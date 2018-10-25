@@ -5382,6 +5382,20 @@ struct add_fd_completion_reply
 
 
 
+struct set_fd_completion_mode_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    unsigned int flags;
+    char __pad_20[4];
+};
+struct set_fd_completion_mode_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct set_fd_disp_info_request
 {
     struct request_header __header;
@@ -5918,6 +5932,7 @@ enum request
     REQ_query_completion,
     REQ_set_completion_info,
     REQ_add_fd_completion,
+    REQ_set_fd_completion_mode,
     REQ_set_fd_disp_info,
     REQ_set_fd_name_info,
     REQ_get_window_layered_info,
@@ -6215,6 +6230,7 @@ union generic_request
     struct query_completion_request query_completion_request;
     struct set_completion_info_request set_completion_info_request;
     struct add_fd_completion_request add_fd_completion_request;
+    struct set_fd_completion_mode_request set_fd_completion_mode_request;
     struct set_fd_disp_info_request set_fd_disp_info_request;
     struct set_fd_name_info_request set_fd_name_info_request;
     struct get_window_layered_info_request get_window_layered_info_request;
@@ -6510,6 +6526,7 @@ union generic_reply
     struct query_completion_reply query_completion_reply;
     struct set_completion_info_reply set_completion_info_reply;
     struct add_fd_completion_reply add_fd_completion_reply;
+    struct set_fd_completion_mode_reply set_fd_completion_mode_reply;
     struct set_fd_disp_info_reply set_fd_disp_info_reply;
     struct set_fd_name_info_reply set_fd_name_info_reply;
     struct get_window_layered_info_reply get_window_layered_info_reply;
@@ -6529,6 +6546,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 568
+#define SERVER_PROTOCOL_VERSION 569
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

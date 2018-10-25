@@ -3700,6 +3700,13 @@ struct handle_info
 @END
 
 
+/* set fd completion information */
+@REQ(set_fd_completion_mode)
+    obj_handle_t handle;          /* handle to a file or directory */
+    unsigned int flags;           /* completion notification flags */
+@END
+
+
 /* set fd disposition information */
 @REQ(set_fd_disp_info)
     obj_handle_t handle;          /* handle to a file or directory */
