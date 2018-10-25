@@ -5656,9 +5656,8 @@ static void test_load_texture(void)
         if (hr == D3DRMERR_BADOBJECT)
             IDirect3DRM_Release(d3drm1);
         d3drm_img = IDirect3DRMTexture_GetImage(texture1);
-        todo_wine ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
-        if (d3drm_img)
-            test_bitmap_data(i * 7, d3drm_img, FALSE, tests[i].w, tests[i].h, tests[i].palettized);
+        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        test_bitmap_data(i * 7, d3drm_img, FALSE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture_Release(texture1);
         ref2 = get_refcount((IUnknown *)d3drm1);
         ok(ref1 == ref2, "Test %u: expected ref1 == ref2, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
@@ -5666,15 +5665,14 @@ static void test_load_texture(void)
                 NULL, &IID_IDirect3DRMTexture, (void **)&texture1);
         ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture_InitFromFile(texture1, NULL);
-        todo_wine ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture_InitFromFile(texture1, "");
-        todo_wine ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture_InitFromFile(texture1, filename);
-        todo_wine ok(SUCCEEDED(hr), "Test %u: Failed to initialise texture from file, hr %#x.\n", i, hr);
+        ok(SUCCEEDED(hr), "Test %u: Failed to initialise texture from file, hr %#x.\n", i, hr);
         d3drm_img = IDirect3DRMTexture_GetImage(texture1);
-        todo_wine ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
-        if (d3drm_img)
-            test_bitmap_data(i * 7 + 1, d3drm_img, FALSE, tests[i].w, tests[i].h, tests[i].palettized);
+        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        test_bitmap_data(i * 7 + 1, d3drm_img, FALSE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture_Release(texture1);
 
         hr = IDirect3DRM2_LoadTexture(d3drm2, filename, &texture2);
@@ -5687,9 +5685,8 @@ static void test_load_texture(void)
         if (hr == D3DRMERR_BADOBJECT)
             IDirect3DRM_Release(d3drm1);
         d3drm_img = IDirect3DRMTexture2_GetImage(texture2);
-        todo_wine ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
-        if (d3drm_img)
-            test_bitmap_data(i * 7 + 2, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
+        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        test_bitmap_data(i * 7 + 2, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture2_Release(texture2);
         ref2 = get_refcount((IUnknown *)d3drm1);
         ok(ref1 == ref2, "Test %u: expected ref1 == ref2, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
@@ -5697,15 +5694,14 @@ static void test_load_texture(void)
                 NULL, &IID_IDirect3DRMTexture2, (void **)&texture2);
         ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture2_InitFromFile(texture2, NULL);
-        todo_wine ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture2_InitFromFile(texture2, "");
-        todo_wine ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture2_InitFromFile(texture2, filename);
-        todo_wine ok(SUCCEEDED(hr), "Test %u: Failed to initialise texture from file, hr %#x.\n", i, hr);
+        ok(SUCCEEDED(hr), "Test %u: Failed to initialise texture from file, hr %#x.\n", i, hr);
         d3drm_img = IDirect3DRMTexture2_GetImage(texture2);
-        todo_wine ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
-        if (d3drm_img)
-            test_bitmap_data(i * 7 + 3, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
+        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        test_bitmap_data(i * 7 + 3, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture2_Release(texture2);
 
         hr = IDirect3DRM3_LoadTexture(d3drm3, filename, &texture3);
@@ -5718,17 +5714,15 @@ static void test_load_texture(void)
         if (hr == D3DRMERR_BADOBJECT)
             IDirect3DRM_Release(d3drm1);
         d3drm_img = IDirect3DRMTexture3_GetImage(texture3);
-        todo_wine ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
-        if (d3drm_img)
-            test_bitmap_data(i * 7 + 4, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
+        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        test_bitmap_data(i * 7 + 4, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         /* Test whether querying a version 1 texture from version 3 causes a
          * change in the loading behavior. */
         hr = IDirect3DRMTexture3_QueryInterface(texture3, &IID_IDirect3DRMTexture, (void **)&texture1);
         ok(SUCCEEDED(hr), "Failed to get IDirect3DRMTexture interface, hr %#x.\n", hr);
         d3drm_img = IDirect3DRMTexture_GetImage(texture1);
-        todo_wine ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
-        if (d3drm_img)
-            test_bitmap_data(i * 7 + 5, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
+        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        test_bitmap_data(i * 7 + 5, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture_Release(texture1);
         IDirect3DRMTexture3_Release(texture3);
         ref2 = get_refcount((IUnknown *)d3drm1);
@@ -5738,15 +5732,14 @@ static void test_load_texture(void)
                 NULL, &IID_IDirect3DRMTexture3, (void **)&texture3);
         ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture3_InitFromFile(texture3, NULL);
-        todo_wine ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture3_InitFromFile(texture3, "");
-        todo_wine ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DRMTexture3_InitFromFile(texture3, filename);
-        todo_wine ok(SUCCEEDED(hr), "Test %u: Failed to initialize texture from file, hr %#x.\n", i, hr);
+        ok(SUCCEEDED(hr), "Test %u: Failed to initialize texture from file, hr %#x.\n", i, hr);
         d3drm_img = IDirect3DRMTexture3_GetImage(texture3);
-        todo_wine ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
-        if (d3drm_img)
-            test_bitmap_data(i * 7 + 6, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
+        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        test_bitmap_data(i * 7 + 6, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture3_Release(texture3);
 
         ret = DeleteFileA(filename);
