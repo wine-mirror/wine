@@ -6276,48 +6276,8 @@ BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo,
  DWORD *pcbStructInfo)
 {
-    BOOL ret = FALSE;
-    CryptDecodeObjectFunc pCryptDecodeObject = NULL;
-    CryptDecodeObjectExFunc pCryptDecodeObjectEx = NULL;
-    HCRYPTOIDFUNCADDR hFunc = NULL;
-
-    TRACE_(crypt)("(0x%08x, %s, %p, %d, 0x%08x, %p, %p)\n", dwCertEncodingType,
-     debugstr_a(lpszStructType), pbEncoded, cbEncoded, dwFlags,
-     pvStructInfo, pcbStructInfo);
-
-    if (!pvStructInfo && !pcbStructInfo)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (cbEncoded > MAX_ENCODED_LEN)
-    {
-        SetLastError(CRYPT_E_ASN1_LARGE);
-        return FALSE;
-    }
-
-    if (!(pCryptDecodeObjectEx = CRYPT_GetBuiltinDecoder(dwCertEncodingType,
-     lpszStructType)))
-    {
-        TRACE_(crypt)("OID %s not found or unimplemented, looking for DLL\n",
-         debugstr_a(lpszStructType));
-        pCryptDecodeObject = CRYPT_LoadDecoderFunc(dwCertEncodingType,
-         lpszStructType, &hFunc);
-        if (!pCryptDecodeObject)
-            pCryptDecodeObjectEx = CRYPT_LoadDecoderExFunc(dwCertEncodingType,
-             lpszStructType, &hFunc);
-    }
-    if (pCryptDecodeObject)
-        ret = pCryptDecodeObject(dwCertEncodingType, lpszStructType,
-         pbEncoded, cbEncoded, dwFlags, pvStructInfo, pcbStructInfo);
-    else if (pCryptDecodeObjectEx)
-        ret = pCryptDecodeObjectEx(dwCertEncodingType, lpszStructType,
-         pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL,
-         pvStructInfo, pcbStructInfo);
-    if (hFunc)
-        CryptFreeOIDFunctionAddress(hFunc, 0);
-    TRACE_(crypt)("returning %d\n", ret);
-    return ret;
+    return CryptDecodeObjectEx(dwCertEncodingType, lpszStructType,
+        pbEncoded, cbEncoded, dwFlags, NULL, pvStructInfo, pcbStructInfo);
 }
 
 BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
