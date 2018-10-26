@@ -753,6 +753,15 @@ ULONG WINAPI RtlRandom (PULONG seed)
 
 
 /*************************************************************************
+ * RtlRandomEx   [NTDLL.@]
+ */
+ULONG WINAPI RtlRandomEx( ULONG *seed )
+{
+    WARN( "semi-stub: should use a different algorithm\n" );
+    return RtlRandom( seed );
+}
+
+/*************************************************************************
  * RtlAreAllAccessesGranted   [NTDLL.@]
  *
  * Check if all desired accesses are granted
