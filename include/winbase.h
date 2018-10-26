@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
 #include <libloaderapi.h>
+#include <synchapi.h>
 
   /* Windows Exit Procedure flag values */
 #define	WEP_FREE_DLL        0

@@ -17,10 +17,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windows.h"
 #include "appmodel.h"
 
 #include "wine/debug.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
 
@@ -96,4 +99,29 @@ BOOL WINAPI QuirkIsEnabled3(void *unk1, void *unk2)
         FIXME("(%p, %p) stub!\n", unk1, unk2);
 
     return FALSE;
+}
+
+/***********************************************************************
+ *           WaitOnAddress   (KERNELBASE.@)
+ */
+BOOL WINAPI WaitOnAddress(volatile void *addr, void *cmp, SIZE_T size, DWORD timeout)
+{
+    LARGE_INTEGER to;
+    NTSTATUS status;
+
+    if (timeout != INFINITE)
+    {
+        to.QuadPart = -(LONGLONG)timeout * 10000;
+        status = RtlWaitOnAddress((const void *)addr, cmp, size, &to);
+    }
+    else
+        status = RtlWaitOnAddress((const void *)addr, cmp, size, NULL);
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    return TRUE;
 }

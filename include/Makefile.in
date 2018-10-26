@@ -604,6 +604,7 @@ SOURCES = \
 	strsafe.h \
 	structuredquerycondition.idl \
 	svrapi.h \
+	synchapi.h \
 	t2embapi.h \
 	tapi.h \
 	taskschd.idl \

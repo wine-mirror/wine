@@ -1696,10 +1696,10 @@
 @ stdcall WaitForThreadpoolWorkCallbacks(ptr long) kernel32.WaitForThreadpoolWorkCallbacks
 # @ stub WaitForUserPolicyForegroundProcessingInternal
 @ stdcall WaitNamedPipeW(wstr long) kernel32.WaitNamedPipeW
-# @ stub WaitOnAddress
+@ stdcall WaitOnAddress(ptr ptr long long)
 @ stdcall WakeAllConditionVariable(ptr) kernel32.WakeAllConditionVariable
-# @ stub WakeByAddressAll
-# @ stub WakeByAddressSingle
+@ stdcall WakeByAddressAll(ptr) ntdll.RtlWakeAddressAll
+@ stdcall WakeByAddressSingle(ptr) ntdll.RtlWakeAddressSingle
 @ stdcall WakeConditionVariable(ptr) kernel32.WakeConditionVariable
 # @ stub WerGetFlags
 @ stdcall WerRegisterFile(wstr long long) kernel32.WerRegisterFile
