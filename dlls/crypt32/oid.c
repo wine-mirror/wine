@@ -250,6 +250,8 @@ BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
         {
             struct OIDFunction *func;
 
+            TRACE("OID %s, func %p\n", debugstr_a(rgFuncEntry[i].pszOID), rgFuncEntry[i].pvFuncAddr);
+
             if (!IS_INTOID(rgFuncEntry[i].pszOID))
                 func = CryptMemAlloc(sizeof(struct OIDFunction)
                  + strlen(rgFuncEntry[i].pszOID) + 1);
