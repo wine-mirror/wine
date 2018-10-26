@@ -2872,6 +2872,36 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line,
 
 
 /**********************************************************************
+ *       CreateProcessAsUserA          (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessAsUserA( HANDLE token, LPCSTR app_name, LPSTR cmd_line,
+                                                    LPSECURITY_ATTRIBUTES process_attr,
+                                                    LPSECURITY_ATTRIBUTES thread_attr,
+                                                    BOOL inherit, DWORD flags, LPVOID env, LPCSTR cur_dir,
+                                                    LPSTARTUPINFOA startup_info,
+                                                    LPPROCESS_INFORMATION info )
+{
+    return CreateProcessInternalA( token, app_name, cmd_line, process_attr, thread_attr,
+                                   inherit, flags, env, cur_dir, startup_info, info, NULL );
+}
+
+
+/**********************************************************************
+ *       CreateProcessAsUserW          (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessAsUserW( HANDLE token, LPCWSTR app_name, LPWSTR cmd_line,
+                                                    LPSECURITY_ATTRIBUTES process_attr,
+                                                    LPSECURITY_ATTRIBUTES thread_attr,
+                                                    BOOL inherit, DWORD flags, LPVOID env, LPCWSTR cur_dir,
+                                                    LPSTARTUPINFOW startup_info,
+                                                    LPPROCESS_INFORMATION info )
+{
+    return CreateProcessInternalW( token, app_name, cmd_line, process_attr, thread_attr,
+                                   inherit, flags, env, cur_dir, startup_info, info, NULL );
+}
+
+
+/**********************************************************************
  *       exec_process
  */
 static void exec_process( LPCWSTR name )
