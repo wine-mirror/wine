@@ -1760,10 +1760,10 @@ static void test_keyed_events(void)
     ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
 
     status = pNtWaitForKeyedEvent( NULL, (void *)8, 0, &timeout );
-    todo_wine ok( status == STATUS_TIMEOUT || broken(status == STATUS_INVALID_HANDLE), /* XP/2003 */
+    ok( status == STATUS_TIMEOUT || broken(status == STATUS_INVALID_HANDLE), /* XP/2003 */
         "NtWaitForKeyedEvent %x\n", status );
     status = pNtReleaseKeyedEvent( NULL, (void *)8, 0, &timeout );
-    todo_wine ok( status == STATUS_TIMEOUT || broken(status == STATUS_INVALID_HANDLE), /* XP/2003 */
+    ok( status == STATUS_TIMEOUT || broken(status == STATUS_INVALID_HANDLE), /* XP/2003 */
         "NtReleaseKeyedEvent %x\n", status );
 
     status = pNtWaitForKeyedEvent( (HANDLE)0xdeadbeef, (void *)9, 0, &timeout );
