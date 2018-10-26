@@ -314,8 +314,8 @@
 # @ stub CreatePrivateNamespaceW
 @ stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr)
 # @ stub CreateProcessAsUserW
-# @ stub CreateProcessInternalA
-# @ stub CreateProcessInternalW
+@ stdcall CreateProcessInternalA(long str str ptr ptr long long ptr str ptr ptr ptr)
+@ stdcall CreateProcessInternalW(long wstr wstr ptr ptr long long ptr wstr ptr ptr ptr)
 # @ stub CreateProcessInternalWSecure
 @ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr)
 @ stdcall CreateRemoteThread(long ptr long ptr long long ptr)
