@@ -3210,7 +3210,6 @@ static void testComparePublicKeyInfo(void)
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info2);
-todo_wine
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
 
     /* Different OIDs appear to compare */
@@ -3219,14 +3218,12 @@ todo_wine
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info2);
-todo_wine
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
 
     info2.Algorithm.pszObjId = oid_x957_dsa;
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info2);
-todo_wine
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
 
     info1.PublicKey.cbData = sizeof(bits1);
@@ -3238,7 +3235,6 @@ todo_wine
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info2);
-todo_wine
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
 
     info2.Algorithm.pszObjId = oid_rsa_rsa;
@@ -3297,11 +3293,9 @@ todo_wine
     ret = CertComparePublicKeyInfo(0, &info1, &info1);
     ok(ret, "CertComparePublicKeyInfo: as raw binary: keys should be equal\n");
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info1);
-todo_wine
     ok(ret, "CertComparePublicKeyInfo: as ASN.1 encoded: keys should be equal\n");
     info1.PublicKey.cbData--; /* kill one byte, make ASN.1 encoded data invalid */
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info1);
-todo_wine
     ok(ret, "CertComparePublicKeyInfo: as ASN.1 encoded: keys should be equal\n");
 
     /* ASN.1 encoded non-comparing case */

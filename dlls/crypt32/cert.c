@@ -28,6 +28,7 @@
 #include "winternl.h"
 #define CRYPT_OID_INFO_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
+#include "snmp.h"
 #include "bcrypt.h"
 #include "winnls.h"
 #include "rpc.h"
@@ -1241,6 +1242,12 @@ BOOL WINAPI CertComparePublicKeyInfo(DWORD dwCertEncodingType,
     BOOL ret;
 
     TRACE("(%08x, %p, %p)\n", dwCertEncodingType, pPublicKey1, pPublicKey2);
+
+    /* RSA public key data should start with ASN_SEQUENCE,
+     * otherwise it's not a RSA_CSP_PUBLICKEYBLOB.
+     */
+    if (!pPublicKey1->PublicKey.cbData || pPublicKey1->PublicKey.pbData[0] != ASN_SEQUENCE)
+        dwCertEncodingType = 0;
 
     switch (GET_CERT_ENCODING_TYPE(dwCertEncodingType))
     {
