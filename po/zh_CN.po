@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-08-30 00:16-0600\n"
-"Last-Translator: Zixing Liu <liushuyu011@gmail.com>\n"
+"PO-Revision-Date: 2018-10-25 11:43-0500\n"
+"Last-Translator: Mingcong Bai <jeffbai@aosc.xyz>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -296,25 +296,23 @@ msgstr "正在取消..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "剩余 %1!u! %2"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "剩余 %1!u! %2 %3!u! %4"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "秒(&S)"
+msgstr "秒"
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "分"
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "时"
 
 #: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
@@ -10867,10 +10865,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "错误：无效的选项 '%c'。\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "错误：找不到进程 \"%1\"。\n"
+msgstr "错误：无法获取主机名：%u。\n"
 
 #: hostname.rc:33
 msgid ""
