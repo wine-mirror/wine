@@ -70,6 +70,10 @@ static NTSTATUS (WINAPI *pNtReleaseKeyedEvent)( HANDLE, const void *, BOOLEAN, c
 static NTSTATUS (WINAPI *pNtCreateIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, ULONG);
 static NTSTATUS (WINAPI *pNtOpenIoCompletion)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES );
 static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, void *, ULONG, FILE_INFORMATION_CLASS);
+static NTSTATUS (WINAPI *pNtQuerySystemTime)( LARGE_INTEGER * );
+static NTSTATUS (WINAPI *pRtlWaitOnAddress)( const void *, const void *, SIZE_T, const LARGE_INTEGER * );
+static void     (WINAPI *pRtlWakeAddressAll)( const void * );
+static void     (WINAPI *pRtlWakeAddressSingle)( const void * );
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -2064,6 +2068,79 @@ static void test_mutant(void)
     NtClose( mutant );
 }
 
+static void test_wait_on_address(void)
+{
+    DWORD ticks;
+    SIZE_T size;
+    NTSTATUS status;
+    LARGE_INTEGER timeout;
+    LONG64 address, compare;
+
+    if (!pRtlWaitOnAddress)
+    {
+        win_skip("RtlWaitOnAddress not supported, skipping test\n");
+        return;
+    }
+
+    if (0) /* crash on Windows */
+    {
+        pRtlWaitOnAddress(&address, NULL, 8, NULL);
+        pRtlWaitOnAddress(NULL, &compare, 8, NULL);
+        pRtlWaitOnAddress(NULL, NULL, 8, NULL);
+    }
+
+    /* don't crash */
+    pRtlWakeAddressSingle(NULL);
+    pRtlWakeAddressAll(NULL);
+
+    /* invalid values */
+    address = 0;
+    compare = 0;
+    status = pRtlWaitOnAddress(&address, &compare, 5, NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "got %x\n", status);
+
+    /* values match */
+    address = 0;
+    compare = 0;
+    pNtQuerySystemTime(&timeout);
+    timeout.QuadPart += 100*10000;
+    ticks = GetTickCount();
+    status = pRtlWaitOnAddress(&address, &compare, 8, &timeout);
+    ticks = GetTickCount() - ticks;
+    ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
+    ok(ticks >= 100 && ticks <= 1000, "got %u\n", ticks);
+    ok(address == 0, "got %s\n", wine_dbgstr_longlong(address));
+    ok(compare == 0, "got %s\n", wine_dbgstr_longlong(compare));
+
+    /* different address size */
+    for (size = 1; size <= 4; size <<= 1)
+    {
+        compare = ~0;
+        compare <<= size * 8;
+
+        timeout.QuadPart = -100 * 10000;
+        ticks = GetTickCount();
+        status = pRtlWaitOnAddress(&address, &compare, size, &timeout);
+        ticks = GetTickCount() - ticks;
+        ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
+        ok(ticks >= 100 && ticks <= 1000, "got %u\n", ticks);
+
+        status = pRtlWaitOnAddress(&address, &compare, size << 1, &timeout);
+        ok(!status, "got 0x%08x\n", status);
+    }
+    address = 0;
+    compare = 1;
+    status = pRtlWaitOnAddress(&address, &compare, 8, NULL);
+    ok(!status, "got 0x%08x\n", status);
+
+    /* no waiters */
+    address = 0;
+    pRtlWakeAddressSingle(&address);
+    ok(address == 0, "got %s\n", wine_dbgstr_longlong(address));
+    pRtlWakeAddressAll(&address);
+    ok(address == 0, "got %s\n", wine_dbgstr_longlong(address));
+}
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -2117,6 +2194,10 @@ START_TEST(om)
     pNtCreateIoCompletion   =  (void *)GetProcAddress(hntdll, "NtCreateIoCompletion");
     pNtOpenIoCompletion     =  (void *)GetProcAddress(hntdll, "NtOpenIoCompletion");
     pNtQueryInformationFile =  (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
+    pNtQuerySystemTime      =  (void *)GetProcAddress(hntdll, "NtQuerySystemTime");
+    pRtlWaitOnAddress       =  (void *)GetProcAddress(hntdll, "RtlWaitOnAddress");
+    pRtlWakeAddressAll      =  (void *)GetProcAddress(hntdll, "RtlWakeAddressAll");
+    pRtlWakeAddressSingle   =  (void *)GetProcAddress(hntdll, "RtlWakeAddressSingle");
 
     test_case_sensitive();
     test_namespace_pipe();
@@ -2130,4 +2211,5 @@ START_TEST(om)
     test_mutant();
     test_keyed_events();
     test_null_device();
+    test_wait_on_address();
 }

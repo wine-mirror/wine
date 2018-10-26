@@ -61,6 +61,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 HANDLE keyed_event = NULL;
 
+static const LARGE_INTEGER zero_timeout;
+
 static inline int interlocked_dec_if_nonzero( int *dest )
 {
     int val, tmp;
@@ -1954,4 +1956,51 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     else
         RtlAcquireSRWLockExclusive( lock );
     return status;
+}
+
+/***********************************************************************
+ *           RtlWaitOnAddress   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size,
+                                  const LARGE_INTEGER *timeout )
+{
+    switch (size)
+    {
+        case 1:
+            if (*(const UCHAR *)addr != *(const UCHAR *)cmp)
+                return STATUS_SUCCESS;
+            break;
+        case 2:
+            if (*(const USHORT *)addr != *(const USHORT *)cmp)
+                return STATUS_SUCCESS;
+            break;
+        case 4:
+            if (*(const ULONG *)addr != *(const ULONG *)cmp)
+                return STATUS_SUCCESS;
+            break;
+        case 8:
+            if (*(const ULONG64 *)addr != *(const ULONG64 *)cmp)
+                return STATUS_SUCCESS;
+            break;
+        default:
+            return STATUS_INVALID_PARAMETER;
+    }
+
+    return NtWaitForKeyedEvent( keyed_event, addr, 0, timeout );
+}
+
+/***********************************************************************
+ *           RtlWakeAddressAll    (NTDLL.@)
+ */
+void WINAPI RtlWakeAddressAll( const void *addr )
+{
+    while (NtReleaseKeyedEvent( keyed_event, addr, 0, &zero_timeout ) == STATUS_SUCCESS) {}
+}
+
+/***********************************************************************
+ *           RtlWakeAddressSingle (NTDLL.@)
+ */
+void WINAPI RtlWakeAddressSingle( const void *addr )
+{
+    NtReleaseKeyedEvent( keyed_event, addr, 0, &zero_timeout );
 }
