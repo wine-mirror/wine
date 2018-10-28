@@ -3304,3 +3304,12 @@ DWORD WINAPI GetIpNetTable2(ADDRESS_FAMILY family, PMIB_IPNET_TABLE2 *table)
     if (!once++) FIXME("(%u %p): stub\n", family, table);
     return ERROR_NOT_SUPPORTED;
 }
+
+/******************************************************************
+ *    GetIpInterfaceTable (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIpInterfaceTable(ADDRESS_FAMILY family, PMIB_IPINTERFACE_TABLE *table)
+{
+    FIXME("(%u %p): stub\n", family, table);
+    return ERROR_NOT_SUPPORTED;
+}
