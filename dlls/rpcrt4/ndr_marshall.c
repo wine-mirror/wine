@@ -856,9 +856,9 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   STD_OVERFLOW_CHECK(pStubMsg);
 }
 
-/***********************************************************************
- *           PointerUnmarshall [internal]
- */
+/* pPointer is the pointer that we will unmarshal into; pSrcPointer is the
+ * pointer to memory which we may attempt to reuse if non-NULL. Usually these
+ * are the same; for the case when they aren't, see EmbeddedPointerUnmarshall(). */
 static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                               unsigned char *Buffer,
                               unsigned char **pPointer,
@@ -1228,9 +1228,14 @@ static unsigned char * EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   return NULL;
 }
 
-/***********************************************************************
- *           EmbeddedPointerUnmarshall
- */
+/* rpcrt4 does something bizarre with embedded pointers: instead of copying the
+ * struct/array/union from the buffer to memory and then unmarshalling pointers
+ * into it, it unmarshals pointers into the buffer itself and then copies it to
+ * memory. However, it will still attempt to use a user-supplied pointer where
+ * appropriate (i.e. one on stack). Therefore we need to pass both pointers to
+ * this function and to PointerUnmarshall: the pointer (to the buffer) that we
+ * will actually unmarshal into (pDstBuffer), and the pointer (to memory) that
+ * we will attempt to use for storage if possible (pSrcMemoryPtrs). */
 static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  unsigned char *pDstBuffer,
                                                  unsigned char *pSrcMemoryPtrs,
