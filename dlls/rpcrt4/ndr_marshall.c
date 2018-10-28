@@ -950,26 +950,25 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
        * whether we have to initialise it so we can use the optimisation of
        * setting the pointer to the buffer, if possible, or set fMustAlloc to
        * TRUE. */
-      if (attr & FC_POINTER_DEREF) {
+      if (attr & FC_POINTER_DEREF)
+      {
         if (pSrcPointer && (attr & FC_ALLOCED_ON_STACK))
           *pPointer = pSrcPointer;
         else
           fMustAlloc = TRUE;
-      } else {
-        *current_ptr = NULL;
       }
+      else
+        *pPointer = NULL;
     }
 
     if (attr & FC_ALLOCATE_ALL_NODES)
         FIXME("FC_ALLOCATE_ALL_NODES not implemented\n");
 
     if (attr & FC_POINTER_DEREF) {
-      if (fMustAlloc) {
-        unsigned char *base_ptr_val = NdrAllocate(pStubMsg, sizeof(void *));
-        *pPointer = base_ptr_val;
-        current_ptr = (unsigned char **)base_ptr_val;
-      } else
-        current_ptr = *(unsigned char***)current_ptr;
+      if (fMustAlloc)
+        *pPointer = NdrAllocateZero(pStubMsg, sizeof(void *));
+
+      current_ptr = *(unsigned char***)current_ptr;
       TRACE("deref => %p\n", current_ptr);
       if (!fMustAlloc && !*current_ptr) fMustAlloc = TRUE;
     }
