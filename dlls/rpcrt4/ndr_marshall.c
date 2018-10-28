@@ -436,6 +436,13 @@ void * WINAPI NdrAllocate(MIDL_STUB_MESSAGE *pStubMsg, SIZE_T len)
     return p;
 }
 
+static void *NdrAllocateZero(MIDL_STUB_MESSAGE *stubmsg, SIZE_T len)
+{
+    void *mem = NdrAllocate(stubmsg, len);
+    memset(mem, 0, len);
+    return mem;
+}
+
 static void NdrFree(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *Pointer)
 {
     TRACE("(%p, %p)\n", pStubMsg, Pointer);
@@ -1752,7 +1759,7 @@ unsigned char * WINAPI NdrSimpleStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   align_pointer(&pStubMsg->Buffer, pFormat[1] + 1);
 
   if (fMustAlloc)
-    *ppMemory = NdrAllocate(pStubMsg, size);
+    *ppMemory = NdrAllocateZero(pStubMsg, size);
   else
   {
     if (!pStubMsg->IsClient && !*ppMemory)
@@ -2143,7 +2150,7 @@ static inline ULONG array_read_variance_and_unmarshall(
     if (fUnmarshall)
     {
       if (fMustAlloc)
-        *ppMemory = NdrAllocate(pStubMsg, memsize);
+        *ppMemory = NdrAllocateZero(pStubMsg, memsize);
       else
       {
         if (fUseBufferMemoryServer && !pStubMsg->IsClient && !*ppMemory)
@@ -2182,7 +2189,7 @@ static inline ULONG array_read_variance_and_unmarshall(
       if (!fMustAlloc && !*ppMemory)
         fMustAlloc = TRUE;
       if (fMustAlloc)
-        *ppMemory = NdrAllocate(pStubMsg, memsize);
+        *ppMemory = NdrAllocateZero(pStubMsg, memsize);
       saved_buffer = pStubMsg->Buffer;
       safe_buffer_increment(pStubMsg, bufsize);
 
@@ -2259,7 +2266,7 @@ static inline ULONG array_read_variance_and_unmarshall(
     if (!fMustAlloc && !*ppMemory)
       fMustAlloc = TRUE;
     if (fMustAlloc)
-      *ppMemory = NdrAllocate(pStubMsg, memsize);
+      *ppMemory = NdrAllocateZero(pStubMsg, memsize);
 
     align_pointer(&pStubMsg->Buffer, alignment);
     saved_buffer = pStubMsg->Buffer;
@@ -3716,7 +3723,7 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   if (!fMustAlloc && !*ppMemory)
     fMustAlloc = TRUE;
   if (fMustAlloc)
-    *ppMemory = NdrAllocate(pStubMsg, size);
+    *ppMemory = NdrAllocateZero(pStubMsg, size);
 
   pMemory = ComplexUnmarshall(pStubMsg, *ppMemory, pFormat, pointer_desc, fMustAlloc);
 
@@ -4774,7 +4781,7 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
     if (fMustAlloc)
     {
         SIZE_T size = pCStructFormat->memory_size + bufsize;
-        *ppMemory = NdrAllocate(pStubMsg, size);
+        *ppMemory = NdrAllocateZero(pStubMsg, size);
     }
     else
     {
@@ -4975,7 +4982,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     if (fMustAlloc)
     {
         SIZE_T size = pCVStructFormat->memory_size + memsize;
-        *ppMemory = NdrAllocate(pStubMsg, size);
+        *ppMemory = NdrAllocateZero(pStubMsg, size);
     }
 
     /* mark the start of the constant data */
@@ -5216,7 +5223,7 @@ unsigned char *  WINAPI NdrFixedArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     }
 
     if (fMustAlloc)
-        *ppMemory = NdrAllocate(pStubMsg, total_size);
+        *ppMemory = NdrAllocateZero(pStubMsg, total_size);
     else
     {
         if (!pStubMsg->IsClient && !*ppMemory)
@@ -5462,7 +5469,7 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (!fMustAlloc && !*ppMemory)
         fMustAlloc = TRUE;
     if (fMustAlloc)
-        *ppMemory = NdrAllocate(pStubMsg, size);
+        *ppMemory = NdrAllocateZero(pStubMsg, size);
     saved_buffer = pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_buffer_increment(pStubMsg, bufsize);
 
