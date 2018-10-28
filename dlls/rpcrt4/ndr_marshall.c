@@ -865,7 +865,11 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
 /* pPointer is the pointer that we will unmarshal into; pSrcPointer is the
  * pointer to memory which we may attempt to reuse if non-NULL. Usually these
- * are the same; for the case when they aren't, see EmbeddedPointerUnmarshall(). */
+ * are the same; for the case when they aren't, see EmbeddedPointerUnmarshall().
+ *
+ * fMustAlloc seems to determine whether we can allocate from the buffer (if we
+ * are on the server side). It's ignored here, since we can't allocate a pointer
+ * from the buffer. */
 static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                               unsigned char *Buffer,
                               unsigned char **pPointer,
@@ -877,7 +881,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   PFORMAT_STRING desc;
   NDR_UNMARSHALL m;
   DWORD pointer_id = 0;
-  BOOL pointer_needs_unmarshaling;
+  BOOL pointer_needs_unmarshaling, need_alloc = FALSE, inner_must_alloc = FALSE;
 
   TRACE("(%p,%p,%p,%p,%p,%d)\n", pStubMsg, Buffer, pPointer, pSrcPointer, pFormat, fMustAlloc);
   TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
@@ -902,11 +906,13 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   case FC_OP: /* object pointer - we must free data before overwriting it */
     pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
     TRACE("pointer_id is 0x%08x\n", pointer_id);
-    if (!fMustAlloc && pSrcPointer)
-    {
+
+    /* An object pointer always allocates new memory (it cannot point to the
+     * buffer). */
+    inner_must_alloc = TRUE;
+
+    if (pSrcPointer)
         FIXME("free object pointer %p\n", pSrcPointer);
-        fMustAlloc = TRUE;
-    }
     if (pointer_id)
       pointer_needs_unmarshaling = TRUE;
     else
@@ -931,31 +937,31 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     unsigned char **current_ptr = pPointer;
     if (pStubMsg->IsClient) {
       TRACE("client\n");
-      /* if we aren't forcing allocation of memory then try to use the existing
-       * (source) pointer to unmarshall the data into so that [in,out]
-       * parameters behave correctly. it doesn't matter if the parameter is
-       * [out] only since in that case the pointer will be NULL. we force
-       * allocation when the source pointer is NULL here instead of in the type
-       * unmarshalling routine for the benefit of the deref code below */
-      if (!fMustAlloc) {
-        if (pSrcPointer) {
-          TRACE("setting *pPointer to %p\n", pSrcPointer);
-          *pPointer = pSrcPointer;
-        } else
-          fMustAlloc = TRUE;
+      /* Try to use the existing (source) pointer to unmarshall the data into
+       * so that [in, out] or [out, ref] parameters behave correctly. If the
+       * source pointer is NULL and we are not dereferencing, we must force the
+       * inner marshalling routine to allocate, since otherwise it will crash. */
+      if (pSrcPointer)
+      {
+        TRACE("setting *pPointer to %p\n", pSrcPointer);
+        *pPointer = pSrcPointer;
       }
+      else
+        need_alloc = inner_must_alloc = TRUE;
     } else {
       TRACE("server\n");
-      /* the memory in a stub is never initialised, so we have to work out here
-       * whether we have to initialise it so we can use the optimisation of
-       * setting the pointer to the buffer, if possible, or set fMustAlloc to
-       * TRUE. */
+      /* We can use an existing source pointer here only if it is on-stack,
+       * probably since otherwise NdrPointerFree() might later try to free a
+       * pointer we don't know the provenance of. Otherwise we must always
+       * allocate if we are dereferencing. We never need to force the inner
+       * routine to allocate here, since it will either write into an existing
+       * pointer, or use a pointer to the buffer. */
       if (attr & FC_POINTER_DEREF)
       {
         if (pSrcPointer && (attr & FC_ALLOCED_ON_STACK))
           *pPointer = pSrcPointer;
         else
-          fMustAlloc = TRUE;
+          need_alloc = TRUE;
       }
       else
         *pPointer = NULL;
@@ -965,15 +971,14 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
         FIXME("FC_ALLOCATE_ALL_NODES not implemented\n");
 
     if (attr & FC_POINTER_DEREF) {
-      if (fMustAlloc)
+      if (need_alloc)
         *pPointer = NdrAllocateZero(pStubMsg, sizeof(void *));
 
       current_ptr = *(unsigned char***)current_ptr;
       TRACE("deref => %p\n", current_ptr);
-      if (!fMustAlloc && !*current_ptr) fMustAlloc = TRUE;
     }
     m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
-    if (m) m(pStubMsg, current_ptr, desc, fMustAlloc);
+    if (m) m(pStubMsg, current_ptr, desc, inner_must_alloc);
     else FIXME("no unmarshaller for data type=%02x\n", *desc);
 
     if (type == FC_FP)
