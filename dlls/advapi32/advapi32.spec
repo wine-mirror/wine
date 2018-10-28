@@ -668,7 +668,7 @@
 @ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall RegQueryMultipleValuesA(long ptr long ptr ptr)
 @ stdcall RegQueryMultipleValuesW(long ptr long ptr ptr)
-# @ stub RegQueryReflectionKey
+@ stdcall RegQueryReflectionKey(long ptr)
 @ stdcall RegQueryValueA(long str ptr ptr)
 @ stdcall RegQueryValueExA(long str ptr ptr ptr ptr)
 @ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr)

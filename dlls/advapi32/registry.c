@@ -1194,6 +1194,15 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
     return RtlNtStatusToDosError( status );
 }
 
+/******************************************************************************
+ * RegQueryReflectionKey   [ADVAPI32.@]
+ */
+LONG WINAPI RegQueryReflectionKey( HKEY hkey, BOOL *is_reflection_disabled )
+{
+    FIXME( "%p, %p stub\n", hkey, is_reflection_disabled );
+    *is_reflection_disabled = TRUE;
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 /******************************************************************************
  * RegCloseKey   [ADVAPI32.@]
