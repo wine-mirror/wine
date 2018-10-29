@@ -2889,7 +2889,7 @@ interface IFileDialog : IModalWindow
         [in] FILEOPENDIALOGOPTIONS fos);
 
     HRESULT GetOptions(
-        [in] FILEOPENDIALOGOPTIONS *pfos);
+        [out] FILEOPENDIALOGOPTIONS *pfos);
 
     HRESULT SetDefaultFolder(
         [in] IShellItem *psi);
