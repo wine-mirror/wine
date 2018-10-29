@@ -3574,7 +3574,7 @@ static void test_file_mode(void)
         { &file_name, FILE_DELETE_ON_CLOSE, 0 },
         { &file_name, FILE_RANDOM_ACCESS | FILE_NO_COMPRESSION, 0 },
         { &pipe_dev_name, 0, 0 },
-        { &pipe_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT, TRUE },
+        { &pipe_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT },
         { &mailslot_dev_name, 0, 0 },
         { &mailslot_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT, TRUE },
         { &mountmgr_dev_name, 0, 0 },

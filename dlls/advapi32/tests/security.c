@@ -5523,14 +5523,14 @@ static void test_named_pipe_security(HANDLE token)
                                 STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS };
     static const struct
     {
-        int todo, generic, mapped;
+        int generic, mapped;
     } map[] =
     {
-        { 0, 0, 0 },
-        { 1, GENERIC_READ, FILE_GENERIC_READ },
-        { 1, GENERIC_WRITE, FILE_GENERIC_WRITE },
-        { 1, GENERIC_EXECUTE, FILE_GENERIC_EXECUTE },
-        { 1, GENERIC_ALL, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS }
+        { 0, 0 },
+        { GENERIC_READ, FILE_GENERIC_READ },
+        { GENERIC_WRITE, FILE_GENERIC_WRITE },
+        { GENERIC_EXECUTE, FILE_GENERIC_EXECUTE },
+        { GENERIC_ALL, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS }
     };
     static const struct
     {
@@ -5610,9 +5610,7 @@ static void test_named_pipe_security(HANDLE token)
             ok(ret, "DuplicateHandle error %d\n", GetLastError());
 
             access = get_obj_access(dup);
-            todo_wine_if (map[i].todo)
-                ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
-
+            ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
             CloseHandle(dup);
         }
     }
