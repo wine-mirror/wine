@@ -84,6 +84,7 @@ struct taskdialog_info
     INT selected_radio_id;
     BOOL verification_checked;
     BOOL expanded;
+    BOOL has_cancel;
     WCHAR *expanded_text;
     WCHAR *collapsed_text;
 };
@@ -1197,6 +1198,13 @@ static void taskdialog_init(struct taskdialog_info *dialog_info, HWND hwnd)
     id = GetWindowLongW(dialog_info->default_button, GWLP_ID);
     SendMessageW(dialog_info->hwnd, DM_SETDEFID, id, 0);
 
+    dialog_info->has_cancel =
+        (taskconfig->dwFlags & TDF_ALLOW_DIALOG_CANCELLATION)
+        || taskdialog_find_button(dialog_info->command_links, dialog_info->command_link_count, IDCANCEL)
+        || taskdialog_find_button(dialog_info->buttons, dialog_info->button_count, IDCANCEL);
+
+    if (!dialog_info->has_cancel) DeleteMenu(GetSystemMenu(hwnd, FALSE), SC_CLOSE, MF_BYCOMMAND);
+
     taskdialog_layout(dialog_info);
 }
 
@@ -1369,6 +1377,15 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             RemovePropW(hwnd, taskdialog_info_propnameW);
             taskdialog_destroy(dialog_info);
             break;
+        case WM_CLOSE:
+            if (dialog_info->has_cancel)
+            {
+                if(taskdialog_notify(dialog_info, TDN_BUTTON_CLICKED, IDCANCEL, 0) == S_OK)
+                    EndDialog(hwnd, IDCANCEL);
+                SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 0);
+                break;
+            }
+            return FALSE;
         default:
             return FALSE;
     }

@@ -290,6 +290,34 @@ static const struct message_info msg_return_navigated_page[] =
     { 0 }
 };
 
+static const struct message_info msg_send_close[] =
+{
+    { WM_CLOSE, 0, 0, 0},
+    { 0 }
+};
+
+static const struct message_info msg_handle_wm_close[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, msg_send_close },
+    { TDN_BUTTON_CLICKED, IDCANCEL, 0, S_FALSE, msg_send_close },
+    { TDN_BUTTON_CLICKED, IDCANCEL, 0, S_OK, NULL },
+    { 0 }
+};
+
+static const struct message_info msg_send_close_then_ok[] =
+{
+    { WM_CLOSE, 0, 0, 0},
+    { TDM_CLICK_BUTTON, IDOK, 0 },
+    { 0 }
+};
+
+static const struct message_info msg_handle_wm_close_without_cancel_button[] =
+{
+    { TDN_CREATED, 0, 0, S_OK, msg_send_close_then_ok },
+    { TDN_BUTTON_CLICKED, IDOK, 0, S_OK, NULL },
+    { 0 }
+};
+
 static void init_test_message(UINT message, WPARAM wParam, LPARAM lParam, struct message *msg)
 {
     msg->message = WM_TD_CALLBACK;
@@ -739,6 +767,26 @@ static void test_navigate_page(void)
     run_test(&info, IDOK, ID_START_RADIO_BUTTON, TRUE, msg_return_navigated_page, "navigate page: invalid taskconfig cbSize");
 }
 
+static void test_wm_close(void)
+{
+    TASKDIALOGCONFIG info = {0};
+
+    info.cbSize = sizeof(TASKDIALOGCONFIG);
+    info.pfCallback = taskdialog_callback_proc;
+    info.lpCallbackData = test_ref_data;
+
+    /* WM_CLOSE can end the dialog only when a cancel button is present or dwFlags has TDF_ALLOW_DIALOG_CANCELLATION */
+    info.dwCommonButtons = TDCBF_OK_BUTTON;
+    run_test(&info, IDOK, 0, FALSE, msg_handle_wm_close_without_cancel_button, "send WM_CLOSE without cancel button");
+
+    info.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION;
+    run_test(&info, IDCANCEL, 0, FALSE, msg_handle_wm_close, "send WM_CLOSE with TDF_ALLOW_DIALOG_CANCELLATION");
+
+    info.dwFlags = 0;
+    info.dwCommonButtons = TDCBF_CANCEL_BUTTON;
+    run_test(&info, IDCANCEL, 0, FALSE, msg_handle_wm_close, "send WM_CLOSE with a cancel button");
+}
+
 START_TEST(taskdialog)
 {
     ULONG_PTR ctx_cookie;
@@ -780,6 +828,7 @@ START_TEST(taskdialog)
     test_progress_bar();
     test_verification_box();
     test_navigate_page();
+    test_wm_close();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
