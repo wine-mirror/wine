@@ -95,7 +95,8 @@ struct button_layout_info
     LONG line;
 };
 
-static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND hwnd);
+static HRESULT taskdialog_notify(struct taskdialog_info *dialog_info, UINT notification, WPARAM wparam, LPARAM lparam);
+static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND hwnd, WORD id);
 static void taskdialog_layout(struct taskdialog_info *dialog_info);
 
 static void taskdialog_du_to_px(struct taskdialog_info *dialog_info, LONG *width, LONG *height)
@@ -209,9 +210,7 @@ static void taskdialog_enable_button(const struct taskdialog_info *dialog_info, 
 
 static void taskdialog_click_button(struct taskdialog_info *dialog_info, INT id)
 {
-    HWND hwnd = taskdialog_find_button(dialog_info->command_links, dialog_info->command_link_count, id);
-    if (!hwnd) hwnd = taskdialog_find_button(dialog_info->buttons, dialog_info->button_count, id);
-    if (hwnd) taskdialog_on_button_click(dialog_info, hwnd);
+    if (taskdialog_notify(dialog_info, TDN_BUTTON_CLICKED, id, 0) == S_OK) EndDialog(dialog_info->hwnd, id);
 }
 
 static void taskdialog_button_set_shield(const struct taskdialog_info *dialog_info, INT id, BOOL elevate)
@@ -303,19 +302,22 @@ static void taskdialog_toggle_expando_control(struct taskdialog_info *dialog_inf
     }
 }
 
-static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND hwnd)
+static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND hwnd, WORD id)
 {
-    INT command_id = GetWindowLongW(hwnd, GWLP_ID);
-    HWND radio_button;
+    INT command_id;
+    HWND button, radio_button;
 
-    if (hwnd == dialog_info->expando_button)
+    /* Prefer the id from hwnd because the id from WM_COMMAND is truncated to WORD */
+    command_id = hwnd ? GetWindowLongW(hwnd, GWLP_ID) : id;
+
+    if (hwnd && hwnd == dialog_info->expando_button)
     {
         taskdialog_toggle_expando_control(dialog_info);
         taskdialog_notify(dialog_info, TDN_EXPANDO_BUTTON_CLICKED, dialog_info->expanded, 0);
         return;
     }
 
-    if (hwnd == dialog_info->verification_box)
+    if (hwnd && hwnd == dialog_info->verification_box)
     {
         dialog_info->verification_checked = !dialog_info->verification_checked;
         taskdialog_notify(dialog_info, TDN_VERIFICATION_CLICKED, dialog_info->verification_checked, 0);
@@ -330,7 +332,15 @@ static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, HWND
         return;
     }
 
-    if (taskdialog_notify(dialog_info, TDN_BUTTON_CLICKED, command_id, 0) == S_OK)
+    button = taskdialog_find_button(dialog_info->command_links, dialog_info->command_link_count, command_id);
+    if (!button) button = taskdialog_find_button(dialog_info->buttons, dialog_info->button_count, command_id);
+    if (!button && command_id == IDOK)
+    {
+        button = dialog_info->command_link_count > 0 ? dialog_info->command_links[0] : dialog_info->buttons[0];
+        command_id = GetWindowLongW(button, GWLP_ID);
+    }
+
+    if (button && taskdialog_notify(dialog_info, TDN_BUTTON_CLICKED, command_id, 0) == S_OK)
         EndDialog(dialog_info->hwnd, command_id);
 }
 
@@ -582,7 +592,7 @@ static void taskdialog_check_default_radio_buttons(struct taskdialog_info *dialo
     if (default_button)
     {
         SendMessageW(default_button, BM_SETCHECK, BST_CHECKED, 0);
-        taskdialog_on_button_click(dialog_info, default_button);
+        taskdialog_on_button_click(dialog_info, default_button, 0);
     }
 }
 
@@ -1332,7 +1342,7 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                taskdialog_on_button_click(dialog_info, (HWND)lParam);
+                taskdialog_on_button_click(dialog_info, (HWND)lParam, LOWORD(wParam));
                 break;
             }
             return FALSE;
