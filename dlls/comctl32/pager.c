@@ -1051,6 +1051,16 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
     case DTN_FORMATQUERYW: return DTN_FORMATQUERYA;
     case DTN_USERSTRINGW: return DTN_USERSTRINGA;
     case DTN_WMKEYDOWNW: return DTN_WMKEYDOWNA;
+    /* Header */
+    case HDN_BEGINTRACKW: return HDN_BEGINTRACKA;
+    case HDN_DIVIDERDBLCLICKW: return HDN_DIVIDERDBLCLICKA;
+    case HDN_ENDTRACKW: return HDN_ENDTRACKA;
+    case HDN_GETDISPINFOW: return HDN_GETDISPINFOA;
+    case HDN_ITEMCHANGEDW: return HDN_ITEMCHANGEDA;
+    case HDN_ITEMCHANGINGW: return HDN_ITEMCHANGINGA;
+    case HDN_ITEMCLICKW: return HDN_ITEMCLICKA;
+    case HDN_ITEMDBLCLICKW: return HDN_ITEMDBLCLICKA;
+    case HDN_TRACKW: return HDN_TRACKA;
     /* List View */
     case LVN_BEGINLABELEDITW: return LVN_BEGINLABELEDITA;
     case LVN_ENDLABELEDITW: return LVN_ENDLABELEDITA;
@@ -1251,6 +1261,40 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
     {
         NMDATETIMESTRINGW *nmdts = (NMDATETIMESTRINGW *)hdr;
         return PAGER_SendConvertedNotify(infoPtr, hdr, NULL, 0, (WCHAR **)&nmdts->pszUserString, NULL, CONVERT_SEND);
+    }
+    /* Header */
+    case HDN_BEGINTRACKW:
+    case HDN_DIVIDERDBLCLICKW:
+    case HDN_ENDTRACKW:
+    case HDN_ITEMCHANGEDW:
+    case HDN_ITEMCHANGINGW:
+    case HDN_ITEMCLICKW:
+    case HDN_ITEMDBLCLICKW:
+    case HDN_TRACKW:
+    {
+        NMHEADERW *nmh = (NMHEADERW *)hdr;
+        WCHAR *oldText = NULL, *oldFilterText = NULL;
+        HD_TEXTFILTERW *tf = NULL;
+
+        hdr->code = PAGER_GetAnsiNtfCode(hdr->code);
+
+        if (!nmh->pitem) return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
+        if (nmh->pitem->mask & HDI_TEXT) oldText = PAGER_ConvertText(&nmh->pitem->pszText);
+        if ((nmh->pitem->mask & HDI_FILTER) && (nmh->pitem->type == HDFT_ISSTRING) && nmh->pitem->pvFilter)
+        {
+            tf = (HD_TEXTFILTERW *)nmh->pitem->pvFilter;
+            oldFilterText = PAGER_ConvertText(&tf->pszText);
+        }
+        ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
+        PAGER_RestoreText(&nmh->pitem->pszText, oldText);
+        if (tf) PAGER_RestoreText(&tf->pszText, oldFilterText);
+        return ret;
+    }
+    case HDN_GETDISPINFOW:
+    {
+        NMHDDISPINFOW *nmhddi = (NMHDDISPINFOW *)hdr;
+        return PAGER_SendConvertedNotify(infoPtr, hdr, &nmhddi->mask, HDI_TEXT, &nmhddi->pszText, &nmhddi->cchTextMax,
+                                         SEND_EMPTY_IF_NULL | CONVERT_SEND | CONVERT_RECEIVE);
     }
     /* List View */
     case LVN_BEGINLABELEDITW:

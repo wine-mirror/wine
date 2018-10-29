@@ -282,6 +282,14 @@ static const struct message set_pos_empty_seq[] = {
     { 0 }
 };
 
+static CHAR *heap_strdup(const CHAR *str)
+{
+    int len = lstrlenA(str) + 1;
+    CHAR *ret = heap_alloc(len * sizeof(CHAR));
+    lstrcpyA(ret, str);
+    return ret;
+}
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -643,6 +651,10 @@ static void notify_generic_text_handler(CHAR **text, INT *text_max)
 
         if (receive_data->write_text)
             memcpy(*text, receive_data->write_text, receive_data->write_text_size);
+        /* 64bit Windows will try to free the text pointer even if it's application provided when handling
+         * HDN_GETDISPINFOW. Deliberate leak here. */
+        else if(notify_test_info.unicode == HDN_GETDISPINFOW)
+            *text = heap_strdup(receive_data->write_pointer);
         else
             *text = receive_data->write_pointer;
         if (text_max && receive_data->write_text_max != -1) *text_max = receive_data->write_text_max;
@@ -757,6 +769,45 @@ static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, L
         {
             NMDATETIMESTRINGA *nmdts = (NMDATETIMESTRINGA *)hdr;
             notify_generic_text_handler((CHAR **)&nmdts->pszUserString, NULL);
+            break;
+        }
+        /* Header */
+        case HDN_BEGINDRAG:
+        case HDN_ENDDRAG:
+        case HDN_BEGINFILTEREDIT:
+        case HDN_ENDFILTEREDIT:
+        case HDN_DROPDOWN:
+        case HDN_FILTERCHANGE:
+        case HDN_ITEMKEYDOWN:
+        case HDN_ITEMSTATEICONCLICK:
+        case HDN_OVERFLOWCLICK:
+        {
+            NMHEADERW *nmhd = (NMHEADERW *)hdr;
+            ok(!lstrcmpW(nmhd->pitem->pszText, test_w), "Expect %s, got %s\n", wine_dbgstr_w(test_w),
+               wine_dbgstr_w(nmhd->pitem->pszText));
+            ok(!lstrcmpW(((HD_TEXTFILTERW *)nmhd->pitem->pvFilter)->pszText, test_w), "Expect %s, got %s\n",
+               wine_dbgstr_w(test_w), wine_dbgstr_w(((HD_TEXTFILTERW *)nmhd->pitem->pvFilter)->pszText));
+            break;
+        }
+        case HDN_BEGINTRACKA:
+        case HDN_DIVIDERDBLCLICKA:
+        case HDN_ENDTRACKA:
+        case HDN_ITEMCHANGEDA:
+        case HDN_ITEMCHANGINGA:
+        case HDN_ITEMCLICKA:
+        case HDN_ITEMDBLCLICKA:
+        case HDN_TRACKA:
+        {
+            NMHEADERA *nmhd = (NMHEADERA *)hdr;
+            ok(!lstrcmpA(nmhd->pitem->pszText, test_a), "Expect %s, got %s\n", test_a, nmhd->pitem->pszText);
+            ok(!lstrcmpA(((HD_TEXTFILTERA *)nmhd->pitem->pvFilter)->pszText, test_a), "Expect %s, got %s\n", test_a,
+               ((HD_TEXTFILTERA *)nmhd->pitem->pvFilter)->pszText);
+            break;
+        }
+        case HDN_GETDISPINFOA:
+        {
+            NMHDDISPINFOA *nmhddi = (NMHDDISPINFOA *)hdr;
+            notify_generic_text_handler(&nmhddi->pszText, &nmhddi->cchTextMax);
             break;
         }
         /* List View */
@@ -1046,6 +1097,36 @@ static void test_wm_notify_datetime(HWND pager)
     }
 }
 
+static void test_wm_notify_header(HWND pager)
+{
+    NMHEADERW nmh = {0};
+    HDITEMW hdi = {0};
+    HD_TEXTFILTERW hdtf = {0};
+
+    hdi.mask = HDI_TEXT | HDI_FILTER;
+    hdi.pszText = test_w;
+    hdtf.pszText = test_w;
+    nmh.pitem = &hdi;
+    nmh.pitem->pvFilter = &hdtf;
+    send_notify(pager, HDN_BEGINDRAG, HDN_BEGINDRAG, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ENDDRAG, HDN_ENDDRAG, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_BEGINFILTEREDIT, HDN_BEGINFILTEREDIT, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ENDFILTEREDIT, HDN_ENDFILTEREDIT, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_DROPDOWN, HDN_DROPDOWN, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_FILTERCHANGE, HDN_FILTERCHANGE, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ITEMKEYDOWN, HDN_ITEMKEYDOWN, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ITEMSTATEICONCLICK, HDN_ITEMSTATEICONCLICK, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_OVERFLOWCLICK, HDN_OVERFLOWCLICK, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_BEGINTRACKW, HDN_BEGINTRACKA, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_DIVIDERDBLCLICKW, HDN_DIVIDERDBLCLICKA, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ENDTRACKW, HDN_ENDTRACKA, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ITEMCHANGEDW, HDN_ITEMCHANGEDA, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ITEMCHANGINGW, HDN_ITEMCHANGINGA, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ITEMCLICKW, HDN_ITEMCLICKA, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_ITEMDBLCLICKW, HDN_ITEMDBLCLICKA, (LPARAM)&nmh, TRUE);
+    send_notify(pager, HDN_TRACKW, HDN_TRACKA, (LPARAM)&nmh, TRUE);
+}
+
 static void test_wm_notify_tooltip(HWND pager)
 {
     NMTTDISPINFOW nmttdi;
@@ -1094,6 +1175,8 @@ static void test_wm_notify(void)
     static NMDATETIMEFORMATQUERYW nmdtfq;
     static NMDATETIMEWMKEYDOWNW nmdtkd;
     static NMDATETIMESTRINGW nmdts;
+    /* Header */
+    static NMHDDISPINFOW nmhddi;
     /* List View */
     static NMLVDISPINFOW nmlvdi;
     static NMLVGETINFOTIPW nmlvgit;
@@ -1124,6 +1207,9 @@ static void test_wm_notify(void)
          CONVERT_SEND},
         {&nmdts, sizeof(nmdts), NULL, 0, (WCHAR **)&nmdts.pszUserString, NULL, DTN_USERSTRINGW, DTN_USERSTRINGA,
          CONVERT_SEND},
+        /* Header */
+        {&nmhddi, sizeof(nmhddi), &nmhddi.mask, HDI_TEXT, &nmhddi.pszText, &nmhddi.cchTextMax, HDN_GETDISPINFOW,
+         HDN_GETDISPINFOA, SEND_EMPTY_IF_NULL | CONVERT_SEND | CONVERT_RECEIVE},
         /* List View */
         {&nmlvfi, sizeof(nmlvfi), &nmlvfi.lvfi.flags, LVFI_STRING, (WCHAR **)&nmlvfi.lvfi.psz, NULL,
          LVN_INCREMENTALSEARCHW, LVN_INCREMENTALSEARCHA, CONVERT_SEND},
@@ -1212,6 +1298,7 @@ static void test_wm_notify(void)
     /* Tests for those that can't be covered by generic text test helper */
     test_wm_notify_comboboxex(pager);
     test_wm_notify_datetime(pager);
+    test_wm_notify_header(pager);
     test_wm_notify_tooltip(pager);
 
     DestroyWindow(parent);
