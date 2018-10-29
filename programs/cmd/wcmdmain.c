@@ -2419,9 +2419,9 @@ int wmain (int argc, WCHAR *argvW[])
   OSVERSIONINFOW osv;
   char osver[50];
 
-  if (!GetEnvironmentVariableW(comspecW, comspec, sizeof(comspec)/sizeof(WCHAR)))
+  if (!GetEnvironmentVariableW(comspecW, comspec, ARRAY_SIZE(comspec)))
   {
-      GetSystemDirectoryW(comspec, (sizeof(comspec) - sizeof(cmdW))/sizeof(WCHAR));
+      GetSystemDirectoryW(comspec, ARRAY_SIZE(comspec) - ARRAY_SIZE(cmdW));
       strcatW(comspec, cmdW);
       SetEnvironmentVariableW(comspecW, comspec);
   }
