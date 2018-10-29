@@ -7652,6 +7652,279 @@ static void test_skew_matrix(void)
     }
 }
 
+static ID2D1DeviceContext *create_device_context(ID2D1Factory1 *factory, ID3D10Device1 *d3d_device)
+{
+    ID2D1DeviceContext *device_context;
+    IDXGIDevice *dxgi_device;
+    ID2D1Device *device;
+    HRESULT hr;
+
+    hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    ok(SUCCEEDED(hr), "Failed to get IDXGIDevice interface, hr %#x.\n", hr);
+
+    hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
+    ok(SUCCEEDED(hr), "Failed to get ID2D1Device, hr %#x.\n", hr);
+    IDXGIDevice_Release(dxgi_device);
+
+    hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
+    ok(SUCCEEDED(hr), "Failed to create device context, hr %#x.\n", hr);
+    ID2D1Device_Release(device);
+
+    return device_context;
+}
+
+static void test_command_list(void)
+{
+    static const DWORD bitmap_data[] =
+    {
+        0xffff0000, 0xffffff00, 0xff00ff00, 0xff00ffff,
+    };
+    static const D2D1_GRADIENT_STOP stops[] =
+    {
+        {0.0f, {1.0f, 0.0f, 0.0f, 1.0f}},
+        {0.5f, {0.0f, 1.0f, 0.0f, 1.0f}},
+        {1.0f, {0.0f, 0.0f, 1.0f, 1.0f}},
+    };
+    D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES radial_gradient_properties;
+    D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES linear_gradient_properties;
+    ID2D1DeviceContext *device_context, *device_context2;
+    D2D1_STROKE_STYLE_PROPERTIES stroke_desc;
+    ID2D1GradientStopCollection *gradient;
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    ID2D1StrokeStyle *stroke_style;
+    ID2D1CommandList *command_list;
+    ID3D10Device1 *d3d_device;
+    ID2D1Geometry *geometry;
+    ID2D1Factory1 *factory;
+    ID2D1RenderTarget *rt;
+    D2D1_POINT_2F p0, p1;
+    ID2D1Bitmap *bitmap;
+    ID2D1Image *target;
+    D2D1_COLOR_F color;
+    ID2D1Brush *brush;
+    D2D1_RECT_F rect;
+    D2D_SIZE_U size;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(d3d_device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        ID3D10Device1_Release(d3d_device);
+        return;
+    }
+
+    device_context = create_device_context(factory, d3d_device);
+    ok(device_context != NULL, "Failed to create device context.\n");
+
+    hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to create command list, hr %#x.\n", hr);
+
+    if (FAILED(hr))
+    {
+        ID2D1DeviceContext_Release(device_context);
+        ID2D1Factory1_Release(factory);
+        return;
+    }
+
+    ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)command_list);
+    ID2D1DeviceContext_BeginDraw(device_context);
+
+    hr = ID2D1DeviceContext_QueryInterface(device_context, &IID_ID2D1RenderTarget, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get rt interface, hr %#x.\n", hr);
+
+    /* Test how resources are referenced by the list. */
+
+    /* Bitmap. */
+    set_size_u(&size, 4, 1);
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    bitmap_desc.dpiX = 96.0f;
+    bitmap_desc.dpiY = 96.0f;
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, bitmap_data, 4 * sizeof(*bitmap_data), &bitmap_desc, &bitmap);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, NULL, 0.25f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
+
+    refcount = ID2D1Bitmap_Release(bitmap);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Solid color brush. */
+    set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1RenderTarget_CreateSolidColorBrush(rt, &color, NULL, (ID2D1SolidColorBrush **)&brush);
+    ok(SUCCEEDED(hr), "Failed to create a brush, hr %#x.\n", hr);
+
+    set_rect(&rect, 0.0f, 0.0f, 16.0f, 16.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &rect, brush);
+
+    refcount = ID2D1Brush_Release(brush);
+    ok(refcount == 0, "Got unexpected refcount %u.\n", refcount);
+
+    /* Bitmap brush. */
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, bitmap_data, 4 * sizeof(*bitmap_data), &bitmap_desc, &bitmap);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+
+    hr = ID2D1RenderTarget_CreateBitmapBrush(rt, bitmap, NULL, NULL, (ID2D1BitmapBrush **)&brush);
+    ok(SUCCEEDED(hr), "Failed to create bitmap brush, hr %#x.\n", hr);
+
+    set_rect(&rect, 0.0f, 0.0f, 16.0f, 16.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &rect, brush);
+
+    refcount = ID2D1Brush_Release(brush);
+    ok(refcount == 0, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID2D1Bitmap_Release(bitmap);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Linear gradient brush. */
+    hr = ID2D1RenderTarget_CreateGradientStopCollection(rt, stops, ARRAY_SIZE(stops),
+            D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_CLAMP, &gradient);
+    ok(SUCCEEDED(hr), "Failed to create stop collection, hr %#x.\n", hr);
+
+    set_point(&linear_gradient_properties.startPoint, 320.0f, 0.0f);
+    set_point(&linear_gradient_properties.endPoint, 0.0f, 960.0f);
+    hr = ID2D1RenderTarget_CreateLinearGradientBrush(rt, &linear_gradient_properties, NULL, gradient,
+            (ID2D1LinearGradientBrush **)&brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+
+    set_rect(&rect, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory1_CreateRectangleGeometry(factory, &rect, (ID2D1RectangleGeometry **)&geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    ID2D1RenderTarget_FillGeometry(rt, geometry, brush, NULL);
+
+    refcount = ID2D1Brush_Release(brush);
+    ok(refcount == 0, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID2D1Geometry_Release(geometry);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID2D1GradientStopCollection_Release(gradient);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Radial gradient brush. */
+    hr = ID2D1RenderTarget_CreateGradientStopCollection(rt, stops, ARRAY_SIZE(stops),
+            D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_CLAMP, &gradient);
+    ok(SUCCEEDED(hr), "Failed to create stop collection, hr %#x.\n", hr);
+
+    set_point(&radial_gradient_properties.center, 160.0f, 480.0f);
+    set_point(&radial_gradient_properties.gradientOriginOffset, 40.0f, -120.0f);
+    radial_gradient_properties.radiusX = 160.0f;
+    radial_gradient_properties.radiusY = 480.0f;
+    hr = ID2D1RenderTarget_CreateRadialGradientBrush(rt, &radial_gradient_properties, NULL, gradient,
+            (ID2D1RadialGradientBrush **)&brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+
+    set_rect(&rect, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory1_CreateRectangleGeometry(factory, &rect, (ID2D1RectangleGeometry **)&geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    ID2D1RenderTarget_FillGeometry(rt, geometry, brush, NULL);
+
+    refcount = ID2D1Brush_Release(brush);
+    ok(refcount == 0, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID2D1Geometry_Release(geometry);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID2D1GradientStopCollection_Release(gradient);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Geometry. */
+    set_rect(&rect, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory1_CreateRectangleGeometry(factory, &rect, (ID2D1RectangleGeometry **)&geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1RenderTarget_CreateSolidColorBrush(rt, &color, NULL, (ID2D1SolidColorBrush **)&brush);
+    ok(SUCCEEDED(hr), "Failed to create a brush, hr %#x.\n", hr);
+
+    ID2D1RenderTarget_FillGeometry(rt, geometry, brush, NULL);
+
+    refcount = ID2D1Brush_Release(brush);
+    ok(refcount == 0, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID2D1Geometry_Release(geometry);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Stroke style. */
+    stroke_desc.startCap = D2D1_CAP_STYLE_SQUARE;
+    stroke_desc.endCap = D2D1_CAP_STYLE_ROUND;
+    stroke_desc.dashCap = D2D1_CAP_STYLE_TRIANGLE;
+    stroke_desc.lineJoin = D2D1_LINE_JOIN_BEVEL;
+    stroke_desc.miterLimit = 1.5f;
+    stroke_desc.dashStyle = D2D1_DASH_STYLE_DOT;
+    stroke_desc.dashOffset = -1.0f;
+
+    hr = ID2D1Factory_CreateStrokeStyle((ID2D1Factory *)factory, &stroke_desc, NULL, 0, &stroke_style);
+    ok(SUCCEEDED(hr), "Failed to create stroke style, %#x.\n", hr);
+
+    set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1RenderTarget_CreateSolidColorBrush(rt, &color, NULL, (ID2D1SolidColorBrush **)&brush);
+    ok(SUCCEEDED(hr), "Failed to create a brush, hr %#x.\n", hr);
+
+    set_point(&p0, 100.0f, 160.0f);
+    set_point(&p1, 140.0f, 160.0f);
+    ID2D1RenderTarget_DrawLine(rt, p0, p1, brush, 1.0f, stroke_style);
+
+    refcount = ID2D1Brush_Release(brush);
+    ok(refcount == 0, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID2D1StrokeStyle_Release(stroke_style);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Close on attached list. */
+    ID2D1DeviceContext_GetTarget(device_context, &target);
+    ok(target == (ID2D1Image *)command_list, "Unexpected context target.\n");
+    ID2D1Image_Release(target);
+
+    hr = ID2D1CommandList_Close(command_list);
+    ok(SUCCEEDED(hr), "Failed to close a list, hr %#x.\n", hr);
+
+    ID2D1DeviceContext_GetTarget(device_context, &target);
+    ok(target == NULL, "Unexpected context target.\n");
+
+    hr = ID2D1CommandList_Close(command_list);
+    ok(hr == D2DERR_WRONG_STATE, "Unexpected hr %#x.\n", hr);
+
+    ID2D1CommandList_Release(command_list);
+
+    /* Close empty list. */
+    hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
+    ok(SUCCEEDED(hr), "Failed to create command list, hr %#x.\n", hr);
+
+    hr = ID2D1CommandList_Close(command_list);
+    ok(SUCCEEDED(hr), "Failed to close a list, hr %#x.\n", hr);
+
+    ID2D1CommandList_Release(command_list);
+
+    /* List created with different context. */
+    device_context2 = create_device_context(factory, d3d_device);
+    ok(device_context2 != NULL, "Failed to create device context.\n");
+
+    hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
+    ok(SUCCEEDED(hr), "Failed to create command list, hr %#x.\n", hr);
+
+    ID2D1DeviceContext_SetTarget(device_context2, (ID2D1Image *)command_list);
+    ID2D1DeviceContext_GetTarget(device_context2, &target);
+    ok(target == NULL, "Unexpected target.\n");
+
+    ID2D1CommandList_Release(command_list);
+    ID2D1DeviceContext_Release(device_context2);
+
+    ID2D1RenderTarget_Release(rt);
+    ID2D1DeviceContext_Release(device_context);
+    refcount = ID2D1Factory1_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+}
+
 START_TEST(d2d1)
 {
     unsigned int argc, i;
@@ -7695,6 +7968,7 @@ START_TEST(d2d1)
     queue_test(test_device_context);
     queue_test(test_invert_matrix);
     queue_test(test_skew_matrix);
+    queue_test(test_command_list);
 
     run_queued_tests();
 }
