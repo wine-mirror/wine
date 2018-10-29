@@ -85,6 +85,8 @@ static NTSTATUS (WINAPI *pNtQueryVolumeInformationFile)(HANDLE,PIO_STATUS_BLOCK,
 static NTSTATUS (WINAPI *pNtQueryFullAttributesFile)(const OBJECT_ATTRIBUTES*, FILE_NETWORK_OPEN_INFORMATION*);
 static NTSTATUS (WINAPI *pNtFlushBuffersFile)(HANDLE, IO_STATUS_BLOCK*);
 
+static WCHAR fooW[] = {'f','o','o',0};
+
 static inline BOOL is_signaled( HANDLE obj )
 {
     return WaitForSingleObject( obj, 0 ) == WAIT_OBJECT_0;
@@ -331,7 +333,6 @@ static void open_file_test(void)
 {
     static const WCHAR testdirW[] = {'o','p','e','n','f','i','l','e','t','e','s','t',0};
     static const char testdata[] = "Hello World";
-    static WCHAR fooW[] = {'f','o','o',0};
     NTSTATUS status;
     HANDLE dir, root, handle, file;
     WCHAR path[MAX_PATH], tmpfile[MAX_PATH];
@@ -3545,6 +3546,98 @@ static void test_file_access_information(void)
     CloseHandle( h );
 }
 
+static void test_file_mode(void)
+{
+    UNICODE_STRING file_name, pipe_dev_name, mountmgr_dev_name, mailslot_dev_name;
+    WCHAR tmp_path[MAX_PATH], dos_file_name[MAX_PATH];
+    FILE_MODE_INFORMATION mode;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    HANDLE file;
+    unsigned i;
+    DWORD res, access;
+    NTSTATUS status;
+
+    const struct {
+        UNICODE_STRING *file_name;
+        ULONG options;
+        ULONG mode;
+        BOOL todo;
+    } option_tests[] = {
+        { &file_name, 0, 0 },
+        { &file_name, FILE_NON_DIRECTORY_FILE, 0 },
+        { &file_name, FILE_NON_DIRECTORY_FILE | FILE_SEQUENTIAL_ONLY, FILE_SEQUENTIAL_ONLY },
+        { &file_name, FILE_WRITE_THROUGH, FILE_WRITE_THROUGH },
+        { &file_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT },
+        { &file_name, FILE_NO_INTERMEDIATE_BUFFERING, FILE_NO_INTERMEDIATE_BUFFERING },
+        { &file_name, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE, FILE_SYNCHRONOUS_IO_NONALERT },
+        { &file_name, FILE_DELETE_ON_CLOSE, 0 },
+        { &file_name, FILE_RANDOM_ACCESS | FILE_NO_COMPRESSION, 0 },
+        { &pipe_dev_name, 0, 0 },
+        { &pipe_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT, TRUE },
+        { &mailslot_dev_name, 0, 0 },
+        { &mailslot_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT, TRUE },
+        { &mountmgr_dev_name, 0, 0 },
+        { &mountmgr_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT, TRUE }
+    };
+
+    static WCHAR pipe_devW[] = {'\\','?','?','\\','P','I','P','E','\\'};
+    static WCHAR mailslot_devW[] = {'\\','?','?','\\','M','A','I','L','S','L','O','T','\\'};
+    static WCHAR mountmgr_devW[] =
+        {'\\','?','?','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r'};
+
+    GetTempPathW(MAX_PATH, tmp_path);
+    res = GetTempFileNameW(tmp_path, fooW, 0, dos_file_name);
+    ok(res, "GetTempFileNameW failed: %u\n", GetLastError());
+    pRtlDosPathNameToNtPathName_U( dos_file_name, &file_name, NULL, NULL );
+
+    pipe_dev_name.Buffer = pipe_devW;
+    pipe_dev_name.Length = sizeof(pipe_devW);
+    pipe_dev_name.MaximumLength = sizeof(pipe_devW);
+
+    mailslot_dev_name.Buffer = mailslot_devW;
+    mailslot_dev_name.Length = sizeof(mailslot_devW);
+    mailslot_dev_name.MaximumLength = sizeof(mailslot_devW);
+
+    mountmgr_dev_name.Buffer = mountmgr_devW;
+    mountmgr_dev_name.Length = sizeof(mountmgr_devW);
+    mountmgr_dev_name.MaximumLength = sizeof(mountmgr_devW);
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    for (i = 0; i < ARRAY_SIZE(option_tests); i++)
+    {
+        attr.ObjectName = option_tests[i].file_name;
+        access = SYNCHRONIZE;
+
+        if (option_tests[i].file_name == &file_name)
+        {
+            file = CreateFileW(dos_file_name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+            ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+            CloseHandle(file);
+            access |= GENERIC_WRITE | DELETE;
+        }
+
+        status = pNtOpenFile(&file, access, &attr, &io, 0, option_tests[i].options);
+        ok(status == STATUS_SUCCESS, "[%u] NtOpenFile failed: %x\n", i, status);
+
+        memset(&mode, 0xcc, sizeof(mode));
+        status = pNtQueryInformationFile(file, &io, &mode, sizeof(mode), FileModeInformation);
+        ok(status == STATUS_SUCCESS, "[%u] can't get FileModeInformation: %x\n", i, status);
+        todo_wine_if(option_tests[i].todo)
+        ok(mode.Mode == option_tests[i].mode, "[%u] Mode = %x, expected %x\n",
+           i, mode.Mode, option_tests[i].mode);
+
+        pNtClose(file);
+        if (option_tests[i].file_name == &file_name)
+            DeleteFileW(dos_file_name);
+    }
+}
+
 static void test_query_volume_information_file(void)
 {
     NTSTATUS status;
@@ -4628,6 +4721,7 @@ START_TEST(file)
     test_file_completion_information();
     test_file_id_information();
     test_file_access_information();
+    test_file_mode();
     test_query_volume_information_file();
     test_query_attribute_information_file();
     test_ioctl();

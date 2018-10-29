@@ -2195,6 +2195,22 @@ void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int 
             set_reply_data( &info, sizeof(info) );
             break;
         }
+    case FileModeInformation:
+        {
+            FILE_MODE_INFORMATION info;
+            if (get_reply_max_size() < sizeof(info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+            info.Mode = fd->options & ( FILE_WRITE_THROUGH
+                                      | FILE_SEQUENTIAL_ONLY
+                                      | FILE_NO_INTERMEDIATE_BUFFERING
+                                      | FILE_SYNCHRONOUS_IO_ALERT
+                                      | FILE_SYNCHRONOUS_IO_NONALERT );
+            set_reply_data( &info, sizeof(info) );
+            break;
+        }
     case FileIoCompletionNotificationInformation:
         {
             FILE_IO_COMPLETION_NOTIFICATION_INFORMATION info;
