@@ -3277,7 +3277,7 @@ struct wined3d_texture
         unsigned int map_count;
         DWORD locations;
         GLuint buffer_object;
-    } sub_resources[1];
+    } *sub_resources;
 };
 
 static inline struct wined3d_texture *texture_from_resource(struct wined3d_resource *resource)
@@ -3407,6 +3407,16 @@ void wined3d_texture_validate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, DWORD location) DECLSPEC_HIDDEN;
 
 void wined3d_gl_texture_swizzle_from_color_fixup(GLint swizzle[4], struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
+
+struct wined3d_texture_gl
+{
+    struct wined3d_texture t;
+};
+
+static inline struct wined3d_texture_gl *wined3d_texture_gl(struct wined3d_texture *texture)
+{
+    return CONTAINING_RECORD(texture, struct wined3d_texture_gl, t);
+}
 
 #define WINED3D_LOCATION_DISCARDED      0x00000001
 #define WINED3D_LOCATION_SYSMEM         0x00000002
