@@ -623,7 +623,7 @@ static void process_setting(struct setting *s)
     static const WCHAR softwareW[] = {'S','o','f','t','w','a','r','e','\\'};
     HKEY key;
     BOOL needs_wow64 = (is_win64 && s->root == HKEY_LOCAL_MACHINE && s->path &&
-                        !strncmpiW( s->path, softwareW, sizeof(softwareW)/sizeof(WCHAR) ));
+                        !strncmpiW(s->path, softwareW, ARRAY_SIZE(softwareW)));
 
     if (s->value)
     {

@@ -440,7 +440,7 @@ static void update_controls(HWND dialog)
     type = current_drive->type;
     SendDlgItemMessageW(dialog, IDC_COMBO_TYPE, CB_RESETCONTENT, 0, 0);
 
-    for (i = 0; i < sizeof(type_pairs) / sizeof(struct drive_typemap); i++)
+    for (i = 0; i < ARRAY_SIZE(type_pairs); i++)
     {
         WCHAR driveDesc[64];
         LoadStringW(GetModuleHandleW(NULL), type_pairs[i].idDesc, driveDesc, ARRAY_SIZE(driveDesc));

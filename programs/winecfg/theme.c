@@ -635,7 +635,7 @@ static void on_theme_install(HWND dialog)
   ofn.nFilterIndex = 0;
   ofn.lpstrFile = file;
   ofn.lpstrFile[0] = '\0';
-  ofn.nMaxFile = sizeof(file)/sizeof(filetitle[0]);
+  ofn.nMaxFile = ARRAY_SIZE(file);
   ofn.lpstrFileTitle = filetitle;
   ofn.lpstrFileTitle[0] = '\0';
   ofn.nMaxFileTitle = ARRAY_SIZE(filetitle);
@@ -729,8 +729,6 @@ static struct ShellFolderInfo asfiInfo[] = {
 
 static struct ShellFolderInfo *psfiSelected = NULL;
 
-#define NUM_ELEMS(x) (sizeof(x)/sizeof(*(x)))
-
 static void init_shell_folder_listview_headers(HWND dialog) {
     LVCOLUMNW listColumn;
     RECT viewRect;
@@ -763,8 +761,8 @@ static void read_shell_folder_link_targets(void) {
     WCHAR wszPath[MAX_PATH];
     HRESULT hr;
     int i;
-   
-    for (i=0; i<NUM_ELEMS(asfiInfo); i++) {
+
+    for (i=0; i<ARRAY_SIZE(asfiInfo); i++) {
         asfiInfo[i].szLinkTarget[0] = '\0';
         hr = SHGetFolderPathW(NULL, asfiInfo[i].nFolder|CSIDL_FLAG_DONT_VERIFY, NULL, 
                               SHGFP_TYPE_CURRENT, wszPath);
@@ -790,7 +788,7 @@ static void update_shell_folder_listview(HWND dialog) {
 
     SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_DELETEALLITEMS, 0, 0);
 
-    for (i=0; i<NUM_ELEMS(asfiInfo); i++) {
+    for (i=0; i<ARRAY_SIZE(asfiInfo); i++) {
         WCHAR buffer[MAX_PATH];
         HRESULT hr;
         LPITEMIDLIST pidlCurrent;
@@ -905,7 +903,7 @@ static void apply_shell_folder_changes(void) {
     struct stat statPath;
     HRESULT hr;
 
-    for (i=0; i<NUM_ELEMS(asfiInfo); i++) {
+    for (i=0; i<ARRAY_SIZE(asfiInfo); i++) {
         /* Ignore nonexistent link targets */
         if (asfiInfo[i].szLinkTarget[0] && stat(asfiInfo[i].szLinkTarget, &statPath))
             continue;
