@@ -2772,7 +2772,7 @@ static UINT parse_aa_pattern( FcPattern *pattern )
         case FC_RGBA_BGR:  aa_flags = WINE_GGO_HBGR_BITMAP; break;
         case FC_RGBA_VRGB: aa_flags = WINE_GGO_VRGB_BITMAP; break;
         case FC_RGBA_VBGR: aa_flags = WINE_GGO_VBGR_BITMAP; break;
-        case FC_RGBA_NONE: aa_flags = GGO_GRAY4_BITMAP; break;
+        case FC_RGBA_NONE: aa_flags = aa_flags ? aa_flags : GGO_GRAY4_BITMAP; break;
         }
     }
     return aa_flags;
