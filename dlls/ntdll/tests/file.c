@@ -3578,7 +3578,7 @@ static void test_file_mode(void)
         { &mailslot_dev_name, 0, 0 },
         { &mailslot_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT, TRUE },
         { &mountmgr_dev_name, 0, 0 },
-        { &mountmgr_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT, TRUE }
+        { &mountmgr_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT }
     };
 
     static WCHAR pipe_devW[] = {'\\','?','?','\\','P','I','P','E','\\'};

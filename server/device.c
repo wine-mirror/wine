@@ -358,7 +358,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
                             &mode, access, sharing, options );
         if (file->fd) set_fd_user( file->fd, &device_file_fd_ops, &file->obj );
     }
-    else file->fd = alloc_pseudo_fd( &device_file_fd_ops, &file->obj, 0 );
+    else file->fd = alloc_pseudo_fd( &device_file_fd_ops, &file->obj, options );
 
     if (!file->fd)
     {
