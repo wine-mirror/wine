@@ -2852,7 +2852,7 @@ static DWORD CALLBACK flush_proc(HANDLE pipe)
     if (expected_flush_error == ERROR_SUCCESS)
         ok(res, "FlushFileBuffers failed: %u\n", GetLastError());
     else
-        todo_wine ok(!res && GetLastError() == expected_flush_error, "FlushFileBuffers failed: %u\n", GetLastError());
+        ok(!res && GetLastError() == expected_flush_error, "FlushFileBuffers failed: %u\n", GetLastError());
     return 0;
 }
 

@@ -3317,9 +3317,17 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK *io )
     }
     else if (ret != STATUS_ACCESS_DENIED)
     {
+        struct async_irp *async;
+
+        if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, hFile )))
+            return STATUS_NO_MEMORY;
+        async->event   = NULL;
+        async->buffer  = NULL;
+        async->size    = 0;
+
         SERVER_START_REQ( flush )
         {
-            req->async = server_async( hFile, NULL, NULL, NULL, NULL, io );
+            req->async = server_async( hFile, &async->io, NULL, NULL, NULL, io );
             ret = wine_server_call( req );
             wait_handle = wine_server_ptr_handle( reply->event );
             if (wait_handle && ret != STATUS_PENDING)
@@ -3329,6 +3337,8 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK *io )
             }
         }
         SERVER_END_REQ;
+
+        if (ret != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, async );
 
         if (wait_handle)
         {
