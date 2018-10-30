@@ -647,7 +647,8 @@ void WINAPI VARIANT_UserFree(ULONG *pFlags, VARIANT *pvar)
       break;
     case VT_UNKNOWN | VT_BYREF:
     case VT_DISPATCH | VT_BYREF:
-      IUnknown_Release(*V_UNKNOWNREF(pvar));
+      if (*V_UNKNOWNREF(pvar))
+        IUnknown_Release(*V_UNKNOWNREF(pvar));
       break;
     }
   }

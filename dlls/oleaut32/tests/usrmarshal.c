@@ -777,6 +777,7 @@ static void test_marshal_VARIANT(void)
     HRESULT hr;
     LONG bound, bound2;
     VARTYPE vt, vt2;
+    IUnknown *unk;
 
     stubMsg.RpcMsg = &rpcMsg;
 
@@ -1578,6 +1579,32 @@ todo_wine
     VARIANT_UserFree(&umcb.Flags, &v3);
     ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
     IUnknown_Release(&heap_unknown->IUnknown_iface);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
+
+    unk = NULL;
+    VariantInit(&v);
+    V_VT(&v) = VT_UNKNOWN | VT_BYREF;
+    V_UNKNOWNREF(&v) = &unk;
+
+    rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(stubMsg.BufferLength >= 28, "size %d\n", stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
+    stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
+    memset(buffer, 0xcc, stubMsg.BufferLength);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    wirev = (DWORD*)buffer;
+    wirev = check_variant_header(wirev, &v, stubMsg.BufferLength);
+
+    ok(*wirev == 4, "wv[5] %08x\n", *wirev);
+
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v2), V_VT(&v));
+    ok(!*V_UNKNOWNREF(&v2), "got %p expect NULL\n", *V_UNKNOWNREF(&v2));
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 }
 
