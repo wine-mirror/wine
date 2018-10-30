@@ -373,7 +373,7 @@
 # @ stub FindPackagesByPackageFamily
 @ stdcall FindResourceExW(long wstr wstr long) kernel32.FindResourceExW
 @ stdcall FindResourceW(long wstr wstr) kernel32.FindResourceW
-@ stub FindStringOrdinal
+@ stdcall FindStringOrdinal(long wstr long wstr long long) kernel32.FindStringOrdinal
 @ stdcall FindVolumeClose(ptr) kernel32.FindVolumeClose
 @ stdcall FlsAlloc(ptr) kernel32.FlsAlloc
 @ stdcall FlsFree(long) kernel32.FlsFree

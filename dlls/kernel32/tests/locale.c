@@ -107,6 +107,7 @@ static INT (WINAPI *pFindNLSStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT
 static LANGID (WINAPI *pSetThreadUILanguage)(LANGID);
 static LANGID (WINAPI *pGetThreadUILanguage)(VOID);
 static INT (WINAPI *pNormalizeString)(NORM_FORM, LPCWSTR, INT, LPWSTR, INT);
+static INT (WINAPI *pFindStringOrdinal)(DWORD, LPCWSTR lpStringSource, INT, LPCWSTR, INT, BOOL);
 
 static void InitFunctionPointers(void)
 {
@@ -143,6 +144,7 @@ static void InitFunctionPointers(void)
   X(SetThreadUILanguage);
   X(GetThreadUILanguage);
   X(NormalizeString);
+  X(FindStringOrdinal);
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
@@ -5496,6 +5498,73 @@ static void test_FindNLSStringEx(void)
     }
 }
 
+static void test_FindStringOrdinal(void)
+{
+    static const WCHAR abc123aBcW[] = {'a', 'b', 'c', '1', '2', '3', 'a', 'B', 'c', 0};
+    static const WCHAR abcW[] = {'a', 'b', 'c', 0};
+    static const WCHAR aBcW[] = {'a', 'B', 'c', 0};
+    static const WCHAR aaaW[] = {'a', 'a', 'a', 0};
+    static const struct
+    {
+        DWORD flag;
+        const WCHAR *src;
+        INT src_size;
+        const WCHAR *val;
+        INT val_size;
+        BOOL ignore_case;
+        INT ret;
+        DWORD err;
+    }
+    tests[] =
+    {
+        /* Invalid */
+        {1, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, abcW, ARRAY_SIZE(abcW) - 1, FALSE, -1, ERROR_INVALID_FLAGS},
+        {FIND_FROMSTART, NULL, ARRAY_SIZE(abc123aBcW) - 1, abcW, ARRAY_SIZE(abcW) - 1, FALSE, -1,
+         ERROR_INVALID_PARAMETER},
+        {FIND_FROMSTART, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, NULL, ARRAY_SIZE(abcW) - 1, FALSE, -1,
+         ERROR_INVALID_PARAMETER},
+        {FIND_FROMSTART, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, NULL, 0, FALSE, -1, ERROR_INVALID_PARAMETER},
+        {FIND_FROMSTART, NULL, 0, abcW, ARRAY_SIZE(abcW) - 1, FALSE, -1, ERROR_INVALID_PARAMETER},
+        {FIND_FROMSTART, NULL, 0, NULL, 0, FALSE, -1, ERROR_INVALID_PARAMETER},
+        /* Case-insensitive */
+        {FIND_FROMSTART, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, abcW, ARRAY_SIZE(abcW) - 1, FALSE, 0, NO_ERROR},
+        {FIND_FROMEND, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, abcW, ARRAY_SIZE(abcW) - 1, FALSE, 0, NO_ERROR},
+        {FIND_STARTSWITH, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, abcW, ARRAY_SIZE(abcW) - 1, FALSE, 0, NO_ERROR},
+        {FIND_ENDSWITH, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, abcW, ARRAY_SIZE(abcW) - 1, FALSE, -1, NO_ERROR},
+        /* Case-sensitive */
+        {FIND_FROMSTART, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, aBcW, ARRAY_SIZE(aBcW) - 1, TRUE, 0, NO_ERROR},
+        {FIND_FROMEND, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, aBcW, ARRAY_SIZE(aBcW) - 1, TRUE, 6, NO_ERROR},
+        {FIND_STARTSWITH, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, aBcW, ARRAY_SIZE(aBcW) - 1, TRUE, 0, NO_ERROR},
+        {FIND_ENDSWITH, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, aBcW, ARRAY_SIZE(aBcW) - 1, TRUE, 6, NO_ERROR},
+        /* Other */
+        {FIND_FROMSTART, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, aaaW, ARRAY_SIZE(aaaW) - 1, FALSE, -1, NO_ERROR},
+        {FIND_FROMSTART, abc123aBcW, -1, abcW, ARRAY_SIZE(abcW) - 1, FALSE, 0, NO_ERROR},
+        {FIND_FROMSTART, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, abcW, -1, FALSE, 0, NO_ERROR},
+        {FIND_FROMSTART, abc123aBcW, 0, abcW, ARRAY_SIZE(abcW) - 1, FALSE, -1, NO_ERROR},
+        {FIND_FROMSTART, abc123aBcW, ARRAY_SIZE(abc123aBcW) - 1, abcW, 0, FALSE, 0, NO_ERROR},
+        {FIND_FROMSTART, abc123aBcW, 0, abcW, 0, FALSE, 0, NO_ERROR},
+    };
+    INT ret;
+    DWORD err;
+    INT i;
+
+    if (!pFindStringOrdinal)
+    {
+        win_skip("FindStringOrdinal is not available.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pFindStringOrdinal(tests[i].flag, tests[i].src, tests[i].src_size, tests[i].val, tests[i].val_size,
+                                 tests[i].ignore_case);
+        err = GetLastError();
+        ok(ret == tests[i].ret, "Item %d expected %d, got %d\n", i, tests[i].ret, ret);
+        ok(err == tests[i].err, "Item %d expected %#x, got %#x\n", i, tests[i].err, err);
+    }
+}
+
 static void test_SetThreadUILanguage(void)
 {
     LANGID res;
@@ -5746,6 +5815,7 @@ START_TEST(locale)
   test_GetThreadPreferredUILanguages();
   test_GetUserPreferredUILanguages();
   test_FindNLSStringEx();
+  test_FindStringOrdinal();
   test_SetThreadUILanguage();
   test_NormalizeString();
   /* this requires collation table patch to make it MS compatible */
