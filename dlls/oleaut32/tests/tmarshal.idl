@@ -59,6 +59,9 @@ enum IWidget_dispids
     DISPID_TM_BASETYPES_OUT,
     DISPID_TM_INT_PTR,
     DISPID_TM_INT_PTR_PTR,
+    DISPID_TM_IFACE_IN,
+    DISPID_TM_IFACE_OUT,
+    DISPID_TM_IFACE_PTR,
 };
 
 static const int DISPID_TM_NEG_RESTRICTED = -26;
@@ -95,6 +98,7 @@ library TestTypelib
 
     [
         odl,
+        oleautomation,
         uuid(12345678-1234-4321-1234-121212121212)
     ]
     interface ISomethingFromDispatch : IDispatch
@@ -250,6 +254,15 @@ library TestTypelib
 
         [id(DISPID_TM_INT_PTR_PTR)]
         HRESULT int_ptr_ptr([in] int **in, [out] int **out, [in, out] int **in_out);
+
+        [id(DISPID_TM_IFACE_IN)]
+        HRESULT iface_in([in] IUnknown *unk, [in] IDispatch *disp, [in] ISomethingFromDispatch *sfd);
+
+        [id(DISPID_TM_IFACE_OUT)]
+        HRESULT iface_out([out] IUnknown **unk, [out] IDispatch **disp, [out] ISomethingFromDispatch **sfd);
+
+        [id(DISPID_TM_IFACE_PTR)]
+        HRESULT iface_ptr([in] ISomethingFromDispatch **in, [out] ISomethingFromDispatch **out, [in, out] ISomethingFromDispatch **in_out);
     }
 
     [

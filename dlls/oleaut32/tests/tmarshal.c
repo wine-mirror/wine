@@ -34,6 +34,12 @@ static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
 
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
+static inline void release_iface_(unsigned int line, void *iface)
+{
+    ULONG ref = IUnknown_Release((IUnknown *)iface);
+    ok_(__FILE__, line)(!ref, "Got outstanding refcount %d.\n", ref);
+}
+#define release_iface(a) release_iface_(__LINE__, a)
 
 /* ULL suffix is not portable */
 #define ULL_CONST(dw1, dw2) ((((ULONGLONG)dw1) << 32) | (ULONGLONG)dw2)
@@ -369,6 +375,98 @@ static ItestDualVtbl TestDualVtbl = {
 
 static ItestDual TestDual = { &TestDualVtbl };
 static ItestDual TestDualDisp = { &TestDualVtbl };
+
+struct disp_obj
+{
+    ISomethingFromDispatch ISomethingFromDispatch_iface;
+    LONG ref;
+};
+
+static inline struct disp_obj *impl_from_ISomethingFromDispatch(ISomethingFromDispatch *iface)
+{
+    return CONTAINING_RECORD(iface, struct disp_obj, ISomethingFromDispatch_iface);
+}
+
+static HRESULT WINAPI disp_obj_QueryInterface(ISomethingFromDispatch *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IDispatch)
+            || IsEqualGUID(iid, &IID_ISomethingFromDispatch))
+    {
+        *out = iface;
+        ISomethingFromDispatch_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI disp_obj_AddRef(ISomethingFromDispatch *iface)
+{
+    struct disp_obj *obj = impl_from_ISomethingFromDispatch(iface);
+    return ++obj->ref;
+}
+
+static ULONG WINAPI disp_obj_Release(ISomethingFromDispatch *iface)
+{
+    struct disp_obj *obj = impl_from_ISomethingFromDispatch(iface);
+    LONG ref = --obj->ref;
+    if (!ref)
+        CoTaskMemFree(obj);
+    return ref;
+}
+
+static HRESULT WINAPI disp_obj_GetTypeInfoCount(ISomethingFromDispatch *iface, UINT *count)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI disp_obj_GetTypeInfo(ISomethingFromDispatch *iface,
+        UINT index, LCID lcid, ITypeInfo **typeinfo)
+{
+    ok(index == 0xdeadbeef, "Got unexpected index %#x.\n", index);
+    return 0xbeefdead;
+}
+
+static HRESULT WINAPI disp_obj_GetIDsOfNames(ISomethingFromDispatch *iface,
+        REFIID iid, LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI disp_obj_Invoke(ISomethingFromDispatch *iface, DISPID id, REFIID iid, LCID lcid,
+        WORD flags, DISPPARAMS *dispparams, VARIANT *result, EXCEPINFO *excepinfo, UINT *errarg)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI disp_obj_anotherfn(ISomethingFromDispatch *iface)
+{
+    return 0x01234567;
+}
+
+static const ISomethingFromDispatchVtbl disp_obj_vtbl =
+{
+    disp_obj_QueryInterface,
+    disp_obj_AddRef,
+    disp_obj_Release,
+    disp_obj_GetTypeInfoCount,
+    disp_obj_GetTypeInfo,
+    disp_obj_GetIDsOfNames,
+    disp_obj_Invoke,
+    disp_obj_anotherfn,
+};
+
+static ISomethingFromDispatch *create_disp_obj(void)
+{
+    struct disp_obj *obj = CoTaskMemAlloc(sizeof(*obj));
+    obj->ISomethingFromDispatch_iface.lpVtbl = &disp_obj_vtbl;
+    obj->ref = 1;
+    return &obj->ISomethingFromDispatch_iface;
+}
 
 static int testmode;
 
@@ -1011,6 +1109,90 @@ todo_wine_if(testmode == 2)
     return S_OK;
 }
 
+/* Call methods to check that we have valid proxies to each interface. */
+static void check_iface_marshal(IUnknown *unk, IDispatch *disp, ISomethingFromDispatch *sfd)
+{
+    ISomethingFromDispatch *sfd2;
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(unk, &IID_ISomethingFromDispatch, (void **)&sfd2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ISomethingFromDispatch_Release(sfd2);
+
+    hr = IDispatch_GetTypeInfo(disp, 0xdeadbeef, 0, &typeinfo);
+    ok(hr == 0xbeefdead, "Got hr %#x.\n", hr);
+
+    hr = ISomethingFromDispatch_anotherfn(sfd);
+    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+}
+
+static HRESULT WINAPI Widget_iface_in(IWidget *iface, IUnknown *unk, IDispatch *disp, ISomethingFromDispatch *sfd)
+{
+    if (testmode == 0)
+        check_iface_marshal(unk, disp, sfd);
+    else if (testmode == 1)
+    {
+        ok(!unk, "Got iface %p.\n", unk);
+        ok(!disp, "Got iface %p.\n", disp);
+        ok(!sfd, "Got iface %p.\n", sfd);
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_iface_out(IWidget *iface, IUnknown **unk, IDispatch **disp, ISomethingFromDispatch **sfd)
+{
+todo_wine
+    ok(!*unk, "Got iface %p.\n", *unk);
+    ok(!*disp, "Got iface %p.\n", *disp);
+    ok(!*sfd, "Got iface %p.\n", *sfd);
+
+    if (testmode == 0)
+    {
+        *unk = (IUnknown *)create_disp_obj();
+        *disp = (IDispatch *)create_disp_obj();
+        *sfd = create_disp_obj();
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_iface_ptr(IWidget *iface, ISomethingFromDispatch **in,
+        ISomethingFromDispatch **out, ISomethingFromDispatch **in_out)
+{
+    HRESULT hr;
+
+    ok(!*out, "Got [out] %p.\n", *out);
+    if (testmode == 0 || testmode == 1)
+    {
+        hr = ISomethingFromDispatch_anotherfn(*in);
+        ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+        hr = ISomethingFromDispatch_anotherfn(*in_out);
+        ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    }
+
+    if (testmode == 1)
+    {
+        *out = create_disp_obj();
+        ISomethingFromDispatch_Release(*in_out);
+        *in_out = create_disp_obj();
+    }
+    else if (testmode == 2)
+    {
+        ok(!*in, "Got [in] %p.\n", *in);
+        ok(!*in_out, "Got [in, out] %p.\n", *in_out);
+        *in_out = create_disp_obj();
+    }
+    else if (testmode == 3)
+    {
+        hr = ISomethingFromDispatch_anotherfn(*in_out);
+        ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+        ISomethingFromDispatch_Release(*in_out);
+        *in_out = NULL;
+    }
+
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -1056,6 +1238,9 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_basetypes_out,
     Widget_int_ptr,
     Widget_int_ptr_ptr,
+    Widget_iface_in,
+    Widget_iface_out,
+    Widget_iface_ptr,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1570,6 +1755,248 @@ if (0) {
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(in_ptr == &in, "[in] parameter should not have been cleared.\n");
     ok(!out_ptr, "[out] parameter should have been cleared.\n");
+}
+}
+
+static void test_marshal_iface(IWidget *widget, IDispatch *disp)
+{
+    VARIANTARG arg[3];
+    DISPPARAMS dispparams = {arg, NULL, ARRAY_SIZE(arg), 0};
+    ISomethingFromDispatch *sfd1, *sfd2, *sfd3, *proxy_sfd, *sfd_in, *sfd_out, *sfd_in_out;
+    IUnknown *proxy_unk, *proxy_unk2, *unk_in, *unk_out, *unk_in_out;
+    IDispatch *proxy_disp;
+    HRESULT hr;
+
+    testmode = 0;
+    sfd1 = create_disp_obj();
+    sfd2 = create_disp_obj();
+    sfd3 = create_disp_obj();
+    hr = IWidget_iface_in(widget, (IUnknown *)create_disp_obj(),
+            (IDispatch *)create_disp_obj(), create_disp_obj());
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    release_iface(sfd1);
+    release_iface(sfd2);
+    release_iface(sfd3);
+
+    testmode = 1;
+    hr = IWidget_iface_in(widget, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 0;
+    proxy_unk = (IUnknown *)0xdeadbeef;
+    proxy_disp = (IDispatch *)0xdeadbeef;
+    proxy_sfd = (ISomethingFromDispatch *)0xdeadbeef;
+    hr = IWidget_iface_out(widget, &proxy_unk, &proxy_disp, &proxy_sfd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_iface_marshal(proxy_unk, proxy_disp, proxy_sfd);
+    release_iface(proxy_unk);
+    release_iface(proxy_disp);
+    release_iface(proxy_sfd);
+
+if (0) {
+    testmode = 1;
+    hr = IWidget_iface_out(widget, &proxy_unk, &proxy_disp, &proxy_sfd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!proxy_unk, "Got unexpected proxy %p.\n", proxy_unk);
+    ok(!proxy_disp, "Got unexpected proxy %p.\n", proxy_disp);
+    ok(!proxy_sfd, "Got unexpected proxy %p.\n", proxy_sfd);
+}
+
+    testmode = 0;
+    sfd_in = sfd1 = create_disp_obj();
+    sfd_out = sfd2 = create_disp_obj();
+    sfd_in_out = sfd3 = create_disp_obj();
+    hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(sfd_in == sfd1, "[in] parameter should not have changed.\n");
+    ok(!sfd_out, "[out] parameter should have been cleared.\n");
+    ok(sfd_in_out == sfd3, "[in, out] parameter should not have changed.\n");
+    release_iface(sfd1);
+    release_iface(sfd2);
+todo_wine
+    release_iface(sfd3);
+
+    testmode = 1;
+    sfd_in = sfd1 = create_disp_obj();
+    sfd_in_out = sfd3 = create_disp_obj();
+    ISomethingFromDispatch_AddRef(sfd_in_out);
+    hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ISomethingFromDispatch_anotherfn(sfd_out);
+    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ok(sfd_in_out != sfd3, "[in, out] parameter should have changed.\n");
+    hr = ISomethingFromDispatch_anotherfn(sfd_in_out);
+    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    release_iface(sfd_out);
+    release_iface(sfd_in_out);
+    release_iface(sfd1);
+todo_wine
+    release_iface(sfd3);
+
+    testmode = 2;
+    sfd_in = sfd_out = sfd_in_out = NULL;
+    hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!sfd_out, "[out] parameter should not have been set.\n");
+    hr = ISomethingFromDispatch_anotherfn(sfd_in_out);
+    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    release_iface(sfd_in_out);
+
+    testmode = 3;
+    sfd_in = sfd_out = NULL;
+    sfd_in_out = sfd3 = create_disp_obj();
+    ISomethingFromDispatch_AddRef(sfd_in_out);
+    hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!sfd_in_out, "Got [in, out] %p.\n", sfd_in_out);
+todo_wine
+    release_iface(sfd3);
+
+    /* Test with Invoke(). Note that since we pass VT_UNKNOWN, we don't get our
+     * interface back, but rather an IUnknown. */
+
+    testmode = 0;
+    sfd1 = create_disp_obj();
+    sfd2 = create_disp_obj();
+    sfd3 = create_disp_obj();
+
+    V_VT(&arg[2]) = VT_UNKNOWN;  V_UNKNOWN(&arg[2]) = (IUnknown *)sfd1;
+    V_VT(&arg[1]) = VT_UNKNOWN;  V_UNKNOWN(&arg[1]) = (IUnknown *)sfd2;
+    V_VT(&arg[0]) = VT_UNKNOWN;  V_UNKNOWN(&arg[0]) = (IUnknown *)sfd3;
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_IN, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    V_VT(&arg[2]) = VT_DISPATCH; V_DISPATCH(&arg[2]) = (IDispatch *)sfd1;
+    V_VT(&arg[1]) = VT_DISPATCH; V_DISPATCH(&arg[1]) = (IDispatch *)sfd2;
+    V_VT(&arg[0]) = VT_DISPATCH; V_DISPATCH(&arg[0]) = (IDispatch *)sfd3;
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_IN, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    release_iface(sfd1);
+    release_iface(sfd2);
+    release_iface(sfd3);
+
+    testmode = 1;
+    V_VT(&arg[2]) = VT_UNKNOWN;  V_UNKNOWN(&arg[2]) = NULL;
+    V_VT(&arg[1]) = VT_UNKNOWN;  V_UNKNOWN(&arg[1]) = NULL;
+    V_VT(&arg[0]) = VT_UNKNOWN;  V_UNKNOWN(&arg[0]) = NULL;
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_IN, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 0;
+    proxy_unk = proxy_unk2 = NULL;
+    proxy_disp = NULL;
+    V_VT(&arg[2]) = VT_UNKNOWN|VT_BYREF;  V_UNKNOWNREF(&arg[2]) = &proxy_unk;
+    V_VT(&arg[1]) = VT_DISPATCH|VT_BYREF; V_DISPATCHREF(&arg[1]) = &proxy_disp;
+    V_VT(&arg[0]) = VT_UNKNOWN|VT_BYREF;  V_UNKNOWNREF(&arg[0]) = &proxy_unk2;
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_OUT, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+if (hr == S_OK) {
+    hr = IUnknown_QueryInterface(proxy_unk2, &IID_ISomethingFromDispatch, (void **)&proxy_sfd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_iface_marshal(proxy_unk, proxy_disp, proxy_sfd);
+    ISomethingFromDispatch_Release(proxy_sfd);
+    release_iface(proxy_unk);
+    release_iface(proxy_disp);
+    release_iface(proxy_unk2);
+}
+
+    testmode = 1;
+    proxy_unk = proxy_unk2 = NULL;
+    proxy_disp = NULL;
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_OUT, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!proxy_unk, "Got unexpected proxy %p.\n", proxy_unk);
+    ok(!proxy_disp, "Got unexpected proxy %p.\n", proxy_disp);
+    ok(!proxy_unk2, "Got unexpected proxy %p.\n", proxy_unk2);
+
+    testmode = 0;
+    sfd1 = create_disp_obj();
+    sfd3 = create_disp_obj();
+    unk_in = (IUnknown *)sfd1;
+    unk_out = NULL;
+    unk_in_out = (IUnknown *)sfd3;
+    V_VT(&arg[2]) = VT_UNKNOWN|VT_BYREF; V_UNKNOWNREF(&arg[2]) = &unk_in;
+    V_VT(&arg[1]) = VT_UNKNOWN|VT_BYREF; V_UNKNOWNREF(&arg[1]) = &unk_out;
+    V_VT(&arg[0]) = VT_UNKNOWN|VT_BYREF; V_UNKNOWNREF(&arg[0]) = &unk_in_out;
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_PTR, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk_in == (IUnknown *)sfd1, "[in] parameter should not have changed.\n");
+    ok(!unk_out, "[out] parameter should have been cleared.\n");
+    ok(unk_in_out == (IUnknown *)sfd3, "[in, out] parameter should not have changed.\n");
+    release_iface(sfd1);
+    release_iface(sfd3);
+
+    testmode = 1;
+    sfd1 = create_disp_obj();
+    sfd3 = create_disp_obj();
+    unk_in = (IUnknown *)sfd1;
+    unk_out = NULL;
+    unk_in_out = (IUnknown *)sfd3;
+    IUnknown_AddRef(unk_in_out);
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_PTR, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+if (hr == S_OK) {
+    hr = IUnknown_QueryInterface(unk_out, &IID_ISomethingFromDispatch, (void **)&sfd_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ISomethingFromDispatch_anotherfn(sfd_out);
+    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ISomethingFromDispatch_Release(sfd_out);
+
+    ok(unk_in_out != (IUnknown *)sfd3, "[in, out] parameter should have changed.\n");
+    hr = IUnknown_QueryInterface(unk_in_out, &IID_ISomethingFromDispatch, (void **)&sfd_in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ISomethingFromDispatch_anotherfn(sfd_in_out);
+    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ISomethingFromDispatch_Release(sfd_in_out);
+
+    release_iface(unk_out);
+    release_iface(unk_in_out);
+    release_iface(sfd1);
+    release_iface(sfd3);
+}
+
+    testmode = 2;
+    unk_in = unk_out = unk_in_out = NULL;
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_PTR, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!unk_out, "[out] parameter should not have been set.\n");
+if (hr == S_OK) {
+    hr = IUnknown_QueryInterface(unk_in_out, &IID_ISomethingFromDispatch, (void **)&sfd_in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ISomethingFromDispatch_anotherfn(sfd_in_out);
+    ok(hr == 0x01234567, "Got hr %#x.\n", hr);
+    ISomethingFromDispatch_Release(sfd_in_out);
+
+    release_iface(unk_in_out);
+}
+
+    testmode = 3;
+    unk_in = unk_out = NULL;
+    sfd3 = create_disp_obj();
+    unk_in_out = (IUnknown *)sfd3;
+    IUnknown_AddRef(unk_in_out);
+    hr = IDispatch_Invoke(disp, DISPID_TM_IFACE_PTR, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+todo_wine {
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!unk_in_out, "[in, out] parameter should have been cleared.\n");
+    release_iface(sfd3);
 }
 }
 
@@ -2184,6 +2611,7 @@ todo_wine
 
     test_marshal_basetypes(pWidget, pDispatch);
     test_marshal_pointer(pWidget, pDispatch);
+    test_marshal_iface(pWidget, pDispatch);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);
