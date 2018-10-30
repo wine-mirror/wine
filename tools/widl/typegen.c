@@ -2145,7 +2145,7 @@ static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs,
     else
         fc = get_basic_fc(ref);
 
-    if (out_attr && !in_attr)
+    if (out_attr && !in_attr && pointer_fc == FC_RP)
         flags |= FC_ALLOCED_ON_STACK;
 
     print_file(file, 2, "0x%02x, 0x%x,\t/* %s %s[simple_pointer] */\n",
