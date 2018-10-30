@@ -370,6 +370,8 @@ static ItestDualVtbl TestDualVtbl = {
 static ItestDual TestDual = { &TestDualVtbl };
 static ItestDual TestDualDisp = { &TestDualVtbl };
 
+static int testmode;
+
 typedef struct Widget
 {
     IWidget IWidget_iface;
@@ -956,6 +958,59 @@ static HRESULT WINAPI Widget_basetypes_out(IWidget *iface, signed char *c, short
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_int_ptr(IWidget *iface, int *in, int *out, int *in_out)
+{
+    ok(*in == 123, "Got [in] %d.\n", *in);
+    if (testmode == 0)  /* Invoke() */
+        ok(*out == 456, "Got [out] %d.\n", *out);
+    else if (testmode == 1)
+        ok(!*out, "Got [out] %d.\n", *out);
+    ok(*in_out == 789, "Got [in, out] %d.\n", *in_out);
+
+    *in = 987;
+    *out = 654;
+    *in_out = 321;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_int_ptr_ptr(IWidget *iface, int **in, int **out, int **in_out)
+{
+todo_wine_if(testmode == 2)
+    ok(!*out, "Got [out] %p.\n", *out);
+    if (testmode == 0)
+    {
+        ok(!*in, "Got [in] %p.\n", *in);
+        ok(!*in_out, "Got [in, out] %p.\n", *in_out);
+    }
+    else if (testmode == 1)
+    {
+        ok(!*in, "Got [in] %p.\n", *in);
+        ok(!*in_out, "Got [in, out] %p.\n", *in_out);
+
+        *out = CoTaskMemAlloc(sizeof(int));
+        **out = 654;
+        *in_out = CoTaskMemAlloc(sizeof(int));
+        **in_out = 321;
+    }
+    else if (testmode == 2)
+    {
+        ok(**in == 123, "Got [in] %d.\n", **in);
+        ok(**in_out == 789, "Got [in, out] %d.\n", **in_out);
+
+        *out = CoTaskMemAlloc(sizeof(int));
+        **out = 654;
+        **in_out = 321;
+    }
+    else if (testmode == 3)
+    {
+        ok(**in_out == 789, "Got [in, out] %d.\n", **in_out);
+        *in_out = NULL;
+    }
+
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -999,6 +1054,8 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_Coclass,
     Widget_basetypes_in,
     Widget_basetypes_out,
+    Widget_int_ptr,
+    Widget_int_ptr_ptr,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1394,6 +1451,126 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     ok(f == (float)M_LN2, "Got float %f.\n", f);
     ok(d == M_LN10, "Got double %f.\n", d);
     ok(st == STATE_UNWIDGETIFIED, "Got state %u.\n", st);
+}
+
+static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
+{
+    VARIANTARG arg[3];
+    DISPPARAMS dispparams = {arg, NULL, ARRAY_SIZE(arg), 0};
+    int in, out, in_out, *in_ptr, *out_ptr, *in_out_ptr;
+    HRESULT hr;
+
+    testmode = 0;
+
+    in = 123;
+    out = 456;
+    in_out = 789;
+    V_VT(&arg[2]) = VT_BYREF|VT_I4; V_I4REF(&arg[2]) = &in;
+    V_VT(&arg[1]) = VT_BYREF|VT_I4; V_I4REF(&arg[1]) = &out;
+    V_VT(&arg[0]) = VT_BYREF|VT_I4; V_I4REF(&arg[0]) = &in_out;
+    hr = IDispatch_Invoke(disp, DISPID_TM_INT_PTR, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(in == 987, "Got [in] %d.\n", in);
+    ok(out == 654, "Got [out] %d.\n", out);
+    ok(in_out == 321, "Got [in, out] %d.\n", in_out);
+
+    testmode = 1;
+
+    in = 123;
+    out = 456;
+    in_out = 789;
+    hr = IWidget_int_ptr(widget, &in, &out, &in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(in == 123, "Got [in] %d.\n", in);
+    ok(out == 654, "Got [out] %d.\n", out);
+    ok(in_out == 321, "Got [in, out] %d.\n", in_out);
+
+if (0) {
+    out = in_out = -1;
+    hr = IWidget_int_ptr(widget, NULL, &out, &in_out);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(!out, "[out] parameter should have been cleared.\n");
+    ok(in_out == -1, "[in, out] parameter should not have been cleared.\n");
+
+    in = in_out = -1;
+    hr = IWidget_int_ptr(widget, &in, NULL, &in_out);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(in == -1, "[in] parameter should not have been cleared.\n");
+    ok(in_out == -1, "[in, out] parameter should not have been cleared.\n");
+
+    in = out = -1;
+    hr = IWidget_int_ptr(widget, &in, &out, NULL);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(in == -1, "[in] parameter should not have been cleared.\n");
+    ok(!out, "[out] parameter should have been cleared.\n");
+}
+
+    /* We can't test Invoke() with double pointers, as it is not possible to fit
+     * more than one level of indirection into a VARIANTARG. */
+
+    testmode = 0;
+    in_ptr = out_ptr = in_out_ptr = NULL;
+    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
+    ok(hr == S_OK, "Got hr %#x\n", hr);
+    ok(!in_ptr, "Got [in] %p.\n", in_ptr);
+    ok(!out_ptr, "Got [out] %p.\n", out_ptr);
+    ok(!in_out_ptr, "Got [in, out] %p.\n", in_out_ptr);
+
+if (0) {
+    testmode = 1;
+    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
+    ok(hr == S_OK, "Got hr %#x\n", hr);
+    ok(*out_ptr == 654, "Got [out] %d.\n", *out_ptr);
+    ok(*in_out_ptr == 321, "Got [in, out] %d.\n", *in_out_ptr);
+    CoTaskMemFree(out_ptr);
+    CoTaskMemFree(in_out_ptr);
+
+    testmode = 2;
+    in = 123;
+    out = 456;
+    in_out = 789;
+    in_ptr = &in;
+    out_ptr = &out;
+    in_out_ptr = &in_out;
+    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(out_ptr != &out, "[out] ptr should have changed.\n");
+    ok(in_out_ptr == &in_out, "[in, out] ptr should not have changed.\n");
+    ok(*out_ptr == 654, "Got [out] %d.\n", *out_ptr);
+    ok(*in_out_ptr == 321, "Got [in, out] %d.\n", *in_out_ptr);
+}
+
+    testmode = 3;
+    in_ptr = out_ptr = NULL;
+    in_out = 789;
+    in_out_ptr = &in_out;
+    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!in_out_ptr, "Got [in, out] %p.\n", in_out_ptr);
+
+if (0) {
+    out_ptr = &out;
+    in_out_ptr = &in_out;
+    hr = IWidget_int_ptr_ptr(widget, NULL, &out_ptr, &in_out_ptr);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(!out_ptr, "[out] parameter should have been cleared.\n");
+    ok(in_out_ptr == &in_out, "[in, out] parameter should not have been cleared.\n");
+
+    in_ptr = &in;
+    in_out_ptr = &in_out;
+    hr = IWidget_int_ptr_ptr(widget, &in_ptr, NULL, &in_out_ptr);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(in_ptr == &in, "[in] parameter should not have been cleared.\n");
+    ok(in_out_ptr == &in_out, "[in, out] parameter should not have been cleared.\n");
+
+    in_ptr = &in;
+    out_ptr = &out;
+    hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, NULL);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
+    ok(in_ptr == &in, "[in] parameter should not have been cleared.\n");
+    ok(!out_ptr, "[out] parameter should have been cleared.\n");
+}
 }
 
 static void test_typelibmarshal(void)
@@ -2006,6 +2183,7 @@ todo_wine
     VariantClear(&varresult);
 
     test_marshal_basetypes(pWidget, pDispatch);
+    test_marshal_pointer(pWidget, pDispatch);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);
