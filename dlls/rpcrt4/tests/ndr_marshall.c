@@ -21,6 +21,7 @@
 #define _WIN32_WINNT  0x0500
 #define NTDDI_WIN2K   0x05000000
 #define NTDDI_VERSION NTDDI_WIN2K /* for some MIDL_STUB_MESSAGE fields */
+#define COBJMACROS
 
 #include <stdarg.h>
 
@@ -1171,6 +1172,280 @@ static void test_simple_struct(void)
     else
         *(unsigned int *)wiredata = (UINT_PTR)&ps1;
     test_pointer_marshal(fmtstr_pointer_struct, &ps1, 17, wiredata, 21, ps1_cmp, 2, "pointer_struct");
+}
+
+struct testiface
+{
+    IPersist IPersist_iface;
+    LONG ref;
+};
+
+static struct testiface *impl_from_IPersist(IPersist *iface)
+{
+    return CONTAINING_RECORD(iface, struct testiface, IPersist_iface);
+}
+
+static HRESULT WINAPI test_persist_QueryInterface(IPersist *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IPersist))
+    {
+        *out = iface;
+        IPersist_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_persist_AddRef(IPersist *iface)
+{
+    struct testiface *unk = impl_from_IPersist(iface);
+    return ++unk->ref;
+}
+
+static ULONG WINAPI test_persist_Release(IPersist *iface)
+{
+    struct testiface *unk = impl_from_IPersist(iface);
+    return --unk->ref;
+}
+
+static HRESULT WINAPI test_persist_GetClassId(IPersist *iface, GUID *clsid)
+{
+    *clsid = IID_IPersist;
+    return S_OK;
+}
+
+static IPersistVtbl testiface_vtbl = {
+    test_persist_QueryInterface,
+    test_persist_AddRef,
+    test_persist_Release,
+    test_persist_GetClassId,
+};
+
+static void test_iface_ptr(void)
+{
+    struct testiface server_obj = {{&testiface_vtbl}, 1};
+    struct testiface client_obj = {{&testiface_vtbl}, 1};
+
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc;
+    RPC_MESSAGE RpcMessage;
+    IPersist *proxy;
+    HRESULT hr;
+    GUID clsid;
+    void *ptr;
+    LONG ref;
+
+    static const unsigned char fmtstr_ip[] =
+    {
+        FC_IP,
+        FC_CONSTANT_IID,
+        NdrFcLong(0x0000010c),
+        NdrFcShort(0x0000),
+        NdrFcShort(0x0000),
+        0xc0,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x46,
+    };
+
+    CoInitialize(NULL);
+
+    StubDesc = Object_StubDesc;
+    StubDesc.pFormatTypes = fmtstr_ip;
+
+    NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 0);
+    StubMsg.BufferLength = 0;
+    NdrInterfacePointerBufferSize(&StubMsg, (unsigned char *)&client_obj.IPersist_iface, fmtstr_ip);
+
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
+    StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
+
+    /* server -> client */
+
+    StubMsg.IsClient = 0;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    IPersist_AddRef(&server_obj.IPersist_iface);
+    ptr = NdrInterfacePointerMarshall(&StubMsg, (unsigned char *)&server_obj.IPersist_iface, fmtstr_ip);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(server_obj.ref > 2, "got %d references\n", server_obj.ref);
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+
+    NdrInterfacePointerFree(&StubMsg, (unsigned char *)&server_obj.IPersist_iface, fmtstr_ip);
+    ok(server_obj.ref > 1, "got %d references\n", server_obj.ref);
+
+    StubMsg.IsClient = 1;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    proxy = NULL;
+    ptr = NdrInterfacePointerUnmarshall(&StubMsg, (unsigned char **)&proxy, fmtstr_ip, 0);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(!!proxy, "mem not alloced\n");
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+    ok(server_obj.ref > 1, "got %d references\n", server_obj.ref);
+
+    hr = IPersist_GetClassID(proxy, &clsid);
+    ok(hr == S_OK, "got hr %#x\n", hr);
+    ok(IsEqualGUID(&clsid, &IID_IPersist), "wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+
+    ref = IPersist_Release(proxy);
+    ok(ref == 1, "got %d references\n", ref);
+    ok(server_obj.ref == 1, "got %d references\n", server_obj.ref);
+
+    /* An existing interface pointer is released; this is necessary so that an
+     * [in, out] pointer which changes does not leak references. */
+
+    StubMsg.IsClient = 0;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    IPersist_AddRef(&server_obj.IPersist_iface);
+    ptr = NdrInterfacePointerMarshall(&StubMsg, (unsigned char *)&server_obj.IPersist_iface, fmtstr_ip);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(server_obj.ref > 2, "got %d references\n", server_obj.ref);
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+
+    NdrInterfacePointerFree(&StubMsg, (unsigned char *)&server_obj.IPersist_iface, fmtstr_ip);
+    ok(server_obj.ref > 1, "got %d references\n", server_obj.ref);
+
+    StubMsg.IsClient = 1;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    proxy = &client_obj.IPersist_iface;
+    IPersist_AddRef(proxy);
+    ptr = NdrInterfacePointerUnmarshall(&StubMsg, (unsigned char **)&proxy, fmtstr_ip, 0);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(!!proxy && proxy != &client_obj.IPersist_iface, "mem not alloced\n");
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+    ok(server_obj.ref > 1, "got %d references\n", server_obj.ref);
+todo_wine
+    ok(client_obj.ref == 1, "got %d references\n", client_obj.ref);
+client_obj.ref = 1;
+
+    hr = IPersist_GetClassID(proxy, &clsid);
+    ok(hr == S_OK, "got hr %#x\n", hr);
+    ok(IsEqualGUID(&clsid, &IID_IPersist), "wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+
+    ref = IPersist_Release(proxy);
+    ok(ref == 1, "got %d references\n", ref);
+    ok(server_obj.ref == 1, "got %d references\n", server_obj.ref);
+
+    /* client -> server */
+
+    StubMsg.IsClient = 1;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    IPersist_AddRef(&client_obj.IPersist_iface);
+    ptr = NdrInterfacePointerMarshall(&StubMsg, (unsigned char *)&client_obj.IPersist_iface, fmtstr_ip);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(client_obj.ref > 2, "got %d references\n", client_obj.ref);
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+
+    StubMsg.IsClient = 0;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    proxy = NULL;
+    ptr = NdrInterfacePointerUnmarshall(&StubMsg, (unsigned char **)&proxy, fmtstr_ip, 0);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(!!proxy, "mem not alloced\n");
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+    ok(client_obj.ref > 2, "got %d references\n", client_obj.ref);
+
+    hr = IPersist_GetClassID(proxy, &clsid);
+    ok(hr == S_OK, "got hr %#x\n", hr);
+    ok(IsEqualGUID(&clsid, &IID_IPersist), "wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+
+    ref = IPersist_Release(proxy);
+    ok(client_obj.ref > 1, "got %d references\n", client_obj.ref);
+    ok(ref == client_obj.ref, "expected %d references, got %d\n", client_obj.ref, ref);
+
+    NdrInterfacePointerFree(&StubMsg, (unsigned char *)proxy, fmtstr_ip);
+    ok(client_obj.ref == 1, "got %d references\n", client_obj.ref);
+
+    /* same, but free the interface after calling NdrInterfacePointerFree */
+
+    StubMsg.IsClient = 1;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    IPersist_AddRef(&client_obj.IPersist_iface);
+    ptr = NdrInterfacePointerMarshall(&StubMsg, (unsigned char *)&client_obj.IPersist_iface, fmtstr_ip);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(client_obj.ref > 2, "got %d references\n", client_obj.ref);
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+
+    StubMsg.IsClient = 0;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    proxy = NULL;
+    ptr = NdrInterfacePointerUnmarshall(&StubMsg, (unsigned char **)&proxy, fmtstr_ip, 0);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(!!proxy, "mem not alloced\n");
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+    ok(client_obj.ref > 2, "got %d references\n", client_obj.ref);
+
+    NdrInterfacePointerFree(&StubMsg, (unsigned char *)proxy, fmtstr_ip);
+    ok(client_obj.ref > 1, "got %d references\n", client_obj.ref);
+
+    hr = IPersist_GetClassID(proxy, &clsid);
+    ok(hr == S_OK, "got hr %#x\n", hr);
+    ok(IsEqualGUID(&clsid, &IID_IPersist), "wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+
+    ref = IPersist_Release(proxy);
+    ok(ref == 1, "got %d references\n", ref);
+    ok(client_obj.ref == 1, "got %d references\n", client_obj.ref);
+
+    /* An existing interface pointer is *not* released (in fact, it is ignored
+     * and may be invalid). In practice it will always be NULL anyway. */
+
+    StubMsg.IsClient = 1;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    IPersist_AddRef(&client_obj.IPersist_iface);
+    ptr = NdrInterfacePointerMarshall(&StubMsg, (unsigned char *)&client_obj.IPersist_iface, fmtstr_ip);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(client_obj.ref > 2, "got %d references\n", client_obj.ref);
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+
+    StubMsg.IsClient = 0;
+    my_alloc_called = my_free_called = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    proxy = &server_obj.IPersist_iface;
+    IPersist_AddRef(proxy);
+    ptr = NdrInterfacePointerUnmarshall(&StubMsg, (unsigned char **)&proxy, fmtstr_ip, 0);
+    ok(!ptr, "ret %p\n", ptr);
+    ok(!!proxy && proxy != &server_obj.IPersist_iface, "mem not alloced\n");
+    ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
+    ok(!my_free_called, "free called %d\n", my_free_called);
+    ok(client_obj.ref > 2, "got %d references\n", client_obj.ref);
+    ok(server_obj.ref == 2, "got %d references\n", server_obj.ref);
+    IPersist_Release(&server_obj.IPersist_iface);
+
+    hr = IPersist_GetClassID(proxy, &clsid);
+    ok(hr == S_OK, "got hr %#x\n", hr);
+    ok(IsEqualGUID(&clsid, &IID_IPersist), "wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+
+    ref = IPersist_Release(proxy);
+    ok(client_obj.ref > 1, "got %d references\n", client_obj.ref);
+    ok(ref == client_obj.ref, "expected %d references, got %d\n", client_obj.ref, ref);
+
+    NdrInterfacePointerFree(&StubMsg, (unsigned char *)proxy, fmtstr_ip);
+    ok(client_obj.ref == 1, "got %d references\n", client_obj.ref);
+
+    CoUninitialize();
 }
 
 static void test_fullpointer_xlat(void)
@@ -2635,6 +2910,7 @@ START_TEST( ndr_marshall )
     test_simple_types();
     test_nontrivial_pointer_types();
     test_simple_struct();
+    test_iface_ptr();
     test_fullpointer_xlat();
     test_client_init();
     test_server_init();
