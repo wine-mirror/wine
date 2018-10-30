@@ -235,6 +235,7 @@ static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
 
 static char* (__cdecl *p_setlocale)(int, const char*);
+static size_t (__cdecl *p___strncnt)(const char*, size_t);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -270,6 +271,7 @@ static BOOL init(void)
     SET(p__memicmp, "_memicmp");
     SET(p__memicmp_l, "_memicmp_l");
     SET(p_setlocale, "setlocale");
+    SET(p___strncnt, "__strncnt");
 
     SET(p_Context_Id, "?Id@Context@Concurrency@@SAIXZ");
     SET(p_CurrentScheduler_Detach, "?Detach@CurrentScheduler@Concurrency@@SAXXZ");
@@ -1075,6 +1077,35 @@ static void test_setlocale(void)
     ok(!ret, "got %p\n", ret);
 }
 
+static void test___strncnt(void)
+{
+    static const struct
+    {
+        const char *str;
+        size_t size;
+        size_t ret;
+    }
+    strncnt_tests[] =
+    {
+        { NULL, 0, 0 },
+        { "a", 0, 0 },
+        { "a", 1, 1 },
+        { "a", 10, 1 },
+        { "abc", 1, 1 },
+    };
+    unsigned int i;
+    size_t ret;
+
+    if (0) /* crashes */
+        ret = p___strncnt(NULL, 1);
+
+    for (i = 0; i < ARRAY_SIZE(strncnt_tests); ++i)
+    {
+        ret = p___strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
+        ok(ret == strncnt_tests[i].ret, "%u: unexpected return value %u.\n", i, (int)ret);
+    }
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -1094,4 +1125,5 @@ START_TEST(msvcr100)
     test__memicmp();
     test__memicmp_l();
     test_setlocale();
+    test___strncnt();
 }

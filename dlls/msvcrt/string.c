@@ -2060,3 +2060,22 @@ char* __cdecl MSVCRT_strpbrk(const char *str, const char *accept)
 {
     return strpbrk(str, accept);
 }
+
+/*********************************************************************
+ *                  __strncnt   (MSVCRT.@)
+ */
+MSVCRT_size_t __cdecl MSVCRT___strncnt(const char *str, MSVCRT_size_t size)
+{
+    MSVCRT_size_t ret = 0;
+
+#if _MSVCR_VER >= 140
+    while (*str++ && size--)
+#else
+    while (size-- && *str++)
+#endif
+    {
+        ret++;
+    }
+
+    return ret;
+}

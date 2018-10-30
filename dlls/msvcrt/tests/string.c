@@ -100,6 +100,7 @@ static size_t (__cdecl *p__mbsnlen)(const unsigned char*, size_t);
 static int (__cdecl *p__mbccpy_s)(unsigned char*, size_t, int*, const unsigned char*);
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
+static size_t (__cdecl *p___strncnt)(const char*, size_t);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -3568,6 +3569,41 @@ static void test__tcsnicoll(void)
     }
 }
 
+static void test___strncnt(void)
+{
+    static const struct
+    {
+        const char *str;
+        size_t size;
+        size_t ret;
+    }
+    strncnt_tests[] =
+    {
+        { NULL, 0, 0 },
+        { "a", 0, 0 },
+        { "a", 1, 1 },
+        { "a", 10, 1 },
+        { "abc", 1, 1 },
+    };
+    unsigned int i;
+    size_t ret;
+
+    if (!p___strncnt)
+    {
+        win_skip("__strncnt() is not available.\n");
+        return;
+    }
+
+    if (0) /* crashes */
+        ret = p___strncnt(NULL, 1);
+
+    for (i = 0; i < ARRAY_SIZE(strncnt_tests); ++i)
+    {
+        ret = p___strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
+        ok(ret == strncnt_tests[i].ret, "%u: unexpected return value %u.\n", i, (int)ret);
+    }
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -3626,6 +3662,7 @@ START_TEST(string)
     p__mbccpy_s = (void*)GetProcAddress(hMsvcrt, "_mbccpy_s");
     p__memicmp = (void*)GetProcAddress(hMsvcrt, "_memicmp");
     p__memicmp_l = (void*)GetProcAddress(hMsvcrt, "_memicmp_l");
+    p___strncnt = (void*)GetProcAddress(hMsvcrt, "__strncnt");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -3693,4 +3730,5 @@ START_TEST(string)
     test__strupr();
     test__tcsncoll();
     test__tcsnicoll();
+    test___strncnt();
 }

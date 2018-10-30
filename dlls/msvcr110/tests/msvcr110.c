@@ -32,6 +32,7 @@
 #include <locale.h>
 
 static char* (CDECL *p_setlocale)(int category, const char* locale);
+static size_t (CDECL *p___strncnt)(const char *str, size_t count);
 
 static unsigned int (CDECL *p_CurrentScheduler_GetNumberOfVirtualProcessors)(void);
 static unsigned int (CDECL *p__CurrentScheduler__GetNumberOfVirtualProcessors)(void);
@@ -50,6 +51,7 @@ static BOOL init(void)
     }
 
     p_setlocale = (void*)GetProcAddress(module, "setlocale");
+    p___strncnt = (void*)GetProcAddress(module, "__strncnt");
     p_CurrentScheduler_GetNumberOfVirtualProcessors = (void*)GetProcAddress(module, "?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ");
     p__CurrentScheduler__GetNumberOfVirtualProcessors = (void*)GetProcAddress(module, "?_GetNumberOfVirtualProcessors@_CurrentScheduler@details@Concurrency@@SAIXZ");
     p_CurrentScheduler_Id = (void*)GetProcAddress(module, "?Id@CurrentScheduler@Concurrency@@SAIXZ");
@@ -112,9 +114,39 @@ static void test_setlocale(void)
     p_setlocale(LC_ALL, "C");
 }
 
+static void test___strncnt(void)
+{
+    static const struct
+    {
+        const char *str;
+        size_t size;
+        size_t ret;
+    }
+    strncnt_tests[] =
+    {
+        { NULL, 0, 0 },
+        { "a", 0, 0 },
+        { "a", 1, 1 },
+        { "a", 10, 1 },
+        { "abc", 1, 1 },
+    };
+    unsigned int i;
+    size_t ret;
+
+    if (0) /* crashes */
+        ret = p___strncnt(NULL, 1);
+
+    for (i = 0; i < ARRAY_SIZE(strncnt_tests); ++i)
+    {
+        ret = p___strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
+        ok(ret == strncnt_tests[i].ret, "%u: unexpected return value %u.\n", i, (int)ret);
+    }
+}
+
 START_TEST(msvcr110)
 {
     if (!init()) return;
     test_CurrentScheduler(); /* MUST be first (at least among Concurrency tests) */
     test_setlocale();
+    test___strncnt();
 }

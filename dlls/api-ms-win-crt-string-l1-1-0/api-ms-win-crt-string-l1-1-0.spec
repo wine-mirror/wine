@@ -3,7 +3,7 @@
 @ cdecl __iscsymf(long) ucrtbase.__iscsymf
 @ stub __iswcsym
 @ stub __iswcsymf
-@ stub __strncnt
+@ cdecl __strncnt(str long) ucrtbase.__strncnt
 @ stub __wcsncnt
 @ cdecl _isalnum_l(long ptr) ucrtbase._isalnum_l
 @ cdecl _isalpha_l(long ptr) ucrtbase._isalpha_l

@@ -281,7 +281,7 @@
 @ cdecl __set_app_type(long) MSVCRT___set_app_type
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
-# stub __strncnt(str long)
+@ cdecl __strncnt(str long) MSVCRT___strncnt
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
 @ cdecl __toascii(long) MSVCRT___toascii

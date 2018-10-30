@@ -289,7 +289,7 @@
 @ stub __set_flsgetvalue
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
-@ stub __strncnt
+@ cdecl __strncnt(str long) MSVCRT___strncnt
 @ varargs  __swprintf_l(ptr wstr ptr) MSVCRT___swprintf_l
 @ cdecl __sys_errlist()
 @ cdecl __sys_nerr()

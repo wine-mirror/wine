@@ -89,6 +89,7 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
 static double (__cdecl *p_strtod)(const char*, char** end);
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
+static size_t (__cdecl *p___strncnt)(const char*, size_t);
 
 static BOOL init(void)
 {
@@ -105,6 +106,7 @@ static BOOL init(void)
     p_strtod = (void*)GetProcAddress(module, "strtod");
     p__memicmp = (void*)GetProcAddress(module, "_memicmp");
     p__memicmp_l = (void*)GetProcAddress(module, "_memicmp_l");
+    p___strncnt = (void*)GetProcAddress(module, "__strncnt");
     return TRUE;
 }
 
@@ -244,10 +246,50 @@ static void test__memicmp_l(void)
     ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
+
+
+static void test___strncnt(void)
+{
+    static const struct
+    {
+        const char *str;
+        size_t size;
+        size_t ret;
+    }
+    strncnt_tests[] =
+    {
+        { "a", 0, 0 },
+        { "a", 1, 1 },
+        { "a", 10, 1 },
+        { "abc", 1, 1 },
+    };
+    unsigned int i;
+    size_t ret;
+
+    for (i = 0; i < ARRAY_SIZE(strncnt_tests); ++i)
+    {
+        ret = p___strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
+        ok(ret == strncnt_tests[i].ret, "%u: unexpected return value %u.\n", i, (int)ret);
+    }
+
+    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    if (0) /* crashes */
+    {
+        ret = p___strncnt(NULL, 0);
+        ret = p___strncnt(NULL, 1);
+    }
+
+    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+}
+
 START_TEST(string)
 {
     if (!init()) return;
     test_strtod();
     test__memicmp();
     test__memicmp_l();
+    test___strncnt();
 }

@@ -164,7 +164,7 @@
 @ cdecl __stdio_common_vswprintf_p(int64 ptr long wstr ptr ptr) MSVCRT__stdio_common_vswprintf_p
 @ cdecl __stdio_common_vswprintf_s(int64 ptr long wstr ptr ptr) MSVCRT__stdio_common_vswprintf_s
 @ cdecl __stdio_common_vswscanf(int64 ptr long wstr ptr ptr) MSVCRT__stdio_common_vswscanf
-@ stub __strncnt
+@ cdecl __strncnt(str long) MSVCRT___strncnt
 @ cdecl __sys_errlist()
 @ cdecl __sys_nerr()
 @ cdecl __threadhandle() kernel32.GetCurrentThread
