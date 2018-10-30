@@ -44,6 +44,11 @@ static inline void release_iface_(unsigned int line, void *iface)
 /* ULL suffix is not portable */
 #define ULL_CONST(dw1, dw2) ((((ULONGLONG)dw1) << 32) | (ULONGLONG)dw2)
 
+static const WCHAR test_bstr1[] = {'f','o','o',0,'b','a','r'};
+static const WCHAR test_bstr2[] = {'t','e','s','t',0};
+static const WCHAR test_bstr3[] = {'q','u','x',0};
+static const WCHAR test_bstr4[] = {'a','b','c',0};
+
 const MYSTRUCT MYSTRUCT_BYVAL = {0x12345678, ULL_CONST(0xdeadbeef, 0x98765432), {0,1,2,3,4,5,6,7}};
 const MYSTRUCT MYSTRUCT_BYPTR = {0x91827364, ULL_CONST(0x88776655, 0x44332211), {0,1,2,3,4,5,6,7}};
 const MYSTRUCT MYSTRUCT_ARRAY[5] = {
@@ -1193,6 +1198,37 @@ static HRESULT WINAPI Widget_iface_ptr(IWidget *iface, ISomethingFromDispatch **
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_bstr(IWidget *iface, BSTR in, BSTR *out, BSTR *in_ptr, BSTR *in_out)
+{
+    UINT len;
+
+    if (testmode == 0)
+    {
+        len = SysStringByteLen(in);
+        ok(len == sizeof(test_bstr1), "Got wrong length %u.\n", len);
+        ok(!memcmp(in, test_bstr1, len), "Got string %s.\n", wine_dbgstr_wn(in, len / sizeof(WCHAR)));
+todo_wine_if(*out)
+        ok(!*out, "Got unexpected output %p.\n", *out);
+        len = SysStringLen(*in_ptr);
+        ok(len == lstrlenW(test_bstr2), "Got wrong length %u.\n", len);
+        ok(!memcmp(*in_ptr, test_bstr2, len), "Got string %s.\n", wine_dbgstr_w(*in_ptr));
+        len = SysStringLen(*in_out);
+        ok(len == lstrlenW(test_bstr3), "Got wrong length %u.\n", len);
+        ok(!memcmp(*in_out, test_bstr3, len), "Got string %s.\n", wine_dbgstr_w(*in_out));
+
+        *out = SysAllocString(test_bstr4);
+        in[1] = (*in_ptr)[1] = (*in_out)[1] = 'X';
+    }
+    else if (testmode == 1)
+    {
+        ok(!in, "Got string %s.\n", wine_dbgstr_w(in));
+        ok(!*out, "Got string %s.\n", wine_dbgstr_w(*out));
+        ok(!*in_ptr, "Got string %s.\n", wine_dbgstr_w(*in_ptr));
+        ok(!*in_out, "Got string %s.\n", wine_dbgstr_w(*in_out));
+    }
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -1241,6 +1277,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_iface_in,
     Widget_iface_out,
     Widget_iface_ptr,
+    Widget_bstr,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -2000,6 +2037,58 @@ todo_wine {
 }
 }
 
+static void test_marshal_bstr(IWidget *widget, IDispatch *disp)
+{
+    VARIANTARG arg[4];
+    DISPPARAMS dispparams = {arg, NULL, ARRAY_SIZE(arg), 0};
+    BSTR in, out, in_ptr, in_out;
+    HRESULT hr;
+    UINT len;
+
+    testmode = 0;
+    in = SysAllocStringLen(test_bstr1, ARRAY_SIZE(test_bstr1));
+    out = NULL;
+    in_ptr = SysAllocString(test_bstr2);
+    in_out = SysAllocString(test_bstr3);
+
+    V_VT(&arg[3]) = VT_BSTR;            V_BSTR(&arg[3])    = in;
+    V_VT(&arg[2]) = VT_BSTR|VT_BYREF;   V_BSTRREF(&arg[2]) = &out;
+    V_VT(&arg[1]) = VT_BSTR|VT_BYREF;   V_BSTRREF(&arg[1]) = &in_ptr;
+    V_VT(&arg[0]) = VT_BSTR|VT_BYREF;   V_BSTRREF(&arg[0]) = &in_out;
+    hr = IDispatch_Invoke(disp, DISPID_TM_BSTR, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(in[1] == test_bstr1[1], "[in] parameter should not be changed.\n");
+    ok(in_ptr[1] == 'X', "[in] pointer should be changed.\n");
+    ok(in_out[1] == 'X', "[in, out] parameter should be changed.\n");
+    len = SysStringLen(out);
+    ok(len == lstrlenW(test_bstr4), "Got wrong length %d.\n", len);
+    ok(!memcmp(out, test_bstr4, len), "Got string %s.\n", wine_dbgstr_wn(out, len));
+
+    in[1] = test_bstr1[1];
+    in_ptr[1] = test_bstr2[1];
+    in_out[1] = test_bstr3[1];
+    SysFreeString(out);
+    out = (BSTR)0xdeadbeef;
+    hr = IWidget_bstr(widget, in, &out, &in_ptr, &in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(in[1] == test_bstr1[1], "[in] parameter should not be changed.\n");
+    ok(in_ptr[1] == test_bstr2[1], "[in] pointer should not be changed.\n");
+    ok(in_out[1] == 'X', "[in, out] parameter should be changed.\n");
+    len = SysStringLen(out);
+    ok(len == lstrlenW(test_bstr4), "Got wrong length %d.\n", len);
+    ok(!memcmp(out, test_bstr4, len), "Got string %s.\n", wine_dbgstr_wn(out, len));
+    SysFreeString(in);
+    SysFreeString(out);
+    SysFreeString(in_ptr);
+    SysFreeString(in_out);
+
+    testmode = 1;
+    out = in_ptr = in_out = NULL;
+    hr = IWidget_bstr(widget, NULL, &out, &in_ptr, &in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 static void test_typelibmarshal(void)
 {
     static const WCHAR szCat[] = { 'C','a','t',0 };
@@ -2612,6 +2701,7 @@ todo_wine
     test_marshal_basetypes(pWidget, pDispatch);
     test_marshal_pointer(pWidget, pDispatch);
     test_marshal_iface(pWidget, pDispatch);
+    test_marshal_bstr(pWidget, pDispatch);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);
