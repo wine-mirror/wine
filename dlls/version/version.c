@@ -1054,7 +1054,6 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
 BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, PUINT puLen )
 {
-    static const WCHAR nullW[] = { 0 };
     static const WCHAR rootW[] = { '\\', 0 };
     static const WCHAR varfileinfoW[] = { '\\','V','a','r','F','i','l','e','I','n','f','o',
                                           '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
@@ -1067,7 +1066,7 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
     if (!pBlock)
         return FALSE;
 
-    if (lpSubBlock == NULL || lpSubBlock[0] == nullW[0])
+    if (!lpSubBlock || !lpSubBlock[0])
         lpSubBlock = rootW;
 
     if ( VersionInfoIs16( info ) )
