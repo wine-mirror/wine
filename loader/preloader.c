@@ -330,34 +330,6 @@ __ASM_GLOBAL_FUNC(wld_mmap,
                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                   "\tret\n" )
 
-static inline uid_t wld_getuid(void)
-{
-    uid_t ret;
-    __asm__( "int $0x80" : "=a" (ret) : "0" (24 /* SYS_getuid */) );
-    return ret;
-}
-
-static inline uid_t wld_geteuid(void)
-{
-    uid_t ret;
-    __asm__( "int $0x80" : "=a" (ret) : "0" (49 /* SYS_geteuid */) );
-    return ret;
-}
-
-static inline gid_t wld_getgid(void)
-{
-    gid_t ret;
-    __asm__( "int $0x80" : "=a" (ret) : "0" (47 /* SYS_getgid */) );
-    return ret;
-}
-
-static inline gid_t wld_getegid(void)
-{
-    gid_t ret;
-    __asm__( "int $0x80" : "=a" (ret) : "0" (50 /* SYS_getegid */) );
-    return ret;
-}
-
 static inline int wld_prctl( int code, long arg )
 {
     int ret;
@@ -1282,7 +1254,7 @@ void* wld_start( void **stack )
     long i, *pargc;
     char **argv, **p;
     char *interp, *reserve = NULL;
-    struct wld_auxv new_av[12], delete_av[3], *av;
+    struct wld_auxv new_av[8], delete_av[3], *av;
     struct wld_link_map main_binary_map, ld_so_map;
     struct wine_preload_info **wine_main_preload_info;
 
@@ -1365,11 +1337,7 @@ void* wld_start( void **stack )
     SET_NEW_AV( 4, AT_BASE, ld_so_map.l_addr );
     SET_NEW_AV( 5, AT_FLAGS, get_auxiliary( av, AT_FLAGS, 0 ) );
     SET_NEW_AV( 6, AT_ENTRY, main_binary_map.l_entry );
-    SET_NEW_AV( 7, AT_UID, get_auxiliary( av, AT_UID, wld_getuid() ) );
-    SET_NEW_AV( 8, AT_EUID, get_auxiliary( av, AT_EUID, wld_geteuid() ) );
-    SET_NEW_AV( 9, AT_GID, get_auxiliary( av, AT_GID, wld_getgid() ) );
-    SET_NEW_AV(10, AT_EGID, get_auxiliary( av, AT_EGID, wld_getegid() ) );
-    SET_NEW_AV(11, AT_NULL, 0 );
+    SET_NEW_AV( 7, AT_NULL, 0 );
 #undef SET_NEW_AV
 
     i = 0;
