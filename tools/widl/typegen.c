@@ -2093,8 +2093,32 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
     out_attr = is_attr(attrs, ATTR_OUT);
     if (!in_attr && !out_attr) in_attr = 1;
 
-    if (out_attr && !in_attr && pointer_type == FC_RP)
-        flags |= FC_ALLOCED_ON_STACK;
+    if (!is_interpreted_func(current_iface, current_func))
+    {
+        if (out_attr && !in_attr && pointer_type == FC_RP)
+            flags |= FC_ALLOCED_ON_STACK;
+    }
+    else if (get_stub_mode() == MODE_Oif)
+    {
+        if (context == TYPE_CONTEXT_TOPLEVELPARAM && is_ptr(type) && pointer_type == FC_RP)
+        {
+            switch (typegen_detect_type(type_pointer_get_ref(type), NULL, TDT_ALL_TYPES))
+            {
+            case TGT_STRING:
+            case TGT_POINTER:
+            case TGT_CTXT_HANDLE:
+            case TGT_CTXT_HANDLE_POINTER:
+                flags |= FC_ALLOCED_ON_STACK;
+                break;
+            case TGT_IFACE_POINTER:
+                if (in_attr && out_attr)
+                    flags |= FC_ALLOCED_ON_STACK;
+                break;
+            default:
+                break;
+            }
+        }
+    }
 
     if (is_ptr(type))
     {
@@ -2145,8 +2169,16 @@ static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs,
     else
         fc = get_basic_fc(ref);
 
-    if (out_attr && !in_attr && pointer_fc == FC_RP)
-        flags |= FC_ALLOCED_ON_STACK;
+    if (!is_interpreted_func(current_iface, current_func))
+    {
+        if (out_attr && !in_attr && pointer_fc == FC_RP)
+            flags |= FC_ALLOCED_ON_STACK;
+    }
+    else if (get_stub_mode() == MODE_Oif)
+    {
+        if (context == TYPE_CONTEXT_TOPLEVELPARAM && fc == FC_ENUM16 && pointer_fc == FC_RP)
+            flags |= FC_ALLOCED_ON_STACK;
+    }
 
     print_file(file, 2, "0x%02x, 0x%x,\t/* %s %s[simple_pointer] */\n",
                pointer_fc, flags, string_of_type(pointer_fc),
