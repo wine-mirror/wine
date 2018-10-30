@@ -3305,7 +3305,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK *io )
     enum server_fd_type type;
     int fd, needs_close;
 
-    if (!io || !virtual_check_buffer_for_write( io, sizeof(io) )) return STATUS_ACCESS_VIOLATION;
+    if (!io || !virtual_check_buffer_for_write( io, sizeof(*io) )) return STATUS_ACCESS_VIOLATION;
 
     ret = server_get_unix_fd( hFile, FILE_WRITE_DATA, &fd, &needs_close, &type, NULL );
     if (ret == STATUS_ACCESS_DENIED)
