@@ -131,6 +131,7 @@ typedef struct
 					   should be sent to the first parent. */
 	HWND hwndListBox;		/* handle of ComboBox's listbox or NULL */
 	INT wheelDeltaRemainder;        /* scroll wheel delta left over after scrolling whole lines */
+       WCHAR *cue_banner_text;
 	/*
 	 *	only for multi line controls
 	 */
@@ -2181,6 +2182,12 @@ static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 		x += EDIT_PaintText(es, dc, x, y, line, e - li, li + ll - e, FALSE);
 	} else
 		x += EDIT_PaintText(es, dc, x, y, line, 0, ll, FALSE);
+
+       if (es->cue_banner_text && es->text_length == 0 && !(es->flags & EF_FOCUSED))
+       {
+	       SetTextColor(dc, GetSysColor(COLOR_GRAYTEXT));
+	       TextOutW(dc, x, y, es->cue_banner_text, strlenW(es->cue_banner_text));
+       }
 }
 
 
@@ -4152,6 +4159,57 @@ static LRESULT EDIT_EM_GetThumb(EDITSTATE *es)
                         EDIT_WM_HScroll(es, EM_GETTHUMB, 0));
 }
 
+static inline WCHAR *heap_strdupW(const WCHAR *str)
+{
+    int len = strlenW(str) + 1;
+    WCHAR *ret = heap_alloc(len * sizeof(WCHAR));
+    strcpyW(ret, str);
+    return ret;
+}
+
+/*********************************************************************
+ *
+ *	EM_SETCUEBANNER
+ *
+ */
+static BOOL EDIT_EM_SetCueBanner(EDITSTATE *es, BOOL focus, const WCHAR *cue_text)
+{
+    if (es->style & ES_MULTILINE || !cue_text)
+        return FALSE;
+
+    if (focus)
+        FIXME("cue banner for focused control not implemented.\n");
+
+    heap_free(es->cue_banner_text);
+    es->cue_banner_text = heap_strdupW(cue_text);
+
+    return TRUE;
+}
+
+/*********************************************************************
+ *
+ *	EM_GETCUEBANNER
+ *
+ */
+static BOOL EDIT_EM_GetCueBanner(EDITSTATE *es, WCHAR *buf, DWORD size)
+{
+    if (es->style & ES_MULTILINE)
+        return FALSE;
+
+    if (!es->cue_banner_text)
+    {
+        if (buf && size)
+            *buf = 0;
+        return FALSE;
+    }
+    else
+    {
+        if (buf)
+            lstrcpynW(buf, es->cue_banner_text, size);
+        return TRUE;
+    }
+}
+
 
 /********************************************************************
  *
@@ -4489,6 +4547,7 @@ static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 
     SetWindowLongPtrW( es->hwndSelf, 0, 0 );
     heap_free(es->undo_text);
+    heap_free(es->cue_banner_text);
     heap_free(es);
 
     return 0;
@@ -4701,6 +4760,14 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
     case EM_CHARFROMPOS:
         result = EDIT_EM_CharFromPos(es, (short)LOWORD(lParam), (short)HIWORD(lParam));
+        break;
+
+    case EM_SETCUEBANNER:
+        result = EDIT_EM_SetCueBanner(es, (BOOL)wParam, (const WCHAR *)lParam);
+        break;
+
+    case EM_GETCUEBANNER:
+        result = EDIT_EM_GetCueBanner(es, (WCHAR *)wParam, (DWORD)lParam);
         break;
 
     /* End of the EM_ messages which were in numerical order; what order
