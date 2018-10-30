@@ -37,7 +37,6 @@ enum IWidget_dispids
     DISPID_TM_ARRAY,
     DISPID_TM_VARARRAYPTR,
     DISPID_TM_VARCARRAY,
-    DISPID_TM_VARIANT,
     DISPID_TM_VARARG,
     DISPID_TM_STRUCTARGS,
     DISPID_TM_ERROR,
@@ -63,6 +62,7 @@ enum IWidget_dispids
     DISPID_TM_IFACE_OUT,
     DISPID_TM_IFACE_PTR,
     DISPID_TM_BSTR,
+    DISPID_TM_VARIANT,
 };
 
 static const int DISPID_TM_NEG_RESTRICTED = -26;
@@ -189,9 +189,6 @@ library TestTypelib
         [id(DISPID_TM_VARCARRAY)]
         HRESULT VariantCArray([in] ULONG count, [in, out] VARIANT values[2]);
 
-        [id(DISPID_TM_VARIANT)]
-        HRESULT Variant([in] VARIANT var);
-
         [vararg, id(DISPID_TM_VARARG)]
         HRESULT VarArg([in] int numexpect, [in] SAFEARRAY(VARIANT) values);
 
@@ -267,6 +264,9 @@ library TestTypelib
 
         [id(DISPID_TM_BSTR)]
         HRESULT bstr([in] BSTR in, [out] BSTR *out, [in] BSTR *in_ptr, [in, out] BSTR *in_out);
+
+        [id(DISPID_TM_VARIANT)]
+        HRESULT variant([in] VARIANT in, [out] VARIANT *out, [in] VARIANT *in_ptr, [in, out] VARIANT *in_out);
     }
 
     [

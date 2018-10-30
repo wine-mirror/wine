@@ -776,17 +776,6 @@ static HRESULT WINAPI Widget_VariantCArray(
     return S_OK;
 }
 
-static HRESULT WINAPI Widget_Variant(
-    IWidget __RPC_FAR * iface,
-    VARIANT var)
-{
-    trace("Variant()\n");
-    ok(V_VT(&var) == VT_CY, "V_VT(&var) was %d\n", V_VT(&var));
-    ok(S(V_CY(&var)).Hi == 0xdababe, "V_CY(&var).Hi was 0x%x\n", S(V_CY(&var)).Hi);
-    ok(S(V_CY(&var)).Lo == 0xdeadbeef, "V_CY(&var).Lo was 0x%x\n", S(V_CY(&var)).Lo);
-    return S_OK;
-}
-
 static HRESULT WINAPI Widget_VarArg(
     IWidget * iface,
     int numexpect,
@@ -1229,6 +1218,36 @@ todo_wine_if(*out)
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_variant(IWidget *iface, VARIANT in, VARIANT *out, VARIANT *in_ptr, VARIANT *in_out)
+{
+    ok(V_VT(&in) == VT_CY, "Got wrong type %#x.\n", V_VT(&in));
+    ok(V_CY(&in).Hi == 0xdababe && V_CY(&in).Lo == 0xdeadbeef,
+            "Got wrong value %s.\n", wine_dbgstr_longlong(V_CY(&in).int64));
+    if (testmode == 0)
+    {
+        ok(V_VT(out) == VT_I4, "Got wrong type %u.\n", V_VT(out));
+        ok(V_I4(out) == 1, "Got wrong value %d.\n", V_I4(out));
+    }
+    else
+        ok(V_VT(out) == VT_EMPTY, "Got wrong type %u.\n", V_VT(out));
+    ok(V_VT(in_ptr) == VT_I4, "Got wrong type %u.\n", V_VT(in_ptr));
+    ok(V_I4(in_ptr) == -1, "Got wrong value %d.\n", V_I4(in_ptr));
+    ok(V_VT(in_out) == VT_BSTR, "Got wrong type %u.\n", V_VT(in_out));
+    ok(!lstrcmpW(V_BSTR(in_out), test_bstr2), "Got wrong value %s.\n",
+            wine_dbgstr_w(V_BSTR(in_out)));
+
+    V_VT(&in) = VT_I4;
+    V_I4(&in) = 2;
+    V_VT(out) = VT_UI1;
+    V_UI1(out) = 3;
+    V_VT(in_ptr) = VT_I2;
+    V_I2(in_ptr) = 4;
+    VariantClear(in_out);
+    V_VT(in_out) = VT_I1;
+    V_I1(in_out) = 5;
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -1253,7 +1272,6 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_Array,
     Widget_VariantArrayPtr,
     Widget_VariantCArray,
-    Widget_Variant,
     Widget_VarArg,
     Widget_StructArgs,
     Widget_Error,
@@ -1278,6 +1296,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_iface_out,
     Widget_iface_ptr,
     Widget_bstr,
+    Widget_variant,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -2089,6 +2108,58 @@ static void test_marshal_bstr(IWidget *widget, IDispatch *disp)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
+static void test_marshal_variant(IWidget *widget, IDispatch *disp)
+{
+    VARIANTARG arg[4];
+    DISPPARAMS dispparams = {arg, NULL, ARRAY_SIZE(arg), 0};
+    VARIANT out, in_ptr, in_out;
+    HRESULT hr;
+    BSTR bstr;
+
+    testmode = 0;
+    V_VT(&out) = VT_I4;
+    V_I4(&out) = 1;
+    V_VT(&in_ptr) = VT_I4;
+    V_I4(&in_ptr) = -1;
+    V_VT(&in_out) = VT_BSTR;
+    V_BSTR(&in_out) = bstr = SysAllocString(test_bstr2);
+
+    V_VT(&arg[3]) = VT_CY;
+    V_CY(&arg[3]).Hi = 0xdababe;
+    V_CY(&arg[3]).Lo = 0xdeadbeef;
+    V_VT(&arg[2]) = VT_VARIANT|VT_BYREF; V_VARIANTREF(&arg[2]) = &out;
+    V_VT(&arg[1]) = VT_VARIANT|VT_BYREF; V_VARIANTREF(&arg[1]) = &in_ptr;
+    V_VT(&arg[0]) = VT_VARIANT|VT_BYREF; V_VARIANTREF(&arg[0]) = &in_out;
+    hr = IDispatch_Invoke(disp, DISPID_TM_VARIANT, &IID_NULL, LOCALE_NEUTRAL,
+            DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(V_VT(&arg[3]) == VT_CY, "Got wrong type %u.\n", V_VT(&arg[3]));
+    ok(V_VT(&out) == VT_UI1, "Got wrong type %u.\n", V_VT(&out));
+    ok(V_UI1(&out) == 3, "Got wrong value %d.\n", V_UI1(&out));
+    VariantClear(&out);
+    ok(V_VT(&in_ptr) == VT_I2, "Got wrong type %u.\n", V_VT(&in_ptr));
+    ok(V_I2(&in_ptr) == 4, "Got wrong value %d.\n", V_I1(&in_ptr));
+    ok(V_VT(&in_out) == VT_I1, "Got wrong type %u.\n", V_VT(&in_out));
+    ok(V_I1(&in_out) == 5, "Got wrong value %d.\n", V_I1(&in_out));
+
+    testmode = 1;
+    V_VT(&out) = VT_I4;
+    V_I4(&out) = 1;
+    V_VT(&in_ptr) = VT_I4;
+    V_I4(&in_ptr) = -1;
+    V_VT(&in_out) = VT_BSTR;
+    V_BSTR(&in_out) = bstr = SysAllocString(test_bstr2);
+    hr = IWidget_variant(widget, arg[3], &out, &in_ptr, &in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(V_VT(&arg[3]) == VT_CY, "Got wrong type %u.\n", V_VT(&arg[3]));
+    ok(V_VT(&out) == VT_UI1, "Got wrong type %u.\n", V_VT(&out));
+    ok(V_UI1(&out) == 3, "Got wrong value %d.\n", V_UI1(&out));
+    ok(V_VT(&in_ptr) == VT_I4, "Got wrong type %u.\n", V_VT(&in_ptr));
+    ok(V_I2(&in_ptr) == -1, "Got wrong value %d.\n", V_I1(&in_ptr));
+    ok(V_VT(&in_out) == VT_I1, "Got wrong type %u.\n", V_VT(&in_out));
+    ok(V_I1(&in_out) == 5, "Got wrong value %d.\n", V_I1(&in_out));
+}
+
 static void test_typelibmarshal(void)
 {
     static const WCHAR szCat[] = { 'C','a','t',0 };
@@ -2365,22 +2436,6 @@ static void test_typelibmarshal(void)
 
     ok(V_VT(&varresult) == VT_I2, "V_VT(&varresult) was %d instead of VT_I2\n", V_VT(&varresult));
     ok(V_I2(&varresult) == 1234, "V_I2(&varresult) was %d instead of 1234\n", V_I2(&varresult));
-    VariantClear(&varresult);
-
-    /* call Variant - exercises variant copying in ITypeInfo::Invoke and
-     * handling of void return types */
-    /* use a big type to ensure that the variant was properly copied into the
-     * destination function's args */
-    V_VT(&vararg[0]) = VT_CY;
-    S(V_CY(&vararg[0])).Hi = 0xdababe;
-    S(V_CY(&vararg[0])).Lo = 0xdeadbeef;
-    dispparams.cNamedArgs = 0;
-    dispparams.cArgs = 1;
-    dispparams.rgdispidNamedArgs = NULL;
-    dispparams.rgvarg = vararg;
-    VariantInit(&varresult);
-    hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARIANT, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok_ole_success(hr, IDispatch_Invoke);
     VariantClear(&varresult);
 
     /* call Array with BSTR argument - type mismatch */
@@ -2702,6 +2757,7 @@ todo_wine
     test_marshal_pointer(pWidget, pDispatch);
     test_marshal_iface(pWidget, pDispatch);
     test_marshal_bstr(pWidget, pDispatch);
+    test_marshal_variant(pWidget, pDispatch);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);
