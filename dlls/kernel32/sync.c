@@ -1746,6 +1746,11 @@ BOOL WINAPI TransactNamedPipe(
 
     status = NtFsControlFile(handle, event, NULL, cvalue, iosb, FSCTL_PIPE_TRANSCEIVE,
                              write_buf, write_size, read_buf, read_size);
+    if (status == STATUS_PENDING && !overlapped)
+    {
+        WaitForSingleObject(handle, INFINITE);
+        status = iosb->u.Status;
+    }
 
     if (bytes_read) *bytes_read = overlapped && status ? 0 : iosb->Information;
 
