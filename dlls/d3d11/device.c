@@ -6070,7 +6070,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     desc.SampleDesc.Count = wined3d_desc->multisample_type ? wined3d_desc->multisample_type : 1;
     desc.SampleDesc.Quality = wined3d_desc->multisample_quality;
     desc.Usage = D3D11_USAGE_DEFAULT;
-    desc.BindFlags = d3d11_bind_flags_from_wined3d_usage(wined3d_desc->usage);
+    desc.BindFlags = d3d11_bind_flags_from_wined3d(wined3d_desc->bind_flags);
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 

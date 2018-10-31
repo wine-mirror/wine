@@ -441,21 +441,6 @@ unsigned int wined3d_getdata_flags_from_d3d11_async_getdata_flags(unsigned int d
     return WINED3DGETDATA_FLUSH;
 }
 
-UINT d3d11_bind_flags_from_wined3d_usage(DWORD wined3d_usage)
-{
-    UINT bind_flags = 0;
-
-    if (wined3d_usage & WINED3DUSAGE_TEXTURE)
-        bind_flags |= D3D11_BIND_SHADER_RESOURCE;
-    if (wined3d_usage & WINED3DUSAGE_RENDERTARGET)
-        bind_flags |= D3D11_BIND_RENDER_TARGET;
-
-    wined3d_usage &= ~(WINED3DUSAGE_TEXTURE | WINED3DUSAGE_RENDERTARGET);
-    if (wined3d_usage)
-        FIXME("Unhandled wined3d usage %#x.\n", wined3d_usage);
-    return bind_flags;
-}
-
 DWORD wined3d_usage_from_d3d11(UINT bind_flags, enum D3D11_USAGE usage)
 {
     static const DWORD handled = D3D11_BIND_SHADER_RESOURCE
