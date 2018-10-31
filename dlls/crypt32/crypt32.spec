@@ -180,6 +180,7 @@
 @ stdcall CryptSIPRetrieveSubjectGuidForCatalogFile(wstr long ptr)
 @ stdcall CryptSIPVerifyIndirectData(ptr ptr)
 @ stub CryptSetAsyncParam
+@ stdcall CryptSetKeyIdentifierProperty(ptr long long wstr ptr ptr)
 @ stdcall CryptSetOIDFunctionValue(long str str wstr long ptr long)
 @ stub CryptSetProviderU
 @ stdcall CryptSignAndEncodeCertificate(long long long str ptr ptr ptr ptr ptr)

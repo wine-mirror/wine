@@ -3681,3 +3681,11 @@ const void * WINAPI CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
         return NULL;
     }
 }
+
+BOOL WINAPI CryptSetKeyIdentifierProperty(const CRYPT_HASH_BLOB *pKeyIdentifier, DWORD dwPropId,
+    DWORD dwFlags, LPCWSTR pwszComputerName, void *pvReserved, const void *pvData)
+{
+    FIXME("(%p, 0x%x, 0x%x, %s, %p, %p): stub\n", pKeyIdentifier, dwPropId, dwFlags,
+        debugstr_w(pwszComputerName), pvReserved, pvData);
+    return FALSE;
+}
