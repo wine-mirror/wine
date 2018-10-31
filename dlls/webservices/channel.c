@@ -395,6 +395,11 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
 
     for (i = 0; i < count; i++)
     {
+        TRACE( "property id %u value ptr %p size %u\n", properties[i].id, properties[i].value,
+               properties[i].valueSize );
+        if (properties[i].valueSize == sizeof(ULONG) && properties[i].value)
+            TRACE( " value %08x\n", *(ULONG *)properties[i].value );
+
         switch (properties[i].id)
         {
         case WS_CHANNEL_PROPERTY_ENCODING:
@@ -622,6 +627,8 @@ static HRESULT open_channel( struct channel *channel, const WS_ENDPOINT_ADDRESS 
         FIXME( "headers, extensions or identity not supported\n" );
         return E_NOTIMPL;
     }
+
+    TRACE( "endpoint %s\n", debugstr_wn(endpoint->url.chars, endpoint->url.length) );
 
     if (!(channel->addr.url.chars = heap_alloc( endpoint->url.length * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
     memcpy( channel->addr.url.chars, endpoint->url.chars, endpoint->url.length * sizeof(WCHAR) );
