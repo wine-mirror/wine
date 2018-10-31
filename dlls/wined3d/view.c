@@ -87,7 +87,7 @@ static const struct wined3d_format *validate_resource_view(const struct wined3d_
     const struct wined3d_adapter *adapter = resource->device->adapter;
     const struct wined3d_format *format;
 
-    format = wined3d_get_format(adapter, desc->format_id, resource->usage);
+    format = wined3d_get_format(adapter, desc->format_id, resource->bind_flags);
     if (resource->type == WINED3D_RTYPE_BUFFER && (desc->flags & WINED3D_VIEW_BUFFER_RAW))
     {
         if (format->id != WINED3DFMT_R32_TYPELESS)
@@ -96,7 +96,7 @@ static const struct wined3d_format *validate_resource_view(const struct wined3d_
             return NULL;
         }
 
-        format = wined3d_get_format(adapter, WINED3DFMT_R32_UINT, resource->usage);
+        format = wined3d_get_format(adapter, WINED3DFMT_R32_UINT, resource->bind_flags);
     }
 
     if (wined3d_format_is_typeless(format))
@@ -118,7 +118,7 @@ static const struct wined3d_format *validate_resource_view(const struct wined3d_
                 return NULL;
             }
 
-            format = wined3d_get_format(adapter, WINED3DFMT_R32_UINT, resource->usage);
+            format = wined3d_get_format(adapter, WINED3DFMT_R32_UINT, resource->bind_flags);
             element_size = buffer->structure_byte_stride;
         }
         else
