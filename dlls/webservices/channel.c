@@ -1137,9 +1137,39 @@ done:
     return hr;
 }
 
+static void set_blocking( SOCKET socket, BOOL blocking )
+{
+    ULONG state = !blocking;
+    ioctlsocket( socket, FIONBIO, &state );
+}
+
+static int sock_peek( SOCKET socket )
+{
+    int ret;
+    char byte;
+
+    set_blocking( socket, FALSE );
+    ret = recv( socket, &byte, 1, MSG_PEEK );
+    set_blocking( socket, TRUE );
+    return ret;
+}
+
+static int sock_recv( SOCKET socket, char *buf, int len )
+{
+    int count, ret = 0;
+    for (;;)
+    {
+        if ((count = recv( socket, buf + ret, len, 0 )) <= 0) break;
+        ret += count;
+        len -= count;
+        if (sock_peek( socket ) != 1) break;
+    }
+    return ret;
+}
+
 static HRESULT receive_bytes( struct channel *channel, unsigned char *bytes, int len )
 {
-    int count = recv( channel->u.tcp.socket, (char *)bytes, len, 0 );
+    int count = sock_recv( channel->u.tcp.socket, (char *)bytes, len );
     if (count < 0) return HRESULT_FROM_WIN32( WSAGetLastError() );
     if (count != len) return WS_E_INVALID_FORMAT;
     return S_OK;
@@ -1494,7 +1524,7 @@ static HRESULT receive_message_unsized( struct channel *channel, SOCKET socket )
     if ((hr = resize_read_buffer( channel, max_len )) != S_OK) return hr;
 
     channel->read_size = 0;
-    if ((bytes_read = recv( socket, channel->read_buf, max_len, 0 )) < 0)
+    if ((bytes_read = sock_recv( socket, channel->read_buf, max_len )) < 0)
     {
         return HRESULT_FROM_WIN32( WSAGetLastError() );
     }
@@ -1513,7 +1543,7 @@ static HRESULT receive_message_sized( struct channel *channel, unsigned int size
     channel->read_size = 0;
     while (channel->read_size < size)
     {
-        if ((bytes_read = recv( channel->u.tcp.socket, channel->read_buf + offset, to_read, 0 )) < 0)
+        if ((bytes_read = sock_recv( channel->u.tcp.socket, channel->read_buf + offset, to_read )) < 0)
         {
             return HRESULT_FROM_WIN32( WSAGetLastError() );
         }
