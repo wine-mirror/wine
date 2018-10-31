@@ -5259,6 +5259,13 @@ typedef struct _tagEDITBALLOONTIP
 #define EM_NOSETFOCUS             (ECM_FIRST + 7)
 #define EM_TAKEFOCUS              (ECM_FIRST + 8)
 
+#define Edit_SetCueBannerText(hwnd, text) \
+        (BOOL)SNDMSG((hwnd), EM_SETCUEBANNER, 0, (LPARAM)(text))
+#define Edit_SetCueBannerTextFocused(hwnd, text, drawfocused) \
+        (BOOL)SNDMSG((hwnd), EM_SETCUEBANNER, (WPARAM)(drawfocused), (LPARAM)(text))
+#define Edit_GetCueBannerText(hwnd, buff, buff_size) \
+        (BOOL)SNDMSG((hwnd), EM_GETCUEBANNER, (WPARAM)(buff), (LPARAM)(buff_size))
+
 /**************************************************************************
  * Listbox control
  */
