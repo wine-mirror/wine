@@ -1930,6 +1930,12 @@ unsigned int get_fd_options( struct fd *fd )
     return fd->options;
 }
 
+/* check if fd is in overlapped mode */
+int is_fd_overlapped( struct fd *fd )
+{
+    return !(fd->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
+}
+
 /* retrieve the unix fd for an object */
 int get_unix_fd( struct fd *fd )
 {
@@ -2611,7 +2617,7 @@ DECL_HANDLER(set_completion_info)
 
     if (fd)
     {
-        if (!(fd->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)) && !fd->completion)
+        if (is_fd_overlapped( fd ) && !fd->completion)
         {
             fd->completion = get_completion_obj( current->process, req->chandle, IO_COMPLETION_MODIFY_STATE );
             fd->comp_key = req->ckey;
@@ -2639,7 +2645,7 @@ DECL_HANDLER(set_fd_completion_mode)
     struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
     if (fd)
     {
-        if (!(fd->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+        if (is_fd_overlapped( fd ))
         {
             /* removing COMPLETION_SKIP_ON_SUCCESS is not allowed */
             fd->comp_flags |= req->flags & ( FILE_SKIP_COMPLETION_PORT_ON_SUCCESS

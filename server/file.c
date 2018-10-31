@@ -114,11 +114,6 @@ static const struct fd_ops file_fd_ops =
     default_fd_reselect_async     /* reselect_async */
 };
 
-static inline int is_overlapped( const struct file *file )
-{
-    return !(get_fd_options( file->fd ) & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
-}
-
 /* create a file from a file descriptor */
 /* if the function fails the fd is closed */
 struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing )
@@ -761,7 +756,7 @@ DECL_HANDLER(lock_file)
     if ((file = get_file_obj( current->process, req->handle, 0 )))
     {
         reply->handle = lock_fd( file->fd, req->offset, req->count, req->shared, req->wait );
-        reply->overlapped = is_overlapped( file );
+        reply->overlapped = is_fd_overlapped( file->fd );
         release_object( file );
     }
 }
