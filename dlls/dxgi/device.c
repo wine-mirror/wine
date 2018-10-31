@@ -186,12 +186,12 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     surface_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_sample_desc_from_dxgi(&surface_desc.multisample_type,
             &surface_desc.multisample_quality, &desc->SampleDesc);
-    surface_desc.usage = wined3d_usage_from_dxgi_usage(usage);
-    surface_desc.bind_flags = 0;
-    if (surface_desc.usage & WINED3DUSAGE_RENDERTARGET)
-        surface_desc.bind_flags |= WINED3D_BIND_RENDER_TARGET;
-    if (surface_desc.usage & WINED3DUSAGE_TEXTURE)
-        surface_desc.bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
+    surface_desc.bind_flags = wined3d_bind_flags_from_dxgi_usage(usage);
+    surface_desc.usage = 0;
+    if (surface_desc.bind_flags & WINED3D_BIND_SHADER_RESOURCE)
+        surface_desc.usage |= WINED3DUSAGE_TEXTURE;
+    if (surface_desc.bind_flags & WINED3D_BIND_RENDER_TARGET)
+        surface_desc.usage |= WINED3DUSAGE_RENDERTARGET;
     surface_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
     surface_desc.width = desc->Width;
     surface_desc.height = desc->Height;

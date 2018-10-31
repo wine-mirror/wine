@@ -381,7 +381,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDesc(IDXGISwapChain1 *iface,
     desc->BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
     dxgi_sample_desc_from_wined3d(&desc->SampleDesc,
             wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
-    desc->BufferUsage = dxgi_usage_from_wined3d_usage(wined3d_desc.backbuffer_usage);
+    desc->BufferUsage = dxgi_usage_from_wined3d_bind_flags(wined3d_desc.backbuffer_bind_flags);
     desc->BufferCount = wined3d_desc.backbuffer_count;
     desc->OutputWindow = wined3d_desc.device_window;
     desc->Windowed = wined3d_desc.windowed;
@@ -538,7 +538,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDesc1(IDXGISwapChain1 *iface
     desc->Stereo = FALSE;
     dxgi_sample_desc_from_wined3d(&desc->SampleDesc,
             wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
-    desc->BufferUsage = dxgi_usage_from_wined3d_usage(wined3d_desc.backbuffer_usage);
+    desc->BufferUsage = dxgi_usage_from_wined3d_bind_flags(wined3d_desc.backbuffer_bind_flags);
     desc->BufferCount = wined3d_desc.backbuffer_count;
     desc->Scaling = DXGI_SCALING_STRETCH;
     desc->SwapEffect = dxgi_swap_effect_from_wined3d(wined3d_desc.swap_effect);
@@ -858,7 +858,7 @@ HRESULT d3d11_swapchain_create(IWineDXGIDevice *device, HWND window, const DXGI_
     wined3d_desc.backbuffer_height = swapchain_desc->Height;
     wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(swapchain_desc->Format);
     wined3d_desc.backbuffer_count = swapchain_desc->BufferCount;
-    wined3d_desc.backbuffer_usage = wined3d_usage_from_dxgi_usage(swapchain_desc->BufferUsage);
+    wined3d_desc.backbuffer_bind_flags = wined3d_bind_flags_from_dxgi_usage(swapchain_desc->BufferUsage);
     wined3d_sample_desc_from_dxgi(&wined3d_desc.multisample_type,
             &wined3d_desc.multisample_quality, &swapchain_desc->SampleDesc);
     wined3d_desc.device_window = window;
