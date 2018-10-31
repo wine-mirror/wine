@@ -284,7 +284,7 @@ struct async *create_request_async( struct fd *fd, unsigned int comp_flags, cons
 }
 
 /* return async object status and wait handle to client */
-obj_handle_t async_handoff( struct async *async, int success, data_size_t *result )
+obj_handle_t async_handoff( struct async *async, int success, data_size_t *result, int force_blocking )
 {
     if (!success)
     {
@@ -316,7 +316,7 @@ obj_handle_t async_handoff( struct async *async, int success, data_size_t *resul
     else
     {
         async->direct_result = 0;
-        if (!async_is_blocking( async ))
+        if (!force_blocking && async->fd && is_fd_overlapped( async->fd ))
         {
             close_handle( async->thread->process, async->wait_handle);
             async->wait_handle = 0;

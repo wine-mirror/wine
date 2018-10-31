@@ -412,9 +412,9 @@ static void test_alertable(void)
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
     todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %x\n", res);
 
-    todo_wine ok(userapc_called, "user apc didn't run\n");
+    ok(userapc_called, "user apc didn't run\n");
     ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
-    todo_wine ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == WAIT_TIMEOUT, "hEvent signaled\n");
+    ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == WAIT_TIMEOUT, "hEvent signaled\n");
     ok(!ioapc_called, "IOAPC ran\n");
 
 /* queue an user apc from a different thread */
@@ -445,11 +445,11 @@ static void test_alertable(void)
     ok(hThread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %x\n", GetLastError());
 
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-    todo_wine ok(!res, "NtFsControlFile returned %x\n", res);
+    ok(!res, "NtFsControlFile returned %x\n", res);
 
     ok(open_succeeded, "couldn't open client side pipe\n");
     ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
-    todo_wine ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
+    ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     WaitForSingleObject(hThread, INFINITE);
     CloseHandle(hThread);
@@ -482,11 +482,11 @@ static void test_nonalertable(void)
     ok(ret, "can't queue user apc, GetLastError: %x\n", GetLastError());
 
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-    todo_wine ok(!res, "NtFsControlFile returned %x\n", res);
+    ok(!res, "NtFsControlFile returned %x\n", res);
 
     ok(open_succeeded, "couldn't open client side pipe\n");
-    todo_wine ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
-    todo_wine ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
+    ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
+    ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     ok(!ioapc_called, "IOAPC ran too early\n");
     ok(!userapc_called, "user apc ran too early\n");
@@ -1348,7 +1348,6 @@ static void test_completion(void)
 
     ok(is_signaled(client), "client is not signaled\n");
 
-    if (broken(1)) { /* blocks on wine */
     /* no event, APC nor completion: only signals on handle */
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, NULL, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
@@ -1360,7 +1359,6 @@ static void test_completion(void)
     ok(is_signaled(client), "client is signaled\n");
     ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
     ok(io.Information == sizeof(buf), "Information = %lu\n", io.Information);
-    }
 
     /* event with no APC nor completion: signals only event */
     memset(&io, 0xcc, sizeof(io));
@@ -1434,12 +1432,10 @@ static void test_completion(void)
     ok(!is_signaled(client), "client is signaled\n");
     test_queued_completion(port, &io, STATUS_SUCCESS, sizeof(buf));
 
-    if (broken(1)) { /* blocks on wine */
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, NULL, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
     ok(status == STATUS_PENDING, "status = %x\n", status);
     ok(!is_signaled(client), "client is signaled\n");
-    }
 
     ret = WriteFile(client, buf, 1, &num_bytes, NULL);
     ok(ret, "WriteFile failed, error %u\n", GetLastError());
@@ -1575,9 +1571,7 @@ static void test_blocking(ULONG options)
     SetEvent(ctx.wait);
     status = NtReadFile(ctx.client, ctx.event, ioapc, &io, &io, read_buf,
                         sizeof(read_buf), NULL, NULL);
-    todo_wine
     ok(status == STATUS_SUCCESS, "status = %x\n", status);
-    if (status == STATUS_PENDING) WaitForSingleObject(ctx.event, INFINITE);
     ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
     ok(io.Information == 1, "Information = %lu\n", io.Information);
     ok(is_signaled(ctx.event), "event is not signaled\n");

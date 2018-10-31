@@ -2438,7 +2438,7 @@ DECL_HANDLER(flush)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->event = async_handoff( async, fd->fd_ops->flush( fd, async ), NULL );
+        reply->event = async_handoff( async, fd->fd_ops->flush( fd, async ), NULL, 1 );
         release_object( async );
     }
     release_object( fd );
@@ -2537,7 +2537,7 @@ DECL_HANDLER(read)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->wait    = async_handoff( async, fd->fd_ops->read( fd, async, req->pos ), NULL );
+        reply->wait    = async_handoff( async, fd->fd_ops->read( fd, async, req->pos ), NULL, 0 );
         reply->options = fd->options;
         release_object( async );
     }
@@ -2554,7 +2554,7 @@ DECL_HANDLER(write)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->wait    = async_handoff( async, fd->fd_ops->write( fd, async, req->pos ), &reply->size );
+        reply->wait    = async_handoff( async, fd->fd_ops->write( fd, async, req->pos ), &reply->size, 0 );
         reply->options = fd->options;
         release_object( async );
     }
@@ -2572,7 +2572,7 @@ DECL_HANDLER(ioctl)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->wait    = async_handoff( async, fd->fd_ops->ioctl( fd, req->code, async ), NULL );
+        reply->wait    = async_handoff( async, fd->fd_ops->ioctl( fd, req->code, async ), NULL, 0 );
         reply->options = fd->options;
         release_object( async );
     }
