@@ -1316,9 +1316,14 @@ static HRESULT init_writer( struct channel *channel )
     WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
     WS_XML_WRITER_TEXT_ENCODING text = {{WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8};
     WS_XML_WRITER_BINARY_ENCODING bin = {{WS_XML_WRITER_ENCODING_TYPE_BINARY}};
+    WS_XML_WRITER_PROPERTY prop;
+    ULONG max_size = (1 << 17);
     HRESULT hr;
 
-    if (!channel->writer && (hr = WsCreateWriter( NULL, 0, &channel->writer, NULL )) != S_OK) return hr;
+    prop.id        = WS_XML_WRITER_PROPERTY_BUFFER_MAX_SIZE;
+    prop.value     = &max_size;
+    prop.valueSize = sizeof(max_size);
+    if (!channel->writer && (hr = WsCreateWriter( &prop, 1, &channel->writer, NULL )) != S_OK) return hr;
 
     switch (channel->encoding)
     {
