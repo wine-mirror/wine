@@ -3297,15 +3297,15 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     static const struct
     {
         enum wined3d_resource_type rtype;
-        unsigned int usage;
+        unsigned int bind_flags;
         D3D11_FORMAT_SUPPORT flag;
     }
     flag_mapping[] =
     {
-        {WINED3D_RTYPE_TEXTURE_2D, WINED3DUSAGE_TEXTURE,      D3D11_FORMAT_SUPPORT_TEXTURE2D},
-        {WINED3D_RTYPE_TEXTURE_3D, WINED3DUSAGE_TEXTURE,      D3D11_FORMAT_SUPPORT_TEXTURE3D},
-        {WINED3D_RTYPE_NONE,       WINED3DUSAGE_RENDERTARGET, D3D11_FORMAT_SUPPORT_RENDER_TARGET},
-        {WINED3D_RTYPE_NONE,       WINED3DUSAGE_DEPTHSTENCIL, D3D11_FORMAT_SUPPORT_DEPTH_STENCIL},
+        {WINED3D_RTYPE_TEXTURE_2D, WINED3D_BIND_SHADER_RESOURCE, D3D11_FORMAT_SUPPORT_TEXTURE2D},
+        {WINED3D_RTYPE_TEXTURE_3D, WINED3D_BIND_SHADER_RESOURCE, D3D11_FORMAT_SUPPORT_TEXTURE3D},
+        {WINED3D_RTYPE_NONE,       WINED3D_BIND_RENDER_TARGET,   D3D11_FORMAT_SUPPORT_RENDER_TARGET},
+        {WINED3D_RTYPE_NONE,       WINED3D_BIND_DEPTH_STENCIL,   D3D11_FORMAT_SUPPORT_DEPTH_STENCIL},
     };
     HRESULT hr;
 
@@ -3327,7 +3327,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     for (i = 0; i < ARRAY_SIZE(flag_mapping); ++i)
     {
         hr = wined3d_check_device_format(wined3d, params.adapter_idx, params.device_type,
-                WINED3DFMT_UNKNOWN, flag_mapping[i].usage, flag_mapping[i].rtype, wined3d_format);
+                WINED3DFMT_UNKNOWN, 0, flag_mapping[i].bind_flags, flag_mapping[i].rtype, wined3d_format);
         if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DOK_NOMIPGEN)
             continue;
         if (hr != WINED3D_OK)
