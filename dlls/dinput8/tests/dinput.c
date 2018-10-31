@@ -381,7 +381,6 @@ static BOOL CALLBACK enum_devices_callback(const DIDEVICEINSTANCEA *instance, vo
            (instance->dwDevType & 0xff) == DI8DEVTYPE_MOUSE) {
         const char *device = ((instance->dwDevType & 0xff) ==
                                    DI8DEVTYPE_KEYBOARD) ? "Keyboard" : "Mouse";
-        todo_wine
         ok(IsEqualGUID(&instance->guidInstance, &instance->guidProduct),
            "%s guidInstance (%s) does not match guidProduct (%s)\n",
            device, wine_dbgstr_guid(&instance->guidInstance),

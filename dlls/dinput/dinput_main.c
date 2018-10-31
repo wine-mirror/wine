@@ -1747,12 +1747,10 @@ static DWORD WINAPI hook_thread_proc(void *param)
                 {
                     if (!dev->acquired || !dev->event_proc) continue;
 
-                    if (IsEqualGUID( &dev->guid, &GUID_SysKeyboard ) ||
-                        IsEqualGUID( &dev->guid, &DInput_Wine_Keyboard_GUID ))
+                    if (IsEqualGUID( &dev->guid, &GUID_SysKeyboard ))
                         kbd_cnt++;
                     else
-                        if (IsEqualGUID( &dev->guid, &GUID_SysMouse ) ||
-                            IsEqualGUID( &dev->guid, &DInput_Wine_Mouse_GUID ))
+                        if (IsEqualGUID( &dev->guid, &GUID_SysMouse ))
                             mice_cnt++;
                 }
                 LeaveCriticalSection( &dinput->crit );
