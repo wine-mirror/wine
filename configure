@@ -1486,6 +1486,7 @@ enable_qmgr
 enable_qmgrprxy
 enable_quartz
 enable_query
+enable_qwave
 enable_rasapi32
 enable_rasdlg
 enable_regapi
@@ -19758,6 +19759,7 @@ wine_fn_config_makefile dlls/qmgrprxy enable_qmgrprxy
 wine_fn_config_makefile dlls/quartz enable_quartz
 wine_fn_config_makefile dlls/quartz/tests enable_tests
 wine_fn_config_makefile dlls/query enable_query
+wine_fn_config_makefile dlls/qwave enable_qwave
 wine_fn_config_makefile dlls/rasapi16.dll16 enable_win16
 wine_fn_config_makefile dlls/rasapi32 enable_rasapi32
 wine_fn_config_makefile dlls/rasapi32/tests enable_tests

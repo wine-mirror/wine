@@ -1,0 +1,14 @@
+@ stub QDLHPathDiagnostics
+@ stub QDLHStartDiagnosingPath
+@ stub QOSAddSocketToFlow
+@ stub QOSCancel
+@ stub QOSCloseHandle
+@ stub QOSCreateHandle
+@ stub QOSEnumerateFlows
+@ stub QOSNotifyFlow
+@ stub QOSQueryFlow
+@ stub QOSRemoveSocketFromFlow
+@ stub QOSSetFlow
+@ stub QOSStartTrackingClient
+@ stub QOSStopTrackingClient
+@ stub ServiceMain
