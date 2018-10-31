@@ -1241,7 +1241,7 @@ static void test_completion(void)
     FILE_IO_COMPLETION_NOTIFICATION_INFORMATION info;
     FILE_PIPE_PEEK_BUFFER peek_buf;
     char read_buf[16];
-    HANDLE port, pipe, client;
+    HANDLE port, pipe, client, event;
     OVERLAPPED ov;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
@@ -1341,6 +1341,319 @@ static void test_completion(void)
     CloseHandle(client);
     CloseHandle(pipe);
     CloseHandle(port);
+
+    event = CreateEventW(NULL, TRUE, TRUE, NULL);
+    create_pipe_pair( &pipe, &client, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
+                      PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 4096 );
+
+    ok(is_signaled(client), "client is not signaled\n");
+
+    if (broken(1)) { /* blocks on wine */
+    /* no event, APC nor completion: only signals on handle */
+    memset(&io, 0xcc, sizeof(io));
+    status = NtReadFile(client, NULL, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
+    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(!is_signaled(client), "client is signaled\n");
+
+    ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(is_signaled(client), "client is signaled\n");
+    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
+    ok(io.Information == sizeof(buf), "Information = %lu\n", io.Information);
+    }
+
+    /* event with no APC nor completion: signals only event */
+    memset(&io, 0xcc, sizeof(io));
+    status = NtReadFile(client, event, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
+    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(!is_signaled(client), "client is signaled\n");
+    ok(!is_signaled(event), "event is signaled\n");
+
+    ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(!is_signaled(client), "client is signaled\n");
+    ok(is_signaled(event), "event is not signaled\n");
+    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
+    ok(io.Information == sizeof(buf), "Information = %lu\n", io.Information);
+
+    /* APC with no event: handle is signaled */
+    ioapc_called = FALSE;
+    memset(&io, 0xcc, sizeof(io));
+    status = NtReadFile(client, NULL, ioapc, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
+    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(!is_signaled(client), "client is signaled\n");
+
+    ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(is_signaled(client), "client is signaled\n");
+    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
+    ok(io.Information == sizeof(buf), "Information = %lu\n", io.Information);
+
+    ok(!ioapc_called, "ioapc called\n");
+    SleepEx(0, TRUE);
+    ok(ioapc_called, "ioapc not called\n");
+
+    /* completion with no completion port: handle signaled */
+    memset(&io, 0xcc, sizeof(io));
+    status = NtReadFile(client, NULL, NULL, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
+    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(!is_signaled(client), "client is signaled\n");
+
+    ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(is_signaled(client), "client is not signaled\n");
+
+    port = CreateIoCompletionPort(client, NULL, 0xdeadbeef, 0);
+    ok(port != NULL, "CreateIoCompletionPort failed, error %u\n", GetLastError());
+
+    /* skipping completion on succcess: handle is signaled */
+    info.Flags = FILE_SKIP_COMPLETION_PORT_ON_SUCCESS;
+    status = pNtSetInformationFile(client, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok(is_signaled(client), "client is not signaled\n");
+
+    memset(&io, 0xcc, sizeof(io));
+    status = NtReadFile(client, NULL, NULL, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
+    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(!is_signaled(client), "client is signaled\n");
+
+    ret = WriteFile(client, buf, 1, &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(is_signaled(client), "client is not signaled\n");
+
+    /* skipping set event on handle: handle is never signaled */
+    info.Flags = FILE_SKIP_SET_EVENT_ON_HANDLE;
+    status = pNtSetInformationFile(client, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    todo_wine
+    ok(!is_signaled(client), "client is not signaled\n");
+
+    ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    todo_wine
+    ok(!is_signaled(client), "client is signaled\n");
+    test_queued_completion(port, &io, STATUS_SUCCESS, sizeof(buf));
+
+    if (broken(1)) { /* blocks on wine */
+    memset(&io, 0xcc, sizeof(io));
+    status = NtReadFile(client, NULL, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
+    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(!is_signaled(client), "client is signaled\n");
+    }
+
+    ret = WriteFile(client, buf, 1, &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    todo_wine
+    ok(!is_signaled(client), "client is signaled\n");
+
+    ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    todo_wine
+    ok(!is_signaled(client), "client is signaled\n");
+
+    CloseHandle(port);
+    CloseHandle(client);
+    CloseHandle(pipe);
+}
+
+struct blocking_thread_args
+{
+    HANDLE wait;
+    HANDLE done;
+    enum {
+        BLOCKING_THREAD_WRITE,
+        BLOCKING_THREAD_READ,
+        BLOCKING_THREAD_QUIT
+    } cmd;
+    HANDLE client;
+    HANDLE pipe;
+    HANDLE event;
+};
+
+static DWORD WINAPI blocking_thread(void *arg)
+{
+    struct blocking_thread_args *ctx = arg;
+    static const char buf[] = "testdata";
+    char read_buf[32];
+    DWORD res, num_bytes;
+    BOOL ret;
+
+    for (;;)
+    {
+        res = WaitForSingleObject(ctx->wait, 10000);
+        ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+        if (res != WAIT_OBJECT_0) break;
+        switch(ctx->cmd) {
+        case BLOCKING_THREAD_WRITE:
+            Sleep(100);
+            if(ctx->event)
+                ok(!is_signaled(ctx->event), "event is signaled\n");
+            ok(!ioapc_called, "ioapc called\n");
+            ok(!is_signaled(ctx->client), "client is signaled\n");
+            ok(is_signaled(ctx->pipe), "pipe is not signaled\n");
+            ret = WriteFile(ctx->pipe, buf, 1, &num_bytes, NULL);
+            ok(ret, "WriteFile failed, error %u\n", GetLastError());
+            break;
+        case BLOCKING_THREAD_READ:
+            Sleep(100);
+            if(ctx->event)
+                ok(!is_signaled(ctx->event), "event is signaled\n");
+            ok(!ioapc_called, "ioapc called\n");
+            ok(!is_signaled(ctx->client), "client is signaled\n");
+            ok(is_signaled(ctx->pipe), "pipe is not signaled\n");
+            ret = ReadFile(ctx->pipe, read_buf, 1, &num_bytes, NULL);
+            ok(ret, "WriteFile failed, error %u\n", GetLastError());
+            break;
+        case BLOCKING_THREAD_QUIT:
+            return 0;
+        default:
+            ok(0, "unvalid command\n");
+        }
+        SetEvent(ctx->done);
+    }
+
+    return 1;
+}
+
+static void test_blocking(ULONG options)
+{
+    struct blocking_thread_args ctx;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name;
+    char read_buf[16];
+    HANDLE thread;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    DWORD res, num_bytes;
+    BOOL ret;
+
+    ctx.wait = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ctx.done = CreateEventW(NULL, FALSE, FALSE, NULL);
+    thread = CreateThread(NULL, 0, blocking_thread, &ctx, 0, 0);
+    ok(thread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %x\n", GetLastError());
+
+    status = create_pipe(&ctx.pipe, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         options);
+    ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile returned %x\n", status);
+
+    pRtlInitUnicodeString(&name, testpipe_nt);
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &name;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    status = NtCreateFile(&ctx.client, SYNCHRONIZE | GENERIC_READ | GENERIC_WRITE, &attr, &io,
+                          NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
+                          options, NULL, 0 );
+    ok(status == STATUS_SUCCESS, "NtCreateFile returned %x\n", status);
+
+    ok(is_signaled(ctx.client), "client is not signaled\n");
+    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
+
+    /* blocking read with no event nor APC */
+    ioapc_called = FALSE;
+    memset(&io, 0xff, sizeof(io));
+    ctx.cmd = BLOCKING_THREAD_WRITE;
+    ctx.event = NULL;
+    SetEvent(ctx.wait);
+    status = NtReadFile(ctx.client, NULL, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
+    ok(status == STATUS_SUCCESS, "status = %x\n", status);
+    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
+    ok(io.Information == 1, "Information = %lu\n", io.Information);
+    ok(is_signaled(ctx.client), "client is not signaled\n");
+    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
+
+    res = WaitForSingleObject(ctx.done, 10000);
+    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+
+    /* blocking read with event and APC */
+    ioapc_called = FALSE;
+    memset(&io, 0xff, sizeof(io));
+    ctx.cmd = BLOCKING_THREAD_WRITE;
+    ctx.event = CreateEventW(NULL, TRUE, TRUE, NULL);
+    SetEvent(ctx.wait);
+    status = NtReadFile(ctx.client, ctx.event, ioapc, &io, &io, read_buf,
+                        sizeof(read_buf), NULL, NULL);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "status = %x\n", status);
+    if (status == STATUS_PENDING) WaitForSingleObject(ctx.event, INFINITE);
+    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
+    ok(io.Information == 1, "Information = %lu\n", io.Information);
+    ok(is_signaled(ctx.event), "event is not signaled\n");
+    todo_wine
+    ok(is_signaled(ctx.client), "client is not signaled\n");
+    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
+
+    if (!(options & FILE_SYNCHRONOUS_IO_ALERT))
+        ok(!ioapc_called, "ioapc called\n");
+    SleepEx(0, TRUE); /* alertable wait state */
+    ok(ioapc_called, "ioapc not called\n");
+
+    res = WaitForSingleObject(ctx.done, 10000);
+    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+    ioapc_called = FALSE;
+    CloseHandle(ctx.event);
+    ctx.event = NULL;
+
+    /* blocking flush */
+    ret = WriteFile(ctx.client, read_buf, 1, &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+
+    ioapc_called = FALSE;
+    memset(&io, 0xff, sizeof(io));
+    ctx.cmd = BLOCKING_THREAD_READ;
+    SetEvent(ctx.wait);
+    status = NtFlushBuffersFile(ctx.client, &io);
+    ok(status == STATUS_SUCCESS, "status = %x\n", status);
+    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
+    ok(io.Information == 0, "Information = %lu\n", io.Information);
+    ok(is_signaled(ctx.client), "client is not signaled\n");
+
+    res = WaitForSingleObject(ctx.done, 10000);
+    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+
+    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
+    CloseHandle(ctx.pipe);
+    CloseHandle(ctx.client);
+
+    /* flush is blocking even in overlapped mode */
+    create_pipe_pair(&ctx.pipe, &ctx.client, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                     PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 4096);
+
+    ok(is_signaled(ctx.client), "client is not signaled\n");
+    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
+
+    ret = WriteFile(ctx.client, read_buf, 1, &num_bytes, NULL);
+    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+
+    ok(is_signaled(ctx.client), "client is not signaled\n");
+    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
+
+    ioapc_called = FALSE;
+    memset(&io, 0xff, sizeof(io));
+    ctx.cmd = BLOCKING_THREAD_READ;
+    SetEvent(ctx.wait);
+    status = NtFlushBuffersFile(ctx.client, &io);
+    ok(status == STATUS_SUCCESS, "status = %x\n", status);
+    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
+    ok(io.Information == 0, "Information = %lu\n", io.Information);
+    /* client signaling is inconsistent in this case */
+
+    res = WaitForSingleObject(ctx.done, 10000);
+    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+
+    CloseHandle(ctx.pipe);
+    CloseHandle(ctx.client);
+
+    ctx.cmd = BLOCKING_THREAD_QUIT;
+    SetEvent(ctx.wait);
+    res = WaitForSingleObject(thread, 10000);
+    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+
+    CloseHandle(ctx.wait);
+    CloseHandle(ctx.done);
+    CloseHandle(thread);
 }
 
 static void test_volume_info(void)
@@ -2091,6 +2404,10 @@ START_TEST(pipe)
 
     trace("starting completion tests\n");
     test_completion();
+
+    trace("starting blocking tests\n");
+    test_blocking(FILE_SYNCHRONOUS_IO_NONALERT);
+    test_blocking(FILE_SYNCHRONOUS_IO_ALERT);
 
     trace("starting FILE_PIPE_INFORMATION tests\n");
     test_filepipeinfo();
