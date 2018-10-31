@@ -131,7 +131,7 @@
 @ stdcall WsRemoveHeader(ptr long ptr)
 @ stdcall WsRemoveMappedHeader(ptr ptr ptr)
 @ stub WsRemoveNode
-@ stub WsRequestReply
+@ stdcall WsRequestReply(ptr ptr ptr long ptr long ptr ptr long ptr ptr long ptr ptr)
 @ stub WsRequestSecurityToken
 @ stdcall WsResetChannel(ptr ptr)
 @ stdcall WsResetError(ptr)

@@ -2007,6 +2007,121 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
     return hr;
 }
 
+static HRESULT request_reply( struct channel *channel, WS_MESSAGE *request,
+                              const WS_MESSAGE_DESCRIPTION *request_desc, WS_WRITE_OPTION write_option,
+                              const void *request_body, ULONG request_size, WS_MESSAGE *reply,
+                              const WS_MESSAGE_DESCRIPTION *reply_desc, WS_READ_OPTION read_option,
+                              WS_HEAP *heap, void *value, ULONG size )
+{
+    HRESULT hr;
+    WsInitializeMessage( request, WS_REQUEST_MESSAGE, NULL, NULL );
+    if ((hr = WsAddressMessage( request, &channel->addr, NULL )) != S_OK) return hr;
+    if ((hr = message_set_action( request, request_desc->action )) != S_OK) return hr;
+
+    if ((hr = init_writer( channel )) != S_OK) return hr;
+    if ((hr = write_message( channel, request, request_desc->bodyElementDescription, write_option, request_body,
+                             request_size )) != S_OK) return hr;
+    if ((hr = send_message( channel, request )) != S_OK) return hr;
+
+    return receive_message( channel, reply, &reply_desc, 1, WS_RECEIVE_OPTIONAL_MESSAGE, read_option, heap,
+                            value, size, NULL );
+}
+
+struct request_reply
+{
+    struct task                   task;
+    struct channel               *channel;
+    WS_MESSAGE                   *request;
+    const WS_MESSAGE_DESCRIPTION *request_desc;
+    WS_WRITE_OPTION               write_option;
+    const void                   *request_body;
+    ULONG                         request_size;
+    WS_MESSAGE                   *reply;
+    const WS_MESSAGE_DESCRIPTION *reply_desc;
+    WS_READ_OPTION                read_option;
+    WS_HEAP                      *heap;
+    void                         *value;
+    ULONG                         size;
+    WS_ASYNC_CONTEXT              ctx;
+};
+
+static void request_reply_proc( struct task *task )
+{
+    struct request_reply *r = (struct request_reply *)task;
+    HRESULT hr;
+
+    hr = request_reply( r->channel, r->request, r->request_desc, r->write_option, r->request_body, r->request_size,
+                        r->reply, r->reply_desc, r->read_option, r->heap, r->value, r->size );
+
+    TRACE( "calling %p(%08x)\n", r->ctx.callback, hr );
+    r->ctx.callback( hr, WS_LONG_CALLBACK, r->ctx.callbackState );
+    TRACE( "%p returned\n", r->ctx.callback );
+}
+
+static HRESULT queue_request_reply( struct channel *channel, WS_MESSAGE *request,
+                                    const WS_MESSAGE_DESCRIPTION *request_desc, WS_WRITE_OPTION write_option,
+                                    const void *request_body, ULONG request_size, WS_MESSAGE *reply,
+                                    const WS_MESSAGE_DESCRIPTION *reply_desc, WS_READ_OPTION read_option,
+                                    WS_HEAP *heap, void *value, ULONG size, const WS_ASYNC_CONTEXT *ctx )
+{
+    struct request_reply *r;
+
+    if (!(r = heap_alloc( sizeof(*r) ))) return E_OUTOFMEMORY;
+    r->task.proc    = request_reply_proc;
+    r->channel      = channel;
+    r->request      = request;
+    r->request_desc = request_desc;
+    r->write_option = write_option;
+    r->request_body = request_body;
+    r->request_size = request_size;
+    r->reply        = reply;
+    r->reply_desc   = reply_desc;
+    r->read_option  = read_option;
+    r->heap         = heap;
+    r->value        = value;
+    r->size         = size;
+    r->ctx          = *ctx;
+    return queue_task( &channel->recv_q, &r->task );
+}
+
+/**************************************************************************
+ *          WsRequestReply		[webservices.@]
+ */
+HRESULT WINAPI WsRequestReply( WS_CHANNEL *handle, WS_MESSAGE *request, const WS_MESSAGE_DESCRIPTION *request_desc,
+                               WS_WRITE_OPTION write_option, const void *request_body, ULONG request_size,
+                               WS_MESSAGE *reply, const WS_MESSAGE_DESCRIPTION *reply_desc, WS_READ_OPTION read_option,
+                               WS_HEAP *heap, void *value, ULONG size, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %p %08x %p %u %p %p %08x %p %p %u %p %p\n", handle, request, request_desc, write_option,
+           request_body, request_size, reply, reply_desc, read_option, heap, value, size, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!channel || !request || !reply) return E_INVALIDARG;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if (ctx)
+        hr = queue_request_reply( channel, request, request_desc, write_option, request_body, request_size, reply,
+                                  reply_desc, read_option, heap, value, size, ctx );
+    else
+        hr = request_reply( channel, request, request_desc, write_option, request_body, request_size, reply,
+                            reply_desc, read_option, heap, value, size );
+
+    LeaveCriticalSection( &channel->cs );
+    TRACE( "returning %08x\n", hr );
+    return hr;
+}
+
 /**************************************************************************
  *          WsReadMessageStart		[webservices.@]
  */
