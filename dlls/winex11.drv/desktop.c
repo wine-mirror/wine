@@ -173,12 +173,21 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
  */
 BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
 {
+    static const WCHAR rootW[] = {'r','o','o','t',0};
     XSetWindowAttributes win_attr;
     Window win;
     Display *display = thread_init_display();
     RECT rect;
+    WCHAR name[MAX_PATH];
 
-    TRACE( "%u x %u\n", width, height );
+    if (!GetUserObjectInformationW( GetThreadDesktop( GetCurrentThreadId() ),
+                                    UOI_NAME, name, sizeof(name), NULL ))
+        name[0] = 0;
+
+    TRACE( "%s %ux%u\n", debugstr_w(name), width, height );
+
+    /* magic: desktop "root" means use the root window */
+    if (!lstrcmpiW( name, rootW )) return FALSE;
 
     /* Create window */
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | EnterWindowMask |

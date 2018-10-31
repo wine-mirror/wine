@@ -670,12 +670,10 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
 /* create the desktop and the associated driver window, and make it the current desktop */
 static BOOL create_desktop( HMODULE driver, const WCHAR *name, unsigned int width, unsigned int height )
 {
-    static const WCHAR rootW[] = {'r','o','o','t',0};
     BOOL ret = FALSE;
     BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
 
-    /* magic: desktop "root" means use the root window */
-    if (driver && strcmpiW( name, rootW ))
+    if (driver)
     {
         create_desktop_func = (void *)GetProcAddress( driver, "wine_create_desktop" );
         if (create_desktop_func) ret = create_desktop_func( width, height );
