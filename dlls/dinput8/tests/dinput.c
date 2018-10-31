@@ -377,6 +377,17 @@ static BOOL CALLBACK enum_devices_callback(const DIDEVICEINSTANCEA *instance, vo
           instance->wUsagePage,
           instance->wUsage);
 
+    if ((instance->dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD ||
+           (instance->dwDevType & 0xff) == DI8DEVTYPE_MOUSE) {
+        const char *device = ((instance->dwDevType & 0xff) ==
+                                   DI8DEVTYPE_KEYBOARD) ? "Keyboard" : "Mouse";
+        todo_wine
+        ok(IsEqualGUID(&instance->guidInstance, &instance->guidProduct),
+           "%s guidInstance (%s) does not match guidProduct (%s)\n",
+           device, wine_dbgstr_guid(&instance->guidInstance),
+           wine_dbgstr_guid(&instance->guidProduct));
+    }
+
     enum_test->device_count++;
     return enum_test->return_value;
 }
