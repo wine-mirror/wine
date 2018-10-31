@@ -59,6 +59,7 @@ struct OIDFunctionSet
 
 struct OIDFunction
 {
+    HMODULE hModule;
     DWORD encoding;
     CRYPT_OID_FUNC_ENTRY entry;
     struct list next;
@@ -271,6 +272,7 @@ BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
                 else
                     func->entry.pszOID = rgFuncEntry[i].pszOID;
                 func->entry.pvFuncAddr = rgFuncEntry[i].pvFuncAddr;
+                func->hModule = hModule;
                 list_add_tail(&set->functions, &func->next);
             }
             else
@@ -428,6 +430,38 @@ BOOL WINAPI CryptGetOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
     return ret;
 }
 
+static BOOL is_module_registered(HMODULE hModule)
+{
+    struct OIDFunctionSet *set;
+    BOOL ret = FALSE;
+
+    EnterCriticalSection(&funcSetCS);
+
+    LIST_FOR_EACH_ENTRY(set, &funcSets, struct OIDFunctionSet, next)
+    {
+        struct OIDFunction *function;
+
+        EnterCriticalSection(&set->cs);
+
+        LIST_FOR_EACH_ENTRY(function, &set->functions, struct OIDFunction, next)
+        {
+            if (function->hModule == hModule)
+            {
+                ret = TRUE;
+                break;
+            }
+        }
+
+        LeaveCriticalSection(&set->cs);
+
+        if (ret) break;
+    }
+
+    LeaveCriticalSection(&funcSetCS);
+
+    return ret;
+}
+
 BOOL WINAPI CryptFreeOIDFunctionAddress(HCRYPTOIDFUNCADDR hFuncAddr,
  DWORD dwFlags)
 {
@@ -441,9 +475,12 @@ BOOL WINAPI CryptFreeOIDFunctionAddress(HCRYPTOIDFUNCADDR hFuncAddr,
     {
         struct FuncAddr *addr = hFuncAddr;
 
-        CryptMemFree(addr->dllList);
-        FreeLibrary(addr->lib);
-        CryptMemFree(addr);
+        if (!is_module_registered(addr->lib))
+        {
+            CryptMemFree(addr->dllList);
+            FreeLibrary(addr->lib);
+            CryptMemFree(addr);
+        }
     }
     return TRUE;
 }
