@@ -602,6 +602,79 @@ static void test_SetScrollInfo(void)
     DestroyWindow(mainwnd);
 }
 
+static WNDPROC scrollbar_wndproc;
+
+static LRESULT CALLBACK subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_CREATE && ((CREATESTRUCTA*)lparam)->lpCreateParams)
+        return DefWindowProcA(hwnd, msg, wparam, lparam);
+
+    return CallWindowProcA(scrollbar_wndproc, hwnd, msg, wparam, lparam);
+}
+
+static void test_subclass(void)
+{
+    SCROLLBARINFO scroll_info;
+    WNDCLASSEXA class_info;
+    WNDCLASSA wc;
+    LRESULT res;
+    HWND hwnd;
+    BOOL r;
+
+    r = GetClassInfoExA(GetModuleHandleA(NULL), "SCROLLBAR", &class_info);
+    ok(r, "GetClassInfoEx failed: %u\n", GetLastError());
+    scrollbar_wndproc = class_info.lpfnWndProc;
+
+    memset(&wc, 0, sizeof(wc));
+    wc.cbWndExtra = class_info.cbWndExtra + 3; /* more space than needed works */
+    wc.hInstance = GetModuleHandleA(NULL);
+    wc.lpszClassName = "MyTestSubclass";
+    wc.lpfnWndProc = subclass_proc;
+    r = RegisterClassA(&wc);
+    ok(r, "RegisterClass failed: %u\n", GetLastError());
+
+    hwnd = CreateWindowExA( 0, "MyTestSubclass", "Scroll", WS_OVERLAPPEDWINDOW,
+                            CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, NULL, NULL, GetModuleHandleA(NULL), 0 );
+    ok(hwnd != NULL, "Failed to create window: %u\n", GetLastError());
+
+    memset(&scroll_info, 0xcc, sizeof(scroll_info));
+    scroll_info.cbSize = sizeof(scroll_info);
+    res = SendMessageA(hwnd, SBM_GETSCROLLBARINFO, 0, (LPARAM)&scroll_info);
+    todo_wine
+    ok(res == 1, "SBM_GETSCROLLBARINFO returned %lu\n", res);
+
+    DestroyWindow(hwnd);
+
+    /* if we skip calling wndproc for WM_CREATE, window is not considered a scrollbar */
+    hwnd = CreateWindowExA( 0, "MyTestSubclass", "Scroll", WS_OVERLAPPEDWINDOW,
+                            CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, NULL, NULL, GetModuleHandleA(NULL), (void *)1 );
+    ok(hwnd != NULL, "Failed to create window: %u\n", GetLastError());
+
+    memset(&scroll_info, 0xcc, sizeof(scroll_info));
+    scroll_info.cbSize = sizeof(scroll_info);
+    res = SendMessageA(hwnd, SBM_GETSCROLLBARINFO, 0, (LPARAM)&scroll_info);
+    ok(!res, "SBM_GETSCROLLBARINFO returned %lu\n", res);
+
+    DestroyWindow(hwnd);
+
+    /* not enough space in extra data */
+    wc.cbWndExtra = class_info.cbWndExtra - 1;
+    wc.lpszClassName = "MyTestSubclass2";
+    r = RegisterClassA(&wc);
+    ok(r, "RegisterClass failed: %u\n", GetLastError());
+
+    hwnd = CreateWindowExA( 0, "MyTestSubclass2", "Scroll", WS_OVERLAPPEDWINDOW,
+                            CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, NULL, NULL, GetModuleHandleA(NULL), 0 );
+    ok(hwnd != NULL, "Failed to create window: %u\n", GetLastError());
+
+    memset(&scroll_info, 0xcc, sizeof(scroll_info));
+    scroll_info.cbSize = sizeof(scroll_info);
+    res = SendMessageA(hwnd, SBM_GETSCROLLBARINFO, 0, (LPARAM)&scroll_info);
+    ok(!res, "SBM_GETSCROLLBARINFO returned %lu\n", res);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST ( scroll )
 {
     WNDCLASSA wc;
@@ -626,6 +699,7 @@ START_TEST ( scroll )
     test_GetScrollBarInfo();
     scrollbar_test_track();
     test_SetScrollInfo();
+    test_subclass();
 
     /* Some test results vary depending of theming being active or not */
     hUxtheme = LoadLibraryA("uxtheme.dll");
