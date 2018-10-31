@@ -129,7 +129,9 @@ typedef struct
 					   should be sent to the first parent. */
 	HWND hwndListBox;		/* handle of ComboBox's listbox or NULL */
 	INT wheelDeltaRemainder;        /* scroll wheel delta left over after scrolling whole lines */
-       WCHAR *cue_banner_text;
+	WCHAR *cue_banner_text;
+	BOOL cue_banner_draw_focused;
+
 	/*
 	 *	only for multi line controls
 	 */
@@ -2181,7 +2183,7 @@ static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 	} else
 		x += EDIT_PaintText(es, dc, x, y, line, 0, ll, FALSE);
 
-       if (es->cue_banner_text && es->text_length == 0 && !(es->flags & EF_FOCUSED))
+       if (es->cue_banner_text && es->text_length == 0 && (!(es->flags & EF_FOCUSED) || es->cue_banner_draw_focused))
        {
 	       SetTextColor(dc, GetSysColor(COLOR_GRAYTEXT));
 	       TextOutW(dc, x, y, es->cue_banner_text, strlenW(es->cue_banner_text));
@@ -4170,16 +4172,14 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
  *	EM_SETCUEBANNER
  *
  */
-static BOOL EDIT_EM_SetCueBanner(EDITSTATE *es, BOOL focus, const WCHAR *cue_text)
+static BOOL EDIT_EM_SetCueBanner(EDITSTATE *es, BOOL draw_focused, const WCHAR *cue_text)
 {
     if (es->style & ES_MULTILINE || !cue_text)
         return FALSE;
 
-    if (focus)
-        FIXME("cue banner for focused control not implemented.\n");
-
     heap_free(es->cue_banner_text);
     es->cue_banner_text = heap_strdupW(cue_text);
+    es->cue_banner_draw_focused = draw_focused;
 
     return TRUE;
 }
