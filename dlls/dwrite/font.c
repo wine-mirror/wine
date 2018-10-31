@@ -3883,6 +3883,8 @@ HRESULT create_font_collection(IDWriteFactory5 *factory, IDWriteFontFileEnumerat
             if (FAILED(hr))
                 break;
         }
+
+        IDWriteFontFileStream_Release(stream);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(fileenum, fileenum2, &scannedfiles, struct fontfile_enum, entry) {
