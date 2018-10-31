@@ -3841,7 +3841,7 @@ static HRESULT str_to_float( const unsigned char *str, ULONG len, float *ret )
     return S_OK;
 }
 
-static HRESULT str_to_guid( const unsigned char *str, ULONG len, GUID *ret )
+HRESULT str_to_guid( const unsigned char *str, ULONG len, GUID *ret )
 {
     static const unsigned char hex[] =
     {

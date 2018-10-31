@@ -71,6 +71,7 @@ HRESULT read_header( WS_XML_READER *, const WS_XML_STRING *, const WS_XML_STRING
 HRESULT create_header_buffer( WS_XML_READER *, WS_HEAP *, WS_XML_BUFFER ** ) DECLSPEC_HIDDEN;
 HRESULT text_to_text( const WS_XML_TEXT *, const WS_XML_TEXT *, ULONG *, WS_XML_TEXT ** ) DECLSPEC_HIDDEN;
 HRESULT text_to_utf8text( const WS_XML_TEXT *, const WS_XML_UTF8_TEXT *, ULONG *, WS_XML_UTF8_TEXT ** ) DECLSPEC_HIDDEN;
+HRESULT str_to_guid( const unsigned char *, ULONG, GUID * ) DECLSPEC_HIDDEN;
 WS_XML_UTF8_TEXT *alloc_utf8_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;
 WS_XML_UTF16_TEXT *alloc_utf16_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;
 WS_XML_BASE64_TEXT *alloc_base64_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;

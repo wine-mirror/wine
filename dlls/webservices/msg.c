@@ -846,21 +846,33 @@ static HRESULT read_message_id( WS_XML_READER *reader, GUID *ret )
 {
     const WS_XML_NODE *node;
     const WS_XML_TEXT_NODE *text;
-    const WS_XML_UNIQUE_ID_TEXT *id;
     HRESULT hr;
 
     if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
     if ((hr = WsGetReaderNode( reader, &node, NULL )) != S_OK) return hr;
     if (node->nodeType != WS_XML_NODE_TYPE_TEXT) return WS_E_INVALID_FORMAT;
     text = (const WS_XML_TEXT_NODE *)node;
-    if (text->text->textType != WS_XML_TEXT_TYPE_UNIQUE_ID)
+
+    switch (text->text->textType)
     {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text->text;
+        if (utf8->value.length != 45 || memcmp( utf8->value.bytes, "urn:uuid:", 9 ))
+            return WS_E_INVALID_FORMAT;
+
+        return str_to_guid( utf8->value.bytes + 9, utf8->value.length - 9, ret );
+    }
+    case WS_XML_TEXT_TYPE_UNIQUE_ID:
+    {
+        const WS_XML_UNIQUE_ID_TEXT *id = (const WS_XML_UNIQUE_ID_TEXT *)text->text;
+        *ret = id->value;
+        return S_OK;
+    }
+    default:
         FIXME( "unhandled text type %u\n", text->text->textType );
         return E_NOTIMPL;
     }
-    id = (const WS_XML_UNIQUE_ID_TEXT *)text->text;
-    *ret = id->value;
-    return S_OK;
 }
 
 static HRESULT read_envelope_start( struct msg *msg, WS_XML_READER *reader )
