@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -48,6 +49,37 @@ static HINSTANCE instance;
 #else
 #define COMPAT_E_INVALID_CALL XAUDIO2_E_INVALID_CALL
 #define COMPAT_E_DEVICE_INVALIDATED XAUDIO2_E_DEVICE_INVALIDATED
+#endif
+
+#if XAUDIO2_VER != 0 && defined(__i386__)
+/* EVE Online uses an OnVoiceProcessingPassStart callback which corrupts %esi. */
+#define IXAudio2VoiceCallback_OnVoiceProcessingPassStart(a, b) call_on_voice_processing_pass_start(a, b)
+extern void call_on_voice_processing_pass_start(IXAudio2VoiceCallback *This, UINT32 BytesRequired);
+__ASM_GLOBAL_FUNC( call_on_voice_processing_pass_start,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %esi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %esi,-4\n\t")
+                   "pushl %edi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %edi,-8\n\t")
+                   "subl $8,%esp\n\t"
+                   "pushl 12(%ebp)\n\t"     /* BytesRequired */
+                   "pushl 8(%ebp)\n\t"      /* This */
+                   "movl 8(%ebp),%eax\n\t"
+                   "movl 0(%eax),%eax\n\t"
+                   "call *0(%eax)\n\t"      /* This->lpVtbl->OnVoiceProcessingPassStart */
+                   "leal -8(%ebp),%esp\n\t"
+                   "popl %edi\n\t"
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
+                   "popl %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" )
 #endif
 
 static void dump_fmt(const WAVEFORMATEX *fmt)
