@@ -1150,27 +1150,21 @@ static void set_blocking( SOCKET socket, BOOL blocking )
     ioctlsocket( socket, FIONBIO, &state );
 }
 
-static int sock_peek( SOCKET socket )
-{
-    int ret;
-    char byte;
-
-    set_blocking( socket, FALSE );
-    ret = recv( socket, &byte, 1, MSG_PEEK );
-    set_blocking( socket, TRUE );
-    return ret;
-}
-
 static int sock_recv( SOCKET socket, char *buf, int len )
 {
-    int count, ret = 0;
+    int count, ret;
+
+    if ((ret = recv( socket, buf, len, 0 )) <= 0) return ret;
+    len -= ret;
+
+    set_blocking( socket, FALSE );
     for (;;)
     {
         if ((count = recv( socket, buf + ret, len, 0 )) <= 0) break;
         ret += count;
         len -= count;
-        if (sock_peek( socket ) != 1) break;
     }
+    set_blocking( socket, TRUE );
     return ret;
 }
 
