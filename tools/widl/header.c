@@ -369,6 +369,7 @@ void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
       case TYPE_BASIC:
         if (type_basic_get_type(t) != TYPE_BASIC_INT32 &&
             type_basic_get_type(t) != TYPE_BASIC_INT64 &&
+            type_basic_get_type(t) != TYPE_BASIC_LONG &&
             type_basic_get_type(t) != TYPE_BASIC_HYPER)
         {
           if (type_basic_get_sign(t) < 0) fprintf(h, "signed ");
@@ -388,6 +389,12 @@ void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
         case TYPE_BASIC_ERROR_STATUS_T: fprintf(h, "error_status_t"); break;
         case TYPE_BASIC_HANDLE: fprintf(h, "handle_t"); break;
         case TYPE_BASIC_INT32:
+          if (type_basic_get_sign(t) > 0)
+            fprintf(h, "UINT32");
+          else
+            fprintf(h, "INT32");
+          break;
+        case TYPE_BASIC_LONG:
           if (type_basic_get_sign(t) > 0)
             fprintf(h, "ULONG");
           else

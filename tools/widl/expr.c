@@ -50,6 +50,7 @@ static int is_integer_type(const type_t *type)
         case TYPE_BASIC_INT64:
         case TYPE_BASIC_INT:
         case TYPE_BASIC_INT3264:
+        case TYPE_BASIC_LONG:
         case TYPE_BASIC_CHAR:
         case TYPE_BASIC_HYPER:
         case TYPE_BASIC_BYTE:
@@ -82,6 +83,7 @@ static int is_signed_integer_type(const type_t *type)
         case TYPE_BASIC_INT64:
         case TYPE_BASIC_INT:
         case TYPE_BASIC_INT3264:
+        case TYPE_BASIC_LONG:
             return type_basic_get_sign(type) < 0;
         case TYPE_BASIC_CHAR:
             return TRUE;

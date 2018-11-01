@@ -208,7 +208,7 @@ static typelib_t *current_typelib;
 %token tIMPORT tIMPORTLIB
 %token tIN tIN_LINE tINLINE
 %token tINPUTSYNC
-%token tINT tINT3264 tINT64
+%token tINT tINT32 tINT3264 tINT64
 %token tINTERFACE
 %token tLCID
 %token tLENGTHIS tLIBRARY
@@ -815,10 +815,11 @@ m_int:
 int_std:  tINT					{ $$ = type_new_int(TYPE_BASIC_INT, 0); }
 	| tSHORT m_int				{ $$ = type_new_int(TYPE_BASIC_INT16, 0); }
 	| tSMALL				{ $$ = type_new_int(TYPE_BASIC_INT8, 0); }
-	| tLONG m_int				{ $$ = type_new_int(TYPE_BASIC_INT32, 0); }
+	| tLONG m_int				{ $$ = type_new_int(TYPE_BASIC_LONG, 0); }
 	| tHYPER m_int				{ $$ = type_new_int(TYPE_BASIC_HYPER, 0); }
 	| tINT64				{ $$ = type_new_int(TYPE_BASIC_INT64, 0); }
 	| tCHAR					{ $$ = type_new_int(TYPE_BASIC_CHAR, 0); }
+	| tINT32				{ $$ = type_new_int(TYPE_BASIC_INT32, 0); }
 	| tINT3264				{ $$ = type_new_int(TYPE_BASIC_INT3264, 0); }
 	;
 
@@ -1408,6 +1409,7 @@ static int is_allowed_range_type(const type_t *type)
         case TYPE_BASIC_INT64:
         case TYPE_BASIC_INT:
         case TYPE_BASIC_INT3264:
+        case TYPE_BASIC_LONG:
         case TYPE_BASIC_BYTE:
         case TYPE_BASIC_CHAR:
         case TYPE_BASIC_WCHAR:
@@ -2399,6 +2401,7 @@ static int is_allowed_conf_type(const type_t *type)
         case TYPE_BASIC_INT32:
         case TYPE_BASIC_INT64:
         case TYPE_BASIC_INT:
+        case TYPE_BASIC_LONG:
         case TYPE_BASIC_CHAR:
         case TYPE_BASIC_HYPER:
         case TYPE_BASIC_BYTE:

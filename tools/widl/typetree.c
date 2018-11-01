@@ -377,6 +377,7 @@ static int is_valid_bitfield_type(const type_t *type)
         case TYPE_BASIC_INT64:
         case TYPE_BASIC_INT:
         case TYPE_BASIC_INT3264:
+        case TYPE_BASIC_LONG:
         case TYPE_BASIC_CHAR:
         case TYPE_BASIC_HYPER:
         case TYPE_BASIC_BYTE:

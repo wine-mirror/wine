@@ -208,7 +208,8 @@ unsigned char get_basic_fc(const type_t *type)
     {
     case TYPE_BASIC_INT8: return (sign <= 0 ? FC_SMALL : FC_USMALL);
     case TYPE_BASIC_INT16: return (sign <= 0 ? FC_SHORT : FC_USHORT);
-    case TYPE_BASIC_INT32: return (sign <= 0 ? FC_LONG : FC_ULONG);
+    case TYPE_BASIC_INT32:
+    case TYPE_BASIC_LONG: return (sign <= 0 ? FC_LONG : FC_ULONG);
     case TYPE_BASIC_INT64: return FC_HYPER;
     case TYPE_BASIC_INT: return (sign <= 0 ? FC_LONG : FC_ULONG);
     case TYPE_BASIC_INT3264: return (sign <= 0 ? FC_INT3264 : FC_UINT3264);
@@ -234,6 +235,7 @@ static unsigned char get_basic_fc_signed(const type_t *type)
     case TYPE_BASIC_INT64: return FC_HYPER;
     case TYPE_BASIC_INT: return FC_LONG;
     case TYPE_BASIC_INT3264: return FC_INT3264;
+    case TYPE_BASIC_LONG: return FC_LONG;
     case TYPE_BASIC_BYTE: return FC_BYTE;
     case TYPE_BASIC_CHAR: return FC_CHAR;
     case TYPE_BASIC_WCHAR: return FC_WCHAR;

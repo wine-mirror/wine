@@ -156,6 +156,7 @@ unsigned short get_type_vt(type_t *t)
       else
         return VT_INT;
     case TYPE_BASIC_INT32:
+    case TYPE_BASIC_LONG:
     case TYPE_BASIC_ERROR_STATUS_T:
       if (type_basic_get_sign(t) > 0)
         return VT_UI4;
