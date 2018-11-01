@@ -1496,6 +1496,7 @@ static WCHAR *load_ttf_name_id( const BYTE *mem, DWORD_PTR size, DWORD id )
 struct add_font_param
 {
     GpFontCollection *collection;
+    BOOL is_system;
     GpStatus stat;
 };
 
@@ -1541,6 +1542,7 @@ GpStatus WINGDIPAPI GdipPrivateAddMemoryFont(GpFontCollection* fontCollection,
         lfw.lfPitchAndFamily = 0;
 
         param.collection = fontCollection;
+        param.is_system = FALSE;
         if (!EnumFontFamiliesExW(hdc, &lfw, add_font_proc, (LPARAM)&param, 0))
             ret = param.stat;
 
@@ -1651,6 +1653,9 @@ static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
 
     if ((stat = GdipCreateFontFamilyFromName(lfw->lfFaceName, NULL, &family)) != Ok)
     {
+        WARN("Failed to create font family for %s, status %d.\n", debugstr_w(lfw->lfFaceName), stat);
+        if (param->is_system)
+            return 1;
         param->stat = stat;
         return 0;
     }
@@ -1691,6 +1696,7 @@ GpStatus WINGDIPAPI GdipNewInstalledFontCollection(
         lfw.lfPitchAndFamily = 0;
 
         param.collection = &installedFontCollection;
+        param.is_system = TRUE;
         if (!EnumFontFamiliesExW(hdc, &lfw, add_font_proc, (LPARAM)&param, 0))
         {
             free_installed_fonts();
