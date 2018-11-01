@@ -336,8 +336,8 @@
 @ thiscall -arch=i386 ?_DoYield@?$_SpinWait@$0A@@details@Concurrency@@IAEXXZ(ptr) msvcr120.?_DoYield@?$_SpinWait@$0A@@details@Concurrency@@IAEXXZ
 @ cdecl -arch=win64 ?_DoYield@?$_SpinWait@$0A@@details@Concurrency@@IEAAXXZ(ptr) msvcr120.?_DoYield@?$_SpinWait@$0A@@details@Concurrency@@IEAAXXZ
 @ cdecl ?_Get@_CurrentScheduler@details@Concurrency@@SA?AV_Scheduler@23@XZ(ptr) msvcr120.?_Get@_CurrentScheduler@details@Concurrency@@SA?AV_Scheduler@23@XZ
-@ stub -arch=win32 ?_GetCombinableSize@details@Concurrency@@YAIXZ
-@ stub -arch=win64 ?_GetCombinableSize@details@Concurrency@@YA_KXZ
+@ cdecl -arch=win32 ?_GetCombinableSize@details@Concurrency@@YAIXZ() msvcp120.?_GetCombinableSize@details@Concurrency@@YAIXZ
+@ cdecl -arch=win64 ?_GetCombinableSize@details@Concurrency@@YA_KXZ() msvcp120.?_GetCombinableSize@details@Concurrency@@YA_KXZ
 @ stub -arch=win32 ?_GetConcRTTraceInfo@Concurrency@@YAPBU_CONCRT_TRACE_INFO@details@1@XZ
 @ stub -arch=win64 ?_GetConcRTTraceInfo@Concurrency@@YAPEBU_CONCRT_TRACE_INFO@details@1@XZ
 @ cdecl ?_GetConcurrency@details@Concurrency@@YAIXZ() msvcr120.?_GetConcurrency@details@Concurrency@@YAIXZ

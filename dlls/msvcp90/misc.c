@@ -2578,6 +2578,14 @@ MSVCP_bool __cdecl is_current_task_group_canceling(void)
 {
     return Context_IsCurrentTaskCollectionCanceling();
 }
+
+/* ?_GetCombinableSize@details@Concurrency@@YAIXZ */
+/* ?_GetCombinableSize@details@Concurrency@@YA_KXZ */
+MSVCP_size_t __cdecl _GetCombinableSize(void)
+{
+    FIXME("() stub\n");
+    return 11;
+}
 #endif
 
 #if _MSVCP_VER >= 140
