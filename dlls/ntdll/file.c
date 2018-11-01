@@ -2661,8 +2661,8 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         {
             FILE_IO_COMPLETION_NOTIFICATION_INFORMATION *info = ptr;
 
-            if (info->Flags & ~FILE_SKIP_COMPLETION_PORT_ON_SUCCESS)
-                FIXME( "Unsupported completion flags %x\n", info->Flags );
+            if (info->Flags & FILE_SKIP_SET_USER_EVENT_ON_FAST_IO)
+                FIXME( "FILE_SKIP_SET_USER_EVENT_ON_FAST_IO not supported\n" );
 
             SERVER_START_REQ( set_fd_completion_mode )
             {

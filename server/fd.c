@@ -1964,6 +1964,7 @@ int is_fd_removable( struct fd *fd )
 /* set or clear the fd signaled state */
 void set_fd_signaled( struct fd *fd, int signaled )
 {
+    if (fd->comp_flags & FILE_SKIP_SET_EVENT_ON_HANDLE) return;
     fd->signaled = signaled;
     if (signaled) wake_up( fd->user, 0 );
 }
@@ -2647,7 +2648,9 @@ DECL_HANDLER(set_fd_completion_mode)
     {
         if (is_fd_overlapped( fd ))
         {
-            /* removing COMPLETION_SKIP_ON_SUCCESS is not allowed */
+            if (req->flags & FILE_SKIP_SET_EVENT_ON_HANDLE)
+                set_fd_signaled( fd, 0 );
+            /* removing flags is not allowed */
             fd->comp_flags |= req->flags & ( FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
                                            | FILE_SKIP_SET_EVENT_ON_HANDLE
                                            | FILE_SKIP_SET_USER_EVENT_ON_FAST_IO );

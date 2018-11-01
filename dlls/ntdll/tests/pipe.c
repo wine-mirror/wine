@@ -1423,12 +1423,10 @@ static void test_completion(void)
     info.Flags = FILE_SKIP_SET_EVENT_ON_HANDLE;
     status = pNtSetInformationFile(client, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
-    todo_wine
     ok(!is_signaled(client), "client is not signaled\n");
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
     ok(ret, "WriteFile failed, error %u\n", GetLastError());
-    todo_wine
     ok(!is_signaled(client), "client is signaled\n");
     test_queued_completion(port, &io, STATUS_SUCCESS, sizeof(buf));
 
@@ -1439,12 +1437,10 @@ static void test_completion(void)
 
     ret = WriteFile(client, buf, 1, &num_bytes, NULL);
     ok(ret, "WriteFile failed, error %u\n", GetLastError());
-    todo_wine
     ok(!is_signaled(client), "client is signaled\n");
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
     ok(ret, "WriteFile failed, error %u\n", GetLastError());
-    todo_wine
     ok(!is_signaled(client), "client is signaled\n");
 
     CloseHandle(port);
