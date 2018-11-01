@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-10-25 11:58+0200\n"
+"PO-Revision-Date: 2018-11-01 22:38+0100\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -2448,16 +2448,12 @@ msgstr ""
 "vellykket."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Velg sertifikatlager"
+msgstr "Velg sertifikat"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Velg sertifikatlageret du vil bruke:"
+msgstr "Velg et sertifikat du vil bruke"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2989,20 +2985,16 @@ msgstr ""
 "Merk: Den private nøkkelen for dette sertifikatet kan ikke eksporteres."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "Tilte&nkt formål:"
+msgstr "Tiltenkt formål"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Plassering"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Velg sertifikatlager"
+msgstr "Velg et sertifikat"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
