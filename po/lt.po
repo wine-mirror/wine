@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-10-24 08:54+0300\n"
+"PO-Revision-Date: 2018-11-01 08:19+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -2449,16 +2449,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "Sėkmingai baigėte liudijimo eksporto vediklį."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Išrinkite liudijimų saugyklą"
+msgstr "Išrinkite liudijimą"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Išrinkite liudijimų saugyklą, kurią norite naudoti:"
+msgstr "Išrinkite liudijimą, kurį norite naudoti"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2987,20 +2983,16 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Pastaba: šio liudijimo privatusis raktas neišeksportuojamas."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "&Numatytosios paskirtys:"
+msgstr "Numatyta paskirtis"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Vieta"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Išrinkite liudijimų saugyklą"
+msgstr "Išrinkite liudijimą"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
