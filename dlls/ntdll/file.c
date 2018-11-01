@@ -375,7 +375,6 @@ struct async_fileio_write
 struct async_irp
 {
     struct async_fileio io;
-    HANDLE              event;    /* async event */
     void               *buffer;   /* buffer for output */
     ULONG               size;     /* size of buffer */
 };
@@ -568,7 +567,6 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
     if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle )))
         return STATUS_NO_MEMORY;
 
-    async->event   = event;
     async->buffer  = buffer;
     async->size    = size;
 
@@ -612,7 +610,6 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
     if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle )))
         return STATUS_NO_MEMORY;
 
-    async->event   = event;
     async->buffer  = NULL;
     async->size    = 0;
 
@@ -1522,7 +1519,6 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
 
     if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle )))
         return STATUS_NO_MEMORY;
-    async->event   = event;
     async->buffer  = out_buffer;
     async->size    = out_size;
 
@@ -3321,7 +3317,6 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK *io )
 
         if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, hFile )))
             return STATUS_NO_MEMORY;
-        async->event   = NULL;
         async->buffer  = NULL;
         async->size    = 0;
 
