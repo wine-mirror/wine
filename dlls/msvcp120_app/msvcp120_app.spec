@@ -1192,8 +1192,8 @@
 @ cdecl -arch=win64 ?_Fput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBD_K444@Z(ptr ptr ptr ptr long str long long long long) msvcp120.?_Fput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBD_K444@Z
 @ stub -arch=win32 ?_Future_error_map@std@@YAPBDH@Z
 @ stub -arch=win64 ?_Future_error_map@std@@YAPEBDH@Z
-@ stub -arch=win32 ?_GetCombinableSize@details@Concurrency@@YAIXZ
-@ stub -arch=win64 ?_GetCombinableSize@details@Concurrency@@YA_KXZ
+@ cdecl -arch=win32 ?_GetCombinableSize@details@Concurrency@@YAIXZ() msvcp120.?_GetCombinableSize@details@Concurrency@@YAIXZ
+@ cdecl -arch=win64 ?_GetCombinableSize@details@Concurrency@@YA_KXZ() msvcp120.?_GetCombinableSize@details@Concurrency@@YA_KXZ
 @ cdecl -arch=win32 ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z(ptr ptr) msvcp120.?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
 @ cdecl -arch=win64 ?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z(ptr ptr) msvcp120.?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
 @ cdecl -arch=win32 ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z(ptr ptr) msvcp120.?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z

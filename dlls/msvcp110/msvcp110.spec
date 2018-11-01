@@ -1227,8 +1227,8 @@
 @ cdecl -arch=win64 ?_Fput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBD_K444@Z(ptr ptr ptr ptr long str long long long long) num_put_wchar__Fput
 @ stub -arch=win32 ?_Future_error_map@std@@YAPBDH@Z
 @ stub -arch=win64 ?_Future_error_map@std@@YAPEBDH@Z
-@ stub -arch=win32 ?_GetCombinableSize@details@Concurrency@@YAIXZ
-@ stub -arch=win64 ?_GetCombinableSize@details@Concurrency@@YA_KXZ
+@ cdecl -arch=win32 ?_GetCombinableSize@details@Concurrency@@YAIXZ() _GetCombinableSize
+@ cdecl -arch=win64 ?_GetCombinableSize@details@Concurrency@@YA_KXZ() _GetCombinableSize
 @ stub ?_GetCurrentThreadId@details@Concurrency@@YAKXZ
 @ stub ?_GetNextAsyncId@details@Concurrency@@YAIXZ
 @ stub -arch=win32 ?_Get_future_error_what@std@@YAPBDH@Z
