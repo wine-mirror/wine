@@ -38,7 +38,6 @@ enum IWidget_dispids
     DISPID_TM_VARARRAYPTR,
     DISPID_TM_VARCARRAY,
     DISPID_TM_VARARG,
-    DISPID_TM_STRUCTARGS,
     DISPID_TM_ERROR,
     DISPID_TM_CLONEINTERFACE,
     DISPID_TM_TESTDUAL,
@@ -64,6 +63,10 @@ enum IWidget_dispids
     DISPID_TM_BSTR,
     DISPID_TM_VARIANT,
     DISPID_TM_SAFEARRAY,
+    DISPID_TM_STRUCT,
+    DISPID_TM_STRUCT_PTR_PTR,
+    DISPID_TM_THIN_STRUCT,
+    DISPID_TM_RECT,
 };
 
 static const int DISPID_TM_NEG_RESTRICTED = -26;
@@ -193,9 +196,6 @@ library TestTypelib
         [vararg, id(DISPID_TM_VARARG)]
         HRESULT VarArg([in] int numexpect, [in] SAFEARRAY(VARIANT) values);
 
-        [id(DISPID_TM_STRUCTARGS)]
-        HRESULT StructArgs([in] MYSTRUCT byval, [in] MYSTRUCT *byptr, [in] MYSTRUCT arr[5]);
-
         [id(DISPID_TM_ERROR)]
         HRESULT Error();
 
@@ -271,6 +271,24 @@ library TestTypelib
 
         [id(DISPID_TM_SAFEARRAY)]
         HRESULT safearray([in] SAFEARRAY(int) in, [out] SAFEARRAY(int) *out, [in] SAFEARRAY(int) *in_ptr, [in, out] SAFEARRAY(int) *in_out);
+
+        [id(DISPID_TM_STRUCT)]
+        HRESULT mystruct([in] MYSTRUCT in, [out] MYSTRUCT *out, [in] MYSTRUCT *in_ptr, [in, out] MYSTRUCT *in_out);
+
+        [id(DISPID_TM_STRUCT_PTR_PTR)]
+        HRESULT mystruct_ptr_ptr([in] MYSTRUCT **in);
+
+        struct thin
+        {
+            short a;
+            char b;
+        };
+
+        [id(DISPID_TM_THIN_STRUCT)]
+        HRESULT thin_struct([in] struct thin in);
+
+        [id(DISPID_TM_RECT)]
+        HRESULT rect([in] RECT in, [out] RECT *out, [in] RECT *in_ptr, [in, out] RECT *in_out);
     }
 
     [

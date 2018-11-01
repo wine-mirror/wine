@@ -49,16 +49,23 @@ static const WCHAR test_bstr2[] = {'t','e','s','t',0};
 static const WCHAR test_bstr3[] = {'q','u','x',0};
 static const WCHAR test_bstr4[] = {'a','b','c',0};
 
-const MYSTRUCT MYSTRUCT_BYVAL = {0x12345678, ULL_CONST(0xdeadbeef, 0x98765432), {0,1,2,3,4,5,6,7}};
-const MYSTRUCT MYSTRUCT_BYPTR = {0x91827364, ULL_CONST(0x88776655, 0x44332211), {0,1,2,3,4,5,6,7}};
-const MYSTRUCT MYSTRUCT_ARRAY[5] = {
-    {0x1a1b1c1d, ULL_CONST(0x1e1f1011, 0x12131415), {0,1,2,3,4,5,6,7}},
-    {0x2a2b2c2d, ULL_CONST(0x2e2f2021, 0x22232425), {0,1,2,3,4,5,6,7}},
-    {0x3a3b3c3d, ULL_CONST(0x3e3f3031, 0x32333435), {0,1,2,3,4,5,6,7}},
-    {0x4a4b4c4d, ULL_CONST(0x4e4f4041, 0x42434445), {0,1,2,3,4,5,6,7}},
-    {0x5a5b5c5d, ULL_CONST(0x5e5f5051, 0x52535455), {0,1,2,3,4,5,6,7}},
-};
+static const MYSTRUCT test_mystruct1 = {0x12345678, ULL_CONST(0xdeadbeef, 0x98765432), {0,1,2,3,4,5,6,7}};
+static const MYSTRUCT test_mystruct2 = {0x91827364, ULL_CONST(0x88776655, 0x44332211), {3,6,1,4,0,1,3,0}};
+static const MYSTRUCT test_mystruct3 = {0x1a1b1c1d, ULL_CONST(0x1e1f1011, 0x12131415), {9,2,4,5,6,5,1,3}};
+static const MYSTRUCT test_mystruct4 = {0x2a2b2c2d, ULL_CONST(0x2e2f2021, 0x22232425), {0,4,6,7,3,6,7,4}};
+static const MYSTRUCT test_mystruct5 = {0x3a3b3c3d, ULL_CONST(0x3e3f3031, 0x32333435), {1,6,7,3,8,4,6,5}};
+static const MYSTRUCT test_mystruct6 = {0x4a4b4c4d, ULL_CONST(0x4e4f4041, 0x42434445), {3,6,5,3,4,8,0,9}};
+static const MYSTRUCT test_mystruct7 = {0x5a5b5c5d, ULL_CONST(0x5e5f5051, 0x52535455), {1,8,4,4,4,2,3,1}};
 
+static const struct thin test_thin_struct = {-456, 78};
+
+static const RECT test_rect1 = {1,2,3,4};
+static const RECT test_rect2 = {5,6,7,8};
+static const RECT test_rect3 = {9,10,11,12};
+static const RECT test_rect4 = {13,14,15,16};
+static const RECT test_rect5 = {17,18,19,20};
+static const RECT test_rect6 = {21,22,23,24};
+static const RECT test_rect7 = {25,26,27,28};
 
 #define RELEASEMARSHALDATA WM_USER
 
@@ -810,41 +817,6 @@ static HRESULT WINAPI Widget_VarArg(
     return S_OK;
 }
 
-
-static BOOL mystruct_uint_ordered(MYSTRUCT *mystruct)
-{
-    int i;
-    for (i = 0; i < ARRAY_SIZE(mystruct->uarr); i++)
-        if (mystruct->uarr[i] != i)
-            return FALSE;
-    return TRUE;
-}
-
-static HRESULT WINAPI Widget_StructArgs(
-    IWidget * iface,
-    MYSTRUCT byval,
-    MYSTRUCT *byptr,
-    MYSTRUCT arr[5])
-{
-    int i, diff = 0;
-    ok(byval.field1 == MYSTRUCT_BYVAL.field1 &&
-       byval.field2 == MYSTRUCT_BYVAL.field2 &&
-       mystruct_uint_ordered(&byval),
-       "Struct parameter passed by value corrupted\n");
-    ok(byptr->field1 == MYSTRUCT_BYPTR.field1 &&
-       byptr->field2 == MYSTRUCT_BYPTR.field2 &&
-       mystruct_uint_ordered(byptr),
-       "Struct parameter passed by pointer corrupted\n");
-    for (i = 0; i < 5; i++)
-        if (arr[i].field1 != MYSTRUCT_ARRAY[i].field1 ||
-            arr[i].field2 != MYSTRUCT_ARRAY[i].field2 ||
-            ! mystruct_uint_ordered(&arr[i]))
-            diff++;
-    ok(diff == 0, "Array of structs corrupted\n");
-    return S_OK;
-}
-
-
 static HRESULT WINAPI Widget_Error(
     IWidget __RPC_FAR * iface)
 {
@@ -1298,6 +1270,46 @@ static HRESULT WINAPI Widget_safearray(IWidget *iface, SAFEARRAY *in, SAFEARRAY 
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_mystruct(IWidget *iface, MYSTRUCT in, MYSTRUCT *out, MYSTRUCT *in_ptr, MYSTRUCT *in_out)
+{
+    static const MYSTRUCT empty = {0};
+    ok(!memcmp(&in, &test_mystruct1, sizeof(in)), "Structs didn't match.\n");
+    ok(!memcmp(out, &empty, sizeof(*out)), "Structs didn't match.\n");
+    ok(!memcmp(in_ptr, &test_mystruct3, sizeof(*in_ptr)), "Structs didn't match.\n");
+    ok(!memcmp(in_out, &test_mystruct4, sizeof(*in_out)), "Structs didn't match.\n");
+
+    memcpy(out, &test_mystruct5, sizeof(*out));
+    memcpy(in_ptr, &test_mystruct6, sizeof(*in_ptr));
+    memcpy(in_out, &test_mystruct7, sizeof(*in_out));
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_mystruct_ptr_ptr(IWidget *iface, MYSTRUCT **in)
+{
+    ok(!memcmp(*in, &test_mystruct1, sizeof(**in)), "Structs didn't match.\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_thin_struct(IWidget *iface, struct thin in)
+{
+    ok(!memcmp(&in, &test_thin_struct, sizeof(in)), "Structs didn't match.\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_rect(IWidget *iface, RECT in, RECT *out, RECT *in_ptr, RECT *in_out)
+{
+    static const RECT empty = {0};
+    ok(EqualRect(&in, &test_rect1), "Rects didn't match.\n");
+    ok(EqualRect(out, &empty), "Rects didn't match.\n");
+    ok(EqualRect(in_ptr, &test_rect3), "Rects didn't match.\n");
+    ok(EqualRect(in_out, &test_rect4), "Rects didn't match.\n");
+
+    *out = test_rect5;
+    *in_ptr = test_rect6;
+    *in_out = test_rect7;
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -1323,7 +1335,6 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_VariantArrayPtr,
     Widget_VariantCArray,
     Widget_VarArg,
-    Widget_StructArgs,
     Widget_Error,
     Widget_CloneInterface,
     Widget_put_prop_with_lcid,
@@ -1348,6 +1359,10 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_bstr,
     Widget_variant,
     Widget_safearray,
+    Widget_mystruct,
+    Widget_mystruct_ptr_ptr,
+    Widget_thin_struct,
+    Widget_rect,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -2233,6 +2248,43 @@ static void test_marshal_safearray(IWidget *widget, IDispatch *disp)
     SafeArrayDestroy(in_out);
 }
 
+static void test_marshal_struct(IWidget *widget, IDispatch *disp)
+{
+    MYSTRUCT out, in_ptr, in_out, *in_ptr_ptr;
+    RECT rect_out, rect_in_ptr, rect_in_out;
+    HRESULT hr;
+
+    memcpy(&out, &test_mystruct2, sizeof(MYSTRUCT));
+    memcpy(&in_ptr, &test_mystruct3, sizeof(MYSTRUCT));
+    memcpy(&in_out, &test_mystruct4, sizeof(MYSTRUCT));
+    hr = IWidget_mystruct(widget, test_mystruct1, &out, &in_ptr, &in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!memcmp(&out, &test_mystruct5, sizeof(MYSTRUCT)), "Structs didn't match.\n");
+    ok(!memcmp(&in_ptr, &test_mystruct3, sizeof(MYSTRUCT)), "Structs didn't match.\n");
+    ok(!memcmp(&in_out, &test_mystruct7, sizeof(MYSTRUCT)), "Structs didn't match.\n");
+
+    memcpy(&in_ptr, &test_mystruct1, sizeof(MYSTRUCT));
+    in_ptr_ptr = &in_ptr;
+    hr = IWidget_mystruct_ptr_ptr(widget, &in_ptr_ptr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Make sure that "thin" structs (<=8 bytes) are handled correctly in x86-64. */
+
+    hr = IWidget_thin_struct(widget, test_thin_struct);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Make sure we can handle an imported type. */
+
+    rect_out = test_rect2;
+    rect_in_ptr = test_rect3;
+    rect_in_out = test_rect4;
+    hr = IWidget_rect(widget, test_rect1, &rect_out, &rect_in_ptr, &rect_in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(EqualRect(&rect_out, &test_rect5), "Rects didn't match.\n");
+    ok(EqualRect(&rect_in_ptr, &test_rect3), "Rects didn't match.\n");
+    ok(EqualRect(&rect_in_out, &test_rect7), "Rects didn't match.\n");
+}
+
 static void test_typelibmarshal(void)
 {
     static const WCHAR szCat[] = { 'C','a','t',0 };
@@ -2254,8 +2306,6 @@ static void test_typelibmarshal(void)
     DWORD tid;
     BSTR bstr;
     ITypeInfo *pTypeInfo;
-    MYSTRUCT mystruct;
-    MYSTRUCT mystructArray[5];
     UINT uval;
 
     ok(pKEW != NULL, "Widget creation failed\n");
@@ -2411,12 +2461,6 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_GETOLECOLOR, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
     VariantClear(&varresult);
-
-    /* call StructArgs (direct) */
-    mystruct = MYSTRUCT_BYPTR;
-    memcpy(mystructArray, MYSTRUCT_ARRAY, sizeof(mystructArray));
-    hr = IWidget_StructArgs(pWidget, MYSTRUCT_BYVAL, &mystruct, mystructArray);
-    ok_ole_success(hr, IWidget_StructArgs);
 
     /* call Clone */
     dispparams.cNamedArgs = 0;
@@ -2832,6 +2876,7 @@ todo_wine
     test_marshal_bstr(pWidget, pDispatch);
     test_marshal_variant(pWidget, pDispatch);
     test_marshal_safearray(pWidget, pDispatch);
+    test_marshal_struct(pWidget, pDispatch);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);
