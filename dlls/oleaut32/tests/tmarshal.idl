@@ -63,6 +63,7 @@ enum IWidget_dispids
     DISPID_TM_IFACE_PTR,
     DISPID_TM_BSTR,
     DISPID_TM_VARIANT,
+    DISPID_TM_SAFEARRAY,
 };
 
 static const int DISPID_TM_NEG_RESTRICTED = -26;
@@ -267,6 +268,9 @@ library TestTypelib
 
         [id(DISPID_TM_VARIANT)]
         HRESULT variant([in] VARIANT in, [out] VARIANT *out, [in] VARIANT *in_ptr, [in, out] VARIANT *in_out);
+
+        [id(DISPID_TM_SAFEARRAY)]
+        HRESULT safearray([in] SAFEARRAY(int) in, [out] SAFEARRAY(int) *out, [in] SAFEARRAY(int) *in_ptr, [in, out] SAFEARRAY(int) *in_out);
     }
 
     [

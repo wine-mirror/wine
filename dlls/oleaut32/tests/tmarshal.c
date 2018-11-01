@@ -1248,6 +1248,56 @@ static HRESULT WINAPI Widget_variant(IWidget *iface, VARIANT in, VARIANT *out, V
     return S_OK;
 }
 
+static SAFEARRAY *make_safearray(ULONG len)
+{
+    SAFEARRAY *sa = SafeArrayCreateVector(VT_I4, 0, len);
+    int i, *data;
+
+    SafeArrayAccessData(sa, (void **)&data);
+    for (i = 0; i < len; ++i)
+        data[i] = len + i;
+    SafeArrayUnaccessData(sa);
+
+    return sa;
+}
+
+static void check_safearray(SAFEARRAY *sa, LONG expect)
+{
+    LONG len, i, *data;
+    HRESULT hr;
+
+    hr = SafeArrayGetUBound(sa, 1, &len);
+    len++;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(len == expect, "Expected len %d, got %d.\n", expect, len);
+
+    hr = SafeArrayAccessData(sa, (void **)&data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    for (i = 0; i < len; ++i)
+        ok(data[i] == len + i, "Expected data %d at %d, got %d.\n", len + i, i, data[i]);
+
+    SafeArrayUnaccessData(sa);
+}
+
+static HRESULT WINAPI Widget_safearray(IWidget *iface, SAFEARRAY *in, SAFEARRAY **out, SAFEARRAY **in_ptr, SAFEARRAY **in_out)
+{
+    HRESULT hr;
+
+    check_safearray(in, 3);
+    ok(!*out, "Got array %p.\n", *out);
+    check_safearray(*in_ptr, 7);
+    check_safearray(*in_out, 9);
+
+    hr = SafeArrayDestroy(*in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    *out = make_safearray(4);
+    *in_out = make_safearray(6);
+
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -1297,6 +1347,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_iface_ptr,
     Widget_bstr,
     Widget_variant,
+    Widget_safearray,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -2160,6 +2211,28 @@ static void test_marshal_variant(IWidget *widget, IDispatch *disp)
     ok(V_I1(&in_out) == 5, "Got wrong value %d.\n", V_I1(&in_out));
 }
 
+static void test_marshal_safearray(IWidget *widget, IDispatch *disp)
+{
+    SAFEARRAY *in, *out, *in_ptr, *in_out;
+    HRESULT hr;
+
+    in = make_safearray(3);
+    out = make_safearray(5);
+    in_ptr = make_safearray(7);
+    in_out = make_safearray(9);
+    hr = IWidget_safearray(widget, in, &out, &in_ptr, &in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_safearray(in, 3);
+    check_safearray(out, 4);
+    check_safearray(in_ptr, 7);
+    check_safearray(in_out, 6);
+
+    SafeArrayDestroy(in);
+    SafeArrayDestroy(out);
+    SafeArrayDestroy(in_ptr);
+    SafeArrayDestroy(in_out);
+}
+
 static void test_typelibmarshal(void)
 {
     static const WCHAR szCat[] = { 'C','a','t',0 };
@@ -2758,6 +2831,7 @@ todo_wine
     test_marshal_iface(pWidget, pDispatch);
     test_marshal_bstr(pWidget, pDispatch);
     test_marshal_variant(pWidget, pDispatch);
+    test_marshal_safearray(pWidget, pDispatch);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);
