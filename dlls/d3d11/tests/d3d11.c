@@ -5789,6 +5789,98 @@ static void test_timestamp_query(void)
     release_test_context(&test_context);
 }
 
+static void test_so_statistics_query(void)
+{
+    struct d3d11_test_context test_context;
+    D3D11_QUERY_DATA_SO_STATISTICS data;
+    ID3D11DeviceContext *context;
+    D3D11_QUERY_DESC query_desc;
+    ID3D11Asynchronous *query;
+    unsigned int data_size;
+    ID3D11Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    static const struct
+    {
+        D3D11_QUERY query;
+        D3D_FEATURE_LEVEL feature_level;
+    }
+    tests[] =
+    {
+        {D3D11_QUERY_SO_STATISTICS,         D3D_FEATURE_LEVEL_10_0},
+        {D3D11_QUERY_SO_STATISTICS_STREAM0, D3D_FEATURE_LEVEL_11_0},
+        {D3D11_QUERY_SO_STATISTICS_STREAM1, D3D_FEATURE_LEVEL_11_0},
+        {D3D11_QUERY_SO_STATISTICS_STREAM2, D3D_FEATURE_LEVEL_11_0},
+        {D3D11_QUERY_SO_STATISTICS_STREAM3, D3D_FEATURE_LEVEL_11_0},
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (ID3D11Device_GetFeatureLevel(device) < tests[i].feature_level)
+        {
+            skip("Feature level %#x is required.\n", tests[i].feature_level);
+            continue;
+        }
+
+        query_desc.Query = tests[i].query;
+        query_desc.MiscFlags = 0;
+        hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
+        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS)
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        if (FAILED(hr)) continue;
+        data_size = ID3D11Asynchronous_GetDataSize(query);
+        ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
+
+        hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+        ID3D11DeviceContext_End(context, query);
+        ID3D11DeviceContext_Begin(context, query);
+        ID3D11DeviceContext_Begin(context, query);
+
+        memset(&data, 0xff, sizeof(data));
+        hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+        todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+        todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        ok(data.NumPrimitivesWritten == ~(UINT64)0, "Data was modified.\n");
+        ok(data.PrimitivesStorageNeeded == ~(UINT64)0, "Data was modified.\n");
+
+        draw_quad(&test_context);
+
+        ID3D11DeviceContext_End(context, query);
+        get_query_data(context, query, &data, sizeof(data));
+        ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
+                (unsigned int)data.NumPrimitivesWritten);
+        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
+        ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
+                (unsigned int)data.PrimitivesStorageNeeded);
+
+        ID3D11DeviceContext_Begin(context, query);
+        draw_quad(&test_context);
+        ID3D11DeviceContext_End(context, query);
+        get_query_data(context, query, &data, sizeof(data));
+        ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
+                (unsigned int)data.NumPrimitivesWritten);
+        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
+        ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
+                (unsigned int)data.PrimitivesStorageNeeded);
+
+        ID3D11Asynchronous_Release(query);
+    }
+
+    release_test_context(&test_context);
+}
+
 static void test_device_removed_reason(void)
 {
     ID3D11Device *device;
@@ -28691,6 +28783,7 @@ START_TEST(d3d11)
     queue_test(test_occlusion_query);
     queue_test(test_pipeline_statistics_query);
     queue_test(test_timestamp_query);
+    queue_test(test_so_statistics_query);
     queue_test(test_device_removed_reason);
     queue_test(test_private_data);
     queue_for_each_feature_level(test_state_refcounting);
