@@ -454,7 +454,8 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
     if (flag != autoappend_flag_displayempty && len == 0)
     {
         if (ac->options & ACO_AUTOSUGGEST)
-            hide_listbox(ac, ac->hwndListBox, TRUE);
+            hide_listbox(ac, ac->hwndListBox, FALSE);
+        free_enum_strs(ac);
         return;
     }
 
