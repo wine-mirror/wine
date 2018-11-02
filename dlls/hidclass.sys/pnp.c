@@ -286,12 +286,10 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_START_DEVICE:
         {
             BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-            UNICODE_STRING linkU;
 
             rc = minidriver->PNPDispatch(device, irp);
 
-            RtlInitUnicodeString(&linkU, ext->link_name);
-            IoSetDeviceInterfaceState(&linkU, TRUE);
+            IoSetDeviceInterfaceState(&ext->link_name, TRUE);
             return rc;
         }
         case IRP_MN_REMOVE_DEVICE:

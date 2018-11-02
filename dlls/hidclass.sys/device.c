@@ -42,12 +42,6 @@ WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e',
     '\\','H','I','D','#','%','p','&','%','p',0};
-static const WCHAR device_link_fmtW[] = {'\\','?','?','\\','%','s','#','%','s',0};
-/* GUID_DEVINTERFACE_HID */
-static const WCHAR class_guid[] = {'{','4','D','1','E','5','5','B','2',
-    '-','F','1','6','F','-','1','1','C','F','-','8','8','C','B','-','0','0',
-    '1','1','1','1','0','0','0','0','3','0','}',0};
-
 
 NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT **device)
 {
@@ -75,7 +69,7 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
     ext->deviceExtension.NextDeviceObject = native_device;
     ext->device_name = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(dev_name) + 1) * sizeof(WCHAR));
     lstrcpyW(ext->device_name, dev_name);
-    ext->link_name = NULL;
+    ext->link_name.Buffer = NULL;
 
     IoAttachDeviceToDeviceStack(*device, native_device);
 
@@ -84,10 +78,8 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
 
 NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 {
-    WCHAR dev_link[255];
-    WCHAR *ptr;
     SP_DEVINFO_DATA Data;
-    UNICODE_STRING nameW, linkW;
+    UNICODE_STRING nameW;
     NTSTATUS status;
     HDEVINFO devinfo;
     GUID hidGuid;
@@ -96,25 +88,7 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
     HidD_GetHidGuid(&hidGuid);
     ext = device->DeviceExtension;
 
-    sprintfW(dev_link, device_link_fmtW, ext->instance_id, class_guid);
-    ptr = dev_link + 4;
-    do { if (*ptr == '\\') *ptr = '#'; } while (*ptr++);
-    struprW(dev_link);
-
     RtlInitUnicodeString( &nameW, ext->device_name);
-    RtlInitUnicodeString( &linkW, dev_link );
-
-    TRACE("Create link %s\n", debugstr_w(dev_link));
-
-    ext->link_name = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * (lstrlenW(dev_link) + 1));
-    lstrcpyW(ext->link_name, dev_link);
-
-    status = IoCreateSymbolicLink( &linkW, &nameW );
-    if (status)
-    {
-        FIXME( "failed to create link error %x\n", status );
-        return status;
-    }
 
     devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_HIDCLASS, NULL, NULL, DIGCF_DEVICEINTERFACE);
     if (!devinfo)
@@ -138,13 +112,22 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
         FIXME( "failed to Register Device Info %x\n", GetLastError());
         goto error;
     }
-    if (!SetupDiCreateDeviceInterfaceW( devinfo, &Data,  &hidGuid, NULL, 0, NULL))
+    SetupDiDestroyDeviceInfoList(devinfo);
+
+    status = IoRegisterDeviceInterface(device, &hidGuid, NULL, &ext->link_name);
+    if (status != STATUS_SUCCESS)
     {
-        FIXME( "failed to Create Device Interface %x\n", GetLastError());
-        goto error;
+        FIXME( "failed to register device interface %x\n", status );
+        return status;
     }
 
-    SetupDiDestroyDeviceInfoList(devinfo);
+    status = IoCreateSymbolicLink( &ext->link_name, &nameW );
+    if (status != STATUS_SUCCESS)
+    {
+        FIXME( "failed to create link error %x\n", status );
+        return status;
+    }
+
     return STATUS_SUCCESS;
 
 error:
@@ -156,20 +139,17 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
 {
     NTSTATUS status;
     BASE_DEVICE_EXTENSION *ext;
-    UNICODE_STRING linkW;
     LIST_ENTRY *entry;
     IRP *irp;
 
     ext = device->DeviceExtension;
 
-    if (ext->link_name)
+    if (ext->link_name.Buffer)
     {
-        TRACE("Delete link %s\n", debugstr_w(ext->link_name));
-        RtlInitUnicodeString(&linkW, ext->link_name);
+        TRACE("Delete link %s\n", debugstr_w(ext->link_name.Buffer));
 
-        IoSetDeviceInterfaceState(&linkW, FALSE);
-
-        status = IoDeleteSymbolicLink(&linkW);
+        IoSetDeviceInterfaceState(&ext->link_name, FALSE);
+        status = IoDeleteSymbolicLink(&ext->link_name);
         if (status != STATUS_SUCCESS)
             ERR("Delete Symbolic Link failed (%x)\n",status);
     }
@@ -196,7 +176,7 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
 
     TRACE("Delete device(%p) %s\n", device, debugstr_w(ext->device_name));
     HeapFree(GetProcessHeap(), 0, ext->device_name);
-    HeapFree(GetProcessHeap(), 0, ext->link_name);
+    RtlFreeUnicodeString(&ext->link_name);
 
     IoDeleteDevice(device);
 }
