@@ -2169,7 +2169,7 @@ BOOL WINAPI CryptHashCertificate(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
      pbEncoded, cbEncoded, pbComputedHash, pcbComputedHash);
 
     if (!hCryptProv)
-        hCryptProv = CRYPT_GetDefaultProvider();
+        hCryptProv = I_CryptGetDefaultCryptProv(0);
     if (!Algid)
         Algid = CALG_SHA1;
     if (ret)
@@ -2198,7 +2198,7 @@ BOOL WINAPI CryptHashPublicKeyInfo(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
      dwCertEncodingType, pInfo, pbComputedHash, pcbComputedHash);
 
     if (!hCryptProv)
-        hCryptProv = CRYPT_GetDefaultProvider();
+        hCryptProv = I_CryptGetDefaultCryptProv(0);
     if (!Algid)
         Algid = CALG_MD5;
     if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) != X509_ASN_ENCODING)
@@ -2250,7 +2250,7 @@ BOOL WINAPI CryptHashToBeSigned(HCRYPTPROV_LEGACY hCryptProv,
         HCRYPTHASH hHash;
 
         if (!hCryptProv)
-            hCryptProv = CRYPT_GetDefaultProvider();
+            hCryptProv = I_CryptGetDefaultCryptProv(0);
         oidInfo = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
          info->SignatureAlgorithm.pszObjId, 0);
         if (!oidInfo)
@@ -2299,7 +2299,7 @@ BOOL WINAPI CryptSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
     if (info->dwGroupId == CRYPT_HASH_ALG_OID_GROUP_ID)
     {
         if (!hCryptProv)
-            hCryptProv = CRYPT_GetDefaultProvider();
+            hCryptProv = I_CryptGetDefaultCryptProv(0);
         ret = CryptCreateHash(hCryptProv, info->u.Algid, 0, 0, &hHash);
         if (ret)
         {
@@ -2423,7 +2423,7 @@ static BOOL CRYPT_VerifySignature(HCRYPTPROV_LEGACY hCryptProv, DWORD dwCertEnco
         pubKeyID = hashID;
     /* Load the default provider if necessary */
     if (!hCryptProv)
-        hCryptProv = CRYPT_GetDefaultProvider();
+        hCryptProv = I_CryptGetDefaultCryptProv(0);
     ret = CryptImportPublicKeyInfoEx(hCryptProv, dwCertEncodingType,
      pubKeyInfo, pubKeyID, 0, NULL, &key);
     if (ret)

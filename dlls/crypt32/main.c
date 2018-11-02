@@ -56,7 +56,7 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, PVOID pvReserved)
     return TRUE;
 }
 
-HCRYPTPROV CRYPT_GetDefaultProvider(void)
+static HCRYPTPROV CRYPT_GetDefaultProvider(void)
 {
     if (!hDefProv)
     {

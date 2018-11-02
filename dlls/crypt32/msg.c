@@ -567,7 +567,7 @@ static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
         prov = info->hCryptProv;
     else
     {
-        prov = CRYPT_GetDefaultProvider();
+        prov = I_CryptGetDefaultCryptProv(0);
         dwFlags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
     }
     msg = CryptMemAlloc(sizeof(CHashEncodeMsg));
@@ -1956,7 +1956,7 @@ static HCRYPTMSG CEnvelopedEncodeMsg_Open(DWORD dwFlags,
         prov = info->hCryptProv;
     else
     {
-        prov = CRYPT_GetDefaultProvider();
+        prov = I_CryptGetDefaultCryptProv(0);
         dwFlags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
     }
     msg = CryptMemAlloc(sizeof(CEnvelopedEncodeMsg));
@@ -3545,7 +3545,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
             msg->crypt_prov = hCryptProv;
         else
         {
-            msg->crypt_prov = CRYPT_GetDefaultProvider();
+            msg->crypt_prov = I_CryptGetDefaultCryptProv(0);
             msg->base.open_flags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
         }
         memset(&msg->u, 0, sizeof(msg->u));
