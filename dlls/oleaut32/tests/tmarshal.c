@@ -67,6 +67,13 @@ static const RECT test_rect5 = {17,18,19,20};
 static const RECT test_rect6 = {21,22,23,24};
 static const RECT test_rect7 = {25,26,27,28};
 
+static const array_t test_array1 = {1,2,3,4};
+static const array_t test_array2 = {5,6,7,8};
+static const array_t test_array3 = {9,10,11,12};
+static const array_t test_array4 = {13,14,15,16};
+static const array_t test_array5 = {17,18,19,20};
+static const array_t test_array6 = {21,22,23,24};
+
 #define RELEASEMARSHALDATA WM_USER
 
 struct host_object_data
@@ -727,59 +734,11 @@ static HRESULT WINAPI Widget_Value(
     return S_OK;
 }
 
-static HRESULT WINAPI Widget_Array(
-    IWidget * iface,
-    SAFEARRAY * values)
-{
-    trace("Array(%p)\n", values);
-    return S_OK;
-}
-
 static HRESULT WINAPI Widget_VariantArrayPtr(
     IWidget * iface,
     SAFEARRAY ** values)
 {
     trace("VariantArrayPtr(%p)\n", values);
-    return S_OK;
-}
-
-static HRESULT WINAPI Widget_VariantCArray(
-    IWidget * iface,
-    ULONG count,
-    VARIANT values[])
-{
-    ULONG i;
-
-    trace("VariantCArray(%u,%p)\n", count, values);
-
-    ok(count == 2, "count is %d\n", count);
-    for (i = 0; i < count; i++)
-        ok(V_VT(&values[i]) == VT_I4, "values[%d] is not VT_I4\n", i);
-
-    if (pVarAdd)
-    {
-        VARIANT inc, res;
-        HRESULT hr;
-
-        V_VT(&inc) = VT_I4;
-        V_I4(&inc) = 1;
-        for (i = 0; i < count; i++) {
-            VariantInit(&res);
-            hr = pVarAdd(&values[i], &inc, &res);
-            if (FAILED(hr)) {
-                ok(0, "VarAdd failed at %u with error 0x%x\n", i, hr);
-                return hr;
-            }
-            hr = VariantCopy(&values[i], &res);
-            if (FAILED(hr)) {
-                ok(0, "VariantCopy failed at %u with error 0x%x\n", i, hr);
-                return hr;
-            }
-        }
-    }
-    else
-        win_skip("VarAdd is not available\n");
-
     return S_OK;
 }
 
@@ -1310,6 +1269,51 @@ static HRESULT WINAPI Widget_rect(IWidget *iface, RECT in, RECT *out, RECT *in_p
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_array(IWidget *iface, array_t in, array_t out, array_t in_out)
+{
+    static const array_t empty = {0};
+    ok(!memcmp(in, test_array1, sizeof(array_t)), "Arrays didn't match.\n");
+todo_wine
+    ok(!memcmp(out, empty, sizeof(array_t)), "Arrays didn't match.\n");
+    ok(!memcmp(in_out, test_array3, sizeof(array_t)), "Arrays didn't match.\n");
+
+    memcpy(in, test_array4, sizeof(array_t));
+    memcpy(out, test_array5, sizeof(array_t));
+    memcpy(in_out, test_array6, sizeof(array_t));
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_variant_array(IWidget *iface, VARIANT in[2], VARIANT out[2], VARIANT in_out[2])
+{
+    ok(V_VT(&in[0]) == VT_I4, "Got wrong type %u.\n", V_VT(&in[0]));
+    ok(V_I4(&in[0]) == 1, "Got wrong value %d.\n", V_I4(&in[0]));
+    ok(V_VT(&in[1]) == VT_I4, "Got wrong type %u.\n", V_VT(&in[1]));
+    ok(V_I4(&in[1]) == 2, "Got wrong value %d.\n", V_I4(&in[1]));
+    ok(V_VT(&out[0]) == VT_EMPTY, "Got wrong type %u.\n", V_VT(&out[0]));
+    ok(V_VT(&out[1]) == VT_EMPTY, "Got wrong type %u.\n", V_VT(&out[1]));
+    ok(V_VT(&in_out[0]) == VT_I4, "Got wrong type %u.\n", V_VT(&in_out[0]));
+    ok(V_I4(&in_out[0]) == 5, "Got wrong type %u.\n", V_VT(&in_out[0]));
+    ok(V_VT(&in_out[1]) == VT_I4, "Got wrong type %u.\n", V_VT(&in_out[1]));
+    ok(V_I4(&in_out[1]) == 6, "Got wrong type %u.\n", V_VT(&in_out[1]));
+
+    V_VT(&in[0]) = VT_I1;     V_I1(&in[0])     = 7;
+    V_VT(&in[1]) = VT_I1;     V_I1(&in[1])     = 8;
+    V_VT(&out[0]) = VT_I1;    V_I1(&out[0])    = 9;
+    V_VT(&out[1]) = VT_I1;    V_I1(&out[1])    = 10;
+    V_VT(&in_out[0]) = VT_I1; V_I1(&in_out[0]) = 11;
+    V_VT(&in_out[1]) = VT_I1; V_I1(&in_out[1]) = 12;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_mystruct_array(IWidget *iface, MYSTRUCT in[2])
+{
+    ok(!memcmp(&in[0], &test_mystruct1, sizeof(MYSTRUCT)), "Structs didn't match.\n");
+    ok(!memcmp(&in[1], &test_mystruct2, sizeof(MYSTRUCT)), "Structs didn't match.\n");
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -1331,9 +1335,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_CloneDispatch,
     Widget_CloneCoclass,
     Widget_Value,
-    Widget_Array,
     Widget_VariantArrayPtr,
-    Widget_VariantCArray,
     Widget_VarArg,
     Widget_Error,
     Widget_CloneInterface,
@@ -1363,6 +1365,9 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_mystruct_ptr_ptr,
     Widget_thin_struct,
     Widget_rect,
+    Widget_array,
+    Widget_variant_array,
+    Widget_mystruct_array,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -2285,6 +2290,54 @@ static void test_marshal_struct(IWidget *widget, IDispatch *disp)
     ok(EqualRect(&rect_in_out, &test_rect7), "Rects didn't match.\n");
 }
 
+static void test_marshal_array(IWidget *widget, IDispatch *disp)
+{
+    VARIANT var_in[2], var_out[2], var_in_out[2];
+    array_t in, out, in_out;
+    MYSTRUCT struct_in[2];
+    HRESULT hr;
+
+if (0) {
+    memcpy(in, test_array1, sizeof(array_t));
+    memcpy(out, test_array2, sizeof(array_t));
+    memcpy(in_out, test_array3, sizeof(array_t));
+    hr = IWidget_array(widget, in, out, in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+todo_wine
+    ok(!memcmp(&in, &test_array1, sizeof(array_t)), "Arrays didn't match.\n");
+    ok(!memcmp(&out, &test_array5, sizeof(array_t)), "Arrays didn't match.\n");
+    ok(!memcmp(&in_out, &test_array6, sizeof(array_t)), "Arrays didn't match.\n");
+}
+
+    V_VT(&var_in[0]) = VT_I4;     V_I4(&var_in[0])     = 1;
+    V_VT(&var_in[1]) = VT_I4;     V_I4(&var_in[1])     = 2;
+    V_VT(&var_out[0]) = VT_I4;    V_I4(&var_out[0])    = 3;
+    V_VT(&var_out[1]) = VT_I4;    V_I4(&var_out[1])    = 4;
+    V_VT(&var_in_out[0]) = VT_I4; V_I4(&var_in_out[0]) = 5;
+    V_VT(&var_in_out[1]) = VT_I4; V_I4(&var_in_out[1]) = 6;
+    hr = IWidget_variant_array(widget, var_in, var_out, var_in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(V_VT(&var_in[0]) == VT_I4, "Got wrong type %u.\n", V_VT(&var_in[0]));
+    ok(V_I4(&var_in[0]) == 1, "Got wrong value %d.\n", V_I4(&var_in[0]));
+    ok(V_VT(&var_in[1]) == VT_I4, "Got wrong type %u.\n", V_VT(&var_in[1]));
+    ok(V_I4(&var_in[1]) == 2, "Got wrong value %d.\n", V_I4(&var_in[1]));
+todo_wine {
+    ok(V_VT(&var_out[0]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_out[0]));
+    ok(V_I1(&var_out[0]) == 9, "Got wrong value %u.\n", V_VT(&var_out[0]));
+    ok(V_VT(&var_out[1]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_out[1]));
+    ok(V_I1(&var_out[1]) == 10, "Got wrong value %u.\n", V_VT(&var_out[1]));
+    ok(V_VT(&var_in_out[0]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_in_out[0]));
+    ok(V_I1(&var_in_out[0]) == 11, "Got wrong value %u.\n", V_VT(&var_in_out[0]));
+    ok(V_VT(&var_in_out[1]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_in_out[1]));
+    ok(V_I1(&var_in_out[1]) == 12, "Got wrong value %u.\n", V_VT(&var_in_out[1]));
+}
+
+    memcpy(&struct_in[0], &test_mystruct1, sizeof(MYSTRUCT));
+    memcpy(&struct_in[1], &test_mystruct2, sizeof(MYSTRUCT));
+    hr = IWidget_mystruct_array(widget, struct_in);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 static void test_typelibmarshal(void)
 {
     static const WCHAR szCat[] = { 'C','a','t',0 };
@@ -2579,18 +2632,6 @@ static void test_typelibmarshal(void)
     ok(hr == DISP_E_TYPEMISMATCH || hr == DISP_E_BADVARTYPE, "expected DISP_E_TYPEMISMATCH, got %#x\n", hr);
     SysFreeString(V_BSTR(&vararg[0]));
 
-    /* call VariantCArray - test marshaling of variant arrays */
-    V_VT(&vararg[0]) = VT_I4;
-    V_I4(&vararg[0]) = 1;
-    V_VT(&vararg[1]) = VT_I4;
-    V_I4(&vararg[1]) = 2;
-    hr = IWidget_VariantCArray(pWidget, 2, vararg);
-    ok_ole_success(hr, IWidget_VariantCArray);
-todo_wine
-    ok(V_VT(&vararg[0]) == VT_I4 && V_I4(&vararg[0]) == 2, "vararg[0] = %d[%d]\n", V_VT(&vararg[0]), V_I4(&vararg[0]));
-todo_wine
-    ok(V_VT(&vararg[1]) == VT_I4 && V_I4(&vararg[1]) == 3, "vararg[1] = %d[%d]\n", V_VT(&vararg[1]), V_I4(&vararg[1]));
-
     /* call VarArg */
     VariantInit(&vararg[3]);
     V_VT(&vararg[3]) = VT_I4;
@@ -2877,6 +2918,7 @@ todo_wine
     test_marshal_variant(pWidget, pDispatch);
     test_marshal_safearray(pWidget, pDispatch);
     test_marshal_struct(pWidget, pDispatch);
+    test_marshal_array(pWidget, pDispatch);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);

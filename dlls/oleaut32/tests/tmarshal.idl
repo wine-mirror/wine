@@ -34,9 +34,7 @@ enum IWidget_dispids
     DISPID_TM_CLONEDISPATCH,
     DISPID_TM_CLONECOCLASS,
     DISPID_TM_VALUE,
-    DISPID_TM_ARRAY,
     DISPID_TM_VARARRAYPTR,
-    DISPID_TM_VARCARRAY,
     DISPID_TM_VARARG,
     DISPID_TM_ERROR,
     DISPID_TM_CLONEINTERFACE,
@@ -67,6 +65,9 @@ enum IWidget_dispids
     DISPID_TM_STRUCT_PTR_PTR,
     DISPID_TM_THIN_STRUCT,
     DISPID_TM_RECT,
+    DISPID_TM_ARRAY,
+    DISPID_TM_VARIANT_ARRAY,
+    DISPID_TM_STRUCT_ARRAY,
 };
 
 static const int DISPID_TM_NEG_RESTRICTED = -26;
@@ -184,14 +185,8 @@ library TestTypelib
         [propget, id(DISPID_VALUE)]
         HRESULT Value([in] VARIANT *value, [out, retval] VARIANT *retval);
 
-        [id(DISPID_TM_ARRAY)]
-        HRESULT Array([in] SAFEARRAY(BSTR) values);
-
         [id(DISPID_TM_VARARRAYPTR)]
         HRESULT VariantArrayPtr([in] SAFEARRAY(VARIANT) *values);
-
-        [id(DISPID_TM_VARCARRAY)]
-        HRESULT VariantCArray([in] ULONG count, [in, out] VARIANT values[2]);
 
         [vararg, id(DISPID_TM_VARARG)]
         HRESULT VarArg([in] int numexpect, [in] SAFEARRAY(VARIANT) values);
@@ -289,6 +284,17 @@ library TestTypelib
 
         [id(DISPID_TM_RECT)]
         HRESULT rect([in] RECT in, [out] RECT *out, [in] RECT *in_ptr, [in, out] RECT *in_out);
+
+        typedef int array_t[4];
+
+        [id(DISPID_TM_ARRAY)]
+        HRESULT array([in] array_t in, [out] array_t out, [in, out] array_t in_out);
+
+        [id(DISPID_TM_VARIANT_ARRAY)]
+        HRESULT variant_array([in] VARIANT in[2], [out] VARIANT out[2], [in, out] VARIANT in_out[2]);
+
+        [id(DISPID_TM_STRUCT_ARRAY)]
+        HRESULT mystruct_array([in] MYSTRUCT in[2]);
     }
 
     [
