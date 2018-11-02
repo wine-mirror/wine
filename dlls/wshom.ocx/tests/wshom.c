@@ -66,6 +66,17 @@ static void test_wshshell(void)
     static const WCHAR path2W[] = {'P','A','T','H',0};
     static const WCHAR dummydirW[] = {'d','e','a','d','p','a','r','r','o','t',0};
     static const WCHAR emptyW[] = {'e','m','p','t','y',0};
+    static const WCHAR cmdexeW[] = {'\\','c','m','d','.','e','x','e',0};
+    static const WCHAR testdirW[] = {'w','s','h','o','m',' ','t','e','s','t',' ','d','i','r',0};
+    static const WCHAR paramsW[] =
+        {' ','/','c',' ','r','d',' ','/','s',' ','/','q',' ','c',':','\\','n','o','s','u','c','h','d','i','r',0};
+    static const WCHAR cmdW[] =
+        {'c','m','d','.','e','x','e',' ','/','c',' ','r','d',' ','/','s',' ','/','q',' ','c',':','\\',
+         'n','o','s','u','c','h','d','i','r',0};
+    static const WCHAR cmd2W[] =
+        {'"','c','m','d','.','e','x','e',' ','"',' ','/','c',' ','r','d',' ','/','s',' ','/','q',' ','c',':','\\',
+         'n','o','s','u','c','h','d','i','r',0};
+    WCHAR path[MAX_PATH], path2[MAX_PATH], buf[MAX_PATH];
     IWshEnvironment *env;
     IWshExec *shexec;
     IWshShell3 *sh3;
@@ -82,7 +93,7 @@ static void test_wshshell(void)
     EXCEPINFO ei;
     VARIANT arg, res, arg2;
     BSTR str, ret;
-    DWORD retval;
+    DWORD retval, attrs;
     UINT err;
 
     hr = CoCreateInstance(&CLSID_WshShell, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -238,8 +249,52 @@ static void test_wshshell(void)
     hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
     ok(hr == DISP_E_TYPEMISMATCH, "got 0x%08x\n", hr);
     ok(retval == 10, "got %u\n", retval);
-
     SysFreeString(str);
+
+    V_VT(&arg2) = VT_BOOL;
+    V_BOOL(&arg2) = VARIANT_TRUE;
+
+    retval = 0xdeadbeef;
+    str = SysAllocString(cmdW);
+    hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(retval == ERROR_FILE_NOT_FOUND, "got %u\n", retval);
+    SysFreeString(str);
+
+    retval = 0xdeadbeef;
+    str = SysAllocString(cmd2W);
+    hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(retval == ERROR_FILE_NOT_FOUND, "got %u\n", retval);
+    SysFreeString(str);
+
+    GetSystemDirectoryW(path, ARRAY_SIZE(path));
+    lstrcatW(path, cmdexeW);
+    attrs = GetFileAttributesW(path);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "cmd.exe not found\n");
+
+    /* copy cmd.exe to a path with spaces */
+    GetTempPathW(ARRAY_SIZE(path2), path2);
+    lstrcatW(path2, testdirW);
+    CreateDirectoryW(path2, NULL);
+    lstrcatW(path2, cmdexeW);
+    CopyFileW(path, path2, FALSE);
+
+    buf[0] = '"';
+    lstrcpyW(buf + 1, path2);
+    buf[lstrlenW(buf)] = '"';
+    lstrcpyW(buf + lstrlenW(path2) + 2, paramsW);
+
+    retval = 0xdeadbeef;
+    str = SysAllocString(buf);
+    hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(retval == ERROR_FILE_NOT_FOUND, "got %u\n", retval);
+    SysFreeString(str);
+
+    DeleteFileW(path2);
+    path2[lstrlenW(path2) - lstrlenW(cmdexeW)] = 0;
+    RemoveDirectoryW(path2);
 
     /* current directory */
     if (0) /* crashes on native */

@@ -1218,12 +1218,37 @@ static inline BOOL is_optional_argument(const VARIANT *arg)
     return V_VT(arg) == VT_ERROR && V_ERROR(arg) == DISP_E_PARAMNOTFOUND;
 }
 
+static WCHAR *split_command( BSTR cmd, WCHAR **params )
+{
+    WCHAR *ret, *ptr;
+    BOOL in_quotes = FALSE;
+
+    if (!(ret = heap_alloc((strlenW(cmd) + 1) * sizeof(WCHAR)))) return NULL;
+    strcpyW( ret, cmd );
+
+    *params = NULL;
+    for (ptr = ret; *ptr; ptr++)
+    {
+        if (*ptr == '"') in_quotes = !in_quotes;
+        else if (*ptr == ' ' && !in_quotes)
+        {
+            *ptr = 0;
+            *params = ptr + 1;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style, VARIANT *wait, DWORD *exit_code)
 {
     SHELLEXECUTEINFOW info;
     int waitforprocess;
+    WCHAR *file, *params;
     VARIANT s;
     HRESULT hr;
+    BOOL ret;
 
     TRACE("(%s %s %s %p)\n", debugstr_w(cmd), debugstr_variant(style), debugstr_variant(wait), exit_code);
 
@@ -1251,13 +1276,18 @@ static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style,
         waitforprocess = V_I4(&w);
     }
 
+    if (!(file = split_command(cmd, &params))) return E_OUTOFMEMORY;
+
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     info.fMask = waitforprocess ? SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS : SEE_MASK_DEFAULT;
-    info.lpFile = cmd;
+    info.lpFile = file;
+    info.lpParameters = params;
     info.nShow = V_I4(&s);
 
-    if (!ShellExecuteExW(&info))
+    ret = ShellExecuteExW(&info);
+    heap_free( file );
+    if (!ret)
     {
         TRACE("ShellExecute failed, %d\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
