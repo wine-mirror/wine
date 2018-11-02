@@ -1317,9 +1317,30 @@ DWORD WINAPI CertGetPublicKeyLength(DWORD dwCertEncodingType,
     }
     else
     {
+        PCCRYPT_OID_INFO info;
         DWORD size;
         PBYTE buf;
-        BOOL ret = CryptDecodeObjectEx(dwCertEncodingType,
+        BOOL ret;
+
+        info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, pPublicKey->Algorithm.pszObjId, 0);
+        if (info)
+        {
+            HCRYPTKEY key;
+
+            TRACE("public key algid %#x (%s)\n", info->u.Algid, debugstr_a(pPublicKey->Algorithm.pszObjId));
+
+            ret = CryptImportPublicKeyInfo(I_CryptGetDefaultCryptProv(0), dwCertEncodingType, pPublicKey, &key);
+            if (ret)
+            {
+                size = sizeof(len);
+                ret = CryptGetKeyParam(key, KP_KEYLEN, (BYTE *)&len, &size, 0);
+                CryptDestroyKey(key);
+                return len;
+            }
+            /* fallback to RSA */
+        }
+
+        ret = CryptDecodeObjectEx(dwCertEncodingType,
          RSA_CSP_PUBLICKEYBLOB, pPublicKey->PublicKey.pbData,
          pPublicKey->PublicKey.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &buf,
          &size);
