@@ -601,10 +601,14 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                 hide_listbox(This, This->hwndListBox, TRUE);
             return 0;
         case WM_KILLFOCUS:
-            if ((This->options & ACO_AUTOSUGGEST) && ((HWND)wParam != This->hwndListBox))
+            if (This->options & ACO_AUTOSUGGEST)
             {
+                if ((HWND)wParam == This->hwndListBox) break;
                 hide_listbox(This, This->hwndListBox, FALSE);
             }
+
+            /* Reset the enumerator if it's not visible anymore */
+            if (!IsWindowVisible(hwnd)) free_enum_strs(This);
             break;
         case WM_KEYDOWN:
             return ACEditSubclassProc_KeyDown(This, hwnd, uMsg, wParam, lParam);
