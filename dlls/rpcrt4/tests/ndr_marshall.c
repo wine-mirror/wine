@@ -1327,9 +1327,7 @@ static void test_iface_ptr(void)
     ok(!my_alloc_called, "alloc called %d\n", my_alloc_called);
     ok(!my_free_called, "free called %d\n", my_free_called);
     ok(server_obj.ref > 1, "got %d references\n", server_obj.ref);
-todo_wine
     ok(client_obj.ref == 1, "got %d references\n", client_obj.ref);
-client_obj.ref = 1;
 
     hr = IPersist_GetClassID(proxy, &clsid);
     ok(hr == S_OK, "got hr %#x\n", hr);

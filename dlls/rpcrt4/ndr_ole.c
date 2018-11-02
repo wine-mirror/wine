@@ -338,19 +338,25 @@ unsigned char * WINAPI NdrInterfacePointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg
                                                     PFORMAT_STRING pFormat,
                                                     unsigned char fMustAlloc)
 {
+  IUnknown **unk = (IUnknown **)ppMemory;
   LPSTREAM stream;
   HRESULT hr;
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
   if (!LoadCOM()) return NULL;
-  *(LPVOID*)ppMemory = NULL;
+
+  /* Avoid reference leaks for [in, out] pointers. */
+  if (pStubMsg->IsClient && *unk)
+    IUnknown_Release(*unk);
+
+  *unk = NULL;
   if (pStubMsg->Buffer + sizeof(DWORD) < (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength) {
     ULONG size;
 
     hr = RpcStream_Create(pStubMsg, FALSE, &size, &stream);
     if (hr == S_OK) {
       if (size != 0)
-        hr = COM_UnmarshalInterface(stream, &IID_NULL, (LPVOID*)ppMemory);
+        hr = COM_UnmarshalInterface(stream, &IID_NULL, (void **)unk);
 
       IStream_Release(stream);
     }
