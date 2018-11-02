@@ -53,6 +53,7 @@ enum IWidget_dispids
 
     DISPID_TM_BASETYPES_IN,
     DISPID_TM_BASETYPES_OUT,
+    DISPID_TM_FLOAT_ABI,
     DISPID_TM_INT_PTR,
     DISPID_TM_INT_PTR_PTR,
     DISPID_TM_IFACE_IN,
@@ -245,6 +246,9 @@ library TestTypelib
         HRESULT basetypes_out([out] signed char *c, [out] short *s, [out] int *i, [out] hyper *h,
                 [out] unsigned char *uc, [out] unsigned short *us, [out] unsigned int *ui,
                 [out] unsigned hyper *uh, [out] float *f, [out] double *d, [out] STATE *st);
+
+        [id(DISPID_TM_FLOAT_ABI)]
+        HRESULT float_abi([in] float f, [in] double d, [in] int i, [in] float f2, [in] double d2);
 
         [id(DISPID_TM_INT_PTR)]
         HRESULT int_ptr([in] int *in, [out] int *out, [in, out] int *in_out);

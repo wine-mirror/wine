@@ -981,6 +981,17 @@ static HRESULT WINAPI Widget_basetypes_out(IWidget *iface, signed char *c, short
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_float_abi(IWidget *iface, float f, double d, int i, float f2, double d2)
+{
+    ok(f == 1.0f, "Got float %f.\n", f);
+    ok(d == 2.0, "Got double %f.\n", d);
+    ok(i == 3, "Got int %d.\n", i);
+    ok(f2 == 4.0f, "Got float %f.\n", f2);
+    ok(d2 == 5.0, "Got double %f.\n", d2);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI Widget_int_ptr(IWidget *iface, int *in, int *out, int *in_out)
 {
     ok(*in == 123, "Got [in] %d.\n", *in);
@@ -1361,6 +1372,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_Coclass,
     Widget_basetypes_in,
     Widget_basetypes_out,
+    Widget_float_abi,
     Widget_int_ptr,
     Widget_int_ptr_ptr,
     Widget_iface_in,
@@ -1779,6 +1791,11 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     i2 = 789;
     pi = &i2;
     hr = IWidget_myint(widget, 123, &i, &pi);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Test that different float ABIs are correctly handled. */
+
+    hr = IWidget_float_abi(widget, 1.0f, 2.0, 3, 4.0f, 5.0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
