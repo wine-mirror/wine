@@ -135,7 +135,8 @@ static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
     hr = IXmlWriter_WriteComment(writer, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
-    /* FIXME: add WriteDocType */
+    hr = IXmlWriter_WriteDocType(writer, aW, NULL, NULL, NULL);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteElementString(writer, NULL, aW, NULL, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
@@ -353,7 +354,8 @@ static void test_invalid_output_encoding(IXmlWriter *writer, IUnknown *output)
     hr = IXmlWriter_WriteComment(writer, aW);
     ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
 
-    /* TODO: WriteDocType */
+    hr = IXmlWriter_WriteDocType(writer, aW, NULL, NULL, NULL);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
 
     hr = IXmlWriter_WriteElementString(writer, NULL, aW, NULL, NULL);
     ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
@@ -2113,6 +2115,109 @@ static void test_WriteString(void)
     IStream_Release(stream);
 }
 
+static HRESULT write_doctype(IXmlWriter *writer, const char *name, const char *pubid, const char *sysid,
+        const char *subset)
+{
+    WCHAR *nameW, *pubidW, *sysidW, *subsetW;
+    HRESULT hr;
+
+    nameW = strdupAtoW(name);
+    pubidW = strdupAtoW(pubid);
+    sysidW = strdupAtoW(sysid);
+    subsetW = strdupAtoW(subset);
+
+    hr = IXmlWriter_WriteDocType(writer, nameW, pubidW, sysidW, subsetW);
+
+    heap_free(nameW);
+    heap_free(pubidW);
+    heap_free(sysidW);
+    heap_free(subsetW);
+
+    return hr;
+}
+
+static void test_WriteDocType(void)
+{
+    static const struct
+    {
+        const char *name;
+        const char *pubid;
+        const char *sysid;
+        const char *subset;
+        const char *output;
+    }
+    doctype_tests[] =
+    {
+        { "a", "", NULL, NULL, "<!DOCTYPE a PUBLIC \"\" \"\">" },
+        { "a", NULL, NULL, NULL, "<!DOCTYPE a>" },
+        { "a", NULL, "", NULL, "<!DOCTYPE a SYSTEM \"\">" },
+        { "a", "", "", NULL, "<!DOCTYPE a PUBLIC \"\" \"\">" },
+        { "a", "pubid", "", NULL, "<!DOCTYPE a PUBLIC \"pubid\" \"\">" },
+        { "a", "pubid", NULL, NULL, "<!DOCTYPE a PUBLIC \"pubid\" \"\">" },
+        { "a", "", "sysid", NULL, "<!DOCTYPE a PUBLIC \"\" \"sysid\">" },
+        { "a", NULL, NULL, "", "<!DOCTYPE a []>" },
+        { "a", NULL, NULL, "subset", "<!DOCTYPE a [subset]>" },
+        { "a", "", NULL, "subset", "<!DOCTYPE a PUBLIC \"\" \"\" [subset]>" },
+        { "a", NULL, "", "subset", "<!DOCTYPE a SYSTEM \"\" [subset]>" },
+        { "a", "", "", "subset", "<!DOCTYPE a PUBLIC \"\" \"\" [subset]>" },
+        { "a", "pubid", NULL, "subset", "<!DOCTYPE a PUBLIC \"pubid\" \"\" [subset]>" },
+        { "a", "pubid", "", "subset", "<!DOCTYPE a PUBLIC \"pubid\" \"\" [subset]>" },
+        { "a", NULL, "sysid", "subset", "<!DOCTYPE a SYSTEM \"sysid\" [subset]>" },
+        { "a", "", "sysid", "subset", "<!DOCTYPE a PUBLIC \"\" \"sysid\" [subset]>" },
+        { "a", "pubid", "sysid", "subset", "<!DOCTYPE a PUBLIC \"pubid\" \"sysid\" [subset]>" },
+    };
+    static const WCHAR pubidW[] = {'p',0x100,'i','d',0};
+    static const WCHAR nameW[] = {'-','a',0};
+    static const WCHAR emptyW[] = { 0 };
+    IXmlWriter *writer;
+    IStream *stream;
+    unsigned int i;
+    HRESULT hr;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
+    ok(hr == S_OK, "Failed to create writer instance, hr %#x.\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteDocType(writer, NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteDocType(writer, emptyW, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Name validation. */
+    hr = IXmlWriter_WriteDocType(writer, nameW, NULL, NULL, NULL);
+    ok(hr == WC_E_NAMECHARACTER, "Unexpected hr %#x.\n", hr);
+
+    /* Pubid validation. */
+    hr = IXmlWriter_WriteDocType(writer, aW, pubidW, NULL, NULL);
+    ok(hr == WC_E_PUBLICID, "Unexpected hr %#x.\n", hr);
+
+    IStream_Release(stream);
+
+    for (i = 0; i < ARRAY_SIZE(doctype_tests); i++)
+    {
+        stream = writer_set_output(writer);
+
+        hr = write_doctype(writer, doctype_tests[i].name, doctype_tests[i].pubid, doctype_tests[i].sysid,
+                doctype_tests[i].subset);
+        ok(hr == S_OK, "%u: failed to write doctype, hr %#x.\n", i, hr);
+
+        hr = IXmlWriter_Flush(writer);
+        ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+        CHECK_OUTPUT(stream, doctype_tests[i].output);
+
+        hr = write_doctype(writer, doctype_tests[i].name, doctype_tests[i].pubid, doctype_tests[i].sysid,
+                doctype_tests[i].subset);
+        ok(hr == WR_E_INVALIDACTION, "Unexpected hr %#x.\n", hr);
+
+        IStream_Release(stream);
+    }
+
+    IXmlWriter_Release(writer);
+}
+
 START_TEST(writer)
 {
     test_writer_create();
@@ -2134,4 +2239,5 @@ START_TEST(writer)
     test_WriteFullEndElement();
     test_WriteCharEntity();
     test_WriteString();
+    test_WriteDocType();
 }

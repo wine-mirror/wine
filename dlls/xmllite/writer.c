@@ -366,6 +366,50 @@ static HRESULT is_valid_ncname(const WCHAR *str, int *out)
     return S_OK;
 }
 
+static HRESULT is_valid_name(const WCHAR *str, unsigned int *out)
+{
+    unsigned int len = 1;
+
+    *out = 0;
+
+    if (!str || !*str)
+        return S_OK;
+
+    if (!is_namestartchar(*str++))
+        return WC_E_NAMECHARACTER;
+
+    while (*str++)
+    {
+        if (!is_namechar(*str))
+            return WC_E_NAMECHARACTER;
+        len++;
+    }
+
+    *out = len;
+    return S_OK;
+}
+
+static HRESULT is_valid_pubid(const WCHAR *str, unsigned int *out)
+{
+    unsigned int len = 0;
+
+    *out = 0;
+
+    if (!str || !*str)
+        return S_OK;
+
+    while (*str)
+    {
+        if (!is_pubchar(*str++))
+            return WC_E_PUBLICID;
+        len++;
+    }
+
+    *out = len;
+
+    return S_OK;
+}
+
 static HRESULT init_output_buffer(xmlwriteroutput *output)
 {
     struct output_buffer *buffer = &output->buffer;
@@ -455,6 +499,11 @@ static HRESULT write_output_buffer_quoted(xmlwriteroutput *output, const WCHAR *
         write_output_buffer(output, data, len);
     write_output_buffer(output, quoteW, ARRAY_SIZE(quoteW));
     return S_OK;
+}
+
+static HRESULT write_output_buffer_char(xmlwriteroutput *output, WCHAR ch)
+{
+    return write_output_buffer(output, &ch, 1);
 }
 
 /* TODO: test if we need to validate char range */
@@ -1103,15 +1152,69 @@ static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlwriter_WriteDocType(IXmlWriter *iface, LPCWSTR pwszName, LPCWSTR pwszPublicId,
-                               LPCWSTR pwszSystemId, LPCWSTR pwszSubset)
+static HRESULT WINAPI xmlwriter_WriteDocType(IXmlWriter *iface, LPCWSTR name, LPCWSTR pubid,
+        LPCWSTR sysid, LPCWSTR subset)
 {
+    static const WCHAR doctypeW[] = {'<','!','D','O','C','T','Y','P','E',' '};
+    static const WCHAR publicW[] = {' ','P','U','B','L','I','C',' '};
+    static const WCHAR systemW[] = {' ','S','Y','S','T','E','M',' '};
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    unsigned int name_len, pubid_len;
+    HRESULT hr;
 
-    FIXME("%p %s %s %s %s\n", This, wine_dbgstr_w(pwszName), wine_dbgstr_w(pwszPublicId),
-                        wine_dbgstr_w(pwszSystemId), wine_dbgstr_w(pwszSubset));
+    TRACE("(%p)->(%s %s %s %s)\n", This, wine_dbgstr_w(name), wine_dbgstr_w(pubid), wine_dbgstr_w(sysid),
+            wine_dbgstr_w(subset));
 
-    return E_NOTIMPL;
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_InvalidEncoding:
+        return MX_E_ENCODING;
+    case XmlWriterState_Content:
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
+    if (is_empty_string(name))
+        return E_INVALIDARG;
+
+    if (FAILED(hr = is_valid_name(name, &name_len)))
+        return hr;
+
+    if (FAILED(hr = is_valid_pubid(pubid, &pubid_len)))
+        return hr;
+
+    write_output_buffer(This->output, doctypeW, ARRAY_SIZE(doctypeW));
+    write_output_buffer(This->output, name, name_len);
+
+    if (pubid)
+    {
+        write_output_buffer(This->output, publicW, ARRAY_SIZE(publicW));
+        write_output_buffer_quoted(This->output, pubid, pubid_len);
+        write_output_buffer(This->output, spaceW, ARRAY_SIZE(spaceW));
+        write_output_buffer_quoted(This->output, sysid, -1);
+    }
+    else if (sysid)
+    {
+        write_output_buffer(This->output, systemW, ARRAY_SIZE(systemW));
+        write_output_buffer_quoted(This->output, sysid, -1);
+    }
+
+    if (subset)
+    {
+        write_output_buffer_char(This->output, ' ');
+        write_output_buffer_char(This->output, '[');
+        write_output_buffer(This->output, subset, -1);
+        write_output_buffer_char(This->output, ']');
+    }
+    write_output_buffer_char(This->output, '>');
+
+    This->state = XmlWriterState_Content;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR prefix,
