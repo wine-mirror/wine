@@ -40,6 +40,7 @@
 #include "winuser.h"
 #include "dbt.h"
 #include "winreg.h"
+#include "setupapi.h"
 #include "ddk/csq.h"
 #include "ddk/ntddk.h"
 #include "ddk/ntifs.h"
@@ -1662,6 +1663,115 @@ NTSTATUS WINAPI IoQueryDeviceDescription(PINTERFACE_TYPE itype, PULONG bus, PCON
 {
     FIXME( "(%p %p %p %p %p %p %p %p)\n", itype, bus, ctype, cnum, ptype, pnum, callout, context);
     return STATUS_NOT_IMPLEMENTED;
+}
+
+
+static NTSTATUS get_instance_id(DEVICE_OBJECT *device, WCHAR **instance_id)
+{
+    WCHAR *id, *ptr;
+    NTSTATUS status;
+
+    status = get_device_id( device, BusQueryInstanceID, &id );
+    if (status != STATUS_SUCCESS) return status;
+
+    struprW( id );
+    for (ptr = id; *ptr; ptr++)if (*ptr == '\\') *ptr = '#';
+
+    *instance_id = id;
+    return STATUS_SUCCESS;
+}
+
+
+/*****************************************************
+ *           IoRegisterDeviceInterface(NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *class_guid, UNICODE_STRING *reference_string, UNICODE_STRING *symbolic_link)
+{
+    WCHAR *instance_id;
+    NTSTATUS status = STATUS_SUCCESS;
+    HDEVINFO infoset;
+    WCHAR *referenceW = NULL;
+    SP_DEVINFO_DATA devInfo;
+    SP_DEVICE_INTERFACE_DATA infoData;
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *data;
+    DWORD required;
+    BOOL rc;
+
+    TRACE( "(%p, %s, %s, %p)\n", device, debugstr_guid(class_guid), debugstr_us(reference_string), symbolic_link );
+
+    if (reference_string != NULL)
+        referenceW = reference_string->Buffer;
+
+    infoset = SetupDiGetClassDevsW( class_guid, referenceW, NULL, DIGCF_DEVICEINTERFACE );
+    if (infoset == INVALID_HANDLE_VALUE) return STATUS_UNSUCCESSFUL;
+
+    status = get_instance_id( device, &instance_id );
+    if (status != STATUS_SUCCESS) return status;
+
+    devInfo.cbSize = sizeof( devInfo );
+    rc = SetupDiCreateDeviceInfoW( infoset, instance_id, class_guid, NULL, NULL, 0, &devInfo );
+    if (rc == 0)
+    {
+        if (GetLastError() == ERROR_DEVINST_ALREADY_EXISTS)
+        {
+            DWORD index = 0;
+            DWORD size = strlenW(instance_id) + 2;
+            WCHAR *id = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
+            do
+            {
+                rc = SetupDiEnumDeviceInfo( infoset, index, &devInfo );
+                if (rc && IsEqualGUID( &devInfo.ClassGuid, class_guid ))
+                {
+                    BOOL check;
+                    check = SetupDiGetDeviceInstanceIdW( infoset, &devInfo, id, size, &required );
+                    if (check && strcmpW( id, instance_id ) == 0)
+                        break;
+                }
+                index++;
+            } while (rc);
+
+            HeapFree( GetProcessHeap(), 0, id );
+            if (!rc)
+            {
+                HeapFree( GetProcessHeap(), 0, instance_id );
+                return STATUS_UNSUCCESSFUL;
+            }
+        }
+        else
+        {
+            HeapFree( GetProcessHeap(), 0, instance_id );
+            return STATUS_UNSUCCESSFUL;
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, instance_id );
+
+    infoData.cbSize = sizeof( infoData );
+    rc = SetupDiCreateDeviceInterfaceW( infoset, &devInfo, class_guid, NULL, 0, &infoData );
+    if (!rc) return STATUS_UNSUCCESSFUL;
+
+    required = 0;
+    SetupDiGetDeviceInterfaceDetailW( infoset, &infoData, NULL, 0, &required, NULL );
+    if (required == 0) return STATUS_UNSUCCESSFUL;
+
+    data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY , required );
+    data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+
+    rc = SetupDiGetDeviceInterfaceDetailW( infoset, &infoData, data, required, NULL, NULL );
+    if (!rc)
+    {
+        HeapFree( GetProcessHeap(), 0, data );
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    data->DevicePath[1] = '?';
+    TRACE( "Device path %s\n",debugstr_w(data->DevicePath) );
+
+    if (symbolic_link)
+        RtlCreateUnicodeString( symbolic_link, data->DevicePath);
+
+    HeapFree( GetProcessHeap(), 0, data );
+
+    return status;
 }
 
 

@@ -428,7 +428,7 @@
 @ stub IoReadPartitionTableEx
 @ stub IoReadTransferCount
 @ stub IoRegisterBootDriverReinitialization
-@ stub IoRegisterDeviceInterface
+@ stdcall IoRegisterDeviceInterface(ptr ptr ptr ptr)
 @ stdcall IoRegisterDriverReinitialization(ptr ptr ptr)
 @ stdcall IoRegisterFileSystem(ptr)
 @ stub IoRegisterFsRegistrationChange
