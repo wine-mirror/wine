@@ -110,7 +110,13 @@ static void clear_output_vars( const var_list_t *args )
           if (type_get_type(type_pointer_get_ref(arg->type)) == TYPE_BASIC) continue;
           if (type_get_type(type_pointer_get_ref(arg->type)) == TYPE_ENUM) continue;
       }
-      print_proxy( "if (%s) MIDL_memset( %s, 0, sizeof( *%s ));\n", arg->name, arg->name, arg->name );
+      print_proxy( "if (%s) MIDL_memset( %s, 0, ", arg->name, arg->name );
+      if (is_array(arg->type) && type_array_has_conformance(arg->type))
+      {
+          write_expr( proxy, type_array_get_conformance(arg->type), 1, 1, NULL, NULL, "" );
+          fprintf( proxy, " * " );
+      }
+      fprintf( proxy, "sizeof( *%s ));\n", arg->name );
   }
 }
 
