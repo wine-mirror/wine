@@ -274,6 +274,7 @@ struct string_enumerator
     WCHAR **data;
     int data_len;
     int cur;
+    UINT num_resets;
     UINT num_expand;
     WCHAR last_expand[32];
 };
@@ -349,6 +350,7 @@ static HRESULT WINAPI string_enumerator_Reset(IEnumString *iface)
     struct string_enumerator *this = impl_from_IEnumString(iface);
 
     this->cur = 0;
+    this->num_resets++;
 
     return S_OK;
 }
@@ -456,6 +458,7 @@ static void test_aclist_expand(HWND hwnd_edit, void *enumerator)
     static WCHAR str2[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\','b','a',0};
     static WCHAR str2a[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\',0};
     static WCHAR str2b[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\','b','a','z','_','b','b','q','\\',0};
+    obj->num_resets = 0;
 
     ok(obj->num_expand == 0, "Expected 0 expansions, got %u\n", obj->num_expand);
     SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)str1);
@@ -464,12 +467,14 @@ static void test_aclist_expand(HWND hwnd_edit, void *enumerator)
     dispatch_messages();
     ok(obj->num_expand == 1, "Expected 1 expansion, got %u\n", obj->num_expand);
     ok(lstrcmpW(obj->last_expand, str1a) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str1a), wine_dbgstr_w(obj->last_expand));
+    ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
     SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)str2);
     SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(str2) - 1, ARRAY_SIZE(str2) - 1);
     SendMessageW(hwnd_edit, WM_CHAR, 'z', 1);
     dispatch_messages();
     ok(obj->num_expand == 2, "Expected 2 expansions, got %u\n", obj->num_expand);
     ok(lstrcmpW(obj->last_expand, str2a) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str2a), wine_dbgstr_w(obj->last_expand));
+    ok(obj->num_resets == 2, "Expected 2 resets, got %u\n", obj->num_resets);
     SetFocus(hwnd_edit);
     SendMessageW(hwnd_edit, WM_CHAR, '_', 1);
     SendMessageW(hwnd_edit, WM_CHAR, 'b', 1);
@@ -479,20 +484,24 @@ static void test_aclist_expand(HWND hwnd_edit, void *enumerator)
     SendMessageW(hwnd_edit, WM_CHAR, 'q', 1);
     dispatch_messages();
     ok(obj->num_expand == 2, "Expected 2 expansions, got %u\n", obj->num_expand);
+    ok(obj->num_resets == 2, "Expected 2 resets, got %u\n", obj->num_resets);
     SendMessageW(hwnd_edit, WM_CHAR, '\\', 1);
     dispatch_messages();
     ok(obj->num_expand == 3, "Expected 3 expansions, got %u\n", obj->num_expand);
     ok(lstrcmpW(obj->last_expand, str2b) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str2b), wine_dbgstr_w(obj->last_expand));
+    ok(obj->num_resets == 3, "Expected 3 resets, got %u\n", obj->num_resets);
     SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(str1a) - 1, -1);
     SendMessageW(hwnd_edit, WM_CHAR, 'x', 1);
     SendMessageW(hwnd_edit, WM_CHAR, 'y', 1);
     dispatch_messages();
     ok(obj->num_expand == 4, "Expected 4 expansions, got %u\n", obj->num_expand);
     ok(lstrcmpW(obj->last_expand, str1a) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str1a), wine_dbgstr_w(obj->last_expand));
+    ok(obj->num_resets == 4, "Expected 4 resets, got %u\n", obj->num_resets);
     SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(str1) - 1, -1);
     SendMessageW(hwnd_edit, WM_CHAR, 'x', 1);
     dispatch_messages();
     ok(obj->num_expand == 4, "Expected 4 expansions, got %u\n", obj->num_expand);
+    ok(obj->num_resets == 5, "Expected 5 resets, got %u\n", obj->num_resets);
 }
 
 static void test_custom_source(void)
@@ -502,6 +511,7 @@ static void test_custom_source(void)
     static WCHAR str_beta[] = {'a','u','t','o',' ','c','o','m','p','l','e','t','e',0};
     static WCHAR str_au[] = {'a','u',0};
     static WCHAR *suggestions[] = { str_alpha, str_alpha2, str_beta };
+    struct string_enumerator *obj;
     IUnknown *enumerator;
     IAutoComplete2 *autocomplete;
     HWND hwnd_edit;
@@ -516,6 +526,7 @@ static void test_custom_source(void)
     ok(hr == S_OK, "CoCreateInstance failed: %x\n", hr);
 
     string_enumerator_create((void**)&enumerator, suggestions, ARRAY_SIZE(suggestions));
+    obj = (struct string_enumerator*)enumerator;
 
     hr = IAutoComplete2_SetOptions(autocomplete, ACO_AUTOSUGGEST | ACO_AUTOAPPEND);
     ok(hr == S_OK, "IAutoComplete2_SetOptions failed: %x\n", hr);
@@ -528,11 +539,14 @@ static void test_custom_source(void)
     dispatch_messages();
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(lstrcmpW(str_beta, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_beta), wine_dbgstr_w(buffer));
+    ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
     SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
     SendMessageW(hwnd_edit, WM_CHAR, '\b', 1);
     dispatch_messages();
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(buffer[0] == '\0', "Expected empty string, got %s\n", wine_dbgstr_w(buffer));
+    ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
+    obj->num_resets = 0;
 
     /* hijack the window procedure */
     HijackerWndProc_prev = (WNDPROC)SetWindowLongPtrW(hwnd_edit, GWLP_WNDPROC, (LONG_PTR)HijackerWndProc);
@@ -545,6 +559,7 @@ static void test_custom_source(void)
     dispatch_messages();
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(lstrcmpW(str_au, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_au), wine_dbgstr_w(buffer));
+    ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
     SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
     SendMessageW(hwnd_edit, WM_CHAR, '\b', 1);
     dispatch_messages();
@@ -558,6 +573,7 @@ static void test_custom_source(void)
     dispatch_messages();
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(lstrcmpW(str_beta, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_beta), wine_dbgstr_w(buffer));
+    ok(obj->num_resets == 2, "Expected 2 resets, got %u\n", obj->num_resets);
     /* end of hijacks */
 
     test_aclist_expand(hwnd_edit, enumerator);
