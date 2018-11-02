@@ -1291,7 +1291,7 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
     if (cas) {
       const statement_t *stmt2 = NULL;
       STATEMENTS_FOR_EACH_FUNC(stmt2, type_iface_get_stmts(iface))
-        if (!strcmp(stmt2->u.var->name, cas->name))
+        if (!strcmp(get_name(stmt2->u.var), cas->name))
           break;
       if (&stmt2->entry != type_iface_get_stmts(iface)) {
         const var_t *m = stmt2->u.var;
