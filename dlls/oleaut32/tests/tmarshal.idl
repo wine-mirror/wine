@@ -68,6 +68,7 @@ enum IWidget_dispids
     DISPID_TM_ARRAY,
     DISPID_TM_VARIANT_ARRAY,
     DISPID_TM_STRUCT_ARRAY,
+    DISPID_TM_TYPEDEF,
 };
 
 static const int DISPID_TM_NEG_RESTRICTED = -26;
@@ -99,6 +100,8 @@ library TestTypelib
         ULONGLONG field2;
         UINT uarr[8];
     } MYSTRUCT;
+
+    typedef [public] int myint_t;
 
     coclass ApplicationObject2;
 
@@ -295,6 +298,9 @@ library TestTypelib
 
         [id(DISPID_TM_STRUCT_ARRAY)]
         HRESULT mystruct_array([in] MYSTRUCT in[2]);
+
+        [id(DISPID_TM_TYPEDEF)]
+        HRESULT myint([in] myint_t val, [in] myint_t *ptr, [in] myint_t **ptr_ptr);
     }
 
     [
