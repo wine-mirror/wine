@@ -197,7 +197,7 @@ static const struct thunk *allocate_block( unsigned int num )
     return block;
 }
 
-static BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
+BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
 {
     const void **entry = (const void **)(vtbl + 1);
     DWORD i, j;

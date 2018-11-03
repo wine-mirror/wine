@@ -61,5 +61,6 @@ extern const IRpcStubBufferVtbl CStdStubBuffer_Delegating_Vtbl DECLSPEC_HIDDEN;
 BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num) DECLSPEC_HIDDEN;
 HRESULT create_proxy(REFIID iid, IUnknown *pUnkOuter, IRpcProxyBuffer **pproxy, void **ppv) DECLSPEC_HIDDEN;
 HRESULT create_stub(REFIID iid, IUnknown *pUnk, IRpcStubBuffer **ppstub) DECLSPEC_HIDDEN;
+BOOL fill_stubless_table(IUnknownVtbl *vtbl, DWORD num) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_CPSF_H */
