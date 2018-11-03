@@ -258,8 +258,12 @@ static void test_MFCreateAttributes(void)
 static void test_MFCreateMFByteStreamOnStream(void)
 {
     IMFByteStream *bytestream;
+    IMFByteStream *bytestream2;
     IStream *stream;
+    IMFAttributes *attributes = NULL;
+    IUnknown *unknown;
     HRESULT hr;
+    ULONG ref;
 
     if(!pMFCreateMFByteStreamOnStream)
     {
@@ -270,11 +274,56 @@ static void test_MFCreateMFByteStreamOnStream(void)
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = pMFCreateMFByteStreamOnStream(stream, &bytestream );
+    hr = pMFCreateMFByteStreamOnStream(stream, &bytestream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    IStream_Release(stream);
+    hr = IUnknown_QueryInterface(bytestream, &IID_IUnknown,
+                                 (void **)&unknown);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok((void *)unknown == (void *)bytestream, "got %p\n", unknown);
+    ref = IUnknown_Release(unknown);
+    ok(ref == 1, "got %u\n", ref);
+
+    hr = IUnknown_QueryInterface(unknown, &IID_IMFByteStream,
+                                 (void **)&bytestream2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(bytestream2 == bytestream, "got %p\n", bytestream2);
+    ref = IMFByteStream_Release(bytestream2);
+    ok(ref == 1, "got %u\n", ref);
+
+    hr = IUnknown_QueryInterface(bytestream, &IID_IMFAttributes,
+                                 (void **)&attributes);
+    ok(hr == S_OK ||
+       /* w7pro64 */
+       broken(hr == E_NOINTERFACE), "got 0x%08x\n", hr);
+
+    if (hr != S_OK)
+    {
+        win_skip("Can not retrieve IMFAttributes interface from IMFByteStream\n");
+        IStream_Release(stream);
+        IMFByteStream_Release(bytestream);
+        return;
+    }
+
+    ok(attributes != NULL, "got NULL\n");
+
+    hr = IUnknown_QueryInterface(attributes, &IID_IUnknown,
+                                 (void **)&unknown);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok((void *)unknown == (void *)bytestream, "got %p\n", unknown);
+    ref = IUnknown_Release(unknown);
+    ok(ref == 2, "got %u\n", ref);
+
+    hr = IUnknown_QueryInterface(attributes, &IID_IMFByteStream,
+                                 (void **)&bytestream2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(bytestream2 == bytestream, "got %p\n", bytestream2);
+    ref = IMFByteStream_Release(bytestream2);
+    ok(ref == 2, "got %u\n", ref);
+
+    IMFAttributes_Release(attributes);
     IMFByteStream_Release(bytestream);
+    IStream_Release(stream);
 }
 
 static void test_MFCreateMemoryBuffer(void)

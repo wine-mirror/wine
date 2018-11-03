@@ -847,8 +847,8 @@ HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size)
 
 typedef struct _mfbytestream
 {
+    mfattributes attributes;
     IMFByteStream IMFByteStream_iface;
-    LONG ref;
 } mfbytestream;
 
 static inline mfbytestream *impl_from_IMFByteStream(IMFByteStream *iface)
@@ -867,6 +867,10 @@ static HRESULT WINAPI mfbytestream_QueryInterface(IMFByteStream *iface, REFIID r
     {
         *out = &This->IMFByteStream_iface;
     }
+    else if(IsEqualGUID(riid, &IID_IMFAttributes))
+    {
+        *out = &This->attributes.IMFAttributes_iface;
+    }
     else
     {
         FIXME("(%s, %p)\n", debugstr_guid(riid), out);
@@ -881,17 +885,17 @@ static HRESULT WINAPI mfbytestream_QueryInterface(IMFByteStream *iface, REFIID r
 static ULONG WINAPI mfbytestream_AddRef(IMFByteStream *iface)
 {
     mfbytestream *This = impl_from_IMFByteStream(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->attributes.ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
 
     return ref;
 }
 
-static ULONG  WINAPI mfbytestream_Release(IMFByteStream *iface)
+static ULONG WINAPI mfbytestream_Release(IMFByteStream *iface)
 {
     mfbytestream *This = impl_from_IMFByteStream(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->attributes.ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
 
@@ -1044,7 +1048,7 @@ static HRESULT WINAPI mfbytestream_Close(IMFByteStream *iface)
     return E_NOTIMPL;
 }
 
-static const IMFByteStreamVtbl mfbytesteam_vtbl =
+static const IMFByteStreamVtbl mfbytestream_vtbl =
 {
     mfbytestream_QueryInterface,
     mfbytestream_AddRef,
@@ -1066,6 +1070,67 @@ static const IMFByteStreamVtbl mfbytesteam_vtbl =
     mfbytestream_Close
 };
 
+static inline mfbytestream *impl_from_IMFByteStream_IMFAttributes(IMFAttributes *iface)
+{
+    return CONTAINING_RECORD(iface, mfbytestream, attributes.IMFAttributes_iface);
+}
+
+static HRESULT WINAPI mfbytestream_attributes_QueryInterface(
+    IMFAttributes *iface, REFIID riid, void **out)
+{
+    mfbytestream *This = impl_from_IMFByteStream_IMFAttributes(iface);
+    return IMFByteStream_QueryInterface(&This->IMFByteStream_iface, riid, out);
+}
+
+static ULONG WINAPI mfbytestream_attributes_AddRef(IMFAttributes *iface)
+{
+    mfbytestream *This = impl_from_IMFByteStream_IMFAttributes(iface);
+    return IMFByteStream_AddRef(&This->IMFByteStream_iface);
+}
+
+static ULONG WINAPI mfbytestream_attributes_Release(IMFAttributes *iface)
+{
+    mfbytestream *This = impl_from_IMFByteStream_IMFAttributes(iface);
+    return IMFByteStream_Release(&This->IMFByteStream_iface);
+}
+
+static const IMFAttributesVtbl mfbytestream_attributes_vtbl =
+{
+    mfbytestream_attributes_QueryInterface,
+    mfbytestream_attributes_AddRef,
+    mfbytestream_attributes_Release,
+    mfattributes_GetItem,
+    mfattributes_GetItemType,
+    mfattributes_CompareItem,
+    mfattributes_Compare,
+    mfattributes_GetUINT32,
+    mfattributes_GetUINT64,
+    mfattributes_GetDouble,
+    mfattributes_GetGUID,
+    mfattributes_GetStringLength,
+    mfattributes_GetString,
+    mfattributes_GetAllocatedString,
+    mfattributes_GetBlobSize,
+    mfattributes_GetBlob,
+    mfattributes_GetAllocatedBlob,
+    mfattributes_GetUnknown,
+    mfattributes_SetItem,
+    mfattributes_DeleteItem,
+    mfattributes_DeleteAllItems,
+    mfattributes_SetUINT32,
+    mfattributes_SetUINT64,
+    mfattributes_SetDouble,
+    mfattributes_SetGUID,
+    mfattributes_SetString,
+    mfattributes_SetBlob,
+    mfattributes_SetUnknown,
+    mfattributes_LockStore,
+    mfattributes_UnlockStore,
+    mfattributes_GetCount,
+    mfattributes_GetItemByIndex,
+    mfattributes_CopyAllItems
+};
+
 HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **bytestream)
 {
     mfbytestream *object;
@@ -1076,8 +1141,9 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
     if(!object)
         return E_OUTOFMEMORY;
 
-    object->ref = 1;
-    object->IMFByteStream_iface.lpVtbl = &mfbytesteam_vtbl;
+    init_attribute_object(&object->attributes, 0);
+    object->IMFByteStream_iface.lpVtbl = &mfbytestream_vtbl;
+    object->attributes.IMFAttributes_iface.lpVtbl = &mfbytestream_attributes_vtbl;
 
     *bytestream = &object->IMFByteStream_iface;
 
