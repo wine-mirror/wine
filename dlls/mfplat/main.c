@@ -1150,6 +1150,77 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
     return S_OK;
 }
 
+HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
+                            LPCWSTR url, IMFByteStream **bytestream)
+{
+    mfbytestream *object;
+    DWORD fileaccessmode = 0;
+    DWORD filesharemode = FILE_SHARE_READ;
+    DWORD filecreation_disposition = 0;
+    DWORD fileattributes = 0;
+    HANDLE file;
+
+    FIXME("(%d, %d, %d, %s, %p): stub\n", accessmode, openmode, flags, debugstr_w(url), bytestream);
+
+    switch (accessmode)
+    {
+        case MF_ACCESSMODE_READ:
+            fileaccessmode = GENERIC_READ;
+            break;
+        case MF_ACCESSMODE_WRITE:
+            fileaccessmode = GENERIC_WRITE;
+            break;
+        case MF_ACCESSMODE_READWRITE:
+            fileaccessmode = GENERIC_READ | GENERIC_WRITE;
+            break;
+    }
+
+    switch (openmode)
+    {
+        case MF_OPENMODE_FAIL_IF_NOT_EXIST:
+            filecreation_disposition = OPEN_EXISTING;
+            break;
+        case MF_OPENMODE_FAIL_IF_EXIST:
+            filecreation_disposition = CREATE_NEW;
+            break;
+        case MF_OPENMODE_RESET_IF_EXIST:
+            filecreation_disposition = TRUNCATE_EXISTING;
+            break;
+        case MF_OPENMODE_APPEND_IF_EXIST:
+            filecreation_disposition = OPEN_ALWAYS;
+            fileaccessmode |= FILE_APPEND_DATA;
+            break;
+        case MF_OPENMODE_DELETE_IF_EXIST:
+            filecreation_disposition = CREATE_ALWAYS;
+            break;
+    }
+
+    if (flags & MF_FILEFLAGS_NOBUFFERING)
+        fileattributes |= FILE_FLAG_NO_BUFFERING;
+
+    /* Open HANDLE to file */
+    file = CreateFileW(url, fileaccessmode, filesharemode, NULL,
+                       filecreation_disposition, fileattributes, 0);
+
+    if(file == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    /* Close the file again, since we don't do anything with it yet */
+    CloseHandle(file);
+
+    object = heap_alloc( sizeof(*object) );
+    if(!object)
+        return E_OUTOFMEMORY;
+
+    init_attribute_object(&object->attributes, 0);
+    object->IMFByteStream_iface.lpVtbl = &mfbytestream_vtbl;
+    object->attributes.IMFAttributes_iface.lpVtbl = &mfbytestream_attributes_vtbl;
+
+    *bytestream = &object->IMFByteStream_iface;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI MFPluginControl_QueryInterface(IMFPluginControl *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown)) {
