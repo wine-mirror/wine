@@ -15,6 +15,7 @@ C_SRCS = \
 	ndr_marshall.c \
 	ndr_ole.c \
 	ndr_stubless.c \
+	ndr_typelib.c \
 	rpc_assoc.c \
 	rpc_async.c \
 	rpc_binding.c \

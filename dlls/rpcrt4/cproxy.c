@@ -42,21 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-/* I don't know what MS's std proxy structure looks like,
-   so this probably doesn't match, but that shouldn't matter */
-typedef struct {
-  IRpcProxyBuffer IRpcProxyBuffer_iface;
-  LPVOID *PVtbl;
-  LONG RefCount;
-  const IID* piid;
-  LPUNKNOWN pUnkOuter;
-  IUnknown *base_object;  /* must be at offset 0x10 from PVtbl */
-  IRpcProxyBuffer *base_proxy;
-  PCInterfaceName name;
-  LPPSFACTORYBUFFER pPSFactory;
-  LPRPCCHANNELBUFFER pChannel;
-} StdProxyImpl;
-
 static const IRpcProxyBufferVtbl StdProxy_Vtbl;
 
 static inline StdProxyImpl *impl_from_IRpcProxyBuffer(IRpcProxyBuffer *iface)
@@ -296,9 +281,7 @@ HRESULT StdProxy_Construct(REFIID riid,
   return S_OK;
 }
 
-static HRESULT WINAPI StdProxy_QueryInterface(LPRPCPROXYBUFFER iface,
-                                             REFIID riid,
-                                             LPVOID *obj)
+HRESULT WINAPI StdProxy_QueryInterface(IRpcProxyBuffer *iface, REFIID riid, void **obj)
 {
   StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(riid),obj);
@@ -319,7 +302,7 @@ static HRESULT WINAPI StdProxy_QueryInterface(LPRPCPROXYBUFFER iface,
   return E_NOINTERFACE;
 }
 
-static ULONG WINAPI StdProxy_AddRef(LPRPCPROXYBUFFER iface)
+ULONG WINAPI StdProxy_AddRef(IRpcProxyBuffer *iface)
 {
   StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->AddRef()\n",This);
@@ -349,8 +332,7 @@ static ULONG WINAPI StdProxy_Release(LPRPCPROXYBUFFER iface)
   return refs;
 }
 
-static HRESULT WINAPI StdProxy_Connect(LPRPCPROXYBUFFER iface,
-                                      LPRPCCHANNELBUFFER pChannel)
+HRESULT WINAPI StdProxy_Connect(IRpcProxyBuffer *iface, IRpcChannelBuffer *pChannel)
 {
   StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->Connect(%p)\n",This,pChannel);
@@ -361,7 +343,7 @@ static HRESULT WINAPI StdProxy_Connect(LPRPCPROXYBUFFER iface,
   return S_OK;
 }
 
-static VOID WINAPI StdProxy_Disconnect(LPRPCPROXYBUFFER iface)
+void WINAPI StdProxy_Disconnect(IRpcProxyBuffer *iface)
 {
   StdProxyImpl *This = impl_from_IRpcProxyBuffer(iface);
   TRACE("(%p)->Disconnect()\n",This);
@@ -529,27 +511,6 @@ HRESULT WINAPI NdrProxyErrorHandler(DWORD dwExceptionCode)
     return dwExceptionCode;
   else
     return HRESULT_FROM_WIN32(dwExceptionCode);
-}
-
-HRESULT WINAPI
-CreateProxyFromTypeInfo( LPTYPEINFO pTypeInfo, LPUNKNOWN pUnkOuter, REFIID riid,
-                         LPRPCPROXYBUFFER *ppProxy, LPVOID *ppv )
-{
-    typedef INT (WINAPI *MessageBoxA)(HWND,LPCSTR,LPCSTR,UINT);
-    HMODULE hUser32 = LoadLibraryA("user32");
-    MessageBoxA pMessageBoxA = (void *)GetProcAddress(hUser32, "MessageBoxA");
-
-    FIXME("%p %p %s %p %p\n", pTypeInfo, pUnkOuter, debugstr_guid(riid), ppProxy, ppv);
-    if (pMessageBoxA)
-    {
-        pMessageBoxA(NULL,
-            "The native implementation of OLEAUT32.DLL cannot be used "
-            "with Wine's RPCRT4.DLL. Remove OLEAUT32.DLL and try again.\n",
-            "Wine: Unimplemented CreateProxyFromTypeInfo",
-            0x10);
-        ExitProcess(1);
-    }
-    return E_NOTIMPL;
 }
 
 HRESULT WINAPI

@@ -21,9 +21,29 @@
 #ifndef __WINE_CPSF_H
 #define __WINE_CPSF_H
 
+typedef struct
+{
+    IRpcProxyBuffer IRpcProxyBuffer_iface;
+    void **PVtbl;
+    LONG RefCount;
+    const IID *piid;
+    IUnknown *pUnkOuter;
+    /* offset of base_object from PVtbl must match assembly thunks; see
+     * fill_delegated_proxy_table() */
+    IUnknown *base_object;
+    IRpcProxyBuffer *base_proxy;
+    PCInterfaceName name;
+    IPSFactoryBuffer *pPSFactory;
+    IRpcChannelBuffer *pChannel;
+} StdProxyImpl;
+
 HRESULT StdProxy_Construct(REFIID riid, LPUNKNOWN pUnkOuter, const ProxyFileInfo *ProxyInfo,
                            int Index, LPPSFACTORYBUFFER pPSFactory, LPRPCPROXYBUFFER *ppProxy,
                            LPVOID *ppvObj) DECLSPEC_HIDDEN;
+HRESULT WINAPI StdProxy_QueryInterface(IRpcProxyBuffer *iface, REFIID iid, void **obj) DECLSPEC_HIDDEN;
+ULONG WINAPI StdProxy_AddRef(IRpcProxyBuffer *iface) DECLSPEC_HIDDEN;
+HRESULT WINAPI StdProxy_Connect(IRpcProxyBuffer *iface, IRpcChannelBuffer *channel) DECLSPEC_HIDDEN;
+void WINAPI StdProxy_Disconnect(IRpcProxyBuffer *iface) DECLSPEC_HIDDEN;
 
 HRESULT CStdStubBuffer_Construct(REFIID riid, LPUNKNOWN pUnkServer, PCInterfaceName name,
                                  CInterfaceStubVtbl *vtbl, LPPSFACTORYBUFFER pPSFactory,
