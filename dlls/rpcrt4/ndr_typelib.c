@@ -91,3 +91,39 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
 
     return hr;
 }
+
+struct typelib_stub
+{
+    CStdStubBuffer stub;
+};
+
+static HRESULT typelib_stub_init(struct typelib_stub *stub, IUnknown *server,
+        IRpcStubBuffer **stub_buffer)
+{
+    stub->stub.RefCount = 1;
+    *stub_buffer = (IRpcStubBuffer *)&stub->stub;
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI CreateStubFromTypeInfo(ITypeInfo *typeinfo, REFIID iid,
+        IUnknown *server, IRpcStubBuffer **stub_buffer)
+{
+    struct typelib_stub *stub;
+    HRESULT hr;
+
+    TRACE("typeinfo %p, iid %s, server %p, stub_buffer %p.\n",
+            typeinfo, debugstr_guid(iid), server, stub_buffer);
+
+    if (!(stub = heap_alloc_zero(sizeof(*stub))))
+    {
+        ERR("Failed to allocate stub object.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = typelib_stub_init(stub, server, stub_buffer);
+    if (FAILED(hr))
+        heap_free(stub);
+
+    return hr;
+}
