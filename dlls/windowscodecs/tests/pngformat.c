@@ -539,6 +539,15 @@ static const char png_PLTE_tRNS[] = {
   0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
 };
 
+/* grayscale 16 bpp 1x1 pixel PNG image with tRNS chunk */
+static const char png_gray_tRNS[] = {
+  0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,
+  0x00,0x00,0x00,0x0d,'I','H','D','R',0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x10,0x00,0x00,0x00,0x00,0x6a,0xee,0x47,0x16,
+  0x00,0x00,0x00,0x02,'t','R','N','S',0x00,0x00,0x76,0x93,0xcd,0x38,
+  0x00,0x00,0x00,0x0b,'I','D','A','T',0x78,0x9c,0x63,0x60,0x60,0x00,0x00,0x00,0x03,0x00,0x01,0xb8,0xad,0x3a,0x63,
+  0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
+};
+
 static void test_png_palette(void)
 {
     HRESULT hr;
@@ -548,6 +557,7 @@ static void test_png_palette(void)
     GUID format;
     UINT count, ret;
     WICColor color[256];
+    char *buf;
 
     hr = create_decoder(png_PLTE_tRNS, sizeof(png_PLTE_tRNS), &decoder);
     ok(hr == S_OK, "Failed to load PNG image data %#x\n", hr);
@@ -576,6 +586,64 @@ static void test_png_palette(void)
     ok(color[0] == 0xff010203, "expected 0xff010203, got %#x\n", color[0]);
     ok(color[1] == 0x00040506, "expected 0x00040506, got %#x\n", color[1]);
 
+    IWICPalette_Release(palette);
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+
+    hr = create_decoder(png_gray_tRNS, sizeof(png_gray_tRNS), &decoder);
+    ok(hr == S_OK, "Failed to load PNG image data %#x\n", hr);
+    if (hr != S_OK) return;
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat64bppRGBA),
+       "got wrong format %s\n", wine_dbgstr_guid(&format));
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
+    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "CopyPalette error %#x\n", hr);
+
+    IWICPalette_Release(palette);
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+
+    /* test 8 bpp grayscale PNG image with tRNS chunk */
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(png_gray_tRNS));
+    memcpy(buf, png_gray_tRNS, sizeof(png_gray_tRNS));
+    buf[24] = 8; /* override bit depth */
+
+    hr = create_decoder(buf, sizeof(png_gray_tRNS), &decoder);
+    ok(hr == S_OK, "Failed to load PNG image data %#x\n", hr);
+    if (hr != S_OK) return;
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed),
+       "got wrong format %s\n", wine_dbgstr_guid(&format));
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 256, "expected 256, got %u\n", count);
+
+    hr = IWICPalette_GetColors(palette, 256, color, &ret);
+    ok(hr == S_OK, "GetColors error %#x\n", hr);
+    ok(ret == count, "expected %u, got %u\n", count, ret);
+    ok(color[0] == 0x00000000, "expected 0x00000000, got %#x\n", color[0]);
+    ok(color[1] == 0xff010101, "expected 0xff010101, got %#x\n", color[1]);
+
+    HeapFree(GetProcessHeap(), 0, buf);
     IWICPalette_Release(palette);
     IWICBitmapFrameDecode_Release(frame);
     IWICBitmapDecoder_Release(decoder);

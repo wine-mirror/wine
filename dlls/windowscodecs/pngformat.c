@@ -1057,7 +1057,7 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
                           png_palette[i].blue);
         }
     }
-    else if (color_type == PNG_COLOR_TYPE_GRAY) {
+    else if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth <= 8) {
         ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans_alpha, &num_trans, &trans_values);
 
         if (!ret)
