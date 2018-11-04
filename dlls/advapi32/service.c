@@ -1663,6 +1663,7 @@ BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
 
     if (!needed)
     {
+        if (dwLevel == SERVICE_CONFIG_DESCRIPTION) heap_free(bufptr);
         SetLastError(ERROR_INVALID_ADDRESS);
         return FALSE;
     }
