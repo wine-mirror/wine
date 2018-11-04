@@ -624,23 +624,29 @@ static const char png_1x1_data[] = {
   0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
 };
 
+#define PNG_COLOR_TYPE_GRAY 0
+#define PNG_COLOR_TYPE_RGB 2
+#define PNG_COLOR_TYPE_PALETTE 3
+#define PNG_COLOR_TYPE_GRAY_ALPHA 4
+#define PNG_COLOR_TYPE_RGB_ALPHA 6
+
 static BOOL is_valid_png_type_depth(int color_type, int bit_depth, BOOL plte)
 {
     switch (color_type)
     {
-    case 0: /* Grayscale */
+    case PNG_COLOR_TYPE_GRAY:
         return bit_depth == 1 || bit_depth == 2 || bit_depth == 4 || bit_depth == 8 || bit_depth == 16;
 
-    case 2: /* True Color */
+    case PNG_COLOR_TYPE_RGB:
         return bit_depth == 8 || bit_depth == 16;
 
-    case 3: /* Indexed Color */
+    case PNG_COLOR_TYPE_PALETTE:
         return (bit_depth == 1 || bit_depth == 2 || bit_depth == 4 || bit_depth == 8) && plte;
 
-    case 4: /* Grayscale with alpha */
+    case PNG_COLOR_TYPE_GRAY_ALPHA:
         return bit_depth == 8 || bit_depth == 16;
 
-    case 6: /* True Color with alpha */
+    case PNG_COLOR_TYPE_RGB_ALPHA:
         return bit_depth == 8 || bit_depth == 16;
 
     default:
@@ -662,33 +668,44 @@ static void test_color_formats(void)
     } td[] =
     {
         /* 2 - PNG_COLOR_TYPE_RGB */
-        { 1, 2, NULL, NULL, NULL },
-        { 2, 2, NULL, NULL, NULL },
-        { 4, 2, NULL, NULL, NULL },
-        { 8, 2, &GUID_WICPixelFormat24bppBGR, &GUID_WICPixelFormat24bppBGR, &GUID_WICPixelFormat24bppBGR },
+        { 1, PNG_COLOR_TYPE_RGB, NULL, NULL, NULL },
+        { 2, PNG_COLOR_TYPE_RGB, NULL, NULL, NULL },
+        { 4, PNG_COLOR_TYPE_RGB, NULL, NULL, NULL },
+        { 8, PNG_COLOR_TYPE_RGB,
+          &GUID_WICPixelFormat24bppBGR, &GUID_WICPixelFormat24bppBGR, &GUID_WICPixelFormat24bppBGR },
         /* libpng refuses to load our test image complaining about extra compressed data,
          * but libpng is still able to load the image with other combination of type/depth
          * making RGB 16 bpp case special for some reason. Therefore todo = TRUE.
          */
-        { 16, 2, &GUID_WICPixelFormat48bppRGB, &GUID_WICPixelFormat48bppRGB, &GUID_WICPixelFormat48bppRGB, TRUE, TRUE },
-        { 24, 2, NULL, NULL, NULL },
-        { 32, 2, NULL, NULL, NULL },
+        { 16, PNG_COLOR_TYPE_RGB,
+          &GUID_WICPixelFormat48bppRGB, &GUID_WICPixelFormat48bppRGB, &GUID_WICPixelFormat48bppRGB, TRUE, TRUE },
+        { 24, PNG_COLOR_TYPE_RGB, NULL, NULL, NULL },
+        { 32, PNG_COLOR_TYPE_RGB, NULL, NULL, NULL },
         /* 0 - PNG_COLOR_TYPE_GRAY */
-        { 1, 0, &GUID_WICPixelFormatBlackWhite, &GUID_WICPixelFormatBlackWhite, &GUID_WICPixelFormat1bppIndexed },
-        { 2, 0, &GUID_WICPixelFormat2bppGray, &GUID_WICPixelFormat2bppGray, &GUID_WICPixelFormat2bppIndexed },
-        { 4, 0, &GUID_WICPixelFormat4bppGray, &GUID_WICPixelFormat4bppGray, &GUID_WICPixelFormat4bppIndexed },
-        { 8, 0, &GUID_WICPixelFormat8bppGray, &GUID_WICPixelFormat8bppGray, &GUID_WICPixelFormat8bppIndexed },
-        { 16, 0, &GUID_WICPixelFormat16bppGray, &GUID_WICPixelFormat16bppGray, &GUID_WICPixelFormat64bppRGBA },
-        { 24, 0, NULL, NULL, NULL },
-        { 32, 0, NULL, NULL, NULL },
+        { 1, PNG_COLOR_TYPE_GRAY,
+          &GUID_WICPixelFormatBlackWhite, &GUID_WICPixelFormatBlackWhite, &GUID_WICPixelFormat1bppIndexed },
+        { 2, PNG_COLOR_TYPE_GRAY,
+          &GUID_WICPixelFormat2bppGray, &GUID_WICPixelFormat2bppGray, &GUID_WICPixelFormat2bppIndexed },
+        { 4, PNG_COLOR_TYPE_GRAY,
+          &GUID_WICPixelFormat4bppGray, &GUID_WICPixelFormat4bppGray, &GUID_WICPixelFormat4bppIndexed },
+        { 8, PNG_COLOR_TYPE_GRAY,
+          &GUID_WICPixelFormat8bppGray, &GUID_WICPixelFormat8bppGray, &GUID_WICPixelFormat8bppIndexed },
+        { 16, PNG_COLOR_TYPE_GRAY,
+          &GUID_WICPixelFormat16bppGray, &GUID_WICPixelFormat16bppGray, &GUID_WICPixelFormat64bppRGBA },
+        { 24, PNG_COLOR_TYPE_GRAY, NULL, NULL, NULL },
+        { 32, PNG_COLOR_TYPE_GRAY, NULL, NULL, NULL },
         /* 3 - PNG_COLOR_TYPE_PALETTE */
-        { 1, 3, &GUID_WICPixelFormat1bppIndexed, &GUID_WICPixelFormat1bppIndexed, &GUID_WICPixelFormat1bppIndexed },
-        { 2, 3, &GUID_WICPixelFormat2bppIndexed, &GUID_WICPixelFormat2bppIndexed, &GUID_WICPixelFormat2bppIndexed },
-        { 4, 3, &GUID_WICPixelFormat4bppIndexed, &GUID_WICPixelFormat4bppIndexed, &GUID_WICPixelFormat4bppIndexed },
-        { 8, 3, &GUID_WICPixelFormat8bppIndexed, &GUID_WICPixelFormat8bppIndexed, &GUID_WICPixelFormat8bppIndexed },
-        { 16, 3, NULL, NULL, NULL },
-        { 24, 3,  NULL, NULL, NULL },
-        { 32, 3,  NULL, NULL, NULL },
+        { 1, PNG_COLOR_TYPE_PALETTE,
+          &GUID_WICPixelFormat1bppIndexed, &GUID_WICPixelFormat1bppIndexed, &GUID_WICPixelFormat1bppIndexed },
+        { 2, PNG_COLOR_TYPE_PALETTE,
+          &GUID_WICPixelFormat2bppIndexed, &GUID_WICPixelFormat2bppIndexed, &GUID_WICPixelFormat2bppIndexed },
+        { 4, PNG_COLOR_TYPE_PALETTE,
+          &GUID_WICPixelFormat4bppIndexed, &GUID_WICPixelFormat4bppIndexed, &GUID_WICPixelFormat4bppIndexed },
+        { 8, PNG_COLOR_TYPE_PALETTE,
+          &GUID_WICPixelFormat8bppIndexed, &GUID_WICPixelFormat8bppIndexed, &GUID_WICPixelFormat8bppIndexed },
+        { 16, PNG_COLOR_TYPE_PALETTE, NULL, NULL, NULL },
+        { 24, PNG_COLOR_TYPE_PALETTE, NULL, NULL, NULL },
+        { 32, PNG_COLOR_TYPE_PALETTE, NULL, NULL, NULL },
     };
     char buf[sizeof(png_1x1_data)];
     HRESULT hr;
@@ -833,6 +850,11 @@ todo_wine_if(td[i].todo)
         IWICBitmapDecoder_Release(decoder);
     }
 }
+#undef PNG_COLOR_TYPE_GRAY
+#undef PNG_COLOR_TYPE_RGB
+#undef PNG_COLOR_TYPE_PALETTE
+#undef PNG_COLOR_TYPE_GRAY_ALPHA
+#undef PNG_COLOR_TYPE_RGB_ALPHA
 
 START_TEST(pngformat)
 {
