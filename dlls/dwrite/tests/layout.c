@@ -2677,83 +2677,6 @@ static void test_SetVerticalGlyphOrientation(void)
     IDWriteFactory_Release(factory);
 }
 
-static void test_fallback(void)
-{
-    static const WCHAR strW[] = {'a','b','c','d',0};
-    IDWriteFontFallback *fallback, *fallback2;
-    IDWriteTextLayout2 *layout2;
-    IDWriteTextFormat1 *format1;
-    IDWriteTextFormat *format;
-    IDWriteTextLayout *layout;
-    IDWriteFactory2 *factory2;
-    IDWriteFactory *factory;
-    HRESULT hr;
-
-    factory = create_factory();
-
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    IDWriteTextFormat_Release(format);
-
-    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
-    IDWriteTextLayout_Release(layout);
-
-    if (hr != S_OK) {
-        win_skip("GetFontFallback() is not supported.\n");
-        IDWriteFactory_Release(factory);
-        return;
-    }
-
-    if (0) /* crashes on native */
-        hr = IDWriteTextLayout2_GetFontFallback(layout2, NULL);
-
-    fallback = (void*)0xdeadbeef;
-    hr = IDWriteTextLayout2_GetFontFallback(layout2, &fallback);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fallback == NULL, "got %p\n", fallback);
-
-    hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextFormat1, (void**)&format1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    fallback = (void*)0xdeadbeef;
-    hr = IDWriteTextFormat1_GetFontFallback(format1, &fallback);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fallback == NULL, "got %p\n", fallback);
-
-    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    fallback = NULL;
-    hr = IDWriteFactory2_GetSystemFontFallback(factory2, &fallback);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fallback != NULL, "got %p\n", fallback);
-
-    hr = IDWriteTextFormat1_SetFontFallback(format1, fallback);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    fallback2 = (void*)0xdeadbeef;
-    hr = IDWriteTextLayout2_GetFontFallback(layout2, &fallback2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fallback2 == fallback, "got %p\n", fallback2);
-
-    hr = IDWriteTextLayout2_SetFontFallback(layout2, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    fallback2 = (void*)0xdeadbeef;
-    hr = IDWriteTextFormat1_GetFontFallback(format1, &fallback2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fallback2 == NULL, "got %p\n", fallback2);
-
-    IDWriteFontFallback_Release(fallback);
-    IDWriteTextFormat1_Release(format1);
-    IDWriteTextLayout2_Release(layout2);
-    IDWriteFactory_Release(factory);
-}
-
 static void test_DetermineMinWidth(void)
 {
     struct minwidth_test {
@@ -4938,6 +4861,117 @@ todo_wine {
     ref = IDWriteFactory2_Release(factory2);
     ok(ref == 0, "Factory is not released, ref %u.\n", ref);
 }
+
+static void test_fallback(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteFontFallback *fallback, *fallback2;
+    DWRITE_CLUSTER_METRICS clusters[4];
+    DWRITE_TEXT_METRICS metrics;
+    IDWriteTextLayout2 *layout2;
+    IDWriteTextFormat1 *format1;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory2 *factory2;
+    IDWriteFactory *factory;
+    UINT32 count, i;
+    FLOAT width;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    /* Font does not exist in system collection. */
+    hr = IDWriteFactory_CreateTextFormat(factory, g_blahfontW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 4, &count);
+todo_wine {
+    ok(hr == S_OK, "Failed to get cluster metrics, hr %#x.\n", hr);
+    ok(count == 4, "Unexpected count %u.\n", count);
+}
+    for (i = 0, width = 0.0; i < count; i++)
+        width += clusters[i].width;
+
+    memset(&metrics, 0xcc, sizeof(metrics));
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "Failed to get layout metrics, hr %#x.\n", hr);
+todo_wine {
+    ok(metrics.width > 0.0 && metrics.width == width, "Unexpected width %.2f, expected %.2f.\n", metrics.width, width);
+    ok(metrics.height > 0.0, "Unexpected height %.2f.\n", metrics.height);
+    ok(metrics.lineCount == 1, "Unexpected line count %u.\n", metrics.lineCount);
+}
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* Existing font. */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextFormat_Release(format);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
+    IDWriteTextLayout_Release(layout);
+
+    if (hr != S_OK) {
+        win_skip("GetFontFallback() is not supported.\n");
+        IDWriteFactory_Release(factory);
+        return;
+    }
+
+    if (0) /* crashes on native */
+        hr = IDWriteTextLayout2_GetFontFallback(layout2, NULL);
+
+    fallback = (void*)0xdeadbeef;
+    hr = IDWriteTextLayout2_GetFontFallback(layout2, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback == NULL, "got %p\n", fallback);
+
+    hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextFormat1, (void**)&format1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fallback = (void*)0xdeadbeef;
+    hr = IDWriteTextFormat1_GetFontFallback(format1, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback == NULL, "got %p\n", fallback);
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fallback = NULL;
+    hr = IDWriteFactory2_GetSystemFontFallback(factory2, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback != NULL, "got %p\n", fallback);
+
+    hr = IDWriteTextFormat1_SetFontFallback(format1, fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fallback2 = (void*)0xdeadbeef;
+    hr = IDWriteTextLayout2_GetFontFallback(layout2, &fallback2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback2 == fallback, "got %p\n", fallback2);
+
+    hr = IDWriteTextLayout2_SetFontFallback(layout2, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fallback2 = (void*)0xdeadbeef;
+    hr = IDWriteTextFormat1_GetFontFallback(format1, &fallback2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback2 == NULL, "got %p\n", fallback2);
+
+    IDWriteFontFallback_Release(fallback);
+    IDWriteTextFormat1_Release(format1);
+    IDWriteTextLayout2_Release(layout2);
+    IDWriteFactory_Release(factory);
+}
+
 
 static void test_SetTypography(void)
 {
