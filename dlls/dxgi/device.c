@@ -190,8 +190,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     surface_desc.usage = 0;
     if (surface_desc.bind_flags & WINED3D_BIND_SHADER_RESOURCE)
         surface_desc.usage |= WINED3DUSAGE_TEXTURE;
-    if (surface_desc.bind_flags & WINED3D_BIND_RENDER_TARGET)
-        surface_desc.usage |= WINED3DUSAGE_RENDERTARGET;
     surface_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
     surface_desc.width = desc->Width;
     surface_desc.height = desc->Height;

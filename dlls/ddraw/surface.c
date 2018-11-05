@@ -6181,7 +6181,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             }
             else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
             {
-                wined3d_desc.usage |= WINED3DUSAGE_RENDERTARGET;
                 wined3d_desc.bind_flags |= WINED3D_BIND_RENDER_TARGET;
             }
         }
