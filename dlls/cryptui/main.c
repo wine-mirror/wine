@@ -7013,32 +7013,32 @@ static void init_columns(HWND lv, DWORD flags)
     column.pszText = buf;
     if (!(flags & CRYPTUI_SELECT_ISSUEDTO_COLUMN))
     {
-        LoadStringW(hInstance, IDS_SUBJECT_COLUMN, buf, sizeof(buf) / sizeof(buf[0]));
+        LoadStringW(hInstance, IDS_SUBJECT_COLUMN, buf, ARRAY_SIZE(buf));
         SendMessageW(lv, LVM_INSERTCOLUMNW, i++, (LPARAM)&column);
     }
     if (!(flags & CRYPTUI_SELECT_ISSUEDBY_COLUMN))
     {
-        LoadStringW(hInstance, IDS_ISSUER_COLUMN, buf, sizeof(buf) / sizeof(buf[0]));
+        LoadStringW(hInstance, IDS_ISSUER_COLUMN, buf, ARRAY_SIZE(buf));
         SendMessageW(lv, LVM_INSERTCOLUMNW, i++, (LPARAM)&column);
     }
     if (!(flags & CRYPTUI_SELECT_INTENDEDUSE_COLUMN))
     {
-        LoadStringW(hInstance, IDS_INTENDED_USE_COLUMN, buf, sizeof(buf) / sizeof(buf[0]));
+        LoadStringW(hInstance, IDS_INTENDED_USE_COLUMN, buf, ARRAY_SIZE(buf));
         SendMessageW(lv, LVM_INSERTCOLUMNW, i++, (LPARAM)&column);
     }
     if (!(flags & CRYPTUI_SELECT_FRIENDLYNAME_COLUMN))
     {
-        LoadStringW(hInstance, IDS_FRIENDLY_NAME_COLUMN, buf, sizeof(buf) / sizeof(buf[0]));
+        LoadStringW(hInstance, IDS_FRIENDLY_NAME_COLUMN, buf, ARRAY_SIZE(buf));
         SendMessageW(lv, LVM_INSERTCOLUMNW, i++, (LPARAM)&column);
     }
     if (!(flags & CRYPTUI_SELECT_EXPIRATION_COLUMN))
     {
-        LoadStringW(hInstance, IDS_EXPIRATION_COLUMN, buf, sizeof(buf) / sizeof(buf[0]));
+        LoadStringW(hInstance, IDS_EXPIRATION_COLUMN, buf, ARRAY_SIZE(buf));
         SendMessageW(lv, LVM_INSERTCOLUMNW, i++, (LPARAM)&column);
     }
     if (!(flags & CRYPTUI_SELECT_LOCATION_COLUMN))
     {
-        LoadStringW(hInstance, IDS_LOCATION_COLUMN, buf, sizeof(buf) / sizeof(buf[0]));
+        LoadStringW(hInstance, IDS_LOCATION_COLUMN, buf, ARRAY_SIZE(buf));
         SendMessageW(lv, LVM_INSERTCOLUMNW, i++, (LPARAM)&column);
     }
 }
@@ -7149,11 +7149,9 @@ static void add_cert_to_list(HWND lv, PCCERT_CONTEXT cert, DWORD flags, DWORD *a
     }
     if (!(flags & CRYPTUI_SELECT_EXPIRATION_COLUMN))
     {
-        GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
-         sizeof(dateFmt) / sizeof(dateFmt[0]));
+        GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt, ARRAY_SIZE(dateFmt));
         FileTimeToSystemTime(&cert->pCertInfo->NotAfter, &sysTime);
-        GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, buf,
-         sizeof(buf) / sizeof(buf[0]));
+        GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, buf, ARRAY_SIZE(buf));
         item.pszText = buf;
         if (!item.iSubItem)
             SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
@@ -7167,7 +7165,7 @@ static void add_cert_to_list(HWND lv, PCCERT_CONTEXT cert, DWORD flags, DWORD *a
         static int show_fixme;
         if (!show_fixme++)
             FIXME("showing location is not implemented\n");
-        LoadStringW(hInstance, IDS_NO_IMPL, buf, sizeof(buf) / sizeof(buf[0]));
+        LoadStringW(hInstance, IDS_NO_IMPL, buf, ARRAY_SIZE(buf));
         if (!item.iSubItem)
             SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
         else
@@ -7373,10 +7371,9 @@ static LRESULT CALLBACK select_cert_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPA
             {
                 WCHAR buf[40], title[40];
 
-                LoadStringW(hInstance, IDS_SELECT_CERT, buf, sizeof(buf) / sizeof(buf[0]));
+                LoadStringW(hInstance, IDS_SELECT_CERT, buf, ARRAY_SIZE(buf));
                 if (!data->title)
-                    LoadStringW(hInstance, IDS_SELECT_CERT_TITLE, title,
-                     sizeof(title) / sizeof(title[0]));
+                    LoadStringW(hInstance, IDS_SELECT_CERT_TITLE, title, ARRAY_SIZE(title));
                 MessageBoxW(hwnd, buf, data->title ? data->title : title, MB_OK | MB_ICONWARNING);
                 break;
             }
