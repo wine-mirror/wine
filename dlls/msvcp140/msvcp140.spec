@@ -1669,7 +1669,7 @@
 @ stub -arch=arm ?_W_Gettnames@_Locinfo@std@@QBA?AV_Timevec@2@XZ
 @ stub -arch=i386 ?_W_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ
 @ stub -arch=win64 ?_W_Gettnames@_Locinfo@std@@QEBA?AV_Timevec@2@XZ
-@ stub ?_Winerror_map@std@@YAHH@Z
+@ cdecl ?_Winerror_map@std@@YAHH@Z(long) _Winerror_map
 @ cdecl -arch=win32 ?_Winerror_message@std@@YAKKPADK@Z(long ptr long) _Winerror_message
 @ cdecl -arch=win64 ?_Winerror_message@std@@YAKKPEADK@Z(long ptr long) _Winerror_message
 @ stub ?_XGetLastError@std@@YAXXZ
