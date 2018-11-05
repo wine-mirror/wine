@@ -4132,6 +4132,16 @@ LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
 
 
 /***********************************************************************
+ *		GetCurrentInputMessageSource (USER32.@)
+ */
+BOOL WINAPI GetCurrentInputMessageSource( INPUT_MESSAGE_SOURCE *source )
+{
+    FIXME( "stub\n" );
+    return FALSE;
+}
+
+
+/***********************************************************************
  *		WaitMessage (USER.112) Suspend thread pending messages
  *		WaitMessage (USER32.@) Suspend thread pending messages
  *

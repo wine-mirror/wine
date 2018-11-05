@@ -280,6 +280,7 @@
 @ stdcall GetClipboardSequenceNumber ()
 @ stdcall GetClipboardViewer()
 @ stdcall GetComboBoxInfo(long ptr)
+@ stdcall GetCurrentInputMessageSource(ptr)
 @ stdcall GetCursor()
 @ stdcall GetCursorFrameInfo(long long long ptr ptr)
 @ stdcall GetCursorInfo(ptr)
