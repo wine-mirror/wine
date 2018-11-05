@@ -339,31 +339,39 @@ static int assign_thread_input( struct thread *thread, struct thread_input *new_
     return 1;
 }
 
-/* set the cursor position and queue the corresponding mouse message */
-static void set_cursor_pos( struct desktop *desktop, int x, int y )
+/* allocate a hardware message and its data */
+static struct message *alloc_hardware_message( lparam_t info, unsigned int time )
 {
     struct hardware_msg_data *msg_data;
     struct message *msg;
 
-    if (!(msg = mem_alloc( sizeof(*msg) ))) return;
+    if (!(msg = mem_alloc( sizeof(*msg) ))) return NULL;
     if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
     {
         free( msg );
-        return;
+        return NULL;
     }
-    memset( msg_data, 0, sizeof(*msg_data) );
-
+    memset( msg, 0, sizeof(*msg) );
     msg->type      = MSG_HARDWARE;
-    msg->win       = 0;
-    msg->msg       = WM_MOUSEMOVE;
-    msg->wparam    = 0;
-    msg->lparam    = 0;
-    msg->x         = x;
-    msg->y         = y;
-    msg->time      = get_tick_count();
-    msg->result    = NULL;
+    msg->time      = time;
     msg->data      = msg_data;
     msg->data_size = sizeof(*msg_data);
+
+    memset( msg_data, 0, sizeof(*msg_data) );
+    msg_data->info   = info;
+    return msg;
+}
+
+/* set the cursor position and queue the corresponding mouse message */
+static void set_cursor_pos( struct desktop *desktop, int x, int y )
+{
+    struct message *msg;
+
+    if (!(msg = alloc_hardware_message( 0, get_tick_count() ))) return;
+
+    msg->msg = WM_MOUSEMOVE;
+    msg->x   = x;
+    msg->y   = y;
     queue_hardware_message( desktop, msg, 1 );
 }
 
@@ -1639,24 +1647,14 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
 
     if ((device = current->process->rawinput_mouse))
     {
-        if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
-        if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
-        {
-            free( msg );
-            return 0;
-        }
+        if (!(msg = alloc_hardware_message( input->mouse.info, time ))) return 0;
+        msg_data = msg->data;
 
-        msg->type      = MSG_HARDWARE;
         msg->win       = device->target;
         msg->msg       = WM_INPUT;
         msg->wparam    = RIM_INPUT;
         msg->lparam    = 0;
-        msg->time      = time;
-        msg->data      = msg_data;
-        msg->data_size = sizeof(*msg_data);
-        msg->result    = NULL;
 
-        msg_data->info                = input->mouse.info;
         msg_data->flags               = flags;
         msg_data->rawinput.type       = RIM_TYPEMOUSE;
         msg_data->rawinput.mouse.x    = x - desktop->cursor.x;
@@ -1672,26 +1670,15 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         if (!(flags & (1 << i))) continue;
         flags &= ~(1 << i);
 
-        if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
-        if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
-        {
-            free( msg );
-            return 0;
-        }
-        memset( msg_data, 0, sizeof(*msg_data) );
+        if (!(msg = alloc_hardware_message( input->mouse.info, time ))) return 0;
+        msg_data = msg->data;
 
-        msg->type      = MSG_HARDWARE;
         msg->win       = get_user_full_handle( win );
         msg->msg       = messages[i];
         msg->wparam    = input->mouse.data << 16;
         msg->lparam    = 0;
         msg->x         = x;
         msg->y         = y;
-        msg->time      = time;
-        msg->result    = NULL;
-        msg->data      = msg_data;
-        msg->data_size = sizeof(*msg_data);
-        msg_data->info = input->mouse.info;
         if (hook_flags & SEND_HWMSG_INJECTED) msg_data->flags = LLMHF_INJECTED;
 
         /* specify a sender only when sending the last message */
@@ -1783,26 +1770,15 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         break;
     }
 
+    if (!(msg = alloc_hardware_message( input->kbd.info, time ))) return 0;
+    msg_data = msg->data;
+
     if ((device = current->process->rawinput_kbd))
     {
-        if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
-        if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
-        {
-            free( msg );
-            return 0;
-        }
-
-        msg->type      = MSG_HARDWARE;
         msg->win       = device->target;
         msg->msg       = WM_INPUT;
         msg->wparam    = RIM_INPUT;
-        msg->lparam    = 0;
-        msg->time      = time;
-        msg->data      = msg_data;
-        msg->data_size = sizeof(*msg_data);
-        msg->result    = NULL;
 
-        msg_data->info                 = input->kbd.info;
         msg_data->flags                = input->kbd.flags;
         msg_data->rawinput.type        = RIM_TYPEKEYBOARD;
         msg_data->rawinput.kbd.message = message_code;
@@ -1812,23 +1788,9 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         queue_hardware_message( desktop, msg, 0 );
     }
 
-    if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
-    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
-    {
-        free( msg );
-        return 0;
-    }
-    memset( msg_data, 0, sizeof(*msg_data) );
-
-    msg->type      = MSG_HARDWARE;
     msg->win       = get_user_full_handle( win );
     msg->msg       = message_code;
     msg->lparam    = (input->kbd.scan << 16) | 1u; /* repeat count */
-    msg->time      = time;
-    msg->result    = NULL;
-    msg->data      = msg_data;
-    msg->data_size = sizeof(*msg_data);
-    msg_data->info = input->kbd.info;
     if (hook_flags & SEND_HWMSG_INJECTED) msg_data->flags = LLKHF_INJECTED;
 
     if (input->kbd.flags & KEYEVENTF_UNICODE)
@@ -1858,28 +1820,16 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 static void queue_custom_hardware_message( struct desktop *desktop, user_handle_t win,
                                            const hw_input_t *input )
 {
-    struct hardware_msg_data *msg_data;
     struct message *msg;
 
-    if (!(msg = mem_alloc( sizeof(*msg) ))) return;
-    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
-    {
-        free( msg );
-        return;
-    }
-    memset( msg_data, 0, sizeof(*msg_data) );
+    if (!(msg = alloc_hardware_message( 0, get_tick_count() ))) return;
 
-    msg->type      = MSG_HARDWARE;
     msg->win       = get_user_full_handle( win );
     msg->msg       = input->hw.msg;
     msg->wparam    = 0;
     msg->lparam    = input->hw.lparam;
     msg->x         = desktop->cursor.x;
     msg->y         = desktop->cursor.y;
-    msg->time      = get_tick_count();
-    msg->result    = NULL;
-    msg->data      = msg_data;
-    msg->data_size = sizeof(*msg_data);
 
     queue_hardware_message( desktop, msg, 1 );
 }
