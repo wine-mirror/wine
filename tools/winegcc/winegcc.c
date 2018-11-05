@@ -1580,6 +1580,7 @@ int main(int argc, char **argv)
 			raw_linker_arg = 1;
                     }
                     else if (!strncmp("-mcpu=", argv[i], 6) ||
+                             !strncmp("-mfpu=", argv[i], 6) ||
                              !strncmp("-march=", argv[i], 7) ||
                              !strncmp("-mfloat-abi=", argv[i], 12))
                         strarray_add(opts.winebuild_args, argv[i]);
