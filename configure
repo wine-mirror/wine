@@ -1075,6 +1075,7 @@ enable_api_ms_win_mm_mme_l1_1_0
 enable_api_ms_win_mm_time_l1_1_0
 enable_api_ms_win_ntuser_dc_access_l1_1_0
 enable_api_ms_win_ntuser_rectangle_l1_1_0
+enable_api_ms_win_ntuser_sysparams_l1_1_0
 enable_api_ms_win_perf_legacy_l1_1_0
 enable_api_ms_win_power_base_l1_1_0
 enable_api_ms_win_power_setting_l1_1_0
@@ -19181,6 +19182,7 @@ wine_fn_config_makefile dlls/api-ms-win-mm-mme-l1-1-0 enable_api_ms_win_mm_mme_l
 wine_fn_config_makefile dlls/api-ms-win-mm-time-l1-1-0 enable_api_ms_win_mm_time_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-ntuser-dc-access-l1-1-0 enable_api_ms_win_ntuser_dc_access_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-ntuser-rectangle-l1-1-0 enable_api_ms_win_ntuser_rectangle_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-ntuser-sysparams-l1-1-0 enable_api_ms_win_ntuser_sysparams_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-perf-legacy-l1-1-0 enable_api_ms_win_perf_legacy_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-power-base-l1-1-0 enable_api_ms_win_power_base_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-power-setting-l1-1-0 enable_api_ms_win_power_setting_l1_1_0

@@ -389,6 +389,7 @@ my @dll_groups =
   "ext-ms-win-ntuser-private-l1-3-1",
   "ext-ms-win-ntuser-rectangle-ext-l1-1-0",
   "api-ms-win-ntuser-rectangle-l1-1-0",
+  "api-ms-win-ntuser-sysparams-l1-1-0",
   "ext-ms-win-ntuser-uicontext-ext-l1-1-0",
   "ext-ms-win-ntuser-windowclass-l1-1-1",
   "ext-ms-win-ntuser-window-l1-1-1",
