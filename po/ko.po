@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-10-30 20:17+0900\n"
+"PO-Revision-Date: 2018-11-05 10:52+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -867,7 +867,7 @@ msgstr ""
 
 #: comdlg32.rc:36
 msgid "Invalid character(s) in path"
-msgstr "경로에 올바르지 않은 문자가 들어 있습니다."
+msgstr "경로에 올바르지 않은 문자가 들어 있습니다"
 
 #: comdlg32.rc:37
 msgid ""
@@ -2438,16 +2438,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "인증서 내보내기 마법사를 완료했습니다."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "인증서 저장소 선택"
+msgstr "인증서 선택"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "사용하고자 하는 인증서 저장소를 선택하십시오:"
+msgstr "사용하고자 하는 인증서를 선택하십시오"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2968,20 +2964,16 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "참고: 이 인증서의 개인 키는 내보낼 수 없습니다."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "지정된 용도(&N):"
+msgstr "지정된 용도"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "위치"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "인증서 저장소 선택"
+msgstr "인증서 선택"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
@@ -9064,7 +9056,7 @@ msgstr "구성요소 설치 실패: %08x"
 
 #: urlmon.rc:52
 msgid "Install (%d)"
-msgstr "설치 (%D)"
+msgstr "설치 (%d)"
 
 #: urlmon.rc:53
 msgid "Install"
@@ -10219,11 +10211,11 @@ msgid ""
 msgstr ""
 "<배치파일 이름>을 호출하는 것은 배치 파일 안에서 다른 배치 파일의\n"
 "명령을 실행하는 것입니다. 배치 파일이 끝나면, 제어권은 배치 파일을\n"
-"호출한 배치 파일로 돌아갑니다. CALL 명령은 매개변수를 지원합니다.\n"
+"호출한 배치 파일로 돌아갑니다.\n"
+"CALL 명령은 매개변수를 지원합니다.\n"
 "\n"
-"\n"
-"기본 디렉터리, 환경 변수 등을 바꾸는 것은 호출자에게 상속됩니다.\n"
-"\n"
+"호출된 프로시저 안에서 기본 디렉터리, 환경 변수 등을 바꾸는 것은\n"
+"호출자에게 상속됩니다.\n"
 
 #: cmd.rc:44
 msgid ""
@@ -10312,7 +10304,8 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
-"GOTO는 배치 파일 안에서 다른 구문으로 실행을 전환합니다.\n"
+"GOTO 명령은 배치 파일 안에서 다른 구문으로 실행을\n"
+"전환합니다.\n"
 "\n"
 "GOTO의 타겟인 레이블은 255자까지 가능합니다만, 공백은 포함하지 않을 수도\n"
 "있습니다(운영체제에 따라서 다를 수도 있습니다).\n"
@@ -10566,7 +10559,8 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"프로그램을 시작하거나, 파일 확장자와 연관된 프로그램으로 문서를 엽니다.\n"
+"프로그램을 시작하거나, 파일 확장자와 연관된 프로그램으로\n"
+"문서를 엽니다.\n"
 "사용법:\n"
 "start [옵션] 프로그램_파일 이름 [...]\n"
 "start [옵션] 문서_파일 이름\n"
@@ -12140,7 +12134,7 @@ msgstr "도움말은 가능하지않습니다."
 
 #: progman.rc:78
 msgid "Unknown feature in %s"
-msgstr "%s의  없는 특징"
+msgstr "%s의 알 수 없는 특징"
 
 #: progman.rc:79
 msgid "File `%s' exists. Not overwritten."
@@ -12225,11 +12219,11 @@ msgstr "reg : 지원되지 않는 레지스트리 데이터 유형 [%1]\n"
 
 #: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr "reg : 옵션 [/d] 다음에 유효한 정수가 있어야 합니다.\n"
+msgstr "reg : 옵션 [/d] 다음에 유효한 정수가 있어야 합니다\n"
 
 #: reg.rc:46
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr "reg : 옵션 [/d] 다음에 유효한 16 진수 값이 있어야 합니다.\n"
+msgstr "reg : 옵션 [/d] 다음에 유효한 16 진수 값이 있어야 합니다\n"
 
 #: reg.rc:47
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
@@ -12280,7 +12274,7 @@ msgstr ""
 
 #: reg.rc:60
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr "검색 완료. 일치하는 항목 수:  %1!d!\n"
+msgstr "검색 완료. 일치하는 항목 수: %1!d!\n"
 
 #: reg.rc:61
 msgid "reg: Invalid syntax. "
@@ -12488,28 +12482,30 @@ msgstr "다중 문자열 편집"
 
 #: regedit.rc:159
 msgid "Contains commands for working with the whole registry"
-msgstr "모든 레지스트리 작업 명령 포함"
+msgstr "전체 레지스트리 작업 명령이 포함되어 있습니다"
 
 #: regedit.rc:160
 msgid "Contains commands for editing values or keys"
-msgstr "키의 값 편집 명령 포함"
+msgstr "값 또는 키 편집에 대한 명령이 포함되어 있습니다"
 
 #: regedit.rc:161
 msgid "Contains commands for customizing the registry window"
-msgstr "레지스트리 창 사용자 정의하는 명령 포함"
+msgstr "레지스트리 창 사용자 정의 명령이 포함되어 있습니다"
 
 #: regedit.rc:162
 msgid "Contains commands for accessing frequently used keys"
-msgstr "자주 사용하는 키 접근하는 명령 포함"
+msgstr "자주 사용되는 키에 액세스하는 명령이 포함되어 있습니다"
 
 #: regedit.rc:163
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
-msgstr "레지스트리 편집기 정보와 도움말 보여주는 명령 포함"
+msgstr ""
+"레지스트리 편집기에 대한 도움말 및 정보를 표시하기 위한 명령이 포함되어 있습"
+"니다"
 
 #: regedit.rc:164
 msgid "Contains commands for creating new keys or values"
-msgstr "새 키나 값 만드는 명령 포함"
+msgstr "새 키 또는 값을 만드는 명령이 포함되어 있습니다"
 
 #: regedit.rc:149
 msgid "Data"
@@ -12537,11 +12533,11 @@ msgstr "Win9x/NT4 레지스트리 파일 (REGEDIT4)"
 
 #: regedit.rc:241
 msgid "(cannot display value)"
-msgstr "(값을 보여 줄수 없음)"
+msgstr "(값을 표시할 수 없음)"
 
 #: regedit.rc:242
 msgid "(unknown %d)"
-msgstr "( 없는 %d)"
+msgstr "(알 수 없음: %d)"
 
 #: regedit.rc:247
 msgid "Unable to modify the selected registry value."
@@ -12650,11 +12646,11 @@ msgstr ""
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr "regedit: [%1](은)는 유효하지 않은 또는  없는 스위치입니다\n"
+msgstr "regedit: [%1](은)는 유효하지 않거나 인식할 수 없는 스위치입니다\n"
 
 #: regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "\"regedit /?\"를 입력해 도움말을 볼 수 있습니다.\n"
+msgstr "도움말을 보려면 \"regedit /?\"를 입력하십시오.\n"
 
 #: regedit.rc:411
 msgid "regedit: No filename was specified.\n"
@@ -12662,7 +12658,7 @@ msgstr "regedit: 파일 이름이 지정되지 않았습니다.\n"
 
 #: regedit.rc:412
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr "regedit: 제거 할 레지스트리 키가 지정되지 않았습니다.\n"
+msgstr "regedit: 제거할 레지스트리 키가 지정되지 않았습니다.\n"
 
 #: regedit.rc:413
 msgid "regedit: The file '%1' was not found.\n"
@@ -12674,11 +12670,11 @@ msgstr "regedit: '%1'(을)를 열 수 없습니다.\n"
 
 #: regedit.rc:415
 msgid "regedit: Unhandled action.\n"
-msgstr "regedit: 올바르지 않은 핸들 작업.\n"
+msgstr "regedit: 처리되지 않은 작업.\n"
 
 #: regedit.rc:416
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr "regedit: 메모리 초과! (%2!u!번째 줄, %1!S!, )\n"
+msgstr "regedit: 메모리 초과! (%1!S!, line %2!u!)\n"
 
 #: regedit.rc:417
 msgid "regedit: Invalid hexadecimal value.\n"
@@ -12693,19 +12689,19 @@ msgstr ""
 
 #: regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: [\\%1!c!](은)는  없는 제어 문자입니다\n"
+msgstr "regedit: [\\%1!c!](은)는 알수 없는 제어 문자입니다\n"
 
 #: regedit.rc:420
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "regedit: [0x%1!x!](은)는 지원하지 않는 레지스트리 형태입니다\n"
+msgstr "regedit: [0x%1!x!](은)는 지원하지 않는 레지스트리 데이터 유형입니다\n"
 
 #: regedit.rc:421
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "regedit: '%1'(은)는 예상치 못한 마지막 문자입니다.\n"
+msgstr "regedit: '%1' 라인이 예상대로 끝나지 않았습니다.\n"
 
 #: regedit.rc:422
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "regedit: 명령줄 '%1'(을)를 인식할 수 없습니다.\n"
+msgstr "regedit: '%1' 라인을 인식할 수 없습니다.\n"
 
 #: regedit.rc:423
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
@@ -12713,13 +12709,14 @@ msgstr "regedit: 레지스트리 값 '%1'(을)를 '%2'에 더할 수 없습니�
 
 #: regedit.rc:424
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "regedit: 레지스트리 키 '%1'를 열 수 없습니다.\n"
+msgstr "regedit: 레지스트리 키 '%1'을(를) 열 수 없습니다.\n"
 
 #: regedit.rc:425
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
-"regedit: '%2'의 형태는 [0x%1!x!](으)로 지원하지 않는 정보 형태입니다.\n"
+"regedit: 지원하지 않는 레지스트리 데이터 유형 [0x%1!x!]이(가) '%2'에서 발생하"
+"였습니다.\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
@@ -12756,7 +12753,7 @@ msgstr "즐겨 찾기 목록에서 키 제거"
 
 #: regedit.rc:190
 msgid "Shows or hides the status bar"
-msgstr "상태 표시줄을 표시하거나 숨김니다"
+msgstr "상태 표시줄을 표시하거나 숨깁니다"
 
 #: regedit.rc:191
 msgid "Changes the position of the split between two panes"
@@ -12780,7 +12777,7 @@ msgstr "선택한 키의 이름을 클립보드에 복사합니다"
 
 #: regedit.rc:196
 msgid "Finds a text string in a key, value or data"
-msgstr "키,값, 데이터에서 텍스트 문자열을 찾습니다"
+msgstr "키, 값, 데이터에서 텍스트 문자열을 찾습니다"
 
 #: regedit.rc:197
 msgid "Finds next occurrence of text specified in previous search"
@@ -12812,11 +12809,11 @@ msgstr "텍스트 파일을 레지스트리로 가져옵니다"
 
 #: regedit.rc:179
 msgid "Exports all or part of the registry to a text file"
-msgstr "레지스트리의 전부나 일부분을 텍스트 파일로 내보내기"
+msgstr "레지스트리 전부 또는 일부분을 텍스트 파일로 내보내기"
 
 #: regedit.rc:180
 msgid "Prints all or part of the registry"
-msgstr "레지스트리 전부나 부분 인쇄하기"
+msgstr "레지스트리 전부 또는 일부분을 인쇄하기"
 
 #: regedit.rc:181
 msgid "Opens Registry Editor Help"
@@ -12824,15 +12821,15 @@ msgstr "레지스트리 편집기 도움말 열기"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
-msgstr "프로그램 정보,버전, 저작권 보기"
+msgstr "프로그램 정보, 버전, 저작권 보기"
 
 #: regedit.rc:206
 msgid "Unable to query the registry value '%1'."
-msgstr "레지스트리 값 '%1'를 찾을 수 없음."
+msgstr "레지스트리 값 '%1'을(를) 찾을 수 없습니다."
 
 #: regedit.rc:207
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "이 형식(%1!u!)의 값을 편집할 수 없습니다."
+msgstr "(%1!u!) 유형의 값을 편집할 수 없습니다."
 
 #: regedit.rc:208
 msgid "The value is too big (%1!u!)."
@@ -12852,7 +12849,7 @@ msgstr "검색이 완료되었습니다. '%1' 문자열을 찾을 수 없습니�
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
-msgstr "이 값을 지우려는 것이 확실합니까?"
+msgstr "이 값을 지우시겠습니까?"
 
 #: regedit.rc:214
 msgid "New Key #%d"
@@ -12864,19 +12861,19 @@ msgstr "새 값 #%d"
 
 #: regedit.rc:205
 msgid "Unable to query the registry key '%1'."
-msgstr "레지스트리 키 '%1'을(를) 쿼리할 수 없습니다."
+msgstr "레지스트리 키 '%1'을(를) 질의할 수 없습니다."
 
 #: regedit.rc:170
 msgid "Modifies the value's data in binary form"
-msgstr "값의 데이터를 이진 형식으로 수정합니다"
+msgstr "이 값의 데이터를 이진 형식으로 수정합니다"
 
 #: regedit.rc:175
 msgid "Adds a new multi-string value"
-msgstr "새 다중 문자열 값 추가"
+msgstr "새 다중 문자열 값을 추가합니다"
 
 #: regedit.rc:198
 msgid "Exports the selected branch of the registry to a text file"
-msgstr "레지스트리의 선택된 부분을 텍스트 파일로 내보내기"
+msgstr "레지스트리의 선택된 부분을 텍스트 파일로 내보냅니다"
 
 #: regedit.rc:176
 msgid "Adds a new expandable string value"
@@ -12932,8 +12929,7 @@ msgstr ""
 "  [/s]  침묵 모드. 메시지를 표시하지 않습니다.\n"
 "  [/i]  DllInstall을 호출합니다. 선택적으로 [cmdline]을 전달합니다.\n"
 "        [/u] 옵션을 함께 쓰면, 제거 모드에서 DllInstall을 호출합니다.\n"
-"  [/n]  DllRegisterServer를 호출하지 않습니다. 이 옵션은 [/i]를 함께\n"
-"        사용해야 합니다.\n"
+"  [/n]  DllRegisterServer를 호출하지 않습니다. [/i]과 함께 사용합니다.\n"
 "\n"
 
 #: regsvr32.rc:41
@@ -13797,9 +13793,11 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"경고: 프로세스를 종료하면 데이터 손실 및 시스템 불안정관 같은\n"
-"원하지 않는 결과가 발생할 수 있습니다. 프로세스는 종료되기 전에 상태\n"
-"또는 데이터를 저장할 기회를 얻지 못합니다. 프로세스를 종료하시겠습니까?"
+"경고: 프로세스를 종료하면 데이터 손실 및 시스템 불안정과\n"
+"같은 원하지 않는 결과가 발생할 수 있습니다.\n"
+"프로세스는 종료되기 전에 상태 또는 데이터를 저장할 기회를\n"
+"얻지 못합니다.\n"
+"프로세스를 종료하시겠습니까?"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
@@ -13847,7 +13845,7 @@ msgstr "작업"
 
 #: uninstaller.rc:29
 msgid "Wine Application Uninstaller"
-msgstr "Wine Application Uninstaller"
+msgstr "Wine 프로그램 삭제기"
 
 #: uninstaller.rc:30
 msgid ""
@@ -13900,13 +13898,11 @@ msgstr ""
 "  uninstaller [옵션]\n"
 "\n"
 "옵션:\n"
-"  --help    지금 보고 있는 정보를 출력합니다.\n"
-"  --list    현재 실행한 Wine에 설치된 모든 프로그램의 목록을 출력합니다.\n"
-"  --remove {GUID}\n"
-"            지정한 프로그램을 제거합니다. 프로그램의 GUID를 알아 내기\n"
-"            위해서는 '--list' 옵션을 사용하십시오.\n"
-"\n"
-"  옵션없이 실행하면 uninstaller의 GUI 버전이 시작됩니다.\n"
+"  --help      지금 보고 있는 정보를 출력합니다.\n"
+"  --list      실행한 Wine에 설치된 모든 프로그램의 목록을 출력합니다.\n"
+"  --remove {GUID} 지정한 프로그램을 제거합니다. 프로그램의 GUID를 알아\n"
+"              내기 위해서는 '--list' 옵션을 사용하십시오.\n"
+"  [옵션 없음] 옵션없이 실행하면 uninstaller의 GUI 버전이 시작됩니다.\n"
 "\n"
 
 #: view.rc:36
