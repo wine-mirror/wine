@@ -77,6 +77,7 @@ static struct {
 } key_status;
 
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
+static BOOL (WINAPI *pGetCurrentInputMessageSource)( INPUT_MESSAGE_SOURCE *source );
 static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEPOINT, int, DWORD);
 static UINT (WINAPI *pGetRawInputDeviceList) (PRAWINPUTDEVICELIST, PUINT, UINT);
 
@@ -156,14 +157,13 @@ static void init_function_pointers(void)
     HMODULE hdll = GetModuleHandleA("user32");
 
 #define GET_PROC(func) \
-    p ## func = (void*)GetProcAddress(hdll, #func); \
-    if(!p ## func) \
-      trace("GetProcAddress(%s) failed\n", #func);
+    if (!(p ## func = (void*)GetProcAddress(hdll, #func))) \
+      trace("GetProcAddress(%s) failed\n", #func)
 
-    GET_PROC(SendInput)
-    GET_PROC(GetMouseMovePointsEx)
-    GET_PROC(GetRawInputDeviceList)
-
+    GET_PROC(SendInput);
+    GET_PROC(GetCurrentInputMessageSource);
+    GET_PROC(GetMouseMovePointsEx);
+    GET_PROC(GetRawInputDeviceList);
 #undef GET_PROC
 }
 
@@ -2487,6 +2487,7 @@ static void test_GetKeyState(void)
     result = WaitForSingleObject(semaphores[0], 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
 
+    SetForegroundWindow(hwnd);
     SetFocus(hwnd);
     keybd_event('X', 0, 0, 0);
 
@@ -2540,9 +2541,141 @@ static void test_OemKeyScan(void)
     }
 }
 
+static INPUT_MESSAGE_SOURCE expect_src;
+
+static LRESULT WINAPI msg_source_proc( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
+{
+    INPUT_MESSAGE_SOURCE source;
+    MSG msg;
+
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    switch (message)
+    {
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        ok( source.deviceType == expect_src.deviceType || /* also accept system-generated WM_MOUSEMOVE */
+            (message == WM_MOUSEMOVE && source.deviceType == IMDT_UNAVAILABLE),
+            "%x: wrong deviceType %x/%x\n", message, source.deviceType, expect_src.deviceType );
+        ok( source.originId == expect_src.originId ||
+            (message == WM_MOUSEMOVE && source.originId == IMO_SYSTEM),
+            "%x: wrong originId %x/%x\n", message, source.originId, expect_src.originId );
+        SendMessageA( hwnd, WM_USER, 0, 0 );
+        PostMessageA( hwnd, WM_USER, 0, 0 );
+        if (PeekMessageW( &msg, hwnd, WM_USER, WM_USER, PM_REMOVE )) DispatchMessageW( &msg );
+        ok( source.deviceType == expect_src.deviceType || /* also accept system-generated WM_MOUSEMOVE */
+            (message == WM_MOUSEMOVE && source.deviceType == IMDT_UNAVAILABLE),
+            "%x: wrong deviceType %x/%x\n", message, source.deviceType, expect_src.deviceType );
+        ok( source.originId == expect_src.originId ||
+            (message == WM_MOUSEMOVE && source.originId == IMO_SYSTEM),
+            "%x: wrong originId %x/%x\n", message, source.originId, expect_src.originId );
+        break;
+    default:
+        ok( source.deviceType == IMDT_UNAVAILABLE, "%x: wrong deviceType %x\n",
+            message, source.deviceType );
+        ok( source.originId == 0, "%x: wrong originId %x\n", message, source.originId );
+        break;
+    }
+
+    return DefWindowProcA( hwnd, message, wp, lp );
+}
+
+static void test_input_message_source(void)
+{
+    WNDCLASSA cls;
+    TEST_INPUT inputs[2];
+    HWND hwnd;
+    RECT rc;
+    MSG msg;
+
+    cls.style = 0;
+    cls.lpfnWndProc = msg_source_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = 0;
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "message source class";
+    RegisterClassA(&cls);
+    hwnd = CreateWindowA( cls.lpszClassName, "test", WS_OVERLAPPED, 0, 0, 100, 100,
+                          0, 0, 0, 0 );
+    ShowWindow( hwnd, SW_SHOWNORMAL );
+    UpdateWindow( hwnd );
+    SetForegroundWindow( hwnd );
+    SetFocus( hwnd );
+
+    inputs[0].type = INPUT_KEYBOARD;
+    inputs[0].u.ki.dwExtraInfo = 0;
+    inputs[0].u.ki.time = 0;
+    inputs[0].u.ki.wVk = 0;
+    inputs[0].u.ki.wScan = 0x3c0;
+    inputs[0].u.ki.dwFlags = KEYEVENTF_UNICODE;
+    inputs[1] = inputs[0];
+    inputs[1].u.ki.dwFlags |= KEYEVENTF_KEYUP;
+
+    expect_src.deviceType = IMDT_UNAVAILABLE;
+    expect_src.originId = IMO_UNAVAILABLE;
+    SendMessageA( hwnd, WM_KEYDOWN, 0, 0 );
+    SendMessageA( hwnd, WM_MOUSEMOVE, 0, 0 );
+
+    pSendInput( 2, (INPUT *)inputs, sizeof(INPUT) );
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
+    {
+        expect_src.deviceType = IMDT_KEYBOARD;
+        expect_src.originId = IMO_INJECTED;
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+    GetWindowRect( hwnd, &rc );
+    simulate_click( TRUE, (rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2 );
+    simulate_click( FALSE, (rc.left + rc.right) / 2 + 1, (rc.top + rc.bottom) / 2 + 1 );
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
+    {
+        expect_src.deviceType = IMDT_MOUSE;
+        expect_src.originId = IMO_INJECTED;
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+
+    expect_src.deviceType = IMDT_UNAVAILABLE;
+    expect_src.originId = IMO_UNAVAILABLE;
+    SendMessageA( hwnd, WM_KEYDOWN, 0, 0 );
+    SendMessageA( hwnd, WM_LBUTTONDOWN, 0, 0 );
+    PostMessageA( hwnd, WM_KEYUP, 0, 0 );
+    PostMessageA( hwnd, WM_LBUTTONUP, 0, 0 );
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
+    {
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+
+    expect_src.deviceType = IMDT_UNAVAILABLE;
+    expect_src.originId = IMO_SYSTEM;
+    SetCursorPos( (rc.left + rc.right) / 2 - 1, (rc.top + rc.bottom) / 2 - 1 );
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
+    {
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+
+    DestroyWindow( hwnd );
+    UnregisterClassA( cls.lpszClassName, GetModuleHandleA(0) );
+}
+
 START_TEST(input)
 {
+    POINT pos;
+
     init_function_pointers();
+    GetCursorPos( &pos );
 
     if (pSendInput)
     {
@@ -2574,4 +2707,11 @@ START_TEST(input)
         test_GetRawInputDeviceList();
     else
         win_skip("GetRawInputDeviceList is not available\n");
+
+    if (pGetCurrentInputMessageSource)
+        test_input_message_source();
+    else
+        win_skip("GetCurrentInputMessageSource is not available\n");
+
+    SetCursorPos( pos.x, pos.y );
 }
