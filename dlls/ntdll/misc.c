@@ -342,6 +342,14 @@ NTSTATUS WINAPI WinSqmEndSession(HANDLE session)
 }
 
 /*********************************************************************
+ *          WinSqmIncrementDWORD (NTDLL.@)
+ */
+void WINAPI WinSqmIncrementDWORD(DWORD unk1, DWORD unk2, DWORD unk3)
+{
+    FIXME("(%d, %d, %d): stub\n", unk1, unk2, unk3);
+}
+
+/*********************************************************************
  *                  WinSqmIsOptedIn   (NTDLL.@)
  */
 BOOL WINAPI WinSqmIsOptedIn(void)

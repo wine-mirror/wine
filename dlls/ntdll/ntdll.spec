@@ -1039,6 +1039,7 @@
 @ stdcall TpWaitForWork(ptr long)
 @ stdcall -ret64 VerSetConditionMask(int64 long long)
 @ stdcall WinSqmEndSession(long)
+@ stdcall WinSqmIncrementDWORD(long long long)
 @ stdcall WinSqmIsOptedIn()
 @ stdcall WinSqmSetDWORD(ptr long long)
 @ stdcall WinSqmStartSession(ptr long long)
