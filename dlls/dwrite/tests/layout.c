@@ -4972,7 +4972,6 @@ todo_wine {
     IDWriteFactory_Release(factory);
 }
 
-
 static void test_SetTypography(void)
 {
     static const WCHAR strW[] = {'a','f','i','b',0};
@@ -5599,6 +5598,90 @@ static void test_GetOverhangMetrics(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_tab_stops(void)
+{
+    static const WCHAR strW[] = {'\t','a','\t','b'};
+    DWRITE_CLUSTER_METRICS clusters[4];
+    IDWriteTextLayout *layout;
+    IDWriteTextFormat *format;
+    IDWriteFactory *factory;
+    DWRITE_TEXT_RANGE range;
+    FLOAT tabstop, size;
+    ULONG count;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    /* Default tab stop value. */
+    for (size = 1.0f; size < 25.0f; size += 5.0f)
+    {
+        hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+                DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, size, enusW, &format);
+        ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
+
+        tabstop = IDWriteTextFormat_GetIncrementalTabStop(format);
+        ok(tabstop == 4.0f * size, "Unexpected tab stop %f.\n", tabstop);
+
+        IDWriteTextFormat_Release(format);
+    }
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
+
+    hr = IDWriteTextFormat_SetIncrementalTabStop(format, 0.0f);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteTextFormat_SetIncrementalTabStop(format, -10.0f);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    tabstop = IDWriteTextFormat_GetIncrementalTabStop(format);
+    ok(tabstop == 40.0f, "Unexpected tab stop %f.\n", tabstop);
+
+    hr = IDWriteTextFormat_SetIncrementalTabStop(format, 100.0f);
+    ok(hr == S_OK, "Failed to set tab stop value, hr %#x.\n", hr);
+
+    tabstop = IDWriteTextFormat_GetIncrementalTabStop(format);
+    ok(tabstop == 100.0f, "Unexpected tab stop %f.\n", tabstop);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %x.\n", hr);
+
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 4, &count);
+    ok(hr == S_OK, "Failed to get cluster metrics, hr %#x.\n", hr);
+    ok(clusters[0].isWhitespace, "Unexpected isWhitespace.\n");
+    ok(!clusters[1].isWhitespace, "Unexpected isWhitespace.\n");
+    ok(clusters[2].isWhitespace, "Unexpected isWhitespace.\n");
+    ok(!clusters[3].isWhitespace, "Unexpected isWhitespace.\n");
+todo_wine {
+    ok(clusters[0].width == tabstop, "Unexpected tab width.\n");
+    ok(clusters[1].width + clusters[2].width == tabstop, "Unexpected tab width.\n");
+}
+    range.startPosition = 0;
+    range.length = ~0u;
+    hr = IDWriteTextLayout_SetFontSize(layout, 20.0f, range);
+    ok(hr == S_OK, "Failed to set font size, hr %#x.\n", hr);
+
+    tabstop = IDWriteTextLayout_GetIncrementalTabStop(layout);
+    ok(tabstop == 100.0f, "Unexpected tab stop %f.\n", tabstop);
+
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 4, &count);
+    ok(hr == S_OK, "Failed to get cluster metrics, hr %#x.\n", hr);
+    ok(clusters[0].isWhitespace, "Unexpected isWhitespace.\n");
+    ok(!clusters[1].isWhitespace, "Unexpected isWhitespace.\n");
+    ok(clusters[2].isWhitespace, "Unexpected isWhitespace.\n");
+    ok(!clusters[3].isWhitespace, "Unexpected isWhitespace.\n");
+todo_wine {
+    ok(clusters[0].width == tabstop, "Unexpected tab width.\n");
+    ok(clusters[1].width + clusters[2].width == tabstop, "Unexpected tab width.\n");
+}
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteTextFormat_Release(format);
+
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     IDWriteFactory *factory;
@@ -5649,6 +5732,7 @@ START_TEST(layout)
     test_InvalidateLayout();
     test_line_spacing();
     test_GetOverhangMetrics();
+    test_tab_stops();
 
     IDWriteFactory_Release(factory);
 }

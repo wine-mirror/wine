@@ -53,6 +53,7 @@ struct dwrite_textformat_data {
     DWRITE_LINE_SPACING spacing;
 
     FLOAT fontsize;
+    FLOAT tabstop;
 
     DWRITE_TRIMMING trimming;
     IDWriteInlineObject *trimmingsign;
@@ -4272,7 +4273,13 @@ static HRESULT WINAPI dwritetextformat_layout_SetFlowDirection(IDWriteTextFormat
 static HRESULT WINAPI dwritetextformat_layout_SetIncrementalTabStop(IDWriteTextFormat2 *iface, FLOAT tabstop)
 {
     struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
-    FIXME("(%p)->(%f): stub\n", This, tabstop);
+
+    TRACE("(%p)->(%f)\n", This, tabstop);
+
+    if (tabstop <= 0.0f)
+        return E_INVALIDARG;
+
+    This->format.tabstop = tabstop;
     return S_OK;
 }
 
@@ -4346,8 +4353,8 @@ static DWRITE_FLOW_DIRECTION WINAPI dwritetextformat_layout_GetFlowDirection(IDW
 static FLOAT WINAPI dwritetextformat_layout_GetIncrementalTabStop(IDWriteTextFormat2 *iface)
 {
     struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat2(iface);
-    FIXME("(%p): stub\n", This);
-    return 0.0f;
+    TRACE("(%p)\n", This);
+    return This->format.tabstop;
 }
 
 static HRESULT WINAPI dwritetextformat_layout_GetTrimming(IDWriteTextFormat2 *iface, DWRITE_TRIMMING *options,
@@ -4875,6 +4882,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     layout->format.style   = IDWriteTextFormat_GetFontStyle(format);
     layout->format.stretch = IDWriteTextFormat_GetFontStretch(format);
     layout->format.fontsize= IDWriteTextFormat_GetFontSize(format);
+    layout->format.tabstop = IDWriteTextFormat_GetIncrementalTabStop(format);
     layout->format.textalignment = IDWriteTextFormat_GetTextAlignment(format);
     layout->format.paralign = IDWriteTextFormat_GetParagraphAlignment(format);
     layout->format.wrapping = IDWriteTextFormat_GetWordWrapping(format);
@@ -5302,7 +5310,13 @@ static HRESULT WINAPI dwritetextformat_SetFlowDirection(IDWriteTextFormat2 *ifac
 static HRESULT WINAPI dwritetextformat_SetIncrementalTabStop(IDWriteTextFormat2 *iface, FLOAT tabstop)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat2(iface);
-    FIXME("(%p)->(%f): stub\n", This, tabstop);
+
+    TRACE("(%p)->(%f)\n", This, tabstop);
+
+    if (tabstop <= 0.0f)
+        return E_INVALIDARG;
+
+    This->format.tabstop = tabstop;
     return S_OK;
 }
 
@@ -5368,8 +5382,8 @@ static DWRITE_FLOW_DIRECTION WINAPI dwritetextformat_GetFlowDirection(IDWriteTex
 static FLOAT WINAPI dwritetextformat_GetIncrementalTabStop(IDWriteTextFormat2 *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat2(iface);
-    FIXME("(%p): stub\n", This);
-    return 0.0f;
+    TRACE("(%p)\n", This);
+    return This->format.tabstop;
 }
 
 static HRESULT WINAPI dwritetextformat_GetTrimming(IDWriteTextFormat2 *iface, DWRITE_TRIMMING *options,
@@ -5631,6 +5645,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.weight = weight;
     This->format.style = style;
     This->format.fontsize = size;
+    This->format.tabstop = 4.0f * size;
     This->format.stretch = stretch;
     This->format.textalignment = DWRITE_TEXT_ALIGNMENT_LEADING;
     This->format.optical_alignment = DWRITE_OPTICAL_ALIGNMENT_NONE;
