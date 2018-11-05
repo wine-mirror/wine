@@ -223,7 +223,7 @@ FactoryTemplate const g_Templates[] = {
     },
 };
 
-const int g_cTemplates = sizeof(g_Templates) / sizeof (g_Templates[0]);
+const int g_cTemplates = ARRAY_SIZE(g_Templates);
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
@@ -323,7 +323,7 @@ static HRESULT register_server(BOOL do_register)
     INF_SET_ID(MEDIATYPE_Stream);
     INF_SET_ID(WINESUBTYPE_Gstreamer);
 
-    for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++) {
+    for(i = 0; i < ARRAY_SIZE(pse); i++) {
         pse[i].pszValue = HeapAlloc(GetProcessHeap(),0,39);
         sprintf(pse[i].pszValue, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                 clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
@@ -331,7 +331,7 @@ static HRESULT register_server(BOOL do_register)
                 clsids[i]->Data4[5], clsids[i]->Data4[6], clsids[i]->Data4[7]);
     }
 
-    strtable.cEntries = sizeof(pse)/sizeof(pse[0]);
+    strtable.cEntries = ARRAY_SIZE(pse);
     strtable.pse = pse;
 
     hAdvpack = LoadLibraryW(wszAdvpack);
@@ -339,7 +339,7 @@ static HRESULT register_server(BOOL do_register)
 
     hres = pRegInstall(hInst, do_register ? "RegisterDll" : "UnregisterDll", &strtable);
 
-    for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++)
+    for(i = 0; i < ARRAY_SIZE(pse); i++)
         HeapFree(GetProcessHeap(),0,pse[i].pszValue);
 
     if(FAILED(hres)) {

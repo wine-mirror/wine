@@ -794,12 +794,12 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = &This->filter.IBaseFilter_iface;
     name = gst_pad_get_name(pad);
-    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, piOutput.achName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]) - 1);
+    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, piOutput.achName, ARRAY_SIZE(piOutput.achName) - 1);
     TRACE("Name: %s\n", name);
     strcpy(my_name, "qz_sink_");
     strcat(my_name, name);
     g_free(name);
-    piOutput.achName[sizeof(piOutput.achName) / sizeof(piOutput.achName[0]) - 1] = 0;
+    piOutput.achName[ARRAY_SIZE(piOutput.achName) - 1] = 0;
 
     caps = gst_pad_query_caps(pad, NULL);
     caps = gst_caps_make_writable(caps);
@@ -1259,7 +1259,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
     piInput = &This->pInputPin.pin.pinInfo;
     piInput->dir = PINDIR_INPUT;
     piInput->pFilter = &This->filter.IBaseFilter_iface;
-    lstrcpynW(piInput->achName, wcsInputPinName, sizeof(piInput->achName) / sizeof(piInput->achName[0]));
+    lstrcpynW(piInput->achName, wcsInputPinName, ARRAY_SIZE(piInput->achName));
     This->pInputPin.pin.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
     This->pInputPin.pin.refCount = 1;
     This->pInputPin.pin.pConnectedTo = NULL;
