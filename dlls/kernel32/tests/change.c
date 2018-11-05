@@ -254,11 +254,12 @@ static void test_FindFirstChangeNotification(void)
 static void test_ffcn(void)
 {
     DWORD filter;
-    HANDLE handle;
+    HANDLE handle, file;
     LONG r;
-    WCHAR path[MAX_PATH], subdir[MAX_PATH];
+    WCHAR path[MAX_PATH], subdir[MAX_PATH], filename[MAX_PATH];
     static const WCHAR szBoo[] = { '\\','b','o','o',0 };
     static const WCHAR szHoo[] = { '\\','h','o','o',0 };
+    static const WCHAR szZoo[] = { '\\','z','o','o',0 };
 
     SetLastError(0xdeadbeef);
     r = GetTempPathW( MAX_PATH, path );
@@ -275,6 +276,9 @@ static void test_ffcn(void)
     lstrcpyW( subdir, path );
     lstrcatW( subdir, szHoo );
 
+    lstrcpyW( filename, path );
+    lstrcatW( filename, szZoo );
+
     RemoveDirectoryW( subdir );
     RemoveDirectoryW( path );
     
@@ -286,6 +290,38 @@ static void test_ffcn(void)
 
     handle = FindFirstChangeNotificationW( path, 1, filter);
     ok( handle != INVALID_HANDLE_VALUE, "invalid handle\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == STATUS_TIMEOUT, "should time out\n");
+
+    file = CreateFileW( filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError() );
+    CloseHandle(file);
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n");
+
+    r = FindNextChangeNotification(handle);
+    ok( r == TRUE, "find next failed\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == STATUS_TIMEOUT, "should time out\n");
+
+    r = DeleteFileW( filename );
+    ok( r == TRUE, "failed to remove file\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n");
+
+    r = WaitForSingleObject( handle, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n");
+
+    r = FindNextChangeNotification(handle);
+    ok( r == TRUE, "find next failed\n");
 
     r = WaitForSingleObject( handle, 0 );
     ok( r == STATUS_TIMEOUT, "should time out\n");
