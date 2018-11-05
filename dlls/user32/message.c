@@ -280,6 +280,8 @@ struct send_message_info
     enum wm_char_mapping wm_char;
 };
 
+static const INPUT_MESSAGE_SOURCE msg_source_unavailable = { IMDT_UNAVAILABLE, IMO_UNAVAILABLE };
+
 
 /* Message class descriptor */
 static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
@@ -2701,6 +2703,9 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     DPI_AWARENESS_CONTEXT context;
     BOOL ret = FALSE;
 
+    get_user_thread_info()->msg_source.deviceType = msg_data->source.device;
+    get_user_thread_info()->msg_source.originId   = msg_data->source.origin;
+
     /* hardware messages are always in physical coords */
     context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
 
@@ -2745,6 +2750,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
 {
     LRESULT result;
     struct user_thread_info *thread_info = get_user_thread_info();
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
     struct received_message_info info, *old_info;
     unsigned int hw_id = 0;  /* id of previous hardware message */
     void *buffer;
@@ -2760,6 +2766,8 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
         NTSTATUS res;
         size_t size = 0;
         const message_data_t *msg_data = buffer;
+
+        thread_info->msg_source = prev_source;
 
         SERVER_START_REQ( get_message )
         {
@@ -2952,6 +2960,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             thread_info->GetMessagePosVal = MAKELONG( msg->pt.x, msg->pt.y );
             thread_info->GetMessageTimeVal = info.msg.time;
             thread_info->GetMessageExtraInfoVal = 0;
+            thread_info->msg_source = msg_source_unavailable;
             HeapFree( GetProcessHeap(), 0, buffer );
             HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
             return TRUE;
@@ -2960,6 +2969,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
         /* if we get here, we have a sent message; call the window procedure */
         old_info = thread_info->receive_info;
         thread_info->receive_info = &info;
+        thread_info->msg_source = msg_source_unavailable;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
                                    info.msg.lParam, (info.type != MSG_ASCII), FALSE,
                                    WMCHAR_MAP_RECVMESSAGE );
@@ -3252,6 +3262,8 @@ static BOOL is_message_broadcastable(UINT msg)
  */
 static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BOOL unicode )
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
     DWORD dest_pid;
     BOOL ret;
     LRESULT result;
@@ -3268,6 +3280,7 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
 
     if (USER_IsExitingThread( info->dest_tid )) return FALSE;
 
+    thread_info->msg_source = msg_source_unavailable;
     SPY_EnterMessage( SPY_SENDMESSAGE, info->hwnd, info->msg, info->wparam, info->lparam );
 
     if (info->dest_tid == GetCurrentThreadId())
@@ -3293,6 +3306,7 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
     }
 
     SPY_ExitMessage( SPY_RESULT_OK, info->hwnd, info->msg, result, info->wparam, info->lparam );
+    thread_info->msg_source = prev_source;
     if (ret && res_ptr) *res_ptr = result;
     return ret;
 }
@@ -4136,8 +4150,8 @@ LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
  */
 BOOL WINAPI GetCurrentInputMessageSource( INPUT_MESSAGE_SOURCE *source )
 {
-    FIXME( "stub\n" );
-    return FALSE;
+    *source = get_user_thread_info()->msg_source;
+    return TRUE;
 }
 
 

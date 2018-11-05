@@ -280,11 +280,18 @@ typedef struct
 
 /* structures for extra message data */
 
+struct hw_msg_source
+{
+    unsigned int    device;        /* source device (IMDT_* values) */
+    unsigned int    origin;        /* source origin (IMO_* values) */
+};
+
 struct hardware_msg_data
 {
-    lparam_t        info;      /* extra info */
-    unsigned int    hw_id;     /* unique id */
-    unsigned int    flags;     /* hook flags */
+    lparam_t             info;      /* extra info */
+    unsigned int         hw_id;     /* unique id */
+    unsigned int         flags;     /* hook flags */
+    struct hw_msg_source source;    /* message source */
     union
     {
         int type;
