@@ -1090,47 +1090,16 @@ static BOOL store_accept_types( request_t *request, const WCHAR **accept_types )
     return TRUE;
 }
 
-static WCHAR *get_request_path( const WCHAR *object, DWORD flags )
+static WCHAR *get_request_path( const WCHAR *object )
 {
-    DWORD len, path_len = 0, query_len = 0;
-    const WCHAR *p = object, *q = NULL;
-    enum escape_flags path_flags, query_flags;
-    WCHAR *ret;
+    int len = object ? strlenW(object) : 0;
+    WCHAR *p, *ret;
 
-    if (flags & WINHTTP_FLAG_ESCAPE_DISABLE) path_flags = ESCAPE_FLAG_SPACE_ONLY|ESCAPE_FLAG_REMOVE_CRLF;
-    else if (flags & WINHTTP_FLAG_ESCAPE_PERCENT) path_flags = ESCAPE_FLAG_PERCENT;
-    else path_flags = 0;
-
-    if (flags & WINHTTP_FLAG_ESCAPE_DISABLE_QUERY) query_flags = ESCAPE_FLAG_SPACE_ONLY|ESCAPE_FLAG_REMOVE_CRLF;
-    else query_flags = path_flags;
-
-    if (object)
-    {
-        path_len = strlenW( object );
-        if (object[0] == '/')
-        {
-            path_len--;
-            p++;
-        }
-        if ((q = strchrW( p, '?' )))
-        {
-            q++;
-            query_len = path_len - (q - p);
-            path_len -= query_len + 1;
-        }
-    }
-
-    len = escape_string( NULL, p, path_len, path_flags );
-    len += escape_string( NULL, q, query_len, query_flags );
-    if (!(ret = heap_alloc( (len + 3) * sizeof(WCHAR) ))) return NULL;
-
-    ret[0] = '/';
-    len = escape_string( ret + 1, p, path_len, path_flags ) + 1;
-    if (q)
-    {
-        ret[len] = '?';
-        escape_string( ret + 1 + len, q, query_len, query_flags );
-    }
+    if (!object || object[0] != '/') len++;
+    if (!(p = ret = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
+    if (!object || object[0] != '/') *p++ = '/';
+    if (object) strcpyW( p, object );
+    ret[len] = 0;
     return ret;
 }
 
@@ -1193,7 +1162,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
 
     if (!verb || !verb[0]) verb = getW;
     if (!(request->verb = strdupW( verb ))) goto end;
-    if (!(request->path = get_request_path( object, flags ))) goto end;
+    if (!(request->path = get_request_path( object ))) goto end;
 
     if (!version || !version[0]) version = http1_1;
     if (!(request->version = strdupW( version ))) goto end;

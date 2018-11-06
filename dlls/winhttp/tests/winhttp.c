@@ -2368,9 +2368,16 @@ static DWORD CALLBACK server_thread(LPVOID param)
                                        "%5E_%60%7B%7C%7D~%0D%0A ";
             static const char res3[] = "\x1f\x7f<%20%three?\x1f\x7f%20!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ";
             static const char res4[] = "%0D%0A%1F%7F%3C%20%four?\x1f\x7f%20!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ";
+            static const char res5[] = "&text=one%C2%80%7F~";
+            static const char res6[] = "&text=two%C2%80\x7f~";
+            static const char res7[] = "&text=%E5%90%9B%E3%81%AE%E5%90%8D%E3%81%AF";
 
             if (strstr(buffer + 11, res) || strstr(buffer + 11, res2) || strstr(buffer + 11, res3) ||
-                strstr(buffer + 11, res4 )) send(c, okmsg, sizeof(okmsg) - 1, 0);
+                strstr(buffer + 11, res4) || strstr(buffer + 11, res5) || strstr(buffer + 11, res6) ||
+                strstr(buffer + 11, res7))
+            {
+                send(c, okmsg, sizeof(okmsg) - 1, 0);
+            }
             else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
         }
         if (strstr(buffer, "GET /quit"))
@@ -3367,7 +3374,8 @@ static void do_request( HINTERNET con, const WCHAR *obj, DWORD flags )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
-    ok( status == HTTP_STATUS_OK, "request %s with flags %08x failed %u\n", wine_dbgstr_w(obj), flags, status );
+    ok( status == HTTP_STATUS_OK || broken(status == HTTP_STATUS_BAD_REQUEST) /* < win7 */,
+        "request %s with flags %08x failed %u\n", wine_dbgstr_w(obj), flags, status );
     WinHttpCloseHandle( req );
 }
 
@@ -3389,6 +3397,12 @@ static void test_request_path_escapes( int port )
         {'/','e','s','c','a','p','e','\r','\n',0x1f,0x7f,'<',' ','%','f','o','u','r','?',0x1f,0x7f,' ','!','"',
          '#','$','%','&','\'','(',')','*','+',',','-','.','/',':',';','<','=','>','?','@','[','\\',']','^','_',
          '`','{','|','}','~','\r','\n',0};
+    static const WCHAR obj5W[] =
+        {'/','e','s','c','a','p','e','&','t','e','x','t','=','o','n','e',0x80,0x7f,0x7e,0};
+    static const WCHAR obj6W[] =
+        {'/','e','s','c','a','p','e','&','t','e','x','t','=','t','w','o',0x80,0x7f,0x7e,0};
+    static const WCHAR obj7W[] =
+        {'/','e','s','c','a','p','e','&','t','e','x','t','=',0x541b,0x306e,0x540d,0x306f,0};
     HINTERNET ses, con;
 
     ses = WinHttpOpen( test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
@@ -3401,6 +3415,9 @@ static void test_request_path_escapes( int port )
     do_request( con, obj2W, WINHTTP_FLAG_ESCAPE_PERCENT );
     do_request( con, obj3W, WINHTTP_FLAG_ESCAPE_DISABLE );
     do_request( con, obj4W, WINHTTP_FLAG_ESCAPE_DISABLE_QUERY );
+    do_request( con, obj5W, 0 );
+    do_request( con, obj6W, WINHTTP_FLAG_ESCAPE_DISABLE );
+    do_request( con, obj7W, WINHTTP_FLAG_ESCAPE_DISABLE );
 
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );

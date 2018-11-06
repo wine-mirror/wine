@@ -826,7 +826,6 @@ BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, 
     return ret;
 }
 
-
 static const WCHAR basicW[]     = {'B','a','s','i','c',0};
 static const WCHAR ntlmW[]      = {'N','T','L','M',0};
 static const WCHAR passportW[]  = {'P','a','s','s','p','o','r','t',0};
@@ -2046,6 +2045,176 @@ static void drain_content( request_t *request )
     }
 }
 
+enum escape_flags
+{
+    ESCAPE_FLAG_NON_PRINTABLE = 0x01,
+    ESCAPE_FLAG_SPACE         = 0x02,
+    ESCAPE_FLAG_PERCENT       = 0x04,
+    ESCAPE_FLAG_UNSAFE        = 0x08,
+    ESCAPE_FLAG_DEL           = 0x10,
+    ESCAPE_FLAG_8BIT          = 0x20,
+    ESCAPE_FLAG_STRIP_CRLF    = 0x40,
+};
+
+#define ESCAPE_MASK_DEFAULT (ESCAPE_FLAG_NON_PRINTABLE | ESCAPE_FLAG_SPACE | ESCAPE_FLAG_UNSAFE |\
+                             ESCAPE_FLAG_DEL | ESCAPE_FLAG_8BIT)
+#define ESCAPE_MASK_PERCENT (ESCAPE_FLAG_PERCENT | ESCAPE_MASK_DEFAULT)
+#define ESCAPE_MASK_DISABLE (ESCAPE_FLAG_SPACE | ESCAPE_FLAG_8BIT | ESCAPE_FLAG_STRIP_CRLF)
+
+static inline BOOL need_escape( char ch, enum escape_flags flags )
+{
+    static const char unsafe[] = "\"#<>[\\]^`{|}";
+    const char *ptr = unsafe;
+
+    if ((flags & ESCAPE_FLAG_SPACE) && ch == ' ') return TRUE;
+    if ((flags & ESCAPE_FLAG_PERCENT) && ch == '%') return TRUE;
+    if ((flags & ESCAPE_FLAG_NON_PRINTABLE) && ch < 0x20) return TRUE;
+    if ((flags & ESCAPE_FLAG_DEL) && ch == 0x7f) return TRUE;
+    if ((flags & ESCAPE_FLAG_8BIT) && (ch & 0x80)) return TRUE;
+    if ((flags & ESCAPE_FLAG_UNSAFE)) while (*ptr) { if (ch == *ptr++) return TRUE; }
+    return FALSE;
+}
+
+static DWORD escape_string( const char *src, DWORD len, char *dst, enum escape_flags flags )
+{
+    static const char hex[] = "0123456789ABCDEF";
+    DWORD i, ret = len;
+    char *ptr = dst;
+
+    for (i = 0; i < len; i++)
+    {
+        if ((flags & ESCAPE_FLAG_STRIP_CRLF) && (src[i] == '\r' || src[i] == '\n'))
+        {
+            ret--;
+            continue;
+        }
+        if (need_escape( src[i], flags ))
+        {
+            if (dst)
+            {
+                ptr[0] = '%';
+                ptr[1] = hex[(src[i] >> 4) & 0xf];
+                ptr[2] = hex[src[i] & 0xf];
+                ptr += 3;
+            }
+            ret += 2;
+        }
+        else if (dst) *ptr++ = src[i];
+    }
+
+    if (dst) dst[ret] = 0;
+    return ret;
+}
+
+static DWORD str_to_wire( const WCHAR *src, int src_len, char *dst, enum escape_flags flags )
+{
+    DWORD len;
+    char *utf8;
+
+    if (src_len < 0) src_len = strlenW( src );
+    len = WideCharToMultiByte( CP_UTF8, 0, src, src_len, NULL, 0, NULL, NULL );
+    if (!(utf8 = heap_alloc( len ))) return 0;
+
+    WideCharToMultiByte( CP_UTF8, 0, src, -1, utf8, len, NULL, NULL );
+    len = escape_string( utf8, len, dst, flags );
+    heap_free( utf8 );
+
+    return len;
+}
+
+static char *build_wire_path( request_t *request, DWORD *ret_len )
+{
+    WCHAR *full_path;
+    const WCHAR *path, *query = NULL;
+    DWORD len, len_path = 0, len_query = 0;
+    enum escape_flags path_flags, query_flags;
+    char *ret;
+
+    if (!strcmpiW( request->connect->hostname, request->connect->servername )) full_path = request->path;
+    else if (!(full_path = build_absolute_request_path( request ))) return NULL;
+
+    len = strlenW( full_path );
+    if ((path = strchrW( full_path, '/' )))
+    {
+        len_path = strlenW( path );
+        if ((query = strchrW( path, '?' )))
+        {
+            len_query = strlenW( query );
+            len_path -= len_query;
+        }
+    }
+
+    if (request->hdr.flags & WINHTTP_FLAG_ESCAPE_DISABLE) path_flags = ESCAPE_MASK_DISABLE;
+    else if (request->hdr.flags & WINHTTP_FLAG_ESCAPE_PERCENT) path_flags = ESCAPE_MASK_PERCENT;
+    else path_flags = ESCAPE_MASK_DEFAULT;
+
+    if (request->hdr.flags & WINHTTP_FLAG_ESCAPE_DISABLE_QUERY) query_flags = ESCAPE_MASK_DISABLE;
+    else query_flags = path_flags;
+
+    *ret_len = str_to_wire( full_path, len - len_path - len_query, NULL, 0 );
+    if (path) *ret_len += str_to_wire( path, len_path, NULL, path_flags );
+    if (query) *ret_len += str_to_wire( query, len_query, NULL, query_flags );
+
+    if ((ret = heap_alloc( *ret_len + 1 )))
+    {
+        len = str_to_wire( full_path, len - len_path - len_query, ret, 0 );
+        if (path) len += str_to_wire( path, len_path, ret + len, path_flags );
+        if (query) str_to_wire( query, len_query, ret + len, query_flags );
+    }
+
+    if (full_path != request->path) heap_free( full_path );
+    return ret;
+}
+
+static char *build_wire_request( request_t *request, DWORD *len )
+{
+    char *path, *ptr, *ret;
+    DWORD i, len_path;
+
+    if (!(path = build_wire_path( request, &len_path ))) return NULL;
+
+    *len = str_to_wire( request->verb, -1, NULL, 0 ) + 1; /* ' ' */
+    *len += len_path + 1; /* ' ' */
+    *len += str_to_wire( request->version, -1, NULL, 0 );
+
+    for (i = 0; i < request->num_headers; i++)
+    {
+        if (request->headers[i].is_request)
+        {
+            *len += str_to_wire( request->headers[i].field, -1, NULL, 0 ) + 2; /* ': ' */
+            *len += str_to_wire( request->headers[i].value, -1, NULL, 0 ) + 2; /* '\r\n' */
+        }
+    }
+    *len += 4; /* '\r\n\r\n' */
+
+    if ((ret = ptr = heap_alloc( *len + 1 )))
+    {
+        ptr += str_to_wire( request->verb, -1, ptr, 0 );
+        *ptr++ = ' ';
+        memcpy( ptr, path, len_path );
+        ptr += len_path;
+        *ptr++ = ' ';
+        ptr += str_to_wire( request->version, -1, ptr, 0 );
+
+        for (i = 0; i < request->num_headers; i++)
+        {
+            if (request->headers[i].is_request)
+            {
+                *ptr++ = '\r';
+                *ptr++ = '\n';
+                ptr += str_to_wire( request->headers[i].field, -1, ptr, 0 );
+                *ptr++ = ':';
+                *ptr++ = ' ';
+                ptr += str_to_wire( request->headers[i].value, -1, ptr, 0 );
+            }
+        }
+        memcpy( ptr, "\r\n\r\n", sizeof("\r\n\r\n") );
+    }
+
+    heap_free( path );
+    return ret;
+}
+
 static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len, LPVOID optional,
                           DWORD optional_len, DWORD total_len, DWORD_PTR context, BOOL async )
 {
@@ -2056,8 +2225,7 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     BOOL ret = FALSE;
     connect_t *connect = request->connect;
     session_t *session = connect->session;
-    WCHAR *req = NULL;
-    char *req_ascii;
+    char *wire_req;
     int bytes_sent;
     DWORD len, i, flags;
 
@@ -2107,16 +2275,13 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     if (context) request->hdr.context = context;
 
     if (!(ret = open_connection( request ))) goto end;
-    if (!(req = build_request_string( request ))) goto end;
-
-    if (!(req_ascii = strdupWA( req ))) goto end;
-    TRACE("full request: %s\n", debugstr_a(req_ascii));
-    len = strlen(req_ascii);
+    if (!(wire_req = build_wire_request( request, &len ))) goto end;
+    TRACE("full request: %s\n", debugstr_a(wire_req));
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST, NULL, 0 );
 
-    ret = netconn_send( request->netconn, req_ascii, len, &bytes_sent );
-    heap_free( req_ascii );
+    ret = netconn_send( request->netconn, wire_req, len, &bytes_sent );
+    heap_free( wire_req );
     if (!ret) goto end;
 
     if (optional_len)
@@ -2140,7 +2305,6 @@ end:
             send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
         }
     }
-    heap_free( req );
     return ret;
 }
 
@@ -2524,18 +2688,19 @@ static BOOL handle_redirect( request_t *request, DWORD status )
 
         if (location[0] == '/')
         {
-            len = escape_string( NULL, location, len_loc, 0 );
-            if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            escape_string( path, location, len_loc, 0 );
+            if (!(path = heap_alloc( (len_loc + 1) * sizeof(WCHAR) ))) goto end;
+            memcpy( path, location, len_loc * sizeof(WCHAR) );
+            path[len_loc] = 0;
         }
         else
         {
             if ((p = strrchrW( request->path, '/' ))) *p = 0;
-            len = strlenW( request->path ) + 1 + escape_string( NULL, location, len_loc, 0 );
+            len = strlenW( request->path ) + 1 + len_loc;
             if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
             strcpyW( path, request->path );
             strcatW( path, slashW );
-            escape_string( path + strlenW(path), location, len_loc, 0 );
+            memcpy( path + strlenW(path), location, len_loc * sizeof(WCHAR) );
+            path[len_loc] = 0;
         }
         heap_free( request->path );
         request->path = path;
@@ -2586,9 +2751,10 @@ static BOOL handle_redirect( request_t *request, DWORD status )
         request->path = NULL;
         if (uc.dwUrlPathLength)
         {
-            len = escape_string( NULL, uc.lpszUrlPath, uc.dwUrlPathLength + uc.dwExtraInfoLength, 0 );
+            len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
             if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            escape_string( request->path, uc.lpszUrlPath, uc.dwUrlPathLength + uc.dwExtraInfoLength, 0 );
+            memcpy( request->path, uc.lpszUrlPath, (len + 1) * sizeof(WCHAR) );
+            request->path[len] = 0;
         }
         else request->path = strdupW( slashW );
     }
