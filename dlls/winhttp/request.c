@@ -265,7 +265,7 @@ static BOOL queue_task( struct task_header *task )
     return TRUE;
 }
 
-static void free_header( header_t *header )
+static void free_header( struct header *header )
 {
     heap_free( header->field );
     heap_free( header->value );
@@ -293,10 +293,10 @@ static BOOL valid_token_char( WCHAR c )
     }
 }
 
-static header_t *parse_header( LPCWSTR string )
+static struct header *parse_header( const WCHAR *string )
 {
     const WCHAR *p, *q;
-    header_t *header;
+    struct header *header;
     int len;
 
     p = string;
@@ -320,7 +320,7 @@ static header_t *parse_header( LPCWSTR string )
         p++;
     }
     len = q - string;
-    if (!(header = heap_alloc_zero( sizeof(header_t) ))) return NULL;
+    if (!(header = heap_alloc_zero( sizeof(struct header) ))) return NULL;
     if (!(header->field = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
         heap_free( header );
@@ -364,15 +364,15 @@ static int get_header_index( request_t *request, LPCWSTR field, int requested_in
     return index;
 }
 
-static BOOL insert_header( request_t *request, header_t *header )
+static BOOL insert_header( request_t *request, struct header *header )
 {
     DWORD count = request->num_headers + 1;
-    header_t *hdrs;
+    struct header *hdrs;
 
     if (request->headers)
-        hdrs = heap_realloc_zero( request->headers, sizeof(header_t) * count );
+        hdrs = heap_realloc_zero( request->headers, sizeof(struct header) * count );
     else
-        hdrs = heap_alloc_zero( sizeof(header_t) );
+        hdrs = heap_alloc_zero( sizeof(struct header) );
     if (!hdrs) return FALSE;
 
     request->headers = hdrs;
@@ -392,15 +392,16 @@ static BOOL delete_header( request_t *request, DWORD index )
     heap_free( request->headers[index].field );
     heap_free( request->headers[index].value );
 
-    memmove( &request->headers[index], &request->headers[index + 1], (request->num_headers - index) * sizeof(header_t) );
-    memset( &request->headers[request->num_headers], 0, sizeof(header_t) );
+    memmove( &request->headers[index], &request->headers[index + 1],
+             (request->num_headers - index) * sizeof(struct header) );
+    memset( &request->headers[request->num_headers], 0, sizeof(struct header) );
     return TRUE;
 }
 
 static BOOL process_header( request_t *request, LPCWSTR field, LPCWSTR value, DWORD flags, BOOL request_only )
 {
     int index;
-    header_t hdr;
+    struct header hdr;
 
     TRACE("%s: %s 0x%08x\n", debugstr_w(field), debugstr_w(value), flags);
 
@@ -435,7 +436,7 @@ static BOOL process_header( request_t *request, LPCWSTR field, LPCWSTR value, DW
         {
             WCHAR *tmp;
             int len, len_orig, len_value;
-            header_t *header = &request->headers[index];
+            struct header *header = &request->headers[index];
 
             len_orig = strlenW( header->value );
             len_value = strlenW( value );
@@ -466,7 +467,7 @@ BOOL add_request_headers( request_t *request, LPCWSTR headers, DWORD len, DWORD 
 {
     BOOL ret = FALSE;
     WCHAR *buffer, *p, *q;
-    header_t *header;
+    struct header *header;
 
     if (len == ~0u) len = strlenW( headers );
     if (!len) return TRUE;
@@ -639,7 +640,7 @@ out:
 
 static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID buffer, LPDWORD buflen, LPDWORD index )
 {
-    header_t *header = NULL;
+    struct header *header = NULL;
     BOOL request_only, ret = FALSE;
     int requested_index, header_index = -1;
     DWORD attr, len;
@@ -2458,7 +2459,7 @@ static BOOL read_reply( request_t *request )
     offset = buflen + crlf_len - 1;
     for (;;)
     {
-        header_t *header;
+        struct header *header;
 
         buflen = MAX_REPLY_LEN;
         if (!read_line( request, buffer, &buflen )) return TRUE;
@@ -2499,7 +2500,7 @@ static void record_cookies( request_t *request )
 
     for (i = 0; i < request->num_headers; i++)
     {
-        header_t *set_cookie = &request->headers[i];
+        struct header *set_cookie = &request->headers[i];
         if (!strcmpiW( set_cookie->field, attr_set_cookie ) && !set_cookie->is_request)
         {
             set_cookies( request, set_cookie->value );

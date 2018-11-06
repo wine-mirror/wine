@@ -129,12 +129,12 @@ typedef struct
     size_t peek_len;
 } netconn_t;
 
-typedef struct
+struct header
 {
-    LPWSTR field;
-    LPWSTR value;
+    WCHAR *field;
+    WCHAR *value;
     BOOL is_request; /* part of request headers? */
-} header_t;
+};
 
 enum auth_target
 {
@@ -196,7 +196,7 @@ typedef struct
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */
     char  read_buf[8192]; /* buffer for already read but not returned data */
-    header_t *headers;
+    struct header *headers;
     DWORD num_headers;
     WCHAR **accept_types;
     DWORD num_accept_types;
