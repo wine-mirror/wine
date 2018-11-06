@@ -567,7 +567,12 @@ static HCRYPTMSG CHashEncodeMsg_Open(DWORD dwFlags, const void *pvMsgEncodeInfo,
         prov = info->hCryptProv;
     else
     {
-        prov = I_CryptGetDefaultCryptProv(0);
+        prov = I_CryptGetDefaultCryptProv(algID);
+        if (!prov)
+        {
+            SetLastError(E_INVALIDARG);
+            return NULL;
+        }
         dwFlags &= ~CMSG_CRYPT_RELEASE_CONTEXT_FLAG;
     }
     msg = CryptMemAlloc(sizeof(CHashEncodeMsg));
