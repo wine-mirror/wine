@@ -640,7 +640,6 @@ static void test_subclass(void)
     memset(&scroll_info, 0xcc, sizeof(scroll_info));
     scroll_info.cbSize = sizeof(scroll_info);
     res = SendMessageA(hwnd, SBM_GETSCROLLBARINFO, 0, (LPARAM)&scroll_info);
-    todo_wine
     ok(res == 1, "SBM_GETSCROLLBARINFO returned %lu\n", res);
 
     DestroyWindow(hwnd);
