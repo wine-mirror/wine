@@ -2533,6 +2533,14 @@ VOID WINAPI KeInitializeDpc(PRKDPC Dpc, PKDEFERRED_ROUTINE DeferredRoutine, PVOI
 }
 
 /***********************************************************************
+ *          KeSetTargetProcessorDpc   (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI KeSetTargetProcessorDpc(PRKDPC dpc, CCHAR number)
+{
+    FIXME("%p, %d stub\n", dpc, number);
+}
+
+/***********************************************************************
  *           READ_REGISTER_BUFFER_UCHAR   (NTOSKRNL.EXE.@)
  */
 VOID WINAPI READ_REGISTER_BUFFER_UCHAR(PUCHAR Register, PUCHAR Buffer, ULONG Count)

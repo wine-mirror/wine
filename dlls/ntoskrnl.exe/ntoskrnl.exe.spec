@@ -619,7 +619,7 @@
 @ stdcall KeSetPriorityThread(ptr long)
 @ stub KeSetProfileIrql
 @ stdcall KeSetSystemAffinityThread(long)
-@ stub KeSetTargetProcessorDpc
+@ stdcall KeSetTargetProcessorDpc(ptr long)
 @ stub KeSetTimeIncrement
 @ stub KeSetTimer
 @ stdcall KeSetTimerEx(ptr int64 long ptr)
