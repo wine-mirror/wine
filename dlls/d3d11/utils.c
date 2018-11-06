@@ -450,8 +450,6 @@ DWORD wined3d_usage_from_d3d11(UINT bind_flags, enum D3D11_USAGE usage)
 
     if (bind_flags & D3D11_BIND_SHADER_RESOURCE)
         wined3d_usage |= WINED3DUSAGE_TEXTURE;
-    if (bind_flags & D3D11_BIND_DEPTH_STENCIL)
-        wined3d_usage |= WINED3DUSAGE_DEPTHSTENCIL;
     if (bind_flags & ~handled)
         FIXME("Unhandled bind flags %#x.\n", bind_flags & ~handled);
 
