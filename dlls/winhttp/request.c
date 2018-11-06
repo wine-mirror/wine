@@ -177,13 +177,13 @@ static const WCHAR *attribute_table[] =
     NULL                            /* WINHTTP_QUERY_PASSPORT_CONFIG            = 78 */
 };
 
-static task_header_t *dequeue_task( request_t *request )
+static struct task_header *dequeue_task( request_t *request )
 {
-    task_header_t *task;
+    struct task_header *task;
 
     EnterCriticalSection( &request->task_cs );
     TRACE("%u tasks queued\n", list_count( &request->task_queue ));
-    task = LIST_ENTRY( list_head( &request->task_queue ), task_header_t, entry );
+    task = LIST_ENTRY( list_head( &request->task_queue ), struct task_header, entry );
     if (task) list_remove( &task->entry );
     LeaveCriticalSection( &request->task_cs );
 
@@ -205,7 +205,7 @@ static DWORD CALLBACK task_proc( LPVOID param )
         {
         case WAIT_OBJECT_0:
         {
-            task_header_t *task;
+            struct task_header *task;
             while ((task = dequeue_task( request )))
             {
                 task->proc( task );
@@ -231,7 +231,7 @@ static DWORD CALLBACK task_proc( LPVOID param )
     return 0;
 }
 
-static BOOL queue_task( task_header_t *task )
+static BOOL queue_task( struct task_header *task )
 {
     request_t *request = task->request;
 
@@ -2163,7 +2163,7 @@ end:
     return ret;
 }
 
-static void task_send_request( task_header_t *task )
+static void task_send_request( struct task_header *task )
 {
     send_request_t *s = (send_request_t *)task;
     send_request( s->hdr.request, s->headers, s->headers_len, s->optional, s->optional_len, s->total_len, s->context, TRUE );
@@ -2211,7 +2211,7 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
         s->context      = context;
 
         addref_object( &request->hdr );
-        ret = queue_task( (task_header_t *)s );
+        ret = queue_task( (struct task_header *)s );
     }
     else
         ret = send_request( request, headers, headers_len, optional, optional_len, total_len, context, FALSE );
@@ -2690,7 +2690,7 @@ static BOOL receive_response( request_t *request, BOOL async )
     return ret;
 }
 
-static void task_receive_response( task_header_t *task )
+static void task_receive_response( struct task_header *task )
 {
     receive_response_t *r = (receive_response_t *)task;
     receive_response( r->hdr.request, TRUE );
@@ -2727,7 +2727,7 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
         r->hdr.proc    = task_receive_response;
 
         addref_object( &request->hdr );
-        ret = queue_task( (task_header_t *)r );
+        ret = queue_task( (struct task_header *)r );
     }
     else
         ret = receive_response( request, FALSE );
@@ -2761,7 +2761,7 @@ done:
     return TRUE;
 }
 
-static void task_query_data_available( task_header_t *task )
+static void task_query_data_available( struct task_header *task )
 {
     query_data_t *q = (query_data_t *)task;
     query_data_available( q->hdr.request, q->available, TRUE );
@@ -2799,7 +2799,7 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
         q->available   = available;
 
         addref_object( &request->hdr );
-        ret = queue_task( (task_header_t *)q );
+        ret = queue_task( (struct task_header *)q );
     }
     else
         ret = query_data_available( request, available, FALSE );
@@ -2809,7 +2809,7 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
     return ret;
 }
 
-static void task_read_data( task_header_t *task )
+static void task_read_data( struct task_header *task )
 {
     read_data_t *r = (read_data_t *)task;
     read_data( r->hdr.request, r->buffer, r->to_read, r->read, TRUE );
@@ -2849,7 +2849,7 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
         r->read        = read;
 
         addref_object( &request->hdr );
-        ret = queue_task( (task_header_t *)r );
+        ret = queue_task( (struct task_header *)r );
     }
     else
         ret = read_data( request, buffer, to_read, read, FALSE );
@@ -2881,7 +2881,7 @@ static BOOL write_data( request_t *request, LPCVOID buffer, DWORD to_write, LPDW
     return ret;
 }
 
-static void task_write_data( task_header_t *task )
+static void task_write_data( struct task_header *task )
 {
     write_data_t *w = (write_data_t *)task;
     write_data( w->hdr.request, w->buffer, w->to_write, w->written, TRUE );
@@ -2921,7 +2921,7 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
         w->written     = written;
 
         addref_object( &request->hdr );
-        ret = queue_task( (task_header_t *)w );
+        ret = queue_task( (struct task_header *)w );
     }
     else
         ret = write_data( request, buffer, to_write, written, FALSE );

@@ -214,18 +214,16 @@ typedef struct
     } creds[TARGET_MAX][SCHEME_MAX];
 } request_t;
 
-typedef struct _task_header_t task_header_t;
-
-struct _task_header_t
+struct task_header
 {
     struct list entry;
     request_t *request;
-    void (*proc)( task_header_t * );
+    void (*proc)( struct task_header * );
 };
 
 typedef struct
 {
-    task_header_t hdr;
+    struct task_header hdr;
     LPWSTR headers;
     DWORD headers_len;
     LPVOID optional;
@@ -236,18 +234,18 @@ typedef struct
 
 typedef struct
 {
-    task_header_t hdr;
+    struct task_header hdr;
 } receive_response_t;
 
 typedef struct
 {
-    task_header_t hdr;
+    struct task_header hdr;
     LPDWORD available;
 } query_data_t;
 
 typedef struct
 {
-    task_header_t hdr;
+    struct task_header hdr;
     LPVOID buffer;
     DWORD to_read;
     LPDWORD read;
@@ -255,7 +253,7 @@ typedef struct
 
 typedef struct
 {
-    task_header_t hdr;
+    struct task_header hdr;
     LPCVOID buffer;
     DWORD to_write;
     LPDWORD written;
