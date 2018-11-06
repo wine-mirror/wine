@@ -668,6 +668,7 @@
 @ stub MmBuildMdlForNonPagedPool
 @ stub MmCanFileBeTruncated
 @ stub MmCommitSessionMappedView
+@ stdcall MmCopyVirtualMemory(ptr ptr ptr ptr long long ptr)
 @ stub MmCreateMdl
 @ stdcall MmCreateSection(ptr long ptr ptr long long long ptr)
 @ stub MmDisableModifiedWriteOfSection

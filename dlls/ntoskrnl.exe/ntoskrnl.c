@@ -4016,3 +4016,14 @@ PVOID WINAPI PsGetProcessWow64Process(PEPROCESS process)
     FIXME("stub: %p\n", process);
     return NULL;
 }
+
+/*********************************************************************
+ *           MmCopyVirtualMemory    (NTOSKRNL.@)
+ */
+NTSTATUS WINAPI MmCopyVirtualMemory(PEPROCESS fromprocess, PVOID fromaddress, PEPROCESS toprocess,
+                                    PVOID toaddress, SIZE_T bufsize, KPROCESSOR_MODE mode,
+                                    PSIZE_T copied)
+{
+    FIXME("stub: %p %p %p %p %lu %d %p\n", fromprocess, fromaddress, toprocess, toaddress, bufsize, mode, copied);
+    return STATUS_NOT_IMPLEMENTED;
+}
