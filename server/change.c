@@ -742,11 +742,9 @@ static unsigned int filter_from_event( struct inotify_event *ie )
     if (ie->mask & (IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE | IN_CREATE))
         filter |= FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME;
     if (ie->mask & IN_MODIFY)
-        filter |= FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
+        filter |= FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_LAST_ACCESS;
     if (ie->mask & IN_ATTRIB)
         filter |= FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SECURITY;
-    if (ie->mask & IN_ACCESS)
-        filter |= FILE_NOTIFY_CHANGE_LAST_ACCESS;
     if (ie->mask & IN_CREATE)
         filter |= FILE_NOTIFY_CHANGE_CREATION;
 
@@ -979,7 +977,7 @@ static int map_flags( unsigned int filter )
     if (filter & FILE_NOTIFY_CHANGE_LAST_WRITE)
         mask |= IN_MODIFY;
     if (filter & FILE_NOTIFY_CHANGE_LAST_ACCESS)
-        mask |= IN_ACCESS;
+        mask |= IN_MODIFY;
     if (filter & FILE_NOTIFY_CHANGE_SECURITY)
         mask |= IN_ATTRIB;
 
