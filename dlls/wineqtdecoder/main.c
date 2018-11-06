@@ -141,7 +141,7 @@ FactoryTemplate const g_Templates[] = {
     }
 };
 
-int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
+int g_cTemplates = ARRAY_SIZE(g_Templates);
 static HINSTANCE hInst = NULL;
 
 /***********************************************************************

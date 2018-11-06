@@ -361,7 +361,7 @@ static pascal ComponentResult myDataHGetFileName ( DataHandler dh, Str255 str)
         int i;
         IAsyncReader_SyncRead(data->dataRef.pReader, 0, 8, header);
 
-        for (i=0; i < sizeof(stream_sigs)/sizeof(signature); i++)
+        for (i = 0; i < ARRAY_SIZE(stream_sigs); i++)
             if (memcmp(header, stream_sigs[i].sig, stream_sigs[i].sig_length)==0)
             {
                 str[0] = strlen(stream_sigs[i].fname);
