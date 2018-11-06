@@ -949,11 +949,9 @@ static void inotify_poll_event( struct fd *fd, int event )
     for( ofs = 0; ofs < r - offsetof(struct inotify_event, name); )
     {
         ie = (struct inotify_event*) &buffer[ofs];
-        if (!ie->len)
-            break;
         ofs += offsetof( struct inotify_event, name[ie->len] );
         if (ofs > r) break;
-        inotify_notify_all( ie );
+        if (ie->len) inotify_notify_all( ie );
     }
 }
 
