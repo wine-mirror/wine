@@ -38,11 +38,18 @@ struct cookie
     WCHAR *path;
 };
 
-static domain_t *add_domain( session_t *session, WCHAR *name )
+struct domain
 {
-    domain_t *domain;
+    struct list entry;
+    WCHAR *name;
+    struct list cookies;
+};
 
-    if (!(domain = heap_alloc_zero( sizeof(domain_t) ))) return NULL;
+static struct domain *add_domain( session_t *session, WCHAR *name )
+{
+    struct domain *domain;
+
+    if (!(domain = heap_alloc_zero( sizeof(struct domain) ))) return NULL;
 
     list_init( &domain->entry );
     list_init( &domain->cookies );
@@ -54,7 +61,7 @@ static domain_t *add_domain( session_t *session, WCHAR *name )
     return domain;
 }
 
-static struct cookie *find_cookie( domain_t *domain, const WCHAR *path, const WCHAR *name )
+static struct cookie *find_cookie( struct domain *domain, const WCHAR *path, const WCHAR *name )
 {
     struct list *item;
     struct cookie *cookie;
@@ -71,7 +78,7 @@ static struct cookie *find_cookie( domain_t *domain, const WCHAR *path, const WC
     return NULL;
 }
 
-static BOOL domain_match( const WCHAR *name, domain_t *domain, BOOL partial )
+static BOOL domain_match( const WCHAR *name, struct domain *domain, BOOL partial )
 {
     TRACE("comparing %s with %s\n", debugstr_w(name), debugstr_w(domain->name));
 
@@ -94,7 +101,7 @@ static void delete_cookie( struct cookie *cookie )
     free_cookie( cookie );
 }
 
-void delete_domain( domain_t *domain )
+static void delete_domain( struct domain *domain )
 {
     struct cookie *cookie;
     struct list *item, *next;
@@ -110,9 +117,21 @@ void delete_domain( domain_t *domain )
     heap_free( domain );
 }
 
+void destroy_cookies( session_t *session )
+{
+    struct list *item, *next;
+    struct domain *domain;
+
+    LIST_FOR_EACH_SAFE( item, next, &session->cookie_cache )
+    {
+        domain = LIST_ENTRY( item, struct domain, entry );
+        delete_domain( domain );
+    }
+}
+
 static BOOL add_cookie( session_t *session, struct cookie *cookie, WCHAR *domain_name, WCHAR *path )
 {
-    domain_t *domain = NULL;
+    struct domain *domain = NULL;
     struct cookie *old_cookie;
     struct list *item;
 
@@ -122,7 +141,7 @@ static BOOL add_cookie( session_t *session, struct cookie *cookie, WCHAR *domain
 
     LIST_FOR_EACH( item, &session->cookie_cache )
     {
-        domain = LIST_ENTRY( item, domain_t, entry );
+        domain = LIST_ENTRY( item, struct domain, entry );
         if (domain_match( domain_name, domain, FALSE )) break;
         domain = NULL;
     }
@@ -311,7 +330,7 @@ BOOL add_cookie_headers( request_t *request )
 
     LIST_FOR_EACH( domain_cursor, &session->cookie_cache )
     {
-        domain_t *domain = LIST_ENTRY( domain_cursor, domain_t, entry );
+        struct domain *domain = LIST_ENTRY( domain_cursor, struct domain, entry );
         if (domain_match( request->connect->servername, domain, TRUE ))
         {
             struct list *cookie_cursor;

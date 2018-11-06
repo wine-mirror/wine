@@ -66,13 +66,6 @@ struct _object_header_t
     struct list children;
 };
 
-typedef struct
-{
-    struct list entry;
-    WCHAR *name;
-    struct list cookies;
-} domain_t;
-
 typedef struct {
     struct list entry;
     LONG ref;
@@ -295,7 +288,7 @@ int netconn_get_cipher_strength( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL set_cookies( request_t *, const WCHAR * ) DECLSPEC_HIDDEN;
 BOOL add_cookie_headers( request_t * ) DECLSPEC_HIDDEN;
 BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD ) DECLSPEC_HIDDEN;
-void delete_domain( domain_t * ) DECLSPEC_HIDDEN;
+void destroy_cookies( session_t * ) DECLSPEC_HIDDEN;
 BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HIDDEN;
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 

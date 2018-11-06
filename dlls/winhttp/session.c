@@ -89,19 +89,13 @@ BOOL WINAPI WinHttpCheckPlatform( void )
 static void session_destroy( object_header_t *hdr )
 {
     session_t *session = (session_t *)hdr;
-    struct list *item, *next;
-    domain_t *domain;
 
     TRACE("%p\n", session);
 
     if (session->unload_event) SetEvent( session->unload_event );
     if (session->cred_handle_initialized) FreeCredentialsHandle( &session->cred_handle );
+    destroy_cookies( session );
 
-    LIST_FOR_EACH_SAFE( item, next, &session->cookie_cache )
-    {
-        domain = LIST_ENTRY( item, domain_t, entry );
-        delete_domain( domain );
-    }
     session->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &session->cs );
     heap_free( session->agent );
