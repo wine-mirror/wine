@@ -3991,13 +3991,28 @@ void WINAPI IoReleaseRemoveLockAndWaitEx(PIO_REMOVE_LOCK lock, PVOID tag, ULONG 
     FIXME("stub: %p %p %u\n", lock, tag, size);
 }
 
+/*********************************************************************
+ *           DbgQueryDebugFilterState    (NTOSKRNL.@)
+ */
 NTSTATUS WINAPI DbgQueryDebugFilterState(ULONG component, ULONG level)
 {
     FIXME("stub: %d %d\n", component, level);
     return STATUS_NOT_IMPLEMENTED;
 }
 
+/*********************************************************************
+ *           ExReleaseResourceLite    (NTOSKRNL.@)
+ */
 void WINAPI ExReleaseResourceLite(PERESOURCE resource)
 {
     FIXME("stub: %p\n", resource);
+}
+
+/*********************************************************************
+ *           PsGetProcessWow64Process    (NTOSKRNL.@)
+ */
+PVOID WINAPI PsGetProcessWow64Process(PEPROCESS process)
+{
+    FIXME("stub: %p\n", process);
+    return NULL;
 }
