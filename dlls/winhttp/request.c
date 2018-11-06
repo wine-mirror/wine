@@ -2166,7 +2166,7 @@ end:
 
 static void task_send_request( struct task_header *task )
 {
-    send_request_t *s = (send_request_t *)task;
+    struct send_request *s = (struct send_request *)task;
     send_request( s->hdr.request, s->headers, s->headers_len, s->optional, s->optional_len, s->total_len, s->context, TRUE );
     heap_free( s->headers );
 }
@@ -2199,9 +2199,9 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        send_request_t *s;
+        struct send_request *s;
 
-        if (!(s = heap_alloc( sizeof(send_request_t) ))) return FALSE;
+        if (!(s = heap_alloc( sizeof(struct send_request) ))) return FALSE;
         s->hdr.request  = request;
         s->hdr.proc     = task_send_request;
         s->headers      = strdupW( headers );

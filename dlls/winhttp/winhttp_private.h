@@ -221,16 +221,16 @@ struct task_header
     void (*proc)( struct task_header * );
 };
 
-typedef struct
+struct send_request
 {
     struct task_header hdr;
-    LPWSTR headers;
+    WCHAR *headers;
     DWORD headers_len;
-    LPVOID optional;
+    void *optional;
     DWORD optional_len;
     DWORD total_len;
     DWORD_PTR context;
-} send_request_t;
+};
 
 typedef struct
 {
