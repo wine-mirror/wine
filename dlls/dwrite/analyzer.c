@@ -517,7 +517,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
     {
         switch (break_class[i])
         {
-            /* LB7 - do not break before spaces */
+            /* LB7 - do not break before spaces or zero-width space */
             case b_SP:
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
@@ -531,10 +531,9 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                 if (j < count-1 && break_class[j+1] != b_ZW)
                     set_break_condition(j, BreakConditionAfter, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
                 break;
-            /* LB8a - do not break between ZWJ and an ideograph, emoji base or emoji modifier */
+            /* LB8a - do not break after ZWJ */
             case b_ZWJ:
-                if (i < count-1 && (break_class[i+1] == b_ID || break_class[i+1] == b_EB || break_class[i+1] == b_EM))
-                    set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+                set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
         }
     }
