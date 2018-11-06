@@ -541,98 +541,78 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
     return ret;
 }
 
-static WCHAR *build_request_path( request_t *request )
+static WCHAR *build_absolute_request_path( request_t *request )
 {
+    static const WCHAR http[] = {'h','t','t','p',0};
+    static const WCHAR https[] = {'h','t','t','p','s',0};
+    static const WCHAR fmt[] = {'%','s',':','/','/','%','s',0};
+    const WCHAR *scheme;
     WCHAR *ret;
+    int len;
 
-    if (strcmpiW( request->connect->hostname, request->connect->servername ))
+    scheme = (request->netconn ? request->netconn->secure : (request->hdr.flags & WINHTTP_FLAG_SECURE)) ? https : http;
+
+    len = strlenW( scheme ) + strlenW( request->connect->hostname ) + 4; /* '://' + nul */
+    if (request->connect->hostport) len += 6; /* ':' between host and port, up to 5 for port */
+
+    if (request->path) len += strlenW( request->path );
+    if ((ret = heap_alloc( len * sizeof(WCHAR) )))
     {
-        static const WCHAR http[] = { 'h','t','t','p',0 };
-        static const WCHAR https[] = { 'h','t','t','p','s',0 };
-        static const WCHAR fmt[] = { '%','s',':','/','/','%','s',0 };
-        LPCWSTR scheme = (request->netconn ? request->netconn->secure : (request->hdr.flags & WINHTTP_FLAG_SECURE)) ? https : http;
-        int len;
-
-        len = strlenW( scheme ) + strlenW( request->connect->hostname );
-        /* 3 characters for '://', 1 for NUL. */
-        len += 4;
+        len = sprintfW( ret, fmt, scheme, request->connect->hostname );
         if (request->connect->hostport)
         {
-            /* 1 for ':' between host and port, up to 5 for port */
-            len += 6;
+            static const WCHAR port_fmt[] = {':','%','u',0};
+            sprintfW( ret + len, port_fmt, request->connect->hostport );
         }
-        if (request->path)
-            len += strlenW( request->path );
-        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
-        {
-            sprintfW( ret, fmt, scheme, request->connect->hostname );
-            if (request->connect->hostport)
-            {
-                static const WCHAR colonFmt[] = { ':','%','u',0 };
-
-                sprintfW( ret + strlenW( ret ), colonFmt,
-                    request->connect->hostport );
-            }
-            if (request->path)
-                strcatW( ret, request->path );
-        }
+        if (request->path) strcatW( ret, request->path );
     }
-    else
-        ret = request->path;
+
     return ret;
 }
 
 static WCHAR *build_request_string( request_t *request )
 {
-    static const WCHAR space[]   = {' ',0};
-    static const WCHAR crlf[]    = {'\r','\n',0};
-    static const WCHAR colon[]   = {':',' ',0};
-    static const WCHAR twocrlf[] = {'\r','\n','\r','\n',0};
-
+    static const WCHAR spaceW[] = {' ',0}, crlfW[] = {'\r','\n',0}, colonW[] = {':',' ',0};
+    static const WCHAR twocrlfW[] = {'\r','\n','\r','\n',0};
     WCHAR *path, *ret;
-    const WCHAR **headers, **p;
-    unsigned int len, i = 0, j;
+    unsigned int i, len;
 
-    /* allocate space for an array of all the string pointers to be added */
-    len = request->num_headers * 4 + 7;
-    if (!(headers = heap_alloc( len * sizeof(LPCWSTR) ))) return NULL;
+    if (!strcmpiW( request->connect->hostname, request->connect->servername )) path = request->path;
+    else if (!(path = build_absolute_request_path( request ))) return NULL;
 
-    path = build_request_path( request );
-    headers[i++] = request->verb;
-    headers[i++] = space;
-    headers[i++] = path;
-    headers[i++] = space;
-    headers[i++] = request->version;
+    len = strlenW( request->verb ) + 1 /* ' ' */;
+    len += strlenW( path ) + 1 /* ' ' */;
+    len += strlenW( request->version );
 
-    for (j = 0; j < request->num_headers; j++)
+    for (i = 0; i < request->num_headers; i++)
     {
-        if (request->headers[j].is_request)
-        {
-            headers[i++] = crlf;
-            headers[i++] = request->headers[j].field;
-            headers[i++] = colon;
-            headers[i++] = request->headers[j].value;
-
-            TRACE("adding header %s (%s)\n", debugstr_w(request->headers[j].field),
-                  debugstr_w(request->headers[j].value));
-        }
+        if (request->headers[i].is_request)
+            len += strlenW( request->headers[i].field ) + strlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
     }
-    headers[i++] = twocrlf;
-    headers[i] = NULL;
+    len += 4; /* '\r\n\r\n' */
 
-    len = 0;
-    for (p = headers; *p; p++) len += strlenW( *p );
-    len++;
+    if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+    {
+        strcpyW( ret, request->verb );
+        strcatW( ret, spaceW );
+        strcatW( ret, path );
+        strcatW( ret, spaceW );
+        strcatW( ret, request->version );
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) )))
-        goto out;
-    *ret = 0;
-    for (p = headers; *p; p++) strcatW( ret, *p );
+        for (i = 0; i < request->num_headers; i++)
+        {
+            if (request->headers[i].is_request)
+            {
+                strcatW( ret, crlfW );
+                strcatW( ret, request->headers[i].field );
+                strcatW( ret, colonW );
+                strcatW( ret, request->headers[i].value );
+            }
+        }
+        strcatW( ret, twocrlfW );
+    }
 
-out:
-    if (path != request->path)
-        heap_free( path );
-    heap_free( headers );
+    if (path != request->path) heap_free( path );
     return ret;
 }
 
