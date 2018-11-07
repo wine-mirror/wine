@@ -186,6 +186,8 @@ static void prepare_and_run_test(const char *dll_source, run_type run)
     ULONG_PTR cookie;
     HANDLE handle_context = 0;
 
+    path_manifest_exe[0] = path_manifest_dll[0] = path_dll_source[0] = 0;
+
     GetTempPathA(MAX_PATH, path_tmp);
     GetTempPathA(MAX_PATH, path_tmp_manifest);
     PathAppendA(path_tmp_manifest, "manifests");
