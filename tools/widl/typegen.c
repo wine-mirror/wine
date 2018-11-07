@@ -3675,52 +3675,35 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     return write_type_tfs(file, 2, attrs, type, name, write_ptr ? TYPE_CONTEXT_CONTAINER : TYPE_CONTEXT_CONTAINER_NO_POINTERS, tfsoff);
 }
 
-static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
-                                      type_pred_t pred, unsigned int *typeformat_offset)
+static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned int *offset)
 {
+    const statement_t *stmt_func;
     var_t *var;
-    const statement_t *stmt;
 
-    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    current_iface = iface;
+    STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(iface) )
     {
-        const type_t *iface;
-        const statement_t *stmt_func;
+        const var_t *func = stmt_func->u.var;
+        current_func = func;
+        if (is_local(func->attrs)) continue;
 
-        if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
-            continue;
+        var = type_function_get_retval(func->type);
+        if (!is_void(var->type))
+            var->typestring_offset = write_type_tfs( file, 2, func->attrs, var->type, func->name,
+                                                     TYPE_CONTEXT_PARAM, offset);
 
-        iface = stmt->u.type;
-        if (!pred(iface))
-            continue;
-
-        current_iface = iface;
-        STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(iface) )
-        {
-            const var_t *func = stmt_func->u.var;
-            current_func = func;
-            if (is_local(func->attrs)) continue;
-
-            var = type_function_get_retval(func->type);
-            if (!is_void(var->type))
-                var->typestring_offset = write_type_tfs( file, 2, func->attrs, var->type, func->name,
-                                                         TYPE_CONTEXT_PARAM, typeformat_offset);
-
-            if (type_get_function_args(func->type))
-                LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), var_t, entry )
-                    var->typestring_offset = write_type_tfs( file, 2, var->attrs, var->type, var->name,
-                                                             TYPE_CONTEXT_TOPLEVELPARAM,
-                                                             typeformat_offset );
-        }
+        if (type_get_function_args(func->type))
+            LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), var_t, entry )
+                var->typestring_offset = write_type_tfs( file, 2, var->attrs, var->type, var->name,
+                                                         TYPE_CONTEXT_TOPLEVELPARAM, offset );
     }
-
-    return *typeformat_offset + 1;
 }
 
 static unsigned int process_tfs(FILE *file, const statement_list_t *stmts, type_pred_t pred)
 {
     unsigned int typeformat_offset = 2;
-
-    return process_tfs_stmts(file, stmts, pred, &typeformat_offset);
+    for_each_iface(stmts, process_tfs_iface, pred, file, 0, &typeformat_offset);
+    return typeformat_offset + 1;
 }
 
 
