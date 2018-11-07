@@ -24,6 +24,7 @@
   - implement ACO_SEARCH style
   - implement ACO_FILTERPREFIXES style
   - implement ACO_RTLREADING style
+  - implement ACO_WORD_FILTER style
  */
 #include "config.h"
 
@@ -406,7 +407,8 @@ static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
     UINT cnt, start, end;
     if (!str) return (ac->options & ACO_AUTOSUGGEST) ? FALSE : TRUE;
 
-    if (len)
+    /* Windows seems to disable autoappend if ACO_NOPREFIXFILTERING is set */
+    if (!(ac->options & ACO_NOPREFIXFILTERING) && len)
     {
         start = find_matching_enum_str(ac, 0, text, len, -1);
         if (start == ~0)
@@ -811,6 +813,7 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     if (This->options & ACO_SEARCH) FIXME(" ACO_SEARCH not supported\n");
     if (This->options & ACO_FILTERPREFIXES) FIXME(" ACO_FILTERPREFIXES not supported\n");
     if (This->options & ACO_RTLREADING) FIXME(" ACO_RTLREADING not supported\n");
+    if (This->options & ACO_WORD_FILTER) FIXME(" ACO_WORD_FILTER not supported\n");
 
     if (!hwndEdit || !punkACL)
         return E_INVALIDARG;
