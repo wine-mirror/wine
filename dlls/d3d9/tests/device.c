@@ -8673,6 +8673,7 @@ static void test_surface_double_unlock(void)
     };
     IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
+    D3DSURFACE_DESC desc;
     D3DLOCKED_RECT lr;
     IDirect3D9 *d3d;
     unsigned int i;
@@ -8696,6 +8697,11 @@ static void test_surface_double_unlock(void)
         hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64,
                 D3DFMT_X8R8G8B8, pools[i], &surface, NULL);
         ok(SUCCEEDED(hr), "Failed to create surface in pool %#x, hr %#x.\n", pools[i], hr);
+
+        hr = IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(hr == D3D_OK, "Pool %#x: Got unexpected hr %#x.\n", pools[i], hr);
+        ok(!desc.Usage, "Pool %#x: Got unexpected usage %#x.\n", pools[i], desc.Usage);
+        ok(desc.Pool == pools[i], "Pool %#x: Got unexpected pool %#x.\n", pools[i], desc.Pool);
 
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, for surface in pool %#x.\n", hr, pools[i]);
