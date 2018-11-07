@@ -113,6 +113,8 @@ const char *get_attr_display_name(enum attr_type type);
 static void add_explicit_handle_if_necessary(const type_t *iface, var_t *func);
 static void check_def(const type_t *t);
 
+static void check_async_uuid(type_t *iface);
+
 static statement_t *make_statement(enum statement_type type);
 static statement_t *make_statement_type_decl(type_t *type);
 static statement_t *make_statement_reference(type_t *type);
@@ -909,6 +911,7 @@ interfacedef: interfacehdr inherit
 						  if($$ == $2)
 						    error_loc("Interface can't inherit from itself\n");
 						  type_interface_define($$, $2, $4);
+						  check_async_uuid($$);
 						  pointer_default = $1.old_pointer_default;
 						}
 /* MIDL is able to import the definition of a base class from inside the
@@ -1236,10 +1239,13 @@ static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_lis
   return new_list;
 }
 
-static attr_list_t *dupattrs(const attr_list_t *list)
+typedef int (*map_attrs_filter_t)(attr_list_t*,const attr_t*);
+
+static attr_list_t *map_attrs(const attr_list_t *list, map_attrs_filter_t filter)
 {
   attr_list_t *new_list;
   const attr_t *attr;
+  attr_t *new_attr;
 
   if (!list) return NULL;
 
@@ -1247,7 +1253,8 @@ static attr_list_t *dupattrs(const attr_list_t *list)
   list_init( new_list );
   LIST_FOR_EACH_ENTRY(attr, list, const attr_t, entry)
   {
-    attr_t *new_attr = xmalloc(sizeof(*new_attr));
+    if (filter && !filter(new_list, attr)) continue;
+    new_attr = xmalloc(sizeof(*new_attr));
     *new_attr = *attr;
     list_add_tail(new_list, &new_attr->entry);
   }
@@ -1297,7 +1304,7 @@ static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t 
   {
     attr_list_t *attrs;
     declspec->type = duptype(type, 1);
-    attrs = dupattrs(type->attrs);
+    attrs = map_attrs(type->attrs, NULL);
     declspec->type->attrs = append_attr_list(attrs, declspec->attrs);
     declspec->attrs = NULL;
   }
@@ -1731,6 +1738,18 @@ var_t *make_var(char *name)
   v->eval = NULL;
   v->stgclass = STG_NONE;
   init_loc_info(&v->loc_info);
+  return v;
+}
+
+static var_t *copy_var(var_t *src, char *name, map_attrs_filter_t attr_filter)
+{
+  var_t *v = xmalloc(sizeof(var_t));
+  v->name = name;
+  v->type = src->type;
+  v->attrs = map_attrs(src->attrs, attr_filter);
+  v->eval = src->eval;
+  v->stgclass = src->stgclass;
+  v->loc_info = src->loc_info;
   return v;
 }
 
@@ -2740,6 +2759,87 @@ static void check_functions(const type_t *iface, int is_inside_library)
                 check_remoting_args(func);
         }
     }
+}
+
+static char *concat_str(const char *prefix, const char *str)
+{
+    char *ret = xmalloc(strlen(prefix) + strlen(str) + 1);
+    strcpy(ret, prefix);
+    strcat(ret, str);
+    return ret;
+}
+
+static int async_iface_attrs(attr_list_t *attrs, const attr_t *attr)
+{
+    switch(attr->type)
+    {
+    case ATTR_UUID:
+        return 0;
+    case ATTR_ASYNCUUID:
+        append_attr(attrs, make_attrp(ATTR_UUID, attr->u.pval));
+        return 0;
+    default:
+        return 1;
+    }
+}
+
+static int arg_in_attrs(attr_list_t *attrs, const attr_t *attr)
+{
+    return attr->type != ATTR_OUT && attr->type != ATTR_RETVAL;
+}
+
+static int arg_out_attrs(attr_list_t *attrs, const attr_t *attr)
+{
+    return attr->type != ATTR_IN;
+}
+
+static void check_async_uuid(type_t *iface)
+{
+    statement_list_t *stmts = NULL;
+    statement_t *stmt;
+    type_t *async_iface;
+    type_t *inherit;
+
+    if (!is_attr(iface->attrs, ATTR_ASYNCUUID)) return;
+
+    inherit = iface->details.iface->inherit;
+    if (inherit && strcmp(inherit->name, "IUnknown"))
+        inherit = inherit->details.iface->async_iface;
+    if (!inherit)
+        error_loc("async_uuid applied to an interface with incompatible parent\n");
+
+    async_iface = get_type(TYPE_INTERFACE, concat_str("Async", iface->name), iface->namespace, 0);
+    async_iface->attrs = map_attrs(iface->attrs, async_iface_attrs);
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+    {
+        var_t *begin_func, *finish_func, *func = stmt->u.var, *arg;
+        var_list_t *begin_args = NULL, *finish_args = NULL, *args;
+
+        args = func->type->details.function->args;
+        if (args) LIST_FOR_EACH_ENTRY(arg, args, var_t, entry)
+        {
+            if (is_attr(arg->attrs, ATTR_IN) || !is_attr(arg->attrs, ATTR_OUT))
+                begin_args = append_var(begin_args, copy_var(arg, strdup(arg->name), arg_in_attrs));
+            if (is_attr(arg->attrs, ATTR_OUT))
+                finish_args = append_var(finish_args, copy_var(arg, strdup(arg->name), arg_out_attrs));
+        }
+
+        begin_func = copy_var(func, concat_str("Begin_", func->name), NULL);
+        begin_func->type = type_new_function(begin_args);
+        begin_func->type->attrs = func->attrs;
+        begin_func->type->details.function->retval = func->type->details.function->retval;
+        stmts = append_statement(stmts, make_statement_declaration(begin_func));
+
+        finish_func = copy_var(func, concat_str("Finish_", func->name), NULL);
+        finish_func->type = type_new_function(finish_args);
+        finish_func->type->attrs = func->attrs;
+        finish_func->type->details.function->retval = func->type->details.function->retval;
+        stmts = append_statement(stmts, make_statement_declaration(finish_func));
+    }
+
+    type_interface_define(async_iface, inherit, stmts);
+    iface->details.iface->async_iface = async_iface->details.iface->async_iface = async_iface;
 }
 
 static void check_statements(const statement_list_t *stmts, int is_inside_library)
