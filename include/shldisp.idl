@@ -99,6 +99,8 @@ interface IAutoComplete2 : IAutoComplete
 	    ACO_USETAB         = 0x10,      /* use tab to select autosuggest entries */
 	    ACO_UPDOWNKEYDROPSLIST = 0x20,  /* up/down arrow key invokes autosuggest dropdown (if enabled) */
 	    ACO_RTLREADING     = 0x40,      /* enable RTL reading order for dropdown */
+	    ACO_WORD_FILTER    = 0x80,      /* treat the autocompleted suggestion as a phrase for search purposes */
+	    ACO_NOPREFIXFILTERING = 0x100,  /* always display all suggestions */
 	} AUTOCOMPLETEOPTIONS;
 
     HRESULT SetOptions( [in] DWORD dwFlag);
