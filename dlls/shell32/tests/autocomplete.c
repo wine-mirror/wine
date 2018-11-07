@@ -514,6 +514,7 @@ static void test_custom_source(void)
     struct string_enumerator *obj;
     IUnknown *enumerator;
     IAutoComplete2 *autocomplete;
+    IAutoCompleteDropDown *acdropdown;
     HWND hwnd_edit;
     WCHAR buffer[20];
     HRESULT hr;
@@ -525,11 +526,16 @@ static void test_custom_source(void)
     hr = CoCreateInstance(&CLSID_AutoComplete, NULL, CLSCTX_INPROC_SERVER, &IID_IAutoComplete2, (void**)&autocomplete);
     ok(hr == S_OK, "CoCreateInstance failed: %x\n", hr);
 
+    hr = IAutoComplete2_QueryInterface(autocomplete, &IID_IAutoCompleteDropDown, (LPVOID*)&acdropdown);
+    ok(hr == S_OK, "No IAutoCompleteDropDown interface: %x\n", hr);
+
     string_enumerator_create((void**)&enumerator, suggestions, ARRAY_SIZE(suggestions));
     obj = (struct string_enumerator*)enumerator;
 
     hr = IAutoComplete2_SetOptions(autocomplete, ACO_AUTOSUGGEST | ACO_AUTOAPPEND);
     ok(hr == S_OK, "IAutoComplete2_SetOptions failed: %x\n", hr);
+    hr = IAutoCompleteDropDown_ResetEnumerator(acdropdown);
+    ok(hr == S_OK, "IAutoCompleteDropDown_ResetEnumerator failed: %x\n", hr);
     hr = IAutoComplete2_Init(autocomplete, hwnd_edit, enumerator, NULL, NULL);
     ok(hr == S_OK, "IAutoComplete_Init failed: %x\n", hr);
 
@@ -545,6 +551,9 @@ static void test_custom_source(void)
     dispatch_messages();
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(buffer[0] == '\0', "Expected empty string, got %s\n", wine_dbgstr_w(buffer));
+    ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
+    hr = IAutoCompleteDropDown_ResetEnumerator(acdropdown);
+    ok(hr == S_OK, "IAutoCompleteDropDown_ResetEnumerator failed: %x\n", hr);
     ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
     obj->num_resets = 0;
 
@@ -565,6 +574,8 @@ static void test_custom_source(void)
     dispatch_messages();
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
     ok(buffer[0] == '\0', "Expected empty string, got %s\n", wine_dbgstr_w(buffer));
+    hr = IAutoCompleteDropDown_ResetEnumerator(acdropdown);
+    ok(hr == S_OK, "IAutoCompleteDropDown_ResetEnumerator failed: %x\n", hr);
 
     HijackerWndProc_prev = (WNDPROC)SetWindowLongPtrW(hwnd_edit, GWLP_WNDPROC, (LONG_PTR)HijackerWndProc2);
     SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
@@ -577,6 +588,17 @@ static void test_custom_source(void)
     /* end of hijacks */
 
     test_aclist_expand(hwnd_edit, enumerator);
+    obj->num_resets = 0;
+
+    hr = IAutoCompleteDropDown_ResetEnumerator(acdropdown);
+    ok(hr == S_OK, "IAutoCompleteDropDown_ResetEnumerator failed: %x\n", hr);
+    SendMessageW(hwnd_edit, WM_CHAR, 'x', 1);
+    dispatch_messages();
+    ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
+    SendMessageW(hwnd_edit, WM_CHAR, 'x', 1);
+    dispatch_messages();
+    ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
+    IAutoCompleteDropDown_Release(acdropdown);
 
     ShowWindow(hMainWnd, SW_HIDE);
     DestroyWindow(hwnd_edit);
