@@ -24,8 +24,6 @@
   - implement ACO_SEARCH style
   - implement ACO_FILTERPREFIXES style
   - implement ACO_RTLREADING style
-  - implement ResetEnumerator
-  
  */
 #include "config.h"
 
@@ -1041,9 +1039,15 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnResetEnumerator(
 {
     IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
 
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p)\n", This);
 
-    return E_NOTIMPL;
+    if (This->initialized)
+    {
+        free_enum_strs(This);
+        if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBox))
+            autocomplete_text(This, This->hwndEdit, autoappend_flag_displayempty);
+    }
+    return S_OK;
 }
 
 /**************************************************************************
