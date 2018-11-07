@@ -4537,30 +4537,21 @@ unsigned int get_size_procformatstring_func(const type_t *iface, const var_t *fu
     return offset;
 }
 
-unsigned int get_size_procformatstring(const statement_list_t *stmts, type_pred_t pred)
+static void get_size_procformatstring_iface(type_t *iface, FILE *file, int indent, unsigned int *size)
 {
     const statement_t *stmt;
-    unsigned int size = 1;
-
-    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
-        const type_t *iface;
-        const statement_t *stmt_func;
-
-        if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
-            continue;
-
-        iface = stmt->u.type;
-        if (!pred(iface))
-            continue;
-
-        STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(iface) )
-        {
-            const var_t *func = stmt_func->u.var;
-            if (!is_local(func->attrs))
-                size += get_size_procformatstring_func( iface, func );
-        }
+        const var_t *func = stmt->u.var;
+        if (!is_local(func->attrs))
+            *size += get_size_procformatstring_func( iface, func );
     }
+}
+
+unsigned int get_size_procformatstring(const statement_list_t *stmts, type_pred_t pred)
+{
+    unsigned int size = 1;
+    for_each_iface(stmts, get_size_procformatstring_iface, pred, NULL, 0, &size);
     return size;
 }
 
