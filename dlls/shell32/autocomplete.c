@@ -637,6 +637,10 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             ret = CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
             autocomplete_text(This, hwnd, autoappend_flag_yes);
             return ret;
+        case WM_MOUSEWHEEL:
+            if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBox))
+                return SendMessageW(This->hwndListBox, WM_MOUSEWHEEL, wParam, lParam);
+            break;
         case WM_SETFONT:
             if (This->hwndListBox)
                 SendMessageW(This->hwndListBox, WM_SETFONT, wParam, lParam);
