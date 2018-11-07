@@ -895,6 +895,7 @@ static void write_proxy_routines(const statement_list_t *stmts)
   unsigned int proc_offset = 0;
   char *file_id = proxy_token;
   int i, count, have_baseiid = 0;
+  unsigned int table_version;
   type_t **interfaces;
   const type_t * delegate_to;
 
@@ -1006,6 +1007,26 @@ static void write_proxy_routines(const statement_list_t *stmts)
   fprintf(proxy, "}\n");
   fprintf(proxy, "\n");
 
+  table_version = get_stub_mode() == MODE_Oif ? 2 : 1;
+  for (i = 0; i < count; i++)
+  {
+      if (interfaces[i]->details.iface->async_iface != interfaces[i]) continue;
+      if (table_version != 6)
+      {
+          fprintf(proxy, "static const IID *_AsyncInterfaceTable[] =\n");
+          fprintf(proxy, "{\n");
+          table_version = 6;
+      }
+      fprintf(proxy, "    &IID_%s,\n", interfaces[i]->name);
+      fprintf(proxy, "    (IID*)(LONG_PTR)-1,\n");
+  }
+  if (table_version == 6)
+  {
+      fprintf(proxy, "    0\n");
+      fprintf(proxy, "};\n");
+      fprintf(proxy, "\n");
+  }
+
   fprintf(proxy, "const ExtendedProxyFileInfo %s_ProxyFileInfo DECLSPEC_HIDDEN =\n", file_id);
   fprintf(proxy, "{\n");
   fprintf(proxy, "    (const PCInterfaceProxyVtblList*)_%s_ProxyVtblList,\n", file_id);
@@ -1015,8 +1036,8 @@ static void write_proxy_routines(const statement_list_t *stmts)
   else fprintf(proxy, "    0,\n");
   fprintf(proxy, "    _%s_IID_Lookup,\n", file_id);
   fprintf(proxy, "    %d,\n", count);
-  fprintf(proxy, "    %d,\n", get_stub_mode() == MODE_Oif ? 2 : 1);
-  fprintf(proxy, "    0,\n");
+  fprintf(proxy, "    %u,\n", table_version);
+  fprintf(proxy, "    %s,\n", table_version == 6 ? "_AsyncInterfaceTable" : "0");
   fprintf(proxy, "    0,\n");
   fprintf(proxy, "    0,\n");
   fprintf(proxy, "    0\n");
