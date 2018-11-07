@@ -311,6 +311,7 @@ struct drawcall_entry {
     WCHAR string[10]; /* only meaningful for DrawGlyphRun() */
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
     UINT32 glyphcount; /* only meaningful for DrawGlyphRun() */
+    UINT32 bidilevel;
 };
 
 struct drawcall_sequence
@@ -432,6 +433,17 @@ static void ok_sequence_(struct drawcall_sequence **seq, int sequence_index,
                 ok_(file, line) (expected->glyphcount == actual->glyphcount,
                     "%s: wrong glyph count, %u was expected, but got %u instead\n",
                     context, expected->glyphcount, actual->glyphcount);
+
+            if (expected->bidilevel != actual->bidilevel && todo) {
+                failcount++;
+            todo_wine
+                ok_(file, line) (0, "%s: wrong bidi level, %u was expected, but got %u instead\n",
+                    context, expected->bidilevel, actual->bidilevel);
+            }
+            else
+                ok_(file, line) (expected->bidilevel == actual->bidilevel,
+                    "%s: wrong bidi level, %u was expected, but got %u instead\n",
+                    context, expected->bidilevel, actual->bidilevel);
         }
         else if ((expected->kind & DRAW_KINDS_MASK) == DRAW_UNDERLINE) {
             int cmp = lstrcmpW(expected->locale, actual->locale);
@@ -606,6 +618,7 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     ok(lstrlenW(descr->localeName) < LOCALE_NAME_MAX_LENGTH, "unexpectedly long locale name\n");
     lstrcpyW(entry.locale, descr->localeName);
     entry.glyphcount = run->glyphCount;
+    entry.bidilevel = run->bidiLevel;
     add_call(sequences, RENDERER_ID, &entry);
     return S_OK;
 }
@@ -1681,11 +1694,19 @@ static const struct drawcall_entry draw_single_run_seq[] = {
     { DRAW_LAST_KIND }
 };
 
-static const struct drawcall_entry draw_reordered_run_seq[] = {
+static const struct drawcall_entry draw_ltr_reordered_run_seq[] = {
     { DRAW_GLYPHRUN, {'1','2','3','-','5','2',0}, {'r','u',0}, 6 },
-    { DRAW_GLYPHRUN, {0x64a,0x64f,0x633,0x627,0x648,0x650,0x64a,0}, {'r','u',0}, 7 },
-    { DRAW_GLYPHRUN, {'7','1',0}, {'r','u',0}, 2 },
+    { DRAW_GLYPHRUN, {0x64a,0x64f,0x633,0x627,0x648,0x650,0x64a,0}, {'r','u',0}, 7, 1 },
+    { DRAW_GLYPHRUN, {'7','1',0}, {'r','u',0}, 2, 2 },
     { DRAW_GLYPHRUN, {'.',0}, {'r','u',0}, 1 },
+    { DRAW_LAST_KIND }
+};
+
+static const struct drawcall_entry draw_rtl_reordered_run_seq[] = {
+    { DRAW_GLYPHRUN, {'1','2','3','-','5','2',0}, {'r','u',0}, 6, 2 },
+    { DRAW_GLYPHRUN, {0x64a,0x64f,0x633,0x627,0x648,0x650,0x64a,0}, {'r','u',0}, 7, 1 },
+    { DRAW_GLYPHRUN, {'7','1',0}, {'r','u',0}, 2, 2 },
+    { DRAW_GLYPHRUN, {'.',0}, {'r','u',0}, 1, 1 },
     { DRAW_LAST_KIND }
 };
 
@@ -1887,10 +1908,21 @@ todo_wine
     ctxt.use_gdi_natural = FALSE;
     ctxt.snapping_disabled = TRUE;
 
+    hr = IDWriteTextLayout_SetReadingDirection(layout, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
+    ok(hr == S_OK, "Failed to set reading direction, hr %#x.\n", hr);
+
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0f, 0.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, draw_reordered_run_seq, "draw test 11", FALSE);
+    ok_sequence(sequences, RENDERER_ID, draw_ltr_reordered_run_seq, "draw test 11", FALSE);
+
+    hr = IDWriteTextLayout_SetReadingDirection(layout, DWRITE_READING_DIRECTION_RIGHT_TO_LEFT);
+    ok(hr == S_OK, "Failed to set reading direction, hr %#x.\n", hr);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0f, 0.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_rtl_reordered_run_seq, "draw test 12", FALSE);
 
     IDWriteTextLayout_Release(layout);
 
