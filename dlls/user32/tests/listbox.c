@@ -741,6 +741,7 @@ static void test_listbox_item_data(void)
 
 static void test_listbox_LB_DIR(void)
 {
+    char path[MAX_PATH], curdir[MAX_PATH];
     HWND hList;
     int res, itemCount;
     int itemCount_justFiles;
@@ -753,6 +754,16 @@ static void test_listbox_LB_DIR(void)
     char driveletter;
     const char *wildcard = "*";
     HANDLE file;
+    BOOL ret;
+
+    GetCurrentDirectoryA(ARRAY_SIZE(curdir), curdir);
+
+    GetTempPathA(ARRAY_SIZE(path), path);
+    ret = SetCurrentDirectoryA(path);
+    ok(ret, "Failed to set current directory.\n");
+
+    ret = CreateDirectoryA("lb_dir_test", NULL);
+    ok(ret, "Failed to create test directory.\n");
 
     file = CreateFileA( "wtest1.tmp.c", GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
     ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %d\n", GetLastError());
@@ -1084,11 +1095,11 @@ static void test_listbox_LB_DIR(void)
         itemCount, itemCount_allDirs);
     ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, *) returned incorrect index!\n");
 
-    if (itemCount && GetCurrentDirectoryA( MAX_PATH, pathBuffer ) > 3)  /* there's no [..] in drive root */
+    if (itemCount)
     {
         memset(pathBuffer, 0, MAX_PATH);
         SendMessageA(hList, LB_GETTEXT, 0, (LPARAM)pathBuffer);
-        ok( !strcmp(pathBuffer, "[..]"), "First element is not [..]\n");
+        ok( !strcmp(pathBuffer, "[..]"), "First element is %s, not [..]\n", pathBuffer);
     }
 
     /* This tests behavior when no files match the wildcard */
@@ -1172,6 +1183,9 @@ static void test_listbox_LB_DIR(void)
     DestroyWindow(hList);
 
     DeleteFileA( "wtest1.tmp.c" );
+    RemoveDirectoryA("lb_dir_test");
+
+    SetCurrentDirectoryA(curdir);
 }
 
 static HWND g_listBox;
