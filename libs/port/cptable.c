@@ -175,8 +175,6 @@ static const union cptable * const cptables[72] =
 /* ### cpmap end ### */
 /* Everything above this line is generated automatically by make_unicode */
 
-#define NB_CODEPAGES  (sizeof(cptables)/sizeof(cptables[0]))
-
 
 static int cmp_codepage( const void *codepage, const void *entry )
 {
@@ -189,7 +187,7 @@ const union cptable *wine_cp_get_table( unsigned int codepage )
 {
     const union cptable **res;
 
-    if (!(res = bsearch( &codepage, cptables, NB_CODEPAGES,
+    if (!(res = bsearch( &codepage, cptables, ARRAY_SIZE( cptables ),
                          sizeof(cptables[0]), cmp_codepage ))) return NULL;
     return *res;
 }
@@ -198,6 +196,6 @@ const union cptable *wine_cp_get_table( unsigned int codepage )
 /* enum valid codepages */
 const union cptable *wine_cp_enum_table( unsigned int index )
 {
-    if (index >= NB_CODEPAGES) return NULL;
+    if (index >= ARRAY_SIZE( cptables )) return NULL;
     return cptables[index];
 }
