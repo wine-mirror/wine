@@ -1381,6 +1381,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
 
         if (is_attr( func->attrs, ATTR_NOTIFY )) ext_flags |= 0x08;  /* HasNotify */
         if (is_attr( func->attrs, ATTR_NOTIFYFLAG )) ext_flags |= 0x10;  /* HasNotify2 */
+        if (iface == iface->details.iface->async_iface) oi2_flags |= 0x20;
 
         size = get_function_buffer_size( func, PASS_IN );
         print_file( file, indent, "NdrFcShort(0x%x),\t/* client buffer = %u */\n", size, size );
@@ -1479,6 +1480,8 @@ static void for_each_iface(const statement_list_t *stmts,
         iface = stmt->u.type;
         if (!pred(iface)) continue;
         proc(iface, file, indent, offset);
+        if (iface->details.iface->async_iface)
+            proc(iface->details.iface->async_iface, file, indent, offset);
     }
 }
 

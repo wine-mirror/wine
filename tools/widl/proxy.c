@@ -736,7 +736,9 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "},\n");
   print_proxy( "{\n");
   indent++;
-  print_proxy( "CStdStubBuffer_%s\n", need_delegation_indirect(iface) ? "DELEGATING_METHODS" : "METHODS");
+  print_proxy( "%s_%s\n",
+               iface->details.iface->async_iface == iface ? "CStdAsyncStubBuffer" : "CStdStubBuffer",
+               need_delegation_indirect(iface) ? "DELEGATING_METHODS" : "METHODS");
   indent--;
   print_proxy( "}\n");
   indent--;
@@ -832,8 +834,13 @@ static void write_proxy_stmts(const statement_list_t *stmts, unsigned int *proc_
   {
     if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
     {
-      if (need_proxy(stmt->u.type))
-        write_proxy(stmt->u.type, proc_offset);
+      type_t *iface = stmt->u.type;
+      if (need_proxy(iface))
+      {
+        write_proxy(iface, proc_offset);
+        if (iface->details.iface->async_iface)
+          write_proxy(iface->details.iface->async_iface, proc_offset);
+      }
     }
   }
 }
@@ -861,6 +868,12 @@ static void build_iface_list( const statement_list_t *stmts, type_t **ifaces[], 
             {
                 *ifaces = xrealloc( *ifaces, (*count + 1) * sizeof(**ifaces) );
                 (*ifaces)[(*count)++] = iface;
+                if (iface->details.iface->async_iface)
+                {
+                    iface = iface->details.iface->async_iface;
+                    *ifaces = xrealloc( *ifaces, (*count + 1) * sizeof(**ifaces) );
+                    (*ifaces)[(*count)++] = iface;
+                }
             }
         }
     }
