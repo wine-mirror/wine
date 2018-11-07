@@ -1465,27 +1465,34 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
     }
 }
 
-static void write_procformatstring_stmts(FILE *file, int indent, const statement_list_t *stmts,
-                                         type_pred_t pred, unsigned int *offset)
+static void for_each_iface(const statement_list_t *stmts,
+                           void (*proc)(type_t *iface, FILE *file, int indent, unsigned int *offset),
+                           type_pred_t pred, FILE *file, int indent, unsigned int *offset)
 {
     const statement_t *stmt;
+    type_t *iface;
+
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
-        if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
-        {
-            const statement_t *stmt_func;
-            const type_t *iface = stmt->u.type;
-            const type_t *parent = type_iface_get_inherit( iface );
-            int count = parent ? count_methods( parent ) : 0;
+        if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
+            continue;
+        iface = stmt->u.type;
+        if (!pred(iface)) continue;
+        proc(iface, file, indent, offset);
+    }
+}
 
-            if (!pred(iface)) continue;
-            STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(iface))
-            {
-                var_t *func = stmt_func->u.var;
-                if (is_local(func->attrs)) continue;
-                write_procformatstring_func( file, indent, iface, func, offset, count++ );
-            }
-        }
+static void write_iface_procformatstring(type_t *iface, FILE *file, int indent, unsigned int *offset)
+{
+    const statement_t *stmt;
+    const type_t *parent = type_iface_get_inherit( iface );
+    int count = parent ? count_methods( parent ) : 0;
+
+    STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
+    {
+        var_t *func = stmt->u.var;
+        if (is_local(func->attrs)) continue;
+        write_procformatstring_func( file, indent, iface, func, offset, count++ );
     }
 }
 
@@ -1501,7 +1508,7 @@ void write_procformatstring(FILE *file, const statement_list_t *stmts, type_pred
     print_file(file, indent, "{\n");
     indent++;
 
-    write_procformatstring_stmts(file, indent, stmts, pred, &offset);
+    for_each_iface(stmts, write_iface_procformatstring, pred, file, indent, &offset);
 
     print_file(file, indent, "0x0\n");
     indent--;
