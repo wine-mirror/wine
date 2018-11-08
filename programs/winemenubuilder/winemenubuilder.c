@@ -401,7 +401,7 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
         WINE_ERR("error 0x%08X creating output file %s\n", hr, wine_dbgstr_w(dosOutputFileName));
         goto end;
     }
-    hr = IWICBitmapEncoder_Initialize(encoder, outputFile, GENERIC_WRITE);
+    hr = IWICBitmapEncoder_Initialize(encoder, outputFile, WICBitmapEncoderNoCache);
     if (FAILED(hr))
     {
         WINE_ERR("error 0x%08X initializing encoder\n", hr);
