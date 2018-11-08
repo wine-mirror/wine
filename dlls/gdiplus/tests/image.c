@@ -5168,7 +5168,7 @@ static void test_png_color_formats(void)
         { 2, PNG_COLOR_TYPE_RGB },
         { 4, PNG_COLOR_TYPE_RGB },
         { 8, PNG_COLOR_TYPE_RGB,
-          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB, TRUE },
+          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB },
            { PixelFormat24bppRGB, ImageFlagsColorSpaceRGB },
            { PixelFormat24bppRGB, ImageFlagsColorSpaceRGB }}},
         /* libpng refuses to load our test image complaining about extra compressed data,
@@ -5182,7 +5182,7 @@ static void test_png_color_formats(void)
 
         /*  5 */
         { 1, PNG_COLOR_TYPE_GRAY,
-          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB, TRUE },
+          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB },
            { PixelFormat1bppIndexed, ImageFlagsColorSpaceRGB },
            { PixelFormat1bppIndexed, ImageFlagsColorSpaceRGB }}},
         { 2, PNG_COLOR_TYPE_GRAY,
@@ -5194,7 +5194,7 @@ static void test_png_color_formats(void)
            { PixelFormat32bppARGB, ImageFlagsColorSpaceGRAY },
            { PixelFormat32bppARGB, ImageFlagsColorSpaceGRAY }}},
         { 8, PNG_COLOR_TYPE_GRAY,
-          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB, TRUE },
+          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB },
            { PixelFormat32bppARGB, ImageFlagsColorSpaceGRAY },
            { PixelFormat32bppARGB, ImageFlagsColorSpaceGRAY }}},
         { 16, PNG_COLOR_TYPE_GRAY,
@@ -5204,7 +5204,7 @@ static void test_png_color_formats(void)
 
         /* 10 */
         { 1, PNG_COLOR_TYPE_PALETTE,
-          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB, TRUE },
+          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB },
            { PixelFormat1bppIndexed, ImageFlagsColorSpaceRGB },
            { 0, 0 }}},
         { 2, PNG_COLOR_TYPE_PALETTE,
@@ -5216,7 +5216,7 @@ static void test_png_color_formats(void)
            { PixelFormat4bppIndexed, ImageFlagsColorSpaceRGB, TRUE },
            { 0, 0 }}},
         { 8, PNG_COLOR_TYPE_PALETTE,
-          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB, TRUE },
+          {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB },
            { PixelFormat8bppIndexed, ImageFlagsColorSpaceRGB },
            { 0, 0 }}},
         { 16, PNG_COLOR_TYPE_PALETTE },
