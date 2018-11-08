@@ -3626,24 +3626,11 @@ static HRESULT write_type_union( struct writer *writer, const WS_UNION_DESCRIPTI
     int enum_value;
     HRESULT hr;
 
+    if (size < sizeof(enum_value)) return E_INVALIDARG;
     if ((hr = get_value_ptr( option, value, size, desc->size, &ptr )) != S_OK) return hr;
 
-    if (size < sizeof(enum_value)) return E_INVALIDARG;
-    if ((enum_value = *(int *)(char *)ptr + desc->enumOffset) == desc->noneEnumValue)
-    {
-        switch (option)
-        {
-        case WS_WRITE_REQUIRED_VALUE:
-            return WS_E_INVALID_FORMAT;
-
-        case WS_WRITE_NILLABLE_VALUE:
-            return S_OK;
-
-        default:
-            ERR( "unhandled write option %u\n", option );
-            return E_INVALIDARG;
-        }
-    }
+    enum_value = *(int *)(char *)ptr + desc->enumOffset;
+    if (enum_value == desc->noneEnumValue && option == WS_WRITE_NILLABLE_VALUE) return S_OK;
 
     if ((hr = find_index( desc, enum_value, &i )) != S_OK) return hr;
     return write_type_field( writer, &desc->fields[i]->field, ptr, desc->fields[i]->field.offset );

@@ -3913,11 +3913,11 @@ static void test_union_type(void)
 {
     static const WCHAR testW[] = {'t','e','s','t',0};
     static WS_XML_STRING str_ns = {0, NULL}, str_a = {1, (BYTE *)"a"}, str_b = {1, (BYTE *)"b"};
-    static WS_XML_STRING str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"};
+    static WS_XML_STRING str_none = {4, (BYTE *)"none"}, str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"};
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_UNION_DESCRIPTION u;
-    WS_UNION_FIELD_DESCRIPTION f, f2, *fields[2];
+    WS_UNION_FIELD_DESCRIPTION f, f2, f3, *fields[3];
     WS_FIELD_DESCRIPTION f_struct, *fields_struct[1];
     WS_STRUCT_DESCRIPTION s;
     enum choice {CHOICE_A = 30, CHOICE_B = 20, CHOICE_C = 10, CHOICE_NONE = 0};
@@ -3929,6 +3929,7 @@ static void test_union_type(void)
         {
             const WCHAR *a;
             UINT32       b;
+            BOOL         none;
         } value;
     } test;
 
@@ -4020,11 +4021,35 @@ static void test_union_type(void)
                       WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
+    /* field value equals noneEnumValue */
+    memset( &f3, 0, sizeof(f3) );
+    f3.value           = CHOICE_NONE;
+    f3.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f3.field.localName = &str_none;
+    f3.field.ns        = &str_ns;
+    f3.field.type      = WS_BOOL_TYPE;
+    f3.field.offset    = FIELD_OFFSET(struct test, value.none);
+    fields[2] = &f3;
+
+    u.fieldCount = 3;
+    u.valueIndices = NULL;
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
     hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    test.choice = CHOICE_NONE;
+    test.choice     = CHOICE_NONE;
+    test.value.none = TRUE;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t><none>true</none></t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
     f_struct.options = WS_FIELD_OPTIONAL;
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
                       WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
