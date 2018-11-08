@@ -2439,16 +2439,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "Olet menestyksekkäästi suoriutunut ohjatusta varmenteen viennistä."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Valitse varmennesäilö"
+msgstr "Valitse varmenne"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Valitse varmennesäilö, jota haluat käyttää:"
+msgstr "Valitse varmenne, jota haluat käyttää"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2978,20 +2974,16 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Huomio: Tämän varmenteen yksityistä avainta ei voi viedä."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "Suunniteltu tarkoitus:"
+msgstr "Suunniteltu käyttö"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Sijainti"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Valitse varmennesäilö"
+msgstr "Valitse varmenne"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
