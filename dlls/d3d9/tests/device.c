@@ -12131,7 +12131,6 @@ todo_wine
     ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
 
     hr = IDirect3DSurface9_LockRect(surface, &lockrect, NULL, D3DLOCK_DISCARD);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to lock rect, hr %#x.\n", hr);
     hr = IDirect3DSurface9_UnlockRect(surface);
     ok(SUCCEEDED(hr), "Failed to unlock rect, hr %#x.\n", hr);
