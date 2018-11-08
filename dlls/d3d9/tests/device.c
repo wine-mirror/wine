@@ -12103,7 +12103,6 @@ static void test_lockable_backbuffer(void)
     ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
 
     hr = IDirect3DSurface9_LockRect(surface, &lockrect, NULL, D3DLOCK_DISCARD);
-todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     dc = (void *)0xdeadbeef;
