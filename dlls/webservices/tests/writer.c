@@ -3920,7 +3920,8 @@ static void test_union_type(void)
     WS_UNION_FIELD_DESCRIPTION f, f2, *fields[2];
     WS_FIELD_DESCRIPTION f_struct, *fields_struct[1];
     WS_STRUCT_DESCRIPTION s;
-    enum choice {CHOICE_A, CHOICE_B, CHOICE_NONE};
+    enum choice {CHOICE_A = 30, CHOICE_B = 20, CHOICE_C = 10, CHOICE_NONE = 0};
+    ULONG index[2] = {1, 0};
     struct test
     {
         enum choice choice;
@@ -3987,6 +3988,7 @@ static void test_union_type(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t><a>test</a></t>", __LINE__ );
 
+    u.valueIndices = index;
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
     hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
@@ -3999,6 +4001,15 @@ static void test_union_type(void)
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t><b>123</b></t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    test.choice = CHOICE_C;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
