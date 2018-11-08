@@ -5213,7 +5213,7 @@ static void test_png_color_formats(void)
            { 0, 0 }}},
         { 4, PNG_COLOR_TYPE_PALETTE,
           {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB },
-           { PixelFormat4bppIndexed, ImageFlagsColorSpaceRGB, TRUE },
+           { PixelFormat4bppIndexed, ImageFlagsColorSpaceRGB },
            { 0, 0 }}},
         { 8, PNG_COLOR_TYPE_PALETTE,
           {{ PixelFormat32bppARGB, ImageFlagsColorSpaceRGB },
