@@ -8437,7 +8437,6 @@ static void test_lockable_backbuffer(void)
     ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
 
     hr = IDirect3DSurface8_LockRect(surface, &lockrect, NULL, D3DLOCK_READONLY);
-todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     IDirect3DSurface8_Release(surface);
