@@ -452,6 +452,20 @@ static void test_createbitmapfromsource(void)
     hr = IWICBitmap_SetResolution(bitmap, 12.0, 34.0);
     ok(hr == S_OK, "IWICBitmap_SetResolution failed hr=%x\n", hr);
 
+    /* WICBitmapNoCache */
+    hr = IWICImagingFactory_CreateBitmapFromSource(factory, (IWICBitmapSource *)bitmap,
+        WICBitmapNoCache, &bitmap2);
+    ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromSource failed hr=%x\n", hr);
+todo_wine
+    ok(bitmap2 == bitmap, "Unexpected bitmap instance.\n");
+
+    IWICBitmap_Release(bitmap2);
+
+    bitmap2 = (void *)0xdeadbeef;
+    hr = IWICImagingFactory_CreateBitmapFromSource(factory, &bitmapsource, WICBitmapNoCache, &bitmap2);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(bitmap2 == (void *)0xdeadbeef, "Unexpected pointer %p.\n", bitmap2);
+
     hr = IWICImagingFactory_CreateBitmapFromSource(factory, (IWICBitmapSource*)bitmap,
         WICBitmapCacheOnLoad, &bitmap2);
     ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromSource failed hr=%x\n", hr);
@@ -537,6 +551,43 @@ static void test_createbitmapfromsource(void)
     ok(hr == S_OK, "IWICBitmap_GetSize failed hr=%x\n", hr);
     ok(width == 3, "got %d, expected 3\n", width);
     ok(height == 3, "got %d, expected 3\n", height);
+
+    /* CreateBitmapFromSourceRect */
+    hr = IWICImagingFactory_CreateBitmapFromSourceRect(factory, (IWICBitmapSource *)bitmap2, 0, 0, 16, 32, &bitmap);
+    ok(hr == S_OK, "Failed to create a bitmap, hr %#x.\n", hr);
+    hr = IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "Failed to get bitmap size, hr %#x.\n", hr);
+    ok(width == 3, "Unexpected width %u.\n", width);
+    ok(height == 3, "Unexpected height %u.\n", height);
+    IWICBitmap_Release(bitmap);
+
+    hr = IWICImagingFactory_CreateBitmapFromSourceRect(factory, (IWICBitmapSource *)bitmap2, 0, 0, 1, 1, &bitmap);
+    ok(hr == S_OK, "Failed to create a bitmap, hr %#x.\n", hr);
+    hr = IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "Failed to get bitmap size, hr %#x.\n", hr);
+    ok(width == 1, "Unexpected width %u.\n", width);
+    ok(height == 1, "Unexpected height %u.\n", height);
+    IWICBitmap_Release(bitmap);
+
+    hr = IWICImagingFactory_CreateBitmapFromSourceRect(factory, (IWICBitmapSource *)bitmap2, 2, 1, 16, 32, &bitmap);
+    ok(hr == S_OK, "Failed to create a bitmap, hr %#x.\n", hr);
+    hr = IWICBitmap_GetSize(bitmap, &width, &height);
+    ok(hr == S_OK, "Failed to get bitmap size, hr %#x.\n", hr);
+    ok(width == 1, "Unexpected width %u.\n", width);
+    ok(height == 2, "Unexpected height %u.\n", height);
+    IWICBitmap_Release(bitmap);
+
+    hr = IWICImagingFactory_CreateBitmapFromSourceRect(factory, (IWICBitmapSource *)bitmap2, 0, 0, 0, 2, &bitmap);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromSourceRect(factory, (IWICBitmapSource *)bitmap2, 0, 0, 2, 0, &bitmap);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromSourceRect(factory, (IWICBitmapSource *)bitmap2, 1, 3, 16, 32, &bitmap);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICImagingFactory_CreateBitmapFromSourceRect(factory, (IWICBitmapSource *)bitmap2, 3, 1, 16, 32, &bitmap);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IWICBitmap_Release(bitmap2);
 }
