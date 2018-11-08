@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -501,8 +502,17 @@ static HRESULT create_bitmap_from_source_rect(IWICBitmapSource *piBitmapSource, 
     IWICPixelFormatInfo2 *formatinfo;
     WICPixelFormatNumericRepresentation format_type;
 
+    assert(!rect || (rect && option == WICBitmapCacheOnLoad));
+
     if (!piBitmapSource || !ppIBitmap)
         return E_INVALIDARG;
+
+    if (option == WICBitmapNoCache && SUCCEEDED(IWICBitmapSource_QueryInterface(piBitmapSource,
+            &IID_IWICBitmap, (void **)&result)))
+    {
+        *ppIBitmap = result;
+        return S_OK;
+    }
 
     hr = IWICBitmapSource_GetSize(piBitmapSource, &width, &height);
 

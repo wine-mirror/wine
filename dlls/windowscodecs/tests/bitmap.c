@@ -456,7 +456,6 @@ static void test_createbitmapfromsource(void)
     hr = IWICImagingFactory_CreateBitmapFromSource(factory, (IWICBitmapSource *)bitmap,
         WICBitmapNoCache, &bitmap2);
     ok(hr == S_OK, "IWICImagingFactory_CreateBitmapFromSource failed hr=%x\n", hr);
-todo_wine
     ok(bitmap2 == bitmap, "Unexpected bitmap instance.\n");
 
     IWICBitmap_Release(bitmap2);
