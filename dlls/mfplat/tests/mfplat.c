@@ -307,7 +307,7 @@ static void test_MFCreateMFByteStreamOnStream(void)
     hr = pMFCreateMFByteStreamOnStream(stream, &bytestream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IUnknown_QueryInterface(bytestream, &IID_IUnknown,
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IUnknown,
                                  (void **)&unknown);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok((void *)unknown == (void *)bytestream, "got %p\n", unknown);
@@ -321,7 +321,7 @@ static void test_MFCreateMFByteStreamOnStream(void)
     ref = IMFByteStream_Release(bytestream2);
     ok(ref == 1, "got %u\n", ref);
 
-    hr = IUnknown_QueryInterface(bytestream, &IID_IMFAttributes,
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFAttributes,
                                  (void **)&attributes);
     ok(hr == S_OK ||
        /* w7pro64 */
@@ -337,14 +337,14 @@ static void test_MFCreateMFByteStreamOnStream(void)
 
     ok(attributes != NULL, "got NULL\n");
 
-    hr = IUnknown_QueryInterface(attributes, &IID_IUnknown,
+    hr = IMFAttributes_QueryInterface(attributes, &IID_IUnknown,
                                  (void **)&unknown);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok((void *)unknown == (void *)bytestream, "got %p\n", unknown);
     ref = IUnknown_Release(unknown);
     ok(ref == 2, "got %u\n", ref);
 
-    hr = IUnknown_QueryInterface(attributes, &IID_IMFByteStream,
+    hr = IMFAttributes_QueryInterface(attributes, &IID_IMFByteStream,
                                  (void **)&bytestream2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(bytestream2 == bytestream, "got %p\n", bytestream2);
@@ -375,7 +375,7 @@ static void test_MFCreateFile(void)
                       MF_FILEFLAGS_NONE, filename, &bytestream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IUnknown_QueryInterface(bytestream, &IID_IMFAttributes,
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFAttributes,
                                  (void **)&attributes);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(attributes != NULL, "got NULL\n");
