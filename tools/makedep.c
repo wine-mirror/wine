@@ -2648,6 +2648,7 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     output_filenames( make->define_args );
     output_filenames( extradefs );
     output_filenames( get_expanded_make_var_array( make, "EXTRAIDLFLAGS" ));
+    output_filenames( get_expanded_file_local_var( make, obj, "EXTRAIDLFLAGS" ));
     output_filename( source->filename );
     output( "\n" );
     output_filenames_obj_dir( make, targets );
