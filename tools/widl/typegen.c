@@ -3680,25 +3680,54 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
 
 static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned int *offset)
 {
-    const statement_t *stmt_func;
+    const statement_list_t *stmts = type_iface_get_stmts(iface);
+    const statement_t *stmt;
     var_t *var;
 
     current_iface = iface;
-    STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(iface) )
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, statement_t, entry )
     {
-        const var_t *func = stmt_func->u.var;
-        current_func = func;
-        if (is_local(func->attrs)) continue;
+        switch(stmt->type)
+        {
+        case STMT_DECLARATION:
+        {
+            const var_t *func = stmt->u.var;
 
-        var = type_function_get_retval(func->type);
-        if (!is_void(var->type))
-            var->typestring_offset = write_type_tfs( file, 2, func->attrs, var->type, func->name,
-                                                     TYPE_CONTEXT_PARAM, offset);
+            if(stmt->u.var->stgclass != STG_NONE
+               || type_get_type_detect_alias(stmt->u.var->type) != TYPE_FUNCTION)
+                continue;
 
-        if (type_get_function_args(func->type))
-            LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), var_t, entry )
-                var->typestring_offset = write_type_tfs( file, 2, var->attrs, var->type, var->name,
-                                                         TYPE_CONTEXT_TOPLEVELPARAM, offset );
+            current_func = func;
+            if (is_local(func->attrs)) continue;
+
+            var = type_function_get_retval(func->type);
+            if (!is_void(var->type))
+                var->typestring_offset = write_type_tfs( file, 2, func->attrs, var->type, func->name,
+                                                         TYPE_CONTEXT_PARAM, offset);
+
+            if (type_get_function_args(func->type))
+                LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), var_t, entry )
+                    var->typestring_offset = write_type_tfs( file, 2, var->attrs, var->type, var->name,
+                                                             TYPE_CONTEXT_TOPLEVELPARAM, offset );
+            break;
+
+        }
+        case STMT_TYPEDEF:
+        {
+            const type_list_t *type_entry;
+            for (type_entry = stmt->u.type_list; type_entry; type_entry = type_entry->next)
+            {
+                if (is_attr(type_entry->type->attrs, ATTR_ENCODE)
+                    || is_attr(type_entry->type->attrs, ATTR_DECODE))
+                    type_entry->type->typestring_offset = write_type_tfs( file, 2,
+                            type_entry->type->attrs, type_entry->type, type_entry->type->name,
+                            TYPE_CONTEXT_CONTAINER, offset);
+            }
+            break;
+        }
+        default:
+            break;
+        }
     }
 }
 
