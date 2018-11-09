@@ -287,6 +287,29 @@ static void write_function_stub( const type_t *iface, const var_t *func,
     fprintf(client, "\n");
 }
 
+static void write_serialize_function(FILE *file, const type_t *type, const type_t *iface,
+                                     const char *func_name, const char *ret_type)
+{
+    /* FIXME: Assuming explicit handle */
+
+    fprintf(file, "%s __cdecl %s_%s(handle_t IDL_handle, %s *IDL_type)%s\n",
+            ret_type ? ret_type : "void", type->name, func_name, type->name, iface ? "" : ";");
+}
+
+void write_serialize_functions(FILE *file, const type_t *type, const type_t *iface)
+{
+    if (is_attr(type->attrs, ATTR_ENCODE))
+    {
+        write_serialize_function(file, type, iface, "AlignSize", "SIZE_T");
+        write_serialize_function(file, type, iface, "Encode", NULL);
+    }
+    if (is_attr(type->attrs, ATTR_DECODE))
+    {
+        write_serialize_function(file, type, iface, "Decode", NULL);
+        write_serialize_function(file, type, iface, "Free", NULL);
+    }
+}
+
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
     const statement_t *stmt;
