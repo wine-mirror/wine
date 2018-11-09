@@ -1084,6 +1084,7 @@ static void test_bitmap_scaler(void)
 {
     WICPixelFormatGUID pixel_format;
     IWICBitmapScaler *scaler;
+    double res_x, res_y;
     IWICBitmap *bitmap;
     UINT width, height;
     HRESULT hr;
@@ -1095,6 +1096,10 @@ static void test_bitmap_scaler(void)
     ok(hr == S_OK, "Failed to get bitmap size, hr %#x.\n", hr);
     ok(width == 4, "Unexpected width %u.\n", width);
     ok(height == 2, "Unexpected height %u.\n", height);
+
+    hr = IWICBitmap_GetResolution(bitmap, &res_x, &res_y);
+    ok(hr == S_OK, "Failed to get bitmap resolution, hr %#x.\n", hr);
+    ok(res_x == 0.0 && res_y == 0.0, "Unexpected resolution %f x %f.\n", res_x, res_y);
 
     hr = IWICImagingFactory_CreateBitmapScaler(factory, &scaler);
     ok(hr == S_OK, "Failed to create bitmap scaler, hr %#x.\n", hr);
@@ -1111,6 +1116,20 @@ static void test_bitmap_scaler(void)
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_GetSize(scaler, &width, NULL);
+    ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICBitmapScaler_GetResolution(scaler, NULL, NULL);
+    ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    res_x = 0.1;
+    hr = IWICBitmapScaler_GetResolution(scaler, &res_x, NULL);
+    ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
+    ok(res_x == 0.1, "Unexpected resolution %f.\n", res_x);
+
+    hr = IWICBitmapScaler_GetResolution(scaler, NULL, &res_y);
+    ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICBitmapScaler_GetResolution(scaler, &res_x, &res_y);
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_GetPixelFormat(scaler, NULL);
@@ -1188,6 +1207,22 @@ static void test_bitmap_scaler(void)
     ok(hr == S_OK, "Failed to get pixel format, hr %#x.\n", hr);
     ok(IsEqualGUID(&pixel_format, &GUID_WICPixelFormat24bppBGR), "Unexpected pixel format %s.\n",
         wine_dbgstr_guid(&pixel_format));
+
+    hr = IWICBitmapScaler_GetResolution(scaler, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    res_x = 0.1;
+    hr = IWICBitmapScaler_GetResolution(scaler, &res_x, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(res_x == 0.1, "Unexpected resolution %f.\n", res_x);
+
+    hr = IWICBitmapScaler_GetResolution(scaler, NULL, &res_y);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    res_x = res_y = 1.0;
+    hr = IWICBitmapScaler_GetResolution(scaler, &res_x, &res_y);
+    ok(hr == S_OK, "Failed to get scaler resolution, hr %#x.\n", hr);
+    ok(res_x == 0.0 && res_y == 0.0, "Unexpected resolution %f x %f.\n", res_x, res_y);
 
     IWICBitmapScaler_Release(scaler);
 

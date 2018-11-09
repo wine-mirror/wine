@@ -144,11 +144,11 @@ static HRESULT WINAPI BitmapScaler_GetResolution(IWICBitmapScaler *iface,
     BitmapScaler *This = impl_from_IWICBitmapScaler(iface);
     TRACE("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
 
+    if (!This->source)
+        return WINCODEC_ERR_NOTINITIALIZED;
+
     if (!pDpiX || !pDpiY)
         return E_INVALIDARG;
-
-    if (!This->source)
-        return WINCODEC_ERR_WRONGSTATE;
 
     return IWICBitmapSource_GetResolution(This->source, pDpiX, pDpiY);
 }
