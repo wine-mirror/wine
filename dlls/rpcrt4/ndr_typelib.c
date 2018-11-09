@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #define COBJMACROS
 #include "oaidl.h"
 #define USE_STUBLESS_PROXY
@@ -29,6 +31,9 @@
 #include "cpsf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
+    size_t *len, TYPEDESC *desc, BOOL toplevel, BOOL onstack);
 
 #define WRITE_CHAR(str, len, val) \
     do { if ((str)) (str)[(len)] = (val); (len)++; } while (0)
@@ -118,10 +123,106 @@ static unsigned int type_memsize(ITypeInfo *typeinfo, TYPEDESC *desc)
     }
 }
 
+static size_t write_ip_tfs(unsigned char *str, size_t *len, const GUID *iid)
+{
+    size_t off = *len;
+
+    if (str)
+    {
+        str[*len] = FC_IP;
+        str[*len+1] = FC_CONSTANT_IID;
+        memcpy(str + *len + 2, iid, sizeof(*iid));
+    }
+    *len += 2 + sizeof(*iid);
+
+    return off;
+}
+
+static size_t write_pointer_tfs(ITypeInfo *typeinfo, unsigned char *str,
+        size_t *len, TYPEDESC *desc, BOOL toplevel, BOOL onstack)
+{
+    unsigned char basetype, flags = 0;
+    size_t ref, off = *len;
+    ITypeInfo *refinfo;
+    TYPEATTR *attr;
+
+    if (desc->vt == VT_USERDEFINED)
+    {
+        ITypeInfo_GetRefTypeInfo(typeinfo, desc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        switch (attr->typekind)
+        {
+        case TKIND_ENUM:
+            assert(!toplevel);  /* toplevel base-type pointers should use IsSimpleRef */
+            WRITE_CHAR(str, *len, FC_UP);
+            WRITE_CHAR(str, *len, FC_SIMPLE_POINTER);
+            WRITE_CHAR(str, *len, FC_ENUM32);
+            WRITE_CHAR(str, *len, FC_PAD);
+            break;
+        case TKIND_INTERFACE:
+        case TKIND_DISPATCH:
+            write_ip_tfs(str, len, &attr->guid);
+            break;
+        case TKIND_ALIAS:
+            off = write_pointer_tfs(refinfo, str, len, &attr->tdescAlias, toplevel, onstack);
+            break;
+        default:
+            FIXME("unhandled kind %#x\n", attr->typekind);
+            WRITE_SHORT(str, *len, 0);
+            break;
+        }
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+    }
+    else if ((basetype = get_base_type(desc->vt)))
+    {
+        assert(!toplevel); /* toplevel base-type pointers should use IsSimpleRef */
+        WRITE_CHAR(str, *len, FC_UP);
+        WRITE_CHAR(str, *len, FC_SIMPLE_POINTER);
+        WRITE_CHAR(str, *len, basetype);
+        WRITE_CHAR(str, *len, FC_PAD);
+    }
+    else
+    {
+        ref = write_type_tfs(typeinfo, str, len, desc, FALSE, FALSE);
+
+        if (onstack) flags |= FC_ALLOCED_ON_STACK;
+        if (desc->vt == VT_PTR || desc->vt == VT_UNKNOWN || desc->vt == VT_DISPATCH)
+            flags |= FC_POINTER_DEREF;
+
+        off = *len;
+
+        WRITE_CHAR (str, *len, toplevel ? FC_RP : FC_UP);
+        WRITE_CHAR (str, *len, flags);
+        WRITE_SHORT(str, *len, ref - *len);
+    }
+
+    return off;
+}
+
 static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
         size_t *len, TYPEDESC *desc, BOOL toplevel, BOOL onstack)
 {
-    return E_NOTIMPL;
+    size_t off;
+
+    TRACE("vt %d%s\n", desc->vt, toplevel ? " (toplevel)" : "");
+
+    switch (desc->vt)
+    {
+    case VT_PTR:
+        return write_pointer_tfs(typeinfo, str, len, desc->lptdesc, toplevel, onstack);
+    default:
+        /* base types are always embedded directly */
+        assert(!get_base_type(desc->vt));
+        FIXME("unhandled type %u\n", desc->vt);
+        off = *len;
+        WRITE_SHORT(str, *len, 0);
+        break;
+    }
+
+    return off;
 }
 
 static unsigned short get_stack_size(ITypeInfo *typeinfo, TYPEDESC *desc)
