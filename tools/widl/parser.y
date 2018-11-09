@@ -173,7 +173,7 @@ static typelib_t *current_typelib;
 %token <dbl> aDOUBLE
 %token <str> aSTRING aWSTRING aSQSTRING
 %token <uuid> aUUID
-%token aEOF
+%token aEOF aACF
 %token SHL SHR
 %token MEMBERPTR
 %token EQUALITY INEQUALITY
@@ -321,7 +321,7 @@ static typelib_t *current_typelib;
 
 %%
 
-input:   gbl_statements				{ fix_incomplete();
+input: gbl_statements m_acf			{ fix_incomplete();
 						  check_statements($1, FALSE);
 						  check_all_user_types($1);
 						  write_header($1);
@@ -335,6 +335,8 @@ input:   gbl_statements				{ fix_incomplete();
 						  write_local_stubs($1);
 						}
 	;
+
+m_acf: /* empty */ | aACF acf_statements
 
 gbl_statements:					{ $$ = NULL; }
 	| gbl_statements namespacedef '{' { push_namespace($2); } gbl_statements '}'
@@ -1149,6 +1151,9 @@ version:
 	| aNUM '.' aNUM				{ $$ = MAKEVERSION($1, $3); }
 	| aHEXNUM				{ $$ = $1; }
 	;
+
+acf_statements
+        : /* empty */
 
 %%
 
