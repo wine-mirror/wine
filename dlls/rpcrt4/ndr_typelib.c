@@ -22,6 +22,7 @@
 #include "oaidl.h"
 #define USE_STUBLESS_PROXY
 #include "rpcproxy.h"
+#include "ndrtypes.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -29,11 +30,189 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+#define WRITE_CHAR(str, len, val) \
+    do { if ((str)) (str)[(len)] = (val); (len)++; } while (0)
+#define WRITE_SHORT(str, len, val) \
+    do { if ((str)) *((short *)((str) + (len))) = (val); (len) += 2; } while (0)
+
+static unsigned int type_memsize(ITypeInfo *typeinfo, TYPEDESC *desc)
+{
+    switch (desc->vt)
+    {
+    case VT_I1:
+    case VT_UI1:
+        return 1;
+    case VT_I2:
+    case VT_UI2:
+    case VT_BOOL:
+        return 2;
+    case VT_I4:
+    case VT_UI4:
+    case VT_R4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_ERROR:
+    case VT_HRESULT:
+        return 4;
+    case VT_I8:
+    case VT_UI8:
+    case VT_R8:
+    case VT_DATE:
+        return 8;
+    case VT_BSTR:
+    case VT_SAFEARRAY:
+    case VT_PTR:
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+        return sizeof(void *);
+    case VT_VARIANT:
+        return sizeof(VARIANT);
+    case VT_CARRAY:
+    {
+        unsigned int size = type_memsize(typeinfo, &desc->lpadesc->tdescElem);
+        unsigned int i;
+        for (i = 0; i < desc->lpadesc->cDims; i++)
+            size *= desc->lpadesc->rgbounds[i].cElements;
+        return size;
+    }
+    case VT_USERDEFINED:
+    {
+        unsigned int size = 0;
+        ITypeInfo *refinfo;
+        TYPEATTR *attr;
+
+        ITypeInfo_GetRefTypeInfo(typeinfo, desc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+        size = attr->cbSizeInstance;
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+        return size;
+    }
+    default:
+        FIXME("unhandled type %u\n", desc->vt);
+        return 0;
+    }
+}
+
+static unsigned short get_stack_size(ITypeInfo *typeinfo, TYPEDESC *desc)
+{
+#if defined(__i386__) || defined(__arm__)
+    if (desc->vt == VT_CARRAY)
+        return sizeof(void *);
+    return (type_memsize(typeinfo, desc) + 3) & ~3;
+#else
+    return sizeof(void *);
+#endif
+}
+
+static HRESULT write_param_fs(ITypeInfo *typeinfo, unsigned char *type,
+        size_t *typelen, unsigned char *proc, size_t *proclen, ELEMDESC *desc,
+        BOOL is_return, unsigned short *stack_offset)
+{
+    return E_NOTIMPL;
+}
+
+static void write_proc_func_header(ITypeInfo *typeinfo, FUNCDESC *desc,
+        WORD proc_idx, unsigned char *proc, size_t *proclen)
+{
+    unsigned short stack_size = 2 * sizeof(void *); /* This + return */
+    WORD param_idx;
+
+    WRITE_CHAR (proc, *proclen, FC_AUTO_HANDLE);
+    WRITE_CHAR (proc, *proclen, Oi_OBJECT_PROC | Oi_OBJ_USE_V2_INTERPRETER);
+    WRITE_SHORT(proc, *proclen, proc_idx);
+    for (param_idx = 0; param_idx < desc->cParams; param_idx++)
+        stack_size += get_stack_size(typeinfo, &desc->lprgelemdescParam[param_idx].tdesc);
+    WRITE_SHORT(proc, *proclen, stack_size);
+
+    WRITE_SHORT(proc, *proclen, 0); /* constant_client_buffer_size */
+    WRITE_SHORT(proc, *proclen, 0); /* constant_server_buffer_size */
+    WRITE_CHAR (proc, *proclen, 0x07);  /* HasReturn | ClientMustSize | ServerMustSize */
+    WRITE_CHAR (proc, *proclen, desc->cParams + 1); /* incl. return value */
+}
+
+static HRESULT write_iface_fs(ITypeInfo *typeinfo, WORD funcs,
+        unsigned char *type, size_t *typelen, unsigned char *proc,
+        size_t *proclen, unsigned short *offset)
+{
+    unsigned short stack_offset;
+    WORD proc_idx, param_idx;
+    FUNCDESC *desc;
+    HRESULT hr;
+
+    for (proc_idx = 0; proc_idx < funcs; proc_idx++)
+    {
+        TRACE("Writing procedure %d.\n", proc_idx);
+
+        hr = ITypeInfo_GetFuncDesc(typeinfo, proc_idx, &desc);
+        if (FAILED(hr)) return hr;
+
+        if (offset)
+            offset[proc_idx] = *proclen;
+
+        write_proc_func_header(typeinfo, desc, proc_idx + 3, proc, proclen);
+
+        stack_offset = sizeof(void *);  /* This */
+        for (param_idx = 0; param_idx < desc->cParams; param_idx++)
+        {
+            TRACE("Writing parameter %d.\n", param_idx);
+            hr = write_param_fs(typeinfo, type, typelen, proc, proclen,
+                    &desc->lprgelemdescParam[param_idx], FALSE, &stack_offset);
+            if (FAILED(hr))
+            {
+                ITypeInfo_ReleaseFuncDesc(typeinfo, desc);
+                return hr;
+            }
+        }
+
+        hr = write_param_fs(typeinfo, type, typelen, proc, proclen,
+                &desc->elemdescFunc, TRUE, &stack_offset);
+        ITypeInfo_ReleaseFuncDesc(typeinfo, desc);
+        if (FAILED(hr)) return hr;
+    }
+
+    return S_OK;
+}
+
 static HRESULT build_format_strings(ITypeInfo *typeinfo, WORD funcs,
         const unsigned char **type_ret, const unsigned char **proc_ret,
         unsigned short **offset_ret)
 {
-    return E_NOTIMPL;
+    size_t typelen = 0, proclen = 0;
+    unsigned char *type, *proc;
+    unsigned short *offset;
+    HRESULT hr;
+
+    hr = write_iface_fs(typeinfo, funcs, NULL, &typelen, NULL, &proclen, NULL);
+    if (FAILED(hr)) return hr;
+
+    type = heap_alloc(typelen);
+    proc = heap_alloc(proclen);
+    offset = heap_alloc(funcs * sizeof(*offset));
+    if (!type || !proc || !offset)
+    {
+        ERR("Failed to allocate format strings.\n");
+        hr = E_OUTOFMEMORY;
+        goto err;
+    }
+
+    typelen = 0;
+    proclen = 0;
+
+    hr = write_iface_fs(typeinfo, funcs, type, &typelen, proc, &proclen, offset);
+    if (SUCCEEDED(hr))
+    {
+        *type_ret = type;
+        *proc_ret = proc;
+        *offset_ret = offset;
+        return S_OK;
+    }
+
+err:
+    heap_free(type);
+    heap_free(proc);
+    heap_free(offset);
+    return hr;
 }
 
 /* Common helper for Create{Proxy,Stub}FromTypeInfo(). */
