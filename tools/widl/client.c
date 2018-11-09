@@ -290,10 +290,49 @@ static void write_function_stub( const type_t *iface, const var_t *func,
 static void write_serialize_function(FILE *file, const type_t *type, const type_t *iface,
                                      const char *func_name, const char *ret_type)
 {
+    enum stub_mode mode = get_stub_mode();
+    static int emited_pickling_info;
+
+    if (iface && !type->typestring_offset)
+    {
+        /* FIXME: Those are mostly basic types. They should be implemented
+         * using NdrMesSimpleType* functions */
+        if (ret_type) warning("Serialization of type %s is not supported\n", type->name);
+        return;
+    }
+
+    if (!emited_pickling_info && iface && mode != MODE_Os)
+    {
+        fprintf(file, "static const MIDL_TYPE_PICKLING_INFO __MIDL_TypePicklingInfo =\n");
+        fprintf(file, "{\n");
+        fprintf(file, "    0x33205054,\n");
+        fprintf(file, "    0x3,\n");
+        fprintf(file, "    0,\n");
+        fprintf(file, "    0,\n");
+        fprintf(file, "    0\n");
+        fprintf(file, "};\n");
+        fprintf(file, "\n");
+        emited_pickling_info = 1;
+    }
+
     /* FIXME: Assuming explicit handle */
 
     fprintf(file, "%s __cdecl %s_%s(handle_t IDL_handle, %s *IDL_type)%s\n",
             ret_type ? ret_type : "void", type->name, func_name, type->name, iface ? "" : ";");
+    if (!iface) return; /* declaration only */
+
+    fprintf(file, "{\n");
+    fprintf(file, "    %sNdrMesType%s%s(\n", ret_type ? "return " : "", func_name,
+            mode != MODE_Os ? "2" : "");
+    fprintf(file, "        IDL_handle,\n");
+    if (mode != MODE_Os)
+        fprintf(file, "        (MIDL_TYPE_PICKLING_INFO*)&__MIDL_TypePicklingInfo,\n");
+    fprintf(file, "        &%s_StubDesc,\n", iface->name);
+    fprintf(file, "        (PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%u],\n",
+            type->typestring_offset);
+    fprintf(file, "        IDL_type);\n");
+    fprintf(file, "}\n");
+    fprintf(file, "\n");
 }
 
 void write_serialize_functions(FILE *file, const type_t *type, const type_t *iface)
@@ -319,11 +358,30 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
     if (!implicit_handle)
         print_client("static RPC_BINDING_HANDLE %s__MIDL_AutoBindHandle;\n\n", iface->name);
 
-    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+    LIST_FOR_EACH_ENTRY( stmt, type_iface_get_stmts(iface), const statement_t, entry )
     {
-        const var_t *func = stmt->u.var;
-        write_function_stub( iface, func, method_count++, *proc_offset );
-        *proc_offset += get_size_procformatstring_func( iface, func );
+        switch (stmt->type)
+        {
+        case STMT_DECLARATION:
+        {
+            const var_t *func = stmt->u.var;
+            if (stmt->u.var->stgclass != STG_NONE
+                || type_get_type_detect_alias(stmt->u.var->type) != TYPE_FUNCTION)
+                continue;
+            write_function_stub( iface, func, method_count++, *proc_offset );
+            *proc_offset += get_size_procformatstring_func( iface, func );
+            break;
+        }
+        case STMT_TYPEDEF:
+        {
+            const type_list_t *type_entry;
+            for (type_entry = stmt->u.type_list; type_entry; type_entry = type_entry->next)
+                write_serialize_functions(client, type_entry->type, iface);
+            break;
+        }
+        default:
+            break;
+        }
     }
 }
 
@@ -461,7 +519,7 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
     {
         if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
-            int has_func = 0;
+            int needs_stub = 0;
             const statement_t *stmt2;
             type_t *iface = stmt->u.type;
             if (!need_stub(iface))
@@ -472,13 +530,31 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
             fprintf(client, " */\n");
             fprintf(client, "\n");
 
-            STATEMENTS_FOR_EACH_FUNC(stmt2, type_iface_get_stmts(iface))
+            LIST_FOR_EACH_ENTRY(stmt2, type_iface_get_stmts(iface), const statement_t, entry)
             {
-                has_func = 1;
-                break;
+                if (stmt2->type == STMT_DECLARATION && stmt2->u.var->stgclass == STG_NONE &&
+                    type_get_type_detect_alias(stmt2->u.var->type) == TYPE_FUNCTION)
+                {
+                    needs_stub = 1;
+                    break;
+                }
+                if (stmt2->type == STMT_TYPEDEF)
+                {
+                    const type_list_t *type_entry;
+                    for (type_entry = stmt2->u.type_list; type_entry; type_entry = type_entry->next)
+                    {
+                        if (is_attr(type_entry->type->attrs, ATTR_ENCODE)
+                            || is_attr(type_entry->type->attrs, ATTR_DECODE))
+                        {
+                            needs_stub = 1;
+                            break;
+                        }
+                    }
+                    if (needs_stub)
+                        break;
+                }
             }
-
-            if (has_func)
+            if (needs_stub)
             {
                 write_implicithandledecl(iface);
 
