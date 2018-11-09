@@ -5754,6 +5754,30 @@ static DWORD CALLBACK test_EM_STREAMIN_esCallback_UTF8Split(DWORD_PTR dwCookie,
     return 0;
 }
 
+static DWORD CALLBACK test_EM_STREAMIN_null_bytes(DWORD_PTR cookie, BYTE *buf, LONG size, LONG *written)
+{
+    DWORD *phase = (DWORD *)cookie;
+
+    if (*phase == 0)
+    {
+        static const char first[] = "{\\rtf1\\ansi{Th\0is";
+        *written = sizeof(first);
+        memcpy(buf, first, *written);
+    }
+    else if (*phase == 1)
+    {
+        static const char second[] = " is a test}}";
+        *written = sizeof(second);
+        memcpy(buf, second, *written);
+    }
+    else
+        *written = 0;
+
+    ++*phase;
+
+    return 0;
+}
+
 struct StringWithLength {
     int length;
     char *buffer;
@@ -6040,6 +6064,17 @@ static void test_EM_STREAMIN(void)
   result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
   ok (!strcmp(buffer, "line1"),
       "EM_STREAMIN: Unexpected text '%s'\n", buffer);
+
+  /* Test 0-bytes inside text */
+  hwndRichEdit = new_richedit_with_style(NULL, 0);
+  phase = 0;
+  es.dwCookie = (DWORD_PTR)&phase;
+  es.dwError = 0;
+  es.pfnCallback = test_EM_STREAMIN_null_bytes;
+  result = SendMessageA(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  ok(result == 16, "got %ld, expected %d\n", result, 16);
+  result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
+  ok (!strcmp(buffer, "Th is  is a test"), "EM_STREAMIN: Unexpected text '%s'\n", buffer);
 }
 
 static void test_EM_StreamIn_Undo(void)

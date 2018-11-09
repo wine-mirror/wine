@@ -109,7 +109,7 @@ int _RTFGetChar(RTF_Info *info)
 	}
 	ch = (unsigned char)stream->buffer[stream->dwUsed++];
 	if (!ch)
-		 return EOF;
+		 return ' ';
 	return ch;
 }
 
