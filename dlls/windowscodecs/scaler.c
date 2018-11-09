@@ -309,6 +309,9 @@ static HRESULT WINAPI BitmapScaler_Initialize(IWICBitmapScaler *iface,
 
     TRACE("(%p,%p,%u,%u,%u)\n", iface, pISource, uiWidth, uiHeight, mode);
 
+    if (!pISource || !uiWidth || !uiHeight)
+        return E_INVALIDARG;
+
     EnterCriticalSection(&This->lock);
 
     if (This->source)
