@@ -2307,8 +2307,8 @@ static void set_fd_disposition( struct fd *fd, int unlink )
         return;
     }
 
-    /* can't unlink files we don't have permission to access */
-    if (unlink && !(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+    /* can't unlink files we don't have permission to write */
+    if (unlink && !(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)) && !S_ISDIR(st.st_mode))
     {
         set_error( STATUS_CANNOT_DELETE );
         return;
