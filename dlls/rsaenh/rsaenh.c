@@ -3628,15 +3628,16 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                                 &pCryptHash->tpPRFParams.blobSeed, pbData, *pdwDataLen);
             }
 
-            if ( pbData == NULL ) {
-                *pdwDataLen = pCryptHash->dwHashSize;
-                return TRUE;
-            }
-
-            if (pbData && (pCryptHash->dwState != RSAENH_HASHSTATE_FINISHED))
+            if (pCryptHash->dwState != RSAENH_HASHSTATE_FINISHED)
             {
                 finalize_hash(pCryptHash);
                 pCryptHash->dwState = RSAENH_HASHSTATE_FINISHED;
+            }
+
+            if (!pbData)
+            {
+                *pdwDataLen = pCryptHash->dwHashSize;
+                return TRUE;
             }
 
             return copy_param(pbData, pdwDataLen, pCryptHash->abHashValue,
