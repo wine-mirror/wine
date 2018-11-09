@@ -166,7 +166,7 @@ struct closed_fd
 {
     struct list entry;       /* entry in inode closed list */
     int         unix_fd;     /* the unix file descriptor */
-    int         unlink;      /* whether to unlink on close */
+    int         unlink;      /* whether to unlink on close: -1 - implicit FILE_DELETE_ON_CLOSE, 1 - explicit disposition */
     char       *unix_name;   /* name to unlink on close, points to parent fd unix_name */
 };
 
@@ -1869,7 +1869,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
             goto error;
         }
 
-        fd->closed->unlink = (options & FILE_DELETE_ON_CLOSE) != 0;
+        fd->closed->unlink = (options & FILE_DELETE_ON_CLOSE) ? -1 : 0;
         if (flags & O_TRUNC)
         {
             if (S_ISDIR(st.st_mode))
@@ -2314,7 +2314,9 @@ static void set_fd_disposition( struct fd *fd, int unlink )
         return;
     }
 
-    fd->closed->unlink = unlink || (fd->options & FILE_DELETE_ON_CLOSE);
+    fd->closed->unlink = unlink ? 1 : 0;
+    if (fd->options & FILE_DELETE_ON_CLOSE)
+        fd->closed->unlink = -1;
 }
 
 /* set new name for the fd */
