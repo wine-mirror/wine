@@ -523,10 +523,15 @@ void write_id_data(const statement_list_t *stmts)
   fprintf(idfile, "#define MIDL_DEFINE_GUID(type,name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \\\n");
   fprintf(idfile, "    DEFINE_GUID(name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)\n\n");
 
+  fprintf(idfile, "#elif defined(__cplusplus)\n\n");
+
+  fprintf(idfile, "#define MIDL_DEFINE_GUID(type,name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \\\n");
+  fprintf(idfile, "    EXTERN_C const type DECLSPEC_SELECTANY name = {l,w1,w2,{b1,b2,b3,b4,b5,b6,b7,b8}}\n\n");
+
   fprintf(idfile, "#else\n\n");
 
   fprintf(idfile, "#define MIDL_DEFINE_GUID(type,name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \\\n");
-  fprintf(idfile, "    const type name = {l,w1,w2,{b1,b2,b3,b4,b5,b6,b7,b8}}\n\n");
+  fprintf(idfile, "    const type DECLSPEC_SELECTANY name = {l,w1,w2,{b1,b2,b3,b4,b5,b6,b7,b8}}\n\n");
 
   fprintf(idfile, "#endif\n\n");
   start_cplusplus_guard(idfile);
