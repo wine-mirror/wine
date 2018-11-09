@@ -39,6 +39,8 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
     do { if ((str)) (str)[(len)] = (val); (len)++; } while (0)
 #define WRITE_SHORT(str, len, val) \
     do { if ((str)) *((short *)((str) + (len))) = (val); (len) += 2; } while (0)
+#define WRITE_INT(str, len, val) \
+    do { if ((str)) *((int *)((str) + (len))) = (val); (len) += 4; } while (0)
 
 static unsigned char get_base_type(VARTYPE vt)
 {
@@ -121,6 +123,108 @@ static unsigned int type_memsize(ITypeInfo *typeinfo, TYPEDESC *desc)
         FIXME("unhandled type %u\n", desc->vt);
         return 0;
     }
+}
+
+static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc);
+
+static unsigned char get_struct_fc(ITypeInfo *typeinfo, TYPEATTR *attr)
+{
+    unsigned char fc = FC_STRUCT;
+    VARDESC *desc;
+    VARTYPE vt;
+    WORD i;
+
+    for (i = 0; i < attr->cVars; i++)
+    {
+        ITypeInfo_GetVarDesc(typeinfo, i, &desc);
+        vt = desc->elemdescVar.tdesc.vt;
+
+        switch (vt)
+        {
+        case VT_CARRAY:
+            if (get_array_fc(typeinfo, &desc->elemdescVar.tdesc.lpadesc->tdescElem) == FC_BOGUS_ARRAY)
+                fc = FC_BOGUS_STRUCT;
+            break;
+        default:
+            if (!get_base_type(vt))
+            {
+                FIXME("unhandled type %u\n", vt);
+                fc = FC_BOGUS_STRUCT;
+            }
+            break;
+        }
+
+        ITypeInfo_ReleaseVarDesc(typeinfo, desc);
+    }
+
+    return fc;
+}
+
+static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc)
+{
+    if (get_base_type(desc->vt))
+        return FC_LGFARRAY;
+    else if (desc->vt == VT_USERDEFINED)
+    {
+        ITypeInfo *refinfo;
+        TYPEATTR *attr;
+        unsigned char fc;
+
+        ITypeInfo_GetRefTypeInfo(typeinfo, desc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        if (attr->typekind == TKIND_ENUM)
+            fc = FC_LGFARRAY;
+        else if (attr->typekind == TKIND_RECORD && get_struct_fc(refinfo, attr) == FC_STRUCT)
+            fc = FC_LGFARRAY;
+        else
+            fc = FC_BOGUS_ARRAY;
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+
+        return fc;
+    }
+    else
+        return FC_BOGUS_ARRAY;
+}
+
+static size_t write_array_tfs(ITypeInfo *typeinfo, unsigned char *str,
+    size_t *len, ARRAYDESC *desc)
+{
+    unsigned char fc = get_array_fc(typeinfo, &desc->tdescElem);
+    ULONG size = type_memsize(typeinfo, &desc->tdescElem);
+    unsigned char basetype;
+    size_t ref = 0, off;
+    USHORT i;
+
+    if (fc != FC_LGFARRAY)
+        FIXME("complex arrays not implemented\n");
+
+    if (!(basetype = get_base_type(desc->tdescElem.vt)))
+        ref = write_type_tfs(typeinfo, str, len, &desc->tdescElem, FALSE, FALSE);
+
+    /* In theory arrays should be nested, but there's no reason not to marshal
+     * [x][y] as [x*y]. */
+    for (i = 0; i < desc->cDims; i++) size *= desc->rgbounds[i].cElements;
+
+    off = *len;
+
+    WRITE_CHAR(str, *len, FC_LGFARRAY);
+    WRITE_CHAR(str, *len, 0);
+    WRITE_INT (str, *len, size);
+    if (basetype)
+        WRITE_CHAR(str, *len, basetype);
+    else
+    {
+        WRITE_CHAR (str, *len, FC_EMBEDDED_COMPLEX);
+        WRITE_CHAR (str, *len, 0);
+        WRITE_SHORT(str, *len, ref - *len);
+        WRITE_CHAR (str, *len, FC_PAD);
+    }
+    WRITE_CHAR(str, *len, FC_END);
+
+    return off;
 }
 
 static size_t write_ip_tfs(unsigned char *str, size_t *len, const GUID *iid)
@@ -213,6 +317,8 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
     {
     case VT_PTR:
         return write_pointer_tfs(typeinfo, str, len, desc->lptdesc, toplevel, onstack);
+    case VT_CARRAY:
+        return write_array_tfs(typeinfo, str, len, desc->lpadesc);
     default:
         /* base types are always embedded directly */
         assert(!get_base_type(desc->vt));
