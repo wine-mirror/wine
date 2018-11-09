@@ -3378,9 +3378,9 @@ static const struct {
 /* returns # of RM trials required for a given bit size */
 int mp_prime_rabin_miller_trials(int size)
 {
-   int x;
+   unsigned int x;
 
-   for (x = 0; x < (int)(sizeof(sizes)/(sizeof(sizes[0]))); x++) {
+   for (x = 0; x < ARRAY_SIZE(sizes); x++) {
        if (sizes[x].k == size) {
           return sizes[x].t;
        } else if (sizes[x].k > size) {
