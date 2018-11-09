@@ -121,6 +121,8 @@ number.  For the meaning of values, see the \fBDEBUG\fR section.
 .B Miscellaneous options:
 .IP "\fB-app_config\fR"
 Ignored, present for midl compatibility.
+.IP "\fB--acf=\fIfile\fR"
+Use specified application configuration file.
 .IP "\fB--local-stubs=\fIfile\fR"
 Generate empty stubs for call_as/local methods in an object interface and
 write them to \fIfile\fR.

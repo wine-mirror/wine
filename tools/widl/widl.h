@@ -54,6 +54,7 @@ extern int use_abi_namespace;
 
 extern char *input_name;
 extern char *input_idl_name;
+extern char *acf_name;
 extern char *header_name;
 extern char *header_token;
 extern char *local_stubs_name;

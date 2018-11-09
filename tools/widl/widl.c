@@ -51,6 +51,7 @@
 static const char usage[] =
 "Usage: widl [options...] infile.idl\n"
 "   or: widl [options...] --dlldata-only name1 [name2...]\n"
+"   --acf=file         Use ACF file\n"
 "   -app_config        Ignored, present for midl compatibility\n"
 "   -b arch            Set the target architecture\n"
 "   -c                 Generate client stub\n"
@@ -122,6 +123,7 @@ static enum stub_mode stub_mode = MODE_Os;
 
 char *input_name;
 char *input_idl_name;
+char *acf_name;
 char *header_name;
 char *local_stubs_name;
 char *header_token;
@@ -151,6 +153,8 @@ time_t now;
 
 enum {
     OLDNAMES_OPTION = CHAR_MAX + 1,
+    ACF_OPTION,
+    APP_CONFIG_OPTION,
     DLLDATA_OPTION,
     DLLDATA_ONLY_OPTION,
     LOCAL_STUBS_OPTION,
@@ -160,17 +164,18 @@ enum {
     PRINT_HELP,
     RT_NS_PREFIX,
     RT_OPTION,
+    ROBUST_OPTION,
     WIN32_OPTION,
     WIN64_OPTION,
     WIN32_ALIGN_OPTION,
-    WIN64_ALIGN_OPTION,
-    APP_CONFIG_OPTION,
-    ROBUST_OPTION
+    WIN64_ALIGN_OPTION
 };
 
 static const char short_options[] =
     "b:cC:d:D:EhH:I:m:No:O:pP:rsS:tT:uU:VW";
 static const struct option long_options[] = {
+    { "acf", 1, NULL, ACF_OPTION },
+    { "app_config", 0, NULL, APP_CONFIG_OPTION },
     { "dlldata", 1, NULL, DLLDATA_OPTION },
     { "dlldata-only", 0, NULL, DLLDATA_ONLY_OPTION },
     { "help", 0, NULL, PRINT_HELP },
@@ -187,7 +192,6 @@ static const struct option long_options[] = {
     { "win64", 0, NULL, WIN64_OPTION },
     { "win32-align", 1, NULL, WIN32_ALIGN_OPTION },
     { "win64-align", 1, NULL, WIN64_ALIGN_OPTION },
-    { "app_config", 0, NULL, APP_CONFIG_OPTION },
     { NULL, 0, NULL, 0 }
 };
 
@@ -613,10 +617,13 @@ int main(int argc,char *argv[])
       if(win64_packing != 2 && win64_packing != 4 && win64_packing != 8)
           error("Packing must be one of 2, 4 or 8\n");
       break;
+    case ACF_OPTION:
+      acf_name = xstrdup(optarg);
+      break;
     case APP_CONFIG_OPTION:
       /* widl does not distinguish between app_mode and default mode,
          but we ignore this option for midl compatibility */
-        break;
+      break;
     case ROBUST_OPTION:
         /* FIXME: Support robust option */
         break;
