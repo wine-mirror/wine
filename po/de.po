@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-07-10 14:47+0200\n"
+"PO-Revision-Date: 2018-11-09 11:29+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -311,25 +311,23 @@ msgstr "Abbrechen..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "%1!u! %2 verbleibend"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "%1!u! %2 und %3!u! %4 verbleibend"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Sekunden"
+msgstr "Sekunden"
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "Minuten"
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "Stunden"
 
 #: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
@@ -428,16 +426,12 @@ msgid "&Retry"
 msgstr "&Wiederholen"
 
 #: comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "&Tabs verbergen"
+msgstr "Details ausblenden"
 
 #: comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
-msgstr "Details"
+msgstr "Details anzeigen"
 
 #: comctl32.rc:31 cryptui.rc:235 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
@@ -2452,16 +2446,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "Exportvorgang ordnungsgemäß abgeschlossen."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Zertifikatsspeicher wählen"
+msgstr "Zertifikat auswählen"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Zertifikatsspeicher wählen den Sie benutzen möchten:"
+msgstr "Wählen Sie ein Zertifikat, das Sie verwenden möchten"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2996,20 +2986,16 @@ msgstr ""
 "Hinweis: Der private Schlüssel des Zertifikats kann nicht exportiert werden."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "&Geplanter Zweck:"
+msgstr "Geplanter Zweck"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Ort"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Zertifikatsspeicher wählen"
+msgstr "Wählen Sie ein Zertifikat"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
@@ -3508,18 +3494,16 @@ msgid "Connections"
 msgstr "Verbindungen"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Wine-Konfiguration"
+msgstr "Automatische Konfiguration"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Web-Proxy-Auto-Discovery (WPAD) verwenden"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Proxy-Autokonfigurationsskript (PAC) verwenden"
 
 #: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
@@ -11186,10 +11170,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Fehler: Ungültige Option '%c'.\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Fehler: Prozess \"%1\" konnte nicht gefunden werden.\n"
+msgstr "Fehler: Hostname nicht gefunden: %u.\n"
 
 #: hostname.rc:33
 msgid ""
@@ -14372,11 +14354,11 @@ msgstr "F&arbe:"
 
 #: winecfg.rc:304
 msgid "MIME types"
-msgstr ""
+msgstr "MIME-Typen"
 
 #: winecfg.rc:305
 msgid "Manage file &associations"
-msgstr ""
+msgstr "Datei&zuordnungen verwalten"
 
 #: winecfg.rc:308
 msgid "Folders"
@@ -14384,7 +14366,7 @@ msgstr "Ordner"
 
 #: winecfg.rc:311
 msgid "&Link to:"
-msgstr "&Verknüpfe:"
+msgstr "&Verknüpfen mit:"
 
 #: winecfg.rc:34
 msgid "Libraries"
