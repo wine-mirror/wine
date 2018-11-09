@@ -95,7 +95,7 @@ extern "C" {
 #define _puttc        WINE_tchar_routine(putc,            putc,        putwc)
 #define _puttchar     WINE_tchar_routine(putchar,         putchar,     putwchar)
 #define _putts        WINE_tchar_routine(puts,            puts,        putws)
-#define _sntprintf    WINE_tchar_routine(snprintf,        snprintf,    snwprintf)
+#define _sntprintf    WINE_tchar_routine(snprintf,        snprintf,    _snwprintf)
 #define _stprintf     WINE_tchar_routine(sprintf,         sprintf,     swprintf)
 #define _stscanf      WINE_tchar_routine(sscanf,          sscanf,      swscanf)
 #define _taccess      WINE_tchar_routine(access,          _access,     _waccess)
