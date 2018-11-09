@@ -35,6 +35,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define WRITE_SHORT(str, len, val) \
     do { if ((str)) *((short *)((str) + (len))) = (val); (len) += 2; } while (0)
 
+static unsigned char get_base_type(VARTYPE vt)
+{
+    switch (vt)
+    {
+    case VT_I1:     return FC_SMALL;
+    case VT_BOOL:
+    case VT_I2:     return FC_SHORT;
+    case VT_INT:
+    case VT_ERROR:
+    case VT_HRESULT:
+    case VT_I4:     return FC_LONG;
+    case VT_I8:
+    case VT_UI8:    return FC_HYPER;
+    case VT_UI1:    return FC_USMALL;
+    case VT_UI2:    return FC_USHORT;
+    case VT_UINT:
+    case VT_UI4:    return FC_ULONG;
+    case VT_R4:     return FC_FLOAT;
+    case VT_DATE:
+    case VT_R8:     return FC_DOUBLE;
+    default:        return 0;
+    }
+}
+
 static unsigned int type_memsize(ITypeInfo *typeinfo, TYPEDESC *desc)
 {
     switch (desc->vt)
@@ -94,6 +118,12 @@ static unsigned int type_memsize(ITypeInfo *typeinfo, TYPEDESC *desc)
     }
 }
 
+static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
+        size_t *len, TYPEDESC *desc, BOOL toplevel, BOOL onstack)
+{
+    return E_NOTIMPL;
+}
+
 static unsigned short get_stack_size(ITypeInfo *typeinfo, TYPEDESC *desc)
 {
 #if defined(__i386__) || defined(__arm__)
@@ -105,11 +135,233 @@ static unsigned short get_stack_size(ITypeInfo *typeinfo, TYPEDESC *desc)
 #endif
 }
 
+static const unsigned short MustSize    = 0x0001;
+static const unsigned short MustFree    = 0x0002;
+static const unsigned short IsIn        = 0x0008;
+static const unsigned short IsOut       = 0x0010;
+static const unsigned short IsReturn    = 0x0020;
+static const unsigned short IsBasetype  = 0x0040;
+static const unsigned short IsByValue   = 0x0080;
+static const unsigned short IsSimpleRef = 0x0100;
+
+static HRESULT get_param_pointer_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int is_in,
+        int is_out, unsigned short *server_size, unsigned short *flags,
+        unsigned char *basetype, TYPEDESC **tfs_tdesc)
+{
+    ITypeInfo *refinfo;
+    HRESULT hr = S_OK;
+    TYPEATTR *attr;
+
+    switch (tdesc->vt)
+    {
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+        *flags |= MustFree;
+        if (is_in && is_out)
+            *server_size = sizeof(void *);
+        break;
+    case VT_PTR:
+        *flags |= MustFree;
+
+        if (tdesc->lptdesc->vt == VT_USERDEFINED)
+        {
+            ITypeInfo_GetRefTypeInfo(typeinfo, tdesc->lptdesc->hreftype, &refinfo);
+            ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+            switch (attr->typekind)
+            {
+            case TKIND_INTERFACE:
+            case TKIND_DISPATCH:
+            case TKIND_COCLASS:
+                if (is_in && is_out)
+                    *server_size = sizeof(void *);
+                break;
+            default:
+                *server_size = sizeof(void *);
+            }
+
+            ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+            ITypeInfo_Release(refinfo);
+        }
+        else
+            *server_size = sizeof(void *);
+        break;
+    case VT_CARRAY:
+        *flags |= IsSimpleRef | MustFree;
+        *server_size = type_memsize(typeinfo, tdesc);
+        *tfs_tdesc = tdesc;
+        break;
+    case VT_USERDEFINED:
+        ITypeInfo_GetRefTypeInfo(typeinfo, tdesc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        switch (attr->typekind)
+        {
+        case TKIND_ENUM:
+            *flags |= IsSimpleRef | IsBasetype;
+            if (!is_in && is_out)
+                *server_size = sizeof(void *);
+            *basetype = FC_ENUM32;
+            break;
+        case TKIND_RECORD:
+            *flags |= IsSimpleRef | MustFree;
+            if (!is_in && is_out)
+                *server_size = attr->cbSizeInstance;
+            *tfs_tdesc = tdesc;
+            break;
+        case TKIND_INTERFACE:
+        case TKIND_DISPATCH:
+        case TKIND_COCLASS:
+            *flags |= MustFree;
+            break;
+        case TKIND_ALIAS:
+            hr = get_param_pointer_info(refinfo, &attr->tdescAlias, is_in,
+                    is_out, server_size, flags, basetype, tfs_tdesc);
+            break;
+        default:
+            FIXME("unhandled kind %#x\n", attr->typekind);
+            hr = E_NOTIMPL;
+            break;
+        }
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+        break;
+    default:
+        *flags |= IsSimpleRef;
+        *tfs_tdesc = tdesc;
+        if (!is_in && is_out)
+            *server_size = type_memsize(typeinfo, tdesc);
+        if ((*basetype = get_base_type(tdesc->vt)))
+            *flags |= IsBasetype;
+        break;
+    }
+
+    return hr;
+}
+
+static HRESULT get_param_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int is_in,
+        int is_out, unsigned short *server_size, unsigned short *flags,
+        unsigned char *basetype, TYPEDESC **tfs_tdesc)
+{
+    ITypeInfo *refinfo;
+    HRESULT hr = S_OK;
+    TYPEATTR *attr;
+
+    *server_size = 0;
+    *flags = MustSize;
+    *basetype = 0;
+    *tfs_tdesc = tdesc;
+
+    TRACE("vt %u\n", tdesc->vt);
+
+    switch (tdesc->vt)
+    {
+    case VT_VARIANT:
+#ifndef __i386__
+        *flags |= IsSimpleRef | MustFree;
+        break;
+#endif
+        /* otherwise fall through */
+    case VT_BSTR:
+    case VT_SAFEARRAY:
+    case VT_CY:
+        *flags |= IsByValue | MustFree;
+        break;
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+    case VT_CARRAY:
+        *flags |= MustFree;
+        break;
+    case VT_PTR:
+        return get_param_pointer_info(typeinfo, tdesc->lptdesc, is_in, is_out,
+                server_size, flags, basetype, tfs_tdesc);
+    case VT_USERDEFINED:
+        ITypeInfo_GetRefTypeInfo(typeinfo, tdesc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        switch (attr->typekind)
+        {
+        case TKIND_ENUM:
+            *flags |= IsBasetype;
+            *basetype = FC_ENUM32;
+            break;
+        case TKIND_RECORD:
+#ifdef __i386__
+            *flags |= IsByValue | MustFree;
+#elif defined(__x86_64__)
+            if (attr->cbSizeInstance <= 8)
+                *flags |= IsByValue | MustFree;
+            else
+                *flags |= IsSimpleRef | MustFree;
+#endif
+            break;
+        case TKIND_ALIAS:
+            hr = get_param_info(refinfo, &attr->tdescAlias, is_in, is_out,
+                    server_size, flags, basetype, tfs_tdesc);
+            break;
+        default:
+            FIXME("unhandled kind %#x\n", attr->typekind);
+            hr = E_NOTIMPL;
+            break;
+        }
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+        break;
+    default:
+        if ((*basetype = get_base_type(tdesc->vt)))
+            *flags |= IsBasetype;
+        else
+        {
+            FIXME("unhandled type %u\n", tdesc->vt);
+            return E_NOTIMPL;
+        }
+        break;
+    }
+
+    return hr;
+}
+
 static HRESULT write_param_fs(ITypeInfo *typeinfo, unsigned char *type,
         size_t *typelen, unsigned char *proc, size_t *proclen, ELEMDESC *desc,
         BOOL is_return, unsigned short *stack_offset)
 {
-    return E_NOTIMPL;
+    USHORT param_flags = desc->paramdesc.wParamFlags;
+    int is_in  = param_flags & PARAMFLAG_FIN;
+    int is_out = param_flags & PARAMFLAG_FOUT;
+    TYPEDESC *tdesc = &desc->tdesc, *tfs_tdesc;
+    unsigned short server_size;
+    unsigned short stack_size = get_stack_size(typeinfo, tdesc);
+    unsigned char basetype;
+    unsigned short flags;
+    size_t off = 0;
+    HRESULT hr;
+
+    hr = get_param_info(typeinfo, tdesc, is_in, is_out, &server_size, &flags,
+            &basetype, &tfs_tdesc);
+
+    if (is_in)      flags |= IsIn;
+    if (is_out)     flags |= IsOut;
+    if (is_return)  flags |= IsOut | IsReturn;
+
+    server_size = (server_size + 7) / 8;
+    if (server_size >= 8) server_size = 0;
+    flags |= server_size << 13;
+
+    if (!basetype)
+        off = write_type_tfs(typeinfo, type, typelen, tfs_tdesc, TRUE, server_size != 0);
+
+    if (SUCCEEDED(hr))
+    {
+        WRITE_SHORT(proc, *proclen, flags);
+        WRITE_SHORT(proc, *proclen, *stack_offset);
+        WRITE_SHORT(proc, *proclen, basetype ? basetype : off);
+
+        *stack_offset += stack_size;
+    }
+
+    return hr;
 }
 
 static void write_proc_func_header(ITypeInfo *typeinfo, FUNCDESC *desc,
