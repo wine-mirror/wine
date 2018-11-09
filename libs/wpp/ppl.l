@@ -150,6 +150,7 @@
 %x pp_macexp
 %x pp_if
 %x pp_ifd
+%x pp_ifignored
 %x pp_endif
 %x pp_line
 %x pp_defined
@@ -390,7 +391,7 @@ void pp_writestring(const char *format, ...)
 <pp_pp>{ws}*undef{ws}*		if(yy_top_state() != pp_ignore) {yy_pp_state(pp_ifd); return tUNDEF;} else {yy_pp_state(pp_eol);}
 <pp_pp>{ws}*ifdef{ws}*		yy_pp_state(pp_ifd);	return tIFDEF;
 <pp_pp>{ws}*ifndef{ws}*		pp_incl_state.seen_junk--; yy_pp_state(pp_ifd);	return tIFNDEF;
-<pp_pp>{ws}*if{ws}*		yy_pp_state(pp_if);	return tIF;
+<pp_pp>{ws}*if{ws}*		if(yy_top_state() != pp_ignore) {yy_pp_state(pp_if);} else {yy_pp_state(pp_ifignored);} return tIF;
 <pp_pp>{ws}*elif{ws}*		yy_pp_state(pp_if);	return tELIF;
 <pp_pp>{ws}*else{ws}*		yy_pp_state(pp_endif);  return tELSE;
 <pp_pp>{ws}*endif{ws}*		yy_pp_state(pp_endif);  return tENDIF;
@@ -449,6 +450,9 @@ void pp_writestring(const char *format, ...)
 <pp_if>\'			new_string(); add_string(ppy_text, ppy_leng); yy_push_state(pp_sqs);
 <pp_if>\"			ppy_error("String constants not allowed in conditionals");
 <pp_if>.			return *ppy_text;
+
+<pp_ifignored>[^\n]+		ppy_lval.sint = 0; return tSINT;
+<pp_ifignored>\n		newline(1); yy_pop_state(); return tNL;
 
 	/*
 	 * Handle #ifdef, #ifndef and #undef
