@@ -636,14 +636,14 @@ static void append_url_params( WCHAR *url )
     DWORD len = strlenW(url);
 
     memcpy(url+len, arch_formatW, sizeof(arch_formatW));
-    len += sizeof(arch_formatW)/sizeof(WCHAR);
+    len += ARRAY_SIZE(arch_formatW);
     len += MultiByteToWideChar(CP_ACP, 0, ARCH_STRING, sizeof(ARCH_STRING),
                                url+len, size/sizeof(WCHAR)-len)-1;
     memcpy(url+len, v_formatW, sizeof(v_formatW));
-    len += sizeof(v_formatW)/sizeof(WCHAR);
+    len += ARRAY_SIZE(v_formatW);
     len += MultiByteToWideChar(CP_ACP, 0, addon->version, -1, url+len, size/sizeof(WCHAR)-len)-1;
     memcpy(url+len, winevW, sizeof(winevW));
-    len += sizeof(winevW)/sizeof(WCHAR);
+    len += ARRAY_SIZE(winevW);
     MultiByteToWideChar(CP_ACP, 0, PACKAGE_VERSION, -1, url+len, size/sizeof(WCHAR)-len);
 }
 
@@ -717,9 +717,9 @@ static void run_winebrowser(const WCHAR *url)
 
     url_len = strlenW(url);
 
-    len = GetSystemDirectoryW(app, MAX_PATH-sizeof(winebrowserW)/sizeof(WCHAR));
+    len = GetSystemDirectoryW(app, MAX_PATH - ARRAY_SIZE(winebrowserW));
     memcpy(app+len, winebrowserW, sizeof(winebrowserW));
-    len += sizeof(winebrowserW)/sizeof(WCHAR) -1;
+    len += ARRAY_SIZE(winebrowserW) - 1;
 
     args = heap_alloc((len+1+url_len)*sizeof(WCHAR));
     if(!args)
