@@ -920,7 +920,7 @@ static const struct notification read_allow_close_test[] =
 static void _read_request_data(struct test_request *req, struct info *info, const char *expected_data, BOOL closing_connection, unsigned line)
 {
     char buffer[1024];
-    DWORD read, len;
+    DWORD len;
     BOOL ret;
 
     if (closing_connection)
@@ -937,8 +937,7 @@ static void _read_request_data(struct test_request *req, struct info *info, cons
 
     setup_test( info, winhttp_read_data, line );
     memset(buffer, '?', sizeof(buffer));
-    read = 0xdeadbeef;
-    ret = WinHttpReadData( req->request, buffer, sizeof(buffer), &read );
+    ret = WinHttpReadData( req->request, buffer, sizeof(buffer), NULL );
     ok(ret, "failed to read data %u\n", GetLastError());
 
     WaitForSingleObject( info->wait, INFINITE );
