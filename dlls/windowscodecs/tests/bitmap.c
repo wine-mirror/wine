@@ -1082,6 +1082,7 @@ static void test_WICCreateBitmapFromSectionEx(void)
 
 static void test_bitmap_scaler(void)
 {
+    WICPixelFormatGUID pixel_format;
     IWICBitmapScaler *scaler;
     IWICBitmap *bitmap;
     UINT width, height;
@@ -1111,6 +1112,15 @@ static void test_bitmap_scaler(void)
 
     hr = IWICBitmapScaler_GetSize(scaler, &width, NULL);
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICBitmapScaler_GetPixelFormat(scaler, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    memset(&pixel_format, 0, sizeof(pixel_format));
+    hr = IWICBitmapScaler_GetPixelFormat(scaler, &pixel_format);
+    ok(hr == S_OK, "Failed to get pixel format, hr %#x.\n", hr);
+    ok(IsEqualGUID(&pixel_format, &GUID_WICPixelFormatDontCare), "Unexpected pixel format %s.\n",
+        wine_dbgstr_guid(&pixel_format));
 
     width = 123;
     height = 321;
@@ -1169,6 +1179,15 @@ static void test_bitmap_scaler(void)
 
     hr = IWICBitmapScaler_GetSize(scaler, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICBitmapScaler_GetPixelFormat(scaler, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    memset(&pixel_format, 0, sizeof(pixel_format));
+    hr = IWICBitmapScaler_GetPixelFormat(scaler, &pixel_format);
+    ok(hr == S_OK, "Failed to get pixel format, hr %#x.\n", hr);
+    ok(IsEqualGUID(&pixel_format, &GUID_WICPixelFormat24bppBGR), "Unexpected pixel format %s.\n",
+        wine_dbgstr_guid(&pixel_format));
 
     IWICBitmapScaler_Release(scaler);
 

@@ -130,7 +130,10 @@ static HRESULT WINAPI BitmapScaler_GetPixelFormat(IWICBitmapScaler *iface,
         return E_INVALIDARG;
 
     if (!This->source)
-        return WINCODEC_ERR_WRONGSTATE;
+    {
+        memcpy(pPixelFormat, &GUID_WICPixelFormatDontCare, sizeof(*pPixelFormat));
+        return S_OK;
+    }
 
     return IWICBitmapSource_GetPixelFormat(This->source, pPixelFormat);
 }
