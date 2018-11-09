@@ -1094,7 +1094,7 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+    TRACE("(%p,%s,%u,%u,%p)\n", iface, debug_wic_rect(prc), cbStride, cbBufferSize, pbBuffer);
 
     return copy_pixels(This->bpp, This->image_bits,
         This->width, This->height, This->stride,
@@ -1745,7 +1745,7 @@ static HRESULT WINAPI PngFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
 {
     PngEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
     HRESULT hr;
-    TRACE("(%p,%p,%p)\n", iface, pIBitmapSource, prc);
+    TRACE("(%p,%p,%s)\n", iface, pIBitmapSource, debug_wic_rect(prc));
 
     if (!This->frame_initialized)
         return WINCODEC_ERR_WRONGSTATE;
