@@ -266,8 +266,9 @@ static typelib_t *current_typelib;
 %token tWCHAR tWIREMARSHAL
 %token tAPARTMENT tNEUTRAL tSINGLE tFREE tBOTH
 
-%type <attr> attribute type_qualifier function_specifier
+%type <attr> attribute type_qualifier function_specifier acf_attribute
 %type <attr_list> m_attributes attributes attrib_list m_type_qual_list
+%type <attr_list> acf_attributes acf_attribute_list
 %type <str_list> str_list
 %type <expr> m_expr expr expr_const expr_int_const array m_bitfield
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
@@ -1154,6 +1155,37 @@ version:
 
 acf_statements
         : /* empty */
+        | acf_interface acf_statements
+
+acf_int_statements
+        : /* empty */
+        | acf_int_statement acf_int_statements
+
+acf_int_statement
+        : tTYPEDEF acf_attributes aKNOWNTYPE ';'
+                                                { type_t *type = find_type_or_error($3, 0);
+                                                  type->attrs = append_attr_list(type->attrs, $2);
+                                                }
+acf_interface
+        : acf_attributes tINTERFACE aKNOWNTYPE '{' acf_int_statements '}'
+                                                {  type_t *iface = find_type_or_error2($3, 0);
+                                                   if (type_get_type(iface) != TYPE_INTERFACE)
+                                                       error_loc("%s is not an interface\n", iface->name);
+                                                   iface->attrs = append_attr_list(iface->attrs, $1);
+                                                }
+
+acf_attributes
+        : /* empty */                           { $$ = NULL; };
+        | '[' acf_attribute_list ']'            { $$ = $2; };
+
+acf_attribute_list
+        : acf_attribute                         { $$ = append_attr(NULL, $1); }
+        | acf_attribute_list ',' acf_attribute  { $$ = append_attr($1, $3); }
+
+acf_attribute
+        : tENCODE                               { $$ = make_attr(ATTR_ENCODE); }
+        | tDECODE                               { $$ = make_attr(ATTR_DECODE); }
+        | tEXPLICITHANDLE                       { $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
 
 %%
 
