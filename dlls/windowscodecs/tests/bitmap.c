@@ -1107,17 +1107,14 @@ static void test_bitmap_scaler(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_GetSize(scaler, NULL, &height);
-todo_wine
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_GetSize(scaler, &width, NULL);
-todo_wine
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
 
     width = 123;
     height = 321;
     hr = IWICBitmapScaler_GetSize(scaler, &width, &height);
-todo_wine
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
     ok(width == 123, "Unexpected width %u.\n", width);
     ok(height == 321, "Unexpected height %u.\n", height);
@@ -1127,7 +1124,6 @@ todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_GetSize(scaler, &width, &height);
-todo_wine
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 0, 2,
@@ -1135,7 +1131,6 @@ todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_GetSize(scaler, &width, &height);
-todo_wine
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_Initialize(scaler, NULL, 8, 4,

@@ -108,11 +108,11 @@ static HRESULT WINAPI BitmapScaler_GetSize(IWICBitmapScaler *iface,
     BitmapScaler *This = impl_from_IWICBitmapScaler(iface);
     TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
 
+    if (!This->source)
+        return WINCODEC_ERR_NOTINITIALIZED;
+
     if (!puiWidth || !puiHeight)
         return E_INVALIDARG;
-
-    if (!This->source)
-        return WINCODEC_ERR_WRONGSTATE;
 
     *puiWidth = This->width;
     *puiHeight = This->height;
