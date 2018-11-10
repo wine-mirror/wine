@@ -1010,7 +1010,6 @@ static HRESULT WINAPI Widget_int_ptr(IWidget *iface, int *in, int *out, int *in_
 
 static HRESULT WINAPI Widget_int_ptr_ptr(IWidget *iface, int **in, int **out, int **in_out)
 {
-todo_wine_if(testmode == 2)
     ok(!*out, "Got [out] %p.\n", *out);
     if (testmode == 0)
     {
@@ -1078,7 +1077,6 @@ static HRESULT WINAPI Widget_iface_in(IWidget *iface, IUnknown *unk, IDispatch *
 
 static HRESULT WINAPI Widget_iface_out(IWidget *iface, IUnknown **unk, IDispatch **disp, ISomethingFromDispatch **sfd)
 {
-todo_wine
     ok(!*unk, "Got iface %p.\n", *unk);
     ok(!*disp, "Got iface %p.\n", *disp);
     ok(!*sfd, "Got iface %p.\n", *sfd);
@@ -1138,7 +1136,6 @@ static HRESULT WINAPI Widget_bstr(IWidget *iface, BSTR in, BSTR *out, BSTR *in_p
         len = SysStringByteLen(in);
         ok(len == sizeof(test_bstr1), "Got wrong length %u.\n", len);
         ok(!memcmp(in, test_bstr1, len), "Got string %s.\n", wine_dbgstr_wn(in, len / sizeof(WCHAR)));
-todo_wine_if(*out)
         ok(!*out, "Got unexpected output %p.\n", *out);
         len = SysStringLen(*in_ptr);
         ok(len == lstrlenW(test_bstr2), "Got wrong length %u.\n", len);
@@ -1284,7 +1281,6 @@ static HRESULT WINAPI Widget_array(IWidget *iface, array_t in, array_t out, arra
 {
     static const array_t empty = {0};
     ok(!memcmp(in, test_array1, sizeof(array_t)), "Arrays didn't match.\n");
-todo_wine
     ok(!memcmp(out, empty, sizeof(array_t)), "Arrays didn't match.\n");
     ok(!memcmp(in_out, test_array3, sizeof(array_t)), "Arrays didn't match.\n");
 
@@ -1832,7 +1828,6 @@ static void test_marshal_pointer(IWidget *widget, IDispatch *disp)
     ok(out == 654, "Got [out] %d.\n", out);
     ok(in_out == 321, "Got [in, out] %d.\n", in_out);
 
-if (0) {
     out = in_out = -1;
     hr = IWidget_int_ptr(widget, NULL, &out, &in_out);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
@@ -1850,7 +1845,6 @@ if (0) {
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(in == -1, "[in] parameter should not have been cleared.\n");
     ok(!out, "[out] parameter should have been cleared.\n");
-}
 
     /* We can't test Invoke() with double pointers, as it is not possible to fit
      * more than one level of indirection into a VARIANTARG. */
@@ -1863,7 +1857,6 @@ if (0) {
     ok(!out_ptr, "Got [out] %p.\n", out_ptr);
     ok(!in_out_ptr, "Got [in, out] %p.\n", in_out_ptr);
 
-if (0) {
     testmode = 1;
     hr = IWidget_int_ptr_ptr(widget, &in_ptr, &out_ptr, &in_out_ptr);
     ok(hr == S_OK, "Got hr %#x\n", hr);
@@ -1885,7 +1878,6 @@ if (0) {
     ok(in_out_ptr == &in_out, "[in, out] ptr should not have changed.\n");
     ok(*out_ptr == 654, "Got [out] %d.\n", *out_ptr);
     ok(*in_out_ptr == 321, "Got [in, out] %d.\n", *in_out_ptr);
-}
 
     testmode = 3;
     in_ptr = out_ptr = NULL;
@@ -1895,7 +1887,6 @@ if (0) {
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!in_out_ptr, "Got [in, out] %p.\n", in_out_ptr);
 
-if (0) {
     out_ptr = &out;
     in_out_ptr = &in_out;
     hr = IWidget_int_ptr_ptr(widget, NULL, &out_ptr, &in_out_ptr);
@@ -1916,7 +1907,6 @@ if (0) {
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "Got hr %#x.\n", hr);
     ok(in_ptr == &in, "[in] parameter should not have been cleared.\n");
     ok(!out_ptr, "[out] parameter should have been cleared.\n");
-}
 }
 
 static void test_marshal_iface(IWidget *widget, IDispatch *disp)
@@ -1954,14 +1944,12 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     release_iface(proxy_disp);
     release_iface(proxy_sfd);
 
-if (0) {
     testmode = 1;
     hr = IWidget_iface_out(widget, &proxy_unk, &proxy_disp, &proxy_sfd);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!proxy_unk, "Got unexpected proxy %p.\n", proxy_unk);
     ok(!proxy_disp, "Got unexpected proxy %p.\n", proxy_disp);
     ok(!proxy_sfd, "Got unexpected proxy %p.\n", proxy_sfd);
-}
 
     testmode = 0;
     sfd_in = sfd1 = create_disp_obj();
@@ -1974,7 +1962,6 @@ if (0) {
     ok(sfd_in_out == sfd3, "[in, out] parameter should not have changed.\n");
     release_iface(sfd1);
     release_iface(sfd2);
-todo_wine
     release_iface(sfd3);
 
     testmode = 1;
@@ -1991,7 +1978,6 @@ todo_wine
     release_iface(sfd_out);
     release_iface(sfd_in_out);
     release_iface(sfd1);
-todo_wine
     release_iface(sfd3);
 
     testmode = 2;
@@ -2010,7 +1996,6 @@ todo_wine
     hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!sfd_in_out, "Got [in, out] %p.\n", sfd_in_out);
-todo_wine
     release_iface(sfd3);
 
     /* Test with Invoke(). Note that since we pass VT_UNKNOWN, we don't get our
@@ -2331,17 +2316,14 @@ static void test_marshal_array(IWidget *widget, IDispatch *disp)
     MYSTRUCT struct_in[2];
     HRESULT hr;
 
-if (0) {
     memcpy(in, test_array1, sizeof(array_t));
     memcpy(out, test_array2, sizeof(array_t));
     memcpy(in_out, test_array3, sizeof(array_t));
     hr = IWidget_array(widget, in, out, in_out);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-todo_wine
     ok(!memcmp(&in, &test_array1, sizeof(array_t)), "Arrays didn't match.\n");
     ok(!memcmp(&out, &test_array5, sizeof(array_t)), "Arrays didn't match.\n");
     ok(!memcmp(&in_out, &test_array6, sizeof(array_t)), "Arrays didn't match.\n");
-}
 
     V_VT(&var_in[0]) = VT_I4;     V_I4(&var_in[0])     = 1;
     V_VT(&var_in[1]) = VT_I4;     V_I4(&var_in[1])     = 2;
@@ -2355,7 +2337,6 @@ todo_wine
     ok(V_I4(&var_in[0]) == 1, "Got wrong value %d.\n", V_I4(&var_in[0]));
     ok(V_VT(&var_in[1]) == VT_I4, "Got wrong type %u.\n", V_VT(&var_in[1]));
     ok(V_I4(&var_in[1]) == 2, "Got wrong value %d.\n", V_I4(&var_in[1]));
-todo_wine {
     ok(V_VT(&var_out[0]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_out[0]));
     ok(V_I1(&var_out[0]) == 9, "Got wrong value %u.\n", V_VT(&var_out[0]));
     ok(V_VT(&var_out[1]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_out[1]));
@@ -2364,7 +2345,6 @@ todo_wine {
     ok(V_I1(&var_in_out[0]) == 11, "Got wrong value %u.\n", V_VT(&var_in_out[0]));
     ok(V_VT(&var_in_out[1]) == VT_I1, "Got wrong type %u.\n", V_VT(&var_in_out[1]));
     ok(V_I1(&var_in_out[1]) == 12, "Got wrong value %u.\n", V_VT(&var_in_out[1]));
-}
 
     memcpy(&struct_in[0], &test_mystruct1, sizeof(MYSTRUCT));
     memcpy(&struct_in[1], &test_mystruct2, sizeof(MYSTRUCT));
@@ -2404,9 +2384,6 @@ static void test_typelibmarshal(void)
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IKindaEnumWidget, (void **)&pKEW);
-#ifndef __i386__
-    todo_wine
-#endif
     ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
     if (FAILED(hr))
@@ -3080,9 +3057,6 @@ static void test_external_connection(void)
 
     IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
     hres = CoUnmarshalInterface(stream, &IID_ItestDual, (void**)&iface);
-#ifndef __i386__
-    todo_wine
-#endif
     ok(hres == S_OK, "CoUnmarshalInterface failed: %08x\n", hres);
     if (FAILED(hres))
     {

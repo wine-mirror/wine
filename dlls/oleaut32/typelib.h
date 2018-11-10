@@ -595,12 +595,6 @@ WORD typeofarray
 
 #include "poppack.h"
 
-HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **ppFuncDesc ) DECLSPEC_HIDDEN;
-
-extern DWORD _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) DECLSPEC_HIDDEN;
-
-HRESULT TMARSHAL_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv) DECLSPEC_HIDDEN;
-
 /* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
 DEFINE_OLEGUID( CLSID_PSDispatch,    0x00020420, 0x0000, 0x0000 );
 DEFINE_OLEGUID( CLSID_PSEnumVariant, 0x00020421, 0x0000, 0x0000 );

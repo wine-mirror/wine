@@ -6345,38 +6345,6 @@ __ASM_GLOBAL_FUNC( call_method,
 __ASM_GLOBAL_FUNC( call_double_method,
                    "jmp " __ASM_NAME("call_method") )
 
-/* ITypeInfo::Invoke
- *
- * Invokes a method, or accesses a property of an object, that implements the
- * interface described by the type description.
- */
-DWORD
-_invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
-    DWORD res;
-    int stack_offset;
-
-    if (TRACE_ON(ole)) {
-	int i;
-	TRACE("Calling %p(",func);
-	for (i=0;i<min(nrargs,30);i++) TRACE("%08x,",args[i]);
-	if (nrargs > 30) TRACE("...");
-	TRACE(")\n");
-    }
-
-    switch (callconv) {
-    case CC_STDCALL:
-    case CC_CDECL:
-        res = call_method( func, nrargs, args, &stack_offset );
-	break;
-    default:
-	FIXME("unsupported calling convention %d\n",callconv);
-	res = -1;
-	break;
-    }
-    TRACE("returns %08x\n",res);
-    return res;
-}
-
 #elif defined(__x86_64__)
 
 extern DWORD_PTR CDECL call_method( void *func, int nb_args, const DWORD_PTR *args );
