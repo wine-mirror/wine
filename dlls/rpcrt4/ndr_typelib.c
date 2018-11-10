@@ -792,15 +792,40 @@ err:
 }
 
 /* Common helper for Create{Proxy,Stub}FromTypeInfo(). */
-static HRESULT get_iface_info(ITypeInfo *typeinfo, WORD *funcs, WORD *parentfuncs)
+static HRESULT get_iface_info(ITypeInfo **typeinfo, WORD *funcs, WORD *parentfuncs)
 {
+    ITypeInfo *real_typeinfo;
     TYPEATTR *typeattr;
     ITypeLib *typelib;
     TLIBATTR *libattr;
+    TYPEKIND typekind;
+    HREFTYPE reftype;
     SYSKIND syskind;
     HRESULT hr;
 
-    hr = ITypeInfo_GetContainingTypeLib(typeinfo, &typelib, NULL);
+    /* Dual interfaces report their size to be sizeof(IDispatchVtbl) and their
+     * implemented type to be IDispatch. We need to retrieve the underlying
+     * interface to get that information. */
+    hr = ITypeInfo_GetTypeAttr(*typeinfo, &typeattr);
+    if (FAILED(hr))
+        return hr;
+    typekind = typeattr->typekind;
+    ITypeInfo_ReleaseTypeAttr(*typeinfo, typeattr);
+    if (typekind == TKIND_DISPATCH)
+    {
+        hr = ITypeInfo_GetRefTypeOfImplType(*typeinfo, -1, &reftype);
+        if (FAILED(hr))
+            return hr;
+
+        hr = ITypeInfo_GetRefTypeInfo(*typeinfo, reftype, &real_typeinfo);
+        if (FAILED(hr))
+            return hr;
+
+        ITypeInfo_Release(*typeinfo);
+        *typeinfo = real_typeinfo;
+    }
+
+    hr = ITypeInfo_GetContainingTypeLib(*typeinfo, &typelib, NULL);
     if (FAILED(hr))
         return hr;
 
@@ -814,12 +839,12 @@ static HRESULT get_iface_info(ITypeInfo *typeinfo, WORD *funcs, WORD *parentfunc
     ITypeLib_ReleaseTLibAttr(typelib, libattr);
     ITypeLib_Release(typelib);
 
-    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    hr = ITypeInfo_GetTypeAttr(*typeinfo, &typeattr);
     if (FAILED(hr))
         return hr;
     *funcs = typeattr->cFuncs;
     *parentfuncs = typeattr->cbSizeVft / (syskind == SYS_WIN64 ? 8 : 4) - *funcs;
-    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+    ITypeInfo_ReleaseTypeAttr(*typeinfo, typeattr);
 
     return S_OK;
 }
@@ -903,7 +928,7 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
     TRACE("typeinfo %p, outer %p, iid %s, proxy_buffer %p, out %p.\n",
             typeinfo, outer, debugstr_guid(iid), proxy_buffer, out);
 
-    hr = get_iface_info(typeinfo, &funcs, &parentfuncs);
+    hr = get_iface_info(&typeinfo, &funcs, &parentfuncs);
     if (FAILED(hr))
         return hr;
 
@@ -1016,7 +1041,7 @@ HRESULT WINAPI CreateStubFromTypeInfo(ITypeInfo *typeinfo, REFIID iid,
     TRACE("typeinfo %p, iid %s, server %p, stub_buffer %p.\n",
             typeinfo, debugstr_guid(iid), server, stub_buffer);
 
-    hr = get_iface_info(typeinfo, &funcs, &parentfuncs);
+    hr = get_iface_info(&typeinfo, &funcs, &parentfuncs);
     if (FAILED(hr))
         return hr;
 
