@@ -689,6 +689,10 @@ static void write_proc_func_header(ITypeInfo *typeinfo, FUNCDESC *desc,
         WORD proc_idx, unsigned char *proc, size_t *proclen)
 {
     unsigned short stack_size = 2 * sizeof(void *); /* This + return */
+#ifdef __x86_64__
+    unsigned short float_mask = 0;
+    unsigned char basetype;
+#endif
     WORD param_idx;
 
     WRITE_CHAR (proc, *proclen, FC_AUTO_HANDLE);
@@ -700,8 +704,28 @@ static void write_proc_func_header(ITypeInfo *typeinfo, FUNCDESC *desc,
 
     WRITE_SHORT(proc, *proclen, 0); /* constant_client_buffer_size */
     WRITE_SHORT(proc, *proclen, 0); /* constant_server_buffer_size */
+#ifdef __x86_64__
+    WRITE_CHAR (proc, *proclen, 0x47);  /* HasExtensions | HasReturn | ClientMustSize | ServerMustSize */
+#else
     WRITE_CHAR (proc, *proclen, 0x07);  /* HasReturn | ClientMustSize | ServerMustSize */
+#endif
     WRITE_CHAR (proc, *proclen, desc->cParams + 1); /* incl. return value */
+#ifdef __x86_64__
+    WRITE_CHAR (proc, *proclen, 10); /* extension size */
+    WRITE_CHAR (proc, *proclen, 0);  /* INTERPRETER_OPT_FLAGS2 */
+    WRITE_SHORT(proc, *proclen, 0);  /* ClientCorrHint */
+    WRITE_SHORT(proc, *proclen, 0);  /* ServerCorrHint */
+    WRITE_SHORT(proc, *proclen, 0);  /* NotifyIndex */
+    for (param_idx = 0; param_idx < desc->cParams && param_idx < 3; param_idx++)
+    {
+        basetype = get_base_type(desc->lprgelemdescParam[param_idx].tdesc.vt);
+        if (basetype == FC_FLOAT)
+            float_mask |= (1 << ((param_idx + 1) * 2));
+        else if (basetype == FC_DOUBLE)
+            float_mask |= (2 << ((param_idx + 1) * 2));
+    }
+    WRITE_SHORT(proc, *proclen, float_mask);
+#endif
 }
 
 static HRESULT write_iface_fs(ITypeInfo *typeinfo, WORD funcs, WORD parentfuncs,
