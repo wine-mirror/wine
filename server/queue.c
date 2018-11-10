@@ -1775,11 +1775,11 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         break;
     }
 
-    if (!(msg = alloc_hardware_message( input->kbd.info, source, time ))) return 0;
-    msg_data = msg->data;
-
     if ((device = current->process->rawinput_kbd))
     {
+        if (!(msg = alloc_hardware_message( input->kbd.info, source, time ))) return 0;
+        msg_data = msg->data;
+
         msg->win       = device->target;
         msg->msg       = WM_INPUT;
         msg->wparam    = RIM_INPUT;
@@ -1792,6 +1792,9 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 
         queue_hardware_message( desktop, msg, 0 );
     }
+
+    if (!(msg = alloc_hardware_message( input->kbd.info, source, time ))) return 0;
+    msg_data = msg->data;
 
     msg->win       = get_user_full_handle( win );
     msg->msg       = message_code;
