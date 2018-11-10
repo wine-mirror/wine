@@ -37,6 +37,13 @@ typedef struct
     IRpcChannelBuffer *pChannel;
 } StdProxyImpl;
 
+typedef struct
+{
+    IUnknownVtbl *base_obj;
+    IRpcStubBuffer *base_stub;
+    CStdStubBuffer stub_buffer;
+} cstdstubbuffer_delegating_t;
+
 HRESULT StdProxy_Construct(REFIID riid, LPUNKNOWN pUnkOuter, const ProxyFileInfo *ProxyInfo,
                            int Index, LPPSFACTORYBUFFER pPSFactory, LPRPCPROXYBUFFER *ppProxy,
                            LPVOID *ppvObj) DECLSPEC_HIDDEN;
@@ -62,5 +69,7 @@ BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num) DECLSPEC_HIDDEN;
 HRESULT create_proxy(REFIID iid, IUnknown *pUnkOuter, IRpcProxyBuffer **pproxy, void **ppv) DECLSPEC_HIDDEN;
 HRESULT create_stub(REFIID iid, IUnknown *pUnk, IRpcStubBuffer **ppstub) DECLSPEC_HIDDEN;
 BOOL fill_stubless_table(IUnknownVtbl *vtbl, DWORD num) DECLSPEC_HIDDEN;
+IUnknownVtbl *get_delegating_vtbl(DWORD num_methods) DECLSPEC_HIDDEN;
+void release_delegating_vtbl(IUnknownVtbl *vtbl) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_CPSF_H */

@@ -50,13 +50,6 @@ static LONG WINAPI stub_filter(EXCEPTION_POINTERS *eptr)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-typedef struct
-{
-    IUnknownVtbl *base_obj;
-    IRpcStubBuffer *base_stub;
-    CStdStubBuffer stub_buffer;
-} cstdstubbuffer_delegating_t;
-
 static inline cstdstubbuffer_delegating_t *impl_from_delegating( IRpcStubBuffer *iface )
 {
     return CONTAINING_RECORD(iface, cstdstubbuffer_delegating_t, stub_buffer);
@@ -260,7 +253,7 @@ BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num)
     return TRUE;
 }
 
-static IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
+IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
 {
     IUnknownVtbl *ret;
 
@@ -296,7 +289,7 @@ static IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
     return ret;
 }
 
-static void release_delegating_vtbl(IUnknownVtbl *vtbl)
+void release_delegating_vtbl(IUnknownVtbl *vtbl)
 {
     ref_counted_vtbl *table = (ref_counted_vtbl*)((DWORD *)vtbl - 1);
 
