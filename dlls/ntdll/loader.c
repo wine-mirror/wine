@@ -2934,7 +2934,8 @@ BOOLEAN WINAPI RtlDllShutdownInProgress(void)
  *              LdrResolveDelayLoadedAPI   (NTDLL.@)
  */
 void* WINAPI LdrResolveDelayLoadedAPI( void* base, const IMAGE_DELAYLOAD_DESCRIPTOR* desc,
-                                       PDELAYLOAD_FAILURE_DLL_CALLBACK dllhook, void* syshook,
+                                       PDELAYLOAD_FAILURE_DLL_CALLBACK dllhook,
+                                       PDELAYLOAD_FAILURE_SYSTEM_ROUTINE syshook,
                                        IMAGE_THUNK_DATA* addr, ULONG flags )
 {
     IMAGE_THUNK_DATA *pIAT, *pINT;
@@ -2992,7 +2993,20 @@ fail:
     delayinfo.TargetModuleBase = *phmod;
     delayinfo.Unused = NULL;
     delayinfo.LastError = nts;
-    return dllhook(4, &delayinfo);
+
+    if (dllhook)
+        return dllhook(4, &delayinfo);
+
+    if (IMAGE_SNAP_BY_ORDINAL(pINT[id].u1.Ordinal))
+    {
+        DWORD_PTR ord = LOWORD(pINT[id].u1.Ordinal);
+        return syshook(name, (const char *)ord);
+    }
+    else
+    {
+        const IMAGE_IMPORT_BY_NAME* iibn = get_rva(base, pINT[id].u1.AddressOfData);
+        return syshook(name, (const char *)iibn->Name);
+    }
 }
 
 /******************************************************************
