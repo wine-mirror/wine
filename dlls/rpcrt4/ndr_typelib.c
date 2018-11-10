@@ -29,6 +29,9 @@
 #include "wine/heap.h"
 
 #include "cpsf.h"
+#include "initguid.h"
+#include "ndr_types.h"
+#include "ndr_stubless.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -41,6 +44,67 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
     do { if ((str)) *((short *)((str) + (len))) = (val); (len) += 2; } while (0)
 #define WRITE_INT(str, len, val) \
     do { if ((str)) *((int *)((str) + (len))) = (val); (len) += 4; } while (0)
+
+extern const ExtendedProxyFileInfo ndr_types_ProxyFileInfo;
+
+static const MIDL_STUBLESS_PROXY_INFO *get_ndr_types_proxy_info(void)
+{
+    return ndr_types_ProxyFileInfo.pProxyVtblList[0]->header.pStublessProxyInfo;
+}
+
+static const NDR_PARAM_OIF *get_ndr_types_params( unsigned int *nb_params )
+{
+    const MIDL_STUBLESS_PROXY_INFO *proxy = get_ndr_types_proxy_info();
+    const unsigned char *format = proxy->ProcFormatString + proxy->FormatStringOffset[3];
+    const NDR_PROC_HEADER *proc = (const NDR_PROC_HEADER *)format;
+    const NDR_PROC_PARTIAL_OIF_HEADER *header;
+
+    if (proc->Oi_flags & Oi_HAS_RPCFLAGS)
+        format += sizeof(NDR_PROC_HEADER_RPC);
+    else
+        format += sizeof(NDR_PROC_HEADER);
+
+    header = (const NDR_PROC_PARTIAL_OIF_HEADER *)format;
+    format += sizeof(*header);
+    if (header->Oi2Flags.HasExtensions)
+    {
+        const NDR_PROC_HEADER_EXTS *ext = (const NDR_PROC_HEADER_EXTS *)format;
+        format += ext->Size;
+    }
+    *nb_params = header->number_of_params;
+    return (const NDR_PARAM_OIF *)format;
+}
+
+static unsigned short get_tfs_offset( int param )
+{
+    unsigned int nb_params;
+    const NDR_PARAM_OIF *params = get_ndr_types_params( &nb_params );
+
+    assert( param < nb_params );
+    return params[param].u.type_offset;
+}
+
+static const unsigned char *get_type_format_string( size_t *size )
+{
+    unsigned int nb_params;
+    const NDR_PARAM_OIF *params = get_ndr_types_params( &nb_params );
+
+    *size = params[nb_params - 1].u.type_offset;
+    return get_ndr_types_proxy_info()->pStubDesc->pFormatTypes;
+}
+
+static unsigned short write_oleaut_tfs(VARTYPE vt)
+{
+    switch (vt)
+    {
+    case VT_BSTR:       return get_tfs_offset( 0 );
+    case VT_UNKNOWN:    return get_tfs_offset( 1 );
+    case VT_DISPATCH:   return get_tfs_offset( 2 );
+    case VT_VARIANT:    return get_tfs_offset( 3 );
+    case VT_SAFEARRAY:  return get_tfs_offset( 4 );
+    }
+    return 0;
+}
 
 static unsigned char get_base_type(VARTYPE vt)
 {
@@ -340,6 +404,9 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
     size_t off;
 
     TRACE("vt %d%s\n", desc->vt, toplevel ? " (toplevel)" : "");
+
+    if ((off = write_oleaut_tfs(desc->vt)))
+        return off;
 
     switch (desc->vt)
     {
@@ -684,7 +751,9 @@ static HRESULT build_format_strings(ITypeInfo *typeinfo, WORD funcs,
         const unsigned char **type_ret, const unsigned char **proc_ret,
         unsigned short **offset_ret)
 {
-    size_t typelen = 0, proclen = 0;
+    size_t tfs_size;
+    const unsigned char *tfs = get_type_format_string( &tfs_size );
+    size_t typelen = tfs_size, proclen = 0;
     unsigned char *type, *proc;
     unsigned short *offset;
     HRESULT hr;
@@ -702,7 +771,8 @@ static HRESULT build_format_strings(ITypeInfo *typeinfo, WORD funcs,
         goto err;
     }
 
-    typelen = 0;
+    memcpy(type, tfs, tfs_size);
+    typelen = tfs_size;
     proclen = 0;
 
     hr = write_iface_fs(typeinfo, funcs, type, &typelen, proc, &proclen, offset);
@@ -759,6 +829,7 @@ static void init_stub_desc(MIDL_STUB_DESC *desc)
     desc->pfnAllocate = NdrOleAllocate;
     desc->pfnFree = NdrOleFree;
     desc->Version = 0x50002;
+    desc->aUserMarshalQuadruple = get_ndr_types_proxy_info()->pStubDesc->aUserMarshalQuadruple;
     /* type format string is initialized with proc format string and offset table */
 }
 

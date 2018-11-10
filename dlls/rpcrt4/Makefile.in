@@ -2,7 +2,9 @@ EXTRADEFS = -D_RPCRT4_ -DMSWMSG
 MODULE    = rpcrt4.dll
 IMPORTLIB = rpcrt4
 IMPORTS   = uuid advapi32
-DELAYIMPORTS = iphlpapi wininet secur32 user32 ws2_32
+DELAYIMPORTS = iphlpapi wininet secur32 user32 ws2_32 oleaut32
+
+ndr_types_EXTRAIDLFLAGS = -Oicf
 
 C_SRCS = \
 	cproxy.c \
@@ -27,4 +29,6 @@ C_SRCS = \
 
 RC_SRCS = version.rc
 
-IDL_SRCS = epm.idl
+IDL_SRCS = \
+	epm.idl \
+	ndr_types.idl
