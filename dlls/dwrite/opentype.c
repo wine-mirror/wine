@@ -1309,6 +1309,13 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
             metrics->hasTypographicMetrics = TRUE;
         }
     }
+    else {
+        metrics->strikethroughPosition = metrics->designUnitsPerEm / 3;
+        if (tt_hhea) {
+            metrics->ascent = GET_BE_WORD(tt_hhea->ascender);
+            metrics->descent = abs((SHORT)GET_BE_WORD(tt_hhea->descender));
+        }
+    }
 
     if (tt_post) {
         metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);
