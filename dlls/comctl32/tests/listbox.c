@@ -435,6 +435,8 @@ static void test_ownerdraw(void)
         NULL, NULL, NULL, 0);
     ok(hLB != NULL, "last error 0x%08x\n", GetLastError());
 
+    ok(GetWindowLongA(hLB, GWL_STYLE) & LBS_OWNERDRAWVARIABLE, "Unexpected window style.\n");
+
     ret = SendMessageA(hLB, LB_INSERTSTRING, -1, 0);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(hLB, LB_INSERTSTRING, -1, 0);
@@ -450,7 +452,6 @@ static void test_ownerdraw(void)
     ok(ret == LB_OKAY, "Failed to set item height, %d.\n", ret);
 
     ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 0, 0);
-todo_wine
     ok(ret == 42, "Unexpected item height %d.\n", ret);
 
     ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 1, 0);
