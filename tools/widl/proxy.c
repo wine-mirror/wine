@@ -664,7 +664,8 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
 
   /* proxy vtable */
   print_proxy( "static %sCINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n",
-               need_delegation_indirect(iface) ? "" : "const ", count, iface->name);
+               (get_stub_mode() != MODE_Os || need_delegation_indirect(iface)) ? "" : "const ",
+               count, iface->name);
   print_proxy( "{\n");
   indent++;
   print_proxy( "{\n");
