@@ -2176,7 +2176,7 @@ static void debug_dump_ir_swizzle(const struct hlsl_ir_swizzle *swizzle)
     }
     else
     {
-        char c[] = {'x', 'y', 'z', 'w'};
+        static const char c[] = {'x', 'y', 'z', 'w'};
 
         for (i = 0; i < swizzle->node.data_type->dimx; ++i)
             TRACE("%c", c[(swizzle->swizzle >> i * 2) & 0x3]);
