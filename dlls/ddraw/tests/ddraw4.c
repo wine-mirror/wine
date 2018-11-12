@@ -1591,11 +1591,11 @@ static void test_viewport_object(void)
     todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
     desc.vp1.dwSize = sizeof(desc.vp1);
     hr = IDirect3DViewport3_GetViewport(viewport3, &desc.vp1);
-    todo_wine ok(hr == D3DERR_VIEWPORTDATANOTSET, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_VIEWPORTDATANOTSET, "Got unexpected hr %#x.\n", hr);
     ok(desc.vp1.dwSize == sizeof(desc.vp1), "Got unexpected dwSize %u.\n", desc.vp1.dwSize);
     hr = IDirect3DViewport3_GetViewport2(viewport3, &desc.vp2);
-    todo_wine ok(hr == D3DERR_VIEWPORTDATANOTSET, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(desc.vp2.dwSize == sizeof(desc.vp2), "Got unexpected dwSize %u.\n", desc.vp2.dwSize);
+    ok(hr == D3DERR_VIEWPORTDATANOTSET, "Got unexpected hr %#x.\n", hr);
+    ok(desc.vp2.dwSize == sizeof(desc.vp2), "Got unexpected dwSize %u.\n", desc.vp2.dwSize);
     desc.vp2.dwSize = sizeof(desc.vp2) + 1;
     hr = IDirect3DViewport3_GetViewport2(viewport3, &desc.vp2);
     todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);

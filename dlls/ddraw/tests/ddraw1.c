@@ -1260,7 +1260,7 @@ static void test_viewport_object(void)
     todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
     desc.vp1.dwSize = sizeof(desc.vp1);
     hr = IDirect3DViewport_GetViewport(viewport, &desc.vp1);
-    todo_wine ok(hr == D3DERR_VIEWPORTDATANOTSET, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_VIEWPORTDATANOTSET, "Got unexpected hr %#x.\n", hr);
     ok(desc.vp1.dwSize == sizeof(desc.vp1), "Got unexpected dwSize %u.\n", desc.vp1.dwSize);
 
     /* E_FAIL return values are returned by Winetestbot Windows NT machines. While not supporting
