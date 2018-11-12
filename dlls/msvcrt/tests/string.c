@@ -3493,7 +3493,6 @@ static void test__tcsnicoll(void)
         const char *str2;
         size_t count;
         int exp;
-        BOOL todo;
     };
     static const struct test tests[] = {
         { "English", "abcd", "ABCD",  4,  0 },
