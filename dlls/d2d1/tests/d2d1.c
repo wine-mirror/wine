@@ -7925,6 +7925,124 @@ todo_wine
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static void test_max_bitmap_size(void)
+{
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    IDXGISwapChain *swapchain;
+    ID2D1Factory *factory;
+    IDXGISurface *surface;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    ID2D1Bitmap *bitmap;
+    UINT32 bitmap_size;
+    unsigned int i, j;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        const char *name;
+        DWORD type;
+    }
+    device_types[] =
+    {
+        { "HW",   D3D10_DRIVER_TYPE_HARDWARE },
+        { "WARP", D3D10_DRIVER_TYPE_WARP },
+        { "REF",  D3D10_DRIVER_TYPE_REFERENCE },
+    };
+    static const struct
+    {
+        const char *name;
+        DWORD type;
+    }
+    target_types[] =
+    {
+        { "DEFAULT", D2D1_RENDER_TARGET_TYPE_DEFAULT },
+        { "HW",      D2D1_RENDER_TARGET_TYPE_HARDWARE },
+    };
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(device_types); ++i)
+    {
+        if (FAILED(hr = D3D10CreateDevice1(NULL, device_types[i].type, NULL, D3D10_CREATE_DEVICE_BGRA_SUPPORT,
+                D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
+        {
+            skip("Failed to create %s d3d device, hr %#x.\n", device_types[i].name, hr);
+            continue;
+        }
+
+        window = create_window();
+        swapchain = create_swapchain(device, window, TRUE);
+        hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+        ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+        for (j = 0; j < ARRAY_SIZE(target_types); ++j)
+        {
+            D3D10_TEXTURE2D_DESC texture_desc;
+            ID3D10Texture2D *texture;
+            D2D1_SIZE_U size;
+
+            desc.type = target_types[j].type;
+            desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+            desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+            desc.dpiX = 0.0f;
+            desc.dpiY = 0.0f;
+            desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+            desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+            hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, surface, &desc, &rt);
+            ok(SUCCEEDED(hr), "%s/%s: failed to create render target, hr %#x.\n", device_types[i].name,
+                    target_types[j].name, hr);
+
+            bitmap_size = ID2D1RenderTarget_GetMaximumBitmapSize(rt);
+            ok(bitmap_size >= D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION, "%s/%s: unexpected bitmap size %u.\n",
+                    device_types[i].name, target_types[j].name, bitmap_size);
+
+            bitmap_desc.dpiX = 96.0f;
+            bitmap_desc.dpiY = 96.0f;
+            bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+
+            size.width = bitmap_size;
+            size.height = 1;
+            hr = ID2D1RenderTarget_CreateBitmap(rt, size, NULL, 0, &bitmap_desc, &bitmap);
+            ok(SUCCEEDED(hr), "Failed to create a bitmap, hr %#x.\n", hr);
+            ID2D1Bitmap_Release(bitmap);
+
+            ID2D1RenderTarget_Release(rt);
+
+            texture_desc.Width = bitmap_size;
+            texture_desc.Height = 1;
+            texture_desc.MipLevels = 1;
+            texture_desc.ArraySize = 1;
+            texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            texture_desc.SampleDesc.Count = 1;
+            texture_desc.SampleDesc.Quality = 0;
+            texture_desc.Usage = D3D10_USAGE_DEFAULT;
+            texture_desc.BindFlags = 0;
+            texture_desc.CPUAccessFlags = 0;
+            texture_desc.MiscFlags = 0;
+
+            hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &texture);
+            ok(SUCCEEDED(hr) || broken(hr == E_INVALIDARG && device_types[i].type == D3D10_DRIVER_TYPE_WARP) /* Vista */,
+                    "%s/%s: failed to create texture, hr %#x.\n", device_types[i].name, target_types[j].name, hr);
+            if (SUCCEEDED(hr))
+                ID3D10Texture2D_Release(texture);
+        }
+
+        IDXGISurface_Release(surface);
+        IDXGISwapChain_Release(swapchain);
+        DestroyWindow(window);
+
+        ID3D10Device1_Release(device);
+    }
+
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     unsigned int argc, i;
@@ -7969,6 +8087,7 @@ START_TEST(d2d1)
     queue_test(test_invert_matrix);
     queue_test(test_skew_matrix);
     queue_test(test_command_list);
+    queue_test(test_max_bitmap_size);
 
     run_queued_tests();
 }
