@@ -1001,9 +1001,9 @@ enum content
 
 static enum content get_content_type(LPCOLESTR name, CLSID *control_id)
 {
+    static const WCHAR mshtml_prefixW[] = {'m','s','h','t','m','l',':',0};
     WCHAR new_urlW[MAX_PATH];
     DWORD size = MAX_PATH;
-    WCHAR mshtml_prefixW[] = {'m','s','h','t','m','l',':','\0'};
 
     if (!name || !name[0])
     {
