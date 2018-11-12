@@ -329,6 +329,21 @@ DWORD WINAPI GetActiveProcessorCount(WORD group)
 }
 
 /***********************************************************************
+ *           GetMaximumProcessorCount (KERNEL32.@)
+ */
+DWORD WINAPI GetMaximumProcessorCount(WORD group)
+{
+    SYSTEM_INFO si;
+    DWORD cpus;
+
+    GetSystemInfo( &si );
+    cpus = si.dwNumberOfProcessors;
+
+    FIXME("semi-stub, returning %u\n", cpus);
+    return cpus;
+}
+
+/***********************************************************************
  *           GetEnabledXStateFeatures (KERNEL32.@)
  */
 DWORD64 WINAPI GetEnabledXStateFeatures(void)
