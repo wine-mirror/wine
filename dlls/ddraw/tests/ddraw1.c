@@ -1212,6 +1212,7 @@ static void test_viewport_object(void)
     IDirect3D *d3d;
     HRESULT hr;
     ULONG ref;
+    D3DVIEWPORT vp;
     IDirect3DViewport *viewport, *another_vp;
     IDirect3DViewport2 *viewport2;
     IDirect3DViewport3 *viewport3;
@@ -1219,6 +1220,11 @@ static void test_viewport_object(void)
     IUnknown *unknown;
     IDirect3DDevice *device;
     HWND window;
+    union
+    {
+        D3DVIEWPORT vp1;
+        BYTE blob[1024];
+    } desc;
 
     window = create_window();
     ddraw = create_ddraw();
@@ -1234,14 +1240,28 @@ static void test_viewport_object(void)
     hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
     ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
     ref = get_refcount((IUnknown *) d3d);
-    ok(ref == 2, "IDirect3D refcount is %d\n", ref);
+    ok(ref == 2, "Got unexpected refcount %u.\n", ref);
 
     hr = IDirect3D_CreateViewport(d3d, &viewport, NULL);
     ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
     ref = get_refcount((IUnknown *)viewport);
-    ok(ref == 1, "Initial IDirect3DViewport refcount is %u\n", ref);
+    ok(ref == 1, "Got unexpected refcount %u.\n", ref);
     ref = get_refcount((IUnknown *)d3d);
-    ok(ref == 2, "IDirect3D refcount is %u\n", ref);
+    ok(ref == 2, "Got unexpected refcount %u.\n", ref);
+
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirect3DViewport_GetViewport(viewport, &desc.vp1);
+    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    desc.vp1.dwSize = sizeof(desc.vp1) + 1;
+    hr = IDirect3DViewport_GetViewport(viewport, &desc.vp1);
+    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    desc.vp1.dwSize = sizeof(desc.vp1) - 1;
+    hr = IDirect3DViewport_GetViewport(viewport, &desc.vp1);
+    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    desc.vp1.dwSize = sizeof(desc.vp1);
+    hr = IDirect3DViewport_GetViewport(viewport, &desc.vp1);
+    todo_wine ok(hr == D3DERR_VIEWPORTDATANOTSET, "Got unexpected hr %#x.\n", hr);
+    ok(desc.vp1.dwSize == sizeof(desc.vp1), "Got unexpected dwSize %u.\n", desc.vp1.dwSize);
 
     /* E_FAIL return values are returned by Winetestbot Windows NT machines. While not supporting
      * newer interfaces is legitimate for old ddraw versions, E_FAIL violates Microsoft's rules
@@ -1259,9 +1279,9 @@ static void test_viewport_object(void)
     if (viewport2)
     {
         ref = get_refcount((IUnknown *)viewport);
-        ok(ref == 2, "IDirect3DViewport refcount is %u\n", ref);
+        ok(ref == 2, "Got unexpected refcount %u.\n", ref);
         ref = get_refcount((IUnknown *)viewport2);
-        ok(ref == 2, "IDirect3DViewport2 refcount is %u\n", ref);
+        ok(ref == 2, "Got unexpected refcount %u.\n", ref);
         IDirect3DViewport2_Release(viewport2);
         viewport2 = NULL;
     }
@@ -1272,47 +1292,65 @@ static void test_viewport_object(void)
     if (viewport3)
     {
         ref = get_refcount((IUnknown *)viewport);
-        ok(ref == 2, "IDirect3DViewport refcount is %u\n", ref);
+        ok(ref == 2, "Got unexpected refcount %u.\n", ref);
         ref = get_refcount((IUnknown *)viewport3);
-        ok(ref == 2, "IDirect3DViewport3 refcount is %u\n", ref);
+        ok(ref == 2, "Got unexpected refcount %u.\n", ref);
         IDirect3DViewport3_Release(viewport3);
     }
 
     hr = IDirect3DViewport_QueryInterface(viewport, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Failed to QI IUnknown, hr %#x.\n", hr);
-    if (unknown)
-    {
-        ref = get_refcount((IUnknown *)viewport);
-        ok(ref == 2, "IDirect3DViewport refcount is %u\n", ref);
-        ref = get_refcount(unknown);
-        ok(ref == 2, "IUnknown refcount is %u\n", ref);
-        IUnknown_Release(unknown);
-    }
+    ref = get_refcount((IUnknown *)viewport);
+    ok(ref == 2, "Got unexpected refcount %u.\n", ref);
+    ref = get_refcount(unknown);
+    ok(ref == 2, "Got unexpected refcount %u.\n", ref);
+    IUnknown_Release(unknown);
 
-    /* AddViewport(NULL): Segfault */
     hr = IDirect3DDevice_DeleteViewport(device, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3D_CreateViewport(d3d, &another_vp, NULL);
     ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x.\n", hr);
 
+    /* AddViewport(NULL): Segfault */
     hr = IDirect3DDevice_AddViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
     ref = get_refcount((IUnknown *) viewport);
-    ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+    ok(ref == 2, "Got unexpected refcount %u.\n", ref);
     hr = IDirect3DDevice_AddViewport(device, another_vp);
     ok(SUCCEEDED(hr), "Failed to add viewport to device, hr %#x.\n", hr);
     ref = get_refcount((IUnknown *) another_vp);
-    ok(ref == 2, "IDirect3DViewport refcount is %d\n", ref);
+    ok(ref == 2, "Got unexpected refcount %u.\n", ref);
+
+    memset(&vp, 0, sizeof(vp));
+    vp.dwX = 0;
+    vp.dwY = 0;
+    vp.dwWidth = 640;
+    vp.dwHeight = 480;
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+    vp.dvScaleX = vp.dwWidth / 2.0f;
+    vp.dvScaleY = vp.dwHeight / 2.0f;
+    vp.dvMaxX = 1.0f;
+    vp.dvMaxY = 1.0f;
+    hr = IDirect3DViewport_SetViewport(viewport, &vp);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    vp.dwSize = sizeof(vp);
+    hr = IDirect3DViewport_SetViewport(viewport, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
 
     hr = IDirect3DDevice_DeleteViewport(device, another_vp);
     ok(SUCCEEDED(hr), "Failed to delete viewport from device, hr %#x.\n", hr);
     ref = get_refcount((IUnknown *) another_vp);
-    ok(ref == 1, "IDirect3DViewport refcount is %d\n", ref);
+    ok(ref == 1, "Got unexpected refcount %u.\n", ref);
 
     IDirect3DDevice_Release(device);
     ref = get_refcount((IUnknown *) viewport);
-    ok(ref == 1, "IDirect3DViewport refcount is %d\n", ref);
+    ok(ref == 1, "Got unexpected refcount %u.\n", ref);
+
+    hr = IDirect3DViewport_SetViewport(viewport, &vp);
+    ok(hr == D3DERR_VIEWPORTHASNODEVICE, "Got unexpected hr %#x.\n", hr);
 
     IDirect3DViewport_Release(another_vp);
     IDirect3D_Release(d3d);
