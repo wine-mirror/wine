@@ -299,7 +299,7 @@ static LPWSTR service_get_pipe_name(void)
     RegCloseKey(service_current_key);
     if (ret != ERROR_SUCCESS || type != REG_DWORD)
         return NULL;
-    len = sizeof(format)/sizeof(WCHAR) + 10 /* strlenW("4294967295") */;
+    len = ARRAY_SIZE(format) + 10 /* strlenW("4294967295") */;
     name = heap_alloc(len * sizeof(WCHAR));
     if (!name)
         return NULL;
