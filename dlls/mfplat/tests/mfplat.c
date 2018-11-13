@@ -40,6 +40,7 @@ static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
 static HRESULT (WINAPI *pMFCreateMemoryBuffer)(DWORD max_length, IMFMediaBuffer **buffer);
 
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 DEFINE_GUID(MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 0xa634a91c, 0x822b, 0x41b9, 0xa4, 0x94, 0x4d, 0xe4, 0x64, 0x36, 0x12, 0xb0);
 
@@ -259,6 +260,70 @@ if(0)
     IMFMediaType_Release(mediatype);
 
     MFShutdown();
+}
+
+static void test_MFCreateMediaEvent(void)
+{
+    HRESULT hr;
+    IMFMediaEvent *mediaevent;
+
+    MediaEventType type;
+    GUID extended_type;
+    HRESULT status;
+    PROPVARIANT value;
+
+    PropVariantInit(&value);
+    value.vt = VT_UNKNOWN;
+
+    hr = MFCreateMediaEvent(MEError, &GUID_NULL, E_FAIL, &value, &mediaevent);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    PropVariantClear(&value);
+
+    hr = IMFMediaEvent_GetType(mediaevent, &type);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(type == MEError, "got %#x\n", type);
+
+    hr = IMFMediaEvent_GetExtendedType(mediaevent, &extended_type);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualGUID(&extended_type, &GUID_NULL), "got %s\n",
+       wine_dbgstr_guid(&extended_type));
+
+    hr = IMFMediaEvent_GetStatus(mediaevent, &status);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(status == E_FAIL, "got 0x%08x\n", status);
+
+    PropVariantInit(&value);
+    hr = IMFMediaEvent_GetValue(mediaevent, &value);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(value.vt == VT_UNKNOWN, "got %#x\n", value.vt);
+    PropVariantClear(&value);
+
+    IMFMediaEvent_Release(mediaevent);
+
+    hr = MFCreateMediaEvent(MEUnknown, &DUMMY_GUID1, S_OK, NULL, &mediaevent);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IMFMediaEvent_GetType(mediaevent, &type);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(type == MEUnknown, "got %#x\n", type);
+
+    hr = IMFMediaEvent_GetExtendedType(mediaevent, &extended_type);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualGUID(&extended_type, &DUMMY_GUID1), "got %s\n",
+       wine_dbgstr_guid(&extended_type));
+
+    hr = IMFMediaEvent_GetStatus(mediaevent, &status);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(status == S_OK, "got 0x%08x\n", status);
+
+    PropVariantInit(&value);
+    hr = IMFMediaEvent_GetValue(mediaevent, &value);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(value.vt == VT_EMPTY, "got %#x\n", value.vt);
+    PropVariantClear(&value);
+
+    IMFMediaEvent_Release(mediaevent);
 }
 
 static void test_MFCreateAttributes(void)
@@ -556,6 +621,7 @@ START_TEST(mfplat)
     test_register();
     test_source_resolver();
     test_MFCreateMediaType();
+    test_MFCreateMediaEvent();
     test_MFCreateAttributes();
     test_MFSample();
     test_MFCreateFile();
