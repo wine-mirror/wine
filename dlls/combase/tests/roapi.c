@@ -74,10 +74,10 @@ static void test_ActivationFactories(void)
         return;
     }
 
-    hr = pWindowsCreateString(xmldocumentW, sizeof(xmldocumentW)/sizeof(WCHAR) - 1, &str);
+    hr = pWindowsCreateString(xmldocumentW, ARRAY_SIZE(xmldocumentW) - 1, &str);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    hr = pWindowsCreateString(nonexistW, sizeof(nonexistW)/sizeof(WCHAR) - 1, &str2);
+    hr = pWindowsCreateString(nonexistW, ARRAY_SIZE(nonexistW) - 1, &str2);
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = pRoInitialize(RO_INIT_MULTITHREADED);
