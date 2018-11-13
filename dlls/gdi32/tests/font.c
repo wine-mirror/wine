@@ -1003,10 +1003,10 @@ static void test_bitmap_font_metrics(void)
             memset(&gm, 0, sizeof(gm));
             SetLastError(0xdeadbeef);
             ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
-            todo_wine {
+            todo_wine
             ok(ret == GDI_ERROR, "GetGlyphOutline should fail for a bitmap font\n");
-            ok(GetLastError() == ERROR_CAN_NOT_COMPLETE, "expected ERROR_CAN_NOT_COMPLETE, got %u\n", GetLastError());
-            }
+            ret = GetLastError();
+            ok(ret == ERROR_CAN_NOT_COMPLETE || ret == 0xdeadbeef /* Win10 */, "Unexpected error %d.\n", ret);
 
             bRet = GetTextMetricsA(hdc, &tm);
             ok(bRet, "GetTextMetrics error %d\n", GetLastError());
