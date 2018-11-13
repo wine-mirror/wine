@@ -38,6 +38,7 @@
 #define SWAPCHAIN_FLAG_SHADER_INPUT             0x1
 
 static unsigned int use_adapter_idx;
+static BOOL enable_debug_layer;
 static BOOL use_warp_adapter;
 static BOOL use_mt = TRUE;
 
@@ -1346,6 +1347,9 @@ static ID3D11Device *create_device(const struct device_desc *desc)
         feature_level_count = ARRAY_SIZE(default_feature_level);
     }
 
+    if (enable_debug_layer)
+        flags |= D3D11_CREATE_DEVICE_DEBUG;
+
     if ((adapter = create_adapter()))
     {
         hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, flags,
@@ -2037,7 +2041,7 @@ static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
     check_interface(device, &IID_ID3D10Multithread, TRUE, TRUE); /* Not available on all Windows versions. */
     todo_wine check_interface(device, &IID_ID3D10Device, FALSE, FALSE);
     todo_wine check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
-    check_interface(device, &IID_ID3D11InfoQueue, FALSE, FALSE); /* Non-debug mode. */
+    check_interface(device, &IID_ID3D11InfoQueue, enable_debug_layer, FALSE);
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
     ok(SUCCEEDED(hr), "Device should implement IDXGIDevice.\n");
@@ -28750,7 +28754,9 @@ START_TEST(d3d11)
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
     {
-        if (!strcmp(argv[i], "--warp"))
+        if (!strcmp(argv[i], "--validate"))
+            enable_debug_layer = TRUE;
+        else if (!strcmp(argv[i], "--warp"))
             use_warp_adapter = TRUE;
         else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
             use_adapter_idx = atoi(argv[++i]);
