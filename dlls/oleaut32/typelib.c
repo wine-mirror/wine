@@ -6647,7 +6647,7 @@ DispCallFunc(
     VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult)
 {
 #ifdef __i386__
-    int argspos, stack_offset;
+    int argspos = 0, stack_offset;
     void *func;
     UINT i;
     DWORD *args;
@@ -6665,8 +6665,6 @@ DispCallFunc(
     /* maximum size for an argument is sizeof(VARIANT) */
     args = heap_alloc(sizeof(VARIANT) * cActuals + sizeof(DWORD) * 2 );
 
-    /* start at 1 in case we need to pass a pointer to the return value as arg 0 */
-    argspos = 1;
     if (pvInstance)
     {
         const FARPROC *vtable = *(FARPROC **)pvInstance;
@@ -6674,6 +6672,20 @@ DispCallFunc(
         args[argspos++] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
     }
     else func = (void *)oVft;
+
+    switch (vtReturn)
+    {
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        args[argspos++] = (DWORD)pvargResult;  /* arg 0 is a pointer to the result */
+        break;
+    case VT_HRESULT:
+        WARN("invalid return type %u\n", vtReturn);
+        heap_free( args );
+        return E_INVALIDARG;
+    default:
+        break;
+    }
 
     for (i = 0; i < cActuals; i++)
     {
@@ -6709,31 +6721,24 @@ DispCallFunc(
     switch (vtReturn)
     {
     case VT_EMPTY:
-        call_method( func, argspos - 1, args + 1, &stack_offset );
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        call_method( func, argspos, args, &stack_offset );
         break;
     case VT_R4:
-        V_R4(pvargResult) = call_double_method( func, argspos - 1, args + 1, &stack_offset );
+        V_R4(pvargResult) = call_double_method( func, argspos, args, &stack_offset );
         break;
     case VT_R8:
     case VT_DATE:
-        V_R8(pvargResult) = call_double_method( func, argspos - 1, args + 1, &stack_offset );
-        break;
-    case VT_DECIMAL:
-    case VT_VARIANT:
-        args[0] = (DWORD)pvargResult;  /* arg 0 is a pointer to the result */
-        call_method( func, argspos, args, &stack_offset );
+        V_R8(pvargResult) = call_double_method( func, argspos, args, &stack_offset );
         break;
     case VT_I8:
     case VT_UI8:
     case VT_CY:
-        V_UI8(pvargResult) = call_method( func, argspos - 1, args + 1, &stack_offset );
+        V_UI8(pvargResult) = call_method( func, argspos, args, &stack_offset );
         break;
-    case VT_HRESULT:
-        WARN("invalid return type %u\n", vtReturn);
-        heap_free( args );
-        return E_INVALIDARG;
     default:
-        V_UI4(pvargResult) = call_method( func, argspos - 1, args + 1, &stack_offset );
+        V_UI4(pvargResult) = call_method( func, argspos, args, &stack_offset );
         break;
     }
     heap_free( args );
@@ -6747,7 +6752,7 @@ DispCallFunc(
     return S_OK;
 
 #elif defined(__x86_64__)
-    int argspos;
+    int argspos = 0;
     UINT i;
     DWORD_PTR *args;
     void *func;
@@ -6765,8 +6770,6 @@ DispCallFunc(
     /* maximum size for an argument is sizeof(DWORD_PTR) */
     args = heap_alloc( sizeof(DWORD_PTR) * (cActuals + 2) );
 
-    /* start at 1 in case we need to pass a pointer to the return value as arg 0 */
-    argspos = 1;
     if (pvInstance)
     {
         const FARPROC *vtable = *(FARPROC **)pvInstance;
@@ -6774,6 +6777,20 @@ DispCallFunc(
         args[argspos++] = (DWORD_PTR)pvInstance; /* the This pointer is always the first parameter */
     }
     else func = (void *)oVft;
+
+    switch (vtReturn)
+    {
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        args[argspos++] = (DWORD_PTR)pvargResult;  /* arg 0 is a pointer to the result */
+        break;
+    case VT_HRESULT:
+        WARN("invalid return type %u\n", vtReturn);
+        heap_free( args );
+        return E_INVALIDARG;
+    default:
+        break;
+    }
 
     for (i = 0; i < cActuals; i++)
     {
@@ -6798,23 +6815,18 @@ DispCallFunc(
     switch (vtReturn)
     {
     case VT_R4:
-        V_R4(pvargResult) = call_double_method( func, argspos - 1, args + 1 );
+        V_R4(pvargResult) = call_double_method( func, argspos, args );
         break;
     case VT_R8:
     case VT_DATE:
-        V_R8(pvargResult) = call_double_method( func, argspos - 1, args + 1 );
+        V_R8(pvargResult) = call_double_method( func, argspos, args );
         break;
     case VT_DECIMAL:
     case VT_VARIANT:
-        args[0] = (DWORD_PTR)pvargResult;  /* arg 0 is a pointer to the result */
         call_method( func, argspos, args );
         break;
-    case VT_HRESULT:
-        WARN("invalid return type %u\n", vtReturn);
-        heap_free( args );
-        return E_INVALIDARG;
     default:
-        V_UI8(pvargResult) = call_method( func, argspos - 1, args + 1 );
+        V_UI8(pvargResult) = call_method( func, argspos, args );
         break;
     }
     heap_free( args );
@@ -6854,6 +6866,14 @@ DispCallFunc(
     argspos = 0;
     rcount = 0;
 
+    if (pvInstance)
+    {
+        const FARPROC *vtable = *(FARPROC **)pvInstance;
+        func = vtable[oVft/sizeof(void *)];
+        regs.r[rcount++] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
+    }
+    else func = (void *)oVft;
+
     /* Determine if we need to pass a pointer for the return value as arg 0.  If so, do that */
     /*  first as it will need to be in the 'r' registers:                                    */
     switch (vtReturn)
@@ -6868,14 +6888,6 @@ DispCallFunc(
     default:                    /* And all others are in 'r', 's', or 'd' registers or have no return value */
         break;
     }
-
-    if (pvInstance)
-    {
-        const FARPROC *vtable = *(FARPROC **)pvInstance;
-        func = vtable[oVft/sizeof(void *)];
-        regs.r[rcount++] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
-    }
-    else func = (void *)oVft;
 
     /* maximum size for an argument is sizeof(VARIANT).  Also allow for return pointer and stack alignment. */
     args = heap_alloc( sizeof(VARIANT) * cActuals + sizeof(DWORD) * 4 );
