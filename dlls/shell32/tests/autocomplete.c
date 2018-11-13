@@ -510,12 +510,14 @@ static void test_custom_source(void)
     static WCHAR str_alpha2[] = {'t','e','s','t','2',0};
     static WCHAR str_beta[] = {'a','u','t','o',' ','c','o','m','p','l','e','t','e',0};
     static WCHAR str_au[] = {'a','u',0};
+    static WCHAR str_aut[] = {'a','u','t',0};
     static WCHAR *suggestions[] = { str_alpha, str_alpha2, str_beta };
     struct string_enumerator *obj;
     IUnknown *enumerator;
     IAutoComplete2 *autocomplete;
     IAutoCompleteDropDown *acdropdown;
     HWND hwnd_edit;
+    DWORD flags = 0;
     WCHAR buffer[20];
     HRESULT hr;
 
@@ -586,6 +588,22 @@ static void test_custom_source(void)
     ok(lstrcmpW(str_beta, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_beta), wine_dbgstr_w(buffer));
     ok(obj->num_resets == 2, "Expected 2 resets, got %u\n", obj->num_resets);
     /* end of hijacks */
+
+    hr = IAutoCompleteDropDown_GetDropDownStatus(acdropdown, &flags, NULL);
+    ok(hr == S_OK, "IAutoCompleteDropDown_GetDropDownStatus failed: %x\n", hr);
+    ok(flags & ACDD_VISIBLE, "AutoComplete DropDown should be visible\n");
+    SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)str_au);
+    dispatch_messages();
+    hr = IAutoCompleteDropDown_GetDropDownStatus(acdropdown, &flags, NULL);
+    ok(hr == S_OK, "IAutoCompleteDropDown_GetDropDownStatus failed: %x\n", hr);
+    ok(!(flags & ACDD_VISIBLE), "AutoComplete DropDown should have been hidden\n");
+    SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)str_aut);
+    dispatch_messages();
+    hr = IAutoCompleteDropDown_GetDropDownStatus(acdropdown, &flags, NULL);
+    ok(hr == S_OK, "IAutoCompleteDropDown_GetDropDownStatus failed: %x\n", hr);
+    ok(!(flags & ACDD_VISIBLE), "AutoComplete DropDown should be hidden\n");
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str_aut, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str_aut), wine_dbgstr_w(buffer));
 
     test_aclist_expand(hwnd_edit, enumerator);
     obj->num_resets = 0;
