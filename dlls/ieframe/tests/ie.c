@@ -261,9 +261,6 @@ static void test_InternetExplorer(void)
         return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
-#ifndef __i386__
-todo_wine
-#endif
     ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
     if (hres != S_OK) {
         IUnknown_Release(unk);
