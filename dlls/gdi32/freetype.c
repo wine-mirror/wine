@@ -6801,6 +6801,37 @@ static unsigned int get_bezier_glyph_outline(FT_Outline *outline, unsigned int b
     return needed;
 }
 
+static FT_Int get_load_flags( UINT format )
+{
+    FT_Int load_flags = FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
+
+    if (format & GGO_UNHINTED)
+        return load_flags | FT_LOAD_NO_HINTING;
+
+    switch (format & ~GGO_GLYPH_INDEX)
+    {
+    case GGO_BITMAP:
+        load_flags |= FT_LOAD_TARGET_MONO;
+        break;
+    case GGO_GRAY2_BITMAP:
+    case GGO_GRAY4_BITMAP:
+    case GGO_GRAY8_BITMAP:
+    case WINE_GGO_GRAY16_BITMAP:
+        load_flags |= FT_LOAD_TARGET_NORMAL;
+        break;
+    case WINE_GGO_HRGB_BITMAP:
+    case WINE_GGO_HBGR_BITMAP:
+        load_flags |= FT_LOAD_TARGET_LCD;
+        break;
+    case WINE_GGO_VRGB_BITMAP:
+    case WINE_GGO_VBGR_BITMAP:
+        load_flags |= FT_LOAD_TARGET_LCD_V;
+        break;
+    }
+
+    return load_flags;
+}
+
 static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 
 static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
@@ -6820,7 +6851,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     FT_Vector adv;
     INT origin_x = 0, origin_y = 0;
     FT_Angle angle = 0;
-    FT_Int load_flags = FT_LOAD_DEFAULT | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
+    FT_Int load_flags = get_load_flags(format);
     double widthRatio = 1.0;
     FT_Matrix transMat = identityMat;
     FT_Matrix transMatUnrotated;
@@ -6859,10 +6890,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             tategaki = check_unicode_tategaki(glyph);
     }
 
-    if(format & GGO_UNHINTED) {
-        load_flags |= FT_LOAD_NO_HINTING;
-        format &= ~GGO_UNHINTED;
-    }
+    format &= ~GGO_UNHINTED;
 
     if(original_index >= font->gmsize * GM_BLOCK_SIZE) {
 	font->gmsize = (original_index / GM_BLOCK_SIZE + 1);
