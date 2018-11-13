@@ -1382,6 +1382,7 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_POGO:        str = "POGO";       break;
     case IMAGE_DEBUG_TYPE_ILTCG:       str = "ILTCG";      break;
     case IMAGE_DEBUG_TYPE_MPX:         str = "MPX";        break;
+    case IMAGE_DEBUG_TYPE_REPRO:       str = "REPRO";      break;
     }
     printf("  Type:              %u (%s)\n", idd->Type, str);
     printf("  SizeOfData:        %u\n", idd->SizeOfData);
