@@ -1806,9 +1806,7 @@ static void test_set_count( void )
 
         SetLastError( 0xdeadbeef );
         ret = SendMessageA( listbox, LB_SETCOUNT, 100, 0 );
-    todo_wine_if(i == 0)
         ok( ret == LB_ERR, "expected %d, got %d\n", LB_ERR, ret );
-    todo_wine_if(i == 1)
         ok( GetLastError() == 0xdeadbeef, "Unexpected error %d.\n", GetLastError() );
 
         DestroyWindow( listbox );
@@ -2341,7 +2339,6 @@ todo_wine
         style = GetWindowLongA(listbox, GWL_STYLE);
         ok((style & invalid_styles[i]) == invalid_styles[i], "%u: unexpected window styles %#x.\n", i, style);
         ret = SendMessageA(listbox, LB_SETCOUNT, 100, 0);
-    todo_wine_if(i == 1 || i == 4)
         ok(ret == LB_ERR, "%u: unexpected return value %d.\n", i, ret);
         DestroyWindow(listbox);
     }
