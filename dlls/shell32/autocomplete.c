@@ -627,6 +627,9 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                                           ? autoappend_flag_yes : autoappend_flag_no);
             return ret;
         case WM_SETTEXT:
+            if (This->options & ACO_AUTOSUGGEST)
+                hide_listbox(This, This->hwndListBox, TRUE);
+            break;
         case WM_CUT:
         case WM_CLEAR:
         case WM_UNDO:
