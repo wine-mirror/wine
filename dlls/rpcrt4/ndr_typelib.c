@@ -579,7 +579,7 @@ static HRESULT get_param_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int is_in,
     switch (tdesc->vt)
     {
     case VT_VARIANT:
-#ifndef __i386__
+#if !defined(__i386__) && !defined(__arm__)
         *flags |= IsSimpleRef | MustFree;
         break;
 #endif
@@ -608,9 +608,9 @@ static HRESULT get_param_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int is_in,
             *basetype = FC_ENUM32;
             break;
         case TKIND_RECORD:
-#ifdef __i386__
+#if defined(__i386__) || defined(__arm__)
             *flags |= IsByValue | MustFree;
-#elif defined(__x86_64__)
+#else
             if (attr->cbSizeInstance <= 8)
                 *flags |= IsByValue | MustFree;
             else

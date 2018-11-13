@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- * 
- * TODO: Handle non-i386 architectures
  */
 
 #include "config.h"
@@ -153,6 +151,49 @@ static inline void init_thunk( struct thunk *thunk, unsigned int index )
     *thunk = thunk_template;
     thunk->index = index;
     thunk->call_stubless = call_stubless_func;
+}
+
+#elif defined(__arm__)
+
+extern void call_stubless_func(void);
+__ASM_GLOBAL_FUNC(call_stubless_func,
+                  "push {r0-r3}\n\t"
+                  "mov r2, sp\n\t"              /* stack_top */
+                  "push {fp,lr}\n\t"
+                  "mov fp, sp\n\t"
+                  "ldr r0, [r0]\n\t"            /* This->lpVtbl */
+                  "ldr r0, [r0,#-8]\n\t"        /* MIDL_STUBLESS_PROXY_INFO */
+                  "ldr r1, [r0,#8]\n\t"         /* info->FormatStringOffset */
+                  "ldrh r1, [r1,ip]\n\t"        /* info->FormatStringOffset[index] */
+                  "ldr ip, [r0,#4]\n\t"         /* info->ProcFormatString */
+                  "add r1, ip\n\t"              /* info->ProcFormatString + offset */
+                  "ldr r0, [r0]\n\t"            /* info->pStubDesc */
+#ifdef __SOFTFP__
+                  "mov r3, #0\n\t"
+#else
+                  "vpush {s0-s15}\n\t"          /* store the s0-s15/d0-d7 arguments */
+                  "mov r3, sp\n\t"              /* fpu_stack */
+#endif
+                  "bl " __ASM_NAME("ndr_client_call") "\n\t"
+                  "mov sp, fp\n\t"
+                  "pop {fp,lr}\n\t"
+                  "add sp, #16\n\t"
+                  "bx lr" );
+
+struct thunk
+{
+    DWORD ldr_ip;         /* ldr ip,[pc] */
+    DWORD ldr_pc;         /* ldr pc,[pc] */
+    DWORD index;
+    void *func;
+};
+
+static inline void init_thunk( struct thunk *thunk, unsigned int index )
+{
+    thunk->ldr_ip = 0xe59fc000; /* ldr ip,[pc] */
+    thunk->ldr_pc = 0xe59ff000; /* ldr pc,[pc] */
+    thunk->index  = index * sizeof(unsigned short);
+    thunk->func   = call_stubless_func;
 }
 
 #else  /* __i386__ */
