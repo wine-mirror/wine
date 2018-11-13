@@ -167,6 +167,25 @@ typedef struct
 
 static const BYTE opcodes[16] = { 0x48, 0x8b, 0x49, 0x20, 0x48, 0x8b, 0x01,
                                   0xff, 0xa0, 0, 0, 0, 0, 0x48, 0x8d, 0x36 };
+#elif defined(__arm__)
+
+static const DWORD opcodes[] =
+{
+    0xe52d4004,    /* push {r4} */
+    0xe5900010,    /* ldr r0, [r0, #16] */
+    0xe5904000,    /* ldr r4, [r0] */
+    0xe59fc008,    /* ldr ip, [pc, #8] */
+    0xe08cc004,    /* add ip, ip, r4 */
+    0xe49d4004,    /* pop {r4} */
+    0xe59cf000     /* ldr pc, [ip] */
+};
+
+typedef struct
+{
+    DWORD opcodes[ARRAY_SIZE(opcodes)];
+    DWORD offset;
+} vtbl_method_t;
+
 #else
 
 #warning You must implement delegated proxies/stubs for your CPU
