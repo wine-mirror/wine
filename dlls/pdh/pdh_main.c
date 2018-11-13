@@ -1084,6 +1084,18 @@ PDH_STATUS WINAPI PdhValidatePathW( LPCWSTR path )
 }
 
 /***********************************************************************
+ *              PdhVbAddCounter   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhVbAddCounter( PDH_HQUERY query, LPCSTR path, PDH_HCOUNTER *counter )
+{
+    FIXME("%p, %s, %p: stub!\n", query, debugstr_a(path), counter);
+
+    if (!path) return PDH_INVALID_ARGUMENT;
+
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *              PdhValidatePathExA   (PDH.@)
  */
 PDH_STATUS WINAPI PdhValidatePathExA( PDH_HLOG source, LPCSTR path )
