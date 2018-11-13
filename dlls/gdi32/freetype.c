@@ -8116,8 +8116,30 @@ static UINT freetype_GetOutlineTextMetrics( PHYSDEV dev, UINT cbSize, OUTLINETEX
 
 static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
 {
+    const struct list *face_list;
+    Face *child_face = NULL, *best_face = NULL;
+    UINT penalty = 0, new_penalty = 0;
+    BOOL bold, italic, bd, it;
+
+    italic = font->font_desc.lf.lfItalic ? TRUE : FALSE;
+    bold = font->font_desc.lf.lfWeight > FW_MEDIUM ? TRUE : FALSE;
+
+    face_list = get_face_list_from_family( child->face->family );
+    LIST_FOR_EACH_ENTRY( child_face, face_list, Face, entry )
+    {
+        it = child_face->ntmFlags & NTM_ITALIC ? TRUE : FALSE;
+        bd = child_face->ntmFlags & NTM_BOLD ? TRUE : FALSE;
+        new_penalty = ( it ^ italic ) + ( bd ^ bold );
+        if (!best_face || new_penalty < penalty)
+        {
+            penalty = new_penalty;
+            best_face = child_face;
+        }
+    }
+    child_face = best_face ? best_face : child->face;
+
     child->font = alloc_font();
-    child->font->ft_face = OpenFontFace(child->font, child->face, 0, -font->ppem);
+    child->font->ft_face = OpenFontFace( child->font, child_face, 0, -font->ppem );
     if(!child->font->ft_face)
     {
         free_font(child->font);
@@ -8125,11 +8147,13 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
         return FALSE;
     }
 
+    child->font->fake_italic = italic && !( child_face->ntmFlags & NTM_ITALIC );
+    child->font->fake_bold = bold && !( child_face->ntmFlags & NTM_BOLD );
     child->font->font_desc = font->font_desc;
-    child->font->ntmFlags = child->face->ntmFlags;
+    child->font->ntmFlags = child_face->ntmFlags;
     child->font->orientation = font->orientation;
     child->font->scale_y = font->scale_y;
-    child->font->name = strdupW(child->face->family->FamilyName);
+    child->font->name = strdupW( child_face->family->FamilyName );
     child->font->base_font = font;
     TRACE("created child font %p for base %p\n", child->font, font);
     return TRUE;
