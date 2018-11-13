@@ -1,12 +1,13 @@
-The Wine maintenance release 3.0.3 is now available.
+The Wine maintenance release 3.0.4 is now available.
 
 What's new in this release (see below for details):
+  - Added a lot of icons in Shell32
   - Various bug fixes
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/3.0/wine-3.0.3.tar.xz
-  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0.3.tar.xz
+  https://dl.winehq.org/wine/source/3.0/wine-3.0.4.tar.xz
+  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0.4.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,202 +23,292 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 3.0.3 (total 52):
+Bugs fixed in 3.0.4 (total 47):
 
-  18164  dlls/iphlpapi/ifenum.c: compiler warnings on NetBSD
-  18734  DlgDirList(DDL_DRIVES|DDL_DIRECTORY) on 16-bits displays files on listbox in Windows but not Wine.
-  21404  winedbg does not support fixed host:port parameter
-  24374  Driller crashes in process PE entry point due to Wine's mis-align workaround for 32-bit entry point asm wrapper (MoleBox Ultra v4.x)
-  24641  ProPresenter 4.x (.NET 3.5 WPF app) fails on startup (devenum CreateInstance() doesn't support IID_IUnknown)
-  27497  Regedit mangles registry keys containing embedded NULLs
-  30713  Microsoft Visual C++ 64-bit redistributables get incorrectly installed into SysWOW64 (system directory for 32-bit files) when run under 64-bit Wine
-  32907  AMMYY Admin v3.0 crashes at startup in Win7 mode ('NtSetInformationToken' needs to support 'TokenSessionId')
-  34910  WinLaunch 0.4.x (OSX Style free Launcher) complains about missing "%USERPROFILE%\\Application Data\\Microsoft\\Windows\\Themes\\" directory
-  35928  Crash handlers/debuggers fail to display user-interface when invoked for crashing (non-interactive) service processes (inherited Wine service window station/desktop)
-  38849  valgrind shows an uninitialized variable in programs/cmd/tests/batch.c:WCMD_assoc
-  38886  AArch64 platforms: ABI Problems wrt varargs (needs arm64 specific __builtin_ms_va_list)
-  39078  Visual Pinball 8.x, 9.x, 10.x crash on exit after creating a new table, needs support for VBScript IActiveScriptDebug
-  40271  Can't start UPlay: "Connection Lost" error
-  40694  Invalid behavior of "C: && echo haha" or "C: & echo haha"
-  40742  cmd.exe: buffer overflow while parsing qualifiers
-  42304  Caladrius Blaze, Raiden IV: Overkill show black screen on title menu (needs native vcrun2013)
-  42599  Max Payne 3 (Steam) crashes in DX9 mode
-  42602  ::CompareItem(LPCOMPAREITEMSTRUCT lpCompareItemStruct) bad sort compared to Windows
-  42669  SolveigMM Video Splitter Business Edition v6.1: Crashes inside gdi32.GetCharacterPlacementW
-  43300  wchar.h missing wmemchr, wmemcmp, wmemcpy, wmemmove, and wmemset
-  44001  Empire of the Ants (french version "les fourmis") - game crashed
-  44334  'start /W "" notepad' does not wait as on native.
-  44399  WickrMe 4.19.7: Crashes due to stub combase.RoGetActivationFactory
-  44845  Bankperfect plugin installater Echéancier hangs during install
-  44895  League Of Legends: Unable to log in if behind OpenWRT based router
-  44952  cmd.exe skips statements after if statement inside for loop
-  44953  Adobe Premiere Elements 14 (trial) crashes inside winmm.dll
-  44976  ConEmu-Maximus5 Windows console emulator causes crash of builtin 'wineconsole.exe' (division by zero)
-  45051  cmd.exe for loop does not resolve wildcards with subdirectory
-  45067  UNORM/SNORM immediate constants not supported for UAV stores (Claybook,  Just Cause 3)
-  45078  UFOHD2 crashes inside devenum
-  45081  DsEnumerateDomainTrusts stubbed without A/W suffix
-  45118  Microsoft Windows PowerShell 6.x reports 'PowerShell Gallery is currently unavailable.' (WinHttpSetOption returns incorrect lasterror on unsupported options)
-  45143  Neoncron 2 Launcher crashes embedding IE browser process when clicking bottom menu items
-  45170  Cygwin/MSYS2 needs EXDEV error code mapped to STATUS_NOT_SAME_DEVICE (rename of cross-device links)
-  45179  iTunes 12.x installer freezes at the final step
-  45220  Regression: Hearthstone-Deck-Tracker stoped working after wine-2.21
-  45243  Wrong cast in some HANDLE_MSG_WM_* macros produces errors when compiling with wineg++
-  45274  Multiple applications crash on unimplemented function msvcp140.dll.?_Syserror_map@std@@YAPEBDH@Z (Native Instruments Traktor Pro 2)
-  45299  Adobe flash player online installer fails the download
-  45317  updating wine mono does not change version in uninstaller.exe
-  45333  Add diagnostic 'mscoree.dll.CorIsLatestSvc' stub (NGEN service) to hint at broken Microsoft .NET Frameworks installation (Wine-Mono not uninstalled and/or 'mscoree.dll' placeholders not removed prior install)
-  45359  SHGetKnownFolderPath doesn't handle flag KF_FLAG_DONT_UNEXPAND
-  45378  vSphere 5.5 client 'hcmon.sys' driver crashes on unimplemented function ntoskrnl.exe.IoUnregisterPlugPlayNotification
-  45387  arm64_map_dwarf_register: Don't know how to map register (64-66)
-  45393  TextureCookerService.exe (part of ArcGIS Desktop 10.6) needs api-ms-win-crt-stdio-l1-1-0.dll.gets_s
-  45394  Reinstalling ArcGIS Desktop 10.6 calls unimplemented function msvcr120.dll._SetWinRTOutOfMemoryExceptionCallback
-  45403  dwarf2_parse_variable(): Assertion `subpgm->func' failed
-  45428  Crash Bandicoot N. Sane Trilogy (Steam) crashes while entering main menu in ntdll.NtGetContextThread() with NULL context
-  45439  Visual Basic setup toolkit fails to run if path contains a voiced Katakana character.
-  45445  1C:Enterprise 8 platform doesn't install
+  20961  RegEditX 2.x/3.x reports 'Internal error: could not find RegEdit window' on startup (Wine's builtin 'regedit.exe' needs to provide 'RegEdit_RegEdit' window class name)
+  22255  Total Commander: Deleting the 1st or 2nd character in an edit box deletes all of them
+  22333  Total Commander: Application freezes when the current directory field is editable, and you right-click a regular file and click Properties
+  30185  SuperPower 2 demo crashes on launch
+  30487  Add icons for 'My Network Places', 'My favorites'
+  36884  Drakensang: The Dark Eye demo crashes on startup (needs d3dx9_36.dll.D3DXCreateTeapot implementation)
+  37275  Chess Position Trainer 5 (.NET 4.0 app) wants gdiplus.GdipCreateAdjustableArrowCap implementation
+  37834  RtlSetCurrentDirectory_U prepends "UNC\" for network paths; the resulting path is invalid
+  39906  ODB++ Viewer fails to install due to improper bat file handling (quoting or delimiting problem)
+  40598  Warframe 'launcher.exe' reports 'update failed' ('InternetCrackUrlW' must resize buffer when URL canonicalization fails due to insufficient buffer)
+  41652  Uplay cannot connect/login to Server
+  42470  Frequent critical section timeouts in winetricks dotnet46
+  42577  Far manager: needs virtdisk.dll.GetStorageDependencyInformation
+  42710  Wechat can not send file to friend
+  42870  CurrentBuild registry value is missing
+  43036  SetNamedPipeHandleState returns ERROR_ACCESS_DENIED when setting PIPE_NOWAIT
+  43125  Device reports coming in too fast
+  43488  Bluestacks crashes in ITextService::TxGetVScroll()
+  44369  cmd's %0 path variables (e.g. %~dp0) wrong inside subroutine call
+  44489  Zwei: The Arges Adventure can't detect installed Indeo 5 codec
+  44490  Zwei: The Arges Adventure videos play distorted (Indeo 5 encoded)
+  44981  Xenserver console and Vmware management console (client) v5.5 installer fails on 'hcmon' driver service ('EventLog\\System' needs 'Sources' registry key present for WinVer < Windows 7)
+  45167  Acronis Disk Director 12 installer fails: action L"_USRCUSTACT_MsiFltSrvInstall_fltsrv_component" returned 1603 (setupapi lasterror leakage)
+  45199  Many applications and games fail to start/crash after compiling wine with gcc 8.1.0 and -O2 (GOT/PIC register load code now emitted at function entry, missing hotpatch signatures)
+  45372  Resident Evil 7 requires mfplat.dll.MFCreateMFByteStreamOnStream to be implemented
+  45478  World of Warcraft: graphical artifacts since 8.0 (BfA)
+  45495  Toontown Corporate Clash: fails to launch
+  45521  64-bit Sentinel HASP hardlock.sys kernel driver crashes due ntoskrnl emulate_instruction not handling 'cli' and 'sti'
+  45529  Custom color scheme applied but wine not respecting current text color of scheme on window columns and statusbar.
+  45530  No$Gba crashes with pulseaudio assertion in waveOutOpen
+  45535  Rekordbox 5.3.0 terminates with the message "Unexpected application error" (dwrite:dwritetextlayout_Draw out-of-bounds access on empty clustermetrics after failure to resolve layout fonts)
+  45552  Kolab E14 Client installation fails
+  45602  Wargaming Game Center needs msvcp140.dll._Set_last_write_time
+  45603  Total War:Arena needs POWRPROF.dll.PowerEnumerate
+  45617  Just Dance 2017: Unimplemented function mfplat.dll.MFCreateSample
+  45622  Overwatch crashes when trying to save highlights (needs mfplat.MFTRegisterLocal implementation)
+  45644  chromium 64-bit sandbox >=win10 needs UpdateProcThreadAttribute to handle  PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY
+  45715  Just Dance 2017: Unimplemented function mfplat.dll.MFCreateMemoryBuffer
+  45722  cmd for loop doesn't work with tokens and delims
+  45729  cmd's REM evaluates |
+  45731  cmd for loops sensitive to whitespace
+  45770  WMP9 crashes with unimplemented function pidgen.dll.PIDGenSimpW
+  45784  Bethesda Launcher Updater crashes on unimplemented function msvcp110.xtime_get
+  45785  Bethesda Launcher Updater crashes on unimplemented function msvcp110._Xtime_diff_to_millis2
+  45786  GTA downgrader (.NET program latest.exe) crashes: "Can't find matching timezone information" ("America/Sao_Paulo")
+  45821  Metasploit Console won't start due to missing registry value HKLM\System\CurrentControlSet\Services\Tcpip\Parameters\DataBasePath
+  46106  Stable: ARM64 build broken with gcc
 
 ----------------------------------------------------------------
 
-Changes since 3.0.2:
+Changes since 3.0.3:
 
-Akihiro Sagawa (2):
-      kernel32/tests: Add more LCMapString tests.
-      kernel32: Fix LCMapString(LCMAP_HALFWIDTH) in some cases.
+Alex Henrie (116):
+      shell32: Rename IDI_SHELL_DOCUMENT to IDI_SHELL_FILE.
+      shell32: Add document icon.
+      shell32: Add window icon.
+      shell32: Add 512k and 314k floppy drive icons.
+      shell32: Add Internet icon.
+      shell32: Add network icon.
+      shell32: Switch the "My Network Places" icon to the network icon.
+      shell32: Add "Computers Near Me" icon.
+      shell32: Add recent documents icon.
+      shell32: Add settings icon.
+      shell32: Remove alpha channel from 4-bit and 8-bit Internet icons.
+      shell32: Remove alpha channel from 4-bit and 8-bit network icons.
+      shell32: Add search icon.
+      shell32: Add help icon.
+      shell32: Add run icon.
+      shell32: Add sleep icon.
+      shell32: Add eject icon.
+      shell32: Add shutdown icon.
+      shell32: Add "trash full" icon.
+      shell32: Add modem folder icon.
+      shell32: Add application folder icon.
+      shell32: Add printer folder icon.
+      shell32: Add font folder icon.
+      shell32: Scale SVG properly to create 48x48 sleep icons.
+      shell32: Scale SVG properly to create 48x48 shutdown icons.
+      shell32: Add start menu icon.
+      shell32: Add optical disc icon.
+      shell32: Add music CD icon.
+      shell32: Add tree icon.
+      shell32: Add remote folder icon.
+      shell32: Add favorites icon.
+      shell32: Add logoff icon.
+      shell32: Add folder search icon.
+      shell32: Add update icon.
+      shell32: Add rights icon.
+      shell32: Add shutdown confirmation icon.
+      shell32: Add blank icons.
+      shell32: Add unknown drive icon.
+      shell32: Add files icon.
+      shell32: Add file search icon.
+      shell32: Add system search icon.
+      shell32: Add options icon.
+      shell32: Add XP printer folder icon.
+      shell32: Add "add printer" icon.
+      shell32: Add remote printer icon.
+      shell32: Add "print to file" icon.
+      shell32: Add "trash folder" icon.
+      shell32: Add "trash mixed" icon.
+      shell32: Add file overwrite icon.
+      shell32: Add folder overwrite icon.
+      shell32: Add rename icon.
+      shell32: Add folder rename icon.
+      shell32: Add install icon.
+      shell32: Add config file icon.
+      shell32: Add text file icon.
+      shell32: Add batch file icon.
+      shell32: Add library file icon.
+      shell32: Add system font icon.
+      shell32: Add TrueType font icon.
+      shell32: Add PostScript font icon.
+      shell32: Add second run icon.
+      shell32: Add copy icon.
+      shell32: Add backup icon.
+      shell32: Add disk check icon.
+      shell32: Add defragment icon.
+      shell32: Add treeview icon.
+      shell32: Add network folder icon.
+      shell32: Add checklist folder icon.
+      shell32: Add network connections icon.
+      shell32: Add web folder icons.
+      shell32: Add visual settings icon.
+      shell32: Add remote connection icon.
+      shell32: Add window-on-monitor and desktop-on-monitor icons.
+      shell32: Add demo window icons.
+      shell32: Add one-click-open and two-click-open icons.
+      shell32: Add remaining recycle bin icons.
+      shell32: Rename icon 48 from "rights" to "security".
+      shell32: Add users icon and passwords icon.
+      shell32: Add fax machine icons.
+      shell32: Add "restricted" icon.
+      shell32: Add remaining folder icons.
+      shell32: Add "power off" icon.
+      shell32: Rename icon 12 from "cdrom" to "optical drive".
+      shell32: Add remaining optical disc icons.
+      shell32: Add documents icon.
+      shell32: Add video file icon.
+      shell32: Add audio file icon.
+      shell32: Rename floppy.svg to disk_drive.svg.
+      shell32: Add card reader icon.
+      shell32: Add zip drive icon.
+      shell32: Add download icons.
+      shell32: Add removable disk icons.
+      shell32: Add MSN icon.
+      shell32: Add delete icon.
+      shell32: Add move icon.
+      shell32: Add upload icon.
+      shell32: Add print icon.
+      shell32: Add play icon.
+      shell32: Add image file icon.
+      shell32: Add multimedia file icon.
+      shell32: Add users icon.
+      shell32: Add remaining Internet icons.
+      shell32: Add remaining printer icons.
+      shell32: Add remaining help icons.
+      shell32: Add XP install icon.
+      shell32: Add remaining search icons.
+      shell32: Add Jaz drive icon.
+      shell32: Rename icon 137 from "options" to "control panel XP".
+      shell32: Add remaining control panel icons.
+      shell32: Add remaining small icons.
+      wine.inf: Add TCP/IP DataBasePath value.
+      kernel32: Add DECLSPEC_HOTPATCH to functions patched by libtcmalloc.
+      ntdll: Add DECLSPEC_HOTPATCH to functions patched by libtcmalloc.
+      oleaut32: Add DECLSPEC_HOTPATCH to functions patched by MS Word 2010.
+      msvcrt: Add DECLSPEC_HOTPATCH to functions patched by libtcmalloc.
+      oleaut32: Add DECLSPEC_HOTPATCH to SysAllocStringByteLen.
 
-Alex Henrie (9):
-      comctl32/listview: Don't invalidate when new style is same as old.
-      include: Add wmemchr to wchar.h.
-      include: Add wmemcmp to wchar.h.
-      include: Add wmemcpy to wchar.h.
-      include: Add wmemmove to wchar.h.
-      include: Add wmemset to wchar.h.
-      iphlpapi: Cast caddr_t to char* before doing pointer arithmetic.
-      gdi32: Add DECLSPEC_HOTPATCH to GetDIBits.
-      gdi32: Fix memory leak on error in PATH_WidenPath (Coverity).
+Alexandre Julliard (4):
+      shell32: Move image resources to a resources subdirectory.
+      shell32: Fix some resources ids.
+      winedump: Don't use strncat with source length.
+      widl: Silence a gcc warning.
 
-Alex Villacís Lasso (1):
-      user.exe16: Fix handling of DDL_DRIVES flag in DlgDirList.
-
-Alexandre Julliard (3):
-      winex11: Don't allocate a window surface for off-screen windows.
-      winex11: Support using an ARGB visual as default visual.
-      winex11: Use the client window support also for XComposite child windows.
-
-Alistair Leslie-Hughes (3):
-      msvcrtd: Forward operator_new_dbg to msvcrt.
-      combase/tests: Add RoGetActivationFactory tests.
-      netapi32: Add DsEnumerateDomainTrustsA/W stubs.
-
-André Hentschel (3):
-      dbghelp: Recompute location after fixing it.
-      dbghelp: Map SIMD dwarf registers on ARM64.
-      winedbg: Check for visible window station before displaying crash dialog.
+Alistair Leslie-Hughes (10):
+      powrprof: Added PowerEnumerate stub.
+      d3dx9: Return a mesh in D3DXCreateTeapot().
+      wininet: Always copy the password even if blank.
+      regedit: Don't expand items on initial tree creation.
+      mfplat: Implement MFCreateMFByteStreamOnStream.
+      mfplat: Implement MFCreateMemoryBuffer.
+      mfplat: Forward IMFMediaType to IMFAttributes.
+      mfplat: Implement MFCreateSample.
+      mfplat: Add MFTRegisterLocal stub.
+      mfplat: Correct spec for MFTRegisterLocal.
 
 Austin English (1):
-      winecfg: Recommend against overriding secur32.
+      setupapi: Set LastError on success in SetupInstallFromInfSectionW.
 
-Bernhard Übelacker (1):
-      cmd: Avoid having first parameter to start.exe ignored.
+Chip Davis (1):
+      libwine: Use getsegmentdata(3) on Mac OS to find the end of the __TEXT segment.
 
-Dmitry Timoshkov (4):
-      user32/tests: Add a test for WM_MEASUREITEM when inserting an item to an owner-drawn listbox.
-      user32/tests: Add a message test for an owner-drawn sorted listbox.
-      user32: Fix order of items passed in WM_COMPAREITEM data.
-      user32: Fix the listbox sorting algorithm.
+Dmitry Timoshkov (2):
+      kernel32/tests: Add a test for holding a critical section during process termination.
+      ntdll: Don't allow blocking on a critical section during process termination.
 
-Fabian Maurer (2):
-      wineconsole: When loading settings for an application, respect a 0 in FontSize.
-      wrc: Don't crash when parsing COMBOBOX element without style.
+Fabian Maurer (4):
+      kernel32: Make UpdateProcThreadAttribute handle PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY.
+      cmd: Handle quotes when parsing the folders in the PATH environment variable.
+      ntoskrnl: Emulate sti/cli instructions on x86_64.
+      winmm: Don't crash in waveOutOpen when nSamplesPerSec is 0 and add tests.
 
-Hans Leidekker (4):
-      ws2_32: Enable IP_DONTFRAGMENT by default for SOCK_STREAM sockets.
-      winhttp: Fix invalid option error returned from WinHttpSetOption.
-      winhttp: Store the server certificate context in the request.
-      webservices: Avoid a warning from HeapDestroy.
+Gabriel Ivăncescu (3):
+      ntdll: Properly set the current directory for UNC paths.
+      shell32/autocomplete: Don't crash when there's another AutoComplete object on the same edit control.
+      shell32/autocomplete: Fix handling of Backspace and Delete.
 
-Hugh McMaster (2):
-      regedit/tests: Add tests for values with embedded null characters.
-      regedit: Stop exporting REG_SZ data at the first NUL character.
+Gijs Vermeulen (4):
+      wine.inf: Add "Sources" key.
+      msvcp110: Export _Xtime_diff_to_millis2.
+      include: Add virtdisk.h.
+      msvcp110: Export xtime_get.
 
-Jason Edmeades (5):
-      cmd: Fix issue in WCMD_assoc highlighted by valgrind.
-      cmd: Support "c:<space>" etc when changing drive letters.
-      cmd: Fix subdirectory prefix in for loops.
-      cmd: Expand the storage space for qualifiers.
-      cmd: Fix statements after 'else' inside for loops.
+Henri Verbeet (2):
+      d3d10: Handle D3D10_DRIVER_TYPE_WARP in D3D10CreateDevice().
+      wined3d: Add GPU information for NVIDIA GeForce GT 720.
 
-Johannes Brandstätter (1):
-      ntdll: Check for NULL context in NtGetContextThread.
+Hugh McMaster (1):
+      regedit: Use the correct window class name.
 
-Józef Kucia (4):
-      shell32: Accept more flags in SHGetKnownFolderPath().
-      wined3d: Fix snorm/unorm immediate values for UAV writes.
-      wined3d: Add GPU information for AMD Radeon RX Vega.
-      wined3d: Add GPU information for Intel HD Graphics 630.
+Jacek Caban (2):
+      ntdll: Allow FileAccessInformation to be queried on files without fds.
+      kernel32: Use proper access flags in CreatePipe.
 
-Louis Lenders (4):
-      winmm: Return error in waveOutMessage if either dwParam1 or dwParam2 is null.
-      winmm: Return error in waveInMessage if either dwParam1 or dwParam2 is null.
-      mscoree: Add stub for CorIsLatestSvc to hint user at broken .NET installation.
-      ntoskrnl.exe: Add stub for IoUnregisterPlugPlayNotification.
+Jactry Zeng (2):
+      riched20: Handle NULL in ITextServices::{TxGetHScroll, TxGetVScroll}.
+      ole32: Partially implement OleCreateStaticFromData() for OLERENDER_FORMAT.
 
-Marcos Gutierrez (1):
-      include: Fixed casts in some HANDLE_MSG_WM_* macros.
+Jason Edmeades (6):
+      cmd: for /f fails to launch quoted program plus args.
+      cmd: Correct handling of %~0 for batch call.
+      cmd: Handle whitespace in 'for' argument items.
+      cmd: Handle unechoed rem commands inside a (..) section.
+      cmd: Handle special case tokens=* in for /f.
+      cmd: Handle "for" loop handling of tokens, where * does not follow a number.
 
-Martin Storsjo (1):
-      arm64: Use __builtin_ms_va_list and __attribute__((ms_abi)) on arm64.
+Józef Kucia (1):
+      wined3d: Allow copying between different texture types.
 
-Matej Špindler (1):
-      kernel32: Check for LOCALE_NOUSEROVERRIDE for neutral locales.
+Kai Krakow (1):
+      winebus.sys: Do not print HID report read errors.
 
-Michael Müller (9):
-      include: Add activation.idl with IActivationFactory interface.
-      include/roapi.h: Add further typedefs.
-      combase: Implement RoGetActivationFactory.
-      combase: Implement RoActivateInstance.
-      secur32: Set output buffer size to zero during handshake when no data needs to be sent.
-      ntdll: Return success for TokenSessionId in NtSetInformationToken.
-      dxdiagn: Add several more fields for DisplayDevices.
-      gdi32: Treat lpResults as optional in GetCharacterPlacement.
-      msvcr120: Add stub for _SetWinRTOutOfMemoryExceptionCallback.
+Louis Lenders (1):
+      pidgen: Add stub for PIDGenSimpW.
 
-Nikolay Sivov (2):
-      comctl32/trackbar: Don't update page size if it was explicitly set.
-      comctl32/trackbar: Fix reseting to default page size.
+Marcus Meissner (1):
+      ole32: Read vt into a DWORD, as propvariant->vt is 16 bit (Coverity).
 
-Piotr Caban (5):
-      msvcr80: Add gets_s implementation.
-      include/msvcrt: Add POSIX error codes to errno.h.
-      msvcp110: Add _Syserror_map implementation.
-      msvcp90: Don't set failbit in basic_istream::tellg.
-      msi: Fix condition evaluation when comparing literal and integer.
+Michael Müller (2):
+      virtdisk: Add GetStorageDependencyInformation stub.
+      wininet: Resize buffer when call to InternetCanonicalizeUrlW fails in InternetCrackUrlW.
 
-Qian Hong (1):
-      server: Map EXDEV to STATUS_NOT_SAME_DEVICE.
+Michael Stefaniuc (1):
+      Revert "arm64: Use __builtin_ms_va_list and __attribute__((ms_abi)) on arm64."
 
-Sebastian Lackner (2):
-      shell32: Create Microsoft\Windows\Themes directory during prefix creation.
-      kernel32: Fill stack with meaningful values in call_process_entry mis-align workaround.
+Nikolay Sivov (5):
+      comctl32/header: Fix item text color.
+      comctl32: Fix background and text color for DrawStatusText().
+      dwrite: Avoid possible out-of-bounds cluster metrics access.
+      gdiplus: Partially implement arrow caps.
+      gdiplus: Implement unfilled mode for arrow caps.
 
-Vincent Povirk (3):
-      mscoree: Use upgrade code to find installed Wine Mono version.
-      gdi32: Check for truncated EMF files.
-      gdi32: Check that emf records are within the file.
+Piotr Caban (3):
+      msvcp110: Add _Last_write_time(wchar_t) implementation.
+      msvcp140: Add _Last_write_time implementation.
+      msvcp90: Fix EOF delimiter handling in basic_istream<char>::ignore.
 
-Zebediah Figura (9):
-      winedbg: Add support for starting on a user-supplied port.
-      msi: Disable WoW redirection when installing a 64-bit package.
-      devenum/tests: Test all registered categories.
-      devenum: Check for null pointer in IMoniker_BindToObject().
-      jscript: Avoid crash when calling stringify() with no arguments.
-      advapi32: Correctly translate SERVICE_REQUIRED_PRIVILEGES_INFO to RPC.
-      vbscript: Add stub IActiveScriptDebug interface.
-      devenum: Merge factory.c into devenum_main.c.
-      devenum: Use separate factories for CLSID_SystemDeviceEnum and CLSID_CDeviceMoniker.
+Rodrigo Saboya (1):
+      wine.inf: Updates E. South America Standard Time DST data.
 
-Zhiyi Zhang (1):
-      gdiplus: Fix a memory leak.
+Thomas Faller (1):
+      wine.inf: Set CurrentBuild always to the same value as CurrentBuildNumber.
+
+Zebediah Figura (4):
+      msvfw32: Fix driver enumeration.
+      msvfw32: Set fccType in ICInfo().
+      msvfw32: Reimplement ICGetDisplayFormat().
+      ddraw: Avoid leaking references to the wined3d device.
+
+Zhiyi Zhang (2):
+      crypt32/tests: Add revocation flags tests for CertGetCertificateChain().
+      crypt32: Properly check root certificate in CERT_CHAIN_REVOCATION_CHECK_CHAIN.
 
 --
 Michael Stefaniuc
