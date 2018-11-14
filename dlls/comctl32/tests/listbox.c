@@ -2309,9 +2309,15 @@ static void test_LBS_NODATA(void)
     }
 
     /* More messages that don't work with LBS_NODATA. */
+    ret = SendMessageA(listbox, LB_FINDSTRING, 1, 0);
+    ok(ret == LB_ERR, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(listbox, LB_FINDSTRING, 1, 42);
     ok(ret == LB_ERR, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(listbox, LB_FINDSTRINGEXACT, 1, 0);
+    ok(ret == LB_ERR, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(listbox, LB_FINDSTRINGEXACT, 1, 42);
+    ok(ret == LB_ERR, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(listbox, LB_SELECTSTRING, 1, 0);
     ok(ret == LB_ERR, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(listbox, LB_SELECTSTRING, 1, 42);
     ok(ret == LB_ERR, "Unexpected return value %d.\n", ret);

@@ -880,6 +880,8 @@ static INT LISTBOX_FindString( LB_DESCR *descr, INT start, LPCWSTR str, BOOL exa
     INT i;
     LB_ITEMDATA *item;
 
+    if (descr->style & LBS_NODATA) return LB_ERR;
+
     if (start >= descr->nb_items) start = -1;
     item = descr->items + start + 1;
     if (HAS_STRINGS(descr))
