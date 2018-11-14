@@ -408,9 +408,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
     ARGB startcolor, ARGB endcolor, LinearGradientMode mode, GpWrapMode wrap,
     GpLineGradient **line)
 {
-    GpPointF start, end;
-    GpStatus stat;
-    float far_x, far_y;
+    float angle;
 
     TRACE("(%p, %x, %x, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
           wrap, line);
@@ -418,45 +416,25 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
     if(!line || !rect)
         return InvalidParameter;
 
-    far_x = rect->X + rect->Width;
-    far_y = rect->Y + rect->Height;
-
     switch (mode)
     {
     case LinearGradientModeHorizontal:
-        start.X = min(rect->X, far_x);
-        start.Y = rect->Y;
-        end.X = max(rect->X, far_x);
-        end.Y = rect->Y;
+        angle = 0.0f;
         break;
     case LinearGradientModeVertical:
-        start.X = rect->X;
-        start.Y = min(rect->Y, far_y);
-        end.X = rect->X;
-        end.Y = max(rect->Y, far_y);
+        angle = 90.0f;
         break;
     case LinearGradientModeForwardDiagonal:
-        start.X = min(rect->X, far_x);
-        start.Y = min(rect->Y, far_y);
-        end.X = max(rect->X, far_x);
-        end.Y = max(rect->Y, far_y);
+        angle = 45.0f;
         break;
     case LinearGradientModeBackwardDiagonal:
-        start.X = max(rect->X, far_x);
-        start.Y = min(rect->Y, far_y);
-        end.X = min(rect->X, far_x);
-        end.Y = max(rect->Y, far_y);
+        angle = 135.0f;
         break;
     default:
         return InvalidParameter;
     }
 
-    stat = GdipCreateLineBrush(&start, &end, startcolor, endcolor, wrap, line);
-
-    if (stat == Ok)
-        (*line)->rect = *rect;
-
-    return stat;
+    return GdipCreateLineBrushFromRectWithAngle(rect, startcolor, endcolor, angle, TRUE, wrap, line);
 }
 
 GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,

@@ -764,15 +764,11 @@ static void test_gradientgetrect(void)
 
 #define expectf2(expected, got) ok(fabs(expected - got) < 0.001, "%u: expected %.3f, got %.3f.\n", i, expected, got)
             expectf2(create_from_rect[i].transform[0], elements[0]);
-        todo_wine_if(create_from_rect[i].mode == LinearGradientModeVertical) {
             expectf2(create_from_rect[i].transform[1], elements[1]);
             expectf2(create_from_rect[i].transform[2], elements[2]);
-        }
             expectf2(create_from_rect[i].transform[3], elements[3]);
-        todo_wine_if(create_from_rect[i].mode == LinearGradientModeVertical) {
             expectf2(create_from_rect[i].transform[4], elements[4]);
             expectf2(create_from_rect[i].transform[5], elements[5]);
-        }
 #undef expectf2
         }
 
