@@ -1130,12 +1130,15 @@ static BOOL CSignedMsgData_Sign(CSignedMsgData *msg_data)
     for (i = 0; ret && i < msg_data->info->cSignerInfo; i++)
     {
         HCRYPTHASH hash;
+        DWORD keySpec = msg_data->info->signerKeySpec[i];
 
+        if (!keySpec)
+            keySpec = AT_SIGNATURE;
         if (msg_data->info->rgSignerInfo[i].AuthAttrs.cAttr)
             hash = msg_data->signerHandles[i].authAttrHash;
         else
             hash = msg_data->signerHandles[i].contentHash;
-        ret = CryptSignHashW(hash, AT_SIGNATURE, NULL, 0, NULL,
+        ret = CryptSignHashW(hash, keySpec, NULL, 0, NULL,
          &msg_data->info->rgSignerInfo[i].EncryptedHash.cbData);
         if (ret)
         {
@@ -1144,7 +1147,7 @@ static BOOL CSignedMsgData_Sign(CSignedMsgData *msg_data)
              msg_data->info->rgSignerInfo[i].EncryptedHash.cbData);
             if (msg_data->info->rgSignerInfo[i].EncryptedHash.pbData)
             {
-                ret = CryptSignHashW(hash, AT_SIGNATURE, NULL, 0,
+                ret = CryptSignHashW(hash, keySpec, NULL, 0,
                  msg_data->info->rgSignerInfo[i].EncryptedHash.pbData,
                  &msg_data->info->rgSignerInfo[i].EncryptedHash.cbData);
                 if (ret)
@@ -1194,6 +1197,7 @@ static void CSignedEncodeMsg_Close(HCRYPTMSG hCryptMsg)
     for (i = 0; i < msg->msg_data.info->cSignerInfo; i++)
         CSignerInfo_Free(&msg->msg_data.info->rgSignerInfo[i]);
     CSignedMsgData_CloseHandles(&msg->msg_data);
+    CryptMemFree(msg->msg_data.info->signerKeySpec);
     CryptMemFree(msg->msg_data.info->rgSignerInfo);
     CryptMemFree(msg->msg_data.info);
 }
@@ -1416,6 +1420,9 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
                      msg->msg_data.info->cSignerInfo *
                      sizeof(CMSG_CMS_SIGNER_INFO));
                     ret = CSignedMsgData_AllocateHandles(&msg->msg_data);
+                    msg->msg_data.info->signerKeySpec = CryptMemAlloc(info->cSigners * sizeof(DWORD));
+                    if (!msg->msg_data.info->signerKeySpec)
+                        ret = FALSE;
                     for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
                     {
                         if (info->rgSigners[i].SignerId.dwIdChoice ==
@@ -1432,6 +1439,8 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
                                 CryptReleaseContext(info->rgSigners[i].hCryptProv,
                                  0);
                         }
+                        msg->msg_data.info->signerKeySpec[i] =
+                         info->rgSigners[i].dwKeySpec;
                     }
                 }
                 else

@@ -116,6 +116,7 @@ typedef struct _CRYPT_SIGNED_INFO
     CRYPT_CONTENT_INFO    content;
     DWORD                 cSignerInfo;
     PCMSG_CMS_SIGNER_INFO rgSignerInfo;
+    PDWORD                signerKeySpec;
 } CRYPT_SIGNED_INFO;
 
 BOOL CRYPT_AsnEncodeCMSSignedInfo(CRYPT_SIGNED_INFO *, void *pvData,
