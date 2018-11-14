@@ -43,11 +43,6 @@
 #include "wine/wpp.h"
 #include "header.h"
 
-/* future options to reserve characters for: */
-/* A = ACF input filename */
-/* J = do not search standard include path */
-/* w = select win16/win32 output (?) */
-
 static const char usage[] =
 "Usage: widl [options...] infile.idl\n"
 "   or: widl [options...] --dlldata-only name1 [name2...]\n"
@@ -63,7 +58,7 @@ static const char usage[] =
 "   -H file            Name of header file (default is infile.h)\n"
 "   -I path            Set include search dir to path (multiple -I allowed)\n"
 "   --local-stubs=file Write empty stubs for call_as/local methods to file\n"
-"   -m32, -m64         Set the kind of typelib to build (Win32 or Win64)\n"
+"   -m32, -m64         Set the target architecture (Win32 or Win64)\n"
 "   -N                 Do not preprocess input\n"
 "   --oldnames         Use old naming conventions\n"
 "   -o, --output=NAME  Set the output file name\n"
@@ -81,8 +76,7 @@ static const char usage[] =
 "   -u                 Generate interface identifiers file\n"
 "   -V                 Print version and exit\n"
 "   -W                 Enable pedantic warnings\n"
-"   --win32            Only generate 32-bit code\n"
-"   --win64            Only generate 64-bit code\n"
+"   --win32, --win64   Set the target architecture (Win32 or Win64)\n"
 "   --win32-align n    Set win32 structure alignment to 'n'\n"
 "   --win64-align n    Set win64 structure alignment to 'n'\n"
 "Debug level 'n' is a bitmask with following meaning:\n"
@@ -96,6 +90,20 @@ static const char usage[] =
 
 static const char version_string[] = "Wine IDL Compiler version " PACKAGE_VERSION "\n"
 			"Copyright 2002 Ove Kaaven\n";
+
+#ifdef __i386__
+enum target_cpu target_cpu = CPU_x86;
+#elif defined(__x86_64__)
+enum target_cpu target_cpu = CPU_x86_64;
+#elif defined(__powerpc__)
+enum target_cpu target_cpu = CPU_POWERPC;
+#elif defined(__arm__)
+enum target_cpu target_cpu = CPU_ARM;
+#elif defined(__aarch64__)
+enum target_cpu target_cpu = CPU_ARM64;
+#else
+#error Unsupported CPU
+#endif
 
 int debuglevel = DEBUGLEVEL_NONE;
 int parser_debug, yy_flex_debug;
@@ -113,8 +121,6 @@ int do_idfile = 0;
 int do_dlldata = 0;
 static int no_preprocess = 0;
 int old_names = 0;
-int do_win32 = 1;
-int do_win64 = 1;
 int win32_packing = 8;
 int win64_packing = 8;
 int winrt_mode = 0;
@@ -147,7 +153,6 @@ int line_number = 1;
 static FILE *idfile;
 
 unsigned int pointer_size = 0;
-syskind_t typelib_kind = sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32;
 
 time_t now;
 
@@ -187,6 +192,7 @@ static const struct option long_options[] = {
     { "prefix-client", 1, NULL, PREFIX_CLIENT_OPTION },
     { "prefix-server", 1, NULL, PREFIX_SERVER_OPTION },
     { "robust", 0, NULL, ROBUST_OPTION },
+    { "target", 0, NULL, 'b' },
     { "winrt", 0, NULL, RT_OPTION },
     { "win32", 0, NULL, WIN32_OPTION },
     { "win64", 0, NULL, WIN64_OPTION },
@@ -268,20 +274,24 @@ static void set_target( const char *target )
 {
     static const struct
     {
-        const char *name;
-        syskind_t   kind;
+        const char     *name;
+        enum target_cpu cpu;
     } cpu_names[] =
     {
-        { "i386",    SYS_WIN32 },
-        { "i486",    SYS_WIN32 },
-        { "i586",    SYS_WIN32 },
-        { "i686",    SYS_WIN32 },
-        { "i786",    SYS_WIN32 },
-        { "amd64",   SYS_WIN64 },
-        { "x86_64",  SYS_WIN64 },
-        { "powerpc", SYS_WIN32 },
-        { "arm",     SYS_WIN32 },
-        { "aarch64", SYS_WIN64 }
+        { "i386",    CPU_x86 },
+        { "i486",    CPU_x86 },
+        { "i586",    CPU_x86 },
+        { "i686",    CPU_x86 },
+        { "i786",    CPU_x86 },
+        { "amd64",   CPU_x86_64 },
+        { "x86_64",  CPU_x86_64 },
+        { "powerpc", CPU_POWERPC },
+        { "arm",     CPU_ARM },
+        { "armv5",   CPU_ARM },
+        { "armv6",   CPU_ARM },
+        { "armv7",   CPU_ARM },
+        { "arm64",   CPU_ARM64 },
+        { "aarch64", CPU_ARM64 },
     };
 
     unsigned int i;
@@ -295,7 +305,7 @@ static void set_target( const char *target )
     {
         if (!strcmp( cpu_names[i].name, spec ))
         {
-            typelib_kind = cpu_names[i].kind;
+            target_cpu = cpu_names[i].cpu;
             free( spec );
             return;
         }
@@ -605,12 +615,10 @@ int main(int argc,char *argv[])
       use_abi_namespace = 1;
       break;
     case WIN32_OPTION:
-      do_win32 = 1;
-      do_win64 = 0;
+      pointer_size = 4;
       break;
     case WIN64_OPTION:
-      do_win32 = 0;
-      do_win64 = 1;
+      pointer_size = 8;
       break;
     case WIN32_ALIGN_OPTION:
       win32_packing = strtol(optarg, NULL, 0);
@@ -663,8 +671,8 @@ int main(int argc,char *argv[])
       wpp_add_include_path(optarg);
       break;
     case 'm':
-      if (!strcmp( optarg, "32" )) typelib_kind = SYS_WIN32;
-      else if (!strcmp( optarg, "64" )) typelib_kind = SYS_WIN64;
+      if (!strcmp( optarg, "32" )) pointer_size = 4;
+      else if (!strcmp( optarg, "64" )) pointer_size = 8;
       break;
     case 'N':
       no_preprocess = 1;
@@ -727,6 +735,26 @@ int main(int argc,char *argv[])
 #ifdef DEFAULT_INCLUDE_DIR
   wpp_add_include_path(DEFAULT_INCLUDE_DIR);
 #endif
+
+  switch (target_cpu)
+  {
+  case CPU_x86:
+      if (pointer_size == 8) target_cpu = CPU_x86_64;
+      else pointer_size = 4;
+      break;
+  case CPU_x86_64:
+      if (pointer_size == 4) target_cpu = CPU_x86;
+      else pointer_size = 8;
+      break;
+  case CPU_ARM64:
+      if (pointer_size == 4) error( "Cannot build 32-bit code for this CPU\n" );
+      pointer_size = 8;
+      break;
+  default:
+      if (pointer_size == 8) error( "Cannot build 64-bit code for this CPU\n" );
+      pointer_size = 4;
+      break;
+  }
 
   /* if nothing specified, try to guess output type from the output file name */
   if (output_name && do_everything && !do_header && !do_typelib && !do_proxies &&

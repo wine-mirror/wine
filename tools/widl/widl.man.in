@@ -35,10 +35,12 @@ Set the name of the output file. When generating multiple output
 files, this sets only the base name of the file; the respective output
 files are then named \fIname\fR.h, \fIname\fR_p.c, etc.  If a full
 file name with extension is specified, only that file is generated.
-.IP "\fB-b \fIcpu-manufacturer\fR[\fB-\fIkernel\fR]\fB-\fIos\fR"
+.IP "\fB-b, --target=\fIcpu-manufacturer\fR[\fI-kernel\fR]\fI-os\fR"
 Set the target architecture when cross-compiling. The target
 specification is in the standard autoconf format as returned by
 \fBconfig.sub\fR.
+.IP "\fB-m32, -m64, --win32, --win64\fR"
+Force the target architecture to 32-bit or 64-bit.
 .PP
 .B Header options:
 .IP "\fB-h\fR"
@@ -51,8 +53,6 @@ Use old naming conventions.
 Generate a type library. The default output filename is
 \fIinfile\fB.tlb\fR.  If the output file name ends in \fB.res\fR, a
 binary resource file containing the type library is generated instead.
-.IP "\fB-m32, -m64\fR"
-Generate a Win32 or Win64 type library respectively.
 .PP
 .B UUID file options:
 .IP "\fB-u\fR"
@@ -78,10 +78,6 @@ Prefix to put on the name of server stubs.
 .IP "\fB-s\fR"
 Generate a server stub file. The default output filename is
 \fIinfile\fB_s.c\fR.
-.IP "\fB--win32\fR, \fB--win64\fR"
-Only generate 32-bit or 64-bit code respectively (the default is to
-generate both 32-bit and 64-bit versions into the same destination
-file).
 .PP
 .IP "\fB--winrt\fR"
 Enable Windows Runtime mode.

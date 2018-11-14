@@ -2653,8 +2653,6 @@ int create_msft_typelib(typelib_t *typelib)
     GUID midl_info_guid = {0xde77ba65,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
     char info_string[128];
 
-    pointer_size = (typelib_kind == SYS_WIN64) ? 8 : 4;
-
     msft = xmalloc(sizeof(*msft));
     memset(msft, 0, sizeof(*msft));
     msft->typelib = typelib;
@@ -2662,7 +2660,7 @@ int create_msft_typelib(typelib_t *typelib)
     ctl2_init_header(msft);
     ctl2_init_segdir(msft);
 
-    msft->typelib_header.varflags |= typelib_kind;
+    msft->typelib_header.varflags |= (pointer_size == 8) ? SYS_WIN64 : SYS_WIN32;
 
     /*
      * The following two calls return an offset or -1 if out of memory. We

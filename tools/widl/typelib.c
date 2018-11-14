@@ -169,7 +169,7 @@ unsigned short get_type_vt(type_t *t)
       else
         return VT_I8;
     case TYPE_BASIC_INT3264:
-      if (typelib_kind == SYS_WIN64)
+      if (pointer_size == 8)
       {
         if (type_basic_get_sign(t) > 0)
           return VT_UI8;

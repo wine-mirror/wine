@@ -325,7 +325,7 @@ void output_typelib_regscript( const typelib_t *typelib )
         sprintf(resname, "%s\\%d", typelib_name, expr->cval);
     }
     put_str( indent, "'%x' { %s = s '%%MODULE%%%s' }\n",
-             lcid_expr ? lcid_expr->cval : 0, typelib_kind == SYS_WIN64 ? "win64" : "win32", id_part );
+             lcid_expr ? lcid_expr->cval : 0, pointer_size == 8 ? "win64" : "win32", id_part );
     put_str( indent, "FLAGS = s '%u'\n", flags );
     put_str( --indent, "}\n" );
     put_str( --indent, "}\n" );

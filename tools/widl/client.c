@@ -627,26 +627,6 @@ void write_client(const statement_list_t *stmts)
     if (!client)
         return;
 
-    if (do_win32 && do_win64)
-    {
-        fprintf(client, "#ifndef _WIN64\n\n");
-        pointer_size = 4;
-        write_client_routines( stmts );
-        fprintf(client, "\n#else /* _WIN64 */\n\n");
-        pointer_size = 8;
-        write_client_routines( stmts );
-        fprintf(client, "\n#endif /* _WIN64 */\n");
-    }
-    else if (do_win32)
-    {
-        pointer_size = 4;
-        write_client_routines( stmts );
-    }
-    else if (do_win64)
-    {
-        pointer_size = 8;
-        write_client_routines( stmts );
-    }
-
+    write_client_routines( stmts );
     fclose(client);
 }

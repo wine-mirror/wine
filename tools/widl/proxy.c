@@ -942,7 +942,7 @@ static void write_proxy_routines(const statement_list_t *stmts)
   write_stubdesc(expr_eval_routines);
 
   print_proxy( "#if !defined(__RPC_WIN%u__)\n", pointer_size == 8 ? 64 : 32);
-  print_proxy( "#error Currently only Wine and WIN32 are supported.\n");
+  print_proxy( "#error Invalid build platform for this proxy.\n");
   print_proxy( "#endif\n");
   print_proxy( "\n");
   write_procformatstring(proxy, stmts, need_proxy);
@@ -1053,26 +1053,6 @@ void write_proxies(const statement_list_t *stmts)
   init_proxy(stmts);
   if(!proxy) return;
 
-  if (do_win32 && do_win64)
-  {
-      fprintf(proxy, "\n#ifndef _WIN64\n\n");
-      pointer_size = 4;
-      write_proxy_routines( stmts );
-      fprintf(proxy, "\n#else /* _WIN64 */\n\n");
-      pointer_size = 8;
-      write_proxy_routines( stmts );
-      fprintf(proxy, "\n#endif /* _WIN64 */\n");
-  }
-  else if (do_win32)
-  {
-      pointer_size = 4;
-      write_proxy_routines( stmts );
-  }
-  else if (do_win64)
-  {
-      pointer_size = 8;
-      write_proxy_routines( stmts );
-  }
-
+  write_proxy_routines( stmts );
   fclose(proxy);
 }

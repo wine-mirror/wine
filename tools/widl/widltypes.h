@@ -553,7 +553,6 @@ typedef enum {
     SYS_WIN64
 } syskind_t;
 
-extern syskind_t typelib_kind;
 extern user_type_list_t user_type_list;
 extern context_handle_list_t context_handle_list;
 extern generic_handle_list_t generic_handle_list;
