@@ -49,7 +49,6 @@ enum IWidget_dispids
     DISPID_TM_TESTSECONDIFACE,
     DISPID_TM_VARARG_RUN,
     DISPID_TM_VARARG_REF_RUN,
-    DISPID_TM_COCLASS,
 
     DISPID_TM_BASETYPES_IN,
     DISPID_TM_BASETYPES_OUT,
@@ -70,6 +69,8 @@ enum IWidget_dispids
     DISPID_TM_VARIANT_ARRAY,
     DISPID_TM_STRUCT_ARRAY,
     DISPID_TM_TYPEDEF,
+    DISPID_TM_COCLASS,
+    DISPID_TM_COCLASS_PTR,
 };
 
 static const int DISPID_TM_NEG_RESTRICTED = -26;
@@ -145,6 +146,51 @@ library TestTypelib
     interface ITestSecondDisp : IDispatch
     {
         HRESULT test();
+    }
+
+    [
+        oleautomation,
+        uuid(3f7e06fe-0bce-46f0-8b7d-3a68393c796a)
+    ]
+    interface ICoclass1 : IDispatch
+    {
+        HRESULT test();
+    }
+
+    [
+        oleautomation,
+        uuid(3f7e06fe-0bce-46f0-8b7d-3a68393c796b)
+    ]
+    interface ICoclass2 : IDispatch
+    {
+        HRESULT test();
+    }
+
+    [
+        uuid(3f7e06fe-0bce-46f0-8b7d-3a68393c796c)
+    ]
+    coclass Coclass1
+    {
+        [default] interface ICoclass1;
+        interface ICoclass2;
+    }
+
+    [
+        uuid(3f7e06fe-0bce-46f0-8b7d-3a68393c796d)
+    ]
+    coclass Coclass2
+    {
+        interface ICoclass1;
+        [default] interface ICoclass2;
+    }
+
+    [
+        uuid(3f7e06fe-0bce-46f0-8b7d-3a68393c796e)
+    ]
+    coclass Coclass3
+    {
+        interface ICoclass1;
+        interface ICoclass2;
     }
 
     [
@@ -234,9 +280,6 @@ library TestTypelib
         [id(DISPID_TM_VARARG_REF_RUN), vararg]
         HRESULT VarArg_Ref_Run([in] BSTR name, [in] SAFEARRAY(VARIANT) *params, [out, retval] VARIANT *result);
 
-        [id(DISPID_TM_COCLASS)]
-        HRESULT Coclass([in] ApplicationObject2 *param);
-
         [id(DISPID_TM_BASETYPES_IN)]
         HRESULT basetypes_in([in] signed char c, [in] short s, [in] int i, [in] hyper h,
                 [in] unsigned char uc, [in] unsigned short us, [in] unsigned int ui,
@@ -305,6 +348,12 @@ library TestTypelib
 
         [id(DISPID_TM_TYPEDEF)]
         HRESULT myint([in] myint_t val, [in] myint_t *ptr, [in] myint_t **ptr_ptr);
+
+        [id(DISPID_TM_COCLASS)]
+        HRESULT Coclass([in] Coclass1 *class1, [in] Coclass2 *class2, [in] Coclass3 *class3);
+
+        [id(DISPID_TM_COCLASS_PTR)]
+        HRESULT Coclass_ptr([in] Coclass1 **in, [out] Coclass1 **out, [in, out] Coclass1 **in_out);
     }
 
     [
