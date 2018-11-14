@@ -6567,13 +6567,13 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
     return hr;
 }
 
-static HRESULT get_iface_guid(ITypeInfo *tinfo, const TYPEDESC *tdesc, GUID *guid)
+static HRESULT get_iface_guid(ITypeInfo *tinfo, HREFTYPE href, GUID *guid)
 {
     ITypeInfo *tinfo2;
     TYPEATTR *tattr;
     HRESULT hres;
 
-    hres = ITypeInfo_GetRefTypeInfo(tinfo, tdesc->u.hreftype, &tinfo2);
+    hres = ITypeInfo_GetRefTypeInfo(tinfo, href, &tinfo2);
     if(FAILED(hres))
         return hres;
 
@@ -6585,7 +6585,7 @@ static HRESULT get_iface_guid(ITypeInfo *tinfo, const TYPEDESC *tdesc, GUID *gui
 
     switch(tattr->typekind) {
     case TKIND_ALIAS:
-        hres = get_iface_guid(tinfo2, &tattr->tdescAlias, guid);
+        hres = get_iface_guid(tinfo2, tattr->tdescAlias.u.hreftype, guid);
         break;
 
     case TKIND_INTERFACE:
@@ -7299,7 +7299,10 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         IUnknown *userdefined_iface;
                         GUID guid;
 
-                        hres = get_iface_guid((ITypeInfo*)iface, tdesc->vt == VT_PTR ? tdesc->u.lptdesc : tdesc, &guid);
+                        if (tdesc->vt == VT_PTR)
+                            tdesc = tdesc->u.lptdesc;
+
+                        hres = get_iface_guid((ITypeInfo*)iface, tdesc->u.hreftype, &guid);
                         if(FAILED(hres))
                             break;
 
