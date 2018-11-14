@@ -386,13 +386,13 @@ static	LRESULT ADPCM_DriverDetails(PACMDRIVERDETAILSW add)
     add->cFilterTags = 0;
     add->hicon = NULL;
     MultiByteToWideChar( CP_ACP, 0, "MS-ADPCM", -1,
-                         add->szShortName, sizeof(add->szShortName)/sizeof(WCHAR) );
+                         add->szShortName, ARRAY_SIZE( add->szShortName ));
     MultiByteToWideChar( CP_ACP, 0, "Wine MS ADPCM converter", -1,
-                         add->szLongName, sizeof(add->szLongName)/sizeof(WCHAR) );
+                         add->szLongName, ARRAY_SIZE( add->szLongName ));
     MultiByteToWideChar( CP_ACP, 0, "Brought to you by the Wine team...", -1,
-                         add->szCopyright, sizeof(add->szCopyright)/sizeof(WCHAR) );
+                         add->szCopyright, ARRAY_SIZE( add->szCopyright ));
     MultiByteToWideChar( CP_ACP, 0, "Refer to LICENSE file", -1,
-                         add->szLicensing, sizeof(add->szLicensing)/sizeof(WCHAR) );
+                         add->szLicensing, ARRAY_SIZE( add->szLicensing ));
     add->szFeatures[0] = 0;
 
     return MMSYSERR_NOERROR;
