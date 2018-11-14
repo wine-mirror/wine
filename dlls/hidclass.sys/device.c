@@ -121,13 +121,6 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
         return status;
     }
 
-    status = IoCreateSymbolicLink( &ext->link_name, &nameW );
-    if (status != STATUS_SUCCESS)
-    {
-        FIXME( "failed to create link error %x\n", status );
-        return status;
-    }
-
     return STATUS_SUCCESS;
 
 error:
