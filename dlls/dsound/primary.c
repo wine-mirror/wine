@@ -1101,7 +1101,6 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(IDirectSoundBuffer8 *ifac
 
 	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
 		ERR("app requested IDirectSoundNotify on primary buffer\n");
-		/* FIXME: should we support this? */
 		return E_NOINTERFACE;
 	}
 
