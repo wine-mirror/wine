@@ -26,6 +26,15 @@
 #include "wincodec.h"
 #include "wine/test.h"
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 #define IFD_BYTE 1
 #define IFD_ASCII 2
 #define IFD_SHORT 3
@@ -407,8 +416,11 @@ static void test_tiff_8bpp_alpha(void)
     ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
     ok(frame_count == 1, "expected 1, got %u\n", frame_count);
 
+    EXPECT_REF(decoder, 1);
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
     ok(hr == S_OK, "GetFrame error %#x\n", hr);
+    EXPECT_REF(decoder, 2);
+    IWICBitmapDecoder_Release(decoder);
 
     hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
     ok(hr == S_OK, "GetSize error %#x\n", hr);
@@ -443,7 +455,6 @@ static void test_tiff_8bpp_alpha(void)
         ok(data[i] == expected_data[i], "%u: expected %02x, got %02x\n", i, expected_data[i], data[i]);
 
     IWICBitmapFrameDecode_Release(frame);
-    IWICBitmapDecoder_Release(decoder);
 }
 
 static void test_tiff_resolution(void)
