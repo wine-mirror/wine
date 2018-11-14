@@ -762,8 +762,8 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
     } else
     {
         if (buffer)
-            *((DWORD *)buffer) = *(DWORD *)&descr->items[index].data;
-        len = sizeof(DWORD);
+            *((ULONG_PTR *)buffer) = descr->items[index].data;
+        len = sizeof(ULONG_PTR);
     }
     return len;
 }
@@ -2653,7 +2653,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
             SetLastError(ERROR_INVALID_INDEX);
             return LB_ERR;
         }
-        if (!HAS_STRINGS(descr)) return sizeof(DWORD);
+        if (!HAS_STRINGS(descr)) return sizeof(ULONG_PTR);
         return strlenW( descr->items[wParam].str );
 
     case LB_GETCURSEL:
