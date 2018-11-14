@@ -157,7 +157,6 @@ case $host in
       host_cpu="i386"
       notice_platform="32-bit "
       AC_SUBST(TARGETFLAGS,"-m32")
-      AC_SUBST(WIDLFLAGS,"--win32")
       PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib/pkgconfig}
       export PKG_CONFIG_PATH
       enable_win16=${enable_win16:-yes}
@@ -175,7 +174,6 @@ case $host in
       host_cpu="x86_64"
       notice_platform="64-bit "
       AC_SUBST(TARGETFLAGS,"-m64")
-      AC_SUBST(WIDLFLAGS,"--win64")
     fi
     ;;
   arm*)
@@ -207,7 +205,6 @@ case $host in
     esac
     CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
     AC_SUBST(TARGETFLAGS,"-marm -mfloat-abi=$float_abi")
-    AC_SUBST(WIDLFLAGS,"--win32")
     ;;
   aarch64*)
     AC_MSG_CHECKING([whether $CC supports __builtin_ms_va_list])
@@ -215,11 +212,9 @@ case $host in
                       [AC_MSG_RESULT([yes])],
                       [AC_MSG_RESULT([no])
                        AC_MSG_ERROR([You need clang >= 5.0 to build Wine for arm64.])])
-    AC_SUBST(WIDLFLAGS,"--win64")
     ;;
   i[[3456789]]86*)
     enable_win16=${enable_win16:-yes}
-    AC_SUBST(WIDLFLAGS,"--win32")
     ;;
 esac
 
