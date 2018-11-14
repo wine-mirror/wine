@@ -6572,6 +6572,7 @@ static HRESULT get_iface_guid(ITypeInfo *tinfo, HREFTYPE href, GUID *guid)
     ITypeInfo *tinfo2;
     TYPEATTR *tattr;
     HRESULT hres;
+    int flags, i;
 
     hres = ITypeInfo_GetRefTypeInfo(tinfo, href, &tinfo2);
     if(FAILED(hres))
@@ -6591,6 +6592,22 @@ static HRESULT get_iface_guid(ITypeInfo *tinfo, HREFTYPE href, GUID *guid)
     case TKIND_INTERFACE:
     case TKIND_DISPATCH:
         *guid = tattr->guid;
+        break;
+
+    case TKIND_COCLASS:
+        for (i = 0; i < tattr->cImplTypes; i++)
+        {
+            ITypeInfo_GetImplTypeFlags(tinfo2, i, &flags);
+            if (flags & IMPLTYPEFLAG_FDEFAULT)
+                break;
+        }
+
+        if (i == tattr->cImplTypes)
+            i = 0;
+
+        hres = ITypeInfo_GetRefTypeOfImplType(tinfo2, i, &href);
+        if (SUCCEEDED(hres))
+            hres = get_iface_guid(tinfo2, href, guid);
         break;
 
     default:
