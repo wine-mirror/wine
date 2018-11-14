@@ -947,6 +947,25 @@ void signal_init_process(void)
 }
 
 
+/**********************************************************************
+ *              RtlAddFunctionTable   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_PTR addr )
+{
+    FIXME( "%p %u %lx: stub\n", table, count, addr );
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *              RtlDeleteFunctionTable   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlDeleteFunctionTable( RUNTIME_FUNCTION *table )
+{
+    FIXME( "%p: stub\n", table );
+    return TRUE;
+}
+
 /***********************************************************************
  *            RtlUnwind  (NTDLL.@)
  */

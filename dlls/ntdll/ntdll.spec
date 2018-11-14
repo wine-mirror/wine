@@ -433,7 +433,7 @@
 # @ stub RtlAddCompoundAce
 @ stdcall RtlAddMandatoryAce(ptr long long long long ptr)
 # @ stub RtlAddRange
-@ cdecl -arch=arm,x86_64 RtlAddFunctionTable(ptr long long)
+@ cdecl -arch=arm,arm64,x86_64 RtlAddFunctionTable(ptr long long)
 @ stdcall RtlAddRefActivationContext(ptr)
 # @ stub RtlAddRefMemoryStream
 @ stdcall RtlAddVectoredContinueHandler(long ptr)
@@ -543,7 +543,7 @@
 @ stdcall RtlDeleteCriticalSection(ptr)
 @ stub RtlDeleteElementGenericTable
 @ stub RtlDeleteElementGenericTableAvl
-@ cdecl -arch=arm,x86_64 RtlDeleteFunctionTable(ptr)
+@ cdecl -arch=arm,arm64,x86_64 RtlDeleteFunctionTable(ptr)
 @ stub RtlDeleteNoSplay
 @ stub RtlDeleteOwnersRanges
 @ stub RtlDeleteRange
