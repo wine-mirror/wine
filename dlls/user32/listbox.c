@@ -2521,6 +2521,8 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
     if (descr->style & LBS_EXTENDEDSEL) descr->style |= LBS_MULTIPLESEL;
     if (descr->style & LBS_MULTICOLUMN) descr->style &= ~LBS_OWNERDRAWVARIABLE;
     if (descr->style & LBS_OWNERDRAWVARIABLE) descr->style |= LBS_NOINTEGRALHEIGHT;
+    if ((descr->style & (LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_SORT)) != LBS_OWNERDRAWFIXED)
+        descr->style &= ~LBS_NODATA;
     descr->item_height = LISTBOX_SetFont( descr, 0 );
 
     if (descr->style & LBS_OWNERDRAWFIXED)
