@@ -1916,7 +1916,10 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
         rect = *src_rect;
 
     if (FAILED(IDirect3DSurface9_LockRect(src_surface, &lock, NULL, D3DLOCK_READONLY)))
+    {
+        FIXME("Called for unlockable source surface.\n");
         return D3DXERR_INVALIDDATA;
+    }
 
     hr = D3DXLoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect,
             lock.pBits, SrcDesc.Format, lock.Pitch, src_palette, &rect, filter, color_key);
