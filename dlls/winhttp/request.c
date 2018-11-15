@@ -1337,122 +1337,73 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
     return ret;
 }
 
-static LPWSTR concatenate_string_list( LPCWSTR *list, int len )
+static WCHAR *build_proxy_connect_string( request_t *request )
 {
-    LPCWSTR *t;
-    LPWSTR str;
+    static const WCHAR fmtW[] = {'%','s',':','%','u',0};
+    static const WCHAR connectW[] = {'C','O','N','N','E','C','T', 0};
+    static const WCHAR spaceW[] = {' ',0}, crlfW[] = {'\r','\n',0}, colonW[] = {':',' ',0};
+    static const WCHAR twocrlfW[] = {'\r','\n','\r','\n',0};
+    WCHAR *ret, *host;
+    unsigned int i;
+    int len;
 
-    for( t = list; *t ; t++  )
-        len += strlenW( *t );
-    len++;
+    if (!(host = heap_alloc( (strlenW( request->connect->hostname ) + 7) * sizeof(WCHAR) ))) return NULL;
+    len = sprintfW( host, fmtW, request->connect->hostname, request->connect->hostport );
 
-    str = heap_alloc( len * sizeof(WCHAR) );
-    if (!str) return NULL;
-    *str = 0;
+    len += ARRAY_SIZE(connectW);
+    len += ARRAY_SIZE(http1_1);
 
-    for( t = list; *t ; t++ )
-        strcatW( str, *t );
-
-    return str;
-}
-
-static LPWSTR build_header_request_string( request_t *request, LPCWSTR verb,
-    LPCWSTR path, LPCWSTR version )
-{
-    static const WCHAR crlf[] = {'\r','\n',0};
-    static const WCHAR space[] = { ' ',0 };
-    static const WCHAR colon[] = { ':',' ',0 };
-    static const WCHAR twocrlf[] = {'\r','\n','\r','\n', 0};
-    LPWSTR requestString;
-    DWORD len, n;
-    LPCWSTR *req;
-    UINT i;
-    LPWSTR p;
-
-    /* allocate space for an array of all the string pointers to be added */
-    len = (request->num_headers) * 4 + 10;
-    req = heap_alloc( len * sizeof(LPCWSTR) );
-    if (!req) return NULL;
-
-    /* add the verb, path and HTTP version string */
-    n = 0;
-    req[n++] = verb;
-    req[n++] = space;
-    req[n++] = path;
-    req[n++] = space;
-    req[n++] = version;
-
-    /* Append custom request headers */
     for (i = 0; i < request->num_headers; i++)
     {
         if (request->headers[i].is_request)
-        {
-            req[n++] = crlf;
-            req[n++] = request->headers[i].field;
-            req[n++] = colon;
-            req[n++] = request->headers[i].value;
+            len += strlenW( request->headers[i].field ) + strlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
+    }
+    len += 4; /* '\r\n\r\n' */
 
-            TRACE("Adding custom header %s (%s)\n",
-                   debugstr_w(request->headers[i].field),
-                   debugstr_w(request->headers[i].value));
+    if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+    {
+        strcpyW( ret, connectW );
+        strcatW( ret, spaceW );
+        strcatW( ret, host );
+        strcatW( ret, spaceW );
+        strcatW( ret, http1_1 );
+
+        for (i = 0; i < request->num_headers; i++)
+        {
+            if (request->headers[i].is_request)
+            {
+                strcatW( ret, crlfW );
+                strcatW( ret, request->headers[i].field );
+                strcatW( ret, colonW );
+                strcatW( ret, request->headers[i].value );
+            }
         }
+        strcatW( ret, twocrlfW );
     }
 
-    if( n >= len )
-        ERR("oops. buffer overrun\n");
-
-    req[n] = NULL;
-    requestString = concatenate_string_list( req, 4 );
-    heap_free( req );
-    if (!requestString) return NULL;
-
-    /*
-     * Set (header) termination string for request
-     * Make sure there are exactly two new lines at the end of the request
-     */
-    p = &requestString[strlenW(requestString)-1];
-    while ( (*p == '\n') || (*p == '\r') )
-       p--;
-    strcpyW( p+1, twocrlf );
-
-    return requestString;
+    heap_free( host );
+    return ret;
 }
 
 static BOOL read_reply( request_t *request );
 
 static BOOL secure_proxy_connect( request_t *request )
 {
-    static const WCHAR verbConnect[] = {'C','O','N','N','E','C','T',0};
-    static const WCHAR fmt[] = {'%','s',':','%','u',0};
-    BOOL ret = FALSE;
-    LPWSTR path;
-    connect_t *connect = request->connect;
+    WCHAR *str;
+    char *strA;
+    int len, bytes_sent;
+    BOOL ret;
 
-    path = heap_alloc( (strlenW( connect->hostname ) + 13) * sizeof(WCHAR) );
-    if (path)
-    {
-        LPWSTR requestString;
+    if (!(str = build_proxy_connect_string( request ))) return FALSE;
+    strA = strdupWA( str );
+    heap_free( str );
+    if (!strA) return FALSE;
 
-        sprintfW( path, fmt, connect->hostname, connect->hostport );
-        requestString = build_header_request_string( request, verbConnect,
-            path, http1_1 );
-        heap_free( path );
-        if (requestString)
-        {
-            LPSTR req_ascii = strdupWA( requestString );
+    len = strlen( strA );
+    ret = netconn_send( request->netconn, strA, len, &bytes_sent );
+    heap_free( strA );
+    if (ret) ret = read_reply( request );
 
-            heap_free( requestString );
-            if (req_ascii)
-            {
-                int len = strlen( req_ascii ), bytes_sent;
-
-                ret = netconn_send( request->netconn, req_ascii, len, &bytes_sent );
-                heap_free( req_ascii );
-                if (ret)
-                    ret = read_reply( request );
-            }
-        }
-    }
     return ret;
 }
 
