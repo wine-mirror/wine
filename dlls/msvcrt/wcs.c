@@ -1919,6 +1919,14 @@ INT CDECL MSVCRT_iswupper( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
+ *		_iswupper_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__iswupper_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
+{
+    return isupperW( wc );
+}
+
+/*********************************************************************
  *		iswxdigit (MSVCRT.@)
  */
 INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )

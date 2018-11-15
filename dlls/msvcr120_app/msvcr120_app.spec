@@ -1245,7 +1245,7 @@
 @ stub _iswprint_l
 @ cdecl _iswpunct_l(long ptr) msvcr120._iswpunct_l
 @ cdecl _iswspace_l(long ptr) msvcr120._iswspace_l
-@ stub _iswupper_l
+@ cdecl _iswupper_l(long ptr) msvcr120._iswupper_l
 @ stub _iswxdigit_l
 @ cdecl _isxdigit_l(long ptr) msvcr120._isxdigit_l
 @ cdecl _itoa(long ptr long) msvcr120._itoa

@@ -32,7 +32,7 @@
 @ stub _iswprint_l
 @ cdecl _iswpunct_l(long ptr) ucrtbase._iswpunct_l
 @ cdecl _iswspace_l(long ptr) ucrtbase._iswspace_l
-@ stub _iswupper_l
+@ cdecl _iswupper_l(long ptr) ucrtbase._iswupper_l
 @ stub _iswxdigit_l
 @ cdecl _isxdigit_l(long ptr) ucrtbase._isxdigit_l
 @ cdecl _memccpy(ptr ptr long long) ucrtbase._memccpy

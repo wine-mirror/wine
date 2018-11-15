@@ -643,7 +643,7 @@
 # stub _iswprint_l(long ptr)
 @ cdecl _iswpunct_l(long ptr) MSVCRT__iswpunct_l
 @ cdecl _iswspace_l(long ptr) MSVCRT__iswspace_l
-# stub _iswupper_l(long ptr)
+@ cdecl _iswupper_l(long ptr) MSVCRT__iswupper_l
 # stub _iswxdigit_l(long ptr)
 @ cdecl _isxdigit_l(long ptr) MSVCRT__isxdigit_l
 @ cdecl _itoa(long ptr long) MSVCRT__itoa
