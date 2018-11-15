@@ -3767,7 +3767,7 @@ static NTSTATUS send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power 
 static void handle_bus_relations( DEVICE_OBJECT *device )
 {
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
-    WCHAR buffer[MAX_SERVICE_NAME + sizeof(servicesW)/sizeof(WCHAR)];
+    WCHAR buffer[MAX_SERVICE_NAME + ARRAY_SIZE(servicesW)];
     WCHAR driver[MAX_SERVICE_NAME] = {0};
     DRIVER_OBJECT *driver_obj;
     UNICODE_STRING string;
