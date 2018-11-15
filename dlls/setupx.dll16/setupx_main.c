@@ -303,7 +303,7 @@ static void SETUPX_CreateStandardLDDs(void)
 
     RegOpenKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Setup", &hKey);
 
-    for (n=0; n < sizeof(LDID_Data)/sizeof(LDID_DATA); n++)
+    for (n=0; n < ARRAY_SIZE(LDID_Data); n++)
     {
 	buffer[0] = '\0';
 
