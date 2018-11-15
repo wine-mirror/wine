@@ -232,10 +232,10 @@ struct send_request
     DWORD_PTR context;
 };
 
-typedef struct
+struct receive_response
 {
     struct task_header hdr;
-} receive_response_t;
+};
 
 typedef struct
 {

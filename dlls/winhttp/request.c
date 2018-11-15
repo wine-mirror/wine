@@ -2839,7 +2839,7 @@ static BOOL receive_response( request_t *request, BOOL async )
 
 static void task_receive_response( struct task_header *task )
 {
-    receive_response_t *r = (receive_response_t *)task;
+    struct receive_response *r = (struct receive_response *)task;
     receive_response( r->hdr.request, TRUE );
 }
 
@@ -2867,9 +2867,9 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        receive_response_t *r;
+        struct receive_response *r;
 
-        if (!(r = heap_alloc( sizeof(receive_response_t) ))) return FALSE;
+        if (!(r = heap_alloc( sizeof(struct receive_response) ))) return FALSE;
         r->hdr.request = request;
         r->hdr.proc    = task_receive_response;
 
