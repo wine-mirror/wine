@@ -179,7 +179,7 @@ static void set_blocking( netconn_t *conn, BOOL blocking )
     ioctlsocket( conn->socket, FIONBIO, &state );
 }
 
-netconn_t *netconn_create( hostdata_t *host, const struct sockaddr_storage *sockaddr, int timeout )
+netconn_t *netconn_create( struct hostdata *host, const struct sockaddr_storage *sockaddr, int timeout )
 {
     netconn_t *conn;
     unsigned int addr_len;

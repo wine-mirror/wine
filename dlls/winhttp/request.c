@@ -1487,7 +1487,7 @@ static CRITICAL_SECTION connection_pool_cs = { &connection_pool_debug, -1, 0, 0,
 
 static struct list connection_pool = LIST_INIT( connection_pool );
 
-void release_host( hostdata_t *host )
+void release_host( struct hostdata *host )
 {
     LONG ref;
 
@@ -1507,7 +1507,7 @@ static DWORD WINAPI connection_collector(void *arg)
 {
     unsigned int remaining_connections;
     netconn_t *netconn, *next_netconn;
-    hostdata_t *host, *next_host;
+    struct hostdata *host, *next_host;
     ULONGLONG now;
 
     do
@@ -1519,7 +1519,7 @@ static DWORD WINAPI connection_collector(void *arg)
 
         EnterCriticalSection(&connection_pool_cs);
 
-        LIST_FOR_EACH_ENTRY_SAFE(host, next_host, &connection_pool, hostdata_t, entry)
+        LIST_FOR_EACH_ENTRY_SAFE(host, next_host, &connection_pool, struct hostdata, entry)
         {
             LIST_FOR_EACH_ENTRY_SAFE(netconn, next_netconn, &host->connections, netconn_t, entry)
             {
@@ -1617,7 +1617,7 @@ static BOOL ensure_cred_handle( session_t *session )
 static BOOL open_connection( request_t *request )
 {
     BOOL is_secure = request->hdr.flags & WINHTTP_FLAG_SECURE;
-    hostdata_t *host = NULL, *iter;
+    struct hostdata *host = NULL, *iter;
     netconn_t *netconn = NULL;
     connect_t *connect;
     WCHAR *addressW = NULL;
@@ -1631,7 +1631,7 @@ static BOOL open_connection( request_t *request )
 
     EnterCriticalSection( &connection_pool_cs );
 
-    LIST_FOR_EACH_ENTRY( iter, &connection_pool, hostdata_t, entry )
+    LIST_FOR_EACH_ENTRY( iter, &connection_pool, struct hostdata, entry )
     {
         if (iter->port == port && !strcmpW( connect->servername, iter->hostname ) && !is_secure == !iter->secure)
         {
