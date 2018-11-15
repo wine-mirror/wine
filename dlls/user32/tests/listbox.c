@@ -371,6 +371,35 @@ static void test_ownerdraw(void)
     ok(rc.top < 0, "rc.top is not negative (%d)\n", rc.top);
 
     DestroyWindow(hLB);
+
+    /* Both FIXED and VARIABLE, FIXED should override VARIABLE. */
+    hLB = CreateWindowA("listbox", "TestList", LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE, 0, 0, 100, 100,
+        NULL, NULL, NULL, 0);
+    ok(hLB != NULL, "last error 0x%08x\n", GetLastError());
+
+    ret = SendMessageA(hLB, LB_INSERTSTRING, -1, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ret = SendMessageA(hLB, LB_INSERTSTRING, -1, 0);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETITEMHEIGHT, 0, 13);
+    ok(ret == LB_OKAY, "Failed to set item height, %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 0, 0);
+    ok(ret == 13, "Unexpected item height %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETITEMHEIGHT, 1, 42);
+    ok(ret == LB_OKAY, "Failed to set item height, %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 0, 0);
+todo_wine
+    ok(ret == 42, "Unexpected item height %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 1, 0);
+    ok(ret == 42, "Unexpected item height %d.\n", ret);
+
+    DestroyWindow (hLB);
+
     DestroyWindow(parent);
 }
 
@@ -1695,7 +1724,13 @@ static void test_listbox_dlgdir(void)
 
 static void test_set_count( void )
 {
+    static const DWORD styles[] =
+    {
+        LBS_OWNERDRAWFIXED,
+        LBS_HASSTRINGS,
+    };
     HWND parent, listbox;
+    unsigned int i;
     LONG ret;
     RECT r;
 
@@ -1725,6 +1760,21 @@ static void test_set_count( void )
     ok( !IsRectEmpty( &r ), "got empty rect\n");
 
     DestroyWindow( listbox );
+
+    for (i = 0; i < ARRAY_SIZE(styles); ++i)
+    {
+        listbox = create_listbox( styles[i] | WS_CHILD | WS_VISIBLE, parent );
+
+        SetLastError( 0xdeadbeef );
+        ret = SendMessageA( listbox, LB_SETCOUNT, 100, 0 );
+    todo_wine_if(i == 0)
+        ok( ret == LB_ERR, "expected %d, got %d\n", LB_ERR, ret );
+    todo_wine_if(i == 0)
+        ok( GetLastError() == ERROR_SETCOUNT_ON_BAD_LB, "Unexpected error %d.\n", GetLastError() );
+
+        DestroyWindow( listbox );
+    }
+
     DestroyWindow( parent );
 }
 
