@@ -237,11 +237,11 @@ struct receive_response
     struct task_header hdr;
 };
 
-typedef struct
+struct query_data
 {
     struct task_header hdr;
-    LPDWORD available;
-} query_data_t;
+    DWORD *available;
+};
 
 typedef struct
 {

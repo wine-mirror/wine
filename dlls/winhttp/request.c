@@ -2910,7 +2910,7 @@ done:
 
 static void task_query_data_available( struct task_header *task )
 {
-    query_data_t *q = (query_data_t *)task;
+    struct query_data *q = (struct query_data *)task;
     query_data_available( q->hdr.request, q->available, TRUE );
 }
 
@@ -2938,9 +2938,9 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        query_data_t *q;
+        struct query_data *q;
 
-        if (!(q = heap_alloc( sizeof(query_data_t) ))) return FALSE;
+        if (!(q = heap_alloc( sizeof(struct query_data) ))) return FALSE;
         q->hdr.request = request;
         q->hdr.proc    = task_query_data_available;
         q->available   = available;
