@@ -64,7 +64,7 @@ DWORD get_last_error( void )
     return GetLastError();
 }
 
-void send_callback( object_header_t *hdr, DWORD status, LPVOID info, DWORD buflen )
+void send_callback( struct object_header *hdr, DWORD status, void *info, DWORD buflen )
 {
     if (hdr->callback && (hdr->notify_mask & status))
     {
@@ -86,7 +86,7 @@ BOOL WINAPI WinHttpCheckPlatform( void )
 /***********************************************************************
  *          session_destroy (internal)
  */
-static void session_destroy( object_header_t *hdr )
+static void session_destroy( struct object_header *hdr )
 {
     session_t *session = (session_t *)hdr;
 
@@ -106,7 +106,7 @@ static void session_destroy( object_header_t *hdr )
     heap_free( session );
 }
 
-static BOOL session_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
+static BOOL session_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
     session_t *session = (session_t *)hdr;
 
@@ -157,7 +157,7 @@ static BOOL session_query_option( object_header_t *hdr, DWORD option, LPVOID buf
     }
 }
 
-static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
+static BOOL session_set_option( struct object_header *hdr, DWORD option, void *buffer, DWORD buflen )
 {
     session_t *session = (session_t *)hdr;
 
@@ -246,7 +246,7 @@ static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
     }
 }
 
-static const object_vtbl_t session_vtbl =
+static const struct object_vtbl session_vtbl =
 {
     session_destroy,
     session_query_option,
@@ -320,7 +320,7 @@ end:
 /***********************************************************************
  *          connect_destroy (internal)
  */
-static void connect_destroy( object_header_t *hdr )
+static void connect_destroy( struct object_header *hdr )
 {
     connect_t *connect = (connect_t *)hdr;
 
@@ -335,7 +335,7 @@ static void connect_destroy( object_header_t *hdr )
     heap_free( connect );
 }
 
-static BOOL connect_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
+static BOOL connect_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
     connect_t *connect = (connect_t *)hdr;
 
@@ -350,7 +350,7 @@ static BOOL connect_query_option( object_header_t *hdr, DWORD option, LPVOID buf
             return FALSE;
         }
 
-        *(HINTERNET *)buffer = ((object_header_t *)connect->session)->handle;
+        *(HINTERNET *)buffer = ((struct object_header *)connect->session)->handle;
         *buflen = sizeof(HINTERNET);
         return TRUE;
     }
@@ -386,7 +386,7 @@ static BOOL connect_query_option( object_header_t *hdr, DWORD option, LPVOID buf
     }
 }
 
-static const object_vtbl_t connect_vtbl =
+static const struct object_vtbl connect_vtbl =
 {
     connect_destroy,
     connect_query_option,
@@ -606,7 +606,7 @@ end:
 /***********************************************************************
  *          request_destroy (internal)
  */
-static void request_destroy( object_header_t *hdr )
+static void request_destroy( struct object_header *hdr )
 {
     request_t *request = (request_t *)hdr;
     unsigned int i, j;
@@ -704,7 +704,7 @@ static BOOL copy_sockaddr( const struct sockaddr *addr, SOCKADDR_STORAGE *addr_s
     }
 }
 
-static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
+static BOOL request_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
     request_t *request = (request_t *)hdr;
 
@@ -885,7 +885,7 @@ static WCHAR *buffer_to_str( WCHAR *buffer, DWORD buflen )
     return NULL;
 }
 
-static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
+static BOOL request_set_option( struct object_header *hdr, DWORD option, void *buffer, DWORD buflen )
 {
     request_t *request = (request_t *)hdr;
 
@@ -1050,7 +1050,7 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
     }
 }
 
-static const object_vtbl_t request_vtbl =
+static const struct object_vtbl request_vtbl =
 {
     request_destroy,
     request_query_option,
@@ -1186,7 +1186,7 @@ end:
  */
 BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )
 {
-    object_header_t *hdr;
+    struct object_header *hdr;
 
     TRACE("%p\n", handle);
 
@@ -1201,7 +1201,7 @@ BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )
     return TRUE;
 }
 
-static BOOL query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
+static BOOL query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
     BOOL ret = FALSE;
 
@@ -1245,7 +1245,7 @@ static BOOL query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPD
 BOOL WINAPI WinHttpQueryOption( HINTERNET handle, DWORD option, LPVOID buffer, LPDWORD buflen )
 {
     BOOL ret = FALSE;
-    object_header_t *hdr;
+    struct object_header *hdr;
 
     TRACE("%p, %u, %p, %p\n", handle, option, buffer, buflen);
 
@@ -1262,7 +1262,7 @@ BOOL WINAPI WinHttpQueryOption( HINTERNET handle, DWORD option, LPVOID buffer, L
     return ret;
 }
 
-static BOOL set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
+static BOOL set_option( struct object_header *hdr, DWORD option, void *buffer, DWORD buflen )
 {
     BOOL ret = TRUE;
 
@@ -1304,7 +1304,7 @@ static BOOL set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD
 BOOL WINAPI WinHttpSetOption( HINTERNET handle, DWORD option, LPVOID buffer, DWORD buflen )
 {
     BOOL ret = FALSE;
-    object_header_t *hdr;
+    struct object_header *hdr;
 
     TRACE("%p, %u, %p, %u\n", handle, option, buffer, buflen);
 
@@ -2048,7 +2048,7 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHTTP_STATUS_CALLBACK callback,
                                                          DWORD flags, DWORD_PTR reserved )
 {
-    object_header_t *hdr;
+    struct object_header *hdr;
     WINHTTP_STATUS_CALLBACK ret;
 
     TRACE("%p, %p, 0x%08x, 0x%lx\n", handle, callback, flags, reserved);
@@ -2073,7 +2073,7 @@ WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHT
 BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int send, int receive )
 {
     BOOL ret = TRUE;
-    object_header_t *hdr;
+    struct object_header *hdr;
 
     TRACE("%p, %d, %d, %d, %d\n", handle, resolve, connect, send, receive);
 

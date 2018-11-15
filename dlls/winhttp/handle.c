@@ -42,20 +42,20 @@ static CRITICAL_SECTION_DEBUG handle_cs_debug =
 };
 static CRITICAL_SECTION handle_cs = { &handle_cs_debug, -1, 0, 0, 0, 0 };
 
-static object_header_t **handles;
+static struct object_header **handles;
 static ULONG_PTR next_handle;
 static ULONG_PTR max_handles;
 
-object_header_t *addref_object( object_header_t *hdr )
+struct object_header *addref_object( struct object_header *hdr )
 {
     ULONG refs = InterlockedIncrement( &hdr->refs );
     TRACE("%p -> refcount = %d\n", hdr, refs);
     return hdr;
 }
 
-object_header_t *grab_object( HINTERNET hinternet )
+struct object_header *grab_object( HINTERNET hinternet )
 {
-    object_header_t *hdr = NULL;
+    struct object_header *hdr = NULL;
     ULONG_PTR handle = (ULONG_PTR)hinternet;
 
     EnterCriticalSection( &handle_cs );
@@ -69,7 +69,7 @@ object_header_t *grab_object( HINTERNET hinternet )
     return hdr;
 }
 
-void release_object( object_header_t *hdr )
+void release_object( struct object_header *hdr )
 {
     ULONG refs = InterlockedDecrement( &hdr->refs );
     TRACE("object %p refcount = %d\n", hdr, refs);
@@ -85,9 +85,9 @@ void release_object( object_header_t *hdr )
     }
 }
 
-HINTERNET alloc_handle( object_header_t *hdr )
+HINTERNET alloc_handle( struct object_header *hdr )
 {
-    object_header_t **p;
+    struct object_header **p;
     ULONG_PTR handle, num;
 
     list_init( &hdr->children );
@@ -124,7 +124,7 @@ BOOL free_handle( HINTERNET hinternet )
 {
     BOOL ret = FALSE;
     ULONG_PTR handle = (ULONG_PTR)hinternet;
-    object_header_t *hdr = NULL, *child, *next;
+    struct object_header *hdr = NULL, *child, *next;
 
     EnterCriticalSection( &handle_cs );
 
@@ -144,7 +144,7 @@ BOOL free_handle( HINTERNET hinternet )
 
     if (hdr)
     {
-        LIST_FOR_EACH_ENTRY_SAFE( child, next, &hdr->children, object_header_t, entry )
+        LIST_FOR_EACH_ENTRY_SAFE( child, next, &hdr->children, struct object_header, entry )
         {
             TRACE("freeing child handle %p for parent handle 0x%lx\n", child->handle, handle + 1);
             free_handle( child->handle );
