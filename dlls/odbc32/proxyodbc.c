@@ -2038,7 +2038,7 @@ static BOOL SQLColAttributes_KnownStringAttribute(SQLUSMALLINT fDescType)
     };
     unsigned int i;
 
-    for (i = 0; i < sizeof(attrList) / sizeof(SQLUSMALLINT); i++) {
+    for (i = 0; i < ARRAY_SIZE(attrList); i++) {
         if (attrList[i] == fDescType) return TRUE;
     }
     return FALSE;
