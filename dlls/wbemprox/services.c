@@ -420,13 +420,13 @@ static WCHAR *query_from_path( const struct path *path )
 
     if (path->filter)
     {
-        len = path->class_len + path->filter_len + SIZEOF(selectW);
+        len = path->class_len + path->filter_len + ARRAY_SIZE(selectW);
         if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
         sprintfW( query, selectW, path->class, path->filter );
     }
     else
     {
-        len = path->class_len + SIZEOF(select_allW);
+        len = path->class_len + ARRAY_SIZE(select_allW);
         if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
         strcpyW( query, select_allW );
         strcatW( query, path->class );

@@ -1250,7 +1250,7 @@ static UINT16 systemenclosure_chassistypes[] =
 };
 static const struct array systemenclosure_chassistypes_array =
 {
-    SIZEOF(systemenclosure_chassistypes),
+    ARRAY_SIZE(systemenclosure_chassistypes),
     &systemenclosure_chassistypes
 };
 static const struct record_systemenclosure data_systemenclosure[] =
@@ -3522,38 +3522,38 @@ done:
 
 static struct table builtin_classes[] =
 {
-    { class_baseboardW, SIZEOF(col_baseboard), col_baseboard, SIZEOF(data_baseboard), 0, (BYTE *)data_baseboard },
-    { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), 0, (BYTE *)data_bios },
-    { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, 0, 0, NULL, fill_cdromdrive },
-    { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, 0, NULL, fill_compsys },
-    { class_compsysproductW, SIZEOF(col_compsysproduct), col_compsysproduct, 0, 0, NULL, fill_compsysproduct },
-    { class_datafileW, SIZEOF(col_datafile), col_datafile, 0, 0, NULL, fill_datafile },
-    { class_desktopmonitorW, SIZEOF(col_desktopmonitor), col_desktopmonitor, 0, 0, NULL, fill_desktopmonitor },
-    { class_directoryW, SIZEOF(col_directory), col_directory, 0, 0, NULL, fill_directory },
-    { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, 0, 0, NULL, fill_diskdrive },
-    { class_diskpartitionW, SIZEOF(col_diskpartition), col_diskpartition, 0, 0, NULL, fill_diskpartition },
-    { class_ip4routetableW, SIZEOF(col_ip4routetable), col_ip4routetable, 0, 0, NULL, fill_ip4routetable },
-    { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
-    { class_logicaldisk2W, SIZEOF(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
-    { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, 0, NULL, fill_networkadapter },
-    { class_networkadapterconfigW, SIZEOF(col_networkadapterconfig), col_networkadapterconfig, 0, 0, NULL, fill_networkadapterconfig },
-    { class_osW, SIZEOF(col_os), col_os, 0, 0, NULL, fill_os },
-    { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), 0, (BYTE *)data_param },
-    { class_physicalmediaW, SIZEOF(col_physicalmedia), col_physicalmedia, SIZEOF(data_physicalmedia), 0, (BYTE *)data_physicalmedia },
-    { class_physicalmemoryW, SIZEOF(col_physicalmemory), col_physicalmemory, 0, 0, NULL, fill_physicalmemory },
-    { class_pnpentityW, SIZEOF(col_pnpentity), col_pnpentity, 0, 0, NULL, fill_pnpentity },
-    { class_printerW, SIZEOF(col_printer), col_printer, 0, 0, NULL, fill_printer },
-    { class_processW, SIZEOF(col_process), col_process, 0, 0, NULL, fill_process },
-    { class_processorW, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
-    { class_processor2W, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
-    { class_qualifiersW, SIZEOF(col_qualifier), col_qualifier, SIZEOF(data_qualifier), 0, (BYTE *)data_qualifier },
-    { class_serviceW, SIZEOF(col_service), col_service, 0, 0, NULL, fill_service },
-    { class_sidW, SIZEOF(col_sid), col_sid, 0, 0, NULL, fill_sid },
-    { class_sounddeviceW, SIZEOF(col_sounddevice), col_sounddevice, SIZEOF(data_sounddevice), 0, (BYTE *)data_sounddevice },
-    { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), 0, (BYTE *)data_stdregprov },
-    { class_systemsecurityW, SIZEOF(col_systemsecurity), col_systemsecurity, SIZEOF(data_systemsecurity), 0, (BYTE *)data_systemsecurity },
-    { class_systemenclosureW, SIZEOF(col_systemenclosure), col_systemenclosure, SIZEOF(data_systemenclosure), 0, (BYTE *)data_systemenclosure },
-    { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, 0, NULL, fill_videocontroller }
+    { class_baseboardW, ARRAY_SIZE(col_baseboard), col_baseboard, ARRAY_SIZE(data_baseboard), 0, (BYTE *)data_baseboard },
+    { class_biosW, ARRAY_SIZE(col_bios), col_bios, ARRAY_SIZE(data_bios), 0, (BYTE *)data_bios },
+    { class_cdromdriveW, ARRAY_SIZE(col_cdromdrive), col_cdromdrive, 0, 0, NULL, fill_cdromdrive },
+    { class_compsysW, ARRAY_SIZE(col_compsys), col_compsys, 0, 0, NULL, fill_compsys },
+    { class_compsysproductW, ARRAY_SIZE(col_compsysproduct), col_compsysproduct, 0, 0, NULL, fill_compsysproduct },
+    { class_datafileW, ARRAY_SIZE(col_datafile), col_datafile, 0, 0, NULL, fill_datafile },
+    { class_desktopmonitorW, ARRAY_SIZE(col_desktopmonitor), col_desktopmonitor, 0, 0, NULL, fill_desktopmonitor },
+    { class_directoryW, ARRAY_SIZE(col_directory), col_directory, 0, 0, NULL, fill_directory },
+    { class_diskdriveW, ARRAY_SIZE(col_diskdrive), col_diskdrive, 0, 0, NULL, fill_diskdrive },
+    { class_diskpartitionW, ARRAY_SIZE(col_diskpartition), col_diskpartition, 0, 0, NULL, fill_diskpartition },
+    { class_ip4routetableW, ARRAY_SIZE(col_ip4routetable), col_ip4routetable, 0, 0, NULL, fill_ip4routetable },
+    { class_logicaldiskW, ARRAY_SIZE(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
+    { class_logicaldisk2W, ARRAY_SIZE(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
+    { class_networkadapterW, ARRAY_SIZE(col_networkadapter), col_networkadapter, 0, 0, NULL, fill_networkadapter },
+    { class_networkadapterconfigW, ARRAY_SIZE(col_networkadapterconfig), col_networkadapterconfig, 0, 0, NULL, fill_networkadapterconfig },
+    { class_osW, ARRAY_SIZE(col_os), col_os, 0, 0, NULL, fill_os },
+    { class_paramsW, ARRAY_SIZE(col_param), col_param, ARRAY_SIZE(data_param), 0, (BYTE *)data_param },
+    { class_physicalmediaW, ARRAY_SIZE(col_physicalmedia), col_physicalmedia, ARRAY_SIZE(data_physicalmedia), 0, (BYTE *)data_physicalmedia },
+    { class_physicalmemoryW, ARRAY_SIZE(col_physicalmemory), col_physicalmemory, 0, 0, NULL, fill_physicalmemory },
+    { class_pnpentityW, ARRAY_SIZE(col_pnpentity), col_pnpentity, 0, 0, NULL, fill_pnpentity },
+    { class_printerW, ARRAY_SIZE(col_printer), col_printer, 0, 0, NULL, fill_printer },
+    { class_processW, ARRAY_SIZE(col_process), col_process, 0, 0, NULL, fill_process },
+    { class_processorW, ARRAY_SIZE(col_processor), col_processor, 0, 0, NULL, fill_processor },
+    { class_processor2W, ARRAY_SIZE(col_processor), col_processor, 0, 0, NULL, fill_processor },
+    { class_qualifiersW, ARRAY_SIZE(col_qualifier), col_qualifier, ARRAY_SIZE(data_qualifier), 0, (BYTE *)data_qualifier },
+    { class_serviceW, ARRAY_SIZE(col_service), col_service, 0, 0, NULL, fill_service },
+    { class_sidW, ARRAY_SIZE(col_sid), col_sid, 0, 0, NULL, fill_sid },
+    { class_sounddeviceW, ARRAY_SIZE(col_sounddevice), col_sounddevice, ARRAY_SIZE(data_sounddevice), 0, (BYTE *)data_sounddevice },
+    { class_stdregprovW, ARRAY_SIZE(col_stdregprov), col_stdregprov, ARRAY_SIZE(data_stdregprov), 0, (BYTE *)data_stdregprov },
+    { class_systemsecurityW, ARRAY_SIZE(col_systemsecurity), col_systemsecurity, ARRAY_SIZE(data_systemsecurity), 0, (BYTE *)data_systemsecurity },
+    { class_systemenclosureW, ARRAY_SIZE(col_systemenclosure), col_systemenclosure, ARRAY_SIZE(data_systemenclosure), 0, (BYTE *)data_systemenclosure },
+    { class_videocontrollerW, ARRAY_SIZE(col_videocontroller), col_videocontroller, 0, 0, NULL, fill_videocontroller }
 };
 
 void init_table_list( void )
@@ -3561,6 +3561,6 @@ void init_table_list( void )
     static struct list tables = LIST_INIT( tables );
     UINT i;
 
-    for (i = 0; i < SIZEOF(builtin_classes); i++) list_add_tail( &tables, &builtin_classes[i].entry );
+    for (i = 0; i < ARRAY_SIZE(builtin_classes); i++) list_add_tail( &tables, &builtin_classes[i].entry );
     table_list = &tables;
 }

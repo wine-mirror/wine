@@ -807,7 +807,7 @@ static WCHAR *build_signature_table_name( const WCHAR *class, const WCHAR *metho
     static const WCHAR fmtW[] = {'_','_','%','s','_','%','s','_','%','s',0};
     static const WCHAR outW[] = {'O','U','T',0};
     static const WCHAR inW[] = {'I','N',0};
-    UINT len = SIZEOF(fmtW) + SIZEOF(outW) + strlenW( class ) + strlenW( method );
+    UINT len = ARRAY_SIZE(fmtW) + ARRAY_SIZE(outW) + strlenW( class ) + strlenW( method );
     WCHAR *ret;
 
     if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
@@ -826,7 +826,7 @@ HRESULT create_signature( const WCHAR *class, const WCHAR *method, enum param_di
          'D','i','r','e','c','t','i','o','n','%','s',0};
     static const WCHAR geW[] = {'>','=','0',0};
     static const WCHAR leW[] = {'<','=','0',0};
-    UINT len = SIZEOF(selectW) + SIZEOF(geW);
+    UINT len = ARRAY_SIZE(selectW) + ARRAY_SIZE(geW);
     IEnumWbemClassObject *iter;
     WCHAR *query, *name;
     HRESULT hr;
