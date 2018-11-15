@@ -3030,7 +3030,7 @@ static BOOL write_data( request_t *request, LPCVOID buffer, DWORD to_write, LPDW
 
 static void task_write_data( struct task_header *task )
 {
-    write_data_t *w = (write_data_t *)task;
+    struct write_data *w = (struct write_data *)task;
     write_data( w->hdr.request, w->buffer, w->to_write, w->written, TRUE );
 }
 
@@ -3058,9 +3058,9 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        write_data_t *w;
+        struct write_data *w;
 
-        if (!(w = heap_alloc( sizeof(write_data_t) ))) return FALSE;
+        if (!(w = heap_alloc( sizeof(struct write_data) ))) return FALSE;
         w->hdr.request = request;
         w->hdr.proc    = task_write_data;
         w->buffer      = buffer;

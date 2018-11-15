@@ -251,13 +251,13 @@ struct read_data
     DWORD *read;
 };
 
-typedef struct
+struct write_data
 {
     struct task_header hdr;
-    LPCVOID buffer;
+    const void *buffer;
     DWORD to_write;
-    LPDWORD written;
-} write_data_t;
+    DWORD *written;
+};
 
 object_header_t *addref_object( object_header_t * ) DECLSPEC_HIDDEN;
 object_header_t *grab_object( HINTERNET ) DECLSPEC_HIDDEN;
