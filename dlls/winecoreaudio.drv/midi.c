@@ -148,7 +148,7 @@ LONG CoreAudio_MIDIInit(void)
         sources[i].source = MIDIGetSource(i);
 
         CoreMIDI_GetObjectName(sources[i].source, szPname, sizeof(szPname));
-        MultiByteToWideChar(CP_ACP, 0, szPname, -1, sources[i].caps.szPname, sizeof(sources[i].caps.szPname)/sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, szPname, -1, sources[i].caps.szPname, ARRAY_SIZE(sources[i].caps.szPname));
 
         MIDIPortConnectSource(MIDIInPort, sources[i].source, &sources[i].wDevID);
 
@@ -164,7 +164,7 @@ LONG CoreAudio_MIDIInit(void)
     for (i = 0; i < MAX_MIDI_SYNTHS; i++)
     {
         snprintf(szPname, sizeof(szPname), "CoreAudio MIDI Synth %d", i);
-        MultiByteToWideChar(CP_ACP, 0, szPname, -1, destinations[i].caps.szPname, sizeof(destinations[i].caps.szPname)/sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, szPname, -1, destinations[i].caps.szPname, ARRAY_SIZE(destinations[i].caps.szPname));
 
         destinations[i].caps.wTechnology = MOD_SYNTH;
         destinations[i].caps.wChannelMask = 0xFFFF;
@@ -182,7 +182,7 @@ LONG CoreAudio_MIDIInit(void)
         destinations[i].dest = MIDIGetDestination(i - MAX_MIDI_SYNTHS);
 
         CoreMIDI_GetObjectName(destinations[i].dest, szPname, sizeof(szPname));
-        MultiByteToWideChar(CP_ACP, 0, szPname, -1, destinations[i].caps.szPname, sizeof(destinations[i].caps.szPname)/sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, szPname, -1, destinations[i].caps.szPname, ARRAY_SIZE(destinations[i].caps.szPname));
 
         destinations[i].caps.wTechnology = MOD_MIDIPORT;
         destinations[i].caps.wChannelMask = 0xFFFF;
