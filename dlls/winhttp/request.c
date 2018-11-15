@@ -541,7 +541,7 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
     return ret;
 }
 
-static WCHAR *build_absolute_request_path( request_t *request )
+static WCHAR *build_absolute_request_path( request_t *request, const WCHAR **path )
 {
     static const WCHAR http[] = {'h','t','t','p',0};
     static const WCHAR https[] = {'h','t','t','p','s',0};
@@ -555,16 +555,17 @@ static WCHAR *build_absolute_request_path( request_t *request )
     len = strlenW( scheme ) + strlenW( request->connect->hostname ) + 4; /* '://' + nul */
     if (request->connect->hostport) len += 6; /* ':' between host and port, up to 5 for port */
 
-    if (request->path) len += strlenW( request->path );
+    len += strlenW( request->path );
     if ((ret = heap_alloc( len * sizeof(WCHAR) )))
     {
         len = sprintfW( ret, fmt, scheme, request->connect->hostname );
         if (request->connect->hostport)
         {
             static const WCHAR port_fmt[] = {':','%','u',0};
-            sprintfW( ret + len, port_fmt, request->connect->hostport );
+            len += sprintfW( ret + len, port_fmt, request->connect->hostport );
         }
-        if (request->path) strcatW( ret, request->path );
+        strcpyW( ret + len, request->path );
+        if (path) *path = ret + len;
     }
 
     return ret;
@@ -578,7 +579,7 @@ static WCHAR *build_request_string( request_t *request )
     unsigned int i, len;
 
     if (!strcmpiW( request->connect->hostname, request->connect->servername )) path = request->path;
-    else if (!(path = build_absolute_request_path( request ))) return NULL;
+    else if (!(path = build_absolute_request_path( request, NULL ))) return NULL;
 
     len = strlenW( request->verb ) + 1 /* ' ' */;
     len += strlenW( path ) + 1 /* ' ' */;
@@ -2125,16 +2126,16 @@ static DWORD str_to_wire( const WCHAR *src, int src_len, char *dst, enum escape_
 static char *build_wire_path( request_t *request, DWORD *ret_len )
 {
     WCHAR *full_path;
-    const WCHAR *path, *query = NULL;
+    const WCHAR *start, *path, *query = NULL;
     DWORD len, len_path = 0, len_query = 0;
     enum escape_flags path_flags, query_flags;
     char *ret;
 
-    if (!strcmpiW( request->connect->hostname, request->connect->servername )) full_path = request->path;
-    else if (!(full_path = build_absolute_request_path( request ))) return NULL;
+    if (!strcmpiW( request->connect->hostname, request->connect->servername )) start = full_path = request->path;
+    else if (!(full_path = build_absolute_request_path( request, &start ))) return NULL;
 
     len = strlenW( full_path );
-    if ((path = strchrW( full_path, '/' )))
+    if ((path = strchrW( start, '/' )))
     {
         len_path = strlenW( path );
         if ((query = strchrW( path, '?' )))
