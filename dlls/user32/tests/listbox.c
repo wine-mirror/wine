@@ -2096,7 +2096,6 @@ static void test_LBS_NODATA(void)
         memset(&data, 0xee, sizeof(data));
         ret = SendMessageA(listbox, LB_GETTEXT, valid_idx[i], (LPARAM)&data);
         ok(ret == sizeof(data), "Unexpected return value %d.\n", ret);
-    todo_wine
         ok(!memcmp(&data, &zero_data, sizeof(data)), "Unexpected item data.\n");
 
         ret = SendMessageA(listbox, LB_GETITEMDATA, valid_idx[i], 0);

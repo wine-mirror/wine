@@ -799,7 +799,8 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
         __ENDTRY
     } else {
         if (buffer)
-            *((ULONG_PTR *)buffer) = descr->items[index].data;
+            *((ULONG_PTR *)buffer) = (descr->style & LBS_NODATA)
+                                     ? 0 : descr->items[index].data;
         len = sizeof(ULONG_PTR);
     }
     return len;
