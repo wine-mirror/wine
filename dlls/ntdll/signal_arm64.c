@@ -545,6 +545,9 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
     {
         DWORD c;
 
+        TRACE( "code=%x flags=%x addr=%p pc=%lx tid=%04x\n",
+               rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+               context->Pc, GetCurrentThreadId() );
         for (c = 0; c < rec->NumberParameters; c++)
             TRACE( " info[%d]=%016lx\n", c, rec->ExceptionInformation[c] );
         if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
@@ -560,7 +563,24 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
         }
         else
         {
-            /* FIXME: dump context */
+            TRACE(" x0=%016lx x1=%016lx x2=%016lx x3=%016lx\n",
+                  context->u.s.X0, context->u.s.X1, context->u.s.X2, context->u.s.X3 );
+            TRACE(" x4=%016lx x5=%016lx x6=%016lx x7=%016lx\n",
+                  context->u.s.X4, context->u.s.X5, context->u.s.X6, context->u.s.X7 );
+            TRACE(" x8=%016lx x9=%016lx x10=%016lx x11=%016lx\n",
+                  context->u.s.X8, context->u.s.X9, context->u.s.X10, context->u.s.X11 );
+            TRACE(" x12=%016lx x13=%016lx x14=%016lx x15=%016lx\n",
+                  context->u.s.X12, context->u.s.X13, context->u.s.X14, context->u.s.X15 );
+            TRACE(" x16=%016lx x17=%016lx x18=%016lx x19=%016lx\n",
+                  context->u.s.X16, context->u.s.X17, context->u.s.X18, context->u.s.X19 );
+            TRACE(" x20=%016lx x21=%016lx x22=%016lx x23=%016lx\n",
+                  context->u.s.X20, context->u.s.X21, context->u.s.X22, context->u.s.X23 );
+            TRACE(" x24=%016lx x25=%016lx x26=%016lx x27=%016lx\n",
+                  context->u.s.X24, context->u.s.X25, context->u.s.X26, context->u.s.X27 );
+            TRACE(" x28=%016lx fp=%016lx lr=%016lx sp=%016lx\n",
+                  context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
+            TRACE(" pc=%016lx\n",
+                  context->Pc );
         }
 
         status = send_debug_event( rec, TRUE, context );
