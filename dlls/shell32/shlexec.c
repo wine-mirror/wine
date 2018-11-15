@@ -823,7 +823,7 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
     {
         WCHAR command[1024], fullpath[MAX_PATH];
         static const WCHAR wSo[] = { '.','s','o',0 };
-        int sizeSo = sizeof(wSo)/sizeof(WCHAR);
+        int sizeSo = ARRAY_SIZE(wSo);
         LPWSTR ptr = NULL;
         DWORD ret = 0;
 
