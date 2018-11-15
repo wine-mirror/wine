@@ -2958,7 +2958,7 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
 
 static void task_read_data( struct task_header *task )
 {
-    read_data_t *r = (read_data_t *)task;
+    struct read_data *r = (struct read_data *)task;
     read_data( r->hdr.request, r->buffer, r->to_read, r->read, TRUE );
 }
 
@@ -2986,9 +2986,9 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        read_data_t *r;
+        struct read_data *r;
 
-        if (!(r = heap_alloc( sizeof(read_data_t) ))) return FALSE;
+        if (!(r = heap_alloc( sizeof(struct read_data) ))) return FALSE;
         r->hdr.request = request;
         r->hdr.proc    = task_read_data;
         r->buffer      = buffer;

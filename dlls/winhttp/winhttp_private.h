@@ -243,13 +243,13 @@ struct query_data
     DWORD *available;
 };
 
-typedef struct
+struct read_data
 {
     struct task_header hdr;
-    LPVOID buffer;
+    void *buffer;
     DWORD to_read;
-    LPDWORD read;
-} read_data_t;
+    DWORD *read;
+};
 
 typedef struct
 {
