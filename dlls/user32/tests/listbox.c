@@ -264,6 +264,7 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
         }
         else
         {
+        todo_wine_if((style & LBS_NODATA) && strings[mi->itemID])
             ok((void*)mi->itemData == strings[mi->itemID],
                     "mi->itemData = %08lx, expected %p\n", mi->itemData, strings[mi->itemID]);
         }
@@ -2042,12 +2043,21 @@ static void test_WM_MEASUREITEM(void)
 
 static void test_LBS_NODATA(void)
 {
+    static const DWORD invalid_styles[] =
+    {
+        0,
+        LBS_OWNERDRAWVARIABLE,
+        LBS_SORT,
+        LBS_HASSTRINGS,
+        LBS_OWNERDRAWFIXED | LBS_SORT,
+        LBS_OWNERDRAWFIXED | LBS_HASSTRINGS,
+    };
     static const UINT invalid_idx[] = { -2, 2 };
     static const UINT valid_idx[] = { 0, 1 };
     static const ULONG_PTR zero_data;
+    HWND listbox, parent;
     unsigned int i;
     ULONG_PTR data;
-    HWND listbox;
     INT ret;
 
     listbox = CreateWindowA("listbox", "TestList", LBS_NODATA | LBS_OWNERDRAWFIXED | WS_VISIBLE,
@@ -2110,6 +2120,28 @@ todo_wine
     ok(ret == LB_ERR, "Unexpected return value %d.\n", ret);
 
     DestroyWindow(listbox);
+
+    /* Invalid window style combinations. */
+    parent = create_parent();
+    ok(parent != NULL, "Failed to create parent window.\n");
+
+    for (i = 0; i < ARRAY_SIZE(invalid_styles); ++i)
+    {
+        DWORD style;
+
+        listbox = CreateWindowA("listbox", "TestList", LBS_NODATA | WS_CHILD | invalid_styles[i],
+                0, 0, 100, 100, parent, (HMENU)1, NULL, 0);
+        ok(listbox != NULL, "Failed to create a listbox.\n");
+
+        style = GetWindowLongA(listbox, GWL_STYLE);
+        ok((style & invalid_styles[i]) == invalid_styles[i], "%u: unexpected window styles %#x.\n", i, style);
+        ret = SendMessageA(listbox, LB_SETCOUNT, 100, 0);
+    todo_wine_if(i == 1 || i == 4)
+        ok(ret == LB_ERR, "%u: unexpected return value %d.\n", i, ret);
+        DestroyWindow(listbox);
+    }
+
+    DestroyWindow(parent);
 }
 
 START_TEST(listbox)
