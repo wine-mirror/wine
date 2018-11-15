@@ -1863,6 +1863,14 @@ INT CDECL MSVCRT_iswlower( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
+ *		_iswlower_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__iswlower_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
+{
+    return islowerW( wc );
+}
+
+/*********************************************************************
  *		iswprint (MSVCRT.@)
  */
 INT CDECL MSVCRT_iswprint( MSVCRT_wchar_t wc )
