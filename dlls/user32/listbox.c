@@ -1757,7 +1757,7 @@ static LRESULT LISTBOX_SetCount( LB_DESCR *descr, INT count )
 {
     LRESULT ret;
 
-    if (HAS_STRINGS(descr))
+    if (!(descr->style & LBS_NODATA))
     {
         SetLastError(ERROR_SETCOUNT_ON_BAD_LB);
         return LB_ERR;

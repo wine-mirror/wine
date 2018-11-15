@@ -264,7 +264,6 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
         }
         else
         {
-        todo_wine_if((style & LBS_NODATA) && strings[mi->itemID])
             ok((void*)mi->itemData == strings[mi->itemID],
                     "mi->itemData = %08lx, expected %p\n", mi->itemData, strings[mi->itemID]);
         }
@@ -1765,9 +1764,7 @@ static void test_set_count( void )
 
         SetLastError( 0xdeadbeef );
         ret = SendMessageA( listbox, LB_SETCOUNT, 100, 0 );
-    todo_wine_if(i == 0)
         ok( ret == LB_ERR, "expected %d, got %d\n", LB_ERR, ret );
-    todo_wine_if(i == 0)
         ok( GetLastError() == ERROR_SETCOUNT_ON_BAD_LB, "Unexpected error %d.\n", GetLastError() );
 
         DestroyWindow( listbox );
@@ -2137,7 +2134,6 @@ todo_wine
         style = GetWindowLongA(listbox, GWL_STYLE);
         ok((style & invalid_styles[i]) == invalid_styles[i], "%u: unexpected window styles %#x.\n", i, style);
         ret = SendMessageA(listbox, LB_SETCOUNT, 100, 0);
-    todo_wine_if(i == 1 || i == 4)
         ok(ret == LB_ERR, "%u: unexpected return value %d.\n", i, ret);
         DestroyWindow(listbox);
     }
