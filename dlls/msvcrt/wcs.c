@@ -1017,6 +1017,15 @@ int CDECL MSVCRT__vscprintf( const char *format, __ms_va_list valist )
 }
 
 /*********************************************************************
+ *              _vscprintf_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__vscprintf_l(const char *format,
+        MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    return MSVCRT_vsnprintf_l(NULL, INT_MAX, format, locale, valist);
+}
+
+/*********************************************************************
  *		_vscprintf_p_l (MSVCRT.@)
  */
 int CDECL MSVCRT__vscprintf_p_l(const char *format,
