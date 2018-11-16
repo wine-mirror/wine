@@ -1967,6 +1967,14 @@ INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
+ *		_iswxdigit_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__iswxdigit_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
+{
+    return isxdigitW( wc );
+}
+
+/*********************************************************************
  *		_iswctype_l (MSVCRT.@)
  */
 INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, MSVCRT_wctype_t type, MSVCRT__locale_t locale )
