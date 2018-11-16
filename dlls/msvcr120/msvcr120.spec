@@ -1375,7 +1375,7 @@
 @ stub _iswcsymf_l
 @ cdecl _iswctype_l(long long ptr) MSVCRT__iswctype_l
 @ cdecl _iswdigit_l(long ptr) MSVCRT__iswdigit_l
-@ stub _iswgraph_l
+@ cdecl _iswgraph_l(long ptr) MSVCRT__iswgraph_l
 @ cdecl _iswlower_l(long ptr) MSVCRT__iswlower_l
 @ stub _iswprint_l
 @ cdecl _iswpunct_l(long ptr) MSVCRT__iswpunct_l

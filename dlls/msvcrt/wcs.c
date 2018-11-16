@@ -1855,6 +1855,14 @@ INT CDECL MSVCRT_iswgraph( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
+ *		_iswgraph_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__iswgraph_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
+{
+    return isgraphW( wc );
+}
+
+/*********************************************************************
  *		iswlower (MSVCRT.@)
  */
 INT CDECL MSVCRT_iswlower( MSVCRT_wchar_t wc )
