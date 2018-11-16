@@ -1242,7 +1242,7 @@
 @ cdecl _iswdigit_l(long ptr) msvcr120._iswdigit_l
 @ cdecl _iswgraph_l(long ptr) msvcr120._iswgraph_l
 @ cdecl _iswlower_l(long ptr) msvcr120._iswlower_l
-@ stub _iswprint_l
+@ cdecl _iswprint_l(long ptr) msvcr120._iswprint_l
 @ cdecl _iswpunct_l(long ptr) msvcr120._iswpunct_l
 @ cdecl _iswspace_l(long ptr) msvcr120._iswspace_l
 @ cdecl _iswupper_l(long ptr) msvcr120._iswupper_l

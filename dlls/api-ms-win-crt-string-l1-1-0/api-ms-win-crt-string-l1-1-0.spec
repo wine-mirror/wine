@@ -29,7 +29,7 @@
 @ cdecl _iswdigit_l(long ptr) ucrtbase._iswdigit_l
 @ cdecl _iswgraph_l(long ptr) ucrtbase._iswgraph_l
 @ cdecl _iswlower_l(long ptr) ucrtbase._iswlower_l
-@ stub _iswprint_l
+@ cdecl _iswprint_l(long ptr) ucrtbase._iswprint_l
 @ cdecl _iswpunct_l(long ptr) ucrtbase._iswpunct_l
 @ cdecl _iswspace_l(long ptr) ucrtbase._iswspace_l
 @ cdecl _iswupper_l(long ptr) ucrtbase._iswupper_l
