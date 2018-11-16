@@ -1515,7 +1515,7 @@
 @ stub _vprintf_p_l
 @ stub _vprintf_s_l
 @ cdecl _vscprintf(str ptr) msvcr120._vscprintf
-@ stub _vscprintf_l
+@ cdecl _vscprintf_l(str ptr ptr) msvcr120._vscprintf_l
 @ cdecl _vscprintf_p(str ptr) msvcr120._vscprintf_p
 @ cdecl _vscprintf_p_l(str ptr ptr) msvcr120._vscprintf_p_l
 @ cdecl _vscwprintf(wstr ptr) msvcr120._vscwprintf
