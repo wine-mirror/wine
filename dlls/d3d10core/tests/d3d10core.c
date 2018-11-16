@@ -9612,6 +9612,16 @@ static void test_copy_subresource_region_1d(void)
     }
     release_resource_readback(&rb);
 
+    get_texture1d_readback(texture1d, 0, &rb);
+    for (i = 0; i < texture1d_desc.Width; ++i)
+    {
+        color = get_readback_color(&rb, i, 0);
+        ok(compare_color(color, bitmap_data[i], 1),
+                "Got color 0x%08x at %u, expected 0x%08x.\n",
+                color, i, bitmap_data[i]);
+    }
+    release_resource_readback(&rb);
+
     ID3D10Texture1D_Release(texture1d);
     ID3D10Texture2D_Release(texture2d);
     release_test_context(&test_context);
