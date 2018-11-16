@@ -1807,6 +1807,14 @@ INT CDECL MSVCRT_iswalnum( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
+ *		_iswalnum_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__iswalnum_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
+{
+    return isalnumW( wc );
+}
+
+/*********************************************************************
  *		iswalpha (MSVCRT.@)
  */
 INT CDECL MSVCRT_iswalpha( MSVCRT_wchar_t wc )

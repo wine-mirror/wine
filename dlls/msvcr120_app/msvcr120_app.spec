@@ -1232,7 +1232,7 @@
 @ stub _ispunct_l
 @ cdecl _isspace_l(long ptr) msvcr120._isspace_l
 @ cdecl _isupper_l(long ptr) msvcr120._isupper_l
-@ stub _iswalnum_l
+@ cdecl _iswalnum_l(long ptr) msvcr120._iswalnum_l
 @ cdecl _iswalpha_l(long ptr) msvcr120._iswalpha_l
 @ cdecl _iswblank_l(long ptr) msvcr120._iswblank_l
 @ stub _iswcntrl_l

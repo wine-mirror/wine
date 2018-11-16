@@ -19,7 +19,7 @@
 @ stub _ispunct_l
 @ cdecl _isspace_l(long ptr) ucrtbase._isspace_l
 @ cdecl _isupper_l(long ptr) ucrtbase._isupper_l
-@ stub _iswalnum_l
+@ cdecl _iswalnum_l(long ptr) ucrtbase._iswalnum_l
 @ cdecl _iswalpha_l(long ptr) ucrtbase._iswalpha_l
 @ cdecl _iswblank_l(long ptr) ucrtbase._iswblank_l
 @ stub _iswcntrl_l

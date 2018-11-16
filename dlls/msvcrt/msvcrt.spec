@@ -633,7 +633,7 @@
 @ cdecl _isprint_l(long ptr) MSVCRT__isprint_l
 @ cdecl _isspace_l(long ptr) MSVCRT__isspace_l
 @ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
-# stub _iswalnum_l(long ptr)
+@ cdecl _iswalnum_l(long ptr) MSVCRT__iswalnum_l
 @ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
 # stub _iswcntrl_l(long ptr)
 @ cdecl _iswctype_l(long long ptr) MSVCRT__iswctype_l

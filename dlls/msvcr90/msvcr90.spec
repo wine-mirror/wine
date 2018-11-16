@@ -666,7 +666,7 @@
 @ stub _ispunct_l
 @ cdecl _isspace_l(long ptr) MSVCRT__isspace_l
 @ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
-@ stub _iswalnum_l
+@ cdecl _iswalnum_l(long ptr) MSVCRT__iswalnum_l
 @ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
 @ stub _iswcntrl_l
 @ stub _iswcsym_l
