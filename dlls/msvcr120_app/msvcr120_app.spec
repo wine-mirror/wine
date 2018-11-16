@@ -1235,7 +1235,7 @@
 @ cdecl _iswalnum_l(long ptr) msvcr120._iswalnum_l
 @ cdecl _iswalpha_l(long ptr) msvcr120._iswalpha_l
 @ cdecl _iswblank_l(long ptr) msvcr120._iswblank_l
-@ stub _iswcntrl_l
+@ cdecl _iswcntrl_l(long ptr) msvcr120._iswcntrl_l
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
 @ cdecl _iswctype_l(long long ptr) msvcr120._iswctype_l

@@ -509,7 +509,7 @@
 @ cdecl _iswalnum_l(long ptr) MSVCRT__iswalnum_l
 @ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
 @ cdecl _iswblank_l(long ptr) MSVCRT__iswblank_l
-@ stub _iswcntrl_l
+@ cdecl _iswcntrl_l(long ptr) MSVCRT__iswcntrl_l
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
 @ cdecl _iswctype_l(long long ptr) MSVCRT__iswctype_l

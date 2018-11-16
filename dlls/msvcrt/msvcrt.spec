@@ -635,7 +635,7 @@
 @ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
 @ cdecl _iswalnum_l(long ptr) MSVCRT__iswalnum_l
 @ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
-# stub _iswcntrl_l(long ptr)
+@ cdecl _iswcntrl_l(long ptr) MSVCRT__iswcntrl_l
 @ cdecl _iswctype_l(long long ptr) MSVCRT__iswctype_l
 @ cdecl _iswdigit_l(long ptr) MSVCRT__iswdigit_l
 @ cdecl _iswgraph_l(long ptr) MSVCRT__iswgraph_l

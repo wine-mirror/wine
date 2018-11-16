@@ -1839,6 +1839,14 @@ INT CDECL MSVCRT_iswcntrl( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
+ *		_iswcntrl_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__iswcntrl_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
+{
+    return iscntrlW( wc );
+}
+
+/*********************************************************************
  *		iswdigit (MSVCRT.@)
  */
 INT CDECL MSVCRT_iswdigit( MSVCRT_wchar_t wc )

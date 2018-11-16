@@ -22,7 +22,7 @@
 @ cdecl _iswalnum_l(long ptr) ucrtbase._iswalnum_l
 @ cdecl _iswalpha_l(long ptr) ucrtbase._iswalpha_l
 @ cdecl _iswblank_l(long ptr) ucrtbase._iswblank_l
-@ stub _iswcntrl_l
+@ cdecl _iswcntrl_l(long ptr) ucrtbase._iswcntrl_l
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
 @ cdecl _iswctype_l(long long ptr) ucrtbase._iswctype_l
