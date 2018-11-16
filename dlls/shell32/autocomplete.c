@@ -611,6 +611,15 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             /* Reset the enumerator if it's not visible anymore */
             if (!IsWindowVisible(hwnd)) free_enum_strs(This);
             break;
+        case WM_WINDOWPOSCHANGED:
+        {
+            WINDOWPOS *pos = (WINDOWPOS*)lParam;
+
+            if ((pos->flags & (SWP_NOMOVE | SWP_NOSIZE)) != (SWP_NOMOVE | SWP_NOSIZE) &&
+                This->hwndListBox && IsWindowVisible(This->hwndListBox))
+                show_listbox(This);
+            break;
+        }
         case WM_KEYDOWN:
             return ACEditSubclassProc_KeyDown(This, hwnd, uMsg, wParam, lParam);
         case WM_CHAR:
