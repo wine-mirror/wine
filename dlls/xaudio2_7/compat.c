@@ -2102,7 +2102,7 @@ static HRESULT WINAPI XA20_GetDeviceDetails(IXAudio20 *iface, UINT32 index,
         goto done;
     }
 
-    lstrcpynW(pDeviceDetails->DisplayName, var.u.pwszVal, sizeof(pDeviceDetails->DisplayName)/sizeof(WCHAR));
+    lstrcpynW(pDeviceDetails->DisplayName, var.u.pwszVal, ARRAY_SIZE(pDeviceDetails->DisplayName));
 
     PropVariantClear(&var);
 
@@ -2385,7 +2385,7 @@ static HRESULT WINAPI XA22_GetDeviceDetails(IXAudio22 *iface, UINT32 index,
         goto done;
     }
 
-    lstrcpynW(pDeviceDetails->DisplayName, var.u.pwszVal, sizeof(pDeviceDetails->DisplayName)/sizeof(WCHAR));
+    lstrcpynW(pDeviceDetails->DisplayName, var.u.pwszVal, ARRAY_SIZE(pDeviceDetails->DisplayName));
 
     PropVariantClear(&var);
 
@@ -2667,7 +2667,7 @@ static HRESULT WINAPI XA27_GetDeviceDetails(IXAudio27 *iface, UINT32 index,
         goto done;
     }
 
-    lstrcpynW(pDeviceDetails->DisplayName, var.u.pwszVal, sizeof(pDeviceDetails->DisplayName)/sizeof(WCHAR));
+    lstrcpynW(pDeviceDetails->DisplayName, var.u.pwszVal, ARRAY_SIZE(pDeviceDetails->DisplayName));
 
     PropVariantClear(&var);
 
