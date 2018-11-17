@@ -29,6 +29,8 @@ extern "C" {
 #define SLCAPI DECLSPEC_IMPORT
 #endif
 
+typedef PVOID HSLC;
+
 typedef enum _tagSLDATATYPE
 {
     SL_DATA_NONE     = REG_NONE,
@@ -41,7 +43,7 @@ typedef enum _tagSLDATATYPE
 
 SLCAPI HRESULT WINAPI SLGetWindowsInformation(LPCWSTR, SLDATATYPE*, UINT*, LPBYTE*);
 SLCAPI HRESULT WINAPI SLGetWindowsInformationDWORD(LPCWSTR, LPDWORD);
-
+SLCAPI HRESULT WINAPI SLOpen(HSLC*);
 
 #ifdef __cplusplus
 }
