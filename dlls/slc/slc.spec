@@ -30,7 +30,7 @@
 @ stub SLInstallLicense
 @ stub SLInstallProofOfPurchase
 @ stub SLInstallSAMLicense
-@ stub SLOpen
+@ stdcall SLOpen(ptr)
 @ stub SLReArmWindows
 @ stub SLRegisterEvent
 @ stub SLRegisterWindowsEvent

@@ -62,6 +62,13 @@ HRESULT WINAPI SLGetWindowsInformationDWORD(LPCWSTR lpszValueName, LPDWORD pdwVa
     return status ? E_FAIL : S_OK;
 }
 
+HRESULT WINAPI SLOpen(HSLC *handle)
+{
+    FIXME("(%p) stub\n", handle );
+
+    return S_OK;
+}
+
 /***********************************************************************
  *             DllMain   (CLUSAPI.@)
  *
