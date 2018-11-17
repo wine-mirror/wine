@@ -2765,6 +2765,9 @@ static ULONG EmbeddedComplexSize(MIDL_STUB_MESSAGE *pStubMsg,
   case FC_SMVARRAY:
   case FC_CSTRING:
     return *(const WORD*)&pFormat[2];
+  case FC_LGFARRAY:
+  case FC_LGVARRAY:
+    return *(const ULONG*)&pFormat[2];
   case FC_USER_MARSHAL:
     return *(const WORD*)&pFormat[4];
   case FC_RANGE: {
