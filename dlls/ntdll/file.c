@@ -2671,6 +2671,18 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
         break;
 
+    case FileIoPriorityHintInformation:
+        if (len >= sizeof(FILE_IO_PRIORITY_HINT_INFO))
+        {
+            FILE_IO_PRIORITY_HINT_INFO *info = ptr;
+            if (info->PriorityHint < MaximumIoPriorityHintType)
+                TRACE( "ignoring FileIoPriorityHintInformation %u\n", info->PriorityHint );
+            else
+                io->u.Status = STATUS_INVALID_PARAMETER;
+        }
+        else io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
     case FileAllInformation:
         io->u.Status = STATUS_INVALID_INFO_CLASS;
         break;

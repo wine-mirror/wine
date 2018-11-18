@@ -4914,6 +4914,7 @@ static void test_SetFileInformationByHandle(void)
     FILE_STANDARD_INFO stdinfo = { {{0}},{{0}},0,FALSE,FALSE };
     FILE_COMPRESSION_INFO compressinfo;
     FILE_DISPOSITION_INFO dispinfo;
+    DECLSPEC_ALIGN(8) FILE_IO_PRIORITY_HINT_INFO hintinfo;
     char tempFileName[MAX_PATH];
     char tempPath[MAX_PATH];
     HANDLE file;
@@ -4948,6 +4949,28 @@ static void test_SetFileInformationByHandle(void)
 
     SetLastError(0xdeadbeef);
     ret = pSetFileInformationByHandle(file, FileAttributeTagInfo, &fileattrinfo, sizeof(fileattrinfo));
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hintinfo.PriorityHint = MaximumIoPriorityHintType;
+    ret = pSetFileInformationByHandle(file, FileIoPriorityHintInfo, &hintinfo, sizeof(hintinfo));
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    hintinfo.PriorityHint = IoPriorityHintNormal;
+    ret = pSetFileInformationByHandle(file, FileIoPriorityHintInfo, &hintinfo, sizeof(hintinfo));
+    ok(ret, "setting FileIoPriorityHintInfo got %d, error %d\n", ret, GetLastError());
+
+    hintinfo.PriorityHint = IoPriorityHintVeryLow;
+    ret = pSetFileInformationByHandle(file, FileIoPriorityHintInfo, &hintinfo, sizeof(hintinfo));
+    ok(ret, "setting FileIoPriorityHintInfo got %d, error %d\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pSetFileInformationByHandle(file, FileIoPriorityHintInfo, &hintinfo, sizeof(hintinfo) - 1);
+    ok(!ret && GetLastError() == ERROR_BAD_LENGTH, "got %d, error %d\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hintinfo.PriorityHint = IoPriorityHintVeryLow - 1;
+    ret = pSetFileInformationByHandle(file, FileIoPriorityHintInfo, &hintinfo, sizeof(hintinfo));
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
     memset(&protinfo, 0, sizeof(protinfo));

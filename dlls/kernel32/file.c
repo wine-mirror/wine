@@ -1103,7 +1103,6 @@ BOOL WINAPI SetFileInformationByHandle( HANDLE file, FILE_INFO_BY_HANDLE_CLASS c
     case FileStreamInfo:
     case FileIdBothDirectoryInfo:
     case FileIdBothDirectoryRestartInfo:
-    case FileIoPriorityHintInfo:
     case FileFullDirectoryInfo:
     case FileFullDirectoryRestartInfo:
     case FileStorageInfo:
@@ -1118,7 +1117,9 @@ BOOL WINAPI SetFileInformationByHandle( HANDLE file, FILE_INFO_BY_HANDLE_CLASS c
     case FileDispositionInfo:
         status = NtSetInformationFile( file, &io, info, size, FileDispositionInformation );
         break;
-
+    case FileIoPriorityHintInfo:
+        status = NtSetInformationFile( file, &io, info, size, FileIoPriorityHintInformation );
+        break;
     case FileStandardInfo:
     case FileCompressionInfo:
     case FileAttributeTagInfo:
