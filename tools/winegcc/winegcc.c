@@ -672,10 +672,11 @@ no_compat_defines:
     {
         if (opts->use_msvcrt)
         {
-            strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/msvcrt" : "-I" INCLUDEDIR "/msvcrt" );
+            strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/wine/msvcrt" : "-I" INCLUDEDIR "/wine/msvcrt" );
             strarray_add(comp_args, "-D__MSVCRT__");
         }
-        strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/windows" : "-I" INCLUDEDIR "/windows" );
+        strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR : "-I" INCLUDEDIR );
+        strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/wine/windows" : "-I" INCLUDEDIR "/wine/windows" );
     }
     else if (opts->wine_objdir)
         strarray_add(comp_args, strmake("-I%s/include", opts->wine_objdir) );

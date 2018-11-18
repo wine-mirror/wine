@@ -9,7 +9,7 @@ C_SRCS = \
 	winegcc.c
 
 winegcc_EXTRADEFS = \
-	-DINCLUDEDIR="\"${includedir}/wine\"" \
+	-DINCLUDEDIR="\"${includedir}\"" \
 	-DDLLDIR="\"${dlldir}\"" \
 	-DLIBDIR="\"${libdir}\"" \
 	-DCC="\"$(CC)\"" \
