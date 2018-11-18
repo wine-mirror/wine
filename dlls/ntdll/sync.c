@@ -1351,7 +1351,7 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE port, FILE_IO_COMPLETION_INFORMAT
 
     for (;;)
     {
-        for (;;)
+        while (i < count)
         {
             SERVER_START_REQ( remove_completion )
             {
@@ -1368,7 +1368,7 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE port, FILE_IO_COMPLETION_INFORMAT
 
             if (ret != STATUS_SUCCESS) break;
 
-            if (i++ >= count) break;
+            ++i;
         }
 
         if (i || ret != STATUS_PENDING)
