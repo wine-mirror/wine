@@ -1371,9 +1371,10 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE port, FILE_IO_COMPLETION_INFORMAT
             if (i++ >= count) break;
         }
 
-        if (i && ret == STATUS_PENDING)
+        if (i || ret != STATUS_PENDING)
         {
-            ret = STATUS_SUCCESS;
+            if (ret == STATUS_PENDING)
+                ret = STATUS_SUCCESS;
             break;
         }
 
