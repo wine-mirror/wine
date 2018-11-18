@@ -85,13 +85,31 @@ DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
     return HID_set_state(&controllers[index], vibration);
 }
 
+/* Some versions of SteamOverlayRenderer hot-patch XInputGetStateEx() and call
+ * XInputGetState() in the hook, so we need a wrapper. */
+static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
+{
+    HID_find_gamepads(controllers);
+
+    if (index >= XUSER_MAX_COUNT)
+        return ERROR_BAD_ARGUMENTS;
+    if (!controllers[index].connected)
+        return ERROR_DEVICE_NOT_CONNECTED;
+
+    HID_update_state(&controllers[index]);
+    memcpy(state, &controllers[index].state, sizeof(XINPUT_STATE));
+
+    return ERROR_SUCCESS;
+}
+
+
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
 {
     DWORD ret;
 
     TRACE("(index %u, state %p)!\n", index, state);
 
-    ret = XInputGetStateEx(index, state);
+    ret = xinput_get_state(index, state);
     if (ret != ERROR_SUCCESS)
         return ret;
 
@@ -105,17 +123,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE* state
 {
     TRACE("(index %u, state %p)!\n", index, state);
 
-    HID_find_gamepads(controllers);
-
-    if (index >= XUSER_MAX_COUNT)
-        return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].connected)
-        return ERROR_DEVICE_NOT_CONNECTED;
-
-    HID_update_state(&controllers[index]);
-    memcpy(state, &controllers[index].state, sizeof(XINPUT_STATE));
-
-    return ERROR_SUCCESS;
+    return xinput_get_state(index, state);
 }
 
 DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)
