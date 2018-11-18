@@ -25,6 +25,17 @@
 
 #include <olectl.h>
 
+/* These typedefs need to have the same size as their real counterparts. */
+typedef short VARIANT_BOOL;
+typedef void *BSTR;
+typedef double CURRENCY;
+typedef unsigned long HRESULT;
+typedef struct {
+    short word1, word2, word3, word4;
+    void *ptr1, *ptr2;
+} VARIANT;
+typedef unsigned long SCODE;
+
 [
   uuid(00020430-0000-0000-C000-000000000046),
   version(2.0),
@@ -32,17 +43,6 @@
 ]
 library stdole
 {
-    /* These typedefs need to have the same size as their real counterparts. */
-    typedef short VARIANT_BOOL;
-    typedef void *BSTR;
-    typedef double CURRENCY;
-    typedef unsigned long HRESULT;
-    typedef struct {
-        short word1, word2, word3, word4;
-        void *ptr1, *ptr2;
-    } VARIANT;
-    typedef unsigned long SCODE;
-
     typedef struct GUID {
         unsigned long  Data1;
         unsigned short Data2;
