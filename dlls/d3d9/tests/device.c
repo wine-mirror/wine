@@ -12902,9 +12902,8 @@ static void test_resource_access(void)
             ok(hr == D3D_OK, "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
 
             hr = IDirect3DDevice9_SetDepthStencilSurface(device, surface);
-            todo_wine_if(!(surface_desc.Usage & D3DUSAGE_DEPTHSTENCIL))
-                ok(hr == (surface_desc.Usage & D3DUSAGE_DEPTHSTENCIL ? D3D_OK : D3DERR_INVALIDCALL),
-                        "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
+            ok(hr == (surface_desc.Usage & D3DUSAGE_DEPTHSTENCIL ? D3D_OK : D3DERR_INVALIDCALL),
+                    "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
             hr = IDirect3DDevice9_SetDepthStencilSurface(device, depth_stencil);
             ok(hr == D3D_OK, "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
 
