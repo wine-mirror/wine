@@ -12774,8 +12774,7 @@ static void test_resource_access(void)
                 case SURFACE_2D:
                     hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1,
                             tests[j].usage, format, tests[j].pool, &texture_2d, NULL);
-                    todo_wine_if(j == 10 || j == 13 || j == 16 || j == 17 || j == 20 || j == 23 || j == 24
-                            || j == 27 || j == 30 || j == 31 || j == 32 || j == 33 || j == 34)
+                    todo_wine_if(j == 10 || j == 13 || j == 16 || j == 23 || j == 30)
                         ok(hr == (tests[j].valid && (tests[j].format != FORMAT_DEPTH || depth_2d)
                                 ? D3D_OK : D3DERR_INVALIDCALL),
                                 "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
@@ -12790,8 +12789,7 @@ static void test_resource_access(void)
                 case SURFACE_CUBE:
                     hr = IDirect3DDevice9_CreateCubeTexture(device, 16, 1,
                             tests[j].usage, format, tests[j].pool, &texture_cube, NULL);
-                    todo_wine_if(j == 10 || j == 13 || j == 16 || j == 17 || j == 20 || j == 23 || j == 24
-                            || j == 27 || j == 30 || j == 31 || j == 32 || j == 33 || j == 34)
+                    todo_wine_if(j == 10 || j == 13 || j == 16 || j == 23 || j == 30)
                         ok(hr == (tests[j].valid && (tests[j].format != FORMAT_DEPTH || depth_cube)
                                 ? D3D_OK : D3DERR_INVALIDCALL),
                                 "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
@@ -12928,8 +12926,7 @@ static void test_resource_access(void)
 
         hr = IDirect3DDevice9_CreateVolumeTexture(device, 16, 16, 1, 1,
                 tests[i].usage, format, tests[i].pool, &texture, NULL);
-        todo_wine_if((tests[i].usage & D3DUSAGE_DEPTHSTENCIL && tests[i].pool == D3DPOOL_SCRATCH)
-                || tests[i].usage & D3DUSAGE_RENDERTARGET)
+        todo_wine_if(tests[i].usage & D3DUSAGE_RENDERTARGET && tests[i].pool == D3DPOOL_DEFAULT)
             ok(hr == (!(tests[i].usage & ~D3DUSAGE_DYNAMIC) ? D3D_OK : D3DERR_INVALIDCALL),
                     "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (FAILED(hr))
