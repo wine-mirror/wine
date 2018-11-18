@@ -9055,8 +9055,7 @@ static void test_resource_access(void)
             if (SUCCEEDED(IDirect3DSurface8_GetContainer(surface, &IID_IDirect3DBaseTexture8, (void **)&texture)))
             {
                 hr = IDirect3DDevice8_SetTexture(device, 0, texture);
-                todo_wine_if(surface_desc.Pool == D3DPOOL_SCRATCH)
-                    ok(hr == D3D_OK, "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
+                ok(hr == D3D_OK, "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
                 hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
                 ok(hr == D3D_OK, "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
                 IDirect3DBaseTexture8_Release(texture);
@@ -9121,8 +9120,7 @@ static void test_resource_access(void)
         ok(hr == expected_hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
 
         hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)texture);
-        todo_wine_if(volume_desc.Pool == D3DPOOL_SCRATCH)
-            ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
         ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
 
