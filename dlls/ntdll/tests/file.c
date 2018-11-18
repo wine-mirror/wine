@@ -955,6 +955,32 @@ static void test_set_io_completion(void)
         info[1].IoStatusBlock.Information );
     ok( U(info[1].IoStatusBlock).Status == 56, "wrong status %#x\n", U(info[1].IoStatusBlock).Status);
 
+    res = pNtSetIoCompletion( h, 123, 456, 789, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#x\n", res );
+
+    res = pNtSetIoCompletion( h, 12, 34, 56, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#x\n", res );
+
+    count = 0xdeadbeef;
+    res = pNtRemoveIoCompletionEx( h, info, 1, &count, NULL, FALSE );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletionEx failed: %#x\n", res );
+    ok( count == 1, "wrong count %u\n", count );
+    ok( info[0].CompletionKey == 123, "wrong key %#lx\n", info[0].CompletionKey );
+    ok( info[0].CompletionValue == 456, "wrong value %#lx\n", info[0].CompletionValue );
+    ok( info[0].IoStatusBlock.Information == size, "wrong information %#lx\n",
+        info[0].IoStatusBlock.Information );
+    ok( U(info[0].IoStatusBlock).Status == 789, "wrong status %#x\n", U(info[0].IoStatusBlock).Status);
+
+    count = 0xdeadbeef;
+    res = pNtRemoveIoCompletionEx( h, info, 1, &count, NULL, FALSE );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletionEx failed: %#x\n", res );
+    ok( count == 1, "wrong count %u\n", count );
+    ok( info[0].CompletionKey == 12, "wrong key %#lx\n", info[0].CompletionKey );
+    ok( info[0].CompletionValue == 34, "wrong value %#lx\n", info[0].CompletionValue );
+    ok( info[0].IoStatusBlock.Information == size, "wrong information %#lx\n",
+        info[0].IoStatusBlock.Information );
+    ok( U(info[0].IoStatusBlock).Status == 56, "wrong status %#x\n", U(info[0].IoStatusBlock).Status);
+
     apc_count = 0;
     QueueUserAPC( user_apc_proc, GetCurrentThread(), (ULONG_PTR)&apc_count );
 
