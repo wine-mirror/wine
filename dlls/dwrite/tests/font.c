@@ -3711,16 +3711,52 @@ static void test_GetGdiInterop(void)
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
+static void *map_font_file(const WCHAR *filename, DWORD *file_size)
+{
+    HANDLE file, mapping;
+    void *ptr;
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    if (file == INVALID_HANDLE_VALUE) return NULL;
+
+    *file_size = GetFileSize(file, NULL);
+
+    mapping = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    if (!mapping)
+    {
+        CloseHandle(file);
+        return NULL;
+    }
+
+    ptr = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+
+    CloseHandle(file);
+    CloseHandle(mapping);
+    return ptr;
+}
+
 static void test_CreateFontFaceFromHdc(void)
 {
+    IDWriteFontFileStream *stream, *stream2;
+    void *font_data, *fragment_context;
+    const void *refkey, *fragment;
+    IDWriteFontFileLoader *loader;
+    DWORD data_size, num_fonts;
     IDWriteGdiInterop *interop;
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
+    UINT64 size, writetime;
+    IDWriteFontFile *file;
     HFONT hfont, oldhfont;
     LOGFONTW logfont;
+    HANDLE resource;
+    IUnknown *unk;
+    UINT32 count;
     LOGFONTA lf;
+    WCHAR *path;
     HRESULT hr;
     ULONG ref;
+    BOOL ret;
     HDC hdc;
 
     factory = create_factory();
@@ -3771,8 +3807,91 @@ static void test_CreateFontFaceFromHdc(void)
     ok(fontface == NULL, "got %p\n", fontface);
 
     DeleteObject(SelectObject(hdc, oldhfont));
-    DeleteDC(hdc);
 
+    /* Memory resource font */
+    path = create_testfontfile(test_fontfile);
+
+    data_size = 0;
+    font_data = map_font_file(path, &data_size);
+
+    num_fonts = 0;
+    resource = AddFontMemResourceEx(font_data, data_size, NULL, &num_fonts);
+    ok(resource != NULL, "Failed to add memory resource font, %d.\n", GetLastError());
+    ok(num_fonts == 1, "Unexpected number of fonts.\n");
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = -12;
+    strcpy(lf.lfFaceName, "wine_test");
+
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != NULL, "Failed to create a font.\n");
+    oldhfont = SelectObject(hdc, hfont);
+
+    hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, hdc, &fontface);
+todo_wine
+    ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
+
+if (fontface)
+{
+    count = 1;
+    hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
+    ok(hr == S_OK, "Failed to get font files, hr %#x.\n", hr);
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "Failed to get file loader, hr %#x.\n", hr);
+
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, loader);
+    ok(hr == DWRITE_E_ALREADYREGISTERED, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteInMemoryFontFileLoader, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteLocalFontFileLoader, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    count = 0;
+    hr = IDWriteFontFile_GetReferenceKey(file, &refkey, &count);
+    ok(hr == S_OK, "Failed to get ref key, hr %#x.\n", hr);
+    ok(count > 0, "Unexpected key length %u.\n", count);
+
+    hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, refkey, count, &stream);
+    ok(hr == S_OK, "Failed to create file stream, hr %#x.\n", hr);
+
+    hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, refkey, count, &stream2);
+    ok(hr == S_OK, "Failed to create file stream, hr %#x.\n", hr);
+    ok(stream2 != stream, "Unexpected stream instance.\n");
+    IDWriteFontFileStream_Release(stream2);
+
+    hr = IDWriteFontFileStream_GetFileSize(stream, &size);
+    ok(hr == S_OK, "Failed to get stream size, hr %#x.\n", hr);
+    ok(size == data_size, "Unexpected stream size.\n");
+
+    hr = IDWriteFontFileStream_GetLastWriteTime(stream, &writetime);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    fragment_context = NULL;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, 0, size, &fragment_context);
+    ok(hr == S_OK, "Failed to read fragment, hr %#x.\n", hr);
+    ok(fragment_context != NULL, "Unexpected context %p.\n", fragment_context);
+    ok(fragment == fragment_context, "Unexpected data pointer %p, context %p.\n", fragment, fragment_context);
+    IDWriteFontFileStream_ReleaseFileFragment(stream, fragment_context);
+
+    IDWriteFontFileStream_Release(stream);
+
+    IDWriteFontFileLoader_Release(loader);
+    IDWriteFontFile_Release(file);
+
+    IDWriteFontFace_Release(fontface);
+}
+    ret = RemoveFontMemResourceEx(resource);
+    ok(ret, "Failed to remove memory resource font, %d.\n", GetLastError());
+
+    UnmapViewOfFile(font_data);
+
+    DELETE_FONTFILE(path);
+
+    DeleteObject(SelectObject(hdc, oldhfont));
+    DeleteDC(hdc);
     IDWriteGdiInterop_Release(interop);
     ref = IDWriteFactory_Release(factory);
     ok(ref == 0, "factory not released, %u\n", ref);
@@ -7935,6 +8054,7 @@ static void test_inmemory_file_loader(void)
     hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, &ref_key, sizeof(ref_key), &stream2);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    /* With owner object. */
     hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory, data,
         file_size, &ownerobject.IUnknown_iface, &file);
     ok(hr == S_OK, "Failed to create in-memory file reference, hr %#x.\n", hr);
@@ -7946,7 +8066,7 @@ static void test_inmemory_file_loader(void)
     context2 = (void *)0xdeadbeef;
     hr = IDWriteFontFileStream_ReadFileFragment(stream2, &frag_start, 0, file_size, &context2);
     ok(hr == S_OK, "Failed to read a fragment, hr %#x.\n", hr);
-    ok(context == NULL, "Unexpected context %p.\n", context2);
+    ok(context2 == NULL, "Unexpected context %p.\n", context2);
     ok(frag_start == data, "Unexpected fragment pointer %p.\n", frag_start);
 
     hr = IDWriteFontFileStream_GetFileSize(stream2, &size);
@@ -7962,6 +8082,36 @@ static void test_inmemory_file_loader(void)
 
     IDWriteFontFileStream_Release(stream2);
 
+    /* Without owner object. */
+    hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory, data,
+        file_size, NULL, &file2);
+    ok(hr == S_OK, "Failed to create in-memory file reference, hr %#x.\n", hr);
+
+    ref_key = 1;
+    hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, &ref_key, sizeof(ref_key), &stream2);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+
+    context2 = (void *)0xdeadbeef;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream2, &frag_start, 0, file_size, &context2);
+    ok(hr == S_OK, "Failed to read a fragment, hr %#x.\n", hr);
+    ok(context2 == NULL, "Unexpected context %p.\n", context2);
+    ok(frag_start != data, "Unexpected fragment pointer %p.\n", frag_start);
+
+    hr = IDWriteFontFileStream_GetFileSize(stream2, &size);
+    ok(hr == S_OK, "Failed to get file size, hr %#x.\n", hr);
+    ok(size == file_size, "Unexpected file size.\n");
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream2, context2);
+
+    writetime = 1;
+    hr = IDWriteFontFileStream_GetLastWriteTime(stream2, &writetime);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(writetime == 0, "Unexpected writetime.\n");
+
+    IDWriteFontFileStream_Release(stream2);
+    IDWriteFontFile_Release(file2);
+
+    /* Key size validation. */
     ref_key = 0;
     hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, NULL, sizeof(ref_key) - 1, &stream2);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
@@ -7975,7 +8125,7 @@ static void test_inmemory_file_loader(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
-    ok(count == 1, "Unexpected file count %u.\n", count);
+    ok(count == 2, "Unexpected file count %u.\n", count);
 
     hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
     ok(hr == S_OK, "Failed to get reference key, hr %#x.\n", hr);
@@ -7986,7 +8136,7 @@ static void test_inmemory_file_loader(void)
     IDWriteFontFile_Release(file);
 
     count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
-    ok(count == 1, "Unexpected file count %u.\n", count);
+    ok(count == 2, "Unexpected file count %u.\n", count);
 
     hr = IDWriteFactory5_UnregisterFontFileLoader(factory, (IDWriteFontFileLoader *)inmemory);
     ok(hr == S_OK, "Failed to unregister loader, hr %#x.\n", hr);
