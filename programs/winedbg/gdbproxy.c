@@ -733,27 +733,18 @@ static void packet_reply_val(struct gdb_context* gdbctx, unsigned long val, int 
     }
 }
 
-static inline void packet_reply_add(struct gdb_context* gdbctx, const char* str, int len)
+static inline void packet_reply_add(struct gdb_context* gdbctx, const char* str)
 {
+    int len = strlen(str);
     packet_reply_grow(gdbctx, len);
     memcpy(&gdbctx->out_buf[gdbctx->out_len], str, len);
     gdbctx->out_len += len;
 }
 
-static inline void packet_reply_cat(struct gdb_context* gdbctx, const char* str)
-{
-    packet_reply_add(gdbctx, str, strlen(str));
-}
-
-static inline void packet_reply_catc(struct gdb_context* gdbctx, char ch)
-{
-    packet_reply_add(gdbctx, &ch, 1);
-}
-
 static void packet_reply_open(struct gdb_context* gdbctx)
 {
     assert(gdbctx->out_curr_packet == -1);
-    packet_reply_catc(gdbctx, '$');
+    packet_reply_add(gdbctx, "$");
     gdbctx->out_curr_packet = gdbctx->out_len;
 }
 
@@ -763,20 +754,19 @@ static void packet_reply_close(struct gdb_context* gdbctx)
     int plen;
 
     plen = gdbctx->out_len - gdbctx->out_curr_packet;
-    packet_reply_catc(gdbctx, '#');
+    packet_reply_add(gdbctx, "#");
     cksum = checksum(&gdbctx->out_buf[gdbctx->out_curr_packet], plen);
     packet_reply_hex_to(gdbctx, &cksum, 1);
     gdbctx->out_curr_packet = -1;
 }
 
-static enum packet_return packet_reply(struct gdb_context* gdbctx, const char* packet, int len)
+static enum packet_return packet_reply(struct gdb_context* gdbctx, const char* packet)
 {
     packet_reply_open(gdbctx);
 
-    if (len == -1) len = strlen(packet);
-    assert(memchr(packet, '$', len) == NULL && memchr(packet, '#', len) == NULL);
+    assert(strchr(packet, '$') == NULL && strchr(packet, '#') == NULL);
 
-    packet_reply_add(gdbctx, packet, len);
+    packet_reply_add(gdbctx, packet);
 
     packet_reply_close(gdbctx);
 
@@ -787,7 +777,7 @@ static enum packet_return packet_reply_error(struct gdb_context* gdbctx, int err
 {
     packet_reply_open(gdbctx);
 
-    packet_reply_add(gdbctx, "E", 1);
+    packet_reply_add(gdbctx, "E");
     packet_reply_val(gdbctx, error, 1);
 
     packet_reply_close(gdbctx);
@@ -832,12 +822,12 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
         unsigned char           sig;
         unsigned                i;
 
-        packet_reply_catc(gdbctx, 'T');
+        packet_reply_add(gdbctx, "T");
         sig = gdbctx->last_sig;
         packet_reply_val(gdbctx, sig, 1);
-        packet_reply_add(gdbctx, "thread:", 7);
+        packet_reply_add(gdbctx, "thread:");
         packet_reply_val(gdbctx, dbg_curr_thread->tid, 4);
-        packet_reply_catc(gdbctx, ';');
+        packet_reply_add(gdbctx, ";");
 
         for (i = 0; i < gdbctx->process->be_cpu->gdb_num_regs; i++)
         {
@@ -845,9 +835,9 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
              * unneeded, but not harmful
              */
             packet_reply_val(gdbctx, i, 1);
-            packet_reply_catc(gdbctx, ':');
+            packet_reply_add(gdbctx, ":");
             packet_reply_register_hex_to(gdbctx, i);
-            packet_reply_catc(gdbctx, ';');
+            packet_reply_add(gdbctx, ";");
         }
     }
     else
@@ -855,7 +845,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
         /* Try to put an exit code
          * Cannot use GetExitCodeProcess, wouldn't fit in a 8 bit value, so
          * just indicate the end of process and exit */
-        packet_reply_add(gdbctx, "W00", 3);
+        packet_reply_add(gdbctx, "W00");
         /*if (!gdbctx->extended)*/ ret |= packet_last_f;
     }
 
@@ -923,12 +913,12 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
           The vCont packet is not supported.  (this didn't seem to be obeyed!)
         */
         packet_reply_open(gdbctx);
-        packet_reply_add(gdbctx, "vCont", 5);
+        packet_reply_add(gdbctx, "vCont");
         /* add all the supported actions to the reply (all of them for now) */
-        packet_reply_add(gdbctx, ";c", 2);
-        packet_reply_add(gdbctx, ";C", 2);
-        packet_reply_add(gdbctx, ";s", 2);
-        packet_reply_add(gdbctx, ";S", 2);
+        packet_reply_add(gdbctx, ";c");
+        packet_reply_add(gdbctx, ";C");
+        packet_reply_add(gdbctx, ";s");
+        packet_reply_add(gdbctx, ";S");
         packet_reply_close(gdbctx);
         return packet_done;
     }
@@ -1358,7 +1348,7 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
 	  strcpy(wndName, "-- Empty --");
 
        packet_reply_open(gdbctx);
-       packet_reply_catc(gdbctx, 'O');
+       packet_reply_add(gdbctx, "O");
        snprintf(buffer, sizeof(buffer),
                 "%*s%04lx%*s%-17.17s %08x %0*lx %.14s\n",
                 indent, "", (ULONG_PTR)hWnd, 13 - indent, "",
@@ -1380,7 +1370,7 @@ static void packet_query_monitor_wnd(struct gdb_context* gdbctx, int len, const 
     /* we do the output in several 'O' packets, with the last one being just OK for
      * marking the end of the output */
     packet_reply_open(gdbctx);
-    packet_reply_catc(gdbctx, 'O');
+    packet_reply_add(gdbctx, "O");
     snprintf(buffer, sizeof(buffer),
              "%-16.16s %-17.17s %-8.8s %s\n",
              "hwnd", "Class Name", " Style", " WndProc Text");
@@ -1389,7 +1379,7 @@ static void packet_query_monitor_wnd(struct gdb_context* gdbctx, int len, const 
 
     /* FIXME: could also add a pmt to this command in str... */
     packet_query_monitor_wnd_helper(gdbctx, GetDesktopWindow(), 0);
-    packet_reply(gdbctx, "OK", 2);
+    packet_reply(gdbctx, "OK");
 }
 
 static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, const char* str)
@@ -1410,7 +1400,7 @@ static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, co
      * marking the end of the output */
 
     packet_reply_open(gdbctx);
-    packet_reply_catc(gdbctx, 'O');
+    packet_reply_add(gdbctx, "O");
     snprintf(buffer, sizeof(buffer),
              " %-8.8s %-8.8s %-8.8s %s\n",
              "pid", "threads", "parent", "executable");
@@ -1422,7 +1412,7 @@ static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, co
         deco = ' ';
         if (entry.th32ProcessID == gdbctx->process->pid) deco = '>';
         packet_reply_open(gdbctx);
-        packet_reply_catc(gdbctx, 'O');
+        packet_reply_add(gdbctx, "O");
         snprintf(buffer, sizeof(buffer),
                  "%c%08x %-8d %08x '%s'\n",
                  deco, entry.th32ProcessID, entry.cntThreads,
@@ -1432,7 +1422,7 @@ static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, co
         ok = Process32Next(snap, &entry);
     }
     CloseHandle(snap);
-    packet_reply(gdbctx, "OK", 2);
+    packet_reply(gdbctx, "OK");
 }
 
 static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const char* str)
@@ -1447,7 +1437,7 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
     /* we do the output in several 'O' packets, with the last one being just OK for
      * marking the end of the output */
     packet_reply_open(gdbctx);
-    packet_reply_catc(gdbctx, 'O');
+    packet_reply_add(gdbctx, "O");
     packet_reply_hex_to_str(gdbctx, "Address  Size     State   Type    RWX\n");
     packet_reply_close(gdbctx);
 
@@ -1490,7 +1480,7 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
         snprintf(buffer, sizeof(buffer), "%0*lx %0*lx %s %s %s\n",
                  (unsigned)sizeof(void*), (DWORD_PTR)addr,
                  (unsigned)sizeof(void*), mbi.RegionSize, state, type, prot);
-        packet_reply_catc(gdbctx, 'O');
+        packet_reply_add(gdbctx, "O");
         packet_reply_hex_to_str(gdbctx, buffer);
         packet_reply_close(gdbctx);
 
@@ -1498,7 +1488,7 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
             break;
         addr += mbi.RegionSize;
     }
-    packet_reply(gdbctx, "OK", 2);
+    packet_reply(gdbctx, "OK");
 }
 
 struct query_detail
@@ -1548,12 +1538,12 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             struct dbg_thread*  thd;
 
             packet_reply_open(gdbctx);
-            packet_reply_add(gdbctx, "m", 1);
+            packet_reply_add(gdbctx, "m");
             LIST_FOR_EACH_ENTRY(thd, &gdbctx->process->threads, struct dbg_thread, entry)
             {
                 packet_reply_val(gdbctx, thd->tid, 4);
                 if (list_next(&gdbctx->process->threads, &thd->entry) != NULL)
-                    packet_reply_add(gdbctx, ",", 1);
+                    packet_reply_add(gdbctx, ",");
             }
             packet_reply_close(gdbctx);
             return packet_done;
@@ -1563,7 +1553,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             char        result[128];
 
             packet_reply_open(gdbctx);
-            packet_reply_catc(gdbctx, 'O');
+            packet_reply_add(gdbctx, "O");
             get_process_info(gdbctx, result, sizeof(result));
             packet_reply_hex_to_str(gdbctx, result);
             packet_reply_close(gdbctx);
@@ -1573,24 +1563,18 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
     case 's':
         if (strncmp(gdbctx->in_packet + 1, "ThreadInfo", gdbctx->in_packet_len - 1) == 0)
         {
-            packet_reply(gdbctx, "l", 1);
+            packet_reply(gdbctx, "l");
             return packet_done;
         }
         else if (strncmp(gdbctx->in_packet + 1, "ProcessInfo", gdbctx->in_packet_len - 1) == 0)
         {
-            packet_reply(gdbctx, "l", 1);
+            packet_reply(gdbctx, "l");
             return packet_done;
         }
         break;
     case 'A':
         if (strncmp(gdbctx->in_packet, "Attached", gdbctx->in_packet_len) == 0)
-        {
-            char    buf[2];
-
-            buf[0] = '1';
-            buf[1] = 0;
-            return packet_reply(gdbctx, buf, -1);
-        }
+            return packet_reply(gdbctx, "1");
         break;
     case 'C':
         if (gdbctx->in_packet_len == 1)
@@ -1601,7 +1585,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             assert(gdbctx->process && !list_empty(&gdbctx->process->threads));
             thd = LIST_ENTRY(list_tail(&gdbctx->process->threads), struct dbg_thread, entry);
             packet_reply_open(gdbctx);
-            packet_reply_add(gdbctx, "QC", 2);
+            packet_reply_add(gdbctx, "QC");
             packet_reply_val(gdbctx, thd->tid, 4);
             packet_reply_close(gdbctx);
             return packet_done;
@@ -1616,7 +1600,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
                      "Text=%08lx;Data=%08lx;Bss=%08lx",
                      gdbctx->wine_segs[0], gdbctx->wine_segs[1],
                      gdbctx->wine_segs[2]);
-            return packet_reply(gdbctx, buf, -1);
+            return packet_reply(gdbctx, buf);
         }
         break;
     case 'R':
@@ -1632,7 +1616,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         if (strncmp(gdbctx->in_packet, "Supported", 9) == 0)
         {
             if (strlen(target_xml))
-                return packet_reply(gdbctx, "PacketSize=400;qXfer:features:read+", -1);
+                return packet_reply(gdbctx, "PacketSize=400;qXfer:features:read+");
             else
             {
                 /* no features supported */
@@ -1669,7 +1653,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         break;
     case 'X':
         if (strlen(target_xml) && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
-            return packet_reply(gdbctx, target_xml, -1);
+            return packet_reply(gdbctx, target_xml);
         break;
     }
     ERR("Unhandled query %s\n", debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
@@ -1814,8 +1798,8 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
                 }
                 switch (ret & ~packet_last_f)
                 {
-                case packet_error:  packet_reply(gdbctx, "", 0); break;
-                case packet_ok:     packet_reply(gdbctx, "OK", 2); break;
+                case packet_error:  packet_reply(gdbctx, ""); break;
+                case packet_ok:     packet_reply(gdbctx, "OK"); break;
                 case packet_done:   break;
                 }
                 TRACE("Reply: %s\n", debugstr_an(gdbctx->out_buf, gdbctx->out_len));
