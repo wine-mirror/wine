@@ -25,7 +25,6 @@
 
 #include <stdarg.h>
 
-#include "wine/test.h"
 #include <windef.h>
 #include <winbase.h>
 #include <winnt.h>
@@ -37,6 +36,9 @@
 #include "rpcproxy.h"
 #include "midles.h"
 #include "ndrtypes.h"
+
+#include "wine/heap.h"
+#include "wine/test.h"
 
 static int my_alloc_called;
 static int my_free_called;
@@ -1172,6 +1174,68 @@ static void test_simple_struct(void)
     else
         *(unsigned int *)wiredata = (UINT_PTR)&ps1;
     test_pointer_marshal(fmtstr_pointer_struct, &ps1, 17, wiredata, 21, ps1_cmp, 2, "pointer_struct");
+}
+
+struct aligned
+{
+    int a;
+    LONGLONG b;
+};
+
+static void test_struct_align(void)
+{
+    RPC_MESSAGE RpcMessage;
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc;
+    void *ptr;
+    struct aligned *memsrc_orig, *memsrc, *mem;
+
+    /* force bogus struct so that members are marshalled individually */
+    static const unsigned char fmtstr[] =
+    {
+        0x1a,   /* FC_BOGUS_STRUCT */
+        0x7,    /* alignment 8 */
+        NdrFcShort(0x10),   /* memory size 16 */
+        NdrFcShort(0x0),
+        NdrFcShort(0x0),
+        0x08,   /* FC_LONG */
+        0x39,   /* FC_ALIGNM8 */
+        0x0b,   /* FC_HYPER */
+        0x5b,   /* FC_END */
+    };
+
+    memsrc_orig = heap_alloc_zero(sizeof(struct aligned) + 8);
+    /* intentionally mis-align memsrc */
+    memsrc = (struct aligned *)((((ULONG_PTR)memsrc_orig + 7) & ~7) + 4);
+
+    memsrc->a = 0xdeadbeef;
+    memsrc->b = ((ULONGLONG) 0xbadefeed << 32) | 0x2468ace0;
+
+    StubDesc = Object_StubDesc;
+    StubDesc.pFormatTypes = fmtstr;
+    NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 0);
+
+    StubMsg.BufferLength = 0;
+    NdrComplexStructBufferSize(&StubMsg, (unsigned char *)memsrc, fmtstr);
+
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = heap_alloc(StubMsg.BufferLength);
+    StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
+
+    ptr = NdrComplexStructMarshall(&StubMsg, (unsigned char *)memsrc, fmtstr);
+    ok(ptr == NULL, "ret %p\n", ptr);
+
+    /* Server */
+    StubMsg.IsClient = 0;
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    ptr = NdrComplexStructUnmarshall(&StubMsg, (unsigned char **)&mem, fmtstr, 0);
+    ok(ptr == NULL, "ret %p\n", ptr);
+todo_wine
+    ok(!memcmp(mem, memsrc, sizeof(*memsrc)), "struct wasn't unmarshalled correctly\n");
+    StubMsg.pfnFree(mem);
+
+    heap_free(StubMsg.RpcMsg->Buffer);
+    heap_free(memsrc_orig);
 }
 
 struct testiface
@@ -2908,6 +2972,7 @@ START_TEST( ndr_marshall )
     test_simple_types();
     test_nontrivial_pointer_types();
     test_simple_struct();
+    test_struct_align();
     test_iface_ptr();
     test_fullpointer_xlat();
     test_client_init();
