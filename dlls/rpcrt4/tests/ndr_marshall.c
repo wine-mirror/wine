@@ -1230,7 +1230,6 @@ static void test_struct_align(void)
     StubMsg.Buffer = StubMsg.BufferStart;
     ptr = NdrComplexStructUnmarshall(&StubMsg, (unsigned char **)&mem, fmtstr, 0);
     ok(ptr == NULL, "ret %p\n", ptr);
-todo_wine
     ok(!memcmp(mem, memsrc, sizeof(*memsrc)), "struct wasn't unmarshalled correctly\n");
     StubMsg.pfnFree(mem);
 

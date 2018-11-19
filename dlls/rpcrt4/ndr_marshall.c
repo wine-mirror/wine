@@ -108,6 +108,19 @@ static inline void align_pointer_clear( unsigned char **ptr, unsigned int align 
     *ptr = (unsigned char *)(((ULONG_PTR)*ptr + mask) & ~mask);
 }
 
+static inline void align_pointer_offset( unsigned char **ptr, unsigned char *base, unsigned int align )
+{
+    ULONG_PTR mask = align - 1;
+    *ptr = base + (((ULONG_PTR)(*ptr - base) + mask) & ~mask);
+}
+
+static inline void align_pointer_offset_clear( unsigned char **ptr, unsigned char *base, unsigned int align )
+{
+    ULONG_PTR mask = align - 1;
+    memset( *ptr, 0, (align - (ULONG_PTR)(*ptr - base)) & mask );
+    *ptr = base + (((ULONG_PTR)(*ptr - base) + mask) & ~mask);
+}
+
 #define STD_OVERFLOW_CHECK(_Msg) do { \
     TRACE("buffer=%d/%d\n", (ULONG)(_Msg->Buffer - (unsigned char *)_Msg->RpcMsg->Buffer), _Msg->BufferLength); \
     if (_Msg->Buffer > (unsigned char *)_Msg->RpcMsg->Buffer + _Msg->BufferLength) \
@@ -2834,6 +2847,7 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                        PFORMAT_STRING pFormat,
                                        PFORMAT_STRING pPointer)
 {
+  unsigned char *mem_base = pMemory;
   PFORMAT_STRING desc;
   NDR_MARSHALL m;
   ULONG size;
@@ -2937,13 +2951,13 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     }
     case FC_ALIGNM2:
-      align_pointer(&pMemory, 2);
+      align_pointer_offset(&pMemory, mem_base, 2);
       break;
     case FC_ALIGNM4:
-      align_pointer(&pMemory, 4);
+      align_pointer_offset(&pMemory, mem_base, 4);
       break;
     case FC_ALIGNM8:
-      align_pointer(&pMemory, 8);
+      align_pointer_offset(&pMemory, mem_base, 8);
       break;
     case FC_STRUCTPAD1:
     case FC_STRUCTPAD2:
@@ -2993,6 +3007,7 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                          PFORMAT_STRING pPointer,
                                          unsigned char fMustAlloc)
 {
+  unsigned char *mem_base = pMemory;
   PFORMAT_STRING desc;
   NDR_UNMARSHALL m;
   ULONG size;
@@ -3105,13 +3120,13 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     }
     case FC_ALIGNM2:
-      align_pointer_clear(&pMemory, 2);
+      align_pointer_offset_clear(&pMemory, mem_base, 2);
       break;
     case FC_ALIGNM4:
-      align_pointer_clear(&pMemory, 4);
+      align_pointer_offset_clear(&pMemory, mem_base, 4);
       break;
     case FC_ALIGNM8:
-      align_pointer_clear(&pMemory, 8);
+      align_pointer_offset_clear(&pMemory, mem_base, 8);
       break;
     case FC_STRUCTPAD1:
     case FC_STRUCTPAD2:
@@ -3168,6 +3183,7 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                          PFORMAT_STRING pFormat,
                                          PFORMAT_STRING pPointer)
 {
+  unsigned char *mem_base = pMemory;
   PFORMAT_STRING desc;
   NDR_BUFFERSIZE m;
   ULONG size;
@@ -3238,13 +3254,13 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += sizeof(void*);
       break;
     case FC_ALIGNM2:
-      align_pointer(&pMemory, 2);
+      align_pointer_offset(&pMemory, mem_base, 2);
       break;
     case FC_ALIGNM4:
-      align_pointer(&pMemory, 4);
+      align_pointer_offset(&pMemory, mem_base, 4);
       break;
     case FC_ALIGNM8:
-      align_pointer(&pMemory, 8);
+      align_pointer_offset(&pMemory, mem_base, 8);
       break;
     case FC_STRUCTPAD1:
     case FC_STRUCTPAD2:
@@ -3292,6 +3308,7 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
                                    PFORMAT_STRING pFormat,
                                    PFORMAT_STRING pPointer)
 {
+  unsigned char *mem_base = pMemory;
   PFORMAT_STRING desc;
   NDR_FREE m;
   ULONG size;
@@ -3339,13 +3356,13 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += sizeof(void *);
       break;
     case FC_ALIGNM2:
-      align_pointer(&pMemory, 2);
+      align_pointer_offset(&pMemory, mem_base, 2);
       break;
     case FC_ALIGNM4:
-      align_pointer(&pMemory, 4);
+      align_pointer_offset(&pMemory, mem_base, 4);
       break;
     case FC_ALIGNM8:
-      align_pointer(&pMemory, 8);
+      align_pointer_offset(&pMemory, mem_base, 8);
       break;
     case FC_STRUCTPAD1:
     case FC_STRUCTPAD2:
