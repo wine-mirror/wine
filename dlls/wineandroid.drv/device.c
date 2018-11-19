@@ -212,6 +212,8 @@ struct ioctl_android_set_capture
     struct ioctl_header hdr;
 };
 
+static struct gralloc_module_t *gralloc_module;
+
 static inline BOOL is_in_desktop_process(void)
 {
     return thread != NULL;
@@ -496,6 +498,44 @@ void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
     NtQueueApcThread( thread, register_native_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, opengl );
 }
 
+void init_gralloc( const struct hw_module_t *module )
+{
+    TRACE( "got module %p ver %u.%u id %s name %s author %s\n",
+           module, module->module_api_version >> 8, module->module_api_version & 0xff,
+           debugstr_a(module->id), debugstr_a(module->name), debugstr_a(module->author) );
+
+    gralloc_module = (struct gralloc_module_t *)module;
+}
+
+static int gralloc_grab_buffer( struct ANativeWindowBuffer *buffer )
+{
+    if (gralloc_module)
+        return gralloc_module->registerBuffer( gralloc_module, buffer->handle );
+    return -ENODEV;
+}
+
+static void gralloc_release_buffer( struct ANativeWindowBuffer *buffer )
+{
+    if (gralloc_module) gralloc_module->unregisterBuffer( gralloc_module, buffer->handle );
+    close_native_handle( (native_handle_t *)buffer->handle );
+}
+
+static int gralloc_lock( struct ANativeWindowBuffer *buffer, void **bits )
+{
+    if (gralloc_module)
+        return gralloc_module->lock( gralloc_module, buffer->handle,
+                                     GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
+                                     0, 0, buffer->width, buffer->height, bits );
+
+    *bits = ((struct native_buffer_wrapper *)buffer)->bits;
+    return 0;
+}
+
+static void gralloc_unlock( struct ANativeWindowBuffer *buffer )
+{
+    if (gralloc_module) gralloc_module->unlock( gralloc_module, buffer->handle );
+}
+
 /* get the capture window stored in the desktop process */
 HWND get_capture_window(void)
 {
@@ -740,12 +780,10 @@ static NTSTATUS queueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, UL
     if (win_data->mappings[res->buffer_id])
     {
         void *bits;
-        int ret = gralloc_module->lock( gralloc_module, buffer->handle,
-                                        GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
-                                        0, 0, buffer->width, buffer->height, &bits );
+        ret = gralloc_lock( buffer, &bits );
         if (ret) return android_error_to_status( ret );
         memcpy( bits, win_data->mappings[res->buffer_id], buffer->stride * buffer->height * 4 );
-        gralloc_module->unlock( gralloc_module, buffer->handle );
+        gralloc_unlock( buffer );
     }
     wrap_java_call();
     ret = parent->queueBuffer( parent, buffer, -1 );
@@ -1084,11 +1122,7 @@ static void buffer_decRef( struct android_native_base_t *base )
 
     if (!InterlockedDecrement( &buffer->ref ))
     {
-        if (!is_in_desktop_process())
-        {
-            if (gralloc_module) gralloc_module->unregisterBuffer( gralloc_module, buffer->buffer.handle );
-            close_native_handle( (native_handle_t *)buffer->buffer.handle );
-        }
+        if (!is_in_desktop_process()) gralloc_release_buffer( &buffer->buffer );
         if (buffer->bits) UnmapViewOfFile( buffer->bits );
         HeapFree( GetProcessHeap(), 0, buffer );
     }
@@ -1140,8 +1174,9 @@ static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuff
         }
         else if (!is_in_desktop_process())
         {
-            if ((ret = gralloc_module->registerBuffer( gralloc_module, buf->buffer.handle )) < 0)
-                WARN( "hwnd %p, buffer %p failed to register %d %s\n", win->hwnd, &buf->buffer, ret, strerror(-ret) );
+            if ((ret = gralloc_grab_buffer( &buf->buffer )) < 0)
+                WARN( "hwnd %p, buffer %p failed to register %d %s\n",
+                      win->hwnd, &buf->buffer, ret, strerror(-ret) );
         }
     }
 
@@ -1313,18 +1348,11 @@ static int perform( ANativeWindow *window, int operation, ... )
         int ret = window->dequeueBuffer_DEPRECATED( window, &buffer );
         if (!ret)
         {
-            if (gralloc_module)
+            if ((ret = gralloc_lock( buffer, &buffer_ret->bits )))
             {
-                if ((ret = gralloc_module->lock( gralloc_module, buffer->handle,
-                                                 GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
-                                                 0, 0, buffer->width, buffer->height, &buffer_ret->bits )))
-                {
-                    WARN( "gralloc->lock %p failed %d %s\n", win->hwnd, ret, strerror(-ret) );
-                    window->cancelBuffer( window, buffer, -1 );
-                }
+                WARN( "gralloc->lock %p failed %d %s\n", win->hwnd, ret, strerror(-ret) );
+                window->cancelBuffer( window, buffer, -1 );
             }
-            else
-                buffer_ret->bits = ((struct native_buffer_wrapper *)buffer)->bits;
         }
         if (!ret)
         {
@@ -1350,7 +1378,7 @@ static int perform( ANativeWindow *window, int operation, ... )
         int ret = -EINVAL;
         if (win->locked_buffer)
         {
-            if (gralloc_module) gralloc_module->unlock( gralloc_module, win->locked_buffer->handle );
+            gralloc_unlock( win->locked_buffer );
             ret = window->queueBuffer( window, win->locked_buffer, -1 );
             win->locked_buffer = NULL;
         }

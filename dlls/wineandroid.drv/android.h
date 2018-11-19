@@ -88,6 +88,7 @@ enum android_window_messages
     WM_ANDROID_REFRESH = 0x80001000,
 };
 
+extern void init_gralloc( const struct hw_module_t *module ) DECLSPEC_HIDDEN;
 extern HWND get_capture_window(void) DECLSPEC_HIDDEN;
 extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
 extern void set_screen_dpi( DWORD dpi ) DECLSPEC_HIDDEN;
@@ -154,7 +155,5 @@ int send_event( const union event_data *data );
 
 extern JavaVM *wine_get_java_vm(void);
 extern jobject wine_get_java_object(void);
-
-extern struct gralloc_module_t *gralloc_module;
 
 #endif  /* __WINE_ANDROID_H */

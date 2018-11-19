@@ -450,8 +450,6 @@ DECL_FUNCPTR( ANativeWindow_fromSurface );
 DECL_FUNCPTR( ANativeWindow_release );
 DECL_FUNCPTR( hw_get_module );
 
-struct gralloc_module_t *gralloc_module = NULL;
-
 #ifndef DT_GNU_HASH
 #define DT_GNU_HASH 0x6ffffef5
 #endif
@@ -564,6 +562,7 @@ static int enum_libs( struct dl_phdr_info* info, size_t size, void* data )
 static void load_hardware_libs(void)
 {
     const struct hw_module_t *module;
+    int ret;
     void *libhardware;
     char error[256];
 
@@ -589,10 +588,13 @@ static void load_hardware_libs(void)
         }
     }
 
-    if (phw_get_module( GRALLOC_HARDWARE_MODULE_ID, &module ) == 0)
-        gralloc_module = (struct gralloc_module_t *)module;
-    else
-        ERR( "failed to load gralloc module\n" );
+    if ((ret = phw_get_module( GRALLOC_HARDWARE_MODULE_ID, &module )))
+    {
+        ERR( "failed to load gralloc module err %d\n", ret );
+        return;
+    }
+
+    init_gralloc( module );
 }
 
 static void load_android_libs(void)
