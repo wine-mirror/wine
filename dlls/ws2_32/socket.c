@@ -5808,6 +5808,17 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             optlen = sizeof(struct linger);
             break;
 
+        case WS_SO_SNDBUF:
+            if (!*(const int *)optval)
+            {
+                FIXME("SO_SNDBUF ignoring request to disable send buffering\n");
+#ifdef __APPLE__
+                return 0;
+#endif
+            }
+            convert_sockopt(&level, &optname);
+            break;
+
         case WS_SO_RCVBUF:
             if (*(const int*)optval < 2048)
             {
@@ -5828,7 +5839,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
          * however, using it the BSD way fixes bug 8513 and seems to be what
          * most programmers assume, anyway */
         case WS_SO_REUSEADDR:
-        case WS_SO_SNDBUF:
         case WS_SO_TYPE:
             convert_sockopt(&level, &optname);
             break;
