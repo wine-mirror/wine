@@ -1319,7 +1319,7 @@ static void test_actctx_classes(void)
     ATOM class;
     HINSTANCE hinst;
     char buff[64];
-    HWND hwnd;
+    HWND hwnd, hwnd2;
     char path[MAX_PATH];
 
     GetTempPathA(ARRAY_SIZE(path), path);
@@ -1353,6 +1353,14 @@ static void test_actctx_classes(void)
     hwnd = CreateWindowExA(0, testclass, "test", 0, 0, 0, 0, 0, 0, 0, hinst, 0);
     ok(hwnd != NULL, "Failed to create a window.\n");
 
+    hwnd2 = FindWindowExA(NULL, NULL, "MyTestClass", NULL);
+todo_wine
+    ok(hwnd2 == hwnd, "Failed to find test window.\n");
+
+    hwnd2 = FindWindowExA(NULL, NULL, "4.3.2.1!MyTestClass", NULL);
+todo_wine
+    ok(hwnd2 == NULL, "Unexpected find result %p.\n", hwnd2);
+
     ret = GetClassNameA(hwnd, buff, sizeof(buff));
     ok(ret, "Failed to get class name.\n");
     ok(!strcmp(buff, testclass), "Unexpected class name.\n");
@@ -1375,6 +1383,19 @@ static void test_actctx_classes(void)
     ret = GetClassNameA(hwnd, buff, sizeof(buff));
     ok(ret, "Failed to get class name.\n");
     ok(!strcmp(buff, testclass), "Unexpected class name.\n");
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, "4.3.2.1!MyTestClass", "test", 0, 0, 0, 0, 0, 0, 0, hinst, 0);
+    ok(hwnd != NULL, "Failed to create a window.\n");
+
+    hwnd2 = FindWindowExA(NULL, NULL, "MyTestClass", NULL);
+todo_wine
+    ok(hwnd2 == hwnd, "Failed to find test window.\n");
+
+    hwnd2 = FindWindowExA(NULL, NULL, "4.3.2.1!MyTestClass", NULL);
+todo_wine
+    ok(hwnd2 == NULL, "Unexpected find result %p.\n", hwnd2);
 
     DestroyWindow(hwnd);
 
