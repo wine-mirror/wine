@@ -1354,11 +1354,9 @@ static void test_actctx_classes(void)
     ok(hwnd != NULL, "Failed to create a window.\n");
 
     hwnd2 = FindWindowExA(NULL, NULL, "MyTestClass", NULL);
-todo_wine
     ok(hwnd2 == hwnd, "Failed to find test window.\n");
 
     hwnd2 = FindWindowExA(NULL, NULL, "4.3.2.1!MyTestClass", NULL);
-todo_wine
     ok(hwnd2 == NULL, "Unexpected find result %p.\n", hwnd2);
 
     ret = GetClassNameA(hwnd, buff, sizeof(buff));
@@ -1390,11 +1388,9 @@ todo_wine
     ok(hwnd != NULL, "Failed to create a window.\n");
 
     hwnd2 = FindWindowExA(NULL, NULL, "MyTestClass", NULL);
-todo_wine
     ok(hwnd2 == hwnd, "Failed to find test window.\n");
 
     hwnd2 = FindWindowExA(NULL, NULL, "4.3.2.1!MyTestClass", NULL);
-todo_wine
     ok(hwnd2 == NULL, "Unexpected find result %p.\n", hwnd2);
 
     DestroyWindow(hwnd);
