@@ -1329,7 +1329,7 @@ DWORD WINAPI CertGetPublicKeyLength(DWORD dwCertEncodingType,
 
             TRACE("public key algid %#x (%s)\n", info->u.Algid, debugstr_a(pPublicKey->Algorithm.pszObjId));
 
-            ret = CryptImportPublicKeyInfo(I_CryptGetDefaultCryptProv(0), dwCertEncodingType, pPublicKey, &key);
+            ret = CryptImportPublicKeyInfo(I_CryptGetDefaultCryptProv(info->u.Algid), dwCertEncodingType, pPublicKey, &key);
             if (ret)
             {
                 size = sizeof(len);
