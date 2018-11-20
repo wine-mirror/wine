@@ -1706,7 +1706,7 @@
 @ stub _o_lround
 @ stub _o_lroundf
 @ stub _o_lroundl
-@ stub _o_malloc
+@ cdecl _o_malloc(long) MSVCRT_malloc
 @ stub _o_mblen
 @ stub _o_mbrlen
 @ stub _o_mbrtoc16

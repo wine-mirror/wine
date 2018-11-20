@@ -136,6 +136,9 @@ static int (__cdecl *p_crt_at_quick_exit)(void (__cdecl *func)(void));
 static void (__cdecl *p_quick_exit)(int exitcode);
 static int (__cdecl *p__stat32)(const char*, struct _stat32 *buf);
 static int (__cdecl *p__close)(int);
+static void* (__cdecl *p__o_malloc)(size_t);
+static size_t (__cdecl *p__msize)(void*);
+static void (__cdecl *p_free)(void*);
 
 static void test__initialize_onexit_table(void)
 {
@@ -496,6 +499,9 @@ static BOOL init(void)
     p_quick_exit = (void*)GetProcAddress(module, "quick_exit");
     p__stat32 = (void*)GetProcAddress(module, "_stat32");
     p__close = (void*)GetProcAddress(module, "_close");
+    p__o_malloc = (void*)GetProcAddress(module, "_o_malloc");
+    p__msize = (void*)GetProcAddress(module, "_msize");
+    p_free = (void*)GetProcAddress(module, "free");
 
     return TRUE;
 }
@@ -1034,6 +1040,20 @@ static void test__stat32(void)
     }
 }
 
+static void test__o_malloc(void)
+{
+    void *m;
+    size_t s;
+
+    m = p__o_malloc(1);
+    ok(m != NULL, "p__o_malloc(1) returned NULL\n");
+
+    s = p__msize(m);
+    ok(s == 1, "_msize returned %d\n", (int)s);
+
+    p_free(m);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1068,4 +1088,5 @@ START_TEST(misc)
     test_exit(arg_v[0]);
     test_quick_exit(arg_v[0]);
     test__stat32();
+    test__o_malloc();
 }
