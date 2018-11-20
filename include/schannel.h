@@ -107,6 +107,8 @@ static const WCHAR SCHANNEL_NAME_W[] = { 'S','c','h','a','n','n','e','l',0 };
 #define SP_PROT_ALL           0xffffffff
 #define SP_PROT_UNI_CLIENT    0x80000000
 #define SP_PROT_UNI_SERVER    0x40000000
+#define SP_PROT_TLS1_3_SERVER 0x00001000
+#define SP_PROT_TLS1_3_CLIENT 0x00002000
 #define SP_PROT_TLS1_2_CLIENT 0x00000800
 #define SP_PROT_TLS1_2_SERVER 0x00000400
 #define SP_PROT_TLS1_1_CLIENT 0x00000200
@@ -124,6 +126,7 @@ static const WCHAR SCHANNEL_NAME_W[] = { 'S','c','h','a','n','n','e','l',0 };
 #define SP_PROT_NONE          0x00000000
 
 #define SP_PROT_UNI                (SP_PROT_UNI_CLIENT | SP_PROT_UNI_SERVER)
+#define SP_PROT_TLS1_3             (SP_PROT_TLS1_3_CLIENT | SP_PROT_TLS1_3_SERVER)
 #define SP_PROT_TLS1_2             (SP_PROT_TLS1_2_CLIENT | SP_PROT_TLS1_2_SERVER)
 #define SP_PROT_TLS1_1             (SP_PROT_TLS1_1_CLIENT | SP_PROT_TLS1_1_SERVER)
 #define SP_PROT_TLS1_0             (SP_PROT_TLS1_0_CLIENT | SP_PROT_TLS1_0_SERVER)
@@ -136,10 +139,20 @@ static const WCHAR SCHANNEL_NAME_W[] = { 'S','c','h','a','n','n','e','l',0 };
 #define SP_PROT_SSL3TLS1_SERVERS   (SP_PROT_SSL3_SERVER | SP_PROT_TLS1_SERVER)
 #define SP_PROT_SSL3TLS1_X_CLIENTS (SP_PROT_SSL3_CLIENT | SP_PROT_TLS1_X_CLIENT)
 #define SP_PROT_SSL3TLS1_X_SERVERS (SP_PROT_SSL3_SERVER | SP_PROT_TLS1_X_SERVER)
-#define SP_PROT_TLS1_X_CLIENT      (SP_PROT_TLS1_0_CLIENT | SP_PROT_TLS1_1_CLIENT | SP_PROT_TLS1_2_CLIENT)
-#define SP_PROT_TLS1_X_SERVER      (SP_PROT_TLS1_0_SERVER | SP_PROT_TLS1_1_SERVER | SP_PROT_TLS1_2_SERVER)
-#define SP_PROT_TLS1_1PLUS_CLIENT  (SP_PROT_TLS1_1_CLIENT | SP_PROT_TLS1_2_CLIENT)
-#define SP_PROT_TLS1_1PLUS_SERVER  (SP_PROT_TLS1_1_SERVER | SP_PROT_TLS1_2_SERVER)
+#define SP_PROT_TLS1_X_CLIENT      ( SP_PROT_TLS1_0_CLIENT \
+                                   | SP_PROT_TLS1_1_CLIENT \
+                                   | SP_PROT_TLS1_2_CLIENT \
+                                   | SP_PROT_TLS1_3_CLIENT )
+#define SP_PROT_TLS1_X_SERVER      ( SP_PROT_TLS1_0_SERVER \
+                                   | SP_PROT_TLS1_1_SERVER \
+                                   | SP_PROT_TLS1_2_SERVER \
+                                   | SP_PROT_TLS1_3_SERVER )
+#define SP_PROT_TLS1_1PLUS_CLIENT  ( SP_PROT_TLS1_1_CLIENT \
+                                   | SP_PROT_TLS1_2_CLIENT \
+                                   | SP_PROT_TLS1_3_CLIENT)
+#define SP_PROT_TLS1_1PLUS_SERVER  ( SP_PROT_TLS1_1_SERVER \
+                                   | SP_PROT_TLS1_2_SERVER \
+                                   | SP_PROT_TLS1_3_SERVER )
 #define SP_PROT_CLIENTS            (SP_PROT_PCT1_CLIENT | SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT \
                                   | SP_PROT_TLS1_CLIENT | SP_PROT_UNI_CLIENT)
 #define SP_PROT_SERVERS            (SP_PROT_PCT1_SERVER | SP_PROT_SSL2_SERVER | SP_PROT_SSL3_SERVER \
