@@ -43,7 +43,6 @@ static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiGetINFClassA)(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
-static BOOL     (WINAPI *pSetupDiInstallClassA)(HWND, PCSTR, DWORD, HSPFILEQ);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 static HKEY     (WINAPI *pSetupDiOpenDevRegKey)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, REGSAM);
 static HKEY     (WINAPI *pSetupDiCreateDevRegKeyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCWSTR);
@@ -83,7 +82,6 @@ static void init_function_pointers(void)
     pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
     pSetupDiGetDeviceInterfaceDetailW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailW");
-    pSetupDiInstallClassA = (void *)GetProcAddress(hSetupAPI, "SetupDiInstallClassA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
     pSetupDiOpenDevRegKey = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenDevRegKey");
     pSetupDiCreateDevRegKeyW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDevRegKeyW");
@@ -291,7 +289,7 @@ static void get_temp_filename(LPSTR path)
     lstrcpyA(path, ptr + 1);
 }
 
-static void testInstallClass(void)
+static void test_install_class(void)
 {
     static const WCHAR classKey[] = {'S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -307,27 +305,29 @@ static void testInstallClass(void)
     get_temp_filename(tmpfile + 2);
     create_inf_file(tmpfile + 2);
 
-    ret = pSetupDiInstallClassA(NULL, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-    ret = pSetupDiInstallClassA(NULL, NULL, DI_NOVCP, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-    ret = pSetupDiInstallClassA(NULL, tmpfile + 2, DI_NOVCP, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-    ret = pSetupDiInstallClassA(NULL, tmpfile + 2, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    ret = SetupDiInstallClassA(NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiInstallClassA(NULL, NULL, DI_NOVCP, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiInstallClassA(NULL, tmpfile + 2, DI_NOVCP, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiInstallClassA(NULL, tmpfile + 2, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got unexpected error %#x.\n", GetLastError());
+
     /* The next call will succeed. Information is put into the registry but the
      * location(s) is/are depending on the Windows version.
      */
-    ret = pSetupDiInstallClassA(NULL, tmpfile, 0, NULL);
-    ok(ret, "SetupDiInstallClassA failed: %08x\n", GetLastError());
+    ret = SetupDiInstallClassA(NULL, tmpfile, 0, NULL);
+    ok(ret, "Failed to install class, error %#x.\n", GetLastError());
 
-    ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey),
-     "Couldn't delete classkey\n");
-
+    ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey), "Failed to delete class key, error %u.\n", GetLastError());
     DeleteFileA(tmpfile);
 }
 
@@ -1456,7 +1456,7 @@ START_TEST(devinst)
     else
         win_skip("SetupDiOpenClassRegKeyExA is not available\n");
 
-    testInstallClass();
+    test_install_class();
     testCreateDeviceInfo();
     testGetDeviceInstanceId();
     testRegisterDeviceInfo();
