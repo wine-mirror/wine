@@ -5,13 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-11-15 17:27-0200\n"
+"PO-Revision-Date: 2018-11-18 16:52-0200\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -318,10 +319,8 @@ msgid "%1!u! %2 and %3!u! %4 remaining"
 msgstr "%1!u! %2 and %3!u! %4 restante"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Segundos"
+msgstr "segundos"
 
 #: browseui.rc:32
 msgid "minutes"
@@ -428,14 +427,10 @@ msgid "&Retry"
 msgstr "&Repetir"
 
 #: comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "Esconder A&bas"
+msgstr "Esconder detalhes"
 
 #: comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
 msgstr "Detalhes"
 
@@ -2456,16 +2451,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "O Assistente de Exportação de Certificados finalizou com sucesso."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
 msgstr "Selecione o Conjunto de Certificados"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Selecione o conjunto de certificados que deseja usar"
+msgstr "Selecione o certificado que deseja usar"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -3001,20 +2992,16 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Nota: A chave privada para este certificado não é exportável."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "&Com o propósito:"
+msgstr "Uso pretendido"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Localização"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Selecione o Conjunto de Certificados"
+msgstr "Selecione um Certificado"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
@@ -3509,24 +3496,20 @@ msgid "Publishers..."
 msgstr "Editores..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Conexão LAN"
+msgstr "Conexões"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Configuração do Wine"
+msgstr "Configuração automática"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Usar processo automático de configuração de Proxy Web(WPAD)"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Utilizar script automático de configuracao Proxy(PAC)"
 
 #: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
@@ -3805,6 +3788,8 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
+"atributo 'gravavel' no descritor de propriedades nao pode ser setao para "
+"'verdade' neste objeto"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
@@ -6389,7 +6374,7 @@ msgstr "Erro RPC interno.\n"
 
 #: winerror.mc:3253
 msgid "RPC divide-by-zero.\n"
-msgstr "divisão por zero em RPC.\n"
+msgstr "Divisão por zero em RPC.\n"
 
 #: winerror.mc:3258
 msgid "Address error.\n"
@@ -6788,10 +6773,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Conexão redefinida pelo cliente.\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "Mensagem 0x%1 não encontrada no arquivo %2.\n"
+msgstr "Nenhuma Assinatura encontrada no arquivo.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -7018,94 +7001,68 @@ msgid "New Folder"
 msgstr "Nova Pasta"
 
 #: msi.rc:91
-#, fuzzy
-#| msgid "No registry log space.\n"
 msgid "Allocating registry space"
-msgstr "Sem espaço de log no registro.\n"
+msgstr "Alocando espaço de registro"
 
 #: msi.rc:92
-#, fuzzy
-#| msgid "Single-instance application.\n"
 msgid "Searching for installed applications"
-msgstr "Aplicativo de instância única.\n"
+msgstr "Buscando por aplicativos instalados"
 
 #: msi.rc:93
 msgid "Binding executables"
 msgstr "Executaveis de ligação"
 
 #: msi.rc:94 msi.rc:137
-#, fuzzy
-#| msgid "Searching for %s"
 msgid "Searching for qualifying products"
-msgstr "Localizando %s"
+msgstr "Buscando por produtos relacionados"
 
 #: msi.rc:95 msi.rc:96 msi.rc:101
 msgid "Computing space requirements"
 msgstr "Calculando requisitos de espaço"
 
 #: msi.rc:97
-#, fuzzy
-#| msgid "Target folder"
 msgid "Creating folders"
-msgstr "Diretório alvo"
+msgstr "Criando pasta"
 
 #: msi.rc:98
-#, fuzzy
-#| msgid "Create Shor&tcut"
 msgid "Creating shortcuts"
-msgstr "Criar Ata&lho"
+msgstr "Criando atalhos"
 
 #: msi.rc:99
-#, fuzzy
-#| msgid "Exception in service.\n"
 msgid "Deleting services"
-msgstr "Exceção no serviço.\n"
+msgstr "Removendo serviços"
 
 #: msi.rc:100
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creating duplicate files"
-msgstr "Data de criação"
+msgstr "Duplicando arquivos"
 
 #: msi.rc:102
-#, fuzzy
-#| msgid "No associated application.\n"
 msgid "Searching for related applications"
-msgstr "Nenhum aplicativo associada.\n"
+msgstr "Buscando por aplicações relacionadas"
 
 #: msi.rc:103
 msgid "Copying network install files"
 msgstr "Copiando arquivos para instalacao via rede"
 
 #: msi.rc:104
-#, fuzzy
-#| msgid "Copying Files..."
 msgid "Copying new files"
-msgstr "Copiando arquivos..."
+msgstr "Copiando novos arquivos"
 
 #: msi.rc:105
-#, fuzzy
-#| msgid "Installation of component failed: %08x"
 msgid "Installing ODBC components"
-msgstr "Instalação do componente falhou: %08x"
+msgstr "Instalando componentes ODBC"
 
 #: msi.rc:106
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "Falha no serviço de instalação.\n"
+msgstr "Instalando novos serviços"
 
 #: msi.rc:107
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Installing system catalog"
-msgstr "Instalar/Desinstalar"
+msgstr "Instalando catalogo do sistema"
 
 #: msi.rc:108
-#, fuzzy
-#| msgid "Wine Application Uninstaller"
 msgid "Validating install"
-msgstr "Desinstalador de Aplicativos Wine"
+msgstr "Validando instalação"
 
 #: msi.rc:109
 msgid "Evaluating launch conditions"
@@ -7116,26 +7073,20 @@ msgid "Migrating feature states from related applications"
 msgstr "Migrando caracteristicas de aplicações relacionadas"
 
 #: msi.rc:111
-#, fuzzy
-#| msgid "Icon files"
 msgid "Moving files"
-msgstr "Arquivos de ícones"
+msgstr "Movendo arquivos"
 
 #: msi.rc:112
-#, fuzzy
-#| msgid "Version information"
 msgid "Publishing assembly information"
-msgstr "Informação de versão"
+msgstr "Publicando informações de montagem"
 
 #: msi.rc:113
 msgid "Unpublishing assembly information"
 msgstr "Removendo informacao de montagem"
 
 #: msi.rc:114
-#, fuzzy
-#| msgid "Icon files"
 msgid "Patching files"
-msgstr "Arquivos de ícones"
+msgstr "Atualizando arquivos"
 
 #: msi.rc:115
 msgid "Updating component registration"
@@ -7150,10 +7101,8 @@ msgid "Publishing Product Features"
 msgstr "Publicando Caracteristicas de Produto"
 
 #: msi.rc:118
-#, fuzzy
-#| msgid "Client Information"
 msgid "Publishing product information"
-msgstr "Informação do Cliente"
+msgstr "Publicando informações do produto"
 
 #: msi.rc:119
 msgid "Registering Class servers"
@@ -7172,56 +7121,40 @@ msgid "Registering fonts"
 msgstr "Registrando fontes"
 
 #: msi.rc:123
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Registering MIME info"
-msgstr "Editor do Registro"
+msgstr "Registrando informação MIME"
 
 #: msi.rc:124
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "O registro está corrompido.\n"
+msgstr "Registrando produto"
 
 #: msi.rc:125
 msgid "Registering program identifiers"
 msgstr "Registrando identificadores de programa"
 
 #: msi.rc:126
-#, fuzzy
-#| msgid "Type Libraries"
 msgid "Registering type libraries"
-msgstr "Bibliotecas de tipos"
+msgstr "Registrando bibliotecas de tipos"
 
 #: msi.rc:127
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "Recurso em uso.\n"
+msgstr "Registrando usuário"
 
 #: msi.rc:128
-#, fuzzy
-#| msgid "&Remove duplicates"
 msgid "Removing duplicated files"
-msgstr "Remover &duplicados"
+msgstr "Removendo arquivos duplicados"
 
 #: msi.rc:129 msi.rc:153
-#, fuzzy
-#| msgid "Applying font settings"
 msgid "Updating environment strings"
-msgstr "Aplicando configurações de fonte"
+msgstr "Atualizando textos do ambiente"
 
 #: msi.rc:130
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "&Remover aplicativo"
+msgstr "Removendo aplicativos"
 
 #: msi.rc:131
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "Arquivos de ícones"
+msgstr "Removendo arquivos"
 
 #: msi.rc:132
 msgid "Removing folders"
@@ -7232,16 +7165,12 @@ msgid "Removing INI files entries"
 msgstr "Removendo entradas do arquivo INI"
 
 #: msi.rc:134
-#, fuzzy
-#| msgid "Domain Component"
 msgid "Removing ODBC components"
-msgstr "Componente de Domínio"
+msgstr "Removendo componentes ODBC"
 
 #: msi.rc:135
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Removing system registry values"
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Removendo valores do registro do sistema"
 
 #: msi.rc:136
 msgid "Removing shortcuts"
@@ -7256,22 +7185,16 @@ msgid "Unregistering modules"
 msgstr "Desregistrando modulos"
 
 #: msi.rc:140
-#, fuzzy
-#| msgid "Initializing; "
 msgid "Initializing ODBC directories"
-msgstr "Inicializando; "
+msgstr "Inicializando diretórios ODBC"
 
 #: msi.rc:141
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "Falha ao iniciar o Wordpad"
+msgstr "Iniciando serviços"
 
 #: msi.rc:142
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
 msgid "Stopping services"
-msgstr "Parando o serviço dependente: %1\n"
+msgstr "Parando serviços"
 
 #: msi.rc:143
 msgid "Unpublishing Qualified Components"
@@ -7282,10 +7205,8 @@ msgid "Unpublishing Product Features"
 msgstr "Removendo Caracteristicas de Produto"
 
 #: msi.rc:145
-#, fuzzy
-#| msgid "Client Information"
 msgid "Unpublishing product information"
-msgstr "Informação do Cliente"
+msgstr "Removendo informações de produto"
 
 #: msi.rc:146
 msgid "Unregister Class servers"
@@ -7320,10 +7241,8 @@ msgid "Writing INI files values"
 msgstr "Gravando valores no arquivo INI"
 
 #: msi.rc:155
-#, fuzzy
-#| msgid "Warning: system library"
 msgid "Writing system registry values"
-msgstr "Aviso: biblioteca do sistema"
+msgstr "Gravando valores do registro de sistema"
 
 #: msi.rc:161
 msgid "Free space: [1]"
@@ -7346,40 +7265,32 @@ msgid "Shortcut: [1]"
 msgstr "Atalho"
 
 #: msi.rc:166 msi.rc:197 msi.rc:198
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "Dispositi&vo:"
+msgstr "Serviço: [1]"
 
 #: msi.rc:167 msi.rc:170 msi.rc:174
 msgid "File: [1],  Directory: [9],  Size: [6]"
 msgstr "Arquivo: [1],  Pasta: [9],  Tamanho: [6]"
 
 #: msi.rc:168
-#, fuzzy
-#| msgid "application"
 msgid "Found application: [1]"
-msgstr "aplicativo"
+msgstr "Aplicativo Encontrado: [1]"
 
 #: msi.rc:169
 msgid "File: [1], Directory: [9], Size: [6]"
 msgstr "Arquivo: [1], Pasta: [9], Tamanho: [6]"
 
 #: msi.rc:171
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "Dispositi&vo:"
+msgstr "Serviço: [2]"
 
 #: msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
 msgstr "Arquivo: [1],  Dependências: [2]"
 
 #: msi.rc:173
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "Aplicativos"
+msgstr "Aplicativos: [1]"
 
 #: msi.rc:175 msi.rc:176
 msgid "Application Context:[1], Assembly Name:[2]"
@@ -7403,13 +7314,11 @@ msgstr "Id de Classe: [1]"
 
 #: msi.rc:181
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
-msgstr ""
+msgstr "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 
 #: msi.rc:182 msi.rc:203
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "Extensões Apenas"
+msgstr "Extensão: [1]"
 
 #: msi.rc:183 msi.rc:204
 msgid "Font: [1]"
@@ -7421,11 +7330,11 @@ msgstr "Tipo de conteúdo MIME: [1], Extensão: [2]"
 
 #: msi.rc:185 msi.rc:206
 msgid "ProgId: [1]"
-msgstr ""
+msgstr "ProgId: [1]"
 
 #: msi.rc:186 msi.rc:207
 msgid "LibID: [1]"
-msgstr ""
+msgstr "LibID: [1]"
 
 #: msi.rc:187 msi.rc:190
 msgid "File: [1], Directory: [9]"
@@ -7453,7 +7362,7 @@ msgstr "Arquivo: [1], Pasta: [2]"
 
 #: msi.rc:202
 msgid "AppId: [1]{{, AppType: [2]}}"
-msgstr ""
+msgstr "AppId: [1]{{, AppType: [2]}}"
 
 #: msi.rc:210
 msgid "Key: [1], Name: [2], Value: [3]"
@@ -7518,8 +7427,8 @@ msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
 msgstr ""
-"Arquivo de origem nao encontrado{{(cabinet)}}: [2]. Verifique se o arquivo "
-"existee se você tem acesso a ele"
+"Arquivo de origem não encontrado{{(cabinet)}}: [2]. Verifique se o arquivo "
+"existe e se você tem acesso a ele."
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -7827,7 +7736,7 @@ msgstr "botão de divisão"
 
 #: oleacc.rc:94
 msgid "IP address"
-msgstr "endereço IP"
+msgstr "Endereço IP"
 
 #: oleacc.rc:95
 msgid "outline button"
@@ -8708,8 +8617,6 @@ msgid "&Browse..."
 msgstr "&Procurar..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
 msgstr "Tipo de arquivo:"
 
@@ -8722,16 +8629,12 @@ msgid "Size:"
 msgstr "Tamanho:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
 msgstr "Data de criação:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Atributos:"
+msgstr "Atributos:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8742,26 +8645,18 @@ msgid "&Archive"
 msgstr "Ar&quivo"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Abrir:"
+msgstr "Abrir com:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "Mudar &Ícone..."
+msgstr "M&udar..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
 msgstr "Modificado:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
 msgstr "Última Alteração:"
 
@@ -9058,8 +8953,6 @@ msgid "Wine Control Panel"
 msgstr "Painel de Controle do Wine"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
 msgstr ""
 "Não é possível mostrar a caixa de diálogo Executar Arquivo (erro interno)"
@@ -9179,10 +9072,8 @@ msgid " sec"
 msgstr " s"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "Select Folder"
 msgid "Select Source"
-msgstr "Selecionar pasta"
+msgstr "Selecionar Pasta"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -9372,56 +9263,44 @@ msgstr ""
 "Há pelo menos um problema de segurança não especificado com este certificado."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Tempo limite no pedido de serviço.\n"
+msgstr "Tempo limite no pedido.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "Ocorreu um erro de impressão."
+msgstr "Ocorreu um erro interno.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Caminho inválido.\n"
+msgstr "A URL é inválida.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
 msgstr "O tipo de URL nao pode ser reconhecido ou não é suportado.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "O nome de usuário não foi encontrado.\n"
+msgstr "O nome de servidor não pode ser resolvido.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "O perfil do usuário é inválido.\n"
+msgstr "A operação requisitada é inválida.\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"A operação foi cancelada, normalmente isto ocorre porque o handle onde a "
+"requisição foi feita foi fechado antes da operação ser concluída.\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "O perfil não pôde ser adicionado.\n"
+msgstr "O item requisitado não foi localizado.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "Impossível conectar-se ao servidor LDAP"
+msgstr "Tentativa de conexão com servidor falhou.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
@@ -10136,10 +10015,8 @@ msgid "Confidentiality Required"
 msgstr "Confidencialidade Requerida"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Encerramento em progresso.\n"
+msgstr "Ligação SASL em andamento"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -10954,6 +10831,16 @@ msgid ""
 "link_name is the name of the new symbolic link.\n"
 "target is the path that link_name points to.\n"
 msgstr ""
+"Cria link simbólico.\n"
+"\n"
+"Sintaxe: MKLINK [opções] nome_link alvo\n"
+"\n"
+"Opções:\n"
+"/d             Cria um link simbólico para um diretório.\n"
+"/h             Cria um link duro.\n"
+"/j              Cria uma combinação de diretórios.\n"
+"nome_link é o nome do novo link simbólico.\n"
+"alvo é o caminho para onde o nome_link aponta.\n"
 
 #: cmd.rc:312
 msgid ""
@@ -10964,47 +10851,6 @@ msgstr ""
 "shell que tenha invocado o cmd.\n"
 
 #: cmd.rc:364
-#, fuzzy
-#| msgid ""
-#| "CMD built-in commands are:\n"
-#| "ASSOC\t\tShow or modify file extension associations\n"
-#| "ATTRIB\t\tShow or change DOS file attributes\n"
-#| "CALL\t\tInvoke a batch file from inside another\n"
-#| "CD (CHDIR)\tChange current default directory\n"
-#| "CHOICE\t\tWait for an keypress from a selectable list\n"
-#| "CLS\t\tClear the console screen\n"
-#| "COPY\t\tCopy file\n"
-#| "CTTY\t\tChange input/output device\n"
-#| "DATE\t\tShow or change the system date\n"
-#| "DEL (ERASE)\tDelete a file or set of files\n"
-#| "DIR\t\tList the contents of a directory\n"
-#| "ECHO\t\tCopy text directly to the console output\n"
-#| "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
-#| "FTYPE\t\tShow or modify open commands associated with file types\n"
-#| "HELP\t\tShow brief help details on a topic\n"
-#| "MD (MKDIR)\tCreate a subdirectory\n"
-#| "MORE\t\tDisplay output in pages\n"
-#| "MOVE\t\tMove a file, set of files or directory tree\n"
-#| "PATH\t\tSet or show the search path\n"
-#| "PAUSE\t\tSuspend execution of a batch file\n"
-#| "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
-#| "PROMPT\t\tChange the command prompt\n"
-#| "PUSHD\t\tChange to a new directory, saving the current one\n"
-#| "REN (RENAME)\tRename a file\n"
-#| "RD (RMDIR)\tDelete a subdirectory\n"
-#| "SET\t\tSet or show environment variables\n"
-#| "SETLOCAL\tStart localization of environment changes in a batch file\n"
-#| "START\t\tStart a program, or open a document in the associated program\n"
-#| "TIME\t\tSet or show the current system time\n"
-#| "TITLE\t\tSet the window title for the CMD session\n"
-#| "TYPE\t\tType the contents of a text file\n"
-#| "VER\t\tShow the current version of CMD\n"
-#| "VOL\t\tShow the volume label of a disk device\n"
-#| "XCOPY\t\tCopy source files or directory trees to a destination\n"
-#| "EXIT\t\tClose down CMD\n"
-#| "\n"
-#| "Enter HELP <command> for further information on any of the above "
-#| "commands.\n"
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -11302,10 +11148,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Erro: Opção inválida '%c'.\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Erro: Não foi possível encontrar o processo \"%1\".\n"
+msgstr "Erro: Não foi possível encontrar o nome do host: \"%u\".\n"
 
 #: hostname.rc:33
 msgid ""
@@ -12414,17 +12258,6 @@ msgid "Icons (*.ico)"
 msgstr "Ícones (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12440,7 +12273,7 @@ msgstr ""
 "  REG [operação] [parâmetros]\n"
 "\n"
 "Operações suportadas:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
 "Para ajuda com alguma operação específica digite:\n"
 "  REG [operação] /?\n"
@@ -12574,40 +12407,28 @@ msgid "REG IMPORT file.reg\n"
 msgstr "REG IMPORT arquivo.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: O arquivo '%1' não foi encontrado.\n"
+msgstr "reg: O arquivo '%1' não foi encontrado.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "reg: Não foi possível abrir a chave de registro '%1'.\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Sequência de escape não reconhecida [\\%1!c!]\n"
+msgstr "reg: Sequência de escape não reconhecida [\\%1!c!]\n"
 
 #: reg.rc:70
-#, fuzzy
-#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG QUERY nome_chave [/v nome_valor | /ve] [/s]\n"
+msgstr "REG EXPOER nome_chave [/y]\n"
 
 #: reg.rc:71
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "reg: Nome de chave inválido\n"
+msgstr "reg: Chave de sistema inválido[%1]\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "O valor do registro '%1' já existe. Deseja sobrescrevê-lo?"
+msgstr "O arquivo '%1' já existe. Deseja sobrescrevê-lo?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12678,15 +12499,10 @@ msgid "&About Registry Editor"
 msgstr "&Sobre o Editor do Registro"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:230
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "expanded"
 msgid "Expand"
-msgstr "expandido"
+msgstr "Expandir"
 
 #: regedit.rc:134 regedit.rc:233
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
 msgstr "Modificar Dados Binários..."
 
@@ -12787,10 +12603,6 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Contém comandos para acessar chaves frequentemente usadas"
 
 #: regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
@@ -12834,22 +12646,16 @@ msgid "(unknown %d)"
 msgstr "(desconhecido %d)"
 
 #: regedit.rc:247
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Não foi possível modificar o valor do registro selecionado."
 
 #: regedit.rc:248
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Não foi possível criar uma nova chave de registro."
 
 #: regedit.rc:249
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Não foi possível criar um novo valor de registro."
 
 #: regedit.rc:250
 msgid ""
@@ -12868,72 +12674,30 @@ msgstr ""
 "A valor especificado já existe."
 
 #: regedit.rc:252
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Não foi possível apagar a chave de registro selecionada."
 
 #: regedit.rc:253
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Não foi possível renomear a chave de registro selecionada."
 
 #: regedit.rc:254
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Não foi possível renomear o valore de registro selecionado."
 
 #: regedit.rc:255
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
-"A chave e o valor contidos em %1 foram adicionados com sucesso ao registro"
+"A chave e o valor contidos em %1 foram adicionados com sucesso ao registro."
 
 #: regedit.rc:256
-#, fuzzy
-#| msgid ""
-#| "regedit: Unable to export '%1'. The specified registry key was not "
-#| "found.\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
-"regedit: Não foi possível exportar '%1'. A chave do registro não foi "
-"encontrada.\n"
+"Não foi possível importar %1. O arquivo especificado não é um arquivo de "
+"registro válido."
 
 #: regedit.rc:408
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  regedit [options] [filename] [reg_key]\n"
-#| "\n"
-#| "Options:\n"
-#| "  [no option]    Launch the graphical version of this program.\n"
-#| "  /L:system.dat  The location of the system.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /R:user.dat    The location of the user.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /C             Import the contents of a registry file.\n"
-#| "  /D             Delete a specified registry key.\n"
-#| "  /E             Export the contents of a specified registry key to a "
-#| "file.\n"
-#| "                 If no key is specified, the entire registry is "
-#| "exported.\n"
-#| "  /S             Silent mode. No messages will be displayed.\n"
-#| "  /V             Launch the GUI in advanced mode. Ignored.\n"
-#| "  /?             Display this information and exit.\n"
-#| "  [filename]     The location of the file containing registry information "
-#| "to\n"
-#| "                 be imported. When used with [/E], this option specifies "
-#| "the\n"
-#| "                 file location where registry information will be "
-#| "exported.\n"
-#| "  [reg_key]      The registry key to be modified.\n"
-#| "\n"
-#| "Usage examples:\n"
-#| "  regedit \"import.reg\"\n"
-#| "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-#| "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -13040,10 +12804,8 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Sequência de escape não reconhecida [\\%1!c!]\n"
 
 #: regedit.rc:420
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "regedit: Tipo de dado de registro não suportado [%1]\n"
+msgstr "regedit: Tipo de dado de registro não suportado [0x%1!x!]\n"
 
 #: regedit.rc:421
 msgid "regedit: Unexpected end of line in '%1'.\n"
@@ -13063,8 +12825,6 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
@@ -13075,10 +12835,8 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: O valor de registro '%1' será exportado como dado binário.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Nome de chave inválido\n"
+msgstr "regedit: Chave de sistema inválido[%1]\n"
 
 #: regedit.rc:428
 msgid ""
@@ -13088,20 +12846,14 @@ msgstr ""
 "encontrada.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: Não foi possível remover a classe de registro '%1'.\n"
+msgstr "regedit: Não foi possível remover a chave de registro '%1'.\n"
 
 #: regedit.rc:431
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: A linha '%1' não foi reconhecida.\n"
+msgstr "regedit: A linha contém sintaxe inválida.\n"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "Encerra o Editor do Registro"
 
@@ -13118,8 +12870,6 @@ msgid "Shows or hides the status bar"
 msgstr "Mostra ou oculta a barra de status"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr "Altera a posição da divisão entre os painéis"
 
@@ -13165,8 +12915,6 @@ msgid "Adds a new binary value"
 msgstr "Adiciona um novo valor binário"
 
 #: regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
 msgstr "Adiciona um novo valor binário"
 
@@ -13183,48 +12931,36 @@ msgid "Prints all or part of the registry"
 msgstr "Imprime todo ou parte do registro"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Editor do Registro"
+msgstr "Abre a Ajuda do Editor de Registro"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
 msgstr "Exibe informações do programa, número da versão e direitos autorais"
 
 #: regedit.rc:206
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Não foi possível consultar o valor de registro '%1'."
 
 #: regedit.rc:207
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Não é possível editar chaves deste tipo (%u)"
+msgstr "Não é possível editar chaves deste tipo (%1!u!)."
 
 #: regedit.rc:208
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "O valor é muito grande (%u)"
+msgstr "O valor é muito grande (%1!u!)."
 
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Confirmar Exclusão de Valor"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "Tem certeza que deseja excluir o valor do registro '%1'?"
+msgstr "Tem certeza que deseja excluir o valor do registro selecionado?"
 
 #: regedit.rc:216
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Chave de busca '%s' não encontrada"
+msgstr "Busca completa. A seqüência '%1' não foi encontrada."
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -13239,56 +12975,43 @@ msgid "New Value #%d"
 msgstr "Novo valor #%d"
 
 #: regedit.rc:205
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "Não foi possível consultar a chave de registro '%1'."
 
 #: regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Modifica os dados do valor"
+msgstr "Modifica os dados do valor em formato binário"
 
 #: regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "Adiciona um novo valor de múltiplas strings"
 
 #: regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Exporta o ramo do registro selecionado para um arquivo de texto"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
 msgstr "Adiciona um novo valor texto"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Confirmar Exclusão de Valor"
+msgstr "Confirma a Exclusão da Chave"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "Você tem certeza que deseja excluir a chave de registro '%1'?"
+msgstr ""
+"Você tem certeza que deseja excluir a chave de registro e todas as sub "
+"chaves?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
 msgstr "Expande ou recolhe o nó selecionado"
 
 #: regedit.rc:231
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "collapsed"
 msgid "Collapse"
-msgstr "reduzido"
+msgstr "Recolher"
 
 #: regsvr32.rc:32
 msgid ""
@@ -15222,7 +14945,7 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
-"Um programa ou systema teve uma falha, mas WineDbg nao foi capaz de se "
+"Um programa ou sistema teve uma falha, mas WineDbg nao foi capaz de se "
 "conectar ao processo para obter os logs da pilha."
 
 #: winedbg.rc:41
@@ -15483,10 +15206,8 @@ msgid "Expert"
 msgstr "Experiente"
 
 #: winemine.rc:74 winemine.rc:33
-#, fuzzy
-#| msgid "Result"
 msgid "Reset Results"
-msgstr "Resultado"
+msgstr "Limpar Resultados"
 
 #: winemine.rc:80
 msgid "Congratulations!"
@@ -16085,41 +15806,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
