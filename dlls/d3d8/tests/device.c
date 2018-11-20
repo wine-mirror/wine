@@ -9132,7 +9132,7 @@ static void test_resource_access(void)
 
         hr = IDirect3DDevice8_CreateIndexBuffer(device, 16, tests[i].usage,
                 tests[i].format == FORMAT_COLOUR ? D3DFMT_INDEX32 : D3DFMT_INDEX16, tests[i].pool, &ib);
-        todo_wine_if(tests[i].pool == D3DPOOL_SCRATCH || tests[i].usage & ~D3DUSAGE_DYNAMIC)
+        todo_wine_if(tests[i].pool != D3DPOOL_SCRATCH && tests[i].usage & ~D3DUSAGE_DYNAMIC)
             ok(hr == (tests[i].pool == D3DPOOL_SCRATCH || (tests[i].usage & ~D3DUSAGE_DYNAMIC)
                     ? D3DERR_INVALIDCALL : D3D_OK), "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (FAILED(hr))
