@@ -1146,19 +1146,19 @@ static void _enable_event( HANDLE s, unsigned int event,
     SERVER_END_REQ;
 }
 
-static NTSTATUS _is_blocking(SOCKET s, BOOL *ret)
+static DWORD sock_is_blocking(SOCKET s, BOOL *ret)
 {
-    NTSTATUS status;
+    DWORD err;
     SERVER_START_REQ( get_socket_event )
     {
         req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->service = FALSE;
         req->c_event = 0;
-        status = wine_server_call( req );
+        err = NtStatusToWSAError( wine_server_call( req ));
         *ret = (reply->state & FD_WINE_NONBLOCKING) == 0;
     }
     SERVER_END_REQ;
-    return status;
+    return err;
 }
 
 static unsigned int _get_sock_mask(SOCKET s)
@@ -1181,7 +1181,7 @@ static void _sync_sock_state(SOCKET s)
     BOOL dummy;
     /* do a dummy wineserver request in order to let
        the wineserver run through its select loop once */
-    (void)_is_blocking(s, &dummy);
+    sock_is_blocking(s, &dummy);
 }
 
 static void _get_sock_errors(SOCKET s, int *events)
@@ -2761,12 +2761,13 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
 {
     NTSTATUS status;
+    DWORD err;
     SOCKET as;
     BOOL is_blocking;
 
     TRACE("socket %04lx\n", s );
-    status = _is_blocking(s, &is_blocking);
-    if (status)
+    err = sock_is_blocking(s, &is_blocking);
+    if (err)
         goto error;
 
     do {
@@ -2799,10 +2800,11 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
             release_sock_fd( s, fd );
         }
     } while (is_blocking && status == STATUS_CANT_WAIT);
+    err = NtStatusToWSAError( status );
 
 error:
-    set_error(status);
-    WARN(" -> ERROR %d\n", GetLastError());
+    WARN(" -> ERROR %d\n", err);
+    SetLastError(err);
     return INVALID_SOCKET;
 }
 
@@ -3467,7 +3469,6 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
 
     if (fd != -1)
     {
-        NTSTATUS status;
         BOOL is_blocking;
         int ret = do_connect(fd, name, namelen);
         if (ret == 0)
@@ -3479,33 +3480,21 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
             _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
                           FD_CONNECT,
                           FD_WINE_CONNECTED|FD_WINE_LISTENING);
-            status = _is_blocking( s, &is_blocking );
-            if (status)
+            ret = sock_is_blocking( s, &is_blocking );
+            if (!ret)
             {
-                release_sock_fd( s, fd );
-                set_error( status );
-                return SOCKET_ERROR;
+                if (is_blocking)
+                {
+                    do_block(fd, POLLIN | POLLOUT, -1);
+                    _sync_sock_state(s); /* let wineserver notice connection */
+                    /* retrieve any error codes from it */
+                    if (!(ret = get_sock_error(s, FD_CONNECT_BIT))) goto connect_success;
+                }
+                else ret = WSAEWOULDBLOCK;
             }
-            if (is_blocking)
-            {
-                int result;
-                /* block here */
-                do_block(fd, POLLIN | POLLOUT, -1);
-                _sync_sock_state(s); /* let wineserver notice connection */
-                /* retrieve any error codes from it */
-                if (!(result = get_sock_error(s, FD_CONNECT_BIT))) goto connect_success;
-                SetLastError(result);
-            }
-            else
-            {
-                SetLastError(WSAEWOULDBLOCK);
-            }
-        }
-        else
-        {
-            SetLastError(ret);
         }
         release_sock_fd( s, fd );
+        SetLastError(ret);
     }
     return SOCKET_ERROR;
 
@@ -5667,11 +5656,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         return 0;
     }
 
-    if ((err = _is_blocking( s, &is_blocking )))
-    {
-        err = NtStatusToWSAError( err );
-        goto error;
-    }
+    if ((err = sock_is_blocking( s, &is_blocking ))) goto error;
 
     if ( is_blocking )
     {
@@ -8096,11 +8081,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
         if (n != -1) break;
 
-        if ((err = _is_blocking( s, &is_blocking )))
-        {
-            err = NtStatusToWSAError( err );
-            goto error;
-        }
+        if ((err = sock_is_blocking( s, &is_blocking ))) goto error;
 
         if ( is_blocking )
         {
