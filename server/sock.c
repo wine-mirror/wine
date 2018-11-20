@@ -109,7 +109,7 @@ struct sock
     user_handle_t       window;      /* window to send the message to */
     unsigned int        message;     /* message to send */
     obj_handle_t        wparam;      /* message wparam (socket handle) */
-    int                 errors[FD_MAX_EVENTS]; /* event errors */
+    unsigned int        errors[FD_MAX_EVENTS]; /* event errors */
     timeout_t           connect_time;/* time the socket was connected */
     struct sock        *deferred;    /* socket that waits for a deferred accept */
     struct async_queue  read_q;      /* queue for asynchronous reads */
@@ -134,7 +134,7 @@ static void sock_queue_async( struct fd *fd, struct async *async, int type, int 
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
 static int sock_get_ntstatus( int err );
-static int sock_get_error( int err );
+static unsigned int sock_get_error( int err );
 static void sock_set_error(void);
 
 static const struct object_ops sock_ops =
@@ -292,7 +292,7 @@ static void sock_wake_up( struct sock *sock )
             int event = event_bitorder[i];
             if (sock->pmask & (1 << event))
             {
-                lparam_t lparam = (1 << event) | (sock_get_error(sock->errors[event]) << 16);
+                lparam_t lparam = (1 << event) | (sock->errors[event] << 16);
                 post_message( sock->window, sock->message, sock->wparam, lparam );
             }
         }
@@ -345,14 +345,14 @@ static void sock_dispatch_events( struct sock *sock, int prevstate, int event, i
     {
         sock->pmask |= FD_CONNECT;
         sock->hmask |= FD_CONNECT;
-        sock->errors[FD_CONNECT_BIT] = error;
+        sock->errors[FD_CONNECT_BIT] = sock_get_error( error );
         goto end;
     }
     if (prevstate & FD_WINE_LISTENING)
     {
         sock->pmask |= FD_ACCEPT;
         sock->hmask |= FD_ACCEPT;
-        sock->errors[FD_ACCEPT_BIT] = error;
+        sock->errors[FD_ACCEPT_BIT] = sock_get_error( error );
         goto end;
     }
 
@@ -381,7 +381,7 @@ static void sock_dispatch_events( struct sock *sock, int prevstate, int event, i
     {
         sock->pmask |= FD_CLOSE;
         sock->hmask |= FD_CLOSE;
-        sock->errors[FD_CLOSE_BIT] = error;
+        sock->errors[FD_CLOSE_BIT] = sock_get_error( error );
     }
 end:
     sock_wake_up( sock );
@@ -823,7 +823,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
 }
 
 /* return an errno value mapped to a WSA error */
-static int sock_get_error( int err )
+static unsigned int sock_get_error( int err )
 {
     switch (err)
     {
@@ -1265,24 +1265,13 @@ DECL_HANDLER(set_socket_event)
 DECL_HANDLER(get_socket_event)
 {
     struct sock *sock;
-    int i;
-    int errors[FD_MAX_EVENTS];
 
-    sock = (struct sock *)get_handle_obj( current->process, req->handle, FILE_READ_ATTRIBUTES, &sock_ops );
-    if (!sock)
-    {
-        reply->mask  = 0;
-        reply->pmask = 0;
-        reply->state = 0;
-        return;
-    }
+    if (!(sock = (struct sock *)get_handle_obj( current->process, req->handle,
+                                                FILE_READ_ATTRIBUTES, &sock_ops ))) return;
     reply->mask  = sock->mask;
     reply->pmask = sock->pmask;
     reply->state = sock->state;
-    for (i = 0; i < FD_MAX_EVENTS; i++)
-        errors[i] = sock_get_ntstatus(sock->errors[i]);
-
-    set_reply_data( errors, min( get_reply_max_size(), sizeof(errors) ));
+    set_reply_data( sock->errors, min( get_reply_max_size(), sizeof(sock->errors) ));
 
     if (req->service)
     {
