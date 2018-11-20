@@ -250,6 +250,9 @@ static void test__register_onexit_function(void)
     ret = p_o__register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
     ok(f != table._last, "got %p, initial %p\n", table._last, f);
+
+    ret = p_execute_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
 }
 
 static void test__execute_onexit_table(void)
@@ -444,6 +447,8 @@ static void test__get_narrow_winmain_command_line(char *path)
             CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
             NULL, NULL, &startup, &proc);
     winetest_wait_child_process(proc.hProcess);
+    CloseHandle(proc.hProcess);
+    CloseHandle(proc.hThread);
 }
 
 static BOOL init(void)
