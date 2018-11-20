@@ -857,7 +857,7 @@ static void try_add_device(SDL_JoystickID index)
               id, vid, pid, version, debugstr_w(serial));
 
         axis_count = pSDL_JoystickNumAxes(joystick);
-        button_count = pSDL_JoystickNumAxes(joystick);
+        button_count = pSDL_JoystickNumButtons(joystick);
         is_xbox_gamepad = (axis_count == 6  && button_count >= 14);
     }
 
