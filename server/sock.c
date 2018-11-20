@@ -135,7 +135,6 @@ static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
 static int sock_get_ntstatus( int err );
 static unsigned int sock_get_error( int err );
-static void sock_set_error(void);
 
 static const struct object_ops sock_ops =
 {
@@ -699,17 +698,13 @@ static int accept_new_fd( struct sock *sock )
      * or that accept() is allowed on it. In those cases we will get -1/errno
      * return.
      */
-    int acceptfd;
     struct sockaddr saddr;
     socklen_t slen = sizeof(saddr);
-    acceptfd = accept( get_unix_fd(sock->fd), &saddr, &slen);
-    if (acceptfd == -1)
-    {
-        sock_set_error();
-        return acceptfd;
-    }
-
-    fcntl(acceptfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
+    int acceptfd = accept( get_unix_fd(sock->fd), &saddr, &slen );
+    if (acceptfd != -1)
+        fcntl( acceptfd, F_SETFL, O_NONBLOCK );
+    else
+        set_win32_error( sock_get_error( errno ));
     return acceptfd;
 }
 
@@ -934,12 +929,6 @@ static int sock_get_ntstatus( int err )
             perror("wineserver: sock_get_ntstatus() can't map error");
             return STATUS_UNSUCCESSFUL;
     }
-}
-
-/* set the last error depending on errno */
-static void sock_set_error(void)
-{
-    set_error( sock_get_ntstatus( errno ) );
 }
 
 #ifdef HAVE_LINUX_RTNETLINK_H

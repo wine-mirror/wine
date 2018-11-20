@@ -2521,7 +2521,7 @@ static NTSTATUS WS2_async_accept( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS st
         }
         SERVER_END_REQ;
 
-        if (status == STATUS_CANT_WAIT)
+        if (NtStatusToWSAError( status ) == WSAEWOULDBLOCK)
             return STATUS_PENDING;
 
         if (status == STATUS_INVALID_HANDLE)
@@ -2760,9 +2760,9 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
  */
 SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
 {
-    NTSTATUS status;
     DWORD err;
     SOCKET as;
+    int fd;
     BOOL is_blocking;
 
     TRACE("socket %04lx\n", s );
@@ -2770,18 +2770,19 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
     if (err)
         goto error;
 
-    do {
+    for (;;)
+    {
         /* try accepting first (if there is a deferred connection) */
         SERVER_START_REQ( accept_socket )
         {
             req->lhandle    = wine_server_obj_handle( SOCKET2HANDLE(s) );
             req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
             req->attributes = OBJ_INHERIT;
-            status = wine_server_call( req );
+            err = NtStatusToWSAError( wine_server_call( req ));
             as = HANDLE2SOCKET( wine_server_ptr_handle( reply->handle ));
         }
         SERVER_END_REQ;
-        if (!status)
+        if (!err)
         {
             if (addr && addrlen32 && WS_getpeername(as, addr, addrlen32))
             {
@@ -2791,16 +2792,14 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
             TRACE("\taccepted %04lx\n", as);
             return as;
         }
-        if (is_blocking && status == STATUS_CANT_WAIT)
-        {
-            int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
-            /* block here */
-            do_block(fd, POLLIN, -1);
-            _sync_sock_state(s); /* let wineserver notice connection */
-            release_sock_fd( s, fd );
-        }
-    } while (is_blocking && status == STATUS_CANT_WAIT);
-    err = NtStatusToWSAError( status );
+        if (!is_blocking) break;
+        if (err != WSAEWOULDBLOCK) break;
+        fd = get_sock_fd( s, FILE_READ_DATA, NULL );
+        /* block here */
+        do_block(fd, POLLIN, -1);
+        _sync_sock_state(s); /* let wineserver notice connection */
+        release_sock_fd( s, fd );
+    }
 
 error:
     WARN(" -> ERROR %d\n", err);
