@@ -170,3 +170,16 @@ HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size)
 
     return next == extension ? S_FALSE : S_OK;
 }
+
+HRESULT WINAPI PathCchRenameExtension(WCHAR *path, SIZE_T size, const WCHAR *extension)
+{
+    HRESULT hr;
+
+    TRACE("%s %lu %s\n", wine_dbgstr_w(path), size, wine_dbgstr_w(extension));
+
+    hr = PathCchRemoveExtension(path, size);
+    if (FAILED(hr)) return hr;
+
+    hr = PathCchAddExtension(path, size, extension);
+    return FAILED(hr) ? hr : S_OK;
+}

@@ -1044,7 +1044,7 @@
 # @ stub PathCchRemoveBackslashEx
 @ stdcall PathCchRemoveExtension(wstr long)
 # @ stub PathCchRemoveFileSpec
-# @ stub PathCchRenameExtension
+@ stdcall PathCchRenameExtension(wstr long wstr)
 # @ stub PathCchSkipRoot
 # @ stub PathCchStripPrefix
 # @ stub PathCchStripToRoot

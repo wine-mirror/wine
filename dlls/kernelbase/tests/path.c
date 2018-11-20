@@ -36,6 +36,7 @@ HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *ex
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
 HRESULT (WINAPI *pPathCchRemoveExtension)(WCHAR *path, SIZE_T size);
+HRESULT (WINAPI *pPathCchRenameExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 
 static const struct
 {
@@ -554,6 +555,83 @@ static void test_PathCchRemoveExtension(void)
     }
 }
 
+struct renameextension_test
+{
+    const CHAR *path;
+    const CHAR *extension;
+    const CHAR *expected;
+};
+
+static const struct renameextension_test renameextension_tests[] =
+{
+    {"1.exe", ".txt", "1.txt"},
+    {"C:1.exe", ".txt", "C:1.txt"},
+    {"C:\\1.exe", ".txt", "C:\\1.txt"},
+    {"\\1.exe", ".txt", "\\1.txt"},
+    {"\\\\1.exe", ".txt", "\\\\1.txt"},
+    {"\\\\?\\C:1.exe", ".txt", "\\\\?\\C:1.txt"},
+    {"\\\\?\\C:\\1.exe", ".txt", "\\\\?\\C:\\1.txt"},
+    {"\\\\?\\UNC\\1.exe", ".txt", "\\\\?\\UNC\\1.txt"},
+    {"\\\\?\\UNC\\192.168.1.1\\1.exe", ".txt", "\\\\?\\UNC\\192.168.1.1\\1.txt"},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\1.exe", ".txt",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\1.txt"},
+    {"C:\\1.exe", "", "C:\\1"},
+    {"C:\\1.exe", "txt", "C:\\1.txt"}
+};
+
+static void test_PathCchRenameExtension(void)
+{
+    WCHAR pathW[PATHCCH_MAX_CCH + 1];
+    CHAR pathA[PATHCCH_MAX_CCH + 1];
+    WCHAR extensionW[MAX_PATH];
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchRenameExtension)
+    {
+        win_skip("PathCchRenameExtension() is not available.\n");
+        return;
+    }
+
+    /* Invalid arguments */
+    MultiByteToWideChar(CP_ACP, 0, "C:\\1.txt", -1, pathW, ARRAY_SIZE(pathW));
+    MultiByteToWideChar(CP_ACP, 0, ".exe", -1, extensionW, ARRAY_SIZE(extensionW));
+
+    hr = pPathCchRenameExtension(NULL, PATHCCH_MAX_CCH, extensionW);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchRenameExtension(pathW, 0, extensionW);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchRenameExtension(pathW, PATHCCH_MAX_CCH, NULL);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    /* Path length */
+    hr = pPathCchRenameExtension(pathW, ARRAY_SIZE("C:\\1.exe") - 1, extensionW);
+    ok(E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchRenameExtension(pathW, PATHCCH_MAX_CCH + 1, extensionW);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchRenameExtension(pathW, PATHCCH_MAX_CCH, extensionW);
+    ok(hr == S_OK, "expect result %#x, got %#x\n", S_OK, hr);
+
+    for (i = 0; i < ARRAY_SIZE(renameextension_tests); i++)
+    {
+        const struct renameextension_test *t = renameextension_tests + i;
+        MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
+        MultiByteToWideChar(CP_ACP, 0, t->extension, -1, extensionW, ARRAY_SIZE(extensionW));
+        hr = pPathCchRenameExtension(pathW, PATHCCH_MAX_CCH, extensionW);
+        ok(hr == S_OK, "path %s extension %s expect result %#x, got %#x\n", t->path, t->extension, S_OK, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, pathW, -1, pathA, ARRAY_SIZE(pathA), NULL, NULL);
+            ok(!lstrcmpA(pathA, t->expected), "path %s extension %s expect output path %s, got %s\n", t->path,
+               t->extension, t->expected, pathA);
+        }
+    }
+}
+
 START_TEST(path)
 {
     HMODULE hmod = LoadLibraryA("kernelbase.dll");
@@ -564,6 +642,7 @@ START_TEST(path)
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
     pPathCchRemoveExtension = (void *)GetProcAddress(hmod, "PathCchRemoveExtension");
+    pPathCchRenameExtension = (void *)GetProcAddress(hmod, "PathCchRenameExtension");
 
     test_PathCchCombineEx();
     test_PathCchAddBackslash();
@@ -571,4 +650,5 @@ START_TEST(path)
     test_PathCchAddExtension();
     test_PathCchFindExtension();
     test_PathCchRemoveExtension();
+    test_PathCchRenameExtension();
 }
