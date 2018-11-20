@@ -869,16 +869,12 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
     ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
-    todo_wine
     ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0xff000000);
-    todo_wine
     ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_TRIANGLE | D3DX_FILTER_MIRROR, 0);
-    todo_wine
     ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_LINEAR, 0);
-    todo_wine
     ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
 
     IDirect3DSurface9_Release(newsurf);

@@ -1924,10 +1924,12 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
         const PALETTEENTRY *dst_palette, const RECT *dst_rect, IDirect3DSurface9 *src_surface,
         const PALETTEENTRY *src_palette, const RECT *src_rect, DWORD filter, D3DCOLOR color_key)
 {
-    RECT rect;
+    IDirect3DSurface9 *surface = src_surface;
+    IDirect3DDevice9 *device;
+    D3DSURFACE_DESC src_desc;
     D3DLOCKED_RECT lock;
-    D3DSURFACE_DESC SrcDesc;
     HRESULT hr;
+    RECT s;
 
     TRACE("dst_surface %p, dst_palette %p, dst_rect %s, src_surface %p, "
             "src_palette %p, src_rect %s, filter %#x, color_key 0x%08x.\n",
@@ -1937,23 +1939,40 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
     if (!dst_surface || !src_surface)
         return D3DERR_INVALIDCALL;
 
-    IDirect3DSurface9_GetDesc(src_surface, &SrcDesc);
+    IDirect3DSurface9_GetDesc(src_surface, &src_desc);
 
     if (!src_rect)
-        SetRect(&rect, 0, 0, SrcDesc.Width, SrcDesc.Height);
-    else
-        rect = *src_rect;
-
-    if (FAILED(IDirect3DSurface9_LockRect(src_surface, &lock, NULL, D3DLOCK_READONLY)))
     {
-        FIXME("Called for unlockable source surface.\n");
-        return D3DXERR_INVALIDDATA;
+        SetRect(&s, 0, 0, src_desc.Width, src_desc.Height);
+        src_rect = &s;
     }
 
-    hr = D3DXLoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect,
-            lock.pBits, SrcDesc.Format, lock.Pitch, src_palette, &rect, filter, color_key);
+    if (FAILED(IDirect3DSurface9_LockRect(surface, &lock, NULL, D3DLOCK_READONLY)))
+    {
+        IDirect3DSurface9_GetDevice(src_surface, &device);
+        if (FAILED(IDirect3DDevice9_CreateRenderTarget(device, src_desc.Width, src_desc.Height,
+                src_desc.Format, D3DMULTISAMPLE_NONE, 0, TRUE, &surface, NULL)))
+        {
+            IDirect3DDevice9_Release(device);
+            return D3DXERR_INVALIDDATA;
+        }
 
-    IDirect3DSurface9_UnlockRect(src_surface);
+        if (SUCCEEDED(hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, surface, NULL, D3DTEXF_NONE)))
+            hr = IDirect3DSurface9_LockRect(surface, &lock, NULL, D3DLOCK_READONLY);
+        IDirect3DDevice9_Release(device);
+        if (FAILED(hr))
+        {
+            IDirect3DSurface9_Release(surface);
+            return D3DXERR_INVALIDDATA;
+        }
+    }
+
+    hr = D3DXLoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect, lock.pBits,
+            src_desc.Format, lock.Pitch, src_palette, src_rect, filter, color_key);
+
+    IDirect3DSurface9_UnlockRect(surface);
+    if (surface != src_surface)
+        IDirect3DSurface9_Release(surface);
 
     return hr;
 }
