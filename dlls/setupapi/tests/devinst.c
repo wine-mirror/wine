@@ -329,13 +329,39 @@ static void test_install_class(void)
     DeleteFileA(tmpfile);
 }
 
+static void check_device_info_(int line, HDEVINFO set, int index, const GUID *class, const char *expect_id)
+{
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    char id[50];
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiEnumDeviceInfo(set, index, &device);
+    if (expect_id)
+    {
+        ok_(__FILE__, line)(ret, "Got unexpected error %#x.\n", GetLastError());
+        ok_(__FILE__, line)(IsEqualGUID(&device.ClassGuid, class),
+                "Got unexpected class %s.\n", wine_dbgstr_guid(&device.ClassGuid));
+        ret = SetupDiGetDeviceInstanceIdA(set, &device, id, sizeof(id), NULL);
+        ok_(__FILE__, line)(ret, "Got unexpected error %#x.\n", GetLastError());
+        ok_(__FILE__, line)(!strcasecmp(id, expect_id), "Got unexpected id %s.\n", id);
+    }
+    else
+    {
+        ok_(__FILE__, line)(!ret, "Expected failure.\n");
+        ok_(__FILE__, line)(GetLastError() == ERROR_NO_MORE_ITEMS,
+                "Got unexpected error %#x.\n", GetLastError());
+    }
+}
+#define check_device_info(a,b,c,d) check_device_info_(__LINE__,a,b,c,d)
+
 static void test_device_info(void)
 {
     static const GUID deadbeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
-    SP_DEVINFO_DATA device = {0};
-    BOOL ret;
+    SP_DEVINFO_DATA device = {0}, ret_device = {sizeof(ret_device)};
     HDEVINFO set;
-    DWORD i;
+    char id[50];
+    BOOL ret;
 
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInfoA(NULL, NULL, NULL, NULL, NULL, 0, NULL);
@@ -355,44 +381,95 @@ static void test_device_info(void)
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
 
-    /* We can't add device information to the set with a different GUID */
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &deadbeef, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_CLASS_MISMATCH, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &GUID_NULL, NULL, NULL, 0, NULL);
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_CLASS_MISMATCH, "Got unexpected error %#x.\n", GetLastError());
 
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, NULL);
     ok(ret, "Failed to create device, error %#x.\n", GetLastError());
 
-    /* This fails because the device ID already exists.. */
+    check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0000");
+    check_device_info(set, 1, &guid, NULL);
+
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_DEVINST_ALREADY_EXISTS, "Got unexpected error %#x.\n", GetLastError());
 
-    /* whereas this "fails" because cbSize is wrong.. */
     SetLastError(0xdeadbeef);
-    ret = SetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL, DICD_GENERATE_ID, &device);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0001", &guid, NULL, NULL, 0, &device);
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "Got unexpected error %#x.\n", GetLastError());
 
-    /* and this finally succeeds. */
-    device.cbSize = sizeof(device);
-    ret = SetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL, DICD_GENERATE_ID, &device);
-    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+    check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0000");
+    check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\0001");
+    check_device_info(set, 2, &guid, NULL);
 
-    /* There were three devices added, however - the second failure just
-     * resulted in the SP_DEVINFO_DATA not getting copied. */
-    SetLastError(0xdeadbeef);
-    i = 0;
-    while (SetupDiEnumDeviceInfo(set, i, &device))
-        i++;
-    ok(i == 3, "Expected 3 devices, got %d.\n", i);
-    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "Got unexpected error %#x.\n", GetLastError());
+    device.cbSize = sizeof(device);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0002", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Got unexpected error %#x.\n", GetLastError());
+    ok(IsEqualGUID(&device.ClassGuid, &guid), "Got unexpected class %s.\n",
+            wine_dbgstr_guid(&device.ClassGuid));
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, id, sizeof(id), NULL);
+    ok(ret, "Got unexpected error %#x.\n", GetLastError());
+    ok(!strcmp(id, "ROOT\\LEGACY_BOGUS\\0002"), "Got unexpected id %s.\n", id);
+
+    check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0000");
+    check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\0001");
+    check_device_info(set, 2, &guid, "ROOT\\LEGACY_BOGUS\\0002");
+    check_device_info(set, 3, &guid, NULL);
 
     ret = SetupDiRemoveDevice(set, &device);
 todo_wine
-    ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
+    ok(ret, "Got unexpected error %#x.\n", GetLastError());
+
+    check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0000");
+    check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\0001");
+
+    ret = SetupDiEnumDeviceInfo(set, 2, &ret_device);
+    ok(ret, "Got unexpected error %#x.\n", GetLastError());
+    ok(IsEqualGUID(&ret_device.ClassGuid, &guid), "Got unexpected class %s.\n",
+            wine_dbgstr_guid(&ret_device.ClassGuid));
+    ret = SetupDiGetDeviceInstanceIdA(set, &ret_device, id, sizeof(id), NULL);
+todo_wine {
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_NO_SUCH_DEVINST, "Got unexpected error %#x.\n", GetLastError());
+}
+    ok(ret_device.DevInst == device.DevInst, "Expected device node %#x, got %#x.\n",
+            device.DevInst, ret_device.DevInst);
+
+    check_device_info(set, 3, &guid, NULL);
+
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != NULL, "Failed to create device info, error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\deadbeef", &deadbeef, NULL, NULL, 0, NULL);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\null", &GUID_NULL, NULL, NULL, 0, NULL);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\testguid", &guid, NULL, NULL, 0, NULL);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    check_device_info(set, 0, &deadbeef, "ROOT\\LEGACY_BOGUS\\deadbeef");
+    check_device_info(set, 1, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\null");
+    check_device_info(set, 2, &guid, "ROOT\\LEGACY_BOGUS\\testguid");
+    check_device_info(set, 3, NULL, NULL);
+
     SetupDiDestroyDeviceInfoList(set);
 }
 
