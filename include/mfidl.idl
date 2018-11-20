@@ -21,6 +21,7 @@ import "mftransform.idl";
 
 typedef unsigned __int64 TOPOID;
 typedef LONGLONG  MFTIME;
+typedef DWORD MFSequencerElementId;
 
 typedef enum MF_TOPOLOGY_TYPE
 {
@@ -249,6 +250,60 @@ interface IMFGetService : IUnknown
         [out, iid_is(riid)] LPVOID *ppvObject
     );
 }
+
+[
+    object,
+    uuid(03cb2711-24d7-4db6-a17f-f3a7a479a536),
+]
+interface IMFPresentationDescriptor : IMFAttributes
+{
+    HRESULT GetStreamDescriptorCount(
+        [out] DWORD *count );
+
+    HRESULT GetStreamDescriptorByIndex(
+        [in] DWORD index,
+        [out] BOOL *selected,
+        [out] IMFStreamDescriptor **descriptor );
+
+    HRESULT SelectStream(
+        [in] DWORD index );
+
+    HRESULT DeselectStream(
+        [in] DWORD index );
+
+    HRESULT Clone(
+        [out] IMFPresentationDescriptor **descriptor );
+}
+
+[
+    object,
+    uuid(197cd219-19cb-4de1-a64c-acf2edcbe59e),
+    local
+]
+interface IMFSequencerSource : IUnknown
+{
+    HRESULT AppendTopology(
+        [in] IMFTopology *topology,
+        [in] DWORD flags,
+        [out] MFSequencerElementId *element );
+
+    HRESULT DeleteTopology(
+        [in] MFSequencerElementId element);
+
+    HRESULT GetPresentationContext(
+        [in] IMFPresentationDescriptor *pd,
+        [out, optional] MFSequencerElementId *id,
+        [out, optional] IMFTopology **topology );
+
+    HRESULT UpdateTopology(
+        [in] MFSequencerElementId od,
+        [in] IMFTopology *topology);
+
+    HRESULT UpdateTopologyFlags(
+        [in] MFSequencerElementId id,
+        [in] DWORD flags );
+
+};
 
 cpp_quote("HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session);")
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **bytestream);" )
