@@ -338,65 +338,73 @@ static HWND create_parent( void )
 
 static void test_ownerdraw(void)
 {
+    static const DWORD styles[] =
+    {
+        0,
+        LBS_NODATA
+    };
     HWND parent, hLB;
     INT ret;
     RECT rc;
+    UINT i;
 
     parent = create_parent();
     assert(parent);
 
-    hLB = create_listbox(LBS_OWNERDRAWFIXED | WS_CHILD | WS_VISIBLE, parent);
-    assert(hLB);
+    for (i = 0; i < ARRAY_SIZE(styles); i++)
+    {
+        hLB = create_listbox(LBS_OWNERDRAWFIXED | WS_CHILD | WS_VISIBLE | styles[i], parent);
+        assert(hLB);
 
-    SetForegroundWindow(hLB);
-    UpdateWindow(hLB);
+        SetForegroundWindow(hLB);
+        UpdateWindow(hLB);
 
-    /* make height short enough */
-    SendMessageA(hLB, LB_GETITEMRECT, 0, (LPARAM)&rc);
-    SetWindowPos(hLB, 0, 0, 0, 100, rc.bottom - rc.top + 1,
-                 SWP_NOZORDER | SWP_NOMOVE);
+        /* make height short enough */
+        SendMessageA(hLB, LB_GETITEMRECT, 0, (LPARAM)&rc);
+        SetWindowPos(hLB, 0, 0, 0, 100, rc.bottom - rc.top + 1,
+                     SWP_NOZORDER | SWP_NOMOVE);
 
-    /* make 0 item invisible */
-    SendMessageA(hLB, LB_SETTOPINDEX, 1, 0);
-    ret = SendMessageA(hLB, LB_GETTOPINDEX, 0, 0);
-    ok(ret == 1, "wrong top index %d\n", ret);
+        /* make 0 item invisible */
+        SendMessageA(hLB, LB_SETTOPINDEX, 1, 0);
+        ret = SendMessageA(hLB, LB_GETTOPINDEX, 0, 0);
+        ok(ret == 1, "wrong top index %d\n", ret);
 
-    SendMessageA(hLB, LB_GETITEMRECT, 0, (LPARAM)&rc);
-    trace("item 0 rect %s\n", wine_dbgstr_rect(&rc));
-    ok(!IsRectEmpty(&rc), "empty item rect\n");
-    ok(rc.top < 0, "rc.top is not negative (%d)\n", rc.top);
+        SendMessageA(hLB, LB_GETITEMRECT, 0, (LPARAM)&rc);
+        trace("item 0 rect %s\n", wine_dbgstr_rect(&rc));
+        ok(!IsRectEmpty(&rc), "empty item rect\n");
+        ok(rc.top < 0, "rc.top is not negative (%d)\n", rc.top);
 
-    DestroyWindow(hLB);
+        DestroyWindow(hLB);
 
-    /* Both FIXED and VARIABLE, FIXED should override VARIABLE. */
-    hLB = CreateWindowA("listbox", "TestList", LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE, 0, 0, 100, 100,
-        NULL, NULL, NULL, 0);
-    ok(hLB != NULL, "last error 0x%08x\n", GetLastError());
+        /* Both FIXED and VARIABLE, FIXED should override VARIABLE. */
+        hLB = CreateWindowA("listbox", "TestList", LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE | styles[i],
+            0, 0, 100, 100, NULL, NULL, NULL, 0);
+        ok(hLB != NULL, "last error 0x%08x\n", GetLastError());
 
-    ok(GetWindowLongA(hLB, GWL_STYLE) & LBS_OWNERDRAWVARIABLE, "Unexpected window style.\n");
+        ok(GetWindowLongA(hLB, GWL_STYLE) & LBS_OWNERDRAWVARIABLE, "Unexpected window style.\n");
 
-    ret = SendMessageA(hLB, LB_INSERTSTRING, -1, 0);
-    ok(ret == 0, "Unexpected return value %d.\n", ret);
-    ret = SendMessageA(hLB, LB_INSERTSTRING, -1, 0);
-    ok(ret == 1, "Unexpected return value %d.\n", ret);
+        ret = SendMessageA(hLB, LB_INSERTSTRING, -1, 0);
+        ok(ret == 0, "Unexpected return value %d.\n", ret);
+        ret = SendMessageA(hLB, LB_INSERTSTRING, -1, 0);
+        ok(ret == 1, "Unexpected return value %d.\n", ret);
 
-    ret = SendMessageA(hLB, LB_SETITEMHEIGHT, 0, 13);
-    ok(ret == LB_OKAY, "Failed to set item height, %d.\n", ret);
+        ret = SendMessageA(hLB, LB_SETITEMHEIGHT, 0, 13);
+        ok(ret == LB_OKAY, "Failed to set item height, %d.\n", ret);
 
-    ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 0, 0);
-    ok(ret == 13, "Unexpected item height %d.\n", ret);
+        ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 0, 0);
+        ok(ret == 13, "Unexpected item height %d.\n", ret);
 
-    ret = SendMessageA(hLB, LB_SETITEMHEIGHT, 1, 42);
-    ok(ret == LB_OKAY, "Failed to set item height, %d.\n", ret);
+        ret = SendMessageA(hLB, LB_SETITEMHEIGHT, 1, 42);
+        ok(ret == LB_OKAY, "Failed to set item height, %d.\n", ret);
 
-    ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 0, 0);
-    ok(ret == 42, "Unexpected item height %d.\n", ret);
+        ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 0, 0);
+        ok(ret == 42, "Unexpected item height %d.\n", ret);
 
-    ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 1, 0);
-    ok(ret == 42, "Unexpected item height %d.\n", ret);
+        ret = SendMessageA(hLB, LB_GETITEMHEIGHT, 1, 0);
+        ok(ret == 42, "Unexpected item height %d.\n", ret);
 
-    DestroyWindow (hLB);
-
+        DestroyWindow (hLB);
+    }
     DestroyWindow(parent);
 }
 
