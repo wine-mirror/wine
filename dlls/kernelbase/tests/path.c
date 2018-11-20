@@ -32,6 +32,7 @@
 
 HRESULT (WINAPI *pPathCchAddBackslash)(WCHAR *out, SIZE_T size);
 HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr, SIZE_T *remaining);
+HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
 
@@ -247,6 +248,111 @@ static void test_PathCchAddBackslashEx(void)
     }
 }
 
+struct addextension_test
+{
+    const CHAR *path;
+    const CHAR *extension;
+    const CHAR *expected;
+    HRESULT hr;
+};
+
+static const struct addextension_test addextension_tests[] =
+{
+    /* Normal */
+    {"", ".exe", ".exe", S_OK},
+    {"C:\\", "", "C:\\", S_OK},
+    {"C:", ".exe", "C:.exe", S_OK},
+    {"C:\\", ".exe", "C:\\.exe", S_OK},
+    {"\\", ".exe", "\\.exe", S_OK},
+    {"\\\\", ".exe", "\\\\.exe", S_OK},
+    {"\\\\?\\C:", ".exe", "\\\\?\\C:.exe", S_OK},
+    {"\\\\?\\C:\\", ".exe", "\\\\?\\C:\\.exe", S_OK},
+    {"\\\\?\\UNC\\", ".exe", "\\\\?\\UNC\\.exe", S_OK},
+    {"\\\\?\\UNC\\192.168.1.1\\", ".exe", "\\\\?\\UNC\\192.168.1.1\\.exe", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", ".exe",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\.exe", S_OK},
+    {"C:\\", "exe", "C:\\.exe", S_OK},
+    {"C:\\", ".", "C:\\", S_OK},
+    {"C:\\1.exe", ".txt", "C:\\1.exe", S_FALSE},
+
+    /* Extension contains invalid characters but valid for PathCchAddExtension */
+    {"C:\\", "./", "C:\\./", S_OK},
+    {"C:\\", ".?", "C:\\.?", S_OK},
+    {"C:\\", ".%", "C:\\.%", S_OK},
+    {"C:\\", ".*", "C:\\.*", S_OK},
+    {"C:\\", ".:", "C:\\.:", S_OK},
+    {"C:\\", ".|", "C:\\.|", S_OK},
+    {"C:\\", ".\"", "C:\\.\"", S_OK},
+    {"C:\\", ".<", "C:\\.<", S_OK},
+    {"C:\\", ".>", "C:\\.>", S_OK},
+
+    /* Invalid argument for extension */
+    {"C:\\", " exe", NULL, E_INVALIDARG},
+    {"C:\\", ". exe", NULL, E_INVALIDARG},
+    {"C:\\", " ", NULL, E_INVALIDARG},
+    {"C:\\", "\\", NULL, E_INVALIDARG},
+    {"C:\\", "..", NULL, E_INVALIDARG},
+    {"C:\\", ". ", NULL, E_INVALIDARG},
+    {"C:\\", ".\\", NULL, E_INVALIDARG},
+    {"C:\\", ".a.", NULL, E_INVALIDARG},
+    {"C:\\", ".a ", NULL, E_INVALIDARG},
+    {"C:\\", ".a\\", NULL, E_INVALIDARG},
+    {"C:\\1.exe", " ", NULL, E_INVALIDARG}
+};
+
+static void test_PathCchAddExtension(void)
+{
+    WCHAR pathW[PATHCCH_MAX_CCH + 1];
+    CHAR pathA[PATHCCH_MAX_CCH + 1];
+    WCHAR extensionW[MAX_PATH];
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchAddExtension)
+    {
+        win_skip("PathCchAddExtension() is not available.\n");
+        return;
+    }
+
+    /* Arguments check */
+    MultiByteToWideChar(CP_ACP, 0, "C:\\", -1, pathW, ARRAY_SIZE(pathW));
+    MultiByteToWideChar(CP_ACP, 0, ".exe", -1, extensionW, ARRAY_SIZE(extensionW));
+
+    hr = pPathCchAddExtension(NULL, PATHCCH_MAX_CCH, extensionW);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchAddExtension(pathW, 0, extensionW);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchAddExtension(pathW, PATHCCH_MAX_CCH, NULL);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    /* Path length check */
+    hr = pPathCchAddExtension(pathW, ARRAY_SIZE("C:\\.exe") - 1, extensionW);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "expect result %#x, got %#x\n", STRSAFE_E_INSUFFICIENT_BUFFER, hr);
+
+    hr = pPathCchAddExtension(pathW, PATHCCH_MAX_CCH + 1, extensionW);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchAddExtension(pathW, PATHCCH_MAX_CCH, extensionW);
+    ok(hr == S_OK, "expect result %#x, got %#x\n", S_OK, hr);
+
+    for (i = 0; i < ARRAY_SIZE(addextension_tests); i++)
+    {
+        const struct addextension_test *t = addextension_tests + i;
+        MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
+        MultiByteToWideChar(CP_ACP, 0, t->extension, -1, extensionW, ARRAY_SIZE(extensionW));
+        hr = pPathCchAddExtension(pathW, PATHCCH_MAX_CCH, extensionW);
+        ok(hr == t->hr, "path %s extension %s expect result %#x, got %#x\n", t->path, t->extension, t->hr, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, pathW, -1, pathA, ARRAY_SIZE(pathA), NULL, NULL);
+            ok(!lstrcmpA(pathA, t->expected), "path %s extension %s expect output path %s, got %s\n", t->path,
+               t->extension, t->expected, pathA);
+        }
+    }
+}
+
 struct findextension_test
 {
     const CHAR *path;
@@ -372,10 +478,12 @@ START_TEST(path)
     pPathCchCombineEx = (void *)GetProcAddress(hmod, "PathCchCombineEx");
     pPathCchAddBackslash = (void *)GetProcAddress(hmod, "PathCchAddBackslash");
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
+    pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
 
     test_PathCchCombineEx();
     test_PathCchAddBackslash();
     test_PathCchAddBackslashEx();
+    test_PathCchAddExtension();
     test_PathCchFindExtension();
 }

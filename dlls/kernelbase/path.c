@@ -29,6 +29,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(path);
 
+static SIZE_T strnlenW(const WCHAR *string, SIZE_T maxlen)
+{
+    SIZE_T i;
+
+    for (i = 0; i < maxlen; i++)
+        if (!string[i]) break;
+    return i;
+}
+
 HRESULT WINAPI PathCchAddBackslash(WCHAR *path, SIZE_T size)
 {
     return PathCchAddBackslashEx(path, size, NULL, NULL);
@@ -64,6 +73,49 @@ HRESULT WINAPI PathCchAddBackslashEx(WCHAR *path, SIZE_T size, WCHAR **endptr, S
     if (endptr) *endptr = path + length;
     if (remaining) *remaining = size - length;
 
+    return S_OK;
+}
+
+HRESULT WINAPI PathCchAddExtension(WCHAR *path, SIZE_T size, const WCHAR *extension)
+{
+    const WCHAR *existing_extension, *next;
+    SIZE_T path_length, extension_length, dot_length;
+    BOOL has_dot;
+    HRESULT hr;
+
+    TRACE("%s %lu %s\n", wine_dbgstr_w(path), size, wine_dbgstr_w(extension));
+
+    if (!path || !size || size > PATHCCH_MAX_CCH || !extension) return E_INVALIDARG;
+
+    next = extension;
+    while (*next)
+    {
+        if ((*next == '.' && next > extension) || *next == ' ' || *next == '\\') return E_INVALIDARG;
+        next++;
+    }
+
+    has_dot = extension[0] == '.' ? TRUE : FALSE;
+
+    hr = PathCchFindExtension(path, size, &existing_extension);
+    if (FAILED(hr)) return hr;
+    if (*existing_extension) return S_FALSE;
+
+    path_length = strnlenW(path, size);
+    dot_length = has_dot ? 0 : 1;
+    extension_length = strlenW(extension);
+
+    if (path_length + dot_length + extension_length + 1 > size) return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    /* If extension is empty or only dot, return S_OK with path unchanged */
+    if (!extension[0] || (extension[0] == '.' && !extension[1])) return S_OK;
+
+    if (!has_dot)
+    {
+        path[path_length] = '.';
+        path_length++;
+    }
+
+    strcpyW(path + path_length, extension);
     return S_OK;
 }
 

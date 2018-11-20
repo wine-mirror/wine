@@ -2,7 +2,7 @@
 @ stub PathAllocCombine
 @ stdcall PathCchAddBackslash(wstr long) kernelbase.PathCchAddBackslash
 @ stdcall PathCchAddBackslashEx(wstr long ptr ptr) kernelbase.PathCchAddBackslashEx
-@ stub PathCchAddExtension
+@ stdcall PathCchAddExtension(wstr long wstr) kernelbase.PathCchAddExtension
 @ stub PathCchAppend
 @ stub PathCchAppendEx
 @ stub PathCchCanonicalize
