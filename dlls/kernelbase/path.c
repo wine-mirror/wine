@@ -151,3 +151,22 @@ HRESULT WINAPI PathCchFindExtension(const WCHAR *path, SIZE_T size, const WCHAR 
     *extension = lastpoint ? lastpoint : path;
     return S_OK;
 }
+
+HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size)
+{
+    const WCHAR *extension;
+    WCHAR *next;
+    HRESULT hr;
+
+    TRACE("%s %lu\n", wine_dbgstr_w(path), size);
+
+    if (!path || !size || size > PATHCCH_MAX_CCH) return E_INVALIDARG;
+
+    hr = PathCchFindExtension(path, size, &extension);
+    if (FAILED(hr)) return hr;
+
+    next = path + (extension - path);
+    while (next - path < size && *next) *next++ = 0;
+
+    return next == extension ? S_FALSE : S_OK;
+}

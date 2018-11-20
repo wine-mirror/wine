@@ -13,7 +13,7 @@
 @ stub PathCchIsRoot
 @ stub PathCchRemoveBackslash
 @ stub PathCchRemoveBackslashEx
-@ stub PathCchRemoveExtension
+@ stdcall PathCchRemoveExtension(wstr long) kernelbase.PathCchRemoveExtension
 @ stub PathCchRemoveFileSpec
 @ stub PathCchRenameExtension
 @ stub PathCchSkipRoot

@@ -35,6 +35,7 @@ HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr
 HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
+HRESULT (WINAPI *pPathCchRemoveExtension)(WCHAR *path, SIZE_T size);
 
 static const struct
 {
@@ -471,6 +472,88 @@ static void test_PathCchFindExtension(void)
     }
 }
 
+struct removeextension_test
+{
+    const CHAR *path;
+    const CHAR *expected;
+    HRESULT hr;
+};
+
+static const struct removeextension_test removeextension_tests[] =
+{
+    {"1.exe", "1", S_OK},
+    {"C:1.exe", "C:1", S_OK},
+    {"C:\\1.exe", "C:\\1", S_OK},
+    {"\\1.exe", "\\1", S_OK},
+    {"\\\\1.exe", "\\\\1", S_OK},
+    {"\\\\?\\C:1.exe", "\\\\?\\C:1", S_OK},
+    {"\\\\?\\C:\\1.exe", "\\\\?\\C:\\1", S_OK},
+    {"\\\\?\\UNC\\1.exe", "\\\\?\\UNC\\1", S_OK},
+    {"\\\\?\\UNC\\192.168.1.1\\1.exe", "\\\\?\\UNC\\192.168.1.1\\1", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\1.exe",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\1", S_OK},
+
+    /* Malformed */
+    {"", "", S_FALSE},
+    {" ", " ", S_FALSE},
+    {".", "", S_OK},
+    {"..", ".", S_OK},
+    {"a", "a", S_FALSE},
+    {"a.", "a", S_OK},
+    {".a.b.", ".a.b", S_OK},
+    {"a. ", "a. ", S_FALSE},
+    {"a.\\", "a.\\", S_FALSE},
+    {"\\\\?\\UNC\\192.168.1.1", "\\\\?\\UNC\\192.168.1", S_OK},
+    {"\\\\?\\UNC\\192.168.1.1\\", "\\\\?\\UNC\\192.168.1.1\\", S_FALSE},
+    {"\\\\?\\UNC\\192.168.1.1\\a", "\\\\?\\UNC\\192.168.1.1\\a", S_FALSE}
+};
+
+static void test_PathCchRemoveExtension(void)
+{
+    WCHAR pathW[PATHCCH_MAX_CCH] = {0};
+    CHAR pathA[PATHCCH_MAX_CCH];
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchRemoveExtension)
+    {
+        win_skip("PathCchRemoveExtension() is not available.\n");
+        return;
+    }
+
+    /* Arguments check */
+    hr = pPathCchRemoveExtension(NULL, PATHCCH_MAX_CCH);
+    ok(hr == E_INVALIDARG, "expect %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchRemoveExtension(pathW, 0);
+    ok(hr == E_INVALIDARG, "expect %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchRemoveExtension(pathW, PATHCCH_MAX_CCH + 1);
+    ok(hr == E_INVALIDARG, "expect %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchRemoveExtension(pathW, PATHCCH_MAX_CCH);
+    ok(hr == S_FALSE, "expect %#x, got %#x\n", S_FALSE, hr);
+
+    /* Size < original path length + 1 */
+    MultiByteToWideChar(CP_ACP, 0, "C:\\1.exe", -1, pathW, ARRAY_SIZE(pathW));
+    hr = pPathCchRemoveExtension(pathW, ARRAY_SIZE("C:\\1.exe") - 1);
+    ok(hr == E_INVALIDARG, "expect %#x, got %#x\n", E_INVALIDARG, hr);
+
+    for (i = 0; i < ARRAY_SIZE(removeextension_tests); i++)
+    {
+        const struct removeextension_test *t = removeextension_tests + i;
+
+        MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
+        hr = pPathCchRemoveExtension(pathW, ARRAY_SIZE(pathW));
+        ok(hr == t->hr, "path %s expect result %#x, got %#x\n", t->path, t->hr, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, pathW, -1, pathA, ARRAY_SIZE(pathA), NULL, NULL);
+            ok(!lstrcmpA(pathA, t->expected), "path %s expect stripped path %s, got %s\n", t->path, t->expected, pathA);
+        }
+    }
+}
+
 START_TEST(path)
 {
     HMODULE hmod = LoadLibraryA("kernelbase.dll");
@@ -480,10 +563,12 @@ START_TEST(path)
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
+    pPathCchRemoveExtension = (void *)GetProcAddress(hmod, "PathCchRemoveExtension");
 
     test_PathCchCombineEx();
     test_PathCchAddBackslash();
     test_PathCchAddBackslashEx();
     test_PathCchAddExtension();
     test_PathCchFindExtension();
+    test_PathCchRemoveExtension();
 }
