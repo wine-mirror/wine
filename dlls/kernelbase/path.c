@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Nikolay Sivov
+ * Copyright 2018 Zhiyi Zhang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,5 +64,38 @@ HRESULT WINAPI PathCchAddBackslashEx(WCHAR *path, SIZE_T size, WCHAR **endptr, S
     if (endptr) *endptr = path + length;
     if (remaining) *remaining = size - length;
 
+    return S_OK;
+}
+
+HRESULT WINAPI PathCchFindExtension(const WCHAR *path, SIZE_T size, const WCHAR **extension)
+{
+    const WCHAR *lastpoint = NULL;
+    SIZE_T counter = 0;
+
+    TRACE("%s %lu %p\n", wine_dbgstr_w(path), size, extension);
+
+    if (!path || !size || size > PATHCCH_MAX_CCH)
+    {
+        *extension = NULL;
+        return E_INVALIDARG;
+    }
+
+    while (*path)
+    {
+        if (*path == '\\' || *path == ' ')
+            lastpoint = NULL;
+        else if (*path == '.')
+            lastpoint = path;
+
+        path++;
+        counter++;
+        if (counter == size || counter == PATHCCH_MAX_CCH)
+        {
+            *extension = NULL;
+            return E_INVALIDARG;
+        }
+    }
+
+    *extension = lastpoint ? lastpoint : path;
     return S_OK;
 }

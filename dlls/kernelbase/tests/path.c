@@ -2,6 +2,7 @@
  * Path tests for kernelbase.dll
  *
  * Copyright 2017 Michael Müller
+ * Copyright 2018 Zhiyi Zhang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +33,7 @@
 HRESULT (WINAPI *pPathCchAddBackslash)(WCHAR *out, SIZE_T size);
 HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr, SIZE_T *remaining);
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
+HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
 
 static const struct
 {
@@ -245,6 +247,124 @@ static void test_PathCchAddBackslashEx(void)
     }
 }
 
+struct findextension_test
+{
+    const CHAR *path;
+    INT extension_offset;
+};
+
+static const struct findextension_test findextension_tests[] =
+{
+    /* Normal */
+    {"1.exe", 1},
+    {"C:1.exe", 3},
+    {"C:\\1.exe", 4},
+    {"\\1.exe", 2},
+    {"\\\\1.exe", 3},
+    {"\\\\?\\C:1.exe", 7},
+    {"\\\\?\\C:\\1.exe", 8},
+    {"\\\\?\\UNC\\1.exe", 9},
+    {"\\\\?\\UNC\\192.168.1.1\\1.exe", 21},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\1.exe", 50},
+
+    /* Contains forward slash */
+    {"C:\\a/1.exe", 6},
+    {"/1.exe", 2},
+    {"//1.exe", 3},
+    {"C:\\a/b/1.exe", 8},
+    {"/a/1.exe", 4},
+    {"/a/1.exe", 4},
+
+    /* Malformed */
+    {"", 0},
+    {" ", 1},
+    {".", 0},
+    {"..", 1},
+    {"a", 1},
+    {"a.", 1},
+    {".a.b.", 4},
+    {"a. ", 3},
+    {"a.\\", 3},
+    {"\\\\?\\UNC\\192.168.1.1", 17},
+    {"\\\\?\\UNC\\192.168.1.1\\", 20},
+    {"\\\\?\\UNC\\192.168.1.1\\a", 21}
+};
+
+static void test_PathCchFindExtension(void)
+{
+    WCHAR pathW[PATHCCH_MAX_CCH + 1] = {0};
+    const WCHAR *extension;
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchFindExtension)
+    {
+        win_skip("PathCchFindExtension() is not available.\n");
+        return;
+    }
+
+    /* Arguments check */
+    extension = (const WCHAR *)0xdeadbeef;
+    hr = pPathCchFindExtension(NULL, PATHCCH_MAX_CCH, &extension);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+    ok(extension == NULL, "Expect extension null, got %p\n", extension);
+
+    extension = (const WCHAR *)0xdeadbeef;
+    hr = pPathCchFindExtension(pathW, 0, &extension);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+    ok(extension == NULL, "Expect extension null, got %p\n", extension);
+
+    /* Crashed on Windows */
+    if (0)
+    {
+        hr = pPathCchFindExtension(pathW, PATHCCH_MAX_CCH, NULL);
+        ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+    }
+
+    /* Path length check */
+    /* size == PATHCCH_MAX_CCH + 1 */
+    MultiByteToWideChar(CP_ACP, 0, "C:\\1.exe", -1, pathW, ARRAY_SIZE(pathW));
+    hr = pPathCchFindExtension(pathW, PATHCCH_MAX_CCH + 1, &extension);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    /* Size == path length + 1*/
+    hr = pPathCchFindExtension(pathW, ARRAY_SIZE("C:\\1.exe"), &extension);
+    ok(hr == S_OK, "expect result %#x, got %#x\n", S_OK, hr);
+    ok(*extension == '.', "wrong extension value\n");
+
+    /* Size < path length + 1 */
+    extension = (const WCHAR *)0xdeadbeef;
+    hr = pPathCchFindExtension(pathW, ARRAY_SIZE("C:\\1.exe") - 1, &extension);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+    ok(extension == NULL, "Expect extension null, got %p\n", extension);
+
+    /* Size == PATHCCH_MAX_CCH */
+    hr = pPathCchFindExtension(pathW, PATHCCH_MAX_CCH, &extension);
+    ok(hr == S_OK, "expect result %#x, got %#x\n", S_OK, hr);
+
+    /* Path length + 1 > PATHCCH_MAX_CCH */
+    for (i = 0; i < ARRAY_SIZE(pathW) - 1; i++) pathW[i] = 'a';
+    pathW[PATHCCH_MAX_CCH] = 0;
+    hr = pPathCchFindExtension(pathW, PATHCCH_MAX_CCH, &extension);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    /* Path length + 1 == PATHCCH_MAX_CCH */
+    pathW[PATHCCH_MAX_CCH - 1] = 0;
+    hr = pPathCchFindExtension(pathW, PATHCCH_MAX_CCH, &extension);
+    ok(hr == S_OK, "expect result %#x, got %#x\n", S_OK, hr);
+
+    for (i = 0; i < ARRAY_SIZE(findextension_tests); i++)
+    {
+        const struct findextension_test *t = findextension_tests + i;
+        MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
+        hr = pPathCchFindExtension(pathW, PATHCCH_MAX_CCH, &extension);
+        ok(hr == S_OK, "path %s expect result %#x, got %#x\n", t->path, S_OK, hr);
+        if (SUCCEEDED(hr))
+            ok(extension - pathW == t->extension_offset, "path %s expect extension offset %d, got %ld\n", t->path,
+               t->extension_offset, (UINT_PTR)(extension - pathW));
+    }
+}
+
 START_TEST(path)
 {
     HMODULE hmod = LoadLibraryA("kernelbase.dll");
@@ -252,8 +372,10 @@ START_TEST(path)
     pPathCchCombineEx = (void *)GetProcAddress(hmod, "PathCchCombineEx");
     pPathCchAddBackslash = (void *)GetProcAddress(hmod, "PathCchAddBackslash");
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
+    pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
 
     test_PathCchCombineEx();
     test_PathCchAddBackslash();
     test_PathCchAddBackslashEx();
+    test_PathCchFindExtension();
 }
