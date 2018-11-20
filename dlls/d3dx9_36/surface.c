@@ -1925,6 +1925,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
         const PALETTEENTRY *src_palette, const RECT *src_rect, DWORD filter, D3DCOLOR color_key)
 {
     IDirect3DSurface9 *surface = src_surface;
+    D3DTEXTUREFILTERTYPE d3d_filter;
     IDirect3DDevice9 *device;
     D3DSURFACE_DESC src_desc;
     D3DLOCKED_RECT lock;
@@ -1938,6 +1939,37 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
 
     if (!dst_surface || !src_surface)
         return D3DERR_INVALIDCALL;
+
+    if (!dst_palette && !src_palette && !color_key)
+    {
+        switch (filter)
+        {
+            case D3DX_FILTER_NONE:
+                d3d_filter = D3DTEXF_NONE;
+                break;
+
+            case D3DX_FILTER_POINT:
+                d3d_filter = D3DTEXF_POINT;
+                break;
+
+            case D3DX_FILTER_LINEAR:
+                d3d_filter = D3DTEXF_LINEAR;
+                break;
+
+            default:
+                d3d_filter = ~0u;
+                break;
+        }
+
+        if (d3d_filter != ~0u)
+        {
+            IDirect3DSurface9_GetDevice(src_surface, &device);
+            hr = IDirect3DDevice9_StretchRect(device, src_surface, src_rect, dst_surface, dst_rect, d3d_filter);
+            IDirect3DDevice9_Release(device);
+            if (SUCCEEDED(hr))
+                return D3D_OK;
+        }
+    }
 
     IDirect3DSurface9_GetDesc(src_surface, &src_desc);
 
