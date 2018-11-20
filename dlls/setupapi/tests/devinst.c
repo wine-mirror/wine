@@ -40,7 +40,6 @@ static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOI
 static BOOL     (WINAPI *pSetupDiCreateDeviceInterfaceA)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
-static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiGetINFClassA)(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
@@ -77,7 +76,6 @@ static void init_function_pointers(void)
     pSetupDiCreateDeviceInterfaceA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInterfaceA");
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
     pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
-    pSetupDiEnumDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInfo");
     pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
     pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
@@ -331,83 +329,71 @@ static void test_install_class(void)
     DeleteFileA(tmpfile);
 }
 
-static void testCreateDeviceInfo(void)
+static void test_device_info(void)
 {
+    static const GUID deadbeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
+    SP_DEVINFO_DATA device = {0};
     BOOL ret;
     HDEVINFO set;
+    DWORD i;
 
     SetLastError(0xdeadbeef);
-    ret = pSetupDiCreateDeviceInfoA(NULL, NULL, NULL, NULL, NULL, 0, NULL);
-    ok(!ret, "Expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME ||
-      GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
-     "Unexpected last error, got %08x\n", GetLastError());
+    ret = SetupDiCreateDeviceInfoA(NULL, NULL, NULL, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#x.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    ret = pSetupDiCreateDeviceInfoA(NULL, "Root\\LEGACY_BOGUS\\0000", NULL,
-     NULL, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
-    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %08x\n",
-     GetLastError());
-    if (set)
-    {
-        SP_DEVINFO_DATA devInfo = { 0 };
-        DWORD i;
-        static GUID deadbeef =
-         {0xdeadbeef, 0xdead, 0xbeef, {0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
+    ret = SetupDiCreateDeviceInfoA(NULL, "Root\\LEGACY_BOGUS\\0000", NULL, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
-        /* No GUID given */
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL,
-         NULL, NULL, 0, NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    set = SetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "Failed to create device info, error %#x.\n", GetLastError());
 
-        /* We can't add device information to the set with a different GUID */
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000",
-         &deadbeef, NULL, NULL, 0, NULL);
-        ok(!ret && GetLastError() == ERROR_CLASS_MISMATCH,
-         "Expected ERROR_CLASS_MISMATCH, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
 
-        /* Finally, with all three required parameters, this succeeds: */
-        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
-         NULL, NULL, 0, NULL);
-        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
-        /* This fails because the device ID already exists.. */
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
-         NULL, NULL, 0, &devInfo);
-        ok(!ret && GetLastError() == ERROR_DEVINST_ALREADY_EXISTS,
-         "Expected ERROR_DEVINST_ALREADY_EXISTS, got %08x\n", GetLastError());
-        /* whereas this "fails" because cbSize is wrong.. */
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL,
-         DICD_GENERATE_ID, &devInfo);
-        ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
-         "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
-        /* and this finally succeeds. */
-        devInfo.cbSize = sizeof(devInfo);
-        ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL,
-         DICD_GENERATE_ID, &devInfo);
-        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
-        /* There were three devices added, however - the second failure just
-         * resulted in the SP_DEVINFO_DATA not getting copied.
-         */
-        SetLastError(0xdeadbeef);
-        i = 0;
-        while (pSetupDiEnumDeviceInfo(set, i, &devInfo))
-            i++;
-        ok(i == 3, "Expected 3 devices, got %d\n", i);
-        ok(GetLastError() == ERROR_NO_MORE_ITEMS,
-         "SetupDiEnumDeviceInfo failed: %08x\n", GetLastError());
+    /* We can't add device information to the set with a different GUID */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &deadbeef, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_CLASS_MISMATCH, "Got unexpected error %#x.\n", GetLastError());
 
-        ret = pSetupDiRemoveDevice(set, &devInfo);
-        todo_wine ok(ret, "got %u\n", GetLastError());
-        pSetupDiDestroyDeviceInfoList(set);
-    }
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, NULL);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    /* This fails because the device ID already exists.. */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_DEVINST_ALREADY_EXISTS, "Got unexpected error %#x.\n", GetLastError());
+
+    /* whereas this "fails" because cbSize is wrong.. */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL, DICD_GENERATE_ID, &device);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+
+    /* and this finally succeeds. */
+    device.cbSize = sizeof(device);
+    ret = SetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL, DICD_GENERATE_ID, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    /* There were three devices added, however - the second failure just
+     * resulted in the SP_DEVINFO_DATA not getting copied. */
+    SetLastError(0xdeadbeef);
+    i = 0;
+    while (SetupDiEnumDeviceInfo(set, i, &device))
+        i++;
+    ok(i == 3, "Expected 3 devices, got %d.\n", i);
+    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiRemoveDevice(set, &device);
+todo_wine
+    ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
 }
 
 static void testGetDeviceInstanceId(void)
@@ -1457,7 +1443,7 @@ START_TEST(devinst)
         win_skip("SetupDiOpenClassRegKeyExA is not available\n");
 
     test_install_class();
-    testCreateDeviceInfo();
+    test_device_info();
     testGetDeviceInstanceId();
     testRegisterDeviceInfo();
     testCreateDeviceInterface();
