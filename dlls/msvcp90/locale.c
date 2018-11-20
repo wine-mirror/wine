@@ -10060,36 +10060,6 @@ istreambuf_iterator_char* __thiscall time_get_char_get_fmt(const time_get_char *
     return NULL;
 }
 
-/* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
-/* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
-DEFINE_THISCALL_WRAPPER(time_get_char_do_get_date, 36) /* virtual */
-#if _MSVCP_VER <= 100
-#define call_time_get_char_do_get_date(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_char*, \
-        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
-        (this, ret, s, e, base, err, t))
-#else
-#define call_time_get_char_do_get_date(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_char*, \
-        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
-        (this, ret, s, e, base, err, t))
-#endif
-istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_char *this,
-        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
-        ios_base *base, int *err, struct tm *t)
-{
-    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
-    return NULL;
-}
-
-/* ?get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
-/* ?get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
-DEFINE_THISCALL_WRAPPER(time_get_char_get_date, 36)
-istreambuf_iterator_char* __thiscall time_get_char_get_date(const time_get_char *this,
-        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
-        ios_base *base, int *err, struct tm *t)
-{
-    return call_time_get_char_do_get_date(this, ret, s, e, base, err, t);
-}
-
 static int find_longest_match(istreambuf_iterator_char *iter, const char *str)
 {
     int i, len = 0, last_match = -1, match = -1;
@@ -10308,6 +10278,149 @@ istreambuf_iterator_char* __thiscall time_get_char_get_year(const time_get_char 
         ios_base *base, int *err, struct tm *t)
 {
     return call_time_get_char_do_get_year(this, ret, s, e, base, err, t);
+}
+
+static void skip_date_delim(ctype_char *ctype, istreambuf_iterator_char *iter)
+{
+    istreambuf_iterator_char_val(iter);
+    while(iter->strbuf && ctype_char_is_ch(ctype, _SPACE, iter->val))
+        istreambuf_iterator_char_inc(iter);
+
+    if(iter->strbuf && (iter->val == '/' || iter->val == ':'))
+        istreambuf_iterator_char_inc(iter);
+
+    while(iter->strbuf && ctype_char_is_ch(ctype, _SPACE, iter->val))
+        istreambuf_iterator_char_inc(iter);
+}
+
+/* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_do_get_date, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_char_do_get_date(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_char_do_get_date(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    ctype_char *ctype;
+    dateorder order;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    ctype = ctype_char_use_facet(IOS_LOCALE(base));
+
+    order = time_get_char_date_order(this);
+    if(order == DATEORDER_no_order)
+        order = DATEORDER_mdy;
+
+    switch(order) {
+    case DATEORDER_dmy:
+        *err |= time_get_char__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        skip_date_delim(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        if(s.strbuf && ctype_char_is_ch(ctype, _DIGIT, s.val)) {
+            *err |= time_get_char__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+            t->tm_mon--;
+        } else {
+            time_get_char_get_monthname(this, &s, s, e, base, err, t);
+        }
+        skip_date_delim(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        time_get_char_get_year(this, &s, s, e, base, err, t);
+        break;
+    case DATEORDER_mdy:
+        istreambuf_iterator_char_val(&s);
+        if(s.strbuf && ctype_char_is_ch(ctype, _DIGIT, s.val)) {
+            *err |= time_get_char__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+            t->tm_mon--;
+        } else {
+            time_get_char_get_monthname(this, &s, s, e, base, err, t);
+        }
+        skip_date_delim(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        *err |= time_get_char__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        skip_date_delim(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        time_get_char_get_year(this, &s, s, e, base, err, t);
+        break;
+    case DATEORDER_ymd:
+        time_get_char_get_year(this, &s, s, e, base, err, t);
+        skip_date_delim(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        if(ctype_char_is_ch(ctype, _DIGIT, s.val)) {
+            *err |= time_get_char__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+            t->tm_mon--;
+        } else {
+            time_get_char_get_monthname(this, &s, s, e, base, err, t);
+        }
+        skip_date_delim(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        *err |= time_get_char__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        break;
+    case DATEORDER_ydm:
+        time_get_char_get_year(this, &s, s, e, base, err, t);
+        skip_date_delim(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        *err |= time_get_char__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        skip_date_delim(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        if(ctype_char_is_ch(ctype, _DIGIT, s.val)) {
+            *err |= time_get_char__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+            t->tm_mon--;
+        } else {
+            time_get_char_get_monthname(this, &s, s, e, base, err, t);
+        }
+        break;
+    default:
+        ERR("incorrect order value: %d\n", order);
+        break;
+    }
+
+    if(!s.strbuf)
+        *err |= IOSTATE_eofbit;
+    *ret = s;
+    return ret;
+}
+
+/* ?get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get_date, 36)
+istreambuf_iterator_char* __thiscall time_get_char_get_date(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_char_do_get_date(this, ret, s, e, base, err, t);
 }
 
 /* ??_7_Locimp@locale@std@@6B@ */
