@@ -10019,16 +10019,6 @@ dateorder __thiscall time_get_char_date_order(const time_get_char *this)
     return call_time_get_char_do_date_order(this);
 }
 
-/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@PEBD4@Z */
-DEFINE_THISCALL_WRAPPER(time_get_char_get_fmt, 44)
-istreambuf_iterator_char* __thiscall time_get_char_get_fmt(const time_get_char *this,
-        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
-        ios_base *base, int *err, struct tm *t, const char *fmtstart, const char *fmtend)
-{
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, base, err, t, fmtstart, fmtend);
-    return NULL;
-}
-
 static int find_longest_match(istreambuf_iterator_char *iter, const char *str)
 {
     int i, len = 0, last_match = -1, match = -1;
@@ -10588,6 +10578,54 @@ istreambuf_iterator_char* __thiscall time_get_char_get(const time_get_char *this
         ios_base *base, int *err, struct tm *t, char fmt, char mod)
 {
     return call_time_get_char_do_get(this, ret, s, e, base, err, t, fmt, mod);
+}
+
+/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@PEBD4@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get_fmt, 44)
+istreambuf_iterator_char* __thiscall time_get_char_get_fmt(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t, const char *fmtstart, const char *fmtend)
+{
+    ctype_char *ctype;
+
+    TRACE("(%p %p %p %p %p %s)\n", this, ret, base, err, t, wine_dbgstr_an(fmtstart, fmtend-fmtstart));
+
+    ctype = ctype_char_use_facet(IOS_LOCALE(base));
+    istreambuf_iterator_char_val(&s);
+
+    while(fmtstart < fmtend) {
+        if(ctype_char_is_ch(ctype, _SPACE, *fmtstart)) {
+            skip_ws(ctype, &s);
+            fmtstart++;
+            continue;
+        }
+
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+
+        if(*fmtstart != '%' || fmtstart+1 >= fmtend || fmtstart[1] == '%') {
+            if(s.val != *fmtstart)
+                *err |= IOSTATE_failbit;
+            else
+                istreambuf_iterator_char_inc(&s);
+            if(*fmtstart == '%')
+                fmtstart++;
+        } else {
+            fmtstart++;
+            time_get_char_get(this, &s, s, e, base, err, t, *fmtstart, 0);
+        }
+
+        if(*err & IOSTATE_failbit)
+            break;
+        fmtstart++;
+    }
+
+    if(!s.strbuf)
+        *err |= IOSTATE_eofbit;
+    *ret = s;
+    return ret;
 }
 
 /* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@PBD4@Z */
