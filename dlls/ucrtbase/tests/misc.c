@@ -118,6 +118,7 @@ static int (CDECL *p__ltoa_s)(LONG, char*, size_t, int);
 static char* (CDECL *p__get_narrow_winmain_command_line)(void);
 static int (CDECL *p_sopen_dispatch)(const char *, int, int, int, int *, int);
 static int (CDECL *p_sopen_s)(int *, const char *, int, int, int);
+static int (WINAPIV *p__open)(const char*, int, ...);
 static MSVCRT_lldiv_t* (CDECL *p_lldiv)(MSVCRT_lldiv_t*,LONGLONG,LONGLONG);
 static int (CDECL *p__isctype)(int,int);
 static int (CDECL *p_isblank)(int);
@@ -134,6 +135,7 @@ static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
 static int (__cdecl *p_crt_at_quick_exit)(void (__cdecl *func)(void));
 static void (__cdecl *p_quick_exit)(int exitcode);
 static int (__cdecl *p__stat32)(const char*, struct _stat32 *buf);
+static int (__cdecl *p__close)(int);
 
 static void test__initialize_onexit_table(void)
 {
@@ -476,6 +478,7 @@ static BOOL init(void)
     p__get_narrow_winmain_command_line = (void*)GetProcAddress(GetModuleHandleA("ucrtbase.dll"), "_get_narrow_winmain_command_line");
     p_sopen_dispatch = (void*)GetProcAddress(module, "_sopen_dispatch");
     p_sopen_s = (void*)GetProcAddress(module, "_sopen_s");
+    p__open = (void*)GetProcAddress(module, "_open");
     p_lldiv = (void*)GetProcAddress(module, "lldiv");
     p__isctype = (void*)GetProcAddress(module, "_isctype");
     p_isblank = (void*)GetProcAddress(module, "isblank");
@@ -492,6 +495,7 @@ static BOOL init(void)
     p_crt_at_quick_exit = (void*)GetProcAddress(module, "_crt_at_quick_exit");
     p_quick_exit = (void*)GetProcAddress(module, "quick_exit");
     p__stat32 = (void*)GetProcAddress(module, "_stat32");
+    p__close = (void*)GetProcAddress(module, "_close");
 
     return TRUE;
 }
@@ -507,7 +511,7 @@ static void test__sopen_dispatch(void)
     ret = p_sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 0);
     ok(!ret, "got %d\n", ret);
     ok(fd > 0, "got fd %d\n", fd);
-    _close(fd);
+    p__close(fd);
     unlink(tempf);
 
     p__set_invalid_parameter_handler(global_invalid_parameter_handler);
@@ -520,7 +524,7 @@ static void test__sopen_dispatch(void)
     CHECK_CALLED(global_invalid_parameter_handler);
     if (fd > 0)
     {
-        _close(fd);
+        p__close(fd);
         unlink(tempf);
     }
 
@@ -540,13 +544,13 @@ static void test__sopen_s(void)
     ret = p_sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0);
     ok(!ret, "got %d\n", ret);
     ok(fd > 0, "got fd %d\n", fd);
-    _close(fd);
+    p__close(fd);
     unlink(tempf);
 
     /* _open() does not validate pmode */
-    fd = _open(tempf, _O_CREAT, 0xff);
+    fd = p__open(tempf, _O_CREAT, 0xff);
     ok(fd > 0, "got fd %d\n", fd);
-    _close(fd);
+    p__close(fd);
     unlink(tempf);
 
     p__set_invalid_parameter_handler(global_invalid_parameter_handler);
