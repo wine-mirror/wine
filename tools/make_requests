@@ -298,6 +298,10 @@ sub GET_ERROR_NAMES()
             {
                 $errors{$1} = "0xc0010000 | $1";
             }
+            while (/\breturn\s+(WSA\w+)/g)
+            {
+                $errors{$1} = "0xc0010000 | $1";
+            }
         }
         close FILE;
     }

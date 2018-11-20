@@ -661,11 +661,10 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     int sockfd;
 
     sockfd = socket( family, type, protocol );
-    if (debug_level)
-        fprintf(stderr,"socket(%d,%d,%d)=%d\n",family,type,protocol,sockfd);
     if (sockfd == -1)
     {
-        sock_set_error();
+        if (errno == EINVAL) set_win32_error( WSAESOCKTNOSUPPORT );
+        else set_win32_error( sock_get_error( errno ));
         return NULL;
     }
     fcntl(sockfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */

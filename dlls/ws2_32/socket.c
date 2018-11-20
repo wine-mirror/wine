@@ -7619,7 +7619,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
         req->attributes = (dwFlags & WSA_FLAG_NO_HANDLE_INHERIT) ? 0 : OBJ_INHERIT;
         req->flags      = dwFlags & ~WSA_FLAG_NO_HANDLE_INHERIT;
-        set_error( wine_server_call( req ) );
+        err = NtStatusToWSAError( wine_server_call( req ) );
         ret = HANDLE2SOCKET( wine_server_ptr_handle( reply->handle ));
     }
     SERVER_END_REQ;
@@ -7655,21 +7655,12 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
        return ret;
     }
 
-    err = GetLastError();
     if (err == WSAEACCES) /* raw socket denied */
     {
         if (type == SOCK_RAW)
             ERR_(winediag)("Failed to create a socket of type SOCK_RAW, this requires special permissions.\n");
         else
             ERR_(winediag)("Failed to create socket, this requires special permissions.\n");
-    }
-    else
-    {
-        /* invalid combination of valid parameters, like SOCK_STREAM + IPPROTO_UDP */
-        if (err == WSAEINVAL)
-            err = WSAESOCKTNOSUPPORT;
-        else if (err == WSAEOPNOTSUPP)
-            err = WSAEPROTONOSUPPORT;
     }
 
 done:
