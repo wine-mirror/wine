@@ -105,6 +105,9 @@ static HMODULE module;
 static int (CDECL *p_initialize_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
 static int (CDECL *p_execute_onexit_table)(MSVCRT__onexit_table_t *table);
+static int (CDECL *p_o__initialize_onexit_table)(MSVCRT__onexit_table_t *table);
+static int (CDECL *p_o__register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
+static int (CDECL *p_o__execute_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p___fpe_flt_rounds)(void);
 static unsigned int (CDECL *p__controlfp)(unsigned int, unsigned int);
 static _invalid_parameter_handler (CDECL *p__set_invalid_parameter_handler)(_invalid_parameter_handler);
@@ -150,6 +153,15 @@ static void test__initialize_onexit_table(void)
     ret = p_initialize_onexit_table(&table2);
     ok(ret == 0, "got %d\n", ret);
     ok(table2._first == table._first, "got %p, %p\n", table2._first, table._first);
+    ok(table2._last == table._last, "got %p, %p\n", table2._last, table._last);
+    ok(table2._end == table._end, "got %p, %p\n", table2._end, table._end);
+
+    memset(&table2, 0, sizeof(table2));
+    ret = p_o__initialize_onexit_table(&table2);
+    ok(ret == 0, "got %d\n", ret);
+    ok(table2._first == table._first, "got %p, %p\n", table2._first, table._first);
+    ok(table2._last == table._last, "got %p, %p\n", table2._last, table._last);
+    ok(table2._end == table._end, "got %p, %p\n", table2._end, table._end);
 
     /* uninitialized table */
     table._first = table._last = table._end = (void*)0x123;
@@ -228,6 +240,16 @@ static void test__register_onexit_function(void)
     ret = p_register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
     ok(f != table._last, "got %p, initial %p\n", table._last, f);
+
+    f = table._last;
+    ret = p_o__register_onexit_function(&table, NULL);
+    ok(ret == 0, "got %d\n", ret);
+    ok(f != table._last, "got %p, initial %p\n", table._last, f);
+
+    f = table._last;
+    ret = p_o__register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+    ok(f != table._last, "got %p, initial %p\n", table._last, f);
 }
 
 static void test__execute_onexit_table(void)
@@ -246,7 +268,7 @@ static void test__execute_onexit_table(void)
     ret = p_execute_onexit_table(&table);
     ok(ret == 0, "got %d\n", ret);
 
-    /* same functions registered twice */
+    /* same function registered multiple times */
     ret = p_register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
 
@@ -256,11 +278,33 @@ static void test__execute_onexit_table(void)
     ret = p_register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
 
+    ret = p_o__register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+
     ok(table._first != table._end, "got %p, %p\n", table._first, table._end);
     g_onexit_called = 0;
     ret = p_execute_onexit_table(&table);
     ok(ret == 0, "got %d\n", ret);
-    ok(g_onexit_called == 2, "got %d\n", g_onexit_called);
+    ok(g_onexit_called == 3, "got %d\n", g_onexit_called);
+    ok(table._first == table._end, "got %p, %p\n", table._first, table._end);
+
+    ret = p_register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = p_register_onexit_function(&table, NULL);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = p_register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = p_o__register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+
+    ok(table._first != table._end, "got %p, %p\n", table._first, table._end);
+    g_onexit_called = 0;
+    ret = p_o__execute_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
+    ok(g_onexit_called == 3, "got %d\n", g_onexit_called);
     ok(table._first == table._end, "got %p, %p\n", table._first, table._end);
 
     /* execute again, table is already empty */
@@ -414,6 +458,9 @@ static BOOL init(void)
     p_initialize_onexit_table = (void*)GetProcAddress(module, "_initialize_onexit_table");
     p_register_onexit_function = (void*)GetProcAddress(module, "_register_onexit_function");
     p_execute_onexit_table = (void*)GetProcAddress(module, "_execute_onexit_table");
+    p_o__initialize_onexit_table = (void*)GetProcAddress(module, "_o__initialize_onexit_table");
+    p_o__register_onexit_function = (void*)GetProcAddress(module, "_o__register_onexit_function");
+    p_o__execute_onexit_table = (void*)GetProcAddress(module, "_o__execute_onexit_table");
     p___fpe_flt_rounds = (void*)GetProcAddress(module, "__fpe_flt_rounds");
     p__controlfp = (void*)GetProcAddress(module, "_controlfp");
     p__set_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_invalid_parameter_handler");

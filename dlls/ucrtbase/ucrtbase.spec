@@ -906,7 +906,7 @@
 @ stub _o__eof
 @ stub _o__errno
 @ stub _o__except1
-@ stub _o__execute_onexit_table
+@ cdecl _o__execute_onexit_table(ptr) MSVCRT__execute_onexit_table
 @ stub _o__execv
 @ stub _o__execve
 @ stub _o__execvp
@@ -1029,7 +1029,7 @@
 @ stub _o__i64tow
 @ stub _o__i64tow_s
 @ stub _o__initialize_narrow_environment
-@ stub _o__initialize_onexit_table
+@ cdecl _o__initialize_onexit_table(ptr) MSVCRT__initialize_onexit_table
 @ stub _o__initialize_wide_environment
 @ stub _o__invalid_parameter_noinfo
 @ stub _o__invalid_parameter_noinfo_noreturn
@@ -1316,7 +1316,7 @@
 @ stub _o__read
 @ stub _o__realloc_base
 @ stub _o__recalloc
-@ stub _o__register_onexit_function
+@ cdecl _o__register_onexit_function(ptr ptr) MSVCRT__register_onexit_function
 @ stub _o__resetstkoflw
 @ stub _o__rmdir
 @ stub _o__rmtmp

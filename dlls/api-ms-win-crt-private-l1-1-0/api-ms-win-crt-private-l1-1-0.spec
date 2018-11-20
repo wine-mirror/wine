@@ -226,7 +226,7 @@
 @ stub _o__eof
 @ stub _o__errno
 @ stub _o__except1
-@ stub _o__execute_onexit_table
+@ cdecl _o__execute_onexit_table(ptr) ucrtbase._o__execute_onexit_table
 @ stub _o__execv
 @ stub _o__execve
 @ stub _o__execvp
@@ -345,7 +345,7 @@
 @ stub _o__i64toa_s
 @ stub _o__i64tow
 @ stub _o__i64tow_s
-@ stub _o__initialize_onexit_table
+@ cdecl _o__initialize_onexit_table(ptr) ucrtbase._o__initialize_onexit_table
 @ stub _o__invalid_parameter_noinfo
 @ stub _o__invalid_parameter_noinfo_noreturn
 @ stub _o__isatty
@@ -630,7 +630,7 @@
 @ stub _o__read
 @ stub _o__realloc_base
 @ stub _o__recalloc
-@ stub _o__register_onexit_function
+@ cdecl _o__register_onexit_function(ptr ptr) ucrtbase._o__register_onexit_function
 @ stub _o__resetstkoflw
 @ stub _o__rmdir
 @ stub _o__rmtmp
