@@ -20,6 +20,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <assert.h>
 
 #include "windef.h"
@@ -6859,7 +6860,24 @@ static void test_long_names(void)
 
 START_TEST(font)
 {
+    static const char *test_names[] =
+    {
+        "AddFontMemResource",
+    };
+    char path_name[MAX_PATH];
+    STARTUPINFOA startup;
+    char **argv;
+    int argc, i;
+
     init();
+
+    argc = winetest_get_mainargs(&argv);
+    if (argc >= 3)
+    {
+        if (!strcmp(argv[2], "AddFontMemResource"))
+            test_AddFontMemResource();
+        return;
+    }
 
     test_stock_fonts();
     test_logfont();
@@ -6879,7 +6897,6 @@ START_TEST(font)
     test_nonexistent_font();
     test_orientation();
     test_height_selection();
-    test_AddFontMemResource();
     test_EnumFonts();
     test_EnumFonts_subst();
 
@@ -6928,4 +6945,19 @@ START_TEST(font)
      */
     test_vertical_font();
     test_CreateScalableFontResource();
+
+    winetest_get_mainargs( &argv );
+    for (i = 0; i < ARRAY_SIZE(test_names); ++i)
+    {
+        PROCESS_INFORMATION info;
+
+        memset(&startup, 0, sizeof(startup));
+        startup.cb = sizeof(startup);
+        sprintf(path_name, "%s font %s", argv[0], test_names[i]);
+        ok(CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+            "CreateProcess failed.\n");
+        winetest_wait_child_process(info.hProcess);
+        CloseHandle(info.hProcess);
+        CloseHandle(info.hThread);
+    }
 }
