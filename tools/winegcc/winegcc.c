@@ -444,15 +444,35 @@ static int check_platform( struct options *opts, const char *file )
     return ret;
 }
 
+static const char *get_multiarch_dir( enum target_cpu cpu )
+{
+   switch(cpu)
+   {
+   case CPU_x86:     return "/i386-linux-gnu";
+   case CPU_x86_64:  return "/x86_64-linux-gnu";
+   case CPU_ARM:     return "/arm-linux-gnueabi";
+   case CPU_ARM64:   return "/aarch64-linux-gnu";
+   case CPU_POWERPC: return "/powerpc-linux-gnu";
+   default:
+       assert(0);
+       return NULL;
+   }
+}
+
 static char *get_lib_dir( struct options *opts )
 {
     static const char *stdlibpath[] = { LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     static const char libwine[] = "/libwine.so";
-    const char *bit_suffix, *other_bit_suffix;
+    const char *bit_suffix, *other_bit_suffix, *build_multiarch, *target_multiarch;
     unsigned int i;
+    size_t build_len, target_len;
 
     bit_suffix = opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64 ? "64" : "32";
     other_bit_suffix = opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64 ? "32" : "64";
+    build_multiarch = get_multiarch_dir( build_cpu );
+    target_multiarch = get_multiarch_dir( opts->target_cpu );
+    build_len = strlen( build_multiarch );
+    target_len = strlen( target_multiarch );
 
     for (i = 0; i < sizeof(stdlibpath)/sizeof(stdlibpath[0]); i++)
     {
@@ -471,16 +491,7 @@ static char *get_lib_dir( struct options *opts )
         strcpy( p, bit_suffix );
         strcat( p, libwine );
         if (check_platform( opts, buffer )) goto found;
-        switch(opts->target_cpu)
-        {
-        case CPU_x86:     strcpy( p, "/i386-linux-gnu" ); break;
-        case CPU_x86_64:  strcpy( p, "/x86_64-linux-gnu" ); break;
-        case CPU_ARM:     strcpy( p, "/arm-linux-gnueabi" ); break;
-        case CPU_ARM64:   strcpy( p, "/aarch64-linux-gnu" ); break;
-        case CPU_POWERPC: strcpy( p, "/powerpc-linux-gnu" ); break;
-        default:
-            assert(0);
-        }
+        strcpy( p, target_multiarch );
         strcat( p, libwine );
         if (check_platform( opts, buffer )) goto found;
 
@@ -495,6 +506,17 @@ static char *get_lib_dir( struct options *opts )
             p--;
             while (p > buffer && *p != '/') p--;
             if (*p != '/') break;
+
+            /* try s/$build_cpu/$target_cpu/ on multiarch */
+            if (build_cpu != opts->target_cpu && !memcmp( p, build_multiarch, build_len ) && p[build_len] == '/')
+            {
+                memmove( p + target_len, p + build_len, strlen( p + build_len ) + 1 );
+                memcpy( p, target_multiarch, target_len );
+                if (check_platform( opts, buffer )) goto found;
+                memmove( p + build_len, p + target_len, strlen( p + target_len ) + 1 );
+                memcpy( p, build_multiarch, build_len );
+            }
+
             if (memcmp( p + 1, "lib", 3 )) continue;
             if (p[4] == '/')
             {
