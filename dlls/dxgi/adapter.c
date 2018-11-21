@@ -297,10 +297,44 @@ static void STDMETHODCALLTYPE dxgi_adapter_UnregisterHardwareContentProtectionTe
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryVideoMemoryInfo(IWineDXGIAdapter *iface,
         UINT node_index, DXGI_MEMORY_SEGMENT_GROUP segment_group, DXGI_QUERY_VIDEO_MEMORY_INFO *memory_info)
 {
-    FIXME("iface %p, node_index %u, segment_group %#x, memory_info %p stub!\n",
+    struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
+    struct wined3d_adapter_identifier adapter_id;
+    HRESULT hr;
+
+    FIXME("iface %p, node_index %u, segment_group %#x, memory_info %p partial stub!\n",
             iface, node_index, segment_group, memory_info);
 
-    return E_NOTIMPL;
+    if (node_index)
+        FIXME("Ignoring node index %u.\n", node_index);
+
+    adapter_id.driver_size = 0;
+    adapter_id.description_size = 0;
+    adapter_id.device_name_size = 0;
+
+    wined3d_mutex_lock();
+    hr = wined3d_get_adapter_identifier(adapter->factory->wined3d, adapter->ordinal, 0, &adapter_id);
+    wined3d_mutex_unlock();
+
+    if (FAILED(hr))
+        return hr;
+
+    switch (segment_group)
+    {
+        case DXGI_MEMORY_SEGMENT_GROUP_LOCAL:
+            memory_info->Budget = adapter_id.video_memory;
+            memory_info->CurrentUsage = 0;
+            memory_info->AvailableForReservation = adapter_id.video_memory / 2;
+            memory_info->CurrentReservation = 0;
+            break;
+        case DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL:
+            memset(memory_info, 0, sizeof(*memory_info));
+            break;
+        default:
+            WARN("Invalid memory segment group %#x.\n", segment_group);
+            return E_INVALIDARG;
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetVideoMemoryReservation(IWineDXGIAdapter *iface,
