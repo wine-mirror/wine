@@ -472,32 +472,33 @@ static HRESULT WINAPI IHlink_fnGetMiscStatus(IHlink* iface, DWORD* pdwStatus)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
-        IBindStatusCallback *pbsc, IHlinkBrowseContext *phbc)
+static HRESULT WINAPI IHlink_fnNavigate(IHlink *iface, DWORD flags, IBindCtx *user_bind_ctx,
+        IBindStatusCallback *bind_callback, IHlinkBrowseContext *browse_ctx)
 {
-    HlinkImpl  *This = impl_from_IHlink(iface);
+    HlinkImpl *This = impl_from_IHlink(iface);
     IMoniker *mon = NULL;
     HRESULT r;
 
-    FIXME("Semi-Stub:(%p)->(%i %p %p %p)\n", This, grfHLNF, pbc, pbsc, phbc);
+    TRACE("hlink %p, flags %#x, user_bind_ctx %p, bind_callback %p, browse_ctx %p.\n",
+            This, flags, user_bind_ctx, bind_callback, browse_ctx);
 
     r = __GetMoniker(This, &mon, HLINKGETREF_ABSOLUTE);
     TRACE("Moniker %p\n", mon);
 
     if (SUCCEEDED(r))
     {
-        IBindCtx *bcxt = NULL;
+        IBindCtx *bind_ctx = NULL;
         IUnknown *unk = NULL;
         IHlinkTarget *target;
 
-        if (phbc)
+        if (browse_ctx)
         {
-            r = IHlinkBrowseContext_GetObject(phbc, mon, TRUE, &unk);
+            r = IHlinkBrowseContext_GetObject(browse_ctx, mon, TRUE, &unk);
             if (r != S_OK)
             {
-                CreateBindCtx(0, &bcxt);
-                RegisterBindStatusCallback(bcxt, pbsc, NULL, 0);
-                r = IMoniker_BindToObject(mon, bcxt, NULL, &IID_IUnknown, (void**)&unk);
+                CreateBindCtx(0, &bind_ctx);
+                RegisterBindStatusCallback(bind_ctx, bind_callback, NULL, 0);
+                r = IMoniker_BindToObject(mon, bind_ctx, NULL, &IID_IUnknown, (void**)&unk);
             }
             if (r == S_OK)
             {
@@ -506,13 +507,13 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
             }
             if (r == S_OK)
             {
-                if (bcxt) IHlinkTarget_SetBrowseContext(target, phbc);
-                r = IHlinkTarget_Navigate(target, grfHLNF, This->Location);
+                if (bind_ctx) IHlinkTarget_SetBrowseContext(target, browse_ctx);
+                r = IHlinkTarget_Navigate(target, flags, This->Location);
                 IHlinkTarget_Release(target);
             }
 
-            RevokeBindStatusCallback(bcxt, pbsc);
-            if (bcxt) IBindCtx_Release(bcxt);
+            RevokeBindStatusCallback(bind_ctx, bind_callback);
+            if (bind_ctx) IBindCtx_Release(bind_ctx);
         }
         else
         {
