@@ -60,7 +60,7 @@ static BOOL  (WINAPI *pRemoveFontMemResourceEx)(HANDLE);
 static INT   (WINAPI *pAddFontResourceExA)(LPCSTR, DWORD, PVOID);
 static BOOL  (WINAPI *pRemoveFontResourceExA)(LPCSTR, DWORD, PVOID);
 static BOOL  (WINAPI *pGetFontRealizationInfo)(HDC hdc, DWORD *);
-static BOOL  (WINAPI *pGetFontFileInfo)(DWORD, DWORD, void *, DWORD, DWORD *);
+static BOOL  (WINAPI *pGetFontFileInfo)(DWORD, DWORD, void *, SIZE_T, SIZE_T *);
 static BOOL  (WINAPI *pGetFontFileData)(DWORD, DWORD, ULONGLONG, void *, DWORD);
 
 static HMODULE hgdi32 = 0;
@@ -4255,18 +4255,26 @@ todo_wine
     DeleteDC(hdc);
 }
 
+struct font_realization_info
+{
+    DWORD size;
+    DWORD flags;
+    DWORD cache_num;
+    DWORD instance_id;
+    DWORD unk;
+    WORD  face_index;
+    WORD  simulations;
+};
+
+struct file_info
+{
+    FILETIME time;
+    LARGE_INTEGER size;
+    WCHAR path[MAX_PATH];
+};
+
 static void test_RealizationInfo(void)
 {
-    struct font_realization_info {
-        DWORD size;
-        DWORD flags;
-        DWORD cache_num;
-        DWORD instance_id;
-        DWORD unk;
-        WORD  face_index;
-        WORD  simulations;
-    };
-
     struct realization_info_t
     {
         DWORD flags;
@@ -4274,22 +4282,17 @@ static void test_RealizationInfo(void)
         DWORD instance_id;
     };
 
+    struct file_info file_info;
     HDC hdc;
-    DWORD info[4], info2[10];
-    BOOL r, have_file = FALSE;
+    DWORD info[4], info2[32], read;
     HFONT hfont, hfont_old;
+    SIZE_T needed;
     LOGFONTA lf;
-    DWORD needed, read;
     HANDLE h;
     BYTE file[16], data[14];
-    struct file_info
-    {
-        FILETIME time;
-        LARGE_INTEGER size;
-        WCHAR path[MAX_PATH];
-    } file_info;
     FILETIME time;
     LARGE_INTEGER size;
+    BOOL r;
 
     if(!pGdiRealizationInfo)
     {
@@ -4375,11 +4378,11 @@ static void test_RealizationInfo(void)
 
         needed = 0;
         r = pGetFontFileInfo(fri->instance_id, 0, &file_info, sizeof(file_info), &needed);
-        ok(r != 0 || GetLastError() == ERROR_NOACCESS, "ret %d gle %d\n", r, GetLastError());
+        ok(r != 0, "Failed to get font file info, error %d.\n", GetLastError());
 
         if (r)
         {
-            ok(needed > 0 && needed < sizeof(file_info), "got needed size %u\n", needed);
+            ok(needed > 0 && needed < sizeof(file_info), "Unexpected required size.\n");
 
             h = CreateFileW(file_info.path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
             ok(h != INVALID_HANDLE_VALUE, "Unable to open file %d\n", GetLastError());
@@ -4392,7 +4395,6 @@ static void test_RealizationInfo(void)
             /* Read first 16 bytes from the file */
             ReadFile(h, file, sizeof(file), &read, NULL);
             CloseHandle(h);
-            have_file = TRUE;
 
             /* shorter buffer */
             SetLastError(0xdeadbeef);
@@ -4405,10 +4407,7 @@ static void test_RealizationInfo(void)
         r = pGetFontFileData(fri->instance_id, 0, 2, data, sizeof(data));
         ok(r != 0, "ret 0 gle %d\n", GetLastError());
 
-        if (have_file)
-            ok(!memcmp(data, file + 2, sizeof(data)), "mismatch\n");
-        else
-            win_skip("GetFontFileInfo() failed, skipping\n");
+        ok(!memcmp(data, file + 2, sizeof(data)), "mismatch\n");
     }
     }
 
@@ -5050,9 +5049,14 @@ static void *load_font(const char *font_name, DWORD *font_size)
     HANDLE file, mapping;
     void *font;
 
-    if (!GetWindowsDirectoryA(file_name, sizeof(file_name))) return NULL;
-    strcat(file_name, "\\fonts\\");
-    strcat(file_name, font_name);
+    if (font_name[1] == ':')
+        strcpy(file_name, font_name);
+    else
+    {
+        if (!GetWindowsDirectoryA(file_name, sizeof(file_name))) return NULL;
+        strcat(file_name, "\\fonts\\");
+        strcat(file_name, font_name);
+    }
 
     file = CreateFileA(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
     if (file == INVALID_HANDLE_VALUE) return NULL;
@@ -5073,8 +5077,120 @@ static void *load_font(const char *font_name, DWORD *font_size)
     return font;
 }
 
+static void test_realization_info(const char *name, DWORD size, BOOL is_memory_resource)
+{
+    struct font_realization_info info;
+    struct file_info file_info;
+    HFONT hfont, hfont_prev;
+    SIZE_T needed;
+    LOGFONTA lf;
+    BYTE *data;
+    BOOL ret;
+    HDC hdc;
+
+    if (!pGetFontRealizationInfo)
+        return;
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = 72;
+    strcpy(lf.lfFaceName, name);
+
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "Failed to create a font, %u.\n", GetLastError());
+
+    hdc = GetDC(NULL);
+
+    hfont_prev = SelectObject(hdc, hfont);
+    ok(hfont_prev != NULL, "Failed to select font.\n");
+
+    memset(&info, 0xcc, sizeof(info));
+    info.size = sizeof(info);
+    ret = pGetFontRealizationInfo(hdc, (DWORD *)&info);
+    ok(ret != 0, "Unexpected return value %d.\n", ret);
+
+    ok((info.flags & 0xf) == 0x3, "Unexpected flags %#x.\n", info.flags);
+    ok(info.cache_num != 0, "Unexpected cache num %u.\n", info.cache_num);
+    ok(info.instance_id != 0, "Unexpected instance id %u.\n", info.instance_id);
+    ok(info.simulations == 0, "Unexpected simulations %#x.\n", info.simulations);
+    ok(info.face_index == 0, "Unexpected face index %u.\n", info.face_index);
+
+    ret = pGetFontFileInfo(info.instance_id, 0, NULL, 0, NULL);
+    ok(ret == 0 && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected return value %d, error %d.\n",
+        ret, GetLastError());
+
+    needed = 0;
+    ret = pGetFontFileInfo(info.instance_id, 0, NULL, 0, &needed);
+    ok(ret == 0 && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected return value %d, error %d.\n",
+        ret, GetLastError());
+
+    ret = pGetFontFileInfo(info.instance_id, 0, &file_info, 0, NULL);
+    ok(ret == 0 && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected return value %d, error %d.\n",
+        ret, GetLastError());
+
+    ret = pGetFontFileInfo(info.instance_id, 0, &file_info, needed - 1, NULL);
+    ok(ret == 0 && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected return value %d, error %d.\n",
+        ret, GetLastError());
+
+    ret = pGetFontFileInfo(info.instance_id, 0, &file_info, needed, NULL);
+    ok(ret != 0, "Failed to get font file info, ret %d gle %d.\n", ret, GetLastError());
+
+    memset(&file_info, 0xcc, sizeof(file_info));
+    ret = pGetFontFileInfo(info.instance_id, 0, &file_info, sizeof(file_info), NULL);
+    ok(ret != 0, "Failed to get font file info, ret %d gle %d.\n", ret, GetLastError());
+    if (ret)
+    {
+    todo_wine_if(is_memory_resource)
+        ok(is_memory_resource ? file_info.size.QuadPart == size : file_info.size.QuadPart > 0, "Unexpected file size.\n");
+        ok(is_memory_resource ? !file_info.path[0] : file_info.path[0], "Unexpected file path %s.\n",
+            wine_dbgstr_w(file_info.path));
+    }
+
+if (pGetFontFileData)
+{
+    size = file_info.size.LowPart;
+    data = HeapAlloc(GetProcessHeap(), 0, size + 16);
+
+    memset(data, 0xcc, size);
+    ret = pGetFontFileData(info.instance_id, 0, 0, data, size);
+    ok(ret != 0, "Failed to get font file data, %d\n", GetLastError());
+    ok(*(DWORD *)data == 0x00000100, "Unexpected sfnt header version %#x.\n", *(DWORD *)data);
+    ok(*(WORD *)(data + 4) == 0x0e00, "Unexpected table count %#x.\n", *(WORD *)(data + 4));
+
+    /* Larger than font data size. */
+    memset(data, 0xcc, size);
+    ret = pGetFontFileData(info.instance_id, 0, 0, data, size + 16);
+    ok(ret == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected return value %d, error %d\n",
+        ret, GetLastError());
+    ok(*(DWORD *)data == 0xcccccccc, "Unexpected buffer contents %#x.\n", *(DWORD *)data);
+
+    /* With offset. */
+    memset(data, 0xcc, size);
+    ret = pGetFontFileData(info.instance_id, 0, 16, data, size - 16);
+    ok(ret != 0, "Failed to get font file data, %d\n", GetLastError());
+    ok(*(DWORD *)data == 0x1000000, "Unexpected buffer contents %#x.\n", *(DWORD *)data);
+
+    memset(data, 0xcc, size);
+    ret = pGetFontFileData(info.instance_id, 0, 16, data, size);
+    ok(ret == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected return value %d, error %d\n",
+        ret, GetLastError());
+    ok(*(DWORD *)data == 0xcccccccc, "Unexpected buffer contents %#x.\n", *(DWORD *)data);
+
+    /* Zero buffer size. */
+    memset(data, 0xcc, size);
+    ret = pGetFontFileData(info.instance_id, 0, 16, data, 0);
+    ok(ret == 0 && GetLastError() == ERROR_NOACCESS, "Unexpected return value %d, error %d\n", ret, GetLastError());
+    ok(*(DWORD *)data == 0xcccccccc, "Unexpected buffer contents %#x.\n", *(DWORD *)data);
+
+    HeapFree(GetProcessHeap(), 0, data);
+}
+    SelectObject(hdc, hfont_prev);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+}
+
 static void test_AddFontMemResource(void)
 {
+    char ttf_name[MAX_PATH];
     void *font;
     DWORD font_size, num_fonts;
     HANDLE ret;
@@ -5083,13 +5199,6 @@ static void test_AddFontMemResource(void)
     if (!pAddFontMemResourceEx || !pRemoveFontMemResourceEx)
     {
         win_skip("AddFontMemResourceEx is not available on this platform\n");
-        return;
-    }
-
-    font = load_font("sserife.fon", &font_size);
-    if (!font)
-    {
-        skip("Unable to locate and load font sserife.fon\n");
         return;
     }
 
@@ -5120,6 +5229,42 @@ static void test_AddFontMemResource(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
        GetLastError());
+
+    /* Now with scalable font */
+    bRet = write_ttf_file("wine_test.ttf", ttf_name);
+    ok(bRet, "Failed to create test font file.\n");
+
+    font = load_font(ttf_name, &font_size);
+    ok(font != NULL, "Failed to map font file.\n");
+
+    bRet = is_truetype_font_installed("wine_test");
+    ok(!bRet, "Font wine_test should not be enumerated.\n");
+
+    num_fonts = 0;
+    ret = pAddFontMemResourceEx(font, font_size, NULL, &num_fonts);
+    ok(ret != 0, "Failed to add resource, %d.\n", GetLastError());
+    ok(num_fonts == 1, "Unexpected number of fonts %u.\n", num_fonts);
+
+    bRet = is_truetype_font_installed("wine_test");
+todo_wine
+    ok(!bRet, "Font wine_test should not be enumerated.\n");
+
+    test_realization_info("wine_test", font_size, TRUE);
+
+    bRet = pRemoveFontMemResourceEx(ret);
+    ok(bRet, "RemoveFontMemResourceEx error %d\n", GetLastError());
+
+    free_font(font);
+
+    bRet = DeleteFileA(ttf_name);
+    ok(bRet, "Failed to delete font file, %d.\n", GetLastError());
+
+    font = load_font("sserife.fon", &font_size);
+    if (!font)
+    {
+        skip("Unable to locate and load font sserife.fon\n");
+        return;
+    }
 
     SetLastError(0xdeadbeef);
     ret = pAddFontMemResourceEx(font, 0, NULL, NULL);

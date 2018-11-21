@@ -8576,9 +8576,10 @@ static BOOL freetype_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
 /*************************************************************************
  *             GetFontFileInfo   (GDI32.@)
  */
-BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info, DWORD size, DWORD *needed )
+BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info, SIZE_T size, SIZE_T *needed )
 {
     struct font_handle_entry *entry = handle_entry( instance_id );
+    SIZE_T required_size;
     const GdiFont *font;
 
     if (!entry)
@@ -8586,6 +8587,9 @@ BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_filei
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+
+    if (!needed)
+        needed = &required_size;
 
     font = entry->obj;
     *needed = sizeof(*info) + strlenW(font->fileinfo->path) * sizeof(WCHAR);
