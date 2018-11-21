@@ -61,7 +61,7 @@ static INT   (WINAPI *pAddFontResourceExA)(LPCSTR, DWORD, PVOID);
 static BOOL  (WINAPI *pRemoveFontResourceExA)(LPCSTR, DWORD, PVOID);
 static BOOL  (WINAPI *pGetFontRealizationInfo)(HDC hdc, DWORD *);
 static BOOL  (WINAPI *pGetFontFileInfo)(DWORD, DWORD, void *, SIZE_T, SIZE_T *);
-static BOOL  (WINAPI *pGetFontFileData)(DWORD, DWORD, ULONGLONG, void *, DWORD);
+static BOOL  (WINAPI *pGetFontFileData)(DWORD, DWORD, UINT64, void *, DWORD);
 
 static HMODULE hgdi32 = 0;
 static const MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
@@ -4402,13 +4402,11 @@ static void test_RealizationInfo(void)
             ok(r == 0 && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "ret %d gle %d\n", r, GetLastError());
         }
 
-    if (pGetFontFileData) {
         /* Get bytes 2 - 16 using GetFontFileData */
         r = pGetFontFileData(fri->instance_id, 0, 2, data, sizeof(data));
         ok(r != 0, "ret 0 gle %d\n", GetLastError());
 
         ok(!memcmp(data, file + 2, sizeof(data)), "mismatch\n");
-    }
     }
 
     DeleteObject(SelectObject(hdc, hfont_old));
@@ -5144,8 +5142,6 @@ static void test_realization_info(const char *name, DWORD size, BOOL is_memory_r
             wine_dbgstr_w(file_info.path));
     }
 
-if (pGetFontFileData)
-{
     size = file_info.size.LowPart;
     data = HeapAlloc(GetProcessHeap(), 0, size + 16);
 
@@ -5177,11 +5173,12 @@ if (pGetFontFileData)
     /* Zero buffer size. */
     memset(data, 0xcc, size);
     ret = pGetFontFileData(info.instance_id, 0, 16, data, 0);
+todo_wine
     ok(ret == 0 && GetLastError() == ERROR_NOACCESS, "Unexpected return value %d, error %d\n", ret, GetLastError());
     ok(*(DWORD *)data == 0xcccccccc, "Unexpected buffer contents %#x.\n", *(DWORD *)data);
 
     HeapFree(GetProcessHeap(), 0, data);
-}
+
     SelectObject(hdc, hfont_prev);
     DeleteObject(hfont);
     ReleaseDC(NULL, hdc);
