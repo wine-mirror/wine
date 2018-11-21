@@ -1854,10 +1854,9 @@ INT WINAPI DECLSPEC_HOTPATCH SetScrollPos( HWND hwnd, INT nBar, INT nPos, BOOL b
 {
     SCROLLINFO info;
     SCROLLBAR_INFO *infoPtr;
-    INT oldPos;
+    INT oldPos = 0;
 
-    if (!(infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE ))) return 0;
-    oldPos      = infoPtr->curVal;
+    if ((infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE ))) oldPos = infoPtr->curVal;
     info.cbSize = sizeof(info);
     info.nPos   = nPos;
     info.fMask  = SIF_POS;
