@@ -47,7 +47,6 @@ static HKEY     (WINAPI *pSetupDiOpenDevRegKey)(HDEVINFO, PSP_DEVINFO_DATA, DWOR
 static HKEY     (WINAPI *pSetupDiCreateDevRegKeyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCWSTR);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoW)(HDEVINFO, PCWSTR, GUID *, PCWSTR, HWND, DWORD, PSP_DEVINFO_DATA);
-static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailA)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailW)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_W, DWORD, PDWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiRegisterDeviceInfo)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
@@ -77,7 +76,6 @@ static void init_function_pointers(void)
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
     pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
     pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
-    pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
     pSetupDiGetDeviceInterfaceDetailW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailW");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
@@ -473,71 +471,68 @@ todo_wine {
     SetupDiDestroyDeviceInfoList(set);
 }
 
-static void testGetDeviceInstanceId(void)
+static void test_get_device_instance_id(void)
 {
     BOOL ret;
     HDEVINFO set;
-    SP_DEVINFO_DATA devInfo = { 0 };
+    SP_DEVINFO_DATA device = {0};
+    char id[200];
+    DWORD size;
 
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceInstanceIdA(NULL, NULL, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
+    ret = SetupDiGetDeviceInstanceIdA(NULL, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceInstanceIdA(NULL, &devInfo, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
-    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %08x\n",
-     GetLastError());
-    if (set)
-    {
-        char instanceID[MAX_PATH];
-        DWORD size;
+    ret = SetupDiGetDeviceInstanceIdA(NULL, &device, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInstanceIdA(set, NULL, NULL, 0, NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-        devInfo.cbSize = sizeof(devInfo);
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
-         NULL, NULL, 0, &devInfo);
-        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, NULL, 0, &size);
-        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-         "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
-        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, instanceID,
-         sizeof(instanceID), NULL);
-        ok(ret, "SetupDiGetDeviceInstanceIdA failed: %08x\n", GetLastError());
-        ok(!lstrcmpA(instanceID, "ROOT\\LEGACY_BOGUS\\0000"),
-         "Unexpected instance ID %s\n", instanceID);
-        ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid,
-         NULL, NULL, DICD_GENERATE_ID, &devInfo);
-        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
-        ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, instanceID,
-         sizeof(instanceID), NULL);
-        ok(ret, "SetupDiGetDeviceInstanceIdA failed: %08x\n", GetLastError());
-        /* NT4 returns 'Root' and W2K and above 'ROOT' */
-        ok(!lstrcmpiA(instanceID, "ROOT\\LEGACY_BOGUS\\0001"),
-         "Unexpected instance ID %s\n", instanceID);
+    set = SetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
 
-        ret = pSetupDiRemoveDevice(set, &devInfo);
-        todo_wine ok(ret, "got %u\n", GetLastError());
-        pSetupDiDestroyDeviceInfoList(set);
-    }
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInstanceIdA(set, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, NULL, 0, &size);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    device.cbSize = sizeof(device);
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, NULL, 0, &size);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, NULL, 0, &size);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, id, sizeof(id), NULL);
+    ok(ret, "Failed to get device id, error %#x.\n", GetLastError());
+    ok(!strcmp(id, "ROOT\\LEGACY_BOGUS\\0000"), "Got unexpected id %s.\n", id);
+
+    ret = SetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL, DICD_GENERATE_ID, &device);
+    ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, id, sizeof(id), NULL);
+    ok(ret, "Failed to get device id, error %#x.\n", GetLastError());
+    ok(!strcmp(id, "ROOT\\LEGACY_BOGUS\\0001"), "Got unexpected id %s.\n", id);
+
+    SetupDiDestroyDeviceInfoList(set);
 }
 
 static void testRegisterDeviceInfo(void)
@@ -1521,7 +1516,7 @@ START_TEST(devinst)
 
     test_install_class();
     test_device_info();
-    testGetDeviceInstanceId();
+    test_get_device_instance_id();
     testRegisterDeviceInfo();
     testCreateDeviceInterface();
     testGetDeviceInterfaceDetail();
