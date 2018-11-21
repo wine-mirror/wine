@@ -4796,6 +4796,66 @@ static void test_timestamp_query(void)
     release_test_context(&test_context);
 }
 
+static void test_so_statistics_query(void)
+{
+    struct d3d10core_test_context test_context;
+    D3D10_QUERY_DATA_SO_STATISTICS data;
+    D3D10_QUERY_DESC query_desc;
+    ID3D10Asynchronous *query;
+    unsigned int data_size;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    query_desc.Query = D3D10_QUERY_SO_STATISTICS;
+    query_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateQuery(device, &query_desc, (ID3D10Query **)&query);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    if (FAILED(hr)) goto done;
+    data_size = ID3D10Asynchronous_GetDataSize(query);
+    ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
+
+    hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Asynchronous_End(query);
+    ID3D10Asynchronous_Begin(query);
+    ID3D10Asynchronous_Begin(query);
+
+    hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    draw_quad(&test_context);
+
+    ID3D10Asynchronous_End(query);
+    get_query_data(query, &data, sizeof(data));
+    ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
+            (unsigned int)data.NumPrimitivesWritten);
+    ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
+            (unsigned int)data.PrimitivesStorageNeeded);
+
+    ID3D10Asynchronous_Begin(query);
+    draw_quad(&test_context);
+    ID3D10Asynchronous_End(query);
+    get_query_data(query, &data, sizeof(data));
+    ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
+            (unsigned int)data.NumPrimitivesWritten);
+    ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
+            (unsigned int)data.PrimitivesStorageNeeded);
+
+    ID3D10Asynchronous_Release(query);
+done:
+    release_test_context(&test_context);
+}
+
 static void test_device_removed_reason(void)
 {
     ID3D10Device *device;
@@ -17627,6 +17687,7 @@ START_TEST(d3d10core)
     queue_test(test_occlusion_query);
     queue_test(test_pipeline_statistics_query);
     queue_test(test_timestamp_query);
+    queue_test(test_so_statistics_query);
     queue_test(test_device_removed_reason);
     queue_test(test_scissor);
     queue_test(test_clear_state);
