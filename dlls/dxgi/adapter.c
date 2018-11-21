@@ -178,7 +178,7 @@ static HRESULT dxgi_adapter_get_desc(struct dxgi_adapter *adapter, DXGI_ADAPTER_
     desc->Revision = adapter_id.revision;
     desc->DedicatedVideoMemory = adapter_id.video_memory;
     desc->DedicatedSystemMemory = 0; /* FIXME */
-    desc->SharedSystemMemory = 0; /* FIXME */
+    desc->SharedSystemMemory = adapter_id.shared_system_memory;
     desc->AdapterLuid = adapter_id.adapter_luid;
     desc->Flags = 0;
     desc->GraphicsPreemptionGranularity = 0; /* FIXME */
