@@ -820,6 +820,57 @@ static void test_adapter_luid(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static void test_query_video_memory_info(void)
+{
+    DXGI_QUERY_VIDEO_MEMORY_INFO memory_info;
+    IDXGIAdapter3 *adapter3;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device(0)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
+    hr = IDXGIAdapter_QueryInterface(adapter, &IID_IDXGIAdapter3, (void **)&adapter3);
+    ok(hr == S_OK || hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+    if (hr == E_NOINTERFACE)
+        goto done;
+
+    hr = IDXGIAdapter3_QueryVideoMemoryInfo(adapter3, 0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memory_info);
+    ok(hr == S_OK, "Failed to query video memory info, hr %#x.\n", hr);
+    ok(memory_info.Budget >= memory_info.AvailableForReservation,
+            "Available for reservation 0x%s is greater than budget 0x%s.\n",
+            wine_dbgstr_longlong(memory_info.AvailableForReservation),
+            wine_dbgstr_longlong(memory_info.Budget));
+    ok(!memory_info.CurrentReservation, "Got unexpected current reservation 0x%s.\n",
+            wine_dbgstr_longlong(memory_info.CurrentReservation));
+
+    hr = IDXGIAdapter3_QueryVideoMemoryInfo(adapter3, 0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &memory_info);
+    ok(hr == S_OK, "Failed to query video memory info, hr %#x.\n", hr);
+    ok(memory_info.Budget >= memory_info.AvailableForReservation,
+            "Available for reservation 0x%s is greater than budget 0x%s.\n",
+            wine_dbgstr_longlong(memory_info.AvailableForReservation),
+            wine_dbgstr_longlong(memory_info.Budget));
+    ok(!memory_info.CurrentReservation, "Got unexpected current reservation 0x%s.\n",
+            wine_dbgstr_longlong(memory_info.CurrentReservation));
+
+    hr = IDXGIAdapter3_QueryVideoMemoryInfo(adapter3, 0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL + 1, &memory_info);
+    ok(hr == E_INVALIDARG, "Failed to query video memory info, hr %#x.\n", hr);
+
+    IDXGIAdapter3_Release(adapter3);
+
+done:
+    IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_check_interface_support(void)
 {
     LARGE_INTEGER driver_version;
@@ -4694,6 +4745,7 @@ START_TEST(dxgi)
 
     queue_test(test_adapter_desc);
     queue_test(test_adapter_luid);
+    queue_test(test_query_video_memory_info);
     queue_test(test_check_interface_support);
     queue_test(test_create_surface);
     queue_test(test_parents);
