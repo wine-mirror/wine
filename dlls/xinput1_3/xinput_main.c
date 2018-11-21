@@ -71,7 +71,7 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
     }
 }
 
-DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
+DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
 {
     TRACE("(index %u, vibration %p)\n", index, vibration);
 
@@ -126,7 +126,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE* state
     return xinput_get_state(index, state);
 }
 
-DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)
+DWORD WINAPI DECLSPEC_HOTPATCH XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)
 {
     static int warn_once;
 
@@ -141,7 +141,7 @@ DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE k
     return ERROR_NOT_SUPPORTED;
 }
 
-DWORD WINAPI XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES* capabilities)
+DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES* capabilities)
 {
     TRACE("(index %u, flags 0x%x, capabilities %p)\n", index, flags, capabilities);
 
@@ -159,7 +159,7 @@ DWORD WINAPI XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES
     return ERROR_SUCCESS;
 }
 
-DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD index, GUID* render_guid, GUID* capture_guid)
+DWORD WINAPI DECLSPEC_HOTPATCH XInputGetDSoundAudioDeviceGuids(DWORD index, GUID* render_guid, GUID* capture_guid)
 {
     FIXME("(index %u, render guid %p, capture guid %p) Stub!\n", index, render_guid, capture_guid);
 
@@ -171,7 +171,7 @@ DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD index, GUID* render_guid, GUI
     return ERROR_NOT_SUPPORTED;
 }
 
-DWORD WINAPI XInputGetBatteryInformation(DWORD index, BYTE type, XINPUT_BATTERY_INFORMATION* battery)
+DWORD WINAPI DECLSPEC_HOTPATCH XInputGetBatteryInformation(DWORD index, BYTE type, XINPUT_BATTERY_INFORMATION* battery)
 {
     static int once;
 
