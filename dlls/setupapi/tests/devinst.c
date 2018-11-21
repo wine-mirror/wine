@@ -535,52 +535,52 @@ static void test_get_device_instance_id(void)
     SetupDiDestroyDeviceInfoList(set);
 }
 
-static void testRegisterDeviceInfo(void)
+static void test_register_device_info(void)
 {
     static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
      'E','n','u','m','\\','U','S','B','\\','B','O','G','U','S',0};
+    SP_DEVINFO_DATA device = {0};
     BOOL ret;
     HDEVINFO set;
 
     SetLastError(0xdeadbeef);
-    ret = pSetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
-    if (set)
-    {
-        SP_DEVINFO_DATA devInfo = { 0 };
+    ret = SetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiRegisterDeviceInfo(set, NULL, 0, NULL, NULL, NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-        devInfo.cbSize = sizeof(devInfo);
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    set = SetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
 
-        ret = pSetupDiCreateDeviceInfoA(set, "USB\\BOGUS\\0000", &guid,
-         NULL, NULL, 0, &devInfo);
-        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = SetupDiRegisterDeviceInfo(set, NULL, 0, NULL, NULL, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
 
-        ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
-        ok(ret, "SetupDiRegisterDeviceInfo failed: %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
 
-        ret = pSetupDiRemoveDevice(set, &devInfo);
-        todo_wine ok(ret, "got %u\n", GetLastError());
-        pSetupDiDestroyDeviceInfoList(set);
+    device.cbSize = sizeof(device);
+    SetLastError(0xdeadbeef);
+    ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
 
-        /* remove once Wine is fixed */
-        devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
-    }
+    ret = SetupDiCreateDeviceInfoA(set, "USB\\BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
+    ok(ret, "Failed to register device, error %#x.\n", GetLastError());
+
+    ret = SetupDiRemoveDevice(set, &device);
+todo_wine
+    ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
+
+    /* remove once Wine is fixed */
+    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
 }
 
 static void testCreateDeviceInterface(void)
@@ -1517,7 +1517,7 @@ START_TEST(devinst)
     test_install_class();
     test_device_info();
     test_get_device_instance_id();
-    testRegisterDeviceInfo();
+    test_register_device_info();
     testCreateDeviceInterface();
     testGetDeviceInterfaceDetail();
     testDevRegKey();
