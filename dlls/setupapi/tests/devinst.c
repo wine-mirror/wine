@@ -539,10 +539,11 @@ static void test_register_device_info(void)
 {
     static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-     'E','n','u','m','\\','U','S','B','\\','B','O','G','U','S',0};
+     'E','n','u','m','\\','R','o','o','t','\\','L','E','G','A','C','Y','_','B','O','G','U','S',0};
     SP_DEVINFO_DATA device = {0};
     BOOL ret;
     HDEVINFO set;
+    char id[30];
 
     SetLastError(0xdeadbeef);
     ret = SetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
@@ -568,15 +569,34 @@ static void test_register_device_info(void)
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
 
-    ret = SetupDiCreateDeviceInfoA(set, "USB\\BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
     ok(ret, "Failed to create device, error %#x.\n", GetLastError());
 
     ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
     ok(ret, "Failed to register device, error %#x.\n", GetLastError());
 
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0001", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiGetClassDevsA(&guid, NULL, NULL, 0);
+    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+
+    ret = SetupDiEnumDeviceInfo(set, 0, &device);
+    ok(ret, "Failed to enumerate devices, error %#x.\n", GetLastError());
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, id, sizeof(id), NULL);
+    ok(ret, "Failed to get device id, error %#x.\n", GetLastError());
+    ok(!strcasecmp(id, "Root\\LEGACY_BOGUS\\0000"), "Got unexpected id %s.\n", id);
+
     ret = SetupDiRemoveDevice(set, &device);
 todo_wine
     ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
+
+    ret = SetupDiEnumDeviceInfo(set, 1, &device);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "Got unexpected error %#x.\n", GetLastError());
+
     SetupDiDestroyDeviceInfoList(set);
 
     /* remove once Wine is fixed */
