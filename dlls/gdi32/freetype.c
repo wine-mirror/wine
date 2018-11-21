@@ -5335,6 +5335,7 @@ static void fill_fileinfo_from_face( GdiFont *font, Face *face )
     if (!face->file)
     {
         font->fileinfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font->fileinfo));
+        font->fileinfo->size.QuadPart = face->font_data_size;
         return;
     }
 

@@ -5139,7 +5139,6 @@ static void test_realization_info(const char *name, DWORD size, BOOL is_memory_r
     ok(ret != 0, "Failed to get font file info, ret %d gle %d.\n", ret, GetLastError());
     if (ret)
     {
-    todo_wine_if(is_memory_resource)
         ok(is_memory_resource ? file_info.size.QuadPart == size : file_info.size.QuadPart > 0, "Unexpected file size.\n");
         ok(is_memory_resource ? !file_info.path[0] : file_info.path[0], "Unexpected file path %s.\n",
             wine_dbgstr_w(file_info.path));
