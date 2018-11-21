@@ -9163,16 +9163,14 @@ static void test_resource_access(void)
 
         hr = IDirect3DDevice8_CreateVertexBuffer(device, 16, tests[i].usage,
                 tests[i].format == FORMAT_COLOUR ? 0 : D3DFVF_XYZRHW, tests[i].pool, &vb);
-        todo_wine_if(tests[i].pool != D3DPOOL_SCRATCH && tests[i].usage & ~D3DUSAGE_DYNAMIC)
-            ok(hr == (tests[i].pool == D3DPOOL_SCRATCH || (tests[i].usage & ~D3DUSAGE_DYNAMIC)
-                    ? D3DERR_INVALIDCALL : D3D_OK), "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == (tests[i].pool == D3DPOOL_SCRATCH || (tests[i].usage & ~D3DUSAGE_DYNAMIC)
+                ? D3DERR_INVALIDCALL : D3D_OK), "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (FAILED(hr))
             continue;
 
         hr = IDirect3DVertexBuffer8_GetDesc(vb, &vb_desc);
         ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        todo_wine_if(tests[i].usage & ~D3DUSAGE_DYNAMIC)
-            ok(vb_desc.Usage == tests[i].usage, "Test %u: Got unexpected usage %#x.\n", i, vb_desc.Usage);
+        ok(vb_desc.Usage == tests[i].usage, "Test %u: Got unexpected usage %#x.\n", i, vb_desc.Usage);
         ok(vb_desc.Pool == tests[i].pool, "Test %u: Got unexpected pool %#x.\n", i, vb_desc.Pool);
 
         hr = IDirect3DVertexBuffer8_Lock(vb, 0, 0, &data, 0);
