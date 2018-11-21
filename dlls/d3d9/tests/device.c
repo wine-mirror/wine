@@ -12877,7 +12877,7 @@ static void test_resource_access(void)
                 expected_hr = D3D_OK;
             else
                 expected_hr = D3DERR_INVALIDCALL;
-            todo_wine_if(expected_hr != D3D_OK)
+            todo_wine_if(expected_hr != D3D_OK && surface_types[i].type != SURFACE_2D)
                 ok(hr == expected_hr, "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
             hr = IDirect3DSurface9_UnlockRect(surface);
             todo_wine_if(expected_hr != D3D_OK)
