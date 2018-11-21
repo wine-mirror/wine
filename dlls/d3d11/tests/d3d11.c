@@ -5292,7 +5292,7 @@ static void test_create_query(void)
         {D3D11_QUERY_TIMESTAMP_DISJOINT,            D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, FALSE},
         {D3D11_QUERY_PIPELINE_STATISTICS,           D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, FALSE},
         {D3D11_QUERY_OCCLUSION_PREDICATE,           D3D_FEATURE_LEVEL_10_0, TRUE,  TRUE,  FALSE},
-        {D3D11_QUERY_SO_STATISTICS,                 D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_STATISTICS,                 D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, FALSE},
         {D3D11_QUERY_SO_OVERFLOW_PREDICATE,         D3D_FEATURE_LEVEL_10_0, TRUE,  TRUE,  TRUE},
         {D3D11_QUERY_SO_STATISTICS_STREAM0,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, FALSE},
         {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM0, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
@@ -5839,9 +5839,7 @@ static void test_so_statistics_query(void)
         query_desc.Query = tests[i].query;
         query_desc.MiscFlags = 0;
         hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS)
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        if (FAILED(hr)) continue;
         data_size = ID3D11Asynchronous_GetDataSize(query);
         ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
 
@@ -5868,7 +5866,7 @@ static void test_so_statistics_query(void)
         get_query_data(context, query, &data, sizeof(data));
         ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
                 (unsigned int)data.NumPrimitivesWritten);
-        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
+        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS || query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
         ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
                 (unsigned int)data.PrimitivesStorageNeeded);
 
@@ -5878,7 +5876,7 @@ static void test_so_statistics_query(void)
         get_query_data(context, query, &data, sizeof(data));
         ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
                 (unsigned int)data.NumPrimitivesWritten);
-        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
+        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS || query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
         ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
                 (unsigned int)data.PrimitivesStorageNeeded);
 
