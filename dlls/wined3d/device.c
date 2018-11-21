@@ -1302,14 +1302,18 @@ void CDECL wined3d_device_set_multithreaded(struct wined3d_device *device)
 
 UINT CDECL wined3d_device_get_available_texture_mem(const struct wined3d_device *device)
 {
+    const struct wined3d_driver_info *driver_info;
+
     TRACE("device %p.\n", device);
 
-    TRACE("Emulating 0x%s bytes. 0x%s used, returning 0x%s left.\n",
-            wine_dbgstr_longlong(device->adapter->vram_bytes),
-            wine_dbgstr_longlong(device->adapter->vram_bytes_used),
-            wine_dbgstr_longlong(device->adapter->vram_bytes - device->adapter->vram_bytes_used));
+    driver_info = &device->adapter->driver_info;
 
-    return min(UINT_MAX, device->adapter->vram_bytes - device->adapter->vram_bytes_used);
+    TRACE("Emulating 0x%s bytes. 0x%s used, returning 0x%s left.\n",
+            wine_dbgstr_longlong(driver_info->vram_bytes),
+            wine_dbgstr_longlong(device->adapter->vram_bytes_used),
+            wine_dbgstr_longlong(driver_info->vram_bytes - device->adapter->vram_bytes_used));
+
+    return min(UINT_MAX, driver_info->vram_bytes - device->adapter->vram_bytes_used);
 }
 
 void CDECL wined3d_device_set_stream_output(struct wined3d_device *device, UINT idx,
