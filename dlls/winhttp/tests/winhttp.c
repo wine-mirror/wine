@@ -1198,11 +1198,6 @@ static void test_request_parameter_defaults(void)
     ok(ret, "failed to send request %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(req, NULL);
-    if (!ret && GetLastError() == ERROR_WINHTTP_INVALID_SERVER_RESPONSE) /* win2k */
-    {
-        win_skip("invalid response\n");
-        goto done;
-    }
     ok(ret, "failed to receive response %u\n", GetLastError());
 
     status = 0xdeadbeef;
@@ -4420,14 +4415,12 @@ static void test_WinHttpDetectAutoProxyConfigUrl(void)
     WCHAR *url;
     DWORD error;
 
-if (0) /* crashes on some win2k systems */
-{
     SetLastError(0xdeadbeef);
     ret = WinHttpDetectAutoProxyConfigUrl( 0, NULL );
     error = GetLastError();
     ok( !ret, "expected failure\n" );
     ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
-}
+
     url = NULL;
     SetLastError(0xdeadbeef);
     ret = WinHttpDetectAutoProxyConfigUrl( 0, &url );
@@ -4435,14 +4428,12 @@ if (0) /* crashes on some win2k systems */
     ok( !ret, "expected failure\n" );
     ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
 
-if (0) /* crashes on some win2k systems */
-{
     SetLastError(0xdeadbeef);
     ret = WinHttpDetectAutoProxyConfigUrl( WINHTTP_AUTO_DETECT_TYPE_DNS_A, NULL );
     error = GetLastError();
     ok( !ret, "expected failure\n" );
     ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
-}
+
     url = (WCHAR *)0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = WinHttpDetectAutoProxyConfigUrl( WINHTTP_AUTO_DETECT_TYPE_DNS_A, &url );
