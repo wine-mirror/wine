@@ -31,6 +31,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(slc);
 
+HRESULT WINAPI SLGetLicensingStatusInformation(HSLC handle, const SLID *app, const SLID *product,
+                                               LPCWSTR name, UINT *count, SL_LICENSING_STATUS **status)
+{
+    FIXME("(%p %p %p %s %p %p) stub\n", handle, app, product, debugstr_w(name), count, status );
+
+    return SL_E_RIGHT_NOT_CONSUMED;
+}
+
 HRESULT WINAPI SLGetWindowsInformation(LPCWSTR name, SLDATATYPE *type, UINT *val, LPBYTE *size)
 {
     FIXME("(%s %p %p %p) stub\n", debugstr_w(name), type, val, size );
