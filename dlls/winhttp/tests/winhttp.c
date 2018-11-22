@@ -2086,6 +2086,11 @@ static void test_resolve_timeout(void)
         ok(GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED,
            "expected ERROR_WINHTTP_NAME_NOT_RESOLVED got %u\n", GetLastError());
 
+        ret = WinHttpReceiveResponse( req, NULL );
+        ok( !ret && (GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_STATE ||
+                     GetLastError() == ERROR_WINHTTP_OPERATION_CANCELLED /* < win7 */),
+            "got %u\n", GetLastError() );
+
         WinHttpCloseHandle(req);
         WinHttpCloseHandle(con);
         WinHttpCloseHandle(ses);

@@ -2736,6 +2736,12 @@ static BOOL receive_response( struct request *request, BOOL async )
     BOOL ret;
     DWORD size, query, status;
 
+    if (!request->netconn)
+    {
+        SetLastError( ERROR_WINHTTP_INCORRECT_HANDLE_STATE );
+        return FALSE;
+    }
+
     netconn_set_timeout( request->netconn, FALSE, request->receive_response_timeout );
     for (;;)
     {
