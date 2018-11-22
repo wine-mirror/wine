@@ -5813,7 +5813,6 @@ static void test_so_statistics_query(void)
     unsigned int i;
     HRESULT hr;
 
-    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
     static const DWORD vs_code[] =
     {
 #if 0
@@ -5993,8 +5992,6 @@ static void test_so_statistics_query(void)
     ID3D11DeviceContext_GSSetConstantBuffers(context, 0, 1, &cb);
 
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
 
     query_desc.Query = D3D11_QUERY_SO_STATISTICS;
     query_desc.MiscFlags = 0;
