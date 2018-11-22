@@ -10,7 +10,7 @@
 @ stub PathCchCombine
 @ stub PathCchCombineEx
 @ stdcall PathCchFindExtension(wstr long ptr) kernelbase.PathCchFindExtension
-@ stub PathCchIsRoot
+@ stdcall PathCchIsRoot(wstr) kernelbase.PathCchIsRoot
 @ stub PathCchRemoveBackslash
 @ stub PathCchRemoveBackslashEx
 @ stdcall PathCchRemoveExtension(wstr long) kernelbase.PathCchRemoveExtension

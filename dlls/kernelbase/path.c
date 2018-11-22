@@ -240,6 +240,44 @@ HRESULT WINAPI PathCchFindExtension(const WCHAR *path, SIZE_T size, const WCHAR 
     return S_OK;
 }
 
+BOOL WINAPI PathCchIsRoot(const WCHAR *path)
+{
+    const WCHAR *root_end;
+    const WCHAR *next;
+    BOOL is_unc;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path || !*path) return FALSE;
+
+    root_end = get_root_end(path);
+    if (!root_end) return FALSE;
+
+    if ((is_unc = is_prefixed_unc(path)) || (path[0] == '\\' && path[1] == '\\' && path[2] != '?'))
+    {
+        next = root_end + 1;
+        /* No extra segments */
+        if ((is_unc && !*next) || (!is_unc && !*next)) return TRUE;
+
+        /* Has first segment with an ending backslash but no remaining characters */
+        if (get_next_segment(next, &next) && !*next) return FALSE;
+        /* Has first segment with no ending backslash */
+        else if (!*next)
+            return TRUE;
+        /* Has first segment with an ending backslash and has remaining characters*/
+        else
+        {
+            next++;
+            /* Second segment must have no backslash and no remaining characters */
+            return !get_next_segment(next, &next) && !*next;
+        }
+    }
+    else if (*root_end == '\\' && !root_end[1])
+        return TRUE;
+    else
+        return FALSE;
+}
+
 HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size)
 {
     const WCHAR *extension;

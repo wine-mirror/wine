@@ -35,6 +35,7 @@ HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr
 HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
+BOOL    (WINAPI *pPathCchIsRoot)(const WCHAR *path);
 HRESULT (WINAPI *pPathCchRemoveExtension)(WCHAR *path, SIZE_T size);
 HRESULT (WINAPI *pPathCchRenameExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT (WINAPI *pPathCchSkipRoot)(const WCHAR *path, const WCHAR **root_end);
@@ -474,6 +475,72 @@ static void test_PathCchFindExtension(void)
         if (SUCCEEDED(hr))
             ok(extension - pathW == t->extension_offset, "path %s expect extension offset %d, got %ld\n", t->path,
                t->extension_offset, (UINT_PTR)(extension - pathW));
+    }
+}
+
+struct isroot_test
+{
+    const CHAR *path;
+    BOOL ret;
+};
+
+static const struct isroot_test isroot_tests[] =
+{
+    {"", FALSE},
+    {"a", FALSE},
+    {"C:", FALSE},
+    {"C:\\", TRUE},
+    {"C:\\a", FALSE},
+    {"\\\\?\\C:\\", TRUE},
+    {"\\\\?\\C:", FALSE},
+    {"\\\\?\\C:\\a", FALSE},
+    {"\\", TRUE},
+    {"\\a\\", FALSE},
+    {"\\a\\b", FALSE},
+    {"\\\\", TRUE},
+    {"\\\\a", TRUE},
+    {"\\\\a\\", FALSE},
+    {"\\\\a\\b", TRUE},
+    {"\\\\a\\b\\", FALSE},
+    {"\\\\a\\b\\c", FALSE},
+    {"\\\\?\\UNC\\", TRUE},
+    {"\\\\?\\UNC\\a", TRUE},
+    {"\\\\?\\UNC\\a\\", FALSE},
+    {"\\\\?\\UNC\\a\\b", TRUE},
+    {"\\\\?\\UNC\\a\\b\\", FALSE},
+    {"\\\\?\\UNC\\a\\b\\c", FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", TRUE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", FALSE},
+    {"..\\a", FALSE},
+
+    /* Wrong MSDN examples */
+    {"\\a", FALSE},
+    {"X:", FALSE},
+    {"\\server", FALSE}
+};
+
+static void test_PathCchIsRoot(void)
+{
+    WCHAR pathW[MAX_PATH];
+    BOOL ret;
+    INT i;
+
+    if (!pPathCchIsRoot)
+    {
+        win_skip("PathCchIsRoot() is not available.\n");
+        return;
+    }
+
+    ret = pPathCchIsRoot(NULL);
+    ok(ret == FALSE, "expect return FALSE\n");
+
+    for (i = 0; i < ARRAY_SIZE(isroot_tests); i++)
+    {
+        const struct isroot_test *t = isroot_tests + i;
+        MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
+        ret = pPathCchIsRoot(pathW);
+        ok(ret == t->ret, "path %s expect return %d, got %d\n", t->path, t->ret, ret);
     }
 }
 
@@ -1039,6 +1106,7 @@ START_TEST(path)
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
+    pPathCchIsRoot = (void *)GetProcAddress(hmod, "PathCchIsRoot");
     pPathCchRemoveExtension = (void *)GetProcAddress(hmod, "PathCchRemoveExtension");
     pPathCchRenameExtension = (void *)GetProcAddress(hmod, "PathCchRenameExtension");
     pPathCchSkipRoot = (void *)GetProcAddress(hmod, "PathCchSkipRoot");
@@ -1051,6 +1119,7 @@ START_TEST(path)
     test_PathCchAddBackslashEx();
     test_PathCchAddExtension();
     test_PathCchFindExtension();
+    test_PathCchIsRoot();
     test_PathCchRemoveExtension();
     test_PathCchRenameExtension();
     test_PathCchSkipRoot();
