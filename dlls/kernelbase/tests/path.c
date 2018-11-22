@@ -39,6 +39,7 @@ HRESULT (WINAPI *pPathCchRemoveExtension)(WCHAR *path, SIZE_T size);
 HRESULT (WINAPI *pPathCchRenameExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT (WINAPI *pPathCchSkipRoot)(const WCHAR *path, const WCHAR **root_end);
 HRESULT (WINAPI *pPathCchStripPrefix)(WCHAR *path, SIZE_T size);
+HRESULT (WINAPI *pPathCchStripToRoot)(WCHAR *path, SIZE_T size);
 BOOL    (WINAPI *pPathIsUNCEx)(const WCHAR *path, const WCHAR **server);
 
 static const struct
@@ -835,6 +836,131 @@ static void test_PathCchStripPrefix(void)
     }
 }
 
+struct striptoroot_test
+{
+    const CHAR *path;
+    const CHAR *root;
+    HRESULT hr;
+    SIZE_T size;
+};
+
+static const struct striptoroot_test striptoroot_tests[] =
+{
+    /* Invalid */
+    {"", "", E_INVALIDARG},
+    {"C", NULL, E_INVALIDARG},
+    {"\\\\?\\UNC", NULL, E_INVALIDARG},
+
+    /* Size */
+    {"C:\\", NULL, E_INVALIDARG, PATHCCH_MAX_CCH + 1},
+    {"C:\\", "C:\\", S_FALSE, PATHCCH_MAX_CCH},
+    /* Size < original path length + 1, read beyond size */
+    {"C:\\a", "C:\\", S_OK, ARRAY_SIZE("C:\\a") - 1},
+    /* Size < stripped path length + 1 */
+    {"C:\\a", "C:\\", E_INVALIDARG, ARRAY_SIZE("C:\\") - 1},
+    {"\\\\a\\b\\c", NULL, E_INVALIDARG, ARRAY_SIZE("\\\\a\\b") - 1},
+
+    /* X: */
+    {"C:", "C:", S_FALSE},
+    {"C:a", "C:", S_OK},
+    {"C:a\\b", "C:", S_OK},
+    {"C:a\\b\\c", "C:", S_OK},
+
+    /* X:\ */
+    {"C:\\", "C:\\", S_FALSE},
+    {"C:\\a", "C:\\", S_OK},
+    {"C:\\a\\b", "C:\\", S_OK},
+    {"C:\\a\\b\\c", "C:\\", S_OK},
+
+    /* \ */
+    {"\\", "\\", S_FALSE},
+    {"\\a", "\\", S_OK},
+    {"\\a\\b", "\\", S_OK},
+    {"\\a\\b\\c", "\\", S_OK},
+
+    /* \\ */
+    {"\\\\", "\\\\", S_FALSE},
+    {"\\\\a", "\\\\a", S_FALSE},
+    {"\\\\a\\b", "\\\\a\\b", S_FALSE},
+    {"\\\\a\\b\\c", "\\\\a\\b", S_OK},
+
+    /* UNC */
+    {"\\\\?\\UNC\\", "\\\\?\\UNC\\", S_FALSE},
+    {"\\\\?\\UNC\\a", "\\\\?\\UNC\\a", S_FALSE},
+    {"\\\\?\\UNC\\a\\b", "\\\\?\\UNC\\a\\b", S_FALSE},
+    {"\\\\?\\UNC\\a\\b\\", "\\\\?\\UNC\\a\\b", S_OK},
+    {"\\\\?\\UNC\\a\\b\\c", "\\\\?\\UNC\\a\\b", S_OK},
+
+    /* Prefixed X: */
+    {"\\\\?\\C:", "\\\\?\\C:", S_FALSE},
+    {"\\\\?\\C:a", "\\\\?\\C:", S_OK},
+    {"\\\\?\\C:a\\b", "\\\\?\\C:", S_OK},
+    {"\\\\?\\C:a\\b\\c", "\\\\?\\C:", S_OK},
+
+    /* Prefixed X:\ */
+    {"\\\\?\\C:\\", "\\\\?\\C:\\", S_FALSE},
+    {"\\\\?\\C:\\a", "\\\\?\\C:\\", S_OK},
+    {"\\\\?\\C:\\a\\b", "\\\\?\\C:\\", S_OK},
+    {"\\\\?\\C:\\a\\b\\c", "\\\\?\\C:\\", S_OK},
+
+    /* UNC Volume */
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", S_FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a\\b",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a\\b\\c",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", S_OK},
+
+    /* UNC Volume with backslash */
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", S_FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a\\b",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a\\b\\c",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", S_OK},
+};
+
+static void test_PathCchStripToRoot(void)
+{
+    WCHAR pathW[PATHCCH_MAX_CCH];
+    CHAR rootA[PATHCCH_MAX_CCH];
+    SIZE_T size;
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchStripToRoot)
+    {
+        win_skip("PathCchStripToRoot() is not available.\n");
+        return;
+    }
+
+    /* Null arguments */
+    hr = pPathCchStripToRoot(NULL, ARRAY_SIZE(pathW));
+    ok(hr == E_INVALIDARG, "Expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    MultiByteToWideChar(CP_ACP, 0, "C:\\a", -1, pathW, ARRAY_SIZE(pathW));
+    hr = pPathCchStripToRoot(pathW, 0);
+    ok(hr == E_INVALIDARG, "Expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    for (i = 0; i < ARRAY_SIZE(striptoroot_tests); i++)
+    {
+        const struct striptoroot_test *t = striptoroot_tests + i;
+        MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
+        size = t->size ? t->size : ARRAY_SIZE(pathW);
+        hr = pPathCchStripToRoot(pathW, size);
+        ok(hr == t->hr, "path %s expect result %#x, got %#x\n", t->path, t->hr, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, pathW, -1, rootA, ARRAY_SIZE(rootA), NULL, NULL);
+            ok(!lstrcmpA(rootA, t->root), "path %s expect stripped path %s, got %s\n", t->path, t->root, rootA);
+        }
+    }
+}
+
 struct isuncex_test
 {
     const CHAR *path;
@@ -917,6 +1043,7 @@ START_TEST(path)
     pPathCchRenameExtension = (void *)GetProcAddress(hmod, "PathCchRenameExtension");
     pPathCchSkipRoot = (void *)GetProcAddress(hmod, "PathCchSkipRoot");
     pPathCchStripPrefix = (void *)GetProcAddress(hmod, "PathCchStripPrefix");
+    pPathCchStripToRoot = (void *)GetProcAddress(hmod, "PathCchStripToRoot");
     pPathIsUNCEx = (void *)GetProcAddress(hmod, "PathIsUNCEx");
 
     test_PathCchCombineEx();
@@ -928,5 +1055,6 @@ START_TEST(path)
     test_PathCchRenameExtension();
     test_PathCchSkipRoot();
     test_PathCchStripPrefix();
+    test_PathCchStripToRoot();
     test_PathIsUNCEx();
 }

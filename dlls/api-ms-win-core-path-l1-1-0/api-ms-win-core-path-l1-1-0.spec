@@ -18,5 +18,5 @@
 @ stdcall PathCchRenameExtension(wstr long wstr) kernelbase.PathCchRenameExtension
 @ stdcall PathCchSkipRoot(wstr ptr) kernelbase.PathCchSkipRoot
 @ stdcall PathCchStripPrefix(wstr long) kernelbase.PathCchStripPrefix
-@ stub PathCchStripToRoot
+@ stdcall PathCchStripToRoot(wstr long) kernelbase.PathCchStripToRoot
 @ stdcall PathIsUNCEx(wstr ptr) kernelbase.PathIsUNCEx

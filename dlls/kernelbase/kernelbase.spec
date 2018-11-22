@@ -1047,7 +1047,7 @@
 @ stdcall PathCchRenameExtension(wstr long wstr)
 @ stdcall PathCchSkipRoot(wstr ptr)
 @ stdcall PathCchStripPrefix(wstr long)
-# @ stub PathCchStripToRoot
+@ stdcall PathCchStripToRoot(wstr long)
 @ stdcall PathCombineA(ptr str str) shlwapi.PathCombineA
 @ stdcall PathCombineW(ptr wstr wstr) shlwapi.PathCombineW
 @ stdcall PathCommonPrefixA(str str ptr) shlwapi.PathCommonPrefixA
