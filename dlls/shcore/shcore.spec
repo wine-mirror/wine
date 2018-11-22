@@ -14,17 +14,17 @@
 @ stub GetScaleFactorForDevice
 @ stub GetScaleFactorForMonitor
 @ stub IStream_Copy
-@ stdcall IStream_Read(ptr ptr long) shlwapi.IStream_Read
+@ stdcall IStream_Read(ptr ptr long) _IStream_Read
 @ stub IStream_ReadStr
-@ stdcall IStream_Reset(ptr) shlwapi.IStream_Reset
-@ stdcall IStream_Size(ptr ptr) shlwapi.IStream_Size
-@ stdcall IStream_Write(ptr ptr long) shlwapi.IStream_Write
+@ stdcall IStream_Reset(ptr)
+@ stdcall IStream_Size(ptr ptr)
+@ stdcall IStream_Write(ptr ptr long) _IStream_Write
 @ stub IStream_WriteStr
-@ stdcall IUnknown_AtomicRelease(long) shlwapi.IUnknown_AtomicRelease
-@ stdcall IUnknown_GetSite(ptr ptr ptr) shlwapi.IUnknown_GetSite
-@ stdcall IUnknown_QueryService(ptr ptr ptr ptr) shlwapi.IUnknown_QueryService
-@ stdcall IUnknown_Set(ptr ptr) shlwapi.IUnknown_Set
-@ stdcall IUnknown_SetSite(ptr ptr) shlwapi.IUnknown_SetSite
+@ stdcall IUnknown_AtomicRelease(long)
+@ stdcall IUnknown_GetSite(ptr ptr ptr)
+@ stdcall IUnknown_QueryService(ptr ptr ptr ptr)
+@ stdcall IUnknown_Set(ptr ptr)
+@ stdcall IUnknown_SetSite(ptr ptr)
 @ stdcall IsOS(long) shlwapi.IsOS
 @ stub RegisterScaleChangeEvent
 @ stub RegisterScaleChangeNotifications
