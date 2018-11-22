@@ -603,87 +603,77 @@ todo_wine
     devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
 }
 
-static void testCreateDeviceInterface(void)
+static void test_device_iface(void)
 {
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVINFO_DATA device = {0};
     BOOL ret;
     HDEVINFO set;
+    DWORD i;
 
-    if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiEnumDeviceInterfaces)
-    {
-        win_skip("SetupDiCreateDeviceInterfaceA and/or SetupDiEnumDeviceInterfaces are not available\n");
-        return;
-    }
     SetLastError(0xdeadbeef);
-    ret = pSetupDiCreateDeviceInterfaceA(NULL, NULL, NULL, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ret = SetupDiCreateDeviceInterfaceA(NULL, NULL, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiCreateDeviceInterfaceA(NULL, NULL, &guid, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
-    if (set)
+    ret = SetupDiCreateDeviceInterfaceA(NULL, NULL, &guid, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
+
+    set = SetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInterfaceA(set, NULL, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    device.cbSize = sizeof(device);
+    ret = SetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, NULL, 0, NULL);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
+
+    /* Creating the same interface a second time succeeds */
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, NULL, 0, NULL);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, "Oogah", 0, NULL);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
+
+    ret = SetupDiEnumDeviceInterfaces(set, &device, &guid, 0, &iface);
+    ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
+
+    i = 0;
+    while (SetupDiEnumDeviceInterfaces(set, &device, &guid, i, &iface))
+        i++;
+    ok(i == 2, "expected 2 interfaces, got %d\n", i);
+    ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
+
+    for (i = 0; i < 2; i++)
     {
-        SP_DEVINFO_DATA devInfo = { 0 };
-        SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData),
-            { 0 } };
-        DWORD i;
+        ret = SetupDiEnumDeviceInterfaces(set, &device, &guid, i, &iface);
+        ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
 
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiCreateDeviceInterfaceA(set, NULL, NULL, NULL, 0, NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, NULL, NULL, 0,
-                NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-        devInfo.cbSize = sizeof(devInfo);
-        ret = pSetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid,
-                NULL, NULL, 0, &devInfo);
-        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, NULL, NULL, 0,
-                NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
-         "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
-        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
-                NULL);
-        ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
-        /* Creating the same interface a second time succeeds */
-        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
-                NULL);
-        ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
-        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, "Oogah", 0,
-                NULL);
-        ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
-        ret = pSetupDiEnumDeviceInterfaces(set, &devInfo, &guid, 0,
-                &interfaceData);
-        ok(ret, "SetupDiEnumDeviceInterfaces failed: %d\n", GetLastError());
-        i = 0;
-        while (pSetupDiEnumDeviceInterfaces(set, &devInfo, &guid, i,
-                    &interfaceData))
-            i++;
-        ok(i == 2, "expected 2 interfaces, got %d\n", i);
-        ok(GetLastError() == ERROR_NO_MORE_ITEMS,
-         "SetupDiEnumDeviceInterfaces failed: %08x\n", GetLastError());
-
-        for (i = 0; i < 2; i++)
-        {
-            ret = pSetupDiEnumDeviceInterfaces(set, &devInfo, &guid, i, &interfaceData);
-            ok(ret, "SetupDiEnumDeviceInterfaces failed: %08x\n", GetLastError());
-
-            ret = pSetupDiRemoveDeviceInterface(set, &interfaceData);
-            todo_wine ok(ret, "SetupDiRemoveDeviceInterface failed: %08x\n", GetLastError());
-        }
-
-        ret = pSetupDiRemoveDevice(set, &devInfo);
-        todo_wine ok(ret, "got %u\n", GetLastError());
-
-        ret = pSetupDiDestroyDeviceInfoList(set);
-        ok(ret, "SetupDiDestroyDeviceInfoList failed: %08x\n", GetLastError());
+        ret = SetupDiRemoveDeviceInterface(set, &iface);
+todo_wine
+        ok(ret, "Failed to remove interface, error %#x.\n", GetLastError());
     }
+
+    ret = SetupDiDestroyDeviceInfoList(set);
+    ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
 }
 
 static void testGetDeviceInterfaceDetail(void)
@@ -1538,7 +1528,7 @@ START_TEST(devinst)
     test_device_info();
     test_get_device_instance_id();
     test_register_device_info();
-    testCreateDeviceInterface();
+    test_device_iface();
     testGetDeviceInterfaceDetail();
     testDevRegKey();
     testRegisterAndGetDetail();
