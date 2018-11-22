@@ -445,6 +445,7 @@ enum wined3d_shader_resource_type
 #define WINED3D_SHADER_CONST_FFP_LIGHTS      0x00080000
 #define WINED3D_SHADER_CONST_FFP_PS          0x00100000
 #define WINED3D_SHADER_CONST_FFP_COLOR_KEY   0x00200000
+#define WINED3D_SHADER_CONST_BASE_VERTEX_ID  0x00400000
 
 enum wined3d_shader_register_type
 {

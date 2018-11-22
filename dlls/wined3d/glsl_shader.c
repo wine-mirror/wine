@@ -155,6 +155,7 @@ struct glsl_vs_program
     GLint uniform_i_locations[WINED3D_MAX_CONSTS_I];
     GLint uniform_b_locations[WINED3D_MAX_CONSTS_B];
     GLint pos_fixup_location;
+    GLint base_vertex_id_location;
 
     GLint modelview_matrix_location[MAX_VERTEX_BLENDS];
     GLint projection_matrix_location;
@@ -1775,22 +1776,21 @@ static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps
 static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
-    const struct glsl_context_data *ctx_data = context->shader_backend_data;
     const struct wined3d_shader *vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     const struct wined3d_shader *pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct shader_glsl_priv *priv = shader_priv;
-    float position_fixup[4 * WINED3D_MAX_VIEWPORTS];
-    DWORD update_mask;
-
+    const struct glsl_context_data *ctx_data = context->shader_backend_data;
     struct glsl_shader_prog_link *prog = ctx_data->glsl_program;
-    UINT constant_version;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    float position_fixup[4 * WINED3D_MAX_VIEWPORTS];
+    struct shader_glsl_priv *priv = shader_priv;
+    unsigned int constant_version;
+    DWORD update_mask;
     int i;
 
-    if (!prog) {
-        /* No GLSL program set - nothing to do. */
+    /* No GLSL program set - nothing to do. */
+    if (!prog)
         return;
-    }
+
     constant_version = prog->constant_version;
     update_mask = context->constant_update_mask & prog->constant_update_mask;
 
@@ -1827,6 +1827,12 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         else
             GL_EXTCALL(glUniform4fv(prog->vs.pos_fixup_location, 1, position_fixup));
         checkGLcall("glUniform4fv");
+    }
+
+    if (update_mask & WINED3D_SHADER_CONST_BASE_VERTEX_ID)
+    {
+        GL_EXTCALL(glUniform1i(prog->vs.base_vertex_id_location, state->base_vertex_index));
+        checkGLcall("base vertex id");
     }
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_MODELVIEW)
@@ -2359,8 +2365,8 @@ static void shader_glsl_declare_generic_vertex_attribute(struct wined3d_string_b
 
     if (e->sysval_semantic == WINED3D_SV_VERTEX_ID)
     {
-        shader_addline(buffer, "vec4 vs_in%u = vec4(intBitsToFloat(gl_VertexID), 0.0, 0.0, 0.0);\n",
-                index);
+        shader_addline(buffer, "uniform int base_vertex_id;\n");
+        shader_addline(buffer, "vec4 vs_in%u = vec4(intBitsToFloat(gl_VertexID - base_vertex_id), 0.0, 0.0, 0.0);\n", index);
         return;
     }
     if (e->sysval_semantic == WINED3D_SV_INSTANCE_ID)
@@ -10123,6 +10129,7 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     }
 
     vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "pos_fixup"));
+    vs->base_vertex_id_location = GL_EXTCALL(glGetUniformLocation(program_id, "base_vertex_id"));
 
     for (i = 0; i < MAX_VERTEX_BLENDS; ++i)
     {
@@ -10694,6 +10701,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_B;
         if (entry->vs.pos_fixup_location != -1)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
+        if (entry->vs.base_vertex_id_location != -1)
+            entry->constant_update_mask |= WINED3D_SHADER_CONST_BASE_VERTEX_ID;
 
         shader_glsl_load_program_resources(context, priv, program_id, vshader);
     }
