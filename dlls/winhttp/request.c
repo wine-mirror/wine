@@ -1458,7 +1458,7 @@ static BOOL connection_collector_running;
 static DWORD WINAPI connection_collector(void *arg)
 {
     unsigned int remaining_connections;
-    netconn_t *netconn, *next_netconn;
+    struct netconn *netconn, *next_netconn;
     struct hostdata *host, *next_host;
     ULONGLONG now;
 
@@ -1473,7 +1473,7 @@ static DWORD WINAPI connection_collector(void *arg)
 
         LIST_FOR_EACH_ENTRY_SAFE(host, next_host, &connection_pool, struct hostdata, entry)
         {
-            LIST_FOR_EACH_ENTRY_SAFE(netconn, next_netconn, &host->connections, netconn_t, entry)
+            LIST_FOR_EACH_ENTRY_SAFE(netconn, next_netconn, &host->connections, struct netconn, entry)
             {
                 if (netconn->keep_until < now)
                 {
@@ -1496,7 +1496,7 @@ static DWORD WINAPI connection_collector(void *arg)
     FreeLibraryAndExitThread( winhttp_instance, 0 );
 }
 
-static void cache_connection( netconn_t *netconn )
+static void cache_connection( struct netconn *netconn )
 {
     TRACE( "caching connection %p\n", netconn );
 
@@ -1570,7 +1570,7 @@ static BOOL open_connection( request_t *request )
 {
     BOOL is_secure = request->hdr.flags & WINHTTP_FLAG_SECURE;
     struct hostdata *host = NULL, *iter;
-    netconn_t *netconn = NULL;
+    struct netconn *netconn = NULL;
     struct connect *connect;
     WCHAR *addressW = NULL;
     INTERNET_PORT port;
@@ -1622,7 +1622,7 @@ static BOOL open_connection( request_t *request )
         EnterCriticalSection( &connection_pool_cs );
         if (!list_empty( &host->connections ))
         {
-            netconn = LIST_ENTRY( list_head( &host->connections ), netconn_t, entry );
+            netconn = LIST_ENTRY( list_head( &host->connections ), struct netconn, entry );
             list_remove( &netconn->entry );
         }
         LeaveCriticalSection( &connection_pool_cs );

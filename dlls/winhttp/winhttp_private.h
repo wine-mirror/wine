@@ -111,7 +111,7 @@ struct connect
     BOOL resolved;
 };
 
-typedef struct
+struct netconn
 {
     struct list entry;
     int socket;
@@ -127,7 +127,7 @@ typedef struct
     char *peek_msg;
     char *peek_msg_mem;
     size_t peek_len;
-} netconn_t;
+};
 
 struct header
 {
@@ -178,7 +178,7 @@ typedef struct
     LPWSTR raw_headers;
     void *optional;
     DWORD optional_len;
-    netconn_t *netconn;
+    struct netconn *netconn;
     DWORD security_flags;
     BOOL check_revocation;
     const CERT_CONTEXT *server_cert;
@@ -270,18 +270,18 @@ DWORD get_last_error( void ) DECLSPEC_HIDDEN;
 void send_callback( struct object_header *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
 void close_connection( request_t * ) DECLSPEC_HIDDEN;
 
-void netconn_close( netconn_t * ) DECLSPEC_HIDDEN;
-netconn_t *netconn_create( struct hostdata *, const struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
+void netconn_close( struct netconn * ) DECLSPEC_HIDDEN;
+struct netconn *netconn_create( struct hostdata *, const struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
-ULONG netconn_query_data_available( netconn_t * ) DECLSPEC_HIDDEN;
-BOOL netconn_recv( netconn_t *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
+ULONG netconn_query_data_available( struct netconn * ) DECLSPEC_HIDDEN;
+BOOL netconn_recv( struct netconn *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
 BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
-BOOL netconn_secure_connect( netconn_t *, WCHAR *, DWORD, CredHandle *, BOOL ) DECLSPEC_HIDDEN;
-BOOL netconn_send( netconn_t *, const void *, size_t, int * ) DECLSPEC_HIDDEN;
-DWORD netconn_set_timeout( netconn_t *, BOOL, int ) DECLSPEC_HIDDEN;
-BOOL netconn_is_alive( netconn_t * ) DECLSPEC_HIDDEN;
-const void *netconn_get_certificate( netconn_t * ) DECLSPEC_HIDDEN;
-int netconn_get_cipher_strength( netconn_t * ) DECLSPEC_HIDDEN;
+BOOL netconn_secure_connect( struct netconn *, WCHAR *, DWORD, CredHandle *, BOOL ) DECLSPEC_HIDDEN;
+BOOL netconn_send( struct netconn *, const void *, size_t, int * ) DECLSPEC_HIDDEN;
+DWORD netconn_set_timeout( struct netconn *, BOOL, int ) DECLSPEC_HIDDEN;
+BOOL netconn_is_alive( struct netconn * ) DECLSPEC_HIDDEN;
+const void *netconn_get_certificate( struct netconn * ) DECLSPEC_HIDDEN;
+int netconn_get_cipher_strength( struct netconn * ) DECLSPEC_HIDDEN;
 
 BOOL set_cookies( request_t *, const WCHAR * ) DECLSPEC_HIDDEN;
 BOOL add_cookie_headers( request_t * ) DECLSPEC_HIDDEN;
