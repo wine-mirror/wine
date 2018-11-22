@@ -1046,7 +1046,7 @@
 # @ stub PathCchRemoveFileSpec
 @ stdcall PathCchRenameExtension(wstr long wstr)
 # @ stub PathCchSkipRoot
-# @ stub PathCchStripPrefix
+@ stdcall PathCchStripPrefix(wstr long)
 # @ stub PathCchStripToRoot
 @ stdcall PathCombineA(ptr str str) shlwapi.PathCombineA
 @ stdcall PathCombineW(ptr wstr wstr) shlwapi.PathCombineW
