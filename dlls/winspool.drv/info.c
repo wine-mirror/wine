@@ -1572,6 +1572,8 @@ static void old_printer_check( BOOL delete_phase )
     EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num );
     for (i = 0; i < num; i++)
     {
+        if (!pi[i].pPortName) continue;
+
         if (strncmpW( pi[i].pPortName, CUPS_Port, strlenW(CUPS_Port) ) &&
             strncmpW( pi[i].pPortName, LPR_Port, strlenW(LPR_Port) ))
             continue;
