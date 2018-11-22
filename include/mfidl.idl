@@ -313,3 +313,39 @@ cpp_quote("     IMFMediaType **types, IMFStreamDescriptor **descriptor);")
 cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")
 cpp_quote("HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array);")
 cpp_quote("HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID iid, void **obj);")
+
+[
+    object,
+    uuid(279a808d-aec7-40c8-9c6b-a6b492c78a66),
+]
+interface IMFMediaSource : IMFMediaEventGenerator
+{
+    HRESULT GetCharacteristics(
+        [out] DWORD *characteristics );
+
+    [local]
+    HRESULT CreatePresentationDescriptor(
+        [out] IMFPresentationDescriptor **descriptor );
+    [call_as(CreatePresentationDescriptor)]
+    HRESULT RemoteCreatePresentationDescriptor(
+        [out] DWORD *count,
+        [out, size_is(,*count)] BYTE **data,
+        [out] IMFPresentationDescriptor **descriptor );
+
+    HRESULT Start(
+        [in] IMFPresentationDescriptor *descriptor,
+        [in, unique] const GUID *time_format,
+        [in, unique] const PROPVARIANT *start_position );
+
+    HRESULT Stop();
+    HRESULT Pause();
+    HRESULT Shutdown();
+}
+
+cpp_quote("#define MF_RESOLUTION_MEDIASOURCE                                           0x00000001")
+cpp_quote("#define MF_RESOLUTION_BYTESTREAM                                            0x00000002")
+cpp_quote("#define MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE 0x00000010")
+cpp_quote("#define MF_RESOLUTION_KEEP_BYTE_STREAM_ALIVE_ON_FAIL                        0x00000020")
+cpp_quote("#define MF_RESOLUTION_READ                                                  0x00010000")
+cpp_quote("#define MF_RESOLUTION_WRITE                                                 0x00020000")
+cpp_quote("#define MF_RESOLUTION_DISABLE_LOCAL_PLUGINS                                 0x00000040")
