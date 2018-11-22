@@ -203,9 +203,8 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 
         SetEvent(device->sleepev);
         if (device->thread) {
-            WaitForSingleObject(device->thread_finished, INFINITE);
+            WaitForSingleObject(device->thread, INFINITE);
             CloseHandle(device->thread);
-            CloseHandle(device->thread_finished);
         }
 
         EnterCriticalSection(&DSOUND_renderers_lock);
@@ -383,7 +382,6 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
 
     ZeroMemory(&device->volpan, sizeof(device->volpan));
 
-    device->thread_finished = CreateEventW(0, 0, 0, 0);
     device->thread = CreateThread(0, 0, DSOUND_mixthread, device, 0, 0);
     SetThreadPriority(device->thread, THREAD_PRIORITY_TIME_CRITICAL);
 

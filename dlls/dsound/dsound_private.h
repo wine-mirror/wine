@@ -106,7 +106,6 @@ struct DirectSoundDevice
     IAudioRenderClient *render;
 
     HANDLE sleepev, thread;
-    HANDLE thread_finished;
     struct list entry;
 };
 
