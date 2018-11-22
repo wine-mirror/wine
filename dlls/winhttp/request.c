@@ -1571,7 +1571,7 @@ static BOOL open_connection( request_t *request )
     BOOL is_secure = request->hdr.flags & WINHTTP_FLAG_SECURE;
     struct hostdata *host = NULL, *iter;
     netconn_t *netconn = NULL;
-    connect_t *connect;
+    struct connect *connect;
     WCHAR *addressW = NULL;
     INTERNET_PORT port;
     DWORD len;
@@ -1751,7 +1751,7 @@ static BOOL add_host_header( request_t *request, DWORD modifier )
     DWORD len;
     WCHAR *host;
     static const WCHAR fmt[] = {'%','s',':','%','u',0};
-    connect_t *connect = request->connect;
+    struct connect *connect = request->connect;
     INTERNET_PORT port;
 
     port = connect->hostport ? connect->hostport : (request->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
@@ -2175,7 +2175,7 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     static const WCHAR length_fmt[] = {'%','l','d',0};
 
     BOOL ret = FALSE;
-    connect_t *connect = request->connect;
+    struct connect *connect = request->connect;
     struct session *session = connect->session;
     char *wire_req;
     int bytes_sent;
@@ -2623,7 +2623,7 @@ static BOOL handle_redirect( request_t *request, DWORD status )
     BOOL ret = FALSE;
     DWORD len, len_loc;
     URL_COMPONENTS uc;
-    connect_t *connect = request->connect;
+    struct connect *connect = request->connect;
     INTERNET_PORT port;
     WCHAR *hostname = NULL, *location;
     int index;

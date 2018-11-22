@@ -97,19 +97,19 @@ struct session
     DWORD secure_protocols;
 };
 
-typedef struct
+struct connect
 {
     struct object_header hdr;
     struct session *session;
-    LPWSTR hostname;    /* final destination of the request */
-    LPWSTR servername;  /* name of the server we directly connect to */
-    LPWSTR username;
-    LPWSTR password;
+    WCHAR *hostname;    /* final destination of the request */
+    WCHAR *servername;  /* name of the server we directly connect to */
+    WCHAR *username;
+    WCHAR *password;
     INTERNET_PORT hostport;
     INTERNET_PORT serverport;
     struct sockaddr_storage sockaddr;
     BOOL resolved;
-} connect_t;
+};
 
 typedef struct
 {
@@ -171,7 +171,7 @@ struct authinfo
 typedef struct
 {
     struct object_header hdr;
-    connect_t *connect;
+    struct connect *connect;
     LPWSTR verb;
     LPWSTR path;
     LPWSTR version;
@@ -287,7 +287,7 @@ BOOL set_cookies( request_t *, const WCHAR * ) DECLSPEC_HIDDEN;
 BOOL add_cookie_headers( request_t * ) DECLSPEC_HIDDEN;
 BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD ) DECLSPEC_HIDDEN;
 void destroy_cookies( struct session * ) DECLSPEC_HIDDEN;
-BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HIDDEN;
+BOOL set_server_for_hostname( struct connect *, const WCHAR *, INTERNET_PORT ) DECLSPEC_HIDDEN;
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 
 void release_host( struct hostdata *host ) DECLSPEC_HIDDEN;

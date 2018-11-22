@@ -322,7 +322,7 @@ end:
  */
 static void connect_destroy( struct object_header *hdr )
 {
-    connect_t *connect = (connect_t *)hdr;
+    struct connect *connect = (struct connect *)hdr;
 
     TRACE("%p\n", connect);
 
@@ -337,7 +337,7 @@ static void connect_destroy( struct object_header *hdr )
 
 static BOOL connect_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
-    connect_t *connect = (connect_t *)hdr;
+    struct connect *connect = (struct connect *)hdr;
 
     switch (option)
     {
@@ -478,7 +478,7 @@ static BOOL should_bypass_proxy(struct session *session, LPCWSTR server)
     return ret;
 }
 
-BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT port )
+BOOL set_server_for_hostname( struct connect *connect, const WCHAR *server, INTERNET_PORT port )
 {
     struct session *session = connect->session;
     BOOL ret = TRUE;
@@ -545,7 +545,7 @@ end:
  */
 HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PORT port, DWORD reserved )
 {
-    connect_t *connect;
+    struct connect *connect;
     struct session *session;
     HINTERNET hconnect = NULL;
 
@@ -567,7 +567,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
         set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
         return NULL;
     }
-    if (!(connect = heap_alloc_zero( sizeof(connect_t) )))
+    if (!(connect = heap_alloc_zero( sizeof(struct connect) )))
     {
         release_object( &session->hdr );
         return NULL;
@@ -987,7 +987,7 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
 
     case WINHTTP_OPTION_USERNAME:
     {
-        connect_t *connect = request->connect;
+        struct connect *connect = request->connect;
 
         heap_free( connect->username );
         if (!(connect->username = buffer_to_str( buffer, buflen ))) return FALSE;
@@ -995,7 +995,7 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
     }
     case WINHTTP_OPTION_PASSWORD:
     {
-        connect_t *connect = request->connect;
+        struct connect *connect = request->connect;
 
         heap_free( connect->password );
         if (!(connect->password = buffer_to_str( buffer, buflen ))) return FALSE;
@@ -1110,7 +1110,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
                                      LPCWSTR referrer, LPCWSTR *types, DWORD flags )
 {
     request_t *request;
-    connect_t *connect;
+    struct connect *connect;
     HINTERNET hrequest = NULL;
 
     TRACE("%p, %s, %s, %s, %s, %p, 0x%08x\n", hconnect, debugstr_w(verb), debugstr_w(object),
@@ -1123,7 +1123,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
         for (iter = types; *iter; iter++) TRACE("    %s\n", debugstr_w(*iter));
     }
 
-    if (!(connect = (connect_t *)grab_object( hconnect )))
+    if (!(connect = (struct connect *)grab_object( hconnect )))
     {
         set_last_error( ERROR_INVALID_HANDLE );
         return NULL;
