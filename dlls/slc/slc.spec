@@ -16,7 +16,7 @@
 @ stub SLGetLicense
 @ stub SLGetLicenseFileId
 @ stub SLGetLicenseInformation
-@ stub SLGetLicensingStatusInformation
+@ stdcall SLGetLicensingStatusInformation(ptr ptr ptr wstr ptr ptr)
 @ stub SLGetPKeyId
 @ stub SLGetPKeyInformation
 @ stub SLGetPolicyInformation
