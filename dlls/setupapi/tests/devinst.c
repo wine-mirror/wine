@@ -30,6 +30,7 @@
 #include "setupapi.h"
 #include "cfgmgr32.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 static BOOL is_wow64;
@@ -48,7 +49,6 @@ static HKEY     (WINAPI *pSetupDiCreateDevRegKeyW)(HDEVINFO, PSP_DEVINFO_DATA, D
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoW)(HDEVINFO, PCWSTR, GUID *, PCWSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailA)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
-static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailW)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_W, DWORD, PDWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiRegisterDeviceInfo)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
 static HDEVINFO (WINAPI *pSetupDiGetClassDevsA)(const GUID *, LPCSTR, HWND, DWORD);
 static HDEVINFO (WINAPI *pSetupDiGetClassDevsW)(const GUID *, LPCWSTR, HWND, DWORD);
@@ -78,7 +78,6 @@ static void init_function_pointers(void)
     pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
     pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
     pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
-    pSetupDiGetDeviceInterfaceDetailW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailW");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
     pSetupDiOpenDevRegKey = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenDevRegKey");
     pSetupDiCreateDevRegKeyW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDevRegKeyW");
@@ -735,7 +734,7 @@ todo_wine
     ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
 }
 
-static void testGetDeviceInterfaceDetail(void)
+static void test_device_iface_detail(void)
 {
     static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -747,112 +746,81 @@ static void testGetDeviceInterfaceDetail(void)
      '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
-    BOOL ret;
+    static const char path[] = "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+    SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail;
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    DWORD size = 0, expectedsize;
     HDEVINFO set;
+    BOOL ret;
 
-    if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiGetDeviceInterfaceDetailA)
-    {
-        win_skip("SetupDiCreateDeviceInterfaceA and/or SetupDiGetDeviceInterfaceDetailA are not available\n");
-        return;
-    }
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceInterfaceDetailA(NULL, NULL, NULL, 0, NULL, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
-    if (set)
-    {
-        SP_DEVINFO_DATA devInfo = { sizeof(devInfo), { 0 } };
-        SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData),
-            { 0 } };
-        DWORD size = 0;
+    ret = SetupDiGetDeviceInterfaceDetailA(NULL, NULL, NULL, 0, NULL, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInterfaceDetailA(set, NULL, NULL, 0, NULL,
-                NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-        ret = pSetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid,
-                NULL, NULL, 0, &devInfo);
-        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0,
-                &interfaceData);
-        ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
-                0, NULL, NULL);
-        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-         "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
-                100, NULL, NULL);
-        ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
-         "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL,
-                0, &size, NULL);
-        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-         "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-        if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-        {
-            static const char path[] =
-             "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
-            static const char path_w2k[] =
-             "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\";
-            LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
-            SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail =
-                (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buf;
-            DWORD expectedsize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath) + sizeof(WCHAR)*(1 + strlen(path));
+    set = SetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
 
-            detail->cbSize = 0;
-            SetLastError(0xdeadbeef);
-            ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
-                    size, &size, NULL);
-            ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
-             "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
-            detail->cbSize = size;
-            SetLastError(0xdeadbeef);
-            ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
-                    size, &size, NULL);
-            ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
-             "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
-            detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
-            SetLastError(0xdeadbeef);
-            ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
-                    size, &size, NULL);
-            ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %d\n",
-                    GetLastError());
-            ok(!lstrcmpiA(path, detail->DevicePath) ||
-             !lstrcmpiA(path_w2k, detail->DevicePath), "Unexpected path %s\n",
-             detail->DevicePath);
-            /* Check SetupDiGetDeviceInterfaceDetailW */
-            ret = pSetupDiGetDeviceInterfaceDetailW(set, &interfaceData, NULL, 0, &size, NULL);
-            ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-             "Expected ERROR_INSUFFICIENT_BUFFER, got error code: %d\n", GetLastError());
-            ok(expectedsize == size ||
-             (expectedsize + sizeof(WCHAR)) == size /* W2K adds a backslash */,
-             "SetupDiGetDeviceInterfaceDetailW returned wrong reqsize, got %d\n",
-             size);
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, NULL, NULL, 0, NULL, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
 
-            HeapFree(GetProcessHeap(), 0, buf);
-        }
+    ret = SetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
 
-        ret = pSetupDiEnumDeviceInterfaces(set, &devInfo, &guid, 0, &interfaceData);
-        ok(ret, "SetupDiEnumDeviceInterfaces failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, NULL, 0, &iface);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
 
-        ret = pSetupDiRemoveDeviceInterface(set, &interfaceData);
-        todo_wine ok(ret, "SetupDiRemoveDeviceInterface failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, NULL, 0, NULL, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#x.\n", GetLastError());
 
-        ret = pSetupDiRemoveDevice(set, &devInfo);
-        todo_wine ok(ret, "got %u\n", GetLastError());
-        pSetupDiDestroyDeviceInfoList(set);
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, NULL, 100, NULL, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "Got unexpected error %#x.\n", GetLastError());
 
-        /* remove once Wine is fixed */
-        devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
-        devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, devclass);
-    }
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, NULL, 0, &size, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+
+    detail = heap_alloc(size);
+    expectedsize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath[strlen(path) + 1]);
+
+    detail->cbSize = 0;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, detail, size, &size, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+
+    detail->cbSize = size;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, detail, size, &size, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+
+    detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, detail, size, &size, NULL);
+    ok(ret, "Failed to get interface detail, error %#x.\n", GetLastError());
+    ok(!strcasecmp(path, detail->DevicePath), "Got unexpected path %s.\n", detail->DevicePath);
+
+    ret = SetupDiGetDeviceInterfaceDetailW(set, &iface, NULL, 0, &size, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+    ok(size == expectedsize, "Got unexpected size %d.\n", size);
+
+    heap_free(detail);
+    SetupDiDestroyDeviceInfoList(set);
+
+    /* remove once Wine is fixed */
+    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
+    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, devclass);
 }
 
 static void testDevRegKey(void)
@@ -1588,7 +1556,7 @@ START_TEST(devinst)
     test_get_device_instance_id();
     test_register_device_info();
     test_device_iface();
-    testGetDeviceInterfaceDetail();
+    test_device_iface_detail();
     testDevRegKey();
     testRegisterAndGetDetail();
     testDeviceRegistryPropertyA();
