@@ -62,6 +62,7 @@ static BOOL     (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 /* This is a unique guid for testing purposes */
 static GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+static GUID guid2 = {0x6a55b5a5, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 
 static void init_function_pointers(void)
 {
@@ -603,13 +604,48 @@ todo_wine
     devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
 }
 
+static void check_device_iface_(int line, HDEVINFO set, SP_DEVINFO_DATA *device,
+        const GUID *class, int index, DWORD flags, const char *path)
+{
+    char buffer[200];
+    SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buffer;
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    BOOL ret;
+
+    detail->cbSize = sizeof(*detail);
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiEnumDeviceInterfaces(set, device, class, index, &iface);
+    if (path)
+    {
+        ok_(__FILE__, line)(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
+        ok_(__FILE__, line)(IsEqualGUID(&iface.InterfaceClassGuid, class),
+                "Got unexpected class %s.\n", wine_dbgstr_guid(&iface.InterfaceClassGuid));
+todo_wine_if(flags & SPINT_REMOVED)
+        ok_(__FILE__, line)(iface.Flags == flags, "Got unexpected flags %#x.\n", iface.Flags);
+        ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, detail, sizeof(buffer), NULL, NULL);
+        ok_(__FILE__, line)(ret, "Failed to get interface detail, error %#x.\n", GetLastError());
+        ok_(__FILE__, line)(!strcasecmp(detail->DevicePath, path), "Got unexpected path %s.\n", detail->DevicePath);
+    }
+    else
+    {
+        ok_(__FILE__, line)(!ret, "Expected failure.\n");
+        ok_(__FILE__, line)(GetLastError() == ERROR_NO_MORE_ITEMS,
+                "Got unexpected error %#x.\n", GetLastError());
+    }
+}
+#define check_device_iface(a,b,c,d,e,f) check_device_iface_(__LINE__,a,b,c,d,e,f)
+
 static void test_device_iface(void)
 {
+    char buffer[200];
+    SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
     SP_DEVINFO_DATA device = {0};
     BOOL ret;
     HDEVINFO set;
-    DWORD i;
+
+    detail->cbSize = sizeof(*detail);
 
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInterfaceA(NULL, NULL, NULL, NULL, 0, NULL);
@@ -638,6 +674,8 @@ static void test_device_iface(void)
     ret = SetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
     ok(ret, "Failed to create device, error %#x.\n", GetLastError());
 
+    check_device_iface(set, &device, &guid, 0, 0, NULL);
+
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInterfaceA(set, &device, NULL, NULL, 0, NULL);
     ok(!ret, "Expected failure.\n");
@@ -646,31 +684,52 @@ static void test_device_iface(void)
     ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, NULL, 0, NULL);
     ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
 
+    check_device_iface(set, &device, &guid, 0, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}");
+    check_device_iface(set, &device, &guid, 1, 0, NULL);
+
     /* Creating the same interface a second time succeeds */
     ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, NULL, 0, NULL);
     ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
 
+    check_device_iface(set, &device, &guid, 0, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}");
+    check_device_iface(set, &device, &guid, 1, 0, NULL);
+
     ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, "Oogah", 0, NULL);
     ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
 
-    ret = SetupDiEnumDeviceInterfaces(set, &device, &guid, 0, &iface);
+    check_device_iface(set, &device, &guid, 0, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}");
+    check_device_iface(set, &device, &guid, 1, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}\\Oogah");
+    check_device_iface(set, &device, &guid, 2, 0, NULL);
+
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, "test", 0, &iface);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
+    ok(IsEqualGUID(&iface.InterfaceClassGuid, &guid), "Got unexpected class %s.\n",
+            wine_dbgstr_guid(&iface.InterfaceClassGuid));
+    ok(iface.Flags == 0, "Got unexpected flags %#x.\n", iface.Flags);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, detail, sizeof(buffer), NULL, NULL);
+    ok(ret, "Failed to get interface detail, error %#x.\n", GetLastError());
+    ok(!strcasecmp(detail->DevicePath, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}\\test"),
+            "Got unexpected path %s.\n", detail->DevicePath);
+
+    check_device_iface(set, &device, &guid, 0, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}");
+    check_device_iface(set, &device, &guid, 1, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}\\Oogah");
+    check_device_iface(set, &device, &guid, 2, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}\\test");
+    check_device_iface(set, &device, &guid, 3, 0, NULL);
+
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid2, NULL, 0, NULL);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
+
+    check_device_iface(set, &device, &guid2, 0, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A5-3F65-11DB-B704-0011955C2BDB}");
+    check_device_iface(set, &device, &guid2, 1, 0, NULL);
+
+    ret = SetupDiEnumDeviceInterfaces(set, &device, &guid2, 0, &iface);
     ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
-
-    i = 0;
-    while (SetupDiEnumDeviceInterfaces(set, &device, &guid, i, &iface))
-        i++;
-    ok(i == 2, "expected 2 interfaces, got %d\n", i);
-    ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
-
-    for (i = 0; i < 2; i++)
-    {
-        ret = SetupDiEnumDeviceInterfaces(set, &device, &guid, i, &iface);
-        ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
-
-        ret = SetupDiRemoveDeviceInterface(set, &iface);
+    ret = SetupDiRemoveDeviceInterface(set, &iface);
 todo_wine
-        ok(ret, "Failed to remove interface, error %#x.\n", GetLastError());
-    }
+    ok(ret, "Failed to remove interface, error %#x.\n", GetLastError());
+
+    check_device_iface(set, &device, &guid2, 0, SPINT_REMOVED, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A5-3F65-11DB-B704-0011955C2BDB}");
+    check_device_iface(set, &device, &guid2, 1, 0, NULL);
 
     ret = SetupDiDestroyDeviceInfoList(set);
     ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
