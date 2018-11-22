@@ -181,7 +181,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
 
     if (!url || !uc || uc->dwStructSize != sizeof(URL_COMPONENTS))
     {
-        set_last_error( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     if (!len) len = strlenW( url );
@@ -190,7 +190,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     {
         if ((err = escape_url( url, &len, &url_escaped )))
         {
-            set_last_error( err );
+            SetLastError( err );
             return FALSE;
         }
         url = url_escaped;
@@ -199,14 +199,14 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     {
         if (!(url_decoded = decode_url( url, &len )))
         {
-            set_last_error( ERROR_OUTOFMEMORY );
+            SetLastError( ERROR_OUTOFMEMORY );
             return FALSE;
         }
         url = url_decoded;
     }
     if (!(p = strchrW( url, ':' )))
     {
-        set_last_error( ERROR_WINHTTP_UNRECOGNIZED_SCHEME );
+        SetLastError( ERROR_WINHTTP_UNRECOGNIZED_SCHEME );
         return FALSE;
     }
     if (p - url == 4 && !strncmpiW( url, scheme_http, 4 )) scheme = INTERNET_SCHEME_HTTP;
@@ -307,7 +307,7 @@ exit:
     }
     heap_free( url_decoded );
     heap_free( url_escaped );
-    set_last_error( err );
+    SetLastError( err );
     return !err;
 }
 
@@ -372,7 +372,7 @@ static BOOL get_url_length( URL_COMPONENTS *uc, DWORD flags, DWORD *len )
     {
         if (uc->lpszPassword)
         {
-            set_last_error( ERROR_INVALID_PARAMETER );
+            SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
     }
@@ -412,7 +412,7 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
 
     if (!uc || uc->dwStructSize != sizeof(URL_COMPONENTS) || !required)
     {
-        set_last_error( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -421,12 +421,12 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
     if (*required < len)
     {
         *required = len + 1;
-        set_last_error( ERROR_INSUFFICIENT_BUFFER );
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
         return FALSE;
     }
     if (!url)
     {
-        set_last_error( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -497,7 +497,7 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
         {
             if (!escape_string( uc->lpszUrlPath, len, url, &len_escaped ))
             {
-                set_last_error( ERROR_INVALID_PARAMETER );
+                SetLastError( ERROR_INVALID_PARAMETER );
                 return FALSE;
             }
             url += len_escaped;
@@ -515,7 +515,7 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
         {
             if (!escape_string( uc->lpszExtraInfo, len, url, &len_escaped ))
             {
-                set_last_error( ERROR_INVALID_PARAMETER );
+                SetLastError( ERROR_INVALID_PARAMETER );
                 return FALSE;
             }
             url += len_escaped;
@@ -527,6 +527,6 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
         }
     }
     *url = 0;
-    set_last_error( ERROR_SUCCESS );
+    SetLastError( ERROR_SUCCESS );
     return TRUE;
 }

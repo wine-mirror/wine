@@ -265,8 +265,6 @@ void release_object( struct object_header * ) DECLSPEC_HIDDEN;
 HINTERNET alloc_handle( struct object_header * ) DECLSPEC_HIDDEN;
 BOOL free_handle( HINTERNET ) DECLSPEC_HIDDEN;
 
-void set_last_error( DWORD ) DECLSPEC_HIDDEN;
-DWORD get_last_error( void ) DECLSPEC_HIDDEN;
 void send_callback( struct object_header *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
 void close_connection( struct request * ) DECLSPEC_HIDDEN;
 

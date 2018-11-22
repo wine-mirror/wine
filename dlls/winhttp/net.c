@@ -225,7 +225,7 @@ struct netconn *netconn_create( struct hostdata *host, const struct sockaddr_sto
             FD_ZERO( &set );
             FD_SET( conn->socket, &set );
             if ((res = select( conn->socket + 1, NULL, &set, NULL, &timeval )) > 0) ret = TRUE;
-            else if (!res) set_last_error( ERROR_WINHTTP_TIMEOUT );
+            else if (!res) SetLastError( ERROR_WINHTTP_TIMEOUT );
         }
     }
 
@@ -233,7 +233,7 @@ struct netconn *netconn_create( struct hostdata *host, const struct sockaddr_sto
 
     if (!ret)
     {
-        WARN("unable to connect to host (%u)\n", get_last_error());
+        WARN("unable to connect to host (%u)\n", GetLastError());
         closesocket( conn->socket );
         heap_free( conn );
         return NULL;
@@ -378,7 +378,7 @@ BOOL netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD securi
         heap_free(conn->ssl_buf);
         conn->ssl_buf = NULL;
         DeleteSecurityContext(&ctx);
-        set_last_error(res ? res : ERROR_WINHTTP_SECURE_CHANNEL_ERROR);
+        SetLastError(res ? res : ERROR_WINHTTP_SECURE_CHANNEL_ERROR);
         return FALSE;
     }
 
@@ -690,7 +690,7 @@ BOOL netconn_resolve( WCHAR *hostname, INTERNET_PORT port, struct sockaddr_stora
 
     if (ret)
     {
-        set_last_error( ret );
+        SetLastError( ret );
         return FALSE;
     }
     return TRUE;
