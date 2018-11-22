@@ -608,7 +608,7 @@ end:
  */
 static void request_destroy( struct object_header *hdr )
 {
-    request_t *request = (request_t *)hdr;
+    struct request *request = (struct request *)hdr;
     unsigned int i, j;
 
     TRACE("%p\n", request);
@@ -706,7 +706,7 @@ static BOOL copy_sockaddr( const struct sockaddr *addr, SOCKADDR_STORAGE *addr_s
 
 static BOOL request_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
-    request_t *request = (request_t *)hdr;
+    struct request *request = (struct request *)hdr;
 
     switch (option)
     {
@@ -887,7 +887,7 @@ static WCHAR *buffer_to_str( WCHAR *buffer, DWORD buflen )
 
 static BOOL request_set_option( struct object_header *hdr, DWORD option, void *buffer, DWORD buflen )
 {
-    request_t *request = (request_t *)hdr;
+    struct request *request = (struct request *)hdr;
 
     switch (option)
     {
@@ -1057,7 +1057,7 @@ static const struct object_vtbl request_vtbl =
     request_set_option
 };
 
-static BOOL store_accept_types( request_t *request, const WCHAR **accept_types )
+static BOOL store_accept_types( struct request *request, const WCHAR **accept_types )
 {
     const WCHAR **types = accept_types;
     DWORD i;
@@ -1109,7 +1109,7 @@ static WCHAR *get_request_path( const WCHAR *object )
 HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR object, LPCWSTR version,
                                      LPCWSTR referrer, LPCWSTR *types, DWORD flags )
 {
-    request_t *request;
+    struct request *request;
     struct connect *connect;
     HINTERNET hrequest = NULL;
 
@@ -1134,7 +1134,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
         set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
         return NULL;
     }
-    if (!(request = heap_alloc_zero( sizeof(request_t) )))
+    if (!(request = heap_alloc_zero( sizeof(struct request) )))
     {
         release_object( &connect->hdr );
         return NULL;
@@ -2093,7 +2093,7 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
     {
     case WINHTTP_HANDLE_TYPE_REQUEST:
     {
-        request_t *request = (request_t *)hdr;
+        struct request *request = (struct request *)hdr;
         request->connect_timeout = connect;
 
         if (resolve < 0) resolve = 0;

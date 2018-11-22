@@ -75,7 +75,7 @@ void release_object( struct object_header *hdr )
     TRACE("object %p refcount = %d\n", hdr, refs);
     if (!refs)
     {
-        if (hdr->type == WINHTTP_HANDLE_TYPE_REQUEST) close_connection( (request_t *)hdr );
+        if (hdr->type == WINHTTP_HANDLE_TYPE_REQUEST) close_connection( (struct request *)hdr );
 
         send_callback( hdr, WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, &hdr->handle, sizeof(HINTERNET) );
 

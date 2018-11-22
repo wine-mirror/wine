@@ -260,7 +260,7 @@ static struct attr *parse_attr( const WCHAR *str, int *used )
     return attr;
 }
 
-BOOL set_cookies( request_t *request, const WCHAR *cookies )
+BOOL set_cookies( struct request *request, const WCHAR *cookies )
 {
     static const WCHAR pathW[] = {'p','a','t','h',0};
     static const WCHAR domainW[] = {'d','o','m','a','i','n',0};
@@ -321,7 +321,7 @@ end:
     return ret;
 }
 
-BOOL add_cookie_headers( request_t *request )
+BOOL add_cookie_headers( struct request *request )
 {
     struct list *domain_cursor;
     struct session *session = request->connect->session;

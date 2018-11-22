@@ -168,14 +168,14 @@ struct authinfo
     BOOL finished; /* finished authenticating */
 };
 
-typedef struct
+struct request
 {
     struct object_header hdr;
     struct connect *connect;
-    LPWSTR verb;
-    LPWSTR path;
-    LPWSTR version;
-    LPWSTR raw_headers;
+    WCHAR *verb;
+    WCHAR *path;
+    WCHAR *version;
+    WCHAR *raw_headers;
     void *optional;
     DWORD optional_len;
     struct netconn *netconn;
@@ -187,7 +187,7 @@ typedef struct
     int send_timeout;
     int receive_timeout;
     int receive_response_timeout;
-    LPWSTR status_text;
+    WCHAR *status_text;
     DWORD content_length; /* total number of bytes to be read */
     DWORD content_read;   /* bytes read so far */
     BOOL  read_chunked;   /* are we reading in chunked mode? */
@@ -212,12 +212,12 @@ typedef struct
         WCHAR *username;
         WCHAR *password;
     } creds[TARGET_MAX][SCHEME_MAX];
-} request_t;
+};
 
 struct task_header
 {
     struct list entry;
-    request_t *request;
+    struct request *request;
     void (*proc)( struct task_header * );
 };
 
@@ -268,7 +268,7 @@ BOOL free_handle( HINTERNET ) DECLSPEC_HIDDEN;
 void set_last_error( DWORD ) DECLSPEC_HIDDEN;
 DWORD get_last_error( void ) DECLSPEC_HIDDEN;
 void send_callback( struct object_header *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
-void close_connection( request_t * ) DECLSPEC_HIDDEN;
+void close_connection( struct request * ) DECLSPEC_HIDDEN;
 
 void netconn_close( struct netconn * ) DECLSPEC_HIDDEN;
 struct netconn *netconn_create( struct hostdata *, const struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
@@ -283,9 +283,9 @@ BOOL netconn_is_alive( struct netconn * ) DECLSPEC_HIDDEN;
 const void *netconn_get_certificate( struct netconn * ) DECLSPEC_HIDDEN;
 int netconn_get_cipher_strength( struct netconn * ) DECLSPEC_HIDDEN;
 
-BOOL set_cookies( request_t *, const WCHAR * ) DECLSPEC_HIDDEN;
-BOOL add_cookie_headers( request_t * ) DECLSPEC_HIDDEN;
-BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD ) DECLSPEC_HIDDEN;
+BOOL set_cookies( struct request *, const WCHAR * ) DECLSPEC_HIDDEN;
+BOOL add_cookie_headers( struct request * ) DECLSPEC_HIDDEN;
+BOOL add_request_headers( struct request *, const WCHAR *, DWORD, DWORD ) DECLSPEC_HIDDEN;
 void destroy_cookies( struct session * ) DECLSPEC_HIDDEN;
 BOOL set_server_for_hostname( struct connect *, const WCHAR *, INTERNET_PORT ) DECLSPEC_HIDDEN;
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
