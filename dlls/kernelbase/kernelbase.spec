@@ -1082,7 +1082,7 @@
 @ stdcall PathIsSameRootA(str str) shlwapi.PathIsSameRootA
 @ stdcall PathIsSameRootW(wstr wstr) shlwapi.PathIsSameRootW
 @ stdcall PathIsUNCA(str) shlwapi.PathIsUNCA
-# @ stub PathIsUNCEx
+@ stdcall PathIsUNCEx(wstr ptr)
 @ stdcall PathIsUNCServerA(str) shlwapi.PathIsUNCServerA
 @ stdcall PathIsUNCServerShareA(str) shlwapi.PathIsUNCServerShareA
 @ stdcall PathIsUNCServerShareW(wstr) shlwapi.PathIsUNCServerShareW

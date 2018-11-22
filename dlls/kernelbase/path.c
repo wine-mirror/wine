@@ -38,6 +38,12 @@ static SIZE_T strnlenW(const WCHAR *string, SIZE_T maxlen)
     return i;
 }
 
+static BOOL is_prefixed_unc(const WCHAR *string)
+{
+    static const WCHAR prefixed_unc[] = {'\\', '\\', '?', '\\', 'U', 'N', 'C', '\\'};
+    return !strncmpiW(string, prefixed_unc, ARRAY_SIZE(prefixed_unc));
+}
+
 HRESULT WINAPI PathCchAddBackslash(WCHAR *path, SIZE_T size)
 {
     return PathCchAddBackslashEx(path, size, NULL, NULL);
@@ -182,4 +188,19 @@ HRESULT WINAPI PathCchRenameExtension(WCHAR *path, SIZE_T size, const WCHAR *ext
 
     hr = PathCchAddExtension(path, size, extension);
     return FAILED(hr) ? hr : S_OK;
+}
+
+BOOL WINAPI PathIsUNCEx(const WCHAR *path, const WCHAR **server)
+{
+    const WCHAR *result = NULL;
+
+    TRACE("%s %p\n", wine_dbgstr_w(path), server);
+
+    if (is_prefixed_unc(path))
+        result = path + 8;
+    else if (path[0] == '\\' && path[1] == '\\' && path[2] != '?')
+        result = path + 2;
+
+    if (server) *server = result;
+    return result ? TRUE : FALSE;
 }

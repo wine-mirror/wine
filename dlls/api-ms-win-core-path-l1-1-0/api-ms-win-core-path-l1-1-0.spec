@@ -19,4 +19,4 @@
 @ stub PathCchSkipRoot
 @ stub PathCchStripPrefix
 @ stub PathCchStripToRoot
-@ stub PathIsUNCEx
+@ stdcall PathIsUNCEx(wstr ptr) kernelbase.PathIsUNCEx

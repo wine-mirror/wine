@@ -37,6 +37,7 @@ HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1,
 HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
 HRESULT (WINAPI *pPathCchRemoveExtension)(WCHAR *path, SIZE_T size);
 HRESULT (WINAPI *pPathCchRenameExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
+BOOL    (WINAPI *pPathIsUNCEx)(const WCHAR *path, const WCHAR **server);
 
 static const struct
 {
@@ -632,6 +633,75 @@ static void test_PathCchRenameExtension(void)
     }
 }
 
+struct isuncex_test
+{
+    const CHAR *path;
+    INT server_offset;
+    BOOL ret;
+};
+
+static const struct isuncex_test isuncex_tests[] =
+{
+    {"\\\\", 2, TRUE},
+    {"\\\\a\\", 2, TRUE},
+    {"\\\\.\\", 2, TRUE},
+    {"\\\\?\\UNC\\", 8, TRUE},
+    {"\\\\?\\UNC\\a", 8, TRUE},
+    {"\\\\?\\unc\\", 8, TRUE},
+    {"\\\\?\\unc\\a", 8, TRUE},
+
+    {"", 0, FALSE},
+    {"\\", 0, FALSE},
+    {"C:\\", 0, FALSE},
+    {"\\??\\", 0, FALSE},
+    {"\\\\?\\", 0, FALSE},
+    {"\\\\?\\UNC", 0, FALSE},
+    {"\\\\?\\C:", 0, FALSE},
+    {"\\\\?\\C:\\", 0, FALSE},
+    {"\\\\?\\C:\\a", 0, FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", 0, FALSE}
+};
+
+static void test_PathIsUNCEx(void)
+{
+    WCHAR pathW[MAX_PATH];
+    const WCHAR *server;
+    BOOL ret;
+    INT i;
+
+    if (!pPathIsUNCEx)
+    {
+        win_skip("PathIsUNCEx(() is not available.\n");
+        return;
+    }
+
+    /* No NULL check for path pointers on Windows */
+    if (0)
+    {
+        ret = pPathIsUNCEx(NULL, &server);
+        ok(ret == FALSE, "expect FALSE\n");
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, "C:\\", -1, pathW, ARRAY_SIZE(pathW));
+    ret = pPathIsUNCEx(pathW, NULL);
+    ok(ret == FALSE, "expect FALSE\n");
+
+    for (i = 0; i < ARRAY_SIZE(isuncex_tests); i++)
+    {
+        const struct isuncex_test *t = isuncex_tests + i;
+
+        MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
+        server = (const WCHAR *)0xdeadbeef;
+        ret = pPathIsUNCEx(pathW, &server);
+        ok(ret == t->ret, "path \"%s\" expect return %d, got %d\n", t->path, t->ret, ret);
+        if (ret)
+            ok(server == pathW + t->server_offset, "path \"%s\" expect server offset %d, got %ld\n", t->path,
+               t->server_offset, (INT_PTR)(server - pathW));
+        else
+            ok(!server, "expect server is null, got %p\n", server);
+    }
+}
+
 START_TEST(path)
 {
     HMODULE hmod = LoadLibraryA("kernelbase.dll");
@@ -643,6 +713,7 @@ START_TEST(path)
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
     pPathCchRemoveExtension = (void *)GetProcAddress(hmod, "PathCchRemoveExtension");
     pPathCchRenameExtension = (void *)GetProcAddress(hmod, "PathCchRenameExtension");
+    pPathIsUNCEx = (void *)GetProcAddress(hmod, "PathIsUNCEx");
 
     test_PathCchCombineEx();
     test_PathCchAddBackslash();
@@ -651,4 +722,5 @@ START_TEST(path)
     test_PathCchFindExtension();
     test_PathCchRemoveExtension();
     test_PathCchRenameExtension();
+    test_PathIsUNCEx();
 }
