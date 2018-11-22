@@ -32,5 +32,6 @@ HRESULT WINAPI PathCchCombineEx(WCHAR *out, SIZE_T size, const WCHAR *path1, con
 HRESULT WINAPI PathCchFindExtension(const WCHAR *path, SIZE_T size, const WCHAR **extension);
 HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size);
 HRESULT WINAPI PathCchRenameExtension(WCHAR *path, SIZE_T size, const WCHAR *extension);
+HRESULT WINAPI PathCchSkipRoot(const WCHAR *path, const WCHAR **root_end);
 HRESULT WINAPI PathCchStripPrefix(WCHAR *path, SIZE_T size);
 BOOL    WINAPI PathIsUNCEx(const WCHAR *path, const WCHAR **server);
