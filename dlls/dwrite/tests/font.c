@@ -1,7 +1,7 @@
 /*
  *    Font related tests
  *
- * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2018 Nikolay Sivov for CodeWeavers
  * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -121,6 +121,8 @@ static void _expect_ref_broken(IUnknown* obj, ULONG ref, ULONG brokenref, int li
     rc = IUnknown_Release(obj);
     ok_(__FILE__,line)(rc == ref || broken(rc == brokenref), "expected refcount %d, got %d\n", ref, rc);
 }
+
+static BOOL (WINAPI *pGetFontRealizationInfo)(HDC hdc, void *);
 
 static const WCHAR test_fontfile[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
@@ -3735,10 +3737,22 @@ static void *map_font_file(const WCHAR *filename, DWORD *file_size)
     return ptr;
 }
 
+struct font_realization_info
+{
+    DWORD size;
+    DWORD flags;
+    DWORD cache_num;
+    DWORD instance_id;
+    DWORD unk;
+    WORD  face_index;
+    WORD  simulations;
+};
+
 static void test_CreateFontFaceFromHdc(void)
 {
     IDWriteFontFileStream *stream, *stream2;
     void *font_data, *fragment_context;
+    struct font_realization_info info;
     const void *refkey, *fragment;
     IDWriteFontFileLoader *loader;
     DWORD data_size, num_fonts;
@@ -3748,10 +3762,10 @@ static void test_CreateFontFaceFromHdc(void)
     UINT64 size, writetime;
     IDWriteFontFile *file;
     HFONT hfont, oldhfont;
+    UINT32 count, dummy;
     LOGFONTW logfont;
     HANDLE resource;
     IUnknown *unk;
-    UINT32 count;
     LOGFONTA lf;
     WCHAR *path;
     HRESULT hr;
@@ -3760,6 +3774,8 @@ static void test_CreateFontFaceFromHdc(void)
     HDC hdc;
 
     factory = create_factory();
+
+    pGetFontRealizationInfo = (void *)GetProcAddress(GetModuleHandleA("gdi32"), "GetFontRealizationInfo");
 
     interop = NULL;
     hr = IDWriteFactory_GetGdiInterop(factory, &interop);
@@ -3789,7 +3805,23 @@ static void test_CreateFontFaceFromHdc(void)
 
     fontface = NULL;
     hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, hdc, &fontface);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create font face, hr %#x.\n", hr);
+
+    count = 1;
+    hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
+    ok(hr == S_OK, "Failed to get font files, hr %#x.\n", hr);
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "Failed to get file loader, hr %#x.\n", hr);
+
+    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteLocalFontFileLoader, (void **)&unk);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Vista */, "Expected local loader, hr %#x.\n", hr);
+    if (unk)
+        IUnknown_Release(unk);
+
+    IDWriteFontFileLoader_Release(loader);
+    IDWriteFontFile_Release(file);
+
     IDWriteFontFace_Release(fontface);
     DeleteObject(SelectObject(hdc, oldhfont));
 
@@ -3828,11 +3860,8 @@ static void test_CreateFontFaceFromHdc(void)
     oldhfont = SelectObject(hdc, hfont);
 
     hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, hdc, &fontface);
-todo_wine
     ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
 
-if (fontface)
-{
     count = 1;
     hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
     ok(hr == S_OK, "Failed to get font files, hr %#x.\n", hr);
@@ -3854,12 +3883,34 @@ if (fontface)
     ok(hr == S_OK, "Failed to get ref key, hr %#x.\n", hr);
     ok(count > 0, "Unexpected key length %u.\n", count);
 
+    if (pGetFontRealizationInfo)
+    {
+        info.size = sizeof(info);
+        ret = pGetFontRealizationInfo(hdc, &info);
+        ok(ret, "Failed to get realization info.\n");
+        ok(count == sizeof(info.instance_id), "Unexpected key size.\n");
+        ok(*(DWORD *)refkey == info.instance_id, "Unexpected stream key.\n");
+    }
+    else
+        win_skip("GetFontRealizationInfo() is not available.\n");
+
     hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, refkey, count, &stream);
     ok(hr == S_OK, "Failed to create file stream, hr %#x.\n", hr);
 
     hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, refkey, count, &stream2);
     ok(hr == S_OK, "Failed to create file stream, hr %#x.\n", hr);
     ok(stream2 != stream, "Unexpected stream instance.\n");
+    IDWriteFontFileStream_Release(stream2);
+
+    dummy = 1;
+    hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, &dummy, count, &stream2);
+    ok(hr == S_OK, "Failed to create file stream, hr %#x.\n", hr);
+
+    writetime = 1;
+    hr = IDWriteFontFileStream_GetLastWriteTime(stream2, &writetime);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(writetime == 1, "Unexpected write time.\n");
+
     IDWriteFontFileStream_Release(stream2);
 
     hr = IDWriteFontFileStream_GetFileSize(stream, &size);
@@ -3876,13 +3927,19 @@ if (fontface)
     ok(fragment == fragment_context, "Unexpected data pointer %p, context %p.\n", fragment, fragment_context);
     IDWriteFontFileStream_ReleaseFileFragment(stream, fragment_context);
 
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, 0, size + 1, &fragment_context);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, size - 1, size / 2, &fragment_context);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
     IDWriteFontFileStream_Release(stream);
 
     IDWriteFontFileLoader_Release(loader);
     IDWriteFontFile_Release(file);
 
     IDWriteFontFace_Release(fontface);
-}
+
     ret = RemoveFontMemResourceEx(resource);
     ok(ret, "Failed to remove memory resource font, %d.\n", GetLastError());
 
