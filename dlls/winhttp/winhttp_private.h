@@ -75,32 +75,32 @@ struct hostdata
     struct list connections;
 };
 
-typedef struct
+struct session
 {
     struct object_header hdr;
     CRITICAL_SECTION cs;
-    LPWSTR agent;
+    WCHAR *agent;
     DWORD access;
     int resolve_timeout;
     int connect_timeout;
     int send_timeout;
     int receive_timeout;
     int receive_response_timeout;
-    LPWSTR proxy_server;
-    LPWSTR proxy_bypass;
-    LPWSTR proxy_username;
-    LPWSTR proxy_password;
+    WCHAR *proxy_server;
+    WCHAR *proxy_bypass;
+    WCHAR *proxy_username;
+    WCHAR *proxy_password;
     struct list cookie_cache;
     HANDLE unload_event;
     CredHandle cred_handle;
     BOOL cred_handle_initialized;
     DWORD secure_protocols;
-} session_t;
+};
 
 typedef struct
 {
     struct object_header hdr;
-    session_t *session;
+    struct session *session;
     LPWSTR hostname;    /* final destination of the request */
     LPWSTR servername;  /* name of the server we directly connect to */
     LPWSTR username;
@@ -286,7 +286,7 @@ int netconn_get_cipher_strength( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL set_cookies( request_t *, const WCHAR * ) DECLSPEC_HIDDEN;
 BOOL add_cookie_headers( request_t * ) DECLSPEC_HIDDEN;
 BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD ) DECLSPEC_HIDDEN;
-void destroy_cookies( session_t * ) DECLSPEC_HIDDEN;
+void destroy_cookies( struct session * ) DECLSPEC_HIDDEN;
 BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HIDDEN;
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 

@@ -1538,7 +1538,7 @@ static DWORD map_secure_protocols( DWORD mask )
     return ret;
 }
 
-static BOOL ensure_cred_handle( session_t *session )
+static BOOL ensure_cred_handle( struct session *session )
 {
     SECURITY_STATUS status = SEC_E_OK;
 
@@ -2176,7 +2176,7 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
 
     BOOL ret = FALSE;
     connect_t *connect = request->connect;
-    session_t *session = connect->session;
+    struct session *session = connect->session;
     char *wire_req;
     int bytes_sent;
     DWORD len, i, flags;

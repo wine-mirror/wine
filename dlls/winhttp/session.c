@@ -88,7 +88,7 @@ BOOL WINAPI WinHttpCheckPlatform( void )
  */
 static void session_destroy( struct object_header *hdr )
 {
-    session_t *session = (session_t *)hdr;
+    struct session *session = (struct session *)hdr;
 
     TRACE("%p\n", session);
 
@@ -108,7 +108,7 @@ static void session_destroy( struct object_header *hdr )
 
 static BOOL session_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
-    session_t *session = (session_t *)hdr;
+    struct session *session = (struct session *)hdr;
 
     switch (option)
     {
@@ -159,7 +159,7 @@ static BOOL session_query_option( struct object_header *hdr, DWORD option, void 
 
 static BOOL session_set_option( struct object_header *hdr, DWORD option, void *buffer, DWORD buflen )
 {
-    session_t *session = (session_t *)hdr;
+    struct session *session = (struct session *)hdr;
 
     switch (option)
     {
@@ -258,12 +258,12 @@ static const struct object_vtbl session_vtbl =
  */
 HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWSTR bypass, DWORD flags )
 {
-    session_t *session;
+    struct session *session;
     HINTERNET handle = NULL;
 
     TRACE("%s, %u, %s, %s, 0x%08x\n", debugstr_w(agent), access, debugstr_w(proxy), debugstr_w(bypass), flags);
 
-    if (!(session = heap_alloc_zero( sizeof(session_t) ))) return NULL;
+    if (!(session = heap_alloc_zero( sizeof(struct session) ))) return NULL;
 
     session->hdr.type = WINHTTP_HANDLE_TYPE_SESSION;
     session->hdr.vtbl = &session_vtbl;
@@ -447,7 +447,7 @@ static BOOL domain_matches(LPCWSTR server, LPCWSTR domain)
 /* Matches INTERNET_MAX_HOST_NAME_LENGTH in wininet.h, also RFC 1035 */
 #define MAX_HOST_NAME_LENGTH 256
 
-static BOOL should_bypass_proxy(session_t *session, LPCWSTR server)
+static BOOL should_bypass_proxy(struct session *session, LPCWSTR server)
 {
     LPCWSTR ptr;
     BOOL ret = FALSE;
@@ -480,7 +480,7 @@ static BOOL should_bypass_proxy(session_t *session, LPCWSTR server)
 
 BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT port )
 {
-    session_t *session = connect->session;
+    struct session *session = connect->session;
     BOOL ret = TRUE;
 
     if (session->proxy_server && !should_bypass_proxy(session, server))
@@ -546,7 +546,7 @@ end:
 HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PORT port, DWORD reserved )
 {
     connect_t *connect;
-    session_t *session;
+    struct session *session;
     HINTERNET hconnect = NULL;
 
     TRACE("%p, %s, %u, %x\n", hsession, debugstr_w(server), port, reserved);
@@ -556,7 +556,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
         set_last_error( ERROR_INVALID_PARAMETER );
         return NULL;
     }
-    if (!(session = (session_t *)grab_object( hsession )))
+    if (!(session = (struct session *)grab_object( hsession )))
     {
         set_last_error( ERROR_INVALID_HANDLE );
         return NULL;
@@ -1003,7 +1003,7 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
     }
     case WINHTTP_OPTION_PROXY_USERNAME:
     {
-        session_t *session = request->connect->session;
+        struct session *session = request->connect->session;
 
         heap_free( session->proxy_username );
         if (!(session->proxy_username = buffer_to_str( buffer, buflen ))) return FALSE;
@@ -1011,7 +1011,7 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
     }
     case WINHTTP_OPTION_PROXY_PASSWORD:
     {
-        session_t *session = request->connect->session;
+        struct session *session = request->connect->session;
 
         heap_free( session->proxy_password );
         if (!(session->proxy_password = buffer_to_str( buffer, buflen ))) return FALSE;
@@ -1886,14 +1886,14 @@ BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTO
 {
     WCHAR *detected_pac_url = NULL;
     const WCHAR *pac_url;
-    session_t *session;
+    struct session *session;
     char *script;
     DWORD size;
     BOOL ret = FALSE;
 
     TRACE("%p, %s, %p, %p\n", hsession, debugstr_w(url), options, info);
 
-    if (!(session = (session_t *)grab_object( hsession )))
+    if (!(session = (struct session *)grab_object( hsession )))
     {
         set_last_error( ERROR_INVALID_HANDLE );
         return FALSE;
@@ -2114,7 +2114,7 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
     }
     case WINHTTP_HANDLE_TYPE_SESSION:
     {
-        session_t *session = (session_t *)hdr;
+        struct session *session = (struct session *)hdr;
         session->connect_timeout = connect;
 
         if (resolve < 0) resolve = 0;
