@@ -4459,10 +4459,9 @@ static void test_resource_access(void)
 
         hr = IDirect3DDevice9Ex_CreateVolumeTexture(device, 16, 16, 1, 1,
                 tests[i].usage, format, tests[i].pool, &texture, NULL);
-        todo_wine_if(hr == D3D_OK && tests[i].pool == D3DPOOL_MANAGED)
-            ok(hr == (!(tests[i].usage & ~D3DUSAGE_DYNAMIC) && tests[i].pool != D3DPOOL_MANAGED
-                    ? D3D_OK : D3DERR_INVALIDCALL),
-                    "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == (!(tests[i].usage & ~D3DUSAGE_DYNAMIC) && tests[i].pool != D3DPOOL_MANAGED
+                ? D3D_OK : D3DERR_INVALIDCALL),
+                "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (FAILED(hr))
             continue;
 
