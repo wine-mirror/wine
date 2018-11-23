@@ -1949,6 +1949,7 @@ static BOOL end_of_read_data( struct request *request )
 static BOOL read_data( struct request *request, void *buffer, DWORD size, DWORD *read, BOOL async )
 {
     int count, bytes_read = 0;
+    BOOL ret = TRUE;
 
     if (end_of_read_data( request )) goto done;
 
@@ -1956,7 +1957,7 @@ static BOOL read_data( struct request *request, void *buffer, DWORD size, DWORD 
     {
         if (!(count = get_available_data( request )))
         {
-            if (!refill_buffer( request, async )) goto done;
+            if (!(ret = refill_buffer( request, async ))) goto done;
             if (!(count = get_available_data( request ))) goto done;
         }
         count = min( count, size );
@@ -1968,15 +1969,25 @@ static BOOL read_data( struct request *request, void *buffer, DWORD size, DWORD 
         request->content_read += count;
         if (end_of_read_data( request )) goto done;
     }
-    if (request->read_chunked && !request->read_chunked_size) refill_buffer( request, async );
+    if (request->read_chunked && !request->read_chunked_size) ret = refill_buffer( request, async );
 
 done:
     TRACE( "retrieved %u bytes (%u/%u)\n", bytes_read, request->content_read, request->content_length );
+    if (async)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, bytes_read );
+        else
+        {
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_READ_DATA;
+            result.dwError  = GetLastError();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
 
-    if (async) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, bytes_read );
-    if (read) *read = bytes_read;
+    if (ret && read) *read = bytes_read;
     if (end_of_read_data( request )) finished_reading( request );
-    return TRUE;
+    return ret;
 }
 
 /* read any content returned by the server so that the connection can be reused */
@@ -2781,7 +2792,7 @@ static BOOL receive_response( struct request *request, BOOL async )
     }
 
     netconn_set_timeout( request->netconn, FALSE, request->receive_timeout );
-    if (request->content_length) refill_buffer( request, FALSE );
+    if (request->content_length) ret = refill_buffer( request, FALSE );
 
     if (async)
     {
@@ -2847,25 +2858,35 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
 static BOOL query_data_available( struct request *request, DWORD *available, BOOL async )
 {
     DWORD count = 0;
+    BOOL ret = TRUE;
 
     if (end_of_read_data( request )) goto done;
 
     count = get_available_data( request );
-    if (!request->read_chunked && request->netconn)
-        count += netconn_query_data_available( request->netconn );
+    if (!request->read_chunked && request->netconn) count += netconn_query_data_available( request->netconn );
     if (!count)
     {
-        refill_buffer( request, async );
+        if (!(ret = refill_buffer( request, async ))) goto done;
         count = get_available_data( request );
-        if (!request->read_chunked && request->netconn)
-            count += netconn_query_data_available( request->netconn );
+        if (!request->read_chunked && request->netconn) count += netconn_query_data_available( request->netconn );
     }
 
 done:
-    if (async) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &count, sizeof(count) );
     TRACE("%u bytes available\n", count);
-    if (available) *available = count;
-    return TRUE;
+    if (async)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &count, sizeof(count) );
+        else
+        {
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_QUERY_DATA_AVAILABLE;
+            result.dwError  = GetLastError();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
+
+    if (ret && available) *available = count;
+    return ret;
 }
 
 static void task_query_data_available( struct task_header *task )
