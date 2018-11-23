@@ -204,7 +204,7 @@ struct request
     struct authinfo *proxy_authinfo;
     HANDLE task_wait;
     HANDLE task_cancel;
-    HANDLE task_thread;
+    BOOL   task_proc_running;
     struct list task_queue;
     CRITICAL_SECTION task_cs;
     struct

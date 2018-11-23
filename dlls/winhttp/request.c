@@ -191,9 +191,9 @@ static struct task_header *dequeue_task( struct request *request )
     return task;
 }
 
-static DWORD CALLBACK task_proc( LPVOID param )
+static void CALLBACK task_proc( TP_CALLBACK_INSTANCE *instance, void *ctx )
 {
-    struct request *request = param;
+    struct request *request = ctx;
     HANDLE handles[2];
 
     handles[0] = request->task_wait;
@@ -221,21 +221,20 @@ static DWORD CALLBACK task_proc( LPVOID param )
             request->task_cs.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection( &request->task_cs );
             request->hdr.vtbl->destroy( &request->hdr );
-            return 0;
+            return;
 
         default:
             ERR("wait failed %u (%u)\n", err, GetLastError());
             break;
         }
     }
-    return 0;
 }
 
 static BOOL queue_task( struct task_header *task )
 {
     struct request *request = task->request;
 
-    if (!request->task_thread)
+    if (!request->task_wait)
     {
         if (!(request->task_wait = CreateEventW( NULL, FALSE, FALSE, NULL ))) return FALSE;
         if (!(request->task_cancel = CreateEventW( NULL, FALSE, FALSE, NULL )))
@@ -244,7 +243,7 @@ static BOOL queue_task( struct task_header *task )
             request->task_wait = NULL;
             return FALSE;
         }
-        if (!(request->task_thread = CreateThread( NULL, 0, task_proc, request, 0, NULL )))
+        if (!TrySubmitThreadpoolCallback( task_proc, request, NULL ))
         {
             CloseHandle( request->task_wait );
             request->task_wait = NULL;
@@ -252,6 +251,7 @@ static BOOL queue_task( struct task_header *task )
             request->task_cancel = NULL;
             return FALSE;
         }
+        request->task_proc_running = TRUE;
         InitializeCriticalSection( &request->task_cs );
         request->task_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": request.task_cs");
     }

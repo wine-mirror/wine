@@ -601,14 +601,11 @@ static void request_destroy( struct object_header *hdr )
 
     TRACE("%p\n", request);
 
-    if (request->task_thread)
+    if (request->task_proc_running)
     {
-        /* Signal to the task proc to quit.  It will call
-           this again when it does. */
-        HANDLE thread = request->task_thread;
-        request->task_thread = 0;
+        /* Signal to the task proc to quit. It will call this again when it does. */
+        request->task_proc_running = FALSE;
         SetEvent( request->task_cancel );
-        CloseHandle( thread );
         return;
     }
     release_object( &request->connect->hdr );
