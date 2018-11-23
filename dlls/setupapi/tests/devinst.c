@@ -33,20 +33,12 @@
 #include "wine/heap.h"
 #include "wine/test.h"
 
-static BOOL is_wow64;
-
 /* function pointers */
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static BOOL     (WINAPI *pSetupDiGetINFClassA)(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
-static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
-static BOOL     (WINAPI *pSetupDiCreateDeviceInfoW)(HDEVINFO, PCWSTR, GUID *, PCWSTR, HWND, DWORD, PSP_DEVINFO_DATA);
-static HDEVINFO (WINAPI *pSetupDiGetClassDevsW)(const GUID *, LPCWSTR, HWND, DWORD);
-static BOOL     (WINAPI *pSetupDiSetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
-static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
-static BOOL     (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 /* This is a unique guid for testing purposes */
 static GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
@@ -55,19 +47,12 @@ static GUID guid2 = {0x6a55b5a5, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,
 static void init_function_pointers(void)
 {
     HMODULE hSetupAPI = GetModuleHandleA("setupapi.dll");
-    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
 
-    pSetupDiCreateDeviceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoA");
-    pSetupDiCreateDeviceInfoW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoW");
     pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
     pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
-    pSetupDiGetClassDevsW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsW");
     pSetupDiGetINFClassA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetINFClassA");
-    pSetupDiSetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiSetDeviceRegistryPropertyW");
-    pSetupDiGetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyW");
-    pIsWow64Process = (void *)GetProcAddress(hKernel32, "IsWow64Process");
 }
 
 static LSTATUS devinst_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
@@ -1061,16 +1046,13 @@ todo_wine
     }
 }
 
-static void testDeviceRegistryPropertyW(void)
+static void test_registry_property_w(void)
 {
-    HDEVINFO set;
-    SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
-    WCHAR devName[] = {'L','E','G','A','C','Y','_','B','O','G','U','S',0};
-    WCHAR friendlyName[] = {'B','o','g','u','s',0};
+    WCHAR friendly_name[] = {'B','o','g','u','s',0};
+    SP_DEVINFO_DATA device = {sizeof(device)};
     WCHAR buf[6] = {0};
-    DWORD buflen = 6 * sizeof(WCHAR);
-    DWORD size;
-    DWORD regType;
+    DWORD size, type;
+    HDEVINFO set;
     BOOL ret;
     LONG res;
     HKEY key;
@@ -1079,89 +1061,94 @@ static void testDeviceRegistryPropertyW(void)
      'E','n','u','m','\\','R','o','o','t','\\',
      'L','E','G','A','C','Y','_','B','O','G','U','S',0};
 
+    set = SetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to get device list, error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL, DICD_GENERATE_ID, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    set = pSetupDiGetClassDevsW(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
-    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsW failed: %08x\n",
-     GetLastError());
+    ret = SetupDiSetDeviceRegistryPropertyW(NULL, NULL, -1, NULL, 0);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiCreateDeviceInfoW(set, devName, &guid, NULL, NULL,
-     DICD_GENERATE_ID, &devInfo);
-    ok(ret, "SetupDiCreateDeviceInfoW failed: %08x\n", GetLastError());
+    ret = SetupDiSetDeviceRegistryPropertyW(set, NULL, -1, NULL, 0);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiSetDeviceRegistryPropertyW(NULL, NULL, -1, NULL, 0);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    ret = pSetupDiSetDeviceRegistryPropertyW(set, NULL, -1, NULL, 0);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    ret = pSetupDiSetDeviceRegistryPropertyW(set, &devInfo, -1, NULL, 0);
+    ret = SetupDiSetDeviceRegistryPropertyW(set, &device, -1, NULL, 0);
+    ok(!ret, "Expected failure.\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_REG_PROPERTY, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiSetDeviceRegistryPropertyW(set, &device, SPDRP_FRIENDLYNAME, NULL, 0);
     todo_wine
-    ok(!ret && GetLastError() == ERROR_INVALID_REG_PROPERTY,
-     "Expected ERROR_INVALID_REG_PROPERTY, got %08x\n", GetLastError());
+    ok(!ret, "Expected failure.\n");
     /* GetLastError() returns nonsense in win2k3 */
-    ret = pSetupDiSetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
-     NULL, 0);
-    todo_wine
-    ok(!ret, "Expected failure, got %d\n", ret);
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiSetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
-     (PBYTE)friendlyName, buflen);
-    ok(ret, "SetupDiSetDeviceRegistryPropertyW failed: %08x\n", GetLastError());
+    ret = SetupDiSetDeviceRegistryPropertyW(set, &device, SPDRP_FRIENDLYNAME, (BYTE *)friendly_name, sizeof(friendly_name));
+    ok(ret, "Failed to set property, error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceRegistryPropertyW(NULL, NULL, -1, NULL, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
+    ret = SetupDiGetDeviceRegistryPropertyW(NULL, NULL, -1, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceRegistryPropertyW(set, NULL, -1, NULL, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    ret = SetupDiGetDeviceRegistryPropertyW(set, NULL, -1, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, -1, NULL, NULL, 0, NULL);
-    todo_wine
-    ok(!ret && GetLastError() == ERROR_INVALID_REG_PROPERTY,
-     "Expected ERROR_INVALID_REG_PROPERTY, got %08x\n", GetLastError());
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, -1, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_REG_PROPERTY, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_FRIENDLYNAME, NULL, NULL, sizeof(buf), NULL);
+    ok(!ret, "Expected failure.\n");
     /* GetLastError() returns nonsense in win2k3 */
-    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
-     NULL, NULL, buflen, NULL);
-    ok(!ret, "Expected failure, got %d\n", ret);
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
-     NULL, NULL, 0, &size);
-    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-     "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
-    ok(buflen == size, "Unexpected size: %d\n", size);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_FRIENDLYNAME, NULL, NULL, 0, &size);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+    ok(size == sizeof(friendly_name), "Got unexpected size %d.\n", size);
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
-     NULL, (PBYTE)buf, buflen, NULL);
-    ok(ret, "SetupDiGetDeviceRegistryPropertyW failed: %08x\n", GetLastError());
-    ok(!lstrcmpiW(friendlyName, buf), "Unexpected property\n");
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_FRIENDLYNAME, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get property, error %#x.\n", GetLastError());
+    ok(!lstrcmpW(buf, friendly_name), "Got unexpected property %s.\n", wine_dbgstr_w(buf));
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
-     &regType, (PBYTE)buf, buflen, NULL);
-    ok(ret, "SetupDiGetDeviceRegistryPropertyW failed: %08x\n", GetLastError());
-    ok(!lstrcmpiW(friendlyName, buf), "Unexpected value of property\n");
-    ok(regType == REG_SZ, "Unexpected type of property: %d\n", regType);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_FRIENDLYNAME, &type, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get property, error %#x.\n", GetLastError());
+    ok(!lstrcmpW(buf, friendly_name), "Got unexpected property %s.\n", wine_dbgstr_w(buf));
+    ok(type == REG_SZ, "Got unexpected type %d.\n", type);
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiSetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
-     NULL, 0);
-    ok(ret, "SetupDiSetDeviceRegistryPropertyW failed: %08x\n", GetLastError());
+    ret = SetupDiSetDeviceRegistryPropertyW(set, &device, SPDRP_FRIENDLYNAME, NULL, 0);
+    ok(ret, "Failed to set property, error %#x.\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
-     NULL, (PBYTE)buf, buflen, &size);
-    todo_wine
-    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
-    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_HARDWAREID,
-     NULL, NULL, 0, &size);
-    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
-    pSetupDiDestroyDeviceInfoList(set);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_FRIENDLYNAME, NULL, (BYTE *)buf, sizeof(buf), &size);
+todo_wine {
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "Got unexpected error %#x.\n", GetLastError());
+}
+
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_HARDWAREID, NULL, NULL, 0, &size);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "Got unexpected error %#x.\n", GetLastError());
+
+    SetupDiDestroyDeviceInfoList(set);
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
-    if(!is_wow64)
-        todo_wine ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
+todo_wine
+    ok(res == ERROR_FILE_NOT_FOUND, "Key should not exist.\n");
     /* FIXME: Remove when Wine is fixed */
     if (res == ERROR_SUCCESS)
     {
@@ -1433,9 +1420,6 @@ START_TEST(devinst)
     }
     RegCloseKey(hkey);
 
-    if (pIsWow64Process)
-        pIsWow64Process(GetCurrentProcess(), &is_wow64);
-
     if (pSetupDiCreateDeviceInfoListExW)
         test_SetupDiCreateDeviceInfoListEx();
     else
@@ -1455,7 +1439,7 @@ START_TEST(devinst)
     test_device_key();
     test_register_device_iface();
     test_registry_property_a();
-    testDeviceRegistryPropertyW();
+    test_registry_property_w();
     testSetupDiGetINFClassA();
     test_devnode();
     test_device_interface_key();
