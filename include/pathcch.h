@@ -31,6 +31,7 @@ HRESULT WINAPI PathCchAddExtension(WCHAR *path, SIZE_T size, const WCHAR *extens
 HRESULT WINAPI PathCchCombineEx(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 HRESULT WINAPI PathCchFindExtension(const WCHAR *path, SIZE_T size, const WCHAR **extension);
 BOOL    WINAPI PathCchIsRoot(const WCHAR *path);
+HRESULT WINAPI PathCchRemoveBackslashEx(WCHAR *path, SIZE_T path_size, WCHAR **path_end, SIZE_T *free_size);
 HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size);
 HRESULT WINAPI PathCchRenameExtension(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT WINAPI PathCchSkipRoot(const WCHAR *path, const WCHAR **root_end);

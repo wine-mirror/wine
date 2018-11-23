@@ -12,7 +12,7 @@
 @ stdcall PathCchFindExtension(wstr long ptr) kernelbase.PathCchFindExtension
 @ stdcall PathCchIsRoot(wstr) kernelbase.PathCchIsRoot
 @ stub PathCchRemoveBackslash
-@ stub PathCchRemoveBackslashEx
+@ stdcall PathCchRemoveBackslashEx(wstr long ptr ptr) kernelbase.PathCchRemoveBackslashEx
 @ stdcall PathCchRemoveExtension(wstr long) kernelbase.PathCchRemoveExtension
 @ stub PathCchRemoveFileSpec
 @ stdcall PathCchRenameExtension(wstr long wstr) kernelbase.PathCchRenameExtension

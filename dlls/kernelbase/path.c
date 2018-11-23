@@ -278,6 +278,45 @@ BOOL WINAPI PathCchIsRoot(const WCHAR *path)
         return FALSE;
 }
 
+HRESULT WINAPI PathCchRemoveBackslashEx(WCHAR *path, SIZE_T path_size, WCHAR **path_end, SIZE_T *free_size)
+{
+    const WCHAR *root_end;
+    SIZE_T path_length;
+
+    TRACE("%s %lu %p %p\n", debugstr_w(path), path_size, path_end, free_size);
+
+    if (!path_size || !path_end || !free_size)
+    {
+        if (path_end) *path_end = NULL;
+        if (free_size) *free_size = 0;
+        return E_INVALIDARG;
+    }
+
+    path_length = strnlenW(path, path_size);
+    if (path_length == path_size && !path[path_length]) return E_INVALIDARG;
+
+    root_end = get_root_end(path);
+    if (path_length > 0 && path[path_length - 1] == '\\')
+    {
+        *path_end = path + path_length - 1;
+        *free_size = path_size - path_length + 1;
+        /* If the last character is beyond end of root */
+        if (!root_end || path + path_length - 1 > root_end)
+        {
+            path[path_length - 1] = 0;
+            return S_OK;
+        }
+        else
+            return S_FALSE;
+    }
+    else
+    {
+        *path_end = path + path_length;
+        *free_size = path_size - path_length;
+        return S_FALSE;
+    }
+}
+
 HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size)
 {
     const WCHAR *extension;

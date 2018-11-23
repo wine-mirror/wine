@@ -36,6 +36,7 @@ HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *ex
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
 BOOL    (WINAPI *pPathCchIsRoot)(const WCHAR *path);
+HRESULT (WINAPI *pPathCchRemoveBackslashEx)(WCHAR *path, SIZE_T path_size, WCHAR **path_end, SIZE_T *free_size);
 HRESULT (WINAPI *pPathCchRemoveExtension)(WCHAR *path, SIZE_T size);
 HRESULT (WINAPI *pPathCchRenameExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT (WINAPI *pPathCchSkipRoot)(const WCHAR *path, const WCHAR **root_end);
@@ -541,6 +542,119 @@ static void test_PathCchIsRoot(void)
         MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
         ret = pPathCchIsRoot(pathW);
         ok(ret == t->ret, "path %s expect return %d, got %d\n", t->path, t->ret, ret);
+    }
+}
+
+struct removebackslashex_test
+{
+    const CHAR *path_in;
+    const CHAR *path_out;
+    int end_offset;
+    SIZE_T free_size;
+    HRESULT hr;
+};
+
+static const struct removebackslashex_test removebackslashex_tests [] =
+{
+    {"", "", 0, 1, S_FALSE},
+    {"C", "C", 1, 1, S_FALSE},
+    {"C\\", "C", 1, 2, S_OK},
+    {"C:", "C:", 2, 1, S_FALSE},
+    {"C:\\", "C:\\", 2, 2, S_FALSE},
+    {"C:\\\\", "C:\\", 3, 2, S_OK},
+    {"C:\\a\\", "C:\\a", 4, 2, S_OK},
+    {"C:\\a\\\\", "C:\\a\\", 5, 2, S_OK},
+    {"\\", "\\", 0, 2, S_FALSE},
+    {"\\\\", "\\\\", 1, 2, S_FALSE},
+    {"\\?\\", "\\?", 2, 2, S_OK},
+    {"\\?\\\\", "\\?\\", 3, 2, S_OK},
+    {"\\a\\", "\\a", 2, 2, S_OK},
+    {"\\a\\\\", "\\a\\", 3, 2, S_OK},
+    {"\\\\a\\", "\\\\a", 3, 2, S_OK},
+    {"\\\\a\\b\\", "\\\\a\\b", 5, 2, S_OK},
+    {"\\\\a\\\\", "\\\\a\\", 4, 2, S_OK},
+    {"\\\\?\\", "\\\\?", 3, 2, S_OK},
+    {"\\\\?\\\\", "\\\\?\\", 4, 2, S_OK},
+    {"\\\\?\\C:", "\\\\?\\C:", 6, 1, S_FALSE},
+    {"\\\\?\\C:\\", "\\\\?\\C:\\", 6, 2, S_FALSE},
+    {"\\?\\UNC\\", "\\?\\UNC", 6, 2, S_OK},
+    {"\\\\?\\UNC", "\\\\?\\UNC", 7, 1, S_FALSE},
+    {"\\\\?\\UNC\\", "\\\\?\\UNC\\", 7, 2, S_FALSE},
+    {"\\\\?\\UNC\\a", "\\\\?\\UNC\\a", 9, 1, S_FALSE},
+    {"\\\\?\\UNC\\a\\", "\\\\?\\UNC\\a", 9, 2, S_OK},
+    {"\\\\?\\UNC\\a\\b\\", "\\\\?\\UNC\\a\\b", 11, 2, S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", 48, 1, S_FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", 48, 2, S_FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", 50, 1, S_FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a\\",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", 50, 2, S_OK}
+};
+
+static void test_PathCchRemoveBackslashEx(void)
+{
+    WCHAR pathW[PATHCCH_MAX_CCH];
+    CHAR pathA[PATHCCH_MAX_CCH];
+    WCHAR *path_end;
+    SIZE_T path_size, free_size;
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchRemoveBackslashEx)
+    {
+        win_skip("PathCchRemoveBackslashEx() is not available.\n");
+        return;
+    }
+
+    /* No NULL check for path on Windows */
+    if (0)
+    {
+        hr = pPathCchRemoveBackslashEx(NULL, 0, &path_end, &path_size);
+        ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+    }
+
+    path_size = MultiByteToWideChar(CP_ACP, 0, "C:\\a\\", -1, pathW, ARRAY_SIZE(pathW));
+    hr = pPathCchRemoveBackslashEx(pathW, 0, &path_end, &path_size);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+
+    free_size = 0xdeadbeef;
+    hr = pPathCchRemoveBackslashEx(pathW, path_size, NULL, &free_size);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+    ok(free_size == 0, "expect %d, got %lu\n", 0, free_size);
+
+    path_end = (WCHAR *)0xdeadbeef;
+    hr = pPathCchRemoveBackslashEx(pathW, path_size, &path_end, NULL);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+    ok(path_end == NULL, "expect null, got %p\n", path_end);
+
+    hr = pPathCchRemoveBackslashEx(pathW, PATHCCH_MAX_CCH + 1, &path_end, &free_size);
+    ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
+
+    hr = pPathCchRemoveBackslashEx(pathW, PATHCCH_MAX_CCH, &path_end, &free_size);
+    ok(hr == S_FALSE, "expect hr %#x, got %#x\n", S_FALSE, hr);
+
+    /* Size < original path length + 1, don't read beyond size */
+    MultiByteToWideChar(CP_ACP, 0, "C:\\a", -1, pathW, ARRAY_SIZE(pathW));
+    hr = pPathCchRemoveBackslashEx(pathW, ARRAY_SIZE("C:\\a") - 1, &path_end, &free_size);
+    ok(hr == E_INVALIDARG, "expect result %#x, got %#x\n", E_INVALIDARG, hr);
+
+    for (i = 0; i < ARRAY_SIZE(removebackslashex_tests); i++)
+    {
+        const struct removebackslashex_test *t = removebackslashex_tests + i;
+        path_size = MultiByteToWideChar(CP_ACP, 0, t->path_in, -1, pathW, ARRAY_SIZE(pathW));
+        hr = pPathCchRemoveBackslashEx(pathW, path_size, &path_end, &free_size);
+        ok(hr == t->hr, "path %s expect result %#x, got %#x\n", t->path_in, t->hr, hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(path_end - pathW == t->end_offset, "path %s expect end offset %d, got %ld\n", t->path_in, t->end_offset,
+               (INT_PTR)(path_end - pathW));
+            ok(free_size == t->free_size, "path %s expect free size %lu, got %lu\n", t->path_in, t->free_size, free_size);
+            WideCharToMultiByte(CP_ACP, 0, pathW, -1, pathA, ARRAY_SIZE(pathA), NULL, NULL);
+            ok(!lstrcmpA(pathA, t->path_out), "path %s expect output path %s, got %s\n", t->path_in, t->path_out,
+               pathA);
+        }
     }
 }
 
@@ -1107,6 +1221,7 @@ START_TEST(path)
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
     pPathCchIsRoot = (void *)GetProcAddress(hmod, "PathCchIsRoot");
+    pPathCchRemoveBackslashEx = (void *)GetProcAddress(hmod, "PathCchRemoveBackslashEx");
     pPathCchRemoveExtension = (void *)GetProcAddress(hmod, "PathCchRemoveExtension");
     pPathCchRenameExtension = (void *)GetProcAddress(hmod, "PathCchRenameExtension");
     pPathCchSkipRoot = (void *)GetProcAddress(hmod, "PathCchSkipRoot");
@@ -1120,6 +1235,7 @@ START_TEST(path)
     test_PathCchAddExtension();
     test_PathCchFindExtension();
     test_PathCchIsRoot();
+    test_PathCchRemoveBackslashEx();
     test_PathCchRemoveExtension();
     test_PathCchRenameExtension();
     test_PathCchSkipRoot();
