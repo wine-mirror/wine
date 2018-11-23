@@ -11736,6 +11736,194 @@ static void test_instance_id(void)
     release_test_context(&test_context);
 }
 
+static void test_vertex_id(void)
+{
+    static const DWORD vs_code[] =
+    {
+#if 0
+        uint4 main(uint id : ID, uint instance_id : SV_InstanceID, uint vertex_id : SV_VertexID) : OUTPUT
+        {
+            return uint4(id, instance_id, vertex_id, 0);
+        }
+#endif
+        0x43425844, 0x5625197b, 0x588ccf8f, 0x48694905, 0x961d19ca, 0x00000001, 0x00000170, 0x00000003,
+        0x0000002c, 0x000000a4, 0x000000d4, 0x4e475349, 0x00000070, 0x00000003, 0x00000008, 0x00000050,
+        0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000101, 0x00000053, 0x00000000, 0x00000008,
+        0x00000001, 0x00000001, 0x00000101, 0x00000061, 0x00000000, 0x00000006, 0x00000001, 0x00000002,
+        0x00000101, 0x53004449, 0x6e495f56, 0x6e617473, 0x44496563, 0x5f565300, 0x74726556, 0x44497865,
+        0xababab00, 0x4e47534f, 0x00000028, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
+        0x00000001, 0x00000000, 0x0000000f, 0x5054554f, 0xab005455, 0x52444853, 0x00000094, 0x00010040,
+        0x00000025, 0x0300005f, 0x00101012, 0x00000000, 0x04000060, 0x00101012, 0x00000001, 0x00000008,
+        0x04000060, 0x00101012, 0x00000002, 0x00000006, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
+        0x00102012, 0x00000000, 0x0010100a, 0x00000000, 0x05000036, 0x00102022, 0x00000000, 0x0010100a,
+        0x00000001, 0x05000036, 0x00102042, 0x00000000, 0x0010100a, 0x00000002, 0x05000036, 0x00102082,
+        0x00000000, 0x00004001, 0x00000000, 0x0100003e,
+    };
+    D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"ID", 0, DXGI_FORMAT_R32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const D3D11_SO_DECLARATION_ENTRY so_declaration[] =
+    {
+        {0, "OUTPUT", 0, 0, 4, 0},
+    };
+    static const unsigned int vertices[] =
+    {
+        0,
+        1,
+        2,
+
+        3,
+        4,
+        5,
+
+        6,
+        7,
+        8,
+
+        5,
+        6,
+        7,
+    };
+    static const unsigned int indices[] =
+    {
+        6, 7, 8,
+
+        0, 1, 2,
+    };
+    struct uvec4 expected_values[] =
+    {
+        {0, 0, 0},
+        {1, 0, 1},
+        {2, 0, 2},
+        {0, 1, 0},
+        {1, 1, 1},
+        {2, 1, 2},
+
+        {3, 0, 0},
+        {4, 0, 1},
+        {5, 0, 2},
+
+        {6, 0, 6},
+        {7, 0, 7},
+        {8, 0, 8},
+        {6, 1, 6},
+        {7, 1, 7},
+        {8, 1, 8},
+
+        {5, 0, 0},
+        {6, 0, 1},
+        {7, 0, 2},
+    };
+
+    BOOL found_values[ARRAY_SIZE(expected_values)] = {0};
+    BOOL used_values[ARRAY_SIZE(expected_values)] = {0};
+    struct d3d11_test_context test_context;
+    D3D11_QUERY_DATA_SO_STATISTICS data;
+    ID3D11Buffer *vb, *ib, *so_buffer;
+    ID3D11InputLayout *input_layout;
+    ID3D11DeviceContext *context;
+    D3D11_QUERY_DESC query_desc;
+    struct resource_readback rb;
+    unsigned int stride, offset;
+    ID3D11Asynchronous *query;
+    ID3D11GeometryShader *gs;
+    ID3D11VertexShader *vs;
+    ID3D11Device *device;
+    unsigned int count;
+    unsigned int i, j;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    query_desc.Query = D3D11_QUERY_SO_STATISTICS;
+    query_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == S_OK, "Failed to create input layout, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
+    ok(hr == S_OK, "Failed to create vertex shader, hr %#x.\n", hr);
+
+    stride = 16;
+    hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, vs_code, sizeof(vs_code),
+            so_declaration, ARRAY_SIZE(so_declaration), &stride, 1, 0, NULL, &gs);
+    ok(hr == S_OK, "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+
+    vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(vertices), vertices);
+    ib = create_buffer(device, D3D11_BIND_INDEX_BUFFER, sizeof(indices), indices);
+    so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, 1024, NULL);
+
+    ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
+    ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
+    ID3D11DeviceContext_IASetInputLayout(context, input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+    ID3D11DeviceContext_IASetIndexBuffer(context, ib, DXGI_FORMAT_R32_UINT, 0);
+    offset = 0;
+    stride = sizeof(*vertices);
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb, &stride, &offset);
+
+    offset = 0;
+    ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
+
+    ID3D11DeviceContext_Begin(context, query);
+
+    ID3D11DeviceContext_DrawInstanced(context, 3, 2, 0, 0);
+    ID3D11DeviceContext_DrawInstanced(context, 3, 1, 3, 16);
+
+    ID3D11DeviceContext_DrawIndexedInstanced(context, 3, 2, 0, 0, 0);
+    ID3D11DeviceContext_DrawIndexedInstanced(context, 3, 1, 3, 9, 7);
+
+    ID3D11DeviceContext_End(context, query);
+
+    get_query_data(context, query, &data, sizeof(data));
+    count = data.NumPrimitivesWritten;
+    ok(count == ARRAY_SIZE(expected_values), "Got unexpected value %u.\n", count);
+
+    count = min(count, ARRAY_SIZE(used_values));
+    get_buffer_readback(so_buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(expected_values); ++i)
+    {
+        for (j = 0; j < count; ++j)
+        {
+            if (!used_values[j] && compare_uvec4(get_readback_uvec4(&rb, j, 0), &expected_values[i]))
+            {
+                found_values[i] = TRUE;
+                used_values[j] = TRUE;
+                break;
+            }
+        }
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        const struct uvec4 *v = get_readback_uvec4(&rb, i, 0);
+        ok(used_values[i], "Found unexpected value {0x%08x, 0x%08x, 0x%08x, 0x%08x}.\n", v->x, v->y, v->z, v->w);
+    }
+    release_resource_readback(&rb);
+
+    for (i = 0; i < ARRAY_SIZE(expected_values); ++i)
+    {
+        ok(found_values[i], "Failed to find value {0x%08x, 0x%08x, 0x%08x, 0x%08x}.\n",
+                expected_values[i].x, expected_values[i].y, expected_values[i].z, expected_values[i].w);
+    }
+
+    ID3D11Asynchronous_Release(query);
+    ID3D11Buffer_Release(so_buffer);
+    ID3D11Buffer_Release(vb);
+    ID3D11Buffer_Release(ib);
+    ID3D11GeometryShader_Release(gs);
+    ID3D11VertexShader_Release(vs);
+    ID3D11InputLayout_Release(input_layout);
+    release_test_context(&test_context);
+}
+
 static void test_fragment_coords(void)
 {
     struct d3d11_test_context test_context;
@@ -29024,6 +29212,7 @@ START_TEST(d3d11)
     queue_test(test_clear_state);
     queue_test(test_il_append_aligned);
     queue_test(test_instance_id);
+    queue_test(test_vertex_id);
     queue_test(test_fragment_coords);
     queue_test(test_initial_texture_data);
     queue_test(test_update_subresource);
