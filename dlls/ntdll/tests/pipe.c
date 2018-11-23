@@ -2042,7 +2042,7 @@ static HANDLE connect_pipe_reader(HANDLE server)
 {
     HANDLE client;
 
-    client = CreateFileW(testpipe, GENERIC_READ, 0, 0, OPEN_EXISTING,
+    client = CreateFileW(testpipe, GENERIC_READ | FILE_WRITE_ATTRIBUTES, 0, 0, OPEN_EXISTING,
                          FILE_FLAG_OVERLAPPED, 0);
     ok(client != INVALID_HANDLE_VALUE, "can't open pipe: %u\n", GetLastError());
 
@@ -2146,6 +2146,19 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
         ok(pipe_info.ReadMode == 0, "ReadMode = %u\n", pipe_info.ReadMode);
         ok(pipe_info.CompletionMode == 0, "CompletionMode = %u\n", pipe_info.CompletionMode);
     }
+
+    pipe_info.ReadMode = 0;
+    pipe_info.CompletionMode = 0;
+    memset(&iosb, 0xcc, sizeof(iosb));
+    status = pNtSetInformationFile(pipe, &iosb, &pipe_info, sizeof(pipe_info), FilePipeInformation);
+    if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+        ok(status == STATUS_PIPE_DISCONNECTED,
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
+    else
+        ok(status == STATUS_SUCCESS,
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            is_server ? "server" : "client", state, status);
 }
 
 static void test_file_info(void)

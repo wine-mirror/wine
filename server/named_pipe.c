@@ -1427,7 +1427,11 @@ DECL_HANDLER(set_named_pipe_info)
         if (!pipe_end) return;
     }
 
-    if ((req->flags & ~(NAMED_PIPE_MESSAGE_STREAM_READ | NAMED_PIPE_NONBLOCKING_MODE)) ||
+    if (!pipe_end->pipe)
+    {
+        set_error( STATUS_PIPE_DISCONNECTED );
+    }
+    else if ((req->flags & ~(NAMED_PIPE_MESSAGE_STREAM_READ | NAMED_PIPE_NONBLOCKING_MODE)) ||
             ((req->flags & NAMED_PIPE_MESSAGE_STREAM_READ) && !(pipe_end->pipe->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE)))
     {
         set_error( STATUS_INVALID_PARAMETER );
