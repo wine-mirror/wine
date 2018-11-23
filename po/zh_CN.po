@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-10-25 11:43-0500\n"
+"PO-Revision-Date: 2018-11-21 10:10-0600\n"
 "Last-Translator: Mingcong Bai <jeffbai@aosc.xyz>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
@@ -2414,16 +2414,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "您已成功完成证书导出向导。"
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "选择证书存储"
+msgstr "选择证书"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "选择您要使用的证书存储"
+msgstr "选择您要使用的证书"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2936,20 +2932,16 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "注意：证书的私钥不可导出。"
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "预期用途："
+msgstr "预期用途"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "位置"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "选择证书存储"
+msgstr "选择证书"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
