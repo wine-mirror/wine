@@ -278,6 +278,16 @@ BOOL WINAPI PathCchIsRoot(const WCHAR *path)
         return FALSE;
 }
 
+HRESULT WINAPI PathCchRemoveBackslash(WCHAR *path, SIZE_T path_size)
+{
+    WCHAR *path_end;
+    SIZE_T free_size;
+
+    TRACE("%s %lu\n", debugstr_w(path), path_size);
+
+    return PathCchRemoveBackslashEx(path, path_size, &path_end, &free_size);
+}
+
 HRESULT WINAPI PathCchRemoveBackslashEx(WCHAR *path, SIZE_T path_size, WCHAR **path_end, SIZE_T *free_size)
 {
     const WCHAR *root_end;
