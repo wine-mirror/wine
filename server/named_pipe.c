@@ -1168,6 +1168,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     init_pipe_end( &server->pipe_end, pipe, pipe_flags, pipe->insize );
     server->pipe_end.state = FILE_PIPE_LISTENING_STATE;
     server->pipe_end.server_pid = get_process_id( current->process );
+    init_async_queue( &server->listen_q );
 
     list_add_head( &pipe->servers, &server->entry );
     if (!(server->pipe_end.fd = alloc_pseudo_fd( &pipe_server_fd_ops, &server->pipe_end.obj, options )))
@@ -1177,7 +1178,6 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     }
     allow_fd_caching( server->pipe_end.fd );
     set_fd_signaled( server->pipe_end.fd, 1 );
-    init_async_queue( &server->listen_q );
     return server;
 }
 
