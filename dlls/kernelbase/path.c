@@ -389,6 +389,17 @@ HRESULT WINAPI PathCchAddExtension(WCHAR *path, SIZE_T size, const WCHAR *extens
     return S_OK;
 }
 
+HRESULT WINAPI PathCchCanonicalize(WCHAR *out, SIZE_T size, const WCHAR *in)
+{
+    TRACE("%p %lu %s\n", out, size, wine_dbgstr_w(in));
+
+    /* Not X:\ and path > MAX_PATH - 4, return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE) */
+    if (strlenW(in) > MAX_PATH - 4 && !(isalphaW(in[0]) && in[1] == ':' && in[2] == '\\'))
+        return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
+
+    return PathCchCanonicalizeEx(out, size, in, PATHCCH_NONE);
+}
+
 HRESULT WINAPI PathCchCanonicalizeEx(WCHAR *out, SIZE_T size, const WCHAR *in, DWORD flags)
 {
     WCHAR *buffer;

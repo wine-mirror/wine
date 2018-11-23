@@ -1034,7 +1034,7 @@
 @ stdcall PathCchAddExtension(wstr long wstr)
 # @ stub PathCchAppend
 # @ stub PathCchAppendEx
-# @ stub PathCchCanonicalize
+@ stdcall PathCchCanonicalize(ptr long wstr)
 @ stdcall PathCchCanonicalizeEx(ptr long wstr long)
 # @ stub PathCchCombine
 # @ stub PathCchCombineEx

@@ -34,6 +34,7 @@ HRESULT (WINAPI *pPathAllocCanonicalize)(const WCHAR *path_in, DWORD flags, WCHA
 HRESULT (WINAPI *pPathCchAddBackslash)(WCHAR *out, SIZE_T size);
 HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr, SIZE_T *remaining);
 HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
+HRESULT (WINAPI *pPathCchCanonicalize)(WCHAR *out, SIZE_T size, const WCHAR *in);
 HRESULT (WINAPI *pPathCchCanonicalizeEx)(WCHAR *out, SIZE_T size, const WCHAR *in, DWORD flags);
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
@@ -665,6 +666,108 @@ static void test_PathCchAddExtension(void)
             ok(!lstrcmpA(pathA, t->expected), "path %s extension %s expect output path %s, got %s\n", t->path,
                t->extension, t->expected, pathA);
         }
+    }
+}
+
+static void test_PathCchCanonicalize(void)
+{
+    WCHAR path_inW[MAX_PATH], path_outW[MAX_PATH];
+    CHAR path_outA[MAX_PATH];
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchCanonicalize)
+    {
+        win_skip("PathCchCanonicalize() is not available.\n");
+        return;
+    }
+
+    /* No NULL check for path pointers on Windows */
+    if (0)
+    {
+        hr = pPathCchCanonicalize(NULL, ARRAY_SIZE(path_outW), path_inW);
+        ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+
+        /* MSDN says NULL path_in result in a backslash added to path_out, but the fact is that it would crash */
+        hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), NULL);
+        ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+    }
+
+    hr = pPathCchCanonicalize(path_outW, 0, path_inW);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+
+    /* Test path length */
+    for (i = 0; i < MAX_PATH - 3; i++) path_inW[i] = 'a';
+    path_inW[MAX_PATH - 3] = '\0';
+    memset(path_outW, 0, sizeof(path_outW));
+    hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), "expect hr %#x, got %#x %s\n",
+       HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), hr, wine_dbgstr_w(path_outW));
+    ok(lstrlenW(path_outW) == 0, "got %d\n", lstrlenW(path_outW));
+
+    path_inW[0] = 'C';
+    path_inW[1] = ':';
+    path_inW[2] = '\\';
+    hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
+    ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
+
+    path_inW[MAX_PATH - 4] = '\0';
+    hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
+    ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
+
+    /* Insufficient buffer size handling */
+    hr = pPathCchCanonicalize(path_outW, 1, path_inW);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "expect hr %#x, got %#x\n", STRSAFE_E_INSUFFICIENT_BUFFER, hr);
+
+    for (i = 0; i < ARRAY_SIZE(alloccanonicalize_tests); i++)
+    {
+        const struct alloccanonicalize_test *t = alloccanonicalize_tests + i;
+
+        /* Skip testing X: path input, this case is different compared to PathAllocCanonicalize */
+        /* Skip test cases where a flag is used */
+        if (!lstrcmpA("C:", t->path_in) || t->flags) continue;
+
+        MultiByteToWideChar(CP_ACP, 0, t->path_in, -1, path_inW, ARRAY_SIZE(path_inW));
+        hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
+        ok(hr == t->hr, "path %s expect result %#x, got %#x\n", t->path_in, t->hr, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, path_outW, -1, path_outA, ARRAY_SIZE(path_outA), NULL, NULL);
+            ok(!lstrcmpA(path_outA, t->path_out), "path \"%s\" expect output path \"%s\", got \"%s\"\n", t->path_in,
+               t->path_out, path_outA);
+        }
+    }
+
+    /* X: path input */
+    /* Fill a \ at the end of X: if there is enough space */
+    MultiByteToWideChar(CP_ACP, 0, "C:", -1, path_inW, ARRAY_SIZE(path_inW));
+    hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
+    ok(hr == S_OK, "path %s expect result %#x, got %#x\n", "C:", S_OK, hr);
+    if (SUCCEEDED(hr))
+    {
+        WideCharToMultiByte(CP_ACP, 0, path_outW, -1, path_outA, ARRAY_SIZE(path_outA), NULL, NULL);
+        ok(!lstrcmpA(path_outA, "C:\\"), "path \"%s\" expect output path \"%s\", got \"%s\"\n", "C:", "C:\\",
+           path_outA);
+    }
+
+    /* Don't fill a \ at the end of X: if there isn't enough space */
+    MultiByteToWideChar(CP_ACP, 0, "C:", -1, path_inW, ARRAY_SIZE(path_inW));
+    hr = pPathCchCanonicalize(path_outW, 3, path_inW);
+    ok(hr == S_OK, "path %s expect result %#x, got %#x\n", "C:", S_OK, hr);
+    if (SUCCEEDED(hr))
+    {
+        WideCharToMultiByte(CP_ACP, 0, path_outW, -1, path_outA, ARRAY_SIZE(path_outA), NULL, NULL);
+        ok(!lstrcmpA(path_outA, "C:"), "path \"%s\" expect output path \"%s\", got \"%s\"\n", "C:", "C:\\", path_outA);
+    }
+
+    /* Don't fill a \ at the end of X: if there is character following X: */
+    MultiByteToWideChar(CP_ACP, 0, "C:a", -1, path_inW, ARRAY_SIZE(path_inW));
+    hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
+    ok(hr == S_OK, "path %s expect result %#x, got %#x\n", "C:a", S_OK, hr);
+    if (SUCCEEDED(hr))
+    {
+        WideCharToMultiByte(CP_ACP, 0, path_outW, -1, path_outA, ARRAY_SIZE(path_outA), NULL, NULL);
+        ok(!lstrcmpA(path_outA, "C:a"), "path \"%s\" expect output path \"%s\", got \"%s\"\n", "C:a", "C:a", path_outA);
     }
 }
 
@@ -1836,6 +1939,7 @@ START_TEST(path)
     pPathCchAddBackslash = (void *)GetProcAddress(hmod, "PathCchAddBackslash");
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
+    pPathCchCanonicalize = (void *)GetProcAddress(hmod, "PathCchCanonicalize");
     pPathCchCanonicalizeEx = (void *)GetProcAddress(hmod, "PathCchCanonicalizeEx");
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
     pPathCchIsRoot = (void *)GetProcAddress(hmod, "PathCchIsRoot");
@@ -1854,6 +1958,7 @@ START_TEST(path)
     test_PathCchAddBackslash();
     test_PathCchAddBackslashEx();
     test_PathCchAddExtension();
+    test_PathCchCanonicalize();
     test_PathCchCanonicalizeEx();
     test_PathCchFindExtension();
     test_PathCchIsRoot();

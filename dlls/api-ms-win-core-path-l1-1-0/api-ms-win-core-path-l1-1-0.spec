@@ -5,7 +5,7 @@
 @ stdcall PathCchAddExtension(wstr long wstr) kernelbase.PathCchAddExtension
 @ stub PathCchAppend
 @ stub PathCchAppendEx
-@ stub PathCchCanonicalize
+@ stdcall PathCchCanonicalize(ptr long wstr) kernelbase.PathCchCanonicalize
 @ stdcall PathCchCanonicalizeEx(ptr long wstr long) kernelbase.PathCchCanonicalizeEx
 @ stub PathCchCombine
 @ stub PathCchCombineEx
