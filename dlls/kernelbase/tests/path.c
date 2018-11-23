@@ -39,6 +39,7 @@ BOOL    (WINAPI *pPathCchIsRoot)(const WCHAR *path);
 HRESULT (WINAPI *pPathCchRemoveBackslash)(WCHAR *path, SIZE_T path_size);
 HRESULT (WINAPI *pPathCchRemoveBackslashEx)(WCHAR *path, SIZE_T path_size, WCHAR **path_end, SIZE_T *free_size);
 HRESULT (WINAPI *pPathCchRemoveExtension)(WCHAR *path, SIZE_T size);
+HRESULT (WINAPI *pPathCchRemoveFileSpec)(WCHAR *path, SIZE_T size);
 HRESULT (WINAPI *pPathCchRenameExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT (WINAPI *pPathCchSkipRoot)(const WCHAR *path, const WCHAR **root_end);
 HRESULT (WINAPI *pPathCchStripPrefix)(WCHAR *path, SIZE_T size);
@@ -787,6 +788,129 @@ static void test_PathCchRemoveExtension(void)
     }
 }
 
+struct removefilespec_test
+{
+    const CHAR *path;
+    const CHAR *expected;
+    HRESULT hr;
+    SIZE_T size;
+};
+
+static const struct removefilespec_test removefilespec_tests[] =
+{
+    {"", "", S_FALSE},
+    {"a", "", S_OK},
+    {"a\\", "a", S_OK},
+    {"a\\b", "a", S_OK},
+
+    {"\\", "\\", S_FALSE},
+    {"\\a", "\\", S_OK},
+    {"\\a\\", "\\a", S_OK},
+    {"\\a\\b", "\\a", S_OK},
+
+    {"\\\\", "\\\\", S_FALSE},
+    {"\\\\a", "\\\\a", S_FALSE},
+    {"\\\\a\\", "\\\\a", S_OK},
+    {"\\\\a\\b", "\\\\a\\b", S_FALSE},
+    {"\\\\a\\b\\", "\\\\a\\b", S_OK},
+    {"\\\\a\\b\\c", "\\\\a\\b", S_OK},
+
+    {"C:", "C:", S_FALSE},
+    {"C:a", "C:", S_OK},
+    {"C:a\\", "C:a", S_OK},
+    {"C:a\\b", "C:a", S_OK},
+
+    {"C:\\", "C:\\", S_FALSE},
+    {"C:\\a", "C:\\", S_OK},
+    {"C:\\a\\", "C:\\a", S_OK},
+    {"C:\\a\\b", "C:\\a", S_OK},
+
+    {"\\\\?\\", "\\\\?", S_OK},
+    {"\\\\?\\a", "\\\\?", S_OK},
+    {"\\\\?\\a\\", "\\\\?\\a", S_OK},
+    {"\\\\?\\a\\b", "\\\\?\\a", S_OK},
+
+    {"\\\\?\\C:", "\\\\?\\C:", S_FALSE},
+    {"\\\\?\\C:a", "\\\\?\\C:", S_OK},
+    {"\\\\?\\C:a\\", "\\\\?\\C:a", S_OK},
+    {"\\\\?\\C:a\\b", "\\\\?\\C:a", S_OK},
+
+    {"\\\\?\\C:\\", "\\\\?\\C:\\", S_FALSE},
+    {"\\\\?\\C:\\a", "\\\\?\\C:\\", S_OK},
+    {"\\\\?\\C:\\a\\", "\\\\?\\C:\\a", S_OK},
+    {"\\\\?\\C:\\a\\b", "\\\\?\\C:\\a", S_OK},
+
+    {"\\\\?\\UNC\\", "\\\\?\\UNC\\", S_FALSE},
+    {"\\\\?\\UNC\\a", "\\\\?\\UNC\\a", S_FALSE},
+    {"\\\\?\\UNC\\a\\", "\\\\?\\UNC\\a", S_OK},
+    {"\\\\?\\UNC\\a\\b", "\\\\?\\UNC\\a\\b", S_FALSE},
+    {"\\\\?\\UNC\\a\\b\\", "\\\\?\\UNC\\a\\b", S_OK},
+    {"\\\\?\\UNC\\a\\b\\c", "\\\\?\\UNC\\a\\b", S_OK},
+
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", S_FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a\\",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a\\b",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a", S_OK},
+
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", S_FALSE},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a\\",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a\\b",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", S_OK},
+
+    /* Size tests */
+    {"C:\\a", NULL, E_INVALIDARG, PATHCCH_MAX_CCH + 1},
+    {"C:\\a", "C:\\", S_OK, PATHCCH_MAX_CCH},
+    /* Size < original path length + 1, read beyond size */
+    {"C:\\a", "C:\\", S_OK, ARRAY_SIZE("C:\\a") - 1},
+    /* Size < result path length + 1 */
+    {"C:\\a", NULL, E_INVALIDARG, ARRAY_SIZE("C:\\") - 1}
+};
+
+static void test_PathCchRemoveFileSpec(void)
+{
+    WCHAR pathW[PATHCCH_MAX_CCH] = {0};
+    CHAR pathA[PATHCCH_MAX_CCH];
+    SIZE_T size;
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchRemoveFileSpec)
+    {
+        win_skip("PathCchRemoveFileSpec() is not available.\n");
+        return;
+    }
+
+    /* Null arguments */
+    hr = pPathCchRemoveFileSpec(NULL, ARRAY_SIZE(pathW));
+    ok(hr == E_INVALIDARG, "expect %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchRemoveFileSpec(pathW, 0);
+    ok(hr == E_INVALIDARG, "expect %#x, got %#x\n", E_INVALIDARG, hr);
+
+    for (i = 0; i < ARRAY_SIZE(removefilespec_tests); i++)
+    {
+        const struct removefilespec_test *t = removefilespec_tests + i;
+
+        MultiByteToWideChar(CP_ACP, 0, t->path, -1, pathW, ARRAY_SIZE(pathW));
+        size = t->size ? t->size : ARRAY_SIZE(pathW);
+        hr = pPathCchRemoveFileSpec(pathW, size);
+        ok(hr == t->hr, "path %s expect result %#x, got %#x\n", t->path, t->hr, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, pathW, -1, pathA, ARRAY_SIZE(pathA), NULL, NULL);
+            ok(!lstrcmpA(pathA, t->expected), "path %s expect stripped path %s, got %s\n", t->path, t->expected, pathA);
+        }
+    }
+}
+
 struct renameextension_test
 {
     const CHAR *path;
@@ -1271,6 +1395,7 @@ START_TEST(path)
     pPathCchRemoveBackslash = (void *)GetProcAddress(hmod, "PathCchRemoveBackslash");
     pPathCchRemoveBackslashEx = (void *)GetProcAddress(hmod, "PathCchRemoveBackslashEx");
     pPathCchRemoveExtension = (void *)GetProcAddress(hmod, "PathCchRemoveExtension");
+    pPathCchRemoveFileSpec = (void *)GetProcAddress(hmod, "PathCchRemoveFileSpec");
     pPathCchRenameExtension = (void *)GetProcAddress(hmod, "PathCchRenameExtension");
     pPathCchSkipRoot = (void *)GetProcAddress(hmod, "PathCchSkipRoot");
     pPathCchStripPrefix = (void *)GetProcAddress(hmod, "PathCchStripPrefix");
@@ -1286,6 +1411,7 @@ START_TEST(path)
     test_PathCchRemoveBackslash();
     test_PathCchRemoveBackslashEx();
     test_PathCchRemoveExtension();
+    test_PathCchRemoveFileSpec();
     test_PathCchRenameExtension();
     test_PathCchSkipRoot();
     test_PathCchStripPrefix();

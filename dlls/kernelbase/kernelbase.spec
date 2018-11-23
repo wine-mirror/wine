@@ -1043,7 +1043,7 @@
 @ stdcall PathCchRemoveBackslash(wstr long)
 @ stdcall PathCchRemoveBackslashEx(wstr long ptr ptr)
 @ stdcall PathCchRemoveExtension(wstr long)
-# @ stub PathCchRemoveFileSpec
+@ stdcall PathCchRemoveFileSpec(wstr long)
 @ stdcall PathCchRenameExtension(wstr long wstr)
 @ stdcall PathCchSkipRoot(wstr ptr)
 @ stdcall PathCchStripPrefix(wstr long)

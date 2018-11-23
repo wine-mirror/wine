@@ -346,6 +346,43 @@ HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size)
     return next == extension ? S_FALSE : S_OK;
 }
 
+HRESULT WINAPI PathCchRemoveFileSpec(WCHAR *path, SIZE_T size)
+{
+    const WCHAR *root_end = NULL;
+    SIZE_T length;
+    WCHAR *last;
+
+    TRACE("%s %lu\n", wine_dbgstr_w(path), size);
+
+    if (!path || !size || size > PATHCCH_MAX_CCH) return E_INVALIDARG;
+
+    if (PathCchIsRoot(path)) return S_FALSE;
+
+    PathCchSkipRoot(path, &root_end);
+
+    /* The backslash at the end of UNC and \\* are not considered part of root in this case */
+    if (root_end && root_end > path && root_end[-1] == '\\'
+        && (is_prefixed_unc(path) || (path[0] == '\\' && path[1] == '\\' && path[2] != '?')))
+        root_end--;
+
+    length = strlenW(path);
+    last = path + length - 1;
+    while (last >= path && (!root_end || last >= root_end))
+    {
+        if (last - path >= size) return E_INVALIDARG;
+
+        if (*last == '\\')
+        {
+            *last-- = 0;
+            break;
+        }
+
+        *last-- = 0;
+    }
+
+    return last != path + length - 1 ? S_OK : S_FALSE;
+}
+
 HRESULT WINAPI PathCchRenameExtension(WCHAR *path, SIZE_T size, const WCHAR *extension)
 {
     HRESULT hr;

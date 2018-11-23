@@ -34,6 +34,7 @@ BOOL    WINAPI PathCchIsRoot(const WCHAR *path);
 HRESULT WINAPI PathCchRemoveBackslash(WCHAR *path, SIZE_T path_size);
 HRESULT WINAPI PathCchRemoveBackslashEx(WCHAR *path, SIZE_T path_size, WCHAR **path_end, SIZE_T *free_size);
 HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size);
+HRESULT WINAPI PathCchRemoveFileSpec(WCHAR *path, SIZE_T size);
 HRESULT WINAPI PathCchRenameExtension(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT WINAPI PathCchSkipRoot(const WCHAR *path, const WCHAR **root_end);
 HRESULT WINAPI PathCchStripPrefix(WCHAR *path, SIZE_T size);
