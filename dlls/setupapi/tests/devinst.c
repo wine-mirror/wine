@@ -37,24 +37,18 @@ static BOOL is_wow64;
 
 /* function pointers */
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
-static BOOL     (WINAPI *pSetupDiCreateDeviceInterfaceA)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
-static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiGetINFClassA)(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoW)(HDEVINFO, PCWSTR, GUID *, PCWSTR, HWND, DWORD, PSP_DEVINFO_DATA);
-static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailA)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
-static BOOL     (WINAPI *pSetupDiRegisterDeviceInfo)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
 static HDEVINFO (WINAPI *pSetupDiGetClassDevsA)(const GUID *, LPCSTR, HWND, DWORD);
 static HDEVINFO (WINAPI *pSetupDiGetClassDevsW)(const GUID *, LPCWSTR, HWND, DWORD);
 static BOOL     (WINAPI *pSetupDiSetDeviceRegistryPropertyA)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
 static BOOL     (WINAPI *pSetupDiSetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyA)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
-static BOOL     (WINAPI *pSetupDiRemoveDevice)(HDEVINFO, PSP_DEVINFO_DATA);
-static BOOL     (WINAPI *pSetupDiRemoveDeviceInterface)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 /* This is a unique guid for testing purposes */
@@ -69,13 +63,9 @@ static void init_function_pointers(void)
     pSetupDiCreateDeviceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoA");
     pSetupDiCreateDeviceInfoW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoW");
     pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
-    pSetupDiCreateDeviceInterfaceA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInterfaceA");
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
     pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
-    pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
-    pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
-    pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
     pSetupDiGetClassDevsA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsA");
     pSetupDiGetClassDevsW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsW");
     pSetupDiGetINFClassA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetINFClassA");
@@ -83,8 +73,6 @@ static void init_function_pointers(void)
     pSetupDiSetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiSetDeviceRegistryPropertyW");
     pSetupDiGetDeviceRegistryPropertyA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyA");
     pSetupDiGetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyW");
-    pSetupDiRemoveDeviceInterface = (void *)GetProcAddress(hSetupAPI, "SetupDiRemoveDeviceInterface");
-    pSetupDiRemoveDevice = (void *)GetProcAddress(hSetupAPI, "SetupDiRemoveDevice");
     pIsWow64Process = (void *)GetProcAddress(hKernel32, "IsWow64Process");
 }
 
@@ -929,104 +917,47 @@ todo_wine
     devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
 }
 
-static void testRegisterAndGetDetail(void)
+static void test_register_device_iface(void)
 {
-    static const WCHAR classKey[] = {'S','y','s','t','e','m','\\',
-     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-     'C','o','n','t','r','o','l','\\','C','l','a','s','s','\\',
-     '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
-     '1','1','d','b','-','b','7','0','4','-',
-     '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
     static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
      'E','n','u','m','\\','R','o','o','t','\\',
      'L','E','G','A','C','Y','_','B','O','G','U','S',0};
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)}, ret_iface = {sizeof(ret_iface)};
+    SP_DEVINFO_DATA device = {sizeof(device)};
     HDEVINFO set, set2;
     BOOL ret;
-    SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
-    SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData), { 0 } };
-    SP_DEVICE_INTERFACE_DATA interfaceData2 = { sizeof(interfaceData2), { 0 } };
-    DWORD dwSize = 0;
     HKEY key;
     LONG res;
 
-    if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiEnumDeviceInterfaces ||
-        !pSetupDiGetDeviceInterfaceDetailA)
-    {
-        win_skip("Needed functions are not available\n");
-        return;
-    }
-
-    SetLastError(0xdeadbeef);
-    set = pSetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_ALLCLASSES);
-    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsA failed: %08x\n",
-     GetLastError());
+    set = SetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_ALLCLASSES);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
-    ok(res != ERROR_SUCCESS, "Expected key to not exist\n");
-    RegCloseKey(key);
+    ok(res == ERROR_FILE_NOT_FOUND, "Key should not exist.\n");
 
-    SetLastError(0xdeadbeef);
-    ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, 0,
-     DICD_GENERATE_ID, &devInfo);
-    ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    ret = pSetupDiCreateDeviceInterfaceA(set, &devInfo, &guid, NULL, 0, &interfaceData);
-    ok(ret, "SetupDiCreateDeviceInterfaceA failed: %08x\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
-    ok(ret, "SetupDiRegisterDeviceInfo failed: %08x\n", GetLastError());
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, NULL, 0, &iface);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
+    ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
+    ok(ret, "Failed to register device, error %#x.\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    set2 = pSetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
-    ok(set2 != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsA failed: %08x\n",
-     GetLastError());
+    set2 = SetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
+    ok(set2 != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    ret = pSetupDiEnumDeviceInterfaces(set2, NULL, &guid, 0, &interfaceData2);
-    ok(ret, "SetupDiEnumDeviceInterfaces failed: %08x\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    ret = pSetupDiGetDeviceInterfaceDetailA(set2, &interfaceData2, NULL, 0, &dwSize, NULL);
-    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-     "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
-    if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-    {
-        static const char path[] =
-            "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
-        static const char path_w10[] =
-            "\\\\?\\root#legacy_bogus#0001#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
-        static const char path_w2k[] =
-            "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\";
-        PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail = NULL;
+    check_device_iface(set2, NULL, &guid, 0, 0, "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}");
+    check_device_iface(set2, NULL, &guid, 1, 0, NULL);
 
-        detail = HeapAlloc(GetProcessHeap(), 0, dwSize);
-        if (detail)
-        {
-            detail->cbSize = sizeof(*detail);
-            SetLastError(0xdeadbeef);
-            ret = pSetupDiGetDeviceInterfaceDetailA(set2, &interfaceData2,
-             detail, dwSize, &dwSize, NULL);
-            ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %08x\n", GetLastError());
-            ok(!lstrcmpiA(path, detail->DevicePath) ||
-               !lstrcmpiA(path_w10, detail->DevicePath) ||
-               !lstrcmpiA(path_w2k, detail->DevicePath),
-               "Unexpected path %s\n", detail->DevicePath);
-            HeapFree(GetProcessHeap(), 0, detail);
-        }
-    }
+    ret = SetupDiRemoveDevice(set, &device);
+todo_wine
+    ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
 
-    ret = pSetupDiRemoveDeviceInterface(set, &interfaceData);
-    todo_wine ok(ret, "SetupDiRemoveDeviceInterface failed: %08x\n", GetLastError());
-
-    ret = pSetupDiRemoveDevice(set, &devInfo);
-    todo_wine ok(ret, "got %u\n", GetLastError());
-
-    pSetupDiDestroyDeviceInfoList(set);
-    pSetupDiDestroyDeviceInfoList(set2);
+    SetupDiDestroyDeviceInfoList(set);
+    SetupDiDestroyDeviceInfoList(set2);
 
     /* remove once Wine is fixed */
     devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
-    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
 }
 
 static void testDeviceRegistryPropertyA(void)
@@ -1528,7 +1459,7 @@ START_TEST(devinst)
     test_device_iface();
     test_device_iface_detail();
     test_device_key();
-    testRegisterAndGetDetail();
+    test_register_device_iface();
     testDeviceRegistryPropertyA();
     testDeviceRegistryPropertyW();
     testSetupDiGetINFClassA();
