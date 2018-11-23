@@ -491,7 +491,13 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
 			       INT index, UINT action, BOOL ignoreFocus )
 {
     LB_ITEMDATA *item = NULL;
-    if (index < descr->nb_items) item = &descr->items[index];
+    BOOL selected = FALSE;
+
+    if (index < descr->nb_items)
+    {
+        item = &descr->items[index];
+        selected = is_item_selected(descr, index);
+    }
 
     if (IS_OWNERDRAW(descr))
     {
@@ -522,7 +528,8 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         dis.hDC          = hdc;
         dis.itemID       = index;
         dis.itemState    = 0;
-        if (item->selected) dis.itemState |= ODS_SELECTED;
+        if (selected)
+            dis.itemState |= ODS_SELECTED;
         if (!ignoreFocus && (descr->focus_item == index) &&
             (descr->caret_on) &&
             (descr->in_focus)) dis.itemState |= ODS_FOCUS;
@@ -545,7 +552,7 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
             DrawFocusRect( hdc, rect );
             return;
         }
-        if (item && item->selected)
+        if (selected)
         {
             oldBk = SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
             oldText = SetTextColor( hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
@@ -570,7 +577,7 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
                             item->str, strlenW(item->str),
                             descr->nb_tabs, descr->tabs, 0);
 	}
-        if (item && item->selected)
+        if (selected)
         {
             SetBkColor( hdc, oldBk );
             SetTextColor( hdc, oldText );
