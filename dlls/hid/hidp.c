@@ -81,6 +81,49 @@ static NTSTATUS get_report_data(BYTE *report, INT reportLength, INT startBit, IN
     return HIDP_STATUS_SUCCESS;
 }
 
+static NTSTATUS set_report_data(BYTE *report, INT reportLength, INT startBit, INT valueSize, ULONG value)
+{
+    if ((startBit + valueSize) / 8  > reportLength)
+        return HIDP_STATUS_INVALID_REPORT_LENGTH;
+
+    if (valueSize == 1)
+    {
+        ULONG byte_index = startBit / 8;
+        ULONG bit_index = startBit - (byte_index * 8);
+        if (value)
+            report[byte_index] |= (1 << bit_index);
+        else
+            report[byte_index] &= ~(1 << bit_index);
+    }
+    else
+    {
+        ULONG byte_index = (startBit + valueSize - 1) / 8;
+        ULONG data = value;
+        ULONG remainingBits = valueSize;
+        while (remainingBits)
+        {
+            BYTE subvalue = data & 0xff;
+
+            data >>= 8;
+
+            if (remainingBits >= 8)
+            {
+                report[byte_index] = subvalue;
+                byte_index --;
+                remainingBits -= 8;
+            }
+            else if (remainingBits > 0)
+            {
+                BYTE mask = (0xff << (8-remainingBits)) & subvalue;
+                report[byte_index] |= mask;
+                remainingBits = 0;
+            }
+        }
+    }
+    return HIDP_STATUS_SUCCESS;
+}
+
+
 NTSTATUS WINAPI HidP_GetButtonCaps(HIDP_REPORT_TYPE ReportType, PHIDP_BUTTON_CAPS ButtonCaps,
                                    PUSHORT ButtonCapsLength, PHIDP_PREPARSED_DATA PreparsedData)
 {
@@ -527,6 +570,28 @@ ULONG WINAPI HidP_MaxUsageListLength(HIDP_REPORT_TYPE ReportType, USAGE UsagePag
     }
     return count;
 }
+
+NTSTATUS WINAPI HidP_SetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
+                                   USAGE Usage, ULONG UsageValue, PHIDP_PREPARSED_DATA PreparsedData,
+                                   CHAR *Report, ULONG ReportLength)
+{
+    WINE_HID_ELEMENT *element;
+    NTSTATUS rc;
+
+    TRACE("(%i, %x, %i, %i, %i, %p, %p, %i)\n", ReportType, UsagePage, LinkCollection, Usage, UsageValue,
+          PreparsedData, Report, ReportLength);
+
+    rc = find_value(ReportType, UsagePage, LinkCollection, Usage, PreparsedData, Report, &element);
+
+    if (rc == HIDP_STATUS_SUCCESS)
+    {
+        return set_report_data((BYTE*)Report, ReportLength,
+                               element->valueStartBit, element->bitCount, UsageValue);
+    }
+
+    return rc;
+}
+
 
 NTSTATUS WINAPI HidP_TranslateUsagesToI8042ScanCodes(USAGE *ChangedUsageList,
     ULONG UsageListLength, HIDP_KEYBOARD_DIRECTION KeyAction,

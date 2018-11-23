@@ -36,7 +36,7 @@
 @ stdcall HidP_MaxUsageListLength(long long ptr)
 @ stub HidP_SetData
 @ stub HidP_SetScaledUsageValue
-@ stub HidP_SetUsageValue
+@ stdcall HidP_SetUsageValue(long long long long long ptr ptr long)
 @ stub HidP_SetUsageValueArray
 @ stub HidP_SetUsages
 @ stdcall HidP_TranslateUsagesToI8042ScanCodes(ptr long long ptr ptr ptr)
