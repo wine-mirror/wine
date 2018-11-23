@@ -4289,8 +4289,8 @@ static void test_resource_access(void)
                 case SURFACE_CUBE:
                     hr = IDirect3DDevice9Ex_CreateCubeTexture(device, 16, 1,
                             tests[j].usage, format, tests[j].pool, &texture_cube, NULL);
-                    todo_wine_if(!tests[j].valid && !tests[j].usage && (tests[j].format == FORMAT_DEPTH
-                            || tests[j].pool == D3DPOOL_MANAGED))
+                    todo_wine_if(!tests[j].valid && tests[j].format == FORMAT_DEPTH
+                            && !tests[j].usage && tests[j].pool != D3DPOOL_MANAGED)
                         ok(hr == (tests[j].valid && (tests[j].format != FORMAT_DEPTH || depth_cube)
                                 ? D3D_OK : D3DERR_INVALIDCALL),
                                 "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
