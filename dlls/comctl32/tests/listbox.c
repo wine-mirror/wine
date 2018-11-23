@@ -34,6 +34,7 @@
 
 enum seq_index
 {
+    LB_SEQ_INDEX,
     PARENT_SEQ_INDEX,
     NUM_MSG_SEQUENCES
 };
@@ -90,9 +91,47 @@ static const char BAD_EXTENSION[] = "*.badtxt";
 
 #define ID_LISTBOX 1
 
+static LRESULT WINAPI listbox_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    static LONG defwndproc_counter = 0;
+    struct message msg = { 0 };
+    LRESULT ret;
+
+    switch (message)
+    {
+        case WM_SIZE:
+        case WM_GETTEXT:
+        case WM_PAINT:
+        case WM_ERASEBKGND:
+        case WM_WINDOWPOSCHANGING:
+        case WM_WINDOWPOSCHANGED:
+        case WM_NCCALCSIZE:
+        case WM_NCPAINT:
+        case WM_NCHITTEST:
+        case WM_DEVICECHANGE:
+            break;
+
+        default:
+            msg.message = message;
+            msg.flags = sent|wparam|lparam;
+            if (defwndproc_counter) msg.flags |= defwinproc;
+            msg.wParam = wParam;
+            msg.lParam = lParam;
+            add_message(sequences, LB_SEQ_INDEX, &msg);
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
 static HWND create_listbox(DWORD add_style, HWND parent)
 {
     INT_PTR ctl_id = 0;
+    WNDPROC oldproc;
     HWND handle;
 
     if (parent)
@@ -106,6 +145,9 @@ static HWND create_listbox(DWORD add_style, HWND parent)
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[1]);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[2]);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[3]);
+
+    oldproc = (WNDPROC)SetWindowLongPtrA(handle, GWLP_WNDPROC, (LONG_PTR)listbox_wnd_proc);
+    SetWindowLongPtrA(handle, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     return handle;
 }
@@ -167,9 +209,18 @@ static void keypress(HWND handle, WPARAM keycode, BYTE scancode, BOOL extended)
 
 static void run_test(DWORD style, const struct listbox_test test)
 {
+    static const struct message delete_seq[] =
+    {
+        { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+        { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+        { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+        { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+        { LB_RESETCONTENT, sent|wparam|lparam|defwinproc, 0, 0 },
+        { 0 }
+    };
     struct listbox_stat answer;
+    int i, res, count;
     RECT second_item;
-    int i, res;
     HWND hLB;
 
     hLB = create_listbox (style, 0);
@@ -224,8 +275,17 @@ static void run_test(DWORD style, const struct listbox_test test)
     ok(res == LB_ERR, "Expected LB_ERR items, got %d\n", res);
     res = SendMessageA(hLB, LB_DELETESTRING, 4, 0);
     ok(res == LB_ERR, "Expected LB_ERR items, got %d\n", res);
-    res = SendMessageA(hLB, LB_GETCOUNT, 0, 0);
-    ok(res == 4, "Expected 4 items, got %d\n", res);
+    count = SendMessageA(hLB, LB_GETCOUNT, 0, 0);
+    ok(count == 4, "Unexpected item count %d.\n", count);
+
+    /* Emptying listbox sends a LB_RESETCONTENT to itself. */
+    flush_sequence(sequences, LB_SEQ_INDEX);
+    for (i = count; i--;)
+    {
+        res = SendMessageA(hLB, LB_DELETESTRING, 0, 0);
+        ok(res == i, "Unexpected return value %d.\n", res);
+    }
+    ok_sequence(sequences, LB_SEQ_INDEX, delete_seq, "Emptying listbox", FALSE);
 
     DestroyWindow(hLB);
 }
@@ -1815,34 +1875,23 @@ static void test_set_count( void )
     DestroyWindow( parent );
 }
 
-static int lb_getlistboxinfo;
-
-static LRESULT WINAPI listbox_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
-
-    if (message == LB_GETLISTBOXINFO)
-        lb_getlistboxinfo++;
-
-    return CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
-}
-
 static void test_GetListBoxInfo(void)
 {
+    static const struct message getlistboxinfo_seq[] =
+    {
+        { LB_GETLISTBOXINFO, sent },
+        { 0 }
+    };
     HWND listbox, parent;
-    WNDPROC oldproc;
     DWORD ret;
 
     parent = create_parent();
     listbox = create_listbox(WS_CHILD | WS_VISIBLE, parent);
 
-    oldproc = (WNDPROC)SetWindowLongPtrA(listbox, GWLP_WNDPROC, (LONG_PTR)listbox_subclass_proc);
-    SetWindowLongPtrA(listbox, GWLP_USERDATA, (LONG_PTR)oldproc);
-
-    lb_getlistboxinfo = 0;
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ret = GetListBoxInfo(listbox);
     ok(ret > 0, "got %d\n", ret);
-    ok(lb_getlistboxinfo == 1, "got %d\n", lb_getlistboxinfo);
+    ok_sequence(sequences, LB_SEQ_INDEX, getlistboxinfo_seq, "GetListBoxInfo()", FALSE);
 
     DestroyWindow(listbox);
     DestroyWindow(parent);
