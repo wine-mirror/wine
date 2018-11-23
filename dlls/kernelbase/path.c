@@ -126,6 +126,188 @@ static const WCHAR *get_root_end(const WCHAR *path)
         return NULL;
 }
 
+HRESULT WINAPI PathAllocCanonicalize(const WCHAR *path_in, DWORD flags, WCHAR **path_out)
+{
+    WCHAR *buffer, *dst;
+    const WCHAR *src;
+    const WCHAR *root_end;
+    SIZE_T buffer_size, length;
+
+    TRACE("%s %#x %p\n", debugstr_w(path_in), flags, path_out);
+
+    if (!path_in || !path_out
+        || ((flags & PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS) && (flags & PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS))
+        || (flags & (PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS | PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS)
+            && !(flags & PATHCCH_ALLOW_LONG_PATHS))
+        || ((flags & PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH) && (flags & PATHCCH_ALLOW_LONG_PATHS)))
+    {
+        if (path_out) *path_out = NULL;
+        return E_INVALIDARG;
+    }
+
+    length = strlenW(path_in);
+    if ((length + 1 > MAX_PATH && !(flags & (PATHCCH_ALLOW_LONG_PATHS | PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH)))
+        || (length + 1 > PATHCCH_MAX_CCH))
+    {
+        *path_out = NULL;
+        return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
+    }
+
+    /* PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH implies PATHCCH_DO_NOT_NORMALIZE_SEGMENTS */
+    if (flags & PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH) flags |= PATHCCH_DO_NOT_NORMALIZE_SEGMENTS;
+
+    /* path length + possible \\?\ addition + possible \ addition + NUL */
+    buffer_size = (length + 6) * sizeof(WCHAR);
+    buffer = LocalAlloc(LMEM_ZEROINIT, buffer_size);
+    if (!buffer)
+    {
+        *path_out = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    src = path_in;
+    dst = buffer;
+
+    root_end = get_root_end(path_in);
+    if (root_end) root_end = buffer + (root_end - path_in);
+
+    /* Copy path root */
+    if (root_end)
+    {
+        memcpy(dst, src, (root_end - buffer + 1) * sizeof(WCHAR));
+        src += root_end - buffer + 1;
+        if(PathCchStripPrefix(dst, length + 6) == S_OK)
+        {
+            /* Fill in \ in X:\ if the \ is missing */
+            if(isalphaW(dst[0]) && dst[1] == ':' && dst[2]!= '\\')
+            {
+                dst[2] = '\\';
+                dst[3] = 0;
+            }
+            dst = buffer + strlenW(buffer);
+            root_end = dst;
+        }
+        else
+            dst += root_end - buffer + 1;
+    }
+
+    while (*src)
+    {
+        if (src[0] == '.')
+        {
+            if (src[1] == '.')
+            {
+                /* Keep one . after * */
+                if (dst > buffer && dst[-1] == '*')
+                {
+                    *dst++ = *src++;
+                    continue;
+                }
+
+                /* Keep the . if one of the following is true:
+                 * 1. PATHCCH_DO_NOT_NORMALIZE_SEGMENTS
+                 * 2. in form of a..b
+                 */
+                if (dst > buffer
+                    && (((flags & PATHCCH_DO_NOT_NORMALIZE_SEGMENTS) && dst[-1] != '\\')
+                        || (dst[-1] != '\\' && src[2] != '\\' && src[2])))
+                {
+                    *dst++ = *src++;
+                    *dst++ = *src++;
+                    continue;
+                }
+
+                /* Remove the \ before .. if the \ is not part of root */
+                if (dst > buffer && dst[-1] == '\\' && (!root_end || dst - 1 > root_end))
+                {
+                    *--dst = '\0';
+                    /* Remove characters until a \ is encountered */
+                    while (dst > buffer)
+                    {
+                        if (dst[-1] == '\\')
+                        {
+                            *--dst = 0;
+                            break;
+                        }
+                        else
+                            *--dst = 0;
+                    }
+                }
+                /* Remove the extra \ after .. if the \ before .. wasn't deleted */
+                else if (src[2] == '\\')
+                    src++;
+
+                src += 2;
+            }
+            else
+            {
+                /* Keep the . if one of the following is true:
+                 * 1. PATHCCH_DO_NOT_NORMALIZE_SEGMENTS
+                 * 2. in form of a.b, which is used in domain names
+                 * 3. *.
+                 */
+                if (dst > buffer
+                    && ((flags & PATHCCH_DO_NOT_NORMALIZE_SEGMENTS && dst[-1] != '\\')
+                        || (dst[-1] != '\\' && src[1] != '\\' && src[1]) || (dst[-1] == '*')))
+                {
+                    *dst++ = *src++;
+                    continue;
+                }
+
+                /* Remove the \ before . if the \ is not part of root */
+                if (dst > buffer && dst[-1] == '\\' && (!root_end || dst - 1 > root_end)) dst--;
+                /* Remove the extra \ after . if the \ before . wasn't deleted */
+                else if (src[1] == '\\')
+                    src++;
+
+                src++;
+            }
+
+            /* If X:\ is not complete, then complete it */
+            if (isalphaW(buffer[0]) && buffer[1] == ':' && buffer[2] != '\\')
+            {
+                root_end = buffer + 2;
+                dst = buffer + 3;
+                buffer[2] = '\\';
+                /* If next character is \, use the \ to fill in */
+                if (src[0] == '\\') src++;
+            }
+        }
+        /* Copy over */
+        else
+            *dst++ = *src++;
+    }
+    /* End the path */
+    *dst = 0;
+
+    /* If result path is empty, fill in \ */
+    if (!*buffer)
+    {
+        buffer[0] = '\\';
+        buffer[1] = 0;
+    }
+
+    /* Extend the path if needed */
+    length = strlenW(buffer);
+    if (((length + 1 > MAX_PATH && isalphaW(buffer[0]) && buffer[1] == ':')
+         || (isalphaW(buffer[0]) && buffer[1] == ':' && flags & PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH))
+        && !(flags & PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS))
+    {
+        memmove(buffer + 4, buffer, (length + 1) * sizeof(WCHAR));
+        buffer[0] = '\\';
+        buffer[1] = '\\';
+        buffer[2] = '?';
+        buffer[3] = '\\';
+    }
+
+    /* Add a trailing backslash to the path if needed */
+    if (flags & PATHCCH_ENSURE_TRAILING_SLASH)
+        PathCchAddBackslash(buffer, buffer_size);
+
+    *path_out = buffer;
+    return S_OK;
+}
+
 HRESULT WINAPI PathCchAddBackslash(WCHAR *path, SIZE_T size)
 {
     return PathCchAddBackslashEx(path, size, NULL, NULL);

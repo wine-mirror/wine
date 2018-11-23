@@ -30,6 +30,7 @@
 
 #include "wine/test.h"
 
+HRESULT (WINAPI *pPathAllocCanonicalize)(const WCHAR *path_in, DWORD flags, WCHAR **path_out);
 HRESULT (WINAPI *pPathCchAddBackslash)(WCHAR *out, SIZE_T size);
 HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr, SIZE_T *remaining);
 HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
@@ -45,6 +46,309 @@ HRESULT (WINAPI *pPathCchSkipRoot)(const WCHAR *path, const WCHAR **root_end);
 HRESULT (WINAPI *pPathCchStripPrefix)(WCHAR *path, SIZE_T size);
 HRESULT (WINAPI *pPathCchStripToRoot)(WCHAR *path, SIZE_T size);
 BOOL    (WINAPI *pPathIsUNCEx)(const WCHAR *path, const WCHAR **server);
+
+struct alloccanonicalize_test
+{
+    const CHAR *path_in;
+    const CHAR *path_out;
+    DWORD flags;
+    HRESULT hr;
+};
+
+static const struct alloccanonicalize_test alloccanonicalize_tests[] =
+{
+    /* Malformed path */
+    {"C:a", "C:a", 0, S_OK},
+    {"\\\\?\\C:", "C:\\", 0, S_OK},
+    {"\\\\?C:\\a", "\\\\?C:\\a", 0, S_OK},
+    {"\\\\?UNC\\a", "\\\\?UNC\\a", 0, S_OK},
+    {"\\\\?\\UNCa", "\\\\?\\UNCa", 0, S_OK},
+    {"\\\\?C:a", "\\\\?C:a", 0, S_OK},
+
+    /* No . */
+    {"", "\\", 0, S_OK},
+    {"C:", "C:", 0, S_OK},
+    {"C:\\", "C:\\", 0, S_OK},
+    {"\\\\?\\C:\\a", "C:\\a", 0, S_OK},
+    {"\\\\?\\UNC\\a", "\\\\a", 0, S_OK},
+
+    /* . */
+    {".", "\\", 0, S_OK},
+    {"..", "\\", 0, S_OK},
+    {"...", "\\", 0, S_OK},
+    {"*.", "*.", 0, S_OK},
+    {"*..", "*.", 0, S_OK},
+    {"*...", "*.", 0, S_OK},
+    {"a.", "a", 0, S_OK},
+    {"a.b", "a.b", 0, S_OK},
+    {"a\\.", "a", 0, S_OK},
+    {"a\\.\\b", "a\\b", 0, S_OK},
+    {"C:.", "C:\\", 0, S_OK},
+    {"C:\\.", "C:\\", 0, S_OK},
+    {"C:\\.\\", "C:\\", 0, S_OK},
+    {"C:\\a.", "C:\\a", 0, S_OK},
+    {"C:\\a\\.", "C:\\a", 0, S_OK},
+    {"C:\\a\\\\.", "C:\\a\\", 0, S_OK},
+    {"C:\\a\\\\\\.", "C:\\a\\\\", 0, S_OK},
+    {"\\.", "\\", 0, S_OK},
+    {"\\\\.", "\\\\", 0, S_OK},
+    {"\\\\.\\", "\\\\", 0, S_OK},
+    {"\\\\\\.", "\\\\", 0, S_OK},
+    {"\\\\.\\\\", "\\\\\\", 0, S_OK},
+    {"\\\\\\\\.", "\\\\\\", 0, S_OK},
+    {"\\?\\.", "\\?", 0, S_OK},
+    {"\\\\?\\.", "\\\\?", 0, S_OK},
+    {"\\192.168.1.1\\a", "\\192.168.1.1\\a", 0, S_OK},
+    {"\\a.168.1.1\\a", "\\a.168.1.1\\a", 0, S_OK},
+    {"\\\\192.168.1.1\\a", "\\\\192.168.1.1\\a", 0, S_OK},
+    {"\\\\a.168.1.1\\b", "\\\\a.168.1.1\\b", 0, S_OK},
+    {"\\\\?\\C:.", "C:\\", 0, S_OK},
+    {"\\\\?\\C:\\.", "C:\\", 0, S_OK},
+    {"\\\\?\\UNC\\.", "\\\\", 0, S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\.",
+      "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", 0, S_OK},
+
+    /* .. */
+    {"a..", "a", 0, S_OK},
+    {"a..b", "a..b", 0, S_OK},
+    {"a\\..", "\\", 0, S_OK},
+    {"a\\..\\", "\\", 0, S_OK},
+    {"a\\..\\b", "\\b", 0, S_OK},
+    {"C:..", "C:\\", 0, S_OK},
+    {"C:\\..", "C:\\", 0, S_OK},
+    {"C:\\\\..", "C:\\", 0, S_OK},
+    {"C:\\..\\", "C:\\", 0, S_OK},
+    {"C:\\a\\..", "C:\\", 0, S_OK},
+    {"C:\\a\\\\..", "C:\\a", 0, S_OK},
+    {"C:\\a\\\\\\..", "C:\\a\\", 0, S_OK},
+    {"C:\\a\\..\\b", "C:\\b", 0, S_OK},
+    {"C:\\a\\..\\\\b", "C:\\\\b", 0, S_OK},
+    {"\\..", "\\", 0, S_OK},
+    {"\\\\..", "\\\\", 0, S_OK},
+    {"\\\\\\..", "\\", 0, S_OK},
+    {"\\\\..\\", "\\\\", 0, S_OK},
+    {"\\\\\\..", "\\", 0, S_OK},
+    {"\\\\..\\\\", "\\\\\\", 0, S_OK},
+    {"\\\\\\\\..", "\\\\", 0, S_OK},
+    {"\\?\\..", "\\", 0, S_OK},
+    {"\\a\\..", "\\", 0, S_OK},
+    {"\\\\?\\..", "\\", 0, S_OK},
+    {"\\\\a\\..", "\\", 0, S_OK},
+    {"\\a\\..\\b", "\\b", 0, S_OK},
+    {"\\a\\b\\..", "\\a", 0, S_OK},
+    {"\\?\\UNC\\..", "\\?", 0, S_OK},
+    {"\\?\\C:\\..", "\\?", 0, S_OK},
+    {"\\\\?\\C:..", "C:\\", 0, S_OK},
+    {"\\\\?\\C:\\..", "C:\\", 0, S_OK},
+    {"\\\\?\\UNC\\..", "\\\\", 0, S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}..",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", 0, S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\..",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", 0, S_OK},
+    {"\\\\?\\UNC\\a\\b\\..", "\\\\a", 0, S_OK},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a\\b\\..",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", 0, S_OK},
+
+    /* . and .. */
+    {"C:\\a\\.\\b\\..\\", "C:\\a\\", 0, S_OK},
+    {"\\a\\.\\b\\..\\", "\\a\\", 0, S_OK},
+    {"\\?\\a\\.\\b\\..\\", "\\?\\a\\", 0, S_OK},
+    {"\\\\.\\a\\.\\b\\..\\", "\\\\a\\", 0, S_OK},
+    {"\\\\?\\a\\.\\b\\..\\", "\\\\?\\a\\", 0, S_OK},
+    {"\\\\.\\..", "\\\\", 0, S_OK},
+
+    /* PATHCCH_ALLOW_LONG_PATHS */
+    /* Input path with prefix \\?\ and length of MAXPATH + 1, HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE) = 0x800700ce */
+    {"\\\\?\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", NULL, 0, 0x800700ce},
+    /* Input path with prefix C:\ and length of MAXPATH + 1 */
+    {"C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", NULL, 0, 0x800700ce},
+    {"C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "\\\\?\\C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", PATHCCH_ALLOW_LONG_PATHS, S_OK},
+    /* Input path with prefix C: and length of MAXPATH + 1  */
+    {"C:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "\\\\?\\C:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", PATHCCH_ALLOW_LONG_PATHS, S_OK},
+    /* Input path with prefix C:\ and length of MAXPATH + 1 and with .. */
+    {"C:\\..\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", PATHCCH_ALLOW_LONG_PATHS, S_OK},
+    /* Input path with prefix \\?\ and length of MAXPATH + 1 */
+    {"\\\\?\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "\\\\?\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", PATHCCH_ALLOW_LONG_PATHS, S_OK},
+    /* Input path with prefix \ and length of MAXPATH + 1 */
+    {"\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", PATHCCH_ALLOW_LONG_PATHS, S_OK},
+    /* Input path with length of MAXPATH with PATHCCH_ALLOW_LONG_PATHS disabled*/
+    {"C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0, S_OK},
+    /* Input path with length of MAXPATH */
+    {"C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", PATHCCH_ALLOW_LONG_PATHS, S_OK},
+
+    /* Flags added after Windows 10 1709 */
+    /* PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS */
+    /* PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS without PATHCCH_ALLOW_LONG_PATHS */
+    {"", NULL, PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS, E_INVALIDARG},
+    /* Input path with prefix C:\ and length of MAXPATH + 1 and PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS */
+    {"C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     PATHCCH_ALLOW_LONG_PATHS | PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS, S_OK},
+
+    /* PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS */
+    /* PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS without PATHCCH_ALLOW_LONG_PATHS */
+    {"", NULL, PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS, E_INVALIDARG},
+    /* Both PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS and PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS */
+    {"", "\\", PATHCCH_ALLOW_LONG_PATHS | PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS | PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS,
+     E_INVALIDARG},
+    /* Input path with prefix C:\ and length of MAXPATH + 1 and PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS */
+    {"C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "\\\\?\\C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     PATHCCH_ALLOW_LONG_PATHS | PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS, S_OK},
+    /* Input path with prefix C:\ and length of MAXPATH and PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS */
+    {"C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    PATHCCH_ALLOW_LONG_PATHS | PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS, S_OK},
+
+    /* PATHCCH_DO_NOT_NORMALIZE_SEGMENTS */
+    /* No effect for spaces */
+    {"C:\\a \\", "C:\\a \\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:\\a\\ ", "C:\\a\\ ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:\\a ", "C:\\a ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:\\a  ", "C:\\a  ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:\\a. ", "C:\\a. ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"\\a \\", "\\a \\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"\\a\\ ", "\\a\\ ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"\\\\a \\", "\\\\a \\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"\\\\a\\ ", "\\\\a\\ ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"\\\\?\\ ", "\\\\?\\ ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    /* Keep trailing dot */
+    {"*..", "*..", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {".", "\\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"..", "\\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:.", "C:.", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:..", "C:..", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:\\a\\.", "C:\\a", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:\\a\\..", "C:\\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:\\a.", "C:\\a.", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:\\a..", "C:\\a..", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+
+    /* PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH */
+    {"C:\\a\\", "\\\\?\\C:\\a\\", PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH, S_OK},
+    {"", NULL, PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH | PATHCCH_ALLOW_LONG_PATHS, E_INVALIDARG},
+    {"\\a\\", "\\a\\", PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH, S_OK},
+    {"\\\\?\\C:\\a\\", "\\\\?\\C:\\a\\", PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH, S_OK},
+    /* Implication of PATHCCH_DO_NOT_NORMALIZE_SEGMENTS by PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH */
+    {"\\a.", "\\a.", PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH, S_OK},
+
+    /* PATHCCH_ENSURE_TRAILING_SLASH */
+    {"\\", "\\", PATHCCH_ENSURE_TRAILING_SLASH, S_OK},
+    {"C:\\", "C:\\", PATHCCH_ENSURE_TRAILING_SLASH, S_OK},
+    {"C:\\a\\.", "C:\\a\\", PATHCCH_ENSURE_TRAILING_SLASH, S_OK},
+    {"C:\\a", "C:\\a\\", PATHCCH_ENSURE_TRAILING_SLASH, S_OK}
+};
+
+static void test_PathAllocCanonicalize(void)
+{
+    WCHAR path_inW[1024], path_maxW[PATHCCH_MAX_CCH + 1];
+    WCHAR *path_outW;
+    CHAR path_outA[1024];
+    BOOL skip_new_flags = TRUE;
+    HRESULT hr;
+    INT i;
+
+    if (!pPathAllocCanonicalize)
+    {
+        win_skip("PathAllocCanonicalize() is not available.\n");
+        return;
+    }
+
+    /* No NULL check for path on Windows */
+    if (0)
+    {
+        hr = pPathAllocCanonicalize(NULL, 0, &path_outW);
+        ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, "C:\\", -1, path_inW, ARRAY_SIZE(path_inW));
+    hr = pPathAllocCanonicalize(path_inW, 0, NULL);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+
+    /* Test longest path */
+    for (i = 0; i < ARRAY_SIZE(path_maxW) - 1; i++) path_maxW[i] = 'a';
+    path_maxW[PATHCCH_MAX_CCH] = '\0';
+    path_outW = (WCHAR *)0xdeadbeef;
+    hr = pPathAllocCanonicalize(path_maxW, PATHCCH_ALLOW_LONG_PATHS, &path_outW);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), "expect hr %#x, got %#x\n",
+       HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), hr);
+    ok(path_outW == NULL, "expect path_outW null, got %p\n", path_outW);
+
+    path_maxW[PATHCCH_MAX_CCH - 1] = '\0';
+    hr = pPathAllocCanonicalize(path_maxW, PATHCCH_ALLOW_LONG_PATHS, &path_outW);
+    ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
+
+    /* Check if flags added after Windows 10 1709 are supported */
+    MultiByteToWideChar(CP_ACP, 0, "C:\\", -1, path_inW, ARRAY_SIZE(path_inW));
+    hr = pPathAllocCanonicalize(path_inW, PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS, &path_outW);
+    if (hr == E_INVALIDARG) skip_new_flags = FALSE;
+
+    for (i = 0; i < ARRAY_SIZE(alloccanonicalize_tests); i++)
+    {
+        const struct alloccanonicalize_test *t = alloccanonicalize_tests + i;
+
+        if (((PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS | PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS
+              | PATHCCH_DO_NOT_NORMALIZE_SEGMENTS | PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH
+              | PATHCCH_ENSURE_TRAILING_SLASH)
+             & t->flags)
+            && skip_new_flags)
+        {
+            win_skip("Skip testing new flags added after Windows 10 1709\n");
+            return;
+        }
+
+        MultiByteToWideChar(CP_ACP, 0, t->path_in, -1, path_inW, ARRAY_SIZE(path_inW));
+        hr = pPathAllocCanonicalize(path_inW, t->flags, &path_outW);
+        ok(hr == t->hr, "path %s expect result %#x, got %#x\n", t->path_in, t->hr, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, path_outW, -1, path_outA, ARRAY_SIZE(path_outA), NULL, NULL);
+            ok(!lstrcmpA(path_outA, t->path_out), "path \"%s\" expect output path \"%s\", got \"%s\"\n", t->path_in,
+               t->path_out, path_outA);
+            LocalFree(path_outW);
+        }
+    }
+}
 
 static const struct
 {
@@ -1386,6 +1690,7 @@ START_TEST(path)
 {
     HMODULE hmod = LoadLibraryA("kernelbase.dll");
 
+    pPathAllocCanonicalize = (void *)GetProcAddress(hmod, "PathAllocCanonicalize");
     pPathCchCombineEx = (void *)GetProcAddress(hmod, "PathCchCombineEx");
     pPathCchAddBackslash = (void *)GetProcAddress(hmod, "PathCchAddBackslash");
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
@@ -1402,6 +1707,7 @@ START_TEST(path)
     pPathCchStripToRoot = (void *)GetProcAddress(hmod, "PathCchStripToRoot");
     pPathIsUNCEx = (void *)GetProcAddress(hmod, "PathIsUNCEx");
 
+    test_PathAllocCanonicalize();
     test_PathCchCombineEx();
     test_PathCchAddBackslash();
     test_PathCchAddBackslashEx();
