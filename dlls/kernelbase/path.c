@@ -389,6 +389,45 @@ HRESULT WINAPI PathCchAddExtension(WCHAR *path, SIZE_T size, const WCHAR *extens
     return S_OK;
 }
 
+HRESULT WINAPI PathCchCanonicalizeEx(WCHAR *out, SIZE_T size, const WCHAR *in, DWORD flags)
+{
+    WCHAR *buffer;
+    SIZE_T length;
+    HRESULT hr;
+
+    TRACE("%p %lu %s %#x\n", out, size, wine_dbgstr_w(in), flags);
+
+    if (!size) return E_INVALIDARG;
+
+    hr = PathAllocCanonicalize(in, flags, &buffer);
+    if (FAILED(hr)) return hr;
+
+    length = strlenW(buffer);
+    if (size < length + 1)
+    {
+        /* No root and path > MAX_PATH - 4, return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE) */
+        if (length > MAX_PATH - 4 && !(in[0] == '\\' || (isalphaW(in[0]) && in[1] == ':' && in[2] == '\\')))
+            hr = HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
+        else
+            hr = STRSAFE_E_INSUFFICIENT_BUFFER;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        memcpy(out, buffer, (length + 1) * sizeof(WCHAR));
+
+        /* Fill a backslash at the end of X: */
+        if (isalphaW(out[0]) && out[1] == ':' && !out[2] && size > 3)
+        {
+            out[2] = '\\';
+            out[3] = 0;
+        }
+    }
+
+    LocalFree(buffer);
+    return hr;
+}
+
 HRESULT WINAPI PathCchFindExtension(const WCHAR *path, SIZE_T size, const WCHAR **extension)
 {
     const WCHAR *lastpoint = NULL;
