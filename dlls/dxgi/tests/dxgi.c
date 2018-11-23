@@ -2433,10 +2433,11 @@ static void test_windowed_resize_target(IDXGISwapChain *swapchain, HWND window,
     }
 
     ret = MoveWindow(window, 0, 0, 0, 0, TRUE);
-    ok(ret, "MoveWindow failed.\n");
+    ok(ret, "Failed to move window.\n");
     GetWindowRect(window, &e->window_rect);
     GetClientRect(window, &e->client_rect);
     ret = MoveWindow(window, 0, 0, 200, 200, TRUE);
+    ok(ret, "Failed to move window.\n");
 
     memset(&mode, 0, sizeof(mode));
     hr = IDXGISwapChain_ResizeTarget(swapchain, &mode);
