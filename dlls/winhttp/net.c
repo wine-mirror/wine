@@ -651,42 +651,44 @@ static DWORD resolve_hostname( const WCHAR *name, INTERNET_PORT port, struct soc
     return ERROR_SUCCESS;
 }
 
-struct resolve_args
+struct async_resolve
 {
     const WCHAR             *hostname;
     INTERNET_PORT            port;
-    struct sockaddr_storage *sa;
+    struct sockaddr_storage *addr;
+    DWORD                    result;
+    HANDLE                   done;
 };
 
-static DWORD CALLBACK resolve_proc( LPVOID arg )
+static void CALLBACK resolve_proc( TP_CALLBACK_INSTANCE *instance, void *ctx )
 {
-    struct resolve_args *ra = arg;
-    return resolve_hostname( ra->hostname, ra->port, ra->sa );
+    struct async_resolve *async = ctx;
+    async->result = resolve_hostname( async->hostname, async->port, async->addr );
+    SetEvent( async->done );
 }
 
-BOOL netconn_resolve( WCHAR *hostname, INTERNET_PORT port, struct sockaddr_storage *sa, int timeout )
+BOOL netconn_resolve( WCHAR *hostname, INTERNET_PORT port, struct sockaddr_storage *addr, int timeout )
 {
     DWORD ret;
 
-    if (timeout)
+    if (!timeout) ret = resolve_hostname( hostname, port, addr );
+    else
     {
-        DWORD status;
-        HANDLE thread;
-        struct resolve_args ra;
+        struct async_resolve async;
 
-        ra.hostname = hostname;
-        ra.port     = port;
-        ra.sa       = sa;
-
-        thread = CreateThread( NULL, 0, resolve_proc, &ra, 0, NULL );
-        if (!thread) return FALSE;
-
-        status = WaitForSingleObject( thread, timeout );
-        if (status == WAIT_OBJECT_0) GetExitCodeThread( thread, &ret );
-        else ret = ERROR_WINHTTP_TIMEOUT;
-        CloseHandle( thread );
+        async.hostname = hostname;
+        async.port     = port;
+        async.addr     = addr;
+        if (!(async.done = CreateEventW( NULL, FALSE, FALSE, NULL ))) return FALSE;
+        if (!TrySubmitThreadpoolCallback( resolve_proc, &async, NULL ))
+        {
+            CloseHandle( async.done );
+            return FALSE;
+        }
+        if (WaitForSingleObject( async.done, timeout ) != WAIT_OBJECT_0) ret = ERROR_WINHTTP_TIMEOUT;
+        else ret = async.result;
+        CloseHandle( async.done );
     }
-    else ret = resolve_hostname( hostname, port, sa );
 
     if (ret)
     {
