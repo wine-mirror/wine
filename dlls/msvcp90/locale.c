@@ -171,6 +171,14 @@ typedef struct {
     _Cvtvec cvt;
 } time_get_char;
 
+typedef struct {
+    locale_facet facet;
+    const wchar_t *days;
+    const wchar_t *months;
+    dateorder dateorder;
+    _Cvtvec cvt;
+} time_get_wchar;
+
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
@@ -10629,6 +10637,906 @@ istreambuf_iterator_char* __thiscall time_get_char_get_fmt(const time_get_char *
     return ret;
 }
 
+/* ?id@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@2V0locale@2@A */
+locale_id time_get_wchar_id = {0};
+
+/* ??_7?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_time_get_wchar_vtable;
+
+#if _MSVCP_VER >=110
+static wchar_t* create_time_get_str(const wchar_t *str)
+{
+    wchar_t *ret;
+    int len;
+
+    len = strlenW(str)+1;
+    ret = MSVCRT_operator_new(len * sizeof(wchar_t));
+    if(ret)
+        memcpy(ret, str, len*sizeof(wchar_t));
+    return ret;
+}
+#else
+static wchar_t* create_time_get_str(const char *str, const _Locinfo *locinfo)
+{
+    wchar_t *ret;
+    _Cvtvec cvt;
+    int len;
+
+    _Locinfo__Getcvt(locinfo, &cvt);
+    len = MultiByteToWideChar(cvt.page, 0, str, -1, NULL, 0);
+    ret = MSVCRT_operator_new(len*sizeof(WCHAR));
+    if(ret)
+        MultiByteToWideChar(cvt.page, 0, str, -1, ret, len);
+    return ret;
+}
+#endif
+
+/* ?_Init@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar__Init, 8)
+void __thiscall time_get_wchar__Init(time_get_wchar *this, const _Locinfo *locinfo)
+{
+    TRACE("(%p %p)\n", this, locinfo);
+
+#if _MSVCP_VER >=110
+    this->days = create_time_get_str(_Locinfo__W_Getdays(locinfo));
+#else
+    this->days = create_time_get_str(_Locinfo__Getdays(locinfo), locinfo);
+#endif
+    if(!this->days)
+    {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+
+#if _MSVCP_VER >=110
+    this->months = create_time_get_str(_Locinfo__W_Getmonths(locinfo));
+#else
+    this->months = create_time_get_str(_Locinfo__Getmonths(locinfo), locinfo);
+#endif
+    if(!this->months)
+    {
+        MSVCRT_operator_delete((wchar_t*)this->days);
+
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+
+    this->dateorder = _Locinfo__Getdateorder(locinfo);
+    _Locinfo__Getcvt(locinfo, &this->cvt);
+}
+
+/* ??0?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_ctor_locinfo, 12)
+time_get_wchar* __thiscall time_get_wchar_ctor_locinfo(time_get_wchar *this,
+        const _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    TRACE("(%p %p %lu)\n", this, locinfo, refs);
+    locale_facet_ctor_refs(&this->facet, refs);
+    this->facet.vtable = &MSVCP_time_get_wchar_vtable;
+    time_get_wchar__Init(this, locinfo);
+    return this;
+}
+
+/* ??0?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IAE@PBDI@Z */
+/* ??0?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAA@PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_ctor_name, 12)
+time_get_wchar* __thiscall time_get_wchar_ctor_name(time_get_wchar *this, const char *name, MSVCP_size_t refs)
+{
+    _Locinfo locinfo;
+
+    TRACE("(%p %s %lu)\n", this, name, refs);
+
+    _Locinfo_ctor_cstr(&locinfo, name);
+    time_get_wchar_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
+}
+
+/* ??0?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@I@Z */
+/* ??0?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_ctor_refs, 8)
+time_get_wchar* __thiscall time_get_wchar_ctor_refs(time_get_wchar *this, MSVCP_size_t refs)
+{
+    _Locinfo locinfo;
+
+    TRACE("(%p %lu)\n", this, refs);
+
+    _Locinfo_ctor(&locinfo);
+    time_get_wchar_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
+}
+
+/* ??_F?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAEXXZ */
+/* ??_F?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_ctor, 4)
+time_get_wchar* __thiscall time_get_wchar_ctor(time_get_wchar *this)
+{
+    return time_get_wchar_ctor_refs(this, 0);
+}
+
+/* ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAEXXZ */
+/* ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEAAXXZ */
+DEFINE_THISCALL_WRAPPER(time_get_wchar__Tidy, 4)
+void __thiscall time_get_wchar__Tidy(time_get_wchar *this)
+{
+    TRACE("(%p)\n", this);
+
+    MSVCRT_operator_delete((wchar_t*)this->days);
+    MSVCRT_operator_delete((wchar_t*)this->months);
+}
+
+/* ??1?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MAE@XZ */
+/* ??1?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_dtor, 4) /* virtual */
+void __thiscall time_get_wchar_dtor(time_get_wchar *this)
+{
+    TRACE("(%p)\n", this);
+
+    time_get_wchar__Tidy(this);
+}
+
+DEFINE_THISCALL_WRAPPER(time_get_wchar_vector_dtor, 8)
+time_get_wchar* __thiscall time_get_wchar_vector_dtor(time_get_wchar *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            time_get_wchar_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        time_get_wchar_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+unsigned int __cdecl time_get_wchar__Getcat(const locale_facet **facet, const locale *loc)
+{
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(time_get_wchar));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
+        time_get_wchar_ctor_locinfo((time_get_wchar*)*facet, &locinfo, 0);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_TIME;
+}
+
+static time_get_wchar* time_get_wchar_use_facet(const locale *loc)
+{
+    static time_get_wchar *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&time_get_wchar_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (time_get_wchar*)fac;
+    }
+
+    if(obj) {
+        _Lockit_dtor(&lock);
+        return obj;
+    }
+
+    time_get_wchar__Getcat(&fac, loc);
+    obj = (time_get_wchar*)fac;
+    call_locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
+/* ?_Getint@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAHAAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@0HHAAH@Z */
+/* ?_Getint@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAHAEAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@0HHAEAH@Z */
+int __cdecl time_get_wchar__Getint(const time_get_wchar *this,
+        istreambuf_iterator_wchar *b, istreambuf_iterator_wchar *e,
+        int min_val, int max_val, int *val)
+{
+    BOOL got_digit = FALSE;
+    int len = 0, ret = 0;
+    char buf[16];
+
+    TRACE("(%p %p %p %d %d %p)\n", this, b, e, min_val, max_val, val);
+
+    istreambuf_iterator_wchar_val(b);
+    if(b->strbuf && (b->val == '-' || b->val == '+'))
+    {
+        buf[len++] = b->val;
+        istreambuf_iterator_wchar_inc(b);
+    }
+
+    if (b->strbuf && b->val == '0')
+    {
+        got_digit = TRUE;
+        buf[len++] = '0';
+        istreambuf_iterator_wchar_inc(b);
+    }
+    while (b->strbuf && b->val == '0')
+        istreambuf_iterator_wchar_inc(b);
+
+    for (; b->strbuf && b->val >= '0' && b->val <= '9';
+            istreambuf_iterator_wchar_inc(b))
+    {
+        if(len < ARRAY_SIZE(buf)-1)
+            buf[len] = b->val;
+        got_digit = TRUE;
+        len++;
+    }
+
+    if (!b->strbuf)
+        ret |= IOSTATE_eofbit;
+    if (got_digit && len < ARRAY_SIZE(buf)-1)
+    {
+        int v, err;
+
+        buf[len] = 0;
+        v = _Stolx(buf, NULL, 10, &err);
+        if(err || v < min_val || v > max_val)
+            ret |= IOSTATE_failbit;
+        else
+            *val = v;
+    }
+    else
+        ret |= IOSTATE_failbit;
+    return ret;
+}
+
+/* ?do_date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AW4dateorder@time_base@2@XZ */
+/* ?do_date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AW4dateorder@time_base@2@XZ */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_do_date_order, 4) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_wchar_do_date_order(this) CALL_VTBL_FUNC(this, 4, dateorder, (const time_get_wchar*), (this))
+#else
+#define call_time_get_wchar_do_date_order(this) CALL_VTBL_FUNC(this, 12, dateorder, (const time_get_wchar*), (this))
+#endif
+dateorder __thiscall time_get_wchar_do_date_order(const time_get_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return this->dateorder;
+}
+
+/* ?date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AW4dateorder@time_base@2@XZ */
+/* ?date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AW4dateorder@time_base@2@XZ */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_date_order, 4)
+dateorder __thiscall time_get_wchar_date_order(const time_get_wchar *this)
+{
+    return call_time_get_wchar_do_date_order(this);
+}
+
+static int find_longest_match_wchar(istreambuf_iterator_wchar *iter, const wchar_t *str)
+{
+    int i, len = 0, last_match = -1, match = -1;
+    const wchar_t *p, *end;
+    wchar_t buf[64];
+
+    for(istreambuf_iterator_wchar_val(iter); iter->strbuf && len<ARRAY_SIZE(buf);
+            istreambuf_iterator_wchar_inc(iter))
+    {
+        BOOL got_prefix = FALSE;
+
+        buf[len++] = iter->val;
+        last_match = match;
+        match = -1;
+        for(p=str+1, i=0; *p; p = (*end ? end+1 : end), i++)
+        {
+            end = strchrW(p, ':');
+            if (!end)
+                end = p + strlenW(p);
+
+            if (end-p >= len && !memcmp(p, buf, len*sizeof(wchar_t)))
+            {
+                if (end-p == len)
+                    match = i;
+                else
+                    got_prefix = TRUE;
+            }
+        }
+
+        if (!got_prefix)
+        {
+            if (match != -1)
+            {
+                istreambuf_iterator_wchar_inc(iter);
+                return match;
+            }
+            break;
+        }
+    }
+    if (len == ARRAY_SIZE(buf))
+        FIXME("temporary buffer is too small\n");
+    if (!iter->strbuf)
+        return match;
+    return last_match;
+}
+
+/* ?do_get_monthname@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_monthname@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_do_get_monthname, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_wchar_do_get_monthname(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_wchar_do_get_monthname(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_wchar* __thiscall time_get_wchar_do_get_monthname(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    int match;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    if ((match = find_longest_match_wchar(&s, this->months)) != -1)
+        t->tm_mon = match / 2;
+    else
+        *err |= IOSTATE_failbit;
+
+    *ret = s;
+    return ret;
+}
+
+/* ?get_monthname@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_monthname@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_get_monthname, 36)
+istreambuf_iterator_wchar* __thiscall time_get_wchar_get_monthname(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_wchar_do_get_monthname(this, ret, s, e, base, err, t);
+}
+
+/* ?do_get_time@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_time@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_do_get_time, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_wchar_do_get_time(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 8, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_wchar_do_get_time(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_wchar* __thiscall time_get_wchar_do_get_time(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    *err |= time_get_wchar__Getint(this, &s, &e, 0, 23, &t->tm_hour);
+    if (*err || istreambuf_iterator_wchar_val(&s)!=':')
+        *err |= IOSTATE_failbit;
+
+    if (!*err)
+    {
+        istreambuf_iterator_wchar_inc(&s);
+        *err |= time_get_wchar__Getint(this, &s, &e, 0, 59, &t->tm_min);
+    }
+    if (*err || istreambuf_iterator_wchar_val(&s)!=':')
+        *err |= IOSTATE_failbit;
+
+    if (!*err)
+    {
+        istreambuf_iterator_wchar_inc(&s);
+        *err |= time_get_wchar__Getint(this, &s, &e, 0, 59, &t->tm_sec);
+    }
+
+    *ret = s;
+    return ret;
+}
+
+/* ?get_time@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_time@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_get_time, 36)
+istreambuf_iterator_wchar* __thiscall time_get_wchar_get_time(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_wchar_do_get_time(this, ret, s, e, base, err, t);
+}
+
+/* ?do_get_weekday@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_weekday@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_do_get_weekday, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_wchar_do_get_weekday(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_wchar_do_get_weekday(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_wchar* __thiscall time_get_wchar_do_get_weekday(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    int match;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    if ((match = find_longest_match_wchar(&s, this->days)) != -1)
+        t->tm_wday = match / 2;
+    else
+        *err |= IOSTATE_failbit;
+
+    *ret = s;
+    return ret;
+}
+
+/* ?get_weekday@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_weekday@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_get_weekday, 36)
+istreambuf_iterator_wchar* __thiscall time_get_wchar_get_weekday(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_wchar_do_get_weekday(this, ret, s, e, base, err, t);
+}
+
+/* ?do_get_year@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_year@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_do_get_year, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_wchar_do_get_year(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_wchar_do_get_year(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 32, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_wchar* __thiscall time_get_wchar_do_get_year(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    int year;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    /* The function supports only dates from [1900-2035] range */
+    *err |= time_get_wchar__Getint(this, &s, &e, 0, 2035, &year);
+    if (!(*err & IOSTATE_failbit))
+    {
+        if (year >= 1900)
+            year -= 1900;
+        if (year > 135)
+            *err |= IOSTATE_failbit;
+        else
+            t->tm_year = year;
+    }
+
+    *ret = s;
+    return ret;
+}
+
+/* ?get_year@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_year@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_get_year, 36)
+istreambuf_iterator_wchar* __thiscall time_get_wchar_get_year(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_wchar_do_get_year(this, ret, s, e, base, err, t);
+}
+
+static void skip_ws_wchar(ctype_wchar *ctype, istreambuf_iterator_wchar *iter)
+{
+    istreambuf_iterator_wchar_val(iter);
+    while(iter->strbuf && ctype_wchar_is_ch(ctype, _SPACE, iter->val))
+        istreambuf_iterator_wchar_inc(iter);
+}
+
+static void skip_date_delim_wchar(ctype_wchar *ctype, istreambuf_iterator_wchar *iter)
+{
+    skip_ws_wchar(ctype, iter);
+    if(iter->strbuf && (iter->val == '/' || iter->val == ':'))
+        istreambuf_iterator_wchar_inc(iter);
+    skip_ws_wchar(ctype, iter);
+}
+
+/* ?do_get_date@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_date@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_do_get_date, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_wchar_do_get_date(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_wchar_do_get_date(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_wchar* __thiscall time_get_wchar_do_get_date(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    ctype_wchar *ctype;
+    dateorder order;
+
+    TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
+
+    ctype = ctype_wchar_use_facet(IOS_LOCALE(base));
+
+    order = time_get_wchar_date_order(this);
+    if(order == DATEORDER_no_order)
+        order = DATEORDER_mdy;
+
+    switch(order) {
+    case DATEORDER_dmy:
+        *err |= time_get_wchar__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        skip_date_delim_wchar(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        if(s.strbuf && ctype_wchar_is_ch(ctype, _DIGIT, s.val)) {
+            *err |= time_get_wchar__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+            t->tm_mon--;
+        } else {
+            time_get_wchar_get_monthname(this, &s, s, e, base, err, t);
+        }
+        skip_date_delim_wchar(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        time_get_wchar_get_year(this, &s, s, e, base, err, t);
+        break;
+    case DATEORDER_mdy:
+        istreambuf_iterator_wchar_val(&s);
+        if(s.strbuf && ctype_wchar_is_ch(ctype, _DIGIT, s.val)) {
+            *err |= time_get_wchar__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+            t->tm_mon--;
+        } else {
+            time_get_wchar_get_monthname(this, &s, s, e, base, err, t);
+        }
+        skip_date_delim_wchar(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        *err |= time_get_wchar__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        skip_date_delim_wchar(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        time_get_wchar_get_year(this, &s, s, e, base, err, t);
+        break;
+    case DATEORDER_ymd:
+        time_get_wchar_get_year(this, &s, s, e, base, err, t);
+        skip_date_delim_wchar(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        if(ctype_wchar_is_ch(ctype, _DIGIT, s.val)) {
+            *err |= time_get_wchar__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+            t->tm_mon--;
+        } else {
+            time_get_wchar_get_monthname(this, &s, s, e, base, err, t);
+        }
+        skip_date_delim_wchar(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        *err |= time_get_wchar__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        break;
+    case DATEORDER_ydm:
+        time_get_wchar_get_year(this, &s, s, e, base, err, t);
+        skip_date_delim_wchar(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        *err |= time_get_wchar__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        skip_date_delim_wchar(ctype, &s);
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        if(ctype_wchar_is_ch(ctype, _DIGIT, s.val)) {
+            *err |= time_get_wchar__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+            t->tm_mon--;
+        } else {
+            time_get_wchar_get_monthname(this, &s, s, e, base, err, t);
+        }
+        break;
+    default:
+        ERR("incorrect order value: %d\n", order);
+        break;
+    }
+
+    if(!s.strbuf)
+        *err |= IOSTATE_eofbit;
+    *ret = s;
+    return ret;
+}
+
+/* ?get_date@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_date@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_get_date, 36)
+istreambuf_iterator_wchar* __thiscall time_get_wchar_get_date(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_wchar_do_get_date(this, ret, s, e, base, err, t);
+}
+
+istreambuf_iterator_wchar* __thiscall time_get_wchar_get(const time_get_wchar*,
+        istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar,
+        ios_base*, int*, struct tm*, char, char);
+
+/* ?_Getfmt@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@PBD@Z */
+/* ?_Getfmt@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar__Getfmt, 40)
+istreambuf_iterator_wchar* __thiscall time_get_wchar__Getfmt(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t, const char *fmt)
+{
+    ctype_wchar *ctype;
+
+    TRACE("(%p %p %p %p %p %s)\n", this, ret, base, err, t, fmt);
+
+    ctype = ctype_wchar_use_facet(IOS_LOCALE(base));
+    istreambuf_iterator_wchar_val(&s);
+
+    while(*fmt) {
+        if(*fmt == ' ') {
+            skip_ws_wchar(ctype, &s);
+            fmt++;
+            continue;
+        }
+
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+
+        if(*fmt == '%') {
+            fmt++;
+            time_get_wchar_get(this, &s, s, e, base, err, t, *fmt, 0);
+        } else {
+            if(s.val != *fmt)
+                *err |= IOSTATE_failbit;
+            else
+                istreambuf_iterator_wchar_inc(&s);
+        }
+
+        if(*err & IOSTATE_failbit)
+            break;
+        fmt++;
+    }
+
+    if(!s.strbuf)
+        *err |= IOSTATE_eofbit;
+    *ret = s;
+    return ret;
+}
+
+/* ?do_get@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@DD@Z */
+/* ?do_get@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@DD@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_do_get, 44) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_wchar_do_get(this, ret, s, e, base, err, t, fmt, mod) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*, char, char), \
+        (this, ret, s, e, base, err, t, fmt, mod))
+#else
+#define call_time_get_wchar_do_get(this, ret, s, e, base, err, t, fmt, mod) CALL_VTBL_FUNC(this, 36, istreambuf_iterator_wchar*, \
+        (const time_get_wchar*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, struct tm*, char, char), \
+        (this, ret, s, e, base, err, t, fmt, mod))
+#endif
+istreambuf_iterator_wchar* __thiscall time_get_wchar_do_get(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t, char fmt, char mod)
+{
+    ctype_wchar *ctype;
+
+    TRACE("(%p %p %p %p %p %c %c)\n", this, ret, base, err, t, fmt, mod);
+
+    ctype = ctype_wchar_use_facet(IOS_LOCALE(base));
+
+    switch(fmt) {
+    case 'a':
+    case 'A':
+        time_get_wchar_get_weekday(this, &s, s, e, base, err, t);
+        break;
+    case 'b':
+    case 'B':
+    case 'h':
+        time_get_wchar_get_monthname(this, &s, s, e, base, err, t);
+        break;
+    case 'c':
+        time_get_wchar__Getfmt(this, &s, s, e, base, err, t, "%b %d %H:%M:%S %Y");
+        break;
+    case 'C':
+        *err |= time_get_wchar__Getint(this, &s, &e, 0, 99, &t->tm_year);
+        if(!(*err & IOSTATE_failbit))
+            t->tm_year = t->tm_year * 100 - 1900;
+        break;
+    case 'd':
+    case 'e':
+        if(fmt == 'e') skip_ws_wchar(ctype, &s);
+        *err |= time_get_wchar__Getint(this, &s, &e, 1, 31, &t->tm_mday);
+        break;
+    case 'D':
+        time_get_wchar__Getfmt(this, &s, s, e, base, err, t, "%m/%d/%y");
+        break;
+    case 'F':
+        time_get_wchar__Getfmt(this, &s, s, e, base, err, t, "%Y-%m-%d");
+        break;
+    case 'H':
+        *err |= time_get_wchar__Getint(this, &s, &e, 0, 23, &t->tm_hour);
+        break;
+    case 'I':
+        *err |= time_get_wchar__Getint(this, &s, &e, 0, 11, &t->tm_hour);
+        break;
+    case 'j':
+        *err |= time_get_wchar__Getint(this, &s, &e, 1, 366, &t->tm_yday);
+        break;
+    case 'm':
+        *err |= time_get_wchar__Getint(this, &s, &e, 1, 12, &t->tm_mon);
+        if(!(*err & IOSTATE_failbit))
+            t->tm_mon--;
+        break;
+    case 'M':
+        *err = time_get_wchar__Getint(this, &s, &e, 0, 59, &t->tm_min);
+        break;
+    case 'n':
+    case 't':
+        skip_ws_wchar(ctype, &s);
+    case 'p': {
+        BOOL pm = FALSE;
+
+        istreambuf_iterator_wchar_val(&s);
+        if(s.strbuf && (s.val=='P' || s.val=='p'))
+            pm = TRUE;
+        else if (!s.strbuf || (s.val!='A' && s.val!='a')) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        istreambuf_iterator_wchar_inc(&s);
+        if(!s.strbuf || (s.val!='M' && s.val!='m')) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+        istreambuf_iterator_wchar_inc(&s);
+
+        if(pm)
+            t->tm_hour += 12;
+        break;
+    }
+    case 'r':
+        time_get_wchar__Getfmt(this, &s, s, e, base, err, t, "%I:%M:%S %p");
+        break;
+    case 'R':
+        time_get_wchar__Getfmt(this, &s, s, e, base, err, t, "%H:%M");
+        break;
+    case 'S':
+        *err |= time_get_wchar__Getint(this, &s, &e, 0, 59, &t->tm_sec);
+        break;
+    case 'T':
+    case 'X':
+        time_get_wchar__Getfmt(this, &s, s, e, base, err, t, "%H:%M:%S");
+        break;
+    case 'u':
+        *err |= time_get_wchar__Getint(this, &s, &e, 1, 7, &t->tm_wday);
+        if(!(*err & IOSTATE_failbit) && t->tm_wday==7)
+            t->tm_wday = 0;
+        break;
+    case 'w':
+        *err |= time_get_wchar__Getint(this, &s, &e, 0, 6, &t->tm_wday);
+        break;
+    case 'x':
+        time_get_wchar_get_date(this, &s, s, e, base, err, t);
+        break;
+    case 'y':
+        *err |= time_get_wchar__Getint(this, &s, &e, 0, 99, &t->tm_year);
+        if(!(*err & IOSTATE_failbit) && t->tm_year<69)
+            t->tm_year += 100;
+        break;
+    case 'Y':
+        time_get_wchar_get_year(this, &s, s, e, base, err, t);
+        break;
+    default:
+        FIXME("unrecognized format: %c\n", fmt);
+        *err |= IOSTATE_failbit;
+    }
+
+    if(!s.strbuf)
+        *err |= IOSTATE_eofbit;
+    *ret = s;
+    return ret;
+}
+
+/* ?get@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@DD@Z */
+/* ?get@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@DD@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_get, 44)
+istreambuf_iterator_wchar* __thiscall time_get_wchar_get(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t, char fmt, char mod)
+{
+    return call_time_get_wchar_do_get(this, ret, s, e, base, err, t, fmt, mod);
+}
+
+/* ?get@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@PB_W4@Z */
+/* ?get@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@PEB_W4@Z */
+DEFINE_THISCALL_WRAPPER(time_get_wchar_get_fmt, 44)
+istreambuf_iterator_wchar* __thiscall time_get_wchar_get_fmt(const time_get_wchar *this,
+        istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar s, istreambuf_iterator_wchar e,
+        ios_base *base, int *err, struct tm *t, const wchar_t *fmtstart, const wchar_t *fmtend)
+{
+    ctype_wchar *ctype;
+
+    TRACE("(%p %p %p %p %p %s)\n", this, ret, base, err, t, wine_dbgstr_wn(fmtstart, fmtend-fmtstart));
+
+    ctype = ctype_wchar_use_facet(IOS_LOCALE(base));
+    istreambuf_iterator_wchar_val(&s);
+
+    while(fmtstart < fmtend) {
+        if(ctype_wchar_is_ch(ctype, _SPACE, *fmtstart)) {
+            skip_ws_wchar(ctype, &s);
+            fmtstart++;
+            continue;
+        }
+
+        if(!s.strbuf) {
+            *err |= IOSTATE_failbit;
+            break;
+        }
+
+        if(*fmtstart != '%' || fmtstart+1 >= fmtend || fmtstart[1] == '%') {
+            if(s.val != *fmtstart)
+                *err |= IOSTATE_failbit;
+            else
+                istreambuf_iterator_wchar_inc(&s);
+            if(*fmtstart == '%')
+                fmtstart++;
+        } else {
+            fmtstart++;
+            time_get_wchar_get(this, &s, s, e, base, err, t, *fmtstart, 0);
+        }
+
+        if(*err & IOSTATE_failbit)
+            break;
+        fmtstart++;
+    }
+
+    if(!s.strbuf)
+        *err |= IOSTATE_eofbit;
+    *ret = s;
+    return ret;
+}
+
 /* ??_7_Locimp@locale@std@@6B@ */
 extern const vtable_ptr MSVCP_locale__Locimp_vtable;
 
@@ -10956,7 +11864,7 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
 /* ?_Makewloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makewloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
 /* List of missing facets:
- * messages, money_get, money_put, moneypunct, moneypunct, time_get
+ * messages, money_get, money_put, moneypunct, moneypunct
  */
 void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
@@ -11040,6 +11948,22 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             collate_wchar_ctor_locinfo(c, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_wchar_id));
+    }
+
+    if(cat & (1<<(time_get_wchar__Getcat(NULL, NULL)-1))) {
+        time_get_wchar *t;
+
+        if(loc) {
+            t = time_get_wchar_use_facet(loc);
+        }else {
+            t = MSVCRT_operator_new(sizeof(time_get_wchar));
+            if(!t) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            time_get_wchar_ctor_locinfo(t, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_get_wchar_id));
     }
 
     if(cat & (1<<(time_put_wchar__Getcat(NULL, NULL)-1))) {
@@ -11775,6 +12699,7 @@ DEFINE_RTTI_DATA1(time_put_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$
 DEFINE_RTTI_DATA1(time_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@")
 DEFINE_RTTI_DATA1(time_base, 0, &locale_facet_rtti_base_descriptor, ".?AUtime_base@std@@")
 DEFINE_RTTI_DATA2(time_get_char, 0, &time_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
+DEFINE_RTTI_DATA2(time_get_wchar, 0, &time_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@")
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -12127,6 +13052,22 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(time_get_char_do_get)
 #endif
             );
+    __ASM_VTABLE(time_get_wchar,
+            VTABLE_ADD_FUNC(time_get_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
+            VTABLE_ADD_FUNC(time_get_wchar_do_date_order)
+            VTABLE_ADD_FUNC(time_get_wchar_do_get_time)
+            VTABLE_ADD_FUNC(time_get_wchar_do_get_date)
+            VTABLE_ADD_FUNC(time_get_wchar_do_get_weekday)
+            VTABLE_ADD_FUNC(time_get_wchar_do_get_monthname)
+            VTABLE_ADD_FUNC(time_get_wchar_do_get_year)
+#if _MSVCP_VER >= 100
+            VTABLE_ADD_FUNC(time_get_wchar_do_get)
+#endif
+            );
 #ifndef __GNUC__
 }
 #endif
@@ -12162,6 +13103,7 @@ void init_locale(void *base)
     init_time_put_short_rtti(base);
     init_time_base_rtti(base);
     init_time_get_char_rtti(base);
+    init_time_get_wchar_rtti(base);
 #endif
 }
 
