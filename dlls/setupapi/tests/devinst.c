@@ -36,7 +36,6 @@
 static BOOL is_wow64;
 
 /* function pointers */
-static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoList)(GUID*,HWND);
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInterfaceA)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
@@ -44,8 +43,6 @@ static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
 static BOOL     (WINAPI *pSetupDiGetINFClassA)(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
-static HKEY     (WINAPI *pSetupDiOpenDevRegKey)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, REGSAM);
-static HKEY     (WINAPI *pSetupDiCreateDevRegKeyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCWSTR);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoW)(HDEVINFO, PCWSTR, GUID *, PCWSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailA)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
@@ -71,7 +68,6 @@ static void init_function_pointers(void)
 
     pSetupDiCreateDeviceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoA");
     pSetupDiCreateDeviceInfoW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoW");
-    pSetupDiCreateDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoList");
     pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
     pSetupDiCreateDeviceInterfaceA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInterfaceA");
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
@@ -79,8 +75,6 @@ static void init_function_pointers(void)
     pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
     pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
-    pSetupDiOpenDevRegKey = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenDevRegKey");
-    pSetupDiCreateDevRegKeyW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDevRegKeyW");
     pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
     pSetupDiGetClassDevsA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsA");
     pSetupDiGetClassDevsW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsW");
@@ -823,7 +817,7 @@ static void test_device_iface_detail(void)
     devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, devclass);
 }
 
-static void testDevRegKey(void)
+static void test_device_key(void)
 {
     static const WCHAR classKey[] = {'S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -835,128 +829,104 @@ static void testDevRegKey(void)
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
      'E','n','u','m','\\','R','o','o','t','\\',
      'L','E','G','A','C','Y','_','B','O','G','U','S',0};
+    SP_DEVINFO_DATA device = {sizeof(device)};
     BOOL ret;
     HDEVINFO set;
     HKEY key = NULL;
+    LONG res;
 
     SetLastError(0xdeadbeef);
-    key = pSetupDiCreateDevRegKeyW(NULL, NULL, 0, 0, 0, NULL, NULL);
-    ok(key == INVALID_HANDLE_VALUE,
-     "Expected INVALID_HANDLE_VALUE, got %p\n", key);
-    ok(GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
+    key = SetupDiCreateDevRegKeyW(NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
-    set = pSetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
-    if (set)
+    set = SetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
+    ok(res != ERROR_SUCCESS, "Key should not exist.\n");
+    RegCloseKey(key);
+
+    ret = SetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+    ok(!RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key), "Key should exist.\n");
+    RegCloseKey(key);
+
+    SetLastError(0xdeadbeef);
+    key = SetupDiOpenDevRegKey(NULL, NULL, 0, 0, 0, 0);
+    ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    key = SetupDiOpenDevRegKey(set, NULL, 0, 0, 0, 0);
+    ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    key = SetupDiOpenDevRegKey(set, &device, 0, 0, 0, 0);
+    ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, 0, 0);
+    ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_BOTH, 0);
+    ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, 0);
+    ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_DEVINFO_NOT_REGISTERED, "Got unexpected error %#x.\n", GetLastError());
+
+    ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
+    ok(ret, "Failed to register device, error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, 0);
+    ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_KEY_DOES_NOT_EXIST, "Got unexpected error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, classKey, &key);
+todo_wine
+    ok(res == ERROR_FILE_NOT_FOUND, "Key should not exist.\n");
+    RegCloseKey(key);
+
+    key = SetupDiCreateDevRegKeyW(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, NULL, NULL);
+    ok(key != INVALID_HANDLE_VALUE || GetLastError() == ERROR_KEY_DOES_NOT_EXIST, /* Vista+ */
+            "Failed to create device key, error %#x.\n", GetLastError());
+    if (key != INVALID_HANDLE_VALUE)
     {
-        SP_DEVINFO_DATA devInfo = { sizeof(devInfo), { 0 } };
-        LONG res;
-
-        /* The device info key shouldn't be there */
-        res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
-        ok(res != ERROR_SUCCESS, "Expected key to not exist\n");
         RegCloseKey(key);
-        /* Create the device information */
-        ret = pSetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid,
-                NULL, NULL, 0, &devInfo);
-        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
-        /* The device info key should have been created */
-        ok(!RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key),
-         "Expected registry key to exist\n");
-        RegCloseKey(key);
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(NULL, NULL, 0, 0, 0, 0);
-        ok(!key || key == INVALID_HANDLE_VALUE,
-         "Expected INVALID_HANDLE_VALUE or a NULL key (NT4)\n");
-        ok(GetLastError() == ERROR_INVALID_HANDLE,
-         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(set, NULL, 0, 0, 0, 0);
-        ok(key == INVALID_HANDLE_VALUE &&
-         GetLastError() == ERROR_INVALID_PARAMETER,
-         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(set, &devInfo, 0, 0, 0, 0);
-        ok(key == INVALID_HANDLE_VALUE &&
-         GetLastError() == ERROR_INVALID_FLAGS,
-         "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0, 0, 0);
-        ok(key == INVALID_HANDLE_VALUE &&
-         GetLastError() == ERROR_INVALID_FLAGS,
-         "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-         DIREG_BOTH, 0);
-        ok(key == INVALID_HANDLE_VALUE &&
-         GetLastError() == ERROR_INVALID_FLAGS,
-         "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-         DIREG_DRV, 0);
-        ok(key == INVALID_HANDLE_VALUE &&
-         GetLastError() == ERROR_DEVINFO_NOT_REGISTERED,
-         "Expected ERROR_DEVINFO_NOT_REGISTERED, got %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = pSetupDiRegisterDeviceInfo(set, &devInfo, 0, NULL, NULL, NULL);
-        ok(ret, "SetupDiRegisterDeviceInfo failed: %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-         DIREG_DRV, 0);
-        /* The software key isn't created by default */
-        ok(key == INVALID_HANDLE_VALUE &&
-         GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
-         "Expected ERROR_KEY_DOES_NOT_EXIST, got %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-         DIREG_DEV, 0);
-        todo_wine
-        ok(key == INVALID_HANDLE_VALUE &&
-         GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
-         "Expected ERROR_KEY_DOES_NOT_EXIST, got %08x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        /* The class key shouldn't be there */
-        res = RegOpenKeyW(HKEY_LOCAL_MACHINE, classKey, &key);
-        todo_wine
-        ok(res != ERROR_SUCCESS, "Expected key to not exist\n");
-        RegCloseKey(key);
-        /* Create the device reg key */
-        key = pSetupDiCreateDevRegKeyW(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-         DIREG_DRV, NULL, NULL);
-        /* Vista and higher don't actually create the key */
-        ok(key != INVALID_HANDLE_VALUE || GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
-         "SetupDiCreateDevRegKey failed: %08x\n", GetLastError());
-        if (key != INVALID_HANDLE_VALUE)
-        {
-            RegCloseKey(key);
-            /* The class key should have been created */
-            ok(!RegOpenKeyW(HKEY_LOCAL_MACHINE, classKey, &key),
-             "Expected registry key to exist\n");
-            RegCloseKey(key);
-            SetLastError(0xdeadbeef);
-            key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-             DIREG_DRV, 0);
-            todo_wine
-            ok(key == INVALID_HANDLE_VALUE &&
-             (GetLastError() == ERROR_INVALID_DATA ||
-             GetLastError() == ERROR_ACCESS_DENIED), /* win2k3 */
-             "Expected ERROR_INVALID_DATA or ERROR_ACCESS_DENIED, got %08x\n", GetLastError());
-            key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
-             DIREG_DRV, KEY_READ);
-            ok(key != INVALID_HANDLE_VALUE, "SetupDiOpenDevRegKey failed: %08x\n",
-             GetLastError());
-            RegCloseKey(key);
-        }
 
-        ret = pSetupDiRemoveDevice(set, &devInfo);
-        todo_wine ok(ret, "got %u\n", GetLastError());
-        pSetupDiDestroyDeviceInfoList(set);
+        ok(!RegOpenKeyW(HKEY_LOCAL_MACHINE, classKey, &key), "Key should exist.\n");
+        RegCloseKey(key);
 
-        /* remove once Wine is fixed */
-        devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
-        devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
+        SetLastError(0xdeadbeef);
+        key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, 0);
+todo_wine {
+        ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+        ok(GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_ACCESS_DENIED, /* win2k3 */
+                "Got unexpected error %#x.\n", GetLastError());
+}
+
+        key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, KEY_READ);
+        ok(key != INVALID_HANDLE_VALUE, "Failed to open device key, error %#x.\n", GetLastError());
+        RegCloseKey(key);
     }
+
+    ret = SetupDiRemoveDevice(set, &device);
+todo_wine
+    ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
+
+    /* remove once Wine is fixed */
+    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
+    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
 }
 
 static void testRegisterAndGetDetail(void)
@@ -1557,7 +1527,7 @@ START_TEST(devinst)
     test_register_device_info();
     test_device_iface();
     test_device_iface_detail();
-    testDevRegKey();
+    test_device_key();
     testRegisterAndGetDetail();
     testDeviceRegistryPropertyA();
     testDeviceRegistryPropertyW();
