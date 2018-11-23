@@ -10019,7 +10019,7 @@ dateorder __thiscall time_get_char_date_order(const time_get_char *this)
     return call_time_get_char_do_date_order(this);
 }
 
-static int find_longest_match(istreambuf_iterator_char *iter, const char *str)
+static int find_longest_match_char(istreambuf_iterator_char *iter, const char *str)
 {
     int i, len = 0, last_match = -1, match = -1;
     const char *p, *end;
@@ -10085,7 +10085,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_monthname(const time_g
 
     TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
 
-    if ((match = find_longest_match(&s, this->months)) != -1)
+    if ((match = find_longest_match_char(&s, this->months)) != -1)
         t->tm_mon = match / 2;
     else
         *err |= IOSTATE_failbit;
@@ -10174,7 +10174,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_weekday(const time_get
 
     TRACE("(%p %p %p %p %p)\n", this, ret, base, err, t);
 
-    if ((match = find_longest_match(&s, this->days)) != -1)
+    if ((match = find_longest_match_char(&s, this->days)) != -1)
         t->tm_wday = match / 2;
     else
         *err |= IOSTATE_failbit;
@@ -10239,19 +10239,19 @@ istreambuf_iterator_char* __thiscall time_get_char_get_year(const time_get_char 
     return call_time_get_char_do_get_year(this, ret, s, e, base, err, t);
 }
 
-static void skip_ws(ctype_char *ctype, istreambuf_iterator_char *iter)
+static void skip_ws_char(ctype_char *ctype, istreambuf_iterator_char *iter)
 {
     istreambuf_iterator_char_val(iter);
     while(iter->strbuf && ctype_char_is_ch(ctype, _SPACE, iter->val))
         istreambuf_iterator_char_inc(iter);
 }
 
-static void skip_date_delim(ctype_char *ctype, istreambuf_iterator_char *iter)
+static void skip_date_delim_char(ctype_char *ctype, istreambuf_iterator_char *iter)
 {
-    skip_ws(ctype, iter);
+    skip_ws_char(ctype, iter);
     if(iter->strbuf && (iter->val == '/' || iter->val == ':'))
         istreambuf_iterator_char_inc(iter);
-    skip_ws(ctype, iter);
+    skip_ws_char(ctype, iter);
 }
 
 /* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
@@ -10284,7 +10284,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_ch
     switch(order) {
     case DATEORDER_dmy:
         *err |= time_get_char__Getint(this, &s, &e, 1, 31, &t->tm_mday);
-        skip_date_delim(ctype, &s);
+        skip_date_delim_char(ctype, &s);
         if(!s.strbuf) {
             *err |= IOSTATE_failbit;
             break;
@@ -10295,7 +10295,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_ch
         } else {
             time_get_char_get_monthname(this, &s, s, e, base, err, t);
         }
-        skip_date_delim(ctype, &s);
+        skip_date_delim_char(ctype, &s);
         if(!s.strbuf) {
             *err |= IOSTATE_failbit;
             break;
@@ -10310,13 +10310,13 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_ch
         } else {
             time_get_char_get_monthname(this, &s, s, e, base, err, t);
         }
-        skip_date_delim(ctype, &s);
+        skip_date_delim_char(ctype, &s);
         if(!s.strbuf) {
             *err |= IOSTATE_failbit;
             break;
         }
         *err |= time_get_char__Getint(this, &s, &e, 1, 31, &t->tm_mday);
-        skip_date_delim(ctype, &s);
+        skip_date_delim_char(ctype, &s);
         if(!s.strbuf) {
             *err |= IOSTATE_failbit;
             break;
@@ -10325,7 +10325,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_ch
         break;
     case DATEORDER_ymd:
         time_get_char_get_year(this, &s, s, e, base, err, t);
-        skip_date_delim(ctype, &s);
+        skip_date_delim_char(ctype, &s);
         if(!s.strbuf) {
             *err |= IOSTATE_failbit;
             break;
@@ -10336,7 +10336,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_ch
         } else {
             time_get_char_get_monthname(this, &s, s, e, base, err, t);
         }
-        skip_date_delim(ctype, &s);
+        skip_date_delim_char(ctype, &s);
         if(!s.strbuf) {
             *err |= IOSTATE_failbit;
             break;
@@ -10345,13 +10345,13 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_ch
         break;
     case DATEORDER_ydm:
         time_get_char_get_year(this, &s, s, e, base, err, t);
-        skip_date_delim(ctype, &s);
+        skip_date_delim_char(ctype, &s);
         if(!s.strbuf) {
             *err |= IOSTATE_failbit;
             break;
         }
         *err |= time_get_char__Getint(this, &s, &e, 1, 31, &t->tm_mday);
-        skip_date_delim(ctype, &s);
+        skip_date_delim_char(ctype, &s);
         if(!s.strbuf) {
             *err |= IOSTATE_failbit;
             break;
@@ -10404,7 +10404,7 @@ istreambuf_iterator_char* __thiscall time_get_char__Getfmt(const time_get_char *
 
     while(*fmt) {
         if(ctype_char_is_ch(ctype, _SPACE, *fmt)) {
-            skip_ws(ctype, &s);
+            skip_ws_char(ctype, &s);
             fmt++;
             continue;
         }
@@ -10477,7 +10477,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get(const time_get_char *t
         break;
     case 'd':
     case 'e':
-        if(fmt == 'e') skip_ws(ctype, &s);
+        if(fmt == 'e') skip_ws_char(ctype, &s);
         *err |= time_get_char__Getint(this, &s, &e, 1, 31, &t->tm_mday);
         break;
     case 'D':
@@ -10505,7 +10505,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get(const time_get_char *t
         break;
     case 'n':
     case 't':
-        skip_ws(ctype, &s);
+        skip_ws_char(ctype, &s);
     case 'p': {
         BOOL pm = FALSE;
 
@@ -10580,6 +10580,7 @@ istreambuf_iterator_char* __thiscall time_get_char_get(const time_get_char *this
     return call_time_get_char_do_get(this, ret, s, e, base, err, t, fmt, mod);
 }
 
+/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@PBD4@Z */
 /* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@PEBD4@Z */
 DEFINE_THISCALL_WRAPPER(time_get_char_get_fmt, 44)
 istreambuf_iterator_char* __thiscall time_get_char_get_fmt(const time_get_char *this,
@@ -10595,7 +10596,7 @@ istreambuf_iterator_char* __thiscall time_get_char_get_fmt(const time_get_char *
 
     while(fmtstart < fmtend) {
         if(ctype_char_is_ch(ctype, _SPACE, *fmtstart)) {
-            skip_ws(ctype, &s);
+            skip_ws_char(ctype, &s);
             fmtstart++;
             continue;
         }
@@ -10628,7 +10629,6 @@ istreambuf_iterator_char* __thiscall time_get_char_get_fmt(const time_get_char *
     return ret;
 }
 
-/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@PBD4@Z */
 /* ??_7_Locimp@locale@std@@6B@ */
 extern const vtable_ptr MSVCP_locale__Locimp_vtable;
 
