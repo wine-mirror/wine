@@ -1984,12 +1984,8 @@ static BOOL is_valid_binary( HMODULE module, const pe_image_info_t *info )
     if (info->machine == IMAGE_FILE_MACHINE_ARM64) return TRUE;
 #endif
     if (!info->contains_code) return TRUE;
-    if (info->image_flags & IMAGE_FLAGS_ComPlusNativeReady)
-    {
-        if (!convert_to_pe64( module, info )) return FALSE;
-    }
-    if (info->image_flags & IMAGE_FLAGS_ComPlusILOnly) return TRUE;
-    return FALSE;
+    if (!(info->image_flags & IMAGE_FLAGS_ComPlusNativeReady)) return FALSE;
+    return convert_to_pe64( module, info );
 #else
     return FALSE;  /* no wow64 support on other platforms */
 #endif
