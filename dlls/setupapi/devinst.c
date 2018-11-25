@@ -157,6 +157,25 @@ static struct device *get_device(HDEVINFO devinfo, const SP_DEVINFO_DATA *data)
     return device;
 }
 
+static struct device_iface *get_device_iface(HDEVINFO devinfo, const SP_DEVICE_INTERFACE_DATA *data)
+{
+    struct DeviceInfoSet *set = devinfo;
+
+    if (!devinfo || devinfo == INVALID_HANDLE_VALUE || set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
+    }
+
+    if (!data || data->cbSize != sizeof(*data) || !data->Reserved)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    return (struct device_iface *)data->Reserved;
+}
+
 static inline void copy_device_data(SP_DEVINFO_DATA *data, const struct device *device)
 {
     data->ClassGuid = device->class;
@@ -2493,34 +2512,22 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO devinfo,
     SP_DEVICE_INTERFACE_DATA *iface_data, DWORD reserved, REGSAM access,
     HINF hinf, const WCHAR *section)
 {
-    struct DeviceInfoSet *set = devinfo;
     struct device_iface *iface;
     HKEY refstr_key, params_key;
     WCHAR *path;
     LONG ret;
 
-    TRACE("%p %p %d %#x %p %s\n", devinfo, iface_data, reserved, access, hinf,
-        debugstr_w(section));
+    TRACE("devinfo %p, iface_data %p, reserved %d, access %#x, hinf %p, section %s.\n",
+            devinfo, iface_data, reserved, access, hinf, debugstr_w(section));
 
-    if (!devinfo || devinfo == INVALID_HANDLE_VALUE ||
-            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return INVALID_HANDLE_VALUE;
-    }
-    if (!iface_data || iface_data->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
-            !iface_data->Reserved)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return INVALID_HANDLE_VALUE;
-    }
+    if (!(iface = get_device_iface(devinfo, iface_data)))
+
     if (hinf && !section)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
     }
 
-    iface = (struct device_iface *)iface_data->Reserved;
     if (!(path = get_refstr_key_path(iface)))
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -2554,28 +2561,16 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO devinfo,
 BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(HDEVINFO devinfo,
     SP_DEVICE_INTERFACE_DATA *iface_data, DWORD reserved)
 {
-    struct DeviceInfoSet *set = devinfo;
     struct device_iface *iface;
     HKEY refstr_key;
     WCHAR *path;
     LONG ret;
 
-    TRACE("%p %p %d\n", devinfo, iface_data, reserved);
+    TRACE("devinfo %p, iface_data %p, reserved %d.\n", devinfo, iface_data, reserved);
 
-    if (!devinfo || devinfo == INVALID_HANDLE_VALUE ||
-            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
+    if (!(iface = get_device_iface(devinfo, iface_data)))
         return FALSE;
-    }
-    if (!iface_data || iface_data->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
-            !iface_data->Reserved)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
 
-    iface = (struct device_iface *)iface_data->Reserved;
     if (!(path = get_refstr_key_path(iface)))
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -2743,36 +2738,21 @@ BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
 /***********************************************************************
  *		SetupDiGetDeviceInterfaceDetailA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
-      HDEVINFO DeviceInfoSet,
-      PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
-      PSP_DEVICE_INTERFACE_DETAIL_DATA_A DeviceInterfaceDetailData,
-      DWORD DeviceInterfaceDetailDataSize,
-      PDWORD RequiredSize,
-      SP_DEVINFO_DATA *device_data)
+BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data,
+        SP_DEVICE_INTERFACE_DETAIL_DATA_A *DeviceInterfaceDetailData,
+        DWORD DeviceInterfaceDetailDataSize, DWORD *RequiredSize, SP_DEVINFO_DATA *device_data)
 {
-    struct DeviceInfoSet *set = DeviceInfoSet;
     struct device_iface *iface;
     DWORD bytesNeeded = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath[1]);
     BOOL ret = FALSE;
 
-    TRACE("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
-     DeviceInterfaceData, DeviceInterfaceDetailData,
-     DeviceInterfaceDetailDataSize, RequiredSize, device_data);
+    TRACE("devinfo %p, iface_data %p, detail_data %p, size %d, needed %p, device_data %p.\n",
+            devinfo, iface_data, DeviceInterfaceDetailData, DeviceInterfaceDetailDataSize,
+            RequiredSize, device_data);
 
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
-            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
+    if (!(iface = get_device_iface(devinfo, iface_data)))
         return FALSE;
-    }
-    if (!DeviceInterfaceData ||
-            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
-            !DeviceInterfaceData->Reserved)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+
     if (DeviceInterfaceDetailData &&
         DeviceInterfaceDetailData->cbSize != sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A))
     {
@@ -2784,7 +2764,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
-    iface = (struct device_iface *)DeviceInterfaceData->Reserved;
+
     if (iface->symlink)
         bytesNeeded += WideCharToMultiByte(CP_ACP, 0, iface->symlink, -1,
                 NULL, 0, NULL, NULL);
@@ -2816,37 +2796,22 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
 /***********************************************************************
  *		SetupDiGetDeviceInterfaceDetailW (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
-      HDEVINFO DeviceInfoSet,
-      PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
-      PSP_DEVICE_INTERFACE_DETAIL_DATA_W DeviceInterfaceDetailData,
-      DWORD DeviceInterfaceDetailDataSize,
-      PDWORD RequiredSize,
-      SP_DEVINFO_DATA *device_data)
+BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data,
+        SP_DEVICE_INTERFACE_DETAIL_DATA_W *DeviceInterfaceDetailData,
+        DWORD DeviceInterfaceDetailDataSize, DWORD *RequiredSize, SP_DEVINFO_DATA *device_data)
 {
-    struct DeviceInfoSet *set = DeviceInfoSet;
     struct device_iface *iface;
     DWORD bytesNeeded = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath)
         + sizeof(WCHAR); /* include NULL terminator */
     BOOL ret = FALSE;
 
-    TRACE("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
-     DeviceInterfaceData, DeviceInterfaceDetailData,
-     DeviceInterfaceDetailDataSize, RequiredSize, device_data);
+    TRACE("devinfo %p, iface_data %p, detail_data %p, size %d, needed %p, device_data %p.\n",
+            devinfo, iface_data, DeviceInterfaceDetailData, DeviceInterfaceDetailDataSize,
+            RequiredSize, device_data);
 
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE ||
-            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
+    if (!(iface = get_device_iface(devinfo, iface_data)))
         return FALSE;
-    }
-    if (!DeviceInterfaceData ||
-            DeviceInterfaceData->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA) ||
-            !DeviceInterfaceData->Reserved)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+
     if (DeviceInterfaceDetailData && (DeviceInterfaceDetailData->cbSize <
             offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath) + sizeof(WCHAR) ||
             DeviceInterfaceDetailData->cbSize > sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W)))
@@ -2859,7 +2824,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
-    iface = (struct device_iface *)DeviceInterfaceData->Reserved;
+
     if (iface->symlink)
         bytesNeeded += sizeof(WCHAR) * lstrlenW(iface->symlink);
     if (DeviceInterfaceDetailDataSize >= bytesNeeded)
