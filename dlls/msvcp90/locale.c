@@ -10514,6 +10514,7 @@ istreambuf_iterator_char* __thiscall time_get_char_do_get(const time_get_char *t
     case 'n':
     case 't':
         skip_ws_char(ctype, &s);
+        break;
     case 'p': {
         BOOL pm = FALSE;
 
@@ -11414,6 +11415,7 @@ istreambuf_iterator_wchar* __thiscall time_get_wchar_do_get(const time_get_wchar
     case 'n':
     case 't':
         skip_ws_wchar(ctype, &s);
+        break;
     case 'p': {
         BOOL pm = FALSE;
 
