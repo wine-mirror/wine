@@ -114,6 +114,15 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
 }
 
 /***********************************************************************
+ *           KeWaitForSingleObject   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeWaitForSingleObject( void *obj, KWAIT_REASON reason,
+    KPROCESSOR_MODE mode, BOOLEAN alertable, LARGE_INTEGER *timeout )
+{
+    return KeWaitForMultipleObjects( 1, &obj, WaitAny, reason, mode, alertable, timeout, NULL );
+}
+
+/***********************************************************************
  *           KeInitializeEvent   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeEvent( PRKEVENT event, EVENT_TYPE type, BOOLEAN state )

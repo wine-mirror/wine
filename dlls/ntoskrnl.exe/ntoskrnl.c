@@ -2447,19 +2447,6 @@ VOID WINAPI KeSetSystemAffinityThread(KAFFINITY Affinity)
 }
 
 /***********************************************************************
- *           KeWaitForSingleObject   (NTOSKRNL.EXE.@)
- */
-NTSTATUS WINAPI KeWaitForSingleObject(PVOID Object,
-                                      KWAIT_REASON WaitReason,
-                                      KPROCESSOR_MODE WaitMode,
-                                      BOOLEAN Alertable,
-                                      PLARGE_INTEGER Timeout)
-{
-    FIXME( "stub: %p, %d, %d, %d, %p\n", Object, WaitReason, WaitMode, Alertable, Timeout );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/***********************************************************************
  *           IoRegisterFileSystem   (NTOSKRNL.EXE.@)
  */
 VOID WINAPI IoRegisterFileSystem(PDEVICE_OBJECT DeviceObject)
