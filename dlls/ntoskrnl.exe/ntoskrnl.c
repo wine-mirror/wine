@@ -2277,15 +2277,6 @@ PRKTHREAD WINAPI KeGetCurrentThread(void)
     return NULL;
 }
 
-/***********************************************************************
- *           KeInitializeEvent   (NTOSKRNL.EXE.@)
- */
-void WINAPI KeInitializeEvent( PRKEVENT Event, EVENT_TYPE Type, BOOLEAN State )
-{
-    FIXME( "stub: %p %d %d\n", Event, Type, State );
-}
-
-
  /***********************************************************************
  *           KeInitializeMutex   (NTOSKRNL.EXE.@)
  */

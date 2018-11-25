@@ -112,3 +112,16 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
 
     return ret;
 }
+
+/***********************************************************************
+ *           KeInitializeEvent   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeEvent( PRKEVENT event, EVENT_TYPE type, BOOLEAN state )
+{
+    TRACE("event %p, type %u, state %u.\n", event, type, state);
+
+    event->Header.Type = type;
+    event->Header.SignalState = state;
+    event->Header.WaitListHead.Blink = NULL;
+    event->Header.WaitListHead.Flink = NULL;
+}
