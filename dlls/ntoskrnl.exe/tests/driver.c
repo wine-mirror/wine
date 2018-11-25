@@ -210,6 +210,121 @@ static void test_load_driver(void)
     ok(!ret, "got %#x\n", ret);
 }
 
+static NTSTATUS wait_single(void *obj, ULONGLONG timeout)
+{
+    LARGE_INTEGER integer;
+
+    integer.QuadPart = timeout;
+    return KeWaitForSingleObject(obj, Executive, KernelMode, FALSE, &integer);
+}
+
+static NTSTATUS wait_multiple(ULONG count, void *objs[], WAIT_TYPE wait_type, ULONGLONG timeout)
+{
+    LARGE_INTEGER integer;
+
+    integer.QuadPart = timeout;
+    return KeWaitForMultipleObjects(count, objs, wait_type, Executive, KernelMode, FALSE, &integer, NULL);
+}
+
+static void test_sync(void)
+{
+    KEVENT manual_event, auto_event;
+    void *objs[2];
+    NTSTATUS ret;
+
+    KeInitializeEvent(&manual_event, NotificationEvent, FALSE);
+
+    ret = wait_single(&manual_event, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeSetEvent(&manual_event, 0, FALSE);
+
+    ret = wait_single(&manual_event, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&manual_event, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    KeResetEvent(&manual_event);
+
+    ret = wait_single(&manual_event, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeInitializeEvent(&auto_event, SynchronizationEvent, FALSE);
+
+    ret = wait_single(&auto_event, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeSetEvent(&auto_event, 0, FALSE);
+
+    ret = wait_single(&auto_event, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&auto_event, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeInitializeEvent(&auto_event, SynchronizationEvent, TRUE);
+
+    ret = wait_single(&auto_event, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    objs[0] = &manual_event;
+    objs[1] = &auto_event;
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeSetEvent(&manual_event, 0, FALSE);
+    KeSetEvent(&auto_event, 0, FALSE);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&auto_event, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    KeResetEvent(&manual_event);
+    KeSetEvent(&auto_event, 0, FALSE);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == 1, "got %#x\n", ret);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeSetEvent(&manual_event, 0, FALSE);
+    KeSetEvent(&auto_event, 0, FALSE);
+
+    ret = wait_multiple(2, objs, WaitAll, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_multiple(2, objs, WaitAll, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeSetEvent(&auto_event, 0, FALSE);
+    KeResetEvent(&manual_event);
+
+    ret = wait_multiple(2, objs, WaitAll, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&auto_event, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    objs[0] = &auto_event;
+    objs[1] = &manual_event;
+    KeSetEvent(&manual_event, 0, FALSE);
+    KeSetEvent(&auto_event, 0, FALSE);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == 1, "got %#x\n", ret);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == 1, "got %#x\n", ret);
+}
+
 static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -237,6 +352,7 @@ static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
     test_mdl_map();
     test_init_funcs();
     test_load_driver();
+    test_sync();
 
     /* print process report */
     if (test_input->winetest_debug)
