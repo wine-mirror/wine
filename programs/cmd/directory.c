@@ -203,7 +203,7 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
         ULONG domainLen = MAXSTRING;
         SID_NAME_USE nameuse;
 
-        secBuffer = heap_alloc(sizeNeeded * sizeof(BYTE));
+        secBuffer = heap_xalloc(sizeNeeded * sizeof(BYTE));
 
         /* Get the owners security descriptor */
         if(!GetFileSecurityW(filename, OWNER_SECURITY_INFORMATION, secBuffer,
@@ -273,7 +273,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
      same directory. Note issuing a directory header with no contents
      mirrors what windows does                                            */
   parms = inputparms;
-  fd = heap_alloc(sizeof(WIN32_FIND_DATAW));
+  fd = heap_xalloc(sizeof(WIN32_FIND_DATAW));
   while (parms && strcmpW(inputparms->dirName, parms->dirName) == 0) {
     concurrentDirs++;
 
@@ -510,7 +510,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(string));
 
             /* Allocate memory, add to list */
-            thisDir = heap_alloc(sizeof(DIRECTORY_STACK));
+            thisDir = heap_xalloc(sizeof(DIRECTORY_STACK));
             if (dirStack == NULL) dirStack = thisDir;
             if (lastEntry != NULL) lastEntry->next = thisDir;
             lastEntry = thisDir;
@@ -841,7 +841,7 @@ void WCMD_directory (WCHAR *args)
       }
 
       WINE_TRACE("Using path '%s'\n", wine_dbgstr_w(path));
-      thisEntry = heap_alloc(sizeof(DIRECTORY_STACK));
+      thisEntry = heap_xalloc(sizeof(DIRECTORY_STACK));
       if (fullParms == NULL) fullParms = thisEntry;
       if (prevEntry != NULL) prevEntry->next = thisEntry;
       prevEntry = thisEntry;
@@ -853,11 +853,11 @@ void WCMD_directory (WCHAR *args)
                  wine_dbgstr_w(drive), wine_dbgstr_w(dir),
                  wine_dbgstr_w(fname), wine_dbgstr_w(ext));
 
-      thisEntry->dirName = heap_alloc(sizeof(WCHAR) * (strlenW(drive)+strlenW(dir)+1));
+      thisEntry->dirName = heap_xalloc(sizeof(WCHAR) * (strlenW(drive)+strlenW(dir)+1));
       strcpyW(thisEntry->dirName, drive);
       strcatW(thisEntry->dirName, dir);
 
-      thisEntry->fileName = heap_alloc(sizeof(WCHAR) * (strlenW(fname)+strlenW(ext)+1));
+      thisEntry->fileName = heap_xalloc(sizeof(WCHAR) * (strlenW(fname)+strlenW(ext)+1));
       strcpyW(thisEntry->fileName, fname);
       strcatW(thisEntry->fileName, ext);
 
@@ -867,7 +867,7 @@ void WCMD_directory (WCHAR *args)
   /* If just 'dir' entered, a '*' parameter is assumed */
   if (fullParms == NULL) {
     WINE_TRACE("Inserting default '*'\n");
-    fullParms = heap_alloc(sizeof(DIRECTORY_STACK));
+    fullParms = heap_xalloc(sizeof(DIRECTORY_STACK));
     fullParms->next = NULL;
     fullParms->dirName = heap_strdupW(cwd);
     fullParms->fileName = heap_strdupW(starW);

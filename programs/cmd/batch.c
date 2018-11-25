@@ -257,7 +257,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
       const char *p;
 
       cp = GetConsoleCP();
-      bufA = heap_alloc(noChars);
+      bufA = heap_xalloc(noChars);
 
       /* Save current file position */
       filepos.QuadPart = 0;
@@ -508,7 +508,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
 
     size = GetEnvironmentVariableW(env, NULL, 0);
     if (size > 0) {
-      WCHAR *fullpath = heap_alloc(size * sizeof(WCHAR));
+      WCHAR *fullpath = heap_xalloc(size * sizeof(WCHAR));
       if (!fullpath || (GetEnvironmentVariableW(env, fullpath, size) == 0) ||
           (SearchPathW(fullpath, outputparam, NULL, MAX_PATH, outputparam, NULL) == 0))
           size = 0;

@@ -720,7 +720,7 @@ void WCMD_copy(WCHAR * args) {
     }
 
     /* We have found something to process - build a COPY_FILE block to store it */
-    thiscopy = heap_alloc(sizeof(COPY_FILES));
+    thiscopy = heap_xalloc(sizeof(COPY_FILES));
 
     WINE_TRACE("Not a switch, but probably a filename/list %s\n", wine_dbgstr_w(thisparam));
     thiscopy->concatenate = concatnextfilename;
@@ -731,7 +731,7 @@ void WCMD_copy(WCHAR * args) {
        leave space to append \* to the end) , then copy in character by character. Strip off
        quotes if we find them.                                                               */
     len = strlenW(thisparam) + (sizeof(WCHAR) * 5);  /* 5 spare characters, null + \*.*      */
-    thiscopy->name = heap_alloc(len*sizeof(WCHAR));
+    thiscopy->name = heap_xalloc(len*sizeof(WCHAR));
     memset(thiscopy->name, 0x00, len);
 
     pos1 = thisparam;
@@ -810,7 +810,7 @@ void WCMD_copy(WCHAR * args) {
     strcpyW(destname, dotW);
     strcatW(destname, slashW);
 
-    destination = heap_alloc(sizeof(COPY_FILES));
+    destination = heap_xalloc(sizeof(COPY_FILES));
     if (destination == NULL) goto exitreturn;
     destination->concatenate = FALSE;           /* Not used for destination */
     destination->binarycopy  = binarymode;
@@ -1390,7 +1390,7 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(subParm));
 
             /* Allocate memory, add to list */
-            nextDir = heap_alloc(sizeof(DIRECTORY_STACK));
+            nextDir = heap_xalloc(sizeof(DIRECTORY_STACK));
             if (allDirs == NULL) allDirs = nextDir;
             if (lastEntry != NULL) lastEntry->next = nextDir;
             lastEntry = nextDir;
@@ -1476,7 +1476,7 @@ static WCHAR *WCMD_strtrim(const WCHAR *s)
     const WCHAR *start = s;
     WCHAR* result;
 
-    result = heap_alloc((len + 1) * sizeof(WCHAR));
+    result = heap_xalloc((len + 1) * sizeof(WCHAR));
 
     while (isspaceW(*start)) start++;
     if (*start) {
@@ -1787,12 +1787,12 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
           (strcmpW(fd.cFileName, dotW) != 0))
       {
         /* Allocate memory, add to list */
-        DIRECTORY_STACK *toWalk = heap_alloc(sizeof(DIRECTORY_STACK));
+        DIRECTORY_STACK *toWalk = heap_xalloc(sizeof(DIRECTORY_STACK));
         WINE_TRACE("(%p->%p)\n", remainingDirs, remainingDirs->next);
         toWalk->next = remainingDirs->next;
         remainingDirs->next = toWalk;
         remainingDirs = toWalk;
-        toWalk->dirName = heap_alloc(sizeof(WCHAR) * (strlenW(dirsToWalk->dirName) + 2 + strlenW(fd.cFileName)));
+        toWalk->dirName = heap_xalloc(sizeof(WCHAR) * (strlenW(dirsToWalk->dirName) + 2 + strlenW(fd.cFileName)));
         strcpyW(toWalk->dirName, dirsToWalk->dirName);
         strcatW(toWalk->dirName, slashW);
         strcatW(toWalk->dirName, fd.cFileName);
@@ -2228,7 +2228,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   /* Set up the list of directories to recurse if we are going to */
   } else if (doRecurse) {
        /* Allocate memory, add to list */
-       dirsToWalk = heap_alloc(sizeof(DIRECTORY_STACK));
+       dirsToWalk = heap_xalloc(sizeof(DIRECTORY_STACK));
        dirsToWalk->next = NULL;
        dirsToWalk->dirName = heap_strdupW(optionsRoot);
        WINE_TRACE("Starting with root directory %s\n", wine_dbgstr_w(dirsToWalk->dirName));
@@ -3673,7 +3673,7 @@ static int WCMD_getprecedence(const WCHAR in)
  * stack
  */
 static void WCMD_pushnumber(WCHAR *var, int num, VARSTACK **varstack) {
-  VARSTACK *thisstack = heap_alloc(sizeof(VARSTACK));
+  VARSTACK *thisstack = heap_xalloc(sizeof(VARSTACK));
   thisstack->isnum = (var == NULL);
   if (var) {
     thisstack->variable = var;
@@ -3736,7 +3736,7 @@ static int WCMD_popnumber(VARSTACK **varstack) {
  * Push an operator onto the supplied stack
  */
 static void WCMD_pushoperator(WCHAR op, int precedence, OPSTACK **opstack) {
-  OPSTACK *thisstack = heap_alloc(sizeof(OPSTACK));
+  OPSTACK *thisstack = heap_xalloc(sizeof(OPSTACK));
   thisstack->precedence = precedence;
   thisstack->op = op;
   thisstack->next = *opstack;
@@ -4206,7 +4206,7 @@ void WCMD_setshow_env (WCHAR *s) {
     WCHAR *src,*dst;
 
     /* Remove all quotes before doing any calculations */
-    thisexpr = heap_alloc((strlenW(s+2)+1) * sizeof(WCHAR));
+    thisexpr = heap_xalloc((strlenW(s+2)+1) * sizeof(WCHAR));
     src = s+2;
     dst = thisexpr;
     while (*src) {
@@ -4407,7 +4407,7 @@ void WCMD_start(WCHAR *args)
 
     GetWindowsDirectoryW( file, MAX_PATH );
     strcatW( file, exeW );
-    cmdline = heap_alloc( (strlenW(file) + strlenW(args) + 8) * sizeof(WCHAR) );
+    cmdline = heap_xalloc( (strlenW(file) + strlenW(args) + 8) * sizeof(WCHAR) );
     strcpyW( cmdline, file );
     strcatW( cmdline, spaceW );
     cmdline_params = cmdline + strlenW(cmdline);

@@ -75,7 +75,7 @@ static char *get_file_buffer(void)
 {
     static char *output_bufA = NULL;
     if (!output_bufA)
-        output_bufA = heap_alloc(MAX_WRITECONSOLE_SIZE);
+        output_bufA = heap_xalloc(MAX_WRITECONSOLE_SIZE);
     return output_bufA;
 }
 
@@ -438,11 +438,11 @@ static void WCMD_show_prompt (BOOL newLine) {
   WCMD_output_asis (out_string);
 }
 
-void *heap_alloc(size_t size)
+void *heap_xalloc(size_t size)
 {
     void *ret;
 
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = heap_alloc(size);
     if(!ret) {
         ERR("Out of memory\n");
         ExitProcess(1);
@@ -981,7 +981,7 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
          * its new input & output handles)
          */
         sz = max(sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
-        ptr = heap_alloc(sz);
+        ptr = heap_xalloc(sz);
         flags = (char*)(ptr + sizeof(unsigned));
         handles = (HANDLE*)(flags + num * sizeof(char));
 
@@ -1300,12 +1300,12 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                wine_dbgstr_w(command), cmdList);
 
     /* Move copy of the command onto the heap so it can be expanded */
-    new_cmd = heap_alloc(MAXSTRING * sizeof(WCHAR));
+    new_cmd = heap_xalloc(MAXSTRING * sizeof(WCHAR));
     strcpyW(new_cmd, command);
     cmd = new_cmd;
 
     /* Move copy of the redirects onto the heap so it can be expanded */
-    new_redir = heap_alloc(MAXSTRING * sizeof(WCHAR));
+    new_redir = heap_xalloc(MAXSTRING * sizeof(WCHAR));
     redir = new_redir;
 
     /* Strip leading whitespaces, and a '@' if supplied */
@@ -1708,16 +1708,16 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
     CMD_LIST *thisEntry = NULL;
 
     /* Allocate storage for command */
-    thisEntry = heap_alloc(sizeof(CMD_LIST));
+    thisEntry = heap_xalloc(sizeof(CMD_LIST));
 
     /* Copy in the command */
     if (command) {
-        thisEntry->command = heap_alloc((*commandLen+1) * sizeof(WCHAR));
+        thisEntry->command = heap_xalloc((*commandLen+1) * sizeof(WCHAR));
         memcpy(thisEntry->command, command, *commandLen * sizeof(WCHAR));
         thisEntry->command[*commandLen] = 0x00;
 
         /* Copy in the redirects */
-        thisEntry->redirects = heap_alloc((*redirLen+1) * sizeof(WCHAR));
+        thisEntry->redirects = heap_xalloc((*redirLen+1) * sizeof(WCHAR));
         memcpy(thisEntry->redirects, redirs, *redirLen * sizeof(WCHAR));
         thisEntry->redirects[*redirLen] = 0x00;
         thisEntry->pipeFile[0] = 0x00;
@@ -1849,7 +1849,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
-        extraSpace = heap_alloc((MAXSTRING+1) * sizeof(WCHAR));
+        extraSpace = heap_xalloc((MAXSTRING+1) * sizeof(WCHAR));
     if (!extraSpace)
     {
         WINE_ERR("Could not allocate memory for extraSpace\n");

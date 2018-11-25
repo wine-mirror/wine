@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <wine/heap.h>
 #include <wine/unicode.h>
 
 /* msdn specified max for Win XP */
@@ -127,12 +128,7 @@ void      WCMD_free_commands(CMD_LIST *cmds);
 void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
                         CMD_LIST **cmdList, BOOL retrycall);
 
-void *heap_alloc(size_t);
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
+void *heap_xalloc(size_t);
 
 static inline WCHAR *heap_strdupW(const WCHAR *str)
 {
@@ -142,7 +138,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
         size_t size;
 
         size = (strlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
+        ret = heap_xalloc(size);
         memcpy(ret, str, size);
     }
 
