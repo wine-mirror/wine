@@ -129,16 +129,26 @@ struct device_iface
     struct list      entry;
 };
 
-static struct device *get_device(HDEVINFO devinfo, const SP_DEVINFO_DATA *data)
+static struct DeviceInfoSet *get_device_set(HDEVINFO devinfo)
 {
     struct DeviceInfoSet *set = devinfo;
-    struct device *device;
 
     if (!devinfo || devinfo == INVALID_HANDLE_VALUE || set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return NULL;
     }
+
+    return set;
+}
+
+static struct device *get_device(HDEVINFO devinfo, const SP_DEVINFO_DATA *data)
+{
+    struct DeviceInfoSet *set;
+    struct device *device;
+
+    if (!(set = get_device_set(devinfo)))
+        return FALSE;
 
     if (!data || data->cbSize != sizeof(*data) || !data->Reserved)
     {
@@ -159,13 +169,8 @@ static struct device *get_device(HDEVINFO devinfo, const SP_DEVINFO_DATA *data)
 
 static struct device_iface *get_device_iface(HDEVINFO devinfo, const SP_DEVICE_INTERFACE_DATA *data)
 {
-    struct DeviceInfoSet *set = devinfo;
-
-    if (!devinfo || devinfo == INVALID_HANDLE_VALUE || set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return NULL;
-    }
+    if (!get_device_set(devinfo))
+        return FALSE;
 
     if (!data || data->cbSize != sizeof(*data) || !data->Reserved)
     {
@@ -1387,38 +1392,33 @@ static DWORD SETUPDI_DevNameToDevID(LPCWSTR devName)
 /***********************************************************************
  *              SetupDiCreateDeviceInfoW (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO DeviceInfoSet, PCWSTR DeviceName,
+BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, PCWSTR DeviceName,
         const GUID *ClassGuid, PCWSTR DeviceDescription, HWND hwndParent, DWORD CreationFlags,
         SP_DEVINFO_DATA *device_data)
 {
-    struct DeviceInfoSet *set = DeviceInfoSet;
+    struct DeviceInfoSet *set;
     BOOL ret = FALSE, allocatedInstanceId = FALSE;
     LPCWSTR instanceId = NULL;
 
-    TRACE("%p %s %s %s %p %x %p\n", DeviceInfoSet, debugstr_w(DeviceName),
-        debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
-        hwndParent, CreationFlags, device_data);
+    TRACE("devinfo %p, name %s, class %s, description %s, hwnd %p, flags %#x, device_data %p.\n",
+            devinfo, debugstr_w(DeviceName), debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
+            hwndParent, CreationFlags, device_data);
 
     if (!DeviceName)
     {
         SetLastError(ERROR_INVALID_DEVINST_NAME);
         return FALSE;
     }
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
+
+    if (!(set = get_device_set(devinfo)))
         return FALSE;
-    }
+
     if (!ClassGuid)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
+
     if (!IsEqualGUID(&set->ClassGuid, &GUID_NULL) &&
         !IsEqualGUID(ClassGuid, &set->ClassGuid))
     {
@@ -1561,54 +1561,45 @@ BOOL WINAPI SetupDiRemoveDeviceInterface(HDEVINFO info, PSP_DEVICE_INTERFACE_DAT
 /***********************************************************************
  *		SetupDiEnumDeviceInfo (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiEnumDeviceInfo(
-        HDEVINFO  devinfo,
-        DWORD  index,
-        PSP_DEVINFO_DATA info)
+BOOL WINAPI SetupDiEnumDeviceInfo(HDEVINFO devinfo, DWORD index, SP_DEVINFO_DATA *device_data)
 {
-    BOOL ret = FALSE;
+    struct DeviceInfoSet *set;
+    struct device *device;
+    DWORD i = 0;
 
-    TRACE("%p %d %p\n", devinfo, index, info);
+    TRACE("devinfo %p, index %d, device_data %p\n", devinfo, index, device_data);
 
-    if(info==NULL)
+    if (!(set = get_device_set(devinfo)))
+        return FALSE;
+
+    if (!device_data)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (devinfo && devinfo != INVALID_HANDLE_VALUE)
-    {
-        struct DeviceInfoSet *list = devinfo;
-        if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
-        {
-            if (index < list->cDevices)
-            {
-                if (info->cbSize == sizeof(SP_DEVINFO_DATA))
-                {
-                    struct device *device;
-                    DWORD i = 0;
 
-                    LIST_FOR_EACH_ENTRY(device, &list->devices, struct device, entry)
-                    {
-                        if (i++ == index)
-                        {
-                            copy_device_data(info, device);
-                            break;
-                        }
-                    }
-                    ret = TRUE;
-                }
-                else
-                    SetLastError(ERROR_INVALID_USER_BUFFER);
-            }
-            else
-                SetLastError(ERROR_NO_MORE_ITEMS);
-        }
-        else
-            SetLastError(ERROR_INVALID_HANDLE);
+    if (device_data->cbSize != sizeof(SP_DEVINFO_DATA))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
     }
-    else
-        SetLastError(ERROR_INVALID_HANDLE);
-    return ret;
+
+    if (index >= set->cDevices)
+    {
+        SetLastError(ERROR_NO_MORE_ITEMS);
+        return FALSE;
+    }
+
+    LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
+    {
+        if (i++ == index)
+        {
+            copy_device_data(device_data, device);
+            break;
+        }
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2338,24 +2329,15 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *class, PCWSTR enumstr, HWND p
 /***********************************************************************
  *		SetupDiGetDeviceInfoListDetailA  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetDeviceInfoListDetailA(
-        HDEVINFO DeviceInfoSet,
-        PSP_DEVINFO_LIST_DETAIL_DATA_A DevInfoData )
+BOOL WINAPI SetupDiGetDeviceInfoListDetailA(HDEVINFO devinfo, SP_DEVINFO_LIST_DETAIL_DATA_A *DevInfoData)
 {
-    struct DeviceInfoSet *set = DeviceInfoSet;
+    struct DeviceInfoSet *set;
 
-    TRACE("%p %p\n", DeviceInfoSet, DevInfoData);
+    TRACE("devinfo %p, detail_data %p.\n", devinfo, DevInfoData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
+    if (!(set = get_device_set(devinfo)))
         return FALSE;
-    }
-    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
+
     if (!DevInfoData ||
             DevInfoData->cbSize != sizeof(SP_DEVINFO_LIST_DETAIL_DATA_A))
     {
@@ -2371,24 +2353,15 @@ BOOL WINAPI SetupDiGetDeviceInfoListDetailA(
 /***********************************************************************
  *		SetupDiGetDeviceInfoListDetailW  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetDeviceInfoListDetailW(
-        HDEVINFO DeviceInfoSet,
-        PSP_DEVINFO_LIST_DETAIL_DATA_W DevInfoData )
+BOOL WINAPI SetupDiGetDeviceInfoListDetailW(HDEVINFO devinfo, SP_DEVINFO_LIST_DETAIL_DATA_W *DevInfoData)
 {
-    struct DeviceInfoSet *set = DeviceInfoSet;
+    struct DeviceInfoSet *set;
 
-    TRACE("%p %p\n", DeviceInfoSet, DevInfoData);
+    TRACE("devinfo %p, detail_data %p.\n", devinfo, DevInfoData);
 
-    if (!DeviceInfoSet || DeviceInfoSet == INVALID_HANDLE_VALUE)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
+    if (!(set = get_device_set(devinfo)))
         return FALSE;
-    }
-    if (set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
+
     if (!DevInfoData ||
             DevInfoData->cbSize != sizeof(SP_DEVINFO_LIST_DETAIL_DATA_W))
     {
@@ -2624,26 +2597,14 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO devinfo,
     SP_DEVINFO_DATA *device_data, const GUID *class, DWORD index,
     SP_DEVICE_INTERFACE_DATA *iface_data)
 {
-    struct DeviceInfoSet *set = devinfo;
+    struct DeviceInfoSet *set;
     struct device *device;
     struct device_iface *iface;
     DWORD i = 0;
 
-    TRACE("%p, %p, %s, %u, %p\n", devinfo, device_data, debugstr_guid(class),
-        index, iface_data);
+    TRACE("devinfo %p, device_data %p, class %s, index %u, iface_data %p.\n",
+            devinfo, device_data, debugstr_guid(class), index, iface_data);
 
-    if (!devinfo || devinfo == INVALID_HANDLE_VALUE ||
-            set->magic != SETUP_DEVICE_INFO_SET_MAGIC)
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
-    }
-    if (device_data && (device_data->cbSize != sizeof(SP_DEVINFO_DATA) ||
-                !device_data->Reserved))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
     if (!iface_data || iface_data->cbSize != sizeof(SP_DEVICE_INTERFACE_DATA))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -2656,7 +2617,8 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO devinfo,
 
     if (device_data)
     {
-        device = (struct device *)device_data->Reserved;
+        if (!(device = get_device(devinfo, device_data)))
+            return FALSE;
 
         LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
         {
@@ -2673,6 +2635,9 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO devinfo,
     }
     else
     {
+        if (!(set = get_device_set(devinfo)))
+            return FALSE;
+
         LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
         {
             LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
@@ -2708,31 +2673,21 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO devinfo,
  */
 BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
 {
-    BOOL ret = FALSE;
+    struct DeviceInfoSet *set;
+    struct device *device, *device2;
 
-    TRACE("%p\n", devinfo);
-    if (devinfo && devinfo != INVALID_HANDLE_VALUE)
+    TRACE("devinfo %p.\n", devinfo);
+
+    if (!(set = get_device_set(devinfo)))
+        return FALSE;
+
+    LIST_FOR_EACH_ENTRY_SAFE(device, device2, &set->devices, struct device, entry)
     {
-        struct DeviceInfoSet *list = devinfo;
-
-        if (list->magic == SETUP_DEVICE_INFO_SET_MAGIC)
-        {
-            struct device *device, *device2;
-
-            LIST_FOR_EACH_ENTRY_SAFE(device, device2, &list->devices,
-                    struct device, entry)
-            {
-                SETUPDI_RemoveDevice(device);
-            }
-            HeapFree(GetProcessHeap(), 0, list);
-            ret = TRUE;
-        }
+        SETUPDI_RemoveDevice(device);
     }
+    heap_free(set);
 
-    if (!ret)
-        SetLastError(ERROR_INVALID_HANDLE);
-
-    return ret;
+    return TRUE;
 }
 
 /***********************************************************************
