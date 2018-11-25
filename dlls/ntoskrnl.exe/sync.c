@@ -125,3 +125,22 @@ void WINAPI KeInitializeEvent( PRKEVENT event, EVENT_TYPE type, BOOLEAN state )
     event->Header.WaitListHead.Blink = NULL;
     event->Header.WaitListHead.Flink = NULL;
 }
+
+/***********************************************************************
+ *           KeSetEvent   (NTOSKRNL.EXE.@)
+ */
+LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
+{
+    HANDLE handle = event->Header.WaitListHead.Blink;
+    LONG ret;
+
+    TRACE("event %p, increment %d, wait %u.\n", event, increment, wait);
+
+    EnterCriticalSection( &sync_cs );
+    ret = InterlockedExchange( &event->Header.SignalState, TRUE );
+    if (handle)
+        SetEvent( handle );
+    LeaveCriticalSection( &sync_cs );
+
+    return ret;
+}
