@@ -701,6 +701,15 @@ HANDLE WINAPI GetCurrentThread(void)
     return (HANDLE)~(ULONG_PTR)1;
 }
 
+/***********************************************************************
+ *		GetCurrentThreadStackLimits (KERNEL32.@)
+ */
+void WINAPI GetCurrentThreadStackLimits(ULONG_PTR *low, ULONG_PTR *high)
+{
+    *low = (ULONG_PTR)NtCurrentTeb()->DeallocationStack;
+    *high = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase;
+}
+
 
 #ifdef __i386__
 
