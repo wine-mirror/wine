@@ -334,7 +334,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
                 SendMessageW( hWnd, BM_SETCHECK, !(state & BST_CHECKED), 0 );
                 break;
             case BS_AUTORADIOBUTTON:
-                SendMessageW( hWnd, BM_SETCHECK, TRUE, 0 );
+                BUTTON_CheckAutoRadioButton( hWnd );
                 break;
             case BS_AUTO3STATE:
                 SendMessageW( hWnd, BM_SETCHECK,
@@ -500,8 +500,6 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
             set_button_state( hWnd, (state & ~3) | wParam );
             paint_button( hWnd, btn_type, ODA_SELECT );
         }
-        if ((btn_type == BS_AUTORADIOBUTTON) && (wParam == BST_CHECKED) && (style & WS_CHILD))
-            BUTTON_CheckAutoRadioButton( hWnd );
         break;
 
     case BM_GETSTATE:
@@ -986,13 +984,12 @@ static void BUTTON_CheckAutoRadioButton( HWND hwnd )
 
     parent = GetParent(hwnd);
     /* make sure that starting control is not disabled or invisible */
-    start = sibling = GetNextDlgGroupItem( parent, hwnd, TRUE );
+    start = sibling = hwnd;
     do
     {
         if (!sibling) break;
-        if ((hwnd != sibling) &&
-            ((GetWindowLongW( sibling, GWL_STYLE) & BS_TYPEMASK) == BS_AUTORADIOBUTTON))
-            SendMessageW( sibling, BM_SETCHECK, BST_UNCHECKED, 0 );
+        if (SendMessageW( sibling, WM_GETDLGCODE, 0, 0 ) == (DLGC_BUTTON | DLGC_RADIOBUTTON))
+            SendMessageW( sibling, BM_SETCHECK, sibling == hwnd ? BST_CHECKED : BST_UNCHECKED, 0 );
         sibling = GetNextDlgGroupItem( parent, sibling, FALSE );
     } while (sibling != start);
 }
