@@ -2430,16 +2430,6 @@ ULONG WINAPI KeQueryTimeIncrement(void)
 
 
 /***********************************************************************
- *           KeResetEvent   (NTOSKRNL.EXE.@)
- */
-LONG WINAPI KeResetEvent( PRKEVENT Event )
-{
-    FIXME("(%p): stub\n", Event);
-    return 0;
-}
-
-
-/***********************************************************************
  *           KeSetPriorityThread   (NTOSKRNL.EXE.@)
  */
 KPRIORITY WINAPI KeSetPriorityThread( PKTHREAD Thread, KPRIORITY Priority )
