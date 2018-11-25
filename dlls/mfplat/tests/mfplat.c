@@ -205,6 +205,7 @@ static void test_source_resolver(void)
     IMFByteStream *bytestream;
     IMFAttributes *attributes;
     IMFMediaSource *mediasource;
+    IMFPresentationDescriptor *descriptor;
     MF_OBJECT_TYPE obj_type;
     HRESULT hr;
     WCHAR *filename;
@@ -286,6 +287,12 @@ static void test_source_resolver(void)
     ok(mediasource != NULL, "got %p\n", mediasource);
     ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
 
+    hr = IMFMediaSource_CreatePresentationDescriptor(
+        mediasource, &descriptor);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(descriptor != NULL, "got %p\n", descriptor);
+
+    IMFPresentationDescriptor_Release(descriptor);
     IMFMediaSource_Release(mediasource);
     IMFByteStream_Release(bytestream);
 
