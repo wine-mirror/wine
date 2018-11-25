@@ -227,6 +227,7 @@ struct symt_public
     struct symt                 symt;
     struct hash_table_elt       hash_elt;
     struct symt*                container;      /* compiland */
+    BOOL is_function;
     unsigned long               address;
     unsigned long               size;
 };
@@ -716,7 +717,9 @@ extern struct symt_public*
                     symt_new_public(struct module* module, 
                                     struct symt_compiland* parent, 
                                     const char* typename,
-                                    unsigned long address, unsigned size) DECLSPEC_HIDDEN;
+                                    BOOL is_function,
+                                    unsigned long address,
+                                    unsigned size) DECLSPEC_HIDDEN;
 extern struct symt_data*
                     symt_new_global_variable(struct module* module, 
                                              struct symt_compiland* parent,
