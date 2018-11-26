@@ -364,13 +364,14 @@ static INT SIC_LoadIcon (const WCHAR *sourcefile, INT index, DWORD flags)
     HICON hshortcuts[ARRAY_SIZE(hicons)] = { 0 };
     unsigned int i;
     SIZE size;
-    int ret;
+    INT ret = -1;
 
     for (i = 0; i < ARRAY_SIZE(hicons); i++)
     {
         get_imagelist_icon_size( i, &size );
         if (!PrivateExtractIconsW( sourcefile, index, size.cx, size.cy, &hicons[i], 0, 1, 0 ))
             WARN("Failed to load icon %d from %s.\n", index, debugstr_w(sourcefile));
+        if (!hicons[i]) goto fail;
     }
 
     if (flags & GIL_FORSHORTCUT)
@@ -403,6 +404,8 @@ static INT SIC_LoadIcon (const WCHAR *sourcefile, INT index, DWORD flags)
     }
 
     ret = SIC_IconAppend( sourcefile, index, hicons, flags );
+
+fail:
     for (i = 0; i < ARRAY_SIZE(hicons); i++)
         DestroyIcon(hicons[i]);
     return ret;
