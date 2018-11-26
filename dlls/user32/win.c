@@ -1611,8 +1611,8 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     if (cy < 0) cy = 0;
     SetRect( &rect, cs->x, cs->y, cs->x + cx, cs->y + cy );
     /* check for wraparound */
-    if (cs->x + cx < cs->x) rect.right = 0x7fffffff;
-    if (cs->y + cy < cs->y) rect.bottom = 0x7fffffff;
+    if (cs->x > 0x7fffffff - cx) rect.right = 0x7fffffff;
+    if (cs->y > 0x7fffffff - cy) rect.bottom = 0x7fffffff;
     if (!set_window_pos( hwnd, 0, SWP_NOZORDER | SWP_NOACTIVATE, &rect, &rect, NULL )) goto failed;
 
     /* send WM_NCCREATE */
