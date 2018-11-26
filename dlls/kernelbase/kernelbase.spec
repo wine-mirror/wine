@@ -1033,7 +1033,7 @@
 @ stdcall PathCchAddBackslashEx(wstr long ptr ptr)
 @ stdcall PathCchAddExtension(wstr long wstr)
 # @ stub PathCchAppend
-# @ stub PathCchAppendEx
+@ stdcall PathCchAppendEx(wstr long wstr long)
 @ stdcall PathCchCanonicalize(ptr long wstr)
 @ stdcall PathCchCanonicalizeEx(ptr long wstr long)
 @ stdcall PathCchCombine(ptr long wstr wstr)

@@ -4,7 +4,7 @@
 @ stdcall PathCchAddBackslashEx(wstr long ptr ptr) kernelbase.PathCchAddBackslashEx
 @ stdcall PathCchAddExtension(wstr long wstr) kernelbase.PathCchAddExtension
 @ stub PathCchAppend
-@ stub PathCchAppendEx
+@ stdcall PathCchAppendEx(wstr long wstr long) kernelbase.PathCchAppendEx
 @ stdcall PathCchCanonicalize(ptr long wstr) kernelbase.PathCchCanonicalize
 @ stdcall PathCchCanonicalizeEx(ptr long wstr long) kernelbase.PathCchCanonicalizeEx
 @ stdcall PathCchCombine(ptr long wstr wstr) kernelbase.PathCchCombine

@@ -35,6 +35,7 @@ HRESULT (WINAPI *pPathAllocCombine)(const WCHAR *path1, const WCHAR *path2, DWOR
 HRESULT (WINAPI *pPathCchAddBackslash)(WCHAR *out, SIZE_T size);
 HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr, SIZE_T *remaining);
 HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
+HRESULT (WINAPI *pPathCchAppendEx)(WCHAR *path1, SIZE_T size, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchCanonicalize)(WCHAR *out, SIZE_T size, const WCHAR *in);
 HRESULT (WINAPI *pPathCchCanonicalizeEx)(WCHAR *out, SIZE_T size, const WCHAR *in, DWORD flags);
 HRESULT (WINAPI *pPathCchCombine)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2);
@@ -785,6 +786,126 @@ static const struct addextension_test addextension_tests[] =
     {"C:\\", ".a\\", NULL, E_INVALIDARG},
     {"C:\\1.exe", " ", NULL, E_INVALIDARG}
 };
+
+struct append_test
+{
+    const CHAR *path1;
+    const CHAR *path2;
+    const CHAR *result;
+};
+
+static const struct append_test append_tests[] =
+{
+    /* normal paths */
+    {"C:\\", "a", "C:\\a"},
+    {"C:\\b", "..\\a", "C:\\a"},
+    {"C:", "a", "C:\\a"},
+    {"C:\\", ".", "C:\\"},
+    {"C:\\", "..", "C:\\"},
+    {"C:\\a", "", "C:\\a"},
+
+    /* normal UNC paths */
+    {"\\\\192.168.1.1\\test", "a", "\\\\192.168.1.1\\test\\a"},
+    {"\\\\192.168.1.1\\test", "..", "\\\\192.168.1.1"},
+    {"\\a", "b", "\\a\\b"},
+    {"\\", "a", "\\a"},
+    {"\\\\", "a", "\\\\a"},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", "a",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a"},
+
+    /* NT paths */
+    {"\\\\?\\C:\\", "a", "C:\\a"},
+    {"\\\\?\\C:\\", "..", "C:\\"},
+    {"\\\\?\\C:", "a", "C:\\a"},
+
+    /* NT UNC path */
+    {"\\\\?\\UNC\\", "a", "\\\\a"},
+    {"\\\\?\\UNC\\192.168.1.1\\test", "a", "\\\\192.168.1.1\\test\\a"},
+    {"\\\\?\\UNC\\192.168.1.1\\test", "..", "\\\\192.168.1.1"},
+
+    /* Second path begins with a single backslash */
+    {"C:a\\b", "\\1", "C:a\\b\\1"},
+    {"C:\\a\\b", "\\1", "C:\\a\\b\\1"},
+    {"\\a\\b", "\\1", "\\a\\b\\1"},
+    {"\\\\a\\b", "\\1", "\\\\a\\b\\1"},
+    {"\\\\a\\b\\c", "\\1", "\\\\a\\b\\c\\1"},
+    {"\\\\?\\UNC\\a", "\\1", "\\\\a\\1"},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a", "\\1",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}a\\1"},
+    {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", "\\1",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a\\1"},
+    {"C:\\a\\b", "\\", "C:\\a\\b"},
+
+    /* Second path is fully qualified */
+    {"X:\\", "C:", "C:\\"},
+    {"X:\\", "C:\\", "C:\\"},
+    {"X:\\", "\\\\", "\\\\"},
+    {"X:\\", "\\\\?\\C:", "C:\\"},
+    {"X:\\", "\\\\?\\C:\\", "C:\\"},
+    {"X:\\", "\\\\?\\UNC\\", "\\\\"},
+    {"X:\\", "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\",
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\"},
+
+    /* Canonicalization */
+    {"C:\\a", ".\\b", "C:\\a\\b"},
+    {"C:\\a", "..\\b", "C:\\b"},
+
+    /* Other */
+    {"", "", "\\"},
+    {"a", "b", "a\\b"}
+};
+
+static void test_PathCchAppendEx(void)
+{
+    WCHAR path1W[PATHCCH_MAX_CCH];
+    WCHAR path2W[PATHCCH_MAX_CCH];
+    CHAR path1A[PATHCCH_MAX_CCH];
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchAppendEx)
+    {
+        win_skip("PathCchAppendEx() is not available.\n");
+        return;
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, "\\a", -1, path1W, ARRAY_SIZE(path1W));
+    MultiByteToWideChar(CP_ACP, 0, "\\b", -1, path2W, ARRAY_SIZE(path2W));
+    hr = pPathCchAppendEx(NULL, ARRAY_SIZE(path1W), path2W, 0);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchAppendEx(path1W, 0, path2W, 0);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+    ok(path1W[0] == '\\', "expect path1 unchanged\n");
+
+    hr = pPathCchAppendEx(path1W, PATHCCH_MAX_CCH + 1, path2W, 0);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+    ok(path1W[0] == '\\', "expect path1 unchanged\n");
+
+    hr = pPathCchAppendEx(path1W,  ARRAY_SIZE(path1W), NULL, 0);
+    ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
+    WideCharToMultiByte(CP_ACP, 0, path1W, -1, path1A, ARRAY_SIZE(path1A), NULL, NULL);
+    ok(!lstrcmpA(path1A, "\\a"), "expect \\a, got %s\n", path1A);
+
+    hr = pPathCchAppendEx(path1W, PATHCCH_MAX_CCH, path2W, 0);
+    ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
+
+    for (i = 0; i < ARRAY_SIZE(append_tests); i++)
+    {
+        const struct append_test *t = append_tests + i;
+
+        MultiByteToWideChar(CP_ACP, 0, t->path1, -1, path1W, ARRAY_SIZE(path1W));
+        MultiByteToWideChar(CP_ACP, 0, t->path2, -1, path2W, ARRAY_SIZE(path2W));
+        hr = pPathCchAppendEx(path1W, PATHCCH_MAX_CCH, path2W, 0);
+        ok(hr == S_OK, "append \"%s\" \"%s\" expect hr %#x, got %#x\n", t->path1, t->path2, S_OK, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, path1W, -1, path1A, ARRAY_SIZE(path1A), NULL, NULL);
+            ok(!lstrcmpA(path1A, t->result), "append \"%s\" \"%s\" expect result \"%s\", got \"%s\"\n", t->path1,
+               t->path2, t->result, path1A);
+        }
+    }
+}
 
 static void test_PathCchAddExtension(void)
 {
@@ -2109,6 +2230,7 @@ START_TEST(path)
     pPathCchAddBackslash = (void *)GetProcAddress(hmod, "PathCchAddBackslash");
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
+    pPathCchAppendEx = (void *)GetProcAddress(hmod, "PathCchAppendEx");
     pPathCchCanonicalize = (void *)GetProcAddress(hmod, "PathCchCanonicalize");
     pPathCchCanonicalizeEx = (void *)GetProcAddress(hmod, "PathCchCanonicalizeEx");
     pPathCchCombine = (void *)GetProcAddress(hmod, "PathCchCombine");
@@ -2130,6 +2252,7 @@ START_TEST(path)
     test_PathCchAddBackslash();
     test_PathCchAddBackslashEx();
     test_PathCchAddExtension();
+    test_PathCchAppendEx();
     test_PathCchCanonicalize();
     test_PathCchCanonicalizeEx();
     test_PathCchCombine();

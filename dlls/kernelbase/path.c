@@ -446,6 +446,31 @@ HRESULT WINAPI PathCchAddExtension(WCHAR *path, SIZE_T size, const WCHAR *extens
     return S_OK;
 }
 
+HRESULT WINAPI PathCchAppendEx(WCHAR *path1, SIZE_T size, const WCHAR *path2, DWORD flags)
+{
+    HRESULT hr;
+    WCHAR *result;
+
+    TRACE("%s %lu %s %#x\n", wine_dbgstr_w(path1), size, wine_dbgstr_w(path2), flags);
+
+    if (!path1 || !size) return E_INVALIDARG;
+
+    /* Create a temporary buffer for result because we need to keep path1 unchanged if error occurs.
+     * And PathCchCombineEx writes empty result if there is error so we can't just use path1 as output
+     * buffer for PathCchCombineEx */
+    result = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    if (!result) return E_OUTOFMEMORY;
+
+    /* Avoid the single backslash behavior with PathCchCombineEx when appending */
+    if (path2 && path2[0] == '\\' && path2[1] != '\\') path2++;
+
+    hr = PathCchCombineEx(result, size, path1, path2, flags);
+    if (SUCCEEDED(hr)) memcpy(path1, result, size * sizeof(WCHAR));
+
+    HeapFree(GetProcessHeap(), 0, result);
+    return hr;
+}
+
 HRESULT WINAPI PathCchCanonicalize(WCHAR *out, SIZE_T size, const WCHAR *in)
 {
     TRACE("%p %lu %s\n", out, size, wine_dbgstr_w(in));
