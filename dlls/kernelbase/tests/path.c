@@ -35,6 +35,7 @@ HRESULT (WINAPI *pPathAllocCombine)(const WCHAR *path1, const WCHAR *path2, DWOR
 HRESULT (WINAPI *pPathCchAddBackslash)(WCHAR *out, SIZE_T size);
 HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr, SIZE_T *remaining);
 HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
+HRESULT (WINAPI *pPathCchAppend)(WCHAR *path1, SIZE_T size, const WCHAR *path2);
 HRESULT (WINAPI *pPathCchAppendEx)(WCHAR *path1, SIZE_T size, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchCanonicalize)(WCHAR *out, SIZE_T size, const WCHAR *in);
 HRESULT (WINAPI *pPathCchCanonicalizeEx)(WCHAR *out, SIZE_T size, const WCHAR *in, DWORD flags);
@@ -854,6 +855,53 @@ static const struct append_test append_tests[] =
     {"", "", "\\"},
     {"a", "b", "a\\b"}
 };
+
+static void test_PathCchAppend(void)
+{
+    WCHAR path1W[PATHCCH_MAX_CCH];
+    WCHAR path2W[PATHCCH_MAX_CCH];
+    CHAR path1A[PATHCCH_MAX_CCH];
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchAppend)
+    {
+        win_skip("PathCchAppend() is not available.\n");
+        return;
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, "\\a", -1, path1W, ARRAY_SIZE(path1W));
+    MultiByteToWideChar(CP_ACP, 0, "\\b", -1, path2W, ARRAY_SIZE(path2W));
+    hr = pPathCchAppend(NULL, PATHCCH_MAX_CCH, path2W);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchAppend(path1W, 0, path2W);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchAppend(path1W, PATHCCH_MAX_CCH + 1, path2W);
+    ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
+
+    hr = pPathCchAppend(path1W, PATHCCH_MAX_CCH, NULL);
+    ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
+    WideCharToMultiByte(CP_ACP, 0, path1W, -1, path1A, ARRAY_SIZE(path1A), NULL, NULL);
+    ok(!lstrcmpA(path1A, "\\a"), "expect \\a, got %s\n", path1A);
+
+    for (i = 0; i < ARRAY_SIZE(append_tests); i++)
+    {
+        const struct append_test *t = append_tests + i;
+
+        MultiByteToWideChar(CP_ACP, 0, t->path1, -1, path1W, ARRAY_SIZE(path1W));
+        MultiByteToWideChar(CP_ACP, 0, t->path2, -1, path2W, ARRAY_SIZE(path2W));
+        hr = pPathCchAppend(path1W, PATHCCH_MAX_CCH, path2W);
+        ok(hr == S_OK, "append \"%s\" \"%s\" expect hr %#x, got %#x\n", t->path1, t->path2, S_OK, hr);
+        if (SUCCEEDED(hr))
+        {
+            WideCharToMultiByte(CP_ACP, 0, path1W, -1, path1A, ARRAY_SIZE(path1A), NULL, NULL);
+            ok(!lstrcmpA(path1A, t->result), "append \"%s\" \"%s\" expect result \"%s\", got \"%s\"\n", t->path1,
+               t->path2, t->result, path1A);
+        }
+    }
+}
 
 static void test_PathCchAppendEx(void)
 {
@@ -2230,6 +2278,7 @@ START_TEST(path)
     pPathCchAddBackslash = (void *)GetProcAddress(hmod, "PathCchAddBackslash");
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
+    pPathCchAppend = (void *)GetProcAddress(hmod, "PathCchAppend");
     pPathCchAppendEx = (void *)GetProcAddress(hmod, "PathCchAppendEx");
     pPathCchCanonicalize = (void *)GetProcAddress(hmod, "PathCchCanonicalize");
     pPathCchCanonicalizeEx = (void *)GetProcAddress(hmod, "PathCchCanonicalizeEx");
@@ -2252,6 +2301,7 @@ START_TEST(path)
     test_PathCchAddBackslash();
     test_PathCchAddBackslashEx();
     test_PathCchAddExtension();
+    test_PathCchAppend();
     test_PathCchAppendEx();
     test_PathCchCanonicalize();
     test_PathCchCanonicalizeEx();
