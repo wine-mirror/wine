@@ -37,7 +37,6 @@
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
-static BOOL     (WINAPI *pSetupDiGetINFClassA)(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 
 /* This is a unique guid for testing purposes */
@@ -52,7 +51,6 @@ static void init_function_pointers(void)
     pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
     pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
-    pSetupDiGetINFClassA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetINFClassA");
 }
 
 static LSTATUS devinst_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
@@ -1157,7 +1155,7 @@ todo_wine
     }
 }
 
-static void testSetupDiGetINFClassA(void)
+static void test_get_inf_class(void)
 {
     static const char inffile[] = "winetest.inf";
     static const char content[] = "[Version]\r\n\r\n";
@@ -1171,19 +1169,7 @@ static void testSetupDiGetINFClassA(void)
     HANDLE h;
     int i;
 
-    if(!pSetupDiGetINFClassA)
-    {
-        win_skip("SetupDiGetINFClassA not present\n");
-        return;
-    }
-
-    count = GetTempPathA(MAX_PATH, filename);
-    if(!count)
-    {
-        win_skip("GetTempPathA failed\n");
-        return;
-    }
-
+    GetTempPathA(MAX_PATH, filename);
     strcat(filename, inffile);
     DeleteFileA(filename);
 
@@ -1191,11 +1177,6 @@ static void testSetupDiGetINFClassA(void)
     SetLastError(0xdeadbeef);
     retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
     ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-    if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError())
-    {
-        skip("SetupDiGetINFClassA is not implemented\n");
-        return;
-    }
     ok(ERROR_FILE_NOT_FOUND == GetLastError(),
         "expected error ERROR_FILE_NOT_FOUND, got %u\n", GetLastError());
 
@@ -1227,12 +1208,8 @@ static void testSetupDiGetINFClassA(void)
     /* test file content */
     h = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                     FILE_ATTRIBUTE_NORMAL, NULL);
-    if(h == INVALID_HANDLE_VALUE)
-    {
-        win_skip("failed to create file %s (error %u)\n", filename, GetLastError());
-        return;
-    }
-    CloseHandle( h);
+    ok(h != INVALID_HANDLE_VALUE, "Failed to create file, error %#x.\n", GetLastError());
+    CloseHandle(h);
 
     retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
     ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
@@ -1242,13 +1219,9 @@ static void testSetupDiGetINFClassA(void)
         trace("testing signature %s\n", signatures[i]);
         h = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                         FILE_ATTRIBUTE_NORMAL, NULL);
-        if(h == INVALID_HANDLE_VALUE)
-        {
-            win_skip("failed to create file %s (error %u)\n", filename, GetLastError());
-            return;
-        }
-        WriteFile( h, content, sizeof(content), &count, NULL);
-        CloseHandle( h);
+        ok(h != INVALID_HANDLE_VALUE, "Failed to create file, error %#x.\n", GetLastError());
+        WriteFile(h, content, sizeof(content), &count, NULL);
+        CloseHandle(h);
 
         retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
         ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
@@ -1300,10 +1273,8 @@ static void testSetupDiGetINFClassA(void)
         SetLastError(0xdeadbeef);
         retval = SetupDiGetINFClassA(filename, &guid, cn, 0, &count);
         ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-        ok(ERROR_INSUFFICIENT_BUFFER == GetLastError() ||
-           ERROR_INVALID_PARAMETER == GetLastError(),
-            "expected error ERROR_INSUFFICIENT_BUFFER or ERROR_INVALID_PARAMETER, "
-            "got %u\n", GetLastError());
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER || GetLastError() == ERROR_INVALID_PARAMETER /* 2k3+ */,
+                "Got unexpected error %#x.\n", GetLastError());
 
         DeleteFileA(filename);
 
@@ -1313,10 +1284,8 @@ static void testSetupDiGetINFClassA(void)
         SetLastError(0xdeadbeef);
         retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
         ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-        ok(RPC_S_INVALID_STRING_UUID == GetLastError() ||
-           ERROR_INVALID_PARAMETER == GetLastError(),
-            "expected error RPC_S_INVALID_STRING_UUID or ERROR_INVALID_PARAMETER, "
-            "got %u\n", GetLastError());
+        ok(GetLastError() == RPC_S_INVALID_STRING_UUID || GetLastError() == ERROR_INVALID_PARAMETER /* 7+ */,
+                "Got unexpected error %#x.\n", GetLastError());
 
         /* network adapter guid */
         WritePrivateProfileStringA("Version", "ClassGUID",
@@ -1440,7 +1409,7 @@ START_TEST(devinst)
     test_register_device_iface();
     test_registry_property_a();
     test_registry_property_w();
-    testSetupDiGetINFClassA();
+    test_get_inf_class();
     test_devnode();
     test_device_interface_key();
 }
