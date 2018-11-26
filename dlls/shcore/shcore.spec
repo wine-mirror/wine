@@ -1,5 +1,5 @@
 1 stub @
-@ stdcall CommandLineToArgvW(wstr ptr) shell32.CommandLineToArgvW
+@ stdcall CommandLineToArgvW(wstr ptr)
 @ stub CreateRandomAccessStreamOnFile
 @ stub CreateRandomAccessStreamOverStream
 @ stub CreateStreamOverRandomAccessStream
