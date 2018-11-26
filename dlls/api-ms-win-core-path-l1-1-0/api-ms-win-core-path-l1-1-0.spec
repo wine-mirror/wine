@@ -8,7 +8,7 @@
 @ stdcall PathCchCanonicalize(ptr long wstr) kernelbase.PathCchCanonicalize
 @ stdcall PathCchCanonicalizeEx(ptr long wstr long) kernelbase.PathCchCanonicalizeEx
 @ stub PathCchCombine
-@ stub PathCchCombineEx
+@ stdcall PathCchCombineEx(ptr long wstr wstr long) kernelbase.PathCchCombineEx
 @ stdcall PathCchFindExtension(wstr long ptr) kernelbase.PathCchFindExtension
 @ stdcall PathCchIsRoot(wstr) kernelbase.PathCchIsRoot
 @ stdcall PathCchRemoveBackslash(wstr long) kernelbase.PathCchRemoveBackslash

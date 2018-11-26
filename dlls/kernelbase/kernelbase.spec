@@ -1037,7 +1037,7 @@
 @ stdcall PathCchCanonicalize(ptr long wstr)
 @ stdcall PathCchCanonicalizeEx(ptr long wstr long)
 # @ stub PathCchCombine
-# @ stub PathCchCombineEx
+@ stdcall PathCchCombineEx(ptr long wstr wstr long)
 @ stdcall PathCchFindExtension(wstr long ptr)
 @ stdcall PathCchIsRoot(wstr)
 @ stdcall PathCchRemoveBackslash(wstr long)

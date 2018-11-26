@@ -485,12 +485,19 @@ static void test_PathCchCombineEx(void)
 
     if (!pPathCchCombineEx)
     {
-        skip("PathCchCombineEx() is not available.\n");
+        win_skip("PathCchCombineEx() is not available.\n");
         return;
     }
 
+    output[0] = 0xff;
+    hr = pPathCchCombineEx(output, 5, NULL, NULL, 0);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(output[0] == 0, "Expected output buffer to be empty\n");
+
+    output[0] = 0xff;
     hr = pPathCchCombineEx(NULL, 2, p1, p2, 0);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(output[0] == 0xff, "Expected output buffer to be unchanged\n");
 
     memset(output, 0xff, sizeof(output));
     hr = pPathCchCombineEx(output, 0, p1, p2, 0);
@@ -506,6 +513,14 @@ static void test_PathCchCombineEx(void)
     hr = pPathCchCombineEx(output, 4, p1, p2, 0);
     ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "Expected STRSAFE_E_INSUFFICIENT_BUFFER, got %08x\n", hr);
     ok(output[0] == 0x0, "Expected output buffer to contain NULL string\n");
+
+    output[0] = 0xff;
+    hr = pPathCchCombineEx(output, PATHCCH_MAX_CCH + 1, p1, p2, 0);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(output[0] == 0xff, "Expected output buffer to be 0xff\n");
+
+    hr = pPathCchCombineEx(output, PATHCCH_MAX_CCH, p1, p2, 0);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     memset(output, 0xff, sizeof(output));
     hr = pPathCchCombineEx(output, 5, p1, p2, 0);
@@ -2029,12 +2044,12 @@ START_TEST(path)
 
     pPathAllocCanonicalize = (void *)GetProcAddress(hmod, "PathAllocCanonicalize");
     pPathAllocCombine = (void *)GetProcAddress(hmod, "PathAllocCombine");
-    pPathCchCombineEx = (void *)GetProcAddress(hmod, "PathCchCombineEx");
     pPathCchAddBackslash = (void *)GetProcAddress(hmod, "PathCchAddBackslash");
     pPathCchAddBackslashEx = (void *)GetProcAddress(hmod, "PathCchAddBackslashEx");
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
     pPathCchCanonicalize = (void *)GetProcAddress(hmod, "PathCchCanonicalize");
     pPathCchCanonicalizeEx = (void *)GetProcAddress(hmod, "PathCchCanonicalizeEx");
+    pPathCchCombineEx = (void *)GetProcAddress(hmod, "PathCchCombineEx");
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
     pPathCchIsRoot = (void *)GetProcAddress(hmod, "PathCchIsRoot");
     pPathCchRemoveBackslash = (void *)GetProcAddress(hmod, "PathCchRemoveBackslash");
@@ -2049,12 +2064,12 @@ START_TEST(path)
 
     test_PathAllocCanonicalize();
     test_PathAllocCombine();
-    test_PathCchCombineEx();
     test_PathCchAddBackslash();
     test_PathCchAddBackslashEx();
     test_PathCchAddExtension();
     test_PathCchCanonicalize();
     test_PathCchCanonicalizeEx();
+    test_PathCchCombineEx();
     test_PathCchFindExtension();
     test_PathCchIsRoot();
     test_PathCchRemoveBackslash();
