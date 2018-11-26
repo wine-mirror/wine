@@ -729,7 +729,7 @@ public class WineActivity extends Activity
         {
             Log.i( LOGTAG, String.format( "view key event win %08x action %d keycode %d (%s)",
                                           window.hwnd, event.getAction(), event.getKeyCode(),
-                                          event.keyCodeToString( event.getKeyCode() )));;
+                                          KeyEvent.keyCodeToString( event.getKeyCode() )));;
             boolean ret = wine_keyboard_event( window.hwnd, event.getAction(), event.getKeyCode(),
                                                event.getMetaState() );
             if (!ret) ret = super.dispatchKeyEvent(event);

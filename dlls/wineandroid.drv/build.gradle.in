@@ -56,6 +56,11 @@ tasks.whenTaskAdded { t ->
       }
 }
 
+tasks.withType(JavaCompile)
+{
+    options.compilerArgs << "-Xlint"
+}
+
 android
 {
     compileSdkVersion 25
