@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.1.88"
+VK_XML_VERSION = "1.1.94"
 WINE_VK_VERSION = (1, 0)
 
 # Filenames to create.
@@ -94,6 +94,7 @@ SUPPORTED_INSTANCE_EXTENSIONS = [
 ]
 
 BLACKLISTED_EXTENSIONS = [
+    "VK_AMD_memory_overallocation_behavior",
     # Handling of VK_EXT_debug_report requires some consideration. The win32
     # loader already provides it for us and it is somewhat usable. If we add
     # plumbing down to the native layer, we will get each message twice as we
