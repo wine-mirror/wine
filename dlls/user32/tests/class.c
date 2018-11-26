@@ -115,6 +115,8 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
         return;
     ok(classatom, "failed to register class\n");
 
+    ok(GetClipboardFormatNameW(classatom, str, ARRAY_SIZE(str)) != 0, "atom not found\n");
+
     ok(!RegisterClassW (&cls),
         "RegisterClass of the same class should fail for the second time\n");
 
@@ -230,6 +232,8 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     ok(UnregisterClassW(className, hInstance),
         "UnregisterClass() failed\n");
 
+    ok(GetClipboardFormatNameW(classatom, str, ARRAY_SIZE(str)) == 0,
+        "atom still found\n");
     return;
 }
 
