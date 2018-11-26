@@ -20,6 +20,7 @@
 
 package org.winehq.wine;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -74,17 +75,37 @@ public class WineActivity extends Activity
         new Thread( new Runnable() { public void run() { loadWine( null ); }} ).start();
     }
 
+    @TargetApi(21)
+    @SuppressWarnings("deprecation")
+    private String[] get_supported_abis()
+    {
+        if (Build.VERSION.SDK_INT >= 21) return Build.SUPPORTED_ABIS;
+        return new String[]{ Build.CPU_ABI };
+    }
+
+    private String get_wine_abi()
+    {
+        for (String abi : get_supported_abis())
+        {
+            File server = new File( getFilesDir(), abi + "/bin/wineserver" );
+            if (server.canExecute()) return abi;
+        }
+        Log.e( LOGTAG, "could not find a supported ABI" );
+        return null;
+    }
+
     private void loadWine( String cmdline )
     {
-        File bindir = new File( getFilesDir(), Build.CPU_ABI + "/bin" );
-        File libdir = new File( getFilesDir(), Build.CPU_ABI + "/lib" );
+        copyAssetFiles();
+
+        String wine_abi = get_wine_abi();
+        File bindir = new File( getFilesDir(), wine_abi + "/bin" );
+        File libdir = new File( getFilesDir(), wine_abi + "/lib" );
         File dlldir = new File( libdir, "wine" );
         File prefix = new File( getFilesDir(), "prefix" );
         File loader = new File( bindir, "wine" );
         String locale = Locale.getDefault().getLanguage() + "_" +
             Locale.getDefault().getCountry() + ".UTF-8";
-
-        copyAssetFiles();
 
         HashMap<String,String> env = new HashMap<String,String>();
         env.put( "WINELOADER", loader.toString() );
@@ -166,15 +187,18 @@ public class WineActivity extends Activity
     {
         if (name.equals( "files.sum" )) return true;
         if (name.startsWith( "share/" )) return true;
-        if (name.startsWith( Build.CPU_ABI + "/system/" )) return false;
-        if (name.startsWith( Build.CPU_ABI + "/" )) return true;
+        for (String abi : get_supported_abis())
+        {
+            if (name.startsWith( abi + "/system/" )) return false;
+            if (name.startsWith( abi + "/" )) return true;
+        }
         if (name.startsWith( "x86/" )) return true;
         return false;
     }
 
     private final boolean isFileExecutable( String name )
     {
-        return name.startsWith( Build.CPU_ABI + "/" ) || name.startsWith( "x86/" );
+        return !name.equals( "files.sum" ) && !name.startsWith( "share/" );
     }
 
     private final HashMap<String,String> readMapFromInputStream( InputStream in )
