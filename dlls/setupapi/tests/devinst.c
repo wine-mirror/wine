@@ -33,21 +33,9 @@
 #include "wine/heap.h"
 #include "wine/test.h"
 
-/* function pointers */
-static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
-static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
-
 /* This is a unique guid for testing purposes */
 static GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 static GUID guid2 = {0x6a55b5a5, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
-
-static void init_function_pointers(void)
-{
-    HMODULE hSetupAPI = GetModuleHandleA("setupapi.dll");
-
-    pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
-    pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
-}
 
 static LSTATUS devinst_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
 {
@@ -149,42 +137,32 @@ static void test_create_device_list_ex(void)
     ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
 }
 
-static void test_SetupDiOpenClassRegKeyExA(void)
+static void test_open_class_key(void)
 {
-    static const CHAR guidString[] = "{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
-    HKEY hkey;
+    static const char guidstr[] = "{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+    HKEY root_key, class_key;
+    LONG res;
 
-    /* Check return value for nonexistent key */
-    hkey = pSetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS,
-        DIOCR_INSTALLER, NULL, NULL);
-    ok(hkey == INVALID_HANDLE_VALUE,
-        "returned %p (expected INVALID_HANDLE_VALUE)\n", hkey);
+    SetLastError(0xdeadbeef);
+    class_key = SetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS, DIOCR_INSTALLER, NULL, NULL);
+    ok(class_key == INVALID_HANDLE_VALUE, "Expected failure.\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_CLASS, "Got unexpected error %#x.\n", GetLastError());
 
-    /* Test it for a key that exists */
-    hkey = SetupDiOpenClassRegKey(NULL, KEY_ALL_ACCESS);
-    if (hkey != INVALID_HANDLE_VALUE)
-    {
-        HKEY classKey;
-        if (RegCreateKeyA(hkey, guidString, &classKey) == ERROR_SUCCESS)
-        {
-            RegCloseKey(classKey);
-            SetLastError(0xdeadbeef);
-            classKey = pSetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS,
-                DIOCR_INSTALLER, NULL, NULL);
-            ok(classKey != INVALID_HANDLE_VALUE,
-                "opening class registry key failed with error %d\n",
-                GetLastError());
-            if (classKey != INVALID_HANDLE_VALUE)
-                RegCloseKey(classKey);
-            RegDeleteKeyA(hkey, guidString);
-        }
-        else
-            trace("failed to create registry key for test\n");
+    root_key = SetupDiOpenClassRegKey(NULL, KEY_ALL_ACCESS);
+    ok(root_key != INVALID_HANDLE_VALUE, "Failed to open root key, error %#x.\n", GetLastError());
 
-        RegCloseKey(hkey);
-    }
-    else
-        trace("failed to open classes key %u\n", GetLastError());
+    res = RegCreateKeyA(root_key, guidstr, &class_key);
+    ok(!res, "Failed to create class key, error %#x.\n", GetLastError());
+    RegCloseKey(class_key);
+
+    SetLastError(0xdeadbeef);
+    class_key = SetupDiOpenClassRegKeyExA(&guid, KEY_ALL_ACCESS, DIOCR_INSTALLER, NULL, NULL);
+    ok(class_key != INVALID_HANDLE_VALUE, "Failed to open class key, error %#x.\n", GetLastError());
+    RegCloseKey(class_key);
+
+    RegDeleteKeyA(root_key, guidstr);
+    RegCloseKey(root_key);
 }
 
 static void create_inf_file(LPCSTR filename)
@@ -1357,8 +1335,6 @@ START_TEST(devinst)
 {
     HKEY hkey;
 
-    init_function_pointers();
-
     if ((hkey = SetupDiOpenClassRegKey(NULL, KEY_ALL_ACCESS)) == INVALID_HANDLE_VALUE)
     {
         skip("needs admin rights\n");
@@ -1367,12 +1343,7 @@ START_TEST(devinst)
     RegCloseKey(hkey);
 
     test_create_device_list_ex();
-
-    if (pSetupDiOpenClassRegKeyExA)
-        test_SetupDiOpenClassRegKeyExA();
-    else
-        win_skip("SetupDiOpenClassRegKeyExA is not available\n");
-
+    test_open_class_key();
     test_install_class();
     test_device_info();
     test_get_device_instance_id();
