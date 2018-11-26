@@ -1457,7 +1457,7 @@ void release_host( struct hostdata *host )
 
 static BOOL connection_collector_running;
 
-static DWORD WINAPI connection_collector(void *arg)
+static void CALLBACK connection_collector( TP_CALLBACK_INSTANCE *instance, void *ctx )
 {
     unsigned int remaining_connections;
     struct netconn *netconn, *next_netconn;
@@ -1483,10 +1483,7 @@ static DWORD WINAPI connection_collector(void *arg)
                     list_remove(&netconn->entry);
                     netconn_close(netconn);
                 }
-                else
-                {
-                    remaining_connections++;
-                }
+                else remaining_connections++;
             }
         }
 
@@ -1495,7 +1492,7 @@ static DWORD WINAPI connection_collector(void *arg)
         LeaveCriticalSection(&connection_pool_cs);
     } while(remaining_connections);
 
-    FreeLibraryAndExitThread( winhttp_instance, 0 );
+    FreeLibraryWhenCallbackReturns( instance, winhttp_instance );
 }
 
 static void cache_connection( struct netconn *netconn )
@@ -1510,20 +1507,11 @@ static void cache_connection( struct netconn *netconn )
     if (!connection_collector_running)
     {
         HMODULE module;
-        HANDLE thread;
 
-        GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR*)winhttp_instance, &module );
+        GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR *)winhttp_instance, &module );
 
-        thread = CreateThread(NULL, 0, connection_collector, NULL, 0, NULL);
-        if (thread)
-        {
-            CloseHandle( thread );
-            connection_collector_running = TRUE;
-        }
-        else
-        {
-            FreeLibrary( winhttp_instance );
-        }
+        if (TrySubmitThreadpoolCallback( connection_collector, NULL, NULL )) connection_collector_running = TRUE;
+        else FreeLibrary( winhttp_instance );
     }
 
     LeaveCriticalSection( &connection_pool_cs );
