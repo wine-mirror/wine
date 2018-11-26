@@ -37,6 +37,7 @@ HRESULT (WINAPI *pPathCchAddBackslashEx)(WCHAR *out, SIZE_T size, WCHAR **endptr
 HRESULT (WINAPI *pPathCchAddExtension)(WCHAR *path, SIZE_T size, const WCHAR *extension);
 HRESULT (WINAPI *pPathCchCanonicalize)(WCHAR *out, SIZE_T size, const WCHAR *in);
 HRESULT (WINAPI *pPathCchCanonicalizeEx)(WCHAR *out, SIZE_T size, const WCHAR *in, DWORD flags);
+HRESULT (WINAPI *pPathCchCombine)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2);
 HRESULT (WINAPI *pPathCchCombineEx)(WCHAR *out, SIZE_T size, const WCHAR *path1, const WCHAR *path2, DWORD flags);
 HRESULT (WINAPI *pPathCchFindExtension)(const WCHAR *path, SIZE_T size, const WCHAR **extension);
 BOOL    (WINAPI *pPathCchIsRoot)(const WCHAR *path);
@@ -471,6 +472,67 @@ static void test_PathAllocCombine(void)
                resultA);
             LocalFree(resultW);
         }
+    }
+}
+
+static void test_PathCchCombine(void)
+{
+    WCHAR expected[PATHCCH_MAX_CCH] = {'C', ':', '\\', 'a', 0};
+    WCHAR p1[PATHCCH_MAX_CCH] = {'C', ':', '\\', 0};
+    WCHAR p2[PATHCCH_MAX_CCH] = {'a', 0};
+    WCHAR output[PATHCCH_MAX_CCH];
+    HRESULT hr;
+    INT i;
+
+    if (!pPathCchCombine)
+    {
+        win_skip("PathCchCombine() is not available.\n");
+        return;
+    }
+
+    hr = pPathCchCombine(output, 5, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = pPathCchCombine(NULL, 2, p1, p2);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    memset(output, 0xff, sizeof(output));
+    hr = pPathCchCombine(output, 0, p1, p2);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+    ok(output[0] == 0xffff, "Expected output buffer to be unchanged\n");
+
+    memset(output, 0xff, sizeof(output));
+    hr = pPathCchCombine(output, 1, p1, p2);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "Expected STRSAFE_E_INSUFFICIENT_BUFFER, got %08x\n", hr);
+    ok(output[0] == 0, "Expected output buffer to contain NULL string\n");
+
+    memset(output, 0xff, sizeof(output));
+    hr = pPathCchCombine(output, 4, p1, p2);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "Expected STRSAFE_E_INSUFFICIENT_BUFFER, got %08x\n", hr);
+    ok(output[0] == 0x0, "Expected output buffer to contain NULL string\n");
+
+    memset(output, 0xff, sizeof(output));
+    hr = pPathCchCombine(output, 5, p1, p2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(!lstrcmpW(output, expected), "Combination of %s + %s returned %s, expected %s\n", wine_dbgstr_w(p1),
+       wine_dbgstr_w(p2), wine_dbgstr_w(output), wine_dbgstr_w(expected));
+
+    hr = pPathCchCombine(output, PATHCCH_MAX_CCH + 1, p1, p2);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = pPathCchCombine(output, PATHCCH_MAX_CCH, p1, p2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(combine_tests); i++)
+    {
+        MultiByteToWideChar(CP_ACP, 0, combine_tests[i].path1, -1, p1, ARRAY_SIZE(p1));
+        MultiByteToWideChar(CP_ACP, 0, combine_tests[i].path2, -1, p2, ARRAY_SIZE(p2));
+        MultiByteToWideChar(CP_ACP, 0, combine_tests[i].result, -1, expected, ARRAY_SIZE(expected));
+
+        hr = pPathCchCombine(output, ARRAY_SIZE(output), p1, p2);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(!lstrcmpW(output, expected), "Combining %s with %s returned %s, expected %s\n", wine_dbgstr_w(p1),
+           wine_dbgstr_w(p2), wine_dbgstr_w(output), wine_dbgstr_w(expected));
     }
 }
 
@@ -2049,6 +2111,7 @@ START_TEST(path)
     pPathCchAddExtension = (void *)GetProcAddress(hmod, "PathCchAddExtension");
     pPathCchCanonicalize = (void *)GetProcAddress(hmod, "PathCchCanonicalize");
     pPathCchCanonicalizeEx = (void *)GetProcAddress(hmod, "PathCchCanonicalizeEx");
+    pPathCchCombine = (void *)GetProcAddress(hmod, "PathCchCombine");
     pPathCchCombineEx = (void *)GetProcAddress(hmod, "PathCchCombineEx");
     pPathCchFindExtension = (void *)GetProcAddress(hmod, "PathCchFindExtension");
     pPathCchIsRoot = (void *)GetProcAddress(hmod, "PathCchIsRoot");
@@ -2069,6 +2132,7 @@ START_TEST(path)
     test_PathCchAddExtension();
     test_PathCchCanonicalize();
     test_PathCchCanonicalizeEx();
+    test_PathCchCombine();
     test_PathCchCombineEx();
     test_PathCchFindExtension();
     test_PathCchIsRoot();

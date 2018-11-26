@@ -1036,7 +1036,7 @@
 # @ stub PathCchAppendEx
 @ stdcall PathCchCanonicalize(ptr long wstr)
 @ stdcall PathCchCanonicalizeEx(ptr long wstr long)
-# @ stub PathCchCombine
+@ stdcall PathCchCombine(ptr long wstr wstr)
 @ stdcall PathCchCombineEx(ptr long wstr wstr long)
 @ stdcall PathCchFindExtension(wstr long ptr)
 @ stdcall PathCchIsRoot(wstr)
