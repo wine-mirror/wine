@@ -4058,16 +4058,22 @@ fi
 
 if test -n "$with_wine64"
 then
+    case "$with_wine64" in
+      /*) reldir="" ;;
+      *)  reldir="../" ;;
+    esac
     WINE_APPEND_RULE(
-[all: fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader
+[all: fonts server loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 fonts server:
 	\$(RM) \$[@] && \$(LN_S) $with_wine64/\$[@] \$[@]
+loader/wine64 loader/wine64-preloader:
+	\$(RM) \$[@] && \$(LN_S) $reldir$with_wine64/\$[@] \$[@]
 $with_wine64/loader/wine:
 	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine \$[@]
 $with_wine64/loader/wine-preloader:
 	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine-preloader \$[@]
 clean::
-	\$(RM) fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
+	\$(RM) fonts server loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
     AC_SUBST(WINELOADER_INSTALL,"wine.inf l_intl.nls")
     case $host_os in

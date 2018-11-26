@@ -976,7 +976,7 @@ static const char *get_alternate_loader( char **ret_env )
 
     *ret_env = NULL;
 
-    if (wine_get_build_dir()) loader = is_win64 ? "loader/wine" : "server/../loader/wine64";
+    if (wine_get_build_dir()) loader = is_win64 ? "loader/wine" : "loader/wine64";
 
     if (loader_env)
     {
