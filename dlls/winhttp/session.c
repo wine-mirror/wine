@@ -626,8 +626,6 @@ static void request_destroy( struct object_header *hdr )
         heap_free( request->headers[i].value );
     }
     heap_free( request->headers );
-    for (i = 0; i < request->num_accept_types; i++) heap_free( request->accept_types[i] );
-    heap_free( request->accept_types );
     for (i = 0; i < TARGET_MAX; i++)
     {
         for (j = 0; j < SCHEME_MAX; j++)
@@ -1042,34 +1040,15 @@ static const struct object_vtbl request_vtbl =
     request_set_option
 };
 
-static BOOL store_accept_types( struct request *request, const WCHAR **accept_types )
+static BOOL add_accept_types_header( struct request *request, const WCHAR **types )
 {
-    const WCHAR **types = accept_types;
-    DWORD i;
+    static const WCHAR acceptW[] = {'A','c','c','e','p','t',0};
+    static const DWORD flags = WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA;
 
     if (!types) return TRUE;
     while (*types)
     {
-        request->num_accept_types++;
-        types++;
-    }
-    if (!request->num_accept_types) return TRUE;
-    if (!(request->accept_types = heap_alloc( request->num_accept_types * sizeof(WCHAR *))))
-    {
-        request->num_accept_types = 0;
-        return FALSE;
-    }
-    types = accept_types;
-    for (i = 0; i < request->num_accept_types; i++)
-    {
-        if (!(request->accept_types[i] = strdupW( *types )))
-        {
-            for ( ; i > 0; --i) heap_free( request->accept_types[i - 1] );
-            heap_free( request->accept_types );
-            request->accept_types = NULL;
-            request->num_accept_types = 0;
-            return FALSE;
-        }
+        if (!process_header( request, acceptW, *types, flags, TRUE )) return FALSE;
         types++;
     }
     return TRUE;
@@ -1151,7 +1130,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
 
     if (!version || !version[0]) version = http1_1;
     if (!(request->version = strdupW( version ))) goto end;
-    if (!(store_accept_types( request, types ))) goto end;
+    if (!(add_accept_types_header( request, types ))) goto end;
 
     if (!(hrequest = alloc_handle( &request->hdr ))) goto end;
     request->hdr.handle = hrequest;

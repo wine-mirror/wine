@@ -198,8 +198,6 @@ struct request
     char  read_buf[8192]; /* buffer for already read but not returned data */
     struct header *headers;
     DWORD num_headers;
-    WCHAR **accept_types;
-    DWORD num_accept_types;
     struct authinfo *authinfo;
     struct authinfo *proxy_authinfo;
     HANDLE task_wait;
@@ -288,7 +286,8 @@ void destroy_cookies( struct session * ) DECLSPEC_HIDDEN;
 BOOL set_server_for_hostname( struct connect *, const WCHAR *, INTERNET_PORT ) DECLSPEC_HIDDEN;
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 
-void release_host( struct hostdata *host ) DECLSPEC_HIDDEN;
+void release_host( struct hostdata * ) DECLSPEC_HIDDEN;
+BOOL process_header( struct request *, const WCHAR *, const WCHAR *, DWORD, BOOL ) DECLSPEC_HIDDEN;
 
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 void release_typelib( void ) DECLSPEC_HIDDEN;
