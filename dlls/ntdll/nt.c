@@ -973,30 +973,26 @@ __ASM_GLOBAL_FUNC( do_cpuid,
                    "ret" )
 #endif
 
-/* From xf86info havecpuid.c 1.11 */
-static inline BOOL have_cpuid(void)
-{
 #ifdef __i386__
-	unsigned int f1, f2;
-	__asm__("pushfl\n\t"
-                "pushfl\n\t"
-                "popl %0\n\t"
-                "movl %0,%1\n\t"
-                "xorl %2,%0\n\t"
-                "pushl %0\n\t"
-                "popfl\n\t"
-                "pushfl\n\t"
-                "popl %0\n\t"
-                "popfl"
-                : "=&r" (f1), "=&r" (f2)
-                : "ir" (0x00200000));
-	return ((f1^f2) & 0x00200000) != 0;
-#elif defined(__x86_64__)
-        return TRUE;
+extern int have_cpuid(void);
+__ASM_GLOBAL_FUNC( have_cpuid,
+                   "pushfl\n\t"
+                   "pushfl\n\t"
+                   "movl (%esp),%ecx\n\t"
+                   "xorl $0x00200000,(%esp)\n\t"
+                   "popfl\n\t"
+                   "pushfl\n\t"
+                   "popl %eax\n\t"
+                   "popfl\n\t"
+                   "xorl %ecx,%eax\n\t"
+                   "andl $0x00200000,%eax\n\t"
+                   "ret" )
 #else
-        return FALSE;
-#endif
+static int have_cpuid(void)
+{
+    return 1;
 }
+#endif
 
 /* Detect if a SSE2 processor is capable of Denormals Are Zero (DAZ) mode.
  *
