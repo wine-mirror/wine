@@ -6,7 +6,7 @@
 @ stub DllCanUnloadNow
 @ stub DllGetActivationFactory
 @ stub DllGetClassObject
-@ stdcall GetCurrentProcessExplicitAppUserModelID(ptr) shell32.GetCurrentProcessExplicitAppUserModelID
+@ stdcall GetCurrentProcessExplicitAppUserModelID(ptr)
 @ stdcall GetDpiForMonitor(long long ptr ptr)
 @ stub GetDpiForShellUIComponent
 @ stdcall GetProcessDpiAwareness(long ptr)
@@ -77,7 +77,7 @@
 @ stdcall SHStrDupW(wstr ptr) shlwapi.SHStrDupW
 @ stdcall SHUnicodeToAnsi(wstr ptr ptr) shlwapi.SHUnicodeToAnsi
 @ stdcall SHUnicodeToUnicode(wstr ptr long) shlwapi.SHUnicodeToUnicode
-@ stdcall SetCurrentProcessExplicitAppUserModelID(wstr) shell32.SetCurrentProcessExplicitAppUserModelID
+@ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
 @ stdcall SetProcessDpiAwareness(long)
 @ stub SetProcessReference
 @ stub UnregisterScaleChangeEvent
