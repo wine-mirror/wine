@@ -3,9 +3,9 @@
 @ stub CreateRandomAccessStreamOnFile
 @ stub CreateRandomAccessStreamOverStream
 @ stub CreateStreamOverRandomAccessStream
-@ stdcall -private DllCanUnloadNow() shell32.DllCanUnloadNow
+@ stub DllCanUnloadNow
 @ stub DllGetActivationFactory
-@ stdcall -private DllGetClassObject(ptr ptr ptr) shell32.DllGetClassObject
+@ stub DllGetClassObject
 @ stdcall GetCurrentProcessExplicitAppUserModelID(ptr) shell32.GetCurrentProcessExplicitAppUserModelID
 @ stdcall GetDpiForMonitor(long long ptr ptr)
 @ stub GetDpiForShellUIComponent
