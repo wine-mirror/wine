@@ -240,13 +240,39 @@ static inline BOOL is_client_in_process(void)
     return current_client_id() == GetCurrentProcessId();
 }
 
-#ifdef __i386__  /* the Java VM uses %fs for its own purposes, so we need to wrap the calls */
+#ifdef __i386__  /* the Java VM uses %fs/%gs for its own purposes, so we need to wrap the calls */
+
 static WORD orig_fs, java_fs;
 static inline void wrap_java_call(void)   { wine_set_fs( java_fs ); }
 static inline void unwrap_java_call(void) { wine_set_fs( orig_fs ); }
+static inline void init_java_thread( JavaVM *java_vm )
+{
+    orig_fs = wine_get_fs();
+    (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
+    java_fs = wine_get_fs();
+    wine_set_fs( orig_fs );
+}
+
+#elif defined(__x86_64__)
+
+#include <asm/prctl.h>
+#include <asm/unistd.h>
+static void *orig_teb, *java_teb;
+static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
+static inline void wrap_java_call(void)   { arch_prctl( ARCH_SET_GS, java_teb ); }
+static inline void unwrap_java_call(void) { arch_prctl( ARCH_SET_GS, orig_teb ); }
+static inline void init_java_thread( JavaVM *java_vm )
+{
+    arch_prctl( ARCH_GET_GS, &orig_teb );
+    (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
+    arch_prctl( ARCH_GET_GS, &java_teb );
+    arch_prctl( ARCH_SET_GS, orig_teb );
+}
+
 #else
 static inline void wrap_java_call(void) { }
 static inline void unwrap_java_call(void) { }
+static inline void init_java_thread( JavaVM *java_vm ) { (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 ); }
 #endif  /* __i386__ */
 
 static struct native_win_data *data_map[65536];
@@ -1092,15 +1118,7 @@ static DWORD CALLBACK device_thread( void *arg )
 
     if (!(java_vm = wine_get_java_vm())) return 0;  /* not running under Java */
 
-#ifdef __i386__
-    orig_fs = wine_get_fs();
-    (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
-    java_fs = wine_get_fs();
-    wine_set_fs( orig_fs );
-    if (java_fs != orig_fs) TRACE( "%%fs changed from %04x to %04x by Java VM\n", orig_fs, java_fs );
-#else
-    (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
-#endif
+    init_java_thread( java_vm );
 
     create_desktop_window( GetDesktopWindow() );
 
@@ -1116,7 +1134,9 @@ static DWORD CALLBACK device_thread( void *arg )
 
     ret = wine_ntoskrnl_main_loop( stop_event );
 
+    wrap_java_call();
     (*java_vm)->DetachCurrentThread( java_vm );
+    unwrap_java_call();
     return ret;
 }
 
