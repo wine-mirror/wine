@@ -207,7 +207,6 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
             CloseHandle(device->thread);
             CloseHandle(device->thread_finished);
         }
-        CloseHandle(device->sleepev);
 
         EnterCriticalSection(&DSOUND_renderers_lock);
         list_remove(&device->entry);
@@ -234,6 +233,7 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
             IAudioStreamVolume_Release(device->volume);
         if(device->mmdevice)
             IMMDevice_Release(device->mmdevice);
+        CloseHandle(device->sleepev);
         HeapFree(GetProcessHeap(), 0, device->tmp_buffer);
         HeapFree(GetProcessHeap(), 0, device->cp_buffer);
         HeapFree(GetProcessHeap(), 0, device->buffer);
