@@ -308,6 +308,63 @@ HRESULT WINAPI PathAllocCanonicalize(const WCHAR *path_in, DWORD flags, WCHAR **
     return S_OK;
 }
 
+HRESULT WINAPI PathAllocCombine(const WCHAR *path1, const WCHAR *path2, DWORD flags, WCHAR **out)
+{
+    SIZE_T combined_length, length2;
+    WCHAR *combined_path;
+    BOOL from_path2 = FALSE;
+    HRESULT hr;
+
+    TRACE("%s %s %#x %p\n", wine_dbgstr_w(path1), wine_dbgstr_w(path2), flags, out);
+
+    if ((!path1 && !path2) || !out)
+    {
+        if (out) *out = NULL;
+        return E_INVALIDARG;
+    }
+
+    if (!path1 || !path2) return PathAllocCanonicalize(path1 ? path1 : path2, flags, out);
+
+    /* If path2 is fully qualified, use path2 only */
+    if (path2 && ((isalphaW(path2[0]) && path2[1] == ':') || (path2[0] == '\\' && path2[1] == '\\')))
+    {
+        path1 = path2;
+        path2 = NULL;
+        from_path2 = TRUE;
+    }
+
+    length2 = path2 ? strlenW(path2) : 0;
+    /* path1 length + path2 length + possible backslash + NULL */
+    combined_length = strlenW(path1) + length2 + 2;
+
+    combined_path = HeapAlloc(GetProcessHeap(), 0, combined_length * sizeof(WCHAR));
+    if (!combined_path)
+    {
+        *out = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    lstrcpyW(combined_path, path1);
+    PathCchStripPrefix(combined_path, combined_length);
+    if (from_path2) PathCchAddBackslashEx(combined_path, combined_length, NULL, NULL);
+
+    if (path2 && path2[0])
+    {
+        if (path2[0] == '\\' && path2[1] != '\\')
+        {
+            PathCchStripToRoot(combined_path, combined_length);
+            path2++;
+        }
+
+        PathCchAddBackslashEx(combined_path, combined_length, NULL, NULL);
+        lstrcatW(combined_path, path2);
+    }
+
+    hr = PathAllocCanonicalize(combined_path, flags, out);
+    HeapFree(GetProcessHeap(), 0, combined_path);
+    return hr;
+}
+
 HRESULT WINAPI PathCchAddBackslash(WCHAR *path, SIZE_T size)
 {
     return PathCchAddBackslashEx(path, size, NULL, NULL);

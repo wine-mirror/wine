@@ -1024,7 +1024,7 @@
 @ stdcall PathAddExtensionA(str str) shlwapi.PathAddExtensionA
 @ stdcall PathAddExtensionW(wstr wstr) shlwapi.PathAddExtensionW
 @ stdcall PathAllocCanonicalize(wstr long ptr)
-# @ stub PathAllocCombine
+@ stdcall PathAllocCombine(wstr wstr long ptr)
 @ stdcall PathAppendA(str str) shlwapi.PathAppendA
 @ stdcall PathAppendW(wstr wstr) shlwapi.PathAppendW
 @ stdcall PathCanonicalizeA(ptr str) shlwapi.PathCanonicalizeA
