@@ -34,9 +34,7 @@
 #include "wine/test.h"
 
 /* function pointers */
-static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
-static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 
 /* This is a unique guid for testing purposes */
@@ -47,8 +45,6 @@ static void init_function_pointers(void)
 {
     HMODULE hSetupAPI = GetModuleHandleA("setupapi.dll");
 
-    pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
-    pSetupDiDestroyDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiDestroyDeviceInfoList");
     pSetupDiCallClassInstaller = (void *)GetProcAddress(hSetupAPI, "SetupDiCallClassInstaller");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
 }
@@ -119,57 +115,38 @@ cleanup:
     return ret;
 }
 
-static void test_SetupDiCreateDeviceInfoListEx(void)
+static void test_create_device_list_ex(void)
 {
-    HDEVINFO devlist;
-    BOOL ret;
-    DWORD error;
-    static CHAR notnull[] = "NotNull";
     static const WCHAR machine[] = { 'd','u','m','m','y',0 };
     static const WCHAR empty[] = { 0 };
+    static char notnull[] = "NotNull";
+    HDEVINFO set;
+    BOOL ret;
 
     SetLastError(0xdeadbeef);
-    /* create empty DeviceInfoList, but set Reserved to a value, which is not NULL */
-    devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, notnull);
-
-    error = GetLastError();
-    if (error == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("SetupDiCreateDeviceInfoListExW is not implemented\n");
-        return;
-    }
-    ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
-    ok(error == ERROR_INVALID_PARAMETER, "GetLastError returned wrong value : %d, (expected %d)\n", error, ERROR_INVALID_PARAMETER);
+    set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, notnull);
+    ok(set == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %#x.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    /* create empty DeviceInfoList, but set MachineName to something */
-    devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, machine, NULL);
+    set = SetupDiCreateDeviceInfoListExW(NULL, NULL, machine, NULL);
+    ok(set == INVALID_HANDLE_VALUE, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_MACHINENAME
+            || GetLastError() == ERROR_MACHINE_UNAVAILABLE
+            || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
+            "Got unexpected error %#x.\n", GetLastError());
 
-    error = GetLastError();
-    if (error == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        /* win10 reports ERROR_CALL_NOT_IMPLEMENTED at first here */
-        win_skip("SetupDiCreateDeviceInfoListExW is not implemented\n");
-        return;
-    }
-    ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
-    ok(error == ERROR_INVALID_MACHINENAME || error == ERROR_MACHINE_UNAVAILABLE, "GetLastError returned wrong value : %d, (expected %d or %d)\n", error, ERROR_INVALID_MACHINENAME, ERROR_MACHINE_UNAVAILABLE);
+    set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
+    ok(set && set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.", GetLastError());
 
-    /* create empty DeviceInfoList */
-    devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
-    ok(devlist && devlist != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected != %p)\n", devlist, error, INVALID_HANDLE_VALUE);
+    ret = SetupDiDestroyDeviceInfoList(set);
+    ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
 
-    /* destroy DeviceInfoList */
-    ret = pSetupDiDestroyDeviceInfoList(devlist);
-    ok(ret, "SetupDiDestroyDeviceInfoList failed : %d\n", error);
+    set = SetupDiCreateDeviceInfoListExW(NULL, NULL, empty, NULL);
+    ok(set && set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.", GetLastError());
 
-    /* create empty DeviceInfoList with empty machine name */
-    devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, empty, NULL);
-    ok(devlist && devlist != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected != %p)\n", devlist, error, INVALID_HANDLE_VALUE);
-
-    /* destroy DeviceInfoList */
-    ret = pSetupDiDestroyDeviceInfoList(devlist);
-    ok(ret, "SetupDiDestroyDeviceInfoList failed : %d\n", error);
+    ret = SetupDiDestroyDeviceInfoList(set);
+    ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
 }
 
 static void test_SetupDiOpenClassRegKeyExA(void)
@@ -1389,10 +1366,7 @@ START_TEST(devinst)
     }
     RegCloseKey(hkey);
 
-    if (pSetupDiCreateDeviceInfoListExW)
-        test_SetupDiCreateDeviceInfoListEx();
-    else
-        win_skip("SetupDiCreateDeviceInfoListExW is not available\n");
+    test_create_device_list_ex();
 
     if (pSetupDiOpenClassRegKeyExA)
         test_SetupDiOpenClassRegKeyExA();
