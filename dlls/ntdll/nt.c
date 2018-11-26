@@ -944,27 +944,34 @@ static  SYSTEM_CPU_INFORMATION cached_sci;
 #define INEI	0x49656e69	/* "ineI" */
 #define NTEL	0x6c65746e	/* "ntel" */
 
-/* Calls cpuid with an eax of 'ax' and returns the 16 bytes in *p
- * We are compiled with -fPIC, so we can't clobber ebx.
- */
-static inline void do_cpuid(unsigned int ax, unsigned int *p)
-{
+extern void do_cpuid(unsigned int ax, unsigned int *p);
+
 #ifdef __i386__
-	__asm__("pushl %%ebx\n\t"
-                "cpuid\n\t"
-                "movl %%ebx, %%esi\n\t"
-                "popl %%ebx"
-                : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
-                :  "0" (ax));
-#elif defined(__x86_64__)
-	__asm__("push %%rbx\n\t"
-                "cpuid\n\t"
-                "movq %%rbx, %%rsi\n\t"
-                "pop %%rbx"
-                : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
-                :  "0" (ax));
+__ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushl %esi\n\t"
+                   "pushl %ebx\n\t"
+                   "movl 12(%esp),%eax\n\t"
+                   "movl 16(%esp),%esi\n\t"
+                   "cpuid\n\t"
+                   "movl %eax,(%esi)\n\t"
+                   "movl %ebx,4(%esi)\n\t"
+                   "movl %ecx,8(%esi)\n\t"
+                   "movl %edx,12(%esi)\n\t"
+                   "popl %ebx\n\t"
+                   "popl %esi\n\t"
+                   "ret" )
+#else
+__ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushq %rbx\n\t"
+                   "movl %edi,%eax\n\t"
+                   "cpuid\n\t"
+                   "movl %eax,(%rsi)\n\t"
+                   "movl %ebx,4(%rsi)\n\t"
+                   "movl %ecx,8(%rsi)\n\t"
+                   "movl %edx,12(%rsi)\n\t"
+                   "popq %rbx\n\t"
+                   "ret" )
 #endif
-}
 
 /* From xf86info havecpuid.c 1.11 */
 static inline BOOL have_cpuid(void)
