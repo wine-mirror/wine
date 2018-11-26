@@ -72,6 +72,8 @@ extern int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const R
                                      HWND after, HWND owner ) DECLSPEC_HIDDEN;
 extern int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale ) DECLSPEC_HIDDEN;
 extern int ioctl_set_capture( HWND hwnd ) DECLSPEC_HIDDEN;
+extern int ioctl_set_cursor( int id, int width, int height,
+                             int hotspotx, int hotspoty, const unsigned int *bits ) DECLSPEC_HIDDEN;
 
 
 /**************************************************************************
@@ -151,7 +153,7 @@ union event_data
     } kbd;
 };
 
-int send_event( const union event_data *data );
+int send_event( const union event_data *data ) DECLSPEC_HIDDEN;
 
 extern JavaVM *wine_get_java_vm(void);
 extern jobject wine_get_java_object(void);

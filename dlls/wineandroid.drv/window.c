@@ -37,6 +37,7 @@
 # include <unistd.h>
 #endif
 
+#define OEMRESOURCE
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -966,6 +967,226 @@ static void set_surface_layered( struct window_surface *window_surface, BYTE alp
     window_surface->funcs->unlock( window_surface );
 }
 
+/***********************************************************************
+ *           get_mono_icon_argb
+ *
+ * Return a monochrome icon/cursor bitmap bits in ARGB format.
+ */
+static unsigned int *get_mono_icon_argb( HDC hdc, HBITMAP bmp, unsigned int *width, unsigned int *height )
+{
+    BITMAP bm;
+    char *mask;
+    unsigned int i, j, stride, mask_size, bits_size, *bits = NULL, *ptr;
+
+    if (!GetObjectW( bmp, sizeof(bm), &bm )) return NULL;
+    stride = ((bm.bmWidth + 15) >> 3) & ~1;
+    mask_size = stride * bm.bmHeight;
+    if (!(mask = HeapAlloc( GetProcessHeap(), 0, mask_size ))) return NULL;
+    if (!GetBitmapBits( bmp, mask_size, mask )) goto done;
+
+    bm.bmHeight /= 2;
+    bits_size = bm.bmWidth * bm.bmHeight * sizeof(*bits);
+    if (!(bits = HeapAlloc( GetProcessHeap(), 0, bits_size ))) goto done;
+
+    ptr = bits;
+    for (i = 0; i < bm.bmHeight; i++)
+        for (j = 0; j < bm.bmWidth; j++, ptr++)
+        {
+            int and = ((mask[i * stride + j / 8] << (j % 8)) & 0x80);
+            int xor = ((mask[(i + bm.bmHeight) * stride + j / 8] << (j % 8)) & 0x80);
+            if (!xor && and)
+                *ptr = 0;
+            else if (xor && !and)
+                *ptr = 0xffffffff;
+            else
+                /* we can't draw "invert" pixels, so render them as black instead */
+                *ptr = 0xff000000;
+        }
+
+    *width = bm.bmWidth;
+    *height = bm.bmHeight;
+
+done:
+    HeapFree( GetProcessHeap(), 0, mask );
+    return bits;
+}
+
+/***********************************************************************
+ *           get_bitmap_argb
+ *
+ * Return the bitmap bits in ARGB format. Helper for setting icons and cursors.
+ */
+static unsigned int *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, unsigned int *width,
+                                      unsigned int *height )
+{
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    BITMAP bm;
+    unsigned int *ptr, *bits = NULL;
+    unsigned char *mask_bits = NULL;
+    int i, j;
+    BOOL has_alpha = FALSE;
+
+    if (!color) return get_mono_icon_argb( hdc, mask, width, height );
+
+    if (!GetObjectW( color, sizeof(bm), &bm )) return NULL;
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biWidth = bm.bmWidth;
+    info->bmiHeader.biHeight = -bm.bmHeight;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biSizeImage = bm.bmWidth * bm.bmHeight * 4;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed = 0;
+    info->bmiHeader.biClrImportant = 0;
+    if (!(bits = HeapAlloc( GetProcessHeap(), 0, bm.bmWidth * bm.bmHeight * sizeof(unsigned int) )))
+        goto failed;
+    if (!GetDIBits( hdc, color, 0, bm.bmHeight, bits, info, DIB_RGB_COLORS )) goto failed;
+
+    *width = bm.bmWidth;
+    *height = bm.bmHeight;
+
+    for (i = 0; i < bm.bmWidth * bm.bmHeight; i++)
+        if ((has_alpha = (bits[i] & 0xff000000) != 0)) break;
+
+    if (!has_alpha)
+    {
+        unsigned int width_bytes = (bm.bmWidth + 31) / 32 * 4;
+        /* generate alpha channel from the mask */
+        info->bmiHeader.biBitCount = 1;
+        info->bmiHeader.biSizeImage = width_bytes * bm.bmHeight;
+        if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
+        if (!GetDIBits( hdc, mask, 0, bm.bmHeight, mask_bits, info, DIB_RGB_COLORS )) goto failed;
+        ptr = bits;
+        for (i = 0; i < bm.bmHeight; i++)
+            for (j = 0; j < bm.bmWidth; j++, ptr++)
+                if (!((mask_bits[i * width_bytes + j / 8] << (j % 8)) & 0x80)) *ptr |= 0xff000000;
+        HeapFree( GetProcessHeap(), 0, mask_bits );
+    }
+
+    return bits;
+
+failed:
+    HeapFree( GetProcessHeap(), 0, bits );
+    HeapFree( GetProcessHeap(), 0, mask_bits );
+    *width = *height = 0;
+    return NULL;
+}
+
+
+enum android_system_cursors
+{
+    TYPE_ARROW = 1000,
+    TYPE_CONTEXT_MENU = 1001,
+    TYPE_HAND = 1002,
+    TYPE_HELP = 1003,
+    TYPE_WAIT = 1004,
+    TYPE_CELL = 1006,
+    TYPE_CROSSHAIR = 1007,
+    TYPE_TEXT = 1008,
+    TYPE_VERTICAL_TEXT = 1009,
+    TYPE_ALIAS = 1010,
+    TYPE_COPY = 1011,
+    TYPE_NO_DROP = 1012,
+    TYPE_ALL_SCROLL = 1013,
+    TYPE_HORIZONTAL_DOUBLE_ARROW = 1014,
+    TYPE_VERTICAL_DOUBLE_ARROW = 1015,
+    TYPE_TOP_RIGHT_DIAGONAL_DOUBLE_ARROW = 1016,
+    TYPE_TOP_LEFT_DIAGONAL_DOUBLE_ARROW = 1017,
+    TYPE_ZOOM_IN = 1018,
+    TYPE_ZOOM_OUT = 1019,
+    TYPE_GRAB = 1020,
+    TYPE_GRABBING = 1021,
+};
+
+struct system_cursors
+{
+    WORD id;
+    enum android_system_cursors android_id;
+};
+
+static const struct system_cursors user32_cursors[] =
+{
+    { OCR_NORMAL,      TYPE_ARROW },
+    { OCR_IBEAM,       TYPE_TEXT },
+    { OCR_WAIT,        TYPE_WAIT },
+    { OCR_CROSS,       TYPE_CROSSHAIR },
+    { OCR_SIZE,        TYPE_ALL_SCROLL },
+    { OCR_SIZEALL,     TYPE_ALL_SCROLL },
+    { OCR_SIZENWSE,    TYPE_TOP_LEFT_DIAGONAL_DOUBLE_ARROW },
+    { OCR_SIZENESW,    TYPE_TOP_RIGHT_DIAGONAL_DOUBLE_ARROW },
+    { OCR_SIZEWE,      TYPE_HORIZONTAL_DOUBLE_ARROW },
+    { OCR_SIZENS,      TYPE_VERTICAL_DOUBLE_ARROW },
+    { OCR_NO,          TYPE_NO_DROP },
+    { OCR_HAND,        TYPE_HAND },
+    { OCR_HELP,        TYPE_HELP },
+    { 0 }
+};
+
+static const struct system_cursors comctl32_cursors[] =
+{
+    /* 102 TYPE_MOVE doesn't exist */
+    { 104, TYPE_COPY },
+    { 105, TYPE_ARROW },
+    { 106, TYPE_HORIZONTAL_DOUBLE_ARROW },
+    { 107, TYPE_HORIZONTAL_DOUBLE_ARROW },
+    { 108, TYPE_GRABBING },
+    { 135, TYPE_VERTICAL_DOUBLE_ARROW },
+    { 0 }
+};
+
+static const struct system_cursors ole32_cursors[] =
+{
+    { 1, TYPE_NO_DROP },
+    /* 2 TYPE_MOVE doesn't exist */
+    { 3, TYPE_COPY },
+    { 4, TYPE_ALIAS },
+    { 0 }
+};
+
+static const struct system_cursors riched20_cursors[] =
+{
+    { 105, TYPE_GRABBING },
+    { 109, TYPE_COPY },
+    /* 110 TYPE_MOVE doesn't exist */
+    { 111, TYPE_NO_DROP },
+    { 0 }
+};
+
+static const struct
+{
+    const struct system_cursors *cursors;
+    WCHAR name[16];
+} module_cursors[] =
+{
+    { user32_cursors, {'u','s','e','r','3','2','.','d','l','l',0} },
+    { comctl32_cursors, {'c','o','m','c','t','l','3','2','.','d','l','l',0} },
+    { ole32_cursors, {'o','l','e','3','2','.','d','l','l',0} },
+    { riched20_cursors, {'r','i','c','h','e','d','2','0','.','d','l','l',0} }
+};
+
+static int get_cursor_system_id( const ICONINFOEXW *info )
+{
+    const struct system_cursors *cursors;
+    unsigned int i;
+    HMODULE module;
+
+    if (info->szResName[0]) return 0;  /* only integer resources are supported here */
+    if (!(module = GetModuleHandleW( info->szModName ))) return 0;
+
+    for (i = 0; i < sizeof(module_cursors)/sizeof(module_cursors[0]); i++)
+        if (GetModuleHandleW( module_cursors[i].name ) == module) break;
+    if (i == sizeof(module_cursors)/sizeof(module_cursors[0])) return 0;
+
+    cursors = module_cursors[i].cursors;
+    for (i = 0; cursors[i].id; i++)
+        if (cursors[i].id == info->wResID) return cursors[i].android_id;
+
+    return 0;
+}
+
 
 static WNDPROC desktop_orig_wndproc;
 
@@ -1201,6 +1422,51 @@ void CDECL ANDROID_SetCapture( HWND hwnd, UINT flags )
 {
     if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
     ioctl_set_capture( hwnd );
+}
+
+
+/***********************************************************************
+ *           ANDROID_SetCursor
+ */
+void CDECL ANDROID_SetCursor( HCURSOR handle )
+{
+    static HCURSOR last_cursor;
+    static DWORD last_cursor_change;
+
+    if (InterlockedExchangePointer( (void **)&last_cursor, handle ) != handle ||
+        GetTickCount() - last_cursor_change > 100)
+    {
+        last_cursor_change = GetTickCount();
+
+        if (handle)
+        {
+            unsigned int width = 0, height = 0, *bits = NULL;
+            ICONINFOEXW info;
+            int id;
+
+            info.cbSize = sizeof(info);
+            if (!GetIconInfoExW( handle, &info )) return;
+
+            if (!(id = get_cursor_system_id( &info )))
+            {
+                HDC hdc = CreateCompatibleDC( 0 );
+                bits = get_bitmap_argb( hdc, info.hbmColor, info.hbmMask, &width, &height );
+                DeleteDC( hdc );
+
+                /* make sure hotspot is valid */
+                if (info.xHotspot >= width || info.yHotspot >= height)
+                {
+                    info.xHotspot = width / 2;
+                    info.yHotspot = height / 2;
+                }
+            }
+            ioctl_set_cursor( id, width, height, info.xHotspot, info.yHotspot, bits );
+            HeapFree( GetProcessHeap(), 0, bits );
+            DeleteObject( info.hbmColor );
+            DeleteObject( info.hbmMask );
+        }
+        else ioctl_set_cursor( 0, 0, 0, 0, 0, NULL );
+    }
 }
 
 

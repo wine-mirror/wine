@@ -25,6 +25,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
@@ -34,6 +35,7 @@ import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.PointerIcon;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -64,6 +66,7 @@ public class WineActivity extends Activity
 
     protected WineWindow desktop_window;
     protected WineWindow message_window;
+    private PointerIcon current_cursor;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -684,6 +687,12 @@ public class WineActivity extends Activity
         {
         }
 
+        @TargetApi(24)
+        public PointerIcon onResolvePointerIcon( MotionEvent event, int index )
+        {
+            return current_cursor;
+        }
+
         public boolean onGenericMotionEvent( MotionEvent event )
         {
             if (is_client) return false;  // let the whole window handle it
@@ -799,6 +808,18 @@ public class WineActivity extends Activity
         if (win.parent == desktop_window) win.create_whole_view();
     }
 
+    @TargetApi(24)
+    public void set_cursor( int id, int width, int height, int hotspotx, int hotspoty, int bits[] )
+    {
+        Log.i( LOGTAG, String.format( "set_cursor id %d size %dx%d hotspot %dx%d", id, width, height, hotspotx, hotspoty ));
+        if (bits != null)
+        {
+            Bitmap bitmap = Bitmap.createBitmap( bits, width, height, Bitmap.Config.ARGB_8888 );
+            current_cursor = PointerIcon.create( bitmap, hotspotx, hotspoty );
+        }
+        else current_cursor = PointerIcon.getSystemIcon( this, id );
+    }
+
     public void window_pos_changed( int hwnd, int flags, int insert_after, int owner, int style,
                                     Rect window_rect, Rect client_rect, Rect visible_rect )
     {
@@ -825,6 +846,13 @@ public class WineActivity extends Activity
     public void setParent( final int hwnd, final int parent, final float scale, final int pid )
     {
         runOnUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent, scale, pid ); }} );
+    }
+
+    public void setCursor( final int id, final int width, final int height,
+                           final int hotspotx, final int hotspoty, final int bits[] )
+    {
+        if (Build.VERSION.SDK_INT < 24) return;
+        runOnUiThread( new Runnable() { public void run() { set_cursor( id, width, height, hotspotx, hotspoty, bits ); }} );
     }
 
     public void windowPosChanged( final int hwnd, final int flags, final int insert_after,
