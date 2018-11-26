@@ -271,7 +271,7 @@
 
 @ stdcall CheckEscapesA(str long)
 @ stdcall CheckEscapesW(wstr long)
-@ stdcall CommandLineToArgvW(wstr ptr)
+@ stdcall CommandLineToArgvW(wstr ptr) shcore.CommandLineToArgvW
 @ stdcall Control_FillCache_RunDLL(long long long long) Control_FillCache_RunDLLA
 @ stdcall Control_FillCache_RunDLLA(long long long long)
 @ stdcall Control_FillCache_RunDLLW(long long long long)
@@ -312,7 +312,7 @@
 @ stdcall FindExecutableW(wstr wstr ptr)
 @ stub FixupOptionalComponents
 @ stdcall FreeIconList(long)
-@ stdcall GetCurrentProcessExplicitAppUserModelID(ptr)
+@ stdcall GetCurrentProcessExplicitAppUserModelID(ptr) shcore.GetCurrentProcessExplicitAppUserModelID
 @ stdcall InitNetworkAddressControl()
 @ stub InternalExtractIconListA
 @ stub InternalExtractIconListW
@@ -328,7 +328,7 @@
 @ stub RealShellExecuteExW
 @ stub RealShellExecuteW
 @ stdcall RegenerateUserEnvironment(ptr long)
-@ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
+@ stdcall SetCurrentProcessExplicitAppUserModelID(wstr) shcore.SetCurrentProcessExplicitAppUserModelID
 @ stdcall SHAddToRecentDocs (long ptr)
 @ stdcall SHAppBarMessage(long ptr)
 @ stdcall SHAssocEnumHandlers(wstr long ptr)

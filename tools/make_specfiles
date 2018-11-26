@@ -339,6 +339,13 @@ my @dll_groups =
   "sspicli",
  ],
  [
+  "shcore",
+  "shell32",
+  "api-ms-win-shcore-obsolete-l1-1-0",
+  "api-ms-win-shcore-thread-l1-1-0",
+  "api-ms-win-shcore-stream-l1-1-0",
+ ],
+ [
   "shell32",
   "api-ms-win-downlevel-shell32-l1-1-0",
   "api-ms-win-shell-shellcom-l1-1-0",
@@ -357,14 +364,7 @@ my @dll_groups =
  [
   "shell32",
   "shlwapi",
-  "shcore",
   "api-ms-win-shcore-scaling-l1-1-1",
- ],
- [
-  "shcore",
-  "api-ms-win-shcore-obsolete-l1-1-0",
-  "api-ms-win-shcore-thread-l1-1-0",
-  "api-ms-win-shcore-stream-l1-1-0",
  ],
  [
   "user32",
