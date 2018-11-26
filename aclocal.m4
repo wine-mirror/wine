@@ -257,7 +257,7 @@ dnl
 dnl Usage: WINE_CONFIG_SYMLINK(target,src,files,enable,srcfile)
 dnl
 AC_DEFUN([WINE_CONFIG_SYMLINK],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_ifval([$4],[if test "x$[$4]" != xno; then
+m4_ifval([$4],[if test $4; then
 ])m4_foreach([f],[$3],
 [AC_CONFIG_LINKS(m4_ifval([$1],[$1/])f[:]m4_ifval([$2],[$2/])m4_ifval([$5],[$5],f))])dnl
 m4_if([$1],[$2],[test "$srcdir" = "." || ])dnl

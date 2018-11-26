@@ -18977,7 +18977,7 @@ ac_config_links="$ac_config_links loader/l_intl.nls:loader/l_intl.nls"
 test "$srcdir" = "." || wine_fn_config_symlink loader/l_intl.nls
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
-if test "x$enable_win64" != xno; then
+if test "x$enable_win64" != xno -o -n "$with_wine64"; then
 ac_config_links="$ac_config_links wine64:tools/winewrapper"
 wine_fn_config_symlink wine64
 fi
