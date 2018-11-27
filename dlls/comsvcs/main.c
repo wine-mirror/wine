@@ -43,9 +43,178 @@ typedef struct dispensermanager
 
 } dispensermanager;
 
+typedef struct holder
+{
+    IHolder IHolder_iface;
+    LONG ref;
+
+    IDispenserDriver *driver;
+} holder;
+
 static inline dispensermanager *impl_from_IDispenserManager(IDispenserManager *iface)
 {
     return CONTAINING_RECORD(iface, dispensermanager, IDispenserManager_iface);
+}
+
+static inline holder *impl_from_IHolder(IHolder *iface)
+{
+    return CONTAINING_RECORD(iface, holder, IHolder_iface);
+}
+
+static HRESULT WINAPI holder_QueryInterface(IHolder *iface, REFIID riid, void **object)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), object);
+
+    *object = NULL;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IHolder))
+    {
+        *object = &This->IHolder_iface;
+        IUnknown_AddRef( (IUnknown*)*object);
+
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),object);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI holder_AddRef(IHolder *iface)
+{
+    holder *This = impl_from_IHolder(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI holder_Release(IHolder *iface)
+{
+    holder *This = impl_from_IHolder(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+    {
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI holder_AllocResource(IHolder *iface, const RESTYPID typeid, RESID *resid)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    FIXME("(%p)->(%08lx, %p) stub\n", This, typeid, resid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI holder_FreeResource(IHolder *iface, const RESID resid)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    FIXME("(%p)->(%08lx) stub\n", This, resid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI holder_TrackResource(IHolder *iface, const RESID resid)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    FIXME("(%p)->(%08lx) stub\n", This, resid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI holder_TrackResourceS(IHolder *iface, const SRESID resid)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(resid));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI holder_UntrackResource(IHolder *iface, const RESID resid, const BOOL value)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    FIXME("(%p)->(%08lx, %d) stub\n", This, resid, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI holder_UntrackResourceS(IHolder *iface, const SRESID resid, const BOOL value)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    FIXME("(%p)->(%s, %d) stub\n", This, debugstr_w(resid), value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI holder_Close(IHolder *iface)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    FIXME("(%p) stub\n", This);
+
+    IDispenserDriver_Release(This->driver);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI holder_RequestDestroyResource(IHolder *iface, const RESID resid)
+{
+    holder *This = impl_from_IHolder(iface);
+
+    FIXME("(%p)->(%08lx) stub\n", This, resid);
+
+    return E_NOTIMPL;
+}
+
+struct IHolderVtbl holder_vtbl =
+{
+    holder_QueryInterface,
+    holder_AddRef,
+    holder_Release,
+    holder_AllocResource,
+    holder_FreeResource,
+    holder_TrackResource,
+    holder_TrackResourceS,
+    holder_UntrackResource,
+    holder_UntrackResourceS,
+    holder_Close,
+    holder_RequestDestroyResource
+};
+
+static HRESULT create_holder(IDispenserDriver *driver, IHolder **object)
+{
+    holder *hold;
+    HRESULT ret;
+
+    TRACE("(%p)\n", object);
+
+    hold = heap_alloc(sizeof(*hold));
+    if (!hold)
+    {
+        *object = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    hold->IHolder_iface.lpVtbl = &holder_vtbl;
+    hold->ref = 1;
+    hold->driver = driver;
+
+    ret = holder_QueryInterface(&hold->IHolder_iface, &IID_IHolder, (void**)object);
+    holder_Release(&hold->IHolder_iface);
+
+    return ret;
 }
 
 static HRESULT WINAPI dismanager_QueryInterface(IDispenserManager *iface, REFIID riid, void **object)
@@ -95,10 +264,18 @@ static HRESULT WINAPI dismanager_RegisterDispenser(IDispenserManager *iface, IDi
                         LPCOLESTR name, IHolder **dispenser)
 {
     dispensermanager *This = impl_from_IDispenserManager(iface);
+    HRESULT hr;
 
-    FIXME("(%p)->(%p, %s, %p) stub\n", This, driver, debugstr_w(name), dispenser);
+    TRACE("(%p)->(%p, %s, %p)\n", This, driver, debugstr_w(name), dispenser);
 
-    return E_NOTIMPL;
+    if(!dispenser)
+        return E_INVALIDARG;
+
+    hr = create_holder(driver, dispenser);
+
+    TRACE("<-- 0x%08x, %p\n", hr, *dispenser);
+
+    return hr;
 }
 
 static HRESULT WINAPI dismanager_GetContext(IDispenserManager *iface, INSTID *id, TRANSID *transid)
