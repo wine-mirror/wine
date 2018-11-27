@@ -35,6 +35,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shcore);
 
+static DWORD shcore_tls;
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     TRACE("(%p, %u, %p)\n", instance, reason, reserved);
@@ -45,6 +47,12 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
             return FALSE;  /* prefer native version */
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(instance);
+            shcore_tls = TlsAlloc();
+            break;
+        case DLL_PROCESS_DETACH:
+            if (reserved) break;
+            if (shcore_tls != TLS_OUT_OF_INDEXES)
+                TlsFree(shcore_tls);
             break;
     }
 
@@ -1122,4 +1130,134 @@ HRESULT WINAPI SHCreateStreamOnFileA(const char *path, DWORD mode, IStream **str
     heap_free(pathW);
 
     return hr;
+}
+
+struct threadref
+{
+    IUnknown IUnknown_iface;
+    LONG *refcount;
+};
+
+static inline struct threadref *threadref_impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct threadref, IUnknown_iface);
+}
+
+static HRESULT WINAPI threadref_QueryInterface(IUnknown *iface, REFIID riid, void **out)
+{
+    struct threadref *threadref = threadref_impl_from_IUnknown(iface);
+
+    TRACE("(%p, %s, %p)\n", threadref, debugstr_guid(riid), out);
+
+    if (out == NULL)
+        return E_POINTER;
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+    {
+        *out = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    WARN("Interface %s not supported.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI threadref_AddRef(IUnknown *iface)
+{
+    struct threadref *threadref = threadref_impl_from_IUnknown(iface);
+    LONG refcount = InterlockedIncrement(threadref->refcount);
+
+    TRACE("(%p, %d)\n", threadref, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI threadref_Release(IUnknown *iface)
+{
+    struct threadref *threadref = threadref_impl_from_IUnknown(iface);
+    LONG refcount = InterlockedDecrement(threadref->refcount);
+
+    TRACE("(%p, %d)\n", threadref, refcount);
+
+    if (!refcount)
+        heap_free(threadref);
+
+    return refcount;
+}
+
+static const IUnknownVtbl threadrefvtbl =
+{
+    threadref_QueryInterface,
+    threadref_AddRef,
+    threadref_Release,
+};
+
+/*************************************************************************
+ * SHCreateThreadRef        [SHCORE.@]
+ */
+HRESULT WINAPI SHCreateThreadRef(LONG *refcount, IUnknown **out)
+{
+    struct threadref *threadref;
+
+    TRACE("(%p, %p)\n", refcount, out);
+
+    if (!refcount || !out)
+        return E_INVALIDARG;
+
+    *out = NULL;
+
+    threadref = heap_alloc(sizeof(*threadref));
+    if (!threadref)
+        return E_OUTOFMEMORY;
+    threadref->IUnknown_iface.lpVtbl = &threadrefvtbl;
+    threadref->refcount = refcount;
+
+    *refcount = 1;
+    *out = &threadref->IUnknown_iface;
+
+    TRACE("Created %p.\n", threadref);
+    return S_OK;
+}
+
+/*************************************************************************
+ * SHGetThreadRef        [SHCORE.@]
+ */
+HRESULT WINAPI SHGetThreadRef(IUnknown **out)
+{
+    TRACE("(%p)\n", out);
+
+    if (shcore_tls == TLS_OUT_OF_INDEXES)
+        return E_NOINTERFACE;
+
+    *out = TlsGetValue(shcore_tls);
+    if (!*out)
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef(*out);
+    return S_OK;
+}
+
+/*************************************************************************
+ * SHSetThreadRef        [SHCORE.@]
+ */
+HRESULT WINAPI SHSetThreadRef(IUnknown *obj)
+{
+    TRACE("(%p)\n", obj);
+
+    if (shcore_tls == TLS_OUT_OF_INDEXES)
+        return E_NOINTERFACE;
+
+    TlsSetValue(shcore_tls, obj);
+    return S_OK;
+}
+
+/*************************************************************************
+ * SHReleaseThreadRef        [SHCORE.@]
+ */
+HRESULT WINAPI SHReleaseThreadRef(void)
+{
+    FIXME("() - stub!\n");
+    return S_OK;
 }

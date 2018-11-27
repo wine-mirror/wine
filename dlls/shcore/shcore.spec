@@ -38,7 +38,7 @@
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr)
 @ stdcall SHCreateStreamOnFileW(wstr long ptr)
 @ stdcall SHCreateThread(ptr ptr long ptr) shlwapi.SHCreateThread
-@ stdcall SHCreateThreadRef(ptr ptr) shlwapi.SHCreateThreadRef
+@ stdcall SHCreateThreadRef(ptr ptr)
 @ stub SHCreateThreadWithHandle
 @ stdcall SHDeleteEmptyKeyA(long ptr) shlwapi.SHDeleteEmptyKeyA
 @ stdcall SHDeleteEmptyKeyW(long ptr) shlwapi.SHDeleteEmptyKeyW
@@ -50,7 +50,7 @@
 @ stdcall SHEnumKeyExW(long long wstr ptr) shlwapi.SHEnumKeyExW
 @ stdcall SHEnumValueA(long long str ptr ptr ptr ptr) shlwapi.SHEnumValueA
 @ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr) shlwapi.SHEnumValueW
-@ stdcall SHGetThreadRef(ptr) shlwapi.SHGetThreadRef
+@ stdcall SHGetThreadRef(ptr)
 @ stdcall SHGetValueA( long str str ptr ptr ptr ) shlwapi.SHGetValueA
 @ stdcall SHGetValueW( long wstr wstr ptr ptr ptr ) shlwapi.SHGetValueW
 @ stdcall SHOpenRegStream2A(long str str long) shlwapi.SHOpenRegStream2A
@@ -69,8 +69,8 @@
 @ stdcall SHRegGetValueW( long wstr wstr long ptr ptr ptr ) shlwapi.SHRegGetValueW
 @ stdcall SHRegSetPathA(long str str str long) shlwapi.SHRegSetPathA
 @ stdcall SHRegSetPathW(long wstr wstr wstr long) shlwapi.SHRegSetPathW
-@ stdcall SHReleaseThreadRef() shlwapi.SHReleaseThreadRef
-@ stdcall SHSetThreadRef(ptr) shlwapi.SHSetThreadRef
+@ stdcall SHReleaseThreadRef()
+@ stdcall SHSetThreadRef(ptr)
 @ stdcall SHSetValueA(long  str  str long ptr long) shlwapi.SHSetValueA
 @ stdcall SHSetValueW(long wstr wstr long ptr long) shlwapi.SHSetValueW
 @ stdcall SHStrDupA(str ptr) shlwapi.SHStrDupA
