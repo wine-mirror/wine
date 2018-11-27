@@ -1,5 +1,5 @@
 MODULE    = shcore.dll
-IMPORTS   = user32 gdi32
+IMPORTS   = user32 gdi32 ole32
 
 C_SRCS = \
 	main.c

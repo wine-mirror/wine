@@ -508,6 +508,12 @@ struct shstream
             DWORD length;
             DWORD position;
         } mem;
+        struct
+        {
+            HANDLE handle;
+            DWORD mode;
+            WCHAR *path;
+        } file;
     } u;
 };
 
@@ -742,7 +748,7 @@ static HRESULT WINAPI shstream_Clone(IStream *iface, IStream **dest)
     return E_NOTIMPL;
 }
 
-static const IStreamVtbl shstreamvtbl =
+static const IStreamVtbl memstreamvtbl =
 {
     shstream_QueryInterface,
     shstream_AddRef,
@@ -786,7 +792,7 @@ IStream * WINAPI SHCreateMemStream(const BYTE *data, UINT data_len)
         data_len = 0;
 
     stream = heap_alloc(sizeof(*stream));
-    stream->IStream_iface.lpVtbl = &shstreamvtbl;
+    stream->IStream_iface.lpVtbl = &memstreamvtbl;
     stream->refcount = 1;
     stream->u.mem.buffer = heap_alloc(data_len);
     if (!stream->u.mem.buffer)
@@ -799,4 +805,321 @@ IStream * WINAPI SHCreateMemStream(const BYTE *data, UINT data_len)
     stream->u.mem.position = 0;
 
     return &stream->IStream_iface;
+}
+
+static ULONG WINAPI filestream_Release(IStream *iface)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedDecrement(&stream->refcount);
+
+    TRACE("(%p)->(%u)\n", stream, refcount);
+
+    if (!refcount)
+    {
+        CloseHandle(stream->u.file.handle);
+        heap_free(stream);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI filestream_Read(IStream *iface, void *buff, ULONG size, ULONG *read_len)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    DWORD read = 0;
+
+    TRACE("(%p, %p, %u, %p)\n", stream, buff, size, read_len);
+
+    if (!ReadFile(stream->u.file.handle, buff, size, &read, NULL))
+    {
+        WARN("error %d reading file\n", GetLastError());
+        return S_FALSE;
+    }
+
+    if (read_len)
+        *read_len = read;
+
+    return read == size ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI filestream_Write(IStream *iface, const void *buff, ULONG size, ULONG *written)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    DWORD written_len = 0;
+
+    TRACE("(%p, %p, %u, %p)\n", stream, buff, size, written);
+
+    switch (stream->u.file.mode & 0xf)
+    {
+        case STGM_WRITE:
+        case STGM_READWRITE:
+            break;
+        default:
+            return STG_E_ACCESSDENIED;
+    }
+
+    if (!WriteFile(stream->u.file.handle, buff, size, &written_len, NULL))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if (written)
+        *written = written_len;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI filestream_Seek(IStream *iface, LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER *new_pos)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    DWORD position;
+
+    TRACE("(%p, %s, %d, %p)\n", stream, wine_dbgstr_longlong(move.QuadPart), origin, new_pos);
+
+    position = SetFilePointer(stream->u.file.handle, move.u.LowPart, NULL, origin);
+    if (position == INVALID_SET_FILE_POINTER)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if (new_pos)
+    {
+        new_pos->u.HighPart = 0;
+        new_pos->u.LowPart = position;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI filestream_SetSize(IStream *iface, ULARGE_INTEGER size)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p, %s)\n", stream, wine_dbgstr_longlong(size.QuadPart));
+
+    if (!SetFilePointer(stream->u.file.handle, size.QuadPart, NULL, FILE_BEGIN))
+        return E_FAIL;
+
+    if (!SetEndOfFile(stream->u.file.handle))
+        return E_FAIL;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI filestream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGER size,
+        ULARGE_INTEGER *read_len, ULARGE_INTEGER *written)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    HRESULT hr = S_OK;
+    char buff[1024];
+
+    TRACE("(%p, %p, %s, %p, %p)\n", stream, dest, wine_dbgstr_longlong(size.QuadPart), read_len, written);
+
+    if (read_len)
+        read_len->QuadPart = 0;
+    if (written)
+        written->QuadPart = 0;
+
+    if (!dest)
+        return S_OK;
+
+    while (size.QuadPart)
+    {
+        ULONG left, read_chunk, written_chunk;
+
+        left = size.QuadPart > sizeof(buff) ? sizeof(buff) : size.QuadPart;
+
+        /* Read */
+        hr = IStream_Read(iface, buff, left, &read_chunk);
+        if (FAILED(hr) || read_chunk == 0)
+            break;
+        if (read_len)
+            read_len->QuadPart += read_chunk;
+
+        /* Write */
+        hr = IStream_Write(dest, buff, read_chunk, &written_chunk);
+        if (written_chunk)
+            written->QuadPart += written_chunk;
+        if (FAILED(hr) || written_chunk != left)
+            break;
+
+        size.QuadPart -= left;
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI filestream_Stat(IStream *iface, STATSTG *statstg, DWORD flags)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    BY_HANDLE_FILE_INFORMATION fi;
+
+    TRACE("(%p, %p, %#x)\n", stream, statstg, flags);
+
+    if (!statstg)
+        return STG_E_INVALIDPOINTER;
+
+    memset(&fi, 0, sizeof(fi));
+    GetFileInformationByHandle(stream->u.file.handle, &fi);
+
+    if (flags & STATFLAG_NONAME)
+        statstg->pwcsName = NULL;
+    else
+    {
+        int len = strlenW(stream->u.file.path);
+        if ((statstg->pwcsName = CoTaskMemAlloc((len + 1) * sizeof(WCHAR))))
+            memcpy(statstg->pwcsName, stream->u.file.path, (len + 1) * sizeof(WCHAR));
+    }
+    statstg->type = 0;
+    statstg->cbSize.u.LowPart = fi.nFileSizeLow;
+    statstg->cbSize.u.HighPart = fi.nFileSizeHigh;
+    statstg->mtime = fi.ftLastWriteTime;
+    statstg->ctime = fi.ftCreationTime;
+    statstg->atime = fi.ftLastAccessTime;
+    statstg->grfMode = stream->u.file.mode;
+    statstg->grfLocksSupported = 0;
+    memcpy(&statstg->clsid, &IID_IStream, sizeof(CLSID));
+    statstg->grfStateBits = 0;
+    statstg->reserved = 0;
+
+    return S_OK;
+}
+
+static const IStreamVtbl filestreamvtbl =
+{
+    shstream_QueryInterface,
+    shstream_AddRef,
+    filestream_Release,
+    filestream_Read,
+    filestream_Write,
+    filestream_Seek,
+    filestream_SetSize,
+    filestream_CopyTo,
+    shstream_Commit,
+    shstream_Revert,
+    shstream_LockRegion,
+    shstream_UnlockRegion,
+    filestream_Stat,
+    shstream_Clone,
+};
+
+/*************************************************************************
+ * SHCreateStreamOnFileEx   [SHCORE.@]
+ */
+HRESULT WINAPI SHCreateStreamOnFileEx(const WCHAR *path, DWORD mode, DWORD attributes,
+    BOOL create, IStream *template, IStream **ret)
+{
+    DWORD access, share, creation_disposition, len;
+    struct shstream *stream;
+    HANDLE hFile;
+
+    TRACE("(%s, %d, 0x%08X, %d, %p, %p)\n", debugstr_w(path), mode, attributes,
+        create, template, ret);
+
+    if (!path || !ret || template)
+        return E_INVALIDARG;
+
+    *ret = NULL;
+
+    /* Access */
+    switch (mode & 0xf)
+    {
+        case STGM_WRITE:
+        case STGM_READWRITE:
+            access = GENERIC_READ | GENERIC_WRITE;
+            break;
+        case STGM_READ:
+            access = GENERIC_READ;
+            break;
+        default:
+            return E_INVALIDARG;
+    }
+
+    /* Sharing */
+    switch (mode & 0xf0)
+    {
+        case 0:
+        case STGM_SHARE_DENY_NONE:
+            share = FILE_SHARE_READ | FILE_SHARE_WRITE;
+            break;
+        case STGM_SHARE_DENY_READ:
+            share = FILE_SHARE_WRITE;
+            break;
+        case STGM_SHARE_DENY_WRITE:
+            share = FILE_SHARE_READ;
+            break;
+        case STGM_SHARE_EXCLUSIVE:
+            share = 0;
+            break;
+        default:
+            return E_INVALIDARG;
+    }
+
+    switch (mode & 0xf000)
+    {
+        case STGM_FAILIFTHERE:
+            creation_disposition = create ? CREATE_NEW : OPEN_EXISTING;
+            break;
+        case STGM_CREATE:
+            creation_disposition = CREATE_ALWAYS;
+            break;
+        default:
+            return E_INVALIDARG;
+    }
+
+    hFile = CreateFileW(path, access, share, NULL, creation_disposition, attributes, 0);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    stream = heap_alloc(sizeof(*stream));
+    stream->IStream_iface.lpVtbl = &filestreamvtbl;
+    stream->refcount = 1;
+    stream->u.file.handle = hFile;
+    stream->u.file.mode = mode;
+
+    len = strlenW(path);
+    stream->u.file.path = heap_alloc((len + 1) * sizeof(WCHAR));
+    memcpy(stream->u.file.path, path, (len + 1) * sizeof(WCHAR));
+
+    *ret = &stream->IStream_iface;
+
+    return S_OK;
+}
+
+/*************************************************************************
+ * SHCreateStreamOnFileW   [SHCORE.@]
+ */
+HRESULT WINAPI SHCreateStreamOnFileW(const WCHAR *path, DWORD mode, IStream **stream)
+{
+    TRACE("(%s, %#x, %p)\n", debugstr_w(path), mode, stream);
+
+    if (!path || !stream)
+        return E_INVALIDARG;
+
+    if ((mode & (STGM_CONVERT | STGM_DELETEONRELEASE | STGM_TRANSACTED)) != 0)
+        return E_INVALIDARG;
+
+    return SHCreateStreamOnFileEx(path, mode, 0, FALSE, NULL, stream);
+}
+
+/*************************************************************************
+ * SHCreateStreamOnFileA   [SHCORE.@]
+ */
+HRESULT WINAPI SHCreateStreamOnFileA(const char *path, DWORD mode, IStream **stream)
+{
+    WCHAR *pathW;
+    HRESULT hr;
+    DWORD len;
+
+    TRACE("(%s, %#x, %p)\n", debugstr_a(path), mode, stream);
+
+    if (!path)
+        return HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
+
+    len = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
+    pathW = heap_alloc(len * sizeof(WCHAR));
+    if (!pathW)
+        return E_OUTOFMEMORY;
+
+    MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, len);
+    hr = SHCreateStreamOnFileW(pathW, mode, stream);
+    heap_free(pathW);
+
+    return hr;
 }

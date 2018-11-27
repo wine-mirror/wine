@@ -34,9 +34,9 @@
 @ stdcall SHCopyKeyA(long str long long) shlwapi.SHCopyKeyA
 @ stdcall SHCopyKeyW(long wstr long long) shlwapi.SHCopyKeyW
 @ stdcall SHCreateMemStream(ptr long)
-@ stdcall SHCreateStreamOnFileA(str long ptr) shlwapi.SHCreateStreamOnFileA
-@ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) shlwapi.SHCreateStreamOnFileEx
-@ stdcall SHCreateStreamOnFileW(wstr long ptr) shlwapi.SHCreateStreamOnFileW
+@ stdcall SHCreateStreamOnFileA(str long ptr)
+@ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr)
+@ stdcall SHCreateStreamOnFileW(wstr long ptr)
 @ stdcall SHCreateThread(ptr ptr long ptr) shlwapi.SHCreateThread
 @ stdcall SHCreateThreadRef(ptr ptr) shlwapi.SHCreateThreadRef
 @ stub SHCreateThreadWithHandle
