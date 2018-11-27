@@ -2308,15 +2308,6 @@ LONG WINAPI KeReleaseMutex(PRKMUTEX Mutex, BOOLEAN Wait)
 
 
 /***********************************************************************
- *           KeInitializeSemaphore   (NTOSKRNL.EXE.@)
- */
-void WINAPI KeInitializeSemaphore( PRKSEMAPHORE Semaphore, LONG Count, LONG Limit )
-{
-    FIXME( "(%p %d %d) stub\n", Semaphore , Count, Limit );
-}
-
-
-/***********************************************************************
  *           KeInitializeSpinLock   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeSpinLock( PKSPIN_LOCK SpinLock )
