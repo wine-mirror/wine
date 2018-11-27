@@ -89,6 +89,12 @@ static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements
 static int (__cdecl *p_wctob)(wint_t);
 static size_t (__cdecl *p_wcrtomb)(char*, wchar_t, mbstate_t*);
 static int (__cdecl *p_tolower)(int);
+static int (__cdecl *p_towlower)(wint_t);
+static int (__cdecl *p__towlower_l)(wint_t, _locale_t);
+static int (__cdecl *p_towupper)(wint_t);
+static int (__cdecl *p__towupper_l)(wint_t, _locale_t);
+static _locale_t(__cdecl *p__create_locale)(int, const char*);
+static void(__cdecl *p__free_locale)(_locale_t);
 static size_t (__cdecl *p_mbrlen)(const char*, size_t, mbstate_t*);
 static size_t (__cdecl *p_mbrtowc)(wchar_t*, const char*, size_t, mbstate_t*);
 static int (__cdecl *p__atodbl_l)(_CRT_DOUBLE*,char*,_locale_t);
@@ -3603,6 +3609,73 @@ static void test___strncnt(void)
     }
 }
 
+static void test_C_locale(void)
+{
+    int i, j;
+    wint_t ret, exp;
+    _locale_t locale;
+    static const char *locales[] = { NULL, "C" };
+
+    /* C locale only converts case for [a-zA-Z] */
+    setlocale(LC_ALL, "C");
+    for (i = 0; i <= 0xffff; i++)
+    {
+        ret = p_towlower(i);
+        if (i >= 'A' && i <= 'Z')
+        {
+            exp = i + 'a' - 'A';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+        todo_wine_if(ret != i)
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
+        ret = p_towupper(i);
+        if (i >= 'a' && i <= 'z')
+        {
+            exp = i + 'A' - 'a';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+        todo_wine_if(ret != i)
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+    }
+
+    if (!p__towlower_l || !p__towupper_l || !p__create_locale)
+    {
+        win_skip("_towlower_l/_towupper_l/_create_locale not available\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(locales); i++) {
+        locale = locales[i] ? p__create_locale(LC_ALL, locales[i]) : NULL;
+
+        for (j = 0; j <= 0xffff; j++) {
+            ret = p__towlower_l(j, locale);
+            if (j >= 'A' && j <= 'Z')
+            {
+                exp = j + 'a' - 'A';
+                ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+            }
+            else
+            todo_wine_if(ret != j)
+                ok(ret == j, "expected self %x, got %x for C locale\n", j, ret);
+
+            ret = p__towupper_l(j, locale);
+            if (j >= 'a' && j <= 'z')
+            {
+                exp = j + 'A' - 'a';
+                ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+            }
+            else
+            todo_wine_if(ret != j)
+                ok(ret == j, "expected self %x, got %x for C locale\n", j, ret);
+        }
+
+        p__free_locale(locale);
+    }
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -3648,6 +3721,12 @@ START_TEST(string)
     p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
     p_wcrtomb = (void*)GetProcAddress(hMsvcrt, "wcrtomb");
     p_tolower = (void*)GetProcAddress(hMsvcrt, "tolower");
+    p_towlower = (void*)GetProcAddress(hMsvcrt, "towlower");
+    p__towlower_l = (void*)GetProcAddress(hMsvcrt, "_towlower_l");
+    p_towupper = (void*)GetProcAddress(hMsvcrt, "towupper");
+    p__towupper_l = (void*)GetProcAddress(hMsvcrt, "_towupper_l");
+    p__create_locale = (void*)GetProcAddress(hMsvcrt, "_create_locale");
+    p__free_locale = (void*)GetProcAddress(hMsvcrt, "_free_locale");
     p_mbrlen = (void*)GetProcAddress(hMsvcrt, "mbrlen");
     p_mbrtowc = (void*)GetProcAddress(hMsvcrt, "mbrtowc");
     p_mbsrtowcs = (void*)GetProcAddress(hMsvcrt, "mbsrtowcs");
@@ -3730,4 +3809,5 @@ START_TEST(string)
     test__tcsncoll();
     test__tcsnicoll();
     test___strncnt();
+    test_C_locale();
 }
