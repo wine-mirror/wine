@@ -93,6 +93,7 @@ static const WCHAR Phantom[] = {'P','h','a','n','t','o','m',0};
 static const WCHAR SymbolicLink[] = {'S','y','m','b','o','l','i','c','L','i','n','k',0};
 static const WCHAR Control[] = {'C','o','n','t','r','o','l',0};
 static const WCHAR Linked[] = {'L','i','n','k','e','d',0};
+static const WCHAR emptyW[] = {0};
 
 /* is used to identify if a DeviceInfoSet pointer is
 valid or not */
@@ -126,6 +127,8 @@ struct device_iface
     struct device   *device;
     GUID             class;
     DWORD            flags;
+    HKEY             class_key;
+    HKEY             refstr_key;
     struct list      entry;
 };
 
@@ -377,7 +380,7 @@ static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
 {
     struct device_iface *iface = NULL;
     WCHAR *refstr2 = NULL, *symlink = NULL, *path = NULL;
-    HKEY key = NULL;
+    HKEY key;
     LONG ret;
 
     TRACE("%p %s %s\n", device, debugstr_guid(class), debugstr_w(refstr));
@@ -422,8 +425,9 @@ static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
     }
     RegSetValueExW(key, DeviceInstance, 0, REG_SZ, (BYTE *)device->instanceId,
         lstrlenW(device->instanceId) * sizeof(WCHAR));
-    RegCloseKey(key);
     heap_free(path);
+
+    iface->class_key = key;
 
     if (!(path = get_refstr_key_path(iface)))
     {
@@ -442,8 +446,9 @@ static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
     if (is_linked(key))
         iface->flags |= SPINT_ACTIVE;
 
-    RegCloseKey(key);
     heap_free(path);
+
+    iface->refstr_key = key;
 
     list_add_tail(&device->interfaces, &iface->entry);
     return iface;
@@ -554,7 +559,6 @@ static BOOL SETUPDI_SetDeviceRegistryPropertyW(struct device *device,
 static void SETUPDI_RemoveDevice(struct device *device)
 {
     struct device_iface *iface, *next;
-    WCHAR *path;
 
     if (device->key != INVALID_HANDLE_VALUE)
         RegCloseKey(device->key);
@@ -576,11 +580,10 @@ static void SETUPDI_RemoveDevice(struct device *device)
             struct device_iface, entry)
     {
         list_remove(&iface->entry);
-        if (device->phantom && (path = get_refstr_key_path(iface)))
-        {
-            RegDeleteKeyW(HKEY_LOCAL_MACHINE, path);
-            heap_free(path);
-        }
+        if (device->phantom)
+            RegDeleteKeyW(iface->refstr_key, emptyW);
+        RegCloseKey(iface->refstr_key);
+        RegCloseKey(iface->class_key);
         heap_free(iface->refstr);
         heap_free(iface->symlink);
         heap_free(iface);
@@ -2486,8 +2489,7 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO devinfo,
     HINF hinf, const WCHAR *section)
 {
     struct device_iface *iface;
-    HKEY refstr_key, params_key;
-    WCHAR *path;
+    HKEY params_key;
     LONG ret;
 
     TRACE("devinfo %p, iface_data %p, reserved %d, access %#x, hinf %p, section %s.\n",
@@ -2501,24 +2503,8 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO devinfo,
         return INVALID_HANDLE_VALUE;
     }
 
-    if (!(path = get_refstr_key_path(iface)))
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return INVALID_HANDLE_VALUE;
-    }
-
-    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, path, 0, NULL, 0, 0, NULL,
-        &refstr_key, NULL);
-    heap_free(path);
-    if (ret)
-    {
-        SetLastError(ret);
-        return INVALID_HANDLE_VALUE;
-    }
-
-    ret = RegCreateKeyExW(refstr_key, DeviceParameters, 0, NULL, 0, access,
+    ret = RegCreateKeyExW(iface->refstr_key, DeviceParameters, 0, NULL, 0, access,
         NULL, &params_key, NULL);
-    RegCloseKey(refstr_key);
     if (ret)
     {
         SetLastError(ret);
@@ -2535,8 +2521,6 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(HDEVINFO devinfo,
     SP_DEVICE_INTERFACE_DATA *iface_data, DWORD reserved)
 {
     struct device_iface *iface;
-    HKEY refstr_key;
-    WCHAR *path;
     LONG ret;
 
     TRACE("devinfo %p, iface_data %p, reserved %d.\n", devinfo, iface_data, reserved);
@@ -2544,23 +2528,7 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(HDEVINFO devinfo,
     if (!(iface = get_device_iface(devinfo, iface_data)))
         return FALSE;
 
-    if (!(path = get_refstr_key_path(iface)))
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
-    }
-
-    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, path, 0, NULL, 0, 0, NULL,
-        &refstr_key, NULL);
-    heap_free(path);
-    if (ret)
-    {
-        SetLastError(ret);
-        return FALSE;
-    }
-
-    ret = RegDeleteKeyW(refstr_key, DeviceParameters);
-    RegCloseKey(refstr_key);
+    ret = RegDeleteKeyW(iface->refstr_key, DeviceParameters);
     if (ret)
     {
         SetLastError(ret);
