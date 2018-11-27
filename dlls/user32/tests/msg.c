@@ -123,6 +123,8 @@ static DWORD cbt_hook_thread_id;
 static const WCHAR testWindowClassW[] =
 { 'T','e','s','t','W','i','n','d','o','w','C','l','a','s','s','W',0 };
 
+static LRESULT WINAPI ParentMsgCheckProcA(HWND, UINT, WPARAM, LPARAM);
+
 /*
 FIXME: add tests for these
 Window Edge Styles (Win31/Win95/98 look), in order of precedence:
@@ -6188,7 +6190,24 @@ static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
     case BM_SETSTATE:
         if (GetCapture())
             ok(GetCapture() == hwnd, "GetCapture() = %p\n", GetCapture());
+
+        lParam = (ULONG_PTR)GetMenu(hwnd);
+        goto log_it;
+
+    case WM_GETDLGCODE:
+        if (lParam)
+        {
+            MSG *msg = (MSG *)lParam;
+            lParam = MAKELPARAM(msg->message, msg->wParam);
+        }
+        wParam = (ULONG_PTR)GetMenu(hwnd);
+        goto log_it;
+
+    case BM_SETCHECK:
+    case BM_GETCHECK:
+        lParam = (ULONG_PTR)GetMenu(hwnd);
         /* fall through */
+log_it:
     default:
         msg.hwnd = hwnd;
         msg.message = message;
@@ -6670,32 +6689,34 @@ static void test_button_bm_get_set_image(void)
     ReleaseDC(0, hdc);
 }
 
-#define ID_RADIO1 0x00e1
-#define ID_RADIO2 0x00e2
+#define ID_RADIO1 501
+#define ID_RADIO2 502
+#define ID_RADIO3 503
+#define ID_TEXT   504
 
-static const struct message auto_radio_button_WM_CLICK[] =
+static const struct message auto_radio_button_BM_CLICK[] =
 {
     { BM_CLICK, sent|wparam|lparam, 0, 0 },
     { WM_LBUTTONDOWN, sent|wparam|lparam|defwinproc, 0, 0 },
     { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
-    { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_CHECKED, 0 },
+    { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_CHECKED, ID_RADIO2 },
     { WM_CTLCOLORSTATIC, sent|parent },
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_LBUTTONUP, sent|wparam|lparam|defwinproc, 0, 0 },
-    { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_UNCHECKED, 0 },
+    { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_UNCHECKED, ID_RADIO2 },
     { WM_CTLCOLORSTATIC, sent|parent },
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
-    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, 0, 0 },
-    { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_CHECKED, 0 },
-    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, 0, 0 },
-    { BM_SETCHECK, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO2, 0 },
+    { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_CHECKED, ID_RADIO2 },
+    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO1, 0 },
+    { BM_SETCHECK, sent|wparam|lparam|defwinproc, 0, ID_RADIO1 },
     { WM_CTLCOLORSTATIC, sent|parent },
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
-    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, 0, 0 },
-    { BM_SETCHECK, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO3, 0 },
+    { BM_SETCHECK, sent|wparam|lparam|defwinproc, 0, ID_RADIO3 },
     { WM_CTLCOLORSTATIC, sent|parent },
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
-    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_TEXT, 0 },
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
     { WM_CAPTURECHANGED, sent|wparam|lparam|defwinproc, 0, 0 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO2, BN_CLICKED) },
@@ -6705,30 +6726,27 @@ static const struct message auto_radio_button_WM_CLICK[] =
     { 0 }
 };
 
-static void test_autoradio_messages(void)
+static INT_PTR WINAPI radio_test_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    HWND parent, radio1, radio2, radio3, child;
+    ParentMsgCheckProcA(hwnd, msg, wp, lp);
+    return 1;
+}
+
+static void test_autoradio_BM_CLICK(void)
+{
+    HWND parent, radio1, radio2, radio3;
     RECT rc;
     MSG msg;
     DWORD ret;
 
     subclass_button();
 
-    parent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                             100, 100, 200, 200, 0, 0, 0, NULL);
+    parent = CreateDialogParamA(0, "AUTORADIO_TEST_DIALOG_1", 0, radio_test_dlg_proc, 0);
     ok(parent != 0, "failed to create parent window\n");
-    radio1 = CreateWindowExA(0, "my_button_class", "radio1", WS_VISIBLE | WS_CHILD | WS_GROUP | BS_AUTORADIOBUTTON | BS_NOTIFY,
-                             0, 0, 70, 18, parent, (HMENU)ID_RADIO1, 0, NULL);
-    ok(radio1 != 0, "failed to create child window\n");
-    radio3 = CreateWindowExA(0, "my_button_class", "radio3", WS_VISIBLE | WS_CHILD | BS_RADIOBUTTON | BS_NOTIFY,
-                             0, 25, 70, 18, parent, (HMENU)-1, 0, NULL);
-    ok(radio3 != 0, "failed to create child window\n");
-    child = CreateWindowExA(0, "my_button_class", "text", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON | BS_NOTIFY,
-                           0, 50, 70, 18, parent, (HMENU)-1, 0, NULL);
-    ok(child != 0, "failed to create child window\n");
-    radio2 = CreateWindowExA(0, "my_button_class", "radio2", WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON | BS_NOTIFY,
-                             0, 75, 70, 18, parent, (HMENU)ID_RADIO2, 0, NULL);
-    ok(radio2 != 0, "failed to create child window\n");
+
+    radio1 = GetDlgItem(parent, ID_RADIO1);
+    radio2 = GetDlgItem(parent, ID_RADIO2);
+    radio3 = GetDlgItem(parent, ID_RADIO3);
 
     /* this avoids focus messages in the generated sequence */
     SetFocus(radio2);
@@ -6780,7 +6798,7 @@ static void test_autoradio_messages(void)
 
     SendMessageA(radio2, BM_CLICK, 0, 0);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(auto_radio_button_WM_CLICK, "BM_CLICK on auto-radio button", FALSE);
+    ok_sequence(auto_radio_button_BM_CLICK, "BM_CLICK on auto-radio button", FALSE);
 
     log_all_parent_messages--;
 
@@ -17254,7 +17272,7 @@ START_TEST(msg)
     test_mdi_messages();
     test_button_messages();
     test_button_bm_get_set_image();
-    test_autoradio_messages();
+    test_autoradio_BM_CLICK();
     test_static_messages();
     test_listbox_messages();
     test_combobox_messages();
