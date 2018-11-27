@@ -82,6 +82,9 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
             case TYPE_AUTO_EVENT:
                 objs[i]->WaitListHead.Blink = CreateEventW( NULL, FALSE, objs[i]->SignalState, NULL );
                 break;
+            case TYPE_MUTEX:
+                objs[i]->WaitListHead.Blink = CreateMutexW( NULL, FALSE, NULL );
+                break;
             case TYPE_SEMAPHORE:
             {
                 KSEMAPHORE *semaphore = CONTAINING_RECORD(objs[i], KSEMAPHORE, Header);
@@ -108,6 +111,7 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
             case TYPE_AUTO_EVENT:
                 objs[i]->SignalState = FALSE;
                 break;
+            case TYPE_MUTEX:
             case TYPE_SEMAPHORE:
                 --objs[i]->SignalState;
                 break;
@@ -116,8 +120,24 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
 
         if (!--*((ULONG_PTR *)&objs[i]->WaitListHead.Flink))
         {
-            CloseHandle(objs[i]->WaitListHead.Blink);
-            objs[i]->WaitListHead.Blink = NULL;
+            switch (objs[i]->Type)
+            {
+            case TYPE_MANUAL_EVENT:
+            case TYPE_AUTO_EVENT:
+            case TYPE_SEMAPHORE:
+                CloseHandle(objs[i]->WaitListHead.Blink);
+                objs[i]->WaitListHead.Blink = NULL;
+                break;
+            case TYPE_MUTEX:
+                /* Native will panic if a mutex is destroyed while held, so we
+                 * don't have to worry about leaking the handle here. */
+                if (objs[i]->SignalState == 1)
+                {
+                    CloseHandle(objs[i]->WaitListHead.Blink);
+                    objs[i]->WaitListHead.Blink = NULL;
+                }
+                break;
+            }
         }
     }
     LeaveCriticalSection( &sync_cs );
@@ -231,4 +251,26 @@ void WINAPI KeInitializeMutex( PRKMUTEX mutex, ULONG level )
     mutex->Header.SignalState = 1;
     mutex->Header.WaitListHead.Blink = NULL;
     mutex->Header.WaitListHead.Flink = NULL;
+}
+
+/***********************************************************************
+ *           KeReleaseMutex   (NTOSKRNL.EXE.@)
+ */
+LONG WINAPI KeReleaseMutex( PRKMUTEX mutex, BOOLEAN wait )
+{
+    HANDLE handle = mutex->Header.WaitListHead.Blink;
+    LONG ret;
+
+    TRACE("mutex %p, wait %u.\n", mutex, wait);
+
+    EnterCriticalSection( &sync_cs );
+    ret = mutex->Header.SignalState++;
+    if (!ret && !mutex->Header.WaitListHead.Flink)
+    {
+        CloseHandle( handle );
+        mutex->Header.WaitListHead.Blink = NULL;
+    }
+    LeaveCriticalSection( &sync_cs );
+
+    return ret;
 }

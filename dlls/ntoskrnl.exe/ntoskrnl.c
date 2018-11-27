@@ -2288,16 +2288,6 @@ NTSTATUS WINAPI KeWaitForMutexObject(PRKMUTEX Mutex, KWAIT_REASON WaitReason, KP
 }
 
 
- /***********************************************************************
- *           KeReleaseMutex   (NTOSKRNL.EXE.@)
- */
-LONG WINAPI KeReleaseMutex(PRKMUTEX Mutex, BOOLEAN Wait)
-{
-    FIXME( "stub: %p, %d\n", Mutex, Wait );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
 /***********************************************************************
  *           KeInitializeSpinLock   (NTOSKRNL.EXE.@)
  */
