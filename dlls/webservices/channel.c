@@ -2245,7 +2245,6 @@ HRESULT WINAPI WsWriteMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_
 static HRESULT sock_accept( SOCKET socket, HANDLE wait, HANDLE cancel, SOCKET *ret )
 {
     HANDLE handles[] = { wait, cancel };
-    ULONG nonblocking = 0;
     HRESULT hr = S_OK;
 
     if (WSAEventSelect( socket, handles[0], FD_ACCEPT )) return HRESULT_FROM_WIN32( WSAGetLastError() );
@@ -2256,7 +2255,7 @@ static HRESULT sock_accept( SOCKET socket, HANDLE wait, HANDLE cancel, SOCKET *r
         if ((*ret = accept( socket, NULL, NULL )) != -1)
         {
             WSAEventSelect( *ret, NULL, 0 );
-            ioctlsocket( *ret, FIONBIO, &nonblocking );
+            set_blocking( *ret, TRUE );
             break;
         }
         hr = HRESULT_FROM_WIN32( WSAGetLastError() );
@@ -2296,7 +2295,6 @@ HRESULT channel_accept_tcp( SOCKET socket, HANDLE wait, HANDLE cancel, WS_CHANNE
 static HRESULT sock_wait( SOCKET socket, HANDLE wait, HANDLE cancel )
 {
     HANDLE handles[] = { wait, cancel };
-    ULONG nonblocking = 0;
     HRESULT hr;
 
     if (WSAEventSelect( socket, handles[0], FD_READ )) return HRESULT_FROM_WIN32( WSAGetLastError() );
@@ -2317,7 +2315,7 @@ static HRESULT sock_wait( SOCKET socket, HANDLE wait, HANDLE cancel )
     }
 
     WSAEventSelect( socket, NULL, 0 );
-    ioctlsocket( socket, FIONBIO, &nonblocking );
+    set_blocking( socket, TRUE );
     return hr;
 }
 
