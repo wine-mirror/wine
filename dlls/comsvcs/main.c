@@ -107,19 +107,29 @@ static ULONG WINAPI holder_Release(IHolder *iface)
 static HRESULT WINAPI holder_AllocResource(IHolder *iface, const RESTYPID typeid, RESID *resid)
 {
     holder *This = impl_from_IHolder(iface);
+    HRESULT hr;
+    TIMEINSECS secs;
 
-    FIXME("(%p)->(%08lx, %p) stub\n", This, typeid, resid);
+    TRACE("(%p)->(%08lx, %p) stub\n", This, typeid, resid);
 
-    return E_NOTIMPL;
+    hr = IDispenserDriver_CreateResource(This->driver, typeid, resid, &secs);
+
+    TRACE("<- 0x%08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI holder_FreeResource(IHolder *iface, const RESID resid)
 {
     holder *This = impl_from_IHolder(iface);
+    HRESULT hr;
 
-    FIXME("(%p)->(%08lx) stub\n", This, resid);
+    TRACE("(%p)->(%08lx) stub\n", This, resid);
 
-    return E_NOTIMPL;
+    hr = IDispenserDriver_DestroyResource(This->driver, resid);
+
+    TRACE("<- 0x%08x\n", hr);
+
+    return hr;
 }
 
 static HRESULT WINAPI holder_TrackResource(IHolder *iface, const RESID resid)
