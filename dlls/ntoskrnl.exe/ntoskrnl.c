@@ -3867,14 +3867,6 @@ NTSTATUS WINAPI IoCreateFile(HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUT
 }
 
 /***********************************************************************
- *           KeClearEvent (NTOSKRNL.EXE.@)
- */
-VOID WINAPI KeClearEvent(PRKEVENT event)
-{
-    FIXME("stub: %p\n", event);
-}
-
-/***********************************************************************
  *           KeAcquireInStackQueuedSpinLock (NTOSKRNL.EXE.@)
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT

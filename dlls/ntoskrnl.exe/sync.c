@@ -216,6 +216,14 @@ LONG WINAPI KeResetEvent( PRKEVENT event )
 }
 
 /***********************************************************************
+ *           KeClearEvent (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeClearEvent( PRKEVENT event )
+{
+    KeResetEvent( event );
+}
+
+/***********************************************************************
  *           KeInitializeSemaphore   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeSemaphore( PRKSEMAPHORE semaphore, LONG count, LONG limit )
