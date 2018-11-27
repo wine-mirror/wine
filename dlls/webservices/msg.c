@@ -938,13 +938,6 @@ HRESULT WINAPI WsReadEnvelopeStart( WS_MESSAGE *handle, WS_XML_READER *reader, W
     return hr;
 }
 
-static HRESULT read_envelope_end( WS_XML_READER *reader )
-{
-    HRESULT hr;
-    if ((hr = WsReadEndElement( reader, NULL )) != S_OK) return hr; /* </s:Body> */
-    return WsReadEndElement( reader, NULL ); /* </s:Envelope> */
-}
-
 /**************************************************************************
  *          WsReadEnvelopeEnd		[webservices.@]
  */
@@ -967,7 +960,7 @@ HRESULT WINAPI WsReadEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
     }
 
     if (msg->state != WS_MESSAGE_STATE_READING) hr = WS_E_INVALID_OPERATION;
-    else if ((hr = read_envelope_end( msg->reader_body )) == S_OK)
+    else if ((hr = WsReadEndElement( msg->reader_body, NULL )) == S_OK)
         msg->state = WS_MESSAGE_STATE_DONE;
 
     LeaveCriticalSection( &msg->cs );
