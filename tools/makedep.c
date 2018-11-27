@@ -137,6 +137,8 @@ static struct strarray libs;
 static struct strarray enable_tests;
 static struct strarray cmdline_vars;
 static struct strarray disabled_dirs;
+static struct strarray top_install_lib;
+static struct strarray top_install_dev;
 static const char *root_src_dir;
 static const char *tools_dir;
 static const char *tools_ext;
@@ -2126,12 +2128,16 @@ static struct strarray get_default_imports( const struct makefile *make )
 static void add_install_rule( struct makefile *make, const char *target,
                               const char *file, const char *dest )
 {
-    if (strarray_exists( &make->install_lib, target ))
+    if (strarray_exists( &make->install_lib, target ) ||
+        strarray_exists( &top_install_lib, make->base_dir ) ||
+        strarray_exists( &top_install_lib, base_dir_path( make, target )))
     {
         strarray_add( &make->install_rules[INSTALL_LIB], file );
         strarray_add( &make->install_rules[INSTALL_LIB], dest );
     }
-    else if (strarray_exists( &make->install_dev, target ))
+    else if (strarray_exists( &make->install_dev, target ) ||
+             strarray_exists( &top_install_dev, make->base_dir ) ||
+             strarray_exists( &top_install_dev, base_dir_path( make, target )))
     {
         strarray_add( &make->install_rules[INSTALL_DEV], file );
         strarray_add( &make->install_rules[INSTALL_DEV], dest );
@@ -2493,15 +2499,10 @@ static void output_source_l( struct makefile *make, struct incl_file *source, co
 static void output_source_h( struct makefile *make, struct incl_file *source, const char *obj )
 {
     if (source->file->flags & FLAG_GENERATED)
-    {
         strarray_add( &make->all_targets, source->name );
-    }
     else
-    {
-        strarray_add( &make->install_rules[INSTALL_DEV], source->name );
-        strarray_add( &make->install_rules[INSTALL_DEV],
-                      strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
-    }
+        add_install_rule( make, source->name, source->name,
+                          strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
 }
 
 
@@ -2626,15 +2627,11 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     if (source->file->flags & FLAG_IDL_PROXY) strarray_add( &make->dlldata_files, source->name );
     if (source->file->flags & FLAG_INSTALL)
     {
-        strarray_add( &make->install_rules[INSTALL_DEV], xstrdup( source->name ));
-        strarray_add( &make->install_rules[INSTALL_DEV],
-                      strmake( "D$(includedir)/wine/%s.idl", get_include_install_path( obj ) ));
+        add_install_rule( make, source->name, xstrdup( source->name ),
+                          strmake( "D$(includedir)/wine/%s.idl", get_include_install_path( obj ) ));
         if (source->file->flags & FLAG_IDL_HEADER)
-        {
-            strarray_add( &make->install_rules[INSTALL_DEV], strmake( "%s.h", obj ));
-            strarray_add( &make->install_rules[INSTALL_DEV],
-                          strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
-        }
+            add_install_rule( make, source->name, strmake( "%s.h", obj ),
+                              strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
     }
     if (!targets.count) return;
 
@@ -2676,12 +2673,10 @@ static void output_source_x( struct makefile *make, struct incl_file *source, co
             tools_dir_path( make, "make_xftmpl" ), tools_ext, source->filename );
     if (source->file->flags & FLAG_INSTALL)
     {
-        strarray_add( &make->install_rules[INSTALL_DEV], source->name );
-        strarray_add( &make->install_rules[INSTALL_DEV],
-                      strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
-        strarray_add( &make->install_rules[INSTALL_DEV], strmake( "%s.h", obj ));
-        strarray_add( &make->install_rules[INSTALL_DEV],
-                      strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
+        add_install_rule( make, source->name, source->name,
+                          strmake( "D$(includedir)/wine/%s", get_include_install_path( source->name ) ));
+        add_install_rule( make, source->name, strmake( "%s.h", obj ),
+                          strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
     }
 }
 
@@ -2692,7 +2687,8 @@ static void output_source_x( struct makefile *make, struct incl_file *source, co
 static void output_source_sfd( struct makefile *make, struct incl_file *source, const char *obj )
 {
     unsigned int i;
-    char *ttf_file = src_dir_path( make, strmake( "%s.ttf", obj ));
+    char *ttf_obj = strmake( "%s.ttf", obj );
+    char *ttf_file = src_dir_path( make, ttf_obj );
 
     if (fontforge && !make->src_dir)
     {
@@ -2702,10 +2698,8 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
         if (!(source->file->flags & FLAG_SFD_FONTS)) output( "all: %s\n", ttf_file );
     }
     if (source->file->flags & FLAG_INSTALL)
-    {
-        strarray_add( &make->install_rules[INSTALL_LIB], strmake( "%s.ttf", obj ));
-        strarray_add( &make->install_rules[INSTALL_LIB], strmake( "D$(fontdir)/%s.ttf", obj ));
-    }
+        add_install_rule( make, source->name, ttf_obj, strmake( "D$(fontdir)/%s", ttf_obj ));
+
     if (source->file->flags & FLAG_SFD_FONTS)
     {
         struct strarray *array = source->file->args;
@@ -2719,8 +2713,7 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
             output( "%s: %s %s\n", obj_dir_path( make, font ),
                     tools_path( make, "sfnt2fon" ), ttf_file );
             output( "\t%s -o $@ %s %s\n", tools_path( make, "sfnt2fon" ), ttf_file, args );
-            strarray_add( &make->install_rules[INSTALL_LIB], xstrdup(font) );
-            strarray_add( &make->install_rules[INSTALL_LIB], strmake( "d$(fontdir)/%s", font ));
+            add_install_rule( make, source->name, xstrdup(font), strmake( "d$(fontdir)/%s", font ));
         }
     }
 }
@@ -4211,6 +4204,8 @@ int main( int argc, char *argv[] )
     unwind_flags = get_expanded_make_var_array( top_makefile, "UNWINDFLAGS" );
     libs         = get_expanded_make_var_array( top_makefile, "LIBS" );
     enable_tests = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
+    top_install_lib = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_LIB" );
+    top_install_dev = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_DEV" );
 
     root_src_dir = get_expanded_make_variable( top_makefile, "srcdir" );
     tools_dir    = get_expanded_make_variable( top_makefile, "TOOLSDIR" );

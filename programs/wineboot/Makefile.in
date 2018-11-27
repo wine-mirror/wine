@@ -10,5 +10,3 @@ C_SRCS = \
 RC_SRCS = wineboot.rc
 
 MANPAGES = wineboot.man.in
-
-INSTALL_LIB = wineboot.exe $(wine64_disable)wineboot

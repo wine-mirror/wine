@@ -11,5 +11,3 @@ RC_SRCS = notepad.rc
 MANPAGES = notepad.man.in
 
 SVG_SRCS = notepad.svg
-
-INSTALL_LIB = notepad.exe $(wine64_disable)notepad

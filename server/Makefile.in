@@ -51,5 +51,3 @@ MANPAGES = \
 	wineserver.man.in
 
 EXTRALIBS = $(LDEXECFLAGS) -lwine $(POLL_LIBS) $(RT_LIBS)
-
-INSTALL_LIB = $(PROGRAMS)

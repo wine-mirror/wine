@@ -237,7 +237,6 @@ then
 You should create a separate build directory and run configure from there.])
     enable_fonts=${enable_fonts:-no}
     enable_server=${enable_server:-no}
-    AC_SUBST(wine64_disable,[\#])
 elif test "x$enable_win64" = "xyes"
 then
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"
@@ -714,6 +713,8 @@ AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")
 AC_SUBST(LDEXECFLAGS,"")
+AC_SUBST(TOP_INSTALL_LIB,"")
+AC_SUBST(TOP_INSTALL_DEV,"")
 AC_SUBST(WINELOADER_LDFLAGS,"")
 LIBEXT="so"
 DLLEXT=".so"
@@ -753,10 +754,10 @@ case $host_os in
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.dll")
     AC_SUBST(LIBWINE_IMPORTLIB,"libwine.a")
-    AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.dll")
-    AC_SUBST(LIBWINE_INSTALL_DEV,"libwine.a")
     AC_SUBST(LIBWINE_LDFLAGS,"-shared \$(srcdir)/wine.def")
     AC_SUBST(LIBWINE_DEPENDS,"wine.def")
+    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/libwine.dll"
+    TOP_INSTALL_DEV="$TOP_INSTALL_DEV libs/wine/libwine.a"
     ;;
 
   darwin*|macosx*)
@@ -881,10 +882,10 @@ case $host_os in
     fi
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.$libwine_version.dylib")
-    AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.$libwine_version.dylib libwine.$libwine_soversion.dylib")
-    AC_SUBST(LIBWINE_INSTALL_DEV,"libwine.dylib")
     AC_SUBST(LIBWINE_LDFLAGS,["-dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"])
     AC_SUBST(WINELOADER_DEPENDS,"wine_info.plist")
+    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/libwine.$libwine_version.dylib libs/wine/libwine.$libwine_soversion.dylib"
+    TOP_INSTALL_DEV="$TOP_INSTALL_DEV libs/wine/libwine.dylib"
     ;;
 
   linux-android*)
@@ -903,8 +904,8 @@ case $host_os in
                     [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"])
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so")
-    AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so")
     AC_SUBST(LIBWINE_LDFLAGS,["-shared -Wl,-soname,libwine.so"])
+    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/libwine.so"
 
     WINE_CHECK_SONAME(EGL,eglGetProcAddress)
     WINE_CHECK_SONAME(GLESv2,glFlush)
@@ -983,9 +984,9 @@ case $host_os in
       fi
     fi
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so.$libwine_version")
-    AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so.$libwine_version libwine.so.$libwine_soversion")
-    AC_SUBST(LIBWINE_INSTALL_DEV,"libwine.so")
     AC_SUBST(LIBWINE_DEPENDS,"wine.map")
+    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/libwine.so.$libwine_version libs/wine/libwine.so.$libwine_soversion"
+    TOP_INSTALL_DEV="$TOP_INSTALL_DEV libs/wine/libwine.so"
     ;;
 esac
 
@@ -4075,10 +4076,27 @@ $with_wine64/loader/wine-preloader:
 clean::
 	\$(RM) fonts server loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
-    AC_SUBST(WINELOADER_INSTALL,"wine.inf l_intl.nls")
+    TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
+    TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
+fonts \
+loader/l_intl.nls \
+loader/wine.inf \
+programs/msiexec/msiexec \
+programs/notepad/notepad \
+programs/regedit/regedit \
+programs/regsvr32/regsvr32 \
+programs/wineboot/wineboot \
+programs/winecfg/winecfg \
+programs/wineconsole/wineconsole \
+programs/winedbg/winedbg \
+programs/winefile/winefile \
+programs/winemine/winemine \
+programs/winepath/winepath \
+server/wineserver"
+
     case $host_os in
       cygwin*|mingw32*|darwin*|macosx*|linux-android*) ;;
-      *) WINELOADER_INSTALL="$WINELOADER_INSTALL wine.desktop" ;;
+      *) TOP_INSTALL_LIB="$TOP_INSTALL_LIB loader/wine.desktop" ;;
     esac
 fi
 

@@ -20,5 +20,3 @@ RC_SRCS = regedit.rc
 MANPAGES = regedit.man.in
 
 SVG_SRCS = regedit.svg
-
-INSTALL_LIB = regedit.exe $(wine64_disable)regedit
