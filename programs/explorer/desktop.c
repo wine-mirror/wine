@@ -921,6 +921,7 @@ void manage_desktop( WCHAR *arg )
     WCHAR *p = arg;
     const WCHAR *name = NULL;
     BOOL enable_shell = FALSE;
+    void (WINAPI *pShellDDEInit)( BOOL ) = NULL;
 
     /* get the rest of the command line (if any) */
     while (*p && !is_whitespace(*p)) p++;
@@ -993,7 +994,6 @@ void manage_desktop( WCHAR *arg )
         if (graphics_driver)
         {
             HMODULE shell32;
-            void (WINAPI *pShellDDEInit)( BOOL );
 
             if (using_root) enable_shell = FALSE;
 
@@ -1034,6 +1034,8 @@ void manage_desktop( WCHAR *arg )
         while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
         WINE_TRACE( "desktop message loop exiting for hwnd %p\n", hwnd );
     }
+
+    if (pShellDDEInit) pShellDDEInit( FALSE );
 
     ExitProcess( 0 );
 }
