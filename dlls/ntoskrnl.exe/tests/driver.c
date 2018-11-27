@@ -228,9 +228,11 @@ static NTSTATUS wait_multiple(ULONG count, void *objs[], WAIT_TYPE wait_type, UL
 
 static void test_sync(void)
 {
+    KSEMAPHORE semaphore, semaphore2;
     KEVENT manual_event, auto_event;
     void *objs[2];
     NTSTATUS ret;
+    int i;
 
     KeInitializeEvent(&manual_event, NotificationEvent, FALSE);
 
@@ -323,6 +325,68 @@ static void test_sync(void)
 
     ret = wait_multiple(2, objs, WaitAny, 0);
     ok(ret == 1, "got %#x\n", ret);
+
+    /* test semaphores */
+    KeInitializeSemaphore(&semaphore, 0, 5);
+
+    ret = wait_single(&semaphore, 0);
+    ok(ret == STATUS_TIMEOUT, "got %u\n", ret);
+
+    ret = KeReleaseSemaphore(&semaphore, 0, 1, FALSE);
+    ok(ret == 0, "got prev %d\n", ret);
+
+    ret = KeReleaseSemaphore(&semaphore, 0, 2, FALSE);
+    ok(ret == 1, "got prev %d\n", ret);
+
+    ret = KeReleaseSemaphore(&semaphore, 0, 1, FALSE);
+    ok(ret == 3, "got prev %d\n", ret);
+
+    for (i = 0; i < 4; i++)
+    {
+        ret = wait_single(&semaphore, 0);
+        ok(ret == 0, "got %#x\n", ret);
+    }
+
+    ret = wait_single(&semaphore, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeInitializeSemaphore(&semaphore2, 3, 5);
+
+    ret = KeReleaseSemaphore(&semaphore2, 0, 1, FALSE);
+    ok(ret == 3, "got prev %d\n", ret);
+
+    for (i = 0; i < 4; i++)
+    {
+        ret = wait_single(&semaphore2, 0);
+        ok(ret == 0, "got %#x\n", ret);
+    }
+
+    objs[0] = &semaphore;
+    objs[1] = &semaphore2;
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeReleaseSemaphore(&semaphore, 0, 1, FALSE);
+    KeReleaseSemaphore(&semaphore2, 0, 1, FALSE);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == 1, "got %#x\n", ret);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeReleaseSemaphore(&semaphore, 0, 1, FALSE);
+    KeReleaseSemaphore(&semaphore2, 0, 1, FALSE);
+
+    ret = wait_multiple(2, objs, WaitAll, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_multiple(2, objs, WaitAny, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
 }
 
 static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
