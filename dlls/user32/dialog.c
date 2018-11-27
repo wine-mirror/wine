@@ -1237,8 +1237,16 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
             if (!(dlgCode & DLGC_WANTARROWS))
             {
                 BOOL fPrevious = (msg->wParam == VK_LEFT || msg->wParam == VK_UP);
-                HWND hwndNext = GetNextDlgGroupItem (hwndDlg, GetFocus(), fPrevious );
-                SendMessageW( hwndDlg, WM_NEXTDLGCTL, (WPARAM)hwndNext, 1 );
+                HWND hwndNext = GetNextDlgGroupItem( hwndDlg, msg->hwnd, fPrevious );
+                if (hwndNext && SendMessageW( hwndNext, WM_GETDLGCODE, msg->wParam, (LPARAM)msg ) == (DLGC_BUTTON | DLGC_RADIOBUTTON))
+                {
+                    SetFocus( hwndNext );
+                    if ((GetWindowLongW( hwndNext, GWL_STYLE ) & BS_TYPEMASK) == BS_AUTORADIOBUTTON &&
+                        SendMessageW( hwndNext, BM_GETCHECK, 0, 0 ) != BST_CHECKED)
+                        SendMessageW( hwndNext, BM_CLICK, 1, 0 );
+                }
+                else
+                    SendMessageW( hwndDlg, WM_NEXTDLGCTL, (WPARAM)hwndNext, 1 );
                 return TRUE;
             }
             break;
