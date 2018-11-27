@@ -117,11 +117,9 @@ static void test_process_reference(void)
 
     pSHGetInstanceExplorer = (void *)GetProcAddress(hmod, "SHGetInstanceExplorer");
     hr = pSHGetInstanceExplorer(&obj);
-todo_wine {
     ok(hr == S_OK, "Failed to get reference, hr %#x.\n", hr);
     ok(obj == &test_unk2.IUnknown_iface, "Unexpected pointer.\n");
     ok(test_unk2.refcount == 3, "Unexpected refcount %u.\n", test_unk2.refcount);
-}
 }
 
 START_TEST(shcore)

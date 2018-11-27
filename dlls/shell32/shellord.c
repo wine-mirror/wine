@@ -1103,34 +1103,6 @@ BOOL WINAPI SHRunControlPanel (LPCWSTR commandLine, HWND parent)
 	return FALSE;
 }
 
-static LPUNKNOWN SHELL32_IExplorerInterface=0;
-/*************************************************************************
- * SHSetInstanceExplorer			[SHELL32.176]
- *
- * NOTES
- *  Sets the interface
- */
-VOID WINAPI SHSetInstanceExplorer (LPUNKNOWN lpUnknown)
-{	TRACE("%p\n", lpUnknown);
-	SHELL32_IExplorerInterface = lpUnknown;
-}
-/*************************************************************************
- * SHGetInstanceExplorer			[SHELL32.@]
- *
- * NOTES
- *  gets the interface pointer of the explorer and a reference
- */
-HRESULT WINAPI SHGetInstanceExplorer (IUnknown **lpUnknown)
-{	TRACE("%p\n", lpUnknown);
-
-	*lpUnknown = SHELL32_IExplorerInterface;
-
-	if (!SHELL32_IExplorerInterface)
-	  return E_FAIL;
-
-	IUnknown_AddRef(SHELL32_IExplorerInterface);
-	return S_OK;
-}
 /*************************************************************************
  * SHFreeUnusedLibraries			[SHELL32.123]
  *

@@ -165,7 +165,7 @@
  173 stdcall -ordinal SHValidateUNC(long wstr long)
  174 stdcall -ordinal SHCreateShellFolderViewEx(ptr ptr)
  175 stdcall -noname SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPathAW
- 176 stdcall -ordinal SHSetInstanceExplorer(ptr)
+ 176 stdcall -ordinal SHSetInstanceExplorer(ptr) shcore.SetProcessReference
  177 stub DAD_SetDragImageFromListView
  178 stdcall -ordinal SHObjectProperties(long long wstr wstr)
  179 stdcall -ordinal SHGetNewLinkInfoA(str str ptr ptr long)
@@ -380,7 +380,7 @@
 @ stdcall SHGetIconOverlayIndexA(str long)
 @ stdcall SHGetIconOverlayIndexW(wstr long)
 @ stdcall SHGetIDListFromObject(ptr ptr)
-@ stdcall SHGetInstanceExplorer(ptr)
+@ stdcall SHGetInstanceExplorer(ptr) shcore.GetProcessReference
 @ stdcall SHGetItemFromDataObject(ptr long ptr ptr)
 @ stdcall SHGetItemFromObject(ptr ptr ptr)
 @ stdcall SHGetKnownFolderIDList(ptr long ptr ptr)
