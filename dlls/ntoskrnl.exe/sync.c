@@ -155,6 +155,16 @@ NTSTATUS WINAPI KeWaitForSingleObject( void *obj, KWAIT_REASON reason,
 }
 
 /***********************************************************************
+ *           KeWaitForMutexObject   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeWaitForMutexObject( PRKMUTEX mutex, KWAIT_REASON reason,
+    KPROCESSOR_MODE mode, BOOLEAN alertable, LARGE_INTEGER *timeout)
+{
+    return KeWaitForSingleObject( mutex, reason, mode, alertable, timeout );
+}
+
+
+/***********************************************************************
  *           KeInitializeEvent   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeEvent( PRKEVENT event, EVENT_TYPE type, BOOLEAN state )
