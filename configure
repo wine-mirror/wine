@@ -19792,6 +19792,7 @@ wine_fn_config_makefile dlls/setupx.dll16 enable_win16
 wine_fn_config_makefile dlls/sfc enable_sfc
 wine_fn_config_makefile dlls/sfc_os enable_sfc_os
 wine_fn_config_makefile dlls/shcore enable_shcore
+wine_fn_config_makefile dlls/shcore/tests enable_tests
 wine_fn_config_makefile dlls/shdoclc enable_shdoclc
 wine_fn_config_makefile dlls/shdocvw enable_shdocvw
 wine_fn_config_makefile dlls/shdocvw/tests enable_tests

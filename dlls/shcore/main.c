@@ -36,6 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shcore);
 
 static DWORD shcore_tls;
+static IUnknown *process_ref;
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
@@ -1260,4 +1261,32 @@ HRESULT WINAPI SHReleaseThreadRef(void)
 {
     FIXME("() - stub!\n");
     return S_OK;
+}
+
+/*************************************************************************
+ * GetProcessReference        [SHCORE.@]
+ */
+HRESULT WINAPI GetProcessReference(IUnknown **obj)
+{
+    TRACE("(%p)\n", obj);
+
+    *obj = process_ref;
+
+    if (!process_ref)
+        return E_FAIL;
+
+    if (*obj)
+        IUnknown_AddRef(*obj);
+
+    return S_OK;
+}
+
+/*************************************************************************
+ * SetProcessReference        [SHCORE.@]
+ */
+void WINAPI SetProcessReference(IUnknown *obj)
+{
+    TRACE("(%p)\n", obj);
+
+    process_ref = obj;
 }

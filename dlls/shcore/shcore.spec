@@ -10,7 +10,7 @@
 @ stdcall GetDpiForMonitor(long long ptr ptr)
 @ stub GetDpiForShellUIComponent
 @ stdcall GetProcessDpiAwareness(long ptr)
-@ stub GetProcessReference
+@ stdcall GetProcessReference(ptr)
 @ stub GetScaleFactorForDevice
 @ stub GetScaleFactorForMonitor
 @ stub IStream_Copy
@@ -79,7 +79,7 @@
 @ stdcall SHUnicodeToUnicode(wstr ptr long) shlwapi.SHUnicodeToUnicode
 @ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
 @ stdcall SetProcessDpiAwareness(long)
-@ stub SetProcessReference
+@ stdcall SetProcessReference(ptr)
 @ stub UnregisterScaleChangeEvent
 
 100 stub @

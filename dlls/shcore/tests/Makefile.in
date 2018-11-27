@@ -1,0 +1,4 @@
+TESTDLL = shcore.dll
+
+C_SRCS = \
+	shcore.c
