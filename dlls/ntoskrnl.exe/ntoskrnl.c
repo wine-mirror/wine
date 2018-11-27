@@ -2278,15 +2278,6 @@ PRKTHREAD WINAPI KeGetCurrentThread(void)
 }
 
  /***********************************************************************
- *           KeInitializeMutex   (NTOSKRNL.EXE.@)
- */
-void WINAPI KeInitializeMutex(PRKMUTEX Mutex, ULONG Level)
-{
-    FIXME( "stub: %p, %u\n", Mutex, Level );
-}
-
-
- /***********************************************************************
  *           KeWaitForMutexObject   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI KeWaitForMutexObject(PRKMUTEX Mutex, KWAIT_REASON WaitReason, KPROCESSOR_MODE WaitMode,

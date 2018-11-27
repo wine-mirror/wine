@@ -36,6 +36,7 @@ enum object_type
 {
     TYPE_MANUAL_EVENT = 0,
     TYPE_AUTO_EVENT = 1,
+    TYPE_MUTEX = 2,
     TYPE_SEMAPHORE = 5,
 };
 
@@ -217,4 +218,17 @@ LONG WINAPI KeReleaseSemaphore( PRKSEMAPHORE semaphore, KPRIORITY increment,
     LeaveCriticalSection( &sync_cs );
 
     return ret;
+}
+
+/***********************************************************************
+ *           KeInitializeMutex   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeMutex( PRKMUTEX mutex, ULONG level )
+{
+    TRACE("mutex %p, level %u.\n", mutex, level);
+
+    mutex->Header.Type = TYPE_MUTEX;
+    mutex->Header.SignalState = 1;
+    mutex->Header.WaitListHead.Blink = NULL;
+    mutex->Header.WaitListHead.Flink = NULL;
 }
