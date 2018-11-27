@@ -6689,6 +6689,111 @@ static void test_empty_text_field(void)
     WsFreeHeap( heap );
 }
 
+static const char stream_utf8[] = {0xef,0xbb,0xbf,'<','t','/','>',0};
+static const struct stream_test
+{
+    const char *xml;
+    HRESULT     hr;
+    int         todo;
+}
+stream_tests[] =
+{
+    { "", WS_E_QUOTA_EXCEEDED },
+    { "<?xml version=\"1.0\" encoding=\"utf-8\"?><t/>", S_OK },
+    { "<t/>", S_OK },
+    { stream_utf8, S_OK, 1 },
+};
+
+static CALLBACK HRESULT read_callback( void *state, void *buf, ULONG buflen, ULONG *retlen,
+                                       const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct stream_test *test = state;
+    ULONG len = strlen( test->xml );
+
+    ok( state != NULL, "NULL state\n" );
+    ok( buf != NULL, "NULL buf\n" );
+    ok( buflen > 0, "zero buflen\n" );
+    ok( retlen != NULL, "NULL retlen\n" );
+    if (buflen < len) return WS_E_QUOTA_EXCEEDED;
+    memcpy( buf, test->xml, len );
+    *retlen = len;
+    return S_OK;
+}
+
+static void test_stream_input(void)
+{
+    static WS_XML_STRING str_ns = {0, NULL}, str_t = {1, (BYTE *)"t"};
+    WS_XML_READER_TEXT_ENCODING text = {{WS_XML_READER_ENCODING_TYPE_TEXT}};
+    WS_XML_READER_STREAM_INPUT stream;
+    WS_XML_READER *reader;
+    const WS_XML_NODE *node;
+    WS_CHARSET charset;
+    HRESULT hr;
+    BOOL found;
+    ULONG i, size;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    stream.input.inputType   = WS_XML_READER_INPUT_TYPE_STREAM;
+    stream.readCallback      = read_callback;
+    stream.readCallbackState = (void *)&stream_tests[2];
+    hr = WsSetInput( reader, &text.encoding, &stream.input, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    size = sizeof(charset);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, size, NULL );
+    todo_wine ok( hr == WS_E_QUOTA_EXCEEDED, "got %08x\n", hr );
+
+    hr = WsSetInput( reader, &text.encoding, &stream.input, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, strlen(stream_tests[2].xml), NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    charset = 0xdeadbeef;
+    size = sizeof(charset);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( charset == WS_CHARSET_UTF8, "got %u\n", charset );
+
+    found = -1;
+    hr = WsReadToStartElement( reader, &str_t, &str_ns, &found, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (i = 0; i < ARRAY_SIZE(stream_tests); i++)
+    {
+        stream.readCallbackState = (void *)&stream_tests[i];
+        hr = WsSetInput( reader, &text.encoding, &stream.input, NULL, 0, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        hr = WsFillReader( reader, strlen( stream_tests[i].xml ), NULL, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        found = -1;
+        hr = WsReadToStartElement( reader, &str_t, &str_ns, &found, NULL );
+        todo_wine_if(stream_tests[i].todo) ok( hr == stream_tests[i].hr, "%u: got %08x\n", i, hr );
+        if (hr == S_OK)
+        {
+            ok( found == TRUE, "%u: got %d\n", i, found );
+            hr = WsReadStartElement( reader, NULL );
+            ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+            hr = WsGetReaderNode( reader, &node, NULL );
+            ok( hr == S_OK, "%u: got %08x\n", i, hr );
+            if (node) ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "%u: got %u\n", i, node->nodeType );
+        }
+    }
+
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -6738,4 +6843,5 @@ START_TEST(reader)
     test_float();
     test_repeating_element_choice();
     test_empty_text_field();
+    test_stream_input();
 }
