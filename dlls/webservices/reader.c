@@ -982,41 +982,42 @@ static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
 /* minimum Unicode value depending on UTF-8 sequence length */
 static const unsigned int utf8_minval[4] = { 0x0, 0x80, 0x800, 0x10000 };
 
-static inline unsigned int read_utf8_char( struct reader *reader, unsigned int *skip )
+static inline HRESULT read_utf8_char( struct reader *reader, unsigned int *ret, unsigned int *skip )
 {
-    unsigned int len, res;
+    unsigned int len;
     unsigned char ch = reader->read_bufptr[reader->read_pos];
     const unsigned char *end;
 
-    if (reader->read_pos >= reader->read_size) return 0;
+    if (reader->read_pos >= reader->read_size) return WS_E_INVALID_FORMAT;
 
     if (ch < 0x80)
     {
+        *ret = ch;
         *skip = 1;
-        return ch;
+        return S_OK;
     }
     len = utf8_length[ch - 0x80];
-    if (reader->read_pos + len >= reader->read_size) return 0;
+    if (reader->read_pos + len >= reader->read_size) return WS_E_INVALID_FORMAT;
     end = reader->read_bufptr + reader->read_pos + len + 1;
-    res = ch & utf8_mask[len];
+    *ret = ch & utf8_mask[len];
 
     switch (len)
     {
     case 3:
         if ((ch = end[-3] ^ 0x80) >= 0x40) break;
-        res = (res << 6) | ch;
+        *ret = (*ret << 6) | ch;
     case 2:
         if ((ch = end[-2] ^ 0x80) >= 0x40) break;
-        res = (res << 6) | ch;
+        *ret = (*ret << 6) | ch;
     case 1:
         if ((ch = end[-1] ^ 0x80) >= 0x40) break;
-        res = (res << 6) | ch;
-        if (res < utf8_minval[len]) break;
+        *ret = (*ret << 6) | ch;
+        if (*ret < utf8_minval[len]) break;
         *skip = len + 1;
-        return res;
+        return S_OK;
     }
 
-    return 0;
+    return WS_E_INVALID_FORMAT;
 }
 
 static inline void read_skip( struct reader *reader, unsigned int count )
@@ -1303,14 +1304,14 @@ static HRESULT read_attribute_value_text( struct reader *reader, WS_XML_ATTRIBUT
 
     read_skip_whitespace( reader );
     if ((hr = read_cmp( reader, "\"", 1 )) != S_OK && (hr = read_cmp( reader, "'", 1 )) != S_OK) return hr;
-    quote = read_utf8_char( reader, &skip );
+    if ((hr = read_utf8_char( reader, &quote, &skip )) != S_OK) return hr;
     read_skip( reader, 1 );
 
     len = 0;
     start = read_current_ptr( reader );
     for (;;)
     {
-        if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
+        if ((hr = read_utf8_char( reader, &ch, &skip )) != S_OK) return hr;
         if (ch == quote) break;
         read_skip( reader, skip );
         len += skip;
@@ -1651,19 +1652,23 @@ static HRESULT read_attribute_text( struct reader *reader, WS_XML_ATTRIBUTE **re
     unsigned int len = 0, ch, skip;
     const unsigned char *start;
     WS_XML_STRING *prefix, *localname;
-    HRESULT hr = WS_E_INVALID_FORMAT;
+    HRESULT hr;
 
     if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
 
     start = read_current_ptr( reader );
     for (;;)
     {
-        if (!(ch = read_utf8_char( reader, &skip ))) goto error;
+        if ((hr = read_utf8_char( reader, &ch, &skip )) != S_OK) goto error;
         if (!read_isnamechar( ch )) break;
         read_skip( reader, skip );
         len += skip;
     }
-    if (!len) goto error;
+    if (!len)
+    {
+        hr = WS_E_INVALID_FORMAT;
+        goto error;
+    }
 
     if ((hr = parse_qname( start, len, &prefix, &localname )) != S_OK) goto error;
     if (WsXmlStringEquals( prefix, &xmlns, NULL ) == S_OK)
@@ -1953,16 +1958,19 @@ static HRESULT read_element_text( struct reader *reader )
     if (!(elem = alloc_element_pair())) return E_OUTOFMEMORY;
     node = (struct node *)elem;
 
-    hr = WS_E_INVALID_FORMAT;
     start = read_current_ptr( reader );
     for (;;)
     {
-        if (!(ch = read_utf8_char( reader, &skip ))) goto error;
+        if ((hr = read_utf8_char( reader, &ch, &skip )) != S_OK) goto error;
         if (!read_isnamechar( ch )) break;
         read_skip( reader, skip );
         len += skip;
     }
-    if (!len) goto error;
+    if (!len)
+    {
+        hr = WS_E_INVALID_FORMAT;
+        goto error;
+    }
 
     if (!(parent = find_parent( reader ))) goto error;
     if ((hr = parse_qname( start, len, &elem->prefix, &elem->localName )) != S_OK) goto error;
@@ -2107,7 +2115,7 @@ static HRESULT read_text_text( struct reader *reader )
     for (;;)
     {
         if (read_end_of_data( reader )) break;
-        if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
+        if ((hr = read_utf8_char( reader, &ch, &skip )) != S_OK) return hr;
         if (ch == '<') break;
         read_skip( reader, skip );
         len += skip;
@@ -2741,7 +2749,7 @@ static HRESULT read_endelement_text( struct reader *reader )
     start = read_current_ptr( reader );
     for (;;)
     {
-        if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
+        if ((hr = read_utf8_char( reader, &ch, &skip )) != S_OK) return hr;
         if (ch == '>')
         {
             read_skip( reader, 1 );
@@ -2821,7 +2829,7 @@ static HRESULT read_comment_text( struct reader *reader )
             read_skip( reader, 3 );
             break;
         }
-        if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
+        if ((hr = read_utf8_char( reader, &ch, &skip )) != S_OK) return hr;
         read_skip( reader, skip );
         len += skip;
     }
@@ -2907,12 +2915,13 @@ static HRESULT read_cdata( struct reader *reader )
     struct node *node;
     WS_XML_TEXT_NODE *text;
     WS_XML_UTF8_TEXT *utf8;
+    HRESULT hr;
 
     start = read_current_ptr( reader );
     for (;;)
     {
         if (read_cmp( reader, "]]>", 3 ) == S_OK) break;
-        if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
+        if ((hr = read_utf8_char( reader, &ch, &skip )) != S_OK) return hr;
         read_skip( reader, skip );
         len += skip;
     }
