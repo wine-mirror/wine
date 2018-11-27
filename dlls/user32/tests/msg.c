@@ -6656,6 +6656,132 @@ static const struct message auto_radio_button_BM_CLICK[] =
     { 0 }
 };
 
+static const struct message auto_radio_button_VK_UP_child[] =
+{
+    { WM_KEYDOWN, sent|wparam|lparam, VK_UP, 0 },
+    { WM_KEYUP, sent|wparam|lparam, VK_UP, 0 },
+    { 0 }
+};
+
+static const struct message auto_radio_button_VK_UP_parent[] =
+{
+    { WM_KEYDOWN, sent|wparam|lparam|parent, VK_UP, 0 },
+    { WM_KEYUP, sent|wparam|lparam|parent, VK_UP, 0 },
+    { 0 }
+};
+
+static const struct message auto_radio_button_VK_UP_dialog[] =
+{
+    { WM_GETDLGCODE, sent|parent, 0, 0 },
+
+    /* optional trailer seen on some windows setups */
+    { WM_CHANGEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_CTLCOLORSTATIC, sent|parent|optional },
+    { WM_CTLCOLORSTATIC, sent|parent|optional },
+    { WM_CTLCOLORSTATIC, sent|parent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_CTLCOLORSTATIC, sent|parent|optional },
+    { WM_CTLCOLORSTATIC, sent|parent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_CTLCOLORBTN, sent|parent|optional },
+    { WM_CTLCOLORBTN, sent|parent|optional },
+    { WM_UPDATEUISTATE, sent|optional },
+    { WM_CTLCOLORSTATIC, sent|parent|optional },
+    { WM_CTLCOLORSTATIC, sent|parent|optional },
+    { 0 }
+};
+
+static const struct message auto_radio_button_VK_DOWN_dialog[] =
+{
+    { WM_GETDLGCODE, sent|parent, 0, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam, ID_RADIO1, MAKELPARAM(WM_KEYDOWN, VK_DOWN) },
+    { WM_GETDLGCODE, sent|wparam|lparam, ID_RADIO1, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent, 0, 0 },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO3, BN_KILLFOCUS) },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_SETFOCUS, sent, 0, 0 },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO1, BN_SETFOCUS) },
+    { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO1, BN_CLICKED) },
+    { WM_GETDLGCODE, sent|wparam|lparam, ID_RADIO1, 0 },
+    { WM_GETDLGCODE, sent|parent, 0, 0 },
+    { DM_GETDEFID, sent|parent, 0, 0 },
+    { BM_GETCHECK, sent|wparam|lparam, 0, ID_RADIO1 },
+    { BM_CLICK, sent|wparam|lparam, 1, 0 },
+    { WM_LBUTTONDOWN, sent|wparam|lparam|defwinproc, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_CHECKED, ID_RADIO1 },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_LBUTTONUP, sent|wparam|lparam|defwinproc, 0, 0 },
+    { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_UNCHECKED, ID_RADIO1 },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO1, 0 },
+    { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_CHECKED, ID_RADIO1 },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO3, 0 },
+    { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_UNCHECKED, ID_RADIO3 },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_TEXT, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO2, 0 },
+    { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_UNCHECKED, ID_RADIO2 },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_CAPTURECHANGED, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO1, BN_CLICKED) },
+    { WM_NCHITTEST, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
+    { WM_SETCURSOR, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
+    { WM_MOUSEMOVE, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
+    { WM_PAINT, sent },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { 0 }
+};
+
+static const struct message auto_radio_button_VK_DOWN_radio3[] =
+{
+    { BM_GETCHECK, sent|wparam|lparam, 0, ID_RADIO1 },
+    { BM_GETCHECK, sent|wparam|lparam, 0, ID_RADIO2 },
+    { BM_GETCHECK, sent|wparam|lparam, 0, ID_RADIO3 },
+    { WM_GETDLGCODE, sent|parent, 0, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam, ID_RADIO1, MAKELPARAM(WM_KEYDOWN, VK_DOWN) },
+    { WM_GETDLGCODE, sent|wparam|lparam, ID_RADIO1, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam, ID_RADIO1, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|parent, 0, 0 },
+    { WM_USER, sent|parent, 0, 0 },
+    { BM_GETCHECK, sent|wparam|lparam, 0, ID_RADIO1 },
+    { 0 }
+};
+
+static const struct message auto_radio_button_VK_UP_radio1[] =
+{
+    { WM_GETDLGCODE, sent|parent, 0, 0 },
+    { 0 }
+};
+
 static INT_PTR WINAPI radio_test_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     ParentMsgCheckProcA(hwnd, msg, wp, lp);
@@ -6738,6 +6864,195 @@ static void test_autoradio_BM_CLICK(void)
     ok(ret == BST_CHECKED, "got %08x\n", ret);
     ret = SendMessageA(radio3, BM_GETCHECK, 0, 0);
     ok(ret == BST_UNCHECKED, "got %08x\n", ret);
+
+    DestroyWindow(parent);
+}
+
+#define test_radio(r1, s1, r2, s2, r3, s3) test_radio_dbg(r1, s1, r2, s2, r3, s3, __LINE__)
+static void test_radio_dbg(HWND radio1, int state1, HWND radio2, int state2, HWND radio3, int state3, int line)
+{
+    DWORD ret;
+
+    ret = SendMessageA(radio1, BM_GETCHECK, 0, 0);
+    ok_(__FILE__,line)(ret == state1 ? BST_CHECKED : BST_UNCHECKED, "got %08x\n", ret);
+    ret = SendMessageA(radio2, BM_GETCHECK, 0, 0);
+    ok_(__FILE__,line)(ret == state2 ? BST_CHECKED : BST_UNCHECKED, "got %08x\n", ret);
+    ret = SendMessageA(radio3, BM_GETCHECK, 0, 0);
+    ok_(__FILE__,line)(ret == state3 ? BST_CHECKED : BST_UNCHECKED, "got %08x\n", ret);
+}
+
+static void set_radio(HWND radio1, int state1, HWND radio2, int state2, HWND radio3, int state3)
+{
+    SendMessageA(radio1, BM_SETCHECK, state1 ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessageA(radio2, BM_SETCHECK, state2 ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessageA(radio3, BM_SETCHECK, state3 ? BST_CHECKED : BST_UNCHECKED, 0);
+}
+
+static void test_autoradio_kbd_move(void)
+{
+    HWND parent, radio1, radio2, radio3, hwnd;
+    RECT rc;
+    MSG msg;
+    DWORD ret;
+
+    subclass_button();
+
+    parent = CreateDialogParamA(0, "AUTORADIO_TEST_DIALOG_2", 0, radio_test_dlg_proc, 0);
+    ok(parent != 0, "failed to create parent window\n");
+
+    radio1 = GetDlgItem(parent, ID_RADIO1);
+    radio2 = GetDlgItem(parent, ID_RADIO2);
+    radio3 = GetDlgItem(parent, ID_RADIO3);
+
+    flush_events();
+    flush_sequence();
+
+    test_radio(radio1, 0, radio2, 0, radio3, 0);
+    set_radio(radio1, 1, radio2, 1, radio3, 1);
+    test_radio(radio1, 1, radio2, 1, radio3, 1);
+
+    SetFocus(radio3);
+
+    flush_events();
+    flush_sequence();
+
+    log_all_parent_messages++;
+
+    SendMessageA(radio3, WM_KEYDOWN, VK_UP, 0);
+    SendMessageA(radio3, WM_KEYUP, VK_UP, 0);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(auto_radio_button_VK_UP_child, "press/release VK_UP on auto-radio button", FALSE);
+
+    test_radio(radio1, 1, radio2, 1, radio3, 1);
+
+    flush_events();
+    flush_sequence();
+
+    DefDlgProcA(parent, WM_KEYDOWN, VK_UP, 0);
+    DefDlgProcA(parent, WM_KEYUP, VK_UP, 0);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(auto_radio_button_VK_UP_parent, "press/release VK_UP on dialog", FALSE);
+
+    test_radio(radio1, 1, radio2, 1, radio3, 1);
+
+    SetFocus(radio3);
+    GetWindowRect(radio3, &rc);
+
+    flush_events();
+    flush_sequence();
+
+    msg.hwnd = parent;
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_UP;
+    msg.lParam = 0;
+    msg.pt.x = rc.left + 1;
+    msg.pt.y = rc.top + 1;
+    ret = IsDialogMessageA(parent, &msg);
+    ok(ret, "IsDialogMessage should return TRUE\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+if (0) /* actual message sequence is different on every run in some Windows setups */
+    ok_sequence(auto_radio_button_VK_UP_dialog, "IsDialogMessage(VK_UP) #1", FALSE);
+    /* what really matters is that nothing has changed */
+    test_radio(radio1, 1, radio2, 1, radio3, 1);
+
+    set_radio(radio1, 0, radio2, 1, radio3, 1);
+    test_radio(radio1, 0, radio2, 1, radio3, 1);
+
+    flush_events();
+    flush_sequence();
+
+    ret = IsDialogMessageA(parent, &msg);
+    ok(ret, "IsDialogMessage should return TRUE\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+if (0) /* actual message sequence is different on every run in some Windows setups */
+    ok_sequence(auto_radio_button_VK_UP_dialog, "IsDialogMessage(VK_UP) #2", FALSE);
+    /* what really matters is that nothing has changed */
+    test_radio(radio1, 0, radio2, 1, radio3, 1);
+
+    /* switch from radio3 ro radio1 */
+    SetFocus(radio3);
+    GetWindowRect(radio3, &rc);
+
+    flush_events();
+    flush_sequence();
+
+    msg.hwnd = parent;
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_DOWN;
+    msg.lParam = 0;
+    msg.pt.x = rc.left + 1;
+    msg.pt.y = rc.top + 1;
+    ret = IsDialogMessageA(parent, &msg);
+    ok(ret, "IsDialogMessage should return TRUE\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(auto_radio_button_VK_DOWN_dialog, "IsDialogMessage(VK_DOWN)", TRUE);
+
+todo_wine
+    test_radio(radio1, 1, radio2, 0, radio3, 0);
+
+    hwnd = GetFocus();
+todo_wine
+    ok(hwnd == radio1, "focus should be on radio1, not on %p\n", hwnd);
+    GetWindowRect(radio1, &rc);
+
+    msg.hwnd = parent;
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_DOWN;
+    msg.lParam = 0;
+    msg.pt.x = rc.left + 1;
+    msg.pt.y = rc.top + 1;
+    ret = IsDialogMessageA(parent, &msg);
+    ok(ret, "IsDialogMessage should return TRUE\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(auto_radio_button_VK_DOWN_radio3, "down to radio3", TRUE);
+
+todo_wine
+    test_radio(radio1, 1, radio2, 0, radio3, 0);
+
+    hwnd = GetFocus();
+todo_wine
+    ok(hwnd == radio1, "focus should be on radio1, not on %p\n", hwnd);
+
+    flush_events();
+    flush_sequence();
+
+    msg.hwnd = parent;
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_UP;
+    msg.lParam = 0;
+    msg.pt.x = rc.left + 1;
+    msg.pt.y = rc.top + 1;
+    ret = IsDialogMessageA(parent, &msg);
+    ok(ret, "IsDialogMessage should return TRUE\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(auto_radio_button_VK_UP_radio1, "up to radio1", TRUE);
+
+todo_wine
+    test_radio(radio1, 1, radio2, 0, radio3, 0);
+
+    hwnd = GetFocus();
+todo_wine
+    ok(hwnd == radio1, "focus should be on radio1, not on %p\n", hwnd);
+
+    flush_events();
+    flush_sequence();
+
+    msg.hwnd = parent;
+    msg.message = WM_KEYDOWN;
+    msg.wParam = VK_UP;
+    msg.lParam = 0;
+    msg.pt.x = rc.left + 1;
+    msg.pt.y = rc.top + 1;
+    ret = IsDialogMessageA(parent, &msg);
+    ok(ret, "IsDialogMessage should return TRUE\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+if (0) /* actual message sequence is different on every run in some Windows setups */
+    ok_sequence(auto_radio_button_VK_UP_dialog, "IsDialogMessage(VK_UP) #3", FALSE);
+    /* what really matters is that nothing has changed */
+todo_wine
+    test_radio(radio1, 1, radio2, 0, radio3, 0);
+
+    log_all_parent_messages--;
 
     DestroyWindow(parent);
 }
@@ -17067,6 +17382,7 @@ START_TEST(msg)
     test_mdi_messages();
     test_button_messages();
     test_autoradio_BM_CLICK();
+    test_autoradio_kbd_move();
     test_static_messages();
     test_listbox_messages();
     test_combobox_messages();
