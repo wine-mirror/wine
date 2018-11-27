@@ -939,10 +939,10 @@ static inline const unsigned char *read_current_ptr( struct reader *reader )
     return &reader->read_bufptr[reader->read_pos];
 }
 
-static inline HRESULT read_peek( struct reader *reader, unsigned char *byte )
+static inline HRESULT read_peek( struct reader *reader, unsigned char *bytes, unsigned int len )
 {
-    if (reader->read_pos >= reader->read_size) return WS_E_INVALID_FORMAT;
-    *byte = reader->read_bufptr[reader->read_pos];
+    if (reader->read_pos + len > reader->read_size) return WS_E_INVALID_FORMAT;
+    memcpy( bytes, reader->read_bufptr + reader->read_pos, len );
     return S_OK;
 }
 
@@ -1023,11 +1023,6 @@ static inline void read_skip( struct reader *reader, unsigned int count )
 {
     if (reader->read_pos + count > reader->read_size) return;
     reader->read_pos += count;
-}
-
-static inline void read_rewind( struct reader *reader, unsigned int count )
-{
-    reader->read_pos -= count;
 }
 
 static inline BOOL read_isnamechar( unsigned int ch )
@@ -1938,6 +1933,7 @@ static HRESULT read_element_text( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
     const unsigned char *start;
+    unsigned char buf[2];
     struct node *node = NULL, *parent;
     WS_XML_ELEMENT_NODE *elem;
     HRESULT hr;
@@ -1950,13 +1946,9 @@ static HRESULT read_element_text( struct reader *reader )
         return S_OK;
     }
 
-    if ((hr = read_cmp( reader, "<", 1 )) != S_OK) return hr;
+    if ((hr = read_peek( reader, buf, 2 )) != S_OK) return hr;
+    if (buf[0] != '<' || !read_isnamechar( buf[1] )) return WS_E_INVALID_FORMAT;
     read_skip( reader, 1 );
-    if (!read_isnamechar( read_utf8_char( reader, &skip )))
-    {
-        read_rewind( reader, 1 );
-        return WS_E_INVALID_FORMAT;
-    }
 
     if (!(elem = alloc_element_pair())) return E_OUTOFMEMORY;
     node = (struct node *)elem;
@@ -2000,7 +1992,7 @@ static HRESULT read_attributes_bin( struct reader *reader, WS_XML_ELEMENT_NODE *
     reader->current_attr = 0;
     for (;;)
     {
-        if ((hr = read_peek( reader, &type )) != S_OK) return hr;
+        if ((hr = read_peek( reader, &type, 1 )) != S_OK) return hr;
         if (!is_attribute_type( type )) break;
         if ((hr = read_attribute_bin( reader, &attr )) != S_OK) return hr;
         if ((hr = append_attribute( elem, attr )) != S_OK)
@@ -2405,7 +2397,7 @@ static HRESULT read_text_bytes( struct reader *reader, unsigned char type )
             node->flags |= NODE_FLAG_TEXT_WITH_IMPLICIT_END_ELEMENT;
             break;
         }
-        if ((hr = read_peek( reader, &type )) != S_OK) goto error;
+        if ((hr = read_peek( reader, &type, 1 )) != S_OK) goto error;
         if (type < RECORD_BYTES8_TEXT || type > RECORD_BYTES32_TEXT_WITH_ENDELEMENT) break;
         read_skip( reader, 1 );
     }
@@ -3008,7 +3000,7 @@ static HRESULT read_node_bin( struct reader *reader )
         return S_OK;
     }
 
-    if ((hr = read_peek( reader, &type )) != S_OK) return hr;
+    if ((hr = read_peek( reader, &type, 1 )) != S_OK) return hr;
     if (type == RECORD_ENDELEMENT)
     {
         return read_endelement_bin( reader );
