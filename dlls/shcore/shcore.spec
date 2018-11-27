@@ -33,7 +33,7 @@
 @ stdcall SHAnsiToUnicode(str ptr long) shlwapi.SHAnsiToUnicode
 @ stdcall SHCopyKeyA(long str long long) shlwapi.SHCopyKeyA
 @ stdcall SHCopyKeyW(long wstr long long) shlwapi.SHCopyKeyW
-@ stdcall SHCreateMemStream(ptr long) shlwapi.SHCreateMemStream
+@ stdcall SHCreateMemStream(ptr long)
 @ stdcall SHCreateStreamOnFileA(str long ptr) shlwapi.SHCreateStreamOnFileA
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) shlwapi.SHCreateStreamOnFileEx
 @ stdcall SHCreateStreamOnFileW(wstr long ptr) shlwapi.SHCreateStreamOnFileW

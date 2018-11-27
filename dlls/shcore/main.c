@@ -28,7 +28,9 @@
 #include "initguid.h"
 #include "ocidl.h"
 #include "shellscalingapi.h"
+
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shcore);
@@ -491,4 +493,310 @@ WCHAR** WINAPI CommandLineToArgvW(const WCHAR *cmdline, int *numargs)
     *numargs = argc;
 
     return argv;
+}
+
+struct shstream
+{
+    IStream IStream_iface;
+    LONG refcount;
+
+    union
+    {
+        struct
+        {
+            BYTE *buffer;
+            DWORD length;
+            DWORD position;
+        } mem;
+    } u;
+};
+
+static inline struct shstream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct shstream, IStream_iface);
+}
+
+static HRESULT WINAPI shstream_QueryInterface(IStream *iface, REFIID riid, void **out)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p)->(%s, %p)\n", stream, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IStream))
+    {
+        *out = iface;
+        IStream_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI shstream_AddRef(IStream *iface)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedIncrement(&stream->refcount);
+
+    TRACE("(%p)->(%u)\n", stream, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI memstream_Release(IStream *iface)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedDecrement(&stream->refcount);
+
+    TRACE("(%p)->(%u)\n", stream, refcount);
+
+    if (!refcount)
+    {
+        heap_free(stream->u.mem.buffer);
+        heap_free(stream);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI memstream_Read(IStream *iface, void *buff, ULONG buff_size, ULONG *read_len)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    DWORD length;
+
+    TRACE("(%p)->(%p, %u, %p)\n", stream, buff, buff_size, read_len);
+
+    if (stream->u.mem.position >= stream->u.mem.length)
+        length = 0;
+    else
+        length = stream->u.mem.length - stream->u.mem.position;
+
+    length = buff_size > length ? length : buff_size;
+    if (length != 0) /* not at end of buffer and we want to read something */
+    {
+        memmove(buff, stream->u.mem.buffer + stream->u.mem.position, length);
+        stream->u.mem.position += length; /* adjust pointer */
+    }
+
+    if (read_len)
+        *read_len = length;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI memstream_Write(IStream *iface, const void *buff, ULONG buff_size, ULONG *written)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    DWORD length = stream->u.mem.position + buff_size;
+
+    TRACE("(%p)->(%p, %u, %p)\n", stream, buff, buff_size, written);
+
+    if (length < stream->u.mem.position) /* overflow */
+        return STG_E_INSUFFICIENTMEMORY;
+
+    if (length > stream->u.mem.length)
+    {
+        BYTE *buffer = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, stream->u.mem.buffer, length);
+        if (!buffer)
+            return STG_E_INSUFFICIENTMEMORY;
+
+        stream->u.mem.length = length;
+        stream->u.mem.buffer = buffer;
+    }
+    memmove(stream->u.mem.buffer + stream->u.mem.position, buff, buff_size);
+    stream->u.mem.position += buff_size; /* adjust pointer */
+
+    if (written)
+        *written = buff_size;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI memstream_Seek(IStream *iface, LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER*new_pos)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    LARGE_INTEGER tmp;
+
+    TRACE("(%p)->(%s, %d, %p)\n", stream, wine_dbgstr_longlong(move.QuadPart), origin, new_pos);
+
+    if (origin == STREAM_SEEK_SET)
+        tmp = move;
+    else if (origin == STREAM_SEEK_CUR)
+        tmp.QuadPart = stream->u.mem.position + move.QuadPart;
+    else if (origin == STREAM_SEEK_END)
+        tmp.QuadPart = stream->u.mem.length + move.QuadPart;
+    else
+        return STG_E_INVALIDPARAMETER;
+
+    if (tmp.QuadPart < 0)
+        return STG_E_INVALIDFUNCTION;
+
+    /* we cut off the high part here */
+    stream->u.mem.position = tmp.u.LowPart;
+
+    if (new_pos)
+        new_pos->QuadPart = stream->u.mem.position;
+    return S_OK;
+}
+
+static HRESULT WINAPI memstream_SetSize(IStream *iface, ULARGE_INTEGER new_size)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    DWORD length;
+    BYTE *buffer;
+
+    TRACE("(%p, %s)\n", stream, wine_dbgstr_longlong(new_size.QuadPart));
+
+    /* we cut off the high part here */
+    length = new_size.u.LowPart;
+    buffer = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, stream->u.mem.buffer, length);
+    if (!buffer)
+        return STG_E_INSUFFICIENTMEMORY;
+
+    stream->u.mem.buffer = buffer;
+    stream->u.mem.length = length;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI shstream_CopyTo(IStream *iface, IStream *pstm, ULARGE_INTEGER size, ULARGE_INTEGER *read_len, ULARGE_INTEGER *written)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p)\n", stream);
+
+    if (read_len)
+        read_len->QuadPart = 0;
+
+    if (written)
+        written->QuadPart = 0;
+
+    /* TODO implement */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shstream_Commit(IStream *iface, DWORD flags)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p, %#x)\n", stream, flags);
+
+    /* Commit is not supported by this stream */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shstream_Revert(IStream *iface)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p)\n", stream);
+
+    /* revert not supported by this stream */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shstream_LockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size, DWORD lock_type)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p)\n", stream);
+
+    /* lock/unlock not supported by this stream */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shstream_UnlockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size, DWORD lock_type)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p)\n", stream);
+
+    /* lock/unlock not supported by this stream */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memstream_Stat(IStream *iface, STATSTG *statstg, DWORD flags)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p, %p, %#x)\n", stream, statstg, flags);
+
+    memset(statstg, 0, sizeof(*statstg));
+    statstg->type = STGTY_STREAM;
+    statstg->cbSize.QuadPart = stream->u.mem.length;
+    statstg->grfMode = STGM_READWRITE;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI shstream_Clone(IStream *iface, IStream **dest)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p, %p)\n", stream, dest);
+
+    *dest = NULL;
+
+    /* clone not supported by this stream */
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl shstreamvtbl =
+{
+    shstream_QueryInterface,
+    shstream_AddRef,
+    memstream_Release,
+    memstream_Read,
+    memstream_Write,
+    memstream_Seek,
+    memstream_SetSize,
+    shstream_CopyTo,
+    shstream_Commit,
+    shstream_Revert,
+    shstream_LockRegion,
+    shstream_UnlockRegion,
+    memstream_Stat,
+    shstream_Clone,
+};
+
+/*************************************************************************
+ * SHCreateMemStream   [SHCORE.@]
+ *
+ * Create an IStream object on a block of memory.
+ *
+ * PARAMS
+ * data     [I] Memory block to create the IStream object on
+ * data_len [I] Length of data block
+ *
+ * RETURNS
+ * Success: A pointer to the IStream object.
+ * Failure: NULL, if any parameters are invalid or an error occurs.
+ *
+ * NOTES
+ *  A copy of the memory block is made, it's freed when the stream is released.
+ */
+IStream * WINAPI SHCreateMemStream(const BYTE *data, UINT data_len)
+{
+    struct shstream *stream;
+
+    TRACE("(%p, %u)\n", data, data_len);
+
+    if (!data)
+        data_len = 0;
+
+    stream = heap_alloc(sizeof(*stream));
+    stream->IStream_iface.lpVtbl = &shstreamvtbl;
+    stream->refcount = 1;
+    stream->u.mem.buffer = heap_alloc(data_len);
+    if (!stream->u.mem.buffer)
+    {
+        heap_free(stream);
+        return NULL;
+    }
+    memcpy(stream->u.mem.buffer, data, data_len);
+    stream->u.mem.length = data_len;
+    stream->u.mem.position = 0;
+
+    return &stream->IStream_iface;
 }
