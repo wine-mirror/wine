@@ -1203,6 +1203,92 @@ static void create_ico_file(const char *filename, const test_icon_entries_t *tes
     HeapFree(GetProcessHeap(), 0, buf);
 }
 
+void test_LoadImage_working_directory_run(char *path)
+{
+    DWORD bytes_written;
+    HANDLE handle;
+    BOOL ret;
+    char path_icon[MAX_PATH];
+    char path_image[MAX_PATH];
+    static const test_icon_entries_t icon_desc = {32, 32};
+
+    sprintf(path_icon, "%s\\icon.ico", path);
+    sprintf(path_image,  "%s\\test.bmp", path);
+
+    /* Create Files */
+    create_ico_file(path_icon, &icon_desc, 1);
+
+    handle = CreateFileA(path_image, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(handle != INVALID_HANDLE_VALUE, "run %s: CreateFileA failed. %u\n", path, GetLastError());
+    ret = WriteFile(handle, bmpimage, sizeof(bmpimage), &bytes_written, NULL);
+    ok(ret && bytes_written == sizeof(bmpimage), "run %s: Test file created improperly.\n", path);
+    CloseHandle(handle);
+
+    /* Test cursor */
+    handle = LoadImageA(NULL, "icon.ico", IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
+    ok(handle != NULL, "run %s: LoadImage() failed.\n", path);
+
+    ret = DestroyIcon(handle);
+    ok(ret, "run %s: DestroyIcon failed: %d\n", path, GetLastError());
+
+    /* Test image */
+    handle = LoadImageA(NULL, "test.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    ok(handle != NULL, "run %s: LoadImageA failed.\n", path);
+
+    ret = DeleteObject(handle);
+    ok(ret, "run %s: DeleteObject failed: %d\n", path, GetLastError());
+
+    /* Cleanup */
+    ret = DeleteFileA(path_image);
+    ok(ret, "run %s: DeleteFileA failed: %d\n", path, GetLastError());
+    ret = DeleteFileA(path_icon);
+    ok(ret, "run %s: DeleteFileA failed: %d\n", path, GetLastError());
+}
+
+static void test_LoadImage_working_directory(void)
+{
+    char old_working_dir[MAX_PATH];
+    char temp_dir_current[MAX_PATH];
+    char temp_dir_PATH[MAX_PATH];
+    char executable_path[MAX_PATH];
+    int pos_slash;
+    char old_PATH[10000];
+    char new_PATH[10000];
+    BOOL ret;
+
+    GetCurrentDirectoryA(ARRAY_SIZE(old_working_dir), old_working_dir);
+
+    GetTempPathA(ARRAY_SIZE(temp_dir_current), temp_dir_current);
+    strcat(temp_dir_current, "wine-test-dir-current\\");
+    GetTempPathA(ARRAY_SIZE(temp_dir_PATH), temp_dir_PATH);
+    strcat(temp_dir_PATH,    "wine-test-dir-path\\");
+
+    GetModuleFileNameA(NULL, executable_path, ARRAY_SIZE(executable_path));
+    pos_slash = strrchr(executable_path, '\\') - executable_path;
+    executable_path[pos_slash + 1] = 0;
+
+    CreateDirectoryA(temp_dir_current, NULL);
+    CreateDirectoryA(temp_dir_PATH, NULL);
+
+    SetCurrentDirectoryA(temp_dir_current);
+
+    GetEnvironmentVariableA("PATH", old_PATH, ARRAY_SIZE(old_PATH));
+    sprintf(new_PATH, "%s;%s", old_PATH, temp_dir_PATH);
+    SetEnvironmentVariableA("PATH", new_PATH);
+
+    test_LoadImage_working_directory_run(temp_dir_current);
+    test_LoadImage_working_directory_run(executable_path);
+    test_LoadImage_working_directory_run(temp_dir_PATH);
+
+    SetCurrentDirectoryA(old_working_dir);
+    SetEnvironmentVariableA("PATH", old_PATH);
+
+    ret = RemoveDirectoryA(temp_dir_current);
+    ok(ret, "RemoveDirectoryA failed: %d\n", GetLastError());
+    ret = RemoveDirectoryA(temp_dir_PATH);
+    ok(ret, "RemoveDirectoryA failed: %d\n", GetLastError());
+}
+
 static void test_LoadImage(void)
 {
     HANDLE handle;
@@ -1326,6 +1412,9 @@ static void test_LoadImage(void)
     bitmap_header->biSize = sizeof(BITMAPINFOHEADER);
 
     test_LoadImageFile("Cursor (invalid dwDIBOffset)", invalid_dwDIBOffset, sizeof(invalid_dwDIBOffset), "cur", 0);
+
+    /* Test in which paths images with a relative path can be found */
+    test_LoadImage_working_directory();
 }
 
 static void test_CreateIconFromResource(void)

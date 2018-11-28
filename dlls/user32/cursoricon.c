@@ -3039,11 +3039,17 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
                 INT desiredx, INT desiredy, UINT loadflags )
 {
     int depth;
+    WCHAR path[MAX_PATH];
 
     TRACE_(resource)("(%p,%s,%d,%d,%d,0x%08x)\n",
                      hinst,debugstr_w(name),type,desiredx,desiredy,loadflags);
 
-    if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;
+    if (loadflags & LR_LOADFROMFILE)
+    {
+        loadflags &= ~LR_SHARED;
+        /* relative paths are not only relative to the current working directory */
+        if (SearchPathW(NULL, name, NULL, ARRAY_SIZE(path), path, NULL)) name = path;
+    }
     switch (type) {
     case IMAGE_BITMAP:
         return BITMAP_Load( hinst, name, desiredx, desiredy, loadflags );
