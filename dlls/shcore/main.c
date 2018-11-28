@@ -28,6 +28,7 @@
 #include "initguid.h"
 #include "ocidl.h"
 #include "shellscalingapi.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -1289,4 +1290,122 @@ void WINAPI SetProcessReference(IUnknown *obj)
     TRACE("(%p)\n", obj);
 
     process_ref = obj;
+}
+
+struct thread_data
+{
+    LPTHREAD_START_ROUTINE thread_proc;
+    LPTHREAD_START_ROUTINE callback;
+    void *data;
+    DWORD flags;
+    HANDLE hEvent;
+    IUnknown *thread_ref;
+    IUnknown *process_ref;
+};
+
+static DWORD WINAPI shcore_thread_wrapper(void *data)
+{
+    struct thread_data thread_data;
+    HRESULT hr = E_FAIL;
+    DWORD retval;
+
+    TRACE("(%p)\n", data);
+
+    /* We are now executing in the context of the newly created thread.
+     * So we copy the data passed to us (it is on the stack of the function
+     * that called us, which is waiting for us to signal an event before
+     * returning). */
+    thread_data = *(struct thread_data *)data;
+
+    if (thread_data.flags & CTF_COINIT)
+    {
+        hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        if (FAILED(hr))
+            hr = CoInitializeEx(NULL, COINIT_DISABLE_OLE1DDE);
+    }
+
+    if (thread_data.callback)
+        thread_data.callback(thread_data.data);
+
+    /* Signal the thread that created us; it can return now. */
+    SetEvent(thread_data.hEvent);
+
+    /* Execute the callers start code. */
+    retval = thread_data.thread_proc(thread_data.data);
+
+    /* Release thread and process references. */
+    if (thread_data.thread_ref)
+        IUnknown_Release(thread_data.thread_ref);
+
+    if (thread_data.process_ref)
+        IUnknown_Release(thread_data.process_ref);
+
+    if (SUCCEEDED(hr))
+        CoUninitialize();
+
+    return retval;
+}
+
+/*************************************************************************
+ *      SHCreateThread        [SHCORE.@]
+ */
+BOOL WINAPI SHCreateThread(LPTHREAD_START_ROUTINE thread_proc, void *data, DWORD flags, LPTHREAD_START_ROUTINE callback)
+{
+    struct thread_data thread_data;
+    BOOL called = FALSE;
+
+    TRACE("(%p, %p, %#x, %p)\n", thread_proc, data, flags, callback);
+
+    thread_data.thread_proc = thread_proc;
+    thread_data.callback = callback;
+    thread_data.data = data;
+    thread_data.flags = flags;
+    thread_data.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    if (flags & CTF_THREAD_REF)
+        SHGetThreadRef(&thread_data.thread_ref);
+    else
+        thread_data.thread_ref = NULL;
+
+    if (flags & CTF_PROCESS_REF)
+        GetProcessReference(&thread_data.process_ref);
+    else
+        thread_data.process_ref = NULL;
+
+    /* Create the thread */
+    if (thread_data.hEvent)
+    {
+        HANDLE hThread;
+        DWORD retval;
+
+        hThread = CreateThread(NULL, 0, shcore_thread_wrapper, &thread_data, 0, &retval);
+        if (hThread)
+        {
+            /* Wait for the thread to signal us to continue */
+            WaitForSingleObject(thread_data.hEvent, INFINITE);
+            CloseHandle(hThread);
+            called = TRUE;
+        }
+        CloseHandle(thread_data.hEvent);
+    }
+
+    if (!called)
+    {
+        if (!thread_data.callback && flags & CTF_INSIST)
+        {
+            /* Couldn't call, call synchronously */
+            thread_data.thread_proc(data);
+            called = TRUE;
+        }
+        else
+        {
+            if (thread_data.thread_ref)
+                IUnknown_Release(thread_data.thread_ref);
+
+            if (thread_data.process_ref)
+                IUnknown_Release(thread_data.process_ref);
+        }
+    }
+
+    return called;
 }

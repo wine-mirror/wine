@@ -37,7 +37,7 @@
 @ stdcall SHCreateStreamOnFileA(str long ptr)
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr)
 @ stdcall SHCreateStreamOnFileW(wstr long ptr)
-@ stdcall SHCreateThread(ptr ptr long ptr) shlwapi.SHCreateThread
+@ stdcall SHCreateThread(ptr ptr long ptr)
 @ stdcall SHCreateThreadRef(ptr ptr)
 @ stub SHCreateThreadWithHandle
 @ stdcall SHDeleteEmptyKeyA(long ptr) shlwapi.SHDeleteEmptyKeyA
