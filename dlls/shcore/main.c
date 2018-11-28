@@ -1409,3 +1409,49 @@ BOOL WINAPI SHCreateThread(LPTHREAD_START_ROUTINE thread_proc, void *data, DWORD
 
     return called;
 }
+
+/*************************************************************************
+ * SHStrDupW    [SHCORE.@]
+ */
+HRESULT WINAPI SHStrDupW(const WCHAR *src, WCHAR **dest)
+{
+    size_t len;
+
+    TRACE("(%s, %p)\n", debugstr_w(src), dest);
+
+    *dest = NULL;
+
+    if (!src)
+        return E_INVALIDARG;
+
+    len = (strlenW(src) + 1) * sizeof(WCHAR);
+    *dest = CoTaskMemAlloc(len);
+    if (!*dest)
+        return E_OUTOFMEMORY;
+
+    memcpy(*dest, src, len);
+
+    return S_OK;
+}
+
+/*************************************************************************
+ * SHStrDupA    [SHCORE.@]
+ */
+HRESULT WINAPI SHStrDupA(const char *src, WCHAR **dest)
+{
+    DWORD len;
+
+    *dest = NULL;
+
+    if (!src)
+        return E_INVALIDARG;
+
+    len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
+    *dest = CoTaskMemAlloc(len * sizeof(WCHAR));
+    if (!*dest)
+        return E_OUTOFMEMORY;
+
+    MultiByteToWideChar(CP_ACP, 0, src, -1, *dest, len);
+
+    return S_OK;
+}

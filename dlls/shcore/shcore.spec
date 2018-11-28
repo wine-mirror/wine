@@ -73,8 +73,8 @@
 @ stdcall SHSetThreadRef(ptr)
 @ stdcall SHSetValueA(long  str  str long ptr long) shlwapi.SHSetValueA
 @ stdcall SHSetValueW(long wstr wstr long ptr long) shlwapi.SHSetValueW
-@ stdcall SHStrDupA(str ptr) shlwapi.SHStrDupA
-@ stdcall SHStrDupW(wstr ptr) shlwapi.SHStrDupW
+@ stdcall SHStrDupA(str ptr)
+@ stdcall SHStrDupW(wstr ptr)
 @ stdcall SHUnicodeToAnsi(wstr ptr ptr) shlwapi.SHUnicodeToAnsi
 @ stdcall SHUnicodeToUnicode(wstr ptr long) shlwapi.SHUnicodeToUnicode
 @ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
