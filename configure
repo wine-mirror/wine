@@ -5657,8 +5657,6 @@ then
     fi
     test "$srcdir" != . || as_fn_error $? "--with-wine64 cannot be used when building inside the source tree.
 You should create a separate build directory and run configure from there." "$LINENO" 5
-    enable_fonts=${enable_fonts:-no}
-    enable_server=${enable_server:-no}
 elif test "x$enable_win64" = "xyes"
 then
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"
@@ -20014,7 +20012,7 @@ wine_fn_config_makefile dlls/xmllite/tests enable_tests
 wine_fn_config_makefile dlls/xolehlp enable_xolehlp
 wine_fn_config_makefile dlls/xpsprint enable_xpsprint
 wine_fn_config_makefile dlls/xpssvcs enable_xpssvcs
-test -n "$with_wine64" || wine_fn_config_makefile fonts enable_fonts
+wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/port enable_port
 wine_fn_config_makefile libs/wine enable_wine
@@ -20124,7 +20122,7 @@ wine_fn_config_makefile programs/wscript/tests enable_tests
 wine_fn_config_makefile programs/wusa enable_wusa
 wine_fn_config_makefile programs/xcopy enable_xcopy
 wine_fn_config_makefile programs/xcopy/tests enable_tests
-test -n "$with_wine64" || wine_fn_config_makefile server enable_server
+wine_fn_config_makefile server enable_server
 test "x$enable_tools" = xno || wine_fn_config_makefile tools enable_tools
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/sfnt2fon enable_sfnt2fon
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/widl enable_widl
@@ -20187,9 +20185,8 @@ then
       /*) reldir="" ;;
       *)  reldir="../" ;;
     esac
-    wine_fn_append_rule "all: fonts server loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
-fonts server:
-	\$(RM) \$@ && \$(LN_S) $with_wine64/\$@ \$@
+        rm -f fonts server 2>/dev/null
+    wine_fn_append_rule "all: loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 loader/wine64 loader/wine64-preloader:
 	\$(RM) \$@ && \$(LN_S) $reldir$with_wine64/\$@ \$@
 $with_wine64/loader/wine:
@@ -20197,7 +20194,7 @@ $with_wine64/loader/wine:
 $with_wine64/loader/wine-preloader:
 	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine-preloader \$@
 clean::
-	\$(RM) fonts server loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
+	\$(RM) loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
 else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \

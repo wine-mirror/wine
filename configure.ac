@@ -235,8 +235,6 @@ then
     fi
     test "$srcdir" != . || AC_MSG_ERROR([--with-wine64 cannot be used when building inside the source tree.
 You should create a separate build directory and run configure from there.])
-    enable_fonts=${enable_fonts:-no}
-    enable_server=${enable_server:-no}
 elif test "x$enable_win64" = "xyes"
 then
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"
@@ -3877,7 +3875,7 @@ WINE_CONFIG_MAKEFILE(dlls/xmllite/tests)
 WINE_CONFIG_MAKEFILE(dlls/xolehlp)
 WINE_CONFIG_MAKEFILE(dlls/xpsprint)
 WINE_CONFIG_MAKEFILE(dlls/xpssvcs)
-WINE_CONFIG_MAKEFILE(fonts,,[test -n "$with_wine64"])
+WINE_CONFIG_MAKEFILE(fonts)
 WINE_CONFIG_MAKEFILE(include)
 WINE_CONFIG_MAKEFILE(libs/port)
 WINE_CONFIG_MAKEFILE(libs/wine)
@@ -3987,7 +3985,7 @@ WINE_CONFIG_MAKEFILE(programs/wscript/tests)
 WINE_CONFIG_MAKEFILE(programs/wusa)
 WINE_CONFIG_MAKEFILE(programs/xcopy)
 WINE_CONFIG_MAKEFILE(programs/xcopy/tests)
-WINE_CONFIG_MAKEFILE(server,,[test -n "$with_wine64"])
+WINE_CONFIG_MAKEFILE(server)
 WINE_CONFIG_MAKEFILE(tools,,[test "x$enable_tools" = xno])
 WINE_CONFIG_MAKEFILE(tools/sfnt2fon,,[test "x$enable_tools" = xno])
 WINE_CONFIG_MAKEFILE(tools/widl,,[test "x$enable_tools" = xno])
@@ -4065,10 +4063,10 @@ then
       /*) reldir="" ;;
       *)  reldir="../" ;;
     esac
+    dnl Get rid of old symlinks
+    rm -f fonts server 2>/dev/null
     WINE_APPEND_RULE(
-[all: fonts server loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
-fonts server:
-	\$(RM) \$[@] && \$(LN_S) $with_wine64/\$[@] \$[@]
+[all: loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 loader/wine64 loader/wine64-preloader:
 	\$(RM) \$[@] && \$(LN_S) $reldir$with_wine64/\$[@] \$[@]
 $with_wine64/loader/wine:
@@ -4076,7 +4074,7 @@ $with_wine64/loader/wine:
 $with_wine64/loader/wine-preloader:
 	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine-preloader \$[@]
 clean::
-	\$(RM) fonts server loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
+	\$(RM) loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
