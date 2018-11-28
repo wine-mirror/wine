@@ -691,6 +691,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                         SendMessageW( focus, EM_SETSEL, 0, MAXLONG );
                     SetFocus( focus );
                 }
+                else
+                    SetFocus( hwnd );
             }
         }
 

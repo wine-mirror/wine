@@ -13574,10 +13574,12 @@ static const struct message WmCreateDialogParamSeq_1[] = {
     { WM_MOVE, sent },
     { WM_SETFONT, sent },
     { WM_INITDIALOG, sent },
-    { WM_GETDLGCODE, sent|wparam|lparam, 0, 0 },
+    { WM_GETDLGCODE, sent|wparam|lparam|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
     { HCBT_SETFOCUS, hook },
     { HCBT_ACTIVATE, hook },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_QUERYNEWPALETTE, sent|optional },
+    { WM_PALETTEISCHANGING, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent },
     { WM_ACTIVATE, sent|wparam, 1 },
@@ -13760,9 +13762,8 @@ static void test_dialog_messages(void)
     flush_sequence();
     hdlg = CreateDialogParamA(0, "CLASS_TEST_DIALOG_2", 0, test_dlg_proc, 1);
     ok(IsWindow(hdlg), "CreateDialogParam failed\n");
-    ok_sequence(WmCreateDialogParamSeq_1, "CreateDialogParam_1", TRUE);
+    ok_sequence(WmCreateDialogParamSeq_1, "CreateDialogParam_1", FALSE);
     hfocus = GetFocus();
-todo_wine
     ok(hfocus == hdlg, "wrong focus %p\n", hfocus);
     EndDialog(hdlg, 0);
     DestroyWindow(hdlg);
