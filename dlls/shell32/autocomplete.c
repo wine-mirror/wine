@@ -22,7 +22,6 @@
 /*
   TODO:
   - implement ACO_SEARCH style
-  - implement ACO_FILTERPREFIXES style
   - implement ACO_RTLREADING style
   - implement ACO_WORD_FILTER style
  */
@@ -81,6 +80,13 @@ enum autoappend_flag
     autoappend_flag_displayempty
 };
 
+enum prefix_filtering
+{
+    prefix_filtering_none = 0,  /* no prefix filtering (raw search) */
+    prefix_filtering_protocol,  /* filter common protocol (e.g. http://) */
+    prefix_filtering_all        /* filter all common prefixes (protocol & www. ) */
+};
+
 static const WCHAR autocomplete_propertyW[] = {'W','i','n','e',' ','A','u','t','o',
                                                'c','o','m','p','l','e','t','e',' ',
                                                'c','o','n','t','r','o','l',0};
@@ -103,14 +109,98 @@ static void set_text_and_selection(IAutoCompleteImpl *ac, HWND hwnd, WCHAR *text
         CallWindowProcW(proc, hwnd, EM_SETSEL, start, end);
 }
 
-static int sort_strs_cmpfn(const void *a, const void *b)
+static inline WCHAR *filter_protocol(WCHAR *str)
 {
-    return strcmpiW(*(WCHAR* const*)a, *(WCHAR* const*)b);
+    static const WCHAR http[] = {'h','t','t','p'};
+
+    if (!strncmpW(str, http, ARRAY_SIZE(http)))
+    {
+        str += ARRAY_SIZE(http);
+        str += (*str == 's');    /* https */
+        if (str[0] == ':' && str[1] == '/' && str[2] == '/')
+            return str + 3;
+    }
+    return NULL;
 }
 
-static void sort_strs(WCHAR **strs, UINT numstrs)
+static inline WCHAR *filter_www(WCHAR *str)
 {
-    qsort(strs, numstrs, sizeof(*strs), sort_strs_cmpfn);
+    static const WCHAR www[] = {'w','w','w','.'};
+
+    if (!strncmpW(str, www, ARRAY_SIZE(www)))
+        return str + ARRAY_SIZE(www);
+    return NULL;
+}
+
+/*
+   Get the prefix filtering based on text, for example if text's prefix
+   is a protocol, then we return none because we actually filter nothing
+*/
+static enum prefix_filtering get_text_prefix_filtering(const WCHAR *text)
+{
+    /* Convert to lowercase to perform case insensitive filtering,
+       using the longest possible prefix as the size of the buffer */
+    WCHAR buf[sizeof("https://")];
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(buf) - 1 && text[i]; i++)
+        buf[i] = tolowerW(text[i]);
+    buf[i] = '\0';
+
+    if (filter_protocol(buf)) return prefix_filtering_none;
+    if (filter_www(buf)) return prefix_filtering_protocol;
+    return prefix_filtering_all;
+}
+
+/*
+   Filter the prefix of str based on the value of pfx_filter
+   This is used in sorting, so it's more performance sensitive
+*/
+static WCHAR *filter_str_prefix(WCHAR *str, enum prefix_filtering pfx_filter)
+{
+    WCHAR *p = str;
+
+    if (pfx_filter == prefix_filtering_none) return str;
+    if ((p = filter_protocol(str))) str = p;
+
+    if (pfx_filter == prefix_filtering_protocol) return str;
+    if ((p = filter_www(str))) str = p;
+
+    return str;
+}
+
+static inline int sort_strs_cmpfn_impl(WCHAR *a, WCHAR *b, enum prefix_filtering pfx_filter)
+{
+    WCHAR *str1 = filter_str_prefix(a, pfx_filter);
+    WCHAR *str2 = filter_str_prefix(b, pfx_filter);
+    return strcmpiW(str1, str2);
+}
+
+static int sort_strs_cmpfn_none(const void *a, const void *b)
+{
+    return sort_strs_cmpfn_impl(*(WCHAR* const*)a, *(WCHAR* const*)b, prefix_filtering_none);
+}
+
+static int sort_strs_cmpfn_protocol(const void *a, const void *b)
+{
+    return sort_strs_cmpfn_impl(*(WCHAR* const*)a, *(WCHAR* const*)b, prefix_filtering_protocol);
+}
+
+static int sort_strs_cmpfn_all(const void *a, const void *b)
+{
+    return sort_strs_cmpfn_impl(*(WCHAR* const*)a, *(WCHAR* const*)b, prefix_filtering_all);
+}
+
+static int (*const sort_strs_cmpfn[])(const void*, const void*) =
+{
+    sort_strs_cmpfn_none,
+    sort_strs_cmpfn_protocol,
+    sort_strs_cmpfn_all
+};
+
+static void sort_strs(WCHAR **strs, UINT numstrs, enum prefix_filtering pfx_filter)
+{
+    qsort(strs, numstrs, sizeof(*strs), sort_strs_cmpfn[pfx_filter]);
 }
 
 /*
@@ -119,7 +209,7 @@ static void sort_strs(WCHAR **strs, UINT numstrs)
    We don't free the enumerated strings (except on error) to avoid needless
    copies, until the next reset (or the object itself is destroyed)
 */
-static void enumerate_strings(IAutoCompleteImpl *ac)
+static void enumerate_strings(IAutoCompleteImpl *ac, enum prefix_filtering pfx_filter)
 {
     UINT cur = 0, array_size = 1024;
     LPOLESTR *strs = NULL, *tmp;
@@ -145,7 +235,7 @@ static void enumerate_strings(IAutoCompleteImpl *ac)
     {
         strs = tmp;
         if (cur > 0)
-            sort_strs(strs, cur);
+            sort_strs(strs, cur, pfx_filter);
 
         ac->enum_strs = strs;
         ac->enum_strs_num = cur;
@@ -159,14 +249,14 @@ fail:
 }
 
 static UINT find_matching_enum_str(IAutoCompleteImpl *ac, UINT start, WCHAR *text,
-                                   UINT len, int direction)
+                                   UINT len, enum prefix_filtering pfx_filter, int direction)
 {
     WCHAR **strs = ac->enum_strs;
     UINT index = ~0, a = start, b = ac->enum_strs_num;
     while (a < b)
     {
         UINT i = (a + b - 1) / 2;
-        int cmp = strncmpiW(text, strs[i], len);
+        int cmp = strncmpiW(text, filter_str_prefix(strs[i], pfx_filter), len);
         if (cmp == 0)
         {
             index = i;
@@ -406,7 +496,8 @@ static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *
 }
 
 static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
-                                  HWND hwnd, enum autoappend_flag flag)
+                                  enum prefix_filtering pfx_filter, HWND hwnd,
+                                  enum autoappend_flag flag)
 {
     /* Return FALSE if we need to hide the listbox */
     WCHAR **str = ac->enum_strs;
@@ -416,17 +507,17 @@ static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
     /* Windows seems to disable autoappend if ACO_NOPREFIXFILTERING is set */
     if (!(ac->options & ACO_NOPREFIXFILTERING) && len)
     {
-        start = find_matching_enum_str(ac, 0, text, len, -1);
+        start = find_matching_enum_str(ac, 0, text, len, pfx_filter, -1);
         if (start == ~0)
             return (ac->options & ACO_AUTOSUGGEST) ? FALSE : TRUE;
 
         if (flag == autoappend_flag_yes)
-            autoappend_str(ac, text, len, str[start], hwnd);
+            autoappend_str(ac, text, len, filter_str_prefix(str[start], pfx_filter), hwnd);
         if (!(ac->options & ACO_AUTOSUGGEST))
             return TRUE;
 
         /* Find the index beyond the last string that matches */
-        end = find_matching_enum_str(ac, start + 1, text, len, 1);
+        end = find_matching_enum_str(ac, start + 1, text, len, pfx_filter, 1);
         end = (end == ~0 ? start : end) + 1;
     }
     else
@@ -450,10 +541,26 @@ static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
     return TRUE;
 }
 
+static enum prefix_filtering setup_prefix_filtering(IAutoCompleteImpl *ac, const WCHAR *text)
+{
+    enum prefix_filtering pfx_filter;
+    if (!(ac->options & ACO_FILTERPREFIXES)) return prefix_filtering_none;
+
+    pfx_filter = get_text_prefix_filtering(text);
+    if (!ac->enum_strs) return pfx_filter;
+
+    /* If the prefix filtering is different, re-sort the filtered strings */
+    if (pfx_filter != get_text_prefix_filtering(ac->txtbackup))
+        sort_strs(ac->enum_strs, ac->enum_strs_num, pfx_filter);
+
+    return pfx_filter;
+}
+
 static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_flag flag)
 {
     WCHAR *text;
     BOOL expanded = FALSE;
+    enum prefix_filtering pfx_filter;
     UINT size, len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 
     if (flag != autoappend_flag_displayempty && len == 0)
@@ -477,10 +584,12 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
             flag = autoappend_flag_no;
         expanded = aclist_expand(ac, text);
     }
+    pfx_filter = setup_prefix_filtering(ac, text);
+
     if (expanded || !ac->enum_strs)
     {
         if (!expanded) IEnumString_Reset(ac->enumstr);
-        enumerate_strings(ac);
+        enumerate_strings(ac, pfx_filter);
     }
 
     /* Set txtbackup to point to text itself (which must not be released),
@@ -488,7 +597,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
     heap_free(ac->txtbackup);
     ac->txtbackup = text;
 
-    if (!display_matching_strs(ac, text, len, hwnd, flag))
+    if (!display_matching_strs(ac, text, len, pfx_filter, hwnd, flag))
         hide_listbox(ac, ac->hwndListBox, FALSE);
 }
 
@@ -832,7 +941,6 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
 	  This, hwndEdit, punkACL, debugstr_w(pwzsRegKeyPath), debugstr_w(pwszQuickComplete));
 
     if (This->options & ACO_SEARCH) FIXME(" ACO_SEARCH not supported\n");
-    if (This->options & ACO_FILTERPREFIXES) FIXME(" ACO_FILTERPREFIXES not supported\n");
     if (This->options & ACO_RTLREADING) FIXME(" ACO_RTLREADING not supported\n");
     if (This->options & ACO_WORD_FILTER) FIXME(" ACO_WORD_FILTER not supported\n");
 
@@ -965,6 +1073,7 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
     DWORD dwFlag)
 {
     IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
+    DWORD changed = This->options ^ dwFlag;
     HRESULT hr = S_OK;
 
     TRACE("(%p) -> (0x%x)\n", This, dwFlag);
@@ -975,6 +1084,13 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
         create_listbox(This);
     else if (!(This->options & ACO_AUTOSUGGEST) && This->hwndListBox)
         hide_listbox(This, This->hwndListBox, TRUE);
+
+    /* If ACO_FILTERPREFIXES changed we might have to reset the enumerator */
+    if ((changed & ACO_FILTERPREFIXES) && This->txtbackup)
+    {
+        if (get_text_prefix_filtering(This->txtbackup) != prefix_filtering_none)
+            IAutoCompleteDropDown_ResetEnumerator(&This->IAutoCompleteDropDown_iface);
+    }
 
     return hr;
 }
