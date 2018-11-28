@@ -558,34 +558,29 @@ __ASM_GLOBAL_FUNC( do_x86cpuid,
                    "popl %ebx\n\t"
                    "popl %esi\n\t"
                    "ret" )
+extern int have_x86cpuid(void);
+__ASM_GLOBAL_FUNC( have_x86cpuid,
+                   "pushfl\n\t"
+                   "pushfl\n\t"
+                   "movl (%esp),%ecx\n\t"
+                   "xorl $0x00200000,(%esp)\n\t"
+                   "popfl\n\t"
+                   "pushfl\n\t"
+                   "popl %eax\n\t"
+                   "popfl\n\t"
+                   "xorl %ecx,%eax\n\t"
+                   "andl $0x00200000,%eax\n\t"
+                   "ret" )
 #else
 static void do_x86cpuid(unsigned int ax, unsigned int *p)
 {
 }
-#endif
 
-/* From xf86info havecpuid.c 1.11 */
-static inline int have_x86cpuid(void)
+static int have_x86cpuid(void)
 {
-#if defined(__GNUC__) && defined(__i386__)
-    unsigned int f1, f2;
-    __asm__("pushfl\n\t"
-            "pushfl\n\t"
-            "popl %0\n\t"
-            "movl %0,%1\n\t"
-            "xorl %2,%0\n\t"
-            "pushl %0\n\t"
-            "popfl\n\t"
-            "pushfl\n\t"
-            "popl %0\n\t"
-            "popfl"
-            : "=&r" (f1), "=&r" (f2)
-            : "ir" (0x00200000));
-    return ((f1^f2) & 0x00200000) != 0;
-#else
     return 0;
-#endif
 }
+#endif
 
 /******************************************************************
  *		dump_system_info
