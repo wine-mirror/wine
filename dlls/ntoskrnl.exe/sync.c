@@ -348,3 +348,19 @@ BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, 
 
     return ret;
 }
+
+BOOLEAN WINAPI KeCancelTimer( KTIMER *timer )
+{
+    BOOL ret;
+
+    TRACE("timer %p.\n", timer);
+
+    EnterCriticalSection( &sync_cs );
+    ret = timer->Header.Inserted;
+    timer->Header.Inserted = FALSE;
+    CloseHandle(timer->Header.WaitListHead.Blink);
+    timer->Header.WaitListHead.Blink = NULL;
+    LeaveCriticalSection( &sync_cs );
+
+    return ret;
+}

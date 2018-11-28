@@ -517,7 +517,7 @@
 @ stub KeAttachProcess
 @ stub KeBugCheck
 @ stub KeBugCheckEx
-@ stub KeCancelTimer
+@ stdcall KeCancelTimer(ptr)
 @ stub KeCapturePersistentThreadState
 @ stdcall KeClearEvent(ptr)
 @ stub KeConnectInterrupt
