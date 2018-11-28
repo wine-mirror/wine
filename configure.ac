@@ -225,18 +225,11 @@ enable_win64=${enable_win64:-no}
 dnl Disable winetest too if tests are disabled
 enable_winetest=${enable_winetest:-$enable_tests}
 
-dnl Some special cases for the wow64 build
-if test -n "$with_wine64"
+dnl Some special cases for the 64-bit build
+if test "x$enable_win64" = "xyes"
 then
-    if test "x$enable_win64" = "xyes"
-    then
-        AC_MSG_ERROR([--enable-win64 and --with-wine64 are mutually exclusive.
+    test -z "$with_wine64" || AC_MSG_ERROR([--enable-win64 and --with-wine64 are mutually exclusive.
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree.])
-    fi
-    test "$srcdir" != . || AC_MSG_ERROR([--with-wine64 cannot be used when building inside the source tree.
-You should create a separate build directory and run configure from there.])
-elif test "x$enable_win64" = "xyes"
-then
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"
 fi
 
