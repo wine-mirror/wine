@@ -54,9 +54,11 @@ static void fatal_perror( const char *err, ... )  __attribute__((noreturn,format
 #endif
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__ )
-#define EXE_LINK "/proc/self/exe"
+static const char exe_link[] = "/proc/self/exe";
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
-#define EXE_LINK "/proc/curproc/file"
+static const char exe_link[] = "/proc/curproc/file";
+#else
+static const char exe_link[] = "";
 #endif
 
 /* die on a fatal error */
@@ -151,30 +153,34 @@ static char *get_runtime_libdir(void)
     return NULL;
 }
 
-/* return the directory that contains the main exe at run-time */
-static char *get_runtime_exedir(void)
+/* read a symlink and return its directory */
+static char *symlink_dirname( const char *name )
 {
-#ifdef EXE_LINK
-    char *p, *bindir;
-    int size;
+    char *p, *buffer;
+    int ret, size;
 
     for (size = 256; ; size *= 2)
     {
-        int ret;
-        if (!(bindir = malloc( size ))) return NULL;
-        if ((ret = readlink( EXE_LINK, bindir, size )) == -1) break;
+        if (!(buffer = malloc( size ))) return NULL;
+        if ((ret = readlink( name, buffer, size )) == -1) break;
         if (ret != size)
         {
-            bindir[ret] = 0;
-            if (!(p = strrchr( bindir, '/' ))) break;
-            if (p == bindir) p++;
+            buffer[ret] = 0;
+            if (!(p = strrchr( buffer, '/' ))) break;
+            if (p == buffer) p++;
             *p = 0;
-            return bindir;
+            return buffer;
         }
-        free( bindir );
+        free( buffer );
     }
-    free( bindir );
-#endif
+    free( buffer );
+    return NULL;
+}
+
+/* return the directory that contains the main exe at run-time */
+static char *get_runtime_exedir(void)
+{
+    if (exe_link[0]) return symlink_dirname( exe_link );
     return NULL;
 }
 
