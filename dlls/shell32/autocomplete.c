@@ -1181,7 +1181,7 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnResetEnumerator(
 
     TRACE("(%p)\n", This);
 
-    if (This->initialized)
+    if (This->hwndEdit)
     {
         free_enum_strs(This);
         if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBox))
