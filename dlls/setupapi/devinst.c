@@ -1341,8 +1341,8 @@ BOOL WINAPI SetupDiCreateDeviceInfoA(HDEVINFO DeviceInfoSet, const char *name,
         const GUID *ClassGuid, PCSTR DeviceDescription, HWND hwndParent, DWORD CreationFlags,
         PSP_DEVINFO_DATA DeviceInfoData)
 {
+    WCHAR nameW[MAX_DEVICE_ID_LEN];
     BOOL ret = FALSE;
-    LPWSTR DeviceNameW = NULL;
     LPWSTR DeviceDescriptionW = NULL;
 
     if (!name || strlen(name) >= MAX_DEVICE_ID_LEN)
@@ -1351,23 +1351,18 @@ BOOL WINAPI SetupDiCreateDeviceInfoA(HDEVINFO DeviceInfoSet, const char *name,
         return FALSE;
     }
 
-    DeviceNameW = MultiByteToUnicode(name, CP_ACP);
-    if (DeviceNameW == NULL) return FALSE;
+    MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, sizeof(nameW));
 
     if (DeviceDescription)
     {
         DeviceDescriptionW = MultiByteToUnicode(DeviceDescription, CP_ACP);
         if (DeviceDescriptionW == NULL)
-        {
-            MyFree(DeviceNameW);
             return FALSE;
-        }
     }
 
-    ret = SetupDiCreateDeviceInfoW(DeviceInfoSet, DeviceNameW, ClassGuid, DeviceDescriptionW,
+    ret = SetupDiCreateDeviceInfoW(DeviceInfoSet, nameW, ClassGuid, DeviceDescriptionW,
             hwndParent, CreationFlags, DeviceInfoData);
 
-    MyFree(DeviceNameW);
     MyFree(DeviceDescriptionW);
 
     return ret;
