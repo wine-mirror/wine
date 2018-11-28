@@ -12864,6 +12864,8 @@ static INT_PTR WINAPI test_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPAR
     switch (message)
     {
     case WM_INITDIALOG:
+        return lParam;
+
     case WM_GETDLGCODE:
         return 0;
     }
@@ -12972,6 +12974,20 @@ static const struct message WmDefDlgSetFocus_2[] = {
     { 0 }
 };
 /* Creation of a dialog */
+static const struct message WmCreateDialogParamSeq_0[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { WM_SETFONT, sent },
+    { WM_INITDIALOG, sent },
+    { WM_CHANGEUISTATE, sent|optional },
+    { 0 }
+};
+/* Creation of a dialog */
 static const struct message WmCreateDialogParamSeq_1[] = {
     { HCBT_CREATEWND, hook },
     { WM_NCCREATE, sent },
@@ -12982,6 +12998,14 @@ static const struct message WmCreateDialogParamSeq_1[] = {
     { WM_MOVE, sent },
     { WM_SETFONT, sent },
     { WM_INITDIALOG, sent },
+    { WM_GETDLGCODE, sent|wparam|lparam, 0, 0 },
+    { HCBT_SETFOCUS, hook },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { WM_SETFOCUS, sent },
     { WM_CHANGEUISTATE, sent|optional },
     { 0 }
 };
@@ -13145,9 +13169,25 @@ static void test_dialog_messages(void)
     cls.lpfnWndProc = test_dlg_proc;
     if (!RegisterClassA(&cls)) assert(0);
 
+    SetFocus(0);
+    flush_sequence();
     hdlg = CreateDialogParamA(0, "CLASS_TEST_DIALOG_2", 0, test_dlg_proc, 0);
     ok(IsWindow(hdlg), "CreateDialogParam failed\n");
-    ok_sequence(WmCreateDialogParamSeq_1, "CreateDialogParam_1", FALSE);
+    ok_sequence(WmCreateDialogParamSeq_0, "CreateDialogParam_0", FALSE);
+    hfocus = GetFocus();
+    ok(hfocus == 0, "wrong focus %p\n", hfocus);
+    EndDialog(hdlg, 0);
+    DestroyWindow(hdlg);
+    flush_sequence();
+
+    SetFocus(0);
+    flush_sequence();
+    hdlg = CreateDialogParamA(0, "CLASS_TEST_DIALOG_2", 0, test_dlg_proc, 1);
+    ok(IsWindow(hdlg), "CreateDialogParam failed\n");
+    ok_sequence(WmCreateDialogParamSeq_1, "CreateDialogParam_1", TRUE);
+    hfocus = GetFocus();
+todo_wine
+    ok(hfocus == hdlg, "wrong focus %p\n", hfocus);
     EndDialog(hdlg, 0);
     DestroyWindow(hdlg);
     flush_sequence();
