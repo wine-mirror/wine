@@ -103,9 +103,14 @@ static void set_text_and_selection(IAutoCompleteImpl *ac, HWND hwnd, WCHAR *text
         CallWindowProcW(proc, hwnd, EM_SETSEL, start, end);
 }
 
-static int enumerate_strings_cmpfn(const void *a, const void *b)
+static int sort_strs_cmpfn(const void *a, const void *b)
 {
     return strcmpiW(*(WCHAR* const*)a, *(WCHAR* const*)b);
+}
+
+static void sort_strs(WCHAR **strs, UINT numstrs)
+{
+    qsort(strs, numstrs, sizeof(*strs), sort_strs_cmpfn);
 }
 
 /*
@@ -140,7 +145,7 @@ static void enumerate_strings(IAutoCompleteImpl *ac)
     {
         strs = tmp;
         if (cur > 0)
-            qsort(strs, cur, sizeof(*strs), enumerate_strings_cmpfn);
+            sort_strs(strs, cur);
 
         ac->enum_strs = strs;
         ac->enum_strs_num = cur;
