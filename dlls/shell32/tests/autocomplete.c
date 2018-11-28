@@ -450,6 +450,50 @@ static void dispatch_messages(void)
     }
 }
 
+#define check_dropdown(acdropdown, hwnd_edit, list, list_num) check_dropdown_(__FILE__, __LINE__, acdropdown, hwnd_edit, list, list_num)
+static void check_dropdown_(const char *file, UINT line, IAutoCompleteDropDown *acdropdown, HWND hwnd_edit, WCHAR **list, UINT list_num)
+{
+    UINT i;
+    DWORD flags = 0;
+    LPWSTR str;
+    HRESULT hr;
+
+    hr = IAutoCompleteDropDown_GetDropDownStatus(acdropdown, &flags, &str);
+    ok_(file, line)(hr == S_OK, "IAutoCompleteDropDown_GetDropDownStatus failed: %x\n", hr);
+    if (hr != S_OK) return;
+    if (list_num) ok_(file, line)(flags & ACDD_VISIBLE, "AutoComplete DropDown not visible\n");
+    else
+    {
+        ok_(file, line)(!(flags & ACDD_VISIBLE), "AutoComplete DropDown visible\n");
+        return;
+    }
+    ok_(file, line)(str == NULL, "Expected (null), got %s\n", wine_dbgstr_w(str));
+    if (str)
+    {
+        CoTaskMemFree(str);
+        return;
+    }
+
+    for (i = 0; i <= list_num; i++)
+    {
+        flags = 0;
+        SendMessageW(hwnd_edit, WM_KEYDOWN, VK_DOWN, 0);
+        SendMessageW(hwnd_edit, WM_KEYUP, VK_DOWN, 0xc0000000);
+        hr = IAutoCompleteDropDown_GetDropDownStatus(acdropdown, &flags, &str);
+        ok_(file, line)(hr == S_OK, "IAutoCompleteDropDown_GetDropDownStatus failed: %x\n", hr);
+        ok_(file, line)(flags & ACDD_VISIBLE, "AutoComplete DropDown not visible\n");
+        if (hr == S_OK)
+        {
+            if (i < list_num)
+                ok_(file, line)(str && !lstrcmpW(list[i], str), "Expected %s, got %s\n",
+                                wine_dbgstr_w(list[i]), wine_dbgstr_w(str));
+            else
+                ok_(file, line)(str == NULL, "Expected (null), got %s\n", wine_dbgstr_w(str));
+        }
+        if (str) CoTaskMemFree(str);
+    }
+}
+
 static void test_aclist_expand(HWND hwnd_edit, void *enumerator)
 {
     struct string_enumerator *obj = (struct string_enumerator*)enumerator;
@@ -502,6 +546,132 @@ static void test_aclist_expand(HWND hwnd_edit, void *enumerator)
     dispatch_messages();
     ok(obj->num_expand == 4, "Expected 4 expansions, got %u\n", obj->num_expand);
     ok(obj->num_resets == 5, "Expected 5 resets, got %u\n", obj->num_resets);
+}
+
+static void test_prefix_filtering(HWND hwnd_edit)
+{
+    static WCHAR htt[]  = {'h','t','t',0};
+    static WCHAR www[]  = {'w','w','w','.',0};
+    static WCHAR str0[] = {'w','w','w','.','a','x',0};
+    static WCHAR str1[] = {'h','t','t','p','s',':','/','/','w','w','w','.','a','c',0};
+    static WCHAR str2[] = {'a','a',0};
+    static WCHAR str3[] = {'a','b',0};
+    static WCHAR str4[] = {'h','t','t','p',':','/','/','a','0',0};
+    static WCHAR str5[] = {'h','t','t','p','s',':','/','/','h','t','a',0};
+    static WCHAR str6[] = {'h','f','o','o',0};
+    static WCHAR str7[] = {'h','t','t','p',':','/','/','w','w','w','.','a','d','d',0};
+    static WCHAR str8[] = {'w','w','w','.','w','w','w','.','?',0};
+    static WCHAR str9[] = {'h','t','t','p',':','/','/','a','b','c','.','a','a','.','c','o','m',0};
+    static WCHAR str10[]= {'f','t','p',':','/','/','a','b','c',0};
+    static WCHAR str11[]= {'f','i','l','e',':','/','/','a','a',0};
+    static WCHAR str12[]= {'f','t','p',':','/','/','w','w','w','.','a','a',0};
+    static WCHAR *suggestions[] = { str0, str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12 };
+    static WCHAR *sorted1[] = { str4, str2, str3, str9, str1, str7, str0 };
+    static WCHAR *sorted2[] = { str3, str9 };
+    static WCHAR *sorted3[] = { str1, str7, str0 };
+    static WCHAR *sorted4[] = { str6, str5 };
+    static WCHAR *sorted5[] = { str5 };
+    static WCHAR *sorted6[] = { str4, str9 };
+    static WCHAR *sorted7[] = { str11, str10, str12 };
+    IUnknown *enumerator;
+    IAutoComplete2 *autocomplete;
+    IAutoCompleteDropDown *acdropdown;
+    WCHAR buffer[20];
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_AutoComplete, NULL, CLSCTX_INPROC_SERVER, &IID_IAutoComplete2, (void**)&autocomplete);
+    ok(hr == S_OK, "CoCreateInstance failed: %x\n", hr);
+
+    hr = IAutoComplete2_QueryInterface(autocomplete, &IID_IAutoCompleteDropDown, (LPVOID*)&acdropdown);
+    ok(hr == S_OK, "No IAutoCompleteDropDown interface: %x\n", hr);
+
+    string_enumerator_create((void**)&enumerator, suggestions, ARRAY_SIZE(suggestions));
+
+    hr = IAutoComplete2_SetOptions(autocomplete, ACO_FILTERPREFIXES | ACO_AUTOSUGGEST | ACO_AUTOAPPEND);
+    ok(hr == S_OK, "IAutoComplete2_SetOptions failed: %x\n", hr);
+    hr = IAutoComplete2_Init(autocomplete, hwnd_edit, enumerator, NULL, NULL);
+    ok(hr == S_OK, "IAutoComplete_Init failed: %x\n", hr);
+
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str4 + 7, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str4 + 7), wine_dbgstr_w(buffer));
+    check_dropdown(acdropdown, hwnd_edit, sorted1, ARRAY_SIZE(sorted1));
+
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'b', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str3, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str3), wine_dbgstr_w(buffer));
+    check_dropdown(acdropdown, hwnd_edit, sorted2, ARRAY_SIZE(sorted2));
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'b', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'c', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str9 + 7, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str9 + 7), wine_dbgstr_w(buffer));
+
+    SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)www);
+    SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(www) - 1, ARRAY_SIZE(www) - 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str1 + 8, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str1 + 8), wine_dbgstr_w(buffer));
+    check_dropdown(acdropdown, hwnd_edit, sorted3, ARRAY_SIZE(sorted3));
+    SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)www);
+    SendMessageW(hwnd_edit, EM_SETSEL, ARRAY_SIZE(www) - 1, ARRAY_SIZE(www) - 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'w', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str8, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str8), wine_dbgstr_w(buffer));
+
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'h', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str6, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str6), wine_dbgstr_w(buffer));
+    check_dropdown(acdropdown, hwnd_edit, sorted4, ARRAY_SIZE(sorted4));
+    SendMessageW(hwnd_edit, WM_CHAR, 't', 1);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str5 + 8, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str5 + 8), wine_dbgstr_w(buffer));
+    check_dropdown(acdropdown, hwnd_edit, sorted5, ARRAY_SIZE(sorted5));
+    SendMessageW(hwnd_edit, WM_CHAR, 't', 1);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(htt, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(htt), wine_dbgstr_w(buffer));
+    check_dropdown(acdropdown, hwnd_edit, NULL, 0);
+    SendMessageW(hwnd_edit, WM_CHAR, 'p', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, ':', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, '/', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, '/', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'a', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    ok(lstrcmpW(str4, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(str4), wine_dbgstr_w(buffer));
+    check_dropdown(acdropdown, hwnd_edit, sorted6, ARRAY_SIZE(sorted6));
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, 2);
+    SendMessageW(hwnd_edit, WM_CHAR, 'H', 1);
+    dispatch_messages();
+    check_dropdown(acdropdown, hwnd_edit, NULL, 0);
+    SendMessageW(hwnd_edit, WM_CHAR, 't', 1);
+    dispatch_messages();
+    check_dropdown(acdropdown, hwnd_edit, sorted6, ARRAY_SIZE(sorted6));
+
+    SendMessageW(hwnd_edit, EM_SETSEL, 0, -1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'F', 1);
+    dispatch_messages();
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    check_dropdown(acdropdown, hwnd_edit, sorted7, ARRAY_SIZE(sorted7));
+    SendMessageW(hwnd_edit, WM_CHAR, 'i', 1);
+    SendMessageW(hwnd_edit, WM_CHAR, 'L', 1);
+    SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
+    check_dropdown(acdropdown, hwnd_edit, sorted7, 1);
+
+    IAutoCompleteDropDown_Release(acdropdown);
+    IAutoComplete2_Release(autocomplete);
+    IUnknown_Release(enumerator);
 }
 
 static void test_custom_source(void)
@@ -617,6 +787,8 @@ static void test_custom_source(void)
     dispatch_messages();
     ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
     IAutoCompleteDropDown_Release(acdropdown);
+
+    test_prefix_filtering(hwnd_edit);
 
     ShowWindow(hMainWnd, SW_HIDE);
     DestroyWindow(hwnd_edit);
