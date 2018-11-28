@@ -271,8 +271,8 @@ static void test_device_info(void)
 {
     static const GUID deadbeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
     SP_DEVINFO_DATA device = {0}, ret_device = {sizeof(ret_device)};
+    char id[MAX_DEVICE_ID_LEN + 2];
     HDEVINFO set;
-    char id[50];
     BOOL ret;
 
     SetLastError(0xdeadbeef);
@@ -381,6 +381,24 @@ todo_wine {
     check_device_info(set, 1, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\null");
     check_device_info(set, 2, &guid, "ROOT\\LEGACY_BOGUS\\testguid");
     check_device_info(set, 3, NULL, NULL);
+
+    memset(id, 'x', sizeof(id));
+    memcpy(id, "Root\\LEGACY_BOGUS\\", strlen("Root\\LEGACY_BOGUS\\"));
+    id[MAX_DEVICE_ID_LEN + 1] = 0;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInfoA(set, id, &guid, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#x.\n", GetLastError());
+
+    id[MAX_DEVICE_ID_LEN] = 0;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiCreateDeviceInfoA(set, id, &guid, NULL, NULL, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#x.\n", GetLastError());
+
+    id[MAX_DEVICE_ID_LEN - 1] = 0;
+    ret = SetupDiCreateDeviceInfoA(set, id, &guid, NULL, NULL, 0, NULL);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
 
     SetupDiDestroyDeviceInfoList(set);
 }

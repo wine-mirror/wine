@@ -1337,7 +1337,7 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_da
 /***********************************************************************
  *              SetupDiCreateDeviceInfoA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiCreateDeviceInfoA(HDEVINFO DeviceInfoSet, PCSTR DeviceName,
+BOOL WINAPI SetupDiCreateDeviceInfoA(HDEVINFO DeviceInfoSet, const char *name,
         const GUID *ClassGuid, PCSTR DeviceDescription, HWND hwndParent, DWORD CreationFlags,
         PSP_DEVINFO_DATA DeviceInfoData)
 {
@@ -1345,11 +1345,15 @@ BOOL WINAPI SetupDiCreateDeviceInfoA(HDEVINFO DeviceInfoSet, PCSTR DeviceName,
     LPWSTR DeviceNameW = NULL;
     LPWSTR DeviceDescriptionW = NULL;
 
-    if (DeviceName)
+    if (!name || strlen(name) >= MAX_DEVICE_ID_LEN)
     {
-        DeviceNameW = MultiByteToUnicode(DeviceName, CP_ACP);
-        if (DeviceNameW == NULL) return FALSE;
+        SetLastError(ERROR_INVALID_DEVINST_NAME);
+        return FALSE;
     }
+
+    DeviceNameW = MultiByteToUnicode(name, CP_ACP);
+    if (DeviceNameW == NULL) return FALSE;
+
     if (DeviceDescription)
     {
         DeviceDescriptionW = MultiByteToUnicode(DeviceDescription, CP_ACP);
@@ -1407,7 +1411,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, PCWSTR DeviceName,
             devinfo, debugstr_w(DeviceName), debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
             hwndParent, CreationFlags, device_data);
 
-    if (!DeviceName)
+    if (!DeviceName || strlenW(DeviceName) >= MAX_DEVICE_ID_LEN)
     {
         SetLastError(ERROR_INVALID_DEVINST_NAME);
         return FALSE;
