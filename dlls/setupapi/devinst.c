@@ -1607,57 +1607,25 @@ BOOL WINAPI SetupDiEnumDeviceInfo(HDEVINFO devinfo, DWORD index, SP_DEVINFO_DATA
 /***********************************************************************
  *		SetupDiGetDeviceInstanceIdA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetDeviceInstanceIdA(
-	HDEVINFO DeviceInfoSet,
-	PSP_DEVINFO_DATA DeviceInfoData,
-	PSTR DeviceInstanceId,
-	DWORD DeviceInstanceIdSize,
-	PDWORD RequiredSize)
+BOOL WINAPI SetupDiGetDeviceInstanceIdA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
+        char *id, DWORD size, DWORD *needed)
 {
-    BOOL ret = FALSE;
-    DWORD size;
-    PWSTR instanceId;
+    WCHAR idW[MAX_DEVICE_ID_LEN];
 
-    TRACE("%p %p %p %d %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
-	    DeviceInstanceIdSize, RequiredSize);
+    TRACE("devinfo %p, device_data %p, id %p, size %d, needed %p.\n",
+            devinfo, device_data, id, size, needed);
 
-    SetupDiGetDeviceInstanceIdW(DeviceInfoSet,
-                                DeviceInfoData,
-                                NULL,
-                                0,
-                                &size);
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+    if (!SetupDiGetDeviceInstanceIdW(devinfo, device_data, idW, ARRAY_SIZE(idW), NULL))
         return FALSE;
-    instanceId = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-    if (instanceId)
-    {
-        ret = SetupDiGetDeviceInstanceIdW(DeviceInfoSet,
-                                          DeviceInfoData,
-                                          instanceId,
-                                          size,
-                                          &size);
-        if (ret)
-        {
-            int len = WideCharToMultiByte(CP_ACP, 0, instanceId, -1,
-                                          DeviceInstanceId,
-                                          DeviceInstanceIdSize, NULL, NULL);
 
-            if (!len)
-                ret = FALSE;
-            else
-            {
-                if (len > DeviceInstanceIdSize)
-                {
-                    SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                    ret = FALSE;
-                }
-                if (RequiredSize)
-                    *RequiredSize = len;
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, instanceId);
-    }
-    return ret;
+    if (needed)
+        *needed = WideCharToMultiByte(CP_ACP, 0, idW, -1, NULL, 0, NULL, NULL);
+
+    if (size && WideCharToMultiByte(CP_ACP, 0, idW, -1, id, size, NULL, NULL))
+        return TRUE;
+
+    SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    return FALSE;
 }
 
 /***********************************************************************
