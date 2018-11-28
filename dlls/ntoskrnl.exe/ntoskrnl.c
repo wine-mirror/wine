@@ -2285,27 +2285,6 @@ void WINAPI KeInitializeSpinLock( PKSPIN_LOCK SpinLock )
     FIXME( "stub: %p\n", SpinLock );
 }
 
-
-/***********************************************************************
- *           KeInitializeTimerEx   (NTOSKRNL.EXE.@)
- */
-void WINAPI KeInitializeTimerEx( PKTIMER Timer, TIMER_TYPE Type )
-{
-    FIXME( "stub: %p %d\n", Timer, Type );
-
-    RtlZeroMemory(Timer, sizeof(KTIMER));
-    Timer->Header.Type = Type ? 9 : 8;
-}
-
-
-/***********************************************************************
- *           KeInitializeTimer   (NTOSKRNL.EXE.@)
- */
-void WINAPI KeInitializeTimer( PKTIMER Timer )
-{
-    KeInitializeTimerEx(Timer, NotificationTimer);
-}
-
 /***********************************************************************
  *           KeInsertQueue   (NTOSKRNL.EXE.@)
  */

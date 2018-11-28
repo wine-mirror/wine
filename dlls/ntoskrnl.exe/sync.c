@@ -38,6 +38,8 @@ enum object_type
     TYPE_AUTO_EVENT = 1,
     TYPE_MUTEX = 2,
     TYPE_SEMAPHORE = 5,
+    TYPE_MANUAL_TIMER = 8,
+    TYPE_AUTO_TIMER = 9,
 };
 
 static CRITICAL_SECTION sync_cs;
@@ -291,4 +293,27 @@ LONG WINAPI KeReleaseMutex( PRKMUTEX mutex, BOOLEAN wait )
     LeaveCriticalSection( &sync_cs );
 
     return ret;
+}
+
+/***********************************************************************
+ *           KeInitializeTimerEx   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeTimerEx( KTIMER *timer, TIMER_TYPE type )
+{
+    TRACE("timer %p, type %u.\n", timer, type);
+
+    RtlZeroMemory(timer, sizeof(KTIMER));
+    timer->Header.Type = (type == NotificationTimer) ? TYPE_MANUAL_TIMER : TYPE_AUTO_TIMER;
+    timer->Header.SignalState = FALSE;
+    timer->Header.Inserted = FALSE;
+    timer->Header.WaitListHead.Blink = NULL;
+    timer->Header.WaitListHead.Flink = NULL;
+}
+
+/***********************************************************************
+ *           KeInitializeTimer   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeTimer( KTIMER *timer )
+{
+    KeInitializeTimerEx(timer, NotificationTimer);
 }
