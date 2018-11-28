@@ -260,6 +260,8 @@ static void test_sync(void)
 {
     KSEMAPHORE semaphore, semaphore2;
     KEVENT manual_event, auto_event;
+    KTIMER timer;
+    LARGE_INTEGER timeout;
     void *objs[2];
     NTSTATUS ret;
     int i;
@@ -444,6 +446,55 @@ static void test_sync(void)
     ok(ret == 0, "got %#x\n", ret);
 
     run_thread(mutex_thread, (void *)0);
+
+    /* test timers */
+    KeInitializeTimerEx(&timer, NotificationTimer);
+
+    timeout.QuadPart = -100;
+    KeSetTimerEx(&timer, timeout, 0, NULL);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -200);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == 0, "got %#x\n", ret);
+
+    KeCancelTimer(&timer);
+    KeInitializeTimerEx(&timer, SynchronizationTimer);
+
+    KeSetTimerEx(&timer, timeout, 0, NULL);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -200);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    KeCancelTimer(&timer);
+    KeSetTimerEx(&timer, timeout, 10, NULL);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -200);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -20 * 10000);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -20 * 10000);
+    ok(ret == 0, "got %#x\n", ret);
+
+    KeCancelTimer(&timer);
 }
 
 static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
