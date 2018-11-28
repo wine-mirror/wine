@@ -3198,15 +3198,6 @@ NTSTATUS WINAPI CmUnRegisterCallback(LARGE_INTEGER cookie)
 }
 
 /***********************************************************************
- *           KeDelayExecutionThread  (NTOSKRNL.EXE.@)
- */
-NTSTATUS WINAPI KeDelayExecutionThread(KPROCESSOR_MODE waitmode, BOOLEAN alertable, PLARGE_INTEGER interval)
-{
-    FIXME("(%u, %u, %p): stub\n", waitmode, alertable, interval);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/***********************************************************************
  *           IoAttachDevice  (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoAttachDevice(DEVICE_OBJECT *source, UNICODE_STRING *target, DEVICE_OBJECT *attached)

@@ -364,3 +364,12 @@ BOOLEAN WINAPI KeCancelTimer( KTIMER *timer )
 
     return ret;
 }
+
+/***********************************************************************
+ *           KeDelayExecutionThread  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeDelayExecutionThread( KPROCESSOR_MODE mode, BOOLEAN alertable, LARGE_INTEGER *timeout )
+{
+    TRACE("mode %d, alertable %u, timeout %p.\n", mode, alertable, timeout);
+    return NtDelayExecution( alertable, timeout );
+}
