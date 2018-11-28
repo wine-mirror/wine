@@ -1394,19 +1394,18 @@ static DWORD SETUPDI_DevNameToDevID(LPCWSTR devName)
 /***********************************************************************
  *              SetupDiCreateDeviceInfoW (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, PCWSTR DeviceName,
-        const GUID *ClassGuid, PCWSTR DeviceDescription, HWND hwndParent, DWORD CreationFlags,
-        SP_DEVINFO_DATA *device_data)
+BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const GUID *class,
+        const WCHAR *description, HWND parent, DWORD flags, SP_DEVINFO_DATA *device_data)
 {
+    WCHAR id[MAX_DEVICE_ID_LEN];
     struct DeviceInfoSet *set;
-    BOOL ret = FALSE, allocatedInstanceId = FALSE;
-    LPCWSTR instanceId = NULL;
+    struct device *device;
 
     TRACE("devinfo %p, name %s, class %s, description %s, hwnd %p, flags %#x, device_data %p.\n",
-            devinfo, debugstr_w(DeviceName), debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
-            hwndParent, CreationFlags, device_data);
+            devinfo, debugstr_w(name), debugstr_guid(class), debugstr_w(description),
+            parent, flags, device_data);
 
-    if (!DeviceName || strlenW(DeviceName) >= MAX_DEVICE_ID_LEN)
+    if (!name || strlenW(name) >= MAX_DEVICE_ID_LEN)
     {
         SetLastError(ERROR_INVALID_DEVINST_NAME);
         return FALSE;
@@ -1415,105 +1414,90 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, PCWSTR DeviceName,
     if (!(set = get_device_set(devinfo)))
         return FALSE;
 
-    if (!ClassGuid)
+    if (!class)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    if (!IsEqualGUID(&set->ClassGuid, &GUID_NULL) &&
-        !IsEqualGUID(ClassGuid, &set->ClassGuid))
+    if (!IsEqualGUID(&set->ClassGuid, &GUID_NULL) && !IsEqualGUID(class, &set->ClassGuid))
     {
         SetLastError(ERROR_CLASS_MISMATCH);
         return FALSE;
     }
-    if ((CreationFlags & DICD_GENERATE_ID))
+    if ((flags & DICD_GENERATE_ID))
     {
-        if (strchrW(DeviceName, '\\'))
-            SetLastError(ERROR_INVALID_DEVINST_NAME);
-        else
+        static const WCHAR formatW[] = {'R','O','O','T','\\','%','s','\\','%','0','4','d',0};
+        DWORD devId;
+
+        if (strchrW(name, '\\'))
         {
-            static const WCHAR newDeviceFmt[] = {'R','O','O','T','\\','%','s',
-                '\\','%','0','4','d',0};
-            DWORD devId;
+            SetLastError(ERROR_INVALID_DEVINST_NAME);
+            return FALSE;
+        }
 
-            if (set->cDevices)
+        if (set->cDevices)
+        {
+            DWORD highestDevID = 0;
+
+            LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
             {
-                DWORD highestDevID = 0;
-                struct device *device;
+                const WCHAR *devName = strrchrW(device->instanceId, '\\');
+                DWORD id;
 
-                LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
-                {
-                    const WCHAR *devName = strrchrW(device->instanceId, '\\');
-                    DWORD id;
+                if (devName)
+                    devName++;
+                else
+                    devName = device->instanceId;
+                id = SETUPDI_DevNameToDevID(devName);
+                if (id != 0xffffffff && id > highestDevID)
+                    highestDevID = id;
+            }
+            devId = highestDevID + 1;
+        }
+        else
+            devId = 0;
 
-                    if (devName)
-                        devName++;
-                    else
-                        devName = device->instanceId;
-                    id = SETUPDI_DevNameToDevID(devName);
-                    if (id != 0xffffffff && id > highestDevID)
-                        highestDevID = id;
-                }
-                devId = highestDevID + 1;
-            }
-            else
-                devId = 0;
-            /* 17 == lstrlenW(L"Root\\") + lstrlenW("\\") + 1 + %d max size */
-            instanceId = HeapAlloc(GetProcessHeap(), 0,
-                    (17 + lstrlenW(DeviceName)) * sizeof(WCHAR));
-            if (instanceId)
-            {
-                sprintfW((LPWSTR)instanceId, newDeviceFmt, DeviceName,
-                        devId);
-                allocatedInstanceId = TRUE;
-                ret = TRUE;
-            }
-            else
-                ret = FALSE;
+        if (snprintfW(id, ARRAY_SIZE(id), formatW, name, devId) == -1)
+        {
+            SetLastError(ERROR_INVALID_DEVINST_NAME);
+            return FALSE;
         }
     }
     else
     {
-        struct device *device;
-
-        ret = TRUE;
-        instanceId = DeviceName;
+        strcpyW(id, name);
         LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
         {
-            if (!lstrcmpiW(DeviceName, device->instanceId))
+            if (!lstrcmpiW(name, device->instanceId))
             {
                 SetLastError(ERROR_DEVINST_ALREADY_EXISTS);
-                ret = FALSE;
+                return FALSE;
             }
         }
     }
-    if (ret)
+
+    if (!(device = SETUPDI_CreateDeviceInfo(set, class, id, TRUE)))
+        return FALSE;
+
+    if (description)
     {
-        struct device *device = NULL;
-
-        if ((device = SETUPDI_CreateDeviceInfo(set, ClassGuid, instanceId, TRUE)))
-        {
-            if (DeviceDescription)
-                SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_DEVICEDESC,
-                    (const BYTE *)DeviceDescription,
-                    lstrlenW(DeviceDescription) * sizeof(WCHAR));
-            if (device_data)
-            {
-                if (device_data->cbSize != sizeof(SP_DEVINFO_DATA))
-                {
-                    SetLastError(ERROR_INVALID_USER_BUFFER);
-                    ret = FALSE;
-                }
-                else
-                    copy_device_data(device_data, device);
-            }
-        }
+        SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_DEVICEDESC,
+                (const BYTE *)description, lstrlenW(description) * sizeof(WCHAR));
     }
-    if (allocatedInstanceId)
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)instanceId);
 
-    return ret;
+    if (device_data)
+    {
+        if (device_data->cbSize != sizeof(SP_DEVINFO_DATA))
+        {
+            SetLastError(ERROR_INVALID_USER_BUFFER);
+            return FALSE;
+        }
+        else
+            copy_device_data(device_data, device);
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
