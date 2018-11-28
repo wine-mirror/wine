@@ -47,6 +47,7 @@ static char *server_dir;
 static char *build_dir;
 static char *user_name;
 static char *argv0_name;
+static char *wineserver64;
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
@@ -156,7 +157,7 @@ static char *get_runtime_libdir(void)
 /* read a symlink and return its directory */
 static char *symlink_dirname( const char *name )
 {
-    char *p, *buffer;
+    char *p, *buffer, *absdir = NULL;
     int ret, size;
 
     for (size = 256; ; size *= 2)
@@ -169,11 +170,19 @@ static char *symlink_dirname( const char *name )
             if (!(p = strrchr( buffer, '/' ))) break;
             if (p == buffer) p++;
             *p = 0;
-            return buffer;
+            if (buffer[0] == '/') return buffer;
+            /* make it absolute */
+            absdir = xmalloc( strlen(name) + strlen(buffer) + 1 );
+            strcpy( absdir, name );
+            if (!(p = strrchr( absdir, '/' ))) break;
+            strcpy( p + 1, buffer );
+            free( buffer );
+            return absdir;
         }
         free( buffer );
     }
     free( buffer );
+    free( absdir );
     return NULL;
 }
 
@@ -446,6 +455,16 @@ done:
     if (build_dir)
     {
         argv0_name = build_path( "loader/", basename );
+        if (sizeof(int) == sizeof(void *))
+        {
+            char *loader, *linkname = build_path( build_dir, "loader/wine64" );
+            if ((loader = symlink_dirname( linkname )))
+            {
+                wineserver64 = build_path( loader, "../server/wineserver" );
+                free( loader );
+            }
+            free( linkname );
+        }
     }
     else
     {
@@ -565,7 +584,10 @@ void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
         /* if we are in build dir and name contains a path, try that */
         if (build_dir)
         {
-            argv[0] = build_path( build_dir, name );
+            if (wineserver64 && !strcmp( name, "server/wineserver" ))
+                argv[0] = xstrdup( wineserver64 );
+            else
+                argv[0] = build_path( build_dir, name );
             preloader_exec( argv, use_preloader );
             free( argv[0] );
         }
