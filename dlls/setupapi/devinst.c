@@ -2083,6 +2083,7 @@ static void SETUPDI_EnumerateMatchingDeviceInstances(struct DeviceInfoSet *set,
         LPCWSTR enumerator, LPCWSTR deviceName, HKEY deviceKey,
         const GUID *class, DWORD flags)
 {
+    WCHAR id[MAX_DEVICE_ID_LEN];
     DWORD i, len;
     WCHAR deviceInstance[MAX_PATH];
     LONG l = ERROR_SUCCESS;
@@ -2120,18 +2121,11 @@ static void SETUPDI_EnumerateMatchingDeviceInstances(struct DeviceInfoSet *set,
                         {
                             static const WCHAR fmt[] =
                              {'%','s','\\','%','s','\\','%','s',0};
-                            LPWSTR instanceId;
 
-                            instanceId = HeapAlloc(GetProcessHeap(), 0,
-                                (lstrlenW(enumerator) + lstrlenW(deviceName) +
-                                lstrlenW(deviceInstance) + 3) * sizeof(WCHAR));
-                            if (instanceId)
+                            if (snprintfW(id, ARRAY_SIZE(id), fmt, enumerator,
+                                    deviceName, deviceInstance) != -1)
                             {
-                                sprintfW(instanceId, fmt, enumerator,
-                                        deviceName, deviceInstance);
-                                SETUPDI_CreateDeviceInfo(set, &deviceClass,
-                                        instanceId, FALSE);
-                                HeapFree(GetProcessHeap(), 0, instanceId);
+                                SETUPDI_CreateDeviceInfo(set, &deviceClass, id, FALSE);
                             }
                         }
                     }
