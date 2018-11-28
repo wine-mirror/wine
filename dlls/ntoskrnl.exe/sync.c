@@ -94,6 +94,9 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
                     semaphore->Header.SignalState, semaphore->Limit, NULL );
                 break;
             }
+            case TYPE_MANUAL_TIMER:
+            case TYPE_AUTO_TIMER:
+                break;
             }
         }
 
@@ -111,6 +114,7 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
             switch (objs[i]->Type)
             {
             case TYPE_AUTO_EVENT:
+            case TYPE_AUTO_TIMER:
                 objs[i]->SignalState = FALSE;
                 break;
             case TYPE_MUTEX:
@@ -316,4 +320,31 @@ void WINAPI KeInitializeTimerEx( KTIMER *timer, TIMER_TYPE type )
 void WINAPI KeInitializeTimer( KTIMER *timer )
 {
     KeInitializeTimerEx(timer, NotificationTimer);
+}
+
+/***********************************************************************
+ *           KeSetTimerEx (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, KDPC *dpc )
+{
+    BOOL manual = timer->Header.Type == TYPE_MANUAL_TIMER;
+    BOOL ret;
+
+    TRACE("timer %p, duetime %s, period %d, dpc %p.\n",
+        timer, wine_dbgstr_longlong(duetime.QuadPart), period, dpc);
+
+    if (dpc)
+    {
+        FIXME("Unhandled DPC %p.\n", dpc);
+        return FALSE;
+    }
+
+    EnterCriticalSection( &sync_cs );
+    ret = timer->Header.Inserted;
+    timer->Header.Inserted = TRUE;
+    timer->Header.WaitListHead.Blink = CreateWaitableTimerW( NULL, manual, NULL );
+    SetWaitableTimer( timer->Header.WaitListHead.Blink, &duetime, period, NULL, NULL, FALSE );
+    LeaveCriticalSection( &sync_cs );
+
+    return ret;
 }
