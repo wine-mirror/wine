@@ -2014,7 +2014,6 @@ static inline void get_bitmap_size( FT_Face ft_face, Bitmap_Size *face_size )
 static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
 {
     TT_OS2 *os2;
-    FT_UInt dummy;
     CHARSETINFO csi;
     FT_WinFNT_HeaderRec winfnt_header;
     int i;
@@ -2031,10 +2030,10 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
 
         if (os2->version == 0)
         {
-            if (pFT_Get_First_Char( ft_face, &dummy ) < 0x100)
-                fs->fsCsb[0] = FS_LATIN1;
-            else
+            if (os2->usFirstCharIndex >= 0xf000 && os2->usFirstCharIndex < 0xf100)
                 fs->fsCsb[0] = FS_SYMBOL;
+            else
+                fs->fsCsb[0] = FS_LATIN1;
         }
         else
         {
