@@ -29,8 +29,8 @@
 @ stub RegisterScaleChangeEvent
 @ stub RegisterScaleChangeNotifications
 @ stub RevokeScaleChangeNotifications
-@ stdcall SHAnsiToAnsi(str ptr long) shlwapi.SHAnsiToAnsi
-@ stdcall SHAnsiToUnicode(str ptr long) shlwapi.SHAnsiToUnicode
+@ stdcall SHAnsiToAnsi(str ptr long)
+@ stdcall SHAnsiToUnicode(str ptr long)
 @ stdcall SHCopyKeyA(long str long long) shlwapi.SHCopyKeyA
 @ stdcall SHCopyKeyW(long wstr long long) shlwapi.SHCopyKeyW
 @ stdcall SHCreateMemStream(ptr long)
@@ -75,8 +75,8 @@
 @ stdcall SHSetValueW(long wstr wstr long ptr long) shlwapi.SHSetValueW
 @ stdcall SHStrDupA(str ptr)
 @ stdcall SHStrDupW(wstr ptr)
-@ stdcall SHUnicodeToAnsi(wstr ptr ptr) shlwapi.SHUnicodeToAnsi
-@ stdcall SHUnicodeToUnicode(wstr ptr long) shlwapi.SHUnicodeToUnicode
+@ stdcall SHUnicodeToAnsi(wstr ptr ptr)
+@ stdcall SHUnicodeToUnicode(wstr ptr long)
 @ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
 @ stdcall SetProcessDpiAwareness(long)
 @ stdcall SetProcessReference(ptr)

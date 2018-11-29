@@ -1455,3 +1455,93 @@ HRESULT WINAPI SHStrDupA(const char *src, WCHAR **dest)
 
     return S_OK;
 }
+
+/*************************************************************************
+ * SHAnsiToAnsi        [SHCORE.@]
+ */
+DWORD WINAPI SHAnsiToAnsi(const char *src, char *dest, int dest_len)
+{
+    DWORD ret;
+
+    TRACE("(%s, %p, %d)\n", debugstr_a(src), dest, dest_len);
+
+    if (!src || !dest || dest_len <= 0)
+        return 0;
+
+    lstrcpynA(dest, src, dest_len);
+    ret = strlen(dest);
+
+    return src[ret] ? 0 : ret + 1;
+}
+
+/*************************************************************************
+ * SHUnicodeToAnsi        [SHCORE.@]
+ */
+DWORD WINAPI SHUnicodeToAnsi(const WCHAR *src, char *dest, int dest_len)
+{
+    int ret = 1;
+
+    TRACE("(%s, %p, %d)\n", debugstr_w(src), dest, dest_len);
+
+    if (!dest || !dest_len)
+        return 0;
+
+    if (src)
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, src, -1, dest, dest_len, NULL, NULL);
+        if (!ret)
+        {
+            dest[dest_len - 1] = 0;
+            ret = dest_len;
+        }
+    }
+    else
+        dest[0] = 0;
+
+    return ret;
+}
+
+/*************************************************************************
+ * SHUnicodeToUnicode        [SHCORE.@]
+ */
+DWORD WINAPI SHUnicodeToUnicode(const WCHAR *src, WCHAR *dest, int dest_len)
+{
+    DWORD ret;
+
+    TRACE("(%s, %p, %d)\n", debugstr_w(src), dest, dest_len);
+
+    if (!src || !dest || dest_len <= 0)
+        return 0;
+
+    lstrcpynW(dest, src, dest_len);
+    ret = strlenW(dest);
+
+    return src[ret] ? 0 : ret + 1;
+}
+
+/*************************************************************************
+ * SHAnsiToUnicode        [SHCORE.@]
+ */
+DWORD WINAPI SHAnsiToUnicode(const char *src, WCHAR *dest, int dest_len)
+{
+    int ret = 1;
+
+    TRACE("(%s, %p, %d)\n", debugstr_a(src), dest, dest_len);
+
+    if (!dest || !dest_len)
+        return 0;
+
+    if (src)
+    {
+        ret = MultiByteToWideChar(CP_ACP, 0, src, -1, dest, dest_len);
+        if (!ret)
+        {
+            dest[dest_len - 1] = 0;
+            ret = dest_len;
+        }
+    }
+    else
+        dest[0] = 0;
+
+    return ret;
+}

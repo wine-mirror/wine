@@ -29,12 +29,20 @@
 static HRESULT (WINAPI *pGetProcessReference)(IUnknown **);
 static void (WINAPI *pSetProcessReference)(IUnknown *);
 static HRESULT (WINAPI *pSHGetInstanceExplorer)(IUnknown **);
+static int (WINAPI *pSHUnicodeToAnsi)(const WCHAR *, char *, int);
+static int (WINAPI *pSHAnsiToUnicode)(const char *, WCHAR *, int);
+static int (WINAPI *pSHAnsiToAnsi)(const char *, char *, int);
+static int (WINAPI *pSHUnicodeToUnicode)(const WCHAR *, WCHAR *, int);
 
 static void init(HMODULE hshcore)
 {
 #define X(f) p##f = (void*)GetProcAddress(hshcore, #f)
     X(GetProcessReference);
     X(SetProcessReference);
+    X(SHUnicodeToAnsi);
+    X(SHAnsiToUnicode);
+    X(SHAnsiToAnsi);
+    X(SHUnicodeToUnicode);
 #undef X
 }
 
@@ -122,6 +130,176 @@ static void test_process_reference(void)
     ok(test_unk2.refcount == 3, "Unexpected refcount %u.\n", test_unk2.refcount);
 }
 
+static void test_SHUnicodeToAnsi(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR emptyW[] = { 0 };
+    char buff[16];
+    int ret;
+
+    ret = pSHUnicodeToAnsi(NULL, NULL, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+
+    strcpy(buff, "abc");
+    ret = pSHUnicodeToAnsi(NULL, buff, 2);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+    ok(buff[0] == 0 && buff[1] == 'b', "Unexpected buffer contents.\n");
+
+    buff[0] = 1;
+    ret = pSHUnicodeToAnsi(NULL, buff, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ok(buff[0] == 1, "Unexpected buffer contents.\n");
+
+    buff[0] = 1;
+    strcpy(buff, "test");
+    ret = pSHUnicodeToAnsi(emptyW, buff, 1);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+    ok(*buff == 0, "Unexpected buffer contents.\n");
+
+    buff[0] = 1;
+    ret = pSHUnicodeToAnsi(testW, buff, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ok(buff[0] == 1, "Unexpected buffer contents.\n");
+
+    buff[0] = 1;
+    ret = pSHUnicodeToAnsi(testW, buff, 1);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+    ok(*buff == 0, "Unexpected buffer contents.\n");
+
+    ret = pSHUnicodeToAnsi(testW, buff, 16);
+    ok(ret == 5, "Unexpected return value %d.\n", ret);
+    ok(!strcmp(buff, "test"), "Unexpected buffer contents.\n");
+
+    ret = pSHUnicodeToAnsi(testW, buff, 2);
+    ok(ret == 2, "Unexpected return value %d.\n", ret);
+    ok(!strcmp(buff, "t"), "Unexpected buffer contents.\n");
+}
+
+static void test_SHAnsiToUnicode(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    WCHAR buffW[16];
+    int ret;
+
+    ret = pSHAnsiToUnicode(NULL, NULL, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+
+    buffW[0] = 1;
+    buffW[1] = 2;
+    ret = pSHAnsiToUnicode(NULL, buffW, 2);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+    ok(buffW[0] == 0 && buffW[1] == 2, "Unexpected buffer contents.\n");
+
+    buffW[0] = 1;
+    ret = pSHAnsiToUnicode(NULL, buffW, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ok(buffW[0] == 1, "Unexpected buffer contents.\n");
+
+    buffW[0] = 1;
+    ret = pSHAnsiToUnicode("", buffW, 1);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+    ok(*buffW == 0, "Unexpected buffer contents.\n");
+
+    buffW[0] = 1;
+    ret = pSHAnsiToUnicode("test", buffW, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ok(buffW[0] == 1, "Unexpected buffer contents.\n");
+
+    buffW[0] = 1;
+    ret = pSHAnsiToUnicode("test", buffW, 1);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+    ok(*buffW == 0, "Unexpected buffer contents.\n");
+
+    ret = pSHAnsiToUnicode("test", buffW, 16);
+    ok(ret == 5, "Unexpected return value %d.\n", ret);
+    ok(!lstrcmpW(buffW, testW), "Unexpected buffer contents.\n");
+
+    ret = pSHAnsiToUnicode("test", buffW, 2);
+    ok(ret == 2, "Unexpected return value %d.\n", ret);
+    ok(buffW[0] == 't' && buffW[1] == 0, "Unexpected buffer contents.\n");
+}
+
+static void test_SHAnsiToAnsi(void)
+{
+    char buff[16];
+    int ret;
+
+    ret = pSHAnsiToAnsi(NULL, NULL, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+
+    strcpy(buff, "abcdefghijklm");
+    ret = pSHAnsiToAnsi("test", buff, 3);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ok(!strcmp(buff, "te"), "Unexpected buffer contents.\n");
+    ok(buff[3] == 'd', "Unexpected buffer contents.\n");
+
+    strcpy(buff, "abcdefghijklm");
+    ret = pSHAnsiToAnsi("", buff, 3);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+    ok(!*buff, "Unexpected buffer contents.\n");
+    ok(buff[3] == 'd', "Unexpected buffer contents.\n");
+
+    strcpy(buff, "abcdefghijklm");
+    ret = pSHAnsiToAnsi("test", buff, 4);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ok(!strcmp(buff, "tes"), "Unexpected buffer contents.\n");
+    ok(buff[4] == 'e', "Unexpected buffer contents.\n");
+
+    strcpy(buff, "abcdefghijklm");
+    ret = pSHAnsiToAnsi("test", buff, 5);
+    ok(ret == 5, "Unexpected return value %d.\n", ret);
+    ok(!strcmp(buff, "test"), "Unexpected buffer contents.\n");
+    ok(buff[5] == 'f', "Unexpected buffer contents.\n");
+
+    strcpy(buff, "abcdefghijklm");
+    ret = pSHAnsiToAnsi("test", buff, 6);
+    ok(ret == 5, "Unexpected return value %d.\n", ret);
+    ok(!strcmp(buff, "test"), "Unexpected buffer contents.\n");
+    ok(buff[5] == 'f', "Unexpected buffer contents.\n");
+}
+
+static void test_SHUnicodeToUnicode(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR strW[] = {'a','b','c','d','e','f','g','h','i','k','l','m',0};
+    static const WCHAR emptyW[] = { 0 };
+    WCHAR buff[16];
+    int ret;
+
+    ret = pSHUnicodeToUnicode(NULL, NULL, 0);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+
+    lstrcpyW(buff, strW);
+    ret = pSHUnicodeToUnicode(testW, buff, 3);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ok(!memcmp(buff, testW, 2 * sizeof(WCHAR)) && !buff[2], "Unexpected buffer contents.\n");
+    ok(buff[3] == 'd', "Unexpected buffer contents.\n");
+
+    lstrcpyW(buff, strW);
+    ret = pSHUnicodeToUnicode(emptyW, buff, 3);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+    ok(!*buff, "Unexpected buffer contents.\n");
+    ok(buff[3] == 'd', "Unexpected buffer contents.\n");
+
+    lstrcpyW(buff, strW);
+    ret = pSHUnicodeToUnicode(testW, buff, 4);
+    ok(ret == 0, "Unexpected return value %d.\n", ret);
+    ok(!memcmp(buff, testW, 3 * sizeof(WCHAR)) && !buff[3], "Unexpected buffer contents.\n");
+    ok(buff[4] == 'e', "Unexpected buffer contents.\n");
+
+    lstrcpyW(buff, strW);
+    ret = pSHUnicodeToUnicode(testW, buff, 5);
+    ok(ret == 5, "Unexpected return value %d.\n", ret);
+    ok(!lstrcmpW(buff, testW), "Unexpected buffer contents.\n");
+    ok(buff[5] == 'f', "Unexpected buffer contents.\n");
+
+    lstrcpyW(buff, strW);
+    ret = pSHUnicodeToUnicode(testW, buff, 6);
+    ok(ret == 5, "Unexpected return value %d.\n", ret);
+    ok(!lstrcmpW(buff, testW), "Unexpected buffer contents.\n");
+    ok(buff[5] == 'f', "Unexpected buffer contents.\n");
+}
+
 START_TEST(shcore)
 {
     HMODULE hshcore = LoadLibraryA("shcore.dll");
@@ -135,4 +313,8 @@ START_TEST(shcore)
     init(hshcore);
 
     test_process_reference();
+    test_SHUnicodeToAnsi();
+    test_SHAnsiToUnicode();
+    test_SHAnsiToAnsi();
+    test_SHUnicodeToUnicode();
 }
