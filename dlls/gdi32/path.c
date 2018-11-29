@@ -1594,7 +1594,7 @@ static BOOL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const REC
         void *outline;
 
         dwSize = GetGlyphOutlineW(dev->hdc, str[idx], ggo_flags, &gm, 0, NULL, &identity);
-        if (dwSize == GDI_ERROR) return FALSE;
+        if (dwSize == GDI_ERROR) continue;
 
         /* add outline only if char is printable */
         if(dwSize)

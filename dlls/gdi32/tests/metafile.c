@@ -2439,7 +2439,6 @@ static void test_emf_ExtTextOut_on_path(void)
     ok(ret, "BeginPath error %d\n", GetLastError());
 
     ret = ExtTextOutA(hdcDisplay, 11, 22, 0, NULL, "Test", 4, dx);
-todo_wine
     ok(ret, "ExtTextOut error %d\n", GetLastError());
 
     ret = EndPath(hdcDisplay);
@@ -2455,7 +2454,7 @@ todo_wine
     ok(ret, "BeginPath error %d\n", GetLastError());
 
     ret = ExtTextOutA(hdcMetafile, 11, 22, 0, NULL, "Test", 4, dx);
-    todo_wine ok(ret, "ExtTextOut error %d\n", GetLastError());
+    ok(ret, "ExtTextOut error %d\n", GetLastError());
 
     ret = EndPath(hdcMetafile);
     ok(ret, "EndPath error %d\n", GetLastError());
@@ -2514,7 +2513,6 @@ todo_wine
     ok(ret, "BeginPath error %d\n", GetLastError());
 
     ret = ExtTextOutA(hdcMetafile, 11, 22, 0, NULL, "Test", 4, dx);
-todo_wine
     ok(ret, "ExtTextOut error %d\n", GetLastError());
 
     ret = EndPath(hdcMetafile);
