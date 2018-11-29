@@ -2963,7 +2963,8 @@ static void test_mf_GetPath(void)
     hdc = CreateMetaFileA(NULL);
     ok(hdc != 0, "CreateMetaFileA error %d\n", GetLastError());
 
-    BeginPath(hdc);
+    ret = BeginPath(hdc);
+    ok(!ret, "BeginPath on metafile DC should fail\n");
     ret = MoveToEx(hdc, 50, 50, NULL);
     ok( ret, "MoveToEx error %d.\n", GetLastError());
     ret = LineTo(hdc, 50, 150);
@@ -3851,7 +3852,8 @@ static void test_emf_paths(void)
     hdcMetafile = CreateEnhMetaFileA(GetDC(0), NULL, NULL, NULL);
     ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
 
-    BeginPath(hdcMetafile);
+    ret = BeginPath(hdcMetafile);
+    ok(ret, "BeginPath error %d\n", GetLastError());
     ret = MoveToEx(hdcMetafile, 50, 50, NULL);
     ok( ret, "MoveToEx error %d.\n", GetLastError());
     ret = LineTo(hdcMetafile, 50, 150);
