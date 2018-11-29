@@ -168,9 +168,7 @@ static ULONG STDMETHODCALLTYPE d3d11_swapchain_Release(IDXGISwapChain1 *iface)
         }
         if (swapchain->factory)
             IDXGIFactory_Release(swapchain->factory);
-        wined3d_mutex_lock();
         wined3d_swapchain_decref(swapchain->wined3d_swapchain);
-        wined3d_mutex_unlock();
         if (device)
             IWineDXGIDevice_Release(device);
     }
