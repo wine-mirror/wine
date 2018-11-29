@@ -2564,7 +2564,8 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
                                       editor->pCursors[0].pRun->member.run.style);
               para = editor->pBuffer->pFirst->member.para.next_para;
               ME_SetDefaultParaFormat(editor, &para->member.para.fmt);
-              para->member.para.nFlags = MEPF_REWRAP;
+              para->member.para.nFlags = 0;
+              mark_para_rewrap(editor, para);
               editor->pCursors[0].pPara = para;
               editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
               editor->pCursors[1] = editor->pCursors[0];

@@ -23,6 +23,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
+void mark_para_rewrap(ME_TextEditor *editor, ME_DisplayItem *para)
+{
+    para->member.para.nFlags |= MEPF_REWRAP;
+}
+
+ME_DisplayItem *get_di_from_para(ME_Paragraph *para)
+{
+    return (ME_DisplayItem *)((ptrdiff_t)para - offsetof(ME_DisplayItem, member));
+}
+
 static ME_DisplayItem *make_para(ME_TextEditor *editor)
 {
     ME_DisplayItem *item = ME_MakeDI(diParagraph);
@@ -143,7 +153,7 @@ static void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, con
 {
   while(first != last)
   {
-    first->member.para.nFlags |= MEPF_REWRAP;
+    mark_para_rewrap(editor, first);
     first = first->member.para.next_para;
   }
 }
@@ -366,11 +376,11 @@ void para_num_clear( struct para_num *pn )
     pn->text = NULL;
 }
 
-static void para_num_clear_list( ME_Paragraph *para, const PARAFORMAT2 *orig_fmt )
+static void para_num_clear_list( ME_TextEditor *editor, ME_Paragraph *para, const PARAFORMAT2 *orig_fmt )
 {
     do
     {
-        para->nFlags |= MEPF_REWRAP;
+        mark_para_rewrap(editor, get_di_from_para(para));
         para_num_clear( &para->para_num );
         if (para->next_para->type != diParagraph) break;
         para = &para->next_para->member.para;
@@ -445,12 +455,12 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PA
 
   if (memcmp(&copy, &para->fmt, sizeof(PARAFORMAT2)))
   {
-    para->nFlags |= MEPF_REWRAP;
+    mark_para_rewrap(editor, get_di_from_para(para));
     if (((dwMask & PFM_NUMBERING)      && (copy.wNumbering != para->fmt.wNumbering)) ||
         ((dwMask & PFM_NUMBERINGSTART) && (copy.wNumberingStart != para->fmt.wNumberingStart)) ||
         ((dwMask & PFM_NUMBERINGSTYLE) && (copy.wNumberingStyle != para->fmt.wNumberingStyle)))
     {
-        para_num_clear_list( para, &copy );
+        para_num_clear_list( editor, para, &copy );
     }
   }
 
@@ -487,7 +497,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
 
   /* Clear any cached para numbering following this paragraph */
   if (run_para->member.para.fmt.wNumbering)
-      para_num_clear_list( &run_para->member.para, &run_para->member.para.fmt );
+      para_num_clear_list( editor, &run_para->member.para, &run_para->member.para.fmt );
 
   new_para->member.para.text = ME_VSplitString( run_para->member.para.text, run->member.run.nCharOfs );
 
@@ -519,7 +529,8 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   }
   new_para->member.para.nCharOfs = run_para->member.para.nCharOfs + ofs;
   new_para->member.para.nCharOfs += eol_len;
-  new_para->member.para.nFlags = MEPF_REWRAP;
+  new_para->member.para.nFlags = 0;
+  mark_para_rewrap(editor, new_para);
 
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
   new_para->member.para.fmt = run_para->member.para.fmt;
@@ -585,8 +596,8 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   }
 
   /* force rewrap of the */
-  run_para->member.para.prev_para->member.para.nFlags |= MEPF_REWRAP;
-  new_para->member.para.prev_para->member.para.nFlags |= MEPF_REWRAP;
+  mark_para_rewrap(editor, run_para->member.para.prev_para);
+  mark_para_rewrap(editor, new_para->member.para.prev_para);
 
   /* we've added the end run, so we need to modify nCharOfs in the next paragraphs */
   ME_PropagateCharOffset(next_para, eol_len);
@@ -613,7 +624,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
 
   /* Clear any cached para numbering following this paragraph */
   if (tp->member.para.fmt.wNumbering)
-      para_num_clear_list( &tp->member.para, &tp->member.para.fmt );
+      para_num_clear_list( editor, &tp->member.para, &tp->member.para.fmt );
 
   pNext = tp->member.para.next_para;
 
@@ -721,7 +732,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   ME_CheckCharOffsets(editor);
 
   editor->nParagraphs--;
-  tp->member.para.nFlags |= MEPF_REWRAP;
+  mark_para_rewrap(editor, tp);
   return tp;
 }
 

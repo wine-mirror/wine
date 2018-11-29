@@ -224,7 +224,7 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
   int i;
   assert(p->type == diRun && pNext->type == diRun);
   assert(p->member.run.nCharOfs != -1);
-  ME_GetParagraph(p)->member.para.nFlags |= MEPF_REWRAP;
+  mark_para_rewrap(editor, ME_GetParagraph(p));
 
   /* Update all cursors so that they don't contain the soon deleted run */
   for (i=0; i<editor->nCursors; i++) {
@@ -277,7 +277,7 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_Cursor *cursor)
       editor->pCursors[i].nOffset -= nOffset;
     }
   }
-  cursor->pPara->member.para.nFlags |= MEPF_REWRAP;
+  mark_para_rewrap(editor, cursor->pPara);
   return run;
 }
 
@@ -345,7 +345,7 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
   ME_InsertBefore( insert_before, pDI );
   TRACE("Shift length:%d\n", len);
   ME_PropagateCharOffset( insert_before, len );
-  insert_before->member.run.para->nFlags |= MEPF_REWRAP;
+  mark_para_rewrap(editor, get_di_from_para(insert_before->member.run.para));
 
   /* Move any cursors that were at the end of the previous run to the end of the inserted run */
   prev = ME_FindItemBack( pDI, diRun );
@@ -766,7 +766,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
       ME_ReleaseStyle(para->para_num.style);
       para->para_num.style = NULL;
     }
-    para->nFlags |= MEPF_REWRAP;
+    mark_para_rewrap(editor, get_di_from_para(para));
   }
 }
 
