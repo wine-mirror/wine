@@ -472,6 +472,11 @@ static HRESULT WINAPI BmpEncoder_Initialize(IWICBitmapEncoder *iface,
 static HRESULT WINAPI BmpEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
     GUID *pguidContainerFormat)
 {
+    TRACE("(%p,%p)\n", iface, pguidContainerFormat);
+
+    if (!pguidContainerFormat)
+        return E_INVALIDARG;
+
     memcpy(pguidContainerFormat, &GUID_ContainerFormatBmp, sizeof(GUID));
     return S_OK;
 }

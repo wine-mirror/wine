@@ -849,6 +849,7 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
     const struct bitmap_data **dsts, const CLSID *clsid_decoder, WICRect *rc,
     const struct setting *settings, const char *name, IWICPalette *palette)
 {
+    const GUID *container_format = NULL;
     HRESULT hr;
     IWICBitmapEncoder *encoder;
     BitmapTestSrc *src_obj;
@@ -859,6 +860,7 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *framedecode;
     WICPixelFormatGUID pixelformat;
+    GUID guid;
     int i;
 
     hr = CoCreateInstance(clsid_encoder, NULL, CLSCTX_INPROC_SERVER,
@@ -867,6 +869,28 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(SUCCEEDED(hr), "CreateStreamOnHGlobal failed, hr=%x\n", hr);
+
+    hr = IWICBitmapEncoder_GetContainerFormat(encoder, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    if (IsEqualGUID(clsid_encoder, &CLSID_WICPngEncoder))
+        container_format = &GUID_ContainerFormatPng;
+    else if (IsEqualGUID(clsid_encoder, &CLSID_WICBmpEncoder))
+        container_format = &GUID_ContainerFormatBmp;
+    else if (IsEqualGUID(clsid_encoder, &CLSID_WICTiffEncoder))
+        container_format = &GUID_ContainerFormatTiff;
+    else if (IsEqualGUID(clsid_encoder, &CLSID_WICJpegEncoder))
+        container_format = &GUID_ContainerFormatJpeg;
+    else
+        ok(0, "Unknown encoder %s.\n", wine_dbgstr_guid(clsid_encoder));
+
+    if (container_format)
+    {
+        memset(&guid, 0, sizeof(guid));
+        hr = IWICBitmapEncoder_GetContainerFormat(encoder, &guid);
+        ok(SUCCEEDED(hr), "Failed to get container format, hr %#x.\n", hr);
+        ok(IsEqualGUID(container_format, &guid), "Unexpected container format %s.\n", wine_dbgstr_guid(&guid));
+    }
 
     hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
     ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
