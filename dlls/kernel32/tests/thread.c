@@ -1012,8 +1012,8 @@ static VOID test_GetCurrentThreadStackLimits(void)
     }
 
     pGetCurrentThreadStackLimits(&low, &high);
-    ok(low == (ULONG_PTR)NtCurrentTeb()->DeallocationStack, "exptected %p, got %lx\n", NtCurrentTeb()->DeallocationStack, low);
-    ok(high == (ULONG_PTR)NtCurrentTeb()->Tib.StackBase, "exptected %p, got %lx\n", NtCurrentTeb()->Tib.StackBase, high);
+    ok(low == (ULONG_PTR)NtCurrentTeb()->DeallocationStack, "expected %p, got %lx\n", NtCurrentTeb()->DeallocationStack, low);
+    ok(high == (ULONG_PTR)NtCurrentTeb()->Tib.StackBase, "expected %p, got %lx\n", NtCurrentTeb()->Tib.StackBase, high);
 }
 
 static VOID test_GetThreadExitCode(void)
