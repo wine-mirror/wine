@@ -53,10 +53,10 @@
 @ stdcall SHGetThreadRef(ptr)
 @ stdcall SHGetValueA( long str str ptr ptr ptr ) shlwapi.SHGetValueA
 @ stdcall SHGetValueW( long wstr wstr ptr ptr ptr ) shlwapi.SHGetValueW
-@ stdcall SHOpenRegStream2A(long str str long) shlwapi.SHOpenRegStream2A
-@ stdcall SHOpenRegStream2W(long wstr wstr long) shlwapi.SHOpenRegStream2W
-@ stdcall SHOpenRegStreamA(long str str long) shlwapi.SHOpenRegStreamA
-@ stdcall SHOpenRegStreamW(long wstr wstr long) shlwapi.SHOpenRegStreamW
+@ stdcall SHOpenRegStream2A(long str str long)
+@ stdcall SHOpenRegStream2W(long wstr wstr long)
+@ stdcall SHOpenRegStreamA(long str str long)
+@ stdcall SHOpenRegStreamW(long wstr wstr long)
 @ stdcall SHQueryInfoKeyA(long ptr ptr ptr ptr) shlwapi.SHQueryInfoKeyA
 @ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr) shlwapi.SHQueryInfoKeyW
 @ stdcall SHQueryValueExA(long str ptr ptr ptr ptr) shlwapi.SHQueryValueExA

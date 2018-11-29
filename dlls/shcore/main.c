@@ -517,6 +517,9 @@ struct shstream
             BYTE *buffer;
             DWORD length;
             DWORD position;
+
+            HKEY hkey;
+            WCHAR *valuename;
         } mem;
         struct
         {
@@ -776,6 +779,29 @@ static const IStreamVtbl memstreamvtbl =
     shstream_Clone,
 };
 
+static struct shstream *shstream_create(const IStreamVtbl *vtbl, const BYTE *data, UINT data_len)
+{
+    struct shstream *stream;
+
+    if (!data)
+        data_len = 0;
+
+    stream = heap_alloc(sizeof(*stream));
+    stream->IStream_iface.lpVtbl = vtbl;
+    stream->refcount = 1;
+    stream->u.mem.buffer = heap_alloc(data_len);
+    if (!stream->u.mem.buffer)
+    {
+        heap_free(stream);
+        return NULL;
+    }
+    memcpy(stream->u.mem.buffer, data, data_len);
+    stream->u.mem.length = data_len;
+    stream->u.mem.position = 0;
+
+    return stream;
+}
+
 /*************************************************************************
  * SHCreateMemStream   [SHCORE.@]
  *
@@ -798,23 +824,8 @@ IStream * WINAPI SHCreateMemStream(const BYTE *data, UINT data_len)
 
     TRACE("(%p, %u)\n", data, data_len);
 
-    if (!data)
-        data_len = 0;
-
-    stream = heap_alloc(sizeof(*stream));
-    stream->IStream_iface.lpVtbl = &memstreamvtbl;
-    stream->refcount = 1;
-    stream->u.mem.buffer = heap_alloc(data_len);
-    if (!stream->u.mem.buffer)
-    {
-        heap_free(stream);
-        return NULL;
-    }
-    memcpy(stream->u.mem.buffer, data, data_len);
-    stream->u.mem.length = data_len;
-    stream->u.mem.position = 0;
-
-    return &stream->IStream_iface;
+    stream = shstream_create(&memstreamvtbl, data, data_len);
+    return stream ? &stream->IStream_iface : NULL;
 }
 
 static ULONG WINAPI filestream_Release(IStream *iface)
@@ -1132,6 +1143,201 @@ HRESULT WINAPI SHCreateStreamOnFileA(const char *path, DWORD mode, IStream **str
     heap_free(pathW);
 
     return hr;
+}
+
+static ULONG WINAPI regstream_Release(IStream *iface)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedDecrement(&stream->refcount);
+
+    TRACE("(%p)->(%u)\n", stream, refcount);
+
+    if (!refcount)
+    {
+        if (stream->u.mem.hkey)
+        {
+            if (stream->u.mem.length)
+                RegSetValueExW(stream->u.mem.hkey, stream->u.mem.valuename, 0, REG_BINARY,
+                        (const BYTE *)stream->u.mem.buffer, stream->u.mem.length);
+            else
+                RegDeleteValueW(stream->u.mem.hkey, stream->u.mem.valuename);
+            RegCloseKey(stream->u.mem.hkey);
+        }
+        CoTaskMemFree(stream->u.mem.valuename);
+        heap_free(stream->u.mem.buffer);
+        heap_free(stream);
+    }
+
+    return refcount;
+}
+
+static const IStreamVtbl regstreamvtbl =
+{
+    shstream_QueryInterface,
+    shstream_AddRef,
+    regstream_Release,
+    memstream_Read,
+    memstream_Write,
+    memstream_Seek,
+    memstream_SetSize,
+    shstream_CopyTo,
+    shstream_Commit,
+    shstream_Revert,
+    shstream_LockRegion,
+    shstream_UnlockRegion,
+    memstream_Stat,
+    shstream_Clone,
+};
+
+/*************************************************************************
+ * SHOpenRegStream2W        [SHCORE.@]
+ */
+IStream * WINAPI SHOpenRegStream2W(HKEY hKey, const WCHAR *subkey, const WCHAR *value, DWORD mode)
+{
+    struct shstream *stream;
+    HKEY hStrKey = NULL;
+    BYTE *buff = NULL;
+    DWORD length = 0;
+    LONG ret;
+
+    TRACE("(%p, %s, %s, %#x)\n", hKey, debugstr_w(subkey), debugstr_w(value), mode);
+
+    if (mode == STGM_READ)
+        ret = RegOpenKeyExW(hKey, subkey, 0, KEY_READ, &hStrKey);
+    else /* in write mode we make sure the subkey exits */
+        ret = RegCreateKeyExW(hKey, subkey, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &hStrKey, NULL);
+
+    if (ret == ERROR_SUCCESS)
+    {
+        if (mode == STGM_READ || mode == STGM_READWRITE)
+        {
+            /* read initial data */
+            ret = RegQueryValueExW(hStrKey, value, 0, 0, 0, &length);
+            if (ret == ERROR_SUCCESS && length)
+            {
+                buff = heap_alloc(length);
+                RegQueryValueExW(hStrKey, value, 0, 0, buff, &length);
+            }
+        }
+
+        if (!length)
+            buff = heap_alloc(length);
+
+        stream = shstream_create(&regstreamvtbl, buff, length);
+        heap_free(buff);
+        if (stream)
+        {
+            stream->u.mem.hkey = hStrKey;
+            SHStrDupW(value, &stream->u.mem.valuename);
+            return &stream->IStream_iface;
+        }
+    }
+
+    heap_free(buff);
+    if (hStrKey)
+        RegCloseKey(hStrKey);
+
+    return NULL;
+}
+
+/*************************************************************************
+ * SHOpenRegStream2A        [SHCORE.@]
+ */
+IStream * WINAPI SHOpenRegStream2A(HKEY hKey, const char *subkey, const char *value, DWORD mode)
+{
+    WCHAR *subkeyW = NULL, *valueW = NULL;
+    IStream *stream;
+
+    TRACE("(%p, %s, %s, %#x)\n", hKey, debugstr_a(subkey), debugstr_a(value), mode);
+
+    if (subkey && FAILED(SHStrDupA(subkey, &subkeyW)))
+        return NULL;
+    if (value && FAILED(SHStrDupA(value, &valueW)))
+    {
+        CoTaskMemFree(subkeyW);
+        return NULL;
+    }
+
+    stream = SHOpenRegStream2W(hKey, subkeyW, valueW, mode);
+    CoTaskMemFree(subkeyW);
+    CoTaskMemFree(valueW);
+    return stream;
+}
+
+/*************************************************************************
+ * SHOpenRegStreamA        [SHCORE.@]
+ */
+IStream * WINAPI SHOpenRegStreamA(HKEY hkey, const char *subkey, const char *value, DWORD mode)
+{
+    WCHAR *subkeyW = NULL, *valueW = NULL;
+    IStream *stream;
+
+    TRACE("(%p, %s, %s, %#x)\n", hkey, debugstr_a(subkey), debugstr_a(value), mode);
+
+    if (subkey && FAILED(SHStrDupA(subkey, &subkeyW)))
+        return NULL;
+    if (value && FAILED(SHStrDupA(value, &valueW)))
+    {
+        CoTaskMemFree(subkeyW);
+        return NULL;
+    }
+
+    stream = SHOpenRegStreamW(hkey, subkeyW, valueW, mode);
+    CoTaskMemFree(subkeyW);
+    CoTaskMemFree(valueW);
+    return stream;
+}
+
+static ULONG WINAPI dummystream_AddRef(IStream *iface)
+{
+    TRACE("()\n");
+    return 2;
+}
+
+static ULONG WINAPI dummystream_Release(IStream *iface)
+{
+    TRACE("()\n");
+    return 1;
+}
+
+static HRESULT WINAPI dummystream_Read(IStream *iface, void *buff, ULONG buff_size, ULONG *read_len)
+{
+    if (read_len)
+        *read_len = 0;
+
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl dummystreamvtbl =
+{
+    shstream_QueryInterface,
+    dummystream_AddRef,
+    dummystream_Release,
+    dummystream_Read,
+    memstream_Write,
+    memstream_Seek,
+    memstream_SetSize,
+    shstream_CopyTo,
+    shstream_Commit,
+    shstream_Revert,
+    shstream_LockRegion,
+    shstream_UnlockRegion,
+    memstream_Stat,
+    shstream_Clone,
+};
+
+static struct shstream dummyregstream = { { &dummystreamvtbl } };
+
+/*************************************************************************
+ * SHOpenRegStreamW        [SHCORE.@]
+ */
+IStream * WINAPI SHOpenRegStreamW(HKEY hkey, const WCHAR *subkey, const WCHAR *value, DWORD mode)
+{
+    IStream *stream;
+
+    TRACE("(%p, %s, %s, %#x)\n", hkey, debugstr_w(subkey), debugstr_w(value), mode);
+    stream = SHOpenRegStream2W(hkey, subkey, value, mode);
+    return stream ? stream : &dummyregstream.IStream_iface;
 }
 
 struct threadref
