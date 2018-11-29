@@ -2665,6 +2665,114 @@ static void test_resize_target(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static LRESULT CALLBACK resize_target_wndproc(HWND hwnd, unsigned int message, WPARAM wparam, LPARAM lparam)
+{
+    IDXGISwapChain *swapchain = (IDXGISwapChain *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    DXGI_SWAP_CHAIN_DESC desc;
+    HRESULT hr;
+
+    switch (message)
+    {
+        case WM_SIZE:
+            ok(!!swapchain, "GWLP_USERDATA is NULL.\n");
+            hr = IDXGISwapChain_GetDesc(swapchain, &desc);
+            ok(hr == S_OK, "Failed to get desc, hr %#x.\n", hr);
+            ok(desc.BufferDesc.Width == 800, "Got unexpected buffer width %u.\n", desc.BufferDesc.Width);
+            ok(desc.BufferDesc.Height == 600, "Got unexpected buffer height %u.\n", desc.BufferDesc.Height);
+            return 0;
+
+        default:
+            return DefWindowProcA(hwnd, message, wparam, lparam);
+    }
+}
+
+static void test_resize_target_wndproc(void)
+{
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    IDXGISwapChain *swapchain;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    DXGI_MODE_DESC mode;
+    IDXGIDevice *device;
+    ULONG refcount;
+    LONG_PTR data;
+    WNDCLASSA wc;
+    HRESULT hr;
+    RECT rect;
+    BOOL ret;
+
+    if (!(device = create_device(0)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    memset(&wc, 0, sizeof(wc));
+    wc.lpfnWndProc = resize_target_wndproc;
+    wc.lpszClassName = "dxgi_resize_target_wndproc_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
+
+    swapchain_desc.BufferDesc.Width = 800;
+    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+
+    swapchain_desc.OutputWindow = CreateWindowA("dxgi_resize_target_wndproc_wc",
+            "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    ok(!!swapchain_desc.OutputWindow, "Failed to create window.\n");
+
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
+
+    data = SetWindowLongPtrA(swapchain_desc.OutputWindow, GWLP_USERDATA, (LONG_PTR)swapchain);
+    ok(!data, "Got unexpected GWLP_USERDATA %p.\n", (void *)data);
+
+    memset(&mode, 0, sizeof(mode));
+    mode.Width = 600;
+    mode.Height = 400;
+    hr = IDXGISwapChain_ResizeTarget(swapchain, &mode);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
+    ok(hr == S_OK, "Getswapchain_desc failed, hr %#x.\n", hr);
+    ok(swapchain_desc.BufferDesc.Width == 800,
+            "Got unexpected buffer width %u.\n", swapchain_desc.BufferDesc.Width);
+    ok(swapchain_desc.BufferDesc.Height == 600,
+            "Got unexpected buffer height %u.\n", swapchain_desc.BufferDesc.Height);
+
+    ret = GetClientRect(swapchain_desc.OutputWindow, &rect);
+    ok(ret, "Failed to get client rect.\n");
+    ok(rect.right == mode.Width && rect.bottom == mode.Height,
+            "Got unexpected client rect %s.\n", wine_dbgstr_rect(&rect));
+
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    DestroyWindow(swapchain_desc.OutputWindow);
+
+    IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+
+    UnregisterClassA("dxgi_test_wndproc_wc", GetModuleHandleA(NULL));
+}
+
 static void test_inexact_modes(void)
 {
     struct swapchain_fullscreen_state initial_state, expected_state;
@@ -4753,6 +4861,7 @@ START_TEST(dxgi)
     queue_test(test_output);
     queue_test(test_find_closest_matching_mode);
     queue_test(test_get_containing_output);
+    queue_test(test_resize_target_wndproc);
     queue_test(test_create_factory);
     queue_test(test_private_data);
     queue_test(test_swapchain_present);
