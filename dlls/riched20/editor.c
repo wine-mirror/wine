@@ -3164,7 +3164,10 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   ME_EmptyUndoStack(editor);
   while(p) {
     pNext = p->next;
-    ME_DestroyDisplayItem(p);
+    if (p->type == diParagraph)
+      destroy_para(editor, p);
+    else
+      ME_DestroyDisplayItem(p);
     p = pNext;
   }
 

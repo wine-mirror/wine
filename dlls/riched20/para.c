@@ -32,6 +32,15 @@ static ME_DisplayItem *make_para(ME_TextEditor *editor)
     return item;
 }
 
+void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item)
+{
+    assert(item->type == diParagraph);
+
+    ME_DestroyString(item->member.para.text);
+    para_num_clear( &item->member.para.para_num );
+    ME_DestroyDisplayItem(item);
+}
+
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   ME_Context c;
@@ -682,7 +691,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   tp->member.para.next_para = pNext->member.para.next_para;
   pNext->member.para.next_para->member.para.prev_para = tp;
   ME_Remove(pNext);
-  ME_DestroyDisplayItem(pNext);
+  destroy_para(editor, pNext);
 
   ME_PropagateCharOffset(tp->member.para.next_para, -end_len);
 
