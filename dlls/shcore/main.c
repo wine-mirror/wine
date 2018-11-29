@@ -1751,3 +1751,15 @@ DWORD WINAPI SHAnsiToUnicode(const char *src, WCHAR *dest, int dest_len)
 
     return ret;
 }
+
+/*************************************************************************
+ * SHRegDuplicateHKey        [SHCORE.@]
+ */
+HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
+{
+    HKEY newKey = 0;
+
+    RegOpenKeyExW(hKey, 0, 0, MAXIMUM_ALLOWED, &newKey);
+    TRACE("new key is %p\n", newKey);
+    return newKey;
+}

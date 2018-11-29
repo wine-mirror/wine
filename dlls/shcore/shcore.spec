@@ -61,7 +61,7 @@
 @ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr) shlwapi.SHQueryInfoKeyW
 @ stdcall SHQueryValueExA(long str ptr ptr ptr ptr) shlwapi.SHQueryValueExA
 @ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr) shlwapi.SHQueryValueExW
-@ stdcall SHRegDuplicateHKey(long) shlwapi.SHRegDuplicateHKey
+@ stdcall SHRegDuplicateHKey(long)
 @ stdcall SHRegGetIntW(ptr wstr long) shlwapi.SHRegGetIntW
 @ stdcall SHRegGetPathA(long str str ptr long) shlwapi.SHRegGetPathA
 @ stdcall SHRegGetPathW(long wstr wstr ptr long) shlwapi.SHRegGetPathW

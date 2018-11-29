@@ -33,6 +33,7 @@ static int (WINAPI *pSHUnicodeToAnsi)(const WCHAR *, char *, int);
 static int (WINAPI *pSHAnsiToUnicode)(const char *, WCHAR *, int);
 static int (WINAPI *pSHAnsiToAnsi)(const char *, char *, int);
 static int (WINAPI *pSHUnicodeToUnicode)(const WCHAR *, WCHAR *, int);
+static HKEY (WINAPI *pSHRegDuplicateHKey)(HKEY);
 
 static void init(HMODULE hshcore)
 {
@@ -43,6 +44,7 @@ static void init(HMODULE hshcore)
     X(SHAnsiToUnicode);
     X(SHAnsiToAnsi);
     X(SHUnicodeToUnicode);
+    X(SHRegDuplicateHKey);
 #undef X
 }
 
@@ -300,6 +302,23 @@ static void test_SHUnicodeToUnicode(void)
     ok(buff[5] == 'f', "Unexpected buffer contents.\n");
 }
 
+static void test_SHRegDuplicateHKey(void)
+{
+    HKEY hkey, hkey2;
+    DWORD ret;
+
+    ret = RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey);
+    ok(!ret, "Failed to create test key, ret %d.\n", ret);
+
+    hkey2 = pSHRegDuplicateHKey(hkey);
+    ok(hkey2 != NULL && hkey2 != hkey, "Unexpected duplicate key.\n");
+
+    RegCloseKey(hkey2);
+    RegCloseKey(hkey);
+
+    RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test");
+}
+
 START_TEST(shcore)
 {
     HMODULE hshcore = LoadLibraryA("shcore.dll");
@@ -317,4 +336,5 @@ START_TEST(shcore)
     test_SHAnsiToUnicode();
     test_SHAnsiToAnsi();
     test_SHUnicodeToUnicode();
+    test_SHRegDuplicateHKey();
 }
