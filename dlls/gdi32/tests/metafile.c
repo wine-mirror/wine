@@ -1122,6 +1122,44 @@ static const unsigned char EMF_TEXTOUT_ON_PATH_BITS[] =
     0x14, 0x00, 0x00, 0x00
 };
 
+static const unsigned char EMF_TEXTOUT_OUTLINE_ON_PATH_BITS[] =
+{
+    0x01, 0x00, 0x00, 0x00, 0x6c, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xdd, 0xff, 0xff, 0xff, 0xdd, 0xff, 0xff, 0xff,
+    0x20, 0x45, 0x4d, 0x46, 0x00, 0x00, 0x01, 0x00,
+    0x0c, 0x01, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x90, 0x06, 0x00, 0x00, 0x1a, 0x04, 0x00, 0x00,
+    0x51, 0x02, 0x00, 0x00, 0x72, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x1a, 0x0b, 0x09, 0x00,
+    0xf0, 0xa6, 0x05, 0x00, 0x25, 0x00, 0x00, 0x00,
+    0x0c, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x80,
+    0x3b, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+    0x54, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0x01, 0x00, 0x00, 0x00, 0xc3, 0x30, 0x0d, 0x42,
+    0xcf, 0xf3, 0x0c, 0x42, 0x0b, 0x00, 0x00, 0x00,
+    0x16, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
+    0x4c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0x54, 0x00, 0x00, 0x00, 0x54, 0x00, 0x65, 0x00,
+    0x73, 0x00, 0x74, 0x00, 0x03, 0x00, 0x00, 0x00,
+    0x05, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+    0x0c, 0x00, 0x00, 0x00, 0x3c, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x25, 0x00, 0x00, 0x00,
+    0x0c, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x80,
+    0x0e, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
+    0x14, 0x00, 0x00, 0x00
+};
+
 static const unsigned char MF_LINETO_BITS[] = {
     0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x11, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
@@ -2384,6 +2422,8 @@ static void test_emf_ExtTextOut_on_path(void)
     HDC hdcDisplay, hdcMetafile;
     HENHMETAFILE hMetafile;
     BOOL ret;
+    LOGFONTA lf;
+    HFONT hFont;
     static const INT dx[4] = { 3, 5, 8, 12 };
 
     /* Win9x doesn't play EMFs on invisible windows */
@@ -2393,6 +2433,20 @@ static void test_emf_ExtTextOut_on_path(void)
 
     hdcDisplay = GetDC(hwnd);
     ok(hdcDisplay != 0, "GetDC error %d\n", GetLastError());
+
+    /* with default font */
+    ret = BeginPath(hdcDisplay);
+    ok(ret, "BeginPath error %d\n", GetLastError());
+
+    ret = ExtTextOutA(hdcDisplay, 11, 22, 0, NULL, "Test", 4, dx);
+todo_wine
+    ok(ret, "ExtTextOut error %d\n", GetLastError());
+
+    ret = EndPath(hdcDisplay);
+    ok(ret, "EndPath error %d\n", GetLastError());
+
+    ret = GetPath(hdcDisplay, NULL, NULL, 0);
+    ok(!ret, "expected 0, got %d\n", ret);
 
     hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
     ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
@@ -2405,6 +2459,9 @@ static void test_emf_ExtTextOut_on_path(void)
 
     ret = EndPath(hdcMetafile);
     ok(ret, "EndPath error %d\n", GetLastError());
+
+    ret = GetPath(hdcMetafile, NULL, NULL, 0);
+    ok(!ret, "expected 0, got %d\n", ret);
 
     hMetafile = CloseEnhMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
@@ -2421,6 +2478,67 @@ static void test_emf_ExtTextOut_on_path(void)
 
     ret = DeleteEnhMetaFile(hMetafile);
     ok(ret, "DeleteEnhMetaFile error %d\n", GetLastError());
+
+    /* with outline font */
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = ANSI_CHARSET;
+    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf.lfWeight = FW_DONTCARE;
+    lf.lfHeight = 7;
+    lf.lfQuality = DEFAULT_QUALITY;
+    lstrcpyA(lf.lfFaceName, "Tahoma");
+    hFont = CreateFontIndirectA(&lf);
+    ok(hFont != 0, "CreateFontIndirectA error %d\n", GetLastError());
+    hFont = SelectObject(hdcDisplay, hFont);
+
+    ret = BeginPath(hdcDisplay);
+    ok(ret, "BeginPath error %d\n", GetLastError());
+
+    ret = ExtTextOutA(hdcDisplay, 11, 22, 0, NULL, "Test", 4, dx);
+    ok(ret, "ExtTextOut error %d\n", GetLastError());
+
+    ret = EndPath(hdcDisplay);
+    ok(ret, "EndPath error %d\n", GetLastError());
+
+    ret = GetPath(hdcDisplay, NULL, NULL, 0);
+    ok(ret != 0, "expected != 0\n");
+
+    SelectObject(hdcDisplay, hFont);
+
+    hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
+
+    hFont = SelectObject(hdcMetafile, hFont);
+
+    ret = BeginPath(hdcMetafile);
+    ok(ret, "BeginPath error %d\n", GetLastError());
+
+    ret = ExtTextOutA(hdcMetafile, 11, 22, 0, NULL, "Test", 4, dx);
+todo_wine
+    ok(ret, "ExtTextOut error %d\n", GetLastError());
+
+    ret = EndPath(hdcMetafile);
+    ok(ret, "EndPath error %d\n", GetLastError());
+
+    ret = GetPath(hdcMetafile, NULL, NULL, 0);
+    ok(!ret, "expected 0, got %d\n", ret);
+
+    hFont = SelectObject(hdcMetafile, hFont);
+    DeleteObject(hFont);
+
+    hMetafile = CloseEnhMetaFile(hdcMetafile);
+    ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
+
+    if (compare_emf_bits(hMetafile, EMF_TEXTOUT_OUTLINE_ON_PATH_BITS, sizeof(EMF_TEXTOUT_OUTLINE_ON_PATH_BITS),
+        "emf_TextOut_on_path", FALSE) != 0)
+    {
+        dump_emf_bits(hMetafile, "emf_TextOut_outline_on_path");
+        dump_emf_records(hMetafile, "emf_TextOut_outline_on_path");
+    }
+
+    ret = DeleteEnhMetaFile(hMetafile);
+    ok(ret, "DeleteEnhMetaFile error %d\n", GetLastError());
+
     ret = ReleaseDC(hwnd, hdcDisplay);
     ok(ret, "ReleaseDC error %d\n", GetLastError());
     DestroyWindow(hwnd);
