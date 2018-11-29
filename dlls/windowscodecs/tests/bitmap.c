@@ -1084,6 +1084,7 @@ static void test_bitmap_scaler(void)
 {
     WICPixelFormatGUID pixel_format;
     IWICBitmapScaler *scaler;
+    IWICPalette *palette;
     double res_x, res_y;
     IWICBitmap *bitmap;
     UINT width, height;
@@ -1147,6 +1148,15 @@ static void test_bitmap_scaler(void)
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
     ok(width == 123, "Unexpected width %u.\n", width);
     ok(height == 321, "Unexpected height %u.\n", height);
+
+    hr = IWICBitmapScaler_CopyPalette(scaler, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "Failed to create a palette, hr %#x.\n", hr);
+    hr = IWICBitmapScaler_CopyPalette(scaler, palette);
+    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#x.\n", hr);
+    IWICPalette_Release(palette);
 
     hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 4, 0,
         WICBitmapInterpolationModeNearestNeighbor);
@@ -1223,6 +1233,12 @@ static void test_bitmap_scaler(void)
     hr = IWICBitmapScaler_GetResolution(scaler, &res_x, &res_y);
     ok(hr == S_OK, "Failed to get scaler resolution, hr %#x.\n", hr);
     ok(res_x == 0.0 && res_y == 0.0, "Unexpected resolution %f x %f.\n", res_x, res_y);
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "Failed to create a palette, hr %#x.\n", hr);
+    hr = IWICBitmapScaler_CopyPalette(scaler, palette);
+    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#x.\n", hr);
+    IWICPalette_Release(palette);
 
     IWICBitmapScaler_Release(scaler);
 

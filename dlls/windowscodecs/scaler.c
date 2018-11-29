@@ -163,7 +163,7 @@ static HRESULT WINAPI BitmapScaler_CopyPalette(IWICBitmapScaler *iface,
         return E_INVALIDARG;
 
     if (!This->source)
-        return WINCODEC_ERR_WRONGSTATE;
+        return WINCODEC_ERR_PALETTEUNAVAILABLE;
 
     return IWICBitmapSource_CopyPalette(This->source, pIPalette);
 }
