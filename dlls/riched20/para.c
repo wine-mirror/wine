@@ -54,6 +54,7 @@ void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item)
         item->member.para.nWidth = 0;
         editor->nTotalWidth = get_total_width(editor);
     }
+    editor->total_rows -= item->member.para.nRows;
     ME_DestroyString(item->member.para.text);
     para_num_clear( &item->member.para.para_num );
     remove_marked_para(editor, item);

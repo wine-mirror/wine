@@ -397,6 +397,7 @@ typedef struct tagME_TextEditor
   int nTotalWidth, nLastTotalWidth;
   int nAvailWidth; /* 0 = wrap to client area, else wrap width in twips */
   int nUDArrowX;
+  int total_rows;
   COLORREF rgbBackColor;
   HBRUSH hbrBackground;
   BOOL bCaretAtEnd;

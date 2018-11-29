@@ -733,12 +733,13 @@ static int ME_GetParaLineSpace(ME_Context* c, ME_Paragraph* para)
     return sp * c->editor->nZoomNumerator / c->editor->nZoomDenominator;
 }
 
-static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
+static void ME_PrepareParagraphForWrapping(ME_TextEditor *editor, ME_Context *c, ME_DisplayItem *tp) {
   ME_DisplayItem *p;
 
   tp->member.para.nWidth = 0;
   /* remove row start items as they will be reinserted by the
    * paragraph wrapper anyway */
+  editor->total_rows -= tp->member.para.nRows;
   tp->member.para.nRows = 0;
   for (p = tp->next; p != tp->member.para.next_para; p = p->next) {
     if (p->type == diStartRow) {
@@ -870,7 +871,7 @@ static HRESULT shape_para( ME_Context *c, ME_DisplayItem *p )
     return hr;
 }
 
-static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
+static void ME_WrapTextParagraph(ME_TextEditor *editor, ME_Context *c, ME_DisplayItem *tp) {
   ME_DisplayItem *p;
   ME_WrapContext wc;
   int border = 0;
@@ -881,7 +882,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   if (!(tp->member.para.nFlags & MEPF_REWRAP)) {
     return;
   }
-  ME_PrepareParagraphForWrapping(c, tp);
+  ME_PrepareParagraphForWrapping(editor, c, tp);
 
   /* Calculate paragraph numbering label */
   para_num_init( c, &tp->member.para );
@@ -969,6 +970,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   tp->member.para.nFlags &= ~MEPF_REWRAP;
   tp->member.para.nHeight = wc.pt.y;
   tp->member.para.nRows = wc.nRow;
+  editor->total_rows += wc.nRow;
 }
 
 static void ME_MarkRepaintEnd(ME_DisplayItem *para,
@@ -1114,7 +1116,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
     assert(item->type == diParagraph);
 
     prev_width = item->member.para.nWidth;
-    ME_WrapTextParagraph(&c, item);
+    ME_WrapTextParagraph(editor, &c, item);
     if (prev_width == totalWidth && item->member.para.nWidth < totalWidth)
       totalWidth = get_total_width(editor);
     else
