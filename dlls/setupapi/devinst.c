@@ -1351,7 +1351,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoA(HDEVINFO DeviceInfoSet, const char *name,
         return FALSE;
     }
 
-    MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, sizeof(nameW));
+    MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, ARRAY_SIZE(nameW));
 
     if (DeviceDescription)
     {
