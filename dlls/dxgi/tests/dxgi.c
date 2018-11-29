@@ -2686,20 +2686,65 @@ static LRESULT CALLBACK resize_target_wndproc(HWND hwnd, unsigned int message, W
     }
 }
 
+struct window_thread_data
+{
+    HWND window;
+    HANDLE window_created;
+    HANDLE finished;
+};
+
+static DWORD WINAPI window_thread(void *data)
+{
+    struct window_thread_data *thread_data = data;
+    unsigned int ret;
+    WNDCLASSA wc;
+    MSG msg;
+
+    memset(&wc, 0, sizeof(wc));
+    wc.lpfnWndProc = resize_target_wndproc;
+    wc.lpszClassName = "dxgi_resize_target_wndproc_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+
+    thread_data->window = CreateWindowA("dxgi_resize_target_wndproc_wc", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    ok(!!thread_data->window, "Failed to create window.\n");
+
+    ret = SetEvent(thread_data->window_created);
+    ok(ret, "Failed to set event, last error %#x.\n", GetLastError());
+
+    for (;;)
+    {
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+
+        ret = WaitForSingleObject(thread_data->finished, 0);
+        if (ret != WAIT_TIMEOUT)
+            break;
+    }
+    ok(ret == WAIT_OBJECT_0, "Failed to wait for event, ret %#x, last error %#x.\n", ret, GetLastError());
+
+    DestroyWindow(thread_data->window);
+    thread_data->window = NULL;
+
+    UnregisterClassA("dxgi_test_wndproc_wc", GetModuleHandleA(NULL));
+
+    return 0;
+}
+
 static void test_resize_target_wndproc(void)
 {
+    struct window_thread_data thread_data;
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     IDXGISwapChain *swapchain;
     IDXGIFactory *factory;
     IDXGIAdapter *adapter;
     DXGI_MODE_DESC mode;
     IDXGIDevice *device;
+    unsigned int ret;
     ULONG refcount;
     LONG_PTR data;
-    WNDCLASSA wc;
+    HANDLE thread;
     HRESULT hr;
     RECT rect;
-    BOOL ret;
 
     if (!(device = create_device(0)))
     {
@@ -2707,10 +2752,16 @@ static void test_resize_target_wndproc(void)
         return;
     }
 
-    memset(&wc, 0, sizeof(wc));
-    wc.lpfnWndProc = resize_target_wndproc;
-    wc.lpszClassName = "dxgi_resize_target_wndproc_wc";
-    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+    memset(&thread_data, 0, sizeof(thread_data));
+    thread_data.window_created = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(!!thread_data.window_created, "Failed to create event, last error %#x.\n", GetLastError());
+    thread_data.finished = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(!!thread_data.finished, "Failed to create event, last error %#x.\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, window_thread, &thread_data, 0, NULL);
+    ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
+    ret = WaitForSingleObject(thread_data.window_created, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "Failed to wait for thread, ret %#x, last error %#x.\n", ret, GetLastError());
 
     hr = IDXGIDevice_GetAdapter(device, &adapter);
     ok(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
@@ -2728,18 +2779,14 @@ static void test_resize_target_wndproc(void)
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapchain_desc.BufferCount = 1;
+    swapchain_desc.OutputWindow = thread_data.window;
     swapchain_desc.Windowed = TRUE;
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
-
-    swapchain_desc.OutputWindow = CreateWindowA("dxgi_resize_target_wndproc_wc",
-            "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
-    ok(!!swapchain_desc.OutputWindow, "Failed to create window.\n");
-
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
 
-    data = SetWindowLongPtrA(swapchain_desc.OutputWindow, GWLP_USERDATA, (LONG_PTR)swapchain);
+    data = SetWindowLongPtrA(thread_data.window, GWLP_USERDATA, (LONG_PTR)swapchain);
     ok(!data, "Got unexpected GWLP_USERDATA %p.\n", (void *)data);
 
     memset(&mode, 0, sizeof(mode));
@@ -2762,7 +2809,6 @@ static void test_resize_target_wndproc(void)
 
     refcount = IDXGISwapChain_Release(swapchain);
     ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
-    DestroyWindow(swapchain_desc.OutputWindow);
 
     IDXGIAdapter_Release(adapter);
     refcount = IDXGIDevice_Release(device);
@@ -2770,7 +2816,13 @@ static void test_resize_target_wndproc(void)
     refcount = IDXGIFactory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
 
-    UnregisterClassA("dxgi_test_wndproc_wc", GetModuleHandleA(NULL));
+    ret = SetEvent(thread_data.finished);
+    ok(ret, "Failed to set event, last error %#x.\n", GetLastError());
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "Failed to wait for thread, ret %#x, last error %#x.\n", ret, GetLastError());
+    CloseHandle(thread);
+    CloseHandle(thread_data.window_created);
+    CloseHandle(thread_data.finished);
 }
 
 static void test_inexact_modes(void)
