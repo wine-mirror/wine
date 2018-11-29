@@ -912,16 +912,26 @@ static HRESULT WINAPI IWICStreamImpl_Clone(IWICStream *iface,
     return IStream_Clone(This->pStream, ppstm);
 }
 
-static HRESULT WINAPI IWICStreamImpl_InitializeFromIStream(IWICStream *iface,
-    IStream *pIStream)
+static HRESULT WINAPI IWICStreamImpl_InitializeFromIStream(IWICStream *iface, IStream *stream)
 {
-    ULARGE_INTEGER offset, size;
-    TRACE("(%p, %p)\n", iface, pIStream);
+    IWICStreamImpl *This = impl_from_IWICStream(iface);
+    HRESULT hr = S_OK;
 
-    offset.QuadPart = 0;
-    size.u.LowPart = 0xffffffff;
-    size.u.HighPart = 0xffffffff;
-    return IWICStream_InitializeFromIStreamRegion(iface, pIStream, offset, size);
+    TRACE("(%p, %p)\n", iface, stream);
+
+    if (!stream) return E_INVALIDARG;
+    if (This->pStream) return WINCODEC_ERR_WRONGSTATE;
+
+    IStream_AddRef(stream);
+
+    if (InterlockedCompareExchangePointer((void **)&This->pStream, stream, NULL))
+    {
+        /* Some other thread set the stream first. */
+        IStream_Release(stream);
+        hr = WINCODEC_ERR_WRONGSTATE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IWICStreamImpl_InitializeFromFilename(IWICStream *iface,

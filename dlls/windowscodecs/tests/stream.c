@@ -777,7 +777,7 @@ static void test_StreamOnIStream(void)
 
     hr = IWICStream_InitializeFromIStream(substream, (IStream *)stream);
     ok(hr == S_OK, "Failed to initialize stream, hr %#x.\n", hr);
-    CHECK_CUR_POS_TODO(substream, 1);
+    CHECK_CUR_POS(substream, 1);
 
     /* Seek */
     CHECK_CUR_POS(stream, 1);
@@ -785,12 +785,12 @@ static void test_StreamOnIStream(void)
     ok(hr == S_OK, "Failed to seek a stream, hr %#x.\n", hr);
     ok(newpos.QuadPart == sizeof(memory), "Unexpected position %s.\n", wine_dbgstr_longlong(newpos.QuadPart));
     CHECK_CUR_POS(substream, sizeof(memory));
-    CHECK_CUR_POS_TODO(stream, sizeof(memory));
+    CHECK_CUR_POS(stream, sizeof(memory));
 
     hr = IWICStream_Seek(substream, zero_pos, STREAM_SEEK_SET, &newpos);
     ok(hr == S_OK, "Failed to seek a stream, hr %#x.\n", hr);
     ok(newpos.QuadPart == 0, "Unexpected position %s.\n", wine_dbgstr_longlong(newpos.QuadPart));
-    CHECK_CUR_POS_TODO(stream, 0);
+    CHECK_CUR_POS(stream, 0);
     CHECK_CUR_POS(substream, 0);
 
     hr = IWICStream_Seek(substream, zero_pos, STREAM_SEEK_SET, NULL);
@@ -801,41 +801,37 @@ static void test_StreamOnIStream(void)
     newpos.u.HighPart = 0xdeadbeef;
     newpos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(substream, pos, STREAM_SEEK_SET, &newpos);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "Unexpected hr %#x.\n", hr);
     ok(newpos.u.HighPart == 0xdeadbeef && newpos.u.LowPart == 0xdeadbeef, "Unexpected position %s.\n",
         wine_dbgstr_longlong(newpos.QuadPart));
-    CHECK_CUR_POS_TODO(stream, 0);
+    CHECK_CUR_POS(stream, 0);
     CHECK_CUR_POS(substream, 0);
 
     pos.QuadPart = sizeof(memory) + 1;
     newpos.u.HighPart = 0xdeadbeef;
     newpos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(substream, pos, STREAM_SEEK_SET, &newpos);
-todo_wine {
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(newpos.u.HighPart == 0xdeadbeef && newpos.u.LowPart == 0xdeadbeef, "Unexpected position %s.\n",
         wine_dbgstr_longlong(newpos.QuadPart));
-}
-    CHECK_CUR_POS_TODO(stream, 0);
-    CHECK_CUR_POS_TODO(substream, 0);
+    CHECK_CUR_POS(stream, 0);
+    CHECK_CUR_POS(substream, 0);
 
     pos.QuadPart = 1;
     newpos.u.HighPart = 0xdeadbeef;
     newpos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(substream, pos, STREAM_SEEK_END, &newpos);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(newpos.u.HighPart == 0xdeadbeef && newpos.u.LowPart == 0xdeadbeef, "Unexpected position %s.\n",
         wine_dbgstr_longlong(newpos.QuadPart));
-    CHECK_CUR_POS_TODO(stream, 0);
-    CHECK_CUR_POS_TODO(substream, 0);
+    CHECK_CUR_POS(stream, 0);
+    CHECK_CUR_POS(substream, 0);
 
     pos.QuadPart = -1;
     hr = IWICStream_Seek(substream, pos, STREAM_SEEK_END, &newpos);
     ok(hr == S_OK, "Failed to seek a stream, hr %#x.\n", hr);
     ok(newpos.QuadPart == sizeof(memory) - 1, "Unexpected position %s.\n", wine_dbgstr_longlong(newpos.QuadPart));
-    CHECK_CUR_POS_TODO(stream, sizeof(memory) - 1);
+    CHECK_CUR_POS(stream, sizeof(memory) - 1);
     CHECK_CUR_POS(substream, sizeof(memory) - 1);
 
     IWICStream_Seek(substream, zero_pos, STREAM_SEEK_SET, NULL);
@@ -846,23 +842,23 @@ todo_wine
     ok(read_len == 12, "Unexpected read length %u.\n", read_len);
     ok(!memcmp(buff, data, 12), "Unexpected data.\n");
     CHECK_CUR_POS(substream, read_len);
-    CHECK_CUR_POS_TODO(stream, read_len);
+    CHECK_CUR_POS(stream, read_len);
 
     IWICStream_Seek(substream, zero_pos, STREAM_SEEK_SET, NULL);
-    CHECK_CUR_POS_TODO(stream, 0);
+    CHECK_CUR_POS(stream, 0);
 
     hr = IWICStream_Read(substream, memory, 10, &read_len);   /* source = dest */
     ok(hr == S_OK, "Failed to read from stream, hr %#x.\n", hr);
     ok(read_len == 10, "Unexpected read length %u.\n", read_len);
     ok(!memcmp(memory, data, read_len), "Unexpected data.\n");
-    CHECK_CUR_POS_TODO(stream, 10);
+    CHECK_CUR_POS(stream, 10);
 
     IWICStream_Seek(substream, zero_pos, STREAM_SEEK_SET, NULL);
     hr = IWICStream_Read(substream, memory, 2 * sizeof(data), &read_len);   /* request too many bytes */
     ok(hr == S_OK, "Failed to read from stream, hr %#x.\n", hr);
     ok(read_len == 64, "Unexpected read length %u.\n", read_len);
     ok(!memcmp(memory, data, read_len), "Unexpected data.\n");
-    CHECK_CUR_POS_TODO(stream, sizeof(data));
+    CHECK_CUR_POS(stream, sizeof(data));
 
     IWICStream_Seek(substream, zero_pos, STREAM_SEEK_SET, NULL);
     read_len = 0xdeadbeef;
@@ -898,7 +894,7 @@ todo_wine
     ok(written == 3, "Unexpected written length %u.\n", written);
     ok(!memcmp(buff, memory, 3), "Unexpected stream data.\n");
     CHECK_CUR_POS(substream, written);
-    CHECK_CUR_POS_TODO(stream, written);
+    CHECK_CUR_POS(stream, written);
     IWICStream_Seek(substream, zero_pos, STREAM_SEEK_SET, NULL);
 
     hr = IWICStream_Write(substream, buff, 0, &written);
@@ -909,14 +905,14 @@ todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(written == 0xdeadbeef, "Unexpected written length %u.\n", written);
     CHECK_CUR_POS(substream, 0);
-    CHECK_CUR_POS_TODO(stream, 0);
+    CHECK_CUR_POS(stream, 0);
 
     written = 0xdeadbeef;
     hr = IWICStream_Write(substream, NULL, 0, &written);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(written == 0xdeadbeef, "Unexpected written length %u.\n", written);
     CHECK_CUR_POS(substream, 0);
-    CHECK_CUR_POS_TODO(stream, 0);
+    CHECK_CUR_POS(stream, 0);
 
     /* SetSize */
     newpos.u.HighPart = 0;
