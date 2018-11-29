@@ -143,14 +143,10 @@ static ULONG STDMETHODCALLTYPE d3d11_swapchain_AddRef(IDXGISwapChain1 *iface)
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
     ULONG refcount = InterlockedIncrement(&swapchain->refcount);
 
-    TRACE("%p increasing refcount to %u\n", swapchain, refcount);
+    TRACE("%p increasing refcount to %u.\n", swapchain, refcount);
 
     if (refcount == 1)
-    {
-        wined3d_mutex_lock();
         wined3d_swapchain_incref(swapchain->wined3d_swapchain);
-        wined3d_mutex_unlock();
-    }
 
     return refcount;
 }
