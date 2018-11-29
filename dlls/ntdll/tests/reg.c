@@ -374,7 +374,7 @@ todo_wine
     ok(!key, "key = %p\n", key);
     if (status == STATUS_SUCCESS) NtClose(key);
 
-    /* Calling without parent key requres full registry path. */
+    /* Calling without parent key requires full registry path. */
     pRtlCreateUnicodeStringFromAsciiz( &str, "Machine" );
     InitializeObjectAttributes(&attr, &str, 0, 0, 0);
     key = (HANDLE)0xdeadbeef;
