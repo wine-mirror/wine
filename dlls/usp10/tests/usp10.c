@@ -3349,7 +3349,7 @@ static void test_ScriptCacheGetHeight(HDC hdc)
 
     height = 123;
     hr = ScriptCacheGetHeight(hdc, NULL, &height);
-    ok(hr == E_INVALIDARG, "Uexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(height == 123, "Unexpected height.\n");
 
     memset(&tm, 0, sizeof(tm));
