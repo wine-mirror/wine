@@ -596,7 +596,9 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   }
 
   /* force rewrap of the */
-  mark_para_rewrap(editor, run_para->member.para.prev_para);
+  if (run_para->member.para.prev_para->type == diParagraph)
+    mark_para_rewrap(editor, run_para->member.para.prev_para);
+
   mark_para_rewrap(editor, new_para->member.para.prev_para);
 
   /* we've added the end run, so we need to modify nCharOfs in the next paragraphs */
