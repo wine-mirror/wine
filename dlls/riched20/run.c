@@ -103,6 +103,9 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
   ME_DisplayItem *p = editor->pBuffer->pFirst;
   int ofs = 0, ofsp = 0;
 
+  if (!TRACE_ON(richedit_check))
+    return;
+
   TRACE_(richedit_check)("Checking begin\n");
   if(TRACE_ON(richedit_lists))
   {
@@ -238,8 +241,7 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
   ME_Remove(pNext);
   ME_DestroyDisplayItem(pNext);
   ME_UpdateRunFlags(editor, &p->member.run);
-  if(TRACE_ON(richedit_check))
-    ME_CheckCharOffsets(editor);
+  ME_CheckCharOffsets(editor);
 }
 
 /******************************************************************************

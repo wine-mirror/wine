@@ -23,7 +23,6 @@
 #include "editor.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
-WINE_DECLARE_DEBUG_CHANNEL(richedit_check);
 
 /*
  * Unsolved problems:
@@ -140,8 +139,7 @@ static ME_DisplayItem *split_run_extents(ME_WrapContext *wc, ME_DisplayItem *ite
   ME_Cursor cursor = {wc->pPara, item, nVChar};
 
   assert(item->member.run.nCharOfs != -1);
-  if(TRACE_ON(richedit_check))
-    ME_CheckCharOffsets(editor);
+  ME_CheckCharOffsets(editor);
 
   run = &item->member.run;
 
@@ -160,8 +158,7 @@ static ME_DisplayItem *split_run_extents(ME_WrapContext *wc, ME_DisplayItem *ite
   run2->pt.x = run->pt.x+run->nWidth;
   run2->pt.y = run->pt.y;
 
-  if(TRACE_ON(richedit_check))
-    ME_CheckCharOffsets(editor);
+  ME_CheckCharOffsets(editor);
 
   TRACE("After split: %s(%d, %d), %s(%d, %d)\n",
         debugstr_run( run ), run->pt.x, run->pt.y,
