@@ -434,7 +434,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeTarget(IDXGISwapChain1 *i
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
     struct wined3d_display_mode mode;
-    HRESULT hr;
 
     TRACE("iface %p, target_mode_desc %p.\n", iface, target_mode_desc);
 
@@ -451,11 +450,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeTarget(IDXGISwapChain1 *i
 
     wined3d_display_mode_from_dxgi(&mode, target_mode_desc);
 
-    wined3d_mutex_lock();
-    hr = wined3d_swapchain_resize_target(swapchain->wined3d_swapchain, &mode);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return wined3d_swapchain_resize_target(swapchain->wined3d_swapchain, &mode);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapChain1 *iface, IDXGIOutput **output)
