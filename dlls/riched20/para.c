@@ -36,9 +36,32 @@ void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item)
 {
     assert(item->type == diParagraph);
 
+    if (item->member.para.nWidth == editor->nTotalWidth)
+    {
+        item->member.para.nWidth = 0;
+        editor->nTotalWidth = get_total_width(editor);
+    }
     ME_DestroyString(item->member.para.text);
     para_num_clear( &item->member.para.para_num );
     ME_DestroyDisplayItem(item);
+}
+
+int get_total_width(ME_TextEditor *editor)
+{
+    ME_Paragraph *para;
+    int total_width = 0;
+
+    if (editor->pBuffer->pFirst && editor->pBuffer->pLast)
+    {
+        para = &editor->pBuffer->pFirst->next->member.para;
+        while (para != &editor->pBuffer->pLast->member.para && para->next_para)
+        {
+            total_width = max(total_width, para->nWidth);
+            para = &para->next_para->member.para;
+        }
+    }
+
+    return total_width;
 }
 
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
