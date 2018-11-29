@@ -1013,9 +1013,9 @@ static void test_default_format(void)
 
     ITextHostImpl_TxGetCharFormat(host, &host_cf);
     ok(!lstrcmpW(host_cf->szFaceName, cf2.szFaceName), "got wrong font name: %s.\n", wine_dbgstr_w(cf2.szFaceName));
-    ok(cf2.yHeight == host_cf->yHeight, "got wrong yHeight: %d, expetced %d.\n", cf2.yHeight, host_cf->yHeight);
+    ok(cf2.yHeight == host_cf->yHeight, "got wrong yHeight: %d, expected %d.\n", cf2.yHeight, host_cf->yHeight);
     expected_effects = (cf2.dwEffects & ~(CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR));
-    ok(host_cf->dwEffects == expected_effects , "got wrong dwEffects: %x, expetced %x.\n", cf2.dwEffects, expected_effects);
+    ok(host_cf->dwEffects == expected_effects, "got wrong dwEffects: %x, expected %x.\n", cf2.dwEffects, expected_effects);
     ok(cf2.bPitchAndFamily == host_cf->bPitchAndFamily, "got wrong bPitchAndFamily: %x, expected %x.\n",
        cf2.bPitchAndFamily, host_cf->bPitchAndFamily);
     ok(cf2.bCharSet == host_cf->bCharSet, "got wrong bCharSet: %x, expected %x.\n", cf2.bCharSet, host_cf->bCharSet);
