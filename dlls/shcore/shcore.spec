@@ -40,12 +40,12 @@
 @ stdcall SHCreateThread(ptr ptr long ptr)
 @ stdcall SHCreateThreadRef(ptr ptr)
 @ stub SHCreateThreadWithHandle
-@ stdcall SHDeleteEmptyKeyA(long ptr) shlwapi.SHDeleteEmptyKeyA
-@ stdcall SHDeleteEmptyKeyW(long ptr) shlwapi.SHDeleteEmptyKeyW
-@ stdcall SHDeleteKeyA(long str) shlwapi.SHDeleteKeyA
-@ stdcall SHDeleteKeyW(long wstr) shlwapi.SHDeleteKeyW
-@ stdcall SHDeleteValueA(long  str  str) shlwapi.SHDeleteValueA
-@ stdcall SHDeleteValueW(long wstr wstr) shlwapi.SHDeleteValueW
+@ stdcall SHDeleteEmptyKeyA(long ptr)
+@ stdcall SHDeleteEmptyKeyW(long ptr)
+@ stdcall SHDeleteKeyA(long str)
+@ stdcall SHDeleteKeyW(long wstr)
+@ stdcall SHDeleteValueA(long str str)
+@ stdcall SHDeleteValueW(long wstr wstr)
 @ stdcall SHEnumKeyExA(long long str ptr) shlwapi.SHEnumKeyExA
 @ stdcall SHEnumKeyExW(long long wstr ptr) shlwapi.SHEnumKeyExW
 @ stdcall SHEnumValueA(long long str ptr ptr ptr ptr) shlwapi.SHEnumValueA

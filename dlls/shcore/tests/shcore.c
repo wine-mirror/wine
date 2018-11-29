@@ -34,6 +34,7 @@ static int (WINAPI *pSHAnsiToUnicode)(const char *, WCHAR *, int);
 static int (WINAPI *pSHAnsiToAnsi)(const char *, char *, int);
 static int (WINAPI *pSHUnicodeToUnicode)(const WCHAR *, WCHAR *, int);
 static HKEY (WINAPI *pSHRegDuplicateHKey)(HKEY);
+static DWORD (WINAPI *pSHDeleteKeyA)(HKEY, const char *);
 
 static void init(HMODULE hshcore)
 {
@@ -45,6 +46,7 @@ static void init(HMODULE hshcore)
     X(SHAnsiToAnsi);
     X(SHUnicodeToUnicode);
     X(SHRegDuplicateHKey);
+    X(SHDeleteKeyA);
 #undef X
 }
 
@@ -319,6 +321,28 @@ static void test_SHRegDuplicateHKey(void)
     RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test");
 }
 
+static void test_SHDeleteKey(void)
+{
+    HKEY hkey, hkey2;
+    DWORD ret;
+
+    ret = RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey);
+    ok(!ret, "Failed to create test key, %d.\n", ret);
+
+    ret = RegCreateKeyA(hkey, "delete_key", &hkey2);
+    ok(!ret, "Failed to create test key, %d.\n", ret);
+    RegCloseKey(hkey2);
+
+    ret = RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test");
+    ok(ret == ERROR_ACCESS_DENIED, "Unexpected return value %d.\n", ret);
+
+    ret = pSHDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test");
+    ok(!ret, "Failed to delete a key, %d.\n", ret);
+
+    ret = RegCloseKey(hkey);
+    ok(!ret, "Failed to delete a key, %d.\n", ret);
+}
+
 START_TEST(shcore)
 {
     HMODULE hshcore = LoadLibraryA("shcore.dll");
@@ -337,4 +361,5 @@ START_TEST(shcore)
     test_SHAnsiToAnsi();
     test_SHUnicodeToUnicode();
     test_SHRegDuplicateHKey();
+    test_SHDeleteKey();
 }

@@ -1763,3 +1763,113 @@ HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
     TRACE("new key is %p\n", newKey);
     return newKey;
 }
+
+/*************************************************************************
+ * SHDeleteEmptyKeyW        [SHCORE.@]
+ */
+DWORD WINAPI SHDeleteEmptyKeyW(HKEY hkey, const WCHAR *subkey)
+{
+    DWORD ret, count = 0;
+    HKEY hsubkey = 0;
+
+    TRACE("(%p, %s)\n", hkey, debugstr_w(subkey));
+
+    ret = RegOpenKeyExW(hkey, subkey, 0, KEY_READ, &hsubkey);
+    if (!ret)
+    {
+        ret = RegQueryInfoKeyW(hsubkey, NULL, NULL, NULL, &count,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        RegCloseKey(hsubkey);
+        if (!ret)
+        {
+            if (count)
+                ret = ERROR_KEY_HAS_CHILDREN;
+            else
+                ret = RegDeleteKeyW(hkey, subkey);
+        }
+    }
+
+    return ret;
+}
+
+/*************************************************************************
+ * SHDeleteEmptyKeyA        [SHCORE.@]
+ */
+DWORD WINAPI SHDeleteEmptyKeyA(HKEY hkey, const char *subkey)
+{
+    WCHAR *subkeyW = NULL;
+    DWORD ret;
+
+    TRACE("(%p, %s)\n", hkey, debugstr_a(subkey));
+
+    if (subkey && FAILED(SHStrDupA(subkey, &subkeyW)))
+        return ERROR_OUTOFMEMORY;
+
+    ret = SHDeleteEmptyKeyW(hkey, subkeyW);
+    CoTaskMemFree(subkeyW);
+    return ret;
+}
+
+/*************************************************************************
+ * SHDeleteKeyW        [SHCORE.@]
+ */
+DWORD WINAPI SHDeleteKeyW(HKEY hkey, const WCHAR *subkey)
+{
+    TRACE("(%p, %s)\n", hkey, debugstr_w(subkey));
+
+    return RegDeleteTreeW(hkey, subkey);
+}
+
+/*************************************************************************
+ * SHDeleteKeyA        [SHCORE.@]
+ */
+DWORD WINAPI SHDeleteKeyA(HKEY hkey, const char *subkey)
+{
+    TRACE("(%p, %s)\n", hkey, debugstr_a(subkey));
+
+    return RegDeleteTreeA(hkey, subkey);
+}
+
+/*************************************************************************
+ * SHDeleteValueW        [SHCORE.@]
+ */
+DWORD WINAPI SHDeleteValueW(HKEY hkey, const WCHAR *subkey, const WCHAR *value)
+{
+    HKEY hsubkey;
+    DWORD ret;
+
+    TRACE("(%p, %s, %s)\n", hkey, debugstr_w(subkey), debugstr_w(value));
+
+    ret = RegOpenKeyExW(hkey, subkey, 0, KEY_SET_VALUE, &hsubkey);
+    if (!ret)
+    {
+        ret = RegDeleteValueW(hsubkey, value);
+        RegCloseKey(hsubkey);
+    }
+
+    return ret;
+}
+
+/*************************************************************************
+ * SHDeleteValueA        [SHCORE.@]
+ */
+DWORD WINAPI SHDeleteValueA(HKEY hkey, const char *subkey, const char *value)
+{
+    WCHAR *subkeyW = NULL, *valueW = NULL;
+    DWORD ret;
+
+    TRACE("(%p, %s, %s)\n", hkey, debugstr_a(subkey), debugstr_a(value));
+
+    if (subkey && FAILED(SHStrDupA(subkey, &subkeyW)))
+        return ERROR_OUTOFMEMORY;
+    if (value && FAILED(SHStrDupA(value, &valueW)))
+    {
+        CoTaskMemFree(subkeyW);
+        return ERROR_OUTOFMEMORY;
+    }
+
+    ret = SHDeleteValueW(hkey, subkeyW, valueW);
+    CoTaskMemFree(subkeyW);
+    CoTaskMemFree(valueW);
+    return ret;
+}
