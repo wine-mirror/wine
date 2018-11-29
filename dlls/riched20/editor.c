@@ -3035,6 +3035,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->bEmulateVersion10 = bEmulateVersion10;
   ed->styleFlags = 0;
   ed->exStyleFlags = 0;
+  ed->first_marked_para = NULL;
   ITextHost_TxGetPropertyBits(texthost,
                               (TXTBIT_RICHTEXT|TXTBIT_MULTILINE|
                                TXTBIT_READONLY|TXTBIT_USEPASSWORD|

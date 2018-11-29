@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 void mark_para_rewrap(ME_TextEditor *editor, ME_DisplayItem *para)
 {
     para->member.para.nFlags |= MEPF_REWRAP;
+    add_marked_para(editor, para);
 }
 
 ME_DisplayItem *get_di_from_para(ME_Paragraph *para)
@@ -39,6 +40,8 @@ static ME_DisplayItem *make_para(ME_TextEditor *editor)
 
     ME_SetDefaultParaFormat(editor, &item->member.para.fmt);
     item->member.para.nFlags = MEPF_REWRAP;
+    item->member.para.next_marked = item->member.para.prev_marked = NULL;
+
     return item;
 }
 
@@ -53,6 +56,7 @@ void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item)
     }
     ME_DestroyString(item->member.para.text);
     para_num_clear( &item->member.para.para_num );
+    remove_marked_para(editor, item);
     ME_DestroyDisplayItem(item);
 }
 
@@ -72,6 +76,77 @@ int get_total_width(ME_TextEditor *editor)
     }
 
     return total_width;
+}
+
+void remove_marked_para(ME_TextEditor *editor, ME_DisplayItem *di)
+{
+    ME_DisplayItem *head = editor->first_marked_para;
+
+    assert(di->type == diParagraph);
+    if (!di->member.para.next_marked && !di->member.para.prev_marked)
+    {
+        if (di == head)
+            editor->first_marked_para = NULL;
+    }
+    else if (di->member.para.next_marked && di->member.para.prev_marked)
+    {
+        di->member.para.prev_marked->member.para.next_marked = di->member.para.next_marked;
+        di->member.para.next_marked->member.para.prev_marked = di->member.para.prev_marked;
+        di->member.para.prev_marked = di->member.para.next_marked = NULL;
+    }
+    else if (di->member.para.next_marked)
+    {
+        assert(di == editor->first_marked_para);
+        editor->first_marked_para = di->member.para.next_marked;
+        di->member.para.next_marked->member.para.prev_marked = NULL;
+        di->member.para.next_marked = NULL;
+    }
+    else
+    {
+        di->member.para.prev_marked->member.para.next_marked = NULL;
+        di->member.para.prev_marked = NULL;
+    }
+}
+
+void add_marked_para(ME_TextEditor *editor, ME_DisplayItem *di)
+{
+    ME_DisplayItem *iter = editor->first_marked_para;
+
+    if (!iter)
+    {
+        editor->first_marked_para = di;
+        return;
+    }
+    while (iter)
+    {
+        if (iter == di)
+            return;
+        else if (di->member.para.nCharOfs < iter->member.para.nCharOfs)
+        {
+            if (iter == editor->first_marked_para)
+                editor->first_marked_para = di;
+            di->member.para.next_marked = iter;
+            iter->member.para.prev_marked = di;
+            break;
+        }
+        else if (di->member.para.nCharOfs >= iter->member.para.nCharOfs)
+        {
+            if (!iter->member.para.next_marked ||
+                (iter->member.para.next_marked &&
+                 di->member.para.nCharOfs < iter->member.para.next_marked->member.para.nCharOfs))
+            {
+                if (iter->member.para.next_marked)
+                {
+                    di->member.para.next_marked = iter->member.para.next_marked;
+                    iter->member.para.next_marked->member.para.prev_marked = di;
+                }
+                di->member.para.prev_marked = iter;
+                iter->member.para.next_marked = di;
+                break;
+            }
+        }
+        iter = iter->member.para.next_marked;
+    }
 }
 
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
@@ -146,6 +221,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
 
   text->pLast->member.para.nCharOfs = editor->bEmulateVersion10 ? 2 : 1;
 
+  add_marked_para(editor, para);
   ME_DestroyContext(&c);
 }
 

@@ -1098,29 +1098,61 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
 {
   ME_DisplayItem *item;
   ME_Context c;
-  int totalWidth = 0;
+  int totalWidth = editor->nTotalWidth, diff = 0, prev_width;
   ME_DisplayItem *repaint_start = NULL, *repaint_end = NULL;
+  ME_Paragraph *para;
+
+  if (!editor->first_marked_para)
+    return FALSE;
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
-  c.pt.x = 0;
-  item = editor->pBuffer->pFirst->next;
-  while(item != editor->pBuffer->pLast) {
-    BOOL bRedraw = FALSE;
 
+  item = editor->first_marked_para;
+  c.pt = item->member.para.pt;
+  while (item != editor->pBuffer->pLast)
+  {
     assert(item->type == diParagraph);
-    if ((item->member.para.nFlags & MEPF_REWRAP)
-     || (item->member.para.pt.y != c.pt.y))
-      bRedraw = TRUE;
-    item->member.para.pt = c.pt;
 
+    prev_width = item->member.para.nWidth;
     ME_WrapTextParagraph(&c, item);
+    if (prev_width == totalWidth && item->member.para.nWidth < totalWidth)
+      totalWidth = get_total_width(editor);
+    else
+      totalWidth = max(totalWidth, item->member.para.nWidth);
 
-    if (bRedraw)
-      ME_MarkRepaintEnd(item, &repaint_start, &repaint_end);
-
+    if (!item->member.para.nCharOfs)
+      ME_MarkRepaintEnd(item->member.para.prev_para, &repaint_start, &repaint_end);
+    ME_MarkRepaintEnd(item, &repaint_start, &repaint_end);
     adjust_para_y(item, &c, repaint_start, repaint_end);
-    totalWidth = max(totalWidth, item->member.para.nWidth);
-    item = item->member.para.next_para;
+
+    if (item->member.para.next_para)
+    {
+      diff = c.pt.y - item->member.para.next_para->member.para.pt.y;
+      if (diff)
+      {
+        para = &item->member.para;
+        while (para->next_para && para != &item->member.para.next_marked->member.para &&
+               para != &editor->pBuffer->pLast->member.para)
+        {
+          ME_MarkRepaintEnd(para->next_para, &repaint_start, &repaint_end);
+          para->next_para->member.para.pt.y = c.pt.y;
+          adjust_para_y(para->next_para, &c, repaint_start, repaint_end);
+          para = &para->next_para->member.para;
+        }
+      }
+    }
+    if (item->member.para.next_marked)
+    {
+      ME_DisplayItem *rem = item;
+      item = item->member.para.next_marked;
+      remove_marked_para(editor, rem);
+    }
+    else
+    {
+      remove_marked_para(editor, item);
+      item = editor->pBuffer->pLast;
+    }
+    c.pt.y = item->member.para.pt.y;
   }
   editor->sizeWindow.cx = c.rcView.right-c.rcView.left;
   editor->sizeWindow.cy = c.rcView.bottom-c.rcView.top;

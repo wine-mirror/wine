@@ -205,6 +205,8 @@ void para_num_clear( struct para_num *pn ) DECLSPEC_HIDDEN;
 int get_total_width(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void mark_para_rewrap(ME_TextEditor *editor, ME_DisplayItem *para) DECLSPEC_HIDDEN;
 ME_DisplayItem *get_di_from_para(ME_Paragraph *para) DECLSPEC_HIDDEN;
+void add_marked_para(ME_TextEditor *editor, ME_DisplayItem *para) DECLSPEC_HIDDEN;
+void remove_marked_para(ME_TextEditor *editor, ME_DisplayItem *para) DECLSPEC_HIDDEN;
 
 /* paint.c */
 void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate) DECLSPEC_HIDDEN;
