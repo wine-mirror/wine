@@ -980,6 +980,120 @@ static void ME_MarkRepaintEnd(ME_DisplayItem *para,
     *repaint_end = para;
 }
 
+static void adjust_para_y(ME_DisplayItem *item, ME_Context *c, ME_DisplayItem *repaint_start, ME_DisplayItem *repaint_end)
+{
+    if (item->member.para.nFlags & MEPF_ROWSTART)
+    {
+        ME_DisplayItem *cell = ME_FindItemFwd(item, diCell);
+        ME_DisplayItem *endRowPara;
+        int borderWidth = 0;
+        cell->member.cell.pt = c->pt;
+        /* Offset the text by the largest top border width. */
+        while (cell->member.cell.next_cell)
+        {
+            borderWidth = max(borderWidth, cell->member.cell.border.top.width);
+            cell = cell->member.cell.next_cell;
+        }
+        endRowPara = ME_FindItemFwd(cell, diParagraph);
+        assert(endRowPara->member.para.nFlags & MEPF_ROWEND);
+        if (borderWidth > 0)
+        {
+            borderWidth = max(ME_twips2pointsY(c, borderWidth), 1);
+            while (cell)
+            {
+                cell->member.cell.yTextOffset = borderWidth;
+                cell = cell->member.cell.prev_cell;
+            }
+            c->pt.y += borderWidth;
+        }
+        if (endRowPara->member.para.fmt.dxStartIndent > 0)
+        {
+            int dxStartIndent = endRowPara->member.para.fmt.dxStartIndent;
+            cell = ME_FindItemFwd(item, diCell);
+            cell->member.cell.pt.x += ME_twips2pointsX(c, dxStartIndent);
+            c->pt.x = cell->member.cell.pt.x;
+        }
+    }
+    else if (item->member.para.nFlags & MEPF_ROWEND)
+    {
+        /* Set all the cells to the height of the largest cell */
+        ME_DisplayItem *startRowPara;
+        int prevHeight, nHeight, bottomBorder = 0;
+        ME_DisplayItem *cell = ME_FindItemBack(item, diCell);
+        item->member.para.nWidth = cell->member.cell.pt.x + cell->member.cell.nWidth;
+        if (!(item->member.para.next_para->member.para.nFlags & MEPF_ROWSTART))
+        {
+            /* Last row, the bottom border is added to the height. */
+            cell = cell->member.cell.prev_cell;
+            while (cell)
+            {
+                bottomBorder = max(bottomBorder, cell->member.cell.border.bottom.width);
+                cell = cell->member.cell.prev_cell;
+            }
+            bottomBorder = ME_twips2pointsY(c, bottomBorder);
+            cell = ME_FindItemBack(item, diCell);
+        }
+        prevHeight = cell->member.cell.nHeight;
+        nHeight = cell->member.cell.prev_cell->member.cell.nHeight + bottomBorder;
+        cell->member.cell.nHeight = nHeight;
+        item->member.para.nHeight = nHeight;
+        cell = cell->member.cell.prev_cell;
+        cell->member.cell.nHeight = nHeight;
+        while (cell->member.cell.prev_cell)
+        {
+            cell = cell->member.cell.prev_cell;
+            cell->member.cell.nHeight = nHeight;
+        }
+        /* Also set the height of the start row paragraph */
+        startRowPara = ME_FindItemBack(cell, diParagraph);
+        startRowPara->member.para.nHeight = nHeight;
+        c->pt.x = startRowPara->member.para.pt.x;
+        c->pt.y = cell->member.cell.pt.y + nHeight;
+        if (prevHeight < nHeight)
+        {
+            /* The height of the cells has grown, so invalidate the bottom of
+             * the cells. */
+            ME_MarkRepaintEnd(item, &repaint_start, &repaint_end);
+            cell = ME_FindItemBack(item, diCell);
+            while (cell)
+            {
+                ME_MarkRepaintEnd(ME_FindItemBack(cell, diParagraph), &repaint_start, &repaint_end);
+                cell = cell->member.cell.prev_cell;
+            }
+        }
+    }
+    else if (item->member.para.pCell &&
+             item->member.para.pCell != item->member.para.next_para->member.para.pCell)
+    {
+        /* The next paragraph is in the next cell in the table row. */
+        ME_Cell *cell = &item->member.para.pCell->member.cell;
+        cell->nHeight = c->pt.y + item->member.para.nHeight - cell->pt.y;
+
+        /* Propagate the largest height to the end so that it can be easily
+         * sent back to all the cells at the end of the row. */
+        if (cell->prev_cell)
+            cell->nHeight = max(cell->nHeight, cell->prev_cell->member.cell.nHeight);
+
+        c->pt.x = cell->pt.x + cell->nWidth;
+        c->pt.y = cell->pt.y;
+        cell->next_cell->member.cell.pt = c->pt;
+        if (!(item->member.para.next_para->member.para.nFlags & MEPF_ROWEND))
+            c->pt.y += cell->yTextOffset;
+    }
+    else
+    {
+        if (item->member.para.pCell)
+        {
+            /* Next paragraph in the same cell. */
+            c->pt.x = item->member.para.pCell->member.cell.pt.x;
+        }
+        else
+            /* Normal paragraph */
+            c->pt.x = 0;
+        c->pt.y += item->member.para.nHeight;
+    }
+}
+
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
 {
   ME_DisplayItem *item;
@@ -1004,113 +1118,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
     if (bRedraw)
       ME_MarkRepaintEnd(item, &repaint_start, &repaint_end);
 
-    if (item->member.para.nFlags & MEPF_ROWSTART)
-    {
-      ME_DisplayItem *cell = ME_FindItemFwd(item, diCell);
-      ME_DisplayItem *endRowPara;
-      int borderWidth = 0;
-      cell->member.cell.pt = c.pt;
-      /* Offset the text by the largest top border width. */
-      while (cell->member.cell.next_cell) {
-        borderWidth = max(borderWidth, cell->member.cell.border.top.width);
-        cell = cell->member.cell.next_cell;
-      }
-      endRowPara = ME_FindItemFwd(cell, diParagraph);
-      assert(endRowPara->member.para.nFlags & MEPF_ROWEND);
-      if (borderWidth > 0)
-      {
-        borderWidth = max(ME_twips2pointsY(&c, borderWidth), 1);
-        while (cell) {
-          cell->member.cell.yTextOffset = borderWidth;
-          cell = cell->member.cell.prev_cell;
-        }
-        c.pt.y += borderWidth;
-      }
-      if (endRowPara->member.para.fmt.dxStartIndent > 0)
-      {
-        int dxStartIndent = endRowPara->member.para.fmt.dxStartIndent;
-        cell = ME_FindItemFwd(item, diCell);
-        cell->member.cell.pt.x += ME_twips2pointsX(&c, dxStartIndent);
-        c.pt.x = cell->member.cell.pt.x;
-      }
-    }
-    else if (item->member.para.nFlags & MEPF_ROWEND)
-    {
-      /* Set all the cells to the height of the largest cell */
-      ME_DisplayItem *startRowPara;
-      int prevHeight, nHeight, bottomBorder = 0;
-      ME_DisplayItem *cell = ME_FindItemBack(item, diCell);
-      item->member.para.nWidth = cell->member.cell.pt.x + cell->member.cell.nWidth;
-      if (!(item->member.para.next_para->member.para.nFlags & MEPF_ROWSTART))
-      {
-        /* Last row, the bottom border is added to the height. */
-        cell = cell->member.cell.prev_cell;
-        while (cell)
-        {
-          bottomBorder = max(bottomBorder, cell->member.cell.border.bottom.width);
-          cell = cell->member.cell.prev_cell;
-        }
-        bottomBorder = ME_twips2pointsY(&c, bottomBorder);
-        cell = ME_FindItemBack(item, diCell);
-      }
-      prevHeight = cell->member.cell.nHeight;
-      nHeight = cell->member.cell.prev_cell->member.cell.nHeight + bottomBorder;
-      cell->member.cell.nHeight = nHeight;
-      item->member.para.nHeight = nHeight;
-      cell = cell->member.cell.prev_cell;
-      cell->member.cell.nHeight = nHeight;
-      while (cell->member.cell.prev_cell)
-      {
-        cell = cell->member.cell.prev_cell;
-        cell->member.cell.nHeight = nHeight;
-      }
-      /* Also set the height of the start row paragraph */
-      startRowPara = ME_FindItemBack(cell, diParagraph);
-      startRowPara->member.para.nHeight = nHeight;
-      c.pt.x = startRowPara->member.para.pt.x;
-      c.pt.y = cell->member.cell.pt.y + nHeight;
-      if (prevHeight < nHeight)
-      {
-        /* The height of the cells has grown, so invalidate the bottom of
-         * the cells. */
-        ME_MarkRepaintEnd(item, &repaint_start, &repaint_end);
-        cell = ME_FindItemBack(item, diCell);
-        while (cell) {
-          ME_MarkRepaintEnd(ME_FindItemBack(cell, diParagraph), &repaint_start, &repaint_end);
-          cell = cell->member.cell.prev_cell;
-        }
-      }
-    }
-    else if (item->member.para.pCell &&
-             item->member.para.pCell != item->member.para.next_para->member.para.pCell)
-    {
-      /* The next paragraph is in the next cell in the table row. */
-      ME_Cell *cell = &item->member.para.pCell->member.cell;
-      cell->nHeight = c.pt.y + item->member.para.nHeight - cell->pt.y;
-
-      /* Propagate the largest height to the end so that it can be easily
-       * sent back to all the cells at the end of the row. */
-      if (cell->prev_cell)
-        cell->nHeight = max(cell->nHeight, cell->prev_cell->member.cell.nHeight);
-
-      c.pt.x = cell->pt.x + cell->nWidth;
-      c.pt.y = cell->pt.y;
-      cell->next_cell->member.cell.pt = c.pt;
-      if (!(item->member.para.next_para->member.para.nFlags & MEPF_ROWEND))
-        c.pt.y += cell->yTextOffset;
-    }
-    else
-    {
-      if (item->member.para.pCell) {
-        /* Next paragraph in the same cell. */
-        c.pt.x = item->member.para.pCell->member.cell.pt.x;
-      } else {
-        /* Normal paragraph */
-        c.pt.x = 0;
-      }
-      c.pt.y += item->member.para.nHeight;
-    }
-
+    adjust_para_y(item, &c, repaint_start, repaint_end);
     totalWidth = max(totalWidth, item->member.para.nWidth);
     item = item->member.para.next_para;
   }
