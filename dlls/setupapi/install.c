@@ -1598,7 +1598,7 @@ BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
     }
     else
     {
-        WCHAR infdir[] = {'\\','i','n','f',0 };
+        static const WCHAR infdir[] = {'\\','i','n','f',0};
         DWORD msize;
         dir_len = GetWindowsDirectoryW( NULL, 0 );
         msize = ( 7 + 4 + dir_len ) * sizeof( WCHAR );

@@ -259,7 +259,7 @@ static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
 
 static WCHAR *get_iface_key_path(struct device_iface *iface)
 {
-    const WCHAR slashW[] = {'\\',0};
+    static const WCHAR slashW[] = {'\\',0};
     WCHAR *path, *ptr;
     size_t len = strlenW(DeviceClasses) + 1 + 38 + 1 + strlenW(iface->symlink);
 
@@ -286,8 +286,8 @@ static WCHAR *get_iface_key_path(struct device_iface *iface)
 
 static WCHAR *get_refstr_key_path(struct device_iface *iface)
 {
-    const WCHAR hashW[] = {'#',0};
-    const WCHAR slashW[] = {'\\',0};
+    static const WCHAR hashW[] = {'#',0};
+    static const WCHAR slashW[] = {'\\',0};
     WCHAR *path, *ptr;
     size_t len = strlenW(DeviceClasses) + 1 + 38 + 1 + strlenW(iface->symlink) + 1 + 1;
 
