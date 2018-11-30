@@ -1969,7 +1969,7 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
             VARIANT v;
             VariantInit(&v);
             V_VT(&v) = VT_UI1;
-            V_UNION(&v, bVal) = WICTiffCompressionDontCare;
+            V_UI1(&v) = WICTiffCompressionDontCare;
             hr = IPropertyBag2_Write(*ppIEncoderOptions, 1, (PROPBAG2 *)opts, &v);
             VariantClear(&v);
             if (FAILED(hr))
