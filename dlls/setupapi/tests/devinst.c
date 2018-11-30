@@ -338,7 +338,6 @@ static void test_device_info(void)
     check_device_info(set, 3, &guid, NULL);
 
     ret = SetupDiRemoveDevice(set, &device);
-todo_wine
     ok(ret, "Got unexpected error %#x.\n", GetLastError());
 
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0000");
@@ -349,10 +348,8 @@ todo_wine
     ok(IsEqualGUID(&ret_device.ClassGuid, &guid), "Got unexpected class %s.\n",
             wine_dbgstr_guid(&ret_device.ClassGuid));
     ret = SetupDiGetDeviceInstanceIdA(set, &ret_device, id, sizeof(id), NULL);
-todo_wine {
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_NO_SUCH_DEVINST, "Got unexpected error %#x.\n", GetLastError());
-}
     ok(ret_device.DevInst == device.DevInst, "Expected device node %#x, got %#x.\n",
             device.DevInst, ret_device.DevInst);
 
@@ -522,7 +519,6 @@ static void test_register_device_info(void)
     ok(!strcasecmp(id, "Root\\LEGACY_BOGUS\\0000"), "Got unexpected id %s.\n", id);
 
     ret = SetupDiRemoveDevice(set, &device);
-todo_wine
     ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
 
     ret = SetupDiEnumDeviceInfo(set, 1, &device);
@@ -849,7 +845,6 @@ todo_wine {
     }
 
     ret = SetupDiRemoveDevice(set, &device);
-todo_wine
     ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
     SetupDiDestroyDeviceInfoList(set);
 
@@ -891,7 +886,6 @@ static void test_register_device_iface(void)
     check_device_iface(set2, NULL, &guid, 1, 0, NULL);
 
     ret = SetupDiRemoveDevice(set, &device);
-todo_wine
     ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
 
     SetupDiDestroyDeviceInfoList(set);

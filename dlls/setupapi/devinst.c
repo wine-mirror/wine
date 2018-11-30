@@ -118,6 +118,7 @@ struct device
     GUID                  class;
     DEVINST               devnode;
     struct list           entry;
+    BOOL                  removed;
 };
 
 struct device_iface
@@ -164,6 +165,12 @@ static struct device *get_device(HDEVINFO devinfo, const SP_DEVINFO_DATA *data)
     if (device->set != set)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    if (device->removed)
+    {
+        SetLastError(ERROR_NO_SUCH_DEVINST);
         return NULL;
     }
 
@@ -569,32 +576,36 @@ static void remove_device_iface(struct device_iface *iface)
     iface->flags |= SPINT_REMOVED;
 }
 
-static void SETUPDI_RemoveDevice(struct device *device)
+static void remove_device(struct device *device)
+{
+    struct device_iface *iface;
+
+    LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
+    {
+        remove_device_iface(iface);
+    }
+
+    RegDeleteTreeW(device->key, NULL);
+    RegDeleteKeyW(device->key, emptyW);
+    RegCloseKey(device->key);
+    device->key = NULL;
+    device->removed = TRUE;
+}
+
+static void delete_device(struct device *device)
 {
     struct device_iface *iface, *next;
 
-    if (device->key != INVALID_HANDLE_VALUE)
-        RegCloseKey(device->key);
     if (device->phantom)
-    {
-        HKEY enumKey;
-        LONG l;
+        remove_device(device);
 
-        l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0,
-                KEY_ALL_ACCESS, NULL, &enumKey, NULL);
-        if (!l)
-        {
-            RegDeleteTreeW(enumKey, device->instanceId);
-            RegCloseKey(enumKey);
-        }
-    }
+    RegCloseKey(device->key);
     heap_free(device->instanceId);
+
     LIST_FOR_EACH_ENTRY_SAFE(iface, next, &device->interfaces,
             struct device_iface, entry)
     {
         list_remove(&iface->entry);
-        if (device->phantom)
-            remove_device_iface(iface);
         RegCloseKey(iface->refstr_key);
         RegCloseKey(iface->class_key);
         heap_free(iface->refstr);
@@ -635,6 +646,7 @@ static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     list_init(&device->interfaces);
     device->class = *class;
     device->devnode = alloc_devnode(device);
+    device->removed = FALSE;
     list_add_tail(&set->devices, &device->entry);
     set->cDevices++;
 
@@ -1538,13 +1550,18 @@ BOOL WINAPI SetupDiRegisterDeviceInfo(HDEVINFO devinfo, SP_DEVINFO_DATA *device_
 /***********************************************************************
  *              SetupDiRemoveDevice (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiRemoveDevice(
-        HDEVINFO devinfo,
-        PSP_DEVINFO_DATA info)
+BOOL WINAPI SetupDiRemoveDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    FIXME("(%p, %p): stub\n", devinfo, info);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    struct device *device;
+
+    TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    remove_device(device);
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2616,7 +2633,7 @@ BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
 
     LIST_FOR_EACH_ENTRY_SAFE(device, device2, &set->devices, struct device, entry)
     {
-        SETUPDI_RemoveDevice(device);
+        delete_device(device);
     }
     heap_free(set);
 
