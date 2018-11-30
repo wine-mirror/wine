@@ -668,9 +668,10 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
 
 static BOOL header_from_file( LPCWSTR file, PPROFILEHEADER header )
 {
+    static const WCHAR slash[] = {'\\',0};
     BOOL ret;
     PROFILE profile;
-    WCHAR path[MAX_PATH], slash[] = {'\\',0};
+    WCHAR path[MAX_PATH];
     DWORD size = sizeof(path);
     HANDLE handle;
 
@@ -953,8 +954,8 @@ exit:
 BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
                                 PDWORD size, PDWORD number )
 {
+    static const WCHAR spec[] = {'\\','*','i','c','m',0};
     BOOL match, ret = FALSE;
-    WCHAR spec[] = {'\\','*','i','c','m',0};
     WCHAR colordir[MAX_PATH], glob[MAX_PATH], **profiles = NULL;
     DWORD i, len = sizeof(colordir), count = 0, totalsize = 0;
     PROFILEHEADER header;
