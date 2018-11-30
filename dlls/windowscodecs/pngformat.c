@@ -622,7 +622,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
         HeapFree(GetProcessHeap(), 0, row_pointers);
         This->png_ptr = NULL;
-        hr = E_FAIL;
+        hr = WINCODEC_ERR_UNKNOWNIMAGEFORMAT;
         goto end;
     }
     ppng_set_error_fn(This->png_ptr, jmpbuf, user_error_fn, user_warning_fn);
