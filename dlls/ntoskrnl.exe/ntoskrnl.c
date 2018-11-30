@@ -1371,15 +1371,15 @@ static NTSTATUS create_device_symlink( DEVICE_OBJECT *device, UNICODE_STRING *sy
  */
 NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable )
 {
-    const WCHAR DeviceClassesW[] = {'\\','R','E','G','I','S','T','R','Y','\\',
+    static const WCHAR DeviceClassesW[] = {'\\','R','E','G','I','S','T','R','Y','\\',
         'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
         'C','o','n','t','r','o','l','\\',
         'D','e','v','i','c','e','C','l','a','s','s','e','s','\\',0};
-    const WCHAR controlW[] = {'C','o','n','t','r','o','l',0};
-    const WCHAR linkedW[] = {'L','i','n','k','e','d',0};
-    const WCHAR slashW[] = {'\\',0};
-    const WCHAR hashW[] = {'#',0};
+    static const WCHAR controlW[] = {'C','o','n','t','r','o','l',0};
+    static const WCHAR linkedW[] = {'L','i','n','k','e','d',0};
+    static const WCHAR slashW[] = {'\\',0};
+    static const WCHAR hashW[] = {'#',0};
 
     size_t namelen = name->Length / sizeof(WCHAR);
     DEV_BROADCAST_DEVICEINTERFACE_W *broadcast;
