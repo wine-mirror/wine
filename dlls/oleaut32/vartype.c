@@ -6522,7 +6522,7 @@ static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
    */
   if (buff[0] == '-')
   {
-    const WCHAR szAccept[] = {'0', '.', '\0'};
+    static const WCHAR szAccept[] = {'0', '.', '\0'};
     if (strlenW(buff + 1) == strspnW(buff + 1, szAccept))
     { buff[0] = '0'; buff[1] = '\0'; }
   }
