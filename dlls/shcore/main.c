@@ -966,6 +966,15 @@ static HRESULT WINAPI filestream_CopyTo(IStream *iface, IStream *dest, ULARGE_IN
     return hr;
 }
 
+static HRESULT WINAPI filestream_Commit(IStream *iface, DWORD flags)
+{
+    struct shstream *stream = impl_from_IStream(iface);
+
+    TRACE("(%p, %#x)\n", stream, flags);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI filestream_Stat(IStream *iface, STATSTG *statstg, DWORD flags)
 {
     struct shstream *stream = impl_from_IStream(iface);
@@ -1012,7 +1021,7 @@ static const IStreamVtbl filestreamvtbl =
     filestream_Seek,
     filestream_SetSize,
     filestream_CopyTo,
-    shstream_Commit,
+    filestream_Commit,
     shstream_Revert,
     shstream_LockRegion,
     shstream_UnlockRegion,
