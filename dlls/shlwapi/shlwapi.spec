@@ -683,9 +683,9 @@
 @ stdcall SHCopyKeyA(long str long long)
 @ stdcall SHCopyKeyW(long wstr long long)
 @ stdcall SHCreateShellPalette(long)
-@ stdcall SHCreateStreamOnFileA(str long ptr)
-@ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr)
-@ stdcall SHCreateStreamOnFileW(wstr long ptr)
+@ stdcall SHCreateStreamOnFileA(str long ptr) shcore.SHCreateStreamOnFileA
+@ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) shcore.SHCreateStreamOnFileEx
+@ stdcall SHCreateStreamOnFileW(wstr long ptr) shcore.SHCreateStreamOnFileW
 @ stdcall SHCreateStreamWrapper(ptr ptr long ptr)
 @ stdcall SHCreateThreadRef(ptr ptr)
 @ stdcall SHDeleteEmptyKeyA(long ptr)

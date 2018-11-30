@@ -1,4 +1,5 @@
 /*
+ * Copyright 2002 Jon Griffiths
  * Copyright 2016 Sebastian Lackner
  *
  * This library is free software; you can redistribute it and/or
