@@ -129,6 +129,12 @@ typedef struct {
     } u;
 } instr_t;
 
+typedef enum {
+    PROPERTY_DEFINITION_VALUE,
+    PROPERTY_DEFINITION_GETTER,
+    PROPERTY_DEFINITION_SETTER
+} property_definition_type_t;
+
 typedef struct {
     BSTR name;
     int ref;

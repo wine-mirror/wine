@@ -46,12 +46,14 @@ static const WCHAR falseW[] = {'f','a','l','s','e',0};
 static const WCHAR finallyW[] = {'f','i','n','a','l','l','y',0};
 static const WCHAR forW[] = {'f','o','r',0};
 static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
+static const WCHAR getW[] = {'g','e','t',0};
 static const WCHAR ifW[] = {'i','f',0};
 static const WCHAR inW[] = {'i','n',0};
 static const WCHAR instanceofW[] = {'i','n','s','t','a','n','c','e','o','f',0};
 static const WCHAR newW[] = {'n','e','w',0};
 static const WCHAR nullW[] = {'n','u','l','l',0};
 static const WCHAR returnW[] = {'r','e','t','u','r','n',0};
+static const WCHAR setW[] = {'s','e','t',0};
 static const WCHAR switchW[] = {'s','w','i','t','c','h',0};
 static const WCHAR thisW[] = {'t','h','i','s',0};
 static const WCHAR throwW[] = {'t','h','r','o','w',0};
@@ -70,11 +72,12 @@ static const struct {
     const WCHAR *word;
     int token;
     BOOL no_nl;
+    unsigned min_version;
 } keywords[] = {
-    {breakW,       kBREAK, TRUE},
+    {breakW,       kBREAK,       TRUE},
     {caseW,        kCASE},
     {catchW,       kCATCH},
-    {continueW,    kCONTINUE, TRUE},
+    {continueW,    kCONTINUE,    TRUE},
     {defaultW,     kDEFAULT},
     {deleteW,      kDELETE},
     {doW,          kDO},
@@ -83,12 +86,14 @@ static const struct {
     {finallyW,     kFINALLY},
     {forW,         kFOR},
     {functionW,    kFUNCTION},
+    {getW,         kGET,         FALSE, SCRIPTLANGUAGEVERSION_ES5},
     {ifW,          kIF},
     {inW,          kIN},
     {instanceofW,  kINSTANCEOF},
     {newW,         kNEW},
     {nullW,        kNULL},
-    {returnW,      kRETURN, TRUE},
+    {returnW,      kRETURN,      TRUE},
+    {setW,         kSET,         FALSE, SCRIPTLANGUAGEVERSION_ES5},
     {switchW,      kSWITCH},
     {thisW,        kTHIS},
     {throwW,       kTHROW},
@@ -169,6 +174,12 @@ static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
 
         r = check_keyword(ctx, keywords[i].word, lval);
         if(!r) {
+            if(ctx->script->version < keywords[i].min_version) {
+                TRACE("ignoring keyword %s in incompatible mode\n",
+                      debugstr_w(keywords[i].word));
+                ctx->ptr -= strlenW(keywords[i].word);
+                return 0;
+            }
             ctx->implicit_nl_semicolon = keywords[i].no_nl;
             return keywords[i].token;
         }

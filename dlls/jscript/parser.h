@@ -359,6 +359,7 @@ typedef struct {
 } array_literal_expression_t;
 
 typedef struct _property_definition_t {
+    unsigned type;
     literal_t *name;
     expression_t *value;
 

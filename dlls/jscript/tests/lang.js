@@ -1832,6 +1832,8 @@ ok(tmp, "tmp = " + tmp);
     ok(x === undefined, "x = " + x);
 })();
 
+var get, set;
+
 /* NoNewline rule parser tests */
 while(true) {
     if(true) break

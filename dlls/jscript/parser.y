@@ -45,8 +45,8 @@ typedef struct _property_list_t {
     property_definition_t *tail;
 } property_list_t;
 
-static property_definition_t *new_property_definition(parser_ctx_t *ctx, literal_t *name,
-                                                      expression_t *value);
+static property_definition_t *new_property_definition(parser_ctx_t *ctx, property_definition_type_t,
+                                                      literal_t *name, expression_t *value);
 static property_list_t *new_property_list(parser_ctx_t*,property_definition_t*);
 static property_list_t *property_list_add(parser_ctx_t*,property_list_t*,property_definition_t*);
 
@@ -167,7 +167,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 }
 
 /* keywords */
-%token <identifier> kBREAK kCASE kCATCH kCONTINUE kDEFAULT kDELETE kDO kELSE kFUNCTION kIF kFINALLY kFOR kIN
+%token <identifier> kBREAK kCASE kCATCH kCONTINUE kDEFAULT kDELETE kDO kELSE kFUNCTION kIF kFINALLY kFOR kGET kIN kSET
 %token <identifier> kINSTANCEOF kNEW kNULL kRETURN kSWITCH kTHIS kTHROW kTRUE kFALSE kTRY kTYPEOF kVAR kVOID kWHILE kWITH
 %token tANDAND tOROR tINC tDEC tHTMLCOMMENT kDIVEQ kDCOL
 
@@ -224,6 +224,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %type <expr> CallExpression
 %type <expr> MemberExpression
 %type <expr> PrimaryExpression
+%type <expr> GetterSetterMethod
 %type <identifier> Identifier_opt
 %type <variable_list> VariableDeclarationList
 %type <variable_list> VariableDeclarationListNoIn
@@ -243,7 +244,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %type <property_definition> PropertyDefinition
 %type <literal> PropertyName
 %type <literal> BooleanLiteral
-%type <srcptr> KFunction
+%type <srcptr> KFunction left_bracket
 %type <ival> AssignOper
 %type <identifier> IdentifierName ReservedAsIdentifier
 
@@ -800,9 +801,17 @@ PropertyNameAndValueList
 /* ECMA-262 5.1 Edition    12.2.6 */
 PropertyDefinition
         : PropertyName ':' AssignmentExpression
-                                { $$ = new_property_definition(ctx, $1, $3); }
+                                { $$ = new_property_definition(ctx, PROPERTY_DEFINITION_VALUE, $1, $3); }
+        | kGET PropertyName GetterSetterMethod
+                                { $$ = new_property_definition(ctx, PROPERTY_DEFINITION_GETTER, $2, $3); }
+        | kSET PropertyName GetterSetterMethod
+                                { $$ = new_property_definition(ctx, PROPERTY_DEFINITION_SETTER, $2, $3); }
 
-/* ECMA-262 3rd Edition    11.1.5 */
+GetterSetterMethod
+        : left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
+                                { $$ = new_function_expression(ctx, NULL, $2, $5, NULL, $1, $6-$1); }
+
+/* Ecma-262 3rd Edition    11.1.5 */
 PropertyName
         : IdentifierName        { $$ = new_string_literal(ctx, $1); }
         | tStringLiteral        { $$ = new_string_literal(ctx, $1); }
@@ -839,12 +848,14 @@ ReservedAsIdentifier
         | kFINALLY              { $$ = $1; }
         | kFOR                  { $$ = $1; }
         | kFUNCTION             { $$ = $1; }
+        | kGET                  { $$ = $1; }
         | kIF                   { $$ = $1; }
         | kIN                   { $$ = $1; }
         | kINSTANCEOF           { $$ = $1; }
         | kNEW                  { $$ = $1; }
         | kNULL                 { $$ = $1; }
         | kRETURN               { $$ = $1; }
+        | kSET                  { $$ = $1; }
         | kSWITCH               { $$ = $1; }
         | kTHIS                 { $$ = $1; }
         | kTHROW                { $$ = $1; }
@@ -878,7 +889,7 @@ semicolon_opt
         | error                 { if(!allow_auto_semicolon(ctx)) {YYABORT;} }
 
 left_bracket
-        : '('
+        : '('                   { $$ = ctx->ptr; }
         | error                 { set_error(ctx, JS_E_MISSING_LBRACKET); YYABORT; }
 
 right_bracket
@@ -929,10 +940,12 @@ static literal_t *new_null_literal(parser_ctx_t *ctx)
     return ret;
 }
 
-static property_definition_t *new_property_definition(parser_ctx_t *ctx, literal_t *name, expression_t *value)
+static property_definition_t *new_property_definition(parser_ctx_t *ctx, property_definition_type_t type,
+                                                      literal_t *name, expression_t *value)
 {
     property_definition_t *ret = parser_alloc(ctx, sizeof(property_definition_t));
 
+    ret->type = type;
     ret->name = name;
     ret->value = value;
     ret->next = NULL;
