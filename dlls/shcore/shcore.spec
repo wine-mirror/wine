@@ -25,7 +25,7 @@
 @ stdcall IUnknown_QueryService(ptr ptr ptr ptr)
 @ stdcall IUnknown_Set(ptr ptr)
 @ stdcall IUnknown_SetSite(ptr ptr)
-@ stdcall IsOS(long) shlwapi.IsOS
+@ stdcall IsOS(long)
 @ stub RegisterScaleChangeEvent
 @ stub RegisterScaleChangeNotifications
 @ stub RevokeScaleChangeNotifications
