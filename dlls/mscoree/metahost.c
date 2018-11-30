@@ -446,8 +446,8 @@ static HRESULT WINAPI CLRRuntimeInfo_GetVersionString(ICLRRuntimeInfo* iface,
 
 static BOOL get_install_root(LPWSTR install_dir)
 {
-    const WCHAR dotnet_key[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\','.','N','E','T','F','r','a','m','e','w','o','r','k','\\',0};
-    const WCHAR install_root[] = {'I','n','s','t','a','l','l','R','o','o','t',0};
+    static const WCHAR dotnet_key[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\','.','N','E','T','F','r','a','m','e','w','o','r','k','\\',0};
+    static const WCHAR install_root[] = {'I','n','s','t','a','l','l','R','o','o','t',0};
 
     DWORD len;
     HKEY key;
