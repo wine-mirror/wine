@@ -2520,11 +2520,11 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
 
       if (editor->styleFlags & ES_MULTILINE)
       {
+        static const WCHAR endl = '\r';
+        static const WCHAR endlv10[] = {'\r','\n'};
         ME_Cursor cursor = editor->pCursors[0];
         ME_DisplayItem *para = cursor.pPara;
         int from, to;
-        const WCHAR endl = '\r';
-        const WCHAR endlv10[] = {'\r','\n'};
         ME_Style *style, *eop_style;
 
         if (editor->styleFlags & ES_READONLY) {

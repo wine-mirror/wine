@@ -612,8 +612,8 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset, BOOL visu
 SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,
                          int startx, int *pAscent, int *pDescent)
 {
+  static const WCHAR spaceW[] = {' ',0};
   SIZE size;
-  WCHAR spaceW[] = {' ',0};
 
   nLen = min( nLen, run->len );
 

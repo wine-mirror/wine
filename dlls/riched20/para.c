@@ -152,6 +152,7 @@ void add_marked_para(ME_TextEditor *editor, ME_DisplayItem *di)
 
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
+  static const WCHAR cr_lf[] = {'\r','\n',0};
   ME_Context c;
   CHARFORMAT2W cf;
   const CHARFORMATW *host_cf;
@@ -162,7 +163,6 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   ME_DisplayItem *run;
   ME_Style *style;
   int eol_len;
-  WCHAR cr_lf[] = {'\r','\n',0};
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
 
