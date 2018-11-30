@@ -556,6 +556,19 @@ static BOOL SETUPDI_SetDeviceRegistryPropertyW(struct device *device,
     return FALSE;
 }
 
+static void remove_device_iface(struct device_iface *iface)
+{
+    RegDeleteTreeW(iface->refstr_key, NULL);
+    RegDeleteKeyW(iface->refstr_key, emptyW);
+    RegCloseKey(iface->refstr_key);
+    iface->refstr_key = NULL;
+    /* Also remove the class key if it's empty. */
+    RegDeleteKeyW(iface->class_key, emptyW);
+    RegCloseKey(iface->class_key);
+    iface->class_key = NULL;
+    iface->flags |= SPINT_REMOVED;
+}
+
 static void SETUPDI_RemoveDevice(struct device *device)
 {
     struct device_iface *iface, *next;
@@ -1537,11 +1550,18 @@ BOOL WINAPI SetupDiRemoveDevice(
 /***********************************************************************
  *              SetupDiRemoveDeviceInterface (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiRemoveDeviceInterface(HDEVINFO info, PSP_DEVICE_INTERFACE_DATA data)
+BOOL WINAPI SetupDiRemoveDeviceInterface(HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data)
 {
-    FIXME("(%p, %p): stub\n", info, data);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    struct device_iface *iface;
+
+    TRACE("devinfo %p, iface_data %p.\n", devinfo, iface_data);
+
+    if (!(iface = get_device_iface(devinfo, iface_data)))
+        return FALSE;
+
+    remove_device_iface(iface);
+
+    return TRUE;
 }
 
 /***********************************************************************

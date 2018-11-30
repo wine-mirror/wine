@@ -552,7 +552,6 @@ static void check_device_iface_(int line, HDEVINFO set, SP_DEVINFO_DATA *device,
         ok_(__FILE__, line)(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
         ok_(__FILE__, line)(IsEqualGUID(&iface.InterfaceClassGuid, class),
                 "Got unexpected class %s.\n", wine_dbgstr_guid(&iface.InterfaceClassGuid));
-todo_wine_if(flags & SPINT_REMOVED)
         ok_(__FILE__, line)(iface.Flags == flags, "Got unexpected flags %#x.\n", iface.Flags);
         ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, detail, sizeof(buffer), NULL, NULL);
         ok_(__FILE__, line)(ret, "Failed to get interface detail, error %#x.\n", GetLastError());
@@ -656,7 +655,6 @@ static void test_device_iface(void)
     ret = SetupDiEnumDeviceInterfaces(set, &device, &guid2, 0, &iface);
     ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
     ret = SetupDiRemoveDeviceInterface(set, &iface);
-todo_wine
     ok(ret, "Failed to remove interface, error %#x.\n", GetLastError());
 
     check_device_iface(set, &device, &guid2, 0, SPINT_REMOVED, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A5-3F65-11DB-B704-0011955C2BDB}");
