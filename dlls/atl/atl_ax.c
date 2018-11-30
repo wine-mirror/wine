@@ -104,7 +104,7 @@ BOOL WINAPI AtlAxWinInit(void)
 #error Unsupported version
 #endif
 
-    const WCHAR AtlAxWinW[] = {'A','t','l','A','x','W','i','n',ATL_NAME_SUFFIX};
+    static const WCHAR AtlAxWinW[] = {'A','t','l','A','x','W','i','n',ATL_NAME_SUFFIX};
 
     FIXME("version %04x semi-stub\n", _ATL_VER);
 
@@ -128,7 +128,7 @@ BOOL WINAPI AtlAxWinInit(void)
         return FALSE;
 
     if(_ATL_VER > _ATL_VER_30) {
-        const WCHAR AtlAxWinLicW[] = {'A','t','l','A','x','W','i','n','L','i','c',ATL_NAME_SUFFIX};
+        static const WCHAR AtlAxWinLicW[] = {'A','t','l','A','x','W','i','n','L','i','c',ATL_NAME_SUFFIX};
 
         wcex.lpszClassName = AtlAxWinLicW;
         if ( !RegisterClassExW( &wcex ) )
