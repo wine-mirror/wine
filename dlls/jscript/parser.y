@@ -45,8 +45,10 @@ typedef struct _property_list_t {
     property_definition_t *tail;
 } property_list_t;
 
-static property_list_t *new_property_list(parser_ctx_t*,literal_t*,expression_t*);
-static property_list_t *property_list_add(parser_ctx_t*,property_list_t*,literal_t*,expression_t*);
+static property_definition_t *new_property_definition(parser_ctx_t *ctx, literal_t *name,
+                                                      expression_t *value);
+static property_list_t *new_property_list(parser_ctx_t*,property_definition_t*);
+static property_list_t *property_list_add(parser_ctx_t*,property_list_t*,property_definition_t*);
 
 typedef struct _element_list_t {
     array_element_t *head;
@@ -156,6 +158,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
     const WCHAR            *identifier;
     struct _parameter_list_t *parameter_list;
     struct _property_list_t *property_list;
+    property_definition_t   *property_definition;
     source_elements_t       *source_elements;
     statement_t             *statement;
     struct _statement_list_t *statement_list;
@@ -237,6 +240,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %type <ival> Elision Elision_opt
 %type <element_list> ElementList
 %type <property_list> PropertyNameAndValueList
+%type <property_definition> PropertyDefinition
 %type <literal> PropertyName
 %type <literal> BooleanLiteral
 %type <srcptr> KFunction
@@ -789,10 +793,14 @@ ObjectLiteral
 
 /* ECMA-262 3rd Edition    11.1.5 */
 PropertyNameAndValueList
+        : PropertyDefinition    { $$ = new_property_list(ctx, $1); }
+        | PropertyNameAndValueList ',' PropertyDefinition
+                                { $$ = property_list_add(ctx, $1, $3); }
+
+/* ECMA-262 5.1 Edition    12.2.6 */
+PropertyDefinition
         : PropertyName ':' AssignmentExpression
-                                { $$ = new_property_list(ctx, $1, $3); }
-        | PropertyNameAndValueList ',' PropertyName ':' AssignmentExpression
-                                { $$ = property_list_add(ctx, $1, $3, $5); }
+                                { $$ = new_property_definition(ctx, $1, $3); }
 
 /* ECMA-262 3rd Edition    11.1.5 */
 PropertyName
@@ -932,19 +940,16 @@ static property_definition_t *new_property_definition(parser_ctx_t *ctx, literal
     return ret;
 }
 
-static property_list_t *new_property_list(parser_ctx_t *ctx, literal_t *name, expression_t *value)
+static property_list_t *new_property_list(parser_ctx_t *ctx, property_definition_t *prop)
 {
     property_list_t *ret = parser_alloc_tmp(ctx, sizeof(property_list_t));
-
-    ret->head = ret->tail = new_property_definition(ctx, name, value);
-
+    ret->head = ret->tail = prop;
     return ret;
 }
 
-static property_list_t *property_list_add(parser_ctx_t *ctx, property_list_t *list, literal_t *name, expression_t *value)
+static property_list_t *property_list_add(parser_ctx_t *ctx, property_list_t *list, property_definition_t *prop)
 {
-    list->tail = list->tail->next = new_property_definition(ctx, name, value);
-
+    list->tail = list->tail->next = prop;
     return list;
 }
 
