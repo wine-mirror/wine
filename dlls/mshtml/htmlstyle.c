@@ -1160,8 +1160,8 @@ static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR ex
 
 static inline HRESULT set_style_pos(HTMLStyle *This, styleid_t sid, float value)
 {
+    static const WCHAR szFormat[] = {'%','.','0','f','p','x',0};
     WCHAR szValue[25];
-    WCHAR szFormat[] = {'%','.','0','f','p','x',0};
 
     value = floor(value);
 

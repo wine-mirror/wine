@@ -2067,7 +2067,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
     nsresult nsres;
     HRESULT hres;
 
-    const WCHAR selector_formatW[] = {'a','[','i','d','=','"','%','s','"',']',0};
+    static const WCHAR selector_formatW[] = {'a','[','i','d','=','"','%','s','"',']',0};
 
     set_current_uri(window, uri);
 

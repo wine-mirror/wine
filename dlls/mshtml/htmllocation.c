@@ -350,7 +350,7 @@ static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
 
     if(url.nPort) {
         /* <hostname>:<port> */
-        const WCHAR format[] = {'%','u',0};
+        static const WCHAR format[] = {'%','u',0};
         DWORD len, port_len;
         WCHAR portW[6];
         WCHAR *buf;

@@ -100,8 +100,8 @@ void update_title(HTMLDocumentObj *This)
 
     hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&olecmd);
     if(SUCCEEDED(hres)) {
+        static const WCHAR empty[] = {0};
         VARIANT title;
-        WCHAR empty[] = {0};
 
         V_VT(&title) = VT_BSTR;
         V_BSTR(&title) = SysAllocString(empty);
