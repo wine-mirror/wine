@@ -496,7 +496,7 @@ static BOOL load_xul(const PRUnichar *gre_path)
 
     set_environment(gre_path);
 
-    xul_handle = LoadLibraryExW(file_name, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+    xul_handle = LoadLibraryExW(file_name, 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
     if(!xul_handle) {
         WARN("Could not load XUL: %d\n", GetLastError());
         return FALSE;
