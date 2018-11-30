@@ -16,7 +16,7 @@ SVG_SRCS = winetest.svg
 
 EXTRA_OBJS = build.res
 
-EXTRA_TARGETS = build.rc build.nfo
+EXTRA_TARGETS = build.nfo
 
 INSTALL_LIB = none
 
@@ -26,8 +26,7 @@ build.rc: dummy
 build.nfo:
 	-$(CC) -v 2>$@
 
-build.res: build.rc build.nfo
-	$(WRC) -o $@ build.rc
+build.res: build.nfo
 
 dummy:
 .PHONY: dummy

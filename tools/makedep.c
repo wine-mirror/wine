@@ -1805,7 +1805,9 @@ static struct makefile *parse_makefile( const char *path )
  */
 static void add_generated_sources( struct makefile *make )
 {
+    unsigned int i;
     struct incl_file *source, *next, *file;
+    struct strarray objs = get_expanded_make_var_array( make, "EXTRA_OBJS" );
 
     LIST_FOR_EACH_ENTRY_SAFE( source, next, &make->sources, struct incl_file, entry )
     {
@@ -1903,6 +1905,16 @@ static void add_generated_sources( struct makefile *make )
         file = add_generated_source( make, "testlist.o", "testlist.c" );
         add_dependency( file->file, "wine/test.h", INCL_NORMAL );
         add_all_includes( make, file, file->file );
+    }
+    for (i = 0; i < objs.count; i++)
+    {
+        /* default to .c for unknown extra object files */
+        if (strendswith( objs.str[i], ".o" ))
+            add_generated_source( make, objs.str[i], replace_extension( objs.str[i], ".o", ".c" ));
+        else if (strendswith( objs.str[i], ".res" ))
+            add_generated_source( make, replace_extension( objs.str[i], ".res", ".rc" ), NULL );
+        else
+            add_generated_source( make, objs.str[i], NULL );
     }
 }
 
@@ -2514,6 +2526,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     struct strarray extradefs = get_expanded_file_local_var( make, obj, "EXTRADEFS" );
     unsigned int i;
 
+    if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
     strarray_add( &make->object_files, strmake( "%s.res", obj ));
     if (crosstarget) strarray_add( &make->crossobj_files, strmake( "%s.res", obj ));
     output( "%s.res: %s\n", obj_dir_path( make, obj ), source->filename );
@@ -4085,16 +4098,6 @@ static void load_sources( struct makefile *make )
     }
 
     add_generated_sources( make );
-
-    value = get_expanded_make_var_array( make, "EXTRA_OBJS" );
-    for (i = 0; i < value.count; i++)
-    {
-        /* default to .c for unknown extra object files */
-        if (strendswith( value.str[i], ".o" ))
-            add_generated_source( make, value.str[i], replace_extension( value.str[i], ".o", ".c" ) );
-        else
-            add_generated_source( make, value.str[i], NULL );
-    }
 
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
     LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );
