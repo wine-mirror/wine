@@ -594,7 +594,7 @@ static void SETUPDI_RemoveDevice(struct device *device)
     {
         list_remove(&iface->entry);
         if (device->phantom)
-            RegDeleteKeyW(iface->refstr_key, emptyW);
+            remove_device_iface(iface);
         RegCloseKey(iface->refstr_key);
         RegCloseKey(iface->class_key);
         heap_free(iface->refstr);
