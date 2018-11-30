@@ -7837,7 +7837,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, GetSystemDefaultLangID() );
     if (!full_nameW)
     {
-        WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
+        static const WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
         FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w(font->name));
         full_nameW = strdupW(fake_nameW);
     }
