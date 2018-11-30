@@ -90,3 +90,6 @@ END
 
 /* @makedep: winetest.ico */
 IDI_WINE ICON "winetest.ico"
+
+/* @makedep: build.nfo */
+BUILD_INFO STRINGRES "build.nfo"

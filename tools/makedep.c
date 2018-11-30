@@ -170,6 +170,7 @@ struct makefile
     struct strarray extradllflags;
     struct strarray install_lib;
     struct strarray install_dev;
+    struct strarray extra_targets;
     struct list     sources;
     struct list     includes;
     const char     *base_dir;
@@ -1431,6 +1432,14 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
         pFile->sourcename = filename;
         pFile->filename = obj_dir_path( make, pFile->name );
         return file;
+    }
+
+    /* check for extra targets */
+    if (strarray_exists( &make->extra_targets, pFile->name ))
+    {
+        pFile->sourcename = filename;
+        pFile->filename = obj_dir_path( make, pFile->name );
+        return NULL;
     }
 
     /* now try in source dir */
@@ -3740,7 +3749,7 @@ static void output_sources( struct makefile *make )
     strarray_addall( &make->clean_files, make->object_files );
     strarray_addall_uniq( &make->clean_files, make->crossobj_files );
     strarray_addall( &make->clean_files, make->all_targets );
-    strarray_addall( &make->clean_files, get_expanded_make_var_array( make, "EXTRA_TARGETS" ));
+    strarray_addall( &make->clean_files, make->extra_targets );
 
     if (make->clean_files.count)
     {
@@ -4044,6 +4053,7 @@ static void load_sources( struct makefile *make )
     make->extradllflags = get_expanded_make_var_array( make, "EXTRADLLFLAGS" );
     make->install_lib   = get_expanded_make_var_array( make, "INSTALL_LIB" );
     make->install_dev   = get_expanded_make_var_array( make, "INSTALL_DEV" );
+    make->extra_targets = get_expanded_make_var_array( make, "EXTRA_TARGETS" );
 
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
