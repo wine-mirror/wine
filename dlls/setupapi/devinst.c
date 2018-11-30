@@ -578,7 +578,9 @@ static void remove_device_iface(struct device_iface *iface)
 
 static void remove_device(struct device *device)
 {
+    WCHAR id[MAX_DEVICE_ID_LEN], *p;
     struct device_iface *iface;
+    HKEY enum_key;
 
     LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
     {
@@ -587,6 +589,21 @@ static void remove_device(struct device *device)
 
     RegDeleteTreeW(device->key, NULL);
     RegDeleteKeyW(device->key, emptyW);
+
+    /* delete all empty parents of the key */
+    if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, 0, &enum_key))
+    {
+        strcpyW(id, device->instanceId);
+
+        while ((p = strrchrW(id, '\\')))
+        {
+            *p = 0;
+            RegDeleteKeyW(enum_key, id);
+        }
+
+        RegCloseKey(enum_key);
+    }
+
     RegCloseKey(device->key);
     device->key = NULL;
     device->removed = TRUE;

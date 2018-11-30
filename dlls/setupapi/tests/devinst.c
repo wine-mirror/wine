@@ -466,9 +466,6 @@ static void test_get_device_instance_id(void)
 
 static void test_register_device_info(void)
 {
-    static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
-     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-     'E','n','u','m','\\','R','o','o','t','\\','L','E','G','A','C','Y','_','B','O','G','U','S',0};
     SP_DEVINFO_DATA device = {0};
     BOOL ret;
     HDEVINFO set;
@@ -526,9 +523,6 @@ static void test_register_device_info(void)
     ok(GetLastError() == ERROR_NO_MORE_ITEMS, "Got unexpected error %#x.\n", GetLastError());
 
     SetupDiDestroyDeviceInfoList(set);
-
-    /* remove once Wine is fixed */
-    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
 }
 
 static void check_device_iface_(int line, HDEVINFO set, SP_DEVINFO_DATA *device,
@@ -662,10 +656,6 @@ static void test_device_iface(void)
 
 static void test_device_iface_detail(void)
 {
-    static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
-     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-     'E','n','u','m','\\','R','o','o','t','\\',
-     'L','E','G','A','C','Y','_','B','O','G','U','S',0};
     static const char path[] = "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
@@ -737,9 +727,6 @@ static void test_device_iface_detail(void)
 
     heap_free(detail);
     SetupDiDestroyDeviceInfoList(set);
-
-    /* remove once Wine is fixed */
-    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
 }
 
 static void test_device_key(void)
@@ -849,7 +836,6 @@ todo_wine {
     SetupDiDestroyDeviceInfoList(set);
 
     /* remove once Wine is fixed */
-    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
     devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, classKey);
 }
 
@@ -890,9 +876,6 @@ static void test_register_device_iface(void)
 
     SetupDiDestroyDeviceInfoList(set);
     SetupDiDestroyDeviceInfoList(set2);
-
-    /* remove once Wine is fixed */
-    devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
 }
 
 static void test_registry_property_a(void)
@@ -992,14 +975,7 @@ todo_wine {
     SetupDiDestroyDeviceInfoList(set);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, bogus, &key);
-todo_wine
     ok(res == ERROR_FILE_NOT_FOUND, "Key should not exist.\n");
-    /* FIXME: Remove when Wine is fixed */
-    if (res == ERROR_SUCCESS)
-    {
-        /* Wine doesn't delete the information currently */
-        RegDeleteKeyA(HKEY_LOCAL_MACHINE, bogus);
-    }
 }
 
 static void test_registry_property_w(void)
@@ -1103,14 +1079,7 @@ todo_wine {
     SetupDiDestroyDeviceInfoList(set);
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
-todo_wine
     ok(res == ERROR_FILE_NOT_FOUND, "Key should not exist.\n");
-    /* FIXME: Remove when Wine is fixed */
-    if (res == ERROR_SUCCESS)
-    {
-        /* Wine doesn't delete the information currently */
-        RegDeleteKeyW(HKEY_LOCAL_MACHINE, bogus);
-    }
 }
 
 static void test_get_inf_class(void)
