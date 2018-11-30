@@ -4835,6 +4835,118 @@ static void test_swapchain_window_styles(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static void test_gamma_control(void)
+{
+    DXGI_GAMMA_CONTROL_CAPABILITIES caps;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    IDXGISwapChain *swapchain;
+    DXGI_GAMMA_CONTROL gamma;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    IDXGIOutput *output;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device(0)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output);
+    if (hr == DXGI_ERROR_NOT_FOUND)
+    {
+        skip("Adapter doesn't have any outputs.\n");
+        IDXGIAdapter_Release(adapter);
+        IDXGIDevice_Release(device);
+        return;
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGIOutput_GetGammaControlCapabilities(output, &caps);
+    todo_wine
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    IDXGIOutput_Release(output);
+
+    swapchain_desc.BufferDesc.Width = 800;
+    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+            || broken(hr == DXGI_ERROR_UNSUPPORTED), /* Win 7 testbot */
+            "Failed to enter fullscreen, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Could not change fullscreen state.\n");
+        goto done;
+    }
+
+    hr = IDXGISwapChain_GetContainingOutput(swapchain, &output);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&caps, 0, sizeof(caps));
+    hr = IDXGIOutput_GetGammaControlCapabilities(output, &caps);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ok(caps.MaxConvertedValue > caps.MinConvertedValue
+            || broken(caps.MaxConvertedValue == 0.0f && caps.MinConvertedValue == 1.0f) /* WARP */,
+            "Expected max gamma value (%.8e) to be bigger than min value (%.8e).\n",
+            caps.MaxConvertedValue, caps.MinConvertedValue);
+
+    for (i = 1; i < caps.NumGammaControlPoints; ++i)
+    {
+        ok(caps.ControlPointPositions[i] > caps.ControlPointPositions[i - 1],
+                "Expected control point positions to be strictly monotonically increasing (%.8e > %.8e).\n",
+                caps.ControlPointPositions[i], caps.ControlPointPositions[i - 1]);
+    }
+
+    memset(&gamma, 0, sizeof(gamma));
+    hr = IDXGIOutput_GetGammaControl(output, &gamma);
+    todo_wine
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIOutput_SetGammaControl(output, &gamma);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    IDXGIOutput_Release(output);
+
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+done:
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    DestroyWindow(swapchain_desc.OutputWindow);
+
+    IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -4929,6 +5041,7 @@ START_TEST(dxgi)
     test_default_fullscreen_target_output();
     test_resize_target();
     test_inexact_modes();
+    test_gamma_control();
     test_swapchain_parameters();
     test_swapchain_window_messages();
     test_swapchain_window_styles();
