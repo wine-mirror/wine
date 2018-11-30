@@ -553,9 +553,9 @@ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
  */
 static LRESULT MIDIMAP_drvOpen(void)
 {
+    static const WCHAR  throughportW[] = {'M','i','d','i',' ','T','h','r','o','u','g','h',0};
     MIDIOUTCAPSW	moc;
     unsigned		dev, i;
-    WCHAR               throughportW[] = {'M','i','d','i',' ','T','h','r','o','u','g','h',0};
     BOOL                found_valid_port = FALSE;
 
     if (midiOutPorts)
