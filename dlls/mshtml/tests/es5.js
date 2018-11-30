@@ -149,7 +149,7 @@ function test_identifier_keywords() {
 }
 
 function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerable,
-                            expected_configurable) {
+                                 expected_configurable) {
     var desc = Object.getOwnPropertyDescriptor(obj, prop);
     ok("value" in desc, "value is not in desc");
     ok(desc.value === obj[prop], "desc.value = " + desc.value + " expected " + obj[prop]);
@@ -427,6 +427,72 @@ function test_defineProperty() {
     next_test();
 }
 
+function test_property_definitions() {
+    var obj, val, i, arr;
+
+    function test_accessor_prop_desc(obj, prop, have_getter, have_setter) {
+        var desc = Object.getOwnPropertyDescriptor(obj, prop);
+        ok(desc.enumerable === true, "desc.enumerable = " + desc.enumerable);
+        ok(desc.configurable === true, "desc.configurable = " + desc.configurable);
+
+        if(have_getter) {
+            ok(typeof(desc.get) === "function", "desc.get = " + desc.get);
+            ok(typeof(desc.get.prototype) === "object", "desc.get.prototype = " + desc.get.prototype);
+            trace("" + desc.get);
+        }else {
+            ok(!("get" in obj), "desc.get = " + desc.get);
+        }
+
+        if(have_setter) {
+            ok(typeof(desc.set) === "function", "desc.set = " + desc.set);
+            ok(typeof(desc.set.prototype) === "object", "desc.set.prototype = " + desc.set.prototype);
+        }else {
+            ok(!("set" in obj), "desc.get = " + desc.get);
+        }
+    }
+
+    obj = {
+        get prop()  { return val + 1; },
+        set prop(v) { val = v; }
+    };
+    test_accessor_prop_desc(obj, "prop", true, true);
+    val = 0;
+    ok(obj.prop === 1, "obj.prop = " + obj.prop);
+    obj.prop = 3;
+    ok(val === 3, "val = " + val);
+    ok(obj.prop === 4, "obj.prop = " + obj.prop);
+
+    arr = [];
+    for(i in obj)
+        arr.push(i);
+    ok(arr.join() === "prop", "prop of obj = " + arr.join());
+
+    obj = {
+        set prop(v) { val = v; }
+    };
+    test_accessor_prop_desc(obj, "prop", false, true);
+    val = 1;
+    ok(obj.prop === undefined, "obj.prop = " + obj.prop);
+    obj.prop = 2;
+    ok(val === 2, "val = " + val);
+    ok(obj.prop === undefined, "obj.prop = " + obj.prop);
+
+    obj = {
+        get prop()  { return val + 1; },
+        get 0()     { return val + 2; }
+    };
+    test_accessor_prop_desc(obj, "prop", true, false);
+    val = 5;
+    ok(obj.prop === 6, "obj.prop = " + obj.prop);
+    obj.prop = 10;
+    ok(val === 5, "val = " + val);
+    ok(obj.prop === 6, "obj.prop = " + obj.prop);
+    test_accessor_prop_desc(obj, "0", true, false);
+    ok(obj[0] === 7, "obj.prop = " + obj[0]);
+
+    next_test();
+}
+
 function test_string_trim() {
     function test_trim(value, expected) {
         var r = String.prototype.trim.call(value);
@@ -513,6 +579,7 @@ var tests = [
     test_identifier_keywords,
     test_getOwnPropertyDescriptor,
     test_defineProperty,
+    test_property_definitions,
     test_string_trim,
     test_global_properties,
     test_string_split

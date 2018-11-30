@@ -1445,6 +1445,7 @@ static HRESULT interp_new_obj(script_ctx_t *ctx)
 static HRESULT interp_obj_prop(script_ctx_t *ctx)
 {
     const BSTR name = get_op_bstr(ctx, 0);
+    unsigned type = get_op_uint(ctx, 1);
     jsdisp_t *obj;
     jsval_t val;
     HRESULT hres;
@@ -1456,7 +1457,28 @@ static HRESULT interp_obj_prop(script_ctx_t *ctx)
     assert(is_object_instance(stack_top(ctx)));
     obj = as_jsdisp(get_object(stack_top(ctx)));
 
-    hres = jsdisp_propput_name(obj, name, val);
+    if(type == PROPERTY_DEFINITION_VALUE) {
+        hres = jsdisp_propput_name(obj, name, val);
+    }else {
+        property_desc_t desc = {PROPF_ENUMERABLE | PROPF_CONFIGURABLE};
+        jsdisp_t *func;
+
+        assert(is_object_instance(val));
+        func = iface_to_jsdisp(get_object(val));
+
+        desc.mask = desc.flags;
+        if(type == PROPERTY_DEFINITION_GETTER) {
+            desc.explicit_getter = TRUE;
+            desc.getter = func;
+        }else {
+            desc.explicit_setter = TRUE;
+            desc.setter = func;
+        }
+
+        hres = jsdisp_define_property(obj, name, &desc);
+        jsdisp_release(func);
+    }
+
     jsval_release(val);
     return hres;
 }

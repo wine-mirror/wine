@@ -889,7 +889,6 @@ static HRESULT compile_array_literal(compiler_ctx_t *ctx, array_literal_expressi
 static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expression_t *expr)
 {
     property_definition_t *iter;
-    unsigned instr;
     BSTR name;
     HRESULT hres;
 
@@ -905,11 +904,9 @@ static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expres
         if(FAILED(hres))
             return hres;
 
-        instr = push_instr(ctx, OP_obj_prop);
-        if(!instr)
-            return E_OUTOFMEMORY;
-
-        instr_ptr(ctx, instr)->u.arg->bstr = name;
+        hres = push_instr_bstr_uint(ctx, OP_obj_prop, name, iter->type);
+        if(FAILED(hres))
+            return hres;
     }
 
     return S_OK;
