@@ -888,7 +888,7 @@ static HRESULT compile_array_literal(compiler_ctx_t *ctx, array_literal_expressi
 
 static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expression_t *expr)
 {
-    prop_val_t *iter;
+    property_definition_t *iter;
     unsigned instr;
     BSTR name;
     HRESULT hres;
@@ -1999,7 +1999,7 @@ static HRESULT visit_expression(compiler_ctx_t *ctx, expression_t *expr)
         hres = visit_expression(ctx, ((member_expression_t*)expr)->expression);
         break;
     case EXPR_PROPVAL: {
-        prop_val_t *iter;
+        property_definition_t *iter;
         for(iter = ((property_value_expression_t*)expr)->property_list; iter; iter = iter->next) {
             hres = visit_expression(ctx, iter->value);
             if(FAILED(hres))

@@ -41,8 +41,8 @@ static literal_t *new_string_literal(parser_ctx_t*,const WCHAR*);
 static literal_t *new_null_literal(parser_ctx_t*);
 
 typedef struct _property_list_t {
-    prop_val_t *head;
-    prop_val_t *tail;
+    property_definition_t *head;
+    property_definition_t *tail;
 } property_list_t;
 
 static property_list_t *new_property_list(parser_ctx_t*,literal_t*,expression_t*);
@@ -921,9 +921,9 @@ static literal_t *new_null_literal(parser_ctx_t *ctx)
     return ret;
 }
 
-static prop_val_t *new_prop_val(parser_ctx_t *ctx, literal_t *name, expression_t *value)
+static property_definition_t *new_property_definition(parser_ctx_t *ctx, literal_t *name, expression_t *value)
 {
-    prop_val_t *ret = parser_alloc(ctx, sizeof(prop_val_t));
+    property_definition_t *ret = parser_alloc(ctx, sizeof(property_definition_t));
 
     ret->name = name;
     ret->value = value;
@@ -936,14 +936,14 @@ static property_list_t *new_property_list(parser_ctx_t *ctx, literal_t *name, ex
 {
     property_list_t *ret = parser_alloc_tmp(ctx, sizeof(property_list_t));
 
-    ret->head = ret->tail = new_prop_val(ctx, name, value);
+    ret->head = ret->tail = new_property_definition(ctx, name, value);
 
     return ret;
 }
 
 static property_list_t *property_list_add(parser_ctx_t *ctx, property_list_t *list, literal_t *name, expression_t *value)
 {
-    list->tail = list->tail->next = new_prop_val(ctx, name, value);
+    list->tail = list->tail->next = new_property_definition(ctx, name, value);
 
     return list;
 }
