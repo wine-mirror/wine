@@ -2298,8 +2298,8 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
                       DWORD flags, LPBYTE* bufptr, DWORD prefmaxlen,
                       LPDWORD entriesread, LPDWORD totalentries)
 {
+    static const WCHAR admins[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r','s',0};
     NET_API_STATUS status;
-    const WCHAR admins[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r','s',0};
     LPWSTR currentuser;
     LOCALGROUP_USERS_INFO_0* info;
     DWORD size;
