@@ -5,7 +5,7 @@
 @ stdcall IStream_Size(ptr ptr) shlwapi.IStream_Size
 @ stdcall IStream_Write(ptr ptr long) shlwapi.IStream_Write
 @ stub IStream_WriteStr
-@ stdcall IUnknown_AtomicRelease(long) shlwapi.IUnknown_AtomicRelease
+@ stdcall IUnknown_AtomicRelease(ptr) shlwapi.IUnknown_AtomicRelease
 @ stdcall IUnknown_GetSite(ptr ptr ptr) shlwapi.IUnknown_GetSite
 @ stdcall IUnknown_QueryService(ptr ptr ptr ptr) shlwapi.IUnknown_QueryService
 @ stdcall IUnknown_Set(ptr ptr) shlwapi.IUnknown_Set

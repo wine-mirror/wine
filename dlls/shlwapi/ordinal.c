@@ -57,7 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 extern HINSTANCE shlwapi_hInstance;
 extern DWORD SHLWAPI_ThreadRef_index;
 
-HRESULT WINAPI IUnknown_QueryService(IUnknown*,REFGUID,REFIID,LPVOID*);
+static HRESULT iunknown_query_service(IUnknown*,REFGUID,REFIID,LPVOID*);
 HRESULT WINAPI SHInvokeCommand(HWND,IShellFolder*,LPCITEMIDLIST,DWORD);
 BOOL    WINAPI SHAboutInfoW(LPWSTR,DWORD);
 
@@ -299,7 +299,7 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
 
   TRACE("(%p, %p)\n", lpBC, lpUnknown);
 
-  hr = IUnknown_QueryService(lpUnknown, &IID_IWebBrowserApp, &IID_IWebBrowserApp, (void**)&pBrowser);
+  hr = iunknown_query_service(lpUnknown, &IID_IWebBrowserApp, &IID_IWebBrowserApp, (void**)&pBrowser);
   if (FAILED(hr))
     return hr;
 
@@ -1173,29 +1173,6 @@ HRESULT WINAPI ConnectToConnectionPoint(IUnknown* lpUnkSink, REFIID riid, BOOL f
 }
 
 /*************************************************************************
- *	@	[SHLWAPI.169]
- *
- * Release an interface and zero a supplied pointer.
- *
- * PARAMS
- *  lpUnknown [I] Object to release
- *
- * RETURNS
- *  Nothing.
- */
-void WINAPI IUnknown_AtomicRelease(IUnknown ** lpUnknown)
-{
-    TRACE("(%p)\n", lpUnknown);
-
-    if(!lpUnknown || !*lpUnknown) return;
-
-    TRACE("doing Release\n");
-
-    IUnknown_Release(*lpUnknown);
-    *lpUnknown = NULL;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.170]
  *
  * Skip '//' if present in a string.
@@ -1343,44 +1320,6 @@ HRESULT WINAPI IUnknown_SetOwner(IUnknown *iface, IUnknown *pUnk)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.174]
- *
- * Call either IObjectWithSite_SetSite() or IInternetSecurityManager_SetSecuritySite() on
- * an object.
- *
- */
-HRESULT WINAPI IUnknown_SetSite(
-        IUnknown *obj,        /* [in]   OLE object     */
-        IUnknown *site)       /* [in]   Site interface */
-{
-    HRESULT hr;
-    IObjectWithSite *iobjwithsite;
-    IInternetSecurityManager *isecmgr;
-
-    if (!obj) return E_FAIL;
-
-    hr = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (LPVOID *)&iobjwithsite);
-    TRACE("IID_IObjectWithSite QI ret=%08x, %p\n", hr, iobjwithsite);
-    if (SUCCEEDED(hr))
-    {
-	hr = IObjectWithSite_SetSite(iobjwithsite, site);
-	TRACE("done IObjectWithSite_SetSite ret=%08x\n", hr);
-	IObjectWithSite_Release(iobjwithsite);
-    }
-    else
-    {
-	hr = IUnknown_QueryInterface(obj, &IID_IInternetSecurityManager, (LPVOID *)&isecmgr);
-	TRACE("IID_IInternetSecurityManager QI ret=%08x, %p\n", hr, isecmgr);
-	if (FAILED(hr)) return hr;
-
-	hr = IInternetSecurityManager_SetSecuritySite(isecmgr, (IInternetSecurityMgrSite *)site);
-	TRACE("done IInternetSecurityManager_SetSecuritySite ret=%08x\n", hr);
-	IInternetSecurityManager_Release(isecmgr);
-    }
-    return hr;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.175]
  *
  * Call IPersist_GetClassID() on an object.
@@ -1421,26 +1360,7 @@ HRESULT WINAPI IUnknown_GetClassID(IUnknown *lpUnknown, CLSID *clsid)
     return hr;
 }
 
-/*************************************************************************
- *      @	[SHLWAPI.176]
- *
- * Retrieve a Service Interface from an object.
- *
- * PARAMS
- *  lpUnknown [I] Object to get an IServiceProvider interface from
- *  sid       [I] Service ID for IServiceProvider_QueryService() call
- *  riid      [I] Function requested for QueryService call
- *  lppOut    [O] Destination for the service interface pointer
- *
- * RETURNS
- *  Success: S_OK. lppOut contains an object providing the requested service
- *  Failure: An HRESULT error code
- *
- * NOTES
- *  lpUnknown is expected to support the IServiceProvider interface.
- */
-HRESULT WINAPI IUnknown_QueryService(IUnknown* lpUnknown, REFGUID sid, REFIID riid,
-                           LPVOID *lppOut)
+static HRESULT iunknown_query_service(IUnknown* lpUnknown, REFGUID sid, REFIID riid, LPVOID *lppOut)
 {
   IServiceProvider* pService = NULL;
   HRESULT hRet;
@@ -1500,7 +1420,7 @@ HRESULT WINAPI IUnknown_QueryServiceExec(IUnknown *lpUnknown, REFIID service,
     TRACE("%p %s %s %d %08x %p %p\n", lpUnknown, debugstr_guid(service),
         debugstr_guid(group), cmdId, cmdOpt, pIn, pOut);
 
-    hr = IUnknown_QueryService(lpUnknown, service, &IID_IOleCommandTarget, (void**)&target);
+    hr = iunknown_query_service(lpUnknown, service, &IID_IOleCommandTarget, (void**)&target);
     if (hr == S_OK)
     {
         hr = IOleCommandTarget_Exec(target, group, cmdId, cmdOpt, pIn, pOut);
@@ -1537,7 +1457,7 @@ HRESULT WINAPI IUnknown_ProfferService(IUnknown *lpUnknown, REFGUID service, ISe
 
     TRACE("%p %s %p %p\n", lpUnknown, debugstr_guid(service), pService, pCookie);
 
-    hr = IUnknown_QueryService(lpUnknown, &IID_IProfferService, &IID_IProfferService, (void**)&proffer);
+    hr = iunknown_query_service(lpUnknown, &IID_IProfferService, &IID_IProfferService, (void**)&proffer);
     if (hr == S_OK)
     {
         if (pService)
@@ -1905,7 +1825,7 @@ HRESULT WINAPI IUnknown_HandleIRestrict(LPUNKNOWN lpUnknown, PVOID lpArg1,
 
   if (lpUnknown && lpArg4)
   {
-     hRet = IUnknown_QueryService(lpUnknown, (REFGUID)service_id,
+     hRet = iunknown_query_service(lpUnknown, (REFGUID)service_id,
                                   (REFGUID)function_id, (void**)&lpUnkInner);
 
      if (SUCCEEDED(hRet) && lpUnkInner)
@@ -2113,32 +2033,6 @@ int WINAPI SHSearchMapInt(const int *lpKeys, const int *lpValues, int iLen, int 
     }
   }
   return -1; /* Not found */
-}
-
-
-/*************************************************************************
- *      @	[SHLWAPI.199]
- *
- * Copy an interface pointer
- *
- * PARAMS
- *   lppDest   [O] Destination for copy
- *   lpUnknown [I] Source for copy
- *
- * RETURNS
- *  Nothing.
- */
-VOID WINAPI IUnknown_Set(IUnknown **lppDest, IUnknown *lpUnknown)
-{
-  TRACE("(%p,%p)\n", lppDest, lpUnknown);
-
-  IUnknown_AtomicRelease(lppDest);
-
-  if (lpUnknown)
-  {
-    IUnknown_AddRef(lpUnknown);
-    *lppDest = lpUnknown;
-  }
 }
 
 /*************************************************************************
@@ -2536,29 +2430,6 @@ LRESULT CALLBACK SHDefWindowProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM
 }
 
 /*************************************************************************
- *      @       [SHLWAPI.256]
- */
-HRESULT WINAPI IUnknown_GetSite(LPUNKNOWN lpUnknown, REFIID iid, PVOID *lppSite)
-{
-  HRESULT hRet = E_INVALIDARG;
-  LPOBJECTWITHSITE lpSite = NULL;
-
-  TRACE("(%p,%s,%p)\n", lpUnknown, debugstr_guid(iid), lppSite);
-
-  if (lpUnknown && iid && lppSite)
-  {
-    hRet = IUnknown_QueryInterface(lpUnknown, &IID_IObjectWithSite,
-                                   (void**)&lpSite);
-    if (SUCCEEDED(hRet) && lpSite)
-    {
-      hRet = IObjectWithSite_GetSite(lpSite, iid, lppSite);
-      IObjectWithSite_Release(lpSite);
-    }
-  }
-  return hRet;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.257]
  *
  * Create a worker window using CreateWindowExA().
@@ -2758,7 +2629,8 @@ VOID WINAPI SHWeakReleaseInterface(IUnknown *lpDest, IUnknown **lppUnknown)
   {
     /* Copy Reference*/
     IUnknown_AddRef(lpDest);
-    IUnknown_AtomicRelease(lppUnknown); /* Release existing interface */
+    IUnknown_Release(*lppUnknown); /* Release existing interface */
+    *lppUnknown = NULL;
   }
 }
 
@@ -5174,7 +5046,7 @@ HRESULT WINAPI IUnknown_QueryServiceForWebBrowserApp(IUnknown* lpUnknown,
         REFGUID riid, LPVOID *lppOut)
 {
     FIXME("%p %s %p semi-STUB\n", lpUnknown, debugstr_guid(riid), lppOut);
-    return IUnknown_QueryService(lpUnknown,&IID_IWebBrowserApp,riid,lppOut);
+    return iunknown_query_service(lpUnknown,&IID_IWebBrowserApp,riid,lppOut);
 }
 
 /**************************************************************************

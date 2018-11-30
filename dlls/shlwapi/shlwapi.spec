@@ -166,14 +166,14 @@
 166 stdcall -noname SHIsEmptyStream(ptr)
 167 stdcall -noname SHSetParentHwnd(long ptr)
 168 stdcall -ordinal ConnectToConnectionPoint(ptr ptr long ptr ptr ptr)
-169 stdcall -ordinal IUnknown_AtomicRelease(long)
+169 stdcall -ordinal IUnknown_AtomicRelease(ptr) shcore.IUnknown_AtomicRelease
 170 stdcall -noname PathSkipLeadingSlashesA(str)
 171 stdcall -noname SHIsSameObject(ptr ptr)
 172 stdcall -ordinal IUnknown_GetWindow(ptr ptr)
 173 stdcall -noname IUnknown_SetOwner(ptr ptr)
-174 stdcall -ordinal IUnknown_SetSite(ptr ptr)
+174 stdcall -ordinal IUnknown_SetSite(ptr ptr) shcore.IUnknown_SetSite
 175 stdcall -noname IUnknown_GetClassID(ptr ptr)
-176 stdcall -ordinal IUnknown_QueryService(ptr ptr ptr ptr)
+176 stdcall -ordinal IUnknown_QueryService(ptr ptr ptr ptr) shcore.IUnknown_QueryService
 177 stdcall -noname SHLoadMenuPopup(ptr wstr)
 178 stdcall -noname SHPropagateMessage(ptr long long long long)
 179 stdcall -noname SHMenuIndexFromID(long long)
@@ -196,7 +196,7 @@
 196 stdcall -noname SHVerbExistsNA(str ptr ptr long)
 197 stdcall -noname SHFillRectClr(long ptr long)
 198 stdcall -noname SHSearchMapInt(ptr ptr long long)
-199 stdcall -ordinal IUnknown_Set(ptr ptr)
+199 stdcall -ordinal IUnknown_Set(ptr ptr) shcore.IUnknown_Set
 200 stdcall -noname MayQSForward(ptr ptr ptr long ptr ptr)
 201 stdcall -noname MayExecForward(ptr long ptr long long ptr ptr)
 202 stdcall -noname IsQSForward(ptr long ptr)
@@ -253,7 +253,7 @@
 253 stub -noname StopWatchExA
 254 stub -noname StopWatchExW
 255 stub -noname EventTraceHandler
-256 stdcall -ordinal IUnknown_GetSite(ptr ptr ptr)
+256 stdcall -ordinal IUnknown_GetSite(ptr ptr ptr) shcore.IUnknown_GetSite
 257 stdcall -noname SHCreateWorkerWindowA(ptr ptr long long ptr long)
 258 stub -noname SHRegisterWaitForSingleObject
 259 stub -noname SHUnregisterWait
