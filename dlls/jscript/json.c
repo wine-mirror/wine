@@ -487,7 +487,7 @@ static HRESULT json_quote(stringify_ctx_t *ctx, const WCHAR *ptr, size_t len)
             break;
         default:
             if(*ptr < ' ') {
-                const WCHAR formatW[] = {'\\','u','%','0','4','x',0};
+                static const WCHAR formatW[] = {'\\','u','%','0','4','x',0};
                 WCHAR buf[7];
                 sprintfW(buf, formatW, *ptr);
                 if(!append_string(ctx, buf))

@@ -718,7 +718,7 @@ static jsstr_t *int_to_string(int i)
 
 HRESULT double_to_string(double n, jsstr_t **str)
 {
-    const WCHAR InfinityW[] = {'-','I','n','f','i','n','i','t','y',0};
+    static const WCHAR InfinityW[] = {'-','I','n','f','i','n','i','t','y',0};
 
     if(isnan(n)) {
         *str = jsstr_nan();
@@ -748,9 +748,9 @@ HRESULT double_to_string(double n, jsstr_t **str)
 /* ECMA-262 3rd Edition    9.8 */
 HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str)
 {
-    const WCHAR nullW[] = {'n','u','l','l',0};
-    const WCHAR trueW[] = {'t','r','u','e',0};
-    const WCHAR falseW[] = {'f','a','l','s','e',0};
+    static const WCHAR nullW[] = {'n','u','l','l',0};
+    static const WCHAR trueW[] = {'t','r','u','e',0};
+    static const WCHAR falseW[] = {'f','a','l','s','e',0};
 
     switch(jsval_type(val)) {
     case JSV_UNDEFINED:

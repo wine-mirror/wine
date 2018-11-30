@@ -693,7 +693,7 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
     case EXPR_IDENT:
         return push_instr_bstr(ctx, OP_delete_ident, ((identifier_expression_t*)expr->expression)->identifier);
     default: {
-        const WCHAR fixmeW[] = {'F','I','X','M','E',0};
+        static const WCHAR fixmeW[] = {'F','I','X','M','E',0};
 
         WARN("invalid delete, unimplemented exception message\n");
 
