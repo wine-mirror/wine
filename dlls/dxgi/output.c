@@ -320,10 +320,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_SetGammaControl(IDXGIOutput4 *iface
 {
     FIXME("iface %p, gamma_control %p stub!\n", iface, gamma_control);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_output_GetGammaControl(IDXGIOutput4 *iface, DXGI_GAMMA_CONTROL *gamma_control)
+static HRESULT STDMETHODCALLTYPE dxgi_output_GetGammaControl(IDXGIOutput4 *iface,
+        DXGI_GAMMA_CONTROL *gamma_control)
 {
     FIXME("iface %p, gamma_control %p stub!\n", iface, gamma_control);
 
