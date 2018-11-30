@@ -148,11 +148,16 @@ static const char *man_ext;
 static const char *crosstarget;
 static const char *fontforge;
 static const char *convert;
+static const char *flex;
+static const char *bison;
+static const char *ar;
+static const char *ranlib;
 static const char *rsvg;
 static const char *icotool;
 static const char *dlltool;
 static const char *msgfmt;
 static const char *ln_s;
+static const char *sed_cmd;
 
 struct makefile
 {
@@ -2492,15 +2497,15 @@ static void output_source_y( struct makefile *make, struct incl_file *source, co
     if (find_include_file( make, header ))
     {
         output( "%s: %s\n", obj_dir_path( make, header ), source->filename );
-        output( "\t$(BISON) -p %s_ -o %s.tab.c -d %s\n",
-                obj, obj_dir_path( make, obj ), source->filename );
+        output( "\t%s -p %s_ -o %s.tab.c -d %s\n",
+                bison, obj, obj_dir_path( make, obj ), source->filename );
         output( "%s.tab.c: %s %s\n", obj_dir_path( make, obj ),
                 source->filename, obj_dir_path( make, header ));
         strarray_add( &make->clean_files, header );
     }
     else output( "%s.tab.c: %s\n", obj, source->filename );
 
-    output( "\t$(BISON) -p %s_ -o $@ %s\n", obj, source->filename );
+    output( "\t%s -p %s_ -o $@ %s\n", bison, obj, source->filename );
 }
 
 
@@ -2510,7 +2515,7 @@ static void output_source_y( struct makefile *make, struct incl_file *source, co
 static void output_source_l( struct makefile *make, struct incl_file *source, const char *obj )
 {
     output( "%s.yy.c: %s\n", obj_dir_path( make, obj ), source->filename );
-    output( "\t$(FLEX) -o$@ %s\n", source->filename );
+    output( "\t%s -o$@ %s\n", flex, source->filename );
 }
 
 
@@ -2825,7 +2830,7 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
     strarray_add( &make->in_files, xstrdup(obj) );
     strarray_add( &make->all_targets, xstrdup(obj) );
     output( "%s: %s\n", obj_dir_path( make, obj ), source->filename );
-    output( "\t$(SED_CMD) %s >$@ || (rm -f $@ && false)\n", source->filename );
+    output( "\t%s %s >$@ || (rm -f $@ && false)\n", sed_cmd, source->filename );
     output( "%s:", obj_dir_path( make, obj ));
     output_filenames( source->dependencies );
     output( "\n" );
@@ -3177,9 +3182,9 @@ static void output_static_lib( struct makefile *make )
     output( "%s:", obj_dir_path( make, make->staticlib ));
     output_filenames_obj_dir( make, make->object_files );
     output( "\n\trm -f $@\n" );
-    output( "\t$(AR) $(ARFLAGS) $@" );
+    output( "\t%s rc $@", ar );
     output_filenames_obj_dir( make, make->object_files );
-    output( "\n\t$(RANLIB) $@\n" );
+    output( "\n\t%s $@\n", ranlib );
     add_install_rule( make, make->staticlib, make->staticlib,
                       strmake( "d$(dlldir)/%s", make->staticlib ));
     if (crosstarget && make->module)
@@ -3190,7 +3195,7 @@ static void output_static_lib( struct makefile *make )
         output( "%s:", obj_dir_path( make, name ));
         output_filenames_obj_dir( make, make->crossobj_files );
         output( "\n\trm -f $@\n" );
-        output( "\t%s-ar $(ARFLAGS) $@", crosstarget );
+        output( "\t%s-ar rc $@", crosstarget );
         output_filenames_obj_dir( make, make->crossobj_files );
         output( "\n\t%s-ranlib $@\n", crosstarget );
     }
@@ -4229,10 +4234,15 @@ int main( int argc, char *argv[] )
     crosstarget  = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
     fontforge    = get_expanded_make_variable( top_makefile, "FONTFORGE" );
     convert      = get_expanded_make_variable( top_makefile, "CONVERT" );
+    flex         = get_expanded_make_variable( top_makefile, "FLEX" );
+    bison        = get_expanded_make_variable( top_makefile, "BISON" );
+    ar           = get_expanded_make_variable( top_makefile, "AR" );
+    ranlib       = get_expanded_make_variable( top_makefile, "RANLIB" );
     rsvg         = get_expanded_make_variable( top_makefile, "RSVG" );
     icotool      = get_expanded_make_variable( top_makefile, "ICOTOOL" );
     dlltool      = get_expanded_make_variable( top_makefile, "DLLTOOL" );
     msgfmt       = get_expanded_make_variable( top_makefile, "MSGFMT" );
+    sed_cmd      = get_expanded_make_variable( top_makefile, "SED_CMD" );
     ln_s         = get_expanded_make_variable( top_makefile, "LN_S" );
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
