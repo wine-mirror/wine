@@ -1001,8 +1001,8 @@ BOOLEAN WINAPI GetComputerObjectNameW(
                     DWORD len = domainInfo->Name.Length + size + 3;
                     if (lpNameBuffer && *nSize >= len)
                     {
-                        WCHAR bs[] = { '\\', 0 };
-                        WCHAR ds[] = { '$', 0 };
+                        static const WCHAR bs[] = { '\\', 0 };
+                        static const WCHAR ds[] = { '$', 0 };
                         if (domainInfo->Name.Buffer)
                         {
                             lstrcpyW(lpNameBuffer, domainInfo->Name.Buffer);
