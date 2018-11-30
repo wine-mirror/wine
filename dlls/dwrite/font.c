@@ -4263,7 +4263,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection1
     hr = IDWriteFontCollection1_FindFamilyName(&collection->IDWriteFontCollection1_iface, emptyW,
         &index, &exists);
     if (FAILED(hr) || !exists) {
-        const WCHAR globaldefaultW[] = {'E','U','D','C','.','T','T','E',0};
+        static const WCHAR globaldefaultW[] = {'E','U','D','C','.','T','T','E',0};
         hr = eudc_collection_add_family(factory, collection, emptyW, globaldefaultW);
         if (hr != S_OK)
             WARN("failed to add global default EUDC font, 0x%08x\n", hr);
