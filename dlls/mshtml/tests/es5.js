@@ -460,6 +460,51 @@ function test_global_properties() {
     next_test();
 }
 
+function test_string_split() {
+    var r;
+
+    /* IE9 got this wrong*/
+    if("1undefined2".split(undefined).length != 1) {
+        win_skip("detected broken String.prototype.split implementation");
+        next_test();
+        return;
+    }
+
+    r = "1,2,3".split(undefined);
+    ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+    ok(r.length === 1, "r.length = " + r.length);
+    ok(r[0] === "1,2,3", "r[0] = " + r[0]);
+
+    r = "1,undefined2undefined,3".split(undefined);
+    ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+    ok(r.length === 1, "r.length = " + r.length);
+    ok(r[0] === "1,undefined2undefined,3", "r[0] = " + r[0]);
+
+    r = "1,undefined2undefined,3".split();
+    ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+    ok(r.length === 1, "r.length = " + r.length);
+    ok(r[0] === "1,undefined2undefined,3", "r[0] = " + r[0]);
+
+    /* note: spec violation, limit is ignored */
+    r = "1,undefined2undefined,3".split(undefined, 0);
+    ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+    ok(r.length === 1, "r.length = " + r.length);
+    ok(r[0] === "1,undefined2undefined,3", "r[0] = " + r[0]);
+
+    r = "1,undefined2null,3".split(null);
+    ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+    ok(r.length === 2, "r.length = " + r.length);
+    ok(r[0] === "1,undefined2", "r[0] = " + r[0]);
+    ok(r[1] === ",3", "r[1] = " + r[1]);
+
+    r = "".split();
+    ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
+    ok(r.length === 1, "r.length = " + r.length);
+    ok(r[0] === "", "r[0] = " + r[0]);
+
+    next_test();
+}
+
 var tests = [
     test_date_now,
     test_toISOString,
@@ -469,5 +514,6 @@ var tests = [
     test_getOwnPropertyDescriptor,
     test_defineProperty,
     test_string_trim,
-    test_global_properties
+    test_global_properties,
+    test_string_split
 ];

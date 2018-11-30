@@ -1140,16 +1140,31 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
     TRACE("\n");
 
-    if(argc != 1 && argc != 2) {
-        FIXME("unsupported argc %u\n", argc);
-        return E_NOTIMPL;
-    }
-
     hres = get_string_flat_val(ctx, jsthis, &jsstr, &str);
     if(FAILED(hres))
         return hres;
 
     length = jsstr_length(jsstr);
+
+    if(!argc || (is_undefined(argv[0]) && ctx->version >= SCRIPTLANGUAGEVERSION_ES5)) {
+        if(!r)
+            return S_OK;
+
+        hres = create_array(ctx, 0, &array);
+        if(FAILED(hres))
+            return hres;
+
+        /* NOTE: according to spec, we should respect limit argument here (if provided).
+         * We have a test showing that it's broken in native IE. */
+        hres = jsdisp_propput_idx(array, 0, jsval_string(jsstr));
+        if(FAILED(hres)) {
+            jsdisp_release(array);
+            return hres;
+        }
+
+        *r = jsval_obj(array);
+        return S_OK;
+    }
 
     if(argc > 1 && !is_undefined(argv[1])) {
         hres = to_uint32(ctx, argv[1], &limit);
