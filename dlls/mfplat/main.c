@@ -1907,7 +1907,7 @@ static HRESULT WINAPI mfsourceresolver_CreateObjectFromByteStream(IMFSourceResol
     {
         mfsource *new_object;
 
-        new_object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
+        new_object = HeapAlloc( GetProcessHeap(), 0, sizeof(*new_object) );
         if (!new_object)
             return E_OUTOFMEMORY;
 
