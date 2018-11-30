@@ -23,6 +23,7 @@
 #include <windows.h>
 #include "initguid.h"
 #include "objidl.h"
+#include "shlwapi.h"
 
 #include "wine/test.h"
 
@@ -35,6 +36,26 @@ static int (WINAPI *pSHAnsiToAnsi)(const char *, char *, int);
 static int (WINAPI *pSHUnicodeToUnicode)(const WCHAR *, WCHAR *, int);
 static HKEY (WINAPI *pSHRegDuplicateHKey)(HKEY);
 static DWORD (WINAPI *pSHDeleteKeyA)(HKEY, const char *);
+static DWORD (WINAPI *pSHGetValueA)(HKEY, const char *, const char *, DWORD *, void *, DWORD *);
+static LSTATUS (WINAPI *pSHRegGetValueA)(HKEY, const char *, const char *, SRRF, DWORD *, void *, DWORD *);
+static DWORD (WINAPI *pSHQueryValueExA)(HKEY, const char *, DWORD *, DWORD *, void *buff, DWORD *buff_len);
+static DWORD (WINAPI *pSHRegGetPathA)(HKEY, const char *, const char *, char *, DWORD);
+static DWORD (WINAPI *pSHCopyKeyA)(HKEY, const char *, HKEY, DWORD);
+
+/* Keys used for testing */
+#define REG_TEST_KEY        "Software\\Wine\\Test"
+#define REG_CURRENT_VERSION "Software\\Microsoft\\Windows\\CurrentVersion\\explorer"
+
+static const char test_path1[] = "%LONGSYSTEMVAR%\\subdir1";
+static const char test_path2[] = "%FOO%\\subdir1";
+
+static const char * test_envvar1 = "bar";
+static const char * test_envvar2 = "ImARatherLongButIndeedNeededString";
+static char test_exp_path1[MAX_PATH];
+static char test_exp_path2[MAX_PATH];
+static DWORD exp_len1;
+static DWORD exp_len2;
+static const char * initial_buffer ="0123456789";
 
 static void init(HMODULE hshcore)
 {
@@ -47,6 +68,11 @@ static void init(HMODULE hshcore)
     X(SHUnicodeToUnicode);
     X(SHRegDuplicateHKey);
     X(SHDeleteKeyA);
+    X(SHGetValueA);
+    X(SHRegGetValueA);
+    X(SHQueryValueExA);
+    X(SHRegGetPathA);
+    X(SHCopyKeyA);
 #undef X
 }
 
@@ -343,6 +369,308 @@ static void test_SHDeleteKey(void)
     ok(!ret, "Failed to delete a key, %d.\n", ret);
 }
 
+static HKEY create_test_entries(void)
+{
+    HKEY hKey;
+    DWORD ret;
+    DWORD nExpectedLen1, nExpectedLen2;
+
+    SetEnvironmentVariableA("LONGSYSTEMVAR", test_envvar1);
+    SetEnvironmentVariableA("FOO", test_envvar2);
+
+    ret = RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY, &hKey);
+    ok(!ret, "RegCreateKeyA failed, ret=%u\n", ret);
+
+    if (hKey)
+    {
+        ok(!RegSetValueExA(hKey, "Test1", 0, REG_EXPAND_SZ, (BYTE *)test_path1, strlen(test_path1)+1), "RegSetValueExA failed\n");
+        ok(!RegSetValueExA(hKey, "Test2", 0, REG_SZ, (BYTE *)test_path1, strlen(test_path1)+1), "RegSetValueExA failed\n");
+        ok(!RegSetValueExA(hKey, "Test3", 0, REG_EXPAND_SZ, (BYTE *)test_path2, strlen(test_path2)+1), "RegSetValueExA failed\n");
+    }
+
+    exp_len1 = ExpandEnvironmentStringsA(test_path1, test_exp_path1, sizeof(test_exp_path1));
+    exp_len2 = ExpandEnvironmentStringsA(test_path2, test_exp_path2, sizeof(test_exp_path2));
+
+    nExpectedLen1 = strlen(test_path1) - strlen("%LONGSYSTEMVAR%") + strlen(test_envvar1) + 1;
+    nExpectedLen2 = strlen(test_path2) - strlen("%FOO%") + strlen(test_envvar2) + 1;
+
+    /* Make sure we carry on with correct values */
+    exp_len1 = nExpectedLen1;
+    exp_len2 = nExpectedLen2;
+
+    return hKey;
+}
+
+/* delete key and all its subkeys */
+static DWORD delete_key( HKEY hkey, LPCSTR parent, LPCSTR keyname )
+{
+    HKEY parentKey;
+    DWORD ret;
+
+    RegCloseKey(hkey);
+
+    /* open the parent of the key to close */
+    ret = RegOpenKeyExA( HKEY_CURRENT_USER, parent, 0, KEY_ALL_ACCESS, &parentKey);
+    if (ret != ERROR_SUCCESS)
+        return ret;
+
+    ret = pSHDeleteKeyA( parentKey, keyname );
+    RegCloseKey(parentKey);
+
+    return ret;
+}
+
+static void test_SHGetValue(void)
+{
+    DWORD size;
+    DWORD type;
+    DWORD ret;
+    char buf[MAX_PATH];
+
+    HKEY hkey = create_test_entries();
+
+    strcpy(buf, initial_buffer);
+    size = MAX_PATH;
+    type = -1;
+    ret = pSHGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", &type, buf, &size);
+    ok(!ret, "Failed to get value, ret %u.\n", ret);
+
+    ok(!strcmp(test_exp_path1, buf), "Unexpected value %s.\n", buf);
+    ok(type == REG_SZ, "Unexpected value type %d.\n", type);
+
+    strcpy(buf, initial_buffer);
+    size = MAX_PATH;
+    type = -1;
+    ret = pSHGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test2", &type, buf, &size);
+    ok(!ret, "Failed to get value, ret %u.\n", ret);
+    ok(!strcmp(test_path1, buf), "Unexpected value %s.\n", buf);
+    ok(type == REG_SZ, "Unexpected value type %d.\n", type);
+
+    delete_key(hkey, "Software\\Wine", "Test");
+}
+
+static void test_SHRegGetValue(void)
+{
+    LSTATUS ret;
+    DWORD size, type;
+    char data[MAX_PATH];
+
+    HKEY hkey = create_test_entries();
+
+    size = MAX_PATH;
+    ret = pSHRegGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", SRRF_RT_REG_EXPAND_SZ, &type, data, &size);
+    ok(ret == ERROR_INVALID_PARAMETER, "SHRegGetValue failed, ret=%u\n", ret);
+
+    size = MAX_PATH;
+    ret = pSHRegGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", SRRF_RT_REG_SZ, &type, data, &size);
+    ok(ret == ERROR_SUCCESS, "SHRegGetValue failed, ret=%u\n", ret);
+    ok(!strcmp(data, test_exp_path1), "data = %s, expected %s\n", data, test_exp_path1);
+    ok(type == REG_SZ, "type = %d, expected REG_SZ\n", type);
+
+    size = MAX_PATH;
+    ret = pSHRegGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", SRRF_RT_REG_DWORD, &type, data, &size);
+    ok(ret == ERROR_UNSUPPORTED_TYPE, "SHRegGetValue failed, ret=%u\n", ret);
+
+    size = MAX_PATH;
+    ret = pSHRegGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test2", SRRF_RT_REG_EXPAND_SZ, &type, data, &size);
+    ok(ret == ERROR_INVALID_PARAMETER, "SHRegGetValue failed, ret=%u\n", ret);
+
+    size = MAX_PATH;
+    ret = pSHRegGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test2", SRRF_RT_REG_SZ, &type, data, &size);
+    ok(ret == ERROR_SUCCESS, "SHRegGetValue failed, ret=%u\n", ret);
+    ok(!strcmp(data, test_path1), "data = %s, expected %s\n", data, test_path1);
+    ok(type == REG_SZ, "type = %d, expected REG_SZ\n", type);
+
+    size = MAX_PATH;
+    ret = pSHRegGetValueA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test2", SRRF_RT_REG_QWORD, &type, data, &size);
+    ok(ret == ERROR_UNSUPPORTED_TYPE, "SHRegGetValue failed, ret=%u\n", ret);
+
+    delete_key(hkey, "Software\\Wine", "Test");
+}
+
+static void test_SHQueryValueEx(void)
+{
+    DWORD buffer_len1,buffer_len2;
+    DWORD ret, type, size;
+    char buf[MAX_PATH];
+    HKEY hKey, testkey;
+
+    testkey = create_test_entries();
+
+    ret = RegOpenKeyExA(HKEY_CURRENT_USER, REG_TEST_KEY, 0,  KEY_QUERY_VALUE, &hKey);
+    ok(!ret, "Failed to open a key, ret %u.\n", ret);
+
+    /****** SHQueryValueExA ******/
+
+    buffer_len1 = max(strlen(test_exp_path1)+1, strlen(test_path1)+1);
+    buffer_len2 = max(strlen(test_exp_path2)+1, strlen(test_path2)+1);
+
+    /*
+     * Case 1.1 All arguments are NULL
+     */
+    ret = pSHQueryValueExA( hKey, "Test1", NULL, NULL, NULL, NULL);
+    ok(!ret, "Failed to query value, ret %u.\n", ret);
+
+    /*
+     * Case 1.2 dwType is set
+     */
+    type = -1;
+    ret = pSHQueryValueExA( hKey, "Test1", NULL, &type, NULL, NULL);
+    ok(!ret, "Failed to query value, ret %u.\n", ret);
+    ok(type == REG_SZ, "Expected REG_SZ, got (%u)\n", type);
+
+    size = 6;
+    ret = pSHQueryValueExA( hKey, "Test1", NULL, NULL, NULL, &size);
+    ok(!ret, "Failed to query value, ret %u.\n", ret);
+    ok(size == buffer_len1, "Buffer sizes (%u) and (%u) are not equal\n", size, buffer_len1);
+
+    /*
+     * Expanded > unexpanded
+     */
+    size = 6;
+    ret = pSHQueryValueExA( hKey, "Test3", NULL, NULL, NULL, &size);
+    ok(!ret, "Failed to query value, ret %u.\n", ret);
+    ok(size >= buffer_len2, "Buffer size (%u) should be >= (%u)\n", size, buffer_len2);
+
+    /*
+     * Case 1 string shrinks during expanding
+     */
+    strcpy(buf, initial_buffer);
+    size = 6;
+    type = -1;
+    ret = pSHQueryValueExA( hKey, "Test1", NULL, &type, buf, &size);
+    ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got (%u)\n", ret);
+    ok(!strcmp(initial_buffer, buf), "Comparing (%s) with (%s) failed\n", buf, initial_buffer);
+    ok(size == buffer_len1, "Buffer sizes (%u) and (%u) are not equal\n", size, buffer_len1);
+    ok(type == REG_SZ, "Expected REG_SZ, got (%u)\n", type);
+
+    /*
+    * string grows during expanding
+    * dwSize is smaller than the size of the unexpanded string
+    */
+    strcpy(buf, initial_buffer);
+    size = 6;
+    type = -1;
+    ret = pSHQueryValueExA( hKey, "Test3", NULL, &type, buf, &size);
+    ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got (%u)\n", ret);
+    ok(!strcmp(initial_buffer, buf), "Comparing (%s) with (%s) failed\n", buf, initial_buffer);
+    ok(size >= buffer_len2, "Buffer size (%u) should be >= (%u)\n", size, buffer_len2);
+    ok(type == REG_SZ, "Expected REG_SZ, got (%u)\n", type);
+
+    /*
+    * string grows during expanding
+    * dwSize is larger than the size of the unexpanded string, but
+    * smaller than the part before the backslash. If the unexpanded
+    * string fits into the buffer, it can get cut when expanded.
+    */
+    strcpy(buf, initial_buffer);
+    size = strlen(test_envvar2) - 2;
+    type = -1;
+    ret = pSHQueryValueExA(hKey, "Test3", NULL, &type, buf, &size);
+    ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got (%u)\n", ret);
+
+    todo_wine
+    {
+    ok(!strcmp("", buf), "Unexpanded string %s.\n", buf);
+    }
+
+    ok(size >= buffer_len2, "Buffer size (%u) should be >= (%u)\n", size, buffer_len2);
+    ok(type == REG_SZ, "Expected REG_SZ, got (%u)\n", type);
+
+    /*
+    * string grows during expanding
+    * dwSize is larger than the size of the part before the backslash,
+    * but smaller than the expanded string. If the unexpanded string fits
+    * into the buffer, it can get cut when expanded.
+    */
+    strcpy(buf, initial_buffer);
+    size = exp_len2 - 4;
+    type = -1;
+    ret = pSHQueryValueExA( hKey, "Test3", NULL, &type, buf, &size);
+    ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got (%u)\n", ret);
+
+    todo_wine
+    {
+    ok( (0 == strcmp("", buf)) || (0 == strcmp(test_envvar2, buf)),
+    "Expected empty or first part of the string \"%s\", got \"%s\"\n", test_envvar2, buf);
+    }
+
+    ok(size >= buffer_len2, "Buffer size (%u) should be >= (%u)\n", size, buffer_len2);
+    ok(type == REG_SZ, "Expected REG_SZ, got (%u)\n", type);
+
+    /*
+    * The buffer is NULL but the size is set
+    */
+    strcpy(buf, initial_buffer);
+    size = 6;
+    type = -1;
+    ret = pSHQueryValueExA( hKey, "Test3", NULL, &type, NULL, &size);
+    ok(!ret, "Failed to query value, ret %u.\n", ret);
+    ok(size >= buffer_len2, "Buffer size (%u) should be >= (%u)\n", size, buffer_len2);
+    ok(type == REG_SZ, "Expected REG_SZ, got (%u)\n", type);
+
+    RegCloseKey(hKey);
+
+    delete_key(testkey, "Software\\Wine", "Test");
+}
+
+static void test_SHRegGetPath(void)
+{
+    char buf[MAX_PATH];
+    DWORD ret;
+    HKEY hkey;
+
+    hkey = create_test_entries();
+
+    strcpy(buf, initial_buffer);
+    ret = pSHRegGetPathA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", buf, 0);
+    ok(!ret, "Failed to get path, ret %u.\n", ret);
+    ok(!strcmp(test_exp_path1, buf), "Unexpected path %s.\n", buf);
+
+    delete_key(hkey, "Software\\Wine", "Test");
+}
+
+static void test_SHCopyKey(void)
+{
+    HKEY hKeySrc, hKeyDst;
+    DWORD ret;
+
+    HKEY hkey = create_test_entries();
+
+    /* Delete existing destination sub keys */
+    hKeyDst = NULL;
+    if (!RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst) && hKeyDst)
+    {
+        pSHDeleteKeyA(hKeyDst, NULL);
+        RegCloseKey(hKeyDst);
+    }
+
+    hKeyDst = NULL;
+    ret = RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst);
+    ok(!ret, "Failed to create a test key, ret %d.\n", ret);
+
+    hKeySrc = NULL;
+    ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, REG_CURRENT_VERSION, &hKeySrc);
+    ok(!ret, "Failed to open a test key, ret %d.\n", ret);
+
+    ret = pSHCopyKeyA(hKeySrc, NULL, hKeyDst, 0);
+    ok(!ret, "Copy failed, ret=(%u)\n", ret);
+
+    RegCloseKey(hKeySrc);
+    RegCloseKey(hKeyDst);
+
+    /* Check we copied the sub keys, i.e. something that's on every windows system (including Wine) */
+    hKeyDst = NULL;
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination\\Shell Folders", &hKeyDst);
+    ok(!ret, "Failed to open a test key, ret %d.\n", ret);
+
+    /* And the we copied the values too */
+    ok(!pSHQueryValueExA(hKeyDst, "Common AppData", NULL, NULL, NULL, NULL), "SHQueryValueExA failed\n");
+
+    RegCloseKey(hKeyDst);
+    delete_key( hkey, "Software\\Wine", "Test" );
+}
+
 START_TEST(shcore)
 {
     HMODULE hshcore = LoadLibraryA("shcore.dll");
@@ -362,4 +690,9 @@ START_TEST(shcore)
     test_SHUnicodeToUnicode();
     test_SHRegDuplicateHKey();
     test_SHDeleteKey();
+    test_SHGetValue();
+    test_SHRegGetValue();
+    test_SHQueryValueEx();
+    test_SHRegGetPath();
+    test_SHCopyKey();
 }

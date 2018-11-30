@@ -31,8 +31,8 @@
 @ stub RevokeScaleChangeNotifications
 @ stdcall SHAnsiToAnsi(str ptr long)
 @ stdcall SHAnsiToUnicode(str ptr long)
-@ stdcall SHCopyKeyA(long str long long) shlwapi.SHCopyKeyA
-@ stdcall SHCopyKeyW(long wstr long long) shlwapi.SHCopyKeyW
+@ stdcall SHCopyKeyA(long str long long)
+@ stdcall SHCopyKeyW(long wstr long long)
 @ stdcall SHCreateMemStream(ptr long)
 @ stdcall SHCreateStreamOnFileA(str long ptr)
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr)
@@ -46,33 +46,33 @@
 @ stdcall SHDeleteKeyW(long wstr)
 @ stdcall SHDeleteValueA(long str str)
 @ stdcall SHDeleteValueW(long wstr wstr)
-@ stdcall SHEnumKeyExA(long long str ptr) shlwapi.SHEnumKeyExA
-@ stdcall SHEnumKeyExW(long long wstr ptr) shlwapi.SHEnumKeyExW
-@ stdcall SHEnumValueA(long long str ptr ptr ptr ptr) shlwapi.SHEnumValueA
-@ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr) shlwapi.SHEnumValueW
+@ stdcall SHEnumKeyExA(long long str ptr)
+@ stdcall SHEnumKeyExW(long long wstr ptr)
+@ stdcall SHEnumValueA(long long str ptr ptr ptr ptr)
+@ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr)
 @ stdcall SHGetThreadRef(ptr)
-@ stdcall SHGetValueA( long str str ptr ptr ptr ) shlwapi.SHGetValueA
-@ stdcall SHGetValueW( long wstr wstr ptr ptr ptr ) shlwapi.SHGetValueW
+@ stdcall SHGetValueA(long str str ptr ptr ptr)
+@ stdcall SHGetValueW(long wstr wstr ptr ptr ptr)
 @ stdcall SHOpenRegStream2A(long str str long)
 @ stdcall SHOpenRegStream2W(long wstr wstr long)
 @ stdcall SHOpenRegStreamA(long str str long)
 @ stdcall SHOpenRegStreamW(long wstr wstr long)
-@ stdcall SHQueryInfoKeyA(long ptr ptr ptr ptr) shlwapi.SHQueryInfoKeyA
-@ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr) shlwapi.SHQueryInfoKeyW
-@ stdcall SHQueryValueExA(long str ptr ptr ptr ptr) shlwapi.SHQueryValueExA
-@ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr) shlwapi.SHQueryValueExW
+@ stdcall SHQueryInfoKeyA(long ptr ptr ptr ptr)
+@ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr)
+@ stdcall SHQueryValueExA(long str ptr ptr ptr ptr)
+@ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr)
 @ stdcall SHRegDuplicateHKey(long)
-@ stdcall SHRegGetIntW(ptr wstr long) shlwapi.SHRegGetIntW
-@ stdcall SHRegGetPathA(long str str ptr long) shlwapi.SHRegGetPathA
-@ stdcall SHRegGetPathW(long wstr wstr ptr long) shlwapi.SHRegGetPathW
-@ stdcall SHRegGetValueA( long str str long ptr ptr ptr ) shlwapi.SHRegGetValueA
-@ stdcall SHRegGetValueW( long wstr wstr long ptr ptr ptr ) shlwapi.SHRegGetValueW
-@ stdcall SHRegSetPathA(long str str str long) shlwapi.SHRegSetPathA
-@ stdcall SHRegSetPathW(long wstr wstr wstr long) shlwapi.SHRegSetPathW
+@ stdcall SHRegGetIntW(ptr wstr long)
+@ stdcall SHRegGetPathA(long str str ptr long)
+@ stdcall SHRegGetPathW(long wstr wstr ptr long)
+@ stdcall SHRegGetValueA(long str str long ptr ptr ptr) advapi32.RegGetValueA
+@ stdcall SHRegGetValueW(long wstr wstr long ptr ptr ptr) advapi32.RegGetValueW
+@ stdcall SHRegSetPathA(long str str str long)
+@ stdcall SHRegSetPathW(long wstr wstr wstr long)
 @ stdcall SHReleaseThreadRef()
 @ stdcall SHSetThreadRef(ptr)
-@ stdcall SHSetValueA(long  str  str long ptr long) shlwapi.SHSetValueA
-@ stdcall SHSetValueW(long wstr wstr long ptr long) shlwapi.SHSetValueW
+@ stdcall SHSetValueA(long str str long ptr long)
+@ stdcall SHSetValueW(long wstr wstr long ptr long)
 @ stdcall SHStrDupA(str ptr)
 @ stdcall SHStrDupW(wstr ptr)
 @ stdcall SHUnicodeToAnsi(wstr ptr ptr)

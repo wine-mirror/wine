@@ -1873,3 +1873,445 @@ DWORD WINAPI SHDeleteValueA(HKEY hkey, const char *subkey, const char *value)
     CoTaskMemFree(valueW);
     return ret;
 }
+
+/*************************************************************************
+ * SHCopyKeyA        [SHCORE.@]
+ */
+DWORD WINAPI SHCopyKeyA(HKEY hkey_src, const char *subkey, HKEY hkey_dst, DWORD reserved)
+{
+    WCHAR *subkeyW = NULL;
+    DWORD ret;
+
+    TRACE("(%p, %s, %p, %d)\n", hkey_src, debugstr_a(subkey), hkey_dst, reserved);
+
+    if (subkey && FAILED(SHStrDupA(subkey, &subkeyW)))
+        return 0;
+
+    ret = SHCopyKeyW(hkey_src, subkeyW, hkey_dst, reserved);
+    CoTaskMemFree(subkeyW);
+    return ret;
+}
+
+/*************************************************************************
+ * SHCopyKeyW        [SHCORE.@]
+ */
+DWORD WINAPI SHCopyKeyW(HKEY hkey_src, const WCHAR *subkey, HKEY hkey_dst, DWORD reserved)
+{
+    DWORD key_count = 0, value_count = 0, max_key_len = 0;
+    WCHAR name[MAX_PATH], *ptr_name = name;
+    BYTE buff[1024], *ptr = buff;
+    DWORD max_data_len = 0, i;
+    DWORD ret = 0;
+
+    TRACE("(%p, %s, %p, %d)\n", hkey_src, debugstr_w(subkey), hkey_dst, reserved);
+
+    if (!hkey_dst || !hkey_src)
+        return ERROR_INVALID_PARAMETER;
+
+    if (subkey)
+        ret = RegOpenKeyExW(hkey_src, subkey, 0, KEY_ALL_ACCESS, &hkey_src);
+
+    if (ret)
+        hkey_src = NULL; /* Don't close this key since we didn't open it */
+    else
+    {
+        DWORD max_value_len;
+
+        ret = RegQueryInfoKeyW(hkey_src, NULL, NULL, NULL, &key_count, &max_key_len,
+                NULL, &value_count, &max_value_len, &max_data_len, NULL, NULL);
+        if (!ret)
+        {
+            /* Get max size for key/value names */
+            max_key_len = max(max_key_len, max_value_len);
+
+            if (max_key_len++ > MAX_PATH - 1)
+                ptr_name = heap_alloc(max_key_len * sizeof(WCHAR));
+
+            if (max_data_len > sizeof(buff))
+                ptr = heap_alloc(max_data_len);
+
+            if (!ptr_name || !ptr)
+                ret = ERROR_NOT_ENOUGH_MEMORY;
+        }
+    }
+
+    for (i = 0; i < key_count && !ret; i++)
+    {
+        HKEY hsubkey_src, hsubkey_dst;
+        DWORD length = max_key_len;
+
+        ret = RegEnumKeyExW(hkey_src, i, ptr_name, &length, NULL, NULL, NULL, NULL);
+        if (!ret)
+        {
+            ret = RegOpenKeyExW(hkey_src, ptr_name, 0, KEY_READ, &hsubkey_src);
+            if (!ret)
+            {
+                /* Create destination sub key */
+                ret = RegCreateKeyW(hkey_dst, ptr_name, &hsubkey_dst);
+                if (!ret)
+                {
+                    /* Recursively copy keys and values from the sub key */
+                    ret = SHCopyKeyW(hsubkey_src, NULL, hsubkey_dst, 0);
+                    RegCloseKey(hsubkey_dst);
+                }
+            }
+            RegCloseKey(hsubkey_src);
+        }
+    }
+
+    /* Copy all the values in this key */
+    for (i = 0; i < value_count && !ret; i++)
+    {
+        DWORD length = max_key_len, type, data_len = max_data_len;
+
+        ret = RegEnumValueW(hkey_src, i, ptr_name, &length, NULL, &type, ptr, &data_len);
+        if (!ret) {
+            ret = SHSetValueW(hkey_dst, NULL, ptr_name, type, ptr, data_len);
+        }
+    }
+
+    /* Free buffers if allocated */
+    if (ptr_name != name)
+        heap_free(ptr_name);
+    if (ptr != buff)
+        heap_free(ptr);
+
+    if (subkey && hkey_src)
+        RegCloseKey(hkey_src);
+
+    return ret;
+}
+
+
+/*************************************************************************
+ * SHEnumKeyExA        [SHCORE.@]
+ */
+LONG WINAPI SHEnumKeyExA(HKEY hkey, DWORD index, char *subkey, DWORD *length)
+{
+    TRACE("(%p, %d, %s, %p)\n", hkey, index, debugstr_a(subkey), length);
+
+    return RegEnumKeyExA(hkey, index, subkey, length, NULL, NULL, NULL, NULL);
+}
+
+/*************************************************************************
+ * SHEnumKeyExW        [SHCORE.@]
+ */
+LONG WINAPI SHEnumKeyExW(HKEY hkey, DWORD index, WCHAR *subkey, DWORD *length)
+{
+    TRACE("(%p, %d, %s, %p)\n", hkey, index, debugstr_w(subkey), length);
+
+    return RegEnumKeyExW(hkey, index, subkey, length, NULL, NULL, NULL, NULL);
+}
+
+/*************************************************************************
+ * SHEnumValueA        [SHCORE.@]
+ */
+LONG WINAPI SHEnumValueA(HKEY hkey, DWORD index, char *value, DWORD *length, DWORD *type,
+        void *data, DWORD *data_len)
+{
+    TRACE("(%p, %d, %s, %p, %p, %p, %p)\n", hkey, index, debugstr_a(value), length, type, data, data_len);
+
+    return RegEnumValueA(hkey, index, value, length, NULL, type, data, data_len);
+}
+
+/*************************************************************************
+ * SHEnumValueW        [SHCORE.@]
+ */
+LONG WINAPI SHEnumValueW(HKEY hkey, DWORD index, WCHAR *value, DWORD *length, DWORD *type,
+        void *data, DWORD *data_len)
+{
+    TRACE("(%p, %d, %s, %p, %p, %p, %p)\n", hkey, index, debugstr_w(value), length, type, data, data_len);
+
+    return RegEnumValueW(hkey, index, value, length, NULL, type, data, data_len);
+}
+
+/*************************************************************************
+ * SHQueryValueExW    [SHCORE.@]
+ */
+DWORD WINAPI SHQueryValueExW(HKEY hkey, const WCHAR *name, DWORD *reserved, DWORD *type,
+        void *buff, DWORD *buff_len)
+{
+    DWORD ret, value_type, data_len = 0;
+
+    TRACE("(%p, %s, %p, %p, %p, %p)\n", hkey, debugstr_w(name), reserved, type, buff, buff_len);
+
+    if (buff_len)
+        data_len = *buff_len;
+
+    ret = RegQueryValueExW(hkey, name, reserved, &value_type, buff, &data_len);
+    if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)
+        return ret;
+
+    if (buff_len && value_type == REG_EXPAND_SZ)
+    {
+        DWORD length;
+        WCHAR *value;
+
+        if (!buff || ret == ERROR_MORE_DATA)
+        {
+            length = data_len;
+            value = heap_alloc(length);
+            RegQueryValueExW(hkey, name, reserved, NULL, (BYTE *)value, &length);
+            length = ExpandEnvironmentStringsW(value, NULL, 0);
+        }
+        else
+        {
+            length = (strlenW(buff) + 1) * sizeof(WCHAR);
+            value = heap_alloc(length);
+            memcpy(value, buff, length);
+            length = ExpandEnvironmentStringsW(value, buff, *buff_len / sizeof(WCHAR));
+            if (length > *buff_len) ret = ERROR_MORE_DATA;
+        }
+        data_len = max(data_len, length);
+        heap_free(value);
+    }
+
+    if (type)
+        *type = value_type == REG_EXPAND_SZ ? REG_SZ : value_type;
+    if (buff_len)
+        *buff_len = data_len;
+    return ret;
+}
+
+/*************************************************************************
+ * SHQueryValueExA    [SHCORE.@]
+ */
+DWORD WINAPI SHQueryValueExA(HKEY hkey, const char *name, DWORD *reserved, DWORD *type,
+        void *buff, DWORD *buff_len)
+{
+    DWORD ret, value_type, data_len = 0;
+
+    TRACE("(%p, %s, %p, %p, %p, %p)\n", hkey, debugstr_a(name), reserved, type, buff, buff_len);
+
+    if (buff_len)
+        data_len = *buff_len;
+
+    ret = RegQueryValueExA(hkey, name, reserved, &value_type, buff, &data_len);
+    if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)
+        return ret;
+
+    if (buff_len && value_type == REG_EXPAND_SZ)
+    {
+        DWORD length;
+        char *value;
+
+        if (!buff || ret == ERROR_MORE_DATA)
+        {
+            length = data_len;
+            value = heap_alloc(length);
+            RegQueryValueExA(hkey, name, reserved, NULL, (BYTE *)value, &length);
+            length = ExpandEnvironmentStringsA(value, NULL, 0);
+        }
+        else
+        {
+            length = strlen(buff) + 1;
+            value = heap_alloc(length);
+            memcpy(value, buff, length);
+            length = ExpandEnvironmentStringsA(value, buff, *buff_len);
+            if (length > *buff_len) ret = ERROR_MORE_DATA;
+        }
+        data_len = max(data_len, length);
+        heap_free(value);
+    }
+
+    if (type)
+        *type = value_type == REG_EXPAND_SZ ? REG_SZ : value_type;
+    if (buff_len)
+        *buff_len = data_len;
+    return ret;
+}
+
+/*************************************************************************
+ * SHGetValueA        [SHCORE.@]
+ */
+DWORD WINAPI SHGetValueA(HKEY hkey, const char *subkey, const char *value,
+       DWORD *type, void *data, DWORD *data_len)
+{
+    HKEY hsubkey = 0;
+    DWORD ret = 0;
+
+    TRACE("(%p, %s, %s, %p, %p, %p)\n", hkey, debugstr_a(subkey), debugstr_a(value),
+            type, data, data_len);
+
+    if (subkey)
+        ret = RegOpenKeyExA(hkey, subkey, 0, KEY_QUERY_VALUE, &hsubkey);
+
+    if (!ret)
+    {
+        ret = SHQueryValueExA(hsubkey ? hsubkey : hkey, value, 0, type, data, data_len);
+        if (subkey)
+            RegCloseKey(hsubkey);
+    }
+
+    return ret;
+}
+
+/*************************************************************************
+ * SHGetValueW        [SHCORE.@]
+ */
+DWORD WINAPI SHGetValueW(HKEY hkey, const WCHAR *subkey, const WCHAR *value,
+        DWORD *type, void *data, DWORD *data_len)
+{
+    HKEY hsubkey = 0;
+    DWORD ret = 0;
+
+    TRACE("(%p, %s, %s, %p, %p, %p)\n", hkey, debugstr_w(subkey), debugstr_w(value),
+            type, data, data_len);
+
+    if (subkey)
+        ret = RegOpenKeyExW(hkey, subkey, 0, KEY_QUERY_VALUE, &hsubkey);
+
+    if (!ret)
+    {
+        ret = SHQueryValueExW(hsubkey ? hsubkey : hkey, value, 0, type, data, data_len);
+        if (subkey)
+            RegCloseKey(hsubkey);
+    }
+
+    return ret;
+}
+
+/*************************************************************************
+ * SHRegGetIntW        [SHCORE.280]
+ */
+int WINAPI SHRegGetIntW(HKEY hkey, const WCHAR *value, int default_value)
+{
+    WCHAR buff[32];
+    DWORD buff_len;
+
+    TRACE("(%p, %s, %d)\n", hkey, debugstr_w(value), default_value);
+
+    buff[0] = 0;
+    buff_len = sizeof(buff);
+    if (SHQueryValueExW(hkey, value, 0, 0, buff, &buff_len))
+        return default_value;
+
+    if (*buff >= '0' && *buff <= '9')
+        return atoiW(buff);
+
+    return default_value;
+}
+
+/*************************************************************************
+ * SHRegGetPathA        [SHCORE.@]
+ */
+DWORD WINAPI SHRegGetPathA(HKEY hkey, const char *subkey, const char *value, char *path, DWORD flags)
+{
+    DWORD length = MAX_PATH;
+
+    TRACE("(%p, %s, %s, %p, %#x)\n", hkey, debugstr_a(subkey), debugstr_a(value), path, flags);
+
+    return SHGetValueA(hkey, subkey, value, 0, path, &length);
+}
+
+/*************************************************************************
+ * SHRegGetPathW        [SHCORE.@]
+ */
+DWORD WINAPI SHRegGetPathW(HKEY hkey, const WCHAR *subkey, const WCHAR *value, WCHAR *path, DWORD flags)
+{
+    DWORD length = MAX_PATH;
+
+    TRACE("(%p, %s, %s, %p, %d)\n", hkey, debugstr_w(subkey), debugstr_w(value), path, flags);
+
+    return SHGetValueW(hkey, subkey, value, 0, path, &length);
+}
+
+/*************************************************************************
+ * SHSetValueW       [SHCORE.@]
+ */
+DWORD WINAPI SHSetValueW(HKEY hkey, const WCHAR *subkey, const WCHAR *value, DWORD type,
+        const void *data, DWORD data_len)
+{
+    DWORD ret = ERROR_SUCCESS, dummy;
+    HKEY hsubkey;
+
+    TRACE("(%p, %s, %s, %d, %p, %d)\n", hkey, debugstr_w(subkey), debugstr_w(value),
+            type, data, data_len);
+
+    if (subkey && *subkey)
+        ret = RegCreateKeyExW(hkey, subkey, 0, NULL, 0, KEY_SET_VALUE, NULL, &hsubkey, &dummy);
+    else
+        hsubkey = hkey;
+
+    if (!ret)
+    {
+        ret = RegSetValueExW(hsubkey, value, 0, type, data, data_len);
+        if (hsubkey != hkey)
+            RegCloseKey(hsubkey);
+    }
+
+    return ret;
+}
+
+/*************************************************************************
+ * SHSetValueA        [SHCORE.@]
+ */
+DWORD WINAPI SHSetValueA(HKEY hkey, const char *subkey, const char *value,
+        DWORD type, const void *data, DWORD data_len)
+{
+    DWORD ret = ERROR_SUCCESS, dummy;
+    HKEY hsubkey;
+
+    TRACE("(%p, %s, %s, %d, %p, %d)\n", hkey, debugstr_a(subkey), debugstr_a(value),
+            type, data, data_len);
+
+    if (subkey && *subkey)
+        ret = RegCreateKeyExA(hkey, subkey, 0, NULL, 0, KEY_SET_VALUE, NULL, &hsubkey, &dummy);
+    else
+        hsubkey = hkey;
+
+    if (!ret)
+    {
+        ret = RegSetValueExA(hsubkey, value, 0, type, data, data_len);
+        if (hsubkey != hkey)
+            RegCloseKey(hsubkey);
+    }
+
+    return ret;
+}
+
+/*************************************************************************
+ * SHRegSetPathA       [SHCORE.@]
+ */
+DWORD WINAPI SHRegSetPathA(HKEY hkey, const char *subkey, const char *value, const char *path, DWORD flags)
+{
+    FIXME("(%p, %s, %s, %p, %#x) - semi-stub\n", hkey, debugstr_a(subkey),
+            debugstr_a(value), debugstr_a(path), flags);
+
+    /* FIXME: PathUnExpandEnvStringsA() */
+
+    return SHSetValueA(hkey, subkey, value, REG_SZ, path, lstrlenA(path));
+}
+
+/*************************************************************************
+ * SHRegSetPathW       [SHCORE.@]
+ */
+DWORD WINAPI SHRegSetPathW(HKEY hkey, const WCHAR *subkey, const WCHAR *value, const WCHAR *path, DWORD flags)
+{
+    FIXME("(%p, %s, %s, %s, %#x) - semi-stub\n", hkey, debugstr_w(subkey),
+            debugstr_w(value), debugstr_w(path), flags);
+
+    /* FIXME: PathUnExpandEnvStringsW(); */
+
+    return SHSetValueW(hkey, subkey, value, REG_SZ, path, lstrlenW(path));
+}
+
+/*************************************************************************
+ * SHQueryInfoKeyA       [SHCORE.@]
+ */
+LONG WINAPI SHQueryInfoKeyA(HKEY hkey, DWORD *subkeys, DWORD *subkey_max, DWORD *values, DWORD *value_max)
+{
+    TRACE("(%p, %p, %p, %p, %p)\n", hkey, subkeys, subkey_max, values, value_max);
+
+    return RegQueryInfoKeyA(hkey, NULL, NULL, NULL, subkeys, subkey_max, NULL, values, value_max, NULL, NULL, NULL);
+}
+
+/*************************************************************************
+ * SHQueryInfoKeyW       [SHCORE.@]
+ */
+LONG WINAPI SHQueryInfoKeyW(HKEY hkey, DWORD *subkeys, DWORD *subkey_max, DWORD *values, DWORD *value_max)
+{
+    TRACE("(%p, %p, %p, %p, %p)\n", hkey, subkeys, subkey_max, values, value_max);
+
+    return RegQueryInfoKeyW(hkey, NULL, NULL, NULL, subkeys, subkey_max, NULL, values, value_max, NULL, NULL, NULL);
+}
