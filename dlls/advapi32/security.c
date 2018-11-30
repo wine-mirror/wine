@@ -440,10 +440,10 @@ static inline DWORD get_security_service( LPWSTR full_service_name, DWORD access
 /* helper function for SE_REGISTRY_KEY objects in [Get|Set]NamedSecurityInfo */
 static inline DWORD get_security_regkey( LPWSTR full_key_name, DWORD access, HANDLE *key )
 {
-    WCHAR classes_rootW[] = {'C','L','A','S','S','E','S','_','R','O','O','T',0};
-    WCHAR current_userW[] = {'C','U','R','R','E','N','T','_','U','S','E','R',0};
-    WCHAR machineW[] = {'M','A','C','H','I','N','E',0};
-    WCHAR usersW[] = {'U','S','E','R','S',0};
+    static const WCHAR classes_rootW[] = {'C','L','A','S','S','E','S','_','R','O','O','T',0};
+    static const WCHAR current_userW[] = {'C','U','R','R','E','N','T','_','U','S','E','R',0};
+    static const WCHAR machineW[] = {'M','A','C','H','I','N','E',0};
+    static const WCHAR usersW[] = {'U','S','E','R','S',0};
     LPWSTR p = strchrW(full_key_name, '\\');
     int len = p-full_key_name;
     HKEY hParent;
@@ -4997,9 +4997,9 @@ static void DumpString(LPCWSTR string, int cch, WCHAR **pwptr, ULONG *plen)
 
 static BOOL DumpSidNumeric(PSID psid, WCHAR **pwptr, ULONG *plen)
 {
+    static const WCHAR fmt[] = { 'S','-','%','u','-','%','d',0 };
+    static const WCHAR subauthfmt[] = { '-','%','u',0 };
     DWORD i;
-    WCHAR fmt[] = { 'S','-','%','u','-','%','d',0 };
-    WCHAR subauthfmt[] = { '-','%','u',0 };
     WCHAR buf[26];
     SID *pisid = psid;
 
