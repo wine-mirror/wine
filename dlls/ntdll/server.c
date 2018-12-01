@@ -349,7 +349,7 @@ void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sig
  *
  * Wait for a reply on the waiting pipe of the current thread.
  */
-static int wait_select_reply( void *cookie )
+int wait_select_reply( void *cookie )
 {
     int signaled;
     struct wake_up_reply reply;
@@ -386,7 +386,7 @@ static int wait_select_reply( void *cookie )
  *
  * Invoke a single APC. Return TRUE if a user APC has been run.
  */
-static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
+BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
 {
     BOOL user_apc = FALSE;
     SIZE_T size;
