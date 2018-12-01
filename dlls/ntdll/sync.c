@@ -1961,6 +1961,15 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     return status;
 }
 
+static RTL_CRITICAL_SECTION addr_section;
+static RTL_CRITICAL_SECTION_DEBUG addr_section_debug =
+{
+    0, 0, &addr_section,
+    { &addr_section_debug.ProcessLocksList, &addr_section_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": addr_section") }
+};
+static RTL_CRITICAL_SECTION addr_section = { &addr_section_debug, -1, 0, 0, 0, 0 };
+
 static BOOL compare_addr( const void *addr, const void *cmp, SIZE_T size )
 {
     switch (size)
@@ -2004,8 +2013,12 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
 
     for (;;)
     {
+        RtlEnterCriticalSection( &addr_section );
         if (!compare_addr( addr, cmp, size ))
+        {
+            RtlLeaveCriticalSection( &addr_section );
             return STATUS_SUCCESS;
+        }
 
         SERVER_START_REQ( select )
         {
@@ -2021,6 +2034,9 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
             call        = reply->call;
         }
         SERVER_END_REQ;
+
+        RtlLeaveCriticalSection( &addr_section );
+
         if (ret == STATUS_PENDING) ret = wait_select_reply( &cookie );
         if (ret != STATUS_USER_APC) break;
         if (invoke_apc( &call, &result ))
@@ -2043,7 +2059,9 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
  */
 void WINAPI RtlWakeAddressAll( const void *addr )
 {
+    RtlEnterCriticalSection( &addr_section );
     while (NtReleaseKeyedEvent( 0, addr, 0, &zero_timeout ) == STATUS_SUCCESS) {}
+    RtlLeaveCriticalSection( &addr_section );
 }
 
 /***********************************************************************
@@ -2051,5 +2069,7 @@ void WINAPI RtlWakeAddressAll( const void *addr )
  */
 void WINAPI RtlWakeAddressSingle( const void *addr )
 {
+    RtlEnterCriticalSection( &addr_section );
     NtReleaseKeyedEvent( 0, addr, 0, &zero_timeout );
+    RtlLeaveCriticalSection( &addr_section );
 }
