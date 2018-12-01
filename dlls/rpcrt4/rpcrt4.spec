@@ -519,9 +519,9 @@
 @ stub long_from_ndr
 @ stub long_from_ndr_temp
 @ stub pfnFreeRoutines # wxp
-@ stub pfnMarshallRouteines # wxp
+@ stub pfnMarshallRoutines # wxp
 @ stub pfnSizeRoutines # wxp
-@ stub pfnUnmarshallRouteines # wxp
+@ stub pfnUnmarshallRoutines # wxp
 @ stub short_array_from_ndr
 @ stub short_from_ndr
 @ stub short_from_ndr_temp
