@@ -8208,8 +8208,8 @@ end:
  */
 static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
 {
+    static const WCHAR fmtW[] = {'l','p','r',' ','-','P','\'','%','s','\'',0};
     WCHAR *cmd;
-    const WCHAR fmtW[] = {'l','p','r',' ','-','P','\'','%','s','\'',0};
     BOOL r;
 
     cmd = HeapAlloc(GetProcessHeap(), 0, strlenW(printer_name) * sizeof(WCHAR) + sizeof(fmtW));
