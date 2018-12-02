@@ -746,26 +746,24 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
          * the last leaf starting from the '#'. Otherwise the '#' is not
          * meaningful and just start looking from the end. */
         if ((work = strpbrkW(base.pszSuffix + sizeloc, fragquerystr))) {
-            const WCHAR htmlW[] = {'.','h','t','m','l',0};
-            const int len_htmlW = 5;
-            const WCHAR htmW[] = {'.','h','t','m',0};
-            const int len_htmW = 4;
+            static const WCHAR htmlW[] = {'.','h','t','m','l'};
+            static const WCHAR htmW[] = {'.','h','t','m'};
 
             if (*work == '?' || base.nScheme == URL_SCHEME_HTTP || base.nScheme == URL_SCHEME_HTTPS)
                 manual_search = TRUE;
-            else if (work - base.pszSuffix > len_htmW) {
-                work -= len_htmW;
-                if (strncmpiW(work, htmW, len_htmW) == 0)
+            else if (work - base.pszSuffix > ARRAY_SIZE(htmW)) {
+                work -= ARRAY_SIZE(htmW);
+                if (strncmpiW(work, htmW, ARRAY_SIZE(htmW)) == 0)
                     manual_search = TRUE;
-                work += len_htmW;
+                work += ARRAY_SIZE(htmW);
             }
 
             if (!manual_search &&
-                    work - base.pszSuffix > len_htmlW) {
-                work -= len_htmlW;
-                if (strncmpiW(work, htmlW, len_htmlW) == 0)
+                    work - base.pszSuffix > ARRAY_SIZE(htmlW)) {
+                work -= ARRAY_SIZE(htmlW);
+                if (strncmpiW(work, htmlW, ARRAY_SIZE(htmlW)) == 0)
                     manual_search = TRUE;
-                work += len_htmlW;
+                work += ARRAY_SIZE(htmlW);
             }
         }
 
@@ -1734,11 +1732,11 @@ static HRESULT URL_GuessScheme(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 
 static HRESULT URL_CreateFromPath(LPCWSTR pszPath, LPWSTR pszUrl, LPDWORD pcchUrl)
 {
+    static const WCHAR file_colonW[] = {'f','i','l','e',':',0};
+    static const WCHAR three_slashesW[] = {'/','/','/',0};
     DWORD needed;
     HRESULT ret = S_OK;
     WCHAR *pszNewUrl;
-    WCHAR file_colonW[] = {'f','i','l','e',':',0};
-    WCHAR three_slashesW[] = {'/','/','/',0};
     PARSEDURLW parsed_url;
 
     parsed_url.cbSize = sizeof(parsed_url);
