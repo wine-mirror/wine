@@ -1032,10 +1032,10 @@ static HRESULT register_pixelformats(struct regsvr_pixelformat const *list)
         if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 
         if (list->channelmasks) {
+            static const WCHAR valuename_format[] = {'%','d',0};
             HKEY masks_key;
             UINT i, mask_size;
             WCHAR mask_valuename[11];
-            const WCHAR valuename_format[] = {'%','d',0};
 
             mask_size = (list->bitsperpixel + 7)/8;
 
