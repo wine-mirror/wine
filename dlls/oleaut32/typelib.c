@@ -7217,7 +7217,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         break;
                     }
                 }
-                else if (src_arg)
+                else if (src_arg && !((wParamFlags & PARAMFLAG_FOPT) &&
+                         V_VT(src_arg) == VT_ERROR && V_ERROR(src_arg) == DISP_E_PARAMNOTFOUND))
                 {
                     TRACE("%s\n", debugstr_variant(src_arg));
 
