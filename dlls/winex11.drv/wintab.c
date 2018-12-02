@@ -487,7 +487,7 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
     static const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
     static const WCHAR SZ_DEVICE_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','D','e','v','i','c','e',0};
-    static const WCHAR SZ_NON_PLUGINPLAY[] = {'n','o','n','-','p','l','u','g','i','n','p','l','a','y',0};
+    static const WCHAR SZ_NON_PLUG_N_PLAY[] = {'n','o','n','-','p','l','u','g','-','n','-','p','l','a','y',0};
 
     struct x11drv_thread_data *data = x11drv_init_thread_data();
     int num_devices;
@@ -549,7 +549,7 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
     gSysDevice.PKTDATA =
         PK_CONTEXT | PK_STATUS | PK_SERIAL_NUMBER| PK_TIME | PK_CURSOR |
         PK_BUTTONS |  PK_X | PK_Y | PK_NORMAL_PRESSURE | PK_ORIENTATION;
-    strcpyW(gSysDevice.PNPID, SZ_NON_PLUGINPLAY);
+    strcpyW(gSysDevice.PNPID, SZ_NON_PLUG_N_PLAY);
 
     devices = pXListInputDevices(data->display, &num_devices);
     if (!devices)
