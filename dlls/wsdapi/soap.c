@@ -364,7 +364,7 @@ HRESULT register_namespaces(IWSDXMLContext *xml_context)
 
 static BOOL create_guid(LPWSTR buffer)
 {
-    const WCHAR formatString[] = { 'u','r','n',':','u','u','i','d',':','%','s', 0 };
+    static const WCHAR formatString[] = { 'u','r','n',':','u','u','i','d',':','%','s', 0 };
 
     WCHAR* uuidString = NULL;
     UUID uuid;
@@ -401,7 +401,7 @@ static void populate_soap_header(WSD_SOAP_HEADER *header, LPCWSTR to, LPCWSTR ac
 
 static LPWSTR ulonglong_to_string(void *parent, ULONGLONG value)
 {
-    WCHAR formatString[] = { '%','I','6','4','u', 0 };
+    static const WCHAR formatString[] = { '%','I','6','4','u', 0 };
     LPWSTR ret;
 
     ret = WSDAllocateLinkedMemory(parent, MAX_ULONGLONG_STRING_SIZE * sizeof(WCHAR));
@@ -560,7 +560,7 @@ static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *
 
 static HRESULT build_types_list(LPWSTR buffer, size_t buffer_size, const WSD_NAME_LIST *list, struct list *namespaces)
 {
-    WCHAR format_string[] = { '%', 's', ':', '%', 's', 0 };
+    static const WCHAR format_string[] = { '%', 's', ':', '%', 's', 0 };
     LPWSTR current_buf_pos = buffer;
     size_t memory_needed = 0;
     const WSD_NAME_LIST *cur = list;

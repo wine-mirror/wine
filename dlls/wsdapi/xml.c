@@ -380,7 +380,7 @@ static BOOL is_prefix_unique(struct list *namespaces, LPCWSTR prefix)
 
 static LPWSTR generate_namespace_prefix(IWSDXMLContextImpl *impl, void *parentMemoryBlock, LPCWSTR uri)
 {
-    WCHAR formatString[] = { 'u','n','%','d', 0 };
+    static const WCHAR formatString[] = { 'u','n','%','d', 0 };
     WCHAR suggestedPrefix[7];
 
     /* Find a unique prefix */
