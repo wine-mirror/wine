@@ -602,7 +602,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_Present1(IDXGISwapChain1 *iface
         UINT sync_interval, UINT flags, const DXGI_PRESENT_PARAMETERS *present_parameters)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
-    HRESULT hr;
 
     TRACE("iface %p, sync_interval %u, flags %#x, present_parameters %p.\n",
             iface, sync_interval, flags, present_parameters);
@@ -624,11 +623,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_Present1(IDXGISwapChain1 *iface
     if (present_parameters)
         FIXME("Ignored present parameters %p.\n", present_parameters);
 
-    wined3d_mutex_lock();
-    hr = wined3d_swapchain_present(swapchain->wined3d_swapchain, NULL, NULL, NULL, sync_interval, 0);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return wined3d_swapchain_present(swapchain->wined3d_swapchain, NULL, NULL, NULL, sync_interval, 0);
 }
 
 static BOOL STDMETHODCALLTYPE d3d11_swapchain_IsTemporaryMonoSupported(IDXGISwapChain1 *iface)

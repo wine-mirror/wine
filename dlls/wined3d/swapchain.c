@@ -164,9 +164,12 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
 
+    wined3d_mutex_lock();
+
     if (!swapchain->back_buffers)
     {
         WARN("Swapchain doesn't have a backbuffer, returning WINED3DERR_INVALIDCALL.\n");
+        wined3d_mutex_unlock();
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -185,6 +188,8 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
 
     wined3d_cs_emit_present(swapchain->device->cs, swapchain, src_rect,
             dst_rect, dst_window_override, swap_interval, flags);
+
+    wined3d_mutex_unlock();
 
     return WINED3D_OK;
 }
