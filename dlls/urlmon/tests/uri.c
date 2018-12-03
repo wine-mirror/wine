@@ -10529,7 +10529,7 @@ static void test_IUriBuilderFactory(void) {
                 ok(hr == S_OK, "Error: GetIUri return 0x%08x, expected 0x%08x.\n",
                     hr, S_OK);
                 ok(tmp == uri, "Error: Expected tmp to be %p, but was %p.\n", uri, tmp);
-                if(uri) IUri_Release(uri);
+                if(tmp) IUri_Release(tmp);
             }
             if(builder) IUriBuilder_Release(builder);
         }
