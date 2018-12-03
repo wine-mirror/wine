@@ -181,7 +181,7 @@
 181 stdcall -noname SHEnableMenuItem(long long long)
 182 stdcall -noname SHCheckMenuItem(long long long)
 183 stdcall -noname SHRegisterClassA(ptr)
-184 stdcall -ordinal IStream_Read(ptr ptr long) SHIStream_Read
+184 stdcall -ordinal IStream_Read(ptr ptr long) shcore.IStream_Read
 185 stdcall -ordinal SHMessageBoxCheckA(ptr str str long long str)
 186 stdcall -noname SHSimulateDrop(ptr ptr long ptr ptr)
 187 stdcall -noname SHLoadFromPropertyBag(ptr ptr)
@@ -209,9 +209,9 @@
 209 stdcall -noname FDSA_Destroy(ptr)
 210 stdcall -noname FDSA_InsertItem(ptr long ptr)
 211 stdcall -noname FDSA_DeleteItem(ptr long)
-212 stdcall -ordinal IStream_Write(ptr ptr long) SHIStream_Write
-213 stdcall -ordinal IStream_Reset(ptr)
-214 stdcall -ordinal IStream_Size(ptr ptr)
+212 stdcall -ordinal IStream_Write(ptr ptr long) shcore.IStream_Write
+213 stdcall -ordinal IStream_Reset(ptr) shcore.IStream_Reset
+214 stdcall -ordinal IStream_Size(ptr ptr) shcore.IStream_Size
 215 stdcall -ordinal SHAnsiToUnicode(str ptr long)
 216 stdcall -noname SHAnsiToUnicodeCP(long str ptr long)
 217 stdcall -ordinal SHUnicodeToAnsi(wstr ptr ptr)

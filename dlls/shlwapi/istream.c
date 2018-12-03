@@ -35,35 +35,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 /*************************************************************************
- * @       [SHLWAPI.184]
- *
- * Call IStream_Read() on a stream.
- *
- * PARAMS
- *  lpStream [I] IStream object
- *  lpvDest  [O] Destination for data read
- *  ulSize   [I] Size of data to read
- *
- * RETURNS
- *  Success: S_OK. ulSize bytes have been read from the stream into lpvDest.
- *  Failure: An HRESULT error code, or E_FAIL if the read succeeded but the
- *           number of bytes read does not match.
- */
-HRESULT WINAPI SHIStream_Read(IStream *lpStream, LPVOID lpvDest, ULONG ulSize)
-{
-  ULONG ulRead;
-  HRESULT hRet;
-
-  TRACE("(%p,%p,%u)\n", lpStream, lpvDest, ulSize);
-
-  hRet = IStream_Read(lpStream, lpvDest, ulSize, &ulRead);
-
-  if (SUCCEEDED(hRet) && ulRead != ulSize)
-    hRet = E_FAIL;
-  return hRet;
-}
-
-/*************************************************************************
  * @       [SHLWAPI.166]
  *
  * Determine if a stream has 0 length.
@@ -91,10 +62,10 @@ BOOL WINAPI SHIsEmptyStream(IStream *lpStream)
   }
   else
   {
-    DWORD dwDummy;
+    DWORD dummy, read_len;
 
     /* Try to read from the stream */
-    if(SUCCEEDED(SHIStream_Read(lpStream, &dwDummy, sizeof(dwDummy))))
+    if (SUCCEEDED(IStream_Read(lpStream, &dummy, sizeof(dummy), &read_len)) && read_len == sizeof(dummy))
     {
       LARGE_INTEGER zero;
       zero.QuadPart = 0;
@@ -104,83 +75,4 @@ BOOL WINAPI SHIsEmptyStream(IStream *lpStream)
     }
   }
   return bRet;
-}
-
-/*************************************************************************
- * @       [SHLWAPI.212]
- *
- * Call IStream_Write() on a stream.
- *
- * PARAMS
- *  lpStream [I] IStream object
- *  lpvSrc   [I] Source for data to write
- *  ulSize   [I] Size of data
- *
- * RETURNS
- *  Success: S_OK. ulSize bytes have been written to the stream from lpvSrc.
- *  Failure: An HRESULT error code, or E_FAIL if the write succeeded but the
- *           number of bytes written does not match.
- */
-HRESULT WINAPI SHIStream_Write(IStream *lpStream, LPCVOID lpvSrc, ULONG ulSize)
-{
-  ULONG ulWritten;
-  HRESULT hRet;
-
-  TRACE("(%p,%p,%d)\n", lpStream, lpvSrc, ulSize);
-
-  hRet = IStream_Write(lpStream, lpvSrc, ulSize, &ulWritten);
-
-  if (SUCCEEDED(hRet) && ulWritten != ulSize)
-    hRet = E_FAIL;
-
-  return hRet;
-}
-
-/*************************************************************************
- * @       [SHLWAPI.213]
- *
- * Seek to the start of a stream.
- *
- * PARAMS
- *  lpStream [I] IStream object
- *
- * RETURNS
- *  Success: S_OK. The current position within the stream is updated
- *  Failure: An HRESULT error code.
- */
-HRESULT WINAPI IStream_Reset(IStream *lpStream)
-{
-  LARGE_INTEGER zero;
-  TRACE("(%p)\n", lpStream);
-  zero.QuadPart = 0;
-  return IStream_Seek(lpStream, zero, 0, NULL);
-}
-
-/*************************************************************************
- * @       [SHLWAPI.214]
- *
- * Get the size of a stream.
- *
- * PARAMS
- *  lpStream [I] IStream object
- *  lpulSize [O] Destination for size
- *
- * RETURNS
- *  Success: S_OK. lpulSize contains the size of the stream.
- *  Failure: An HRESULT error code.
- */
-HRESULT WINAPI IStream_Size(IStream *lpStream, ULARGE_INTEGER* lpulSize)
-{
-  STATSTG statstg;
-  HRESULT hRet;
-
-  TRACE("(%p,%p)\n", lpStream, lpulSize);
-
-  memset(&statstg, 0, sizeof(statstg));
-
-  hRet = IStream_Stat(lpStream, &statstg, 1);
-
-  if (SUCCEEDED(hRet) && lpulSize)
-    *lpulSize = statstg.cbSize;
-  return hRet;
 }
