@@ -9,7 +9,7 @@
 9   stdcall -ordinal SHUnlockShared(ptr)
 10  stdcall -ordinal SHFreeShared(long long)
 11  stdcall -noname SHMapHandle(long long long long long)
-12  stdcall -ordinal SHCreateMemStream(ptr long)
+12  stdcall -ordinal SHCreateMemStream(ptr long) shcore.SHCreateMemStream
 13  stdcall -noname RegisterDefaultAcceptHeaders(ptr ptr)
 14  stdcall -ordinal GetAcceptLanguagesA(ptr ptr)
 15  stdcall -ordinal GetAcceptLanguagesW(ptr ptr)

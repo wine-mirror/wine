@@ -633,46 +633,6 @@ IStream * WINAPI SHOpenRegStreamW(HKEY hkey, LPCWSTR pszSubkey,
 }
 
 /*************************************************************************
- * @   [SHLWAPI.12]
- *
- * Create an IStream object on a block of memory.
- *
- * PARAMS
- * lpbData   [I] Memory block to create the IStream object on
- * dwDataLen [I] Length of data block
- *
- * RETURNS
- * Success: A pointer to the IStream object.
- * Failure: NULL, if any parameters are invalid or an error occurs.
- *
- * NOTES
- *  A copy of the memory pointed to by lpbData is made, and is freed
- *  when the stream is released.
- */
-IStream * WINAPI SHCreateMemStream(const BYTE *lpbData, UINT dwDataLen)
-{
-  ISHRegStream *strm = NULL;
-  LPBYTE lpbDup;
-
-  TRACE("(%p,%d)\n", lpbData, dwDataLen);
-
-  if (!lpbData)
-    dwDataLen = 0;
-
-  lpbDup = HeapAlloc(GetProcessHeap(), 0, dwDataLen);
-
-  if (lpbDup)
-  {
-    memcpy(lpbDup, lpbData, dwDataLen);
-    strm = IStream_Create(NULL, lpbDup, dwDataLen);
-
-    if (!strm)
-      HeapFree(GetProcessHeap(), 0, lpbDup);
-  }
-  return &strm->IStream_iface;
-}
-
-/*************************************************************************
  * SHCreateStreamWrapper   [SHLWAPI.@]
  *
  * Create an IStream object on a block of memory.
