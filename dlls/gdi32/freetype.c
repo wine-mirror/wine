@@ -9168,7 +9168,7 @@ BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, vo
 /*************************************************************************
  *             GetFontFileInfo   (GDI32.@)
  */
-BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info, DWORD size, DWORD *needed)
+BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info, SIZE_T size, SIZE_T *needed)
 {
     *needed = 0;
     return FALSE;
