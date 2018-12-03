@@ -1634,6 +1634,44 @@ static BOOL sysfs_parse_bitmap(const char *filename, ULONG_PTR * const mask)
     return TRUE;
 }
 
+/* Helper function for counting number of elements in interval lists as used by
+ * the Linux kernel. The format is comma separated list of intervals of which
+ * each interval has the format of "begin-end" where begin and end are decimal
+ * numbers. E.g. "0-7", "0-7,16-23"
+ *
+ * Example files include:
+ * - /sys/devices/system/cpu/online
+ * - /sys/devices/system/cpu/cpu0/cache/index0/shared_cpu_list
+ * - /sys/devices/system/cpu/cpu0/topology/thread_siblings_list.
+ */
+static BOOL sysfs_count_list_elements(const char *filename, DWORD *result)
+{
+    FILE *f;
+
+    f = fopen(filename, "r");
+    if (!f)
+        return FALSE;
+
+    while (!feof(f))
+    {
+        char op;
+        DWORD beg, end;
+
+        if (!fscanf(f, "%u%c ", &beg, &op))
+            break;
+
+        if(op == '-')
+            fscanf(f, "%u%c ", &end, &op);
+        else
+            end = beg;
+
+        *result += end - beg + 1;
+    }
+
+    fclose(f);
+    return TRUE;
+}
+
 /* for 'data', max_len is the array count. for 'dataex', max_len is in bytes */
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data,
         SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex, DWORD *max_len)
@@ -1643,9 +1681,23 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
     static const char numa_info[] = "/sys/devices/system/node/node%u/cpumap";
 
     FILE *fcpu_list, *fnuma_list, *f;
-    DWORD len = 0, beg, end, i, j, r, num_cpus = 0;
+    DWORD len = 0, beg, end, i, j, r, num_cpus = 0, max_cpus = 0;
     char op, name[MAX_PATH];
     ULONG_PTR all_cpus_mask = 0;
+
+    /* On systems with a large number of CPU cores (32 or 64 depending on 32-bit or 64-bit),
+     * we have issues parsing processor information:
+     * - ULONG_PTR masks as used in data structures can't hold all cores. Requires splitting
+     *   data appropriately into "processor groups". We are hard coding 1.
+     * - Thread affinity code in wineserver and our CPU parsing code here work independently.
+     *   So far the Windows mask applied directly to Linux, but process groups break that.
+     *   (NUMA systems you may have multiple non-full groups.)
+     */
+    if(sysfs_count_list_elements("/sys/devices/system/cpu/present", &max_cpus) && max_cpus > MAXIMUM_PROCESSORS)
+    {
+        FIXME("Improve CPU info reporting: system supports %u logical cores, but only %u supported!\n",
+                max_cpus, MAXIMUM_PROCESSORS);
+    }
 
     fcpu_list = fopen("/sys/devices/system/cpu/online", "r");
     if(!fcpu_list)
