@@ -63,7 +63,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,15 +90,9 @@
 # include <sys/link.h>
 #endif
 
-#include "main.h"
+#include "preloader.h"
 
-static int wld_vsprintf(char *buffer, const char *fmt, va_list args );
-
-static __attribute__((format(printf,1,2))) void wld_printf(const char *fmt, ... );
-
-static __attribute__((noreturn,format(printf,1,2))) void fatal_error(const char *fmt, ... );
-
-static void preload_reserve( const char *str );
+#ifdef __linux__
 
 /* ELF definitions */
 #define ELF_PREFERRED_ADDRESS(loader, maplength, mapstartpref) (mapstartpref)
@@ -544,28 +537,6 @@ SYSCALL_NOERR( wld_getegid, 177 /* SYS_getegid */ );
 #else
 #error preloader not implemented for this CPU
 #endif
-
-/* replacement for libc functions */
-
-static int wld_strcmp( const char *str1, const char *str2 )
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
-static int wld_strncmp( const char *str1, const char *str2, size_t len )
-{
-    if (len <= 0) return 0;
-    while ((--len > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
-static inline void *wld_memset( void *dest, int val, size_t len )
-{
-    char *dst = dest;
-    while (len--) *dst++ = val;
-    return dest;
-}
 
 #ifdef DUMP_AUX_INFO
 /*
@@ -1063,17 +1034,6 @@ static int is_addr_reserved( const void *addr )
     return 0;
 }
 
-/* remove a range from the preload list */
-static void remove_preload_range( int i )
-{
-    while (preload_info[i].size)
-    {
-        preload_info[i].addr = preload_info[i+1].addr;
-        preload_info[i].size = preload_info[i+1].size;
-        i++;
-    }
-}
-
 /*
  *  is_in_preload_range
  *
@@ -1155,13 +1115,13 @@ void* wld_start( void **stack )
 #endif
 
     /* reserve memory that Wine needs */
-    if (reserve) preload_reserve( reserve );
+    if (reserve) preload_reserve( reserve, preload_info, page_mask );
     for (i = 0; preload_info[i].size; i++)
     {
         if ((char *)av >= (char *)preload_info[i].addr &&
             (char *)pargc <= (char *)preload_info[i].addr + preload_info[i].size)
         {
-            remove_preload_range( i );
+            remove_preload_range( i, preload_info );
             i--;
         }
         else if (wld_mmap( preload_info[i].addr, preload_info[i].size, PROT_NONE,
@@ -1175,7 +1135,7 @@ void* wld_start( void **stack )
             )
                 wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
                             preload_info[i].addr, (char *)preload_info[i].addr + preload_info[i].size );
-            remove_preload_range( i );
+            remove_preload_range( i, preload_info );
             i--;
         }
     }
@@ -1243,6 +1203,10 @@ void* wld_start( void **stack )
     return (void *)ld_so_map.l_entry;
 }
 
+#endif /* __linux__ */
+
+/* replacement for libc functions */
+
 /*
  * wld_printf - just the basics
  *
@@ -1250,7 +1214,7 @@ void* wld_start( void **stack )
  *  %s prints a string
  *  %p prints a pointer
  */
-static int wld_vsprintf(char *buffer, const char *fmt, va_list args )
+int wld_vsprintf(char *buffer, const char *fmt, va_list args )
 {
     static const char hex_chars[16] = "0123456789abcdef";
     const char *p = fmt;
@@ -1297,7 +1261,7 @@ static int wld_vsprintf(char *buffer, const char *fmt, va_list args )
     return str - buffer;
 }
 
-static void wld_printf(const char *fmt, ... )
+void wld_printf(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
@@ -1309,7 +1273,7 @@ static void wld_printf(const char *fmt, ... )
     wld_write(2, buffer, len);
 }
 
-static void fatal_error(const char *fmt, ... )
+void fatal_error(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
@@ -1327,7 +1291,7 @@ static void fatal_error(const char *fmt, ... )
  *
  * Reserve a range specified in string format
  */
-static void preload_reserve( const char *str )
+void preload_reserve( const char *str, struct wine_preload_info *preload_info, size_t page_mask )
 {
     const char *p;
     unsigned long result = 0;

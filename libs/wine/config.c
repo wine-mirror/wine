@@ -573,7 +573,7 @@ void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
 
     if (!name) name = argv0_name;  /* no name means default loader */
 
-#ifdef linux
+#if defined(linux) || defined(__APPLE__)
     use_preloader = !strendswith( name, "wineserver" );
 #else
     use_preloader = 0;

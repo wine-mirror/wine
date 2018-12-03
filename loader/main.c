@@ -41,43 +41,8 @@
 #include "wine/library.h"
 #include "main.h"
 
-#ifdef __APPLE__
-
-#ifndef __clang__
-__asm__(".zerofill WINE_DOS, WINE_DOS, ___wine_dos, 0x40000000");
-__asm__(".zerofill WINE_SHAREDHEAP, WINE_SHAREDHEAP, ___wine_shared_heap, 0x03000000");
-extern char __wine_dos[0x40000000], __wine_shared_heap[0x03000000];
-#else
-__asm__(".zerofill WINE_DOS, WINE_DOS");
-__asm__(".zerofill WINE_SHAREDHEAP, WINE_SHAREDHEAP");
-static char __wine_dos[0x40000000] __attribute__((section("WINE_DOS, WINE_DOS")));
-static char __wine_shared_heap[0x03000000] __attribute__((section("WINE_SHAREDHEAP, WINE_SHAREDHEAP")));
-#endif
-
-static const struct wine_preload_info wine_main_preload_info[] =
-{
-    { __wine_dos,         sizeof(__wine_dos) },          /* DOS area + PE exe */
-    { __wine_shared_heap, sizeof(__wine_shared_heap) },  /* shared user data + shared heap */
-    { 0, 0 }  /* end of list */
-};
-
-static inline void reserve_area( void *addr, size_t size )
-{
-    wine_anon_mmap( addr, size, PROT_NONE, MAP_FIXED | MAP_NORESERVE );
-    wine_mmap_add_reserved_area( addr, size );
-}
-
-#else  /* __APPLE__ */
-
 /* the preloader will set this variable */
 const struct wine_preload_info *wine_main_preload_info = NULL;
-
-static inline void reserve_area( void *addr, size_t size )
-{
-    wine_mmap_add_reserved_area( addr, size );
-}
-
-#endif  /* __APPLE__ */
 
 /***********************************************************************
  *           check_command_line
@@ -202,6 +167,13 @@ static int pre_exec(void)
     return 1;  /* we have a preloader on x86-64/arm64 */
 }
 
+#elif defined(__APPLE__) && (defined(__i386__) || defined(__x86_64__))
+
+static int pre_exec(void)
+{
+    return 1;  /* we have a preloader */
+}
+
 #elif (defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__))
 
 static int pre_exec(void)
@@ -247,12 +219,10 @@ int main( int argc, char *argv[] )
         }
     }
 
-#ifndef __APPLE__
     if (wine_main_preload_info)
-#endif
     {
         for (i = 0; wine_main_preload_info[i].size; i++)
-            reserve_area( wine_main_preload_info[i].addr, wine_main_preload_info[i].size );
+            wine_mmap_add_reserved_area( wine_main_preload_info[i].addr, wine_main_preload_info[i].size );
     }
 
     wine_init( argc, argv, error, sizeof(error) );
