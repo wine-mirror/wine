@@ -392,9 +392,9 @@ void free_netconn(netconn_t *netconn)
         heap_free(netconn->extra_buf);
         netconn->extra_buf = NULL;
         netconn->extra_len = 0;
-        if (SecIsValidHandle(&netconn->ssl_ctx))
-            DeleteSecurityContext(&netconn->ssl_ctx);
     }
+    if (SecIsValidHandle(&netconn->ssl_ctx))
+        DeleteSecurityContext(&netconn->ssl_ctx);
 
     close_netconn(netconn);
     heap_free(netconn);
