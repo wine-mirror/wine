@@ -13,7 +13,7 @@
 13  stdcall -noname RegisterDefaultAcceptHeaders(ptr ptr)
 14  stdcall -ordinal GetAcceptLanguagesA(ptr ptr)
 15  stdcall -ordinal GetAcceptLanguagesW(ptr ptr)
-16  stdcall -ordinal SHCreateThread(ptr ptr long ptr)
+16  stdcall -ordinal SHCreateThread(ptr ptr long ptr) shcore.SHCreateThread
 17  stdcall -noname SHWriteDataBlockList(ptr ptr)
 18  stdcall -noname SHReadDataBlockList(ptr ptr)
 19  stdcall -noname SHFreeDataBlockList(ptr)
@@ -687,7 +687,7 @@
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) shcore.SHCreateStreamOnFileEx
 @ stdcall SHCreateStreamOnFileW(wstr long ptr) shcore.SHCreateStreamOnFileW
 @ stdcall SHCreateStreamWrapper(ptr ptr long ptr)
-@ stdcall SHCreateThreadRef(ptr ptr)
+@ stdcall SHCreateThreadRef(ptr ptr) shcore.SHCreateThreadRef
 @ stdcall SHDeleteEmptyKeyA(long ptr)
 @ stdcall SHDeleteEmptyKeyW(long ptr)
 @ stdcall SHDeleteKeyA(long str)
@@ -701,7 +701,7 @@
 @ stdcall SHEnumValueA(long long str ptr ptr ptr ptr)
 @ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr)
 @ stdcall SHGetInverseCMAP ( ptr long )
-@ stdcall SHGetThreadRef (ptr)
+@ stdcall SHGetThreadRef(ptr) shcore.SHGetThreadRef
 @ stdcall SHGetValueA ( long str str ptr ptr ptr )
 @ stdcall SHGetValueW ( long wstr wstr ptr ptr ptr )
 @ stdcall SHIsLowMemoryMachine(long)
@@ -746,8 +746,8 @@
 @ stdcall SHRegWriteUSValueA (long str long ptr long long)
 @ stdcall SHRegWriteUSValueW (long wstr long ptr long long)
 @ stdcall SHRegisterValidateTemplate(wstr long)
-@ stdcall SHReleaseThreadRef()
-@ stdcall SHSetThreadRef (ptr)
+@ stdcall SHReleaseThreadRef() shcore.SHReleaseThreadRef
+@ stdcall SHSetThreadRef(ptr) shcore.SHSetThreadRef
 @ stdcall SHSetValueA (long  str  str long ptr long)
 @ stdcall SHSetValueW (long wstr wstr long ptr long)
 @ stdcall SHSkipJunction(ptr ptr)

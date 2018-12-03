@@ -55,7 +55,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 /* DLL handles for late bound calls */
 extern HINSTANCE shlwapi_hInstance;
-extern DWORD SHLWAPI_ThreadRef_index;
 
 static HRESULT iunknown_query_service(IUnknown*,REFGUID,REFIID,LPVOID*);
 HRESULT WINAPI SHInvokeCommand(HWND,IShellFolder*,LPCITEMIDLIST,DWORD);
