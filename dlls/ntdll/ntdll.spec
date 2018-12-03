@@ -683,6 +683,7 @@
 @ stdcall RtlGetUnloadEventTrace()
 @ stub RtlGetUserInfoHeap
 @ stdcall RtlGetVersion(ptr)
+@ stdcall -arch=arm,arm64,x86_64 RtlGrowFunctionTable(ptr long)
 @ stub RtlGuidToPropertySetName
 @ stdcall RtlHashUnicodeString(ptr long long ptr)
 @ stdcall RtlIdentifierAuthoritySid(ptr)

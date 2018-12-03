@@ -3518,6 +3518,15 @@ DWORD WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functi
 }
 
 
+/*************************************************************************
+ *              RtlGrowFunctionTable   (NTDLL.@)
+ */
+void WINAPI RtlGrowFunctionTable( void *table, DWORD count )
+{
+    FIXME( "(%p, %d) stub!\n", table, count );
+}
+
+
 /**********************************************************************
  *              RtlDeleteFunctionTable   (NTDLL.@)
  */
