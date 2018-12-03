@@ -1704,13 +1704,8 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 
             /* Mask of logical threads sharing same physical core in kernel core numbering. */
             sprintf(name, core_info, i, "thread_siblings");
-            f = fopen(name, "r");
-            if(f)
-            {
-                fscanf(f, "%lx", &thread_mask);
-                fclose(f);
-            }
-            else thread_mask = 1<<i;
+            if(!sysfs_parse_bitmap(name, &thread_mask))
+                thread_mask = 1<<i;
             if(!logical_proc_info_add_by_id(data, dataex, &len, max_len, RelationProcessorCore, phys_core, thread_mask))
             {
                 fclose(fcpu_list);
