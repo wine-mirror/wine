@@ -1550,7 +1550,7 @@ static BOOL CRYPT_AsnDecodeNameValueInternal(const BYTE *pbEncoded,
         case ASN_UTF8STRING:
             valueType = CERT_RDN_UTF8_STRING;
             bytesNeeded += MultiByteToWideChar(CP_UTF8, 0,
-             (LPCSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) * 2;
+             (LPCSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) * sizeof(WCHAR);
             break;
         default:
             SetLastError(CRYPT_E_ASN1_BADTAG);
