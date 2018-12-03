@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-11-18 16:52-0200\n"
+"PO-Revision-Date: 2018-12-02 22:31-0200\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -316,7 +316,7 @@ msgstr "%1!u! %2 restante"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr "%1!u! %2 and %3!u! %4 restante"
+msgstr "%1!u! %2 e %3!u! %4 restante"
 
 #: browseui.rc:31
 msgid "seconds"
@@ -3509,7 +3509,7 @@ msgstr "Usar processo automático de configuração de Proxy Web(WPAD)"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr "Utilizar script automático de configuracao Proxy(PAC)"
+msgstr "Utilizar script automático de configuração Proxy(PAC)"
 
 #: inetcpl.rc:128 inetcpl.rc:132
 msgid "Address:"
@@ -3788,20 +3788,20 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
-"atributo 'gravavel' no descritor de propriedades nao pode ser setao para "
+"atributo 'gravável' no descritor de propriedades não pode ser setado para "
 "'verdade' neste objeto"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
-msgstr "Nao pode redinir propriedade nao configuravel '|'"
+msgstr "Não pode redefinir propriedade não configurável '|'"
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr "Nao pode modificar propriedade nao gravavel '|'"
+msgstr "Não pode modificar propriedade não gravável '|'"
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
-msgstr "Propriedade nao pode ter ambos acessores e valor"
+msgstr "Propriedade não pode ter ambos acessores e valor"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -7010,7 +7010,7 @@ msgstr "Buscando por aplicativos instalados"
 
 #: msi.rc:93
 msgid "Binding executables"
-msgstr "Executaveis de ligação"
+msgstr "Executáveis de ligação"
 
 #: msi.rc:94 msi.rc:137
 msgid "Searching for qualifying products"
@@ -7042,7 +7042,7 @@ msgstr "Buscando por aplicações relacionadas"
 
 #: msi.rc:103
 msgid "Copying network install files"
-msgstr "Copiando arquivos para instalacao via rede"
+msgstr "Copiando arquivos para instalação via rede"
 
 #: msi.rc:104
 msgid "Copying new files"
@@ -7066,11 +7066,11 @@ msgstr "Validando instalação"
 
 #: msi.rc:109
 msgid "Evaluating launch conditions"
-msgstr "Avaliando condicoes de inicialização"
+msgstr "Avaliando condições de inicialização"
 
 #: msi.rc:110
 msgid "Migrating feature states from related applications"
-msgstr "Migrando caracteristicas de aplicações relacionadas"
+msgstr "Migrando características de aplicações relacionadas"
 
 #: msi.rc:111
 msgid "Moving files"
@@ -7082,7 +7082,7 @@ msgstr "Publicando informações de montagem"
 
 #: msi.rc:113
 msgid "Unpublishing assembly information"
-msgstr "Removendo informacao de montagem"
+msgstr "Removendo informação de montagem"
 
 #: msi.rc:114
 msgid "Patching files"
@@ -7090,7 +7090,7 @@ msgstr "Atualizando arquivos"
 
 #: msi.rc:115
 msgid "Updating component registration"
-msgstr "Atualizando registro de componenetes"
+msgstr "Atualizando registro de componentes"
 
 #: msi.rc:116
 msgid "Publishing Qualified Components"
@@ -7098,7 +7098,7 @@ msgstr "Publicando Componentes Qualificados"
 
 #: msi.rc:117
 msgid "Publishing Product Features"
-msgstr "Publicando Caracteristicas de Produto"
+msgstr "Publicando Características de Produto"
 
 #: msi.rc:118
 msgid "Publishing product information"
@@ -7114,7 +7114,7 @@ msgstr "Registrando Aplicativos e Componentes COM+"
 
 #: msi.rc:121
 msgid "Registering extension servers"
-msgstr "Registrando extensoes de servidores"
+msgstr "Registrando extensões de servidores"
 
 #: msi.rc:122
 msgid "Registering fonts"
@@ -7178,11 +7178,11 @@ msgstr "Removendo atalhos"
 
 #: msi.rc:138
 msgid "Registering modules"
-msgstr "Registrando modulos"
+msgstr "Registrando módulos"
 
 #: msi.rc:139
 msgid "Unregistering modules"
-msgstr "Desregistrando modulos"
+msgstr "Desregistrando módulos"
 
 #: msi.rc:140
 msgid "Initializing ODBC directories"
@@ -7198,11 +7198,11 @@ msgstr "Parando serviços"
 
 #: msi.rc:143
 msgid "Unpublishing Qualified Components"
-msgstr "Removendo Componentes Qalificados"
+msgstr "Removendo Componentes Qualificados"
 
 #: msi.rc:144
 msgid "Unpublishing Product Features"
-msgstr "Removendo Caracteristicas de Produto"
+msgstr "Removendo Características de Produto"
 
 #: msi.rc:145
 msgid "Unpublishing product information"
@@ -7270,7 +7270,7 @@ msgstr "Serviço: [1]"
 
 #: msi.rc:167 msi.rc:170 msi.rc:174
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr "Arquivo: [1],  Pasta: [9],  Tamanho: [6]"
+msgstr "Arquivo: [1], Pasta: [9], Tamanho: [6]"
 
 #: msi.rc:168
 msgid "Found application: [1]"
@@ -7286,7 +7286,7 @@ msgstr "Serviço: [2]"
 
 #: msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
-msgstr "Arquivo: [1],  Dependências: [2]"
+msgstr "Arquivo: [1], Dependências: [2]"
 
 #: msi.rc:173
 msgid "Application: [1]"
@@ -7298,7 +7298,7 @@ msgstr "Contexto de Aplicação:[1], Nome de Montagem:[2]"
 
 #: msi.rc:177
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr "Arquivo: [1],  Pasta: [2],  Tamanho: [3]"
+msgstr "Arquivo: [1], Pasta: [2], Tamanho: [3]"
 
 #: msi.rc:178 msi.rc:199
 msgid "Component ID: [1], Qualifier: [2]"
@@ -7306,7 +7306,7 @@ msgstr "ID Componente: [1], Propriedade: [2]"
 
 #: msi.rc:179 msi.rc:200
 msgid "Feature: [1]"
-msgstr "Caracteristica: [1]"
+msgstr "Característica: [1]"
 
 #: msi.rc:180 msi.rc:201
 msgid "Class Id: [1]"
@@ -7350,7 +7350,7 @@ msgstr "Aplicação: [1], Linha de comando: [2]"
 
 #: msi.rc:192 msi.rc:209
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr "Arquivo: [1],  Seção: [2],  Chave: [3], Valor: [4]"
+msgstr "Arquivo: [1], Seção: [2], Chave: [3], Valor: [4]"
 
 #: msi.rc:193
 msgid "Key: [1], Name: [2]"
@@ -7408,7 +7408,7 @@ msgstr "Tipo da Mensagem: [1], Argumento: [2]{, [3]}"
 
 #: msi.rc:82
 msgid "=== Logging started: [Date]  [Time] ==="
-msgstr "=== Logging started: [Date]  [Time] ==="
+msgstr "=== Logging Iniciado: [Date]  [Time] ==="
 
 #: msi.rc:80
 msgid "Action start [Time]: [1]."
@@ -7420,7 +7420,7 @@ msgstr "Ação finalizada [Time]: [1]. Valore de Retorno [2]."
 
 #: msi.rc:84
 msgid "Please insert the disk: [2]"
-msgstr "Porfavor insira o disco: [2]"
+msgstr "Por favor insira o disco: [2]"
 
 #: msi.rc:85
 msgid ""
@@ -9276,7 +9276,7 @@ msgstr "A URL é inválida.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr "O tipo de URL nao pode ser reconhecido ou não é suportado.\n"
+msgstr "O tipo de URL não pode ser reconhecido ou não é suportado.\n"
 
 #: winineterror.mc:46
 msgid "The server name could not be resolved.\n"
@@ -9311,11 +9311,13 @@ msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
-"Data do certificado SSL recebida do host ruim. O certificado esta expirado.\n"
+"Data do certificado SSL recebida do servidor ruim. O certificado esta "
+"expirado.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr "Nome comun do certificado SSL(campo nome do host) esta incorreto.\n"
+msgstr ""
+"Nome comum do certificado SSL(campo nome do servidor) esta incorreto.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
@@ -10703,7 +10705,7 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY é usado para configurar, limpar e testar a flag de verificação. As\n"
+"VERIFY é usado para configurar, limpar e testar a flag de verificação. As "
 "formas válidas são\n"
 "\n"
 "VERIFY ON\tAciona a flag.\n"
@@ -10815,7 +10817,7 @@ msgid ""
 msgstr ""
 "CHOICE exibe um texto e aguarda até que o Usuário pressione uma tecla\n"
 "permitida de uma lista de seleção.\n"
-"CHOICE é principalmente usado para construir um menu de seleção num arquivo\n"
+"CHOICE é principalmente usado para construir um menu de seleção num arquivo "
 "de lote.\n"
 
 #: cmd.rc:324
@@ -12420,7 +12422,7 @@ msgstr "reg: Sequência de escape não reconhecida [\\%1!c!]\n"
 
 #: reg.rc:70
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG EXPOER nome_chave [/y]\n"
+msgstr "REG EXPORT nome_chave [/y]\n"
 
 #: reg.rc:71
 msgid "reg: Invalid system key [%1]\n"
@@ -12662,7 +12664,7 @@ msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
-"Nao pode renomear a chave '%1'.\n"
+"Não pode renomear a chave '%1'.\n"
 "A chave de registro especificada já existe."
 
 #: regedit.rc:251
@@ -12670,7 +12672,7 @@ msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
-"Nao pode renomear o valor '%1'.\n"
+"Não pode renomear o valor '%1'.\n"
 "A valor especificado já existe."
 
 #: regedit.rc:252
@@ -12730,7 +12732,7 @@ msgstr ""
 "Uso:\n"
 "  regedit [opções] [arquivo] [chave]\n"
 "\n"
-"Options:\n"
+"Opções:\n"
 "  [sem opção]    Executa a versão gráfica desse programa..\n"
 "  /L:system.dat  O local do arquivo system.dat a ser modificado.\n"
 "                 Compatível com qualquer outra opção. Ignorado.\n"
@@ -12828,7 +12830,8 @@ msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
-"regedit: Tipo de dado de registro [%1] não suportado encontrado em '%2'.\n"
+"regedit: Tipo de dado de registro [0x%1!x!] não suportado encontrado em "
+"'%2'.\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
@@ -14945,7 +14948,7 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
-"Um programa ou sistema teve uma falha, mas WineDbg nao foi capaz de se "
+"Um programa ou sistema teve uma falha, mas WineDbg não foi capaz de se "
 "conectar ao processo para obter os logs da pilha."
 
 #: winedbg.rc:41
