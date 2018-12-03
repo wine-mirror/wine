@@ -490,7 +490,7 @@ static void check_dropdown_(const char *file, UINT line, IAutoCompleteDropDown *
             else
                 ok_(file, line)(str == NULL, "Expected (null), got %s\n", wine_dbgstr_w(str));
         }
-        if (str) CoTaskMemFree(str);
+        CoTaskMemFree(str);
     }
 }
 
