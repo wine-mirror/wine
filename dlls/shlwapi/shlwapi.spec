@@ -707,8 +707,8 @@
 @ stdcall SHIsLowMemoryMachine(long)
 @ stdcall SHOpenRegStream2A(long str str long)
 @ stdcall SHOpenRegStream2W(long wstr wstr long)
-@ stdcall SHOpenRegStreamA(long str str long)
-@ stdcall SHOpenRegStreamW(long wstr wstr long)
+@ stdcall SHOpenRegStreamA(long str str long) shcore.SHOpenRegStreamA
+@ stdcall SHOpenRegStreamW(long wstr wstr long) shcore.SHOpenRegStreamW
 @ stdcall SHQueryInfoKeyA(long ptr ptr ptr ptr)
 @ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr)
 @ stdcall SHQueryValueExA(long str ptr ptr ptr ptr)

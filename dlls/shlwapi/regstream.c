@@ -369,70 +369,6 @@ static const IStreamVtbl rstvt =
 	IStream_fnClone
 };
 
-/* Methods overridden by the dummy stream */
-
-/**************************************************************************
- *  IStream_fnAddRefDummy
- */
-static ULONG WINAPI IStream_fnAddRefDummy(IStream *iface)
-{
-	ISHRegStream *This = impl_from_IStream(iface);
-	TRACE("(%p)\n", This);
-	return 2;
-}
-
-/**************************************************************************
- *  IStream_fnReleaseDummy
- */
-static ULONG WINAPI IStream_fnReleaseDummy(IStream *iface)
-{
-	ISHRegStream *This = impl_from_IStream(iface);
-	TRACE("(%p)\n", This);
-	return 1;
-}
-
-/**************************************************************************
- * IStream_fnReadDummy
- */
-static HRESULT WINAPI IStream_fnReadDummy(IStream *iface, LPVOID pv, ULONG cb, ULONG* pcbRead)
-{
-  if (pcbRead)
-    *pcbRead = 0;
-  return E_NOTIMPL;
-}
-
-static const IStreamVtbl DummyRegStreamVTable =
-{
-  IStream_fnQueryInterface,
-  IStream_fnAddRefDummy,  /* Overridden */
-  IStream_fnReleaseDummy, /* Overridden */
-  IStream_fnReadDummy,    /* Overridden */
-  IStream_fnWrite,
-  IStream_fnSeek,
-  IStream_fnSetSize,
-  IStream_fnCopyTo,
-  IStream_fnCommit,
-  IStream_fnRevert,
-  IStream_fnLockUnlockRegion,
-  IStream_fnLockUnlockRegion,
-  IStream_fnStat,
-  IStream_fnClone
-};
-
-/* Dummy registry stream object */
-static ISHRegStream rsDummyRegStream =
-{
- { &DummyRegStreamVTable },
- 1,
- NULL,
- NULL,
- 0,
- 0,
- STGM_READWRITE,
- {NULL},
- FALSE
-};
-
 /**************************************************************************
  * IStream_Create
  *
@@ -587,49 +523,6 @@ IStream * WINAPI SHOpenRegStream2W(HKEY hKey, LPCWSTR pszSubkey,
   if (hStrKey)
     RegCloseKey(hStrKey);
   return NULL;
-}
-
-/*************************************************************************
- * SHOpenRegStreamA     [SHLWAPI.@]
- *
- * Create a stream to read binary registry data.
- *
- * PARAMS
- * hKey      [I] Registry handle
- * pszSubkey [I] The sub key name
- * pszValue  [I] The value name under the sub key
- * dwMode    [I] STGM mode for opening the file
- *
- * RETURNS
- * Success: An IStream interface referring to the registry data
- * Failure: If the registry key could not be opened or is not binary,
- *          A dummy (empty) IStream object is returned.
- */
-IStream * WINAPI SHOpenRegStreamA(HKEY hkey, LPCSTR pszSubkey,
-                                  LPCSTR pszValue, DWORD dwMode)
-{
-  IStream *iStream;
-
-  TRACE("(%p,%s,%s,0x%08x)\n", hkey, pszSubkey, pszValue, dwMode);
-
-  iStream = SHOpenRegStream2A(hkey, pszSubkey, pszValue, dwMode);
-  return iStream ? iStream : &rsDummyRegStream.IStream_iface;
-}
-
-/*************************************************************************
- * SHOpenRegStreamW	[SHLWAPI.@]
- *
- * See SHOpenRegStreamA.
- */
-IStream * WINAPI SHOpenRegStreamW(HKEY hkey, LPCWSTR pszSubkey,
-                                  LPCWSTR pszValue, DWORD dwMode)
-{
-  IStream *iStream;
-
-  TRACE("(%p,%s,%s,0x%08x)\n", hkey, debugstr_w(pszSubkey),
-        debugstr_w(pszValue), dwMode);
-  iStream = SHOpenRegStream2W(hkey, pszSubkey, pszValue, dwMode);
-  return iStream ? iStream : &rsDummyRegStream.IStream_iface;
 }
 
 /*************************************************************************
