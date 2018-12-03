@@ -71,8 +71,9 @@
  *
  *      Linker Options
  *          object-file-name  -llibrary -nostartfiles  -nodefaultlibs
- *          -nostdlib -s  -static  -static-libgcc  -shared  -shared-libgcc
- *          -symbolic -Wl,option  -Xlinker option -u symbol --image-base
+ *          -nostdlib -s  -static  -static-libgcc  -static-libstdc++
+ *          -shared  -shared-libgcc  -symbolic  -Wl,option
+ *          -Xlinker option -u symbol --image-base
  *
  *      Directory Options
  *          -Bprefix  -Idir  -I-  -Ldir  -specs=file
@@ -1288,8 +1289,9 @@ static int is_linker_arg(const char* arg)
 {
     static const char* link_switches[] = 
     {
-	"-nostdlib", "-s", "-static", "-static-libgcc", "-shared", "-shared-libgcc", "-symbolic",
-	"-framework", "--coverage", "-fprofile-generate", "-fprofile-use"
+	"-nostdlib", "-s", "-static", "-static-libgcc", "-static-libstdc++",
+	"-shared", "-shared-libgcc", "-symbolic", "-framework", "--coverage",
+	"-fprofile-generate", "-fprofile-use"
     };
     unsigned int j;
 
