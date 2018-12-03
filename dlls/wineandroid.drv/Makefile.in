@@ -20,9 +20,5 @@ EXTRA_TARGETS = wine-debug.apk
 all: wine-debug.apk
 
 wine-debug.apk: build.gradle $(srcdir)/AndroidManifest.xml $(srcdir)/WineActivity.java $(srcdir)/wine.svg
-	(test -d assets && \
-	  rm -f assets/files.sum assets/sums.sum && \
-	  sha256sum `find assets -type f -print` | sed 's/ assets\// /' >files.sum && \
-	  sha256sum files.sum >sums.sum && \
-	  mv files.sum sums.sum assets) || rm -rf assets
-	gradle -q assembleDebug && mv build/outputs/apk/wine-debug.apk .
+	gradle -q assembleDebug
+	mv build/outputs/apk/wine-debug.apk $@
