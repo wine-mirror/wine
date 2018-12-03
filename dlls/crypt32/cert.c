@@ -1811,7 +1811,7 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
     }
 
     if (find)
-        ret = find(hCertStore, dwFlags, dwType, pvPara, pPrevCertContext);
+        ret = find(hCertStore, dwType, dwFlags, pvPara, pPrevCertContext);
     else if (compare)
         ret = cert_compare_certs_in_store(hCertStore, pPrevCertContext,
          compare, dwType, dwFlags, pvPara);
