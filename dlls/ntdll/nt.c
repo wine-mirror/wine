@@ -1604,6 +1604,36 @@ static inline BOOL logical_proc_info_add_group(SYSTEM_LOGICAL_PROCESSOR_INFORMAT
 }
 
 #ifdef linux
+/* Helper function for counting bitmap values as commonly used by the Linux kernel
+ * for storing CPU masks in sysfs. The format is comma separated lists of hex values
+ * each max 32-bit e.g. "00ff" or even "00,00000000,0000ffff".
+ *
+ * Example files include:
+ * - /sys/devices/system/cpu/cpu0/cache/index0/shared_cpu_map
+ * - /sys/devices/system/cpu/cpu0/topology/thread_siblings
+ */
+static BOOL sysfs_parse_bitmap(const char *filename, ULONG_PTR * const mask)
+{
+    FILE *f;
+    DWORD r;
+
+    f = fopen(filename, "r");
+    if (!f)
+        return FALSE;
+
+    while (!feof(f))
+    {
+        char op;
+        if (!fscanf(f, "%x%c ", &r, &op))
+            break;
+
+        *mask = (sizeof(ULONG_PTR)>sizeof(int) ? *mask<<(8*sizeof(DWORD)) : 0) + r;
+    }
+
+    fclose(f);
+    return TRUE;
+}
+
 /* for 'data', max_len is the array count. for 'dataex', max_len is in bytes */
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data,
         SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex, DWORD *max_len)
@@ -1693,15 +1723,7 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
                 ULONG_PTR mask = 0;
 
                 sprintf(name, cache_info, i, j, "shared_cpu_map");
-                f = fopen(name, "r");
-                if(!f) continue;
-                while(!feof(f))
-                {
-                    if(!fscanf(f, "%x%c ", &r, &op))
-                        break;
-                    mask = (sizeof(ULONG_PTR)>sizeof(int) ? mask<<(8*sizeof(DWORD)) : 0) + r;
-                }
-                fclose(f);
+                if(!sysfs_parse_bitmap(name, &mask)) continue;
 
                 sprintf(name, cache_info, i, j, "level");
                 f = fopen(name, "r");
