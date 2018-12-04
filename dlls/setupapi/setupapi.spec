@@ -302,7 +302,7 @@
 @ stdcall SetupDiCreateDeviceInterfaceRegKeyW(ptr ptr long long ptr wstr)
 @ stdcall SetupDiDeleteDevRegKey(ptr ptr long long long)
 @ stdcall SetupDiDeleteDeviceInfo(ptr ptr)
-@ stub SetupDiDeleteDeviceInterfaceData
+@ stdcall SetupDiDeleteDeviceInterfaceData(ptr ptr)
 @ stdcall SetupDiDeleteDeviceInterfaceRegKey(ptr ptr long)
 @ stub SetupDiDeleteDeviceRegKey
 @ stdcall SetupDiDestroyClassImageList(ptr)

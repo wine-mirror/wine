@@ -650,6 +650,15 @@ static void test_device_iface(void)
     check_device_iface(set, &device, &guid2, 0, SPINT_REMOVED, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A5-3F65-11DB-B704-0011955C2BDB}");
     check_device_iface(set, &device, &guid2, 1, 0, NULL);
 
+    ret = SetupDiEnumDeviceInterfaces(set, &device, &guid, 0, &iface);
+    ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
+    ret = SetupDiDeleteDeviceInterfaceData(set, &iface);
+    ok(ret, "Failed to delete interface, error %#x.\n", GetLastError());
+
+    check_device_iface(set, &device, &guid, 0, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}\\Oogah");
+    check_device_iface(set, &device, &guid, 1, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}\\test");
+    check_device_iface(set, &device, &guid, 2, 0, NULL);
+
     ret = SetupDiDestroyDeviceInfoList(set);
     ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
 }
@@ -862,14 +871,28 @@ static void test_register_device_iface(void)
     ok(ret, "Failed to create device, error %#x.\n", GetLastError());
     ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, NULL, 0, &iface);
     ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, "removed", 0, &iface);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, "deleted", 0, &iface);
+    ok(ret, "Failed to create interface, error %#x.\n", GetLastError());
     ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
     ok(ret, "Failed to register device, error %#x.\n", GetLastError());
+
+    ret = SetupDiEnumDeviceInterfaces(set, &device, &guid, 1, &iface);
+    ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
+    ret = SetupDiRemoveDeviceInterface(set, &iface);
+    ok(ret, "Failed to delete interface, error %#x.\n", GetLastError());
+    ret = SetupDiEnumDeviceInterfaces(set, &device, &guid, 2, &iface);
+    ok(ret, "Failed to enumerate interfaces, error %#x.\n", GetLastError());
+    ret = SetupDiDeleteDeviceInterfaceData(set, &iface);
+    ok(ret, "Failed to delete interface, error %#x.\n", GetLastError());
 
     set2 = SetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
     ok(set2 != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
     check_device_iface(set2, NULL, &guid, 0, 0, "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}");
-    check_device_iface(set2, NULL, &guid, 1, 0, NULL);
+    check_device_iface(set2, NULL, &guid, 1, 0, "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\deleted");
+    check_device_iface(set2, NULL, &guid, 2, 0, NULL);
 
     ret = SetupDiRemoveDevice(set, &device);
     ok(ret, "Failed to remove device, error %#x.\n", GetLastError());

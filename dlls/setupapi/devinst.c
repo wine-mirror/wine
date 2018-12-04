@@ -576,6 +576,16 @@ static void remove_device_iface(struct device_iface *iface)
     iface->flags |= SPINT_REMOVED;
 }
 
+static void delete_device_iface(struct device_iface *iface)
+{
+    list_remove(&iface->entry);
+    RegCloseKey(iface->refstr_key);
+    RegCloseKey(iface->class_key);
+    heap_free(iface->refstr);
+    heap_free(iface->symlink);
+    heap_free(iface);
+}
+
 static void remove_device(struct device *device)
 {
     WCHAR id[MAX_DEVICE_ID_LEN], *p;
@@ -622,12 +632,7 @@ static void delete_device(struct device *device)
     LIST_FOR_EACH_ENTRY_SAFE(iface, next, &device->interfaces,
             struct device_iface, entry)
     {
-        list_remove(&iface->entry);
-        RegCloseKey(iface->refstr_key);
-        RegCloseKey(iface->class_key);
-        heap_free(iface->refstr);
-        heap_free(iface->symlink);
-        heap_free(iface);
+        delete_device_iface(iface);
     }
     free_devnode(device->devnode);
     list_remove(&device->entry);
@@ -1594,6 +1599,23 @@ BOOL WINAPI SetupDiRemoveDeviceInterface(HDEVINFO devinfo, SP_DEVICE_INTERFACE_D
         return FALSE;
 
     remove_device_iface(iface);
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiDeleteDeviceInterfaceData (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiDeleteDeviceInterfaceData(HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data)
+{
+    struct device_iface *iface;
+
+    TRACE("devinfo %p, iface_data %p.\n", devinfo, iface_data);
+
+    if (!(iface = get_device_iface(devinfo, iface_data)))
+        return FALSE;
+
+    delete_device_iface(iface);
 
     return TRUE;
 }
