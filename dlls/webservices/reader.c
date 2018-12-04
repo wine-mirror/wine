@@ -628,7 +628,7 @@ static HRESULT read_more_data( struct reader *reader, ULONG min_size, const WS_A
     if (reader->input_type != WS_XML_READER_INPUT_TYPE_STREAM) return WS_E_INVALID_FORMAT;
     if (min_size > reader->input_size) return WS_E_QUOTA_EXCEEDED;
 
-    if (min_size > reader->input_size - reader->read_pos)
+    if (reader->read_pos)
     {
         memmove( reader->stream_buf, reader->stream_buf + reader->read_pos, reader->read_size - reader->read_pos );
         reader->read_size -= reader->read_pos;
