@@ -507,7 +507,8 @@ static void test_BCryptGenerateSymmetricKey(void)
         {0xc6,0xa1,0x3b,0x37,0x87,0x8f,0x5b,0x82,0x6f,0x4f,0x81,0x62,0xa1,0xc8,0xd8,0x79};
     BCRYPT_ALG_HANDLE aes;
     BCRYPT_KEY_HANDLE key, key2;
-    UCHAR *buf, ciphertext[16], plaintext[16], ivbuf[16];
+    UCHAR *buf, ciphertext[16], plaintext[16], ivbuf[16], mode[64];
+    BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
     ULONG size, len, i;
     NTSTATUS ret;
 
@@ -607,6 +608,27 @@ static void test_BCryptGenerateSymmetricKey(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(size == 16, "got %u\n", size);
     ok(!memcmp(plaintext, data, sizeof(data)), "wrong data\n");
+
+    memset(mode, 0, sizeof(mode));
+    ret = pBCryptGetProperty(key, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CBC), "wrong mode\n");
+
+    len = 0;
+    size = 0;
+    ret = pBCryptGetProperty(key, BCRYPT_BLOCK_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len == 16, "got %u\n", len);
+    ok(size == sizeof(len), "got %u\n", size);
+
+    size = 0;
+    memset(&key_lengths, 0, sizeof(key_lengths));
+    ret = pBCryptGetProperty(aes, BCRYPT_KEY_LENGTHS, (UCHAR*)&key_lengths, sizeof(key_lengths), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == sizeof(key_lengths), "got %u\n", size);
+    ok(key_lengths.dwMinLength == 128, "Expected 128, got %d\n", key_lengths.dwMinLength);
+    ok(key_lengths.dwMaxLength == 256, "Expected 256, got %d\n", key_lengths.dwMaxLength);
+    ok(key_lengths.dwIncrement == 64, "Expected 64, got %d\n", key_lengths.dwIncrement);
 
     ret = pBCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
@@ -854,6 +876,9 @@ static void test_BCryptEncrypt(void)
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(key != NULL, "key not set\n");
+
+    ret = pBCryptGetProperty(key, BCRYPT_AUTH_TAG_LENGTH, (UCHAR*)&tag_length, sizeof(tag_length), &size, 0);
+    ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
 
     memset(&auth_info, 0, sizeof(auth_info));
     auth_info.cbSize = sizeof(auth_info);
@@ -1108,6 +1133,7 @@ static void test_BCryptDecrypt(void)
         {0x17,0x9d,0xc0,0x7a,0xf0,0xcf,0xaa,0xd5,0x1c,0x11,0xc4,0x4b,0xd6,0xa3,0x3e,0x77};
     BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO auth_info;
     BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
+    BCRYPT_AUTH_TAG_LENGTHS_STRUCT tag_lengths;
     BCRYPT_ALG_HANDLE aes;
     BCRYPT_KEY_HANDLE key;
     UCHAR *buf, plaintext[48], ivbuf[16];
@@ -1241,6 +1267,9 @@ static void test_BCryptDecrypt(void)
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(key != NULL, "key not set\n");
+
+    ret = pBCryptGetProperty(key, BCRYPT_AUTH_TAG_LENGTH, (UCHAR*)&tag_lengths, sizeof(tag_lengths), &size, 0);
+    ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
 
     memset(&auth_info, 0, sizeof(auth_info));
     auth_info.cbSize = sizeof(auth_info);
