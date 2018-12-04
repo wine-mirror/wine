@@ -2138,7 +2138,8 @@ static void debug_dump_ir_constructor(const struct hlsl_ir_constructor *construc
 
 static const char *debug_writemask(DWORD writemask)
 {
-    char string[5], components[] = {'x', 'y', 'z', 'w'};
+    static const char components[] = {'x', 'y', 'z', 'w'};
+    char string[5];
     unsigned int i = 0, pos = 0;
 
     while (writemask)
