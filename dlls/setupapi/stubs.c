@@ -612,18 +612,6 @@ BOOL WINAPI SetupDiDestroyDriverInfoList(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DAT
 }
 
 /***********************************************************************
- *              SetupDiDeleteDeviceInfo  (SETUPAPI.@)
- */
-
-BOOL WINAPI SetupDiDeleteDeviceInfo(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA DeviceInfoData)
- {
-    FIXME(": stub %p, %p\n", DeviceInfoSet, DeviceInfoData);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
- }
-
-/***********************************************************************
  *              SetupDiDrawMiniIcon  (SETUPAPI.@)
  */
 INT WINAPI SetupDiDrawMiniIcon(HDC hdc, RECT rc, INT MiniIconIndex, DWORD Flags)

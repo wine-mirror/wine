@@ -1575,6 +1575,23 @@ BOOL WINAPI SetupDiRemoveDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 }
 
 /***********************************************************************
+ *              SetupDiDeleteDeviceInfo (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiDeleteDeviceInfo(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
+{
+    struct device *device;
+
+    TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    delete_device(device);
+
+    return TRUE;
+}
+
+/***********************************************************************
  *              SetupDiRemoveDeviceInterface (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiRemoveDeviceInterface(HDEVINFO devinfo, SP_DEVICE_INTERFACE_DATA *iface_data)

@@ -337,13 +337,21 @@ static void test_device_info(void)
     check_device_info(set, 2, &guid, "ROOT\\LEGACY_BOGUS\\0002");
     check_device_info(set, 3, &guid, NULL);
 
+    ret = SetupDiEnumDeviceInfo(set, 0, &ret_device);
+    ok(ret, "Failed to enumerate devices, error %#x.\n", GetLastError());
+    ret = SetupDiDeleteDeviceInfo(set, &ret_device);
+    ok(ret, "Failed to delete device, error %#x.\n", GetLastError());
+
+    check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0001");
+    check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\0002");
+    check_device_info(set, 2, &guid, NULL);
+
     ret = SetupDiRemoveDevice(set, &device);
     ok(ret, "Got unexpected error %#x.\n", GetLastError());
 
-    check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0000");
-    check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\0001");
+    check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0001");
 
-    ret = SetupDiEnumDeviceInfo(set, 2, &ret_device);
+    ret = SetupDiEnumDeviceInfo(set, 1, &ret_device);
     ok(ret, "Got unexpected error %#x.\n", GetLastError());
     ok(IsEqualGUID(&ret_device.ClassGuid, &guid), "Got unexpected class %s.\n",
             wine_dbgstr_guid(&ret_device.ClassGuid));
@@ -353,7 +361,7 @@ static void test_device_info(void)
     ok(ret_device.DevInst == device.DevInst, "Expected device node %#x, got %#x.\n",
             device.DevInst, ret_device.DevInst);
 
-    check_device_info(set, 3, &guid, NULL);
+    check_device_info(set, 2, &guid, NULL);
 
     SetupDiDestroyDeviceInfoList(set);
 
@@ -469,7 +477,7 @@ static void test_register_device_info(void)
     SP_DEVINFO_DATA device = {0};
     BOOL ret;
     HDEVINFO set;
-    char id[30];
+    int i = 0;
 
     SetLastError(0xdeadbeef);
     ret = SetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
@@ -497,11 +505,24 @@ static void test_register_device_info(void)
 
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device);
     ok(ret, "Failed to create device, error %#x.\n", GetLastError());
-
     ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
     ok(ret, "Failed to register device, error %#x.\n", GetLastError());
 
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0001", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+    ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
+    ok(ret, "Failed to register device, error %#x.\n", GetLastError());
+    ret = SetupDiRemoveDevice(set, &device);
+    ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0002", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#x.\n", GetLastError());
+    ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
+    ok(ret, "Failed to register device, error %#x.\n", GetLastError());
+    ret = SetupDiDeleteDeviceInfo(set, &device);
+    ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0003", &guid, NULL, NULL, 0, &device);
     ok(ret, "Failed to create device, error %#x.\n", GetLastError());
 
     SetupDiDestroyDeviceInfoList(set);
@@ -509,18 +530,15 @@ static void test_register_device_info(void)
     set = SetupDiGetClassDevsA(&guid, NULL, NULL, 0);
     ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
 
-    ret = SetupDiEnumDeviceInfo(set, 0, &device);
-    ok(ret, "Failed to enumerate devices, error %#x.\n", GetLastError());
-    ret = SetupDiGetDeviceInstanceIdA(set, &device, id, sizeof(id), NULL);
-    ok(ret, "Failed to get device id, error %#x.\n", GetLastError());
-    ok(!strcasecmp(id, "Root\\LEGACY_BOGUS\\0000"), "Got unexpected id %s.\n", id);
+    check_device_info(set, 0, &guid, "Root\\LEGACY_BOGUS\\0000");
+    check_device_info(set, 1, &guid, "Root\\LEGACY_BOGUS\\0002");
+    check_device_info(set, 2, &guid, NULL);
 
-    ret = SetupDiRemoveDevice(set, &device);
-    ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
-
-    ret = SetupDiEnumDeviceInfo(set, 1, &device);
-    ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "Got unexpected error %#x.\n", GetLastError());
+    while (SetupDiEnumDeviceInfo(set, i++, &device))
+    {
+        ret = SetupDiRemoveDevice(set, &device);
+        ok(ret, "Failed to remove device, error %#x.\n", GetLastError());
+    }
 
     SetupDiDestroyDeviceInfoList(set);
 }
