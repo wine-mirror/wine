@@ -2132,37 +2132,6 @@ DWORD WINAPI SHCopyKeyW(HKEY hKeySrc, LPCWSTR lpszSrcSubKey, HKEY hKeyDst, DWORD
  */
 
 /*************************************************************************
- *      @     [SHLWAPI.280]
- *
- * Read an integer value from the registry, falling back to a default.
- *
- * PARAMS
- *  hKey      [I] Registry key to read from
- *  lpszValue [I] Value name to read
- *  iDefault  [I] Default value to return
- *
- * RETURNS
- *  The value contained in the given registry value if present, otherwise
- *  iDefault.
- */
-int WINAPI SHRegGetIntW(HKEY hKey, LPCWSTR lpszValue, int iDefault)
-{
-  TRACE("(%p,%s,%d)\n", hKey, debugstr_w(lpszValue), iDefault);
-
-  if (hKey)
-  {
-    WCHAR szBuff[32];
-    DWORD dwSize = sizeof(szBuff);
-    szBuff[0] = '\0';
-    SHQueryValueExW(hKey, lpszValue, 0, 0, szBuff, &dwSize);
-
-    if(*szBuff >= '0' && *szBuff <= '9')
-      return StrToIntW(szBuff);
-  }
-  return iDefault;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.343]
  *
  * Create or open an explorer ClassId Key.

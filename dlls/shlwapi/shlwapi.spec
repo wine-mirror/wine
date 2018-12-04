@@ -277,7 +277,7 @@
 277 stub -noname SHDialogBox
 278 stdcall -noname SHCreateWorkerWindowW(ptr ptr long long ptr long)
 279 stdcall -noname SHInvokeDefaultCommand(ptr ptr ptr)
-280 stdcall -ordinal SHRegGetIntW(ptr wstr long)
+280 stdcall -ordinal SHRegGetIntW(ptr wstr long) shcore.SHRegGetIntW
 281 stdcall -noname SHPackDispParamsV(ptr ptr long ptr)
 282 varargs -noname SHPackDispParams(ptr ptr long)
 283 stdcall -noname IConnectionPoint_InvokeWithCancel(ptr long long long long)
