@@ -999,6 +999,33 @@ HRESULT WINAPI WsReadBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *des
 }
 
 /**************************************************************************
+ *          WsFillBody		[webservices.@]
+ */
+HRESULT WINAPI WsFillBody( WS_MESSAGE *handle, ULONG size, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %u %p %p\n", handle, size, ctx, error );
+
+    if (!msg) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = WsFillReader( msg->reader_body, size, ctx, error );
+
+    LeaveCriticalSection( &msg->cs );
+    TRACE( "returning %08x\n", hr );
+    return hr;
+}
+
+/**************************************************************************
  *          WsInitializeMessage		[webservices.@]
  */
 HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATION init,
