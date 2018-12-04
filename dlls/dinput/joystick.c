@@ -766,11 +766,11 @@ HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                    LPCWSTR lpszUserName,
                                                    DWORD dwFlags)
 {
+    static const DWORD object_types[] = { DIDFT_AXIS, DIDFT_BUTTON };
+    static const DWORD type_map[] = { DIDFT_RELAXIS, DIDFT_PSHBUTTON };
     JoystickGenericImpl *This = impl_from_IDirectInputDevice8W(iface);
     unsigned int i, j;
     BOOL has_actions = FALSE;
-    DWORD object_types[] = { DIDFT_AXIS, DIDFT_BUTTON };
-    DWORD type_map[] = { DIDFT_RELAXIS, DIDFT_PSHBUTTON };
 
     FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 
