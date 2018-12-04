@@ -690,8 +690,8 @@
 @ stdcall SHCreateThreadRef(ptr ptr) shcore.SHCreateThreadRef
 @ stdcall SHDeleteEmptyKeyA(long str) shcore.SHDeleteEmptyKeyA
 @ stdcall SHDeleteEmptyKeyW(long wstr) shcore.SHDeleteEmptyKeyW
-@ stdcall SHDeleteKeyA(long str)
-@ stdcall SHDeleteKeyW(long wstr)
+@ stdcall SHDeleteKeyA(long str) shcore.SHDeleteKeyA
+@ stdcall SHDeleteKeyW(long wstr) shcore.SHDeleteKeyW
 @ stdcall SHDeleteOrphanKeyA(long str)
 @ stdcall SHDeleteOrphanKeyW(long wstr)
 @ stdcall SHDeleteValueA(long  str  str)
