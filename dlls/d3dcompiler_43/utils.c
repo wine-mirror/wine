@@ -2142,6 +2142,8 @@ static const char *debug_writemask(DWORD writemask)
     char string[5];
     unsigned int i = 0, pos = 0;
 
+    assert(!(writemask & ~BWRITERSP_WRITEMASK_ALL));
+
     while (writemask)
     {
         if (writemask & 1)
