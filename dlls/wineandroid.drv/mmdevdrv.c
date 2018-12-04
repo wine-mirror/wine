@@ -287,8 +287,8 @@ static SLObjectItf outputmix;
 
 HRESULT AUDDRV_Init(void)
 {
+    static const SLEngineOption options[] = { {SL_ENGINEOPTION_THREADSAFE, SL_BOOLEAN_TRUE} };
     SLresult sr;
-    SLEngineOption options[] = { {SL_ENGINEOPTION_THREADSAFE, SL_BOOLEAN_TRUE} };
 
     sr = pslCreateEngine(&sl, 1, options, 0, NULL, NULL);
     if(sr != SL_RESULT_SUCCESS){
