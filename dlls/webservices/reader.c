@@ -653,6 +653,7 @@ HRESULT WINAPI WsFillReader( WS_XML_READER *handle, ULONG min_size, const WS_ASY
 
     TRACE( "%p %u %p %p\n", handle, min_size, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
 
     if (!reader) return E_INVALIDARG;
 
@@ -3582,7 +3583,7 @@ HRESULT WINAPI WsMoveReader( WS_XML_READER *handle, WS_MOVE_TO move, BOOL *found
         return E_INVALIDARG;
     }
 
-    if (!reader->input_type) hr = WS_E_INVALID_OPERATION;
+    if (reader->input_type != WS_XML_READER_INPUT_TYPE_BUFFER) hr = WS_E_INVALID_OPERATION;
     else hr = read_move_to( reader, move, found );
 
     LeaveCriticalSection( &reader->cs );
@@ -6982,8 +6983,8 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     {
         if (input->inputType == WS_XML_READER_INPUT_TYPE_BUFFER)
         {
-            WS_XML_READER_TEXT_ENCODING *text = (WS_XML_READER_TEXT_ENCODING *)encoding;
-            WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
+            const WS_XML_READER_TEXT_ENCODING *text = (const WS_XML_READER_TEXT_ENCODING *)encoding;
+            const WS_XML_READER_BUFFER_INPUT *buf = (const WS_XML_READER_BUFFER_INPUT *)input;
             if (text->charSet != WS_CHARSET_AUTO) reader->input_charset = text->charSet;
             else reader->input_charset = detect_charset( buf->encodedData, buf->encodedDataSize, &offset );
         }
@@ -6993,7 +6994,7 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     }
     case WS_XML_READER_ENCODING_TYPE_BINARY:
     {
-        WS_XML_READER_BINARY_ENCODING *bin = (WS_XML_READER_BINARY_ENCODING *)encoding;
+        const WS_XML_READER_BINARY_ENCODING *bin = (const WS_XML_READER_BINARY_ENCODING *)encoding;
         reader->input_enc     = WS_XML_READER_ENCODING_TYPE_BINARY;
         reader->input_charset = 0;
         reader->dict_static   = bin->staticDictionary ? bin->staticDictionary : &dict_builtin_static.dict;
@@ -7010,13 +7011,13 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     {
     case WS_XML_READER_INPUT_TYPE_BUFFER:
     {
-        WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
+        const WS_XML_READER_BUFFER_INPUT *buf = (const WS_XML_READER_BUFFER_INPUT *)input;
         set_input_buffer( reader, (const unsigned char *)buf->encodedData + offset, buf->encodedDataSize - offset );
         break;
     }
     case WS_XML_READER_INPUT_TYPE_STREAM:
     {
-        WS_XML_READER_STREAM_INPUT *stream = (WS_XML_READER_STREAM_INPUT *)input;
+        const WS_XML_READER_STREAM_INPUT *stream = (const WS_XML_READER_STREAM_INPUT *)input;
         if (!reader->stream_buf && !(reader->stream_buf = heap_alloc( STREAM_BUFSIZE )))
         {
             hr = E_OUTOFMEMORY;
