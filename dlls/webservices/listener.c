@@ -644,7 +644,10 @@ HRESULT WINAPI WsAcceptChannel( WS_LISTENER *handle, WS_CHANNEL *channel_handle,
         return E_INVALIDARG;
     }
 
-    if (listener->state != WS_LISTENER_STATE_OPEN || listener->channel) hr = WS_E_INVALID_OPERATION;
+    if (listener->state != WS_LISTENER_STATE_OPEN || (listener->channel && listener->channel != channel_handle))
+    {
+        hr = WS_E_INVALID_OPERATION;
+    }
     else
     {
         wait = listener->wait;
