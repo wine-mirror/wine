@@ -698,8 +698,8 @@
 @ stdcall SHDeleteValueW(long wstr wstr)
 @ stdcall SHEnumKeyExA(long long str ptr)
 @ stdcall SHEnumKeyExW(long long wstr ptr)
-@ stdcall SHEnumValueA(long long str ptr ptr ptr ptr)
-@ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr)
+@ stdcall SHEnumValueA(long long str ptr ptr ptr ptr) shcore.SHEnumValueA
+@ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr) shcore.SHEnumValueW
 @ stdcall SHGetInverseCMAP ( ptr long )
 @ stdcall SHGetThreadRef(ptr) shcore.SHGetThreadRef
 @ stdcall SHGetValueA ( long str str ptr ptr ptr )

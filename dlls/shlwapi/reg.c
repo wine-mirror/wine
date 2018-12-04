@@ -1667,51 +1667,6 @@ LONG WINAPI SHEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpszSubKey,
 }
 
 /*************************************************************************
- * SHEnumValueA   [SHLWAPI.@]
- *
- * Enumerate values in a registry key.
- *
- * PARAMS
- *   hKey      [I] Handle to registry key
- *   dwIndex   [I] Index of key to enumerate
- *   lpszValue [O] Pointer updated with the values name
- *   pwLen     [O] Pointer updated with the values length
- *   pwType    [O] Pointer updated with the values type
- *   pvData    [O] Pointer updated with the values data
- *   pcbData   [O] Pointer updated with the values size
- *
- * RETURNS
- *   Success: ERROR_SUCCESS. Output parameters are updated.
- *   Failure: An error code from RegEnumValueA().
- */
-LONG WINAPI SHEnumValueA(HKEY hKey, DWORD dwIndex, LPSTR lpszValue,
-                         LPDWORD pwLen, LPDWORD pwType,
-                         LPVOID pvData, LPDWORD pcbData)
-{
-  TRACE("(hkey=%p,%d,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
-        debugstr_a(lpszValue), pwLen, pwType, pvData, pcbData);
-
-  return RegEnumValueA(hKey, dwIndex, lpszValue, pwLen, NULL,
-                       pwType, pvData, pcbData);
-}
-
-/*************************************************************************
- * SHEnumValueW   [SHLWAPI.@]
- *
- * See SHEnumValueA.
- */
-LONG WINAPI SHEnumValueW(HKEY hKey, DWORD dwIndex, LPWSTR lpszValue,
-                         LPDWORD pwLen, LPDWORD pwType,
-                         LPVOID pvData, LPDWORD pcbData)
-{
-  TRACE("(hkey=%p,%d,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
-        debugstr_w(lpszValue), pwLen, pwType, pvData, pcbData);
-
-  return RegEnumValueW(hKey, dwIndex, lpszValue, pwLen, NULL,
-                       pwType, pvData, pcbData);
-}
-
-/*************************************************************************
  * @   [SHLWAPI.205]
  *
  * Get a value from the registry.
