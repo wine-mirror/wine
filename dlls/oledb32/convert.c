@@ -638,7 +638,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                 hr = E_OUTOFMEMORY;
             else
             {
-                const char hexchars[] = "0123456789ABCDEF";
+                static const char hexchars[] = "0123456789ABCDEF";
                 WCHAR *s = *d;
                 unsigned char *p = src;
                 while (src_len > 0)
