@@ -19,8 +19,8 @@
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) shlwapi.SHCreateStreamOnFileEx
 @ stdcall SHCreateStreamOnFileW(wstr long ptr) shlwapi.SHCreateStreamOnFileW
 @ stdcall SHCreateThreadRef(ptr ptr) shlwapi.SHCreateThreadRef
-@ stdcall SHDeleteEmptyKeyA(long ptr) shlwapi.SHDeleteEmptyKeyA
-@ stdcall SHDeleteEmptyKeyW(long ptr) shlwapi.SHDeleteEmptyKeyW
+@ stdcall SHDeleteEmptyKeyA(long str) shlwapi.SHDeleteEmptyKeyA
+@ stdcall SHDeleteEmptyKeyW(long wstr) shlwapi.SHDeleteEmptyKeyW
 @ stdcall SHDeleteKeyA(long str) shlwapi.SHDeleteKeyA
 @ stdcall SHDeleteKeyW(long wstr) shlwapi.SHDeleteKeyW
 @ stdcall SHDeleteValueA(long  str  str) shlwapi.SHDeleteValueA

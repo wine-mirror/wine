@@ -40,8 +40,8 @@
 @ stdcall SHCreateThread(ptr ptr long ptr)
 @ stdcall SHCreateThreadRef(ptr ptr)
 @ stub SHCreateThreadWithHandle
-@ stdcall SHDeleteEmptyKeyA(long ptr)
-@ stdcall SHDeleteEmptyKeyW(long ptr)
+@ stdcall SHDeleteEmptyKeyA(long str)
+@ stdcall SHDeleteEmptyKeyW(long wstr)
 @ stdcall SHDeleteKeyA(long str)
 @ stdcall SHDeleteKeyW(long wstr)
 @ stdcall SHDeleteValueA(long str str)

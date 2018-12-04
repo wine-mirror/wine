@@ -688,8 +688,8 @@
 @ stdcall SHCreateStreamOnFileW(wstr long ptr) shcore.SHCreateStreamOnFileW
 @ stdcall SHCreateStreamWrapper(ptr ptr long ptr)
 @ stdcall SHCreateThreadRef(ptr ptr) shcore.SHCreateThreadRef
-@ stdcall SHDeleteEmptyKeyA(long ptr)
-@ stdcall SHDeleteEmptyKeyW(long ptr)
+@ stdcall SHDeleteEmptyKeyA(long str) shcore.SHDeleteEmptyKeyA
+@ stdcall SHDeleteEmptyKeyW(long wstr) shcore.SHDeleteEmptyKeyW
 @ stdcall SHDeleteKeyA(long str)
 @ stdcall SHDeleteKeyW(long wstr)
 @ stdcall SHDeleteOrphanKeyA(long str)
