@@ -813,7 +813,7 @@ HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR pszThemeName,
                                              LPWSTR pszValueBuff,
                                              int cchMaxValChars)
 {
-    const WORD wDocToRes[] = {
+    static const WORD wDocToRes[] = {
         TMT_DISPLAYNAME,5000,
         TMT_TOOLTIP,5001,
         TMT_COMPANY,5002,
