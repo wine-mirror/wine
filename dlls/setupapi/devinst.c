@@ -104,7 +104,6 @@ struct DeviceInfoSet
     DWORD magic;        /* if is equal to SETUP_DEVICE_INFO_SET_MAGIC struct is okay */
     GUID ClassGuid;
     HWND hwndParent;
-    DWORD cDevices;
     struct list devices;
 };
 
@@ -670,7 +669,6 @@ static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     device->devnode = alloc_devnode(device);
     device->removed = FALSE;
     list_add_tail(&set->devices, &device->entry);
-    set->cDevices++;
 
     SETUPDI_GuidToString(class, guidstr);
     SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CLASSGUID,
@@ -1289,7 +1287,6 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
     memcpy(&list->ClassGuid,
             ClassGuid ? ClassGuid : &GUID_NULL,
             sizeof(list->ClassGuid));
-    list->cDevices = 0;
     list_init(&list->devices);
 
     return list;
@@ -1475,7 +1472,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
     if ((flags & DICD_GENERATE_ID))
     {
         static const WCHAR formatW[] = {'R','O','O','T','\\','%','s','\\','%','0','4','d',0};
-        DWORD devId;
+        int instance_id, highest_id = -1;
 
         if (strchrW(name, '\\'))
         {
@@ -1483,29 +1480,20 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
             return FALSE;
         }
 
-        if (set->cDevices)
+        LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
         {
-            DWORD highestDevID = 0;
+            const WCHAR *instance_str = strrchrW(device->instanceId, '\\');
 
-            LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
-            {
-                const WCHAR *devName = strrchrW(device->instanceId, '\\');
-                DWORD id;
-
-                if (devName)
-                    devName++;
-                else
-                    devName = device->instanceId;
-                id = SETUPDI_DevNameToDevID(devName);
-                if (id != 0xffffffff && id > highestDevID)
-                    highestDevID = id;
-            }
-            devId = highestDevID + 1;
+            if (instance_str)
+                instance_str++;
+            else
+                instance_str = device->instanceId;
+            instance_id = SETUPDI_DevNameToDevID(instance_str);
+            if (instance_id != 0xffffffff && instance_id > highest_id)
+                highest_id = instance_id;
         }
-        else
-            devId = 0;
 
-        if (snprintfW(id, ARRAY_SIZE(id), formatW, name, devId) == -1)
+        if (snprintfW(id, ARRAY_SIZE(id), formatW, name, highest_id + 1) == -1)
         {
             SetLastError(ERROR_INVALID_DEVINST_NAME);
             return FALSE;
@@ -1646,22 +1634,17 @@ BOOL WINAPI SetupDiEnumDeviceInfo(HDEVINFO devinfo, DWORD index, SP_DEVINFO_DATA
         return FALSE;
     }
 
-    if (index >= set->cDevices)
-    {
-        SetLastError(ERROR_NO_MORE_ITEMS);
-        return FALSE;
-    }
-
     LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
     {
         if (i++ == index)
         {
             copy_device_data(device_data, device);
-            break;
+            return TRUE;
         }
     }
 
-    return TRUE;
+    SetLastError(ERROR_NO_MORE_ITEMS);
+    return FALSE;
 }
 
 /***********************************************************************
