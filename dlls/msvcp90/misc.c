@@ -112,7 +112,7 @@ static const char str_ETIMEDOUT[]       = "connection timed out";
 static const char str_ETXTBSY[]         = "text file busy";
 static const char str_EWOULDBLOCK[]     = "operation would block";
 
-static struct {
+static const struct {
     int err;
     const char *str;
 } syserror_map[] =
@@ -199,7 +199,7 @@ static struct {
 #endif
 
 #if _MSVCP_VER >= 140
-static struct {
+static const struct {
     int winerr;
     int doserr;
 } winerror_map[] =
