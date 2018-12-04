@@ -915,7 +915,7 @@ error:
 
 Capture * qcap_driver_init( IPin *pOut, USHORT card )
 {
-    const char msg[] = 
+    static const char msg[] =
         "The v4l headers were not available at compile time,\n"
         "so video capture support is not available.\n";
     MESSAGE(msg);

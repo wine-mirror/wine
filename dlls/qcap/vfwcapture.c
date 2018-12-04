@@ -524,10 +524,10 @@ static HRESULT WINAPI
 PPB_Load( IPersistPropertyBag * iface, IPropertyBag *pPropBag,
           IErrorLog *pErrorLog )
 {
+    static const OLECHAR VFWIndex[] = {'V','F','W','I','n','d','e','x',0};
     VfwCapture *This = impl_from_IPersistPropertyBag(iface);
     HRESULT hr;
     VARIANT var;
-    const OLECHAR VFWIndex[] = {'V','F','W','I','n','d','e','x',0};
 
     TRACE("%p/%p-> (%p, %p)\n", iface, This, pPropBag, pErrorLog);
 
