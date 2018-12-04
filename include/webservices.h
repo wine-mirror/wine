@@ -296,14 +296,20 @@ typedef struct _WS_ASYNC_CONTEXT {
 typedef HRESULT (CALLBACK *WS_READ_CALLBACK)
     (void*, void*, ULONG, ULONG*, const WS_ASYNC_CONTEXT*, WS_ERROR*);
 
-typedef HRESULT (CALLBACK *WS_WRITE_CALLBACK)
-    (void*, const WS_BYTES*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*);
-
 typedef struct _WS_XML_READER_STREAM_INPUT {
     WS_XML_READER_INPUT input;
     WS_READ_CALLBACK readCallback;
     void *readCallbackState;
 } WS_XML_READER_STREAM_INPUT;
+
+typedef HRESULT (CALLBACK *WS_WRITE_CALLBACK)
+    (void*, const WS_BYTES*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*);
+
+typedef struct _WS_XML_WRITER_STREAM_OUTPUT {
+    WS_XML_WRITER_OUTPUT output;
+    WS_WRITE_CALLBACK writeCallback;
+    void *writeCallbackState;
+} WS_XML_WRITER_STREAM_OUTPUT;
 
 typedef enum {
     WS_ELEMENT_TYPE_MAPPING         = 1,
@@ -1626,6 +1632,8 @@ HRESULT WINAPI WsFillBody(WS_MESSAGE*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*
 HRESULT WINAPI WsFillReader(WS_XML_READER*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*);
 HRESULT WINAPI WsFindAttribute(WS_XML_READER*, const WS_XML_STRING*, const WS_XML_STRING*, BOOL,
                                ULONG*, WS_ERROR*);
+HRESULT WINAPI WsFlushBody(WS_MESSAGE*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*);
+HRESULT WINAPI WsFlushWriter(WS_XML_WRITER*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*);
 void WINAPI WsFreeChannel(WS_CHANNEL*);
 void WINAPI WsFreeError(WS_ERROR*);
 void WINAPI WsFreeHeap(WS_HEAP*);

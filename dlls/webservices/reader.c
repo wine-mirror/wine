@@ -6921,7 +6921,6 @@ static void set_input_buffer( struct reader *reader, const unsigned char *data, 
     reader->text_conv_offset = 0;
 }
 
-#define STREAM_BUFSIZE 4096
 static void set_input_stream( struct reader *reader, WS_READ_CALLBACK callback, void *state )
 {
     reader->input_type     = WS_XML_READER_INPUT_TYPE_STREAM;

@@ -4685,6 +4685,76 @@ static void test_repeating_element_choice(void)
     WsFreeWriter( writer );
 }
 
+static const struct stream_test
+{
+    ULONG min_size;
+    ULONG ret_size;
+}
+stream_tests[] =
+{
+    { 0, 4 },
+    { 1, 4 },
+    { 4, 4 },
+    { 5, 4 },
+};
+
+static CALLBACK HRESULT write_callback( void *state, const WS_BYTES *buf, ULONG count,
+                                        const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    ULONG i = *(ULONG *)state;
+    ok( buf->length == stream_tests[i].ret_size, "%u: got %u\n", i, buf->length );
+    ok( !memcmp( buf->bytes, "<t/>", stream_tests[i].ret_size ), "%u: wrong data\n", i );
+    ok( count == 1, "%u: got %u\n", i, count );
+    return S_OK;
+}
+
+static void test_stream_output(void)
+{
+    static WS_XML_STRING str_ns = {0, NULL}, str_t = {1, (BYTE *)"t"};
+    WS_XML_WRITER_TEXT_ENCODING text = {{WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8};
+    WS_XML_WRITER_STREAM_OUTPUT stream;
+    WS_XML_WRITER *writer;
+    HRESULT hr;
+    ULONG i = 0;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFlushWriter( writer, 0, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    stream.output.outputType = WS_XML_WRITER_OUTPUT_TYPE_STREAM;
+    stream.writeCallback      = write_callback;
+    stream.writeCallbackState = &i;
+    hr = WsSetOutput( writer, &text.encoding, &stream.output, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutput( writer, &text.encoding, &stream.output, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsFlushWriter( writer, 0, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (i = 0; i < ARRAY_SIZE(stream_tests); i++)
+    {
+        stream.writeCallbackState = &i;
+        hr = WsSetOutput( writer, &text.encoding, &stream.output, NULL, 0, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        hr = WsWriteEndElement( writer, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        hr = WsFlushWriter( writer, stream_tests[i].min_size, NULL, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+    }
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -4728,4 +4798,5 @@ START_TEST(writer)
     test_union_type();
     test_text_types_binary();
     test_repeating_element_choice();
+    test_stream_output();
 }

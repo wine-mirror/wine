@@ -18,6 +18,8 @@
 
 #include "winhttp.h"
 
+#define STREAM_BUFSIZE 4096
+
 struct xmlbuf
 {
     WS_HEAP                     *heap;
