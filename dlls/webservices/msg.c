@@ -831,6 +831,33 @@ done:
     return hr;
 }
 
+/**************************************************************************
+ *          WsFlushBody		[webservices.@]
+ */
+HRESULT WINAPI WsFlushBody( WS_MESSAGE *handle, ULONG size, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %u %p %p\n", handle, size, ctx, error );
+
+    if (!msg) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = WsFlushWriter( msg->writer_body, size, ctx, error );
+
+    LeaveCriticalSection( &msg->cs );
+    TRACE( "returning %08x\n", hr );
+    return hr;
+}
+
 static BOOL match_current_element( WS_XML_READER *reader, const WS_XML_STRING *localname )
 {
     const WS_XML_NODE *node;

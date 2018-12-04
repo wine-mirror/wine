@@ -46,7 +46,7 @@
 @ stdcall WsFillBody(ptr long ptr ptr)
 @ stdcall WsFillReader(ptr long ptr ptr)
 @ stdcall WsFindAttribute(ptr ptr ptr long ptr ptr)
-@ stub WsFlushBody
+@ stdcall WsFlushBody(ptr long ptr ptr)
 @ stdcall WsFlushWriter(ptr long ptr ptr)
 @ stdcall WsFreeChannel(ptr)
 @ stdcall WsFreeError(ptr)
