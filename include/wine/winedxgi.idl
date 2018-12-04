@@ -23,6 +23,23 @@ import "dxgi1_6.idl";
 [
     object,
     local,
+    uuid(53cb4ff0-c25a-4164-a891-0e83db0a7aac)
+]
+interface IWineDXGISwapChainFactory : IUnknown
+{
+    HRESULT create_swapchain(
+        [in] IDXGIFactory *factory,
+        [in] HWND window,
+        [in] const DXGI_SWAP_CHAIN_DESC1 *desc,
+        [in] const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
+        [in] IDXGIOutput *output,
+        [out] IDXGISwapChain1 **swapchain
+    );
+}
+
+[
+    object,
+    local,
     uuid(3e1ff30b-c951-48c3-b010-0fb49f3dca71)
 ]
 interface IWineDXGIDevice : IDXGIDevice2

@@ -250,8 +250,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
         IDXGIOutput *output, IDXGISwapChain1 **swapchain)
 {
+    IWineDXGISwapChainFactory *swapchain_factory;
     ID3D12CommandQueue *command_queue;
-    IWineDXGIDevice *dxgi_device;
     HRESULT hr;
 
     TRACE("iface %p, device %p, window %p, desc %p, fullscreen_desc %p, output %p, swapchain %p.\n",
@@ -275,10 +275,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
     if (output)
         FIXME("Ignoring output %p.\n", output);
 
-    if (SUCCEEDED(IUnknown_QueryInterface(device, &IID_IWineDXGIDevice, (void **)&dxgi_device)))
+    if (SUCCEEDED(IUnknown_QueryInterface(device, &IID_IWineDXGISwapChainFactory, (void **)&swapchain_factory)))
     {
-        hr = d3d11_swapchain_create(dxgi_device, window, desc, fullscreen_desc, swapchain);
-        IWineDXGIDevice_Release(dxgi_device);
+        hr = IWineDXGISwapChainFactory_create_swapchain(swapchain_factory,
+                (IDXGIFactory *)iface, window, desc, fullscreen_desc, output, swapchain);
+        IWineDXGISwapChainFactory_Release(swapchain_factory);
         return hr;
     }
 
