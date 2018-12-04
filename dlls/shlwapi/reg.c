@@ -1631,42 +1631,6 @@ DWORD WINAPI SHDeleteValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue)
 }
 
 /*************************************************************************
- * SHEnumKeyExA   [SHLWAPI.@]
- *
- * Enumerate sub keys in a registry key.
- *
- * PARAMS
- *   hKey       [I] Handle to registry key
- *   dwIndex    [I] Index of key to enumerate
- *   lpszSubKey [O] Pointer updated with the subkey name
- *   pwLen      [O] Pointer updated with the subkey length
- *
- * RETURNS
- *   Success: ERROR_SUCCESS. lpszSubKey and pwLen are updated.
- *   Failure: An error code from RegEnumKeyExA().
- */
-LONG WINAPI SHEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpszSubKey,
-                         LPDWORD pwLen)
-{
-  TRACE("(hkey=%p,%d,%s,%p)\n", hKey, dwIndex, debugstr_a(lpszSubKey), pwLen);
-
-  return RegEnumKeyExA(hKey, dwIndex, lpszSubKey, pwLen, NULL, NULL, NULL, NULL);
-}
-
-/*************************************************************************
- * SHEnumKeyExW   [SHLWAPI.@]
- *
- * See SHEnumKeyExA.
- */
-LONG WINAPI SHEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpszSubKey,
-                         LPDWORD pwLen)
-{
-  TRACE("(hkey=%p,%d,%s,%p)\n", hKey, dwIndex, debugstr_w(lpszSubKey), pwLen);
-
-  return RegEnumKeyExW(hKey, dwIndex, lpszSubKey, pwLen, NULL, NULL, NULL, NULL);
-}
-
-/*************************************************************************
  * @   [SHLWAPI.205]
  *
  * Get a value from the registry.
