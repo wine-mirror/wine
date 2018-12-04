@@ -1680,6 +1680,20 @@ RTL_UNLOAD_EVENT_TRACE * WINAPI RtlGetUnloadEventTrace(void)
 }
 
 /*********************************************************************
+ *           RtlGetUnloadEventTraceEx [NTDLL.@]
+ */
+void WINAPI RtlGetUnloadEventTraceEx(ULONG **size, ULONG **count, void **trace)
+{
+    static ULONG dummy_size, dummy_count;
+
+    FIXME("(%p, %p, %p): stub!\n", size, count, trace);
+
+    if (size)  *size  = &dummy_size;
+    if (count) *count = &dummy_count;
+    if (trace) *trace = NULL;
+}
+
+/*********************************************************************
  *           RtlQueryPackageIdentity [NTDLL.@]
  */
 NTSTATUS WINAPI RtlQueryPackageIdentity(HANDLE token, WCHAR *fullname, SIZE_T *fullname_size,

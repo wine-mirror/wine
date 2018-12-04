@@ -681,6 +681,7 @@
 # @ stub RtlGetSetBootStatusData
 @ stdcall RtlGetThreadErrorMode()
 @ stdcall RtlGetUnloadEventTrace()
+@ stdcall RtlGetUnloadEventTraceEx(ptr ptr ptr)
 @ stub RtlGetUserInfoHeap
 @ stdcall RtlGetVersion(ptr)
 @ stdcall -arch=arm,arm64,x86_64 RtlGrowFunctionTable(ptr long)
