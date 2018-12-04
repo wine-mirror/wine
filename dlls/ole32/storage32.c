@@ -10034,8 +10034,8 @@ HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName
     static const WCHAR wstrStreamName[] = {1,'C', 'o', 'm', 'p', 'O', 'b', 'j', 0};
     WCHAR bufferW[OLESTREAM_MAX_STR_LEN];
 
-    BYTE pCompObjUnknown1[] = {0x01, 0x00, 0xFE, 0xFF, 0x03, 0x0A, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF};
-    BYTE pCompObjUnknown2[] = {0xF4, 0x39, 0xB2, 0x71};
+    static const BYTE pCompObjUnknown1[] = {0x01, 0x00, 0xFE, 0xFF, 0x03, 0x0A, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF};
+    static const BYTE pCompObjUnknown2[] = {0xF4, 0x39, 0xB2, 0x71};
 
     /* Initialize the CompObj structure */
     memset(&IStorageCompObj, 0, sizeof(IStorageCompObj));
@@ -10133,7 +10133,7 @@ static void OLECONVERT_CreateOlePresStream(LPSTORAGE pStorage, DWORD dwExtentX, 
     HRESULT hRes;
     IStream *pStream;
     static const WCHAR wstrStreamName[] = {2, 'O', 'l', 'e', 'P', 'r', 'e', 's', '0', '0', '0', 0};
-    BYTE pOlePresStreamHeader [] =
+    static const BYTE pOlePresStreamHeader[] =
     {
         0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x00, 0x00, 0x00,
         0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
@@ -10141,7 +10141,7 @@ static void OLECONVERT_CreateOlePresStream(LPSTORAGE pStorage, DWORD dwExtentX, 
         0x00, 0x00, 0x00, 0x00
     };
 
-    BYTE pOlePresStreamHeaderEmpty [] =
+    static const BYTE pOlePresStreamHeaderEmpty[] =
     {
         0x00, 0x00, 0x00, 0x00,
         0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
