@@ -291,7 +291,7 @@ BOOL T42_download_glyph(PHYSDEV dev, DOWNLOAD *pdl, DWORD index,
     char *buf;
     TYPE42 *t42;
 
-    const char glyph_def[] = 
+    static const char glyph_def[] =
       "/%s findfont exch 1 index\n"
       "havetype42gdir\n"
       "{/GlyphDirectory get begin %d exch def end}\n"
