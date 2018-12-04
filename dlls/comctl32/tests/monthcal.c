@@ -1798,7 +1798,7 @@ static void test_hittest_v6(void)
     mchit.iOffset = -1;
     mchit.iCol = mchit.iRow = -1;
     mchit.uHit = 0;
-    mchit.rc.left = mchit.rc.right = mchit.rc.top = mchit.rc.bottom = -1;
+    SetRect(&mchit.rc, -1, -1, -1, -1);
     ret = SendMessageA(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     expect_hex(MCHT_CALENDARDATE, ret);
     expect_hex(MCHT_CALENDARDATE, mchit.uHit);
@@ -1815,7 +1815,7 @@ static void test_hittest_v6(void)
     mchit.iOffset = -1;
     mchit.iCol = mchit.iRow = -1;
     mchit.uHit = 0;
-    mchit.rc.left = mchit.rc.right = mchit.rc.top = mchit.rc.bottom = -1;
+    SetRect(&mchit.rc, -1, -1, -1, -1);
     ret = SendMessageA(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     expect_hex(MCHT_TITLE, ret);
     expect_hex(MCHT_TITLE, mchit.uHit);
@@ -1834,7 +1834,7 @@ static void test_hittest_v6(void)
     mchit.iOffset = -2;
     mchit.iCol = mchit.iRow = -2;
     mchit.uHit = ~0;
-    mchit.rc.left = mchit.rc.right = mchit.rc.top = mchit.rc.bottom = -1;
+    SetRect(&mchit.rc, -1, -1, -1, -1);
     ret = SendMessageA(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     todo_wine expect_hex(MCHT_NOWHERE, ret);
     todo_wine expect_hex(MCHT_NOWHERE, mchit.uHit);

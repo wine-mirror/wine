@@ -1366,10 +1366,7 @@ static void test_get_set_textmargin(void)
     BOOL ret;
     DWORD type;
 
-    margin_in.top = 1;
-    margin_in.left = 2;
-    margin_in.right = 3;
-    margin_in.bottom = 4;
+    SetRect(&margin_in, 2, 1, 3, 4);
     for (type = BS_PUSHBUTTON; type <= BS_DEFCOMMANDLINK; type++)
     {
         hwnd = create_button(type, NULL);
