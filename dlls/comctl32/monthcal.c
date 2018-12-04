@@ -213,7 +213,7 @@ static inline int MONTHCAL_MonthDiff(const SYSTEMTIME *left, const SYSTEMTIME *r
 /* January is 1, December is 12 */
 int MONTHCAL_MonthLength(int month, int year)
 {
-  const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+  static const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
   /* Wrap around, this eases handling. Getting length only we shouldn't care
      about year change here cause January and December have
      the same day quantity */
