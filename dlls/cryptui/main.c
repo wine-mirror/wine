@@ -4905,7 +4905,7 @@ static const WCHAR filter_cms[] = { '*','.','s','p','c',';','*','.',
  'p','7','b',0 };
 static const WCHAR filter_all[] = { '*','.','*',0 };
 
-static struct StringToFilter
+static const struct
 {
     int     id;
     DWORD   allowFlags;
