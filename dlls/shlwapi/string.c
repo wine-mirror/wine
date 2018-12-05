@@ -2750,30 +2750,6 @@ INT WINAPI SHUnicodeToAnsi(LPCWSTR lpSrcStr, LPSTR lpDstStr, INT iLen)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.345]
- *
- * Copy one string to another.
- *
- * PARAMS
- *  lpszSrc [I] Source string to copy
- *  lpszDst [O] Destination for copy
- *  iLen    [I] Length of lpszDst in characters
- *
- * RETURNS
- *  The length of the copied string, including the terminating NUL. lpszDst
- *  contains iLen characters of lpszSrc.
- */
-DWORD WINAPI SHAnsiToAnsi(LPCSTR lpszSrc, LPSTR lpszDst, int iLen)
-{
-    LPSTR lpszRet;
-
-    TRACE("(%s,%p,0x%08x)\n", debugstr_a(lpszSrc), lpszDst, iLen);
-
-    lpszRet = StrCpyNXA(lpszDst, lpszSrc, iLen);
-    return lpszRet - lpszDst + 1;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.364]
  *
  * Determine if an Ascii string converts to Unicode and back identically.

@@ -342,7 +342,7 @@
 342 stdcall -noname SHInterlockedCompareExchange(ptr ptr ptr)
 343 stdcall -noname SHRegGetCLSIDKeyA(ptr str long long ptr)
 344 stdcall -noname SHRegGetCLSIDKeyW(ptr wstr long long ptr)
-345 stdcall -ordinal SHAnsiToAnsi(str ptr long)
+345 stdcall -ordinal SHAnsiToAnsi(str ptr long) shcore.SHAnsiToAnsi
 346 stdcall -ordinal SHUnicodeToUnicode(wstr ptr long) shcore.SHUnicodeToUnicode
 347 stdcall -noname RegDeleteValueWrapW(long wstr) advapi32.RegDeleteValueW
 348 stub -noname SHGetFileDescriptionW
