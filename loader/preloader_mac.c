@@ -48,6 +48,7 @@
 #ifdef HAVE_MACH_O_LOADER_H
 #include <mach/thread_status.h>
 #include <mach-o/loader.h>
+#include <mach-o/ldsyms.h>
 #endif
 
 #include "main.h"
@@ -98,6 +99,8 @@ void __stack_chk_fail(void) { return; }
 static const size_t page_size = 0x1000;
 static const size_t page_mask = 0xfff;
 #define target_mach_header      mach_header
+#define target_segment_command  segment_command
+#define TARGET_LC_SEGMENT       LC_SEGMENT
 #define target_thread_state_t   i386_thread_state_t
 #ifdef __DARWIN_UNIX03
 #define target_thread_ip(x)     (x)->__eip
@@ -184,6 +187,8 @@ __ASM_GLOBAL_FUNC( start,
 static const size_t page_size = 0x1000;
 static const size_t page_mask = 0xfff;
 #define target_mach_header      mach_header_64
+#define target_segment_command  segment_command_64
+#define TARGET_LC_SEGMENT       LC_SEGMENT_64
 #define target_thread_state_t   x86_thread_state64_t
 #ifdef __DARWIN_UNIX03
 #define target_thread_ip(x)     (x)->__rip
@@ -376,6 +381,36 @@ static __attribute__((noreturn,format(printf,1,2))) void fatal_error(const char 
     wld_exit(1);
 }
 
+static int preloader_overlaps_range( const void *start, const void *end )
+{
+    intptr_t slide = p_dyld_get_image_slide(&_mh_execute_header);
+    struct load_command *cmd = (struct load_command*)(&_mh_execute_header + 1);
+    int i;
+
+    for (i = 0; i < _mh_execute_header.ncmds; ++i)
+    {
+        if (cmd->cmd == TARGET_LC_SEGMENT)
+        {
+            struct target_segment_command *seg = (struct target_segment_command*)cmd;
+            const void *seg_start = (const void*)(seg->vmaddr + slide);
+            const void *seg_end = (const char*)seg_start + seg->vmsize;
+
+            if (end > seg_start && start <= seg_end)
+            {
+                char segname[sizeof(seg->segname) + 1];
+                memcpy(segname, seg->segname, sizeof(seg->segname));
+                segname[sizeof(segname) - 1] = 0;
+                wld_printf( "WINEPRELOADRESERVE range %p-%p overlaps preloader %s segment %p-%p\n",
+                             start, end, segname, seg_start, seg_end );
+                return 1;
+            }
+        }
+        cmd = (struct load_command*)((char*)cmd + cmd->cmdsize);
+    }
+
+    return 0;
+}
+
 /*
  *  preload_reserve
  *
@@ -406,7 +441,8 @@ static void preload_reserve( const char *str )
     else if (result) goto error;  /* single value '0' is allowed */
 
     /* sanity checks */
-    if (end <= start) start = end = NULL;
+    if (end <= start || preloader_overlaps_range(start, end))
+        start = end = NULL;
 
     /* check for overlap with low memory areas */
     for (i = 0; preload_info[i].size; i++)
@@ -562,6 +598,11 @@ void *wld_start( void *stack, int *is_unix_thread )
         p++;
     }
 
+    LOAD_POSIX_DYLD_FUNC( dlopen );
+    LOAD_POSIX_DYLD_FUNC( dlsym );
+    LOAD_POSIX_DYLD_FUNC( dladdr );
+    LOAD_MACHO_DYLD_FUNC( _dyld_get_image_slide );
+
     /* reserve memory that Wine needs */
     if (reserve) preload_reserve( reserve );
     for (i = 0; preload_info[i].size; i++)
@@ -575,11 +616,6 @@ void *wld_start( void *stack, int *is_unix_thread )
 
     if (!map_region( &builtin_dlls ))
         builtin_dlls.size = 0;
-
-    LOAD_POSIX_DYLD_FUNC( dlopen );
-    LOAD_POSIX_DYLD_FUNC( dlsym );
-    LOAD_POSIX_DYLD_FUNC( dladdr );
-    LOAD_MACHO_DYLD_FUNC( _dyld_get_image_slide );
 
     /* load the main binary */
     if (!(mod = pdlopen( argv[1], RTLD_NOW )))
