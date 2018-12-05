@@ -3323,8 +3323,7 @@ static HMODULE load_driver_module( const WCHAR *name )
 
         if ((rel = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &size )))
         {
-            WINE_TRACE( "%s: relocating from %p to %p\n",
-                        wine_dbgstr_w(name), (char *)module - delta, module );
+            TRACE( "%s: relocating from %p to %p\n", wine_dbgstr_w(name), (char *)module - delta, module );
             end = (IMAGE_BASE_RELOCATION *)((char *)rel + size);
             while (rel < end && rel->SizeOfBlock)
             {
@@ -3379,7 +3378,7 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
 
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, keyname->Buffer + 18 /* skip \registry\machine */, &driver_hkey ))
     {
-        WINE_ERR( "cannot open key %s, err=%u\n", wine_dbgstr_w(keyname->Buffer), GetLastError() );
+        ERR( "cannot open key %s, err=%u\n", wine_dbgstr_w(keyname->Buffer), GetLastError() );
         return NULL;
     }
 
@@ -3435,7 +3434,7 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
     }
     RegCloseKey( driver_hkey );
 
-    WINE_TRACE( "loading driver %s\n", wine_dbgstr_w(str) );
+    TRACE( "loading driver %s\n", wine_dbgstr_w(str) );
 
     module = load_driver_module( str );
     HeapFree( GetProcessHeap(), 0, path );
@@ -3473,12 +3472,12 @@ static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING
     TRACE_(relay)( "\1Ret  driver init %p (obj=%p,str=%s) retval=%08x\n",
                    driver_object->DriverInit, driver_object, wine_dbgstr_w(keyname->Buffer), status );
 
-    WINE_TRACE( "init done for %s obj %p\n", wine_dbgstr_w(driver_name), driver_object );
-    WINE_TRACE( "- DriverInit = %p\n", driver_object->DriverInit );
-    WINE_TRACE( "- DriverStartIo = %p\n", driver_object->DriverStartIo );
-    WINE_TRACE( "- DriverUnload = %p\n", driver_object->DriverUnload );
+    TRACE( "init done for %s obj %p\n", wine_dbgstr_w(driver_name), driver_object );
+    TRACE( "- DriverInit = %p\n", driver_object->DriverInit );
+    TRACE( "- DriverStartIo = %p\n", driver_object->DriverStartIo );
+    TRACE( "- DriverUnload = %p\n", driver_object->DriverUnload );
     for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
-        WINE_TRACE( "- MajorFunction[%d] = %p\n", i, driver_object->MajorFunction[i] );
+        TRACE( "- MajorFunction[%d] = %p\n", i, driver_object->MajorFunction[i] );
 
     return status;
 }
