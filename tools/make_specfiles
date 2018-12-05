@@ -384,6 +384,7 @@ my @dll_groups =
   "ext-ms-win-ntuser-gui-l1-3-0",
   "ext-ms-win-ntuser-keyboard-l1-3-0",
   "ext-ms-win-ntuser-message-l1-1-1",
+  "ext-ms-win-ntuser-misc-l1-2-0",
   "ext-ms-win-ntuser-misc-l1-5-1",
   "ext-ms-win-ntuser-mouse-l1-1-0",
   "ext-ms-win-ntuser-private-l1-1-1",
