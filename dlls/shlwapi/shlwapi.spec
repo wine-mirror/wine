@@ -434,7 +434,7 @@
 434 stdcall -noname SendMessageTimeoutWrapW(long long long long long long ptr) user32.SendMessageTimeoutW
 435 stdcall -noname CLSIDFromProgIDWrap(wstr ptr) ole32.CLSIDFromProgID
 436 stdcall -noname CLSIDFromStringWrap(wstr ptr)
-437 stdcall -ordinal IsOS(long)
+437 stdcall -ordinal IsOS(long) shcore.IsOS
 438 stub -noname SHLoadRegUIStringA
 439 stdcall -noname SHLoadRegUIStringW(ptr wstr ptr long)
 440 stdcall -noname SHGetWebFolderFilePathA(str ptr long)
