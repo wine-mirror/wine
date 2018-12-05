@@ -187,6 +187,7 @@ function test_javascript() {
     test_exposed("now", Date, true);
     test_exposed("toISOString", Date.prototype, v >= 9);
     test_exposed("isArray", Array, v >= 9);
+    test_exposed("forEach", Array.prototype, v >= 9);
     test_exposed("indexOf", Array.prototype, v >= 9);
     test_exposed("trim", String.prototype, v >= 9);
 

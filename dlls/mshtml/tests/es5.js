@@ -90,6 +90,28 @@ function test_indexOf() {
     next_test();
 }
 
+function test_array_forEach() {
+    ok(Array.prototype.forEach.length === 1, "forEach.length = " + Array.prototype.forEach.length);
+
+    function test(array, expect) {
+        var r = Array.prototype.forEach.call(array, function(value, index, arr) {
+            ok(arr === array, "unexpected array " + arr);
+            ok(index === expect[0][0], "index = " + index + " expected " + expect[0][0]);
+            ok(value === expect[0][1], "value = " + value + " expected " + expect[0][1]);
+            expect.shift();
+        });
+        ok(r === undefined, "forEach returned " + r);
+        ok(expect.length === 0, "too few forEach() calls, expected " + expect.length + " more");
+    }
+
+    test(["a",2,"c"], [[0,"a"],[1,2],[2,"c"]]);
+    test({length: 1000, 500: false, c: 30, 3: "x", 999: 1}, [[3,"x"],[500,false],[999,1]]);
+    test(new String("abc"), [[0,"a"],[1,"b"],[2,"c"]]);
+    test([], []);
+
+    next_test();
+}
+
 function test_isArray() {
     function expect_array(a, exr) {
         var r = Array.isArray(a);
@@ -438,7 +460,6 @@ function test_property_definitions() {
         if(have_getter) {
             ok(typeof(desc.get) === "function", "desc.get = " + desc.get);
             ok(typeof(desc.get.prototype) === "object", "desc.get.prototype = " + desc.get.prototype);
-            trace("" + desc.get);
         }else {
             ok(!("get" in obj), "desc.get = " + desc.get);
         }
@@ -575,6 +596,7 @@ var tests = [
     test_date_now,
     test_toISOString,
     test_indexOf,
+    test_array_forEach,
     test_isArray,
     test_identifier_keywords,
     test_getOwnPropertyDescriptor,
