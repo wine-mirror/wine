@@ -2774,21 +2774,6 @@ DWORD WINAPI SHAnsiToAnsi(LPCSTR lpszSrc, LPSTR lpszDst, int iLen)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.346]
- *
- * Unicode version of SSHAnsiToAnsi.
- */
-DWORD WINAPI SHUnicodeToUnicode(LPCWSTR lpszSrc, LPWSTR lpszDst, int iLen)
-{
-    LPWSTR lpszRet;
-
-    TRACE("(%s,%p,0x%08x)\n", debugstr_w(lpszSrc), lpszDst, iLen);
-
-    lpszRet = StrCpyNXW(lpszDst, lpszSrc, iLen);
-    return lpszRet - lpszDst + 1;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.364]
  *
  * Determine if an Ascii string converts to Unicode and back identically.
