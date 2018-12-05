@@ -2667,7 +2667,7 @@ system.ini, drivers32,,"; vidc.IV32=ir32_32.dll"
 ; http://www.twinsun.com/tz/tz-link.htm
 ; The mapping of Windows timezone names to Olson Tzids is based on the
 ; Unicode.org CLDR data:
-; http://unicode.org/cldr/data/diff/supplemental/windows_tzid.html
+; https://www.unicode.org/cldr/charts/latest/supplemental/zone_tzid.html
 HKLM,%CurrentVersionNT%\Time Zones\Afghanistan Standard Time,"Display",,"Asia/Kabul"
 HKLM,%CurrentVersionNT%\Time Zones\Afghanistan Standard Time,"Dlt",,"Afghanistan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Afghanistan Standard Time,"Std",,"Afghanistan Standard Time"
@@ -2692,10 +2692,6 @@ HKLM,%CurrentVersionNT%\Time Zones\Argentina Standard Time,"Display",,"America/B
 HKLM,%CurrentVersionNT%\Time Zones\Argentina Standard Time,"Dlt",,"Argentina Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Argentina Standard Time,"Std",,"Argentina Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Argentina Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Armenian Standard Time,"Display",,"Asia/Yerevan"
-HKLM,%CurrentVersionNT%\Time Zones\Armenian Standard Time,"Dlt",,"Armenian Daylight Time"
-HKLM,%CurrentVersionNT%\Time Zones\Armenian Standard Time,"Std",,"Armenian Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Armenian Standard Time,"TZI",1,10,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Atlantic Standard Time,"Display",,"America/Halifax"
 HKLM,%CurrentVersionNT%\Time Zones\Atlantic Standard Time,"Dlt",,"Atlantic Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Atlantic Standard Time,"Std",,"Atlantic Standard Time"
@@ -3050,18 +3046,6 @@ HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"Display",,"Indian/Ma
 HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"Dlt",,"Mauritius Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"Std",,"Mauritius Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"TZI",1,10,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Display",,"America/Mexico_City"
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Dlt",,"Mexico Daylight Time"
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Std",,"Mexico Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Display",,"America/Chihuahua"
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Dlt",,"Mexico Daylight Time 2"
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Std",,"Mexico Standard Time 2"
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"TZI",1,a4,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Mid-Atlantic Standard Time,"Display",,"America/Noronha"
-HKLM,%CurrentVersionNT%\Time Zones\Mid-Atlantic Standard Time,"Dlt",,"Mid-Atlantic Daylight Time"
-HKLM,%CurrentVersionNT%\Time Zones\Mid-Atlantic Standard Time,"Std",,"Mid-Atlantic Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Mid-Atlantic Standard Time,"TZI",1,78,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Middle East Standard Time,"Display",,"Asia/Beirut"
 HKLM,%CurrentVersionNT%\Time Zones\Middle East Standard Time,"Dlt",,"Middle East Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Middle East Standard Time,"Std",,"Middle East Standard Time"
