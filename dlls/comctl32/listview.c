@@ -10238,7 +10238,9 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   {
     if ((infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) && (lvHitTestInfo.flags & LVHT_ONITEMSTATEICON))
     {
+        notify_click(infoPtr, NM_CLICK, &lvHitTestInfo);
         toggle_checkbox_state(infoPtr, nItem);
+        infoPtr->bLButtonDown = FALSE;
         return 0;
     }
 
