@@ -2285,7 +2285,7 @@ DWORD WINAPI SHSetValueA(HKEY hkey, const char *subkey, const char *value,
  */
 DWORD WINAPI SHRegSetPathA(HKEY hkey, const char *subkey, const char *value, const char *path, DWORD flags)
 {
-    FIXME("(%p, %s, %s, %p, %#x) - semi-stub\n", hkey, debugstr_a(subkey),
+    FIXME("(%p, %s, %s, %s, %#x) - semi-stub\n", hkey, debugstr_a(subkey),
             debugstr_a(value), debugstr_a(path), flags);
 
     /* FIXME: PathUnExpandEnvStringsA() */
