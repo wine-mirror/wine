@@ -680,8 +680,8 @@
 @ stdcall PathUnquoteSpacesA (str)
 @ stdcall PathUnquoteSpacesW (wstr)
 @ stdcall SHAutoComplete(ptr long)
-@ stdcall SHCopyKeyA(long str long long)
-@ stdcall SHCopyKeyW(long wstr long long)
+@ stdcall SHCopyKeyA(long str long long) shcore.SHCopyKeyA
+@ stdcall SHCopyKeyW(long wstr long long) shcore.SHCopyKeyW
 @ stdcall SHCreateShellPalette(long)
 @ stdcall SHCreateStreamOnFileA(str long ptr) shcore.SHCreateStreamOnFileA
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) shcore.SHCreateStreamOnFileEx
