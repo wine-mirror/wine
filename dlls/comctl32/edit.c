@@ -1707,9 +1707,14 @@ static LRESULT EDIT_EM_Scroll(EDITSTATE *es, INT action)
 static void EDIT_SetCaretPos(EDITSTATE *es, INT pos,
 			     BOOL after_wrap)
 {
-	LRESULT res = EDIT_EM_PosFromChar(es, pos, after_wrap);
-	TRACE("%d - %dx%d\n", pos, (short)LOWORD(res), (short)HIWORD(res));
-	SetCaretPos((short)LOWORD(res), (short)HIWORD(res));
+    LRESULT res;
+
+    if (es->flags & EF_FOCUSED)
+    {
+        res = EDIT_EM_PosFromChar(es, pos, after_wrap);
+        TRACE("%d - %dx%d\n", pos, (short)LOWORD(res), (short)HIWORD(res));
+        SetCaretPos((short)LOWORD(res), (short)HIWORD(res));
+    }
 }
 
 
@@ -1778,7 +1783,6 @@ static void EDIT_EM_ScrollCaret(EDITSTATE *es)
 		}
 	}
 
-    if(es->flags & EF_FOCUSED)
 	EDIT_SetCaretPos(es, es->selection_end, es->flags & EF_AFTER_WRAP);
 }
 
