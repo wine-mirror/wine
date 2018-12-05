@@ -621,7 +621,7 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
         ok(height == tests[i].font_height, "Got unexpected height %u.\n", height);
         }
 
-        SetRect(&rect, 0, 0, 0, 0);
+        SetRectEmpty(&rect);
         height = ID3DXFont_DrawTextW(font, sprite, testW, size, &rect,
                 DT_LEFT | DT_CALCRECT, 0xffffffff);
         todo_wine ok(height == tests[i].font_height, "Got unexpected height %u.\n", height);
