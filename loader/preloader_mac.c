@@ -27,6 +27,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +50,7 @@
 #include <mach-o/loader.h>
 #endif
 
-#include "preloader.h"
+#include "main.h"
 
 #ifndef LC_MAIN
 #define LC_MAIN 0x80000028
@@ -287,6 +288,159 @@ MAKE_FUNCPTR(dladdr);
 
 extern int _dyld_func_lookup( const char *dyld_func_name, void **address );
 
+/* replacement for libc functions */
+
+static int wld_strncmp( const char *str1, const char *str2, size_t len )
+{
+    if (len <= 0) return 0;
+    while ((--len > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
+
+/*
+ * wld_printf - just the basics
+ *
+ *  %x prints a hex number
+ *  %s prints a string
+ *  %p prints a pointer
+ */
+static int wld_vsprintf(char *buffer, const char *fmt, va_list args )
+{
+    static const char hex_chars[16] = "0123456789abcdef";
+    const char *p = fmt;
+    char *str = buffer;
+    int i;
+
+    while( *p )
+    {
+        if( *p == '%' )
+        {
+            p++;
+            if( *p == 'x' )
+            {
+                unsigned int x = va_arg( args, unsigned int );
+                for (i = 2*sizeof(x) - 1; i >= 0; i--)
+                    *str++ = hex_chars[(x>>(i*4))&0xf];
+            }
+            else if (p[0] == 'l' && p[1] == 'x')
+            {
+                unsigned long x = va_arg( args, unsigned long );
+                for (i = 2*sizeof(x) - 1; i >= 0; i--)
+                    *str++ = hex_chars[(x>>(i*4))&0xf];
+                p++;
+            }
+            else if( *p == 'p' )
+            {
+                unsigned long x = (unsigned long)va_arg( args, void * );
+                for (i = 2*sizeof(x) - 1; i >= 0; i--)
+                    *str++ = hex_chars[(x>>(i*4))&0xf];
+            }
+            else if( *p == 's' )
+            {
+                char *s = va_arg( args, char * );
+                while(*s)
+                    *str++ = *s++;
+            }
+            else if( *p == 0 )
+                break;
+            p++;
+        }
+        *str++ = *p++;
+    }
+    *str = 0;
+    return str - buffer;
+}
+
+static __attribute__((format(printf,1,2))) void wld_printf(const char *fmt, ... )
+{
+    va_list args;
+    char buffer[256];
+    int len;
+
+    va_start( args, fmt );
+    len = wld_vsprintf(buffer, fmt, args );
+    va_end( args );
+    wld_write(2, buffer, len);
+}
+
+static __attribute__((noreturn,format(printf,1,2))) void fatal_error(const char *fmt, ... )
+{
+    va_list args;
+    char buffer[256];
+    int len;
+
+    va_start( args, fmt );
+    len = wld_vsprintf(buffer, fmt, args );
+    va_end( args );
+    wld_write(2, buffer, len);
+    wld_exit(1);
+}
+
+/*
+ *  preload_reserve
+ *
+ * Reserve a range specified in string format
+ */
+static void preload_reserve( const char *str )
+{
+    const char *p;
+    unsigned long result = 0;
+    void *start = NULL, *end = NULL;
+    int i, first = 1;
+
+    for (p = str; *p; p++)
+    {
+        if (*p >= '0' && *p <= '9') result = result * 16 + *p - '0';
+        else if (*p >= 'a' && *p <= 'f') result = result * 16 + *p - 'a' + 10;
+        else if (*p >= 'A' && *p <= 'F') result = result * 16 + *p - 'A' + 10;
+        else if (*p == '-')
+        {
+            if (!first) goto error;
+            start = (void *)(result & ~page_mask);
+            result = 0;
+            first = 0;
+        }
+        else goto error;
+    }
+    if (!first) end = (void *)((result + page_mask) & ~page_mask);
+    else if (result) goto error;  /* single value '0' is allowed */
+
+    /* sanity checks */
+    if (end <= start) start = end = NULL;
+
+    /* check for overlap with low memory areas */
+    for (i = 0; preload_info[i].size; i++)
+    {
+        if ((char *)preload_info[i].addr > (char *)0x00110000) break;
+        if ((char *)end <= (char *)preload_info[i].addr + preload_info[i].size)
+        {
+            start = end = NULL;
+            break;
+        }
+        if ((char *)start < (char *)preload_info[i].addr + preload_info[i].size)
+            start = (char *)preload_info[i].addr + preload_info[i].size;
+    }
+
+    while (preload_info[i].size) i++;
+    preload_info[i].addr = start;
+    preload_info[i].size = (char *)end - (char *)start;
+    return;
+
+error:
+    fatal_error( "invalid WINEPRELOADRESERVE value '%s'\n", str );
+}
+
+/* remove a range from the preload list */
+static void remove_preload_range( int i )
+{
+    while (preload_info[i].size)
+    {
+        preload_info[i].addr = preload_info[i+1].addr;
+        preload_info[i].size = preload_info[i+1].size;
+        i++;
+    }
+}
+
 static void *get_entry_point( struct target_mach_header *mh, intptr_t slide, int *unix_thread )
 {
     struct entry_point_command *entry;
@@ -409,12 +563,12 @@ void *wld_start( void *stack, int *is_unix_thread )
     }
 
     /* reserve memory that Wine needs */
-    if (reserve) preload_reserve( reserve, preload_info, page_mask );
+    if (reserve) preload_reserve( reserve );
     for (i = 0; preload_info[i].size; i++)
     {
         if (!map_region( &preload_info[i] ))
         {
-            remove_preload_range( i, preload_info );
+            remove_preload_range( i );
             i--;
         }
     }
