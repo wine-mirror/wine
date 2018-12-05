@@ -755,7 +755,6 @@ EGREP
 GREP
 LN_S
 RANLIB
-ARFLAGS
 STRIP
 ac_ct_AR
 AR
@@ -5998,8 +5997,6 @@ esac
 else
   STRIP="$ac_cv_prog_STRIP"
 fi
-
-ARFLAGS=rc
 
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
@@ -20223,13 +20220,13 @@ then
         rm -f fonts server 2>/dev/null
     wine_fn_append_rule "all: loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 loader/wine64 loader/wine64-preloader:
-	\$(RM) \$@ && \$(LN_S) $reldir$with_wine64/\$@ \$@
+	rm -f \$@ && \$(LN_S) $reldir$with_wine64/\$@ \$@
 $with_wine64/loader/wine:
-	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine \$@
+	rm -f \$@ && \$(LN_S) $ac_pwd/loader/wine \$@
 $with_wine64/loader/wine-preloader:
-	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine-preloader \$@
+	rm -f \$@ && \$(LN_S) $ac_pwd/loader/wine-preloader \$@
 clean::
-	\$(RM) loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
+	rm -f loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
 else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \

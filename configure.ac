@@ -292,7 +292,6 @@ fi
 
 AC_CHECK_TOOLS(AR,[ar gar],ar)
 AC_CHECK_TOOL(STRIP,strip,strip)
-AC_SUBST(ARFLAGS,rc)
 AC_PROG_RANLIB
 AC_PROG_LN_S
 AC_PROG_EGREP
@@ -4078,13 +4077,13 @@ then
     WINE_APPEND_RULE(
 [all: loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
 loader/wine64 loader/wine64-preloader:
-	\$(RM) \$[@] && \$(LN_S) $reldir$with_wine64/\$[@] \$[@]
+	rm -f \$[@] && \$(LN_S) $reldir$with_wine64/\$[@] \$[@]
 $with_wine64/loader/wine:
-	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine \$[@]
+	rm -f \$[@] && \$(LN_S) $ac_pwd/loader/wine \$[@]
 $with_wine64/loader/wine-preloader:
-	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine-preloader \$[@]
+	rm -f \$[@] && \$(LN_S) $ac_pwd/loader/wine-preloader \$[@]
 clean::
-	\$(RM) loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
+	rm -f loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
