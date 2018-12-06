@@ -1347,6 +1347,10 @@ static GUID const * const bmp_encode_formats[] = {
     &GUID_WICPixelFormat16bppBGR565,
     &GUID_WICPixelFormat24bppBGR,
     &GUID_WICPixelFormat32bppBGR,
+    &GUID_WICPixelFormatBlackWhite,
+    &GUID_WICPixelFormat1bppIndexed,
+    &GUID_WICPixelFormat4bppIndexed,
+    &GUID_WICPixelFormat8bppIndexed,
     NULL
 };
 

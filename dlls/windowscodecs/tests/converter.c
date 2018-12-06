@@ -804,6 +804,8 @@ static void check_bmp_format(IStream *stream, const WICPixelFormatGUID *format)
 
     if (IsEqualGUID(format, &GUID_WICPixelFormat1bppIndexed))
     {
+        ok(bfh.bfOffBits == 0x0436, "wrong bfOffBits %02x\n", bfh.bfOffBits);
+
         ok(bih.bV5Width == 32, "wrong width %u\n", bih.bV5Width);
         ok(bih.bV5Height == 2, "wrong height %u\n", bih.bV5Height);
 
@@ -814,6 +816,8 @@ static void check_bmp_format(IStream *stream, const WICPixelFormatGUID *format)
     }
     else if (IsEqualGUID(format, &GUID_WICPixelFormat4bppIndexed))
     {
+        ok(bfh.bfOffBits == 0x0436, "wrong bfOffBits %02x\n", bfh.bfOffBits);
+
         ok(bih.bV5Width == 8, "wrong width %u\n", bih.bV5Width);
         ok(bih.bV5Height == 2, "wrong height %u\n", bih.bV5Height);
 
@@ -824,6 +828,8 @@ static void check_bmp_format(IStream *stream, const WICPixelFormatGUID *format)
     }
     else if (IsEqualGUID(format, &GUID_WICPixelFormat8bppIndexed))
     {
+        ok(bfh.bfOffBits == 0x0436, "wrong bfOffBits %02x\n", bfh.bfOffBits);
+
         ok(bih.bV5Width == 4, "wrong width %u\n", bih.bV5Width);
         ok(bih.bV5Height == 2, "wrong height %u\n", bih.bV5Height);
 
@@ -834,6 +840,8 @@ static void check_bmp_format(IStream *stream, const WICPixelFormatGUID *format)
     }
     else if (IsEqualGUID(format, &GUID_WICPixelFormat32bppBGR))
     {
+        ok(bfh.bfOffBits == 0x0036, "wrong bfOffBits %02x\n", bfh.bfOffBits);
+
         ok(bih.bV5Width == 4, "wrong width %u\n", bih.bV5Width);
         ok(bih.bV5Height == 2, "wrong height %u\n", bih.bV5Height);
 
@@ -1492,8 +1500,6 @@ START_TEST(converter)
     test_encoder(&testdata_24bppBGR, &CLSID_WICPngEncoder,
                  &testdata_24bppBGR, &CLSID_WICPngDecoder, "PNG encoder 24bppBGR");
 
-if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once implemented in Wine */
-{
     test_encoder(&testdata_BlackWhite, &CLSID_WICBmpEncoder,
                  &testdata_1bppIndexed, &CLSID_WICBmpDecoder, "BMP encoder BlackWhite");
     test_encoder(&testdata_1bppIndexed, &CLSID_WICBmpEncoder,
@@ -1504,7 +1510,6 @@ if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once implemented in 
                  &testdata_4bppIndexed, &CLSID_WICBmpDecoder, "BMP encoder 4bppIndexed");
     test_encoder(&testdata_8bppIndexed, &CLSID_WICBmpEncoder,
                  &testdata_8bppIndexed, &CLSID_WICBmpDecoder, "BMP encoder 8bppIndexed");
-}
     test_encoder(&testdata_32bppBGR, &CLSID_WICBmpEncoder,
                  &testdata_32bppBGR, &CLSID_WICBmpDecoder, "BMP encoder 32bppBGR");
 
