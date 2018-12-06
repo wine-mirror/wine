@@ -1510,8 +1510,6 @@ if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once implemented in 
 
     test_encoder(&testdata_BlackWhite, &CLSID_WICTiffEncoder,
                  &testdata_BlackWhite, &CLSID_WICTiffDecoder, "TIFF encoder BlackWhite");
-if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once implemented in Wine */
-{
     test_encoder(&testdata_1bppIndexed, &CLSID_WICTiffEncoder,
                  &testdata_1bppIndexed, &CLSID_WICTiffDecoder, "TIFF encoder 1bppIndexed");
     test_encoder(&testdata_2bppIndexed, &CLSID_WICTiffEncoder,
@@ -1520,7 +1518,6 @@ if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once implemented in 
                  &testdata_4bppIndexed, &CLSID_WICTiffDecoder, "TIFF encoder 4bppIndexed");
     test_encoder(&testdata_8bppIndexed, &CLSID_WICTiffEncoder,
                  &testdata_8bppIndexed, &CLSID_WICTiffDecoder, "TIFF encoder 8bppIndexed");
-}
     test_encoder(&testdata_24bppBGR, &CLSID_WICTiffEncoder,
                  &testdata_24bppBGR, &CLSID_WICTiffDecoder, "TIFF encoder 24bppBGR");
 

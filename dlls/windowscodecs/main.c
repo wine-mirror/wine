@@ -182,7 +182,7 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
     if (FAILED(hr))
     {
         ERR("Failed to convert source, target format %s, %#x\n", debugstr_guid(format), hr);
-        return hr;
+        return E_NOTIMPL;
     }
 
     stride = (bpp * width + 7)/8;
