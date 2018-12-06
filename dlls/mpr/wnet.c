@@ -2290,6 +2290,23 @@ DWORD WINAPI WNetCancelConnection2W( LPCWSTR lpName, DWORD dwFlags, BOOL fForce 
             }
         }
     }
+
+    if (ret == WN_SUCCESS && dwFlags & CONNECT_UPDATE_PROFILE)
+    {
+        HKEY user_profile;
+
+        /* FIXME: Only remove it if that's a drive letter */
+        if (isalphaW(lpName[0]) && lpName[1] == ':' &&
+            RegOpenCurrentUser(KEY_ALL_ACCESS, &user_profile) == ERROR_SUCCESS)
+        {
+            WCHAR subkey[10] = {'N', 'e', 't', 'w', 'o', 'r', 'k', '\\', lpName[0], 0};
+
+            RegDeleteKeyW(user_profile, subkey);
+
+            RegCloseKey(user_profile);
+        }
+    }
+
     return ret;
 }
 
