@@ -166,7 +166,7 @@ DWORD schan_imp_enabled_protocols(void)
 BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cred)
 {
     gnutls_session_t *s = (gnutls_session_t*)session;
-    char priority[128] = "NORMAL:%LATEST_RECORD_VERSION", *p;
+    char priority[128] = "NORMAL:%LATEST_RECORD_VERSION:-VERS-ALL", *p;
     unsigned i;
 
     int err = pgnutls_init(s, cred->credential_use == SECPKG_CRED_INBOUND ? GNUTLS_SERVER : GNUTLS_CLIENT);
@@ -178,8 +178,9 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
 
     p = priority + strlen(priority);
     for(i = 0; i < ARRAY_SIZE(protocol_priority_flags); i++) {
+        if (!(cred->enabled_protocols & protocol_priority_flags[i].enable_flag)) continue;
         *p++ = ':';
-        *p++ = (cred->enabled_protocols & protocol_priority_flags[i].enable_flag) ? '+' : '-';
+        *p++ = '+';
         strcpy(p, protocol_priority_flags[i].gnutls_flag);
         p += strlen(p);
     }
