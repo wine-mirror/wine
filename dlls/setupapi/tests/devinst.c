@@ -752,6 +752,13 @@ static void test_device_iface_detail(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#x.\n", GetLastError());
     ok(size == expectedsize, "Got unexpected size %d.\n", size);
 
+    memset(&device, 0, sizeof(device));
+    device.cbSize = sizeof(device);
+    ret = SetupDiGetDeviceInterfaceDetailW(set, &iface, NULL, 0, &size, &device);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#x.\n", GetLastError());
+    ok(IsEqualGUID(&device.ClassGuid, &guid), "Got unexpected class %s.\n", wine_dbgstr_guid(&device.ClassGuid));
+
     heap_free(detail);
     SetupDiDestroyDeviceInfoList(set);
 }
