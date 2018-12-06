@@ -681,6 +681,8 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
     {
         static const WCHAR stdW[] = { 'S','t','d',0 };
         static const WCHAR dltW[] = { 'D','l','t',0 };
+        static const WCHAR mui_stdW[] = { 'M','U','I','_','S','t','d',0 };
+        static const WCHAR mui_dltW[] = { 'M','U','I','_','D','l','t',0 };
         static const WCHAR tziW[] = { 'T','Z','I',0 };
         RTL_DYNAMIC_TIME_ZONE_INFORMATION reg_tzi;
         HANDLE hSubkey, hSubkeyDynamicDST;
@@ -715,8 +717,10 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
         continue; \
     }
 
-        get_value(hSubkey, stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName));
-        get_value(hSubkey, dltW, REG_SZ, reg_tzi.DaylightName, sizeof(reg_tzi.DaylightName));
+        if (!reg_query_value(hSubkey, mui_stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName)))
+            get_value(hSubkey, stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName));
+        if (!reg_query_value(hSubkey, mui_dltW, REG_SZ, reg_tzi.DaylightName, sizeof(reg_tzi.DaylightName)))
+            get_value(hSubkey, dltW, REG_SZ, reg_tzi.DaylightName, sizeof(reg_tzi.DaylightName));
         memcpy(reg_tzi.TimeZoneKeyName, nameW.Buffer, nameW.Length);
         reg_tzi.TimeZoneKeyName[nameW.Length/sizeof(WCHAR)] = 0;
 
