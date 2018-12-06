@@ -1412,29 +1412,6 @@ BOOL WINAPI SetupDiCreateDeviceInfoA(HDEVINFO DeviceInfoSet, const char *name,
     return ret;
 }
 
-static DWORD SETUPDI_DevNameToDevID(LPCWSTR devName)
-{
-    LPCWSTR ptr;
-    int devNameLen = lstrlenW(devName);
-    DWORD devInst = 0;
-    BOOL valid = TRUE;
-
-    TRACE("%s\n", debugstr_w(devName));
-    for (ptr = devName; valid && *ptr && ptr - devName < devNameLen; )
-    {
-	if (isdigitW(*ptr))
-	{
-	    devInst *= 10;
-	    devInst |= *ptr - '0';
-	    ptr++;
-	}
-	else
-	    valid = FALSE;
-    }
-    TRACE("%d\n", valid ? devInst : 0xffffffff);
-    return valid ? devInst : 0xffffffff;
-}
-
 /***********************************************************************
  *              SetupDiCreateDeviceInfoW (SETUPAPI.@)
  */
@@ -1483,14 +1460,16 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
         LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
         {
             const WCHAR *instance_str = strrchrW(device->instanceId, '\\');
+            WCHAR *endptr;
 
             if (instance_str)
                 instance_str++;
             else
                 instance_str = device->instanceId;
-            instance_id = SETUPDI_DevNameToDevID(instance_str);
-            if (instance_id != 0xffffffff && instance_id > highest_id)
-                highest_id = instance_id;
+
+            instance_id = strtoulW(instance_str, &endptr, 10);
+            if (*instance_str && !*endptr)
+                highest_id = max(highest_id, instance_id);
         }
 
         if (snprintfW(id, ARRAY_SIZE(id), formatW, name, highest_id + 1) == -1)
