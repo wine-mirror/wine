@@ -126,7 +126,7 @@ __declspec(naked) int wine_call_on_stack( int (*func)(void *), void *arg, void *
   __asm call [ecx];
   __asm mov esp, esi;
   __asm pop esi;
-  __asm pop ebp
+  __asm pop ebp;
   __asm ret;
 }
 #elif defined(__x86_64__) && defined(__GNUC__)
