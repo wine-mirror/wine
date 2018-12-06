@@ -39,16 +39,10 @@ typedef struct
 {
 	IStream IStream_iface;
 	LONG   ref;
-	HKEY   hKey;
 	LPBYTE pbBuffer;
 	DWORD  dwLength;
 	DWORD  dwPos;
 	DWORD  dwMode;
-	union {
-	    LPSTR keyNameA;
-	    LPWSTR keyNameW;
-	}u;
-	BOOL   bUnicode;
 } ISHRegStream;
 
 static inline ISHRegStream *impl_from_IStream(IStream *iface)
@@ -105,35 +99,6 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 
 	if (!refCount)
 	{
-	  TRACE(" destroying SHReg IStream (%p)\n",This);
-
-	  if (This->hKey)
-	  {
-	    /* write back data in REG_BINARY */
-	    if (This->dwMode == STGM_READWRITE || This->dwMode == STGM_WRITE)
-	    {
-	      if (This->dwLength)
-	      {
-	        if (This->bUnicode)
-	          RegSetValueExW(This->hKey, This->u.keyNameW, 0, REG_BINARY,
-	                         (const BYTE *) This->pbBuffer, This->dwLength);
-	        else
-	          RegSetValueExA(This->hKey, This->u.keyNameA, 0, REG_BINARY,
-	                        (const BYTE *) This->pbBuffer, This->dwLength);
-	      }
-	      else
-	      {
-	        if (This->bUnicode)
-	          RegDeleteValueW(This->hKey, This->u.keyNameW);
-	        else
-	          RegDeleteValueA(This->hKey, This->u.keyNameA);
-	      }
-	    }
-
-	    RegCloseKey(This->hKey);
-	  }
-
-	  HeapFree(GetProcessHeap(),0,This->u.keyNameA);
 	  HeapFree(GetProcessHeap(),0,This->pbBuffer);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
@@ -384,13 +349,10 @@ static ISHRegStream *IStream_Create(HKEY hKey, LPBYTE pbBuffer, DWORD dwLength)
  {
    regStream->IStream_iface.lpVtbl = &rstvt;
    regStream->ref = 1;
-   regStream->hKey = hKey;
    regStream->pbBuffer = pbBuffer;
    regStream->dwLength = dwLength;
    regStream->dwPos = 0;
    regStream->dwMode = STGM_READWRITE;
-   regStream->u.keyNameA = NULL;
-   regStream->bUnicode = FALSE;
  }
  TRACE ("Returning %p\n", regStream);
  return regStream;
