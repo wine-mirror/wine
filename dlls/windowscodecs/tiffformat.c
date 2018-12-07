@@ -694,8 +694,12 @@ static HRESULT WINAPI TiffDecoder_CopyPalette(IWICBitmapDecoder *iface,
 static HRESULT WINAPI TiffDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface,
     IWICMetadataQueryReader **ppIMetadataQueryReader)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIMetadataQueryReader);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIMetadataQueryReader);
+
+    if (!ppIMetadataQueryReader) return E_INVALIDARG;
+
+    *ppIMetadataQueryReader = NULL;
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI TiffDecoder_GetPreview(IWICBitmapDecoder *iface,
