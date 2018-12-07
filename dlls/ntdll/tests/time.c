@@ -134,10 +134,10 @@ static void test_RtlQueryTimeZoneInformation(void)
     status = pRtlQueryDynamicTimeZoneInformation(&tzinfo);
     ok(status == STATUS_SUCCESS,
        "RtlQueryDynamicTimeZoneInformation failed, got %08x\n", status);
-    todo_wine ok(tzinfo.StandardName[0] == '@',
+    ok(tzinfo.StandardName[0] == '@',
        "standard time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.StandardName));
-    todo_wine ok(tzinfo.DaylightName[0] == '@',
+    ok(tzinfo.DaylightName[0] == '@',
        "daylight time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.DaylightName));
 
@@ -145,10 +145,10 @@ static void test_RtlQueryTimeZoneInformation(void)
     status = pRtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     ok(status == STATUS_SUCCESS,
        "RtlQueryTimeZoneInformation failed, got %08x\n", status);
-    todo_wine ok(tzinfo.StandardName[0] == '@',
+    ok(tzinfo.StandardName[0] == '@',
        "standard time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.StandardName));
-    todo_wine ok(tzinfo.DaylightName[0] == '@',
+    ok(tzinfo.DaylightName[0] == '@',
        "daylight time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.DaylightName));
 }
