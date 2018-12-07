@@ -1736,6 +1736,8 @@ static BYTE const channel_mask_16bit2[] = { 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 
 static BYTE const channel_mask_16bit3[] = { 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00 };
 static BYTE const channel_mask_16bit4[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff };
 
+static BYTE const channel_mask_32bit[] = { 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 };
+
 static BYTE const channel_mask_5bit[] = { 0x1f, 0x00 };
 static BYTE const channel_mask_5bit2[] = { 0xe0, 0x03 };
 static BYTE const channel_mask_5bit3[] = { 0x00, 0x7c };
@@ -1751,6 +1753,8 @@ static BYTE const * const channel_masks_8bit[] = { channel_mask_8bit,
     channel_mask_8bit2, channel_mask_8bit3, channel_mask_8bit4 };
 static BYTE const * const channel_masks_16bit[] = { channel_mask_16bit,
     channel_mask_16bit2, channel_mask_16bit3, channel_mask_16bit4};
+
+static BYTE const * const channel_masks_32bit[] = { channel_mask_32bit };
 
 static BYTE const * const channel_masks_BGRA5551[] = { channel_mask_5bit,
     channel_mask_5bit2, channel_mask_5bit3, channel_mask_5bit4 };
@@ -1944,6 +1948,17 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         4, /* channel count */
         channel_masks_8bit,
         WICPixelFormatNumericRepresentationUnsignedInteger,
+        1
+    },
+    {   &GUID_WICPixelFormat32bppGrayFloat,
+        "The Wine Project",
+        "32bpp GrayFloat",
+        NULL, /* no version */
+        &GUID_VendorMicrosoft,
+        32, /* bitsperpixel */
+        1, /* channel count */
+        channel_masks_32bit,
+        WICPixelFormatNumericRepresentationFloat,
         1
     },
     {   &GUID_WICPixelFormat48bppRGB,
