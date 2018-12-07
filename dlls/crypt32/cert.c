@@ -533,14 +533,19 @@ void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info)
     provNameLen = (lstrlenW(info->pwszProvName) + 1) * sizeof(WCHAR);
     data += provNameLen;
 
-    info->rgProvParam = (PCRYPT_KEY_PROV_PARAM)data;
-    data += info->cProvParam * sizeof(CRYPT_KEY_PROV_PARAM);
-
-    for (i = 0; i < info->cProvParam; i++)
+    if (info->cProvParam)
     {
-        info->rgProvParam[i].pbData = data;
-        data += info->rgProvParam[i].cbData;
+        info->rgProvParam = (PCRYPT_KEY_PROV_PARAM)data;
+        data += info->cProvParam * sizeof(CRYPT_KEY_PROV_PARAM);
+
+        for (i = 0; i < info->cProvParam; i++)
+        {
+            info->rgProvParam[i].pbData = data;
+            data += info->rgProvParam[i].cbData;
+        }
     }
+    else
+        info->rgProvParam = NULL;
 }
 
 BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
