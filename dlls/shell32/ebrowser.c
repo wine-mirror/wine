@@ -314,9 +314,7 @@ static void update_layout(ExplorerBrowserImpl *This)
 
     if(navpane_width_actual)
     {
-        This->navpane.rc.left = This->navpane.rc.top = 0;
-        This->navpane.rc.right = navpane_width_actual;
-        This->navpane.rc.bottom = rc.bottom;
+        SetRect(&This->navpane.rc, 0, 0, navpane_width_actual, rc.bottom);
 
         if(!This->navpane.hwnd_splitter)
             initialize_navpane(This, This->hwnd_main, &This->navpane.rc);
@@ -324,10 +322,8 @@ static void update_layout(ExplorerBrowserImpl *This)
     else
         ZeroMemory(&This->navpane.rc, sizeof(RECT));
 
-    This->sv_rc.left   = navpane_width_actual;
-    This->sv_rc.top    = 0;
-    This->sv_rc.right  = This->sv_rc.left + shellview_width_actual;
-    This->sv_rc.bottom = rc.bottom;
+    SetRect(&This->sv_rc, navpane_width_actual, 0, navpane_width_actual + shellview_width_actual,
+            rc.bottom);
 }
 
 static void size_panes(ExplorerBrowserImpl *This)
