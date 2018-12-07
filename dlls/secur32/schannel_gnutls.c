@@ -199,7 +199,8 @@ DWORD schan_imp_enabled_protocols(void)
 BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cred)
 {
     gnutls_session_t *s = (gnutls_session_t*)session;
-    char priority[128] = "NORMAL:%LATEST_RECORD_VERSION:-VERS-ALL", *p;
+    char priority[128] = "NORMAL:%LATEST_RECORD_VERSION", *p;
+    BOOL using_vers_all = FALSE, disabled;
     unsigned i;
 
     int err = pgnutls_init(s, cred->credential_use == SECPKG_CRED_INBOUND ? GNUTLS_SERVER : GNUTLS_CLIENT);
@@ -210,10 +211,26 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
     }
 
     p = priority + strlen(priority);
-    for(i = 0; i < ARRAY_SIZE(protocol_priority_flags); i++) {
-        if (!(cred->enabled_protocols & protocol_priority_flags[i].enable_flag)) continue;
+
+    /* VERS-ALL is nice to use for forward compatibility. It was introduced before support for TLS1.3,
+     * so if TLS1.3 is supported, we may safely use it. Otherwise explicitly disable all known
+     * disabled protocols. */
+    if (supported_protocols & SP_PROT_TLS1_3_CLIENT)
+    {
+        strcpy(p, ":-VERS-ALL");
+        p += strlen(p);
+        using_vers_all = TRUE;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(protocol_priority_flags); i++)
+    {
+        if (!(supported_protocols & protocol_priority_flags[i].enable_flag)) continue;
+
+        disabled = !(cred->enabled_protocols & protocol_priority_flags[i].enable_flag);
+        if (using_vers_all && disabled) continue;
+
         *p++ = ':';
-        *p++ = '+';
+        *p++ = disabled ? '-' : '+';
         strcpy(p, protocol_priority_flags[i].gnutls_flag);
         p += strlen(p);
     }
