@@ -1203,7 +1203,7 @@ static void create_ico_file(const char *filename, const test_icon_entries_t *tes
     HeapFree(GetProcessHeap(), 0, buf);
 }
 
-void test_LoadImage_working_directory_run(char *path)
+static void test_LoadImage_working_directory_run(char *path)
 {
     DWORD bytes_written;
     HANDLE handle;
