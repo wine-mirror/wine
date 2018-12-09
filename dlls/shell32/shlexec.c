@@ -736,7 +736,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
 	extension++;
 	if (GetProfileStringW(wExtensions, extension, wszEmpty, command, ARRAY_SIZE(command)) > 0)
         {
-            if (strlenW(command) != 0)
+            if (*command)
             {
                 strcpyW(lpResult, command);
                 tok = strchrW(lpResult, '^'); /* should be ^.extension? */
