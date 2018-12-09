@@ -1973,7 +1973,7 @@ static void test_server_listening(void)
     ok(status == RPC_S_OK, "RpcStringFree\n");
 }
 
-HANDLE create_server_process(void)
+static HANDLE create_server_process(void)
 {
     SECURITY_ATTRIBUTES sec_attr = { sizeof(sec_attr), NULL, TRUE };
     HANDLE ready_event;
