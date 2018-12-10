@@ -615,17 +615,17 @@ static void test_sizegrip(void)
 
     /* check bounds when not maximized */
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.left, rc.top));
-    todo_wine expect(HTBOTTOMRIGHT, r);
+    expect(HTBOTTOMRIGHT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.left - 1, rc.top));
     expect(HTCLIENT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.left, rc.top - 1));
-    todo_wine expect(HTBOTTOMRIGHT, r);
+    expect(HTBOTTOMRIGHT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right, rc.bottom));
-    todo_wine expect(HTBOTTOMRIGHT, r);
+    expect(HTBOTTOMRIGHT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right + 1, rc.bottom));
-    todo_wine expect(HTBOTTOMRIGHT, r);
+    expect(HTBOTTOMRIGHT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right, rc.bottom + 1));
-    todo_wine expect(HTBOTTOMRIGHT, r);
+    expect(HTBOTTOMRIGHT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right - 1, rc.bottom - 1));
     expect(HTBOTTOMRIGHT, r);
 
@@ -638,17 +638,17 @@ static void test_sizegrip(void)
     rc.right = pt.x;
 
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.left, rc.top));
-    todo_wine expect(HTBOTTOMLEFT, r);
+    expect(HTBOTTOMLEFT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.left + 1, rc.top));
     expect(HTCLIENT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.left, rc.top - 1));
-    todo_wine expect(HTBOTTOMLEFT, r);
+    expect(HTBOTTOMLEFT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right, rc.bottom));
-    todo_wine expect(HTBOTTOMLEFT, r);
+    expect(HTBOTTOMLEFT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right - 1, rc.bottom));
-    todo_wine expect(HTBOTTOMLEFT, r);
+    expect(HTBOTTOMLEFT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right, rc.bottom + 1));
-    todo_wine expect(HTBOTTOMLEFT, r);
+    expect(HTBOTTOMLEFT, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right + 1, rc.bottom - 1));
     expect(HTBOTTOMLEFT, r);
 
