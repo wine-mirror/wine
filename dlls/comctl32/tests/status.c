@@ -682,7 +682,7 @@ static void test_sizegrip(void)
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right, rc.bottom + 1));
     expect(HTNOWHERE, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right - 1, rc.bottom - 1));
-    todo_wine expect(HTCLIENT, r);
+    expect(HTCLIENT, r);
 
     /* maximized with right-to-left */
     SetWindowLongA(hwndStatus, GWL_EXSTYLE, WS_EX_LAYOUTRTL);
@@ -705,7 +705,7 @@ static void test_sizegrip(void)
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right, rc.bottom + 1));
     expect(HTNOWHERE, r);
     r = SendMessageA(hwndStatus, WM_NCHITTEST, 0, MAKELPARAM(rc.right + 1, rc.bottom - 1));
-    todo_wine expect(HTCLIENT, r);
+    expect(HTCLIENT, r);
 
     SetWindowLongA(g_hMainWnd, GWL_STYLE, style);
     DestroyWindow(hwndStatus);
