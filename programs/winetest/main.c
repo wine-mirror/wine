@@ -1437,7 +1437,7 @@ int main( int argc, char *argv[] )
             }
             if (failures > FAILURES_LIMIT)
                 report( R_WARNING,
-                        "%d tests failed, there's probably something broken with your setup.\n"
+                        "%d tests failed. There is probably something broken with your setup.\n"
                         "You need to address this before submitting results.", failures );
 
             if (build_id[0] && nr_of_skips <= SKIP_LIMIT && failures <= FAILURES_LIMIT &&
