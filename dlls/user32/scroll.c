@@ -1095,15 +1095,17 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
 {
     MSG msg;
+    RECT rect;
 
     if (scrollbar != SB_CTL)
     {
-        RECT rect;
         WIN_GetRectangles( hwnd, COORDS_CLIENT, &rect, NULL );
         ScreenToClient( hwnd, &pt );
         pt.x -= rect.left;
         pt.y -= rect.top;
     }
+    else
+        rect.left = rect.top = 0;
 
     SCROLL_HandleScrollEvent( hwnd, scrollbar, WM_LBUTTONDOWN, pt );
 
@@ -1115,8 +1117,8 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
             msg.message == WM_MOUSEMOVE ||
             (msg.message == WM_SYSTIMER && msg.wParam == SCROLL_TIMER))
         {
-            pt.x = (short)LOWORD(msg.lParam);
-            pt.y = (short)HIWORD(msg.lParam);
+            pt.x = (short)LOWORD(msg.lParam) - rect.left;
+            pt.y = (short)HIWORD(msg.lParam) - rect.top;
             SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
         }
         else
