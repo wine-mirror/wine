@@ -563,13 +563,17 @@ static void test_NtQueryDirectoryFile(void)
     ok( U(io).Status == STATUS_BUFFER_OVERFLOW, "wrong status %x\n", U(io).Status );
     ok( U(io).Information == data_size || broken( U(io).Information == 0),
         "wrong info %lx\n", U(io).Information );
-    ok( fbdi->NextEntryOffset == 0, "wrong offset %x\n",  fbdi->NextEntryOffset );
-    ok( fbdi->FileNameLength == lstrlenW(testfiles[0].name) * sizeof(WCHAR),
-        "wrong length %x\n", fbdi->FileNameLength );
-    ok( filename[0] == testfiles[0].name[0], "incorrect long file name: %s\n",
-        wine_dbgstr_wn(fbdi->FileName, fbdi->FileNameLength/sizeof(WCHAR)));
-    ok( filename[1] == 0x5555, "incorrect long file name: %s\n",
-        wine_dbgstr_wn(fbdi->FileName, fbdi->FileNameLength/sizeof(WCHAR)));
+    ok( fbdi->NextEntryOffset == 0 || fbdi->NextEntryOffset == 0x55555555, /* win10 >= 1709 */
+        "wrong offset %x\n",  fbdi->NextEntryOffset );
+    if (!fbdi->NextEntryOffset)
+    {
+        ok( fbdi->FileNameLength == lstrlenW(testfiles[0].name) * sizeof(WCHAR),
+            "wrong length %x\n", fbdi->FileNameLength );
+        ok( filename[0] == testfiles[0].name[0], "incorrect long file name: %s\n",
+            wine_dbgstr_wn(fbdi->FileName, fbdi->FileNameLength/sizeof(WCHAR)));
+        ok( filename[1] == 0x5555, "incorrect long file name: %s\n",
+            wine_dbgstr_wn(fbdi->FileName, fbdi->FileNameLength/sizeof(WCHAR)));
+    }
 
     test_NtQueryDirectoryFile_classes( dirh, &mask );
 
