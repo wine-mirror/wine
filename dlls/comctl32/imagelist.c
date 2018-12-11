@@ -2273,7 +2273,7 @@ HIMAGELIST WINAPI ImageList_Read(IStream *pstm)
     TRACE("cx %u, cy %u, flags 0x%04x, cCurImage %u, cMaxImage %u\n",
           ilHead.cx, ilHead.cy, ilHead.flags, ilHead.cCurImage, ilHead.cMaxImage);
 
-    himl = ImageList_Create(ilHead.cx, ilHead.cy, ilHead.flags, ilHead.cCurImage, ilHead.cMaxImage);
+    himl = ImageList_Create(ilHead.cx, ilHead.cy, ilHead.flags, ilHead.cMaxImage, ilHead.cGrow);
     if (!himl)
 	return NULL;
 
