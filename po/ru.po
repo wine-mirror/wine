@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-07-20 09:26+0300\n"
+"PO-Revision-Date: 2018-12-11 15:59+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.9\n"
+"X-Generator: Poedit 2.2\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -312,25 +312,23 @@ msgstr "Отмена..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "Осталось %1!u! %2"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "Осталось %1!u! %2 и %3!u! %4"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Секунды"
+msgstr "сек."
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "мин."
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "ч."
 
 #: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
@@ -2453,16 +2451,12 @@ msgstr ""
 "выполнения экспорта."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Выбор хранилища сертификатов"
+msgstr "Выбор сертификата"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Выберите хранилище для импорта сертификата:"
+msgstr "Выберите сертификат, который хотите использовать"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2992,20 +2986,16 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Примечание: закрытый ключ этого сертификата не экспортируемый."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "&Назначения:"
+msgstr "Предназначение"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Размещение"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Выбор хранилища сертификатов"
+msgstr "Выберите сертификат"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
@@ -11106,10 +11096,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Ошибка: неверная опция «%c».\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Ошибка: не удалось найти Процесс «%1».\n"
+msgstr "Ошибка: не удалось получить имя хоста: %u.\n"
 
 #: hostname.rc:33
 msgid ""
@@ -14262,11 +14250,11 @@ msgstr "Цвет:"
 
 #: winecfg.rc:304
 msgid "MIME types"
-msgstr ""
+msgstr "Типы MIME"
 
 #: winecfg.rc:305
 msgid "Manage file &associations"
-msgstr ""
+msgstr "Управлять &ассоциациями файлов"
 
 #: winecfg.rc:308
 msgid "Folders"
