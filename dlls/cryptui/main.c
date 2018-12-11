@@ -3497,7 +3497,7 @@ static void set_general_cert_properties(HWND hwnd, struct edit_cert_data *data)
 static void set_cert_string_property(PCCERT_CONTEXT cert, DWORD prop,
  LPWSTR str)
 {
-    if (str && strlenW(str))
+    if (str && *str)
     {
         CRYPT_DATA_BLOB blob;
 
