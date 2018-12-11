@@ -165,6 +165,7 @@ static const char *compare_line(const char *out_line, const char *out_end, const
     static const char path_cmd[]  = {'@','p','a','t','h','@'};
     static const char shortpath_cmd[]  = {'@','s','h','o','r','t','p','a','t','h','@'};
     static const char space_cmd[] = {'@','s','p','a','c','e','@'};
+    static const char spaces_cmd[] = {'@','s','p','a','c','e','s','@'};
     static const char tab_cmd[]   = {'@','t','a','b','@'};
     static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
 
@@ -223,6 +224,15 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                 } else {
                     err = out_end;
                 }
+            }else if(exp_ptr+sizeof(spaces_cmd) <= exp_end
+                    && !memcmp(exp_ptr, spaces_cmd, sizeof(spaces_cmd))) {
+                exp_ptr += sizeof(spaces_cmd);
+                if(out_ptr < out_end && *out_ptr == ' ') {
+                    while (out_ptr < out_end && *out_ptr == ' ') out_ptr++;
+                    continue;
+                } else {
+                    err = out_end;
+                }
             }else if(exp_ptr+sizeof(tab_cmd) <= exp_end
                     && !memcmp(exp_ptr, tab_cmd, sizeof(tab_cmd))) {
                 exp_ptr += sizeof(tab_cmd);
@@ -250,10 +260,8 @@ static const char *compare_line(const char *out_line, const char *out_end, const
 
             while(exp_ptr+sizeof(or_broken_cmd) <= exp_end && memcmp(exp_ptr, or_broken_cmd, sizeof(or_broken_cmd)))
                 exp_ptr++;
-            if(!exp_ptr)
-                return err;
-
             exp_ptr += sizeof(or_broken_cmd);
+            if (exp_ptr > exp_end) return err;
             out_ptr = out_line;
             err = NULL;
             continue;

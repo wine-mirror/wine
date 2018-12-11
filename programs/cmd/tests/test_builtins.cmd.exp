@@ -1392,22 +1392,22 @@ bar\baz removed
 @drive@@path@foobar
 @pwd@
 ------------ Testing attrib ------------
-A            @drive@@path@foobar\foo@or_broken@A          @drive@@path@foobar\foo@or_broken@A       I    @drive@@path@foobar\foo
+A@spaces@@drive@@path@foobar\foo@or_broken@A       I@spaces@@drive@@path@foobar\foo
 --- read-only attribute
-A    R       @drive@@path@foobar\foo@or_broken@A    R     @drive@@path@foobar\foo@or_broken@A    R  I    @drive@@path@foobar\foo
+A    R@spaces@@drive@@path@foobar\foo@or_broken@A    R  I@spaces@@drive@@path@foobar\foo
 foo
 foo original contents
 Read-only file not deleted
 Read-only file forcibly deleted
 --- recursive behaviour
-A            @drive@@path@foobar\baz\level2@or_broken@A          @drive@@path@foobar\baz\level2@or_broken@A       I    @drive@@path@foobar\baz\level2
-A    R       @drive@@path@foobar\level1@or_broken@A    R     @drive@@path@foobar\level1@or_broken@A    R  I    @drive@@path@foobar\level1
-A    R       @drive@@path@foobar\baz\level2@or_broken@A    R     @drive@@path@foobar\baz\level2@or_broken@A    R  I    @drive@@path@foobar\baz\level2
-A            @drive@@path@foobar\bar@or_broken@A          @drive@@path@foobar\bar@or_broken@A       I    @drive@@path@foobar\bar
+A@spaces@@drive@@path@foobar\baz\level2@or_broken@A       I@spaces@@drive@@path@foobar\baz\level2
+A    R@spaces@@drive@@path@foobar\level1@or_broken@A    R  I@spaces@@drive@@path@foobar\level1
+A    R@spaces@@drive@@path@foobar\baz\level2@or_broken@A    R  I@spaces@@drive@@path@foobar\baz\level2
+A@spaces@@drive@@path@foobar\bar@or_broken@A       I@spaces@@drive@@path@foobar\bar
 --- folders processing
-             @drive@@path@foobar@or_broken@           @drive@@path@foobar@or_broken@        I    @drive@@path@foobar
-@todo_wine@     R       @drive@@path@foobar\baz@or_broken@     R     @drive@@path@foobar\baz@or_broken@           @drive@@path@foobar\baz@or_broken@     R  I    @drive@@path@foobar\baz
-A            @drive@@path@foobar\baz\toto@or_broken@A          @drive@@path@foobar\baz\toto@or_broken@A       I    @drive@@path@foobar\baz\toto
+@spaces@@drive@@path@foobar@or_broken@        I@spaces@@drive@@path@foobar
+@todo_wine@     R@spaces@@drive@@path@foobar\baz@or_broken@@spaces@@drive@@path@foobar\baz@or_broken@     R  I@spaces@@drive@@path@foobar\baz
+A@spaces@@drive@@path@foobar\baz\toto@or_broken@A       I@spaces@@drive@@path@foobar\baz\toto
 toto
 lulu
 file created in read-only dir
