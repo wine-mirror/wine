@@ -3240,7 +3240,8 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
         uiStringId = atoiW(pComma+2);
         *pComma = '\0';
 
-        hModule = LoadLibraryW(pwszExpandedBuffer + 1);
+        hModule = LoadLibraryExW(pwszExpandedBuffer + 1, NULL,
+                                 LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
         if (!hModule || !load_string(hModule, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR)))
             result = ERROR_BADKEY;
         FreeLibrary(hModule);
