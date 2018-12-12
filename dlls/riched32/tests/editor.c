@@ -1149,6 +1149,14 @@ static void simulate_typing_characters(HWND hwnd, const char* szChars)
     }
 }
 
+static void format_test_result(char *target, const char *src)
+{
+    int i;
+    for (i = 0; i < strlen(src); i++)
+        sprintf(target + 2*i, "%02x", src[i] & 0xFF);
+    target[2*i] = 0;
+}
+
 /*
  * This test attempts to show the effect of enter on a richedit
  * control v1.0 inserts CRLF whereas for higher versions it only
@@ -1173,15 +1181,14 @@ static void test_enter(void)
   char expectedbuf[1024];
   char resultbuf[1024];
   HWND hwndRichEdit = new_richedit(NULL);
-  UINT i,j;
+  UINT i;
+  char buf[1024] = {0};
+  GETTEXTEX getText = {sizeof(buf)};
+  LRESULT result;
+  const char *expected;
 
-  for (i = 0; i < ARRAY_SIZE(testenteritems); i++) {
-
-    char buf[1024] = {0};
-    LRESULT result;
-    GETTEXTEX getText;
-    const char *expected;
-
+  for (i = 0; i < ARRAY_SIZE(testenteritems); i++)
+  {
     /* Set the text to the initial text */
     result = SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)testenteritems[i].initialtext);
     ok (result == 1, "[%d] WM_SETTEXT returned %ld instead of 1\n", i, result);
@@ -1195,12 +1202,8 @@ static void test_enter(void)
     result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buf);
     expected = testenteritems[i].expectedtext;
 
-    resultbuf[0]=0x00;
-    for (j = 0; j < (UINT)result; j++)
-      sprintf(resultbuf+strlen(resultbuf), "%02x", buf[j] & 0xFF);
-    expectedbuf[0] = '\0';
-    for (j = 0; j < strlen(expected); j++)
-      sprintf(expectedbuf+strlen(expectedbuf), "%02x", expected[j] & 0xFF);
+    format_test_result(resultbuf, buf);
+    format_test_result(expectedbuf, expected);
 
     result = strcmp(expected, buf);
     ok (result == 0,
@@ -1208,21 +1211,14 @@ static void test_enter(void)
         i, resultbuf, expectedbuf);
 
     /* 2. Retrieve with EM_GETTEXTEX, GT_DEFAULT */
-    getText.cb = sizeof(buf);
     getText.flags = GT_DEFAULT;
-    getText.codepage      = CP_ACP;
-    getText.lpDefaultChar = NULL;
-    getText.lpUsedDefChar = NULL;
+    getText.codepage = CP_ACP;
     buf[0] = 0x00;
     result = SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
     expected = testenteritems[i].expectedtext;
 
-    resultbuf[0]=0x00;
-    for (j = 0; j < (UINT)result; j++)
-      sprintf(resultbuf+strlen(resultbuf), "%02x", buf[j] & 0xFF);
-    expectedbuf[0] = '\0';
-    for (j = 0; j < strlen(expected); j++)
-      sprintf(expectedbuf+strlen(expectedbuf), "%02x", expected[j] & 0xFF);
+    format_test_result(resultbuf, buf);
+    format_test_result(expectedbuf, expected);
 
     result = strcmp(expected, buf);
     ok (result == 0 || broken(buf[0]==0x00 /* WinNT4 */),
@@ -1230,21 +1226,14 @@ static void test_enter(void)
         i, resultbuf, expectedbuf);
 
     /* 3. Retrieve with EM_GETTEXTEX, GT_USECRLF */
-    getText.cb = sizeof(buf);
     getText.flags = GT_USECRLF;
-    getText.codepage      = CP_ACP;
-    getText.lpDefaultChar = NULL;
-    getText.lpUsedDefChar = NULL;
+    getText.codepage = CP_ACP;
     buf[0] = 0x00;
     result = SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
     expected = testenteritems[i].expectedtext;
 
-    resultbuf[0]=0x00;
-    for (j = 0; j < (UINT)result; j++)
-      sprintf(resultbuf+strlen(resultbuf), "%02x", buf[j] & 0xFF);
-    expectedbuf[0] = '\0';
-    for (j = 0; j < strlen(expected); j++)
-      sprintf(expectedbuf+strlen(expectedbuf), "%02x", expected[j] & 0xFF);
+    format_test_result(resultbuf, buf);
+    format_test_result(expectedbuf, expected);
 
     result = strcmp(expected, buf);
     ok (result == 0 || broken(buf[0]==0x00 /* WinNT4 */),
