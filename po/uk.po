@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-07-15 16:35+0300\n"
+"PO-Revision-Date: 2018-12-12 15:58+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -306,25 +306,23 @@ msgstr "Скасування..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "Залишилося %1!u! %2"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "Залишилося %1!u! %2 and %3!u! %4"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Секунди"
+msgstr "сек."
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "хв."
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "год."
 
 #: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
@@ -423,16 +421,12 @@ msgid "&Retry"
 msgstr "По&втор"
 
 #: comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "С&ховати вкладки"
+msgstr "Сховати подробиці"
 
 #: comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
-msgstr "Подробиці"
+msgstr "Показати подробиці"
 
 #: comctl32.rc:31 cryptui.rc:235 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
@@ -2452,16 +2446,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "Майстер експорту сертифікатів завершив роботу успішно."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Вибір сховища сертифікатів"
+msgstr "Вибір сертифіката"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Виберіть потрібне сховище сертифікатів:"
+msgstr "Виберіть потрібний сертифікат"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2992,20 +2982,16 @@ msgstr ""
 "Увага: Приватний ключ для цього сертифікату не може бути експортований."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "&Призначена ціль:"
+msgstr "Призначення"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Розміщення"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Вибір сховища сертифікатів"
+msgstr "Виберіть сертифікат"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
@@ -11183,10 +11169,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Помилка: невірний параметр '%c'.\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Помилка: Не вдалось знайти процес \"%1\".\n"
+msgstr "Помилка: Не вдалося отримати ім'я хоста: %u.\n"
 
 #: hostname.rc:33
 msgid ""
@@ -14354,11 +14338,11 @@ msgstr "Ко&лір:"
 
 #: winecfg.rc:304
 msgid "MIME types"
-msgstr ""
+msgstr "Типи MIME"
 
 #: winecfg.rc:305
 msgid "Manage file &associations"
-msgstr ""
+msgstr "Керування &асоціаціями файлів"
 
 #: winecfg.rc:308
 msgid "Folders"
