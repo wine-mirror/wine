@@ -132,9 +132,7 @@ void add_marked_para(ME_TextEditor *editor, ME_DisplayItem *di)
         }
         else if (di->member.para.nCharOfs >= iter->member.para.nCharOfs)
         {
-            if (!iter->member.para.next_marked ||
-                (iter->member.para.next_marked &&
-                 di->member.para.nCharOfs < iter->member.para.next_marked->member.para.nCharOfs))
+            if (!iter->member.para.next_marked || di->member.para.nCharOfs < iter->member.para.next_marked->member.para.nCharOfs)
             {
                 if (iter->member.para.next_marked)
                 {
