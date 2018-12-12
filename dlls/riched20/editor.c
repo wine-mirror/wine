@@ -2668,7 +2668,9 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       ME_SendRequestResize(editor, FALSE);
       return TRUE;
     case VK_RETURN:
-      return handle_enter(editor);
+      if (!editor->bEmulateVersion10)
+          return handle_enter(editor);
+      break;
     case VK_ESCAPE:
       if (editor->bDialogMode && editor->hwndParent)
         PostMessageW(editor->hwndParent, WM_CLOSE, 0, 0);
@@ -2740,6 +2742,12 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
   if (editor->bMouseCaptured)
     return 0;
 
+  if (editor->styleFlags & ES_READONLY)
+  {
+    MessageBeep(MB_ICONERROR);
+    return 0; /* FIXME really 0 ? */
+  }
+
   if (unicode)
       wstr = (WCHAR)charCode;
   else
@@ -2748,10 +2756,8 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
       MultiByteToWideChar(CP_ACP, 0, &charA, 1, &wstr, 1);
   }
 
-  if (editor->styleFlags & ES_READONLY) {
-    MessageBeep(MB_ICONERROR);
-    return 0; /* FIXME really 0 ? */
-  }
+  if (editor->bEmulateVersion10 && wstr == '\r')
+      handle_enter(editor);
 
   if ((unsigned)wstr >= ' ' || wstr == '\t')
   {

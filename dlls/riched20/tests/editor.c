@@ -8273,6 +8273,7 @@ static void format_test_result(char *target, const char *src)
  * inserts CR. If shows that EM_GETTEXTEX with GT_USECRLF == WM_GETTEXT
  * and also shows that GT_USECRLF has no effect in richedit 1.0, but
  * does for higher. The same test is cloned in riched32 and riched20.
+ * Also shows the difference between WM_CHAR/WM_KEYDOWN in v1.0 and higher versions
  */
 static void test_enter(void)
 {
@@ -8352,6 +8353,34 @@ static void test_enter(void)
         "[%d] EM_GETTEXTEX, GT_USECRLF unexpected '%s', expected '%s'\n",
         i, resultbuf, expectedbuf);
   }
+
+  /* Show that WM_CHAR is handled differently from WM_KEYDOWN */
+  getText.flags    = GT_DEFAULT;
+  getText.codepage = CP_ACP;
+
+  result = SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"");
+  ok (result == 1, "[%d] WM_SETTEXT returned %ld instead of 1\n", i, result);
+  SendMessageW(hwndRichEdit, WM_CHAR, 'T', 0);
+  SendMessageW(hwndRichEdit, WM_KEYDOWN, VK_RETURN, 0);
+
+  result = SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
+  ok(result == 2, "Got %d\n", (int)result);
+  format_test_result(resultbuf, buf);
+  format_test_result(expectedbuf, "T\r");
+  result = strcmp(resultbuf, expectedbuf);
+  ok (result == 0, "[%d] EM_GETTEXTEX, GT_DEFAULT unexpected '%s', expected '%s'\n", i, resultbuf, expectedbuf);
+
+  result = SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"");
+  ok (result == 1, "[%d] WM_SETTEXT returned %ld instead of 1\n", i, result);
+  SendMessageW(hwndRichEdit, WM_CHAR, 'T', 0);
+  SendMessageW(hwndRichEdit, WM_CHAR, '\r', 0);
+
+  result = SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
+  ok(result == 1, "Got %d\n", (int)result);
+  format_test_result(resultbuf, buf);
+  format_test_result(expectedbuf, "T");
+  result = strcmp(resultbuf, expectedbuf);
+  ok (result == 0, "[%d] EM_GETTEXTEX, GT_DEFAULT unexpected '%s', expected '%s'\n", i, resultbuf, expectedbuf);
 
   DestroyWindow(hwndRichEdit);
 }
