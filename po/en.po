@@ -9058,6 +9058,794 @@ msgstr " sec"
 msgid "Select Source"
 msgstr "Select Source"
 
+#: tzres.rc:82
+msgid "China Standard Time"
+msgstr "China Standard Time"
+
+#: tzres.rc:83
+msgid "China Daylight Time"
+msgstr "China Daylight Time"
+
+#: tzres.rc:160
+msgid "North Asia Standard Time"
+msgstr "North Asia Standard Time"
+
+#: tzres.rc:161
+msgid "North Asia Daylight Time"
+msgstr "North Asia Daylight Time"
+
+#: tzres.rc:104
+msgid "Georgian Standard Time"
+msgstr "Georgian Standard Time"
+
+#: tzres.rc:105
+msgid "Georgian Daylight Time"
+msgstr "Georgian Daylight Time"
+
+#: tzres.rc:152
+msgid "Nepal Standard Time"
+msgstr "Nepal Standard Time"
+
+#: tzres.rc:153
+msgid "Nepal Daylight Time"
+msgstr "Nepal Daylight Time"
+
+#: tzres.rc:60
+msgid "Cape Verde Standard Time"
+msgstr "Cape Verde Standard Time"
+
+#: tzres.rc:61
+msgid "Cape Verde Daylight Time"
+msgstr "Cape Verde Daylight Time"
+
+#: tzres.rc:74
+msgid "Central European Standard Time"
+msgstr "Central European Standard Time"
+
+#: tzres.rc:75
+msgid "Central European Daylight Time"
+msgstr "Central European Daylight Time"
+
+#: tzres.rc:140
+msgid "Morocco Standard Time"
+msgstr "Morocco Standard Time"
+
+#: tzres.rc:141
+msgid "Morocco Daylight Time"
+msgstr "Morocco Daylight Time"
+
+#: tzres.rc:72
+msgid "Central Europe Standard Time"
+msgstr "Central Europe Standard Time"
+
+#: tzres.rc:73
+msgid "Central Europe Daylight Time"
+msgstr "Central Europe Daylight Time"
+
+#: tzres.rc:118
+msgid "Iran Standard Time"
+msgstr "Iran Standard Time"
+
+#: tzres.rc:119
+msgid "Iran Daylight Time"
+msgstr "Iran Daylight Time"
+
+#: tzres.rc:150
+msgid "Namibia Standard Time"
+msgstr "Namibia Standard Time"
+
+#: tzres.rc:151
+msgid "Namibia Daylight Time"
+msgstr "Namibia Daylight Time"
+
+#: tzres.rc:200
+msgid "Tonga Standard Time"
+msgstr "Tonga Standard Time"
+
+#: tzres.rc:201
+msgid "Tonga Daylight Time"
+msgstr "Tonga Daylight Time"
+
+#: tzres.rc:144
+msgid "Mountain Standard Time (Mexico)"
+msgstr "Mountain Standard Time (Mexico)"
+
+#: tzres.rc:145
+msgid "Mountain Daylight Time (Mexico)"
+msgstr "Mountain Daylight Time (Mexico)"
+
+#: tzres.rc:106
+msgid "GMT Standard Time"
+msgstr "GMT Standard Time"
+
+#: tzres.rc:107
+msgid "GMT Daylight Time"
+msgstr "GMT Daylight Time"
+
+#: tzres.rc:68
+msgid "Central Asia Standard Time"
+msgstr "Central Asia Standard Time"
+
+#: tzres.rc:69
+msgid "Central Asia Daylight Time"
+msgstr "Central Asia Daylight Time"
+
+#: tzres.rc:38
+msgid "Arabic Standard Time"
+msgstr "Arabic Standard Time"
+
+#: tzres.rc:39
+msgid "Arabic Daylight Time"
+msgstr "Arabic Daylight Time"
+
+#: tzres.rc:132
+msgid "Magadan Standard Time"
+msgstr "Magadan Standard Time"
+
+#: tzres.rc:133
+msgid "Magadan Daylight Time"
+msgstr "Magadan Daylight Time"
+
+#: tzres.rc:156
+msgid "Newfoundland Standard Time"
+msgstr "Newfoundland Standard Time"
+
+#: tzres.rc:157
+msgid "Newfoundland Daylight Time"
+msgstr "Newfoundland Daylight Time"
+
+#: tzres.rc:224
+msgid "West Pacific Standard Time"
+msgstr "West Pacific Standard Time"
+
+#: tzres.rc:225
+msgid "West Pacific Daylight Time"
+msgstr "West Pacific Daylight Time"
+
+#: tzres.rc:164
+msgid "Pacific Standard Time"
+msgstr "Pacific Standard Time"
+
+#: tzres.rc:165
+msgid "Pacific Daylight Time"
+msgstr "Pacific Daylight Time"
+
+#: tzres.rc:48
+msgid "Azerbaijan Standard Time"
+msgstr "Azerbaijan Standard Time"
+
+#: tzres.rc:49
+msgid "Azerbaijan Daylight Time"
+msgstr "Azerbaijan Daylight Time"
+
+#: tzres.rc:182
+msgid "Samoa Standard Time"
+msgstr "Samoa Standard Time"
+
+#: tzres.rc:183
+msgid "Samoa Daylight Time"
+msgstr "Samoa Daylight Time"
+
+#: tzres.rc:124
+msgid "Kaliningrad Standard Time"
+msgstr "Kaliningrad Standard Time"
+
+#: tzres.rc:125
+msgid "Kaliningrad Daylight Time"
+msgstr "Kaliningrad Daylight Time"
+
+#: tzres.rc:166
+msgid "Pacific Standard Time (Mexico)"
+msgstr "Pacific Standard Time (Mexico)"
+
+#: tzres.rc:167
+msgid "Pacific Daylight Time (Mexico)"
+msgstr "Pacific Daylight Time (Mexico)"
+
+#: tzres.rc:136
+msgid "Middle East Standard Time"
+msgstr "Middle East Standard Time"
+
+#: tzres.rc:137
+msgid "Middle East Daylight Time"
+msgstr "Middle East Daylight Time"
+
+#: tzres.rc:198
+msgid "Tokyo Standard Time"
+msgstr "Tokyo Standard Time"
+
+#: tzres.rc:199
+msgid "Tokyo Daylight Time"
+msgstr "Tokyo Daylight Time"
+
+#: tzres.rc:130
+msgid "Line Islands Standard Time"
+msgstr "Line Islands Standard Time"
+
+#: tzres.rc:131
+msgid "Line Islands Daylight Time"
+msgstr "Line Islands Daylight Time"
+
+#: tzres.rc:122
+msgid "Jordan Standard Time"
+msgstr "Jordan Standard Time"
+
+#: tzres.rc:123
+msgid "Jordan Daylight Time"
+msgstr "Jordan Daylight Time"
+
+#: tzres.rc:78
+msgid "Central Standard Time"
+msgstr "Central Standard Time"
+
+#: tzres.rc:79
+msgid "Central Daylight Time"
+msgstr "Central Daylight Time"
+
+#: tzres.rc:50
+msgid "Azores Standard Time"
+msgstr "Azores Standard Time"
+
+#: tzres.rc:51
+msgid "Azores Daylight Time"
+msgstr "Azores Daylight Time"
+
+#: tzres.rc:158
+msgid "North Asia East Standard Time"
+msgstr "North Asia East Standard Time"
+
+#: tzres.rc:159
+msgid "North Asia East Daylight Time"
+msgstr "North Asia East Daylight Time"
+
+#: tzres.rc:40
+msgid "Argentina Standard Time"
+msgstr "Argentina Standard Time"
+
+#: tzres.rc:41
+msgid "Argentina Daylight Time"
+msgstr "Argentina Daylight Time"
+
+#: tzres.rc:146
+msgid "Myanmar Standard Time"
+msgstr "Myanmar Standard Time"
+
+#: tzres.rc:147
+msgid "Myanmar Daylight Time"
+msgstr "Myanmar Daylight Time"
+
+#: tzres.rc:210 tzres.rc:211
+msgid "Coordinated Universal Time"
+msgstr "Coordinated Universal Time"
+
+#: tzres.rc:116
+msgid "India Standard Time"
+msgstr "India Standard Time"
+
+#: tzres.rc:117
+msgid "India Daylight Time"
+msgstr "India Daylight Time"
+
+#: tzres.rc:112
+msgid "GTB Standard Time"
+msgstr "GTB Standard Time"
+
+#: tzres.rc:113
+msgid "GTB Daylight Time"
+msgstr "GTB Daylight Time"
+
+#: tzres.rc:202
+msgid "Turkey Standard Time"
+msgstr "Turkey Standard Time"
+
+#: tzres.rc:203
+msgid "Turkey Daylight Time"
+msgstr "Turkey Daylight Time"
+
+#: tzres.rc:100
+msgid "Fiji Standard Time"
+msgstr "Fiji Standard Time"
+
+#: tzres.rc:101
+msgid "Fiji Daylight Time"
+msgstr "Fiji Daylight Time"
+
+#: tzres.rc:58
+msgid "Canada Central Standard Time"
+msgstr "Canada Central Standard Time"
+
+#: tzres.rc:59
+msgid "Canada Central Daylight Time"
+msgstr "Canada Central Daylight Time"
+
+#: tzres.rc:194
+msgid "Taipei Standard Time"
+msgstr "Taipei Standard Time"
+
+#: tzres.rc:195
+msgid "Taipei Daylight Time"
+msgstr "Taipei Daylight Time"
+
+#: tzres.rc:220
+msgid "W. Europe Standard Time"
+msgstr "W. Europe Standard Time"
+
+#: tzres.rc:221
+msgid "W. Europe Daylight Time"
+msgstr "W. Europe Daylight Time"
+
+#: tzres.rc:138
+msgid "Montevideo Standard Time"
+msgstr "Montevideo Standard Time"
+
+#: tzres.rc:139
+msgid "Montevideo Daylight Time"
+msgstr "Montevideo Daylight Time"
+
+#: tzres.rc:168
+msgid "Pakistan Standard Time"
+msgstr "Pakistan Standard Time"
+
+#: tzres.rc:169
+msgid "Pakistan Daylight Time"
+msgstr "Pakistan Daylight Time"
+
+#: tzres.rc:62
+msgid "Caucasus Standard Time"
+msgstr "Caucasus Standard Time"
+
+#: tzres.rc:63
+msgid "Caucasus Daylight Time"
+msgstr "Caucasus Daylight Time"
+
+#: tzres.rc:46
+msgid "AUS Eastern Standard Time"
+msgstr "AUS Eastern Standard Time"
+
+#: tzres.rc:47
+msgid "AUS Eastern Daylight Time"
+msgstr "AUS Eastern Daylight Time"
+
+#: tzres.rc:148
+msgid "N. Central Asia Standard Time"
+msgstr "N. Central Asia Standard Time"
+
+#: tzres.rc:149
+msgid "N. Central Asia Daylight Time"
+msgstr "N. Central Asia Daylight Time"
+
+#: tzres.rc:94
+msgid "Eastern Standard Time"
+msgstr "Eastern Standard Time"
+
+#: tzres.rc:95
+msgid "Eastern Daylight Time"
+msgstr "Eastern Daylight Time"
+
+#: tzres.rc:80
+msgid "Central Standard Time (Mexico)"
+msgstr "Central Standard Time (Mexico)"
+
+#: tzres.rc:81
+msgid "Central Daylight Time (Mexico)"
+msgstr "Central Daylight Time (Mexico)"
+
+#: tzres.rc:42
+msgid "Atlantic Standard Time"
+msgstr "Atlantic Standard Time"
+
+#: tzres.rc:43
+msgid "Atlantic Daylight Time"
+msgstr "Atlantic Daylight Time"
+
+#: tzres.rc:142
+msgid "Mountain Standard Time"
+msgstr "Mountain Standard Time"
+
+#: tzres.rc:143
+msgid "Mountain Daylight Time"
+msgstr "Mountain Daylight Time"
+
+#: tzres.rc:206
+msgid "US Eastern Standard Time"
+msgstr "US Eastern Standard Time"
+
+#: tzres.rc:207
+msgid "US Eastern Daylight Time"
+msgstr "US Eastern Daylight Time"
+
+#: tzres.rc:196
+msgid "Tasmania Standard Time"
+msgstr "Tasmania Standard Time"
+
+#: tzres.rc:197
+msgid "Tasmania Daylight Time"
+msgstr "Tasmania Daylight Time"
+
+#: tzres.rc:66
+msgid "Central America Standard Time"
+msgstr "Central America Standard Time"
+
+#: tzres.rc:67
+msgid "Central America Daylight Time"
+msgstr "Central America Daylight Time"
+
+#: tzres.rc:208
+msgid "US Mountain Standard Time"
+msgstr "US Mountain Standard Time"
+
+#: tzres.rc:209
+msgid "US Mountain Daylight Time"
+msgstr "US Mountain Daylight Time"
+
+#: tzres.rc:188
+msgid "South Africa Standard Time"
+msgstr "South Africa Standard Time"
+
+#: tzres.rc:189
+msgid "South Africa Daylight Time"
+msgstr "South Africa Daylight Time"
+
+#: tzres.rc:64
+msgid "Cen. Australia Standard Time"
+msgstr "Cen. Australia Standard Time"
+
+#: tzres.rc:65
+msgid "Cen. Australia Daylight Time"
+msgstr "Cen. Australia Daylight Time"
+
+#: tzres.rc:190
+msgid "Sri Lanka Standard Time"
+msgstr "Sri Lanka Standard Time"
+
+#: tzres.rc:191
+msgid "Sri Lanka Daylight Time"
+msgstr "Sri Lanka Daylight Time"
+
+#: tzres.rc:30
+msgid "Afghanistan Standard Time"
+msgstr "Afghanistan Standard Time"
+
+#: tzres.rc:31
+msgid "Afghanistan Daylight Time"
+msgstr "Afghanistan Daylight Time"
+
+#: tzres.rc:226
+msgid "Yakutsk Standard Time"
+msgstr "Yakutsk Standard Time"
+
+#: tzres.rc:227
+msgid "Yakutsk Daylight Time"
+msgstr "Yakutsk Daylight Time"
+
+#: tzres.rc:176
+msgid "SA Eastern Standard Time"
+msgstr "SA Eastern Standard Time"
+
+#: tzres.rc:177
+msgid "SA Eastern Daylight Time"
+msgstr "SA Eastern Daylight Time"
+
+#: tzres.rc:34
+msgid "Arab Standard Time"
+msgstr "Arab Standard Time"
+
+#: tzres.rc:35
+msgid "Arab Daylight Time"
+msgstr "Arab Daylight Time"
+
+#: tzres.rc:36
+msgid "Arabian Standard Time"
+msgstr "Arabian Standard Time"
+
+#: tzres.rc:37
+msgid "Arabian Daylight Time"
+msgstr "Arabian Daylight Time"
+
+#: tzres.rc:174
+msgid "Russian Standard Time"
+msgstr "Russian Standard Time"
+
+#: tzres.rc:175
+msgid "Russian Daylight Time"
+msgstr "Russian Daylight Time"
+
+#: tzres.rc:172
+msgid "Romance Standard Time"
+msgstr "Romance Standard Time"
+
+#: tzres.rc:173
+msgid "Romance Daylight Time"
+msgstr "Romance Daylight Time"
+
+#: tzres.rc:98
+msgid "Ekaterinburg Standard Time"
+msgstr "Ekaterinburg Standard Time"
+
+#: tzres.rc:99
+msgid "Ekaterinburg Daylight Time"
+msgstr "Ekaterinburg Daylight Time"
+
+#: tzres.rc:192
+msgid "Syria Standard Time"
+msgstr "Syria Standard Time"
+
+#: tzres.rc:193
+msgid "Syria Daylight Time"
+msgstr "Syria Daylight Time"
+
+#: tzres.rc:44
+msgid "AUS Central Standard Time"
+msgstr "AUS Central Standard Time"
+
+#: tzres.rc:45
+msgid "AUS Central Daylight Time"
+msgstr "AUS Central Daylight Time"
+
+#: tzres.rc:110
+msgid "Greenwich Standard Time"
+msgstr "Greenwich Standard Time"
+
+#: tzres.rc:111
+msgid "Greenwich Daylight Time"
+msgstr "Greenwich Daylight Time"
+
+#: tzres.rc:204
+msgid "Ulaanbaatar Standard Time"
+msgstr "Ulaanbaatar Standard Time"
+
+#: tzres.rc:205
+msgid "Ulaanbaatar Daylight Time"
+msgstr "Ulaanbaatar Daylight Time"
+
+#: tzres.rc:120
+msgid "Israel Standard Time"
+msgstr "Israel Standard Time"
+
+#: tzres.rc:121
+msgid "Israel Daylight Time"
+msgstr "Israel Daylight Time"
+
+#: tzres.rc:54
+msgid "Bangladesh Standard Time"
+msgstr "Bangladesh Standard Time"
+
+#: tzres.rc:55
+msgid "Bangladesh Daylight Time"
+msgstr "Bangladesh Daylight Time"
+
+#: tzres.rc:178
+msgid "SA Pacific Standard Time"
+msgstr "SA Pacific Standard Time"
+
+#: tzres.rc:179
+msgid "SA Pacific Daylight Time"
+msgstr "SA Pacific Daylight Time"
+
+#: tzres.rc:222
+msgid "West Asia Standard Time"
+msgstr "West Asia Standard Time"
+
+#: tzres.rc:223
+msgid "West Asia Daylight Time"
+msgstr "West Asia Daylight Time"
+
+#: tzres.rc:32
+msgid "Alaskan Standard Time"
+msgstr "Alaskan Standard Time"
+
+#: tzres.rc:33
+msgid "Alaskan Daylight Time"
+msgstr "Alaskan Daylight Time"
+
+#: tzres.rc:170
+msgid "Paraguay Standard Time"
+msgstr "Paraguay Standard Time"
+
+#: tzres.rc:171
+msgid "Paraguay Daylight Time"
+msgstr "Paraguay Daylight Time"
+
+#: tzres.rc:84
+msgid "Dateline Standard Time"
+msgstr "Dateline Standard Time"
+
+#: tzres.rc:85
+msgid "Dateline Daylight Time"
+msgstr "Dateline Daylight Time"
+
+#: tzres.rc:128
+msgid "Libya Standard Time"
+msgstr "Libya Standard Time"
+
+#: tzres.rc:129
+msgid "Libya Daylight Time"
+msgstr "Libya Daylight Time"
+
+#: tzres.rc:52
+msgid "Bahia Standard Time"
+msgstr "Bahia Standard Time"
+
+#: tzres.rc:53
+msgid "Bahia Daylight Time"
+msgstr "Bahia Daylight Time"
+
+#: tzres.rc:212
+msgid "Venezuela Standard Time"
+msgstr "Venezuela Standard Time"
+
+#: tzres.rc:213
+msgid "Venezuela Daylight Time"
+msgstr "Venezuela Daylight Time"
+
+#: tzres.rc:114
+msgid "Hawaiian Standard Time"
+msgstr "Hawaiian Standard Time"
+
+#: tzres.rc:115
+msgid "Hawaiian Daylight Time"
+msgstr "Hawaiian Daylight Time"
+
+#: tzres.rc:184
+msgid "SE Asia Standard Time"
+msgstr "SE Asia Standard Time"
+
+#: tzres.rc:185
+msgid "SE Asia Daylight Time"
+msgstr "SE Asia Daylight Time"
+
+#: tzres.rc:154
+msgid "New Zealand Standard Time"
+msgstr "New Zealand Standard Time"
+
+#: tzres.rc:155
+msgid "New Zealand Daylight Time"
+msgstr "New Zealand Daylight Time"
+
+#: tzres.rc:70
+msgid "Central Brazilian Standard Time"
+msgstr "Central Brazilian Standard Time"
+
+#: tzres.rc:71
+msgid "Central Brazilian Daylight Time"
+msgstr "Central Brazilian Daylight Time"
+
+#: tzres.rc:56
+msgid "Belarus Standard Time"
+msgstr "Belarus Standard Time"
+
+#: tzres.rc:57
+msgid "Belarus Daylight Time"
+msgstr "Belarus Daylight Time"
+
+#: tzres.rc:180
+msgid "SA Western Standard Time"
+msgstr "SA Western Standard Time"
+
+#: tzres.rc:181
+msgid "SA Western Daylight Time"
+msgstr "SA Western Daylight Time"
+
+#: tzres.rc:108
+msgid "Greenland Standard Time"
+msgstr "Greenland Standard Time"
+
+#: tzres.rc:109
+msgid "Greenland Daylight Time"
+msgstr "Greenland Daylight Time"
+
+#: tzres.rc:92
+msgid "Easter Island Standard Time"
+msgstr "Easter Island Standard Time"
+
+#: tzres.rc:93
+msgid "Easter Island Daylight Time"
+msgstr "Easter Island Daylight Time"
+
+#: tzres.rc:96
+msgid "Egypt Standard Time"
+msgstr "Egypt Standard Time"
+
+#: tzres.rc:97
+msgid "Egypt Daylight Time"
+msgstr "Egypt Daylight Time"
+
+#: tzres.rc:134
+msgid "Mauritius Standard Time"
+msgstr "Mauritius Standard Time"
+
+#: tzres.rc:135
+msgid "Mauritius Daylight Time"
+msgstr "Mauritius Daylight Time"
+
+#: tzres.rc:214
+msgid "Vladivostok Standard Time"
+msgstr "Vladivostok Standard Time"
+
+#: tzres.rc:215
+msgid "Vladivostok Daylight Time"
+msgstr "Vladivostok Daylight Time"
+
+#: tzres.rc:186
+msgid "Singapore Standard Time"
+msgstr "Singapore Standard Time"
+
+#: tzres.rc:187
+msgid "Singapore Daylight Time"
+msgstr "Singapore Daylight Time"
+
+#: tzres.rc:126
+msgid "Korea Standard Time"
+msgstr "Korea Standard Time"
+
+#: tzres.rc:127
+msgid "Korea Daylight Time"
+msgstr "Korea Daylight Time"
+
+#: tzres.rc:86
+msgid "E. Africa Standard Time"
+msgstr "E. Africa Standard Time"
+
+#: tzres.rc:87
+msgid "E. Africa Daylight Time"
+msgstr "E. Africa Daylight Time"
+
+#: tzres.rc:102
+msgid "FLE Standard Time"
+msgstr "FLE Standard Time"
+
+#: tzres.rc:103
+msgid "FLE Daylight Time"
+msgstr "FLE Daylight Time"
+
+#: tzres.rc:90
+msgid "E. South America Standard Time"
+msgstr "E. South America Standard Time"
+
+#: tzres.rc:91
+msgid "E. South America Daylight Time"
+msgstr "E. South America Daylight Time"
+
+#: tzres.rc:76
+msgid "Central Pacific Standard Time"
+msgstr "Central Pacific Standard Time"
+
+#: tzres.rc:77
+msgid "Central Pacific Daylight Time"
+msgstr "Central Pacific Daylight Time"
+
+#: tzres.rc:218
+msgid "W. Central Africa Standard Time"
+msgstr "W. Central Africa Standard Time"
+
+#: tzres.rc:219
+msgid "W. Central Africa Daylight Time"
+msgstr "W. Central Africa Daylight Time"
+
+#: tzres.rc:162
+msgid "Pacific SA Standard Time"
+msgstr "Pacific SA Standard Time"
+
+#: tzres.rc:163
+msgid "Pacific SA Daylight Time"
+msgstr "Pacific SA Daylight Time"
+
+#: tzres.rc:88
+msgid "E. Australia Standard Time"
+msgstr "E. Australia Standard Time"
+
+#: tzres.rc:89
+msgid "E. Australia Daylight Time"
+msgstr "E. Australia Daylight Time"
+
+#: tzres.rc:216
+msgid "W. Australia Standard Time"
+msgstr "W. Australia Standard Time"
+
+#: tzres.rc:217
+msgid "W. Australia Daylight Time"
+msgstr "W. Australia Daylight Time"
+
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
 msgstr "Security Warning"
