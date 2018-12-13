@@ -3712,7 +3712,7 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
     if (!get_cache_glyph_widths(psc, glyph, abc))
     {
         if (!hdc) return E_PENDING;
-        if ((get_cache_pitch_family(psc) & TMPF_TRUETYPE))
+        if (get_cache_pitch_family(psc) & TMPF_TRUETYPE)
         {
             if (!GetCharABCWidthsI(hdc, 0, 1, &glyph, abc)) return S_FALSE;
         }
