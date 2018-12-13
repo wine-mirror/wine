@@ -3403,26 +3403,76 @@ static void test_ScriptGetGlyphABCWidth(HDC hdc)
 {
     HRESULT hr;
     SCRIPT_CACHE sc = NULL;
-    ABC abc;
+    HFONT hfont, prev_hfont;
+    TEXTMETRICA tm;
+    ABC abc, abc2;
+    LOGFONTA lf;
+    WORD glyph;
+    INT width;
+    DWORD ret;
 
-    hr = ScriptGetGlyphABCWidth(NULL, NULL, 'a', NULL);
+    glyph = 0;
+    ret = GetGlyphIndicesA(hdc, "a", 1, &glyph, 0);
+    ok(ret == 1, "Failed to get glyph index.\n");
+    ok(glyph != 0, "Unexpected glyph index.\n");
+
+    hr = ScriptGetGlyphABCWidth(NULL, NULL, glyph, NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
 
-    hr = ScriptGetGlyphABCWidth(NULL, &sc, 'a', NULL);
+    hr = ScriptGetGlyphABCWidth(NULL, &sc, glyph, NULL);
     ok(broken(hr == E_PENDING) ||
        hr == E_INVALIDARG, /* WIN7 */
        "expected E_INVALIDARG, got 0x%08x\n", hr);
 
-    hr = ScriptGetGlyphABCWidth(NULL, &sc, 'a', &abc);
+    hr = ScriptGetGlyphABCWidth(NULL, &sc, glyph, &abc);
     ok(hr == E_PENDING, "expected E_PENDING, got 0x%08x\n", hr);
 
     if (0) {    /* crashes on WinXP */
-    hr = ScriptGetGlyphABCWidth(hdc, &sc, 'a', NULL);
+    hr = ScriptGetGlyphABCWidth(hdc, &sc, glyph, NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
     }
 
-    hr = ScriptGetGlyphABCWidth(hdc, &sc, 'a', &abc);
+    hr = ScriptGetGlyphABCWidth(hdc, &sc, glyph, &abc);
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(abc.abcB != 0, "Unexpected width.\n");
+
+    ret = GetCharABCWidthsI(hdc, glyph, 1, NULL, &abc2);
+    ok(ret, "Failed to get char width.\n");
+    ok(!memcmp(&abc, &abc2, sizeof(abc)), "Unexpected width.\n");
+
+    ScriptFreeCache(&sc);
+
+    /* Bitmap font */
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "System");
+    lf.lfHeight = 20;
+
+    hfont = CreateFontIndirectA(&lf);
+    prev_hfont = SelectObject(hdc, hfont);
+
+    ret = GetTextMetricsA(hdc, &tm);
+    ok(ret, "Failed to get text metrics.\n");
+    ok(!(tm.tmPitchAndFamily & TMPF_TRUETYPE), "Unexpected TrueType font.\n");
+    ok(tm.tmPitchAndFamily & TMPF_FIXED_PITCH, "Unexpected fixed pitch font.\n");
+
+    glyph = 0;
+    ret = GetGlyphIndicesA(hdc, "i", 1, &glyph, 0);
+    ok(ret == 1, "Failed to get glyph index.\n");
+    ok(glyph != 0, "Unexpected glyph index.\n");
+
+    sc = NULL;
+    hr = ScriptGetGlyphABCWidth(hdc, &sc, glyph, &abc);
+    ok(hr == S_OK, "Failed to get glyph width, hr %#x.\n", hr);
+    ok(abc.abcB != 0, "Unexpected width.\n");
+
+    ret = GetCharWidthI(hdc, glyph, 1, NULL, &width);
+    ok(ret, "Failed to get char width.\n");
+    abc2.abcA = abc2.abcC = 0;
+    abc2.abcB = width;
+    ok(!memcmp(&abc, &abc2, sizeof(abc)), "Unexpected width.\n");
+
+    SelectObject(hdc, prev_hfont);
+    DeleteObject(hfont);
 
     ScriptFreeCache(&sc);
 }
