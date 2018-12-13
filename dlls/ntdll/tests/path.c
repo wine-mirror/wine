@@ -517,6 +517,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
 
         if (pRtlDosPathNameToNtPathName_U_WithStatus)
         {
+            RtlFreeUnicodeString(&nameW);
             status = pRtlDosPathNameToNtPathName_U_WithStatus(path, &nameW, &file_part, NULL);
             ok(status == tests[i].status || status == tests[i].alt_status,
                 "%s: Expected status %#x, got %#x.\n", tests[i].dos, tests[i].status, status);
