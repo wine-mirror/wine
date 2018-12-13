@@ -3715,7 +3715,7 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
         else
         {
             INT width;
-            if (!GetCharWidth32W(hdc, glyph, glyph, &width)) return S_FALSE;
+            if (!GetCharWidthI(hdc, glyph, 1, NULL, &width)) return S_FALSE;
             abc->abcB = width;
             abc->abcA = abc->abcC = 0;
         }
