@@ -98,6 +98,7 @@ static ULONG WINAPI Unknown_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        MoFreeMediaType(&This->outtype);
         mpg123_delete(This->mh);
         heap_free(This);
     }
