@@ -265,8 +265,7 @@ static void test_LoadIconWithScaleDown(void)
 
     /* non-existing filename */
     hr = pLoadIconMetric(NULL, nonexisting_fileW, LIM_LARGE, &icon);
-    todo_wine
-    ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND),
+    ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* Win7 */,
        "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
 
     hr = pLoadIconWithScaleDown(NULL, nonexisting_fileW, 32, 32, &icon);
