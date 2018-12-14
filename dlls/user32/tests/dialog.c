@@ -907,6 +907,56 @@ static INT_PTR CALLBACK focusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
     return FALSE;
 }
 
+static INT_PTR CALLBACK EmptyProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch(uMsg) {
+    case WM_INITDIALOG:
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static INT_PTR CALLBACK focusChildDlgWinProc (HWND hwnd, UINT uiMsg, WPARAM wParam,
+        LPARAM lParam)
+{
+    static HWND hChildDlg;
+
+    switch (uiMsg)
+    {
+    case WM_INITDIALOG:
+    {
+        RECT rectHwnd;
+        struct  {
+            DLGTEMPLATE tmplate;
+            WORD menu,class,title;
+        } temp;
+
+        SetFocus( GetDlgItem(hwnd, 200) );
+
+        GetClientRect(hwnd,&rectHwnd);
+        temp.tmplate.style = WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | DS_CONTROL | DS_3DLOOK;
+        temp.tmplate.dwExtendedStyle = 0;
+        temp.tmplate.cdit = 0;
+        temp.tmplate.x = 0;
+        temp.tmplate.y = 0;
+        temp.tmplate.cx = 0;
+        temp.tmplate.cy = 0;
+        temp.menu = temp.class = temp.title = 0;
+
+        hChildDlg = CreateDialogIndirectParamA(g_hinst, &temp.tmplate,
+                  hwnd, (DLGPROC)EmptyProcUserTemplate, 0);
+        ok(hChildDlg != 0, "Failed to create test dialog.\n");
+
+        return FALSE;
+    }
+    case WM_CLOSE:
+        DestroyWindow(hChildDlg);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /* Helper for InitialFocusTest */
 static const char * GetHwndString(HWND hw)
 {
@@ -1090,6 +1140,29 @@ static void test_focus(void)
         ok(selectionStart == 0 && selectionEnd == 11,
                 "Text selection after WM_SETFOCUS is [%i, %i) expected [0, 11)\n",
                 selectionStart, selectionEnd);
+
+        DestroyWindow(hDlg);
+    }
+
+    /* Test 6:
+     * Select textbox's text on creation when WM_INITDIALOG creates a child dialog. */
+    {
+        HWND hDlg;
+        HRSRC hResource;
+        HANDLE hTemplate;
+        DLGTEMPLATE* pTemplate;
+        HWND edit;
+
+        hResource = FindResourceA(g_hinst,"FOCUS_TEST_DIALOG_3", (LPCSTR)RT_DIALOG);
+        hTemplate = LoadResource(g_hinst, hResource);
+        pTemplate = LockResource(hTemplate);
+
+        hDlg = CreateDialogIndirectParamA(g_hinst, pTemplate, NULL, focusChildDlgWinProc, 0);
+        ok(hDlg != 0, "Failed to create test dialog.\n");
+        edit = GetDlgItem(hDlg, 200);
+
+        ok(GetFocus() == edit, "Focus not set to edit, focus=%p, dialog=%p, edit=%p\n",
+                GetFocus(), hDlg, edit);
 
         DestroyWindow(hDlg);
     }
