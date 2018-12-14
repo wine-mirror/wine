@@ -323,6 +323,7 @@ static void test_PathAllocCanonicalize(void)
     path_maxW[PATHCCH_MAX_CCH - 1] = '\0';
     hr = pPathAllocCanonicalize(path_maxW, PATHCCH_ALLOW_LONG_PATHS, &path_outW);
     ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
+    LocalFree(path_outW);
 
     /* Check if flags added after Windows 10 1709 are supported */
     MultiByteToWideChar(CP_ACP, 0, "C:\\", -1, path_inW, ARRAY_SIZE(path_inW));
@@ -449,12 +450,14 @@ static void test_PathAllocCombine(void)
     ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
     WideCharToMultiByte(CP_ACP, 0, resultW, -1, resultA, ARRAY_SIZE(resultA), NULL, NULL);
     ok(!lstrcmpA(resultA, "\\a"), "expect \\a, got %s\n", resultA);
+    LocalFree(resultW);
 
     MultiByteToWideChar(CP_ACP, 0, "\\b", -1, path2W, ARRAY_SIZE(path2W));
     hr = pPathAllocCombine(NULL, path2W, 0, &resultW);
     ok(hr == S_OK, "expect hr %#x, got %#x\n", S_OK, hr);
     WideCharToMultiByte(CP_ACP, 0, resultW, -1, resultA, ARRAY_SIZE(resultA), NULL, NULL);
     ok(!lstrcmpA(resultA, "\\b"), "expect \\b, got %s\n", resultA);
+    LocalFree(resultW);
 
     hr = pPathAllocCombine(path1W, path2W, 0, NULL);
     ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
