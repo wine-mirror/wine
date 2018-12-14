@@ -1230,7 +1230,7 @@ static void db_print_address(const char *seg, int size, struct i_addr *addrp, in
 	       } else if (!dbg_read_memory(a1, &a2, sizeof(a2))) {
 		  dbg_printf("(invalid destination)");
 	       } else {
-                   db_task_printsym((unsigned long)a1, 0);
+                   db_task_printsym((ULONG_PTR)a1, 0);
                }
 	    }
 	    else

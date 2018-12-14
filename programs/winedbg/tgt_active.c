@@ -301,7 +301,7 @@ static void fetch_module_name(void* name_addr, BOOL unicode, void* mod_addr,
                 snprintfW(buffer, bufsz, pcspid, dbg_curr_pid);
         }
         else
-            snprintfW(buffer, bufsz, dlladdr, (unsigned long)mod_addr);
+            snprintfW(buffer, bufsz, dlladdr, (ULONG_PTR)mod_addr);
     }
 }
 

@@ -984,7 +984,7 @@ void info_win32_exception(void)
         dbg_printf(" in 16-bit code (%04x:%04x)", addr.Segment, (unsigned) addr.Offset);
         break;
     case AddrMode1632:
-        dbg_printf(" in segmented 32-bit code (%04x:%08lx)", addr.Segment, (unsigned long) addr.Offset);
+        dbg_printf(" in segmented 32-bit code (%04x:%08x)", addr.Segment, (unsigned) addr.Offset);
         break;
     default: dbg_printf(" bad address");
     }
