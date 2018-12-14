@@ -1099,7 +1099,7 @@ static void test_wm_notify_datetime(HWND pager)
 
 static void test_wm_notify_header(HWND pager)
 {
-    NMHEADERW nmh = {0};
+    NMHEADERW nmh = {{0}};
     HDITEMW hdi = {0};
     HD_TEXTFILTERW hdtf = {0};
 
