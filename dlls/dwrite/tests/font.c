@@ -1778,6 +1778,7 @@ static void test_CreateFontFace(void)
     UINT32 count;
     WCHAR *path;
     HRESULT hr;
+    ULONG ref;
 
     factory = create_factory();
 
@@ -1864,6 +1865,8 @@ static void test_CreateFontFace(void)
     IDWriteFont_Release(font);
     IDWriteFontFamily_Release(family);
     IDWriteFontCollection_Release(collection);
+    ref = IDWriteFactory_Release(factory);
+    ok(ref == 0, "factory not released, %u.\n", ref);
 
     /* IDWriteFactory::CreateFontFace() */
     path = create_testfontfile(test_fontfile);
@@ -1929,7 +1932,8 @@ todo_wine
     }
 
     IDWriteFontFile_Release(file);
-    IDWriteFactory_Release(factory);
+    ref = IDWriteFactory_Release(factory);
+    ok(ref == 0, "factory not released, %u.\n", ref);
     DELETE_FONTFILE(path);
 }
 
@@ -4873,6 +4877,7 @@ static void test_IsMonospacedFont(void)
     ULONG ref;
 
     factory = create_factory();
+
     hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -4920,7 +4925,8 @@ static void test_IsMonospacedFont(void)
     else
         skip("Courier New font not found.\n");
 
-    ref = IDWriteFontCollection_Release(collection);
+    IDWriteFontCollection_Release(collection);
+    ref = IDWriteFactory_Release(factory);
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
