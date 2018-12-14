@@ -839,6 +839,7 @@ static ULONG WINAPI filestream_Release(IStream *iface)
     if (!refcount)
     {
         CloseHandle(stream->u.file.handle);
+        heap_free(stream->u.file.path);
         heap_free(stream);
     }
 
