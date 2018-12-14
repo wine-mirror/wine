@@ -786,11 +786,11 @@ static void *cupshandle;
     DO_FUNC(cupsFreeOptions); \
     DO_FUNC(cupsGetDests); \
     DO_FUNC(cupsGetOption); \
-    DO_FUNC(cupsGetPPD); \
     DO_FUNC(cupsParseOptions); \
     DO_FUNC(cupsPrintFile)
 #define CUPS_OPT_FUNCS \
     DO_FUNC(cupsGetNamedDest); \
+    DO_FUNC(cupsGetPPD); \
     DO_FUNC(cupsGetPPD3); \
     DO_FUNC(cupsLastErrorString)
 
@@ -798,6 +798,7 @@ static void *cupshandle;
 CUPS_FUNCS;
 #undef DO_FUNC
 static cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
+static const char *  (*pcupsGetPPD)(const char *);
 static http_status_t (*pcupsGetPPD3)(http_t *, const char *, time_t *, char *, size_t);
 static const char *  (*pcupsLastErrorString)(void);
 
