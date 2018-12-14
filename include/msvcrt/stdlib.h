@@ -109,7 +109,7 @@ extern char***       __cdecl __p__environ(void);
 #define _environ           (*__p__environ())
 extern wchar_t***    __cdecl __p__wenviron(void);
 #define _wenviron          (*__p__wenviron())
-extern unsigned int* __cdecl __p__fmode(void);
+extern int*          __cdecl __p__fmode(void);
 #define _fmode             (*__p__fmode())
 
 #else  /* __i386__ */
