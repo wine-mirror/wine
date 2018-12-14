@@ -34,6 +34,7 @@
 #define _Deref_post_valid_
 #define _Deref_post_z_
 #define _Deref_prepost_opt_z_
+#define _Deref_ret_z_
 
 #define _Field_range_(min, max)
 
