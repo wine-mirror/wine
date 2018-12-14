@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-11-01 08:19+0300\n"
+"PO-Revision-Date: 2018-12-14 21:07+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -9062,811 +9062,791 @@ msgstr "Parinkite šaltinį"
 
 #: tzres.rc:82
 msgid "China Standard Time"
-msgstr ""
+msgstr "Kinijos juostinis laikas"
 
 #: tzres.rc:83
 msgid "China Daylight Time"
-msgstr ""
+msgstr "Kinijos vasaros laikas"
 
 #: tzres.rc:160
 msgid "North Asia Standard Time"
-msgstr ""
+msgstr "Šiaurės Azijos juostinis laikas"
 
 #: tzres.rc:161
 msgid "North Asia Daylight Time"
-msgstr ""
+msgstr "Šiaurės Azijos vasaros laikas"
 
 #: tzres.rc:104
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "Gruzijos juostinis laikas"
 
 #: tzres.rc:105
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "Gruzijos vasaros laikas"
 
 #: tzres.rc:152
 msgid "Nepal Standard Time"
-msgstr ""
+msgstr "Nepalo juostinis laikas"
 
 #: tzres.rc:153
 msgid "Nepal Daylight Time"
-msgstr ""
+msgstr "Nepalo vasaros laikas"
 
 #: tzres.rc:60
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "Žaliojo Kyšulio juostinis laikas"
 
 #: tzres.rc:61
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "Žaliojo Kyšulio vasaros laikas"
 
 #: tzres.rc:74
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Standard Time"
-msgstr "Vidurio Europos"
+msgstr "Vidurio Europos juostinis laikas"
 
 #: tzres.rc:75
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "Vidurio Europos"
+msgstr "Vidurio Europos vasaros laikas"
 
 #: tzres.rc:140
 msgid "Morocco Standard Time"
-msgstr ""
+msgstr "Maroko juostinis laikas"
 
 #: tzres.rc:141
 msgid "Morocco Daylight Time"
-msgstr ""
+msgstr "Maroko vasaros laikas"
 
 #: tzres.rc:72
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Standard Time"
-msgstr "Vidurio Europos"
+msgstr "Vidurio Europos juostinis laikas"
 
 #: tzres.rc:73
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "Vidurio Europos"
+msgstr "Vidurio Europos vasaros laikas"
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
-msgstr ""
+msgstr "Irano juostinis laikas"
 
 #: tzres.rc:119
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "Irano vasaros laikas"
 
 #: tzres.rc:150
 msgid "Namibia Standard Time"
-msgstr ""
+msgstr "Namibijos juostinis laikas"
 
 #: tzres.rc:151
 msgid "Namibia Daylight Time"
-msgstr ""
+msgstr "Namibijos vasaros laikas"
 
 #: tzres.rc:200
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "Tongos juostinis laikas"
 
 #: tzres.rc:201
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "Tongos vasaros laikas"
 
 #: tzres.rc:144
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "Kalnų juostinis laikas (Meksika)"
 
 #: tzres.rc:145
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "Kalnų vasaros laikas (Meksika)"
 
 #: tzres.rc:106
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "Į&prastinė juosta"
+msgstr "Grinvičo laikas"
 
 #: tzres.rc:107
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "Grinvičo vasaros laikas"
 
 #: tzres.rc:68
 msgid "Central Asia Standard Time"
-msgstr ""
+msgstr "Vidurio Azijos juostinis laikas"
 
 #: tzres.rc:69
 msgid "Central Asia Daylight Time"
-msgstr ""
+msgstr "Vidurio Azijos vasaros laikas"
 
 #: tzres.rc:38
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "Arabų juostinis laikas"
 
 #: tzres.rc:39
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "Arabų vasaros laikas"
 
 #: tzres.rc:132
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "Magadano juostinis laikas"
 
 #: tzres.rc:133
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "Magadano vasaros laikas"
 
 #: tzres.rc:156
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "Niufaundlando juostinis laikas"
 
 #: tzres.rc:157
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "Niufaundlando vasaros laikas"
 
 #: tzres.rc:224
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "Vakarų Ramiojo vandenyno juostinis laikas"
 
 #: tzres.rc:225
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "Vakarų Ramiojo vandenyno vasaros laikas"
 
 #: tzres.rc:164
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Ramiojo vandenyno juostinis laikas"
 
 #: tzres.rc:165
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "Ramiojo vandenyno vasaros laikas"
 
 #: tzres.rc:48
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "Azerbaidžano juostinis laikas"
 
 #: tzres.rc:49
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "Azerbaidžano vasaros laikas"
 
 #: tzres.rc:182
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "Samoa juostinis laikas"
 
 #: tzres.rc:183
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "Samoa vasaros laikas"
 
 #: tzres.rc:124
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "Karaliaučiaus juostinis laikas"
 
 #: tzres.rc:125
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "Karaliaučiaus vasaros laikas"
 
 #: tzres.rc:166
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "Ramiojo vandenyno juostinis laikas (Meksika)"
 
 #: tzres.rc:167
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "Ramiojo vandenyno vasaros laikas (Meksika)"
 
 #: tzres.rc:136
 msgid "Middle East Standard Time"
-msgstr ""
+msgstr "Vidurinių Rytų juostinis laikas"
 
 #: tzres.rc:137
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "Vidurinių Rytų vasaros laikas"
 
 #: tzres.rc:198
 msgid "Tokyo Standard Time"
-msgstr ""
+msgstr "Tokijo juostinis laikas"
 
 #: tzres.rc:199
 msgid "Tokyo Daylight Time"
-msgstr ""
+msgstr "Tokijo vasaros laikas"
 
 #: tzres.rc:130
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "Linijinių salų juostinis laikas"
 
 #: tzres.rc:131
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "Linijinių salų vasaros laikas"
 
 #: tzres.rc:122
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "Jordanijos juostinis laikas"
 
 #: tzres.rc:123
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "Jordanijos vasaros laikas"
 
 #: tzres.rc:78
 msgid "Central Standard Time"
-msgstr ""
+msgstr "Centrinis juostinis laikas"
 
 #: tzres.rc:79
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "Centrinis vasaros laikas"
 
 #: tzres.rc:50
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "Azorų juostinis laikas"
 
 #: tzres.rc:51
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "Azorų vasaros laikas"
 
 #: tzres.rc:158
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "Šiaurės Azijos rytų juostinis laikas"
 
 #: tzres.rc:159
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "Šiaurės Azijos rytų vasaros laikas"
 
 #: tzres.rc:40
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "Argentinos juostinis laikas"
 
 #: tzres.rc:41
 msgid "Argentina Daylight Time"
-msgstr ""
+msgstr "Argentinos vasaros laikas"
 
 #: tzres.rc:146
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "Mianmaro juostinis laikas"
 
 #: tzres.rc:147
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "Mianmaro vasaros laikas"
 
 #: tzres.rc:210 tzres.rc:211
 msgid "Coordinated Universal Time"
-msgstr ""
+msgstr "Pasaulinis koordinuotasis laikas"
 
 #: tzres.rc:116
 msgid "India Standard Time"
-msgstr ""
+msgstr "Indijos juostinis laikas"
 
 #: tzres.rc:117
 msgid "India Daylight Time"
-msgstr ""
+msgstr "Indijos vasaros laikas"
 
 #: tzres.rc:112
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "Į&prastinė juosta"
+msgstr "GTB juostinis laikas"
 
 #: tzres.rc:113
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "GTB vasaros laikas"
 
 #: tzres.rc:202
 msgid "Turkey Standard Time"
-msgstr ""
+msgstr "Turkijos juostinis laikas"
 
 #: tzres.rc:203
 msgid "Turkey Daylight Time"
-msgstr ""
+msgstr "Turkijos vasaros laikas"
 
 #: tzres.rc:100
 msgid "Fiji Standard Time"
-msgstr ""
+msgstr "Fidžio juostinis laikas"
 
 #: tzres.rc:101
 msgid "Fiji Daylight Time"
-msgstr ""
+msgstr "Fidžio vasaros laikas"
 
 #: tzres.rc:58
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "Kanados centrinis juostinis laikas"
 
 #: tzres.rc:59
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "Kanados centrinis vasaros laikas"
 
 #: tzres.rc:194
 msgid "Taipei Standard Time"
-msgstr ""
+msgstr "Taipėjaus juostinis laikas"
 
 #: tzres.rc:195
 msgid "Taipei Daylight Time"
-msgstr ""
+msgstr "Taipėjaus vasaros laikas"
 
 #: tzres.rc:220
 msgid "W. Europe Standard Time"
-msgstr ""
+msgstr "Vakarinės Europos juostinis laikas"
 
 #: tzres.rc:221
 msgid "W. Europe Daylight Time"
-msgstr ""
+msgstr "Vakarinės Europos vasaros laikas"
 
 #: tzres.rc:138
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "Montevidėjo juostinis laikas"
 
 #: tzres.rc:139
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "Montevidėjo vasaros laikas"
 
 #: tzres.rc:168
 msgid "Pakistan Standard Time"
-msgstr ""
+msgstr "Pakistano juostinis laikas"
 
 #: tzres.rc:169
 msgid "Pakistan Daylight Time"
-msgstr ""
+msgstr "Pakistano vasaros laikas"
 
 #: tzres.rc:62
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "Kaukazo juostinis laikas"
 
 #: tzres.rc:63
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "Kaukazo vasaros laikas"
 
 #: tzres.rc:46
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "AUS Rytinis juostinis laikas"
 
 #: tzres.rc:47
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "AUS Rytinis vasaros laikas"
 
 #: tzres.rc:148
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "Š. Vidurio Azijos juostinis laikas"
 
 #: tzres.rc:149
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "Š. Vidurio Azijos vasaros laikas"
 
 #: tzres.rc:94
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Rytinis juostinis laikas"
 
 #: tzres.rc:95
 msgid "Eastern Daylight Time"
-msgstr ""
+msgstr "Rytinis vasaros laikas"
 
 #: tzres.rc:80
 msgid "Central Standard Time (Mexico)"
-msgstr ""
+msgstr "Centrinis juostinis laikas (Meksika)"
 
 #: tzres.rc:81
 msgid "Central Daylight Time (Mexico)"
-msgstr ""
+msgstr "Centrinis vasaros laikas (Meksika)"
 
 #: tzres.rc:42
 msgid "Atlantic Standard Time"
-msgstr ""
+msgstr "Atlanto vandenyno juostinis laikas"
 
 #: tzres.rc:43
 msgid "Atlantic Daylight Time"
-msgstr ""
+msgstr "Atlanto vandenyno vasaros laikas"
 
 #: tzres.rc:142
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "Kalnų juostinis laikas"
 
 #: tzres.rc:143
 msgid "Mountain Daylight Time"
-msgstr ""
+msgstr "Kalnų vasaros laikas"
 
 #: tzres.rc:206
 msgid "US Eastern Standard Time"
-msgstr ""
+msgstr "JAV Rytinis juostinis laikas"
 
 #: tzres.rc:207
 msgid "US Eastern Daylight Time"
-msgstr ""
+msgstr "JAV Rytinis vasaros laikas"
 
 #: tzres.rc:196
 msgid "Tasmania Standard Time"
-msgstr ""
+msgstr "Tasmanijos juostinis laikas"
 
 #: tzres.rc:197
 msgid "Tasmania Daylight Time"
-msgstr ""
+msgstr "Tasmanijos vasaros laikas"
 
 #: tzres.rc:66
 msgid "Central America Standard Time"
-msgstr ""
+msgstr "Centrinės Amerikos juostinis laikas"
 
 #: tzres.rc:67
 msgid "Central America Daylight Time"
-msgstr ""
+msgstr "Centrinės Amerikos vasaros laikas"
 
 #: tzres.rc:208
 msgid "US Mountain Standard Time"
-msgstr ""
+msgstr "JAV Kalnų juostinis laikas"
 
 #: tzres.rc:209
 msgid "US Mountain Daylight Time"
-msgstr ""
+msgstr "JAV Kalnų vasaros laikas"
 
 #: tzres.rc:188
 msgid "South Africa Standard Time"
-msgstr ""
+msgstr "Pietų Afrikos juostinis laikas"
 
 #: tzres.rc:189
 msgid "South Africa Daylight Time"
-msgstr ""
+msgstr "Pietų Afrikos vasaros laikas"
 
 #: tzres.rc:64
 msgid "Cen. Australia Standard Time"
-msgstr ""
+msgstr "Vid. Australijos juostinis laikas"
 
 #: tzres.rc:65
 msgid "Cen. Australia Daylight Time"
-msgstr ""
+msgstr "Vid. Australijos vasaros laikas"
 
 #: tzres.rc:190
 msgid "Sri Lanka Standard Time"
-msgstr ""
+msgstr "Šri Lankos juostinis laikas"
 
 #: tzres.rc:191
 msgid "Sri Lanka Daylight Time"
-msgstr ""
+msgstr "Šri Lankos vasaros laikas"
 
 #: tzres.rc:30
 msgid "Afghanistan Standard Time"
-msgstr ""
+msgstr "Afganistano juostinis laikas"
 
 #: tzres.rc:31
 msgid "Afghanistan Daylight Time"
-msgstr ""
+msgstr "Afganistano vasaros laikas"
 
 #: tzres.rc:226
 msgid "Yakutsk Standard Time"
-msgstr ""
+msgstr "Jakutsko juostinis laikas"
 
 #: tzres.rc:227
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "Jakutsko vasaros laikas"
 
 #: tzres.rc:176
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "PA Rytinis juostinis laikas"
 
 #: tzres.rc:177
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "PA Rytinis vasaros laikas"
 
 #: tzres.rc:34
 msgid "Arab Standard Time"
-msgstr ""
+msgstr "Arabų juostinis laikas"
 
 #: tzres.rc:35
 msgid "Arab Daylight Time"
-msgstr ""
+msgstr "Arabų vasaros laikas"
 
 #: tzres.rc:36
 msgid "Arabian Standard Time"
-msgstr ""
+msgstr "Arabų juostinis laikas"
 
 #: tzres.rc:37
 msgid "Arabian Daylight Time"
-msgstr ""
+msgstr "Arabų vasaros laikas"
 
 #: tzres.rc:174
 msgid "Russian Standard Time"
-msgstr ""
+msgstr "Rusijos juostinis laikas"
 
 #: tzres.rc:175
 msgid "Russian Daylight Time"
-msgstr ""
+msgstr "Rusijos vasaros laikas"
 
 #: tzres.rc:172
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "Romanų juostinis laikas"
 
 #: tzres.rc:173
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "Romanų vasaros laikas"
 
 #: tzres.rc:98
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "Jekaterinburgo juostinis laikas"
 
 #: tzres.rc:99
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "Jekaterinburgo vasaros laikas"
 
 #: tzres.rc:192
 msgid "Syria Standard Time"
-msgstr ""
+msgstr "Sirijos juostinis laikas"
 
 #: tzres.rc:193
 msgid "Syria Daylight Time"
-msgstr ""
+msgstr "Sirijos vasaros laikas"
 
 #: tzres.rc:44
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "AUS Centrinis juostinis laikas"
 
 #: tzres.rc:45
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "AUS Centrinis vasaros laikas"
 
 #: tzres.rc:110
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "Grinvičo juostinis laikas"
 
 #: tzres.rc:111
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "Grinvičo vasaros laikas"
 
 #: tzres.rc:204
 msgid "Ulaanbaatar Standard Time"
-msgstr ""
+msgstr "Ulan Batoro juostinis laikas"
 
 #: tzres.rc:205
 msgid "Ulaanbaatar Daylight Time"
-msgstr ""
+msgstr "Ulan Batoro vasaros laikas"
 
 #: tzres.rc:120
 msgid "Israel Standard Time"
-msgstr ""
+msgstr "Izraelio juostinis laikas"
 
 #: tzres.rc:121
 msgid "Israel Daylight Time"
-msgstr ""
+msgstr "Izraelio vasaros laikas"
 
 #: tzres.rc:54
 msgid "Bangladesh Standard Time"
-msgstr ""
+msgstr "Bangladešo juostinis laikas"
 
 #: tzres.rc:55
 msgid "Bangladesh Daylight Time"
-msgstr ""
+msgstr "Bangladešo vasaros laikas"
 
 #: tzres.rc:178
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "PA Ramiojo vandenyno juostinis laikas"
 
 #: tzres.rc:179
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "PA Ramiojo vandenyno vasaros laikas"
 
 #: tzres.rc:222
 msgid "West Asia Standard Time"
-msgstr ""
+msgstr "Vakarų Azijos juostinis laikas"
 
 #: tzres.rc:223
 msgid "West Asia Daylight Time"
-msgstr ""
+msgstr "Vakarų Azijos vasaros laikas"
 
 #: tzres.rc:32
 msgid "Alaskan Standard Time"
-msgstr ""
+msgstr "Aliaskos juostinis laikas"
 
 #: tzres.rc:33
 msgid "Alaskan Daylight Time"
-msgstr ""
+msgstr "Aliaskos vasaros laikas"
 
 #: tzres.rc:170
 msgid "Paraguay Standard Time"
-msgstr ""
+msgstr "Paragvajaus juostinis laikas"
 
 #: tzres.rc:171
 msgid "Paraguay Daylight Time"
-msgstr ""
+msgstr "Paragvajaus vasaros laikas"
 
 #: tzres.rc:84
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "Data ir laikas"
+msgstr "Datos keitimosi linijos juostinis laikas"
 
 #: tzres.rc:85
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Datos keitimosi linijos vasaros laikas"
 
 #: tzres.rc:128
 msgid "Libya Standard Time"
-msgstr ""
+msgstr "Libijos juostinis laikas"
 
 #: tzres.rc:129
 msgid "Libya Daylight Time"
-msgstr ""
+msgstr "Libijos vasaros laikas"
 
 #: tzres.rc:52
 msgid "Bahia Standard Time"
-msgstr ""
+msgstr "Bahijos juostinis laikas"
 
 #: tzres.rc:53
 msgid "Bahia Daylight Time"
-msgstr ""
+msgstr "Bahijos vasaros laikas"
 
 #: tzres.rc:212
 msgid "Venezuela Standard Time"
-msgstr ""
+msgstr "Venesuelos juostinis laikas"
 
 #: tzres.rc:213
 msgid "Venezuela Daylight Time"
-msgstr ""
+msgstr "Venesuelos vasaros laikas"
 
 #: tzres.rc:114
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "Havajų juostinis laikas"
 
 #: tzres.rc:115
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "Havajų vasaros laikas"
 
 #: tzres.rc:184
 msgid "SE Asia Standard Time"
-msgstr ""
+msgstr "Pietryčių Azijos juostinis laikas"
 
 #: tzres.rc:185
 msgid "SE Asia Daylight Time"
-msgstr ""
+msgstr "Pietryčių Azijos vasaros laikas"
 
 #: tzres.rc:154
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "Naujosios Zelandijos juostinis laikas"
 
 #: tzres.rc:155
 msgid "New Zealand Daylight Time"
-msgstr ""
+msgstr "Naujosios Zelandijos vasaros laikas"
 
 #: tzres.rc:70
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "Centrinės Brazilijos juostinis laikas"
 
 #: tzres.rc:71
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "Centrinės Brazilijos vasaros laikas"
 
 #: tzres.rc:56
 msgid "Belarus Standard Time"
-msgstr ""
+msgstr "Baltarusijos juostinis laikas"
 
 #: tzres.rc:57
 msgid "Belarus Daylight Time"
-msgstr ""
+msgstr "Baltarusijos vasaros laikas"
 
 #: tzres.rc:180
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "PA Vakarinis juostinis laikas"
 
 #: tzres.rc:181
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "PA Vakarinis vasaros laikas"
 
 #: tzres.rc:108
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "Grenlandijos juostinis laikas"
 
 #: tzres.rc:109
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "Grenlandijos vasaros laikas"
 
 #: tzres.rc:92
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "Data ir laikas"
+msgstr "Velykų salos juostinis laikas"
 
 #: tzres.rc:93
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "Data ir laikas"
+msgstr "Velykų salos vasaros laikas"
 
 #: tzres.rc:96
 msgid "Egypt Standard Time"
-msgstr ""
+msgstr "Egipto juostinis laikas"
 
 #: tzres.rc:97
 msgid "Egypt Daylight Time"
-msgstr ""
+msgstr "Egipto vasaros laikas"
 
 #: tzres.rc:134
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "Mauricijaus juostinis laikas"
 
 #: tzres.rc:135
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "Mauricijaus vasaros laikas"
 
 #: tzres.rc:214
 msgid "Vladivostok Standard Time"
-msgstr ""
+msgstr "Vladivostoko juostinis laikas"
 
 #: tzres.rc:215
 msgid "Vladivostok Daylight Time"
-msgstr ""
+msgstr "Vladivostoko vasaros laikas"
 
 #: tzres.rc:186
 msgid "Singapore Standard Time"
-msgstr ""
+msgstr "Singapūro juostinis laikas"
 
 #: tzres.rc:187
 msgid "Singapore Daylight Time"
-msgstr ""
+msgstr "Singapūro vasaros laikas"
 
 #: tzres.rc:126
 msgid "Korea Standard Time"
-msgstr ""
+msgstr "Korėjos juostinis laikas"
 
 #: tzres.rc:127
 msgid "Korea Daylight Time"
-msgstr ""
+msgstr "Korėjos vasaros laikas"
 
 #: tzres.rc:86
 msgid "E. Africa Standard Time"
-msgstr ""
+msgstr "R. Afrikos juostinis laikas"
 
 #: tzres.rc:87
 msgid "E. Africa Daylight Time"
-msgstr ""
+msgstr "R. Afrikos vasaros laikas"
 
 #: tzres.rc:102
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "Į&prastinė juosta"
+msgstr "SLE juostinis laikas"
 
 #: tzres.rc:103
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "SLE vasaros laikas"
 
 #: tzres.rc:90
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "R. Pietų Amerikos juostinis laikas"
 
 #: tzres.rc:91
 msgid "E. South America Daylight Time"
-msgstr ""
+msgstr "R. Pietų Amerikos vasaros laikas"
 
 #: tzres.rc:76
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "Vidurio Ramiojo vandenyno juostinis laikas"
 
 #: tzres.rc:77
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "Vidurio Ramiojo vandenyno vasaros laikas"
 
 #: tzres.rc:218
 msgid "W. Central Africa Standard Time"
-msgstr ""
+msgstr "V. Vidurio Afrikos juostinis laikas"
 
 #: tzres.rc:219
 msgid "W. Central Africa Daylight Time"
-msgstr ""
+msgstr "V. Vidurio Afrikos vasaros laikas"
 
 #: tzres.rc:162
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "Ramiojo vandenyno PA juostinis laikas"
 
 #: tzres.rc:163
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "Ramiojo vandenyno PA vasaros laikas"
 
 #: tzres.rc:88
 msgid "E. Australia Standard Time"
-msgstr ""
+msgstr "R. Australijos juostinis laikas"
 
 #: tzres.rc:89
 msgid "E. Australia Daylight Time"
-msgstr ""
+msgstr "R. Australijos vasaros laikas"
 
 #: tzres.rc:216
 msgid "W. Australia Standard Time"
-msgstr ""
+msgstr "V. Australijos juostinis laikas"
 
 #: tzres.rc:217
 msgid "W. Australia Daylight Time"
-msgstr ""
+msgstr "V. Australijos vasaros laikas"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
