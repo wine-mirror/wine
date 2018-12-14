@@ -1055,7 +1055,7 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   if (!command || !mode)
     return NULL;
 
-  textmode = *__p__fmode() & (MSVCRT__O_BINARY | MSVCRT__O_TEXT);
+  textmode = *MSVCRT___p__fmode() & (MSVCRT__O_BINARY | MSVCRT__O_TEXT);
   for (p = mode; *p; p++)
   {
     switch (*p)

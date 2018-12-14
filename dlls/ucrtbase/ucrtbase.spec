@@ -124,14 +124,14 @@
 @ cdecl __p___argc() MSVCRT___p___argc
 @ cdecl __p___argv() MSVCRT___p___argv
 @ cdecl __p___wargv() MSVCRT___p___wargv
-@ cdecl __p__acmdln()
+@ cdecl __p__acmdln() MSVCRT___p__acmdln
 @ cdecl __p__commode()
 @ cdecl __p__environ() MSVCRT___p__environ
-@ cdecl __p__fmode()
+@ cdecl __p__fmode() MSVCRT___p__fmode
 @ stub __p__mbcasemap()
 @ cdecl __p__mbctype()
 @ cdecl __p__pgmptr() MSVCRT___p__pgmptr
-@ cdecl __p__wcmdln()
+@ cdecl __p__wcmdln() MSVCRT___p__wcmdln
 @ cdecl __p__wenviron() MSVCRT___p__wenviron
 @ cdecl __p__wpgmptr() MSVCRT___p__wpgmptr
 @ cdecl __pctype_func() MSVCRT___pctype_func
