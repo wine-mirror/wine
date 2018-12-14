@@ -692,7 +692,10 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                     SetFocus( focus );
                 }
                 else
-                    SetFocus( hwnd );
+                {
+                    if (!(template.style & WS_CHILD))
+                        SetFocus( hwnd );
+                }
             }
         }
 
