@@ -786,7 +786,6 @@ MSVCRT_FILE * CDECL MSVCRT___iob_func(void)
  return &MSVCRT__iob[0];
 }
 
-#if _MSVCR_VER >= 140
 /*********************************************************************
  *		__acrt_iob_func(UCRTBASE.@)
  */
@@ -794,7 +793,6 @@ MSVCRT_FILE * CDECL MSVCRT___acrt_iob_func(unsigned idx)
 {
  return &MSVCRT__iob[idx];
 }
-#endif
 
 /*********************************************************************
  *		_access (MSVCRT.@)

@@ -39,10 +39,7 @@ typedef struct MSVCRT__onexit_table_t
 } MSVCRT__onexit_table_t;
 
 static MSVCRT__onexit_table_t MSVCRT_atexit_table;
-
-#if _MSVCR_VER>=140
 static MSVCRT__onexit_table_t MSVCRT_quick_exit_table;
-#endif
 
 typedef void (__stdcall *_tls_callback_type)(void*,ULONG,void*);
 static _tls_callback_type tls_atexit_callback;
@@ -406,8 +403,6 @@ int CDECL MSVCRT_atexit(void (__cdecl *func)(void))
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
 }
 
-#if _MSVCR_VER>=140
-
 /*********************************************************************
  *             _crt_at_quick_exit (UCRTBASE.@)
  */
@@ -475,8 +470,6 @@ void CDECL _register_thread_local_exe_atexit_callback(_tls_callback_type callbac
     TRACE("(%p)\n", callback);
     tls_atexit_callback = callback;
 }
-
-#endif /* _MSVCR_VER>=140 */
 
 #if _MSVCR_VER>=71
 /*********************************************************************
