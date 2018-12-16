@@ -34,6 +34,12 @@ cpp_quote("#define TLMENUF_BACK             0x00000010")
 cpp_quote("#define TLMENUF_FORE             0x00000020")
 cpp_quote("#define TLMENUF_BACKANDFORTH     (TLMENUF_BACK | TLMENUF_FORE | TLMENUF_INCLUDECURRENT)")
 
+cpp_quote("#ifndef INTERNET_MAX_URL_LENGTH")
+cpp_quote("#define INTERNET_MAX_PATH_LENGTH   2048")
+cpp_quote("#define INTERNET_MAX_SCHEME_LENGTH   32")
+cpp_quote("#define INTERNET_MAX_URL_LENGTH (INTERNET_MAX_SCHEME_LENGTH + sizeof(\"://\")+ INTERNET_MAX_PATH_LENGTH)")
+cpp_quote("#endif")
+
 [
     hidden,
     local,
@@ -214,7 +220,7 @@ interface IBrowserService : IUnknown
 
     HRESULT IEGetDisplayName(
         [in] PCIDLIST_ABSOLUTE pidl,
-        [out] LPWSTR pwszName,
+        [out, size_is(INTERNET_MAX_URL_LENGTH)] LPWSTR pwszName,
         [in] UINT uFlags);
 
     HRESULT IEParseDisplayName(
