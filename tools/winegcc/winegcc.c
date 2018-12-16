@@ -698,7 +698,7 @@ no_compat_defines:
             strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/wine/msvcrt" : "-I" INCLUDEDIR "/wine/msvcrt" );
             strarray_add(comp_args, "-D__MSVCRT__");
         }
-        strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR : "-I" INCLUDEDIR );
+        strarray_add(comp_args, "-I" INCLUDEDIR );
         strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/wine/windows" : "-I" INCLUDEDIR "/wine/windows" );
     }
     else if (opts->wine_objdir)
