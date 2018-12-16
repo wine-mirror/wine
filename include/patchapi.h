@@ -45,6 +45,12 @@ BOOL WINAPI ApplyPatchToFileA(LPCSTR,LPCSTR,LPCSTR,ULONG);
 BOOL WINAPI ApplyPatchToFileW(LPCWSTR,LPCWSTR,LPCWSTR,ULONG);
 #define     ApplyPatchToFile WINELIB_NAME_AW(ApplyPatchToFile)
 
+BOOL WINAPI GetFilePatchSignatureA(LPCSTR, ULONG, PVOID, ULONG, PPATCH_IGNORE_RANGE, ULONG,
+                                   PPATCH_RETAIN_RANGE, ULONG, LPSTR);
+BOOL WINAPI GetFilePatchSignatureW(LPCWSTR, ULONG, PVOID, ULONG, PPATCH_IGNORE_RANGE, ULONG,
+                                   PPATCH_RETAIN_RANGE, ULONG, LPWSTR);
+#define     GetFilePatchSignature WINELIB_NAME_AW(GetFilePatchSignature)
+
 #ifdef __cplusplus
 }
 #endif
