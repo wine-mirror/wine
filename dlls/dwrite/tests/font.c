@@ -8887,6 +8887,8 @@ static void test_localfontfileloader(void)
     IDWriteFontFileLoader_Release(loader2);
     ref = IDWriteFactory_Release(factory);
     ok(ref == 0, "factory not released, %u\n", ref);
+    ref = IDWriteFactory_Release(factory2);
+    ok(ref == 0, "factory not released, %u\n", ref);
     DELETE_FONTFILE(path);
 }
 
