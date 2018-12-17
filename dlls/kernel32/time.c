@@ -689,8 +689,7 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
     }
     else
     {
-        if (GetTimeZoneInformation(&tzinfo) == TIME_ZONE_ID_INVALID)
-            return FALSE;
+        RtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     }
 
     if (!SystemTimeToFileTime(lpUniversalTime, &ft))
@@ -735,8 +734,7 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
     }
     else
     {
-        if (GetTimeZoneInformation(&tzinfo) == TIME_ZONE_ID_INVALID)
-            return FALSE;
+        RtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     }
 
     if (!SystemTimeToFileTime(lpLocalTime, &ft))
@@ -1314,7 +1312,8 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
 BOOL WINAPI GetDaylightFlag(void)
 {
     TIME_ZONE_INFORMATION tzinfo;
-    return GetTimeZoneInformation( &tzinfo) == TIME_ZONE_ID_DAYLIGHT;
+    RtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
+    return (TIME_ZoneID(&tzinfo) == TIME_ZONE_ID_DAYLIGHT);
 }
 
 /***********************************************************************
