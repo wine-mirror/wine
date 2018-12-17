@@ -695,7 +695,7 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
     {
     case WINHTTP_OPTION_SECURITY_FLAGS:
     {
-        DWORD flags = 0;
+        DWORD flags;
         int bits;
 
         if (!buffer || *buflen < sizeof(flags))
@@ -705,9 +705,7 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
             return FALSE;
         }
 
-        flags = 0;
-        if (hdr->flags & WINHTTP_FLAG_SECURE) flags |= SECURITY_FLAG_SECURE;
-        flags |= request->security_flags;
+        flags = request->security_flags;
         if (request->netconn)
         {
             bits = netconn_get_cipher_strength( request->netconn );
@@ -929,6 +927,10 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
     case WINHTTP_OPTION_SECURITY_FLAGS:
     {
         DWORD flags;
+        static const DWORD accepted = SECURITY_FLAG_IGNORE_CERT_CN_INVALID   |
+                                      SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+                                      SECURITY_FLAG_IGNORE_UNKNOWN_CA        |
+                                      SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
 
         if (buflen < sizeof(DWORD))
         {
@@ -937,10 +939,7 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
         }
         flags = *(DWORD *)buffer;
         TRACE("0x%x\n", flags);
-        if (!(flags & (SECURITY_FLAG_IGNORE_CERT_CN_INVALID   |
-                       SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-                       SECURITY_FLAG_IGNORE_UNKNOWN_CA        |
-                       SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE)))
+        if (flags && (flags & ~accepted))
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;

@@ -1033,7 +1033,7 @@ static void test_secure_connection(void)
 {
     static const char data_start[] = "<!DOCTYPE html PUBLIC";
     HINTERNET ses, con, req;
-    DWORD size, status, policy, bitness, read_size, err, available_size, protocols;
+    DWORD size, status, policy, bitness, read_size, err, available_size, protocols, flags;
     BOOL ret;
     CERT_CONTEXT *cert;
     WINHTTP_CERTIFICATE_INFO info;
@@ -1086,6 +1086,33 @@ static void test_secure_connection(void)
 
     req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, WINHTTP_FLAG_SECURE);
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    flags = 0xdeadbeef;
+    size = sizeof(flags);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_SECURITY_FLAGS, &flags, &size);
+    ok(ret, "failed to query security flags %u\n", GetLastError());
+    ok(!flags, "got %08x\n", flags);
+
+    flags = SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok(ret, "failed to set security flags %u\n", GetLastError());
+
+    flags = SECURITY_FLAG_SECURE;
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok(!ret, "success\n");
+
+    flags = SECURITY_FLAG_STRENGTH_STRONG;
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok(!ret, "success\n");
+
+    flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+            SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok(ret, "failed to set security flags %u\n", GetLastError());
+
+    flags = 0;
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok(ret, "failed to set security flags %u\n", GetLastError());
 
     ret = WinHttpSetOption(req, WINHTTP_OPTION_CLIENT_CERT_CONTEXT, WINHTTP_NO_CLIENT_CERT_CONTEXT, 0);
     err = GetLastError();
