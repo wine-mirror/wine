@@ -95,6 +95,7 @@ static void test_devenum(IBindCtx *bind_ctx)
         if (winetest_debug > 1)
             trace("%s %s:\n", wine_dbgstr_guid(&cat_guid), wine_dbgstr_w(V_BSTR(&var)));
 
+        VariantClear(&var);
         IPropertyBag_Release(prop_bag);
         IMoniker_Release(moniker);
 
@@ -688,6 +689,7 @@ static BOOL CALLBACK test_dsound(GUID *guid, const WCHAR *desc, const WCHAR *mod
     ok(!lstrcmpW(buffer, V_BSTR(&var)), "expected %s, got %s\n",
         wine_dbgstr_w(buffer), wine_dbgstr_w(V_BSTR(&var)));
 
+    VariantClear(&var);
     IPropertyBag_Release(prop_bag);
     IMoniker_Release(mon);
     IParseDisplayName_Release(parser);
