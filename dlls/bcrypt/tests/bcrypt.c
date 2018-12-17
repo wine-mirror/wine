@@ -293,6 +293,12 @@ static void test_hash(const struct hash_test *test)
     ret = pBCryptDestroyHash(hash);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    ret = pBCryptDestroyHash(hash);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptDestroyHash(NULL);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
     ret = pBCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
@@ -1415,8 +1421,17 @@ static void test_BCryptDecrypt(void)
     ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
     HeapFree(GetProcessHeap(), 0, buf);
 
+    ret = pBCryptDestroyKey(NULL);
+    ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
+
     ret = pBCryptCloseAlgorithmProvider(aes, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    ret = pBCryptCloseAlgorithmProvider(aes, 0);
+    ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
+
+    ret = pBCryptCloseAlgorithmProvider(NULL, 0);
+    ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
 }
 
 static void test_key_import_export(void)
