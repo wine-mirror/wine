@@ -3786,6 +3786,7 @@ static void test_converttonumeric(void)
     todo_wine ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     todo_wine ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     todo_wine test_numeric_val(&dst, &result5);
+    SysFreeString(bstr);
 
     bstr = SysAllocString(largeW);
     dst_status = 0;
@@ -3798,6 +3799,7 @@ static void test_converttonumeric(void)
     todo_wine ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     todo_wine ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     todo_wine test_numeric_val(&dst, &result6);
+    SysFreeString(bstr);
 }
 
 START_TEST(convert)
