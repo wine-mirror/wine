@@ -99,6 +99,7 @@ static void test_ActivationFactories(void)
     if(inspect)
         IInspectable_Release(inspect);
 
+    pWindowsDeleteString(str2);
     pWindowsDeleteString(str);
     pRoUninitialize();
 }
