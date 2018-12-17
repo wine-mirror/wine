@@ -15088,6 +15088,98 @@ static void test_killfocus(void)
     UnregisterClassA("ddraw_killfocus_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void test_sysmem_draw(void)
+{
+    D3DVERTEXBUFFERDESC vb_desc;
+    IDirect3DVertexBuffer7 *vb;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    IDirect3D7 *d3d;
+    D3DCOLOR colour;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    BYTE *data;
+
+    static const struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
+        {{-1.0f,  1.0f, 0.0f}, 0xff00ff00},
+        {{ 1.0f, -1.0f, 0.0f}, 0xff0000ff},
+        {{ 1.0f,  1.0f, 0.0f}, 0xffffffff},
+    };
+    static WORD indices[] = {0, 1, 2, 3};
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwCaps = D3DVBCAPS_SYSTEMMEMORY;
+    vb_desc.dwFVF = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+    vb_desc.dwNumVertices = 4;
+    hr = IDirect3D7_CreateVertexBuffer(d3d, &vb_desc, &vb, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer7_Lock(vb, 0, (void **)&data, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    memcpy(data, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer7_Unlock(vb);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_EndScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    colour = get_surface_color(rt, 320, 240);
+    ok(compare_color(colour, 0x00007f7f, 1), "Got unexpected colour 0x%08x.\n", colour);
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, indices, 4, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_EndScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    colour = get_surface_color(rt, 320, 240);
+    ok(compare_color(colour, 0x00007f7f, 1), "Got unexpected colour 0x%08x.\n", colour);
+
+    IDirect3DVertexBuffer7_Release(vb);
+    IDirectDrawSurface7_Release(rt);
+    IDirect3D7_Release(d3d);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -15227,4 +15319,5 @@ START_TEST(ddraw7)
     test_device_load();
     test_color_vertex();
     test_killfocus();
+    test_sysmem_draw();
 }
