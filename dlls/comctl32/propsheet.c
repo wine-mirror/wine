@@ -2012,6 +2012,13 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     if (!psInfo->proppage[index].hwndPage) {
       if(!PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage)) {
         PROPSHEET_RemovePage(hwndDlg, index, NULL);
+
+        if (!psInfo->isModeless)
+        {
+            DestroyWindow(hwndDlg);
+            return FALSE;
+        }
+
         if(index >= psInfo->nPages)
           index--;
         if(index < 0)
@@ -2754,7 +2761,7 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
 static INT do_loop(const PropSheetInfo *psInfo)
 {
     MSG msg;
-    INT ret = -1;
+    INT ret = 0;
     HWND hwnd = psInfo->hwnd;
     HWND parent = psInfo->ppshheader.hwndParent;
 
@@ -2771,10 +2778,7 @@ static INT do_loop(const PropSheetInfo *psInfo)
     }
 
     if(ret == 0)
-    {
         PostQuitMessage(msg.wParam);
-        ret = -1;
-    }
 
     if(ret != -1)
         ret = psInfo->result;

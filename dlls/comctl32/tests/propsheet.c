@@ -276,7 +276,6 @@ static void test_disableowner(void)
     psh.pfnCallback = disableowner_callback;
 
     p = pPropertySheetA(&psh);
-    todo_wine
     ok(p == 0, "Expected 0, got %ld\n", p);
     ok(IsWindowEnabled(parenthwnd) != 0, "parent window should be enabled\n");
     DestroyWindow(parenthwnd);
@@ -1165,11 +1164,8 @@ static void test_bad_control_class(void)
     psh.hwndParent = GetDesktopWindow();
     U3(psh).phpage = &hpsp;
 
-if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once Wine is fixed */
-{
     ret = pPropertySheetA(&psh);
     ok(ret == 0, "got %ld\n", ret);
-}
 
     /* Need to recreate hpsp otherwise the test fails under Windows */
     hpsp = pCreatePropertySheetPageA(&psp);
