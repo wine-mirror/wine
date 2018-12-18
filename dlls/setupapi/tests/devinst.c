@@ -125,13 +125,13 @@ static void test_create_device_list_ex(void)
             "Got unexpected error %#x.\n", GetLastError());
 
     set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
-    ok(set && set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.", GetLastError());
 
     ret = SetupDiDestroyDeviceInfoList(set);
     ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
 
     set = SetupDiCreateDeviceInfoListExW(NULL, NULL, empty, NULL);
-    ok(set && set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.", GetLastError());
 
     ret = SetupDiDestroyDeviceInfoList(set);
     ok(ret, "Failed to destroy device list, error %#x.\n", GetLastError());
@@ -286,7 +286,7 @@ static void test_device_info(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "Failed to create device info, error %#x.\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device info, error %#x.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL, NULL, NULL, 0, NULL);
@@ -366,7 +366,7 @@ static void test_device_info(void)
     SetupDiDestroyDeviceInfoList(set);
 
     set = SetupDiCreateDeviceInfoList(NULL, NULL);
-    ok(set != NULL, "Failed to create device info, error %#x.\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device info, error %#x.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL, NULL, NULL, 0, NULL);
@@ -427,7 +427,7 @@ static void test_get_device_instance_id(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupDiGetDeviceInstanceIdA(set, NULL, NULL, 0, NULL);
@@ -485,7 +485,7 @@ static void test_register_device_info(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupDiRegisterDeviceInfo(set, NULL, 0, NULL, NULL, NULL);
@@ -528,7 +528,7 @@ static void test_register_device_info(void)
     SetupDiDestroyDeviceInfoList(set);
 
     set = SetupDiGetClassDevsA(&guid, NULL, NULL, 0);
-    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
     check_device_info(set, 0, &guid, "Root\\LEGACY_BOGUS\\0000");
     check_device_info(set, 1, &guid, "Root\\LEGACY_BOGUS\\0002");
@@ -596,7 +596,7 @@ static void test_device_iface(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInterfaceA(set, NULL, NULL, NULL, 0, NULL);
@@ -697,7 +697,7 @@ static void test_device_iface_detail(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupDiGetDeviceInterfaceDetailA(set, NULL, NULL, 0, NULL, NULL);
@@ -787,7 +787,7 @@ static void test_device_key(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %#x.\n", GetLastError());
 
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
-    ok(set != NULL, "Failed to create device list, error %#x.\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
     ok(res != ERROR_SUCCESS, "Key should not exist.\n");
