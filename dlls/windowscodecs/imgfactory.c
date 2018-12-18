@@ -185,6 +185,7 @@ static HRESULT find_decoder(IStream *pIStream, const GUID *pguidVendor,
                             IWICBitmapDecoder_Release(*decoder);
                             IWICBitmapDecoderInfo_Release(decoderinfo);
                             IUnknown_Release(unkdecoderinfo);
+                            IEnumUnknown_Release(enumdecoders);
                             *decoder = NULL;
                             return res;
                         }
