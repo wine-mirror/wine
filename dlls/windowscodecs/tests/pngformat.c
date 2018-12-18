@@ -306,6 +306,8 @@ static HRESULT create_decoder(const void *image_data, UINT image_size, IWICBitma
         refcount = IStream_Release(stream);
         ok(refcount > 0, "expected stream refcount > 0\n");
     }
+    else
+        IStream_Release(stream);
 
     return hr;
 }
