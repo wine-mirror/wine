@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-31 19:18-0700\n"
+"PO-Revision-Date: 2018-12-17 21:33-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.5\n"
+"X-Generator: Poedit 2.2\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -313,25 +313,23 @@ msgstr "S'està cancel·lant..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "resten %1!u! %2"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "resten %1!u! %2 i %3!u! %4"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Segons"
+msgstr "segons"
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "minuts"
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "hores"
 
 #: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
@@ -430,16 +428,12 @@ msgid "&Retry"
 msgstr "&Reintenta"
 
 #: comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "Amaga &pestanyes"
+msgstr "Amaga els detalls"
 
 #: comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
-msgstr "Detalls"
+msgstr "Mostra els detalls"
 
 #: comctl32.rc:31 cryptui.rc:235 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
@@ -1038,7 +1032,7 @@ msgstr ""
 
 #: comdlg32.rc:67
 msgid "A printer error occurred."
-msgstr "S'ha produït un error d'impressora."
+msgstr "Ha ocorregut un error d'impressora."
 
 #: comdlg32.rc:68
 msgid "No default printer defined."
@@ -2212,7 +2206,7 @@ msgstr ""
 
 #: cryptui.rc:273 cryptui.rc:69
 msgid "Select Certificate Store"
-msgstr "Seleccionar el magatzem de certificats"
+msgstr "Seleccioneu un magatzem de certificats"
 
 #: cryptui.rc:276
 msgid "Select the certificate store you want to use:"
@@ -2463,16 +2457,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "Heu acabat amb èxit l'Assistent d'Exportació de Certificats."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Seleccionar el magatzem de certificats"
+msgstr "Seleccionar el certificat"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Seleccioneu el magatzem de certificats que voleu utilitzar:"
+msgstr "Seleccioneu el magatzem de certificats que voleu utilitzar"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -3007,20 +2997,16 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Nota: La clau privada d'aquest certificat no és exportable."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "&Finalitat prevista:"
+msgstr "Finalitat prevista"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Ubicació"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Seleccionar el magatzem de certificats"
+msgstr "Seleccioneu un certificat"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
@@ -3514,46 +3500,36 @@ msgid "Publishers..."
 msgstr "Publicadors..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Connexió LAN"
+msgstr "Connexions"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Configuració del Wine"
+msgstr "Configuració automàtica"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Utilitza autodescobriment de servidor intermediari web (WPAD)"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Utilitza script de autoconfiguració de servidor intermediari (PAC)"
 
 #: inetcpl.rc:128 inetcpl.rc:132
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Adreça"
+msgstr "Adreça:"
 
 #: inetcpl.rc:130
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "Servidor &local"
+msgstr "Servidor intermediari"
 
 #: inetcpl.rc:131
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Utilitza un servidor intermediari"
 
 #: inetcpl.rc:134
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Cap port"
+msgstr "Port:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -3816,18 +3792,20 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
+"no es pot establir l'atribut 'writable' en el descriptor de propietat com a "
+"'true' en aquest objecte"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "No es pot redefinir la propietat no configurable '|'"
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "No es pot modificar la propietat no escrivible '|'"
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "La propietat no pot tenir ambdós mètodes d'accés i un valor"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -6800,10 +6778,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Un igual ha restablert la connexió.\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "No s'ha trobat el missatge 0x%1 en el fitxer %2.\n"
+msgstr "No s'ha trobat cap signatura en el fitxer.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -8651,10 +8627,8 @@ msgid "&Browse..."
 msgstr "&Navega..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Tipus de fitxer"
+msgstr "Tipus de fitxer:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8665,16 +8639,12 @@ msgid "Size:"
 msgstr "Mida:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Data de creació"
+msgstr "Data de creació:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Atributs:"
+msgstr "Atributs:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8685,28 +8655,20 @@ msgid "&Archive"
 msgstr "&Arxiu"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Obre:"
+msgstr "Obre amb:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "&Canvia d'icona..."
+msgstr "&Canvia..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Modificat"
+msgstr "Última modificació:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Últim canvi:"
+msgstr "Últim accés:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -9131,811 +9093,791 @@ msgstr "Seleccionar font"
 
 #: tzres.rc:82
 msgid "China Standard Time"
-msgstr ""
+msgstr "Hora estàndard de la Xina"
 
 #: tzres.rc:83
 msgid "China Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de la Xina"
 
 #: tzres.rc:160
 msgid "North Asia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àsia del Nord"
 
 #: tzres.rc:161
 msgid "North Asia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àsia del Nord"
 
 #: tzres.rc:104
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Geòrgia"
 
 #: tzres.rc:105
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Geòrgia"
 
 #: tzres.rc:152
 msgid "Nepal Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Nepal"
 
 #: tzres.rc:153
 msgid "Nepal Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Nepal"
 
 #: tzres.rc:60
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Cap Verd"
 
 #: tzres.rc:61
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Cap Verd"
 
 #: tzres.rc:74
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Standard Time"
-msgstr "Europeu central"
+msgstr "Hora estàndard de l'Europa Central"
 
 #: tzres.rc:75
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "Europeu central"
+msgstr "Hora d'estiu de l'Europa Central"
 
 #: tzres.rc:140
 msgid "Morocco Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Marroc"
 
 #: tzres.rc:141
 msgid "Morocco Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Marroc"
 
 #: tzres.rc:72
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Standard Time"
-msgstr "Europeu central"
+msgstr "Hora estàndard de l'Europa Central"
 
 #: tzres.rc:73
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "Europeu central"
+msgstr "Hora d'estiu de l'Europa Central"
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
-msgstr ""
+msgstr "Hora estàndard d'Iran"
 
 #: tzres.rc:119
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu d'Iran"
 
 #: tzres.rc:150
 msgid "Namibia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Namíbia"
 
 #: tzres.rc:151
 msgid "Namibia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Namíbia"
 
 #: tzres.rc:200
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Tonga"
 
 #: tzres.rc:201
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Tonga"
 
 #: tzres.rc:144
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "Hora estàndard de les muntanyes (Mèxic)"
 
 #: tzres.rc:145
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "Hora d'estiu de les muntanyes (Mèxic)"
 
 #: tzres.rc:106
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "Barra &estàndard"
+msgstr "Hora estàndard GMT"
 
 #: tzres.rc:107
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu GMT"
 
 #: tzres.rc:68
 msgid "Central Asia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àsia Central"
 
 #: tzres.rc:69
 msgid "Central Asia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àsia Central"
 
 #: tzres.rc:38
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "Hora estàndard àrab"
 
 #: tzres.rc:39
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu àrab"
 
 #: tzres.rc:132
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Magadan"
 
 #: tzres.rc:133
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Magadan"
 
 #: tzres.rc:156
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Terranova"
 
 #: tzres.rc:157
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Terranova"
 
 #: tzres.rc:224
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Pacífic Occidental"
 
 #: tzres.rc:225
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Pacífic Occidental"
 
 #: tzres.rc:164
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Pacífic"
 
 #: tzres.rc:165
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Pacífic"
 
 #: tzres.rc:48
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Azerbaidjan"
 
 #: tzres.rc:49
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Azerbaidjan"
 
 #: tzres.rc:182
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Samoa"
 
 #: tzres.rc:183
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Samoa"
 
 #: tzres.rc:124
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Kaliningrad"
 
 #: tzres.rc:125
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Kaliningrad"
 
 #: tzres.rc:166
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "Hora estàndard del Pacífic (Mèxic)"
 
 #: tzres.rc:167
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "Hora d'estiu del Pacífic (Mèxic)"
 
 #: tzres.rc:136
 msgid "Middle East Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Orient Mitjà"
 
 #: tzres.rc:137
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Orient Mitjà"
 
 #: tzres.rc:198
 msgid "Tokyo Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Tokyo"
 
 #: tzres.rc:199
 msgid "Tokyo Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Tokyo"
 
 #: tzres.rc:130
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "Hora estàndard de les Illes de la Línia"
 
 #: tzres.rc:131
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de les Illes de la Línia"
 
 #: tzres.rc:122
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Jordània"
 
 #: tzres.rc:123
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Jordània"
 
 #: tzres.rc:78
 msgid "Central Standard Time"
-msgstr ""
+msgstr "Hora estàndard central"
 
 #: tzres.rc:79
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu central"
 
 #: tzres.rc:50
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "Hora estàndard dels Açores"
 
 #: tzres.rc:51
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu dels Açores"
 
 #: tzres.rc:158
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àsia del Norest"
 
 #: tzres.rc:159
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àsia del Norest"
 
 #: tzres.rc:40
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Argentina"
 
 #: tzres.rc:41
 msgid "Argentina Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Argentina"
 
 #: tzres.rc:146
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Birmània"
 
 #: tzres.rc:147
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Birmània"
 
 #: tzres.rc:210 tzres.rc:211
 msgid "Coordinated Universal Time"
-msgstr ""
+msgstr "Temps universal coordinat"
 
 #: tzres.rc:116
 msgid "India Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Índia"
 
 #: tzres.rc:117
 msgid "India Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Índia"
 
 #: tzres.rc:112
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "Barra &estàndard"
+msgstr "Hora estàndard GTB"
 
 #: tzres.rc:113
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu GTB"
 
 #: tzres.rc:202
 msgid "Turkey Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Turquia"
 
 #: tzres.rc:203
 msgid "Turkey Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Turquia"
 
 #: tzres.rc:100
 msgid "Fiji Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Fiji"
 
 #: tzres.rc:101
 msgid "Fiji Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Fiji"
 
 #: tzres.rc:58
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Canadà Central"
 
 #: tzres.rc:59
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Canadà Central"
 
 #: tzres.rc:194
 msgid "Taipei Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Taipei"
 
 #: tzres.rc:195
 msgid "Taipei Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Taipei"
 
 #: tzres.rc:220
 msgid "W. Europe Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Europa Occidental"
 
 #: tzres.rc:221
 msgid "W. Europe Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Europa Occidental"
 
 #: tzres.rc:138
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Montevideo"
 
 #: tzres.rc:139
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Montevideo"
 
 #: tzres.rc:168
 msgid "Pakistan Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Pakistan"
 
 #: tzres.rc:169
 msgid "Pakistan Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Pakistan"
 
 #: tzres.rc:62
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Caucas"
 
 #: tzres.rc:63
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Caucas"
 
 #: tzres.rc:46
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "Hora estàndard oriental AUS"
 
 #: tzres.rc:47
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu oriental AUS"
 
 #: tzres.rc:148
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àsia del Centre-Nord"
 
 #: tzres.rc:149
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àsia del Centre-Nord"
 
 #: tzres.rc:94
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Hora estàndard oriental"
 
 #: tzres.rc:95
 msgid "Eastern Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu oriental"
 
 #: tzres.rc:80
 msgid "Central Standard Time (Mexico)"
-msgstr ""
+msgstr "Hora estàndard central (Mèxic)"
 
 #: tzres.rc:81
 msgid "Central Daylight Time (Mexico)"
-msgstr ""
+msgstr "Hora d'estiu central (Mèxic)"
 
 #: tzres.rc:42
 msgid "Atlantic Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Atlàntic"
 
 #: tzres.rc:43
 msgid "Atlantic Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Atlàntic"
 
 #: tzres.rc:142
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "Hora estàndard de les muntanyes"
 
 #: tzres.rc:143
 msgid "Mountain Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de les muntanyes"
 
 #: tzres.rc:206
 msgid "US Eastern Standard Time"
-msgstr ""
+msgstr "Hora estàndard oriental EEUU"
 
 #: tzres.rc:207
 msgid "US Eastern Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu oriental EEUU"
 
 #: tzres.rc:196
 msgid "Tasmania Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Tasmània"
 
 #: tzres.rc:197
 msgid "Tasmania Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Tasmània"
 
 #: tzres.rc:66
 msgid "Central America Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àmerica Central"
 
 #: tzres.rc:67
 msgid "Central America Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àmerica Central"
 
 #: tzres.rc:208
 msgid "US Mountain Standard Time"
-msgstr ""
+msgstr "Hora estàndard de les muntanyes EEUU"
 
 #: tzres.rc:209
 msgid "US Mountain Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de les muntanyes EEUU"
 
 #: tzres.rc:188
 msgid "South Africa Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àfrica del Sud"
 
 #: tzres.rc:189
 msgid "South Africa Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àfrica del Sud"
 
 #: tzres.rc:64
 msgid "Cen. Australia Standard Time"
-msgstr ""
+msgstr "Hora estàndard d'Austràlia Central"
 
 #: tzres.rc:65
 msgid "Cen. Australia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu d'Austràlia Central"
 
 #: tzres.rc:190
 msgid "Sri Lanka Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Sri Lanka"
 
 #: tzres.rc:191
 msgid "Sri Lanka Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Sri Lanka"
 
 #: tzres.rc:30
 msgid "Afghanistan Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Afganistan"
 
 #: tzres.rc:31
 msgid "Afghanistan Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Afganistan"
 
 #: tzres.rc:226
 msgid "Yakutsk Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Iakutsk"
 
 #: tzres.rc:227
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Iakutsk"
 
 #: tzres.rc:176
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àmerica del Sud-Est"
 
 #: tzres.rc:177
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àmerica del Sud-Est"
 
 #: tzres.rc:34
 msgid "Arab Standard Time"
-msgstr ""
+msgstr "Hora estàndard àrab"
 
 #: tzres.rc:35
 msgid "Arab Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu àrab"
 
 #: tzres.rc:36
 msgid "Arabian Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àrabia"
 
 #: tzres.rc:37
 msgid "Arabian Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àrabia"
 
 #: tzres.rc:174
 msgid "Russian Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Rússia"
 
 #: tzres.rc:175
 msgid "Russian Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Rússia"
 
 #: tzres.rc:172
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "Hora estàndard romànic"
 
 #: tzres.rc:173
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu romànic"
 
 #: tzres.rc:98
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "Hora estàndard d'Iekaterinburg"
 
 #: tzres.rc:99
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu d'Iekaterinburg"
 
 #: tzres.rc:192
 msgid "Syria Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Síria"
 
 #: tzres.rc:193
 msgid "Syria Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Síria"
 
 #: tzres.rc:44
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "Hora estàndard central AUS"
 
 #: tzres.rc:45
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu central AUS"
 
 #: tzres.rc:110
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Greenwich"
 
 #: tzres.rc:111
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Greenwich"
 
 #: tzres.rc:204
 msgid "Ulaanbaatar Standard Time"
-msgstr ""
+msgstr "Hora estàndard d'Ulan Bator"
 
 #: tzres.rc:205
 msgid "Ulaanbaatar Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu d'Ulan Bator"
 
 #: tzres.rc:120
 msgid "Israel Standard Time"
-msgstr ""
+msgstr "Hora estàndard d'Israel"
 
 #: tzres.rc:121
 msgid "Israel Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu d'Israel"
 
 #: tzres.rc:54
 msgid "Bangladesh Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Bangla Desh"
 
 #: tzres.rc:55
 msgid "Bangladesh Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Bangla Desh"
 
 #: tzres.rc:178
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Pacífic de l'Amèrica del Sud"
 
 #: tzres.rc:179
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Pacífic de l'Amèrica del Sud"
 
 #: tzres.rc:222
 msgid "West Asia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àsia Occidental"
 
 #: tzres.rc:223
 msgid "West Asia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àsia Occidental"
 
 #: tzres.rc:32
 msgid "Alaskan Standard Time"
-msgstr ""
+msgstr "Hora estàndard d'Alaska"
 
 #: tzres.rc:33
 msgid "Alaskan Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu d'Alaska"
 
 #: tzres.rc:170
 msgid "Paraguay Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Paraguai"
 
 #: tzres.rc:171
 msgid "Paraguay Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Paraguai"
 
 #: tzres.rc:84
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "Data i hora"
+msgstr "Hora estàndard de la línia de canvi de data"
 
 #: tzres.rc:85
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de la línia de canvi de data"
 
 #: tzres.rc:128
 msgid "Libya Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Líbia"
 
 #: tzres.rc:129
 msgid "Libya Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Líbia"
 
 #: tzres.rc:52
 msgid "Bahia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Bahia"
 
 #: tzres.rc:53
 msgid "Bahia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Bahia"
 
 #: tzres.rc:212
 msgid "Venezuela Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Veneçuela"
 
 #: tzres.rc:213
 msgid "Venezuela Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Veneçuela"
 
 #: tzres.rc:114
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Hawaii"
 
 #: tzres.rc:115
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Hawaii"
 
 #: tzres.rc:184
 msgid "SE Asia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àsia del Sud-Est"
 
 #: tzres.rc:185
 msgid "SE Asia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àsia del Sud-Est"
 
 #: tzres.rc:154
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Nova Zelanda"
 
 #: tzres.rc:155
 msgid "New Zealand Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Nova Zelanda"
 
 #: tzres.rc:70
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Brasil Central"
 
 #: tzres.rc:71
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Brasil Central"
 
 #: tzres.rc:56
 msgid "Belarus Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Bielorússia"
 
 #: tzres.rc:57
 msgid "Belarus Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Bielorússia"
 
 #: tzres.rc:180
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àmerica del Sud-Oest"
 
 #: tzres.rc:181
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àmerica del Sud-Oest"
 
 #: tzres.rc:108
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Groenlàndia"
 
 #: tzres.rc:109
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Groenlàndia"
 
 #: tzres.rc:92
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "Data i hora"
+msgstr "Hora estàndard de l'Illa de Pasqua"
 
 #: tzres.rc:93
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "Data i hora"
+msgstr "Hora d'estiu de l'Illa de Pasqua"
 
 #: tzres.rc:96
 msgid "Egypt Standard Time"
-msgstr ""
+msgstr "Hora estàndard d'Egipte"
 
 #: tzres.rc:97
 msgid "Egypt Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu d'Egipte"
 
 #: tzres.rc:134
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Maurici"
 
 #: tzres.rc:135
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Maurici"
 
 #: tzres.rc:214
 msgid "Vladivostok Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Vladivostok"
 
 #: tzres.rc:215
 msgid "Vladivostok Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Vladivostok"
 
 #: tzres.rc:186
 msgid "Singapore Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Singapur"
 
 #: tzres.rc:187
 msgid "Singapore Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Singapur"
 
 #: tzres.rc:126
 msgid "Korea Standard Time"
-msgstr ""
+msgstr "Hora estàndard de Corea"
 
 #: tzres.rc:127
 msgid "Korea Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de Corea"
 
 #: tzres.rc:86
 msgid "E. Africa Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àfrica Oriental"
 
 #: tzres.rc:87
 msgid "E. Africa Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àfrica Oriental"
 
 #: tzres.rc:102
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "Barra &estàndard"
+msgstr "Hora estàndard FLE"
 
 #: tzres.rc:103
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu FLE"
 
 #: tzres.rc:90
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àmerica del Sudest"
 
 #: tzres.rc:91
 msgid "E. South America Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àmerica del Sudest"
 
 #: tzres.rc:76
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Pacífic Central"
 
 #: tzres.rc:77
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Pacífic Central"
 
 #: tzres.rc:218
 msgid "W. Central Africa Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Àfrica del Centre-Oest"
 
 #: tzres.rc:219
 msgid "W. Central Africa Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Àfrica del Centre-Oest"
 
 #: tzres.rc:162
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "Hora estàndard del Pacífic de l'Amèrica del Sud"
 
 #: tzres.rc:163
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu del Pacífic de l'Amèrica del Sud"
 
 #: tzres.rc:88
 msgid "E. Australia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Austràlia Oriental"
 
 #: tzres.rc:89
 msgid "E. Australia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Austràlia Oriental"
 
 #: tzres.rc:216
 msgid "W. Australia Standard Time"
-msgstr ""
+msgstr "Hora estàndard de l'Austràlia Occidental"
 
 #: tzres.rc:217
 msgid "W. Australia Daylight Time"
-msgstr ""
+msgstr "Hora d'estiu de l'Austràlia Occidental"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -10126,70 +10068,61 @@ msgstr ""
 "Hi ha almenys un problema de seguretat no especificat amb aquest certificat."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "S'ha superat el temps d'espera de sol·licitud de servei.\n"
+msgstr "S'ha superat el temps d'espera de la sol·licitud.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "S'ha produït un error d'impressora."
+msgstr "Ha ocorregut un error intern.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "El camí no és vàlid.\n"
+msgstr "L'URL no és vàlid.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "No s'ha pogut reconèixer l'esquema URL o no és compatible.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "No s'ha pogut trobar el nom d'usuari.\n"
+msgstr "No s'ha pogut resoldre el nom de servidor.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "El perfil d'usuari no és vàlid.\n"
+msgstr "L'operació demanada no és vàlida.\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"S'ha cancel·lat l'operació, usualment perquè s'ha tancat l'identificador en "
+"el qual la sol·licitud s'estava operant abans que es completés l'operació.\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "No s'ha pogut afegir el perfil.\n"
+msgstr "No s'ha pogut ubicar l'element demanat.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "No es pot connectar al servidor LDAP"
+msgstr "L'intent de connectar al servidor ha fallat.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "S'ha terminat la connexió amb el servidor.\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"La data del certificat SSL que s'ha rebut del servidor està malmesa. El "
+"certificat està caducat.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
 msgstr ""
+"El nom comú del certificat SSL (camp de nom de màquina) és incorrecte.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
@@ -10430,7 +10363,7 @@ msgstr "El controlador de dispositiu no està llest."
 #: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
-"Hi ha hagut un problema en inicialitzar l'MCI. Proveu reiniciar el Windows."
+"Ha ocorregut un problema en inicialitzar l'MCI. Proveu reiniciar el Windows."
 
 #: winmm.rc:79
 msgid ""
@@ -10450,7 +10383,7 @@ msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
-"S'han produït errors en més d'un dispositiu. Especifiqueu cada ordre i "
+"Han ocorregut errors en més d'un dispositiu. Especifiqueu cada ordre i "
 "dispositiu separadament per a determinar quins dispositius han causat "
 "l'error."
 
@@ -10764,7 +10697,7 @@ msgstr ""
 
 #: winmm.rc:130
 msgid "An error occurred with the specified port."
-msgstr "S'ha ocorregut un error amb el port especificat."
+msgstr "Ha ocorregut un error amb el port especificat."
 
 #: winmm.rc:133
 msgid ""
@@ -12041,10 +11974,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Error: L'opció '%c' no és vàlida.\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Error: No s'ha pogut trobar el procés \"%1\".\n"
+msgstr "Error: No s'ha pogut obtenir el nom de màquina: %u.\n"
 
 #: hostname.rc:33
 msgid ""
@@ -12245,7 +12176,7 @@ msgstr "Desconnectat"
 
 #: net.rc:50
 msgid "A network error occurred"
-msgstr "Hi ha hagut un error de xarxa"
+msgstr "Ha ocorregut un error de xarxa"
 
 #: net.rc:51
 msgid "Connection is being made"
@@ -13266,16 +13197,16 @@ msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
-"reg: No s'ha pogut suprimir tots els valors de registre en '%1'. Un error "
-"inesperat ha ocorregut.\n"
+"reg: No s'ha pogut suprimir tots els valors de registre en '%1'. Ha "
+"ocorregut un error inesperat.\n"
 
 #: reg.rc:59
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
-"reg: No s'ha pogut completar l'operació especificada. Un error inesperat ha "
-"ocorregut.\n"
+"reg: No s'ha pogut completar l'operació especificada. Ha ocorregut un error "
+"inesperat.\n"
 
 #: reg.rc:60
 msgid "Search complete. Number of matches found: %1!d!\n"
@@ -13852,10 +13783,8 @@ msgid "Confirm Value Delete"
 msgstr "Confirmar eliminació de valor"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "Esteu segur que voleu suprimir el valor de registre '%1'?"
+msgstr "Esteu segur que voleu suprimir el valor de registre seleccionat?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
@@ -15236,11 +15165,11 @@ msgstr "Co&lor:"
 
 #: winecfg.rc:304
 msgid "MIME types"
-msgstr ""
+msgstr "Tipus MIME"
 
 #: winecfg.rc:305
 msgid "Manage file &associations"
-msgstr ""
+msgstr "Gestiona &associacions de fitxer"
 
 #: winecfg.rc:308
 msgid "Folders"
@@ -15857,6 +15786,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
+"Un program en el vostre sistema ha tingut una pana, però el WineDbg no ha "
+"pogut enganxar-se al procès per a obtenir una traça inversa."
 
 #: winedbg.rc:41
 msgid "(unidentified)"
@@ -16716,41 +16647,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -16789,8 +16685,8 @@ msgstr ""
 "XCOPY - Copia fitxers o arbres de directori a una destinació.\n"
 "\n"
 "Sintaxi:\n"
-"XCOPY origen [destinació] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U] [/R]\n"
-"\t     [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"XCOPY origen [destinació] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
 "\n"
 "On:\n"
 "\n"
@@ -16810,7 +16706,7 @@ msgstr ""
 "[/U]  Copia només els fitxers que ja existeixin a la destinació.\n"
 "[/R]  Sobreescriu qualsevol fitxer de només lectura.\n"
 "[/H]  Inclou els fitxers amagats i els fitxers de sistema en la còpia.\n"
-"[/C]  Continuar inclús si es produeix un error durant la còpia.\n"
+"[/C]  Continuar inclús si ocorr un error durant la còpia.\n"
 "[/A]  Només copiar els fitxers amb l'atribut d'arxiu establert.\n"
 "[/M]  Només copiar els fitxers amb l'atribut d'arxiu establert, elimina\n"
 "\tl'atribut d'arxiu.\n"
