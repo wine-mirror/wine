@@ -1143,6 +1143,47 @@ static void test_CreatePropertySheetPage(void)
     }
 }
 
+static void test_bad_control_class(void)
+{
+    PROPSHEETPAGEA psp;
+    PROPSHEETHEADERA psh;
+    HPROPSHEETPAGE hpsp;
+    INT_PTR ret;
+
+    memset(&psp, 0, sizeof(psp));
+    psp.dwSize = sizeof(psp);
+    psp.hInstance = GetModuleHandleA(NULL);
+    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_BAD_CONTROL);
+    psp.pfnDlgProc = page_dlg_proc;
+
+    hpsp = pCreatePropertySheetPageA(&psp);
+    ok(hpsp != 0, "CreatePropertySheetPage failed\n");
+
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
+    psh.nPages = 1;
+    psh.hwndParent = GetDesktopWindow();
+    U3(psh).phpage = &hpsp;
+
+if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once Wine is fixed */
+{
+    ret = pPropertySheetA(&psh);
+    ok(ret == 0, "got %ld\n", ret);
+}
+
+    /* Need to recreate hpsp otherwise the test fails under Windows */
+    hpsp = pCreatePropertySheetPageA(&psp);
+    ok(hpsp != 0, "CreatePropertySheetPage failed\n");
+    U3(psh).phpage = &hpsp;
+
+    psh.dwFlags = PSH_MODELESS;
+    ret = pPropertySheetA(&psh);
+    ok(ret != 0, "got %ld\n", ret);
+
+    ok(IsWindow((HWND)ret), "bad window handle %#lx\n", ret);
+    DestroyWindow((HWND)ret);
+}
+
 static void init_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -1168,6 +1209,7 @@ START_TEST(propsheet)
 
     init_functions();
 
+    test_bad_control_class();
     test_title();
     test_nopage();
     test_disableowner();
