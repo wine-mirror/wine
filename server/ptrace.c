@@ -628,6 +628,9 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 
     if (!suspend_for_ptrace( thread )) return;
 
+    /* force all breakpoint lengths to 1, workaround for kernel bug 200965 */
+    ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), 0x11110055 );
+
     switch (context->cpu)
     {
     case CPU_x86:
