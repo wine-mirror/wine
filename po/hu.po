@@ -59,7 +59,7 @@ msgstr "Támogatási információ"
 #: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
 #: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:359 comdlg32.rc:398
 #: comdlg32.rc:452 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
-#: cryptui.rc:462 dinput.rc:46 ieframe.rc:96 localui.rc:44 localui.rc:57
+#: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
 #: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 twain.rc:32 user32.rc:83
@@ -143,7 +143,7 @@ msgstr "&Telepítés"
 #: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
 #: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:399
 #: comdlg32.rc:453 comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:527 credui.rc:53
-#: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:47
+#: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
 #: oledlg.rc:95 serialui.rc:42 setupapi.rc:42 setupapi.rc:60 shell32.rc:277
@@ -3043,39 +3043,39 @@ msgstr "Jelölje meg a tanúsítvány tárat"
 msgid "Not yet implemented"
 msgstr "Nincs implementálva"
 
-#: dinput.rc:43
+#: dinput.rc:34
 msgid "Configure Devices"
 msgstr "Eszközbeállí&tás"
 
-#: dinput.rc:48
+#: dinput.rc:39
 msgid "Reset"
 msgstr "Újraindítás"
 
-#: dinput.rc:51
+#: dinput.rc:42
 msgid "Player"
 msgstr "Lejátszás"
 
-#: dinput.rc:52 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:89
 msgid "Device"
 msgstr "Eszköz"
 
-#: dinput.rc:53
+#: dinput.rc:44
 msgid "Actions"
 msgstr "Műveletek"
 
-#: dinput.rc:54
+#: dinput.rc:45
 msgid "Mapping"
 msgstr "Csatlakoztat"
 
-#: dinput.rc:56
+#: dinput.rc:47
 msgid "Show Assigned First"
 msgstr "Hozzárendelések előre kerülnek"
 
-#: dinput.rc:37
+#: dinput.rc:28
 msgid "Action"
 msgstr "Művelet"
 
-#: dinput.rc:38
+#: dinput.rc:29
 msgid "Object"
 msgstr "Tárgy"
 
