@@ -158,6 +158,69 @@ static void enumerate_physical_device(VkPhysicalDevice vk_physical_device)
             VK_VERSION_PATCH(properties.apiVersion));
 }
 
+static void test_enumerate_physical_device2(void)
+{
+    static const char *procs[] = {"vkGetPhysicalDeviceProperties2", "vkGetPhysicalDeviceProperties2KHR"};
+    static const char *extensions[] = {VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME};
+    PFN_vkGetPhysicalDeviceProperties2 pfn_vkGetPhysicalDeviceProperties2;
+    VkPhysicalDeviceProperties2 properties2;
+    VkPhysicalDevice *vk_physical_devices;
+    VkPhysicalDeviceIDProperties id;
+    VkInstance vk_instance;
+    unsigned int i, j;
+    const LUID *luid;
+    uint32_t count;
+    VkResult vr;
+
+    if ((vr = create_instance_skip(ARRAY_SIZE(extensions), extensions, &vk_instance)) < 0)
+        return;
+    ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
+
+    vr = vkEnumeratePhysicalDevices(vk_instance, &count, NULL);
+    ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
+    if (!count)
+    {
+        skip("No physical devices.\n");
+        vkDestroyInstance(vk_instance, NULL);
+        return;
+    }
+
+    vk_physical_devices = heap_calloc(count, sizeof(*vk_physical_devices));
+    ok(!!vk_physical_devices, "Failed to allocate memory.\n");
+    vr = vkEnumeratePhysicalDevices(vk_instance, &count, vk_physical_devices);
+    ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
+
+    for (i = 0; i < ARRAY_SIZE(procs); ++i)
+    {
+        pfn_vkGetPhysicalDeviceProperties2
+                = (PFN_vkGetPhysicalDeviceProperties2)vkGetInstanceProcAddr(vk_instance, procs[i]);
+        if (!pfn_vkGetPhysicalDeviceProperties2)
+        {
+            skip("%s is not available.\n", procs[i]);
+            continue;
+        }
+
+        for (j = 0; j < count; ++j)
+        {
+            properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+            properties2.pNext = &id;
+
+            memset(&id, 0, sizeof(id));
+            id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+
+            pfn_vkGetPhysicalDeviceProperties2(vk_physical_devices[j], &properties2);
+            luid = (const LUID *)id.deviceLUID;
+            trace("Device '%s', device UUID: %s, driver UUID: %s, device LUID: %08x:%08x.\n",
+                  properties2.properties.deviceName, wine_dbgstr_guid((const GUID *)id.deviceUUID),
+                  wine_dbgstr_guid((const GUID *)id.driverUUID), luid->HighPart, luid->LowPart);
+            todo_wine ok(id.deviceLUIDValid == VK_TRUE, "Expected valid device LUID.\n");
+        }
+    }
+
+    heap_free(vk_physical_devices);
+    vkDestroyInstance(vk_instance, NULL);
+}
+
 static void enumerate_device_queues(VkPhysicalDevice vk_physical_device)
 {
     VkPhysicalDeviceProperties device_properties;
@@ -359,6 +422,7 @@ START_TEST(vulkan)
 {
     test_instance_version();
     for_each_device(enumerate_physical_device);
+    test_enumerate_physical_device2();
     for_each_device(enumerate_device_queues);
     test_physical_device_groups();
     for_each_device(test_destroy_command_pool);
