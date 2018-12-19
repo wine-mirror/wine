@@ -456,9 +456,8 @@ static void test_parsedescriptor(void)
     /* Nothing loaded */
     hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
     ok(hr == S_OK, "GetDescriptor failed: %08x, expected S_OK\n", hr);
-    ok(desc.dwValidData == DMUS_OBJ_CLASS /* XP */ ||
-            broken(desc.dwValidData == (DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS)), /* Vista and above */
-            "Got valid data %#x, expected DMUS_OBJ_OBJECT\n", desc.dwValidData);
+    ok(desc.dwValidData & DMUS_OBJ_CLASS, "Got valid data %#x, expected DMUS_OBJ_CLASS\n",
+            desc.dwValidData);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicStyle),
             "Got class guid %s, expected CLSID_DirectMusicStyle\n",
             wine_dbgstr_guid(&desc.guidClass));
