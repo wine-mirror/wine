@@ -1125,6 +1125,7 @@ GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection **fontColle
         return InvalidParameter;
 
     for (i = 0; i < (*fontCollection)->count; i++) heap_free((*fontCollection)->FontFamilies[i]);
+    heap_free((*fontCollection)->FontFamilies);
     heap_free(*fontCollection);
 
     return Ok;
