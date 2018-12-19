@@ -93,7 +93,7 @@ static const struct dinput_device *dinput_devices[] =
     &joystick_osx_device
 };
 
-static HINSTANCE DINPUT_instance = NULL;
+HINSTANCE DINPUT_instance;
 
 static BOOL check_hook_thread(void);
 static CRITICAL_SECTION dinput_hook_crit;
