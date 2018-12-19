@@ -527,6 +527,48 @@ rmdir "fol;der"
 rmdir folder
 PATH=%PATH_BACKUP%
 
+echo ------------ Testing 'choice' ------------
+
+rem Windows XP and Windows 2000 do not come with choice
+rem echo is used for @or_broken@ formatting
+choice /C:ABC /M "Example message" /D A /T:0
+if %ERRORLEVEL% EQU 9009 (
+  echo choice unavailable
+)
+echo %ERRORLEVEL%
+choice /C ABC "/M:Example message" /D:B /T 0
+if %ERRORLEVEL% EQU 9009 (
+  echo choice unavailable
+)
+echo %ERRORLEVEL%
+choice /C def /D:f /T:0
+if %ERRORLEVEL% EQU 9009 (
+  echo choice unavailable
+)
+echo %ERRORLEVEL%
+REM If a pipe fails due to a nonexistent command
+REM it will stop the whole program's execution
+if %ERRORLEVEL% NEQ 9009 (
+  echo Y | choice /C ABCXYZ /D A /T 2
+)
+if %ERRORLEVEL% EQU 9009 (
+  echo choice unavailable
+)
+echo %ERRORLEVEL%
+choice /C ABC /N /D A /T 0
+if %ERRORLEVEL% EQU 9009 (
+  echo choice unavailable
+)
+echo %ERRORLEVEL%
+choice /C abcABC /CS /D:A /T:0
+if %ERRORLEVEL% EQU 9009 (
+  echo choice unavailable
+)
+echo %ERRORLEVEL%
+rem intentional error
+choice /C abcABC /D:A /T:0 >NUL 2>NUL
+echo %ERRORLEVEL%
+
 echo ------------ Testing variable expansion ------------
 call :setError 0
 echo ~p0 should be path containing batch file
