@@ -322,7 +322,7 @@ static void test_GetPerformanceInfo(void)
         }
         HeapFree(GetProcessHeap(), 0, sys_process_info);
 
-        ok(check_with_margin(info.HandleCount,  handle_count,  24),
+        ok(check_with_margin(info.HandleCount,  handle_count,  256),
            "expected approximately %d but got %d\n", info.HandleCount, handle_count);
 
         ok(check_with_margin(info.ProcessCount, process_count, 4),
