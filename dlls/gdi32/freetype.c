@@ -184,7 +184,13 @@ MAKE_FUNCPTR(FcPatternDestroy);
 MAKE_FUNCPTR(FcPatternGetBool);
 MAKE_FUNCPTR(FcPatternGetInteger);
 MAKE_FUNCPTR(FcPatternGetString);
+#ifndef FC_NAMELANG
+#define FC_NAMELANG "namelang"
 #endif
+#ifndef FC_PRGNAME
+#define FC_PRGNAME "prgname"
+#endif
+#endif /* SONAME_LIBFONTCONFIG */
 
 #undef MAKE_FUNCPTR
 
