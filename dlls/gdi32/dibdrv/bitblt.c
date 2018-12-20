@@ -1035,6 +1035,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                &dc->brush_org, rop );
         free_clipped_rects( &clipped_rects );
     }
+    free_dib_info( &src_dib );
     if (tmp_rgn) DeleteObject( tmp_rgn );
     return ret;
 
