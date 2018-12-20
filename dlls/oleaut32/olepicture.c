@@ -614,7 +614,6 @@ static void render_masked_bitmap(OLEPictureImpl *This, HDC hdc,
     LONG x, LONG y, LONG cx, LONG cy, OLE_XPOS_HIMETRIC xSrc, OLE_YPOS_HIMETRIC ySrc,
     OLE_XSIZE_HIMETRIC cxSrc, OLE_YSIZE_HIMETRIC cySrc, HBITMAP hbmMask, HBITMAP hbmXor)
 {
-    HBITMAP hbmpOld;
     HDC hdcBmp;
 
     /* Set a mapping mode that maps bitmap pixels into HIMETRIC units.
@@ -630,32 +629,26 @@ static void render_masked_bitmap(OLEPictureImpl *This, HDC hdc,
 
     if (hbmMask)
     {
-        HDC hdcMask = CreateCompatibleDC(0);
-        HBITMAP hOldbm = SelectObject(hdcMask, hbmMask);
-
-        hbmpOld = SelectObject(hdcBmp, hbmXor);
-
-        SetMapMode(hdcMask, MM_ANISOTROPIC);
-        SetWindowOrgEx(hdcMask, 0, 0, NULL);
-        SetWindowExtEx(hdcMask, This->himetricWidth, This->himetricHeight, NULL);
-        SetViewportOrgEx(hdcMask, 0, This->origHeight, NULL);
-        SetViewportExtEx(hdcMask, This->origWidth, -This->origHeight, NULL);
-
         SetBkColor(hdc, RGB(255, 255, 255));
         SetTextColor(hdc, RGB(0, 0, 0));
-        StretchBlt(hdc, x, y, cx, cy, hdcMask, xSrc, ySrc, cxSrc, cySrc, SRCAND);
-        StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCPAINT);
 
-        SelectObject(hdcMask, hOldbm);
-        DeleteDC(hdcMask);
+        SelectObject(hdcBmp, hbmMask);
+        StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCAND);
+
+        if (hbmXor)
+        {
+            SelectObject(hdcBmp, hbmXor);
+            StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCPAINT);
+        }
+        else StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc - This->himetricHeight,
+                        cxSrc, cySrc, SRCPAINT);
     }
     else
     {
-        hbmpOld = SelectObject(hdcBmp, hbmXor);
+        SelectObject(hdcBmp, hbmXor);
         StretchBlt(hdc, x, y, cx, cy, hdcBmp, xSrc, ySrc, cxSrc, cySrc, SRCCOPY);
     }
 
-    SelectObject(hdcBmp, hbmpOld);
     DeleteDC(hdcBmp);
 }
 
