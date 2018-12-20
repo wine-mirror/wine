@@ -482,10 +482,6 @@ static inline struct freetype_physdev *get_freetype_dev( PHYSDEV dev )
 
 static const struct gdi_dc_funcs freetype_funcs;
 
-static const WCHAR defSerif[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
-static const WCHAR defSans[] = {'A','r','i','a','l','\0'};
-static const WCHAR defFixed[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
-
 static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\0'};
 static const WCHAR win9x_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                            'W','i','n','d','o','w','s','\\',
@@ -556,6 +552,10 @@ static const WCHAR *default_sans_list[] =
     bitstream_vera_sans,
     NULL
 };
+
+static const WCHAR *default_serif = times_new_roman;
+static const WCHAR *default_fixed = courier_new;
+static const WCHAR *default_sans = arial;
 
 typedef struct {
     WCHAR *name;
@@ -4341,22 +4341,24 @@ static BOOL move_to_front(const WCHAR *name)
     return FALSE;
 }
 
-static BOOL set_default(const WCHAR **name_list)
+static const WCHAR *set_default(const WCHAR **name_list)
 {
-    while (*name_list)
+    const WCHAR **entry = name_list;
+
+    while (*entry)
     {
-        if (move_to_front(*name_list)) return TRUE;
-        name_list++;
+        if (move_to_front(*entry)) return *entry;
+        entry++;
     }
 
-    return FALSE;
+    return *name_list;
 }
 
 static void reorder_font_list(void)
 {
-    set_default( default_serif_list );
-    set_default( default_fixed_list );
-    set_default( default_sans_list );
+    default_serif = set_default( default_serif_list );
+    default_fixed = set_default( default_fixed_list );
+    default_sans = set_default( default_sans_list );
 }
 
 /*************************************************************
@@ -5649,13 +5651,13 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 
     if((lf.lfPitchAndFamily & FIXED_PITCH) ||
        (lf.lfPitchAndFamily & 0xF0) == FF_MODERN)
-        strcpyW(lf.lfFaceName, defFixed);
+        strcpyW(lf.lfFaceName, default_fixed);
     else if((lf.lfPitchAndFamily & 0xF0) == FF_ROMAN)
-        strcpyW(lf.lfFaceName, defSerif);
+        strcpyW(lf.lfFaceName, default_serif);
     else if((lf.lfPitchAndFamily & 0xF0) == FF_SWISS)
-        strcpyW(lf.lfFaceName, defSans);
+        strcpyW(lf.lfFaceName, default_sans);
     else
-        strcpyW(lf.lfFaceName, defSans);
+        strcpyW(lf.lfFaceName, default_sans);
     LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         if(!strncmpiW(family->FamilyName, lf.lfFaceName, LF_FACESIZE - 1)) {
             font_link = find_font_link(family->FamilyName);
