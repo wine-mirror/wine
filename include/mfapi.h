@@ -23,6 +23,10 @@
 #include <mmreg.h>
 #include <avrt.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #if !defined(MF_VERSION)
 /* Default to Windows XP */
 #define MF_SDK_VERSION 0x0001
@@ -94,5 +98,9 @@ HRESULT WINAPI MFUnlockPlatform(void);
 HRESULT WINAPI MFTUnregister(CLSID clsid);
 HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory);
 HRESULT WINAPI MFGetPluginControl(IMFPluginControl**);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* __WINE_MFAPI_H */
