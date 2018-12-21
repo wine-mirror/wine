@@ -89,6 +89,7 @@ struct incl_file
 
 #define FLAG_GENERATED      0x000001  /* generated file */
 #define FLAG_INSTALL        0x000002  /* file to install */
+#define FLAG_PARENTDIR      0x000004  /* file comes from parent dir */
 #define FLAG_IDL_PROXY      0x000100  /* generates a proxy (_p.c) file */
 #define FLAG_IDL_CLIENT     0x000200  /* generates a client (_c.c) file */
 #define FLAG_IDL_SERVER     0x000400  /* generates a server (_s.c) file */
@@ -1351,6 +1352,7 @@ static struct file *open_local_file( const struct makefile *make, const char *pa
         path = strmake( "%s/%s", make->parent_dir, path );
         src_path = root_dir_path( base_dir_path( make, path ));
         ret = load_file( src_path );
+        if (ret) ret->flags |= FLAG_PARENTDIR;
     }
 
     if (ret) *filename = src_dir_path( make, path );
@@ -2447,6 +2449,7 @@ static void output_po_files( const struct makefile *make )
 
         LIST_FOR_EACH_ENTRY( source, &submake->sources, struct incl_file, entry )
         {
+            if (source->file->flags & FLAG_PARENTDIR) continue;
             if (strendswith( source->name, ".rc" ) && (source->file->flags & FLAG_RC_PO))
             {
                 char *pot_file = replace_extension( source->name, ".rc", ".pot" );
@@ -2567,7 +2570,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
         output_filename( source->filename );
         output( "\n" );
     }
-    if (source->file->flags & FLAG_RC_PO)
+    if (source->file->flags & FLAG_RC_PO && !(source->file->flags & FLAG_PARENTDIR))
     {
         strarray_add( &make->clean_files, strmake( "%s.pot", obj ));
         output( "%s.pot: %s\n", obj_dir_path( make, obj ), source->filename );

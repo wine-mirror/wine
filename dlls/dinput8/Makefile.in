@@ -21,4 +21,5 @@ C_SRCS = \
 IDL_SRCS = dinput8.idl
 
 RC_SRCS = \
+	dinput.rc \
 	version.rc
