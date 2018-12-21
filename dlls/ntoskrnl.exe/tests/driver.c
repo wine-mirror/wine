@@ -206,6 +206,9 @@ static void test_load_driver(void)
     ret = ZwLoadDriver(&name);
     ok(!ret, "got %#x\n", ret);
 
+    ret = ZwLoadDriver(&name);
+    ok(ret == STATUS_IMAGE_ALREADY_LOADED, "got %#x\n", ret);
+
     ret = ZwUnloadDriver(&name);
     ok(!ret, "got %#x\n", ret);
 }

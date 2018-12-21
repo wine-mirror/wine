@@ -3519,6 +3519,13 @@ NTSTATUS WINAPI ZwLoadDriver( const UNICODE_STRING *service_name )
         return STATUS_NO_MEMORY;
     }
 
+    if (wine_rb_get( &wine_drivers, &drv_name ))
+    {
+        TRACE( "driver %s already loaded\n", debugstr_us(&drv_name) );
+        RtlFreeUnicodeString( &drv_name );
+        return STATUS_IMAGE_ALREADY_LOADED;
+    }
+
     set_service_status( service_handle, SERVICE_START_PENDING, 0 );
 
     status = IoCreateDriver( &drv_name, init_driver );
