@@ -36,6 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+BOOL WINAPI GetDaylightFlag(void);
+
 static const int MonthLengths[2][12] =
 {
     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
@@ -765,7 +767,6 @@ double CDECL MSVCRT_difftime(MSVCRT___time32_t time1, MSVCRT___time32_t time2)
  */
 void CDECL MSVCRT__ftime64(struct MSVCRT___timeb64 *buf)
 {
-  TIME_ZONE_INFORMATION tzinfo;
   FILETIME ft;
   ULONGLONG time;
 
@@ -778,7 +779,7 @@ void CDECL MSVCRT__ftime64(struct MSVCRT___timeb64 *buf)
   buf->time = time / TICKSPERSEC - SECS_1601_TO_1970;
   buf->millitm = (time % TICKSPERSEC) / TICKSPERMSEC;
   buf->timezone = MSVCRT___timezone / 60;
-  buf->dstflag = GetTimeZoneInformation(&tzinfo) == TIME_ZONE_ID_DAYLIGHT;
+  buf->dstflag = GetDaylightFlag();
 }
 
 /*********************************************************************
