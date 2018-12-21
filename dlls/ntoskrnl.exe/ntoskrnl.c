@@ -3756,7 +3756,10 @@ static void handle_bus_relations( DEVICE_OBJECT *device )
     strcpyW( buffer, servicesW );
     strcatW( buffer, driver );
     RtlInitUnicodeString( &string, buffer );
-    if (ZwLoadDriver( &string ) != STATUS_SUCCESS)
+    status = ZwLoadDriver( &string );
+    if (status == STATUS_IMAGE_ALREADY_LOADED)
+        return;
+    else if (status != STATUS_SUCCESS)
     {
         ERR_(plugplay)( "Failed to load driver %s\n", debugstr_w(driver) );
         return;
