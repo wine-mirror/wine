@@ -769,17 +769,16 @@ void CDECL MSVCRT__ftime64(struct MSVCRT___timeb64 *buf)
   FILETIME ft;
   ULONGLONG time;
 
-  DWORD tzid = GetTimeZoneInformation(&tzinfo);
+  _tzset_init();
+
   GetSystemTimeAsFileTime(&ft);
 
   time = ((ULONGLONG)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
 
   buf->time = time / TICKSPERSEC - SECS_1601_TO_1970;
   buf->millitm = (time % TICKSPERSEC) / TICKSPERMSEC;
-  buf->timezone = tzinfo.Bias +
-      ( tzid == TIME_ZONE_ID_STANDARD ? tzinfo.StandardBias :
-      ( tzid == TIME_ZONE_ID_DAYLIGHT ? tzinfo.DaylightBias : 0 ));
-  buf->dstflag = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
+  buf->timezone = MSVCRT___timezone / 60;
+  buf->dstflag = GetTimeZoneInformation(&tzinfo) == TIME_ZONE_ID_DAYLIGHT;
 }
 
 /*********************************************************************
