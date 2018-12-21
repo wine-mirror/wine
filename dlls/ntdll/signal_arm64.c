@@ -611,9 +611,9 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
     return STATUS_SUCCESS;
 }
 
-static inline DWORD is_write_fault( ucontext_t *context )
+static inline DWORD is_write_fault( DWORD *pc )
 {
-    DWORD inst = *(DWORD *)PC_sig(context);
+    DWORD inst = *pc;
     if ((inst & 0xbfff0000) == 0x0c000000   /* C3.3.1 */ ||
         (inst & 0xbfe00000) == 0x0c800000   /* C3.3.2 */ ||
         (inst & 0xbfdf0000) == 0x0d000000   /* C3.3.3 */ ||
@@ -637,6 +637,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD *rec;
     ucontext_t *context = ucontext;
+    DWORD *orig_pc = PC_sig(context);
 
     /* check for page fault inside the thread stack */
     if (signal == SIGSEGV &&
@@ -664,7 +665,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     case SIGSEGV:  /* Segmentation fault */
         rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         rec->NumberParameters = 2;
-        rec->ExceptionInformation[0] = is_write_fault(context);
+        rec->ExceptionInformation[0] = is_write_fault(orig_pc);
         rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
         break;
     case SIGBUS:  /* Alignment check exception */
