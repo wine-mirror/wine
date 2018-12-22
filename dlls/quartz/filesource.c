@@ -493,7 +493,7 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
         }
         CoTaskMemFree(This->pszFileName);
         if (This->pmt)
-            FreeMediaType(This->pmt);
+            DeleteMediaType(This->pmt);
         BaseFilter_Destroy(&This->filter);
         CoTaskMemFree(This);
         return 0;
@@ -610,7 +610,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     {
         CoTaskMemFree(This->pszFileName);
         if (This->pmt)
-            FreeMediaType(This->pmt);
+            DeleteMediaType(This->pmt);
 
         This->pszFileName = CoTaskMemAlloc((strlenW(pszFileName) + 1) * sizeof(WCHAR));
         strcpyW(This->pszFileName, pszFileName);
@@ -650,7 +650,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 
         CoTaskMemFree(This->pszFileName);
         if (This->pmt)
-            FreeMediaType(This->pmt);
+            DeleteMediaType(This->pmt);
         This->pszFileName = NULL;
         This->pmt = NULL;
 
