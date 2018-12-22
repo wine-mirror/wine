@@ -5279,8 +5279,8 @@ found:
         TRACE("got %s\n", wine_dbgstr_w(nameW));
 
 end:
-    if (!pat) pFcPatternDestroy(pat);
-    if (!best) pFcPatternDestroy(best);
+    pFcPatternDestroy(pat);
+    pFcPatternDestroy(best);
     return family;
 }
 #endif
