@@ -1827,6 +1827,8 @@ static void test_reset(void)
     IDirect3DDevice9 *device2 = NULL;
     IDirect3DSwapChain9 *swapchain;
     struct device_desc device_desc;
+    IDirect3DVertexBuffer9 *vb;
+    IDirect3DIndexBuffer9 *ib;
     DEVMODEW devmode;
     IDirect3D9 *d3d;
     D3DCAPS9 caps;
@@ -2197,6 +2199,20 @@ static void test_reset(void)
     hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device1, 16, 0,
+            D3DFVF_XYZ, D3DPOOL_SYSTEMMEM, &vb, NULL);
+    ok(hr == D3D_OK, "Failed to create vertex buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
+    ok(hr == D3D_OK, "Failed to reset device, hr %#x.\n", hr);
+    IDirect3DVertexBuffer9_Release(vb);
+
+    hr = IDirect3DDevice9_CreateIndexBuffer(device1, 16, 0,
+            D3DFMT_INDEX16, D3DPOOL_SYSTEMMEM, &ib, NULL);
+    ok(hr == D3D_OK, "Failed to create index buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
+    ok(hr == D3D_OK, "Failed to reset device, hr %#x.\n", hr);
+    IDirect3DIndexBuffer9_Release(ib);
 
     /* The depth stencil should get reset to the auto depth stencil when present. */
     hr = IDirect3DDevice9_SetDepthStencilSurface(device1, NULL);
