@@ -1312,6 +1312,8 @@ static void test_reset(void)
     D3DPRESENT_PARAMETERS d3dpp;
     IDirect3DSurface8 *surface;
     IDirect3DTexture8 *texture;
+    IDirect3DVertexBuffer8 *vb;
+    IDirect3DIndexBuffer8 *ib;
     UINT adapter_mode_count;
     D3DLOCKED_RECT lockrect;
     UINT mode_count = 0;
@@ -1703,6 +1705,20 @@ static void test_reset(void)
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
     ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
     IDirect3DTexture8_Release(texture);
+
+    hr = IDirect3DDevice8_CreateVertexBuffer(device1, 16, 0,
+            D3DFVF_XYZ, D3DPOOL_SYSTEMMEM, &vb);
+    ok(hr == D3D_OK, "Failed to create vertex buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(hr == D3D_OK, "Failed to reset device, hr %#x.\n", hr);
+    IDirect3DVertexBuffer8_Release(vb);
+
+    hr = IDirect3DDevice8_CreateIndexBuffer(device1, 16, 0,
+            D3DFMT_INDEX16, D3DPOOL_SYSTEMMEM, &ib);
+    ok(hr == D3D_OK, "Failed to create index buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(hr == D3D_OK, "Failed to reset device, hr %#x.\n", hr);
+    IDirect3DIndexBuffer8_Release(ib);
 
     /* The depth stencil should get reset to the auto depth stencil when present. */
     hr = IDirect3DDevice8_SetRenderTarget(device1, NULL, NULL);
@@ -2878,7 +2894,7 @@ static void test_wndproc(void)
             && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
             devmode.dmPelsWidth, devmode.dmPelsHeight);
 
-    /* I have to minimize and restore the focus window, otherwise native d3d9 fails
+    /* I have to minimize and restore the focus window, otherwise native d3d8 fails
      * device::reset with D3DERR_DEVICELOST. This does not happen when the window
      * restore is triggered by the user. */
     expect_messages = reactivate_messages;
