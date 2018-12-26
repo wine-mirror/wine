@@ -513,7 +513,7 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
 
         cache_file_name = get_cache_file_name(TRUE);
         if(cache_file_name) {
-            MoveFileW(msi_file, cache_file_name);
+            CopyFileW(msi_file, cache_file_name, FALSE);
             heap_free(cache_file_name);
         }
     }else {
