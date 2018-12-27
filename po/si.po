@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-22 04:58+0530\n"
+"PO-Revision-Date: 2018-12-27 10:39+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
@@ -41,7 +41,7 @@ msgstr "තොරතුරු සඳහා සහාය (&S)"
 
 #: appwiz.rc:68 regedit.rc:133 regedit.rc:232
 msgid "&Modify..."
-msgstr ""
+msgstr "වෙනස් කරන්න... (&M)"
 
 #: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
 #: winecfg.rc:237 wordpad.rc:256
@@ -92,7 +92,7 @@ msgstr "තොරතුරු සඳහා සහාය:"
 
 #: appwiz.rc:84
 msgid "Support Telephone:"
-msgstr ""
+msgstr "සහාය දුරකතනය:"
 
 #: appwiz.rc:85
 msgid "Readme:"
@@ -353,7 +353,7 @@ msgstr ""
 #: progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77 taskmgr.rc:87
 #: winefile.rc:82 winemine.rc:53 winhlp32.rc:57 wordpad.rc:102
 msgid "&Help"
-msgstr ""
+msgstr "උදව් (&H)"
 
 #: comctl32.rc:103
 msgid "Move &Up"
@@ -424,7 +424,7 @@ msgstr "අදට යන්න"
 #: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:459 comdlg32.rc:484
 #: comdlg32.rc:511 shell32.rc:167 oleview.rc:101
 msgid "Open"
-msgstr ""
+msgstr "අරින්න"
 
 #: comdlg32.rc:160 comdlg32.rc:182
 msgid "File &Name:"
@@ -470,7 +470,7 @@ msgstr ""
 
 #: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:268
 msgid "&All"
-msgstr ""
+msgstr "ඔක්කොම (&A)"
 
 #: comdlg32.rc:208
 msgid "S&election"
@@ -478,7 +478,7 @@ msgstr ""
 
 #: comdlg32.rc:209
 msgid "&Pages"
-msgstr ""
+msgstr "පිටු (&P)"
 
 #: comdlg32.rc:212 comdlg32.rc:234
 msgid "&Setup"
@@ -538,11 +538,11 @@ msgstr ""
 
 #: comdlg32.rc:240 comdlg32.rc:415 comdlg32.rc:435 wineps.rc:28
 msgid "Paper"
-msgstr ""
+msgstr "කඩදාසි"
 
 #: comdlg32.rc:241
 msgid "Si&ze"
-msgstr ""
+msgstr "ප්රමාණය (&Z)"
 
 #: comdlg32.rc:242
 msgid "&Source"
@@ -562,7 +562,7 @@ msgstr ""
 
 #: comdlg32.rc:259 comdlg32.rc:436 winecfg.rc:294
 msgid "&Size:"
-msgstr ""
+msgstr "ප්රමාණය (&S):"
 
 #: comdlg32.rc:266
 msgid "Effects"
@@ -697,7 +697,7 @@ msgstr ""
 
 #: comdlg32.rc:366 comdlg32.rc:404 msacm32.rc:34 winefile.rc:138
 msgid "&Name:"
-msgstr ""
+msgstr "නම (&N):"
 
 #: comdlg32.rc:368 comdlg32.rc:406
 msgid "Status:"
@@ -705,11 +705,11 @@ msgstr ""
 
 #: comdlg32.rc:370 comdlg32.rc:408
 msgid "Type:"
-msgstr ""
+msgstr "වර්ගය:"
 
 #: comdlg32.rc:372 comdlg32.rc:410
 msgid "Where:"
-msgstr ""
+msgstr "කොහෙද:"
 
 #: comdlg32.rc:374 comdlg32.rc:412
 msgid "Comment:"
@@ -729,7 +729,7 @@ msgstr ""
 
 #: comdlg32.rc:385
 msgid "Pa&ges"
-msgstr ""
+msgstr "පිටු (&G)"
 
 #: comdlg32.rc:386
 msgid "&Selection"
@@ -1902,7 +1902,7 @@ msgstr ""
 
 #: crypt32.rc:208
 msgid "Full Name"
-msgstr ""
+msgstr "මුළු නම"
 
 #: crypt32.rc:209
 msgid "RDN Name"
@@ -9635,11 +9635,11 @@ msgstr ""
 
 #: urlmon.rc:35
 msgid "Do you want to install this software?"
-msgstr ""
+msgstr "මේ මෘදුකාංගය ඔබට ස්ථාපනය කරන්න ඕනෙද?"
 
 #: urlmon.rc:39
 msgid "Don't install"
-msgstr ""
+msgstr "ස්ථාපනය කරන්න එපා"
 
 #: urlmon.rc:43
 msgid ""
@@ -9653,11 +9653,11 @@ msgstr ""
 
 #: urlmon.rc:52
 msgid "Install (%d)"
-msgstr ""
+msgstr "ස්ථාපනය කරන්න (%d)"
 
 #: urlmon.rc:53
 msgid "Install"
-msgstr ""
+msgstr "ස්ථාපනය කරන්න"
 
 #: user32.rc:30 user32.rc:43 taskmgr.rc:138
 msgctxt "window"
@@ -9690,7 +9690,7 @@ msgstr ""
 
 #: user32.rc:49
 msgid "&Close\tCtrl+F4"
-msgstr ""
+msgstr "වහන්න (&C)\tCtrl+F4"
 
 #: user32.rc:51
 msgid "Nex&t\tCtrl+F6"
@@ -10669,7 +10669,7 @@ msgstr ""
 
 #: clock.rc:40
 msgid "&Date"
-msgstr ""
+msgstr "දිනය (&D)"
 
 #: clock.rc:42 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
@@ -10681,7 +10681,7 @@ msgstr ""
 
 #: clock.rc:51
 msgid "Clock"
-msgstr ""
+msgstr "ඔරලෝසුව"
 
 #: cmd.rc:40
 msgid ""
@@ -11122,7 +11122,7 @@ msgstr ""
 
 #: cmd.rc:371
 msgid "More..."
-msgstr ""
+msgstr "තව..."
 
 #: cmd.rc:372
 msgid "Line in Batch processing possibly truncated. Using:\n"
@@ -12640,7 +12640,7 @@ msgstr ""
 
 #: regedit.rc:294 regedit.rc:305
 msgid "Name:"
-msgstr ""
+msgstr "නම:"
 
 #: regedit.rc:302
 msgid "Remove Favorite"
@@ -14065,7 +14065,7 @@ msgstr ""
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr ""
+msgstr "Wine වින්යාසය %s ඇතුලේ යාවත්කාලීන වේ, බලා සිටින්න..."
 
 #: winecfg.rc:141
 msgid ""
@@ -14467,7 +14467,7 @@ msgstr ""
 
 #: winecfg.rc:72
 msgid "Floppy disk"
-msgstr ""
+msgstr "Floppy තැටිය"
 
 #: winecfg.rc:73
 msgid "CD-ROM"
@@ -14638,7 +14638,7 @@ msgstr ""
 
 #: wineconsole.rc:64
 msgid "&Small"
-msgstr ""
+msgstr "පොඩි (&S)"
 
 #: wineconsole.rc:65
 msgid "&Medium"
@@ -14646,7 +14646,7 @@ msgstr ""
 
 #: wineconsole.rc:66
 msgid "&Large"
-msgstr ""
+msgstr "ලොකු (&L)"
 
 #: wineconsole.rc:68
 msgid "Command history"
@@ -14690,7 +14690,7 @@ msgstr ""
 
 #: wineconsole.rc:90
 msgid "&Color"
-msgstr ""
+msgstr "පාට (&C)"
 
 #: wineconsole.rc:101
 msgid "Configuration"
@@ -14702,11 +14702,11 @@ msgstr ""
 
 #: wineconsole.rc:105
 msgid "&Width:"
-msgstr ""
+msgstr "පළල (&W):"
 
 #: wineconsole.rc:108
 msgid "&Height:"
-msgstr ""
+msgstr "උස (&H):"
 
 #: wineconsole.rc:112
 msgid "Window size"
@@ -14714,11 +14714,11 @@ msgstr ""
 
 #: wineconsole.rc:113
 msgid "W&idth:"
-msgstr ""
+msgstr "පළල (&I):"
 
 #: wineconsole.rc:116
 msgid "H&eight:"
-msgstr ""
+msgstr "උස (&E):"
 
 #: wineconsole.rc:120
 msgid "End of program"
@@ -14861,7 +14861,7 @@ msgstr ""
 
 #: winedbg.rc:62
 msgid "Show &Details"
-msgstr ""
+msgstr "විස්තර පෙන්නන්න (&D)"
 
 #: winedbg.rc:67
 msgid "Program Error Details"
@@ -14923,7 +14923,7 @@ msgstr ""
 
 #: winefile.rc:51
 msgid "&Name"
-msgstr ""
+msgstr "නම (&N)"
 
 #: winefile.rc:52
 msgid "&All File Details"
@@ -15064,15 +15064,15 @@ msgstr ""
 
 #: winefile.rc:109
 msgid "Creation date"
-msgstr ""
+msgstr "හදපු දිනය"
 
 #: winefile.rc:110
 msgid "Access date"
-msgstr ""
+msgstr "පිවිසුම් දිනය"
 
 #: winefile.rc:111
 msgid "Modification date"
-msgstr ""
+msgstr "වෙනස් කරපු දිනය"
 
 #: winefile.rc:112
 msgid "Index/Inode"
@@ -15088,7 +15088,7 @@ msgstr ""
 
 #: winemine.rc:40
 msgid "&New\tF2"
-msgstr ""
+msgstr "අලුත් (&N)\tF2"
 
 #: winemine.rc:42
 msgid "Question &Marks"
@@ -15208,15 +15208,15 @@ msgstr ""
 
 #: winhlp32.rc:52 winhlp32.rc:72
 msgid "Small"
-msgstr ""
+msgstr "පොඩි"
 
 #: winhlp32.rc:53 winhlp32.rc:73
 msgid "Normal"
-msgstr ""
+msgstr "සාමාන"
 
 #: winhlp32.rc:54 winhlp32.rc:74
 msgid "Large"
-msgstr ""
+msgstr "ලොකු"
 
 #: winhlp32.rc:58
 msgid "&Help on help\tF1"
@@ -15292,7 +15292,7 @@ msgstr ""
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
-msgstr ""
+msgstr "අලුත්... (&N)\tCtrl+N"
 
 #: wordpad.rc:45
 msgid "R&edo\tCtrl+Y"
@@ -15372,7 +15372,7 @@ msgstr ""
 
 #: wordpad.rc:88
 msgid "Numbers"
-msgstr ""
+msgstr "නොම්බර"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
@@ -15440,11 +15440,11 @@ msgstr ""
 
 #: wordpad.rc:236 wordpad.rc:159
 msgid "Left"
-msgstr ""
+msgstr "වම් පැත්ත"
 
 #: wordpad.rc:238 wordpad.rc:160
 msgid "Right"
-msgstr ""
+msgstr "දකුණු පැත්ත"
 
 #: wordpad.rc:240
 msgid "First line"
@@ -15503,7 +15503,7 @@ msgstr ""
 #: wordpad.rc:286
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:293
 msgctxt "accelerator Redo"
@@ -15571,19 +15571,19 @@ msgstr ""
 
 #: wordpad.rc:174
 msgid "Next page"
-msgstr ""
+msgstr "ඊළඟ පිටුව"
 
 #: wordpad.rc:175
 msgid "Previous page"
-msgstr ""
+msgstr "කලින් පිටුව"
 
 #: wordpad.rc:176
 msgid "Two pages"
-msgstr ""
+msgstr "පිටු දෙකක්"
 
 #: wordpad.rc:177
 msgid "One page"
-msgstr ""
+msgstr "එක පිටුවක්"
 
 #: wordpad.rc:178
 msgid "Zoom in"
@@ -15595,11 +15595,11 @@ msgstr ""
 
 #: wordpad.rc:181
 msgid "Page"
-msgstr ""
+msgstr "පිටුව"
 
 #: wordpad.rc:182
 msgid "Pages"
-msgstr ""
+msgstr "පිටු"
 
 #: wordpad.rc:183
 msgctxt "unit: centimeter"
