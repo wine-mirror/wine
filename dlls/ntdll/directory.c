@@ -2650,9 +2650,8 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         {
             if (!stat( unix_name, &st ))
             {
-                /* creation fails with STATUS_ACCESS_DENIED for the root of the drive */
                 if (disposition == FILE_CREATE)
-                    return name_len ? STATUS_OBJECT_NAME_COLLISION : STATUS_ACCESS_DENIED;
+                    return STATUS_OBJECT_NAME_COLLISION;
                 return STATUS_SUCCESS;
             }
         }

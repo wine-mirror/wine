@@ -541,9 +541,52 @@ static void test_SetCurrentDirectoryA(void)
     ok( GetLastError() == ERROR_PATH_NOT_FOUND, "wrong error %d\n", GetLastError() );
 }
 
+static void test_CreateDirectory_root(void)
+{
+    static const WCHAR drive_c_root[] = { 'C',':','\\',0 };
+    static const WCHAR drive_c[] = { 'C',':',0 };
+    char curdir[MAX_PATH];
+    BOOL ret;
+
+    GetCurrentDirectoryA(sizeof(curdir), curdir);
+
+    ret = SetCurrentDirectoryA("C:\\");
+    ok(ret, "SetCurrentDirectory error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateDirectoryA("C:\\", NULL);
+    ok(!ret, "CreateDirectory should fail\n");
+    if (GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        win_skip("not an administrator\n");
+        SetCurrentDirectoryA(curdir);
+        return;
+    }
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateDirectoryA("C:", NULL);
+    ok(!ret, "CreateDirectory should fail\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateDirectoryW(drive_c_root, NULL);
+    ok(!ret, "CreateDirectory should fail\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateDirectoryW(drive_c, NULL);
+    ok(!ret, "CreateDirectory should fail\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got %u\n", GetLastError());
+
+    SetCurrentDirectoryA(curdir);
+}
+
 START_TEST(directory)
 {
     init();
+
+    test_CreateDirectory_root();
 
     test_GetWindowsDirectoryA();
     test_GetWindowsDirectoryW();
