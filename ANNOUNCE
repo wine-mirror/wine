@@ -1,12 +1,12 @@
-The Wine development release 4.0-rc3 is now available.
+The Wine development release 4.0-rc4 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/4.0/wine-4.0-rc3.tar.xz
-  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0-rc3.tar.xz
+  https://dl.winehq.org/wine/source/4.0/wine-4.0-rc4.tar.xz
+  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0-rc4.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,146 +22,65 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 4.0-rc3 (total 27):
+Bugs fixed in 4.0-rc4 (total 10):
 
-  26042  advapi32/crypt tests show two leaks under valgrind
-  26070  user32/class tests show some valgrind warnings
-  28766  DIB engine multiple invalid memory accesses
-  29975  Ankh: fails to start with DirectDrawRenderer=opengl
-  33769  Strong Bad's Cool Game for Attractive People Demo crashes without native d3dcompiler_43
-  36095  valgrind errors in loader when loading a dll
-  36162  valgrind shows several leaks in programs/cmd/tests/batch.c
-  36283  valgrind shows an invalid read in imm32/tests/imm32.c
-  36290  valgrind shows a leak in mscms/tests/profile.c
-  36316  valgrind shows a possible leak in quartz/tests/avisplitter.c
-  36328  valgrind shows a leak in rsaenh/tests/rsaenh.c
-  36354  valgrind shows a leak in ddraw/tests/dsurface.c
-  36356  valgrind shows a possible leak in dinput/tests/device.c
-  36655  valgrind shows an unitialized variable in mountmgr.sys/device.c (d3d9/tests/d3d9ex.c)
-  38324  Dead or Alive 5 Last Round and Ridge Racer Unbounded models/geometry problems
-  39279  valgrind shows uninitialized memory in winmm/tests/mcicda.c
-  42546  DSOUND_PrimaryOpen() incorrect set buf size
-  43354  valgrind shows a crash in dlls/wbemprox/tests/query.c (fill_ip4routetable)
-  44410  Multiple setups use wrong char widths in path edit box (UltraISO, some GOG installers)
-  44443  jet40 crashes with wine-2.6 & wine-3.0 and not before
-  45279  Multiple applications crash due to usage of OpenGL core context (Final Fantasy XI, Undertale, ...)
-  45398  mpc-hc crash on startup.
-  46215  File Open Dialog fails to set focus to Filename text box
-  46285  Demo scene fr-041 debris: cut off and broken text
-  46293  winegcc: stdlib.h and math.h not found when including C++'s <cstdlib> or <cmath>
-  46308  SofTalk 1.56: Incorrect icon/text rendering
-  46323  Rally Trophy: Controller configuration cannot be opened
+  35603  Wine64 build produces extra warning in setupapi comparing to Wine32 build
+  40884  Lord of the Rings Online crashes instantly or hangs on start with OSSv4.
+  42719  Natsuiro Asagao Residence (demo): complains about timezone settings.
+  45805  IoCreateDriver failed to insert driver L"\\Driver\\WineHID" in tree
+  46194  Windows PowerShell Core 6.2 Preview 2 for ARM64 crashes due to decoding of instruction from incorrect PC (write watch access causes SIGSEGV)
+  46244  incorrect font rendering in WinOmega splash screen
+  46296  Wine 4.0-rc1 does not compile with fontconfig 2.6.0 or 2.8.0
+  46329  world of tanks hangs in hangar with winsock error
+  46362  Natsuiro Asagao Residence (demo) fails to start
+  46364  Gecko and Mono packages doesn't save in the target folder
 
 ----------------------------------------------------------------
 
-Changes since 4.0-rc2:
+Changes since 4.0-rc3:
 
-Akihiro Sagawa (2):
-      po: Update Japanese translation.
-      kernel32: Use Rtl function when the time zone name is useless.
+Alexander Coffin (1):
+      cmd/tests: Add some tests for "choice".
 
-Alex Henrie (3):
-      po: Update Catalan translation.
-      psapi/tests: Increase GetPerformanceInfo HandleCount error margin.
-      ieframe: Turn several variables into static constants.
+Alexandre Julliard (4):
+      include: Add more language codes.
+      wrc: Support more languages.
+      wmc: Support more languages.
+      user32: Clear %edi register when calling window procedure.
 
-Alexandre Julliard (3):
-      server: Reset hardware breakpoint sizes before setting them.
-      oleaut32: Fix rendering of monochrome icons.
-      makefiles: Add support for sharing resource files with parent dll.
+André Hentschel (2):
+      shlwapi: Remove dead code (coverity).
+      ntdll: Use correct PC for instruction decoding on ARM64.
 
-Alistair Leslie-Hughes (4):
-      include: Add GetFilePatchSignature definition.
-      include: Correct IBrowserService.IEGetDisplayName definition.
-      user32: Don't reset focus if current dialog is a child.
-      include: Wrap exported function in extern C.
+Dmitry Timoshkov (1):
+      kernel32: CreateDirectory shouldn't return ERROR_ACCESS_DENIED for the root of the drive.
 
-Andre Heider (1):
-      winegcc: Don't add the prefix's include dir using -isystem.
+Isira Seneviratne (2):
+      po: Add Sinhala translation.
+      po: Update Sinhala translation.
 
-Andrey Gusev (1):
-      windowscodecs: Remove redundant comparison.
+Józef Kucia (3):
+      d3d9: Fix Reset() with system memory buffers.
+      d3d8: Fix Reset() with system memory buffers.
+      wined3d: Handle unmappable buffers in wined3d_device_process_vertices() gracefully.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+Mingcong Bai (1):
+      po: Update Simplified Chinese translation.
 
-Byeong-Sik Jeon (1):
-      po: Update Korean translation.
+Nikolay Sivov (1):
+      gdi32: Fix fontconfig objects leak (Valgrind).
 
-Daniel Lehman (1):
-      gdi32: Fix memory leak (Valgrind).
+Sebastian Lackner (2):
+      urlmon/tests: Add test for opening cache file with DELETE access.
+      appwiz.cpl: Copy addons to cache instead of moving.
 
-Dmitry Timoshkov (4):
-      include: Add compatibility macros for Visual Studio 10.0.
-      comctl32/tests: Add a test for passing dialog template with bad control class to PropertySheet.
-      comctl32: Don't ignore page creation error for a non-modal propery sheet.
-      comdlg32: When FOS_PICKFOLDERS is specified item selection box should contain full path name.
+Sven Baars (2):
+      wsdapi/tests: Fix a memory leak (Valgrind).
+      quartz: Fix some memory leaks (Valgrind).
 
-Eberhard Beilharz (1):
-      Add .editorconfig file.
-
-François Gouget (1):
-      wined3d: Make wined3d_adapter_init_format_info() static.
-
-Hans Leidekker (2):
-      bcrypt: Clear magic bytes on destroy.
-      winhttp: Fix handling of WINHTTP_OPTION_SECURITY_FLAGS.
-
-Henri Verbeet (1):
-      d3d9: Support drawing from D3DPOOL_SYSTEMMEM vertex buffers.
-
-Huw D. M. Davies (2):
-      gdi32: Fix building with versions of fontconfig < 2.11.0.
-      gdi32: Try to update the default families with fonts that exist.
-
-Matteo Bruni (4):
-      d3d9: Support drawing from D3DPOOL_SYSTEMMEM index buffers.
-      d3d8: Support drawing from D3DPOOL_SYSTEMMEM vertex buffers.
-      d3d8: Support drawing from D3DPOOL_SYSTEMMEM index buffers.
-      ddraw: Support drawing from D3DVBCAPS_SYSTEMMEMORY vertex buffers.
-
-Michael Stefaniuc (1):
-      dmstyle/tests: Relax a test for a pristine DMStyle object.
-
-Nikolay Sivov (7):
-      msxml3: Fix uri object leak on error path (Valgrind).
-      oledb32/tests: Fix string leaks (Valgrind).
-      dwrite/tests: Fix another factory leak (Valgrind).
-      combase/tests: Fix a string leak (Valgrind).
-      shell32/tests: Fix some leaks (Valgrind).
-      urlmon/tests: Fix some leaks (Valgrind).
-      urlmon/tests: Release correct uri object (Coverity).
-
-Paul Gofman (4):
-      d3d9: Fix crash in d3d9_vertexbuffer_Release().
-      d3d9: Fix crash in d3d9_indexbuffer_Release().
-      d3d8: Fix crash in d3d8_vertexbuffer_Release().
-      d3d8: Fix crash in d3d8_indexbuffer_Release().
-
-Piotr Caban (2):
-      msvcrt: Use _timezone in _ftime64.
-      msvcrt: Use GetDaylightFlag() to set dstflag value in _ftime64.
-
-Serge Gautherie (2):
-      d3dcompiler: Fix dxbc_init() function prototype.
-      jscript: Fix a MSVC-x64 warning about to_uint32().
-
-Sven Baars (5):
-      dsound: Fix a memory leak (Valgrind).
-      windowscodecs: Fix a memory leak (Valgrind).
-      windowscodecs/tests: Fix a memory leak (Valgrind).
-      gdiplus: Fix a memory leak (Valgrind).
-      propsys/tests: Fix a memory leak (Valgrind).
-
-Zebediah Figura (4):
-      devenum/tests: Fix some more memory leaks (Valgrind).
-      dinput: Move the version resource to a separate file.
-      dinput8: Include common resources from dinput.
-      dinput: Use the global module instance handle to load resources.
-
-Zhiyi Zhang (2):
-      setupapi/tests: Fix return value checking.
-      vulkan-1/tests: Add tests for vkGetPhysicalDeviceProperties2.
+Zebediah Figura (2):
+      ntoskrnl.exe: Avoid loading a driver multiple times in ZwLoadDriver().
+      ntoskrnl.exe: Handle already-loaded drivers in handle_bus_relations().
 
 --
 Alexandre Julliard
