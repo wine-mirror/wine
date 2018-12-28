@@ -191,6 +191,8 @@ __ASM_GLOBAL_FUNC( WINPROC_wrapper,
                    __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
                    "pushl %ebx\n\t"
                    __ASM_CFI(".cfi_rel_offset %ebx,-12\n\t")
+                   /* TreePad X Enterprise assumes that edi is < 0x80000000 in WM_TIMER messages */
+                   "xorl %edi,%edi\n\t"
                    "subl $12,%esp\n\t"
                    "pushl 24(%ebp)\n\t"
                    "pushl 20(%ebp)\n\t"
