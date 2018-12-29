@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
 "PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"Last-Translator: Denil C Verghese\n"
 "Language-Team: Malayalam\n"
 "Language: ml\n"
 "MIME-Version: 1.0\n"
@@ -15,17 +15,19 @@ msgstr ""
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
-msgstr ""
+msgstr "ഇൻസ്റ്റാൾ/അൺഇൻസ്റ്റാൾ"
 
 #: appwiz.rc:61
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
+"ഫ്ലോപ്പി ഡിസ്ക്, സിഡി-റോം ഡ്രൈവ്, അല്ലെങ്കിൽ നിങ്ങളുടെ ഹാർഡ് ഡ്രൈവ് എന്നിവയിൽ നിന്നും ഒരു "
+"പുതിയ പ്രോഗ്രാം ഇൻസ്റ്റാൾ ചെയ്യാൻ ഇൻസ്റ്റാൾ ചെയ്യുക ക്ലിക്കുചെയ്യുക."
 
 #: appwiz.rc:62
 msgid "&Install..."
-msgstr ""
+msgstr "ഇൻസ്റ്റാൾ (&I)"
 
 #: appwiz.rc:65
 msgid ""
@@ -33,24 +35,26 @@ msgid ""
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
+"ഇനിപ്പറയുന്ന സോഫ്റ്റ്വെയർ സ്വപ്രേരിതമായി നീക്കംചെയ്യാം. ഒരു പ്രോഗ്രാം നീക്കംചെയ്യാനോ അതിന്റെ "
+"ഇൻസ്റ്റാൾ ചെയ്ത ഭാഗങ്ങൾ പരിഷ്ക്കരിക്കുന്നതിന് ലിസ്റ്റിൽ നിന്ന് അത് തിരഞ്ഞെടുത്ത് പരിഷ്ക്കരിക്കുക/"
+"നീക്കം ചെയ്യുക ക്ലിക്കുചെയ്യുക."
 
 #: appwiz.rc:67
-#, fuzzy
 msgid "&Support Information"
-msgstr "_അക്ഷരസഞ്ചയം..."
+msgstr "പിന്തുണ വിവരം (&S)"
 
 #: appwiz.rc:68 regedit.rc:133 regedit.rc:232
 msgid "&Modify..."
-msgstr ""
+msgstr "പരിഷ്ക്കരിക്കുക... (&M)"
 
 #: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
 #: winecfg.rc:237 wordpad.rc:256
 msgid "&Remove"
-msgstr ""
+msgstr "നീക്കംചെയ്യുക (&R)"
 
 #: appwiz.rc:75
 msgid "Support Information"
-msgstr ""
+msgstr "പിന്തുണ വിവരം"
 
 #: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
 #: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:359 comdlg32.rc:398
@@ -68,44 +72,43 @@ msgstr ""
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
-msgstr ""
+msgstr "ശരി"
 
 #: appwiz.rc:79
 msgid "The following information can be used to get technical support for %s:"
-msgstr ""
+msgstr "%s നുള്ള സാങ്കേതിക പിന്തുണ ലഭിക്കാൻ താഴെ പറയുന്ന വിവരങ്ങൾ ഉപയോഗിക്കാം:"
 
 #: appwiz.rc:80
 msgid "Publisher:"
-msgstr ""
+msgstr "പ്രസാധകൻ:"
 
 #: appwiz.rc:81 winefile.rc:166
 msgid "Version:"
-msgstr ""
+msgstr "പതിപ്പ്:"
 
 #: appwiz.rc:82
 msgid "Contact:"
-msgstr ""
+msgstr "ബന്ധപ്പെടുക:"
 
 #: appwiz.rc:83
-#, fuzzy
 msgid "Support Information:"
-msgstr "_അക്ഷരസഞ്ചയം..."
+msgstr "പിന്തുണ വിവരം:"
 
 #: appwiz.rc:84
 msgid "Support Telephone:"
-msgstr ""
+msgstr "ടെലിഫോൺ പിന്തുണ:"
 
 #: appwiz.rc:85
 msgid "Readme:"
-msgstr ""
+msgstr "എന്നെ വായിക്കൂ:"
 
 #: appwiz.rc:86
 msgid "Product Updates:"
-msgstr ""
+msgstr "ഉൽപ്പന്ന അപ്ഡേറ്റുകൾ:"
 
 #: appwiz.rc:87
 msgid "Comments:"
-msgstr ""
+msgstr "അഭിപ്രായങ്ങൾ:"
 
 #: appwiz.rc:100
 msgid "Wine Gecko Installer"
@@ -124,7 +127,7 @@ msgstr ""
 
 #: appwiz.rc:109 appwiz.rc:124
 msgid "&Install"
-msgstr ""
+msgstr "ഇൻസ്റ്റാൾ (&I)"
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
 #: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
@@ -164,17 +167,19 @@ msgstr ""
 
 #: appwiz.rc:31
 msgid "Add/Remove Programs"
-msgstr ""
+msgstr "പ്രോഗ്രാമുകൾ ചേർക്കുക/നീക്കംചെയ്യുക"
 
 #: appwiz.rc:32
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
+"പുതിയ സോഫ്റ്റ്വെയർ ഇൻസ്റ്റാൾ ചെയ്യാൻ അല്ലെങ്കിൽ, നിങ്ങളുടെ കമ്പ്യൂട്ടറിൽ നിന്നും നിലവിലുള്ള "
+"സോഫ്റ്റ്വെയർ നീക്കംചെയ്യാൻ നിങ്ങളെ അനുവദിക്കുന്നു."
 
 #: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
 msgid "Applications"
-msgstr ""
+msgstr "അപ്ലിക്കേഷനുകൾ"
 
 #: appwiz.rc:35
 msgid ""
@@ -184,44 +189,44 @@ msgstr ""
 
 #: appwiz.rc:36
 msgid "Not specified"
-msgstr ""
+msgstr "വ്യക്തമാക്കിയിട്ടില്ല"
 
 #: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
 msgid "Name"
-msgstr ""
+msgstr "പേര്"
 
 #: appwiz.rc:39
 msgid "Publisher"
-msgstr ""
+msgstr "പ്രസാധകൻ"
 
 #: appwiz.rc:40 cryptui.rc:54
 msgid "Version"
-msgstr ""
+msgstr "പതിപ്പ്"
 
 #: appwiz.rc:41
 msgid "Installation programs"
-msgstr ""
+msgstr "ഇൻസ്റ്റലേഷൻ പ്രോഗ്രാമുകൾ"
 
 #: appwiz.rc:42
 msgid "Programs (*.exe)"
-msgstr ""
+msgstr "പ്രോഗ്രാമുകൾ (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
 #: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
-msgstr ""
+msgstr "എല്ലാ ഫയലുകളും (*.*)"
 
 #: appwiz.rc:46
 msgid "&Modify/Remove"
-msgstr ""
+msgstr "പരിഷ്ക്കരിക്കുക/നീക്കംചെയ്യുക (&M)"
 
 #: appwiz.rc:51
 msgid "Downloading..."
-msgstr ""
+msgstr "ഡൗൺലോഡുചെയ്യുന്നു..."
 
 #: appwiz.rc:52
 msgid "Installing..."
-msgstr ""
+msgstr "ഇൻസ്റ്റാൾ ചെയ്യുന്നു..."
 
 #: appwiz.rc:53
 msgid ""
@@ -239,7 +244,7 @@ msgstr ""
 
 #: avifil32.rc:48 wordpad.rc:76
 msgid "&Options..."
-msgstr ""
+msgstr "ഓപ്ഷനുകൾ... (&O)"
 
 #: avifil32.rc:49
 msgid "&Interleave every"
@@ -247,32 +252,31 @@ msgstr ""
 
 #: avifil32.rc:51 msvfw32.rc:51
 msgid "frames"
-msgstr ""
+msgstr "ഫ്രെയിമുകൾ"
 
 #: avifil32.rc:52
-#, fuzzy
 msgid "Current format:"
-msgstr "_അക്ഷരസഞ്ചയം..."
+msgstr "നിലവിലെ ഫോർമാറ്റ്:"
 
 #: avifil32.rc:30
 msgid "Waveform: %s"
-msgstr ""
+msgstr "തരംഗരൂപം: %s"
 
 #: avifil32.rc:31
 msgid "Waveform"
-msgstr ""
+msgstr "തരംഗരൂപം"
 
 #: avifil32.rc:32
 msgid "All multimedia files"
-msgstr ""
+msgstr "എല്ലാ മൾട്ടിമീഡിയ ഫയലുകളും"
 
 #: avifil32.rc:34
 msgid "video"
-msgstr ""
+msgstr "വീഡിയോ"
 
 #: avifil32.rc:35
 msgid "audio"
-msgstr ""
+msgstr "ഓഡിയോ"
 
 #: avifil32.rc:36
 msgid "Wine AVI-default-filehandler"
@@ -284,29 +288,27 @@ msgstr ""
 
 #: browseui.rc:28
 msgid "Canceling..."
-msgstr ""
+msgstr "റദ്ദാക്കുന്നു..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "%1!u! %2 ശേഷിക്കുന്നു"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "%1!u! %2 and %3!u! %4 ശേഷിക്കുന്നു"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "_സെക്കന്‍ഡുകള്‍"
+msgstr "സെക്കന്‍ഡുകള്‍"
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "മിനിറ്റുകൾ"
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "മണിക്കൂറുകൾ"
 
 #: comctl32.rc:68 winefile.rc:157
 #, fuzzy
@@ -315,11 +317,11 @@ msgstr "വി_വരം"
 
 #: comctl32.rc:73 comdlg32.rc:264
 msgid "&Apply"
-msgstr ""
+msgstr "പ്രയോഗിക്കുക (&A)"
 
 #: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
 msgid "Help"
-msgstr ""
+msgstr "സഹായം"
 
 #: comctl32.rc:81
 msgid "Wizard"
@@ -327,7 +329,7 @@ msgstr ""
 
 #: comctl32.rc:84
 msgid "< &Back"
-msgstr ""
+msgstr "< തിരികെ (&B)"
 
 #: comctl32.rc:85
 msgid "&Next >"
@@ -335,11 +337,11 @@ msgstr ""
 
 #: comctl32.rc:86
 msgid "Finish"
-msgstr ""
+msgstr "പൂർത്തിയാക്കുക"
 
 #: comctl32.rc:97
 msgid "Customize Toolbar"
-msgstr ""
+msgstr "ഉപകരണബാർ ഇഷ്ടാനുസൃതമാക്കുക"
 
 #: comctl32.rc:100 comctl32.rc:57 cryptui.rc:356 ieframe.rc:43 oleview.rc:83
 #: oleview.rc:187 oleview.rc:200 oleview.rc:212 taskmgr.rc:139
@@ -407,16 +409,16 @@ msgstr ""
 
 #: comctl32.rc:62
 msgid "Hide details"
-msgstr ""
+msgstr "വിശദാംശങ്ങൾ മറയ്ക്കുക"
 
 #: comctl32.rc:63
 msgid "See details"
-msgstr ""
+msgstr "വിശദാംശങ്ങൾ കാണുക"
 
 #: comctl32.rc:31 cryptui.rc:235 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
-msgstr ""
+msgstr "അടയ്ക്കുക"
 
 #: comctl32.rc:36
 msgid "Today:"
