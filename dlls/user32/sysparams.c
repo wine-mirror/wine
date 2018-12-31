@@ -1463,7 +1463,7 @@ void SYSPARAMS_Init(void)
     if (!dpi_scaling)
     {
         default_awareness = DPI_AWARENESS_PER_MONITOR_AWARE;
-        if (dpi_awareness) dpi_awareness = 0x10 | default_awareness;
+        dpi_awareness = 0x10 | default_awareness;
     }
 
     if (volatile_base_key && dispos == REG_CREATED_NEW_KEY)  /* first process, initialize entries */
