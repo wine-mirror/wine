@@ -3236,8 +3236,8 @@ static void texbem_test(void)
             0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
             0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
         };
+#undef tex
 #undef tex1
-#undef tex2
 #undef origin
 
         hr = IDirect3DTexture9_LockRect(texture2, 0, &locked_rect, NULL, 0);
