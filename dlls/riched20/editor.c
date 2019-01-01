@@ -3183,13 +3183,13 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 
 void ME_DestroyEditor(ME_TextEditor *editor)
 {
-  ME_DisplayItem *pFirst = editor->pBuffer->pFirst;
-  ME_DisplayItem *p = pFirst, *pNext = NULL;
+  ME_DisplayItem *p = editor->pBuffer->pFirst, *pNext = NULL;
   ME_Style *s, *cursor2;
   int i;
 
   ME_ClearTempStyle(editor);
   ME_EmptyUndoStack(editor);
+  editor->pBuffer->pFirst = NULL;
   while(p) {
     pNext = p->next;
     if (p->type == diParagraph)
