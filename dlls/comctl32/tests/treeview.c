@@ -2809,7 +2809,7 @@ static void test_right_click(void)
     HTREEITEM selected;
     RECT rc;
     LRESULT result;
-    POINT pt;
+    POINT pt, orig_pos;
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
@@ -2828,6 +2828,8 @@ static void test_right_click(void)
     pt.x = (rc.left + rc.right) / 2;
     pt.y = (rc.top + rc.bottom) / 2;
     ClientToScreen(hMainWnd, &pt);
+    GetCursorPos(&orig_pos);
+    SetCursorPos(pt.x, pt.y);
 
     flush_events();
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -2843,6 +2845,7 @@ static void test_right_click(void)
     selected = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_CARET, 0);
     ok(selected == hChild, "child item should still be selected\n");
 
+    SetCursorPos(orig_pos.x, orig_pos.y);
     DestroyWindow(hTree);
 }
 
