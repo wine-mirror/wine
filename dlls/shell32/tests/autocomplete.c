@@ -799,6 +799,8 @@ START_TEST(autocomplete)
     HRESULT r;
     MSG msg;
     IAutoComplete* ac;
+    RECT win_rect;
+    POINT orig_pos;
 
     r = CoInitialize(NULL);
     ok(r == S_OK, "CoInitialize failed (0x%08x). Tests aborted.\n", r);
@@ -808,6 +810,11 @@ START_TEST(autocomplete)
     createMainWnd();
     ok(hMainWnd != NULL, "Failed to create parent window. Tests aborted.\n");
     if (!hMainWnd) return;
+
+    /* Move the cursor away from the dropdown listbox */
+    GetWindowRect(hMainWnd, &win_rect);
+    GetCursorPos(&orig_pos);
+    SetCursorPos(win_rect.left, win_rect.top);
 
     test_invalid_init();
     ac = test_init();
@@ -826,6 +833,7 @@ START_TEST(autocomplete)
     IAutoComplete_Release(ac);
 
 cleanup:
+    SetCursorPos(orig_pos.x, orig_pos.y);
     DestroyWindow(hEdit);
     DestroyWindow(hMainWnd);
 
