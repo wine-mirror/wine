@@ -1,12 +1,12 @@
-The Wine development release 4.0-rc4 is now available.
+The Wine development release 4.0-rc5 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/4.0/wine-4.0-rc4.tar.xz
-  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0-rc4.tar.xz
+  https://dl.winehq.org/wine/source/4.0/wine-4.0-rc5.tar.xz
+  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0-rc5.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,65 +22,62 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 4.0-rc4 (total 10):
+Bugs fixed in 4.0-rc5 (total 14):
 
-  35603  Wine64 build produces extra warning in setupapi comparing to Wine32 build
-  40884  Lord of the Rings Online crashes instantly or hangs on start with OSSv4.
-  42719  Natsuiro Asagao Residence (demo): complains about timezone settings.
-  45805  IoCreateDriver failed to insert driver L"\\Driver\\WineHID" in tree
-  46194  Windows PowerShell Core 6.2 Preview 2 for ARM64 crashes due to decoding of instruction from incorrect PC (write watch access causes SIGSEGV)
-  46244  incorrect font rendering in WinOmega splash screen
-  46296  Wine 4.0-rc1 does not compile with fontconfig 2.6.0 or 2.8.0
-  46329  world of tanks hangs in hangar with winsock error
-  46362  Natsuiro Asagao Residence (demo) fails to start
-  46364  Gecko and Mono packages doesn't save in the target folder
+  32218  LTSpice: Objects not resized when the window is resized
+  32221  LTspice: component drawing issues when moving
+  33719  comctl32:propsheet custom window proc test failure
+  34334  MetaTester 5 never sends or receives data
+  38721  Resident Evil 5 Gold Edition (Steam) fails to run
+  39959  Growtopia v2.20->v2.14 fails (was v2.11 fails) to  run with unhandled exception on x86-64 (2.09 & 2.13 did run ok)
+  44485  Delphi 7 debugger generates new exceptions by itself
+  45719  comctl32:treeview test_right_click depends on mouse pointer position
+  45917  battle.net launcher and mouse position on high DPI monitor
+  45984  Skyrim Special Edition does not get past loading screen on high core count or high memory systems
+  46266  tzres is constantly being loaded/unloaded when TimeZone information is queried.
+  46328  Installer for Tanglet 1.5.3 crashes at target directory selection
+  46352  TreePad X Enterprise 12GB (single user) v7.17.0: Generates Error on Startup
+  46353  TreePad X Enterprise 12GB (single user) v7.17.0: Horizontal Ruler/Scale Is Different on Startup and Margins Are Different on Open Database
 
 ----------------------------------------------------------------
 
-Changes since 4.0-rc3:
+Changes since 4.0-rc4:
 
-Alexander Coffin (1):
-      cmd/tests: Add some tests for "choice".
+Alexandre Julliard (3):
+      user32: Also ignore dynamic DPI awareness changes when DPI scaling is disabled.
+      ntdll: Also store FPU registers in RtlRaiseException().
+      msi: Return an error code instead of a button id in msi_change_media().
 
-Alexandre Julliard (4):
-      include: Add more language codes.
-      wrc: Support more languages.
-      wmc: Support more languages.
-      user32: Clear %edi register when calling window procedure.
+Andrey Gusev (1):
+      comctl32/tests: Remove redundant assignment.
 
-André Hentschel (2):
-      shlwapi: Remove dead code (coverity).
-      ntdll: Use correct PC for instruction decoding on ARM64.
+Daniel Ansorregui (1):
+      d3d9/tests: Fix a typo in an undef.
 
-Dmitry Timoshkov (1):
-      kernel32: CreateDirectory shouldn't return ERROR_ACCESS_DENIED for the root of the drive.
+Denil Verghese (1):
+      po: Update Malayalam translation.
 
-Isira Seneviratne (2):
-      po: Add Sinhala translation.
+Henri Verbeet (1):
+      wined3d: Recognise virgl.
+
+Huw D. M. Davies (2):
+      comctl32/tests: Move the cursor over the treeview to avoid random mouse move messages.
+      shell32/tests: Move the cursor away from the dropdown listbox.
+
+Isira Seneviratne (1):
       po: Update Sinhala translation.
 
-Józef Kucia (3):
-      d3d9: Fix Reset() with system memory buffers.
-      d3d8: Fix Reset() with system memory buffers.
-      wined3d: Handle unmappable buffers in wined3d_device_process_vertices() gracefully.
+Ken Thomases (1):
+      winemac: Fix implementation of the AllowVerticalSync registry setting.
 
-Mingcong Bai (1):
-      po: Update Simplified Chinese translation.
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
-Nikolay Sivov (1):
-      gdi32: Fix fontconfig objects leak (Valgrind).
+Paul Gofman (1):
+      user32/tests: Add some tests for implicit stretch mode in CopyImage().
 
-Sebastian Lackner (2):
-      urlmon/tests: Add test for opening cache file with DELETE access.
-      appwiz.cpl: Copy addons to cache instead of moving.
-
-Sven Baars (2):
-      wsdapi/tests: Fix a memory leak (Valgrind).
-      quartz: Fix some memory leaks (Valgrind).
-
-Zebediah Figura (2):
-      ntoskrnl.exe: Avoid loading a driver multiple times in ZwLoadDriver().
-      ntoskrnl.exe: Handle already-loaded drivers in handle_bus_relations().
+Zhiyi Zhang (1):
+      riched20: Fix a use after free.
 
 --
 Alexandre Julliard
