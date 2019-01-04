@@ -918,7 +918,6 @@ static void check_ilhead_data(const ILHEAD *ilh, INT cx, INT cy, INT cur, INT ma
     }
     else
     {
-        grow = (WORD)(grow + 3) & ~3;
         ok(ilh->cMaxImage == max, "wrong cMaxImage %d (expected %d)\n", ilh->cMaxImage, max);
         ok(ilh->cGrow == grow_aligned, "Unexpected cGrow %d, expected %d\n", ilh->cGrow, grow_aligned);
     }
