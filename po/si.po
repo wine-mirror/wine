@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-27 10:39+0530\n"
+"PO-Revision-Date: 2018-12-31 04:27+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
@@ -199,11 +199,11 @@ msgstr "පිටපත"
 
 #: appwiz.rc:41
 msgid "Installation programs"
-msgstr ""
+msgstr "ස්ථාපන මෘදුකාංග"
 
 #: appwiz.rc:42
 msgid "Programs (*.exe)"
-msgstr ""
+msgstr "මෘදුකාංග (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
 #: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
@@ -701,7 +701,7 @@ msgstr "නම (&N):"
 
 #: comdlg32.rc:368 comdlg32.rc:406
 msgid "Status:"
-msgstr ""
+msgstr "තත්ත්වය:"
 
 #: comdlg32.rc:370 comdlg32.rc:408
 msgid "Type:"
@@ -717,11 +717,11 @@ msgstr ""
 
 #: comdlg32.rc:377
 msgid "Copies"
-msgstr ""
+msgstr "පිටපත්"
 
 #: comdlg32.rc:378
 msgid "Number of &copies:"
-msgstr ""
+msgstr "පිටපත් නොම්බරය:"
 
 #: comdlg32.rc:380
 msgid "C&ollate"
@@ -15493,12 +15493,12 @@ msgstr ""
 #: wordpad.rc:284
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:285
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:286
 msgctxt "accelerator Align Right"
@@ -15508,22 +15508,22 @@ msgstr "R"
 #: wordpad.rc:293
 msgctxt "accelerator Redo"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: wordpad.rc:294
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "B"
 
 #: wordpad.rc:295
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:296
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:147
 msgid "All documents (*.*)"
@@ -15531,11 +15531,11 @@ msgstr ""
 
 #: wordpad.rc:148
 msgid "Text documents (*.txt)"
-msgstr ""
+msgstr "පෙළ ලියවිලි (*.txt)"
 
 #: wordpad.rc:149
 msgid "Unicode text document (*.txt)"
-msgstr ""
+msgstr "Unicode පෙළ ලියවිල්ලක් (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"
@@ -15547,7 +15547,7 @@ msgstr ""
 
 #: wordpad.rc:152
 msgid "Text document"
-msgstr ""
+msgstr "පෙළ ලියවිල්ලක්"
 
 #: wordpad.rc:153
 msgid "Unicode text document"
