@@ -105,8 +105,20 @@ static void test_WTSQuerySessionInformationW(void)
     WTSFreeMemory(buf);
 }
 
+static void test_WTSQueryUserToken(void)
+{
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = WTSQueryUserToken(WTS_CURRENT_SESSION, NULL);
+    ok(!ret, "expected WTSQueryUserToken to fail\n");
+    todo_wine
+    ok(GetLastError()==ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
+}
+
 START_TEST (wtsapi)
 {
     test_WTSEnumerateProcessesW();
     test_WTSQuerySessionInformationW();
+    test_WTSQueryUserToken();
 }
