@@ -2528,7 +2528,7 @@ static void test_emf_ExtTextOut_on_path(void)
     ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
     if (compare_emf_bits(hMetafile, EMF_TEXTOUT_OUTLINE_ON_PATH_BITS, sizeof(EMF_TEXTOUT_OUTLINE_ON_PATH_BITS),
-        "emf_TextOut_on_path", FALSE) != 0)
+        "emf_TextOut_outline_on_path", FALSE) != 0)
     {
         dump_emf_bits(hMetafile, "emf_TextOut_outline_on_path");
         dump_emf_records(hMetafile, "emf_TextOut_outline_on_path");
