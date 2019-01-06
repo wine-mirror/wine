@@ -159,7 +159,8 @@ static void test_createfont(void)
         expect(Ok, stat);
         GdipGetFontSize (font, &size);
         ok (size == 24, "Expected 24, got %f (with unit: %d)\n", size, i);
-        GdipGetFontUnit (font, &unit);
+        stat = GdipGetFontUnit (font, &unit);
+        ok (stat == Ok, "Failed to get font unit, %d.\n", stat);
         expect (i, unit);
         GdipDeleteFont(font);
     }
