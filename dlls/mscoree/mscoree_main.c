@@ -682,7 +682,7 @@ static BOOL install_wine_mono(void)
     LONG len;
     BOOL ret;
 
-    static const char* mono_version = "4.7.3";
+    static const char* mono_version = "4.7.5";
     static const char* mono_upgrade_code = "{DE624609-C6B5-486A-9274-EF0B854F6BC5}";
 
     static const WCHAR controlW[] = {'\\','c','o','n','t','r','o','l','.','e','x','e',0};
