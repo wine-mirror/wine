@@ -324,6 +324,7 @@ struct sysparam_font_entry
     struct sysparam_entry hdr;
     UINT                  weight;
     LOGFONTW              val;
+    WCHAR                 fullname[LF_FACESIZE];
 };
 
 struct sysparam_pref_entry
@@ -661,15 +662,18 @@ static int map_to_dpi( int val, UINT dpi )
 static INT CALLBACK real_fontname_proc(const LOGFONTW *lf, const TEXTMETRICW *ntm, DWORD type, LPARAM lparam)
 {
     const ENUMLOGFONTW *elf = (const ENUMLOGFONTW *)lf;
-    LOGFONTW *lfW = (LOGFONTW *)lparam;
+    WCHAR *fullname = (WCHAR *)lparam;
 
-    lstrcpynW(lfW->lfFaceName, elf->elfFullName, LF_FACESIZE);
+    lstrcpynW( fullname, elf->elfFullName, LF_FACESIZE );
     return 0;
 }
 
-static void get_real_fontname( HDC hdc, LOGFONTW *lf )
+static void get_real_fontname( LOGFONTW *lf, WCHAR fullname[LF_FACESIZE] )
 {
-    EnumFontFamiliesExW(hdc, lf, real_fontname_proc, (LPARAM)lf, 0);
+    HDC hdc = get_display_dc();
+    strcpyW( fullname, lf->lfFaceName );
+    EnumFontFamiliesExW( hdc, lf, real_fontname_proc, (LPARAM)fullname, 0 );
+    release_display_dc( hdc );
 }
 
 /* adjust some of the raw values found in the registry */
@@ -686,16 +690,10 @@ static void normalize_nonclientmetrics( NONCLIENTMETRICSW *pncm)
     /* adjust some heights to the corresponding font */
     get_text_metr_size( hdc, &pncm->lfMenuFont, &tm, NULL);
     pncm->iMenuHeight = max( pncm->iMenuHeight, 2 + tm.tmHeight + tm.tmExternalLeading );
-    get_real_fontname( hdc, &pncm->lfMenuFont );
     get_text_metr_size( hdc, &pncm->lfCaptionFont, &tm, NULL);
     pncm->iCaptionHeight = max( pncm->iCaptionHeight, 2 + tm.tmHeight);
-    get_real_fontname( hdc, &pncm->lfCaptionFont );
     get_text_metr_size( hdc, &pncm->lfSmCaptionFont, &tm, NULL);
     pncm->iSmCaptionHeight = max( pncm->iSmCaptionHeight, 2 + tm.tmHeight);
-    get_real_fontname( hdc, &pncm->lfSmCaptionFont );
-
-    get_real_fontname( hdc, &pncm->lfStatusFont );
-    get_real_fontname( hdc, &pncm->lfMessageFont );
     release_display_dc( hdc );
 }
 
@@ -1004,10 +1002,12 @@ static BOOL get_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
             entry->font.val = font;
             break;
         }
+        get_real_fontname( &entry->font.val, entry->font.fullname );
         entry->hdr.loaded = TRUE;
     }
     font = entry->font.val;
     font.lfHeight = map_to_dpi( font.lfHeight, dpi );
+    strcpyW( font.lfFaceName, entry->font.fullname );
     *(LOGFONTW *)ptr_param = font;
     return TRUE;
 }
@@ -1026,6 +1026,7 @@ static BOOL set_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
 
     if (!save_entry( &entry->hdr, &font, sizeof(font), REG_BINARY, flags )) return FALSE;
     entry->font.val = font;
+    get_real_fontname( &entry->font.val, entry->font.fullname );
     entry->hdr.loaded = TRUE;
     return TRUE;
 }
@@ -1036,6 +1037,7 @@ static BOOL init_font_entry( union sysparam_all_entry *entry )
     GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(entry->font.val), &entry->font.val );
     entry->font.val.lfHeight = map_from_system_dpi( entry->font.val.lfHeight );
     entry->font.val.lfWeight = entry->font.weight;
+    get_real_fontname( &entry->font.val, entry->font.fullname );
     return init_entry( &entry->hdr, &entry->font.val, sizeof(entry->font.val), REG_BINARY );
 }
 
