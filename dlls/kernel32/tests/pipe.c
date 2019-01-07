@@ -3215,6 +3215,7 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
     CloseHandle(server);
 
     /* close client with pending writes */
+    memset(buf, 0xaa, sizeof(buf));
     create_overlapped_pipe(create_flags, &client, &server);
     overlapped_write_async(server, buf, 7000, &overlapped);
     flush = test_flush_async(server, ERROR_BROKEN_PIPE);
