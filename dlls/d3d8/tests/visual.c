@@ -10596,12 +10596,12 @@ static void test_sysmem_draw(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_ProcessVertices(device, 0, 0, ARRAY_SIZE(quad), dst_vb, 0);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DVertexBuffer8_Lock(dst_vb, 0, 0, (BYTE **)&dst_data, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     for (i = 0; i < ARRAY_SIZE(quad); ++i)
     {
-        todo_wine ok(compare_vec4(&dst_data[i], quad[i].position.x * 320.0f + 320.0f,
+        ok(compare_vec4(&dst_data[i], quad[i].position.x * 320.0f + 320.0f,
                 -quad[i].position.y * 240.0f + 240.0f, 0.0f, 1.0f, 4),
                 "Got unexpected vertex %u {%.8e, %.8e, %.8e, %.8e}.\n",
                 i, dst_data[i].x, dst_data[i].y, dst_data[i].z, dst_data[i].w);
