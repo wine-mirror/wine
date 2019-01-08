@@ -1419,9 +1419,6 @@ void server_init_process(void)
                                "Or maybe the wrong wineserver is still running?\n",
                                version, SERVER_PROTOCOL_VERSION,
                                (version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
-#ifdef __APPLE__
-    send_server_task_port();
-#endif
 #if defined(__linux__) && defined(HAVE_PRCTL)
     /* work around Ubuntu's ptrace breakage */
     if (server_pid != -1) prctl( 0x59616d61 /* PR_SET_PTRACER */, server_pid );
@@ -1439,6 +1436,10 @@ void server_init_process_done(void)
     void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
     NTSTATUS status;
     int suspend;
+
+#ifdef __APPLE__
+    send_server_task_port();
+#endif
 
     /* Install signal handlers; this cannot be done earlier, since we cannot
      * send exceptions to the debugger before the create process event that

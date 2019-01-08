@@ -587,7 +587,6 @@ data_size_t init_process( struct thread *thread )
     struct process *process = thread->process;
     struct startup_info *info = process->startup_info;
 
-    init_process_tracing( process );
     if (!info) return 0;
     return info->data_size;
 }
@@ -1319,6 +1318,7 @@ DECL_HANDLER(init_process_done)
     if (process->exe_file) release_object( process->exe_file );
     process->exe_file = NULL;
 
+    init_process_tracing( process );
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );
 
