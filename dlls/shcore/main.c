@@ -1244,7 +1244,6 @@ IStream * WINAPI SHOpenRegStream2W(HKEY hKey, const WCHAR *subkey, const WCHAR *
         }
     }
 
-    heap_free(buff);
     if (hStrKey)
         RegCloseKey(hStrKey);
 
