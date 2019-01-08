@@ -920,31 +920,37 @@ static BOOL get_texture_memory(GUID *adapter, DWORD *available_mem)
 
 static const WCHAR *vendor_id_to_manufacturer_string(DWORD vendor_id)
 {
+    unsigned int i;
+
     static const WCHAR atiW[] = {'A','T','I',' ','T','e','c','h','n','o','l','o','g','i','e','s',' ','I','n','c','.',0};
     static const WCHAR nvidiaW[] = {'N','V','I','D','I','A',0};
     static const WCHAR intelW[] = {'I','n','t','e','l',' ','C','o','r','p','o','r','a','t','i','o','n',0};
+    static const WCHAR vmwareW[] = {'V','M','w','a','r','e',0};
+    static const WCHAR redhatW[] = {'R','e','d',' ','H','a','t',0};
     static const WCHAR unknownW[] = {'U','n','k','n','o','w','n',0};
-
-    /* Enumeration copied from dlls/wined3d/wined3d_private.h and slightly modified. */
-    enum pci_vendor
+    static const struct
     {
-        HW_VENDOR_AMD = 0x1002,
-        HW_VENDOR_NVIDIA = 0x10de,
-        HW_VENDOR_INTEL = 0x8086,
+        DWORD id;
+        const WCHAR *name;
+    }
+    vendors[] =
+    {
+        {0x1002, atiW},
+        {0x10de, nvidiaW},
+        {0x15ad, vmwareW},
+        {0x1af4, redhatW},
+        {0x8086, intelW},
     };
 
-    switch (vendor_id)
+    for (i = 0; i < ARRAY_SIZE(vendors); ++i)
     {
-    case HW_VENDOR_AMD:
-        return atiW;
-    case HW_VENDOR_NVIDIA:
-        return nvidiaW;
-    case HW_VENDOR_INTEL:
-        return intelW;
-    default:
-        FIXME("Unknown PCI vendor ID 0x%04x\n", vendor_id);
-        return unknownW;
+        if (vendors[i].id == vendor_id)
+            return vendors[i].name;
     }
+
+    FIXME("Unknown PCI vendor ID 0x%04x.\n", vendor_id);
+
+    return unknownW;
 }
 
 static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node)
