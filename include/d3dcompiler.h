@@ -26,14 +26,14 @@ extern "C" {
 #endif
 
 #if defined(__GNUC__)
-#define D3DCOMPILER_DLL_W (const WCHAR[]){'d','3','d','c','o','m','p','i','l','e','r','_','4','3','.','d','l','l',0}
+#define D3DCOMPILER_DLL_W (const WCHAR[]){'d','3','d','c','o','m','p','i','l','e','r','_','4','7','.','d','l','l',0}
 #elif defined(_MSC_VER)
-#define D3DCOMPILER_DLL_W L"d3dcompiler_43.dll"
+#define D3DCOMPILER_DLL_W L"d3dcompiler_47.dll"
 #else
-static const WCHAR D3DCOMPILER_DLL_W[] = {'d','3','d','c','o','m','p','i','l','e','r','_','4','3','.','d','l','l',0};
+static const WCHAR D3DCOMPILER_DLL_W[] = {'d','3','d','c','o','m','p','i','l','e','r','_','4','7','.','d','l','l',0};
 #endif
 
-#define D3DCOMPILER_DLL_A  "d3dcompiler_43.dll"
+#define D3DCOMPILER_DLL_A  "d3dcompiler_47.dll"
 #define D3DCOMPILER_DLL    WINELIB_NAME_AW(D3DCOMPILER_DLL_)
 
 #define D3DCOMPILE_DEBUG                            0x00000001
