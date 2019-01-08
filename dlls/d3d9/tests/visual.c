@@ -28,6 +28,7 @@
  * causes visible results in games can be tested in a way that does not depend on pixel exactness
  */
 
+#include <limits.h>
 #include <math.h>
 
 #define COBJMACROS
@@ -71,6 +72,30 @@ static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     c1 >>= 8; c2 >>= 8;
     if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
     return TRUE;
+}
+
+static BOOL compare_float(float f, float g, unsigned int ulps)
+{
+    int x = *(int *)&f;
+    int y = *(int *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    if (abs(x - y) > ulps)
+        return FALSE;
+
+    return TRUE;
+}
+
+static BOOL compare_vec4(const struct vec4 *vec, float x, float y, float z, float w, unsigned int ulps)
+{
+    return compare_float(vec->x, x, ulps)
+            && compare_float(vec->y, y, ulps)
+            && compare_float(vec->z, z, ulps)
+            && compare_float(vec->w, w, ulps);
 }
 
 static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER9 *identifier)
@@ -24199,12 +24224,14 @@ static void test_color_vertex(void)
 
 static void test_sysmem_draw(void)
 {
+    IDirect3DVertexBuffer9 *vb, *vb_s0, *vb_s1, *dst_vb;
     IDirect3DVertexDeclaration9 *vertex_declaration;
-    IDirect3DVertexBuffer9 *vb, *vb_s0, *vb_s1;
     IDirect3DIndexBuffer9 *ib;
     IDirect3DDevice9 *device;
+    struct vec4 *dst_data;
     IDirect3D9 *d3d;
     D3DCOLOR colour;
+    unsigned int i;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -24223,10 +24250,10 @@ static void test_sysmem_draw(void)
     }
     quad[] =
     {
-        {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
-        {{-1.0f,  1.0f, 0.0f}, 0xff00ff00},
-        {{ 1.0f, -1.0f, 0.0f}, 0xff0000ff},
-        {{ 1.0f,  1.0f, 0.0f}, 0xffffffff},
+        {{-0.5f, -0.5f, 0.0f}, 0xffff0000},
+        {{-0.5f,  0.5f, 0.0f}, 0xff00ff00},
+        {{ 0.5f, -0.5f, 0.0f}, 0xff0000ff},
+        {{ 0.5f,  0.5f, 0.0f}, 0xffffffff},
     };
     static const struct vec3 quad_s0[] =
     {
@@ -24295,6 +24322,23 @@ static void test_sysmem_draw(void)
 
     colour = getPixelColor(device, 320, 240);
     ok(color_match(colour, 0x00007f7f, 1), "Got unexpected colour 0x%08x.\n", colour);
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, ARRAY_SIZE(quad) * sizeof(*dst_data),
+            0, D3DFVF_XYZRHW, D3DPOOL_SYSTEMMEM, &dst_vb, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_ProcessVertices(device, 0, 0, ARRAY_SIZE(quad), dst_vb, NULL, 0);
+    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer9_Lock(dst_vb, 0, 0, (void **)&dst_data, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(quad); ++i)
+    {
+        todo_wine ok(compare_vec4(&dst_data[i], quad[i].position.x * 320.0f + 320.0f,
+                -quad[i].position.y * 240.0f + 240.0f, 0.0f, 1.0f, 1),
+                "Got unexpected vertex %u {%.8e, %.8e, %.8e, %.8e}.\n",
+                i, dst_data[i].x, dst_data[i].y, dst_data[i].z, dst_data[i].w);
+    }
+    hr = IDirect3DVertexBuffer9_Unlock(dst_vb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_CreateIndexBuffer(device, sizeof(indices), 0,
             D3DFMT_INDEX16, D3DPOOL_SYSTEMMEM, &ib, NULL);
@@ -24379,6 +24423,7 @@ static void test_sysmem_draw(void)
     IDirect3DVertexBuffer9_Release(vb_s0);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
     IDirect3DIndexBuffer9_Release(ib);
+    IDirect3DVertexBuffer9_Release(dst_vb);
     IDirect3DVertexBuffer9_Release(vb);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
