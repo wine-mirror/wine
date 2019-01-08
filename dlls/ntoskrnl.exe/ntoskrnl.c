@@ -3523,6 +3523,7 @@ NTSTATUS WINAPI ZwLoadDriver( const UNICODE_STRING *service_name )
     {
         TRACE( "driver %s already loaded\n", debugstr_us(&drv_name) );
         RtlFreeUnicodeString( &drv_name );
+        CloseServiceHandle( (void *)service_handle );
         return STATUS_IMAGE_ALREADY_LOADED;
     }
 
