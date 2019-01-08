@@ -19,6 +19,7 @@
 
 /* See comment in dlls/d3d9/tests/visual.c for general guidelines */
 
+#include <limits.h>
 #include <math.h>
 
 #define COBJMACROS
@@ -60,6 +61,30 @@ static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     c1 >>= 8; c2 >>= 8;
     if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
     return TRUE;
+}
+
+static BOOL compare_float(float f, float g, unsigned int ulps)
+{
+    int x = *(int *)&f;
+    int y = *(int *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    if (abs(x - y) > ulps)
+        return FALSE;
+
+    return TRUE;
+}
+
+static BOOL compare_vec4(const struct vec4 *vec, float x, float y, float z, float w, unsigned int ulps)
+{
+    return compare_float(vec->x, x, ulps)
+            && compare_float(vec->y, y, ulps)
+            && compare_float(vec->z, z, ulps)
+            && compare_float(vec->w, w, ulps);
 }
 
 static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER8 *identifier)
@@ -10448,11 +10473,14 @@ static void test_color_vertex(void)
 
 static void test_sysmem_draw(void)
 {
-    IDirect3DVertexBuffer8 *vb, *vb_s0, *vb_s1;
+    IDirect3DVertexBuffer8 *vb, *vb_s0, *vb_s1, *dst_vb;
+    D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DIndexBuffer8 *ib;
     IDirect3DDevice8 *device;
+    struct vec4 *dst_data;
     IDirect3D8 *d3d;
     D3DCOLOR colour;
+    unsigned int i;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -10474,10 +10502,10 @@ static void test_sysmem_draw(void)
     }
     quad[] =
     {
-        {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
-        {{-1.0f,  1.0f, 0.0f}, 0xff00ff00},
-        {{ 1.0f, -1.0f, 0.0f}, 0xff0000ff},
-        {{ 1.0f,  1.0f, 0.0f}, 0xffffffff},
+        {{-0.5f, -0.5f, 0.0f}, 0xffff0000},
+        {{-0.5f,  0.5f, 0.0f}, 0xff00ff00},
+        {{ 0.5f, -0.5f, 0.0f}, 0xff0000ff},
+        {{ 0.5f,  0.5f, 0.0f}, 0xffffffff},
     };
     static const struct vec3 quad_s0[] =
     {
@@ -10510,7 +10538,17 @@ static void test_sysmem_draw(void)
 
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
-    if (!(device = create_device(d3d, window, window, TRUE)))
+
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    if (FAILED(hr = IDirect3D8_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            window, D3DCREATE_MIXED_VERTEXPROCESSING, &present_parameters, &device)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         IDirect3D8_Release(d3d);
@@ -10546,6 +10584,37 @@ static void test_sysmem_draw(void)
 
     colour = getPixelColor(device, 320, 240);
     ok(color_match(colour, 0x00007f7f, 1), "Got unexpected colour 0x%08x.\n", colour);
+
+    hr = IDirect3DDevice8_CreateVertexBuffer(device, ARRAY_SIZE(quad) * sizeof(*dst_data),
+            0, D3DFVF_XYZRHW, D3DPOOL_SYSTEMMEM, &dst_vb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_SOFTWAREVERTEXPROCESSING, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, vb, sizeof(*quad));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_ProcessVertices(device, 0, 0, ARRAY_SIZE(quad), dst_vb, 0);
+    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer8_Lock(dst_vb, 0, 0, (BYTE **)&dst_data, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(quad); ++i)
+    {
+        todo_wine ok(compare_vec4(&dst_data[i], quad[i].position.x * 320.0f + 320.0f,
+                -quad[i].position.y * 240.0f + 240.0f, 0.0f, 1.0f, 4),
+                "Got unexpected vertex %u {%.8e, %.8e, %.8e, %.8e}.\n",
+                i, dst_data[i].x, dst_data[i].y, dst_data[i].z, dst_data[i].w);
+    }
+    hr = IDirect3DVertexBuffer8_Unlock(dst_vb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_SOFTWAREVERTEXPROCESSING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, vb, sizeof(*quad));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CreateIndexBuffer(device, sizeof(indices), 0,
             D3DFMT_INDEX16, D3DPOOL_SYSTEMMEM, &ib);
@@ -10633,6 +10702,7 @@ static void test_sysmem_draw(void)
     IDirect3DVertexBuffer8_Release(vb_s0);
     IDirect3DDevice8_DeleteVertexShader(device, vs);
     IDirect3DIndexBuffer8_Release(ib);
+    IDirect3DVertexBuffer8_Release(dst_vb);
     IDirect3DVertexBuffer8_Release(vb);
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
