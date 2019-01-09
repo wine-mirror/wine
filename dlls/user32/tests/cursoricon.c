@@ -2758,13 +2758,19 @@ static COLORREF get_color_from_bits(const unsigned char *bits, const BITMAPINFO 
     unsigned int stride, shift, mask;
     const unsigned char *data;
     RGBQUAD color;
+    WORD color16;
 
-    ok(h->biBitCount <= 8 || h->biBitCount >= 24, "Unsupported bit count %u.\n", h->biBitCount);
     stride = ((h->biBitCount * h->biWidth + 7) / 8 + 3) & ~3;
     data = bits + row * stride + column * h->biBitCount / 8;
     if (h->biBitCount >= 24)
         return RGB(data[2], data[1], data[0]);
 
+    if (h->biBitCount == 16)
+    {
+        color16 = ((WORD)data[1] << 8) | data[0];
+        return RGB(((color16 >> 10) & 0x1f) << 3, ((color16 >> 5) & 0x1f) << 3,
+                (color16 & 0x1f) << 3);
+    }
     shift = 8 - h->biBitCount - (column * h->biBitCount) % 8;
     mask = ~(~0u << h->biBitCount);
     color = bmi->bmiColors[(data[0] >> shift) & mask];
@@ -2785,6 +2791,20 @@ static void test_CopyImage_StretchMode(void)
         0x3f, 0xff, 0x00,  0x3f, 0xff, 0x3f,  0x00, 0x00,
         0x3f, 0xff, 0x7f,  0x00, 0xff, 0x3f,  0x00, 0x00,
     };
+#define rgb16(r, g, b) ((WORD)(((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3)))
+    static const WORD test_bits_16[] =
+    {
+        rgb16(0x00, 0x20, 0x00), rgb16(0x00, 0x40, 0x00), rgb16(0x00, 0x40, 0xff), rgb16(0x00, 0x20, 0x00),
+        rgb16(0x00, 0x60, 0x00), rgb16(0xff, 0x80, 0x00), rgb16(0xff, 0x60, 0x00), rgb16(0x00, 0x80, 0x00),
+        rgb16(0x00, 0x20, 0xff), rgb16(0x00, 0x40, 0x00), rgb16(0x00, 0x40, 0xff), rgb16(0x00, 0x20, 0x00),
+        rgb16(0xff, 0x80, 0x00), rgb16(0x00, 0x60, 0xff), rgb16(0x00, 0x80, 0x00), rgb16(0x00, 0x60, 0x00),
+    };
+    static const WORD expected_bits_16[] =
+    {
+        rgb16(0x00, 0x40, 0x00), rgb16(0x00, 0x20, 0x00),
+        rgb16(0x00, 0x40, 0x00), rgb16(0x00, 0x20, 0x00),
+    };
+#undef rgb16
     static const unsigned char test_bits_8[] =
     {
         0x00, 0xff, 0x00, 0xff,
@@ -2836,6 +2856,8 @@ static void test_CopyImage_StretchMode(void)
         {4, 4, 2, 2, 8, test_bits_8, expected_bits_8,
                 sizeof(test_bits_8), sizeof(expected_bits_8), colors_bits_8,
                 sizeof(colors_bits_8), TRUE},
+        {4, 4, 2, 2, 16, (const unsigned char *)test_bits_16, (const unsigned char *)expected_bits_16,
+                sizeof(test_bits_16), sizeof(expected_bits_16), NULL, 0, TRUE},
     };
 
     HBITMAP bitmap, bitmap_copy;
