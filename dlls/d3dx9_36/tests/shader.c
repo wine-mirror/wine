@@ -6457,6 +6457,7 @@ static void test_shader_semantics(void)
     vs_3_0[] =
     {
         0xfffe0300,                         /* vs_3_0 */
+        0x0002fffe, 0x0200000f, 0x00000000, /* comment */
         0x0200001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
         0x0200001f, 0x80000003, 0x900f0001, /* dcl_normal v1 */
         0x0200001f, 0x8001000a, 0x900f0002, /* dcl_color1 v2 */
