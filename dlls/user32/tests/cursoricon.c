@@ -2777,6 +2777,35 @@ static COLORREF get_color_from_bits(const unsigned char *bits, const BITMAPINFO 
     return RGB(color.rgbRed, color.rgbGreen, color.rgbBlue);
 }
 
+#define compare_bitmap_bits(a, b, c, d, e, f, g) compare_bitmap_bits_(__LINE__, a, b, c, d, e, f, g)
+static void compare_bitmap_bits_(unsigned int line, HDC hdc, HBITMAP bitmap, BITMAPINFO *bmi,
+        size_t result_bits_size, const unsigned char *expected_bits, unsigned int test_index, BOOL todo)
+{
+    unsigned char *result_bits;
+    unsigned int row, column;
+    int ret;
+
+    result_bits = HeapAlloc(GetProcessHeap(), 0, result_bits_size);
+    ret = GetDIBits(hdc, bitmap, 0, bmi->bmiHeader.biHeight,
+            result_bits, bmi, DIB_RGB_COLORS);
+    ok(ret == bmi->bmiHeader.biHeight, "Unexpected GetDIBits result %d, GetLastError() %u.\n",
+            ret, GetLastError());
+    for (row = 0; row < bmi->bmiHeader.biHeight; ++row)
+        for (column = 0; column < bmi->bmiHeader.biWidth; ++column)
+        {
+            COLORREF result, expected;
+
+            result = get_color_from_bits(result_bits, bmi, row, column);
+            expected = get_color_from_bits(expected_bits, bmi, row, column);
+
+            todo_wine_if(todo)
+            ok_(__FILE__, line)(result == expected, "Colors do not match, "
+                    "got 0x%06x, expected 0x%06x, test_index %u, row %u, column %u.\n",
+                    result, expected, test_index, row, column);
+        }
+    HeapFree(GetProcessHeap(), 0, result_bits);
+}
+
 static void test_CopyImage_StretchMode(void)
 {
     static const unsigned char test_bits_24[] =
@@ -2860,16 +2889,17 @@ static void test_CopyImage_StretchMode(void)
                 sizeof(test_bits_16), sizeof(expected_bits_16), NULL, 0, TRUE},
     };
 
+    BITMAPINFO *bmi, *bmi_output;
     HBITMAP bitmap, bitmap_copy;
-    unsigned int row, column, i;
-    unsigned char *result_bits;
     unsigned int test_index;
     unsigned char *bits;
-    BITMAPINFO *bmi;
+    size_t bmi_size;
+    unsigned int i;
     HDC hdc;
-    int ret;
 
-    bmi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    bmi_size = sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD);
+    bmi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bmi_size);
+    bmi_output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bmi_size);
     bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi->bmiHeader.biPlanes = 1;
     bmi->bmiHeader.biCompression = BI_RGB;
@@ -2889,6 +2919,9 @@ static void test_CopyImage_StretchMode(void)
         bmi->bmiHeader.biWidth = tests[test_index].width;
         bmi->bmiHeader.biHeight = tests[test_index].height;
         bmi->bmiHeader.biBitCount = tests[test_index].bit_count;
+        memcpy(bmi_output, bmi, bmi_size);
+        bmi_output->bmiHeader.biWidth = tests[test_index].output_width;
+        bmi_output->bmiHeader.biHeight = tests[test_index].output_height;
 
         bitmap = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
         ok(bitmap && bits, "CreateDIBSection() failed, result %u.\n", GetLastError());
@@ -2898,33 +2931,13 @@ static void test_CopyImage_StretchMode(void)
                 tests[test_index].output_height, LR_CREATEDIBSECTION);
         ok(!!bitmap_copy, "CopyImage() failed, result %u.\n", GetLastError());
 
-        result_bits = HeapAlloc(GetProcessHeap(), 0, tests[test_index].result_bits_size);
-
-        bmi->bmiHeader.biWidth = tests[test_index].output_width;
-        bmi->bmiHeader.biHeight = tests[test_index].output_height;
-        ret = GetDIBits(hdc, bitmap_copy, 0, tests[test_index].output_height,
-                result_bits, bmi, DIB_RGB_COLORS);
-        ok(ret == tests[test_index].output_height, "Unexpected GetDIBits result %d, GetLastError() %u.\n",
-                ret, GetLastError());
-
-        for (row = 0; row < tests[test_index].output_height; ++row)
-            for (column = 0; column < tests[test_index].output_width; ++column)
-            {
-                COLORREF result, expected;
-
-                result = get_color_from_bits(result_bits, bmi, row, column);
-                expected = get_color_from_bits(tests[test_index].expected_bits, bmi, row, column);
-
-                todo_wine_if(tests[test_index].todo)
-                ok(result == expected, "Colors do not match, "
-                        "got 0x%06x, expected 0x%06x, test_index %u, row %u, column %u.\n",
-                        result, expected, test_index, row, column);
-            }
+        compare_bitmap_bits(hdc, bitmap_copy, bmi_output, tests[test_index].result_bits_size,
+                tests[test_index].expected_bits, test_index, tests[test_index].todo);
         DeleteObject(bitmap);
         DeleteObject(bitmap_copy);
-        HeapFree(GetProcessHeap(), 0, result_bits);
     }
     ReleaseDC(0, hdc);
+    HeapFree(GetProcessHeap(), 0, bmi_output);
     HeapFree(GetProcessHeap(), 0, bmi);
 }
 
