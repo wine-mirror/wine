@@ -1203,6 +1203,40 @@ static void create_ico_file(const char *filename, const test_icon_entries_t *tes
     HeapFree(GetProcessHeap(), 0, buf);
 }
 
+static void create_bitmap_file(const char *filename, const BITMAPINFO *bmi, const unsigned char *bits)
+{
+    unsigned int clr_used, bmi_size, bits_size, stride;
+    const BITMAPINFOHEADER *h = &bmi->bmiHeader;
+    BITMAPFILEHEADER hdr;
+    DWORD bytes_written;
+    HANDLE file;
+    BOOL ret;
+
+    clr_used = h->biBitCount <= 8 ? 1u << h->biBitCount : 0;
+    stride = ((h->biBitCount * h->biWidth + 7) / 8 + 3) & ~3;
+    bits_size = h->biHeight * stride;
+    bmi_size = h->biSize + clr_used * sizeof(RGBQUAD);
+
+    hdr.bfType = 0x4d42;
+    hdr.bfOffBits = (DWORD)sizeof(BITMAPFILEHEADER) + bmi_size;
+    hdr.bfSize = hdr.bfOffBits + bits_size;
+    hdr.bfReserved1 = 0;
+    hdr.bfReserved2 = 0;
+
+    file = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed, result %u.\n", GetLastError());
+    ret = WriteFile(file, &hdr, sizeof(hdr), &bytes_written, NULL);
+    ok(ret && bytes_written == sizeof(hdr), "Unexpected WriteFile() result, ret %#x, bytes_written %u.\n",
+            ret, bytes_written);
+    ret = WriteFile(file, bmi, bmi_size, &bytes_written, NULL);
+    ok(ret && bytes_written == bmi_size, "Unexpected WriteFile() result, ret %#x, bytes_written %u.\n",
+            ret, bytes_written);
+    ret = WriteFile(file, bits, bits_size, &bytes_written, NULL);
+    ok(ret && bytes_written == bits_size, "Unexpected WriteFile() result, ret %#x, bytes_written %u.\n",
+            ret, bytes_written);
+    CloseHandle(file);
+}
+
 static void test_LoadImage_working_directory_run(char *path)
 {
     DWORD bytes_written;
@@ -2806,7 +2840,7 @@ static void compare_bitmap_bits_(unsigned int line, HDC hdc, HBITMAP bitmap, BIT
     HeapFree(GetProcessHeap(), 0, result_bits);
 }
 
-static void test_CopyImage_StretchMode(void)
+static void test_Image_StretchMode(void)
 {
     static const unsigned char test_bits_24[] =
     {
@@ -2888,7 +2922,7 @@ static void test_CopyImage_StretchMode(void)
         {4, 4, 2, 2, 16, (const unsigned char *)test_bits_16, (const unsigned char *)expected_bits_16,
                 sizeof(test_bits_16), sizeof(expected_bits_16), NULL, 0, TRUE},
     };
-
+    static const char filename[] = "test.bmp";
     BITMAPINFO *bmi, *bmi_output;
     HBITMAP bitmap, bitmap_copy;
     unsigned int test_index;
@@ -2935,6 +2969,15 @@ static void test_CopyImage_StretchMode(void)
                 tests[test_index].expected_bits, test_index, tests[test_index].todo);
         DeleteObject(bitmap);
         DeleteObject(bitmap_copy);
+
+        create_bitmap_file(filename, bmi, tests[test_index].test_bits);
+        bitmap = LoadImageA(NULL, filename, IMAGE_BITMAP, tests[test_index].output_width,
+                tests[test_index].output_height, LR_CREATEDIBSECTION | LR_LOADFROMFILE);
+        ok(!!bitmap, "LoadImageA() failed, result %u.\n", GetLastError());
+        DeleteFileA(filename);
+        compare_bitmap_bits(hdc, bitmap, bmi_output, tests[test_index].result_bits_size,
+                tests[test_index].expected_bits, test_index, tests[test_index].todo);
+        DeleteObject(bitmap);
     }
     ReleaseDC(0, hdc);
     HeapFree(GetProcessHeap(), 0, bmi_output);
@@ -2968,7 +3011,7 @@ START_TEST(cursoricon)
     test_CopyImage_Bitmap(16);
     test_CopyImage_Bitmap(24);
     test_CopyImage_Bitmap(32);
-    test_CopyImage_StretchMode();
+    test_Image_StretchMode();
     test_initial_cursor();
     test_CreateIcon();
     test_LoadImage();
