@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-11-09 11:29+0100\n"
+"PO-Revision-Date: 2019-01-09 14:31+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -9079,811 +9079,791 @@ msgstr "Quelle auswählen"
 
 #: tzres.rc:82
 msgid "China Standard Time"
-msgstr ""
+msgstr "China Normalzeit"
 
 #: tzres.rc:83
 msgid "China Daylight Time"
-msgstr ""
+msgstr "China Sommerzeit"
 
 #: tzres.rc:160
 msgid "North Asia Standard Time"
-msgstr ""
+msgstr "Nordasien Normalzeit"
 
 #: tzres.rc:161
 msgid "North Asia Daylight Time"
-msgstr ""
+msgstr "Nordasien Sommerzeit"
 
 #: tzres.rc:104
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "Georgische Normalzeit"
 
 #: tzres.rc:105
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "Georgische Sommerzeit"
 
 #: tzres.rc:152
 msgid "Nepal Standard Time"
-msgstr ""
+msgstr "Nepal Normalzeit"
 
 #: tzres.rc:153
 msgid "Nepal Daylight Time"
-msgstr ""
+msgstr "Nepal Sommerzeit"
 
 #: tzres.rc:60
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "Kap Verde Normalzeit"
 
 #: tzres.rc:61
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "Kap Verde Sommerzeit"
 
 #: tzres.rc:74
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Standard Time"
-msgstr "Mitteleuropäisch"
+msgstr "Mitteleuropäische Zeit"
 
 #: tzres.rc:75
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "Mitteleuropäisch"
+msgstr "Mitteleuropäische Sommerzeit"
 
 #: tzres.rc:140
 msgid "Morocco Standard Time"
-msgstr ""
+msgstr "Marokko Normalzeit"
 
 #: tzres.rc:141
 msgid "Morocco Daylight Time"
-msgstr ""
+msgstr "Marokko Sommerzeit"
 
 #: tzres.rc:72
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Standard Time"
-msgstr "Mitteleuropäisch"
+msgstr "Mitteleuropäische Zeit"
 
 #: tzres.rc:73
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "Mitteleuropäisch"
+msgstr "Mitteleuropäische Sommerzeit"
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
-msgstr ""
+msgstr "Iran Normalzeit"
 
 #: tzres.rc:119
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "Iran Sommerzeit"
 
 #: tzres.rc:150
 msgid "Namibia Standard Time"
-msgstr ""
+msgstr "Namibia Normalzeit"
 
 #: tzres.rc:151
 msgid "Namibia Daylight Time"
-msgstr ""
+msgstr "Namibia Sommerzeit"
 
 #: tzres.rc:200
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "Tonga Normalzeit"
 
 #: tzres.rc:201
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "Tonga Sommerzeit"
 
 #: tzres.rc:144
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "Mountain Normalzeit (Mexiko)"
 
 #: tzres.rc:145
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "Mountain Sommerzeit (Mexiko)"
 
 #: tzres.rc:106
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "&Standard"
+msgstr "GMT Normalzeit"
 
 #: tzres.rc:107
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "GMT Sommerzeit"
 
 #: tzres.rc:68
 msgid "Central Asia Standard Time"
-msgstr ""
+msgstr "Zentralasien Normalzeit"
 
 #: tzres.rc:69
 msgid "Central Asia Daylight Time"
-msgstr ""
+msgstr "Zentralasien Sommerzeit"
 
 #: tzres.rc:38
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "Arabische Normalzeit"
 
 #: tzres.rc:39
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "Arabische Sommerzeit"
 
 #: tzres.rc:132
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "Magadan Normalzeit"
 
 #: tzres.rc:133
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "Magadan Sommerzeit"
 
 #: tzres.rc:156
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "Neufundland Normalzeit"
 
 #: tzres.rc:157
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "Neufundland Sommerzeit"
 
 #: tzres.rc:224
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "Westpazifische Normalzeit"
 
 #: tzres.rc:225
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "Westpazifische Sommerzeit"
 
 #: tzres.rc:164
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Pazifische Normalzeit"
 
 #: tzres.rc:165
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "Pazifische Sommerzeit"
 
 #: tzres.rc:48
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "Aserbaidschan Normalzeit"
 
 #: tzres.rc:49
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "Aserbaidschan Sommerzeit"
 
 #: tzres.rc:182
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "Samoa Normalzeit"
 
 #: tzres.rc:183
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "Samoa Sommerzeit"
 
 #: tzres.rc:124
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "Kaliningrad Normalzeit"
 
 #: tzres.rc:125
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "Kaliningrad Sommerzeit"
 
 #: tzres.rc:166
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "Pazifische Normalzeit (Mexiko)"
 
 #: tzres.rc:167
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "Pazifische Sommerzeit (Mexiko)"
 
 #: tzres.rc:136
 msgid "Middle East Standard Time"
-msgstr ""
+msgstr "Mittlerer Osten Normalzeit"
 
 #: tzres.rc:137
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "Mittlerer Osten Sommerzeit"
 
 #: tzres.rc:198
 msgid "Tokyo Standard Time"
-msgstr ""
+msgstr "Tokyo Normalzeit"
 
 #: tzres.rc:199
 msgid "Tokyo Daylight Time"
-msgstr ""
+msgstr "Tokyo Sommerzeit"
 
 #: tzres.rc:130
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "Linieninseln Normalzeit"
 
 #: tzres.rc:131
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "Linieninseln Sommerzeit"
 
 #: tzres.rc:122
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "Jordanien Normalzeit"
 
 #: tzres.rc:123
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "Jordanien Sommerzeit"
 
 #: tzres.rc:78
 msgid "Central Standard Time"
-msgstr ""
+msgstr "Central Normalzeit"
 
 #: tzres.rc:79
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "Central Sommerzeit"
 
 #: tzres.rc:50
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "Azoren Normalzeit"
 
 #: tzres.rc:51
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "Azoren Sommerzeit"
 
 #: tzres.rc:158
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "Ost-Nordasiatische Normalzeit"
 
 #: tzres.rc:159
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "Ost-Nordasiatische Sommerzeit"
 
 #: tzres.rc:40
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "Argentinien Normalzeit"
 
 #: tzres.rc:41
 msgid "Argentina Daylight Time"
-msgstr ""
+msgstr "Argentinien Sommerzeit"
 
 #: tzres.rc:146
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "Myanmar Normalzeit"
 
 #: tzres.rc:147
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "Myanmar Sommerzeit"
 
 #: tzres.rc:210 tzres.rc:211
 msgid "Coordinated Universal Time"
-msgstr ""
+msgstr "Koordinierte Weltzeit"
 
 #: tzres.rc:116
 msgid "India Standard Time"
-msgstr ""
+msgstr "Indien Normalzeit"
 
 #: tzres.rc:117
 msgid "India Daylight Time"
-msgstr ""
+msgstr "Indien Sommerzeit"
 
 #: tzres.rc:112
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "&Standard"
+msgstr "Osteuropäische Zeit"
 
 #: tzres.rc:113
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "Osteuropäische Sommerzeit"
 
 #: tzres.rc:202
 msgid "Turkey Standard Time"
-msgstr ""
+msgstr "Türkei Normalzeit"
 
 #: tzres.rc:203
 msgid "Turkey Daylight Time"
-msgstr ""
+msgstr "Türkei Sommerzeit"
 
 #: tzres.rc:100
 msgid "Fiji Standard Time"
-msgstr ""
+msgstr "Fidschi Normalzeit"
 
 #: tzres.rc:101
 msgid "Fiji Daylight Time"
-msgstr ""
+msgstr "Fidschi Sommerzeit"
 
 #: tzres.rc:58
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "Central Normalzeit (Kanada)"
 
 #: tzres.rc:59
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "Central Sommerzeit (Kanada)"
 
 #: tzres.rc:194
 msgid "Taipei Standard Time"
-msgstr ""
+msgstr "Taipeh Normalzeit"
 
 #: tzres.rc:195
 msgid "Taipei Daylight Time"
-msgstr ""
+msgstr "Taipeh Sommerzeit"
 
 #: tzres.rc:220
 msgid "W. Europe Standard Time"
-msgstr ""
+msgstr "Mitteleuropäische Zeit"
 
 #: tzres.rc:221
 msgid "W. Europe Daylight Time"
-msgstr ""
+msgstr "Mitteleuropäische Sommerzeit"
 
 #: tzres.rc:138
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "Montevideo Normalzeit"
 
 #: tzres.rc:139
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "Montevideo Sommerzeit"
 
 #: tzres.rc:168
 msgid "Pakistan Standard Time"
-msgstr ""
+msgstr "Pakistan Normalzeit"
 
 #: tzres.rc:169
 msgid "Pakistan Daylight Time"
-msgstr ""
+msgstr "Pakistan Sommerzeit"
 
 #: tzres.rc:62
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "Kaukasische Normalzeit"
 
 #: tzres.rc:63
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "Kaukasische Sommerzeit"
 
 #: tzres.rc:46
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "Ostaustralische Normalzeit"
 
 #: tzres.rc:47
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "Ostaustralische Sommerzeit"
 
 #: tzres.rc:148
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "Nordzentralasien Normalzeit"
 
 #: tzres.rc:149
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "Nordzentralasien Sommerzeit"
 
 #: tzres.rc:94
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Eastern Normalzeit"
 
 #: tzres.rc:95
 msgid "Eastern Daylight Time"
-msgstr ""
+msgstr "Eastern Sommerzeit"
 
 #: tzres.rc:80
 msgid "Central Standard Time (Mexico)"
-msgstr ""
+msgstr "Central Normalzeit (Mexiko)"
 
 #: tzres.rc:81
 msgid "Central Daylight Time (Mexico)"
-msgstr ""
+msgstr "Central Sommerzeit (Mexiko)"
 
 #: tzres.rc:42
 msgid "Atlantic Standard Time"
-msgstr ""
+msgstr "Atlantic Normalzeit"
 
 #: tzres.rc:43
 msgid "Atlantic Daylight Time"
-msgstr ""
+msgstr "Atlantic Sommerzeit"
 
 #: tzres.rc:142
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "Mountain Normalzeit"
 
 #: tzres.rc:143
 msgid "Mountain Daylight Time"
-msgstr ""
+msgstr "Mountain Sommerzeit"
 
 #: tzres.rc:206
 msgid "US Eastern Standard Time"
-msgstr ""
+msgstr "US Eastern Normalzeit"
 
 #: tzres.rc:207
 msgid "US Eastern Daylight Time"
-msgstr ""
+msgstr "US Eastern Sommerzeit"
 
 #: tzres.rc:196
 msgid "Tasmania Standard Time"
-msgstr ""
+msgstr "Tasmanien Normalzeit"
 
 #: tzres.rc:197
 msgid "Tasmania Daylight Time"
-msgstr ""
+msgstr "Tasmanien Sommerzeit"
 
 #: tzres.rc:66
 msgid "Central America Standard Time"
-msgstr ""
+msgstr "Mittelamerikanische Normalzeit"
 
 #: tzres.rc:67
 msgid "Central America Daylight Time"
-msgstr ""
+msgstr "Mittelamerikanische Sommerzeit"
 
 #: tzres.rc:208
 msgid "US Mountain Standard Time"
-msgstr ""
+msgstr "US Mountain Normalzeit"
 
 #: tzres.rc:209
 msgid "US Mountain Daylight Time"
-msgstr ""
+msgstr "US Mountain Sommerzeit"
 
 #: tzres.rc:188
 msgid "South Africa Standard Time"
-msgstr ""
+msgstr "Südafrika Normalzeit"
 
 #: tzres.rc:189
 msgid "South Africa Daylight Time"
-msgstr ""
+msgstr "Südafrika Sommerzeit"
 
 #: tzres.rc:64
 msgid "Cen. Australia Standard Time"
-msgstr ""
+msgstr "Zentralaustralische Normalzeit"
 
 #: tzres.rc:65
 msgid "Cen. Australia Daylight Time"
-msgstr ""
+msgstr "Zentralaustralische Sommerzeit"
 
 #: tzres.rc:190
 msgid "Sri Lanka Standard Time"
-msgstr ""
+msgstr "Sri Lanka Normalzeit"
 
 #: tzres.rc:191
 msgid "Sri Lanka Daylight Time"
-msgstr ""
+msgstr "Sri Lanka Sommerzeit"
 
 #: tzres.rc:30
 msgid "Afghanistan Standard Time"
-msgstr ""
+msgstr "Afghanistan Normalzeit"
 
 #: tzres.rc:31
 msgid "Afghanistan Daylight Time"
-msgstr ""
+msgstr "Afghanistan Sommerzeit"
 
 #: tzres.rc:226
 msgid "Yakutsk Standard Time"
-msgstr ""
+msgstr "Yakutsk Normalzeit"
 
 #: tzres.rc:227
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "Yakutsk Sommerzeit"
 
 #: tzres.rc:176
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "Östl. Südamerika Normalzeit"
 
 #: tzres.rc:177
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "Östl. Südamerika Sommerzeit"
 
 #: tzres.rc:34
 msgid "Arab Standard Time"
-msgstr ""
+msgstr "Arabische Normalzeit"
 
 #: tzres.rc:35
 msgid "Arab Daylight Time"
-msgstr ""
+msgstr "Arabische Sommerzeit"
 
 #: tzres.rc:36
 msgid "Arabian Standard Time"
-msgstr ""
+msgstr "Arabische Normalzeit"
 
 #: tzres.rc:37
 msgid "Arabian Daylight Time"
-msgstr ""
+msgstr "Arabische Sommerzeit"
 
 #: tzres.rc:174
 msgid "Russian Standard Time"
-msgstr ""
+msgstr "Russische Normalzeit"
 
 #: tzres.rc:175
 msgid "Russian Daylight Time"
-msgstr ""
+msgstr "Russische Sommerzeit"
 
 #: tzres.rc:172
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "Romanische Normalzeit"
 
 #: tzres.rc:173
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "Romanische Sommerzeit"
 
 #: tzres.rc:98
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "Jekaterinburg Normalzeit"
 
 #: tzres.rc:99
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "Jekaterinburg Sommerzeit"
 
 #: tzres.rc:192
 msgid "Syria Standard Time"
-msgstr ""
+msgstr "Syrien Normalzeit"
 
 #: tzres.rc:193
 msgid "Syria Daylight Time"
-msgstr ""
+msgstr "Syrien Sommerzeit"
 
 #: tzres.rc:44
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "Zentralaustralische Normalzeit"
 
 #: tzres.rc:45
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "Zentralaustralische Sommerzeit"
 
 #: tzres.rc:110
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "Westafrikanische Normalzeit"
 
 #: tzres.rc:111
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "Westafrikanische Sommerzeit"
 
 #: tzres.rc:204
 msgid "Ulaanbaatar Standard Time"
-msgstr ""
+msgstr "Ulan-Bator Normalzeit"
 
 #: tzres.rc:205
 msgid "Ulaanbaatar Daylight Time"
-msgstr ""
+msgstr "Ulan-Bator Sommerzeit"
 
 #: tzres.rc:120
 msgid "Israel Standard Time"
-msgstr ""
+msgstr "Israel Normalzeit"
 
 #: tzres.rc:121
 msgid "Israel Daylight Time"
-msgstr ""
+msgstr "Israel Sommerzeit"
 
 #: tzres.rc:54
 msgid "Bangladesh Standard Time"
-msgstr ""
+msgstr "Bangladesch Normalzeit"
 
 #: tzres.rc:55
 msgid "Bangladesh Daylight Time"
-msgstr ""
+msgstr "Bangladesch Sommerzeit"
 
 #: tzres.rc:178
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "Westl. Südamerika Normalzeit"
 
 #: tzres.rc:179
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "Westl. Südamerika Sommerzeit"
 
 #: tzres.rc:222
 msgid "West Asia Standard Time"
-msgstr ""
+msgstr "Westasien Normalzeit"
 
 #: tzres.rc:223
 msgid "West Asia Daylight Time"
-msgstr ""
+msgstr "Westasien Sommerzeit"
 
 #: tzres.rc:32
 msgid "Alaskan Standard Time"
-msgstr ""
+msgstr "Alaska Normalzeit"
 
 #: tzres.rc:33
 msgid "Alaskan Daylight Time"
-msgstr ""
+msgstr "Alaska Sommerzeit"
 
 #: tzres.rc:170
 msgid "Paraguay Standard Time"
-msgstr ""
+msgstr "Paraguay Normalzeit"
 
 #: tzres.rc:171
 msgid "Paraguay Daylight Time"
-msgstr ""
+msgstr "Paraguay Sommerzeit"
 
 #: tzres.rc:84
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "Datum und Uhrzeit"
+msgstr "Datumsgrenze Normalzeit"
 
 #: tzres.rc:85
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Datumsgrenze Sommerzeit"
 
 #: tzres.rc:128
 msgid "Libya Standard Time"
-msgstr ""
+msgstr "Libyen Normalzeit"
 
 #: tzres.rc:129
 msgid "Libya Daylight Time"
-msgstr ""
+msgstr "Libyen Sommerzeit"
 
 #: tzres.rc:52
 msgid "Bahia Standard Time"
-msgstr ""
+msgstr "Bahia Normalzeit"
 
 #: tzres.rc:53
 msgid "Bahia Daylight Time"
-msgstr ""
+msgstr "Bahia Sommerzeit"
 
 #: tzres.rc:212
 msgid "Venezuela Standard Time"
-msgstr ""
+msgstr "Venezuela Normalzeit"
 
 #: tzres.rc:213
 msgid "Venezuela Daylight Time"
-msgstr ""
+msgstr "Venezuela Sommerzeit"
 
 #: tzres.rc:114
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "Hawaii Normalzeit"
 
 #: tzres.rc:115
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "Hawaii Sommerzeit"
 
 #: tzres.rc:184
 msgid "SE Asia Standard Time"
-msgstr ""
+msgstr "Südostasiatische Normalzeit"
 
 #: tzres.rc:185
 msgid "SE Asia Daylight Time"
-msgstr ""
+msgstr "Südostasiatische Sommerzeit"
 
 #: tzres.rc:154
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "Neuseeland Normalzeit"
 
 #: tzres.rc:155
 msgid "New Zealand Daylight Time"
-msgstr ""
+msgstr "Neuseeland Sommerzeit"
 
 #: tzres.rc:70
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "Zentalbrasilianische Normalzeit"
 
 #: tzres.rc:71
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "Zentalbrasilianische Sommerzeit"
 
 #: tzres.rc:56
 msgid "Belarus Standard Time"
-msgstr ""
+msgstr "Belarus Normalzeit"
 
 #: tzres.rc:57
 msgid "Belarus Daylight Time"
-msgstr ""
+msgstr "Belarus Sommerzeit"
 
 #: tzres.rc:180
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "Mittl. Südamerika Normalzeit"
 
 #: tzres.rc:181
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "Mittl. Südamerika Sommerzeit"
 
 #: tzres.rc:108
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "Grönland Normalzeit"
 
 #: tzres.rc:109
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "Grönland Sommerzeit"
 
 #: tzres.rc:92
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "Datum und Uhrzeit"
+msgstr "Osterinsel Normalzeit"
 
 #: tzres.rc:93
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "Datum und Uhrzeit"
+msgstr "Osterinsel Sommerzeit"
 
 #: tzres.rc:96
 msgid "Egypt Standard Time"
-msgstr ""
+msgstr "Ägypten Normalzeit"
 
 #: tzres.rc:97
 msgid "Egypt Daylight Time"
-msgstr ""
+msgstr "Ägypten Sommerzeit"
 
 #: tzres.rc:134
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "Mauritius Normalzeit"
 
 #: tzres.rc:135
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "Mauritius Sommerzeit"
 
 #: tzres.rc:214
 msgid "Vladivostok Standard Time"
-msgstr ""
+msgstr "Wladiwostok Normalzeit"
 
 #: tzres.rc:215
 msgid "Vladivostok Daylight Time"
-msgstr ""
+msgstr "Wladiwostok Sommerzeit"
 
 #: tzres.rc:186
 msgid "Singapore Standard Time"
-msgstr ""
+msgstr "Singapur Normalzeit"
 
 #: tzres.rc:187
 msgid "Singapore Daylight Time"
-msgstr ""
+msgstr "Singapur Sommerzeit"
 
 #: tzres.rc:126
 msgid "Korea Standard Time"
-msgstr ""
+msgstr "Koreanische Normalzeit"
 
 #: tzres.rc:127
 msgid "Korea Daylight Time"
-msgstr ""
+msgstr "Koreanische Sommerzeit"
 
 #: tzres.rc:86
 msgid "E. Africa Standard Time"
-msgstr ""
+msgstr "Ostafrikanische Normalzeit"
 
 #: tzres.rc:87
 msgid "E. Africa Daylight Time"
-msgstr ""
+msgstr "Ostafrikanische Sommerzeit"
 
 #: tzres.rc:102
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "&Standard"
+msgstr "Osteuropäische Zeit"
 
 #: tzres.rc:103
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "Osteuropäische Sommerzeit"
 
 #: tzres.rc:90
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "Östl. Südamerika Normalzeit"
 
 #: tzres.rc:91
 msgid "E. South America Daylight Time"
-msgstr ""
+msgstr "Östl. Südamerika Sommerzeit"
 
 #: tzres.rc:76
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "Zentralpazifische Normalzeit"
 
 #: tzres.rc:77
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "Zentralpazifische Sommerzeit"
 
 #: tzres.rc:218
 msgid "W. Central Africa Standard Time"
-msgstr ""
+msgstr "West-Zentralafrika Normalzeit"
 
 #: tzres.rc:219
 msgid "W. Central Africa Daylight Time"
-msgstr ""
+msgstr "West-Zentralafrika Sommerzeit"
 
 #: tzres.rc:162
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "Chilenische Normalzeit"
 
 #: tzres.rc:163
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "Chilenische Sommerzeit"
 
 #: tzres.rc:88
 msgid "E. Australia Standard Time"
-msgstr ""
+msgstr "Ostaustralische Normalzeit"
 
 #: tzres.rc:89
 msgid "E. Australia Daylight Time"
-msgstr ""
+msgstr "Ostaustralische Sommerzeit"
 
 #: tzres.rc:216
 msgid "W. Australia Standard Time"
-msgstr ""
+msgstr "Westaustralische Normalzeit"
 
 #: tzres.rc:217
 msgid "W. Australia Daylight Time"
-msgstr ""
+msgstr "Westaustralische Sommerzeit"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
