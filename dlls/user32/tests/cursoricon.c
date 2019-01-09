@@ -2755,17 +2755,19 @@ static COLORREF get_color_from_bits(const unsigned char *bits, const BITMAPINFO 
         unsigned int row, unsigned int column)
 {
     const BITMAPINFOHEADER *h = &bmi->bmiHeader;
+    unsigned int stride, shift, mask;
     const unsigned char *data;
-    unsigned int stride;
     RGBQUAD color;
 
-    ok(h->biBitCount == 1 || h->biBitCount >= 24, "Unsupported bit count %u.\n", h->biBitCount);
+    ok(h->biBitCount <= 8 || h->biBitCount >= 24, "Unsupported bit count %u.\n", h->biBitCount);
     stride = ((h->biBitCount * h->biWidth + 7) / 8 + 3) & ~3;
     data = bits + row * stride + column * h->biBitCount / 8;
     if (h->biBitCount >= 24)
         return RGB(data[2], data[1], data[0]);
 
-    color = bmi->bmiColors[!!(data[0] & (1u << (7 - (column % 8))))];
+    shift = 8 - h->biBitCount - (column * h->biBitCount) % 8;
+    mask = ~(~0u << h->biBitCount);
+    color = bmi->bmiColors[(data[0] >> shift) & mask];
     return RGB(color.rgbRed, color.rgbGreen, color.rgbBlue);
 }
 
@@ -2783,6 +2785,18 @@ static void test_CopyImage_StretchMode(void)
         0x3f, 0xff, 0x00,  0x3f, 0xff, 0x3f,  0x00, 0x00,
         0x3f, 0xff, 0x7f,  0x00, 0xff, 0x3f,  0x00, 0x00,
     };
+    static const unsigned char test_bits_8[] =
+    {
+        0x00, 0xff, 0x00, 0xff,
+        0x00, 0x00, 0x00, 0x00,
+        0xff, 0x55, 0x00, 0xff,
+        0x00, 0xff, 0xff, 0x00,
+    };
+    static const unsigned char expected_bits_8[] =
+    {
+        0xff, 0xff, 0x00, 0x00,
+        0x55, 0xff, 0x00, 0x00,
+    };
     static const unsigned char test_bits_1[] =
     {
         0x30, 0x0, 0x0, 0x0,
@@ -2795,6 +2809,12 @@ static void test_CopyImage_StretchMode(void)
         0x40, 0x0, 0x0, 0x0,
         0x0,  0x0, 0x0, 0x0,
     };
+    static const RGBQUAD colors_bits_1[] =
+    {
+        {0, 0, 0},
+        {0xff, 0xff, 0xff},
+    };
+    static RGBQUAD colors_bits_8[256];
 
     static const struct
     {
@@ -2802,19 +2822,25 @@ static void test_CopyImage_StretchMode(void)
         WORD bit_count;
         const unsigned char *test_bits, *expected_bits;
         size_t test_bits_size, result_bits_size;
+        const RGBQUAD *bmi_colors;
+        size_t bmi_colors_size;
         BOOL todo;
     }
     tests[] =
     {
         {4, 4, 2, 2, 24, test_bits_24, expected_bits_24,
-                sizeof(test_bits_24), sizeof(expected_bits_24), TRUE},
+                sizeof(test_bits_24), sizeof(expected_bits_24), NULL, 0, TRUE},
         {4, 4, 2, 2, 1, test_bits_1, expected_bits_1,
-                sizeof(test_bits_1), sizeof(expected_bits_1), FALSE},
+                sizeof(test_bits_1), sizeof(expected_bits_1), colors_bits_1,
+                sizeof(colors_bits_1), FALSE},
+        {4, 4, 2, 2, 8, test_bits_8, expected_bits_8,
+                sizeof(test_bits_8), sizeof(expected_bits_8), colors_bits_8,
+                sizeof(colors_bits_8), TRUE},
     };
 
     HBITMAP bitmap, bitmap_copy;
+    unsigned int row, column, i;
     unsigned char *result_bits;
-    unsigned int row, column;
     unsigned int test_index;
     unsigned char *bits;
     BITMAPINFO *bmi;
@@ -2825,14 +2851,19 @@ static void test_CopyImage_StretchMode(void)
     bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi->bmiHeader.biPlanes = 1;
     bmi->bmiHeader.biCompression = BI_RGB;
-    bmi->bmiColors[1].rgbRed = 0xff;
-    bmi->bmiColors[1].rgbGreen = 0xff;
-    bmi->bmiColors[1].rgbBlue = 0xff;
+
+    for (i = 0; i < 256; ++i)
+        colors_bits_8[i].rgbRed = colors_bits_8[i].rgbGreen = colors_bits_8[i].rgbBlue = i;
 
     hdc = GetDC(NULL);
 
     for (test_index = 0; test_index < ARRAY_SIZE(tests); ++test_index)
     {
+        if (tests[test_index].bmi_colors)
+            memcpy(bmi->bmiColors, tests[test_index].bmi_colors, tests[test_index].bmi_colors_size);
+        else
+            memset(bmi->bmiColors, 0, 256 * sizeof(RGBQUAD));
+
         bmi->bmiHeader.biWidth = tests[test_index].width;
         bmi->bmiHeader.biHeight = tests[test_index].height;
         bmi->bmiHeader.biBitCount = tests[test_index].bit_count;
