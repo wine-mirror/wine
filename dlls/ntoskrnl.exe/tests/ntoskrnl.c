@@ -155,12 +155,13 @@ static void main_test(void)
     GetTempFileNameW(temppathW, dokW, 0, pathW);
     pRtlDosPathNameToNtPathName_U( pathW, &pathU, NULL, NULL );
 
-    test_input = heap_alloc(sizeof(*test_input) + pathU.Length);
+    test_input = heap_alloc( offsetof( struct test_input, path[pathU.Length / sizeof(WCHAR)]) );
     test_input->running_under_wine = !strcmp(winetest_platform, "wine");
     test_input->winetest_report_success = winetest_report_success;
     test_input->winetest_debug = winetest_debug;
-    lstrcpynW(test_input->path, pathU.Buffer, pathU.Length);
-    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input, sizeof(*test_input) + pathU.Length,
+    memcpy(test_input->path, pathU.Buffer, pathU.Length + sizeof(WCHAR));
+    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input,
+                          offsetof( struct test_input, path[pathU.Length / sizeof(WCHAR)]),
                           &new_failures, sizeof(new_failures), &written, NULL);
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
     ok(written == sizeof(new_failures), "got size %x\n", written);
