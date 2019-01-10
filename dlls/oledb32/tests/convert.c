@@ -3612,6 +3612,7 @@ static void test_converttotimestamp(void)
                                        '.','0','1','7','0','0','0','0','0','0',0};
     DBTIMESTAMP ts = {2013, 5, 14, 2, 4, 12, 0};
     DBTIMESTAMP ts1 = {2013, 5, 14, 2, 4, 12, 17000000};
+    DATE date;
     DBTIMESTAMP dst;
     DBSTATUS dst_status;
     DBLENGTH dst_len;
@@ -3653,6 +3654,14 @@ static void test_converttotimestamp(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
     ok(dst_len == 77, "got %ld\n", dst_len);
+
+    dst_len = 0x1234;
+    date = 41408.086250;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DATE, DBTYPE_DBTIMESTAMP, 0, &dst_len, &date, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(!memcmp(&ts, &dst, sizeof(ts)), "Wrong timestamp\n");
 }
 
 static void test_converttoiunknown(void)
