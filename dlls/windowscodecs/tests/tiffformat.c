@@ -220,7 +220,7 @@ static struct tiff_resolution_image_data
     { 0x11, 0x22, 0x33, 0 }
 };
 
-static const struct
+static const struct tiff_24bpp_data
 {
     USHORT byte_order;
     USHORT version;
@@ -247,12 +247,12 @@ static const struct
         { 0x102, IFD_SHORT, 1, 8 }, /* BITSPERSAMPLE */
         { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
         { 0x106, IFD_SHORT, 1, 2 }, /* PHOTOMETRIC */
-        { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_1bpp_data, pixel_data) }, /* STRIPOFFSETS */
+        { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_24bpp_data, pixel_data) }, /* STRIPOFFSETS */
         { 0x115, IFD_SHORT, 1, 3 }, /* SAMPLESPERPIXEL */
         { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
-        { 0x117, IFD_LONG, 1, 1 }, /* STRIPBYTECOUNT */
-        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* XRESOLUTION */
-        { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* YRESOLUTION */
+        { 0x117, IFD_LONG, 1, 3 }, /* STRIPBYTECOUNT */
+        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_24bpp_data, res) }, /* XRESOLUTION */
+        { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_24bpp_data, res) }, /* YRESOLUTION */
         { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
     },
     0,
