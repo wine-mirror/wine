@@ -137,7 +137,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(IDirectSoundNotify *iface)
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundNotify(iface);
     ULONG ref = InterlockedIncrement(&This->refn);
 
-    TRACE("(%p) ref was %d\n", This, ref - 1);
+    TRACE("(%p) ref %d\n", This, ref);
 
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
@@ -150,7 +150,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(IDirectSoundNotify *iface)
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundNotify(iface);
     ULONG ref = InterlockedDecrement(&This->refn);
 
-    TRACE("(%p) ref was %d\n", This, ref + 1);
+    TRACE("(%p) ref %d\n", This, ref);
 
     if (!ref && !InterlockedDecrement(&This->numIfaces))
         capturebuffer_destroy(This);
@@ -263,7 +263,7 @@ static ULONG WINAPI IDirectSoundCaptureBufferImpl_AddRef(IDirectSoundCaptureBuff
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref was %d\n", This, ref - 1);
+    TRACE("(%p) ref %d\n", This, ref);
 
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
@@ -276,7 +276,7 @@ static ULONG WINAPI IDirectSoundCaptureBufferImpl_Release(IDirectSoundCaptureBuf
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref was %d\n", This, ref + 1);
+    TRACE("(%p) ref %d\n", This, ref);
 
     if (!ref && !InterlockedDecrement(&This->numIfaces))
         capturebuffer_destroy(This);
@@ -851,7 +851,7 @@ static ULONG DirectSoundCaptureDevice_Release(
     DirectSoundCaptureDevice * device)
 {
     ULONG ref = InterlockedDecrement(&(device->ref));
-    TRACE("(%p) ref was %d\n", device, ref + 1);
+    TRACE("(%p) ref %d\n", device, ref);
 
     if (!ref) {
         TRACE("deleting object\n");

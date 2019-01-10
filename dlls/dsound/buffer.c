@@ -60,7 +60,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(IDirectSoundNotify *iface)
     IDirectSoundBufferImpl *This = impl_from_IDirectSoundNotify(iface);
     ULONG ref = InterlockedIncrement(&This->refn);
 
-    TRACE("(%p) ref was %d\n", This, ref - 1);
+    TRACE("(%p) ref %d\n", This, ref);
 
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
@@ -73,7 +73,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(IDirectSoundNotify *iface)
     IDirectSoundBufferImpl *This = impl_from_IDirectSoundNotify(iface);
     ULONG ref = InterlockedDecrement(&This->refn);
 
-    TRACE("(%p) ref was %d\n", This, ref + 1);
+    TRACE("(%p) ref %d\n", This, ref);
 
     if (!ref && !InterlockedDecrement(&This->numIfaces))
         secondarybuffer_destroy(This);
@@ -344,7 +344,7 @@ static ULONG WINAPI IDirectSoundBufferImpl_AddRef(IDirectSoundBuffer8 *iface)
     IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref was %d\n", This, ref - 1);
+    TRACE("(%p) ref %d\n", This, ref);
 
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
@@ -361,7 +361,7 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(IDirectSoundBuffer8 *iface)
         ref = capped_refcount_dec(&This->ref);
         if(!ref)
             capped_refcount_dec(&This->numIfaces);
-        TRACE("(%p) ref is now: %d\n", This, ref);
+        TRACE("(%p) ref %d\n", This, ref);
         return ref;
     }
 
@@ -369,7 +369,7 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(IDirectSoundBuffer8 *iface)
     if (!ref && !InterlockedDecrement(&This->numIfaces))
             secondarybuffer_destroy(This);
 
-    TRACE("(%p) ref is now %d\n", This, ref);
+    TRACE("(%p) ref %d\n", This, ref);
 
     return ref;
 }
@@ -1237,7 +1237,7 @@ static ULONG WINAPI IKsPropertySetImpl_AddRef(IKsPropertySet *iface)
     IDirectSoundBufferImpl *This = impl_from_IKsPropertySet(iface);
     ULONG ref = InterlockedIncrement(&This->refiks);
 
-    TRACE("(%p) ref was %d\n", This, ref - 1);
+    TRACE("(%p) ref %d\n", This, ref);
 
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
@@ -1254,7 +1254,7 @@ static ULONG WINAPI IKsPropertySetImpl_Release(IKsPropertySet *iface)
         ref = capped_refcount_dec(&This->refiks);
         if(!ref)
             capped_refcount_dec(&This->numIfaces);
-        TRACE("(%p) ref is now: %d\n", This, ref);
+        TRACE("(%p) ref %d\n", This, ref);
         return ref;
     }
 
@@ -1262,7 +1262,7 @@ static ULONG WINAPI IKsPropertySetImpl_Release(IKsPropertySet *iface)
     if (!ref && !InterlockedDecrement(&This->numIfaces))
         secondarybuffer_destroy(This);
 
-    TRACE("(%p) ref is now %d\n", This, ref);
+    TRACE("(%p) ref %d\n", This, ref);
 
     return ref;
 }

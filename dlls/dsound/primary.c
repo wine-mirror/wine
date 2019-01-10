@@ -675,7 +675,7 @@ static ULONG WINAPI PrimaryBufferImpl_AddRef(IDirectSoundBuffer8 *iface)
 {
     IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %d\n", This, ref - 1);
+    TRACE("(%p) ref %d\n", This, ref);
     if(ref == 1)
         InterlockedIncrement(&This->numIfaces);
     return ref;
@@ -704,7 +704,7 @@ static ULONG WINAPI PrimaryBufferImpl_Release(IDirectSoundBuffer8 *iface)
     if(!ref)
         capped_refcount_dec(&This->numIfaces);
 
-    TRACE("(%p) primary ref is now %d\n", This, ref);
+    TRACE("(%p) primary ref %d\n", This, ref);
 
     return ref;
 }
