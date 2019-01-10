@@ -239,10 +239,10 @@ static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
 #define check_rt_color(a, b) check_rt_color_(__LINE__, a, b)
 static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR expected_color)
 {
+    D3DCOLOR color = 0xdeadbeef;
     struct surface_readback rb;
     D3DSURFACE_DESC desc;
     unsigned int x, y;
-    D3DCOLOR color;
     HRESULT hr;
 
     hr = IDirect3DSurface9_GetDesc(rt, &desc);
@@ -261,7 +261,7 @@ static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR e
             break;
     }
     release_surface_readback(&rb);
-    ok_(__FILE__, line)(color == 0x000000ff, "Got unexpected color 0x%08x.\n", color);
+    ok_(__FILE__, line)(color == expected_color, "Got unexpected color 0x%08x.\n", color);
 }
 
 static IDirect3DDevice9 *create_device(IDirect3D9 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
@@ -1344,6 +1344,108 @@ static void clear_test(void)
     IDirect3DTexture9_Release(texture);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_clear_different_size_surfaces(void)
+{
+    IDirect3DSurface9 *ds, *rt, *rt2;
+    IDirect3DDevice9 *device;
+    D3DFORMAT ds_format;
+    D3DLOCKED_RECT lr;
+    unsigned int x, y;
+    D3DVIEWPORT9 vp;
+    IDirect3D9 *d3d;
+    D3DCAPS9 caps;
+    WORD *depth;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create D3D device.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "Failed to get device caps, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 1, 1, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &rt, NULL);
+    ok(hr == D3D_OK, "Failed to create render target surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 1, 2, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &rt2, NULL);
+    ok(hr == D3D_OK, "Failed to create render target surface, hr %#x.\n", hr);
+
+    if (SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_A8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, D3DFMT_D16_LOCKABLE)))
+    {
+        ds_format = D3DFMT_D16_LOCKABLE;
+    }
+    else
+    {
+        ds_format = D3DFMT_D24S8;
+    }
+
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 4, 4, ds_format,
+            D3DMULTISAMPLE_NONE, 0, FALSE, &ds, NULL);
+    ok(hr == D3D_OK, "Failed to create depth surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(hr == D3D_OK, "Failed to set depth stencil surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(hr == D3D_OK, "Failed to set render target, hr %#x.\n", hr);
+    if (caps.NumSimultaneousRTs >= 2)
+    {
+        hr = IDirect3DDevice9_SetRenderTarget(device, 1, rt2);
+        ok(hr == D3D_OK, "Failed to set render target, hr %#x.\n", hr);
+    }
+
+    vp.X = 0;
+    vp.Y = 0;
+    vp.Width = 640;
+    vp.Height = 640;
+    vp.MinZ = 0.0f;
+    vp.MaxZ = 1.0f;
+    hr = IDirect3DDevice9_SetViewport(device, &vp);
+    ok(hr == D3D_OK, "Failed to set viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 0.5f, 0);
+    ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+
+    check_rt_color(rt, 0x00ff0000);
+
+    if (caps.NumSimultaneousRTs >= 2)
+        check_rt_color(rt2, 0x00ff0000);
+
+    if (ds_format == D3DFMT_D16_LOCKABLE)
+    {
+        hr = IDirect3DSurface9_LockRect(ds, &lr, NULL, D3DLOCK_READONLY);
+        ok(hr == D3D_OK, "Failed to lock rect, hr %#x.\n", hr);
+        for (y = 0; y < 4; ++y)
+        {
+            depth = (WORD *)((BYTE *)lr.pBits + y * lr.Pitch);
+            for (x = 0; x < 4; ++x)
+            {
+                ok(abs(depth[x] - 0x7fff) <= 2, "Got depth 0x%04x at %u, %u.\n", depth[x], x, y);
+            }
+        }
+        hr = IDirect3DSurface9_UnlockRect(ds);
+        ok(hr == D3D_OK, "Failed to unlock rect, hr %#x.\n", hr);
+        IDirect3DSurface9_Release(ds);
+    }
+    else
+    {
+        skip("D3DFMT_D16_LOCKABLE is not supported.\n");
+    }
+
+    IDirect3DSurface9_Release(rt);
+    IDirect3DSurface9_Release(rt2);
 done:
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
@@ -24465,6 +24567,7 @@ START_TEST(visual)
     lighting_test();
     test_specular_lighting();
     clear_test();
+    test_clear_different_size_surfaces();
     color_fill_test();
     fog_test();
     test_cube_wrap();
