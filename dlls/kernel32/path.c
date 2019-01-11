@@ -1418,8 +1418,9 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
             NtClose( source_handle );
             RtlFreeAnsiString( &source_unix );
             RtlFreeAnsiString( &dest_unix );
-            if (!CopyFileExW( source, dest, fnProgress,
-                              param, NULL, COPY_FILE_FAIL_IF_EXISTS ))
+            if (!CopyFileExW( source, dest, fnProgress, param, NULL,
+                              flag & MOVEFILE_REPLACE_EXISTING ?
+                              0 : COPY_FILE_FAIL_IF_EXISTS ))
                 return FALSE;
             return DeleteFileW( source );
         }
