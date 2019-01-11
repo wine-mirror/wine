@@ -1392,6 +1392,7 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
         }
 
         NtClose( dest_handle );
+        dest_handle = NULL;
     }
     else if (status != STATUS_OBJECT_NAME_NOT_FOUND)
     {
