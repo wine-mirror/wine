@@ -1882,7 +1882,7 @@ if (0) { /* crashes */
         path2 = NULL;
         hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_SIMPLE_IDLIST, NULL, &path2);
         ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
-        ok(path != NULL, "expected path != NULL\n");
+        ok(path2 != NULL, "expected path != NULL\n");
         ok(!lstrcmpiW(path, path2), "expected equal paths: %s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(path2));
         CoTaskMemFree(path2);
 
