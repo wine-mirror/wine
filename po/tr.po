@@ -132,7 +132,7 @@ msgstr ""
 "\n"
 "Not: kendi dağıtımınızın paketlerini kullanmanız önerilir. Ayrıntılar için "
 "<a href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> "
-"adresine gidin."
+"adresini ziyaret edin."
 
 #: appwiz.rc:109 appwiz.rc:124
 msgid "&Install"
@@ -178,7 +178,7 @@ msgstr ""
 "\n"
 "Not: kendi dağıtımınızın paketlerini kullanmanız önerilir. Ayrıntılar için "
 "<a href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> "
-"adresine gidin."
+"adresini ziyaret edin."
 
 #: appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -271,7 +271,7 @@ msgstr "&Her şu değerde yenile"
 
 #: avifil32.rc:51 msvfw32.rc:51
 msgid "frames"
-msgstr "kareler"
+msgstr "kare"
 
 #: avifil32.rc:52
 msgid "Current format:"
@@ -311,25 +311,23 @@ msgstr "İptal ediliyor..."
 
 #: browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "%1!u! %2 kaldı"
 
 #: browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "%1!u! %2 ve %3!u! %4 kaldı"
 
 #: browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Saniyeler"
+msgstr "saniye"
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "dakika"
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "saat"
 
 #: comctl32.rc:68 winefile.rc:157
 msgid "Properties for %s"
@@ -428,16 +426,12 @@ msgid "&Retry"
 msgstr "&Yeniden Dene"
 
 #: comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "Sekmeleri &Gizle"
+msgstr "Ayrıntıları gizle"
 
 #: comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
-msgstr "Ayrıntılar"
+msgstr "Ayrıntıları gör"
 
 #: comctl32.rc:31 cryptui.rc:235 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
@@ -1758,7 +1752,7 @@ msgstr "OEM Windows Sistem Bileşen Doğrulama"
 
 #: crypt32.rc:152 cryptui.rc:136
 msgid "Embedded Windows System Component Verification"
-msgstr "Gömülü Windows Sistemi Bileşen Doğrulaması"
+msgstr "Gömülü Windows Sistem Bileşen Doğrulaması"
 
 #: crypt32.rc:153 cryptui.rc:143
 msgid "Key Pack Licenses"
@@ -2169,7 +2163,7 @@ msgstr "Daha Fazla B&ilgi"
 
 #: cryptui.rc:244
 msgid "&Friendly name:"
-msgstr "&Dosya isim:"
+msgstr "&Kolayca hatırlanabilir isim:"
 
 #: cryptui.rc:246 progman.rc:154 progman.rc:170
 msgid "&Description:"
@@ -2450,16 +2444,12 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "Sertifika Dışa Aktarım Sihirbazını başarıyla tamamladınız."
 
 #: cryptui.rc:456 cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Sertifika Deposunu Seç"
+msgstr "Sertifikayı Seç"
 
 #: cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Kullanmak istediğiniz sertifika deposunu seçin:"
+msgstr "Kullanmak istediğiniz sertifikayı seçin"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2991,24 +2981,20 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Not: Bu sertifika için özel anahtar aktarılamaz."
 
 #: cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "İste&nen amaç:"
+msgstr "İstenen Kullanım:"
 
 #: cryptui.rc:178 shell32.rc:152
 msgid "Location"
 msgstr "Konum"
 
 #: cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Sertifika Deposunu Seç"
+msgstr "Bir sertifika seç"
 
 #: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
-msgstr "Henüz tamamlanmadı"
+msgstr "Henüz eklenmedi/tamamlanmadı"
 
 #: dinput.rc:34
 msgid "Configure Devices"
@@ -3455,7 +3441,7 @@ msgid ""
 "List of websites you have accessed."
 msgstr ""
 "Geçmiş\n"
-"Eriştiğiniz web sitelerini listeler."
+"Eriştiğiniz web sitelerinin listesi."
 
 #: inetcpl.rc:77
 msgid ""
@@ -3498,46 +3484,36 @@ msgid "Publishers..."
 msgstr "Yayımcılar..."
 
 #: inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "LAN Bağlantısı"
+msgstr "Bağlantılar"
 
 #: inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Wine yapılandırması"
+msgstr "Otomatik yapılandırma"
 
 #: inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Web Vekil Sunucu Otomatik Bulma (WPAD) kullan"
 
 #: inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Vekil Sunucu Otomatik Yapılandırma betiği (PAC) kullan"
 
 #: inetcpl.rc:128 inetcpl.rc:132
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Adres"
+msgstr "Adres:"
 
 #: inetcpl.rc:130
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "&Yerel sunucu"
+msgstr "Vekil sunucu"
 
 #: inetcpl.rc:131
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Bir vekil sunucu kullan"
 
 #: inetcpl.rc:134
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Giriş Yok"
+msgstr "Port:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -3600,8 +3576,8 @@ msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
-"Bir aygıtı etkinleştirdiğinizde veya kapattığınızda, bu uygulamacığı yeniden "
-"başlatana kadar bağlı oyun kolları burada güncellenmeyecektir."
+"Bir aygıtı etkinleştirdiğinizde veya kapattığınızda, siz bu ayarlara yeniden "
+"girene kadar bağlı oyun kolları burada güncellenmeyecektir."
 
 #: joy.rc:50
 msgid "Test Joystick"
@@ -3800,18 +3776,20 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
+"Nesne açıklayıcısındaki 'yazılabilir' özelliği bu nesnede 'doğru' olarak "
+"ayarlananmıyor"
 
 #: jscript.rc:70
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "'|' yapılandırılamayan nesnesi yeniden tanımlanamıyor"
 
 #: jscript.rc:71
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "'|' yazılamayan nesnesi değiştirilemiyor"
 
 #: jscript.rc:72
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "Nesnenin erişimcisi ve değeri birden olamaz"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -6782,10 +6760,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Bağlantı eş tarafından sıfırlandı.\n"
 
 #: winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "0x%1 iletisi %2 dosyasında bulunamadı.\n"
+msgstr "Dosyada imza bulunamadı.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -8624,10 +8600,8 @@ msgid "&Browse..."
 msgstr "&Gözat..."
 
 #: shell32.rc:355 shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Dosya türü"
+msgstr "Dosya türü:"
 
 #: shell32.rc:359 shell32.rc:392 urlmon.rc:37 explorer.rc:32
 msgid "Location:"
@@ -8638,16 +8612,12 @@ msgid "Size:"
 msgstr "Boyut:"
 
 #: shell32.rc:365 shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Oluşturma tarihi"
+msgstr "Oluşturma tarihi:"
 
 #: shell32.rc:369 shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Öznitelikler:"
+msgstr "Öznitelikler:"
 
 #: shell32.rc:371 shell32.rc:408 winefile.rc:174
 msgid "H&idden"
@@ -8658,28 +8628,20 @@ msgid "&Archive"
 msgstr "&Arşiv"
 
 #: shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Aç:"
+msgstr "Birlikte aç:"
 
 #: shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "Simge &değiştir..."
+msgstr "&Değiştir..."
 
 #: shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Düzenlenme"
+msgstr "Son değişiklik:"
 
 #: shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Son Değişiklik:"
+msgstr "Son erişim:"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -8976,11 +8938,11 @@ msgstr "Wine Denetim Masası"
 
 #: shell32.rc:195
 msgid "Unable to display Run dialog box (internal error)"
-msgstr "Çalıştır iletişim kutusu görüntülenemedi (dahili hata)"
+msgstr "Çalıştır iletişim kutusu görüntülenemedi (iç hata)"
 
 #: shell32.rc:196
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr "Gözat iletişim kutusu görüntülenemedi (dahili hata)"
+msgstr "Gözat iletişim kutusu görüntülenemedi (iç hata)"
 
 #: shell32.rc:198
 msgid "Executable files (*.exe)"
@@ -9097,811 +9059,791 @@ msgstr "Kaynak Seç"
 
 #: tzres.rc:82
 msgid "China Standard Time"
-msgstr ""
+msgstr "Çin Standart Saati"
 
 #: tzres.rc:83
 msgid "China Daylight Time"
-msgstr ""
+msgstr "Çin Yaz Saati"
 
 #: tzres.rc:160
 msgid "North Asia Standard Time"
-msgstr ""
+msgstr "Kuzey Asya Standart Saati"
 
 #: tzres.rc:161
 msgid "North Asia Daylight Time"
-msgstr ""
+msgstr "Kuzey Asya Yaz Saati"
 
 #: tzres.rc:104
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "Gürcistan Standart Saati"
 
 #: tzres.rc:105
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "Gürcistan Yaz Saati"
 
 #: tzres.rc:152
 msgid "Nepal Standard Time"
-msgstr ""
+msgstr "Nepal Standart Saati"
 
 #: tzres.rc:153
 msgid "Nepal Daylight Time"
-msgstr ""
+msgstr "Nepal Yaz Saati"
 
 #: tzres.rc:60
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "Yeşil Burun Adaları Standart Saati"
 
 #: tzres.rc:61
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "Yeşil Burun Adaları Yaz Saati"
 
 #: tzres.rc:74
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Standard Time"
-msgstr "Orta Avrupa"
+msgstr "Orta Avrupa Standart Saati"
 
 #: tzres.rc:75
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "Orta Avrupa"
+msgstr "Orta Avrupa Yaz Saati"
 
 #: tzres.rc:140
 msgid "Morocco Standard Time"
-msgstr ""
+msgstr "Fas Standart Saati"
 
 #: tzres.rc:141
 msgid "Morocco Daylight Time"
-msgstr ""
+msgstr "Fas Yaz Saati"
 
 #: tzres.rc:72
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Standard Time"
-msgstr "Orta Avrupa"
+msgstr "Orta Avrupa Standart Saati"
 
 #: tzres.rc:73
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "Orta Avrupa"
+msgstr "Orta Avrupa Yaz Saati"
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
-msgstr ""
+msgstr "İran Standart Saati"
 
 #: tzres.rc:119
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "İran Yaz Saati"
 
 #: tzres.rc:150
 msgid "Namibia Standard Time"
-msgstr ""
+msgstr "Namibya Standart Saati"
 
 #: tzres.rc:151
 msgid "Namibia Daylight Time"
-msgstr ""
+msgstr "Namibya Yaz Saati"
 
 #: tzres.rc:200
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "Tonga Standart Saati"
 
 #: tzres.rc:201
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "Tonga Yaz Saati"
 
 #: tzres.rc:144
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "Dağ Standart Saati (Meksika)"
 
 #: tzres.rc:145
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "Dağ Yaz Saati (Meksika)"
 
 #: tzres.rc:106
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "&Standart çubuk"
+msgstr "GMT Standart Saati"
 
 #: tzres.rc:107
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "GMT Yaz Saati"
 
 #: tzres.rc:68
 msgid "Central Asia Standard Time"
-msgstr ""
+msgstr "Orta Asya Standart Saati"
 
 #: tzres.rc:69
 msgid "Central Asia Daylight Time"
-msgstr ""
+msgstr "Orta Asya Yaz Saati"
 
 #: tzres.rc:38
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "Arabistan Standart Saati"
 
 #: tzres.rc:39
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "Arabistan Yaz Saati"
 
 #: tzres.rc:132
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "Magadan Standart Saati"
 
 #: tzres.rc:133
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "Magadan Yaz Saati"
 
 #: tzres.rc:156
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "Newfoundland Standart Saati"
 
 #: tzres.rc:157
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "Newfoundland Yaz Saati"
 
 #: tzres.rc:224
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "Batı Pasifik Standart Saati"
 
 #: tzres.rc:225
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "Batı Pasifik Yaz Saati"
 
 #: tzres.rc:164
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Pasifik Standart Saati"
 
 #: tzres.rc:165
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "Pasifik Yaz Saati"
 
 #: tzres.rc:48
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "Azerbaycan Standart Saati"
 
 #: tzres.rc:49
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "Azerbaycan Yaz Saati"
 
 #: tzres.rc:182
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "Samoa Standart Saati"
 
 #: tzres.rc:183
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "Samoa Yaz Saati"
 
 #: tzres.rc:124
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "Kaliningrad Standart Saati"
 
 #: tzres.rc:125
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "Kaliningrad Yaz Saati"
 
 #: tzres.rc:166
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "Pasifik Standart Saati (Meksika)"
 
 #: tzres.rc:167
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "Pasifik Yaz Saati (Meksika)"
 
 #: tzres.rc:136
 msgid "Middle East Standard Time"
-msgstr ""
+msgstr "Ortadoğu Standart Saati"
 
 #: tzres.rc:137
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "Ortadoğu Yaz Saati"
 
 #: tzres.rc:198
 msgid "Tokyo Standard Time"
-msgstr ""
+msgstr "Tokyo Standart Saati"
 
 #: tzres.rc:199
 msgid "Tokyo Daylight Time"
-msgstr ""
+msgstr "Tokyo Yaz Saati"
 
 #: tzres.rc:130
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "Line Adaları Standart Saati"
 
 #: tzres.rc:131
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "Line Adaları Yaz Saati"
 
 #: tzres.rc:122
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "Ürdün Standart Saati"
 
 #: tzres.rc:123
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "Ürdün Yaz Saati"
 
 #: tzres.rc:78
 msgid "Central Standard Time"
-msgstr ""
+msgstr "Orta Amerika Standart Time"
 
 #: tzres.rc:79
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "Orta Amerika Yaz Saati"
 
 #: tzres.rc:50
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "Azor Adaları Standart Saati"
 
 #: tzres.rc:51
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "Azor Adaları Yaz Saati"
 
 #: tzres.rc:158
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "Kuzey Asya Doğu Standart Saati"
 
 #: tzres.rc:159
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "Kuzey Asya Doğu Yaz Saati"
 
 #: tzres.rc:40
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "Arjantin Standart Saati"
 
 #: tzres.rc:41
 msgid "Argentina Daylight Time"
-msgstr ""
+msgstr "Arjantin Yaz Saati"
 
 #: tzres.rc:146
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "Myanmar Standart Saati"
 
 #: tzres.rc:147
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "Myanmar Yaz Saati"
 
 #: tzres.rc:210 tzres.rc:211
 msgid "Coordinated Universal Time"
-msgstr ""
+msgstr "Eşgüdümlü Evrensel Saat"
 
 #: tzres.rc:116
 msgid "India Standard Time"
-msgstr ""
+msgstr "Hindistan Standart Saati"
 
 #: tzres.rc:117
 msgid "India Daylight Time"
-msgstr ""
+msgstr "Hindistan Yaz Saati"
 
 #: tzres.rc:112
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "&Standart çubuk"
+msgstr "GTB Standart Saati"
 
 #: tzres.rc:113
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "GTB Yaz Saati"
 
 #: tzres.rc:202
 msgid "Turkey Standard Time"
-msgstr ""
+msgstr "Türkiye Standart Saati"
 
 #: tzres.rc:203
 msgid "Turkey Daylight Time"
-msgstr ""
+msgstr "Türkiye Yaz Saati"
 
 #: tzres.rc:100
 msgid "Fiji Standard Time"
-msgstr ""
+msgstr "Fiji Standart Saati"
 
 #: tzres.rc:101
 msgid "Fiji Daylight Time"
-msgstr ""
+msgstr "Fiji Yaz Saati"
 
 #: tzres.rc:58
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "Orta Kanada Standart Saati"
 
 #: tzres.rc:59
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "Orta Kanada Yaz Saati"
 
 #: tzres.rc:194
 msgid "Taipei Standard Time"
-msgstr ""
+msgstr "Taipei Standart Saati"
 
 #: tzres.rc:195
 msgid "Taipei Daylight Time"
-msgstr ""
+msgstr "Taipei Yaz Saati"
 
 #: tzres.rc:220
 msgid "W. Europe Standard Time"
-msgstr ""
+msgstr "Batı Avrupa Standart Saati"
 
 #: tzres.rc:221
 msgid "W. Europe Daylight Time"
-msgstr ""
+msgstr "Batı Avrupa Yaz Saati"
 
 #: tzres.rc:138
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "Montevideo Standart Saati"
 
 #: tzres.rc:139
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "Montevideo Yaz Saati"
 
 #: tzres.rc:168
 msgid "Pakistan Standard Time"
-msgstr ""
+msgstr "Pakistan Standart Saati"
 
 #: tzres.rc:169
 msgid "Pakistan Daylight Time"
-msgstr ""
+msgstr "Pakistan Yaz Saati"
 
 #: tzres.rc:62
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "Kafkasya Standart Saati"
 
 #: tzres.rc:63
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "Kanarya Yaz Saati"
 
 #: tzres.rc:46
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "Doğu Avustralya Standart Saati"
 
 #: tzres.rc:47
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "Doğu Avustralya Yaz Saati"
 
 #: tzres.rc:148
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "Kuzey Orta Asya Standart Saati"
 
 #: tzres.rc:149
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "Kuzey Orta Asya Yaz Saati"
 
 #: tzres.rc:94
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Doğu Amerika Standart Saati"
 
 #: tzres.rc:95
 msgid "Eastern Daylight Time"
-msgstr ""
+msgstr "Doğu Amerika Yaz Saati"
 
 #: tzres.rc:80
 msgid "Central Standard Time (Mexico)"
-msgstr ""
+msgstr "Orta Amerika Standart Saati (Meksika)"
 
 #: tzres.rc:81
 msgid "Central Daylight Time (Mexico)"
-msgstr ""
+msgstr "Orta Amerika Yaz Saati (Meksika)"
 
 #: tzres.rc:42
 msgid "Atlantic Standard Time"
-msgstr ""
+msgstr "Atlas Okyanusu Standart Saati"
 
 #: tzres.rc:43
 msgid "Atlantic Daylight Time"
-msgstr ""
+msgstr "Atlas Okyanusu Yaz Saati"
 
 #: tzres.rc:142
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "Dağlık Amerika Standart Saati"
 
 #: tzres.rc:143
 msgid "Mountain Daylight Time"
-msgstr ""
+msgstr "Dağlık Amerika Yaz Saati"
 
 #: tzres.rc:206
 msgid "US Eastern Standard Time"
-msgstr ""
+msgstr "Doğu Amerika Standart Saati"
 
 #: tzres.rc:207
 msgid "US Eastern Daylight Time"
-msgstr ""
+msgstr "Doğu Amerika Yaz Saati"
 
 #: tzres.rc:196
 msgid "Tasmania Standard Time"
-msgstr ""
+msgstr "Tazmanya Standart Saati"
 
 #: tzres.rc:197
 msgid "Tasmania Daylight Time"
-msgstr ""
+msgstr "Tazmanya Yaz Saati"
 
 #: tzres.rc:66
 msgid "Central America Standard Time"
-msgstr ""
+msgstr "Orta Amerika Standart Saati"
 
 #: tzres.rc:67
 msgid "Central America Daylight Time"
-msgstr ""
+msgstr "Orta Amerika Yaz Saati"
 
 #: tzres.rc:208
 msgid "US Mountain Standard Time"
-msgstr ""
+msgstr "Dağlık Amerika Standart Saati"
 
 #: tzres.rc:209
 msgid "US Mountain Daylight Time"
-msgstr ""
+msgstr "Dağlık Amerika Yaz Saati"
 
 #: tzres.rc:188
 msgid "South Africa Standard Time"
-msgstr ""
+msgstr "Güney Afrika Standart Saati"
 
 #: tzres.rc:189
 msgid "South Africa Daylight Time"
-msgstr ""
+msgstr "Güney Afrika Yaz Saati"
 
 #: tzres.rc:64
 msgid "Cen. Australia Standard Time"
-msgstr ""
+msgstr "Orta Avustralya Standart Saati"
 
 #: tzres.rc:65
 msgid "Cen. Australia Daylight Time"
-msgstr ""
+msgstr "Orta Avustralya Yaz Saati"
 
 #: tzres.rc:190
 msgid "Sri Lanka Standard Time"
-msgstr ""
+msgstr "Sri Lanka Standart Saati"
 
 #: tzres.rc:191
 msgid "Sri Lanka Daylight Time"
-msgstr ""
+msgstr "Sri Lanka Yaz Saati"
 
 #: tzres.rc:30
 msgid "Afghanistan Standard Time"
-msgstr ""
+msgstr "Afganistan Standart Saati"
 
 #: tzres.rc:31
 msgid "Afghanistan Daylight Time"
-msgstr ""
+msgstr "Afganistan Yaz Saati"
 
 #: tzres.rc:226
 msgid "Yakutsk Standard Time"
-msgstr ""
+msgstr "Yakutsk Standart Saati"
 
 #: tzres.rc:227
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "Yakutsk Yaz Saati"
 
 #: tzres.rc:176
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "Güney Amerika Doğu Standart Saati"
 
 #: tzres.rc:177
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "Güney Amerika Doğu Yaz Saati"
 
 #: tzres.rc:34
 msgid "Arab Standard Time"
-msgstr ""
+msgstr "Arap Standart Saati"
 
 #: tzres.rc:35
 msgid "Arab Daylight Time"
-msgstr ""
+msgstr "Arap Yaz Saati"
 
 #: tzres.rc:36
 msgid "Arabian Standard Time"
-msgstr ""
+msgstr "Arabistan Standart Saati"
 
 #: tzres.rc:37
 msgid "Arabian Daylight Time"
-msgstr ""
+msgstr "Arabistan Yaz Saati"
 
 #: tzres.rc:174
 msgid "Russian Standard Time"
-msgstr ""
+msgstr "Rusya Standart Saati"
 
 #: tzres.rc:175
 msgid "Russian Daylight Time"
-msgstr ""
+msgstr "Rusya Yaz Saati"
 
 #: tzres.rc:172
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "Romanya Standart Saati"
 
 #: tzres.rc:173
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "Romanya Yaz Saati"
 
 #: tzres.rc:98
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "Ekaterinburg Standart Saati"
 
 #: tzres.rc:99
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "Ekaterinburg Yaz Saati"
 
 #: tzres.rc:192
 msgid "Syria Standard Time"
-msgstr ""
+msgstr "Suriye Standart Saati"
 
 #: tzres.rc:193
 msgid "Syria Daylight Time"
-msgstr ""
+msgstr "Suriye Yaz Saati"
 
 #: tzres.rc:44
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "Orta Avustralya Standart Saati"
 
 #: tzres.rc:45
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "Orta Avustralya Yaz Saati"
 
 #: tzres.rc:110
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "Greenwich Standart Saati"
 
 #: tzres.rc:111
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "Greenwich Yaz Saati"
 
 #: tzres.rc:204
 msgid "Ulaanbaatar Standard Time"
-msgstr ""
+msgstr "Ulan Bator Standart Saati"
 
 #: tzres.rc:205
 msgid "Ulaanbaatar Daylight Time"
-msgstr ""
+msgstr "Ulan Bator Yaz Saati"
 
 #: tzres.rc:120
 msgid "Israel Standard Time"
-msgstr ""
+msgstr "İsrail Standart Saati"
 
 #: tzres.rc:121
 msgid "Israel Daylight Time"
-msgstr ""
+msgstr "İsrail Yaz Saati"
 
 #: tzres.rc:54
 msgid "Bangladesh Standard Time"
-msgstr ""
+msgstr "Bangladeş Standart Saati"
 
 #: tzres.rc:55
 msgid "Bangladesh Daylight Time"
-msgstr ""
+msgstr "Bangladeş Yaz Saati"
 
 #: tzres.rc:178
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "Güney Amerika Pasifik Standart Saati"
 
 #: tzres.rc:179
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "Güney Amerika Pasifik Yaz Saati"
 
 #: tzres.rc:222
 msgid "West Asia Standard Time"
-msgstr ""
+msgstr "Batı Asya Standart Saati"
 
 #: tzres.rc:223
 msgid "West Asia Daylight Time"
-msgstr ""
+msgstr "Batı Asya Yaz Saati"
 
 #: tzres.rc:32
 msgid "Alaskan Standard Time"
-msgstr ""
+msgstr "Alaska Standart Saati"
 
 #: tzres.rc:33
 msgid "Alaskan Daylight Time"
-msgstr ""
+msgstr "Alaska Yaz Saati"
 
 #: tzres.rc:170
 msgid "Paraguay Standard Time"
-msgstr ""
+msgstr "Paraguay Standart Saati"
 
 #: tzres.rc:171
 msgid "Paraguay Daylight Time"
-msgstr ""
+msgstr "Paraguay Yaz Saati"
 
 #: tzres.rc:84
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "Tarih ve saat"
+msgstr "Tarih Değiştirme Çizgisi Standart Saati"
 
 #: tzres.rc:85
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Tarih Değiştirme Çizgisi Yaz Saati"
 
 #: tzres.rc:128
 msgid "Libya Standard Time"
-msgstr ""
+msgstr "Libya Standart Saati"
 
 #: tzres.rc:129
 msgid "Libya Daylight Time"
-msgstr ""
+msgstr "Libya Yaz Saati"
 
 #: tzres.rc:52
 msgid "Bahia Standard Time"
-msgstr ""
+msgstr "Bahia Standart Saati"
 
 #: tzres.rc:53
 msgid "Bahia Daylight Time"
-msgstr ""
+msgstr "Bahia Yaz Saati"
 
 #: tzres.rc:212
 msgid "Venezuela Standard Time"
-msgstr ""
+msgstr "Venezuela Standart Saati"
 
 #: tzres.rc:213
 msgid "Venezuela Daylight Time"
-msgstr ""
+msgstr "Venezuela Yaz Saati"
 
 #: tzres.rc:114
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "Hawaii Standart Saati"
 
 #: tzres.rc:115
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "Hawaii Yaz Saati"
 
 #: tzres.rc:184
 msgid "SE Asia Standard Time"
-msgstr ""
+msgstr "Güneydoğu Asya Standart Saati"
 
 #: tzres.rc:185
 msgid "SE Asia Daylight Time"
-msgstr ""
+msgstr "Güneydoğu Asya Yaz Saati"
 
 #: tzres.rc:154
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "Yeni Zelanda Standart Saati"
 
 #: tzres.rc:155
 msgid "New Zealand Daylight Time"
-msgstr ""
+msgstr "Yeni Zelanda Yaz Saati"
 
 #: tzres.rc:70
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "Orta Brezilya Standart Saati"
 
 #: tzres.rc:71
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "Orta Brezilya Yaz Saati"
 
 #: tzres.rc:56
 msgid "Belarus Standard Time"
-msgstr ""
+msgstr "Belarus Standart Saati"
 
 #: tzres.rc:57
 msgid "Belarus Daylight Time"
-msgstr ""
+msgstr "Belarus Yaz Saati"
 
 #: tzres.rc:180
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "Güney Amerika Batı Standart Saati"
 
 #: tzres.rc:181
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "Güney Amerika Batı Yaz Saati"
 
 #: tzres.rc:108
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "Grönland Standart Saati"
 
 #: tzres.rc:109
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "Grönland Yaz Saati"
 
 #: tzres.rc:92
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "Tarih ve saat"
+msgstr "Paskalya Adası Standart Saati"
 
 #: tzres.rc:93
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "Tarih ve saat"
+msgstr "Paskalya Adası Yaz Saati"
 
 #: tzres.rc:96
 msgid "Egypt Standard Time"
-msgstr ""
+msgstr "Mısır Standart Saati"
 
 #: tzres.rc:97
 msgid "Egypt Daylight Time"
-msgstr ""
+msgstr "Mısır Yaz Saati"
 
 #: tzres.rc:134
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "Mauritius Standart Saati"
 
 #: tzres.rc:135
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "Mauritius Yaz Saati"
 
 #: tzres.rc:214
 msgid "Vladivostok Standard Time"
-msgstr ""
+msgstr "Vladivostok Standart Saati"
 
 #: tzres.rc:215
 msgid "Vladivostok Daylight Time"
-msgstr ""
+msgstr "Vladivostok Yaz Saati"
 
 #: tzres.rc:186
 msgid "Singapore Standard Time"
-msgstr ""
+msgstr "Singapur Standart Saati"
 
 #: tzres.rc:187
 msgid "Singapore Daylight Time"
-msgstr ""
+msgstr "Singapur Yaz Saati"
 
 #: tzres.rc:126
 msgid "Korea Standard Time"
-msgstr ""
+msgstr "Kore Standart Saati"
 
 #: tzres.rc:127
 msgid "Korea Daylight Time"
-msgstr ""
+msgstr "Kore Yaz Saati"
 
 #: tzres.rc:86
 msgid "E. Africa Standard Time"
-msgstr ""
+msgstr "Doğu Afrika Standart Saati"
 
 #: tzres.rc:87
 msgid "E. Africa Daylight Time"
-msgstr ""
+msgstr "Doğu Afrika Yaz Saati"
 
 #: tzres.rc:102
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "&Standart çubuk"
+msgstr "Finladiya-Litvanya-Estonya Standart Saati"
 
 #: tzres.rc:103
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "Finlandiya-Litvanya-Estonya Yaz Saati"
 
 #: tzres.rc:90
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "Güney Amerika Doğu Standart Saati"
 
 #: tzres.rc:91
 msgid "E. South America Daylight Time"
-msgstr ""
+msgstr "Güney Amerika Doğu Yaz Saati"
 
 #: tzres.rc:76
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "Orta Pasifik Standart Saati"
 
 #: tzres.rc:77
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "Orta Pasifik Yaz Saati"
 
 #: tzres.rc:218
 msgid "W. Central Africa Standard Time"
-msgstr ""
+msgstr "Orta Afrika Batı Standart Saati"
 
 #: tzres.rc:219
 msgid "W. Central Africa Daylight Time"
-msgstr ""
+msgstr "Orta Afrika Batı Yaz Saati"
 
 #: tzres.rc:162
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "Güney Amerika Pasifik Standart Saati"
 
 #: tzres.rc:163
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "Güney Amerika Batı Yaz Saati"
 
 #: tzres.rc:88
 msgid "E. Australia Standard Time"
-msgstr ""
+msgstr "Doğu Avustralya Standart Saati"
 
 #: tzres.rc:89
 msgid "E. Australia Daylight Time"
-msgstr ""
+msgstr "Doğu Avustralya Yaz Saati"
 
 #: tzres.rc:216
 msgid "W. Australia Standard Time"
-msgstr ""
+msgstr "Batı Avustralya Standart Saati"
 
 #: tzres.rc:217
 msgid "W. Australia Daylight Time"
-msgstr ""
+msgstr "Batı Avustralya Yaz Saati"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -10091,70 +10033,60 @@ msgid ""
 msgstr "Bu sertifika ile en az bir tane belirtilmemiş güvenlik problemi var."
 
 #: winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Hizmet isteği zaman aşımına uğradı.\n"
+msgstr "İstek zaman aşımına uğradı.\n"
 
 #: winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "Bir yazıcı hatası oluştu."
+msgstr "Bir iç hata oluştu.\n"
 
 #: winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Yol geçersiz.\n"
+msgstr "URL geçersiz.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "URL şeması tanınamadı veya desteklenmiyor.\n"
 
 #: winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "Kullanıcı adı bulunamadı.\n"
+msgstr "Sunucu adı çözülemedi.\n"
 
 #: winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "Kullanıcı profili geçersiz.\n"
+msgstr "İstenen işlem geçersiz.\n"
 
 #: winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"İşlem iptal edildi, bu durum genellikle isteğin çalıştığı işlemin, işlem "
+"bitmeden önce kapatılmasından kaynaklanır.\n"
 
 #: winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "Profil eklenemedi.\n"
+msgstr "İstenen nesne bulunamadı.\n"
 
 #: winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "LDAP sunucusuna bağlanamıyor"
+msgstr "Sunucuya bağlanma denemesi başarısız.\n"
 
 #: winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "Sunucuyla bağlantı sonlandırıldı.\n"
 
 #: winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"Sunucudan alınan SSL sertifika tarihi uygun değil. Sertifikanın süresi "
+"geçmiş.\n"
 
 #: winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "SSL sertifika ortak adı (sunucu adı) yanlış.\n"
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
@@ -11347,7 +11279,7 @@ msgstr ""
 "Aşağıdaki karakter dizeleri gösterilen özel anlamları içerir:\n"
 "\n"
 "$$    Dolar işareti       $_    Alt satır           $b    boru işareti (|)\n"
-"$d    Geçerli tarih       $e    Escape              $g    > işareti\n"
+"$d    Geçerli tarih       $e    Kaçış               $g    > işareti\n"
 "$l    < işareti           $n    Geçerli sürücü      $p    Geçerli yol\n"
 "$q    Eşittir işareti     $t    Geçerli saat        $v    cmd sürümü\n"
 "\n"
@@ -11476,7 +11408,7 @@ msgstr ""
 "/max            Programı ekranı kaplamış olarak başlatır.\n"
 "/low            Programı boşta öncelik sınıfı ile başlatır.\n"
 "/normal         Programı normal öncelik sınıfı ile başlatır.\n"
-"/high           Programı yüksek öncelik sınıfı ile başlat.\n"
+"/high           Programı yüksek öncelik sınıfı ile başlatır.\n"
 "/realtime       Programı gerçek zaman öncelik sınıfı ile başlatır.\n"
 "/abovenormal    Programı normal üstü öncelik sınıfı ile başlatır.\n"
 "/belownormal    Programı normal altı öncelik sınıfı ile başlatır.\n"
@@ -11964,10 +11896,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Hata: '%c' geçersiz seçenek.\n"
 
 #: hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Hata: \"%1\" işlemi bulunamıyor.\n"
+msgstr "Hata: Sunucu adı alınamadı: %u.\n"
 
 #: hostname.rc:33
 msgid ""
@@ -13767,10 +13697,8 @@ msgid "Confirm Value Delete"
 msgstr "Değer Silmeyi Onayla"
 
 #: regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry value '%1'?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "'%1' kayıt defteri değerini silmek istediğinizden emin misiniz?"
+msgstr "Seçilen kayıt defteri değerini silmek istediğinizden emin misiniz?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
@@ -14098,7 +14026,7 @@ msgstr "&Hata Ayıkla"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
-msgstr "&Önceliği Belirt"
+msgstr "&Önceliği Ayarla"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
@@ -15129,11 +15057,11 @@ msgstr "Re&nk:"
 
 #: winecfg.rc:304
 msgid "MIME types"
-msgstr ""
+msgstr "MIME türleri"
 
 #: winecfg.rc:305
 msgid "Manage file &associations"
-msgstr ""
+msgstr "&Dosya ilişkilendirmelerini düzenle"
 
 #: winecfg.rc:308
 msgid "Folders"
@@ -15719,9 +15647,9 @@ msgid ""
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
-"Bu, programdaki veya Wine'deki bir sorundan dolayı olabilir. Bu uygulamayı "
-"çalıştırma hakkında ipuçları için <a href=\"https://appdb.winehq.org"
-"\">Uygulama Veritabanı</a> sayfasını kontrol etmek isteyebilirsiniz."
+"Bu durum, programdaki veya Wine'deki bir sorundan dolayı olabilir. Bu "
+"uygulamayı çalıştırma hakkında ipuçları için <a href=\"https://appdb.winehq."
+"org\">Uygulama Veritabanı</a> sayfasını kontrol etmek isteyebilirsiniz."
 
 #: winedbg.rc:62
 msgid "Show &Details"
@@ -15738,7 +15666,7 @@ msgid ""
 "button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
-"Eğer bu problem Windows'ta yoksa ve henüz bildirilmemişse, \"Farklı Kaydet\" "
+"Eğer bu sorun Windows'ta yoksa ve henüz bildirilmemişse, \"Farklı Kaydet\" "
 "düğmesi kullanarak ayrıntılı bilgiyi bir dosyaya kaydedebilir; ardından bu "
 "dosyayı ekleyerek bir <a href=\"https://wiki.winehq.org/Bugs\">hata raporu</"
 "a> gönderebilirsiniz."
@@ -15748,6 +15676,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
+"Sisteminizdeki bir program çöktü, ancak WineDbg yığın izleme verisi almak "
+"için işleme bağlanamadı."
 
 #: winedbg.rc:41
 msgid "(unidentified)"
@@ -16048,7 +15978,7 @@ msgstr "Hiç kimse"
 
 #: winemine.rc:32
 msgid "Copyright 2000 Joshua Thielen"
-msgstr "Telif hakkı 2000, Joshua Thielen"
+msgstr "Telif hakkı 2000 Joshua Thielen"
 
 #: winhlp32.rc:35
 msgid "Printer &setup..."
@@ -16605,41 +16535,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -16701,8 +16596,10 @@ msgstr ""
 "[/H]  Kopyalarken gizli ve sistem dosyalarını da dahil eder.\n"
 "[/C]  Kopyalama sırasında bir hata oluşursa devam eder.\n"
 "[/A]  Sadece arşiv nitelikli dosyaları kopyalar.\n"
-"[/M]  Sadece arşiv nitelikli dosyaları kopyala, arşiv niteliklerini\n"
+"[/M]  Sadece arşiv nitelikli dosyaları kopyalar, arşiv niteliklerini\n"
 "\tkaldırır.\n"
+"[/K]  Dosya özniteliklerini kopyalar, bu seçenek olmadan\n"
+"\töznitelikler kopyalanmaz.\n"
 "[/D | /D:a-g-y] Belirtilen tarihten sonra düzenlenmiş yeni dosya\n"
 "\t\tve klasörleri kopyalar. Tarih belirtilmemişse, sadece hedef\n"
 "\t\tkaynaktan yeniyse kopyalar.\n"
