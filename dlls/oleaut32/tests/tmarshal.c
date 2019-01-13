@@ -38,6 +38,7 @@ static inline void release_iface_(unsigned int line, void *iface)
 {
     ULONG ref = IUnknown_Release((IUnknown *)iface);
     ok_(__FILE__, line)(!ref, "Got outstanding refcount %d.\n", ref);
+    if (ref == 1) IUnknown_Release((IUnknown *)iface);
 }
 #define release_iface(a) release_iface_(__LINE__, a)
 
@@ -2141,8 +2142,8 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     sfd1 = create_disp_obj();
     sfd2 = create_disp_obj();
     sfd3 = create_disp_obj();
-    hr = IWidget_iface_in(widget, (IUnknown *)create_disp_obj(),
-            (IDispatch *)create_disp_obj(), create_disp_obj());
+    hr = IWidget_iface_in(widget, (IUnknown *)sfd1,
+            (IDispatch *)sfd2, sfd3);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     release_iface(sfd1);
     release_iface(sfd2);
@@ -2329,9 +2330,10 @@ if (hr == S_OK) {
 
     release_iface(unk_out);
     release_iface(unk_in_out);
-    release_iface(sfd1);
-    release_iface(sfd3);
 }
+    release_iface(sfd1);
+todo_wine
+    release_iface(sfd3);
 
     testmode = 2;
     unk_in = unk_out = unk_in_out = NULL;
@@ -2471,22 +2473,24 @@ static void test_marshal_variant(IWidget *widget, IDispatch *disp)
 
 static void test_marshal_safearray(IWidget *widget, IDispatch *disp)
 {
-    SAFEARRAY *in, *out, *in_ptr, *in_out;
+    SAFEARRAY *in, *out, *out2, *in_ptr, *in_out;
     HRESULT hr;
 
     in = make_safearray(3);
-    out = make_safearray(5);
+    out = out2 = make_safearray(5);
     in_ptr = make_safearray(7);
     in_out = make_safearray(9);
     hr = IWidget_safearray(widget, in, &out, &in_ptr, &in_out);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_safearray(in, 3);
     check_safearray(out, 4);
+    check_safearray(out2, 5);
     check_safearray(in_ptr, 7);
     check_safearray(in_out, 6);
 
     SafeArrayDestroy(in);
     SafeArrayDestroy(out);
+    SafeArrayDestroy(out2);
     SafeArrayDestroy(in_ptr);
     SafeArrayDestroy(in_out);
 }
@@ -2629,6 +2633,7 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     release_iface(out);
     release_iface(in_out);
     release_iface(&class1->ICoclass1_iface);
+    release_iface(&class3->ICoclass1_iface);
 
     testmode = 2;
     in = out = in_out = NULL;
