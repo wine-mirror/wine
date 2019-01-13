@@ -329,11 +329,13 @@ static void test_save_task_curfile(ITask *task)
 
     hr = IPersistFile_Save(pfile, NULL, TRUE);
     ok(hr == S_OK, "Save error %#x\n", hr);
+    CoTaskMemFree(curfile);
 
     curfile = NULL;
     hr = IPersistFile_GetCurFile(pfile, &curfile);
     ok(hr == S_OK, "GetCurFile error %#x\n", hr);
     ok(curfile && curfile[0] , "curfile should not be NULL\n");
+    CoTaskMemFree(curfile);
 
     IPersistFile_Release(pfile);
 }
@@ -454,18 +456,21 @@ static void test_task_storage(void)
     curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
     ok(!lstrcmpW(curfile, task2_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
+    CoTaskMemFree(curfile);
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task3, (IScheduledWorkItem *)task);
     ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
     curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
     ok(!lstrcmpW(curfile, task3_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
+    CoTaskMemFree(curfile);
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
     ok(hr == S_OK, "AddWorkItem error %#x\n", hr);
     curfile = get_task_curfile(task, TRUE, FALSE, __LINE__);
     ok(file_exists(curfile), "curfile should exist\n");
     ok(!lstrcmpW(curfile, task1_full_name), "name is wrong %s\n", wine_dbgstr_w(curfile));
+    CoTaskMemFree(curfile);
 
     hr = ITaskScheduler_AddWorkItem(scheduler, Task1, (IScheduledWorkItem *)task);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "wrong error %#x\n", hr);

@@ -760,6 +760,7 @@ static void test_workitem_data(void)
     ok(count == sizeof(hello), "got %u\n", count);
     ok(data != NULL, "got NULL\n");
     ok(!memcmp(data, hello, sizeof(hello)), "data mismatch\n");
+    CoTaskMemFree(data);
 
     hr = ITask_SetWorkItemData(task, 0, NULL);
     ok(hr == S_OK, "got %#x\n", hr);
