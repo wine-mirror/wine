@@ -13130,6 +13130,7 @@ msgstr ""
 "especificados\n"
 
 #: reg.rc:44
+#, fuzzy
 msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "reg: Tipo de dados do Registo não suportado.\n"
 
