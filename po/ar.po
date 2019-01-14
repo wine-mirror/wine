@@ -14324,6 +14324,7 @@ msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr "رسالة الإغلاق أرسلت إلى مستوى عال من مهام وندوز و معرفها %1!u!.\n"
 
 #: taskkill.rc:37
+#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr "رسالة الإغلاق أرسلت إلى مستوى عال من مهام وندوز و معرفها %2!u!.\n"
