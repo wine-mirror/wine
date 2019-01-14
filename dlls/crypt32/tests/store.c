@@ -541,7 +541,7 @@ static void testStoresInCollection(void)
     cert2 = CertCreateCertificateContext(X509_ASN_ENCODING, signedBigCert, sizeof(signedBigCert));
     ok (cert2 != NULL, "Failed to create cert context %x\n", GetLastError());
     ret = CertAddCertificateContextToStore(collection, cert2, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
-    ok (ret, "Failed to add cert3 to the store %x\n",GetLastError());
+    ok (ret, "Failed to add cert2 to the store %x\n",GetLastError());
 
     /** checking certificates in the stores */
     tcert1 = CertEnumCertificatesInStore(ro_store, 0);
