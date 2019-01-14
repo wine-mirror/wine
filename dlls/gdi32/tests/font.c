@@ -6340,7 +6340,7 @@ static void test_stock_fonts(void)
         int charset, weight, height, height_pixels, dpi;
         const char face_name[LF_FACESIZE];
         WORD lang_id;
-    } td[][12] =
+    } td[][17] =
     {
         { /* ANSI_FIXED_FONT */
             { ANSI_CHARSET, FW_NORMAL, 12, 12, 96, "Courier", LANG_ARABIC },
@@ -6374,10 +6374,15 @@ static void test_stock_fonts(void)
         },
         { /* DEFAULT_GUI_FONT */
             { SHIFTJIS_CHARSET, FW_NORMAL, -11, 13, 96, "MS Shell Dlg" },
+            { SHIFTJIS_CHARSET, FW_NORMAL, -13, 16, 120, "MS Shell Dlg" },
             { SHIFTJIS_CHARSET, FW_NORMAL, -12, 15, 96, "?MS UI Gothic" },
             { SHIFTJIS_CHARSET, FW_NORMAL, -15, 18, 120, "?MS UI Gothic" },
+            { HANGEUL_CHARSET, FW_NORMAL, -11, 13, 96, "MS Shell Dlg" },
+            { HANGEUL_CHARSET, FW_NORMAL, -13, 16, 120, "MS Shell Dlg" },
             { HANGEUL_CHARSET, FW_NORMAL, -12, 15, 96, "?Gulim" },
             { HANGEUL_CHARSET, FW_NORMAL, -15, 18, 120, "?Gulim" },
+            { GB2312_CHARSET, FW_NORMAL, -11, 13, 96, "MS Shell Dlg" },
+            { GB2312_CHARSET, FW_NORMAL, -13, 16, 120, "MS Shell Dlg" },
             { GB2312_CHARSET, FW_NORMAL, -12, 15, 96, "?SimHei" },
             { GB2312_CHARSET, FW_NORMAL, -15, 18, 120, "?SimHei" },
             { CHINESEBIG5_CHARSET, FW_NORMAL, -12, 15, 96, "?MingLiU" },
