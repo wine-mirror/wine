@@ -1544,6 +1544,7 @@ static void test_Win32_IP4RouteTable( IWbemServices *services )
         IWbemClassObject_Release( obj );
     }
 
+    IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
 }
@@ -1656,6 +1657,7 @@ static void test_Win32_Processor( IWbemServices *services )
         IWbemClassObject_Release( obj );
     }
 
+    IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
 }
@@ -1731,6 +1733,7 @@ static void test_Win32_VideoController( IWbemServices *services )
         IWbemClassObject_Release( obj );
     }
 
+    IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
 }
@@ -1796,6 +1799,7 @@ static void test_Win32_Printer( IWbemServices *services )
         IWbemClassObject_Release( obj );
     }
 
+    IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
 }
