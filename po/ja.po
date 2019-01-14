@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-17 20:09+0900\n"
+"PO-Revision-Date: 2019-01-14 19:01+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -13359,7 +13359,7 @@ msgstr "(不明 %d)"
 
 #: regedit.rc:247
 msgid "Unable to modify the selected registry value."
-msgstr "選択したレジストリ キー '%1' を変更できません。"
+msgstr "選択したレジストリ キーを変更できません。"
 
 #: regedit.rc:248
 msgid "Unable to create a new registry key."
