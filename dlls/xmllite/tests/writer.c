@@ -483,6 +483,7 @@ todo_wine
     CHECK_OUTPUT_RAW(stream, utf16_outputW, sizeof(utf16_outputW));
 
     IStream_Release(stream);
+    IUnknown_Release(output);
 
     /* Create output with meaningless code page value. */
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
