@@ -786,7 +786,10 @@ static void test_custom_source(void)
     SendMessageW(hwnd_edit, WM_CHAR, 'x', 1);
     dispatch_messages();
     ok(obj->num_resets == 1, "Expected 1 reset, got %u\n", obj->num_resets);
+
     IAutoCompleteDropDown_Release(acdropdown);
+    IAutoComplete2_Release(autocomplete);
+    IUnknown_Release(enumerator);
 
     test_prefix_filtering(hwnd_edit);
 
