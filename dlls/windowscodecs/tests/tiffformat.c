@@ -598,11 +598,9 @@ static void test_tiff_24bpp(void)
             ok(hr == E_INVALIDARG, "CopyPixels(%u) should fail: %#x\n", stride, hr);
         else
         {
-todo_wine_if(stride > 3)
             ok(hr == S_OK, "CopyPixels(%u) error %#x\n", stride, hr);
 
             for (i = 0; i < sizeof(data); i++)
-todo_wine_if(stride > 3)
                 ok(data[i] == expected_data[i], "%u: expected %02x, got %02x\n", i, expected_data[i], data[i]);
         }
     }

@@ -1105,7 +1105,7 @@ static HRESULT WINAPI TiffFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     if (cbStride < bytesperrow)
         return E_INVALIDARG;
 
-    if ((cbStride * prc->Height) > cbBufferSize)
+    if ((cbStride * (prc->Height-1)) + bytesperrow > cbBufferSize)
         return E_INVALIDARG;
 
     min_tile_x = prc->X / This->decode_info.tile_width;
