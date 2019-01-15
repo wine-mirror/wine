@@ -544,6 +544,7 @@ static void test_FolderCollection(void)
             ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
             ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
 
         ITaskFolder_Release(subfolder);
     }
@@ -571,6 +572,7 @@ static void test_FolderCollection(void)
 
     hr = IUnknown_QueryInterface(unknown, &IID_IUnknown, (void **)&enumvar);
     ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+    IUnknown_Release(unknown);
 
     hr = IEnumVARIANT_Skip(enumvar, 0);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
@@ -605,6 +607,7 @@ static void test_FolderCollection(void)
         ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
     else
         ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
     IDispatch_Release(V_DISPATCH(&var[0]));
 
     memset(var, 0, sizeof(var));
@@ -650,6 +653,7 @@ static void test_FolderCollection(void)
             ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
             ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
 
         ITaskFolder_Release(subfolder);
     }
@@ -1049,7 +1053,10 @@ static void test_settings_v1(ITaskDefinition *taskdef, struct settings *test, st
     if (!test->execution_time_limit[0])
         ok(bstr == NULL, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     else
+    {
         ok(!lstrcmpW(bstr, test->execution_time_limit), "expected %s, got %s\n", wine_dbgstr_w(test->execution_time_limit), wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+    }
 
     hr = ITaskSettings_get_Enabled(set, &vbool);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
