@@ -431,7 +431,10 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
         ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
     else
+    {
         ok(mem != mem_orig, "%s: mem has not changed\n", msgpfx);
+        HeapFree(GetProcessHeap(), 0, mem_orig);
+    }
     ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
@@ -465,7 +468,10 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     if ((formattypes[1] & FC_ALLOCED_ON_STACK) && (formattypes[1] & FC_POINTER_DEREF))
         ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
     else
+    {
         ok(mem != mem_orig, "%s: mem has not changed\n", msgpfx);
+        HeapFree(GetProcessHeap(), 0, mem_orig);
+    }
     ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
@@ -806,6 +812,7 @@ static void test_nontrivial_pointer_types(void)
 
     /* Server */
     my_alloc_called = 0;
+    my_free_called = 0;
     StubMsg.IsClient = 0;
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -813,14 +820,19 @@ static void test_nontrivial_pointer_types(void)
     ok(mem != StubMsg.BufferStart, "mem pointing at buffer\n");
     ok(my_alloc_called == 1, "alloc called %d\n", my_alloc_called);
     NdrPointerFree( &StubMsg, mem, &fmtstr_ref_unique_out[4] );
+    ok(my_free_called == 0, "free called %d\n", my_free_called);
+    my_free(mem);
 
     my_alloc_called = 0;
+    my_free_called = 0;
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, &fmtstr_ref_unique_out[4], 1);
     ok(mem != StubMsg.BufferStart, "mem pointing at buffer\n");
     ok(my_alloc_called == 1, "alloc called %d\n", my_alloc_called);
     NdrPointerFree( &StubMsg, mem, &fmtstr_ref_unique_out[4] );
+    ok(my_free_called == 0, "free called %d\n", my_free_called);
+    my_free(mem);
 
     my_alloc_called = 0;
     mem = mem_orig;
@@ -917,7 +929,10 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
     ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
     my_alloc_called = 0;
+    my_free_called = 0;
     ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
+    NdrSimpleStructFree(&StubMsg, mem, formattypes );
+    ok(my_free_called == num_additional_allocs, "free called %d\n", my_free_called);
 
     /* If we're a server we still use the supplied memory */
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -928,7 +943,10 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx); 
     ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
     my_alloc_called = 0;
+    my_free_called = 0;
     ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
+    NdrSimpleStructFree(&StubMsg, mem, formattypes );
+    ok(my_free_called == num_additional_allocs, "free called %d\n", my_free_called);
 
     /* ...unless we pass a NULL ptr, then the buffer is used. 
        Passing a NULL ptr while we're a client && !must_alloc
@@ -946,6 +964,8 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
         ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
         my_alloc_called = 0;
         ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
+        NdrSimpleStructFree(&StubMsg, mem, formattypes );
+        ok(my_free_called == num_additional_allocs, "free called %d\n", my_free_called);
     }
 
     /*** now must_alloc is true ***/
@@ -961,7 +981,11 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ok(!cmp(mem, memsrc, srcsize), "incorrectly unmarshaled\n");
     ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
     my_alloc_called = 0;
+    my_free_called = 0;
     ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
+    NdrSimpleStructFree(&StubMsg, mem, formattypes );
+    ok(my_free_called == num_additional_allocs, "free called %d\n", my_free_called);
+    my_free(mem);
 
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -970,8 +994,12 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ok(mem != mem_orig, "mem not changed %p %p\n", mem, mem_orig);
     ok(!cmp(mem, memsrc, srcsize), "incorrectly unmarshaled\n");
     ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
-    my_alloc_called = 0; 
+    my_alloc_called = 0;
+    my_free_called = 0;
     ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
+    NdrSimpleStructFree(&StubMsg, mem, formattypes );
+    ok(my_free_called == num_additional_allocs, "free called %d\n", my_free_called);
+    my_free(mem);
 
     mem = mem_orig;
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -984,7 +1012,11 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ok(!cmp(mem, memsrc, srcsize), "incorrectly unmarshaled\n");
     ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
     my_alloc_called = 0;
+    my_free_called = 0;
     ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
+    NdrSimpleStructFree(&StubMsg, mem, formattypes );
+    ok(my_free_called == num_additional_allocs, "free called %d\n", my_free_called);
+    my_free(mem);
 
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -996,7 +1028,11 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ok(!cmp(mem, memsrc, srcsize), "incorrectly unmarshaled\n"); 
     ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
     my_alloc_called = 0;
+    my_free_called = 0;
     ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
+    NdrSimpleStructFree(&StubMsg, mem, formattypes );
+    ok(my_free_called == num_additional_allocs, "free called %d\n", my_free_called);
+    my_free(mem);
 
     HeapFree(GetProcessHeap(), 0, mem_orig);
     HeapFree(GetProcessHeap(), 0, StubMsg.BufferStart);
@@ -1506,6 +1542,8 @@ static void test_iface_ptr(void)
     NdrInterfacePointerFree(&StubMsg, (unsigned char *)proxy, fmtstr_ip);
     ok(client_obj.ref == 1, "got %d references\n", client_obj.ref);
 
+    HeapFree(GetProcessHeap(), 0, StubMsg.BufferStart);
+
     CoUninitialize();
 }
 
@@ -1867,6 +1905,8 @@ static void test_ndr_allocate(void)
         else win_skip("v1 mem list format\n");
     }
     /* NdrFree isn't exported so we can't test free'ing */
+    my_free(p1);
+    my_free(p2);
 }
 
 static void test_conformant_array(void)
