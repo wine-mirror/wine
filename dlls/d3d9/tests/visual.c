@@ -24510,7 +24510,7 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 4, 0, 4, 0, 2);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 4, 0, 5, 0, 2);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
