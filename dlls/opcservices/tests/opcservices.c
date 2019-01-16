@@ -356,7 +356,10 @@ static void test_relationship(void)
     hr = IOpcFactory_CreatePackage(factory, &package);
     ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL) /* Vista */, "Failed to create a package, hr %#x.\n", hr);
     if (FAILED(hr))
+    {
+        IOpcFactory_Release(factory);
         return;
+    }
 
     hr = CreateUri(targetW, Uri_CREATE_ALLOW_RELATIVE, 0, &target_uri);
     ok(SUCCEEDED(hr), "Failed to create target uri, hr %#x.\n", hr);
@@ -1201,6 +1204,7 @@ static void test_create_part_uri(void)
         ok(!!ret, "%u: unexpected result %d.\n", i, ret);
 
         IOpcPartUri_Release(part_uri);
+        IUri_Release(uri);
 
         heap_free(inputW);
         heap_free(rawW);
