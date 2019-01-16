@@ -880,13 +880,13 @@ static void test_Stat(void)
     ok(0777 == perms, "_Stat(): perms expect: 0777, got 0%o\n", perms);
 
     if(ret) {
-        todo_wine ok(DeleteFileW(test_f1_linkW), "expect tr2_test_dir/f1_link to exist\n");
-        todo_wine ok(RemoveDirectoryW(test_dir_linkW), "expect tr2_test_dir/dir_link to exist\n");
+        todo_wine ok(DeleteFileW(test_f1_linkW), "expect wine_test_dir/f1_link to exist\n");
+        todo_wine ok(RemoveDirectoryW(test_dir_linkW), "expect wine_test_dir/dir_link to exist\n");
     }
-    ok(DeleteFileW(test_f1W), "expect tr2_test_dir/f1 to exist\n");
+    ok(DeleteFileW(test_f1W), "expect wine_test_dir/f1 to exist\n");
     SetFileAttributesW(test_f2W, FILE_ATTRIBUTE_NORMAL);
-    ok(DeleteFileW(test_f2W), "expect tr2_test_dir/f2 to exist\n");
-    ok(RemoveDirectoryW(test_dirW), "expect tr2_test_dir to exist\n");
+    ok(DeleteFileW(test_f2W), "expect wine_test_dir/f2 to exist\n");
+    ok(RemoveDirectoryW(test_dirW), "expect wine_test_dir to exist\n");
 
     ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
 }
@@ -1173,7 +1173,7 @@ static void test_Rename(void)
             CloseHandle(h2);
             ok(info1.nFileIndexHigh == info2.nFileIndexHigh
                     && info1.nFileIndexLow == info2.nFileIndexLow,
-                    "test_tr2_sys__Rename(): test %d expect two files equivalent\n", i+1);
+                    "_Rename(): test %d expect two files equivalent\n", i+1);
         }
     }
 
@@ -1187,7 +1187,7 @@ static void test_Rename(void)
     ok(ret == ERROR_ALREADY_EXISTS, "_Rename(): expect: ERROR_ALREADY_EXISTS, got %d\n", ret);
     ok(p_File_size(f1W) == 7, "_Rename(): expect: 7, got %s\n",
             wine_dbgstr_longlong(p_File_size(f1W)));
-    ok(p_File_size(f1_renameW) == 0, "test_tr2_sys__Rename(): expect: 0, got %s\n",
+    ok(p_File_size(f1_renameW) == 0, "_Rename(): expect: 0, got %s\n",
             wine_dbgstr_longlong(p_File_size(f1_renameW)));
 
     ok(DeleteFileW(f1_renameW), "expect f1_rename to exist\n");
