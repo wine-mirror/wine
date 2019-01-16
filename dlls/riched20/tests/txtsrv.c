@@ -705,6 +705,8 @@ static void test_TxSetText(void)
     ok(memcmp(rettext,settext,SysStringByteLen(rettext)) == 0,
                  "String returned differs\n");
 
+    SysFreeString(rettext);
+
     /* Null-pointer should behave the same as empty-string */
 
     hres = ITextServices_TxSetText(txtserv, 0);
