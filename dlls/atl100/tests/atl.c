@@ -964,6 +964,8 @@ static void test_AtlAxCreateControl(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(container != NULL, "returned %p!\n", container);
     ok(control != NULL, "returned %p\n", control);
+    IUnknown_Release(container);
+    IUnknown_Release(control);
     DestroyWindow(hwnd);
 
     container = NULL;
