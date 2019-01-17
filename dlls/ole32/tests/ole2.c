@@ -4091,6 +4091,8 @@ static void check_storage_contents(IStorage *stg, const struct storage_def *stg_
 
         *enumerated_streams += 1;
     }
+
+    IEnumSTATSTG_Release(enumstg);
 }
 
 static HRESULT stgmedium_cmp(const STGMEDIUM *med1, STGMEDIUM *med2)
