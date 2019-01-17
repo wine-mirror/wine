@@ -2541,7 +2541,7 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CERT_SIGNATURE_HASH_PROP_ID                15
 #define CERT_SMART_CARD_DATA_PROP_ID               16
 #define CERT_EFS_PROP_ID                           17
-#define CERT_FORTEZZA_DATA_PROP                    18
+#define CERT_FORTEZZA_DATA_PROP_ID                 18
 #define CERT_ARCHIVED_PROP_ID                      19
 #define CERT_KEY_IDENTIFIER_PROP_ID                20
 #define CERT_AUTO_ENROLL_PROP_ID                   21
