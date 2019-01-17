@@ -33,6 +33,7 @@
 static HANDLE device;
 
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
+static BOOL     (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
 
 static void load_resource(const char *name, char *filename)
 {
@@ -177,6 +178,8 @@ static void main_test(void)
     } while (read == sizeof(buffer));
     winetest_add_failures(new_failures);
 
+    pRtlFreeUnicodeString(&pathU);
+    heap_free(test_input);
     CloseHandle(okfile);
     DeleteFileW(pathW);
 }
@@ -249,6 +252,7 @@ START_TEST(ntoskrnl)
 
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
+    pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
 
     if (!(service = load_driver(filename, "driver.dll", "WineTestDriver")))
         return;
