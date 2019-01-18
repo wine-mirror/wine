@@ -2008,6 +2008,8 @@ static void test_RtlCreateRegistryKey(void)
 
     status = pRtlCreateRegistryKey((RTL_REGISTRY_USER+1) | RTL_REGISTRY_OPTIONAL, NULL);
     ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+
+    pRtlFreeUnicodeString(&str);
 }
 
 START_TEST(reg)
