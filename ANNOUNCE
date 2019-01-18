@@ -1,12 +1,12 @@
-The Wine development release 4.0-rc6 is now available.
+The Wine development release 4.0-rc7 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/4.0/wine-4.0-rc6.tar.xz
-  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0-rc6.tar.xz
+  https://dl.winehq.org/wine/source/4.0/wine-4.0-rc7.tar.xz
+  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0-rc7.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,122 +22,97 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 4.0-rc6 (total 18):
+Bugs fixed in 4.0-rc7 (total 13):
 
-  29181  Combo box doesn't get a background in dialog editor
-  40433  Fifa 11 EU demo fails to install when run from custom DVD
-  40828  Switching resolution in desktop mode makes task bar redraw on top of full screen game
-  43665  The Quantum Break crashes at certain place.
-  45486  Byond 512.x dreamseeker will crash on loading into a ss13 station that uses shaders if run on wine 3.9 or later, but will run fine if you use 3.8
-  46007  Binary Domain crashes with builtin d3dx9_43 or d3dcompiler_43
-  46059  Final Fantasy XI Online: Mouse Movement Heavily Affects FPS
-  46067  Crysis has lighting issues
-  46200  issues printing with LTSPICE XVII X64
-  46275  Some autocomplete tests fail on Win2k3 VM
-  46346  ntoskrnl/tests/ntoskrnl.c shows uninitalized memory use
-  46357  Cossacks 2 Battle for Europe show crashed graphics
-  46359  Vietcong: shooting from weapon causes game crash
-  46369  将棋所(Shogidokoro) doesn't start.
-  46398  When starting Reflex Arena in Steam: "failed to init XAudio2, is DirectX 9.0c installed?"
-  46403  Vietcong: crash caused by loading map/other events
-  46430  Doom3 (CD version) fails to install
-  46435  F1 2011 crashes with a messed up rendering in DX9 mode
+  20728  Multiple video players crash when opening audio or video file (MPC-HC v1.6.5, PotPlayer 1.5.x)(FilterGraph_create releases/destroys controlling IUnknown)
+  26369  A.R.E.S. Extinction Agenda 1.x (.NET 2.0, XNA 3.1 game) crashes during intro ('quartz' FilterGraph2_Connect must translate HRESULT of failures more correctly)
+  29461  BurnPlot (VB6 app) fails to start, complaining with "Run-time error '438'" (WshShell3 'SpecialFolders' collection 'item' method invocation fails)
+  34884  Touhou Danmakufu 0.12m's font becomes distorted
+  35573  gdi32:fonts test_stock_fonts() fails on Windows 7 in the Japanese and Hebrew locales
+  36082  Cannot Read Text In "Question" Boxes On Microsoft Money 2005 Installation
+  36084  Microsoft Money 2005 Window Going "Black" After Certain Menu Operations
+  43211  NVIDIA GeForce Experience 3.x installer fails due to 'setupapi.SetupDiDeleteDeviceInfo' stub
+  44796  Age of Empires II: The Conquerors is broken when CSMT is enabled
+  45874  Secret Files 1-2: hardware mouse cursor corrupted
+  46212  Multiple games have performance issues (Project CARS, NFS: Hot Pursuit (2010), Gas Guzzlers: Combat Carnage)
+  46459  Secret Files 1-2, Ufo: Extraterrestrials: mouse cursor invisible when anti-aliasing and hardware mouse enabled
+  46480  Invalid write of size 2 in ntoskrnl.exe/tests/ntoskrnl.c
 
 ----------------------------------------------------------------
 
-Changes since 4.0-rc5:
+Changes since 4.0-rc6:
 
-Alexandre Julliard (4):
-      user32: Cache full name of non-client metrics fonts.
-      Update copyright info for 2019.
-      inetcpl.cpl: Fix Piotr's name.
-      shell32/tests: Wait a bit longer for the explorer window to be created.
+Akihiro Sagawa (1):
+      po: Update Japanese translation.
 
-Alistair Leslie-Hughes (2):
-      oledb32/tests: Add convert DBTYPE_DATE -> DBTYPE_DBTIMESTAMP test.
-      dsound: Trace ref in a consistent way.
+Alexandre Julliard (1):
+      ntoskrnl.exe/tests: Fix path buffer allocation size.
 
-Dmitry Timoshkov (4):
-      wininet/tests: Add some tests for GetUrlCacheConfigInfo.
-      windowscodecs/tests: Add a test for copying pixels of a 24bpp TIFF format.
-      windowscodecs: Simplify the buffer size check in copy_pixels() helper.
-      windowscodecs/tests: Fix typos in TIFF test data.
+Can Taşan (1):
+      po: Update Turkish translation.
 
-Gijs Vermeulen (2):
-      wtsapi32/tests: Add WTSQueryUserToken parameter test.
-      ntoskrnl.exe/tests: Avoid passing uninitialized data to DeviceIoControl().
+Dmitry Timoshkov (2):
+      windowscodecs: Fix the buffer size check in TIFF decoder's CopyPixels implementation.
+      include: Fix a typo.
 
-Hans Leidekker (1):
-      msi: Only perform the media check if the label of the disk entry differs from the last.
+François Gouget (4):
+      po: Fix a format mismatch in a Russian translation.
+      po: Fuzzy a Portuguese (Portugal) translation with a format mismatch.
+      po: Fuzzy an Arabic translation with a format mismatch.
+      msi/tests: Add a trailing '\n' to an ok() call.
 
-Henri Verbeet (7):
-      d3d9/tests: Add a test for ProcessVertices() on D3DPOOL_SYSTEMMEM buffers.
-      d3d8/tests: Add a test for ProcessVertices() on D3DPOOL_SYSTEMMEM buffers.
-      d3d9: Avoid calling wined3d_device_process_vertices() with unmappable source buffers.
-      d3d8: Avoid calling wined3d_device_process_vertices() with unmappable source buffers.
-      dxdiagn: Handle Red Hat and VMware in vendor_id_to_manufacturer_string().
-      wined3d: Support WINED3D_BLIT_OP_COLOR_BLIT_CKEY in the GLSL blitter.
-      wined3d: Support WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST in the GLSL blitter.
+Gijs Vermeulen (4):
+      crypt32/tests: Fix a typo in ok() message.
+      crypt32/tests: Fix a memory leak (Valgrind).
+      atl100/tests: Fix a memory leak (Valgrind).
+      msvcp140/tests: Fix typos in ok() messages.
 
-Isira Seneviratne (1):
+Henri Verbeet (2):
+      wined3d: Allow multisample destination textures in the GLSL blitter.
+      ddraw/tests: Add a test for the "GDI" surface.
+
+Huw D. M. Davies (1):
+      gdi32/tests: Korean and Chinese machines may use MS Shell Dlg as their default GUI font.
+
+Isira Seneviratne (2):
+      po: Update Sinhala translation.
       po: Update Sinhala translation.
 
-Jacek Caban (5):
-      kernel32/tests: Initialize input buffer in test_overlapped_transport.
-      include: Avoid narrowing conversions in struct initializers.
-      include: Avoid using attributes on elaborated type specifier.
-      include: Don't use unnamed struct for NDR_SCONTEXT declaration.
-      include: Define D3DCOMPILER_DLL to d3dcompiler_47.dll.
+James Larrowe (1):
+      winebuild: Fix a segmentation fault.
 
-Julian Rüger (1):
-      po: Update German translation.
-
-Józef Kucia (14):
-      d3d8: Upload vertex buffer range relative to base vertex index.
-      d3d9: Upload vertex buffer range relative to base vertex index.
-      d3d9/tests: Add test for base vertex index with sysmem vertex buffers.
-      d3d8/tests: Add test for base vertex index with sysmem vertex buffers.
-      ntoskrnl.exe: Fix service handle leak in ZwLoadDriver() (Coverity).
-      ddraw/tests: Add tests for attaching depth buffers of different sizes.
-      ddraw/tests: Fix compilation on systems that don't support nameless unions.
-      wined3d: Simplify wined3d_cs_emit_clear() slightly.
-      wined3d: Sanitise clear flags passed to blitters.
-      wined3d: Use accurate rt_count in ffp_blitter_clear().
-      wined3d: Split clears for different size resources in ffp_blitter_clear().
-      wined3d: Limit surface_cpu_blt_colour_fill() to dimensions of render target view.
-      wined3d: Do not limit draw rect to intersection of all render target views.
-      d3d9/tests: Add test for clearing surfaces with different sizes.
+Józef Kucia (7):
+      wined3d: Execute all CS commands before changing swapchain palette.
+      wined3d: Execute all CS commands before setting palette entries.
+      d3d8: Clamp vertex buffer upload range to buffer size.
+      d3d9: Clamp vertex buffer upload range to buffer size.
+      d3d8: Clamp index buffer upload range to buffer size.
+      d3d9: Clamp index buffer upload range to buffer size.
+      wined3d: Avoid potential out-of-bounds memory access in surface_cpu_blt_colour_fill().
 
 Matteo Bruni (1):
-      d3dcompiler_43: Define D3D_COMPILER_VERSION.
+      wined3d: Set proper GL internal format for sRGB formats.
 
-Nikolay Sivov (4):
-      gdiplus/tests: Add some missing return value checks (Coverity).
-      gdi32/tests: Fix copy-paste issue with test message (Coverity).
-      msi/tests: Use more reasonable buffer sizes for guid strings (Coverity).
-      shcore: Fix double free on error path (Coverity).
+Sven Baars (13):
+      shell32/tests: Fix a typo.
+      mstask/tests: Fix some memory leaks (Valgrind).
+      oleaut32/tests: Fix some memory leaks (Valgrind).
+      shell32/tests: Fix some memory leaks (Valgrind).
+      xmllite/tests: Fix a memory leak (Valgrind).
+      wbemprox/tests: Fix some memory leaks (Valgrind).
+      taskschd/tests: Fix some memory leaks (Valgrind).
+      rpcrt4/tests: Fix some memory leaks (Valgrind).
+      opcservices/tests: Fix some memory leaks (Valgrind).
+      riched20/tests: Fix a memory leak (Valgrind).
+      ole32/tests: Fix a memory leak (Valgrind).
+      ntoskrnl.exe/tests: Fix some memory leaks (Valgrind).
+      ntdll/tests: Fix some string leaks (Valgrind).
 
-Olivier F. R. Dierick (1):
-      explorer: Don't change Z-order of the taskbar when displaying it.
+Thomas Faber (1):
+      msxml3: Handle libxml2 API breakage.
 
-Paul Gofman (5):
-      user32/tests: Add test for 8 bit image stretch mode in CopyImage().
-      user32/tests: Add test for 16 bit image stretch mode in CopyImage().
-      user32/tests: Factor out compare_bitmap_bits() function.
-      user32/tests: Add tests for stretch mode in LoadImage().
-      d3dx9: Return correct comment length from get_instr_length().
-
-Piotr Caban (1):
-      server: Fix process trace_data initialization race on Mac.
-
-Roberto Pungartnik (1):
-      po: Update Portuguese (Brazil) translation.
-
-Thanasis Papoutsidakis (1):
-      crypt32: Add some missing CRYPT_STRING flags.
-
-Vincent Povirk (1):
-      mscoree: Update Wine Mono to 4.7.5.
+Zebediah Figura (1):
+      ntoskrnl.exe: Properly handle already-loaded drivers in handle_bus_relations().
 
 --
 Alexandre Julliard
