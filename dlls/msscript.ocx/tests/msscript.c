@@ -283,8 +283,11 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     ok(hres == S_OK, "Could not get IActiveScriptSiteWindow interface: %08x\n", hres);
     IActiveScriptSiteWindow_Release(window);
 
+    if (site)
+        IActiveScriptSite_Release(site);
     site = pass;
     IActiveScriptSite_AddRef(site);
+
     return S_OK;
 }
 
@@ -430,6 +433,7 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
     ok(!outer, "outer = %p\n", outer);
     ok(IsEqualGUID(&IID_IActiveScript, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     *ppv = &ActiveScript;
+    site = NULL;
     return S_OK;
 }
 
@@ -780,6 +784,8 @@ static void test_Language(void)
         ok(!lstrcmpW(testscriptW, str), "%s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
+        IActiveScriptSite_Release(site);
+
         init_registry(FALSE);
 
         SET_EXPECT(Close);
@@ -1077,6 +1083,9 @@ static void test_Reset(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
         CHECK_CALLED(SetScriptState_INITIALIZED);
 
+        CHECK_CALLED(SetScriptSite);
+        IActiveScriptSite_Release(site);
+
         init_registry(FALSE);
 
         SET_EXPECT(Close);
@@ -1212,6 +1221,9 @@ static void test_AddObject(void)
 
         hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
         ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+        CHECK_CALLED(SetScriptSite);
+        IActiveScriptSite_Release(site);
 
         init_registry(FALSE);
 
