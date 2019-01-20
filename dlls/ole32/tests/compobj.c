@@ -788,7 +788,7 @@ static HRESULT WINAPI MessageFilter_QueryInterface(IMessageFilter *iface, REFIID
     if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IClassFactory))
+        IsEqualGUID(riid, &IID_IMessageFilter))
     {
         *ppvObj = iface;
         IMessageFilter_AddRef(iface);
