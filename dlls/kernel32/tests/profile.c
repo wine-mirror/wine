@@ -579,6 +579,8 @@ static void test_profile_directory_readonly(void)
 
     ret = RemoveDirectoryA(path_folder);
     ok(ret == TRUE, "RemoveDirectoryA failed: %d\n", GetLastError());
+
+    LocalFree(attributes.lpSecurityDescriptor);
 }
 
 static void test_GetPrivateProfileString(const char *content, const char *descript)
