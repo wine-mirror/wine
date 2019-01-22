@@ -720,6 +720,7 @@ static void test_parsedescriptor(void)
     stream = gen_riff_stream(empty);
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == DMUS_E_NOTADLSCOL, "ParseDescriptor failed: %08x, expected DMUS_E_NOTADLSCOL\n", hr);
+    IStream_Release(stream);
 
     /* All desc chunks */
     stream = gen_riff_stream(alldesc);
