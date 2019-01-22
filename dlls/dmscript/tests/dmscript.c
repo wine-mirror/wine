@@ -327,6 +327,7 @@ static void test_parsedescriptor(void)
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == DMUS_E_SCRIPT_INVALID_FILE,
             "ParseDescriptor failed: %08x, expected DMUS_E_SCRIPT_INVALID_FILE\n", hr);
+    IStream_Release(stream);
 
     IDirectMusicObject_Release(dmo);
 }
