@@ -487,6 +487,7 @@ static void test_parsedescriptor(void)
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == DMUS_E_CHUNKNOTFOUND,
             "ParseDescriptor failed: %08x, expected DMUS_E_CHUNKNOTFOUND\n", hr);
+    IStream_Release(stream);
 
     /* All desc chunks, DMUS_OBJ_CATEGORY not supported */
     stream = gen_riff_stream(alldesc);
