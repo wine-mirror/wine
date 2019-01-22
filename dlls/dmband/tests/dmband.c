@@ -390,6 +390,7 @@ static void test_parsedescriptor(void)
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == DMUS_E_INVALID_BAND,
             "ParseDescriptor failed: %08x, expected DMUS_E_INVALID_BAND\n", hr);
+    IStream_Release(stream);
 
     /* A category chunk adds DMUS_OBJ_DATE too */
     stream = gen_riff_stream(catdate);
