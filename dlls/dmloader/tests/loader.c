@@ -547,6 +547,7 @@ static void test_parsedescriptor(void)
     hr = IDirectMusicObject_ParseDescriptor(dmo, stream, &desc);
     ok(hr == DMUS_E_DESCEND_CHUNK_FAIL,
             "ParseDescriptor failed: %08x, expected DMUS_E_DESCEND_CHUNK_FAIL\n", hr);
+    IStream_Release(stream);
 
     /* All desc chunks */
     stream = gen_riff_stream(alldesc);
