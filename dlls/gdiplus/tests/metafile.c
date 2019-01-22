@@ -2519,6 +2519,9 @@ static void test_drawimage(void)
 
     check_emfplus(hemf, draw_image_bitmap_records, "draw image bitmap");
 
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+
     /* test drawing metafile */
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
     expect(Ok, stat);
