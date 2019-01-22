@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-01-19 06:54+0530\n"
+"PO-Revision-Date: 2019-01-24 16:56+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
@@ -76,7 +76,7 @@ msgstr "හරි"
 
 #: appwiz.rc:79
 msgid "The following information can be used to get technical support for %s:"
-msgstr ""
+msgstr "පහලෙ විස්තර පාවිච්චි කරන්න පුළුවන් %s එකට තාක්ෂණික සහාය ගන්නට:"
 
 #: appwiz.rc:80
 msgid "Publisher:"
@@ -167,7 +167,7 @@ msgstr ""
 
 #: appwiz.rc:31
 msgid "Add/Remove Programs"
-msgstr ""
+msgstr "මෘදුකාංග එකතු/ඉවත් කරන්න"
 
 #: appwiz.rc:32
 msgid ""
@@ -187,7 +187,7 @@ msgstr ""
 
 #: appwiz.rc:36
 msgid "Not specified"
-msgstr ""
+msgstr "සඳහන් කරල නැහැ"
 
 #: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
 msgid "Name"
@@ -255,7 +255,7 @@ msgstr ""
 
 #: avifil32.rc:52
 msgid "Current format:"
-msgstr ""
+msgstr "වත්මන් ආකෘතිය:"
 
 #: avifil32.rc:30
 msgid "Waveform: %s"
@@ -374,7 +374,7 @@ msgstr ""
 
 #: comctl32.rc:107
 msgid "&Add ->"
-msgstr ""
+msgstr "එකතු කරන්න (&A) ->"
 
 #: comctl32.rc:108
 msgid "<- &Remove"
@@ -453,12 +453,14 @@ msgid "&Read Only"
 msgstr "කියවීම පමණි (&R)"
 
 #: comdlg32.rc:179
+#, fuzzy
 msgid "Save As..."
-msgstr ""
+msgstr "සුරකින්න..."
 
 #: comdlg32.rc:192 comdlg32.rc:145
+#, fuzzy
 msgid "Save As"
-msgstr ""
+msgstr "සුරකින්න"
 
 #: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
 #: wordpad.rc:173
@@ -487,7 +489,7 @@ msgstr "පිටු (&P)"
 
 #: comdlg32.rc:212 comdlg32.rc:234
 msgid "&Setup"
-msgstr ""
+msgstr "සැකසුම (&S)"
 
 #: comdlg32.rc:213
 msgid "&From:"
@@ -499,7 +501,7 @@ msgstr ""
 
 #: comdlg32.rc:215 wineps.rc:42
 msgid "Print &Quality:"
-msgstr ""
+msgstr "මුද්රණ ගුණය (&Q):"
 
 #: comdlg32.rc:217
 msgid "Print to Fi&le"
@@ -511,7 +513,7 @@ msgstr ""
 
 #: comdlg32.rc:224 comdlg32.rc:395
 msgid "Print Setup"
-msgstr ""
+msgstr "මුද්රණ සැකසුම"
 
 #: comdlg32.rc:227 comdlg32.rc:363 comdlg32.rc:402
 msgid "Printer"
@@ -1034,15 +1036,15 @@ msgstr ""
 
 #: comdlg32.rc:142 ieframe.rc:35
 msgid "&Save"
-msgstr ""
+msgstr "සුරකින්න (&S)"
 
 #: comdlg32.rc:143
 msgid "Save &in:"
-msgstr ""
+msgstr "සුරකින්න ඇතුලේ (&I):"
 
 #: comdlg32.rc:144
 msgid "Save"
-msgstr ""
+msgstr "සුරකින්න"
 
 #: comdlg32.rc:146
 msgid "Open File"
@@ -3193,8 +3195,9 @@ msgid "&Open..."
 msgstr "අරින්න (&O)..."
 
 #: ieframe.rc:36 notepad.rc:33 wordpad.rc:34
+#, fuzzy
 msgid "Save &as..."
-msgstr ""
+msgstr "සුරකින්න... (&A)"
 
 #: ieframe.rc:38
 msgid "Print &format..."
@@ -3520,7 +3523,7 @@ msgstr ""
 
 #: jscript.rc:36
 msgid "Syntax error"
-msgstr ""
+msgstr "රීතියේ දෝෂයක්"
 
 #: jscript.rc:37
 msgid "Expected ';'"
@@ -3874,7 +3877,7 @@ msgstr ""
 
 #: winerror.mc:273
 msgid "Print queue full.\n"
-msgstr ""
+msgstr "මුද්රණ පෝලිම පිරිලා.\n"
 
 #: winerror.mc:278
 msgid "No spool space.\n"
@@ -3946,7 +3949,7 @@ msgstr ""
 
 #: winerror.mc:363
 msgid "Invalid parameter.\n"
-msgstr ""
+msgstr "වලංගු නැති පරාමිතියක්.\n"
 
 #: winerror.mc:368
 msgid "Net write fault.\n"
@@ -5402,7 +5405,7 @@ msgstr ""
 
 #: winerror.mc:2198
 msgid "Internal error.\n"
-msgstr ""
+msgstr "ඇතුලේ දෝෂයක්.\n"
 
 #: winerror.mc:2203
 msgid "Generic access types not mapped.\n"
@@ -5714,7 +5717,7 @@ msgstr ""
 
 #: winerror.mc:2593
 msgid "Invalid SPI parameter.\n"
-msgstr ""
+msgstr "වලංගු නැති SPI පරාමිතියක්.\n"
 
 #: winerror.mc:2598
 msgid "Screen already locked.\n"
@@ -6458,7 +6461,7 @@ msgstr ""
 
 #: winerror.mc:3528
 msgid "Not an RPC error.\n"
-msgstr ""
+msgstr "RPC දෝෂයක් නොවේ.\n"
 
 #: winerror.mc:3533
 msgid "UUID is local only.\n"
@@ -6721,8 +6724,9 @@ msgid "Sound Selection"
 msgstr ""
 
 #: msacm32.rc:39 winedbg.rc:77
+#, fuzzy
 msgid "&Save As..."
-msgstr ""
+msgstr "සුරකින්න... (&S)"
 
 #: msacm32.rc:42
 msgid "&Format:"
@@ -8683,7 +8687,7 @@ msgstr ""
 
 #: shell32.rc:170
 msgid "Error during creation of a new folder"
-msgstr ""
+msgstr "අලුත් ෆෝල්ඩරයක් හදන ගමං දෝෂයක් උනා"
 
 #: shell32.rc:171
 msgid "Confirm file deletion"
@@ -9826,11 +9830,11 @@ msgstr ""
 
 #: winineterror.mc:31
 msgid "An internal error has occurred.\n"
-msgstr ""
+msgstr "ඇතුලේ දෝෂයක් ඇවිල්ලා.\n"
 
 #: winineterror.mc:36
 msgid "The URL is invalid.\n"
-msgstr ""
+msgstr "URL එක වලංගු නැහැ.\n"
 
 #: winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
@@ -10162,7 +10166,7 @@ msgstr ""
 
 #: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr ""
+msgstr "නමක් නැති ගොනුවක් සුරකින්න බැහැ. ගොනුවට නමක් දෙන්න."
 
 #: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
@@ -10368,7 +10372,7 @@ msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"
-msgstr ""
+msgstr "මුද්රණය කරන්න ගොනුවකකට"
 
 #: winspool.rc:40
 msgid "&Output File Name:"
@@ -10392,7 +10396,7 @@ msgstr ""
 
 #: wldap32.rc:34
 msgid "Protocol Error"
-msgstr ""
+msgstr "ප්රොටොකෝලයේ දෝෂයක්"
 
 #: wldap32.rc:35
 msgid "Time Limit Exceeded"
@@ -10472,7 +10476,7 @@ msgstr ""
 
 #: wldap32.rc:65
 msgid "Alias Problem"
-msgstr ""
+msgstr "අන්වර්ථය ප්‍රශ්නයක්"
 
 #: wldap32.rc:66
 msgid "Invalid DN Syntax"
@@ -10588,7 +10592,7 @@ msgstr ""
 
 #: wldap32.rc:121
 msgid "Parameter Error"
-msgstr ""
+msgstr "පරාමිතියේ දෝෂයක්"
 
 #: wldap32.rc:122
 msgid "No Memory"
@@ -11141,11 +11145,11 @@ msgstr ""
 
 #: cmd.rc:375
 msgid "Syntax error\n"
-msgstr ""
+msgstr "රීතියේ දෝෂයක්\n"
 
 #: cmd.rc:377
 msgid "No help available for %1\n"
-msgstr ""
+msgstr "%1 සඳහා උදවු නැහැ\n"
 
 #: cmd.rc:378
 msgid "Target to GOTO not found\n"
@@ -11202,7 +11206,7 @@ msgstr ""
 
 #: cmd.rc:391
 msgid "Parameter error\n"
-msgstr ""
+msgstr "පරාමිතියේ දෝෂයක්\n"
 
 #: cmd.rc:392
 msgid ""
@@ -11326,9 +11330,8 @@ msgid "Usage: ipconfig [ /? | /all ]\n"
 msgstr ""
 
 #: ipconfig.rc:31
-#, fuzzy
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: දන්නේ නැති හෝ වලංගු නැති විධාන රේඛා පරාමිති සඳහන් කරලා.\n"
 
 #: ipconfig.rc:32
 msgid "%1 adapter %2\n"
@@ -11489,7 +11492,7 @@ msgstr ""
 
 #: net.rc:50
 msgid "A network error occurred"
-msgstr ""
+msgstr "ජාල දෝෂයක් උනා"
 
 #: net.rc:51
 msgid "Connection is being made"
@@ -11625,7 +11628,7 @@ msgstr ""
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Save\tCtrl+S"
-msgstr ""
+msgstr "සුරකින්න (&S)\tCtrl+S"
 
 #: notepad.rc:35 regedit.rc:39 wordpad.rc:36
 msgid "&Print...\tCtrl+P"
@@ -11924,8 +11927,9 @@ msgid "&About OleView"
 msgstr ""
 
 #: oleview.rc:82
+#, fuzzy
 msgid "&Save as..."
-msgstr ""
+msgstr "සුරකින්න... (&S)"
 
 #: oleview.rc:87
 msgid "&Group by type kind"
@@ -12144,7 +12148,7 @@ msgstr ""
 
 #: oleview.rc:145
 msgid "Unknown error"
-msgstr ""
+msgstr "දන්නේ නැති දෝෂයක්"
 
 #: oleview.rc:148
 msgid "bytes"
@@ -12160,7 +12164,7 @@ msgstr ""
 
 #: oleview.rc:126
 msgid "Save as an .IDL or .H file"
-msgstr ""
+msgstr "සුරකින්න .IDL හෝ .H ගොනුවක් විදිහට"
 
 #: oleview.rc:127
 msgid "Close window"
@@ -12339,14 +12343,12 @@ msgid "Not implemented"
 msgstr ""
 
 #: progman.rc:71
-#, fuzzy
 msgid "Error reading `%s'."
-msgstr "දෝෂයක්"
+msgstr "දෝෂයක් `%s' කියවන ගමං."
 
 #: progman.rc:72
-#, fuzzy
 msgid "Error writing `%s'."
-msgstr "දෝෂයක්"
+msgstr "දෝෂයක් `%s' ලියන ගමං."
 
 #: progman.rc:75
 msgid ""
@@ -12356,7 +12358,7 @@ msgstr ""
 
 #: progman.rc:77
 msgid "Help not available."
-msgstr ""
+msgstr "උදවු නැහැ."
 
 #: progman.rc:78
 msgid "Unknown feature in %s"
@@ -12500,11 +12502,11 @@ msgstr ""
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "\"REG /?\" ගහන්න උදව්වට.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "\"REG %1 /?\" ගහන්න උදව්වට.\n"
 
 #: reg.rc:65 regedit.rc:240
 msgid "(value not set)"
@@ -12833,7 +12835,7 @@ msgstr ""
 
 #: regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "\"regedit /?\" ගහන්න උදව්වට.\n"
 
 #: regedit.rc:411
 msgid "regedit: No filename was specified.\n"
@@ -13160,14 +13162,12 @@ msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
 msgstr ""
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: දන්නේ නැති හෝ වලංගු නැති විධාන රේඛා විකල්පයක් සඳහන් කරලා.\n"
 
 #: taskkill.rc:32
-#, fuzzy
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: වලංගු නැති විධාන රේඛා පරාමිතියක් සඳහන් කරලා.\n"
 
 #: taskkill.rc:33
 #, fuzzy
@@ -13202,9 +13202,8 @@ msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
 msgstr ""
 
 #: taskkill.rc:40
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: \"%1\" ක්රියාවලිය සොයා ගන්න බැරි උන.\n"
 
 #: taskkill.rc:41
 #, fuzzy
@@ -13212,14 +13211,12 @@ msgid "Error: Unable to enumerate the process list.\n"
 msgstr "දෝෂයක්:"
 
 #: taskkill.rc:42
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: \"%1\" ක්රියාවලිය නතර කරන්න බැහැ.\n"
 
 #: taskkill.rc:43
-#, fuzzy
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: ක්රියාවලියක් තමංම නතර කරන්න බැහැ.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -14330,7 +14327,7 @@ msgstr ""
 
 #: winecfg.rc:308
 msgid "Folders"
-msgstr ""
+msgstr "ෆෝල්ඩර"
 
 #: winecfg.rc:311
 msgid "&Link to:"
@@ -14575,7 +14572,7 @@ msgstr ""
 
 #: winecfg.rc:111
 msgid "Active Title Bar"
-msgstr ""
+msgstr "ක්රියාකාරී මාතෘකා තීරුව"
 
 #: winecfg.rc:112
 msgid "Active Title Text"
@@ -14583,7 +14580,7 @@ msgstr ""
 
 #: winecfg.rc:113
 msgid "Inactive Title Bar"
-msgstr ""
+msgstr "අක්රිය මාතෘකා තීරුව"
 
 #: winecfg.rc:114
 msgid "Inactive Title Text"
@@ -14795,7 +14792,7 @@ msgstr ""
 
 #: wineconsole.rc:41
 msgid "Configuration error"
-msgstr ""
+msgstr "සැකසුම් දෝෂයක්"
 
 #: wineconsole.rc:42
 msgid ""
@@ -15253,7 +15250,7 @@ msgstr "සංඥාව..."
 
 #: winhlp32.rc:68
 msgid "Copy"
-msgstr ""
+msgstr "පිටපත් කරන්න"
 
 #: winhlp32.rc:100
 msgid "Index"
@@ -15300,19 +15297,16 @@ msgid "Error: Command line not supported\n"
 msgstr "දෝෂයක්: විධාන රේඛාව සහාය නොදක්වයි\n"
 
 #: wmic.rc:29
-#, fuzzy
 msgid "Error: Alias not found\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: අන්වර්ථය සොයා ගත්තේ නැහැ\n"
 
 #: wmic.rc:30
-#, fuzzy
 msgid "Error: Invalid query\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: විමසුම වලංගු නැහැ\n"
 
 #: wmic.rc:31
-#, fuzzy
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "දෝෂයක්:"
+msgstr "දෝෂයක්: PATH එකේ රීති වලංගු නැහැ\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -15392,7 +15386,7 @@ msgstr "ලැයිස්තු (&L)"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
-msgstr ""
+msgstr "වෙඩි උණ්ඩ (&B)"
 
 #: wordpad.rc:88
 msgid "Numbers"
@@ -15496,7 +15490,7 @@ msgstr "සියලුම ඉවත් කරන්න (&L)"
 
 #: wordpad.rc:267
 msgid "Line wrapping"
-msgstr ""
+msgstr "රේඛා ඔතා"
 
 #: wordpad.rc:268
 msgid "&No line wrapping"
@@ -15567,11 +15561,11 @@ msgstr ""
 
 #: wordpad.rc:151
 msgid "Rich text document"
-msgstr ""
+msgstr "සරු පෙළ ලියවිල්ල"
 
 #: wordpad.rc:152
 msgid "Text document"
-msgstr "පෙළ ලියවිල්ලක්"
+msgstr "පෙළ ලියවිල්ල"
 
 #: wordpad.rc:153
 msgid "Unicode text document"
@@ -15587,11 +15581,11 @@ msgstr ""
 
 #: wordpad.rc:167
 msgid "Text"
-msgstr ""
+msgstr "පෙළ"
 
 #: wordpad.rc:168
 msgid "Rich text"
-msgstr ""
+msgstr "සරු පෙළ"
 
 #: wordpad.rc:174
 msgid "Next page"
@@ -15611,11 +15605,11 @@ msgstr "එක පිටුවක්"
 
 #: wordpad.rc:178
 msgid "Zoom in"
-msgstr ""
+msgstr "විශාල කරන්න"
 
 #: wordpad.rc:179
 msgid "Zoom out"
-msgstr ""
+msgstr "කුඩා කරන්න"
 
 #: wordpad.rc:181
 msgid "Page"
@@ -15650,7 +15644,7 @@ msgstr "ලියවිල්ල"
 
 #: wordpad.rc:192
 msgid "Save changes to '%s'?"
-msgstr ""
+msgstr "'%s' එකට වෙනස්කම් සුරකින්නද?"
 
 #: wordpad.rc:193
 msgid "Finished searching the document."
@@ -15676,7 +15670,7 @@ msgstr ""
 
 #: wordpad.rc:200
 msgid "Could not save the file."
-msgstr ""
+msgstr "ගොනුව සුරකින්න බැරි උනා."
 
 #: wordpad.rc:201
 msgid "You do not have access to save the file."
@@ -15704,11 +15698,11 @@ msgstr ""
 
 #: xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
+msgstr "පරාමිති ගාණ වලංගු නැහැ - xcopy /? ගහන්න උදව්වට\n"
 
 #: xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr ""
+msgstr "පරාමිතිය '%1' වලංගු නැහැ - xcopy /? ගහන්න උදව්වට\n"
 
 #: xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
