@@ -656,6 +656,8 @@ static void remove_device(struct device *device)
     struct device_iface *iface;
     HKEY enum_key;
 
+    delete_driver_key(device);
+
     LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
     {
         remove_device_iface(iface);
