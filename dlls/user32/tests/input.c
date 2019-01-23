@@ -1530,6 +1530,16 @@ static void test_GetRawInputDeviceList(void)
     ok(odevcount == oret, "expected %d, got %d\n", oret, odevcount);
 }
 
+static void test_GetRawInputData(void)
+{
+    UINT size;
+    UINT ret;
+
+    /* Null raw input handle */
+    ret = GetRawInputData(NULL, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER));
+    ok(ret == ~0U, "Expect ret %u, got %u\n", ~0U, ret);
+}
+
 static void test_key_map(void)
 {
     HKL kl = GetKeyboardLayout(0);
@@ -2697,6 +2707,7 @@ START_TEST(input)
     test_attach_input();
     test_GetKeyState();
     test_OemKeyScan();
+    test_GetRawInputData();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
