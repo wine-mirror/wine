@@ -435,11 +435,17 @@ static BOOL aclist_expand(IAutoCompleteImpl *ac, WCHAR *txt)
 {
     /* call IACList::Expand only when needed, if the
        new txt and old_txt require different expansions */
-    WCHAR c, *p, *last_delim, *old_txt = ac->txtbackup;
+    static const WCHAR empty[] = { 0 };
+
+    const WCHAR *old_txt = ac->txtbackup;
+    WCHAR c, *p, *last_delim;
     size_t i = 0;
 
     /* '/' is allowed as a delim for unix paths */
     static const WCHAR delims[] = { '\\', '/', 0 };
+
+    /* always expand if the enumerator was reset */
+    if (!ac->enum_strs) old_txt = empty;
 
     /* skip the shared prefix */
     while ((c = tolowerW(txt[i])) == tolowerW(old_txt[i]))
