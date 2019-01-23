@@ -314,11 +314,21 @@ static void test_overlapped_buffers(void)
     char buf[256];
     int ret;
 
+    /* limit such that strA's NUL terminator overlaps strW's NUL */
+    size_t overlap_limit = (sizeof(strW)-sizeof(strA)) - (sizeof(strW[0])-sizeof(strA[0]));
+
     SetLastError(0xdeadbeef);
     memcpy(buf + 1, strW, sizeof(strW));
     ret = WideCharToMultiByte(CP_ACP, 0, (WCHAR *)(buf + 1), -1, buf, sizeof(buf), NULL, NULL);
     ok(ret == sizeof(strA), "unexpected ret %d\n", ret);
     ok(!memcmp(buf, strA, sizeof(strA)), "conversion failed: %s\n", buf);
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(buf + overlap_limit, strA, sizeof(strA));
+    ret = MultiByteToWideChar(CP_ACP, 0, buf + overlap_limit, -1, (WCHAR *)buf, sizeof(buf) / sizeof(WCHAR));
+    ok(ret == ARRAY_SIZE(strW), "unexpected ret %d\n", ret);
+    ok(!memcmp(buf, strW, sizeof(strW)), "conversion failed: %s\n", wine_dbgstr_wn((WCHAR *)buf, ARRAY_SIZE(strW)));
     ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
 }
 
