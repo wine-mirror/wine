@@ -3,6 +3,9 @@ IMPORTS   = oleaut32 ole32 rpcrt4 secur32 advapi32
 EXTRAIDLFLAGS = --prefix-server=s_
 EXTRADEFS = -DPROXY_DELEGATION
 
+server_EXTRAIDLFLAGS = -Os
+server_interp_EXTRAIDLFLAGS = -Oicf
+
 C_SRCS = \
 	cstub.c \
 	generated.c \
@@ -13,4 +16,5 @@ C_SRCS = \
 
 IDL_SRCS = \
 	cstub.idl \
-	server.idl
+	server.idl \
+	server_interp.idl
