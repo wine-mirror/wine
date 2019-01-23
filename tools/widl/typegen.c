@@ -451,14 +451,14 @@ static unsigned char get_contexthandle_flags( const type_t *iface, const attr_li
     if (is_ptr(type) &&
         !is_attr( type->attrs, ATTR_CONTEXTHANDLE ) &&
         !is_attr( attrs, ATTR_CONTEXTHANDLE ))
-        flags |= 0x80;
+        flags |= HANDLE_PARAM_IS_VIA_PTR;
 
     if (is_attr(attrs, ATTR_IN))
     {
-        flags |= 0x40;
+        flags |= HANDLE_PARAM_IS_IN;
         if (!is_attr(attrs, ATTR_OUT)) flags |= NDR_CONTEXT_HANDLE_CANNOT_BE_NULL;
     }
-    if (is_attr(attrs, ATTR_OUT)) flags |= 0x20;
+    if (is_attr(attrs, ATTR_OUT)) flags |= HANDLE_PARAM_IS_OUT;
 
     return flags;
 }
@@ -3522,13 +3522,13 @@ static unsigned int write_contexthandle_tfs(FILE *file,
         print_file(file, 0, "no serialize, ");
     if (flags & NDR_STRICT_CONTEXT_HANDLE)
         print_file(file, 0, "strict, ");
-    if (flags & 0x10)
+    if (flags & HANDLE_PARAM_IS_RETURN)
         print_file(file, 0, "return, ");
-    if (flags &  0x20)
+    if (flags & HANDLE_PARAM_IS_OUT)
         print_file(file, 0, "out, ");
-    if (flags & 0x40)
+    if (flags & HANDLE_PARAM_IS_IN)
         print_file(file, 0, "in, ");
-    if (flags & 0x80)
+    if (flags & HANDLE_PARAM_IS_VIA_PTR)
         print_file(file, 0, "via ptr, ");
     print_file(file, 0, "*/\n");
     print_file(file, 2, "0x%x,\t/* rundown routine */\n", get_context_handle_offset( type ));
