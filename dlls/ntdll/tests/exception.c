@@ -146,6 +146,9 @@ static BOOLEAN   (CDECL *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64
 static BOOLEAN   (CDECL *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static BOOLEAN   (CDECL *pRtlInstallFunctionTableCallback)(DWORD64, DWORD64, DWORD, PGET_RUNTIME_FUNCTION_CALLBACK, PVOID, PCWSTR);
 static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG64, ULONG64*, UNWIND_HISTORY_TABLE*);
+static DWORD     (CDECL *pRtlAddGrowableFunctionTable)(void**, RUNTIME_FUNCTION*, DWORD, DWORD, ULONG_PTR, ULONG_PTR);
+static void      (CDECL *pRtlGrowFunctionTable)(void*, DWORD);
+static void      (CDECL *pRtlDeleteGrowableFunctionTable)(void*);
 static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
 static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
 static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
@@ -2037,9 +2040,11 @@ static RUNTIME_FUNCTION* CALLBACK dynamic_unwind_callback( DWORD64 pc, PVOID con
 static void test_dynamic_unwind(void)
 {
     static const int code_offset = 1024;
-    char buf[sizeof(RUNTIME_FUNCTION) + 4];
+    char buf[2 * sizeof(RUNTIME_FUNCTION) + 4];
     RUNTIME_FUNCTION *runtime_func, *func;
     ULONG_PTR table, base;
+    void *growable_table;
+    NTSTATUS status;
     DWORD count;
 
     /* Test RtlAddFunctionTable with aligned RUNTIME_FUNCTION pointer */
@@ -2136,6 +2141,76 @@ static void test_dynamic_unwind(void)
     ok( !pRtlDeleteFunctionTable( (PRUNTIME_FUNCTION)table ),
         "RtlDeleteFunctionTable returned success for nonexistent table = %p\n", (PVOID)table );
 
+    if (!pRtlAddGrowableFunctionTable)
+    {
+        win_skip("Growable function tables are not supported.\n");
+        return;
+    }
+
+    runtime_func = (RUNTIME_FUNCTION *)buf;
+    runtime_func->BeginAddress = code_offset;
+    runtime_func->EndAddress   = code_offset + 16;
+    runtime_func->UnwindData   = 0;
+    runtime_func++;
+    runtime_func->BeginAddress = code_offset + 16;
+    runtime_func->EndAddress   = code_offset + 32;
+    runtime_func->UnwindData   = 0;
+    runtime_func = (RUNTIME_FUNCTION *)buf;
+
+    growable_table = NULL;
+    status = pRtlAddGrowableFunctionTable( &growable_table, runtime_func, 1, 1, (ULONG_PTR)code_mem, (ULONG_PTR)code_mem + 64 );
+    ok(!status, "RtlAddGrowableFunctionTable failed for runtime_func = %p (aligned), %#x.\n", runtime_func, status );
+    ok(growable_table != 0, "Unexpected table value.\n");
+    pRtlDeleteGrowableFunctionTable( growable_table );
+
+    growable_table = NULL;
+    status = pRtlAddGrowableFunctionTable( &growable_table, runtime_func, 2, 2, (ULONG_PTR)code_mem, (ULONG_PTR)code_mem + 64 );
+    ok(!status, "RtlAddGrowableFunctionTable failed for runtime_func = %p (aligned), %#x.\n", runtime_func, status );
+    ok(growable_table != 0, "Unexpected table value.\n");
+    pRtlDeleteGrowableFunctionTable( growable_table );
+
+    growable_table = NULL;
+    status = pRtlAddGrowableFunctionTable( &growable_table, runtime_func, 1, 2, (ULONG_PTR)code_mem, (ULONG_PTR)code_mem + 64 );
+    ok(!status, "RtlAddGrowableFunctionTable failed for runtime_func = %p (aligned), %#x.\n", runtime_func, status );
+    ok(growable_table != 0, "Unexpected table value.\n");
+    pRtlDeleteGrowableFunctionTable( growable_table );
+
+    growable_table = NULL;
+    status = pRtlAddGrowableFunctionTable( &growable_table, runtime_func, 0, 2, (ULONG_PTR)code_mem,
+            (ULONG_PTR)code_mem + code_offset + 64 );
+    ok(!status, "RtlAddGrowableFunctionTable failed for runtime_func = %p (aligned), %#x.\n", runtime_func, status );
+    ok(growable_table != 0, "Unexpected table value.\n");
+
+    /* Current count is 0. */
+    func = pRtlLookupFunctionEntry( (ULONG_PTR)code_mem + code_offset + 8, &base, NULL );
+    ok( func == NULL,
+        "RtlLookupFunctionEntry didn't return expected function, expected: %p, got: %p\n", runtime_func, func );
+
+    pRtlGrowFunctionTable( growable_table, 1 );
+
+    base = 0xdeadbeef;
+    func = pRtlLookupFunctionEntry( (ULONG_PTR)code_mem + code_offset + 8, &base, NULL );
+    ok( func == runtime_func,
+        "RtlLookupFunctionEntry didn't return expected function, expected: %p, got: %p\n", runtime_func, func );
+    ok( base == (ULONG_PTR)code_mem,
+        "RtlLookupFunctionEntry returned invalid base, expected: %lx, got: %lx\n", (ULONG_PTR)code_mem, base );
+
+    /* Second function is inaccessible yet. */
+    base = 0xdeadbeef;
+    func = pRtlLookupFunctionEntry( (ULONG_PTR)code_mem + code_offset + 16, &base, NULL );
+    ok( func == NULL,
+        "RtlLookupFunctionEntry didn't return expected function, expected: %p, got: %p\n", runtime_func, func );
+
+    pRtlGrowFunctionTable( growable_table, 2 );
+
+    base = 0xdeadbeef;
+    func = pRtlLookupFunctionEntry( (ULONG_PTR)code_mem + code_offset + 16, &base, NULL );
+    ok( func == runtime_func + 1,
+        "RtlLookupFunctionEntry didn't return expected function, expected: %p, got: %p\n", runtime_func, func );
+    ok( base == (ULONG_PTR)code_mem,
+        "RtlLookupFunctionEntry returned invalid base, expected: %lx, got: %lx\n", (ULONG_PTR)code_mem, base );
+
+    pRtlDeleteGrowableFunctionTable( growable_table );
 }
 
 static int termination_handler_called;
@@ -3155,6 +3230,9 @@ START_TEST(exception)
                                                                  "RtlInstallFunctionTableCallback" );
     pRtlLookupFunctionEntry            = (void *)GetProcAddress( hntdll,
                                                                  "RtlLookupFunctionEntry" );
+    pRtlAddGrowableFunctionTable       = (void *)GetProcAddress( hntdll, "RtlAddGrowableFunctionTable" );
+    pRtlGrowFunctionTable              = (void *)GetProcAddress( hntdll, "RtlGrowFunctionTable" );
+    pRtlDeleteGrowableFunctionTable    = (void *)GetProcAddress( hntdll, "RtlDeleteGrowableFunctionTable" );
     p__C_specific_handler              = (void *)GetProcAddress( hntdll,
                                                                  "__C_specific_handler" );
     pRtlCaptureContext                 = (void *)GetProcAddress( hntdll,

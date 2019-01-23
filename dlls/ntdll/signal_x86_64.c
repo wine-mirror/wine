@@ -343,6 +343,7 @@ struct dynamic_unwind_entry
     /* lookup table */
     RUNTIME_FUNCTION *table;
     DWORD count;
+    DWORD max_count;
 
     /* user defined callback */
     PGET_RUNTIME_FUNCTION_CALLBACK callback;
@@ -3460,6 +3461,7 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64
     entry->end       = addr + table[count - 1].EndAddress;
     entry->table     = table;
     entry->count     = count;
+    entry->max_count = 0;
     entry->callback  = NULL;
     entry->context   = NULL;
 
@@ -3495,6 +3497,7 @@ BOOLEAN CDECL RtlInstallFunctionTableCallback( DWORD64 table, DWORD64 base, DWOR
     entry->end       = base + length;
     entry->table     = (RUNTIME_FUNCTION *)table;
     entry->count     = 0;
+    entry->max_count = 0;
     entry->callback  = callback;
     entry->context   = context;
 
@@ -3512,9 +3515,29 @@ BOOLEAN CDECL RtlInstallFunctionTableCallback( DWORD64 table, DWORD64 base, DWOR
 DWORD WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functions, DWORD count, DWORD max_count,
                                           ULONG_PTR base, ULONG_PTR end )
 {
-    FIXME( "(%p, %p, %d, %d, %ld, %ld) semi-stub!\n", table, functions, count, max_count, base, end );
-    if (table) *table = NULL;
-    return RtlAddFunctionTable(functions, count, base);
+    struct dynamic_unwind_entry *entry;
+
+    TRACE( "%p, %p, %u, %u, %lx, %lx\n", table, functions, count, max_count, base, end );
+
+    entry = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*entry) );
+    if (!entry)
+        return STATUS_NO_MEMORY;
+
+    entry->base      = base;
+    entry->end       = end;
+    entry->table     = functions;
+    entry->count     = count;
+    entry->max_count = max_count;
+    entry->callback  = NULL;
+    entry->context   = NULL;
+
+    RtlEnterCriticalSection( &dynamic_unwind_section );
+    list_add_tail( &dynamic_unwind_list, &entry->entry );
+    RtlLeaveCriticalSection( &dynamic_unwind_section );
+
+    *table = entry;
+
+    return STATUS_SUCCESS;
 }
 
 
@@ -3523,7 +3546,46 @@ DWORD WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functi
  */
 void WINAPI RtlGrowFunctionTable( void *table, DWORD count )
 {
-    FIXME( "(%p, %d) stub!\n", table, count );
+    struct dynamic_unwind_entry *entry;
+
+    TRACE( "%p, %u\n", table, count );
+
+    RtlEnterCriticalSection( &dynamic_unwind_section );
+    LIST_FOR_EACH_ENTRY( entry, &dynamic_unwind_list, struct dynamic_unwind_entry, entry )
+    {
+        if (entry == table)
+        {
+            if (count > entry->count && count <= entry->max_count)
+                entry->count = count;
+            break;
+        }
+    }
+    RtlLeaveCriticalSection( &dynamic_unwind_section );
+}
+
+
+/*************************************************************************
+ *              RtlDeleteGrowableFunctionTable   (NTDLL.@)
+ */
+void WINAPI RtlDeleteGrowableFunctionTable( void *table )
+{
+    struct dynamic_unwind_entry *entry, *to_free = NULL;
+
+    TRACE( "%p\n", table );
+
+    RtlEnterCriticalSection( &dynamic_unwind_section );
+    LIST_FOR_EACH_ENTRY( entry, &dynamic_unwind_list, struct dynamic_unwind_entry, entry )
+    {
+        if (entry == table)
+        {
+            to_free = entry;
+            list_remove( &entry->entry );
+            break;
+        }
+    }
+    RtlLeaveCriticalSection( &dynamic_unwind_section );
+
+    RtlFreeHeap( GetProcessHeap(), 0, to_free );
 }
 
 

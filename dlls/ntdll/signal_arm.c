@@ -1066,7 +1066,7 @@ DWORD WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functi
 {
     FIXME( "(%p, %p, %d, %d, %ld, %ld) stub!\n", table, functions, count, max_count, base, end );
     if (table) *table = NULL;
-    return S_OK;
+    return STATUS_SUCCESS;
 }
 
 /*************************************************************************
@@ -1075,6 +1075,14 @@ DWORD WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functi
 void WINAPI RtlGrowFunctionTable( void *table, DWORD count )
 {
     FIXME( "(%p, %d) stub!\n", table, count );
+}
+
+/*************************************************************************
+ *              RtlDeleteGrowableFunctionTable   (NTDLL.@)
+ */
+void WINAPI RtlDeleteGrowableFunctionTable( void *table )
+{
+    FIXME( "(%p) stub!\n", table );
 }
 
 /**********************************************************************
