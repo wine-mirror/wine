@@ -112,7 +112,6 @@ static void test_WTSQueryUserToken(void)
     SetLastError(0xdeadbeef);
     ret = WTSQueryUserToken(WTS_CURRENT_SESSION, NULL);
     ok(!ret, "expected WTSQueryUserToken to fail\n");
-    todo_wine
     ok(GetLastError()==ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
 }
 
