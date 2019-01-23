@@ -13042,6 +13042,118 @@ static void test_resource_access(void)
     DestroyWindow(window);
 }
 
+static void test_multiply_transform(void)
+{
+    IDirect3DStateBlock9 *stateblock;
+    IDirect3DDevice9 *device;
+    D3DMATRIX ret_mat;
+    IDirect3D9 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DTRANSFORMSTATETYPE tests[] =
+    {
+        D3DTS_VIEW,
+        D3DTS_PROJECTION,
+        D3DTS_TEXTURE0,
+        D3DTS_TEXTURE1,
+        D3DTS_TEXTURE2,
+        D3DTS_TEXTURE3,
+        D3DTS_TEXTURE4,
+        D3DTS_TEXTURE5,
+        D3DTS_TEXTURE6,
+        D3DTS_TEXTURE7,
+        D3DTS_WORLDMATRIX(0),
+        D3DTS_WORLDMATRIX(1),
+        D3DTS_WORLDMATRIX(2),
+        D3DTS_WORLDMATRIX(3),
+        D3DTS_WORLDMATRIX(255),
+    };
+
+    static const D3DMATRIX mat1 =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+    mat2 =
+    {{{
+        2.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 2.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 2.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 2.0f,
+    }}};
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create D3D object.\n");
+
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create 3D device.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IDirect3DDevice9_GetTransform(device, tests[i], &ret_mat);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!memcmp(&ret_mat, &mat1, sizeof(mat1)), "Test %u: Got unexpected transform matrix.\n", i);
+
+        hr = IDirect3DDevice9_MultiplyTransform(device, tests[i], &mat2);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_GetTransform(device, tests[i], &ret_mat);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!memcmp(&ret_mat, &mat2, sizeof(mat2)), "Test %u: Got unexpected transform matrix.\n", i);
+
+        /* MultiplyTransform() goes directly into the primary stateblock. */
+
+        hr = IDirect3DDevice9_SetTransform(device, tests[i], &mat1);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_BeginStateBlock(device);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_MultiplyTransform(device, tests[i], &mat2);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_GetTransform(device, tests[i], &ret_mat);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+todo_wine
+        ok(!memcmp(&ret_mat, &mat2, sizeof(mat2)), "Test %u: Got unexpected transform matrix.\n", i);
+
+        hr = IDirect3DStateBlock9_Capture(stateblock);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_SetTransform(device, tests[i], &mat1);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DStateBlock9_Apply(stateblock);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_GetTransform(device, tests[i], &ret_mat);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!memcmp(&ret_mat, &mat1, sizeof(mat1)), "Test %u: Got unexpected transform matrix.\n", i);
+
+        IDirect3DStateBlock9_Release(stateblock);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -13167,6 +13279,7 @@ START_TEST(device)
     test_stretch_rect();
     test_device_caps();
     test_resource_access();
+    test_multiply_transform();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
