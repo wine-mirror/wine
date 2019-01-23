@@ -342,7 +342,7 @@ struct dynamic_unwind_entry
 
     /* lookup table */
     RUNTIME_FUNCTION *table;
-    DWORD table_size;
+    DWORD count;
 
     /* user defined callback */
     PGET_RUNTIME_FUNCTION_CALLBACK callback;
@@ -2516,7 +2516,7 @@ static RUNTIME_FUNCTION *find_function_info( ULONG64 pc, HMODULE module,
                                              RUNTIME_FUNCTION *func, ULONG size )
 {
     int min = 0;
-    int max = size/sizeof(*func) - 1;
+    int max = size - 1;
 
     while (min <= max)
     {
@@ -2551,7 +2551,7 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
                                                   IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
         {
             /* lookup in function table */
-            func = find_function_info( pc, (*module)->BaseAddress, func, size );
+            func = find_function_info( pc, (*module)->BaseAddress, func, size/sizeof(*func) );
         }
     }
     else
@@ -2569,7 +2569,7 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
                 if (entry->callback)
                     func = entry->callback( pc, entry->context );
                 else
-                    func = find_function_info( pc, (HMODULE)entry->base, entry->table, entry->table_size );
+                    func = find_function_info( pc, (HMODULE)entry->base, entry->table, entry->count );
                 break;
             }
         }
@@ -3456,12 +3456,12 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64
     if (!entry)
         return FALSE;
 
-    entry->base       = addr;
-    entry->end        = addr + table[count - 1].EndAddress;
-    entry->table      = table;
-    entry->table_size = count * sizeof(RUNTIME_FUNCTION);
-    entry->callback   = NULL;
-    entry->context    = NULL;
+    entry->base      = addr;
+    entry->end       = addr + table[count - 1].EndAddress;
+    entry->table     = table;
+    entry->count     = count;
+    entry->callback  = NULL;
+    entry->context   = NULL;
 
     RtlEnterCriticalSection( &dynamic_unwind_section );
     list_add_tail( &dynamic_unwind_list, &entry->entry );
@@ -3491,12 +3491,12 @@ BOOLEAN CDECL RtlInstallFunctionTableCallback( DWORD64 table, DWORD64 base, DWOR
     if (!entry)
         return FALSE;
 
-    entry->base       = base;
-    entry->end        = base + length;
-    entry->table      = (RUNTIME_FUNCTION *)table;
-    entry->table_size = 0;
-    entry->callback   = callback;
-    entry->context    = context;
+    entry->base      = base;
+    entry->end       = base + length;
+    entry->table     = (RUNTIME_FUNCTION *)table;
+    entry->count     = 0;
+    entry->callback  = callback;
+    entry->context   = context;
 
     RtlEnterCriticalSection( &dynamic_unwind_section );
     list_add_tail( &dynamic_unwind_list, &entry->entry );
