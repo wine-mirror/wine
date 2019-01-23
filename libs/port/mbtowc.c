@@ -65,34 +65,52 @@ static inline int mbstowcs_sbcs( const struct sbcs_table *table, int flags,
         ret = -1;
     }
 
-    for (;;)
+    while (srclen >= 16)
     {
-        switch(srclen)
-        {
-        default:
-        case 16: dst[15] = cp2uni[src[15]];
-        case 15: dst[14] = cp2uni[src[14]];
-        case 14: dst[13] = cp2uni[src[13]];
-        case 13: dst[12] = cp2uni[src[12]];
-        case 12: dst[11] = cp2uni[src[11]];
-        case 11: dst[10] = cp2uni[src[10]];
-        case 10: dst[9]  = cp2uni[src[9]];
-        case 9:  dst[8]  = cp2uni[src[8]];
-        case 8:  dst[7]  = cp2uni[src[7]];
-        case 7:  dst[6]  = cp2uni[src[6]];
-        case 6:  dst[5]  = cp2uni[src[5]];
-        case 5:  dst[4]  = cp2uni[src[4]];
-        case 4:  dst[3]  = cp2uni[src[3]];
-        case 3:  dst[2]  = cp2uni[src[2]];
-        case 2:  dst[1]  = cp2uni[src[1]];
-        case 1:  dst[0]  = cp2uni[src[0]];
-        case 0: break;
-        }
-        if (srclen < 16) return ret;
-        dst += 16;
+        dst[0]  = cp2uni[src[0]];
+        dst[1]  = cp2uni[src[1]];
+        dst[2]  = cp2uni[src[2]];
+        dst[3]  = cp2uni[src[3]];
+        dst[4]  = cp2uni[src[4]];
+        dst[5]  = cp2uni[src[5]];
+        dst[6]  = cp2uni[src[6]];
+        dst[7]  = cp2uni[src[7]];
+        dst[8]  = cp2uni[src[8]];
+        dst[9]  = cp2uni[src[9]];
+        dst[10] = cp2uni[src[10]];
+        dst[11] = cp2uni[src[11]];
+        dst[12] = cp2uni[src[12]];
+        dst[13] = cp2uni[src[13]];
+        dst[14] = cp2uni[src[14]];
+        dst[15] = cp2uni[src[15]];
         src += 16;
+        dst += 16;
         srclen -= 16;
     }
+
+    /* now handle the remaining characters */
+    src += srclen;
+    dst += srclen;
+    switch (srclen)
+    {
+    case 15: dst[-15] = cp2uni[src[-15]];
+    case 14: dst[-14] = cp2uni[src[-14]];
+    case 13: dst[-13] = cp2uni[src[-13]];
+    case 12: dst[-12] = cp2uni[src[-12]];
+    case 11: dst[-11] = cp2uni[src[-11]];
+    case 10: dst[-10] = cp2uni[src[-10]];
+    case 9:  dst[-9]  = cp2uni[src[-9]];
+    case 8:  dst[-8]  = cp2uni[src[-8]];
+    case 7:  dst[-7]  = cp2uni[src[-7]];
+    case 6:  dst[-6]  = cp2uni[src[-6]];
+    case 5:  dst[-5]  = cp2uni[src[-5]];
+    case 4:  dst[-4]  = cp2uni[src[-4]];
+    case 3:  dst[-3]  = cp2uni[src[-3]];
+    case 2:  dst[-2]  = cp2uni[src[-2]];
+    case 1:  dst[-1]  = cp2uni[src[-1]];
+    case 0: break;
+    }
+    return ret;
 }
 
 /* mbstowcs for single-byte code page with char decomposition */
