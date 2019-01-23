@@ -6512,24 +6512,22 @@ static void test_mipmap(void)
             ok(SUCCEEDED(hr), "Test %u, %u: Failed to get surface desc, hr %#x.\n", i, mipmap_count, hr);
             ok(surface_desc.dwFlags & DDSD_MIPMAPCOUNT,
                     "Test %u, %u: Got unexpected flags %#x.\n", i, mipmap_count, surface_desc.dwFlags);
-            todo_wine_if(mipmap_count != tests[i].mipmap_count_out)
-                ok(U2(surface_desc).dwMipMapCount == mipmap_count,
-                        "Test %u, %u: Got unexpected mipmap count %u.\n",
-                        i, mipmap_count, U2(surface_desc).dwMipMapCount);
+            ok(U2(surface_desc).dwMipMapCount == mipmap_count,
+                    "Test %u, %u: Got unexpected mipmap count %u.\n",
+                    i, mipmap_count, U2(surface_desc).dwMipMapCount);
 
             memset(&surface_desc, 0, sizeof(surface_desc));
             surface_desc.dwSize = sizeof(surface_desc);
             hr = IDirectDrawSurface2_Lock(surface_base, NULL, &surface_desc, 0, NULL);
             ok(SUCCEEDED(hr), "Test %u, %u: Failed to lock surface, hr %#x.\n", i, mipmap_count, hr);
-            todo_wine_if(mipmap_count != tests[i].mipmap_count_out)
-                ok(surface_desc.dwMipMapCount == mipmap_count,
-                        "Test %u, %u: unexpected change of mipmap count %u.\n",
-                        i, mipmap_count, surface_desc.dwMipMapCount);
+            ok(surface_desc.dwMipMapCount == mipmap_count,
+                    "Test %u, %u: unexpected change of mipmap count %u.\n",
+                    i, mipmap_count, surface_desc.dwMipMapCount);
             memset(&surface_desc, 0, sizeof(surface_desc));
             surface_desc.dwSize = sizeof(surface_desc);
             hr = IDirectDrawSurface2_Lock(surface_mip, NULL, &surface_desc, 0, NULL);
             ok(SUCCEEDED(hr), "Test %u, %u: Failed to lock surface, hr %#x.\n", i, mipmap_count, hr);
-            todo_wine ok(surface_desc.dwMipMapCount == mipmap_count - 1,
+            ok(surface_desc.dwMipMapCount == mipmap_count - 1,
                     "Test %u, %u: Child mipmap count unexpected %u\n", i, mipmap_count, surface_desc.dwMipMapCount);
             IDirectDrawSurface2_Unlock(surface_mip, NULL);
             IDirectDrawSurface2_Unlock(surface_base, NULL);
