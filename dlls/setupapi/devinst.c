@@ -527,7 +527,9 @@ static HKEY create_driver_key(struct device *device)
     static const WCHAR formatW[] = {'%','0','4','u',0};
     static const WCHAR slash[] = { '\\',0 };
     HKEY class_key, key;
+    unsigned int i = 0;
     WCHAR path[50];
+    DWORD dispos;
     LONG l;
 
     if ((key = open_driver_key(device, KEY_READ | KEY_WRITE)) != INVALID_HANDLE_VALUE)
@@ -543,12 +545,20 @@ static HKEY create_driver_key(struct device *device)
 
     SETUPDI_GuidToString(&device->class, path);
     strcatW(path, slash);
-    sprintfW(path + strlenW(path), formatW, device->devnode);
-    if (!(l = RegCreateKeyExW(class_key, path, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &key, NULL)))
+    /* Allocate a new driver key, by finding the first integer value that's not
+     * already taken. */
+    for (;;)
     {
-        RegSetValueExW(device->key, Driver, 0, REG_SZ, (BYTE *)path, strlenW(path) * sizeof(WCHAR));
-        RegCloseKey(class_key);
-        return key;
+        sprintfW(path + 39, formatW, i++);
+        if ((l = RegCreateKeyExW(class_key, path, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &key, &dispos)))
+            break;
+        else if (dispos == REG_CREATED_NEW_KEY)
+        {
+            RegSetValueExW(device->key, Driver, 0, REG_SZ, (BYTE *)path, strlenW(path) * sizeof(WCHAR));
+            RegCloseKey(class_key);
+            return key;
+        }
+        RegCloseKey(key);
     }
     ERR("Failed to create driver key, error %u.\n", l);
     RegCloseKey(class_key);
