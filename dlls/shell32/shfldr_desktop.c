@@ -611,7 +611,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 
         if ((clsid = _ILGetGUIDPointer (pidl)))
         {
-            if (GET_SHGDN_FOR (dwFlags) & SHGDN_FORPARSING)
+            if ((GET_SHGDN_FOR (dwFlags) & (SHGDN_FORPARSING | SHGDN_FORADDRESSBAR)) == SHGDN_FORPARSING)
             {
                 BOOL bWantsForParsing;
 
