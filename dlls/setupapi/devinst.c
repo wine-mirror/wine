@@ -492,30 +492,85 @@ static HKEY SETUPDI_CreateDevKey(struct device *device)
     return key;
 }
 
-static HKEY SETUPDI_CreateDrvKey(struct device *device)
+static HKEY open_driver_key(struct device *device, REGSAM access)
 {
-    static const WCHAR slash[] = { '\\',0 };
-    WCHAR classKeyPath[MAX_PATH];
-    HKEY classKey, key = INVALID_HANDLE_VALUE;
+    HKEY class_key, key;
+    WCHAR path[50];
+    DWORD size = sizeof(path);
     LONG l;
 
-    lstrcpyW(classKeyPath, ControlClass);
-    lstrcatW(classKeyPath, slash);
-    SETUPDI_GuidToString(&device->set->ClassGuid,
-            classKeyPath + lstrlenW(classKeyPath));
-    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, classKeyPath, 0, NULL, 0,
-            KEY_ALL_ACCESS, NULL, &classKey, NULL);
-    if (!l)
+    if ((l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, ControlClass, 0, NULL, 0,
+            KEY_CREATE_SUB_KEY, NULL, &class_key, NULL)))
     {
-        static const WCHAR fmt[] = { '%','0','4','u',0 };
-        WCHAR devId[10];
-
-        sprintfW(devId, fmt, device->devnode);
-        RegCreateKeyExW(classKey, devId, 0, NULL, 0, KEY_READ | KEY_WRITE,
-                NULL, &key, NULL);
-        RegCloseKey(classKey);
+        ERR("Failed to open driver class root key, error %u.\n", l);
+        SetLastError(l);
+        return INVALID_HANDLE_VALUE;
     }
-    return key;
+
+    if (!(l = RegGetValueW(device->key, NULL, Driver, RRF_RT_REG_SZ, NULL, path, &size)))
+    {
+        if (!(l = RegOpenKeyExW(class_key, path, 0, access, &key)))
+        {
+            RegCloseKey(class_key);
+            return key;
+        }
+        ERR("Failed to open driver key, error %u.\n", l);
+    }
+
+    RegCloseKey(class_key);
+    SetLastError(ERROR_KEY_DOES_NOT_EXIST);
+    return INVALID_HANDLE_VALUE;
+}
+
+static HKEY create_driver_key(struct device *device)
+{
+    static const WCHAR formatW[] = {'%','0','4','u',0};
+    static const WCHAR slash[] = { '\\',0 };
+    HKEY class_key, key;
+    WCHAR path[50];
+    LONG l;
+
+    if ((key = open_driver_key(device, KEY_READ | KEY_WRITE)) != INVALID_HANDLE_VALUE)
+        return key;
+
+    if ((l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, ControlClass, 0, NULL, 0,
+            KEY_CREATE_SUB_KEY, NULL, &class_key, NULL)))
+    {
+        ERR("Failed to open driver class root key, error %u.\n", l);
+        SetLastError(l);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    SETUPDI_GuidToString(&device->class, path);
+    strcatW(path, slash);
+    sprintfW(path + strlenW(path), formatW, device->devnode);
+    if (!(l = RegCreateKeyExW(class_key, path, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &key, NULL)))
+    {
+        RegSetValueExW(device->key, Driver, 0, REG_SZ, (BYTE *)path, strlenW(path) * sizeof(WCHAR));
+        RegCloseKey(class_key);
+        return key;
+    }
+    ERR("Failed to create driver key, error %u.\n", l);
+    RegCloseKey(class_key);
+    SetLastError(l);
+    return INVALID_HANDLE_VALUE;
+}
+
+static BOOL delete_driver_key(struct device *device)
+{
+    HKEY key;
+    LONG l;
+
+    if ((key = open_driver_key(device, KEY_READ | KEY_WRITE)) != INVALID_HANDLE_VALUE)
+    {
+        l = RegDeleteKeyW(key, emptyW);
+        RegCloseKey(key);
+
+        SetLastError(l);
+        return !l;
+    }
+
+    return FALSE;
 }
 
 struct PropertyMapEntry
@@ -1367,7 +1422,7 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_da
             key = SETUPDI_CreateDevKey(device);
             break;
         case DIREG_DRV:
-            key = SETUPDI_CreateDrvKey(device);
+            key = create_driver_key(device);
             break;
         default:
             WARN("unknown KeyType %d\n", KeyType);
@@ -3358,36 +3413,6 @@ static HKEY SETUPDI_OpenDevKey(struct device *device, REGSAM samDesired)
     return key;
 }
 
-static HKEY SETUPDI_OpenDrvKey(struct device *device, REGSAM samDesired)
-{
-    static const WCHAR slash[] = { '\\',0 };
-    WCHAR classKeyPath[MAX_PATH];
-    HKEY classKey, key = INVALID_HANDLE_VALUE;
-    LONG l;
-
-    lstrcpyW(classKeyPath, ControlClass);
-    lstrcatW(classKeyPath, slash);
-    SETUPDI_GuidToString(&device->set->ClassGuid,
-            classKeyPath + lstrlenW(classKeyPath));
-    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, classKeyPath, 0, NULL, 0,
-            KEY_ALL_ACCESS, NULL, &classKey, NULL);
-    if (!l)
-    {
-        static const WCHAR fmt[] = { '%','0','4','u',0 };
-        WCHAR devId[10];
-
-        sprintfW(devId, fmt, device->devnode);
-        l = RegOpenKeyExW(classKey, devId, 0, samDesired, &key);
-        RegCloseKey(classKey);
-        if (l)
-        {
-            SetLastError(ERROR_KEY_DOES_NOT_EXIST);
-            return INVALID_HANDLE_VALUE;
-        }
-    }
-    return key;
-}
-
 /***********************************************************************
  *		SetupDiOpenDevRegKey (SETUPAPI.@)
  */
@@ -3427,7 +3452,7 @@ HKEY WINAPI SetupDiOpenDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
             key = SETUPDI_OpenDevKey(device, samDesired);
             break;
         case DIREG_DRV:
-            key = SETUPDI_OpenDrvKey(device, samDesired);
+            key = open_driver_key(device, samDesired);
             break;
         default:
             WARN("unknown KeyType %d\n", KeyType);
@@ -3447,34 +3472,6 @@ static BOOL SETUPDI_DeleteDevKey(struct device *device)
     {
         ret = RegDeleteTreeW(enumKey, device->instanceId);
         RegCloseKey(enumKey);
-    }
-    else
-        SetLastError(l);
-    return ret;
-}
-
-static BOOL SETUPDI_DeleteDrvKey(struct device *device)
-{
-    static const WCHAR slash[] = { '\\',0 };
-    WCHAR classKeyPath[MAX_PATH];
-    HKEY classKey;
-    LONG l;
-    BOOL ret = FALSE;
-
-    lstrcpyW(classKeyPath, ControlClass);
-    lstrcatW(classKeyPath, slash);
-    SETUPDI_GuidToString(&device->set->ClassGuid,
-            classKeyPath + lstrlenW(classKeyPath));
-    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, classKeyPath, 0, NULL, 0,
-            KEY_ALL_ACCESS, NULL, &classKey, NULL);
-    if (!l)
-    {
-        static const WCHAR fmt[] = { '%','0','4','u',0 };
-        WCHAR devId[10];
-
-        sprintfW(devId, fmt, device->devnode);
-        ret = RegDeleteTreeW(classKey, devId);
-        RegCloseKey(classKey);
     }
     else
         SetLastError(l);
@@ -3520,12 +3517,12 @@ BOOL WINAPI SetupDiDeleteDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
             ret = SETUPDI_DeleteDevKey(device);
             break;
         case DIREG_DRV:
-            ret = SETUPDI_DeleteDrvKey(device);
+            ret = delete_driver_key(device);
             break;
         case DIREG_BOTH:
             ret = SETUPDI_DeleteDevKey(device);
             if (ret)
-                ret = SETUPDI_DeleteDrvKey(device);
+                ret = delete_driver_key(device);
             break;
         default:
             WARN("unknown KeyType %d\n", KeyType);
