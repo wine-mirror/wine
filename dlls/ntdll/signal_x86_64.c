@@ -338,7 +338,7 @@ struct dynamic_unwind_entry
 
     /* memory region which matches this entry */
     DWORD64 base;
-    DWORD size;
+    DWORD64 end;
 
     /* lookup table */
     RUNTIME_FUNCTION *table;
@@ -2561,7 +2561,7 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
         RtlEnterCriticalSection( &dynamic_unwind_section );
         LIST_FOR_EACH_ENTRY( entry, &dynamic_unwind_list, struct dynamic_unwind_entry, entry )
         {
-            if (pc >= entry->base && pc < entry->base + entry->size)
+            if (pc >= entry->base && pc < entry->end)
             {
                 *base = entry->base;
 
@@ -3457,7 +3457,7 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64
         return FALSE;
 
     entry->base       = addr;
-    entry->size       = table[count - 1].EndAddress;
+    entry->end        = addr + table[count - 1].EndAddress;
     entry->table      = table;
     entry->table_size = count * sizeof(RUNTIME_FUNCTION);
     entry->callback   = NULL;
@@ -3492,7 +3492,7 @@ BOOLEAN CDECL RtlInstallFunctionTableCallback( DWORD64 table, DWORD64 base, DWOR
         return FALSE;
 
     entry->base       = base;
-    entry->size       = length;
+    entry->end        = base + length;
     entry->table      = (RUNTIME_FUNCTION *)table;
     entry->table_size = 0;
     entry->callback   = callback;
