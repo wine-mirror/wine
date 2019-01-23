@@ -172,6 +172,7 @@ static void find_hid_devices(void)
 
 done:
     LeaveCriticalSection(&hid_devices_cs);
+    SetupDiDestroyDeviceInfoList(set);
     heap_free(detail);
 }
 
