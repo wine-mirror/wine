@@ -15397,7 +15397,6 @@ static void test_multiply_transform(void)
 
         hr = IDirect3DDevice7_GetTransform(device, tests[i], &ret_mat);
         ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-todo_wine
         ok(!memcmp(&ret_mat, &mat2, sizeof(mat2)), "Test %u: Got unexpected transform matrix.\n", i);
 
         hr = IDirect3DDevice7_CaptureStateBlock(device, stateblock);
