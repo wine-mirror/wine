@@ -1623,12 +1623,12 @@ BOOL WINAPI GUIDFromStringW(LPCWSTR str, LPGUID guid)
 }
 
 /*************************************************************************
- *      @	[SHELL32.714]
+ *      PathIsTemporaryW	[SHELL32.714]
  */
-DWORD WINAPI SHELL32_714(LPVOID x)
+BOOL WINAPI PathIsTemporaryW(const WCHAR *path)
 {
- 	FIXME("(%s)stub\n", debugstr_w(x));
-	return 0;
+    FIXME("(%s) stub\n", debugstr_w(path));
+    return FALSE;
 }
 
 typedef struct _PSXA
