@@ -15317,6 +15317,110 @@ static void test_gdi_surface(void)
     DestroyWindow(window);
 }
 
+static void test_multiply_transform(void)
+{
+    IDirect3DDevice7 *device;
+    D3DMATRIX ret_mat;
+    DWORD stateblock;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DTRANSFORMSTATETYPE tests[] =
+    {
+        D3DTRANSFORMSTATE_WORLD,
+        D3DTRANSFORMSTATE_VIEW,
+        D3DTRANSFORMSTATE_PROJECTION,
+        D3DTRANSFORMSTATE_WORLD1,
+        D3DTRANSFORMSTATE_WORLD2,
+        D3DTRANSFORMSTATE_WORLD3,
+        D3DTRANSFORMSTATE_TEXTURE0,
+        D3DTRANSFORMSTATE_TEXTURE1,
+        D3DTRANSFORMSTATE_TEXTURE2,
+        D3DTRANSFORMSTATE_TEXTURE3,
+        D3DTRANSFORMSTATE_TEXTURE4,
+        D3DTRANSFORMSTATE_TEXTURE5,
+        D3DTRANSFORMSTATE_TEXTURE6,
+        D3DTRANSFORMSTATE_TEXTURE7,
+    };
+
+    D3DMATRIX mat1 =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    },
+    mat2 =
+    {
+        2.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 2.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 2.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 2.0f,
+    };
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create 3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IDirect3DDevice7_GetTransform(device, tests[i], &ret_mat);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!memcmp(&ret_mat, &mat1, sizeof(mat1)), "Test %u: Got unexpected transform matrix.\n", i);
+
+        hr = IDirect3DDevice7_MultiplyTransform(device, tests[i], &mat2);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice7_GetTransform(device, tests[i], &ret_mat);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!memcmp(&ret_mat, &mat2, sizeof(mat2)), "Test %u: Got unexpected transform matrix.\n", i);
+
+        /* MultiplyTransform() goes directly into the primary stateblock. */
+
+        hr = IDirect3DDevice7_SetTransform(device, tests[i], &mat1);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice7_BeginStateBlock(device);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice7_MultiplyTransform(device, tests[i], &mat2);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice7_EndStateBlock(device, &stateblock);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice7_GetTransform(device, tests[i], &ret_mat);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+todo_wine
+        ok(!memcmp(&ret_mat, &mat2, sizeof(mat2)), "Test %u: Got unexpected transform matrix.\n", i);
+
+        hr = IDirect3DDevice7_CaptureStateBlock(device, stateblock);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice7_SetTransform(device, tests[i], &mat1);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice7_ApplyStateBlock(device, stateblock);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice7_GetTransform(device, tests[i], &ret_mat);
+        ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!memcmp(&ret_mat, &mat1, sizeof(mat1)), "Test %u: Got unexpected transform matrix.\n", i);
+
+        IDirect3DDevice7_DeleteStateBlock(device, stateblock);
+    }
+
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -15458,4 +15562,5 @@ START_TEST(ddraw7)
     test_killfocus();
     test_sysmem_draw();
     test_gdi_surface();
+    test_multiply_transform();
 }
