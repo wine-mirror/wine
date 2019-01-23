@@ -23,6 +23,7 @@
  */
 
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "ws2tcpip.h"
 
@@ -3764,21 +3765,93 @@ BOOL WINAPI SetUrlCacheEntryGroupW(LPCWSTR lpszUrlName, DWORD dwFlags,
 /***********************************************************************
  *           GetUrlCacheConfigInfoW (WININET.@)
  */
-BOOL WINAPI GetUrlCacheConfigInfoW(LPINTERNET_CACHE_CONFIG_INFOW CacheInfo, LPDWORD size, DWORD bitmask)
+BOOL WINAPI GetUrlCacheConfigInfoW(LPINTERNET_CACHE_CONFIG_INFOW info, LPDWORD size, DWORD flags)
 {
-    FIXME("(%p, %p, %x)\n", CacheInfo, size, bitmask);
-    INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-    return FALSE;
+    cache_container *container;
+
+    FIXME("(%p, %p, %x): semi-stub\n", info, size, flags);
+
+    if (!info)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    info->dwContainer = 0;
+    info->dwQuota = 0x3e800; /* FIXME */
+    info->dwReserved4 = 0;
+    info->fPerUser = TRUE;
+    info->dwSyncMode = 0;
+    info->dwNumCachePaths = 1;
+    info->dwNormalUsage = 0;
+    info->dwExemptUsage = 0;
+
+    info->u.s.CachePath[0] = 0;
+    info->u.s.dwCacheSize = 0x3e800; /* FIXME */
+
+    LIST_FOR_EACH_ENTRY(container, &UrlContainers, cache_container, entry)
+    {
+        switch (flags & (CACHE_CONFIG_CONTENT_PATHS_FC | CACHE_CONFIG_COOKIES_PATHS_FC | CACHE_CONFIG_HISTORY_PATHS_FC))
+        {
+        case 0:
+        case CACHE_CONFIG_CONTENT_PATHS_FC:
+            if (container->default_entry_type == NORMAL_CACHE_ENTRY)
+                lstrcpynW(info->u.s.CachePath, container->path, MAX_PATH);
+            break;
+
+        case CACHE_CONFIG_COOKIES_PATHS_FC:
+            if (container->default_entry_type == COOKIE_CACHE_ENTRY)
+                lstrcpynW(info->u.s.CachePath, container->path, MAX_PATH);
+            break;
+
+        case CACHE_CONFIG_HISTORY_PATHS_FC:
+            if (container->default_entry_type == URLHISTORY_CACHE_ENTRY)
+                lstrcpynW(info->u.s.CachePath, container->path, MAX_PATH);
+            break;
+
+        default:
+            FIXME("flags %08x not handled\n", flags);
+            break;
+        }
+    }
+
+    TRACE("CachePath %s\n", debugstr_w(info->u.s.CachePath));
+
+    return TRUE;
 }
 
 /***********************************************************************
  *           GetUrlCacheConfigInfoA (WININET.@)
  */
-BOOL WINAPI GetUrlCacheConfigInfoA(LPINTERNET_CACHE_CONFIG_INFOA CacheInfo, LPDWORD size, DWORD bitmask)
+BOOL WINAPI GetUrlCacheConfigInfoA(LPINTERNET_CACHE_CONFIG_INFOA info, LPDWORD size, DWORD flags)
 {
-    FIXME("(%p, %p, %x)\n", CacheInfo, size, bitmask);
-    INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-    return FALSE;
+    INTERNET_CACHE_CONFIG_INFOW infoW;
+
+    TRACE("(%p, %p, %x)\n", info, size, flags);
+
+    if (!info)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    infoW.dwStructSize = sizeof(infoW);
+    if (!GetUrlCacheConfigInfoW(&infoW, size, flags))
+        return FALSE;
+
+    info->dwContainer = infoW.dwContainer;
+    info->dwQuota = infoW.dwQuota;
+    info->dwReserved4 = infoW.dwReserved4;
+    info->fPerUser = infoW.fPerUser;
+    info->dwSyncMode = infoW.dwSyncMode;
+    info->dwNumCachePaths = infoW.dwNumCachePaths;
+    info->dwNormalUsage = infoW.dwNormalUsage;
+    info->dwExemptUsage = infoW.dwExemptUsage;
+
+    info->u.s.dwCacheSize = infoW.u.s.dwCacheSize;
+    WideCharToMultiByte(CP_ACP, 0, infoW.u.s.CachePath, -1, info->u.s.CachePath, MAX_PATH, NULL, NULL);
+
+    return TRUE;
 }
 
 BOOL WINAPI GetUrlCacheGroupAttributeA( GROUPID gid, DWORD dwFlags, DWORD dwAttributes,
