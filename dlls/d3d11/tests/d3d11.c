@@ -6439,12 +6439,7 @@ static void test_device_context_state(void)
 
     feature_level = ID3D11Device1_GetFeatureLevel(device);
     ID3D11Device1_GetImmediateContext1(device, &context);
-    todo_wine ok(!!context, "Failed to get immediate context.\n");
-    if (!context)
-    {
-        ID3D11Device1_Release(device);
-        return;
-    }
+    ok(!!context, "Failed to get immediate context.\n");
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -6471,7 +6466,14 @@ static void test_device_context_state(void)
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
             &IID_ID3D10Device, NULL, &context_state);
+todo_wine
     ok(SUCCEEDED(hr), "Failed to create device context state, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        ID3D11SamplerState_Release(sampler);
+        ID3D11Device1_Release(device);
+        return;
+    }
     refcount = get_refcount(context_state);
     ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
