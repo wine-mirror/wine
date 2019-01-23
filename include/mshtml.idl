@@ -23641,6 +23641,52 @@ methods:
 }
 
 /*****************************************************************************
+ *    IDOMCustomEvent interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305106de-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDOMCustomEvent : IDispatch
+{
+    [propget, id(DISPID_IDOMCUSTOMEVENT_DETAIL)]
+    HRESULT detail([out, retval] VARIANT *p);
+
+    [id(DISPID_IDOMCUSTOMEVENT_INITCUSTOMEVENT)]
+    HRESULT initCustomEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] VARIANT *detail);
+}
+
+/*****************************************************************************
+ *    DispDOMCustomEvent dispinterface
+ */
+[
+    hidden,
+    uuid(3059007c-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMCustomEvent
+{
+properties:
+methods:
+    WINE_IDOMEVENT_DISPINTERFACE_DECL;
+
+    [propget, id(DISPID_IDOMCUSTOMEVENT_DETAIL)]
+    VARIANT detail();
+
+    [id(DISPID_IDOMCUSTOMEVENT_INITCUSTOMEVENT)]
+    void initCustomEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] VARIANT *detail);
+}
+
+/*****************************************************************************
  *    IDOMMessageEvent interface
  */
 [
