@@ -3514,8 +3514,7 @@ static unsigned int write_contexthandle_tfs(FILE *file,
 
     print_file(file, 2, "0x%02x,\t/* FC_BIND_CONTEXT */\n", FC_BIND_CONTEXT);
     print_file(file, 2, "0x%x,\t/* Context flags: ", flags);
-    /* return and can't be null values overlap */
-    if (((flags & 0x21) != 0x21) && (flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL))
+    if (flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL)
         print_file(file, 0, "can't be null, ");
     if (flags & NDR_CONTEXT_HANDLE_SERIALIZE)
         print_file(file, 0, "serialize, ");
@@ -3523,10 +3522,10 @@ static unsigned int write_contexthandle_tfs(FILE *file,
         print_file(file, 0, "no serialize, ");
     if (flags & NDR_STRICT_CONTEXT_HANDLE)
         print_file(file, 0, "strict, ");
-    if ((flags & 0x21) == 0x20)
-        print_file(file, 0, "out, ");
-    if ((flags & 0x21) == 0x21)
+    if (flags & 0x10)
         print_file(file, 0, "return, ");
+    if (flags &  0x20)
+        print_file(file, 0, "out, ");
     if (flags & 0x40)
         print_file(file, 0, "in, ");
     if (flags & 0x80)
