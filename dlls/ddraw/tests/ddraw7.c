@@ -15250,7 +15250,7 @@ static void test_gdi_surface(void)
     ok(!gdi_surface, "Got unexpected surface %p.\n", gdi_surface);
 
     hr = IDirectDraw7_FlipToGDISurface(ddraw);
-    todo_wine ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -15267,7 +15267,7 @@ static void test_gdi_surface(void)
     /* Flipping to the GDI surface requires the primary surface to be
      * flippable. */
     hr = IDirectDraw7_FlipToGDISurface(ddraw);
-    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
 
     IDirectDrawSurface7_Release(primary);
 
