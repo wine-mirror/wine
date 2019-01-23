@@ -2788,13 +2788,19 @@ static void test_tolower(void)
 
     errno = 0xdeadbeef;
     ret = p_tolower((char)0xF4);
-    todo_wine ok(ret == (char)0xF4, "ret = %x\n", ret);
-    todo_wine ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+    ok(ret == (char)0xF4, "ret = %x\n", ret);
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
     errno = 0xdeadbeef;
     ret = p_tolower((char)0xD0);
-    todo_wine ok(ret == (char)0xD0, "ret = %x\n", ret);
-    todo_wine ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+    ok(ret == (char)0xD0, "ret = %x\n", ret);
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    setlocale(LC_ALL, "C");
+    errno = 0xdeadbeef;
+    ret = p_tolower((char)0xF4);
+    ok(ret == (char)0xF4, "ret = %x\n", ret);
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
     /* test C locale after setting locale */
     if(!setlocale(LC_ALL, "us")) {
