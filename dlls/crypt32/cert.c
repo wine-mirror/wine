@@ -2195,7 +2195,7 @@ BOOL WINAPI CryptHashCertificate(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
      pbEncoded, cbEncoded, pbComputedHash, pcbComputedHash);
 
     if (!hCryptProv)
-        hCryptProv = I_CryptGetDefaultCryptProv(0);
+        hCryptProv = I_CryptGetDefaultCryptProv(Algid);
     if (!Algid)
         Algid = CALG_SHA1;
     if (ret)
