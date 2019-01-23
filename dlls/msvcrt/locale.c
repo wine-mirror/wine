@@ -48,6 +48,7 @@ int MSVCRT___lc_collate_cp = 0;
 LCID MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
 int MSVCRT___mb_cur_max = 1;
 static unsigned char charmax = CHAR_MAX;
+BOOL initial_locale = TRUE;
 
 #define MSVCRT_LEADBYTE  0x8000
 #define MSVCRT_C1_DEFINED 0x200
@@ -1779,6 +1780,9 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
     }
 
     _lock_locales();
+
+    if(locale[0] != 'C' || locale[1] != '\0')
+        initial_locale = FALSE;
 
     if(locinfo->lc_handle[MSVCRT_LC_COLLATE]!=newlocinfo->lc_handle[MSVCRT_LC_COLLATE]
             || locinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage!=newlocinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage) {
