@@ -3648,9 +3648,15 @@ static UINT STDMETHODCALLTYPE d3d11_device_GetExceptionMode(ID3D11Device2 *iface
     return 0;
 }
 
-static void STDMETHODCALLTYPE d3d11_device_GetImmediateContext1(ID3D11Device2 *iface, ID3D11DeviceContext1 **context)
+static void STDMETHODCALLTYPE d3d11_device_GetImmediateContext1(ID3D11Device2 *iface,
+        ID3D11DeviceContext1 **immediate_context)
 {
-    FIXME("iface %p, context %p stub!\n", iface, context);
+    struct d3d_device *device = impl_from_ID3D11Device2(iface);
+
+    TRACE("iface %p, immediate_context %p.\n", iface, immediate_context);
+
+    *immediate_context = &device->immediate_context.ID3D11DeviceContext1_iface;
+    ID3D11DeviceContext1_AddRef(*immediate_context);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeferredContext1(ID3D11Device2 *iface, UINT flags,
