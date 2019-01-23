@@ -7,6 +7,7 @@
 @ stub EnumResourceTypesExA
 @ stub EnumResourceTypesExW
 @ stdcall FindResourceExW(long wstr wstr long) kernel32.FindResourceExW
+@ stdcall FindResourceW(long wstr wstr) kernel32.FindResourceW
 @ stdcall FindStringOrdinal(long wstr long wstr long long) kernel32.FindStringOrdinal
 @ stdcall FreeLibrary(long) kernel32.FreeLibrary
 @ stdcall FreeLibraryAndExitThread(long long) kernel32.FreeLibraryAndExitThread
