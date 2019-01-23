@@ -13381,7 +13381,7 @@ static void test_gdi_surface(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDraw2_GetGDISurface(ddraw, &gdi_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(gdi_surface == backbuffer || broken(gdi_surface == primary),
+    ok(gdi_surface == backbuffer || broken(gdi_surface == primary),
             "Got unexpected surface %p, expected %p.\n", gdi_surface, backbuffer);
     IDirectDrawSurface_Release(gdi_surface);
 
