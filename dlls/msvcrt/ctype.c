@@ -398,6 +398,8 @@ int CDECL MSVCRT__toupper_l(int c, MSVCRT__locale_t locale)
  */
 int CDECL MSVCRT_toupper(int c)
 {
+    if(initial_locale)
+        return c>='a' && c<='z' ? c-'a'+'A' : c;
     return MSVCRT__toupper_l(c, NULL);
 }
 
