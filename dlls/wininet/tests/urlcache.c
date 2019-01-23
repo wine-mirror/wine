@@ -1184,10 +1184,8 @@ static void test_GetUrlCacheConfigInfo(void)
 
         SetLastError(0xdeadbeef);
         ret = GetUrlCacheConfigInfoA(td[i].info, NULL, td[i].flags);
-todo_wine
         ok(ret == td[i].ret, "%d: expected %d, got %d\n", i, td[i].ret, ret);
         if (!ret)
-todo_wine
             ok(GetLastError() == td[i].error, "%d: expected %u, got %u\n", i, td[i].error, GetLastError());
         else
         {
