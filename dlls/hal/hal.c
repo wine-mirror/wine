@@ -69,11 +69,24 @@ BOOLEAN WINAPI DECLSPEC_HIDDEN __regs_ExTryToAcquireFastMutex(PFAST_MUTEX FastMu
 }
 
 DEFINE_FASTCALL1_ENTRYPOINT( KfAcquireSpinLock )
-KIRQL WINAPI DECLSPEC_HIDDEN __regs_KfAcquireSpinLock(PKSPIN_LOCK SpinLock)
+KIRQL WINAPI DECLSPEC_HIDDEN __regs_KfAcquireSpinLock( KSPIN_LOCK *lock )
 {
-    FIXME( "(%p) stub!\n", SpinLock );
+    KIRQL irql;
+    KeAcquireSpinLock( lock, &irql );
+    return irql;
+}
 
-    return 0;
+static inline void small_pause(void)
+{
+    __asm__ __volatile__( "rep;nop" : : : "memory" );
+}
+
+void WINAPI KeAcquireSpinLock( KSPIN_LOCK *lock, KIRQL *irql )
+{
+    TRACE("lock %p, irql %p.\n", lock, irql);
+    while (!InterlockedCompareExchangePointer( (void **)lock, (void *)1, (void *)0 ))
+        small_pause();
+    *irql = 0;
 }
 
 DEFINE_FASTCALL2_ENTRYPOINT( KfReleaseSpinLock )

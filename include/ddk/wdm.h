@@ -1419,6 +1419,9 @@ void      WINAPI IoReleaseCancelSpinLock(KIRQL);
 NTSTATUS  WINAPI IoSetDeviceInterfaceState(UNICODE_STRING*,BOOLEAN);
 NTSTATUS  WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT,ULONG);
 
+#ifdef __i386__
+void      WINAPI KeAcquireSpinLock(KSPIN_LOCK*,KIRQL*);
+#endif
 BOOLEAN   WINAPI KeCancelTimer(KTIMER*);
 void      WINAPI KeClearEvent(PRKEVENT);
 NTSTATUS  WINAPI KeDelayExecutionThread(KPROCESSOR_MODE,BOOLEAN,LARGE_INTEGER*);

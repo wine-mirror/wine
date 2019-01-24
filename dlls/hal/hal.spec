@@ -68,7 +68,7 @@
 @ stub IoSetPartitionInformation
 @ stub IoWritePartitionTable
 @ stub KdComPortInUse
-@ stub KeAcquireSpinLock
+@ stdcall -arch=i386 KeAcquireSpinLock(ptr ptr)
 @ stub KeFlushWriteBuffer
 @ stdcall -arch=arm,arm64,i386 KeGetCurrentIrql()
 @ stub KeLowerIrql
