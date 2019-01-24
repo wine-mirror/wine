@@ -10447,7 +10447,7 @@ static void test_color_vertex(void)
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_EMISSIVEMATERIALSOURCE, tests[i].emissive);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
         hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | tests[i].fvf);
-        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to set vertex format, hr %#x.\n", hr);
 
         hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear depth/stencil, hr %#x.\n", hr);
@@ -10475,9 +10475,11 @@ static void test_sysmem_draw(void)
 {
     IDirect3DVertexBuffer8 *vb, *vb_s0, *vb_s1, *dst_vb;
     D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DTexture8 *texture;
     IDirect3DIndexBuffer8 *ib;
     IDirect3DDevice8 *device;
     struct vec4 *dst_data;
+    D3DLOCKED_RECT lr;
     IDirect3D8 *d3d;
     D3DCOLOR colour;
     unsigned int i;
@@ -10487,6 +10489,7 @@ static void test_sysmem_draw(void)
     BYTE *data;
     DWORD vs;
 
+    static const DWORD texture_data[4] = {0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffffff};
     static const DWORD decl[] =
     {
         D3DVSD_STREAM(0),
@@ -10695,9 +10698,35 @@ static void test_sysmem_draw(void)
     colour = getPixelColor(device, 320, 240);
     ok(color_match(colour, 0x00443322, 1), "Got unexpected colour 0x%08x.\n", colour);
 
+    hr = IDirect3DDevice8_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    memset(&lr, 0, sizeof(lr));
+    hr = IDirect3DTexture8_LockRect(texture, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    memcpy(lr.pBits, texture_data, sizeof(texture_data));
+    hr = IDirect3DTexture8_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+    ok(hr == D3D_OK || hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
+    IDirect3DTexture8_Release(texture);
     IDirect3DVertexBuffer8_Release(vb_s1);
     IDirect3DVertexBuffer8_Release(vb_s0);
     IDirect3DDevice8_DeleteVertexShader(device, vs);
