@@ -15444,11 +15444,14 @@ static void test_killfocus(void)
 static void test_sysmem_draw(void)
 {
     D3DRECT rect_full = {{0}, {0}, {640}, {480}};
+    IDirectDrawSurface4 *rt, *surface;
     IDirect3DViewport3 *viewport;
+    DDSURFACEDESC2 surface_desc;
     D3DVERTEXBUFFERDESC vb_desc;
+    IDirect3DTexture2 *texture;
     IDirect3DVertexBuffer *vb;
     IDirect3DDevice3 *device;
-    IDirectDrawSurface4 *rt;
+    IDirectDraw4 *ddraw;
     IDirect3D3 *d3d;
     D3DCOLOR color;
     ULONG refcount;
@@ -15481,6 +15484,8 @@ static void test_sysmem_draw(void)
     }
 
     hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -15531,9 +15536,42 @@ static void test_sysmem_draw(void)
     color = get_surface_color(rt, 320, 240);
     ok(compare_color(color, 0x00007f7f, 1), "Got unexpected color 0x%08x.\n", color);
 
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.dwHeight = 2;
+    surface_desc.dwWidth = 2;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
+    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_QueryInterface(surface, &IID_IDirect3DTexture2, (void **)&texture);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    IDirectDrawSurface4_Release(surface);
+    hr = IDirect3DDevice3_SetTexture(device, 0, texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &rect_full, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice3_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice3_EndScene(device);
+    ok(hr == D3D_OK || hr == D3DERR_SCENE_END_FAILED, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DTexture2_Release(texture);
     IDirect3DVertexBuffer_Release(vb);
     IDirect3DViewport3_Release(viewport);
     IDirectDrawSurface4_Release(rt);
+    IDirectDraw4_Release(ddraw);
     IDirect3D3_Release(d3d);
     refcount = IDirect3DDevice3_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
