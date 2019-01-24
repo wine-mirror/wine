@@ -19,7 +19,8 @@
 #pragma makedep client
 #pragma makedep server
 
-#define NAME(x) interp_##x
+#define IFACE_NAME IInterpServer
+#define IFACE_HANDLE IInterpServer_IfHandle
 #define ISERVER_UUID 00000000-4114-0704-2301-000000000001
 
 #include "server.idl"
