@@ -1,6 +1,6 @@
-@ stdcall -norelay ExAcquireFastMutex(ptr)
-@ stdcall -norelay ExReleaseFastMutex(ptr)
-@ stdcall -norelay ExTryToAcquireFastMutex(ptr)
+@ stdcall -arch=i386 -norelay ExAcquireFastMutex(ptr)
+@ stdcall -arch=i386 -norelay ExReleaseFastMutex(ptr)
+@ stdcall -arch=i386 -norelay ExTryToAcquireFastMutex(ptr)
 @ stub HalClearSoftwareInterrupt
 @ stub HalRequestSoftwareInterrupt
 @ stub HalSystemVectorDispatchEntry
@@ -13,10 +13,10 @@
 @ stub KeReleaseQueuedSpinLock
 @ stub KeTryToAcquireQueuedSpinLock
 @ stub KeTryToAcquireQueuedSpinLockRaiseToSynch
-@ stdcall -norelay KfAcquireSpinLock(ptr)
-@ stdcall -norelay KfLowerIrql(long)
-@ stdcall -norelay KfRaiseIrql(long)
-@ stdcall -norelay KfReleaseSpinLock(ptr long)
+@ stdcall -arch=i386 -norelay KfAcquireSpinLock(ptr)
+@ stdcall -arch=arm,arm64,i386 -norelay KfLowerIrql(long)
+@ stdcall -arch=arm,arm64,i386 -norelay KfRaiseIrql(long)
+@ stdcall -arch=i386 -norelay KfReleaseSpinLock(ptr long)
 @ stub HalAcquireDisplayOwnership
 @ stub HalAdjustResourceList
 @ stub HalAllProcessorsStarted
@@ -70,23 +70,23 @@
 @ stub KdComPortInUse
 @ stub KeAcquireSpinLock
 @ stub KeFlushWriteBuffer
-@ stdcall KeGetCurrentIrql()
+@ stdcall -arch=arm,arm64,i386 KeGetCurrentIrql()
 @ stub KeLowerIrql
 @ stdcall -ret64 KeQueryPerformanceCounter(ptr)
 @ stub KeRaiseIrql
 @ stub KeRaiseIrqlToDpcLevel
 @ stub KeRaiseIrqlToSynchLevel
-@ stdcall KeReleaseSpinLock(ptr long) ntoskrnl.exe.KeReleaseSpinLock
+@ stdcall -arch=i386 KeReleaseSpinLock(ptr long) ntoskrnl.exe.KeReleaseSpinLock
 @ stub KeStallExecutionProcessor
 @ stub READ_PORT_BUFFER_UCHAR
 @ stub READ_PORT_BUFFER_ULONG
 @ stub READ_PORT_BUFFER_USHORT
-@ stdcall READ_PORT_UCHAR(ptr)
-@ stdcall READ_PORT_ULONG(ptr)
+@ stdcall -arch=arm,arm64,i386 READ_PORT_UCHAR(ptr)
+@ stdcall -arch=arm,arm64,i386 READ_PORT_ULONG(ptr)
 @ stub READ_PORT_USHORT
 @ stub WRITE_PORT_BUFFER_UCHAR
 @ stub WRITE_PORT_BUFFER_ULONG
 @ stub WRITE_PORT_BUFFER_USHORT
-@ stdcall WRITE_PORT_UCHAR(ptr long)
-@ stdcall WRITE_PORT_ULONG(ptr long)
+@ stdcall -arch=arm,arm64,i386 WRITE_PORT_UCHAR(ptr long)
+@ stdcall -arch=arm,arm64,i386 WRITE_PORT_ULONG(ptr long)
 @ stub WRITE_PORT_USHORT
