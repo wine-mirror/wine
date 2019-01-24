@@ -67,6 +67,7 @@ enum type_context
     TYPE_CONTEXT_PARAM,
     TYPE_CONTEXT_CONTAINER,
     TYPE_CONTEXT_CONTAINER_NO_POINTERS,
+    TYPE_CONTEXT_RETVAL,
 };
 
 /* parameter flags in Oif mode */
@@ -287,7 +288,7 @@ static unsigned char get_pointer_fc_context( const type_t *type, const attr_list
     int pointer_fc = get_pointer_fc(type, attrs, context == TYPE_CONTEXT_TOPLEVELPARAM);
 
     if (pointer_fc == FC_UP && is_attr( attrs, ATTR_OUT ) &&
-        context == TYPE_CONTEXT_PARAM && is_object( current_iface ))
+        (context == TYPE_CONTEXT_PARAM || context == TYPE_CONTEXT_RETVAL) && is_object( current_iface ))
         pointer_fc = FC_OP;
 
     return pointer_fc;
@@ -442,7 +443,7 @@ static unsigned int get_stack_size( const var_t *var, int *by_value )
 }
 
 static unsigned char get_contexthandle_flags( const type_t *iface, const attr_list_t *attrs,
-                                              const type_t *type )
+                                              const type_t *type, int is_return )
 {
     unsigned char flags = 0;
 
@@ -452,6 +453,8 @@ static unsigned char get_contexthandle_flags( const type_t *iface, const attr_li
         !is_attr( type->attrs, ATTR_CONTEXTHANDLE ) &&
         !is_attr( attrs, ATTR_CONTEXTHANDLE ))
         flags |= HANDLE_PARAM_IS_VIA_PTR;
+
+    if (is_return) return flags | HANDLE_PARAM_IS_OUT | HANDLE_PARAM_IS_RETURN;
 
     if (is_attr(attrs, ATTR_IN))
     {
@@ -1361,7 +1364,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
             *offset += 6;
             break;
         case FC_BIND_CONTEXT:
-            handle_flags = get_contexthandle_flags( iface, handle_var->attrs, handle_var->type );
+            handle_flags = get_contexthandle_flags( iface, handle_var->attrs, handle_var->type, 0 );
             print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
             print_file( file, indent, "0x%02x,\n", handle_flags );
             print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
@@ -3494,17 +3497,17 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
 static unsigned int write_contexthandle_tfs(FILE *file,
                                             const attr_list_t *attrs,
                                             type_t *type,
-                                            int toplevel_param,
+                                            enum type_context context,
                                             unsigned int *typeformat_offset)
 {
     unsigned int start_offset = *typeformat_offset;
-    unsigned char flags = get_contexthandle_flags( current_iface, attrs, type );
+    unsigned char flags = get_contexthandle_flags( current_iface, attrs, type, context == TYPE_CONTEXT_RETVAL );
 
     print_start_tfs_comment(file, type, start_offset);
 
     if (flags & 0x80)  /* via ptr */
     {
-        int pointer_type = get_pointer_fc( type, attrs, toplevel_param );
+        int pointer_type = get_pointer_fc( type, attrs, context == TYPE_CONTEXT_TOPLEVELPARAM );
         if (!pointer_type) pointer_type = FC_RP;
         *typeformat_offset += 4;
         print_file(file, 2,"0x%x, 0x0,\t/* %s */\n", pointer_type, string_of_type(pointer_type) );
@@ -3579,8 +3582,7 @@ static unsigned int write_type_tfs(FILE *file, int indent,
     {
     case TGT_CTXT_HANDLE:
     case TGT_CTXT_HANDLE_POINTER:
-        return write_contexthandle_tfs(file, attrs, type,
-                                       context == TYPE_CONTEXT_TOPLEVELPARAM, typeformat_offset);
+        return write_contexthandle_tfs(file, attrs, type, context, typeformat_offset);
     case TGT_USER_TYPE:
         return write_user_tfs(file, type, typeformat_offset);
     case TGT_STRING:
@@ -3701,8 +3703,8 @@ static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned in
 
             var = type_function_get_retval(func->type);
             if (!is_void(var->type))
-                var->typestring_offset = write_type_tfs( file, 2, func->attrs, var->type, func->name,
-                                                         TYPE_CONTEXT_PARAM, offset);
+                var->typestring_offset = write_type_tfs( file, 2, var->attrs, var->type, func->name,
+                                                         TYPE_CONTEXT_RETVAL, offset);
 
             if (type_get_function_args(func->type))
                 LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), var_t, entry )
