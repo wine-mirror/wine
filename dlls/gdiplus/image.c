@@ -3570,7 +3570,11 @@ static GpStatus initialize_decoder_wic(IStream *stream, REFGUID container, IWICB
     if (FAILED(hr)) return hresult_to_status(hr);
 
     hr = IWICBitmapDecoder_Initialize(*decoder, stream, WICDecodeMetadataCacheOnLoad);
-    if (FAILED(hr)) return hresult_to_status(hr);
+    if (FAILED(hr))
+    {
+        IWICBitmapDecoder_Release(*decoder);
+        return hresult_to_status(hr);
+    }
     return Ok;
 }
 
