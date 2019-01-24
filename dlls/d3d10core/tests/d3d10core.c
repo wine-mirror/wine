@@ -1500,7 +1500,7 @@ static void test_feature_level(void)
 
     if (!(d3d10_device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -1689,7 +1689,7 @@ static void test_texture1d_interfaces(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -1709,7 +1709,7 @@ static void test_texture1d_interfaces(void)
     ID3D10Texture1D_Release(texture);
     if (FAILED(hr))
     {
-        win_skip("1D textures do not implement ID3D11Texture1D, skipping tests.\n");
+        win_skip("1D textures do not implement ID3D11Texture1D.\n");
         ID3D10Device_Release(device);
         return;
     }
@@ -1880,7 +1880,7 @@ static void test_create_texture2d(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -2024,7 +2024,7 @@ static void test_texture2d_interfaces(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -2047,7 +2047,7 @@ static void test_texture2d_interfaces(void)
     ID3D10Texture2D_Release(texture);
     if (FAILED(hr))
     {
-        win_skip("D3D11 is not available, skipping tests.\n");
+        win_skip("D3D11 is not available.\n");
         ID3D10Device_Release(device);
         return;
     }
@@ -2157,7 +2157,7 @@ static void test_create_texture3d(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -3733,7 +3733,7 @@ void main(point float4 vin[1] : POSITION, inout TriangleStream<gs_out> vout)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -3859,7 +3859,7 @@ static void test_create_sampler_state(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -4222,7 +4222,7 @@ static void test_create_depthstencil_state(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -4326,7 +4326,7 @@ static void test_create_rasterizer_state(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -4873,7 +4873,7 @@ static void test_device_removed_reason(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -5083,7 +5083,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -5981,7 +5981,7 @@ static void test_blend(void)
     /* DXGI_FORMAT_B8G8R8X8_UNORM is not supported on all implementations. */
     if (FAILED(ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &offscreen)))
     {
-        skip("DXGI_FORMAT_B8G8R8X8_UNORM not supported, skipping tests.\n");
+        skip("DXGI_FORMAT_B8G8R8X8_UNORM not supported.\n");
         goto done;
     }
 
@@ -8434,7 +8434,7 @@ static void test_private_data(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -10265,7 +10265,7 @@ static void test_check_multisample_quality_levels(void)
     ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
     if (!quality_levels)
     {
-        skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM, skipping test.\n");
+        skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM.\n");
         goto done;
     }
 
@@ -10791,7 +10791,7 @@ static void test_swapchain_flip(void)
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
     SetRect(&rect, 0, 0, 640, 480);
@@ -15875,7 +15875,7 @@ static void test_format_compatibility(void)
         hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &resource_data, &dst_texture);
         if (FAILED(hr) && test_data[i].dst_format == DXGI_FORMAT_B8G8R8A8_UNORM)
         {
-            skip("B8G8R8A8_UNORM not supported, skipping test.\n");
+            skip("B8G8R8A8_UNORM not supported.\n");
             ID3D10Texture2D_Release(src_texture);
             continue;
         }
