@@ -24328,9 +24328,11 @@ static void test_sysmem_draw(void)
 {
     IDirect3DVertexBuffer9 *vb, *vb_s0, *vb_s1, *dst_vb;
     IDirect3DVertexDeclaration9 *vertex_declaration;
+    IDirect3DTexture9 *texture;
     IDirect3DIndexBuffer9 *ib;
     IDirect3DDevice9 *device;
     struct vec4 *dst_data;
+    D3DLOCKED_RECT lr;
     IDirect3D9 *d3d;
     D3DCOLOR colour;
     unsigned int i;
@@ -24339,6 +24341,7 @@ static void test_sysmem_draw(void)
     HRESULT hr;
     BYTE *data;
 
+    static const DWORD texture_data[4] = {0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffffff};
     static const D3DVERTEXELEMENT9 decl_elements[] =
     {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
@@ -24518,9 +24521,35 @@ static void test_sysmem_draw(void)
     colour = getPixelColor(device, 320, 240);
     ok(color_match(colour, 0x00443322, 1), "Got unexpected colour 0x%08x.\n", colour);
 
+    hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &texture, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    memset(&lr, 0, sizeof(lr));
+    hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    memcpy(lr.pBits, texture_data, sizeof(texture_data));
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+    ok(hr == D3D_OK || hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
+    IDirect3DTexture9_Release(texture);
     IDirect3DVertexBuffer9_Release(vb_s1);
     IDirect3DVertexBuffer9_Release(vb_s0);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
