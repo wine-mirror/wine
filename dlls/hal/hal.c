@@ -26,6 +26,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
+#include "winbase.h"
 #include "winternl.h"
 #include "excpt.h"
 #include "ddk/ntddk.h"
@@ -76,9 +77,15 @@ KIRQL WINAPI DECLSPEC_HIDDEN __regs_KfAcquireSpinLock(PKSPIN_LOCK SpinLock)
 }
 
 DEFINE_FASTCALL2_ENTRYPOINT( KfReleaseSpinLock )
-VOID WINAPI DECLSPEC_HIDDEN __regs_KfReleaseSpinLock(PKSPIN_LOCK SpinLock, KIRQL NewIrql)
+void WINAPI DECLSPEC_HIDDEN __regs_KfReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
 {
-    FIXME( "(%p %u) stub!\n", SpinLock, NewIrql );
+    KeReleaseSpinLock( lock, irql );
+}
+
+void WINAPI KeReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
+{
+    TRACE("lock %p, irql %u.\n", lock, irql);
+    InterlockedExchangePointer( (void **)lock, 0 );
 }
 #endif /* __i386__ */
 
