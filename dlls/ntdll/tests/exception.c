@@ -2103,6 +2103,14 @@ static void test_dynamic_unwind(void)
     ok( !pRtlDeleteFunctionTable( runtime_func ),
         "RtlDeleteFunctionTable returned success for nonexistent table runtime_func = %p\n", runtime_func );
 
+    /* Empty table */
+    ok( pRtlAddFunctionTable( runtime_func, 0, (ULONG_PTR)code_mem ),
+        "RtlAddFunctionTable failed for empty table\n" );
+    ok( pRtlDeleteFunctionTable( runtime_func ),
+        "RtlDeleteFunctionTable failed for empty table\n" );
+    ok( !pRtlDeleteFunctionTable( runtime_func ),
+        "RtlDeleteFunctionTable succeeded twice for empty table\n" );
+
     /* Test RtlInstallFunctionTableCallback with both low bits unset */
     table = (ULONG_PTR)code_mem;
     ok( !pRtlInstallFunctionTableCallback( table, (ULONG_PTR)code_mem, code_offset + 32, &dynamic_unwind_callback, (PVOID*)&count, NULL ),

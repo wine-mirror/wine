@@ -3458,7 +3458,7 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64
         return FALSE;
 
     entry->base      = addr;
-    entry->end       = addr + table[count - 1].EndAddress;
+    entry->end       = addr + (count ? table[count - 1].EndAddress : 0);
     entry->table     = table;
     entry->count     = count;
     entry->max_count = 0;
