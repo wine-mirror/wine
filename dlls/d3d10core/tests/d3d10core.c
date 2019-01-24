@@ -2825,8 +2825,11 @@ static void test_create_rendertarget_view(void)
     U(rtv_desc).Buffer.ElementOffset = 0;
     U(rtv_desc).Buffer.ElementWidth = 64;
 
-    hr = ID3D10Device_CreateRenderTargetView(device, NULL, &rtv_desc, &rtview);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    if (!enable_debug_layer)
+    {
+        hr = ID3D10Device_CreateRenderTargetView(device, NULL, &rtv_desc, &rtview);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    }
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)buffer, &rtv_desc, &rtview);
@@ -5173,6 +5176,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
     }
     ok(!tmp_dsv, "Got unexpected depth stencil view %p.\n", tmp_dsv);
 
+    count = 0;
     ID3D10Device_RSGetScissorRects(device, &count, NULL);
     ok(!count, "Got unexpected scissor rect count %u.\n", count);
     memset(tmp_rect, 0x55, sizeof(tmp_rect));
@@ -8567,16 +8571,19 @@ static void test_private_data(void)
     ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#x.\n", hr);
     ok(size == sizeof(device), "Got unexpected size %u.\n", size);
     ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
-    hr = ID3D10Device_GetPrivateData(device, &test_guid2, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    size = 0xdeadbabe;
-    hr = ID3D10Device_GetPrivateData(device, &test_guid2, &size, &ptr);
-    ok(hr == DXGI_ERROR_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
-    ok(size == 0, "Got unexpected size %u.\n", size);
-    ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
-    hr = ID3D10Device_GetPrivateData(device, &test_guid, NULL, &ptr);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
+    if (!enable_debug_layer)
+    {
+        hr = ID3D10Device_GetPrivateData(device, &test_guid2, NULL, NULL);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        size = 0xdeadbabe;
+        hr = ID3D10Device_GetPrivateData(device, &test_guid2, &size, &ptr);
+        ok(hr == DXGI_ERROR_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+        ok(size == 0, "Got unexpected size %u.\n", size);
+        ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
+        hr = ID3D10Device_GetPrivateData(device, &test_guid, NULL, &ptr);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
+    }
 
     hr = ID3D10Texture2D_SetPrivateDataInterface(texture, &test_guid, (IUnknown *)test_object);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -10271,23 +10278,27 @@ static void test_check_multisample_quality_levels(void)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     todo_wine ok(quality_levels == 0xdeadbeef, "Got unexpected quality_levels %u.\n", quality_levels);
 
+    if (!enable_debug_layer)
+    {
+        hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 0, NULL);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 1, NULL);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, NULL);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    }
+
     quality_levels = 0xdeadbeef;
-    hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 0, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &quality_levels);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
 
     quality_levels = 0xdeadbeef;
-    hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 1, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 1, &quality_levels);
     ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
     ok(quality_levels == 1, "Got unexpected quality_levels %u.\n", quality_levels);
 
     quality_levels = 0xdeadbeef;
-    hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_levels);
     ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
     ok(quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
@@ -11022,14 +11033,10 @@ static void test_clear_render_target_view_2d(void)
     ID3D10Device_ClearRenderTargetView(device, rtv, color);
     check_texture_color(texture, expected_color, 1);
 
-    if (is_d3d11_interface_available(device))
+    if (is_d3d11_interface_available(device) && !enable_debug_layer)
     {
         ID3D10Device_ClearRenderTargetView(device, NULL, green);
         check_texture_color(texture, expected_color, 1);
-    }
-    else
-    {
-        win_skip("D3D11 is not available.\n");
     }
 
     ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
@@ -11140,13 +11147,11 @@ static void test_clear_depth_stencil_view(void)
     ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 0.0f, 0);
     check_texture_color(depth_texture, 0x00000000, 0);
 
-    if (is_d3d11_interface_available(device))
+    if (is_d3d11_interface_available(device) && !enable_debug_layer)
     {
         ID3D10Device_ClearDepthStencilView(device, NULL, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0xff);
         check_texture_color(depth_texture, 0x00000000, 0);
     }
-    else
-        win_skip("D3D11 is not available, skipping test.\n");
 
     ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0xff);
     todo_wine check_texture_color(depth_texture, 0x00ffffff, 0);
@@ -14335,10 +14340,13 @@ static void test_render_target_device_mismatch(void)
     rtv = (ID3D10RenderTargetView *)0xdeadbeef;
     ID3D10Device_OMGetRenderTargets(device, 1, &rtv, NULL);
     ok(!rtv, "Got unexpected render target view %p.\n", rtv);
-    ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, NULL);
-    ID3D10Device_OMGetRenderTargets(device, 1, &rtv, NULL);
-    ok(rtv == test_context.backbuffer_rtv, "Got unexpected render target view %p.\n", rtv);
-    ID3D10RenderTargetView_Release(rtv);
+    if (!enable_debug_layer)
+    {
+        ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, NULL);
+        ID3D10Device_OMGetRenderTargets(device, 1, &rtv, NULL);
+        ok(rtv == test_context.backbuffer_rtv, "Got unexpected render target view %p.\n", rtv);
+        ID3D10RenderTargetView_Release(rtv);
+    }
 
     rtv = NULL;
     ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
@@ -17385,7 +17393,7 @@ static void test_multiple_viewports(void)
     vp[1].Width = width;
     ID3D10Device_RSSetViewports(device, 2, vp);
 
-    count = ARRAY_SIZE(vp);
+    count = enable_debug_layer ? ARRAY_SIZE(vp) - 1 : ARRAY_SIZE(vp);
     ID3D10Device_RSGetViewports(device, &count, vp);
     ok(count == 2, "Unexpected viewport count %d.\n", count);
 
@@ -17467,6 +17475,9 @@ static void test_multiple_viewports(void)
     SetRect(&rect, width, texture_desc.Height / 2, 2 * width - 1, texture_desc.Height - 1);
     check_texture_sub_resource_vec4(texture, 0, &rect, &expected_values[11], 1);
 
+    if (enable_debug_layer)
+        goto done;
+
     /* Viewport count exceeding maximum value. */
     ID3D10Device_RSSetViewports(device, 1, vp);
 
@@ -17488,6 +17499,7 @@ static void test_multiple_viewports(void)
     ok(count == 1, "Unexpected viewport count %d.\n", count);
     ok(vp[0].TopLeftX == 0.0f && vp[0].Width == width, "Unexpected viewport.\n");
 
+done:
     ID3D10RasterizerState_Release(rasterizer_state);
     ID3D10RenderTargetView_Release(rtv);
     ID3D10Texture2D_Release(texture);
