@@ -446,6 +446,7 @@ static unsigned char get_contexthandle_flags( const type_t *iface, const attr_li
                                               const type_t *type, int is_return )
 {
     unsigned char flags = 0;
+    int is_out;
 
     if (is_attr(iface->attrs, ATTR_STRICTCONTEXTHANDLE)) flags |= NDR_STRICT_CONTEXT_HANDLE;
 
@@ -456,12 +457,13 @@ static unsigned char get_contexthandle_flags( const type_t *iface, const attr_li
 
     if (is_return) return flags | HANDLE_PARAM_IS_OUT | HANDLE_PARAM_IS_RETURN;
 
-    if (is_attr(attrs, ATTR_IN))
+    is_out = is_attr(attrs, ATTR_OUT);
+    if (is_attr(attrs, ATTR_IN) || !is_out)
     {
         flags |= HANDLE_PARAM_IS_IN;
-        if (!is_attr(attrs, ATTR_OUT)) flags |= NDR_CONTEXT_HANDLE_CANNOT_BE_NULL;
+        if (!is_out) flags |= NDR_CONTEXT_HANDLE_CANNOT_BE_NULL;
     }
-    if (is_attr(attrs, ATTR_OUT)) flags |= HANDLE_PARAM_IS_OUT;
+    if (is_out) flags |= HANDLE_PARAM_IS_OUT;
 
     return flags;
 }
