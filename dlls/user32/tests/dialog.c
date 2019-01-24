@@ -1181,9 +1181,47 @@ static void test_GetDlgItemText(void)
        "string retrieved using GetDlgItemText should have been NULL terminated\n");
 }
 
+static INT_PTR CALLBACK getdlgitem_test_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG)
+    {
+        char text[64];
+        LONG_PTR val;
+        HWND hwnd;
+        BOOL ret;
+
+        hwnd = GetDlgItem(hdlg, -1);
+        ok(hwnd != NULL, "Expected dialog item.\n");
+
+        *text = 0;
+        ret = GetDlgItemTextA(hdlg, -1, text, ARRAY_SIZE(text));
+        ok(ret && !strcmp(text, "Text1"), "Unexpected item text.\n");
+
+        val = GetWindowLongA(hwnd, GWLP_ID);
+        ok(val == -1, "Unexpected id.\n");
+
+        val = GetWindowLongPtrA(hwnd, GWLP_ID);
+        ok(val == -1, "Unexpected id %ld.\n", val);
+
+        hwnd = GetDlgItem(hdlg, -2);
+        ok(hwnd != NULL, "Expected dialog item.\n");
+
+        val = GetWindowLongA(hwnd, GWLP_ID);
+        ok(val == -2, "Unexpected id.\n");
+
+        val = GetWindowLongPtrA(hwnd, GWLP_ID);
+        ok(val == -2, "Unexpected id %ld.\n", val);
+
+        EndDialog(hdlg, 0xdead);
+    }
+
+    return FALSE;
+}
+
 static void test_GetDlgItem(void)
 {
     HWND hwnd, child1, child2, hwnd2;
+    INT_PTR retval;
     BOOL ret;
 
     hwnd = CreateWindowA("button", "parent", WS_VISIBLE, 0, 0, 100, 100, NULL, 0, g_hinst, NULL);
@@ -1230,6 +1268,9 @@ static void test_GetDlgItem(void)
     DestroyWindow(child1);
     DestroyWindow(child2);
     DestroyWindow(hwnd);
+
+    retval = DialogBoxParamA(g_hinst, "GETDLGITEM_TEST_DIALOG", NULL, getdlgitem_test_dialog_proc, 0);
+    ok(retval == 0xdead, "Unexpected return value.\n");
 }
 
 static INT_PTR CALLBACK DestroyDlgWinProc (HWND hDlg, UINT uiMsg,
