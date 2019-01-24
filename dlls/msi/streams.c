@@ -356,7 +356,6 @@ static const MSIVIEWOPS streams_ops =
     NULL,
     NULL,
     NULL,
-    NULL,
 };
 
 static HRESULT open_stream( MSIDATABASE *db, const WCHAR *name, IStream **stream )
