@@ -3243,6 +3243,18 @@ interface nsIDOMKeyEvent : nsIDOMUIEvent
 
 [
     object,
+    uuid(5be16b03-36f9-4ca8-b2c5-0daadf3cd1b3),
+    local
+]
+interface nsIDOMCustomEvent : nsISupports
+{
+    nsresult GetDetail(nsIVariant **aDetail);
+    nsresult InitCustomEvent(const nsAString *typeArg, bool canBubbleArg, bool cancelableArg,
+             nsIVariant *detailArg);
+}
+
+[
+    object,
     uuid(0b976267-4aaa-4f36-a2d4-27b5ca8d73bb),
     local
 ]

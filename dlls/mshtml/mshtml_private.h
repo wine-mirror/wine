@@ -80,6 +80,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispCEventObj) \
     XDIID(DispCPlugins) \
     XDIID(DispDOMChildrenCollection) \
+    XDIID(DispDOMCustomEvent) \
     XDIID(DispDOMEvent) \
     XDIID(DispDOMKeyboardEvent) \
     XDIID(DispDOMMouseEvent) \
@@ -130,6 +131,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispHTMLXMLHttpRequest) \
     XDIID(HTMLDocumentEvents) \
     XDIID(HTMLElementEvents2) \
+    XIID(IDOMCustomEvent) \
     XIID(IDOMEvent) \
     XIID(IDOMKeyboardEvent) \
     XIID(IDOMMouseEvent) \

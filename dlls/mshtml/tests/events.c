@@ -2667,6 +2667,7 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 static void test_create_event(IHTMLDocument2 *doc)
 {
     IDOMKeyboardEvent *keyboard_event;
+    IDOMCustomEvent *custom_event;
     IDOMMouseEvent *mouse_event;
     IDocumentEvent *doc_event;
     IEventTarget *event_target;
@@ -2768,6 +2769,17 @@ static void test_create_event(IHTMLDocument2 *doc)
     hres = IDOMEvent_QueryInterface(event, &IID_IDOMKeyboardEvent, (void**)&keyboard_event);
     ok(hres == S_OK, "QueryInterface(IID_IDOMKeyboardEvent returned %08x\n", hres);
     IDOMKeyboardEvent_Release(keyboard_event);
+
+    IDOMEvent_Release(event);
+
+    str = a2bstr("CustomEvent");
+    hres = IDocumentEvent_createEvent(doc_event, str, &event);
+    SysFreeString(str);
+    ok(hres == S_OK, "createEvent failed: %08x\n", hres);
+
+    hres = IDOMEvent_QueryInterface(event, &IID_IDOMCustomEvent, (void**)&custom_event);
+    ok(hres == S_OK, "QueryInterface(IID_IDOMCustomEvent returned %08x\n", hres);
+    IDOMCustomEvent_Release(custom_event);
 
     IDOMEvent_Release(event);
 
