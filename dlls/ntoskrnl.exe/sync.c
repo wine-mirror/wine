@@ -384,6 +384,15 @@ void WINAPI KeInitializeSpinLock( KSPIN_LOCK *lock )
 }
 
 #ifndef __i386__
+static inline void small_pause(void)
+{
+#ifdef __x86_64__
+    __asm__ __volatile__( "rep;nop" : : : "memory" );
+#else
+    __asm__ __volatile__( "" : : : "memory" );
+#endif
+}
+
 /***********************************************************************
  *           KeReleaseSpinLock (NTOSKRNL.EXE.@)
  */
@@ -391,5 +400,16 @@ void WINAPI KeReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
 {
     TRACE("lock %p, irql %u.\n", lock, irql);
     InterlockedExchangePointer( (void **)lock, 0 );
+}
+
+/***********************************************************************
+ *           KeAcquireSpinLockRaiseToDpc (NTOSKRNL.EXE.@)
+ */
+KIRQL WINAPI KeAcquireSpinLockRaiseToDpc( KSPIN_LOCK *lock )
+{
+    TRACE("lock %p.\n", lock);
+    while (!InterlockedCompareExchangePointer( (void **)lock, (void *)1, (void *)0 ))
+        small_pause();
+    return 0;
 }
 #endif

@@ -1421,6 +1421,9 @@ NTSTATUS  WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT,ULONG);
 
 #ifdef __i386__
 void      WINAPI KeAcquireSpinLock(KSPIN_LOCK*,KIRQL*);
+#else
+#define KeAcquireSpinLock( lock, irql ) *(irql) = KeAcquireSpinLockRaiseToDpc( lock )
+KIRQL     WINAPI KeAcquireSpinLockRaiseToDpc(KSPIN_LOCK*);
 #endif
 BOOLEAN   WINAPI KeCancelTimer(KTIMER*);
 void      WINAPI KeClearEvent(PRKEVENT);

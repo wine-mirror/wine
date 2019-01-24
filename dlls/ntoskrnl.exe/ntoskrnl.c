@@ -3855,15 +3855,6 @@ void WINAPI KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *handle )
 }
 
 /***********************************************************************
- *           KeAcquireSpinLockRaiseToDpc (NTOSKRNL.EXE.@)
- */
-KIRQL WINAPI KeAcquireSpinLockRaiseToDpc(KSPIN_LOCK *spinlock)
-{
-    FIXME( "stub: %p\n", spinlock );
-    return 0;
-}
-
-/***********************************************************************
  *           IoCreateNotificationEvent (NTOSKRNL.EXE.@)
  */
 PKEVENT WINAPI IoCreateNotificationEvent(UNICODE_STRING *name, HANDLE *handle)
