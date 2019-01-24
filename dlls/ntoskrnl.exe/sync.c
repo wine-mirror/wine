@@ -373,3 +373,12 @@ NTSTATUS WINAPI KeDelayExecutionThread( KPROCESSOR_MODE mode, BOOLEAN alertable,
     TRACE("mode %d, alertable %u, timeout %p.\n", mode, alertable, timeout);
     return NtDelayExecution( alertable, timeout );
 }
+
+/***********************************************************************
+ *           KeInitializeSpinLock   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeSpinLock( KSPIN_LOCK *lock )
+{
+    TRACE("lock %p.\n", lock);
+    *lock = 0;
+}

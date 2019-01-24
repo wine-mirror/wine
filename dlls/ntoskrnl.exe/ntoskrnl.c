@@ -2278,14 +2278,6 @@ PRKTHREAD WINAPI KeGetCurrentThread(void)
 }
 
 /***********************************************************************
- *           KeInitializeSpinLock   (NTOSKRNL.EXE.@)
- */
-void WINAPI KeInitializeSpinLock( PKSPIN_LOCK SpinLock )
-{
-    FIXME( "stub: %p\n", SpinLock );
-}
-
-/***********************************************************************
  *           KeInsertQueue   (NTOSKRNL.EXE.@)
  */
 LONG WINAPI KeInsertQueue(PRKQUEUE Queue, PLIST_ENTRY Entry)

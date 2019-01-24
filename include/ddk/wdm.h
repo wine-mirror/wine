@@ -1426,6 +1426,7 @@ PKTHREAD  WINAPI KeGetCurrentThread(void);
 void      WINAPI KeInitializeEvent(PRKEVENT,EVENT_TYPE,BOOLEAN);
 void      WINAPI KeInitializeMutex(PRKMUTEX,ULONG);
 void      WINAPI KeInitializeSemaphore(PRKSEMAPHORE,LONG,LONG);
+void      WINAPI KeInitializeSpinLock(KSPIN_LOCK*);
 void      WINAPI KeInitializeTimerEx(PKTIMER,TIMER_TYPE);
 void      WINAPI KeInitializeTimer(KTIMER*);
 void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
