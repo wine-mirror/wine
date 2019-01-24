@@ -546,6 +546,7 @@ static const struct column col_networkadapter[] =
 {
     { prop_adaptertypeW,         CIM_STRING },
     { prop_adaptertypeidW,       CIM_UINT16, VT_I4 },
+    { prop_descriptionW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_indexW,               CIM_UINT32, VT_I4 },
     { prop_interfaceindexW,      CIM_UINT32, VT_I4 },
@@ -971,6 +972,7 @@ struct record_networkadapter
 {
     const WCHAR *adaptertype;
     UINT16       adaptertypeid;
+    const WCHAR *description;
     const WCHAR *device_id;
     UINT32       index;
     UINT32       interface_index;
@@ -2372,6 +2374,7 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         sprintfW( device_id, fmtW, aa->u.s.IfIndex );
         rec->adaptertype          = get_adaptertype( aa->IfType, &adaptertypeid, &physical );
         rec->adaptertypeid        = adaptertypeid;
+        rec->description          = heap_strdupW( aa->Description );
         rec->device_id            = heap_strdupW( device_id );
         rec->index                = aa->u.s.IfIndex;
         rec->interface_index      = aa->u.s.IfIndex;
