@@ -1529,6 +1529,9 @@ static void color_fill_test(void)
         goto done;
     }
 
+    hr = IDirect3DDevice9_ColorFill(device, NULL, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
     /* Test ColorFill on a the backbuffer (should pass) */
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
     ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
