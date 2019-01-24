@@ -34,6 +34,7 @@
 #define BITS_1_0  0x3f800000
 
 static unsigned int use_adapter_idx;
+static BOOL enable_debug_layer;
 static BOOL use_warp_adapter;
 static BOOL use_mt = TRUE;
 
@@ -1093,20 +1094,24 @@ static IDXGIAdapter *create_adapter(void)
 
 static ID3D10Device *create_device(void)
 {
+    unsigned int flags = 0;
     IDXGIAdapter *adapter;
     ID3D10Device *device;
     HRESULT hr;
 
+    if (enable_debug_layer)
+        flags |= D3D10_CREATE_DEVICE_DEBUG;
+
     adapter = create_adapter();
-    hr = D3D10CreateDevice(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device);
+    hr = D3D10CreateDevice(adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, flags, D3D10_SDK_VERSION, &device);
     if (adapter)
         IDXGIAdapter_Release(adapter);
     if (SUCCEEDED(hr))
         return device;
 
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, flags, D3D10_SDK_VERSION, &device)))
         return device;
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, flags, D3D10_SDK_VERSION, &device)))
         return device;
 
     return NULL;
@@ -17878,7 +17883,9 @@ START_TEST(d3d10core)
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
     {
-        if (!strcmp(argv[i], "--warp"))
+        if (!strcmp(argv[i], "--validate"))
+            enable_debug_layer = TRUE;
+        else if (!strcmp(argv[i], "--warp"))
             use_warp_adapter = TRUE;
         else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
             use_adapter_idx = atoi(argv[++i]);
