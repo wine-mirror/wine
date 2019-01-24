@@ -46,8 +46,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
-#define SHARED_DATA     ((KSHARED_USER_DATA*)0x7ffe0000)
-
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.@)
  *
@@ -200,18 +198,10 @@ VOID WINAPI GetNativeSystemInfo(
  * 			IsProcessorFeaturePresent	[KERNEL32.@]
  *
  * Determine if the cpu supports a given feature.
- * 
- * RETURNS
- *  TRUE, If the processor supports feature,
- *  FALSE otherwise.
  */
-BOOL WINAPI IsProcessorFeaturePresent (
-	DWORD feature	/* [in] Feature number, (PF_ constants from "winnt.h") */) 
+BOOL WINAPI IsProcessorFeaturePresent ( DWORD feature )
 {
-  if (feature < PROCESSOR_FEATURE_MAX)
-    return SHARED_DATA->ProcessorFeatures[feature];
-  else
-    return FALSE;
+    return RtlIsProcessorFeaturePresent( feature );
 }
 
 /***********************************************************************
