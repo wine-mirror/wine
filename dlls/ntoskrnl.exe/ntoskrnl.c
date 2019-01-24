@@ -3864,14 +3864,6 @@ KIRQL WINAPI KeAcquireSpinLockRaiseToDpc(KSPIN_LOCK *spinlock)
 }
 
 /***********************************************************************
- *           KeReleaseSpinLock (NTOSKRNL.EXE.@)
- */
-void WINAPI KeReleaseSpinLock( KSPIN_LOCK *spinlock, KIRQL irql )
-{
-    FIXME( "stub: %p %u\n", spinlock, irql );
-}
-
-/***********************************************************************
  *           IoCreateNotificationEvent (NTOSKRNL.EXE.@)
  */
 PKEVENT WINAPI IoCreateNotificationEvent(UNICODE_STRING *name, HANDLE *handle)

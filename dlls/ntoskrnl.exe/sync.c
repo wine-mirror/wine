@@ -382,3 +382,14 @@ void WINAPI KeInitializeSpinLock( KSPIN_LOCK *lock )
     TRACE("lock %p.\n", lock);
     *lock = 0;
 }
+
+#ifndef __i386__
+/***********************************************************************
+ *           KeReleaseSpinLock (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
+{
+    TRACE("lock %p, irql %u.\n", lock, irql);
+    InterlockedExchangePointer( (void **)lock, 0 );
+}
+#endif
