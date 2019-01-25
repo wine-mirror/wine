@@ -2116,8 +2116,15 @@ static HRESULT WINAPI DOMCustomEvent_initCustomEvent(IDOMCustomEvent *iface, BST
                                                      VARIANT_BOOL cancelable, VARIANT *detail)
 {
     DOMCustomEvent *This = impl_from_IDOMCustomEvent(iface);
-    FIXME("(%p)->(%s %x %x %p)\n", This, debugstr_w(type), can_bubble, cancelable, debugstr_variant(detail));
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x %x %p)\n", This, debugstr_w(type), can_bubble, cancelable, debugstr_variant(detail));
+
+    hres = IDOMEvent_initEvent(&This->event.IDOMEvent_iface, type, can_bubble, cancelable);
+    if(FAILED(hres))
+        return hres;
+
+    return VariantCopy(&This->detail, detail);
 }
 
 static const IDOMCustomEventVtbl DOMCustomEventVtbl = {
