@@ -33,6 +33,7 @@ static HRESULT (WINAPI *pDirect3DCreate9Ex)(UINT SDKVersion, IDirect3D9Ex **d3d9
 
 #define CREATE_DEVICE_FULLSCREEN        0x01
 #define CREATE_DEVICE_NOWINDOWCHANGES   0x02
+#define CREATE_DEVICE_SWVP_ONLY         0x04
 
 struct device_desc
 {
@@ -178,6 +179,8 @@ static IDirect3DDevice9Ex *create_device(HWND focus_window, const struct device_
         present_parameters.Windowed = !(desc->flags & CREATE_DEVICE_FULLSCREEN);
         if (desc->flags & CREATE_DEVICE_NOWINDOWCHANGES)
             behavior_flags |= D3DCREATE_NOWINDOWCHANGES;
+        if (desc->flags & CREATE_DEVICE_SWVP_ONLY)
+            behavior_flags = D3DCREATE_SOFTWARE_VERTEXPROCESSING;
     }
 
     mode.Size = sizeof(mode);
@@ -4753,6 +4756,99 @@ static void test_sysmem_draw(void)
     DestroyWindow(window);
 }
 
+static void test_pinned_buffers(void)
+{
+    static const struct
+    {
+        DWORD device_flags;
+        DWORD usage;
+        D3DPOOL pool;
+    }
+    tests[] =
+    {
+        {CREATE_DEVICE_SWVP_ONLY, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL_DEFAULT},
+        {0, 0, D3DPOOL_SYSTEMMEM},
+    };
+    static const unsigned int vertex_count = 1024;
+    struct device_desc device_desc;
+    IDirect3DVertexBuffer9 *buffer;
+    IDirect3DDevice9Ex *device;
+    D3DVERTEXBUFFER_DESC desc;
+    unsigned int i, test;
+    struct vec3
+    {
+        float x, y, z;
+    } *ptr, *ptr2;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+
+    for (test = 0; test < ARRAY_SIZE(tests); ++test)
+    {
+        device_desc.device_window = window;
+        device_desc.width = 640;
+        device_desc.height = 480;
+        device_desc.flags = tests[test].device_flags;
+        if (!(device = create_device(window, &device_desc)))
+        {
+            skip("Test %u: failed to create a D3D device.\n", test);
+            continue;
+        }
+
+        hr = IDirect3DDevice9Ex_CreateVertexBuffer(device, vertex_count * sizeof(*ptr),
+                tests[test].usage, 0, tests[test].pool, &buffer, NULL);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+        hr = IDirect3DVertexBuffer9_GetDesc(buffer, &desc);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+        ok(desc.Pool == tests[test].pool, "Test %u: got unexpected pool %#x.\n", test, desc.Pool);
+        ok(desc.Usage == tests[test].usage, "Test %u: got unexpected usage %#x.\n", test, desc.Usage);
+
+        hr = IDirect3DVertexBuffer9_Lock(buffer, 0, vertex_count * sizeof(*ptr), (void **)&ptr, D3DLOCK_DISCARD);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+        for (i = 0; i < vertex_count; ++i)
+        {
+            ptr[i].x = i * 1.0f;
+            ptr[i].y = i * 2.0f;
+            ptr[i].z = i * 3.0f;
+        }
+        hr = IDirect3DVertexBuffer9_Unlock(buffer);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+
+        hr = IDirect3DDevice9Ex_SetFVF(device, D3DFVF_XYZ);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+        hr = IDirect3DDevice9Ex_SetStreamSource(device, 0, buffer, 0, sizeof(*ptr));
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+        hr = IDirect3DDevice9Ex_BeginScene(device);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+        hr = IDirect3DDevice9Ex_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+        hr = IDirect3DDevice9Ex_EndScene(device);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+
+        hr = IDirect3DVertexBuffer9_Lock(buffer, 0, vertex_count * sizeof(*ptr2), (void **)&ptr2, D3DLOCK_DISCARD);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+        ok(ptr2 == ptr, "Test %u: got unexpected ptr2 %p, expected %p.\n", test, ptr2, ptr);
+        for (i = 0; i < vertex_count; ++i)
+        {
+            if (ptr2[i].x != i * 1.0f || ptr2[i].y != i * 2.0f || ptr2[i].z != i * 3.0f)
+            {
+                ok(FALSE, "Test %u: got unexpected vertex %u {%.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e}.\n",
+                        test, i, ptr2[i].x, ptr2[i].y, ptr2[i].z, i * 1.0f, i * 2.0f, i * 3.0f);
+                break;
+            }
+        }
+        hr = IDirect3DVertexBuffer9_Unlock(buffer);
+        ok(hr == D3D_OK, "Test %u: got unexpected hr %#x.\n", test, hr);
+
+        IDirect3DVertexBuffer9_Release(buffer);
+        refcount = IDirect3DDevice9Ex_Release(device);
+        ok(!refcount, "Test %u: device has %u references left.\n", test, refcount);
+    }
+    DestroyWindow(window);
+}
+
 START_TEST(d3d9ex)
 {
     DEVMODEW current_mode;
@@ -4806,4 +4902,5 @@ START_TEST(d3d9ex)
     test_frame_latency();
     test_resource_access();
     test_sysmem_draw();
+    test_pinned_buffers();
 }
