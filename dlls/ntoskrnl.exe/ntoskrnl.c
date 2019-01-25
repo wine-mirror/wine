@@ -2803,10 +2803,10 @@ NTSTATUS WINAPI PsRemoveCreateThreadNotifyRoutine( PCREATE_THREAD_NOTIFY_ROUTINE
 /***********************************************************************
  *           PsTerminateSystemThread   (NTOSKRNL.EXE.@)
  */
-NTSTATUS WINAPI PsTerminateSystemThread(NTSTATUS ExitStatus)
+NTSTATUS WINAPI PsTerminateSystemThread(NTSTATUS status)
 {
-    FIXME( "stub: %u\n", ExitStatus );
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("status %#x.\n", status);
+    ExitThread( status );
 }
 
 
