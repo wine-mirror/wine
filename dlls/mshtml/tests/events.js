@@ -769,6 +769,20 @@ function test_keyboard_event() {
     next_test();
 }
 
+function test_custom_event() {
+    var e = document.createEvent("CustomEvent");
+
+    ok(e.detail === undefined, "detail = " + e.detail);
+
+    e.initCustomEvent("test", true, false, 123);
+    ok(e.type === "test", "type = " + e.type);
+    ok(e.bubbles === true, "bubbles = " + e.bubbles);
+    ok(e.cancelable === false, "cancelable = " + e.cancelable);
+    ok(e.detail === 123, "detail = " + e.detail);
+
+    next_test();
+}
+
 function test_error_event() {
     document.body.innerHTML = '<div><img></img></div>';
     var div = document.body.firstChild;
@@ -822,6 +836,7 @@ var tests = [
     test_ui_event,
     test_mouse_event,
     test_keyboard_event,
+    test_custom_event,
     test_error_event,
     test_detached_img_error_event,
     test_time_stamp,

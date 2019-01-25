@@ -2211,6 +2211,18 @@ static dispex_static_data_t DOMKeyboardEvent_dispex = {
     DOMKeyboardEvent_iface_tids
 };
 
+static const tid_t DOMCustomEvent_iface_tids[] = {
+    IDOMEvent_tid,
+    IDOMCustomEvent_tid,
+    0
+};
+
+static dispex_static_data_t DOMCustomEvent_dispex = {
+    NULL,
+    DispDOMCustomEvent_tid,
+    DOMCustomEvent_iface_tids
+};
+
 static BOOL check_event_iface(nsIDOMEvent *event, REFIID riid)
 {
     nsISupports *iface;
@@ -2243,6 +2255,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
         custom_event->event.query_interface = DOMCustomEvent_query_interface;
         custom_event->event.destroy = DOMCustomEvent_destroy;
         event = &custom_event->event;
+        dispex_data = &DOMCustomEvent_dispex;
     }else if(!event) {
         event = heap_alloc_zero(sizeof(*event));
         if(!event)
