@@ -920,40 +920,77 @@ static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace4 *iface)
     return !!(This->flags & FONTFACE_IS_MONOSPACED);
 }
 
+static int fontface_get_design_advance(struct dwrite_fontface *fontface, DWRITE_MEASURING_MODE measuring_mode,
+        float emsize, float ppdip, const DWRITE_MATRIX *transform, UINT16 glyph, BOOL is_sideways)
+{
+    unsigned int adjustment = fontface_get_horz_metric_adjustment(fontface);
+    BOOL has_contours;
+    int advance;
+
+    if (is_sideways)
+        FIXME("Sideways mode is not supported.\n");
+
+    switch (measuring_mode)
+    {
+        case DWRITE_MEASURING_MODE_NATURAL:
+            advance = freetype_get_glyph_advance(&fontface->IDWriteFontFace4_iface, fontface->metrics.designUnitsPerEm,
+                    glyph, measuring_mode, &has_contours);
+            if (has_contours)
+                advance += adjustment;
+
+            return advance;
+        case DWRITE_MEASURING_MODE_GDI_NATURAL:
+        case DWRITE_MEASURING_MODE_GDI_CLASSIC:
+            emsize *= ppdip;
+            if (emsize == 0.0f)
+                return 0.0f;
+
+            if (transform && memcmp(transform, &identity, sizeof(*transform)))
+                FIXME("Transform is not supported.\n");
+
+            advance = freetype_get_glyph_advance(&fontface->IDWriteFontFace4_iface, emsize, glyph, measuring_mode,
+                    &has_contours);
+            if (has_contours)
+                advance = round_metric(advance * fontface->metrics.designUnitsPerEm / emsize + adjustment);
+            else
+                advance = round_metric(advance * fontface->metrics.designUnitsPerEm / emsize);
+
+            return advance;
+        default:
+            WARN("Unknown measuring mode %u.\n", measuring_mode);
+            return 0;
+    }
+}
+
 static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace4 *iface,
     UINT32 glyph_count, UINT16 const *glyphs, INT32 *advances, BOOL is_sideways)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
-    UINT32 adjustment = fontface_get_horz_metric_adjustment(This);
-    UINT32 i;
+    unsigned int i;
 
     TRACE("(%p)->(%u %p %p %d)\n", This, glyph_count, glyphs, advances, is_sideways);
 
     if (is_sideways)
         FIXME("sideways mode not supported\n");
 
-    for (i = 0; i < glyph_count; i++) {
-        BOOL has_contours;
-
-        advances[i] = freetype_get_glyph_advance(iface, This->metrics.designUnitsPerEm, glyphs[i],
-                DWRITE_MEASURING_MODE_NATURAL, &has_contours);
-        if (has_contours)
-            advances[i] += adjustment;
+    for (i = 0; i < glyph_count; ++i)
+    {
+        advances[i] = fontface_get_design_advance(This, DWRITE_MEASURING_MODE_NATURAL, This->metrics.designUnitsPerEm,
+                1.0f, NULL, glyphs[i], is_sideways);
     }
 
     return S_OK;
 }
 
 static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontFace4 *iface,
-    FLOAT em_size, FLOAT ppdip, const DWRITE_MATRIX *m, BOOL use_gdi_natural,
+    float em_size, float ppdip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural,
     BOOL is_sideways, UINT32 glyph_count, UINT16 const *glyphs, INT32 *advances)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
-    UINT32 adjustment = fontface_get_horz_metric_adjustment(This);
-    DWRITE_MEASURING_MODE mode;
+    DWRITE_MEASURING_MODE measuring_mode;
     UINT32 i;
 
-    TRACE("(%p)->(%.2f %.2f %p %d %d %u %p %p)\n", This, em_size, ppdip, m,
+    TRACE("(%p)->(%.2f %.2f %p %d %d %u %p %p)\n", This, em_size, ppdip, transform,
         use_gdi_natural, is_sideways, glyph_count, glyphs, advances);
 
     if (em_size < 0.0f || ppdip <= 0.0f) {
@@ -961,24 +998,16 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
         return E_INVALIDARG;
     }
 
-    em_size *= ppdip;
     if (em_size == 0.0f) {
         memset(advances, 0, sizeof(*advances) * glyph_count);
         return S_OK;
     }
 
-    if (m && memcmp(m, &identity, sizeof(*m)))
-        FIXME("transform is not supported, %s\n", debugstr_matrix(m));
-
-    mode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
-    for (i = 0; i < glyph_count; i++) {
-        BOOL has_contours;
-
-        advances[i] = freetype_get_glyph_advance(iface, em_size, glyphs[i], mode, &has_contours);
-        if (has_contours)
-            advances[i] = round_metric(advances[i] * This->metrics.designUnitsPerEm / em_size + adjustment);
-        else
-            advances[i] = round_metric(advances[i] * This->metrics.designUnitsPerEm / em_size);
+    measuring_mode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
+    for (i = 0; i < glyph_count; ++i)
+    {
+        advances[i] = fontface_get_design_advance(This, measuring_mode, em_size, ppdip, transform,
+                glyphs[i], is_sideways);
     }
 
     return S_OK;
@@ -5348,14 +5377,36 @@ static inline void transform_point(D2D_POINT_2F *point, const DWRITE_MATRIX *m)
     *point = ret;
 }
 
+static float fontface_get_scaled_design_advance(struct dwrite_fontface *fontface, DWRITE_MEASURING_MODE measuring_mode,
+        float emsize, float ppdip, const DWRITE_MATRIX *transform, UINT16 glyph, BOOL is_sideways)
+{
+    unsigned int upem = fontface->metrics.designUnitsPerEm;
+    int advance;
+
+    if (is_sideways)
+        FIXME("Sideways mode is not supported.\n");
+
+    advance = fontface_get_design_advance(fontface, measuring_mode, emsize, ppdip, transform, glyph, is_sideways);
+
+    switch (measuring_mode)
+    {
+        case DWRITE_MEASURING_MODE_NATURAL:
+            return (float)advance * emsize / (float)upem;
+        case DWRITE_MEASURING_MODE_GDI_NATURAL:
+        case DWRITE_MEASURING_MODE_GDI_CLASSIC:
+            return ppdip > 0.0f ? floorf(advance * emsize * ppdip / upem + 0.5f) / ppdip : 0.0f;
+        default:
+            WARN("Unknown measuring mode %u.\n", measuring_mode);
+            return 0.0f;
+    }
+}
+
 HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
-    DWRITE_FONT_METRICS metrics;
-    IDWriteFontFace1 *fontface1;
+    struct dwrite_fontface *fontface;
     D2D_POINT_2F origin;
     FLOAT rtl_factor;
-    HRESULT hr;
     UINT32 i;
 
     *ret = NULL;
@@ -5425,42 +5476,29 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
 
     memcpy(analysis->glyphs, desc->run->glyphIndices, desc->run->glyphCount*sizeof(*desc->run->glyphIndices));
 
-    IDWriteFontFace_GetMetrics(desc->run->fontFace, &metrics);
-    if (FAILED(hr = IDWriteFontFace_QueryInterface(desc->run->fontFace, &IID_IDWriteFontFace1, (void **)&fontface1)))
-        WARN("Failed to get IDWriteFontFace1, %#x.\n", hr);
+    fontface = unsafe_impl_from_IDWriteFontFace(desc->run->fontFace);
 
     origin.x = desc->origin.x;
     origin.y = desc->origin.y;
-    for (i = 0; i < desc->run->glyphCount; i++) {
-        FLOAT advance;
+    for (i = 0; i < desc->run->glyphCount; ++i)
+    {
+        float advance;
 
         /* Use nominal advances if not provided by caller. */
         if (desc->run->glyphAdvances)
             advance = rtl_factor * desc->run->glyphAdvances[i];
-        else {
-            INT32 a;
-
-            advance = 0.0f;
-            switch (desc->measuring_mode)
-            {
-            case DWRITE_MEASURING_MODE_NATURAL:
-                if (SUCCEEDED(IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, desc->run->glyphIndices + i, &a,
-                        desc->run->isSideways)))
-                    advance = rtl_factor * get_scaled_advance_width(a, desc->run->fontEmSize, &metrics);
-                break;
-            case DWRITE_MEASURING_MODE_GDI_CLASSIC:
-            case DWRITE_MEASURING_MODE_GDI_NATURAL:
-                if (SUCCEEDED(IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, desc->run->fontEmSize,
-                        1.0f, desc->transform, desc->measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL,
-                        desc->run->isSideways, 1, desc->run->glyphIndices + i, &a)))
-                    advance = rtl_factor * floorf(a * desc->run->fontEmSize / metrics.designUnitsPerEm + 0.5f);
-                break;
-            default:
-                ;
-            }
-        }
+        else
+            advance = rtl_factor * fontface_get_scaled_design_advance(fontface, desc->measuring_mode,
+                    desc->run->fontEmSize, 1.0f, desc->transform, desc->run->glyphIndices[i], desc->run->isSideways);
 
         analysis->origins[i] = origin;
+        if (desc->run->bidiLevel & 1)
+        {
+            if (desc->run->isSideways)
+                analysis->origins[i].y += advance;
+            else
+                analysis->origins[i].x += advance;
+        }
 
         /* Offsets are optional, appled to pre-transformed origin. */
         if (desc->run->glyphOffsets) {
@@ -5485,8 +5523,6 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
         else
             origin.x += advance;
     }
-
-    IDWriteFontFace1_Release(fontface1);
 
     *ret = &analysis->IDWriteGlyphRunAnalysis_iface;
     return S_OK;
@@ -5689,40 +5725,34 @@ static const IDWriteColorGlyphRunEnumeratorVtbl colorglyphenumvtbl = {
     colorglyphenum_GetCurrentRun
 };
 
-HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_RUN *run, const DWRITE_GLYPH_RUN_DESCRIPTION *rundescr,
-    DWRITE_MEASURING_MODE measuring_mode, const DWRITE_MATRIX *transform, UINT32 palette, IDWriteColorGlyphRunEnumerator **ret)
+HRESULT create_colorglyphenum(float originX, float originY, const DWRITE_GLYPH_RUN *run,
+        const DWRITE_GLYPH_RUN_DESCRIPTION *rundescr, DWRITE_MEASURING_MODE measuring_mode,
+        const DWRITE_MATRIX *transform, unsigned int palette, IDWriteColorGlyphRunEnumerator **ret)
 {
     struct dwrite_colorglyphenum *colorglyphenum;
     BOOL colorfont, has_colored_glyph;
-    IDWriteFontFace4 *fontface;
-    HRESULT hr;
-    UINT32 i;
+    struct dwrite_fontface *fontface;
+    unsigned int i;
 
     *ret = NULL;
 
-    hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace4, (void**)&fontface);
-    if (FAILED(hr)) {
-        WARN("failed to get IDWriteFontFace4, 0x%08x\n", hr);
-        return hr;
-    }
+    fontface = unsafe_impl_from_IDWriteFontFace(run->fontFace);
 
-    colorfont = IDWriteFontFace4_IsColorFont(fontface) && IDWriteFontFace4_GetColorPaletteCount(fontface) > palette;
-    if (!colorfont) {
-        hr = DWRITE_E_NOCOLOR;
-        goto failed;
-    }
+    colorfont = IDWriteFontFace4_IsColorFont(&fontface->IDWriteFontFace4_iface) &&
+            IDWriteFontFace4_GetColorPaletteCount(&fontface->IDWriteFontFace4_iface) > palette;
+    if (!colorfont)
+        return DWRITE_E_NOCOLOR;
 
     colorglyphenum = heap_alloc_zero(sizeof(*colorglyphenum));
-    if (!colorglyphenum) {
-        hr = E_OUTOFMEMORY;
-        goto failed;
-    }
+    if (!colorglyphenum)
+        return E_OUTOFMEMORY;
 
     colorglyphenum->IDWriteColorGlyphRunEnumerator_iface.lpVtbl = &colorglyphenumvtbl;
     colorglyphenum->ref = 1;
     colorglyphenum->origin_x = originX;
     colorglyphenum->origin_y = originY;
-    colorglyphenum->fontface = fontface;
+    colorglyphenum->fontface = &fontface->IDWriteFontFace4_iface;
+    IDWriteFontFace4_AddRef(colorglyphenum->fontface);
     colorglyphenum->glyphs = NULL;
     colorglyphenum->run = *run;
     colorglyphenum->run.glyphIndices = NULL;
@@ -5731,7 +5761,7 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
     colorglyphenum->palette = palette;
     memset(&colorglyphenum->colr, 0, sizeof(colorglyphenum->colr));
     colorglyphenum->colr.exists = TRUE;
-    get_fontface_table(fontface, MS_COLR_TAG, &colorglyphenum->colr);
+    get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_COLR_TAG, &colorglyphenum->colr);
     colorglyphenum->current_layer = 0;
     colorglyphenum->max_layer_num = 0;
 
@@ -5764,7 +5794,7 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
         memcpy(colorglyphenum->offsets, run->glyphOffsets, run->glyphCount * sizeof(*run->glyphOffsets));
     }
 
-    colorglyphenum->colorrun.glyphRun.fontFace = (IDWriteFontFace*)fontface;
+    colorglyphenum->colorrun.glyphRun.fontFace = run->fontFace;
     colorglyphenum->colorrun.glyphRun.fontEmSize = run->fontEmSize;
     colorglyphenum->colorrun.glyphRun.glyphIndices = colorglyphenum->glyphindices;
     colorglyphenum->colorrun.glyphRun.glyphAdvances = colorglyphenum->color_advances;
@@ -5773,43 +5803,16 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
 
     if (run->glyphAdvances)
         memcpy(colorglyphenum->advances, run->glyphAdvances, run->glyphCount * sizeof(FLOAT));
-    else {
-        DWRITE_FONT_METRICS metrics;
-
-        IDWriteFontFace_GetMetrics(run->fontFace, &metrics);
-        for (i = 0; i < run->glyphCount; i++) {
-            HRESULT hr;
-            INT32 a;
-
-            switch (measuring_mode)
-            {
-            case DWRITE_MEASURING_MODE_NATURAL:
-                hr = IDWriteFontFace4_GetDesignGlyphAdvances(fontface, 1, run->glyphIndices + i, &a, run->isSideways);
-                if (FAILED(hr))
-                    a = 0;
-                colorglyphenum->advances[i] = get_scaled_advance_width(a, run->fontEmSize, &metrics);
-                break;
-            case DWRITE_MEASURING_MODE_GDI_CLASSIC:
-            case DWRITE_MEASURING_MODE_GDI_NATURAL:
-                hr = IDWriteFontFace4_GetGdiCompatibleGlyphAdvances(fontface, run->fontEmSize, 1.0f, transform,
-                    measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->isSideways, 1, run->glyphIndices + i, &a);
-                if (FAILED(hr))
-                    colorglyphenum->advances[i] = 0.0f;
-                else
-                    colorglyphenum->advances[i] = floorf(a * run->fontEmSize / metrics.designUnitsPerEm + 0.5f);
-                break;
-            default:
-                ;
-            }
-        }
+    else
+    {
+        for (i = 0; i < run->glyphCount; ++i)
+            colorglyphenum->advances[i] = fontface_get_scaled_design_advance(fontface, measuring_mode,
+                    run->fontEmSize, 1.0f, transform, run->glyphIndices[i], run->isSideways);
     }
 
     *ret = &colorglyphenum->IDWriteColorGlyphRunEnumerator_iface;
-    return S_OK;
 
-failed:
-    IDWriteFontFace4_Release(fontface);
-    return hr;
+    return S_OK;
 }
 
 /* IDWriteFontFaceReference */
