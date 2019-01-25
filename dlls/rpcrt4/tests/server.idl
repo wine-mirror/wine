@@ -446,4 +446,12 @@ cpp_quote("#endif")
 
   int sum_ptr_array([in] int *a[2]);
   int sum_array_ptr([in] int (*a)[2]);
+
+cpp_quote("#ifndef SKIP_STRUCT_DECLS")
+  typedef [context_handle] void *ctx_handle_t;
+cpp_quote("#endif")
+
+  ctx_handle_t get_handle();
+  void get_handle_by_ptr([out] ctx_handle_t *r);
+  void test_handle(ctx_handle_t ctx_handle);
 }

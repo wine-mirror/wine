@@ -141,6 +141,9 @@ static void (__cdecl *stop_autolisten)(void);
 static void (__cdecl *ip_test)(ipu_t *a);
 static int (__cdecl *sum_ptr_array)(int *a[2]);
 static int (__cdecl *sum_array_ptr)(int (*a)[2]);
+static ctx_handle_t __cdecl (*get_handle)(void);
+static void (__cdecl *get_handle_by_ptr)(ctx_handle_t *r);
+static void (__cdecl *test_handle)(ctx_handle_t ctx_handle);
 
 #define SERVER_FUNCTIONS \
     X(int_return) \
@@ -228,7 +231,10 @@ static int (__cdecl *sum_array_ptr)(int (*a)[2]);
     X(stop_autolisten) \
     X(ip_test) \
     X(sum_ptr_array) \
-    X(sum_array_ptr)
+    X(sum_array_ptr) \
+    X(get_handle) \
+    X(get_handle_by_ptr) \
+    X(test_handle)
 
 /* type check statements generated in header file */
 fnprintf *p_printf = printf;
@@ -1068,6 +1074,26 @@ int __cdecl s_sum_array_ptr(int (*a)[2])
     return (*a)[0] + (*a)[1];
 }
 
+ctx_handle_t __cdecl s_get_handle(void)
+{
+    return (ctx_handle_t)0xdeadbeef;
+}
+
+void __cdecl s_get_handle_by_ptr(ctx_handle_t *r)
+{
+    *r = (ctx_handle_t)0xdeadbeef;
+}
+
+void __cdecl s_test_handle(ctx_handle_t ctx_handle)
+{
+    ok(ctx_handle == (ctx_handle_t)0xdeadbeef, "Unexpected ctx_handle %p\n", ctx_handle);
+}
+
+void __RPC_USER ctx_handle_t_rundown(ctx_handle_t ctx_handle)
+{
+    ok(ctx_handle == (ctx_handle_t)0xdeadbeef, "Unexpected ctx_handle %p\n", ctx_handle);
+}
+
 static void
 make_cmdline(char buffer[MAX_PATH], const char *test)
 {
@@ -1809,6 +1835,18 @@ void __cdecl s_authinfo_test(unsigned int protseq, int secure)
     }
 }
 
+static void test_handle_return(void)
+{
+    ctx_handle_t handle, handle2;
+
+    if (!is_interp) return; /* broken in widl */
+
+    handle = get_handle();
+    test_handle(handle);
+    get_handle_by_ptr(&handle2);
+    test_handle(handle2);
+}
+
 static void
 run_tests(void)
 {
@@ -1817,6 +1855,7 @@ run_tests(void)
   pointer_tests();
   array_tests();
   context_handle_test();
+  test_handle_return();
 }
 
 static void
