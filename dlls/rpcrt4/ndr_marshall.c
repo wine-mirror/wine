@@ -7031,10 +7031,15 @@ static unsigned char *WINAPI NdrContextHandleUnmarshall(
 
     if (pStubMsg->IsClient)
     {
+        NDR_CCONTEXT *ccontext;
+        if (pFormat[1] & HANDLE_PARAM_IS_VIA_PTR)
+            ccontext = *(NDR_CCONTEXT **)ppMemory;
+        else
+            ccontext = (NDR_CCONTEXT *)ppMemory;
         /* [out]-only or [ret] param */
         if ((pFormat[1] & (HANDLE_PARAM_IS_IN|HANDLE_PARAM_IS_OUT)) == HANDLE_PARAM_IS_OUT)
-            **(NDR_CCONTEXT **)ppMemory = NULL;
-        NdrClientContextUnmarshall(pStubMsg, *(NDR_CCONTEXT **)ppMemory, pStubMsg->RpcMsg->Handle);
+            *ccontext = NULL;
+        NdrClientContextUnmarshall(pStubMsg, ccontext, pStubMsg->RpcMsg->Handle);
     }
     else
     {
