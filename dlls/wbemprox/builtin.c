@@ -2907,6 +2907,7 @@ static void get_processor_manufacturer( WCHAR *manufacturer )
 static void get_processor_name( WCHAR *name )
 {
     unsigned int regs[4] = {0, 0, 0, 0};
+    int i;
 
     do_cpuid( 0x80000000, regs );
     if (regs[0] >= 0x80000004)
@@ -2918,6 +2919,7 @@ static void get_processor_name( WCHAR *name )
         do_cpuid( 0x80000004, regs );
         regs_to_str( regs, 16, name + 32 );
     }
+    for (i = strlenW(name) - 1; i >= 0 && name[i] == ' '; i--) name[i] = 0;
 }
 static UINT get_processor_currentclockspeed( UINT index )
 {
