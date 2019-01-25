@@ -52,6 +52,8 @@
 #include "wine/rbtree.h"
 #include "wine/svcctl.h"
 
+#include "ntoskrnl_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(plugplay);
@@ -142,29 +144,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": drivers_cs") }
 };
 static CRITICAL_SECTION drivers_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-#ifdef __i386__
-#define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
-    __ASM_STDCALL_FUNC( name, 4, \
-                       "popl %eax\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(4))
-#define DEFINE_FASTCALL2_ENTRYPOINT( name ) \
-    __ASM_STDCALL_FUNC( name, 8, \
-                       "popl %eax\n\t" \
-                       "pushl %edx\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(8))
-#define DEFINE_FASTCALL3_ENTRYPOINT( name ) \
-    __ASM_STDCALL_FUNC( name, 12, \
-                       "popl %eax\n\t" \
-                       "pushl %edx\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(12))
-#endif
 
 static inline LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
@@ -3087,29 +3066,6 @@ NTSTATUS WINAPI ExDeleteResourceLite(PERESOURCE resource)
 {
     FIXME("(%p): stub\n", resource);
     return STATUS_NOT_IMPLEMENTED;
-}
-
-/*****************************************************
- *           ExInterlockedRemoveHeadList  (NTOSKRNL.EXE.@)
- */
-PLIST_ENTRY WINAPI ExInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
-{
-    FIXME("(%p %p) stub\n", head, lock);
-    return NULL;
-}
-
-/***********************************************************************
- *           ExfInterlockedRemoveHeadList   (NTOSKRNL.EXE.@)
- */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( ExfInterlockedRemoveHeadList )
-PLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_ExfInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
-#else
-PLIST_ENTRY WINAPI ExfInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
-#endif
-{
-    FIXME("(%p %p) stub\n", head, lock);
-    return ExInterlockedRemoveHeadList( head, lock );
 }
 
 /***********************************************************************

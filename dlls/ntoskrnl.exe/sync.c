@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -29,6 +30,8 @@
 #include "ddk/wdm.h"
 
 #include "wine/debug.h"
+
+#include "ntoskrnl_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
@@ -432,4 +435,29 @@ void WINAPI IoReleaseCancelSpinLock( KIRQL irql )
 {
     TRACE("irql %u.\n", irql);
     KeReleaseSpinLock( &cancel_lock, irql );
+}
+
+#ifdef __i386__
+DEFINE_FASTCALL2_ENTRYPOINT( ExfInterlockedRemoveHeadList )
+PLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_ExfInterlockedRemoveHeadList( LIST_ENTRY *list, KSPIN_LOCK *lock )
+{
+    return ExInterlockedRemoveHeadList( list, lock );
+}
+#endif
+
+/***********************************************************************
+ *           ExInterlockedRemoveHeadList  (NTOSKRNL.EXE.@)
+ */
+LIST_ENTRY * WINAPI ExInterlockedRemoveHeadList( LIST_ENTRY *list, KSPIN_LOCK *lock )
+{
+    LIST_ENTRY *ret;
+    KIRQL irql;
+
+    TRACE("list %p, lock %p.\n", list, lock);
+
+    KeAcquireSpinLock( lock, &irql );
+    ret = RemoveHeadList( list );
+    KeReleaseSpinLock( lock, irql );
+
+    return ret;
 }
