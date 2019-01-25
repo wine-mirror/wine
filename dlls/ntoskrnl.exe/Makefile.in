@@ -1,6 +1,6 @@
 MODULE    = ntoskrnl.exe
 IMPORTLIB = ntoskrnl
-IMPORTS   = advapi32
+IMPORTS   = advapi32 hal
 DELAYIMPORTS = setupapi user32
 
 C_SRCS = \

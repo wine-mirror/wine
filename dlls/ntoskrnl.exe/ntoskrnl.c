@@ -785,16 +785,6 @@ void WINAPI IoAcquireCancelSpinLock(PKIRQL irql)
     FIXME("(%p): stub\n", irql);
 }
 
-
-/***********************************************************************
- *           IoReleaseCancelSpinLock  (NTOSKRNL.EXE.@)
- */
-void WINAPI IoReleaseCancelSpinLock(KIRQL irql)
-{
-    FIXME("(%u): stub\n", irql);
-}
-
-
 /***********************************************************************
  *           IoAllocateDriverObjectExtension  (NTOSKRNL.EXE.@)
  */
