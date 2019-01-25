@@ -2849,6 +2849,20 @@ static const WCHAR *get_osarchitecture(void)
     if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
     return os_32bitW;
 }
+static unsigned int get_processor_model( unsigned int reg0, unsigned int *stepping, unsigned int *family )
+{
+    unsigned int model, family_id = (reg0 & (0x0f << 8)) >> 8;
+
+    model = (reg0 & (0x0f << 4)) >> 4;
+    if (family_id == 6 || family_id == 15) model |= (reg0 & (0x0f << 16)) >> 12;
+    if (family)
+    {
+        *family = family_id;
+        if (family_id == 15) *family += (reg0 & (0xff << 20)) >> 20;
+    }
+    *stepping = reg0 & 0x0f;
+    return model;
+}
 static void get_processor_caption( WCHAR *caption )
 {
     static const WCHAR fmtW[] =
@@ -2857,19 +2871,23 @@ static void get_processor_caption( WCHAR *caption )
     static const WCHAR x86W[] = {'x','8','6',0};
     static const WCHAR intel64W[] = {'I','n','t','e','l','6','4',0};
     const WCHAR *arch = (get_osarchitecture() == os_32bitW) ? x86W : intel64W;
-    unsigned int regs[4] = {0, 0, 0, 0};
+    unsigned int regs[4] = {0, 0, 0, 0}, family, model, stepping;
 
     do_cpuid( 1, regs );
-    sprintfW( caption, fmtW, arch, (regs[0] & (15 << 8)) >> 8, (regs[0] & (15 << 4)) >> 4, regs[0] & 15 );
+
+    model = get_processor_model( regs[0], &stepping, &family );
+    sprintfW( caption, fmtW, arch, family, model, stepping );
 }
 static void get_processor_version( WCHAR *version )
 {
     static const WCHAR fmtW[] =
         {'M','o','d','e','l',' ','%','u',',',' ','S','t','e','p','p','i','n','g',' ','%','u',0};
-    unsigned int regs[4] = {0, 0, 0, 0};
+    unsigned int regs[4] = {0, 0, 0, 0}, model, stepping;
 
     do_cpuid( 1, regs );
-    sprintfW( version, fmtW, (regs[0] & (15 << 4)) >> 4, regs[0] & 15 );
+
+    model = get_processor_model( regs[0], &stepping, NULL );
+    sprintfW( version, fmtW, model, stepping );
 }
 static UINT16 get_processor_revision(void)
 {
