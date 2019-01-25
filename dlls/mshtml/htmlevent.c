@@ -2108,8 +2108,11 @@ static HRESULT WINAPI DOMCustomEvent_Invoke(IDOMCustomEvent *iface, DISPID dispI
 static HRESULT WINAPI DOMCustomEvent_get_detail(IDOMCustomEvent *iface, VARIANT *p)
 {
     DOMCustomEvent *This = impl_from_IDOMCustomEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    V_VT(p) = VT_EMPTY;
+    return VariantCopy(p, &This->detail);
 }
 
 static HRESULT WINAPI DOMCustomEvent_initCustomEvent(IDOMCustomEvent *iface, BSTR type, VARIANT_BOOL can_bubble,
