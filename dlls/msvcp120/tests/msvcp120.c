@@ -1837,7 +1837,7 @@ static void test_tr2_sys__dir_operation(void)
     result_handle = file;
     result_handle = p_tr2_sys__Open_dir(first_file_name, "not_exist", &err, &type);
     ok(result_handle == NULL, "tr2_sys__Open_dir(): expect: NULL, got %p\n", result_handle);
-    todo_wine ok(err == ERROR_BAD_PATHNAME, "tr2_sys__Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
+    ok(err == ERROR_BAD_PATHNAME, "tr2_sys__Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
     ok((int)type == 0xdeadbeef, "tr2_sys__Open_dir(): expect: 0xdeadbeef, got %d\n", type);
     ok(!*first_file_name, "tr2_sys__Open_dir(): expect: 0, got %s\n", first_file_name);
 

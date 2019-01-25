@@ -983,7 +983,7 @@ static void test_dir_operation(void)
     result_handle = file;
     result_handle = p_Open_dir(first_file_name, not_existW, &err, &type);
     ok(result_handle == NULL, "_Open_dir(): expect: NULL, got %p\n", result_handle);
-    todo_wine ok(err == ERROR_BAD_PATHNAME, "_Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
+    ok(err == ERROR_BAD_PATHNAME, "_Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
     ok((int)type == 0xdeadbeef, "_Open_dir(): expect: 0xdeadbeef, got %d\n", type);
     ok(!*first_file_name, "_Open_dir(): expect: 0, got %s\n", wine_dbgstr_w(first_file_name));
 

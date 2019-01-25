@@ -14983,7 +14983,7 @@ void* __cdecl tr2_sys__Open_dir_wchar(wchar_t* target, wchar_t const* dest, int*
 
     handle = FindFirstFileW(temppath, &data);
     if(handle == INVALID_HANDLE_VALUE) {
-        *err_code = GetLastError();
+        *err_code = ERROR_BAD_PATHNAME;
         return NULL;
     }
     while(!wcscmp(data.cFileName, dot) || !wcscmp(data.cFileName, dotdot)) {
