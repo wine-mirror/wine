@@ -5065,3 +5065,13 @@ BOOL WINAPI CryptImportPublicKeyInfoEx(HCRYPTPROV hCryptProv,
         CryptFreeOIDFunctionAddress(hFunc, 0);
     return ret;
 }
+
+BOOL WINAPI CryptImportPublicKeyInfoEx2(DWORD dwCertEncodingType,
+ PCERT_PUBLIC_KEY_INFO pInfo, DWORD dwFlags, void *pvAuxInfo,
+ BCRYPT_KEY_HANDLE *phKey)
+{
+    FIXME_(crypt)("(%d, %p, %08x, %p, %p): stub\n", dwCertEncodingType, pInfo,
+     dwFlags, pvAuxInfo, phKey);
+    SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+}

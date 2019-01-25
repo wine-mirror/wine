@@ -142,6 +142,7 @@
 @ stub CryptImportPKCS8
 @ stdcall CryptImportPublicKeyInfo(long long ptr ptr)
 @ stdcall CryptImportPublicKeyInfoEx(long long ptr long long ptr ptr)
+@ stdcall CryptImportPublicKeyInfoEx2(long ptr long ptr ptr)
 @ stdcall CryptInitOIDFunctionSet(str long)
 @ stdcall CryptInstallOIDFunctionAddress(ptr long str long ptr long)
 @ stub CryptLoadSip
