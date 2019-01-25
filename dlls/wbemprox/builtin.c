@@ -2842,13 +2842,6 @@ void do_cpuid( unsigned int ax, unsigned int *p )
 }
 #endif
 
-static const WCHAR *get_osarchitecture(void)
-{
-    SYSTEM_INFO info;
-    GetNativeSystemInfo( &info );
-    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
-    return os_32bitW;
-}
 static unsigned int get_processor_model( unsigned int reg0, unsigned int *stepping, unsigned int *family )
 {
     unsigned int model, family_id = (reg0 & (0x0f << 8)) >> 8;
@@ -2863,6 +2856,32 @@ static unsigned int get_processor_model( unsigned int reg0, unsigned int *steppi
     *stepping = reg0 & 0x0f;
     return model;
 }
+static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
+{
+    unsigned int i;
+    unsigned char *p = (unsigned char *)regs;
+
+    for (i = 0; i < len; i++) { buffer[i] = *p++; }
+    buffer[i] = 0;
+}
+static void get_processor_manufacturer( WCHAR *manufacturer )
+{
+    unsigned int tmp, regs[4] = {0, 0, 0, 0};
+
+    do_cpuid( 0, regs );
+    tmp = regs[2];      /* swap edx and ecx */
+    regs[2] = regs[3];
+    regs[3] = tmp;
+
+    regs_to_str( regs + 1, 12, manufacturer );
+}
+static const WCHAR *get_osarchitecture(void)
+{
+    SYSTEM_INFO info;
+    GetNativeSystemInfo( &info );
+    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
+    return os_32bitW;
+}
 static void get_processor_caption( WCHAR *caption )
 {
     static const WCHAR fmtW[] =
@@ -2870,8 +2889,16 @@ static void get_processor_caption( WCHAR *caption )
          'M','o','d','e','l',' ','%','u',' ','S','t','e','p','p','i','n','g',' ','%','u',0};
     static const WCHAR x86W[] = {'x','8','6',0};
     static const WCHAR intel64W[] = {'I','n','t','e','l','6','4',0};
-    const WCHAR *arch = (get_osarchitecture() == os_32bitW) ? x86W : intel64W;
+    static const WCHAR amd64W[] = {'A','M','D','6','4',0};
+    static const WCHAR authenticamdW[] = {'A','u','t','h','e','n','t','i','c','A','M','D',0};
+    const WCHAR *arch;
+    WCHAR manufacturer[13];
     unsigned int regs[4] = {0, 0, 0, 0}, family, model, stepping;
+
+    get_processor_manufacturer( manufacturer );
+    if (get_osarchitecture() == os_32bitW) arch = x86W;
+    else if (!strcmpW( manufacturer, authenticamdW )) arch = amd64W;
+    else arch = intel64W;
 
     do_cpuid( 1, regs );
 
@@ -2902,25 +2929,6 @@ static void get_processor_id( WCHAR *processor_id )
 
     do_cpuid( 1, regs );
     sprintfW( processor_id, fmtW, regs[3], regs[0] );
-}
-static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
-{
-    unsigned int i;
-    unsigned char *p = (unsigned char *)regs;
-
-    for (i = 0; i < len; i++) { buffer[i] = *p++; }
-    buffer[i] = 0;
-}
-static void get_processor_manufacturer( WCHAR *manufacturer )
-{
-    unsigned int tmp, regs[4] = {0, 0, 0, 0};
-
-    do_cpuid( 0, regs );
-    tmp = regs[2];      /* swap edx and ecx */
-    regs[2] = regs[3];
-    regs[3] = tmp;
-
-    regs_to_str( regs + 1, 12, manufacturer );
 }
 static void get_processor_name( WCHAR *name )
 {

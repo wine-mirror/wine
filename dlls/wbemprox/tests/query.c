@@ -1553,6 +1553,8 @@ static void test_Win32_Processor( IWbemServices *services )
 {
     static const WCHAR architectureW[] =
         {'A','r','c','h','i','t','e','c','t','u','r','e',0};
+    static const WCHAR captionW[] =
+        {'C','a','p','t','i','o','n',0};
     static const WCHAR familyW[] =
         {'F','a','m','i','l','y',0};
     static const WCHAR levelW[] =
@@ -1585,6 +1587,15 @@ static void test_Win32_Processor( IWbemServices *services )
     {
         hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
         if (hr != S_OK) break;
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, captionW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "caption %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
 
         type = 0xdeadbeef;
         VariantInit( &val );
