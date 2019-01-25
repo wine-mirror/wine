@@ -2874,6 +2874,7 @@ static void test_draw_primitive(void)
     IDirect3DVertexBuffer9 *vertex_buffer, *current_vb;
     IDirect3DIndexBuffer9 *index_buffer, *current_ib;
     IDirect3DVertexDeclaration9 *vertex_declaration;
+    IDirect3DStateBlock9 *stateblock;
     IDirect3DDevice9 *device;
     UINT offset, stride;
     IDirect3D9 *d3d9;
@@ -2998,9 +2999,73 @@ static void test_draw_primitive(void)
             0 /* MinIndex */, 4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
     ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed, hr %#x.\n", hr);
 
+    hr = IDirect3DDevice9_GetIndices(device, &current_ib);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+    ok(current_ib == index_buffer, "Unexpected index buffer %p.\n", current_ib);
+    IDirect3DIndexBuffer9_Release(current_ib);
+
     hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
             indices, D3DFMT_INDEX16, quad, sizeof(*quad));
     ok(SUCCEEDED(hr), "DrawIndexedPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetIndices(device, &current_ib);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+    ok(!current_ib, "Unexpected index buffer %p.\n", current_ib);
+
+    /* Resetting of stream source and index buffer is not recorded in stateblocks. */
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vertex_buffer, 0, sizeof(*quad));
+    ok(SUCCEEDED(hr), "SetStreamSource failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetIndices(device, index_buffer);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "BeginStateBlock failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
+            indices, D3DFMT_INDEX16, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawIndexedPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "BeginStateBlock failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+todo_wine
+    ok(!current_vb, "Unexpected vb %p.\n", current_vb);
+    ok(!offset, "Unexpected offset %u.\n", offset);
+todo_wine
+    ok(!stride, "Unexpected stride %u.\n", stride);
+    if (current_vb)
+        IDirect3DVertexBuffer9_Release(current_vb);
+    hr = IDirect3DDevice9_GetIndices(device, &current_ib);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+todo_wine
+    ok(!current_ib, "Unexpected index buffer %p.\n", current_ib);
+    if (current_ib)
+        IDirect3DIndexBuffer9_Release(current_ib);
+
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vertex_buffer, 0, sizeof(*quad));
+    ok(SUCCEEDED(hr), "SetStreamSource failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetIndices(device, index_buffer);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+    ok(current_vb == vertex_buffer, "Unexpected vb %p.\n", current_vb);
+    ok(!offset, "Unexpected offset %u.\n", offset);
+    ok(stride == sizeof(*quad), "Unexpected stride %u.\n", stride);
+    IDirect3DVertexBuffer9_Release(current_vb);
+    hr = IDirect3DDevice9_GetIndices(device, &current_ib);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+    ok(current_ib == index_buffer, "Unexpected index buffer %p.\n", current_ib);
+    IDirect3DIndexBuffer9_Release(current_ib);
 
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
@@ -3008,6 +3073,7 @@ static void test_draw_primitive(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
 
+    IDirect3DStateBlock9_Release(stateblock);
     IDirect3DVertexBuffer9_Release(vertex_buffer);
     IDirect3DIndexBuffer9_Release(index_buffer);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
