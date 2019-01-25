@@ -776,15 +776,6 @@ void WINAPI ExReleaseFastMutexUnsafe(PFAST_MUTEX FastMutex)
     FIXME("(%p): stub\n", FastMutex);
 }
 
-
-/***********************************************************************
- *           IoAcquireCancelSpinLock  (NTOSKRNL.EXE.@)
- */
-void WINAPI IoAcquireCancelSpinLock(PKIRQL irql)
-{
-    FIXME("(%p): stub\n", irql);
-}
-
 /***********************************************************************
  *           IoAllocateDriverObjectExtension  (NTOSKRNL.EXE.@)
  */

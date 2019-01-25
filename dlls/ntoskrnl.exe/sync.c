@@ -417,6 +417,15 @@ KIRQL WINAPI KeAcquireSpinLockRaiseToDpc( KSPIN_LOCK *lock )
 static KSPIN_LOCK cancel_lock;
 
 /***********************************************************************
+ *           IoAcquireCancelSpinLock  (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoAcquireCancelSpinLock( KIRQL *irql )
+{
+    TRACE("irql %p.\n", irql);
+    KeAcquireSpinLock( &cancel_lock, irql );
+}
+
+/***********************************************************************
  *           IoReleaseCancelSpinLock  (NTOSKRNL.EXE.@)
  */
 void WINAPI IoReleaseCancelSpinLock( KIRQL irql )
