@@ -1989,7 +1989,14 @@ static BOOL is_valid_binary( HMODULE module, const pe_image_info_t *info )
     if (info->machine == IMAGE_FILE_MACHINE_ARM64) return TRUE;
 #endif
     if (!info->contains_code) return TRUE;
-    if (!(info->image_flags & IMAGE_FLAGS_ComPlusNativeReady)) return FALSE;
+    if (!(info->image_flags & IMAGE_FLAGS_ComPlusNativeReady))
+    {
+        /* check COM header directly, ignoring runtime version */
+        DWORD size;
+        const IMAGE_COR20_HEADER *cor_header = RtlImageDirectoryEntryToData( module, TRUE,
+                                                          IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &size );
+        if (!cor_header || !(cor_header->Flags & COMIMAGE_FLAGS_ILONLY)) return FALSE;
+    }
     return convert_to_pe64( module, info );
 #else
     return FALSE;  /* no wow64 support on other platforms */

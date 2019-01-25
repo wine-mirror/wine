@@ -522,13 +522,14 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
             mod = LoadLibraryExA( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
             if (!has_code && nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
             {
-                BOOL il_only = FALSE;
+                BOOL il_only = FALSE, want_32bit = FALSE;
                 if (((const IMAGE_NT_HEADERS32 *)nt_header)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress)
                 {
                     const IMAGE_COR20_HEADER *cor_header = section_data;
                     il_only = (cor_header->Flags & COMIMAGE_FLAGS_ILONLY) != 0;
+                    if (il_only) want_32bit = (cor_header->Flags & COMIMAGE_FLAGS_32BITREQUIRED) != 0;
                 }
-                ok( mod != NULL || broken(il_only), /* <= win7 */
+                ok( mod != NULL || want_32bit || broken(il_only), /* <= win7 */
                     "%u: loading failed err %u\n", line, GetLastError() );
             }
             else
