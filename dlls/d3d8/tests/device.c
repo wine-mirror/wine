@@ -9208,6 +9208,186 @@ static void test_resource_access(void)
     DestroyWindow(window);
 }
 
+static void test_draw_primitive(void)
+{
+    static const struct
+    {
+        float position[3];
+        DWORD color;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
+        {{-1.0f,  1.0f, 0.0f}, 0xffff0000},
+        {{ 1.0f,  1.0f, 0.0f}, 0xffff0000},
+        {{ 1.0f, -1.0f, 0.0f}, 0xffff0000},
+        {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
+    };
+    static const WORD indices[] = {0, 1, 2, 3, 0, 2};
+
+    IDirect3DVertexBuffer8 *vertex_buffer, *current_vb;
+    IDirect3DIndexBuffer8 *index_buffer, *current_ib;
+    UINT stride, base_vertex_index;
+    IDirect3DDevice8 *device;
+    DWORD stateblock;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    BYTE *ptr;
+
+    window = create_window();
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateVertexBuffer(device, sizeof(quad), 0, 0,
+            D3DPOOL_DEFAULT, &vertex_buffer);
+    ok(SUCCEEDED(hr), "CreateVertexBuffer failed, hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer8_Lock(vertex_buffer, 0, 0, &ptr, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Lock failed, hr %#x.\n", hr);
+    memcpy(ptr, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer8_Unlock(vertex_buffer);
+    ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, vertex_buffer, sizeof(*quad));
+    ok(SUCCEEDED(hr), "SetStreamSource failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_CreateIndexBuffer(device, sizeof(indices), 0, D3DFMT_INDEX16,
+            D3DPOOL_DEFAULT, &index_buffer);
+    ok(SUCCEEDED(hr), "CreateIndexBuffer failed, hr %#x.\n", hr);
+    hr = IDirect3DIndexBuffer8_Lock(index_buffer, 0, 0, &ptr, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Lock failed, hr %#x.\n", hr);
+    memcpy(ptr, indices, sizeof(indices));
+    hr = IDirect3DIndexBuffer8_Unlock(index_buffer);
+    ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState D3DRS_LIGHTING failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetStreamSource(device, 0, &current_vb, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+    ok(current_vb == vertex_buffer, "Unexpected vb %p.\n", current_vb);
+    ok(stride == sizeof(*quad), "Unexpected stride %u.\n", stride);
+    IDirect3DVertexBuffer8_Release(current_vb);
+
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetStreamSource(device, 0, &current_vb, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+    ok(!current_vb, "Unexpected vb %p.\n", current_vb);
+    ok(!stride, "Unexpected stride %u.\n", stride);
+
+    /* NULL index buffer, NULL stream source. */
+    hr = IDirect3DDevice8_SetIndices(device, NULL, 0);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0, 4, 0, 2);
+    todo_wine ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed, hr %#x.\n", hr);
+
+    /* Valid index buffer, NULL stream source. */
+    hr = IDirect3DDevice8_SetIndices(device, index_buffer, 1);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0, 4, 0, 2);
+    ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetIndices(device, &current_ib, &base_vertex_index);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+    ok(current_ib == index_buffer, "Unexpected index buffer %p.\n", current_ib);
+    ok(base_vertex_index == 1, "Unexpected base vertex index %u.\n", base_vertex_index);
+    IDirect3DIndexBuffer8_Release(current_ib);
+
+    hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
+            indices, D3DFMT_INDEX16, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawIndexedPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetIndices(device, &current_ib, &base_vertex_index);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+    ok(!current_ib, "Unexpected index buffer %p.\n", current_ib);
+    ok(!base_vertex_index, "Unexpected base vertex index %u.\n", base_vertex_index);
+
+    /* Resetting of stream source and index buffer is not recorded in stateblocks. */
+
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, vertex_buffer, sizeof(*quad));
+    ok(SUCCEEDED(hr), "SetStreamSource failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetIndices(device, index_buffer, 1);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "BeginStateBlock failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
+            indices, D3DFMT_INDEX16, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawIndexedPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "BeginStateBlock failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetStreamSource(device, 0, &current_vb, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+todo_wine {
+    ok(!current_vb, "Unexpected vb %p.\n", current_vb);
+    ok(!stride, "Unexpected stride %u.\n", stride);
+}
+    if (current_vb)
+        IDirect3DVertexBuffer8_Release(current_vb);
+    hr = IDirect3DDevice8_GetIndices(device, &current_ib, &base_vertex_index);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+todo_wine {
+    ok(!current_ib, "Unexpected index buffer %p.\n", current_ib);
+    ok(!base_vertex_index, "Unexpected base vertex index %u.\n", base_vertex_index);
+}
+    if (current_ib)
+        IDirect3DIndexBuffer8_Release(current_ib);
+
+    hr = IDirect3DDevice8_CaptureStateBlock(device, stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, vertex_buffer, sizeof(*quad));
+    ok(SUCCEEDED(hr), "SetStreamSource failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetIndices(device, index_buffer, 1);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_ApplyStateBlock(device, stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetStreamSource(device, 0, &current_vb, &stride);
+    ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
+    ok(current_vb == vertex_buffer, "Unexpected vb %p.\n", current_vb);
+    ok(stride == sizeof(*quad), "Unexpected stride %u.\n", stride);
+    IDirect3DVertexBuffer8_Release(current_vb);
+    hr = IDirect3DDevice8_GetIndices(device, &current_ib, &base_vertex_index);
+    ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
+    ok(current_ib == index_buffer, "Unexpected index buffer %p.\n", current_ib);
+    ok(base_vertex_index == 1, "Unexpected base vertex index %u.\n", base_vertex_index);
+    IDirect3DIndexBuffer8_Release(current_ib);
+
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
+
+    IDirect3DDevice8_DeleteStateBlock(device, stateblock);
+    IDirect3DVertexBuffer8_Release(vertex_buffer);
+    IDirect3DIndexBuffer8_Release(index_buffer);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = GetModuleHandleA("d3d8.dll");
@@ -9321,6 +9501,7 @@ START_TEST(device)
     test_device_caps();
     test_get_info();
     test_resource_access();
+    test_draw_primitive();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
