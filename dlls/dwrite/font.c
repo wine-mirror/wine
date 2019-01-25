@@ -5060,7 +5060,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
         RECT *bbox = &glyph_bitmap.bbox;
         UINT32 bitmap_size;
 
-        glyph_bitmap.index = analysis->run.glyphIndices[i];
+        glyph_bitmap.glyph = analysis->run.glyphIndices[i];
         freetype_get_glyph_bbox(&glyph_bitmap);
 
         bitmap_size = get_glyph_bitmap_pitch(analysis->rendering_mode, bbox->right - bbox->left) *
@@ -5161,7 +5161,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
         int x, y, width, height;
         BOOL is_1bpp;
 
-        glyph_bitmap.index = analysis->run.glyphIndices[i];
+        glyph_bitmap.glyph = analysis->run.glyphIndices[i];
         freetype_get_glyph_bbox(&glyph_bitmap);
 
         if (IsRectEmpty(bbox))

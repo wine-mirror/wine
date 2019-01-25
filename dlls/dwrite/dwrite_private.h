@@ -252,13 +252,14 @@ extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLS
 extern WCHAR bidi_get_mirrored_char(WCHAR) DECLSPEC_HIDDEN;
 
 /* FreeType integration */
-struct dwrite_glyphbitmap {
+struct dwrite_glyphbitmap
+{
     IDWriteFontFace4 *fontface;
     DWORD simulations;
-    FLOAT emsize;
+    float emsize;
     BOOL nohint;
     BOOL aliased;
-    UINT16 index;
+    UINT16 glyph;
     INT pitch;
     RECT bbox;
     BYTE *buf;
@@ -276,7 +277,7 @@ extern UINT16 freetype_get_glyphcount(IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern void freetype_get_glyphs(IDWriteFontFace4*,INT,UINT32 const*,UINT32,UINT16*) DECLSPEC_HIDDEN;
 extern BOOL freetype_has_kerning_pairs(IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace4*,UINT16,UINT16) DECLSPEC_HIDDEN;
-extern void freetype_get_glyph_bbox(struct dwrite_glyphbitmap*) DECLSPEC_HIDDEN;
+extern void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap_desc) DECLSPEC_HIDDEN;
 extern BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap*) DECLSPEC_HIDDEN;
 extern INT freetype_get_charmap_index(IDWriteFontFace4*,BOOL*) DECLSPEC_HIDDEN;
 extern INT32 freetype_get_glyph_advance(IDWriteFontFace4*,FLOAT,UINT16,DWRITE_MEASURING_MODE,BOOL*) DECLSPEC_HIDDEN;

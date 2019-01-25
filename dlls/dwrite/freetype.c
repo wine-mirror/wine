@@ -686,7 +686,7 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
     imagetype.height = bitmap->emsize;
     imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
 
-    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0) {
+    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->glyph, &glyph, NULL) == 0) {
         if (needs_transform) {
             FT_Glyph glyph_copy;
 
@@ -844,7 +844,7 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     imagetype.height = bitmap->emsize;
     imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
 
-    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0) {
+    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->glyph, &glyph, NULL) == 0) {
         FT_Glyph glyph_copy;
 
         if (needs_transform) {
