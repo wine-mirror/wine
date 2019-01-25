@@ -1935,15 +1935,20 @@ static BOOL convert_to_pe64( HMODULE module, const pe_image_info_t *info )
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
     SIZE_T hdr_size = min( sizeof(hdr32), nt->FileHeader.SizeOfOptionalHeader );
     IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + hdr_size);
-    SIZE_T size = (char *)(nt + 1) + nt->FileHeader.NumberOfSections * sizeof(*sec) - (char *)module;
+    SIZE_T size = info->header_size;
     void *addr = module;
     ULONG i, old_prot;
 
     TRACE( "%p\n", module );
 
-    if (size > info->header_size) return FALSE;
     if (NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &old_prot ))
         return FALSE;
+
+    if ((char *)module + size < (char *)(nt + 1) + nt->FileHeader.NumberOfSections * sizeof(*sec))
+    {
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, old_prot, &old_prot );
+        return FALSE;
+    }
 
     memcpy( &hdr32, &nt->OptionalHeader, hdr_size );
     memcpy( &hdr64, &hdr32, offsetof( IMAGE_OPTIONAL_HEADER64, SizeOfStackReserve ));
