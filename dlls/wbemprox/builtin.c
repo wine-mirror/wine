@@ -2804,21 +2804,44 @@ done:
     return status;
 }
 
-static inline void do_cpuid( unsigned int ax, unsigned int *p )
+extern void do_cpuid( unsigned int ax, unsigned int *p );
+#if defined(_MSC_VER)
+void do_cpuid( unsigned int ax, unsigned int *p )
 {
-#ifdef __i386__
-#ifdef _MSC_VER
-    __cpuid(p, ax);
-#else
-    __asm__("pushl %%ebx\n\t"
-                "cpuid\n\t"
-                "movl %%ebx, %%esi\n\t"
-                "popl %%ebx"
-                : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
-                :  "0" (ax));
-#endif
-#endif
+    __cpuid( p, ax );
 }
+#elif defined(__i386__)
+__ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushl %esi\n\t"
+                   "pushl %ebx\n\t"
+                   "movl 12(%esp),%eax\n\t"
+                   "movl 16(%esp),%esi\n\t"
+                   "cpuid\n\t"
+                   "movl %eax,(%esi)\n\t"
+                   "movl %ebx,4(%esi)\n\t"
+                   "movl %ecx,8(%esi)\n\t"
+                   "movl %edx,12(%esi)\n\t"
+                   "popl %ebx\n\t"
+                   "popl %esi\n\t"
+                   "ret" )
+#elif defined(__x86_64__)
+__ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushq %rbx\n\t"
+                   "movl %edi,%eax\n\t"
+                   "cpuid\n\t"
+                   "movl %eax,(%rsi)\n\t"
+                   "movl %ebx,4(%rsi)\n\t"
+                   "movl %ecx,8(%rsi)\n\t"
+                   "movl %edx,12(%rsi)\n\t"
+                   "popq %rbx\n\t"
+                   "ret" )
+#else
+void do_cpuid( unsigned int ax, unsigned int *p )
+{
+    FIXME("\n");
+}
+#endif
+
 static const WCHAR *get_osarchitecture(void)
 {
     SYSTEM_INFO info;
