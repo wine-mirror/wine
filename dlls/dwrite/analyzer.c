@@ -192,8 +192,7 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
 
 const char *debugstr_sa_script(UINT16 script)
 {
-    return script < Script_LastId ? debugstr_an((char*)&dwritescripts_properties[script].props.isoScriptCode, 4):
-            "undefined";
+    return script < Script_LastId ? debugstr_tag(dwritescripts_properties[script].props.isoScriptCode) : "undefined";
 }
 
 /* system font falback configuration */
@@ -1054,7 +1053,7 @@ done:
 
 static UINT32 get_opentype_language(const WCHAR *locale)
 {
-    UINT32 language = DWRITE_FONT_FEATURE_TAG_DEFAULT;
+    UINT32 language = DWRITE_MAKE_OPENTYPE_TAG('d','f','l','t');
 
     if (locale) {
         WCHAR tag[5];
@@ -1145,7 +1144,7 @@ static void analyzer_dump_user_features(DWRITE_TYPOGRAPHIC_FEATURES const **feat
     for (i = 0, start = 0; i < feature_ranges; start += feature_range_lengths[i++]) {
         TRACE("feature range [%u,%u)\n", start, start + feature_range_lengths[i]);
         for (j = 0; j < features[i]->featureCount; j++)
-            TRACE("feature %s, parameter %u\n", debugstr_an((char *)&features[i]->features[j].nameTag, 4),
+            TRACE("feature %s, parameter %u\n", debugstr_tag(features[i]->features[j].nameTag),
                     features[i]->features[j].parameter);
     }
 }
@@ -1836,11 +1835,11 @@ static HRESULT WINAPI dwritetextanalyzer2_GetTypographicFeatures(IDWriteTextAnal
 };
 
 static HRESULT WINAPI dwritetextanalyzer2_CheckTypographicFeature(IDWriteTextAnalyzer2 *iface,
-    IDWriteFontFace *face, DWRITE_SCRIPT_ANALYSIS sa, const WCHAR *localeName,
-    DWRITE_FONT_FEATURE_TAG feature, UINT32 glyph_count, const UINT16 *indices, UINT8 *feature_applies)
+        IDWriteFontFace *face, DWRITE_SCRIPT_ANALYSIS sa, const WCHAR *locale, DWRITE_FONT_FEATURE_TAG feature,
+        UINT32 glyph_count, const UINT16 *glyphs, UINT8 *feature_applies)
 {
-    FIXME("(%p %u %s %x %u %p %p): stub\n", face, sa.script, debugstr_w(localeName), feature, glyph_count, indices,
-        feature_applies);
+    FIXME("(%p %u %s %s %u %p %p): stub\n", face, sa.script, debugstr_w(locale), debugstr_tag(feature), glyph_count,
+            glyphs, feature_applies);
     return E_NOTIMPL;
 }
 

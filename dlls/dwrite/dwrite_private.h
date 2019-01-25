@@ -76,6 +76,11 @@ static inline const char *debugstr_matrix(const DWRITE_MATRIX *m)
         m->dx, m->dy);
 }
 
+static inline const char *debugstr_tag(DWORD tag)
+{
+    return debugstr_an((char *)&tag, 4);
+}
+
 const char *debugstr_sa_script(UINT16) DECLSPEC_HIDDEN;
 
 static inline unsigned short get_table_entry(const unsigned short *table, WCHAR ch)

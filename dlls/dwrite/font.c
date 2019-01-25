@@ -320,11 +320,6 @@ static inline struct dwrite_fontfacereference *impl_from_IDWriteFontFaceReferenc
     return CONTAINING_RECORD(iface, struct dwrite_fontfacereference, IDWriteFontFaceReference_iface);
 }
 
-static inline const char *debugstr_tag(UINT32 tag)
-{
-    return debugstr_an((char*)&tag, 4);
-}
-
 static HRESULT get_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
 {
     static const DWRITE_GLYPH_METRICS nil;
