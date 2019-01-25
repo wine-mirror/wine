@@ -1365,38 +1365,47 @@ static UINT get_processor_count(void)
     return info.NumberOfProcessors;
 }
 
-static UINT get_logical_processor_count( UINT *num_cores )
+static UINT get_logical_processor_count( UINT *num_physical, UINT *num_packages )
 {
-    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info;
-    UINT i, j, count = 0;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *buf, *entry;
+    UINT core_relation_count = 0, package_relation_count = 0;
     NTSTATUS status;
-    ULONG len;
+    ULONG len, offset = 0;
+    BOOL smt_enabled = FALSE;
+    DWORD all;
 
-    if (num_cores) *num_cores = get_processor_count();
-    status = NtQuerySystemInformation( SystemLogicalProcessorInformation, NULL, 0, &len );
+    if (num_packages) *num_packages = 1;
+    status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &all, sizeof(all), NULL, 0, &len );
     if (status != STATUS_INFO_LENGTH_MISMATCH) return get_processor_count();
 
-    if (!(info = heap_alloc( len ))) return get_processor_count();
-    status = NtQuerySystemInformation( SystemLogicalProcessorInformation, info, len, &len );
+    if (!(buf = heap_alloc( len ))) return get_processor_count();
+    status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &all, sizeof(all), buf, len, NULL );
     if (status != STATUS_SUCCESS)
     {
-        heap_free( info );
+        heap_free( buf );
         return get_processor_count();
     }
-    if (num_cores) *num_cores = 0;
-    for (i = 0; i < len / sizeof(*info); i++)
+
+    while (offset < len)
     {
-        if (info[i].Relationship == RelationProcessorCore)
+        entry = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)buf + offset);
+
+        if (entry->Relationship == RelationProcessorCore)
         {
-            for (j = 0; j < sizeof(ULONG_PTR); j++) if (info[i].ProcessorMask & (1 << j)) count++;
+            core_relation_count++;
+            if (entry->u.Processor.Flags & LTP_PC_SMT) smt_enabled = TRUE;
         }
-        else if (info[i].Relationship == RelationProcessorPackage && num_cores)
+        else if (entry->Relationship == RelationProcessorPackage)
         {
-            for (j = 0; j < sizeof(ULONG_PTR); j++) if (info[i].ProcessorMask & (1 << j)) (*num_cores)++;
+            package_relation_count++;
         }
+        offset += entry->Size;
     }
-    heap_free( info );
-    return count;
+
+    heap_free( buf );
+    if (num_physical) *num_physical = core_relation_count;
+    if (num_packages) *num_packages = package_relation_count;
+    return smt_enabled ? core_relation_count * 2 : core_relation_count;
 }
 
 static UINT64 get_total_physical_memory(void)
@@ -1460,8 +1469,7 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     rec->manufacturer           = compsys_manufacturerW;
     rec->model                  = compsys_modelW;
     rec->name                   = get_computername();
-    rec->num_logical_processors = get_logical_processor_count( NULL );
-    rec->num_processors         = get_processor_count();
+    rec->num_logical_processors = get_logical_processor_count( NULL, &rec->num_processors );
     rec->total_physical_memory  = get_total_physical_memory();
     rec->username               = get_username();
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
@@ -2981,10 +2989,12 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
     WCHAR caption[100], device_id[14], processor_id[17], manufacturer[13], name[49] = {0}, version[50];
     struct record_processor *rec;
-    UINT i, offset = 0, num_rows = 0, num_cores, num_logical_processors, count = get_processor_count();
+    UINT i, offset = 0, num_rows = 0, num_logical, num_physical, num_packages;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    if (!resize_table( table, count, sizeof(*rec) )) return FILL_STATUS_FAILED;
+    num_logical = get_logical_processor_count( &num_physical, &num_packages );
+
+    if (!resize_table( table, num_packages, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     get_processor_caption( caption );
     get_processor_id( processor_id );
@@ -2992,10 +3002,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     get_processor_name( name );
     get_processor_version( version );
 
-    num_logical_processors = get_logical_processor_count( &num_cores ) / count;
-    num_cores /= count;
-
-    for (i = 0; i < count; i++)
+    for (i = 0; i < num_packages; i++)
     {
         rec = (struct record_processor *)(table->data + offset);
         rec->addresswidth           = get_osarchitecture() == os_32bitW ? 32 : 64;
@@ -3012,8 +3019,8 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->manufacturer           = heap_strdupW( manufacturer );
         rec->maxclockspeed          = get_processor_maxclockspeed( i );
         rec->name                   = heap_strdupW( name );
-        rec->num_cores              = num_cores;
-        rec->num_logical_processors = num_logical_processors;
+        rec->num_cores              = num_physical / num_packages;
+        rec->num_logical_processors = num_logical / num_packages;
         rec->processor_id           = heap_strdupW( processor_id );
         rec->processortype          = 3; /* central processor */
         rec->revision               = get_processor_revision();
