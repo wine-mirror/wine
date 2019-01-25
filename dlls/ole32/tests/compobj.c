@@ -3363,32 +3363,28 @@ static void test_IInitializeSpy(void)
     cookie.LowPart = 1;
     hr = CoRegisterInitializeSpy(&testinitialize, &cookie);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
     ok(cookie.HighPart == GetCurrentThreadId(), "got high part 0x%08x, expected 0x%08x\n", cookie.HighPart,
         GetCurrentThreadId());
     ok(cookie.LowPart == 0, "got wrong low part 0x%x\n", cookie.LowPart);
-}
+
     /* register same instance one more time */
     cookie1.HighPart = 0;
     cookie1.LowPart = 0;
     hr = CoRegisterInitializeSpy(&testinitialize, &cookie1);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(cookie1.HighPart == GetCurrentThreadId(), "got high part 0x%08x, expected 0x%08x\n", cookie1.HighPart,
         GetCurrentThreadId());
     ok(cookie1.LowPart == 1, "got wrong low part 0x%x\n", cookie1.LowPart);
-}
+
     cookie2.HighPart = 0;
     cookie2.LowPart = 0;
     hr = CoRegisterInitializeSpy(&testinitialize, &cookie2);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(cookie2.HighPart == GetCurrentThreadId(), "got high part 0x%08x, expected 0x%08x\n", cookie2.HighPart,
         GetCurrentThreadId());
     ok(cookie2.LowPart == 2, "got wrong low part 0x%x\n", cookie2.LowPart);
-}
+
     hr = CoRevokeInitializeSpy(cookie1);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = CoRevokeInitializeSpy(cookie1);
@@ -3397,21 +3393,18 @@ todo_wine
     cookie1.HighPart = 0;
     cookie1.LowPart = 0;
     hr = CoRegisterInitializeSpy(&testinitialize, &cookie1);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(cookie1.HighPart == GetCurrentThreadId(), "got high part 0x%08x, expected 0x%08x\n", cookie1.HighPart,
         GetCurrentThreadId());
     ok(cookie1.LowPart == 1, "got wrong low part 0x%x\n", cookie1.LowPart);
-}
+
     hr = CoRevokeInitializeSpy(cookie);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = CoRevokeInitializeSpy(cookie1);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = CoRevokeInitializeSpy(cookie2);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 }
 

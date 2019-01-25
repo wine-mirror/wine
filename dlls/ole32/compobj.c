@@ -1738,11 +1738,21 @@ static void COM_TlsDestroy(void)
     struct oletls *info = NtCurrentTeb()->ReservedForOle;
     if (info)
     {
+        struct init_spy *cursor, *cursor2;
+
         if (info->apt) apartment_release(info->apt);
         if (info->errorinfo) IErrorInfo_Release(info->errorinfo);
         if (info->state) IUnknown_Release(info->state);
-        if (info->spy) IInitializeSpy_Release(info->spy);
+
+        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &info->spies, struct init_spy, entry)
+        {
+            list_remove(&cursor->entry);
+            IInitializeSpy_Release(cursor->spy);
+            heap_free(cursor);
+        }
+
         if (info->context_token) IObjContext_Release(info->context_token);
+
         HeapFree(GetProcessHeap(), 0, info);
         NtCurrentTeb()->ReservedForOle = NULL;
     }
@@ -1764,6 +1774,19 @@ DWORD WINAPI CoBuildVersion(void)
     return (rmm<<16)+rup;
 }
 
+static struct init_spy *get_spy_entry(struct oletls *info, unsigned int id)
+{
+    struct init_spy *spy;
+
+    LIST_FOR_EACH_ENTRY(spy, &info->spies, struct init_spy, entry)
+    {
+        if (id == spy->id)
+            return spy;
+    }
+
+    return NULL;
+}
+
 /******************************************************************************
  *              CoRegisterInitializeSpy [OLE32.@]
  *
@@ -1783,6 +1806,8 @@ DWORD WINAPI CoBuildVersion(void)
 HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cookie)
 {
     struct oletls *info = COM_CurrentInfo();
+    struct init_spy *entry;
+    unsigned int id;
     HRESULT hr;
 
     TRACE("(%p, %p)\n", spy, cookie);
@@ -1794,19 +1819,32 @@ HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cook
         return E_INVALIDARG;
     }
 
-    if (info->spy)
+    hr = IInitializeSpy_QueryInterface(spy, &IID_IInitializeSpy, (void **)&spy);
+    if (FAILED(hr))
+        return hr;
+
+    entry = heap_alloc(sizeof(*entry));
+    if (!entry)
     {
-        FIXME("Already registered?\n");
-        return E_UNEXPECTED;
+        IInitializeSpy_Release(spy);
+        return E_OUTOFMEMORY;
     }
 
-    hr = IInitializeSpy_QueryInterface(spy, &IID_IInitializeSpy, (void **) &info->spy);
-    if (SUCCEEDED(hr))
+    entry->spy = spy;
+
+    id = 0;
+    while (get_spy_entry(info, id) != NULL)
     {
-        cookie->QuadPart = (DWORD_PTR)spy;
-        return S_OK;
+        id++;
     }
-    return hr;
+
+    entry->id = id;
+    list_add_head(&info->spies, &entry->entry);
+
+    cookie->HighPart = GetCurrentThreadId();
+    cookie->LowPart = entry->id;
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -1827,14 +1865,23 @@ HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cook
 HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
 {
     struct oletls *info = COM_CurrentInfo();
+    struct init_spy *spy;
+
     TRACE("(%s)\n", wine_dbgstr_longlong(cookie.QuadPart));
 
-    if (!info || !info->spy || cookie.QuadPart != (DWORD_PTR)info->spy)
+    if (!info || cookie.HighPart != GetCurrentThreadId())
         return E_INVALIDARG;
 
-    IInitializeSpy_Release(info->spy);
-    info->spy = NULL;
-    return S_OK;
+    if ((spy = get_spy_entry(info, cookie.LowPart)))
+    {
+        IInitializeSpy_Release(spy->spy);
+        list_remove(&spy->entry);
+        heap_free(spy);
+
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 HRESULT enter_apartment( struct oletls *info, DWORD model )
@@ -1929,6 +1976,7 @@ HRESULT WINAPI CoInitialize(LPVOID lpReserved)
 HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
 {
   struct oletls *info = COM_CurrentInfo();
+  struct init_spy *cursor;
   HRESULT hr;
 
   TRACE("(%p, %x)\n", lpReserved, (int)dwCoInit);
@@ -1955,13 +2003,17 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoIni
     RunningObjectTableImpl_Initialize();
   }
 
-  if (info->spy)
-      IInitializeSpy_PreInitialize(info->spy, dwCoInit, info->inits);
+  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+  {
+      IInitializeSpy_PreInitialize(cursor->spy, dwCoInit, info->inits);
+  }
 
   hr = enter_apartment( info, dwCoInit );
 
-  if (info->spy)
-      IInitializeSpy_PostInitialize(info->spy, hr, dwCoInit, info->inits);
+  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+  {
+      hr = IInitializeSpy_PostInitialize(cursor->spy, hr, dwCoInit, info->inits);
+  }
 
   return hr;
 }
@@ -1985,6 +2037,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoIni
 void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
 {
   struct oletls * info = COM_CurrentInfo();
+  struct init_spy *cursor;
   LONG lCOMRefCnt;
 
   TRACE("()\n");
@@ -1992,17 +2045,22 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
   /* will only happen on OOM */
   if (!info) return;
 
-  if (info->spy)
-      IInitializeSpy_PreUninitialize(info->spy, info->inits);
+  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+  {
+      IInitializeSpy_PreUninitialize(cursor->spy, info->inits);
+  }
 
   /* sanity check */
   if (!info->inits)
   {
-    ERR("Mismatched CoUninitialize\n");
+      ERR("Mismatched CoUninitialize\n");
 
-    if (info->spy)
-        IInitializeSpy_PostUninitialize(info->spy, info->inits);
-    return;
+      LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+      {
+          IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
+      }
+
+      return;
   }
 
   leave_apartment( info );
@@ -2024,8 +2082,11 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
     ERR( "CoUninitialize() - not CoInitialized.\n" );
     InterlockedExchangeAdd(&s_COMLockCount,1); /* restore the lock count. */
   }
-  if (info->spy)
-      IInitializeSpy_PostUninitialize(info->spy, info->inits);
+
+  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+  {
+      IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
+  }
 }
 
 /******************************************************************************
