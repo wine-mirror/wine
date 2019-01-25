@@ -1232,6 +1232,7 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                 {
                     NDR_SCONTEXT ctxt = NdrContextHandleInitialize(pStubMsg, pTypeFormat);
                     *(void **)pArg = NDRSContextValue(ctxt);
+                    if (params[i].attr.IsReturn) retval_ptr = (LONG_PTR *)NDRSContextValue(ctxt);
                 }
                 else
                 {
@@ -1243,6 +1244,7 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                     }
                 }
             }
+            if (!retval_ptr && params[i].attr.IsReturn) retval_ptr = (LONG_PTR *)pArg;
             break;
         case STUBLESS_UNMARSHAL:
             if (params[i].attr.ServerAllocSize)
@@ -1260,9 +1262,6 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
             RpcRaiseException(RPC_S_INTERNAL_ERROR);
         }
         TRACE("\tmemory addr (after): %p -> %p\n", pArg, *(unsigned char **)pArg);
-
-        /* make a note of the address of the return value parameter for later */
-        if (params[i].attr.IsReturn) retval_ptr = (LONG_PTR *)pArg;
     }
     return retval_ptr;
 }
