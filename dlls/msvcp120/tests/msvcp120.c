@@ -1792,7 +1792,7 @@ static void test_tr2_sys__dir_operation(void)
     while(lstrlenA(longer_path) < MAX_PATH-1)
         strcat(longer_path, "s");
     ok(lstrlenA(longer_path) == MAX_PATH-1, "tr2_sys__Open_dir(): expect MAX_PATH, got %d\n", lstrlenA(longer_path));
-    memset(first_file_name, 0, MAX_PATH);
+    memset(first_file_name, 0xff, MAX_PATH);
     type = err =  0xdeadbeef;
     result_handle = NULL;
     result_handle = p_tr2_sys__Open_dir(first_file_name, longer_path, &err, &type);
@@ -1801,7 +1801,7 @@ static void test_tr2_sys__dir_operation(void)
     ok(err == ERROR_BAD_PATHNAME, "tr2_sys__Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
     ok((int)type == 0xdeadbeef, "tr2_sys__Open_dir(): expect 0xdeadbeef, got %d\n", type);
 
-    memset(first_file_name, 0, MAX_PATH);
+    memset(first_file_name, 0xff, MAX_PATH);
     memset(dest, 0, MAX_PATH);
     err = type = 0xdeadbeef;
     result_handle = NULL;
@@ -1832,7 +1832,7 @@ static void test_tr2_sys__dir_operation(void)
     ok(num_of_sub_dir == 1, "found sub_dir %d times\n", num_of_sub_dir);
     ok(num_of_other_files == 0, "found %d other files\n", num_of_other_files);
 
-    memset(first_file_name, 0, MAX_PATH);
+    memset(first_file_name, 0xff, MAX_PATH);
     err = type = 0xdeadbeef;
     result_handle = file;
     result_handle = p_tr2_sys__Open_dir(first_file_name, "not_exist", &err, &type);
@@ -1842,7 +1842,7 @@ static void test_tr2_sys__dir_operation(void)
     ok(!*first_file_name, "tr2_sys__Open_dir(): expect: 0, got %s\n", first_file_name);
 
     CreateDirectoryA("empty_dir", NULL);
-    memset(first_file_name, 0, MAX_PATH);
+    memset(first_file_name, 0xff, MAX_PATH);
     err = type = 0xdeadbeef;
     result_handle = file;
     result_handle = p_tr2_sys__Open_dir(first_file_name, "empty_dir", &err, &type);

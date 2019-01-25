@@ -14976,6 +14976,7 @@ void* __cdecl tr2_sys__Open_dir_wchar(wchar_t* target, wchar_t const* dest, int*
     TRACE("(%p %s %p %p)\n", target, debugstr_w(dest), err_code, type);
     if(wcslen(dest) > MAX_PATH - 3) {
         *err_code = ERROR_BAD_PATHNAME;
+        *target = '\0';
         return NULL;
     }
     wcscpy(temppath, dest);
@@ -14984,12 +14985,14 @@ void* __cdecl tr2_sys__Open_dir_wchar(wchar_t* target, wchar_t const* dest, int*
     handle = FindFirstFileW(temppath, &data);
     if(handle == INVALID_HANDLE_VALUE) {
         *err_code = ERROR_BAD_PATHNAME;
+        *target = '\0';
         return NULL;
     }
     while(!wcscmp(data.cFileName, dot) || !wcscmp(data.cFileName, dotdot)) {
         if(!FindNextFileW(handle, &data)) {
             *err_code = ERROR_SUCCESS;
             *type = status_unknown;
+            *target = '\0';
             FindClose(handle);
             return NULL;
         }
@@ -15023,8 +15026,7 @@ void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, e
 
     handle = tr2_sys__Open_dir_wchar(target_w, dest ? dest_w : NULL, err_code, type);
 
-    if (handle)
-        WideCharToMultiByte(CP_ACP, 0, target_w, -1, target, MAX_PATH, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, target_w, -1, target, MAX_PATH, NULL, NULL);
 
     return handle;
 }
