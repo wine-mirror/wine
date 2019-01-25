@@ -3308,14 +3308,14 @@ static ULONG WINAPI testinitialize_Release(IInitializeSpy *iface)
 
 static HRESULT WINAPI testinitialize_PreInitialize(IInitializeSpy *iface, DWORD coinit, DWORD aptrefs)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    ok(coinit == (COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE), "Unexpected init flags %#x.\n", coinit);
+    return S_OK;
 }
 
 static HRESULT WINAPI testinitialize_PostInitialize(IInitializeSpy *iface, HRESULT hr, DWORD coinit, DWORD aptrefs)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    ok(coinit == (COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE), "Unexpected init flags %#x.\n", coinit);
+    return hr;
 }
 
 static HRESULT WINAPI testinitialize_PreUninitialize(IInitializeSpy *iface, DWORD aptrefs)
@@ -3398,6 +3398,9 @@ static void test_IInitializeSpy(void)
         GetCurrentThreadId());
     ok(cookie1.LowPart == 1, "got wrong low part 0x%x\n", cookie1.LowPart);
 
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    ok(hr == S_OK, "Failed to initialize COM, hr %#x.\n", hr);
+
     hr = CoRevokeInitializeSpy(cookie);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -3406,6 +3409,8 @@ static void test_IInitializeSpy(void)
 
     hr = CoRevokeInitializeSpy(cookie2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CoUninitialize();
 }
 
 static HRESULT g_persistfile_qi_ret;
