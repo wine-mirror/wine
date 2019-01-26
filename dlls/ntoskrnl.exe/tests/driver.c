@@ -53,12 +53,10 @@ extern int CDECL _vsnprintf(char *str, size_t len, const char *format, __ms_va_l
 static void kvprintf(const char *format, __ms_va_list ap)
 {
     static char buffer[512];
-    LARGE_INTEGER offset;
     IO_STATUS_BLOCK io;
 
     _vsnprintf(buffer, sizeof(buffer), format, ap);
-    offset.QuadPart = -1;
-    ZwWriteFile(okfile, NULL, NULL, NULL, &io, buffer, strlen(buffer), &offset, NULL);
+    ZwWriteFile(okfile, NULL, NULL, NULL, &io, buffer, strlen(buffer), NULL, NULL);
 }
 
 static void WINAPIV kprintf(const char *format, ...)
@@ -522,7 +520,7 @@ static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
     winetest_report_success = test_input->winetest_report_success;
     attr.ObjectName = &pathU;
     attr.Attributes = OBJ_KERNEL_HANDLE; /* needed to be accessible from system threads */
-    ZwOpenFile(&okfile, FILE_APPEND_DATA, &attr, &io, 0, 0);
+    ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
 
     test_currentprocess();
     test_mdl_map();
