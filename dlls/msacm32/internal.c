@@ -737,11 +737,16 @@ static PWINE_ACMLOCALDRIVER MSACM_pLastACMLocalDriver;
 static PWINE_ACMLOCALDRIVER MSACM_UnregisterLocalDriver(PWINE_ACMLOCALDRIVER paldrv)
 {
     PWINE_ACMLOCALDRIVER pNextACMLocalDriver;
+    LONG ref;
 
     if (paldrv->pACMInstList) {
         ERR("local driver instances still present after closing all drivers - memory leak\n");
         return NULL;
     }
+
+    ref = InterlockedDecrement(&paldrv->ref);
+    if (ref)
+        return paldrv;
 
     if (paldrv == MSACM_pFirstACMLocalDriver)
         MSACM_pFirstACMLocalDriver = paldrv->pNextACMLocalDrv;
@@ -883,7 +888,11 @@ PWINE_ACMLOCALDRIVER MSACM_RegisterLocalDriver(HMODULE hModule, DRIVERPROC lpDri
     /* look up previous instance of local driver module */
     for (paldrv = MSACM_pFirstACMLocalDriver; paldrv; paldrv = paldrv->pNextACMLocalDrv)
     {
-        if (paldrv->hModule == hModule && paldrv->lpDrvProc == lpDriverProc) return paldrv;
+        if (paldrv->hModule == hModule && paldrv->lpDrvProc == lpDriverProc)
+        {
+            InterlockedIncrement(&paldrv->ref);
+            return paldrv;
+        }
     }
 
     paldrv = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMLOCALDRIVER));
@@ -892,6 +901,7 @@ PWINE_ACMLOCALDRIVER MSACM_RegisterLocalDriver(HMODULE hModule, DRIVERPROC lpDri
     paldrv->hModule = hModule;
     paldrv->lpDrvProc = lpDriverProc;
     paldrv->pACMInstList = NULL;
+    paldrv->ref = 1;
 
     paldrv->pNextACMLocalDrv = NULL;
     paldrv->pPrevACMLocalDrv = MSACM_pLastACMLocalDriver;
