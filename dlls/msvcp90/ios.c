@@ -14767,6 +14767,9 @@ int __cdecl tr2_sys__Copy_file(char const* source, char const* dest, MSVCP_bool 
 {
     TRACE("(%s %s %x)\n", debugstr_a(source), debugstr_a(dest), fail_if_exists);
 
+    if(!source || !dest)
+        return ERROR_INVALID_PARAMETER;
+
     if(CopyFileA(source, dest, fail_if_exists))
         return ERROR_SUCCESS;
     return GetLastError();
