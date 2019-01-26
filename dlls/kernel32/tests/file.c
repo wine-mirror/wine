@@ -738,6 +738,14 @@ static void test_CopyFileA(void)
     ret = CopyFileA(source, dest, FALSE);
     ok(ret, "CopyFileA: error %d\n", GetLastError());
 
+    /* NULL checks */
+    retok = CopyFileA(NULL, dest, TRUE);
+    ok(!retok && GetLastError() == ERROR_PATH_NOT_FOUND,
+        "CopyFileA: ret = %d, unexpected error %d\n", retok, GetLastError());
+    retok = CopyFileA(source, NULL, TRUE);
+    ok(!retok && GetLastError() == ERROR_PATH_NOT_FOUND,
+        "CopyFileA: ret = %d, unexpected error %d\n", retok, GetLastError());
+
     /* copying from a read-locked source fails */
     hfile = CreateFileA(source, GENERIC_READ, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open source file, error %d\n", GetLastError());
@@ -1173,6 +1181,13 @@ static void test_CopyFileEx(void)
     ok(GetLastError() == ERROR_REQUEST_ABORTED, "expected ERROR_REQUEST_ABORTED, got %d\n", GetLastError());
     todo_wine
     ok(GetFileAttributesA(dest) == INVALID_FILE_ATTRIBUTES, "file was not deleted\n");
+
+    retok = CopyFileExA(source, NULL, copy_progress_cb, hfile, NULL, 0);
+    ok(!retok, "CopyFileExA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_PATH_NOT_FOUND, "expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
+    retok = CopyFileExA(NULL, dest, copy_progress_cb, hfile, NULL, 0);
+    ok(!retok, "CopyFileExA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_PATH_NOT_FOUND, "expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
 
     ret = DeleteFileA(source);
     ok(ret, "DeleteFileA failed with error %d\n", GetLastError());
