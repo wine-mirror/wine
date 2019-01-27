@@ -385,9 +385,10 @@ static const struct dwrite_fonttable *get_fontface_gasp(struct dwrite_fontface *
     return &fontface->gasp;
 }
 
-static const void* get_fontface_cpal(struct dwrite_fontface *fontface)
+static const struct dwrite_fonttable *get_fontface_cpal(struct dwrite_fontface *fontface)
 {
-    return get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_CPAL_TAG, &fontface->cpal);
+    get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_CPAL_TAG, &fontface->cpal);
+    return &fontface->cpal;
 }
 
 static const void* get_fontface_colr(struct dwrite_fontface *fontface)

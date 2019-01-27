@@ -227,9 +227,10 @@ extern HRESULT opentype_get_font_familyname(struct file_stream_desc*,IDWriteLoca
 extern HRESULT opentype_get_font_facename(struct file_stream_desc*,WCHAR*,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_typographic_features(IDWriteFontFace*,UINT32,UINT32,UINT32,UINT32*,DWRITE_FONT_FEATURE_TAG*) DECLSPEC_HIDDEN;
 extern BOOL opentype_get_vdmx_size(const void*,INT,UINT16*,UINT16*) DECLSPEC_HIDDEN;
-extern UINT32 opentype_get_cpal_palettecount(const void*) DECLSPEC_HIDDEN;
-extern UINT32 opentype_get_cpal_paletteentrycount(const void*) DECLSPEC_HIDDEN;
-extern HRESULT opentype_get_cpal_entries(const void*,UINT32,UINT32,UINT32,DWRITE_COLOR_F*) DECLSPEC_HIDDEN;
+extern unsigned int opentype_get_cpal_palettecount(const struct dwrite_fonttable *table) DECLSPEC_HIDDEN;
+extern unsigned int opentype_get_cpal_paletteentrycount(const struct dwrite_fonttable *table) DECLSPEC_HIDDEN;
+extern HRESULT opentype_get_cpal_entries(const struct dwrite_fonttable *table, unsigned int palette,
+        unsigned int first_entry_index, unsigned int entry_count, DWRITE_COLOR_F *entries) DECLSPEC_HIDDEN;
 extern BOOL opentype_has_vertical_variants(IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern DWRITE_CONTAINER_TYPE opentype_analyze_container_type(void const *, UINT32) DECLSPEC_HIDDEN;

@@ -843,25 +843,17 @@ static const UINT16 dwriteid_to_opentypeid[DWRITE_INFORMATIONAL_STRING_POSTSCRIP
 };
 
 /* CPAL table */
-struct CPAL_Header_0
+struct cpal_header_0
 {
     USHORT version;
-    USHORT numPaletteEntries;
-    USHORT numPalette;
-    USHORT numColorRecords;
-    ULONG  offsetFirstColorRecord;
-    USHORT colorRecordIndices[1];
+    USHORT num_palette_entries;
+    USHORT num_palettes;
+    USHORT num_color_records;
+    ULONG offset_first_color_record;
+    USHORT color_record_indices[1];
 };
 
-/* for version == 1, this comes after full CPAL_Header_0 */
-struct CPAL_SubHeader_1
-{
-    ULONG  offsetPaletteTypeArray;
-    ULONG  offsetPaletteLabelArray;
-    ULONG  offsetPaletteEntryLabelArray;
-};
-
-struct CPAL_ColorRecord
+struct cpal_color_record
 {
     BYTE blue;
     BYTE green;
@@ -2005,37 +1997,46 @@ done:
     return flags;
 }
 
-UINT32 opentype_get_cpal_palettecount(const void *cpal)
+unsigned int opentype_get_cpal_palettecount(const struct dwrite_fonttable *cpal)
 {
-    const struct CPAL_Header_0 *header = (const struct CPAL_Header_0*)cpal;
-    return header ? GET_BE_WORD(header->numPalette) : 0;
+    return table_read_be_word(cpal, FIELD_OFFSET(struct cpal_header_0, num_palettes));
 }
 
-UINT32 opentype_get_cpal_paletteentrycount(const void *cpal)
+unsigned int opentype_get_cpal_paletteentrycount(const struct dwrite_fonttable *cpal)
 {
-    const struct CPAL_Header_0 *header = (const struct CPAL_Header_0*)cpal;
-    return header ? GET_BE_WORD(header->numPaletteEntries) : 0;
+    return table_read_be_word(cpal, FIELD_OFFSET(struct cpal_header_0, num_palette_entries));
 }
 
-HRESULT opentype_get_cpal_entries(const void *cpal, UINT32 palette, UINT32 first_entry_index, UINT32 entry_count,
-    DWRITE_COLOR_F *entries)
+HRESULT opentype_get_cpal_entries(const struct dwrite_fonttable *cpal, unsigned int palette,
+        unsigned int first_entry_index, unsigned int entry_count, DWRITE_COLOR_F *entries)
 {
-    const struct CPAL_Header_0 *header = (const struct CPAL_Header_0*)cpal;
-    const struct CPAL_ColorRecord *records;
-    UINT32 palettecount, entrycount, i;
+    unsigned int num_palettes, num_palette_entries, i;
+    const struct cpal_color_record *records;
+    const struct cpal_header_0 *header;
 
-    if (!header) return DWRITE_E_NOCOLOR;
+    header = table_read_ensure(cpal, 0, sizeof(*header));
 
-    palettecount = GET_BE_WORD(header->numPalette);
-    if (palette >= palettecount)
+    if (!cpal->exists || !header)
         return DWRITE_E_NOCOLOR;
 
-    entrycount = GET_BE_WORD(header->numPaletteEntries);
-    if (first_entry_index + entry_count > entrycount)
+    num_palettes = GET_BE_WORD(header->num_palettes);
+    if (palette >= num_palettes)
+        return DWRITE_E_NOCOLOR;
+
+    header = table_read_ensure(cpal, 0, FIELD_OFFSET(struct cpal_header_0, color_record_indices[palette]));
+    if (!header)
+        return DWRITE_E_NOCOLOR;
+
+    num_palette_entries = GET_BE_WORD(header->num_palette_entries);
+    if (first_entry_index + entry_count > num_palette_entries)
         return E_INVALIDARG;
 
-    records = (const struct CPAL_ColorRecord*)((BYTE*)cpal + GET_BE_DWORD(header->offsetFirstColorRecord));
-    first_entry_index += GET_BE_WORD(header->colorRecordIndices[palette]);
+    records = table_read_ensure(cpal, GET_BE_DWORD(header->offset_first_color_record),
+            sizeof(*records) * GET_BE_WORD(header->num_color_records));
+    if (!records)
+        return DWRITE_E_NOCOLOR;
+
+    first_entry_index += GET_BE_WORD(header->color_record_indices[palette]);
 
     for (i = 0; i < entry_count; i++) {
         entries[i].u1.r = records[first_entry_index + i].red   / 255.0f;
