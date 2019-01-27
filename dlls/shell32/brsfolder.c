@@ -647,7 +647,6 @@ static LRESULT BrsFolder_Treeview_Keydown(browse_info *info, LPNMTVKEYDOWN keydo
             TV_ITEMDATA *item_data;
 
             item.mask  = TVIF_PARAM;
-            item.mask  = TVIF_HANDLE|TVIF_PARAM;
             item.hItem = selected_item;
             SendMessageW(info->hwndTreeView, TVM_GETITEMW, 0, (LPARAM)&item);
             item_data = (TV_ITEMDATA *)item.lParam;
