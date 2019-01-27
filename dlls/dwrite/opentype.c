@@ -82,16 +82,18 @@ typedef struct {
     DWORD length;
 } TT_TableRecord;
 
-typedef struct {
+struct cmap_encoding_record
+{
     WORD platformID;
     WORD encodingID;
     DWORD offset;
-} CMAP_EncodingRecord;
+};
 
-typedef struct {
+struct cmap_header
+{
     WORD version;
-    WORD numTables;
-    CMAP_EncodingRecord tables[1];
+    WORD num_tables;
+    struct cmap_encoding_record tables[1];
 } CMAP_Header;
 
 typedef struct {
@@ -100,25 +102,27 @@ typedef struct {
     DWORD startGlyphID;
 } CMAP_SegmentedCoverage_group;
 
-typedef struct {
+struct cmap_segmented_coverage
+{
     WORD format;
     WORD reserved;
     DWORD length;
     DWORD language;
-    DWORD nGroups;
+    DWORD num_groups;
     CMAP_SegmentedCoverage_group groups[1];
-} CMAP_SegmentedCoverage;
+};
 
-typedef struct {
+struct cmap_segment_mapping
+{
     WORD format;
     WORD length;
     WORD language;
-    WORD segCountX2;
-    WORD searchRange;
-    WORD entrySelector;
-    WORD rangeShift;
-    WORD endCode[1];
-} CMAP_SegmentMapping_0;
+    WORD seg_count_x2;
+    WORD search_range;
+    WORD entry_selector;
+    WORD range_shift;
+    WORD end_code[1];
+};
 
 enum OPENTYPE_CMAP_TABLE_FORMAT
 {
@@ -874,6 +878,26 @@ struct COLR_LayerRecord
     USHORT paletteIndex;
 };
 
+static const void *table_read_ensure(const struct dwrite_fonttable *table, unsigned int offset, unsigned int size)
+{
+    if (size > table->size || offset > table->size - size)
+        return NULL;
+
+    return table->data + offset;
+}
+
+static WORD table_read_be_word(const struct dwrite_fonttable *table, unsigned int offset)
+{
+    const WORD *ptr = table_read_ensure(table, offset, sizeof(*ptr));
+    return ptr ? GET_BE_WORD(*ptr) : 0;
+}
+
+static DWORD table_read_be_dword(const struct dwrite_fonttable *table, unsigned int offset)
+{
+    const DWORD *ptr = table_read_ensure(table, offset, sizeof(*ptr));
+    return ptr ? GET_BE_DWORD(*ptr) : 0;
+}
+
 BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
 {
     return (type == DWRITE_FONT_FACE_TYPE_CFF) ||
@@ -1137,92 +1161,115 @@ HRESULT opentype_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag
  * CMAP
  **********/
 
-static UINT32 opentype_cmap_get_unicode_ranges_count(const CMAP_Header *CMAP_Table)
+static unsigned int opentype_cmap_get_unicode_ranges_count(const struct dwrite_fonttable *cmap)
 {
-    UINT32 count = 0;
-    int i;
+    unsigned int i, num_tables, count = 0;
+    const struct cmap_header *header;
 
-    for (i = 0; i < GET_BE_WORD(CMAP_Table->numTables); i++) {
-        WORD type;
-        WORD *table;
+    num_tables = table_read_be_word(cmap, FIELD_OFFSET(struct cmap_header, num_tables));
+    header = table_read_ensure(cmap, 0, FIELD_OFFSET(struct cmap_header, tables[num_tables]));
 
-        if (GET_BE_WORD(CMAP_Table->tables[i].platformID) != 3)
+    if (!header)
+        return 0;
+
+    for (i = 0; i < num_tables; ++i)
+    {
+        unsigned int format, offset;
+
+        if (GET_BE_WORD(header->tables[i].platformID) != 3)
             continue;
 
-        table = (WORD*)(((BYTE*)CMAP_Table) + GET_BE_DWORD(CMAP_Table->tables[i].offset));
-        type = GET_BE_WORD(*table);
-        TRACE("table type %i\n", type);
+        offset = GET_BE_DWORD(header->tables[i].offset);
+        format = table_read_be_word(cmap, offset);
 
-        switch (type)
+        switch (format)
         {
             case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
             {
-                CMAP_SegmentMapping_0 *format = (CMAP_SegmentMapping_0*)table;
-                count += GET_BE_WORD(format->segCountX2)/2;
+                count += table_read_be_word(cmap, offset + FIELD_OFFSET(struct cmap_segment_mapping, seg_count_x2)) / 2;
                 break;
             }
             case OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE:
             {
-                CMAP_SegmentedCoverage *format = (CMAP_SegmentedCoverage*)table;
-                count += GET_BE_DWORD(format->nGroups);
+                count += table_read_be_dword(cmap, offset + FIELD_OFFSET(struct cmap_segmented_coverage, num_groups));
                 break;
             }
             default:
-                FIXME("table type %i unhandled.\n", type);
+                FIXME("table format %u is not supported.\n", format);
         }
     }
 
     return count;
 }
 
-HRESULT opentype_cmap_get_unicode_ranges(void *data, UINT32 max_count, DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
+HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *cmap, unsigned int max_count,
+        DWRITE_UNICODE_RANGE *ranges, unsigned int *count)
 {
-    CMAP_Header *CMAP_Table = data;
-    int i, k = 0;
+    unsigned int i, num_tables, k = 0;
+    const struct cmap_header *header;
 
-    if (!CMAP_Table)
+    if (!cmap->exists)
         return E_FAIL;
 
-    *count = opentype_cmap_get_unicode_ranges_count(CMAP_Table);
+    *count = opentype_cmap_get_unicode_ranges_count(cmap);
 
-    for (i = 0; i < GET_BE_WORD(CMAP_Table->numTables) && k < max_count; i++)
+    num_tables = table_read_be_word(cmap, FIELD_OFFSET(struct cmap_header, num_tables));
+    header = table_read_ensure(cmap, 0, FIELD_OFFSET(struct cmap_header, tables[num_tables]));
+
+    if (!header)
+        return S_OK;
+
+    for (i = 0; i < num_tables && k < max_count; ++i)
     {
-        WORD type;
-        WORD *table;
-        int j;
+        unsigned int j, offset, format;
 
-        if (GET_BE_WORD(CMAP_Table->tables[i].platformID) != 3)
+        if (GET_BE_WORD(header->tables[i].platformID) != 3)
             continue;
 
-        table = (WORD*)(((BYTE*)CMAP_Table) + GET_BE_DWORD(CMAP_Table->tables[i].offset));
-        type = GET_BE_WORD(*table);
-        TRACE("table type %i\n", type);
+        offset = GET_BE_DWORD(header->tables[i].offset);
 
-        switch (type)
+        format = table_read_be_word(cmap, offset);
+        switch (format)
         {
             case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
             {
-                CMAP_SegmentMapping_0 *format = (CMAP_SegmentMapping_0*)table;
-                UINT16 segment_count = GET_BE_WORD(format->segCountX2)/2;
-                UINT16 *startCode = (WORD*)((BYTE*)format + sizeof(CMAP_SegmentMapping_0) + (sizeof(WORD) * segment_count));
+                unsigned int segment_count = table_read_be_word(cmap, offset +
+                        FIELD_OFFSET(struct cmap_segment_mapping, seg_count_x2)) / 2;
+                const UINT16 *start_code = table_read_ensure(cmap, offset,
+                        FIELD_OFFSET(struct cmap_segment_mapping, end_code[segment_count]) +
+                        2 /* reservedPad */ +
+                        2 * segment_count /* start code array */);
+                const UINT16 *end_code = table_read_ensure(cmap, offset,
+                        FIELD_OFFSET(struct cmap_segment_mapping, end_code[segment_count]));
 
-                for (j = 0; j < segment_count && GET_BE_WORD(format->endCode[j]) < 0xffff && k < max_count; j++, k++) {
-                    ranges[k].first = GET_BE_WORD(startCode[j]);
-                    ranges[k].last  = GET_BE_WORD(format->endCode[j]);
+                if (!start_code || !end_code)
+                    continue;
+
+                for (j = 0; j < segment_count && GET_BE_WORD(end_code[j]) != 0xffff && k < max_count; ++j, ++k)
+                {
+                    ranges[k].first = GET_BE_WORD(start_code[j]);
+                    ranges[k].last = GET_BE_WORD(end_code[j]);
                 }
                 break;
             }
             case OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE:
             {
-                CMAP_SegmentedCoverage *format = (CMAP_SegmentedCoverage*)table;
-                for (j = 0; j < GET_BE_DWORD(format->nGroups) && k < max_count; j++, k++) {
-                    ranges[k].first = GET_BE_DWORD(format->groups[j].startCharCode);
-                    ranges[k].last  = GET_BE_DWORD(format->groups[j].endCharCode);
+                unsigned int num_groups = table_read_be_dword(cmap, offset +
+                        FIELD_OFFSET(struct cmap_segmented_coverage, num_groups));
+                const struct cmap_segmented_coverage *coverage;
+
+                coverage = table_read_ensure(cmap, offset,
+                        FIELD_OFFSET(struct cmap_segmented_coverage, groups[num_groups]));
+
+                for (j = 0; j < num_groups && k < max_count; j++, k++)
+                {
+                    ranges[k].first = GET_BE_DWORD(coverage->groups[j].startCharCode);
+                    ranges[k].last = GET_BE_DWORD(coverage->groups[j].endCharCode);
                 }
                 break;
             }
             default:
-                FIXME("table type %i unhandled.\n", type);
+                FIXME("table format %u unhandled.\n", format);
         }
     }
 

@@ -149,13 +149,6 @@ struct dwrite_font {
     struct dwrite_fontfamily *family;
 };
 
-struct dwrite_fonttable {
-    void  *data;
-    void  *context;
-    UINT32 size;
-    BOOL   exists;
-};
-
 enum runanalysis_flags {
     RUNANALYSIS_BOUNDS_READY  = 1 << 0,
     RUNANALYSIS_BITMAP_READY  = 1 << 1,
@@ -345,7 +338,7 @@ static HRESULT set_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16
     return S_OK;
 }
 
-static void* get_fontface_table(IDWriteFontFace4 *fontface, UINT32 tag, struct dwrite_fonttable *table)
+static const void* get_fontface_table(IDWriteFontFace4 *fontface, UINT32 tag, struct dwrite_fonttable *table)
 {
     HRESULT hr;
 
@@ -381,29 +374,24 @@ static FLOAT get_font_prop_vec_dotproduct(const struct dwrite_font_propvec *left
     return left->stretch * right->stretch + left->style * right->style + left->weight * right->weight;
 }
 
-static inline void* get_fontface_cmap(struct dwrite_fontface *fontface)
-{
-    return get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_CMAP_TAG, &fontface->cmap);
-}
-
-static inline void* get_fontface_vdmx(struct dwrite_fontface *fontface)
+static const void* get_fontface_vdmx(struct dwrite_fontface *fontface)
 {
     return get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_VDMX_TAG, &fontface->vdmx);
 }
 
-static inline void* get_fontface_gasp(struct dwrite_fontface *fontface, UINT32 *size)
+static const void* get_fontface_gasp(struct dwrite_fontface *fontface, UINT32 *size)
 {
-    void *ptr = get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_GASP_TAG, &fontface->gasp);
+    const void *ptr = get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_GASP_TAG, &fontface->gasp);
     *size = fontface->gasp.size;
     return ptr;
 }
 
-static inline void* get_fontface_cpal(struct dwrite_fontface *fontface)
+static const void* get_fontface_cpal(struct dwrite_fontface *fontface)
 {
     return get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_CPAL_TAG, &fontface->cpal);
 }
 
-static inline void* get_fontface_colr(struct dwrite_fontface *fontface)
+static const void* get_fontface_colr(struct dwrite_fontface *fontface)
 {
     return get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_COLR_TAG, &fontface->colr);
 }
@@ -730,9 +718,10 @@ static HRESULT WINAPI dwritefontface_GetRecommendedRenderingMode(IDWriteFontFace
     FLOAT ppdip, DWRITE_MEASURING_MODE measuring, IDWriteRenderingParams *params, DWRITE_RENDERING_MODE *mode)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
-    WORD gasp, *ptr;
+    const WORD *ptr;
     UINT32 size;
     FLOAT ppem;
+    WORD gasp;
 
     TRACE("(%p)->(%.2f %.2f %d %p %p)\n", This, emSize, ppdip, measuring, params, mode);
 
@@ -910,7 +899,8 @@ static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace4 *iface, 
     if (max_count && !ranges)
         return E_INVALIDARG;
 
-    return opentype_cmap_get_unicode_ranges(get_fontface_cmap(This), max_count, ranges, count);
+    get_fontface_table(iface, MS_CMAP_TAG, &This->cmap);
+    return opentype_cmap_get_unicode_ranges(&This->cmap, max_count, ranges, count);
 }
 
 static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace4 *iface)
@@ -1108,8 +1098,9 @@ static HRESULT WINAPI dwritefontface2_GetRecommendedRenderingMode(IDWriteFontFac
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
     FLOAT emthreshold;
-    WORD gasp, *ptr;
+    const WORD *ptr;
     UINT32 size;
+    WORD gasp;
 
     TRACE("(%p)->(%.2f %.2f %.2f %p %d %d %d %p %p %p)\n", This, emSize, dpiX, dpiY, m, is_sideways, threshold,
         measuringmode, params, renderingmode, gridfitmode);
@@ -1239,8 +1230,9 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
     FLOAT emthreshold;
-    WORD gasp, *ptr;
+    const WORD *ptr;
     UINT32 size;
+    WORD gasp;
 
     TRACE("(%p)->(%.2f %.2f %.2f %p %d %d %d %p %p %p)\n", This, emSize, dpiX, dpiY, m, is_sideways, threshold,
         measuring_mode, params, rendering_mode, gridfit_mode);
