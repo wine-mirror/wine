@@ -127,11 +127,11 @@
 @ stub _o___libm_sse2_sinf
 @ stub _o___libm_sse2_tan
 @ stub _o___libm_sse2_tanf
-@ stub _o___p___argc
+@ cdecl _o___p___argc() ucrtbase._o___p___argc
 @ stub _o___p___argv
-@ stub _o___p___wargv
+@ cdecl _o___p___wargv() ucrtbase._o___p___wargv
 @ stub _o___p__acmdln
-@ stub _o___p__commode
+@ cdecl _o___p__commode() ucrtbase._o___p__commode
 @ stub _o___p__environ
 @ stub _o___p__fmode
 @ stub _o___p__mbcasemap
@@ -144,7 +144,7 @@
 @ stub _o___pwctype_func
 @ stub _o___std_exception_copy
 @ stub _o___std_exception_destroy
-@ stub _o___std_type_info_destroy_list
+@ cdecl _o___std_type_info_destroy_list(ptr) ucrtbase._o___std_type_info_destroy_list
 @ stub _o___std_type_info_name
 @ stub _o___stdio_common_vfprintf
 @ stub _o___stdio_common_vfprintf_p
@@ -207,15 +207,15 @@
 @ stub _o__chsize_s
 @ stub _o__close
 @ stub _o__commit
-@ stub _o__configthreadlocale
+@ cdecl _o__configthreadlocale(long) ucrtbase._o__configthreadlocale
 @ stub _o__configure_narrow_argv
-@ stub _o__configure_wide_argv
-@ stub _o__controlfp_s
+@ cdecl _o__configure_wide_argv(long) ucrtbase._o__configure_wide_argv
+@ cdecl _o__controlfp_s(ptr long long) ucrtbase._o__controlfp_s
 @ stub _o__cputs
 @ stub _o__cputws
 @ stub _o__creat
 @ stub _o__create_locale
-@ stub _o__crt_atexit
+@ cdecl _o__crt_atexit(ptr) ucrtbase._o__crt_atexit
 @ stub _o__ctime32_s
 @ stub _o__ctime64_s
 @ stub _o__cwait
@@ -319,7 +319,7 @@
 @ stub _o__get_fmode
 @ stub _o__get_heap_handle
 @ stub _o__get_initial_narrow_environment
-@ stub _o__get_initial_wide_environment
+@ cdecl _o__get_initial_wide_environment() ucrtbase._o__get_initial_wide_environment
 @ stub _o__get_invalid_parameter_handler
 @ stub _o__get_narrow_winmain_command_line
 @ stub _o__get_osfhandle
@@ -366,7 +366,7 @@
 @ stub _o__i64tow_s
 @ stub _o__initialize_narrow_environment
 @ cdecl _o__initialize_onexit_table(ptr) ucrtbase._o__initialize_onexit_table
-@ stub _o__initialize_wide_environment
+@ cdecl _o__initialize_wide_environment() ucrtbase._o__initialize_wide_environment
 @ stub _o__invalid_parameter_noinfo
 @ stub _o__invalid_parameter_noinfo_noreturn
 @ stub _o__isatty
@@ -660,16 +660,16 @@
 @ stub _o__scalbf
 @ stub _o__searchenv
 @ stub _o__searchenv_s
-@ stub _o__seh_filter_dll
-@ stub _o__seh_filter_exe
+@ cdecl _o__seh_filter_dll(long ptr) ucrtbase._o__seh_filter_dll
+@ cdecl _o__seh_filter_exe(long ptr) ucrtbase._o__seh_filter_exe
 @ stub _o__set_abort_behavior
-@ stub _o__set_app_type
+@ cdecl _o__set_app_type(long) ucrtbase._o__set_app_type
 @ stub _o__set_doserrno
 @ stub _o__set_errno
-@ stub _o__set_fmode
+@ cdecl _o__set_fmode(long) ucrtbase._o__set_fmode
 @ stub _o__set_invalid_parameter_handler
 @ stub _o__set_new_handler
-@ stub _o__set_new_mode
+@ cdecl _o__set_new_mode(long) ucrtbase._o__set_new_mode
 @ stub _o__set_thread_local_invalid_parameter_handler
 @ stub _o__seterrormode
 @ stub _o__setmbcp
@@ -919,7 +919,7 @@
 @ stub _o_bsearch
 @ stub _o_bsearch_s
 @ stub _o_btowc
-@ stub _o_calloc
+@ cdecl _o_calloc(long long) ucrtbase._o_calloc
 @ stub _o_cbrt
 @ stub _o_cbrtf
 @ stub _o_ceil
@@ -936,7 +936,7 @@
 @ stub _o_erfcl
 @ stub _o_erff
 @ stub _o_erfl
-@ stub _o_exit
+@ cdecl _o_exit(long) ucrtbase._o_exit
 @ stub _o_exp
 @ stub _o_exp2
 @ stub _o_exp2f
@@ -967,7 +967,7 @@
 @ stub _o_fputws
 @ stub _o_fread
 @ stub _o_fread_s
-@ stub _o_free
+@ cdecl _o_free(ptr) ucrtbase._o_free
 @ stub _o_freopen
 @ stub _o_freopen_s
 @ stub _o_frexp
@@ -1142,7 +1142,7 @@
 @ stub _o_tmpfile_s
 @ stub _o_tmpnam_s
 @ stub _o_tolower
-@ stub _o_toupper
+@ cdecl _o_toupper(long) ucrtbase._o_toupper
 @ stub _o_towlower
 @ stub _o_towupper
 @ stub _o_ungetc
