@@ -3268,7 +3268,7 @@ static void test_device_qi(void)
     ok(SUCCEEDED(hr), "Cannot get IDirect3DRM3 interface (hr = %x).\n", hr);
     hr = IDirect3DRM3_CreateDeviceFromClipper(d3drm3, clipper, &driver, rc.right, rc.bottom, &device3);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DRMDevice3 interface (hr = %x)\n", hr);
-    IDirect3DRMDevice3_QueryInterface(device3, &IID_IUnknown, (void **)&unknown);
+    hr = IDirect3DRMDevice3_QueryInterface(device3, &IID_IUnknown, (void **)&unknown);
     ok(SUCCEEDED(hr), "Cannot get IUnknown interface from IDirect3DRMDevice3 (hr = %x)\n", hr);
     IDirect3DRMDevice3_Release(device3);
     test_qi("device3_qi", unknown, &IID_IUnknown, tests, ARRAY_SIZE(tests));
