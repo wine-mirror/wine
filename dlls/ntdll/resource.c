@@ -259,7 +259,7 @@ done:
 /**********************************************************************
  *	LdrFindResourceDirectory_U  (NTDLL.@)
  */
-NTSTATUS WINAPI LdrFindResourceDirectory_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
+NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrFindResourceDirectory_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
                                             ULONG level, const IMAGE_RESOURCE_DIRECTORY **dir )
 {
     const void *res;
@@ -287,7 +287,7 @@ NTSTATUS WINAPI LdrFindResourceDirectory_U( HMODULE hmod, const LDR_RESOURCE_INF
 /**********************************************************************
  *	LdrFindResource_U  (NTDLL.@)
  */
-NTSTATUS WINAPI LdrFindResource_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
+NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrFindResource_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
                                    ULONG level, const IMAGE_RESOURCE_DATA_ENTRY **entry )
 {
     const void *res;
