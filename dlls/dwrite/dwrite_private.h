@@ -254,7 +254,7 @@ enum gasp_flags {
     GASP_SYMMETRIC_SMOOTHING = 0x0008,
 };
 
-extern WORD opentype_get_gasp_flags(const WORD*,UINT32,INT) DECLSPEC_HIDDEN;
+extern unsigned int opentype_get_gasp_flags(const struct dwrite_fonttable *gasp, float emsize) DECLSPEC_HIDDEN;
 
 /* BiDi helpers */
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;

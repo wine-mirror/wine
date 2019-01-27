@@ -292,6 +292,20 @@ typedef struct {
     BYTE bitDepth;
     BYTE flags;
 } CBLCBitmapSizeTable;
+
+struct gasp_range
+{
+    WORD max_ppem;
+    WORD flags;
+};
+
+struct gasp_header
+{
+    WORD version;
+    WORD num_ranges;
+    struct gasp_range ranges[1];
+};
+
 #include "poppack.h"
 
 enum OS2_FSSELECTION {
@@ -1959,25 +1973,32 @@ BOOL opentype_get_vdmx_size(const void *data, INT emsize, UINT16 *ascent, UINT16
     return FALSE;
 }
 
-WORD opentype_get_gasp_flags(const WORD *ptr, UINT32 size, INT emsize)
+unsigned int opentype_get_gasp_flags(const struct dwrite_fonttable *gasp, float emsize)
 {
-    WORD num_recs, version;
+    unsigned int version, num_ranges, i;
+    const struct gasp_header *table;
     WORD flags = 0;
 
-    if (!ptr)
+    if (!gasp->exists)
         return 0;
 
-    version  = GET_BE_WORD( *ptr++ );
-    num_recs = GET_BE_WORD( *ptr++ );
-    if (version > 1 || size < (num_recs * 2 + 2) * sizeof(WORD)) {
-        ERR("unsupported gasp table: ver %d size %d recs %d\n", version, size, num_recs);
+    num_ranges = table_read_be_word(gasp, FIELD_OFFSET(struct gasp_header, num_ranges));
+
+    table = table_read_ensure(gasp, 0, FIELD_OFFSET(struct gasp_header, ranges[num_ranges]));
+    if (!table)
+        return 0;
+
+    version = GET_BE_WORD(table->version);
+    if (version > 1)
+    {
+        ERR("Unsupported gasp table format version %u.\n", version);
         goto done;
     }
 
-    while (num_recs--) {
-        flags = GET_BE_WORD( *(ptr + 1) );
-        if (emsize <= GET_BE_WORD( *ptr )) break;
-        ptr += 2;
+    for (i = 0; i < num_ranges; ++i)
+    {
+        flags = GET_BE_WORD(table->ranges[i].flags);
+        if (emsize <= GET_BE_WORD(table->ranges[i].max_ppem)) break;
     }
 
 done:

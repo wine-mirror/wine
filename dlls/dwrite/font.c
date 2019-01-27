@@ -379,11 +379,10 @@ static const void* get_fontface_vdmx(struct dwrite_fontface *fontface)
     return get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_VDMX_TAG, &fontface->vdmx);
 }
 
-static const void* get_fontface_gasp(struct dwrite_fontface *fontface, UINT32 *size)
+static const struct dwrite_fonttable *get_fontface_gasp(struct dwrite_fontface *fontface)
 {
-    const void *ptr = get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_GASP_TAG, &fontface->gasp);
-    *size = fontface->gasp.size;
-    return ptr;
+    get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_GASP_TAG, &fontface->gasp);
+    return &fontface->gasp;
 }
 
 static const void* get_fontface_cpal(struct dwrite_fontface *fontface)
@@ -687,7 +686,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace4 *iface,
 }
 
 static DWRITE_RENDERING_MODE fontface_renderingmode_from_measuringmode(DWRITE_MEASURING_MODE measuring,
-    FLOAT ppem, WORD gasp)
+        float ppem, unsigned int gasp)
 {
     DWRITE_RENDERING_MODE mode = DWRITE_RENDERING_MODE_DEFAULT;
 
@@ -718,10 +717,8 @@ static HRESULT WINAPI dwritefontface_GetRecommendedRenderingMode(IDWriteFontFace
     FLOAT ppdip, DWRITE_MEASURING_MODE measuring, IDWriteRenderingParams *params, DWRITE_RENDERING_MODE *mode)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
-    const WORD *ptr;
-    UINT32 size;
+    unsigned int flags;
     FLOAT ppem;
-    WORD gasp;
 
     TRACE("(%p)->(%.2f %.2f %d %p %p)\n", This, emSize, ppdip, measuring, params, mode);
 
@@ -741,9 +738,8 @@ static HRESULT WINAPI dwritefontface_GetRecommendedRenderingMode(IDWriteFontFace
         return S_OK;
     }
 
-    ptr = get_fontface_gasp(This, &size);
-    gasp = opentype_get_gasp_flags(ptr, size, ppem);
-    *mode = fontface_renderingmode_from_measuringmode(measuring, ppem, gasp);
+    flags = opentype_get_gasp_flags(get_fontface_gasp(This), ppem);
+    *mode = fontface_renderingmode_from_measuringmode(measuring, ppem, flags);
     return S_OK;
 }
 
@@ -1097,10 +1093,8 @@ static HRESULT WINAPI dwritefontface2_GetRecommendedRenderingMode(IDWriteFontFac
     DWRITE_GRID_FIT_MODE *gridfitmode)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
+    unsigned int flags;
     FLOAT emthreshold;
-    const WORD *ptr;
-    UINT32 size;
-    WORD gasp;
 
     TRACE("(%p)->(%.2f %.2f %.2f %p %d %d %d %p %p %p)\n", This, emSize, dpiX, dpiY, m, is_sideways, threshold,
         measuringmode, params, renderingmode, gridfitmode);
@@ -1131,14 +1125,13 @@ static HRESULT WINAPI dwritefontface2_GetRecommendedRenderingMode(IDWriteFontFac
 
     emthreshold = threshold == DWRITE_OUTLINE_THRESHOLD_ANTIALIASED ? RECOMMENDED_OUTLINE_AA_THRESHOLD : RECOMMENDED_OUTLINE_A_THRESHOLD;
 
-    ptr = get_fontface_gasp(This, &size);
-    gasp = opentype_get_gasp_flags(ptr, size, emSize);
+    flags = opentype_get_gasp_flags(get_fontface_gasp(This), emSize);
 
     if (*renderingmode == DWRITE_RENDERING_MODE_DEFAULT) {
         if (emSize >= emthreshold)
             *renderingmode = DWRITE_RENDERING_MODE_OUTLINE;
         else
-            *renderingmode = fontface_renderingmode_from_measuringmode(measuringmode, emSize, gasp);
+            *renderingmode = fontface_renderingmode_from_measuringmode(measuringmode, emSize, flags);
     }
 
     if (*gridfitmode == DWRITE_GRID_FIT_MODE_DEFAULT) {
@@ -1147,7 +1140,8 @@ static HRESULT WINAPI dwritefontface2_GetRecommendedRenderingMode(IDWriteFontFac
         else if (measuringmode == DWRITE_MEASURING_MODE_GDI_CLASSIC || measuringmode == DWRITE_MEASURING_MODE_GDI_NATURAL)
             *gridfitmode = DWRITE_GRID_FIT_MODE_ENABLED;
         else
-            *gridfitmode = (gasp & (GASP_GRIDFIT|GASP_SYMMETRIC_GRIDFIT)) ? DWRITE_GRID_FIT_MODE_ENABLED : DWRITE_GRID_FIT_MODE_DISABLED;
+            *gridfitmode = flags & (GASP_GRIDFIT|GASP_SYMMETRIC_GRIDFIT) ?
+                    DWRITE_GRID_FIT_MODE_ENABLED : DWRITE_GRID_FIT_MODE_DISABLED;
     }
 
     return S_OK;
@@ -1229,10 +1223,8 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
     IDWriteRenderingParams *params, DWRITE_RENDERING_MODE1 *rendering_mode, DWRITE_GRID_FIT_MODE *gridfit_mode)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
+    unsigned int flags;
     FLOAT emthreshold;
-    const WORD *ptr;
-    UINT32 size;
-    WORD gasp;
 
     TRACE("(%p)->(%.2f %.2f %.2f %p %d %d %d %p %p %p)\n", This, emSize, dpiX, dpiY, m, is_sideways, threshold,
         measuring_mode, params, rendering_mode, gridfit_mode);
@@ -1263,14 +1255,13 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
 
     emthreshold = threshold == DWRITE_OUTLINE_THRESHOLD_ANTIALIASED ? RECOMMENDED_OUTLINE_AA_THRESHOLD : RECOMMENDED_OUTLINE_A_THRESHOLD;
 
-    ptr = get_fontface_gasp(This, &size);
-    gasp = opentype_get_gasp_flags(ptr, size, emSize);
+    flags = opentype_get_gasp_flags(get_fontface_gasp(This), emSize);
 
     if (*rendering_mode == DWRITE_RENDERING_MODE1_DEFAULT) {
         if (emSize >= emthreshold)
             *rendering_mode = DWRITE_RENDERING_MODE1_OUTLINE;
         else
-            *rendering_mode = fontface_renderingmode_from_measuringmode(measuring_mode, emSize, gasp);
+            *rendering_mode = fontface_renderingmode_from_measuringmode(measuring_mode, emSize, flags);
     }
 
     if (*gridfit_mode == DWRITE_GRID_FIT_MODE_DEFAULT) {
@@ -1279,7 +1270,8 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
         else if (measuring_mode == DWRITE_MEASURING_MODE_GDI_CLASSIC || measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL)
             *gridfit_mode = DWRITE_GRID_FIT_MODE_ENABLED;
         else
-            *gridfit_mode = (gasp & (GASP_GRIDFIT|GASP_SYMMETRIC_GRIDFIT)) ? DWRITE_GRID_FIT_MODE_ENABLED : DWRITE_GRID_FIT_MODE_DISABLED;
+            *gridfit_mode = flags & (GASP_GRIDFIT|GASP_SYMMETRIC_GRIDFIT) ?
+                    DWRITE_GRID_FIT_MODE_ENABLED : DWRITE_GRID_FIT_MODE_DISABLED;
     }
 
     return S_OK;
