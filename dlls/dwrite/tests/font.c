@@ -8038,23 +8038,108 @@ static void test_HasKerningPairs(void)
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
+static void get_expected_glyph_origins(D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *run,
+        D2D1_POINT_2F *origins)
+{
+    unsigned int i;
+
+    if (run->bidiLevel & 1)
+    {
+        DWRITE_GLYPH_METRICS glyph_metrics[2];
+        DWRITE_FONT_METRICS metrics;
+        float advance;
+        HRESULT hr;
+
+        hr = IDWriteFontFace_GetDesignGlyphMetrics(run->fontFace, run->glyphIndices, run->glyphCount, glyph_metrics, FALSE);
+        ok(hr == S_OK, "Failed to get glyph metrics, hr %#x.\n", hr);
+
+        IDWriteFontFace_GetMetrics(run->fontFace, &metrics);
+
+        advance = run->fontEmSize * glyph_metrics[0].advanceWidth / metrics.designUnitsPerEm;
+
+        baseline_origin.x -= advance;
+
+        for (i = 0; i < run->glyphCount; ++i)
+        {
+            origins[i].x = baseline_origin.x - run->glyphOffsets[i].advanceOffset;
+            origins[i].y = baseline_origin.y - run->glyphOffsets[i].ascenderOffset;
+
+            baseline_origin.x -= run->glyphAdvances[i];
+        }
+    }
+    else
+    {
+        for (i = 0; i < run->glyphCount; ++i)
+        {
+            origins[i].x = baseline_origin.x + run->glyphOffsets[i].advanceOffset;
+            origins[i].y = baseline_origin.y - run->glyphOffsets[i].ascenderOffset;
+
+            baseline_origin.x += run->glyphAdvances[i];
+        }
+    }
+}
+
 static void test_ComputeGlyphOrigins(void)
 {
+    static const struct origins_test
+    {
+        D2D1_POINT_2F baseline_origin;
+        float advances[2];
+        DWRITE_GLYPH_OFFSET offsets[2];
+        unsigned int bidi_level;
+    }
+    origins_tests[] =
+    {
+        { { 123.0f, 321.0f }, { 10.0f, 20.0f }, { { 0 } } },
+        { { 123.0f, 321.0f }, { 10.0f, 20.0f }, { { 0.3f, 0.5f }, { -0.1f, 0.9f } } },
+        { { 123.0f, 321.0f }, { 10.0f, 20.0f }, { { 0 } }, 1 },
+    };
     IDWriteFactory4 *factory;
     DWRITE_GLYPH_RUN run;
     HRESULT hr;
-    D2D1_POINT_2F origins[2];
+    D2D1_POINT_2F origins[2], expected_origins[2];
     D2D1_POINT_2F baseline_origin;
-    UINT16 glyphs[2];
+    UINT16 glyphs[2] = { 0 };
     FLOAT advances[2];
     DWRITE_MATRIX m;
     ULONG ref;
+    unsigned int i, j;
+    IDWriteFontFace *fontface;
 
     factory = create_factory_iid(&IID_IDWriteFactory4);
     if (!factory) {
         win_skip("ComputeGlyphOrigins() is not supported.\n");
         return;
     }
+
+    fontface = create_fontface((IDWriteFactory *)factory);
+
+    for (i = 0; i < ARRAY_SIZE(origins_tests); ++i)
+    {
+        run.fontFace = fontface;
+        run.fontEmSize = 32.0f;
+        run.glyphCount = 2;
+        run.glyphIndices = glyphs;
+        run.glyphAdvances = origins_tests[i].advances;
+        run.glyphOffsets = origins_tests[i].offsets;
+        run.isSideways = FALSE;
+        run.bidiLevel = origins_tests[i].bidi_level;
+
+        get_expected_glyph_origins(origins_tests[i].baseline_origin, &run, expected_origins);
+
+        memset(origins, 0, sizeof(origins));
+        hr = IDWriteFactory4_ComputeGlyphOrigins_(factory, &run, origins_tests[i].baseline_origin, origins);
+        ok(hr == S_OK, "%u: failed to compute glyph origins, hr %#x.\n", i, hr);
+        for (j = 0; j < run.glyphCount; ++j)
+        {
+        todo_wine_if(run.bidiLevel & 1)
+            ok(!memcmp(&origins[j], &expected_origins[j], sizeof(origins[j])),
+                    "%u: unexpected origin[%u] (%f, %f) - (%f, %f).\n", i, j, origins[j].x, origins[j].y,
+                    expected_origins[j].x, expected_origins[j].y);
+        }
+    }
+
+    IDWriteFontFace_Release(fontface);
 
     advances[0] = 10.0f;
     advances[1] = 20.0f;
