@@ -76,16 +76,10 @@ KIRQL WINAPI DECLSPEC_HIDDEN __regs_KfAcquireSpinLock( KSPIN_LOCK *lock )
     return irql;
 }
 
-static inline void small_pause(void)
-{
-    __asm__ __volatile__( "rep;nop" : : : "memory" );
-}
-
 void WINAPI KeAcquireSpinLock( KSPIN_LOCK *lock, KIRQL *irql )
 {
     TRACE("lock %p, irql %p.\n", lock, irql);
-    while (!InterlockedCompareExchangePointer( (void **)lock, (void *)1, (void *)0 ))
-        small_pause();
+    KeAcquireSpinLockAtDpcLevel( lock );
     *irql = 0;
 }
 
@@ -98,7 +92,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_KfReleaseSpinLock( KSPIN_LOCK *lock, KIRQL ir
 void WINAPI KeReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
 {
     TRACE("lock %p, irql %u.\n", lock, irql);
-    InterlockedExchangePointer( (void **)lock, 0 );
+    KeReleaseSpinLockFromDpcLevel( lock );
 }
 #endif /* __i386__ */
 
