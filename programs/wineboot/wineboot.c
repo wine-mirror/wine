@@ -163,11 +163,112 @@ static DWORD set_reg_value( HKEY hkey, const WCHAR *name, const WCHAR *value )
     return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, (strlenW(value) + 1) * sizeof(WCHAR) );
 }
 
+extern void do_cpuid( unsigned int ax, unsigned int *p );
+#if defined(_MSC_VER)
+void do_cpuid( unsigned int ax, unsigned int *p )
+{
+    __cpuid( p, ax );
+}
+#elif defined(__i386__)
+__ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushl %esi\n\t"
+                   "pushl %ebx\n\t"
+                   "movl 12(%esp),%eax\n\t"
+                   "movl 16(%esp),%esi\n\t"
+                   "cpuid\n\t"
+                   "movl %eax,(%esi)\n\t"
+                   "movl %ebx,4(%esi)\n\t"
+                   "movl %ecx,8(%esi)\n\t"
+                   "movl %edx,12(%esi)\n\t"
+                   "popl %ebx\n\t"
+                   "popl %esi\n\t"
+                   "ret" )
+#elif defined(__x86_64__)
+__ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushq %rbx\n\t"
+                   "movl %edi,%eax\n\t"
+                   "cpuid\n\t"
+                   "movl %eax,(%rsi)\n\t"
+                   "movl %ebx,4(%rsi)\n\t"
+                   "movl %ecx,8(%rsi)\n\t"
+                   "movl %edx,12(%rsi)\n\t"
+                   "popq %rbx\n\t"
+                   "ret" )
+#else
+void do_cpuid( unsigned int ax, unsigned int *p )
+{
+    FIXME("\n");
+}
+#endif
+
+static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
+{
+    unsigned int i;
+    unsigned char *p = (unsigned char *)regs;
+
+    for (i = 0; i < len; i++) { buffer[i] = *p++; }
+    buffer[i] = 0;
+}
+
+static unsigned int get_model( unsigned int reg0, unsigned int *stepping, unsigned int *family )
+{
+    unsigned int model, family_id = (reg0 & (0x0f << 8)) >> 8;
+
+    model = (reg0 & (0x0f << 4)) >> 4;
+    if (family_id == 6 || family_id == 15) model |= (reg0 & (0x0f << 16)) >> 12;
+
+    *family = family_id;
+    if (family_id == 15) *family += (reg0 & (0xff << 20)) >> 20;
+
+    *stepping = reg0 & 0x0f;
+    return model;
+}
+
+static void get_identifier( WCHAR *buf, const WCHAR *arch )
+{
+    static const WCHAR fmtW[] = {'%','s',' ','F','a','m','i','l','y',' ','%','u',' ','M','o','d','e','l',
+                                 ' ','%','u',' ','S','t','e','p','p','i','n','g',' ','%','u',0};
+    unsigned int regs[4] = {0, 0, 0, 0}, family, model, stepping;
+
+    do_cpuid( 1, regs );
+    model = get_model( regs[0], &stepping, &family );
+    sprintfW( buf, fmtW, arch, family, model, stepping );
+}
+
+static void get_vendorid( WCHAR *buf )
+{
+    unsigned int tmp, regs[4] = {0, 0, 0, 0};
+
+    do_cpuid( 0, regs );
+    tmp = regs[2];      /* swap edx and ecx */
+    regs[2] = regs[3];
+    regs[3] = tmp;
+
+    regs_to_str( regs + 1, 12, buf );
+}
+
+static void get_namestring( WCHAR *buf )
+{
+    unsigned int regs[4] = {0, 0, 0, 0};
+    int i;
+
+    do_cpuid( 0x80000000, regs );
+    if (regs[0] >= 0x80000004)
+    {
+        do_cpuid( 0x80000002, regs );
+        regs_to_str( regs, 16, buf );
+        do_cpuid( 0x80000003, regs );
+        regs_to_str( regs, 16, buf + 16 );
+        do_cpuid( 0x80000004, regs );
+        regs_to_str( regs, 16, buf + 32 );
+    }
+    for (i = strlenW(buf) - 1; i >= 0 && buf[i] == ' '; i--) buf[i] = 0;
+}
+
 /* create the volatile hardware registry keys */
 static void create_hardware_registry_keys(void)
 {
-    static const WCHAR SystemW[] = {'H','a','r','d','w','a','r','e','\\',
-                                    'D','e','s','c','r','i','p','t','i','o','n','\\',
+    static const WCHAR SystemW[] = {'H','a','r','d','w','a','r','e','\\','D','e','s','c','r','i','p','t','i','o','n','\\',
                                     'S','y','s','t','e','m',0};
     static const WCHAR fpuW[] = {'F','l','o','a','t','i','n','g','P','o','i','n','t','P','r','o','c','e','s','s','o','r',0};
     static const WCHAR cpuW[] = {'C','e','n','t','r','a','l','P','r','o','c','e','s','s','o','r',0};
@@ -178,22 +279,22 @@ static void create_hardware_registry_keys(void)
     static const WCHAR ARMSysidW[] = {'A','R','M',' ','p','r','o','c','e','s','s','o','r',' ','f','a','m','i','l','y',0};
     static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
     static const WCHAR VendorIdentifierW[] = {'V','e','n','d','o','r','I','d','e','n','t','i','f','i','e','r',0};
-    static const WCHAR VenidIntelW[] = {'G','e','n','u','i','n','e','I','n','t','e','l',0};
-    /* static const WCHAR VenidAMDW[] = {'A','u','t','h','e','n','t','i','c','A','M','D',0}; */
     static const WCHAR PercentDW[] = {'%','d',0};
-    static const WCHAR IntelCpuDescrW[] = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
-                                           ' ','S','t','e','p','p','i','n','g',' ','%','d',0};
     static const WCHAR ARMCpuDescrW[]  = {'A','R','M',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
-                                            ' ','R','e','v','i','s','i','o','n',' ','%','d',0};
-    static const WCHAR IntelCpuStringW[] = {'I','n','t','e','l','(','R',')',' ','P','e','n','t','i','u','m','(','R',')',' ','4',' ',
-                                            'C','P','U',' ','2','.','4','0','G','H','z',0};
+                                          ' ','R','e','v','i','s','i','o','n',' ','%','d',0};
+    static const WCHAR x86W[] = {'x','8','6',0};
+    static const WCHAR intel64W[] = {'I','n','t','e','l','6','4',0};
+    static const WCHAR amd64W[] = {'A','M','D','6','4',0};
+    static const WCHAR authenticamdW[] = {'A','u','t','h','e','n','t','i','c','A','M','D',0};
     unsigned int i;
     HKEY hkey, system_key, cpu_key, fpu_key;
     SYSTEM_CPU_INFORMATION sci;
     PROCESSOR_POWER_INFORMATION* power_info;
     ULONG sizeof_power_info = sizeof(PROCESSOR_POWER_INFORMATION) * NtCurrentTeb()->Peb->NumberOfProcessors;
-    WCHAR idW[60];
+    WCHAR id[60], namestr[49], vendorid[13];
 
+    get_namestring( namestr );
+    get_vendorid( vendorid );
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
 
     power_info = HeapAlloc( GetProcessHeap(), 0, sizeof_power_info );
@@ -202,16 +303,20 @@ static void create_hardware_registry_keys(void)
     if (NtPowerInformation( ProcessorInformation, NULL, 0, power_info, sizeof_power_info ))
         memset( power_info, 0, sizeof_power_info );
 
-    /*TODO: report 64bit processors properly*/
-    switch(sci.Architecture)
+    switch (sci.Architecture)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
     case PROCESSOR_ARCHITECTURE_ARM64:
-        sprintfW( idW, ARMCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+        sprintfW( id, ARMCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
         break;
-    default:
+
+    case PROCESSOR_ARCHITECTURE_AMD64:
+        get_identifier( id, !strcmpW(vendorid, authenticamdW) ? amd64W : intel64W );
+        break;
+
     case PROCESSOR_ARCHITECTURE_INTEL:
-        sprintfW( idW, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+    default:
+        get_identifier( id, x86W );
         break;
     }
 
@@ -222,14 +327,16 @@ static void create_hardware_registry_keys(void)
         return;
     }
 
-    switch(sci.Architecture)
+    switch (sci.Architecture)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
     case PROCESSOR_ARCHITECTURE_ARM64:
         set_reg_value( system_key, IdentifierW, ARMSysidW );
         break;
-    default:
+
     case PROCESSOR_ARCHITECTURE_INTEL:
+    case PROCESSOR_ARCHITECTURE_AMD64:
+    default:
         set_reg_value( system_key, IdentifierW, SysidW );
         break;
     }
@@ -252,10 +359,10 @@ static void create_hardware_registry_keys(void)
                               KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         {
             RegSetValueExW( hkey, FeatureSetW, 0, REG_DWORD, (BYTE *)&sci.FeatureSet, sizeof(DWORD) );
-            set_reg_value( hkey, IdentifierW, idW );
-            /*TODO; report ARM and AMD properly*/
-            set_reg_value( hkey, ProcessorNameStringW, IntelCpuStringW );
-            set_reg_value( hkey, VendorIdentifierW, VenidIntelW );
+            set_reg_value( hkey, IdentifierW, id );
+            /* TODO: report ARM properly */
+            set_reg_value( hkey, ProcessorNameStringW, namestr );
+            set_reg_value( hkey, VendorIdentifierW, vendorid );
             RegSetValueExW( hkey, mhzKeyW, 0, REG_DWORD, (BYTE *)&power_info[i].MaxMhz, sizeof(DWORD) );
             RegCloseKey( hkey );
         }
@@ -264,7 +371,7 @@ static void create_hardware_registry_keys(void)
             !RegCreateKeyExW( fpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
                               KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         {
-            set_reg_value( hkey, IdentifierW, idW );
+            set_reg_value( hkey, IdentifierW, id );
             RegCloseKey( hkey );
         }
     }
@@ -301,50 +408,56 @@ static void create_environment_registry_keys( void )
     static const WCHAR NumProcW[]  = {'N','U','M','B','E','R','_','O','F','_','P','R','O','C','E','S','S','O','R','S',0};
     static const WCHAR ProcArchW[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
     static const WCHAR x86W[]      = {'x','8','6',0};
-    static const WCHAR armW[]      = {'A','R','M',0};
-    static const WCHAR arm64W[]    = {'A','R','M','6','4',0};
-    static const WCHAR AMD64W[]    = {'A','M','D','6','4',0};
+    static const WCHAR intel64W[]  = {'I','n','t','e','l','6','4',0};
+    static const WCHAR amd64W[]    = {'A','M','D','6','4',0};
+    static const WCHAR authenticamdW[] = {'A','u','t','h','e','n','t','i','c','A','M','D',0};
+    static const WCHAR commaW[]    = {',',' ',0};
     static const WCHAR ProcIdW[]   = {'P','R','O','C','E','S','S','O','R','_','I','D','E','N','T','I','F','I','E','R',0};
     static const WCHAR ProcLvlW[]  = {'P','R','O','C','E','S','S','O','R','_','L','E','V','E','L',0};
     static const WCHAR ProcRevW[]  = {'P','R','O','C','E','S','S','O','R','_','R','E','V','I','S','I','O','N',0};
     static const WCHAR PercentDW[] = {'%','d',0};
     static const WCHAR Percent04XW[] = {'%','0','4','x',0};
-    static const WCHAR IntelCpuDescrW[]  = {'%','s',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
-                                            ' ','S','t','e','p','p','i','n','g',' ','%','d',',',' ','G','e','n','u','i','n','e','I','n','t','e','l',0};
     static const WCHAR ARMCpuDescrW[]  = {'A','R','M',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
-                                            ' ','R','e','v','i','s','i','o','n',' ','%','d',0};
-
+                                          ' ','R','e','v','i','s','i','o','n',' ','%','d',0};
     HKEY env_key;
     SYSTEM_CPU_INFORMATION sci;
-    WCHAR buffer[60];
+    WCHAR buffer[60], vendorid[13];
     const WCHAR *arch;
 
     if (RegCreateKeyW( HKEY_LOCAL_MACHINE, EnvironW, &env_key )) return;
 
+    get_vendorid( vendorid );
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
 
     sprintfW( buffer, PercentDW, NtCurrentTeb()->Peb->NumberOfProcessors );
     set_reg_value( env_key, NumProcW, buffer );
 
-    switch(sci.Architecture)
+    switch (sci.Architecture)
     {
-    case PROCESSOR_ARCHITECTURE_AMD64: arch = AMD64W; break;
-    case PROCESSOR_ARCHITECTURE_ARM:   arch = armW; break;
-    case PROCESSOR_ARCHITECTURE_ARM64: arch = arm64W; break;
+    case PROCESSOR_ARCHITECTURE_AMD64:
+        arch = !strcmpW(vendorid, authenticamdW) ? amd64W : intel64W;
+        break;
+
+    case PROCESSOR_ARCHITECTURE_INTEL:
     default:
-    case PROCESSOR_ARCHITECTURE_INTEL: arch = x86W; break;
+        arch = x86W;
+        break;
     }
     set_reg_value( env_key, ProcArchW, arch );
 
-    switch(sci.Architecture)
+    switch (sci.Architecture)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
     case PROCESSOR_ARCHITECTURE_ARM64:
         sprintfW( buffer, ARMCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
         break;
-    default:
+
+    case PROCESSOR_ARCHITECTURE_AMD64:
     case PROCESSOR_ARCHITECTURE_INTEL:
-        sprintfW( buffer, IntelCpuDescrW, arch, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+    default:
+        get_identifier( buffer, arch );
+        strcatW( buffer, commaW );
+        strcatW( buffer, vendorid );
         break;
     }
     set_reg_value( env_key, ProcIdW, buffer );
@@ -352,7 +465,6 @@ static void create_environment_registry_keys( void )
     sprintfW( buffer, PercentDW, sci.Level );
     set_reg_value( env_key, ProcLvlW, buffer );
 
-    /* Properly report model/stepping */
     sprintfW( buffer, Percent04XW, sci.Revision );
     set_reg_value( env_key, ProcRevW, buffer );
 
