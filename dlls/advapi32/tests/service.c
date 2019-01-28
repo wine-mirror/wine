@@ -2350,7 +2350,7 @@ static void test_servicenotify(SC_HANDLE scm_handle, const char *servicename)
     ok(dr == WAIT_IO_COMPLETION, "Got wrong SleepEx result: %u\n", dr);
     ok(data.was_called == TRUE, "APC wasn't called\n");
 
-    /* cannot register two notifications */
+    /* cannot register two notifications on the same handle */
     data.phase = PHASE_STOPPED;
     data.was_called = FALSE;
 
@@ -2373,13 +2373,29 @@ static void test_servicenotify(SC_HANDLE scm_handle, const char *servicename)
             (dr == ERROR_ALREADY_REGISTERED && dr2 == 0), "Got wrong SleepEx result: %u\n", dr);
     ok(data.was_called == FALSE, "APC should not have been called\n");
 
+    memset(&data2.notify, 0, sizeof(data2.notify));
+    data2.notify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
+    data2.notify.pfnNotifyCallback = &notify_cb;
+    data2.notify.pContext = &data;
+    data2.svc = svc2;
+    data2.phase = PHASE_STOPPED;
+    data2.was_called = FALSE;
+
+    /* it's possible to have multiple notifications using different service handles */
+    dr = pNotifyServiceStatusChangeW(svc2, SERVICE_NOTIFY_STOPPED, &data2.notify);
+    todo_wine
+    ok(dr == ERROR_SUCCESS, "NotifyServiceStatusChangeW gave wrong result: %u\n", dr);
+
     /* stop service and receive notifiction */
     br = ControlService(svc, SERVICE_CONTROL_STOP, &status);
     ok(br, "ControlService failed: %u\n", GetLastError());
 
     dr = SleepEx(100, TRUE);
-    ok(dr == WAIT_IO_COMPLETION, "Got wrong SleepEx result: %u\n", dr);
+    dr2 = SleepEx(100, TRUE);
+    ok(dr == WAIT_IO_COMPLETION || dr2 == WAIT_IO_COMPLETION, "Got wrong SleepEx result: %u\n", dr);
     ok(data.was_called == TRUE, "APC wasn't called\n");
+    todo_wine
+    ok(data2.was_called == TRUE, "APC wasn't called\n");
 
     /* test cancelation: create notify on svc that will block until service
      * start; close svc; start service on svc2; verify that notification does
