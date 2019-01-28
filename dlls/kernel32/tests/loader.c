@@ -508,6 +508,14 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     return image.ImageContainsCode && (!cor_header || !(cor_header->Flags & COMIMAGE_FLAGS_ILONLY));
 }
 
+static UINT get_com_dir_size( const IMAGE_NT_HEADERS *nt )
+{
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+        return ((const IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
+    else
+        return ((const IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
+}
+
 /* helper to test image section mapping */
 static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAGE_SECTION_HEADER *sections,
                                    const void *section_data, int line )
@@ -517,7 +525,7 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
     HANDLE file, map;
     NTSTATUS status;
     ULONG file_size;
-    BOOL has_code;
+    BOOL has_code, il_only = FALSE, want_32bit = FALSE, wrong_machine = FALSE;
     HMODULE mod;
 
     file_size = create_test_dll_sections( &dos_header, nt_header, sections, section_data, dll_name );
@@ -528,6 +536,13 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
     size.QuadPart = file_size;
     status = pNtCreateSection(&map, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
                               NULL, &size, PAGE_READONLY, SEC_IMAGE, file );
+    if (get_com_dir_size( nt_header ))
+    {
+        /* invalid COR20 header seems to corrupt internal loader state on Windows */
+        if (get_com_dir_size( nt_header ) < sizeof(IMAGE_COR20_HEADER)) goto done;
+        if (!((const IMAGE_COR20_HEADER *)section_data)->Flags) goto done;
+    }
+
     if (!status)
     {
         SECTION_BASIC_INFORMATION info;
@@ -540,21 +555,22 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
         ok( info.Size.QuadPart == file_size, "NtQuerySection wrong size %x%08x / %08x\n",
             info.Size.u.HighPart, info.Size.u.LowPart, file_size );
         has_code = query_image_section( line, dll_name, nt_header, section_data );
+
+        if (get_com_dir_size( nt_header ))
+        {
+            const IMAGE_COR20_HEADER *cor_header = section_data;
+            il_only = (cor_header->Flags & COMIMAGE_FLAGS_ILONLY) != 0;
+            if (il_only) want_32bit = (cor_header->Flags & COMIMAGE_FLAGS_32BITREQUIRED) != 0;
+        }
+
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
         /* test loading dll of wrong 32/64 bitness */
         if (nt_header->OptionalHeader.Magic == (is_win64 ? IMAGE_NT_OPTIONAL_HDR32_MAGIC
                                                          : IMAGE_NT_OPTIONAL_HDR64_MAGIC))
         {
-            SetLastError( 0xdeadbeef );
-            mod = LoadLibraryExA( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
-            if (!has_code && nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+            if (!has_code && is_win64)
             {
-                BOOL il_only = FALSE, want_32bit = FALSE;
-                if (((const IMAGE_NT_HEADERS32 *)nt_header)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress)
-                {
-                    const IMAGE_COR20_HEADER *cor_header = section_data;
-                    il_only = (cor_header->Flags & COMIMAGE_FLAGS_ILONLY) != 0;
-                    if (il_only) want_32bit = (cor_header->Flags & COMIMAGE_FLAGS_32BITREQUIRED) != 0;
-                }
                 ok( mod != NULL || want_32bit || broken(il_only), /* <= win7 */
                     "%u: loading failed err %u\n", line, GetLastError() );
             }
@@ -563,9 +579,19 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
                 ok( !mod, "%u: loading succeeded\n", line );
                 ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "%u: wrong error %u\n", line, GetLastError() );
             }
-            if (mod) FreeLibrary( mod );
         }
+        else
+        {
+            wrong_machine = (nt_header->FileHeader.Machine == get_alt_machine( nt_header_template.FileHeader.Machine ));
+
+            ok( mod != NULL || broken(il_only) || /* <= win7 */
+                broken( wrong_machine ), /* win8 */
+                "%u: loading failed err %u\n", line, GetLastError() );
+        }
+        if (mod) FreeLibrary( mod );
     }
+
+done:
     if (map) CloseHandle( map );
     CloseHandle( file );
     DeleteFileA( dll_name );
@@ -736,6 +762,7 @@ static void test_Loader(void)
         nt_header.OptionalHeader.SizeOfImage = td[i].size_of_image;
         nt_header.OptionalHeader.SizeOfHeaders = td[i].size_of_headers;
 
+        section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
         file_size = create_test_dll( &dos_header, td[i].size_of_dos_header, &nt_header, dll_name );
 
         SetLastError(0xdeadbeef);
@@ -3728,7 +3755,6 @@ START_TEST(loader)
         return;
     }
 
-    test_Loader();
     test_filenames();
     test_ResolveDelayLoadedAPI();
     test_ImportDescriptors();
@@ -3736,4 +3762,6 @@ START_TEST(loader)
     test_import_resolution();
     test_ExitProcess();
     test_InMemoryOrderModuleList();
+    /* loader test must be last, it can corrupt the internal loader state on Windows */
+    test_Loader();
 }
