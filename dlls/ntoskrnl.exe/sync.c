@@ -396,6 +396,16 @@ static inline void small_pause(void)
 }
 
 /***********************************************************************
+ *           KeAcquireSpinLockAtDpcLevel (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeAcquireSpinLockAtDpcLevel( KSPIN_LOCK *lock )
+{
+    TRACE("lock %p.\n", lock);
+    while (!InterlockedCompareExchangePointer( (void **)lock, (void *)1, (void *)0 ))
+        small_pause();
+}
+
+/***********************************************************************
  *           KeReleaseSpinLockFromDpcLevel (NTOSKRNL.EXE.@)
  */
 void WINAPI KeReleaseSpinLockFromDpcLevel( KSPIN_LOCK *lock )

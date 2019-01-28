@@ -1427,6 +1427,7 @@ void      WINAPI KeAcquireSpinLock(KSPIN_LOCK*,KIRQL*);
 #define KeAcquireSpinLock( lock, irql ) *(irql) = KeAcquireSpinLockRaiseToDpc( lock )
 KIRQL     WINAPI KeAcquireSpinLockRaiseToDpc(KSPIN_LOCK*);
 #endif
+void      WINAPI KeAcquireSpinLockAtDpcLevel(KSPIN_LOCK*);
 BOOLEAN   WINAPI KeCancelTimer(KTIMER*);
 void      WINAPI KeClearEvent(PRKEVENT);
 NTSTATUS  WINAPI KeDelayExecutionThread(KPROCESSOR_MODE,BOOLEAN,LARGE_INTEGER*);
