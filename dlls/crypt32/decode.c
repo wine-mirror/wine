@@ -6393,17 +6393,3 @@ BOOL WINAPI PFXIsPFXBlob(CRYPT_DATA_BLOB *pPFX)
         ret = FALSE;
     return ret;
 }
-
-HCERTSTORE WINAPI PFXImportCertStore(CRYPT_DATA_BLOB *pPFX, LPCWSTR szPassword,
- DWORD dwFlags)
-{
-    FIXME_(crypt)("(%p, %p, %08x): stub\n", pPFX, szPassword, dwFlags);
-    return NULL;
-}
-
-BOOL WINAPI PFXVerifyPassword(CRYPT_DATA_BLOB *pPFX, LPCWSTR szPassword,
- DWORD dwFlags)
-{
-    FIXME_(crypt)("(%p, %p, %08x): stub\n", pPFX, szPassword, dwFlags);
-    return FALSE;
-}

@@ -54,6 +54,9 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, PVOID pvReserved)
             DisableThreadLibraryCalls(hInst);
             init_empty_store();
             crypt_oid_init();
+#ifdef SONAME_LIBGNUTLS
+            gnutls_initialize();
+#endif
             break;
         case DLL_PROCESS_DETACH:
             if (pvReserved) break;
@@ -61,6 +64,9 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, PVOID pvReserved)
             crypt_sip_free();
             default_chain_engine_free();
             if (hDefProv) CryptReleaseContext(hDefProv, 0);
+#ifdef SONAME_LIBGNUTLS
+            gnutls_uninitialize();
+#endif
             break;
     }
     return TRUE;
