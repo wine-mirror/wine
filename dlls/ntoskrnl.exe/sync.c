@@ -386,7 +386,6 @@ void WINAPI KeInitializeSpinLock( KSPIN_LOCK *lock )
     *lock = 0;
 }
 
-#ifndef __i386__
 static inline void small_pause(void)
 {
 #ifdef __x86_64__
@@ -396,6 +395,16 @@ static inline void small_pause(void)
 #endif
 }
 
+/***********************************************************************
+ *           KeReleaseSpinLockFromDpcLevel (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeReleaseSpinLockFromDpcLevel( KSPIN_LOCK *lock )
+{
+    TRACE("lock %p.\n", lock);
+    InterlockedExchangePointer( (void **)lock, 0 );
+}
+
+#ifndef __i386__
 /***********************************************************************
  *           KeReleaseSpinLock (NTOSKRNL.EXE.@)
  */

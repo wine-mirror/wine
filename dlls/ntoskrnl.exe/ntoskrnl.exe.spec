@@ -594,7 +594,7 @@
 @ stdcall KeReleaseMutex(ptr long)
 @ stdcall KeReleaseSemaphore(ptr long long long)
 @ stdcall -arch=arm,arm64,x86_64 KeReleaseSpinLock(ptr long)
-@ stub KeReleaseSpinLockFromDpcLevel
+@ stdcall KeReleaseSpinLockFromDpcLevel(ptr)
 @ stub KeRemoveByKeyDeviceQueue
 @ stub KeRemoveByKeyDeviceQueueIfBusy
 @ stub KeRemoveDeviceQueue
