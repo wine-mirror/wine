@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <stdio.h>
+#include <locale.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -90,6 +91,13 @@ static double (__cdecl *p_strtod)(const char*, char** end);
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
 static size_t (__cdecl *p___strncnt)(const char*, size_t);
+static int (__cdecl *p_towlower)(wint_t);
+static int (__cdecl *p__towlower_l)(wint_t, _locale_t);
+static int (__cdecl *p_towupper)(wint_t);
+static int (__cdecl *p__towupper_l)(wint_t, _locale_t);
+static char* (__cdecl *p_setlocale)(int, const char*);
+static _locale_t (__cdecl *p__create_locale)(int, const char*);
+static void (__cdecl *p__free_locale)(_locale_t);
 
 static BOOL init(void)
 {
@@ -107,6 +115,13 @@ static BOOL init(void)
     p__memicmp = (void*)GetProcAddress(module, "_memicmp");
     p__memicmp_l = (void*)GetProcAddress(module, "_memicmp_l");
     p___strncnt = (void*)GetProcAddress(module, "__strncnt");
+    p_towlower = (void*)GetProcAddress(module, "towlower");
+    p__towlower_l = (void*)GetProcAddress(module, "_towlower_l");
+    p_towupper = (void*)GetProcAddress(module, "towupper");
+    p__towupper_l = (void*)GetProcAddress(module, "_towupper_l");
+    p_setlocale = (void*)GetProcAddress(module, "setlocale");
+    p__create_locale = (void*)GetProcAddress(module, "_create_locale");
+    p__free_locale = (void*)GetProcAddress(module, "_free_locale");
     return TRUE;
 }
 
@@ -285,6 +300,63 @@ static void test___strncnt(void)
             "Cannot reset invalid parameter handler\n");
 }
 
+static void test_C_locale(void)
+{
+    int i, j;
+    wint_t ret, exp;
+    _locale_t locale;
+    static const char *locales[] = { NULL, "C" };
+
+    /* C locale only converts case for [a-zA-Z] */
+    p_setlocale(LC_ALL, "C");
+    for (i = 0; i <= 0xffff; i++)
+    {
+        ret = p_towlower(i);
+        if (i >= 'A' && i <= 'Z')
+        {
+            exp = i + 'a' - 'A';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
+        ret = p_towupper(i);
+        if (i >= 'a' && i <= 'z')
+        {
+            exp = i + 'A' - 'a';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(locales); i++) {
+        locale = locales[i] ? p__create_locale(LC_ALL, locales[i]) : NULL;
+
+        for (j = 0; j <= 0xffff; j++) {
+            ret = p__towlower_l(j, locale);
+            if (j >= 'A' && j <= 'Z')
+            {
+                exp = j + 'a' - 'A';
+                ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+            }
+            else
+                ok(ret == j, "expected self %x, got %x for C locale\n", j, ret);
+
+            ret = p__towupper_l(j, locale);
+            if (j >= 'a' && j <= 'z')
+            {
+                exp = j + 'A' - 'a';
+                ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+            }
+            else
+                ok(ret == j, "expected self %x, got %x for C locale\n", j, ret);
+        }
+
+        p__free_locale(locale);
+    }
+}
+
 START_TEST(string)
 {
     if (!init()) return;
@@ -292,4 +364,5 @@ START_TEST(string)
     test__memicmp();
     test__memicmp_l();
     test___strncnt();
+    test_C_locale();
 }
