@@ -604,10 +604,14 @@ static void test_DirectInputJoyConfig8(void)
            "IDirectInputJoyConfig8_GetConfig returned 0x%08x\n", hr);
 
         if (SUCCEEDED(hr))
-            ok (SUCCEEDED(IDirectInput_CreateDevice(pDI, &info.guidInstance, &pDID, NULL)),
-               "IDirectInput_CreateDevice failed with guid from GetConfig hr = 0x%08x\n", hr);
+        {
+            hr = IDirectInput_CreateDevice(pDI, &info.guidInstance, &pDID, NULL);
+            ok (SUCCEEDED(hr), "IDirectInput_CreateDevice failed with guid from GetConfig hr = 0x%08x\n", hr);
+            IDirectInputDevice_Release(pDID);
+        }
     }
 
+    IDirectInputJoyConfig8_Release(pDIJC);
     IDirectInput_Release(pDI);
 }
 
