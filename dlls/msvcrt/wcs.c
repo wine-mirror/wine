@@ -2494,6 +2494,19 @@ int CDECL MSVCRT_towupper(MSVCRT_wint_t c)
  */
 int CDECL MSVCRT__towlower_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
+
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE]) {
+        if(c >= 'A' && c <= 'Z')
+            return c + 'a' - 'A';
+        return c;
+    }
+
     return tolowerW(c);
 }
 
