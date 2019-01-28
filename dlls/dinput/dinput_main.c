@@ -1104,10 +1104,12 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
 
         if (lpCallback(&didevis[i], lpdid, callbackFlags, --remain, pvRef) == DIENUM_STOP)
         {
+            IDirectInputDevice_Release(lpdid);
             HeapFree(GetProcessHeap(), 0, didevis);
             HeapFree(GetProcessHeap(), 0, username_w);
             return DI_OK;
         }
+        IDirectInputDevice_Release(lpdid);
     }
 
     HeapFree(GetProcessHeap(), 0, didevis);
@@ -1130,9 +1132,11 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
 
             if (lpCallback(&didevi, lpdid, callbackFlags, --remain, pvRef) == DIENUM_STOP)
             {
+                IDirectInputDevice_Release(lpdid);
                 HeapFree(GetProcessHeap(), 0, username_w);
                 return DI_OK;
             }
+            IDirectInputDevice_Release(lpdid);
         }
     }
 
