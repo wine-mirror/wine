@@ -2383,7 +2383,6 @@ static void test_servicenotify(SC_HANDLE scm_handle, const char *servicename)
 
     /* it's possible to have multiple notifications using different service handles */
     dr = pNotifyServiceStatusChangeW(svc2, SERVICE_NOTIFY_STOPPED, &data2.notify);
-    todo_wine
     ok(dr == ERROR_SUCCESS, "NotifyServiceStatusChangeW gave wrong result: %u\n", dr);
 
     /* stop service and receive notifiction */
@@ -2394,7 +2393,6 @@ static void test_servicenotify(SC_HANDLE scm_handle, const char *servicename)
     dr2 = SleepEx(100, TRUE);
     ok(dr == WAIT_IO_COMPLETION || dr2 == WAIT_IO_COMPLETION, "Got wrong SleepEx result: %u\n", dr);
     ok(data.was_called == TRUE, "APC wasn't called\n");
-    todo_wine
     ok(data2.was_called == TRUE, "APC wasn't called\n");
 
     /* test cancelation: create notify on svc that will block until service
