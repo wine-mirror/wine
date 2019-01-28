@@ -167,6 +167,32 @@ static IMAGE_SECTION_HEADER section =
 static const char filler[0x1000];
 static const char section_data[0x10] = "section data";
 
+/* return an alternate machine of the same 32/64 bitness */
+static WORD get_alt_machine( WORD orig_machine )
+{
+    switch (orig_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  return IMAGE_FILE_MACHINE_ARMNT;
+    case IMAGE_FILE_MACHINE_AMD64: return IMAGE_FILE_MACHINE_ARM64;
+    case IMAGE_FILE_MACHINE_ARMNT: return IMAGE_FILE_MACHINE_I386;
+    case IMAGE_FILE_MACHINE_ARM64: return IMAGE_FILE_MACHINE_AMD64;
+    }
+    return 0;
+}
+
+/* return the machine of the alternate 32/64 bitness */
+static WORD get_alt_bitness_machine( WORD orig_machine )
+{
+    switch (orig_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  return IMAGE_FILE_MACHINE_AMD64;
+    case IMAGE_FILE_MACHINE_AMD64: return IMAGE_FILE_MACHINE_I386;
+    case IMAGE_FILE_MACHINE_ARMNT: return IMAGE_FILE_MACHINE_ARM64;
+    case IMAGE_FILE_MACHINE_ARM64: return IMAGE_FILE_MACHINE_ARMNT;
+    }
+    return 0;
+}
+
 static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
                               const IMAGE_NT_HEADERS *nt_header, char dll_name[MAX_PATH] )
 {
@@ -692,7 +718,7 @@ static void test_Loader(void)
     SIZE_T size;
     BOOL ret;
     NTSTATUS status;
-    WORD alt_machine, orig_machine = nt_header_template.FileHeader.Machine;
+    WORD orig_machine = nt_header_template.FileHeader.Machine;
     IMAGE_NT_HEADERS nt_header;
     IMAGE_COR20_HEADER cor_header;
 
@@ -1013,26 +1039,12 @@ static void test_Loader(void)
     ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
         "NtCreateSection error %08x\n", status );
 
-    switch (orig_machine)
-    {
-    case IMAGE_FILE_MACHINE_I386:  alt_machine = IMAGE_FILE_MACHINE_ARMNT; break;
-    case IMAGE_FILE_MACHINE_AMD64: alt_machine = IMAGE_FILE_MACHINE_ARM64; break;
-    case IMAGE_FILE_MACHINE_ARMNT: alt_machine = IMAGE_FILE_MACHINE_I386; break;
-    case IMAGE_FILE_MACHINE_ARM64: alt_machine = IMAGE_FILE_MACHINE_AMD64; break;
-    }
-    nt_header.FileHeader.Machine = alt_machine;
+    nt_header.FileHeader.Machine = get_alt_machine( orig_machine );
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
         "NtCreateSection error %08x\n", status );
 
-    switch (orig_machine)
-    {
-    case IMAGE_FILE_MACHINE_I386:  alt_machine = IMAGE_FILE_MACHINE_AMD64; break;
-    case IMAGE_FILE_MACHINE_AMD64: alt_machine = IMAGE_FILE_MACHINE_I386; break;
-    case IMAGE_FILE_MACHINE_ARMNT: alt_machine = IMAGE_FILE_MACHINE_ARM64; break;
-    case IMAGE_FILE_MACHINE_ARM64: alt_machine = IMAGE_FILE_MACHINE_ARMNT; break;
-    }
-    nt_header.FileHeader.Machine = alt_machine;
+    nt_header.FileHeader.Machine = get_alt_bitness_machine( orig_machine );
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
                   "NtCreateSection error %08x\n", status );
@@ -1118,7 +1130,7 @@ static void test_Loader(void)
         ok( status == (is_wow64 ? STATUS_INVALID_IMAGE_FORMAT : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
-        nt64.FileHeader.Machine = alt_machine;
+        nt64.FileHeader.Machine = get_alt_bitness_machine( orig_machine );
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, section_data, __LINE__ );
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
@@ -1232,7 +1244,7 @@ static void test_Loader(void)
         ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(!status) /* win8 */,
             "NtCreateSection error %08x\n", status );
 
-        nt32.FileHeader.Machine = alt_machine;
+        nt32.FileHeader.Machine = get_alt_bitness_machine( orig_machine );
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
