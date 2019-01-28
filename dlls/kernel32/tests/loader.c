@@ -29,6 +29,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "winnls.h"
 #include "wine/test.h"
 #include "delayloadhandler.h"
 
@@ -67,6 +68,9 @@ static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG, SIZE_
 static NTSTATUS (WINAPI *pNtFreeVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG);
 static NTSTATUS (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG *, ULONG_PTR *);
 static NTSTATUS (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG_PTR);
+static NTSTATUS (WINAPI *pLdrLoadDll)(LPCWSTR,DWORD,const UNICODE_STRING *,HMODULE*);
+static NTSTATUS (WINAPI *pLdrUnloadDll)(HMODULE);
+static void (WINAPI *pRtlInitUnicodeString)(PUNICODE_STRING,LPCWSTR);
 static void (WINAPI *pRtlAcquirePebLock)(void);
 static void (WINAPI *pRtlReleasePebLock)(void);
 static PVOID    (WINAPI *pResolveDelayLoadedAPI)(PVOID, PCIMAGE_DELAYLOAD_DESCRIPTOR,
@@ -508,6 +512,53 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     return image.ImageContainsCode && (!cor_header || !(cor_header->Flags & COMIMAGE_FLAGS_ILONLY));
 }
 
+static const WCHAR wldr_nameW[] = {'w','l','d','r','t','e','s','t','.','d','l','l',0};
+static WCHAR load_test_name[MAX_PATH], load_fallback_name[MAX_PATH];
+static WCHAR load_path[MAX_PATH];
+
+static void init_load_path( const char *fallback_dll )
+{
+    static const WCHAR pathW[] = {'P','A','T','H',0};
+    static const WCHAR ldrW[] = {'l','d','r',0};
+    static const WCHAR sepW[] = {';',0};
+    static const WCHAR bsW[] = {'\\',0};
+    WCHAR path[MAX_PATH];
+
+    GetTempPathW( MAX_PATH, path );
+    GetTempFileNameW( path, ldrW, 0, load_test_name );
+    GetTempFileNameW( path, ldrW, 0, load_fallback_name );
+    DeleteFileW( load_test_name );
+    ok( CreateDirectoryW( load_test_name, NULL ), "failed to create dir\n" );
+    DeleteFileW( load_fallback_name );
+    ok( CreateDirectoryW( load_fallback_name, NULL ), "failed to create dir\n" );
+    lstrcpyW( load_path, load_test_name );
+    lstrcatW( load_path, sepW );
+    lstrcatW( load_path, load_fallback_name );
+    lstrcatW( load_path, sepW );
+    GetEnvironmentVariableW( pathW, load_path + lstrlenW(load_path),
+                             ARRAY_SIZE(load_path) - lstrlenW(load_path) );
+    lstrcatW( load_test_name, bsW );
+    lstrcatW( load_test_name, wldr_nameW );
+    lstrcatW( load_fallback_name, bsW );
+    lstrcatW( load_fallback_name, wldr_nameW );
+    MultiByteToWideChar( CP_ACP, 0, fallback_dll, -1, path, MAX_PATH );
+    MoveFileW( path, load_fallback_name );
+}
+
+static void delete_load_path(void)
+{
+    WCHAR *p;
+
+    DeleteFileW( load_test_name );
+    for (p = load_test_name + lstrlenW(load_test_name) - 1; *p != '\\'; p--) ;
+    *p = 0;
+    RemoveDirectoryW( load_test_name );
+    DeleteFileW( load_fallback_name );
+    for (p = load_fallback_name + lstrlenW(load_fallback_name) - 1; *p != '\\'; p--) ;
+    *p = 0;
+    RemoveDirectoryW( load_fallback_name );
+}
+
 static UINT get_com_dir_size( const IMAGE_NT_HEADERS *nt )
 {
     if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
@@ -521,12 +572,14 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
                                    const void *section_data, int line )
 {
     char dll_name[MAX_PATH];
+    WCHAR path[MAX_PATH];
+    UNICODE_STRING name;
     LARGE_INTEGER size;
     HANDLE file, map;
-    NTSTATUS status;
+    NTSTATUS status, expect_status, ldr_status;
     ULONG file_size;
-    BOOL has_code, il_only = FALSE, want_32bit = FALSE, wrong_machine = FALSE;
-    HMODULE mod;
+    BOOL has_code = FALSE, il_only = FALSE, want_32bit = FALSE, expect_fallback = FALSE, wrong_machine = FALSE;
+    HMODULE mod = 0, ldr_mod;
 
     file_size = create_test_dll_sections( &dos_header, nt_header, sections, section_data, dll_name );
 
@@ -536,6 +589,8 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
     size.QuadPart = file_size;
     status = pNtCreateSection(&map, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
                               NULL, &size, PAGE_READONLY, SEC_IMAGE, file );
+    expect_status = status;
+
     if (get_com_dir_size( nt_header ))
     {
         /* invalid COR20 header seems to corrupt internal loader state on Windows */
@@ -587,8 +642,56 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
             ok( mod != NULL || broken(il_only) || /* <= win7 */
                 broken( wrong_machine ), /* win8 */
                 "%u: loading failed err %u\n", line, GetLastError() );
+            if (!mod && wrong_machine) expect_status = STATUS_INVALID_IMAGE_FORMAT;
         }
         if (mod) FreeLibrary( mod );
+        expect_fallback = !mod;
+    }
+
+    /* test fallback to another dll further in the load path */
+
+    MultiByteToWideChar( CP_ACP, 0, dll_name, -1, path, MAX_PATH );
+    CopyFileW( path, load_test_name, FALSE );
+    pRtlInitUnicodeString( &name, wldr_nameW );
+    ldr_status = pLdrLoadDll( load_path, 0, &name, &ldr_mod );
+    if (!ldr_status)
+    {
+        GetModuleFileNameW( ldr_mod, path, MAX_PATH );
+        if (!lstrcmpiW( path, load_test_name ))
+        {
+            if (!expect_status)
+                ok( !expect_fallback, "%u: got test dll but expected fallback\n", line );
+            else
+                ok( !expect_fallback, "%u: got test dll but expected failure %x\n", line, expect_status );
+        }
+        else if (!lstrcmpiW( path, load_fallback_name ))
+        {
+            trace( "%u: loaded fallback\n", line );
+            if (!expect_status)
+                ok( expect_fallback ||
+                    /* win10 also falls back for 32-bit dll without code, even though it could be loaded */
+                    (is_win64 && !has_code &&
+                     nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC),
+                    "%u: got fallback but expected test dll\n", line );
+            else
+                ok( broken(expect_status == STATUS_INVALID_IMAGE_FORMAT), /* <= vista */
+                    "%u: got fallback but expected failure %x\n", line, expect_status );
+        }
+        else ok( 0, "%u: got unexpected path %s instead of %s\n", line, wine_dbgstr_w(path), wine_dbgstr_w(load_test_name));
+        pLdrUnloadDll( ldr_mod );
+    }
+    else if (ldr_status == STATUS_DLL_INIT_FAILED || ldr_status == STATUS_ACCESS_VIOLATION)
+    {
+        /* some dlls with invalid entry point will crash, but this means we loaded the test dll */
+        ok( !expect_fallback, "%u: got test dll but expected fallback\n", line );
+    }
+    else todo_wine_if( !expect_status )
+    {
+        ok( ldr_status == expect_status ||
+            broken(il_only && !expect_status && ldr_status == STATUS_INVALID_IMAGE_FORMAT),
+            "%u: wrong status %x/%x\n", line, ldr_status, expect_status );
+        ok( !expect_fallback || broken(il_only) || broken(wrong_machine),
+            "%u: failed with %x expected fallback\n", line, ldr_status );
     }
 
 done:
@@ -995,7 +1098,6 @@ static void test_Loader(void)
     nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
 
     nt_header.OptionalHeader.SectionAlignment = page_size;
-    nt_header.OptionalHeader.AddressOfEntryPoint = 0x1234;
     nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
     nt_header.OptionalHeader.FileAlignment = page_size;
     nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER);
@@ -1006,6 +1108,10 @@ static void test_Loader(void)
     section.VirtualAddress = page_size;
     section.Misc.VirtualSize = page_size;
 
+    create_test_dll_sections( &dos_header, &nt_header, &section, section_data, dll_name );
+    init_load_path( dll_name );
+
+    nt_header.OptionalHeader.AddressOfEntryPoint = 0x1234;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
@@ -1336,6 +1442,7 @@ static void test_Loader(void)
     }
 
     section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
+    delete_load_path();
 }
 
 static void test_filenames(void)
@@ -3721,6 +3828,9 @@ START_TEST(loader)
     pNtFreeVirtualMemory = (void *)GetProcAddress(ntdll, "NtFreeVirtualMemory");
     pLdrLockLoaderLock = (void *)GetProcAddress(ntdll, "LdrLockLoaderLock");
     pLdrUnlockLoaderLock = (void *)GetProcAddress(ntdll, "LdrUnlockLoaderLock");
+    pLdrLoadDll = (void *)GetProcAddress(ntdll, "LdrLoadDll");
+    pLdrUnloadDll = (void *)GetProcAddress(ntdll, "LdrUnloadDll");
+    pRtlInitUnicodeString = (void *)GetProcAddress(ntdll, "RtlInitUnicodeString");
     pRtlAcquirePebLock = (void *)GetProcAddress(ntdll, "RtlAcquirePebLock");
     pRtlReleasePebLock = (void *)GetProcAddress(ntdll, "RtlReleasePebLock");
     pRtlImageDirectoryEntryToData = (void *)GetProcAddress(ntdll, "RtlImageDirectoryEntryToData");
