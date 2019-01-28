@@ -67,6 +67,7 @@ struct service_entry
     BOOL is_wow64;
     BOOL status_notified;
     struct sc_notify_handle *notify;
+    struct list handles;
 };
 
 extern struct scmdatabase *active_database;

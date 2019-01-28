@@ -21,6 +21,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <stdarg.h>
+#include <assert.h>
 #include <windows.h>
 #include <winsvc.h>
 #include <rpc.h>
@@ -114,6 +115,7 @@ DWORD service_create(LPCWSTR name, struct service_entry **entry)
     if (!*entry)
         return ERROR_NOT_ENOUGH_SERVER_MEMORY;
     (*entry)->name = strdupW(name);
+    list_init(&(*entry)->handles);
     if (!(*entry)->name)
     {
         HeapFree(GetProcessHeap(), 0, *entry);
@@ -136,6 +138,7 @@ DWORD service_create(LPCWSTR name, struct service_entry **entry)
 
 void free_service_entry(struct service_entry *entry)
 {
+    assert(list_empty(&entry->handles));
     CloseHandle(entry->status_changed_event);
     HeapFree(GetProcessHeap(), 0, entry->name);
     HeapFree(GetProcessHeap(), 0, entry->config.lpBinaryPathName);

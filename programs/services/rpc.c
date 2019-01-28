@@ -78,6 +78,7 @@ struct sc_manager_handle       /* service control manager handle */
 struct sc_service_handle       /* service handle */
 {
     struct sc_handle hdr;
+    struct list entry;
     struct service_entry *service_entry;
 };
 
@@ -311,6 +312,7 @@ static void SC_RPC_HANDLE_destroy(SC_RPC_HANDLE handle)
         {
             struct sc_service_handle *service = (struct sc_service_handle *)hdr;
             service_lock(service->service_entry);
+            list_remove(&service->entry);
             if (service->service_entry->notify &&
                     service->service_entry->notify->service == service)
             {
@@ -431,7 +433,11 @@ static DWORD create_handle_for_service(struct service_entry *entry, DWORD dwDesi
     service->hdr.type = SC_HTYPE_SERVICE;
     service->hdr.access = dwDesiredAccess;
     RtlMapGenericMask(&service->hdr.access, &g_svc_generic);
+
+    service_lock(entry);
     service->service_entry = entry;
+    list_add_tail(&entry->handles, &service->entry);
+    service_unlock(entry);
 
     *phService = &service->hdr;
     return ERROR_SUCCESS;
