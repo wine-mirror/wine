@@ -3642,7 +3642,6 @@ static void test_C_locale(void)
             ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
         }
         else
-        todo_wine_if(ret != i)
             ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
     }
 
@@ -3672,7 +3671,6 @@ static void test_C_locale(void)
                 ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
             }
             else
-            todo_wine_if(ret != j)
                 ok(ret == j, "expected self %x, got %x for C locale\n", j, ret);
         }
 
