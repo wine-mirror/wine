@@ -421,7 +421,7 @@ void WINAPI KeReleaseSpinLockFromDpcLevel( KSPIN_LOCK *lock )
 void WINAPI KeReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
 {
     TRACE("lock %p, irql %u.\n", lock, irql);
-    InterlockedExchangePointer( (void **)lock, 0 );
+    KeReleaseSpinLockFromDpcLevel( lock );
 }
 
 /***********************************************************************
@@ -430,8 +430,7 @@ void WINAPI KeReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
 KIRQL WINAPI KeAcquireSpinLockRaiseToDpc( KSPIN_LOCK *lock )
 {
     TRACE("lock %p.\n", lock);
-    while (!InterlockedCompareExchangePointer( (void **)lock, (void *)1, (void *)0 ))
-        small_pause();
+    KeAcquireSpinLockAtDpcLevel( lock );
     return 0;
 }
 #endif
