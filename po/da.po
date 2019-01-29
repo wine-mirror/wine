@@ -57,7 +57,7 @@ msgid "Support Information"
 msgstr "Support information"
 
 #: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:359 comdlg32.rc:398
+#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:398
 #: comdlg32.rc:452 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
@@ -138,7 +138,7 @@ msgstr "&Installer"
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
 #: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
 #: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:399
+#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:399
 #: comdlg32.rc:453 comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:527 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
@@ -380,7 +380,7 @@ msgid "R&eset"
 msgstr "N&ulstil"
 
 #: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:361 comdlg32.rc:479
+#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:479
 #: comdlg32.rc:505 comdlg32.rc:528 ieframe.rc:58 msacm32.rc:52 oledlg.rc:96
 #: shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72
 #: progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160
@@ -502,11 +502,11 @@ msgstr "Udskriv"
 msgid "Printer:"
 msgstr "Printer:"
 
-#: comdlg32.rc:206 comdlg32.rc:383
+#: comdlg32.rc:206 comdlg32.rc:373
 msgid "Print range"
 msgstr "Udskriv område"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:268
+#: comdlg32.rc:207 comdlg32.rc:374 regedit.rc:268
 msgid "&All"
 msgstr "&Alt"
 
@@ -546,7 +546,7 @@ msgstr "Sammentrykket"
 msgid "Print Setup"
 msgstr "Udskriftsindstilling"
 
-#: comdlg32.rc:227 comdlg32.rc:363 comdlg32.rc:402
+#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:402
 msgid "Printer"
 msgstr "Printer"
 
@@ -724,62 +724,62 @@ msgstr "&Erstat"
 msgid "Replace &All"
 msgstr "Erstat &alle"
 
-#: comdlg32.rc:364
-msgid "Print to fi&le"
-msgstr "Udskriv til fi&l"
-
-#: comdlg32.rc:365 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:361 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Egenskaber"
 
-#: comdlg32.rc:366 comdlg32.rc:404 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:362
+msgid "Print to fi&le"
+msgstr "Udskriv til fi&l"
+
+#: comdlg32.rc:363 comdlg32.rc:404 msacm32.rc:34 winefile.rc:138
 msgid "&Name:"
 msgstr "&Navn:"
 
-#: comdlg32.rc:368 comdlg32.rc:406
+#: comdlg32.rc:364 comdlg32.rc:406
 msgid "Status:"
 msgstr "Status:"
 
-#: comdlg32.rc:370 comdlg32.rc:408
+#: comdlg32.rc:366 comdlg32.rc:408
 msgid "Type:"
 msgstr "Type:"
 
-#: comdlg32.rc:372 comdlg32.rc:410
+#: comdlg32.rc:368 comdlg32.rc:410
 msgid "Where:"
 msgstr "Hvor:"
 
-#: comdlg32.rc:374 comdlg32.rc:412
+#: comdlg32.rc:370 comdlg32.rc:412
 msgid "Comment:"
 msgstr "Kommentar:"
 
-#: comdlg32.rc:377
-msgid "Copies"
-msgstr "Kopier"
-
-#: comdlg32.rc:378
-msgid "Number of &copies:"
-msgstr "Antal &kopier:"
-
-#: comdlg32.rc:380
-msgid "C&ollate"
-msgstr "&hold sammen"
-
-#: comdlg32.rc:385
+#: comdlg32.rc:375
 msgid "Pa&ges"
 msgstr "Si&der"
 
-#: comdlg32.rc:386
+#: comdlg32.rc:376
 msgid "&Selection"
 msgstr "&Markeret"
 
-#: comdlg32.rc:389
+#: comdlg32.rc:379
 msgid "&from:"
 msgstr "&fra:"
 
-#: comdlg32.rc:390
+#: comdlg32.rc:380
 msgid "&to:"
 msgstr "&til:"
+
+#: comdlg32.rc:382
+msgid "Copies"
+msgstr "Kopier"
+
+#: comdlg32.rc:383
+msgid "Number of &copies:"
+msgstr "Antal &kopier:"
+
+#: comdlg32.rc:385
+msgid "C&ollate"
+msgstr "&hold sammen"
 
 #: comdlg32.rc:416 winecfg.rc:300
 msgid "Si&ze:"
