@@ -2213,6 +2213,59 @@ BOOL WINAPI CryptHashCertificate(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
     return ret;
 }
 
+BOOL WINAPI CryptHashCertificate2(LPCWSTR pwszCNGHashAlgid, DWORD dwFlags,
+ void *pvReserved, const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
+ DWORD *pcbComputedHash)
+{
+    BCRYPT_HASH_HANDLE hash = NULL;
+    BCRYPT_ALG_HANDLE alg = NULL;
+    NTSTATUS status;
+    DWORD hash_len;
+    DWORD hash_len_size;
+
+    TRACE("(%s, %08x, %p, %p, %d, %p, %p)\n", debugstr_w(pwszCNGHashAlgid),
+     dwFlags, pvReserved, pbEncoded, cbEncoded, pbComputedHash, pcbComputedHash);
+
+    if ((status = BCryptOpenAlgorithmProvider(&alg, pwszCNGHashAlgid, NULL, 0)))
+    {
+        if (status == STATUS_NOT_IMPLEMENTED)
+            status = STATUS_NOT_FOUND;
+        goto done;
+    }
+
+    if ((status = BCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0)))
+        goto done;
+
+    if ((status = BCryptGetProperty(hash, BCRYPT_HASH_LENGTH, (BYTE *)&hash_len, sizeof(hash_len), &hash_len_size, 0)))
+        goto done;
+
+    if (!pbComputedHash)
+    {
+        *pcbComputedHash = hash_len;
+        goto done;
+    }
+
+    if (*pcbComputedHash < hash_len)
+    {
+        status = ERROR_MORE_DATA;
+        goto done;
+    }
+
+    *pcbComputedHash = hash_len;
+
+    if ((status = BCryptHashData(hash, (BYTE *)pbEncoded, cbEncoded, 0)))
+        goto done;
+
+    if ((status = BCryptFinishHash(hash, pbComputedHash, hash_len, 0)))
+        goto done;
+
+done:
+    if (hash) BCryptDestroyHash(hash);
+    if (alg)  BCryptCloseAlgorithmProvider(alg, 0);
+    if (status) SetLastError(status);
+    return !status;
+}
+
 BOOL WINAPI CryptHashPublicKeyInfo(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
  DWORD dwFlags, DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo,
  BYTE *pbComputedHash, DWORD *pcbComputedHash)

@@ -4387,6 +4387,10 @@ BOOL WINAPI CryptHashCertificate(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
  DWORD dwFlags, const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
  DWORD *pcbComputedHash);
 
+BOOL WINAPI CryptHashCertificate2(LPCWSTR pwszCNGHashAlgid, DWORD dwFlags,
+ void *pvReserved, const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
+ DWORD *pcbComputedHash);
+
 BOOL WINAPI CryptHashPublicKeyInfo(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
  DWORD dwFlags, DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pInfo,
  BYTE *pbComputedHash, DWORD *pcbComputedHash);
