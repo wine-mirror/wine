@@ -709,7 +709,7 @@ static void check_tiff_format(IStream *stream, const WICPixelFormatGUID *format)
     ok(hr == S_OK, "GetCount error %#x\n", hr);
     ok(count != 0, "wrong count %u\n", count);
 
-    for (i = 0; i < sizeof(tag)/sizeof(tag[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tag); i++)
     {
         PropVariantInit(&id);
         PropVariantInit(&value);
