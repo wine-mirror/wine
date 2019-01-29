@@ -637,82 +637,77 @@ unsigned int get_generic_handle_offset( const type_t *type )
 
 /* check for types which require additional prototypes to be generated in the
  * header */
-void check_for_additional_prototype_types(const var_list_t *list)
+void check_for_additional_prototype_types(type_t *type)
 {
-  const var_t *v;
-
-  if (!list) return;
-  LIST_FOR_EACH_ENTRY( v, list, const var_t, entry )
-  {
-    type_t *type = v->type;
-    if (!type) continue;
-    for (;;) {
-      const char *name = type->name;
-      if (type->user_types_registered) break;
-      type->user_types_registered = 1;
-      if (is_attr(type->attrs, ATTR_CONTEXTHANDLE)) {
-        if (!context_handle_registered(name))
-        {
-          context_handle_t *ch = xmalloc(sizeof(*ch));
-          ch->name = xstrdup(name);
-          list_add_tail(&context_handle_list, &ch->entry);
-        }
-        /* don't carry on parsing fields within this type */
-        break;
-      }
-      if ((type_get_type(type) != TYPE_BASIC ||
-           type_basic_get_type(type) != TYPE_BASIC_HANDLE) &&
-          is_attr(type->attrs, ATTR_HANDLE)) {
-        if (!generic_handle_registered(name))
-        {
-          generic_handle_t *gh = xmalloc(sizeof(*gh));
-          gh->name = xstrdup(name);
-          list_add_tail(&generic_handle_list, &gh->entry);
-        }
-        /* don't carry on parsing fields within this type */
-        break;
-      }
-      if (is_attr(type->attrs, ATTR_WIREMARSHAL)) {
-        if (!user_type_registered(name))
-        {
-          user_type_t *ut = xmalloc(sizeof *ut);
-          ut->name = xstrdup(name);
-          list_add_tail(&user_type_list, &ut->entry);
-        }
-        /* don't carry on parsing fields within this type as we are already
-         * using a wire marshaled type */
-        break;
-      }
-      else if (type_is_complete(type))
+  if (!type) return;
+  for (;;) {
+    const char *name = type->name;
+    if (type->user_types_registered) break;
+    type->user_types_registered = 1;
+    if (is_attr(type->attrs, ATTR_CONTEXTHANDLE)) {
+      if (!context_handle_registered(name))
       {
-        var_list_t *vars;
-        switch (type_get_type_detect_alias(type))
-        {
-        case TYPE_ENUM:
-          vars = type_enum_get_values(type);
-          break;
-        case TYPE_STRUCT:
-          vars = type_struct_get_fields(type);
-          break;
-        case TYPE_UNION:
-          vars = type_union_get_cases(type);
-          break;
-        default:
-          vars = NULL;
-          break;
-        }
-        check_for_additional_prototype_types(vars);
+        context_handle_t *ch = xmalloc(sizeof(*ch));
+        ch->name = xstrdup(name);
+        list_add_tail(&context_handle_list, &ch->entry);
       }
-
-      if (type_is_alias(type))
-        type = type_alias_get_aliasee(type);
-      else if (is_ptr(type))
-        type = type_pointer_get_ref(type);
-      else if (is_array(type))
-        type = type_array_get_element(type);
-      else
-        break;
+      /* don't carry on parsing fields within this type */
+      break;
     }
+    if ((type_get_type(type) != TYPE_BASIC ||
+         type_basic_get_type(type) != TYPE_BASIC_HANDLE) &&
+        is_attr(type->attrs, ATTR_HANDLE)) {
+      if (!generic_handle_registered(name))
+      {
+        generic_handle_t *gh = xmalloc(sizeof(*gh));
+        gh->name = xstrdup(name);
+        list_add_tail(&generic_handle_list, &gh->entry);
+      }
+      /* don't carry on parsing fields within this type */
+      break;
+    }
+    if (is_attr(type->attrs, ATTR_WIREMARSHAL)) {
+      if (!user_type_registered(name))
+      {
+        user_type_t *ut = xmalloc(sizeof *ut);
+        ut->name = xstrdup(name);
+        list_add_tail(&user_type_list, &ut->entry);
+      }
+      /* don't carry on parsing fields within this type as we are already
+       * using a wire marshaled type */
+      break;
+    }
+    else if (type_is_complete(type))
+    {
+      var_list_t *vars;
+      const var_t *v;
+      switch (type_get_type_detect_alias(type))
+      {
+      case TYPE_ENUM:
+        vars = type_enum_get_values(type);
+        break;
+      case TYPE_STRUCT:
+        vars = type_struct_get_fields(type);
+        break;
+      case TYPE_UNION:
+        vars = type_union_get_cases(type);
+        break;
+      default:
+        vars = NULL;
+        break;
+      }
+      if (vars) LIST_FOR_EACH_ENTRY( v, vars, const var_t, entry )
+        check_for_additional_prototype_types(v->type);
+    }
+
+    if (type_is_alias(type))
+      type = type_alias_get_aliasee(type);
+    else if (is_ptr(type))
+      type = type_pointer_get_ref(type);
+    else if (is_array(type))
+      type = type_array_get_element(type);
+    else
+      break;
   }
 }
 

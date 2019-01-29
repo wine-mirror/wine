@@ -2911,6 +2911,7 @@ static void check_statements(const statement_list_t *stmts, int is_inside_librar
 static void check_all_user_types(const statement_list_t *stmts)
 {
   const statement_t *stmt;
+  const var_t *v;
 
   if (stmts) LIST_FOR_EACH_ENTRY(stmt, stmts, const statement_t, entry)
   {
@@ -2922,7 +2923,10 @@ static void check_all_user_types(const statement_list_t *stmts)
       const statement_t *stmt_func;
       STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(stmt->u.type)) {
         const var_t *func = stmt_func->u.var;
-        check_for_additional_prototype_types(func->type->details.function->args);
+        if (func->type->details.function->args)
+          LIST_FOR_EACH_ENTRY( v, func->type->details.function->args, const var_t, entry )
+            check_for_additional_prototype_types(v->type);
+        check_for_additional_prototype_types(type_function_get_rettype(func->type));
       }
     }
   }
