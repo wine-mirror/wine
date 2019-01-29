@@ -815,8 +815,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 end:
     LeaveCriticalSection(&This->lock);
 
-    if (row_pointers)
-        HeapFree(GetProcessHeap(), 0, row_pointers);
+    HeapFree(GetProcessHeap(), 0, row_pointers);
 
     return hr;
 }
