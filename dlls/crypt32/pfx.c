@@ -38,6 +38,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 #ifdef SONAME_LIBGNUTLS
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+/* Not present in gnutls version < 3.0 */
+int gnutls_pkcs12_simple_parse(gnutls_pkcs12_t p12, const char *password,
+    gnutls_x509_privkey_t *key, gnutls_x509_crt_t **chain, unsigned int *chain_len,
+    gnutls_x509_crt_t **extra_certs, unsigned int *extra_certs_len,
+    gnutls_x509_crl_t * crl, unsigned int flags);
+
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_global_deinit);
