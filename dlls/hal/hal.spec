@@ -4,12 +4,12 @@
 @ stub HalClearSoftwareInterrupt
 @ stub HalRequestSoftwareInterrupt
 @ stub HalSystemVectorDispatchEntry
-@ stdcall -norelay KeAcquireInStackQueuedSpinLock(ptr ptr) ntoskrnl.exe.KeAcquireInStackQueuedSpinLock
+@ stdcall -arch=i386 -norelay KeAcquireInStackQueuedSpinLock(ptr ptr)
 @ stub KeAcquireInStackQueuedSpinLockRaiseToSynch
 @ stub KeAcquireQueuedSpinLock
 @ stub KeAcquireQueuedSpinLockRaiseToSynch
 @ stub KeAcquireSpinLockRaiseToSynch
-@ stdcall -norelay KeReleaseInStackQueuedSpinLock(ptr) ntoskrnl.exe.KeReleaseInStackQueuedSpinLock
+@ stdcall -arch=i386 -norelay KeReleaseInStackQueuedSpinLock(ptr)
 @ stub KeReleaseQueuedSpinLock
 @ stub KeTryToAcquireQueuedSpinLock
 @ stub KeTryToAcquireQueuedSpinLockRaiseToSynch

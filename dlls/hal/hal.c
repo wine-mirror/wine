@@ -49,6 +49,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
                        "pushl %eax\n\t" \
                        "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(8))
 
+extern void * WINAPI call_fastcall_func1( void *func, const void *a );
+__ASM_STDCALL_FUNC( call_fastcall_func1, 8,
+                   "popl %ecx\n\t"
+                   "popl %eax\n\t"
+                   "xchgl (%esp),%ecx\n\t"
+                   "jmp *%eax" );
+
+extern void * WINAPI call_fastcall_func2( void *func, const void *a, const void *b );
+__ASM_STDCALL_FUNC( call_fastcall_func2, 12,
+                   "popl %edx\n\t"
+                   "popl %eax\n\t"
+                   "popl %ecx\n\t"
+                   "xchgl (%esp),%edx\n\t"
+                   "jmp *%eax" );
+
 DEFINE_FASTCALL1_ENTRYPOINT( ExAcquireFastMutex )
 VOID WINAPI DECLSPEC_HIDDEN __regs_ExAcquireFastMutex(PFAST_MUTEX FastMutex)
 {
@@ -93,6 +108,22 @@ void WINAPI KeReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
 {
     TRACE("lock %p, irql %u.\n", lock, irql);
     KeReleaseSpinLockFromDpcLevel( lock );
+}
+
+extern void WINAPI KeAcquireInStackQueuedSpinLockAtDpcLevel( KSPIN_LOCK *, KLOCK_QUEUE_HANDLE * );
+
+DEFINE_FASTCALL2_ENTRYPOINT( KeAcquireInStackQueuedSpinLock )
+void WINAPI DECLSPEC_HIDDEN __regs_KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *lock, KLOCK_QUEUE_HANDLE *queue )
+{
+    call_fastcall_func2( KeAcquireInStackQueuedSpinLockAtDpcLevel, lock, queue );
+}
+
+extern void WINAPI KeReleaseInStackQueuedSpinLockFromDpcLevel( KLOCK_QUEUE_HANDLE * );
+
+DEFINE_FASTCALL1_ENTRYPOINT( KeReleaseInStackQueuedSpinLock )
+void WINAPI DECLSPEC_HIDDEN __regs_KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *queue )
+{
+    call_fastcall_func1( KeReleaseInStackQueuedSpinLockFromDpcLevel, queue );
 }
 #endif /* __i386__ */
 
