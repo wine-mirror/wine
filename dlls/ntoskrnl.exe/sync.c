@@ -498,6 +498,24 @@ KIRQL WINAPI KeAcquireSpinLockRaiseToDpc( KSPIN_LOCK *lock )
     KeAcquireSpinLockAtDpcLevel( lock );
     return 0;
 }
+
+/***********************************************************************
+ *           KeAcquireInStackQueuedSpinLock (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *lock, KLOCK_QUEUE_HANDLE *queue )
+{
+    TRACE("lock %p, queue %p.\n", lock, queue);
+    KeAcquireInStackQueuedSpinLockAtDpcLevel( lock, queue );
+}
+
+/***********************************************************************
+ *           KeReleaseInStackQueuedSpinLock (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *queue )
+{
+    TRACE("queue %p.\n", queue);
+    KeReleaseInStackQueuedSpinLockFromDpcLevel( queue );
+}
 #endif
 
 static KSPIN_LOCK cancel_lock;
