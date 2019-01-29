@@ -414,6 +414,71 @@ void WINAPI KeReleaseSpinLockFromDpcLevel( KSPIN_LOCK *lock )
     InterlockedExchangePointer( (void **)lock, 0 );
 }
 
+#define QUEUED_SPINLOCK_OWNED   0x2
+
+/***********************************************************************
+ *           KeAcquireInStackQueuedSpinLockAtDpcLevel  (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( KeAcquireInStackQueuedSpinLockAtDpcLevel )
+void WINAPI DECLSPEC_HIDDEN __regs_KeAcquireInStackQueuedSpinLockAtDpcLevel( KSPIN_LOCK *lock, KLOCK_QUEUE_HANDLE *queue )
+#else
+void WINAPI KeAcquireInStackQueuedSpinLockAtDpcLevel( KSPIN_LOCK *lock, KLOCK_QUEUE_HANDLE *queue )
+#endif
+{
+    KSPIN_LOCK_QUEUE *tail;
+
+    TRACE("lock %p, queue %p.\n", lock, queue);
+
+    queue->LockQueue.Next = NULL;
+
+    if (!(tail = InterlockedExchangePointer( (void **)lock, &queue->LockQueue )))
+        queue->LockQueue.Lock = (KSPIN_LOCK *)((ULONG_PTR)lock | QUEUED_SPINLOCK_OWNED);
+    else
+    {
+        queue->LockQueue.Lock = lock;
+        InterlockedExchangePointer( (void **)&tail->Next, &queue->LockQueue );
+
+        while (!((ULONG_PTR)InterlockedCompareExchangePointer( (void **)&queue->LockQueue.Lock, 0, 0 )
+                 & QUEUED_SPINLOCK_OWNED))
+        {
+            small_pause();
+        }
+    }
+}
+
+/***********************************************************************
+ *           KeReleaseInStackQueuedSpinLockFromDpcLevel  (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL1_ENTRYPOINT
+DEFINE_FASTCALL1_ENTRYPOINT( KeReleaseInStackQueuedSpinLockFromDpcLevel )
+void WINAPI DECLSPEC_HIDDEN __regs_KeReleaseInStackQueuedSpinLockFromDpcLevel( KLOCK_QUEUE_HANDLE *queue )
+#else
+void WINAPI KeReleaseInStackQueuedSpinLockFromDpcLevel( KLOCK_QUEUE_HANDLE *queue )
+#endif
+{
+    KSPIN_LOCK *lock = (KSPIN_LOCK *)((ULONG_PTR)queue->LockQueue.Lock & ~QUEUED_SPINLOCK_OWNED);
+    KSPIN_LOCK_QUEUE *next;
+
+    TRACE("lock %p, queue %p.\n", lock, queue);
+
+    queue->LockQueue.Lock = NULL;
+
+    if (!(next = queue->LockQueue.Next))
+    {
+        /* If we are truly the last in the queue, the lock will point to us. */
+        if (InterlockedCompareExchangePointer( (void **)lock, NULL, &queue->LockQueue ) == queue)
+            return;
+
+        /* Otherwise, someone just queued themselves, but hasn't yet set
+         * themselves as successor. Spin waiting for them to do so. */
+        while (!(next = queue->LockQueue.Next))
+            small_pause();
+    }
+
+    InterlockedExchangePointer( (void **)&next->Lock, (KSPIN_LOCK *)((ULONG_PTR)lock | QUEUED_SPINLOCK_OWNED) );
+}
+
 #ifndef __i386__
 /***********************************************************************
  *           KeReleaseSpinLock (NTOSKRNL.EXE.@)

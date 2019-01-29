@@ -42,9 +42,9 @@
 @ stdcall -norelay IofCallDriver(ptr ptr)
 @ stdcall -norelay IofCompleteRequest(ptr long)
 @ stdcall -norelay KeAcquireInStackQueuedSpinLock(ptr ptr)
-@ stub KeAcquireInStackQueuedSpinLockAtDpcLevel
+@ stdcall -norelay KeAcquireInStackQueuedSpinLockAtDpcLevel(ptr ptr)
 @ stdcall -norelay KeReleaseInStackQueuedSpinLock(ptr)
-@ stub KeReleaseInStackQueuedSpinLockFromDpcLevel
+@ stdcall -norelay KeReleaseInStackQueuedSpinLockFromDpcLevel(ptr)
 @ stub KeSetTimeUpdateNotifyRoutine
 @ stub KefAcquireSpinLockAtDpcLevel
 @ stub KefReleaseSpinLockFromDpcLevel
