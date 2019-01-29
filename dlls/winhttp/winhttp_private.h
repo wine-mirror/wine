@@ -92,8 +92,6 @@ struct session
     WCHAR *proxy_password;
     struct list cookie_cache;
     HANDLE unload_event;
-    CredHandle cred_handle;
-    BOOL cred_handle_initialized;
     DWORD secure_protocols;
 };
 
@@ -182,6 +180,9 @@ struct request
     DWORD security_flags;
     BOOL check_revocation;
     const CERT_CONTEXT *server_cert;
+    const CERT_CONTEXT *client_cert;
+    CredHandle cred_handle;
+    BOOL cred_handle_initialized;
     int resolve_timeout;
     int connect_timeout;
     int send_timeout;

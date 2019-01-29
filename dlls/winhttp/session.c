@@ -81,7 +81,6 @@ static void session_destroy( struct object_header *hdr )
     TRACE("%p\n", session);
 
     if (session->unload_event) SetEvent( session->unload_event );
-    if (session->cred_handle_initialized) FreeCredentialsHandle( &session->cred_handle );
     destroy_cookies( session );
 
     session->cs.DebugInfo->Spare[0] = 0;
@@ -610,7 +609,9 @@ static void request_destroy( struct object_header *hdr )
     }
     release_object( &request->connect->hdr );
 
+    if (request->cred_handle_initialized) FreeCredentialsHandle( &request->cred_handle );
     CertFreeCertificateContext( request->server_cert );
+    CertFreeCertificateContext( request->client_cert );
 
     destroy_authinfo( request->authinfo );
     destroy_authinfo( request->proxy_authinfo );
@@ -1000,14 +1001,39 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
         return TRUE;
     }
     case WINHTTP_OPTION_CLIENT_CERT_CONTEXT:
+    {
+        const CERT_CONTEXT *cert;
+
         if (!(hdr->flags & WINHTTP_FLAG_SECURE))
         {
             SetLastError( ERROR_WINHTTP_INCORRECT_HANDLE_STATE );
             return FALSE;
         }
-        FIXME("WINHTTP_OPTION_CLIENT_CERT_CONTEXT\n");
-        return TRUE;
+        if (!buffer)
+        {
+            CertFreeCertificateContext( request->client_cert );
+            request->client_cert = NULL;
+        }
+        else if (buflen >= sizeof(cert))
+        {
+            if (!(cert = CertDuplicateCertificateContext( buffer ))) return FALSE;
+            CertFreeCertificateContext( request->client_cert );
+            request->client_cert = cert;
+        }
+        else
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
 
+        if (request->cred_handle_initialized)
+        {
+            FreeCredentialsHandle( &request->cred_handle );
+            request->cred_handle_initialized = FALSE;
+        }
+
+        return TRUE;
+    }
     case WINHTTP_OPTION_ENABLE_FEATURE:
         if(buflen == sizeof( DWORD ) && *(DWORD *)buffer == WINHTTP_ENABLE_SSL_REVOCATION)
         {
