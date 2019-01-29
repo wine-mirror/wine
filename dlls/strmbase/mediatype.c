@@ -264,14 +264,17 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
     CoTaskMemFree(This->enumMediaDetails.pMediaTypes);
 
     i = 0;
-    while (This->enumMediaFunction(This->basePin, i, &amt) == S_OK) i++;
+    while (This->enumMediaFunction(This->basePin, i, &amt) == S_OK)
+    {
+        FreeMediaType(&amt);
+        i++;
+    }
 
     This->enumMediaDetails.cMediaTypes = i;
     This->enumMediaDetails.pMediaTypes = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE) * i);
     for (i = 0; i < This->enumMediaDetails.cMediaTypes; i++)
     {
-        This->enumMediaFunction(This->basePin, i,&amt);
-        if (FAILED(CopyMediaType(&This->enumMediaDetails.pMediaTypes[i], &amt)))
+        if (FAILED(This->enumMediaFunction(This->basePin, i, &This->enumMediaDetails.pMediaTypes[i])))
         {
             while (i--)
                 FreeMediaType(&This->enumMediaDetails.pMediaTypes[i]);
