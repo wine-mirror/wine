@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windef.h>
 #include <winbase.h>
 #include <winreg.h>
@@ -33,6 +35,7 @@ static PCCERT_CONTEXT (WINAPI *pCertCreateSelfSignCertificate)(HCRYPTPROV_OR_NCR
 static BOOL (WINAPI *pCertGetValidUsages)(DWORD,PCCERT_CONTEXT*,int*,LPSTR*,DWORD*);
 static BOOL (WINAPI *pCryptAcquireCertificatePrivateKey)(PCCERT_CONTEXT,DWORD,void*,HCRYPTPROV_OR_NCRYPT_KEY_HANDLE*,DWORD*,BOOL*);
 static BOOL (WINAPI *pCryptEncodeObjectEx)(DWORD,LPCSTR,const void*,DWORD,PCRYPT_ENCODE_PARA,void*,DWORD*);
+static BOOL (WINAPI *pCryptHashCertificate2)(LPCWSTR, DWORD, void*, const BYTE*, DWORD, BYTE*, DWORD*);
 static BOOL (WINAPI * pCryptVerifyCertificateSignatureEx)
                         (HCRYPTPROV, DWORD, DWORD, void *, DWORD, void *, DWORD, void *);
 
@@ -53,6 +56,7 @@ static void init_function_pointers(void)
     GET_PROC(hCrypt32, CertGetValidUsages)
     GET_PROC(hCrypt32, CryptAcquireCertificatePrivateKey)
     GET_PROC(hCrypt32, CryptEncodeObjectEx)
+    GET_PROC(hCrypt32, CryptHashCertificate2)
     GET_PROC(hCrypt32, CryptVerifyCertificateSignatureEx)
 
     GET_PROC(hAdvapi32, CryptAcquireContextA)
@@ -1782,6 +1786,80 @@ static void testCryptHashCert(void)
      &hashLen);
     ok(ret, "CryptHashCertificate failed: %08x\n", GetLastError());
     ok(!memcmp(hash, knownHash, sizeof(knownHash)), "Unexpected hash\n");
+}
+
+static void testCryptHashCert2(void)
+{
+    static const BYTE emptyHash[] = { 0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b,
+     0x0d, 0x32, 0x55, 0xbf, 0xef, 0x95, 0x60, 0x18, 0x90, 0xaf, 0xd8, 0x07,
+     0x09 };
+    static const BYTE knownHash[] = { 0xae, 0x9d, 0xbf, 0x6d, 0xf5, 0x46, 0xee,
+     0x8b, 0xc5, 0x7a, 0x13, 0xba, 0xc2, 0xb1, 0x04, 0xf2, 0xbf, 0x52, 0xa8,
+     0xa2 };
+    static const BYTE toHash[] = "abcdefghijklmnopqrstuvwxyz0123456789.,;!?:";
+    BOOL ret;
+    BYTE hash[20];
+    DWORD hashLen;
+    const WCHAR SHA1[] = { 'S', 'H', 'A', '1', '\0' };
+    const WCHAR invalidAlgorithm[] = { '_', 'S', 'H', 'O', 'U', 'L', 'D',
+                                       'N', 'O', 'T',
+                                       'E', 'X', 'I', 'S', 'T', '_', '\0' };
+
+    if (!pCryptHashCertificate2)
+    {
+        win_skip("CryptHashCertificate2() is not available\n");
+        return;
+    }
+
+    /* Test empty hash */
+    hashLen = sizeof(hash);
+    ret = pCryptHashCertificate2(SHA1, 0, NULL, NULL, 0, hash, &hashLen);
+    ok(ret, "CryptHashCertificate2 failed: %08x\n", GetLastError());
+    ok(hashLen == sizeof(hash), "Got unexpected size of hash %d\n", hashLen);
+    ok(!memcmp(hash, emptyHash, sizeof(emptyHash)), "Unexpected hash of nothing\n");
+
+    /* Test known hash */
+    hashLen = sizeof(hash);
+    ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
+    ok(ret, "CryptHashCertificate2 failed: %08x\n", GetLastError());
+    ok(hashLen == sizeof(hash), "Got unexpected size of hash %d\n", hashLen);
+    ok(!memcmp(hash, knownHash, sizeof(knownHash)), "Unexpected hash\n");
+
+    /* Test null hash size pointer just sets hash size */
+    hashLen = 0;
+    ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), NULL, &hashLen);
+    ok(ret, "CryptHashCertificate2 failed: %08x\n", GetLastError());
+    ok(hashLen == sizeof(hash), "Hash size not set correctly (%d)\n", hashLen);
+
+    /* Null algorithm ID crashes Windows implementations */
+    if (0) {
+        /* Test null algorithm ID */
+        hashLen = sizeof(hash);
+        ret = pCryptHashCertificate2(NULL, 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
+    }
+
+    /* Test invalid algorithm */
+    hashLen = sizeof(hash);
+    SetLastError(0xdeadbeef);
+    ret = pCryptHashCertificate2(invalidAlgorithm, 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
+    ok(!ret && GetLastError() == STATUS_NOT_FOUND,
+     "Expected STATUS_NOT_FOUND (0x%08x), got 0x%08x\n", STATUS_NOT_FOUND, GetLastError());
+
+    /* Test hash buffer too small */
+    hashLen = sizeof(hash) / 2;
+    SetLastError(0xdeadbeef);
+    ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
+    ok(!ret && GetLastError() == ERROR_MORE_DATA,
+     "Expected ERROR_MORE_DATA (%d), got %d\n", ERROR_MORE_DATA, GetLastError());
+
+    /* Null hash length crashes Windows implementations */
+    if (0) {
+        /* Test hashLen null with hash */
+        ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), hash, NULL);
+
+        /* Test hashLen null with no hash */
+        ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), NULL, NULL);
+    }
 }
 
 static void verifySig(HCRYPTPROV csp, const BYTE *toSign, size_t toSignLen,
@@ -4074,6 +4152,7 @@ START_TEST(cert)
     testLinkCert();
 
     testCryptHashCert();
+    testCryptHashCert2();
     testCertSigs();
     testSignAndEncodeCert();
     testCreateSelfSignCert();
