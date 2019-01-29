@@ -346,6 +346,7 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
         {
             return VFW_E_TYPE_NOT_ACCEPTED;
         }
+        DeleteMediaType(pmt);
     }
 
     This->pMediaSample = pSample;
