@@ -8755,7 +8755,7 @@ static DWORD get_cblc_formats(IDWriteFontFace4 *fontface)
     sizes = (CBLCBitmapSizeTable *)(header + 1);
 
     for (s = 0; s < num_sizes; s++) {
-        BYTE bpp = sizes->bitDepth;
+        BYTE bpp = sizes[s].bitDepth;
 
         if (bpp == 1 || bpp == 2 || bpp == 4 || bpp == 8)
             ret |= DWRITE_GLYPH_IMAGE_FORMATS_PNG;

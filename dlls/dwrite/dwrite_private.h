@@ -216,6 +216,9 @@ struct dwrite_fonttable
     BOOL exists;
 };
 
+extern const void* get_fontface_table(IDWriteFontFace4 *fontface, UINT32 tag,
+        struct dwrite_fonttable *table) DECLSPEC_HIDDEN;
+
 extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,BOOL*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,UINT32*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_table(struct file_stream_desc*,UINT32,const void**,void**,UINT32*,BOOL*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *table, unsigned int max_count,
