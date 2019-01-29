@@ -243,30 +243,34 @@ typedef struct {
     USHORT numberOfHMetrics;
 } TT_HHEA;
 
-typedef struct {
+struct sbix_header
+{
     WORD version;
     WORD flags;
-    DWORD numStrikes;
-    DWORD strikeOffset[1];
-} sbix_header;
+    DWORD num_strikes;
+    DWORD strike_offset[1];
+};
 
-typedef struct {
+struct sbix_strike
+{
     WORD ppem;
     WORD ppi;
-    DWORD glyphDataOffsets[1];
-} sbix_strike;
+    DWORD glyphdata_offsets[1];
+};
 
-typedef struct {
+struct sbix_glyph_data
+{
     WORD originOffsetX;
     WORD originOffsetY;
-    DWORD graphicType;
+    DWORD graphic_type;
     BYTE data[1];
-} sbix_glyph_data;
+};
 
-typedef struct {
+struct maxp
+{
     DWORD version;
-    WORD numGlyphs;
-} maxp;
+    WORD num_glyphs;
+};
 
 struct cblc_header
 {
@@ -2221,67 +2225,74 @@ static BOOL opentype_has_font_table(IDWriteFontFace4 *fontface, UINT32 tag)
     return exists;
 }
 
-static DWORD opentype_get_sbix_formats(IDWriteFontFace4 *fontface)
+static unsigned int opentype_get_sbix_formats(IDWriteFontFace4 *fontface)
 {
-    UINT32 size, s, num_strikes;
-    const sbix_header *header;
-    UINT16 g, num_glyphs;
-    BOOL exists = FALSE;
-    const maxp *maxp;
-    const void *data;
-    DWORD ret = 0;
-    void *context;
-    HRESULT hr;
+    unsigned int num_strikes, num_glyphs, i, j, ret = 0;
+    const struct sbix_header *sbix_header;
+    struct dwrite_fonttable table;
 
-    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_MAXP_TAG, &data, &size, &context, &exists);
-    if (FAILED(hr) || !exists)
+    memset(&table, 0, sizeof(table));
+    table.exists = TRUE;
+
+    if (!get_fontface_table(fontface, MS_MAXP_TAG, &table))
         return 0;
 
-    maxp = data;
-    num_glyphs = GET_BE_WORD(maxp->numGlyphs);
+    num_glyphs = table_read_be_word(&table, FIELD_OFFSET(struct maxp, num_glyphs));
 
-    IDWriteFontFace4_ReleaseFontTable(fontface, context);
+    IDWriteFontFace4_ReleaseFontTable(fontface, table.context);
 
-    if (FAILED(IDWriteFontFace4_TryGetFontTable(fontface, MS_SBIX_TAG, &data, &size, &context, &exists))) {
-        WARN("Failed to get 'sbix' table, %#x\n", hr);
+    memset(&table, 0, sizeof(table));
+    table.exists = TRUE;
+
+    if (!get_fontface_table(fontface, MS_SBIX_TAG, &table))
         return 0;
-    }
 
-    header = data;
-    num_strikes = GET_BE_DWORD(header->numStrikes);
+    num_strikes = table_read_be_dword(&table, FIELD_OFFSET(struct sbix_header, num_strikes));
+    sbix_header = table_read_ensure(&table, 0, FIELD_OFFSET(struct sbix_header, strike_offset[num_strikes]));
 
-    for (s = 0; s < num_strikes; s++) {
-        sbix_strike *strike = (sbix_strike *)((BYTE *)header + GET_BE_DWORD(header->strikeOffset[s]));
+    if (sbix_header)
+    {
+        for (i = 0; i < num_strikes; ++i)
+        {
+            unsigned int strike_offset = GET_BE_DWORD(sbix_header->strike_offset[i]);
+            const struct sbix_strike *strike = table_read_ensure(&table, strike_offset,
+                    FIELD_OFFSET(struct sbix_strike, glyphdata_offsets[num_glyphs + 1]));
 
-        for (g = 0; g < num_glyphs; g++) {
-            DWORD offset = GET_BE_DWORD(strike->glyphDataOffsets[g]);
-            DWORD offset_next = GET_BE_DWORD(strike->glyphDataOffsets[g + 1]);
-            sbix_glyph_data *glyph_data;
-            DWORD format;
-
-            if (offset == offset_next)
+            if (!strike)
                 continue;
 
-            glyph_data = (sbix_glyph_data *)((BYTE *)strike + offset);
-            switch (format = glyph_data->graphicType)
+            for (j = 0; j < num_glyphs; j++)
             {
-            case MS_PNG__TAG:
-                ret |= DWRITE_GLYPH_IMAGE_FORMATS_PNG;
-                break;
-            case MS_JPG__TAG:
-                ret |= DWRITE_GLYPH_IMAGE_FORMATS_JPEG;
-                break;
-            case MS_TIFF_TAG:
-                ret |= DWRITE_GLYPH_IMAGE_FORMATS_TIFF;
-                break;
-            default:
-                format = GET_BE_DWORD(format);
-                FIXME("unexpected bitmap format %s\n", debugstr_an((char *)&format, 4));
+                unsigned int offset = GET_BE_DWORD(strike->glyphdata_offsets[j]);
+                unsigned int next_offset = GET_BE_DWORD(strike->glyphdata_offsets[j + 1]);
+                const struct sbix_glyph_data *glyph_data;
+
+                if (offset == next_offset)
+                    continue;
+
+                glyph_data = table_read_ensure(&table, strike_offset + offset, sizeof(*glyph_data));
+                if (!glyph_data)
+                    continue;
+
+                switch (glyph_data->graphic_type)
+                {
+                    case MS_PNG__TAG:
+                        ret |= DWRITE_GLYPH_IMAGE_FORMATS_PNG;
+                        break;
+                    case MS_JPG__TAG:
+                        ret |= DWRITE_GLYPH_IMAGE_FORMATS_JPEG;
+                        break;
+                    case MS_TIFF_TAG:
+                        ret |= DWRITE_GLYPH_IMAGE_FORMATS_TIFF;
+                        break;
+                    default:
+                        FIXME("unexpected bitmap format %s\n", debugstr_tag(GET_BE_DWORD(glyph_data->graphic_type)));
+                }
             }
         }
     }
 
-    IDWriteFontFace4_ReleaseFontTable(fontface, context);
+    IDWriteFontFace4_ReleaseFontTable(fontface, table.context);
 
     return ret;
 }
