@@ -2256,7 +2256,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
         custom_event->event.destroy = DOMCustomEvent_destroy;
         event = &custom_event->event;
         dispex_data = &DOMCustomEvent_dispex;
-    }else if(!event) {
+    }else {
         event = heap_alloc_zero(sizeof(*event));
         if(!event)
             return NULL;
