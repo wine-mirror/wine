@@ -5649,7 +5649,7 @@ static BOOL colorglyphenum_build_color_run(struct dwrite_colorglyphenum *glyphen
             /* offsets are relative to glyph origin, nothing to fix up */
             if (glyphenum->color_offsets)
                 glyphenum->color_offsets[index] = glyphenum->offsets[g];
-            opentype_colr_next_glyph(glyphenum->colr.data, glyphenum->glyphs + g);
+            opentype_colr_next_glyph(&glyphenum->colr, glyphenum->glyphs + g);
             if (index)
                 glyphenum->color_advances[index-1] += advance_adj;
             colorrun->glyphRun.glyphCount++;
@@ -5755,7 +5755,7 @@ HRESULT create_colorglyphenum(float originX, float originY, const DWRITE_GLYPH_R
     has_colored_glyph = FALSE;
     colorglyphenum->has_regular_glyphs = FALSE;
     for (i = 0; i < run->glyphCount; i++) {
-        if (opentype_get_colr_glyph(colorglyphenum->colr.data, run->glyphIndices[i], colorglyphenum->glyphs + i) == S_OK) {
+        if (opentype_get_colr_glyph(&colorglyphenum->colr, run->glyphIndices[i], colorglyphenum->glyphs + i) == S_OK) {
             colorglyphenum->max_layer_num = max(colorglyphenum->max_layer_num, colorglyphenum->glyphs[i].num_layers);
             has_colored_glyph = TRUE;
         }

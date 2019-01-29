@@ -245,8 +245,10 @@ struct dwrite_colorglyph {
     UINT16 palette_index;
 };
 
-extern HRESULT opentype_get_colr_glyph(const void*,UINT16,struct dwrite_colorglyph*) DECLSPEC_HIDDEN;
-extern void opentype_colr_next_glyph(const void*,struct dwrite_colorglyph*) DECLSPEC_HIDDEN;
+extern HRESULT opentype_get_colr_glyph(const struct dwrite_fonttable *table, UINT16 glyph,
+        struct dwrite_colorglyph *color_glyph) DECLSPEC_HIDDEN;
+extern void opentype_colr_next_glyph(const struct dwrite_fonttable *table,
+        struct dwrite_colorglyph *color_glyph) DECLSPEC_HIDDEN;
 
 enum gasp_flags {
     GASP_GRIDFIT             = 0x0001,
