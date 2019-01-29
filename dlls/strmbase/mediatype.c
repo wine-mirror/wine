@@ -45,11 +45,8 @@ HRESULT WINAPI CopyMediaType(AM_MEDIA_TYPE *dest, const AM_MEDIA_TYPE *src)
 
 void WINAPI FreeMediaType(AM_MEDIA_TYPE * pMediaType)
 {
-    if (pMediaType->pbFormat)
-    {
-        CoTaskMemFree(pMediaType->pbFormat);
-        pMediaType->pbFormat = NULL;
-    }
+    CoTaskMemFree(pMediaType->pbFormat);
+    pMediaType->pbFormat = NULL;
     if (pMediaType->pUnk)
     {
         IUnknown_Release(pMediaType->pUnk);
