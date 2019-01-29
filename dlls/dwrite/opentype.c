@@ -343,14 +343,14 @@ typedef struct {
     TT_NameRecord nameRecord[1];
 } TT_NAME_V0;
 
-struct VDMX_Header
+struct vdmx_header
 {
     WORD version;
-    WORD numRecs;
-    WORD numRatios;
+    WORD num_recs;
+    WORD num_ratios;
 };
 
-struct VDMX_Ratio
+struct vdmx_ratio
 {
     BYTE bCharSet;
     BYTE xRatio;
@@ -358,18 +358,19 @@ struct VDMX_Ratio
     BYTE yEndRatio;
 };
 
-struct VDMX_group
-{
-    WORD recs;
-    BYTE startsz;
-    BYTE endsz;
-};
-
-struct VDMX_vTable
+struct vdmx_vtable
 {
     WORD yPelHeight;
     SHORT yMax;
     SHORT yMin;
+};
+
+struct vdmx_group
+{
+    WORD recs;
+    BYTE startsz;
+    BYTE endsz;
+    struct vdmx_vtable entries[1];
 };
 
 typedef struct {
@@ -1911,13 +1912,14 @@ HRESULT opentype_get_typographic_features(IDWriteFontFace *fontface, UINT32 scri
     return *count > max_tagcount ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }
 
-static const struct VDMX_group *find_vdmx_group(const struct VDMX_Header *hdr)
+static unsigned int find_vdmx_group(const struct vdmx_header *hdr)
 {
-    WORD num_ratios, i, group_offset = 0;
-    struct VDMX_Ratio *ratios = (struct VDMX_Ratio*)(hdr + 1);
+    WORD num_ratios, i;
+    const struct vdmx_ratio *ratios = (struct vdmx_ratio *)(hdr + 1);
     BYTE dev_x_ratio = 1, dev_y_ratio = 1;
+    unsigned int group_offset = 0;
 
-    num_ratios = GET_BE_WORD(hdr->numRatios);
+    num_ratios = GET_BE_WORD(hdr->num_ratios);
 
     for (i = 0; i < num_ratios; i++) {
 
@@ -1932,42 +1934,56 @@ static const struct VDMX_group *find_vdmx_group(const struct VDMX_Header *hdr)
             break;
         }
     }
-    if (group_offset)
-        return (const struct VDMX_group *)((BYTE *)hdr + group_offset);
-    return NULL;
+
+    return group_offset;
 }
 
-BOOL opentype_get_vdmx_size(const void *data, INT emsize, UINT16 *ascent, UINT16 *descent)
+BOOL opentype_get_vdmx_size(const struct dwrite_fonttable *vdmx, INT emsize, UINT16 *ascent, UINT16 *descent)
 {
-    const struct VDMX_Header *hdr = (const struct VDMX_Header*)data;
-    const struct VDMX_group *group;
-    const struct VDMX_vTable *tables;
-    WORD recs, i;
+    unsigned int num_ratios, num_recs, group_offset, i;
+    const struct vdmx_header *header;
+    const struct vdmx_group *group;
 
-    if (!data)
+    if (!vdmx->exists)
         return FALSE;
 
-    group = find_vdmx_group(hdr);
+    num_ratios = table_read_be_word(vdmx, FIELD_OFFSET(struct vdmx_header, num_ratios));
+    num_recs = table_read_be_word(vdmx, FIELD_OFFSET(struct vdmx_header, num_recs));
+
+    header = table_read_ensure(vdmx, 0, sizeof(*header) + num_ratios * sizeof(struct vdmx_ratio) +
+            num_recs * sizeof(*group));
+
+    if (!header)
+        return FALSE;
+
+    group_offset = find_vdmx_group(header);
+    if (!group_offset)
+        return FALSE;
+
+    num_recs = table_read_be_word(vdmx, group_offset);
+    group = table_read_ensure(vdmx, group_offset, FIELD_OFFSET(struct vdmx_group, entries[num_recs]));
+
     if (!group)
         return FALSE;
 
-    recs = GET_BE_WORD(group->recs);
-    if (emsize < group->startsz || emsize >= group->endsz) return FALSE;
+    if (emsize < group->startsz || emsize >= group->endsz)
+        return FALSE;
 
-    tables = (const struct VDMX_vTable *)(group + 1);
-    for (i = 0; i < recs; i++) {
-        WORD ppem = GET_BE_WORD(tables[i].yPelHeight);
+    for (i = 0; i < num_recs; ++i)
+    {
+        WORD ppem = GET_BE_WORD(group->entries[i].yPelHeight);
         if (ppem > emsize) {
             FIXME("interpolate %d\n", emsize);
             return FALSE;
         }
 
         if (ppem == emsize) {
-            *ascent = (SHORT)GET_BE_WORD(tables[i].yMax);
-            *descent = -(SHORT)GET_BE_WORD(tables[i].yMin);
+            *ascent = (SHORT)GET_BE_WORD(group->entries[i].yMax);
+            *descent = -(SHORT)GET_BE_WORD(group->entries[i].yMin);
             return TRUE;
         }
     }
+
     return FALSE;
 }
 

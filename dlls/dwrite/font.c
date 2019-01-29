@@ -374,9 +374,10 @@ static FLOAT get_font_prop_vec_dotproduct(const struct dwrite_font_propvec *left
     return left->stretch * right->stretch + left->style * right->style + left->weight * right->weight;
 }
 
-static const void* get_fontface_vdmx(struct dwrite_fontface *fontface)
+static const struct dwrite_fonttable *get_fontface_vdmx(struct dwrite_fontface *fontface)
 {
-    return get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_VDMX_TAG, &fontface->vdmx);
+    get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_VDMX_TAG, &fontface->vdmx);
+    return &fontface->vdmx;
 }
 
 static const struct dwrite_fonttable *get_fontface_gasp(struct dwrite_fontface *fontface)
