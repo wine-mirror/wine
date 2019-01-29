@@ -1176,9 +1176,9 @@ static int get_cursor_system_id( const ICONINFOEXW *info )
     if (info->szResName[0]) return 0;  /* only integer resources are supported here */
     if (!(module = GetModuleHandleW( info->szModName ))) return 0;
 
-    for (i = 0; i < sizeof(module_cursors)/sizeof(module_cursors[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( module_cursors ); i++)
         if (GetModuleHandleW( module_cursors[i].name ) == module) break;
-    if (i == sizeof(module_cursors)/sizeof(module_cursors[0])) return 0;
+    if (i == ARRAY_SIZE( module_cursors )) return 0;
 
     cursors = module_cursors[i].cursors;
     for (i = 0; cursors[i].id; i++)
