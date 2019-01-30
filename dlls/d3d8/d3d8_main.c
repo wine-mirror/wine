@@ -61,16 +61,16 @@ IDirect3D8 * WINAPI DECLSPEC_HOTPATCH Direct3DCreate8(UINT sdk_version)
  *              ValidateVertexShader (D3D8.@)
  *
  * I've seen reserved1 and reserved2 always passed as 0's
- * bool seems always passed as 0 or 1, but other values work as well...
+ * boolean seems always passed as 0 or 1, but other values work as well...
  * toto       result?
  */
-HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD* reserved2, BOOL bool, DWORD* toto)
+HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD* reserved2, BOOL boolean, DWORD* toto)
 {
   HRESULT ret;
   static BOOL warned;
 
   if (TRACE_ON(d3d8) || !warned) {
-      FIXME("(%p %p %p %d %p): stub\n", vertexshader, reserved1, reserved2, bool, toto);
+      FIXME("(%p %p %p %d %p): stub\n", vertexshader, reserved1, reserved2, boolean, toto);
       warned = TRUE;
   }
 
@@ -99,13 +99,13 @@ HRESULT WINAPI ValidateVertexShader(DWORD* vertexshader, DWORD* reserved1, DWORD
  * PARAMS
  * toto       result?
  */
-HRESULT WINAPI ValidatePixelShader(DWORD* pixelshader, DWORD* reserved1, BOOL bool, DWORD* toto)
+HRESULT WINAPI ValidatePixelShader(DWORD* pixelshader, DWORD* reserved1, BOOL boolean, DWORD* toto)
 {
   HRESULT ret;
   static BOOL warned;
 
   if (TRACE_ON(d3d8) || !warned) {
-      FIXME("(%p %p %d %p): stub\n", pixelshader, reserved1, bool, toto);
+      FIXME("(%p %p %d %p): stub\n", pixelshader, reserved1, boolean, toto);
       warned = TRUE;
   }
 
