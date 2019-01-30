@@ -32,6 +32,7 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/library.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -239,6 +240,21 @@ done:
 
 #endif
 
+static char *password_to_ascii( const WCHAR *str )
+{
+    char *ret;
+    unsigned int i = 0;
+
+    if (!(ret = heap_alloc( (strlenW(str) + 1) * sizeof(*ret) ))) return NULL;
+    while (*str)
+    {
+        if (*str > 0x7f) WARN( "password contains non-ascii characters\n" );
+        ret[i++] = *str++;
+    }
+    ret[i] = 0;
+    return ret;
+}
+
 HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags )
 {
 #ifdef SONAME_LIBGNUTLS
@@ -250,6 +266,7 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     HCERTSTORE store = NULL;
     CERT_KEY_CONTEXT key_ctx;
     HCRYPTPROV prov = 0;
+    char *pwd = NULL;
     int ret;
 
     TRACE( "(%p, %p, %08x)\n", pfx, password, flags );
@@ -258,21 +275,17 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
     }
-    if (password)
-    {
-        FIXME( "password not supported\n" );
-        return NULL;
-    }
     if (flags & ~(CRYPT_EXPORTABLE|CRYPT_USER_KEYSET|PKCS12_NO_PERSIST_KEY))
     {
         FIXME( "flags %08x not supported\n", flags );
         return NULL;
     }
+    if (password && !(pwd = password_to_ascii( password ))) return NULL;
 
     if ((ret = pgnutls_pkcs12_init( &p12 )) < 0)
     {
         pgnutls_perror( ret );
-        return NULL;
+        goto error;
     }
 
     pfx_data.data = pfx->pbData;
@@ -280,10 +293,10 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     if ((ret = pgnutls_pkcs12_import( p12, &pfx_data, GNUTLS_X509_FMT_DER, 0 )) < 0)
     {
         pgnutls_perror( ret );
-        return NULL;
+        goto error;
     }
 
-    if ((ret = pgnutls_pkcs12_simple_parse( p12, "", &key, &chain, &chain_len, NULL, NULL, NULL, 0 )) < 0)
+    if ((ret = pgnutls_pkcs12_simple_parse( p12, pwd ? pwd : "", &key, &chain, &chain_len, NULL, NULL, NULL, 0 )) < 0)
     {
         pgnutls_perror( ret );
         goto error;
@@ -351,6 +364,7 @@ error:
     CryptReleaseContext( prov, 0 );
     CertCloseStore( store, 0 );
     pgnutls_pkcs12_deinit( p12 );
+    heap_free( pwd );
     return NULL;
 
 #endif
