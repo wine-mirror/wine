@@ -191,14 +191,14 @@ void WINAPI KeInitializeEvent( PRKEVENT event, EVENT_TYPE type, BOOLEAN state )
  */
 LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
 {
-    HANDLE handle = event->Header.WaitListHead.Blink;
+    HANDLE handle;
     LONG ret;
 
     TRACE("event %p, increment %d, wait %u.\n", event, increment, wait);
 
     EnterCriticalSection( &sync_cs );
     ret = InterlockedExchange( &event->Header.SignalState, TRUE );
-    if (handle)
+    if ((handle = event->Header.WaitListHead.Blink))
         SetEvent( handle );
     LeaveCriticalSection( &sync_cs );
 
@@ -210,14 +210,14 @@ LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
  */
 LONG WINAPI KeResetEvent( PRKEVENT event )
 {
-    HANDLE handle = event->Header.WaitListHead.Blink;
+    HANDLE handle;
     LONG ret;
 
     TRACE("event %p.\n", event);
 
     EnterCriticalSection( &sync_cs );
     ret = InterlockedExchange( &event->Header.SignalState, FALSE );
-    if (handle)
+    if ((handle = event->Header.WaitListHead.Blink))
         ResetEvent( handle );
     LeaveCriticalSection( &sync_cs );
 
@@ -252,7 +252,7 @@ void WINAPI KeInitializeSemaphore( PRKSEMAPHORE semaphore, LONG count, LONG limi
 LONG WINAPI KeReleaseSemaphore( PRKSEMAPHORE semaphore, KPRIORITY increment,
                                 LONG count, BOOLEAN wait )
 {
-    HANDLE handle = semaphore->Header.WaitListHead.Blink;
+    HANDLE handle;
     LONG ret;
 
     TRACE("semaphore %p, increment %d, count %d, wait %u.\n",
@@ -260,7 +260,7 @@ LONG WINAPI KeReleaseSemaphore( PRKSEMAPHORE semaphore, KPRIORITY increment,
 
     EnterCriticalSection( &sync_cs );
     ret = InterlockedExchangeAdd( &semaphore->Header.SignalState, count );
-    if (handle)
+    if ((handle = semaphore->Header.WaitListHead.Blink))
         ReleaseSemaphore( handle, count, NULL );
     LeaveCriticalSection( &sync_cs );
 
@@ -285,7 +285,6 @@ void WINAPI KeInitializeMutex( PRKMUTEX mutex, ULONG level )
  */
 LONG WINAPI KeReleaseMutex( PRKMUTEX mutex, BOOLEAN wait )
 {
-    HANDLE handle = mutex->Header.WaitListHead.Blink;
     LONG ret;
 
     TRACE("mutex %p, wait %u.\n", mutex, wait);
@@ -294,7 +293,7 @@ LONG WINAPI KeReleaseMutex( PRKMUTEX mutex, BOOLEAN wait )
     ret = mutex->Header.SignalState++;
     if (!ret && !mutex->Header.WaitListHead.Flink)
     {
-        CloseHandle( handle );
+        CloseHandle( mutex->Header.WaitListHead.Blink );
         mutex->Header.WaitListHead.Blink = NULL;
     }
     LeaveCriticalSection( &sync_cs );
@@ -330,7 +329,6 @@ void WINAPI KeInitializeTimer( KTIMER *timer )
  */
 BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, KDPC *dpc )
 {
-    BOOL manual = timer->Header.Type == TYPE_MANUAL_TIMER;
     BOOL ret;
 
     TRACE("timer %p, duetime %s, period %d, dpc %p.\n",
@@ -343,10 +341,12 @@ BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, 
     }
 
     EnterCriticalSection( &sync_cs );
+
     ret = timer->Header.Inserted;
     timer->Header.Inserted = TRUE;
-    timer->Header.WaitListHead.Blink = CreateWaitableTimerW( NULL, manual, NULL );
+    timer->Header.WaitListHead.Blink = CreateWaitableTimerW( NULL, timer->Header.Type == TYPE_MANUAL_TIMER, NULL );
     SetWaitableTimer( timer->Header.WaitListHead.Blink, &duetime, period, NULL, NULL, FALSE );
+
     LeaveCriticalSection( &sync_cs );
 
     return ret;
