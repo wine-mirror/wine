@@ -168,12 +168,14 @@ typedef struct _OBJECT_TYPE *POBJECT_TYPE;
 typedef struct _OBJECT_HANDLE_INFORMATION *POBJECT_HANDLE_INFORMATION;
 typedef struct _ZONE_HEADER *PZONE_HEADER;
 
+#define FM_LOCK_BIT 0x1
+
 typedef struct _FAST_MUTEX
 {
     LONG Count;
     PKTHREAD Owner;
     ULONG Contention;
-    KEVENT Gate;
+    KEVENT Event;
     ULONG OldIrql;
 } FAST_MUTEX, *PFAST_MUTEX;
 
@@ -1592,5 +1594,13 @@ NTSTATUS  WINAPI ZwWaitForSingleObject(HANDLE,BOOLEAN,const LARGE_INTEGER*);
 NTSTATUS  WINAPI ZwWaitForMultipleObjects(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
 NTSTATUS  WINAPI ZwWriteFile(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,const void*,ULONG,PLARGE_INTEGER,PULONG);
 NTSTATUS  WINAPI ZwYieldExecution(void);
+
+static inline void ExInitializeFastMutex( FAST_MUTEX *mutex )
+{
+    mutex->Count = FM_LOCK_BIT;
+    mutex->Owner = NULL;
+    mutex->Contention = 0;
+    KeInitializeEvent( &mutex->Event, SynchronizationEvent, FALSE );
+}
 
 #endif
