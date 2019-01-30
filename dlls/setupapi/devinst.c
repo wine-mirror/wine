@@ -3815,13 +3815,74 @@ BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
 /***********************************************************************
  *              SetupDiGetDevicePropertyW (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO info_set, PSP_DEVINFO_DATA info_data,
+BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_data,
                 const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type, BYTE *prop_buff,
                 DWORD prop_buff_size, DWORD *required_size, DWORD flags)
 {
-    FIXME("%p, %p, %p, %p, %p, %d, %p, 0x%08x stub\n", info_set, info_data, prop_key,
-               prop_type, prop_buff, prop_buff_size, required_size, flags);
+    static const WCHAR formatW[] = {'\\', '%', '0', '4', 'X', 0};
+    WCHAR key_path[55] = {'P', 'r', 'o', 'p', 'e', 'r', 't', 'i', 'e', 's', '\\'};
+    HKEY hkey;
+    DWORD value_type;
+    DWORD value_size = 0;
+    LSTATUS ls;
+    struct device *device;
 
-    SetLastError(ERROR_NOT_FOUND);
-    return FALSE;
+    TRACE("%p, %p, %p, %p, %p, %d, %p, %#x\n", devinfo, device_data, prop_key, prop_type, prop_buff, prop_buff_size,
+          required_size, flags);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (!prop_key)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    if (!prop_type || (!prop_buff && prop_buff_size))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    if (flags)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+
+    SETUPDI_GuidToString(&prop_key->fmtid, key_path + 11);
+    sprintfW(key_path + 49, formatW, prop_key->pid);
+
+    ls = RegOpenKeyExW(device->key, key_path, 0, KEY_QUERY_VALUE, &hkey);
+    if (!ls)
+    {
+        value_size = prop_buff_size;
+        ls = RegQueryValueExW(hkey, NULL, NULL, &value_type, prop_buff, &value_size);
+    }
+
+    switch (ls)
+    {
+    case NO_ERROR:
+    case ERROR_MORE_DATA:
+        *prop_type = 0xffff & value_type;
+        ls = (ls == ERROR_MORE_DATA || !prop_buff) ? ERROR_INSUFFICIENT_BUFFER : NO_ERROR;
+        break;
+    case ERROR_FILE_NOT_FOUND:
+        *prop_type = DEVPROP_TYPE_EMPTY;
+        value_size = 0;
+        ls = ERROR_NOT_FOUND;
+        break;
+    default:
+        *prop_type = DEVPROP_TYPE_EMPTY;
+        value_size = 0;
+        FIXME("Unhandled error %#x\n", ls);
+        break;
+    }
+
+    if (required_size)
+        *required_size = value_size;
+
+    SetLastError(ls);
+    return !ls;
 }
