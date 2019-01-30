@@ -562,3 +562,41 @@ LIST_ENTRY * WINAPI ExInterlockedRemoveHeadList( LIST_ENTRY *list, KSPIN_LOCK *l
 
     return ret;
 }
+
+/***********************************************************************
+ *           ExAcquireFastMutexUnsafe  (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL1_ENTRYPOINT
+DEFINE_FASTCALL1_ENTRYPOINT(ExAcquireFastMutexUnsafe)
+void WINAPI __regs_ExAcquireFastMutexUnsafe( FAST_MUTEX *mutex )
+#else
+void WINAPI ExAcquireFastMutexUnsafe( FAST_MUTEX *mutex )
+#endif
+{
+    LONG count;
+
+    TRACE("mutex %p.\n", mutex);
+
+    count = InterlockedDecrement( &mutex->Count );
+    if (count < 0)
+        KeWaitForSingleObject( &mutex->Event, Executive, KernelMode, FALSE, NULL );
+}
+
+/***********************************************************************
+ *           ExReleaseFastMutexUnsafe  (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL1_ENTRYPOINT
+DEFINE_FASTCALL1_ENTRYPOINT(ExReleaseFastMutexUnsafe)
+void WINAPI __regs_ExReleaseFastMutexUnsafe( FAST_MUTEX *mutex )
+#else
+void WINAPI ExReleaseFastMutexUnsafe( FAST_MUTEX *mutex )
+#endif
+{
+    LONG count;
+
+    TRACE("mutex %p.\n", mutex);
+
+    count = InterlockedIncrement( &mutex->Count );
+    if (count < 1)
+        KeSetEvent( &mutex->Event, IO_NO_INCREMENT, FALSE );
+}

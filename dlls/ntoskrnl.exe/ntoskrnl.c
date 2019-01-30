@@ -727,34 +727,6 @@ done:
     return status;
 }
 
-
-/***********************************************************************
- *           ExAcquireFastMutexUnsafe  (NTOSKRNL.EXE.@)
- */
-#ifdef DEFINE_FASTCALL1_ENTRYPOINT
-DEFINE_FASTCALL1_ENTRYPOINT(ExAcquireFastMutexUnsafe)
-void WINAPI __regs_ExAcquireFastMutexUnsafe(PFAST_MUTEX FastMutex)
-#else
-void WINAPI ExAcquireFastMutexUnsafe(PFAST_MUTEX FastMutex)
-#endif
-{
-    FIXME("(%p): stub\n", FastMutex);
-}
-
-
-/***********************************************************************
- *           ExReleaseFastMutexUnsafe  (NTOSKRNL.EXE.@)
- */
-#ifdef DEFINE_FASTCALL1_ENTRYPOINT
-DEFINE_FASTCALL1_ENTRYPOINT(ExReleaseFastMutexUnsafe)
-void WINAPI __regs_ExReleaseFastMutexUnsafe(PFAST_MUTEX FastMutex)
-#else
-void WINAPI ExReleaseFastMutexUnsafe(PFAST_MUTEX FastMutex)
-#endif
-{
-    FIXME("(%p): stub\n", FastMutex);
-}
-
 /***********************************************************************
  *           IoAllocateDriverObjectExtension  (NTOSKRNL.EXE.@)
  */
