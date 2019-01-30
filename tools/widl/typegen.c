@@ -4246,13 +4246,14 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         }
         else if (phase == PHASE_UNMARSHAL)
         {
-            if (pass == PASS_OUT)
+            if (pass == PASS_OUT || pass == PASS_RETURN)
             {
                 if (!in_attr)
                     print_file(file, indent, "*%s%s = 0;\n", local_var_prefix, var->name);
                 print_file(file, indent, "NdrClientContextUnmarshall(\n");
                 print_file(file, indent + 1, "&__frame->_StubMsg,\n");
-                print_file(file, indent + 1, "(NDR_CCONTEXT *)%s%s,\n", local_var_prefix, var->name);
+                print_file(file, indent + 1, "(NDR_CCONTEXT *)%s%s%s,\n",
+                           pass == PASS_RETURN ? "&" : "", local_var_prefix, var->name);
                 print_file(file, indent + 1, "__frame->_Handle);\n");
             }
             else
@@ -4605,9 +4606,14 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
     /* declare return value */
     if (!is_void(var->type))
     {
-        print_file(file, indent, "%s", "");
-        write_type_decl(file, var->type, var->name);
-        fprintf(file, ";\n");
+        if (is_context_handle(var->type))
+            print_file(file, indent, "NDR_SCONTEXT %s;\n", var->name);
+        else
+        {
+            print_file(file, indent, "%s", "");
+            write_type_decl(file, var->type, var->name);
+            fprintf(file, ";\n");
+        }
     }
 
     if (!type_get_function_args(func->type))

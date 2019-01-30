@@ -1839,8 +1839,6 @@ static void test_handle_return(void)
 {
     ctx_handle_t handle, handle2;
 
-    if (!is_interp) return; /* broken in widl */
-
     handle = get_handle();
     test_handle(handle);
     get_handle_by_ptr(&handle2);
