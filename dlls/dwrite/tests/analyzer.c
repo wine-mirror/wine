@@ -27,8 +27,10 @@
 
 #include "initguid.h"
 #include "windows.h"
+#include "winternl.h"
 #include "dwrite_3.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 static IDWriteFactory *factory;
@@ -43,6 +45,42 @@ static const WCHAR test_fontfile[] = {'w','i','n','e','_','t','e','s','t','_','f
 #define RLI 0x2067
 #define FSI 0x2068
 #define PDI 0x2069
+
+#define MS_GDEF_TAG DWRITE_MAKE_OPENTYPE_TAG('G','D','E','F')
+
+#ifdef WORDS_BIGENDIAN
+#define GET_BE_WORD(x) (x)
+#define GET_BE_DWORD(x) (x)
+#define GET_LE_WORD(x) RtlUshortByteSwap(x)
+#define GET_LE_DWORD(x) RtlUlongByteSwap(x)
+#else
+#define GET_BE_WORD(x) RtlUshortByteSwap(x)
+#define GET_BE_DWORD(x) RtlUlongByteSwap(x)
+#define GET_LE_WORD(x) (x)
+#define GET_LE_DWORD(x) (x)
+#endif
+
+struct ot_gdef_classdef_format1
+{
+    WORD format;
+    WORD start_glyph;
+    WORD glyph_count;
+    WORD classes[1];
+};
+
+struct ot_gdef_class_range
+{
+    WORD start_glyph;
+    WORD end_glyph;
+    WORD glyph_class;
+};
+
+struct ot_gdef_classdef_format2
+{
+    WORD format;
+    WORD range_count;
+    struct ot_gdef_class_range ranges[1];
+};
 
 enum analysis_kind {
     ScriptAnalysis,
@@ -1364,6 +1402,207 @@ static void get_fontface_advances(IDWriteFontFace *fontface, FLOAT emsize, const
     }
 }
 
+enum ot_gdef_class
+{
+    GDEF_CLASS_UNCLASSIFIED = 0,
+    GDEF_CLASS_BASE = 1,
+    GDEF_CLASS_LIGATURE = 2,
+    GDEF_CLASS_MARK = 3,
+    GDEF_CLASS_COMPONENT = 4,
+    GDEF_CLASS_MAX = GDEF_CLASS_COMPONENT,
+};
+
+struct dwrite_fonttable
+{
+    BYTE *data;
+    void *context;
+    unsigned int size;
+};
+
+static const void *table_read_ensure(const struct dwrite_fonttable *table, unsigned int offset, unsigned int size)
+{
+    if (size > table->size || offset > table->size - size)
+        return NULL;
+
+    return table->data + offset;
+}
+
+static WORD table_read_be_word(const struct dwrite_fonttable *table, unsigned int offset)
+{
+    const WORD *ptr = table_read_ensure(table, offset, sizeof(*ptr));
+    return ptr ? GET_BE_WORD(*ptr) : 0;
+}
+
+static int gdef_class_compare_format2(const void *g, const void *r)
+{
+    const struct ot_gdef_class_range *range = r;
+    UINT16 glyph = *(UINT16 *)g;
+
+    if (glyph < GET_BE_WORD(range->start_glyph))
+        return -1;
+    else if (glyph > GET_BE_WORD(range->end_glyph))
+        return 1;
+    else
+        return 0;
+}
+
+static unsigned int get_glyph_class(const struct dwrite_fonttable *table, UINT16 glyph)
+{
+    unsigned int glyph_class = GDEF_CLASS_UNCLASSIFIED, offset;
+    WORD format, count;
+
+    offset = table_read_be_word(table, 4);
+
+    format = table_read_be_word(table, offset);
+
+    if (format == 1)
+    {
+        const struct ot_gdef_classdef_format1 *format1;
+
+        count = table_read_be_word(table, offset + FIELD_OFFSET(struct ot_gdef_classdef_format1, glyph_count));
+        format1 = table_read_ensure(table, offset, FIELD_OFFSET(struct ot_gdef_classdef_format1, classes[count]));
+        if (format1)
+        {
+            WORD start_glyph = GET_BE_WORD(format1->start_glyph);
+            if (glyph >= start_glyph && (glyph - start_glyph) < count)
+            {
+                glyph_class = GET_BE_WORD(format1->classes[glyph - start_glyph]);
+                if (glyph_class > GDEF_CLASS_MAX)
+                     glyph_class = GDEF_CLASS_UNCLASSIFIED;
+            }
+        }
+    }
+    else if (format == 2)
+    {
+        const struct ot_gdef_classdef_format2 *format2;
+
+        count = table_read_be_word(table, offset + FIELD_OFFSET(struct ot_gdef_classdef_format2, range_count));
+        format2 = table_read_ensure(table, offset, FIELD_OFFSET(struct ot_gdef_classdef_format2, ranges[count]));
+        if (format2)
+        {
+            const struct ot_gdef_class_range *range = bsearch(&glyph, format2->ranges, count,
+                    sizeof(struct ot_gdef_class_range), gdef_class_compare_format2);
+            glyph_class = range && glyph <= GET_BE_WORD(range->end_glyph) ?
+                    GET_BE_WORD(range->glyph_class) : GDEF_CLASS_UNCLASSIFIED;
+            if (glyph_class > GDEF_CLASS_MAX)
+                 glyph_class = GDEF_CLASS_UNCLASSIFIED;
+        }
+    }
+
+    return glyph_class;
+}
+
+static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, unsigned int size)
+{
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
+    BOOL exists = FALSE;
+    unsigned int index;
+    HRESULT hr;
+
+    hr = IDWriteLocalizedStrings_FindLocaleName(strings, enusW, &index, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(exists, "Failed to find locale name %d.\n", exists);
+
+    hr = IDWriteLocalizedStrings_GetString(strings, index, buff, size);
+    ok(hr == S_OK, "Failed to get name string, hr %#x.\n", hr);
+}
+
+static void test_glyph_props(IDWriteTextAnalyzer *analyzer, const WCHAR *family, const WCHAR *face,
+        IDWriteFontFace *fontface)
+{
+    unsigned int i, ch, count, offset;
+    struct dwrite_fonttable gdef;
+    DWRITE_UNICODE_RANGE *ranges;
+    IDWriteFontFace1 *fontface1;
+    BOOL exists = FALSE;
+    HRESULT hr;
+
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_GDEF_TAG, (const void **)&gdef.data, &gdef.size,
+            &gdef.context, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    if (!exists)
+        return;
+
+    offset = table_read_be_word(&gdef, 4);
+    if (!offset)
+    {
+        IDWriteFontFace_ReleaseFontTable(fontface, gdef.context);
+        return;
+    }
+
+    if (FAILED(IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void **)&fontface1)))
+    {
+        IDWriteFontFace_ReleaseFontTable(fontface, gdef.context);
+        return;
+    }
+
+    hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, 0, NULL, &count);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+
+    ranges = heap_alloc(count * sizeof(*ranges));
+
+    hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, count, ranges, &count);
+    ok(hr == S_OK, "Failed to get ranges, hr %#x.\n", hr);
+
+    for (i = 0; i < count; ++i)
+    {
+        if (ranges[i].first > 0xffff)
+            break;
+
+        for (ch = ranges[i].first; ch <= ranges[i].last; ch++)
+        {
+            DWRITE_SHAPING_TEXT_PROPERTIES text_props[10];
+            DWRITE_SHAPING_GLYPH_PROPERTIES glyph_props[10];
+            UINT16 glyphs[10], clustermap[10], glyph;
+            unsigned int actual_count, glyph_class;
+            DWRITE_SCRIPT_ANALYSIS sa;
+            WCHAR text[1];
+
+            hr = IDWriteFontFace1_GetGlyphIndices(fontface1, &ch, 1, &glyph);
+            ok(hr == S_OK, "Failed to get glyph index, hr %#x.\n", hr);
+
+            if (!glyph)
+                continue;
+
+            sa.script = 999;
+            sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
+            text[0] = (WCHAR)ch;
+            memset(glyph_props, 0, sizeof(glyph_props));
+            hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, text, 1, fontface, FALSE, FALSE, &sa, NULL,
+                    NULL, NULL, NULL, 0, ARRAY_SIZE(glyphs), clustermap, text_props, glyphs, glyph_props, &actual_count);
+            ok(hr == S_OK, "Failed to shape, hr %#x.\n", hr);
+            if (actual_count > 1)
+                continue;
+
+            glyph_class = get_glyph_class(&gdef, glyphs[0]);
+
+            switch (glyph_class)
+            {
+                case GDEF_CLASS_MARK:
+                    ok(glyph_props[0].isDiacritic && glyph_props[0].isZeroWidthSpace,
+                            "%#x -> %u: unexpected glyph properties %u/%u. Class %u. Font %s - %s.\n",
+                            text[0], glyphs[0], glyph_props[0].isDiacritic, glyph_props[0].isZeroWidthSpace,
+                            glyph_class, wine_dbgstr_w(family), wine_dbgstr_w(face));
+                    break;
+                default:
+                    break;
+            }
+
+            if (glyph_props[0].isDiacritic)
+                ok(glyph_props[0].isZeroWidthSpace,
+                        "%#x -> %u: unexpected glyph properties %u/%u. Class %u. Font %s - %s.\n", text[0], glyphs[0],
+                        glyph_props[0].isDiacritic, glyph_props[0].isZeroWidthSpace, glyph_class,
+                        wine_dbgstr_w(family), wine_dbgstr_w(face));
+        }
+    }
+
+    heap_free(ranges);
+
+    IDWriteFontFace_ReleaseFontTable(fontface, gdef.context);
+    IDWriteFontFace1_Release(fontface1);
+}
+
 static void test_GetGlyphs(void)
 {
     static const WCHAR test1W[] = {'<','B',' ','C',0};
@@ -1373,6 +1612,7 @@ static void test_GetGlyphs(void)
     DWRITE_SHAPING_TEXT_PROPERTIES props[20];
     UINT32 maxglyphcount, actual_count;
     FLOAT advances[10], advances2[10];
+    IDWriteFontCollection *syscoll;
     IDWriteTextAnalyzer *analyzer;
     IDWriteFontFace *fontface;
     DWRITE_SCRIPT_ANALYSIS sa;
@@ -1380,6 +1620,7 @@ static void test_GetGlyphs(void)
     UINT16 clustermap[10];
     UINT16 glyphs1[10];
     UINT16 glyphs2[10];
+    unsigned int i, j;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
@@ -1505,8 +1746,58 @@ if (0) {
     ok(sa.script == 0, "got %u\n", sa.script);
     ok(!shapingprops[0].isZeroWidthSpace, "got %d\n", shapingprops[0].isZeroWidthSpace);
 
-    IDWriteTextAnalyzer_Release(analyzer);
     IDWriteFontFace_Release(fontface);
+
+    /* Test setting glyph properties from GDEF. */
+if (strcmp(winetest_platform, "wine"))
+{
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscoll, FALSE);
+    ok(hr == S_OK, "Failed to get system collection, hr %#x.\n", hr);
+
+    for (i = 0; i < IDWriteFontCollection_GetFontFamilyCount(syscoll); ++i)
+    {
+        IDWriteLocalizedStrings *names;
+        IDWriteFontFamily *family;
+        WCHAR familyW[256];
+
+        hr = IDWriteFontCollection_GetFontFamily(syscoll, i, &family);
+        ok(hr == S_OK, "Failed to get font family, hr %#x.\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "Failed to get family names, hr %#x.\n", hr);
+        get_enus_string(names, familyW, ARRAY_SIZE(familyW));
+        IDWriteLocalizedStrings_Release(names);
+
+        for (j = 0; j < IDWriteFontFamily_GetFontCount(family); ++j)
+        {
+            IDWriteFont *font;
+            WCHAR faceW[256];
+
+            hr = IDWriteFontFamily_GetFont(family, j, &font);
+            ok(hr == S_OK, "Failed to get font instance, hr %#x.\n", hr);
+
+            hr = IDWriteFont_CreateFontFace(font, &fontface);
+            ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
+
+            hr = IDWriteFont_GetFaceNames(font, &names);
+            ok(hr == S_OK, "Failed to get face names, hr %#x.\n", hr);
+            get_enus_string(names, faceW, ARRAY_SIZE(faceW));
+            IDWriteLocalizedStrings_Release(names);
+
+            test_glyph_props(analyzer, familyW, faceW, fontface);
+
+            IDWriteFontFace_Release(fontface);
+            IDWriteFont_Release(font);
+        }
+
+        IDWriteFontFamily_Release(family);
+    }
+
+    IDWriteFontCollection_Release(syscoll);
+}
+
+    IDWriteTextAnalyzer_Release(analyzer);
 }
 
 static BOOL has_feature(const DWRITE_FONT_FEATURE_TAG *tags, UINT32 count, DWRITE_FONT_FEATURE_TAG feature)
