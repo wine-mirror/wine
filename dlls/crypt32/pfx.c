@@ -56,6 +56,8 @@ MAKE_FUNCPTR(gnutls_pkcs12_import);
 MAKE_FUNCPTR(gnutls_pkcs12_init);
 MAKE_FUNCPTR(gnutls_pkcs12_simple_parse);
 MAKE_FUNCPTR(gnutls_x509_crt_export);
+MAKE_FUNCPTR(gnutls_x509_privkey_export_rsa_raw2);
+MAKE_FUNCPTR(gnutls_x509_privkey_get_pk_algorithm2);
 #undef MAKE_FUNCPTR
 
 static void gnutls_log( int level, const char *msg )
@@ -90,6 +92,8 @@ BOOL gnutls_initialize(void)
     LOAD_FUNCPTR(gnutls_pkcs12_init)
     LOAD_FUNCPTR(gnutls_pkcs12_simple_parse)
     LOAD_FUNCPTR(gnutls_x509_crt_export)
+    LOAD_FUNCPTR(gnutls_x509_privkey_export_rsa_raw2)
+    LOAD_FUNCPTR(gnutls_x509_privkey_get_pk_algorithm2)
 #undef LOAD_FUNCPTR
 
     if ((ret = pgnutls_global_init()) != GNUTLS_E_SUCCESS)
@@ -118,6 +122,121 @@ void gnutls_uninitialize(void)
     wine_dlclose( libgnutls_handle, NULL, 0 );
     libgnutls_handle = NULL;
 }
+
+#define RSA_MAGIC_KEY  ('R' | ('S' << 8) | ('A' << 16) | ('2' << 24))
+#define RSA_PUBEXP     65537
+
+static HCRYPTPROV import_key( gnutls_x509_privkey_t key, DWORD flags )
+{
+    int i, ret;
+    unsigned int bitlen;
+    gnutls_datum_t m, e, d, p, q, u, e1, e2;
+    BLOBHEADER *hdr;
+    RSAPUBKEY *rsakey;
+    HCRYPTPROV prov = 0;
+    HCRYPTKEY cryptkey;
+    BYTE *buf, *src, *dst;
+    DWORD size;
+
+    if ((ret = pgnutls_x509_privkey_get_pk_algorithm2( key, &bitlen )) < 0)
+    {
+        pgnutls_perror( ret );
+        return 0;
+    }
+
+    if (ret != GNUTLS_PK_RSA)
+    {
+        FIXME( "key algorithm %u not supported\n", ret );
+        return 0;
+    }
+
+    if ((ret = pgnutls_x509_privkey_export_rsa_raw2( key, &m, &e, &d, &p, &q, &u, &e1, &e2 )) < 0)
+    {
+        pgnutls_perror( ret );
+        return 0;
+    }
+
+    size = sizeof(*hdr) + sizeof(*rsakey) + (bitlen * 9 / 16);
+    if (!(buf = heap_alloc( size ))) goto done;
+
+    hdr = (BLOBHEADER *)buf;
+    hdr->bType    = PRIVATEKEYBLOB;
+    hdr->bVersion = CUR_BLOB_VERSION;
+    hdr->reserved = 0;
+    hdr->aiKeyAlg = CALG_RSA_KEYX;
+
+    rsakey = (RSAPUBKEY *)(hdr + 1);
+    rsakey->magic  = RSA_MAGIC_KEY;
+    rsakey->bitlen = bitlen;
+    rsakey->pubexp = RSA_PUBEXP;
+
+    dst = (BYTE *)(rsakey + 1);
+    if (m.size == bitlen / 8 + 1 && !m.data[0]) src = m.data + 1;
+    else if (m.size != bitlen / 8) goto done;
+    else src = m.data;
+    for (i = bitlen / 8 - 1; i >= 0; i--) *dst++ = src[i];
+
+    if (p.size == bitlen / 16 + 1 && !p.data[0]) src = p.data + 1;
+    else if (p.size != bitlen / 16) goto done;
+    else src = p.data;
+    for (i = bitlen / 16 - 1; i >= 0; i--) *dst++ = src[i];
+
+    if (q.size == bitlen / 16 + 1 && !q.data[0]) src = q.data + 1;
+    else if (q.size != bitlen / 16) goto done;
+    else src = q.data;
+    for (i = bitlen / 16 - 1; i >= 0; i--) *dst++ = src[i];
+
+    if (e1.size == bitlen / 16 + 1 && !e1.data[0]) src = e1.data + 1;
+    else if (e1.size != bitlen / 16) goto done;
+    else src = e1.data;
+    for (i = bitlen / 16 - 1; i >= 0; i--) *dst++ = src[i];
+
+    if (e2.size == bitlen / 16 + 1 && !e2.data[0]) src = e2.data + 1;
+    else if (e2.size != bitlen / 16) goto done;
+    else src = e2.data;
+    for (i = bitlen / 16 - 1; i >= 0; i--) *dst++ = src[i];
+
+    if (u.size == bitlen / 16 + 1 && !u.data[0]) src = u.data + 1;
+    else if (u.size != bitlen / 16) goto done;
+    else src = u.data;
+    for (i = bitlen / 16 - 1; i >= 0; i--) *dst++ = src[i];
+
+    if (d.size == bitlen / 8 + 1 && !d.data[0]) src = d.data + 1;
+    else if (d.size != bitlen / 8) goto done;
+    else src = d.data;
+    for (i = bitlen / 8 - 1; i >= 0; i--) *dst++ = src[i];
+
+    if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, CRYPT_NEWKEYSET ))
+    {
+        if (GetLastError() != NTE_EXISTS) goto done;
+        if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, 0 ))
+        {
+            WARN( "CryptAcquireContextW failed %08x\n", GetLastError() );
+            goto done;
+        }
+    }
+
+    if (!CryptImportKey( prov, buf, size, 0, flags, &cryptkey ))
+    {
+        WARN( "CryptImportKey failed %08x\n", GetLastError() );
+        CryptReleaseContext( prov, 0 );
+        prov = 0;
+    }
+    else CryptDestroyKey( cryptkey );
+
+done:
+    free( m.data );
+    free( e.data );
+    free( d.data );
+    free( p.data );
+    free( q.data );
+    free( u.data );
+    free( e1.data );
+    free( e2.data );
+    heap_free( buf );
+    return prov;
+}
+
 #endif
 
 HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags )
@@ -129,6 +248,8 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     gnutls_x509_crt_t *chain;
     unsigned int chain_len, i;
     HCERTSTORE store = NULL;
+    CERT_KEY_CONTEXT key_ctx;
+    HCRYPTPROV prov = 0;
     int ret;
 
     TRACE( "(%p, %p, %08x)\n", pfx, password, flags );
@@ -168,6 +289,7 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         goto error;
     }
 
+    if (!(prov = import_key( key, flags & CRYPT_EXPORTABLE ))) goto error;
     if (!(store = CertOpenStore( CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL )))
     {
         WARN( "CertOpenStore failed %08x\n", GetLastError() );
@@ -203,6 +325,16 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         }
         heap_free( crt_data );
 
+        key_ctx.cbSize     = sizeof(key_ctx);
+        key_ctx.hCryptProv = prov;
+        key_ctx.dwKeySpec  = AT_KEYEXCHANGE;
+        if (!CertSetCertificateContextProperty( ctx, CERT_KEY_CONTEXT_PROP_ID, 0, &key_ctx ))
+        {
+            WARN( "CertSetCertificateContextProperty failed %08x\n", GetLastError() );
+            CertFreeCertificateContext( ctx );
+            goto error;
+        }
+
         if (!CertAddCertificateContextToStore( store, ctx, CERT_STORE_ADD_ALWAYS, NULL ))
         {
             WARN( "CertAddCertificateContextToStore failed %08x\n", GetLastError() );
@@ -216,6 +348,7 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     return store;
 
 error:
+    CryptReleaseContext( prov, 0 );
     CertCloseStore( store, 0 );
     pgnutls_pkcs12_deinit( p12 );
     return NULL;

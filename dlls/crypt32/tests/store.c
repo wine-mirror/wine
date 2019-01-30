@@ -3284,7 +3284,11 @@ static void test_PFXImportCertStore(void)
 {
     HCERTSTORE store;
     CRYPT_DATA_BLOB pfx;
-    DWORD count;
+    const CERT_CONTEXT *cert;
+    CERT_KEY_CONTEXT key;
+    CERT_INFO *info;
+    DWORD count, size;
+    BOOL ret;
 
     SetLastError( 0xdeadbeef );
     store = PFXImportCertStore( NULL, NULL, 0 );
@@ -3298,6 +3302,27 @@ static void test_PFXImportCertStore(void)
     if (!store) return;
     count = countCertsInStore( store );
     ok( count == 1, "got %u\n", count );
+
+    cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+    ok( cert != NULL, "got %u\n", GetLastError() );
+    ok( cert->dwCertEncodingType == X509_ASN_ENCODING, "got %u\n", cert->dwCertEncodingType );
+    ok( cert->pbCertEncoded != NULL, "pbCertEncoded not set\n" );
+    ok( cert->cbCertEncoded == 1123, "got %u\n", cert->cbCertEncoded );
+    ok( cert->pCertInfo != NULL, "pCertInfo not set\n" );
+    ok( cert->hCertStore == store, "got %p\n", cert->hCertStore );
+
+    info = cert->pCertInfo;
+    ok( info->dwVersion == CERT_V1, "got %u\n", info->dwVersion );
+    ok( !strcmp(info->SignatureAlgorithm.pszObjId, szOID_RSA_SHA256RSA),
+        "got \"%s\"\n", info->SignatureAlgorithm.pszObjId );
+
+    size = sizeof(key);
+    ret = CertGetCertificateContextProperty( cert, CERT_KEY_CONTEXT_PROP_ID, &key, &size );
+    ok( ret, "got %08x\n", GetLastError() );
+    ok( key.cbSize == sizeof(key), "got %u\n", key.cbSize );
+    ok( key.hCryptProv, "hCryptProv not set\n" );
+    ok( key.dwKeySpec == AT_KEYEXCHANGE, "got %u\n", key.dwKeySpec );
+
     CertCloseStore( store, 0 );
 }
 
