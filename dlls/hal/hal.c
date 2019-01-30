@@ -64,16 +64,20 @@ __ASM_STDCALL_FUNC( call_fastcall_func2, 12,
                    "xchgl (%esp),%edx\n\t"
                    "jmp *%eax" );
 
+extern void WINAPI ExAcquireFastMutexUnsafe( FAST_MUTEX * );
+
 DEFINE_FASTCALL1_ENTRYPOINT( ExAcquireFastMutex )
-VOID WINAPI DECLSPEC_HIDDEN __regs_ExAcquireFastMutex(PFAST_MUTEX FastMutex)
+void WINAPI DECLSPEC_HIDDEN __regs_ExAcquireFastMutex( FAST_MUTEX *mutex )
 {
-    FIXME("%p: stub\n", FastMutex);
+    call_fastcall_func1( ExAcquireFastMutexUnsafe, mutex );
 }
 
+extern void WINAPI ExReleaseFastMutexUnsafe( FAST_MUTEX * );
+
 DEFINE_FASTCALL1_ENTRYPOINT( ExReleaseFastMutex )
-VOID WINAPI DECLSPEC_HIDDEN __regs_ExReleaseFastMutex(PFAST_MUTEX FastMutex)
+void WINAPI DECLSPEC_HIDDEN __regs_ExReleaseFastMutex( FAST_MUTEX *mutex )
 {
-    FIXME("%p: stub\n", FastMutex);
+    call_fastcall_func1( ExReleaseFastMutexUnsafe, mutex );
 }
 
 DEFINE_FASTCALL1_ENTRYPOINT( ExTryToAcquireFastMutex )
