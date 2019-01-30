@@ -81,10 +81,11 @@ void WINAPI DECLSPEC_HIDDEN __regs_ExReleaseFastMutex( FAST_MUTEX *mutex )
 }
 
 DEFINE_FASTCALL1_ENTRYPOINT( ExTryToAcquireFastMutex )
-BOOLEAN WINAPI DECLSPEC_HIDDEN __regs_ExTryToAcquireFastMutex(PFAST_MUTEX FastMutex)
+BOOLEAN WINAPI DECLSPEC_HIDDEN __regs_ExTryToAcquireFastMutex( FAST_MUTEX *mutex )
 {
-    FIXME("(%p) stub\n", FastMutex);
-    return TRUE;
+    TRACE("mutex %p.\n", mutex);
+
+    return (InterlockedCompareExchange( &mutex->Count, 0, 1 ) == 1);
 }
 
 DEFINE_FASTCALL1_ENTRYPOINT( KfAcquireSpinLock )
