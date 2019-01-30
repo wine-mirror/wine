@@ -1634,6 +1634,8 @@ BOOL     WINAPI SetupDiSetDeviceInterfaceDefault(HDEVINFO, PSP_DEVICE_INTERFACE_
 BOOL     WINAPI SetupDiSetDeviceInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_A);
 BOOL     WINAPI SetupDiSetDeviceInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_W);
 #define         SetupDiSetDeviceInstallParams WINELIB_NAME_AW(SetupDiSetDeviceInstallParams)
+BOOL     WINAPI SetupDiSetDevicePropertyW(HDEVINFO, PSP_DEVINFO_DATA, const DEVPROPKEY *, DEVPROPTYPE, const BYTE *, DWORD, DWORD);
+#define         SetupDiSetDeviceProperty WINELIB_NAME_AW(SetupDiSetDeviceProperty) /* note: A function doesn't exist */
 BOOL     WINAPI SetupDiSetDeviceRegistryPropertyA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
 BOOL     WINAPI SetupDiSetDeviceRegistryPropertyW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
 #define         SetupDiSetDeviceRegistryProperty WINELIB_NAME_AW(SetupDiSetDeviceRegistryProperty)
