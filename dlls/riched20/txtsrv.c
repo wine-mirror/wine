@@ -83,10 +83,7 @@ static HRESULT WINAPI ITextServicesImpl_QueryInterface(IUnknown *iface, REFIID r
       if (!This->editor->reOle)
          if (!CreateIRichEditOle(This->outer_unk, This->editor, (void **)(&This->editor->reOle)))
             return E_OUTOFMEMORY;
-      if (IsEqualIID(riid, &IID_ITextDocument) || IsEqualIID(riid, &IID_ITextDocument2Old))
-         ME_GetITextDocument2OldInterface(This->editor->reOle, ppv);
-      else
-         *ppv = This->editor->reOle;
+      return IUnknown_QueryInterface(This->editor->reOle, riid, ppv);
    } else {
       *ppv = NULL;
       FIXME("Unknown interface: %s\n", debugstr_guid(riid));
