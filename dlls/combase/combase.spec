@@ -170,7 +170,7 @@
 @ stdcall CreateStreamOnHGlobal(ptr long ptr) ole32.CreateStreamOnHGlobal
 @ stub DcomChannelSetHResult
 @ stdcall DllDebugObjectRPCHook(long ptr) ole32.DllDebugObjectRPCHook
-@ stub DllGetActivationFactory
+@ stdcall DllGetActivationFactory(ptr ptr)
 @ stdcall -private DllGetClassObject(ptr ptr ptr) ole32.DllGetClassObject
 @ stub EnableHookObject
 @ stdcall FreePropVariantArray(long ptr) ole32.FreePropVariantArray

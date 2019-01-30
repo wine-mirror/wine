@@ -282,3 +282,13 @@ void WINAPI CleanupTlsOleState(void *unknown)
 {
     FIXME("(%p): stub\n", unknown);
 }
+
+/***********************************************************************
+ *      DllGetActivationFactory (combase.@)
+ */
+HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **factory)
+{
+    FIXME("(%s, %p): stub\n", debugstr_hstring(classid), factory);
+
+    return REGDB_E_CLASSNOTREG;
+}
