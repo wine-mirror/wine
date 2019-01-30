@@ -433,6 +433,7 @@ static HRESULT WINAPI
 CompositeMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
                IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
 {
+    HRESULT   res;
     IMoniker *tempMk,*antiMk,*rightMostMk,*leftReducedComposedMk,*rightMostReducedMk;
     IEnumMoniker *enumMoniker;
 
@@ -453,7 +454,11 @@ CompositeMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar
         IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
         IMoniker_Release(antiMk);
 
-        return IMoniker_Reduce(rightMostMk,pbc,dwReduceHowFar,&tempMk, ppmkReduced);
+        res = IMoniker_Reduce(rightMostMk,pbc,dwReduceHowFar,&tempMk, ppmkReduced);
+        IMoniker_Release(tempMk);
+        IMoniker_Release(rightMostMk);
+
+        return res;
     }
     else if (*ppmkToLeft==NULL)
 
@@ -473,13 +478,16 @@ CompositeMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar
         /* If any of the components  reduces itself, the method returns S_OK and passes back a composite */
         /* of the reduced components */
         if (IMoniker_Reduce(rightMostMk,pbc,dwReduceHowFar,NULL,&rightMostReducedMk) &&
-            IMoniker_Reduce(rightMostMk,pbc,dwReduceHowFar,&tempMk,&leftReducedComposedMk)
-           )
+            IMoniker_Reduce(rightMostMk,pbc,dwReduceHowFar,&tempMk,&leftReducedComposedMk) ){
+            IMoniker_Release(tempMk);
+            IMoniker_Release(rightMostMk);
 
             return CreateGenericComposite(leftReducedComposedMk,rightMostReducedMk,ppmkReduced);
-
+        }
         else{
             /* If no reduction occurred, the method passes back the same moniker and returns MK_S_REDUCED_TO_SELF.*/
+            IMoniker_Release(tempMk);
+            IMoniker_Release(rightMostMk);
 
             IMoniker_AddRef(iface);
 
