@@ -1124,6 +1124,7 @@ static HRESULT insert_static_object(ME_TextEditor *editor, HENHMETAFILE hemf, HB
   LPOLECLIENTSITE     lpClientSite = NULL;
   LPDATAOBJECT        lpDataObject = NULL;
   LPOLECACHE          lpOleCache = NULL;
+  LPRICHEDITOLE       lpReOle = NULL;
   STGMEDIUM           stgm;
   FORMATETC           fm;
   CLSID               clsid;
@@ -1156,7 +1157,8 @@ static HRESULT insert_static_object(ME_TextEditor *editor, HENHMETAFILE hemf, HB
   }
 
   if (OleCreateDefaultHandler(&CLSID_NULL, NULL, &IID_IOleObject, (void**)&lpObject) == S_OK &&
-      IRichEditOle_GetClientSite(editor->reOle, &lpClientSite) == S_OK &&
+      IUnknown_QueryInterface(editor->reOle, &IID_IRichEditOle, (void**)&lpReOle) == S_OK &&
+      IRichEditOle_GetClientSite(lpReOle, &lpClientSite) == S_OK &&
       IOleObject_SetClientSite(lpObject, lpClientSite) == S_OK &&
       IOleObject_GetUserClassID(lpObject, &clsid) == S_OK &&
       IOleObject_QueryInterface(lpObject, &IID_IOleCache, (void**)&lpOleCache) == S_OK &&
@@ -1188,6 +1190,7 @@ static HRESULT insert_static_object(ME_TextEditor *editor, HENHMETAFILE hemf, HB
   if (lpStorage)      IStorage_Release(lpStorage);
   if (lpDataObject)   IDataObject_Release(lpDataObject);
   if (lpOleCache)     IOleCache_Release(lpOleCache);
+  if (lpReOle)        IRichEditOle_Release(lpReOle);
 
   return hr;
 }
@@ -3215,7 +3218,7 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   ITextHost_Release(editor->texthost);
   if (editor->reOle)
   {
-    IRichEditOle_Release(editor->reOle);
+    IUnknown_Release(editor->reOle);
     editor->reOle = NULL;
   }
   OleUninitialize();
@@ -4820,9 +4823,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (!editor->reOle)
       if (!CreateIRichEditOle(NULL, editor, (LPVOID *)&editor->reOle))
         return 0;
-    *(LPVOID *)lParam = editor->reOle;
-    IRichEditOle_AddRef(editor->reOle);
-    return 1;
+    if (IUnknown_QueryInterface(editor->reOle, &IID_IRichEditOle, (LPVOID *)lParam) == S_OK)
+      return 1;
+    return 0;
   }
   case EM_GETPASSWORDCHAR:
   {

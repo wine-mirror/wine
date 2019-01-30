@@ -5471,7 +5471,7 @@ LRESULT CreateIRichEditOle(IUnknown *outer_unk, ME_TextEditor *editor, LPVOID *p
         reo->outer_unk = outer_unk;
     else
         reo->outer_unk = &reo->IUnknown_inner;
-    *ppvObj = &reo->IRichEditOle_iface;
+    *ppvObj = &reo->IUnknown_inner;
 
     return 1;
 }
@@ -5690,10 +5690,4 @@ void ME_CopyReObject(REOBJECT *dst, const REOBJECT *src, DWORD flags)
         dst->polesite = src->polesite;
         IOleClientSite_AddRef(dst->polesite);
     }
-}
-
-void ME_GetITextDocument2OldInterface(IRichEditOle *iface, LPVOID *ppvObj)
-{
-    IRichEditOleImpl *This = impl_from_IRichEditOle(iface);
-    *ppvObj = &This->ITextDocument2Old_iface;
 }
