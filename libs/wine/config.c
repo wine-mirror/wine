@@ -33,6 +33,13 @@
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
+#ifdef __APPLE__
+#include <crt_externs.h>
+#include <spawn.h>
+#ifndef _POSIX_SPAWN_DISABLE_ASLR
+#define _POSIX_SPAWN_DISABLE_ASLR 0x0100
+#endif
+#endif
 #include "wine/library.h"
 
 static const char server_config_dir[] = "/.wine";        /* config dir relative to $HOME */
@@ -558,6 +565,15 @@ static void preloader_exec( char **argv, int use_preloader )
         new_argv = xmalloc( (last_arg - argv + 2) * sizeof(*argv) );
         memcpy( new_argv + 1, argv, (last_arg - argv + 1) * sizeof(*argv) );
         new_argv[0] = full_name;
+#ifdef __APPLE__
+        {
+            posix_spawnattr_t attr;
+            posix_spawnattr_init( &attr );
+            posix_spawnattr_setflags( &attr, POSIX_SPAWN_SETEXEC | _POSIX_SPAWN_DISABLE_ASLR );
+            posix_spawn( NULL, full_name, NULL, &attr, new_argv, *_NSGetEnviron() );
+            posix_spawnattr_destroy( &attr );
+        }
+#endif
         execv( full_name, new_argv );
         free( new_argv );
         free( full_name );
