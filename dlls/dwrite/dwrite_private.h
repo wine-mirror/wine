@@ -331,6 +331,14 @@ struct scriptshaping_cache
     const struct shaping_font_ops *font;
     void *context;
     UINT16 upem;
+
+    struct
+    {
+        struct dwrite_fonttable table;
+        unsigned int script_list;
+        unsigned int feature_list;
+        unsigned int lookup_list;
+    } gpos;
 };
 
 struct scriptshaping_context
@@ -341,6 +349,17 @@ struct scriptshaping_context
     const WCHAR *text;
     unsigned int length;
     BOOL is_rtl;
+
+    union
+    {
+        struct
+        {
+            const DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+        } pos;
+    } u;
+
+    unsigned int glyph_count;
+    float *advances;
 };
 
 struct shaping_font_ops
@@ -360,6 +379,14 @@ struct shaping_features
     const DWORD *tags;
     unsigned int count;
 };
+
+extern void opentype_layout_scriptshaping_cache_init(struct scriptshaping_cache *cache) DECLSPEC_HIDDEN;
+extern DWORD opentype_layout_find_script(const struct scriptshaping_cache *cache, DWORD kind, DWORD tag,
+        unsigned int *script_index) DECLSPEC_HIDDEN;
+extern DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWORD kind, DWORD tag,
+        unsigned int script_index, unsigned int *language_index) DECLSPEC_HIDDEN;
+extern void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
+        unsigned int language_index, const struct shaping_features *features) DECLSPEC_HIDDEN;
 
 struct scriptshaping_ops
 {

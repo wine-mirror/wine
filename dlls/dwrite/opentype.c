@@ -390,33 +390,38 @@ typedef struct {
     WORD FeatureIndex[1];
 } OT_LangSys;
 
-typedef struct {
-    CHAR LangSysTag[4];
-    WORD LangSys;
-} OT_LangSysRecord;
+struct ot_langsys_record
+{
+    CHAR tag[4];
+    WORD langsys;
+};
 
-typedef struct {
-    WORD DefaultLangSys;
-    WORD LangSysCount;
-    OT_LangSysRecord LangSysRecord[1];
+struct ot_script
+{
+    WORD default_langsys;
+    WORD langsys_count;
+    struct ot_langsys_record langsys[1];
 } OT_Script;
 
-typedef struct {
-    CHAR ScriptTag[4];
-    WORD Script;
-} OT_ScriptRecord;
+struct ot_script_record
+{
+    CHAR tag[4];
+    WORD script;
+};
 
-typedef struct {
-    WORD ScriptCount;
-    OT_ScriptRecord ScriptRecord[1];
-} OT_ScriptList;
+struct ot_script_list
+{
+    WORD script_count;
+    struct ot_script_record scripts[1];
+};
 
-typedef struct {
+struct gpos_gsub_header
+{
     DWORD version;
-    WORD ScriptList;
-    WORD FeatureList;
-    WORD LookupList;
-} GPOS_GSUB_Header;
+    WORD script_list;
+    WORD feature_list;
+    WORD lookup_list;
+};
 
 enum OPENTYPE_PLATFORM_ID
 {
@@ -909,6 +914,12 @@ static DWORD table_read_be_dword(const struct dwrite_fonttable *table, unsigned 
 {
     const DWORD *ptr = table_read_ensure(table, offset, sizeof(*ptr));
     return ptr ? GET_BE_DWORD(*ptr) : 0;
+}
+
+static DWORD table_read_dword(const struct dwrite_fonttable *table, unsigned int offset)
+{
+    const DWORD *ptr = table_read_ensure(table, offset, sizeof(*ptr));
+    return ptr ? *ptr : 0;
 }
 
 BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
@@ -1828,36 +1839,36 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
     return hr;
 }
 
-static inline const OT_Script *opentype_get_script(const OT_ScriptList *scriptlist, UINT32 scripttag)
+static inline const struct ot_script *opentype_get_script(const struct ot_script_list *scriptlist, UINT32 scripttag)
 {
     UINT16 j;
 
-    for (j = 0; j < GET_BE_WORD(scriptlist->ScriptCount); j++) {
-        const char *tag = scriptlist->ScriptRecord[j].ScriptTag;
+    for (j = 0; j < GET_BE_WORD(scriptlist->script_count); j++) {
+        const char *tag = scriptlist->scripts[j].tag;
         if (scripttag == DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]))
-            return (OT_Script*)((BYTE*)scriptlist + GET_BE_WORD(scriptlist->ScriptRecord[j].Script));
+            return (struct ot_script*)((BYTE*)scriptlist + GET_BE_WORD(scriptlist->scripts[j].script));
     }
 
     return NULL;
 }
 
-static inline const OT_LangSys *opentype_get_langsys(const OT_Script *script, UINT32 languagetag)
+static inline const OT_LangSys *opentype_get_langsys(const struct ot_script *script, UINT32 languagetag)
 {
     UINT16 j;
 
-    for (j = 0; j < GET_BE_WORD(script->LangSysCount); j++) {
-        const char *tag = script->LangSysRecord[j].LangSysTag;
+    for (j = 0; j < GET_BE_WORD(script->langsys_count); j++) {
+        const char *tag = script->langsys[j].tag;
         if (languagetag == DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]))
-            return (OT_LangSys*)((BYTE*)script + GET_BE_WORD(script->LangSysRecord[j].LangSys));
+            return (OT_LangSys*)((BYTE*)script + GET_BE_WORD(script->langsys[j].langsys));
     }
 
     return NULL;
 }
 
-static void opentype_add_font_features(const GPOS_GSUB_Header *header, const OT_LangSys *langsys,
+static void opentype_add_font_features(const struct gpos_gsub_header *header, const OT_LangSys *langsys,
     UINT32 max_tagcount, UINT32 *count, DWRITE_FONT_FEATURE_TAG *tags)
 {
-    const OT_FeatureList *features = (const OT_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
+    const OT_FeatureList *features = (const OT_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->feature_list));
     UINT16 j;
 
     for (j = 0; j < GET_BE_WORD(langsys->FeatureCount); j++) {
@@ -1880,9 +1891,9 @@ HRESULT opentype_get_typographic_features(IDWriteFontFace *fontface, UINT32 scri
 
     *count = 0;
     for (i = 0; i < ARRAY_SIZE(tables); i++) {
-        const OT_ScriptList *scriptlist;
-        const GPOS_GSUB_Header *header;
-        const OT_Script *script;
+        const struct ot_script_list *scriptlist;
+        const struct gpos_gsub_header *header;
+        const struct ot_script *script;
         const void *ptr;
         void *context;
         UINT32 size;
@@ -1896,8 +1907,8 @@ HRESULT opentype_get_typographic_features(IDWriteFontFace *fontface, UINT32 scri
         if (!exists)
             continue;
 
-        header = (const GPOS_GSUB_Header*)ptr;
-        scriptlist = (const OT_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
+        header = (const struct gpos_gsub_header *)ptr;
+        scriptlist = (const struct ot_script_list *)((const BYTE*)header + GET_BE_WORD(header->script_list));
 
         script = opentype_get_script(scriptlist, scripttag);
         if (script) {
@@ -2150,10 +2161,10 @@ void opentype_colr_next_glyph(const struct dwrite_fonttable *colr, struct dwrite
 
 BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
 {
+    const struct gpos_gsub_header *header;
     const OT_FeatureList *featurelist;
     const OT_LookupList *lookup_list;
     BOOL exists = FALSE, ret = FALSE;
-    const GPOS_GSUB_Header *header;
     const void *data;
     void *context;
     UINT32 size;
@@ -2165,8 +2176,8 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
         return FALSE;
 
     header = data;
-    featurelist = (OT_FeatureList*)((BYTE*)header + GET_BE_WORD(header->FeatureList));
-    lookup_list = (const OT_LookupList*)((BYTE*)header + GET_BE_WORD(header->LookupList));
+    featurelist = (OT_FeatureList*)((BYTE*)header + GET_BE_WORD(header->feature_list));
+    lookup_list = (const OT_LookupList*)((BYTE*)header + GET_BE_WORD(header->lookup_list));
 
     for (i = 0; i < GET_BE_WORD(featurelist->FeatureCount); i++) {
         if (*(UINT32*)featurelist->FeatureRecord[i].FeatureTag == DWRITE_FONT_FEATURE_TAG_VERTICAL_WRITING) {
@@ -2395,4 +2406,96 @@ DWRITE_CONTAINER_TYPE opentype_analyze_container_type(void const *data, UINT32 d
     default:
         return DWRITE_CONTAINER_TYPE_UNKNOWN;
     }
+}
+
+void opentype_layout_scriptshaping_cache_init(struct scriptshaping_cache *cache)
+{
+    cache->font->grab_font_table(cache->context, MS_GPOS_TAG, &cache->gpos.table.data, &cache->gpos.table.size,
+            &cache->gpos.table.context);
+
+    if (cache->gpos.table.data)
+    {
+        cache->gpos.script_list = table_read_be_word(&cache->gpos.table,
+                FIELD_OFFSET(struct gpos_gsub_header, script_list));
+        cache->gpos.feature_list = table_read_be_word(&cache->gpos.table,
+                FIELD_OFFSET(struct gpos_gsub_header, feature_list));
+        cache->gpos.lookup_list = table_read_be_word(&cache->gpos.table,
+                FIELD_OFFSET(struct gpos_gsub_header, lookup_list));
+    }
+}
+
+DWORD opentype_layout_find_script(const struct scriptshaping_cache *cache, DWORD kind, DWORD script,
+        unsigned int *script_index)
+{
+    WORD script_count;
+    unsigned int i;
+
+    *script_index = ~0u;
+
+    if (kind != MS_GPOS_TAG)
+        return 0;
+
+    script_count = table_read_be_word(&cache->gpos.table, cache->gpos.script_list);
+    if (!script_count)
+        return 0;
+
+    for (i = 0; i < script_count; i++)
+    {
+        DWORD tag = table_read_dword(&cache->gpos.table, cache->gpos.script_list +
+                FIELD_OFFSET(struct ot_script_list, scripts) + i * sizeof(struct ot_script_record));
+        if (!tag)
+            continue;
+
+        if (tag == script)
+        {
+            *script_index = i;
+            return script;
+        }
+    }
+
+    return 0;
+}
+
+DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWORD kind, DWORD language,
+        unsigned int script_index, unsigned int *language_index)
+{
+    WORD table_offset, lang_count;
+    unsigned int i;
+
+    *language_index = ~0u;
+
+    if (kind != MS_GPOS_TAG)
+        return 0;
+
+    table_offset = table_read_be_word(&cache->gpos.table, cache->gpos.script_list +
+            FIELD_OFFSET(struct ot_script_list, scripts) + script_index * sizeof(struct ot_script_record) +
+            FIELD_OFFSET(struct ot_script_record, script));
+    if (!table_offset)
+        return 0;
+
+    lang_count = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset +
+            FIELD_OFFSET(struct ot_script, langsys_count));
+    for (i = 0; i < lang_count; i++)
+    {
+        DWORD tag = table_read_dword(&cache->gpos.table, cache->gpos.script_list + table_offset +
+                FIELD_OFFSET(struct ot_script, langsys) + i * sizeof(struct ot_langsys_record));
+
+        if (tag == language)
+        {
+            *language_index = i;
+            return language;
+        }
+    }
+
+    /* Try 'defaultLangSys' if it's set. */
+    if (table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset))
+        return ~0u;
+
+    return 0;
+}
+
+void opentype_layout_apply_gpos_features(struct scriptshaping_context *context,
+        unsigned int script_index, unsigned int language_index, const struct shaping_features *features)
+{
+    /* FIXME: stub */
 }

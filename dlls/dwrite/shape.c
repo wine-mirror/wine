@@ -23,6 +23,12 @@
 
 #include "dwrite_private.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
+
+#define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
+
 struct scriptshaping_cache *create_scriptshaping_cache(void *context, const struct shaping_font_ops *font_ops)
 {
     struct scriptshaping_cache *cache;
@@ -34,6 +40,7 @@ struct scriptshaping_cache *create_scriptshaping_cache(void *context, const stru
     cache->font = font_ops;
     cache->context = context;
 
+    opentype_layout_scriptshaping_cache_init(cache);
     cache->upem = cache->font->get_font_upem(cache->context);
 
     return cache;
@@ -43,6 +50,8 @@ void release_scriptshaping_cache(struct scriptshaping_cache *cache)
 {
     if (!cache)
         return;
+
+    cache->font->release_font_table(cache->context, cache->gpos.table.context);
     heap_free(cache);
 }
 
@@ -180,10 +189,80 @@ const struct scriptshaping_ops default_shaping_ops =
     default_set_text_glyphs_props
 };
 
+static DWORD shape_select_script(const struct scriptshaping_cache *cache, DWORD kind, const DWORD *scripts,
+        unsigned int *script_index)
+{
+    static const DWORD fallback_scripts[] =
+    {
+        DWRITE_MAKE_OPENTYPE_TAG('D','F','L','T'),
+        DWRITE_MAKE_OPENTYPE_TAG('d','f','l','t'),
+        DWRITE_MAKE_OPENTYPE_TAG('l','a','t','n'),
+        0,
+    };
+    DWORD script;
+
+    /* Passed scripts in ascending priority. */
+    while (*scripts)
+    {
+        if ((script = opentype_layout_find_script(cache, kind, *scripts, script_index)))
+            return script;
+
+        scripts++;
+    }
+
+    /* 'DFLT' -> 'dflt' -> 'latn' */
+    scripts = fallback_scripts;
+    while (*scripts)
+    {
+        if ((script = opentype_layout_find_script(cache, kind, *scripts, script_index)))
+            return script;
+        scripts++;
+    }
+
+    return 0;
+}
+
+static DWORD shape_select_language(const struct scriptshaping_cache *cache, DWORD kind, unsigned int script_index,
+        DWORD language, unsigned int *language_index)
+{
+    /* Specified language -> 'dflt'. */
+    if ((language = opentype_layout_find_language(cache, kind, language, script_index, language_index)))
+        return language;
+
+    if ((language = opentype_layout_find_language(cache, kind, DWRITE_MAKE_OPENTYPE_TAG('d','f','l','t'),
+            script_index, language_index)))
+        return language;
+
+    return 0;
+}
+
 HRESULT shape_get_positions(struct scriptshaping_context *context, const DWORD *scripts,
         const struct shaping_features *features)
 {
-    /* FIXME: stub */
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int script_index, language_index;
+    unsigned int i;
+    DWORD script;
+
+    /* Resolve script tag to actually supported script. */
+    if (cache->gpos.table.data)
+    {
+        if ((script = shape_select_script(cache, MS_GPOS_TAG, scripts, &script_index)))
+        {
+            DWORD language = context->language_tag;
+
+            if ((language = shape_select_language(cache, MS_GPOS_TAG, script_index, language, &language_index)))
+            {
+                TRACE("script %s, language %s.\n", debugstr_tag(script),
+                        language != ~0u ? debugstr_tag(language) : "deflangsys");
+                opentype_layout_apply_gpos_features(context, script_index, language_index, features);
+            }
+        }
+    }
+
+    for (i = 0; i < context->glyph_count; ++i)
+        if (context->u.pos.glyph_props[i].isZeroWidthSpace)
+            context->advances[i] = 0.0f;
 
     return S_OK;
 }
