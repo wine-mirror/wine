@@ -312,8 +312,6 @@ struct gasp_header
     struct gasp_range ranges[1];
 };
 
-#include "poppack.h"
-
 enum OS2_FSSELECTION {
     OS2_FSSELECTION_ITALIC           = 1 << 0,
     OS2_FSSELECTION_UNDERSCORE       = 1 << 1,
@@ -373,22 +371,25 @@ struct vdmx_group
     struct vdmx_vtable entries[1];
 };
 
-typedef struct {
-    CHAR FeatureTag[4];
-    WORD Feature;
-} OT_FeatureRecord;
+struct ot_feature_record
+{
+    DWORD tag;
+    WORD offset;
+};
 
-typedef struct {
-    WORD FeatureCount;
-    OT_FeatureRecord FeatureRecord[1];
-} OT_FeatureList;
+struct ot_feature_list
+{
+    WORD feature_count;
+    struct ot_feature_record features[1];
+};
 
-typedef struct {
-    WORD LookupOrder; /* Reserved */
-    WORD ReqFeatureIndex;
-    WORD FeatureCount;
-    WORD FeatureIndex[1];
-} OT_LangSys;
+struct ot_langsys
+{
+    WORD lookup_order; /* Reserved */
+    WORD required_feature_index;
+    WORD feature_count;
+    WORD feature_index[1];
+};
 
 struct ot_langsys_record
 {
@@ -432,11 +433,12 @@ enum OPENTYPE_PLATFORM_ID
     OPENTYPE_PLATFORM_CUSTOM
 };
 
-typedef struct {
-    WORD FeatureParams;
-    WORD LookupCount;
-    WORD LookupListIndex[1];
-} OT_Feature;
+struct ot_feature
+{
+    WORD feature_params;
+    WORD lookup_count;
+    WORD lookuplist_index[1];
+};
 
 typedef struct {
     WORD LookupCount;
@@ -469,10 +471,12 @@ typedef struct {
     DWORD ExtensionOffset;
 } GSUB_ExtensionPosFormat1;
 
-enum OPENTYPE_GPOS_LOOKUPS
+#include "poppack.h"
+
+enum gsub_lookup_type
 {
-    OPENTYPE_GPOS_SINGLE_SUBST = 1,
-    OPENTYPE_GPOS_EXTENSION_SUBST = 7
+    GSUB_LOOKUP_SINGLE_SUBST = 1,
+    GSUB_LOOKUP_EXTENSION_SUBST = 7,
 };
 
 enum TT_NAME_WINDOWS_ENCODING_ID
@@ -1852,31 +1856,30 @@ static inline const struct ot_script *opentype_get_script(const struct ot_script
     return NULL;
 }
 
-static inline const OT_LangSys *opentype_get_langsys(const struct ot_script *script, UINT32 languagetag)
+static inline const struct ot_langsys *opentype_get_langsys(const struct ot_script *script, UINT32 languagetag)
 {
     UINT16 j;
 
     for (j = 0; j < GET_BE_WORD(script->langsys_count); j++) {
         const char *tag = script->langsys[j].tag;
         if (languagetag == DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]))
-            return (OT_LangSys*)((BYTE*)script + GET_BE_WORD(script->langsys[j].langsys));
+            return (struct ot_langsys *)((BYTE*)script + GET_BE_WORD(script->langsys[j].langsys));
     }
 
     return NULL;
 }
 
-static void opentype_add_font_features(const struct gpos_gsub_header *header, const OT_LangSys *langsys,
+static void opentype_add_font_features(const struct gpos_gsub_header *header, const struct ot_langsys *langsys,
     UINT32 max_tagcount, UINT32 *count, DWRITE_FONT_FEATURE_TAG *tags)
 {
-    const OT_FeatureList *features = (const OT_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->feature_list));
+    const struct ot_feature_list *features = (const struct ot_feature_list *)((const BYTE*)header + GET_BE_WORD(header->feature_list));
     UINT16 j;
 
-    for (j = 0; j < GET_BE_WORD(langsys->FeatureCount); j++) {
-        const OT_FeatureRecord *feature = &features->FeatureRecord[langsys->FeatureIndex[j]];
-        const char *tag = feature->FeatureTag;
+    for (j = 0; j < GET_BE_WORD(langsys->feature_count); j++) {
+        const struct ot_feature_record *feature = &features->features[langsys->feature_index[j]];
 
         if (*count < max_tagcount)
-            tags[*count] = DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]);
+            tags[*count] = GET_BE_DWORD(feature->tag);
 
         (*count)++;
     }
@@ -1912,7 +1915,7 @@ HRESULT opentype_get_typographic_features(IDWriteFontFace *fontface, UINT32 scri
 
         script = opentype_get_script(scriptlist, scripttag);
         if (script) {
-            const OT_LangSys *langsys = opentype_get_langsys(script, languagetag);
+            const struct ot_langsys *langsys = opentype_get_langsys(script, languagetag);
             if (langsys)
                 opentype_add_font_features(header, langsys, max_tagcount, count, tags);
         }
@@ -2162,27 +2165,27 @@ void opentype_colr_next_glyph(const struct dwrite_fonttable *colr, struct dwrite
 BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
 {
     const struct gpos_gsub_header *header;
-    const OT_FeatureList *featurelist;
+    const struct ot_feature_list *featurelist;
     const OT_LookupList *lookup_list;
     BOOL exists = FALSE, ret = FALSE;
+    unsigned int i, j;
     const void *data;
     void *context;
     UINT32 size;
     HRESULT hr;
-    UINT16 i;
 
     hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_GSUB_TAG, &data, &size, &context, &exists);
     if (FAILED(hr) || !exists)
         return FALSE;
 
     header = data;
-    featurelist = (OT_FeatureList*)((BYTE*)header + GET_BE_WORD(header->feature_list));
+    featurelist = (struct ot_feature_list *)((BYTE*)header + GET_BE_WORD(header->feature_list));
     lookup_list = (const OT_LookupList*)((BYTE*)header + GET_BE_WORD(header->lookup_list));
 
-    for (i = 0; i < GET_BE_WORD(featurelist->FeatureCount); i++) {
-        if (*(UINT32*)featurelist->FeatureRecord[i].FeatureTag == DWRITE_FONT_FEATURE_TAG_VERTICAL_WRITING) {
-            const OT_Feature *feature = (const OT_Feature*)((BYTE*)featurelist + GET_BE_WORD(featurelist->FeatureRecord[i].Feature));
-            UINT16 lookup_count = GET_BE_WORD(feature->LookupCount), i, index, count, type;
+    for (i = 0; i < GET_BE_WORD(featurelist->feature_count); i++) {
+        if (featurelist->features[i].tag == DWRITE_FONT_FEATURE_TAG_VERTICAL_WRITING) {
+            const struct ot_feature *feature = (const struct ot_feature*)((BYTE*)featurelist + GET_BE_WORD(featurelist->features[i].offset));
+            UINT16 lookup_count = GET_BE_WORD(feature->lookup_count), index, count, type;
             const GSUB_SingleSubstFormat2 *subst2;
             const OT_LookupTable *lookup_table;
             UINT32 offset;
@@ -2190,13 +2193,13 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
             if (lookup_count == 0)
                 continue;
 
-            for (i = 0; i < lookup_count; i++) {
+            for (j = 0; j < lookup_count; ++j) {
                 /* check if lookup is empty */
-                index = GET_BE_WORD(feature->LookupListIndex[i]);
+                index = GET_BE_WORD(feature->lookuplist_index[j]);
                 lookup_table = (const OT_LookupTable*)((BYTE*)lookup_list + GET_BE_WORD(lookup_list->Lookup[index]));
 
                 type = GET_BE_WORD(lookup_table->LookupType);
-                if (type != OPENTYPE_GPOS_SINGLE_SUBST && type != OPENTYPE_GPOS_EXTENSION_SUBST)
+                if (type != GSUB_LOOKUP_SINGLE_SUBST && type != GSUB_LOOKUP_EXTENSION_SUBST)
                     continue;
 
                 count = GET_BE_WORD(lookup_table->SubTableCount);
@@ -2204,7 +2207,7 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
                     continue;
 
                 offset = GET_BE_WORD(lookup_table->SubTable[0]);
-                if (type == OPENTYPE_GPOS_EXTENSION_SUBST) {
+                if (type == GSUB_LOOKUP_EXTENSION_SUBST) {
                     const GSUB_ExtensionPosFormat1 *ext = (const GSUB_ExtensionPosFormat1 *)((const BYTE *)lookup_table + offset);
                     if (GET_BE_WORD(ext->SubstFormat) == 1)
                         offset += GET_BE_DWORD(ext->ExtensionOffset);
@@ -2494,8 +2497,116 @@ DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWO
     return 0;
 }
 
+static void opentype_layout_apply_gpos_lookup(struct scriptshaping_context *context, int lookup_index)
+{
+    /* FIXME: stub */
+}
+
+struct lookups
+{
+    int *indexes;
+    size_t capacity;
+    size_t count;
+};
+
+static int lookups_sorting_compare(const void *left, const void *right)
+{
+    return *(int *)left - *(int *)right;
+};
+
 void opentype_layout_apply_gpos_features(struct scriptshaping_context *context,
         unsigned int script_index, unsigned int language_index, const struct shaping_features *features)
 {
-    /* FIXME: stub */
+    WORD table_offset, langsys_offset, script_feature_count, total_feature_count, total_lookup_count;
+    struct scriptshaping_cache *cache = context->cache;
+    const struct ot_feature_list *feature_list;
+    struct lookups lookups = { 0 };
+    unsigned int i, j, l;
+
+    /* ScriptTable offset. */
+    table_offset = table_read_be_word(&cache->gpos.table, cache->gpos.script_list +
+            FIELD_OFFSET(struct ot_script_list, scripts) + script_index * sizeof(struct ot_script_record) +
+            FIELD_OFFSET(struct ot_script_record, script));
+    if (!table_offset)
+        return;
+
+    if (language_index == ~0u)
+        langsys_offset = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset);
+    else
+        langsys_offset = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset +
+                FIELD_OFFSET(struct ot_script, langsys) + language_index * sizeof(struct ot_langsys_record) +
+                FIELD_OFFSET(struct ot_langsys_record, langsys));
+
+    script_feature_count = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset +
+            langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_count));
+    if (!script_feature_count)
+        return;
+
+    total_feature_count = table_read_be_word(&cache->gpos.table, cache->gpos.feature_list);
+    if (!total_feature_count)
+        return;
+
+    total_lookup_count = table_read_be_word(&cache->gpos.table, cache->gpos.lookup_list);
+    if (!total_lookup_count)
+        return;
+
+    feature_list = table_read_ensure(&cache->gpos.table, cache->gpos.feature_list,
+            FIELD_OFFSET(struct ot_feature_list, features[total_feature_count]));
+    if (!feature_list)
+        return;
+
+    /* Collect lookups for all given features. */
+    for (i = 0; i < features->count; ++i)
+    {
+        for (j = 0; j < script_feature_count; ++j)
+        {
+            WORD feature_index = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset +
+                    langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_index[j]));
+            if (feature_index >= total_feature_count)
+                continue;
+
+            if (feature_list->features[feature_index].tag == features->tags[i])
+            {
+                WORD feature_offset = GET_BE_WORD(feature_list->features[feature_index].offset);
+                WORD lookup_count;
+
+                lookup_count = table_read_be_word(&cache->gpos.table, cache->gpos.feature_list + feature_offset +
+                        FIELD_OFFSET(struct ot_feature, lookup_count));
+                if (!lookup_count)
+                    continue;
+
+                if (!dwrite_array_reserve((void **)&lookups.indexes, &lookups.capacity, lookups.count + lookup_count,
+                        sizeof(*lookups.indexes)))
+                {
+                    heap_free(lookups.indexes);
+                    return;
+                }
+
+                for (l = 0; l < lookup_count; ++l)
+                {
+                    WORD lookup_index = table_read_be_word(&cache->gpos.table, cache->gpos.feature_list +
+                            feature_offset + FIELD_OFFSET(struct ot_feature, lookuplist_index[l]));
+
+                    if (lookup_index >= total_lookup_count)
+                        continue;
+
+                    lookups.indexes[lookups.count++] = lookup_index;
+                }
+            }
+        }
+    }
+
+    /* Sort lookups. */
+    qsort(lookups.indexes, lookups.count, sizeof(*lookups.indexes), lookups_sorting_compare);
+
+    for (l = 0; l < lookups.count; ++l)
+    {
+        /* Skip duplicates. */
+        if (l && lookups.indexes[l] == lookups.indexes[l - 1])
+            continue;
+
+        opentype_layout_apply_gpos_lookup(context, lookups.indexes[l]);
+    }
+
+    heap_free(lookups.indexes);
 }
