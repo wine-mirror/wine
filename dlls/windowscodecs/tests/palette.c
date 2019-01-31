@@ -577,48 +577,34 @@ static void test_palette_from_bitmap(void)
     ok(hr == S_OK, "CreatePalette error %#x\n", hr);
 
     hr = IWICPalette_InitializeFromBitmap(palette, (IWICBitmapSource *)bitmap, 0, FALSE);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICPalette_InitializeFromBitmap(palette, (IWICBitmapSource *)bitmap, 1, FALSE);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICPalette_InitializeFromBitmap(palette, (IWICBitmapSource *)bitmap, 257, FALSE);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICPalette_InitializeFromBitmap(palette, NULL, 16, FALSE);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = IWICPalette_InitializeFromBitmap(palette, (IWICBitmapSource *)bitmap, 2, FALSE);
-todo_wine
     ok(hr == S_OK, "InitializeFromBitmap error %#x\n", hr);
-if (hr == S_OK)
-{
-    hr = IWICPalette_GetColorCount(palette, &count);
-    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
-    ok(count == 2, "expected 2, got %u\n", count);
-}
-
-    hr = IWICPalette_InitializeFromBitmap(palette, (IWICBitmapSource *)bitmap, 2, TRUE);
-todo_wine
-    ok(hr == S_OK, "InitializeFromBitmap error %#x\n", hr);
-if (hr == S_OK)
-{
     count = 0;
     hr = IWICPalette_GetColorCount(palette, &count);
     ok(hr == S_OK, "GetColorCount error %#x\n", hr);
     ok(count == 2, "expected 2, got %u\n", count);
-}
+
+    hr = IWICPalette_InitializeFromBitmap(palette, (IWICBitmapSource *)bitmap, 2, TRUE);
+    ok(hr == S_OK, "InitializeFromBitmap error %#x\n", hr);
+    count = 0;
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 2, "expected 2, got %u\n", count);
 
     /* without trasparent color */
     hr = IWICPalette_InitializeFromBitmap(palette, (IWICBitmapSource *)bitmap, 16, FALSE);
-todo_wine
     ok(hr == S_OK, "InitializeFromBitmap error %#x\n", hr);
-if (hr == S_OK)
-{
     type = -1;
     hr = IWICPalette_GetType(palette, &type);
     ok(hr == S_OK, "GetType error %#x\n", hr);
@@ -632,14 +618,10 @@ if (hr == S_OK)
     ok(hr == S_OK, "GetColors error %#x\n", hr);
     ok(ret == count, "expected %u, got %u\n", count, ret);
     ok(color[count - 1] != 0, "expected !0, got %08x\n", color[count - 1]);
-}
 
     /* with trasparent color */
     hr = IWICPalette_InitializeFromBitmap(palette, (IWICBitmapSource *)bitmap, 16, TRUE);
-todo_wine
     ok(hr == S_OK, "InitializeFromBitmap error %#x\n", hr);
-if (hr == S_OK)
-{
     type = -1;
     hr = IWICPalette_GetType(palette, &type);
     ok(hr == S_OK, "GetType error %#x\n", hr);
@@ -653,7 +635,6 @@ if (hr == S_OK)
     ok(hr == S_OK, "GetColors error %#x\n", hr);
     ok(ret == count, "expected %u, got %u\n", count, ret);
     ok(color[count - 1] == 0, "expected 0, got %08x\n", color[count - 1]);
-}
 
     IWICPalette_Release(palette);
     IWICBitmap_Release(bitmap);
