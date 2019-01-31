@@ -919,7 +919,7 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
             if (pdwKeySpec)
                 *pdwKeySpec = keyContext.dwKeySpec;
             if (pfCallerFreeProv)
-                *pfCallerFreeProv = !cache;
+                *pfCallerFreeProv = FALSE;
         }
     }
     if (!*phCryptProv)
