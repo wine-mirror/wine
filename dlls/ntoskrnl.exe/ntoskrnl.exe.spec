@@ -1407,6 +1407,7 @@
 @ stdcall ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 @ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stdcall -private ZwYieldExecution() NtYieldExecution
+@ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
 @ stdcall -private -arch=arm,x86_64 -norelay __chkstk()
 @ cdecl -private -arch=i386 _CIcos() msvcrt._CIcos
 @ cdecl -private -arch=i386 _CIsin() msvcrt._CIsin
