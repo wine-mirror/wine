@@ -4566,7 +4566,8 @@ static void test_vb_lock_flags(void)
         return;
     }
 
-    hr = IDirect3DDevice8_CreateVertexBuffer(device, 1024, D3DUSAGE_DYNAMIC, 0, D3DPOOL_DEFAULT, &buffer);
+    hr = IDirect3DDevice8_CreateVertexBuffer(device, 1024, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
+            0, D3DPOOL_DEFAULT, &buffer);
     ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(test_data); ++i)
