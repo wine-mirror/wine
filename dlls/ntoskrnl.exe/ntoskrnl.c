@@ -3940,3 +3940,19 @@ NTSTATUS WINAPI MmCopyVirtualMemory(PEPROCESS fromprocess, PVOID fromaddress, PE
     FIXME("stub: %p %p %p %p %lu %d %p\n", fromprocess, fromaddress, toprocess, toaddress, bufsize, mode, copied);
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/*********************************************************************
+ *           KeEnterGuardedRegion    (NTOSKRNL.@)
+ */
+void WINAPI KeEnterGuardedRegion(void)
+{
+    FIXME("\n");
+}
+
+/*********************************************************************
+ *           KeLeaveGuardedRegion    (NTOSKRNL.@)
+ */
+void WINAPI KeLeaveGuardedRegion(void)
+{
+    FIXME("\n");
+}
