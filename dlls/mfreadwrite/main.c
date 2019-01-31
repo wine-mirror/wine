@@ -24,12 +24,15 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
+#include "ole2.h"
+#include "rpcproxy.h"
 #include "mfreadwrite.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+
+static HINSTANCE mfinstance;
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
@@ -38,6 +41,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
         case DLL_WINE_PREATTACH:
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
+            mfinstance = instance;
             DisableThreadLibraryCalls(instance);
             break;
     }
@@ -63,6 +67,16 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
+}
+
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( mfinstance );
+}
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( mfinstance );
 }
 
 typedef struct _srcreader
