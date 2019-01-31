@@ -6,6 +6,7 @@
 @ stub ExpandCollapsePattern_Collapse
 @ stub ExpandCollapsePattern_Expand
 @ stub GridPattern_GetItem
+#@ stub IgnoreLeaksInCurrentlyTrackedMemory
 @ stub InvokePattern_Invoke
 @ stub ItemContainerPattern_FindItemByProperty
 @ stub LegacyIAccessiblePattern_DoDefaultAction
@@ -14,6 +15,7 @@
 @ stub LegacyIAccessiblePattern_SetValue
 @ stub MultipleViewPattern_GetViewName
 @ stub MultipleViewPattern_SetCurrentView
+#@ stub PostTestCheckForLeaks
 @ stub RangeValuePattern_SetValue
 @ stub ScrollItemPattern_ScrollIntoView
 @ stub ScrollPattern_Scroll
@@ -53,6 +55,8 @@
 @ stub TransformPattern_Rotate
 @ stub UiaAddEvent
 @ stdcall UiaClientsAreListening()
+#@ stub UiaDisconnectAllProviders
+#@ stub UiaDisconnectProvider
 @ stub UiaEventAddWindow
 @ stub UiaEventRemoveWindow
 @ stub UiaFind
@@ -69,6 +73,7 @@
 @ stub UiaHUiaNodeFromVariant
 @ stub UiaHasServerSideProvider
 @ stub UiaHostProviderFromHwnd
+#@ stub UiaIAccessibleFromProvider
 @ stdcall UiaLookupId(long ptr)
 @ stub UiaNavigate
 @ stub UiaNodeFromFocus
@@ -77,15 +82,21 @@
 @ stub UiaNodeFromProvider
 @ stub UiaNodeRelease
 @ stub UiaPatternRelease
+#@ stub UiaProviderForNonClient
+#@ stub UiaProviderFromIAccessible
 @ stub UiaRaiseAsyncContentLoadedEvent
 @ stdcall UiaRaiseAutomationEvent(ptr long)
 @ stub UiaRaiseAutomationPropertyChangedEvent
+#@ stub UiaRaiseChangesEvent
+#@ stub UiaRaiseNotificationEvent
 @ stub UiaRaiseStructureChangedEvent
+#@ stub UiaRaiseTextEditTextChangedEvent
 @ stub UiaRegisterProviderCallback
 @ stub UiaRemoveEvent
 @ stdcall UiaReturnRawElementProvider(long long long ptr)
 @ stub UiaSetFocus
 @ stub UiaTextRangeRelease
+#@ stub UpdateErrorLoggingCallback
 @ stub ValuePattern_SetValue
 @ stub VirtualizedItemPattern_Realize
 @ stub WindowPattern_Close
