@@ -2121,7 +2121,7 @@ static HRESULT WINAPI DOMCustomEvent_initCustomEvent(IDOMCustomEvent *iface, BST
     DOMCustomEvent *This = impl_from_IDOMCustomEvent(iface);
     HRESULT hres;
 
-    TRACE("(%p)->(%s %x %x %p)\n", This, debugstr_w(type), can_bubble, cancelable, debugstr_variant(detail));
+    TRACE("(%p)->(%s %x %x %s)\n", This, debugstr_w(type), can_bubble, cancelable, debugstr_variant(detail));
 
     hres = IDOMEvent_initEvent(&This->event.IDOMEvent_iface, type, can_bubble, cancelable);
     if(FAILED(hres))
