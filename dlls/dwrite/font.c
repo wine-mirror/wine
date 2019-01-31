@@ -240,6 +240,8 @@ struct dwrite_fontface {
     FONTSIGNATURE fontsig;
     UINT32 glyph_image_formats;
 
+    struct scriptshaping_cache *shaping_cache;
+
     LOGFONTW lf;
 };
 
@@ -262,6 +264,47 @@ struct dwrite_fontfacereference {
     USHORT simulations;
     IDWriteFactory5 *factory;
 };
+
+static void dwrite_grab_font_table(void *context, UINT32 table, const BYTE **data, UINT32 *size, void **data_context)
+{
+    struct dwrite_fontface *fontface = context;
+    BOOL exists = FALSE;
+
+    if (FAILED(IDWriteFontFace4_TryGetFontTable(&fontface->IDWriteFontFace4_iface, table, (const void **)data,
+            size, data_context, &exists)) || !exists)
+    {
+        *data = NULL;
+        *size = 0;
+        *data_context = NULL;
+    }
+}
+
+static void dwrite_release_font_table(void *context, void *data_context)
+{
+    struct dwrite_fontface *fontface = context;
+    IDWriteFontFace4_ReleaseFontTable(&fontface->IDWriteFontFace4_iface, data_context);
+}
+
+static UINT16 dwrite_get_font_upem(void *context)
+{
+    struct dwrite_fontface *fontface = context;
+    return fontface->metrics.designUnitsPerEm;
+}
+
+static const struct shaping_font_ops dwrite_font_ops =
+{
+    dwrite_grab_font_table,
+    dwrite_release_font_table,
+    dwrite_get_font_upem,
+};
+
+struct scriptshaping_cache *fontface_get_shaping_cache(struct dwrite_fontface *fontface)
+{
+    if (fontface->shaping_cache)
+        return fontface->shaping_cache;
+
+    return fontface->shaping_cache = create_scriptshaping_cache(fontface, &dwrite_font_ops);
+}
 
 static inline struct dwrite_fontface *impl_from_IDWriteFontFace4(IDWriteFontFace4 *iface)
 {
@@ -493,7 +536,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace4 *iface)
             factory_unlock(This->factory);
             heap_free(This->cached);
         }
-
+        release_scriptshaping_cache(This->shaping_cache);
         if (This->cmap.context)
             IDWriteFontFace4_ReleaseFontTable(iface, This->cmap.context);
         if (This->vdmx.context)
@@ -1775,7 +1818,7 @@ static struct dwrite_font *unsafe_impl_from_IDWriteFont(IDWriteFont *iface)
     return CONTAINING_RECORD(iface, struct dwrite_font, IDWriteFont3_iface);
 }
 
-static struct dwrite_fontface *unsafe_impl_from_IDWriteFontFace(IDWriteFontFace *iface)
+struct dwrite_fontface *unsafe_impl_from_IDWriteFontFace(IDWriteFontFace *iface)
 {
     if (!iface)
         return NULL;
@@ -5363,7 +5406,7 @@ static inline void transform_point(D2D_POINT_2F *point, const DWRITE_MATRIX *m)
     *point = ret;
 }
 
-static float fontface_get_scaled_design_advance(struct dwrite_fontface *fontface, DWRITE_MEASURING_MODE measuring_mode,
+float fontface_get_scaled_design_advance(struct dwrite_fontface *fontface, DWRITE_MEASURING_MODE measuring_mode,
         float emsize, float ppdip, const DWRITE_MATRIX *transform, UINT16 glyph, BOOL is_sideways)
 {
     unsigned int upem = fontface->metrics.designUnitsPerEm;

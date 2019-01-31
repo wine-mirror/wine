@@ -23,32 +23,26 @@
 
 #include "dwrite_private.h"
 
-struct scriptshaping_cache
+struct scriptshaping_cache *create_scriptshaping_cache(void *context, const struct shaping_font_ops *font_ops)
 {
-    IDWriteFontFace *fontface;
-};
+    struct scriptshaping_cache *cache;
 
-HRESULT create_scriptshaping_cache(IDWriteFontFace *fontface, struct scriptshaping_cache **cache)
-{
-    struct scriptshaping_cache *ret;
+    cache = heap_alloc_zero(sizeof(*cache));
+    if (!cache)
+        return NULL;
 
-    ret = heap_alloc(sizeof(*ret));
-    if (!ret)
-        return E_OUTOFMEMORY;
+    cache->font = font_ops;
+    cache->context = context;
 
-    ret->fontface = fontface;
-    IDWriteFontFace_AddRef(fontface);
+    cache->upem = cache->font->get_font_upem(cache->context);
 
-    *cache = ret;
-
-    return S_OK;
+    return cache;
 }
 
 void release_scriptshaping_cache(struct scriptshaping_cache *cache)
 {
     if (!cache)
         return;
-    IDWriteFontFace_Release(cache->fontface);
     heap_free(cache);
 }
 
@@ -160,10 +154,24 @@ static HRESULT latn_set_text_glyphs_props(struct scriptshaping_context *context,
     return hr;
 }
 
+static const DWORD std_gpos_tags[] =
+{
+    DWRITE_FONT_FEATURE_TAG_KERNING,
+    DWRITE_FONT_FEATURE_TAG_MARK_POSITIONING,
+    DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING,
+};
+
+static const struct shaping_features std_gpos_features =
+{
+    std_gpos_tags,
+    ARRAY_SIZE(std_gpos_tags),
+};
+
 const struct scriptshaping_ops latn_shaping_ops =
 {
     NULL,
-    latn_set_text_glyphs_props
+    latn_set_text_glyphs_props,
+    &std_gpos_features,
 };
 
 const struct scriptshaping_ops default_shaping_ops =
@@ -171,3 +179,11 @@ const struct scriptshaping_ops default_shaping_ops =
     NULL,
     default_set_text_glyphs_props
 };
+
+HRESULT shape_get_positions(struct scriptshaping_context *context, const DWORD *scripts,
+        const struct shaping_features *features)
+{
+    /* FIXME: stub */
+
+    return S_OK;
+}

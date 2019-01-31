@@ -192,6 +192,12 @@ extern void factory_lock(IDWriteFactory5*) DECLSPEC_HIDDEN;
 extern void factory_unlock(IDWriteFactory5*) DECLSPEC_HIDDEN;
 extern HRESULT create_inmemory_fileloader(IDWriteFontFileLoader**) DECLSPEC_HIDDEN;
 
+struct dwrite_fontface;
+
+extern float fontface_get_scaled_design_advance(struct dwrite_fontface *fontface, DWRITE_MEASURING_MODE measuring_mode,
+        float emsize, float ppdip, const DWRITE_MATRIX *transform, UINT16 glyph, BOOL is_sideways) DECLSPEC_HIDDEN;
+extern struct dwrite_fontface *unsafe_impl_from_IDWriteFontFace(IDWriteFontFace *iface) DECLSPEC_HIDDEN;
+
 /* Opentype font table functions */
 struct dwrite_font_props {
     DWRITE_FONT_STYLE style;
@@ -320,7 +326,12 @@ enum SCRIPT_JUSTIFY
     SCRIPT_JUSTIFY_ARABIC_SEEN_M
 };
 
-struct scriptshaping_cache;
+struct scriptshaping_cache
+{
+    const struct shaping_font_ops *font;
+    void *context;
+    UINT16 upem;
+};
 
 struct scriptshaping_context
 {
@@ -328,21 +339,38 @@ struct scriptshaping_context
     UINT32 language_tag;
 
     const WCHAR *text;
-    UINT32 length;
+    unsigned int length;
     BOOL is_rtl;
-
-    UINT32 max_glyph_count;
 };
 
-extern HRESULT create_scriptshaping_cache(IDWriteFontFace*,struct scriptshaping_cache**) DECLSPEC_HIDDEN;
+struct shaping_font_ops
+{
+    void (*grab_font_table)(void *context, UINT32 table, const BYTE **data, UINT32 *size, void **data_context);
+    void (*release_font_table)(void *context, void *data_context);
+    UINT16 (*get_font_upem)(void *context);
+};
+
+extern struct scriptshaping_cache *create_scriptshaping_cache(void *context,
+        const struct shaping_font_ops *font_ops) DECLSPEC_HIDDEN;
 extern void release_scriptshaping_cache(struct scriptshaping_cache*) DECLSPEC_HIDDEN;
+extern struct scriptshaping_cache *fontface_get_shaping_cache(struct dwrite_fontface *fontface) DECLSPEC_HIDDEN;
+
+struct shaping_features
+{
+    const DWORD *tags;
+    unsigned int count;
+};
 
 struct scriptshaping_ops
 {
     HRESULT (*contextual_shaping)(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices, UINT32* actual_glyph_count);
     HRESULT (*set_text_glyphs_props)(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices,
                                      UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props);
+    const struct shaping_features *gpos_features;
 };
 
 extern const struct scriptshaping_ops default_shaping_ops DECLSPEC_HIDDEN;
 extern const struct scriptshaping_ops latn_shaping_ops DECLSPEC_HIDDEN;
+
+extern HRESULT shape_get_positions(struct scriptshaping_context *context, const DWORD *scripts,
+        const struct shaping_features *features) DECLSPEC_HIDDEN;
