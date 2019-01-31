@@ -45,6 +45,8 @@ int gnutls_pkcs12_simple_parse(gnutls_pkcs12_t p12, const char *password,
     gnutls_x509_crt_t **extra_certs, unsigned int *extra_certs_len,
     gnutls_x509_crl_t * crl, unsigned int flags);
 
+int gnutls_x509_privkey_get_pk_algorithm2(gnutls_x509_privkey_t, unsigned int*);
+
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_global_deinit);
