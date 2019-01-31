@@ -1769,6 +1769,7 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
     PCCERT_CONTEXT ret;
     CertFindFunc find = NULL;
     CertCompareFunc compare = NULL;
+    CERT_ID cert_id;
 
     TRACE("(%p, %08x, %08x, %08x, %p, %p)\n", hCertStore, dwCertEncodingType,
 	 dwFlags, dwType, pvPara, pPrevCertContext);
@@ -1799,6 +1800,11 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
     case CERT_COMPARE_SUBJECT_CERT:
         compare = compare_cert_by_subject_cert;
         break;
+    case CERT_COMPARE_KEY_IDENTIFIER:
+        cert_id.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+        cert_id.u.KeyId = *(const CRYPT_HASH_BLOB *)pvPara;
+        pvPara = &cert_id;
+        /* fall through */
     case CERT_COMPARE_CERT_ID:
         compare = compare_cert_by_cert_id;
         break;
