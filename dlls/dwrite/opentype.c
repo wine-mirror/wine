@@ -424,6 +424,19 @@ struct gpos_gsub_header
     WORD lookup_list;
 };
 
+enum gpos_lookup_type
+{
+    GPOS_LOOKUP_SINGLE_ADJUSTMENT = 1,
+    GPOS_LOOKUP_PAIR_ADJUSTMENT = 2,
+    GPOS_LOOKUP_CURSIVE_ATTACHMENT = 3,
+    GPOS_LOOKUP_MARK_TO_BASE_ATTACHMENT = 4,
+    GPOS_LOOKUP_MARK_TO_LIGATURE_ATTACHMENT = 5,
+    GPOS_LOOKUP_MARK_TO_MARK_ATTACHMENT = 6,
+    GPOS_LOOKUP_CONTEXTUAL_POSITION = 7,
+    GPOS_LOOKUP_CONTEXTUAL_CHAINING_POSITION = 8,
+    GPOS_LOOKUP_EXTENSION_POSITION = 9,
+};
+
 enum OPENTYPE_PLATFORM_ID
 {
     OPENTYPE_PLATFORM_UNICODE = 0,
@@ -433,6 +446,13 @@ enum OPENTYPE_PLATFORM_ID
     OPENTYPE_PLATFORM_CUSTOM
 };
 
+struct ot_gpos_extensionpos_format1
+{
+    WORD format;
+    WORD lookup_type;
+    DWORD extension_offset;
+};
+
 struct ot_feature
 {
     WORD feature_params;
@@ -440,17 +460,19 @@ struct ot_feature
     WORD lookuplist_index[1];
 };
 
-typedef struct {
-    WORD LookupCount;
-    WORD Lookup[1];
-} OT_LookupList;
+struct ot_lookup_list
+{
+    WORD lookup_count;
+    WORD lookup[1];
+};
 
-typedef struct {
-    WORD LookupType;
-    WORD LookupFlag;
-    WORD SubTableCount;
-    WORD SubTable[1];
-} OT_LookupTable;
+struct ot_lookup_table
+{
+    WORD lookup_type;
+    WORD flags;
+    WORD subtable_count;
+    WORD subtable[1];
+};
 
 typedef struct {
     WORD SubstFormat;
@@ -2166,7 +2188,7 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
 {
     const struct gpos_gsub_header *header;
     const struct ot_feature_list *featurelist;
-    const OT_LookupList *lookup_list;
+    const struct ot_lookup_list *lookup_list;
     BOOL exists = FALSE, ret = FALSE;
     unsigned int i, j;
     const void *data;
@@ -2180,14 +2202,14 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
 
     header = data;
     featurelist = (struct ot_feature_list *)((BYTE*)header + GET_BE_WORD(header->feature_list));
-    lookup_list = (const OT_LookupList*)((BYTE*)header + GET_BE_WORD(header->lookup_list));
+    lookup_list = (const struct ot_lookup_list *)((BYTE*)header + GET_BE_WORD(header->lookup_list));
 
     for (i = 0; i < GET_BE_WORD(featurelist->feature_count); i++) {
         if (featurelist->features[i].tag == DWRITE_FONT_FEATURE_TAG_VERTICAL_WRITING) {
             const struct ot_feature *feature = (const struct ot_feature*)((BYTE*)featurelist + GET_BE_WORD(featurelist->features[i].offset));
             UINT16 lookup_count = GET_BE_WORD(feature->lookup_count), index, count, type;
             const GSUB_SingleSubstFormat2 *subst2;
-            const OT_LookupTable *lookup_table;
+            const struct ot_lookup_table *lookup_table;
             UINT32 offset;
 
             if (lookup_count == 0)
@@ -2196,17 +2218,17 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
             for (j = 0; j < lookup_count; ++j) {
                 /* check if lookup is empty */
                 index = GET_BE_WORD(feature->lookuplist_index[j]);
-                lookup_table = (const OT_LookupTable*)((BYTE*)lookup_list + GET_BE_WORD(lookup_list->Lookup[index]));
+                lookup_table = (const struct ot_lookup_table *)((BYTE*)lookup_list + GET_BE_WORD(lookup_list->lookup[index]));
 
-                type = GET_BE_WORD(lookup_table->LookupType);
+                type = GET_BE_WORD(lookup_table->lookup_type);
                 if (type != GSUB_LOOKUP_SINGLE_SUBST && type != GSUB_LOOKUP_EXTENSION_SUBST)
                     continue;
 
-                count = GET_BE_WORD(lookup_table->SubTableCount);
+                count = GET_BE_WORD(lookup_table->subtable_count);
                 if (count == 0)
                     continue;
 
-                offset = GET_BE_WORD(lookup_table->SubTable[0]);
+                offset = GET_BE_WORD(lookup_table->subtable[0]);
                 if (type == GSUB_LOOKUP_EXTENSION_SUBST) {
                     const GSUB_ExtensionPosFormat1 *ext = (const GSUB_ExtensionPosFormat1 *)((const BYTE *)lookup_table + offset);
                     if (GET_BE_WORD(ext->SubstFormat) == 1)
@@ -2497,9 +2519,178 @@ DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWO
     return 0;
 }
 
+struct lookup
+{
+    unsigned int offset;
+    unsigned int subtable_count;
+    unsigned int flags;
+};
+
+struct glyph_iterator
+{
+    const struct scriptshaping_context *context;
+    unsigned int flags;
+    unsigned int pos;
+    unsigned int len;
+};
+
+static void glyph_iterator_init(const struct scriptshaping_context *context, unsigned int flags, unsigned int pos,
+        unsigned int len, struct glyph_iterator *iter)
+{
+    iter->context = context;
+    iter->flags = flags;
+    iter->pos = pos;
+    iter->len = len;
+}
+
+static BOOL glyph_iterator_match(const struct glyph_iterator *iter)
+{
+    /* FIXME: implement class matching */
+    return TRUE;
+}
+
+static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_context *context,
+        struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    return FALSE;
+}
+
+static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_context *context,
+        struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    return FALSE;
+}
+
+static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_context *context,
+        struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    return FALSE;
+}
+
+static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(const struct scriptshaping_context *context,
+        struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    return FALSE;
+}
+
+static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(const struct scriptshaping_context *context,
+        struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    return FALSE;
+}
+
+static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(const struct scriptshaping_context *context,
+        struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    return FALSE;
+}
+
+static BOOL opentype_layout_apply_gpos_contextual_positioning(const struct scriptshaping_context *context,
+        struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    return FALSE;
+}
+
+static BOOL opentype_layout_apply_gpos_chaining_contextual_positioning(const struct scriptshaping_context *context,
+        struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    return FALSE;
+}
+
 static void opentype_layout_apply_gpos_lookup(struct scriptshaping_context *context, int lookup_index)
 {
-    /* FIXME: stub */
+    struct scriptshaping_cache *cache = context->cache;
+    const struct ot_lookup_table *lookup_table;
+    struct glyph_iterator iter;
+    struct lookup lookup;
+    WORD lookup_type;
+
+    lookup.offset = table_read_be_word(&cache->gpos.table, cache->gpos.lookup_list +
+            FIELD_OFFSET(struct ot_lookup_list, lookup[lookup_index]));
+    if (!lookup.offset)
+        return;
+
+    lookup.offset += cache->gpos.lookup_list;
+
+    if (!(lookup_table = table_read_ensure(&cache->gpos.table, lookup.offset, sizeof(*lookup_table))))
+        return;
+
+    lookup.subtable_count = GET_BE_WORD(lookup_table->subtable_count);
+    if (!lookup.subtable_count)
+        return;
+
+    lookup_type = GET_BE_WORD(lookup_table->lookup_type);
+    if (lookup_type == GPOS_LOOKUP_EXTENSION_POSITION)
+    {
+        const struct ot_gpos_extensionpos_format1 *extension = table_read_ensure(&cache->gpos.table,
+                lookup.offset + GET_BE_WORD(lookup_table->subtable[0]), sizeof(*extension));
+        WORD format;
+
+        if (!extension)
+            return;
+
+        format = GET_BE_WORD(extension->format);
+        if (format != 1)
+        {
+            WARN("Unexpected extension table format %u.\n", format);
+            return;
+        }
+
+        lookup_type = GET_BE_WORD(extension->lookup_type);
+    }
+    lookup.flags = GET_BE_WORD(lookup_table->flags);
+
+    glyph_iterator_init(context, lookup.flags, 0, context->glyph_count, &iter);
+
+    while (iter.pos < context->glyph_count)
+    {
+        BOOL ret;
+
+        if (!glyph_iterator_match(&iter))
+        {
+            ++iter.pos;
+            continue;
+        }
+
+        switch (lookup_type)
+        {
+            case GPOS_LOOKUP_SINGLE_ADJUSTMENT:
+                ret = opentype_layout_apply_gpos_single_adjustment(context, &iter, &lookup);
+                break;
+            case GPOS_LOOKUP_PAIR_ADJUSTMENT:
+                ret = opentype_layout_apply_gpos_pair_adjustment(context, &iter, &lookup);
+                break;
+            case GPOS_LOOKUP_CURSIVE_ATTACHMENT:
+                ret = opentype_layout_apply_gpos_cursive_attachment(context, &iter, &lookup);
+                break;
+            case GPOS_LOOKUP_MARK_TO_BASE_ATTACHMENT:
+                ret = opentype_layout_apply_gpos_mark_to_base_attachment(context, &iter, &lookup);
+                break;
+            case GPOS_LOOKUP_MARK_TO_LIGATURE_ATTACHMENT:
+                ret = opentype_layout_apply_gpos_mark_to_lig_attachment(context, &iter, &lookup);
+                break;
+            case GPOS_LOOKUP_MARK_TO_MARK_ATTACHMENT:
+                ret = opentype_layout_apply_gpos_mark_to_mark_attachment(context, &iter, &lookup);
+                break;
+            case GPOS_LOOKUP_CONTEXTUAL_POSITION:
+                ret = opentype_layout_apply_gpos_contextual_positioning(context, &iter, &lookup);
+                break;
+            case GPOS_LOOKUP_CONTEXTUAL_CHAINING_POSITION:
+                ret = opentype_layout_apply_gpos_chaining_contextual_positioning(context, &iter, &lookup);
+                break;
+            case GPOS_LOOKUP_EXTENSION_POSITION:
+                WARN("Recursive extension lookup.\n");
+                ret = FALSE;
+                break;
+            default:
+                WARN("Unknown lookup type %u.\n", lookup_type);
+                return;
+        }
+
+        /* Some lookups update position after making changes. */
+        if (!ret)
+            ++iter.pos;
+    }
 }
 
 struct lookups
