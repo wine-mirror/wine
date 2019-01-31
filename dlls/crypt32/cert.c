@@ -826,7 +826,7 @@ BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
  * the certificate if info is NULL.  The acquired provider is returned in
  * *phCryptProv, and the key spec for the provider is returned in *pdwKeySpec.
  */
-static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert,
+static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert, DWORD dwFlags,
  PCRYPT_KEY_PROV_INFO info, HCRYPTPROV *phCryptProv, DWORD *pdwKeySpec)
 {
     DWORD size = 0;
@@ -857,7 +857,7 @@ static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert,
     if (ret)
     {
         ret = CryptAcquireContextW(phCryptProv, info->pwszContainerName,
-         info->pwszProvName, info->dwProvType, 0);
+         info->pwszProvName, info->dwProvType, (dwFlags & CRYPT_ACQUIRE_SILENT_FLAG) ? CRYPT_SILENT : 0);
         if (ret)
         {
             DWORD i;
@@ -924,7 +924,7 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
     }
     if (!*phCryptProv)
     {
-        ret = CRYPT_AcquirePrivateKeyFromProvInfo(pCert, info,
+        ret = CRYPT_AcquirePrivateKeyFromProvInfo(pCert, dwFlags, info,
          &keyContext.hCryptProv, &keyContext.dwKeySpec);
         if (ret)
         {
