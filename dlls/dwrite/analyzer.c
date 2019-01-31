@@ -1313,6 +1313,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
         context.text = text;
         context.length = text_len;
         context.is_rtl = is_rtl;
+        context.u.pos.glyphs = glyphs;
         context.u.pos.glyph_props = glyph_props;
         context.glyph_count = glyph_count;
         context.advances = advances;
@@ -1374,6 +1375,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
         context.text = text;
         context.length = text_len;
         context.is_rtl = is_rtl;
+        context.u.pos.glyphs = glyphs;
         context.u.pos.glyph_props = glyph_props;
         context.glyph_count = glyph_count;
         context.advances = advances;

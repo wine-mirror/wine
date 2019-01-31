@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_OS2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
 #define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
 #define MS_TTCF_TAG DWRITE_MAKE_OPENTYPE_TAG('t','t','c','f')
+#define MS_GDEF_TAG DWRITE_MAKE_OPENTYPE_TAG('G','D','E','F')
 #define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
 #define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
 #define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
@@ -416,12 +417,63 @@ struct ot_script_list
     struct ot_script_record scripts[1];
 };
 
+enum ot_gdef_class
+{
+    GDEF_CLASS_UNCLASSIFIED = 0,
+    GDEF_CLASS_BASE = 1,
+    GDEF_CLASS_LIGATURE = 2,
+    GDEF_CLASS_MARK = 3,
+    GDEF_CLASS_COMPONENT = 4,
+    GDEF_CLASS_MAX = GDEF_CLASS_COMPONENT,
+};
+
+struct gdef_header
+{
+    DWORD version;
+    WORD classdef;
+    WORD attach_list;
+    WORD ligcaret_list;
+    WORD markattach_classdef;
+};
+
+struct ot_gdef_classdef_format1
+{
+    WORD format;
+    WORD start_glyph;
+    WORD glyph_count;
+    WORD classes[1];
+};
+
+struct ot_gdef_class_range
+{
+    WORD start_glyph;
+    WORD end_glyph;
+    WORD glyph_class;
+};
+
+struct ot_gdef_classdef_format2
+{
+    WORD format;
+    WORD range_count;
+    struct ot_gdef_class_range ranges[1];
+};
+
 struct gpos_gsub_header
 {
     DWORD version;
     WORD script_list;
     WORD feature_list;
     WORD lookup_list;
+};
+
+enum gsub_gpos_lookup_flags
+{
+    LOOKUP_FLAG_RTL = 0x1,
+    LOOKUP_FLAG_IGNORE_BASE = 0x2,
+    LOOKUP_FLAG_IGNORE_LIGATURES = 0x4,
+    LOOKUP_FLAG_IGNORE_MARKS = 0x8,
+
+    LOOKUP_FLAG_IGNORE_MASK = 0xe,
 };
 
 enum gpos_lookup_type
@@ -2447,6 +2499,12 @@ void opentype_layout_scriptshaping_cache_init(struct scriptshaping_cache *cache)
         cache->gpos.lookup_list = table_read_be_word(&cache->gpos.table,
                 FIELD_OFFSET(struct gpos_gsub_header, lookup_list));
     }
+
+    cache->font->grab_font_table(cache->context, MS_GDEF_TAG, &cache->gdef.table.data, &cache->gdef.table.size,
+            &cache->gdef.table.context);
+
+    if (cache->gdef.table.data)
+        cache->gdef.classdef = table_read_be_word(&cache->gdef.table, FIELD_OFFSET(struct gdef_header, classdef));
 }
 
 DWORD opentype_layout_find_script(const struct scriptshaping_cache *cache, DWORD kind, DWORD script,
@@ -2519,6 +2577,64 @@ DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWO
     return 0;
 }
 
+static int gdef_class_compare_format2(const void *g, const void *r)
+{
+    const struct ot_gdef_class_range *range = r;
+    UINT16 glyph = *(UINT16 *)g;
+
+    if (glyph < GET_BE_WORD(range->start_glyph))
+        return -1;
+    else if (glyph > GET_BE_WORD(range->end_glyph))
+        return 1;
+    else
+        return 0;
+}
+
+static unsigned int opentype_layout_get_glyph_class(const struct dwrite_fonttable *table,
+        unsigned int offset, UINT16 glyph)
+{
+    WORD format = table_read_be_word(table, offset), count;
+    unsigned int glyph_class = GDEF_CLASS_UNCLASSIFIED;
+
+    if (format == 1)
+    {
+        const struct ot_gdef_classdef_format1 *format1;
+
+        count = table_read_be_word(table, offset + FIELD_OFFSET(struct ot_gdef_classdef_format1, glyph_count));
+        format1 = table_read_ensure(table, offset, FIELD_OFFSET(struct ot_gdef_classdef_format1, classes[count]));
+        if (format1)
+        {
+            WORD start_glyph = GET_BE_WORD(format1->start_glyph);
+            if (glyph >= start_glyph && (glyph - start_glyph) < count)
+            {
+                glyph_class = GET_BE_WORD(format1->classes[glyph - start_glyph]);
+                if (glyph_class > GDEF_CLASS_MAX)
+                     glyph_class = GDEF_CLASS_UNCLASSIFIED;
+            }
+        }
+    }
+    else if (format == 2)
+    {
+        const struct ot_gdef_classdef_format2 *format2;
+
+        count = table_read_be_word(table, offset + FIELD_OFFSET(struct ot_gdef_classdef_format2, range_count));
+        format2 = table_read_ensure(table, offset, FIELD_OFFSET(struct ot_gdef_classdef_format2, ranges[count]));
+        if (format2)
+        {
+            const struct ot_gdef_class_range *range = bsearch(&glyph, format2->ranges, count,
+                    sizeof(struct ot_gdef_class_range), gdef_class_compare_format2);
+            glyph_class = range && glyph <= GET_BE_WORD(range->end_glyph) ?
+                    GET_BE_WORD(range->glyph_class) : GDEF_CLASS_UNCLASSIFIED;
+            if (glyph_class > GDEF_CLASS_MAX)
+                 glyph_class = GDEF_CLASS_UNCLASSIFIED;
+        }
+    }
+    else
+        WARN("Unknown GDEF format %u.\n", format);
+
+    return glyph_class;
+}
+
 struct lookup
 {
     unsigned int offset;
@@ -2545,7 +2661,16 @@ static void glyph_iterator_init(const struct scriptshaping_context *context, uns
 
 static BOOL glyph_iterator_match(const struct glyph_iterator *iter)
 {
-    /* FIXME: implement class matching */
+    struct scriptshaping_cache *cache = iter->context->cache;
+
+    if (cache->gdef.classdef)
+    {
+        unsigned int glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef,
+                iter->context->u.pos.glyphs[iter->pos]);
+        if ((1 << glyph_class) & iter->flags & LOOKUP_FLAG_IGNORE_MASK)
+            return FALSE;
+    }
+
     return TRUE;
 }
 

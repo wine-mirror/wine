@@ -366,6 +366,12 @@ struct scriptshaping_cache
         unsigned int feature_list;
         unsigned int lookup_list;
     } gpos;
+
+    struct
+    {
+        struct dwrite_fonttable table;
+        unsigned int classdef;
+    } gdef;
 };
 
 struct scriptshaping_context
@@ -381,6 +387,7 @@ struct scriptshaping_context
     {
         struct
         {
+            const UINT16 *glyphs;
             const DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
         } pos;
     } u;
