@@ -114,7 +114,7 @@ static void run_test(BOOL expect_success)
     HRESULT result_expected = expect_success ? S_OK : HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
     hr = CoCreateInstance(&CLSID_Test, NULL, CLSCTX_INPROC_SERVER, &IID_ITest, (void**)&test);
-    todo_wine
+    todo_wine_if(!expect_success)
     ok(hr == result_expected, "Expected %x, got %x\n", result_expected, hr);
 
     if (hr == S_OK)
@@ -135,7 +135,7 @@ static void run_test(BOOL expect_success)
     {
         ITest *test2 = NULL;
         hr = IClassFactory_CreateInstance(classFactory, NULL, &IID_ITest, (void **)&test2);
-        todo_wine
+        todo_wine_if(!expect_success)
         ok(hr == S_OK, "Got %x\n", hr);
 
         if (hr == S_OK)

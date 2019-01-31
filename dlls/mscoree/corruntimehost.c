@@ -29,6 +29,7 @@
 #include "winreg.h"
 #include "ole2.h"
 #include "shellapi.h"
+#include "shlwapi.h"
 
 #include "cor.h"
 #include "mscoree.h"
@@ -40,6 +41,7 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
@@ -66,6 +68,43 @@ struct dll_fixup
     VTableFixup *fixup;
     void *vtable;
     void *tokens; /* pointer into process heap */
+};
+
+struct comclassredirect_data
+{
+    ULONG size;
+    BYTE  res;
+    BYTE  miscmask;
+    BYTE  res1[2];
+    DWORD model;
+    GUID  clsid;
+    GUID  alias;
+    GUID  clsid2;
+    GUID  tlbid;
+    ULONG name_len;
+    ULONG name_offset;
+    ULONG progid_len;
+    ULONG progid_offset;
+    ULONG clrdata_len;
+    ULONG clrdata_offset;
+    DWORD miscstatus;
+    DWORD miscstatuscontent;
+    DWORD miscstatusthumbnail;
+    DWORD miscstatusicon;
+    DWORD miscstatusdocprint;
+};
+
+struct clrclass_data
+{
+    ULONG size;
+    DWORD res[2];
+    ULONG module_len;
+    ULONG module_offset;
+    ULONG name_len;
+    ULONG name_offset;
+    ULONG version_len;
+    ULONG version_offset;
+    DWORD res2[2];
 };
 
 static MonoDomain* domain_attach(MonoDomain *domain)
@@ -1606,6 +1645,75 @@ HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid,
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+static BOOL try_create_registration_free_com(REFIID clsid, WCHAR *classname, UINT classname_size, WCHAR *filename, UINT filename_size)
+{
+    ACTCTX_SECTION_KEYED_DATA guid_info = { sizeof(ACTCTX_SECTION_KEYED_DATA) };
+    ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *assembly_info = NULL;
+    SIZE_T bytes_assembly_info;
+    struct comclassredirect_data *redirect_data;
+    struct clrclass_data *class_data;
+    void *ptr_name;
+    const WCHAR *ptr_path_start, *ptr_path_end;
+    WCHAR path[MAX_PATH] = {0};
+    WCHAR str_dll[] = {'.','d','l','l',0};
+    BOOL ret = FALSE;
+
+    if (!FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, 0, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, clsid, &guid_info))
+    {
+        DWORD error = GetLastError();
+        if (error != ERROR_SXS_KEY_NOT_FOUND)
+            ERR("Failed to find guid: %d\n", error);
+        goto end;
+    }
+
+    QueryActCtxW(0, guid_info.hActCtx, &guid_info.ulAssemblyRosterIndex, AssemblyDetailedInformationInActivationContext, NULL, 0, &bytes_assembly_info);
+    assembly_info = heap_alloc(bytes_assembly_info);
+    if (!QueryActCtxW(0, guid_info.hActCtx, &guid_info.ulAssemblyRosterIndex,
+            AssemblyDetailedInformationInActivationContext, assembly_info, bytes_assembly_info, &bytes_assembly_info))
+    {
+        ERR("QueryActCtxW failed: %d!\n", GetLastError());
+        goto end;
+    }
+
+    redirect_data = guid_info.lpData;
+    class_data = (void *)((char *)redirect_data + redirect_data->clrdata_offset);
+
+    ptr_name = (char *)class_data + class_data->name_offset;
+    if (lstrlenW(ptr_name) + 1 > classname_size) /* Include null-terminator */
+    {
+        ERR("Buffer is too small\n");
+        goto end;
+    }
+    strcpyW(classname, ptr_name);
+
+    ptr_path_start = assembly_info->lpAssemblyEncodedAssemblyIdentity;
+    ptr_path_end = strchrW(ptr_path_start, ',');
+    memcpy(path, ptr_path_start, (char*)ptr_path_end - (char*)ptr_path_start);
+
+    GetModuleFileNameW(NULL, filename, filename_size);
+    PathRemoveFileSpecW(filename);
+
+    if (lstrlenW(filename) + lstrlenW(path) + ARRAY_SIZE(str_dll) + 1 > filename_size) /* Include blackslash */
+    {
+        ERR("Buffer is too small\n");
+        goto end;
+    }
+
+    PathAppendW(filename, path);
+    strcatW(filename, str_dll);
+
+    ret = TRUE;
+
+end:
+    if (assembly_info)
+        heap_free(assembly_info);
+
+    if (guid_info.hActCtx)
+        ReleaseActCtx(guid_info.hActCtx);
+
+    return ret;
+}
+
 #define CHARS_IN_GUID 39
 
 HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
@@ -1640,75 +1748,82 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
     TRACE("Registry key: %s\n", debugstr_w(path));
 
     res = RegOpenKeyExW(HKEY_CLASSES_ROOT, path, 0, KEY_READ, &key);
-    if (res == ERROR_FILE_NOT_FOUND)
-        return CLASS_E_CLASSNOTAVAILABLE;
-
-    res = RegGetValueW( key, NULL, wszClass, RRF_RT_REG_SZ, NULL, classname, &dwBufLen);
-    if(res != ERROR_SUCCESS)
+    if (res != ERROR_FILE_NOT_FOUND)
     {
-        WARN("Class value cannot be found.\n");
-        hr = CLASS_E_CLASSNOTAVAILABLE;
-        goto cleanup;
-    }
+        res = RegGetValueW( key, NULL, wszClass, RRF_RT_REG_SZ, NULL, classname, &dwBufLen);
+        if(res != ERROR_SUCCESS)
+        {
+            WARN("Class value cannot be found.\n");
+            hr = CLASS_E_CLASSNOTAVAILABLE;
+            goto cleanup;
+        }
 
-    TRACE("classname (%s)\n", debugstr_w(classname));
+        TRACE("classname (%s)\n", debugstr_w(classname));
 
-    dwBufLen = MAX_PATH + 8;
-    res = RegGetValueW( key, NULL, wszCodebase, RRF_RT_REG_SZ, NULL, codebase, &dwBufLen);
-    if(res == ERROR_SUCCESS)
-    {
-        /* Strip file:/// */
-        if(strncmpW(codebase, wszFileSlash, strlenW(wszFileSlash)) == 0)
-            offset = strlenW(wszFileSlash);
+        dwBufLen = MAX_PATH + 8;
+        res = RegGetValueW( key, NULL, wszCodebase, RRF_RT_REG_SZ, NULL, codebase, &dwBufLen);
+        if(res == ERROR_SUCCESS)
+        {
+            /* Strip file:/// */
+            if(strncmpW(codebase, wszFileSlash, strlenW(wszFileSlash)) == 0)
+                offset = strlenW(wszFileSlash);
 
-        strcpyW(filename, codebase + offset);
+            strcpyW(filename, codebase + offset);
+        }
+        else
+        {
+            WCHAR assemblyname[MAX_PATH + 8];
+
+            hr = CLASS_E_CLASSNOTAVAILABLE;
+            WARN("CodeBase value cannot be found, trying Assembly.\n");
+            /* get the last subkey of InprocServer32 */
+            res = RegQueryInfoKeyW(key, 0, 0, 0, &numKeys, 0, 0, 0, 0, 0, 0, 0);
+            if (res != ERROR_SUCCESS || numKeys == 0)
+                goto cleanup;
+            numKeys--;
+            keyLength = ARRAY_SIZE(subkeyName);
+            res = RegEnumKeyExW(key, numKeys, subkeyName, &keyLength, 0, 0, 0, 0);
+            if (res != ERROR_SUCCESS)
+                goto cleanup;
+            res = RegOpenKeyExW(key, subkeyName, 0, KEY_READ, &subkey);
+            if (res != ERROR_SUCCESS)
+                goto cleanup;
+            dwBufLen = MAX_PATH + 8;
+            res = RegGetValueW(subkey, NULL, wszAssembly, RRF_RT_REG_SZ, NULL, assemblyname, &dwBufLen);
+            RegCloseKey(subkey);
+            if (res != ERROR_SUCCESS)
+                goto cleanup;
+
+            hr = get_file_from_strongname(assemblyname, filename, MAX_PATH);
+            if (FAILED(hr))
+            {
+                /*
+                 * The registry doesn't have a CodeBase entry and it's not in the GAC.
+                 *
+                 * Use the Assembly Key to retrieve the filename.
+                 *    Assembly : REG_SZ : AssemblyName, Version=X.X.X.X, Culture=neutral, PublicKeyToken=null
+                 */
+                WCHAR *ns;
+
+                WARN("Attempt to load from the application directory.\n");
+                GetModuleFileNameW(NULL, filename, MAX_PATH);
+                ns = strrchrW(filename, '\\');
+                *(ns+1) = '\0';
+
+                ns = strchrW(assemblyname, ',');
+                *(ns) = '\0';
+                strcatW(filename, assemblyname);
+                *(ns) = '.';
+                strcatW(filename, wszDLL);
+            }
+        }
     }
     else
     {
-        WCHAR assemblyname[MAX_PATH + 8];
+        if (!try_create_registration_free_com(riid, classname, ARRAY_SIZE(classname), filename, ARRAY_SIZE(filename)))
+            return CLASS_E_CLASSNOTAVAILABLE;
 
-        hr = CLASS_E_CLASSNOTAVAILABLE;
-        WARN("CodeBase value cannot be found, trying Assembly.\n");
-        /* get the last subkey of InprocServer32 */
-        res = RegQueryInfoKeyW(key, 0, 0, 0, &numKeys, 0, 0, 0, 0, 0, 0, 0);
-        if (res != ERROR_SUCCESS || numKeys == 0)
-            goto cleanup;
-        numKeys--;
-        keyLength = ARRAY_SIZE(subkeyName);
-        res = RegEnumKeyExW(key, numKeys, subkeyName, &keyLength, 0, 0, 0, 0);
-        if (res != ERROR_SUCCESS)
-            goto cleanup;
-        res = RegOpenKeyExW(key, subkeyName, 0, KEY_READ, &subkey);
-        if (res != ERROR_SUCCESS)
-            goto cleanup;
-        dwBufLen = MAX_PATH + 8;
-        res = RegGetValueW(subkey, NULL, wszAssembly, RRF_RT_REG_SZ, NULL, assemblyname, &dwBufLen);
-        RegCloseKey(subkey);
-        if (res != ERROR_SUCCESS)
-            goto cleanup;
-
-        hr = get_file_from_strongname(assemblyname, filename, MAX_PATH);
-        if (FAILED(hr))
-        {
-            /*
-             * The registry doesn't have a CodeBase entry and it's not in the GAC.
-             *
-             * Use the Assembly Key to retrieve the filename.
-             *    Assembly : REG_SZ : AssemblyName, Version=X.X.X.X, Culture=neutral, PublicKeyToken=null
-             */
-            WCHAR *ns;
-
-            WARN("Attempt to load from the application directory.\n");
-            GetModuleFileNameW(NULL, filename, MAX_PATH);
-            ns = strrchrW(filename, '\\');
-            *(ns+1) = '\0';
-
-            ns = strchrW(assemblyname, ',');
-            *(ns) = '\0';
-            strcatW(filename, assemblyname);
-            *(ns) = '.';
-            strcatW(filename, wszDLL);
-        }
+        TRACE("classname (%s)\n", debugstr_w(classname));
     }
 
     TRACE("filename (%s)\n", debugstr_w(filename));
