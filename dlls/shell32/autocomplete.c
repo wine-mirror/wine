@@ -508,14 +508,14 @@ static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
     /* Return FALSE if we need to hide the listbox */
     WCHAR **str = ac->enum_strs;
     UINT start, end;
-    if (!str) return (ac->options & ACO_AUTOSUGGEST) ? FALSE : TRUE;
+    if (!str) return !(ac->options & ACO_AUTOSUGGEST);
 
     /* Windows seems to disable autoappend if ACO_NOPREFIXFILTERING is set */
     if (!(ac->options & ACO_NOPREFIXFILTERING) && len)
     {
         start = find_matching_enum_str(ac, 0, text, len, pfx_filter, -1);
         if (start == ~0)
-            return (ac->options & ACO_AUTOSUGGEST) ? FALSE : TRUE;
+            return !(ac->options & ACO_AUTOSUGGEST);
 
         if (flag == autoappend_flag_yes)
             autoappend_str(ac, text, len, filter_str_prefix(str[start], pfx_filter), hwnd);
