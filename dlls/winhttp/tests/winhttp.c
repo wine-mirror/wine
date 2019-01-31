@@ -3206,6 +3206,7 @@ static void test_multiple_reads(int port)
             char *buf = HeapAlloc( GetProcessHeap(), 0, len + 1 );
 
             ret = WinHttpReadData( req, buf, len, &bytes_read );
+            ok(ret, "WinHttpReadData failed: %u.\n", GetLastError());
             ok( len == bytes_read, "only got %u of %u available\n", bytes_read, len );
 
             HeapFree( GetProcessHeap(), 0, buf );
@@ -4699,6 +4700,7 @@ static void test_chunked_read(void)
             char *buf = HeapAlloc( GetProcessHeap(), 0, len + 1 );
 
             ret = WinHttpReadData( req, buf, len, &bytes_read );
+            ok(ret, "WinHttpReadData failed: %u.\n", GetLastError());
 
             buf[bytes_read] = 0;
             trace( "WinHttpReadData -> %d %u\n", ret, bytes_read );
