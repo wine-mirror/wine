@@ -3326,6 +3326,39 @@ static void test_PFXImportCertStore(void)
     CertCloseStore( store, 0 );
 }
 
+static void test_CryptQueryObject(void)
+{
+    CRYPT_DATA_BLOB pfx;
+    DWORD encoding_type, content_type, format_type;
+    HCERTSTORE store;
+    HCRYPTMSG msg;
+    const void *ctx;
+    BOOL ret;
+
+    SetLastError( 0xdeadbeef );
+    ret = CryptQueryObject( CERT_QUERY_OBJECT_BLOB, NULL, CERT_QUERY_CONTENT_FLAG_ALL,
+                            CERT_QUERY_FORMAT_FLAG_BINARY, 0, NULL, NULL, NULL, NULL, NULL, NULL );
+    ok( !ret, "success\n" );
+    ok( GetLastError() == E_INVALIDARG, "got %u\n", GetLastError() );
+
+    pfx.pbData = (BYTE *)pfxdata;
+    pfx.cbData = sizeof(pfxdata);
+    encoding_type = content_type = format_type = 0xdeadbeef;
+    store = (HCERTSTORE *)0xdeadbeef;
+    msg = (HCRYPTMSG *)0xdeadbeef;
+    ctx = (void *)0xdeadbeef;
+    ret = CryptQueryObject( CERT_QUERY_OBJECT_BLOB, &pfx, CERT_QUERY_CONTENT_FLAG_ALL,
+                            CERT_QUERY_FORMAT_FLAG_BINARY, 0, &encoding_type, &content_type, &format_type,
+                            &store, &msg, &ctx );
+    ok( ret, "got %u\n", GetLastError() );
+    ok( encoding_type == X509_ASN_ENCODING, "got %08x\n", encoding_type );
+    ok( content_type == CERT_QUERY_CONTENT_PFX, "got %08x\n", content_type );
+    ok( format_type == CERT_QUERY_FORMAT_BINARY, "got %08x\n", format_type );
+    ok( store == NULL, "got %p\n", store );
+    ok( msg == NULL, "got %p\n", msg );
+    ok( ctx == NULL, "got %p\n", ctx );
+}
+
 START_TEST(store)
 {
     /* various combinations of CertOpenStore */
@@ -3357,4 +3390,5 @@ START_TEST(store)
 
     test_I_UpdateStore();
     test_PFXImportCertStore();
+    test_CryptQueryObject();
 }

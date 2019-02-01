@@ -696,6 +696,48 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
     return ret;
 }
 
+static BOOL CRYPT_QueryPFXObject(DWORD dwObjectType, const void *pvObject,
+ DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
+ DWORD *pdwMsgAndCertEncodingType, DWORD *pdwContentType, DWORD *pdwFormatType,
+ HCERTSTORE *phCertStore, HCRYPTMSG *phMsg)
+{
+    CRYPT_DATA_BLOB blob = {0}, *ptr;
+    BOOL ret;
+
+    TRACE("(%d, %p, %08x, %08x, %p, %p, %p, %p, %p)\n", dwObjectType, pvObject,
+     dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
+     pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType, phCertStore,
+     phMsg);
+
+    switch (dwObjectType)
+    {
+    case CERT_QUERY_OBJECT_FILE:
+        if (!CRYPT_ReadBlobFromFile(pvObject, &blob)) return FALSE;
+        ptr = &blob;
+        break;
+
+    case CERT_QUERY_OBJECT_BLOB:
+        ptr = (CRYPT_DATA_BLOB *)pvObject;
+        break;
+
+    default:
+        return FALSE;
+    }
+
+    ret = PFXIsPFXBlob(ptr);
+    if (ret)
+    {
+        if (pdwMsgAndCertEncodingType) *pdwMsgAndCertEncodingType = X509_ASN_ENCODING;
+        if (pdwContentType) *pdwContentType = CERT_QUERY_CONTENT_PFX;
+        if (pdwFormatType) *pdwFormatType = CERT_QUERY_FORMAT_BINARY;
+        if (phCertStore) *phCertStore = NULL;
+        if (phMsg) *phMsg = NULL;
+    }
+
+    CryptMemFree(blob.pbData);
+    return ret;
+}
+
 BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
  DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
  DWORD dwFlags, DWORD *pdwMsgAndCertEncodingType, DWORD *pdwContentType,
@@ -703,8 +745,7 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
  const void **ppvContext)
 {
     static const DWORD unimplementedTypes =
-     CERT_QUERY_CONTENT_FLAG_PKCS10 | CERT_QUERY_CONTENT_FLAG_PFX |
-     CERT_QUERY_CONTENT_FLAG_CERT_PAIR;
+     CERT_QUERY_CONTENT_FLAG_PKCS10 | CERT_QUERY_CONTENT_FLAG_CERT_PAIR;
     BOOL ret = TRUE;
 
     TRACE("(%08x, %p, %08x, %08x, %08x, %p, %p, %p, %p, %p, %p)\n",
@@ -777,6 +818,14 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
     {
         ret = CRYPT_QueryEmbeddedMessageObject(dwObjectType, pvObject,
          dwExpectedContentTypeFlags, pdwMsgAndCertEncodingType, pdwContentType,
+         phCertStore, phMsg);
+    }
+    if (!ret &&
+     (dwExpectedContentTypeFlags & CERT_QUERY_CONTENT_FLAG_PFX))
+    {
+        ret = CRYPT_QueryPFXObject(dwObjectType, pvObject,
+         dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
+         pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType,
          phCertStore, phMsg);
     }
     if (!ret)
