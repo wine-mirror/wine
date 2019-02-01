@@ -586,6 +586,41 @@ struct ot_gpos_singlepos_format2
     WORD values[1];
 };
 
+struct ot_gpos_pairvalue
+{
+    WORD second_glyph;
+    BYTE data[1];
+};
+
+struct ot_gpos_pairset
+{
+    WORD pairvalue_count;
+    struct ot_gpos_pairvalue pairvalues[1];
+};
+
+struct ot_gpos_pairpos_format1
+{
+    WORD format;
+    WORD coverage;
+    WORD value_format1;
+    WORD value_format2;
+    WORD pairset_count;
+    WORD pairsets[1];
+};
+
+struct ot_gpos_pairpos_format2
+{
+    WORD format;
+    WORD coverage;
+    WORD value_format1;
+    WORD value_format2;
+    WORD class_def1;
+    WORD class_def2;
+    WORD class1_count;
+    WORD class2_count;
+    WORD values[1];
+};
+
 typedef struct {
     WORD SubstFormat;
     WORD Coverage;
@@ -2929,6 +2964,21 @@ static BOOL glyph_iterator_match(const struct glyph_iterator *iter)
     return TRUE;
 }
 
+static BOOL glyph_iterator_next(struct glyph_iterator *iter)
+{
+    while (iter->pos + iter->len < iter->context->glyph_count)
+    {
+        ++iter->pos;
+        if (glyph_iterator_match(iter))
+        {
+            --iter->len;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
@@ -2985,9 +3035,160 @@ static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_co
     return FALSE;
 }
 
+static int gpos_pair_adjustment_compare_format1(const void *g, const void *r)
+{
+    const struct ot_gpos_pairvalue *pairvalue = r;
+    UINT16 second_glyph = GET_BE_WORD(pairvalue->second_glyph);
+    return *(UINT16 *)g - second_glyph;
+}
+
 static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int i, first_glyph, second_glyph;
+    struct glyph_iterator iter_pair;
+    WORD format, coverage;
+
+    glyph_iterator_init(context, iter->flags, iter->pos, 1, &iter_pair);
+    if (!glyph_iterator_next(&iter_pair))
+        return FALSE;
+
+    if (context->is_rtl)
+    {
+        first_glyph = iter_pair.pos;
+        second_glyph = iter->pos;
+    }
+    else
+    {
+        first_glyph = iter->pos;
+        second_glyph = iter_pair.pos;
+    }
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gpos_subtable(cache, lookup->offset, i);
+        WORD value_format1, value_format2, value_len1, value_len2;
+        unsigned int coverage_index;
+
+        format = table_read_be_word(&cache->gpos.table, subtable_offset);
+
+        coverage = table_read_be_word(&cache->gpos.table, subtable_offset +
+                FIELD_OFFSET(struct ot_gpos_pairpos_format1, coverage));
+        if (!coverage)
+            continue;
+
+        coverage_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    coverage, context->u.pos.glyphs[first_glyph]);
+        if (coverage_index == GLYPH_NOT_COVERED)
+            continue;
+
+        if (format == 1)
+        {
+            const struct ot_gpos_pairpos_format1 *format1;
+            WORD pairset_count = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_pairpos_format1, pairset_count));
+            unsigned int pairvalue_len, pairset_offset;
+            const struct ot_gpos_pairset *pairset;
+            const WORD *pairvalue;
+            WORD pairvalue_count;
+
+            if (!pairset_count || coverage_index >= pairset_count)
+                continue;
+
+            format1 = table_read_ensure(&cache->gpos.table, subtable_offset,
+                    FIELD_OFFSET(struct ot_gpos_pairpos_format1, pairsets[pairset_count]));
+            if (!format1)
+                continue;
+
+            /* Ordered paired values. */
+            pairvalue_count = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    GET_BE_WORD(format1->pairsets[coverage_index]));
+            if (!pairvalue_count)
+                continue;
+
+            /* Structure length is variable, but does not change across the subtable. */
+            value_format1 = GET_BE_WORD(format1->value_format1) & 0xff;
+            value_format2 = GET_BE_WORD(format1->value_format2) & 0xff;
+
+            value_len1 = dwrite_popcount(value_format1);
+            value_len2 = dwrite_popcount(value_format2);
+            pairvalue_len = FIELD_OFFSET(struct ot_gpos_pairvalue, data) + value_len1 * sizeof(WORD) +
+                    value_len2 * sizeof(WORD);
+
+            pairset_offset = subtable_offset + GET_BE_WORD(format1->pairsets[coverage_index]);
+            pairset = table_read_ensure(&cache->gpos.table, subtable_offset + pairset_offset,
+                    pairvalue_len * pairvalue_count);
+            if (!pairset)
+                continue;
+
+            pairvalue = bsearch(&context->u.pos.glyphs[second_glyph], pairset->pairvalues, pairvalue_count,
+                    pairvalue_len, gpos_pair_adjustment_compare_format1);
+            if (!pairvalue)
+                continue;
+
+            pairvalue += 1; /* Skip SecondGlyph. */
+            opentype_layout_apply_gpos_value(context, pairset_offset, value_format1, pairvalue, first_glyph);
+            opentype_layout_apply_gpos_value(context, pairset_offset, value_format2, pairvalue + value_len1,
+                    second_glyph);
+
+            iter->pos = iter_pair.pos;
+            if (value_len2)
+                iter->pos++;
+
+            return TRUE;
+        }
+        else if (format == 2)
+        {
+            const struct ot_gpos_pairpos_format2 *format2;
+            WORD class1_count, class2_count;
+            unsigned int class1, class2;
+
+            value_format1 = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_pairpos_format2, value_format1)) & 0xff;
+            value_format2 = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_pairpos_format2, value_format2)) & 0xff;
+
+            class1_count = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_pairpos_format2, class1_count));
+            class2_count = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_pairpos_format2, class2_count));
+
+            value_len1 = dwrite_popcount(value_format1);
+            value_len2 = dwrite_popcount(value_format2);
+
+            format2 = table_read_ensure(&cache->gpos.table, subtable_offset,
+                    FIELD_OFFSET(struct ot_gpos_pairpos_format2,
+                    values[class1_count * class2_count * (value_len1 + value_len2)]));
+            if (!format2)
+                continue;
+
+            class1 = opentype_layout_get_glyph_class(&cache->gpos.table, subtable_offset + GET_BE_WORD(format2->class_def1),
+                    context->u.pos.glyphs[first_glyph]);
+            class2 = opentype_layout_get_glyph_class(&cache->gpos.table, subtable_offset + GET_BE_WORD(format2->class_def2),
+                    context->u.pos.glyphs[second_glyph]);
+
+            if (class1 < class1_count && class2 < class2_count)
+            {
+                const WCHAR *values = &format2->values[(class1 * class2_count + class2) * (value_len1 + value_len2)];
+                opentype_layout_apply_gpos_value(context, subtable_offset, value_format1, values, first_glyph);
+                opentype_layout_apply_gpos_value(context, subtable_offset, value_format2, values + value_len1,
+                        second_glyph);
+
+                iter->pos = iter_pair.pos;
+                if (value_len2)
+                    iter->pos++;
+
+                return TRUE;
+            }
+        }
+        else
+        {
+            WARN("Unknown pair adjustment format %u.\n", format);
+            continue;
+        }
+    }
+
     return FALSE;
 }
 
