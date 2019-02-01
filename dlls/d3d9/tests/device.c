@@ -8051,6 +8051,11 @@ static void test_lockrect_invalid(void)
             ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
 
             IDirect3DTexture9_Release(texture);
+
+            hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_WRITEONLY,
+                    D3DFMT_A8R8G8B8, resources[r].pool, &texture, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for type %s.\n",
+                    hr, resources[r].name);
         }
         if (cube_texture)
         {
@@ -8090,6 +8095,11 @@ static void test_lockrect_invalid(void)
             ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
 
             IDirect3DCubeTexture9_Release(cube_texture);
+
+            hr = IDirect3DDevice9_CreateCubeTexture(device, 128, 1, D3DUSAGE_WRITEONLY, D3DFMT_A8R8G8B8,
+                    resources[r].pool, &cube_texture, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for type %s.\n",
+                    hr, resources[r].name);
         }
     }
 
@@ -10269,6 +10279,11 @@ static void test_lockbox_invalid(void)
     ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
 
     IDirect3DVolumeTexture9_Release(texture);
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 2, 1, D3DUSAGE_WRITEONLY,
+            D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &texture, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D9_Release(d3d);
