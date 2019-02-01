@@ -181,10 +181,17 @@ enum {
 };
 #endif
 
+enum schan_mode {
+    schan_mode_NONE,
+    schan_mode_READ,
+    schan_mode_WRITE,
+    schan_mode_HANDSHAKE,
+};
 
 struct mac_session {
     SSLContextRef context;
     struct schan_transport *transport;
+    enum schan_mode mode;
     CRITICAL_SECTION cs;
 };
 
@@ -634,6 +641,12 @@ static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
 
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->transport, buff, buff_len, *buff_len);
 
+    if (s->mode != schan_mode_READ && s->mode != schan_mode_HANDSHAKE)
+    {
+        WARN("called in mode %u\n", s->mode);
+        return noErr;
+    }
+
     status = schan_pull(s->transport, buff, buff_len);
     if (status == 0)
     {
@@ -692,6 +705,12 @@ static OSStatus schan_push_adapter(SSLConnectionRef transport, const void *buff,
     OSStatus ret;
 
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->transport, buff, buff_len, *buff_len);
+
+    if (s->mode != schan_mode_WRITE && s->mode != schan_mode_HANDSHAKE)
+    {
+        WARN("called in mode %u\n", s->mode);
+        return noErr;
+    }
 
     status = schan_push(s->transport, buff, buff_len);
     if (status == 0)
@@ -787,6 +806,8 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
         goto fail;
     }
 
+    s->mode = schan_mode_NONE;
+
     TRACE("    -> %p/%p\n", s, s->context);
 
     *session = (schan_imp_session)s;
@@ -837,7 +858,10 @@ SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
 
     TRACE("(%p/%p)\n", s, s->context);
 
+    s->mode = schan_mode_HANDSHAKE;
     status = SSLHandshake(s->context);
+    s->mode = schan_mode_NONE;
+
     if (status == noErr)
     {
         TRACE("Handshake completed\n");
@@ -1096,8 +1120,13 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
     EnterCriticalSection(&s->cs);
+    s->mode = schan_mode_WRITE;
+
     status = SSLWrite(s->context, buffer, *length, length);
+
+    s->mode = schan_mode_NONE;
     LeaveCriticalSection(&s->cs);
+
     if (status == noErr)
         TRACE("Wrote %lu bytes\n", *length);
     else if (status == errSSLWouldBlock)
@@ -1128,8 +1157,13 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
     EnterCriticalSection(&s->cs);
+    s->mode = schan_mode_READ;
+
     status = SSLRead(s->context, buffer, *length, length);
+
+    s->mode = schan_mode_NONE;
     LeaveCriticalSection(&s->cs);
+
     if (status == noErr || status == errSSLClosedGraceful)
         TRACE("Read %lu bytes\n", *length);
     else if (status == errSSLWouldBlock)
