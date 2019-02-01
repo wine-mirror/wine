@@ -1186,6 +1186,9 @@ static HRESULT copypixels_to_8bppGray(struct FormatConverter *This, const WICRec
         return hr;
     }
 
+    if (!prc)
+        return copypixels_to_24bppBGR(This, NULL, cbStride, cbBufferSize, pbBuffer, source_format);
+
     srcstride = 3 * prc->Width;
     srcdatasize = srcstride * prc->Height;
 
