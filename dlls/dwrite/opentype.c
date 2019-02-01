@@ -653,6 +653,34 @@ struct ot_gpos_cursive_format1
     WORD anchors[1];
 };
 
+struct ot_gpos_mark_record
+{
+    WORD mark_class;
+    WORD mark_anchor;
+};
+
+struct ot_gpos_mark_array
+{
+    WORD count;
+    struct ot_gpos_mark_record records[1];
+};
+
+struct ot_gpos_base_array
+{
+    WORD count;
+    WORD offsets[1];
+};
+
+struct ot_gpos_mark_to_base_format1
+{
+    WORD format;
+    WORD mark_coverage;
+    WORD base_coverage;
+    WORD mark_class_count;
+    WORD mark_array;
+    WORD base_array;
+};
+
 typedef struct {
     WORD SubstFormat;
     WORD Coverage;
@@ -3386,6 +3414,83 @@ static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_c
 static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(const struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int i;
+    WORD format;
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gpos_subtable(cache, lookup->offset, i);
+
+        format = table_read_be_word(&cache->gpos.table, subtable_offset);
+
+        if (format == 1)
+        {
+            const struct ot_gpos_mark_to_base_format1 *format1 = table_read_ensure(&cache->gpos.table, subtable_offset,
+                    sizeof(*format1));
+            unsigned int mark_class_count, count, mark_array_offset, base_array_offset;
+            const struct ot_gpos_mark_array *mark_array;
+            const struct ot_gpos_base_array *base_array;
+            float mark_x, mark_y, base_x, base_y;
+            unsigned int base_index, mark_index;
+            struct glyph_iterator base_iter;
+            unsigned int base_anchor;
+
+            if (!format1)
+                continue;
+
+            mark_array_offset = subtable_offset + GET_BE_WORD(format1->mark_array);
+            if (!(count = table_read_be_word(&cache->gpos.table, mark_array_offset)))
+                continue;
+
+            mark_array = table_read_ensure(&cache->gpos.table, mark_array_offset,
+                    FIELD_OFFSET(struct ot_gpos_mark_array, records[count]));
+            if (!mark_array)
+                continue;
+
+            base_array_offset = subtable_offset + GET_BE_WORD(format1->base_array);
+            if (!(count = table_read_be_word(&cache->gpos.table, base_array_offset)))
+                continue;
+
+            base_array = table_read_ensure(&cache->gpos.table, base_array_offset,
+                    FIELD_OFFSET(struct ot_gpos_base_array, offsets[count * GET_BE_WORD(format1->mark_class_count)]));
+            if (!base_array)
+                continue;
+
+            mark_class_count = GET_BE_WORD(format1->mark_class_count);
+
+            mark_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    GET_BE_WORD(format1->mark_coverage), context->u.pos.glyphs[iter->pos]);
+
+            if (mark_index == GLYPH_NOT_COVERED || mark_index >= GET_BE_WORD(mark_array->count))
+                continue;
+
+            /* Look back for first base glyph. */
+            glyph_iterator_init(context, LOOKUP_FLAG_IGNORE_MARKS, iter->pos, 1, &base_iter);
+            if (!glyph_iterator_prev(&base_iter))
+                continue;
+
+            base_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    GET_BE_WORD(format1->base_coverage), context->u.pos.glyphs[base_iter.pos]);
+            if (base_index == GLYPH_NOT_COVERED || base_index >= GET_BE_WORD(base_array->count))
+                continue;
+
+            base_anchor = GET_BE_WORD(base_array->offsets[base_index * mark_class_count +
+                    GET_BE_WORD(mark_array->records[mark_index].mark_class)]);
+
+            opentype_layout_gpos_get_anchor(context, mark_array_offset +
+                    GET_BE_WORD(mark_array->records[mark_index].mark_anchor), iter->pos, &mark_x, &mark_y);
+            opentype_layout_gpos_get_anchor(context, base_array_offset + base_anchor, base_iter.pos, &base_x, &base_y);
+
+            context->offsets[iter->pos].advanceOffset = (context->is_rtl ? -1.0f : 1.0f) * (base_x - mark_x);
+            context->offsets[iter->pos].ascenderOffset = base_y - mark_y;
+
+            break;
+        }
+        else
+            WARN("Unknown mark-to-base format %u.\n", format);
+    }
+
     return FALSE;
 }
 
