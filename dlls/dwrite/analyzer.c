@@ -1317,6 +1317,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
         context.u.pos.glyph_props = glyph_props;
         context.glyph_count = glyph_count;
         context.emsize = emSize;
+        context.measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
         context.advances = advances;
         context.offsets = offsets;
         context.language_tag = get_opentype_language(locale);
@@ -1381,6 +1382,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
         context.u.pos.glyph_props = glyph_props;
         context.glyph_count = glyph_count;
         context.emsize = emSize * ppdip;
+        context.measuring_mode = measuring_mode;
         context.advances = advances;
         context.offsets = offsets;
         context.language_tag = get_opentype_language(locale);

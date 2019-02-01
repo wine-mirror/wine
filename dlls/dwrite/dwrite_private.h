@@ -394,6 +394,7 @@ struct scriptshaping_context
 
     unsigned int glyph_count;
     float emsize;
+    DWRITE_MEASURING_MODE measuring_mode;
     float *advances;
     DWRITE_GLYPH_OFFSET *offsets;
 };

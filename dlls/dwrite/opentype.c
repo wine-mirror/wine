@@ -621,6 +621,38 @@ struct ot_gpos_pairpos_format2
     WORD values[1];
 };
 
+struct ot_gpos_anchor_format1
+{
+    WORD format;
+    short x_coord;
+    short y_coord;
+};
+
+struct ot_gpos_anchor_format2
+{
+    WORD format;
+    short x_coord;
+    short y_coord;
+    WORD anchor_point;
+};
+
+struct ot_gpos_anchor_format3
+{
+    WORD format;
+    short x_coord;
+    short y_coord;
+    WORD x_dev_offset;
+    WORD y_dev_offset;
+};
+
+struct ot_gpos_cursive_format1
+{
+    WORD format;
+    WORD coverage;
+    WORD count;
+    WORD anchors[1];
+};
+
 typedef struct {
     WORD SubstFormat;
     WORD Coverage;
@@ -2979,6 +3011,24 @@ static BOOL glyph_iterator_next(struct glyph_iterator *iter)
     return FALSE;
 }
 
+static BOOL glyph_iterator_prev(struct glyph_iterator *iter)
+{
+    if (!iter->pos)
+        return FALSE;
+
+    while (iter->pos > iter->len - 1)
+    {
+        --iter->pos;
+        if (glyph_iterator_match(iter))
+        {
+            --iter->len;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
@@ -3192,9 +3242,144 @@ static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_cont
     return FALSE;
 }
 
+static void opentype_layout_gpos_get_anchor(const struct scriptshaping_context *context, unsigned int anchor_offset,
+        unsigned int glyph_index, float *x, float *y)
+{
+    const struct scriptshaping_cache *cache = context->cache;
+
+    WORD format = table_read_be_word(&cache->gpos.table, anchor_offset);
+
+    *x = *y = 0.0f;
+
+    if (format == 1)
+    {
+        const struct ot_gpos_anchor_format1 *format1 = table_read_ensure(&cache->gpos.table, anchor_offset,
+                sizeof(*format1));
+
+        if (format1)
+        {
+            *x = opentype_scale_gpos_be_value(format1->x_coord, context->emsize, cache->upem);
+            *y = opentype_scale_gpos_be_value(format1->y_coord, context->emsize, cache->upem);
+        }
+    }
+    else if (format == 2)
+    {
+        const struct ot_gpos_anchor_format2 *format2 = table_read_ensure(&cache->gpos.table, anchor_offset,
+                sizeof(*format2));
+
+        if (format2)
+        {
+            if (context->measuring_mode != DWRITE_MEASURING_MODE_NATURAL)
+                FIXME("Use outline anchor point for glyph %u.\n", context->u.pos.glyphs[glyph_index]);
+
+            *x = opentype_scale_gpos_be_value(format2->x_coord, context->emsize, cache->upem);
+            *y = opentype_scale_gpos_be_value(format2->y_coord, context->emsize, cache->upem);
+        }
+    }
+    else if (format == 3)
+    {
+        const struct ot_gpos_anchor_format3 *format3 = table_read_ensure(&cache->gpos.table, anchor_offset,
+                sizeof(*format3));
+
+        if (format3)
+        {
+            *x = opentype_scale_gpos_be_value(format3->x_coord, context->emsize, cache->upem);
+            *y = opentype_scale_gpos_be_value(format3->y_coord, context->emsize, cache->upem);
+
+            if (context->measuring_mode != DWRITE_MEASURING_MODE_NATURAL)
+            {
+                if (format3->x_dev_offset)
+                    *x += opentype_layout_gpos_get_dev_value(context, anchor_offset + GET_BE_WORD(format3->x_dev_offset));
+                if (format3->y_dev_offset)
+                    *y += opentype_layout_gpos_get_dev_value(context, anchor_offset + GET_BE_WORD(format3->y_dev_offset));
+            }
+        }
+    }
+    else
+        WARN("Unknown anchor format %u.\n", format);
+}
+
 static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int i;
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gpos_subtable(cache, lookup->offset, i);
+        WORD format;
+
+        format = table_read_be_word(&cache->gpos.table, subtable_offset);
+
+        if (format == 1)
+        {
+            WORD coverage_offset = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_cursive_format1, coverage));
+            unsigned int glyph_index, entry_count, entry_anchor, exit_anchor;
+            float entry_x, entry_y, exit_x, exit_y, delta;
+            struct glyph_iterator prev_iter;
+
+            if (!coverage_offset)
+                continue;
+
+            entry_count = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_cursive_format1, count));
+
+            glyph_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    coverage_offset, context->u.pos.glyphs[iter->pos]);
+            if (glyph_index == GLYPH_NOT_COVERED || glyph_index >= entry_count)
+                continue;
+
+            entry_anchor = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_cursive_format1, anchors[glyph_index * 2]));
+            if (!entry_anchor)
+                continue;
+
+            glyph_iterator_init(context, iter->flags, iter->pos, 1, &prev_iter);
+            if (!glyph_iterator_prev(&prev_iter))
+                continue;
+
+            glyph_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    coverage_offset, context->u.pos.glyphs[prev_iter.pos]);
+            if (glyph_index == GLYPH_NOT_COVERED || glyph_index >= entry_count)
+                continue;
+
+            exit_anchor = table_read_be_word(&cache->gpos.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gpos_cursive_format1, anchors[glyph_index * 2 + 1]));
+            if (!exit_anchor)
+                continue;
+
+            opentype_layout_gpos_get_anchor(context, subtable_offset + exit_anchor, prev_iter.pos, &exit_x, &exit_y);
+            opentype_layout_gpos_get_anchor(context, subtable_offset + entry_anchor, iter->pos, &entry_x, &entry_y);
+
+            if (context->is_rtl)
+            {
+                delta = exit_x + context->offsets[prev_iter.pos].advanceOffset;
+                context->advances[prev_iter.pos] -= delta;
+                context->advances[iter->pos] = entry_x + context->offsets[iter->pos].advanceOffset;
+                context->offsets[prev_iter.pos].advanceOffset -= delta;
+            }
+            else
+            {
+                delta = entry_x + context->offsets[iter->pos].advanceOffset;
+                context->advances[prev_iter.pos] = exit_x + context->offsets[prev_iter.pos].advanceOffset;
+                context->advances[iter->pos] -= delta;
+                context->offsets[iter->pos].advanceOffset -= delta;
+            }
+
+            if (lookup->flags & LOOKUP_FLAG_RTL)
+                context->offsets[prev_iter.pos].ascenderOffset = entry_y - exit_y;
+            else
+                context->offsets[iter->pos].ascenderOffset = exit_y - entry_y;
+
+            break;
+        }
+        else
+            WARN("Unknown cursive attachment format %u.\n", format);
+
+    }
+
     return FALSE;
 }
 
