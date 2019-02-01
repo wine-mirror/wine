@@ -393,7 +393,9 @@ struct scriptshaping_context
     } u;
 
     unsigned int glyph_count;
+    float emsize;
     float *advances;
+    DWRITE_GLYPH_OFFSET *offsets;
 };
 
 struct shaping_font_ops
