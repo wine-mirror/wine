@@ -2308,6 +2308,25 @@ VOID WINAPI IoRegisterFileSystem(PDEVICE_OBJECT DeviceObject)
 }
 
 /***********************************************************************
+ *           KeExpandKernelStackAndCalloutEx   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeExpandKernelStackAndCalloutEx(PEXPAND_STACK_CALLOUT callout, void *parameter, SIZE_T size,
+                                                BOOLEAN wait, void *context)
+{
+    WARN("(%p %p %lu %x %p) semi-stub: ignoring stack expand\n", callout, parameter, size, wait, context);
+    callout(parameter);
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           KeExpandKernelStackAndCallout   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeExpandKernelStackAndCallout(PEXPAND_STACK_CALLOUT callout, void *parameter, SIZE_T size)
+{
+    return KeExpandKernelStackAndCalloutEx(callout, parameter, size, TRUE, NULL);
+}
+
+/***********************************************************************
 *           IoUnregisterFileSystem   (NTOSKRNL.EXE.@)
 */
 VOID WINAPI IoUnregisterFileSystem(PDEVICE_OBJECT DeviceObject)

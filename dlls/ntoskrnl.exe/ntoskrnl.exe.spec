@@ -44,6 +44,8 @@
 @ stdcall -arch=arm,arm64,x86_64 KeAcquireInStackQueuedSpinLock(ptr ptr)
 @ stdcall -norelay KeAcquireInStackQueuedSpinLockAtDpcLevel(ptr ptr)
 @ stdcall KeEnterGuardedRegion()
+@ stdcall KeExpandKernelStackAndCallout(ptr ptr long)
+@ stdcall KeExpandKernelStackAndCalloutEx(ptr ptr long long ptr)
 @ stdcall KeLeaveGuardedRegion()
 @ stdcall -arch=arm,arm64,x86_64 KeReleaseInStackQueuedSpinLock(ptr)
 @ stdcall -norelay KeReleaseInStackQueuedSpinLockFromDpcLevel(ptr)

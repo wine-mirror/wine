@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "winioctl.h"
+#include "ddk/ntddk.h"
 #include "ddk/wdm.h"
 
 #include "driver.h"
@@ -68,10 +69,9 @@ static void WINAPIV kprintf(const char *format, ...)
     __ms_va_end(valist);
 }
 
-static void WINAPIV ok_(const char *file, int line, int condition, const char *msg, ...)
+static void WINAPIV vok_(const char *file, int line, int condition, const char *msg,  __ms_va_list args)
 {
     const char *current_file;
-    __ms_va_list args;
 
     if (!(current_file = drv_strrchr(file, '/')) &&
         !(current_file = drv_strrchr(file, '\\')))
@@ -79,7 +79,6 @@ static void WINAPIV ok_(const char *file, int line, int condition, const char *m
     else
         current_file++;
 
-    __ms_va_start(args, msg);
     if (todo_level)
     {
         if (condition)
@@ -113,6 +112,39 @@ static void WINAPIV ok_(const char *file, int line, int condition, const char *m
             InterlockedIncrement(&successes);
         }
     }
+}
+
+static void WINAPIV ok_(const char *file, int line, int condition, const char *msg, ...)
+{
+    __ms_va_list args;
+    __ms_va_start(args, msg);
+    vok_(file, line, condition, msg, args);
+    __ms_va_end(args);
+}
+
+void vskip_(const char *file, int line, const char *msg, __ms_va_list args)
+{
+    const char *current_file;
+
+    if (!(current_file = drv_strrchr(file, '/')) &&
+        !(current_file = drv_strrchr(file, '\\')))
+        current_file = file;
+    else
+        current_file++;
+
+    kprintf("%s:%d: Tests skipped: ", current_file, line);
+    kvprintf(msg, args);
+    skipped++;
+}
+
+void WINAPIV win_skip_(const char *file, int line, const char *msg, ...)
+{
+    __ms_va_list args;
+    __ms_va_start(args, msg);
+    if (running_under_wine)
+        vok_(file, line, 0, msg, args);
+    else
+        vskip_(file, line, msg, args);
     __ms_va_end(args);
 }
 
@@ -140,6 +172,7 @@ static void winetest_end_todo(void)
                               winetest_end_todo())
 #define todo_wine               todo_if(running_under_wine)
 #define todo_wine_if(is_todo)   todo_if((is_todo) && running_under_wine)
+#define win_skip(...)           win_skip_(__FILE__, __LINE__, __VA_ARGS__)
 
 static void test_currentprocess(void)
 {
@@ -498,6 +531,50 @@ static void test_sync(void)
     KeCancelTimer(&timer);
 }
 
+static int callout_cnt;
+
+static void WINAPI callout(void *parameter)
+{
+    ok(parameter == (void*)0xdeadbeef, "parameter = %p\n", parameter);
+    callout_cnt++;
+}
+
+static void test_stack_callout(void)
+{
+    NTSTATUS (WINAPI *pKeExpandKernelStackAndCallout)(PEXPAND_STACK_CALLOUT,void*,SIZE_T);
+    NTSTATUS (WINAPI *pKeExpandKernelStackAndCalloutEx)(PEXPAND_STACK_CALLOUT,void*,SIZE_T,BOOLEAN,void*);
+    UNICODE_STRING str;
+    NTSTATUS ret;
+
+    static const WCHAR KeExpandKernelStackAndCalloutW[] =
+        {'K','e','E','x','p','a','n','d','K','e','r','n','e','l','S','t','a','c','k','A','n','d','C','a','l','l','o','u','t',0};
+    static const WCHAR KeExpandKernelStackAndCalloutExW[] =
+        {'K','e','E','x','p','a','n','d','K','e','r','n','e','l','S','t','a','c','k','A','n','d','C','a','l','l','o','u','t','E','x',0};
+
+
+    RtlInitUnicodeString(&str, KeExpandKernelStackAndCalloutW);
+    pKeExpandKernelStackAndCallout = MmGetSystemRoutineAddress(&str);
+    if (pKeExpandKernelStackAndCallout)
+    {
+        callout_cnt = 0;
+        ret = pKeExpandKernelStackAndCallout(callout, (void*)0xdeadbeef, 4096);
+        ok(ret == STATUS_SUCCESS, "KeExpandKernelStackAndCallout failed: %#x\n", ret);
+        ok(callout_cnt == 1, "callout_cnt = %u\n", callout_cnt);
+    }
+    else win_skip("KeExpandKernelStackAndCallout is not available\n");
+
+    RtlInitUnicodeString(&str, KeExpandKernelStackAndCalloutExW);
+    pKeExpandKernelStackAndCalloutEx = MmGetSystemRoutineAddress(&str);
+    if (pKeExpandKernelStackAndCalloutEx)
+    {
+        callout_cnt = 0;
+        ret = pKeExpandKernelStackAndCalloutEx(callout, (void*)0xdeadbeef, 4096, FALSE, NULL);
+        ok(ret == STATUS_SUCCESS, "KeExpandKernelStackAndCalloutEx failed: %#x\n", ret);
+        ok(callout_cnt == 1, "callout_cnt = %u\n", callout_cnt);
+    }
+    else win_skip("KeExpandKernelStackAndCalloutEx is not available\n");
+}
+
 static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -527,6 +604,7 @@ static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
     test_init_funcs();
     test_load_driver();
     test_sync();
+    test_stack_callout();
 
     /* print process report */
     if (test_input->winetest_debug)
