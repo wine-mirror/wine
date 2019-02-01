@@ -11054,15 +11054,24 @@ static void test_lockrect_invalid(void)
     {
         DWORD caps, caps2;
         const char *name;
+        BOOL allowed;
         HRESULT hr;
     }
     resources[] =
     {
-        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0, "sysmem offscreenplain", DDERR_INVALIDPARAMS},
-        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0, "vidmem offscreenplain", DDERR_INVALIDPARAMS},
-        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0, "sysmem texture", DD_OK},
-        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0, "vidmem texture", DDERR_INVALIDPARAMS},
-        {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, "managed texture", DD_OK},
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0, "sysmem offscreenplain", TRUE, DDERR_INVALIDPARAMS},
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0, "vidmem offscreenplain", TRUE, DDERR_INVALIDPARAMS},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0, "sysmem texture", TRUE, DD_OK},
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0, "vidmem texture", TRUE, DDERR_INVALIDPARAMS},
+        {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, "managed texture", TRUE, DD_OK},
+
+        /* FWIW the SDK header mentions DDSCAPS_WRITEONLY as being a "READ
+         * ONLY" flag. */
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_WRITEONLY, 0, "sysmem offscreenplain writeonly", FALSE, DDERR_INVALIDPARAMS},
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY | DDSCAPS_WRITEONLY, 0, "vidmem offscreenplain writeonly", FALSE, DDERR_INVALIDPARAMS},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_WRITEONLY, 0, "sysmem texture writeonly", FALSE, DD_OK},
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_WRITEONLY, 0, "vidmem texture writeonly", FALSE, DDERR_INVALIDPARAMS},
+        {DDSCAPS_TEXTURE | DDSCAPS_WRITEONLY, DDSCAPS2_TEXTUREMANAGE, "managed texture writeonly", TRUE, DD_OK},
     };
 
     window = create_window();
@@ -11099,6 +11108,11 @@ static void test_lockrect_invalid(void)
         U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x0000ff;
 
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        if (!resources[r].allowed)
+        {
+            ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
+            continue;
+        }
         if (is_ddraw64 && (resources[r].caps & DDSCAPS_TEXTURE))
         {
             todo_wine ok(hr == E_NOINTERFACE, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
