@@ -348,7 +348,7 @@ HRESULT WINAPI D3DX11CreateAsyncResourceLoaderA(HMODULE module, const char *reso
 
     if (!(rsrc = FindResourceA(module, resource, (const char *)RT_RCDATA)))
     {
-        ERR("Failed to find resource.\n");
+        WARN("Failed to find resource.\n");
         HeapFree(GetProcessHeap(), 0, object);
         return D3DX11_ERR_INVALID_DATA;
     }
@@ -380,7 +380,7 @@ HRESULT WINAPI D3DX11CreateAsyncResourceLoaderW(HMODULE module, const WCHAR *res
 
     if (!(rsrc = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA)))
     {
-        ERR("Failed to find resource.\n");
+        WARN("Failed to find resource.\n");
         HeapFree(GetProcessHeap(), 0, object);
         return D3DX11_ERR_INVALID_DATA;
     }
