@@ -421,7 +421,7 @@ HRESULT WINAPI PathCchAddExtension(WCHAR *path, SIZE_T size, const WCHAR *extens
         next++;
     }
 
-    has_dot = extension[0] == '.' ? TRUE : FALSE;
+    has_dot = extension[0] == '.';
 
     hr = PathCchFindExtension(path, size, &existing_extension);
     if (FAILED(hr)) return hr;
@@ -863,5 +863,5 @@ BOOL WINAPI PathIsUNCEx(const WCHAR *path, const WCHAR **server)
         result = path + 2;
 
     if (server) *server = result;
-    return result ? TRUE : FALSE;
+    return !!result;
 }
