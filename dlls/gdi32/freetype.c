@@ -8217,14 +8217,14 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     UINT penalty = 0, new_penalty = 0;
     BOOL bold, italic, bd, it;
 
-    italic = font->font_desc.lf.lfItalic ? TRUE : FALSE;
-    bold = font->font_desc.lf.lfWeight > FW_MEDIUM ? TRUE : FALSE;
+    italic = !!font->font_desc.lf.lfItalic;
+    bold = font->font_desc.lf.lfWeight > FW_MEDIUM;
 
     face_list = get_face_list_from_family( child->face->family );
     LIST_FOR_EACH_ENTRY( child_face, face_list, Face, entry )
     {
-        it = child_face->ntmFlags & NTM_ITALIC ? TRUE : FALSE;
-        bd = child_face->ntmFlags & NTM_BOLD ? TRUE : FALSE;
+        it = !!(child_face->ntmFlags & NTM_ITALIC);
+        bd = !!(child_face->ntmFlags & NTM_BOLD);
         new_penalty = ( it ^ italic ) + ( bd ^ bold );
         if (!best_face || new_penalty < penalty)
         {
