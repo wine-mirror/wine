@@ -4115,6 +4115,7 @@ static void test_resource_access(void)
     IDirect3DSurface9 *backbuffer, *depth_stencil;
     D3DFORMAT colour_format, depth_format, format;
     BOOL depth_2d, depth_cube, depth_plain;
+    D3DADAPTER_IDENTIFIER9 identifier;
     struct device_desc device_desc;
     D3DSURFACE_DESC surface_desc;
     IDirect3DDevice9Ex *device;
@@ -4123,6 +4124,7 @@ static void test_resource_access(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    BOOL warp;
 
     enum surface_type
     {
@@ -4223,6 +4225,9 @@ static void test_resource_access(void)
     }
     hr = IDirect3DDevice9Ex_GetDirect3D(device, &d3d);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    warp = adapter_is_warp(&identifier);
 
     hr = IDirect3DDevice9Ex_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -4452,18 +4457,20 @@ static void test_resource_access(void)
         HRESULT expected_hr;
         D3DLOCKED_BOX lb;
 
-        if (tests[j].format == FORMAT_DEPTH)
+        if (tests[i].format == FORMAT_DEPTH)
             continue;
 
-        if (tests[j].format == FORMAT_ATI2)
+        if (tests[i].format == FORMAT_ATI2)
             format = MAKEFOURCC('A','T','I','2');
         else
             format = colour_format;
 
         hr = IDirect3DDevice9Ex_CreateVolumeTexture(device, 16, 16, 1, 1,
                 tests[i].usage, format, tests[i].pool, &texture, NULL);
-        ok(hr == (!(tests[i].usage & ~D3DUSAGE_DYNAMIC) && tests[i].pool != D3DPOOL_MANAGED
-                ? D3D_OK : D3DERR_INVALIDCALL),
+        ok((hr == (!(tests[i].usage & ~D3DUSAGE_DYNAMIC)
+                && (tests[i].format != FORMAT_ATI2 || tests[i].pool == D3DPOOL_SCRATCH)
+                && tests[i].pool != D3DPOOL_MANAGED ? D3D_OK : D3DERR_INVALIDCALL))
+                || (tests[i].format == FORMAT_ATI2 && (hr == D3D_OK || warp)),
                 "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (FAILED(hr))
             continue;
@@ -4481,9 +4488,11 @@ static void test_resource_access(void)
             expected_hr = D3D_OK;
         else
             expected_hr = D3DERR_INVALIDCALL;
-        ok(hr == expected_hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == expected_hr || (volume_desc.Pool == D3DPOOL_DEFAULT && hr == D3D_OK),
+                "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DVolume9_UnlockBox(volume);
-        ok(hr == expected_hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == expected_hr || (volume_desc.Pool == D3DPOOL_DEFAULT && hr == D3D_OK),
+                "Test %u: Got unexpected hr %#x.\n", i, hr);
 
         hr = IDirect3DDevice9Ex_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
         ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
