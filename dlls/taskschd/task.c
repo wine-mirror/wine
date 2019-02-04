@@ -239,7 +239,7 @@ static HRESULT WINAPI DailyTrigger_put_Enabled(IDailyTrigger *iface, VARIANT_BOO
 
     TRACE("(%p)->(%x)\n", This, enabled);
 
-    This->enabled = enabled ? TRUE : FALSE;
+    This->enabled = !!enabled;
     return S_OK;
 }
 
@@ -939,7 +939,7 @@ static HRESULT WINAPI TaskSettings_put_AllowDemandStart(ITaskSettings *iface, VA
 
     TRACE("%p,%d\n", iface, allow);
 
-    taskset->allow_on_demand_start = allow ? TRUE : FALSE;
+    taskset->allow_on_demand_start = !!allow;
 
     return S_OK;
 }
@@ -1045,7 +1045,7 @@ static HRESULT WINAPI TaskSettings_put_StopIfGoingOnBatteries(ITaskSettings *ifa
 
     TRACE("%p,%d\n", iface, stop);
 
-    taskset->stop_if_going_on_batteries = stop ? TRUE : FALSE;
+    taskset->stop_if_going_on_batteries = !!stop;
 
     return S_OK;
 }
@@ -1069,7 +1069,7 @@ static HRESULT WINAPI TaskSettings_put_DisallowStartIfOnBatteries(ITaskSettings 
 
     TRACE("%p,%d\n", iface, disallow);
 
-    taskset->disallow_start_if_on_batteries = disallow ? TRUE : FALSE;
+    taskset->disallow_start_if_on_batteries = !!disallow;
 
     return S_OK;
 }
@@ -1093,7 +1093,7 @@ static HRESULT WINAPI TaskSettings_put_AllowHardTerminate(ITaskSettings *iface, 
 
     TRACE("%p,%d\n", iface, allow);
 
-    taskset->allow_hard_terminate = allow ? TRUE : FALSE;
+    taskset->allow_hard_terminate = !!allow;
 
     return S_OK;
 }
@@ -1117,7 +1117,7 @@ static HRESULT WINAPI TaskSettings_put_StartWhenAvailable(ITaskSettings *iface, 
 
     TRACE("%p,%d\n", iface, start);
 
-    taskset->start_when_available = start ? TRUE : FALSE;
+    taskset->start_when_available = !!start;
 
     return S_OK;
 }
@@ -1153,7 +1153,7 @@ static HRESULT WINAPI TaskSettings_put_RunOnlyIfNetworkAvailable(ITaskSettings *
 
     TRACE("%p,%d\n", iface, run);
 
-    taskset->run_only_if_network_available = run ? TRUE : FALSE;
+    taskset->run_only_if_network_available = !!run;
 
     return S_OK;
 }
@@ -1211,7 +1211,7 @@ static HRESULT WINAPI TaskSettings_put_Enabled(ITaskSettings *iface, VARIANT_BOO
 
     TRACE("%p,%d\n", iface, enabled);
 
-    taskset->enabled = enabled ? TRUE : FALSE;
+    taskset->enabled = !!enabled;
 
     return S_OK;
 }
@@ -1311,7 +1311,7 @@ static HRESULT WINAPI TaskSettings_put_Hidden(ITaskSettings *iface, VARIANT_BOOL
 
     TRACE("%p,%d\n", iface, hidden);
 
-    taskset->hidden = hidden ? TRUE : FALSE;
+    taskset->hidden = !!hidden;
 
     return S_OK;
 }
@@ -1347,7 +1347,7 @@ static HRESULT WINAPI TaskSettings_put_RunOnlyIfIdle(ITaskSettings *iface, VARIA
 
     TRACE("%p,%d\n", iface, run);
 
-    taskset->run_only_if_idle = run ? TRUE : FALSE;
+    taskset->run_only_if_idle = !!run;
 
     return S_OK;
 }
@@ -1371,7 +1371,7 @@ static HRESULT WINAPI TaskSettings_put_WakeToRun(ITaskSettings *iface, VARIANT_B
 
     TRACE("%p,%d\n", iface, wake);
 
-    taskset->wake_to_run = wake ? TRUE : FALSE;
+    taskset->wake_to_run = !!wake;
 
     return S_OK;
 }
