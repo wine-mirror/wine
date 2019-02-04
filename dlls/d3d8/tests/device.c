@@ -102,6 +102,11 @@ static void flush_events(void)
     }
 }
 
+static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER8 *identifier)
+{
+    return !strcmp(identifier->Driver, "d3d10warp.dll");
+}
+
 static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, const struct device_desc *desc)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
@@ -8753,6 +8758,7 @@ static void test_resource_access(void)
     IDirect3DSurface8 *backbuffer, *depth_stencil;
     D3DFORMAT colour_format, depth_format, format;
     BOOL depth_2d, depth_cube, depth_plain;
+    D3DADAPTER_IDENTIFIER8 identifier;
     struct device_desc device_desc;
     D3DSURFACE_DESC surface_desc;
     IDirect3DDevice8 *device;
@@ -8761,6 +8767,7 @@ static void test_resource_access(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    BOOL warp;
 
     enum surface_type
     {
@@ -8845,6 +8852,9 @@ static void test_resource_access(void)
     window = create_window();
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
+    hr = IDirect3D8_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    warp = adapter_is_warp(&identifier);
 
     device_desc.device_window = window;
     device_desc.width = 16;
@@ -8951,7 +8961,9 @@ static void test_resource_access(void)
                     hr = IDirect3DDevice8_CreateDepthStencilSurface(device,
                             16, 16, format, D3DMULTISAMPLE_NONE, &surface);
                     todo_wine_if(tests[j].format == FORMAT_ATI2)
-                        ok(hr == (tests[j].format != FORMAT_COLOUR ? D3D_OK : D3DERR_INVALIDCALL),
+                        ok(hr == (tests[j].format == FORMAT_DEPTH ? D3D_OK
+                                : tests[j].format == FORMAT_COLOUR ? D3DERR_INVALIDCALL : E_INVALIDARG)
+                                || (tests[j].format == FORMAT_ATI2 && hr == D3D_OK),
                                 "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
                     if (FAILED(hr))
                         continue;
@@ -9047,17 +9059,20 @@ static void test_resource_access(void)
         HRESULT expected_hr;
         D3DLOCKED_BOX lb;
 
-        if (tests[j].format == FORMAT_DEPTH)
+        if (tests[i].format == FORMAT_DEPTH)
             continue;
 
-        if (tests[j].format == FORMAT_ATI2)
+        if (tests[i].format == FORMAT_ATI2)
             format = MAKEFOURCC('A','T','I','2');
         else
             format = colour_format;
 
         hr = IDirect3DDevice8_CreateVolumeTexture(device, 16, 16, 1, 1,
                 tests[i].usage, format, tests[i].pool, &texture);
-        ok(hr == (!(tests[i].usage & ~D3DUSAGE_DYNAMIC) ? D3D_OK : D3DERR_INVALIDCALL),
+        ok((hr == ((!(tests[i].usage & ~D3DUSAGE_DYNAMIC) && tests[i].format != FORMAT_ATI2)
+                || (tests[i].pool == D3DPOOL_SCRATCH && !tests[i].usage)
+                ? D3D_OK : D3DERR_INVALIDCALL))
+                || (tests[i].format == FORMAT_ATI2 && (hr == D3D_OK || warp)),
                 "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (FAILED(hr))
             continue;
@@ -9075,9 +9090,11 @@ static void test_resource_access(void)
             expected_hr = D3D_OK;
         else
             expected_hr = D3DERR_INVALIDCALL;
-        ok(hr == expected_hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == expected_hr || (volume_desc.Pool == D3DPOOL_DEFAULT && hr == D3D_OK),
+                "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DVolume8_UnlockBox(volume);
-        ok(hr == expected_hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == expected_hr || (volume_desc.Pool == D3DPOOL_DEFAULT && hr == D3D_OK),
+                "Test %u: Got unexpected hr %#x.\n", i, hr);
 
         hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)texture);
         ok(hr == D3D_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
