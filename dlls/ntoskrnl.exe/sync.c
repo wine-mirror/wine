@@ -563,6 +563,69 @@ LIST_ENTRY * WINAPI ExInterlockedRemoveHeadList( LIST_ENTRY *list, KSPIN_LOCK *l
     return ret;
 }
 
+#ifndef _WIN64
+
+/***********************************************************************
+ *           InterlockedPopEntrySList   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL1_ENTRYPOINT
+DEFINE_FASTCALL1_ENTRYPOINT( NTOSKRNL_InterlockedPopEntrySList )
+PSLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
+#else
+PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
+#endif
+{
+    return RtlInterlockedPopEntrySList( list );
+}
+
+
+/***********************************************************************
+ *           InterlockedPushEntrySList   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_InterlockedPushEntrySList )
+PSLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedPushEntrySList( PSLIST_HEADER list,
+                                                                               PSLIST_ENTRY entry )
+#else
+PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPushEntrySList( PSLIST_HEADER list, PSLIST_ENTRY entry )
+#endif
+{
+    return RtlInterlockedPushEntrySList( list, entry );
+}
+
+#ifdef __i386__
+
+/***********************************************************************
+ *           ExInterlockedPopEntrySList   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_ExInterlockedPopEntrySList )
+PSLIST_ENTRY WINAPI __regs_NTOSKRNL_ExInterlockedPopEntrySList( PSLIST_HEADER list, PKSPIN_LOCK lock )
+#else
+PSLIST_ENTRY WINAPI NTOSKRNL_ExInterlockedPopEntrySList( PSLIST_HEADER list, PKSPIN_LOCK lock )
+#endif
+{
+    return RtlInterlockedPopEntrySList( list );
+}
+
+/***********************************************************************
+ *           ExInterlockedPushEntrySList   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL3_ENTRYPOINT
+DEFINE_FASTCALL3_ENTRYPOINT( NTOSKRNL_ExInterlockedPushEntrySList )
+PSLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_ExInterlockedPushEntrySList( PSLIST_HEADER list,
+                                                                                 PSLIST_ENTRY entry,
+                                                                                 PKSPIN_LOCK lock )
+#else
+PSLIST_ENTRY WINAPI NTOSKRNL_ExInterlockedPushEntrySList( PSLIST_HEADER list, PSLIST_ENTRY entry, PKSPIN_LOCK lock )
+#endif
+{
+    return RtlInterlockedPushEntrySList( list, entry );
+}
+
+#endif /* __i386__ */
+#endif /* _WIN64 */
+
 /***********************************************************************
  *           ExAcquireFastMutexUnsafe  (NTOSKRNL.EXE.@)
  */

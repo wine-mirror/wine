@@ -5,8 +5,8 @@
 @ stub ExInterlockedAddLargeStatistic
 @ stub ExInterlockedCompareExchange64
 @ stub ExInterlockedFlushSList
-@ stdcall -norelay ExInterlockedPopEntrySList(ptr ptr) NTOSKRNL_ExInterlockedPopEntrySList
-@ stdcall -norelay ExInterlockedPushEntrySList (ptr ptr ptr) NTOSKRNL_ExInterlockedPushEntrySList
+@ stdcall -arch=i386 -norelay ExInterlockedPopEntrySList(ptr ptr) NTOSKRNL_ExInterlockedPopEntrySList
+@ stdcall -arch=i386 -norelay ExInterlockedPushEntrySList (ptr ptr ptr) NTOSKRNL_ExInterlockedPushEntrySList
 @ stub ExReInitializeRundownProtection
 @ stdcall -norelay ExReleaseFastMutexUnsafe(ptr)
 @ stdcall ExReleaseResourceLite(ptr)
@@ -27,14 +27,17 @@
 @ stub Exfi386InterlockedDecrementLong
 @ stub Exfi386InterlockedExchangeUlong
 @ stub Exfi386InterlockedIncrementLong
+@ stdcall -arch=win64 ExpInterlockedPopEntrySList(ptr) RtlInterlockedPopEntrySList
+@ stdcall -arch=win64 ExpInterlockedPushEntrySList(ptr ptr) RtlInterlockedPushEntrySList
 @ stub HalExamineMBR
 @ stdcall -norelay InterlockedCompareExchange(ptr long long) NTOSKRNL_InterlockedCompareExchange
 @ stdcall -norelay InterlockedDecrement(ptr) NTOSKRNL_InterlockedDecrement
 @ stdcall -norelay InterlockedExchange(ptr long) NTOSKRNL_InterlockedExchange
 @ stdcall -norelay InterlockedExchangeAdd(ptr long) NTOSKRNL_InterlockedExchangeAdd
 @ stdcall -norelay InterlockedIncrement(ptr) NTOSKRNL_InterlockedIncrement
-@ stdcall -norelay InterlockedPopEntrySList(ptr) NTOSKRNL_InterlockedPopEntrySList
-@ stdcall -norelay InterlockedPushEntrySList(ptr ptr) NTOSKRNL_InterlockedPushEntrySList
+@ stdcall -arch=win32 -norelay InterlockedPopEntrySList(ptr) NTOSKRNL_InterlockedPopEntrySList
+@ stdcall -arch=win32 -norelay InterlockedPushEntrySList(ptr ptr) NTOSKRNL_InterlockedPushEntrySList
+@ stdcall -arch=win64 ExQueryDepthSList(ptr) RtlQueryDepthSList
 @ stub IoAssignDriveLetters
 @ stub IoReadPartitionTable
 @ stub IoSetPartitionInformation
