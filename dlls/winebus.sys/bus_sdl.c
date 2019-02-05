@@ -137,10 +137,10 @@ static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *de
 }
 
 static const BYTE REPORT_AXIS_TAIL[] = {
-    0x16, 0x00, 0x80,   /* LOGICAL_MINIMUM (-32768) */
-    0x26, 0xff, 0x7f,   /* LOGICAL_MAXIMUM (32767) */
-    0x36, 0x00, 0x80,   /* PHYSICAL_MINIMUM (-32768) */
-    0x46, 0xff, 0x7f,   /* PHYSICAL_MAXIMUM (32767) */
+    0x17, 0x00, 0x00, 0x00, 0x00,   /* LOGICAL_MINIMUM (0) */
+    0x27, 0xff, 0xff, 0x00, 0x00,   /* LOGICAL_MAXIMUM (65535) */
+    0x37, 0x00, 0x00, 0x00, 0x00,   /* PHYSICAL_MINIMUM (0) */
+    0x47, 0xff, 0xff, 0x00, 0x00,   /* PHYSICAL_MAXIMUM (65535) */
     0x75, 0x10,         /* REPORT_SIZE (16) */
     0x95, 0x00,         /* REPORT_COUNT (?) */
     0x81, 0x02,         /* INPUT (Data,Var,Abs) */
@@ -170,10 +170,10 @@ static const BYTE CONTROLLER_AXIS [] = {
     0x09, 0x31,         /* USAGE (Y) */
     0x09, 0x33,         /* USAGE (RX) */
     0x09, 0x34,         /* USAGE (RY) */
-    0x16, 0x00, 0x80,   /* LOGICAL_MINIMUM (-32768) */
-    0x26, 0xff, 0x7f,   /* LOGICAL_MAXIMUM (32767) */
-    0x36, 0x00, 0x80,   /* PHYSICAL_MINIMUM (-32768) */
-    0x46, 0xff, 0x7f,   /* PHYSICAL_MAXIMUM (32767) */
+    0x17, 0x00, 0x00, 0x00, 0x00,   /* LOGICAL_MINIMUM (0) */
+    0x27, 0xff, 0xff, 0x00, 0x00,   /* LOGICAL_MAXIMUM (65535) */
+    0x37, 0x00, 0x00, 0x00, 0x00,   /* PHYSICAL_MINIMUM (0) */
+    0x47, 0xff, 0xff, 0x00, 0x00,   /* PHYSICAL_MAXIMUM (65535) */
     0x75, 0x10,         /* REPORT_SIZE (16) */
     0x95, 0x04,         /* REPORT_COUNT (4) */
     0x81, 0x02,         /* INPUT (Data,Var,Abs) */
@@ -245,7 +245,20 @@ static void set_axis_value(struct platform_private *ext, int index, short value)
 {
     int offset;
     offset = ext->axis_start + index * 2;
-    *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value);
+
+    switch (index)
+    {
+    case SDL_CONTROLLER_AXIS_LEFTX:
+    case SDL_CONTROLLER_AXIS_LEFTY:
+    case SDL_CONTROLLER_AXIS_RIGHTX:
+    case SDL_CONTROLLER_AXIS_RIGHTY:
+        *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value) + 32768;
+        break;
+    case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+    case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+        *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value);
+        break;
+    }
 }
 
 static void set_ball_value(struct platform_private *ext, int index, int value1, int value2)
