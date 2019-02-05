@@ -1020,6 +1020,7 @@ SQLRETURN WINAPI ODBC32_SQLDescribeCol(SQLHSTMT StatementHandle, SQLUSMALLINT Co
                                        SQLSMALLINT BufferLength, SQLSMALLINT *NameLength, SQLSMALLINT *DataType,
                                        SQLULEN *ColumnSize, SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
 {
+    SQLSMALLINT dummy;
     SQLRETURN ret;
 
     TRACE("(StatementHandle %p, ColumnNumber %d, ColumnName %p, BufferLength %d, NameLength %p, DataType %p,"
@@ -1027,6 +1028,7 @@ SQLRETURN WINAPI ODBC32_SQLDescribeCol(SQLHSTMT StatementHandle, SQLUSMALLINT Co
           BufferLength, NameLength, DataType, ColumnSize, DecimalDigits, Nullable);
 
     if (!pSQLDescribeCol) return SQL_ERROR;
+    if (!NameLength) NameLength = &dummy; /* workaround for drivers that don't accept NULL NameLength */
 
     ret = pSQLDescribeCol(StatementHandle, ColumnNumber, ColumnName, BufferLength, NameLength, DataType, ColumnSize,
                           DecimalDigits, Nullable);
@@ -2167,6 +2169,7 @@ SQLRETURN WINAPI ODBC32_SQLDescribeColW(SQLHSTMT StatementHandle, SQLUSMALLINT C
                                         SQLSMALLINT BufferLength, SQLSMALLINT *NameLength, SQLSMALLINT *DataType,
                                         SQLULEN *ColumnSize, SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
 {
+    SQLSMALLINT dummy;
     SQLRETURN ret;
 
     TRACE("(StatementHandle %p, ColumnNumber %d, ColumnName %p, BufferLength %d, NameLength %p, DataType %p,"
@@ -2174,6 +2177,7 @@ SQLRETURN WINAPI ODBC32_SQLDescribeColW(SQLHSTMT StatementHandle, SQLUSMALLINT C
           BufferLength, NameLength, DataType, ColumnSize, DecimalDigits, Nullable);
 
     if (!pSQLDescribeColW) return SQL_ERROR;
+    if (!NameLength) NameLength = &dummy; /* workaround for drivers that don't accept NULL NameLength */
 
     ret = pSQLDescribeColW(StatementHandle, ColumnNumber, ColumnName, BufferLength, NameLength, DataType, ColumnSize,
                            DecimalDigits, Nullable);
