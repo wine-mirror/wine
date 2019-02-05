@@ -681,6 +681,16 @@ struct ot_gpos_mark_to_base_format1
     WORD base_array;
 };
 
+struct ot_gpos_mark_to_mark_format1
+{
+    WORD format;
+    WORD mark1_coverage;
+    WORD mark2_coverage;
+    WORD mark_class_count;
+    WORD mark1_array;
+    WORD mark2_array;
+};
+
 typedef struct {
     WORD SubstFormat;
     WORD Coverage;
@@ -3503,6 +3513,85 @@ static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(const struct scrip
 static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(const struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int i;
+    WORD format;
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gpos_subtable(cache, lookup->offset, i);
+
+        format = table_read_be_word(&cache->gpos.table, subtable_offset);
+
+        if (format == 1)
+        {
+            const struct ot_gpos_mark_to_mark_format1 *format1 = table_read_ensure(&cache->gpos.table,
+                    subtable_offset, sizeof(*format1));
+            unsigned int count, mark1_array_offset, mark2_array_offset, mark_class_count;
+            unsigned int mark1_index, mark2_index, mark2_anchor;
+            const struct ot_gpos_mark_array *mark1_array;
+            const struct ot_gpos_base_array *mark2_array;
+            float mark1_x, mark1_y, mark2_x, mark2_y;
+            struct glyph_iterator mark_iter;
+
+            if (!format1)
+                continue;
+
+            mark1_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    GET_BE_WORD(format1->mark1_coverage), context->u.pos.glyphs[iter->pos]);
+
+            mark1_array_offset = subtable_offset + GET_BE_WORD(format1->mark1_array);
+            if (!(count = table_read_be_word(&cache->gpos.table, mark1_array_offset)))
+                continue;
+
+            mark1_array = table_read_ensure(&cache->gpos.table, mark1_array_offset,
+                    FIELD_OFFSET(struct ot_gpos_mark_array, records[count]));
+            if (!mark1_array)
+                continue;
+
+            if (mark1_index == GLYPH_NOT_COVERED || mark1_index >= count)
+                continue;
+
+            glyph_iterator_init(context, lookup->flags & ~LOOKUP_FLAG_IGNORE_MASK, iter->pos, 1, &mark_iter);
+            if (!glyph_iterator_prev(&mark_iter))
+                continue;
+
+            if (!context->u.pos.glyph_props[mark_iter.pos].isDiacritic)
+                continue;
+
+            mark2_array_offset = subtable_offset + GET_BE_WORD(format1->mark2_array);
+            if (!(count = table_read_be_word(&cache->gpos.table, mark2_array_offset)))
+                continue;
+
+            mark_class_count = GET_BE_WORD(format1->mark_class_count);
+
+            mark2_array = table_read_ensure(&cache->gpos.table, mark2_array_offset,
+                    FIELD_OFFSET(struct ot_gpos_base_array, offsets[count * mark_class_count]));
+            if (!mark2_array)
+                continue;
+
+            mark2_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    GET_BE_WORD(format1->mark2_coverage), context->u.pos.glyphs[mark_iter.pos]);
+
+            if (mark2_index == GLYPH_NOT_COVERED || mark2_index >= count)
+                continue;
+
+            mark2_anchor = GET_BE_WORD(mark2_array->offsets[mark2_index * mark_class_count +
+                    GET_BE_WORD(mark1_array->records[mark1_index].mark_class)]);
+            opentype_layout_gpos_get_anchor(context, mark1_array_offset +
+                    GET_BE_WORD(mark1_array->records[mark1_index].mark_anchor), iter->pos, &mark1_x, &mark1_y);
+            opentype_layout_gpos_get_anchor(context, mark2_array_offset + mark2_anchor, mark_iter.pos,
+                    &mark2_x, &mark2_y);
+
+            context->offsets[iter->pos].advanceOffset = mark2_x - mark1_x;
+            context->offsets[iter->pos].ascenderOffset = mark2_y - mark1_y;
+
+            break;
+        }
+        else
+            WARN("Unknown mark-to-mark format %u.\n", format);
+    }
+
     return FALSE;
 }
 
