@@ -13607,6 +13607,7 @@ static void alphatest_test(void)
     D3DCOLOR color;
     ULONG refcount;
     D3DCAPS9 caps;
+    DWORD value;
     HWND window;
     HRESULT hr;
 
@@ -13738,10 +13739,32 @@ static void alphatest_test(void)
             hr = IDirect3DDevice9_EndScene(device);
             ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
             color = getPixelColor(device, 320, 240);
-            ok(color_match(color, testdata[i].color_greater, 1), "Alphatest failed. Got color 0x%08x, expected 0x%08x. alpha > ref, func %u\n",
-            color, testdata[i].color_greater, testdata[i].func);
+            ok(color_match(color, testdata[i].color_greater, 1),
+                    "Alphatest failed, color 0x%08x, expected 0x%08x, alpha > ref, func %u.\n",
+                    color, testdata[i].color_greater, testdata[i].func);
             hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-            ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed with 0x%08x\n", hr);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Present failed, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, ALPHATEST_FAILED, 0.0f, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAREF, 0xff70);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ALPHAREF, &value);
+            ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed, hr %#x.\n", hr);
+            ok(value == 0xff70, "Unexpected D3DRS_ALPHAREF value %#x.\n", value);
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+            ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed, hr %#x.\n", hr);
+            color = getPixelColor(device, 320, 240);
+            ok(color_match(color, testdata[i].color_greater, 1),
+                    "Alphatest failed, color 0x%08x, expected 0x%08x, alpha > ref, func %u.\n",
+                    color, testdata[i].color_greater, testdata[i].func);
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Present failed, hr %#x.\n", hr);
+
         }
     }
 
