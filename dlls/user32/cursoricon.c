@@ -2976,6 +2976,8 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     }
 
     orig_bm = SelectObject(screen_mem_dc, hbitmap);
+    if (info->bmiHeader.biBitCount > 1)
+        SetStretchBltMode(screen_mem_dc, HALFTONE);
     StretchDIBits(screen_mem_dc, 0, 0, new_width, new_height, 0, 0, width, height, bits, fix_info, DIB_RGB_COLORS, SRCCOPY);
     SelectObject(screen_mem_dc, orig_bm);
 
@@ -3217,6 +3219,8 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                     void * bits;
 
                     dc = CreateCompatibleDC(NULL);
+                    if (ds.dsBm.bmBitsPixel > 1)
+                        SetStretchBltMode(dc, HALFTONE);
 
                     bi->bmiHeader.biWidth = ds.dsBm.bmWidth;
                     bi->bmiHeader.biHeight = ds.dsBm.bmHeight;

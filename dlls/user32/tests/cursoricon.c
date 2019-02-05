@@ -2918,9 +2918,9 @@ static void test_Image_StretchMode(void)
                 sizeof(colors_bits_1), FALSE},
         {4, 4, 2, 2, 8, test_bits_8, expected_bits_8,
                 sizeof(test_bits_8), sizeof(expected_bits_8), colors_bits_8,
-                sizeof(colors_bits_8), TRUE},
+                sizeof(colors_bits_8), FALSE},
         {4, 4, 2, 2, 16, (const unsigned char *)test_bits_16, (const unsigned char *)expected_bits_16,
-                sizeof(test_bits_16), sizeof(expected_bits_16), NULL, 0, TRUE},
+                sizeof(test_bits_16), sizeof(expected_bits_16), NULL, 0, FALSE},
     };
     static const char filename[] = "test.bmp";
     BITMAPINFO *bmi, *bmi_output;
