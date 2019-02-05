@@ -277,8 +277,6 @@ NTSTATUS WINAPI HidP_GetScaledUsageValue(HIDP_REPORT_TYPE ReportType, USAGE Usag
                              element->valueStartBit, element->bitCount, &rawValue);
         if (rc != HIDP_STATUS_SUCCESS)
             return rc;
-        if (element->caps.value.BitSize == 16)
-            rawValue = (short)rawValue;
         *UsageValue = rawValue;
     }
 
@@ -925,8 +923,6 @@ NTSTATUS WINAPI HidP_GetData(HIDP_REPORT_TYPE ReportType, HIDP_DATA *DataList, U
                                      element->valueStartBit, element->bitCount, &v);
                 if (rc != HIDP_STATUS_SUCCESS)
                     return rc;
-                if (element->caps.value.BitSize == 16)
-                    v = (short)v;
                 DataList[uCount].DataIndex = element->caps.value.u.NotRange.DataIndex;
                 DataList[uCount].u.RawValue = v;
             }
