@@ -41,6 +41,8 @@ static LSTATUS (WINAPI *pSHRegGetValueA)(HKEY, const char *, const char *, SRRF,
 static DWORD (WINAPI *pSHQueryValueExA)(HKEY, const char *, DWORD *, DWORD *, void *buff, DWORD *buff_len);
 static DWORD (WINAPI *pSHRegGetPathA)(HKEY, const char *, const char *, char *, DWORD);
 static DWORD (WINAPI *pSHCopyKeyA)(HKEY, const char *, HKEY, DWORD);
+static HRESULT (WINAPI *pSHCreateStreamOnFileA)(const char *path, DWORD mode, IStream **stream);
+static HRESULT (WINAPI *pIStream_Size)(IStream *stream, ULARGE_INTEGER *size);
 
 /* Keys used for testing */
 #define REG_TEST_KEY        "Software\\Wine\\Test"
@@ -73,6 +75,8 @@ static void init(HMODULE hshcore)
     X(SHQueryValueExA);
     X(SHRegGetPathA);
     X(SHCopyKeyA);
+    X(SHCreateStreamOnFileA);
+    X(IStream_Size);
 #undef X
 }
 
@@ -671,6 +675,120 @@ static void test_SHCopyKey(void)
     delete_key( hkey, "Software\\Wine", "Test" );
 }
 
+#define CHECK_FILE_SIZE(filename,exp_size) _check_file_size(filename, exp_size, __LINE__)
+static void _check_file_size(const CHAR *filename, LONG exp_size, int line)
+{
+    HANDLE handle;
+    DWORD file_size = 0xdeadbeef;
+    handle = CreateFileA(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    file_size = GetFileSize(handle, NULL);
+    ok_(__FILE__,line)(file_size == exp_size, "got wrong file size: %d.\n", file_size);
+    CloseHandle(handle);
+}
+
+#define CHECK_STREAM_SIZE(obj,exp_size) _check_stream_size(obj, exp_size, __LINE__)
+static void _check_stream_size(IStream *obj, LONG exp_size, int line)
+{
+    ULARGE_INTEGER stream_size;
+    STATSTG stat;
+    HRESULT hr;
+    stream_size.QuadPart = 0xdeadbeef;
+    hr = pIStream_Size(obj, &stream_size);
+    ok_(__FILE__,line)(hr == S_OK, "IStream_Size failed: 0x%08x.\n", hr);
+    ok_(__FILE__,line)(stream_size.QuadPart == exp_size, "Size(): got wrong size of stream: %s.\n",
+                       wine_dbgstr_longlong(stream_size.QuadPart));
+    hr = IStream_Stat(obj, &stat, STATFLAG_NONAME);
+    ok_(__FILE__,line)(hr == S_OK, "IStream_Stat failed: 0x%08x.\n", hr);
+    ok_(__FILE__,line)(stat.cbSize.QuadPart == exp_size, "Stat(): got wrong size of stream: %s.\n",
+                       wine_dbgstr_longlong(stat.cbSize.QuadPart));
+}
+
+#define CHECK_STREAM_POS(obj,exp_pos) _check_stream_pos(obj, exp_pos, __LINE__)
+static void _check_stream_pos(IStream *obj, LONG exp_pos, int line)
+{
+    LARGE_INTEGER move;
+    ULARGE_INTEGER pos;
+    HRESULT hr;
+    move.QuadPart = 0;
+    pos.QuadPart = 0xdeadbeef;
+    hr = IStream_Seek(obj, move, STREAM_SEEK_CUR, &pos);
+    ok_(__FILE__,line)(hr == S_OK, "IStream_Seek failed: 0x%08x.\n", hr);
+    ok_(__FILE__,line)(pos.QuadPart == exp_pos, "got wrong position: %s.\n",
+                       wine_dbgstr_longlong(pos.QuadPart));
+}
+
+static void test_stream_size(void)
+{
+    static const byte test_data[] = {0x1,0x2,0x3,0x4,0x5,0x6};
+    static const CHAR filename[] = "test_file";
+    IStream *stream, *stream2;
+    HANDLE handle;
+    DWORD written = 0;
+    ULARGE_INTEGER stream_size;
+    HRESULT hr;
+
+    handle = CreateFileA(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "File creation failed: 0x%08x.\n", GetLastError());
+    WriteFile(handle, test_data, sizeof(test_data), &written, NULL);
+    ok(written == sizeof(test_data), "Failed to write data into file.\n");
+    CloseHandle(handle);
+
+    /* in read-only mode, SetSize() will success but it has no effect on Size() and the file */
+    hr = pSHCreateStreamOnFileA(filename, STGM_FAILIFTHERE|STGM_READ, &stream);
+    ok(hr == S_OK, "SHCreateStreamOnFileA failed: 0x%08x.\n", hr);
+    CHECK_STREAM_SIZE(stream, sizeof(test_data));
+    stream_size.QuadPart = 0;
+    hr = IStream_SetSize(stream, stream_size);
+    ok(hr == S_OK, "IStream_SetSize failed: 0x%08x.\n", hr);
+    CHECK_STREAM_SIZE(stream, sizeof(test_data));
+    CHECK_STREAM_POS(stream, 0);
+    stream_size.QuadPart = 100;
+    hr = IStream_SetSize(stream, stream_size);
+    ok(hr == S_OK, "IStream_SetSize failed: 0x%08x.\n", hr);
+    CHECK_STREAM_SIZE(stream, sizeof(test_data));
+    CHECK_STREAM_POS(stream, 100);
+    IStream_Release(stream);
+    CHECK_FILE_SIZE(filename, sizeof(test_data));
+
+    hr = pSHCreateStreamOnFileA(filename, STGM_FAILIFTHERE|STGM_WRITE, &stream);
+    ok(hr == S_OK, "SHCreateStreamOnFileA failed: 0x%08x.\n", hr);
+    hr = pSHCreateStreamOnFileA(filename, STGM_FAILIFTHERE|STGM_READ, &stream2);
+    ok(hr == S_OK, "SHCreateStreamOnFileA failed: 0x%08x.\n", hr);
+    CHECK_STREAM_SIZE(stream, sizeof(test_data));
+    CHECK_STREAM_SIZE(stream2, sizeof(test_data));
+    CHECK_STREAM_POS(stream, 0);
+    CHECK_STREAM_POS(stream2, 0);
+
+    stream_size.QuadPart = 0;
+    hr = IStream_SetSize(stream, stream_size);
+    ok(hr == S_OK, "IStream_SetSize failed: 0x%08x.\n", hr);
+    CHECK_STREAM_SIZE(stream, 0);
+    CHECK_STREAM_SIZE(stream2, 0);
+    CHECK_STREAM_POS(stream, 0);
+    CHECK_STREAM_POS(stream2, 0);
+
+    stream_size.QuadPart = 100;
+    hr = IStream_SetSize(stream, stream_size);
+    ok(hr == S_OK, "IStream_SetSize failed: 0x%08x.\n", hr);
+    CHECK_STREAM_SIZE(stream, 100);
+    CHECK_STREAM_SIZE(stream2, 100);
+    CHECK_STREAM_POS(stream, 0);
+    CHECK_STREAM_POS(stream2, 0);
+
+    stream_size.QuadPart = 90;
+    hr = IStream_SetSize(stream2, stream_size);
+    ok(hr == S_OK, "IStream_SetSize failed: 0x%08x.\n", hr);
+    CHECK_STREAM_SIZE(stream, 100);
+    CHECK_STREAM_SIZE(stream2, 100);
+    CHECK_STREAM_POS(stream, 0);
+    CHECK_STREAM_POS(stream2, 90);
+    IStream_Release(stream);
+    IStream_Release(stream2);
+    CHECK_FILE_SIZE(filename, 100);
+
+    DeleteFileA(filename);
+}
+
 START_TEST(shcore)
 {
     HMODULE hshcore = LoadLibraryA("shcore.dll");
@@ -695,4 +813,5 @@ START_TEST(shcore)
     test_SHQueryValueEx();
     test_SHRegGetPath();
     test_SHCopyKey();
+    test_stream_size();
 }

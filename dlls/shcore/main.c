@@ -913,14 +913,25 @@ static HRESULT WINAPI filestream_Seek(IStream *iface, LARGE_INTEGER move, DWORD 
 static HRESULT WINAPI filestream_SetSize(IStream *iface, ULARGE_INTEGER size)
 {
     struct shstream *stream = impl_from_IStream(iface);
+    LARGE_INTEGER origin, move;
 
     TRACE("(%p, %s)\n", stream, wine_dbgstr_longlong(size.QuadPart));
 
-    if (!SetFilePointer(stream->u.file.handle, size.QuadPart, NULL, FILE_BEGIN))
+    move.QuadPart = 0;
+    if (!SetFilePointerEx(stream->u.file.handle, move, &origin, FILE_CURRENT))
         return E_FAIL;
 
-    if (!SetEndOfFile(stream->u.file.handle))
+    move.QuadPart = size.QuadPart;
+    if (!SetFilePointerEx(stream->u.file.handle, move, NULL, FILE_BEGIN))
         return E_FAIL;
+
+    if (stream->u.file.mode != STGM_READ)
+    {
+        if (!SetEndOfFile(stream->u.file.handle))
+            return E_FAIL;
+        if (!SetFilePointerEx(stream->u.file.handle, origin, NULL, FILE_BEGIN))
+            return E_FAIL;
+    }
 
     return S_OK;
 }
