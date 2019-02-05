@@ -681,6 +681,16 @@ struct ot_gpos_mark_to_base_format1
     WORD base_array;
 };
 
+struct ot_gpos_mark_to_lig_format1
+{
+    WORD format;
+    WORD mark_coverage;
+    WORD lig_coverage;
+    WORD mark_class_count;
+    WORD mark_array;
+    WORD lig_array;
+};
+
 struct ot_gpos_mark_to_mark_format1
 {
     WORD format;
@@ -3507,6 +3517,46 @@ static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(const struct scri
 static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(const struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int i;
+    WORD format;
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gpos_subtable(cache, lookup->offset, i);
+
+        format = table_read_be_word(&cache->gpos.table, subtable_offset);
+
+        if (format == 1)
+        {
+            const struct ot_gpos_mark_to_lig_format1 *format1 = table_read_ensure(&cache->gpos.table,
+                    subtable_offset, sizeof(*format1));
+            unsigned int mark_index, lig_index;
+            struct glyph_iterator lig_iter;
+
+            if (!format1)
+                continue;
+
+            mark_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    GET_BE_WORD(format1->mark_coverage), context->u.pos.glyphs[iter->pos]);
+            if (mark_index == GLYPH_NOT_COVERED)
+                continue;
+
+            glyph_iterator_init(context, LOOKUP_FLAG_IGNORE_MARKS, iter->pos, 1, &lig_iter);
+            if (!glyph_iterator_prev(&lig_iter))
+                continue;
+
+            lig_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
+                    GET_BE_WORD(format1->lig_coverage), context->u.pos.glyphs[lig_iter.pos]);
+            if (lig_index == GLYPH_NOT_COVERED)
+                continue;
+
+            FIXME("Unimplemented.\n");
+        }
+        else
+            WARN("Unknown mark-to-ligature format %u.\n", format);
+    }
+
     return FALSE;
 }
 
