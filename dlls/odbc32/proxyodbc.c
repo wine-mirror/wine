@@ -683,42 +683,42 @@ static BOOL ODBC_LoadDMFunctions(void)
  */
 SQLRETURN WINAPI ODBC32_SQLAllocConnect(SQLHENV EnvironmentHandle, SQLHDBC *ConnectionHandle)
 {
-        SQLRETURN ret;
-        TRACE("(EnvironmentHandle %p)\n",EnvironmentHandle);
+    SQLRETURN ret;
 
-        if (!pSQLAllocConnect)
-        {
-           *ConnectionHandle = SQL_NULL_HDBC;
-           TRACE("Not ready\n");
-           return SQL_ERROR;
-        }
+    TRACE("(EnvironmentHandle %p, ConnectionHandle %p)\n", EnvironmentHandle, ConnectionHandle);
 
-        ret = pSQLAllocConnect(EnvironmentHandle, ConnectionHandle);
-        TRACE("Returns %d, Handle %p\n", ret, *ConnectionHandle);
-        return ret;
+    if (!pSQLAllocConnect)
+    {
+        *ConnectionHandle = SQL_NULL_HDBC;
+        TRACE("Not ready\n");
+        return SQL_ERROR;
+    }
+
+    ret = pSQLAllocConnect(EnvironmentHandle, ConnectionHandle);
+    TRACE("Returning %d, ConnectionHandle %p\n", ret, *ConnectionHandle);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLAllocEnv           [ODBC32.002]
  */
 SQLRETURN WINAPI ODBC32_SQLAllocEnv(SQLHENV *EnvironmentHandle)
 {
-        SQLRETURN ret;
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLAllocEnv)
-        {
-           *EnvironmentHandle = SQL_NULL_HENV;
-           TRACE("Not ready\n");
-           return SQL_ERROR;
-        }
+    TRACE("(EnvironmentHandle %p)\n", EnvironmentHandle);
 
-        ret = pSQLAllocEnv(EnvironmentHandle);
-        TRACE("Returns %d, EnvironmentHandle %p\n", ret, *EnvironmentHandle);
-        return ret;
+    if (!pSQLAllocEnv)
+    {
+        *EnvironmentHandle = SQL_NULL_HENV;
+        TRACE("Not ready\n");
+        return SQL_ERROR;
+    }
+
+    ret = pSQLAllocEnv(EnvironmentHandle);
+    TRACE("Returning %d, EnvironmentHandle %p\n", ret, *EnvironmentHandle);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLAllocHandle           [ODBC32.024]
@@ -757,22 +757,21 @@ SQLRETURN WINAPI ODBC32_SQLAllocHandle(SQLSMALLINT HandleType, SQLHANDLE InputHa
  */
 SQLRETURN WINAPI ODBC32_SQLAllocStmt(SQLHDBC ConnectionHandle, SQLHSTMT *StatementHandle)
 {
-        SQLRETURN ret;
+    SQLRETURN ret;
 
-        TRACE("(Connection %p)\n", ConnectionHandle);
+    TRACE("(ConnectionHandle %p, StatementHandle %p)\n", ConnectionHandle, StatementHandle);
 
-        if (!pSQLAllocStmt)
-        {
-           *StatementHandle = SQL_NULL_HSTMT;
-           TRACE ("Not ready\n");
-           return SQL_ERROR;
-        }
+    if (!pSQLAllocStmt)
+    {
+        *StatementHandle = SQL_NULL_HSTMT;
+        TRACE("Not ready\n");
+        return SQL_ERROR;
+    }
 
-        ret = pSQLAllocStmt(ConnectionHandle, StatementHandle);
-        TRACE ("Returns %d, Handle %p\n", ret, *StatementHandle);
-        return ret;
+    ret = pSQLAllocStmt(ConnectionHandle, StatementHandle);
+    TRACE ("Returning %d, StatementHandle %p\n", ret, *StatementHandle);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLAllocHandleStd           [ODBC32.077]
@@ -802,45 +801,66 @@ SQLRETURN WINAPI ODBC32_SQLAllocHandleStd( SQLSMALLINT HandleType,
         return pSQLAllocHandleStd(HandleType, InputHandle, OutputHandle);
 }
 
+static const char *debugstr_sqllen( SQLLEN len )
+{
+#ifdef _WIN64
+    return wine_dbg_sprintf( "%ld", len );
+#else
+    return wine_dbg_sprintf( "%d", len );
+#endif
+}
 
 /*************************************************************************
  *				SQLBindCol           [ODBC32.004]
  */
-SQLRETURN WINAPI ODBC32_SQLBindCol(SQLHSTMT StatementHandle,
-                     SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
-                     SQLPOINTER TargetValue, SQLLEN BufferLength,
-                     SQLLEN *StrLen_or_Ind)
+SQLRETURN WINAPI ODBC32_SQLBindCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
+                                   SQLPOINTER TargetValue, SQLLEN BufferLength, SQLLEN *StrLen_or_Ind)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLBindCol)
-        {
-                TRACE ("Not ready\n");
-                return SQL_ERROR;
-        }
+    TRACE("(StatementHandle %p, ColumnNumber %d, TargetType %d, TargetValue %p, BufferLength %s, StrLen_or_Ind %p)\n",
+          StatementHandle, ColumnNumber, TargetType, TargetValue, debugstr_sqllen(BufferLength), StrLen_or_Ind);
 
-        return pSQLBindCol(StatementHandle, ColumnNumber, TargetType,
-                           TargetValue, BufferLength, StrLen_or_Ind);
+    if (!pSQLBindCol)
+    {
+        TRACE("Not ready\n");
+        return SQL_ERROR;
+    }
+
+    ret = pSQLBindCol(StatementHandle, ColumnNumber, TargetType, TargetValue, BufferLength, StrLen_or_Ind);
+    TRACE ("Returning %d\n", ret);
+    return ret;
 }
 
+static const char *debugstr_sqlulen( SQLULEN len )
+{
+#ifdef _WIN64
+    return wine_dbg_sprintf( "%lu", len );
+#else
+    return wine_dbg_sprintf( "%u", len );
+#endif
+}
 
 /*************************************************************************
  *				SQLBindParam           [ODBC32.025]
  */
-SQLRETURN WINAPI ODBC32_SQLBindParam(SQLHSTMT StatementHandle,
-             SQLUSMALLINT ParameterNumber, SQLSMALLINT ValueType,
-             SQLSMALLINT ParameterType, SQLULEN LengthPrecision,
-             SQLSMALLINT ParameterScale, SQLPOINTER ParameterValue,
-             SQLLEN *StrLen_or_Ind)
+SQLRETURN WINAPI ODBC32_SQLBindParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNumber, SQLSMALLINT ValueType,
+                                     SQLSMALLINT ParameterType, SQLULEN LengthPrecision, SQLSMALLINT ParameterScale,
+                                     SQLPOINTER ParameterValue, SQLLEN *StrLen_or_Ind)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLBindParam) return SQL_ERROR;
-        return pSQLBindParam(StatementHandle, ParameterNumber, ValueType,
-                             ParameterType, LengthPrecision, ParameterScale,
-                             ParameterValue, StrLen_or_Ind);
+    TRACE("(StatementHandle %p, ParameterNumber %d, ValueType %d, ParameterType %d, LengthPrecision %s,"
+          " ParameterScale %d, ParameterValue %p, StrLen_or_Ind %p)\n", StatementHandle, ParameterNumber, ValueType,
+          ParameterType, debugstr_sqlulen(LengthPrecision), ParameterScale, ParameterValue, StrLen_or_Ind);
+
+    if (!pSQLBindParam) return SQL_ERROR;
+
+    ret = pSQLBindParam(StatementHandle, ParameterNumber, ValueType, ParameterType, LengthPrecision, ParameterScale,
+                        ParameterValue, StrLen_or_Ind);
+    TRACE ("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLCancel           [ODBC32.005]
@@ -939,32 +959,31 @@ SQLRETURN WINAPI ODBC32_SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDe
 /*************************************************************************
  *				SQLDataSources           [ODBC32.057]
  */
-SQLRETURN WINAPI ODBC32_SQLDataSources(SQLHENV EnvironmentHandle,
-             SQLUSMALLINT Direction, SQLCHAR *ServerName,
-             SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1,
-             SQLCHAR *Description, SQLSMALLINT BufferLength2,
-             SQLSMALLINT *NameLength2)
+SQLRETURN WINAPI ODBC32_SQLDataSources(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, SQLCHAR *ServerName,
+                                       SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1, SQLCHAR *Description,
+                                       SQLSMALLINT BufferLength2, SQLSMALLINT *NameLength2)
 {
-        SQLRETURN ret;
+    SQLRETURN ret;
 
-        TRACE("(EnvironmentHandle %p)\n", EnvironmentHandle);
+    TRACE("(EnvironmentHandle %p, Direction %d, ServerName %p, BufferLength1 %d, NameLength1 %p, Description %p,"
+          " BufferLength2 %d, NameLength2 %p)\n", EnvironmentHandle, Direction, ServerName, BufferLength1,
+          NameLength1, Description, BufferLength2, NameLength2);
 
-        if (!pSQLDataSources) return SQL_ERROR;
+    if (!pSQLDataSources) return SQL_ERROR;
 
-        ret = pSQLDataSources(EnvironmentHandle, Direction, ServerName,
-                              BufferLength1, NameLength1, Description, BufferLength2, NameLength2);
+    ret = pSQLDataSources(EnvironmentHandle, Direction, ServerName, BufferLength1, NameLength1, Description,
+                          BufferLength2, NameLength2);
+    if (ret >= 0 && TRACE_ON(odbc))
+    {
+        if (ServerName && NameLength1 && *NameLength1 > 0)
+            TRACE(" DataSource %s", debugstr_an((const char *)ServerName, *NameLength1));
+        if (Description && NameLength2 && *NameLength2 > 0)
+            TRACE(" Description %s", debugstr_an((const char *)Description, *NameLength2));
+        TRACE("\n");
+    }
 
-        if (TRACE_ON(odbc))
-        {
-           TRACE("Returns %d \t", ret);
-           if (NameLength1 && *NameLength1 > 0)
-             TRACE("DataSource = %s,", ServerName);
-           if (NameLength2 && *NameLength2 > 0)
-             TRACE(" Description = %s", Description);
-           TRACE("\n");
-        }
-
-        return ret;
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 SQLRETURN WINAPI ODBC32_SQLDataSourcesA(SQLHENV EnvironmentHandle,
@@ -997,35 +1016,48 @@ SQLRETURN WINAPI ODBC32_SQLDataSourcesA(SQLHENV EnvironmentHandle,
 /*************************************************************************
  *				SQLDescribeCol           [ODBC32.008]
  */
-SQLRETURN WINAPI ODBC32_SQLDescribeCol(SQLHSTMT StatementHandle,
-             SQLUSMALLINT ColumnNumber, SQLCHAR *ColumnName,
-             SQLSMALLINT BufferLength, SQLSMALLINT *NameLength,
-             SQLSMALLINT *DataType, SQLULEN *ColumnSize,
-             SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
+SQLRETURN WINAPI ODBC32_SQLDescribeCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber, SQLCHAR *ColumnName,
+                                       SQLSMALLINT BufferLength, SQLSMALLINT *NameLength, SQLSMALLINT *DataType,
+                                       SQLULEN *ColumnSize, SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLDescribeCol) return SQL_ERROR;
-        return pSQLDescribeCol(StatementHandle, ColumnNumber, ColumnName,
-                               BufferLength, NameLength, DataType, ColumnSize, DecimalDigits, Nullable);
+    TRACE("(StatementHandle %p, ColumnNumber %d, ColumnName %p, BufferLength %d, NameLength %p, DataType %p,"
+          " ColumnSize %p, DecimalDigits %p, Nullable %p)\n", StatementHandle, ColumnNumber, ColumnName,
+          BufferLength, NameLength, DataType, ColumnSize, DecimalDigits, Nullable);
+
+    if (!pSQLDescribeCol) return SQL_ERROR;
+
+    ret = pSQLDescribeCol(StatementHandle, ColumnNumber, ColumnName, BufferLength, NameLength, DataType, ColumnSize,
+                          DecimalDigits, Nullable);
+    if (ret >= 0)
+    {
+        if (ColumnName && NameLength) TRACE(" ColumnName %s\n", debugstr_an((const char *)ColumnName, *NameLength));
+        if (DataType) TRACE(" DataType %d\n", *DataType);
+        if (ColumnSize) TRACE(" ColumnSize %s\n", debugstr_sqlulen(*ColumnSize));
+        if (DecimalDigits) TRACE(" DecimalDigits %d\n", *DecimalDigits);
+        if (Nullable) TRACE(" Nullable %d\n", *Nullable);
+    }
+
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLDisconnect           [ODBC32.009]
  */
 SQLRETURN WINAPI ODBC32_SQLDisconnect(SQLHDBC ConnectionHandle)
 {
-        SQLRETURN ret;
-        TRACE("(Handle %p)\n", ConnectionHandle);
+    SQLRETURN ret;
 
-        if (!pSQLDisconnect) return SQL_ERROR;
+    TRACE("(ConnectionHandle %p)\n", ConnectionHandle);
 
-        ret = pSQLDisconnect(ConnectionHandle);
-        TRACE("Returns %d\n", ret);
-        return ret;
+    if (!pSQLDisconnect) return SQL_ERROR;
+
+    ret = pSQLDisconnect(ConnectionHandle);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLEndTran           [ODBC32.029]
@@ -1095,12 +1127,16 @@ SQLRETURN WINAPI ODBC32_SQLExecute(SQLHSTMT StatementHandle)
  */
 SQLRETURN WINAPI ODBC32_SQLFetch(SQLHSTMT StatementHandle)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLFetch) return SQL_ERROR;
-        return pSQLFetch(StatementHandle);
+    TRACE("(StatementHandle %p)\n", StatementHandle);
+
+    if (!pSQLFetch) return SQL_ERROR;
+
+    ret = pSQLFetch(StatementHandle);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLFetchScroll          [ODBC32.030]
@@ -1119,32 +1155,32 @@ SQLRETURN WINAPI ODBC32_SQLFetchScroll(SQLHSTMT StatementHandle, SQLSMALLINT Fet
  */
 SQLRETURN WINAPI ODBC32_SQLFreeConnect(SQLHDBC ConnectionHandle)
 {
-        SQLRETURN ret;
-        TRACE("(Handle %p)\n", ConnectionHandle);
+    SQLRETURN ret;
 
-        if (!pSQLFreeConnect) return SQL_ERROR;
+    TRACE("(ConnectionHandle %p)\n", ConnectionHandle);
 
-        ret = pSQLFreeConnect(ConnectionHandle);
-        TRACE("Returns %d\n", ret);
-        return ret;
+    if (!pSQLFreeConnect) return SQL_ERROR;
+
+    ret = pSQLFreeConnect(ConnectionHandle);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLFreeEnv           [ODBC32.015]
  */
 SQLRETURN WINAPI ODBC32_SQLFreeEnv(SQLHENV EnvironmentHandle)
 {
-        SQLRETURN ret;
-        TRACE("(EnvironmentHandle %p)\n",EnvironmentHandle);
+    SQLRETURN ret;
 
-        if (!pSQLFreeEnv) return SQL_ERROR;
+    TRACE("(EnvironmentHandle %p)\n", EnvironmentHandle);
 
-        ret = pSQLFreeEnv(EnvironmentHandle);
-        TRACE("Returns %d\n", ret);
-        return ret;
+    if (!pSQLFreeEnv) return SQL_ERROR;
+
+    ret = pSQLFreeEnv(EnvironmentHandle);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLFreeHandle           [ODBC32.031]
@@ -1167,16 +1203,16 @@ SQLRETURN WINAPI ODBC32_SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
  */
 SQLRETURN WINAPI ODBC32_SQLFreeStmt(SQLHSTMT StatementHandle, SQLUSMALLINT Option)
 {
-        SQLRETURN ret;
-        TRACE("(Handle %p, Option %d)\n", StatementHandle, Option);
+    SQLRETURN ret;
 
-        if (!pSQLFreeStmt) return SQL_ERROR;
+    TRACE("(StatementHandle %p, Option %d)\n", StatementHandle, Option);
 
-        ret = pSQLFreeStmt(StatementHandle, Option);
-        TRACE("Returns %d\n", ret);
-        return ret;
+    if (!pSQLFreeStmt) return SQL_ERROR;
+
+    ret = pSQLFreeStmt(StatementHandle, Option);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLGetConnectAttr           [ODBC32.032]
@@ -1222,18 +1258,20 @@ SQLRETURN WINAPI ODBC32_SQLGetCursorName(SQLHSTMT StatementHandle,
 /*************************************************************************
  *				SQLGetData           [ODBC32.043]
  */
-SQLRETURN WINAPI ODBC32_SQLGetData(SQLHSTMT StatementHandle,
-             SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
-             SQLPOINTER TargetValue, SQLLEN BufferLength,
-             SQLLEN *StrLen_or_Ind)
+SQLRETURN WINAPI ODBC32_SQLGetData(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
+                                   SQLPOINTER TargetValue, SQLLEN BufferLength, SQLLEN *StrLen_or_Ind)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLGetData) return SQL_ERROR;
-        return pSQLGetData(StatementHandle, ColumnNumber, TargetType,
-                           TargetValue, BufferLength, StrLen_or_Ind);
+    TRACE("(StatementHandle %p, ColumnNumber %d, TargetType %d, TargetValue %p, BufferLength %s, StrLen_or_Ind %p)\n",
+          StatementHandle, ColumnNumber, TargetType, TargetValue, debugstr_sqllen(BufferLength), StrLen_or_Ind);
+
+    if (!pSQLGetData) return SQL_ERROR;
+
+    ret = pSQLGetData(StatementHandle, ColumnNumber, TargetType, TargetValue, BufferLength, StrLen_or_Ind);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLGetDescField           [ODBC32.033]
@@ -1304,28 +1342,36 @@ SQLRETURN WINAPI ODBC32_SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
 /*************************************************************************
  *				SQLGetEnvAttr           [ODBC32.037]
  */
-SQLRETURN WINAPI ODBC32_SQLGetEnvAttr(SQLHENV EnvironmentHandle,
-             SQLINTEGER Attribute, SQLPOINTER Value,
-             SQLINTEGER BufferLength, SQLINTEGER *StringLength)
+SQLRETURN WINAPI ODBC32_SQLGetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, SQLPOINTER Value,
+                                      SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLGetEnvAttr) return SQL_ERROR;
-        return pSQLGetEnvAttr(EnvironmentHandle, Attribute, Value, BufferLength, StringLength);
+    TRACE("(EnvironmentHandle %p, Attribute %d, Value %p, BufferLength %d, StringLength %p)\n",
+          EnvironmentHandle, Attribute, Value, BufferLength, StringLength);
+
+    if (!pSQLGetEnvAttr) return SQL_ERROR;
+
+    ret = pSQLGetEnvAttr(EnvironmentHandle, Attribute, Value, BufferLength, StringLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLGetFunctions           [ODBC32.044]
  */
 SQLRETURN WINAPI ODBC32_SQLGetFunctions(SQLHDBC ConnectionHandle, SQLUSMALLINT FunctionId, SQLUSMALLINT *Supported)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLGetFunctions) return SQL_ERROR;
-        return pSQLGetFunctions(ConnectionHandle, FunctionId, Supported);
+    TRACE("(ConnectionHandle %p, FunctionId %d, Supported %p)\n", ConnectionHandle, FunctionId, Supported);
+
+    if (!pSQLGetFunctions) return SQL_ERROR;
+
+    ret = pSQLGetFunctions(ConnectionHandle, FunctionId, Supported);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLGetInfo           [ODBC32.045]
@@ -1384,12 +1430,16 @@ SQLRETURN WINAPI ODBC32_SQLGetTypeInfo(SQLHSTMT StatementHandle, SQLSMALLINT Dat
  */
 SQLRETURN WINAPI ODBC32_SQLNumResultCols(SQLHSTMT StatementHandle, SQLSMALLINT *ColumnCount)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLNumResultCols) return SQL_ERROR;
-        return pSQLNumResultCols(StatementHandle, ColumnCount);
+    TRACE("(StatementHandle %p, ColumnCount %p)\n", StatementHandle, ColumnCount);
+
+    if (!pSQLNumResultCols) return SQL_ERROR;
+
+    ret = pSQLNumResultCols(StatementHandle, ColumnCount);
+    TRACE("Returning %d ColumnCount %d\n", ret, *ColumnCount);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLParamData           [ODBC32.048]
@@ -1432,12 +1482,17 @@ SQLRETURN WINAPI ODBC32_SQLPutData(SQLHSTMT StatementHandle, SQLPOINTER Data, SQ
  */
 SQLRETURN WINAPI ODBC32_SQLRowCount(SQLHSTMT StatementHandle, SQLLEN *RowCount)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLRowCount) return SQL_ERROR;
-        return pSQLRowCount(StatementHandle, RowCount);
+    TRACE("(StatementHandle %p, RowCount %p)\n", StatementHandle, RowCount);
+
+    if (!pSQLRowCount) return SQL_ERROR;
+
+    ret = pSQLRowCount(StatementHandle, RowCount);
+    if (ret == SQL_SUCCESS && RowCount) TRACE(" RowCount %s\n", debugstr_sqllen(*RowCount));
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLSetConnectAttr           [ODBC32.039]
@@ -1511,16 +1566,20 @@ SQLRETURN WINAPI ODBC32_SQLSetDescRec(SQLHDESC DescriptorHandle,
 /*************************************************************************
  *				SQLSetEnvAttr           [ODBC32.075]
  */
-SQLRETURN WINAPI ODBC32_SQLSetEnvAttr(SQLHENV EnvironmentHandle,
-             SQLINTEGER Attribute, SQLPOINTER Value,
-             SQLINTEGER StringLength)
+SQLRETURN WINAPI ODBC32_SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, SQLPOINTER Value,
+                                      SQLINTEGER StringLength)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLSetEnvAttr) return SQL_ERROR;
-        return pSQLSetEnvAttr(EnvironmentHandle, Attribute, Value, StringLength);
+    TRACE("(EnvironmentHandle %p, Attribute %d, Value %p, StringLength %d)\n", EnvironmentHandle, Attribute, Value,
+          StringLength);
+
+    if (!pSQLSetEnvAttr) return SQL_ERROR;
+
+    ret = pSQLSetEnvAttr(EnvironmentHandle, Attribute, Value, StringLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLSetParam           [ODBC32.022]
@@ -1664,21 +1723,21 @@ SQLRETURN WINAPI ODBC32_SQLBulkOperations(
 /*************************************************************************
  *				SQLColAttributes           [ODBC32.006]
  */
-SQLRETURN WINAPI ODBC32_SQLColAttributes(
-    SQLHSTMT           hstmt,
-    SQLUSMALLINT       icol,
-    SQLUSMALLINT       fDescType,
-    SQLPOINTER         rgbDesc,
-    SQLSMALLINT        cbDescMax,
-    SQLSMALLINT           *pcbDesc,
-    SQLLEN                *pfDesc)
+SQLRETURN WINAPI ODBC32_SQLColAttributes(SQLHSTMT hstmt, SQLUSMALLINT icol, SQLUSMALLINT fDescType,
+                                         SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT *pcbDesc,
+                                         SQLLEN *pfDesc)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLColAttributes) return SQL_ERROR;
-        return pSQLColAttributes(hstmt, icol, fDescType, rgbDesc, cbDescMax, pcbDesc, pfDesc);
+    TRACE("(hstmt %p, icol %d, fDescType %d, rgbDesc %p, cbDescMax %d, pcbDesc %p, pfDesc %p)\n", hstmt, icol,
+          fDescType, rgbDesc, cbDescMax, pcbDesc, pfDesc);
+
+    if (!pSQLColAttributes) return SQL_ERROR;
+
+    ret = pSQLColAttributes(hstmt, icol, fDescType, rgbDesc, cbDescMax, pcbDesc, pfDesc);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLColumnPrivileges           [ODBC32.056]
@@ -1723,19 +1782,20 @@ SQLRETURN WINAPI ODBC32_SQLDescribeParam(
 /*************************************************************************
  *				SQLExtendedFetch           [ODBC32.059]
  */
-SQLRETURN WINAPI ODBC32_SQLExtendedFetch(
-    SQLHSTMT           hstmt,
-    SQLUSMALLINT       fFetchType,
-    SQLLEN             irow,
-    SQLULEN               *pcrow,
-    SQLUSMALLINT          *rgfRowStatus)
+SQLRETURN WINAPI ODBC32_SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType, SQLLEN irow, SQLULEN *pcrow,
+                                         SQLUSMALLINT *rgfRowStatus)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLExtendedFetch) return SQL_ERROR;
-        return pSQLExtendedFetch(hstmt, fFetchType, irow, pcrow, rgfRowStatus);
+    TRACE("(hstmt %p, fFetchType %d, irow %s, pcrow %p, rgfRowStatus %p)\n", hstmt, fFetchType, debugstr_sqllen(irow),
+          pcrow, rgfRowStatus);
+
+    if (!pSQLExtendedFetch) return SQL_ERROR;
+
+    ret = pSQLExtendedFetch(hstmt, fFetchType, irow, pcrow, rgfRowStatus);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLForeignKeys           [ODBC32.060]
@@ -1767,14 +1827,18 @@ SQLRETURN WINAPI ODBC32_SQLForeignKeys(
 /*************************************************************************
  *				SQLMoreResults           [ODBC32.061]
  */
-SQLRETURN WINAPI ODBC32_SQLMoreResults(SQLHSTMT hstmt)
+SQLRETURN WINAPI ODBC32_SQLMoreResults(SQLHSTMT StatementHandle)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLMoreResults) return SQL_ERROR;
-        return pSQLMoreResults(hstmt);
+    TRACE("(%p)\n", StatementHandle);
+
+    if (!pSQLMoreResults) return SQL_ERROR;
+
+    ret = pSQLMoreResults(StatementHandle);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLNativeSql           [ODBC32.062]
@@ -1811,17 +1875,18 @@ SQLRETURN WINAPI ODBC32_SQLNumParams(
 /*************************************************************************
  *				SQLParamOptions           [ODBC32.064]
  */
-SQLRETURN WINAPI ODBC32_SQLParamOptions(
-    SQLHSTMT           hstmt,
-    SQLULEN            crow,
-    SQLULEN               *pirow)
+SQLRETURN WINAPI ODBC32_SQLParamOptions(SQLHSTMT hstmt, SQLULEN crow, SQLULEN *pirow)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLParamOptions) return SQL_ERROR;
-        return pSQLParamOptions(hstmt, crow, pirow);
+    TRACE("(hstmt %p, crow %s, pirow %p)\n", hstmt, debugstr_sqlulen(crow), pirow);
+
+    if (!pSQLParamOptions) return SQL_ERROR;
+
+    ret = pSQLParamOptions(hstmt, crow, pirow);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLPrimaryKeys           [ODBC32.065]
@@ -1924,31 +1989,28 @@ SQLRETURN WINAPI ODBC32_SQLTablePrivileges(
 /*************************************************************************
  *				SQLDrivers           [ODBC32.071]
  */
-SQLRETURN WINAPI ODBC32_SQLDrivers(
-    SQLHENV            henv,
-    SQLUSMALLINT       fDirection,
-    SQLCHAR               *szDriverDesc,
-    SQLSMALLINT        cbDriverDescMax,
-    SQLSMALLINT           *pcbDriverDesc,
-    SQLCHAR               *szDriverAttributes,
-    SQLSMALLINT        cbDriverAttrMax,
-    SQLSMALLINT           *pcbDriverAttr)
+SQLRETURN WINAPI ODBC32_SQLDrivers(SQLHENV EnvironmentHandle, SQLUSMALLINT fDirection, SQLCHAR *szDriverDesc,
+                                   SQLSMALLINT cbDriverDescMax, SQLSMALLINT *pcbDriverDesc,
+                                   SQLCHAR *szDriverAttributes, SQLSMALLINT cbDriverAttrMax,
+                                   SQLSMALLINT *pcbDriverAttr)
 {
-        SQLRETURN ret;
+    SQLRETURN ret;
 
-        TRACE("(Direction %d)\n", fDirection);
+    TRACE("(EnvironmentHandle %p, Direction %d, szDriverDesc %p, cbDriverDescMax %d, pcbDriverDesc %p,"
+          " DriverAttributes %p, cbDriverAttrMax %d, pcbDriverAttr %p)\n", EnvironmentHandle, fDirection,
+          szDriverDesc, cbDriverDescMax, pcbDriverDesc, szDriverAttributes, cbDriverAttrMax, pcbDriverAttr);
 
-        if (!pSQLDrivers) return SQL_ERROR;
-        ret = pSQLDrivers(henv, fDirection, szDriverDesc, cbDriverDescMax, pcbDriverDesc,
-                          szDriverAttributes, cbDriverAttrMax, pcbDriverAttr);
+    if (!pSQLDrivers) return SQL_ERROR;
 
-        if (ret == SQL_NO_DATA && fDirection == SQL_FETCH_FIRST)
-            ERR_(winediag)("No ODBC drivers could be found. "
-                           "Check the settings for your libodbc provider.\n");
+    ret = pSQLDrivers(EnvironmentHandle, fDirection, szDriverDesc, cbDriverDescMax, pcbDriverDesc,
+                      szDriverAttributes, cbDriverAttrMax, pcbDriverAttr);
 
-        return ret;
+    if (ret == SQL_NO_DATA && fDirection == SQL_FETCH_FIRST)
+        ERR_(winediag)("No ODBC drivers could be found. Check the settings for your libodbc provider.\n");
+
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
-
 
 /*************************************************************************
  *				SQLBindParameter           [ODBC32.072]
@@ -2101,30 +2163,31 @@ SQLRETURN WINAPI ODBC32_SQLConnectW(SQLHDBC ConnectionHandle,
 /*************************************************************************
  *				SQLDescribeColW          [ODBC32.108]
  */
-SQLRETURN WINAPI ODBC32_SQLDescribeColW(SQLHSTMT StatementHandle,
-             SQLUSMALLINT ColumnNumber, WCHAR *ColumnName,
-             SQLSMALLINT BufferLength, SQLSMALLINT *NameLength,
-             SQLSMALLINT *DataType, SQLULEN *ColumnSize,
-             SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
+SQLRETURN WINAPI ODBC32_SQLDescribeColW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber, WCHAR *ColumnName,
+                                        SQLSMALLINT BufferLength, SQLSMALLINT *NameLength, SQLSMALLINT *DataType,
+                                        SQLULEN *ColumnSize, SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
 {
-        SQLRETURN iResult;
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLDescribeColW) return SQL_ERROR;
+    TRACE("(StatementHandle %p, ColumnNumber %d, ColumnName %p, BufferLength %d, NameLength %p, DataType %p,"
+          " ColumnSize %p, DecimalDigits %p, Nullable %p)\n", StatementHandle, ColumnNumber, ColumnName,
+          BufferLength, NameLength, DataType, ColumnSize, DecimalDigits, Nullable);
 
-        iResult = pSQLDescribeColW(StatementHandle, ColumnNumber, ColumnName,
-                                   BufferLength, NameLength, DataType, ColumnSize,
-                                   DecimalDigits, Nullable);
-        if (iResult >= 0) {
-            TRACE("Successfully recovered the following column information:\n");
-            TRACE("\tRequested column index: %d\n", ColumnNumber);
-            TRACE("\tAvailable length for column name: %d\n", BufferLength);
-            if (NameLength != NULL)
-                TRACE("\tActual length for column name: %d\n", *NameLength);
-            else TRACE("\tActual length for column name: (null)\n");
-            TRACE("\tReturned column name: %s\n", debugstr_w(ColumnName));
-        }
-        return iResult;
+    if (!pSQLDescribeColW) return SQL_ERROR;
+
+    ret = pSQLDescribeColW(StatementHandle, ColumnNumber, ColumnName, BufferLength, NameLength, DataType, ColumnSize,
+                           DecimalDigits, Nullable);
+    if (ret >= 0)
+    {
+        if (ColumnName && NameLength) TRACE("ColumnName %s\n", debugstr_wn(ColumnName, *NameLength));
+        if (DataType) TRACE("DataType %d\n", *DataType);
+        if (ColumnSize) TRACE("ColumnSize %s\n", debugstr_sqlulen(*ColumnSize));
+        if (DecimalDigits) TRACE("DecimalDigits %d\n", *DecimalDigits);
+        if (Nullable) TRACE("Nullable %d\n", *Nullable);
+    }
+
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2146,13 +2209,18 @@ SQLRETURN WINAPI ODBC32_SQLErrorW(SQLHENV EnvironmentHandle,
 /*************************************************************************
  *				SQLExecDirectW          [ODBC32.111]
  */
-SQLRETURN WINAPI ODBC32_SQLExecDirectW(SQLHSTMT StatementHandle,
-    WCHAR *StatementText, SQLINTEGER TextLength)
+SQLRETURN WINAPI ODBC32_SQLExecDirectW(SQLHSTMT StatementHandle, WCHAR *StatementText, SQLINTEGER TextLength)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLExecDirectW) return SQL_ERROR;
-        return pSQLExecDirectW(StatementHandle, StatementText, TextLength);
+    TRACE("(StatementHandle %p, StatementText %s, TextLength %d)\n", StatementHandle,
+          debugstr_wn(StatementText, TextLength), TextLength);
+
+    if (!pSQLExecDirectW) return SQL_ERROR;
+
+    ret = pSQLExecDirectW(StatementHandle, StatementText, TextLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2226,15 +2294,19 @@ SQLRETURN WINAPI ODBC32_SQLColAttributeW (SQLHSTMT StatementHandle,
 /*************************************************************************
  *				SQLGetConnectAttrW          [ODBC32.132]
  */
-SQLRETURN WINAPI ODBC32_SQLGetConnectAttrW(SQLHDBC ConnectionHandle,
-             SQLINTEGER Attribute, SQLPOINTER Value,
-             SQLINTEGER BufferLength, SQLINTEGER *StringLength)
+SQLRETURN WINAPI ODBC32_SQLGetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribute, SQLPOINTER Value,
+                                           SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLGetConnectAttrW) return SQL_ERROR;
-        return pSQLGetConnectAttrW(ConnectionHandle, Attribute, Value,
-                                   BufferLength, StringLength);
+    TRACE("(ConnectionHandle %p, Attribute %d, Value %p, BufferLength %d, StringLength %p)\n", ConnectionHandle,
+          Attribute, Value, BufferLength, StringLength);
+
+    if (!pSQLGetConnectAttrW) return SQL_ERROR;
+
+    ret = pSQLGetConnectAttrW(ConnectionHandle, Attribute, Value, BufferLength, StringLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2272,16 +2344,20 @@ SQLRETURN WINAPI ODBC32_SQLGetDescRecW(SQLHDESC DescriptorHandle,
 /*************************************************************************
  *				SQLGetDiagFieldW          [ODBC32.135]
  */
-SQLRETURN WINAPI ODBC32_SQLGetDiagFieldW(SQLSMALLINT HandleType, SQLHANDLE Handle,
-             SQLSMALLINT RecNumber, SQLSMALLINT DiagIdentifier,
-             SQLPOINTER DiagInfo, SQLSMALLINT BufferLength,
-             SQLSMALLINT *StringLength)
+SQLRETURN WINAPI ODBC32_SQLGetDiagFieldW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLINT RecNumber,
+                                         SQLSMALLINT DiagIdentifier, SQLPOINTER DiagInfo, SQLSMALLINT BufferLength,
+                                         SQLSMALLINT *StringLength)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLGetDiagFieldW) return SQL_ERROR;
-        return pSQLGetDiagFieldW(HandleType, Handle, RecNumber, DiagIdentifier,
-                                 DiagInfo, BufferLength, StringLength);
+    TRACE("(HandleType %d, Handle %p, RecNumber %d, DiagIdentifier %d, DiagInfo %p, BufferLength %d,"
+          " StringLength %p)\n", HandleType, Handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength, StringLength);
+
+    if (!pSQLGetDiagFieldW) return SQL_ERROR;
+
+    ret = pSQLGetDiagFieldW(HandleType, Handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength, StringLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2302,41 +2378,43 @@ SQLRETURN WINAPI ODBC32_SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle,
 /*************************************************************************
  *				SQLGetStmtAttrW          [ODBC32.138]
  */
-SQLRETURN WINAPI ODBC32_SQLGetStmtAttrW(SQLHSTMT StatementHandle,
-             SQLINTEGER Attribute, SQLPOINTER Value,
-             SQLINTEGER BufferLength, SQLINTEGER *StringLength)
+SQLRETURN WINAPI ODBC32_SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute, SQLPOINTER Value,
+                                        SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
-        SQLRETURN iResult;
+    SQLRETURN ret;
 
-        TRACE("Attribute = (%02d) Value = %p BufferLength = (%d) StringLength = %p\n",
-            Attribute, Value, BufferLength, StringLength);
+    TRACE("(StatementHandle %p, Attribute %d, Value %p, BufferLength %d, StringLength %p)\n", StatementHandle,
+          Attribute, Value, BufferLength, StringLength);
 
-        if (Value == NULL) {
-            WARN("Unexpected NULL in Value return address\n");
-            iResult = SQL_ERROR;
-/*
-        } else if (StringLength == NULL) {
-            WARN("Unexpected NULL in StringLength return address\n");
-            iResult = SQL_ERROR;
-*/
-        } else {
-            if (!pSQLGetStmtAttrW) return SQL_ERROR;
-            iResult = pSQLGetStmtAttrW(StatementHandle, Attribute, Value, BufferLength, StringLength);
-            TRACE("returning %d...\n", iResult);
-        }
-        return iResult;
+    if (!Value)
+    {
+        WARN("Unexpected NULL Value return address\n");
+        return SQL_ERROR;
+    }
+
+    if (!pSQLGetStmtAttrW) return SQL_ERROR;
+
+    ret = pSQLGetStmtAttrW(StatementHandle, Attribute, Value, BufferLength, StringLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
  *				SQLSetConnectAttrW          [ODBC32.139]
  */
-SQLRETURN WINAPI ODBC32_SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribute,
-        SQLPOINTER Value, SQLINTEGER StringLength)
+SQLRETURN WINAPI ODBC32_SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribute, SQLPOINTER Value,
+                                           SQLINTEGER StringLength)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLSetConnectAttrW) return SQL_ERROR;
-        return pSQLSetConnectAttrW(ConnectionHandle, Attribute, Value, StringLength);
+    TRACE("(ConnectionHandle %p, Attribute %d, Value %p, StringLength %d)\n", ConnectionHandle, Attribute, Value,
+          StringLength);
+
+    if (!pSQLSetConnectAttrW) return SQL_ERROR;
+
+    ret = pSQLSetConnectAttrW(ConnectionHandle, Attribute, Value, StringLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2358,22 +2436,23 @@ SQLRETURN WINAPI ODBC32_SQLColumnsW(SQLHSTMT StatementHandle,
 /*************************************************************************
  *				SQLDriverConnectW          [ODBC32.141]
  */
-SQLRETURN WINAPI ODBC32_SQLDriverConnectW(
-    SQLHDBC            hdbc,
-    SQLHWND            hwnd,
-    WCHAR              *conn_str_in,
-    SQLSMALLINT        len_conn_str_in,
-    WCHAR              *conn_str_out,
-    SQLSMALLINT        conn_str_out_max,
-    SQLSMALLINT        *ptr_conn_str_out,
-    SQLUSMALLINT       driver_completion )
+SQLRETURN WINAPI ODBC32_SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandle, WCHAR *InConnectionString,
+                                          SQLSMALLINT Length, WCHAR *OutConnectionString, SQLSMALLINT BufferLength,
+                                          SQLSMALLINT *Length2, SQLUSMALLINT DriverCompletion)
 {
-        TRACE("(ConnectionString %s, Length %d)\n",
-              debugstr_w(conn_str_in), len_conn_str_in);
+    SQLRETURN ret;
 
-        if (!pSQLDriverConnectW) return SQL_ERROR;
-        return pSQLDriverConnectW(hdbc, hwnd, conn_str_in, len_conn_str_in, conn_str_out,
-                                  conn_str_out_max, ptr_conn_str_out, driver_completion);
+    TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
+          " BufferLength %d, Length2 %p, DriverCompletion %d)\n", ConnectionHandle, WindowHandle,
+          debugstr_wn(InConnectionString, Length), Length, OutConnectionString, BufferLength, Length2,
+          DriverCompletion);
+
+    if (!pSQLDriverConnectW) return SQL_ERROR;
+
+    ret = pSQLDriverConnectW(ConnectionHandle, WindowHandle, InConnectionString, Length, OutConnectionString,
+                             BufferLength, Length2, DriverCompletion);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2390,22 +2469,25 @@ SQLRETURN WINAPI ODBC32_SQLGetConnectOptionW(SQLHDBC ConnectionHandle, SQLUSMALL
 /*************************************************************************
  *				SQLGetInfoW          [ODBC32.145]
  */
-SQLRETURN WINAPI ODBC32_SQLGetInfoW(SQLHDBC ConnectionHandle,
-             SQLUSMALLINT InfoType, SQLPOINTER InfoValue,
-             SQLSMALLINT BufferLength, SQLSMALLINT *StringLength)
+SQLRETURN WINAPI ODBC32_SQLGetInfoW(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQLPOINTER InfoValue,
+                                    SQLSMALLINT BufferLength, SQLSMALLINT *StringLength)
 {
-        SQLRETURN iResult;
+    SQLRETURN ret;
 
-        TRACE("InfoType = (%02u), InfoValue = %p, BufferLength = %d bytes\n", InfoType, InfoValue, BufferLength);
-        if (InfoValue == NULL) {
-                WARN("Unexpected NULL in InfoValue address\n");
-                iResult = SQL_ERROR;
-        } else {
-                if (!pSQLGetInfoW) return SQL_ERROR;
-                iResult = pSQLGetInfoW(ConnectionHandle, InfoType, InfoValue, BufferLength, StringLength);
-                TRACE("returning %d...\n", iResult);
-        }
-        return iResult;
+    TRACE("(ConnectionHandle, %p, InfoType %d, InfoValue %p, BufferLength %d, StringLength %p)\n", ConnectionHandle,
+          InfoType, InfoValue, BufferLength, StringLength);
+
+    if (!InfoValue)
+    {
+        WARN("Unexpected NULL InfoValue address\n");
+        return SQL_ERROR;
+    }
+
+    if (!pSQLGetInfoW) return SQL_ERROR;
+
+    ret = pSQLGetInfoW(ConnectionHandle, InfoType, InfoValue, BufferLength, StringLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2448,33 +2530,45 @@ SQLRETURN WINAPI ODBC32_SQLSpecialColumnsW(SQLHSTMT StatementHandle,
 /*************************************************************************
  *				SQLStatisticsW          [ODBC32.153]
  */
-SQLRETURN WINAPI ODBC32_SQLStatisticsW(SQLHSTMT StatementHandle,
-             SQLWCHAR *CatalogName, SQLSMALLINT NameLength1,
-             SQLWCHAR *SchemaName, SQLSMALLINT NameLength2,
-             SQLWCHAR *TableName, SQLSMALLINT NameLength3,
-             SQLUSMALLINT Unique, SQLUSMALLINT Reserved)
+SQLRETURN WINAPI ODBC32_SQLStatisticsW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQLSMALLINT NameLength1,
+                                       SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName,
+                                       SQLSMALLINT NameLength3, SQLUSMALLINT Unique, SQLUSMALLINT Reserved)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLStatisticsW) return SQL_ERROR;
-        return pSQLStatisticsW(StatementHandle, CatalogName, NameLength1, SchemaName, NameLength2,
-                               TableName, NameLength3, Unique, Reserved);
+    TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d SchemaName %s, NameLength2 %d, TableName %s"
+          " NameLength3 %d, Unique %d, Reserved %d)\n", StatementHandle,
+          debugstr_wn(CatalogName, NameLength1), NameLength1, debugstr_wn(SchemaName, NameLength2), NameLength2,
+          debugstr_wn(TableName, NameLength3), NameLength3, Unique, Reserved);
+
+    if (!pSQLStatisticsW) return SQL_ERROR;
+
+    ret = pSQLStatisticsW(StatementHandle, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
+                          NameLength3, Unique, Reserved);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
  *				SQLTablesW          [ODBC32.154]
  */
-SQLRETURN WINAPI ODBC32_SQLTablesW(SQLHSTMT StatementHandle,
-             SQLWCHAR *CatalogName, SQLSMALLINT NameLength1,
-             SQLWCHAR *SchemaName, SQLSMALLINT NameLength2,
-             SQLWCHAR *TableName, SQLSMALLINT NameLength3,
-             SQLWCHAR *TableType, SQLSMALLINT NameLength4)
+SQLRETURN WINAPI ODBC32_SQLTablesW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQLSMALLINT NameLength1,
+                                   SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName,
+                                   SQLSMALLINT NameLength3, SQLWCHAR *TableType, SQLSMALLINT NameLength4)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLTablesW) return SQL_ERROR;
-        return pSQLTablesW(StatementHandle, CatalogName, NameLength1,
-                           SchemaName, NameLength2, TableName, NameLength3, TableType, NameLength4);
+    TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
+          " NameLength3 %d, TableType %s, NameLength4 %d)\n", StatementHandle,
+          debugstr_wn(CatalogName, NameLength1), NameLength1, debugstr_wn(SchemaName, NameLength2), NameLength2,
+          debugstr_wn(TableName, NameLength3), NameLength3, debugstr_wn(TableType, NameLength4), NameLength4);
+
+    if (!pSQLTablesW) return SQL_ERROR;
+
+    ret = pSQLTablesW(StatementHandle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                      TableType, NameLength4);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2519,32 +2613,32 @@ SQLRETURN WINAPI ODBC32_SQLColumnPrivilegesW(
 /*************************************************************************
  *				SQLDataSourcesW          [ODBC32.157]
  */
-SQLRETURN WINAPI ODBC32_SQLDataSourcesW(SQLHENV EnvironmentHandle,
-             SQLUSMALLINT Direction, WCHAR *ServerName,
-             SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1,
-             WCHAR *Description, SQLSMALLINT BufferLength2,
-             SQLSMALLINT *NameLength2)
+SQLRETURN WINAPI ODBC32_SQLDataSourcesW(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, WCHAR *ServerName,
+                                        SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1, WCHAR *Description,
+                                        SQLSMALLINT BufferLength2, SQLSMALLINT *NameLength2)
 {
-        SQLRETURN ret;
+    SQLRETURN ret;
 
-        TRACE("EnvironmentHandle = %p\n", EnvironmentHandle);
+    TRACE("(EnvironmentHandle %p, Direction %d, ServerName %p, BufferLength1 %d, NameLength1 %p, Description %p,"
+          " BufferLength2 %d, NameLength2 %p)\n", EnvironmentHandle, Direction, ServerName, BufferLength1,
+          NameLength1, Description, BufferLength2, NameLength2);
 
-        if (!pSQLDataSourcesW) return SQL_ERROR;
+    if (!pSQLDataSourcesW) return SQL_ERROR;
 
-        ret = pSQLDataSourcesW(EnvironmentHandle, Direction, ServerName,
-                               BufferLength1, NameLength1, Description, BufferLength2, NameLength2);
+    ret = pSQLDataSourcesW(EnvironmentHandle, Direction, ServerName, BufferLength1, NameLength1, Description,
+                           BufferLength2, NameLength2);
 
-        if (TRACE_ON(odbc))
-        {
-           TRACE("Returns %d \t", ret);
-           if (*NameLength1 > 0)
-             TRACE("DataSource = %s,", debugstr_w(ServerName));
-           if (*NameLength2 > 0)
-             TRACE(" Description = %s", debugstr_w(Description));
-           TRACE("\n");
-        }
+    if (ret >= 0 && TRACE_ON(odbc))
+    {
+        if (ServerName && NameLength1 && *NameLength1 > 0)
+            TRACE(" DataSource %s", debugstr_wn(ServerName, *NameLength1));
+        if (Description && NameLength2 && *NameLength2 > 0)
+            TRACE(" Description %s", debugstr_wn(Description, *NameLength2));
+        TRACE("\n");
+    }
 
-        return ret;
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2699,36 +2793,43 @@ SQLRETURN WINAPI ODBC32_SQLDriversW(
 /*************************************************************************
  *				SQLSetDescFieldW          [ODBC32.173]
  */
-SQLRETURN WINAPI ODBC32_SQLSetDescFieldW(SQLHDESC DescriptorHandle,
-             SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
-             SQLPOINTER Value, SQLINTEGER BufferLength)
+SQLRETURN WINAPI ODBC32_SQLSetDescFieldW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
+                                         SQLPOINTER Value, SQLINTEGER BufferLength)
 {
-        TRACE("\n");
+    SQLRETURN ret;
 
-        if (!pSQLSetDescFieldW) return SQL_ERROR;
-        return pSQLSetDescFieldW(DescriptorHandle, RecNumber, FieldIdentifier, Value, BufferLength);
+    TRACE("(DescriptorHandle %p, RecNumber %d, FieldIdentifier %d, Value %p, BufferLength %d)\n", DescriptorHandle,
+          RecNumber, FieldIdentifier, Value, BufferLength);
+
+    if (!pSQLSetDescFieldW) return SQL_ERROR;
+
+    ret = pSQLSetDescFieldW(DescriptorHandle, RecNumber, FieldIdentifier, Value, BufferLength);
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
  *				SQLSetStmtAttrW          [ODBC32.176]
  */
-SQLRETURN WINAPI ODBC32_SQLSetStmtAttrW(SQLHSTMT StatementHandle,
-                 SQLINTEGER Attribute, SQLPOINTER Value,
-                 SQLINTEGER StringLength)
+SQLRETURN WINAPI ODBC32_SQLSetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute, SQLPOINTER Value,
+                                        SQLINTEGER StringLength)
 {
-        SQLRETURN iResult;
-        TRACE("Attribute = (%02d) Value = %p StringLength = (%d)\n",
-            Attribute, Value, StringLength);
+    SQLRETURN ret;
 
-        if (!pSQLSetStmtAttrW) return SQL_ERROR;
-        iResult = pSQLSetStmtAttrW(StatementHandle, Attribute, Value, StringLength);
-        if (iResult == SQL_ERROR && (Attribute == SQL_ROWSET_SIZE || Attribute == SQL_ATTR_ROW_ARRAY_SIZE)) {
-            TRACE("CHEAT: returning SQL_SUCCESS to ADO...\n");
-            iResult = SQL_SUCCESS;
-        } else {
-            TRACE("returning %d...\n", iResult);
-        }
-        return iResult;
+    TRACE("(StatementHandle %p, Attribute %d, Value %p, StringLength %d)\n", StatementHandle, Attribute, Value,
+          StringLength);
+
+    if (!pSQLSetStmtAttrW) return SQL_ERROR;
+
+    ret = pSQLSetStmtAttrW(StatementHandle, Attribute, Value, StringLength);
+    if (ret == SQL_ERROR && (Attribute == SQL_ROWSET_SIZE || Attribute == SQL_ATTR_ROW_ARRAY_SIZE))
+    {
+        TRACE("CHEAT: returning SQL_SUCCESS to ADO\n");
+        return SQL_SUCCESS;
+    }
+
+    TRACE("Returning %d\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -2745,5 +2846,3 @@ SQLRETURN WINAPI ODBC32_SQLGetDiagRecA(SQLSMALLINT handle_type, SQLHANDLE handle
     return pSQLGetDiagRecA(handle_type, handle, record, sql_state, native_error, error_msg,
                            error_msg_max, error_msg_size);
 }
-
-/* End of file */
