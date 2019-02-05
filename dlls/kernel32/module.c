@@ -129,10 +129,10 @@ DWORD WINAPI GetDllDirectoryW( DWORD buf_len, LPWSTR buffer )
  */
 BOOL WINAPI SetDllDirectoryA( LPCSTR dir )
 {
-    WCHAR *dirW;
+    WCHAR *dirW = NULL;
     BOOL ret;
 
-    if (!(dirW = FILE_name_AtoW( dir, TRUE ))) return FALSE;
+    if (dir && !(dirW = FILE_name_AtoW( dir, TRUE ))) return FALSE;
     ret = SetDllDirectoryW( dirW );
     HeapFree( GetProcessHeap(), 0, dirW );
     return ret;
