@@ -1278,7 +1278,6 @@ static HRESULT copypixels_to_8bppIndexed(struct FormatConverter *This, const WIC
 
     hr = IWICPalette_GetColors(This->palette, 256, colors, &count);
     if (hr != S_OK) return hr;
-    if (!count) return WINCODEC_ERR_WRONGSTATE;
 
     srcstride = 3 * prc->Width;
     srcdatasize = srcstride * prc->Height;
@@ -1447,7 +1446,18 @@ static HRESULT WINAPI FormatConverter_CopyPalette(IWICFormatConverter *iface,
     TRACE("(%p,%p)\n", iface, palette);
 
     if (!palette) return E_INVALIDARG;
-    if (!This->palette) return WINCODEC_ERR_WRONGSTATE;
+    if (!This->source) return WINCODEC_ERR_WRONGSTATE;
+
+    if (!This->palette)
+    {
+        HRESULT hr;
+        UINT bpp;
+
+        hr = get_pixelformat_bpp(This->dst_format->guid, &bpp);
+        if (hr != S_OK) return hr;
+        if (bpp <= 8) return WINCODEC_ERR_WRONGSTATE;
+        return IWICBitmapSource_CopyPalette(This->source, palette);
+    }
 
     return IWICPalette_InitializeFromPalette(palette, This->palette);
 }
@@ -1478,7 +1488,7 @@ static HRESULT WINAPI FormatConverter_CopyPixels(IWICFormatConverter *iface,
             pbBuffer, This->src_format->format);
     }
     else
-        return WINCODEC_ERR_NOTINITIALIZED;
+        return WINCODEC_ERR_WRONGSTATE;
 }
 
 static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
@@ -1495,6 +1505,10 @@ static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
 
     if (!palette)
     {
+        UINT bpp;
+        res = get_pixelformat_bpp(dstFormat, &bpp);
+        if (res != S_OK) return res;
+
         res = PaletteImpl_Create(&palette);
         if (res != S_OK) return res;
 
@@ -1503,20 +1517,19 @@ static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
         case WICBitmapPaletteTypeCustom:
             IWICPalette_Release(palette);
             palette = NULL;
-            res = S_OK;
+            if (bpp <= 8) return E_INVALIDARG;
             break;
 
         case WICBitmapPaletteTypeMedianCut:
         {
-            UINT bpp;
-            res = get_pixelformat_bpp(dstFormat, &bpp);
-            if (res == S_OK && bpp <= 8)
+            if (bpp <= 8)
                 res = IWICPalette_InitializeFromBitmap(palette, source, 1 << bpp, FALSE);
             break;
         }
 
         default:
-            res = IWICPalette_InitializePredefined(palette, palette_type, FALSE);
+            if (bpp <= 8)
+                res = IWICPalette_InitializePredefined(palette, palette_type, FALSE);
             break;
         }
 
@@ -1575,6 +1588,9 @@ static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
 end:
 
     LeaveCriticalSection(&This->lock);
+
+    if (res != S_OK && palette)
+        IWICPalette_Release(palette);
 
     return res;
 }
