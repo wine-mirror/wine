@@ -7182,11 +7182,12 @@ static void test_effect_unsupported_shader(void)
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    effect->lpVtbl->SetInt(effect, "i", 1);
+    hr = effect->lpVtbl->SetInt(effect, "i", 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
-    effect->lpVtbl->SetInt(effect, "i", 0);
+    hr = effect->lpVtbl->SetInt(effect, "i", 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
@@ -7229,7 +7230,7 @@ static void test_effect_unsupported_shader(void)
     HeapFree(GetProcessHeap(), 0, byte_code);
     IDirect3DVertexShader9_Release(vshader);
 
-    effect->lpVtbl->SetInt(effect, "i", 1);
+    hr = effect->lpVtbl->SetInt(effect, "i", 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -7321,16 +7322,16 @@ static void test_effect_null_shader(void)
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech0");
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    effect->lpVtbl->SetInt(effect, "i", 0);
+    hr = effect->lpVtbl->SetInt(effect, "i", 0);
     ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    effect->lpVtbl->SetInt(effect, "i", 1);
+    hr = effect->lpVtbl->SetInt(effect, "i", 1);
     ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    effect->lpVtbl->SetInt(effect, "i", 2);
+    hr = effect->lpVtbl->SetInt(effect, "i", 2);
     ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
@@ -7938,7 +7939,7 @@ static void test_effect_find_next_valid_technique(void)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
 
-    effect->lpVtbl->SetInt(effect, "i", 1);
+    hr = effect->lpVtbl->SetInt(effect, "i", 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     tech = (D3DXHANDLE)0xdeadbeef;
@@ -7951,7 +7952,8 @@ static void test_effect_find_next_valid_technique(void)
     hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
     ok(hr == S_FALSE, "Got result %#x.\n", hr);
 
-    effect->lpVtbl->SetInt(effect, "i", 0);
+    hr = effect->lpVtbl->SetInt(effect, "i", 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
