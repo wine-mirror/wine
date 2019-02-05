@@ -1571,6 +1571,163 @@ static const struct setting png_interlace_settings[] = {
     {NULL}
 };
 
+static void test_converter_8bppIndexed(void)
+{
+    HRESULT hr;
+    BitmapTestSrc *src_obj;
+    IWICFormatConverter *converter;
+    IWICPalette *palette;
+    UINT count, i;
+    BYTE buf[32 * 2 * 3]; /* enough to hold 32x2 24bppBGR data */
+
+    CreateTestBitmap(&testdata_24bppBGR, &src_obj);
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    count = 0xdeadbeef;
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 0, "expected 0, got %u\n", count);
+
+    /* NULL palette + Custom type */
+    hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
+    ok(hr == S_OK, "CreateFormatConverter error %#x\n", hr);
+    hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
+                                        &GUID_WICPixelFormat24bppBGR, WICBitmapDitherTypeNone,
+                                        NULL, 0.0, WICBitmapPaletteTypeCustom);
+    ok(hr == S_OK, "Initialize error %#x\n", hr);
+    hr = IWICFormatConverter_CopyPalette(converter, palette);
+    ok(hr == 0xdeadbeef, "unexpected error %#x\n", hr);
+    hr = IWICFormatConverter_CopyPixels(converter, NULL, 32 * 3, sizeof(buf), buf);
+    ok(hr == S_OK, "CopyPixels error %#x\n", hr);
+    IWICFormatConverter_Release(converter);
+
+    /* NULL palette + Custom type */
+    hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
+    ok(hr == S_OK, "CreateFormatConverter error %#x\n", hr);
+    hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
+                                        &GUID_WICPixelFormat8bppIndexed, WICBitmapDitherTypeNone,
+                                        NULL, 0.0, WICBitmapPaletteTypeCustom);
+    ok(hr == E_INVALIDARG, "unexpected error %#x\n", hr);
+    hr = IWICFormatConverter_CopyPalette(converter, palette);
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "unexpected error %#x\n", hr);
+    hr = IWICFormatConverter_CopyPixels(converter, NULL, 32, sizeof(buf), buf);
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "unexpected error %#x\n", hr);
+    IWICFormatConverter_Release(converter);
+
+    /* empty palette + Custom type */
+    hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
+    ok(hr == S_OK, "CreateFormatConverter error %#x\n", hr);
+    hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
+                                        &GUID_WICPixelFormat8bppIndexed, WICBitmapDitherTypeNone,
+                                        palette, 0.0, WICBitmapPaletteTypeCustom);
+    ok(hr == S_OK, "Initialize error %#x\n", hr);
+    hr = IWICFormatConverter_CopyPalette(converter, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+    count = 0xdeadbeef;
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 0, "expected 0, got %u\n", count);
+    memset(buf, 0xaa, sizeof(buf));
+    hr = IWICFormatConverter_CopyPixels(converter, NULL, 32, sizeof(buf), buf);
+    ok(hr == S_OK, "CopyPixels error %#x\n", hr);
+    count = 0;
+    for (i = 0; i < 32 * 2; i++)
+        if (buf[i] != 0) count++;
+    ok(count == 0, "expected 0\n");
+    IWICFormatConverter_Release(converter);
+
+    /* NULL palette + Predefined type */
+    hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
+    ok(hr == S_OK, "CreateFormatConverter error %#x\n", hr);
+    hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
+                                        &GUID_WICPixelFormat8bppIndexed, WICBitmapDitherTypeNone,
+                                        NULL, 0.0, WICBitmapPaletteTypeFixedGray16);
+    ok(hr == S_OK, "Initialize error %#x\n", hr);
+    hr = IWICFormatConverter_CopyPalette(converter, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+    count = 0xdeadbeef;
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 16, "expected 16, got %u\n", count);
+    hr = IWICFormatConverter_CopyPixels(converter, NULL, 32, sizeof(buf), buf);
+    ok(hr == S_OK, "CopyPixels error %#x\n", hr);
+    count = 0;
+    for (i = 0; i < 32 * 2; i++)
+        if (buf[i] != 0) count++;
+    ok(count != 0, "expected != 0\n");
+    IWICFormatConverter_Release(converter);
+
+    /* not empty palette + Predefined type */
+    hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
+    ok(hr == S_OK, "CreateFormatConverter error %#x\n", hr);
+    hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
+                                        &GUID_WICPixelFormat8bppIndexed, WICBitmapDitherTypeNone,
+                                        palette, 0.0, WICBitmapPaletteTypeFixedHalftone64);
+    ok(hr == S_OK, "Initialize error %#x\n", hr);
+    hr = IWICFormatConverter_CopyPalette(converter, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+    count = 0xdeadbeef;
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 16, "expected 16, got %u\n", count);
+    hr = IWICFormatConverter_CopyPixels(converter, NULL, 32, sizeof(buf), buf);
+    ok(hr == S_OK, "CopyPixels error %#x\n", hr);
+    count = 0;
+    for (i = 0; i < 32 * 2; i++)
+        if (buf[i] != 0) count++;
+    ok(count != 0, "expected != 0\n");
+    IWICFormatConverter_Release(converter);
+
+    /* not empty palette + MedianCut type */
+    hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
+    ok(hr == S_OK, "CreateFormatConverter error %#x\n", hr);
+    hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
+                                        &GUID_WICPixelFormat8bppIndexed, WICBitmapDitherTypeNone,
+                                        palette, 0.0, WICBitmapPaletteTypeMedianCut);
+    ok(hr == S_OK, "Initialize error %#x\n", hr);
+    hr = IWICFormatConverter_CopyPalette(converter, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+    count = 0xdeadbeef;
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 16, "expected 16, got %u\n", count);
+    hr = IWICFormatConverter_CopyPixels(converter, NULL, 32, sizeof(buf), buf);
+    ok(hr == S_OK, "CopyPixels error %#x\n", hr);
+    count = 0;
+    for (i = 0; i < 32 * 2; i++)
+        if (buf[i] != 0) count++;
+    ok(count != 0, "expected != 0\n");
+    IWICFormatConverter_Release(converter);
+
+    /* NULL palette + MedianCut type */
+    hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
+    ok(hr == S_OK, "CreateFormatConverter error %#x\n", hr);
+    hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
+                                        &GUID_WICPixelFormat8bppIndexed, WICBitmapDitherTypeNone,
+                                        NULL, 0.0, WICBitmapPaletteTypeMedianCut);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* XP */, "Initialize error %#x\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IWICFormatConverter_CopyPalette(converter, palette);
+        ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+        count = 0xdeadbeef;
+        hr = IWICPalette_GetColorCount(palette, &count);
+        ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+        ok(count == 8, "expected 8, got %u\n", count);
+        hr = IWICFormatConverter_CopyPixels(converter, NULL, 32, sizeof(buf), buf);
+        ok(hr == S_OK, "CopyPixels error %#x\n", hr);
+        count = 0;
+        for (i = 0; i < 32 * 2; i++)
+            if (buf[i] != 0) count++;
+        ok(count != 0, "expected != 0\n");
+    }
+    IWICFormatConverter_Release(converter);
+
+    IWICPalette_Release(palette);
+    DeleteTestBitmap(src_obj);
+}
+
 START_TEST(converter)
 {
     HRESULT hr;
@@ -1615,6 +1772,7 @@ START_TEST(converter)
 
     test_invalid_conversion();
     test_default_converter();
+    test_converter_8bppIndexed();
 
     test_encoder(&testdata_BlackWhite, &CLSID_WICPngEncoder,
                  &testdata_BlackWhite, &CLSID_WICPngDecoder, "PNG encoder BlackWhite");
