@@ -2523,7 +2523,7 @@ HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitma
 
                     if (SUCCEEDED(res) && canconvert)
                         res = IWICFormatConverter_Initialize(converter, pISrc, dstFormat, WICBitmapDitherTypeNone,
-                            NULL, 0.0, WICBitmapPaletteTypeCustom);
+                            NULL, 0.0, WICBitmapPaletteTypeMedianCut);
 
                     if (FAILED(res) || !canconvert)
                     {
