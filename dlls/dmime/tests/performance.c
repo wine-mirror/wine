@@ -178,7 +178,7 @@ static HRESULT test_InitAudio(void)
 
     /* Provided dmusic initialized with SetDirectSound */
     create_performance(&performance, &dmusic, &dsound, TRUE);
-    IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
+    hr = IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
     ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
     ref = get_refcount(dsound);
     ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
@@ -192,7 +192,7 @@ static HRESULT test_InitAudio(void)
 
     /* Provided dmusic and dsound, dmusic initialized with SetDirectSound */
     create_performance(&performance, &dmusic, &dsound, TRUE);
-    IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
+    hr = IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
     ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
     ref = get_refcount(dsound);
     ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
