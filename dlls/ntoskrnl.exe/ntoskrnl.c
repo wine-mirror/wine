@@ -2276,6 +2276,16 @@ VOID WINAPI KeSetSystemAffinityThread(KAFFINITY Affinity)
     FIXME("(%lx) stub\n", Affinity);
 }
 
+
+/***********************************************************************
+ *           KeRevertToUserAffinityThread   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeRevertToUserAffinityThread(void)
+{
+    FIXME("() stub\n");
+}
+
+
 /***********************************************************************
  *           IoRegisterFileSystem   (NTOSKRNL.EXE.@)
  */

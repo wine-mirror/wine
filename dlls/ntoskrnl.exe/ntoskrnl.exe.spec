@@ -611,7 +611,7 @@
 @ stub KeRemoveSystemServiceTable
 @ stdcall KeResetEvent(ptr)
 @ stub KeRestoreFloatingPointState
-@ stub KeRevertToUserAffinityThread
+@ stdcall KeRevertToUserAffinityThread()
 @ stub KeRundownQueue
 @ stub KeSaveFloatingPointState
 @ stub KeSaveStateForHibernate
