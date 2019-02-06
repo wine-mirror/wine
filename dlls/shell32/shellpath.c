@@ -4970,7 +4970,7 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
     if (!(flags & KF_FLAG_CREATE))
     {
         hr = HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
-        goto done;
+        goto failed;
     }
 
     /* create directory/directories */
