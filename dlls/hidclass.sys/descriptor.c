@@ -838,8 +838,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
     if (features[0]->caps.ReportID != 0)
     {
         unsigned int *report_ids;
-        unsigned int cnt = max(i_count, o_count);
-        cnt = max(cnt, f_count);
+        unsigned int cnt = i_count + o_count + f_count;
         report_ids = HeapAlloc(GetProcessHeap(), 0 , sizeof(*report_ids) * cnt);
 
         if (i_count)
