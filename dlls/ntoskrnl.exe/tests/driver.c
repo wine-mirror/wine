@@ -624,6 +624,18 @@ static void test_lookaside_list(void)
     ExDeleteNPagedLookasideList(&list);
 }
 
+static void test_version(void)
+{
+    USHORT *pNtBuildNumber;
+    ULONG build;
+
+    pNtBuildNumber = get_proc_address("NtBuildNumber");
+    ok(!!pNtBuildNumber, "Could not get pointer to NtBuildNumber\n");
+
+    PsGetVersion(NULL, NULL, &build, NULL);
+    ok(*pNtBuildNumber == build, "Expected build number %u, got %u\n", build, *pNtBuildNumber);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -654,6 +666,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_init_funcs();
     test_load_driver();
     test_sync();
+    test_version();
     test_stack_callout();
     test_lookaside_list();
 

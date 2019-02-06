@@ -60,6 +60,7 @@ WINE_DECLARE_DEBUG_CHANNEL(plugplay);
 
 BOOLEAN KdDebuggerEnabled = FALSE;
 ULONG InitSafeBootMode = 0;
+USHORT NtBuildNumber = 0;
 
 extern LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs );
 
@@ -2952,6 +2953,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
 #endif
         KeQueryTickCount( &count );  /* initialize the global KeTickCount */
+        NtBuildNumber = NtCurrentTeb()->Peb->OSBuildNumber;
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;

@@ -751,7 +751,7 @@
 @ stdcall NtAllocateLocallyUniqueId(ptr)
 @ stdcall NtAllocateUuids(ptr ptr ptr ptr)
 @ stdcall NtAllocateVirtualMemory(long ptr long ptr long long)
-@ stub NtBuildNumber
+@ extern NtBuildNumber
 @ stdcall NtClose(long)
 @ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall NtCreateEvent(ptr long ptr long long)
