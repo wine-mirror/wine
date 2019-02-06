@@ -886,6 +886,7 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
     PCRYPT_KEY_PROV_INFO info = NULL;
     CERT_KEY_CONTEXT keyContext;
     DWORD size;
+    PCCERT_CONTEXT cert_in_store = NULL;
 
     TRACE("(%p, %08x, %p, %p, %p, %p)\n", pCert, dwFlags, pvReserved,
      phCryptProv, pdwKeySpec, pfCallerFreeProv);
@@ -896,6 +897,34 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
 
         ret = CertGetCertificateContextProperty(pCert,
          CERT_KEY_PROV_INFO_PROP_ID, 0, &size);
+
+        if (!ret)
+        {
+            static const WCHAR myW[] = { 'M','y',0 };
+            HCERTSTORE hstore;
+
+            hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
+                                   CERT_SYSTEM_STORE_CURRENT_USER, myW);
+            if (hstore)
+            {
+                cert_in_store = CertFindCertificateInStore(hstore, pCert->dwCertEncodingType, 0,
+                                                           CERT_FIND_EXISTING, pCert, NULL);
+                if (cert_in_store)
+                {
+                    ret = CertGetCertificateContextProperty(cert_in_store, CERT_KEY_PROV_INFO_PROP_ID, 0, &size);
+                    if (ret)
+                        pCert = cert_in_store;
+                    else
+                    {
+                        CertFreeCertificateContext(cert_in_store);
+                        cert_in_store = NULL;
+                    }
+                }
+
+                CertCloseStore(hstore, 0);
+            }
+        }
+
         if (ret)
         {
             info = HeapAlloc(GetProcessHeap(), 0, size);
@@ -949,6 +978,8 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
         }
     }
     HeapFree(GetProcessHeap(), 0, info);
+    if (cert_in_store)
+        CertFreeCertificateContext(cert_in_store);
     return ret;
 }
 
