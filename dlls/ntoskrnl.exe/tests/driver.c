@@ -174,6 +174,23 @@ static void winetest_end_todo(void)
 #define todo_wine_if(is_todo)   todo_if((is_todo) && running_under_wine)
 #define win_skip(...)           win_skip_(__FILE__, __LINE__, __VA_ARGS__)
 
+static void *get_proc_address(const char *name)
+{
+    UNICODE_STRING name_u;
+    ANSI_STRING name_a;
+    NTSTATUS status;
+    void *ret;
+
+    RtlInitAnsiString(&name_a, name);
+    status = RtlAnsiStringToUnicodeString(&name_u, &name_a, TRUE);
+    ok (!status, "RtlAnsiStringToUnicodeString failed: %#x\n", status);
+    if (status) return NULL;
+
+    ret = MmGetSystemRoutineAddress(&name_u);
+    RtlFreeUnicodeString(&name_u);
+    return ret;
+}
+
 static void test_currentprocess(void)
 {
     PEPROCESS current;
@@ -555,17 +572,9 @@ static void test_stack_callout(void)
 {
     NTSTATUS (WINAPI *pKeExpandKernelStackAndCallout)(PEXPAND_STACK_CALLOUT,void*,SIZE_T);
     NTSTATUS (WINAPI *pKeExpandKernelStackAndCalloutEx)(PEXPAND_STACK_CALLOUT,void*,SIZE_T,BOOLEAN,void*);
-    UNICODE_STRING str;
     NTSTATUS ret;
 
-    static const WCHAR KeExpandKernelStackAndCalloutW[] =
-        {'K','e','E','x','p','a','n','d','K','e','r','n','e','l','S','t','a','c','k','A','n','d','C','a','l','l','o','u','t',0};
-    static const WCHAR KeExpandKernelStackAndCalloutExW[] =
-        {'K','e','E','x','p','a','n','d','K','e','r','n','e','l','S','t','a','c','k','A','n','d','C','a','l','l','o','u','t','E','x',0};
-
-
-    RtlInitUnicodeString(&str, KeExpandKernelStackAndCalloutW);
-    pKeExpandKernelStackAndCallout = MmGetSystemRoutineAddress(&str);
+    pKeExpandKernelStackAndCallout = get_proc_address("KeExpandKernelStackAndCallout");
     if (pKeExpandKernelStackAndCallout)
     {
         callout_cnt = 0;
@@ -575,8 +584,7 @@ static void test_stack_callout(void)
     }
     else win_skip("KeExpandKernelStackAndCallout is not available\n");
 
-    RtlInitUnicodeString(&str, KeExpandKernelStackAndCalloutExW);
-    pKeExpandKernelStackAndCalloutEx = MmGetSystemRoutineAddress(&str);
+    pKeExpandKernelStackAndCalloutEx = get_proc_address("KeExpandKernelStackAndCalloutEx");
     if (pKeExpandKernelStackAndCalloutEx)
     {
         callout_cnt = 0;
