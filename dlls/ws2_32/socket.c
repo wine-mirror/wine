@@ -158,6 +158,7 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"
+#include "wine/heap.h"
 
 #if defined(linux) && !defined(IP_UNICAST_IF)
 #define IP_UNICAST_IF 50
@@ -6272,8 +6273,7 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
         return NULL;
     adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
     routes = HeapAlloc(GetProcessHeap(), 0, route_size);
-    route_addrs = HeapAlloc(GetProcessHeap(), 0, 0); /* HeapReAlloc doesn't work on NULL */
-    if (adapters == NULL || routes == NULL || route_addrs == NULL)
+    if (adapters == NULL || routes == NULL)
         goto cleanup;
     /* Obtain the adapter list and the full routing table */
     if (GetAdaptersInfo(adapters, &adap_size) != NO_ERROR)
@@ -6306,7 +6306,7 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
         }
         if (exists)
             continue;
-        route_addrs = HeapReAlloc(GetProcessHeap(), 0, route_addrs, (numroutes+1)*sizeof(struct route));
+        route_addrs = heap_realloc(route_addrs, (numroutes+1)*sizeof(struct route));
         if (route_addrs == NULL)
             goto cleanup; /* Memory allocation error, fail gracefully */
         route_addrs[numroutes].interface = ifindex;
