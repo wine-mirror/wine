@@ -350,6 +350,7 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
             SysFreeString(xml);
             return hr;
         }
+        SysFreeString(xml);
 
         heap_free(full_name);
         full_name = heap_strdupW(actual_path);
@@ -366,6 +367,7 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
         {
             heap_free(full_name);
             heap_free(regtask);
+            MIDL_user_free(xml);
             return hr;
         }
         MIDL_user_free(xml);
