@@ -26,7 +26,11 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
+#ifdef HAVE_SYS_SYSCALL_H
+#include <sys/syscall.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -63,6 +67,8 @@ HANDLE keyed_event = NULL;
 
 static const LARGE_INTEGER zero_timeout;
 
+#define TICKSPERSEC 10000000
+
 static inline int interlocked_dec_if_nonzero( int *dest )
 {
     int val, tmp;
@@ -73,6 +79,41 @@ static inline int interlocked_dec_if_nonzero( int *dest )
     }
     return val;
 }
+
+
+#ifdef __linux__
+
+static int wait_op = 128; /*FUTEX_WAIT|FUTEX_PRIVATE_FLAG*/
+static int wake_op = 129; /*FUTEX_WAKE|FUTEX_PRIVATE_FLAG*/
+
+static inline int futex_wait( const int *addr, int val, struct timespec *timeout )
+{
+    return syscall( __NR_futex, addr, wait_op, val, timeout, 0, 0 );
+}
+
+static inline int futex_wake( const int *addr, int val )
+{
+    return syscall( __NR_futex, addr, wake_op, val, NULL, 0, 0 );
+}
+
+static inline int use_futexes(void)
+{
+    static int supported = -1;
+
+    if (supported == -1)
+    {
+        futex_wait( &supported, 10, NULL );
+        if (errno == ENOSYS)
+        {
+            wait_op = 0; /*FUTEX_WAIT*/
+            wake_op = 1; /*FUTEX_WAKE*/
+            futex_wait( &supported, 10, NULL );
+        }
+        supported = (errno != ENOSYS);
+    }
+    return supported;
+}
+#endif
 
 /* creates a struct security_descriptor and contained information in one contiguous piece of memory */
 NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
@@ -1987,6 +2028,95 @@ static BOOL compare_addr( const void *addr, const void *cmp, SIZE_T size )
     return FALSE;
 }
 
+#ifdef __linux__
+/* We can't map addresses to futex directly, because an application can wait on
+ * 8 bytes, and we can't pass all 8 as the compare value to futex(). Instead we
+ * map all addresses to a small fixed table of futexes. This may result in
+ * spurious wakes, but the application is already expected to handle those. */
+
+static int addr_futex_table[256];
+
+static inline int *hash_addr( const void *addr )
+{
+    ULONG_PTR val = (ULONG_PTR)addr;
+
+    return &addr_futex_table[(val >> 2) & 255];
+}
+
+static inline NTSTATUS fast_wait_addr( const void *addr, const void *cmp, SIZE_T size,
+                                       const LARGE_INTEGER *timeout )
+{
+    int *futex;
+    int val;
+    LARGE_INTEGER now;
+    timeout_t diff;
+    struct timespec timespec;
+    int ret;
+
+    if (!use_futexes())
+        return STATUS_NOT_IMPLEMENTED;
+
+    futex = hash_addr( addr );
+
+    /* We must read the previous value of the futex before checking the value
+     * of the address being waited on. That way, if we receive a wake between
+     * now and waiting on the futex, we know that val will have changed.
+     * Use an atomic load so that memory accesses are ordered between this read
+     * and the increment below. */
+    val = interlocked_cmpxchg( futex, 0, 0 );
+    if (!compare_addr( addr, cmp, size ))
+        return STATUS_SUCCESS;
+
+    if (timeout)
+    {
+        if (timeout->QuadPart > 0)
+        {
+            NtQuerySystemTime( &now );
+            diff = timeout->QuadPart - now.QuadPart;
+        }
+        else
+            diff = -timeout->QuadPart;
+
+        timespec.tv_sec  = diff / TICKSPERSEC;
+        timespec.tv_nsec = (diff % TICKSPERSEC) * 100;
+
+        ret = futex_wait( futex, val, &timespec );
+    }
+    else
+        ret = futex_wait( futex, val, NULL );
+
+    if (ret == -1 && errno == ETIMEDOUT)
+        return STATUS_TIMEOUT;
+    return STATUS_SUCCESS;
+}
+
+static inline NTSTATUS fast_wake_addr( const void *addr )
+{
+    int *futex;
+
+    if (!use_futexes())
+        return STATUS_NOT_IMPLEMENTED;
+
+    futex = hash_addr( addr );
+
+    interlocked_xchg_add( futex, 1 );
+
+    futex_wake( futex, INT_MAX );
+    return STATUS_SUCCESS;
+}
+#else
+static inline NTSTATUS fast_wait_addr( const void *addr, const void *cmp, SIZE_T size,
+                                       const LARGE_INTEGER *timeout )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static inline NTSTATUS fast_wake_addr( const void *addr )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+#endif
+
 /***********************************************************************
  *           RtlWaitOnAddress   (NTDLL.@)
  */
@@ -2004,6 +2134,9 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
 
     if (size != 1 && size != 2 && size != 4 && size != 8)
         return STATUS_INVALID_PARAMETER;
+
+    if ((ret = fast_wait_addr( addr, cmp, size, timeout )) != STATUS_NOT_IMPLEMENTED)
+        return ret;
 
     select_op.keyed_event.op     = SELECT_KEYED_EVENT_WAIT;
     select_op.keyed_event.handle = wine_server_obj_handle( keyed_event );
@@ -2059,6 +2192,9 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
  */
 void WINAPI RtlWakeAddressAll( const void *addr )
 {
+    if (fast_wake_addr( addr ) != STATUS_NOT_IMPLEMENTED)
+        return;
+
     RtlEnterCriticalSection( &addr_section );
     while (NtReleaseKeyedEvent( 0, addr, 0, &zero_timeout ) == STATUS_SUCCESS) {}
     RtlLeaveCriticalSection( &addr_section );
@@ -2069,6 +2205,9 @@ void WINAPI RtlWakeAddressAll( const void *addr )
  */
 void WINAPI RtlWakeAddressSingle( const void *addr )
 {
+    if (fast_wake_addr( addr ) != STATUS_NOT_IMPLEMENTED)
+        return;
+
     RtlEnterCriticalSection( &addr_section );
     NtReleaseKeyedEvent( 0, addr, 0, &zero_timeout );
     RtlLeaveCriticalSection( &addr_section );
