@@ -30,20 +30,24 @@ static BOOL (WINAPI *pWaitOnAddress)(volatile void *, void *, SIZE_T, DWORD);
 static void (WINAPI *pWakeByAddressAll)(void *);
 static void (WINAPI *pWakeByAddressSingle)(void *);
 
-static LONG64 address;
-static LONG64 compare;
+static LONG address;
 static DWORD WINAPI test_WaitOnAddress_func(void *arg)
 {
     BOOL ret = FALSE;
-    DWORD gle;
-    while (address == compare)
+    LONG compare;
+
+    do
     {
-        SetLastError(0xdeadbeef);
-        ret = pWaitOnAddress(&address, &compare, sizeof(compare), INFINITE);
-        gle = GetLastError();
-        ok(gle == 0xdeadbeef || broken(gle == ERROR_SUCCESS) /* Win 8 */, "got %d\n", gle);
-    }
-    ok(ret, "got %d\n", ret);
+        while (!(compare = address))
+        {
+            SetLastError(0xdeadbeef);
+            ret = pWaitOnAddress(&address, &compare, sizeof(compare), INFINITE);
+            ok(ret, "wait failed\n");
+            ok(GetLastError() == 0xdeadbeef || broken(GetLastError() == ERROR_SUCCESS) /* Win 8 */,
+                    "got error %d\n", GetLastError());
+        }
+    } while (InterlockedCompareExchange(&address, compare - 1, compare) != compare);
+
     return 0;
 }
 
@@ -51,6 +55,7 @@ static void test_WaitOnAddress(void)
 {
     DWORD gle, val, nthreads;
     HANDLE threads[8];
+    LONG compare;
     BOOL ret;
     int i;
 
@@ -64,8 +69,8 @@ static void test_WaitOnAddress(void)
     compare = 0;
     if (0) /* crash on Windows */
     {
-        ret = pWaitOnAddress(&address, NULL, 8, 0);
-        ret = pWaitOnAddress(NULL, &compare, 8, 0);
+        ret = pWaitOnAddress(&address, NULL, 4, 0);
+        ret = pWaitOnAddress(NULL, &compare, 4, 0);
     }
 
     /* invalid arguments */
@@ -111,15 +116,15 @@ static void test_WaitOnAddress(void)
 
     /* different address size */
     address = 0;
-    compare = 0xffff0000;
+    compare = 0xff00;
     SetLastError(0xdeadbeef);
-    ret = pWaitOnAddress(&address, &compare, 4, 0);
+    ret = pWaitOnAddress(&address, &compare, 2, 0);
     gle = GetLastError();
     ok(gle == 0xdeadbeef || broken(gle == ERROR_SUCCESS) /* Win 8 */, "got %d\n", gle);
     ok(ret, "got %d\n", ret);
 
     SetLastError(0xdeadbeef);
-    ret = pWaitOnAddress(&address, &compare, 2, 0);
+    ret = pWaitOnAddress(&address, &compare, 1, 0);
     gle = GetLastError();
     ok(gle == ERROR_TIMEOUT, "got %d\n", gle);
     ok(!ret, "got %d\n", ret);
@@ -128,24 +133,24 @@ static void test_WaitOnAddress(void)
     address = 0;
     compare = 1;
     SetLastError(0xdeadbeef);
-    ret = pWaitOnAddress(&address, &compare, 8, 0);
+    ret = pWaitOnAddress(&address, &compare, 4, 0);
     gle = GetLastError();
     ok(gle == 0xdeadbeef || broken(gle == ERROR_SUCCESS) /* Win 8 */, "got %d\n", gle);
     ok(ret, "got %d\n", ret);
 
     /* WakeByAddressAll */
     address = 0;
-    compare = 0;
     for (i = 0; i < ARRAY_SIZE(threads); i++)
         threads[i] = CreateThread(NULL, 0, test_WaitOnAddress_func, NULL, 0, NULL);
 
     Sleep(100);
-    address = ~0;
+    address = ARRAY_SIZE(threads);
     pWakeByAddressAll(&address);
     val = WaitForMultipleObjects(ARRAY_SIZE(threads), threads, TRUE, 5000);
     ok(val == WAIT_OBJECT_0, "got %d\n", val);
     for (i = 0; i < ARRAY_SIZE(threads); i++)
         CloseHandle(threads[i]);
+    ok(!address, "got unexpected value %s\n", wine_dbgstr_longlong(address));
 
     /* WakeByAddressSingle */
     address = 0;
@@ -153,13 +158,10 @@ static void test_WaitOnAddress(void)
         threads[i] = CreateThread(NULL, 0, test_WaitOnAddress_func, NULL, 0, NULL);
 
     Sleep(100);
-    address = 1;
     nthreads = ARRAY_SIZE(threads);
+    address = ARRAY_SIZE(threads);
     while (nthreads)
     {
-        val = WaitForMultipleObjects(nthreads, threads, FALSE, 0);
-        ok(val == STATUS_TIMEOUT, "got %u\n", val);
-
         pWakeByAddressSingle(&address);
         val = WaitForMultipleObjects(nthreads, threads, FALSE, 2000);
         ok(val < WAIT_OBJECT_0 + nthreads, "got %u\n", val);
@@ -167,7 +169,7 @@ static void test_WaitOnAddress(void)
         memmove(&threads[val], &threads[val+1], (nthreads - val - 1) * sizeof(threads[0]));
         nthreads--;
     }
-
+    ok(!address, "got unexpected value %s\n", wine_dbgstr_longlong(address));
 }
 
 START_TEST(sync)
