@@ -10739,6 +10739,155 @@ static void test_sysmem_draw(void)
     DestroyWindow(window);
 }
 
+static void test_alphatest(void)
+{
+#define ALPHATEST_PASSED 0x0000ff00
+#define ALPHATEST_FAILED 0x00ff0000
+    IDirect3DDevice8 *device;
+    unsigned int i, j;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    DWORD value;
+    HWND window;
+    HRESULT hr;
+    DWORD ps;
+
+    static const struct
+    {
+        D3DCMPFUNC func;
+        D3DCOLOR color_less;
+        D3DCOLOR color_equal;
+        D3DCOLOR color_greater;
+    }
+    test_data[] =
+    {
+        {D3DCMP_NEVER,        ALPHATEST_FAILED, ALPHATEST_FAILED, ALPHATEST_FAILED},
+        {D3DCMP_LESS,         ALPHATEST_PASSED, ALPHATEST_FAILED, ALPHATEST_FAILED},
+        {D3DCMP_EQUAL,        ALPHATEST_FAILED, ALPHATEST_PASSED, ALPHATEST_FAILED},
+        {D3DCMP_LESSEQUAL,    ALPHATEST_PASSED, ALPHATEST_PASSED, ALPHATEST_FAILED},
+        {D3DCMP_GREATER,      ALPHATEST_FAILED, ALPHATEST_FAILED, ALPHATEST_PASSED},
+        {D3DCMP_NOTEQUAL,     ALPHATEST_PASSED, ALPHATEST_FAILED, ALPHATEST_PASSED},
+        {D3DCMP_GREATEREQUAL, ALPHATEST_FAILED, ALPHATEST_PASSED, ALPHATEST_PASSED},
+        {D3DCMP_ALWAYS,       ALPHATEST_PASSED, ALPHATEST_PASSED, ALPHATEST_PASSED},
+    };
+    static const struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, ALPHATEST_PASSED | 0x80000000},
+        {{-1.0f,  1.0f, 0.1f}, ALPHATEST_PASSED | 0x80000000},
+        {{ 1.0f, -1.0f, 0.1f}, ALPHATEST_PASSED | 0x80000000},
+        {{ 1.0f,  1.0f, 0.1f}, ALPHATEST_PASSED | 0x80000000},
+    };
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
+    ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Failed to disable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHATESTENABLE, TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader failed, hr %#x.\n", hr);
+
+    ps = 0;
+    for (j = 0; j < 2; ++j)
+    {
+        if (j == 1)
+        {
+            /* Try a pixel shader instead of fixed function. The wined3d code
+             * may emulate the alpha test either for performance reasons
+             * (floating point RTs) or to work around driver bugs (GeForce
+             * 7x00 cards on MacOS). There may be a different codepath for ffp
+             * and shader in this case, and the test should cover both. */
+            static const DWORD shader_code[] =
+            {
+                0xffff0101,                                 /* ps_1_1           */
+                0x00000001, 0x800f0000, 0x90e40000,         /* mov r0, v0       */
+                0x0000ffff                                  /* end              */
+            };
+            memset(&caps, 0, sizeof(caps));
+            hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+            ok(hr == D3D_OK, "IDirect3DDevice8_GetDeviceCaps failed, hr %#x.\n", hr);
+            if (caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
+                break;
+
+            hr = IDirect3DDevice8_CreatePixelShader(device, shader_code, &ps);
+            ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_SetPixelShader(device, ps);
+            ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader failed, hr %#x.\n", hr);
+        }
+
+        for (i = 0; i < ARRAY_SIZE(test_data); ++i)
+        {
+            hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHAFUNC, test_data[i].func);
+            ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, ALPHATEST_FAILED, 0.0f, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHAREF, 0x70);
+            ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_BeginScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+            ok(hr == D3D_OK, "IDirect3DDevice8_DrawPrimitiveUP failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_EndScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed, hr %#x.\n", hr);
+            color = getPixelColor(device, 320, 240);
+            ok(color_match(color, test_data[i].color_greater, 0),
+                    "Alphatest failed, color 0x%08x, expected 0x%08x, alpha > ref, func %u.\n",
+                    color, test_data[i].color_greater, test_data[i].func);
+            hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+            ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, ALPHATEST_FAILED, 0.0f, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHAREF, 0xff70);
+            ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_GetRenderState(device, D3DRS_ALPHAREF, &value);
+            ok(hr == D3D_OK, "IDirect3DDevice8_GetRenderState failed, hr %#x.\n", hr);
+            ok(value == 0xff70, "Unexpected D3DRS_ALPHAREF value %#x.\n", value);
+            hr = IDirect3DDevice8_BeginScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+            ok(hr == D3D_OK, "IDirect3DDevice8_DrawPrimitiveUP failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice8_EndScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed, hr %#x.\n", hr);
+            color = getPixelColor(device, 320, 240);
+            ok(color_match(color, test_data[i].color_greater, 0),
+                    "Alphatest failed, color 0x%08x, expected 0x%08x, alpha > ref, func %u.\n",
+                    color, test_data[i].color_greater, test_data[i].func);
+            hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+            ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr %#x.\n", hr);
+        }
+    }
+    if (ps)
+        IDirect3DDevice8_DeletePixelShader(device, ps);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -10814,4 +10963,5 @@ START_TEST(visual)
     test_viewport();
     test_color_vertex();
     test_sysmem_draw();
+    test_alphatest();
 }
