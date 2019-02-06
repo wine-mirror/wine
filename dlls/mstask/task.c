@@ -1690,7 +1690,11 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR ta
         hfile = CreateFileW(task_name, GENERIC_READ | GENERIC_WRITE, 0, NULL, disposition, 0, 0);
         if (hfile != INVALID_HANDLE_VALUE) break;
 
-        if (try++ >= 3) return HRESULT_FROM_WIN32(GetLastError());
+        if (try++ >= 3)
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+            goto failed;
+        }
         Sleep(100);
     }
 
@@ -1781,13 +1785,16 @@ failed:
         CoTaskMemFree(comment);
     CoTaskMemFree(user_data);
 
-    CloseHandle(hfile);
-    if (hr != S_OK)
-        DeleteFileW(task_name);
-    else if (remember)
+    if (hfile != INVALID_HANDLE_VALUE)
     {
-        heap_free(This->task_name);
-        This->task_name = heap_strdupW(task_name);
+        CloseHandle(hfile);
+        if (hr != S_OK)
+            DeleteFileW(task_name);
+        else if (remember)
+        {
+            heap_free(This->task_name);
+            This->task_name = heap_strdupW(task_name);
+        }
     }
     return hr;
 }
