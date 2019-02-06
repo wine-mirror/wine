@@ -20149,6 +20149,33 @@ static void test_multisample_mismatch(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
+    /* Draw with both buffers single sampled but multisample quality set to 1 for depth buffer.
+     * The difference in multisample quality parameter is ignored. */
+    IDirect3DSurface9_Release(ds);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24X8,
+            D3DMULTISAMPLE_NONE, 1, FALSE, &ds, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(SUCCEEDED(hr), "Failed to set depth stencil surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x0000ff00, 0.5f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    color = getPixelColor(device, 62, 240);
+    ok(color_match(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 322, 240);
+    ok(color_match(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
     IDirect3DSurface9_Release(rt);
     IDirect3DSurface9_Release(ds);
     IDirect3DSurface9_Release(rt_multi);
