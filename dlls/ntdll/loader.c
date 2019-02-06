@@ -2442,23 +2442,17 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
                 return STATUS_NO_MEMORY;
             }
             *handle = open_dll_file( &nt_name, pwm, st );
-            goto found;
         }
-
-        /* not found */
-
-        if (!contains_path( libname ))
+        else  /* not found, return the name as is, to be loaded as builtin */
         {
-            /* if libname doesn't contain a path at all, we simply return the name as is,
-             * to be loaded as builtin */
             len = strlenW(libname) * sizeof(WCHAR);
             if (len >= *size) goto overflow;
             strcpyW( filename, libname );
-            goto found;
         }
+        goto found;
     }
 
-    /* absolute path name, or relative path name but not found above */
+    /* absolute path name */
 
     if (!RtlDosPathNameToNtPathName_U( libname, &nt_name, &file_part, NULL ))
     {
