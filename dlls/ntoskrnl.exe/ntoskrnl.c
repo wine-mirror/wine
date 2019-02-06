@@ -2685,6 +2685,15 @@ NTSTATUS WINAPI PsImpersonateClient(PETHREAD Thread, PACCESS_TOKEN Token, BOOLEA
 
 
 /***********************************************************************
+ *           PsRevertToSelf   (NTOSKRNL.EXE.@)
+ */
+void WINAPI PsRevertToSelf(void)
+{
+    FIXME("\n");
+}
+
+
+/***********************************************************************
  *           PsSetCreateProcessNotifyRoutine   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI PsSetCreateProcessNotifyRoutine( PCREATE_PROCESS_NOTIFY_ROUTINE callback, BOOLEAN remove )

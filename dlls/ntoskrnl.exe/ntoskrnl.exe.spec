@@ -925,7 +925,7 @@
 @ stub PsReturnProcessNonPagedPoolQuota
 @ stub PsReturnProcessPagedPoolQuota
 @ stub PsRevertThreadToSelf
-@ stub PsRevertToSelf
+@ stdcall PsRevertToSelf()
 @ stub PsSetContextThread
 @ stdcall PsSetCreateProcessNotifyRoutine(ptr long)
 @ stdcall PsSetCreateProcessNotifyRoutineEx(ptr long)
