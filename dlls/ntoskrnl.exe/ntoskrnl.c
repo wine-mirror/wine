@@ -326,6 +326,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = IRP_MJ_CREATE;
     irpsp->DeviceObject = device;
+    irpsp->FileObject = file;
     irpsp->Parameters.Create.SecurityContext = NULL;  /* FIXME */
     irpsp->Parameters.Create.Options = params->create.options;
     irpsp->Parameters.Create.ShareAccess = params->create.sharing;
@@ -370,6 +371,7 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = IRP_MJ_CLOSE;
     irpsp->DeviceObject = device;
+    irpsp->FileObject = file;
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
@@ -417,6 +419,7 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
     irp->RequestorMode = UserMode;
 
     irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->FileObject = file;
     irpsp->Parameters.Read.Key = params->read.key;
 
     irp->Flags |= IRP_READ_OPERATION;
@@ -453,6 +456,7 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
     irp->RequestorMode = UserMode;
 
     irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->FileObject = file;
     irpsp->Parameters.Write.Key = params->write.key;
 
     irp->Flags |= IRP_WRITE_OPERATION;
@@ -467,6 +471,7 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
                                 ULONG out_size, HANDLE irp_handle )
 {
     IRP *irp;
+    IO_STACK_LOCATION *irpsp;
     DEVICE_OBJECT *device;
     FILE_OBJECT *file = wine_server_get_ptr( params->flush.file );
 
@@ -483,6 +488,9 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
 
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->FileObject = file;
+
     dispatch_irp( device, irp, irp_handle );
 
     HeapFree( GetProcessHeap(), 0, in_buff );
@@ -493,6 +501,7 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
 static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG in_size,
                                 ULONG out_size, HANDLE irp_handle )
 {
+    IO_STACK_LOCATION *irpsp;
     IRP *irp;
     void *out_buff = NULL;
     void *to_free = NULL;
@@ -539,6 +548,9 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
 
     if (out_size && (params->ioctl.code & 3) != METHOD_BUFFERED)
         HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, in_buff, in_size );
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->FileObject = file;
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;

@@ -183,6 +183,18 @@ todo_wine
     ok(current != NULL, "Expected current process to be non-NULL\n");
 }
 
+static FILE_OBJECT *last_created_file;
+
+static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+
+    ok(last_created_file != NULL, "last_created_file = NULL\n");
+    ok(irpsp->FileObject == last_created_file, "FileObject != last_created_file\n");
+    ok(irpsp->DeviceObject == device, "unexpected DeviceObject\n");
+    ok(irpsp->FileObject->DeviceObject == device, "unexpected FileObject->DeviceObject\n");
+}
+
 static void test_mdl_map(void)
 {
     char buffer[20] = "test buffer";
@@ -604,7 +616,7 @@ static void test_lookaside_list(void)
     ExDeleteNPagedLookasideList(&list);
 }
 
-static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     void *buffer = irp->AssociatedIrp.SystemBuffer;
@@ -628,6 +640,7 @@ static NTSTATUS main_test(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
     attr.Attributes = OBJ_KERNEL_HANDLE; /* needed to be accessible from system threads */
     ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
 
+    test_irp_struct(irp, device);
     test_currentprocess();
     test_mdl_map();
     test_init_funcs();
@@ -686,6 +699,10 @@ static NTSTATUS test_load_driver_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG
 
 static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
 {
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+
+    last_created_file = irpsp->FileObject;
+
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
     return STATUS_SUCCESS;
@@ -702,7 +719,7 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             status = test_basic_ioctl(irp, stack, &irp->IoStatus.Information);
             break;
         case IOCTL_WINETEST_MAIN_TEST:
-            status = main_test(irp, stack, &irp->IoStatus.Information);
+            status = main_test(device, irp, stack, &irp->IoStatus.Information);
             break;
         case IOCTL_WINETEST_LOAD_DRIVER:
             status = test_load_driver_ioctl(irp, stack, &irp->IoStatus.Information);
