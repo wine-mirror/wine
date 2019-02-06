@@ -143,10 +143,6 @@ static HRESULT WINAPI EnumWorkItems_Next(IEnumWorkItems *iface, ULONG count, LPW
     enumerated = 0;
     list = NULL;
 
-    allocated = 64;
-    list = CoTaskMemAlloc(allocated * sizeof(list[0]));
-    if (!list) return E_OUTOFMEMORY;
-
     if (This->handle == INVALID_HANDLE_VALUE)
     {
         GetWindowsDirectoryW(path, MAX_PATH);
@@ -160,6 +156,10 @@ static HRESULT WINAPI EnumWorkItems_Next(IEnumWorkItems *iface, ULONG count, LPW
         if (!FindNextFileW(This->handle, &data))
             return S_FALSE;
     }
+
+    allocated = 64;
+    list = CoTaskMemAlloc(allocated * sizeof(list[0]));
+    if (!list) return E_OUTOFMEMORY;
 
     do
     {
