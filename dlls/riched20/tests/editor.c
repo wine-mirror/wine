@@ -751,6 +751,8 @@ static void test_EM_SETCHARFORMAT(void)
   HWND hwndRichEdit = new_richedit(NULL);
   CHARFORMAT2A cf2;
   CHARFORMAT2W cfW;
+  CHARFORMATA cf1a;
+  CHARFORMATW cf1w;
   int rc = 0;
   int tested_effects[] = {
     CFE_BOLD,
@@ -1337,6 +1339,23 @@ static void test_EM_SETCHARFORMAT(void)
      "got %08x\n", cf2.dwMask);
   ok(cf2.dwEffects & CFE_UNDERLINE, "got %08x\n", cf2.dwEffects);
   ok(cf2.bUnderlineType == CFU_UNDERLINEDOUBLE, "got %x\n", cf2.bUnderlineType);
+
+  /* Check setting CFM_ALL2/CFM_EFFECTS2 in CHARFORMAT(A/W). */
+  memset(&cf1a, 0, sizeof(CHARFORMATA));
+  memset(&cf1w, 0, sizeof(CHARFORMATW));
+  cf1a.cbSize = sizeof(CHARFORMATA);
+  cf1w.cbSize = sizeof(CHARFORMATW);
+  cf1a.dwMask = cf1w.dwMask = CFM_ALL2;
+  cf1a.dwEffects = cf1w.dwEffects = CFM_EFFECTS2;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf1a);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf1a);
+  /* flags only valid for CHARFORMAT2 should be masked out */
+  ok((cf1a.dwMask & (CFM_ALL2 & ~CFM_ALL)) == 0, "flags were not masked out\n");
+  ok((cf1a.dwEffects & (CFM_EFFECTS2 & ~CFM_EFFECTS)) == 0, "flags were not masked out\n");
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf1w);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf1w);
+  ok((cf1w.dwMask & (CFM_ALL2 & ~CFM_ALL)) == 0, "flags were not masked out\n");
+  ok((cf1w.dwEffects & (CFM_EFFECTS2 & ~CFM_EFFECTS)) == 0, "flags were not masked out\n");
 
   DestroyWindow(hwndRichEdit);
 }

@@ -85,6 +85,8 @@ BOOL cf2w_to_cfany(CHARFORMAT2W *to, const CHARFORMAT2W *from)
     CopyMemory(t, from, FIELD_OFFSET(CHARFORMATA, szFaceName));
     WideCharToMultiByte(CP_ACP, 0, from->szFaceName, -1, t->szFaceName, sizeof(t->szFaceName), NULL, NULL);
     t->cbSize = sizeof(*t); /* it was overwritten by CopyMemory */
+    t->dwMask &= CFM_ALL;
+    t->dwEffects &= CFM_EFFECTS;
     return TRUE;
   }
   if (to->cbSize == sizeof(CHARFORMATW))
@@ -92,6 +94,8 @@ BOOL cf2w_to_cfany(CHARFORMAT2W *to, const CHARFORMAT2W *from)
     CHARFORMATW *t = (CHARFORMATW *)to;
     CopyMemory(t, from, sizeof(*t));
     t->cbSize = sizeof(*t); /* it was overwritten by CopyMemory */
+    t->dwMask &= CFM_ALL;
+    t->dwEffects &= CFM_EFFECTS;
     return TRUE;
   }
   if (to->cbSize == sizeof(CHARFORMAT2A))
