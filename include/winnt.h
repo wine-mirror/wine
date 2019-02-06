@@ -757,6 +757,8 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define UNICODE_STRING_MAX_CHARS 32767
 
 #define FIELD_OFFSET(type, field) ((LONG)offsetof(type, field))
+#define RTL_FIELD_SIZE(type, field) (sizeof(((type *)0)->field))
+#define RTL_SIZEOF_THROUGH_FIELD(type, field) (FIELD_OFFSET(type, field) + RTL_FIELD_SIZE(type, field))
 
 #define CONTAINING_RECORD(address, type, field) \
   ((type *)((PCHAR)(address) - offsetof(type, field)))
