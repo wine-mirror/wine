@@ -2032,7 +2032,12 @@ NTSTATUS WINAPI ExCreateCallback(PCALLBACK_OBJECT *obj, POBJECT_ATTRIBUTES attr,
  */
 void WINAPI ExDeleteNPagedLookasideList( PNPAGED_LOOKASIDE_LIST lookaside )
 {
-    FIXME("(%p) stub\n", lookaside);
+    void *entry;
+
+    TRACE("(%p)\n", lookaside);
+
+    while ((entry = RtlInterlockedPopEntrySList(&lookaside->L.u.ListHead)))
+        lookaside->L.u5.FreeEx(entry, (LOOKASIDE_LIST_EX*)lookaside);
 }
 
 
