@@ -36,12 +36,13 @@
 #include "wine/unicode.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include "comctl32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(listbox);
 
-/* Items array granularity */
+/* Items array granularity (must be power of 2) */
 #define LB_ARRAY_GRANULARITY 16
 
 /* Scrolling timeout in ms */
@@ -125,6 +126,26 @@ typedef enum
 static TIMER_DIRECTION LISTBOX_Timer = LB_TIMER_NONE;
 
 static LRESULT LISTBOX_GetItemRect( const LB_DESCR *descr, INT index, RECT *rect );
+
+static BOOL resize_storage(LB_DESCR *descr, UINT items_size)
+{
+    LB_ITEMDATA *items;
+
+    if (items_size > descr->items_size ||
+        items_size + LB_ARRAY_GRANULARITY * 2 < descr->items_size)
+    {
+        items_size = (items_size + LB_ARRAY_GRANULARITY - 1) & ~(LB_ARRAY_GRANULARITY - 1);
+        items = heap_realloc(descr->items, items_size * sizeof(LB_ITEMDATA));
+        if (!items)
+        {
+            SEND_NOTIFICATION(descr, LBN_ERRSPACE);
+            return FALSE;
+        }
+        descr->items_size = items_size;
+        descr->items = items;
+    }
+    return TRUE;
+}
 
 static BOOL is_item_selected( const LB_DESCR *descr, UINT index )
 {
@@ -684,27 +705,10 @@ static void LISTBOX_DrawFocusRect( LB_DESCR *descr, BOOL on )
  */
 static LRESULT LISTBOX_InitStorage( LB_DESCR *descr, INT nb_items )
 {
-    LB_ITEMDATA *item;
+    UINT new_size = descr->nb_items + nb_items;
 
-    nb_items += LB_ARRAY_GRANULARITY - 1;
-    nb_items -= (nb_items % LB_ARRAY_GRANULARITY);
-    if (descr->items) {
-        nb_items += descr->items_size;
-	item = HeapReAlloc( GetProcessHeap(), 0, descr->items,
-                              nb_items * sizeof(LB_ITEMDATA));
-    }
-    else {
-	item = HeapAlloc( GetProcessHeap(), 0,
-                              nb_items * sizeof(LB_ITEMDATA));
-    }
-
-    if (!item)
-    {
-        SEND_NOTIFICATION( descr, LBN_ERRSPACE );
+    if (new_size > descr->items_size && !resize_storage(descr, new_size))
         return LB_ERRSPACE;
-    }
-    descr->items_size = nb_items;
-    descr->items = item;
     return LB_OKAY;
 }
 
@@ -1525,29 +1529,11 @@ static LRESULT LISTBOX_InsertItem( LB_DESCR *descr, INT index,
                                    LPWSTR str, ULONG_PTR data )
 {
     LB_ITEMDATA *item;
-    INT max_items;
     INT oldfocus = descr->focus_item;
 
     if (index == -1) index = descr->nb_items;
     else if ((index < 0) || (index > descr->nb_items)) return LB_ERR;
-    if (descr->nb_items == descr->items_size)
-    {
-        /* We need to grow the array */
-        max_items = descr->items_size + LB_ARRAY_GRANULARITY;
-	if (descr->items)
-	    item = HeapReAlloc( GetProcessHeap(), 0, descr->items,
-                                  max_items * sizeof(LB_ITEMDATA) );
-	else
-	    item = HeapAlloc( GetProcessHeap(), 0,
-                                  max_items * sizeof(LB_ITEMDATA) );
-        if (!item)
-        {
-            SEND_NOTIFICATION( descr, LBN_ERRSPACE );
-            return LB_ERRSPACE;
-        }
-        descr->items_size = max_items;
-        descr->items = item;
-    }
+    if (!resize_storage(descr, descr->nb_items + 1)) return LB_ERR;
 
     /* Insert the item structure */
 
