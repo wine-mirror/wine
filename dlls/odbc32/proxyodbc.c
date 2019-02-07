@@ -951,7 +951,7 @@ SQLRETURN WINAPI ODBC32_SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName
 {
     SQLRETURN ret;
 
-    TRACE("(ConnectionHandle %p, ServerName %s, NameLength1 %d, UserName %s, NameLength2 %d, Authentication %p,"
+    TRACE("(ConnectionHandle %p, ServerName %s, NameLength1 %d, UserName %s, NameLength2 %d, Authentication %s,"
           " NameLength3 %d)\n", ConnectionHandle,
           debugstr_an((const char *)ServerName, NameLength1), NameLength1,
           debugstr_an((const char *)UserName, NameLength2), NameLength2,
@@ -2328,7 +2328,7 @@ SQLRETURN WINAPI ODBC32_SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName,
 {
     SQLRETURN ret;
 
-    TRACE("(ConnectionHandle %p, ServerName %s, NameLength1 %d, UserName %s, NameLength2 %d, Authentication %p,"
+    TRACE("(ConnectionHandle %p, ServerName %s, NameLength1 %d, UserName %s, NameLength2 %d, Authentication %s,"
           " NameLength3 %d)\n", ConnectionHandle, debugstr_wn(ServerName, NameLength1), NameLength1,
           debugstr_wn(UserName, NameLength2), NameLength2, debugstr_wn(Authentication, NameLength3), NameLength3);
 
