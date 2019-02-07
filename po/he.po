@@ -64,8 +64,8 @@ msgid "Support Information"
 msgstr "פרטי תמיכה"
 
 #: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:398
-#: comdlg32.rc:452 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
+#: comdlg32.rc:453 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
@@ -145,8 +145,8 @@ msgstr "ה&תקנה"
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
 #: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
 #: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:399
-#: comdlg32.rc:453 comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:527 credui.rc:53
+#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:423
+#: comdlg32.rc:454 comdlg32.rc:479 comdlg32.rc:505 comdlg32.rc:528 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
@@ -376,12 +376,12 @@ msgid "R&eset"
 msgstr "&איפוס"
 
 #: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:479
-#: comdlg32.rc:505 comdlg32.rc:528 ieframe.rc:58 msacm32.rc:52 oledlg.rc:96
-#: shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72
-#: progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160
-#: progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77 taskmgr.rc:87
-#: winefile.rc:82 winemine.rc:53 winhlp32.rc:57 wordpad.rc:102
+#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
+#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:529 ieframe.rc:58 msacm32.rc:52
+#: oledlg.rc:96 shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119
+#: oleview.rc:72 progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144
+#: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
+#: taskmgr.rc:87 winefile.rc:82 winemine.rc:53 winhlp32.rc:57 wordpad.rc:102
 msgid "&Help"
 msgstr "ע&זרה"
 
@@ -455,8 +455,8 @@ msgstr "היום:"
 msgid "Go to today"
 msgstr "מעבר ליום הנוכחי"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:459 comdlg32.rc:484
-#: comdlg32.rc:511 shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
+#: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "פתיחה"
 
@@ -542,7 +542,7 @@ msgstr "דחוס"
 msgid "Print Setup"
 msgstr "הגדרות הדפסה"
 
-#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:402
+#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:398
 msgid "Printer"
 msgstr "מדפסת"
 
@@ -558,7 +558,7 @@ msgstr "[ללא]"
 msgid "Specific &Printer"
 msgstr "מדפסת מ&סוימת"
 
-#: comdlg32.rc:235 comdlg32.rc:421 comdlg32.rc:440 wineps.rc:34
+#: comdlg32.rc:235 comdlg32.rc:417 comdlg32.rc:441 wineps.rc:34
 msgid "Orientation"
 msgstr "כיווניות"
 
@@ -566,11 +566,11 @@ msgstr "כיווניות"
 msgid "Po&rtrait"
 msgstr "ל&אורך"
 
-#: comdlg32.rc:237 comdlg32.rc:442 wineps.rc:37
+#: comdlg32.rc:237 comdlg32.rc:443 wineps.rc:37
 msgid "&Landscape"
 msgstr "ל&רוחב"
 
-#: comdlg32.rc:240 comdlg32.rc:415 comdlg32.rc:435 wineps.rc:28
+#: comdlg32.rc:240 comdlg32.rc:411 comdlg32.rc:436 wineps.rc:28
 msgid "Paper"
 msgstr "נייר"
 
@@ -594,7 +594,7 @@ msgstr "&גופן:"
 msgid "Font St&yle:"
 msgstr "&סגנון הגופן:"
 
-#: comdlg32.rc:259 comdlg32.rc:436 winecfg.rc:294
+#: comdlg32.rc:259 comdlg32.rc:437 winecfg.rc:294
 msgid "&Size:"
 msgstr "&גודל:"
 
@@ -722,7 +722,7 @@ msgstr "ה&חלפה"
 msgid "Replace &All"
 msgstr "החלפת ה&כול"
 
-#: comdlg32.rc:361 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:361 comdlg32.rc:401 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "מ&אפיינים"
@@ -731,23 +731,23 @@ msgstr "מ&אפיינים"
 msgid "Print to fi&le"
 msgstr "הדפסה ל&קובץ"
 
-#: comdlg32.rc:363 comdlg32.rc:404 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
 msgid "&Name:"
 msgstr "&שם:"
 
-#: comdlg32.rc:364 comdlg32.rc:406
+#: comdlg32.rc:364 comdlg32.rc:402
 msgid "Status:"
 msgstr "מצב:"
 
-#: comdlg32.rc:366 comdlg32.rc:408
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Type:"
 msgstr "סוג:"
 
-#: comdlg32.rc:368 comdlg32.rc:410
+#: comdlg32.rc:368 comdlg32.rc:406
 msgid "Where:"
 msgstr "היכן:"
 
-#: comdlg32.rc:370 comdlg32.rc:412
+#: comdlg32.rc:370 comdlg32.rc:408
 msgid "Comment:"
 msgstr "הערה:"
 
@@ -779,80 +779,80 @@ msgstr "מספר ה&עותקים:"
 msgid "C&ollate"
 msgstr "&איסוף"
 
-#: comdlg32.rc:416 winecfg.rc:300
+#: comdlg32.rc:412 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "&גודל:"
 
-#: comdlg32.rc:418
+#: comdlg32.rc:414
 msgid "&Source:"
 msgstr "מ&קור:"
 
-#: comdlg32.rc:423
+#: comdlg32.rc:419
 msgid "P&ortrait"
 msgstr "ל&אורך"
 
-#: comdlg32.rc:424
+#: comdlg32.rc:420
 msgid "L&andscape"
 msgstr "ל&רוחב"
 
-#: comdlg32.rc:429
+#: comdlg32.rc:430
 msgid "Setup Page"
 msgstr "הגדרת עמוד"
 
-#: comdlg32.rc:438
+#: comdlg32.rc:439
 msgid "&Tray:"
 msgstr "מ&גש:"
 
-#: comdlg32.rc:441 wineps.rc:35
+#: comdlg32.rc:442 wineps.rc:35
 msgid "&Portrait"
 msgstr "ל&אורך"
 
-#: comdlg32.rc:444
+#: comdlg32.rc:445
 msgid "L&eft:"
 msgstr "&שמאליים:"
 
-#: comdlg32.rc:446 notepad.rc:112
+#: comdlg32.rc:447 notepad.rc:112
 msgid "&Right:"
 msgstr "&ימניים:"
 
-#: comdlg32.rc:448
+#: comdlg32.rc:449
 msgid "T&op:"
 msgstr "&עליונים:"
 
-#: comdlg32.rc:450 notepad.rc:114
+#: comdlg32.rc:451 notepad.rc:114
 msgid "&Bottom:"
 msgstr "&תחתונים:"
 
-#: comdlg32.rc:454
+#: comdlg32.rc:455
 msgid "P&rinter..."
 msgstr "מ&דפסת..."
 
-#: comdlg32.rc:462 comdlg32.rc:487
+#: comdlg32.rc:463 comdlg32.rc:488
 msgid "Look &in:"
 msgstr "&חיפוש תחת:"
 
-#: comdlg32.rc:468 comdlg32.rc:494
+#: comdlg32.rc:469 comdlg32.rc:495
 msgid "File &name:"
 msgstr "&שם הקובץ:"
 
-#: comdlg32.rc:472 comdlg32.rc:498
+#: comdlg32.rc:473 comdlg32.rc:499
 msgid "Files of &type:"
 msgstr "קבצים מ&סוג:"
 
-#: comdlg32.rc:475 comdlg32.rc:501
+#: comdlg32.rc:476 comdlg32.rc:502
 msgid "Open as &read-only"
 msgstr "פתיחה לקריאה &בלבד"
 
-#: comdlg32.rc:477 comdlg32.rc:503 comdlg32.rc:521 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "&פתיחה"
 
-#: comdlg32.rc:514
+#: comdlg32.rc:515
 #, fuzzy
 msgid "File name:"
 msgstr "&שם הקובץ:"
 
-#: comdlg32.rc:517
+#: comdlg32.rc:518
 #, fuzzy
 msgid "Files of type:"
 msgstr "קבצים מ&סוג:"
