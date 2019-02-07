@@ -2970,6 +2970,7 @@ struct wined3d_dummy_textures
 
 struct wined3d_stateblock_state
 {
+    struct wined3d_vertex_declaration *vertex_declaration;
     struct wined3d_buffer *index_buffer;
     enum wined3d_format_id index_format;
     int base_vertex_index;
