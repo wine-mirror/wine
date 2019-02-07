@@ -6588,6 +6588,119 @@ static inline FT_Vector normalize_vector(FT_Vector *vec)
     return out;
 }
 
+/* get_glyph_outline() glyph transform matrices index */
+enum matrices_index
+{
+    matrix_hori,
+    matrix_vert,
+    matrix_unrotated
+};
+
+static BOOL get_transform_matrices( GdiFont *font, BOOL vertical, const MAT2 *user_transform,
+                                    FT_Matrix matrices[3] )
+{
+    static const FT_Matrix identity_mat = { (1 << 16), 0, 0, (1 << 16) };
+    BOOL needs_transform = FALSE;
+    double width_ratio;
+    int i;
+
+    matrices[matrix_unrotated] = identity_mat;
+
+    /* Scaling factor */
+    if (font->aveWidth)
+    {
+        TEXTMETRICW tm;
+        get_text_metrics( font, &tm );
+
+        width_ratio = (double)font->aveWidth;
+        width_ratio /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
+    }
+    else
+        width_ratio = font->scale_y;
+
+    /* Scaling transform */
+    if (width_ratio != 1.0 || font->scale_y != 1.0)
+    {
+        FT_Matrix scale_mat;
+        scale_mat.xx = FT_FixedFromFloat( width_ratio );
+        scale_mat.xy = 0;
+        scale_mat.yx = 0;
+        scale_mat.yy = FT_FixedFromFloat( font->scale_y );
+
+        pFT_Matrix_Multiply( &scale_mat, &matrices[matrix_unrotated] );
+        needs_transform = TRUE;
+    }
+
+    /* Slant transform */
+    if (font->fake_italic)
+    {
+        FT_Matrix slant_mat;
+        slant_mat.xx = (1 << 16);
+        slant_mat.xy = (1 << 16) >> 2;
+        slant_mat.yx = 0;
+        slant_mat.yy = (1 << 16);
+
+        pFT_Matrix_Multiply( &slant_mat, &matrices[matrix_unrotated] );
+        needs_transform = TRUE;
+    }
+
+    /* Rotation transform */
+    matrices[matrix_hori] = matrices[matrix_unrotated];
+    if (font->orientation % 3600)
+    {
+        FT_Matrix rotation_mat;
+        FT_Vector angle;
+
+        pFT_Vector_Unit( &angle, MulDiv( 1 << 16, font->orientation, 10 ) );
+        rotation_mat.xx =  angle.x;
+        rotation_mat.xy = -angle.y;
+        rotation_mat.yx =  angle.y;
+        rotation_mat.yy =  angle.x;
+        pFT_Matrix_Multiply( &rotation_mat, &matrices[matrix_hori] );
+        needs_transform = TRUE;
+    }
+
+    /* Vertical transform */
+    matrices[matrix_vert] = matrices[matrix_hori];
+    if (vertical)
+    {
+        FT_Matrix vertical_mat = { 0, -(1 << 16), 1 << 16, 0 }; /* 90 degrees rotation */
+
+        pFT_Matrix_Multiply( &vertical_mat, &matrices[matrix_vert] );
+        needs_transform = TRUE;
+    }
+
+    /* World transform */
+    if (!is_identity_FMAT2( &font->font_desc.matrix ))
+    {
+        FT_Matrix world_mat;
+        world_mat.xx =  FT_FixedFromFloat( font->font_desc.matrix.eM11 );
+        world_mat.xy = -FT_FixedFromFloat( font->font_desc.matrix.eM21 );
+        world_mat.yx = -FT_FixedFromFloat( font->font_desc.matrix.eM12 );
+        world_mat.yy =  FT_FixedFromFloat( font->font_desc.matrix.eM22 );
+
+        for (i = 0; i < 3; i++)
+            pFT_Matrix_Multiply( &world_mat, &matrices[i] );
+        needs_transform = TRUE;
+    }
+
+    /* Extra transformation specified by caller */
+    if (!is_identity_MAT2( user_transform ))
+    {
+        FT_Matrix user_mat;
+        user_mat.xx = FT_FixedFromFIXED( user_transform->eM11 );
+        user_mat.xy = FT_FixedFromFIXED( user_transform->eM21 );
+        user_mat.yx = FT_FixedFromFIXED( user_transform->eM12 );
+        user_mat.yy = FT_FixedFromFIXED( user_transform->eM22 );
+
+        for (i = 0; i < 3; i++)
+            pFT_Matrix_Multiply( &user_mat, &matrices[i] );
+        needs_transform = TRUE;
+    }
+
+    return needs_transform;
+}
+
 static BOOL get_bold_glyph_outline(FT_GlyphSlot glyph, LONG ppem, FT_Glyph_Metrics *metrics)
 {
     FT_Error err;
@@ -6934,7 +7047,6 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                                LPGLYPHMETRICS lpgm, ABC *abc, DWORD buflen, LPVOID buf,
                                const MAT2* lpmat)
 {
-    static const FT_Matrix identityMat = {(1 << 16), 0, 0, (1 << 16)};
     GLYPHMETRICS gm;
     FT_Face ft_face = incoming_font->ft_face;
     GdiFont *font = incoming_font;
@@ -6946,12 +7058,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     INT left, right, top = 0, bottom = 0;
     FT_Vector adv;
     INT origin_x = 0, origin_y = 0;
-    FT_Angle angle = 0;
     FT_Int load_flags = get_load_flags(format);
-    double widthRatio = 1.0;
-    FT_Matrix transMat = identityMat;
-    FT_Matrix transMatUnrotated;
-    FT_Matrix transMatTategaki;
+    FT_Matrix matrices[3];
     BOOL needsTransform = FALSE;
     BOOL tategaki = (font->name[0] == '@');
     BOOL vertical_metrics;
@@ -7008,113 +7116,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     if (!font->gm[original_index / GM_BLOCK_SIZE])
         font->gm[original_index / GM_BLOCK_SIZE] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(GM) * GM_BLOCK_SIZE);
 
-    /* Scaling factor */
-    if (font->aveWidth)
-    {
-        TEXTMETRICW tm;
-
-        get_text_metrics(font, &tm);
-
-        widthRatio = (double)font->aveWidth;
-        widthRatio /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
-    }
-    else
-        widthRatio = font->scale_y;
-
-    /* Scaling transform */
-    if (widthRatio != 1.0 || font->scale_y != 1.0)
-    {
-        FT_Matrix scaleMat;
-        scaleMat.xx = FT_FixedFromFloat(widthRatio);
-        scaleMat.xy = 0;
-        scaleMat.yx = 0;
-        scaleMat.yy = FT_FixedFromFloat(font->scale_y);
-
-        pFT_Matrix_Multiply(&scaleMat, &transMat);
-        needsTransform = TRUE;
-    }
-
-    /* Slant transform */
-    if (font->fake_italic) {
-        FT_Matrix slantMat;
-        
-        slantMat.xx = (1 << 16);
-        slantMat.xy = ((1 << 16) >> 2);
-        slantMat.yx = 0;
-        slantMat.yy = (1 << 16);
-        pFT_Matrix_Multiply(&slantMat, &transMat);
-        needsTransform = TRUE;
-    }
-
-    /* Rotation transform */
-    transMatUnrotated = transMat;
-    transMatTategaki = transMat;
-    if(font->orientation || tategaki) {
-        FT_Matrix rotationMat;
-        FT_Matrix taterotationMat;
-        FT_Vector vecAngle;
-
-        double orient = font->orientation / 10.0;
-        double tate_orient = 0.f;
-
-        if (tategaki)
-            tate_orient = ((font->orientation+900)%3600)/10.0;
-        else
-            tate_orient = font->orientation/10.0;
-
-        if (orient)
-        {
-            angle = FT_FixedFromFloat(orient);
-            pFT_Vector_Unit(&vecAngle, angle);
-            rotationMat.xx = vecAngle.x;
-            rotationMat.xy = -vecAngle.y;
-            rotationMat.yx = -rotationMat.xy;
-            rotationMat.yy = rotationMat.xx;
-
-            pFT_Matrix_Multiply(&rotationMat, &transMat);
-        }
-
-        if (tate_orient)
-        {
-            angle = FT_FixedFromFloat(tate_orient);
-            pFT_Vector_Unit(&vecAngle, angle);
-            taterotationMat.xx = vecAngle.x;
-            taterotationMat.xy = -vecAngle.y;
-            taterotationMat.yx = -taterotationMat.xy;
-            taterotationMat.yy = taterotationMat.xx;
-            pFT_Matrix_Multiply(&taterotationMat, &transMatTategaki);
-        }
-
-        needsTransform = TRUE;
-    }
-
-    /* World transform */
-    if (!is_identity_FMAT2(&font->font_desc.matrix))
-    {
-        FT_Matrix worldMat;
-        worldMat.xx = FT_FixedFromFloat(font->font_desc.matrix.eM11);
-        worldMat.xy = -FT_FixedFromFloat(font->font_desc.matrix.eM21);
-        worldMat.yx = -FT_FixedFromFloat(font->font_desc.matrix.eM12);
-        worldMat.yy = FT_FixedFromFloat(font->font_desc.matrix.eM22);
-        pFT_Matrix_Multiply(&worldMat, &transMat);
-        pFT_Matrix_Multiply(&worldMat, &transMatUnrotated);
-        pFT_Matrix_Multiply(&worldMat, &transMatTategaki);
-        needsTransform = TRUE;
-    }
-
-    /* Extra transformation specified by caller */
-    if (!is_identity_MAT2(lpmat))
-    {
-        FT_Matrix extraMat;
-        extraMat.xx = FT_FixedFromFIXED(lpmat->eM11);
-        extraMat.xy = FT_FixedFromFIXED(lpmat->eM21);
-        extraMat.yx = FT_FixedFromFIXED(lpmat->eM12);
-        extraMat.yy = FT_FixedFromFIXED(lpmat->eM22);
-        pFT_Matrix_Multiply(&extraMat, &transMat);
-        pFT_Matrix_Multiply(&extraMat, &transMatUnrotated);
-        pFT_Matrix_Multiply(&extraMat, &transMatTategaki);
-        needsTransform = TRUE;
-    }
+    needsTransform = get_transform_matrices( font, tategaki, lpmat, matrices );
 
     vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
     /* there is a freetype bug where vertical metrics are only
@@ -7177,7 +7179,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	        vec.x = metrics.horiBearingX + xc * metrics.width;
 		vec.y = metrics.horiBearingY - yc * metrics.height;
 		TRACE("Vec %ld,%ld\n", vec.x, vec.y);
-		pFT_Vector_Transform(&vec, &transMatTategaki);
+		pFT_Vector_Transform( &vec, &matrices[matrix_vert] );
 		if(xc == 0 && yc == 0) {
 		    left = right = vec.x;
 		    top = bottom = vec.y;
@@ -7203,7 +7205,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             vec.x = lsb;
             vec.y = font->potm->otmDescent << 6;
             TRACE ("Vec %ld,%ld\n", vec.x>>6, vec.y>>6);
-            pFT_Vector_Transform(&vec, &transMat);
+            pFT_Vector_Transform( &vec, &matrices[matrix_hori] );
             origin_x = (vec.x + left) & -64;
             origin_y = (vec.y + top + 63) & -64;
             lsb -= metrics.horiBearingY;
@@ -7216,24 +7218,24 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         }
 
 	TRACE("transformed box: (%d,%d - %d,%d)\n", left, top, right, bottom);
-        adv = get_advance_metric(incoming_font, font, &metrics, &transMat, vertical_metrics);
+        adv = get_advance_metric(incoming_font, font, &metrics, &matrices[matrix_hori], vertical_metrics);
         gm.gmCellIncX = adv.x >> 6;
         gm.gmCellIncY = adv.y >> 6;
 
-        adv = get_advance_metric(incoming_font, font, &metrics, &transMatUnrotated, vertical_metrics);
+        adv = get_advance_metric(incoming_font, font, &metrics, &matrices[matrix_unrotated], vertical_metrics);
         adv.x = pFT_Vector_Length(&adv);
         adv.y = 0;
 
         vec.x = lsb;
         vec.y = 0;
-        pFT_Vector_Transform(&vec, &transMatUnrotated);
+        pFT_Vector_Transform( &vec, &matrices[matrix_unrotated] );
         if(lsb > 0) abc->abcA = pFT_Vector_Length(&vec) >> 6;
         else abc->abcA = -((pFT_Vector_Length(&vec) + 63) >> 6);
 
         /* We use lsb again to avoid rounding errors */
         vec.x = lsb + (tategaki ? metrics.height : metrics.width);
         vec.y = 0;
-        pFT_Vector_Transform(&vec, &transMatUnrotated);
+        pFT_Vector_Transform( &vec, &matrices[matrix_unrotated] );
         abc->abcB = ((pFT_Vector_Length(&vec) + 63) >> 6) - abc->abcA;
     }
 
@@ -7313,7 +7315,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	    ft_bitmap.buffer = buf;
 
 	    if(needsTransform)
-		pFT_Outline_Transform(&ft_face->glyph->outline, &transMatTategaki);
+		pFT_Outline_Transform( &ft_face->glyph->outline, &matrices[matrix_vert] );
 
 	    pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
@@ -7374,7 +7376,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             ft_bitmap.buffer = buf;
 
             if(needsTransform)
-                pFT_Outline_Transform(&ft_face->glyph->outline, &transMatTategaki);
+                pFT_Outline_Transform( &ft_face->glyph->outline, &matrices[matrix_vert] );
 
             pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
@@ -7489,7 +7491,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             dst = buf;
 
             if ( needsTransform )
-                pFT_Outline_Transform (&ft_face->glyph->outline, &transMatTategaki);
+                pFT_Outline_Transform( &ft_face->glyph->outline, &matrices[matrix_vert] );
 
 #ifdef FT_LCD_FILTER_H
             if ( pFT_Library_SetLcdFilter )
@@ -7575,7 +7577,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         if(buflen == 0) buf = NULL;
 
         if (needsTransform && buf)
-            pFT_Outline_Transform(outline, &transMatTategaki);
+            pFT_Outline_Transform( outline, &matrices[matrix_vert] );
 
         needed = get_native_glyph_outline(outline, buflen, NULL);
 
@@ -7593,7 +7595,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         if(buflen == 0) buf = NULL;
 
         if (needsTransform && buf)
-            pFT_Outline_Transform(outline, &transMatTategaki);
+            pFT_Outline_Transform( outline, &matrices[matrix_vert] );
 
         needed = get_bezier_glyph_outline(outline, buflen, NULL);
 
