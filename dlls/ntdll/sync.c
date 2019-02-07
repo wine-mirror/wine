@@ -1909,8 +1909,8 @@ void WINAPI RtlInitializeConditionVariable( RTL_CONDITION_VARIABLE *variable )
  */
 void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
-    if (interlocked_dec_if_nonzero( (int *)&variable->Ptr ))
-        NtReleaseKeyedEvent( 0, &variable->Ptr, FALSE, NULL );
+    interlocked_xchg_add( (int *)&variable->Ptr, 1 );
+    RtlWakeAddressSingle( variable );
 }
 
 /***********************************************************************
@@ -1920,9 +1920,8 @@ void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
  */
 void WINAPI RtlWakeAllConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
-    int val = interlocked_xchg( (int *)&variable->Ptr, 0 );
-    while (val-- > 0)
-        NtReleaseKeyedEvent( 0, &variable->Ptr, FALSE, NULL );
+    interlocked_xchg_add( (int *)&variable->Ptr, 1 );
+    RtlWakeAddressAll( variable );
 }
 
 /***********************************************************************
@@ -1944,17 +1943,14 @@ NTSTATUS WINAPI RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variable, R
                                              const LARGE_INTEGER *timeout )
 {
     NTSTATUS status;
-    interlocked_xchg_add( (int *)&variable->Ptr, 1 );
+    int val = *(int *)&variable->Ptr;
+
     RtlLeaveCriticalSection( crit );
 
-    status = NtWaitForKeyedEvent( 0, &variable->Ptr, FALSE, timeout );
-    if (status != STATUS_SUCCESS)
-    {
-        if (!interlocked_dec_if_nonzero( (int *)&variable->Ptr ))
-            status = NtWaitForKeyedEvent( 0, &variable->Ptr, FALSE, NULL );
-    }
+    status = RtlWaitOnAddress( &variable->Ptr, &val, sizeof(int), timeout );
 
     RtlEnterCriticalSection( crit );
+
     return status;
 }
 
@@ -1981,19 +1977,14 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
                                               const LARGE_INTEGER *timeout, ULONG flags )
 {
     NTSTATUS status;
-    interlocked_xchg_add( (int *)&variable->Ptr, 1 );
+    int val = *(int *)&variable->Ptr;
 
     if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
         RtlReleaseSRWLockShared( lock );
     else
         RtlReleaseSRWLockExclusive( lock );
 
-    status = NtWaitForKeyedEvent( 0, &variable->Ptr, FALSE, timeout );
-    if (status != STATUS_SUCCESS)
-    {
-        if (!interlocked_dec_if_nonzero( (int *)&variable->Ptr ))
-            status = NtWaitForKeyedEvent( 0, &variable->Ptr, FALSE, NULL );
-    }
+    status = RtlWaitOnAddress( &variable->Ptr, &val, sizeof(int), timeout );
 
     if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
         RtlAcquireSRWLockShared( lock );
