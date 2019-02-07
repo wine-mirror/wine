@@ -508,7 +508,7 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         RECT r;
         HRGN hrgn;
 
-	if (!item)
+	if (index >= descr->nb_items)
 	{
 	    if (action == ODA_FOCUS)
 		DrawFocusRect( hdc, rect );
