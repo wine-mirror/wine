@@ -12124,6 +12124,175 @@ static void test_gdi_surface(void)
     DestroyWindow(window);
 }
 
+static void test_alphatest(void)
+{
+#define ALPHATEST_PASSED 0x0000ff00
+#define ALPHATEST_FAILED 0x00ff0000
+    D3DRECT rect_full = {{0}, {0}, {640}, {480}};
+    IDirect3DExecuteBuffer *execute_buffer;
+    IDirect3DMaterial *blue, *failed;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    IDirect3DViewport *viewport;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    IDirectDraw *ddraw;
+    UINT inst_length;
+    unsigned int i;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *ptr;
+
+    static const struct
+    {
+        D3DCMPFUNC func;
+        D3DCOLOR color_less;
+        D3DCOLOR color_equal;
+        D3DCOLOR color_greater;
+    }
+    test_data[] =
+    {
+        {D3DCMP_NEVER,        ALPHATEST_FAILED, ALPHATEST_FAILED, ALPHATEST_FAILED},
+        {D3DCMP_LESS,         ALPHATEST_PASSED, ALPHATEST_FAILED, ALPHATEST_FAILED},
+        {D3DCMP_EQUAL,        ALPHATEST_FAILED, ALPHATEST_PASSED, ALPHATEST_FAILED},
+        {D3DCMP_LESSEQUAL,    ALPHATEST_PASSED, ALPHATEST_PASSED, ALPHATEST_FAILED},
+        {D3DCMP_GREATER,      ALPHATEST_FAILED, ALPHATEST_FAILED, ALPHATEST_PASSED},
+        {D3DCMP_NOTEQUAL,     ALPHATEST_PASSED, ALPHATEST_FAILED, ALPHATEST_PASSED},
+        {D3DCMP_GREATEREQUAL, ALPHATEST_FAILED, ALPHATEST_PASSED, ALPHATEST_PASSED},
+        {D3DCMP_ALWAYS,       ALPHATEST_PASSED, ALPHATEST_PASSED, ALPHATEST_PASSED},
+    };
+    static D3DLVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.1f}, 0, {ALPHATEST_PASSED | 0x80000000}},
+        {{-1.0f}, { 1.0f}, {0.1f}, 0, {ALPHATEST_PASSED | 0x80000000}},
+        {{ 1.0f}, {-1.0f}, {0.1f}, 0, {ALPHATEST_PASSED | 0x80000000}},
+        {{ 1.0f}, { 1.0f}, {0.1f}, 0, {ALPHATEST_PASSED | 0x80000000}},
+    };
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    blue = create_diffuse_material(device, 0.0f, 0.0f, 1.0f, 1.0f);
+    failed = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+
+    viewport_set_background(device, viewport, blue);
+    hr = IDirect3DViewport_Clear(viewport, 1, &rect_full, D3DCLEAR_TARGET);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    ptr = exec_desc.lpData;
+    emit_set_rs(&ptr, D3DRENDERSTATE_LIGHTING, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ALPHATESTENABLE, TRUE);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    set_execute_data(execute_buffer, 0, 0, inst_length);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    viewport_set_background(device, viewport, failed);
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
+    {
+        hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        memcpy(exec_desc.lpData, quad, sizeof(quad));
+        ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad);
+        emit_set_rs(&ptr, D3DRENDERSTATE_ALPHAFUNC, test_data[i].func);
+        emit_set_rs(&ptr, D3DRENDERSTATE_ALPHAREF, 0x70);
+        emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, ARRAY_SIZE(quad));
+        emit_tquad(&ptr, 0);
+        emit_end(&ptr);
+        inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+        inst_length -= sizeof(quad);
+
+        hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DViewport_Clear(viewport, 1, &rect_full, D3DCLEAR_TARGET);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        set_execute_data(execute_buffer, ARRAY_SIZE(quad), sizeof(quad), inst_length);
+        hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        color = get_surface_color(rt, 320, 240);
+        ok(compare_color(color, test_data[i].color_greater, 0),
+                "Alphatest failed, color 0x%08x, expected 0x%08x, alpha > ref, func %u.\n",
+                color, test_data[i].color_greater, test_data[i].func);
+
+        hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        memcpy(exec_desc.lpData, quad, sizeof(quad));
+        ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad);
+        emit_set_rs(&ptr, D3DRENDERSTATE_ALPHAREF, 0xff70);
+        emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, ARRAY_SIZE(quad));
+        emit_tquad(&ptr, 0);
+        emit_end(&ptr);
+        inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+        inst_length -= sizeof(quad);
+
+        hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DViewport_Clear(viewport, 1, &rect_full, D3DCLEAR_TARGET);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        set_execute_data(execute_buffer, ARRAY_SIZE(quad), sizeof(quad), inst_length);
+        hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        color = get_surface_color(rt, 320, 240);
+        ok(compare_color(color, test_data[i].color_greater, 0),
+                "Alphatest failed, color 0x%08x, expected 0x%08x, alpha > ref, func %u.\n",
+                color, test_data[i].color_greater, test_data[i].func);
+    }
+
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    destroy_viewport(device, viewport);
+    destroy_material(failed);
+    destroy_material(blue);
+    IDirectDrawSurface_Release(rt);
+    refcount = IDirect3DDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "DirectDraw has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -12231,4 +12400,5 @@ START_TEST(ddraw1)
     test_find_device();
     test_killfocus();
     test_gdi_surface();
+    test_alphatest();
 }
