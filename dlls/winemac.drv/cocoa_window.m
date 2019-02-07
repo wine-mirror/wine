@@ -747,6 +747,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [super willRemoveSubview:subview];
     }
 
+    - (void) setLayer:(CALayer*)newLayer
+    {
+        [super setLayer:newLayer];
+        [self updateGLContexts];
+    }
+
     /*
      * ---------- NSTextInputClient methods ----------
      */
