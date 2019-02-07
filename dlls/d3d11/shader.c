@@ -24,21 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static HRESULT osgn_handler(const char *data, DWORD data_size, DWORD tag, void *context)
-{
-    struct wined3d_shader_signature *signature = context;
-
-    if (tag != TAG_OSGN && tag != TAG_OSG5)
-        return S_OK;
-
-    if (signature->elements)
-    {
-        FIXME("Multiple input signatures.\n");
-        shader_free_signature(signature);
-    }
-    return shader_parse_signature(tag, data, data_size, signature);
-}
-
 static const char *shader_get_string(const char *data, size_t data_size, DWORD offset)
 {
     size_t len, max_len;
@@ -1073,18 +1058,14 @@ static const struct wined3d_parent_ops d3d_geometry_shader_wined3d_parent_ops =
     d3d_geometry_shader_wined3d_object_destroyed,
 };
 
-static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_output_element *elements,
-        const D3D11_SO_DECLARATION_ENTRY *entries, unsigned int entry_count,
-        const unsigned int *buffer_strides, unsigned int buffer_stride_count,
-        const struct wined3d_shader_signature *os, D3D_FEATURE_LEVEL feature_level)
+static HRESULT validate_stream_output_entries(const D3D11_SO_DECLARATION_ENTRY *entries, unsigned int entry_count,
+        const unsigned int *buffer_strides, unsigned int buffer_stride_count, D3D_FEATURE_LEVEL feature_level)
 {
-    unsigned int i, j, mask;
+    unsigned int i, j;
 
     for (i = 0; i < entry_count; ++i)
     {
-        struct wined3d_stream_output_element *e = &elements[i];
         const D3D11_SO_DECLARATION_ENTRY *f = &entries[i];
-        struct wined3d_shader_signature_element *output;
 
         TRACE("Stream: %u, semantic: %s, semantic idx: %u, start component: %u, "
                 "component count %u, output slot %u.\n",
@@ -1112,11 +1093,6 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
             return E_INVALIDARG;
         }
 
-        e->stream_idx = f->Stream;
-        e->component_idx = f->StartComponent;
-        e->component_count = f->ComponentCount;
-        e->output_slot = f->OutputSlot;
-
         if (!f->SemanticName)
         {
             if (f->SemanticIndex)
@@ -1129,10 +1105,8 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
                 WARN("Invalid stream output gap %u-%u.\n", f->StartComponent, f->ComponentCount);
                 return E_INVALIDARG;
             }
-
-            e->register_idx = WINED3D_STREAM_OUTPUT_GAP;
         }
-        else if ((output = shader_find_signature_element(os, f->SemanticName, f->SemanticIndex, f->Stream)))
+        else
         {
             if (f->StartComponent > 3 || f->ComponentCount > 4 || !f->ComponentCount
                     || f->StartComponent + f->ComponentCount > 4)
@@ -1140,29 +1114,6 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
                 WARN("Invalid component range %u-%u.\n", f->StartComponent, f->ComponentCount);
                 return E_INVALIDARG;
             }
-
-            for (j = 0; j < 4; ++j)
-            {
-                if ((1u << j) & output->mask)
-                    break;
-            }
-            e->component_idx += j;
-            mask = ((1u << e->component_count) - 1) << e->component_idx;
-            if ((output->mask & 0xff & mask) != mask)
-            {
-                WARN("Invalid component range %u-%u (mask %#x), output mask %#x.\n",
-                        e->component_idx, e->component_count, mask, output->mask & 0xff);
-                return E_INVALIDARG;
-            }
-
-            e->register_idx = output->register_idx;
-            TRACE("Register idx: %u, register component idx %u, register mask %#x.\n",
-                    e->register_idx, e->component_idx, mask);
-        }
-        else
-        {
-            WARN("Failed to find output signature element for stream output entry.\n");
-            return E_INVALIDARG;
         }
     }
 
@@ -1255,7 +1206,6 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
         unsigned int rasterizer_stream)
 {
     struct wined3d_stream_output_desc so_desc;
-    struct wined3d_shader_signature signature;
     struct wined3d_shader_desc desc;
     unsigned int i;
     HRESULT hr;
@@ -1292,40 +1242,22 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
         }
     }
 
+    if (FAILED(hr = validate_stream_output_entries(so_entries, so_entry_count,
+            buffer_strides, buffer_stride_count, device->feature_level)))
+        return hr;
+
     desc.byte_code = byte_code;
     desc.byte_code_size = byte_code_length;
 
     memset(&so_desc, 0, sizeof(so_desc));
     if (so_entries)
     {
+        so_desc.elements = (const struct wined3d_stream_output_element *)so_entries;
         so_desc.element_count = so_entry_count;
         for (i = 0; i < min(buffer_stride_count, ARRAY_SIZE(so_desc.buffer_strides)); ++i)
             so_desc.buffer_strides[i] = buffer_strides[i];
         so_desc.buffer_stride_count = buffer_stride_count;
         so_desc.rasterizer_stream_idx = rasterizer_stream;
-
-        if (!(so_desc.elements = heap_calloc(so_entry_count, sizeof(*so_desc.elements))))
-        {
-            ERR("Failed to allocate wined3d stream output element array memory.\n");
-            return E_OUTOFMEMORY;
-        }
-
-        memset(&signature, 0, sizeof(signature));
-        if (FAILED(hr = parse_dxbc(byte_code, byte_code_length, osgn_handler, &signature)))
-        {
-            ERR("Failed to parse input signature.\n");
-            heap_free(so_desc.elements);
-            return E_FAIL;
-        }
-        hr = wined3d_so_elements_from_d3d11_so_entries(so_desc.elements,
-                so_entries, so_entry_count, buffer_strides, buffer_stride_count,
-                &signature, device->feature_level);
-        shader_free_signature(&signature);
-        if (FAILED(hr))
-        {
-            heap_free(so_desc.elements);
-            return hr;
-        }
     }
 
     shader->ID3D11GeometryShader_iface.lpVtbl = &d3d11_geometry_shader_vtbl;
@@ -1334,10 +1266,8 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    hr = wined3d_shader_create_gs(device->wined3d_device, &desc, so_entries ? &so_desc : NULL,
-            shader, &d3d_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader);
-    heap_free(so_desc.elements);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_shader_create_gs(device->wined3d_device, &desc, so_entries ? &so_desc : NULL,
+            shader, &d3d_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
         WARN("Failed to create wined3d geometry shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
