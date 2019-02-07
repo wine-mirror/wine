@@ -14529,6 +14529,10 @@ msgstr "右(&R)"
 msgid "Regular Metafile Viewer"
 msgstr "普通 Metafile 阅读器"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "正在等待程序"

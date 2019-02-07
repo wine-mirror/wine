@@ -14888,6 +14888,10 @@ msgstr "Przesuń w &prawo"
 msgid "Regular Metafile Viewer"
 msgstr "Przeglądarka zwykłych metaplików"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "Czekanie na program"

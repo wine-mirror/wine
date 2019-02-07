@@ -15182,6 +15182,10 @@ msgstr "Høj&re"
 msgid "Regular Metafile Viewer"
 msgstr "Normal metafil-fremviser"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "Venter på program"

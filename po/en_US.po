@@ -14772,6 +14772,10 @@ msgstr "&Right"
 msgid "Regular Metafile Viewer"
 msgstr "Regular Metafile Viewer"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr "Metafiles (*.wmf, *.emf)"
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "Waiting for Program"

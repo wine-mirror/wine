@@ -14698,6 +14698,10 @@ msgstr "Vp&ravo"
 msgid "Regular Metafile Viewer"
 msgstr "Obyčejný prohlížeč metasouborů"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "Čeká se na program"

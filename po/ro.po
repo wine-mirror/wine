@@ -14974,6 +14974,10 @@ msgstr "D&reapta"
 msgid "Regular Metafile Viewer"
 msgstr "Vizualizator de fișiere metafile normale"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "Așteptare program"

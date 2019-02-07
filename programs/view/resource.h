@@ -19,6 +19,7 @@
 #include <windef.h>
 
 #define IDS_DESCRIPTION                 2
+#define IDS_OPEN_META_STRING            3
 #define IDI_APPICON                     101
 #define IDM_EXIT                        1000
 #define IDM_OPEN                        502

@@ -14714,6 +14714,10 @@ msgstr "오른쪽(&R)"
 msgid "Regular Metafile Viewer"
 msgstr "정규 메타파일 보기"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "프로그램 대기중"

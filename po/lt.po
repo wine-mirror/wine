@@ -14781,6 +14781,10 @@ msgstr "&Dešinėn"
 msgid "Regular Metafile Viewer"
 msgstr "Įprastinė metafailų žiūryklė"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "Laukiama programos"

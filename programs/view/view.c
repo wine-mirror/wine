@@ -18,9 +18,10 @@
 
 #include <windows.h>
 #include <commdlg.h>
-#include "resource.h"
-
 #include <stdio.h>
+
+#include "resource.h"
+#include "wine/unicode.h"
 
 static HINSTANCE hInst;
 static HWND hMainWnd;
@@ -51,11 +52,16 @@ typedef struct
 
 static BOOL FileOpen(HWND hWnd, WCHAR *fn, int fnsz)
 {
-  static const WCHAR filter[] = {'M','e','t','a','f','i','l','e','s','\0','*','.','w','m','f',';','*','.','e','m','f','\0',0};
+  WCHAR filter[120], metafileFilter[100];
+  static const WCHAR filterW[] = {'%','s','%','c','*','.','w','m','f',';','*','.','e','m','f','%','c',0};
   OPENFILENAMEW ofn = { sizeof(OPENFILENAMEW),
                         0, 0, NULL, NULL, 0, 0, NULL,
                         fnsz, NULL, 0, NULL, NULL,
                         OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
+
+  LoadStringW( hInst, IDS_OPEN_META_STRING, metafileFilter, ARRAY_SIZE(metafileFilter) );
+  snprintfW( filter, ARRAY_SIZE(filter), filterW, metafileFilter, 0, 0 );
+
   ofn.lpstrFilter = filter;
   ofn.hwndOwner = hWnd;
   ofn.lpstrFile = fn;

@@ -14788,6 +14788,10 @@ msgstr "S&ağ"
 msgid "Regular Metafile Viewer"
 msgstr "Genel Meta Dosya Görüntüleyicisi"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "Program Bekleniyor"

@@ -14898,6 +14898,10 @@ msgstr "&ימינה"
 msgid "Regular Metafile Viewer"
 msgstr "מציג קובצי על רגיל"
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr "בהמתנה לתכנה"

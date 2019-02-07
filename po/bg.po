@@ -14684,6 +14684,10 @@ msgstr "Най-вдясно"
 msgid "Regular Metafile Viewer"
 msgstr ""
 
+#: view.rc:50
+msgid "Metafiles (*.wmf, *.emf)"
+msgstr ""
+
 #: wineboot.rc:31
 msgid "Waiting for Program"
 msgstr ""
