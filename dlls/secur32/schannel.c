@@ -338,26 +338,26 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryCredentialsAttributesW(
     return ret;
 }
 
-static SECURITY_STATUS schan_CheckCreds(const SCHANNEL_CRED *schanCred)
+static SECURITY_STATUS get_cert(const SCHANNEL_CRED *cred, CERT_CONTEXT const **cert)
 {
-    SECURITY_STATUS st;
+    SECURITY_STATUS status;
     DWORD i;
 
-    TRACE("dwVersion = %d\n", schanCred->dwVersion);
-    TRACE("cCreds = %d\n", schanCred->cCreds);
-    TRACE("hRootStore = %p\n", schanCred->hRootStore);
-    TRACE("cMappers = %d\n", schanCred->cMappers);
-    TRACE("cSupportedAlgs = %d:\n", schanCred->cSupportedAlgs);
-    for (i = 0; i < schanCred->cSupportedAlgs; i++)
-        TRACE("%08x\n", schanCred->palgSupportedAlgs[i]);
-    TRACE("grbitEnabledProtocols = %08x\n", schanCred->grbitEnabledProtocols);
-    TRACE("dwMinimumCipherStrength = %d\n", schanCred->dwMinimumCipherStrength);
-    TRACE("dwMaximumCipherStrength = %d\n", schanCred->dwMaximumCipherStrength);
-    TRACE("dwSessionLifespan = %d\n", schanCred->dwSessionLifespan);
-    TRACE("dwFlags = %08x\n", schanCred->dwFlags);
-    TRACE("dwCredFormat = %d\n", schanCred->dwCredFormat);
+    TRACE("dwVersion = %u\n", cred->dwVersion);
+    TRACE("cCreds = %u\n", cred->cCreds);
+    TRACE("paCred = %p\n", cred->paCred);
+    TRACE("hRootStore = %p\n", cred->hRootStore);
+    TRACE("cMappers = %u\n", cred->cMappers);
+    TRACE("cSupportedAlgs = %u:\n", cred->cSupportedAlgs);
+    for (i = 0; i < cred->cSupportedAlgs; i++) TRACE("%08x\n", cred->palgSupportedAlgs[i]);
+    TRACE("grbitEnabledProtocols = %08x\n", cred->grbitEnabledProtocols);
+    TRACE("dwMinimumCipherStrength = %u\n", cred->dwMinimumCipherStrength);
+    TRACE("dwMaximumCipherStrength = %u\n", cred->dwMaximumCipherStrength);
+    TRACE("dwSessionLifespan = %u\n", cred->dwSessionLifespan);
+    TRACE("dwFlags = %08x\n", cred->dwFlags);
+    TRACE("dwCredFormat = %u\n", cred->dwCredFormat);
 
-    switch (schanCred->dwVersion)
+    switch (cred->dwVersion)
     {
     case SCH_CRED_V3:
     case SCHANNEL_CRED_VERSION:
@@ -366,29 +366,24 @@ static SECURITY_STATUS schan_CheckCreds(const SCHANNEL_CRED *schanCred)
         return SEC_E_INTERNAL_ERROR;
     }
 
-    if (schanCred->cCreds == 0)
-        st = SEC_E_NO_CREDENTIALS;
-    else if (schanCred->cCreds > 1)
-        st = SEC_E_UNKNOWN_CREDENTIALS;
+    if (!cred->cCreds) status = SEC_E_NO_CREDENTIALS;
+    else if (cred->cCreds > 1) status = SEC_E_UNKNOWN_CREDENTIALS;
     else
     {
-        DWORD keySpec;
-        HCRYPTPROV csp;
-        BOOL ret, freeCSP;
+        DWORD spec;
+        HCRYPTPROV prov;
+        BOOL free;
 
-        ret = CryptAcquireCertificatePrivateKey(schanCred->paCred[0],
-         0, /* FIXME: what flags to use? */ NULL,
-         &csp, &keySpec, &freeCSP);
-        if (ret)
+        if (CryptAcquireCertificatePrivateKey(cred->paCred[0], CRYPT_ACQUIRE_CACHE_FLAG, NULL, &prov, &spec, &free))
         {
-            st = SEC_E_OK;
-            if (freeCSP)
-                CryptReleaseContext(csp, 0);
+            if (free) CryptReleaseContext(prov, 0);
+            *cert = cred->paCred[0];
+            status = SEC_E_OK;
         }
-        else
-            st = SEC_E_UNKNOWN_CREDENTIALS;
+        else status = SEC_E_UNKNOWN_CREDENTIALS;
     }
-    return st;
+
+    return status;
 }
 
 static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schanCred,
@@ -397,17 +392,18 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
     struct schan_credentials *creds;
     unsigned enabled_protocols;
     ULONG_PTR handle;
-    SECURITY_STATUS st = SEC_E_OK;
+    SECURITY_STATUS status = SEC_E_OK;
+    const CERT_CONTEXT *cert = NULL;
 
     TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
 
     if (schanCred)
     {
-        st = schan_CheckCreds(schanCred);
-        if (st != SEC_E_OK && st != SEC_E_NO_CREDENTIALS)
-            return st;
+        status = get_cert(schanCred, &cert);
+        if (status != SEC_E_OK && status != SEC_E_NO_CREDENTIALS)
+            return status;
 
-        st = SEC_E_OK;
+        status = SEC_E_OK;
     }
 
     read_config();
@@ -420,9 +416,6 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         return SEC_E_NO_AUTHENTICATING_AUTHORITY;
     }
 
-    /* For now, the only thing I'm interested in is the direction of the
-     * connection, so just store it.
-     */
     creds = heap_alloc(sizeof(*creds));
     if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
 
@@ -430,7 +423,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
     if (handle == SCHAN_INVALID_HANDLE) goto fail;
 
     creds->credential_use = SECPKG_CRED_OUTBOUND;
-    if (!schan_imp_allocate_certificate_credentials(creds))
+    if (!schan_imp_allocate_certificate_credentials(creds, cert))
     {
         schan_free_handle(handle, SCHAN_HANDLE_CRED);
         goto fail;
@@ -447,7 +440,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         ptsExpiry->HighPart = 0;
     }
 
-    return st;
+    return status;
 
 fail:
     heap_free(creds);
@@ -457,14 +450,15 @@ fail:
 static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schanCred,
  PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    SECURITY_STATUS st;
+    SECURITY_STATUS status;
+    const CERT_CONTEXT *cert = NULL;
 
     TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
 
     if (!schanCred) return SEC_E_NO_CREDENTIALS;
 
-    st = schan_CheckCreds(schanCred);
-    if (st == SEC_E_OK)
+    status = get_cert(schanCred, &cert);
+    if (status == SEC_E_OK)
     {
         ULONG_PTR handle;
         struct schan_credentials *creds;
@@ -485,7 +479,7 @@ static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schan
 
         /* FIXME: get expiry from cert */
     }
-    return st;
+    return status;
 }
 
 static SECURITY_STATUS schan_AcquireCredentialsHandle(ULONG fCredentialUse,

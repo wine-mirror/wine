@@ -1185,9 +1185,9 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
     return SEC_E_OK;
 }
 
-BOOL schan_imp_allocate_certificate_credentials(schan_credentials *c)
+BOOL schan_imp_allocate_certificate_credentials(schan_credentials *c, const CERT_CONTEXT *cert)
 {
-    /* The certificate is never really used for anything. */
+    if (cert) FIXME("no support for certificate credentials on this platform\n");
     c->credentials = NULL;
     return TRUE;
 }
