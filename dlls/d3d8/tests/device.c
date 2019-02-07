@@ -27,6 +27,7 @@
 #include <initguid.h>
 #include <d3d8.h>
 #include "wine/test.h"
+#include "wine/heap.h"
 
 struct vec3
 {
@@ -51,7 +52,7 @@ struct device_desc
 
 static DEVMODEW registry_mode;
 
-static HRESULT (WINAPI *ValidateVertexShader)(DWORD *, DWORD *, DWORD *, int, DWORD *);
+static HRESULT (WINAPI *ValidateVertexShader)(const DWORD *, const DWORD *, const D3DCAPS8 *, BOOL, char **);
 static HRESULT (WINAPI *ValidatePixelShader)(DWORD *, DWORD *, int, DWORD *);
 
 static BOOL (WINAPI *pGetCursorInfo)(PCURSORINFO);
@@ -4365,7 +4366,7 @@ static void test_set_rt_vp_scissor(void)
 
 static void test_validate_vs(void)
 {
-    static DWORD vs[] =
+    static DWORD vs_code[] =
     {
         0xfffe0101,                                                             /* vs_1_1                       */
         0x00000009, 0xc0010000, 0x90e40000, 0xa0e40000,                         /* dp4 oPos.x, v0, c0           */
@@ -4374,40 +4375,91 @@ static void test_validate_vs(void)
         0x00000009, 0xc0080000, 0x90e40000, 0xa0e40003,                         /* dp4 oPos.w, v0, c3           */
         0x0000ffff,                                                             /* end                          */
     };
+    D3DCAPS8 caps;
+    char *errors;
     HRESULT hr;
 
-    hr = ValidateVertexShader(0, 0, 0, 0, 0);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    hr = ValidateVertexShader(0, 0, 0, 1, 0);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    hr = ValidateVertexShader(vs, 0, 0, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    static DWORD declaration_valid1[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT4),
+        D3DVSD_END()
+    };
+    static DWORD declaration_valid2[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT2),
+        D3DVSD_END()
+    };
+    static DWORD declaration_invalid[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_NORMAL, D3DVSDT_FLOAT4),
+        D3DVSD_END()
+    };
 
-    hr = ValidateVertexShader(vs, 0, 0, 1, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    /* Seems to do some version checking. */
-    *vs = 0xfffe0100;                                                           /* vs_1_0                       */
-    hr = ValidateVertexShader(vs, 0, 0, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(NULL, NULL, NULL, FALSE, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(NULL, NULL, NULL, TRUE, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(NULL, NULL, NULL, FALSE, &errors);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(!*errors, "Got unexpected string \"%s\".\n", errors);
+    heap_free(errors);
+    hr = ValidateVertexShader(NULL, NULL, NULL, TRUE, &errors);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(!!*errors, "Got unexpected empty string.\n");
+    heap_free(errors);
 
-    *vs = 0xfffe0102;                                                           /* bogus version                */
-    hr = ValidateVertexShader(vs, 0, 0, 1, 0);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    /* I've seen that applications always pass the 2nd and 3rd parameter as 0.
-     * Simple test with non-zero parameters. */
-    *vs = 0xfffe0101;                                                           /* vs_1_1                       */
-    hr = ValidateVertexShader(vs, vs, 0, 1, 0);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(vs_code, NULL, NULL, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(vs_code, NULL, NULL, TRUE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(vs_code, NULL, NULL, TRUE, &errors);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!*errors, "Got unexpected string \"%s\".\n", errors);
+    heap_free(errors);
 
-    hr = ValidateVertexShader(vs, 0, vs, 1, 0);
+    hr = ValidateVertexShader(vs_code, declaration_valid1, NULL, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(vs_code, declaration_valid2, NULL, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(vs_code, declaration_invalid, NULL, FALSE, NULL);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    memset(&caps, 0, sizeof(caps));
+    caps.VertexShaderVersion = D3DVS_VERSION(1, 1);
+    caps.MaxVertexShaderConst = 4;
+    hr = ValidateVertexShader(vs_code, NULL, &caps, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    caps.VertexShaderVersion = D3DVS_VERSION(1, 0);
+    hr = ValidateVertexShader(vs_code, NULL, &caps, FALSE, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    /* I've seen the 4th parameter always passed as either 0 or 1, but passing
-     * other values doesn't seem to hurt. */
-    hr = ValidateVertexShader(vs, 0, 0, 12345, 0);
+    caps.VertexShaderVersion = D3DVS_VERSION(1, 2);
+    hr = ValidateVertexShader(vs_code, NULL, &caps, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    /* What is the 5th parameter? The following seems to work ok. */
-    hr = ValidateVertexShader(vs, 0, 0, 1, vs);
+    caps.VertexShaderVersion = D3DVS_VERSION(8, 8);
+    hr = ValidateVertexShader(vs_code, NULL, &caps, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    caps.VertexShaderVersion = D3DVS_VERSION(1, 1);
+    caps.MaxVertexShaderConst = 3;
+    hr = ValidateVertexShader(vs_code, NULL, &caps, FALSE, NULL);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    *vs_code = D3DVS_VERSION(1, 0);
+    hr = ValidateVertexShader(vs_code, NULL, NULL, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    *vs_code = D3DVS_VERSION(1, 2);
+    hr = ValidateVertexShader(vs_code, NULL, NULL, TRUE, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ValidateVertexShader(vs_code, NULL, NULL, FALSE, &errors);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(!*errors, "Got unexpected string \"%s\".\n", errors);
+    heap_free(errors);
+    hr = ValidateVertexShader(vs_code, NULL, NULL, TRUE, &errors);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(!!*errors, "Got unexpected empty string.\n");
+    heap_free(errors);
 }
 
 static void test_validate_ps(void)
