@@ -1124,9 +1124,9 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
                 WARN("Invalid semantic idx %u for stream output gap.\n", f->SemanticIndex);
                 return E_INVALIDARG;
             }
-            if (e->component_idx || !e->component_count)
+            if (f->StartComponent || !f->ComponentCount)
             {
-                WARN("Invalid stream output gap %u-%u.\n", e->component_idx, e->component_count);
+                WARN("Invalid stream output gap %u-%u.\n", f->StartComponent, f->ComponentCount);
                 return E_INVALIDARG;
             }
 
@@ -1134,10 +1134,10 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
         }
         else if ((output = shader_find_signature_element(os, f->SemanticName, f->SemanticIndex, f->Stream)))
         {
-            if (e->component_idx > 3 || e->component_count > 4 || !e->component_count
-                    || e->component_idx + e->component_count > 4)
+            if (f->StartComponent > 3 || f->ComponentCount > 4 || !f->ComponentCount
+                    || f->StartComponent + f->ComponentCount > 4)
             {
-                WARN("Invalid component range %u-%u.\n", e->component_idx, e->component_count);
+                WARN("Invalid component range %u-%u.\n", f->StartComponent, f->ComponentCount);
                 return E_INVALIDARG;
             }
 
@@ -1168,17 +1168,21 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
 
     for (i = 0; i < entry_count; ++i)
     {
-        const struct wined3d_stream_output_element *e1 = &elements[i];
-        if (e1->register_idx == WINED3D_STREAM_OUTPUT_GAP)
+        const D3D11_SO_DECLARATION_ENTRY *e1 = &entries[i];
+        if (!e1->SemanticName) /* gap */
             continue;
 
         for (j = i + 1; j < entry_count; ++j)
         {
-            const struct wined3d_stream_output_element *e2 = &elements[j];
+            const D3D11_SO_DECLARATION_ENTRY *e2 = &entries[j];
+            if (!e2->SemanticName) /* gap */
+                continue;
 
-            if (e1->register_idx == e2->register_idx
-                    && e1->component_idx < e2->component_idx + e2->component_count
-                    && e1->component_idx + e1->component_count > e2->component_idx)
+            if (e1->Stream == e2->Stream
+                    && !strcasecmp(e1->SemanticName, e2->SemanticName)
+                    && e1->SemanticIndex == e2->SemanticIndex
+                    && e1->StartComponent < e2->StartComponent + e2->ComponentCount
+                    && e1->StartComponent + e1->ComponentCount > e2->StartComponent)
             {
                 WARN("Stream output elements %u and %u overlap.\n", i, j);
                 return E_INVALIDARG;
@@ -1194,14 +1198,14 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
 
         for (j = 0; j < entry_count; ++j)
         {
-            const struct wined3d_stream_output_element *e = &elements[j];
+            const D3D11_SO_DECLARATION_ENTRY *e = &entries[j];
 
-            if (e->stream_idx != i)
+            if (e->Stream != i)
                 continue;
-            current_stride[e->output_slot] += 4 * e->component_count;
-            ++element_count[e->output_slot];
-            if (e->register_idx == WINED3D_STREAM_OUTPUT_GAP)
-                ++gap_count[e->output_slot];
+            current_stride[e->OutputSlot] += 4 * e->ComponentCount;
+            ++element_count[e->OutputSlot];
+            if (!e->SemanticName)
+                ++gap_count[e->OutputSlot];
         }
 
         for (j = 0; j < D3D11_SO_BUFFER_SLOT_COUNT; ++j)
