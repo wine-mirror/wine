@@ -40,7 +40,7 @@ typedef struct dispensermanager
 {
     IDispenserManager IDispenserManager_iface;
     LONG ref;
-
+    HANDLE mta_thread, mta_stop_event;
 } dispensermanager;
 
 typedef struct holder
@@ -264,10 +264,25 @@ static ULONG WINAPI dismanager_Release(IDispenserManager *iface)
 
     if (!ref)
     {
-       heap_free(This);
+        if (This->mta_thread)
+        {
+            SetEvent(This->mta_stop_event);
+            WaitForSingleObject(This->mta_thread, INFINITE);
+            CloseHandle(This->mta_stop_event);
+            CloseHandle(This->mta_thread);
+        }
+        heap_free(This);
     }
 
     return ref;
+}
+
+static DWORD WINAPI mta_thread_proc(void *arg)
+{
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    WaitForSingleObject(arg, INFINITE);
+    CoUninitialize();
+    return 0;
 }
 
 static HRESULT WINAPI dismanager_RegisterDispenser(IDispenserManager *iface, IDispenserDriver *driver,
@@ -282,6 +297,12 @@ static HRESULT WINAPI dismanager_RegisterDispenser(IDispenserManager *iface, IDi
         return E_INVALIDARG;
 
     hr = create_holder(driver, dispenser);
+
+    if (!This->mta_thread)
+    {
+        This->mta_stop_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+        This->mta_thread = CreateThread(NULL, 0, mta_thread_proc, This->mta_stop_event, 0, NULL);
+    }
 
     TRACE("<-- 0x%08x, %p\n", hr, *dispenser);
 
@@ -313,7 +334,7 @@ static HRESULT WINAPI comsvcscf_CreateInstance(IClassFactory *cf,IUnknown* outer
 
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), object);
 
-    dismanager = heap_alloc(sizeof(*dismanager));
+    dismanager = heap_alloc_zero(sizeof(*dismanager));
     if (!dismanager)
     {
         *object = NULL;
