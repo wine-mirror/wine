@@ -516,6 +516,22 @@ static void test_style2(IHTMLStyle2 *style2)
     ok(hres == S_OK, "get_tableLayout failed: %08x\n", hres);
     ok(!strcmp_wa(str, "fixed"), "tableLayout = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    /* borderCollapse */
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle2_get_borderCollapse(style2, &str);
+    ok(hres == S_OK, "get_borderCollapse failed: %08x\n", hres);
+    ok(!str, "borderCollapse = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("separate");
+    hres = IHTMLStyle2_put_borderCollapse(style2, str);
+    ok(hres == S_OK, "put_borderCollapse failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle2_get_borderCollapse(style2, &str);
+    ok(hres == S_OK, "get_borderCollapse failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "separate"), "borderCollapse = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_style3(IHTMLStyle3 *style3, IHTMLCSSStyleDeclaration *css_style)
