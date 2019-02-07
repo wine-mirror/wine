@@ -1906,6 +1906,69 @@ static void test_GetListBoxInfo(void)
     DestroyWindow(parent);
 }
 
+static void test_init_storage( void )
+{
+    static const DWORD styles[] =
+    {
+        LBS_HASSTRINGS,
+        LBS_NODATA | LBS_OWNERDRAWFIXED,
+    };
+    HWND parent, listbox;
+    LONG ret, items_size;
+    int i, j;
+
+    parent = create_parent();
+    for (i = 0; i < ARRAY_SIZE(styles); i++)
+    {
+        listbox = CreateWindowA(WC_LISTBOXA, "TestList", styles[i] | WS_CHILD,
+                                0, 0, 100, 100, parent, (HMENU)ID_LISTBOX, NULL, 0);
+
+        items_size = SendMessageA(listbox, LB_INITSTORAGE, 100, 0);
+        ok(items_size >= 100, "expected at least 100, got %d\n", items_size);
+
+        ret = SendMessageA(listbox, LB_INITSTORAGE, 0, 0);
+        ok(ret == items_size, "expected %d, got %d\n", items_size, ret);
+
+        /* it doesn't grow since the space was already reserved */
+        ret = SendMessageA(listbox, LB_INITSTORAGE, items_size, 0);
+        ok(ret == items_size, "expected %d, got %d\n", items_size, ret);
+
+        /* it doesn't shrink the reserved space */
+        ret = SendMessageA(listbox, LB_INITSTORAGE, 42, 0);
+        ok(ret == items_size, "expected %d, got %d\n", items_size, ret);
+
+        /* now populate almost all of it so it's not reserved anymore */
+        if (styles[i] & LBS_NODATA)
+        {
+            ret = SendMessageA(listbox, LB_SETCOUNT, items_size - 1, 0);
+            ok(ret == 0, "unexpected return value %d\n", ret);
+        }
+        else
+        {
+            for (j = 0; j < items_size - 1; j++)
+            {
+                ret = SendMessageA(listbox, LB_INSERTSTRING, -1, (LPARAM)"");
+                ok(ret == j, "expected %d, got %d\n", j, ret);
+            }
+        }
+
+        /* we still have one more reserved slot, so it doesn't grow yet */
+        ret = SendMessageA(listbox, LB_INITSTORAGE, 1, 0);
+        ok(ret == items_size, "expected %d, got %d\n", items_size, ret);
+
+        /* fill the slot and check again, it should grow this time */
+        ret = SendMessageA(listbox, LB_INSERTSTRING, -1, (LPARAM)"");
+        ok(ret == items_size - 1, "expected %d, got %d\n", items_size - 1, ret);
+        ret = SendMessageA(listbox, LB_INITSTORAGE, 0, 0);
+        ok(ret == items_size, "expected %d, got %d\n", items_size, ret);
+        ret = SendMessageA(listbox, LB_INITSTORAGE, 1, 0);
+        ok(ret > items_size, "expected it to grow past %d, got %d\n", items_size, ret);
+
+        DestroyWindow(listbox);
+    }
+    DestroyWindow(parent);
+}
+
 static void test_missing_lbuttonup(void)
 {
     HWND listbox, parent, capture;
@@ -2425,6 +2488,7 @@ START_TEST(listbox)
     test_listbox_LB_DIR();
     test_listbox_dlgdir();
     test_set_count();
+    test_init_storage();
     test_GetListBoxInfo();
     test_missing_lbuttonup();
     test_extents();
