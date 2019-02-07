@@ -7593,7 +7593,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         if(buflen == 0) buf = NULL;
 
         if (needsTransform && buf)
-		pFT_Outline_Transform(outline, &transMat);
+            pFT_Outline_Transform(outline, &transMatTategaki);
 
         needed = get_bezier_glyph_outline(outline, buflen, NULL);
 
