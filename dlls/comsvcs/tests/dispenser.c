@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "comsvcs.h"
+#include "msxml.h"
 
 #include "wine/test.h"
 
@@ -141,6 +142,17 @@ static const struct IDispenserDriverVtbl driver_vtbl =
 
 static IDispenserDriver DispenserDriver = { &driver_vtbl };
 
+static DWORD WINAPI com_thread(void *arg)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);
+    if (hr == S_OK) IUnknown_Release(unk);
+
+    return hr;
+}
+
 static void create_dispenser(void)
 {
     static const WCHAR pool0[] = {'S','C','.','P','o','o','l',' ','0',' ','0',0};
@@ -149,7 +161,9 @@ static void create_dispenser(void)
     HRESULT hr;
     IDispenserManager *dispenser = NULL;
     IHolder *holder1 = NULL, *holder2 = NULL, *holder3 = NULL;
+    HANDLE thread;
     RESID resid;
+    DWORD ret;
     BSTR str;
 
     hr = CoCreateInstance( &CLSID_DispenserManager, NULL, CLSCTX_ALL, &IID_IDispenserManager, (void**)&dispenser);
@@ -160,8 +174,22 @@ static void create_dispenser(void)
         return;
     }
 
+    thread = CreateThread(NULL, 0, com_thread, NULL, 0, NULL);
+    ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
+    GetExitCodeThread(thread, &ret);
+    ok(ret == CO_E_NOTINITIALIZED, "got unexpected hr %#x\n", ret);
+
     hr = IDispenserManager_RegisterDispenser(dispenser, &DispenserDriver, pool0, &holder1);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* The above call creates an MTA thread, but we need to wait for it to
+     * actually initialize. */
+    Sleep(200);
+    thread = CreateThread(NULL, 0, com_thread, NULL, 0, NULL);
+    ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
+    GetExitCodeThread(thread, &ret);
+todo_wine
+    ok(ret == S_OK, "got unexpected hr %#x\n", ret);
 
     hr = IDispenserManager_RegisterDispenser(dispenser, &DispenserDriver, pool0, &holder2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
