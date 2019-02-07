@@ -188,7 +188,6 @@ static void create_dispenser(void)
     thread = CreateThread(NULL, 0, com_thread, NULL, 0, NULL);
     ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
     GetExitCodeThread(thread, &ret);
-todo_wine
     ok(ret == S_OK, "got unexpected hr %#x\n", ret);
 
     hr = IDispenserManager_RegisterDispenser(dispenser, &DispenserDriver, pool0, &holder2);
