@@ -1248,6 +1248,62 @@ static void test_InitPropVariantFromCLSID(void)
     PropVariantClear(&propvar);
 }
 
+static void test_PropVariantToDouble(void)
+{
+    PROPVARIANT propvar;
+    double value;
+    HRESULT hr;
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_R8;
+    propvar.u.dblVal = 15.0;
+    hr = PropVariantToDouble(&propvar, &value);
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08x.\n", hr);
+    ok(value == 15.0, "Unexpected value: %f.\n", value);
+
+    PropVariantClear(&propvar);
+    propvar.vt = VT_I4;
+    propvar.u.lVal = 123;
+    hr = PropVariantToDouble(&propvar, &value);
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08x.\n", hr);
+    ok(value == 123.0, "Unexpected value: %f.\n", value);
+
+    PropVariantClear(&propvar);
+    propvar.vt = VT_I4;
+    propvar.u.lVal = -256;
+    hr = PropVariantToDouble(&propvar, &value);
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08x.\n", hr);
+    ok(value == -256, "Unexpected value: %f\n", value);
+
+    PropVariantClear(&propvar);
+    propvar.vt = VT_I8;
+    propvar.u.lVal = 65536;
+    hr = PropVariantToDouble(&propvar, &value);
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08x.\n", hr);
+    ok(value == 65536.0, "Unexpected value: %f.\n", value);
+
+    PropVariantClear(&propvar);
+    propvar.vt = VT_I8;
+    propvar.u.lVal = -321;
+    hr = PropVariantToDouble(&propvar, &value);
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08x.\n", hr);
+    ok(value == 4294966975.0, "Unexpected value: %f.\n", value);
+
+    PropVariantClear(&propvar);
+    propvar.vt = VT_UI4;
+    propvar.u.ulVal = 6;
+    hr = PropVariantToDouble(&propvar, &value);
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08x.\n", hr);
+    ok(value == 6.0, "Unexpected value: %f.\n", value);
+
+    PropVariantClear(&propvar);
+    propvar.vt = VT_UI8;
+    propvar.u.uhVal.QuadPart = 8;
+    hr = PropVariantToDouble(&propvar, &value);
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08x.\n", hr);
+    ok(value == 8.0, "Unexpected value: %f.\n", value);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -1263,4 +1319,5 @@ START_TEST(propsys)
     test_PropVariantToBoolean();
     test_PropVariantToStringWithDefault();
     test_InitPropVariantFromCLSID();
+    test_PropVariantToDouble();
 }
