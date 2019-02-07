@@ -509,3 +509,10 @@ HRESULT WINAPI PSPropertyKeyFromString(LPCWSTR pszString, PROPERTYKEY *pkey)
 
     return S_OK;
 }
+
+HRESULT WINAPI PSCreateMemoryPropertyStore(REFIID riid, void **ppv)
+{
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+
+    return PropertyStore_CreateInstance(NULL, riid, ppv);
+}

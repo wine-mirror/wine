@@ -35,6 +35,15 @@
 
 DEFINE_GUID(PKEY_WineTest, 0x7b317433, 0xdfa3, 0x4c44, 0xad, 0x3e, 0x2f, 0x80, 0x4b, 0x90, 0xdb, 0xf4);
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown *)obj, ref, __LINE__)
+static void _expect_ref(IUnknown *obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 static void test_inmemorystore(void)
 {
     IPropertyStoreCache *propcache;
@@ -249,12 +258,57 @@ static void test_persistserialized(void)
     IPersistSerializedPropStorage_Release(serialized);
 }
 
+static void test_PSCreateMemoryPropertyStore(void)
+{
+    IPropertyStore *propstore, *propstore1;
+    IPersistSerializedPropStorage *serialized;
+    IPropertyStoreCache *propstorecache;
+    HRESULT hr;
+
+    /* PSCreateMemoryPropertyStore(&IID_IPropertyStore, NULL); crashes */
+
+    hr = PSCreateMemoryPropertyStore(&IID_IPropertyStore, (void **)&propstore);
+    ok(hr == S_OK, "PSCreateMemoryPropertyStore failed: 0x%08x.\n", hr);
+    ok(propstore != NULL, "got %p.\n", propstore);
+    EXPECT_REF(propstore, 1);
+
+    hr = PSCreateMemoryPropertyStore(&IID_IPersistSerializedPropStorage, (void **)&serialized);
+    todo_wine ok(hr == S_OK, "PSCreateMemoryPropertyStore failed: 0x%08x.\n", hr);
+    todo_wine ok(serialized != NULL, "got %p.\n", serialized);
+    EXPECT_REF(propstore, 1);
+    if(serialized)
+    {
+        EXPECT_REF(serialized, 1);
+        IPersistSerializedPropStorage_Release(serialized);
+    }
+
+    hr = PSCreateMemoryPropertyStore(&IID_IPropertyStoreCache, (void **)&propstorecache);
+    ok(hr == S_OK, "PSCreateMemoryPropertyStore failed: 0x%08x.\n", hr);
+    ok(propstorecache != NULL, "got %p.\n", propstore);
+    ok(propstorecache != (IPropertyStoreCache *)propstore, "pointer are equal: %p, %p.\n", propstorecache, propstore);
+    EXPECT_REF(propstore, 1);
+    EXPECT_REF(propstorecache, 1);
+
+    hr = PSCreateMemoryPropertyStore(&IID_IPropertyStore, (void **)&propstore1);
+    ok(hr == S_OK, "PSCreateMemoryPropertyStore failed: 0x%08x.\n", hr);
+    ok(propstore1 != NULL, "got %p.\n", propstore);
+    ok(propstore1 != propstore, "pointer are equal: %p, %p.\n", propstore1, propstore);
+    EXPECT_REF(propstore, 1);
+    EXPECT_REF(propstore1, 1);
+    EXPECT_REF(propstorecache, 1);
+
+    IPropertyStore_Release(propstore1);
+    IPropertyStore_Release(propstore);
+    IPropertyStoreCache_Release(propstorecache);
+}
+
 START_TEST(propstore)
 {
     CoInitialize(NULL);
 
     test_inmemorystore();
     test_persistserialized();
+    test_PSCreateMemoryPropertyStore();
 
     CoUninitialize();
 }

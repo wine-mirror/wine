@@ -65,7 +65,7 @@
 @ stub PSCoerceToCanonicalValue
 @ stub PSCreateAdapterFromPropertyStore
 @ stub PSCreateDelayedMultiplexPropertyStore
-@ stub PSCreateMemoryPropertyStore
+@ stdcall PSCreateMemoryPropertyStore(ptr ptr)
 @ stub PSCreateMultiplexPropertyStore
 @ stub PSCreatePropertyChangeArray
 @ stub PSCreatePropertyStoreFromObject
