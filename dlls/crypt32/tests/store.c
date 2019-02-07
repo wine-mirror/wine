@@ -3286,6 +3286,7 @@ static void test_PFXImportCertStore(void)
     CRYPT_DATA_BLOB pfx;
     const CERT_CONTEXT *cert;
     CERT_KEY_CONTEXT key;
+    CRYPT_KEY_PROV_INFO keyprov;
     CERT_INFO *info;
     DWORD count, size;
     BOOL ret;
@@ -3322,6 +3323,11 @@ static void test_PFXImportCertStore(void)
     ok( key.cbSize == sizeof(key), "got %u\n", key.cbSize );
     ok( key.hCryptProv, "hCryptProv not set\n" );
     ok( key.dwKeySpec == AT_KEYEXCHANGE, "got %u\n", key.dwKeySpec );
+
+    size = sizeof(keyprov);
+    SetLastError( 0xdeadbeef );
+    ret = CertGetCertificateContextProperty( cert, CERT_KEY_PROV_INFO_PROP_ID, &keyprov, &size );
+    ok( !ret && GetLastError() == CRYPT_E_NOT_FOUND, "got %08x\n", GetLastError() );
 
     CertCloseStore( store, 0 );
 }
