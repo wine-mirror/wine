@@ -216,7 +216,7 @@ enum loadorder
     LO_DEFAULT          /* nothing specified, use default strategy */
 };
 
-extern enum loadorder get_load_order( const WCHAR *app_name, const WCHAR *path ) DECLSPEC_HIDDEN;
+extern enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name ) DECLSPEC_HIDDEN;
 
 struct debug_info
 {

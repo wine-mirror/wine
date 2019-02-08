@@ -2546,7 +2546,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
 
     filename = nt_name.Buffer + 4;  /* \??\ prefix */
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
-    loadorder = get_load_order( main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, filename );
+    loadorder = get_load_order( main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, &nt_name );
 
     if (handle && is_fake_dll( handle ))
     {
