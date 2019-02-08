@@ -6988,6 +6988,302 @@ static void compute_metrics( GdiFont *incoming_font, GdiFont *font,
            gm->gmCellIncX, gm->gmCellIncY, abc->abcA, abc->abcB, abc->abcC );
 }
 
+
+static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+
+static DWORD get_mono_glyph_bitmap( FT_GlyphSlot glyph, FT_BBox bbox,
+                                    BOOL fake_bold, BOOL needs_transform, FT_Matrix matrices[3],
+                                    DWORD buflen, BYTE *buf )
+{
+    DWORD width  = (bbox.xMax - bbox.xMin ) >> 6;
+    DWORD height = (bbox.yMax - bbox.yMin ) >> 6;
+    DWORD pitch  = ((width + 31) >> 5) << 2;
+    DWORD needed = pitch * height;
+    FT_Bitmap ft_bitmap;
+    BYTE *src, *dst;
+    INT w, h, x;
+
+    if (!buf || !buflen) return needed;
+    if (!needed) return GDI_ERROR;  /* empty glyph */
+    if (needed > buflen) return GDI_ERROR;
+
+    switch (glyph->format)
+    {
+    case FT_GLYPH_FORMAT_BITMAP:
+        src = glyph->bitmap.buffer;
+        dst = buf;
+        w = min( pitch, (glyph->bitmap.width + 7) >> 3 );
+        h = min( height, glyph->bitmap.rows );
+        while (h--)
+        {
+            if (!fake_bold)
+                memcpy( dst, src, w );
+            else
+            {
+                dst[0] = 0;
+                for (x = 0; x < w; x++)
+                {
+                    dst[x] = (dst[x] & 0x80) | (src[x] >> 1) | src[x];
+                    if (x + 1 < pitch)
+                        dst[x + 1] = (src[x] & 0x01) << 7;
+                }
+            }
+            src += glyph->bitmap.pitch;
+            dst += pitch;
+        }
+        break;
+
+    case FT_GLYPH_FORMAT_OUTLINE:
+        ft_bitmap.width = width;
+        ft_bitmap.rows = height;
+        ft_bitmap.pitch = pitch;
+        ft_bitmap.pixel_mode = FT_PIXEL_MODE_MONO;
+        ft_bitmap.buffer = buf;
+
+        if (needs_transform)
+            pFT_Outline_Transform( &glyph->outline, &matrices[matrix_vert] );
+        pFT_Outline_Translate( &glyph->outline, -bbox.xMin, -bbox.yMin );
+
+        /* Note: FreeType will only set 'black' bits for us. */
+        memset( buf, 0, buflen );
+        pFT_Outline_Get_Bitmap( library, &glyph->outline, &ft_bitmap );
+        break;
+
+    default:
+        FIXME( "loaded glyph format %x\n", glyph->format );
+        return GDI_ERROR;
+    }
+
+    return needed;
+}
+
+static DWORD get_antialias_glyph_bitmap( FT_GlyphSlot glyph, FT_BBox bbox, UINT format,
+                                         BOOL fake_bold, BOOL needs_transform, FT_Matrix matrices[3],
+                                         DWORD buflen, BYTE *buf )
+{
+    DWORD width  = (bbox.xMax - bbox.xMin ) >> 6;
+    DWORD height = (bbox.yMax - bbox.yMin ) >> 6;
+    DWORD pitch  = (width + 3) / 4 * 4;
+    DWORD needed = pitch * height;
+    FT_Bitmap ft_bitmap;
+    INT w, h, x, max_level;
+    BYTE *src, *dst;
+
+    if (!buf || !buflen) return needed;
+    if (!needed) return GDI_ERROR;  /* empty glyph */
+    if (needed > buflen) return GDI_ERROR;
+
+    max_level = get_max_level( format );
+
+    switch (glyph->format)
+    {
+    case FT_GLYPH_FORMAT_BITMAP:
+        src = glyph->bitmap.buffer;
+        dst = buf;
+        memset( buf, 0, buflen );
+
+        w = min( pitch, glyph->bitmap.width );
+        h = min( height, glyph->bitmap.rows );
+        while (h--)
+        {
+            for (x = 0; x < w; x++)
+            {
+                if (src[x / 8] & masks[x % 8])
+                {
+                    dst[x] = max_level;
+                    if (fake_bold && x + 1 < pitch) dst[x + 1] = max_level;
+                }
+            }
+            src += glyph->bitmap.pitch;
+            dst += pitch;
+        }
+        break;
+
+    case FT_GLYPH_FORMAT_OUTLINE:
+        ft_bitmap.width = width;
+        ft_bitmap.rows = height;
+        ft_bitmap.pitch = pitch;
+        ft_bitmap.pixel_mode = FT_PIXEL_MODE_GRAY;
+        ft_bitmap.buffer = buf;
+
+        if (needs_transform)
+            pFT_Outline_Transform( &glyph->outline, &matrices[matrix_vert] );
+        pFT_Outline_Translate( &glyph->outline, -bbox.xMin, -bbox.yMin );
+
+        memset( buf, 0, buflen );
+        pFT_Outline_Get_Bitmap( library, &glyph->outline, &ft_bitmap );
+
+        if (max_level != 255)
+        {
+            INT row, col;
+            BYTE *ptr, *start;
+
+            for (row = 0, start = buf; row < height; row++)
+            {
+                for (col = 0, ptr = start; col < width; col++, ptr++)
+                    *ptr = (((int)*ptr) * (max_level + 1)) / 256;
+                start += pitch;
+            }
+        }
+        break;
+
+    default:
+        FIXME("loaded glyph format %x\n", glyph->format);
+        return GDI_ERROR;
+    }
+
+    return needed;
+}
+
+static DWORD get_subpixel_glyph_bitmap( FT_GlyphSlot glyph, FT_BBox bbox, UINT format,
+                                        BOOL fake_bold, BOOL needs_transform, FT_Matrix matrices[3],
+                                        GLYPHMETRICS *gm, DWORD buflen, BYTE *buf )
+{
+    DWORD width  = (bbox.xMax - bbox.xMin ) >> 6;
+    DWORD height = (bbox.yMax - bbox.yMin ) >> 6;
+    DWORD pitch, needed = 0;
+    BYTE *src, *dst;
+    INT  w, h, x;
+
+    switch (glyph->format)
+    {
+    case FT_GLYPH_FORMAT_BITMAP:
+        pitch  = width * 4;
+        needed = pitch * height;
+
+        if (!buf || !buflen) break;
+        if (!needed) return GDI_ERROR;  /* empty glyph */
+        if (needed > buflen) return GDI_ERROR;
+
+        src = glyph->bitmap.buffer;
+        dst = buf;
+        memset( buf, 0, buflen );
+
+        w = min( width, glyph->bitmap.width );
+        h = min( height, glyph->bitmap.rows );
+        while (h--)
+        {
+            for (x = 0; x < w; x++)
+            {
+                if ( src[x / 8] & masks[x % 8] )
+                {
+                    ((unsigned int *)dst)[x] = ~0u;
+                    if (fake_bold && x + 1 < width) ((unsigned int *)dst)[x + 1] = ~0u;
+                }
+            }
+            src += glyph->bitmap.pitch;
+            dst += pitch;
+        }
+        break;
+
+    case FT_GLYPH_FORMAT_OUTLINE:
+      {
+        INT src_pitch, src_width, src_height, x_shift, y_shift;
+        INT sub_stride, hmul, vmul;
+        const INT *sub_order;
+        const INT rgb_order[3] = { 0, 1, 2 };
+        const INT bgr_order[3] = { 2, 1, 0 };
+        FT_Render_Mode render_mode =
+            (format == WINE_GGO_HRGB_BITMAP ||
+             format == WINE_GGO_HBGR_BITMAP) ? FT_RENDER_MODE_LCD : FT_RENDER_MODE_LCD_V;
+
+        if (!width || !height) /* empty glyph */
+        {
+            if (!buf || !buflen) break;
+            return GDI_ERROR;
+        }
+
+        if ( render_mode == FT_RENDER_MODE_LCD)
+        {
+            gm->gmBlackBoxX += 2;
+            gm->gmptGlyphOrigin.x -= 1;
+            bbox.xMin -= (1 << 6);
+        }
+        else
+        {
+            gm->gmBlackBoxY += 2;
+            gm->gmptGlyphOrigin.y += 1;
+            bbox.yMax += (1 << 6);
+        }
+
+        width  = gm->gmBlackBoxX;
+        height = gm->gmBlackBoxY;
+        pitch  = width * 4;
+        needed = pitch * height;
+
+        if (!buf || !buflen) return needed;
+        if (needed > buflen) return GDI_ERROR;
+
+        if (needs_transform)
+            pFT_Outline_Transform( &glyph->outline, &matrices[matrix_vert] );
+
+#ifdef FT_LCD_FILTER_H
+        if (pFT_Library_SetLcdFilter)
+            pFT_Library_SetLcdFilter( library, FT_LCD_FILTER_DEFAULT );
+#endif
+        pFT_Render_Glyph( glyph, render_mode );
+
+        src_pitch = glyph->bitmap.pitch;
+        src_width = glyph->bitmap.width;
+        src_height = glyph->bitmap.rows;
+        src = glyph->bitmap.buffer;
+        dst = buf;
+        memset( buf, 0, buflen );
+
+        sub_order  = (format == WINE_GGO_HRGB_BITMAP ||
+                      format == WINE_GGO_VRGB_BITMAP) ? rgb_order : bgr_order;
+        sub_stride = render_mode == FT_RENDER_MODE_LCD ? 1 : src_pitch;
+        hmul       = render_mode == FT_RENDER_MODE_LCD ? 3 : 1;
+        vmul       = render_mode == FT_RENDER_MODE_LCD ? 1 : 3;
+
+        x_shift = glyph->bitmap_left - (bbox.xMin >> 6);
+        if ( x_shift < 0 )
+        {
+            src += hmul * -x_shift;
+            src_width -= hmul * -x_shift;
+        }
+        else if ( x_shift > 0 )
+        {
+            dst += x_shift * sizeof(unsigned int);
+            width -= x_shift;
+        }
+
+        y_shift = (bbox.yMax >> 6) - glyph->bitmap_top;
+        if ( y_shift < 0 )
+        {
+            src += src_pitch * vmul * -y_shift;
+            src_height -= vmul * -y_shift;
+        }
+        else if ( y_shift > 0 )
+        {
+            dst += y_shift * pitch;
+            height -= y_shift;
+        }
+
+        w = min( width, src_width / hmul );
+        h = min( height, src_height / vmul );
+        while (h--)
+        {
+            for (x = 0; x < w; x++)
+            {
+                ((unsigned int *)dst)[x] =
+                    ((unsigned int)src[hmul * x + sub_stride * sub_order[0]] << 16) |
+                    ((unsigned int)src[hmul * x + sub_stride * sub_order[1]] << 8) |
+                    ((unsigned int)src[hmul * x + sub_stride * sub_order[2]]);
+            }
+            src += src_pitch * vmul;
+            dst += pitch;
+        }
+        break;
+      }
+    default:
+        FIXME ( "loaded glyph format %x\n", glyph->format );
+        return GDI_ERROR;
+    }
+
+    return needed;
+}
+
 static unsigned int get_native_glyph_outline(FT_Outline *outline, unsigned int buflen, char *buf)
 {
     TTPOLYGONHEADER *pph;
@@ -7216,8 +7512,6 @@ static FT_Int get_load_flags( UINT format )
     return load_flags;
 }
 
-static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
-
 static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                                LPGLYPHMETRICS lpgm, ABC *abc, DWORD buflen, LPVOID buf,
                                const MAT2* lpmat)
@@ -7227,8 +7521,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     GdiFont *font = incoming_font;
     FT_Glyph_Metrics metrics;
     FT_UInt glyph_index;
-    DWORD width, height, pitch, needed = 0;
-    FT_Bitmap ft_bitmap;
+    DWORD needed = 0;
     FT_Error err;
     FT_BBox bbox;
     FT_Int load_flags = get_load_flags(format);
@@ -7331,305 +7624,28 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	return GDI_ERROR;
     }
 
-    width  = (bbox.xMax - bbox.xMin ) >> 6;
-    height = (bbox.yMax - bbox.yMin ) >> 6;
-
-    switch(format) {
+    switch (format)
+    {
     case GGO_BITMAP:
-	pitch = ((width + 31) >> 5) << 2;
-        needed = pitch * height;
-
-	if(!buf || !buflen) break;
-        if (!needed) return GDI_ERROR;  /* empty glyph */
-        if (needed > buflen)
-            return GDI_ERROR;
-
-	switch(ft_face->glyph->format) {
-	case ft_glyph_format_bitmap:
-	  {
-	    BYTE *src = ft_face->glyph->bitmap.buffer, *dst = buf;
-	    INT w = min( pitch, (ft_face->glyph->bitmap.width + 7) >> 3 );
-	    INT h = min( height, ft_face->glyph->bitmap.rows );
-	    while(h--) {
-		if (!font->fake_bold)
-		    memcpy(dst, src, w);
-		else {
-		    INT x;
-		    dst[0] = 0;
-		    for (x = 0; x < w; x++) {
-			dst[x  ] = (dst[x] & 0x80) | (src[x] >> 1) | src[x];
-			if (x+1 < pitch)
-			    dst[x+1] = (src[x] & 0x01) << 7;
-		    }
-		}
-		src += ft_face->glyph->bitmap.pitch;
-		dst += pitch;
-	    }
-	    break;
-	  }
-
-	case ft_glyph_format_outline:
-	    ft_bitmap.width = width;
-	    ft_bitmap.rows = height;
-	    ft_bitmap.pitch = pitch;
-	    ft_bitmap.pixel_mode = ft_pixel_mode_mono;
-	    ft_bitmap.buffer = buf;
-
-	    if(needsTransform)
-		pFT_Outline_Transform( &ft_face->glyph->outline, &matrices[matrix_vert] );
-
-	    pFT_Outline_Translate(&ft_face->glyph->outline, -bbox.xMin, -bbox.yMin );
-
-	    /* Note: FreeType will only set 'black' bits for us. */
-	    memset(buf, 0, needed);
-	    pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
-	    break;
-
-	default:
-	    FIXME("loaded glyph format %x\n", ft_face->glyph->format);
-	    return GDI_ERROR;
-	}
-	break;
+        needed = get_mono_glyph_bitmap( ft_face->glyph, bbox, font->fake_bold,
+                                        needsTransform, matrices, buflen, buf );
+        break;
 
     case GGO_GRAY2_BITMAP:
     case GGO_GRAY4_BITMAP:
     case GGO_GRAY8_BITMAP:
     case WINE_GGO_GRAY16_BITMAP:
-      {
-	unsigned int max_level, row, col;
-	BYTE *start, *ptr;
-
-	pitch = (width + 3) / 4 * 4;
-	needed = pitch * height;
-
-	if(!buf || !buflen) break;
-        if (!needed) return GDI_ERROR;  /* empty glyph */
-        if (needed > buflen)
-            return GDI_ERROR;
-
-        max_level = get_max_level( format );
-
-	switch(ft_face->glyph->format) {
-	case ft_glyph_format_bitmap:
-	  {
-            BYTE *src = ft_face->glyph->bitmap.buffer, *dst = buf;
-            INT h = min( height, ft_face->glyph->bitmap.rows );
-            INT x;
-            memset( buf, 0, needed );
-            while(h--) {
-                for(x = 0; x < pitch && x < ft_face->glyph->bitmap.width; x++) {
-                    if (src[x / 8] & masks[x % 8]) {
-                        dst[x] = max_level;
-                        if (font->fake_bold && x+1 < pitch) dst[x+1] = max_level;
-                    }
-                }
-                src += ft_face->glyph->bitmap.pitch;
-                dst += pitch;
-            }
-            break;
-	  }
-        case ft_glyph_format_outline:
-          {
-            ft_bitmap.width = width;
-            ft_bitmap.rows = height;
-            ft_bitmap.pitch = pitch;
-            ft_bitmap.pixel_mode = ft_pixel_mode_grays;
-            ft_bitmap.buffer = buf;
-
-            if(needsTransform)
-                pFT_Outline_Transform( &ft_face->glyph->outline, &matrices[matrix_vert] );
-
-            pFT_Outline_Translate(&ft_face->glyph->outline, -bbox.xMin, -bbox.yMin );
-
-            memset(ft_bitmap.buffer, 0, buflen);
-
-            pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
-
-            if (max_level != 255)
-            {
-                for (row = 0, start = buf; row < height; row++)
-                {
-                    for (col = 0, ptr = start; col < width; col++, ptr++)
-                        *ptr = (((int)*ptr) * (max_level + 1)) / 256;
-                    start += pitch;
-                }
-            }
-            break;
-          }
-
-        default:
-            FIXME("loaded glyph format %x\n", ft_face->glyph->format);
-            return GDI_ERROR;
-        }
+        needed = get_antialias_glyph_bitmap( ft_face->glyph, bbox, format, font->fake_bold,
+                                             needsTransform, matrices, buflen, buf );
 	break;
-      }
 
     case WINE_GGO_HRGB_BITMAP:
     case WINE_GGO_HBGR_BITMAP:
     case WINE_GGO_VRGB_BITMAP:
     case WINE_GGO_VBGR_BITMAP:
-      {
-        switch (ft_face->glyph->format)
-        {
-        case FT_GLYPH_FORMAT_BITMAP:
-          {
-            BYTE *src, *dst;
-            INT src_pitch, x;
-
-            pitch  = width * 4;
-            needed = pitch * height;
-
-            if (!buf || !buflen) break;
-            if (!needed) return GDI_ERROR;  /* empty glyph */
-            if (needed > buflen)
-                return GDI_ERROR;
-
-            memset(buf, 0, buflen);
-            dst = buf;
-            src = ft_face->glyph->bitmap.buffer;
-            src_pitch = ft_face->glyph->bitmap.pitch;
-
-            height = min( height, ft_face->glyph->bitmap.rows );
-            while ( height-- )
-            {
-                for (x = 0; x < width && x < ft_face->glyph->bitmap.width; x++)
-                {
-                    if ( src[x / 8] & masks[x % 8] )
-                    {
-                        ((unsigned int *)dst)[x] = ~0u;
-                        if (font->fake_bold && x+1 < width) ((unsigned int *)dst)[x+1] = ~0u;
-                    }
-                }
-                src += src_pitch;
-                dst += pitch;
-            }
-
-            break;
-          }
-
-        case FT_GLYPH_FORMAT_OUTLINE:
-          {
-            unsigned int *dst;
-            BYTE *src;
-            INT x, src_pitch, src_width, src_height, rgb_interval, hmul, vmul;
-            INT x_shift, y_shift;
-            const INT *sub_order;
-            const INT rgb_order[3] = { 0, 1, 2 };
-            const INT bgr_order[3] = { 2, 1, 0 };
-            FT_Render_Mode render_mode =
-                (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_HBGR_BITMAP)?
-                    FT_RENDER_MODE_LCD: FT_RENDER_MODE_LCD_V;
-
-            if (!width || !height)
-            {
-                if (!buf || !buflen) break;
-                return GDI_ERROR;
-            }
-
-            if ( render_mode == FT_RENDER_MODE_LCD)
-            {
-                gm.gmBlackBoxX += 2;
-                gm.gmptGlyphOrigin.x -= 1;
-                bbox.xMin -= (1 << 6);
-            }
-            else
-            {
-                gm.gmBlackBoxY += 2;
-                gm.gmptGlyphOrigin.y += 1;
-                bbox.yMax += (1 << 6);
-            }
-
-            width  = gm.gmBlackBoxX;
-            height = gm.gmBlackBoxY;
-            pitch  = width * 4;
-            needed = pitch * height;
-
-            if (!buf || !buflen) break;
-            if (needed > buflen)
-                return GDI_ERROR;
-
-            memset(buf, 0, buflen);
-            dst = buf;
-
-            if ( needsTransform )
-                pFT_Outline_Transform( &ft_face->glyph->outline, &matrices[matrix_vert] );
-
-#ifdef FT_LCD_FILTER_H
-            if ( pFT_Library_SetLcdFilter )
-                pFT_Library_SetLcdFilter( library, FT_LCD_FILTER_DEFAULT );
-#endif
-            pFT_Render_Glyph (ft_face->glyph, render_mode);
-
-            src = ft_face->glyph->bitmap.buffer;
-            src_pitch = ft_face->glyph->bitmap.pitch;
-            src_width = ft_face->glyph->bitmap.width;
-            src_height = ft_face->glyph->bitmap.rows;
-
-            if ( render_mode == FT_RENDER_MODE_LCD)
-            {
-                rgb_interval = 1;
-                hmul = 3;
-                vmul = 1;
-            }
-            else
-            {
-                rgb_interval = src_pitch;
-                hmul = 1;
-                vmul = 3;
-            }
-
-            x_shift = ft_face->glyph->bitmap_left - (bbox.xMin >> 6);
-            if ( x_shift < 0 )
-            {
-                src += hmul * -x_shift;
-                src_width -= hmul * -x_shift;
-            }
-            else if ( x_shift > 0 )
-            {
-                dst += x_shift;
-                width -= x_shift;
-            }
-
-            y_shift = (bbox.yMax >> 6) - ft_face->glyph->bitmap_top;
-            if ( y_shift < 0 )
-            {
-                src += src_pitch * vmul * -y_shift;
-                src_height -= vmul * -y_shift;
-            }
-            else if ( y_shift > 0 )
-            {
-                dst += y_shift * ( pitch / sizeof(*dst) );
-                height -= y_shift;
-            }
-
-            width = min( width, src_width / hmul );
-            height = min( height, src_height / vmul );
-
-            sub_order = (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_VRGB_BITMAP)?
-                        rgb_order : bgr_order;
-
-            while ( height-- )
-            {
-                for ( x = 0; x < width; x++ )
-                {
-                    dst[x] = ((unsigned int)src[hmul * x + rgb_interval * sub_order[0]] << 16) |
-                             ((unsigned int)src[hmul * x + rgb_interval * sub_order[1]] << 8) |
-                             ((unsigned int)src[hmul * x + rgb_interval * sub_order[2]]);
-                }
-                src += src_pitch * vmul;
-                dst += pitch / sizeof(*dst);
-            }
-
-            break;
-          }
-
-        default:
-            FIXME ("loaded glyph format %x\n", ft_face->glyph->format);
-            return GDI_ERROR;
-        }
-
+        needed = get_subpixel_glyph_bitmap( ft_face->glyph, bbox, format, font->fake_bold,
+                                            needsTransform, matrices, &gm, buflen, buf );
         break;
-      }
 
     case GGO_NATIVE:
       {
@@ -7673,7 +7689,9 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         FIXME("Unsupported format %d\n", format);
 	return GDI_ERROR;
     }
-    *lpgm = gm;
+    if (needed != GDI_ERROR)
+        *lpgm = gm;
+
     return needed;
 }
 
