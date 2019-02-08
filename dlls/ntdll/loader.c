@@ -432,18 +432,23 @@ static WINE_MODREF *find_basename_module( LPCWSTR name )
  * Find a module from its full path name.
  * The loader_section must be locked while calling this function
  */
-static WINE_MODREF *find_fullname_module( LPCWSTR name )
+static WINE_MODREF *find_fullname_module( const UNICODE_STRING *nt_name )
 {
     PLIST_ENTRY mark, entry;
+    UNICODE_STRING name = *nt_name;
 
-    if (cached_modref && !strcmpiW( name, cached_modref->ldr.FullDllName.Buffer ))
+    if (name.Length <= 4 * sizeof(WCHAR)) return NULL;
+    name.Length -= 4 * sizeof(WCHAR);  /* for \??\ prefix */
+    name.Buffer += 4;
+
+    if (cached_modref && RtlEqualUnicodeString( &name, &cached_modref->ldr.FullDllName, TRUE ))
         return cached_modref;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
         LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
-        if (!strcmpiW( name, mod->FullDllName.Buffer ))
+        if (RtlEqualUnicodeString( &name, &mod->FullDllName, TRUE ))
         {
             cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
             return cached_modref;
@@ -2351,6 +2356,8 @@ static HANDLE open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, struct 
     HANDLE handle;
     int fd, needs_close;
 
+    if ((*pwm = find_fullname_module( nt_name ))) return 0;
+
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.Attributes = OBJ_CASE_INSENSITIVE;
@@ -2434,8 +2441,6 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
         if (len)
         {
             if (len >= *size) goto overflow;
-            if ((*pwm = find_fullname_module( filename ))) goto found;
-
             if (!RtlDosPathNameToNtPathName_U( filename, &nt_name, NULL, NULL ))
             {
                 RtlFreeHeap( GetProcessHeap(), 0, dllname );
@@ -2462,8 +2467,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
     len = nt_name.Length - 4*sizeof(WCHAR);  /* for \??\ prefix */
     if (len >= *size) goto overflow;
     memcpy( filename, nt_name.Buffer + 4, len + sizeof(WCHAR) );
-    if (!(*pwm = find_fullname_module( filename )))
-        *handle = open_dll_file( &nt_name, pwm, st );
+    *handle = open_dll_file( &nt_name, pwm, st );
 
 found:
     RtlFreeUnicodeString( &nt_name );
