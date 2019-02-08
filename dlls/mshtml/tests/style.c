@@ -801,6 +801,21 @@ static void test_style6(IHTMLStyle6 *style)
     ok(hres == S_OK, "get_boxSizing failed: %08x\n", hres);
     ok(!strcmp_wa(str, "border-box"), "boxSizing = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    hres = IHTMLStyle6_get_borderSpacing(style, &str);
+    ok(hres == S_OK, "get_borderSpacing failed: %08x\n", hres);
+    ok(!str, "borderSpacing = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("10px");
+    hres = IHTMLStyle6_put_borderSpacing(style, str);
+    ok(hres == S_OK, "put_borderSpacing failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle6_get_borderSpacing(style, &str);
+    ok(hres == S_OK, "get_borderSpacing failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "10px"), "borderSpacing = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
