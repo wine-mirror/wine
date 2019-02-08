@@ -917,6 +917,7 @@
 @ stub PsProcessType
 @ stub PsReferenceImpersonationToken
 @ stub PsReferencePrimaryToken
+@ stdcall PsReferenceProcessFilePointer(ptr ptr)
 @ stdcall PsReleaseProcessExitSynchronization(ptr)
 @ stdcall PsRemoveCreateThreadNotifyRoutine(ptr)
 @ stdcall PsRemoveLoadImageNotifyRoutine(ptr)

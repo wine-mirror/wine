@@ -2789,6 +2789,16 @@ NTSTATUS WINAPI PsRemoveCreateThreadNotifyRoutine( PCREATE_THREAD_NOTIFY_ROUTINE
 
 
 /***********************************************************************
+ *           PsReferenceProcessFilePointer  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsReferenceProcessFilePointer(PEPROCESS process, FILE_OBJECT **file)
+{
+    FIXME("%p %p\n", process, file);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           PsTerminateSystemThread   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI PsTerminateSystemThread(NTSTATUS status)
