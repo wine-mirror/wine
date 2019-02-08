@@ -860,7 +860,7 @@ todo_wine
         buf->BufferType = SECBUFFER_TOKEN;
 
         status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
-            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_USE_SUPPLIED_CREDS,
+            ISC_REQ_USE_SUPPLIED_CREDS,
             0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
         buffers[1].pBuffers[0].cbBuffer = buf_size;
     }
@@ -871,7 +871,8 @@ todo_wine
         skip("Handshake failed\n");
         return;
     }
-    ok(attrs & (ISC_RET_CONFIDENTIALITY|ISC_RET_STREAM|ISC_RET_USED_SUPPLIED_CREDS), "got %08x\n", attrs);
+    ok(attrs == (ISC_RET_REPLAY_DETECT|ISC_RET_SEQUENCE_DETECT|ISC_RET_CONFIDENTIALITY|ISC_RET_STREAM|ISC_RET_USED_SUPPLIED_CREDS),
+       "got %08x\n", attrs);
 
     status = QueryCredentialsAttributesA(&cred_handle, SECPKG_CRED_ATTR_NAMES, &names);
     ok(status == SEC_E_NO_CREDENTIALS || status == SEC_E_UNSUPPORTED_FUNCTION /* before Vista */, "expected SEC_E_NO_CREDENTIALS, got %08x\n", status);
