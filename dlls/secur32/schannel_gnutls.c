@@ -51,6 +51,13 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 /* Not present in gnutls version < 2.9.10. */
 static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t);
 
+/* Not present in gnutls version < 3.3.0. */
+static int (*pgnutls_privkey_import_rsa_raw)(gnutls_privkey_t, const gnutls_datum_t *,
+                                        const gnutls_datum_t *, const gnutls_datum_t *,
+                                        const gnutls_datum_t *, const gnutls_datum_t *,
+                                        const gnutls_datum_t *, const gnutls_datum_t *,
+                                        const gnutls_datum_t *);
+
 /* Not present in gnutls version < 3.4.0. */
 static int (*pgnutls_privkey_export_x509)(gnutls_privkey_t, gnutls_x509_privkey_t *);
 
@@ -79,7 +86,6 @@ MAKE_FUNCPTR(gnutls_perror);
 MAKE_FUNCPTR(gnutls_protocol_get_version);
 MAKE_FUNCPTR(gnutls_priority_set_direct);
 MAKE_FUNCPTR(gnutls_privkey_deinit);
-MAKE_FUNCPTR(gnutls_privkey_import_rsa_raw);
 MAKE_FUNCPTR(gnutls_privkey_init);
 MAKE_FUNCPTR(gnutls_record_get_max_size);
 MAKE_FUNCPTR(gnutls_record_recv);
@@ -133,6 +139,16 @@ static int compat_cipher_get_block_size(gnutls_cipher_algorithm_t cipher)
 }
 
 static int compat_gnutls_privkey_export_x509(gnutls_privkey_t privkey, gnutls_x509_privkey_t *key)
+{
+    FIXME("\n");
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static int compat_gnutls_privkey_import_rsa_raw(gnutls_privkey_t key, const gnutls_datum_t *p1,
+                                        const gnutls_datum_t *p2, const gnutls_datum_t *p3,
+                                        const gnutls_datum_t *p4, const gnutls_datum_t *p5,
+                                        const gnutls_datum_t *p6, const gnutls_datum_t *p7,
+                                        const gnutls_datum_t *p8)
 {
     FIXME("\n");
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
@@ -897,7 +913,6 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_protocol_get_version)
     LOAD_FUNCPTR(gnutls_priority_set_direct)
     LOAD_FUNCPTR(gnutls_privkey_deinit)
-    LOAD_FUNCPTR(gnutls_privkey_import_rsa_raw)
     LOAD_FUNCPTR(gnutls_privkey_init)
     LOAD_FUNCPTR(gnutls_record_get_max_size);
     LOAD_FUNCPTR(gnutls_record_recv);
@@ -923,6 +938,11 @@ BOOL schan_imp_init(void)
     {
         WARN("gnutls_privkey_export_x509 not found\n");
         pgnutls_privkey_export_x509 = compat_gnutls_privkey_export_x509;
+    }
+    if (!(pgnutls_privkey_import_rsa_raw = wine_dlsym(libgnutls_handle, "gnutls_privkey_import_rsa_raw", NULL, 0)))
+    {
+        WARN("gnutls_privkey_import_rsa_raw not found\n");
+        pgnutls_privkey_import_rsa_raw = compat_gnutls_privkey_import_rsa_raw;
     }
 
     ret = pgnutls_global_init();
