@@ -528,11 +528,19 @@ sub READ_DEFAULTS($)
                 $decomp_table[$src] = [ hex $1, hex $2 ];
                 push @compose_table, [ hex $1, hex $2, $src ];
             }
-            elsif ($decomp =~ /^(<[a-z]+>\s)*([0-9a-fA-F]+)$/ &&
-                   (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd)))
+            elsif ($decomp =~ /^([0-9a-fA-F]+)$/)
             {
-                # Single char decomposition in the compatibility range
-                $compatmap_table[$src] = hex $2;
+                # Single char decomposition
+                if (hex $1 < 65536)
+                {
+                    $decomp_table[$src] = [ hex $1, 0 ];
+                }
+
+                if (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd))
+                {
+                    # Single char decomposition in the compatibility range
+                    $compatmap_table[$src] = hex $1;
+                }
             }
         }
         else
@@ -2494,7 +2502,7 @@ unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, un
     if (!ptr)
     {
         ptr = table + table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + 2 * (ch & 0xf);
-        len = 2;
+        len = ptr[1] ? 2 : 1;
     }
 
     if (!*ptr) return 1;

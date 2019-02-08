@@ -5685,6 +5685,11 @@ static void test_NormalizeString(void)
     static const WCHAR part1_str10[] = {0x309B,0};
     static const WCHAR part1_nfkc10[] = {0x20,0x3099,0};
 
+    /* ANGSTROM SIGN */
+    static const WCHAR part1_str11[] = {0x212B,0};
+    static const WCHAR part1_nfc11[] = {0xC5,0};
+    static const WCHAR part1_nfd11[] = {'A',0x030A,0};
+
     struct test_data_normal {
         const WCHAR *str;
         const WCHAR *expected[4];
@@ -5713,6 +5718,7 @@ static void test_NormalizeString(void)
         { part1_str8, { part1_str8, part1_nfd8, part1_str8, part1_nfd8 }, { 1, 0, 1, 0 } },
         { part1_str9, { part1_str9, part1_str9, part1_nfkc9, part1_nfkc9 }, { 1, 0, 1, 0 } },
         { part1_str10, { part1_str10, part1_str10, part1_nfkc10, part1_nfkc10 }, { 1, 0, 1, 0 } },
+        { part1_str11, { part1_nfc11, part1_nfd11, part1_nfc11, part1_nfd11 }, { 1, 0, 1, 0 } },
         { 0 }
     };
     const struct test_data_normal *ptest = test_arr;
