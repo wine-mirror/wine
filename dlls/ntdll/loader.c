@@ -2345,14 +2345,19 @@ done:
  *
  * Open a file for a new dll. Helper for find_dll_file.
  */
-static HANDLE open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, struct stat *st )
+static NTSTATUS open_dll_file( const WCHAR *name, UNICODE_STRING *nt_name,
+                               WINE_MODREF **pwm, HANDLE *handle, struct stat *st )
 {
+    FILE_BASIC_INFORMATION info;
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
-    HANDLE handle;
+    NTSTATUS status;
     int fd, needs_close;
 
-    if ((*pwm = find_fullname_module( nt_name ))) return 0;
+    nt_name->Buffer = NULL;
+    if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, nt_name, NULL, NULL ))) return status;
+
+    if ((*pwm = find_fullname_module( nt_name ))) return STATUS_SUCCESS;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -2360,11 +2365,22 @@ static HANDLE open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, struct 
     attr.ObjectName = nt_name;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    if (NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_DELETE,
-                    FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE ))
-        return 0;
+    if ((status = NtOpenFile( handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                              FILE_SHARE_READ | FILE_SHARE_DELETE,
+                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
+    {
+        if (status != STATUS_OBJECT_PATH_NOT_FOUND &&
+            status != STATUS_OBJECT_NAME_NOT_FOUND &&
+            !NtQueryAttributesFile( &attr, &info ))
+        {
+            /* if the file exists but failed to open, report the error */
+            return status;
+        }
+        /* otherwise continue searching */
+        return STATUS_DLL_NOT_FOUND;
+    }
 
-    if (!server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL ))
+    if (!server_get_unix_fd( *handle, 0, &fd, &needs_close, NULL, NULL ))
     {
         fstat( fd, st );
         if (needs_close) close( fd );
@@ -2372,11 +2388,11 @@ static HANDLE open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, struct 
         {
             TRACE( "%s is the same file as existing module %p %s\n", debugstr_w( nt_name->Buffer ),
                    (*pwm)->ldr.BaseAddress, debugstr_w( (*pwm)->ldr.FullDllName.Buffer ));
-            NtClose( handle );
-            return 0;
+            NtClose( *handle );
+            *handle = 0;
         }
     }
-    return handle;
+    return STATUS_SUCCESS;
 }
 
 
@@ -2385,7 +2401,8 @@ static HANDLE open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, struct 
  *
  * Search for dll in the specified paths.
  */
-static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *nt_name )
+static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *nt_name,
+                                 WINE_MODREF **pwm, HANDLE *handle, struct stat *st )
 {
     WCHAR *name;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
@@ -2407,14 +2424,9 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
         memcpy( name, paths, len * sizeof(WCHAR) );
         if (len && name[len - 1] != '\\') name[len++] = '\\';
         strcpyW( name + len, search );
-        if (RtlDoesFileExists_U( name ))
-        {
-            if (!RtlDosPathNameToNtPathName_U( name, nt_name, NULL, NULL ))
-                status = STATUS_NO_MEMORY;
-            else
-                status = STATUS_SUCCESS;
-            goto done;
-        }
+        status = open_dll_file( name, nt_name, pwm, handle, st );
+        if (status != STATUS_DLL_NOT_FOUND) goto done;
+        RtlFreeUnicodeString( nt_name );
         paths = ptr;
     }
 
@@ -2439,11 +2451,12 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
                                HANDLE *handle, struct stat *st )
 {
     WCHAR *ext, *dllname;
-    NTSTATUS status;
+    NTSTATUS status = STATUS_SUCCESS;
 
     /* first append .dll if needed */
 
     *handle = 0;
+    *pwm = NULL;
     dllname = NULL;
     if (!(ext = strrchrW( libname, '.')) || strchrW( ext, '/' ) || strchrW( ext, '\\'))
     {
@@ -2461,7 +2474,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
     {
         WCHAR *fullname = NULL;
 
-        if ((*pwm = find_basename_module( libname )) != NULL) goto found;
+        if ((*pwm = find_basename_module( libname )) != NULL) goto done;
 
         status = find_actctx_dll( libname, &fullname );
         if (status == STATUS_SUCCESS)
@@ -2470,40 +2483,17 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             RtlFreeHeap( GetProcessHeap(), 0, dllname );
             libname = dllname = fullname;
         }
-        else if (status != STATUS_SXS_KEY_NOT_FOUND)
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, dllname );
-            return status;
-        }
+        else if (status != STATUS_SXS_KEY_NOT_FOUND) goto done;
     }
 
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
-    {
-        /* we need to search for it */
-        if (!(status = search_dll_file( load_path, libname, nt_name )))
-        {
-            *handle = open_dll_file( nt_name, pwm, st );
-        }
-        else if (status != STATUS_DLL_NOT_FOUND)
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, dllname );
-            return status;
-        }
-        goto found;
-    }
+        status = search_dll_file( load_path, libname, nt_name, pwm, handle, st );
+    else
+        status = open_dll_file( libname, nt_name, pwm, handle, st );
 
-    /* absolute path name */
-
-    if (!RtlDosPathNameToNtPathName_U( libname, nt_name, NULL, NULL ))
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, dllname );
-        return STATUS_NO_MEMORY;
-    }
-    *handle = open_dll_file( nt_name, pwm, st );
-
-found:
+done:
     RtlFreeHeap( GetProcessHeap(), 0, dllname );
-    return STATUS_SUCCESS;
+    return status;
 }
 
 
@@ -2524,9 +2514,8 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
 
     TRACE( "looking for %s in %s\n", debugstr_w(libname), debugstr_w(load_path) );
 
-    *pwm = NULL;
     nts = find_dll_file( load_path, libname, &nt_name, pwm, &handle, &st );
-    if (nts) return nts;
+    if (nts && nts != STATUS_DLL_NOT_FOUND) goto done;
 
     if (*pwm)  /* found already loaded module */
     {
@@ -2591,6 +2580,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         break;
     }
 
+done:
     if (nts == STATUS_SUCCESS)
         TRACE("Loaded module %s (%s) at %p\n", debugstr_us(&nt_name),
               ((*pwm)->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native", (*pwm)->ldr.BaseAddress);

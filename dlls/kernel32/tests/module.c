@@ -336,32 +336,23 @@ static void testLoadLibraryEx(void)
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA("testfile.dll", hfile, 0);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_SHARING_VIOLATION ||
-           GetLastError() == ERROR_INVALID_PARAMETER, /* win2k3 */
-           "Unexpected last error, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_SHARING_VIOLATION ||
+       GetLastError() == ERROR_INVALID_PARAMETER, /* win2k3 */
+       "Unexpected last error, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA("testfile.dll", (HANDLE)0xdeadbeef, 0);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_SHARING_VIOLATION ||
-           GetLastError() == ERROR_INVALID_PARAMETER, /* win2k3 */
-           "Unexpected last error, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_SHARING_VIOLATION ||
+       GetLastError() == ERROR_INVALID_PARAMETER, /* win2k3 */
+       "Unexpected last error, got %d\n", GetLastError());
 
     /* try to open a file that is locked */
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA("testfile.dll", NULL, 0);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_SHARING_VIOLATION,
-           "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_SHARING_VIOLATION,
+       "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
 
     /* lpFileName does not matter */
     if (is_unicode_enabled)
