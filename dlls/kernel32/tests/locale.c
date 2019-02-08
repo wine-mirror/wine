@@ -5703,16 +5703,16 @@ static void test_NormalizeString(void)
         { part0_str10, { part0_str10, part0_nfd10, part0_str10, part0_nfd10 }, { 1, 0, 1, 0 } },
         { part0_str11, { part0_str11, part0_nfd11, part0_str11, part0_nfd11 }, { 1, 0, 1, 0 } },
         { part0_str12, { part0_nfc12, part0_nfd12, part0_nfc12, part0_nfd12 }, { 1, 0, 1, 0 } },
-        { part1_str1, { part1_str1, part1_str1, part1_nfkc1, part1_nfkc1 }, { 1, 0, 1, 1 } },
-        { part1_str2, { part1_str2, part1_str2, part1_nfkc2, part1_nfkc2 }, { 1, 0, 1, 1 } },
+        { part1_str1, { part1_str1, part1_str1, part1_nfkc1, part1_nfkc1 }, { 1, 0, 1, 0 } },
+        { part1_str2, { part1_str2, part1_str2, part1_nfkc2, part1_nfkc2 }, { 1, 0, 1, 0 } },
         { part1_str3, { part1_str3, part1_nfd3, part1_str3, part1_nfd3 }, { 1, 0, 1, 0 } },
-        { part1_str4, { part1_str4, part1_str4, part1_nfkc4, part1_nfkc4 }, { 1, 0, 1, 1 } },
+        { part1_str4, { part1_str4, part1_str4, part1_nfkc4, part1_nfkc4 }, { 1, 0, 1, 0 } },
         { part1_str5, { part1_str5, part1_nfd5, part1_str5, part1_nfd5 }, { 1, 0, 1, 0 } },
         { part1_str6, { part1_str6, part1_nfd6, part1_str6, part1_nfd6 }, { 1, 0, 1, 0 } },
-        { part1_str7, { part1_str7, part1_str7, part1_nfkc7, part1_nfkc7 }, { 1, 0, 1, 1 } },
+        { part1_str7, { part1_str7, part1_str7, part1_nfkc7, part1_nfkc7 }, { 1, 0, 1, 0 } },
         { part1_str8, { part1_str8, part1_nfd8, part1_str8, part1_nfd8 }, { 1, 0, 1, 0 } },
-        { part1_str9, { part1_str9, part1_str9, part1_nfkc9, part1_nfkc9 }, { 1, 0, 1, 1 } },
-        { part1_str10, { part1_str10, part1_str10, part1_nfkc10, part1_nfkc10 }, { 1, 0, 1, 1 } },
+        { part1_str9, { part1_str9, part1_str9, part1_nfkc9, part1_nfkc9 }, { 1, 0, 1, 0 } },
+        { part1_str10, { part1_str10, part1_str10, part1_nfkc10, part1_nfkc10 }, { 1, 0, 1, 0 } },
         { 0 }
     };
     const struct test_data_normal *ptest = test_arr;
