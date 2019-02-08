@@ -12419,9 +12419,15 @@ static void stream_test(void)
         goto done;
     }
 
-    /* set the default value because it isn't done in wine? */
+    hr = IDirect3DDevice9_GetStreamSourceFreq(device, 0, &ind);
+    ok(hr == D3D_OK && ind == 1, "IDirect3DDevice9_GetStreamSourceFreq unexpected result, "
+            "hr %#x, ind %#x.\n", hr, ind);
+    hr = IDirect3DDevice9_GetStreamSourceFreq(device, 1, &ind);
+    ok(hr == D3D_OK && ind == 1, "IDirect3DDevice9_GetStreamSourceFreq unexpected result, "
+            "hr %#x, ind %#x.\n", hr, ind);
+
     hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, 1);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed, hr %#x.\n", hr);
 
     /* check for D3DSTREAMSOURCE_INDEXEDDATA at stream0 */
     hr = IDirect3DDevice9_SetStreamSourceFreq(device, 0, (D3DSTREAMSOURCE_INSTANCEDATA | 1));
