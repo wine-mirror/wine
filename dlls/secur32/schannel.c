@@ -932,6 +932,8 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         *pfContextAttr |= ISC_RET_ALLOCATED_MEMORY;
     if (ctx->req_ctx_attr & ISC_REQ_STREAM)
         *pfContextAttr |= ISC_RET_STREAM;
+    if (ctx->req_ctx_attr & ISC_REQ_USE_SUPPLIED_CREDS)
+        *pfContextAttr |= ISC_RET_USED_SUPPLIED_CREDS;
 
     return ret;
 }
