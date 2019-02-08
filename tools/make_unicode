@@ -360,6 +360,7 @@ my @joining_table = ();
 my @direction_table = ();
 my @decomp_table = ();
 my @compose_table = ();
+my @combining_class_table = ();
 my $default_char;
 my $default_wchar;
 
@@ -456,6 +457,10 @@ sub READ_DEFAULTS($)
         if ($dig ne "")
         {
             $digitmap_table[$src] = ord $dig;
+        }
+        if ($comb ne "")
+        {
+            $combining_class_table[$src] = $comb;
         }
 
         # copy the category and direction for everything between First/Last pairs
@@ -2371,6 +2376,24 @@ EOF
 }
 
 ################################################################
+# dump the combining class table
+sub dump_combining_class($)
+{
+    my $filename = shift;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode Combining Classes */\n";
+    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    dump_two_level_mapping( "combining_class_table", 0, @combining_class_table );
+    close OUTPUT;
+    save_file($filename);
+}
+
+################################################################
 # output a codepage definition file from the global tables
 sub output_codepage_file($$$$)
 {
@@ -2604,6 +2627,7 @@ dump_compose_table( "libs/port/compose.c" );
 dump_decompose_table( "libs/port/decompose.c" );
 DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
 dump_digit_folding( "libs/port/digitmap.c" );
+dump_combining_class( "libs/port/combclass.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );
 dump_bracket( "dlls/usp10/bracket.c" );

@@ -5374,6 +5374,7 @@ INT WINAPI NormalizeString(NORM_FORM form, const WCHAR *src, INT src_len, WCHAR 
 
     if (form == NormalizationKC || form == NormalizationKD) flags |= WINE_DECOMPOSE_COMPAT;
     if (form == NormalizationC || form == NormalizationKC) compose = 1;
+    if (compose || dst_len) flags |= WINE_DECOMPOSE_REORDER;
 
     if (!compose && dst_len)
     {
