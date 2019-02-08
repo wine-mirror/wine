@@ -438,7 +438,7 @@ static int decompose_cubic_to(const FT_Vector *control1, const FT_Vector *contro
     return 0;
 }
 
-static void decompose_outline(FT_Outline *outline, FLOAT xoffset, FLOAT yoffset, IDWriteGeometrySink *sink)
+static void decompose_outline(FT_Outline *outline, D2D1_POINT_2F offset, IDWriteGeometrySink *sink)
 {
     static const FT_Outline_Funcs decompose_funcs = {
         decompose_move_to,
@@ -451,8 +451,8 @@ static void decompose_outline(FT_Outline *outline, FLOAT xoffset, FLOAT yoffset,
     struct decompose_context context;
 
     context.sink = sink;
-    context.xoffset = xoffset;
-    context.yoffset = yoffset;
+    context.xoffset = offset.x;
+    context.yoffset = offset.y;
     context.figure_started = FALSE;
     context.move_to = FALSE;
     context.origin.x = 0;
@@ -485,8 +485,9 @@ static void embolden_glyph(FT_Glyph glyph, FLOAT emsize)
     embolden_glyph_outline(&outline_glyph->outline, emsize);
 }
 
-HRESULT freetype_get_glyphrun_outline(IDWriteFontFace4 *fontface, FLOAT emSize, UINT16 const *glyphs,
-    FLOAT const *advances, DWRITE_GLYPH_OFFSET const *offsets, UINT32 count, BOOL is_rtl, IDWriteGeometrySink *sink)
+HRESULT freetype_get_glyphrun_outline(IDWriteFontFace4 *fontface, float emSize, UINT16 const *glyphs,
+        float const *advances, DWRITE_GLYPH_OFFSET const *offsets, unsigned int count, BOOL is_rtl,
+        IDWriteGeometrySink *sink)
 {
     FTC_ScalerRec scaler;
     USHORT simulations;
@@ -509,14 +510,19 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace4 *fontface, FLOAT emSize, 
 
     EnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
-        FLOAT advance = 0.0f;
-        UINT32 g;
+        float rtl_factor = is_rtl ? -1.0f : 1.0f;
+        D2D1_POINT_2F origin;
+        unsigned int i;
 
-        for (g = 0; g < count; g++) {
-            if (pFT_Load_Glyph(size->face, glyphs[g], FT_LOAD_NO_BITMAP) == 0) {
+        origin.x = origin.y = 0.0f;
+        for (i = 0; i < count; ++i)
+        {
+            if (pFT_Load_Glyph(size->face, glyphs[i], FT_LOAD_NO_BITMAP) == 0)
+            {
                 FLOAT ft_advance = size->face->glyph->metrics.horiAdvance >> 6;
                 FT_Outline *outline = &size->face->glyph->outline;
-                FLOAT xoffset = 0.0f, yoffset = 0.0f;
+                D2D1_POINT_2F glyph_origin;
+                float advance;
                 FT_Matrix m;
 
                 if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
@@ -529,23 +535,25 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace4 *fontface, FLOAT emSize, 
 
                 pFT_Outline_Transform(outline, &m);
 
+                if (advances)
+                    advance = rtl_factor * advances[i];
+                else
+                    advance = rtl_factor * ft_advance;
+
+                glyph_origin = origin;
+                if (is_rtl)
+                    glyph_origin.x += advance;
+
                 /* glyph offsets act as current glyph adjustment */
-                if (offsets) {
-                    xoffset += is_rtl ? -offsets[g].advanceOffset : offsets[g].advanceOffset;
-                    yoffset -= offsets[g].ascenderOffset;
+                if (offsets)
+                {
+                    glyph_origin.x += rtl_factor * offsets[i].advanceOffset;
+                    glyph_origin.y -= offsets[i].ascenderOffset;
                 }
 
-                if (g == 0 && is_rtl)
-                    advance = advances ? -advances[g] : -ft_advance;
+                decompose_outline(outline, glyph_origin, sink);
 
-                xoffset += advance;
-                decompose_outline(outline, xoffset, yoffset, sink);
-
-                /* update advance to next glyph */
-                if (advances)
-                    advance += is_rtl ? -advances[g] : advances[g];
-                else
-                    advance += is_rtl ? -ft_advance : ft_advance;
+                origin.x += advance;
             }
         }
     }
@@ -959,8 +967,9 @@ BOOL freetype_is_monospaced(IDWriteFontFace4 *fontface)
     return FALSE;
 }
 
-HRESULT freetype_get_glyphrun_outline(IDWriteFontFace4 *fontface, FLOAT emSize, UINT16 const *glyphs, FLOAT const *advances,
-    DWRITE_GLYPH_OFFSET const *offsets, UINT32 count, BOOL is_rtl, IDWriteGeometrySink *sink)
+HRESULT freetype_get_glyphrun_outline(IDWriteFontFace4 *fontface, float emSize, UINT16 const *glyphs,
+        float const *advances, DWRITE_GLYPH_OFFSET const *offsets, unsigned int count, BOOL is_rtl,
+        IDWriteGeometrySink *sink)
 {
     return E_NOTIMPL;
 }
