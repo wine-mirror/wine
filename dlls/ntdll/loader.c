@@ -464,7 +464,7 @@ static WINE_MODREF *find_fullname_module( const UNICODE_STRING *nt_name )
  * Find a module from its file id.
  * The loader_section must be locked while calling this function
  */
-static WINE_MODREF *find_fileid_module( HANDLE handle, struct stat *st )
+static WINE_MODREF *find_fileid_module( struct stat *st )
 {
     LIST_ENTRY *mark, *entry;
 
@@ -2368,7 +2368,7 @@ static HANDLE open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, struct 
     {
         fstat( fd, st );
         if (needs_close) close( fd );
-        if ((*pwm = find_fileid_module( handle, st )))
+        if ((*pwm = find_fileid_module( st )))
         {
             TRACE( "%s is the same file as existing module %p %s\n", debugstr_w( nt_name->Buffer ),
                    (*pwm)->ldr.BaseAddress, debugstr_w( (*pwm)->ldr.FullDllName.Buffer ));
