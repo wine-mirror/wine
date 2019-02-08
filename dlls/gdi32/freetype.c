@@ -4697,6 +4697,52 @@ static void free_font(GdiFont *font)
     HeapFree(GetProcessHeap(), 0, font);
 }
 
+/* TODO: GGO format support */
+static BOOL get_cached_metrics( GdiFont *font, UINT index, GLYPHMETRICS *gm, ABC *abc )
+{
+    UINT block = index / GM_BLOCK_SIZE;
+    UINT entry = index % GM_BLOCK_SIZE;
+
+    if (block < font->gmsize && font->gm[block] && font->gm[block][entry].init)
+    {
+        *gm  = font->gm[block][entry].gm;
+        *abc = font->gm[block][entry].abc;
+
+        TRACE( "cached gm: %u, %u, %s, %d, %d abc: %d, %u, %d\n",
+               gm->gmBlackBoxX, gm->gmBlackBoxY, wine_dbgstr_point( &gm->gmptGlyphOrigin ),
+               gm->gmCellIncX, gm->gmCellIncY, abc->abcA, abc->abcB, abc->abcC );
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void set_cached_metrics( GdiFont *font, UINT index, const GLYPHMETRICS *gm, const ABC *abc )
+{
+    UINT block = index / GM_BLOCK_SIZE;
+    UINT entry = index % GM_BLOCK_SIZE;
+
+    if (block >= font->gmsize)
+    {
+        GM **ptr = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                font->gm, (block + 1) * sizeof(GM *) );
+        if (!ptr) return;
+
+        font->gmsize = block + 1;
+        font->gm = ptr;
+    }
+
+    if (!font->gm[block])
+    {
+        font->gm[block] = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     sizeof(GM) * GM_BLOCK_SIZE );
+        if (!font->gm[block]) return;
+    }
+
+    font->gm[block][entry].gm   = *gm;
+    font->gm[block][entry].abc  = *abc;
+    font->gm[block][entry].init = TRUE;
+}
 
 static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf, DWORD cbData)
 {
@@ -7063,7 +7109,6 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     BOOL needsTransform = FALSE;
     BOOL tategaki = (font->name[0] == '@');
     BOOL vertical_metrics;
-    UINT original_index;
 
     TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
 	  buflen, buf, lpmat);
@@ -7080,7 +7125,6 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             TRACE("translate glyph index %04x -> %04x\n", glyph, glyph_index);
         } else
             glyph_index = glyph;
-        original_index = glyph_index;
 	format &= ~GGO_GLYPH_INDEX;
         /* TODO: Window also turns off tategaki for glyphs passed in by index
             if their unicode code points fall outside of the range that is
@@ -7089,32 +7133,15 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         BOOL vert;
         get_glyph_index_linked(incoming_font, glyph, &font, &glyph_index, &vert);
         ft_face = font->ft_face;
-        original_index = glyph_index;
         if (!vert && tategaki)
             tategaki = check_unicode_tategaki(glyph);
     }
 
     format &= ~GGO_UNHINTED;
 
-    if(original_index >= font->gmsize * GM_BLOCK_SIZE) {
-	font->gmsize = (original_index / GM_BLOCK_SIZE + 1);
-	font->gm = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, font->gm,
-			       font->gmsize * sizeof(GM*));
-    } else {
-        if (format == GGO_METRICS && font->gm[original_index / GM_BLOCK_SIZE] != NULL &&
-            FONT_GM(font,original_index)->init && is_identity_MAT2(lpmat))
-        {
-            *lpgm = FONT_GM(font,original_index)->gm;
-            *abc = FONT_GM(font,original_index)->abc;
-            TRACE("cached: %u,%u,%s,%d,%d\n", lpgm->gmBlackBoxX, lpgm->gmBlackBoxY,
-                  wine_dbgstr_point(&lpgm->gmptGlyphOrigin),
-                  lpgm->gmCellIncX, lpgm->gmCellIncY);
-	    return 1; /* FIXME */
-	}
-    }
-
-    if (!font->gm[original_index / GM_BLOCK_SIZE])
-        font->gm[original_index / GM_BLOCK_SIZE] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(GM) * GM_BLOCK_SIZE);
+    if (format == GGO_METRICS && is_identity_MAT2(lpmat) &&
+        get_cached_metrics( font, glyph_index, lpgm, abc ))
+        return 1; /* FIXME */
 
     needsTransform = get_transform_matrices( font, tategaki, lpmat, matrices );
 
@@ -7254,11 +7281,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) &&
         is_identity_MAT2(lpmat)) /* don't cache custom transforms */
-    {
-        FONT_GM(font,original_index)->gm = gm;
-        FONT_GM(font,original_index)->abc = *abc;
-        FONT_GM(font,original_index)->init = TRUE;
-    }
+        set_cached_metrics( font, glyph_index, &gm, abc );
 
     if(format == GGO_METRICS)
     {
