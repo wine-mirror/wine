@@ -1678,7 +1678,6 @@ static void LISTBOX_DeleteItem( LB_DESCR *descr, INT index )
 static LRESULT LISTBOX_RemoveItem( LB_DESCR *descr, INT index )
 {
     LB_ITEMDATA *item;
-    INT max_items;
 
     if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
 
@@ -1698,20 +1697,8 @@ static LRESULT LISTBOX_RemoveItem( LB_DESCR *descr, INT index )
                        (descr->nb_items - index) * sizeof(LB_ITEMDATA) );
     if (descr->anchor_item == descr->nb_items) descr->anchor_item--;
 
-    /* Shrink the item array if possible */
+    resize_storage(descr, descr->nb_items);
 
-    max_items = descr->items_size;
-    if (descr->nb_items < max_items - 2*LB_ARRAY_GRANULARITY)
-    {
-        max_items -= LB_ARRAY_GRANULARITY;
-        item = HeapReAlloc( GetProcessHeap(), 0, descr->items,
-                            max_items * sizeof(LB_ITEMDATA) );
-        if (item)
-        {
-            descr->items_size = max_items;
-            descr->items = item;
-        }
-    }
     /* Repaint the items */
 
     LISTBOX_UpdateScroll( descr );
