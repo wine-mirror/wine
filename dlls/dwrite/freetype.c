@@ -317,17 +317,16 @@ BOOL freetype_is_monospaced(IDWriteFontFace4 *fontface)
 
 struct decompose_context {
     IDWriteGeometrySink *sink;
-    FLOAT xoffset;
-    FLOAT yoffset;
+    D2D1_POINT_2F offset;
     BOOL figure_started;
     BOOL move_to;     /* last call was 'move_to' */
     FT_Vector origin; /* 'pen' position from last call */
 };
 
-static inline void ft_vector_to_d2d_point(const FT_Vector *v, FLOAT xoffset, FLOAT yoffset, D2D1_POINT_2F *p)
+static inline void ft_vector_to_d2d_point(const FT_Vector *v, D2D1_POINT_2F offset, D2D1_POINT_2F *p)
 {
-    p->x = (v->x / 64.0f) + xoffset;
-    p->y = (v->y / 64.0f) + yoffset;
+    p->x = (v->x / 64.0f) + offset.x;
+    p->y = (v->y / 64.0f) + offset.y;
 }
 
 static void decompose_beginfigure(struct decompose_context *ctxt)
@@ -337,7 +336,7 @@ static void decompose_beginfigure(struct decompose_context *ctxt)
     if (!ctxt->move_to)
         return;
 
-    ft_vector_to_d2d_point(&ctxt->origin, ctxt->xoffset, ctxt->yoffset, &point);
+    ft_vector_to_d2d_point(&ctxt->origin, ctxt->offset, &point);
     ID2D1SimplifiedGeometrySink_BeginFigure(ctxt->sink, point, D2D1_FIGURE_BEGIN_FILLED);
 
     ctxt->figure_started = TRUE;
@@ -369,7 +368,7 @@ static int decompose_line_to(const FT_Vector *to, void *user)
 
     decompose_beginfigure(ctxt);
 
-    ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, &point);
+    ft_vector_to_d2d_point(to, ctxt->offset, &point);
     ID2D1SimplifiedGeometrySink_AddLines(ctxt->sink, &point, 1);
 
     ctxt->origin = *to;
@@ -414,9 +413,9 @@ static int decompose_conic_to(const FT_Vector *control, const FT_Vector *to, voi
     cubic[1].y += (to->y + 1) / 3;
     cubic[2] = *to;
 
-    ft_vector_to_d2d_point(cubic, ctxt->xoffset, ctxt->yoffset, points);
-    ft_vector_to_d2d_point(cubic + 1, ctxt->xoffset, ctxt->yoffset, points + 1);
-    ft_vector_to_d2d_point(cubic + 2, ctxt->xoffset, ctxt->yoffset, points + 2);
+    ft_vector_to_d2d_point(cubic, ctxt->offset, points);
+    ft_vector_to_d2d_point(cubic + 1, ctxt->offset, points + 1);
+    ft_vector_to_d2d_point(cubic + 2, ctxt->offset, points + 2);
     ID2D1SimplifiedGeometrySink_AddBeziers(ctxt->sink, (D2D1_BEZIER_SEGMENT*)points, 1);
     ctxt->origin = *to;
     return 0;
@@ -430,9 +429,9 @@ static int decompose_cubic_to(const FT_Vector *control1, const FT_Vector *contro
 
     decompose_beginfigure(ctxt);
 
-    ft_vector_to_d2d_point(control1, ctxt->xoffset, ctxt->yoffset, points);
-    ft_vector_to_d2d_point(control2, ctxt->xoffset, ctxt->yoffset, points + 1);
-    ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, points + 2);
+    ft_vector_to_d2d_point(control1, ctxt->offset, points);
+    ft_vector_to_d2d_point(control2, ctxt->offset, points + 1);
+    ft_vector_to_d2d_point(to, ctxt->offset, points + 2);
     ID2D1SimplifiedGeometrySink_AddBeziers(ctxt->sink, (D2D1_BEZIER_SEGMENT*)points, 1);
     ctxt->origin = *to;
     return 0;
@@ -451,8 +450,7 @@ static void decompose_outline(FT_Outline *outline, D2D1_POINT_2F offset, IDWrite
     struct decompose_context context;
 
     context.sink = sink;
-    context.xoffset = offset.x;
-    context.yoffset = offset.y;
+    context.offset = offset;
     context.figure_started = FALSE;
     context.move_to = FALSE;
     context.origin.x = 0;
