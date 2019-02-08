@@ -6228,6 +6228,7 @@ static void test_navigator(IHTMLDocument2 *doc)
     HRESULT hres;
 
     static const WCHAR v40[] = {'4','.','0'};
+    static char ua[] = "1234567890xxxABC";
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "parentWidnow failed: %08x\n", hres);
@@ -6335,6 +6336,17 @@ static void test_navigator(IHTMLDocument2 *doc)
     }else {
         skip("nonstandard user agent\n");
     }
+
+    hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, ua, sizeof(ua), 0);
+    ok(hres == S_OK, "UrlMkSetSessionOption failed: %08x\n", hres);
+
+    hres = IOmNavigator_get_appVersion(navigator, &bstr);
+    ok(hres == S_OK, "get_appVersion failed: %08x\n", hres);
+    ok(!strcmp_wa(bstr, ua+8), "appVersion returned %s, expected \"%s\"\n", wine_dbgstr_w(bstr), buf+8);
+    SysFreeString(bstr);
+
+    hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, buf, strlen(buf), 0);
+    ok(hres == S_OK, "UrlMkSetSessionOption failed: %08x\n", hres);
 
     bstr = NULL;
     hres = IOmNavigator_get_appMinorVersion(navigator, &bstr);

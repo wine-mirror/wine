@@ -1008,6 +1008,7 @@ static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
     char user_agent[512];
     DWORD size;
     HRESULT hres;
+    const unsigned skip_prefix = 8; /* strlen("Mozilla/") */
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1016,17 +1017,17 @@ static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
     if(FAILED(hres))
         return hres;
 
-    if(strncmp(user_agent, "Mozilla/", 8)) {
-        FIXME("Unsupported user agent\n");
-        return E_FAIL;
+    if(size <= skip_prefix) {
+        *p = NULL;
+        return S_OK;
     }
 
-    size = MultiByteToWideChar(CP_ACP, 0, user_agent+8, -1, NULL, 0);
+    size = MultiByteToWideChar(CP_ACP, 0, user_agent + skip_prefix, -1, NULL, 0);
     *p = SysAllocStringLen(NULL, size-1);
     if(!*p)
         return E_OUTOFMEMORY;
 
-    MultiByteToWideChar(CP_ACP, 0, user_agent+8, -1, *p, size);
+    MultiByteToWideChar(CP_ACP, 0, user_agent + skip_prefix, -1, *p, size);
     return S_OK;
 }
 
