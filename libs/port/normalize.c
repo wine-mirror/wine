@@ -20,6 +20,7 @@
 
 #include "wine/unicode.h"
 
+extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
 extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
 extern const unsigned short combining_class_table[] DECLSPEC_HIDDEN;
 
@@ -103,4 +104,38 @@ unsigned int wine_decompose_string( int flags, const WCHAR *src, unsigned int sr
 
     if (flags & WINE_DECOMPOSE_REORDER) canonical_order_string( dst, dst_pos );
     return dst_pos;
+}
+
+static BOOL is_blocked( WCHAR *starter, WCHAR *ptr )
+{
+    if (ptr == starter + 1) return FALSE;
+    /* Because the string is already canonically ordered, the chars are blocked
+       only if the previous char's combining class is equal to the test char. */
+    if (get_combining_class( *(ptr - 1) ) == get_combining_class( *ptr )) return TRUE;
+    return FALSE;
+}
+
+unsigned int wine_compose_string( WCHAR *str, unsigned int len )
+{
+    unsigned int i, last_starter = len;
+    WCHAR pair[2], comp;
+
+    for (i = 0; i < len; i++)
+    {
+        pair[1] = str[i];
+        if (last_starter == len || is_blocked( str + last_starter, str + i ) || !(comp = wine_compose( pair )))
+        {
+            if (is_starter( str[i] ))
+            {
+                last_starter = i;
+                pair[0] = str[i];
+            }
+            continue;
+        }
+        str[last_starter] = pair[0] = comp;
+        len--;
+        memmove( str + i, str + i + 1, (len - i) * sizeof(WCHAR) );
+        i = last_starter;
+    }
+    return len;
 }

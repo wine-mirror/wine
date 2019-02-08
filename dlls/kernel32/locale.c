@@ -5407,8 +5407,8 @@ INT WINAPI NormalizeString(NORM_FORM form, const WCHAR *src, INT src_len, WCHAR 
 
     if (compose)
     {
-        FIXME("Composing not yet implemented\n");
-        res = 0;
+        res = wine_compose_string( buf, res );
+        if (dst_len >= res) memcpy( dst, buf, res * sizeof(WCHAR) );
     }
 
 done:
