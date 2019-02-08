@@ -130,6 +130,7 @@ typedef struct
 } FT_Version_t;
 static FT_Version_t FT_Version;
 static DWORD FT_SimpleVersion;
+#define FT_VERSION_VALUE(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
 
 static void *ft_handle = NULL;
 
@@ -1003,7 +1004,7 @@ static BOOL is_subpixel_rendering_enabled( void )
     if (enabled == -1)
     {
         /* FreeType >= 2.8.1 offers LCD-optimezed rendering without lcd filters. */
-        if (FT_SimpleVersion >= ((2 << 16) | (8 << 8) | (1 << 0)))
+        if (FT_SimpleVersion >= FT_VERSION_VALUE(2, 8, 1))
             enabled = TRUE;
 #ifdef FT_LCD_FILTER_H
         else if (pFT_Library_SetLcdFilter &&
@@ -2188,7 +2189,7 @@ static FT_Face new_ft_face( const char *file, void *font_data_ptr, DWORD font_da
     }
 
     /* There are too many bugs in FreeType < 2.1.9 for bitmap font support */
-    if (!FT_IS_SCALABLE( ft_face ) && FT_SimpleVersion < ((2 << 16) | (1 << 8) | (9 << 0)))
+    if (!FT_IS_SCALABLE( ft_face ) && FT_SimpleVersion < FT_VERSION_VALUE(2, 1, 9))
     {
         WARN("FreeType version < 2.1.9, skipping bitmap font %s/%p\n", debugstr_a(file), font_data_ptr);
         goto fail;
@@ -7119,7 +7120,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
     /* there is a freetype bug where vertical metrics are only
        properly scaled and correct in 2.4.0 or greater */
-    if ((vertical_metrics) && (FT_Version.major < 2 || (FT_Version.major == 2 && FT_Version.minor < 4)))
+    if (vertical_metrics && FT_SimpleVersion < FT_VERSION_VALUE(2, 4, 0))
         vertical_metrics = FALSE;
 
     if (needsTransform || format != GGO_BITMAP) load_flags |= FT_LOAD_NO_BITMAP;
