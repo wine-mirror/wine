@@ -521,6 +521,14 @@ static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
     rect->bottom += offset_y;
 }
 
+static inline void set_rect( RECT *rect, int left, int top, int right, int bottom )
+{
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}
+
 static inline void order_rect( RECT *rect )
 {
     if (rect->left > rect->right)

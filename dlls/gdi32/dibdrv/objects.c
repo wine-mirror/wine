@@ -1334,15 +1334,21 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const P
 {
     HRGN join;
     POINT pts[4];
+    RECT rect;
 
     switch (pdev->pen_join)
     {
     default: FIXME( "Unknown line join %x\n", pdev->pen_join );
         /* fall through */
     case PS_JOIN_ROUND:
-        OffsetRgn( round_cap, pt->x, pt->y );
-        CombineRgn( region, region, round_cap, RGN_OR );
-        OffsetRgn( round_cap, -pt->x, -pt->y );
+        GetRgnBox( round_cap, &rect );
+        offset_rect( &rect, pt->x, pt->y );
+        if (clip_rect_to_dib( &pdev->dib, &rect ))
+        {
+            OffsetRgn( round_cap, pt->x, pt->y );
+            CombineRgn( region, region, round_cap, RGN_OR );
+            OffsetRgn( round_cap, -pt->x, -pt->y );
+        }
         return;
 
     case PS_JOIN_MITER:
@@ -1358,7 +1364,9 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const P
         break;
     }
 
-    CombineRgn( region, region, join, RGN_OR );
+    GetRgnBox( join, &rect );
+    if (clip_rect_to_dib( &pdev->dib, &rect ))
+        CombineRgn( region, region, join, RGN_OR );
     DeleteObject( join );
     return;
 }
@@ -1367,7 +1375,7 @@ static BOOL wide_line_segment( dibdrv_physdev *pdev, HRGN total,
                                const POINT *pt_1, const POINT *pt_2, int dx, int dy,
                                BOOL need_cap_1, BOOL need_cap_2, struct face *face_1, struct face *face_2 )
 {
-    RECT rect;
+    RECT rect, clip_rect;
     BOOL sq_cap_1 = need_cap_1 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
     BOOL sq_cap_2 = need_cap_2 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
 
@@ -1381,7 +1389,9 @@ static BOOL wide_line_segment( dibdrv_physdev *pdev, HRGN total,
         rect.bottom = rect.top + pdev->pen_width;
         if ((sq_cap_1 && dx > 0) || (sq_cap_2 && dx < 0)) rect.left  -= pdev->pen_width / 2;
         if ((sq_cap_2 && dx > 0) || (sq_cap_1 && dx < 0)) rect.right += pdev->pen_width / 2;
-        add_rect_to_region( total, &rect );
+        clip_rect = rect;
+        if (clip_rect_to_dib( &pdev->dib, &clip_rect ))
+            add_rect_to_region( total, &clip_rect );
         if (dx > 0)
         {
             face_1->start.x = face_1->end.x   = rect.left;
@@ -1405,7 +1415,9 @@ static BOOL wide_line_segment( dibdrv_physdev *pdev, HRGN total,
         rect.right = rect.left + pdev->pen_width;
         if ((sq_cap_1 && dy > 0) || (sq_cap_2 && dy < 0)) rect.top    -= pdev->pen_width / 2;
         if ((sq_cap_2 && dy > 0) || (sq_cap_1 && dy < 0)) rect.bottom += pdev->pen_width / 2;
-        add_rect_to_region( total, &rect );
+        clip_rect = rect;
+        if (clip_rect_to_dib( &pdev->dib, &clip_rect ))
+            add_rect_to_region( total, &clip_rect );
         if (dy > 0)
         {
             face_1->start.x = face_2->end.x   = rect.left;
@@ -1475,9 +1487,20 @@ static BOOL wide_line_segment( dibdrv_physdev *pdev, HRGN total,
             seg_pts[3].y += wide_half.x;
         }
 
-        segment = CreatePolygonRgn( seg_pts, 4, ALTERNATE );
-        CombineRgn( total, total, segment, RGN_OR );
-        DeleteObject( segment );
+        if (dx > 0 && dy > 0)
+            set_rect( &clip_rect, seg_pts[0].x, seg_pts[1].y, seg_pts[2].x, seg_pts[3].y );
+        else if (dx > 0 && dy < 0)
+            set_rect( &clip_rect, seg_pts[1].x, seg_pts[2].y, seg_pts[3].x, seg_pts[0].y );
+        else if (dx < 0 && dy > 0)
+            set_rect( &clip_rect, seg_pts[3].x, seg_pts[0].y, seg_pts[1].x, seg_pts[2].y );
+        else
+            set_rect( &clip_rect, seg_pts[2].x, seg_pts[3].y, seg_pts[0].x, seg_pts[1].y );
+        if (clip_rect_to_dib( &pdev->dib, &clip_rect ))
+        {
+            segment = CreatePolygonRgn( seg_pts, 4, ALTERNATE );
+            CombineRgn( total, total, segment, RGN_OR );
+            DeleteObject( segment );
+        }
 
         face_1->start = seg_pts[0];
         face_1->end   = seg_pts[1];
