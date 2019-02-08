@@ -22,7 +22,7 @@
 
 #include "wine/unicode.h"
 
-extern unsigned int wine_decompose( WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
+extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
 
 /* check the code whether it is in Unicode Private Use Area (PUA). */
 /* MB_ERR_INVALID_CHARS raises an error converting from 1-byte character to PUA. */
@@ -125,13 +125,13 @@ static int mbstowcs_sbcs_decompose( const struct sbcs_table *table, int flags,
     {
         WCHAR dummy[4]; /* no decomposition is larger than 4 chars */
         for (len = 0; srclen; srclen--, src++)
-            len += wine_decompose( cp2uni[*src], dummy, 4 );
+            len += wine_decompose( 0, cp2uni[*src], dummy, 4 );
         return len;
     }
 
     for (len = dstlen; srclen && len; srclen--, src++)
     {
-        unsigned int res = wine_decompose( cp2uni[*src], dst, len );
+        unsigned int res = wine_decompose( 0, cp2uni[*src], dst, len );
         if (!res) break;
         len -= res;
         dst += res;
@@ -237,7 +237,7 @@ static int mbstowcs_dbcs_decompose( const struct dbcs_table *table,
                 ch = cp2uni[(off << 8) + *src];
             }
             else ch = cp2uni[*src];
-            len += wine_decompose( ch, dummy, 4 );
+            len += wine_decompose( 0, ch, dummy, 4 );
         }
         return len;
     }
@@ -252,7 +252,7 @@ static int mbstowcs_dbcs_decompose( const struct dbcs_table *table,
             ch = cp2uni[(off << 8) + *src];
         }
         else ch = cp2uni[*src];
-        if (!(res = wine_decompose( ch, dst, len ))) break;
+        if (!(res = wine_decompose( 0, ch, dst, len ))) break;
         dst += res;
         len -= res;
     }

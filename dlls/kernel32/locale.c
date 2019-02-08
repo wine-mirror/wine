@@ -48,6 +48,7 @@
 #include "winerror.h"
 #include "winver.h"
 #include "kernel_private.h"
+#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
@@ -5361,12 +5362,57 @@ INT WINAPI GetUserDefaultLocaleName(LPWSTR localename, int buffersize)
 /******************************************************************************
  *           NormalizeString (KERNEL32.@)
  */
-INT WINAPI NormalizeString(NORM_FORM NormForm, LPCWSTR lpSrcString, INT cwSrcLength,
-                           LPWSTR lpDstString, INT cwDstLength)
+INT WINAPI NormalizeString(NORM_FORM form, const WCHAR *src, INT src_len, WCHAR *dst, INT dst_len)
 {
-    FIXME("%x %p %d %p %d\n", NormForm, lpSrcString, cwSrcLength, lpDstString, cwDstLength);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    int flags = 0, compose = 0;
+    unsigned int res, buf_len;
+    WCHAR *buf = NULL;
+
+    TRACE("%x %s %d %p %d\n", form, debugstr_wn(src, src_len), src_len, dst, dst_len);
+
+    if (src_len == -1) src_len = strlenW(src) + 1;
+
+    if (form == NormalizationKC || form == NormalizationKD) flags |= WINE_DECOMPOSE_COMPAT;
+    if (form == NormalizationC || form == NormalizationKC) compose = 1;
+
+    if (!compose && dst_len)
+    {
+        res = wine_decompose_string( flags, src, src_len, dst, dst_len );
+        if (!res)
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            goto done;
+        }
+        buf = dst;
+    }
+    else
+    {
+        buf_len = src_len * 4;
+        do
+        {
+            WCHAR *old_buf = buf;
+
+            buf = heap_realloc( buf, buf_len );
+            if (!buf)
+            {
+                heap_free( old_buf );
+                SetLastError( ERROR_OUTOFMEMORY );
+                return 0;
+            }
+            res = wine_decompose_string( flags, src, src_len, buf, buf_len );
+            buf_len *= 2;
+        } while (!res);
+    }
+
+    if (compose)
+    {
+        FIXME("Composing not yet implemented\n");
+        res = 0;
+    }
+
+done:
+    if (buf != dst) heap_free( buf );
+    return res;
 }
 
 /******************************************************************************

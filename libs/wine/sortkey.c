@@ -19,7 +19,7 @@
  */
 #include "wine/unicode.h"
 
-extern unsigned int wine_decompose( WCHAR ch, WCHAR *dst, unsigned int dstlen );
+extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen );
 extern const unsigned int collation_table[];
 
 /*

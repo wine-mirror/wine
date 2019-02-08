@@ -747,7 +747,7 @@ static const WCHAR table[4704] =
     0x05d1, 0x05bf, 0x05db, 0x05bf, 0x05e4, 0x05bf, 0x0000, 0x0000
 };
 
-unsigned int DECLSPEC_HIDDEN wine_decompose( WCHAR ch, WCHAR *dst, unsigned int dstlen )
+unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
 {
     const WCHAR *ptr = table + table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + 2 * (ch & 0xf);
     unsigned int res;
@@ -756,6 +756,6 @@ unsigned int DECLSPEC_HIDDEN wine_decompose( WCHAR ch, WCHAR *dst, unsigned int 
     if (!*ptr) return 1;
     if (dstlen <= 1) return 0;
     /* apply the decomposition recursively to the first char */
-    if ((res = wine_decompose( *ptr, dst, dstlen-1 ))) dst[res++] = ptr[1];
+    if ((res = wine_decompose( flags, *ptr, dst, dstlen-1 ))) dst[res++] = ptr[1];
     return res;
 }
