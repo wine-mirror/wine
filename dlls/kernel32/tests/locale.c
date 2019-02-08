@@ -5688,30 +5688,31 @@ static void test_NormalizeString(void)
     struct test_data_normal {
         const WCHAR *str;
         const WCHAR *expected[4];
+        BOOL todo[4];
     };
     static const struct test_data_normal test_arr[] =
     {
-        { part0_str1, { part0_str1, part0_nfd1, part0_str1, part0_nfd1 } },
-        { part0_str2, { part0_nfc2, part0_str2, part0_nfc2, part0_str2 } },
-        { part0_str3, { part0_nfc3, part0_str3, part0_nfc3, part0_str3 } },
-        { part0_str4, { part0_nfc4, part0_str4, part0_nfc4, part0_str4 } },
-        { part0_str5, { part0_nfc5, part0_nfc5, part0_nfc5, part0_nfc5 } },
-        { part0_str6, { part0_nfc6, part0_nfc6, part0_nfc6, part0_nfc6 } },
-        { part0_str8, { part0_str8, part0_nfd8, part0_str8, part0_nfd8 } },
-        { part0_str9, { part0_nfc9, part0_nfd9, part0_nfc9, part0_nfd9 } },
-        { part0_str10, { part0_str10, part0_nfd10, part0_str10, part0_nfd10 } },
-        { part0_str11, { part0_str11, part0_nfd11, part0_str11, part0_nfd11 } },
-        { part0_str12, { part0_nfc12, part0_nfd12, part0_nfc12, part0_nfd12 } },
-        { part1_str1, { part1_str1, part1_str1, part1_nfkc1, part1_nfkc1 } },
-        { part1_str2, { part1_str2, part1_str2, part1_nfkc2, part1_nfkc2 } },
-        { part1_str3, { part1_str3, part1_nfd3, part1_str3, part1_nfd3 } },
-        { part1_str4, { part1_str4, part1_str4, part1_nfkc4, part1_nfkc4 } },
-        { part1_str5, { part1_str5, part1_nfd5, part1_str5, part1_nfd5 } },
-        { part1_str6, { part1_str6, part1_nfd6, part1_str6, part1_nfd6 } },
-        { part1_str7, { part1_str7, part1_str7, part1_nfkc7, part1_nfkc7 } },
-        { part1_str8, { part1_str8, part1_nfd8, part1_str8, part1_nfd8 } },
-        { part1_str9, { part1_str9, part1_str9, part1_nfkc9, part1_nfkc9 } },
-        { part1_str10, { part1_str10, part1_str10, part1_nfkc10, part1_nfkc10 } },
+        { part0_str1, { part0_str1, part0_nfd1, part0_str1, part0_nfd1 }, { 1, 1, 1, 1 } },
+        { part0_str2, { part0_nfc2, part0_str2, part0_nfc2, part0_str2 }, { 1, 1, 1, 1 } },
+        { part0_str3, { part0_nfc3, part0_str3, part0_nfc3, part0_str3 }, { 1, 1, 1, 1 } },
+        { part0_str4, { part0_nfc4, part0_str4, part0_nfc4, part0_str4 }, { 1, 1, 1, 1 } },
+        { part0_str5, { part0_nfc5, part0_nfc5, part0_nfc5, part0_nfc5 }, { 1, 1, 1, 1 } },
+        { part0_str6, { part0_nfc6, part0_nfc6, part0_nfc6, part0_nfc6 }, { 1, 1, 1, 1 } },
+        { part0_str8, { part0_str8, part0_nfd8, part0_str8, part0_nfd8 }, { 1, 1, 1, 1 } },
+        { part0_str9, { part0_nfc9, part0_nfd9, part0_nfc9, part0_nfd9 }, { 1, 1, 1, 1 } },
+        { part0_str10, { part0_str10, part0_nfd10, part0_str10, part0_nfd10 }, { 1, 1, 1, 1 } },
+        { part0_str11, { part0_str11, part0_nfd11, part0_str11, part0_nfd11 }, { 1, 1, 1, 1 } },
+        { part0_str12, { part0_nfc12, part0_nfd12, part0_nfc12, part0_nfd12 }, { 1, 1, 1, 1 } },
+        { part1_str1, { part1_str1, part1_str1, part1_nfkc1, part1_nfkc1 }, { 1, 1, 1, 1 } },
+        { part1_str2, { part1_str2, part1_str2, part1_nfkc2, part1_nfkc2 }, { 1, 1, 1, 1 } },
+        { part1_str3, { part1_str3, part1_nfd3, part1_str3, part1_nfd3 }, { 1, 1, 1, 1 } },
+        { part1_str4, { part1_str4, part1_str4, part1_nfkc4, part1_nfkc4 }, { 1, 1, 1, 1 } },
+        { part1_str5, { part1_str5, part1_nfd5, part1_str5, part1_nfd5 }, { 1, 1, 1, 1 } },
+        { part1_str6, { part1_str6, part1_nfd6, part1_str6, part1_nfd6 }, { 1, 1, 1, 1 } },
+        { part1_str7, { part1_str7, part1_str7, part1_nfkc7, part1_nfkc7 }, { 1, 1, 1, 1 } },
+        { part1_str8, { part1_str8, part1_nfd8, part1_str8, part1_nfd8 }, { 1, 1, 1, 1 } },
+        { part1_str9, { part1_str9, part1_str9, part1_nfkc9, part1_nfkc9 }, { 1, 1, 1, 1 } },
+        { part1_str10, { part1_str10, part1_str10, part1_nfkc10, part1_nfkc10 }, { 1, 1, 1, 1 } },
         { 0 }
     };
     const struct test_data_normal *ptest = test_arr;
@@ -5742,26 +5743,29 @@ static void test_NormalizeString(void)
 
         for (i = 0; i < 4; i++)
         {
-            todo_wine {
-                dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, NULL, 0 );
-                if (dstlen)
-                {
-                    dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, dst, dstlen );
-                    ok(dstlen == strlenW( ptest->expected[i] )+1, "Copied length differed: was %d, should be %d\n",
-                       dstlen, strlenW( ptest->expected[i] )+1);
-                    str_cmp = strncmpW( ptest->expected[i], dst, dstlen+1 );
-                    ok( str_cmp == 0, "test failed: returned value was %d\n", str_cmp );
-                }
+            dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, NULL, 0 );
+            if (dstlen)
+            {
+                dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, dst, dstlen );
+                ok(dstlen == strlenW( dst )+1, "%s:%d: Copied length differed: was %d, should be %d\n",
+                   wine_dbgstr_w(ptest->str), i, dstlen, strlenW( dst )+1);
+                str_cmp = strncmpW( ptest->expected[i], dst, dstlen+1 );
+todo_wine_if(ptest->todo[i])
+                ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
+                    wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
+            }
 
-                dstlen = pNormalizeString( norm_forms[i], ptest->str, strlenW(ptest->str), NULL, 0 );
-                if (dstlen)
-                {
-                    dstlen = pNormalizeString( norm_forms[i], ptest->str, strlenW(ptest->str), dst, dstlen );
-                    ok(dstlen == strlenW( ptest->expected[i] ), "Copied length differed: was %d, should be %d\n",
-                       dstlen, strlenW( ptest->expected[i] ));
-                    str_cmp = strncmpW( ptest->expected[i], dst, dstlen );
-                    ok( str_cmp == 0, "test failed: returned value was %d\n", str_cmp );
-                }
+            dstlen = pNormalizeString( norm_forms[i], ptest->str, strlenW(ptest->str), NULL, 0 );
+            if (dstlen)
+            {
+                memset(dst, 0, sizeof(dst));
+                dstlen = pNormalizeString( norm_forms[i], ptest->str, strlenW(ptest->str), dst, dstlen );
+                ok(dstlen == strlenW( dst ), "%s:%d: Copied length differed: was %d, should be %d\n",
+                   wine_dbgstr_w(ptest->str), i, dstlen, strlenW( dst ));
+                str_cmp = strncmpW( ptest->expected[i], dst, dstlen );
+todo_wine_if(ptest->todo[i])
+                ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
+                    wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
             }
         }
         ptest++;
