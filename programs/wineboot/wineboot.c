@@ -422,7 +422,7 @@ static void create_environment_registry_keys( void )
     HKEY env_key;
     SYSTEM_CPU_INFORMATION sci;
     WCHAR buffer[60], vendorid[13];
-    const WCHAR *arch;
+    const WCHAR *arch, *parch;
 
     if (RegCreateKeyW( HKEY_LOCAL_MACHINE, EnvironW, &env_key )) return;
 
@@ -435,12 +435,13 @@ static void create_environment_registry_keys( void )
     switch (sci.Architecture)
     {
     case PROCESSOR_ARCHITECTURE_AMD64:
-        arch = !strcmpW(vendorid, authenticamdW) ? amd64W : intel64W;
+        arch = amd64W;
+        parch = !strcmpW(vendorid, authenticamdW) ? amd64W : intel64W;
         break;
 
     case PROCESSOR_ARCHITECTURE_INTEL:
     default:
-        arch = x86W;
+        arch = parch = x86W;
         break;
     }
     set_reg_value( env_key, ProcArchW, arch );
@@ -455,7 +456,7 @@ static void create_environment_registry_keys( void )
     case PROCESSOR_ARCHITECTURE_AMD64:
     case PROCESSOR_ARCHITECTURE_INTEL:
     default:
-        get_identifier( buffer, arch );
+        get_identifier( buffer, parch );
         strcatW( buffer, commaW );
         strcatW( buffer, vendorid );
         break;
