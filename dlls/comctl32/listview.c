@@ -11084,13 +11084,21 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
         infoPtr->rcList.bottom = max (infoPtr->rcList.bottom - 2, 0);
     }
 
-    /* if control created invisible header isn't created */
+    /* When ListView control is created invisible, header isn't created right away. */
     if (infoPtr->hwndHeader)
     {
-	HDLAYOUT hl;
-	WINDOWPOS wp;
+        POINT origin;
+        WINDOWPOS wp;
+        HDLAYOUT hl;
+        RECT rect;
 
-	hl.prc = &infoPtr->rcList;
+        LISTVIEW_GetOrigin(infoPtr, &origin);
+
+        rect = infoPtr->rcList;
+        rect.left += origin.x;
+        rect.top += origin.y;
+
+        hl.prc = &rect;
 	hl.pwpos = &wp;
 	SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
 	TRACE("  wp.flags=0x%08x, wp=%d,%d (%dx%d)\n", wp.flags, wp.x, wp.y, wp.cx, wp.cy);
