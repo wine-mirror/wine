@@ -5813,6 +5813,9 @@ static void test_security_flags(void)
         ok(!cert->lpszEncryptionAlgName, "unexpected encryption algorithm name\n");
         ok(!cert->lpszProtocolName, "unexpected protocol name\n");
         ok(cert->dwKeySize != 0xdeadbeef, "unexpected key size\n");
+
+        LocalFree(cert->lpszSubjectInfo);
+        LocalFree(cert->lpszIssuerInfo);
     }
     HeapFree(GetProcessHeap(), 0, cert);
 
