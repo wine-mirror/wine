@@ -3200,7 +3200,7 @@ void virtual_fill_image_information( const pe_image_info_t *pe_info, SECTION_IMA
     info->DllCharacteristics   = pe_info->dll_charact;
     info->Machine              = pe_info->machine;
     info->ImageContainsCode    = pe_info->contains_code;
-    info->u.ImageFlags         = pe_info->image_flags;
+    info->u.ImageFlags         = pe_info->image_flags & ~IMAGE_FLAGS_WineFakeDll;
     info->LoaderFlags          = pe_info->loader_flags;
     info->ImageFileSize        = pe_info->file_size;
     info->CheckSum             = pe_info->checksum;

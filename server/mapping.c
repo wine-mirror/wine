@@ -555,9 +555,15 @@ static int load_clr_header( IMAGE_COR20_HEADER *hdr, size_t va, size_t size, int
 /* retrieve the mapping parameters for an executable (PE) image */
 static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_size, int unix_fd )
 {
-    IMAGE_DOS_HEADER dos;
+    static const char fakedll_signature[] = "Wine placeholder DLL";
+
     IMAGE_COR20_HEADER clr;
     IMAGE_SECTION_HEADER sec[96];
+    struct
+    {
+        IMAGE_DOS_HEADER dos;
+        char buffer[sizeof(fakedll_signature)];
+    } mz;
     struct
     {
         DWORD Signature;
@@ -570,15 +576,17 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     } nt;
     off_t pos;
     int size;
-    size_t clr_va, clr_size;
+    size_t mz_size, clr_va, clr_size;
     unsigned int i, cpu_mask = get_supported_cpu_mask();
 
     /* load the headers */
 
     if (!file_size) return STATUS_INVALID_FILE_FOR_SECTION;
-    if (pread( unix_fd, &dos, sizeof(dos), 0 ) != sizeof(dos)) return STATUS_INVALID_IMAGE_NOT_MZ;
-    if (dos.e_magic != IMAGE_DOS_SIGNATURE) return STATUS_INVALID_IMAGE_NOT_MZ;
-    pos = dos.e_lfanew;
+    size = pread( unix_fd, &mz, sizeof(mz), 0 );
+    if (size < sizeof(mz.dos)) return STATUS_INVALID_IMAGE_NOT_MZ;
+    if (mz.dos.e_magic != IMAGE_DOS_SIGNATURE) return STATUS_INVALID_IMAGE_NOT_MZ;
+    mz_size = size;
+    pos = mz.dos.e_lfanew;
 
     size = pread( unix_fd, &nt, sizeof(nt), pos );
     if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) return STATUS_INVALID_IMAGE_FORMAT;
@@ -691,6 +699,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     mapping->image.gp            = 0; /* FIXME */
     mapping->image.file_size     = file_size;
     mapping->image.loader_flags  = clr_va && clr_size;
+    if (mz_size == sizeof(mz) && !memcmp( mz.buffer, fakedll_signature, sizeof(fakedll_signature) ))
+        mapping->image.image_flags |= IMAGE_FLAGS_WineFakeDll;
 
     /* load the section headers */
 
