@@ -9899,7 +9899,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
     /* carry on only if it really changed */
     if (nNewScrollPos == nOldScrollPos) return 0;
 
-    if (infoPtr->hwndHeader) LISTVIEW_UpdateHeaderSize(infoPtr, nNewScrollPos);
+    LISTVIEW_UpdateHeaderSize(infoPtr, nNewScrollPos);
 
     /* now adjust to client coordinates */
     nScrollDiff = nOldScrollPos - nNewScrollPos;
