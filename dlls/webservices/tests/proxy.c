@@ -708,6 +708,7 @@ static DWORD CALLBACK server_proc( void *arg )
         closesocket( c );
         if (quit) break;
     }
+    closesocket( s );
 
     return 0;
 }
