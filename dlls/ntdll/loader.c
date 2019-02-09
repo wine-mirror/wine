@@ -2127,7 +2127,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
 /***********************************************************************
  *           load_builtin_dll
  */
-static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name, HANDLE file,
+static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name, BOOL has_file,
                                   DWORD flags, WINE_MODREF** pwm )
 {
     char error[256], dllname[MAX_PATH];
@@ -2151,7 +2151,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
     info.status    = STATUS_SUCCESS;
     info.wm        = NULL;
 
-    if (file)  /* we have a real file, try to load it */
+    if (has_file)  /* we have a real file, try to load it */
     {
         ANSI_STRING unix_name;
 
@@ -2565,19 +2565,19 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
             nts = load_native_dll( load_path, &nt_name, handle, flags, pwm, &st );
             if (nts == STATUS_INVALID_IMAGE_NOT_MZ)
                 /* not in PE format, maybe it's a builtin */
-                nts = load_builtin_dll( load_path, &nt_name, handle, flags, pwm );
+                nts = load_builtin_dll( load_path, &nt_name, TRUE, flags, pwm );
         }
         if (nts == STATUS_DLL_NOT_FOUND && loadorder == LO_NATIVE_BUILTIN)
-            nts = load_builtin_dll( load_path, &nt_name, 0, flags, pwm );
+            nts = load_builtin_dll( load_path, &nt_name, FALSE, flags, pwm );
         break;
     case LO_BUILTIN:
     case LO_BUILTIN_NATIVE:
     case LO_DEFAULT:  /* default is builtin,native */
-        nts = load_builtin_dll( load_path, &nt_name, handle, flags, pwm );
+        nts = load_builtin_dll( load_path, &nt_name, handle != 0, flags, pwm );
         if (!handle) break;  /* nothing else we can try */
         /* file is not a builtin library, try without using the specified file */
         if (nts != STATUS_SUCCESS)
-            nts = load_builtin_dll( load_path, &nt_name, 0, flags, pwm );
+            nts = load_builtin_dll( load_path, &nt_name, FALSE, flags, pwm );
         if (nts == STATUS_SUCCESS && loadorder == LO_DEFAULT &&
             (MODULE_InitDLL( *pwm, DLL_WINE_PREATTACH, NULL ) != STATUS_SUCCESS))
         {
@@ -3576,7 +3576,7 @@ void __wine_process_init(void)
     wine_dll_set_callback( load_builtin_callback );
 
     RtlInitUnicodeString( &nt_name, kernel32W );
-    if ((status = load_builtin_dll( NULL, &nt_name, 0, 0, &wm )) != STATUS_SUCCESS)
+    if ((status = load_builtin_dll( NULL, &nt_name, FALSE, 0, &wm )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
         exit(1);
