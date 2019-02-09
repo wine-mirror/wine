@@ -685,7 +685,7 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
         /* some dlls with invalid entry point will crash, but this means we loaded the test dll */
         ok( !expect_fallback, "%u: got test dll but expected fallback\n", line );
     }
-    else todo_wine_if( !expect_status )
+    else
     {
         ok( ldr_status == expect_status ||
             broken(il_only && !expect_status && ldr_status == STATUS_INVALID_IMAGE_FORMAT),

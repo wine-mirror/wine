@@ -1999,12 +1999,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
 
     TRACE("Trying native dll %s\n", debugstr_us(nt_name));
 
-    if (!is_valid_binary( module, image_info ))
-    {
-        NtUnmapViewOfSection( NtCurrentProcess(), module );
-        return STATUS_INVALID_IMAGE_FORMAT;
-    }
-
     /* perform base relocation, if necessary */
 
     if ((status = perform_relocations( module, nt, image_info->map_size )))
@@ -2363,6 +2357,12 @@ static NTSTATUS open_dll_file( const WCHAR *name, UNICODE_STRING *nt_name, WINE_
         if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
         NtClose( mapping );
     }
+    if (!status && !is_valid_binary( *module, image_info ))
+    {
+        TRACE( "%s is for arch %x, continuing search\n", debugstr_us(nt_name), image_info->machine );
+        NtUnmapViewOfSection( NtCurrentProcess(), *module );
+        status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+    }
     return status;
 }
 
@@ -2377,6 +2377,7 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
                                  struct stat *st )
 {
     WCHAR *name;
+    BOOL found_image = FALSE;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     ULONG len = strlenW( paths );
 
@@ -2397,15 +2398,20 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
         if (len && name[len - 1] != '\\') name[len++] = '\\';
         strcpyW( name + len, search );
         status = open_dll_file( name, nt_name, pwm, module, image_info, st );
-        if (status != STATUS_DLL_NOT_FOUND) goto done;
+        if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
+        else if (status != STATUS_DLL_NOT_FOUND) goto done;
         RtlFreeUnicodeString( nt_name );
         paths = ptr;
     }
 
-    /* not found, return file in the system dir to be loaded as builtin */
-    strcpyW( name, system_dir );
-    strcatW( name, search );
-    if (!RtlDosPathNameToNtPathName_U( name, nt_name, NULL, NULL )) status = STATUS_NO_MEMORY;
+    if (!found_image)
+    {
+        /* not found, return file in the system dir to be loaded as builtin */
+        strcpyW( name, system_dir );
+        strcatW( name, search );
+        if (!RtlDosPathNameToNtPathName_U( name, nt_name, NULL, NULL )) status = STATUS_NO_MEMORY;
+    }
+    else status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
 
 done:
     RtlFreeHeap( GetProcessHeap(), 0, name );
@@ -2462,6 +2468,8 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
         status = search_dll_file( load_path, libname, nt_name, pwm, module, image_info, st );
     else
         status = open_dll_file( libname, nt_name, pwm, module, image_info, st );
+
+    if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) status = STATUS_INVALID_IMAGE_FORMAT;
 
 done:
     RtlFreeHeap( GetProcessHeap(), 0, dllname );
