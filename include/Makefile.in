@@ -646,6 +646,7 @@ SOURCES = \
 	virtdisk.h \
 	vmr9.idl \
 	vmrender.idl \
+	vsbackup.idl \
 	vss.idl \
 	vsstyle.h \
 	vssym32.h \
