@@ -113,6 +113,23 @@ static inline int use_futexes(void)
     }
     return supported;
 }
+
+static void timespec_from_timeout( struct timespec *timespec, const LARGE_INTEGER *timeout )
+{
+    LARGE_INTEGER now;
+    timeout_t diff;
+
+    if (timeout->QuadPart > 0)
+    {
+        NtQuerySystemTime( &now );
+        diff = timeout->QuadPart - now.QuadPart;
+    }
+    else
+        diff = -timeout->QuadPart;
+
+    timespec->tv_sec  = diff / TICKSPERSEC;
+    timespec->tv_nsec = (diff % TICKSPERSEC) * 100;
+}
 #endif
 
 /* creates a struct security_descriptor and contained information in one contiguous piece of memory */
@@ -1876,6 +1893,47 @@ BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock )
     return TRUE;
 }
 
+#ifdef __linux__
+static NTSTATUS fast_wait_cv( RTL_CONDITION_VARIABLE *variable, int val, const LARGE_INTEGER *timeout )
+{
+    struct timespec timespec;
+    int ret;
+
+    if (!use_futexes())
+        return STATUS_NOT_IMPLEMENTED;
+
+    if (timeout && timeout->QuadPart != TIMEOUT_INFINITE)
+    {
+        timespec_from_timeout( &timespec, timeout );
+        ret = futex_wait( (int *)&variable->Ptr, val, &timespec );
+    }
+    else
+        ret = futex_wait( (int *)&variable->Ptr, val, NULL );
+
+    if (ret == -1 && errno == ETIMEDOUT)
+        return STATUS_TIMEOUT;
+    return STATUS_WAIT_0;
+}
+
+static NTSTATUS fast_wake_cv( RTL_CONDITION_VARIABLE *variable, int count )
+{
+    if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
+
+    futex_wake( (int *)&variable->Ptr, count );
+    return STATUS_SUCCESS;
+}
+#else
+static NTSTATUS fast_wait_cv( RTL_CONDITION_VARIABLE *variable, int val, const LARGE_INTEGER *timeout )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS fast_wake_cv( RTL_CONDITION_VARIABLE *variable, int count )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+#endif
+
 /***********************************************************************
  *           RtlInitializeConditionVariable   (NTDLL.@)
  *
@@ -1910,7 +1968,8 @@ void WINAPI RtlInitializeConditionVariable( RTL_CONDITION_VARIABLE *variable )
 void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
     interlocked_xchg_add( (int *)&variable->Ptr, 1 );
-    RtlWakeAddressSingle( variable );
+    if (fast_wake_cv( variable, 1 ) == STATUS_NOT_IMPLEMENTED)
+        RtlWakeAddressSingle( variable );
 }
 
 /***********************************************************************
@@ -1921,7 +1980,8 @@ void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
 void WINAPI RtlWakeAllConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
     interlocked_xchg_add( (int *)&variable->Ptr, 1 );
-    RtlWakeAddressAll( variable );
+    if (fast_wake_cv( variable, INT_MAX ) == STATUS_NOT_IMPLEMENTED)
+        RtlWakeAddressAll( variable );
 }
 
 /***********************************************************************
@@ -1947,7 +2007,8 @@ NTSTATUS WINAPI RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variable, R
 
     RtlLeaveCriticalSection( crit );
 
-    status = RtlWaitOnAddress( &variable->Ptr, &val, sizeof(int), timeout );
+    if ((status = fast_wait_cv( variable, val, timeout )) == STATUS_NOT_IMPLEMENTED)
+        status = RtlWaitOnAddress( &variable->Ptr, &val, sizeof(int), timeout );
 
     RtlEnterCriticalSection( crit );
 
@@ -1984,7 +2045,8 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     else
         RtlReleaseSRWLockExclusive( lock );
 
-    status = RtlWaitOnAddress( &variable->Ptr, &val, sizeof(int), timeout );
+    if ((status = fast_wait_cv( variable, val, timeout )) == STATUS_NOT_IMPLEMENTED)
+        status = RtlWaitOnAddress( &variable->Ptr, &val, sizeof(int), timeout );
 
     if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
         RtlAcquireSRWLockShared( lock );
@@ -2039,8 +2101,6 @@ static inline NTSTATUS fast_wait_addr( const void *addr, const void *cmp, SIZE_T
 {
     int *futex;
     int val;
-    LARGE_INTEGER now;
-    timeout_t diff;
     struct timespec timespec;
     int ret;
 
@@ -2060,17 +2120,7 @@ static inline NTSTATUS fast_wait_addr( const void *addr, const void *cmp, SIZE_T
 
     if (timeout)
     {
-        if (timeout->QuadPart > 0)
-        {
-            NtQuerySystemTime( &now );
-            diff = timeout->QuadPart - now.QuadPart;
-        }
-        else
-            diff = -timeout->QuadPart;
-
-        timespec.tv_sec  = diff / TICKSPERSEC;
-        timespec.tv_nsec = (diff % TICKSPERSEC) * 100;
-
+        timespec_from_timeout( &timespec, timeout );
         ret = futex_wait( futex, val, &timespec );
     }
     else
