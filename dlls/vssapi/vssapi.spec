@@ -75,7 +75,7 @@
 @ stub ?Uninitialize@CVssJetWriter@@QAGXXZ
 @ thiscall -arch=i386 ?Unsubscribe@CVssWriter@@QAGJXZ(ptr) VSSAPI_CVssWriter_Unsubscribe
 @ cdecl -arch=win64 ?Unsubscribe@CVssWriter@@QEAAJXZ(ptr) VSSAPI_CVssWriter_Unsubscribe
-@ stub CreateVssBackupComponentsInternal
+@ stdcall CreateVssBackupComponentsInternal(ptr)
 @ stub CreateVssExamineWriterMetadataInternal
 @ stub CreateVssExpressWriterInternal
 @ stub CreateWriter
