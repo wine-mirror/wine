@@ -114,3 +114,13 @@ HRESULT WINAPI CreateVssBackupComponentsInternal(IVssBackupComponents **backup)
     FIXME("%p\n", backup);
     return E_NOTIMPL;
 }
+
+/******************************************************************
+ *  ?CreateVssBackupComponents@@YGJPAPAVIVssBackupComponents@@@Z
+ */
+HRESULT WINAPI VSSAPI_CreateVssBackupComponents( IVssBackupComponents **backup )
+{
+    FIXME( "%p\n", backup );
+
+    return CreateVssBackupComponentsInternal(backup);
+}
