@@ -8758,6 +8758,8 @@ static void test_device_caps(void)
     /* AMD gives 6, Nvidia returns 8. */
     ok(caps.MaxUserClipPlanes <= 8,
             "MaxUserClipPlanes field has unexpected value %u.\n", caps.MaxUserClipPlanes);
+    ok(caps.MaxVertexW == 0.0f || caps.MaxVertexW >= 1e10f,
+            "MaxVertexW field has unexpected value %.8e.\n", caps.MaxVertexW);
 
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
