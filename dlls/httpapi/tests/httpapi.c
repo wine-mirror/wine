@@ -92,30 +92,37 @@ static void test_HttpCreateServerSession(void)
     version.HttpApiMajorVersion = 1;
     version.HttpApiMinorVersion = 0;
     ret = pHttpCreateServerSession(version, NULL, 0);
+todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "Unexpected return value %u.\n", ret);
 
     version.HttpApiMajorVersion = 1;
     version.HttpApiMinorVersion = 1;
     ret = pHttpCreateServerSession(version, &session, 0);
+todo_wine
     ok(ret == ERROR_REVISION_MISMATCH, "Unexpected return value %u.\n", ret);
 
     version.HttpApiMajorVersion = 3;
     version.HttpApiMinorVersion = 0;
     ret = pHttpCreateServerSession(version, &session, 0);
+todo_wine
     ok(ret == ERROR_REVISION_MISMATCH, "Unexpected return value %u.\n", ret);
 
     version.HttpApiMajorVersion = 2;
     version.HttpApiMinorVersion = 0;
     ret = pHttpCreateServerSession(version, &session, 0);
+todo_wine
     ok(!ret, "Unexpected return value %u.\n", ret);
     ret = pHttpCloseServerSession(session);
+todo_wine
     ok(!ret, "Unexpected return value %u.\n", ret);
 
     version.HttpApiMajorVersion = 1;
     version.HttpApiMinorVersion = 0;
     ret = pHttpCreateServerSession(version, &session, 0);
+todo_wine
     ok(!ret, "Unexpected return value %u.\n", ret);
     ret = pHttpCloseServerSession(session);
+todo_wine
     ok(!ret, "Unexpected return value %u.\n", ret);
 
     ret = pHttpCloseServerSession(0xdead);
