@@ -1543,7 +1543,7 @@ static HRESULT audiostreamsample_create(IAudioMediaStream *parent, IAudioData *a
     object->parent = (IMediaStream*)parent;
     object->audio_data = audio_data;
 
-    *audio_stream_sample = (IAudioStreamSample*)&object->IAudioStreamSample_iface;
+    *audio_stream_sample = &object->IAudioStreamSample_iface;
 
     return S_OK;
 }
