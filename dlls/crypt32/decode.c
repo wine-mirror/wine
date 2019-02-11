@@ -2582,7 +2582,7 @@ static BOOL CRYPT_AsnDecodeUnicodeString(const BYTE *pbEncoded,
             if (dataLen)
             {
                 DWORD i;
-                LPWSTR str = *(LPWSTR *)pStr;
+                LPWSTR str = *pStr;
 
                 assert(str);
                 switch (pbEncoded[0])
