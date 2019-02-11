@@ -1588,15 +1588,12 @@ static BOOL CRYPT_AsnDecodeNameValueInternal(const BYTE *pbEncoded,
                 case ASN_VISIBLESTRING:
                 case ASN_GENERALSTRING:
                     value->Value.cbData = dataLen;
-                    if (dataLen)
-                    {
-                        if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
-                            memcpy(value->Value.pbData,
-                             pbEncoded + 1 + lenBytes, dataLen);
-                        else
-                            value->Value.pbData = (LPBYTE)pbEncoded + 1 +
-                             lenBytes;
-                    }
+                    if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
+                        memcpy(value->Value.pbData,
+                         pbEncoded + 1 + lenBytes, dataLen);
+                    else
+                        value->Value.pbData = (LPBYTE)pbEncoded + 1 +
+                         lenBytes;
                     break;
                 case ASN_BMPSTRING:
                 {
