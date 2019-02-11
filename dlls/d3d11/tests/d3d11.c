@@ -14816,10 +14816,6 @@ static void test_cb_relative_addressing(void)
     ID3D11Device *device;
     HRESULT hr;
 
-    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
     static const DWORD vs_code[] =
     {
 #if 0
@@ -14931,10 +14927,6 @@ float4 main(const ps_in v) : SV_TARGET
 
     device = test_context.device;
     context = test_context.immediate_context;
-
-    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
-            vs_code, sizeof(vs_code), &test_context.input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
     colors_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(colors), &colors);
     index_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
