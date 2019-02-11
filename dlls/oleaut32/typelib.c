@@ -578,14 +578,24 @@ static void TLB_register_interface(TLIBATTR *libattr, LPOLESTR name, TYPEATTR *t
     WCHAR keyName[60];
     HKEY key, subKey;
 
-    static const WCHAR PSOA[] = {'{','0','0','0','2','0','4','2','4','-',
-                                 '0','0','0','0','-','0','0','0','0','-','C','0','0','0','-',
-                                 '0','0','0','0','0','0','0','0','0','0','4','6','}',0};
+    static const WCHAR typelib_proxy_clsid[] = {'{','0','0','0','2','0','4','2','4','-',
+            '0','0','0','0','-','0','0','0','0','-','C','0','0','0','-',
+            '0','0','0','0','0','0','0','0','0','0','4','6','}',0};
+    static const WCHAR dispatch_proxy_clsid[] = {'{','0','0','0','2','0','4','2','0','-',
+            '0','0','0','0','-','0','0','0','0','-','C','0','0','0','-',
+            '0','0','0','0','0','0','0','0','0','0','4','6','}',0};
 
     get_interface_key( &tattr->guid, keyName );
     if (RegCreateKeyExW(HKEY_CLASSES_ROOT, keyName, 0, NULL, 0,
                         KEY_WRITE | flag, NULL, &key, NULL) == ERROR_SUCCESS)
     {
+        const WCHAR *proxy_clsid;
+
+        if (tattr->typekind == TKIND_INTERFACE || (tattr->wTypeFlags & TYPEFLAG_FDUAL))
+            proxy_clsid = typelib_proxy_clsid;
+        else
+            proxy_clsid = dispatch_proxy_clsid;
+
         if (name)
             RegSetValueExW(key, NULL, 0, REG_SZ,
                            (BYTE *)name, (strlenW(name)+1) * sizeof(OLECHAR));
@@ -593,14 +603,14 @@ static void TLB_register_interface(TLIBATTR *libattr, LPOLESTR name, TYPEATTR *t
         if (RegCreateKeyExW(key, ProxyStubClsidW, 0, NULL, 0,
             KEY_WRITE | flag, NULL, &subKey, NULL) == ERROR_SUCCESS) {
             RegSetValueExW(subKey, NULL, 0, REG_SZ,
-                           (const BYTE *)PSOA, sizeof PSOA);
+                           (const BYTE *)proxy_clsid, sizeof(typelib_proxy_clsid));
             RegCloseKey(subKey);
         }
 
         if (RegCreateKeyExW(key, ProxyStubClsid32W, 0, NULL, 0,
             KEY_WRITE | flag, NULL, &subKey, NULL) == ERROR_SUCCESS) {
             RegSetValueExW(subKey, NULL, 0, REG_SZ,
-                           (const BYTE *)PSOA, sizeof PSOA);
+                           (const BYTE *)proxy_clsid, sizeof(typelib_proxy_clsid));
             RegCloseKey(subKey);
         }
 

@@ -4963,6 +4963,7 @@ static void test_register_typelib(BOOL system_registration)
     HKEY hkey;
     REGSAM opposite = (sizeof(void*) == 8 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
     BOOL is_wow64 = FALSE;
+    LONG size;
     struct
     {
         TYPEKIND kind;
@@ -5071,7 +5072,26 @@ static void test_register_typelib(BOOL system_registration)
 
         ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &hkey);
         ok(ret == expect_ret, "%d: got %d\n", i, ret);
-        if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
+        if (ret == ERROR_SUCCESS)
+        {
+            size = sizeof(uuid);
+            ret = RegQueryValueA(hkey, "ProxyStubClsid32", uuid, &size);
+            ok(!ret, "Failed to get proxy GUID, error %u.\n", ret);
+
+            if (attrs[i].kind == TKIND_INTERFACE || (attrs[i].flags & TYPEFLAG_FDUAL))
+            {
+                ok(!strcasecmp(uuid, "{00020424-0000-0000-c000-000000000046}"),
+                        "Got unexpected proxy CLSID %s.\n", uuid);
+            }
+            else
+            {
+                ok(!strcasecmp(uuid, "{00020420-0000-0000-c000-000000000046}"),
+                        "Got unexpected proxy CLSID %s.\n", uuid);
+            }
+
+            RegCloseKey(hkey);
+        }
+
 
         /* 32-bit typelibs should be registered into both registry bit modes */
         if (is_win64 || is_wow64)
