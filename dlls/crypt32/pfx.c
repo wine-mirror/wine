@@ -240,8 +240,6 @@ done:
     return prov;
 }
 
-#endif
-
 static char *password_to_ascii( const WCHAR *str )
 {
     char *ret;
@@ -256,6 +254,8 @@ static char *password_to_ascii( const WCHAR *str )
     ret[i] = 0;
     return ret;
 }
+
+#endif
 
 HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags )
 {
