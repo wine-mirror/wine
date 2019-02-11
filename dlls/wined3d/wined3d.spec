@@ -315,3 +315,5 @@
 @ cdecl wined3d_vertex_declaration_decref(ptr)
 @ cdecl wined3d_vertex_declaration_get_parent(ptr)
 @ cdecl wined3d_vertex_declaration_incref(ptr)
+
+@ cdecl wined3d_extract_shader_input_signature_from_dxbc(ptr ptr long)

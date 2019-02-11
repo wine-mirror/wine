@@ -24,19 +24,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
+static struct wined3d_shader_signature_element *shader_find_signature_element(const struct wined3d_shader_signature *s,
+        const char *semantic_name, unsigned int semantic_idx, unsigned int stream_idx)
 {
-    struct wined3d_shader_signature *is = ctx;
+    struct wined3d_shader_signature_element *e = s->elements;
+    unsigned int i;
 
-    if (tag != TAG_ISGN)
-        return S_OK;
-
-    if (is->elements)
+    for (i = 0; i < s->element_count; ++i)
     {
-        FIXME("Multiple input signatures.\n");
-        shader_free_signature(is);
+        if (!strcasecmp(e[i].semantic_name, semantic_name) && e[i].semantic_idx == semantic_idx
+                && e[i].stream_idx == stream_idx)
+            return &e[i];
     }
-    return shader_parse_signature(tag, data, data_size, is);
+
+    return NULL;
 }
 
 static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEMENT_DESC *element_descs,
@@ -47,17 +48,16 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
     unsigned int i;
     HRESULT hr;
 
-    memset(&is, 0, sizeof(is));
-    if (FAILED(hr = parse_dxbc(shader_byte_code, shader_byte_code_length, isgn_handler, &is)))
+    if (FAILED(hr = wined3d_extract_shader_input_signature_from_dxbc(&is, shader_byte_code, shader_byte_code_length)))
     {
-        ERR("Failed to parse input signature.\n");
+        ERR("Failed to extract input signature.\n");
         return E_FAIL;
     }
 
     if (!(*wined3d_elements = heap_calloc(element_count, sizeof(**wined3d_elements))))
     {
         ERR("Failed to allocate wined3d vertex element array memory.\n");
-        shader_free_signature(&is);
+        heap_free(is.elements);
         return E_OUTOFMEMORY;
     }
 
@@ -83,7 +83,7 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
             WARN("Unused input element %u.\n", i);
     }
 
-    shader_free_signature(&is);
+    heap_free(is.elements);
 
     return S_OK;
 }

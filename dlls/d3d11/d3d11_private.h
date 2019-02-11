@@ -102,22 +102,6 @@ static inline UINT d3d11_bind_flags_from_wined3d(unsigned int bind_flags)
     return bind_flags;
 }
 
-static inline void read_dword(const char **ptr, DWORD *d)
-{
-    memcpy(d, *ptr, sizeof(*d));
-    *ptr += sizeof(*d);
-}
-
-static inline BOOL require_space(size_t offset, size_t count, size_t size, size_t data_size)
-{
-    return !count || (data_size - offset) / count >= size;
-}
-
-void skip_dword_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
-
-HRESULT parse_dxbc(const char *data, SIZE_T data_size,
-        HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx) DECLSPEC_HIDDEN;
-
 /* ID3D11Texture1D, ID3D10Texture1D */
 struct d3d_texture1d
 {
@@ -390,12 +374,6 @@ struct d3d11_compute_shader
 HRESULT d3d11_compute_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
         struct d3d11_compute_shader **shader) DECLSPEC_HIDDEN;
 struct d3d11_compute_shader *unsafe_impl_from_ID3D11ComputeShader(ID3D11ComputeShader *iface) DECLSPEC_HIDDEN;
-
-HRESULT shader_parse_signature(DWORD tag, const char *data, DWORD data_size,
-        struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
-struct wined3d_shader_signature_element *shader_find_signature_element(const struct wined3d_shader_signature *s,
-        const char *semantic_name, unsigned int semantic_idx, unsigned int stream_idx) DECLSPEC_HIDDEN;
-void shader_free_signature(struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 
 /* ID3D11ClassLinkage */
 struct d3d11_class_linkage
