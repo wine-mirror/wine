@@ -581,7 +581,7 @@ static ULONG WINAPI CorDebug_Release(ICorDebug *iface)
         if(This->runtimehost)
             ICLRRuntimeHost_Release(This->runtimehost);
 
-        if(This->pCallback)
+        if(This->pCallback2)
             ICorDebugManagedCallback2_Release(This->pCallback2);
 
         if(This->pCallback)
