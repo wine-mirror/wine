@@ -460,7 +460,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
 
     UNICODE_STRING curdir;
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
-    SIZE_T size, env_size;
+    SIZE_T size, env_size = 0;
     void *ptr;
     const WCHAR *env;
     NTSTATUS status = STATUS_SUCCESS;
@@ -485,10 +485,13 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     if (!ShellInfo) ShellInfo = &empty_str;
     if (!RuntimeInfo) RuntimeInfo = &null_str;
 
-    env = Environment;
-    while (*env) env += strlenW(env) + 1;
-    env++;
-    env_size = ROUND_SIZE( (env - Environment) * sizeof(WCHAR) );
+    if (Environment)
+    {
+        env = Environment;
+        while (*env) env += strlenW(env) + 1;
+        env++;
+        env_size = ROUND_SIZE( (env - Environment) * sizeof(WCHAR) );
+    }
 
     size = (sizeof(RTL_USER_PROCESS_PARAMETERS)
             + ROUND_SIZE( ImagePathName->MaximumLength )
@@ -518,8 +521,8 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
         append_unicode_string( &ptr, Desktop, &params->Desktop );
         append_unicode_string( &ptr, ShellInfo, &params->ShellInfo );
         append_unicode_string( &ptr, RuntimeInfo, &params->RuntimeInfo );
-        params->Environment = ptr;
-        memcpy( ptr, Environment, (env - Environment) * sizeof(WCHAR) );
+        if (Environment)
+            params->Environment = memcpy( ptr, Environment, (env - Environment) * sizeof(WCHAR) );
         *result = params;
         if (!(flags & PROCESS_PARAMS_FLAG_NORMALIZED)) RtlDeNormalizeProcessParams( params );
     }
@@ -555,4 +558,91 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
 void WINAPI RtlDestroyProcessParameters( RTL_USER_PROCESS_PARAMETERS *params )
 {
     RtlFreeHeap( GetProcessHeap(), 0, params );
+}
+
+
+static inline void get_unicode_string( UNICODE_STRING *str, WCHAR **src, UINT len )
+{
+    str->Buffer = *src;
+    str->Length = len;
+    str->MaximumLength = len + sizeof(WCHAR);
+    *src += len / sizeof(WCHAR);
+}
+
+/***********************************************************************
+ *           init_user_process_params
+ *
+ * Fill the initial RTL_USER_PROCESS_PARAMETERS structure from the server.
+ */
+void init_user_process_params( SIZE_T data_size )
+{
+    void *ptr;
+    WCHAR *src;
+    SIZE_T info_size, env_size, alloc_size;
+    NTSTATUS status;
+    startup_info_t *info;
+    RTL_USER_PROCESS_PARAMETERS *params = NULL;
+    UNICODE_STRING curdir, dllpath, imagepath, cmdline, title, desktop, shellinfo, runtime;
+
+    if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, data_size ))) return;
+
+    SERVER_START_REQ( get_startup_info )
+    {
+        wine_server_set_reply( req, info, data_size );
+        if (!(status = wine_server_call( req )))
+        {
+            data_size = wine_server_reply_size( reply );
+            info_size = reply->info_size;
+            env_size  = data_size - info_size;
+        }
+    }
+    SERVER_END_REQ;
+    if (status) goto done;
+
+    src = (WCHAR *)(info + 1);
+    get_unicode_string( &curdir, &src, info->curdir_len );
+    get_unicode_string( &dllpath, &src, info->dllpath_len );
+    get_unicode_string( &imagepath, &src, info->imagepath_len );
+    get_unicode_string( &cmdline, &src, info->cmdline_len );
+    get_unicode_string( &title, &src, info->title_len );
+    get_unicode_string( &desktop, &src, info->desktop_len );
+    get_unicode_string( &shellinfo, &src, info->shellinfo_len );
+    get_unicode_string( &runtime, &src, info->runtime_len );
+
+    curdir.MaximumLength = MAX_PATH * sizeof(WCHAR);  /* current directory needs more space */
+    runtime.MaximumLength = runtime.Length;  /* runtime info isn't a real string */
+
+    if (RtlCreateProcessParametersEx( &params, &imagepath, &dllpath, &curdir, &cmdline, NULL,
+                                      &title, &desktop, &shellinfo, &runtime,
+                                      PROCESS_PARAMS_FLAG_NORMALIZED ))
+        goto done;
+
+    NtCurrentTeb()->Peb->ProcessParameters = params;
+    params->DebugFlags      = info->debug_flags;
+    params->ConsoleHandle   = wine_server_ptr_handle( info->console );
+    params->ConsoleFlags    = info->console_flags;
+    params->hStdInput       = wine_server_ptr_handle( info->hstdin );
+    params->hStdOutput      = wine_server_ptr_handle( info->hstdout );
+    params->hStdError       = wine_server_ptr_handle( info->hstderr );
+    params->dwX             = info->x;
+    params->dwY             = info->y;
+    params->dwXSize         = info->xsize;
+    params->dwYSize         = info->ysize;
+    params->dwXCountChars   = info->xchars;
+    params->dwYCountChars   = info->ychars;
+    params->dwFillAttribute = info->attribute;
+    params->dwFlags         = info->flags;
+    params->wShowWindow     = info->show;
+
+    /* environment needs to be a separate memory block */
+    ptr = NULL;
+    alloc_size = max( 1, env_size );
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &alloc_size,
+                                      MEM_COMMIT, PAGE_READWRITE );
+    if (status != STATUS_SUCCESS) goto done;
+    memcpy( ptr, (char *)info + info_size, env_size );
+    params->Environment = ptr;
+
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, info );
 }
