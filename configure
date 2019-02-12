@@ -19985,6 +19985,7 @@ wine_fn_config_makefile dlls/tzres enable_tzres
 wine_fn_config_makefile dlls/ucrtbase enable_ucrtbase
 wine_fn_config_makefile dlls/ucrtbase/tests enable_tests
 wine_fn_config_makefile dlls/uiautomationcore enable_uiautomationcore
+wine_fn_config_makefile dlls/uiautomationcore/tests enable_tests
 wine_fn_config_makefile dlls/uiribbon enable_uiribbon
 wine_fn_config_makefile dlls/unicows enable_unicows
 wine_fn_config_makefile dlls/updspapi enable_updspapi

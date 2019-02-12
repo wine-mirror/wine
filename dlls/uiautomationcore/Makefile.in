@@ -1,4 +1,5 @@
 MODULE = uiautomationcore.dll
+IMPORTLIB = uiautomationcore
 
 C_SRCS = \
 	uia_main.c

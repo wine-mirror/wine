@@ -72,7 +72,7 @@
 @ stub UiaHTextRangeFromVariant
 @ stub UiaHUiaNodeFromVariant
 @ stub UiaHasServerSideProvider
-@ stub UiaHostProviderFromHwnd
+@ stdcall UiaHostProviderFromHwnd(long ptr)
 #@ stub UiaIAccessibleFromProvider
 @ stdcall UiaLookupId(long ptr)
 @ stub UiaNavigate
