@@ -3996,6 +3996,7 @@ static void test_lighting_interface_versions(void)
 
     destroy_material(background);
     destroy_material(emissive);
+    destroy_viewport(device, viewport);
     IDirectDrawSurface_Release(rt);
     IDirect3DDevice2_Release(device);
     ref = IDirectDraw2_Release(ddraw);

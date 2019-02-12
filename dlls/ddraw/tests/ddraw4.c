@@ -4894,6 +4894,7 @@ static void test_lighting_interface_versions(void)
     }
 
     destroy_material(emissive);
+    destroy_viewport(device, viewport);
     IDirectDrawSurface4_Release(rt);
     ref = IDirect3DDevice3_Release(device);
     ok(ref == 0, "Device not properly released, refcount %u.\n", ref);
