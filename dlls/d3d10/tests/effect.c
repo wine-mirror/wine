@@ -1449,7 +1449,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1481,7 +1481,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(constantbuffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, constantbuffer);
@@ -1513,7 +1513,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 4, "BufferOffset is %u, expected 4\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(constantbuffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, constantbuffer);
@@ -1545,7 +1545,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 16, "BufferOffset is %u, expected 16\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(constantbuffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, constantbuffer);
@@ -1577,7 +1577,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 64, "BufferOffset is %u, expected 64\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(constantbuffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, constantbuffer);
@@ -1609,7 +1609,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1641,7 +1641,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1673,7 +1673,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1705,7 +1705,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1737,7 +1737,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1769,7 +1769,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1801,7 +1801,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1833,7 +1833,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1865,7 +1865,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1897,7 +1897,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1929,7 +1929,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1961,7 +1961,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -1993,7 +1993,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -2025,7 +2025,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -2057,7 +2057,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -2089,7 +2089,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
@@ -2121,7 +2121,7 @@ static void test_effect_variable_type_class(void)
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
 
-    check_as((ID3D10EffectVariable *)variable);
+    check_as(variable);
 
     parent = variable->lpVtbl->GetParentConstantBuffer(variable);
     ok(null_buffer == parent, "GetParentConstantBuffer got %p, expected %p\n", parent, null_buffer);
