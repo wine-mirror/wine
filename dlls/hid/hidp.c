@@ -259,6 +259,19 @@ static NTSTATUS find_value(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT 
     return HIDP_STATUS_USAGE_NOT_FOUND;
 }
 
+static LONG sign_extend(ULONG value, const WINE_HID_ELEMENT *element)
+{
+    UINT bit_count = element->bitCount;
+
+    if ((value & (1 << (bit_count - 1)))
+            && element->ElementType == ValueElement
+            && element->caps.value.LogicalMin < 0)
+    {
+        value -= (1 << bit_count);
+    }
+    return value;
+}
+
 NTSTATUS WINAPI HidP_GetScaledUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage,
                                          USHORT LinkCollection, USAGE Usage, PLONG UsageValue,
                                          PHIDP_PREPARSED_DATA PreparsedData, PCHAR Report, ULONG ReportLength)
@@ -277,7 +290,7 @@ NTSTATUS WINAPI HidP_GetScaledUsageValue(HIDP_REPORT_TYPE ReportType, USAGE Usag
                              element->valueStartBit, element->bitCount, &rawValue);
         if (rc != HIDP_STATUS_SUCCESS)
             return rc;
-        *UsageValue = rawValue;
+        *UsageValue = sign_extend(rawValue, element);
     }
 
     return rc;
