@@ -485,6 +485,12 @@ struct d2d_geometry
             ID2D1Geometry *src_geometry;
             D2D_MATRIX_3X2_F transform;
         } transformed;
+        struct
+        {
+            ID2D1Geometry **src_geometries;
+            UINT32 geometry_count;
+            D2D1_FILL_MODE fill_mode;
+        } group;
     } u;
 };
 
@@ -493,6 +499,8 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry,
         ID2D1Factory *factory, const D2D1_RECT_F *rect) DECLSPEC_HIDDEN;
 void d2d_transformed_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory,
         ID2D1Geometry *src_geometry, const D2D_MATRIX_3X2_F *transform) DECLSPEC_HIDDEN;
+HRESULT d2d_geometry_group_init(struct d2d_geometry *geometry, ID2D1Factory *factory,
+        D2D1_FILL_MODE fill_mode, ID2D1Geometry **src_geometries, unsigned int geometry_count) DECLSPEC_HIDDEN;
 struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface) DECLSPEC_HIDDEN;
 
 struct d2d_device
