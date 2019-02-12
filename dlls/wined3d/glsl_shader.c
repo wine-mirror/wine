@@ -1894,10 +1894,10 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
 
         for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
         {
-            if (!state->lights[i])
+            if (!state->light_state.lights[i])
                 continue;
 
-            switch (state->lights[i]->OriginalParms.type)
+            switch (state->light_state.lights[i]->OriginalParms.type)
             {
                 case WINED3D_LIGHT_POINT:
                     ++point_count;
@@ -1912,7 +1912,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
                     ++parallel_point_count;
                     break;
                 default:
-                    FIXME("Unhandled light type %#x.\n", state->lights[i]->OriginalParms.type);
+                    FIXME("Unhandled light type %#x.\n", state->light_state.lights[i]->OriginalParms.type);
                     break;
             }
         }
@@ -1924,7 +1924,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         shader_glsl_ffp_vertex_lightambient_uniform(context, state, prog);
         for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
         {
-            const struct wined3d_light_info *light_info = state->lights[i];
+            const struct wined3d_light_info *light_info = state->light_state.lights[i];
             unsigned int idx;
 
             if (!light_info)
