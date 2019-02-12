@@ -2198,7 +2198,7 @@ static void test_create_texture1d(void)
         desc.Format = DXGI_FORMAT_R32G32B32A32_TYPELESS;
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         desc.MiscFlags = 0;
-        hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, (ID3D11Texture1D **)&texture);
+        hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
         ok(hr == (i ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (SUCCEEDED(hr))
             ID3D11Texture1D_Release(texture);
@@ -2572,7 +2572,7 @@ static void test_create_texture2d(void)
         desc.Format = tests[i].format;
         desc.BindFlags = tests[i].bind_flags;
         desc.MiscFlags = tests[i].misc_flags;
-        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, (ID3D11Texture2D **)&texture);
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
 
         todo_wine_if(todo)
         ok(hr == expected_hr, "Test %u: Got unexpected hr %#x (format %#x).\n",
@@ -2845,7 +2845,7 @@ static void test_create_texture3d(void)
     {
         desc.Format = tests[i].format;
         desc.BindFlags = tests[i].bind_flags;
-        hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, (ID3D11Texture3D **)&texture);
+        hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
 
         todo_wine_if(tests[i].todo)
         ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
@@ -8536,8 +8536,8 @@ static void test_cube_maps(void)
         {
             for (j = 0; j < ARRAY_SIZE(data); ++j)
                 data[j] = sub_resource_idx;
-            ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture, sub_resource_idx, NULL,
-                    data, texture_desc.Width * sizeof(*data), 0);
+            ID3D11DeviceContext_UpdateSubresource(context, texture, sub_resource_idx, NULL, data,
+                    texture_desc.Width * sizeof(*data), 0);
         }
 
         expected_result.y = expected_result.z = 0.0f;
@@ -21344,7 +21344,7 @@ static void test_sampleinfo_instruction(void)
             continue;
         }
 
-        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D11Texture2D **)&texture);
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
         ok(hr == S_OK, "Failed to create texture, hr %#x, sample count %u.\n", hr, sample_count);
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
         ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
@@ -21380,7 +21380,7 @@ static void test_sampleinfo_instruction(void)
             continue;
         }
 
-        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D11Texture2D **)&texture);
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
         ok(hr == S_OK, "Failed to create texture, hr %#x, sample count %u.\n", hr, sample_count);
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
         ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
