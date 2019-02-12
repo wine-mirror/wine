@@ -2722,8 +2722,7 @@ static void test_VarSub(void)
     ok(hres == S_OK && V_VT(&result) == VT_DECIMAL,
         "VarSub: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
     hres = VarR8FromDec(&V_DECIMAL(&result), &r);
-    ok(hres == S_OK && EQ_DOUBLE(r, -6.8),
-        "VarSub: DECIMAL value %f, expected %f\n", r, (double)-15.2);
+    ok(hres == S_OK && EQ_DOUBLE(r, -6.8), "VarSub: DECIMAL value %f, expected %f\n", r, -6.8);
 
     SysFreeString(lbstr);
     SysFreeString(rbstr);
