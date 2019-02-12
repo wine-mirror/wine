@@ -272,6 +272,18 @@ static LONG sign_extend(ULONG value, const WINE_HID_ELEMENT *element)
     return value;
 }
 
+static LONG logical_to_physical(LONG value, const WINE_HID_ELEMENT *element)
+{
+    if (element->caps.value.PhysicalMin || element->caps.value.PhysicalMax)
+    {
+        value = (((ULONGLONG)(value - element->caps.value.LogicalMin)
+                * (element->caps.value.PhysicalMax - element->caps.value.PhysicalMin))
+                / (element->caps.value.LogicalMax - element->caps.value.LogicalMin))
+                + element->caps.value.PhysicalMin;
+    }
+    return value;
+}
+
 NTSTATUS WINAPI HidP_GetScaledUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage,
                                          USHORT LinkCollection, USAGE Usage, PLONG UsageValue,
                                          PHIDP_PREPARSED_DATA PreparsedData, PCHAR Report, ULONG ReportLength)
@@ -290,7 +302,7 @@ NTSTATUS WINAPI HidP_GetScaledUsageValue(HIDP_REPORT_TYPE ReportType, USAGE Usag
                              element->valueStartBit, element->bitCount, &rawValue);
         if (rc != HIDP_STATUS_SUCCESS)
             return rc;
-        *UsageValue = sign_extend(rawValue, element);
+        *UsageValue = logical_to_physical(sign_extend(rawValue, element), element);
     }
 
     return rc;
