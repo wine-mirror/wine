@@ -13256,14 +13256,14 @@ static void test_vertex_buffer_read_write(void)
     hr = IDirect3DVertexBuffer9_Lock(buffer, 0, sizeof(tri), (void **)&data, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     for (i = 0; i < 3; ++i)
-        todo_wine ok(data[i] == 3.0f, "Got unexpected value %.8e, i %u.\n", data[i], i);
+        ok(data[i] == 3.0f, "Got unexpected value %.8e, i %u.\n", data[i], i);
     hr = IDirect3DVertexBuffer9_Unlock(buffer);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer9_Lock(buffer, 0, sizeof(tri), (void **)&data, D3DLOCK_NOOVERWRITE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     for (i = 0; i < 3; ++i)
-        todo_wine ok(data[i] == 3.0f, "Got unexpected value %.8e, i %u.\n", data[i], i);
+        ok(data[i] == 3.0f, "Got unexpected value %.8e, i %u.\n", data[i], i);
     hr = IDirect3DVertexBuffer9_Unlock(buffer);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
