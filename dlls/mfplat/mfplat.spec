@@ -98,7 +98,7 @@
 @ stub MFGetPrivateWorkqueues
 @ stub MFGetSockaddrFromNumericName
 @ stub MFGetStrideForBitmapInfoHeader
-@ stub MFGetSystemTime
+@ stdcall MFGetSystemTime()
 @ stub MFGetTimerPeriodicity
 @ stub MFGetUncompressedVideoFormat
 @ stub MFGetWorkQueueMMCSSClass
