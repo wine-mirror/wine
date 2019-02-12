@@ -59,6 +59,13 @@ static CRITICAL_SECTION_DEBUG hid_critsect_debug =
 };
 static CRITICAL_SECTION hid_xinput_crit = { &hid_critsect_debug, -1, 0, 0, 0, 0 };
 
+struct axis_info
+{
+    LONG min;
+    LONG range;
+    USHORT bits;
+};
+
 struct hid_platform_private {
     PHIDP_PREPARSED_DATA ppd;
     HANDLE device;
@@ -71,50 +78,23 @@ struct hid_platform_private {
     BYTE current_report;
     CHAR *reports[2];
 
-    LONG ThumbLXRange[3];
-    LONG ThumbLYRange[3];
-    LONG LeftTriggerRange[3];
-    LONG ThumbRXRange[3];
-    LONG ThumbRYRange[3];
-    LONG RightTriggerRange[3];
+    struct axis_info lx, ly, ltrigger, rx, ry, rtrigger;
 };
 
 static DWORD last_check = 0;
 
 static void MarkUsage(struct hid_platform_private *private, WORD usage, LONG min, LONG max, USHORT bits)
 {
+    struct axis_info info = {min, max-min, bits};
+
     switch (usage)
     {
-        case HID_USAGE_GENERIC_X:
-            private->ThumbLXRange[0] = min;
-            private->ThumbLXRange[1] = bits;
-            private->ThumbLXRange[2] = max - min;
-        break;
-        case HID_USAGE_GENERIC_Y:
-            private->ThumbLYRange[0] = min;
-            private->ThumbLYRange[1] = bits;
-            private->ThumbLYRange[2] = max - min;
-        break;
-        case HID_USAGE_GENERIC_Z:
-            private->LeftTriggerRange[0] = min;
-            private->LeftTriggerRange[1] = bits;
-            private->LeftTriggerRange[2] = max - min;
-        break;
-        case HID_USAGE_GENERIC_RX:
-            private->ThumbRXRange[0] = min;
-            private->ThumbRXRange[1] = bits;
-            private->ThumbRXRange[2] = max - min;
-        break;
-        case HID_USAGE_GENERIC_RY:
-            private->ThumbRYRange[0] = min;
-            private->ThumbRYRange[1] = bits;
-            private->ThumbRYRange[2] = max - min;
-        break;
-        case HID_USAGE_GENERIC_RZ:
-            private->RightTriggerRange[0] = min;
-            private->RightTriggerRange[1] = bits;
-            private->RightTriggerRange[2] = max - min;
-        break;
+        case HID_USAGE_GENERIC_X: private->lx = info; break;
+        case HID_USAGE_GENERIC_Y: private->ly = info; break;
+        case HID_USAGE_GENERIC_Z: private->ltrigger = info; break;
+        case HID_USAGE_GENERIC_RX: private->rx = info; break;
+        case HID_USAGE_GENERIC_RY: private->ry = info; break;
+        case HID_USAGE_GENERIC_RZ: private->rtrigger = info; break;
     }
 }
 
@@ -166,27 +146,27 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
     }
     HeapFree(GetProcessHeap(), 0, value_caps);
 
-    if (private->LeftTriggerRange[1])
+    if (private->ltrigger.bits)
         xinput_caps->Gamepad.bLeftTrigger = (1u << (sizeof(xinput_caps->Gamepad.bLeftTrigger) + 1)) - 1;
     else
         WARN("Missing axis LeftTrigger\n");
-    if (private->RightTriggerRange[1])
+    if (private->rtrigger.bits)
         xinput_caps->Gamepad.bRightTrigger = (1u << (sizeof(xinput_caps->Gamepad.bRightTrigger) + 1)) - 1;
     else
         WARN("Missing axis RightTrigger\n");
-    if (private->ThumbLXRange[1])
+    if (private->lx.bits)
         xinput_caps->Gamepad.sThumbLX = (1u << (sizeof(xinput_caps->Gamepad.sThumbLX) + 1)) - 1;
     else
         WARN("Missing axis ThumbLX\n");
-    if (private->ThumbLYRange[1])
+    if (private->ly.bits)
         xinput_caps->Gamepad.sThumbLY = (1u << (sizeof(xinput_caps->Gamepad.sThumbLY) + 1)) - 1;
     else
         WARN("Missing axis ThumbLY\n");
-    if (private->ThumbRXRange[1])
+    if (private->rx.bits)
         xinput_caps->Gamepad.sThumbRX = (1u << (sizeof(xinput_caps->Gamepad.sThumbRX) + 1)) - 1;
     else
         WARN("Missing axis ThumbRX\n");
-    if (private->ThumbRYRange[1])
+    if (private->ry.bits)
         xinput_caps->Gamepad.sThumbRY = (1u << (sizeof(xinput_caps->Gamepad.sThumbRY) + 1)) - 1;
     else
         WARN("Missing axis ThumbRY\n");
@@ -338,8 +318,8 @@ void HID_destroy_gamepads(xinput_controller *devices)
     LeaveCriticalSection(&hid_xinput_crit);
 }
 
-#define SCALE_SHORT(v,r) (SHORT)((((0xffff)*(v - r[0]))/r[2])-32767)
-#define SCALE_BYTE(v,r) (BYTE)((((0xff)*(v - r[0]))/r[2]))
+#define SCALE_SHORT(v,r) (SHORT)((((0xffff)*(v - (r).min))/(r).range)-32767)
+#define SCALE_BYTE(v,r) (BYTE)((((0xff)*(v - (r).min))/(r).range))
 
 void HID_update_state(xinput_controller* device)
 {
@@ -402,22 +382,22 @@ void HID_update_state(xinput_controller* device)
     }
 
     HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbLX = SCALE_SHORT(value, private->ThumbLXRange);
+    device->state.Gamepad.sThumbLX = SCALE_SHORT(value, private->lx);
 
     HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbLY = -SCALE_SHORT(value, private->ThumbLYRange);
+    device->state.Gamepad.sThumbLY = -SCALE_SHORT(value, private->ly);
 
     HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbRX = SCALE_SHORT(value, private->ThumbRXRange);
+    device->state.Gamepad.sThumbRX = SCALE_SHORT(value, private->rx);
 
     HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbRY = -SCALE_SHORT(value, private->ThumbRYRange);
+    device->state.Gamepad.sThumbRY = -SCALE_SHORT(value, private->ry);
 
     HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.bRightTrigger = SCALE_BYTE(value, private->RightTriggerRange);
+    device->state.Gamepad.bRightTrigger = SCALE_BYTE(value, private->rtrigger);
 
     HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.bLeftTrigger = SCALE_BYTE(value, private->LeftTriggerRange);
+    device->state.Gamepad.bLeftTrigger = SCALE_BYTE(value, private->ltrigger);
     LeaveCriticalSection(&private->crit);
 }
 
