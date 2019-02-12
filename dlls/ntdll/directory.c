@@ -2269,25 +2269,16 @@ done:
  */
 static void init_redirects(void)
 {
-    UNICODE_STRING nt_name;
-    ANSI_STRING unix_name;
-    NTSTATUS status;
+    static const char windows_dir[] = "/dosdevices/c:/windows";
+    const char *config_dir = wine_get_config_dir();
+    char *dir;
     struct stat st;
     unsigned int i;
 
-    if (!RtlDosPathNameToNtPathName_U( user_shared_data->NtSystemRoot, &nt_name, NULL, NULL ))
-    {
-        ERR( "can't convert %s\n", debugstr_w(user_shared_data->NtSystemRoot) );
-        return;
-    }
-    status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN_IF, FALSE );
-    RtlFreeUnicodeString( &nt_name );
-    if (status)
-    {
-        ERR( "cannot open %s (%x)\n", debugstr_w(user_shared_data->NtSystemRoot), status );
-        return;
-    }
-    if (!stat( unix_name.Buffer, &st ))
+    if (!(dir = RtlAllocateHeap( GetProcessHeap(), 0, strlen(config_dir) + sizeof(windows_dir) ))) return;
+    strcpy( dir, config_dir );
+    strcat( dir, windows_dir );
+    if (!stat( dir, &st ))
     {
         windir.dev = st.st_dev;
         windir.ino = st.st_ino;
@@ -2295,11 +2286,12 @@ static void init_redirects(void)
         for (i = 0; i < nb_redirects; i++)
         {
             if (!redirects[i].dos_target) continue;
-            redirects[i].unix_target = get_redirect_target( unix_name.Buffer, redirects[i].dos_target );
+            redirects[i].unix_target = get_redirect_target( dir, redirects[i].dos_target );
             TRACE( "%s -> %s\n", debugstr_w(redirects[i].source), redirects[i].unix_target );
         }
     }
-    RtlFreeAnsiString( &unix_name );
+    else ERR( "%s: %s\n", dir, strerror(errno) );
+    RtlFreeHeap( GetProcessHeap(), 0, dir );
 
 }
 
