@@ -21,7 +21,7 @@
 @ stub CM_Get_Device_Interface_PropertyW
 @ stub CM_Get_Device_Interface_Property_KeysW
 @ stdcall CM_Get_Parent(ptr long long) setupapi.CM_Get_Parent
-@ stub CM_Get_Sibling
+@ stdcall CM_Get_Sibling(ptr long long) setupapi.CM_Get_Sibling
 @ stdcall CM_Locate_DevNodeW(ptr wstr long) setupapi.CM_Locate_DevNodeW
 @ stub CM_Open_Class_KeyW
 @ stdcall CM_Open_DevNode_Key(long long long long ptr long) setupapi.CM_Open_DevNode_Key

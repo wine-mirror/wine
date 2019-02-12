@@ -501,6 +501,16 @@ CONFIGRET WINAPI CM_Get_Class_Registry_PropertyW(LPGUID class, ULONG prop, PULON
 }
 
 /***********************************************************************
+ *             CM_Get_Sibling  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Sibling(
+    PDEVINST pdnDevInst, DEVINST DevInst, ULONG ulFlags)
+{
+    FIXME("%p 0x%08x 0x%08x: stub\n", pdnDevInst, DevInst, ulFlags);
+    return CR_FAILURE;
+}
+
+/***********************************************************************
  *             CM_Get_Sibling_Ex  (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Get_Sibling_Ex(
