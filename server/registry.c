@@ -1866,6 +1866,14 @@ void init_registry(void)
     /* start the periodic save timer */
     set_periodic_save_timer();
 
+    /* create windows directories */
+
+    if (!mkdir( "drive_c/windows", 0777 ))
+    {
+        mkdir( "drive_c/windows/system32", 0777 );
+        if (prefix_type == PREFIX_64BIT) mkdir( "drive_c/windows/syswow64", 0777 );
+    }
+
     /* go back to the server dir */
     if (fchdir( server_dir_fd ) == -1) fatal_error( "chdir to server dir: %s\n", strerror( errno ));
 }

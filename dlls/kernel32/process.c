@@ -1125,28 +1125,16 @@ done:
 
 /***********************************************************************
  *           init_windows_dirs
- *
- * Create the windows and system directories if necessary.
  */
 static void init_windows_dirs(void)
 {
     static const WCHAR default_syswow64W[] = {'C',':','\\','w','i','n','d','o','w','s',
                                               '\\','s','y','s','w','o','w','6','4',0};
 
-    if (!CreateDirectoryW( DIR_Windows, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
-        ERR( "directory %s could not be created, error %u\n",
-             debugstr_w(DIR_Windows), GetLastError() );
-    if (!CreateDirectoryW( DIR_System, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
-        ERR( "directory %s could not be created, error %u\n",
-             debugstr_w(DIR_System), GetLastError() );
-
     if (is_win64 || is_wow64)   /* SysWow64 is always defined on 64-bit */
     {
         DIR_SysWow64 = default_syswow64W;
         memcpy( winevdm, default_syswow64W, sizeof(default_syswow64W) - sizeof(WCHAR) );
-        if (!CreateDirectoryW( DIR_SysWow64, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
-            ERR( "directory %s could not be created, error %u\n",
-                 debugstr_w(DIR_SysWow64), GetLastError() );
     }
 }
 
