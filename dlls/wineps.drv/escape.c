@@ -397,15 +397,14 @@ INT PSDRV_StartPage( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
+    TRACE("%p\n", dev->hdc);
+
     if(!physDev->job.OutOfPage) {
         FIXME("Already started a page?\n");
 	return 1;
     }
 
-    if(physDev->job.PageNo++ == 0) {
-        if(!PSDRV_WriteHeader( dev, physDev->job.doc_name ))
-            return 0;
-    }
+    physDev->job.PageNo++;
 
     if(!PSDRV_WriteNewPage( dev ))
         return 0;
@@ -420,6 +419,8 @@ INT PSDRV_StartPage( PHYSDEV dev )
 INT PSDRV_EndPage( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
+    TRACE("%p\n", dev->hdc);
 
     if(physDev->job.OutOfPage) {
         FIXME("Already ended a page?\n");
@@ -483,6 +484,13 @@ INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
         ClosePrinter(physDev->job.hprinter);
 	return 0;
     }
+
+    if (!PSDRV_WriteHeader( dev, doc->lpszDocName )) {
+        WARN("Failed to write header\n");
+        ClosePrinter(physDev->job.hprinter);
+        return 0;
+    }
+
     physDev->job.banding = FALSE;
     physDev->job.OutOfPage = TRUE;
     physDev->job.PageNo = 0;
@@ -500,6 +508,8 @@ INT PSDRV_EndDoc( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     INT ret = 1;
+
+    TRACE("%p\n", dev->hdc);
 
     if(!physDev->job.id) {
         FIXME("hJob == 0. Now what?\n");

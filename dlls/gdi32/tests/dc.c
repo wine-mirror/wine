@@ -1433,7 +1433,6 @@ static void print_something(HDC hdc)
 
         while (*p == '\r' || *p == '\n') p++;
     }
-todo_wine
     ok(p && !memcmp(p, psadobe, sizeof(psadobe)), "wrong signature: %.14s\n", p ? p : buf);
 
     DeleteFileA(file_name);
