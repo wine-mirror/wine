@@ -3398,9 +3398,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     }
 
     peb->LoaderLock = &loader_section;
-    peb->ProcessParameters->ImagePathName = wm->ldr.FullDllName;
-    if (!peb->ProcessParameters->WindowTitle.Buffer)
-        peb->ProcessParameters->WindowTitle = wm->ldr.FullDllName;
+    update_user_process_params( &wm->ldr.FullDllName );
     version_init( wm->ldr.FullDllName.Buffer );
     virtual_set_large_address_space();
 

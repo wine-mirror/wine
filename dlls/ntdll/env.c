@@ -669,3 +669,44 @@ void init_user_process_params( SIZE_T data_size )
 done:
     RtlFreeHeap( GetProcessHeap(), 0, info );
 }
+
+
+/***********************************************************************
+ *           update_user_process_params
+ *
+ * Rebuild the RTL_USER_PROCESS_PARAMETERS structure once we have initialized all the fields.
+ */
+void update_user_process_params( const UNICODE_STRING *image )
+{
+    RTL_USER_PROCESS_PARAMETERS *params, *cur_params = NtCurrentTeb()->Peb->ProcessParameters;
+    UNICODE_STRING title = cur_params->WindowTitle;
+    WCHAR *env = cur_params->Environment;
+
+    cur_params->Environment = NULL;  /* avoid copying it */
+    if (!title.Buffer) title = *image;
+    if (RtlCreateProcessParametersEx( &params, image, &cur_params->DllPath, NULL,
+                                      &cur_params->CommandLine, NULL, &title, &cur_params->Desktop,
+                                      &cur_params->ShellInfo, &cur_params->RuntimeInfo,
+                                      PROCESS_PARAMS_FLAG_NORMALIZED ))
+        return;
+
+    params->DebugFlags      = cur_params->DebugFlags;
+    params->ConsoleHandle   = cur_params->ConsoleHandle;
+    params->ConsoleFlags    = cur_params->ConsoleFlags;
+    params->hStdInput       = cur_params->hStdInput;
+    params->hStdOutput      = cur_params->hStdOutput;
+    params->hStdError       = cur_params->hStdError;
+    params->dwX             = cur_params->dwX;
+    params->dwY             = cur_params->dwY;
+    params->dwXSize         = cur_params->dwXSize;
+    params->dwYSize         = cur_params->dwYSize;
+    params->dwXCountChars   = cur_params->dwXCountChars;
+    params->dwYCountChars   = cur_params->dwYCountChars;
+    params->dwFillAttribute = cur_params->dwFillAttribute;
+    params->dwFlags         = cur_params->dwFlags;
+    params->wShowWindow     = cur_params->wShowWindow;
+    params->Environment     = env;
+
+    RtlFreeHeap( GetProcessHeap(), 0, cur_params );
+    NtCurrentTeb()->Peb->ProcessParameters = params;
+}
