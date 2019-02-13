@@ -49,16 +49,18 @@ static void check_output_raw(IStream *stream, const void *expected, SIZE_T size,
     SIZE_T content_size;
     HGLOBAL hglobal;
     HRESULT hr;
-    char *ptr;
+    WCHAR *ptr;
 
     hr = GetHGlobalFromStream(stream, &hglobal);
     ok_(__FILE__, line)(hr == S_OK, "Failed to get the stream handle, hr %#x.\n", hr);
 
     content_size = GlobalSize(hglobal);
-    ok_(__FILE__, line)(size <= content_size, "Unexpected test output size.\n");
+    ok_(__FILE__, line)(size == content_size, "Unexpected test output size %ld.\n", content_size);
     ptr = GlobalLock(hglobal);
     if (size <= content_size)
         ok_(__FILE__, line)(!memcmp(expected, ptr, size), "Unexpected output content.\n");
+    if (size != content_size && *ptr == 0xfeff)
+        ok_(__FILE__, line)(0, "Content: %s.\n", wine_dbgstr_wn(ptr, content_size / sizeof(WCHAR)));
 
     GlobalUnlock(hglobal);
 }
@@ -719,11 +721,14 @@ static void test_omitxmldeclaration(void)
 
 static void test_bom(void)
 {
+    static const WCHAR piW[] = {0xfeff,'<','?','x','m','l',' ','v','e','r','s','i','o','n','=','"','1','.','0','"','?','>'};
+    static const WCHAR aopenW[] = {0xfeff,'<','a'};
+    static const WCHAR afullW[] = {0xfeff,'<','a',' ','/','>'};
     static const WCHAR versionW[] = {'v','e','r','s','i','o','n','=','"','1','.','0','"',0};
     static const WCHAR utf16W[] = {'u','t','f','-','1','6',0};
     static const WCHAR xmlW[] = {'x','m','l',0};
+    static const WCHAR bomW[] = {0xfeff};
     IXmlWriterOutput *output;
-    unsigned char *ptr;
     IXmlWriter *writer;
     IStream *stream;
     HGLOBAL hglobal;
@@ -750,12 +755,7 @@ static void test_bom(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(ptr[0] == 0xff && ptr[1] == 0xfe, "got %x,%x\n", ptr[0], ptr[1]);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT_RAW(stream, bomW, sizeof(bomW));
 
     IStream_Release(stream);
     IUnknown_Release(output);
@@ -776,12 +776,7 @@ static void test_bom(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(ptr[0] == 0xff && ptr[1] == 0xfe, "got %x,%x\n", ptr[0], ptr[1]);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT_RAW(stream, piW, sizeof(piW));
 
     IUnknown_Release(output);
     IStream_Release(stream);
@@ -802,12 +797,7 @@ static void test_bom(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(ptr[0] == 0xff && ptr[1] == 0xfe, "got %x,%x\n", ptr[0], ptr[1]);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT_RAW(stream, aopenW, sizeof(aopenW));
 
     IUnknown_Release(output);
     IStream_Release(stream);
@@ -833,10 +823,7 @@ static void test_bom(void)
     hr = GetHGlobalFromStream(stream, &hglobal);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ptr = GlobalLock(hglobal);
-    ok(ptr[0] == 0xff && ptr[1] == 0xfe && ptr[2] == '<', "Unexpected output: %#x,%#x,%#x\n",
-            ptr[0], ptr[1], ptr[2]);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT_RAW(stream, afullW, sizeof(afullW));
 
     IUnknown_Release(output);
     IStream_Release(stream);
