@@ -125,6 +125,7 @@ enum alg_id
     ALG_ID_SHA256,
     ALG_ID_SHA384,
     ALG_ID_SHA512,
+    ALG_ID_ECDH_P256,
     ALG_ID_ECDSA_P256,
     ALG_ID_ECDSA_P384,
 };
@@ -156,8 +157,9 @@ struct key_symmetric
 
 struct key_asymmetric
 {
-    UCHAR *pubkey;
-    ULONG  pubkey_len;
+    gnutls_privkey_t  handle;
+    UCHAR            *pubkey;
+    ULONG             pubkey_len;
 };
 
 struct key
@@ -224,6 +226,7 @@ NTSTATUS key_symmetric_encrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULO
 NTSTATUS key_symmetric_decrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_symmetric_get_tag( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_init( struct key *, struct algorithm *, const UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_asymmetric_generate( struct key * ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_verify( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, DWORD ) DECLSPEC_HIDDEN;
 NTSTATUS key_destroy( struct key * ) DECLSPEC_HIDDEN;
 BOOL key_is_symmetric( struct key * ) DECLSPEC_HIDDEN;

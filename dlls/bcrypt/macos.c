@@ -205,6 +205,12 @@ NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULO
     return STATUS_NOT_IMPLEMENTED;
 }
 
+NTSTATUS key_asymmetric_generate( struct key *key )
+{
+    FIXME( "not implemented on Mac\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS key_destroy( struct key *key )
 {
     if (key->u.s.ref_encrypt) CCCryptorRelease( key->u.s.ref_encrypt );

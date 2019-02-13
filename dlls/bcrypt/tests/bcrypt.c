@@ -26,31 +26,34 @@
 
 #include "wine/test.h"
 
-static NTSTATUS (WINAPI *pBCryptOpenAlgorithmProvider)(BCRYPT_ALG_HANDLE *, LPCWSTR, LPCWSTR, ULONG);
 static NTSTATUS (WINAPI *pBCryptCloseAlgorithmProvider)(BCRYPT_ALG_HANDLE, ULONG);
-static NTSTATUS (WINAPI *pBCryptGetFipsAlgorithmMode)(BOOLEAN *);
 static NTSTATUS (WINAPI *pBCryptCreateHash)(BCRYPT_ALG_HANDLE, BCRYPT_HASH_HANDLE *, PUCHAR, ULONG, PUCHAR,
                                             ULONG, ULONG);
-static NTSTATUS (WINAPI *pBCryptHash)(BCRYPT_ALG_HANDLE, UCHAR *, ULONG, UCHAR *, ULONG, UCHAR *, ULONG);
-static NTSTATUS (WINAPI *pBCryptHashData)(BCRYPT_HASH_HANDLE, PUCHAR, ULONG, ULONG);
-static NTSTATUS (WINAPI *pBCryptDuplicateHash)(BCRYPT_HASH_HANDLE, BCRYPT_HASH_HANDLE *, UCHAR *, ULONG, ULONG);
-static NTSTATUS (WINAPI *pBCryptFinishHash)(BCRYPT_HASH_HANDLE, PUCHAR, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptDecrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
+                                         ULONG *, ULONG);
 static NTSTATUS (WINAPI *pBCryptDestroyHash)(BCRYPT_HASH_HANDLE);
-static NTSTATUS (WINAPI *pBCryptGenRandom)(BCRYPT_ALG_HANDLE, PUCHAR, ULONG, ULONG);
-static NTSTATUS (WINAPI *pBCryptGetProperty)(BCRYPT_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG *, ULONG);
-static NTSTATUS (WINAPI *pBCryptSetProperty)(BCRYPT_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptDestroyKey)(BCRYPT_KEY_HANDLE);
+static NTSTATUS (WINAPI *pBCryptDuplicateHash)(BCRYPT_HASH_HANDLE, BCRYPT_HASH_HANDLE *, UCHAR *, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptDuplicateKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE *, UCHAR *, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptEncrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
+                                         ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptExportKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptFinalizeKeyPair)(BCRYPT_KEY_HANDLE, ULONG);
+static NTSTATUS (WINAPI *pBCryptFinishHash)(BCRYPT_HASH_HANDLE, PUCHAR, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptGenerateKeyPair)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptGenerateSymmetricKey)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE *, PUCHAR, ULONG,
                                                       PUCHAR, ULONG, ULONG);
-static NTSTATUS (WINAPI *pBCryptEncrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
-                                      ULONG *, ULONG);
-static NTSTATUS (WINAPI *pBCryptDecrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
-                                      ULONG *, ULONG);
-static NTSTATUS (WINAPI *pBCryptDuplicateKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE *, UCHAR *, ULONG, ULONG);
-static NTSTATUS (WINAPI *pBCryptDestroyKey)(BCRYPT_KEY_HANDLE);
+static NTSTATUS (WINAPI *pBCryptGetFipsAlgorithmMode)(BOOLEAN *);
+static NTSTATUS (WINAPI *pBCryptGetProperty)(BCRYPT_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptGenRandom)(BCRYPT_ALG_HANDLE, PUCHAR, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptHash)(BCRYPT_ALG_HANDLE, UCHAR *, ULONG, UCHAR *, ULONG, UCHAR *, ULONG);
+static NTSTATUS (WINAPI *pBCryptHashData)(BCRYPT_HASH_HANDLE, PUCHAR, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptImportKey)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, BCRYPT_KEY_HANDLE *,
                                            PUCHAR, ULONG, PUCHAR, ULONG, ULONG);
-static NTSTATUS (WINAPI *pBCryptExportKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG *, ULONG);
-static NTSTATUS (WINAPI *pBCryptImportKeyPair)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, BCRYPT_KEY_HANDLE *, UCHAR *, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptImportKeyPair)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, BCRYPT_KEY_HANDLE *,
+                                               UCHAR *, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptOpenAlgorithmProvider)(BCRYPT_ALG_HANDLE *, LPCWSTR, LPCWSTR, ULONG);
+static NTSTATUS (WINAPI *pBCryptSetProperty)(BCRYPT_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptVerifySignature)(BCRYPT_KEY_HANDLE, VOID *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG);
 
 static void test_BCryptGenRandom(void)
@@ -1654,6 +1657,31 @@ static void test_RSA(void)
     ok(!ret, "pBCryptCloseAlgorithmProvider failed: %08x\n", ret);
 }
 
+static void test_ECDH(void)
+{
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    NTSTATUS status;
+
+    status = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_P256_ALGORITHM, NULL, 0);
+    if (status)
+    {
+        skip("Failed to open BCRYPT_ECDH_P256_ALGORITHM provider %08x\n", status);
+        return;
+    }
+
+    key = NULL;
+    status = pBCryptGenerateKeyPair(alg, &key, 256, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(key != NULL, "key not set\n");
+
+    status = pBCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    pBCryptDestroyKey(key);
+    pBCryptCloseAlgorithmProvider(alg, 0);
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -1665,26 +1693,28 @@ START_TEST(bcrypt)
         return;
     }
 
-    pBCryptOpenAlgorithmProvider = (void *)GetProcAddress(module, "BCryptOpenAlgorithmProvider");
     pBCryptCloseAlgorithmProvider = (void *)GetProcAddress(module, "BCryptCloseAlgorithmProvider");
-    pBCryptGetFipsAlgorithmMode = (void *)GetProcAddress(module, "BCryptGetFipsAlgorithmMode");
     pBCryptCreateHash = (void *)GetProcAddress(module, "BCryptCreateHash");
+    pBCryptDecrypt = (void *)GetProcAddress(module, "BCryptDecrypt");
+    pBCryptDestroyHash = (void *)GetProcAddress(module, "BCryptDestroyHash");
+    pBCryptDestroyKey = (void *)GetProcAddress(module, "BCryptDestroyKey");
+    pBCryptDuplicateHash = (void *)GetProcAddress(module, "BCryptDuplicateHash");
+    pBCryptDuplicateKey = (void *)GetProcAddress(module, "BCryptDuplicateKey");
+    pBCryptEncrypt = (void *)GetProcAddress(module, "BCryptEncrypt");
+    pBCryptExportKey = (void *)GetProcAddress(module, "BCryptExportKey");
+    pBCryptFinalizeKeyPair = (void *)GetProcAddress(module, "BCryptFinalizeKeyPair");
+    pBCryptFinishHash = (void *)GetProcAddress(module, "BCryptFinishHash");
+    pBCryptGenerateKeyPair = (void *)GetProcAddress(module, "BCryptGenerateKeyPair");
+    pBCryptGenerateSymmetricKey = (void *)GetProcAddress(module, "BCryptGenerateSymmetricKey");
+    pBCryptGenRandom = (void *)GetProcAddress(module, "BCryptGenRandom");
+    pBCryptGetFipsAlgorithmMode = (void *)GetProcAddress(module, "BCryptGetFipsAlgorithmMode");
+    pBCryptGetProperty = (void *)GetProcAddress(module, "BCryptGetProperty");
     pBCryptHash = (void *)GetProcAddress(module, "BCryptHash");
     pBCryptHashData = (void *)GetProcAddress(module, "BCryptHashData");
-    pBCryptDuplicateHash = (void *)GetProcAddress(module, "BCryptDuplicateHash");
-    pBCryptFinishHash = (void *)GetProcAddress(module, "BCryptFinishHash");
-    pBCryptDestroyHash = (void *)GetProcAddress(module, "BCryptDestroyHash");
-    pBCryptGenRandom = (void *)GetProcAddress(module, "BCryptGenRandom");
-    pBCryptGetProperty = (void *)GetProcAddress(module, "BCryptGetProperty");
-    pBCryptSetProperty = (void *)GetProcAddress(module, "BCryptSetProperty");
-    pBCryptGenerateSymmetricKey = (void *)GetProcAddress(module, "BCryptGenerateSymmetricKey");
-    pBCryptEncrypt = (void *)GetProcAddress(module, "BCryptEncrypt");
-    pBCryptDecrypt = (void *)GetProcAddress(module, "BCryptDecrypt");
-    pBCryptDuplicateKey = (void *)GetProcAddress(module, "BCryptDuplicateKey");
-    pBCryptDestroyKey = (void *)GetProcAddress(module, "BCryptDestroyKey");
     pBCryptImportKey = (void *)GetProcAddress(module, "BCryptImportKey");
-    pBCryptExportKey = (void *)GetProcAddress(module, "BCryptExportKey");
     pBCryptImportKeyPair = (void *)GetProcAddress(module, "BCryptImportKeyPair");
+    pBCryptOpenAlgorithmProvider = (void *)GetProcAddress(module, "BCryptOpenAlgorithmProvider");
+    pBCryptSetProperty = (void *)GetProcAddress(module, "BCryptSetProperty");
     pBCryptVerifySignature = (void *)GetProcAddress(module, "BCryptVerifySignature");
 
     test_BCryptGenRandom();
@@ -1698,6 +1728,7 @@ START_TEST(bcrypt)
     test_key_import_export();
     test_ECDSA();
     test_RSA();
+    test_ECDH();
 
     if (pBCryptHash) /* >= Win 10 */
         test_BcryptHash();
