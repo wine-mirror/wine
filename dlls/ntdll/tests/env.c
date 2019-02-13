@@ -37,6 +37,8 @@ static NTSTATUS (WINAPI *pRtlCreateProcessParameters)(RTL_USER_PROCESS_PARAMETER
                                                       const UNICODE_STRING*, const UNICODE_STRING*);
 static void (WINAPI *pRtlDestroyProcessParameters)(RTL_USER_PROCESS_PARAMETERS *);
 
+static void *initial_env;
+
 static WCHAR  small_env[] = {'f','o','o','=','t','o','t','o',0,
                              'f','o','=','t','i','t','i',0,
                              'f','o','o','o','=','t','u','t','u',0,
@@ -289,17 +291,21 @@ static WCHAR *get_params_string( RTL_USER_PROCESS_PARAMETERS *params, UNICODE_ST
 static UINT_PTR check_string_( int line, RTL_USER_PROCESS_PARAMETERS *params, UNICODE_STRING *str,
                                const UNICODE_STRING *expect, UINT_PTR pos )
 {
-    ok_(__FILE__,line)( str->Length == expect->Length, "wrong length %u/%u\n",
-                        str->Length, expect->Length );
-    ok_(__FILE__,line)( str->MaximumLength == expect->MaximumLength ||
-                        broken( str->MaximumLength == 1 && expect->MaximumLength == 2 ), /* winxp */
-                         "wrong maxlength %u/%u\n", str->MaximumLength, expect->MaximumLength );
+    if (expect)
+    {
+        ok_(__FILE__,line)( str->Length == expect->Length, "wrong length %u/%u\n",
+                            str->Length, expect->Length );
+        ok_(__FILE__,line)( str->MaximumLength == expect->MaximumLength ||
+                            broken( str->MaximumLength == 1 && expect->MaximumLength == 2 ), /* winxp */
+                            "wrong maxlength %u/%u\n", str->MaximumLength, expect->MaximumLength );
+    }
     if (!str->MaximumLength)
     {
         ok_(__FILE__,line)( str->Buffer == NULL, "buffer not null %p\n", str->Buffer );
         return pos;
     }
     ok_(__FILE__,line)( (UINT_PTR)str->Buffer == ((pos + sizeof(void*) - 1) & ~(sizeof(void *) - 1)) ||
+                        (!expect && (UINT_PTR)str->Buffer == pos) ||  /* initial params are not aligned */
                         broken( (UINT_PTR)str->Buffer == ((pos + 3) & ~3) ), "wrong buffer %lx/%lx\n",
                         (UINT_PTR)str->Buffer, pos );
     if (str->Length < str->MaximumLength)
@@ -453,11 +459,67 @@ static void test_process_params(void)
     }
     else ok( broken(TRUE), "environment not inside block\n" );  /* <= win2k3 */
     pRtlDestroyProcessParameters( params );
+
+    /* also test the actual parameters of the current process */
+
+    ok( cur_params->Flags & PROCESS_PARAMS_FLAG_NORMALIZED, "current params not normalized\n" );
+    if (VirtualQuery( cur_params, &info, sizeof(info) ) && info.AllocationBase == cur_params)
+    {
+        ok( broken(TRUE), "not a heap block %p\n", cur_params );  /* winxp */
+        ok( cur_params->AllocationSize == info.RegionSize,
+            "wrong AllocationSize %x/%lx\n", cur_params->AllocationSize, info.RegionSize );
+    }
+    else
+    {
+        size = HeapSize( GetProcessHeap(), 0, cur_params );
+        ok( size != ~0UL, "not a heap block %p\n", cur_params );
+        ok( cur_params->AllocationSize == cur_params->Size,
+            "wrong AllocationSize %x/%x\n", cur_params->AllocationSize, cur_params->Size );
+        ok( cur_params->Size == size, "wrong Size %x/%lx\n", cur_params->Size, size );
+    }
+
+    /* CurrentDirectory points outside the params, and DllPath may be null */
+    pos = (UINT_PTR)cur_params->DllPath.Buffer;
+    if (!pos) pos = (UINT_PTR)cur_params->ImagePathName.Buffer;
+    pos = check_string( cur_params, &cur_params->DllPath, NULL, pos );
+    pos = check_string( cur_params, &cur_params->ImagePathName, NULL, pos );
+    pos = check_string( cur_params, &cur_params->CommandLine, NULL, pos );
+    pos = check_string( cur_params, &cur_params->WindowTitle, NULL, pos );
+    pos = check_string( cur_params, &cur_params->Desktop, NULL, pos );
+    pos = check_string( cur_params, &cur_params->ShellInfo, NULL, pos );
+    pos = check_string( cur_params, &cur_params->RuntimeInfo, NULL, pos );
+    /* environment may follow */
+    str = (WCHAR *)pos;
+    if (pos - (UINT_PTR)cur_params < cur_params->Size)
+    {
+        while (*str) str += lstrlenW(str) + 1;
+        str++;
+    }
+    ok( (char *)str == (char *)cur_params + cur_params->Size,
+        "wrong end ptr %p/%p\n", str, (char *)cur_params + cur_params->Size );
+
+    /* initial environment is a separate block */
+
+    ok( (char *)initial_env < (char *)cur_params || (char *)initial_env >= (char *)cur_params + size,
+        "initial environment inside block %p / %p\n", cur_params, initial_env );
+
+    if (VirtualQuery( initial_env, &info, sizeof(info) ) && info.AllocationBase == initial_env)
+    {
+        todo_wine
+        ok( broken(TRUE), "env not a heap block %p / %p\n", cur_params, initial_env );  /* winxp */
+    }
+    else
+    {
+        size = HeapSize( GetProcessHeap(), 0, initial_env );
+        ok( size != ~0UL, "env is not a heap block %p / %p\n", cur_params, initial_env );
+    }
 }
 
 START_TEST(env)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
+
+    initial_env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
 
     pRtlMultiByteToUnicodeN = (void *)GetProcAddress(mod,"RtlMultiByteToUnicodeN");
     pRtlCreateEnvironment = (void*)GetProcAddress(mod, "RtlCreateEnvironment");
