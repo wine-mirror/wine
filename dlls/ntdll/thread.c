@@ -67,8 +67,6 @@ struct startup_info
 
 static PEB *peb;
 static PEB_LDR_DATA ldr;
-static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
-static WCHAR current_dir[MAX_PATH];
 static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static RTL_BITMAP fls_bitmap;
@@ -192,7 +190,6 @@ void thread_init(void)
     peb = addr;
 
     peb->FastPebLock        = &peb_lock;
-    peb->ProcessParameters  = &params;
     peb->TlsBitmap          = &tls_bitmap;
     peb->TlsExpansionBitmap = &tls_expansion_bitmap;
     peb->FlsBitmap          = &fls_bitmap;
@@ -201,9 +198,6 @@ void thread_init(void)
     peb->OSMinorVersion     = 1;
     peb->OSBuildNumber      = 0xA28;
     peb->OSPlatformId       = VER_PLATFORM_WIN32_NT;
-    params.CurrentDirectory.DosPath.Buffer = current_dir;
-    params.CurrentDirectory.DosPath.MaximumLength = sizeof(current_dir);
-    params.wShowWindow = 1; /* SW_SHOWNORMAL */
     ldr.Length = sizeof(ldr);
     ldr.Initialized = TRUE;
     RtlInitializeBitMap( &tls_bitmap, peb->TlsBitmapBits, sizeof(peb->TlsBitmapBits) * 8 );
@@ -257,22 +251,7 @@ void thread_init(void)
         exit(1);
     }
 
-    /* allocate user parameters */
-    if (info_size)
-    {
-        init_user_process_params( info_size );
-    }
-    else
-    {
-        if (isatty(0) || isatty(1) || isatty(2))
-            params.ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */
-        if (!isatty(0))
-            wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params.hStdInput );
-        if (!isatty(1))
-            wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdOutput );
-        if (!isatty(2))
-            wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
-    }
+    init_user_process_params( info_size );
 
     /* initialize time values in user_shared_data */
     NtQuerySystemTime( &now );

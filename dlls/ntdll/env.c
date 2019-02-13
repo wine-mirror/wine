@@ -22,6 +22,9 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -33,6 +36,10 @@
 #include "winnt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
+
+static WCHAR empty[] = {0};
+static const UNICODE_STRING empty_str = { 0, sizeof(empty), empty };
+static const UNICODE_STRING null_str = { 0, 0, NULL };
 
 /******************************************************************************
  *  NtQuerySystemEnvironmentValue		[NTDLL.@]
@@ -454,10 +461,6 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
                                               const UNICODE_STRING *RuntimeInfo,
                                               ULONG flags )
 {
-    static WCHAR empty[] = {0};
-    static const UNICODE_STRING empty_str = { 0, sizeof(empty), empty };
-    static const UNICODE_STRING null_str = { 0, 0, NULL };
-
     UNICODE_STRING curdir;
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
     SIZE_T size, env_size = 0;
@@ -479,7 +482,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     curdir.MaximumLength = MAX_PATH * sizeof(WCHAR);
 
     if (!CommandLine) CommandLine = ImagePathName;
-    if (!Environment) Environment = cur_params->Environment;
+    if (!Environment && cur_params) Environment = cur_params->Environment;
     if (!WindowTitle) WindowTitle = &empty_str;
     if (!Desktop) Desktop = &empty_str;
     if (!ShellInfo) ShellInfo = &empty_str;
@@ -509,7 +512,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
         params->AllocationSize = size;
         params->Size           = size;
         params->Flags          = PROCESS_PARAMS_FLAG_NORMALIZED;
-        params->ConsoleFlags   = cur_params->ConsoleFlags;
+        if (cur_params) params->ConsoleFlags = cur_params->ConsoleFlags;
         /* all other fields are zero */
 
         ptr = params + 1;
@@ -583,6 +586,26 @@ void init_user_process_params( SIZE_T data_size )
     startup_info_t *info;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     UNICODE_STRING curdir, dllpath, imagepath, cmdline, title, desktop, shellinfo, runtime;
+
+    if (!data_size)
+    {
+        if (RtlCreateProcessParametersEx( &params, &null_str, &null_str, &empty_str, &null_str, NULL,
+                                          &null_str, &null_str, &null_str, &null_str,
+                                          PROCESS_PARAMS_FLAG_NORMALIZED ))
+            return;
+
+        NtCurrentTeb()->Peb->ProcessParameters = params;
+        if (isatty(0) || isatty(1) || isatty(2))
+            params->ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */
+        if (!isatty(0))
+            wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params->hStdInput );
+        if (!isatty(1))
+            wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdOutput );
+        if (!isatty(2))
+            wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
+        params->wShowWindow = 1; /* SW_SHOWNORMAL */
+        return;
+    }
 
     if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, data_size ))) return;
 
