@@ -964,7 +964,7 @@ static HRESULT bidi_compute_isolating_runs_set(UINT8 baselevel, UINT8 *classes, 
     HRESULT hr = S_OK;
     Run *runs;
 
-    runs = heap_alloc(count * sizeof(Run));
+    runs = heap_calloc(count, sizeof(*runs));
     if (!runs)
         return E_OUTOFMEMORY;
 

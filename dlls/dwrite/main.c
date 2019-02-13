@@ -483,13 +483,14 @@ HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedSt
         return S_FALSE;
 
     strings = impl_from_IDWriteLocalizedStrings(iface);
-    strings_clone = heap_alloc(sizeof(struct localizedstrings));
-    if (!strings_clone) return E_OUTOFMEMORY;
+    strings_clone = heap_alloc(sizeof(*strings_clone));
+    if (!strings_clone)
+        return E_OUTOFMEMORY;
 
     strings_clone->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
     strings_clone->ref = 1;
     strings_clone->count = strings->count;
-    strings_clone->data = heap_alloc(sizeof(struct localizedpair) * strings_clone->count);
+    strings_clone->data = heap_calloc(strings_clone->count, sizeof(*strings_clone->data));
     if (!strings_clone->data) {
         heap_free(strings_clone);
         return E_OUTOFMEMORY;

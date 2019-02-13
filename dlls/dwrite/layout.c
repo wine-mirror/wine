@@ -594,7 +594,7 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
         after = before = DWRITE_BREAK_CONDITION_NEUTRAL;
 
     if (!layout->actual_breakpoints) {
-        layout->actual_breakpoints = heap_alloc(sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
+        layout->actual_breakpoints = heap_calloc(layout->len, sizeof(*layout->actual_breakpoints));
         if (!layout->actual_breakpoints)
             return E_OUTOFMEMORY;
         memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
@@ -933,15 +933,15 @@ static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular
 
     range = get_layout_range_by_pos(layout, run->descr.textPosition);
     run->descr.localeName = range->locale;
-    run->clustermap = heap_alloc(run->descr.stringLength * sizeof(*run->clustermap));
+    run->clustermap = heap_calloc(run->descr.stringLength, sizeof(*run->clustermap));
 
     max_count = 3 * run->descr.stringLength / 2 + 16;
-    run->glyphs = heap_alloc(max_count * sizeof(*run->glyphs));
+    run->glyphs = heap_calloc(max_count, sizeof(*run->glyphs));
     if (!run->clustermap || !run->glyphs)
         return E_OUTOFMEMORY;
 
-    text_props = heap_alloc(run->descr.stringLength * sizeof(*text_props));
-    glyph_props = heap_alloc(max_count * sizeof(*glyph_props));
+    text_props = heap_calloc(run->descr.stringLength, sizeof(*text_props));
+    glyph_props = heap_calloc(max_count, sizeof(*glyph_props));
     if (!text_props || !glyph_props) {
         heap_free(text_props);
         heap_free(glyph_props);
@@ -960,8 +960,8 @@ static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular
 
             max_count = run->glyphcount;
 
-            run->glyphs = heap_alloc(max_count * sizeof(*run->glyphs));
-            glyph_props = heap_alloc(max_count * sizeof(*glyph_props));
+            run->glyphs = heap_calloc(max_count, sizeof(*run->glyphs));
+            glyph_props = heap_calloc(max_count, sizeof(*glyph_props));
             if (!run->glyphs || !glyph_props) {
                 hr = E_OUTOFMEMORY;
                 break;
@@ -983,8 +983,8 @@ static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular
     run->run.glyphIndices = run->glyphs;
     run->descr.clusterMap = run->clustermap;
 
-    run->advances = heap_alloc(run->glyphcount * sizeof(*run->advances));
-    run->offsets = heap_alloc(run->glyphcount * sizeof(*run->offsets));
+    run->advances = heap_calloc(run->glyphcount, sizeof(*run->advances));
+    run->offsets = heap_calloc(run->glyphcount, sizeof(*run->offsets));
     if (!run->advances || !run->offsets)
         return E_OUTOFMEMORY;
 
@@ -1034,8 +1034,8 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
     /* Cluster data arrays are allocated once, assuming one text position per cluster. */
     if (!layout->clustermetrics && layout->len) {
-        layout->clustermetrics = heap_alloc(layout->len*sizeof(*layout->clustermetrics));
-        layout->clusters = heap_alloc(layout->len*sizeof(*layout->clusters));
+        layout->clustermetrics = heap_calloc(layout->len, sizeof(*layout->clustermetrics));
+        layout->clusters = heap_calloc(layout->len, sizeof(*layout->clusters));
         if (!layout->clustermetrics || !layout->clusters) {
             heap_free(layout->clustermetrics);
             heap_free(layout->clusters);
@@ -1122,7 +1122,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
     if (!layout->nominal_breakpoints) {
         IDWriteTextAnalyzer *analyzer;
 
-        layout->nominal_breakpoints = heap_alloc(layout->len * sizeof(*layout->nominal_breakpoints));
+        layout->nominal_breakpoints = heap_calloc(layout->len, sizeof(*layout->nominal_breakpoints));
         if (!layout->nominal_breakpoints)
             return E_OUTOFMEMORY;
 
@@ -1291,7 +1291,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     length = layout->clusters[last_cluster].position - layout->clusters[first_cluster].position +
         layout->clustermetrics[last_cluster].length;
 
-    run->clustermap = heap_alloc(sizeof(UINT16)*length);
+    run->clustermap = heap_calloc(length, sizeof(*run->clustermap));
     if (!run->clustermap) {
         heap_free(run);
         return E_OUTOFMEMORY;
@@ -1386,8 +1386,8 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
 
     if (!layout->line_alloc) {
         layout->line_alloc = 5;
-        layout->linemetrics = heap_alloc(layout->line_alloc * sizeof(*layout->linemetrics));
-        layout->lines = heap_alloc(layout->line_alloc * sizeof(*layout->lines));
+        layout->linemetrics = heap_calloc(layout->line_alloc, sizeof(*layout->linemetrics));
+        layout->lines = heap_calloc(layout->line_alloc, sizeof(*layout->lines));
         if (!layout->linemetrics || !layout->lines) {
             heap_free(layout->linemetrics);
             heap_free(layout->lines);
@@ -5787,7 +5787,7 @@ HRESULT create_typography(IDWriteTypography **ret)
     typography->allocated = 2;
     typography->count = 0;
 
-    typography->features = heap_alloc(typography->allocated*sizeof(DWRITE_FONT_FEATURE));
+    typography->features = heap_calloc(typography->allocated, sizeof(*typography->features));
     if (!typography->features) {
         heap_free(typography);
         return E_OUTOFMEMORY;

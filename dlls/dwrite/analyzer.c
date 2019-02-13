@@ -448,7 +448,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
     short *break_class;
     int i, j;
 
-    break_class = heap_alloc(count*sizeof(short));
+    break_class = heap_calloc(count, sizeof(*break_class));
     if (!break_class)
         return E_OUTOFMEMORY;
 
@@ -937,8 +937,8 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface
     if (FAILED(hr))
         return hr;
 
-    levels = heap_alloc(length*sizeof(*levels));
-    explicit = heap_alloc(length*sizeof(*explicit));
+    levels = heap_calloc(length, sizeof(*levels));
+    explicit = heap_calloc(length, sizeof(*explicit));
 
     if (!levels || !explicit) {
         hr = E_OUTOFMEMORY;
@@ -1013,7 +1013,7 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnaly
     if (len < length) {
         UINT32 read;
 
-        buff = heap_alloc(length*sizeof(WCHAR));
+        buff = heap_calloc(length, sizeof(*buff));
         if (!buff)
             return E_OUTOFMEMORY;
         memcpy(buff, text, len*sizeof(WCHAR));
@@ -1032,7 +1032,7 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnaly
         text = buff;
     }
 
-    breakpoints = heap_alloc(length*sizeof(*breakpoints));
+    breakpoints = heap_calloc(length, sizeof(*breakpoints));
     if (!breakpoints) {
         hr = E_OUTOFMEMORY;
         goto done;
@@ -1176,7 +1176,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     if (max_glyph_count < length)
         return E_NOT_SUFFICIENT_BUFFER;
 
-    string = heap_alloc(sizeof(WCHAR)*length);
+    string = heap_calloc(length, sizeof(*string));
     if (!string)
         return E_OUTOFMEMORY;
 
@@ -1432,7 +1432,7 @@ static HRESULT apply_cluster_spacing(float leading_spacing, float trailing_spaci
             break;
     }
 
-    deltas = heap_alloc((end - start + 1) * sizeof(*deltas));
+    deltas = heap_calloc(end - start + 1, sizeof(*deltas));
     if (!deltas)
         return E_OUTOFMEMORY;
 
@@ -1677,7 +1677,7 @@ static HRESULT WINAPI dwritetextanalyzer1_GetTextComplexity(IDWriteTextAnalyzer2
 
     /* fetch indices */
     if (*is_simple && indices) {
-        UINT32 *codepoints = heap_alloc(*len_read*sizeof(UINT32));
+        UINT32 *codepoints = heap_calloc(*len_read, sizeof(*codepoints));
         if (!codepoints)
             return E_OUTOFMEMORY;
 
@@ -2305,7 +2305,7 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
         struct fallback_mapping *mappings;
 
         if (fallbackbuilder->mappings_capacity == 0) {
-            if ((mappings = heap_alloc(sizeof(*fallbackbuilder->mappings) * 16)))
+            if ((mappings = heap_calloc(16, sizeof(*mappings))))
                 fallbackbuilder->mappings_capacity = 16;
         }
         else {
@@ -2321,7 +2321,7 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
 
     mapping = &fallbackbuilder->mappings[fallbackbuilder->mappings_count++];
 
-    mapping->ranges = heap_alloc(sizeof(*mapping->ranges) * ranges_count);
+    mapping->ranges = heap_calloc(ranges_count, sizeof(*mapping->ranges));
     memcpy(mapping->ranges, ranges, sizeof(*mapping->ranges) * ranges_count);
     mapping->ranges_count = ranges_count;
     mapping->families = heap_alloc_zero(sizeof(*mapping->families) * families_count);

@@ -2227,7 +2227,7 @@ static HRESULT WINAPI dwritefontfamily_GetMatchingFonts(IDWriteFontFamily1 *ifac
         return E_OUTOFMEMORY;
 
     /* Allocate as many as family has, not all of them will be necessary used. */
-    fonts->fonts = heap_alloc(sizeof(*fonts->fonts) * This->data->font_count);
+    fonts->fonts = heap_calloc(This->data->font_count, sizeof(*fonts->fonts));
     if (!fonts->fonts) {
         heap_free(fonts);
         return E_OUTOFMEMORY;
@@ -2718,7 +2718,7 @@ static HRESULT init_font_collection(struct dwrite_fontcollection *collection, BO
     collection->ref = 1;
     collection->family_count = 0;
     collection->family_alloc = is_system ? 30 : 5;
-    collection->family_data = heap_alloc(sizeof(*collection->family_data) * collection->family_alloc);
+    collection->family_data = heap_calloc(collection->family_alloc, sizeof(*collection->family_data));
     if (!collection->family_data)
         return E_OUTOFMEMORY;
 
@@ -3567,7 +3567,7 @@ static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct 
     data->has_oblique_face = 0;
     data->has_italic_face = 0;
 
-    data->fonts = heap_alloc(sizeof(*data->fonts)*data->font_alloc);
+    data->fonts = heap_calloc(data->font_alloc, sizeof(*data->fonts));
     if (!data->fonts) {
         heap_free(data);
         return E_OUTOFMEMORY;
@@ -5475,8 +5475,8 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     SetRectEmpty(&analysis->bounds);
     analysis->run = *desc->run;
     IDWriteFontFace_AddRef(analysis->run.fontFace);
-    analysis->glyphs = heap_alloc(desc->run->glyphCount * sizeof(*analysis->glyphs));
-    analysis->origins = heap_alloc(desc->run->glyphCount * sizeof(*analysis->origins));
+    analysis->glyphs = heap_calloc(desc->run->glyphCount, sizeof(*analysis->glyphs));
+    analysis->origins = heap_calloc(desc->run->glyphCount, sizeof(*analysis->origins));
 
     if (!analysis->glyphs || !analysis->origins) {
         heap_free(analysis->glyphs);
@@ -5814,12 +5814,12 @@ HRESULT create_colorglyphenum(float originX, float originY, const DWRITE_GLYPH_R
         return DWRITE_E_NOCOLOR;
     }
 
-    colorglyphenum->advances = heap_alloc(run->glyphCount * sizeof(FLOAT));
-    colorglyphenum->color_advances = heap_alloc(run->glyphCount * sizeof(FLOAT));
-    colorglyphenum->glyphindices = heap_alloc(run->glyphCount * sizeof(UINT16));
+    colorglyphenum->advances = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->advances));
+    colorglyphenum->color_advances = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->color_advances));
+    colorglyphenum->glyphindices = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->glyphindices));
     if (run->glyphOffsets) {
-        colorglyphenum->offsets = heap_alloc(run->glyphCount * sizeof(*colorglyphenum->offsets));
-        colorglyphenum->color_offsets = heap_alloc(run->glyphCount * sizeof(*colorglyphenum->color_offsets));
+        colorglyphenum->offsets = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->offsets));
+        colorglyphenum->color_offsets = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->color_offsets));
         memcpy(colorglyphenum->offsets, run->glyphOffsets, run->glyphCount * sizeof(*run->glyphOffsets));
     }
 
@@ -6311,7 +6311,7 @@ static HRESULT WINAPI inmemoryfontfileloader_CreateInMemoryFontFileReference(IDW
         }
         else {
             loader->capacity = 16;
-            loader->streams = heap_alloc(loader->capacity * sizeof(*loader->streams));
+            loader->streams = heap_calloc(loader->capacity, sizeof(*loader->streams));
         }
     }
 
