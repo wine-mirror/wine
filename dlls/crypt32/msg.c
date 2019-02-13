@@ -2999,6 +2999,37 @@ static BOOL CDecodeEnvelopedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
     return ret;
 }
 
+static BOOL CRYPT_CopyUnauthAttr(void *pvData, DWORD *pcbData,
+ const CMSG_CMS_SIGNER_INFO *in)
+{
+    DWORD size;
+    BOOL ret;
+
+    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
+
+    size = CRYPT_SizeOfAttributes(&in->UnauthAttrs);
+    if (!pvData)
+    {
+        *pcbData = size;
+        ret = TRUE;
+    }
+    else if (*pcbData < size)
+    {
+        *pcbData = size;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        CRYPT_ATTRIBUTES *out = pvData;
+
+        CRYPT_ConstructAttributes(out,&in->UnauthAttrs);
+        ret = TRUE;
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
 static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
  DWORD dwIndex, void *pvData, DWORD *pcbData)
 {
@@ -3167,6 +3198,18 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
                 SetLastError(CRYPT_E_INVALID_INDEX);
             else
                 ret = CRYPT_CopyCMSSignerInfo(pvData, pcbData,
+                 &msg->u.signed_data.info->rgSignerInfo[dwIndex]);
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_SIGNER_UNAUTH_ATTR_PARAM:
+        if (msg->u.signed_data.info)
+        {
+            if (dwIndex >= msg->u.signed_data.info->cSignerInfo)
+                SetLastError(CRYPT_E_INVALID_INDEX);
+            else
+                ret = CRYPT_CopyUnauthAttr(pvData, pcbData,
                  &msg->u.signed_data.info->rgSignerInfo[dwIndex]);
         }
         else
