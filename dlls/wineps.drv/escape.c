@@ -97,13 +97,54 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
 	    case CLIP_TO_PATH:
 	    case END_PATH:
 	    /*case DRAWPATTERNRECT:*/
+
+            /* PageMaker checks for it */
+            case DOWNLOADHEADER:
+
+            /* PageMaker doesn't check for DOWNLOADFACE and GETFACENAME but
+             * uses them, they are supposed to be supported by any PS printer.
+             */
+            case DOWNLOADFACE:
+
+            /* PageMaker checks for these as a part of process of detecting
+             * a "fully compatible" PS printer, but doesn't actually use them.
+             */
+            case OPENCHANNEL:
+            case CLOSECHANNEL:
 	        return TRUE;
+
+            /* Windows PS driver reports 0, but still supports this escape */
+            case GETFACENAME:
+                return FALSE; /* suppress the FIXME below */
 
 	    default:
 		FIXME("QUERYESCSUPPORT(%d) - not supported.\n", num);
 	        return FALSE;
 	    }
 	}
+
+    case OPENCHANNEL:
+        FIXME("OPENCHANNEL: stub\n");
+        return 1;
+
+    case CLOSECHANNEL:
+        FIXME("CLOSECHANNEL: stub\n");
+        return 1;
+
+    case DOWNLOADHEADER:
+        FIXME("DOWNLOADHEADER: stub\n");
+        /* should return name of the downloaded procset */
+        *(char *)out_data = 0;
+        return 1;
+
+    case GETFACENAME:
+        FIXME("GETFACENAME: stub\n");
+        lstrcpynA(out_data, "Courier", cbOutput);
+        return 1;
+
+    case DOWNLOADFACE:
+        FIXME("DOWNLOADFACE: stub\n");
+        return 1;
 
     case MFCOMMENT:
     {
