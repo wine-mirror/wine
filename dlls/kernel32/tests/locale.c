@@ -3762,6 +3762,14 @@ static void test_EnumUILanguageA(void)
   SetLastError(ERROR_SUCCESS);
   ret = pEnumUILanguagesA(luilocale_proc2A, 0, 0);
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  ok(enumCount == 1, "enumCount = %u\n", enumCount);
+
+  enumCount = 0;
+  SetLastError(ERROR_SUCCESS);
+  ret = pEnumUILanguagesA(luilocale_proc2A, MUI_LANGUAGE_ID, 0);
+  ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_FLAGS), /* winxp */
+     "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  if (ret) ok(enumCount == 1, "enumCount = %u\n", enumCount);
 
   SetLastError(ERROR_SUCCESS);
   ret = pEnumUILanguagesA(NULL, 0, 0);

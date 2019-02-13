@@ -4814,7 +4814,7 @@ BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA pUILangEnumProc, DWORD dwFlags
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
-    if(dwFlags) {
+    if(dwFlags & ~MUI_LANGUAGE_ID) {
 	SetLastError(ERROR_INVALID_FLAGS);
 	return FALSE;
     }
@@ -4843,7 +4843,7 @@ BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
-    if(dwFlags) {
+    if(dwFlags & ~MUI_LANGUAGE_ID) {
 	SetLastError(ERROR_INVALID_FLAGS);
 	return FALSE;
     }
