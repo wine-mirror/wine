@@ -205,6 +205,18 @@ NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULO
     return STATUS_NOT_IMPLEMENTED;
 }
 
+NTSTATUS key_export_ecc( struct key *key, UCHAR *output, ULONG len, ULONG *ret_len )
+{
+    FIXME( "not implemented on Mac\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS key_import_ecc( struct key *key, UCHAR *input, ULONG len )
+{
+    FIXME( "not implemented on Mac\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS key_asymmetric_generate( struct key *key )
 {
     FIXME( "not implemented on Mac\n" );

@@ -230,6 +230,8 @@ NTSTATUS key_asymmetric_generate( struct key * ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_verify( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, DWORD ) DECLSPEC_HIDDEN;
 NTSTATUS key_destroy( struct key * ) DECLSPEC_HIDDEN;
 BOOL key_is_symmetric( struct key * ) DECLSPEC_HIDDEN;
+NTSTATUS key_export_ecc( struct key *, UCHAR *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
+NTSTATUS key_import_ecc( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 
 BOOL gnutls_initialize(void) DECLSPEC_HIDDEN;
 void gnutls_uninitialize(void) DECLSPEC_HIDDEN;

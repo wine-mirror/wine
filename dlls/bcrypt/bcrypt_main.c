@@ -821,6 +821,10 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         memcpy( output, key->u.a.pubkey, key->u.a.pubkey_len );
         return STATUS_SUCCESS;
     }
+    else if (!strcmpW( type, BCRYPT_ECCPRIVATE_BLOB ))
+    {
+        return key_export_ecc( key, output, output_len, size );
+    }
 
     FIXME( "unsupported key type %s\n", debugstr_w(type) );
     return STATUS_NOT_IMPLEMENTED;
@@ -1055,6 +1059,45 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         *ret_key = key;
         return STATUS_SUCCESS;
     }
+    else if (!strcmpW( type, BCRYPT_ECCPRIVATE_BLOB ))
+    {
+        BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
+        DWORD key_size, magic;
+
+        if (input_len < sizeof(*ecc_blob)) return STATUS_INVALID_PARAMETER;
+
+        switch (alg->id)
+        {
+        case ALG_ID_ECDH_P256:
+            key_size = 32;
+            magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
+            break;
+
+        default:
+            FIXME( "algorithm %u does not yet support importing blob of type %s\n", alg->id, debugstr_w(type) );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        if (ecc_blob->dwMagic != magic) return STATUS_NOT_SUPPORTED;
+        if (ecc_blob->cbKey != key_size || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 3)
+            return STATUS_INVALID_PARAMETER;
+
+        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+        key->hdr.magic = MAGIC_KEY;
+        if ((status = key_asymmetric_init( key, alg, NULL, 0 )))
+        {
+            heap_free( key );
+            return status;
+        }
+        if ((status = key_import_ecc( key, input, input_len )))
+        {
+            heap_free( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
     else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ))
     {
         BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)input;
@@ -1159,6 +1202,18 @@ static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, voi
 
 static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *ret_key, UCHAR *input,
                                  ULONG input_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS key_export_ecc( struct key *key, UCHAR *output, ULONG len, ULONG *ret_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS key_import_ecc( struct key *key, UCHAR *input, ULONG len )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;

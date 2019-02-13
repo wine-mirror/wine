@@ -1657,12 +1657,23 @@ static void test_RSA(void)
     ok(!ret, "pBCryptCloseAlgorithmProvider failed: %08x\n", ret);
 }
 
+static BYTE eccprivkey[] =
+{
+    0x45, 0x43, 0x4b, 0x32, 0x20, 0x00, 0x00, 0x00, 0xfb, 0xbd, 0x3d, 0x20, 0x1b, 0x6d, 0x66, 0xb3,
+    0x7c, 0x9f, 0x89, 0xf3, 0xe4, 0x41, 0x16, 0xa5, 0x68, 0x52, 0x77, 0xac, 0xab, 0x55, 0xb2, 0x6c,
+    0xb0, 0x23, 0x55, 0xcb, 0x96, 0x14, 0xfd, 0x0b, 0x1c, 0xef, 0xdf, 0x07, 0x6d, 0x31, 0xaf, 0x39,
+    0xce, 0x8c, 0x8f, 0x9d, 0x75, 0xd0, 0x7b, 0xea, 0x81, 0xdc, 0x40, 0x21, 0x1f, 0x58, 0x22, 0x5f,
+    0x72, 0x55, 0xfc, 0x58, 0x8a, 0xeb, 0x88, 0x5d, 0x02, 0x09, 0x90, 0xd2, 0xe3, 0x36, 0xac, 0xfe,
+    0x83, 0x13, 0x6c, 0x88, 0x1a, 0xab, 0x9b, 0xdd, 0xaa, 0x8a, 0xee, 0x69, 0x9a, 0x6a, 0x62, 0x86,
+    0x6a, 0x13, 0x69, 0x88, 0xb7, 0xd5, 0xa3, 0xcd
+};
+
 static void test_ECDH(void)
 {
     BYTE *buf;
     BCRYPT_ECCKEY_BLOB *ecckey;
     BCRYPT_ALG_HANDLE alg;
-    BCRYPT_KEY_HANDLE key;
+    BCRYPT_KEY_HANDLE key, privkey, pubkey;
     NTSTATUS status;
     ULONG size;
 
@@ -1682,7 +1693,6 @@ static void test_ECDH(void)
     ok(status == STATUS_SUCCESS, "got %08x\n", status);
 
     size = 0;
-    SetLastError(0xdeadbeef);
     status = pBCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, NULL, 0, &size, 0);
     ok(status == STATUS_SUCCESS, "got %08x\n", status);
     ok(size, "size not set\n");
@@ -1694,13 +1704,47 @@ static void test_ECDH(void)
     ok(ecckey->dwMagic == BCRYPT_ECDH_PUBLIC_P256_MAGIC, "got %08x\n", ecckey->dwMagic);
     ok(ecckey->cbKey == 32, "got %u\n", ecckey->cbKey);
     ok(size == sizeof(*ecckey) + ecckey->cbKey * 2, "got %u\n", size);
-    pBCryptDestroyKey(key);
 
-    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buf, size, 0);
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &pubkey, buf, size, 0);
     ok(status == STATUS_SUCCESS, "got %08x\n", status);
     HeapFree(GetProcessHeap(), 0, buf);
 
+    size = 0;
+    status = pBCryptExportKey(key, NULL, BCRYPT_ECCPRIVATE_BLOB, NULL, 0, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(size, "size not set\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    status = pBCryptExportKey(key, NULL, BCRYPT_ECCPRIVATE_BLOB, buf, size, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ecckey = (BCRYPT_ECCKEY_BLOB *)buf;
+    ok(ecckey->dwMagic == BCRYPT_ECDH_PRIVATE_P256_MAGIC, "got %08x\n", ecckey->dwMagic);
+    ok(ecckey->cbKey == 32, "got %u\n", ecckey->cbKey);
+    ok(size == sizeof(*ecckey) + ecckey->cbKey * 3, "got %u\n", size);
+
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &privkey, buf, size, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    HeapFree(GetProcessHeap(), 0, buf);
+    pBCryptDestroyKey(pubkey);
+    pBCryptDestroyKey(privkey);
     pBCryptDestroyKey(key);
+
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &privkey, eccprivkey, sizeof(eccprivkey), 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    size = 0;
+    status = pBCryptExportKey(privkey, NULL, BCRYPT_ECCPRIVATE_BLOB, NULL, 0, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(size, "size not set\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    status = pBCryptExportKey(privkey, NULL, BCRYPT_ECCPRIVATE_BLOB, buf, size, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(size == sizeof(eccprivkey), "got %u\n", size);
+    ok(!memcmp(buf, eccprivkey, size), "wrong data\n");
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    pBCryptDestroyKey(privkey);
     pBCryptCloseAlgorithmProvider(alg, 0);
 }
 
