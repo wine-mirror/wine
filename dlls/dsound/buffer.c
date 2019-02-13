@@ -923,11 +923,16 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(IDirectSoundBuffer8 
                 return S_OK;
 	}
 
-	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
+        if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
+            if(This->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
                 IDirectSoundNotify_AddRef(&This->IDirectSoundNotify_iface);
                 *ppobj = &This->IDirectSoundNotify_iface;
                 return S_OK;
-	}
+            }
+
+            TRACE( "App requested IDirectSoundNotify without DSBCAPS_CTRLPOSITIONNOTIFY flag.\n");
+            return E_NOINTERFACE;
+        }
 
 	if ( IsEqualGUID( &IID_IDirectSound3DBuffer, riid ) ) {
             if(This->dsbd.dwFlags & DSBCAPS_CTRL3D){
