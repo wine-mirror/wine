@@ -4236,6 +4236,7 @@ static void test_mappings(void)
 {
     char temp_path[MAX_PATH];
     char file_name[MAX_PATH];
+    DWORD data, num_bytes;
     HANDLE hfile;
 
     GetTempPathA(MAX_PATH, temp_path);
@@ -4247,6 +4248,13 @@ static void test_mappings(void)
     SetEndOfFile(hfile);
 
     test_mapping( hfile, SEC_COMMIT, FALSE );
+
+    /* test that file was not modified */
+    SetFilePointer(hfile, 0, NULL, FILE_BEGIN);
+    ok(ReadFile(hfile, &data, sizeof(data), &num_bytes, NULL), "ReadFile failed\n");
+    ok(num_bytes == sizeof(data), "num_bytes = %d\n", num_bytes);
+    todo_wine
+    ok(!data, "data = %x\n", data);
 
     CloseHandle( hfile );
 
