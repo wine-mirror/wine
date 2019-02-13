@@ -3001,40 +3001,55 @@ static const DWORD test_effect_states_effect_blob[] =
 };
 #define TEST_EFFECT_STATES_VSHADER_POS 271
 
+static const D3DXVECTOR4 fvect_filler = {-9999.0f, -9999.0f, -9999.0f, -9999.0f};
+
+static void test_effect_clear_vconsts(IDirect3DDevice9 *device)
+{
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < 256; ++i)
+    {
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, i, &fvect_filler.x, 1);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    }
+}
+
 static void test_effect_states(IDirect3DDevice9 *device)
 {
-    D3DMATRIX test_mat =
+    static const D3DMATRIX test_mat =
     {{{
         -1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f
     }}};
-    D3DMATRIX test_mat_camera =
+    static const D3DMATRIX test_mat_camera =
     {{{
         4.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 6.0f
     }}};
-    D3DMATRIX test_mat_world1 =
+    static const D3DMATRIX test_mat_world1 =
     {{{
         2.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 4.0f
     }}};
-    D3DMATRIX mat;
-    HRESULT hr;
+
+    IDirect3DVertexShader9 *vshader;
+    float float_data[4];
     ID3DXEffect *effect;
+    UINT byte_code_size;
+    void *byte_code;
+    D3DLIGHT9 light;
+    D3DMATRIX mat;
     UINT npasses;
     DWORD value;
-    IDirect3DVertexShader9 *vshader;
-    void *byte_code;
-    UINT byte_code_size;
+    HRESULT hr;
     BOOL bval;
-    D3DLIGHT9 light;
-    float float_data[4];
 
     hr = D3DXCreateEffect(device, test_effect_states_effect_blob, sizeof(test_effect_states_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
@@ -3085,6 +3100,8 @@ static void test_effect_states(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix does not match.\n");
+
+    test_effect_clear_vconsts(device);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
@@ -4367,20 +4384,6 @@ static void test_effect_preshader_op_results_(unsigned int line, IDirect3DDevice
     }
 }
 
-static const D3DXVECTOR4 fvect_filler = {-9999.0f, -9999.0f, -9999.0f, -9999.0f};
-
-static void test_effect_preshader_clear_vconsts(IDirect3DDevice9 *device)
-{
-    unsigned int i;
-    HRESULT hr;
-
-    for (i = 0; i < 256; ++i)
-    {
-        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, i, &fvect_filler.x, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    }
-}
-
 static const D3DXVECTOR4 test_effect_preshader_fvect_v[] =
 {
     {0.0f,   0.0f,  0.0f,  0.0f},
@@ -4588,7 +4591,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
 
     for (i = 0; i < 224; ++i)
     {
@@ -5443,7 +5446,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
 
     for (i = 0; i < ARRAY_SIZE(check_vconsts_parameters); ++i)
     {
-        test_effect_preshader_clear_vconsts(device);
+        test_effect_clear_vconsts(device);
         param = effect->lpVtbl->GetParameterByName(effect, NULL, check_vconsts_parameters[i].param_name);
         ok(!!param, "GetParameterByName failed.\n");
         hr = effect->lpVtbl->GetValue(effect, param, buffer, sizeof(buffer));
@@ -5473,7 +5476,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
                 check_bconsts_parameters[i].param_name);
     }
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "g_Selector");
     ok(!!param, "GetParameterByName failed.\n");
     fvect.x = fvect.y = fvect.z = fvect.w = 0.0f;
@@ -5484,7 +5487,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[0].const_updated_mask,
                 check_vconsts_parameters[0].param_name);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "arr2");
     ok(!!param, "GetParameterByName failed.\n");
     param = effect->lpVtbl->GetParameterElement(effect, param, 0);
@@ -5496,7 +5499,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
                 check_vconsts_parameters[10].param_name);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "arr2");
     ok(!!param, "GetParameterByName failed.\n");
     param = effect->lpVtbl->GetParameterElement(effect, param, 1);
@@ -5509,7 +5512,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[10].const_updated_mask,
                 check_vconsts_parameters[10].param_name);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "arr2");
     ok(!!param, "GetParameterByName failed.\n");
     fvect.x = 92.0f;
@@ -5520,7 +5523,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[10].const_updated_mask,
                 check_vconsts_parameters[10].param_name);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "arr2");
     ok(!!param, "GetParameterByName failed.\n");
     param = effect->lpVtbl->GetParameterElement(effect, param, 1);
@@ -5532,7 +5535,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
                 check_vconsts_parameters[10].param_name);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "g_Pos1");
     ok(!!param, "GetParameterByName failed.\n");
     fvect.x = fvect.y = fvect.z = fvect.w = 0.0f;
@@ -5543,7 +5546,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[1].const_updated_mask,
                 check_vconsts_parameters[1].param_name);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "ts1");
     ok(!!param, "GetParameterByName failed.\n");
     param = effect->lpVtbl->GetParameterElement(effect, param, 0);
@@ -5567,7 +5570,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, value);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "ts2");
     ok(!!param, "GetParameterByName failed.\n");
     param = effect->lpVtbl->GetParameterElement(effect, param, 0);
@@ -5604,7 +5607,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, value);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "ts3");
     ok(!!param, "GetParameterByName failed.\n");
     param = effect->lpVtbl->GetParameterByName(effect, param, "ts");
@@ -5666,7 +5669,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
 
     hr = effect->lpVtbl->CommitChanges(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -6656,7 +6659,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     }
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
     fvect.x = fvect.y = fvect.z = fvect.w = 28.0f;
     hr = effect2->lpVtbl->SetVector(effect2, "g_Pos1", &fvect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -6755,7 +6758,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     hr = effect1->lpVtbl->SetFloatArray(effect1, "arr2", fval, 2);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
 
     hr = effect1->lpVtbl->CommitChanges(effect1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -6765,7 +6768,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     fvect.x = -1.0f;
     test_effect_shared_parameters_compare_vconst(device, 30, &fvect, FALSE);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
 
     hr = effect1->lpVtbl->CommitChanges(effect1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -7064,7 +7067,7 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetFloat(effect, "v5", 32.0f);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_clear_vconsts(device);
+    test_effect_clear_vconsts(device);
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
