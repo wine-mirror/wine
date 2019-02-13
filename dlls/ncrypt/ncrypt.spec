@@ -9,7 +9,7 @@
 @ stub BCryptDeleteContext
 @ stub BCryptDeriveKey
 @ stub BCryptDeriveKeyCapi
-@ stub BCryptDeriveKeyPBKDF2
+@ stdcall BCryptDeriveKeyPBKDF2(ptr ptr long ptr long int64 ptr long long) bcrypt.BCryptDeriveKeyPBKDF2
 @ stdcall BCryptDestroyHash(ptr) bcrypt.BCryptDestroyHash
 @ stdcall BCryptDestroyKey(ptr) bcrypt.BCryptDestroyKey
 @ stub BCryptDestroySecret
