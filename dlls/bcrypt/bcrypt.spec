@@ -21,11 +21,11 @@
 @ stub BCryptEnumProviders
 @ stub BCryptEnumRegisteredProviders
 @ stdcall BCryptExportKey(ptr ptr wstr ptr long ptr long)
-@ stub BCryptFinalizeKeyPair
+@ stdcall BCryptFinalizeKeyPair(ptr long)
 @ stdcall BCryptFinishHash(ptr ptr long long)
 @ stub BCryptFreeBuffer
 @ stdcall BCryptGenRandom(ptr ptr long long)
-@ stub BCryptGenerateKeyPair
+@ stdcall BCryptGenerateKeyPair(ptr ptr long long)
 @ stdcall BCryptGenerateSymmetricKey(ptr ptr ptr long ptr long long)
 @ stdcall BCryptGetFipsAlgorithmMode(ptr)
 @ stdcall BCryptGetProperty(ptr wstr ptr long ptr long)
