@@ -1563,6 +1563,19 @@ static void test_notifications(LPGUID lpGuid)
 
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize = sizeof(bufdesc);
+    bufdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2;
+    bufdesc.dwBufferBytes = wfx.nSamplesPerSec * wfx.nBlockAlign / 2; /* 0.5s */
+    bufdesc.lpwfxFormat = &wfx;
+    rc = IDirectSound_CreateSoundBuffer(dso, &bufdesc, &buf, NULL);
+    ok(rc == DS_OK && buf != NULL, "IDirectSound_CreateSoundBuffer() failed "
+           "to create a buffer %08x\n", rc);
+
+    rc = IDirectSoundBuffer_QueryInterface(buf, &IID_IDirectSoundNotify, (void**)&buf_notif);
+    ok(rc == E_NOINTERFACE, "QueryInterface(IID_IDirectSoundNotify): %08x\n", rc);
+    IDirectSoundBuffer_Release(buf);
+
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize = sizeof(bufdesc);
     bufdesc.dwFlags = DSBCAPS_CTRLPOSITIONNOTIFY;
     bufdesc.dwBufferBytes = wfx.nSamplesPerSec * wfx.nBlockAlign / 2; /* 0.5s */
     bufdesc.lpwfxFormat = &wfx;
