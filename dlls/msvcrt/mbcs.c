@@ -2551,16 +2551,31 @@ unsigned int CDECL _mbctokata(unsigned int c)
     return c;
 }
 
+/*********************************************************************
+ *		_ismbcl0_l (MSVCRT.@)
+ */
+int CDECL _ismbcl0_l(unsigned int c, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+
+    if(!locale)
+        mbcinfo = get_mbcinfo();
+    else
+        mbcinfo = locale->mbcinfo;
+
+    if(mbcinfo->mbcodepage == 932)
+    {
+        /* JIS non-Kanji */
+        return _ismbclegal(c) && c >= 0x8140 && c <= 0x889e;
+    }
+
+    return 0;
+}
 
 /*********************************************************************
  *		_ismbcl0 (MSVCRT.@)
  */
 int CDECL _ismbcl0(unsigned int c)
 {
-  if(get_mbcinfo()->mbcodepage == 932)
-  {
-    /* JIS non-Kanji */
-    return _ismbclegal(c) && c >= 0x8140 && c <= 0x889e;
-  }
-  return 0;
+    return _ismbcl0_l(c, NULL);
 }

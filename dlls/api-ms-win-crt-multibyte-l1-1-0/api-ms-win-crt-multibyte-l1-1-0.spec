@@ -39,7 +39,7 @@
 @ cdecl _ismbckata(long) ucrtbase._ismbckata
 @ stub _ismbckata_l
 @ cdecl _ismbcl0(long) ucrtbase._ismbcl0
-@ stub _ismbcl0_l
+@ cdecl _ismbcl0_l(long ptr) ucrtbase._ismbcl0_l
 @ cdecl _ismbcl1(long) ucrtbase._ismbcl1
 @ stub _ismbcl1_l
 @ cdecl _ismbcl2(long) ucrtbase._ismbcl2
