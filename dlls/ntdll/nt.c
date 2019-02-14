@@ -926,7 +926,7 @@ NTSTATUS WINAPI NtSetIntervalProfile(
     return STATUS_SUCCESS;
 }
 
-static  SYSTEM_CPU_INFORMATION cached_sci;
+SYSTEM_CPU_INFORMATION cpu_info = { 0 };
 
 /*******************************************************************************
  * Architecture specific feature detection for CPUs
@@ -1305,7 +1305,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
  *		fill_cpu_info
  *
  * inits a couple of places with CPU related information:
- * - cached_sci in this file
+ * - cpu_info in this file
  * - Peb->NumberOfProcessors
  * - SharedUserData->ProcessFeatures[] array
  */
@@ -1336,11 +1336,10 @@ void fill_cpu_info(void)
 #endif
     NtCurrentTeb()->Peb->NumberOfProcessors = num;
 
-    memset(&cached_sci, 0, sizeof(cached_sci));
-    get_cpuinfo(&cached_sci);
+    get_cpuinfo(&cpu_info);
 
     TRACE("<- CPU arch %d, level %d, rev %d, features 0x%x\n",
-          cached_sci.Architecture, cached_sci.Level, cached_sci.Revision, cached_sci.FeatureSet);
+          cpu_info.Architecture, cpu_info.Level, cpu_info.Revision, cpu_info.FeatureSet);
 }
 
 static BOOL grow_logical_proc_buf(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata,
@@ -2287,10 +2286,10 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         }
         break;
     case SystemCpuInformation:
-        if (Length >= (len = sizeof(cached_sci)))
+        if (Length >= (len = sizeof(cpu_info)))
         {
             if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
-            else memcpy(SystemInformation, &cached_sci, len);
+            else memcpy(SystemInformation, &cpu_info, len);
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
