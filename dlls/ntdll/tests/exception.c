@@ -400,6 +400,9 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
        rec->ExceptionAddress, (char *)code_mem + 0xb);
 
+    ok( context->ContextFlags == CONTEXT_ALL || context->ContextFlags == (CONTEXT_ALL | CONTEXT_XSTATE),
+        "wrong context flags %x\n", context->ContextFlags );
+
     /* check that context.Eip is fixed up only for EXCEPTION_BREAKPOINT
      * even if raised by RtlRaiseException
      */

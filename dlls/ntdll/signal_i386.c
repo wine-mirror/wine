@@ -2534,7 +2534,16 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 void raise_exception_full_context( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
     save_fpu( context );
-    /* FIXME: extended registers, debug registers */
+    save_fpux( context );
+    /* FIXME: xstate */
+    context->Dr0 = x86_thread_data()->dr0;
+    context->Dr1 = x86_thread_data()->dr1;
+    context->Dr2 = x86_thread_data()->dr2;
+    context->Dr3 = x86_thread_data()->dr3;
+    context->Dr6 = x86_thread_data()->dr6;
+    context->Dr7 = x86_thread_data()->dr7;
+    context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+
     RtlRaiseStatus( NtRaiseException( rec, context, first_chance ));
 }
 
