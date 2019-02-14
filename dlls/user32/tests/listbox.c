@@ -665,6 +665,135 @@ static void test_listbox_height(void)
     DestroyWindow( hList );
 }
 
+static void test_changing_selection_styles(void)
+{
+    static const DWORD styles[] =
+    {
+        0,
+        LBS_NODATA | LBS_OWNERDRAWFIXED
+    };
+    static const DWORD selstyles[] =
+    {
+        0,
+        LBS_MULTIPLESEL,
+        LBS_EXTENDEDSEL,
+        LBS_MULTIPLESEL | LBS_EXTENDEDSEL
+    };
+    static const LONG selexpect_single[]  = { 0, 0, 1 };
+    static const LONG selexpect_single2[] = { 1, 0, 0 };
+    static const LONG selexpect_multi[]   = { 1, 0, 1 };
+    static const LONG selexpect_multi2[]  = { 1, 1, 0 };
+
+    HWND parent, listbox;
+    DWORD style;
+    LONG ret;
+    UINT i, j, k;
+
+    parent = create_parent();
+    ok(parent != NULL, "Failed to create parent window.\n");
+    for (i = 0; i < ARRAY_SIZE(styles); i++)
+    {
+        /* Test if changing selection styles affects selection storage */
+        for (j = 0; j < ARRAY_SIZE(selstyles); j++)
+        {
+            LONG setcursel_expect, selitemrange_expect, getselcount_expect;
+            const LONG *selexpect;
+
+            listbox = CreateWindowA("listbox", "TestList", styles[i] | selstyles[j] | WS_CHILD | WS_VISIBLE,
+                                    0, 0, 100, 100, parent, (HMENU)1, NULL, 0);
+            ok(listbox != NULL, "%u: Failed to create ListBox window.\n", j);
+
+            if (selstyles[j] & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL))
+            {
+                setcursel_expect = LB_ERR;
+                selitemrange_expect = LB_OKAY;
+                getselcount_expect = 2;
+                selexpect = selexpect_multi;
+            }
+            else
+            {
+                setcursel_expect = 2;
+                selitemrange_expect = LB_ERR;
+                getselcount_expect = LB_ERR;
+                selexpect = selexpect_single;
+            }
+
+            for (k = 0; k < ARRAY_SIZE(selexpect_multi); k++)
+            {
+                ret = SendMessageA(listbox, LB_INSERTSTRING, -1, (LPARAM)"x");
+                ok(ret == k, "%u: Unexpected return value %d, expected %d.\n", j, ret, k);
+            }
+            ret = SendMessageA(listbox, LB_GETCOUNT, 0, 0);
+            ok(ret == ARRAY_SIZE(selexpect_multi), "%u: Unexpected count %d.\n", j, ret);
+
+            /* Select items with different methods */
+            ret = SendMessageA(listbox, LB_SETCURSEL, 2, 0);
+            ok(ret == setcursel_expect, "%u: Unexpected return value %d.\n", j, ret);
+            ret = SendMessageA(listbox, LB_SELITEMRANGE, TRUE, MAKELPARAM(0, 0));
+            ok(ret == selitemrange_expect, "%u: Unexpected return value %d.\n", j, ret);
+            ret = SendMessageA(listbox, LB_SELITEMRANGE, TRUE, MAKELPARAM(2, 2));
+            ok(ret == selitemrange_expect, "%u: Unexpected return value %d.\n", j, ret);
+
+            /* Verify that the proper items are selected */
+            for (k = 0; k < ARRAY_SIZE(selexpect_multi); k++)
+            {
+                ret = SendMessageA(listbox, LB_GETSEL, k, 0);
+                ok(ret == selexpect[k], "%u: Unexpected selection state %d, expected %d.\n",
+                    j, ret, selexpect[k]);
+            }
+
+            /* Now change the selection style */
+            style = GetWindowLongA(listbox, GWL_STYLE);
+            ok((style & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)) == selstyles[j],
+                "%u: unexpected window styles %#x.\n", j, style);
+            if (selstyles[j] & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL))
+                style &= ~selstyles[j];
+            else
+                style |= LBS_MULTIPLESEL | LBS_EXTENDEDSEL;
+            SetWindowLongA(listbox, GWL_STYLE, style);
+            style = GetWindowLongA(listbox, GWL_STYLE);
+            ok(!(style & selstyles[j]), "%u: unexpected window styles %#x.\n", j, style);
+
+            /* Verify that the same items are selected */
+            ret = SendMessageA(listbox, LB_GETSELCOUNT, 0, 0);
+            ok(ret == getselcount_expect, "%u: expected %d from LB_GETSELCOUNT, got %d\n",
+                j, getselcount_expect, ret);
+
+            for (k = 0; k < ARRAY_SIZE(selexpect_multi); k++)
+            {
+                ret = SendMessageA(listbox, LB_GETSEL, k, 0);
+                ok(ret == selexpect[k], "%u: Unexpected selection state %d, expected %d.\n",
+                    j, ret, selexpect[k]);
+            }
+
+            /* Lastly see if we can still change the selection as before with old style */
+            if (setcursel_expect != LB_ERR) setcursel_expect = 0;
+            ret = SendMessageA(listbox, LB_SETCURSEL, 0, 0);
+            ok(ret == setcursel_expect, "%u: Unexpected return value %d.\n", j, ret);
+            ret = SendMessageA(listbox, LB_SELITEMRANGE, TRUE, MAKELPARAM(1, 1));
+            ok(ret == selitemrange_expect, "%u: Unexpected return value %d.\n", j, ret);
+            ret = SendMessageA(listbox, LB_SELITEMRANGE, FALSE, MAKELPARAM(2, 2));
+            ok(ret == selitemrange_expect, "%u: Unexpected return value %d.\n", j, ret);
+
+            /* And verify the selections */
+            selexpect = (selstyles[j] & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)) ? selexpect_multi2 : selexpect_single2;
+            ret = SendMessageA(listbox, LB_GETSELCOUNT, 0, 0);
+            ok(ret == getselcount_expect, "%u: expected %d from LB_GETSELCOUNT, got %d\n",
+                j, getselcount_expect, ret);
+
+            for (k = 0; k < ARRAY_SIZE(selexpect_multi); k++)
+            {
+                ret = SendMessageA(listbox, LB_GETSEL, k, 0);
+                ok(ret == selexpect[k], "%u: Unexpected selection state %d, expected %d.\n",
+                    j, ret, selexpect[k]);
+            }
+
+            DestroyWindow(listbox);
+        }
+    }
+    DestroyWindow(parent);
+}
+
 static void test_itemfrompoint(void)
 {
     /* WS_POPUP is required in order to have a more accurate size calculation (
@@ -2309,6 +2438,7 @@ START_TEST(listbox)
   test_LB_SELITEMRANGE();
   test_LB_SETCURSEL();
   test_listbox_height();
+  test_changing_selection_styles();
   test_itemfrompoint();
   test_listbox_item_data();
   test_listbox_LB_DIR();
