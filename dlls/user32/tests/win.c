@@ -10905,7 +10905,6 @@ START_TEST(win)
     test_layered_window();
 
     test_SetForegroundWindow(hwndMain);
-    test_shell_window();
     test_handles( hwndMain );
     test_winregion();
     test_map_points();
@@ -10935,4 +10934,8 @@ START_TEST(win)
      * state of hwndMain and hwndMain2 windows.
      */
     test_topmost();
+
+    /* Execute the SetShellWindow() test last, since it kills explorer and that
+     * breaks a lot of things. */
+    test_shell_window();
 }
