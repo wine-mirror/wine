@@ -2579,3 +2579,24 @@ int CDECL _ismbcl0(unsigned int c)
 {
     return _ismbcl0_l(c, NULL);
 }
+
+/*********************************************************************
+ *		_ismbcl1_l (MSVCRT.@)
+ */
+int CDECL _ismbcl1_l(unsigned int c, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+
+    if(!locale)
+        mbcinfo = get_mbcinfo();
+    else
+        mbcinfo = locale->mbcinfo;
+
+    if(mbcinfo->mbcodepage == 932)
+    {
+        /* JIS level-1 */
+        return _ismbclegal(c) && c >= 0x889f && c <= 0x9872;
+    }
+
+    return 0;
+}
