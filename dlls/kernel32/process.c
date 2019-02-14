@@ -1336,7 +1336,7 @@ static void set_process_name( int argc, char *argv[] )
  *
  * Wine initialisation: load and start the main exe file.
  */
-void CDECL __wine_kernel_init(void)
+void * CDECL __wine_kernel_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     static const WCHAR dotW[] = {'.',0};
@@ -1458,7 +1458,7 @@ void CDECL __wine_kernel_init(void)
 
     if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
 
-    LdrInitializeThunk( start_process_wrapper, 0, 0, 0 );
+    return start_process_wrapper;
 
  error:
     ExitProcess( GetLastError() );

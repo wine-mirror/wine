@@ -3386,8 +3386,6 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     WINE_MODREF *wm;
     PEB *peb = NtCurrentTeb()->Peb;
 
-    kernel32_start_process = kernel_start;
-
     /* allocate the modref for the main exe (if not already done) */
     wm = get_modref( peb->ImageBaseAddress );
     assert( wm );
@@ -3558,7 +3556,7 @@ void __wine_process_init(void)
     NTSTATUS status;
     ANSI_STRING func_name;
     UNICODE_STRING nt_name;
-    void (* DECLSPEC_NORETURN CDECL init_func)(void);
+    void * (CDECL *init_func)(void);
 
     thread_init();
 
@@ -3584,5 +3582,8 @@ void __wine_process_init(void)
         MESSAGE( "wine: could not find __wine_kernel_init in kernel32.dll, status %x\n", status );
         exit(1);
     }
-    init_func();
+
+    kernel32_start_process = init_func();
+
+    LdrInitializeThunk( NULL, 0, 0, 0 );
 }
