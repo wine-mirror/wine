@@ -14742,11 +14742,11 @@ msgstr "&Oikea"
 
 #: view.rc:49
 msgid "Regular Metafile Viewer"
-msgstr "Tavallisten metatiedostojen katselin"
+msgstr "Tavallisten Metafile-tiedostojen katselin"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Metafile-tiedostot (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
