@@ -3247,13 +3247,13 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 }
 
 
-/***********************************************************************
- *           attach_dlls
+/******************************************************************
+ *		LdrInitializeThunk (NTDLL.@)
  *
  * Attach to all the loaded dlls.
  * If this is the first time, perform the full process initialization.
  */
-NTSTATUS attach_dlls( CONTEXT *context, void **entry )
+void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknown3, ULONG_PTR unknown4 )
 {
     NTSTATUS status;
     WINE_MODREF *wm;
@@ -3261,7 +3261,7 @@ NTSTATUS attach_dlls( CONTEXT *context, void **entry )
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
 
-    if (process_detaching) return STATUS_SUCCESS;
+    if (process_detaching) return;
 
     RtlEnterCriticalSection( &loader_section );
 
@@ -3317,7 +3317,6 @@ NTSTATUS attach_dlls( CONTEXT *context, void **entry )
     }
 
     RtlLeaveCriticalSection( &loader_section );
-    return STATUS_SUCCESS;
 }
 
 
@@ -3371,52 +3370,6 @@ static void load_global_options(void)
     NtCurrentTeb()->Peb->HeapDeCommitFreeBlockThreshold = value;
 
     NtClose( hkey );
-}
-
-
-/******************************************************************
- *		LdrInitializeThunk (NTDLL.@)
- *
- */
-void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
-                                ULONG_PTR unknown3, ULONG_PTR unknown4 )
-{
-    static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
-    NTSTATUS status;
-    WINE_MODREF *wm;
-    PEB *peb = NtCurrentTeb()->Peb;
-
-    /* allocate the modref for the main exe (if not already done) */
-    wm = get_modref( peb->ImageBaseAddress );
-    assert( wm );
-    if (wm->ldr.Flags & LDR_IMAGE_IS_DLL)
-    {
-        ERR("%s is a dll, not an executable\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
-        exit(1);
-    }
-
-    peb->LoaderLock = &loader_section;
-    update_user_process_params( &wm->ldr.FullDllName );
-    version_init( wm->ldr.FullDllName.Buffer );
-    virtual_set_large_address_space();
-
-    LdrQueryImageFileExecutionOptions( &peb->ProcessParameters->ImagePathName, globalflagW,
-                                       REG_DWORD, &peb->NtGlobalFlag, sizeof(peb->NtGlobalFlag), NULL );
-    heap_set_debug_flags( GetProcessHeap() );
-
-    /* the main exe needs to be the first in the load order list */
-    RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
-    InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
-    RemoveEntryList( &wm->ldr.InMemoryOrderModuleList );
-    InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
-
-    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, NULL )) != STATUS_SUCCESS)
-    {
-        ERR( "Main exe initialization for %s failed, status %x\n",
-             debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), status );
-        NtTerminateProcess( GetCurrentProcess(), status );
-    }
-    server_init_process_done();
 }
 
 
@@ -3551,6 +3504,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 void __wine_process_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
+    static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
 
     WINE_MODREF *wm;
     NTSTATUS status;
@@ -3585,5 +3539,34 @@ void __wine_process_init(void)
 
     kernel32_start_process = init_func();
 
-    LdrInitializeThunk( NULL, 0, 0, 0 );
+    wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
+    assert( wm );
+    if (wm->ldr.Flags & LDR_IMAGE_IS_DLL)
+    {
+        MESSAGE( "wine: %s is a dll, not an executable\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
+        exit(1);
+    }
+
+    NtCurrentTeb()->Peb->LoaderLock = &loader_section;
+    update_user_process_params( &wm->ldr.FullDllName );
+    version_init( wm->ldr.FullDllName.Buffer );
+    virtual_set_large_address_space();
+
+    LdrQueryImageFileExecutionOptions( &wm->ldr.FullDllName, globalflagW, REG_DWORD,
+                                       &NtCurrentTeb()->Peb->NtGlobalFlag, sizeof(DWORD), NULL );
+    heap_set_debug_flags( GetProcessHeap() );
+
+    /* the main exe needs to be the first in the load order list */
+    RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
+    InsertHeadList( &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
+    RemoveEntryList( &wm->ldr.InMemoryOrderModuleList );
+    InsertHeadList( &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
+
+    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, NULL )) != STATUS_SUCCESS)
+    {
+        ERR( "Main exe initialization for %s failed, status %x\n",
+             debugstr_w(wm->ldr.FullDllName.Buffer), status );
+        NtTerminateProcess( GetCurrentProcess(), status );
+    }
+    server_init_process_done();
 }

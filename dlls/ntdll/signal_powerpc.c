@@ -1194,7 +1194,7 @@ static void thread_startup( void *param )
     context.Iar  = (DWORD)info->start;
 
     if (info->suspend) wait_suspend( &context );
-    attach_dlls( &context, (void **)&context.Gpr3 );
+    LdrInitializeThunk( &context, (void **)&context.Gpr3, 0, 0 );
 
     ((thread_start_func)context.Iar)( (LPTHREAD_START_ROUTINE)context.Gpr3, (void *)context.Gpr4 );
 }

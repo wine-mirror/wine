@@ -111,7 +111,6 @@ extern BOOL invoke_apc( const apc_call_t *call, apc_result_t *result ) DECLSPEC_
 
 /* module handling */
 extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;
-extern NTSTATUS attach_dlls( CONTEXT *context, void **entry ) DECLSPEC_HIDDEN;
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user ) DECLSPEC_HIDDEN;
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
@@ -255,5 +254,6 @@ extern HANDLE keyed_event DECLSPEC_HIDDEN;
 #define HASH_STRING_ALGORITHM_INVALID  0xffffffff
 
 NTSTATUS WINAPI RtlHashUnicodeString(PCUNICODE_STRING,BOOLEAN,ULONG,ULONG*);
+void     WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 
 #endif
