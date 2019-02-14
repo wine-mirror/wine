@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-02-10 05:29+0530\n"
+"PO-Revision-Date: 2019-02-14 16:50+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
@@ -341,7 +341,7 @@ msgstr "විශාරද"
 
 #: comctl32.rc:84
 msgid "< &Back"
-msgstr "< කලින් (&B)"
+msgstr "< ආපසු (&B)"
 
 #: comctl32.rc:85
 msgid "&Next >"
@@ -593,7 +593,7 @@ msgstr "මැදි ඉරැති (&K)"
 
 #: comdlg32.rc:268
 msgid "&Underline"
-msgstr ""
+msgstr "යටිඉරි (&U)"
 
 #: comdlg32.rc:269 winecfg.rc:292
 msgid "&Color:"
@@ -651,7 +651,7 @@ msgstr "දීප්තිය (&L):"
 
 #: comdlg32.rc:308
 msgid "&Add to Custom Colors"
-msgstr ""
+msgstr "චාරිත්ර පාට වලට එක් කරන්න (&A)"
 
 #: comdlg32.rc:309
 msgid "&Define Custom Colors >>"
@@ -780,7 +780,7 @@ msgstr "තිරස් (&A)"
 
 #: comdlg32.rc:430
 msgid "Setup Page"
-msgstr ""
+msgstr "සැකසුම් පිටුව"
 
 #: comdlg32.rc:439
 msgid "&Tray:"
@@ -1232,6 +1232,8 @@ msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
+"බලන්න ඔබගේ පරිශීලක නම\n"
+"හා මුර පදය හරිද කියල."
 
 #: credui.rc:35
 msgid ""
@@ -1488,7 +1490,7 @@ msgstr ""
 
 #: crypt32.rc:90
 msgid "OS Version"
-msgstr ""
+msgstr "OS අනුවාදය"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
@@ -2043,7 +2045,7 @@ msgstr "SSL සේවාදායකයේ සත්යාපනය"
 
 #: crypt32.rc:236
 msgid "S/MIME"
-msgstr ""
+msgstr "S/MIME"
 
 #: crypt32.rc:237
 msgid "Signature"
@@ -2469,7 +2471,7 @@ msgstr "මේ සහතිකයට වලංගු නැති අත්ස�
 
 #: cryptui.rc:43
 msgid "This certificate has expired or is not yet valid."
-msgstr ""
+msgstr "මේ සහතිකය ඉකුත් වෙලා හෝ තවම වලංගු නැතුව ඇති."
 
 #: cryptui.rc:44
 msgid "This certificate's validity period exceeds that of its issuer."
@@ -2481,7 +2483,7 @@ msgstr ""
 
 #: cryptui.rc:46
 msgid "This certificate is OK."
-msgstr ""
+msgstr "මේ සහතිකය හරි."
 
 #: cryptui.rc:47
 msgid "Field"
@@ -2863,11 +2865,11 @@ msgstr "යතුරු නිර්යාත කරන්න"
 
 #: cryptui.rc:168
 msgid "The export was successful."
-msgstr ""
+msgstr "නිර්යාත කිරීම හරියට උනා."
 
 #: cryptui.rc:169
 msgid "The export failed."
-msgstr ""
+msgstr "නිර්යාත කිරීම බැරි උනා."
 
 #: cryptui.rc:170
 msgid "Export Private Key"
@@ -3030,7 +3032,7 @@ msgstr ""
 
 #: gdi32.rc:45 wldap32.rc:112
 msgid "Other"
-msgstr ""
+msgstr "අනිත්"
 
 #: gphoto2.rc:30
 msgid "Files on Camera"
@@ -3078,7 +3080,7 @@ msgstr "සමමුහුර්ත කරන්න"
 
 #: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
-msgstr ""
+msgstr "ආපසු (&D)"
 
 #: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
@@ -3087,7 +3089,7 @@ msgstr ""
 #: hhctrl.rc:62
 msgctxt "table of contents"
 msgid "&Home"
-msgstr ""
+msgstr "මුල (&H)"
 
 #: hhctrl.rc:63
 msgid "&Stop"
@@ -3135,7 +3137,7 @@ msgstr "මුද්රණය කරන්න"
 
 #: hhctrl.rc:31 taskmgr.rc:89
 msgid "&Contents"
-msgstr ""
+msgstr "පටුන (&C)"
 
 #: hhctrl.rc:32
 msgid "I&ndex"
@@ -3175,12 +3177,12 @@ msgstr "නැවුම් කරන්න"
 
 #: hhctrl.rc:46 ieframe.rc:66
 msgid "Back"
-msgstr ""
+msgstr "ආපසු"
 
 #: hhctrl.rc:47
 msgctxt "table of contents"
 msgid "Home"
-msgstr ""
+msgstr "මුල"
 
 #: hhctrl.rc:48
 msgid "Sync"
@@ -3188,7 +3190,7 @@ msgstr "සමමුහුර්ත කරන්න"
 
 #: hhctrl.rc:50 wineconsole.rc:60 wordpad.rc:166
 msgid "Options"
-msgstr ""
+msgstr "විකල්ප"
 
 #: hhctrl.rc:51 ieframe.rc:67
 msgid "Forward"
@@ -3493,7 +3495,7 @@ msgstr ""
 
 #: joy.rc:54
 msgid "Buttons"
-msgstr ""
+msgstr "බොත්තම්"
 
 #: joy.rc:63
 msgid "Test Force Feedback"
@@ -3737,7 +3739,7 @@ msgstr ""
 
 #: winerror.mc:68
 msgid "Not enough memory.\n"
-msgstr ""
+msgstr "මතකය මදි.\n"
 
 #: winerror.mc:73
 msgid "Invalid block.\n"
@@ -4861,7 +4863,7 @@ msgstr "අලුත් windows අනුවාදයක් අවශ්යය�
 
 #: winerror.mc:1483
 msgid "Wrong operating system.\n"
-msgstr ""
+msgstr "මෙහෙයුම් පද්ධතිය වැරදි.\n"
 
 #: winerror.mc:1488
 msgid "Single-instance application.\n"
@@ -4873,7 +4875,7 @@ msgstr ""
 
 #: winerror.mc:1498
 msgid "Invalid DLL.\n"
-msgstr ""
+msgstr "වලංගු නැති DLL එකක්.\n"
 
 #: winerror.mc:1503
 msgid "No associated application.\n"
@@ -4917,11 +4919,11 @@ msgstr ""
 
 #: winerror.mc:1553
 msgid "The device requires cleaning.\n"
-msgstr ""
+msgstr "ආම්පන්නය සුද්ද කරන්න ඕනේ.\n"
 
 #: winerror.mc:1558
 msgid "The device door is open.\n"
-msgstr ""
+msgstr "ආම්පන්නයේ දොර ඇරලා තියෙන්නේ.\n"
 
 #: winerror.mc:1563
 msgid "The device is not connected.\n"
@@ -5317,7 +5319,7 @@ msgstr ""
 
 #: winerror.mc:2058
 msgid "Password expired.\n"
-msgstr ""
+msgstr "මුර පදය ඉකුත් වෙලා.\n"
 
 #: winerror.mc:2063
 msgid "Account disabled.\n"
@@ -6365,7 +6367,7 @@ msgstr ""
 
 #: winerror.mc:3378
 msgid "Account expired.\n"
-msgstr ""
+msgstr "ගිණුම ඉකුත් වෙලා.\n"
 
 #: winerror.mc:3383
 msgid "Redirector has open handles.\n"
@@ -6665,7 +6667,7 @@ msgstr ""
 
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
-msgstr ""
+msgstr "ගොනුවේ අත්සනයක් නැහැ.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -7108,7 +7110,7 @@ msgstr "නිදහස් ස්ථානය: [1]"
 
 #: msi.rc:162
 msgid "Property: [1], Signature: [2]"
-msgstr ""
+msgstr "ගුණාංගය: [1], අත්සන: [2]"
 
 #: msi.rc:163
 msgid "File: [1]"
@@ -7767,7 +7769,7 @@ msgstr ""
 
 #: oleaut32.rc:35
 msgid "Off"
-msgstr ""
+msgstr "ඕෆ්"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -8405,7 +8407,7 @@ msgstr "අලුත් ෆෝල්ඩරයක් හදන්න (&M)"
 
 #: shell32.rc:306
 msgid "Message"
-msgstr ""
+msgstr "පණිවිඩය"
 
 #: shell32.rc:310
 msgid "Yes to &all"
@@ -8516,7 +8518,7 @@ msgstr ""
 
 #: shell32.rc:146
 msgid "Owner"
-msgstr ""
+msgstr "හිමිකරු"
 
 #: shell32.rc:147
 msgid "Group"
@@ -8528,7 +8530,7 @@ msgstr ""
 
 #: shell32.rc:149
 msgid "Date deleted"
-msgstr ""
+msgstr "මකපු දිනය"
 
 #: shell32.rc:156 winecfg.rc:101 winefile.rc:100
 msgctxt "display name"
@@ -8537,7 +8539,7 @@ msgstr "වැඩතලය"
 
 #: shell32.rc:157 regedit.rc:238
 msgid "My Computer"
-msgstr ""
+msgstr "මගේ පරිගණකය"
 
 #: shell32.rc:159
 msgid "Control Panel"
@@ -8557,11 +8559,11 @@ msgstr ""
 
 #: shell32.rc:191
 msgid "Shutdown"
-msgstr ""
+msgstr "වැහීම"
 
 #: shell32.rc:192
 msgid "Do you want to shutdown your Wine session?"
-msgstr ""
+msgstr "ඔබගේ Wine සැසිම වසා දමන්න ඕනෙද?"
 
 #: shell32.rc:203 progman.rc:83
 msgid "Programs"
@@ -9776,7 +9778,7 @@ msgstr "පිටවෙන්න"
 
 #: winemac.rc:40
 msgid "Window"
-msgstr ""
+msgstr "කවුළුව"
 
 #: winemac.rc:41
 msgid "Minimize"
@@ -9796,7 +9798,7 @@ msgstr ""
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
-msgstr ""
+msgstr "කඩදාසි තරම:"
 
 #: wineps.rc:39
 msgid "Duplex:"
@@ -9812,7 +9814,7 @@ msgstr ""
 
 #: wininet.rc:57
 msgid "Authentication Required"
-msgstr ""
+msgstr "සත්‍යාපනය ඕනේ"
 
 #: wininet.rc:61
 msgid "Server"
@@ -10657,7 +10659,7 @@ msgstr ""
 
 #: attrib.rc:31 cmd.rc:376
 msgid "%1: File Not Found\n"
-msgstr ""
+msgstr "%1: ගොනුව හම්බු උනේ නැහැ\n"
 
 #: attrib.rc:50
 msgid ""
@@ -11152,7 +11154,7 @@ msgstr ""
 
 #: cmd.rc:370
 msgid "Overwrite %1?"
-msgstr ""
+msgstr "%1 උඩින් ලියන්නද?"
 
 #: cmd.rc:371
 msgid "More..."
@@ -11255,11 +11257,11 @@ msgstr ""
 
 #: cmd.rc:397
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: cmd.rc:398
 msgid "More? "
-msgstr ""
+msgstr "තව?"
 
 #: cmd.rc:399
 msgid "The input line is too long.\n"
@@ -11292,7 +11294,7 @@ msgstr "බිංදුවෙන් බෙදීම දෝෂයක්.\n"
 
 #: cmd.rc:406
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "අපේක්ෂා කරේ කර්තව්‍යයක්.\n"
 
 #: cmd.rc:407
 msgid "Expected an operator.\n"
@@ -11517,7 +11519,7 @@ msgstr "ජාල දෝෂයක් උනා"
 
 #: net.rc:51
 msgid "Connection is being made"
-msgstr ""
+msgstr "සබැඳුම දැන් හදනවා"
 
 #: net.rc:52
 msgid "Reconnecting"
@@ -11657,7 +11659,7 @@ msgstr "මුද්රණය කරන්න...\tCtrl+P"
 
 #: notepad.rc:36 wordpad.rc:38
 msgid "Page Se&tup..."
-msgstr ""
+msgstr "පිටු හැඩතල... (&T)"
 
 #: notepad.rc:37
 msgid "P&rinter Setup..."
@@ -11722,7 +11724,7 @@ msgstr ""
 
 #: notepad.rc:100
 msgid "Page Setup"
-msgstr ""
+msgstr "පිටු හැඩතල"
 
 #: notepad.rc:102
 msgid "&Header:"
@@ -11817,11 +11819,11 @@ msgstr ""
 
 #: notepad.rc:74
 msgid "Untitled"
-msgstr ""
+msgstr "නම් නොකළ"
 
 #: notepad.rc:77 winedbg.rc:42
 msgid "Text files (*.txt)"
-msgstr ""
+msgstr "පෙළ ගොනු (*.txt)"
 
 #: notepad.rc:80
 msgid ""
@@ -11843,15 +11845,15 @@ msgstr ""
 
 #: notepad.rc:85
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "යුනිකෝඩ් (UTF-16)"
 
 #: notepad.rc:86
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "යුනිකෝඩ් (UTF-16 බිග් එන්ඩියන්)"
 
 #: notepad.rc:87
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "යුනිකෝඩ් (UTF-8)"
 
 #: notepad.rc:94
 msgid ""
@@ -12188,7 +12190,7 @@ msgstr "සුරකින්න .IDL හෝ .H ගොනුවක් විද�
 
 #: oleview.rc:127
 msgid "Close window"
-msgstr ""
+msgstr "කවුළුව වහන්න"
 
 #: oleview.rc:128
 msgid "Group typeinfos by kind"
@@ -12196,7 +12198,7 @@ msgstr ""
 
 #: progman.rc:33
 msgid "&New..."
-msgstr ""
+msgstr "අලුත්... (&N)"
 
 #: progman.rc:34
 msgid "O&pen\tEnter"
@@ -12216,7 +12218,7 @@ msgstr "ගුණාංග\tAlt+Enter"
 
 #: progman.rc:40
 msgid "&Execute..."
-msgstr ""
+msgstr "ක්‍රියාත්මක කරන්න... (&E)"
 
 #: progman.rc:42
 msgid "E&xit Windows"
@@ -12240,7 +12242,7 @@ msgstr ""
 
 #: progman.rc:49 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
-msgstr ""
+msgstr "කවුළු (&W)"
 
 #: progman.rc:50
 msgid "&Overlapped\tShift+F5"
@@ -12682,7 +12684,7 @@ msgstr ""
 
 #: regedit.rc:313
 msgid "Edit String"
-msgstr ""
+msgstr "අනුලකුණු වැල සකසන්න"
 
 #: regedit.rc:316 regedit.rc:329 regedit.rc:345 regedit.rc:358
 msgid "Value name:"
@@ -13900,7 +13902,7 @@ msgstr "CPU"
 
 #: taskmgr.rc:275
 msgid "CPU Time"
-msgstr ""
+msgstr "CPU කාලය"
 
 #: taskmgr.rc:276
 msgid "Mem Usage"
@@ -14084,7 +14086,7 @@ msgstr "සාමාන්‍ය මෙටාගොනුව දක්වනය"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "මෙටාගොනු (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -14316,7 +14318,7 @@ msgstr ""
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr ""
+msgstr "ස්පීකර"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -14416,7 +14418,7 @@ msgstr "%s එකට Wine වින්‍යාසය"
 
 #: winecfg.rc:84
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "තෝරපු ධාවකය: %s"
 
 #: winecfg.rc:85
 msgid "(None)"
@@ -14478,7 +14480,7 @@ msgstr ""
 
 #: winecfg.rc:61
 msgid "Default Settings"
-msgstr ""
+msgstr "පෙරනිමි සැකසුම්"
 
 #: winecfg.rc:62
 msgid "Wine Programs (*.exe; *.exe.so)"
@@ -14609,7 +14611,7 @@ msgstr "අක්රිය නාම පෙළ"
 
 #: winecfg.rc:115
 msgid "Message Box Text"
-msgstr ""
+msgstr "පණිවිඩ කොටුවේ පෙළ"
 
 #: winecfg.rc:116
 msgid "Application Workspace"
@@ -15038,7 +15040,7 @@ msgstr "ලේඛ (&M)"
 
 #: winefile.rc:147
 msgid "&Other files"
-msgstr ""
+msgstr "අනිත් ගොනු (&O)"
 
 #: winefile.rc:149
 msgid "Show Hidden/&System Files"
@@ -15491,7 +15493,7 @@ msgstr ""
 
 #: wordpad.rc:242
 msgid "Alignment"
-msgstr ""
+msgstr "පෙළ ගැසුම"
 
 #: wordpad.rc:250
 msgid "Tabs"
@@ -15574,7 +15576,7 @@ msgstr "පෙළ ලේඛ (*.txt)"
 
 #: wordpad.rc:149
 msgid "Unicode text document (*.txt)"
-msgstr "Unicode පෙළ ලේඛය (*.txt)"
+msgstr "යුනිකෝඩ් පෙළ ලේඛය (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"
@@ -15590,7 +15592,7 @@ msgstr "පෙළ ලේඛය"
 
 #: wordpad.rc:153
 msgid "Unicode text document"
-msgstr "Unicode පෙළ ලේඛය"
+msgstr "යුනිකෝඩ් පෙළ ලේඛය"
 
 #: wordpad.rc:154
 msgid "Printer files (*.prn)"
