@@ -106,6 +106,7 @@ static void test_sprintf( void )
     double pnumber=789456123;
     int x, r;
     WCHAR wide[] = { 'w','i','d','e',0};
+    WCHAR buf_w[2];
 
     format = "%+#23.15e";
     r = sprintf(buffer,format,pnumber);
@@ -785,6 +786,17 @@ static void test_sprintf( void )
     r = sprintf(buffer, format, 0x3042);
     ok(r==0, "r = %d\n", r);
     ok(!strcmp(buffer, ""), "failed: \"%s\"\n", buffer);
+
+    format = "a%Cb";
+    r = sprintf(buffer, format, 0x3042);
+    ok(r==2, "r = %d\n", r);
+    ok(!strcmp(buffer, "ab"), "failed: \"%s\"\n", buffer);
+
+    format = "%S";
+    buf_w[0] = 0x3042;
+    buf_w[1] = 0;
+    r = sprintf(buffer, format, buf_w);
+    ok(r==-1 || broken(!r), "r = %d\n", r);
 
     if(!setlocale(LC_ALL, "Japanese_Japan.932")) {
         win_skip("Japanese_Japan.932 locale not available\n");
