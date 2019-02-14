@@ -1551,13 +1551,27 @@ int CDECL _ismbblead(unsigned int c)
     return _ismbblead_l(c, NULL);
 }
 
+/*********************************************************************
+ *              _ismbbtrail_l(MSVCRT.@)
+ */
+int CDECL _ismbbtrail_l(unsigned int c, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+
+    if(!locale)
+        mbcinfo = get_mbcinfo();
+    else
+        mbcinfo = locale->mbcinfo;
+
+    return (mbcinfo->mbctype[(c&0xff) + 1] & _M2) != 0;
+}
 
 /*********************************************************************
  *		_ismbbtrail(MSVCRT.@)
  */
 int CDECL _ismbbtrail(unsigned int c)
 {
-  return (get_mbcinfo()->mbctype[(c&0xff) + 1] & _M2) != 0;
+    return _ismbbtrail_l(c, NULL);
 }
 
 /*********************************************************************

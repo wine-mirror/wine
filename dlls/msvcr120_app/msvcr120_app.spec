@@ -1225,7 +1225,7 @@
 @ cdecl _ismbbpunct(long) msvcr120._ismbbpunct
 @ stub _ismbbpunct_l
 @ cdecl _ismbbtrail(long) msvcr120._ismbbtrail
-@ stub _ismbbtrail_l
+@ cdecl _ismbbtrail_l(long ptr) msvcr120._ismbbtrail_l
 @ cdecl _isnan(double) msvcr120._isnan
 @ cdecl -arch=x86_64 _isnanf(float) msvcr120._isnanf
 @ cdecl _isprint_l(long ptr) msvcr120._isprint_l

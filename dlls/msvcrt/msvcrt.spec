@@ -594,7 +594,7 @@
 @ stub _ismbbpunct(long)
 # stub _ismbbpunct_l(long ptr)
 @ cdecl _ismbbtrail(long)
-# stub _ismbbtrail_l(long ptr)
+@ cdecl _ismbbtrail_l(long ptr)
 @ cdecl _ismbcalnum(long)
 # stub _ismbcalnum_l(long ptr)
 @ cdecl _ismbcalpha(long)
