@@ -3632,7 +3632,8 @@ static const struct decimal_round_t decimal_round_data[] = {
     {{ 2, 0, 0, 0, 199 }, { 2, 0, 0, 0, 199 }, 2},
     {{ 2, DECIMAL_NEG, 0, 0, 199 }, { 2, DECIMAL_NEG, 0, 0, 199 }, 2},
     {{ 2, DECIMAL_NEG, 0, 0, 55 },  { 2, DECIMAL_NEG, 0, 0, 6 }, 1},
-    {{ 2, 0, 0, 0, 55 },  { 2, 0, 0, 0, 6 }, 1}
+    {{ 2, 0, 0, 0, 55 },  { 2, 0, 0, 0, 6 }, 1},
+    {{ 2, 0, 0, 0, 1999 }, { 1, 0, 0, 0, 200 }, 1},
 };
 
 static void test_VarRound(void)
@@ -3735,7 +3736,6 @@ static void test_VarRound(void)
         S1(U1(*pdec)).Lo32 = ptr->source.Lo32;
         VariantInit(&vDst);
         hres = pVarRound(&v, ptr->dec, &vDst);
-    todo_wine
         ok(hres == S_OK, "%d: got 0x%08x\n", i, hres);
         if (hres == S_OK)
         {
