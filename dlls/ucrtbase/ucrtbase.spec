@@ -478,7 +478,7 @@
 @ stub _ismbckata_l
 @ cdecl _ismbcl0(long)
 @ cdecl _ismbcl0_l(long ptr)
-@ stub _ismbcl1(long)
+@ cdecl _ismbcl1(long)
 @ cdecl _ismbcl1_l(long ptr)
 @ stub _ismbcl2(long)
 @ stub _ismbcl2_l
