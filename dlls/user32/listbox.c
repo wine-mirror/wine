@@ -1442,7 +1442,7 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
     {
         for (i = first; i <= last; i++)
         {
-            if (descr->items[i].selected) continue;
+            if (is_item_selected(descr, i)) continue;
             descr->items[i].selected = TRUE;
             LISTBOX_InvalidateItemRect(descr, i);
         }
@@ -1451,7 +1451,7 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
     {
         for (i = first; i <= last; i++)
         {
-            if (!descr->items[i].selected) continue;
+            if (!is_item_selected(descr, i)) continue;
             descr->items[i].selected = FALSE;
             LISTBOX_InvalidateItemRect(descr, i);
         }
@@ -2091,7 +2091,7 @@ static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, IN
         {
             LISTBOX_SetCaretIndex( descr, index, FALSE );
             LISTBOX_SetSelection( descr, index,
-                                  !descr->items[index].selected,
+                                  !is_item_selected(descr, index),
                                   (descr->style & LBS_NOTIFY) != 0);
         }
         else
@@ -2101,13 +2101,13 @@ static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, IN
             if (descr->style & LBS_EXTENDEDSEL)
             {
                 LISTBOX_SetSelection( descr, index,
-                               descr->items[index].selected,
+                               is_item_selected(descr, index),
                               (descr->style & LBS_NOTIFY) != 0 );
             }
             else
             {
                 LISTBOX_SetSelection( descr, index,
-                               !descr->items[index].selected,
+                               !is_item_selected(descr, index),
                               (descr->style & LBS_NOTIFY) != 0 );
             }
         }
@@ -2427,7 +2427,7 @@ static LRESULT LISTBOX_HandleKeyDown( LB_DESCR *descr, DWORD key )
         else if (descr->style & LBS_MULTIPLESEL)
         {
             LISTBOX_SetSelection( descr, descr->focus_item,
-                                  !descr->items[descr->focus_item].selected,
+                                  !is_item_selected(descr, descr->focus_item),
                                   (descr->style & LBS_NOTIFY) != 0 );
         }
         break;
