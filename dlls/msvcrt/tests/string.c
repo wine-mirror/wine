@@ -3288,6 +3288,9 @@ static void test__ismbclx(void)
     ret = _ismbcl0(0x8140);
     ok(ret, "got %d\n", ret);
 
+    ret = _ismbcl0(0x817f);
+    ok(!ret, "got %d\n", ret);
+
     _setmbcp(cp);
 }
 

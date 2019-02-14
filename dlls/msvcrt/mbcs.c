@@ -2560,7 +2560,7 @@ int CDECL _ismbcl0(unsigned int c)
   if(get_mbcinfo()->mbcodepage == 932)
   {
     /* JIS non-Kanji */
-    return (c >= 0x8140 && c <= 0x889e);
+    return _ismbclegal(c) && c >= 0x8140 && c <= 0x889e;
   }
   return 0;
 }
