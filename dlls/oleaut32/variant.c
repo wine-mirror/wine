@@ -5134,7 +5134,21 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
 	}
 	V_VT(pVarOut) = V_VT(pVarIn);
 	break;
+    case VT_DECIMAL:
+    {
+        double dbl;
 
+        VarR8FromDec(&V_DECIMAL(pVarIn), &dbl);
+
+        if (dbl>0.0f)
+            dbl = floor(dbl*pow(10,deci)+0.5);
+        else
+            dbl = ceil(dbl*pow(10,deci)-0.5);
+
+        V_VT(pVarOut)=VT_DECIMAL;
+        VarDecFromR8(dbl, &V_DECIMAL(pVarOut));
+        break;
+    }
     /* cases we don't know yet */
     default:
 	FIXME("unimplemented part, V_VT(pVarIn) == 0x%X, deci == %d\n",
