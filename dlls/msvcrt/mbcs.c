@@ -1575,11 +1575,19 @@ int CDECL _ismbbtrail(unsigned int c)
 }
 
 /*********************************************************************
+ *              _ismbclegal_l(MSVCRT.@)
+ */
+int CDECL _ismbclegal_l(unsigned int c, MSVCRT__locale_t locale)
+{
+    return _ismbblead_l(HIBYTE(c), locale) && _ismbbtrail_l(LOBYTE(c), locale);
+}
+
+/*********************************************************************
  *              _ismbclegal(MSVCRT.@)
  */
 int CDECL _ismbclegal(unsigned int c)
 {
-    return _ismbblead(HIBYTE(c)) && _ismbbtrail(LOBYTE(c));
+    return _ismbclegal_l(c, NULL);
 }
 
 /*********************************************************************

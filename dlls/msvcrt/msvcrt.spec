@@ -614,7 +614,7 @@
 @ stub _ismbcl2(long)
 # stub _ismbcl2_l(long ptr)
 @ cdecl _ismbclegal(long)
-# stub _ismbclegal_l(long ptr)
+@ cdecl _ismbclegal_l(long ptr)
 @ cdecl _ismbclower(long)
 # stub _ismbclower_l(long ptr)
 @ cdecl _ismbcprint(long)

@@ -1339,7 +1339,7 @@
 @ stub _ismbcl2(long)
 @ stub _ismbcl2_l
 @ cdecl _ismbclegal(long)
-@ stub _ismbclegal_l
+@ cdecl _ismbclegal_l(long ptr)
 @ stub _ismbclower(long)
 @ stub _ismbclower_l
 @ stub _ismbcprint(long)

@@ -45,7 +45,7 @@
 @ cdecl _ismbcl2(long) ucrtbase._ismbcl2
 @ stub _ismbcl2_l
 @ cdecl _ismbclegal(long) ucrtbase._ismbclegal
-@ stub _ismbclegal_l
+@ cdecl _ismbclegal_l(long ptr) ucrtbase._ismbclegal_l
 @ cdecl _ismbclower(long) ucrtbase._ismbclower
 @ stub _ismbclower_l
 @ cdecl _ismbcprint(long) ucrtbase._ismbcprint
