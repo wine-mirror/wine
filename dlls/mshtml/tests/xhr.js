@@ -18,14 +18,21 @@
 
 function test_xhr() {
     var xhr = new XMLHttpRequest();
+    var complete_cnt = 0;
 
     xhr.onreadystatechange = function() {
         if(xhr.readyState != 4)
             return;
 
         ok(xhr.responseText === "Testing...", "unexpected responseText " + xhr.responseText);
-        next_test();
+        if(complete_cnt++)
+            next_test();
     }
+    var onload_func = xhr.onload = function() {
+        if(complete_cnt++)
+            next_test();
+    };
+    ok(xhr.onload === onload_func, "xhr.onload != onload_func");
 
     xhr.open("POST", "echo.php", true);
     xhr.setRequestHeader("X-Test", "True");

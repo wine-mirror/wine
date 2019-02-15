@@ -36,6 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+#define MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD MSHTML_DISPID_CUSTOM_MIN
+
 static HRESULT bstr_to_nsacstr(BSTR bstr, nsACString *str)
 {
     char *cstr = heap_strdupWtoU(bstr);
@@ -96,6 +98,8 @@ typedef struct {
     nsIDOMEventListener nsIDOMEventListener_iface;
     LONG ref;
     HTMLXMLHttpRequest *xhr;
+    BOOL readystatechange_event;
+    BOOL load_event;
 } XMLHttpReqEventListener;
 
 struct HTMLXMLHttpRequest {
@@ -113,15 +117,27 @@ static void detach_xhr_event_listener(XMLHttpReqEventListener *event_listener)
     nsAString str;
     nsresult nsres;
 
+    static const WCHAR loadW[] = {'l','o','a','d',0};
     static const WCHAR readystatechangeW[] =
         {'o','n','r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
 
     nsres = nsIXMLHttpRequest_QueryInterface(event_listener->xhr->nsxhr, &IID_nsIDOMEventTarget, (void**)&event_target);
     assert(nsres == NS_OK);
 
-    nsAString_InitDepend(&str, readystatechangeW);
-    nsres = nsIDOMEventTarget_RemoveEventListener(event_target, &str, &event_listener->nsIDOMEventListener_iface, FALSE);
-    nsAString_Finish(&str);
+    if(event_listener->readystatechange_event) {
+        nsAString_InitDepend(&str, readystatechangeW);
+        nsres = nsIDOMEventTarget_RemoveEventListener(event_target, &str, &event_listener->nsIDOMEventListener_iface, FALSE);
+        nsAString_Finish(&str);
+        assert(nsres == NS_OK);
+    }
+
+    if(event_listener->load_event) {
+        nsAString_InitDepend(&str, loadW);
+        nsres = nsIDOMEventTarget_RemoveEventListener(event_target, &str, &event_listener->nsIDOMEventListener_iface, FALSE);
+        nsAString_Finish(&str);
+        assert(nsres == NS_OK);
+    }
+
     nsIDOMEventTarget_Release(event_target);
 
     event_listener->xhr->event_listener = NULL;
@@ -738,6 +754,49 @@ static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, event_target.dispex);
 }
 
+static HRESULT HTMLXMLHttpRequest_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+{
+    static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
+
+    /* onload event handler property is supported, but not exposed by any interface. We implement as a custom property. */
+    if(!strcmpW(onloadW, name)) {
+        *dispid = MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD;
+        return S_OK;
+    }
+
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT HTMLXMLHttpRequest_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
+
+    if(id == MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD) {
+        switch(flags) {
+        case DISPATCH_PROPERTYGET:
+            TRACE("(%p) get onload\n", This);
+            return get_event_handler(&This->event_target, EVENTID_LOAD, res);
+
+        case DISPATCH_PROPERTYPUT:
+            if(params->cArgs != 1 || (params->cNamedArgs == 1 && *params->rgdispidNamedArgs != DISPID_PROPERTYPUT)
+               || params->cNamedArgs > 1) {
+                FIXME("invalid args\n");
+                return E_INVALIDARG;
+            }
+
+            TRACE("(%p)->(%p) set onload\n", This, params->rgvarg);
+            return set_event_handler(&This->event_target, EVENTID_LOAD, params->rgvarg);
+
+        default:
+            FIXME("Unimplemented flags %x\n", flags);
+            return E_NOTIMPL;
+        }
+    }
+
+    return DISP_E_UNKNOWNNAME;
+}
+
 static nsISupports *HTMLXMLHttpRequest_get_gecko_target(DispatchEx *dispex)
 {
     HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
@@ -748,37 +807,61 @@ static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
     nsIDOMEventTarget *nstarget;
+    const WCHAR *type_name;
     nsAString type_str;
     nsresult nsres;
 
     static const WCHAR readystatechangeW[] = {'r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
+    static const WCHAR loadW[] = {'l','o','a','d',0};
 
     TRACE("(%p)\n", This);
 
-    if(eid != EVENTID_READYSTATECHANGE || This->event_listener)
+    switch(eid) {
+    case EVENTID_READYSTATECHANGE:
+        type_name = readystatechangeW;
+        break;
+    case EVENTID_LOAD:
+        type_name = loadW;
+        break;
+    default:
         return;
+    }
 
-    This->event_listener = heap_alloc(sizeof(*This->event_listener));
-    if(!This->event_listener)
-        return;
+    if(!This->event_listener) {
+        This->event_listener = heap_alloc(sizeof(*This->event_listener));
+        if(!This->event_listener)
+            return;
 
-    This->event_listener->nsIDOMEventListener_iface.lpVtbl = &XMLHttpReqEventListenerVtbl;
-    This->event_listener->ref = 1;
-    This->event_listener->xhr = This;
+        This->event_listener->nsIDOMEventListener_iface.lpVtbl = &XMLHttpReqEventListenerVtbl;
+        This->event_listener->ref = 1;
+        This->event_listener->xhr = This;
+        This->event_listener->readystatechange_event = FALSE;
+        This->event_listener->load_event = FALSE;
+    }
 
     nsres = nsIXMLHttpRequest_QueryInterface(This->nsxhr, &IID_nsIDOMEventTarget, (void**)&nstarget);
     assert(nsres == NS_OK);
 
-    nsAString_InitDepend(&type_str, readystatechangeW);
+    nsAString_InitDepend(&type_str, type_name);
     nsres = nsIDOMEventTarget_AddEventListener(nstarget, &type_str, &This->event_listener->nsIDOMEventListener_iface, FALSE, TRUE, 2);
     nsAString_Finish(&type_str);
-    nsIDOMEventTarget_Release(nstarget);
     if(NS_FAILED(nsres))
-        ERR("AddEventListener failed: %08x\n", nsres);
+        ERR("AddEventListener(%s) failed: %08x\n", debugstr_w(type_name), nsres);
+
+    nsIDOMEventTarget_Release(nstarget);
+
+    if(eid == EVENTID_READYSTATECHANGE)
+        This->event_listener->readystatechange_event = TRUE;
+    else
+        This->event_listener->load_event = TRUE;
 }
 
 static event_target_vtbl_t HTMLXMLHttpRequest_event_target_vtbl = {
-    {NULL},
+    {
+        NULL,
+        HTMLXMLHttpRequest_get_dispid,
+        HTMLXMLHttpRequest_invoke
+    },
     HTMLXMLHttpRequest_get_gecko_target,
     HTMLXMLHttpRequest_bind_event
 };

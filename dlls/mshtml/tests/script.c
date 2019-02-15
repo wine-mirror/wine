@@ -3463,6 +3463,7 @@ static void run_js_tests(void)
 
     init_protocol_handler();
 
+    run_script_as_http_with_mode("xhr.js", NULL, "9");
     run_script_as_http_with_mode("xhr.js", NULL, "11");
     run_script_as_http_with_mode("elements.js", NULL, "11");
     run_script_as_http_with_mode("es5.js", NULL, "11");
