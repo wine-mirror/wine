@@ -156,7 +156,7 @@ static inline BOOL is_identifier_char(WCHAR c)
     return isalnumW(c) || c == '_';
 }
 
-static int check_keyword(parser_ctx_t *ctx, const WCHAR *word)
+static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lval)
 {
     const WCHAR *p1 = ctx->ptr;
     const WCHAR *p2 = word;
@@ -174,17 +174,18 @@ static int check_keyword(parser_ctx_t *ctx, const WCHAR *word)
         return 1;
 
     ctx->ptr = p1;
+    *lval = word;
     return 0;
 }
 
-static int check_keywords(parser_ctx_t *ctx)
+static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
 {
     int min = 0, max = ARRAY_SIZE(keywords)-1, r, i;
 
     while(min <= max) {
         i = (min+max)/2;
 
-        r = check_keyword(ctx, keywords[i].word);
+        r = check_keyword(ctx, keywords[i].word, lval);
         if(!r)
             return keywords[i].token;
 
@@ -412,7 +413,7 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         return parse_numeric_literal(ctx, lval);
 
     if(isalphaW(c)) {
-        int ret = check_keywords(ctx);
+        int ret = check_keywords(ctx, lval);
         if(!ret)
             return parse_identifier(ctx, lval);
         if(ret != tREM)
