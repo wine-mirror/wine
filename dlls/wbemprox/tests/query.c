@@ -1084,6 +1084,34 @@ static void test_query_async( IWbemServices *services )
     SysFreeString( query );
 }
 
+static void test_query_semisync( IWbemServices *services )
+{
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_','D','u','m','m','y',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    ULONG count;
+    HRESULT hr;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY,
+            NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = 1;
+    obj = (void *)0xdeadbeef;
+    hr = IEnumWbemClassObject_Next( result, -1, 1, &obj, &count );
+todo_wine
+    ok( hr == WBEM_E_INVALID_CLASS, "Unexpected hr %#x.\n", hr );
+    ok( count == 0, "Unexpected count %u.\n", count );
+    ok( obj == (void *)0xdeadbeef, "Got object %p\n", obj );
+
+    IEnumWbemClassObject_Release( result );
+
+    SysFreeString( wql );
+    SysFreeString( query );
+}
+
 static void test_GetNames( IWbemServices *services )
 {
     static const WCHAR queryW[] =
@@ -1950,6 +1978,7 @@ START_TEST(query)
     test_StdRegProv( services );
     test_notification_query_async( services );
     test_query_async( services );
+    test_query_semisync( services );
     test_GetNames( services );
     test_SystemSecurity( services );
     test_Win32_OperatingSystem( services );
