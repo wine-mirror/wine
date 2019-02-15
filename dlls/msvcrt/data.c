@@ -444,7 +444,7 @@ static int build_expanded_argv(int *argc, char **argv)
 /*********************************************************************
  *		__getmainargs (MSVCRT.@)
  */
-void CDECL __getmainargs(int *argc, char** *argv, char** *envp,
+int CDECL __getmainargs(int *argc, char** *argv, char** *envp,
                          int expand_wildcards, int *new_mode)
 {
     TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, envp, expand_wildcards, new_mode);
@@ -475,6 +475,7 @@ void CDECL __getmainargs(int *argc, char** *argv, char** *envp,
 
     if (new_mode)
         MSVCRT__set_new_mode( *new_mode );
+    return 0;
 }
 
 static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
@@ -542,7 +543,7 @@ static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
 /*********************************************************************
  *		__wgetmainargs (MSVCRT.@)
  */
-void CDECL __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *wenvp,
+int CDECL __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *wenvp,
                           int expand_wildcards, int *new_mode)
 {
     TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenvp, expand_wildcards, new_mode);
@@ -575,6 +576,7 @@ void CDECL __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *
     *wenvp = MSVCRT___winitenv;
     if (new_mode)
         MSVCRT__set_new_mode( *new_mode );
+    return 0;
 }
 
 /*********************************************************************
