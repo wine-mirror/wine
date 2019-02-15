@@ -145,7 +145,7 @@ STRINGTABLE
 BEGIN
     STRING_ALL_FILES,              "All documents (*.*)"
     STRING_TEXT_FILES_TXT,         "Text documents (*.txt)"
-    STRING_TEXT_FILES_UNICODE_TXT, "Unicode text document (*.txt)"
+    STRING_TEXT_FILES_UNICODE_TXT, "Unicode text documents (*.txt)"
     STRING_RICHTEXT_FILES_RTF,     "Rich text format (*.rtf)"
     STRING_NEWFILE_RICHTEXT,       "Rich text document"
     STRING_NEWFILE_TXT,            "Text document"

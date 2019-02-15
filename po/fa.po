@@ -15927,8 +15927,9 @@ msgid "Text documents (*.txt)"
 msgstr "پرونده‌های متنی (*.txt)"
 
 #: wordpad.rc:149
-msgid "Unicode text document (*.txt)"
-msgstr ""
+#, fuzzy
+msgid "Unicode text documents (*.txt)"
+msgstr "پرونده‌های متنی (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"

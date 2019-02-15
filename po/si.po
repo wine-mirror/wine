@@ -15575,7 +15575,9 @@ msgid "Text documents (*.txt)"
 msgstr "පෙළ ලේඛ (*.txt)"
 
 #: wordpad.rc:149
-msgid "Unicode text document (*.txt)"
+#, fuzzy
+#| msgid "Unicode text document (*.txt)"
+msgid "Unicode text documents (*.txt)"
 msgstr "යුනිකෝඩ් පෙළ ලේඛය (*.txt)"
 
 #: wordpad.rc:150

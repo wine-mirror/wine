@@ -16260,7 +16260,9 @@ msgid "Text documents (*.txt)"
 msgstr "텍스트 파일 (*.txt)"
 
 #: wordpad.rc:149
-msgid "Unicode text document (*.txt)"
+#, fuzzy
+#| msgid "Unicode text document (*.txt)"
+msgid "Unicode text documents (*.txt)"
 msgstr "유니코드 텍스트 문서 (*.txt)"
 
 #: wordpad.rc:150
