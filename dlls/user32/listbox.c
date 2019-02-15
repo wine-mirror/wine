@@ -84,10 +84,10 @@ typedef struct
     INT         wheel_remain;   /* Left over scroll amount */
     BOOL        caret_on;       /* Is caret on? */
     BOOL        captured;       /* Is mouse captured? */
-    BOOL	in_focus;
+    BOOL        in_focus;
     HFONT       font;           /* Current font */
-    LCID          locale;       /* Current locale for string comparisons */
-    LPHEADCOMBO   lphc;		/* ComboLBox */
+    LCID        locale;         /* Current locale for string comparisons */
+    HEADCOMBO  *lphc;           /* ComboLBox */
 } LB_DESCR;
 
 
@@ -558,7 +558,7 @@ static INT LISTBOX_GetItemFromPoint( const LB_DESCR *descr, INT x, INT y )
  *
  * Paint an item.
  */
-static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect, 
+static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
 			       INT index, UINT action, BOOL ignoreFocus )
 {
     BOOL selected = FALSE, focused;
@@ -806,6 +806,7 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
         SetLastError(ERROR_INVALID_INDEX);
         return LB_ERR;
     }
+
     if (HAS_STRINGS(descr))
     {
         WCHAR *str = get_item_string(descr, index);
@@ -818,7 +819,7 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
             return WideCharToMultiByte( CP_ACP, 0, str, len, NULL, 0, NULL, NULL );
         }
 
-	TRACE("index %d (0x%04x) %s\n", index, index, debugstr_w(str));
+        TRACE("index %d (0x%04x) %s\n", index, index, debugstr_w(str));
 
         __TRY  /* hide a Delphi bug that passes a read-only buffer */
         {
@@ -840,7 +841,8 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
             return LB_ERR;
         }
         __ENDTRY
-    } else {
+    } else
+    {
         if (buffer)
             *((ULONG_PTR *)buffer) = get_item_data(descr, index);
         len = sizeof(ULONG_PTR);
@@ -1074,7 +1076,7 @@ static LRESULT LISTBOX_Paint( LB_DESCR *descr, HDC hdc )
 
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
     hbrush = (HBRUSH)SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
-			   	   (WPARAM)hdc, (LPARAM)descr->self );
+				   (WPARAM)hdc, (LPARAM)descr->self );
     if (hbrush) oldBrush = SelectObject( hdc, hbrush );
     if (!IsWindowEnabled(descr->self)) SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
 
@@ -2600,7 +2602,7 @@ static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     LB_DESCR *descr = (LB_DESCR *)GetWindowLongPtrW( hwnd, 0 );
-    LPHEADCOMBO lphc = 0;
+    HEADCOMBO *lphc = NULL;
     LRESULT ret;
 
     if (!descr)
@@ -2878,10 +2880,10 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         if(!unicode && HAS_STRINGS(descr))
             HeapFree(GetProcessHeap(), 0, textW);
         if (index != LB_ERR)
-	{
+        {
             LISTBOX_MoveCaret( descr, index, TRUE );
             LISTBOX_SetSelection( descr, index, TRUE, FALSE );
-	}
+        }
         return index;
     }
 
@@ -3092,7 +3094,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             LISTBOX_HandleMouseMove( descr, mousePos.x, mousePos.y);
 
             descr->captured = captured;
-        } 
+        }
         else if (GetCapture() == descr->self)
         {
             LISTBOX_HandleMouseMove( descr, (INT16)LOWORD(lParam),
