@@ -663,7 +663,7 @@
 @ cdecl _ismbcl1(long)
 @ cdecl _ismbcl1_l(long ptr)
 @ stub _ismbcl2(long)
-@ stub _ismbcl2_l
+@ cdecl _ismbcl2_l(long ptr)
 @ cdecl _ismbclegal(long)
 @ cdecl _ismbclegal_l(long ptr)
 @ cdecl _ismbclower(long)
