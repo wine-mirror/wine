@@ -2629,3 +2629,11 @@ int CDECL _ismbcl2_l(unsigned int c, MSVCRT__locale_t locale)
 
     return 0;
 }
+
+/*********************************************************************
+ *		_ismbcl2 (MSVCRT.@)
+ */
+int CDECL _ismbcl2(unsigned int c)
+{
+    return _ismbcl2_l(c, NULL);
+}

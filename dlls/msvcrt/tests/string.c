@@ -3278,12 +3278,18 @@ static void test__ismbclx(void)
     ret = _ismbcl1(0);
     ok(!ret, "got %d\n", ret);
 
+    ret = _ismbcl2(0);
+    ok(!ret, "got %d\n", ret);
+
     cp = _setmbcp(1252);
 
     ret = _ismbcl0(0x8140);
     ok(!ret, "got %d\n", ret);
 
     ret = _ismbcl1(0x889f);
+    ok(!ret, "got %d\n", ret);
+
+    ret = _ismbcl2(0x989f);
     ok(!ret, "got %d\n", ret);
 
     _setmbcp(932);
@@ -3304,6 +3310,15 @@ static void test__ismbclx(void)
     ok(ret, "got %d\n", ret);
 
     ret = _ismbcl1(0x88fd);
+    ok(!ret, "got %d\n", ret);
+
+    ret = _ismbcl2(0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = _ismbcl2(0x989f);
+    ok(ret, "got %d\n", ret);
+
+    ret = _ismbcl2(0x993f);
     ok(!ret, "got %d\n", ret);
 
     _setmbcp(cp);

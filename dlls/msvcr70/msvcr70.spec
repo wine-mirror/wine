@@ -383,7 +383,7 @@
 @ cdecl _ismbckata(long)
 @ cdecl _ismbcl0(long)
 @ cdecl _ismbcl1(long)
-@ stub _ismbcl2(long)
+@ cdecl _ismbcl2(long)
 @ cdecl _ismbclegal(long)
 @ cdecl _ismbclower(long)
 @ cdecl _ismbcprint(long)
