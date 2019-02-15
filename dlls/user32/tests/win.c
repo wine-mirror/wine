@@ -11337,6 +11337,167 @@ todo_wine
     DestroyWindow(hwnd);
 }
 
+static void test_arrange_iconic_windows(void)
+{
+    MINIMIZEDMETRICS mm = {sizeof(mm)}, oldmm = {sizeof(oldmm)};
+    RECT orig = {100, 200, 300, 400}, rect, expect, parent_rect;
+    POINT pt = {0};
+    HWND parent, hwnds[10];
+    UINT ret;
+    int i, row, col;
+
+    parent = CreateWindowA("MainWindowClass", "parent", WS_OVERLAPPEDWINDOW,
+            100, 200, 500, 300, NULL, 0, 0, NULL);
+    ok(!!parent, "failed to create window, error %u\n", GetLastError());
+
+    GetClientRect(parent, &parent_rect);
+    ClientToScreen(parent, &pt);
+    SystemParametersInfoA(SPI_GETMINIMIZEDMETRICS, sizeof(oldmm), &oldmm, 0);
+
+    mm.iWidth = 100;
+    mm.iHorzGap = 40;
+    mm.iVertGap = 3;
+    mm.iArrange = ARW_TOPLEFT | ARW_RIGHT;
+    ret = SystemParametersInfoA(SPI_SETMINIMIZEDMETRICS, sizeof(mm), &mm, 0);
+    ok(ret, "failed to set minimized metrics, error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ArrangeIconicWindows(parent);
+todo_wine
+    ok(!ret, "wrong ret %u\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(hwnds); ++i)
+    {
+        hwnds[i] = CreateWindowA("MainWindowClass", "child", WS_CHILD |
+            WS_OVERLAPPEDWINDOW, orig.left, orig.top, orig.right - orig.left,
+            orig.bottom - orig.top, parent, 0, 0, NULL);
+        ok(!!hwnds[i], "failed to create window %u, error %u\n", i, GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = ArrangeIconicWindows(parent);
+todo_wine
+    ok(!ret, "wrong ret %u\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(hwnds); ++i)
+    {
+        GetWindowRect(hwnds[i], &rect);
+        expect = orig;
+        OffsetRect(&expect, pt.x, pt.y);
+        ok(EqualRect(&rect, &expect), "hwnd %u: expected rect %s, got %s\n", i,
+            wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+    }
+
+    ShowWindow(hwnds[0], SW_MINIMIZE);
+
+    for (i = 0; i < ARRAY_SIZE(hwnds); ++i)
+    {
+        ret = SetWindowPos(hwnds[i], 0, orig.left, orig.top, 0, 0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ok(ret, "hwnd %u: failed to move window, error %u\n", i, GetLastError());
+    }
+
+    ret = ArrangeIconicWindows(parent);
+todo_wine
+    ok(ret == 1, "wrong ret %u\n", ret);
+
+    GetWindowRect(hwnds[0], &rect);
+    SetRect(&expect, 0, 0, GetSystemMetrics(SM_CXMINIMIZED), GetSystemMetrics(SM_CYMINIMIZED));
+    OffsetRect(&expect, mm.iHorzGap, mm.iVertGap);
+    OffsetRect(&expect, pt.x, pt.y);
+todo_wine
+    ok(EqualRect(&rect, &expect), "expected rect %s, got %s\n",
+        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+    for (i = 1; i < ARRAY_SIZE(hwnds); ++i)
+    {
+        GetWindowRect(hwnds[i], &rect);
+        expect = orig;
+        OffsetRect(&expect, pt.x, pt.y);
+        ok(EqualRect(&rect, &expect), "hwnd %u: expected rect %s, got %s\n", i,
+            wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+    }
+
+    for (i = 0; i < ARRAY_SIZE(hwnds); ++i)
+    {
+        ShowWindow(hwnds[i], SW_MINIMIZE);
+        ret = SetWindowPos(hwnds[i], 0, orig.left, orig.top, 0, 0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ok(ret, "hwnd %u: failed to move window, error %u\n", i, GetLastError());
+    }
+
+    ret = ArrangeIconicWindows(parent);
+todo_wine
+    ok(ret == 10, "wrong ret %u\n", ret);
+
+    col = mm.iHorzGap;
+    row = mm.iVertGap;
+    for (i = 0; i < ARRAY_SIZE(hwnds); ++i)
+    {
+        if (col + GetSystemMetrics(SM_CXMINIMIZED) > parent_rect.right - parent_rect.left)
+        {
+            col = mm.iHorzGap;
+            row += GetSystemMetrics(SM_CYMINIMIZED) + mm.iVertGap;
+        }
+
+        GetWindowRect(hwnds[i], &rect);
+        SetRect(&expect, col, row, col + GetSystemMetrics(SM_CXMINIMIZED),
+            row + GetSystemMetrics(SM_CYMINIMIZED));
+        OffsetRect(&expect, pt.x, pt.y);
+todo_wine
+        ok(EqualRect(&rect, &expect), "hwnd %u: expected rect %s, got %s\n", i,
+            wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+        col += GetSystemMetrics(SM_CXMINIMIZED) + mm.iHorzGap;
+    }
+
+    mm.iArrange = ARW_BOTTOMRIGHT | ARW_UP;
+    mm.iVertGap = 10;
+    ret = SystemParametersInfoA(SPI_SETMINIMIZEDMETRICS, sizeof(mm), &mm, 0);
+    ok(ret, "failed to set minimized metrics, error %u\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(hwnds); ++i)
+    {
+        ret = SetWindowPos(hwnds[i], 0, orig.left, orig.top, 0, 0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ok(ret, "hwnd %u: failed to move window, error %u\n", i, GetLastError());
+    }
+
+    ret = ArrangeIconicWindows(parent);
+todo_wine
+    ok(ret == 10, "wrong ret %u\n", ret);
+
+    col = parent_rect.right - mm.iHorzGap;
+    row = parent_rect.bottom - mm.iVertGap;
+    for (i = 0; i < ARRAY_SIZE(hwnds); ++i)
+    {
+        if (row - GetSystemMetrics(SM_CYMINIMIZED) < parent_rect.top)
+        {
+            row = parent_rect.bottom - mm.iVertGap;
+            col -= GetSystemMetrics(SM_CXMINIMIZED) + mm.iHorzGap;
+        }
+
+        GetWindowRect(hwnds[i], &rect);
+        SetRect(&expect, col - GetSystemMetrics(SM_CXMINIMIZED),
+            row - GetSystemMetrics(SM_CYMINIMIZED), col, row);
+        OffsetRect(&expect, pt.x, pt.y);
+todo_wine
+        ok(EqualRect(&rect, &expect), "hwnd %u: expected rect %s, got %s\n", i,
+            wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+        row -= GetSystemMetrics(SM_CYMINIMIZED) + mm.iVertGap;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(hwnds); ++i)
+        DestroyWindow(hwnds[i]);
+    DestroyWindow(parent);
+
+    ret = SystemParametersInfoA(SPI_SETMINIMIZEDMETRICS, sizeof(oldmm), &oldmm, 0);
+    ok(ret, "failed to restore minimized metrics, error %u\n", GetLastError());
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -11497,6 +11658,7 @@ START_TEST(win)
     test_destroy_quit();
     test_IsWindowEnabled();
     test_window_placement();
+    test_arrange_iconic_windows();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
