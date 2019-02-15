@@ -294,6 +294,21 @@ static BOOL compare_bits(const struct bitmap_data *expect, UINT buffersize, cons
     if (!equal && expect->alt_data)
         equal = compare_bits(expect->alt_data, buffersize, converted_bits);
 
+    if (!equal && winetest_debug > 1)
+    {
+        UINT i, bps;
+        bps = expect->bpp / 8;
+        if (!bps) bps = buffersize;
+        printf("converted_bits (%u bytes):\n    ", buffersize);
+        for (i = 0; i < buffersize; i++)
+        {
+            printf("%u,", converted_bits[i]);
+            if (!((i + 1) % 32)) printf("\n    ");
+            else if (!((i+1) % bps)) printf(" ");
+        }
+        printf("\n");
+    }
+
     return equal;
 }
 
@@ -441,6 +456,10 @@ static const BYTE bits_32bppBGR[] = {
     0,255,255,80, 255,0,255,80, 255,255,0,80, 255,255,255,80, 0,255,255,80, 255,0,255,80, 255,255,0,80, 255,255,255,80};
 static const struct bitmap_data testdata_32bppBGR = {
     &GUID_WICPixelFormat32bppBGR, 32, bits_32bppBGR, 32, 2, 96.0, 96.0};
+static const struct bitmap_data testdata_32bppBGRA80 = {
+    &GUID_WICPixelFormat32bppBGRA, 32, bits_32bppBGR, 32, 2, 96.0, 96.0};
+static const struct bitmap_data testdata_32bppRGBA80 = {
+    &GUID_WICPixelFormat32bppRGBA, 32, bits_32bppBGR, 32, 2, 96.0, 96.0};
 
 static const BYTE bits_32bppBGRA[] = {
     255,0,0,255, 0,255,0,255, 0,0,255,255, 0,0,0,255, 255,0,0,255, 0,255,0,255, 0,0,255,255, 0,0,0,255,
@@ -453,6 +472,24 @@ static const BYTE bits_32bppBGRA[] = {
     0,255,255,255, 255,0,255,255, 255,255,0,255, 255,255,255,255, 0,255,255,255, 255,0,255,255, 255,255,0,255, 255,255,255,255};
 static const struct bitmap_data testdata_32bppBGRA = {
     &GUID_WICPixelFormat32bppBGRA, 32, bits_32bppBGRA, 32, 2, 96.0, 96.0};
+static const struct bitmap_data testdata_32bppRGBA = {
+    &GUID_WICPixelFormat32bppRGBA, 32, bits_32bppBGRA, 32, 2, 96.0, 96.0};
+static const struct bitmap_data testdata_32bppRGB = {
+    &GUID_WICPixelFormat32bppRGB, 32, bits_32bppBGRA, 32, 2, 96.0, 96.0};
+
+static const BYTE bits_32bppPBGRA[] = {
+    80,0,0,80, 0,80,0,80, 0,0,80,80, 0,0,0,80, 80,0,0,80, 0,80,0,80, 0,0,80,80, 0,0,0,80,
+    80,0,0,80, 0,80,0,80, 0,0,80,80, 0,0,0,80, 80,0,0,80, 0,80,0,80, 0,0,80,80, 0,0,0,80,
+    80,0,0,80, 0,80,0,80, 0,0,80,80, 0,0,0,80, 80,0,0,80, 0,80,0,80, 0,0,80,80, 0,0,0,80,
+    80,0,0,80, 0,80,0,80, 0,0,80,80, 0,0,0,80, 80,0,0,80, 0,80,0,80, 0,0,80,80, 0,0,0,80,
+    0,80,80,80, 80,0,80,80, 80,80,0,80, 80,80,80,80, 0,80,80,80, 80,0,80,80, 80,80,0,80, 80,80,80,80,
+    0,80,80,80, 80,0,80,80, 80,80,0,80, 80,80,80,80, 0,80,80,80, 80,0,80,80, 80,80,0,80, 80,80,80,80,
+    0,80,80,80, 80,0,80,80, 80,80,0,80, 80,80,80,80, 0,80,80,80, 80,0,80,80, 80,80,0,80, 80,80,80,80,
+    0,80,80,80, 80,0,80,80, 80,80,0,80, 80,80,80,80, 0,80,80,80, 80,0,80,80, 80,80,0,80, 80,80,80,80};
+static const struct bitmap_data testdata_32bppPBGRA = {
+    &GUID_WICPixelFormat32bppPBGRA, 32, bits_32bppPBGRA, 32, 2, 96.0, 96.0};
+static const struct bitmap_data testdata_32bppPRGBA = {
+    &GUID_WICPixelFormat32bppPRGBA, 32, bits_32bppPBGRA, 32, 2, 96.0, 96.0};
 
 /* XP and 2003 use linear color conversion, later versions use sRGB gamma */
 static const float bits_32bppGrayFloat_xp[] = {
@@ -518,7 +555,7 @@ static void test_conversion(const struct bitmap_data *src, const struct bitmap_d
     hr = WICConvertBitmapSource(dst->format, &src_obj->IWICBitmapSource_iface, &dst_bitmap);
     todo_wine_if (todo)
         ok(hr == S_OK ||
-           broken(hr == E_INVALIDARG) /* XP */, "WICConvertBitmapSource(%s) failed, hr=%x\n", name, hr);
+           broken(hr == E_INVALIDARG || hr == WINCODEC_ERR_COMPONENTNOTFOUND) /* XP */, "WICConvertBitmapSource(%s) failed, hr=%x\n", name, hr);
 
     if (hr == S_OK)
     {
@@ -1593,6 +1630,12 @@ START_TEST(converter)
     test_conversion(&testdata_32bppBGRA, &testdata_32bppBGR, "BGRA -> BGR", FALSE);
     test_conversion(&testdata_32bppBGR, &testdata_32bppBGRA, "BGR -> BGRA", FALSE);
     test_conversion(&testdata_32bppBGRA, &testdata_32bppBGRA, "BGRA -> BGRA", FALSE);
+    test_conversion(&testdata_32bppBGRA80, &testdata_32bppPBGRA, "BGRA -> PBGRA", FALSE);
+
+    test_conversion(&testdata_32bppRGBA, &testdata_32bppRGB, "RGBA -> RGB", FALSE);
+    test_conversion(&testdata_32bppRGB, &testdata_32bppRGBA, "RGB -> RGBA", FALSE);
+    test_conversion(&testdata_32bppRGBA, &testdata_32bppRGBA, "RGBA -> RGBA", FALSE);
+    test_conversion(&testdata_32bppRGBA80, &testdata_32bppPRGBA, "RGBA -> PRGBA", FALSE);
 
     test_conversion(&testdata_24bppBGR, &testdata_24bppBGR, "24bppBGR -> 24bppBGR", FALSE);
     test_conversion(&testdata_24bppBGR, &testdata_24bppRGB, "24bppBGR -> 24bppRGB", FALSE);
