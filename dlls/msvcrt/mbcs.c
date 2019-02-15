@@ -2566,7 +2566,7 @@ int CDECL _ismbcl0_l(unsigned int c, MSVCRT__locale_t locale)
     if(mbcinfo->mbcodepage == 932)
     {
         /* JIS non-Kanji */
-        return _ismbclegal(c) && c >= 0x8140 && c <= 0x889e;
+        return _ismbclegal_l(c, locale) && c >= 0x8140 && c <= 0x889e;
     }
 
     return 0;
@@ -2595,7 +2595,7 @@ int CDECL _ismbcl1_l(unsigned int c, MSVCRT__locale_t locale)
     if(mbcinfo->mbcodepage == 932)
     {
         /* JIS level-1 */
-        return _ismbclegal(c) && c >= 0x889f && c <= 0x9872;
+        return _ismbclegal_l(c, locale) && c >= 0x889f && c <= 0x9872;
     }
 
     return 0;
