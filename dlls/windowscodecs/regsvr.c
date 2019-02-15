@@ -1463,8 +1463,11 @@ static GUID const * const converter_formats[] = {
     &GUID_WICPixelFormat24bppBGR,
     &GUID_WICPixelFormat24bppRGB,
     &GUID_WICPixelFormat32bppBGR,
+    &GUID_WICPixelFormat32bppRGB,
     &GUID_WICPixelFormat32bppBGRA,
+    &GUID_WICPixelFormat32bppRGBA,
     &GUID_WICPixelFormat32bppPBGRA,
+    &GUID_WICPixelFormat32bppPRGBA,
     &GUID_WICPixelFormat32bppGrayFloat,
     &GUID_WICPixelFormat48bppRGB,
     &GUID_WICPixelFormat64bppRGBA,
@@ -1928,6 +1931,17 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         WICPixelFormatNumericRepresentationUnsignedInteger,
         0
     },
+    {   &GUID_WICPixelFormat32bppRGB,
+        "The Wine Project",
+        "32bpp RGB",
+        NULL, /* no version */
+        &GUID_VendorMicrosoft,
+        32, /* bitsperpixel */
+        3, /* channel count */
+        channel_masks_8bit,
+        WICPixelFormatNumericRepresentationUnsignedInteger,
+        0
+    },
     {   &GUID_WICPixelFormat32bppBGRA,
         "The Wine Project",
         "32bpp BGRA",
@@ -1939,9 +1953,31 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         WICPixelFormatNumericRepresentationUnsignedInteger,
         1
     },
+    {   &GUID_WICPixelFormat32bppRGBA,
+        "The Wine Project",
+        "32bpp RGBA",
+        NULL, /* no version */
+        &GUID_VendorMicrosoft,
+        32, /* bitsperpixel */
+        4, /* channel count */
+        channel_masks_8bit,
+        WICPixelFormatNumericRepresentationUnsignedInteger,
+        1
+    },
     {   &GUID_WICPixelFormat32bppPBGRA,
         "The Wine Project",
         "32bpp PBGRA",
+        NULL, /* no version */
+        &GUID_VendorMicrosoft,
+        32, /* bitsperpixel */
+        4, /* channel count */
+        channel_masks_8bit,
+        WICPixelFormatNumericRepresentationUnsignedInteger,
+        1
+    },
+    {   &GUID_WICPixelFormat32bppPRGBA,
+        "The Wine Project",
+        "32bpp PRGBA",
         NULL, /* no version */
         &GUID_VendorMicrosoft,
         32, /* bitsperpixel */
