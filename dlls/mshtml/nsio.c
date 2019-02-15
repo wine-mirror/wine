@@ -540,6 +540,9 @@ static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef r
     }else if(IsEqualGUID(&IID_nsIUploadChannel, riid)) {
         TRACE("(%p)->(IID_nsIUploadChannel %p)\n", This, result);
         *result = &This->nsIUploadChannel_iface;
+    }else if(IsEqualGUID(&IID_nsIFormPOSTActionChannel, riid)) {
+        TRACE("(%p)->(IID_nsIFormPOSTActionChannel %p)\n", This, result);
+        *result = &This->nsIUploadChannel_iface;
     }else if(IsEqualGUID(&IID_nsIHttpChannelInternal, riid)) {
         TRACE("(%p)->(IID_nsIHttpChannelInternal %p)\n", This, result);
         *result = is_http_channel(This) ? &This->nsIHttpChannelInternal_iface : NULL;

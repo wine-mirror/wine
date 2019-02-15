@@ -723,6 +723,15 @@ interface nsIUploadChannel : nsISupports
 
 [
     object,
+    uuid(fc826b53-0db8-42b4-aa6a-5dd2cfca52a4),
+    local
+]
+interface nsIFormPOSTActionChannel : nsIUploadChannel
+{
+}
+
+[
+    object,
     uuid(8d171460-a716-41f1-92be-8c659db39b45),
     local
 ]
