@@ -1,6 +1,6 @@
 MODULE    = msi.dll
 IMPORTLIB = msi
-IMPORTS   = uuid urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 version user32 gdi32 advapi32 rpcrt4
+IMPORTS   = uuid urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 version user32 gdi32 advapi32 rpcrt4 sxs
 DELAYIMPORTS = odbccp32 wintrust crypt32 imagehlp mspatcha
 
 EXTRAIDLFLAGS = --prefix-server=s_
