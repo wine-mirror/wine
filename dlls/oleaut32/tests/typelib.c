@@ -4807,7 +4807,7 @@ static void test_dump_typelib(const char *name)
 
         for (func = 0; func < typeattr->cFuncs; func++)
         {
-            function_info *fn_info = (function_info *)&ti->funcs[func];
+            const function_info *fn_info = &ti->funcs[func];
             FUNCDESC *desc;
             BSTR namesTab[256];
             UINT cNames;
