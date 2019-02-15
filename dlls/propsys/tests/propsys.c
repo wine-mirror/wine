@@ -641,6 +641,12 @@ static void test_PropVariantToStringAlloc(void)
     ok(!lstrcmpW(str, topicW), "got %s\n", wine_dbgstr_w(str));
     CoTaskMemFree(str);
     PropVariantClear(&prop);
+
+    prop.vt = VT_EMPTY;
+    hres = PropVariantToStringAlloc(&prop, &str);
+    ok(hres == S_OK, "returned %x\n", hres);
+    ok(!lstrcmpW(str, emptyW), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
 }
 
 static void test_PropVariantCompare(void)

@@ -314,6 +314,7 @@ HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
 
     switch(propvarIn->vt)
     {
+        case VT_EMPTY:
         case VT_NULL:
             res = CoTaskMemAlloc(1*sizeof(WCHAR));
             res[0] = '\0';
