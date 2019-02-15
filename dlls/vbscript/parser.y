@@ -71,8 +71,6 @@ static class_decl_t *add_dim_prop(parser_ctx_t*,class_decl_t*,dim_decl_t*,unsign
 
 static statement_t *link_statements(statement_t*,statement_t*);
 
-static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
-
 #define STORAGE_IS_PRIVATE    1
 #define STORAGE_IS_DEFAULT    2
 
@@ -108,17 +106,18 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
 %token tTRUE tFALSE
 %token tNOT tAND tOR tXOR tEQV tIMP tNEQ
 %token tIS tLTEQ tGTEQ tMOD
-%token tCALL tDIM tSUB tFUNCTION tPROPERTY tGET tLET tCONST
+%token tCALL tDIM tSUB tFUNCTION tGET tLET tCONST
 %token tIF tELSE tELSEIF tEND tTHEN tEXIT
-%token tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tSTEP tEACH tIN
+%token tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tEACH tIN
 %token tSELECT tCASE
 %token tBYREF tBYVAL
-%token tOPTION tEXPLICIT
+%token tOPTION
 %token tSTOP
 %token tNOTHING tEMPTY tNULL
-%token tCLASS tSET tNEW tPUBLIC tPRIVATE tDEFAULT tME
-%token tERROR tNEXT tON tRESUME tGOTO
+%token tCLASS tSET tNEW tPUBLIC tPRIVATE tME
+%token tNEXT tON tRESUME tGOTO
 %token <string> tIdentifier tString
+%token <string> tDEFAULT tERROR tEXPLICIT tPROPERTY tSTEP
 %token <lng> tLong tShort
 %token <dbl> tDouble
 
@@ -443,10 +442,14 @@ ArgumentDecl
     | tBYREF Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, TRUE); }
     | tBYVAL Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, FALSE); }
 
-/* 'property' may be both keyword and identifier, depending on context */
+/* these keywords may also be an identifier, depending on context */
 Identifier
     : tIdentifier    { $$ = $1; }
-    | tPROPERTY      { $$ = propertyW; }
+    | tDEFAULT       { $$ = $1; }
+    | tERROR         { $$ = $1; }
+    | tEXPLICIT      { $$ = $1; }
+    | tPROPERTY      { $$ = $1; }
+    | tSTEP          { $$ = $1; }
 
 /* Most statements accept both new line and ':' as separators */
 StSep

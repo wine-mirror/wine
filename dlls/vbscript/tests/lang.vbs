@@ -1345,4 +1345,24 @@ end class
 set x = new RegExp
 Call ok(x.Global = false, "x.Global = " & x.Global)
 
+sub test_identifiers
+    ' test keywords that can also be a declared identifier
+    Dim default
+    default = "xx"
+    Call ok(default = "xx", "default = " & default & " expected ""xx""")
+
+    Dim error
+    error = "xx"
+    Call ok(error = "xx", "error = " & error & " expected ""xx""")
+
+    Dim explicit
+    explicit = "xx"
+    Call ok(explicit = "xx", "explicit = " & explicit & " expected ""xx""")
+
+    Dim step
+    step = "xx"
+    Call ok(step = "xx", "step = " & step & " expected ""xx""")
+end sub
+call test_identifiers()
+
 reportSuccess()
