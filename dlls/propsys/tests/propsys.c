@@ -32,6 +32,7 @@
 #include "initguid.h"
 #include "propsys.h"
 #include "propvarutil.h"
+#include "strsafe.h"
 #include "wine/test.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -1310,6 +1311,95 @@ static void test_PropVariantToDouble(void)
     ok(value == 8.0, "Unexpected value: %f.\n", value);
 }
 
+static void test_PropVariantToString(void)
+{
+    PROPVARIANT propvar;
+    static CHAR string[] = "Wine";
+    static WCHAR stringW[] = {'W','i','n','e',0};
+    WCHAR bufferW[256] = {0};
+    HRESULT hr;
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_EMPTY;
+    U(propvar).pwszVal = stringW;
+    bufferW[0] = 65;
+    hr = PropVariantToString(&propvar, bufferW, 0);
+    ok(hr == E_INVALIDARG, "PropVariantToString should fail: 0x%08x.\n", hr);
+    ok(!bufferW[0], "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_EMPTY;
+    U(propvar).pwszVal = stringW;
+    bufferW[0] = 65;
+    hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
+    ok(hr == S_OK, "PropVariantToString failed: 0x%08x.\n", hr);
+    ok(!bufferW[0], "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_NULL;
+    U(propvar).pwszVal = stringW;
+    bufferW[0] = 65;
+    hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
+    ok(hr == S_OK, "PropVariantToString failed: 0x%08x.\n", hr);
+    ok(!bufferW[0], "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_I4;
+    U(propvar).lVal = 22;
+    hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
+    todo_wine ok(hr == S_OK, "PropVariantToString failed: 0x%08x.\n", hr);
+    todo_wine ok(!strcmp_wa(bufferW, "22"), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_LPWSTR;
+    U(propvar).pwszVal = stringW;
+    hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
+    ok(hr == S_OK, "PropVariantToString failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(bufferW, stringW), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_LPSTR;
+    U(propvar).pszVal = string;
+    hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
+    ok(hr == S_OK, "PropVariantToString failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(bufferW, stringW), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_LPWSTR;
+    U(propvar).pwszVal = stringW;
+    hr = PropVariantToString(&propvar, bufferW, 4);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "PropVariantToString returned: 0x%08x.\n", hr);
+    ok(!memcmp(bufferW, stringW, 4), "got wrong string.\n");
+    memset(bufferW, 0, sizeof(bufferW));
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_LPSTR;
+    U(propvar).pszVal = string;
+    hr = PropVariantToString(&propvar, bufferW, 4);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "PropVariantToString returned: 0x%08x.\n", hr);
+    ok(!memcmp(bufferW, stringW, 4), "got wrong string.\n");
+    memset(bufferW, 0, sizeof(bufferW));
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_BSTR;
+    propvar.u.bstrVal = SysAllocString(stringW);
+    hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
+    ok(hr == S_OK, "PropVariantToString failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(bufferW, stringW), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+    SysFreeString(propvar.u.bstrVal);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -1326,4 +1416,5 @@ START_TEST(propsys)
     test_PropVariantToStringWithDefault();
     test_InitPropVariantFromCLSID();
     test_PropVariantToDouble();
+    test_PropVariantToString();
 }

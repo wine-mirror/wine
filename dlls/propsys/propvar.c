@@ -34,6 +34,7 @@
 #include "winuser.h"
 #include "shlobj.h"
 #include "propvarutil.h"
+#include "strsafe.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -302,6 +303,30 @@ HRESULT WINAPI PropVariantToBoolean(REFPROPVARIANT propvarIn, BOOL *ret)
 
     hr = PROPVAR_ConvertNumber(propvarIn, 64, TRUE, &res);
     *ret = !!res;
+    return hr;
+}
+
+HRESULT WINAPI PropVariantToString(REFPROPVARIANT propvarIn, PWSTR ret, UINT cch)
+{
+    HRESULT hr;
+    WCHAR *stringW = NULL;
+
+    TRACE("(%p, %p, %d)\n", propvarIn, ret, cch);
+
+    ret[0] = '\0';
+
+    if(!cch)
+        return E_INVALIDARG;
+
+    hr = PropVariantToStringAlloc(propvarIn, &stringW);
+    if(SUCCEEDED(hr))
+    {
+        if(lstrlenW(stringW) >= cch)
+            hr = STRSAFE_E_INSUFFICIENT_BUFFER;
+        lstrcpynW(ret, stringW, cch);
+        CoTaskMemFree(stringW);
+    }
+
     return hr;
 }
 

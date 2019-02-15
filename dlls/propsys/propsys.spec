@@ -133,7 +133,7 @@
 @ stub PropVariantToInt64VectorAlloc
 @ stub PropVariantToInt64WithDefault
 @ stub PropVariantToStrRet
-@ stub PropVariantToString
+@ stdcall PropVariantToString(ptr ptr long)
 @ stdcall PropVariantToStringAlloc(ptr ptr)
 @ stub PropVariantToStringVector
 @ stub PropVariantToStringVectorAlloc
