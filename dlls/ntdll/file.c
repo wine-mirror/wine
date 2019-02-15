@@ -1014,7 +1014,8 @@ err:
     }
 
     if (send_completion) NTDLL_AddCompletion( hFile, cvalue, status, total );
-
+    if (async_read && (options & FILE_NO_INTERMEDIATE_BUFFERING) && status == STATUS_SUCCESS)
+        return STATUS_PENDING;
     return status;
 }
 
