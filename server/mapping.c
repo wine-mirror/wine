@@ -712,7 +712,11 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.image_flags |= IMAGE_FLAGS_ComPlusILOnly;
         if (nt.opt.hdr32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
             !(clr.Flags & COMIMAGE_FLAGS_32BITREQUIRED))
+        {
             mapping->image.image_flags |= IMAGE_FLAGS_ComPlusNativeReady;
+            if (cpu_mask & CPU_FLAG(CPU_x86_64)) mapping->image.cpu = CPU_x86_64;
+            else if (cpu_mask & CPU_FLAG(CPU_ARM64)) mapping->image.cpu = CPU_ARM64;
+        }
     }
 
     if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections ))
