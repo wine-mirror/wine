@@ -739,6 +739,9 @@ HRESULT WINAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid)
         return PROPVAR_WCHARToGUID(ppropvar->u.bstrVal, SysStringLen(ppropvar->u.bstrVal), guid);
     case VT_LPWSTR:
         return PROPVAR_WCHARToGUID(ppropvar->u.pwszVal, strlenW(ppropvar->u.pwszVal), guid);
+    case VT_CLSID:
+        memcpy(guid, ppropvar->u.puuid, sizeof(*ppropvar->u.puuid));
+        return S_OK;
 
     default:
         FIXME("unsupported vt: %d\n", ppropvar->vt);
