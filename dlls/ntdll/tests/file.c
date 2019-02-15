@@ -742,7 +742,7 @@ static void read_file_test(void)
     ResetEvent(event);
     status = pNtReadFile(handle, event, apc, &apc_count, &iosb,
             aligned_buffer, sizeof(aligned_buffer), &offset, NULL);
-    todo_wine ok(status == STATUS_PENDING, "Wrong status %x.\n", status);
+    ok(status == STATUS_PENDING, "Wrong status %x.\n", status);
     WaitForSingleObject(event, 1000);
     ok(U(iosb).Status == STATUS_SUCCESS, "Wrong status %x.\n", U(iosb).Status);
     ok(iosb.Information == sizeof(aligned_buffer), "Wrong info %lu.\n", iosb.Information);

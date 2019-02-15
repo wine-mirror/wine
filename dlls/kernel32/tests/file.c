@@ -5162,9 +5162,9 @@ static void test_overlapped_read(void)
 
     bytes_count = 0xffffffff;
     ret = ReadFile(hfile, buffer, TEST_OVERLAPPED_READ_SIZE, &bytes_count, &ov);
-    todo_wine ok(!ret && GetLastError() == ERROR_IO_PENDING,
+    ok(!ret && GetLastError() == ERROR_IO_PENDING,
             "Unexpected ReadFile result, ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    todo_wine ok(!bytes_count, "Unexpected read size %u.\n", bytes_count);
+    ok(!bytes_count, "Unexpected read size %u.\n", bytes_count);
     ret = GetOverlappedResult(hfile, &ov, &bytes_count, TRUE);
     ok(ret, "Unexpected error %u.\n", GetLastError());
     ok(bytes_count == TEST_OVERLAPPED_READ_SIZE, "Unexpected read size %u.\n", bytes_count);
