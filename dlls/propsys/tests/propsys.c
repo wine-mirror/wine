@@ -1407,6 +1407,111 @@ static void test_PropVariantToString(void)
     SysFreeString(propvar.u.bstrVal);
 }
 
+static void test_PropVariantToBuffer(void)
+{
+    PROPVARIANT propvar;
+    HRESULT hr;
+    UINT8 data[] = {1,2,3,4,5,6,7,8,9,10};
+    INT8 data_int8[] = {1,2,3,4,5,6,7,8,9,10};
+    SAFEARRAY *sa;
+    SAFEARRAYBOUND sabound;
+    void *pdata;
+    UINT8 buffer[256];
+
+    hr = InitPropVariantFromBuffer(data, 10, &propvar);
+    ok(hr == S_OK, "InitVariantFromBuffer failed 0x%08x.\n", hr);
+    hr = PropVariantToBuffer(&propvar, NULL, 0); /* crash when cb isn't zero */
+    ok(hr == S_OK, "PropVariantToBuffer failed: 0x%08x.\n", hr);
+    PropVariantClear(&propvar);
+
+    hr = InitPropVariantFromBuffer(data, 10, &propvar);
+    ok(hr == S_OK, "InitVariantFromBuffer failed 0x%08x.\n", hr);
+    hr = PropVariantToBuffer(&propvar, buffer, 10);
+    ok(hr == S_OK, "PropVariantToBuffer failed: 0x%08x.\n", hr);
+    ok(!memcmp(buffer, data, 10) && !buffer[10], "got wrong buffer.\n");
+    memset(buffer, 0, sizeof(buffer));
+    PropVariantClear(&propvar);
+
+    hr = InitPropVariantFromBuffer(data, 10, &propvar);
+    ok(hr == S_OK, "InitVariantFromBuffer failed 0x%08x.\n", hr);
+    buffer[0] = 99;
+    hr = PropVariantToBuffer(&propvar, buffer, 11);
+    ok(hr == E_FAIL, "PropVariantToBuffer returned: 0x%08x.\n", hr);
+    ok(buffer[0] == 99, "got wrong buffer.\n");
+    memset(buffer, 0, sizeof(buffer));
+    PropVariantClear(&propvar);
+
+    hr = InitPropVariantFromBuffer(data, 10, &propvar);
+    ok(hr == S_OK, "InitVariantFromBuffer failed 0x%08x.\n", hr);
+    hr = PropVariantToBuffer(&propvar, buffer, 9);
+    ok(hr == S_OK, "PropVariantToBuffer failed: 0x%08x.\n", hr);
+    ok(!memcmp(buffer, data, 9) && !buffer[9], "got wrong buffer.\n");
+    memset(buffer, 0, sizeof(buffer));
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_ARRAY|VT_UI1;
+    sabound.lLbound = 0;
+    sabound.cElements = sizeof(data);
+    sa = NULL;
+    sa = SafeArrayCreate(VT_UI1, 1, &sabound);
+    ok(sa != NULL, "SafeArrayCreate failed.\n");
+    hr = SafeArrayAccessData(sa, &pdata);
+    ok(hr == S_OK, "SafeArrayAccessData failed: 0x%08x.\n", hr);
+    memcpy(pdata, data, sizeof(data));
+    U(propvar).parray = sa;
+    buffer[0] = 99;
+    hr = PropVariantToBuffer(&propvar, buffer, 11);
+    todo_wine ok(hr == E_FAIL, "PropVariantToBuffer returned: 0x%08x.\n", hr);
+    ok(buffer[0] == 99, "got wrong buffer.\n");
+    memset(buffer, 0, sizeof(buffer));
+    SafeArrayDestroy(sa);
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_ARRAY|VT_UI1;
+    sabound.lLbound = 0;
+    sabound.cElements = sizeof(data);
+    sa = NULL;
+    sa = SafeArrayCreate(VT_UI1, 1, &sabound);
+    ok(sa != NULL, "SafeArrayCreate failed.\n");
+    hr = SafeArrayAccessData(sa, &pdata);
+    ok(hr == S_OK, "SafeArrayAccessData failed: 0x%08x.\n", hr);
+    memcpy(pdata, data, sizeof(data));
+    U(propvar).parray = sa;
+    hr = PropVariantToBuffer(&propvar, buffer, sizeof(data));
+    todo_wine ok(hr == S_OK, "PropVariantToBuffer failed: 0x%08x.\n", hr);
+    todo_wine ok(!memcmp(buffer, data, 10) && !buffer[10], "got wrong buffer.\n");
+    memset(buffer, 0, sizeof(buffer));
+    SafeArrayDestroy(sa);
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_VECTOR|VT_I1;
+    U(propvar).caub.pElems = CoTaskMemAlloc(sizeof(data_int8));
+    U(propvar).caub.cElems = sizeof(data_int8);
+    memcpy(U(propvar).caub.pElems, data_int8, sizeof(data_int8));
+    hr = PropVariantToBuffer(&propvar, buffer, sizeof(data_int8));
+    ok(hr == E_INVALIDARG, "PropVariantToBuffer failed: 0x%08x.\n", hr);
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_ARRAY|VT_I1;
+    sabound.lLbound = 0;
+    sabound.cElements = sizeof(data_int8);
+    sa = NULL;
+    sa = SafeArrayCreate(VT_I1, 1, &sabound);
+    ok(sa != NULL, "SafeArrayCreate failed.\n");
+    hr = SafeArrayAccessData(sa, &pdata);
+    ok(hr == S_OK, "SafeArrayAccessData failed: 0x%08x.\n", hr);
+    memcpy(pdata, data_int8, sizeof(data_int8));
+    U(propvar).parray = sa;
+    hr = PropVariantToBuffer(&propvar, buffer, sizeof(data_int8));
+    ok(hr == E_INVALIDARG, "PropVariantToBuffer failed: 0x%08x.\n", hr);
+    SafeArrayDestroy(sa);
+    PropVariantClear(&propvar);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -1424,4 +1529,5 @@ START_TEST(propsys)
     test_InitPropVariantFromCLSID();
     test_PropVariantToDouble();
     test_PropVariantToString();
+    test_PropVariantToBuffer();
 }

@@ -111,7 +111,7 @@
 @ stub PropVariantToBooleanVector
 @ stub PropVariantToBooleanVectorAlloc
 @ stub PropVariantToBooleanWithDefault
-@ stub PropVariantToBuffer
+@ stdcall PropVariantToBuffer(ptr ptr long)
 @ stdcall PropVariantToDouble(ptr ptr)
 @ stub PropVariantToDoubleVector
 @ stub PropVariantToDoubleVectorAlloc

@@ -306,6 +306,32 @@ HRESULT WINAPI PropVariantToBoolean(REFPROPVARIANT propvarIn, BOOL *ret)
     return hr;
 }
 
+HRESULT WINAPI PropVariantToBuffer(REFPROPVARIANT propvarIn, void *ret, UINT cb)
+{
+    HRESULT hr = S_OK;
+
+    TRACE("(%p, %p, %d)\n", propvarIn, ret, cb);
+
+    switch(propvarIn->vt)
+    {
+        case VT_VECTOR|VT_UI1:
+            if(cb > propvarIn->u.caub.cElems)
+                return E_FAIL;
+            memcpy(ret, propvarIn->u.caub.pElems, cb);
+            break;
+        case VT_ARRAY|VT_UI1:
+            FIXME("Unsupported type: VT_ARRAY|VT_UI1\n");
+            hr = E_NOTIMPL;
+            break;
+        default:
+            WARN("Unexpected type: %x\n", propvarIn->vt);
+            hr = E_INVALIDARG;
+    }
+
+    return hr;
+}
+
+
 HRESULT WINAPI PropVariantToString(REFPROPVARIANT propvarIn, PWSTR ret, UINT cch)
 {
     HRESULT hr;
