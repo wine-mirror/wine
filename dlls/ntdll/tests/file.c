@@ -598,8 +598,11 @@ static void delete_file_test(void)
     pRtlFreeUnicodeString( &nameW );
 }
 
+#define TEST_OVERLAPPED_READ_SIZE 4096
+
 static void read_file_test(void)
 {
+    DECLSPEC_ALIGN(TEST_OVERLAPPED_READ_SIZE) static unsigned char aligned_buffer[TEST_OVERLAPPED_READ_SIZE];
     const char text[] = "foobar";
     HANDLE handle;
     IO_STATUS_BLOCK iosb;
@@ -711,7 +714,45 @@ static void read_file_test(void)
 
     CloseHandle( handle );
 
-    CloseHandle( event );
+    if (!(handle = create_temp_file(FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING)))
+        return;
+
+    apc_count = 0;
+    offset.QuadPart = 0;
+    U(iosb).Status = 0xdeadbabe;
+    iosb.Information = 0xdeadbeef;
+    offset.QuadPart = 0;
+    ResetEvent(event);
+    status = pNtWriteFile(handle, event, apc, &apc_count, &iosb,
+            aligned_buffer, sizeof(aligned_buffer), &offset, NULL);
+    ok(status == STATUS_END_OF_FILE || status == STATUS_PENDING || status == STATUS_SUCCESS,
+            "Wrong status %x.\n", status);
+    ok(U(iosb).Status == STATUS_SUCCESS, "Wrong status %x.\n", U(iosb).Status);
+    ok(iosb.Information == sizeof(aligned_buffer), "Wrong info %lu.\n", iosb.Information);
+    ok(is_signaled(event), "event is not signaled.\n");
+    ok(!apc_count, "apc was called.\n");
+    SleepEx(1, TRUE); /* alertable sleep */
+    ok(apc_count == 1, "apc was not called.\n");
+
+    apc_count = 0;
+    offset.QuadPart = 0;
+    U(iosb).Status = 0xdeadbabe;
+    iosb.Information = 0xdeadbeef;
+    offset.QuadPart = 0;
+    ResetEvent(event);
+    status = pNtReadFile(handle, event, apc, &apc_count, &iosb,
+            aligned_buffer, sizeof(aligned_buffer), &offset, NULL);
+    todo_wine ok(status == STATUS_PENDING, "Wrong status %x.\n", status);
+    WaitForSingleObject(event, 1000);
+    ok(U(iosb).Status == STATUS_SUCCESS, "Wrong status %x.\n", U(iosb).Status);
+    ok(iosb.Information == sizeof(aligned_buffer), "Wrong info %lu.\n", iosb.Information);
+    ok(is_signaled(event), "event is not signaled.\n");
+    ok(!apc_count, "apc was called.\n");
+    SleepEx(1, TRUE); /* alertable sleep */
+    ok(apc_count == 1, "apc was not called.\n");
+
+    CloseHandle(handle);
+    CloseHandle(event);
 }
 
 static void append_file_test(void)
