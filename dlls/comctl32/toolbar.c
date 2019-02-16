@@ -717,7 +717,7 @@ static void TOOLBAR_DrawMasked(HIMAGELIST himl, int index, HDC hdc, INT x, INT y
 
 
 static UINT
-TOOLBAR_TranslateState(const TBUTTON_INFO *btnPtr)
+TOOLBAR_TranslateState(const TBUTTON_INFO *btnPtr, BOOL captured)
 {
     UINT retstate = 0;
 
@@ -725,7 +725,7 @@ TOOLBAR_TranslateState(const TBUTTON_INFO *btnPtr)
     retstate |= (btnPtr->fsState & TBSTATE_PRESSED) ? CDIS_SELECTED : 0;
     retstate |= (btnPtr->fsState & TBSTATE_ENABLED) ? 0 : CDIS_DISABLED;
     retstate |= (btnPtr->fsState & TBSTATE_MARKED ) ? CDIS_MARKED   : 0;
-    retstate |= (btnPtr->bHot                     ) ? CDIS_HOT      : 0;
+    retstate |= (btnPtr->bHot & !captured         ) ? CDIS_HOT      : 0;
     retstate |= ((btnPtr->fsState & (TBSTATE_ENABLED|TBSTATE_INDETERMINATE)) == (TBSTATE_ENABLED|TBSTATE_INDETERMINATE)) ? CDIS_INDETERMINATE : 0;
     /* NOTE: we don't set CDIS_GRAYED, CDIS_FOCUS, CDIS_DEFAULT */
     return retstate;
@@ -987,7 +987,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
     tbcd.rcText.top = 0;
     tbcd.rcText.right = rcText.right - rc.left;
     tbcd.rcText.bottom = rcText.bottom - rc.top;
-    tbcd.nmcd.uItemState = TOOLBAR_TranslateState(btnPtr);
+    tbcd.nmcd.uItemState = TOOLBAR_TranslateState(btnPtr, infoPtr->bCaptured);
     tbcd.nmcd.hdc = hdc;
     tbcd.nmcd.rc = btnPtr->rect;
     tbcd.hbrMonoDither = COMCTL32_hPattern55AABrush;
