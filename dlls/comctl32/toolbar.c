@@ -5733,7 +5733,10 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
         TOOLBAR_SendNotify(&hdr, infoPtr, TBN_TOOLBARCHANGE);
     }
-    else if (infoPtr->nButtonDown >= 0) {
+    else if (infoPtr->nButtonDown >= 0)
+    {
+        BOOL was_clicked = nHit == infoPtr->nButtonDown;
+
 	btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 	btnPtr->fsState &= ~TBSTATE_PRESSED;
 
@@ -5775,7 +5778,7 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr,
 			TBN_ENDDRAG);
 
-	if (btnPtr->fsState & TBSTATE_ENABLED)
+	if (was_clicked && btnPtr->fsState & TBSTATE_ENABLED)
 	{
 	    SendMessageW (infoPtr->hwndNotify, WM_COMMAND,
 	      MAKEWPARAM(infoPtr->buttons[nHit].idCommand, BN_CLICKED), (LPARAM)infoPtr->hwndSelf);
