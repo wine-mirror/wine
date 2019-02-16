@@ -1372,7 +1372,7 @@ static UINT get_logical_processor_count( UINT *num_physical, UINT *num_packages 
     NTSTATUS status;
     ULONG len, offset = 0;
     BOOL smt_enabled = FALSE;
-    DWORD all;
+    DWORD all = RelationAll;
 
     if (num_packages) *num_packages = 1;
     status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &all, sizeof(all), NULL, 0, &len );
