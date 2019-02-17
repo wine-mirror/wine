@@ -880,6 +880,8 @@ static void check_tiff_format(IStream *stream, const WICPixelFormatGUID *format)
         }
         else
             tag[i].value[0] = -1;
+
+        PropVariantClear(&value);
     }
 
     IWICMetadataReader_Release(reader);
