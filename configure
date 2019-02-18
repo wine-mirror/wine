@@ -19359,6 +19359,7 @@ wine_fn_config_makefile dlls/atl80 enable_atl80
 wine_fn_config_makefile dlls/atl80/tests enable_tests
 wine_fn_config_makefile dlls/atl90 enable_atl90
 wine_fn_config_makefile dlls/atlthunk enable_atlthunk
+wine_fn_config_makefile dlls/atlthunk/tests enable_tests
 wine_fn_config_makefile dlls/atmlib enable_atmlib
 wine_fn_config_makefile dlls/authz enable_authz
 wine_fn_config_makefile dlls/avicap32 enable_avicap32
