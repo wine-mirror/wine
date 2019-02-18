@@ -1,0 +1,5 @@
+MODULE    = atlthunk.dll
+IMPORTLIB = atlthunk
+
+C_SRCS = \
+	atlthunk.c
