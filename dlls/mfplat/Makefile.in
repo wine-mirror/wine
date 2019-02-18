@@ -3,4 +3,5 @@ IMPORTLIB = mfplat
 IMPORTS   = advapi32 ole32
 
 C_SRCS = \
-	main.c
+	main.c \
+	queue.c

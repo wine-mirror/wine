@@ -693,6 +693,145 @@ static void test_MFSample(void)
     IMFSample_Release(sample);
 }
 
+static HRESULT WINAPI testcallback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testcallback_AddRef(IMFAsyncCallback *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMFAsyncCallbackVtbl testcallbackvtbl =
+{
+    testcallback_QueryInterface,
+    testcallback_AddRef,
+    testcallback_Release,
+    testcallback_GetParameters,
+    testcallback_Invoke,
+};
+
+static void test_MFCreateAsyncResult(void)
+{
+    IMFAsyncCallback callback = { &testcallbackvtbl };
+    IMFAsyncResult *result, *result2;
+    IUnknown *state, *object;
+    MFASYNCRESULT *data;
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = MFCreateAsyncResult(NULL, NULL, NULL, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateAsyncResult(NULL, NULL, NULL, &result);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    data = (MFASYNCRESULT *)result;
+    ok(data->pCallback == NULL, "Unexpected callback value.\n");
+    ok(data->hrStatusResult == S_OK, "Unexpected status %#x.\n", data->hrStatusResult);
+    ok(data->dwBytesTransferred == 0, "Unexpected byte length %u.\n", data->dwBytesTransferred);
+    ok(data->hEvent == NULL, "Unexpected event.\n");
+
+    hr = IMFAsyncResult_GetState(result, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    state = (void *)0xdeadbeef;
+    hr = IMFAsyncResult_GetState(result, &state);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    ok(state == (void *)0xdeadbeef, "Unexpected state.\n");
+
+    hr = IMFAsyncResult_GetStatus(result);
+    ok(hr == S_OK, "Unexpected status %#x.\n", hr);
+
+    data->hrStatusResult = 123;
+    hr = IMFAsyncResult_GetStatus(result);
+    ok(hr == 123, "Unexpected status %#x.\n", hr);
+
+    hr = IMFAsyncResult_SetStatus(result, E_FAIL);
+    ok(hr == S_OK, "Failed to set status, hr %#x.\n", hr);
+    ok(data->hrStatusResult == E_FAIL, "Unexpected status %#x.\n", hr);
+
+    hr = IMFAsyncResult_GetObject(result, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    object = (void *)0xdeadbeef;
+    hr = IMFAsyncResult_GetObject(result, &object);
+    ok(hr == E_POINTER, "Failed to get object, hr %#x.\n", hr);
+    ok(object == (void *)0xdeadbeef, "Unexpected object.\n");
+
+    state = IMFAsyncResult_GetStateNoAddRef(result);
+    ok(state == NULL, "Unexpected state.\n");
+
+    /* Object. */
+    hr = MFCreateAsyncResult((IUnknown *)result, &callback, NULL, &result2);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    data = (MFASYNCRESULT *)result2;
+    ok(data->pCallback == &callback, "Unexpected callback value.\n");
+    ok(data->hrStatusResult == S_OK, "Unexpected status %#x.\n", data->hrStatusResult);
+    ok(data->dwBytesTransferred == 0, "Unexpected byte length %u.\n", data->dwBytesTransferred);
+    ok(data->hEvent == NULL, "Unexpected event.\n");
+
+    object = NULL;
+    hr = IMFAsyncResult_GetObject(result2, &object);
+    ok(hr == S_OK, "Failed to get object, hr %#x.\n", hr);
+    ok(object == (IUnknown *)result, "Unexpected object.\n");
+    IUnknown_Release(object);
+
+    IMFAsyncResult_Release(result2);
+
+    /* State object. */
+    hr = MFCreateAsyncResult(NULL, &callback, (IUnknown *)result, &result2);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    data = (MFASYNCRESULT *)result2;
+    ok(data->pCallback == &callback, "Unexpected callback value.\n");
+    ok(data->hrStatusResult == S_OK, "Unexpected status %#x.\n", data->hrStatusResult);
+    ok(data->dwBytesTransferred == 0, "Unexpected byte length %u.\n", data->dwBytesTransferred);
+    ok(data->hEvent == NULL, "Unexpected event.\n");
+
+    state = NULL;
+    hr = IMFAsyncResult_GetState(result2, &state);
+    ok(hr == S_OK, "Failed to get state object, hr %#x.\n", hr);
+    ok(state == (IUnknown *)result, "Unexpected state.\n");
+    IUnknown_Release(state);
+
+    state = IMFAsyncResult_GetStateNoAddRef(result2);
+    ok(state == (IUnknown *)result, "Unexpected state.\n");
+
+    refcount = IMFAsyncResult_Release(result2);
+    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+    refcount = IMFAsyncResult_Release(result);
+    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -708,6 +847,7 @@ START_TEST(mfplat)
     test_MFCreateMFByteStreamOnStream();
     test_MFCreateMemoryBuffer();
     test_source_resolver();
+    test_MFCreateAsyncResult();
 
     CoUninitialize();
 }

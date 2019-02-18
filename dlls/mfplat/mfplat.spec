@@ -38,7 +38,7 @@
 @ stdcall MFCopyImage(ptr long ptr long long long)
 @ stub MFCreateAMMediaTypeFromMFMediaType
 @ stub MFCreateAlignedMemoryBuffer
-@ stub MFCreateAsyncResult
+@ stdcall MFCreateAsyncResult(ptr ptr ptr ptr)
 @ stdcall MFCreateAttributes(ptr long)
 @ stub MFCreateAudioMediaType
 @ stub MFCreateCollection

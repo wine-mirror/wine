@@ -54,6 +54,19 @@ extern "C" {
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_WMV3,      MAKEFOURCC('W','M','V','3'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB32,     D3DFMT_X8R8G8B8);
 
+#if defined(__cplusplus) && !defined(CINTERFACE)
+typedef struct tagMFASYNCRESULT : public IMFAsyncResult {
+#else
+typedef struct tagMFASYNCRESULT
+{
+    IMFAsyncResult AsyncResult;
+#endif
+    OVERLAPPED overlapped;
+    IMFAsyncCallback *pCallback;
+    HRESULT hrStatusResult;
+    DWORD dwBytesTransferred;
+    HANDLE hEvent;
+} MFASYNCRESULT;
 
 DEFINE_GUID(MF_MT_AVG_BITRATE,         0x20332624, 0xfb0d, 0x4d9e, 0xbd, 0x0d, 0xcb, 0xf6, 0x78, 0x6c, 0x10, 0x2e);
 DEFINE_GUID(MF_MT_FRAME_RATE,          0xc459a2e8, 0x3d2c, 0x4e44, 0xb1, 0x32, 0xfe, 0xe5, 0x15, 0x6c, 0x7b, 0xb0);
@@ -70,6 +83,7 @@ typedef unsigned __int64 MFWORKITEM_KEY;
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
 HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines);
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);
+HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback, IUnknown *state, IMFAsyncResult **result);
 HRESULT WINAPI MFCreateEventQueue(IMFMediaEventQueue **queue);
 HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
                             LPCWSTR url, IMFByteStream **bytestream);
