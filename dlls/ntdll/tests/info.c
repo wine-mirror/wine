@@ -2005,6 +2005,9 @@ static void test_queryvirtualmemory(void)
     /* check error code when addr is higher than working set limit */
     status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)~0, MemoryBasicInformation, &mbi, sizeof(mbi), &readcount);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+    /* check error code when len is less than MEMORY_BASIC_INFORMATION size */
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), GetProcessHeap(), MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION) - 1, &readcount);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 }
 
 static void test_affinity(void)

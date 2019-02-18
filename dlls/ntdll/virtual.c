@@ -2820,6 +2820,9 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         }
     }
 
+    if (len < sizeof(MEMORY_BASIC_INFORMATION))
+        return STATUS_INFO_LENGTH_MISMATCH;
+
     if (process != NtCurrentProcess())
     {
         NTSTATUS status;
