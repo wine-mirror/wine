@@ -102,11 +102,11 @@ static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
     for (i=0;i<nb_samples;i++) {
         double y=sin(440.0*2*PI*i/wfx->nSamplesPerSec);
         if (wfx->wBitsPerSample==8) {
-            unsigned char sample=(unsigned char)((double)127.5*(y+1.0));
+            unsigned char sample=(unsigned char)(127.5*(y+1.0));
             for (j = 0; j < wfx->nChannels; j++)
                 *b++=sample;
         } else if (wfx->wBitsPerSample==16) {
-            signed short sample=(signed short)((double)32767.5*y-0.5);
+            signed short sample=(signed short)(32767.5*y-0.5);
             for (j = 0; j < wfx->nChannels; j++) {
                 b[0]=sample & 0xff;
                 b[1]=sample >> 8;
