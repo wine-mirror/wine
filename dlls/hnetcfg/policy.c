@@ -641,11 +641,8 @@ static HRESULT WINAPI fwpolicy2_get_Rules(INetFwPolicy2 *iface, INetFwRules **ru
     if(!rules)
         return E_POINTER;
 
-    if(rules)
-    {
-        *rules = This->fw_policy2_rules;
-        INetFwRules_AddRef(This->fw_policy2_rules);
-    }
+    *rules = This->fw_policy2_rules;
+    INetFwRules_AddRef(This->fw_policy2_rules);
 
     return S_OK;
 }
