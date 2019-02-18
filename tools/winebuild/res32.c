@@ -492,7 +492,7 @@ void output_resources( DLLSPEC *spec )
 
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
     {
-        output( "\n\t.align %d\n", get_alignment(get_ptr_size()) );
+        output( "\n\t.align %d\n", get_alignment(4) );
         output( ".L__wine_spec_res_%d:\n", i );
         dump_res_data( res );
     }
