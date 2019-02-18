@@ -5597,14 +5597,14 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
 
     tag = get_tag_desc(tag_name);
     if(tag) {
-        hres = tag->constructor(doc, (nsIDOMElement*)nselem, &elem);
+        hres = tag->constructor(doc, nselem, &elem);
     }else if(use_generic) {
-        hres = HTMLGenericElement_Create(doc, (nsIDOMElement*)nselem, &elem);
+        hres = HTMLGenericElement_Create(doc, nselem, &elem);
     }else {
         elem = heap_alloc_zero(sizeof(HTMLElement));
         if(elem) {
             elem->node.vtbl = &HTMLElementImplVtbl;
-            HTMLElement_Init(elem, doc, (nsIDOMElement*)nselem, &HTMLElement_dispex);
+            HTMLElement_Init(elem, doc, nselem, &HTMLElement_dispex);
             hres = S_OK;
         }else {
             hres = E_OUTOFMEMORY;

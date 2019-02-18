@@ -295,7 +295,7 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
 
                 TRACE("found font tag %p\n", elem);
 
-                get_elem_attr_value((nsIDOMElement*)elem, sizeW, &val_str, &val);
+                get_elem_attr_value(elem, sizeW, &val_str, &val);
                 if(*val) {
                     TRACE("found size %s\n", debugstr_w(val));
                     strcpyW(ret, val);
@@ -366,7 +366,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
         nsISelection_Collapse(nsselection, (nsIDOMNode*)elem, 0);
     }else {
         /* Remove all size attributes from the range */
-        remove_child_attr((nsIDOMElement*)elem, fontW, &size_str);
+        remove_child_attr(elem, fontW, &size_str);
         nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)elem);
     }
 
@@ -1174,10 +1174,10 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
 
         if (insert_link_at_caret) {
             /* add them to the document at the caret position */
-            nsres = nsIHTMLEditor_InsertElementAtSelection(html_editor, (nsIDOMElement*)anchor_elem, FALSE);
+            nsres = nsIHTMLEditor_InsertElementAtSelection(html_editor, anchor_elem, FALSE);
             nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)anchor_elem);
         }else /* add them around the selection using the magic provided to us by nsIHTMLEditor */
-            nsres = nsIHTMLEditor_InsertLinkAroundSelection(html_editor, (nsIDOMElement*)anchor_elem);
+            nsres = nsIHTMLEditor_InsertLinkAroundSelection(html_editor, anchor_elem);
 
         nsIHTMLEditor_Release(html_editor);
         hres = NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;

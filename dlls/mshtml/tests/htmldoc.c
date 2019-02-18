@@ -7543,7 +7543,7 @@ static void test_QueryInterface(IHTMLDocument2 *htmldoc)
 
     hres = IUnknown_QueryInterface(doc, &IID_IDispatch, (void**)&qi);
     ok(hres == S_OK, "Could not get IDispatch interface: %08x\n", hres);
-    ok(qi != (IUnknown*)doc, "disp == doc\n");
+    ok(qi != doc, "disp == doc\n");
     IUnknown_Release(qi);
 }
 
