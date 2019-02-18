@@ -10564,7 +10564,7 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice8_CreateVertexBuffer(device, sizeof(quad), 0, 0, D3DPOOL_SYSTEMMEM, &vb);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DVertexBuffer8_Lock(vb, 0, sizeof(quad), (BYTE **)&data, 0);
+    hr = IDirect3DVertexBuffer8_Lock(vb, 0, sizeof(quad), &data, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     memcpy(data, quad, sizeof(quad));
     hr = IDirect3DVertexBuffer8_Unlock(vb);
@@ -10622,7 +10622,7 @@ static void test_sysmem_draw(void)
     hr = IDirect3DDevice8_CreateIndexBuffer(device, sizeof(indices), 0,
             D3DFMT_INDEX16, D3DPOOL_SYSTEMMEM, &ib);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DIndexBuffer8_Lock(ib, 0, sizeof(indices), (BYTE **)&data, 0);
+    hr = IDirect3DIndexBuffer8_Lock(ib, 0, sizeof(indices), &data, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     memcpy(data, indices, sizeof(indices));
     hr = IDirect3DIndexBuffer8_Unlock(ib);
@@ -10651,14 +10651,14 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice8_CreateVertexBuffer(device, sizeof(quad_s0), 0, 0, D3DPOOL_SYSTEMMEM, &vb_s0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DVertexBuffer8_Lock(vb_s0, 0, sizeof(quad_s0), (BYTE **)&data, 0);
+    hr = IDirect3DVertexBuffer8_Lock(vb_s0, 0, sizeof(quad_s0), &data, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     memcpy(data, quad_s0, sizeof(quad_s0));
     hr = IDirect3DVertexBuffer8_Unlock(vb_s0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice8_CreateVertexBuffer(device, sizeof(quad_s1), 0, 0, D3DPOOL_SYSTEMMEM, &vb_s1);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DVertexBuffer8_Lock(vb_s1, 0, sizeof(quad_s1), (BYTE **)&data, 0);
+    hr = IDirect3DVertexBuffer8_Lock(vb_s1, 0, sizeof(quad_s1), &data, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     memcpy(data, quad_s1, sizeof(quad_s1));
     hr = IDirect3DVertexBuffer8_Unlock(vb_s1);
