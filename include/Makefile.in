@@ -22,6 +22,7 @@ SOURCES = \
 	atlbase.h \
 	atlcom.h \
 	atliface.idl \
+	atlthunk.h \
 	atlwin.h \
 	audevcod.h \
 	audioclient.idl \
