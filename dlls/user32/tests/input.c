@@ -1269,6 +1269,19 @@ static LRESULT CALLBACK hook_proc2( int code, WPARAM wparam, LPARAM lparam )
     return CallNextHookEx( 0, code, wparam, lparam );
 }
 
+static LRESULT CALLBACK hook_proc3( int code, WPARAM wparam, LPARAM lparam )
+{
+    POINT pt;
+
+    if (code == HC_ACTION)
+    {
+        /* MSLLHOOKSTRUCT does not seem to be reliable and contains different data on each run. */
+        GetCursorPos(&pt);
+        ok(pt.x == pt_old.x && pt.y == pt_old.y, "GetCursorPos: (%d,%d)\n", pt.x, pt.y);
+    }
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
 static void test_mouse_ll_hook(void)
 {
     HWND hwnd;
@@ -1342,6 +1355,62 @@ static void test_mouse_ll_hook(void)
     ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%d,%d)\n", pt.x, pt.y);
 
     UnhookWindowsHookEx(hook2);
+    hook1 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc3, GetModuleHandleA(0), 0);
+
+    SetRect(&rc, 150, 150, 150, 150);
+    ClipCursor(&rc);
+    clipped = TRUE;
+
+    SetCursorPos(140, 140);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    SetCursorPos(160, 160);
+    GetCursorPos(&pt_old);
+    todo_wine
+    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    mouse_event(MOUSEEVENTF_MOVE, -STEP, -STEP, 0, 0);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    mouse_event(MOUSEEVENTF_MOVE, +STEP, +STEP, 0, 0);
+    GetCursorPos(&pt_old);
+    todo_wine
+    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0);
+    GetCursorPos(&pt_old);
+    todo_wine
+    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+
+    clipped = FALSE;
+    ClipCursor(NULL);
+
+    SetCursorPos(140, 140);
+    SetRect(&rc, 150, 150, 150, 150);
+    ClipCursor(&rc);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    ClipCursor(NULL);
+
+    SetCursorPos(160, 160);
+    SetRect(&rc, 150, 150, 150, 150);
+    ClipCursor(&rc);
+    GetCursorPos(&pt_old);
+    todo_wine
+    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    ClipCursor(NULL);
+
+    SetCursorPos(150, 150);
+    SetRect(&rc, 150, 150, 150, 150);
+    ClipCursor(&rc);
+    GetCursorPos(&pt_old);
+    todo_wine
+    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    ClipCursor(NULL);
+
+    UnhookWindowsHookEx(hook1);
+
 done:
     DestroyWindow(hwnd);
     SetCursorPos(pt_org.x, pt_org.y);
