@@ -78,6 +78,7 @@ static PVOID    (WINAPI *pResolveDelayLoadedAPI)(PVOID, PCIMAGE_DELAYLOAD_DESCRI
                                                  PDELAYLOAD_FAILURE_SYSTEM_ROUTINE,
                                                  PIMAGE_THUNK_DATA ThunkAddress,ULONG);
 static PVOID (WINAPI *pRtlImageDirectoryEntryToData)(HMODULE,BOOL,WORD,ULONG *);
+static PIMAGE_NT_HEADERS (WINAPI *pRtlImageNtHeader)(HMODULE);
 static DWORD (WINAPI *pFlsAlloc)(PFLS_CALLBACK_FUNCTION);
 static BOOL (WINAPI *pFlsSetValue)(DWORD, PVOID);
 static PVOID (WINAPI *pFlsGetValue)(DWORD);
@@ -3806,6 +3807,57 @@ static void test_InMemoryOrderModuleList(void)
     ok(entry2 == mark2, "expected entry2 == mark2, got %p and %p\n", entry2, mark2);
 }
 
+static void test_dll_file( const char *name )
+{
+    HMODULE module = GetModuleHandleA( name );
+    IMAGE_NT_HEADERS *nt, *nt_file;
+    IMAGE_SECTION_HEADER *sec, *sec_file;
+    char path[MAX_PATH];
+    HANDLE file, mapping;
+    int i = 0;
+    void *ptr;
+
+    GetModuleFileNameA( module, path, MAX_PATH );
+    file = CreateFileA( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "can't open '%s': %u\n", path, GetLastError() );
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 0, NULL );
+    ok( mapping != NULL, "%s: CreateFileMappingW failed err %u\n", name, GetLastError() );
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    ok( ptr != NULL, "%s: MapViewOfFile failed err %u\n", name, GetLastError() );
+    CloseHandle( mapping );
+    CloseHandle( file );
+
+    nt = pRtlImageNtHeader( module );
+    nt_file = pRtlImageNtHeader( ptr );
+    ok( nt_file != NULL, "%s: invalid header\n", path );
+#define OK_FIELD(x) ok( nt->x == nt_file->x, "%s:%u: wrong " #x " %x / %x\n", name, i, nt->x, nt_file->x )
+    todo_wine
+    OK_FIELD( FileHeader.NumberOfSections );
+    todo_wine
+    OK_FIELD( OptionalHeader.AddressOfEntryPoint );
+    OK_FIELD( OptionalHeader.NumberOfRvaAndSizes );
+    for (i = 0; i < nt->OptionalHeader.NumberOfRvaAndSizes; i++)
+    {
+        todo_wine_if( i == IMAGE_DIRECTORY_ENTRY_EXPORT ||
+                      (i == IMAGE_DIRECTORY_ENTRY_IMPORT && nt->OptionalHeader.DataDirectory[i].Size) ||
+                      i == IMAGE_DIRECTORY_ENTRY_RESOURCE ||
+                      i == IMAGE_DIRECTORY_ENTRY_BASERELOC )
+        OK_FIELD( OptionalHeader.DataDirectory[i].VirtualAddress );
+        todo_wine_if( i == IMAGE_DIRECTORY_ENTRY_EXPORT ||
+                      (i == IMAGE_DIRECTORY_ENTRY_IMPORT && nt->OptionalHeader.DataDirectory[i].Size) ||
+                      i == IMAGE_DIRECTORY_ENTRY_BASERELOC )
+        OK_FIELD( OptionalHeader.DataDirectory[i].Size );
+    }
+    sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+    sec_file = (IMAGE_SECTION_HEADER *)((char *)&nt_file->OptionalHeader + nt_file->FileHeader.SizeOfOptionalHeader);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+        todo_wine
+        ok( !memcmp( sec + i, sec_file + i, sizeof(*sec) ), "%s: wrong section %d\n", name, i );
+    UnmapViewOfFile( ptr );
+#undef OK_FIELD
+}
+
 START_TEST(loader)
 {
     int argc;
@@ -3834,6 +3886,7 @@ START_TEST(loader)
     pRtlAcquirePebLock = (void *)GetProcAddress(ntdll, "RtlAcquirePebLock");
     pRtlReleasePebLock = (void *)GetProcAddress(ntdll, "RtlReleasePebLock");
     pRtlImageDirectoryEntryToData = (void *)GetProcAddress(ntdll, "RtlImageDirectoryEntryToData");
+    pRtlImageNtHeader = (void *)GetProcAddress(ntdll, "RtlImageNtHeader");
     pFlsAlloc = (void *)GetProcAddress(kernel32, "FlsAlloc");
     pFlsSetValue = (void *)GetProcAddress(kernel32, "FlsSetValue");
     pFlsGetValue = (void *)GetProcAddress(kernel32, "FlsGetValue");
@@ -3872,6 +3925,10 @@ START_TEST(loader)
     test_import_resolution();
     test_ExitProcess();
     test_InMemoryOrderModuleList();
+    test_dll_file( "ntdll.dll" );
+    test_dll_file( "kernel32.dll" );
+    test_dll_file( "advapi32.dll" );
+    test_dll_file( "user32.dll" );
     /* loader test must be last, it can corrupt the internal loader state on Windows */
     test_Loader();
 }
