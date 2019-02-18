@@ -411,8 +411,8 @@ static void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect
         post_desktop_message( desktop, desktop->cursor.clip_msg, rect != NULL, 0 );
 
     /* warp the mouse to be inside the clip rect */
-    x = min( max( desktop->cursor.x, desktop->cursor.clip.left ), desktop->cursor.clip.right-1 );
-    y = min( max( desktop->cursor.y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom-1 );
+    x = max( min( desktop->cursor.x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
+    y = max( min( desktop->cursor.y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
     if (x != desktop->cursor.x || y != desktop->cursor.y) set_cursor_pos( desktop, x, y );
 }
 
@@ -1500,8 +1500,8 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     {
         if (msg->msg == WM_MOUSEMOVE)
         {
-            int x = min( max( msg->x, desktop->cursor.clip.left ), desktop->cursor.clip.right-1 );
-            int y = min( max( msg->y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom-1 );
+            int x = max( min( msg->x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
+            int y = max( min( msg->y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
             if (desktop->cursor.x != x || desktop->cursor.y != y) always_queue = 1;
             desktop->cursor.x = x;
             desktop->cursor.y = y;
