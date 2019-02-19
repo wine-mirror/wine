@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-11 15:59+0300\n"
+"PO-Revision-Date: 2019-02-19 09:59+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2\n"
+"X-Generator: Poedit 2.2.1\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -9100,16 +9100,12 @@ msgid "Cape Verde Daylight Time"
 msgstr ""
 
 #: tzres.rc:74
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Standard Time"
-msgstr "Центральноевропейский"
+msgstr ""
 
 #: tzres.rc:75
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "Центральноевропейский"
+msgstr ""
 
 #: tzres.rc:140
 msgid "Morocco Standard Time"
@@ -9120,16 +9116,12 @@ msgid "Morocco Daylight Time"
 msgstr ""
 
 #: tzres.rc:72
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Standard Time"
-msgstr "Центральноевропейский"
+msgstr ""
 
 #: tzres.rc:73
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "Центральноевропейский"
+msgstr ""
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
@@ -9164,10 +9156,8 @@ msgid "Mountain Daylight Time (Mexico)"
 msgstr ""
 
 #: tzres.rc:106
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "&Стандартная панель"
+msgstr ""
 
 #: tzres.rc:107
 msgid "GMT Daylight Time"
@@ -9338,10 +9328,8 @@ msgid "India Daylight Time"
 msgstr ""
 
 #: tzres.rc:112
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "&Стандартная панель"
+msgstr ""
 
 #: tzres.rc:113
 msgid "GTB Daylight Time"
@@ -9660,10 +9648,8 @@ msgid "Paraguay Daylight Time"
 msgstr ""
 
 #: tzres.rc:84
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "Дата и время"
+msgstr ""
 
 #: tzres.rc:85
 msgid "Dateline Daylight Time"
@@ -9750,16 +9736,12 @@ msgid "Greenland Daylight Time"
 msgstr ""
 
 #: tzres.rc:92
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "Дата и время"
+msgstr ""
 
 #: tzres.rc:93
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "Дата и время"
+msgstr ""
 
 #: tzres.rc:96
 msgid "Egypt Standard Time"
@@ -9810,10 +9792,8 @@ msgid "E. Africa Daylight Time"
 msgstr ""
 
 #: tzres.rc:102
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "&Стандартная панель"
+msgstr ""
 
 #: tzres.rc:103
 msgid "FLE Daylight Time"
@@ -14790,7 +14770,7 @@ msgstr "Просмотрщик обычных метафайлов"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Метафайлы (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -16335,10 +16315,8 @@ msgid "Text documents (*.txt)"
 msgstr "Текстовые документы (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
-msgstr "Документы Unicode (*.txt)"
+msgstr "Текстовые документы Unicode (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"
