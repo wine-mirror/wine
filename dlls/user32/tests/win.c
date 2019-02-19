@@ -6550,6 +6550,18 @@ static void test_ShowWindow(void)
     todo_wine
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
+    /* SetWindowPos shouldn't affect the client rect */
+    ret = SetWindowPos(hwnd, 0, 0, 0, 0, 0,
+                       SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
+    ok(ret, "not expected ret: %lu\n", ret);
+    GetWindowRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
 
     ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
