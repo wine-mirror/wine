@@ -473,7 +473,6 @@ LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
     style = GetWindowLongW( hwnd, GWL_STYLE );
     ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-    if (style & WS_MINIMIZE) return HTCAPTION;
 
     if (PtInRect( &rcClient, pt )) return HTCLIENT;
 

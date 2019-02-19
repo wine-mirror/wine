@@ -305,11 +305,6 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
         LONG style = GetWindowLongW( list[i], GWL_STYLE );
 
         /* If window is minimized or disabled, return at once */
-        if (style & WS_MINIMIZE)
-        {
-            *hittest = HTCAPTION;
-            break;
-        }
         if (style & WS_DISABLED)
         {
             *hittest = HTERROR;
