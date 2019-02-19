@@ -155,9 +155,6 @@ extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType ) DECLSPEC_HIDDEN;
 /* desktop */
 extern BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern ) DECLSPEC_HIDDEN;
 
-/* icon title */
-extern HWND ICONTITLE_Create( HWND hwnd ) DECLSPEC_HIDDEN;
-
 /* menu controls */
 extern HWND MENU_IsMenuActive(void) DECLSPEC_HIDDEN;
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,

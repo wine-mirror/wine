@@ -970,7 +970,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     WND *wndPtr;
     HWND *list;
     HMENU menu = 0, sys_menu;
-    HWND icon_title;
     struct window_surface *surface;
 
     TRACE("%p\n", hwnd );
@@ -1018,7 +1017,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     sys_menu = wndPtr->hSysMenu;
     free_dce( wndPtr->dce, hwnd );
     wndPtr->dce = NULL;
-    icon_title = wndPtr->icon_title;
     HeapFree( GetProcessHeap(), 0, wndPtr->text );
     wndPtr->text = NULL;
     HeapFree( GetProcessHeap(), 0, wndPtr->pScroll );
@@ -1028,7 +1026,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     wndPtr->surface = NULL;
     WIN_ReleasePtr( wndPtr );
 
-    if (icon_title) DestroyWindow( icon_title );
     if (menu) DestroyMenu( menu );
     if (sys_menu) DestroyMenu( sys_menu );
     if (surface)

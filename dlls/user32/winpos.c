@@ -678,67 +678,6 @@ BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
 }
 
 
-/***********************************************************************
- *           WINPOS_RedrawIconTitle
- */
-BOOL WINPOS_RedrawIconTitle( HWND hWnd )
-{
-    HWND icon_title = 0;
-    WND *win = WIN_GetPtr( hWnd );
-
-    if (win && win != WND_OTHER_PROCESS && win != WND_DESKTOP)
-    {
-	icon_title = win->icon_title;
-        WIN_ReleasePtr( win );
-    }
-    if (!icon_title) return FALSE;
-    SendMessageW( icon_title, WM_SHOWWINDOW, TRUE, 0 );
-    InvalidateRect( icon_title, NULL, TRUE );
-    return TRUE;
-}
-
-/***********************************************************************
- *           WINPOS_ShowIconTitle
- */
-static void WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
-{
-    WND *win = WIN_GetPtr( hwnd );
-    HWND title = 0;
-
-    TRACE("%p %i\n", hwnd, (bShow != 0) );
-
-    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return;
-    if (win->window_rect.left == -32000 || win->window_rect.top == -32000)
-    {
-        TRACE( "not showing title for hidden icon %p\n", hwnd );
-        bShow = FALSE;
-    }
-    else title = win->icon_title;
-    WIN_ReleasePtr( win );
-
-    if (bShow)
-    {
-        if (!title)
-        {
-            title = ICONTITLE_Create( hwnd );
-            if (!(win = WIN_GetPtr( hwnd )) || win == WND_OTHER_PROCESS)
-            {
-                DestroyWindow( title );
-                return;
-            }
-            win->icon_title = title;
-            WIN_ReleasePtr( win );
-        }
-        if (!IsWindowVisible(title))
-        {
-            SendMessageW( title, WM_SHOWWINDOW, TRUE, 0 );
-            SetWindowPos( title, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                          SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
-        }
-    }
-    else if (title) ShowWindow( title, SW_HIDE );
-}
-
 /*******************************************************************
  *           WINPOS_GetMinMaxInfo
  *
@@ -1053,10 +992,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
         old_style = WIN_SetStyle( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
         if (old_style & WS_MINIMIZE)
-        {
             win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
-            WINPOS_ShowIconTitle( hwnd, FALSE );
-        }
 
         if (!(old_style & WS_MAXIMIZE)) swpFlags |= SWP_STATECHANGED;
         SetRect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
@@ -1072,7 +1008,6 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         old_style = WIN_SetStyle( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
         if (old_style & WS_MINIMIZE)
         {
-            WINPOS_ShowIconTitle( hwnd, FALSE );
             if (win_get_flags( hwnd ) & WIN_RESTORE_MAX)
             {
                 /* Restore to maximized position */
@@ -1202,8 +1137,6 @@ static BOOL show_window( HWND hwnd, INT cmd )
     {
         HWND hFocus;
 
-        WINPOS_ShowIconTitle( hwnd, FALSE );
-
         /* FIXME: This will cause the window to be activated irrespective
          * of whether it is owned by the same thread. Has to be done
          * asynchronously.
@@ -1222,8 +1155,6 @@ static BOOL show_window( HWND hwnd, INT cmd )
         }
         goto done;
     }
-
-    if (IsIconic(hwnd)) WINPOS_ShowIconTitle( hwnd, TRUE );
 
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) goto done;
 
@@ -1477,7 +1408,6 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
     {
         if (flags & PLACE_MIN)
         {
-            WINPOS_ShowIconTitle( hwnd, FALSE );
             SetWindowPos( hwnd, 0, wp.ptMinPosition.x, wp.ptMinPosition.y, 0, 0,
                           SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
         }
@@ -1498,8 +1428,6 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
 
     if (IsIconic( hwnd ))
     {
-        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE) WINPOS_ShowIconTitle( hwnd, TRUE );
-
         /* SDK: ...valid only the next time... */
         if( wndpl->flags & WPF_RESTORETOMAXIMIZED )
             win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
@@ -2947,7 +2875,6 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 {
                     hOldCursor = SetCursor(hDragCursor);
                     ShowCursor( TRUE );
-                    WINPOS_ShowIconTitle( hwnd, FALSE );
                 }
                 else if(!DragFullWindows)
                     draw_moving_frame( parent, hdc, &sizingRect, thickframe );
@@ -3051,6 +2978,5 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 SendMessageW( hwnd, WM_SYSCOMMAND,
                               SC_MOUSEMENU + HTSYSMENU, MAKELONG(pt.x,pt.y));
         }
-        else WINPOS_ShowIconTitle( hwnd, TRUE );
     }
 }
