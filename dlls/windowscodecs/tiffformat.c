@@ -638,6 +638,7 @@ static HRESULT WINAPI TiffDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
 {
     TiffDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TIFF *tiff;
+    tiff_decode_info decode_info;
     HRESULT hr=S_OK;
 
     TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
@@ -651,10 +652,17 @@ static HRESULT WINAPI TiffDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
     }
 
     tiff = tiff_open_stream(pIStream, "r");
-
     if (!tiff)
     {
         hr = E_FAIL;
+        goto exit;
+    }
+
+    /* make sure that TIFF format is supported */
+    hr = tiff_get_decode_info(tiff, &decode_info);
+    if (hr != S_OK)
+    {
+        pTIFFClose(tiff);
         goto exit;
     }
 
