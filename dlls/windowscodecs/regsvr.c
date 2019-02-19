@@ -1775,7 +1775,7 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         1, /* channel count */
         channel_masks_1bit,
         WICPixelFormatNumericRepresentationIndexed,
-        1
+        0
     },
     {   &GUID_WICPixelFormat2bppIndexed,
         "The Wine Project",
@@ -1786,7 +1786,7 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         1, /* channel count */
         channel_masks_2bit,
         WICPixelFormatNumericRepresentationIndexed,
-        1
+        0
     },
     {   &GUID_WICPixelFormat4bppIndexed,
         "The Wine Project",
@@ -1797,7 +1797,7 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         1, /* channel count */
         channel_masks_4bit,
         WICPixelFormatNumericRepresentationIndexed,
-        1
+        0
     },
     {   &GUID_WICPixelFormat8bppIndexed,
         "The Wine Project",
@@ -1808,7 +1808,7 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         1, /* channel count */
         channel_masks_8bit,
         WICPixelFormatNumericRepresentationIndexed,
-        1
+        0
     },
     {   &GUID_WICPixelFormatBlackWhite,
         "The Wine Project",
@@ -1995,7 +1995,7 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         1, /* channel count */
         channel_masks_32bit,
         WICPixelFormatNumericRepresentationFloat,
-        1
+        0
     },
     {   &GUID_WICPixelFormat48bppRGB,
         "The Wine Project",
