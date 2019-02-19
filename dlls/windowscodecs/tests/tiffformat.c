@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Dmitry Timoshkov
+ * Copyright 2012,2016 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -145,6 +145,49 @@ static const struct tiff_8bpp_alpha
     { 0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88 }
 };
 
+static const struct tiff_8bpp_data
+{
+    USHORT byte_order;
+    USHORT version;
+    ULONG  dir_offset;
+    USHORT number_of_entries;
+    struct IFD_entry entry[14];
+    ULONG next_IFD;
+    struct IFD_rational res;
+    short palette_data[3][256];
+    BYTE pixel_data[4];
+} tiff_8bpp_data =
+{
+#ifdef WORDS_BIGENDIAN
+    'M' | 'M' << 8,
+#else
+    'I' | 'I' << 8,
+#endif
+    42,
+    FIELD_OFFSET(struct tiff_8bpp_data, number_of_entries),
+    14,
+    {
+        { 0xff, IFD_SHORT, 1, 0 }, /* SUBFILETYPE */
+        { 0x100, IFD_LONG, 1, 4 }, /* IMAGEWIDTH */
+        { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
+        { 0x102, IFD_SHORT, 1, 8 }, /* BITSPERSAMPLE: XP doesn't accept IFD_LONG here */
+        { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
+        { 0x106, IFD_SHORT, 1, 3 }, /* PHOTOMETRIC */
+        { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_8bpp_data, pixel_data) }, /* STRIPOFFSETS */
+        { 0x115, IFD_SHORT, 1, 1 }, /* SAMPLESPERPIXEL */
+        { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
+        { 0x117, IFD_LONG, 1, 1 }, /* STRIPBYTECOUNT */
+        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_8bpp_data, res) },
+        { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_8bpp_data, res) },
+        { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
+        { 0x140, IFD_SHORT, 256*3, FIELD_OFFSET(struct tiff_8bpp_data, palette_data) } /* COLORMAP */
+    },
+    0,
+    { 96, 1 },
+    { { 0 } },
+    { 0,1,2,3 }
+};
+
 static const struct tiff_resolution_test_data
 {
     struct IFD_rational resx;
@@ -284,29 +327,41 @@ static IStream *create_stream(const void *data, int data_size)
     return stream;
 }
 
-static IWICBitmapDecoder *create_decoder(const void *image_data, UINT image_size)
+static HRESULT create_decoder(const void *image_data, UINT image_size, IWICBitmapDecoder **decoder)
 {
+    HGLOBAL hmem;
+    BYTE *data;
     HRESULT hr;
     IStream *stream;
-    IWICBitmapDecoder *decoder = NULL;
-    GUID guid;
+    GUID format;
+    LONG refcount;
 
-    stream = create_stream(image_data, image_size);
+    *decoder = NULL;
 
-    hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
-    ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
-    if (FAILED(hr)) return NULL;
+    hmem = GlobalAlloc(0, image_size);
+    data = GlobalLock(hmem);
+    memcpy(data, image_data, image_size);
+    GlobalUnlock(hmem);
 
-    hr = IWICBitmapDecoder_GetContainerFormat(decoder, &guid);
-    ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
-    ok(IsEqualGUID(&guid, &GUID_ContainerFormatTiff), "container format is not TIFF\n");
+    hr = CreateStreamOnHGlobal(hmem, TRUE, &stream);
+    ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
 
-    IStream_Release(stream);
+    hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, decoder);
+    if (hr == S_OK)
+    {
+        hr = IWICBitmapDecoder_GetContainerFormat(*decoder, &format);
+        ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_ContainerFormatTiff),
+           "wrong container format %s\n", wine_dbgstr_guid(&format));
 
-    return decoder;
+        refcount = IStream_Release(stream);
+        ok(refcount > 0, "expected stream refcount > 0\n");
+    }
+
+    return hr;
 }
 
-static void test_tiff_palette(void)
+static void test_tiff_1bpp_palette(void)
 {
     HRESULT hr;
     IWICBitmapDecoder *decoder;
@@ -314,9 +369,9 @@ static void test_tiff_palette(void)
     IWICPalette *palette;
     GUID format;
 
-    decoder = create_decoder(&tiff_1bpp_data, sizeof(tiff_1bpp_data));
-    ok(decoder != 0, "Failed to load TIFF image data\n");
-    if (!decoder) return;
+    hr = create_decoder(&tiff_1bpp_data, sizeof(tiff_1bpp_data), &decoder);
+    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
     ok(hr == S_OK, "GetFrame error %#x\n", hr);
@@ -448,9 +503,9 @@ static void test_tiff_8bpp_alpha(void)
     static const BYTE expected_data[16] = { 0x11,0x11,0x11,0x22,0x33,0x33,0x33,0x44,
                                             0x55,0x55,0x55,0x66,0x77,0x77,0x77,0x88 };
 
-    decoder = create_decoder(&tiff_8bpp_alpha, sizeof(tiff_8bpp_alpha));
-    ok(decoder != 0, "Failed to load TIFF image data\n");
-    if (!decoder) return;
+    hr = create_decoder(&tiff_8bpp_alpha, sizeof(tiff_8bpp_alpha), &decoder);
+    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
@@ -497,6 +552,84 @@ static void test_tiff_8bpp_alpha(void)
     IWICBitmapFrameDecode_Release(frame);
 }
 
+static void generate_tiff_palette(void *buf, unsigned count)
+{
+    unsigned short *r, *g, *b;
+    unsigned i;
+
+    r = buf;
+    g = r + count;
+    b = g + count;
+
+    r[0] = 0x11 * 257;
+    g[0] = 0x22 * 257;
+    b[0] = 0x33 * 257;
+    r[1] = 0x44 * 257;
+    g[1] = 0x55 * 257;
+    b[1] = 0x66 * 257;
+    r[2] = 0x77 * 257;
+    g[2] = 0x88 * 257;
+    b[2] = 0x99 * 257;
+    r[3] = 0xa1 * 257;
+    g[3] = 0xb5 * 257;
+    b[3] = 0xff * 257;
+
+    for (i = 4; i < count; i++)
+    {
+        r[i] = i * 257;
+        g[i] = (i | 0x40) * 257;
+        b[i] = (i | 0x80) * 257;
+    }
+}
+
+static void test_tiff_8bpp_palette(void)
+{
+    char buf[sizeof(tiff_8bpp_data)];
+    HRESULT hr;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *frame;
+    IWICPalette *palette;
+    GUID format;
+    UINT count, ret;
+    WICColor color[256];
+
+    memcpy(buf, &tiff_8bpp_data, sizeof(tiff_8bpp_data));
+    generate_tiff_palette(buf + FIELD_OFFSET(struct tiff_8bpp_data, palette_data), 256);
+
+    hr = create_decoder(buf, sizeof(buf), &decoder);
+    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    if (hr != S_OK) return;
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed),
+       "expected GUID_WICPixelFormat8bppIndexed, got %s\n", wine_dbgstr_guid(&format));
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+    hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+
+    hr = IWICPalette_GetColorCount(palette, &count);
+    ok(hr == S_OK, "GetColorCount error %#x\n", hr);
+    ok(count == 256, "expected 256, got %u\n", count);
+
+    hr = IWICPalette_GetColors(palette, 256, color, &ret);
+    ok(hr == S_OK, "GetColors error %#x\n", hr);
+    ok(ret == count, "expected %u, got %u\n", count, ret);
+    ok(color[0] == 0xff112233, "got %#x\n", color[0]);
+    ok(color[1] == 0xff445566, "got %#x\n", color[1]);
+    ok(color[2] == 0xff778899, "got %#x\n", color[2]);
+    ok(color[3] == 0xffa1b5ff, "got %#x\n", color[3]);
+
+    IWICPalette_Release(palette);
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+}
+
 static void test_tiff_resolution(void)
 {
     HRESULT hr;
@@ -512,9 +645,9 @@ static void test_tiff_resolution(void)
         tiff_resolution_image_data.resy = test_data->resy;
         tiff_resolution_image_data.entry[12].value = test_data->resolution_unit;
 
-        decoder = create_decoder(&tiff_resolution_image_data, sizeof(tiff_resolution_image_data));
-        ok(decoder != 0, "%d: Failed to load TIFF image data\n", i);
-        if (!decoder) continue;
+        hr = create_decoder(&tiff_resolution_image_data, sizeof(tiff_resolution_image_data), &decoder);
+        ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+        if (hr != S_OK) return;
 
         hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
         ok(hr == S_OK, "%d: GetFrame error %#x\n", i, hr);
@@ -561,8 +694,9 @@ static void test_tiff_24bpp(void)
     BYTE data[3];
     static const BYTE expected_data[] = { 0x33,0x22,0x11 };
 
-    decoder = create_decoder(&tiff_24bpp_data, sizeof(tiff_24bpp_data));
-    ok(decoder != NULL, "Failed to load TIFF image data\n");
+    hr = create_decoder(&tiff_24bpp_data, sizeof(tiff_24bpp_data), &decoder);
+    ok(hr == S_OK, "Failed to load TIFF image data %#x\n", hr);
+    if (hr != S_OK) return;
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
     ok(hr == S_OK, "GetFrameCount error %#x\n", hr);
@@ -620,7 +754,8 @@ START_TEST(tiffformat)
     ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
     if (FAILED(hr)) return;
 
-    test_tiff_palette();
+    test_tiff_1bpp_palette();
+    test_tiff_8bpp_palette();
     test_QueryCapability();
     test_tiff_8bpp_alpha();
     test_tiff_resolution();
