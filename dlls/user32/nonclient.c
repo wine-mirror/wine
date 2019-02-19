@@ -414,6 +414,11 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
         if (winRect->left > winRect->right)
             winRect->right = winRect->left;
     }
+    else
+    {
+        winRect->right = winRect->left;
+        winRect->bottom = winRect->top;
+    }
     return result;
 }
 

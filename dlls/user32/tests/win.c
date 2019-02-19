@@ -6469,7 +6469,7 @@ static void test_ShowWindow(void)
 {
     HWND hwnd;
     DWORD style;
-    RECT rcMain, rc, rcMinimized, rcClient, rcEmpty, rcMaximized, rcResized;
+    RECT rcMain, rc, rcMinimized, rcClient, rcEmpty, rcMaximized, rcResized, rcNonClient;
     LPARAM ret;
     MONITORINFO mon_info;
 
@@ -6533,7 +6533,6 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     GetClientRect(hwnd, &rc);
-    todo_wine
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
     /* shouldn't be able to resize minimized windows */
@@ -6547,7 +6546,6 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     GetClientRect(hwnd, &rc);
-    todo_wine
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
     /* SetWindowPos shouldn't affect the client rect */
@@ -6559,9 +6557,14 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     GetClientRect(hwnd, &rc);
-    todo_wine
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
+    /* test NC area */
+    GetWindowRect(hwnd, &rc);
+    SetRect(&rcNonClient, rc.left, rc.top, rc.left, rc.top);
+    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
+    ok(EqualRect(&rc, &rcNonClient), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcNonClient), wine_dbgstr_rect(&rc));
 
     ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -6651,7 +6654,6 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     GetClientRect(hwnd, &rc);
-    todo_wine
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
 
@@ -6667,7 +6669,6 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     GetClientRect(hwnd, &rc);
-    todo_wine
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
 
@@ -6710,7 +6711,6 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     GetClientRect(hwnd, &rc);
-    todo_wine
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
     DestroyWindow(hwnd);
@@ -6729,7 +6729,6 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     GetClientRect(hwnd, &rc);
-    todo_wine
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
     DestroyWindow(hwnd);
@@ -6740,7 +6739,7 @@ static void test_ShowWindow(void)
 static void test_ShowWindow_owned(HWND hwndMain)
 {
     MONITORINFO mon_info = {sizeof(mon_info)};
-    RECT rect, orig, expect;
+    RECT rect, orig, expect, nc;
     BOOL ret;
     HWND hwnd, hwnd2;
     LONG style;
@@ -6798,6 +6797,12 @@ static void test_ShowWindow_owned(HWND hwndMain)
     todo_wine
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+    /* test NC area */
+    GetWindowRect(hwnd, &rect);
+    SetRect(&nc, rect.left, rect.top, rect.left, rect.top);
+    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ok(EqualRect(&rect, &nc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&nc), wine_dbgstr_rect(&rect));
 
     /* multiple minimized owned windows stack next to each other (and eventually
      * on top of each other) */
@@ -6863,7 +6868,7 @@ static void test_ShowWindow_owned(HWND hwndMain)
 
 static void test_ShowWindow_child(HWND hwndMain)
 {
-    RECT rect, orig, expect;
+    RECT rect, orig, expect, nc;
     BOOL ret;
     HWND hwnd, hwnd2;
     LONG style;
@@ -6926,6 +6931,12 @@ static void test_ShowWindow_child(HWND hwndMain)
     todo_wine
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+    /* test NC area */
+    GetWindowRect(hwnd, &rect);
+    SetRect(&nc, rect.left, rect.top, rect.left, rect.top);
+    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ok(EqualRect(&rect, &nc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&nc), wine_dbgstr_rect(&rect));
 
     /* multiple minimized children also stack; here the parent is too small to
      * fit more than one per row */
@@ -6993,7 +7004,7 @@ static void test_ShowWindow_child(HWND hwndMain)
 
 static void test_ShowWindow_mdichild(HWND hwndMain)
 {
-    RECT rect, orig, expect;
+    RECT rect, orig, expect, nc;
     BOOL ret;
     HWND mdiclient, hwnd, hwnd2;
     LONG style;
@@ -7051,6 +7062,12 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
     todo_wine
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+    /* test NC area */
+    GetWindowRect(hwnd, &rect);
+    SetRect(&nc, rect.left, rect.top, rect.left, rect.top);
+    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rect);
+    ok(EqualRect(&rect, &nc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&nc), wine_dbgstr_rect(&rect));
 
     /* multiple minimized children also stack; here the parent is too small to
      * fit more than one per row */
