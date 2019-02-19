@@ -80,6 +80,7 @@ DEFINE_GUID(MFMediaType_Video,         0x73646976, 0x0000, 0x0010, 0x80, 0x00, 0
 
 typedef unsigned __int64 MFWORKITEM_KEY;
 
+HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
 HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines);
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);
@@ -99,6 +100,7 @@ HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *inpu
 HRESULT WINAPI MFTEnumEx(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INFO *input_type,
                          const MFT_REGISTER_TYPE_INFO *output_type, IMFActivate ***activate,
                          UINT32 *pcount);
+HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result);
 HRESULT WINAPI MFLockPlatform(void);
 HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags, UINT32 cinput,
                            MFT_REGISTER_TYPE_INFO *input_types, UINT32 coutput,
@@ -109,6 +111,7 @@ HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWST
 HRESULT WINAPI MFShutdown(void);
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags);
 HRESULT WINAPI MFUnlockPlatform(void);
+HRESULT WINAPI MFUnlockWorkQueue(DWORD queue);
 HRESULT WINAPI MFTUnregister(CLSID clsid);
 HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory);
 HRESULT WINAPI MFGetPluginControl(IMFPluginControl**);

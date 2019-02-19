@@ -21,11 +21,120 @@
 #define COBJMACROS
 
 #include "mfapi.h"
+#include "mferror.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+
+#define FIRST_USER_QUEUE_HANDLE 5
+#define MAX_USER_QUEUE_HANDLES 124
+
+struct queue
+{
+    void *obj;
+    LONG refcount;
+    WORD generation;
+};
+
+static struct queue user_queues[MAX_USER_QUEUE_HANDLES];
+static struct queue *next_free_user_queue;
+static struct queue *next_unused_user_queue = user_queues;
+static WORD queue_generation;
+
+static CRITICAL_SECTION user_queues_section;
+static CRITICAL_SECTION_DEBUG user_queues_critsect_debug =
+{
+    0, 0, &user_queues_section,
+    { &user_queues_critsect_debug.ProcessLocksList, &user_queues_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": user_queues_section") }
+};
+static CRITICAL_SECTION user_queues_section = { &user_queues_critsect_debug, -1, 0, 0, 0, 0 };
+
+static struct queue *get_queue_obj(DWORD handle)
+{
+    unsigned int idx = HIWORD(handle) - FIRST_USER_QUEUE_HANDLE;
+
+    if (idx < MAX_USER_QUEUE_HANDLES && user_queues[idx].refcount)
+    {
+        if (LOWORD(handle) == user_queues[idx].generation)
+            return &user_queues[idx];
+    }
+
+    return NULL;
+}
+
+static HRESULT alloc_user_queue(DWORD *queue)
+{
+    struct queue *entry;
+    unsigned int idx;
+
+    EnterCriticalSection(&user_queues_section);
+
+    entry = next_free_user_queue;
+    if (entry)
+        next_free_user_queue = entry->obj;
+    else if (next_unused_user_queue < user_queues + MAX_USER_QUEUE_HANDLES)
+        entry = next_unused_user_queue++;
+    else
+    {
+        LeaveCriticalSection(&user_queues_section);
+        return E_OUTOFMEMORY;
+    }
+
+    entry->refcount = 1;
+    entry->obj = NULL;
+    if (++queue_generation == 0xffff) queue_generation = 1;
+    entry->generation = queue_generation;
+    idx = entry - user_queues + FIRST_USER_QUEUE_HANDLE;
+    *queue = (idx << 16) | entry->generation;
+    LeaveCriticalSection(&user_queues_section);
+
+    return S_OK;
+}
+
+static HRESULT lock_user_queue(DWORD queue)
+{
+    HRESULT hr = MF_E_INVALID_WORKQUEUE;
+    struct queue *entry;
+
+    if (!(queue & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK))
+        return S_OK;
+
+    EnterCriticalSection(&user_queues_section);
+    entry = get_queue_obj(queue);
+    if (entry && entry->refcount)
+    {
+        entry->refcount++;
+        hr = S_OK;
+    }
+    LeaveCriticalSection(&user_queues_section);
+    return hr;
+}
+
+static HRESULT unlock_user_queue(DWORD queue)
+{
+    HRESULT hr = MF_E_INVALID_WORKQUEUE;
+    struct queue *entry;
+
+    if (!(queue & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK))
+        return S_OK;
+
+    EnterCriticalSection(&user_queues_section);
+    entry = get_queue_obj(queue);
+    if (entry && entry->refcount)
+    {
+        if (--entry->refcount == 0)
+        {
+            entry->obj = next_free_user_queue;
+            next_free_user_queue = entry;
+        }
+        hr = S_OK;
+    }
+    LeaveCriticalSection(&user_queues_section);
+    return hr;
+}
 
 struct async_result
 {
@@ -191,4 +300,34 @@ HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback,
     *out = &result->result.AsyncResult;
 
     return S_OK;
+}
+
+/***********************************************************************
+ *      MFAllocateWorkQueue (mfplat.@)
+ */
+HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue)
+{
+    TRACE("%p.\n", queue);
+
+    return alloc_user_queue(queue);
+}
+
+/***********************************************************************
+ *      MFLockWorkQueue (mfplat.@)
+ */
+HRESULT WINAPI MFLockWorkQueue(DWORD queue)
+{
+    TRACE("%#x.\n", queue);
+
+    return lock_user_queue(queue);
+}
+
+/***********************************************************************
+ *      MFUnlockWorkQueue (mfplat.@)
+ */
+HRESULT WINAPI MFUnlockWorkQueue(DWORD queue)
+{
+    TRACE("%#x.\n", queue);
+
+    return unlock_user_queue(queue);
 }

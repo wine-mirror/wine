@@ -16,7 +16,7 @@
 @ stub GetD3DFormatFromMFSubtype
 @ stub LFGetGlobalPool
 @ stub MFAddPeriodicCallback
-@ stub MFAllocateWorkQueue
+@ stdcall MFAllocateWorkQueue(ptr)
 @ stub MFAllocateWorkQueueEx
 @ stub MFAppendCollection
 @ stub MFAverageTimePerFrameToFrameRate
@@ -119,7 +119,7 @@
 @ stub MFInvokeCallback
 @ stub MFJoinIoPort
 @ stdcall MFLockPlatform()
-@ stub MFLockWorkQueue
+@ stdcall MFLockWorkQueue(long)
 @ stub MFPutWorkItem
 @ stub MFPutWorkItemEx
 @ stub MFRecordError
@@ -147,7 +147,7 @@
 @ stub MFTraceFuncEnter
 @ stub MFUnblockThread
 @ stdcall MFUnlockPlatform()
-@ stub MFUnlockWorkQueue
+@ stdcall MFUnlockWorkQueue(long)
 @ stub MFUnwrapMediaType
 @ stub MFValidateMediaTypeSize
 @ stub MFWrapMediaType

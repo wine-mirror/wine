@@ -838,6 +838,45 @@ static void test_startup(void)
     ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
 }
 
+static void test_allocate_queue(void)
+{
+    DWORD queue, queue2;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+    ok(queue & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK, "Unexpected queue id.\n");
+
+    hr = MFUnlockWorkQueue(queue);
+    ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+
+    hr = MFUnlockWorkQueue(queue);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = MFAllocateWorkQueue(&queue2);
+    ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+    ok(queue2 & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK, "Unexpected queue id.\n");
+
+    hr = MFUnlockWorkQueue(queue2);
+    ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+
+    /* Unlock in system queue range. */
+    hr = MFUnlockWorkQueue(MFASYNC_CALLBACK_QUEUE_STANDARD);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFUnlockWorkQueue(MFASYNC_CALLBACK_QUEUE_UNDEFINED);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFUnlockWorkQueue(0x20);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -855,6 +894,7 @@ START_TEST(mfplat)
     test_MFCreateMemoryBuffer();
     test_source_resolver();
     test_MFCreateAsyncResult();
+    test_allocate_queue();
 
     CoUninitialize();
 }
