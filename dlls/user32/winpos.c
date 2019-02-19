@@ -975,8 +975,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
             wpl.ptMinPosition = WINPOS_FindIconPos( hwnd, wpl.ptMinPosition );
 
             SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
-                     wpl.ptMinPosition.x + GetSystemMetrics(SM_CXICON),
-                     wpl.ptMinPosition.y + GetSystemMetrics(SM_CYICON) );
+                     wpl.ptMinPosition.x + GetSystemMetrics(SM_CXMINIMIZED),
+                     wpl.ptMinPosition.y + GetSystemMetrics(SM_CYMINIMIZED) );
             return SWP_NOSIZE | SWP_NOMOVE;
         }
         if (!SendMessageW( hwnd, WM_QUERYOPEN, 0, 0 )) return SWP_NOSIZE | SWP_NOMOVE;
@@ -1006,8 +1006,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
         if (!(old_style & WS_MINIMIZE)) swpFlags |= SWP_STATECHANGED;
         SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
-                 wpl.ptMinPosition.x + GetSystemMetrics(SM_CXICON),
-                 wpl.ptMinPosition.y + GetSystemMetrics(SM_CYICON) );
+                 wpl.ptMinPosition.x + GetSystemMetrics(SM_CXMINIMIZED),
+                 wpl.ptMinPosition.y + GetSystemMetrics(SM_CYMINIMIZED) );
         swpFlags |= SWP_NOCOPYBITS;
         break;
 
@@ -1705,8 +1705,8 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS *pWinpos, RECT *old_window_rect, REC
     {
         if (wndPtr->dwStyle & WS_MINIMIZE)
         {
-            new_window_rect->right  = new_window_rect->left + GetSystemMetrics(SM_CXICON);
-            new_window_rect->bottom = new_window_rect->top + GetSystemMetrics(SM_CYICON);
+            new_window_rect->right  = new_window_rect->left + GetSystemMetrics(SM_CXMINIMIZED);
+            new_window_rect->bottom = new_window_rect->top + GetSystemMetrics(SM_CYMINIMIZED);
         }
         else
         {
