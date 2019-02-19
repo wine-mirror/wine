@@ -430,8 +430,6 @@ static void NC_GetInsideRect( HWND hwnd, enum coords_relative relative, RECT *re
 {
     WIN_GetRectangles( hwnd, relative, rect, NULL );
 
-    if (style & WS_MINIMIZE) return;
-
     /* Remove frame from rectangle */
     if (HAS_THICKFRAME( style, ex_style ))
     {
@@ -955,9 +953,6 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
     flags = wndPtr->flags;
     WIN_ReleasePtr( wndPtr );
 
-    if ( dwStyle & WS_MINIMIZE ||
-         !WIN_IsWindowDrawable( hwnd, 0 )) return; /* Nothing to do */
-
     active  = flags & WIN_NCACTIVATED;
 
     TRACE("%p %d\n", hwnd, active );
@@ -1065,10 +1060,7 @@ LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
 
     if( dwStyle & WS_VISIBLE )
     {
-	if( dwStyle & WS_MINIMIZE )
-	    WINPOS_RedrawIconTitle( hwnd );
-	else
-	    NC_DoNCPaint( hwnd, clip );
+        NC_DoNCPaint( hwnd, clip );
 
         if (parent == GetDesktopWindow())
             PostMessageW( parent, WM_PARENTNOTIFY, WM_NCPAINT, (LPARAM)hwnd );
@@ -1097,10 +1089,7 @@ LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam, LPARAM lParam )
      */
     if (lParam != -1)
     {
-        if (IsIconic(hwnd))
-            WINPOS_RedrawIconTitle( hwnd );
-        else
-            NC_DoNCPaint( hwnd, (HRGN)1 );
+        NC_DoNCPaint( hwnd, (HRGN)1 );
 
         if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
             PostMessageW( GetDesktopWindow(), WM_PARENTNOTIFY, WM_NCACTIVATE, (LPARAM)hwnd );
@@ -1372,17 +1361,14 @@ LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
         }
 
     case HTSYSMENU:
-         if( style & WS_SYSMENU )
-         {
-             if( !(style & WS_MINIMIZE) )
-             {
-                HDC hDC = GetWindowDC(hwnd);
-                NC_DrawSysButton( hwnd, hDC, TRUE );
-                ReleaseDC( hwnd, hDC );
-             }
-             SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
-         }
-         break;
+        if (style & WS_SYSMENU)
+        {
+            HDC hDC = GetWindowDC( hwnd );
+            NC_DrawSysButton( hwnd, hDC, TRUE );
+            ReleaseDC( hwnd, hDC );
+            SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
+        }
+        break;
 
     case HTMENU:
         SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lParam );
