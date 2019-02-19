@@ -38,6 +38,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+static LONG platform_lock;
+
 static const WCHAR transform_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',
                                  'T','r','a','n','s','f','o','r','m','s',0};
 static const WCHAR categories_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',
@@ -450,6 +452,27 @@ HRESULT WINAPI MFStartup(ULONG version, DWORD flags)
 HRESULT WINAPI MFShutdown(void)
 {
     FIXME("(): stub\n");
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFLockPlatform (mfplat.@)
+ */
+HRESULT WINAPI MFLockPlatform(void)
+{
+    InterlockedIncrement(&platform_lock);
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFUnlockPlatform (mfplat.@)
+ */
+HRESULT WINAPI MFUnlockPlatform(void)
+{
+    InterlockedDecrement(&platform_lock);
+
     return S_OK;
 }
 

@@ -118,7 +118,7 @@
 @ stub MFInitVideoFormat_RGB
 @ stub MFInvokeCallback
 @ stub MFJoinIoPort
-@ stub MFLockPlatform
+@ stdcall MFLockPlatform()
 @ stub MFLockWorkQueue
 @ stub MFPutWorkItem
 @ stub MFPutWorkItemEx
@@ -146,7 +146,7 @@
 @ stub MFTraceError
 @ stub MFTraceFuncEnter
 @ stub MFUnblockThread
-@ stub MFUnlockPlatform
+@ stdcall MFUnlockPlatform()
 @ stub MFUnlockWorkQueue
 @ stub MFUnwrapMediaType
 @ stub MFValidateMediaTypeSize

@@ -83,6 +83,8 @@ static ULONG WINAPI async_result_Release(IMFAsyncResult *iface)
         if (result->state)
             IUnknown_Release(result->state);
         heap_free(result);
+
+        MFUnlockPlatform();
     }
 
     return refcount;
@@ -171,6 +173,8 @@ HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback,
     result = heap_alloc_zero(sizeof(*result));
     if (!result)
         return E_OUTOFMEMORY;
+
+    MFLockPlatform();
 
     result->result.AsyncResult.lpVtbl = &async_result_vtbl;
     result->refcount = 1;
