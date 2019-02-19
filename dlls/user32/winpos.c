@@ -922,21 +922,13 @@ static void get_next_minimized_child_pos( const RECT *parent, const MINIMIZEDMET
     }
 }
 
-/***********************************************************************
- *           WINPOS_FindIconPos
- *
- * Find a suitable place for an iconic window.
- */
-static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
+static POINT get_minimized_pos( HWND hwnd, POINT pt )
 {
     RECT rect, rectParent;
     HWND parent, child;
     HRGN hrgn, tmp;
-    int x, y, xspacing, yspacing;
     MINIMIZEDMETRICS metrics;
-
-    metrics.cbSize = sizeof(metrics);
-    SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
+    int width, height;
 
     parent = GetAncestor( hwnd, GA_PARENT );
     if (parent == GetDesktopWindow())
@@ -950,12 +942,15 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
     }
     else GetClientRect( parent, &rectParent );
 
-    if ((pt.x >= rectParent.left) && (pt.x + GetSystemMetrics(SM_CXICON) < rectParent.right) &&
-        (pt.y >= rectParent.top) && (pt.y + GetSystemMetrics(SM_CYICON) < rectParent.bottom))
+    if ((pt.x >= rectParent.left) && (pt.x + GetSystemMetrics( SM_CXMINIMIZED ) < rectParent.right) &&
+        (pt.y >= rectParent.top) && (pt.y + GetSystemMetrics( SM_CYMINIMIZED ) < rectParent.bottom))
         return pt;  /* The icon already has a suitable position */
 
-    xspacing = GetSystemMetrics(SM_CXICONSPACING);
-    yspacing = GetSystemMetrics(SM_CYICONSPACING);
+    width = GetSystemMetrics( SM_CXMINIMIZED );
+    height = GetSystemMetrics( SM_CYMINIMIZED );
+
+    metrics.cbSize = sizeof(metrics);
+    SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
 
     /* Check if another icon already occupies this spot */
     /* FIXME: this is completely inefficient */
@@ -975,42 +970,17 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
     }
     DeleteObject( tmp );
 
-    for (y = 0; y < (rectParent.bottom - rectParent.top) / yspacing; y++)
+    pt = get_first_minimized_child_pos( &rectParent, &metrics, width, height );
+    for (;;)
     {
-        if (metrics.iArrange & ARW_STARTTOP)
-        {
-            rect.top = rectParent.top + y * yspacing;
-            rect.bottom = rect.top + yspacing;
-        }
-        else
-        {
-            rect.bottom = rectParent.bottom - y * yspacing;
-            rect.top = rect.bottom - yspacing;
-        }
-        for (x = 0; x < (rectParent.right - rectParent.left) / xspacing; x++)
-        {
-            if (metrics.iArrange & ARW_STARTRIGHT)
-            {
-                rect.right = rectParent.right - x * xspacing;
-                rect.left = rect.right - xspacing;
-            }
-            else
-            {
-                rect.left = rectParent.left + x * xspacing;
-                rect.right = rect.left + xspacing;
-            }
-            if (!RectInRegion( hrgn, &rect ))
-            {
-                /* No window was found, so it's OK for us */
-                pt.x = rect.left + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
-                pt.y = rect.top + (yspacing - GetSystemMetrics(SM_CYICON)) / 2;
-                DeleteObject( hrgn );
-                return pt;
-            }
-        }
+        SetRect( &rect, pt.x, pt.y, pt.x + width, pt.y + height );
+        if (!RectInRegion( hrgn, &rect ))
+            break;
+
+        get_next_minimized_child_pos( &rectParent, &metrics, width, height, &pt );
     }
+
     DeleteObject( hrgn );
-    pt.x = pt.y = 0;
     return pt;
 }
 
@@ -1041,7 +1011,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         case SW_SHOWMINIMIZED:
         case SW_FORCEMINIMIZE:
         case SW_MINIMIZE:
-            wpl.ptMinPosition = WINPOS_FindIconPos( hwnd, wpl.ptMinPosition );
+            wpl.ptMinPosition = get_minimized_pos( hwnd, wpl.ptMinPosition );
 
             SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
                      wpl.ptMinPosition.x + GetSystemMetrics(SM_CXMINIMIZED),
@@ -1071,7 +1041,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
         old_style = WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
 
-        wpl.ptMinPosition = WINPOS_FindIconPos( hwnd, wpl.ptMinPosition );
+        wpl.ptMinPosition = get_minimized_pos( hwnd, wpl.ptMinPosition );
 
         if (!(old_style & WS_MINIMIZE)) swpFlags |= SWP_STATECHANGED;
         SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
