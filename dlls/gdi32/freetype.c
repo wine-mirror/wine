@@ -170,6 +170,7 @@ static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
 #ifdef FT_LCD_FILTER_H
 static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
 #endif
+static FT_Error (*pFT_Property_Set)(FT_Library, const FT_String *, const FT_String *, const void *);
 
 #ifdef SONAME_LIBFONTCONFIG
 #include <fontconfig/fontconfig.h>
@@ -4162,6 +4163,7 @@ static BOOL init_freetype(void)
 #ifdef FT_LCD_FILTER_H
     pFT_Library_SetLcdFilter = wine_dlsym(ft_handle, "FT_Library_SetLcdFilter", NULL, 0);
 #endif
+    pFT_Property_Set = wine_dlsym(ft_handle, "FT_Property_Set", NULL, 0);
 
     if(pFT_Init_FreeType(&library) != 0) {
         ERR("Can't init FreeType library\n");
@@ -4175,6 +4177,13 @@ static BOOL init_freetype(void)
     FT_SimpleVersion = ((FT_Version.major << 16) & 0xff0000) |
                        ((FT_Version.minor <<  8) & 0x00ff00) |
                        ((FT_Version.patch      ) & 0x0000ff);
+
+    /* In Freetype < 2.8.1 v40's FT_LOAD_TARGET_MONO has broken advance widths. */
+    if (pFT_Property_Set && FT_SimpleVersion < FT_VERSION_VALUE(2, 8, 1))
+    {
+        FT_UInt interpreter_version = 35;
+        pFT_Property_Set( library, "truetype", "interpreter-version", &interpreter_version );
+    }
 
     font_driver = &freetype_funcs;
     return TRUE;
