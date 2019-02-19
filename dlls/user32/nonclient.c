@@ -315,8 +315,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL
 {
     NONCLIENTMETRICSW ncm;
 
-    if (style & WS_MINIMIZE) return TRUE;
-
     TRACE("(%s) %08x %d %08x\n", wine_dbgstr_rect(rect), style, menu, exStyle );
 
     ncm.cbSize = sizeof(ncm);
@@ -334,8 +332,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectExForDpi( LPRECT rect, DWORD style
                                                         DWORD exStyle, UINT dpi )
 {
     NONCLIENTMETRICSW ncm;
-
-    if (style & WS_MINIMIZE) return TRUE;
 
     TRACE("(%s) %08x %d %08x %u\n", wine_dbgstr_rect(rect), style, menu, exStyle, dpi );
 
