@@ -319,12 +319,6 @@ static void test_MFCreateMediaType(void)
     HRESULT hr;
     IMFMediaType *mediatype;
 
-    hr = MFStartup(MAKELONG( MF_API_VERSION, 0xdead ), MFSTARTUP_FULL);
-    ok(hr == MF_E_BAD_STARTUP_VERSION, "got 0x%08x\n", hr);
-
-    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
 if(0)
 {
     /* Crash on Windows Vista/7 */
@@ -339,8 +333,6 @@ if(0)
     todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IMFMediaType_Release(mediatype);
-
-    MFShutdown();
 }
 
 static void test_MFCreateMediaEvent(void)
@@ -832,12 +824,27 @@ static void test_MFCreateAsyncResult(void)
     ok(!refcount, "Unexpected refcount %u\n.", refcount);
 }
 
+static void test_startup(void)
+{
+    HRESULT hr;
+
+    hr = MFStartup(MAKELONG(MF_API_VERSION, 0xdead), MFSTARTUP_FULL);
+    ok(hr == MF_E_BAD_STARTUP_VERSION, "Unexpected hr %#x.\n", hr);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
 
     init_functions();
 
+    test_startup();
     test_register();
     test_MFCreateMediaType();
     test_MFCreateMediaEvent();
