@@ -852,6 +852,75 @@ MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
     return MinMax;
 }
 
+static POINT get_first_minimized_child_pos( const RECT *parent, const MINIMIZEDMETRICS *mm,
+                                            int width, int height )
+{
+    POINT ret;
+
+    if (mm->iArrange & ARW_STARTRIGHT)
+        ret.x = parent->right - mm->iHorzGap - width;
+    else
+        ret.x = parent->left + mm->iHorzGap;
+    if (mm->iArrange & ARW_STARTTOP)
+        ret.y = parent->top + mm->iVertGap;
+    else
+        ret.y = parent->bottom - mm->iVertGap - height;
+
+    return ret;
+}
+
+static void get_next_minimized_child_pos( const RECT *parent, const MINIMIZEDMETRICS *mm,
+                                          int width, int height, POINT *pos )
+{
+    BOOL next;
+
+    if (mm->iArrange & ARW_UP) /* == ARW_DOWN */
+    {
+        if (mm->iArrange & ARW_STARTTOP)
+        {
+            pos->y += height + mm->iVertGap;
+            if ((next = pos->y + height > parent->bottom))
+                pos->y = parent->top + mm->iVertGap;
+        }
+        else
+        {
+            pos->y -= height + mm->iVertGap;
+            if ((next = pos->y < parent->top))
+                pos->y = parent->bottom - mm->iVertGap - height;
+        }
+
+        if (next)
+        {
+            if (mm->iArrange & ARW_STARTRIGHT)
+                pos->x -= width + mm->iHorzGap;
+            else
+                pos->x += width + mm->iHorzGap;
+        }
+    }
+    else
+    {
+        if (mm->iArrange & ARW_STARTRIGHT)
+        {
+            pos->x -= width + mm->iHorzGap;
+            if ((next = pos->x < parent->left))
+                pos->x = parent->right - mm->iHorzGap - width;
+        }
+        else
+        {
+            pos->x += width + mm->iHorzGap;
+            if ((next = pos->x + width > parent->right))
+                pos->x = parent->left + mm->iHorzGap;
+        }
+
+        if (next)
+        {
+            if (mm->iArrange & ARW_STARTTOP)
+                pos->y += height + mm->iVertGap;
+            else
+                pos->y -= height + mm->iVertGap;
+        }
+    }
+}
 
 /***********************************************************************
  *           WINPOS_FindIconPos
@@ -2567,14 +2636,16 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
  */
 UINT WINAPI ArrangeIconicWindows( HWND parent )
 {
+    int width, height, count = 0;
     RECT rectParent;
     HWND hwndChild;
-    INT x, y, xspacing, yspacing;
     POINT pt;
     MINIMIZEDMETRICS metrics;
 
     metrics.cbSize = sizeof(metrics);
     SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
+    width = GetSystemMetrics( SM_CXMINIMIZED );
+    height = GetSystemMetrics( SM_CYMINIMIZED );
 
     if (parent == GetDesktopWindow())
     {
@@ -2587,41 +2658,21 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
     }
     else GetClientRect( parent, &rectParent );
 
-    x = y = 0;
-    xspacing = GetSystemMetrics(SM_CXICONSPACING);
-    yspacing = GetSystemMetrics(SM_CYICONSPACING);
+    pt = get_first_minimized_child_pos( &rectParent, &metrics, width, height );
 
     hwndChild = GetWindow( parent, GW_CHILD );
     while (hwndChild)
     {
         if( IsIconic( hwndChild ) )
         {
-            WINPOS_ShowIconTitle( hwndChild, FALSE );
-
-            if (metrics.iArrange & ARW_STARTRIGHT)
-                pt.x = rectParent.right - (x + 1) * xspacing;
-            else
-                pt.x = rectParent.left + x * xspacing;
-            if (metrics.iArrange & ARW_STARTTOP)
-                pt.y = rectParent.top + y * yspacing;
-            else
-                pt.y = rectParent.bottom - (y + 1) * yspacing;
-
-            SetWindowPos( hwndChild, 0, pt.x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2,
-                          pt.y + (yspacing - GetSystemMetrics(SM_CYICON)) / 2, 0, 0,
+            SetWindowPos( hwndChild, 0, pt.x, pt.y, 0, 0,
                           SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
-	    if( IsWindow(hwndChild) )
-                WINPOS_ShowIconTitle(hwndChild , TRUE );
-
-            if (++x >= (rectParent.right - rectParent.left) / xspacing)
-            {
-                x = 0;
-                y++;
-            }
+            get_next_minimized_child_pos( &rectParent, &metrics, width, height, &pt );
+            count++;
         }
         hwndChild = GetWindow( hwndChild, GW_HWNDNEXT );
     }
-    return yspacing;
+    return count;
 }
 
 
