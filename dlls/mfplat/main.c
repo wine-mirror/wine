@@ -476,10 +476,21 @@ HRESULT WINAPI MFUnlockPlatform(void)
     return S_OK;
 }
 
+/***********************************************************************
+ *      MFCopyImage (mfplat.@)
+ */
 HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines)
 {
-    FIXME("(%p, %d, %p, %d, %d, %d) stub\n", dest, deststride, src, srcstride, width, lines);
-    return E_NOTIMPL;
+    TRACE("(%p, %d, %p, %d, %u, %u)\n", dest, deststride, src, srcstride, width, lines);
+
+    while (lines--)
+    {
+        memcpy(dest, src, width);
+        dest += deststride;
+        src += srcstride;
+    }
+
+    return S_OK;
 }
 
 typedef struct _mfattributes

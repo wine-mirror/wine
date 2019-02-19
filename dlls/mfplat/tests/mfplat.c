@@ -36,6 +36,8 @@
 
 #include "wine/test.h"
 
+static HRESULT (WINAPI *pMFCopyImage)(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride,
+        DWORD width, DWORD lines);
 static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
 static HRESULT (WINAPI *pMFCreateMemoryBuffer)(DWORD max_length, IMFMediaBuffer **buffer);
@@ -308,6 +310,7 @@ static void init_functions(void)
     HMODULE mod = GetModuleHandleA("mfplat.dll");
 
 #define X(f) if (!(p##f = (void*)GetProcAddress(mod, #f))) return;
+    X(MFCopyImage);
     X(MFCreateSourceResolver);
     X(MFCreateMFByteStreamOnStream);
     X(MFCreateMemoryBuffer);
@@ -877,6 +880,39 @@ static void test_allocate_queue(void)
     ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
 }
 
+static void test_MFCopyImage(void)
+{
+    BYTE dest[16], src[16];
+    HRESULT hr;
+
+    if (!pMFCopyImage)
+    {
+        win_skip("MFCopyImage() is not available.\n");
+        return;
+    }
+
+    memset(dest, 0xaa, sizeof(dest));
+    memset(src, 0x11, sizeof(src));
+
+    hr = pMFCopyImage(dest, 8, src, 8, 4, 1);
+    ok(hr == S_OK, "Failed to copy image %#x.\n", hr);
+    ok(!memcmp(dest, src, 4) && dest[4] == 0xaa, "Unexpected buffer contents.\n");
+
+    memset(dest, 0xaa, sizeof(dest));
+    memset(src, 0x11, sizeof(src));
+
+    hr = pMFCopyImage(dest, 8, src, 8, 16, 1);
+    ok(hr == S_OK, "Failed to copy image %#x.\n", hr);
+    ok(!memcmp(dest, src, 16), "Unexpected buffer contents.\n");
+
+    memset(dest, 0xaa, sizeof(dest));
+    memset(src, 0x11, sizeof(src));
+
+    hr = pMFCopyImage(dest, 8, src, 8, 8, 2);
+    ok(hr == S_OK, "Failed to copy image %#x.\n", hr);
+    ok(!memcmp(dest, src, 16), "Unexpected buffer contents.\n");
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -895,6 +931,7 @@ START_TEST(mfplat)
     test_source_resolver();
     test_MFCreateAsyncResult();
     test_allocate_queue();
+    test_MFCopyImage();
 
     CoUninitialize();
 }
