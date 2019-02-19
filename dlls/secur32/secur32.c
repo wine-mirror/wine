@@ -247,8 +247,8 @@ static void _makeFnTableA(PSecurityFunctionTableA fnTableA,
              * implemented (yikes)
              */
             size_t tableSize = inFnTableA->dwVersion == 1 ?
-             (const BYTE *)&inFnTableA->SetContextAttributesA -
-             (const BYTE *)inFnTableA : sizeof(SecurityFunctionTableA);
+             offsetof(SecurityFunctionTableA, SetContextAttributesA) :
+             sizeof(SecurityFunctionTableA);
 
             memcpy(fnTableA, inFnTableA, tableSize);
             /* override this, since we can do it internally anyway */
@@ -318,8 +318,8 @@ static void _makeFnTableW(PSecurityFunctionTableW fnTableW,
              * implemented (yikes)
              */
             size_t tableSize = inFnTableW->dwVersion == 1 ?
-             (const BYTE *)&inFnTableW->SetContextAttributesW -
-             (const BYTE *)inFnTableW : sizeof(SecurityFunctionTableW);
+             offsetof(SecurityFunctionTableW, SetContextAttributesW) :
+             sizeof(SecurityFunctionTableW);
 
             memcpy(fnTableW, inFnTableW, tableSize);
             /* override this, since we can do it internally anyway */
