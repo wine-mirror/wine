@@ -2496,6 +2496,7 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO devinfo,
             devinfo, iface_data, reserved, access, hinf, debugstr_w(section));
 
     if (!(iface = get_device_iface(devinfo, iface_data)))
+        return INVALID_HANDLE_VALUE;
 
     if (hinf && !section)
     {
