@@ -43,6 +43,7 @@ AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
 AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses]),
             [if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi])
 AC_ARG_WITH(dbus,      AS_HELP_STRING([--without-dbus],[do not use DBus (dynamic device support)]))
+AC_ARG_WITH(faudio,    AS_HELP_STRING([--without-faudio],[do not use FAudio (XAudio2 support)]))
 AC_ARG_WITH(float-abi, AS_HELP_STRING([--with-float-abi=abi],[specify the ABI (soft|softfp|hard) for ARM platforms]))
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]))
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
@@ -1634,6 +1635,16 @@ fi
 WINE_NOTICE_WITH(sdl,[test "x$ac_cv_lib_soname_SDL2" = "x"],
                  [libSDL2 ${notice_platform}development files not found, SDL2 won't be supported.])
 
+dnl **** Check for FAudio ****
+if test "x$with_faudio" != "xno"
+then
+    WINE_PACKAGE_FLAGS(FAUDIO,[faudio],[-lFAudio],,,
+        [AC_CHECK_HEADERS([FAudio.h],
+            [WINE_CHECK_SONAME(FAudio,FAudioCreate,,,[$FAUDIO_LIBS],[[libFAudio*]])])])
+fi
+WINE_NOTICE_WITH(faudio,[test "x$ac_cv_lib_soname_FAudio" = "x"],
+                 [libFAudio ${notice_platform}development files not found, XAudio2 won't be supported.])
+
 dnl **** Check for capi4linux ****
 if test "x$with_capi" != "xno"
 then
@@ -1798,19 +1809,8 @@ WINE_NOTICE_WITH(openal,[test "x$ac_cv_lib_openal" != xyes],
                  [libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported.],
                  [enable_openal32])
 
-dnl **** Check for openal-soft ****
-if test "x$ac_cv_lib_openal" = xyes
+if test "x$ac_cv_lib_soname_FAudio" = "x"
 then
-    AC_CACHE_CHECK([for openal-soft], ac_cv_have_openalsoft,
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-            [[#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alext.h>
-LPALCRENDERSAMPLESSOFT x;]])],[ac_cv_have_openalsoft=yes],[ac_cv_have_openalsoft=no]))
-fi
-if test "x$ac_cv_have_openalsoft" != xyes
-then
-    WINE_NOTICE([openal-soft ${notice_platform}development files not found (or too old), XAudio2 won't be supported.])
     enable_x3daudio1_0=${enable_x3daudio1_0:-no}
     enable_x3daudio1_1=${enable_x3daudio1_1:-no}
     enable_x3daudio1_2=${enable_x3daudio1_2:-no}

@@ -659,6 +659,8 @@ CUPS_LIBS
 CUPS_CFLAGS
 CAPI20_LIBS
 CAPI20_CFLAGS
+FAUDIO_LIBS
+FAUDIO_CFLAGS
 SDL2_LIBS
 SDL2_CFLAGS
 UDEV_LIBS
@@ -836,6 +838,7 @@ with_coreaudio
 with_cups
 with_curses
 with_dbus
+with_faudio
 with_float_abi
 with_fontconfig
 with_freetype
@@ -1828,6 +1831,8 @@ UDEV_CFLAGS
 UDEV_LIBS
 SDL2_CFLAGS
 SDL2_LIBS
+FAUDIO_CFLAGS
+FAUDIO_LIBS
 CAPI20_CFLAGS
 CAPI20_LIBS
 CUPS_CFLAGS
@@ -2498,6 +2503,7 @@ Optional Packages:
   --without-cups          do not use CUPS
   --without-curses        do not use (n)curses
   --without-dbus          do not use DBus (dynamic device support)
+  --without-faudio        do not use FAudio (XAudio2 support)
   --with-float-abi=abi    specify the ABI (soft|softfp|hard) for ARM platforms
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
@@ -2605,6 +2611,9 @@ Some influential environment variables:
   UDEV_LIBS   Linker flags for libudev, overriding pkg-config
   SDL2_CFLAGS C compiler flags for sdl2, overriding pkg-config
   SDL2_LIBS   Linker flags for sdl2, overriding pkg-config
+  FAUDIO_CFLAGS
+              C compiler flags for faudio, overriding pkg-config
+  FAUDIO_LIBS Linker flags for faudio, overriding pkg-config
   CAPI20_CFLAGS
               C compiler flags for capi20, overriding pkg-config
   CAPI20_LIBS Linker flags for capi20, overriding pkg-config
@@ -3834,6 +3843,12 @@ fi
 # Check whether --with-dbus was given.
 if test "${with_dbus+set}" = set; then :
   withval=$with_dbus;
+fi
+
+
+# Check whether --with-faudio was given.
+if test "${with_faudio+set}" = set; then :
+  withval=$with_faudio;
 fi
 
 
@@ -14003,6 +14018,104 @@ esac
 
 fi
 
+if test "x$with_faudio" != "xno"
+then
+    if ${FAUDIO_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  FAUDIO_CFLAGS=`$PKG_CONFIG --cflags faudio 2>/dev/null`
+fi
+fi
+
+if ${FAUDIO_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  FAUDIO_LIBS=`$PKG_CONFIG --libs faudio 2>/dev/null`
+fi
+fi
+
+FAUDIO_LIBS=${FAUDIO_LIBS:-"-lFAudio"}
+$as_echo "$as_me:${as_lineno-$LINENO}: faudio cflags: $FAUDIO_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: faudio libs: $FAUDIO_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $FAUDIO_CFLAGS"
+for ac_header in FAudio.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "FAudio.h" "ac_cv_header_FAudio_h" "$ac_includes_default"
+if test "x$ac_cv_header_FAudio_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_FAUDIO_H 1
+_ACEOF
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lFAudio" >&5
+$as_echo_n "checking for -lFAudio... " >&6; }
+if ${ac_cv_lib_soname_FAudio+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lFAudio $FAUDIO_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char FAudioCreate ();
+int
+main ()
+{
+return FAudioCreate ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_FAudio=`$ac_cv_path_LDD conftest.exe | grep "FAudio" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_FAudio=`$OTOOL -L conftest$ac_exeext | grep "libFAudio*\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libFAudio*\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_FAudio=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libFAudio*\\.$LIBEXT" | sed -e "s/^.*\\[\\(libFAudio*\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_FAudio:+false} :; then :
+  ac_cv_lib_soname_FAudio=`$LDD conftest$ac_exeext | grep "libFAudio*\\.$LIBEXT" | sed -e "s/^.*\(libFAudio*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_FAudio:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_FAudio" >&5
+$as_echo "$ac_cv_lib_soname_FAudio" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBFAUDIO "$ac_cv_lib_soname_FAudio"
+_ACEOF
+
+
+fi
+fi
+
+done
+
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$FAUDIO_CFLAGS" || FAUDIO_CFLAGS=`echo " $FAUDIO_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$FAUDIO_LIBS" || FAUDIO_LIBS=`echo " $FAUDIO_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+if test "x$ac_cv_lib_soname_FAudio" = "x"; then :
+  case "x$with_faudio" in
+  x)   as_fn_append wine_notices "|libFAudio ${notice_platform}development files not found, XAudio2 won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libFAudio ${notice_platform}development files not found, XAudio2 won't be supported.
+This is an error since --with-faudio was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
 if test "x$with_capi" != "xno"
 then
     if ${CAPI20_CFLAGS:+false} :; then :
@@ -15072,40 +15185,8 @@ esac
 enable_openal32=${enable_openal32:-no}
 fi
 
-if test "x$ac_cv_lib_openal" = xyes
+if test "x$ac_cv_lib_soname_FAudio" = "x"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for openal-soft" >&5
-$as_echo_n "checking for openal-soft... " >&6; }
-if ${ac_cv_have_openalsoft+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alext.h>
-LPALCRENDERSAMPLESSOFT x;
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_have_openalsoft=yes
-else
-  ac_cv_have_openalsoft=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_openalsoft" >&5
-$as_echo "$ac_cv_have_openalsoft" >&6; }
-fi
-if test "x$ac_cv_have_openalsoft" != xyes
-then
-    as_fn_append wine_notices "|openal-soft ${notice_platform}development files not found (or too old), XAudio2 won't be supported."
     enable_x3daudio1_0=${enable_x3daudio1_0:-no}
     enable_x3daudio1_1=${enable_x3daudio1_1:-no}
     enable_x3daudio1_2=${enable_x3daudio1_2:-no}
@@ -19064,6 +19145,8 @@ UDEV_CFLAGS = $UDEV_CFLAGS
 UDEV_LIBS = $UDEV_LIBS
 SDL2_CFLAGS = $SDL2_CFLAGS
 SDL2_LIBS = $SDL2_LIBS
+FAUDIO_CFLAGS = $FAUDIO_CFLAGS
+FAUDIO_LIBS = $FAUDIO_LIBS
 CAPI20_CFLAGS = $CAPI20_CFLAGS
 CAPI20_LIBS = $CAPI20_LIBS
 CUPS_CFLAGS = $CUPS_CFLAGS

@@ -165,6 +165,9 @@
 /* Define to 1 if you have the `fallocate' function. */
 #undef HAVE_FALLOCATE
 
+/* Define to 1 if you have the <FAudio.h> header file. */
+#undef HAVE_FAUDIO_H
+
 /* Define to 1 if you have the `ffs' function. */
 #undef HAVE_FFS
 
@@ -1481,6 +1484,9 @@
 
 /* Define to the soname of the libEGL library. */
 #undef SONAME_LIBEGL
+
+/* Define to the soname of the libFAudio library. */
+#undef SONAME_LIBFAUDIO
 
 /* Define to the soname of the libfontconfig library. */
 #undef SONAME_LIBFONTCONFIG

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015 Andrew Eikum for CodeWeavers
+ * Copyright (c) 2018 Ethan Lee for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,33 +18,42 @@
  */
 
 #include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
 #include "wine/list.h"
 
-#include "mmsystem.h"
 #include "xaudio2.h"
-#include "xaudio2fx.h"
 #include "xapo.h"
-#include "devpkey.h"
-#include "mmdeviceapi.h"
-#include "audioclient.h"
 
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alext.h>
+#include <FAudio.h>
+#include <FAPO.h>
 
-typedef struct _XA2Buffer {
-    XAUDIO2_BUFFER xa2buffer;
-    DWORD offs_bytes;
-    UINT32 latest_al_buf, looped, loop_end_bytes, play_end_bytes, cur_end_bytes;
-} XA2Buffer;
+#include <pthread.h>
 
-typedef struct _IXAudio2Impl IXAudio2Impl;
+#if XAUDIO2_VER == 0
+#define COMPAT_E_INVALID_CALL E_INVALIDARG
+#define COMPAT_E_DEVICE_INVALIDATED XAUDIO20_E_DEVICE_INVALIDATED
+#else
+#define COMPAT_E_INVALID_CALL XAUDIO2_E_INVALID_CALL
+#define COMPAT_E_DEVICE_INVALIDATED XAUDIO2_E_DEVICE_INVALIDATED
+#endif
 
-typedef struct _XA2SourceImpl {
+typedef struct _XA2XAPOImpl {
+    IXAPO *xapo;
+    IXAPOParameters *xapo_params;
+
+    LONG ref;
+
+    FAPO FAPO_vtbl;
+} XA2XAPOImpl;
+
+typedef struct _XA2XAPOFXImpl {
+    IXAPO IXAPO_iface;
+    IXAPOParameters IXAPOParameters_iface;
+
+    FAPO *fapo;
+} XA2XAPOFXImpl;
+
+typedef struct _XA2VoiceImpl {
     IXAudio2SourceVoice IXAudio2SourceVoice_iface;
-
 #if XAUDIO2_VER == 0
     IXAudio20SourceVoice IXAudio20SourceVoice_iface;
 #elif XAUDIO2_VER <= 3
@@ -52,43 +62,7 @@ typedef struct _XA2SourceImpl {
     IXAudio27SourceVoice IXAudio27SourceVoice_iface;
 #endif
 
-    IXAudio2Impl *xa2;
-
-    BOOL in_use;
-
-    CRITICAL_SECTION lock;
-
-    WAVEFORMATEX *fmt;
-    ALenum al_fmt;
-    UINT32 submit_blocksize;
-
-    IXAudio2VoiceCallback *cb;
-
-    DWORD nsends;
-    XAUDIO2_SEND_DESCRIPTOR *sends;
-
-    BOOL running;
-
-    UINT64 played_frames;
-
-    XA2Buffer buffers[XAUDIO2_MAX_QUEUED_BUFFERS];
-    UINT32 first_buf, cur_buf, nbufs, in_al_bytes;
-
-    UINT32 scratch_bytes, convert_bytes;
-    BYTE *scratch_buf, *convert_buf;
-
-    ALuint al_src;
-    /* most cases will only need about 4 AL buffers, but some corner cases
-     * could require up to MAX_QUEUED_BUFFERS */
-    ALuint al_bufs[XAUDIO2_MAX_QUEUED_BUFFERS];
-    DWORD first_al_buf, al_bufs_used, abandoned_albufs;
-
-    struct list entry;
-} XA2SourceImpl;
-
-typedef struct _XA2SubmixImpl {
     IXAudio2SubmixVoice IXAudio2SubmixVoice_iface;
-
 #if XAUDIO2_VER == 0
     IXAudio20SubmixVoice IXAudio20SubmixVoice_iface;
 #elif XAUDIO2_VER <= 3
@@ -97,18 +71,41 @@ typedef struct _XA2SubmixImpl {
     IXAudio27SubmixVoice IXAudio27SubmixVoice_iface;
 #endif
 
-    BOOL in_use;
+    IXAudio2MasteringVoice IXAudio2MasteringVoice_iface;
+#if XAUDIO2_VER == 0
+    IXAudio20MasteringVoice IXAudio20MasteringVoice_iface;
+#elif XAUDIO2_VER <= 3
+    IXAudio23MasteringVoice IXAudio23MasteringVoice_iface;
+#elif XAUDIO2_VER <= 7
+    IXAudio27MasteringVoice IXAudio27MasteringVoice_iface;
+#endif
 
-    XAUDIO2_VOICE_DETAILS details;
+    FAudioVoiceCallback FAudioVoiceCallback_vtbl;
+    FAudioEffectChain *effect_chain;
+
+    BOOL in_use;
 
     CRITICAL_SECTION lock;
 
-    struct list entry;
-} XA2SubmixImpl;
+    IXAudio2VoiceCallback *cb;
 
-struct _IXAudio2Impl {
+    FAudioVoice *faudio_voice;
+
+    struct {
+        FAudioEngineCallEXT proc;
+        FAudio *faudio;
+        float *stream;
+    } engine_params;
+
+    HANDLE engine_thread;
+    pthread_cond_t engine_done, engine_ready;
+    pthread_mutex_t engine_lock;
+
+    struct list entry;
+} XA2VoiceImpl;
+
+typedef struct _IXAudio2Impl {
     IXAudio2 IXAudio2_iface;
-    IXAudio2MasteringVoice IXAudio2MasteringVoice_iface;
 
 #if XAUDIO2_VER == 0
     IXAudio20 IXAudio20_iface;
@@ -118,59 +115,43 @@ struct _IXAudio2Impl {
     IXAudio27 IXAudio27_iface;
 #endif
 
-#if XAUDIO2_VER == 0
-    IXAudio20MasteringVoice IXAudio20MasteringVoice_iface;
-#elif XAUDIO2_VER <= 3
-    IXAudio23MasteringVoice IXAudio23MasteringVoice_iface;
-#elif XAUDIO2_VER <= 7
-    IXAudio27MasteringVoice IXAudio27MasteringVoice_iface;
-#endif
-
-    LONG ref;
-
     CRITICAL_SECTION lock;
 
-    HANDLE engine, mmevt;
-    BOOL stop_engine;
+    struct list voices;
 
-    struct list source_voices;
-    struct list submix_voices;
+    FAudio *faudio;
 
-    IMMDeviceEnumerator *devenum;
+    FAudioEngineCallback FAudioEngineCallback_vtbl;
 
-    WCHAR **devids;
-    UINT32 ndevs;
+    XA2VoiceImpl mst;
 
-    UINT32 last_query_glitches;
-
-    IAudioClient *aclient;
-    IAudioRenderClient *render;
-
-    UINT32 period_frames;
-
-    WAVEFORMATEXTENSIBLE fmt;
-
-    ALCdevice *al_device;
-    ALCcontext *al_ctx;
+    DWORD last_query_glitches;
 
     UINT32 ncbs;
     IXAudio2EngineCallback **cbs;
-
-    BOOL running;
-};
+} IXAudio2Impl;
 
 #if XAUDIO2_VER == 0
 extern const IXAudio20SourceVoiceVtbl XAudio20SourceVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio20SubmixVoiceVtbl XAudio20SubmixVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio20MasteringVoiceVtbl XAudio20MasteringVoice_Vtbl DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio20SourceVoice(IXAudio20SourceVoice *iface) DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio20SubmixVoice(IXAudio20SubmixVoice *iface) DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio20MasteringVoice(IXAudio20MasteringVoice *iface) DECLSPEC_HIDDEN;
 #elif XAUDIO2_VER <= 3
 extern const IXAudio23SourceVoiceVtbl XAudio23SourceVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio23SourceVoice(IXAudio23SourceVoice *iface) DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio23SubmixVoice(IXAudio23SubmixVoice *iface) DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio23MasteringVoice(IXAudio23MasteringVoice *iface) DECLSPEC_HIDDEN;
 #elif XAUDIO2_VER <= 7
 extern const IXAudio27SourceVoiceVtbl XAudio27SourceVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio27SubmixVoiceVtbl XAudio27SubmixVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio27MasteringVoiceVtbl XAudio27MasteringVoice_Vtbl DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio27SourceVoice(IXAudio27SourceVoice *iface) DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio27SubmixVoice(IXAudio27SubmixVoice *iface) DECLSPEC_HIDDEN;
+extern XA2VoiceImpl *impl_from_IXAudio27MasteringVoice(IXAudio27MasteringVoice *iface) DECLSPEC_HIDDEN;
 #endif
 
 #if XAUDIO2_VER == 0
@@ -181,5 +162,16 @@ extern const IXAudio22Vtbl XAudio22_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio27Vtbl XAudio27_Vtbl DECLSPEC_HIDDEN;
 #endif
 
-extern HRESULT make_xapo_factory(REFCLSID clsid, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+/* xaudio_dll.c */
 extern HRESULT xaudio2_initialize(IXAudio2Impl *This, UINT32 flags, XAUDIO2_PROCESSOR proc) DECLSPEC_HIDDEN;
+extern FAudioEffectChain *wrap_effect_chain(const XAUDIO2_EFFECT_CHAIN *pEffectChain) DECLSPEC_HIDDEN;
+extern void engine_cb(FAudioEngineCallEXT proc, FAudio *faudio, float *stream, void *user) DECLSPEC_HIDDEN;
+extern DWORD WINAPI engine_thread(void *user) DECLSPEC_HIDDEN;
+
+/* xapo.c */
+extern HRESULT make_xapo_factory(REFCLSID clsid, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+
+/* xaudio_allocator.c */
+extern void* XAudio_Internal_Malloc(size_t size) DECLSPEC_HIDDEN;
+extern void XAudio_Internal_Free(void* ptr) DECLSPEC_HIDDEN;
+extern void* XAudio_Internal_Realloc(void* ptr, size_t size) DECLSPEC_HIDDEN;

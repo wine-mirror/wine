@@ -1,12 +1,14 @@
 EXTRADEFS = -DXAUDIO2_VER=5
 MODULE    = xaudio2_5.dll
 IMPORTS   = advapi32 ole32 user32 uuid
-EXTRALIBS = $(OPENAL_LIBS)
 PARENTSRC = ../xaudio2_7
+EXTRALIBS = $(FAUDIO_LIBS)
+EXTRAINCL = $(FAUDIO_CFLAGS)
 
 C_SRCS = \
 	compat.c \
-	xapofx.c \
+	xapo.c \
+	xaudio_allocator.c \
 	xaudio_dll.c
 
 IDL_SRCS = xaudio_classes.idl

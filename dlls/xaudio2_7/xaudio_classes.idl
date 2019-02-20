@@ -41,13 +41,6 @@ coclass AudioVolumeMeter { interface IUnknown; }
     uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
 ]
 coclass AudioReverb { interface IUnknown; }
-
-[
-    helpstring("XACT 31 Class"),
-    threading(both),
-    uuid(962f5027-99be-4692-a468-85802cf8de61)
-]
-coclass XACT31 { interface IUnknown; }
 #endif /* XAUDIO2_VER == 7 */
 
 #if XAUDIO2_VER == 6
