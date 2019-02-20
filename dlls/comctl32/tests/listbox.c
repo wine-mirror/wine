@@ -1996,6 +1996,11 @@ static void test_set_count( void )
     GetUpdateRect( listbox, &r, TRUE );
     ok( !IsRectEmpty( &r ), "got empty rect\n");
 
+    ret = SendMessageA( listbox, LB_SETCOUNT, -5, 0 );
+    ok( ret == 0, "got %d\n", ret );
+    ret = SendMessageA( listbox, LB_GETCOUNT, 0, 0 );
+    ok( ret == -5, "got %d\n", ret );
+
     DestroyWindow( listbox );
 
     for (i = 0; i < ARRAY_SIZE(styles); ++i)
