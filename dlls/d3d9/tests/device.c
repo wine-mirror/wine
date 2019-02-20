@@ -4085,8 +4085,12 @@ static void test_wndproc(void)
         flush_events();
 
         /* Releasing a device in lost state breaks follow-up tests on native. */
-        hr = reset_device(device, &device_desc);
-        ok(SUCCEEDED(hr), "Failed to reset device, hr %#x, i=%u.\n", hr, i);
+        hr = IDirect3DDevice9_TestCooperativeLevel(device);
+        if (hr == D3DERR_DEVICENOTRESET)
+        {
+            hr = reset_device(device, &device_desc);
+            ok(SUCCEEDED(hr), "Failed to reset device, hr %#x, i=%u.\n", hr, i);
+        }
 
         filter_messages = focus_window;
 
@@ -4184,7 +4188,8 @@ static void test_wndproc(void)
                 "Received WM_WINDOWPOSCHANGED but did not expect it, i=%u.\n", i);
         expect_messages = NULL;
 
-        filter_messages = focus_window;
+        /* On Windows 10 style change messages are delivered both on reset and
+         * on release. */
         hr = IDirect3DDevice9_TestCooperativeLevel(device);
         ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
 
@@ -4194,6 +4199,7 @@ static void test_wndproc(void)
         ref = IDirect3DDevice9_Release(device);
         ok(ref == 0, "The device was not properly freed: refcount %u, i=%u.\n", ref, i);
 
+        filter_messages = focus_window;
         device_desc.device_window = device_window;
         if (!(device = create_device(d3d9, focus_window, &device_desc)))
         {
@@ -4828,11 +4834,13 @@ static void test_window_style(void)
 
         style = GetWindowLongA(device_window, GWL_STYLE);
         expected_style = device_style | tests[i].style;
-        todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+        todo_wine ok(style == expected_style || broken(style == (expected_style & 0xff000000)),
+                "Expected device window style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
         expected_style = device_exstyle | tests[i].exstyle;
-        todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+        todo_wine ok(style == expected_style || broken(style == (expected_style & 0xff)),
+                "Expected device window extended style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
 
         style = GetWindowLongA(focus_window, GWL_STYLE);
@@ -4850,7 +4858,8 @@ static void test_window_style(void)
             ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s, i=%u.\n",
                     wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r), i);
         GetClientRect(device_window, &r2);
-        todo_wine ok(!EqualRect(&r, &r2), "Client rect and window rect are equal.\n");
+        todo_wine ok(!EqualRect(&r, &r2) || broken(!(style & WS_THICKFRAME)),
+                "Client rect and window rect are equal, i=%u.\n", i);
         GetWindowRect(focus_window, &r);
         ok(EqualRect(&r, &focus_rect), "Expected %s, got %s, i=%u.\n",
                 wine_dbgstr_rect(&focus_rect), wine_dbgstr_rect(&r), i);
