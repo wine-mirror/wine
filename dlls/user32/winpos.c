@@ -2709,12 +2709,10 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     HWND parent;
     LONG hittest = (LONG)(wParam & 0x0f);
     WPARAM syscommand = wParam & 0xfff0;
-    HCURSOR hDragCursor = 0, hOldCursor = 0;
     MINMAXINFO minmax;
     POINT capturePoint, pt;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     BOOL    thickframe = HAS_THICKFRAME( style );
-    BOOL    iconic = style & WS_MINIMIZE;
     BOOL    moved = FALSE;
     DWORD     dwPoint = GetMessagePos ();
     BOOL DragFullWindows = TRUE;
@@ -2794,13 +2792,6 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     /* Retrieve a default cache DC (without using the window style) */
     hdc = GetDCEx( parent, 0, DCX_CACHE );
 
-    if( iconic ) /* create a cursor for dragging */
-    {
-        hDragCursor = (HCURSOR)GetClassLongPtrW( hwnd, GCLP_HICON);
-        if( !hDragCursor ) hDragCursor = (HCURSOR)SendMessageW( hwnd, WM_QUERYDRAGICON, 0, 0L);
-        if( !hDragCursor ) iconic = FALSE;
-    }
-
     /* we only allow disabling the full window drag for child windows */
     if (parent) SystemParametersInfoW( SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0 );
 
@@ -2870,20 +2861,14 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
             if( !moved )
             {
                 moved = TRUE;
-
-                if( iconic ) /* ok, no system popup tracking */
-                {
-                    hOldCursor = SetCursor(hDragCursor);
-                    ShowCursor( TRUE );
-                }
-                else if(!DragFullWindows)
+                if (!DragFullWindows)
                     draw_moving_frame( parent, hdc, &sizingRect, thickframe );
             }
 
             if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
             else
             {
-                if(!iconic && !DragFullWindows) draw_moving_frame( parent, hdc, &sizingRect, thickframe );
+                if (!DragFullWindows) draw_moving_frame( parent, hdc, &sizingRect, thickframe );
                 if (hittest == HTCAPTION) OffsetRect( &sizingRect, dx, dy );
                 if (ON_LEFT_BORDER(hittest)) sizingRect.left += dx;
                 else if (ON_RIGHT_BORDER(hittest)) sizingRect.right += dx;
@@ -2903,32 +2888,21 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 else
                     SendMessageW( hwnd, WM_MOVING, 0, (LPARAM)&sizingRect );
 
-                if (!iconic)
+                if (!DragFullWindows)
+                    draw_moving_frame( parent, hdc, &sizingRect, thickframe );
+                else
                 {
-                    if(!DragFullWindows)
-                        draw_moving_frame( parent, hdc, &sizingRect, thickframe );
-                    else
-                    {
-                        RECT rect = sizingRect;
-                        MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
-                        SetWindowPos( hwnd, 0, rect.left, rect.top,
-                                      rect.right - rect.left, rect.bottom - rect.top,
-                                      ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
-                    }
+                    RECT rect = sizingRect;
+                    MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
+                    SetWindowPos( hwnd, 0, rect.left, rect.top,
+                                  rect.right - rect.left, rect.bottom - rect.top,
+                                  (hittest == HTCAPTION) ? SWP_NOSIZE : 0 );
                 }
             }
         }
     }
 
-    if( iconic )
-    {
-        if( moved ) /* restore cursors, show icon title later on */
-        {
-            ShowCursor( FALSE );
-            SetCursor( hOldCursor );
-        }
-    }
-    else if (moved && !DragFullWindows)
+    if (moved && !DragFullWindows)
     {
         draw_moving_frame( parent, hdc, &sizingRect, thickframe );
     }
@@ -2952,7 +2926,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         if (!((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) )
         {
             /* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
-            if(!DragFullWindows || iconic)
+            if (!DragFullWindows)
                 SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
                               sizingRect.right - sizingRect.left,
                               sizingRect.bottom - sizingRect.top,
