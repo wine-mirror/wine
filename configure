@@ -1278,6 +1278,7 @@ enable_ext_ms_win_ntuser_draw_l1_1_0
 enable_ext_ms_win_ntuser_gui_l1_1_0
 enable_ext_ms_win_ntuser_gui_l1_3_0
 enable_ext_ms_win_ntuser_keyboard_l1_3_0
+enable_ext_ms_win_ntuser_message_l1_1_0
 enable_ext_ms_win_ntuser_message_l1_1_1
 enable_ext_ms_win_ntuser_misc_l1_2_0
 enable_ext_ms_win_ntuser_misc_l1_5_1
@@ -19586,6 +19587,7 @@ wine_fn_config_makefile dlls/ext-ms-win-ntuser-draw-l1-1-0 enable_ext_ms_win_ntu
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-gui-l1-1-0 enable_ext_ms_win_ntuser_gui_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-gui-l1-3-0 enable_ext_ms_win_ntuser_gui_l1_3_0
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-keyboard-l1-3-0 enable_ext_ms_win_ntuser_keyboard_l1_3_0
+wine_fn_config_makefile dlls/ext-ms-win-ntuser-message-l1-1-0 enable_ext_ms_win_ntuser_message_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-message-l1-1-1 enable_ext_ms_win_ntuser_message_l1_1_1
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-misc-l1-2-0 enable_ext_ms_win_ntuser_misc_l1_2_0
 wine_fn_config_makefile dlls/ext-ms-win-ntuser-misc-l1-5-1 enable_ext_ms_win_ntuser_misc_l1_5_1
