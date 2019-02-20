@@ -1,5 +1,5 @@
 TESTDLL   = mf.dll
-IMPORTS   = mf
+IMPORTS   = mf mfplat
 
 C_SRCS = \
 	mf.c

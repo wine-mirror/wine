@@ -27,6 +27,7 @@
 #include "winbase.h"
 
 #include "initguid.h"
+#include "mfapi.h"
 #include "mfidl.h"
 
 #include "wine/test.h"
@@ -178,8 +179,26 @@ static void test_MFGetService(void)
     ok(unk == (void *)0xdeadbeef, "Unexpected out object.\n");
 }
 
+static void test_MFCreateSequencerSource(void)
+{
+    IMFSequencerSource *seq_source;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
+
+    hr = MFCreateSequencerSource(NULL, &seq_source);
+    ok(hr == S_OK, "Failed to create sequencer source, hr %#x.\n", hr);
+
+    IMFSequencerSource_Release(seq_source);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
+}
+
 START_TEST(mf)
 {
     test_topology();
     test_MFGetService();
+    test_MFCreateSequencerSource();
 }

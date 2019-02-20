@@ -54,7 +54,7 @@
 @ stub MFCreateSampleGrabberSinkActivate
 @ stub MFCreateSecureHttpSchemePlugin
 @ stub MFCreateSequencerSegmentOffset
-@ stub MFCreateSequencerSource
+@ stdcall MFCreateSequencerSource(ptr ptr)
 @ stub MFCreateSequencerSourceRemoteStream
 @ stub MFCreateSimpleTypeHandler
 @ stdcall MFCreateSourceResolver(ptr) mfplat.MFCreateSourceResolver

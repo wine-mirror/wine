@@ -47,6 +47,12 @@ struct topology_node
     MF_TOPOLOGY_TYPE node_type;
 };
 
+struct seq_source
+{
+    IMFSequencerSource IMFSequencerSource_iface;
+    LONG refcount;
+};
+
 static inline struct topology *impl_from_IMFTopology(IMFTopology *iface)
 {
     return CONTAINING_RECORD(iface, struct topology, IMFTopology_iface);
@@ -55,6 +61,11 @@ static inline struct topology *impl_from_IMFTopology(IMFTopology *iface)
 static struct topology_node *impl_from_IMFTopologyNode(IMFTopologyNode *iface)
 {
     return CONTAINING_RECORD(iface, struct topology_node, IMFTopologyNode_iface);
+}
+
+static struct seq_source *impl_from_IMFSequencerSource(IMFSequencerSource *iface)
+{
+    return CONTAINING_RECORD(iface, struct seq_source, IMFSequencerSource_iface);
 }
 
 static HRESULT WINAPI topology_QueryInterface(IMFTopology *iface, REFIID riid, void **out)
@@ -1049,6 +1060,125 @@ HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode 
     }
 
     *node = &object->IMFTopologyNode_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI seq_source_QueryInterface(IMFSequencerSource *iface, REFIID riid, void **out)
+{
+    struct seq_source *seq_source = impl_from_IMFSequencerSource(iface);
+
+    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFSequencerSource) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = &seq_source->IMFSequencerSource_iface;
+        IMFSequencerSource_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unimplemented %s.\n", debugstr_guid(riid));
+    *out = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI seq_source_AddRef(IMFSequencerSource *iface)
+{
+    struct seq_source *seq_source = impl_from_IMFSequencerSource(iface);
+    ULONG refcount = InterlockedIncrement(&seq_source->refcount);
+
+    TRACE("(%p) refcount=%u\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI seq_source_Release(IMFSequencerSource *iface)
+{
+    struct seq_source *seq_source = impl_from_IMFSequencerSource(iface);
+    ULONG refcount = InterlockedDecrement(&seq_source->refcount);
+
+    TRACE("(%p) refcount=%u\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(seq_source);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI seq_source_AppendTopology(IMFSequencerSource *iface, IMFTopology *topology,
+        DWORD flags, MFSequencerElementId *id)
+{
+    FIXME("%p, %p, %x, %p\n", iface, topology, flags, id);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI seq_source_DeleteTopology(IMFSequencerSource *iface, MFSequencerElementId id)
+{
+    FIXME("%p, %#x\n", iface, id);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI seq_source_GetPresentationContext(IMFSequencerSource *iface,
+        IMFPresentationDescriptor *descriptor, MFSequencerElementId *id, IMFTopology **topology)
+{
+    FIXME("%p, %p, %p, %p\n", iface, descriptor, id, topology);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI seq_source_UpdateTopology(IMFSequencerSource *iface, MFSequencerElementId id,
+        IMFTopology *topology)
+{
+    FIXME("%p, %#x, %p\n", iface, id, topology);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI seq_source_UpdateTopologyFlags(IMFSequencerSource *iface, MFSequencerElementId id, DWORD flags)
+{
+    FIXME("%p, %#x, %#x\n", iface, id, flags);
+
+    return E_NOTIMPL;
+}
+
+static const IMFSequencerSourceVtbl seqsourcevtbl =
+{
+    seq_source_QueryInterface,
+    seq_source_AddRef,
+    seq_source_Release,
+    seq_source_AppendTopology,
+    seq_source_DeleteTopology,
+    seq_source_GetPresentationContext,
+    seq_source_UpdateTopology,
+    seq_source_UpdateTopologyFlags,
+};
+
+/***********************************************************************
+ *      MFCreateSequencerSource (mf.@)
+ */
+HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequencerSource **seq_source)
+{
+    struct seq_source *object;
+
+    TRACE("(%p, %p)\n", reserved, seq_source);
+
+    if (!seq_source)
+        return E_POINTER;
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFSequencerSource_iface.lpVtbl = &seqsourcevtbl;
+    object->refcount = 1;
+
+    *seq_source = &object->IMFSequencerSource_iface;
 
     return S_OK;
 }
