@@ -520,8 +520,8 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
 
     if (!data || data->parent == win)
     {
-        if (win) pANativeWindow_release( win );
-        if (data && win) PostMessageW( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
+        pANativeWindow_release( win );
+        if (data) PostMessageW( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
         TRACE( "%p -> %p win %p (unchanged)\n", hwnd, data, win );
         return;
     }
@@ -529,15 +529,12 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
     release_native_window( data );
     data->parent = win;
     data->generation++;
-    if (win)
-    {
-        wrap_java_call();
-        if (data->api) win->perform( win, NATIVE_WINDOW_API_CONNECT, data->api );
-        win->perform( win, NATIVE_WINDOW_SET_BUFFERS_FORMAT, data->buffer_format );
-        win->setSwapInterval( win, data->swap_interval );
-        unwrap_java_call();
-        PostMessageW( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
-    }
+    wrap_java_call();
+    if (data->api) win->perform( win, NATIVE_WINDOW_API_CONNECT, data->api );
+    win->perform( win, NATIVE_WINDOW_SET_BUFFERS_FORMAT, data->buffer_format );
+    win->setSwapInterval( win, data->swap_interval );
+    unwrap_java_call();
+    PostMessageW( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
     TRACE( "%p -> %p win %p\n", hwnd, data, win );
 }
 
