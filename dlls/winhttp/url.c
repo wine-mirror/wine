@@ -179,7 +179,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
 
     TRACE("%s, %d, %x, %p\n", debugstr_wn(url, len), len, flags, uc);
 
-    if (!url || !uc || uc->dwStructSize != sizeof(URL_COMPONENTS))
+    if (!url || !uc || uc->dwStructSize != sizeof(*uc))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -268,8 +268,12 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
 
         if ((r = memchrW( q, '?', len - (q - url) )))
         {
-            if ((err = set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, r - q, flags, &overflow ))) goto exit;
-            if ((err = set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, r, len - (r - url), flags, &overflow ))) goto exit;
+            if (uc->dwExtraInfoLength)
+            {
+                if ((err = set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, r - q, flags, &overflow ))) goto exit;
+                if ((err = set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, r, len - (r - url), flags, &overflow ))) goto exit;
+            }
+            else if ((err = set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, len - (q - url), flags, &overflow ))) goto exit;
         }
         else
         {

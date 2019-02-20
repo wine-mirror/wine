@@ -81,6 +81,10 @@ static const WCHAR url19[] =
     {'h','t','t','p',':','/','/','?','t','e','x','t','=',0xfb00,0};
 static const WCHAR url20[] =
     {'h','t','t','p',':','/','/','/','t','e','x','t','=',0xfb00,0};
+static const WCHAR url21[] =
+    {'h','t','t','p','s',':','/','/','n','b','a','2','k','1','9','-','w','s','.','2','k','s','p','o','r','t','s','.','c','o','m',':','1','9','1','3','3',
+     '/','n','b','a','/','v','4','/','A','c','c','o','u','n','t','s','/','g','e','t','_','a','c','c','o','u','n','t','?','x','=','3','7','8','9','5','2',
+     '6','7','7','5','2','6','5','6','6','3','8','7','6',0};
 
 static const WCHAR url_k1[]  =
     {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
@@ -428,7 +432,7 @@ static void WinHttpCrackUrl_test( void )
     static const WCHAR pathW[] =
         {'/','p','a','t','h','%','2','0','w','i','t','h','%','2','0','s','p','a','c','e','s',0};
     URL_COMPONENTSW uc;
-    WCHAR scheme[20], user[20], pass[20], host[20], path[80], extra[40];
+    WCHAR scheme[20], user[20], pass[20], host[40], path[80], extra[40];
     DWORD error;
     BOOL ret;
 
@@ -843,6 +847,19 @@ static void WinHttpCrackUrl_test( void )
     ret = WinHttpCrackUrl( url17, 0, 0, &uc );
     ok( ret, "got %u\n", GetLastError() );
     todo_wine ok( uc.nPort == 80, "got %u\n", uc.nPort );
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize      = sizeof(uc);
+    uc.lpszScheme        = scheme;
+    uc.dwSchemeLength    = ARRAY_SIZE(scheme);
+    uc.lpszHostName      = host;
+    uc.dwHostNameLength  = ARRAY_SIZE(host);
+    uc.lpszUrlPath       = path;
+    uc.dwUrlPathLength   = ARRAY_SIZE(path);
+    ret = WinHttpCrackUrl( url21, 0, 0, &uc );
+    ok( ret, "got %u\n", GetLastError() );
+    ok( !lstrcmpW( uc.lpszUrlPath, url21 + 37 ), "unexpected path %s\n", wine_dbgstr_w(uc.lpszUrlPath) );
+    ok( uc.dwUrlPathLength == 50, "unexpected length %u\n", uc.dwUrlPathLength );
 }
 
 START_TEST(url)
