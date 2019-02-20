@@ -939,14 +939,10 @@ HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_d
 
         /* Parse the value */
         hr = parse_config2(p, home_dir, &out[idx]);
-        if (FAILED(hr))
+        if (hr == E_OUTOFMEMORY)
         {
-            if (hr == E_OUTOFMEMORY)
-            {
-                fclose(file);
-                goto xdg_user_dir_lookup_error;
-            }
-            continue;
+            fclose(file);
+            goto xdg_user_dir_lookup_error;
         }
     }
     fclose (file);
