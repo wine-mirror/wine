@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * TODO:
- *    - LBS_NODATA
+ *    - LBS_NODATA for multi-selection listboxes
  */
 
 #include <string.h>
@@ -130,17 +130,20 @@ static BOOL resize_storage(LB_DESCR *descr, UINT items_size)
         items_size + LB_ARRAY_GRANULARITY * 2 < descr->items_size)
     {
         items_size = (items_size + LB_ARRAY_GRANULARITY - 1) & ~(LB_ARRAY_GRANULARITY - 1);
-        items = heap_realloc(descr->items, items_size * sizeof(LB_ITEMDATA));
-        if (!items)
+        if ((descr->style & (LBS_NODATA | LBS_MULTIPLESEL | LBS_EXTENDEDSEL)) != LBS_NODATA)
         {
-            SEND_NOTIFICATION(descr, LBN_ERRSPACE);
-            return FALSE;
+            items = heap_realloc(descr->items, items_size * sizeof(LB_ITEMDATA));
+            if (!items)
+            {
+                SEND_NOTIFICATION(descr, LBN_ERRSPACE);
+                return FALSE;
+            }
+            descr->items = items;
         }
         descr->items_size = items_size;
-        descr->items = items;
     }
 
-    if ((descr->style & LBS_NODATA) && items_size > descr->nb_items)
+    if ((descr->style & LBS_NODATA) && descr->items && items_size > descr->nb_items)
     {
         memset(&descr->items[descr->nb_items], 0,
                (items_size - descr->nb_items) * sizeof(LB_ITEMDATA));
@@ -185,6 +188,8 @@ static void insert_item_data(LB_DESCR *descr, UINT index, WCHAR *str, ULONG_PTR 
 {
     LB_ITEMDATA *item;
 
+    if (!descr->items) return;
+
     item = descr->items + index;
     if (index < descr->nb_items)
         memmove(item + 1, item, (descr->nb_items - index) * sizeof(LB_ITEMDATA));
@@ -198,6 +203,8 @@ static void insert_item_data(LB_DESCR *descr, UINT index, WCHAR *str, ULONG_PTR 
 static void remove_item_data(LB_DESCR *descr, UINT index)
 {
     LB_ITEMDATA *item;
+
+    if (!descr->items) return;
 
     item = descr->items + index;
     if (index < descr->nb_items)
@@ -1772,7 +1779,8 @@ static void LISTBOX_ResetContent( LB_DESCR *descr )
 {
     INT i;
 
-    for(i = descr->nb_items - 1; i>=0; i--) LISTBOX_DeleteItem( descr, i);
+    if (!(descr->style & LBS_NODATA))
+        for (i = descr->nb_items - 1; i >= 0; i--) LISTBOX_DeleteItem(descr, i);
     HeapFree( GetProcessHeap(), 0, descr->items );
     descr->nb_items      = 0;
     descr->top_item      = 0;
