@@ -61,6 +61,7 @@ static BOOL (WINAPI *pSetFileInformationByHandle)(HANDLE, FILE_INFO_BY_HANDLE_CL
 static BOOL (WINAPI *pGetQueuedCompletionStatusEx)(HANDLE, OVERLAPPED_ENTRY*, ULONG, ULONG*, DWORD, BOOL);
 static void (WINAPI *pRtlInitAnsiString)(PANSI_STRING,PCSZ);
 static void (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
+static BOOL (WINAPI *pSetFileCompletionNotificationModes)(HANDLE, UCHAR);
 
 static char filename[MAX_PATH];
 static const char sillytext[] =
@@ -109,6 +110,7 @@ static void InitFunctionPointers(void)
     pGetFinalPathNameByHandleW = (void *) GetProcAddress(hkernel32, "GetFinalPathNameByHandleW");
     pSetFileInformationByHandle = (void *) GetProcAddress(hkernel32, "SetFileInformationByHandle");
     pGetQueuedCompletionStatusEx = (void *) GetProcAddress(hkernel32, "GetQueuedCompletionStatusEx");
+    pSetFileCompletionNotificationModes = (void *)GetProcAddress(hkernel32, "SetFileCompletionNotificationModes");
 }
 
 static void test__hread( void )
@@ -4564,6 +4566,28 @@ static void test_WriteFileGather(void)
     memset( rbuf2, 0, si.dwPageSize );
     ok( memcmp( rbuf1 + si.dwPageSize / 2, rbuf2, si.dwPageSize - si.dwPageSize / 2 ) == 0,
             "invalid data was read into buffer\n" );
+
+    if (pSetFileCompletionNotificationModes)
+    {
+        br = pSetFileCompletionNotificationModes(hfile, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+        ok(br, "SetFileCompletionNotificationModes failed, error %u.\n", GetLastError());
+
+        br = ReadFileScatter(hfile, fse, si.dwPageSize, NULL, &ovl);
+        ok(br == FALSE, "ReadFileScatter should be asynchronous.\n");
+        ok(GetLastError() == ERROR_IO_PENDING, "ReadFileScatter failed, error %u.\n", GetLastError());
+
+        br = GetQueuedCompletionStatus(hiocp2, &size, &key, &povl, 1000);
+        todo_wine ok(br, "GetQueuedCompletionStatus failed, err %u.\n", GetLastError());
+        todo_wine ok(povl == &ovl, "Wrong ovl %p.\n", povl);
+
+        br = GetOverlappedResult(hfile, &ovl, &tx, TRUE);
+        ok(br, "GetOverlappedResult failed, err %u.\n", GetLastError());
+        ok(tx == si.dwPageSize, "Got unexpected size %u.\n", tx);
+
+        ResetEvent(evt);
+    }
+    else
+        win_skip("SetFileCompletionNotificationModes not available.\n");
 
     CloseHandle( hfile );
     CloseHandle( hiocp1 );
