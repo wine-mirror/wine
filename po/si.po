@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-02-19 03:54+0530\n"
+"PO-Revision-Date: 2019-02-26 08:34+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
@@ -247,7 +247,7 @@ msgid ""
 "file."
 msgstr ""
 "බාගත කරපු ගොනුවේ අපේක්ෂා කර නැති checksum එකක් තියෙනවා. සදොස් වෙච්ච ගොනුවේ ස්ථාපනය කිරීම "
-"නවත්තනවා."
+"අහෝසි කරනවා."
 
 #: avifil32.rc:42
 msgid "Compress options"
@@ -994,9 +994,8 @@ msgid "White"
 msgstr "සුදු"
 
 #: comdlg32.rc:56
-#, fuzzy
 msgid "Unreadable Entry"
-msgstr "කියවන්න බැරි"
+msgstr "කියවන්න බැරි සටහනක්"
 
 #: comdlg32.rc:58
 msgid ""
@@ -1255,8 +1254,9 @@ msgid ""
 msgstr ""
 
 #: credui.rc:34
+#, fuzzy
 msgid "Caps Lock is On"
-msgstr ""
+msgstr "Caps Lock"
 
 #: crypt32.rc:30
 msgid "Authority Key Identifier"
@@ -1324,7 +1324,7 @@ msgstr "ඔව් හෝ නෑ විශ්වාසය"
 
 #: crypt32.rc:46
 msgid "Email Address"
-msgstr "විද්යුත් තැපැල් ලිපිනය"
+msgstr "ඊමේල් ලිපිනය"
 
 #: crypt32.rc:47
 #, fuzzy
@@ -1403,14 +1403,12 @@ msgid "Netscape Base URL"
 msgstr "Netscape"
 
 #: crypt32.rc:65
-#, fuzzy
 msgid "Netscape Revocation URL"
-msgstr "Netscape"
+msgstr "Netscape අවලංගුකිරීම URL"
 
 #: crypt32.rc:66
-#, fuzzy
 msgid "Netscape CA Revocation URL"
-msgstr "Netscape"
+msgstr "Netscape CA අවලංගුකිරීම URL"
 
 #: crypt32.rc:67
 #, fuzzy
@@ -1715,7 +1713,7 @@ msgstr ""
 
 #: crypt32.rc:141
 msgid "Secure Email"
-msgstr "ආරක්ෂිත විද්යුත් තැපැල"
+msgstr "ආරක්ෂිත ඊමේල්"
 
 #: crypt32.rc:142
 msgid "Time Stamping"
@@ -1827,7 +1825,7 @@ msgstr ""
 
 #: crypt32.rc:173
 msgid "Personal"
-msgstr ""
+msgstr "‍පුද්ගලික"
 
 #: crypt32.rc:174
 msgid "Intermediate Certification Authorities"
@@ -1863,7 +1861,7 @@ msgstr "අනිත් නම="
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr "විද්යුත් තැපැල් ලිපිනය="
+msgstr "ඊමේල් ලිපිනය="
 
 #: crypt32.rc:187
 msgid "DNS Name="
@@ -2046,7 +2044,7 @@ msgstr ""
 
 #: crypt32.rc:231
 msgid "CRL Signing"
-msgstr ""
+msgstr "CRL අත්සන් කිරීම"
 
 #: crypt32.rc:232
 msgid "Encipher Only"
@@ -2194,11 +2192,11 @@ msgstr ""
 
 #: cryptui.rc:258
 msgid "Add &Purpose..."
-msgstr ""
+msgstr "අරමුණක් එක් කරන්න..."
 
 #: cryptui.rc:262
 msgid "Add Purpose"
-msgstr ""
+msgstr "අරමුණක් එක් කරන්න"
 
 #: cryptui.rc:265
 msgid ""
@@ -2341,7 +2339,7 @@ msgstr ""
 #: cryptui.rc:375 cryptui.rc:386 cryptui.rc:399 cryptui.rc:409 cryptui.rc:432
 #: cryptui.rc:441 cryptui.rc:150
 msgid "Certificate Export Wizard"
-msgstr ""
+msgstr "සහතිකය නිර්යාත කිරීම විශාරද"
 
 #: cryptui.rc:378
 msgid "Welcome to the Certificate Export Wizard"
@@ -2415,9 +2413,8 @@ msgid "&Enable strong encryption"
 msgstr ""
 
 #: cryptui.rc:427
-#, fuzzy
 msgid "Delete the private &key if the export is successful"
-msgstr "පෞද්ගලික යතුර "
+msgstr "පෞද්ගලික යතුර මකන්න නිර්යාත කිරීම හරියට උනොත් (&K)"
 
 #: cryptui.rc:444
 msgid "Completing the Certificate Export Wizard"
@@ -2447,7 +2444,7 @@ msgstr "සහතිකයේ තොරතුරු"
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
-msgstr "මේ සහතිකයට වලංගු නැති අත්සනක් තියෙනවා. සහතිකය සදොස් වෙලා හෝ වෙනස් කරලා ඇති."
+msgstr "මේ සහතිකයට වලංගු නැති අත්සනක් තියෙනවා. සහතිකය වෙනස් කරලා හෝ සදොස් වෙලා ඇති."
 
 #: cryptui.rc:33
 msgid ""
@@ -2549,11 +2546,11 @@ msgstr "වලංගු ඉඳලා"
 
 #: cryptui.rc:58
 msgid "Valid to"
-msgstr ""
+msgstr "වලංගු වෙනකං"
 
 #: cryptui.rc:59
 msgid "Subject"
-msgstr ""
+msgstr "විෂය"
 
 #: cryptui.rc:60
 msgid "Public key"
@@ -2585,11 +2582,11 @@ msgstr "සහතිකයේ ගුණාංග"
 
 #: cryptui.rc:67
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr ""
+msgstr "කරුණාකරල OID එකක් ඇතුල් කරන්න 1.2.3.4 විදිහට"
 
 #: cryptui.rc:68
 msgid "The OID you entered already exists."
-msgstr ""
+msgstr "ඇතුල් කරපු OID එක දැනටමත් තියෙනවා."
 
 #: cryptui.rc:70
 msgid "Please select a certificate store."
@@ -2689,11 +2686,11 @@ msgstr ""
 
 #: cryptui.rc:99
 msgid "The import was successful."
-msgstr ""
+msgstr "ආයාත කිරීම හරියට උනා."
 
 #: cryptui.rc:100
 msgid "The import failed."
-msgstr ""
+msgstr "ආයාත කිරීම බැරි උනා."
 
 #: cryptui.rc:101
 msgid "Arial"
@@ -2895,7 +2892,7 @@ msgstr "නිර්යාත කිරීම බැරි උනා."
 
 #: cryptui.rc:170
 msgid "Export Private Key"
-msgstr ""
+msgstr "පෞද්ගලික යතුර නිර්යාත කරන්න"
 
 #: cryptui.rc:171
 msgid ""
@@ -2920,9 +2917,8 @@ msgid "Note: The private key for this certificate could not be opened."
 msgstr "සටහන: මේ සහතිකයේ පෞද්ගලික යතුර අරින්න බැරි උනා."
 
 #: cryptui.rc:176
-#, fuzzy
 msgid "Note: The private key for this certificate is not exportable."
-msgstr "සටහන:"
+msgstr "සටහන: මේ සහතිකයේ පෞද්ගලික යතුර නිර්යාත කරන්න බැහැ."
 
 #: cryptui.rc:177
 msgid "Intended Use"
@@ -2982,51 +2978,51 @@ msgstr ""
 
 #: dxdiagn.rc:29
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%1!u!MB පාවිච්චි කරලා, %2!u!MB තියෙනවා"
 
 #: gdi32.rc:28
 msgid "Western"
-msgstr ""
+msgstr "බටහිර"
 
 #: gdi32.rc:29
 msgid "Central European"
-msgstr ""
+msgstr "මධ්‍යම යුරෝප"
 
 #: gdi32.rc:30
 msgid "Cyrillic"
-msgstr ""
+msgstr "සිරිලික්"
 
 #: gdi32.rc:31
 msgid "Greek"
-msgstr ""
+msgstr "ග්‍රීක"
 
 #: gdi32.rc:32
 msgid "Turkish"
-msgstr ""
+msgstr "තුර්කියානු"
 
 #: gdi32.rc:33
 msgid "Hebrew"
-msgstr ""
+msgstr "හීබෲ"
 
 #: gdi32.rc:34
 msgid "Arabic"
-msgstr ""
+msgstr "අරාබි"
 
 #: gdi32.rc:35
 msgid "Baltic"
-msgstr ""
+msgstr "බෝල්ටික්"
 
 #: gdi32.rc:36
 msgid "Vietnamese"
-msgstr ""
+msgstr "වියට්නාම"
 
 #: gdi32.rc:37
 msgid "Thai"
-msgstr ""
+msgstr "තායි"
 
 #: gdi32.rc:38
 msgid "Japanese"
-msgstr ""
+msgstr "ජපන්"
 
 #: gdi32.rc:39
 msgid "CHINESE_GB2312"
@@ -3220,7 +3216,7 @@ msgstr ""
 
 #: iccvid.rc:28 iccvid.rc:29
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "Cinepak වීඩියෝ කොඩෙක්"
 
 #: ieframe.rc:28 shell32.rc:114 notepad.rc:29 oleview.rc:30 oleview.rc:80
 #: progman.rc:32 taskmgr.rc:35 view.rc:31 winefile.rc:28 winhlp32.rc:31
@@ -3463,7 +3459,7 @@ msgstr ""
 
 #: inetcpl.rc:34
 msgid "Custom"
-msgstr ""
+msgstr "චාරිත්ර"
 
 #: inetcpl.rc:35
 msgid "Very Low"
@@ -3829,7 +3825,7 @@ msgstr ""
 
 #: winerror.mc:153 winerror.mc:528
 msgid "Seek error.\n"
-msgstr ""
+msgstr "සෙවීමේ දෝෂයක්.\n"
 
 #: winerror.mc:158
 msgid "Not DOS disk.\n"
@@ -4497,7 +4493,7 @@ msgstr ""
 
 #: winerror.mc:998
 msgid "I/O operation aborted.\n"
-msgstr ""
+msgstr "I/O මෙහෙයුම අහෝසි කරා.\n"
 
 #: winerror.mc:1003
 msgid "Overlapped I/O incomplete.\n"
@@ -4669,11 +4665,11 @@ msgstr ""
 
 #: winerror.mc:1213
 msgid "Process aborted.\n"
-msgstr ""
+msgstr "සැකසුම අහෝසි කරා.\n"
 
 #: winerror.mc:1218
 msgid "Service dependency failed.\n"
-msgstr ""
+msgstr "සේවාව පරායත්තයේ දෝෂයක් උනා.\n"
 
 #: winerror.mc:1223
 msgid "Service login failed.\n"
@@ -4789,7 +4785,7 @@ msgstr ""
 
 #: winerror.mc:1363
 msgid "No Unicode translation.\n"
-msgstr ""
+msgstr "යුනිකෝඩ් පරිවර්තනයක් නැහැ.\n"
 
 #: winerror.mc:1368
 msgid "DLL initialization failed.\n"
@@ -4805,7 +4801,7 @@ msgstr ""
 
 #: winerror.mc:1383
 msgid "I/O device error.\n"
-msgstr ""
+msgstr "I/O ආම්පන්නයේ දෝෂයක්.\n"
 
 #: winerror.mc:1388
 msgid "No serial devices found.\n"
@@ -4840,16 +4836,18 @@ msgid "Floppy registers inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:1428
+#, fuzzy
 msgid "Hard disk recalibrate failed.\n"
-msgstr ""
+msgstr "දෘඩ තැටිය"
 
 #: winerror.mc:1433
+#, fuzzy
 msgid "Hard disk operation failed.\n"
-msgstr ""
+msgstr "දෘඩ තැටිය"
 
 #: winerror.mc:1438
 msgid "Hard disk reset failed.\n"
-msgstr ""
+msgstr "දෘඩ තැටිය නැවත සකසන්න බැරි උනා.\n"
 
 #: winerror.mc:1443
 msgid "End of tape media.\n"
@@ -5141,11 +5139,11 @@ msgstr ""
 
 #: winerror.mc:1808
 msgid "Request aborted.\n"
-msgstr ""
+msgstr "ඉල්ලීම අහෝසි කරා.\n"
 
 #: winerror.mc:1813
 msgid "Connection aborted.\n"
-msgstr ""
+msgstr "සබැඳුම් අහෝසි කරා.\n"
 
 #: winerror.mc:1818
 msgid "Please retry operation.\n"
@@ -5365,11 +5363,11 @@ msgstr ""
 
 #: winerror.mc:2088
 msgid "Invalid ACL.\n"
-msgstr ""
+msgstr "අවලංගු ACL.\n"
 
 #: winerror.mc:2093
 msgid "Invalid SID.\n"
-msgstr ""
+msgstr "අවලංගු SID.\n"
 
 #: winerror.mc:2098
 msgid "Invalid security descriptor.\n"
@@ -5877,7 +5875,7 @@ msgstr ""
 
 #: winerror.mc:2733
 msgid "Installation aborted by user.\n"
-msgstr ""
+msgstr "ස්ථාපනය අහෝසි කරා.\n"
 
 #: winerror.mc:2738
 msgid "Installation failure.\n"
@@ -5893,7 +5891,7 @@ msgstr ""
 
 #: winerror.mc:2753
 msgid "Unknown feature.\n"
-msgstr ""
+msgstr "දන්නේ නැති වි‍ශේෂාංගයක්.\n"
 
 #: winerror.mc:2758
 msgid "Unknown component.\n"
@@ -6785,11 +6783,11 @@ msgstr ""
 
 #: mshtml.rc:39
 msgid "Hyperlink"
-msgstr ""
+msgstr "අධිබැඳිය"
 
 #: mshtml.rc:42
 msgid "Hyperlink Information"
-msgstr ""
+msgstr "අධිබැඳියේ තොරතුරු"
 
 #: mshtml.rc:43 winecfg.rc:245
 msgid "&Type:"
@@ -7188,7 +7186,7 @@ msgstr ""
 
 #: msi.rc:179 msi.rc:200
 msgid "Feature: [1]"
-msgstr ""
+msgstr "වි‍ශේෂාංගය: [1]"
 
 #: msi.rc:180 msi.rc:201
 msgid "Class Id: [1]"
@@ -7275,7 +7273,7 @@ msgstr ""
 
 #: msi.rc:77
 msgid "{{Disk full: }}"
-msgstr ""
+msgstr "{{ඩිස්කය පිරිලා: }}"
 
 #: msi.rc:78
 msgid "Action [Time]: [1]. [2]"
@@ -7309,17 +7307,19 @@ msgstr ""
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
-msgstr ""
+msgstr "Wine MS-RLE වීඩියෝ කොඩෙක්"
 
 #: msrle32.rc:32
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
+"Wine MS-RLE වීඩියෝ කොඩෙක්\n"
+"Copyright 2002 by Michael Guennewig"
 
 #: msvfw32.rc:33
 msgid "Video Compression"
-msgstr ""
+msgstr "වීඩියෝ හැකිළීම"
 
 #: msvfw32.rc:39
 msgid "&Compressor:"
@@ -7435,7 +7435,7 @@ msgstr "දෙබස"
 
 #: oleacc.rc:50
 msgid "border"
-msgstr ""
+msgstr "දාරය"
 
 #: oleacc.rc:51
 msgid "grouping"
@@ -7700,7 +7700,7 @@ msgstr ""
 #: oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "අදෘශ්‍යමාන"
 
 #: oleacc.rc:114
 msgctxt "object state"
@@ -7779,11 +7779,11 @@ msgstr ""
 
 #: oleaut32.rc:30 oleview.rc:146
 msgid "True"
-msgstr ""
+msgstr "සත්‍ය"
 
 #: oleaut32.rc:31 oleview.rc:147
 msgid "False"
-msgstr ""
+msgstr "අසත්‍ය"
 
 #: oleaut32.rc:34
 msgid "On"
@@ -7803,7 +7803,7 @@ msgstr "වස්තුව වර්ගය:"
 
 #: oledlg.rc:64 oledlg.rc:102
 msgid "Result"
-msgstr ""
+msgstr "ප්‍රතිඵල"
 
 #: oledlg.rc:65
 msgid "Create New"
@@ -7994,11 +7994,11 @@ msgstr ""
 
 #: serialui.rc:31
 msgid "Baud Rate"
-msgstr ""
+msgstr "බෝඩ් ශීඝ්‍රතාව"
 
 #: serialui.rc:33
 msgid "Parity"
-msgstr ""
+msgstr "සමතාවs"
 
 #: serialui.rc:35
 msgid "Flow Control"
@@ -8006,7 +8006,7 @@ msgstr ""
 
 #: serialui.rc:37
 msgid "Data Bits"
-msgstr ""
+msgstr "දත්ත බිටු"
 
 #: serialui.rc:39
 msgid "Stop Bits"
@@ -8453,7 +8453,7 @@ msgstr "Wine ඔබට ගෙනල්ල තියෙන්නේ මේගො�
 
 #: shell32.rc:334
 msgid "Run"
-msgstr ""
+msgstr "ධාවනය කරන්න"
 
 #: shell32.rc:338
 msgid ""
@@ -8613,7 +8613,7 @@ msgstr ""
 
 #: shell32.rc:209
 msgid "My Videos"
-msgstr ""
+msgstr "මගේ වීඩියෝ"
 
 #: shell32.rc:210
 msgctxt "directory"
@@ -8666,7 +8666,7 @@ msgstr ""
 
 #: shell32.rc:223
 msgid "Videos"
-msgstr ""
+msgstr "වීඩියෝ"
 
 #: shell32.rc:216
 msgid "Program Files (x86)"
@@ -8686,7 +8686,7 @@ msgstr ""
 
 #: shell32.rc:227
 msgid "Playlists"
-msgstr ""
+msgstr "ධාවන ලැයිස්තු"
 
 #: shell32.rc:151 taskmgr.rc:326
 msgid "Status"
@@ -8706,11 +8706,11 @@ msgstr ""
 
 #: shell32.rc:230
 msgid "Sample Playlists"
-msgstr ""
+msgstr "නියැදි ධාවන ලැයිස්තු"
 
 #: shell32.rc:231
 msgid "Sample Videos"
-msgstr ""
+msgstr "නියැදි වීඩියෝ"
 
 #: shell32.rc:232
 msgid "Saved Games"
@@ -8811,7 +8811,7 @@ msgstr "ක්රියාත්මක කළ ගොනු (*.exe)"
 
 #: shell32.rc:244
 msgid "There is no Windows program configured to open this type of file."
-msgstr ""
+msgstr "Windows යෙදුමක් නැහැ මේ ගොනුව වර්ගය අරින්නට."
 
 #: shell32.rc:246
 msgid "Are you sure you wish to permanently delete '%1'?"
@@ -8933,19 +8933,19 @@ msgstr "නේපාලයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:60
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "කේප් වර්ඩෙ සම්මත වෙලාව"
 
 #: tzres.rc:61
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "කේප් වර්ඩෙ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:74
 msgid "Central European Standard Time"
-msgstr "මධ්යම යුරෝපයේ සම්මත වෙලාව"
+msgstr "මධ්‍යම යුරෝපයේ සම්මත වෙලාව"
 
 #: tzres.rc:75
 msgid "Central European Daylight Time"
-msgstr "මධ්යම යුරෝපයේ දිවා ආලෝකය වෙලාව"
+msgstr "මධ්‍යම යුරෝපයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:140
 msgid "Morocco Standard Time"
@@ -8957,11 +8957,11 @@ msgstr "මොරොක්කෝවේ දිවා ආලෝකය වෙලා
 
 #: tzres.rc:72
 msgid "Central Europe Standard Time"
-msgstr "මධ්යම යුරෝපයේ සම්මත වෙලාව"
+msgstr "මධ්‍යම යුරෝපයේ සම්මත වෙලාව"
 
 #: tzres.rc:73
 msgid "Central Europe Daylight Time"
-msgstr "මධ්යම යුරෝපයේ දිවා ආලෝකය වෙලාව"
+msgstr "මධ්‍යම යුරෝපයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
@@ -9005,11 +9005,11 @@ msgstr "GMT දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:68
 msgid "Central Asia Standard Time"
-msgstr "මධ්යම ආසියාවේ සම්මත වෙලාව"
+msgstr "මධ්‍යම ආසියාවේ සම්මත වෙලාව"
 
 #: tzres.rc:69
 msgid "Central Asia Daylight Time"
-msgstr "මධ්යම ආසියාවේ දිවා ආලෝකය වෙලාව"
+msgstr "මධ්‍යම ආසියාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:38
 msgid "Arabic Standard Time"
@@ -9021,19 +9021,19 @@ msgstr "අරාබි දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:132
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "මාගඩාන් සම්මත වෙලාව"
 
 #: tzres.rc:133
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "මාගඩාන් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:156
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "නිව්ෆවුන්ඩ්ලන්තයේ සම්මත වෙලාව"
 
 #: tzres.rc:157
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "නිව්ෆවුන්ඩ්ලන්තයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:224
 msgid "West Pacific Standard Time"
@@ -9053,27 +9053,29 @@ msgstr "පැසිෆිකයේ දිවා ආලෝකය වෙලාව
 
 #: tzres.rc:48
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "අසර්බයිජානයේ සම්මත වෙලාව"
 
 #: tzres.rc:49
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "අසර්බයිජානයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:182
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "සැමෝවා සම්මත වෙලාව"
 
 #: tzres.rc:183
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "සැමෝවා දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:124
+#, fuzzy
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "සම්මත වෙලාව"
 
 #: tzres.rc:125
+#, fuzzy
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:166
 msgid "Pacific Standard Time (Mexico)"
@@ -9101,43 +9103,43 @@ msgstr "ටෝකියෝවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:130
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "රේඛිය දූපත් සම්මත වෙලාව"
 
 #: tzres.rc:131
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "රේඛිය දූපත් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:122
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "පෝර්දානයේ සම්මත වෙලාව"
 
 #: tzres.rc:123
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "පෝර්දානයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:78
 msgid "Central Standard Time"
-msgstr ""
+msgstr "මධ්‍යම සම්මත වෙලාව"
 
 #: tzres.rc:79
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "මධ්‍යම දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:50
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "ඇසෝරස් සම්මත වෙලාව"
 
 #: tzres.rc:51
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "ඇසෝරස් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:158
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "උතුරු ආසියාවේ නැගෙනහිර සම්මත වෙලාව"
 
 #: tzres.rc:159
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "උතුරු ආසියාවේ නැගෙනහිර දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:40
 msgid "Argentina Standard Time"
@@ -9193,11 +9195,11 @@ msgstr "ෆිජියේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:58
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "මධ්‍යම කැනඩාවේ සම්මත වෙලාව"
 
 #: tzres.rc:59
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "මධ්‍යම කැනඩාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:194
 msgid "Taipei Standard Time"
@@ -9217,11 +9219,11 @@ msgstr "බටහිර යුරෝපයේ දිවා ආලෝකය ව�
 
 #: tzres.rc:138
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "මොන්ටෙවිඩෝ සම්මත වෙලාව"
 
 #: tzres.rc:139
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "මොන්ටෙවිඩෝ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:168
 msgid "Pakistan Standard Time"
@@ -9233,27 +9235,27 @@ msgstr "පකිස්ථානයේ දිවා ආලෝකය වෙලා
 
 #: tzres.rc:62
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "කොකේසස් සම්මත වෙලාව"
 
 #: tzres.rc:63
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "කොකේසස් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:46
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "නැගෙනහිර ඕස්ට්රේලියාවේ සම්මත වෙලාව"
 
 #: tzres.rc:47
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "නැගෙනහිර ඕස්ට්රේලියාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:148
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "උතුරු මධ්‍යම ආසියාවේ සම්මත වෙලාව"
 
 #: tzres.rc:149
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "උතුරු මධ්‍යම ආසියාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:94
 msgid "Eastern Standard Time"
@@ -9265,11 +9267,11 @@ msgstr "නැගෙනහිර දිවා ආලෝකය වේලාව"
 
 #: tzres.rc:80
 msgid "Central Standard Time (Mexico)"
-msgstr "මධ්යම සම්මත වෙලාව (මෙක්සිකෝව)"
+msgstr "මධ්‍යම සම්මත වෙලාව (මෙක්සිකෝව)"
 
 #: tzres.rc:81
 msgid "Central Daylight Time (Mexico)"
-msgstr "මධ්යම දිවා ආලෝකය වෙලාව (මෙක්සිකෝව)"
+msgstr "මධ්‍යම දිවා ආලෝකය වෙලාව (මෙක්සිකෝව)"
 
 #: tzres.rc:42
 msgid "Atlantic Standard Time"
@@ -9305,11 +9307,11 @@ msgstr "ටැස්මේනියාවේ දිවා ආලෝකය වෙ
 
 #: tzres.rc:66
 msgid "Central America Standard Time"
-msgstr "මධ්යම ඇමරිකාවේ සම්මත වෙලාව"
+msgstr "මධ්‍යම ඇමරිකාවේ සම්මත වෙලාව"
 
 #: tzres.rc:67
 msgid "Central America Daylight Time"
-msgstr "මධ්යම ඇමරිකාවේ දිවා ආලෝකය වෙලාව"
+msgstr "මධ්‍යම ඇමරිකාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:208
 msgid "US Mountain Standard Time"
@@ -9353,19 +9355,21 @@ msgstr "ඇෆ්ඝනිස්ථානයේ දිවා ආලෝකය ව
 
 #: tzres.rc:226
 msgid "Yakutsk Standard Time"
-msgstr ""
+msgstr "යකුට්ස්ක් සම්මත වෙලාව"
 
 #: tzres.rc:227
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "යකුට්ස්ක් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:176
+#, fuzzy
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "සම්මත වෙලාව"
 
 #: tzres.rc:177
+#, fuzzy
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:34
 msgid "Arab Standard Time"
@@ -9392,20 +9396,22 @@ msgid "Russian Daylight Time"
 msgstr "රුසියාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:172
+#, fuzzy
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "සම්මත වෙලාව"
 
 #: tzres.rc:173
+#, fuzzy
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:98
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "ඊකේටර්බින්බර්ග් සම්මත වෙලාව"
 
 #: tzres.rc:99
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "ඊකේටර්බින්බර්ග් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:192
 msgid "Syria Standard Time"
@@ -9417,27 +9423,27 @@ msgstr "සිරියාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:44
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "මධ්‍යම ඕස්ට්රේලියාවේ සම්මත වෙලාව"
 
 #: tzres.rc:45
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "මධ්‍යම ඕස්ට්රේලියාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:110
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "ග්රිනිච් සම්මත වෙලාව"
 
 #: tzres.rc:111
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "ග්රිනිච් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:204
 msgid "Ulaanbaatar Standard Time"
-msgstr ""
+msgstr "උලාන්බාටර් සම්මත වෙලාව"
 
 #: tzres.rc:205
 msgid "Ulaanbaatar Daylight Time"
-msgstr ""
+msgstr "උලාන්බාටර් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:120
 msgid "Israel Standard Time"
@@ -9457,11 +9463,11 @@ msgstr "බංගලාදේශයේ දිවා ආලෝකය වෙලා
 
 #: tzres.rc:178
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "දකුණු ඇමරිකාව පැසිෆිකයේ සම්මත වෙලාව"
 
 #: tzres.rc:179
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "දකුණු ඇමරිකාව පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:222
 msgid "West Asia Standard Time"
@@ -9481,19 +9487,19 @@ msgstr "ඇලස්කාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:170
 msgid "Paraguay Standard Time"
-msgstr ""
+msgstr "පැරගුවේ සම්මත වෙලාව"
 
 #: tzres.rc:171
 msgid "Paraguay Daylight Time"
-msgstr ""
+msgstr "පැරගුවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:84
 msgid "Dateline Standard Time"
-msgstr ""
+msgstr "Dateline සම්මත වෙලාව"
 
 #: tzres.rc:85
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Dateline දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:128
 msgid "Libya Standard Time"
@@ -9513,19 +9519,19 @@ msgstr "බහියාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:212
 msgid "Venezuela Standard Time"
-msgstr ""
+msgstr "වෙනිසියුලාවේ සම්මත වෙලාව"
 
 #: tzres.rc:213
 msgid "Venezuela Daylight Time"
-msgstr ""
+msgstr "වෙනිසියුලාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:114
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "හවායි සම්මත වෙලාව"
 
 #: tzres.rc:115
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "හවායි දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:184
 msgid "SE Asia Standard Time"
@@ -9537,51 +9543,53 @@ msgstr "ගිනිකොනදිග ආසියාවේ දිවා ආල
 
 #: tzres.rc:154
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "නවසීලන්තයේ සම්මත වෙලාව"
 
 #: tzres.rc:155
 msgid "New Zealand Daylight Time"
-msgstr ""
+msgstr "නවසීලන්තයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:70
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "මධ්‍යම බ්‍රසීලයේ සම්මත වෙලාව"
 
 #: tzres.rc:71
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "මධ්‍යම බ්‍රසීලයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:56
 msgid "Belarus Standard Time"
-msgstr ""
+msgstr "බෙලාරස් සම්මත වෙලාව"
 
 #: tzres.rc:57
 msgid "Belarus Daylight Time"
-msgstr ""
+msgstr "බෙලාරස් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:180
+#, fuzzy
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "සම්මත වෙලාව"
 
 #: tzres.rc:181
+#, fuzzy
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:108
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "ග්රීන්ලන්තයේ සම්මත වෙලාව"
 
 #: tzres.rc:109
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "ග්රීන්ලන්තයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:92
 msgid "Easter Island Standard Time"
-msgstr ""
+msgstr "ඊස්ටර් දූපතේ සම්මත වෙලාව"
 
 #: tzres.rc:93
 msgid "Easter Island Daylight Time"
-msgstr ""
+msgstr "ඊස්ටර් දූපතේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:96
 msgid "Egypt Standard Time"
@@ -9593,19 +9601,19 @@ msgstr "ඊජිප්තුවේ දිවා ආලෝකය වෙලාව
 
 #: tzres.rc:134
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "මෞරිටුයුස් සම්මත වෙලාව"
 
 #: tzres.rc:135
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "මෞරිටුයුස් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:214
 msgid "Vladivostok Standard Time"
-msgstr ""
+msgstr "ලාඩිවොස්ටොක් සම්මත වෙලාව"
 
 #: tzres.rc:215
 msgid "Vladivostok Daylight Time"
-msgstr ""
+msgstr "ලාඩිවොස්ටොක් දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:186
 msgid "Singapore Standard Time"
@@ -9633,43 +9641,43 @@ msgstr "නැගෙනහිර අප්රිකාවේ දිවා ආල
 
 #: tzres.rc:102
 msgid "FLE Standard Time"
-msgstr ""
+msgstr "FLE සම්මත වෙලාව"
 
 #: tzres.rc:103
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "FLE දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:90
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "නැගෙනහිර දකුණු ඇමරිකාවේ සම්මත වෙලාව"
 
 #: tzres.rc:91
 msgid "E. South America Daylight Time"
-msgstr ""
+msgstr "නැගෙනහිර දකුණු ඇමරිකාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:76
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "මධ්‍යම පැසිෆිකයේ සම්මත වෙලාව"
 
 #: tzres.rc:77
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "මධ්‍යම පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:218
 msgid "W. Central Africa Standard Time"
-msgstr ""
+msgstr "බටහිර මධ්‍යම අප්රිකාවේ සම්මත වෙලාව"
 
 #: tzres.rc:219
 msgid "W. Central Africa Daylight Time"
-msgstr ""
+msgstr "බටහිර මධ්‍යම අප්රිකාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:162
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "පැසිෆිකය දකුණු ඇමරිකාවේ සම්මත වෙලාව"
 
 #: tzres.rc:163
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "පැසිෆිකය දකුණු ඇමරිකාවේ දිවා ආලෝකය වෙලාව"
 
 #: tzres.rc:88
 msgid "E. Australia Standard Time"
@@ -9724,7 +9732,7 @@ msgstr ""
 
 #: user32.rc:31 user32.rc:44
 msgid "&Move"
-msgstr ""
+msgstr "ගෙනයන්න (&M)"
 
 #: user32.rc:32 user32.rc:45 wineconsole.rc:93
 msgid "&Size"
@@ -9756,11 +9764,11 @@ msgstr "ඊළඟ (&T)\tCtrl+F6"
 
 #: user32.rc:81
 msgid "&Abort"
-msgstr ""
+msgstr "අහෝසි කරන්න (&A)"
 
 #: user32.rc:85
 msgid "&Ignore"
-msgstr ""
+msgstr "නොසලකන්න (&I)"
 
 #: user32.rc:86
 msgid "&Try Again"
@@ -9808,15 +9816,15 @@ msgstr "හකුළන්න"
 
 #: winemac.rc:42
 msgid "Zoom"
-msgstr ""
+msgstr "විශාලනය"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "මුළු තිර ඇතුල් වෙන්න"
 
 #: winemac.rc:44
 msgid "Bring All to Front"
-msgstr ""
+msgstr "ඔක්කොම ඉස්සරහට ගේන්න"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -9824,11 +9832,11 @@ msgstr "කඩදාසි තරම:"
 
 #: wineps.rc:39
 msgid "Duplex:"
-msgstr ""
+msgstr "ද්වීපත:"
 
 #: wineps.rc:50
 msgid "Setup"
-msgstr ""
+msgstr "පිහිටුම"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
@@ -11188,7 +11196,7 @@ msgstr ""
 
 #: cmd.rc:374
 msgid "Argument missing\n"
-msgstr ""
+msgstr "විස්තාරකය නැහැ\n"
 
 #: cmd.rc:375
 msgid "Syntax error\n"
@@ -11350,7 +11358,7 @@ msgstr ""
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
-msgstr ""
+msgstr "ධාවනය කරන්න... (&R)"
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
@@ -11681,11 +11689,11 @@ msgstr "මුද්‍රණය කරන්න...\tCtrl+P"
 
 #: notepad.rc:36 wordpad.rc:38
 msgid "Page Se&tup..."
-msgstr "පිටු හැඩතල... (&T)"
+msgstr "පිටු පිහිටුම... (&T)"
 
 #: notepad.rc:37
 msgid "P&rinter Setup..."
-msgstr "මුද්‍රකය සැකසුම්... (&R)"
+msgstr "මුද්‍රකය පිහිටුම... (&R)"
 
 #: notepad.rc:41 regedit.rc:43 wineconsole.rc:28 winhlp32.rc:39 wordpad.rc:42
 msgid "&Edit"
@@ -11726,7 +11734,7 @@ msgstr ""
 
 #: notepad.rc:56
 msgid "&Search...\tCtrl+F"
-msgstr ""
+msgstr "සොයන්න... (&S)\tCtrl+F"
 
 #: notepad.rc:57
 msgid "&Search next\tF3"
@@ -11746,7 +11754,7 @@ msgstr "සටහන්පුවරුව ගැන (&A)"
 
 #: notepad.rc:100
 msgid "Page Setup"
-msgstr "පිටු හැඩතල"
+msgstr "පිටු පිහිටුම"
 
 #: notepad.rc:102
 msgid "&Header:"
@@ -11901,7 +11909,7 @@ msgstr ""
 
 #: oleview.rc:36
 msgid "&Run the Registry Editor"
-msgstr ""
+msgstr "රෙජිස්තරය සකසනය ධාවනය කරන්න (&R)"
 
 #: oleview.rc:42
 msgid "&CoCreateInstance Flag"
@@ -12071,7 +12079,7 @@ msgstr ""
 
 #: oleview.rc:108
 msgid "Run the Wine registry editor"
-msgstr ""
+msgstr "Wine රෙජිස්තරය සකසනය ධාවනය කරන්න"
 
 #: oleview.rc:109
 msgid "Quit the application. Prompts to save changes"
@@ -12407,7 +12415,7 @@ msgstr "උදවු ලද හැකි නැහැ."
 
 #: progman.rc:78
 msgid "Unknown feature in %s"
-msgstr ""
+msgstr "දන්නේ නැති වි‍ශේෂාංගයක් %s ඇතුලෙ"
 
 #: progman.rc:79
 msgid "File `%s' exists. Not overwritten."
@@ -13343,7 +13351,7 @@ msgstr ""
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr ""
+msgstr "ඉස්සරහට ගේන්න (&B)"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"
@@ -14458,7 +14466,7 @@ msgstr "(පද්ධතියේ පෙරනිමිය)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr ""
+msgstr "5.1 වටාපිටාව"
 
 #: winecfg.rc:92
 msgid "Quadraphonic"
@@ -14466,11 +14474,11 @@ msgstr ""
 
 #: winecfg.rc:93
 msgid "Stereo"
-msgstr ""
+msgstr "ස්ටීරියෝ"
 
 #: winecfg.rc:94
 msgid "Mono"
-msgstr ""
+msgstr "ඒකල"
 
 #: winecfg.rc:54
 msgid ""
@@ -14520,15 +14528,16 @@ msgstr ""
 
 #: winecfg.rc:69
 msgid "Autodetect"
-msgstr ""
+msgstr "ස්වයං අනාවරිත"
 
 #: winecfg.rc:70
+#, fuzzy
 msgid "Local hard disk"
-msgstr ""
+msgstr "දෘඩ තැටිය"
 
 #: winecfg.rc:71
 msgid "Network share"
-msgstr ""
+msgstr "ජාල හවුල"
 
 #: winecfg.rc:72
 msgid "Floppy disk"
@@ -14547,7 +14556,7 @@ msgstr ""
 
 #: winecfg.rc:75
 msgid "System drive"
-msgstr ""
+msgstr "පද්ධති තැටිය"
 
 #: winecfg.rc:76
 msgid ""
@@ -14795,7 +14804,7 @@ msgstr "කොන්සෝලය වහන්න (&C)"
 
 #: wineconsole.rc:123
 msgid "Edition"
-msgstr ""
+msgstr "සංස්කරණය"
 
 #: wineconsole.rc:129
 msgid "Console parameters"
@@ -14827,15 +14836,15 @@ msgstr "අනුචලනය කරන්න (&R)"
 
 #: wineconsole.rc:36
 msgid "S&earch"
-msgstr ""
+msgstr "සොයන්න (&E)"
 
 #: wineconsole.rc:39
 msgid "Setup - Default settings"
-msgstr ""
+msgstr "පිහිටුම - නිශ්චය කළ පසුතල"
 
 #: wineconsole.rc:40
 msgid "Setup - Current settings"
-msgstr ""
+msgstr "පිහිටුම - පවතින සිටුවම්"
 
 #: wineconsole.rc:41
 msgid "Configuration error"
@@ -14948,7 +14957,7 @@ msgstr ""
 
 #: winedbg.rc:41
 msgid "(unidentified)"
-msgstr ""
+msgstr "(හඳුනා නොගත්)"
 
 #: winedbg.rc:44
 msgid "Saving failed"
@@ -15173,7 +15182,7 @@ msgstr "විශේෂඥයෙක් (&E)"
 
 #: winemine.rc:47
 msgid "&Custom..."
-msgstr ""
+msgstr "චාරිත්ර... (&C)"
 
 #: winemine.rc:49
 msgid "&Fastest Times"
@@ -15245,11 +15254,11 @@ msgstr ""
 
 #: winemine.rc:32
 msgid "Copyright 2000 Joshua Thielen"
-msgstr ""
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:35
 msgid "Printer &setup..."
-msgstr "මුද්‍රකය සැකසුම්... (&S)"
+msgstr "මුද්‍රකය පිහිටුම... (&S)"
 
 #: winhlp32.rc:42
 msgid "&Annotate..."
@@ -15489,7 +15498,7 @@ msgstr "දිනය සහ වෙලාව"
 
 #: wordpad.rc:213
 msgid "Available formats"
-msgstr ""
+msgstr "තියෙන ආකෘති"
 
 #: wordpad.rc:224
 msgid "New document type"
@@ -15501,7 +15510,7 @@ msgstr "ඡේදයේ හැඩතලය"
 
 #: wordpad.rc:235
 msgid "Indentation"
-msgstr ""
+msgstr "එබුම"
 
 #: wordpad.rc:236 wordpad.rc:159
 msgid "Left"
