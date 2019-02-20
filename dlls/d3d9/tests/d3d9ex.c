@@ -922,13 +922,16 @@ static void test_reset(void)
 
     DWORD height, orig_height = GetSystemMetrics(SM_CYSCREEN);
     DWORD width, orig_width = GetSystemMetrics(SM_CXSCREEN);
+    UINT i, adapter_mode_count, offset, stride;
+    IDirect3DVertexBuffer9 *vb, *cur_vb;
+    IDirect3DIndexBuffer9 *ib, *cur_ib;
     IDirect3DVertexShader9 *shader;
     IDirect3DSwapChain9 *swapchain;
     D3DDISPLAYMODE d3ddm, d3ddm2;
     D3DPRESENT_PARAMETERS d3dpp;
     IDirect3DDevice9Ex *device;
     IDirect3DSurface9 *surface;
-    UINT i, adapter_mode_count;
+    IDirect3DTexture9 *texture;
     DEVMODEW devmode;
     IDirect3D9 *d3d9;
     D3DVIEWPORT9 vp;
@@ -1302,6 +1305,45 @@ static void test_reset(void)
     {
         skip("Volume textures not supported.\n");
     }
+
+    /* Test with resources bound but otherwise not referenced. */
+    hr = IDirect3DDevice9Ex_CreateVertexBuffer(device, 16, 0,
+            D3DFVF_XYZ, D3DPOOL_DEFAULT, &vb, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_SetStreamSource(device, 0, vb, 0, 16);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    refcount = IDirect3DVertexBuffer9_Release(vb);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
+    hr = IDirect3DDevice9Ex_CreateIndexBuffer(device, 16, 0,
+            D3DFMT_INDEX16, D3DPOOL_DEFAULT, &ib, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_SetIndices(device, ib);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    refcount = IDirect3DIndexBuffer9_Release(ib);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 16, 16, 0, 0,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_SetTexture(device, i, (IDirect3DBaseTexture9 *)texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9Ex_Reset(device, &d3dpp);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9Ex_GetIndices(device, &cur_ib);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(cur_ib == ib, "Unexpected index buffer %p.\n", cur_ib);
+    refcount = IDirect3DIndexBuffer9_Release(ib);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
+    hr = IDirect3DDevice9Ex_GetStreamSource(device, 0, &cur_vb, &offset, &stride);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(cur_vb == vb, "Unexpected index buffer %p.\n", cur_ib);
+    ok(!offset, "Unexpected offset %u.\n", offset);
+    ok(stride == 16, "Unexpected stride %u.\n", stride);
+    refcount = IDirect3DVertexBuffer9_Release(vb);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
+    refcount = IDirect3DTexture9_Release(texture);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
 
     /* Scratch and sysmem pools are fine too. */
     hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 16, 16,
