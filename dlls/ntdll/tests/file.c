@@ -3403,6 +3403,7 @@ static void _test_completion_flags(unsigned line, HANDLE handle, DWORD expected_
 
 static void test_file_completion_information(void)
 {
+    DECLSPEC_ALIGN(TEST_OVERLAPPED_READ_SIZE) static unsigned char aligned_buf[TEST_OVERLAPPED_READ_SIZE];
     static const char buf[] = "testdata";
     FILE_IO_COMPLETION_NOTIFICATION_INFORMATION info;
     OVERLAPPED ov, *pov;
@@ -3545,6 +3546,40 @@ static void test_file_completion_information(void)
     }
     else
         win_skip("WriteFile never returned TRUE\n");
+
+    CloseHandle(port);
+    CloseHandle(h);
+
+    if (!(h = create_temp_file(FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING)))
+        return;
+
+    port = CreateIoCompletionPort(h, NULL, 0xdeadbeef, 0);
+    ok(port != NULL, "CreateIoCompletionPort failed, error %u.\n", GetLastError());
+
+    info.Flags = FILE_SKIP_COMPLETION_PORT_ON_SUCCESS;
+    status = pNtSetInformationFile(h, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %#x.\n", status);
+    test_completion_flags(h, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+
+    ret = WriteFile(h, aligned_buf, sizeof(aligned_buf), &num_bytes, &ov);
+    if (!ret && GetLastError() == ERROR_IO_PENDING)
+    {
+        ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
+        ok(ret, "GetOverlappedResult failed, error %u.\n", GetLastError());
+        ok(num_bytes == sizeof(aligned_buf), "expected sizeof(aligned_buf), got %u.\n", num_bytes);
+        ret = GetQueuedCompletionStatus(port, &num_bytes, &key, &pov, 1000);
+        ok(ret, "GetQueuedCompletionStatus failed, error %u.\n", GetLastError());
+    }
+    ok(num_bytes == sizeof(aligned_buf), "expected sizeof(buf), got %u.\n", num_bytes);
+
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(h, aligned_buf, sizeof(aligned_buf), &num_bytes, &ov);
+    ok(!ret && GetLastError() == ERROR_IO_PENDING, "Unexpected result, ret %#x, error %u.\n",
+            ret, GetLastError());
+    ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
+    ok(ret, "GetOverlappedResult failed, error %u.\n", GetLastError());
+    ret = GetQueuedCompletionStatus(port, &num_bytes, &key, &pov, 1000);
+    todo_wine ok(ret, "GetQueuedCompletionStatus failed, error %u.\n", GetLastError());
 
     CloseHandle(ov.hEvent);
     CloseHandle(port);
