@@ -749,12 +749,14 @@ static void NC_DrawMaxButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 static void  NC_DrawMinButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
-    UINT flags = DFCS_CAPTIONMIN;
+    UINT flags;
     DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
     DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
     /* never draw minimize box when window has WS_EX_TOOLWINDOW style */
     if (ex_style & WS_EX_TOOLWINDOW) return;
+
+    flags = (style & WS_MINIMIZE) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMIN;
 
     NC_GetInsideRect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
     if (style & WS_SYSMENU)
@@ -1245,7 +1247,8 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
         return;
 
     if (wParam == HTMINBUTTON)
-        SendMessageW( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
+        SendMessageW( hwnd, WM_SYSCOMMAND,
+                      IsIconic(hwnd) ? SC_RESTORE : SC_MINIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
     else
         SendMessageW( hwnd, WM_SYSCOMMAND,
                       IsZoomed(hwnd) ? SC_RESTORE:SC_MAXIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
