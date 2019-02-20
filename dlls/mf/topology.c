@@ -39,9 +39,22 @@ struct topology
     IMFAttributes *attributes;
 };
 
+struct topology_node
+{
+    IMFTopologyNode IMFTopologyNode_iface;
+    LONG refcount;
+    IMFAttributes *attributes;
+    MF_TOPOLOGY_TYPE node_type;
+};
+
 static inline struct topology *impl_from_IMFTopology(IMFTopology *iface)
 {
     return CONTAINING_RECORD(iface, struct topology, IMFTopology_iface);
+}
+
+static struct topology_node *impl_from_IMFTopologyNode(IMFTopologyNode *iface)
+{
+    return CONTAINING_RECORD(iface, struct topology_node, IMFTopologyNode_iface);
 }
 
 static HRESULT WINAPI topology_QueryInterface(IMFTopology *iface, REFIID riid, void **out)
@@ -511,6 +524,531 @@ HRESULT WINAPI MFCreateTopology(IMFTopology **topology)
     }
 
     *topology = &object->IMFTopology_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI topology_node_QueryInterface(IMFTopologyNode *iface, REFIID riid, void **out)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFTopologyNode) ||
+            IsEqualIID(riid, &IID_IMFAttributes) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = &node->IMFTopologyNode_iface;
+        IMFTopologyNode_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI topology_node_AddRef(IMFTopologyNode *iface)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+    ULONG refcount = InterlockedIncrement(&node->refcount);
+
+    TRACE("(%p) refcount=%u\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI topology_node_Release(IMFTopologyNode *iface)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+    ULONG refcount = InterlockedDecrement(&node->refcount);
+
+    TRACE("(%p) refcount=%u\n", iface, refcount);
+
+    if (!refcount)
+    {
+        IMFAttributes_Release(node->attributes);
+        heap_free(node);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI topology_node_GetItem(IMFTopologyNode *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetItem(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_GetItemType(IMFTopologyNode *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), type);
+
+    return IMFAttributes_GetItemType(node->attributes, key, type);
+}
+
+static HRESULT WINAPI topology_node_CompareItem(IMFTopologyNode *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p, %p)\n", iface, debugstr_guid(key), value, result);
+
+    return IMFAttributes_CompareItem(node->attributes, key, value, result);
+}
+
+static HRESULT WINAPI topology_node_Compare(IMFTopologyNode *iface, IMFAttributes *theirs,
+        MF_ATTRIBUTES_MATCH_TYPE type, BOOL *result)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%p, %d, %p)\n", iface, theirs, type, result);
+
+    return IMFAttributes_Compare(node->attributes, theirs, type, result);
+}
+
+static HRESULT WINAPI topology_node_GetUINT32(IMFTopologyNode *iface, REFGUID key, UINT32 *value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT32(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_GetUINT64(IMFTopologyNode *iface, REFGUID key, UINT64 *value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT64(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_GetDouble(IMFTopologyNode *iface, REFGUID key, double *value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetDouble(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_GetGUID(IMFTopologyNode *iface, REFGUID key, GUID *value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetGUID(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_GetStringLength(IMFTopologyNode *iface, REFGUID key, UINT32 *length)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), length);
+
+    return IMFAttributes_GetStringLength(node->attributes, key, length);
+}
+
+static HRESULT WINAPI topology_node_GetString(IMFTopologyNode *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p, %d, %p)\n", iface, debugstr_guid(key), value, size, length);
+
+    return IMFAttributes_GetString(node->attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI topology_node_GetAllocatedString(IMFTopologyNode *iface, REFGUID key,
+        WCHAR **value, UINT32 *length)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p, %p)\n", iface, debugstr_guid(key), value, length);
+
+    return IMFAttributes_GetAllocatedString(node->attributes, key, value, length);
+}
+
+static HRESULT WINAPI topology_node_GetBlobSize(IMFTopologyNode *iface, REFGUID key, UINT32 *size)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), size);
+
+    return IMFAttributes_GetBlobSize(node->attributes, key, size);
+}
+
+static HRESULT WINAPI topology_node_GetBlob(IMFTopologyNode *iface, REFGUID key, UINT8 *buf,
+        UINT32 bufsize, UINT32 *blobsize)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p, %d, %p)\n", iface, debugstr_guid(key), buf, bufsize, blobsize);
+
+    return IMFAttributes_GetBlob(node->attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI topology_node_GetAllocatedBlob(IMFTopologyNode *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p, %p)\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_GetAllocatedBlob(node->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI topology_node_GetUnknown(IMFTopologyNode *iface, REFGUID key, REFIID riid, void **ppv)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %s, %p)\n", iface, debugstr_guid(key), debugstr_guid(riid), ppv);
+
+    return IMFAttributes_GetUnknown(node->attributes, key, riid, ppv);
+}
+
+static HRESULT WINAPI topology_node_SetItem(IMFTopologyNode *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetItem(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_DeleteItem(IMFTopologyNode *iface, REFGUID key)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s)\n", iface, debugstr_guid(key));
+
+    return IMFAttributes_DeleteItem(node->attributes, key);
+}
+
+static HRESULT WINAPI topology_node_DeleteAllItems(IMFTopologyNode *iface)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)\n", iface);
+
+    return IMFAttributes_DeleteAllItems(node->attributes);
+}
+
+static HRESULT WINAPI topology_node_SetUINT32(IMFTopologyNode *iface, REFGUID key, UINT32 value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %d)\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetUINT32(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_SetUINT64(IMFTopologyNode *iface, REFGUID key, UINT64 value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %s)\n", iface, debugstr_guid(key), wine_dbgstr_longlong(value));
+
+    return IMFAttributes_SetUINT64(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_SetDouble(IMFTopologyNode *iface, REFGUID key, double value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %f)\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetDouble(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_SetGUID(IMFTopologyNode *iface, REFGUID key, REFGUID value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %s)\n", iface, debugstr_guid(key), debugstr_guid(value));
+
+    return IMFAttributes_SetGUID(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_SetString(IMFTopologyNode *iface, REFGUID key, const WCHAR *value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %s)\n", iface, debugstr_guid(key), debugstr_w(value));
+
+    return IMFAttributes_SetString(node->attributes, key, value);
+}
+
+static HRESULT WINAPI topology_node_SetBlob(IMFTopologyNode *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p, %d)\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_SetBlob(node->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI topology_node_SetUnknown(IMFTopologyNode *iface, REFGUID key, IUnknown *unknown)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), unknown);
+
+    return IMFAttributes_SetUnknown(node->attributes, key, unknown);
+}
+
+static HRESULT WINAPI topology_node_LockStore(IMFTopologyNode *iface)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)\n", iface);
+
+    return IMFAttributes_LockStore(node->attributes);
+}
+
+static HRESULT WINAPI topology_node_UnlockStore(IMFTopologyNode *iface)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)\n", iface);
+
+    return IMFAttributes_UnlockStore(node->attributes);
+}
+
+static HRESULT WINAPI topology_node_GetCount(IMFTopologyNode *iface, UINT32 *count)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%p)\n", iface, count);
+
+    return IMFAttributes_GetCount(node->attributes, count);
+}
+
+static HRESULT WINAPI topology_node_GetItemByIndex(IMFTopologyNode *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%u, %p, %p)\n", iface, index, key, value);
+
+    return IMFAttributes_GetItemByIndex(node->attributes, index, key, value);
+}
+
+static HRESULT WINAPI topology_node_CopyAllItems(IMFTopologyNode *iface, IMFAttributes *dest)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%p)\n", iface, dest);
+
+    return IMFAttributes_CopyAllItems(node->attributes, dest);
+}
+
+static HRESULT WINAPI topology_node_SetObject(IMFTopologyNode *iface, IUnknown *object)
+{
+    FIXME("(%p)->(%p)\n", iface, object);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_GetObject(IMFTopologyNode *iface, IUnknown **object)
+{
+    FIXME("(%p)->(%p)\n", iface, object);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_GetNodeType(IMFTopologyNode *iface, MF_TOPOLOGY_TYPE *node_type)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("(%p)->(%p)\n", iface, node_type);
+
+    *node_type = node->node_type;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI topology_node_GetTopoNodeID(IMFTopologyNode *iface, TOPOID *id)
+{
+    FIXME("(%p)->(%p)\n", iface, id);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_SetTopoNodeID(IMFTopologyNode *iface, TOPOID id)
+{
+    FIXME("(%p)->(%s)\n", iface, wine_dbgstr_longlong(id));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_GetInputCount(IMFTopologyNode *iface, DWORD *count)
+{
+    FIXME("(%p)->(%p)\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_GetOutputCount(IMFTopologyNode *iface, DWORD *count)
+{
+    FIXME("(%p)->(%p)\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_ConnectOutput(IMFTopologyNode *iface, DWORD output_index,
+        IMFTopologyNode *node, DWORD input_index)
+{
+    FIXME("(%p)->(%u, %p, %u)\n", iface, output_index, node, input_index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_DisconnectOutput(IMFTopologyNode *iface, DWORD index)
+{
+    FIXME("(%p)->(%u)\n", iface, index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_GetInput(IMFTopologyNode *iface, DWORD input_index, IMFTopologyNode **node,
+        DWORD *output_index)
+{
+    FIXME("(%p)->(%u, %p, %p)\n", iface, input_index, node, output_index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_GetOutput(IMFTopologyNode *iface, DWORD output_index, IMFTopologyNode **node,
+        DWORD *input_index)
+{
+    FIXME("(%p)->(%u, %p, %p)\n", iface, output_index, node, input_index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_SetOutputPrefType(IMFTopologyNode *iface, DWORD index, IMFMediaType *type)
+{
+    FIXME("(%p)->(%u, %p)\n", iface, index, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_GetOutputPrefType(IMFTopologyNode *iface, DWORD output_index, IMFMediaType **type)
+{
+    FIXME("(%p)->(%u, %p)\n", iface, output_index, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_SetInputPrefType(IMFTopologyNode *iface, DWORD index, IMFMediaType *type)
+{
+    FIXME("(%p)->(%u, %p)\n", iface, index, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_GetInputPrefType(IMFTopologyNode *iface, DWORD index, IMFMediaType **type)
+{
+    FIXME("(%p)->(%u, %p)\n", iface, index, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI topology_node_CloneFrom(IMFTopologyNode *iface, IMFTopologyNode *node)
+{
+    FIXME("(%p)->(%p)\n", iface, node);
+
+    return E_NOTIMPL;
+}
+
+static const IMFTopologyNodeVtbl topologynodevtbl =
+{
+    topology_node_QueryInterface,
+    topology_node_AddRef,
+    topology_node_Release,
+    topology_node_GetItem,
+    topology_node_GetItemType,
+    topology_node_CompareItem,
+    topology_node_Compare,
+    topology_node_GetUINT32,
+    topology_node_GetUINT64,
+    topology_node_GetDouble,
+    topology_node_GetGUID,
+    topology_node_GetStringLength,
+    topology_node_GetString,
+    topology_node_GetAllocatedString,
+    topology_node_GetBlobSize,
+    topology_node_GetBlob,
+    topology_node_GetAllocatedBlob,
+    topology_node_GetUnknown,
+    topology_node_SetItem,
+    topology_node_DeleteItem,
+    topology_node_DeleteAllItems,
+    topology_node_SetUINT32,
+    topology_node_SetUINT64,
+    topology_node_SetDouble,
+    topology_node_SetGUID,
+    topology_node_SetString,
+    topology_node_SetBlob,
+    topology_node_SetUnknown,
+    topology_node_LockStore,
+    topology_node_UnlockStore,
+    topology_node_GetCount,
+    topology_node_GetItemByIndex,
+    topology_node_CopyAllItems,
+    topology_node_SetObject,
+    topology_node_GetObject,
+    topology_node_GetNodeType,
+    topology_node_GetTopoNodeID,
+    topology_node_SetTopoNodeID,
+    topology_node_GetInputCount,
+    topology_node_GetOutputCount,
+    topology_node_ConnectOutput,
+    topology_node_DisconnectOutput,
+    topology_node_GetInput,
+    topology_node_GetOutput,
+    topology_node_SetOutputPrefType,
+    topology_node_GetOutputPrefType,
+    topology_node_SetInputPrefType,
+    topology_node_GetInputPrefType,
+    topology_node_CloneFrom,
+};
+
+/***********************************************************************
+ *      MFCreateTopologyNode (mf.@)
+ */
+HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode **node)
+{
+    struct topology_node *object;
+    HRESULT hr;
+
+    TRACE("(%p)\n", node);
+
+    if (!node)
+        return E_POINTER;
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFTopologyNode_iface.lpVtbl = &topologynodevtbl;
+    object->refcount = 1;
+    object->node_type = node_type;
+    hr = MFCreateAttributes(&object->attributes, 0);
+    if (FAILED(hr))
+    {
+        heap_free(object);
+        return hr;
+    }
+
+    *node = &object->IMFTopologyNode_iface;
 
     return S_OK;
 }

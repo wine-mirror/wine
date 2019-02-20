@@ -61,7 +61,7 @@
 @ stub MFCreateStandardQualityManager
 @ stub MFCreateTopoLoader
 @ stdcall MFCreateTopology(ptr)
-@ stub MFCreateTopologyNode
+@ stdcall MFCreateTopologyNode(long ptr)
 @ stub MFCreateTranscodeProfile
 @ stub MFCreateTranscodeSinkActivate
 @ stub MFCreateTranscodeTopology

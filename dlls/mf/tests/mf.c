@@ -34,6 +34,7 @@
 static void test_topology(void)
 {
     IMFTopology *topology;
+    IMFTopologyNode *node;
     HRESULT hr;
 
     hr = MFCreateTopology(NULL);
@@ -42,6 +43,13 @@ static void test_topology(void)
     hr = MFCreateTopology(&topology);
     ok(hr == S_OK, "got %#x\n", hr);
     IMFTopology_Release(topology);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+    IMFTopologyNode_Release(node);
 }
 
 static HRESULT WINAPI test_getservice_QI(IMFGetService *iface, REFIID riid, void **obj)
