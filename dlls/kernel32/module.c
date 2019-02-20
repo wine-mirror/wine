@@ -1612,7 +1612,7 @@ DWORD WINAPI K32GetModuleFileNameExA(HANDLE process, HMODULE module,
     if ( process == GetCurrentProcess() )
     {
         len = GetModuleFileNameA( module, file_name, size );
-        if (size) file_name[size - 1] = '\0';
+        file_name[size - 1] = '\0';
         return len;
     }
 
