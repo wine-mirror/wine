@@ -7615,7 +7615,7 @@ cleanup:
     if (gl) FreeLibrary(gl);
     if (hdc) ReleaseDC(window, hdc);
     if (hdc2) ReleaseDC(window2, hdc2);
-    if (window) DestroyWindow(window);
+    DestroyWindow(window);
     if (window2) DestroyWindow(window2);
 }
 
