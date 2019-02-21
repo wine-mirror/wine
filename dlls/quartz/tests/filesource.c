@@ -23,6 +23,8 @@
 #include "dshow.h"
 #include "wine/test.h"
 
+static const WCHAR avifile[] = {'t','e','s','t','.','a','v','i',0};
+
 static IBaseFilter *create_file_source(void)
 {
     IBaseFilter *filter = NULL;
@@ -30,6 +32,50 @@ static IBaseFilter *create_file_source(void)
         &IID_IBaseFilter, (void **)&filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     return filter;
+}
+
+static WCHAR *load_resource(const WCHAR *name)
+{
+    static WCHAR pathW[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
+    lstrcatW(pathW, name);
+
+    file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
+            wine_dbgstr_w(pathW), GetLastError());
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok(!!res, "Failed to load resource, error %u.\n", GetLastError());
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    WriteFile(file, ptr, SizeofResource( GetModuleHandleA(NULL), res), &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource.\n");
+    CloseHandle(file);
+
+    return pathW;
+}
+
+static void load_file(IBaseFilter *filter, const WCHAR *filename)
+{
+    IFileSourceFilter *filesource;
+    HRESULT hr;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFileSourceFilter_Load(filesource, filename, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IFileSourceFilter_Release(filesource);
+}
+
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -192,11 +238,125 @@ static void test_file_source_filter(void)
     }
 }
 
+static void test_enum_pins(void)
+{
+    const WCHAR *filename = load_resource(avifile);
+    IBaseFilter *filter = create_file_source();
+    IEnumPins *enum1, *enum2;
+    IPin *pins[2];
+    ULONG count;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+
+    ref = get_refcount(filter);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    hr = IBaseFilter_EnumPins(filter, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_EnumPins(filter, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, NULL, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    load_file(filter, filename);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+todo_wine
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(filter);
+todo_wine
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pins[0]);
+todo_wine
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    IPin_Release(pins[0]);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 2);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum2, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IPin_Release(pins[0]);
+
+    IEnumPins_Release(enum2);
+    IEnumPins_Release(enum1);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(filesource)
 {
     CoInitialize(NULL);
 
     test_interfaces();
+    test_enum_pins();
     test_file_source_filter();
 
     CoUninitialize();
