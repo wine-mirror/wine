@@ -96,6 +96,8 @@ static void test_factory(void)
     IMFReadWriteClassFactory *factory, *factory2;
     HRESULT hr;
 
+    CoInitialize(NULL);
+
     hr = CoCreateInstance(&CLSID_MFReadWriteClassFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IMFReadWriteClassFactory,
             (void **)&factory);
     ok(hr == S_OK, "Failed to create class factory, hr %#x.\n", hr);
@@ -105,13 +107,13 @@ static void test_factory(void)
     ok(hr == CLASS_E_NOAGGREGATION, "Unexpected hr %#x.\n", hr);
 
     IMFReadWriteClassFactory_Release(factory);
+
+    CoUninitialize();
 }
 
 START_TEST(mfplat)
 {
     HRESULT hr;
-
-    CoInitialize(NULL);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -122,6 +124,4 @@ START_TEST(mfplat)
     test_factory();
 
     MFShutdown();
-
-    CoUninitialize();
 }
