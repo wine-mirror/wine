@@ -170,17 +170,20 @@ static void test_file_source_filter(void)
             "unknown format",
             "Hello World",
             11,
-            NULL, /* FIXME: should be &MEDIASUBTYPE_NULL */
+            &MEDIASUBTYPE_NULL,
         },
     };
-    WCHAR path[MAX_PATH], temp[MAX_PATH];
+    WCHAR path[MAX_PATH], temp[MAX_PATH], *filename;
+    AM_MEDIA_TYPE mt, file_mt, *pmt;
     IFileSourceFilter *filesource;
+    IEnumMediaTypes *enum_mt;
     IBaseFilter *filter;
-    AM_MEDIA_TYPE mt;
     OLECHAR *olepath;
     DWORD written;
     HANDLE file;
     HRESULT hr;
+    ULONG ref;
+    IPin *pin;
     BOOL ret;
     int i;
 
@@ -220,24 +223,177 @@ static void test_file_source_filter(void)
         CoTaskMemFree(olepath);
 
         olepath = NULL;
-        memset(&mt, 0x11, sizeof(mt));
-        hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &mt);
+        memset(&file_mt, 0x11, sizeof(file_mt));
+        hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &file_mt);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         ok(!lstrcmpW(olepath, path), "Expected path %s, got %s.\n",
                 wine_dbgstr_w(path), wine_dbgstr_w(olepath));
-        ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream), "Got major type %s.\n",
-                wine_dbgstr_guid(&mt.majortype));
-        if (tests[i].subtype)
-            ok(IsEqualGUID(&mt.subtype, tests[i].subtype), "Expected subtype %s, got %s.\n",
-                    wine_dbgstr_guid(tests[i].subtype), wine_dbgstr_guid(&mt.subtype));
+        ok(IsEqualGUID(&file_mt.majortype, &MEDIATYPE_Stream), "Got major type %s.\n",
+                wine_dbgstr_guid(&file_mt.majortype));
+        /* winegstreamer hijacks format type detection. */
+        if (!IsEqualGUID(tests[i].subtype, &MEDIASUBTYPE_NULL))
+            ok(IsEqualGUID(&file_mt.subtype, tests[i].subtype), "Expected subtype %s, got %s.\n",
+                wine_dbgstr_guid(tests[i].subtype), wine_dbgstr_guid(&file_mt.subtype));
+        ok(file_mt.bFixedSizeSamples == TRUE, "Got fixed size %d.\n", file_mt.bFixedSizeSamples);
+        ok(file_mt.bTemporalCompression == FALSE, "Got temporal compression %d.\n",
+                file_mt.bTemporalCompression);
+todo_wine {
+        ok(file_mt.lSampleSize == 1, "Got sample size %u.\n", file_mt.lSampleSize);
+        ok(IsEqualGUID(&file_mt.formattype, &GUID_NULL), "Got format type %s.\n",
+                wine_dbgstr_guid(&file_mt.formattype));
+}
+        ok(!file_mt.pUnk, "Got pUnk %p.\n", file_mt.pUnk);
+        ok(!file_mt.cbFormat, "Got format size %#x.\n", file_mt.cbFormat);
+        ok(!file_mt.pbFormat, "Got format %p.\n", file_mt.pbFormat);
         CoTaskMemFree(olepath);
 
+        hr = IBaseFilter_FindPin(filter, source_id, &pin);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IPin_EnumMediaTypes(pin, &enum_mt);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!memcmp(pmt, &file_mt, sizeof(*pmt)), "Media types did not match.\n");
+        CoTaskMemFree(pmt);
+
+        hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
+todo_wine
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (hr == S_OK)
+        {
+            mt = file_mt;
+            mt.subtype = GUID_NULL;
+            ok(!memcmp(pmt, &mt, sizeof(*pmt)), "Media types did not match.\n");
+            CoTaskMemFree(pmt);
+        }
+
+        hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+        IEnumMediaTypes_Release(enum_mt);
+
+        mt = file_mt;
+        hr = IPin_QueryAccept(pin, &mt);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        mt.bFixedSizeSamples = FALSE;
+        mt.bTemporalCompression = TRUE;
+        mt.lSampleSize = 123;
+        mt.formattype = FORMAT_VideoInfo;
+        hr = IPin_QueryAccept(pin, &mt);
+todo_wine
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        mt.majortype = MEDIATYPE_Video;
+        hr = IPin_QueryAccept(pin, &mt);
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+        mt.majortype = MEDIATYPE_Stream;
+
+        if (!IsEqualGUID(tests[i].subtype, &GUID_NULL))
+        {
+            mt.subtype = GUID_NULL;
+            hr = IPin_QueryAccept(pin, &mt);
+            ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+        }
+
+        IPin_Release(pin);
         IFileSourceFilter_Release(filesource);
-        IBaseFilter_Release(filter);
+        ref = IBaseFilter_Release(filter);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
 
         ret = DeleteFileW(path);
         ok(ret, "Failed to delete file, error %u\n", GetLastError());
     }
+
+    /* test prescribed format */
+    filter = create_file_source();
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.majortype = MEDIATYPE_Video;
+    mt.subtype = MEDIASUBTYPE_RGB8;
+    mt.bFixedSizeSamples = FALSE;
+    mt.bTemporalCompression = TRUE;
+    mt.lSampleSize = 123;
+    mt.formattype = FORMAT_None;
+    mt.pUnk = NULL;
+    mt.cbFormat = 0;
+    mt.pbFormat = NULL;
+    filename = load_resource(avifile);
+    hr = IFileSourceFilter_Load(filesource, filename, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &file_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!memcmp(&file_mt, &mt, sizeof(mt)), "Media types did not match.\n");
+    CoTaskMemFree(olepath);
+
+    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EnumMediaTypes(pin, &enum_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!memcmp(pmt, &file_mt, sizeof(*pmt)), "Media types did not match.\n");
+    CoTaskMemFree(pmt);
+
+    hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Stream), "Got major type %s.\n",
+                wine_dbgstr_guid(&pmt->majortype));
+        ok(IsEqualGUID(&pmt->subtype, &GUID_NULL), "Got subtype %s.\n",
+                wine_dbgstr_guid(&pmt->subtype));
+        ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+        ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+        ok(pmt->lSampleSize == 1, "Got sample size %u.\n", pmt->lSampleSize);
+        ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Got format type %s.\n",
+                wine_dbgstr_guid(&pmt->formattype));
+        ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+        ok(!pmt->cbFormat, "Got format size %#x.\n", pmt->cbFormat);
+        ok(!pmt->pbFormat, "Got format %p.\n", pmt->pbFormat);
+
+        hr = IPin_QueryAccept(pin, pmt);
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    }
+
+    hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enum_mt);
+
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.bFixedSizeSamples = TRUE;
+    mt.bTemporalCompression = FALSE;
+    mt.lSampleSize = 456;
+    mt.formattype = FORMAT_VideoInfo;
+    hr = IPin_QueryAccept(pin, &mt);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.majortype = MEDIATYPE_Stream;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Video;
+
+    mt.subtype = MEDIASUBTYPE_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+    IFileSourceFilter_Release(filesource);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
 static void test_enum_pins(void)
