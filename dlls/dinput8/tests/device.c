@@ -281,6 +281,8 @@ static BOOL CALLBACK enumeration_callback(const DIDEVICEINSTANCEA *lpddi, IDirec
     hr = IDirectInputDevice8_SetActionMap(lpdid, data->lpdiaf, NULL, 0);
     ok (hr == DIERR_ACQUIRED, "SetActionMap succeeded with an acquired device hr=%08x\n", hr);
 
+    IDirectInputDevice_Release(lpdid2);
+
     return DIENUM_CONTINUE;
 }
 
@@ -328,6 +330,12 @@ static void test_action_mapping(void)
     data.pDI = pDI;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, &data, DIEDBSFL_ATTACHEDONLY);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
+
+    if (data.keyboard)
+        IDirectInputDevice_Release(data.keyboard);
+
+    if (data.mouse)
+        IDirectInputDevice_Release(data.mouse);
 
     /* Repeat tests with a non NULL user */
     data.username = "Ninja Brian";
@@ -383,6 +391,8 @@ static void test_action_mapping(void)
         hr = IDirectInputDevice_GetProperty(data.keyboard, DIPROP_USERNAME, &dps.diph);
         ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
         ok (dps.wsz[0] == 0, "Expected empty username, got=%s\n", wine_dbgstr_w(dps.wsz));
+
+        IDirectInputDevice_Release(data.keyboard);
     }
 
     if (data.mouse != NULL)
@@ -392,9 +402,12 @@ static void test_action_mapping(void)
         test_build_action_map(data.mouse, data.lpdiaf, DITEST_YAXIS, DIDFT_RELAXIS, 0x01);
 
         test_device_input(data.mouse, INPUT_MOUSE, MOUSEEVENTF_LEFTDOWN, 3);
+
+        IDirectInputDevice_Release(data.mouse);
     }
 
     DestroyWindow(hwnd);
+    IDirectInput_Release(pDI);
 }
 
 static void test_save_settings(void)
@@ -458,7 +471,6 @@ static void test_save_settings(void)
     /* Easy case. Ask for default mapping, save, ask for previous map and read it back */
     hr = IDirectInputDevice8_BuildActionMap(pKey, &af, NULL, DIDBAM_HWDEFAULTS);
     ok (SUCCEEDED(hr), "BuildActionMap failed hr=%08x\n", hr);
-
     ok (results[0] == af.rgoAction[0].dwObjID,
         "Mapped incorrectly expected: 0x%08x got: 0x%08x\n", results[0], af.rgoAction[0].dwObjID);
 
@@ -543,6 +555,9 @@ static void test_save_settings(void)
     ok (other_results[1] == af.rgoAction[1].dwObjID,
         "Mapped incorrectly expected: 0x%08x got: 0x%08x\n", other_results[1], af.rgoAction[1].dwObjID);
     ok (IsEqualGUID(&GUID_SysKeyboard, &af.rgoAction[1].guidInstance), "Action should be mapped to keyboard\n");
+
+    IDirectInputDevice_Release(pKey);
+    IDirectInput_Release(pDI);
 }
 
 START_TEST(device)
