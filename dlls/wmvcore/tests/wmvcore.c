@@ -18,7 +18,7 @@
 #define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
 #include "initguid.h"
-#include "wmsdkidl.h"
+#include "wmsdk.h"
 
 #include "wine/test.h"
 
@@ -232,6 +232,26 @@ static void test_WMCreateWriterPriv(void)
     IWMWriter_Release(writer2);
 }
 
+static void test_urlextension(void)
+{
+    HRESULT hr;
+    const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
+    const WCHAR mkvfile[] = {'t','e','s','t','.','m','k','v',0};
+    const WCHAR urlfile[] = {'a','b','c','d',':','/','/','t','e','s','t','/','t','e','s','t','.','w','m','v',0};
+    const WCHAR testurl[] = {'h','t','t','p',':','/','/','t','e','s','t','/','t','.','a','s','f','?','a','l','t','=','t','.','m','k','v',0};
+
+    hr = WMCheckURLExtension(NULL);
+    ok(hr == E_INVALIDARG, "WMCheckURLExtension failed 0x%08x\n", hr);
+    hr = WMCheckURLExtension(mkvfile);
+    ok(hr == NS_E_INVALID_NAME, "WMCheckURLExtension failed 0x%08x\n", hr);
+    hr = WMCheckURLExtension(mp3file);
+    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
+    hr = WMCheckURLExtension(urlfile);
+    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
+    hr = WMCheckURLExtension(testurl);
+    todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -245,6 +265,7 @@ START_TEST(wmvcore)
     test_wmwriter_interfaces();
     test_profile_manager_interfaces();
     test_WMCreateWriterPriv();
+    test_urlextension();
 
     CoUninitialize();
 }

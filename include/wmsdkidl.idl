@@ -1787,6 +1787,8 @@ interface IWMWriterPreprocess : IUnknown
         [in] DWORD flags);
 };
 
+cpp_quote("HRESULT WINAPI WMCheckURLExtension(LPCWSTR);")
+cpp_quote("HRESULT WINAPI WMCheckURLScheme(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
 cpp_quote("HRESULT WINAPI WMCreateReader(IUnknown*,DWORD,IWMReader**);")
 
