@@ -25,6 +25,8 @@
 
 static const WCHAR avifile[] = {'t','e','s','t','.','a','v','i',0};
 
+static const WCHAR source_id[] = {'O','u','t','p','u','t',0};
+
 static IBaseFilter *create_file_source(void)
 {
     IBaseFilter *filter = NULL;
@@ -351,12 +353,52 @@ todo_wine
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_find_pin(void)
+{
+    const WCHAR *filename = load_resource(avifile);
+    IBaseFilter *filter = create_file_source();
+    IEnumPins *enumpins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+
+    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    load_file(filter, filename);
+
+    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(filter);
+todo_wine
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IBaseFilter_EnumPins(filter, &enumpins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enumpins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Expected pin %p, got %p.\n", pin, pin2);
+
+    IPin_Release(pin2);
+    IPin_Release(pin);
+    IEnumPins_Release(enumpins);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(filesource)
 {
     CoInitialize(NULL);
 
     test_interfaces();
     test_enum_pins();
+    test_find_pin();
     test_file_source_filter();
 
     CoUninitialize();
