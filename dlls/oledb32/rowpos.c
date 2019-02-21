@@ -416,7 +416,7 @@ static HRESULT WINAPI rowpos_cp_Advise(IConnectionPoint *iface, IUnknown *unksin
     }
 
     This->sinks[i] = sink;
-    if (cookie) *cookie = i + 1;
+    *cookie = i + 1;
 
     return S_OK;
 }
