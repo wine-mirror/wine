@@ -1,4 +1,4 @@
-@ stub WMCheckURLExtension
+@ stdcall WMCheckURLExtension(wstr)
 @ stdcall WMCheckURLScheme(wstr)
 @ stub WMCreateBackupRestorerPrivate
 @ stub WMCreateSyncReaderPriv
