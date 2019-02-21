@@ -1173,7 +1173,7 @@ static void LISTBOX_NCPaint( LB_DESCR *descr, HRGN region )
     if (!theme || !(exstyle & WS_EX_CLIENTEDGE))
         return;
 
-    cxEdge = GetSystemMetrics(SM_CXEDGE),
+    cxEdge = GetSystemMetrics(SM_CXEDGE);
     cyEdge = GetSystemMetrics(SM_CYEDGE);
 
     GetWindowRect(descr->self, &r);

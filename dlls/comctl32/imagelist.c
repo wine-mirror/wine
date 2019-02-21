@@ -1002,7 +1002,7 @@ ImageList_InternalDragDraw (HDC hdc, INT x, INT y)
     imldp.cbSize  = sizeof(imldp);
     imldp.himl    = InternalDrag.himl;
     imldp.i       = 0;
-    imldp.hdcDst  = hdc,
+    imldp.hdcDst  = hdc;
     imldp.x       = x;
     imldp.y       = y;
     imldp.rgbBk   = CLR_DEFAULT;
@@ -1236,7 +1236,7 @@ ImageList_DrawEx (HIMAGELIST himl, INT i, HDC hdc, INT x, INT y,
     imldp.cbSize  = sizeof(imldp);
     imldp.himl    = himl;
     imldp.i       = i;
-    imldp.hdcDst  = hdc,
+    imldp.hdcDst  = hdc;
     imldp.x       = x;
     imldp.y       = y;
     imldp.cx      = dx;
