@@ -24,11 +24,14 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "initguid.h"
 #include "ole2.h"
 #include "rpcproxy.h"
 #include "mfreadwrite.h"
 
 #include "wine/debug.h"
+
+DEFINE_GUID(CLSID_MFReadWriteClassFactory, 0x48e2ed0f, 0x98c2, 0x4a37, 0xbe, 0xd5, 0x16, 0x63, 0x12, 0xdd, 0xd8, 0x3f);
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -56,12 +59,6 @@ HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAt
     FIXME("%p %p %p stub.\n", source, attributes, reader);
 
     return E_NOTIMPL;
-}
-
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
-{
-    FIXME("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 HRESULT WINAPI DllCanUnloadNow(void)
@@ -246,4 +243,124 @@ HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *stream, IMFAttr
 
     *reader = &object->IMFSourceReader_iface;
     return S_OK;
+}
+
+static HRESULT WINAPI readwrite_factory_QueryInterface(IMFReadWriteClassFactory *iface, REFIID riid, void **out)
+{
+    if (IsEqualIID(riid, &IID_IMFReadWriteClassFactory) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFReadWriteClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI readwrite_factory_AddRef(IMFReadWriteClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI readwrite_factory_Release(IMFReadWriteClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI readwrite_factory_CreateInstanceFromURL(IMFReadWriteClassFactory *iface, REFCLSID clsid,
+        const WCHAR *url, IMFAttributes *attributes, REFIID riid, void **out)
+{
+    FIXME("%s, %s, %p, %s, %p.\n", debugstr_guid(clsid), debugstr_w(url), attributes, debugstr_guid(riid), out);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI readwrite_factory_CreateInstanceFromObject(IMFReadWriteClassFactory *iface, REFCLSID clsid,
+        IUnknown *unk, IMFAttributes *attributes, REFIID riid, void **out)
+{
+    FIXME("%s, %p, %p, %s, %p.\n", debugstr_guid(clsid), unk, attributes, debugstr_guid(riid), out);
+
+    return E_NOTIMPL;
+}
+
+static const IMFReadWriteClassFactoryVtbl readwrite_factory_vtbl =
+{
+    readwrite_factory_QueryInterface,
+    readwrite_factory_AddRef,
+    readwrite_factory_Release,
+    readwrite_factory_CreateInstanceFromURL,
+    readwrite_factory_CreateInstanceFromObject,
+};
+
+static IMFReadWriteClassFactory readwrite_factory = { &readwrite_factory_vtbl };
+
+static HRESULT WINAPI classfactory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
+{
+    TRACE("%s, %p.\n", debugstr_guid(riid), out);
+
+    if (IsEqualGUID(riid, &IID_IClassFactory) ||
+            IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IClassFactory_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("interface %s not implemented\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI classfactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI classfactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI classfactory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **out)
+{
+    TRACE("%p, %s, %p.\n", outer, debugstr_guid(riid), out);
+
+    *out = NULL;
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    return IMFReadWriteClassFactory_QueryInterface(&readwrite_factory, riid, out);
+}
+
+static HRESULT WINAPI classfactory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    FIXME("%d.\n", dolock);
+    return S_OK;
+}
+
+static const struct IClassFactoryVtbl classfactoryvtbl =
+{
+    classfactory_QueryInterface,
+    classfactory_AddRef,
+    classfactory_Release,
+    classfactory_CreateInstance,
+    classfactory_LockServer,
+};
+
+static IClassFactory classfactory = { &classfactoryvtbl };
+
+HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
+{
+    TRACE("%s, %s, %p.\n", debugstr_guid(clsid), debugstr_guid(riid), out);
+
+    if (IsEqualGUID(clsid, &CLSID_MFReadWriteClassFactory))
+        return IClassFactory_QueryInterface(&classfactory, riid, out);
+
+    WARN("Unsupported class %s.\n", debugstr_guid(clsid));
+    *out = NULL;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }

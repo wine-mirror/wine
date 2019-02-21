@@ -36,6 +36,7 @@
 #include "initguid.h"
 DEFINE_GUID(MF_READWRITE_MMCSS_PRIORITY_AUDIO,0x273db885, 0x2de2, 0x4db2, 0xa6, 0xa7, 0xfd, 0xb6, 0x6f, 0xb4, 0x0b, 0x61);
 DEFINE_GUID(MF_READWRITE_MMCSS_CLASS_AUDIO,   0x430847da, 0x0890, 0x4b0e, 0x93, 0x8c, 0x05, 0x43, 0x32, 0xc5, 0x47, 0xe1);
+DEFINE_GUID(CLSID_MFReadWriteClassFactory, 0x48e2ed0f, 0x98c2, 0x4a37, 0xbe, 0xd5, 0x16, 0x63, 0x12, 0xdd, 0xd8, 0x3f);
 
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
 
@@ -90,6 +91,22 @@ static void test_MFCreateSourceReaderFromByteStream(void)
         IMFSourceReader_Release(source);
 }
 
+static void test_factory(void)
+{
+    IMFReadWriteClassFactory *factory, *factory2;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MFReadWriteClassFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IMFReadWriteClassFactory,
+            (void **)&factory);
+    ok(hr == S_OK, "Failed to create class factory, hr %#x.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_MFReadWriteClassFactory, (IUnknown *)factory, CLSCTX_INPROC_SERVER, &IID_IMFReadWriteClassFactory,
+            (void **)&factory2);
+    ok(hr == CLASS_E_NOAGGREGATION, "Unexpected hr %#x.\n", hr);
+
+    IMFReadWriteClassFactory_Release(factory);
+}
+
 START_TEST(mfplat)
 {
     HRESULT hr;
@@ -102,6 +119,7 @@ START_TEST(mfplat)
     init_functions();
 
     test_MFCreateSourceReaderFromByteStream();
+    test_factory();
 
     MFShutdown();
 
