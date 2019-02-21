@@ -4577,8 +4577,8 @@ static void test_WriteFileGather(void)
         ok(GetLastError() == ERROR_IO_PENDING, "ReadFileScatter failed, error %u.\n", GetLastError());
 
         br = GetQueuedCompletionStatus(hiocp2, &size, &key, &povl, 1000);
-        todo_wine ok(br, "GetQueuedCompletionStatus failed, err %u.\n", GetLastError());
-        todo_wine ok(povl == &ovl, "Wrong ovl %p.\n", povl);
+        ok(br, "GetQueuedCompletionStatus failed, err %u.\n", GetLastError());
+        ok(povl == &ovl, "Wrong ovl %p.\n", povl);
 
         br = GetOverlappedResult(hfile, &ovl, &tx, TRUE);
         ok(br, "GetOverlappedResult failed, err %u.\n", GetLastError());

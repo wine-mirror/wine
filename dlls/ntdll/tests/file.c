@@ -3579,7 +3579,7 @@ static void test_file_completion_information(void)
     ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
     ok(ret, "GetOverlappedResult failed, error %u.\n", GetLastError());
     ret = GetQueuedCompletionStatus(port, &num_bytes, &key, &pov, 1000);
-    todo_wine ok(ret, "GetQueuedCompletionStatus failed, error %u.\n", GetLastError());
+    ok(ret, "GetQueuedCompletionStatus failed, error %u.\n", GetLastError());
 
     CloseHandle(ov.hEvent);
     CloseHandle(port);
