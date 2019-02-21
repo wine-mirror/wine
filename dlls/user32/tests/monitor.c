@@ -23,6 +23,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
+#include <stdio.h>
 
 static HMODULE hdll;
 static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
@@ -74,12 +76,154 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc,
     return TRUE;
 }
 
+static int adapter_count = 0;
+static int monitor_count = 0;
+
+static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *device, DWORD flags)
+{
+    char video_name[16];
+    char video_value[128];
+    char buffer[128];
+    int number;
+    int vendor_id;
+    int device_id;
+    int subsys_id;
+    int revision_id;
+    size_t length;
+    HKEY hkey;
+    HDC hdc;
+    DWORD size;
+    LSTATUS ls;
+
+    adapter_count++;
+
+    /* DeviceName */
+    ok(sscanf(device->DeviceName, "\\\\.\\DISPLAY%d", &number) == 1, "#%d: wrong DeviceName %s\n", index,
+       device->DeviceName);
+
+    /* DeviceKey */
+    /* win7 is the only OS version where \Device\Video? value in HLKM\HARDWARE\DEVICEMAP\VIDEO are not in order with adapter index. */
+    if (GetVersion() != 0x1db10106 || !strcmp(winetest_platform, "wine"))
+    {
+        sprintf(video_name, "\\Device\\Video%d", index);
+        ls = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\VIDEO", 0, KEY_READ, &hkey);
+        todo_wine ok(!ls, "#%d: failed to open registry, error: %#x\n", index, ls);
+        if (!ls)
+        {
+            memset(video_value, 0, sizeof(video_value));
+            size = sizeof(video_value);
+            ls = RegQueryValueExA(hkey, video_name, NULL, NULL, (unsigned char *)video_value, &size);
+            ok(!ls, "#%d: failed to get registry value, error: %#x\n", index, ls);
+            RegCloseKey(hkey);
+            ok(!strcmp(video_value, device->DeviceKey), "#%d: wrong DeviceKey: %s\n", index, device->DeviceKey);
+        }
+    }
+    else
+        ok(sscanf(device->DeviceKey, "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\%[^\\]\\%04d", buffer, &number) == 2,
+           "#%d: wrong DeviceKey %s\n", index, device->DeviceKey);
+
+    /* DeviceString */
+    length = strlen(device->DeviceString);
+    ok(broken(length == 0) || /* XP on Testbot will return an empty string, whereas XP on real machine doesn't. Probably a bug in virtual adapter driver */
+       length > 0, "#%d: expect DeviceString not empty\n", index);
+
+    /* StateFlags */
+    if (index == 0)
+        ok(device->StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE, "#%d: adapter should be primary\n", index);
+    else
+        ok(!(device->StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE), "#%d: adapter should not be primary\n", index);
+
+    if (device->StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+    {
+        /* Test creating DC */
+        hdc = CreateDCA(device->DeviceName, NULL, NULL, NULL);
+        ok(hdc != NULL, "#%d: failed to CreateDC(\"%s\") err=%d\n", index, device->DeviceName, GetLastError());
+        DeleteDC(hdc);
+    }
+
+    /* DeviceID */
+    /* DeviceID should equal to the first string of HardwareID value data in PCI GPU instance. You can verify this
+     * by changing the data and rerun EnumDisplayDevices. But it's difficult to find corresponding PCI device on
+     * userland. So here we check the expected format instead. */
+    if (flags & EDD_GET_DEVICE_INTERFACE_NAME)
+        todo_wine ok(strlen(device->DeviceID) == 0 || /* vista+ */
+           sscanf(device->DeviceID, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X",
+                  &vendor_id, &device_id, &subsys_id, &revision_id) == 4, /* XP/2003 ignores EDD_GET_DEVICE_INTERFACE_NAME */
+           "#%d: got %s\n", index, device->DeviceID);
+    else
+    {
+        todo_wine ok(broken(strlen(device->DeviceID) == 0) || /* XP on Testbot returns an empty string, whereas real machine doesn't */
+           sscanf(device->DeviceID, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X", &vendor_id, &device_id, &subsys_id,
+                  &revision_id) == 4, "#%d: wrong DeviceID %s\n", index, device->DeviceID);
+    }
+}
+
+static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index, const char *adapter_name,
+                                            const DISPLAY_DEVICEA *device, DWORD flags)
+{
+    static const char device_id_prefix[] = "MONITOR\\Default_Monitor\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\";
+    static const char device_key_prefix[] = "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Class"
+                                            "\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\";
+    char monitor_name[32];
+    char buffer[128];
+    int number;
+
+    monitor_count++;
+
+    /* DeviceName */
+    lstrcpyA(monitor_name, adapter_name);
+    sprintf(monitor_name + strlen(monitor_name), "\\Monitor%d", monitor_index);
+    todo_wine ok(!strcmp(monitor_name, device->DeviceName), "#%d: expect %s, got %s\n", monitor_index, monitor_name, device->DeviceName);
+
+    /* DeviceString */
+    ok(strlen(device->DeviceString) > 0, "#%d: expect DeviceString not empty\n", monitor_index);
+
+    /* StateFlags */
+    if (adapter_index == 0 && monitor_index == 0)
+        todo_wine ok(device->StateFlags & DISPLAY_DEVICE_ATTACHED, "#%d expect to have a primary monitor attached\n", monitor_index);
+    else
+        ok(device->StateFlags <= (DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE), "#%d wrong state %#x\n", monitor_index,
+           device->StateFlags);
+
+    /* DeviceID */
+    lstrcpynA(buffer, device->DeviceID, sizeof(device_id_prefix));
+    if (flags & EDD_GET_DEVICE_INTERFACE_NAME)
+    {   /* HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\Default_Monitor\4&2abfaa30&0&UID0 GUID_DEVINTERFACE_MONITOR
+         *                                                   ^                ^                     ^
+         * Expect format                  \\?\DISPLAY#Default_Monitor#4&2abfaa30&0&UID0#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7} */
+        todo_wine ok(strlen(device->DeviceID) == 0 || /* vista ~ win7 */
+            sscanf(device->DeviceID, "\\\\?\\DISPLAY#Default_Monitor#%[^#]#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}", buffer) == 1 || /* win8+ */
+            (!lstrcmpiA(buffer, device_id_prefix) &&
+             sscanf(device->DeviceID + sizeof(device_id_prefix) - 1, "%04d", &number) == 1), /* XP/2003 ignores EDD_GET_DEVICE_INTERFACE_NAME */
+            "#%d: wrong DeviceID : %s \n", monitor_index, device->DeviceID);
+    }
+    else
+    {
+        /* Expect HarewareID value data + Driver value data in HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\Default_Monitor\{Instance} */
+        /* But we don't know which monitor instance this belongs to, so check format instead */
+        todo_wine ok(!lstrcmpiA(buffer, device_id_prefix), "#%d wrong DeviceID : %s\n", monitor_index, device->DeviceID);
+        todo_wine ok(sscanf(device->DeviceID + sizeof(device_id_prefix) - 1, "%04d", &number) == 1,
+                     "#%d wrong DeviceID : %s\n", monitor_index, device->DeviceID);
+    }
+
+    /* DeviceKey */
+    lstrcpynA(buffer, device->DeviceKey, sizeof(device_key_prefix));
+    todo_wine ok(!lstrcmpiA(buffer, device_key_prefix), "#%d: wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
+    todo_wine ok(sscanf(device->DeviceKey + sizeof(device_key_prefix) - 1, "%04d", &number) == 1,
+                 "#%d wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
+}
+
 static void test_enumdisplaydevices(void)
 {
+    static const DWORD flags[] = {0, EDD_GET_DEVICE_INTERFACE_NAME};
     DISPLAY_DEVICEA dd;
     char primary_device_name[32];
     char primary_monitor_device_name[32];
-    DWORD primary_num = -1, num = 0;
+    char adapter_name[32];
+    int number;
+    int flag_index;
+    int adapter_index;
+    int monitor_index;
     BOOL ret;
 
     if (!pEnumDisplayDevicesA)
@@ -88,33 +232,43 @@ static void test_enumdisplaydevices(void)
         return;
     }
 
+    /* Doesn't accept \\.\DISPLAY */
     dd.cb = sizeof(dd);
-    while(1)
-    {
-        BOOL ret;
-        HDC dc;
-        ret = pEnumDisplayDevicesA(NULL, num, &dd, 0);
-        if(!ret) break;
-        if(dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-        {
-            strcpy(primary_device_name, dd.DeviceName);
-            primary_num = num;
-        }
-        if(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
-        {
-            /* test creating DC */
-            dc = CreateDCA(dd.DeviceName, NULL, NULL, NULL);
-            ok(dc != NULL, "Failed to CreateDC(\"%s\") err=%d\n", dd.DeviceName, GetLastError());
-            DeleteDC(dc);
-        }
-        num++;
-    }
+    ret = pEnumDisplayDevicesA("\\\\.\\DISPLAY", 0, &dd, 0);
+    todo_wine ok(!ret, "Expect failure\n");
 
-    if (primary_num == -1 || !pEnumDisplayMonitors || !pGetMonitorInfoA)
+    /* Enumeration */
+    for (flag_index = 0; flag_index < ARRAY_SIZE(flags); flag_index++)
+        for (adapter_index = 0; pEnumDisplayDevicesA(NULL, adapter_index, &dd, flags[flag_index]); adapter_index++)
+        {
+            lstrcpyA(adapter_name, dd.DeviceName);
+
+            if (sscanf(adapter_name, "\\\\.\\DISPLAYV%d", &number) == 1)
+            {
+                skip("Skipping software devices %s:%s\n", adapter_name, dd.DeviceString);
+                continue;
+            }
+
+            test_enumdisplaydevices_adapter(adapter_index, &dd, flags[flag_index]);
+
+            for (monitor_index = 0; pEnumDisplayDevicesA(adapter_name, monitor_index, &dd, flags[flag_index]);
+                 monitor_index++)
+                test_enumdisplaydevices_monitor(adapter_index, monitor_index, adapter_name, &dd, flags[flag_index]);
+        }
+
+    ok(adapter_count > 0, "Expect at least one adapter found\n");
+    /* XP on Testbot doesn't report a monitor, whereas XP on real machine does */
+    ok(broken(monitor_count == 0) || monitor_count > 0, "Expect at least one monitor found\n");
+
+    if (!pEnumDisplayMonitors || !pGetMonitorInfoA)
     {
         win_skip("EnumDisplayMonitors or GetMonitorInfoA are not available\n");
         return;
     }
+
+    ret = pEnumDisplayDevicesA(NULL, 0, &dd, 0);
+    ok(ret, "Expect success\n");
+    lstrcpyA(primary_device_name, dd.DeviceName);
 
     primary_monitor_device_name[0] = 0;
     ret = pEnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)primary_monitor_device_name);
