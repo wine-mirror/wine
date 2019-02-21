@@ -756,11 +756,8 @@ static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(BasePin *pin, const AM_M
 {
     AM_MEDIA_TYPE *pmt_filter = impl_from_IBaseFilter(pin->pinInfo.pFilter)->pmt;
 
-    FIXME("(%p, %p)\n", pin, pmt);
-
     if (IsEqualGUID(&pmt->majortype, &pmt_filter->majortype) &&
-        IsEqualGUID(&pmt->subtype, &pmt_filter->subtype) &&
-        IsEqualGUID(&pmt->formattype, &FORMAT_None))
+        IsEqualGUID(&pmt->subtype, &pmt_filter->subtype))
         return S_OK;
 
     return S_FALSE;
