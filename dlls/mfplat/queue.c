@@ -331,3 +331,57 @@ HRESULT WINAPI MFUnlockWorkQueue(DWORD queue)
 
     return unlock_user_queue(queue);
 }
+
+/***********************************************************************
+ *      MFPutWorkItem (mfplat.@)
+ */
+HRESULT WINAPI MFPutWorkItem(DWORD queue, IMFAsyncCallback *callback, IUnknown *state)
+{
+    IMFAsyncResult *result;
+    HRESULT hr;
+
+    TRACE("%#x, %p, %p.\n", queue, callback, state);
+
+    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+        return hr;
+
+    hr = MFPutWorkItemEx(queue, result);
+
+    IMFAsyncResult_Release(result);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      MFPutWorkItemEx (mfplat.@)
+ */
+HRESULT WINAPI MFPutWorkItemEx(DWORD queue, IMFAsyncResult *result)
+{
+    FIXME("%#x, %p\n", queue, result);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      MFInvokeCallback (mfplat.@)
+ */
+HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result)
+{
+    MFASYNCRESULT *result_data = (MFASYNCRESULT *)result;
+    DWORD queue = MFASYNC_CALLBACK_QUEUE_STANDARD, flags;
+    HRESULT hr;
+
+    TRACE("%p.\n", result);
+
+    if (FAILED(IMFAsyncCallback_GetParameters(result_data->pCallback, &flags, &queue)))
+        queue = MFASYNC_CALLBACK_QUEUE_STANDARD;
+
+    if (FAILED(MFLockWorkQueue(queue)))
+        queue = MFASYNC_CALLBACK_QUEUE_STANDARD;
+
+    hr = MFPutWorkItemEx(queue, result);
+
+    MFUnlockWorkQueue(queue);
+
+    return hr;
+}

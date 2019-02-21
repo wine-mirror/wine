@@ -116,12 +116,12 @@
 @ stub MFInitMediaTypeFromWaveFormatEx
 @ stub MFInitVideoFormat
 @ stub MFInitVideoFormat_RGB
-@ stub MFInvokeCallback
+@ stdcall MFInvokeCallback(ptr)
 @ stub MFJoinIoPort
 @ stdcall MFLockPlatform()
 @ stdcall MFLockWorkQueue(long)
-@ stub MFPutWorkItem
-@ stub MFPutWorkItemEx
+@ stdcall MFPutWorkItem(long ptr ptr)
+@ stdcall MFPutWorkItemEx(long ptr)
 @ stub MFRecordError
 @ stub MFRemovePeriodicCallback
 @ stub MFScheduleWorkItem
