@@ -326,7 +326,7 @@ public class WineActivity extends Activity
 
     private HashMap<Integer,WineWindow> win_map = new HashMap<Integer,WineWindow>();
 
-    protected class WineWindow extends Object
+    protected class WineWindow
     {
         static protected final int HWND_MESSAGE = 0xfffffffd;
         static protected final int SWP_NOZORDER = 0x04;
