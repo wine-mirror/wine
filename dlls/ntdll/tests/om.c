@@ -1563,6 +1563,9 @@ static void test_query_object(void)
 
     test_object_type( GetCurrentProcess(), "Process" );
     test_no_file_info( GetCurrentProcess() );
+
+    test_object_type( GetCurrentThread(), "Thread" );
+    test_no_file_info( GetCurrentThread() );
 }
 
 static void test_type_mismatch(void)

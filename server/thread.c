@@ -128,6 +128,7 @@ static const struct object_ops thread_apc_ops =
 /* thread operations */
 
 static void dump_thread( struct object *obj, int verbose );
+static struct object_type *thread_get_type( struct object *obj );
 static int thread_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int thread_map_access( struct object *obj, unsigned int access );
 static void thread_poll_event( struct fd *fd, int event );
@@ -137,7 +138,7 @@ static const struct object_ops thread_ops =
 {
     sizeof(struct thread),      /* size */
     dump_thread,                /* dump */
-    no_get_type,                /* get_type */
+    thread_get_type,            /* get_type */
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     thread_signaled,            /* signaled */
@@ -359,6 +360,13 @@ static void dump_thread( struct object *obj, int verbose )
 
     fprintf( stderr, "Thread id=%04x unix pid=%d unix tid=%d state=%d\n",
              thread->id, thread->unix_pid, thread->unix_tid, thread->state );
+}
+
+static struct object_type *thread_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'T','h','r','e','a','d'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static int thread_signaled( struct object *obj, struct wait_queue_entry *entry )
