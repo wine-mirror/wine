@@ -237,11 +237,9 @@ static void test_file_source_filter(void)
         ok(file_mt.bFixedSizeSamples == TRUE, "Got fixed size %d.\n", file_mt.bFixedSizeSamples);
         ok(file_mt.bTemporalCompression == FALSE, "Got temporal compression %d.\n",
                 file_mt.bTemporalCompression);
-todo_wine {
         ok(file_mt.lSampleSize == 1, "Got sample size %u.\n", file_mt.lSampleSize);
         ok(IsEqualGUID(&file_mt.formattype, &GUID_NULL), "Got format type %s.\n",
                 wine_dbgstr_guid(&file_mt.formattype));
-}
         ok(!file_mt.pUnk, "Got pUnk %p.\n", file_mt.pUnk);
         ok(!file_mt.cbFormat, "Got format size %#x.\n", file_mt.cbFormat);
         ok(!file_mt.pbFormat, "Got format %p.\n", file_mt.pbFormat);
