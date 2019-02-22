@@ -35,7 +35,7 @@
 
 static void test_topology(void)
 {
-    IMFTopologyNode *node, *node2;
+    IMFTopologyNode *node, *node2, *node3;
     IMFTopology *topology;
     WORD count;
     HRESULT hr;
@@ -180,6 +180,39 @@ todo_wine
     ok(hr == S_OK, "Failed to set node id, hr %#x.\n", hr);
 
     IMFTopologyNode_Release(node);
+
+    /* Change id for attached node. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TEE_NODE, &node2);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node);
+todo_wine
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node2);
+todo_wine
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetTopoNodeID(node, &id);
+    ok(hr == S_OK, "Failed to get node id, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetTopoNodeID(node2, id);
+    ok(hr == S_OK, "Failed to get node id, hr %#x.\n", hr);
+
+    hr = IMFTopology_GetNodeByID(topology, id, &node3);
+todo_wine {
+    ok(hr == S_OK, "Failed to get a node, hr %#x.\n", hr);
+    ok(node3 == node, "Unexpected node.\n");
+}
+    if (SUCCEEDED(hr))
+        IMFTopologyNode_Release(node3);
+
+    IMFTopologyNode_Release(node);
+    IMFTopologyNode_Release(node2);
+
     IMFTopology_Release(topology);
 }
 
