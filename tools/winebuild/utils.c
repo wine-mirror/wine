@@ -66,6 +66,7 @@ static const struct
     { "armv5",   CPU_ARM },
     { "armv6",   CPU_ARM },
     { "armv7",   CPU_ARM },
+    { "armv7a",  CPU_ARM },
     { "arm64",   CPU_ARM64 },
     { "aarch64", CPU_ARM64 },
 };
