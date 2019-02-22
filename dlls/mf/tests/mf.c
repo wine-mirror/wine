@@ -57,11 +57,10 @@ static void test_topology(void)
     ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
 
     hr = IMFTopologyNode_GetTopoNodeID(node, &id);
-todo_wine
     ok(hr == S_OK, "Failed to get node id, hr %#x.\n", hr);
+    ok(((id >> 32) == GetCurrentProcessId()) && !!(id & 0xffff), "Unexpected node id %s.\n", wine_dbgstr_longlong(id));
 
     hr = IMFTopologyNode_SetTopoNodeID(node2, id);
-todo_wine
     ok(hr == S_OK, "Failed to set node id, hr %#x.\n", hr);
 
     count = 1;
@@ -96,7 +95,6 @@ todo_wine {
 
     /* Change node id, add it again. */
     hr = IMFTopologyNode_SetTopoNodeID(node, ++id);
-todo_wine
     ok(hr == S_OK, "Failed to set node id, hr %#x.\n", hr);
 
     hr = IMFTopology_GetNodeByID(topology, id, &node2);
@@ -148,7 +146,6 @@ todo_wine {
     hr = MFCreateTopologyNode(MF_TOPOLOGY_TEE_NODE, &node2);
     ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
     hr = IMFTopologyNode_SetTopoNodeID(node2, id);
-todo_wine
     ok(hr == S_OK, "Failed to set node id, hr %#x.\n", hr);
     hr = IMFTopology_RemoveNode(topology, node2);
 todo_wine
@@ -178,6 +175,9 @@ todo_wine {
     hr = IMFTopology_Clear(topology);
 todo_wine
     ok(hr == S_OK, "Failed to clear topology, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetTopoNodeID(node, 123);
+    ok(hr == S_OK, "Failed to set node id, hr %#x.\n", hr);
 
     IMFTopologyNode_Release(node);
     IMFTopology_Release(topology);

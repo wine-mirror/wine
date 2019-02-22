@@ -32,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+static LONG next_node_id;
+
 struct topology
 {
     IMFTopology IMFTopology_iface;
@@ -45,6 +47,7 @@ struct topology_node
     LONG refcount;
     IMFAttributes *attributes;
     MF_TOPOLOGY_TYPE node_type;
+    TOPOID id;
 };
 
 struct seq_source
@@ -887,16 +890,24 @@ static HRESULT WINAPI topology_node_GetNodeType(IMFTopologyNode *iface, MF_TOPOL
 
 static HRESULT WINAPI topology_node_GetTopoNodeID(IMFTopologyNode *iface, TOPOID *id)
 {
-    FIXME("(%p)->(%p)\n", iface, id);
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, id);
+
+    *id = node->id;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_node_SetTopoNodeID(IMFTopologyNode *iface, TOPOID id)
 {
-    FIXME("(%p)->(%s)\n", iface, wine_dbgstr_longlong(id));
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", iface, wine_dbgstr_longlong(id));
+
+    node->id = id;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_node_GetInputCount(IMFTopologyNode *iface, DWORD *count)
@@ -1058,6 +1069,7 @@ HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode 
         heap_free(object);
         return hr;
     }
+    object->id = ((TOPOID)GetCurrentProcessId() << 32) | InterlockedIncrement(&next_node_id);
 
     *node = &object->IMFTopologyNode_iface;
 
