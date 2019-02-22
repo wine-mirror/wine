@@ -319,7 +319,11 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
         return hres;
     }
 
-    IAudioClient_SetEventHandle(client, device->sleepev);
+    hres = IAudioClient_SetEventHandle(client, device->sleepev);
+    if (FAILED(hres)) {
+        WARN("SetEventHandle failed: %08x\n", hres);
+        goto err;
+    }
 
     hres = IAudioClient_GetService(client, &IID_IAudioRenderClient, (void**)&render);
     if(FAILED(hres))
