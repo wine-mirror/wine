@@ -666,6 +666,84 @@ todo_wine
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_async_reader(void)
+{
+    IBaseFilter *filter = create_file_source();
+    IFileSourceFilter *filesource;
+    LONGLONG length, available;
+    WCHAR filename[MAX_PATH];
+    IAsyncReader *reader;
+    BYTE buffer[20];
+    DWORD written;
+    HANDLE file;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+    BOOL ret;
+    int i;
+
+    GetTempPathW(ARRAY_SIZE(filename), filename);
+    lstrcatW(filename, avifile);
+    file = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file, error %u.\n", GetLastError());
+    for (i = 0; i < 600; i++)
+    {
+        BYTE b = i % 111;
+        WriteFile(file, &b, 1, &written, NULL);
+    }
+    CloseHandle(file);
+
+    IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
+    IFileSourceFilter_Load(filesource, filename, NULL);
+    IBaseFilter_FindPin(filter, source_id, &pin);
+
+    hr = IPin_QueryInterface(pin, &IID_IAsyncReader, (void **)&reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_Length(reader, &length, &available);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(length == 600, "Got length %s.\n", wine_dbgstr_longlong(length));
+    ok(available == 600, "Got available length %s.\n", wine_dbgstr_longlong(available));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    hr = IAsyncReader_SyncRead(reader, 0, 10, buffer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < 10; i++)
+        ok(buffer[i] == i % 111, "Got wrong byte %02x at %u.\n", buffer[i], i);
+
+    hr = IAsyncReader_SyncRead(reader, 0, 10, buffer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < 10; i++)
+        ok(buffer[i] == i % 111, "Got wrong byte %02x at %u.\n", buffer[i], i);
+
+    hr = IAsyncReader_SyncRead(reader, 10, 10, buffer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < 10; i++)
+        ok(buffer[i] == (10 + i) % 111, "Got wrong byte %02x at %u.\n", buffer[i], i);
+
+    hr = IAsyncReader_SyncRead(reader, 590, 20, buffer);
+todo_wine
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    for (i = 0; i < 10; i++)
+        ok(buffer[i] == (590 + i) % 111, "Got wrong byte %02x at %u.\n", buffer[i], i);
+    for (; i < 20; i++)
+        ok(buffer[i] == 0xcc, "Got wrong byte %02x at %u.\n", buffer[i], i);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    hr = IAsyncReader_SyncRead(reader, 600, 10, buffer);
+todo_wine
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(buffer[0] == 0xcc, "Got wrong byte %02x.\n", buffer[0]);
+
+    IAsyncReader_Release(reader);
+    IPin_Release(pin);
+    IFileSourceFilter_Release(filesource);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(filesource)
 {
     CoInitialize(NULL);
@@ -676,6 +754,7 @@ START_TEST(filesource)
     test_pin_info();
     test_filter_state();
     test_file_source_filter();
+    test_async_reader();
 
     CoUninitialize();
 }
