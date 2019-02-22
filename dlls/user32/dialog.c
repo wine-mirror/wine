@@ -1821,6 +1821,7 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
     HWND hwnd;
     LPWSTR orig_spec = spec;
     WCHAR any[] = {'*','.','*',0};
+    WCHAR star[] = {'*',0};
 
 #define SENDMSG(msg,wparam,lparam) \
     ((attrib & DDL_POSTMSGS) ? PostMessageW( hwnd, msg, wparam, lparam ) \
@@ -1829,10 +1830,16 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
     TRACE("%p %s %d %d %04x\n", hDlg, debugstr_w(spec), idLBox, idStatic, attrib );
 
     /* If the path exists and is a directory, chdir to it */
-    if (!spec || !spec[0] || SetCurrentDirectoryW( spec )) spec = any;
+    if (!spec || !spec[0] || SetCurrentDirectoryW( spec )) spec = star;
     else
     {
         WCHAR *p, *p2;
+
+        if (!strchrW(spec, '*') && !strchrW(spec, '?'))
+        {
+            SetLastError(ERROR_NO_WILDCARD_CHARACTERS);
+            return FALSE;
+        }
         p = spec;
         if ((p2 = strchrW( p, ':' ))) p = p2 + 1;
         if ((p2 = strrchrW( p, '\\' ))) p = p2;
