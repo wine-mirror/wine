@@ -129,6 +129,33 @@ static BOOL GUIDFromString(LPCWSTR s, GUID *id)
     return FALSE;
 }
 
+static BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+{
+    size_t new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+
+    return TRUE;
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
     switch (reason)
@@ -3868,6 +3895,232 @@ HRESULT WINAPI MFCreateSample(IMFSample **sample)
     init_attribute_object(&object->attributes, 0);
     object->IMFSample_iface.lpVtbl = &mfsample_vtbl;
     *sample = &object->IMFSample_iface;
+
+    return S_OK;
+}
+
+struct collection
+{
+    IMFCollection IMFCollection_iface;
+    LONG refcount;
+    IUnknown **elements;
+    size_t capacity;
+    size_t count;
+};
+
+static struct collection *impl_from_IMFCollection(IMFCollection *iface)
+{
+    return CONTAINING_RECORD(iface, struct collection, IMFCollection_iface);
+}
+
+static void collection_clear(struct collection *collection)
+{
+    size_t i;
+
+    for (i = 0; i < collection->count; ++i)
+    {
+        if (collection->elements[i])
+            IUnknown_Release(collection->elements[i]);
+    }
+
+    heap_free(collection->elements);
+    collection->elements = NULL;
+    collection->count = 0;
+    collection->capacity = 0;
+}
+
+static HRESULT WINAPI collection_QueryInterface(IMFCollection *iface, REFIID riid, void **out)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFCollection) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFCollection_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI collection_AddRef(IMFCollection *iface)
+{
+    struct collection *collection = impl_from_IMFCollection(iface);
+    ULONG refcount = InterlockedIncrement(&collection->refcount);
+
+    TRACE("%p, %d.\n", collection, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI collection_Release(IMFCollection *iface)
+{
+    struct collection *collection = impl_from_IMFCollection(iface);
+    ULONG refcount = InterlockedDecrement(&collection->refcount);
+
+    TRACE("%p, %d.\n", collection, refcount);
+
+    if (!refcount)
+    {
+        collection_clear(collection);
+        heap_free(collection->elements);
+        heap_free(collection);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI collection_GetElementCount(IMFCollection *iface, DWORD *count)
+{
+    struct collection *collection = impl_from_IMFCollection(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    if (!count)
+        return E_POINTER;
+
+    *count = collection->count;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI collection_GetElement(IMFCollection *iface, DWORD idx, IUnknown **element)
+{
+    struct collection *collection = impl_from_IMFCollection(iface);
+
+    TRACE("%p, %u, %p.\n", iface, idx, element);
+
+    if (!element)
+        return E_POINTER;
+
+    if (idx >= collection->count)
+        return E_INVALIDARG;
+
+    *element = collection->elements[idx];
+    if (*element)
+        IUnknown_AddRef(*element);
+
+    return *element ? S_OK : E_UNEXPECTED;
+}
+
+static HRESULT WINAPI collection_AddElement(IMFCollection *iface, IUnknown *element)
+{
+    struct collection *collection = impl_from_IMFCollection(iface);
+
+    TRACE("%p, %p.\n", iface, element);
+
+    if (!mf_array_reserve((void **)&collection->elements, &collection->capacity, collection->count + 1,
+            sizeof(*collection->elements)))
+        return E_OUTOFMEMORY;
+
+    collection->elements[collection->count++] = element;
+    if (element)
+        IUnknown_AddRef(element);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI collection_RemoveElement(IMFCollection *iface, DWORD idx, IUnknown **element)
+{
+    struct collection *collection = impl_from_IMFCollection(iface);
+    size_t count;
+
+    TRACE("%p, %u, %p.\n", iface, idx, element);
+
+    if (!element)
+        return E_POINTER;
+
+    if (idx >= collection->count)
+        return E_INVALIDARG;
+
+    *element = collection->elements[idx];
+
+    count = collection->count - idx - 1;
+    if (count)
+        memmove(&collection->elements[idx], &collection->elements[idx + 1], count * sizeof(*collection->elements));
+    collection->count--;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI collection_InsertElementAt(IMFCollection *iface, DWORD idx, IUnknown *element)
+{
+    struct collection *collection = impl_from_IMFCollection(iface);
+    size_t i;
+
+    TRACE("%p, %u, %p.\n", iface, idx, element);
+
+    if (!mf_array_reserve((void **)&collection->elements, &collection->capacity, idx + 1,
+            sizeof(*collection->elements)))
+        return E_OUTOFMEMORY;
+
+    if (idx < collection->count)
+    {
+        memmove(&collection->elements[idx + 1], &collection->elements[idx],
+            (collection->count - idx) * sizeof(*collection->elements));
+        collection->count++;
+    }
+    else
+    {
+        for (i = collection->count; i < idx; ++i)
+            collection->elements[i] = NULL;
+        collection->count = idx + 1;
+    }
+
+    collection->elements[idx] = element;
+    if (collection->elements[idx])
+        IUnknown_AddRef(collection->elements[idx]);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI collection_RemoveAllElements(IMFCollection *iface)
+{
+    struct collection *collection = impl_from_IMFCollection(iface);
+
+    TRACE("%p.\n", iface);
+
+    collection_clear(collection);
+
+    return S_OK;
+}
+
+static const IMFCollectionVtbl mfcollectionvtbl =
+{
+    collection_QueryInterface,
+    collection_AddRef,
+    collection_Release,
+    collection_GetElementCount,
+    collection_GetElement,
+    collection_AddElement,
+    collection_RemoveElement,
+    collection_InsertElementAt,
+    collection_RemoveAllElements,
+};
+
+/***********************************************************************
+ *      MFCreateCollection (mfplat.@)
+ */
+HRESULT WINAPI MFCreateCollection(IMFCollection **collection)
+{
+    struct collection *object;
+
+    TRACE("%p\n", collection);
+
+    if (!collection)
+        return E_POINTER;
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFCollection_iface.lpVtbl = &mfcollectionvtbl;
+    object->refcount = 1;
+
+    *collection = &object->IMFCollection_iface;
 
     return S_OK;
 }

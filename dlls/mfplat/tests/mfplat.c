@@ -913,6 +913,108 @@ static void test_MFCopyImage(void)
     ok(!memcmp(dest, src, 16), "Unexpected buffer contents.\n");
 }
 
+static void test_MFCreateCollection(void)
+{
+    IMFCollection *collection;
+    IUnknown *element;
+    DWORD count;
+    HRESULT hr;
+
+    hr = MFCreateCollection(NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateCollection(&collection);
+    ok(hr == S_OK, "Failed to create collection, hr %#x.\n", hr);
+
+    hr = IMFCollection_GetElementCount(collection, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    count = 1;
+    hr = IMFCollection_GetElementCount(collection, &count);
+    ok(hr == S_OK, "Failed to get element count, hr %#x.\n", hr);
+    ok(count == 0, "Unexpected count %u.\n", count);
+
+    hr = IMFCollection_GetElement(collection, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    element = (void *)0xdeadbeef;
+    hr = IMFCollection_GetElement(collection, 0, &element);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(element == (void *)0xdeadbeef, "Unexpected pointer.\n");
+
+    hr = IMFCollection_RemoveElement(collection, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    element = (void *)0xdeadbeef;
+    hr = IMFCollection_RemoveElement(collection, 0, &element);
+    ok(hr == E_INVALIDARG, "Failed to remove element, hr %#x.\n", hr);
+    ok(element == (void *)0xdeadbeef, "Unexpected pointer.\n");
+
+    hr = IMFCollection_RemoveAllElements(collection);
+    ok(hr == S_OK, "Failed to clear, hr %#x.\n", hr);
+
+    hr = IMFCollection_AddElement(collection, (IUnknown *)collection);
+    ok(hr == S_OK, "Failed to add element, hr %#x.\n", hr);
+
+    count = 0;
+    hr = IMFCollection_GetElementCount(collection, &count);
+    ok(hr == S_OK, "Failed to get element count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = IMFCollection_AddElement(collection, NULL);
+    ok(hr == S_OK, "Failed to add element, hr %#x.\n", hr);
+
+    count = 0;
+    hr = IMFCollection_GetElementCount(collection, &count);
+    ok(hr == S_OK, "Failed to get element count, hr %#x.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+
+    hr = IMFCollection_InsertElementAt(collection, 10, (IUnknown *)collection);
+    ok(hr == S_OK, "Failed to insert element, hr %#x.\n", hr);
+
+    count = 0;
+    hr = IMFCollection_GetElementCount(collection, &count);
+    ok(hr == S_OK, "Failed to get element count, hr %#x.\n", hr);
+    ok(count == 11, "Unexpected count %u.\n", count);
+
+    hr = IMFCollection_GetElement(collection, 0, &element);
+    ok(hr == S_OK, "Failed to get element, hr %#x.\n", hr);
+    ok(element == (IUnknown *)collection, "Unexpected element.\n");
+    IUnknown_Release(element);
+
+    hr = IMFCollection_GetElement(collection, 1, &element);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+    ok(!element, "Unexpected element.\n");
+
+    hr = IMFCollection_GetElement(collection, 2, &element);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+    ok(!element, "Unexpected element.\n");
+
+    hr = IMFCollection_GetElement(collection, 10, &element);
+    ok(hr == S_OK, "Failed to get element, hr %#x.\n", hr);
+    ok(element == (IUnknown *)collection, "Unexpected element.\n");
+    IUnknown_Release(element);
+
+    hr = IMFCollection_InsertElementAt(collection, 0, NULL);
+    ok(hr == S_OK, "Failed to insert element, hr %#x.\n", hr);
+
+    hr = IMFCollection_GetElement(collection, 0, &element);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFCollection_RemoveAllElements(collection);
+    ok(hr == S_OK, "Failed to clear, hr %#x.\n", hr);
+
+    count = 1;
+    hr = IMFCollection_GetElementCount(collection, &count);
+    ok(hr == S_OK, "Failed to get element count, hr %#x.\n", hr);
+    ok(count == 0, "Unexpected count %u.\n", count);
+
+    hr = IMFCollection_InsertElementAt(collection, 0, NULL);
+    ok(hr == S_OK, "Failed to insert element, hr %#x.\n", hr);
+
+    IMFCollection_Release(collection);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -932,6 +1034,7 @@ START_TEST(mfplat)
     test_MFCreateAsyncResult();
     test_allocate_queue();
     test_MFCopyImage();
+    test_MFCreateCollection();
 
     CoUninitialize();
 }
