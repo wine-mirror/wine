@@ -2822,15 +2822,16 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
     TRACE("(%04lx, %04lx, %p, %d, %d, %d, %p, %p)\n", listener, acceptor, dest, dest_len, local_addr_len,
                                                   rem_addr_len, received, overlapped);
 
-    if (!dest)
-    {
-        SetLastError(WSAEINVAL);
-        return FALSE;
-    }
-
     if (!overlapped)
     {
         SetLastError(WSA_INVALID_PARAMETER);
+        return FALSE;
+    }
+    overlapped->Internal = STATUS_PENDING;
+
+    if (!dest)
+    {
+        SetLastError(WSAEINVAL);
         return FALSE;
     }
 
