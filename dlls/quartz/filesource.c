@@ -37,6 +37,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
 
+static const AM_MEDIA_TYPE default_mt =
+{
+    {0xe436eb83,0x524f,0x11ce,{0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70}},   /* MEDIATYPE_Stream */
+    {0,0,0,{0,0,0,0,0,0,0,0}},
+    TRUE,
+    FALSE,
+    1,
+    {0,0,0,{0,0,0,0,0,0,0,0}},
+    NULL,
+    0,
+    NULL
+};
+
 typedef struct AsyncReader
 {
     BaseFilter filter;
@@ -618,19 +631,11 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
         This->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         if (!pmt)
         {
-            This->pmt->bFixedSizeSamples = TRUE;
-            This->pmt->bTemporalCompression = FALSE;
-            This->pmt->cbFormat = 0;
-            This->pmt->pbFormat = NULL;
-            This->pmt->pUnk = NULL;
-            This->pmt->lSampleSize = 1;
-            This->pmt->formattype = GUID_NULL;
-            hr = GetClassMediaFile(pReader, pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL);
-            if (FAILED(hr))
+            CopyMediaType(This->pmt, &default_mt);
+            if (FAILED(GetClassMediaFile(pReader, pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL)))
             {
                 This->pmt->majortype = MEDIATYPE_Stream;
                 This->pmt->subtype = MEDIASUBTYPE_NULL;
-                hr = S_OK;
             }
         }
         else
@@ -763,14 +768,20 @@ static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(BasePin *pin, const AM_M
     return S_FALSE;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(BasePin *iface, int index, AM_MEDIA_TYPE *mt)
 {
     FileAsyncReader *This = impl_from_BasePin(iface);
-    if (iPosition < 0)
+    AsyncReader *filter = impl_from_IBaseFilter(This->pin.pin.pinInfo.pFilter);
+
+    if (index < 0)
         return E_INVALIDARG;
-    if (iPosition > 0)
+    else if (index > 1)
         return VFW_S_NO_MORE_ITEMS;
-    CopyMediaType(pmt, impl_from_IBaseFilter(This->pin.pin.pinInfo.pFilter)->pmt);
+
+    if (index == 0)
+        CopyMediaType(mt, filter->pmt);
+    else if (index == 1)
+        CopyMediaType(mt, &default_mt);
     return S_OK;
 }
 

@@ -257,15 +257,11 @@ static void test_file_source_filter(void)
         CoTaskMemFree(pmt);
 
         hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
-todo_wine
         ok(hr == S_OK, "Got hr %#x.\n", hr);
-        if (hr == S_OK)
-        {
-            mt = file_mt;
-            mt.subtype = GUID_NULL;
-            ok(!memcmp(pmt, &mt, sizeof(*pmt)), "Media types did not match.\n");
-            CoTaskMemFree(pmt);
-        }
+        mt = file_mt;
+        mt.subtype = GUID_NULL;
+        ok(!memcmp(pmt, &mt, sizeof(*pmt)), "Media types did not match.\n");
+        CoTaskMemFree(pmt);
 
         hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
         ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -339,26 +335,22 @@ todo_wine
     CoTaskMemFree(pmt);
 
     hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Stream), "Got major type %s.\n",
-                wine_dbgstr_guid(&pmt->majortype));
-        ok(IsEqualGUID(&pmt->subtype, &GUID_NULL), "Got subtype %s.\n",
-                wine_dbgstr_guid(&pmt->subtype));
-        ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
-        ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
-        ok(pmt->lSampleSize == 1, "Got sample size %u.\n", pmt->lSampleSize);
-        ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Got format type %s.\n",
-                wine_dbgstr_guid(&pmt->formattype));
-        ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
-        ok(!pmt->cbFormat, "Got format size %#x.\n", pmt->cbFormat);
-        ok(!pmt->pbFormat, "Got format %p.\n", pmt->pbFormat);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Stream), "Got major type %s.\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    ok(IsEqualGUID(&pmt->subtype, &GUID_NULL), "Got subtype %s.\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    ok(pmt->lSampleSize == 1, "Got sample size %u.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+    ok(!pmt->cbFormat, "Got format size %#x.\n", pmt->cbFormat);
+    ok(!pmt->pbFormat, "Got format %p.\n", pmt->pbFormat);
 
-        hr = IPin_QueryAccept(pin, pmt);
-        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-    }
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
