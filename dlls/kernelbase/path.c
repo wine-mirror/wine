@@ -326,7 +326,7 @@ HRESULT WINAPI PathAllocCombine(const WCHAR *path1, const WCHAR *path2, DWORD fl
     if (!path1 || !path2) return PathAllocCanonicalize(path1 ? path1 : path2, flags, out);
 
     /* If path2 is fully qualified, use path2 only */
-    if (path2 && ((isalphaW(path2[0]) && path2[1] == ':') || (path2[0] == '\\' && path2[1] == '\\')))
+    if ((isalphaW(path2[0]) && path2[1] == ':') || (path2[0] == '\\' && path2[1] == '\\'))
     {
         path1 = path2;
         path2 = NULL;
