@@ -1560,6 +1560,9 @@ static void test_query_object(void)
         pNtClose( handle );
     }
     pRtlFreeUnicodeString( &session );
+
+    test_object_type( GetCurrentProcess(), "Process" );
+    test_no_file_info( GetCurrentProcess() );
 }
 
 static void test_type_mismatch(void)
