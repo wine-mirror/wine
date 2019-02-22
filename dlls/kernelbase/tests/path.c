@@ -1035,6 +1035,7 @@ static void test_PathCchCanonicalize(void)
         ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
     }
 
+    path_inW[0] = 0;
     hr = pPathCchCanonicalize(path_outW, 0, path_inW);
     ok(hr == E_INVALIDARG, "expect hr %#x, got %#x\n", E_INVALIDARG, hr);
 
