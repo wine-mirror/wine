@@ -183,7 +183,7 @@ static const struct object_ops device_file_ops =
 {
     sizeof(struct device_file),       /* size */
     device_file_dump,                 /* dump */
-    no_get_type,                      /* get_type */
+    file_get_type,                    /* get_type */
     add_queue,                        /* add_queue */
     remove_queue,                     /* remove_queue */
     default_fd_signaled,              /* signaled */

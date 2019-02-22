@@ -75,7 +75,7 @@ static const struct object_ops mailslot_ops =
 {
     sizeof(struct mailslot),   /* size */
     mailslot_dump,             /* dump */
-    no_get_type,               /* get_type */
+    file_get_type,             /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     default_fd_signaled,       /* signaled */
@@ -131,7 +131,7 @@ static const struct object_ops mail_writer_ops =
 {
     sizeof(struct mail_writer), /* size */
     mail_writer_dump,           /* dump */
-    no_get_type,                /* get_type */
+    file_get_type,              /* get_type */
     no_add_queue,               /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */

@@ -64,7 +64,6 @@ struct file
 static unsigned int generic_file_map_access( unsigned int access );
 
 static void file_dump( struct object *obj, int verbose );
-static struct object_type *file_get_type( struct object *obj );
 static struct fd *file_get_fd( struct object *obj );
 static struct security_descriptor *file_get_sd( struct object *obj );
 static int file_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
@@ -269,7 +268,7 @@ static void file_dump( struct object *obj, int verbose )
     fprintf( stderr, "File fd=%p\n", file->fd );
 }
 
-static struct object_type *file_get_type( struct object *obj )
+struct object_type *file_get_type( struct object *obj )
 {
     static const WCHAR name[] = {'F','i','l','e'};
     static const struct unicode_str str = { name, sizeof(name) };

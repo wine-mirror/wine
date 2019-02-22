@@ -1500,6 +1500,7 @@ static void test_query_object(void)
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
     trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
 
+    test_object_type( handle, "File" );
     test_file_info( handle );
 
     pNtClose( handle );
@@ -1857,6 +1858,8 @@ static void test_null_device(void)
                          FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
     ok(status == STATUS_SUCCESS,
        "expected STATUS_SUCCESS, got %08x\n", status);
+
+    test_object_type(null, "File");
 
     SetLastError(0xdeadbeef);
     ret = WriteFile(null, buf, sizeof(buf), &num_bytes, NULL);
