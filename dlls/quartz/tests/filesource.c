@@ -602,6 +602,70 @@ todo_wine
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_filter_state(void)
+{
+    IBaseFilter *filter = create_file_source();
+    IMediaControl *control;
+    IFilterGraph2 *graph;
+    FILTER_STATE state;
+    HRESULT hr;
+    ULONG ref;
+
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    IFilterGraph2_AddFilter(graph, filter, NULL);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %d.\n", state);
+
+    hr = IMediaControl_Run(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_GetState(filter, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %d.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_GetState(filter, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %d.\n", state);
+
+    hr = IMediaControl_Pause(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_GetState(filter, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %d.\n", state);
+
+    hr = IMediaControl_Run(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_GetState(filter, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %d.\n", state);
+
+    hr = IMediaControl_Pause(control);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_GetState(filter, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %d.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_GetState(filter, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %d.\n", state);
+
+    IMediaControl_Release(control);
+    IFilterGraph2_Release(graph);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(filesource)
 {
     CoInitialize(NULL);
@@ -610,6 +674,7 @@ START_TEST(filesource)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_filter_state();
     test_file_source_filter();
 
     CoUninitialize();
