@@ -63,117 +63,101 @@ static void test_topology(void)
     hr = IMFTopologyNode_SetTopoNodeID(node2, id);
     ok(hr == S_OK, "Failed to set node id, hr %#x.\n", hr);
 
+    hr = IMFTopology_GetNodeCount(topology, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     count = 1;
     hr = IMFTopology_GetNodeCount(topology, &count);
-todo_wine {
     ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
     ok(count == 0, "Unexpected node count %u.\n", count);
-}
+
     /* Same id, different nodes. */
     hr = IMFTopology_AddNode(topology, node);
-todo_wine
     ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
 
     count = 0;
     hr = IMFTopology_GetNodeCount(topology, &count);
-todo_wine {
     ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
     ok(count == 1, "Unexpected node count %u.\n", count);
-}
+
     hr = IMFTopology_AddNode(topology, node2);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     IMFTopologyNode_Release(node2);
 
     hr = IMFTopology_GetNodeByID(topology, id, &node2);
-todo_wine {
     ok(hr == S_OK, "Failed to get a node, hr %#x.\n", hr);
     ok(node2 == node, "Unexpected node.\n");
-}
-    if (SUCCEEDED(hr))
-        IMFTopologyNode_Release(node2);
+    IMFTopologyNode_Release(node2);
 
     /* Change node id, add it again. */
     hr = IMFTopologyNode_SetTopoNodeID(node, ++id);
     ok(hr == S_OK, "Failed to set node id, hr %#x.\n", hr);
 
     hr = IMFTopology_GetNodeByID(topology, id, &node2);
-todo_wine {
     ok(hr == S_OK, "Failed to get a node, hr %#x.\n", hr);
     ok(node2 == node, "Unexpected node.\n");
-}
-    if (SUCCEEDED(hr))
-        IMFTopologyNode_Release(node2);
+    IMFTopologyNode_Release(node2);
 
     hr = IMFTopology_GetNodeByID(topology, id + 1, &node2);
-todo_wine
     ok(hr == MF_E_NOT_FOUND, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTopology_AddNode(topology, node);
-todo_wine
     ok(hr == E_INVALIDARG, "Failed to add a node, hr %#x.\n", hr);
 
     hr = IMFTopology_GetNode(topology, 0, &node2);
-todo_wine {
     ok(hr == S_OK, "Failed to get a node, hr %#x.\n", hr);
     ok(node2 == node, "Unexpected node.\n");
-}
-    if (SUCCEEDED(hr))
-        IMFTopologyNode_Release(node2);
+    IMFTopologyNode_Release(node2);
+
+    hr = IMFTopology_GetNode(topology, 1, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTopology_GetNode(topology, 1, &node2);
-todo_wine
     ok(hr == MF_E_INVALIDINDEX, "Failed to get a node, hr %#x.\n", hr);
 
     hr = IMFTopology_GetNode(topology, -2, &node2);
-todo_wine
     ok(hr == MF_E_INVALIDINDEX, "Failed to get a node, hr %#x.\n", hr);
 
     hr = MFCreateTopologyNode(MF_TOPOLOGY_TEE_NODE, &node2);
     ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
     hr = IMFTopology_AddNode(topology, node2);
-todo_wine
     ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
     IMFTopologyNode_Release(node2);
 
     count = 0;
     hr = IMFTopology_GetNodeCount(topology, &count);
-todo_wine {
     ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
     ok(count == 2, "Unexpected node count %u.\n", count);
-}
+
     /* Remove with detached node, existing id. */
     hr = MFCreateTopologyNode(MF_TOPOLOGY_TEE_NODE, &node2);
     ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
     hr = IMFTopologyNode_SetTopoNodeID(node2, id);
     ok(hr == S_OK, "Failed to set node id, hr %#x.\n", hr);
     hr = IMFTopology_RemoveNode(topology, node2);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     IMFTopologyNode_Release(node2);
 
     hr = IMFTopology_RemoveNode(topology, node);
-todo_wine
     ok(hr == S_OK, "Failed to remove a node, hr %#x.\n", hr);
 
     count = 0;
     hr = IMFTopology_GetNodeCount(topology, &count);
-todo_wine {
     ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
     ok(count == 1, "Unexpected node count %u.\n", count);
-}
+
     hr = IMFTopology_Clear(topology);
-todo_wine
     ok(hr == S_OK, "Failed to clear topology, hr %#x.\n", hr);
 
     count = 1;
     hr = IMFTopology_GetNodeCount(topology, &count);
-todo_wine {
     ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
     ok(count == 0, "Unexpected node count %u.\n", count);
-}
+
     hr = IMFTopology_Clear(topology);
-todo_wine
     ok(hr == S_OK, "Failed to clear topology, hr %#x.\n", hr);
 
     hr = IMFTopologyNode_SetTopoNodeID(node, 123);
@@ -189,11 +173,9 @@ todo_wine
     ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
 
     hr = IMFTopology_AddNode(topology, node);
-todo_wine
     ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
 
     hr = IMFTopology_AddNode(topology, node2);
-todo_wine
     ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
 
     hr = IMFTopologyNode_GetTopoNodeID(node, &id);
@@ -203,12 +185,9 @@ todo_wine
     ok(hr == S_OK, "Failed to get node id, hr %#x.\n", hr);
 
     hr = IMFTopology_GetNodeByID(topology, id, &node3);
-todo_wine {
     ok(hr == S_OK, "Failed to get a node, hr %#x.\n", hr);
     ok(node3 == node, "Unexpected node.\n");
-}
-    if (SUCCEEDED(hr))
-        IMFTopologyNode_Release(node3);
+    IMFTopologyNode_Release(node3);
 
     IMFTopologyNode_Release(node);
     IMFTopologyNode_Release(node2);
