@@ -1316,15 +1316,30 @@ static void _test_no_file_info(unsigned line, HANDLE handle)
                        "FileIoCompletionNotificationInformation returned %x\n", status);
 }
 
+#define test_object_type(a,b) _test_object_type(__LINE__,a,b)
+static void _test_object_type(unsigned line, HANDLE handle, const char *expected_name)
+{
+    char buffer[1024];
+    UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
+    ULONG len = 0;
+    NTSTATUS status;
+
+    pRtlCreateUnicodeStringFromAsciiz( &expect, expected_name );
+
+    memset( buffer, 0, sizeof(buffer) );
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
+    ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    ok_(__FILE__,line)( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
+    ok_(__FILE__,line)( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
+    ok_(__FILE__,line)( str->Length == expect.Length && !memcmp( str->Buffer, expect.Buffer, expect.Length ),
+                        "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+}
+
 static void test_query_object(void)
 {
     static const WCHAR name[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
                                  '\\','t','e','s','t','_','e','v','e','n','t'};
     static const WCHAR type_event[] = {'E','v','e','n','t'};
-    static const WCHAR type_file[] = {'F','i','l','e'};
-    static const WCHAR type_iocompletion[] = {'I','o','C','o','m','p','l','e','t','i','o','n'};
-    static const WCHAR type_directory[] = {'D','i','r','e','c','t','o','r','y'};
-    static const WCHAR type_section[] = {'S','e','c','t','i','o','n'};
     HANDLE handle, client;
     char buffer[1024];
     NTSTATUS status;
@@ -1382,15 +1397,7 @@ static void test_query_object(void)
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
     ok( len >= sizeof(UNICODE_STRING) + sizeof(name) + sizeof(WCHAR), "unexpected len %u\n", len );
 
-    len = 0;
-    memset( buffer, 0, sizeof(buffer) );
-    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
-    ok( str->Buffer && !memcmp( str->Buffer, type_event, sizeof(type_event) ),
-                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_object_type( handle, "Event" );
 
     len -= sizeof(WCHAR);
     status = pNtQueryObject( handle, ObjectTypeInformation, buffer, len, &len );
@@ -1439,82 +1446,42 @@ static void test_query_object(void)
     ok( len == expected_len || broken(!len),
         "unexpected len %u\n", len );
 
-    len = 0;
-    memset( buffer, 0, sizeof(buffer) );
-    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
-    ok( len >= expected_len, "unexpected len %u\n", len );
-    ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
-                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
-    test_file_info( handle );
+    test_object_type( handle, "File" );
 
     pNtClose( handle );
 
     GetTempPathA(MAX_PATH, tmp_path);
     GetTempFileNameA(tmp_path, "foo", 0, file1);
     handle = CreateFileA(file1, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    len = 0;
-    memset( buffer, 0, sizeof(buffer) );
-    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
-    ok( len >= expected_len, "unexpected len %u\n", len );
-    ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
-                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_object_type(handle, "File");
     DeleteFileA( file1 );
     test_file_info( handle );
     pNtClose( handle );
 
     status = pNtCreateIoCompletion( &handle, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateIoCompletion failed %x\n", status);
-    len = 0;
-    memset( buffer, 0, sizeof(buffer) );
-    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
-    ok( len >= expected_len, "unexpected len %u\n", len );
-    ok( str->Buffer && !memcmp( str->Buffer, type_iocompletion, sizeof(type_iocompletion) ),
-                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+
+    test_object_type( handle, "IoCompletion" );
     test_no_file_info( handle );
+
     pNtClose( handle );
 
     status = pNtCreateDirectoryObject( &handle, DIRECTORY_QUERY, NULL );
     ok(status == STATUS_SUCCESS, "Failed to create Directory %08x\n", status);
-    len = 0;
-    memset( buffer, 0, sizeof(buffer) );
-    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
-    ok( len >= expected_len, "unexpected len %u\n", len );
-    ok( str->Buffer && !memcmp( str->Buffer, type_directory, sizeof(type_directory) ),
-                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+
+    test_object_type( handle, "Directory" );
     test_no_file_info( handle );
+
     pNtClose( handle );
 
     size.u.LowPart = 256;
     size.u.HighPart = 0;
     status = pNtCreateSection( &handle, SECTION_MAP_WRITE, NULL, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
     ok( status == STATUS_SUCCESS , "NtCreateSection returned %x\n", status );
-    len = 0;
-    memset( buffer, 0, sizeof(buffer) );
-    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
-    ok( len >= expected_len, "unexpected len %u\n", len );
-    ok( str->Buffer && !memcmp( str->Buffer, type_section, sizeof(type_section) ),
-                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+
+    test_object_type( handle, "Section" );
     test_no_file_info( handle );
+
     pNtClose( handle );
 
     handle = CreateMailslotA( "\\\\.\\mailslot\\test_mailslot", 100, 1000, NULL );
@@ -1531,7 +1498,9 @@ static void test_query_object(void)
     ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_mailslot") * sizeof(WCHAR),
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
     trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
+
     test_file_info( handle );
+
     pNtClose( handle );
 
     handle = CreateNamedPipeA( "\\\\.\\pipe\\test_pipe", PIPE_ACCESS_DUPLEX, PIPE_READMODE_BYTE,
@@ -1553,30 +1522,14 @@ static void test_query_object(void)
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
     trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
 
-    len = 0;
-    memset( buffer, 0, sizeof(buffer) );
-    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
-    ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
-                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_object_type( handle, "File" );
     test_file_info( handle );
 
     client = CreateFileA( "\\\\.\\pipe\\test_pipe", GENERIC_READ | GENERIC_WRITE,
                           0, NULL, OPEN_EXISTING, 0, 0 );
     ok( client != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
 
-    len = 0;
-    memset( buffer, 0, sizeof(buffer) );
-    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
-    ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
-                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    test_object_type( client, "File" );
     test_file_info( client );
 
     pNtClose( client );
