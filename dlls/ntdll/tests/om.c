@@ -1348,6 +1348,7 @@ static void test_query_object(void)
     UNICODE_STRING path, session, *str;
     char dir[MAX_PATH], tmp_path[MAX_PATH], file1[MAX_PATH + 16];
     LARGE_INTEGER size;
+    BOOL ret;
 
     sprintf( tmp_path, "\\Sessions\\%u", NtCurrentTeb()->Peb->SessionId );
     pRtlCreateUnicodeStringFromAsciiz( &session, tmp_path );
@@ -1566,6 +1567,15 @@ static void test_query_object(void)
 
     test_object_type( GetCurrentThread(), "Thread" );
     test_no_file_info( GetCurrentThread() );
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &handle);
+    ok(ret, "OpenProcessToken failed: %u\n", GetLastError());
+
+    test_object_type( handle, "Token" );
+    test_no_file_info( handle );
+
+    pNtClose(handle);
+
 }
 
 static void test_type_mismatch(void)

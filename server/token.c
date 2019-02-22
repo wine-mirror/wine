@@ -134,6 +134,7 @@ struct group
 };
 
 static void token_dump( struct object *obj, int verbose );
+static struct object_type *token_get_type( struct object *obj );
 static unsigned int token_map_access( struct object *obj, unsigned int access );
 static void token_destroy( struct object *obj );
 
@@ -141,7 +142,7 @@ static const struct object_ops token_ops =
 {
     sizeof(struct token),      /* size */
     token_dump,                /* dump */
-    no_get_type,               /* get_type */
+    token_get_type,            /* get_type */
     no_add_queue,              /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
@@ -165,6 +166,13 @@ static void token_dump( struct object *obj, int verbose )
     assert( obj->ops == &token_ops );
     fprintf( stderr, "Token id=%d.%u primary=%u impersonation level=%d\n", token->token_id.high_part,
              token->token_id.low_part, token->primary, token->impersonation_level );
+}
+
+static struct object_type *token_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'T','o','k','e','n'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static unsigned int token_map_access( struct object *obj, unsigned int access )
