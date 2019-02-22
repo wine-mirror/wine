@@ -599,13 +599,12 @@ static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
 {
     static const WCHAR rsabaseW[] =
         {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','C','r','y','p','t','o','\\','R','S','A','\\',0};
-    DWORD size;
     CERT_KEY_CONTEXT keyctx;
+    DWORD size = sizeof(keyctx), prov_size = 0;
     CRYPT_KEY_PROV_INFO *prov;
     WCHAR username[UNLEN + 1], *ret = NULL;
     DWORD len = ARRAY_SIZE(username);
 
-    size = sizeof(keyctx);
     if (CertGetCertificateContextProperty(ctx, CERT_KEY_CONTEXT_PROP_ID, &keyctx, &size))
     {
         char *str;
@@ -623,12 +622,10 @@ static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
         MultiByteToWideChar(CP_ACP, 0, str, -1, ret + strlenW(ret), len);
         heap_free(str);
     }
-    else
+    else if (CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, NULL, &prov_size))
     {
-        size = 0;
-        if (!CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, NULL, &size)) return NULL;
-        if (!(prov = heap_alloc(size))) return NULL;
-        if (!CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, prov, &size))
+        if (!(prov = heap_alloc(prov_size))) return NULL;
+        if (!CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, prov, &prov_size))
         {
             heap_free(prov);
             return NULL;
