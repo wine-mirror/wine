@@ -4124,3 +4124,21 @@ HRESULT WINAPI MFCreateCollection(IMFCollection **collection)
 
     return S_OK;
 }
+
+/***********************************************************************
+ *      MFHeapAlloc (mfplat.@)
+ */
+void *WINAPI MFHeapAlloc(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type)
+{
+    TRACE("%lu, %#x, %s, %d, %#x.\n", size, flags, debugstr_a(file), line, type);
+    return HeapAlloc(GetProcessHeap(), flags, size);
+}
+
+/***********************************************************************
+ *      MFHeapFree (mfplat.@)
+ */
+void WINAPI MFHeapFree(void *p)
+{
+    TRACE("%p\n", p);
+    HeapFree(GetProcessHeap(), 0, p);
+}

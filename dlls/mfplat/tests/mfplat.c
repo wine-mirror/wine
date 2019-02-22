@@ -41,6 +41,8 @@ static HRESULT (WINAPI *pMFCopyImage)(BYTE *dest, LONG deststride, const BYTE *s
 static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
 static HRESULT (WINAPI *pMFCreateMemoryBuffer)(DWORD max_length, IMFMediaBuffer **buffer);
+static void*   (WINAPI *pMFHeapAlloc)(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
+static void    (WINAPI *pMFHeapFree)(void *p);
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -314,6 +316,8 @@ static void init_functions(void)
     X(MFCreateSourceResolver);
     X(MFCreateMFByteStreamOnStream);
     X(MFCreateMemoryBuffer);
+    X(MFHeapAlloc);
+    X(MFHeapFree);
 #undef X
 }
 
@@ -1015,6 +1019,22 @@ static void test_MFCreateCollection(void)
     IMFCollection_Release(collection);
 }
 
+static void test_MFHeapAlloc(void)
+{
+    void *res;
+
+    if (!pMFHeapAlloc)
+    {
+        win_skip("MFHeapAlloc() is not available.\n");
+        return;
+    }
+
+    res = pMFHeapAlloc(16, 0, NULL, 0, eAllocationTypeIgnore);
+    ok(res != NULL, "MFHeapAlloc failed.\n");
+
+    pMFHeapFree(res);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -1035,6 +1055,7 @@ START_TEST(mfplat)
     test_allocate_queue();
     test_MFCopyImage();
     test_MFCreateCollection();
+    test_MFHeapAlloc();
 
     CoUninitialize();
 }

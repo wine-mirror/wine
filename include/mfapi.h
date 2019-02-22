@@ -68,6 +68,14 @@ typedef struct tagMFASYNCRESULT
     HANDLE hEvent;
 } MFASYNCRESULT;
 
+typedef enum _EAllocationType
+{
+    eAllocationTypeDynamic,
+    eAllocationTypeRT,
+    eAllocationTypePageable,
+    eAllocationTypeIgnore
+} EAllocationType;
+
 DEFINE_GUID(MF_MT_AVG_BITRATE,         0x20332624, 0xfb0d, 0x4d9e, 0xbd, 0x0d, 0xcb, 0xf6, 0x78, 0x6c, 0x10, 0x2e);
 DEFINE_GUID(MF_MT_FRAME_RATE,          0xc459a2e8, 0x3d2c, 0x4e44, 0xb1, 0x32, 0xfe, 0xe5, 0x15, 0x6c, 0x7b, 0xb0);
 DEFINE_GUID(MF_MT_FRAME_SIZE,          0x1652c33d, 0xd6b2, 0x4012, 0xb8, 0x34, 0x72, 0x03, 0x08, 0x49, 0xa3, 0x7d);
@@ -94,6 +102,8 @@ HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HR
 HRESULT WINAPI MFCreateMediaType(IMFMediaType **type);
 HRESULT WINAPI MFCreateSample(IMFSample **sample);
 HRESULT WINAPI MFCreateMemoryBuffer(DWORD max_length, IMFMediaBuffer **buffer);
+void *  WINAPI MFHeapAlloc(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
+void    WINAPI MFHeapFree(void *ptr);
 HRESULT WINAPI MFGetTimerPeriodicity(DWORD *periodicity);
 HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *input_type,
                        MFT_REGISTER_TYPE_INFO *output_type, IMFAttributes *attributes,

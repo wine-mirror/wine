@@ -103,8 +103,8 @@
 @ stub MFGetUncompressedVideoFormat
 @ stub MFGetWorkQueueMMCSSClass
 @ stub MFGetWorkQueueMMCSSTaskId
-@ stub MFHeapAlloc
-@ stub MFHeapFree
+@ stdcall MFHeapAlloc(long long str long long)
+@ stdcall MFHeapFree(ptr)
 @ stub MFInitAMMediaTypeFromMFMediaType
 @ stub MFInitAttributesFromBlob
 @ stub MFInitMediaTypeFromAMMediaType
