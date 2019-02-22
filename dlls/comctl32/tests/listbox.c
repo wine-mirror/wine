@@ -1812,7 +1812,7 @@ static void test_listbox_dlgdir(void)
     strcpy(pathBuffer, "C:\\");
     res = DlgDirListA(hWnd, pathBuffer, ID_TEST_LISTBOX, 0, DDL_DIRECTORY | DDL_EXCLUSIVE);
     ok(res, "DlgDirList failed to list C:\\ folders\n");
-    todo_wine ok(!strcmp(pathBuffer, "*"), "DlgDirList set the invalid path spec '%s', expected '*'\n", pathBuffer);
+    ok(!strcmp(pathBuffer, "*"), "DlgDirList set the invalid path spec '%s', expected '*'\n", pathBuffer);
 
     strcpy(pathBuffer, "C:\\*");
     res = DlgDirListA(hWnd, pathBuffer, ID_TEST_LISTBOX, 0, DDL_DIRECTORY | DDL_EXCLUSIVE);
@@ -1823,8 +1823,8 @@ static void test_listbox_dlgdir(void)
     SetLastError(0xdeadbeef);
     strcpy(pathBuffer, "C:\\INVALID$$DIR");
     res = DlgDirListA(hWnd, pathBuffer, ID_TEST_LISTBOX, 0, DDL_DIRECTORY | DDL_EXCLUSIVE);
-    todo_wine ok(!res, "DlgDirList should have failed with 0 but %d was returned\n", res);
-    todo_wine ok(GetLastError() == ERROR_NO_WILDCARD_CHARACTERS,
+    ok(!res, "DlgDirList should have failed with 0 but %d was returned\n", res);
+    ok(GetLastError() == ERROR_NO_WILDCARD_CHARACTERS,
        "GetLastError should return 0x589, got 0x%X\n",GetLastError());
 
     DestroyWindow(hWnd);
