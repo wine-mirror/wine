@@ -28,10 +28,14 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 #include "mfreadwrite.h"
+#include "mfidl.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 DEFINE_GUID(CLSID_MFReadWriteClassFactory, 0x48e2ed0f, 0x98c2, 0x4a37, 0xbe, 0xd5, 0x16, 0x63, 0x12, 0xdd, 0xd8, 0x3f);
+DEFINE_GUID(CLSID_MFSourceReader, 0x1777133c, 0x0881, 0x411b, 0xa5, 0x77, 0xad, 0x54, 0x5f, 0x07, 0x14, 0xc4);
+DEFINE_GUID(CLSID_MFSinkWriter, 0xa3bbfb17, 0x8273, 0x4e52, 0x9e, 0x0e, 0x97, 0x39, 0xdc, 0x88, 0x79, 0x90);
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -50,15 +54,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
-}
-
-
-HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes,
-                                                   IMFSourceReader **reader)
-{
-    FIXME("%p %p %p stub.\n", source, attributes, reader);
-
-    return E_NOTIMPL;
 }
 
 HRESULT WINAPI DllCanUnloadNow(void)
@@ -228,21 +223,52 @@ struct IMFSourceReaderVtbl srcreader_vtbl =
     src_reader_GetPresentationAttribute
 };
 
-HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *stream, IMFAttributes *attributes, IMFSourceReader **reader)
+static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttributes *attributes,
+        REFIID riid, void **out)
 {
     srcreader *object;
+    HRESULT hr;
 
-    TRACE("%p, %p, %p\n", stream, attributes, reader);
-
-    object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
-    if(!object)
+    object = heap_alloc(sizeof(*object));
+    if (!object)
         return E_OUTOFMEMORY;
 
-    object->ref = 1;
     object->IMFSourceReader_iface.lpVtbl = &srcreader_vtbl;
+    object->ref = 1;
 
-    *reader = &object->IMFSourceReader_iface;
-    return S_OK;
+    hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
+    IMFSourceReader_Release(&object->IMFSourceReader_iface);
+    return hr;
+}
+
+static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttributes *attributes,
+        REFIID riid, void **out)
+{
+    /* FIXME: resolve bytestream to media source */
+
+    return create_source_reader_from_source(NULL, attributes, riid, out);
+}
+
+/***********************************************************************
+ *      MFCreateSourceReaderFromByteStream (mfreadwrite.@)
+ */
+HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *stream, IMFAttributes *attributes,
+        IMFSourceReader **reader)
+{
+    TRACE("%p, %p, %p.\n", stream, attributes, reader);
+
+    return create_source_reader_from_stream(stream, attributes, &IID_IMFSourceReader, (void **)reader);
+}
+
+/***********************************************************************
+ *      MFCreateSourceReaderFromMediaSource (mfreadwrite.@)
+ */
+HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes,
+                                                   IMFSourceReader **reader)
+{
+    TRACE("%p, %p, %p.\n", source, attributes, reader);
+
+    return create_source_reader_from_source(source, attributes, &IID_IMFSourceReader, (void **)reader);
 }
 
 static HRESULT WINAPI readwrite_factory_QueryInterface(IMFReadWriteClassFactory *iface, REFIID riid, void **out)
@@ -281,9 +307,43 @@ static HRESULT WINAPI readwrite_factory_CreateInstanceFromURL(IMFReadWriteClassF
 static HRESULT WINAPI readwrite_factory_CreateInstanceFromObject(IMFReadWriteClassFactory *iface, REFCLSID clsid,
         IUnknown *unk, IMFAttributes *attributes, REFIID riid, void **out)
 {
-    FIXME("%s, %p, %p, %s, %p.\n", debugstr_guid(clsid), unk, attributes, debugstr_guid(riid), out);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%s, %p, %p, %s, %p.\n", debugstr_guid(clsid), unk, attributes, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(clsid, &CLSID_MFSourceReader))
+    {
+        IMFMediaSource *source = NULL;
+        IMFByteStream *stream = NULL;
+
+        hr = IUnknown_QueryInterface(unk, &IID_IMFByteStream, (void **)&stream);
+        if (FAILED(hr))
+            hr = IUnknown_QueryInterface(unk, &IID_IMFMediaSource, (void **)&source);
+
+        if (stream)
+            hr = create_source_reader_from_stream(stream, attributes, riid, out);
+        else if (source)
+            hr = create_source_reader_from_source(source, attributes, riid, out);
+
+        if (source)
+            IMFMediaSource_Release(source);
+        if (stream)
+            IMFByteStream_Release(stream);
+
+        return hr;
+    }
+    else if (IsEqualGUID(clsid, &CLSID_MFSinkWriter))
+    {
+        FIXME("MFSinkWriter is not supported.\n");
+        *out = NULL;
+        return E_NOTIMPL;
+    }
+    else
+    {
+        WARN("Unsupported class %s.\n", debugstr_guid(clsid));
+        *out = NULL;
+        return E_FAIL;
+    }
 }
 
 static const IMFReadWriteClassFactoryVtbl readwrite_factory_vtbl =
