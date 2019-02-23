@@ -722,7 +722,6 @@ static void test_async_reader(void)
         ok(buffer[i] == (10 + i) % 111, "Got wrong byte %02x at %u.\n", buffer[i], i);
 
     hr = IAsyncReader_SyncRead(reader, 590, 20, buffer);
-todo_wine
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     for (i = 0; i < 10; i++)
         ok(buffer[i] == (590 + i) % 111, "Got wrong byte %02x at %u.\n", buffer[i], i);
@@ -731,7 +730,6 @@ todo_wine
 
     memset(buffer, 0xcc, sizeof(buffer));
     hr = IAsyncReader_SyncRead(reader, 600, 10, buffer);
-todo_wine
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(buffer[0] == 0xcc, "Got wrong byte %02x.\n", buffer[0]);
 
