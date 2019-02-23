@@ -1283,36 +1283,60 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
     return hr;
 }
 
-static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader * iface, LONGLONG llPosition, LONG lLength, BYTE * pBuffer);
-
-static HRESULT WINAPI FileAsyncReader_SyncReadAligned(IAsyncReader * iface, IMediaSample * pSample)
+static BOOL sync_read(HANDLE file, LONGLONG offset, LONG length, BYTE *buffer, DWORD *read_len)
 {
-    BYTE * pBuffer;
-    REFERENCE_TIME tStart;
-    REFERENCE_TIME tStop;
+    OVERLAPPED ovl = {0};
+    BOOL ret;
+
+    ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    ovl.u.s.Offset = (DWORD)offset;
+    ovl.u.s.OffsetHigh = offset >> 32;
+
+    ret = ReadFile(file, buffer, length, NULL, &ovl);
+    if (ret || GetLastError() == ERROR_IO_PENDING)
+        ret = GetOverlappedResult(file, &ovl, read_len, TRUE);
+
+    TRACE("Returning %u bytes.\n", *read_len);
+
+    CloseHandle(ovl.hEvent);
+    return ret;
+}
+
+static HRESULT WINAPI FileAsyncReader_SyncReadAligned(IAsyncReader *iface, IMediaSample *sample)
+{
+    FileAsyncReader *filter = impl_from_IAsyncReader(iface);
+    REFERENCE_TIME start_time, end_time;
+    DWORD read_len;
+    BYTE *buffer;
+    LONG length;
     HRESULT hr;
+    BOOL ret;
 
-    TRACE("(%p)\n", pSample);
+    TRACE("filter %p, sample %p.\n", filter, sample);
 
-    hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
-
-    if (SUCCEEDED(hr))
-        hr = IMediaSample_GetPointer(pSample, &pBuffer);
+    hr = IMediaSample_GetTime(sample, &start_time, &end_time);
 
     if (SUCCEEDED(hr))
-        hr = FileAsyncReader_SyncRead(iface, 
-            BYTES_FROM_MEDIATIME(tStart),
-            (LONG) BYTES_FROM_MEDIATIME(tStop - tStart),
-            pBuffer);
+        hr = IMediaSample_GetPointer(sample, &buffer);
 
-    TRACE("-- %x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        length = BYTES_FROM_MEDIATIME(end_time - start_time);
+        ret = sync_read(filter->hFile, BYTES_FROM_MEDIATIME(start_time), length, buffer, &read_len);
+        if (ret)
+            hr = (read_len == length) ? S_OK : S_FALSE;
+        else if (GetLastError() == ERROR_HANDLE_EOF)
+            hr = S_OK;
+        else
+            hr = HRESULT_FROM_WIN32(GetLastError());
+    }
+
     return hr;
 }
 
 static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
         LONGLONG offset, LONG length, BYTE *buffer)
 {
-    OVERLAPPED ovl;
     FileAsyncReader *filter = impl_from_IAsyncReader(iface);
     DWORD read_len;
     HRESULT hr;
@@ -1321,29 +1345,14 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
     TRACE("filter %p, offset %s, length %d, buffer %p.\n",
             filter, wine_dbgstr_longlong(offset), length, buffer);
 
-    ZeroMemory(&ovl, sizeof(ovl));
-
-    ovl.hEvent = CreateEventW(NULL, 0, 0, NULL);
-    /* NOTE: llPosition is the actual byte position to start reading from */
-    ovl.u.s.Offset = (DWORD)offset;
-    ovl.u.s.OffsetHigh = (DWORD)(offset >> (sizeof(DWORD) * 8));
-
-    ret = ReadFile(filter->hFile, buffer, length, NULL, &ovl);
-    if (ret || GetLastError() == ERROR_IO_PENDING)
-    {
-        if (GetOverlappedResult(filter->hFile, &ovl, &read_len, TRUE))
-            hr = (read_len == length) ? S_OK : S_FALSE;
-        else
-            hr = HRESULT_FROM_WIN32(GetLastError());
-    }
+    ret = sync_read(filter->hFile, offset, length, buffer, &read_len);
+    if (ret)
+        hr = (read_len == length) ? S_OK : S_FALSE;
     else if (GetLastError() == ERROR_HANDLE_EOF)
         hr = S_FALSE;
     else
         hr = HRESULT_FROM_WIN32(GetLastError());
 
-    CloseHandle(ovl.hEvent);
-
-    TRACE("-- %x\n", hr);
     return hr;
 }
 
