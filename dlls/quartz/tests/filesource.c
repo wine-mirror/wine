@@ -666,11 +666,71 @@ todo_wine
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_sync_read_aligned(IAsyncReader *reader, IMemAllocator *allocator)
+{
+    REFERENCE_TIME start_time, end_time;
+    IMediaSample *sample;
+    HRESULT hr;
+    BYTE *data;
+    LONG len;
+    int i;
+
+    IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    IMediaSample_GetPointer(sample, &data);
+
+    start_time = 0;
+    end_time = 512 * (LONGLONG)10000000;
+    hr = IMediaSample_SetTime(sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_SyncReadAligned(reader, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    len = IMediaSample_GetActualDataLength(sample);
+todo_wine
+    ok(len == 512, "Got length %d.\n", len);
+
+    for (i = 0; i < 512; i++)
+        ok(data[i] == i % 111, "Got wrong byte %02x at %u.\n", data[i], i);
+
+    start_time = 512 * (LONGLONG)10000000;
+    end_time  = 1024 * (LONGLONG)10000000;
+    hr = IMediaSample_SetTime(sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_SyncReadAligned(reader, sample);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    len = IMediaSample_GetActualDataLength(sample);
+todo_wine
+    ok(len == 88, "Got length %d.\n", len);
+
+    for (i = 0; i < 88; i++)
+        ok(data[i] == (512 + i) % 111, "Got wrong byte %02x at %u.\n", data[i], i);
+
+    start_time = 1024 * (LONGLONG)10000000;
+    end_time   = 1536 * (LONGLONG)10000000;
+    hr = IMediaSample_SetTime(sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_SyncReadAligned(reader, sample);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    len = IMediaSample_GetActualDataLength(sample);
+todo_wine
+    ok(len == 0, "Got length %d.\n", len);
+
+    IMediaSample_Release(sample);
+}
+
 static void test_async_reader(void)
 {
+    ALLOCATOR_PROPERTIES req_props = {2, 1024, 512, 0}, ret_props;
     IBaseFilter *filter = create_file_source();
     IFileSourceFilter *filesource;
     LONGLONG length, available;
+    IMemAllocator *allocator;
     WCHAR filename[MAX_PATH];
     IAsyncReader *reader;
     BYTE buffer[20];
@@ -733,6 +793,19 @@ static void test_async_reader(void)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(buffer[0] == 0xcc, "Got wrong byte %02x.\n", buffer[0]);
 
+    ret_props = req_props;
+    hr = IAsyncReader_RequestAllocator(reader, NULL, &ret_props, &allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret_props.cBuffers == 2, "Got %d buffers.\n", ret_props.cBuffers);
+    ok(ret_props.cbBuffer == 1024, "Got size %d.\n", ret_props.cbBuffer);
+    ok(ret_props.cbAlign == 512, "Got alignment %d.\n", ret_props.cbAlign);
+    ok(ret_props.cbPrefix == 0, "Got prefix %d.\n", ret_props.cbPrefix);
+
+    IMemAllocator_Commit(allocator);
+
+    test_sync_read_aligned(reader, allocator);
+
+    IMemAllocator_Release(allocator);
     IAsyncReader_Release(reader);
     IPin_Release(pin);
     IFileSourceFilter_Release(filesource);
