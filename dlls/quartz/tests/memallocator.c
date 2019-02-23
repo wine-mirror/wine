@@ -1,5 +1,5 @@
 /*
- * Unit tests for Direct Show functions
+ * Memory allocator unit tests
  *
  * Copyright (C) 2005 Christian Costa
  *
@@ -19,72 +19,73 @@
  */
 
 #define COBJMACROS
-
-#include "wine/test.h"
-#include "uuids.h"
 #include "dshow.h"
-#include "control.h"
+#include "wine/test.h"
 
-static void CommitDecommitTest(void)
+static IMemAllocator *create_allocator(void)
 {
-    IMemAllocator* pMemAllocator;
+    IMemAllocator *allocator = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IMemAllocator, (void **)&allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return allocator;
+}
+
+static void test_commit(void)
+{
+    ALLOCATOR_PROPERTIES req_props = {2, 65536, 1, 0}, ret_props;
+    IMemAllocator *allocator = create_allocator();
+    IMediaSample *sample, *sample2;
     HRESULT hr;
+    BYTE *data;
 
-    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)&pMemAllocator);
-    ok(hr==S_OK, "Unable to create memory allocator %x\n", hr);
+    hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    if (hr == S_OK)
-    {
-        ALLOCATOR_PROPERTIES RequestedProps;
-        ALLOCATOR_PROPERTIES ActualProps;
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#x.\n", hr);
 
-        IMediaSample *sample = NULL, *sample2 = NULL;
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        RequestedProps.cBuffers = 2;
-        RequestedProps.cbBuffer = 65536;
-        RequestedProps.cbAlign = 1;
-        RequestedProps.cbPrefix = 0;
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMediaSample_Release(sample);
 
-	hr = IMemAllocator_SetProperties(pMemAllocator, &RequestedProps, &ActualProps);
-	ok(hr==S_OK, "SetProperties returned: %x\n", hr);
+    hr = IMemAllocator_Decommit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemAllocator_Decommit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-	hr = IMemAllocator_Commit(pMemAllocator);
-	ok(hr==S_OK, "Commit returned: %x\n", hr);
-	hr = IMemAllocator_Commit(pMemAllocator);
-	ok(hr==S_OK, "Commit returned: %x\n", hr);
+    /* Extant samples remain valid even after Decommit() is called. */
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        hr = IMemAllocator_GetBuffer(pMemAllocator, &sample, NULL, NULL, 0);
-        ok(hr==S_OK, "Could not get a buffer: %x\n", hr);
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-	hr = IMemAllocator_Decommit(pMemAllocator);
-	ok(hr==S_OK, "Decommit returned: %x\n", hr);
-	hr = IMemAllocator_Decommit(pMemAllocator);
-	ok(hr==S_OK, "Cecommit returned: %x\n", hr);
+    hr = IMediaSample_GetPointer(sample, &data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        /* Decommit and recommit while holding a sample */
-        if (sample)
-        {
-            hr = IMemAllocator_Commit(pMemAllocator);
-            ok(hr==S_OK, "Commit returned: %x\n", hr);
+    hr = IMemAllocator_Decommit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-            hr = IMemAllocator_GetBuffer(pMemAllocator, &sample2, NULL, NULL, 0);
-            ok(hr==S_OK, "Could not get a buffer: %x\n", hr);
-            IMediaSample_Release(sample);
-            if (sample2)
-                IMediaSample_Release(sample2);
+    memset(data, 0xcc, 65536);
 
-            hr = IMemAllocator_Decommit(pMemAllocator);
-            ok(hr==S_OK, "Cecommit returned: %x\n", hr);
-        }
-        IMemAllocator_Release(pMemAllocator);
-    }
+    hr = IMemAllocator_GetBuffer(allocator, &sample2, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#x.\n", hr);
+
+    IMediaSample_Release(sample);
+    IMemAllocator_Release(allocator);
 }
 
 START_TEST(memallocator)
 {
     CoInitialize(NULL);
 
-    CommitDecommitTest();
+    test_commit();
 
     CoUninitialize();
 }
