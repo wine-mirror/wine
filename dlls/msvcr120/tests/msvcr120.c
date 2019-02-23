@@ -127,6 +127,16 @@ static inline float __port_nan(void)
 }
 #define NAN __port_nan()
 
+static inline int isnormal(double d)
+{
+    return _fpclass(d) & (_FPCLASS_PN | _FPCLASS_NN);
+}
+
+static inline int isinf(double d)
+{
+    return _fpclass(d) & (_FPCLASS_PINF | _FPCLASS_NINF);
+}
+
 struct MSVCRT_lconv
 {
     char* decimal_point;
@@ -192,6 +202,9 @@ static unsigned short (__cdecl *p_wctype)(const char*);
 static int (__cdecl *p_vsscanf)(const char*, const char *, __ms_va_list valist);
 static _Dcomplex* (__cdecl *p__Cbuild)(_Dcomplex*, double, double);
 static double (__cdecl *p_creal)(_Dcomplex);
+static double (__cdecl *p_nexttoward)(double, double);
+static float (__cdecl *p_nexttowardf)(float, double);
+static double (__cdecl *p_nexttowardl)(double, double);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -252,6 +265,9 @@ static BOOL init(void)
     SET(p_vsscanf, "vsscanf");
     SET(p__Cbuild, "_Cbuild");
     SET(p_creal, "creal");
+    SET(p_nexttoward, "nexttoward");
+    SET(p_nexttowardf, "nexttowardf");
+    SET(p_nexttowardl, "nexttowardl");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QEAA@XZ");
@@ -964,6 +980,78 @@ static void test__Cbuild(void)
     ok(d == 3.0, "creal returned %lf\n", d);
 }
 
+static void test_nexttoward(void)
+{
+    errno_t e;
+    double d;
+    float f;
+    int i;
+
+    struct
+    {
+        double source;
+        double dir;
+        float f;
+        double d;
+    }
+    tests[] =
+    {
+        {0.0,                      0.0,                      0.0f,        0.0},
+        {0.0,                      1.0,                      1.0e-45f,    5.0e-324},
+        {0.0,                     -1.0,                     -1.0e-45f,   -5.0e-324},
+        {2.2250738585072009e-308,  0.0,                      0.0f,        2.2250738585072004e-308},
+        {2.2250738585072009e-308,  2.2250738585072010e-308,  1.0e-45f,    2.2250738585072009e-308},
+        {2.2250738585072009e-308,  1.0,                      1.0e-45f,    2.2250738585072014e-308},
+        {2.2250738585072014e-308,  0.0,                      0.0f,        2.2250738585072009e-308},
+        {2.2250738585072014e-308,  2.2250738585072014e-308,  1.0e-45f,    2.2250738585072014e-308},
+        {2.2250738585072014e-308,  1.0,                      1.0e-45f,    2.2250738585072019e-308},
+        {1.0,                      2.0,                      1.00000012f, 1.0000000000000002},
+        {1.0,                      0.0,                      0.99999994f, 0.9999999999999999},
+        {1.0,                      1.0,                      1.0f,        1.0},
+        {0.0,                      INFINITY,                 1.0e-45f,    5.0e-324},
+        {FLT_MAX,                  INFINITY,                 INFINITY,    3.402823466385289e+038},
+        {DBL_MAX,                  INFINITY,                 INFINITY,    INFINITY},
+        {INFINITY,                 INFINITY,                 INFINITY,    INFINITY},
+        {INFINITY,                 0,                        FLT_MAX,     DBL_MAX},
+    };
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        f = p_nexttowardf(tests[i].source, tests[i].dir);
+        ok(f == tests[i].f, "Test %d: expected %0.8ef, got %0.8ef.\n", i, tests[i].f, f);
+
+        errno = -1;
+        d = p_nexttoward(tests[i].source, tests[i].dir);
+        e = errno;
+        ok(d == tests[i].d, "Test %d: expected %0.16e, got %0.16e.\n", i, tests[i].d, d);
+        if (!isnormal(d) && !isinf(tests[i].source))
+            ok(e == ERANGE, "Test %d: expected ERANGE, got %d.\n", i, e);
+        else
+            ok(e == -1, "Test %d: expected no error, got %d.\n", i, e);
+
+        d = p_nexttowardl(tests[i].source, tests[i].dir);
+        ok(d == tests[i].d, "Test %d: expected %0.16e, got %0.16e.\n", i, tests[i].d, d);
+    }
+
+    errno = -1;
+    d = p_nexttoward(NAN, 0);
+    e = errno;
+    ok(_isnan(d), "Expected NAN, got %0.16e.\n", d);
+    ok(e == -1, "Expected no error, got %d.\n", e);
+
+    errno = -1;
+    d = p_nexttoward(NAN, NAN);
+    e = errno;
+    ok(_isnan(d), "Expected NAN, got %0.16e.\n", d);
+    ok(e == -1, "Expected no error, got %d.\n", e);
+
+    errno = -1;
+    d = p_nexttoward(0, NAN);
+    e = errno;
+    ok(_isnan(d), "Expected NAN, got %0.16e.\n", d);
+    ok(e == -1, "Expected no error, got %d.\n", e);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -983,4 +1071,5 @@ START_TEST(msvcr120)
     test_wctype();
     test_vsscanf();
     test__Cbuild();
+    test_nexttoward();
 }

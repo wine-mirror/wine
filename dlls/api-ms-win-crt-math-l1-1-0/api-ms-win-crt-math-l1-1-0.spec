@@ -297,9 +297,9 @@
 @ cdecl nextafter(double double) ucrtbase.nextafter
 @ cdecl nextafterf(float float) ucrtbase.nextafterf
 @ cdecl nextafterl(double double) ucrtbase.nextafterl
-@ stub nexttoward
-@ stub nexttowardf
-@ stub nexttowardl
+@ cdecl nexttoward(double double) ucrtbase.nexttoward
+@ cdecl nexttowardf(float double) ucrtbase.nexttowardf
+@ cdecl nexttowardl(double double) ucrtbase.nexttowardl
 @ stub norm
 @ stub normf
 @ stub norml
