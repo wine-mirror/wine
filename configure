@@ -18717,6 +18717,8 @@ for ac_func in \
 	lroundf \
 	nearbyint \
 	nearbyintf \
+	nexttoward \
+	nexttowardf \
 	powl \
 	remainder \
 	remainderf \

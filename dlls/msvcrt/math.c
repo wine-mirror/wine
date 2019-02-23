@@ -1529,6 +1529,44 @@ float CDECL MSVCRT_nearbyintf(float num)
 #endif
 }
 
+/*********************************************************************
+ *              nexttoward (MSVCR120.@)
+ */
+double CDECL MSVCRT_nexttoward(double num, double next)
+{
+#ifdef HAVE_NEXTTOWARD
+    double ret = nexttoward(num, next);
+    if (!(MSVCRT__fpclass(ret) & (MSVCRT__FPCLASS_PN | MSVCRT__FPCLASS_NN
+            | MSVCRT__FPCLASS_SNAN | MSVCRT__FPCLASS_QNAN)) && !isinf(num))
+    {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    }
+    return ret;
+#else
+    FIXME("not implemented\n");
+    return 0;
+#endif
+}
+
+/*********************************************************************
+ *              nexttowardf (MSVCR120.@)
+ */
+float CDECL MSVCRT_nexttowardf(float num, double next)
+{
+#ifdef HAVE_NEXTTOWARDF
+    float ret = nexttowardf(num, next);
+    if (!(MSVCRT__fpclass(ret) & (MSVCRT__FPCLASS_PN | MSVCRT__FPCLASS_NN
+            | MSVCRT__FPCLASS_SNAN | MSVCRT__FPCLASS_QNAN)) && !isinf(num))
+    {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    }
+    return ret;
+#else
+    FIXME("not implemented\n");
+    return 0;
+#endif
+}
+
 #endif /* _MSVCR_VER>=120 */
 
 /*********************************************************************

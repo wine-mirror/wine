@@ -1965,9 +1965,9 @@
 @ cdecl nextafter(double double) msvcr120.nextafter
 @ cdecl nextafterf(float float) msvcr120.nextafterf
 @ cdecl nextafterl(double double) msvcr120.nextafterl
-@ stub nexttoward
-@ stub nexttowardf
-@ stub nexttowardl
+@ cdecl nexttoward(double double) msvcr120.nexttoward
+@ cdecl nexttowardf(float double) msvcr120.nexttowardf
+@ cdecl nexttowardl(double double) msvcr120.nexttowardl
 @ stub norm
 @ stub normf
 @ stub norml
