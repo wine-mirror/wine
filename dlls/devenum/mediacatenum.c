@@ -865,7 +865,6 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
     LONG res;
     ULONG fetched = 0;
     MediaCatMoniker * pMoniker;
-    WCHAR *name;
     CLSID clsid;
     HRESULT hr;
     HKEY hkey;
@@ -877,7 +876,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
         /* FIXME: try PNP devices first */
 
         /* try DMOs */
-        if ((hr = IEnumDMO_Next(This->dmo_enum, 1, &clsid, &name, NULL)) == S_OK)
+        if ((hr = IEnumDMO_Next(This->dmo_enum, 1, &clsid, NULL, NULL)) == S_OK)
         {
             if (!(pMoniker = DEVENUM_IMediaCatMoniker_Construct()))
                 return E_OUTOFMEMORY;
