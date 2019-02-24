@@ -1296,7 +1296,7 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
         hr = E_OUTOFMEMORY;
 
     if (SUCCEEDED(hr))
-        hr = get_runtime_info(filename, NULL, NULL, 0, 0, FALSE, &info);
+        hr = get_runtime_info(filename, NULL, NULL, NULL, 0, 0, FALSE, &info);
 
     if (SUCCEEDED(hr))
         hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
@@ -1469,7 +1469,7 @@ __int32 WINAPI _CorExeMain(void)
 
     FixupVTable(GetModuleHandleW(NULL));
 
-    hr = get_runtime_info(filename, NULL, NULL, 0, 0, FALSE, &info);
+    hr = get_runtime_info(filename, NULL, NULL, NULL, 0, 0, FALSE, &info);
 
     if (SUCCEEDED(hr))
     {
@@ -1831,7 +1831,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
     *ppObj = NULL;
 
 
-    hr = get_runtime_info(filename, NULL, NULL, 0, 0, FALSE, &info);
+    hr = get_runtime_info(filename, NULL, NULL, NULL, 0, 0, FALSE, &info);
     if (SUCCEEDED(hr))
     {
         hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);

@@ -205,7 +205,7 @@ HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor
 
     *ppv = NULL;
 
-    ret = get_runtime_info(NULL, pwszVersion, pwszHostConfigFile, startupFlags, 0, TRUE, &info);
+    ret = get_runtime_info(NULL, pwszVersion, pwszHostConfigFile, NULL, startupFlags, 0, TRUE, &info);
 
     if (SUCCEEDED(ret))
     {
@@ -274,7 +274,7 @@ HRESULT WINAPI GetCORSystemDirectory(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwL
     if (!dwLength || !pbuffer)
         return E_POINTER;
 
-    ret = get_runtime_info(NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
+    ret = get_runtime_info(NULL, NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
 
     if (SUCCEEDED(ret))
     {
@@ -297,7 +297,7 @@ HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
     if (!dwLength || !pbuffer)
         return E_POINTER;
 
-    ret = get_runtime_info(NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
+    ret = get_runtime_info(NULL, NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
 
     if (SUCCEEDED(ret))
     {
@@ -336,7 +336,7 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
 
     if (!dwlength) dwlength = &length_dummy;
 
-    ret = get_runtime_info(pExe, pwszVersion, pConfigurationFile, startupFlags, runtimeInfoFlags, TRUE, &info);
+    ret = get_runtime_info(pExe, pwszVersion, pConfigurationFile, NULL, startupFlags, runtimeInfoFlags, TRUE, &info);
 
     if (SUCCEEDED(ret))
     {
@@ -482,7 +482,7 @@ HRESULT WINAPI CorBindToRuntimeEx(LPWSTR szVersion, LPWSTR szBuildFlavor, DWORD 
 
     *ppv = NULL;
 
-    ret = get_runtime_info(NULL, szVersion, NULL, nflags, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
+    ret = get_runtime_info(NULL, szVersion, NULL, NULL, nflags, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
 
     if (SUCCEEDED(ret))
     {
@@ -503,7 +503,7 @@ HRESULT WINAPI CorBindToCurrentRuntime(LPCWSTR filename, REFCLSID rclsid, REFIID
 
     *ppv = NULL;
 
-    ret = get_runtime_info(NULL, NULL, filename, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
+    ret = get_runtime_info(NULL, NULL, filename, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
 
     if (SUCCEEDED(ret))
     {
@@ -526,7 +526,7 @@ STDAPI ClrCreateManagedInstance(LPCWSTR pTypeName, REFIID riid, void **ppObject)
     TRACE("(%s,%s,%p)\n", debugstr_w(pTypeName), debugstr_guid(riid), ppObject);
 
     /* FIXME: How to determine which runtime version to use? */
-    ret = get_runtime_info(NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
+    ret = get_runtime_info(NULL, NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
 
     if (SUCCEEDED(ret))
     {

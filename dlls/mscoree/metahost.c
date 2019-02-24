@@ -1126,11 +1126,10 @@ static HRESULT WINAPI metahostpolicy_GetRequestedRuntime(ICLRMetaHostPolicy *ifa
         pwzVersion, pcchVersion, pwzImageVersion, pcchImageVersion, pdwConfigFlags,
         debugstr_guid(riid), ppRuntime);
 
-    if (pCfgStream)
-        FIXME("ignoring config file stream\n");
-
-    if (pdwConfigFlags)
+    if (pdwConfigFlags) {
         FIXME("ignoring config flags\n");
+        *pdwConfigFlags = 0;
+    }
 
     if(dwPolicyFlags & METAHOST_POLICY_USE_PROCESS_IMAGE_PATH)
     {
@@ -1145,7 +1144,7 @@ static HRESULT WINAPI metahostpolicy_GetRequestedRuntime(ICLRMetaHostPolicy *ifa
     if(dwPolicyFlags & METAHOST_POLICY_APPLY_UPGRADE_POLICY)
         flags |= RUNTIME_INFO_UPGRADE_VERSION;
 
-    hr = get_runtime_info(path, pwzImageVersion, NULL, 0, flags, FALSE, &result);
+    hr = get_runtime_info(path, pwzImageVersion, NULL, pCfgStream, 0, flags, FALSE, &result);
     if (SUCCEEDED(hr))
     {
         if (pwzImageVersion)
@@ -1276,7 +1275,8 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
 }
 
 HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
-    DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result)
+    IStream *config_stream, DWORD startup_flags, DWORD runtimeinfo_flags,
+    BOOL legacy, ICLRRuntimeInfo **result)
 {
     static const WCHAR dotconfig[] = {'.','c','o','n','f','i','g',0};
     static const DWORD supported_startup_flags = 0;
@@ -1297,7 +1297,7 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     if (exefile && !exefile[0])
         exefile = NULL;
 
-    if (exefile && !config_file)
+    if (exefile && !config_file && !config_stream)
     {
         strcpyW(local_config_file, exefile);
         strcatW(local_config_file, dotconfig);
@@ -1305,10 +1305,13 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
         config_file = local_config_file;
     }
 
-    if (config_file)
+    if (config_file || config_stream)
     {
         BOOL found = FALSE;
-        hr = parse_config_file(config_file, &parsed_config);
+        if (config_file)
+            hr = parse_config_file(config_file, &parsed_config);
+        else
+            hr = parse_config_stream(config_stream, &parsed_config);
 
         if (SUCCEEDED(hr))
         {

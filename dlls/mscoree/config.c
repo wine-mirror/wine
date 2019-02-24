@@ -650,19 +650,13 @@ static HRESULT parse_config(VARIANT input, parsed_config_file *result)
     return S_OK;
 }
 
-HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result)
+HRESULT parse_config_stream(IStream *stream, parsed_config_file *result)
 {
-    IStream *stream;
     VARIANT var;
     HRESULT hr;
     HRESULT initresult;
 
     init_config(result);
-
-
-    hr = CreateConfigStream(filename, &stream);
-    if (FAILED(hr))
-        return hr;
 
     initresult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     V_VT(&var) = VT_UNKNOWN;
@@ -670,9 +664,26 @@ HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result)
 
     hr = parse_config(var, result);
 
-    IStream_Release(stream);
     if (SUCCEEDED(initresult))
         CoUninitialize();
+
+    return hr;
+}
+
+HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result)
+{
+    HRESULT hr;
+    IStream *stream;
+
+    init_config(result);
+
+    hr = CreateConfigStream(filename, &stream);
+    if (FAILED(hr))
+        return hr;
+
+    hr = parse_config_stream(stream, result);
+
+    IStream_Release(stream);
 
     return hr;
 }

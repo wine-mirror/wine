@@ -103,7 +103,8 @@ typedef struct CorDebug
 } CorDebug;
 
 extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
-    DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result) DECLSPEC_HIDDEN;
+    IStream *config_stream, DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy,
+    ICLRRuntimeInfo **result) DECLSPEC_HIDDEN;
 
 extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result) DECLSPEC_HIDDEN;
 
@@ -121,6 +122,8 @@ typedef struct supported_runtime
 } supported_runtime;
 
 extern HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result) DECLSPEC_HIDDEN;
+
+extern HRESULT parse_config_stream(IStream *stream, parsed_config_file *result) DECLSPEC_HIDDEN;
 
 extern void free_parsed_config_file(parsed_config_file *file) DECLSPEC_HIDDEN;
 
