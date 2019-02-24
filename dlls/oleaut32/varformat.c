@@ -2284,9 +2284,9 @@ HRESULT WINAPI VarFormatNumber(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT 
 
     if (nGrouping == -2)
     {
-      WCHAR grouping[16];
+      WCHAR grouping[10];
       grouping[2] = '\0';
-      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, grouping, ARRAY_SIZE(grouping));
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping));
       numfmt.Grouping = grouping[2] == '2' ? 32 : grouping[0] - '0';
     }
     else if (nGrouping == -1)
@@ -2460,9 +2460,9 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
 
     if (nGrouping == -2)
     {
-      WCHAR grouping[16];
+      WCHAR grouping[10];
       grouping[2] = '\0';
-      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, grouping, ARRAY_SIZE(grouping));
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping));
       numfmt.Grouping = grouping[2] == '2' ? 32 : grouping[0] - '0';
     }
     else if (nGrouping == -1)
