@@ -530,7 +530,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
     TRACE("(%p)->(%d %p %p %p)\n", This, cItemsToFetch, pCLSID, Names, pcItemsFetched);
 
-    if (!pCLSID || !Names)
+    if (!pCLSID)
         return E_POINTER;
 
     if (!pcItemsFetched && cItemsToFetch > 1)
@@ -656,14 +656,17 @@ static HRESULT WINAPI IEnumDMO_fnNext(
         }
 
         /* Media object wasn't filtered so add it to return list */
-        Names[count] = NULL;
         len = MAX_PATH * sizeof(WCHAR);
         ret = RegQueryValueExW(hkey, NULL, NULL, NULL, (LPBYTE)szValue, &len);
-        if (ERROR_SUCCESS == ret)
+        if (Names)
         {
-            Names[count] = CoTaskMemAlloc((strlenW(szValue) + 1) * sizeof(WCHAR));
-            if (Names[count])
-                strcpyW(Names[count], szValue);
+            Names[count] = NULL;
+            if (ret == ERROR_SUCCESS)
+            {
+                Names[count] = CoTaskMemAlloc((strlenW(szValue) + 1) * sizeof(WCHAR));
+                if (Names[count])
+                    strcpyW(Names[count], szValue);
+            }
         }
         wsprintfW(szGuidKey,szToGuidFmt,szNextKey);
         CLSIDFromString(szGuidKey, &pCLSID[count]);

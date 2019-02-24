@@ -107,6 +107,13 @@ static void test_DMOEnum(void)
     ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
     ok(count == 0, "expected 0, got %d\n", count);
 
+    hr = IEnumDMO_Next(enum_dmo, 2, NULL, &name, &count);
+    ok(hr == E_POINTER, "expected S_FALSE, got %#x\n", hr);
+
+    hr = IEnumDMO_Next(enum_dmo, 2, &clsid, NULL, &count);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+    ok(count == 0, "expected 0, got %d\n", count);
+
     IEnumDMO_Release(enum_dmo);
 }
 
