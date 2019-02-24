@@ -2443,7 +2443,7 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
 
   if (SUCCEEDED(hRet))
   {
-    WCHAR buff[256], decimal[8], thousands[8], currency[8];
+    WCHAR buff[256], decimal[8], thousands[8], currency[13];
     CURRENCYFMTW numfmt;
 
     if (nDigits < 0)
@@ -2484,7 +2484,7 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
     numfmt.lpThousandSep = thousands;
     GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, thousands, ARRAY_SIZE(thousands));
     numfmt.lpCurrencySymbol = currency;
-    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, currency, ARRAY_SIZE(currency));
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SCURRENCY, currency, ARRAY_SIZE(currency));
 
     /* use NLS as per VarFormatNumber() */
     if (GetCurrencyFormatW(LOCALE_USER_DEFAULT, 0, V_BSTR(&vStr), &numfmt, buff, ARRAY_SIZE(buff)))
