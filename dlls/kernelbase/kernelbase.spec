@@ -449,7 +449,7 @@
 @ stdcall GetConsoleScreenBufferInfoEx(long ptr) kernel32.GetConsoleScreenBufferInfoEx
 @ stdcall GetConsoleTitleW(ptr long) kernel32.GetConsoleTitleW
 @ stdcall GetCurrencyFormatEx(wstr long wstr ptr ptr long) kernel32.GetCurrencyFormatEx
-@ stdcall GetCurrencyFormatW(long long str ptr str long) kernel32.GetCurrencyFormatW
+@ stdcall GetCurrencyFormatW(long long wstr ptr ptr long) kernel32.GetCurrencyFormatW
 @ stdcall GetCurrentActCtx(ptr) kernel32.GetCurrentActCtx
 # @ stub GetCurrentApplicationUserModelId
 @ stdcall GetCurrentDirectoryA(long ptr) kernel32.GetCurrentDirectoryA
