@@ -2760,7 +2760,7 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
 
 static INT do_loop(const PropSheetInfo *psInfo)
 {
-    MSG msg;
+    MSG msg = { 0 };
     INT ret = 0;
     HWND hwnd = psInfo->hwnd;
     HWND parent = psInfo->ppshheader.hwndParent;
@@ -2777,7 +2777,7 @@ static INT do_loop(const PropSheetInfo *psInfo)
         }
     }
 
-    if(ret == 0)
+    if(ret == 0 && msg.message)
         PostQuitMessage(msg.wParam);
 
     if(ret != -1)
