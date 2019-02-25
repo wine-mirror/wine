@@ -52,6 +52,12 @@ struct topology_node
     TOPOID id;
 };
 
+struct topology_loader
+{
+    IMFTopoLoader IMFTopoLoader_iface;
+    LONG refcount;
+};
+
 struct seq_source
 {
     IMFSequencerSource IMFSequencerSource_iface;
@@ -66,6 +72,11 @@ static inline struct topology *impl_from_IMFTopology(IMFTopology *iface)
 static struct topology_node *impl_from_IMFTopologyNode(IMFTopologyNode *iface)
 {
     return CONTAINING_RECORD(iface, struct topology_node, IMFTopologyNode_iface);
+}
+
+static struct topology_loader *impl_from_IMFTopoLoader(IMFTopoLoader *iface)
+{
+    return CONTAINING_RECORD(iface, struct topology_loader, IMFTopoLoader_iface);
 }
 
 static struct seq_source *impl_from_IMFSequencerSource(IMFSequencerSource *iface)
@@ -1208,6 +1219,88 @@ HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode 
     object->id = ((TOPOID)GetCurrentProcessId() << 32) | InterlockedIncrement(&next_node_id);
 
     *node = &object->IMFTopologyNode_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI topology_loader_QueryInterface(IMFTopoLoader *iface, REFIID riid, void **out)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFTopoLoader) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFTopoLoader_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI topology_loader_AddRef(IMFTopoLoader *iface)
+{
+    struct topology_loader *loader = impl_from_IMFTopoLoader(iface);
+    ULONG refcount = InterlockedIncrement(&loader->refcount);
+
+    TRACE("(%p) refcount=%u\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI topology_loader_Release(IMFTopoLoader *iface)
+{
+    struct topology_loader *loader = impl_from_IMFTopoLoader(iface);
+    ULONG refcount = InterlockedDecrement(&loader->refcount);
+
+    TRACE("(%p) refcount=%u\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(loader);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *input_topology,
+        IMFTopology **output_topology, IMFTopology *current_topology)
+{
+    FIXME("%p, %p, %p, %p.\n", iface, input_topology, output_topology, current_topology);
+
+    return E_NOTIMPL;
+}
+
+static const IMFTopoLoaderVtbl topologyloadervtbl =
+{
+    topology_loader_QueryInterface,
+    topology_loader_AddRef,
+    topology_loader_Release,
+    topology_loader_Load,
+};
+
+/***********************************************************************
+ *      MFCreateTopoLoader (mf.@)
+ */
+HRESULT WINAPI MFCreateTopoLoader(IMFTopoLoader **loader)
+{
+    struct topology_loader *object;
+
+    TRACE("%p.\n", loader);
+
+    if (!loader)
+        return E_POINTER;
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFTopoLoader_iface.lpVtbl = &topologyloadervtbl;
+    object->refcount = 1;
+
+    *loader = &object->IMFTopoLoader_iface;
 
     return S_OK;
 }

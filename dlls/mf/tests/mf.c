@@ -469,9 +469,24 @@ static void test_media_session(void)
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
 
+static void test_topology_loader(void)
+{
+    IMFTopoLoader *loader;
+    HRESULT hr;
+
+    hr = MFCreateTopoLoader(NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateTopoLoader(&loader);
+    ok(hr == S_OK, "Failed to create topology loader, hr %#x.\n", hr);
+
+    IMFTopoLoader_Release(loader);
+}
+
 START_TEST(mf)
 {
     test_topology();
+    test_topology_loader();
     test_MFGetService();
     test_MFCreateSequencerSource();
     test_media_session();

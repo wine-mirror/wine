@@ -118,6 +118,17 @@ interface IMFTopology : IMFAttributes
 
 [
     object,
+    uuid(de9a6157-f660-4643-b56a-df9f7998c7cd),
+    local,
+]
+interface IMFTopoLoader : IUnknown
+{
+    HRESULT Load([in] IMFTopology *input_topology, [out] IMFTopology **output_topology,
+            [in] IMFTopology *current_topology);
+}
+
+[
+    object,
     uuid(90377834-21d0-4dee-8214-ba2e3e6c1127),
 ]
 interface IMFMediaSession : IMFMediaEventGenerator
@@ -313,6 +324,7 @@ cpp_quote("HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD cMedi
 cpp_quote("     IMFMediaType **types, IMFStreamDescriptor **descriptor);")
 cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")
 cpp_quote("HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode **node);")
+cpp_quote("HRESULT WINAPI MFCreateTopoLoader(IMFTopoLoader **loader);")
 cpp_quote("HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array);")
 cpp_quote("HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID iid, void **obj);")
 cpp_quote("MFTIME  WINAPI MFGetSystemTime(void);")

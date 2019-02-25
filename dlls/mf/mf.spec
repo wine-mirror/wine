@@ -59,7 +59,7 @@
 @ stub MFCreateSimpleTypeHandler
 @ stdcall MFCreateSourceResolver(ptr) mfplat.MFCreateSourceResolver
 @ stub MFCreateStandardQualityManager
-@ stub MFCreateTopoLoader
+@ stdcall MFCreateTopoLoader(ptr)
 @ stdcall MFCreateTopology(ptr)
 @ stdcall MFCreateTopologyNode(long ptr)
 @ stub MFCreateTranscodeProfile
