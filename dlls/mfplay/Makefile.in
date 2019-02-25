@@ -1,0 +1,4 @@
+MODULE    = mfplay.dll
+
+C_SRCS = \
+	player.c
