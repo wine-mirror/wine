@@ -15,7 +15,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 
@@ -34,6 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 static LONG next_node_id;
+static TOPOID next_topology_id;
 
 struct topology
 {
@@ -41,6 +44,7 @@ struct topology
     LONG refcount;
     IMFAttributes *attributes;
     IMFCollection *nodes;
+    TOPOID id;
 };
 
 struct topology_node
@@ -412,9 +416,16 @@ static HRESULT WINAPI topology_CopyAllItems(IMFTopology *iface, IMFAttributes *d
 
 static HRESULT WINAPI topology_GetTopologyID(IMFTopology *iface, TOPOID *id)
 {
-    FIXME("(%p)->(%p)\n", iface, id);
+    struct topology *topology = impl_from_IMFTopology(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, id);
+
+    if (!id)
+        return E_POINTER;
+
+    *id = topology->id;
+
+    return S_OK;
 }
 
 static HRESULT topology_get_node_by_id(const struct topology *topology, TOPOID id, IMFTopologyNode **node)
@@ -654,6 +665,19 @@ static const IMFTopologyVtbl topologyvtbl =
     topology_GetOutputNodeCollection,
 };
 
+static TOPOID topology_generate_id(void)
+{
+    TOPOID old;
+
+    do
+    {
+        old = next_topology_id;
+    }
+    while (interlocked_cmpxchg64((LONG64 *)&next_topology_id, old + 1, old) != old);
+
+    return next_topology_id;
+}
+
 /***********************************************************************
  *      MFCreateTopology (mf.@)
  */
@@ -683,6 +707,8 @@ HRESULT WINAPI MFCreateTopology(IMFTopology **topology)
         IMFTopology_Release(&object->IMFTopology_iface);
         return hr;
     }
+
+    object->id = topology_generate_id();
 
     *topology = &object->IMFTopology_iface;
 

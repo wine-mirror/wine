@@ -37,7 +37,7 @@ static void test_topology(void)
 {
     IMFCollection *collection, *collection2;
     IMFTopologyNode *node, *node2, *node3;
-    IMFTopology *topology;
+    IMFTopology *topology, *topology2;
     DWORD size;
     WORD count;
     HRESULT hr;
@@ -47,7 +47,26 @@ static void test_topology(void)
     ok(hr == E_POINTER, "got %#x\n", hr);
 
     hr = MFCreateTopology(&topology);
-    ok(hr == S_OK, "got %#x\n", hr);
+    ok(hr == S_OK, "Failed to create topology, hr %#x.\n", hr);
+    hr = IMFTopology_GetTopologyID(topology, &id);
+    ok(hr == S_OK, "Failed to get id, hr %#x.\n", hr);
+    ok(id == 1, "Unexpected id.\n");
+
+    hr = MFCreateTopology(&topology2);
+    ok(hr == S_OK, "Failed to create topology, hr %#x.\n", hr);
+    hr = IMFTopology_GetTopologyID(topology2, &id);
+    ok(hr == S_OK, "Failed to get id, hr %#x.\n", hr);
+    ok(id == 2, "Unexpected id.\n");
+
+    IMFTopology_Release(topology);
+
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "Failed to create topology, hr %#x.\n", hr);
+    hr = IMFTopology_GetTopologyID(topology, &id);
+    ok(hr == S_OK, "Failed to get id, hr %#x.\n", hr);
+    ok(id == 3, "Unexpected id.\n");
+
+    IMFTopology_Release(topology2);
 
     hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
