@@ -961,53 +961,53 @@ static HRESULT validate_stream_output_entries(const D3D11_SO_DECLARATION_ENTRY *
 
     for (i = 0; i < entry_count; ++i)
     {
-        const D3D11_SO_DECLARATION_ENTRY *f = &entries[i];
+        const D3D11_SO_DECLARATION_ENTRY *e = &entries[i];
 
         TRACE("Stream: %u, semantic: %s, semantic idx: %u, start component: %u, "
                 "component count %u, output slot %u.\n",
-                f->Stream, debugstr_a(f->SemanticName), f->SemanticIndex,
-                f->StartComponent, f->ComponentCount, f->OutputSlot);
+                e->Stream, debugstr_a(e->SemanticName), e->SemanticIndex,
+                e->StartComponent, e->ComponentCount, e->OutputSlot);
 
-        if (f->Stream >= D3D11_SO_STREAM_COUNT)
+        if (e->Stream >= D3D11_SO_STREAM_COUNT)
         {
-            WARN("Invalid stream %u.\n", f->Stream);
+            WARN("Invalid stream %u.\n", e->Stream);
             return E_INVALIDARG;
         }
-        if (f->Stream && feature_level < D3D_FEATURE_LEVEL_11_0)
+        if (e->Stream && feature_level < D3D_FEATURE_LEVEL_11_0)
         {
-            WARN("Invalid stream %u for feature level %#x.\n", f->Stream, feature_level);
+            WARN("Invalid stream %u for feature level %#x.\n", e->Stream, feature_level);
             return E_INVALIDARG;
         }
-        if (f->Stream)
+        if (e->Stream)
         {
             FIXME("Streams not implemented yet.\n");
             return E_INVALIDARG;
         }
-        if (f->OutputSlot >= D3D11_SO_BUFFER_SLOT_COUNT)
+        if (e->OutputSlot >= D3D11_SO_BUFFER_SLOT_COUNT)
         {
-            WARN("Invalid output slot %u.\n", f->OutputSlot);
+            WARN("Invalid output slot %u.\n", e->OutputSlot);
             return E_INVALIDARG;
         }
 
-        if (!f->SemanticName)
+        if (!e->SemanticName)
         {
-            if (f->SemanticIndex)
+            if (e->SemanticIndex)
             {
-                WARN("Invalid semantic idx %u for stream output gap.\n", f->SemanticIndex);
+                WARN("Invalid semantic idx %u for stream output gap.\n", e->SemanticIndex);
                 return E_INVALIDARG;
             }
-            if (f->StartComponent || !f->ComponentCount)
+            if (e->StartComponent || !e->ComponentCount)
             {
-                WARN("Invalid stream output gap %u-%u.\n", f->StartComponent, f->ComponentCount);
+                WARN("Invalid stream output gap %u-%u.\n", e->StartComponent, e->ComponentCount);
                 return E_INVALIDARG;
             }
         }
         else
         {
-            if (f->StartComponent > 3 || f->ComponentCount > 4 || !f->ComponentCount
-                    || f->StartComponent + f->ComponentCount > 4)
+            if (e->StartComponent > 3 || e->ComponentCount > 4 || !e->ComponentCount
+                    || e->StartComponent + e->ComponentCount > 4)
             {
-                WARN("Invalid component range %u-%u.\n", f->StartComponent, f->ComponentCount);
+                WARN("Invalid component range %u-%u.\n", e->StartComponent, e->ComponentCount);
                 return E_INVALIDARG;
             }
         }
