@@ -542,25 +542,24 @@ static LONG open_driver_key(struct device *device, REGSAM access, HKEY *key)
     return l;
 }
 
-static HKEY create_driver_key(struct device *device)
+static LONG create_driver_key(struct device *device, HKEY *key)
 {
     static const WCHAR formatW[] = {'%','0','4','u',0};
     static const WCHAR slash[] = { '\\',0 };
-    HKEY class_key, key;
     unsigned int i = 0;
     WCHAR path[50];
+    HKEY class_key;
     DWORD dispos;
     LONG l;
 
-    if (!open_driver_key(device, KEY_READ | KEY_WRITE, &key))
-        return key;
+    if (!open_driver_key(device, KEY_READ | KEY_WRITE, key))
+        return ERROR_SUCCESS;
 
     if ((l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, ControlClass, 0, NULL, 0,
             KEY_CREATE_SUB_KEY, NULL, &class_key, NULL)))
     {
         ERR("Failed to open driver class root key, error %u.\n", l);
-        SetLastError(l);
-        return INVALID_HANDLE_VALUE;
+        return l;
     }
 
     SETUPDI_GuidToString(&device->class, path);
@@ -570,20 +569,19 @@ static HKEY create_driver_key(struct device *device)
     for (;;)
     {
         sprintfW(path + 39, formatW, i++);
-        if ((l = RegCreateKeyExW(class_key, path, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &key, &dispos)))
+        if ((l = RegCreateKeyExW(class_key, path, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, key, &dispos)))
             break;
         else if (dispos == REG_CREATED_NEW_KEY)
         {
             RegSetValueExW(device->key, Driver, 0, REG_SZ, (BYTE *)path, strlenW(path) * sizeof(WCHAR));
             RegCloseKey(class_key);
-            return key;
+            return ERROR_SUCCESS;
         }
-        RegCloseKey(key);
+        RegCloseKey(*key);
     }
     ERR("Failed to create driver key, error %u.\n", l);
     RegCloseKey(class_key);
-    SetLastError(l);
-    return INVALID_HANDLE_VALUE;
+    return l;
 }
 
 static LONG delete_driver_key(struct device *device)
@@ -1449,23 +1447,21 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_da
     switch (KeyType)
     {
         case DIREG_DEV:
-            if ((l = RegCreateKeyExW(device->key, DeviceParameters, 0, NULL, 0,
-                    KEY_READ | KEY_WRITE, NULL, &key, NULL)))
-            {
-                key = INVALID_HANDLE_VALUE;
-            }
-            SetLastError(l);
+            l = RegCreateKeyExW(device->key, DeviceParameters, 0, NULL, 0,
+                    KEY_READ | KEY_WRITE, NULL, &key, NULL);
             break;
         case DIREG_DRV:
-            key = create_driver_key(device);
+            l = create_driver_key(device, &key);
             break;
         default:
-            WARN("unknown KeyType %d\n", KeyType);
+            FIXME("Unhandled type %#x.\n", KeyType);
+            l = ERROR_CALL_NOT_IMPLEMENTED;
     }
     if (InfHandle)
         SetupInstallFromInfSectionW(NULL, InfHandle, InfSectionName, SPINST_ALL,
                 NULL, NULL, SP_COPY_NEWER_ONLY, NULL, NULL, devinfo, device_data);
-    return key;
+    SetLastError(l);
+    return l ? INVALID_HANDLE_VALUE : key;
 }
 
 /***********************************************************************
