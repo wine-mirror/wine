@@ -357,6 +357,29 @@ interface IMFMediaSource : IMFMediaEventGenerator
     HRESULT Shutdown();
 }
 
+interface IMFStreamSink;
+interface IMFPresentationClock;
+
+[
+    object,
+    uuid(6ef2a660-47c0-4666-b13d-cbb717f2fa2c)
+]
+interface IMFMediaSink : IUnknown
+{
+    HRESULT GetCharacteristics([out] DWORD *characteristics);
+    HRESULT AddStreamSink(
+        [in] DWORD stream_sink_id,
+        [in] IMFMediaType *media_type,
+        [out] IMFStreamSink **stream_sink);
+    HRESULT RemoveStreamSink([in] DWORD stream_sink_id);
+    HRESULT GetStreamSinkCount([out] DWORD *count);
+    HRESULT GetStreamSinkByIndex([in] DWORD index, [out] IMFStreamSink **sink);
+    HRESULT GetStreamSinkById([in] DWORD stream_sink_id, [out] IMFStreamSink **sink);
+    HRESULT SetPresentationClock([in] IMFPresentationClock *clock);
+    HRESULT GetPresentationClock([out] IMFPresentationClock **clock);
+    HRESULT Shutdown();
+}
+
 cpp_quote("#define MF_RESOLUTION_MEDIASOURCE                                           0x00000001")
 cpp_quote("#define MF_RESOLUTION_BYTESTREAM                                            0x00000002")
 cpp_quote("#define MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE 0x00000010")

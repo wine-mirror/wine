@@ -27,8 +27,8 @@
 #include "initguid.h"
 #include "ole2.h"
 #include "rpcproxy.h"
-#include "mfreadwrite.h"
 #include "mfidl.h"
+#include "mfreadwrite.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -77,9 +77,20 @@ typedef struct _srcreader
     LONG ref;
 } srcreader;
 
+struct sink_writer
+{
+    IMFSinkWriter IMFSinkWriter_iface;
+    LONG refcount;
+};
+
 static inline srcreader *impl_from_IMFSourceReader(IMFSourceReader *iface)
 {
     return CONTAINING_RECORD(iface, srcreader, IMFSourceReader_iface);
+}
+
+static inline struct sink_writer *impl_from_IMFSinkWriter(IMFSinkWriter *iface)
+{
+    return CONTAINING_RECORD(iface, struct sink_writer, IMFSinkWriter_iface);
 }
 
 static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReader *iface, REFIID riid, void **out)
@@ -249,6 +260,191 @@ static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttrib
     return create_source_reader_from_source(NULL, attributes, riid, out);
 }
 
+static HRESULT WINAPI sink_writer_QueryInterface(IMFSinkWriter *iface, REFIID riid, void **out)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFSinkWriter) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFSinkWriter_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI sink_writer_AddRef(IMFSinkWriter *iface)
+{
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    ULONG refcount = InterlockedIncrement(&writer->refcount);
+
+    TRACE("%p, %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
+{
+    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    ULONG refcount = InterlockedDecrement(&writer->refcount);
+
+    TRACE("%p, %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(writer);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI sink_writer_AddStream(IMFSinkWriter *iface, IMFMediaType *type, DWORD *index)
+{
+    FIXME("%p, %p, %p.\n", iface, type, index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_SetInputMediaType(IMFSinkWriter *iface, DWORD index, IMFMediaType *type,
+        IMFAttributes *parameters)
+{
+    FIXME("%p, %u, %p, %p.\n", iface, index, type, parameters);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriter *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_WriteSample(IMFSinkWriter *iface, DWORD index, IMFSample *sample)
+{
+    FIXME("%p, %u, %p.\n", iface, index, sample);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_SendStreamTick(IMFSinkWriter *iface, DWORD index, LONGLONG timestamp)
+{
+    FIXME("%p, %u, %s.\n", iface, index, wine_dbgstr_longlong(timestamp));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_PlaceMarker(IMFSinkWriter *iface, DWORD index, void *context)
+{
+    FIXME("%p, %u, %p.\n", iface, index, context);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_NotifyEndOfSegment(IMFSinkWriter *iface, DWORD index)
+{
+    FIXME("%p, %u.\n", iface, index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_Flush(IMFSinkWriter *iface, DWORD index)
+{
+    FIXME("%p, %u.\n", iface, index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_Finalize(IMFSinkWriter *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_GetServiceForStream(IMFSinkWriter *iface, DWORD index, REFGUID service,
+        REFIID riid, void **object)
+{
+    FIXME("%p, %u, %s, %s, %p.\n", iface, index, debugstr_guid(service), debugstr_guid(riid), object);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sink_writer_GetStatistics(IMFSinkWriter *iface, DWORD index, MF_SINK_WRITER_STATISTICS *stats)
+{
+    FIXME("%p, %u, %p.\n", iface, index, stats);
+
+    return E_NOTIMPL;
+}
+
+static const IMFSinkWriterVtbl sink_writer_vtbl =
+{
+    sink_writer_QueryInterface,
+    sink_writer_AddRef,
+    sink_writer_Release,
+    sink_writer_AddStream,
+    sink_writer_SetInputMediaType,
+    sink_writer_BeginWriting,
+    sink_writer_WriteSample,
+    sink_writer_SendStreamTick,
+    sink_writer_PlaceMarker,
+    sink_writer_NotifyEndOfSegment,
+    sink_writer_Flush,
+    sink_writer_Finalize,
+    sink_writer_GetServiceForStream,
+    sink_writer_GetStatistics,
+};
+
+static HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attributes,
+        REFIID riid, void **out)
+{
+    struct sink_writer *object;
+    HRESULT hr;
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFSinkWriter_iface.lpVtbl = &sink_writer_vtbl;
+    object->refcount = 1;
+
+    hr = IMFSinkWriter_QueryInterface(&object->IMFSinkWriter_iface, riid, out);
+    IMFSinkWriter_Release(&object->IMFSinkWriter_iface);
+    return hr;
+}
+
+static HRESULT create_sink_writer_from_stream(IMFByteStream *stream, IMFAttributes *attributes,
+        REFIID riid, void **out)
+{
+    struct sink_writer *object;
+    HRESULT hr;
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFSinkWriter_iface.lpVtbl = &sink_writer_vtbl;
+    object->refcount = 1;
+
+    hr = IMFSinkWriter_QueryInterface(&object->IMFSinkWriter_iface, riid, out);
+    IMFSinkWriter_Release(&object->IMFSinkWriter_iface);
+    return hr;
+}
+
+/***********************************************************************
+ *      MFCreateSinkWriterFromMediaSink (mfreadwrite.@)
+ */
+HRESULT WINAPI MFCreateSinkWriterFromMediaSink(IMFMediaSink *sink, IMFAttributes *attributes, IMFSinkWriter **writer)
+{
+    TRACE("%p, %p, %p.\n", sink, attributes, writer);
+
+    return create_sink_writer_from_sink(sink, attributes, &IID_IMFSinkWriter, (void **)writer);
+}
+
 /***********************************************************************
  *      MFCreateSourceReaderFromByteStream (mfreadwrite.@)
  */
@@ -334,9 +530,24 @@ static HRESULT WINAPI readwrite_factory_CreateInstanceFromObject(IMFReadWriteCla
     }
     else if (IsEqualGUID(clsid, &CLSID_MFSinkWriter))
     {
-        FIXME("MFSinkWriter is not supported.\n");
-        *out = NULL;
-        return E_NOTIMPL;
+        IMFByteStream *stream = NULL;
+        IMFMediaSink *sink = NULL;
+
+        hr = IUnknown_QueryInterface(unk, &IID_IMFByteStream, (void **)&stream);
+        if (FAILED(hr))
+            hr = IUnknown_QueryInterface(unk, &IID_IMFMediaSink, (void **)&sink);
+
+        if (stream)
+            hr = create_sink_writer_from_stream(stream, attributes, riid, out);
+        else if (sink)
+            hr = create_sink_writer_from_sink(sink, attributes, riid, out);
+
+        if (sink)
+            IMFMediaSink_Release(sink);
+        if (stream)
+            IMFByteStream_Release(stream);
+
+        return hr;
     }
     else
     {

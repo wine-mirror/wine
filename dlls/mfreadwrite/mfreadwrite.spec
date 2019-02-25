@@ -2,7 +2,7 @@
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
-@ stub MFCreateSinkWriterFromMediaSink
+@ stdcall MFCreateSinkWriterFromMediaSink(ptr ptr ptr)
 @ stub MFCreateSinkWriterFromURL
 @ stdcall MFCreateSourceReaderFromByteStream(ptr ptr ptr)
 @ stdcall MFCreateSourceReaderFromMediaSource(ptr ptr ptr)
