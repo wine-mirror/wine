@@ -918,7 +918,11 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
         *p = 0;
         ret = TRUE;
     }
-    else ret = FALSE;
+    else
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        ret = FALSE;
+    }
 
     *size = totalsize;
     if (number) *number = count;
@@ -1044,7 +1048,11 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
         *p = 0;
         ret = TRUE;
     }
-    else ret = FALSE;
+    else
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        ret = FALSE;
+    }
 
     *size = totalsize;
     if (number) *number = count;
