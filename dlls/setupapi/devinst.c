@@ -514,9 +514,9 @@ static HKEY SETUPDI_CreateDevKey(struct device *device)
     return key;
 }
 
-static HKEY open_driver_key(struct device *device, REGSAM access)
+static LONG open_driver_key(struct device *device, REGSAM access, HKEY *key)
 {
-    HKEY class_key, key;
+    HKEY class_key;
     WCHAR path[50];
     DWORD size = sizeof(path);
     LONG l;
@@ -525,23 +525,21 @@ static HKEY open_driver_key(struct device *device, REGSAM access)
             KEY_CREATE_SUB_KEY, NULL, &class_key, NULL)))
     {
         ERR("Failed to open driver class root key, error %u.\n", l);
-        SetLastError(l);
-        return INVALID_HANDLE_VALUE;
+        return l;
     }
 
     if (!(l = RegGetValueW(device->key, NULL, Driver, RRF_RT_REG_SZ, NULL, path, &size)))
     {
-        if (!(l = RegOpenKeyExW(class_key, path, 0, access, &key)))
+        if (!(l = RegOpenKeyExW(class_key, path, 0, access, key)))
         {
             RegCloseKey(class_key);
-            return key;
+            return l;
         }
         ERR("Failed to open driver key, error %u.\n", l);
     }
 
     RegCloseKey(class_key);
-    SetLastError(ERROR_KEY_DOES_NOT_EXIST);
-    return INVALID_HANDLE_VALUE;
+    return l;
 }
 
 static HKEY create_driver_key(struct device *device)
@@ -554,7 +552,7 @@ static HKEY create_driver_key(struct device *device)
     DWORD dispos;
     LONG l;
 
-    if ((key = open_driver_key(device, KEY_READ | KEY_WRITE)) != INVALID_HANDLE_VALUE)
+    if (!open_driver_key(device, KEY_READ | KEY_WRITE, &key))
         return key;
 
     if ((l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, ControlClass, 0, NULL, 0,
@@ -593,16 +591,14 @@ static BOOL delete_driver_key(struct device *device)
     HKEY key;
     LONG l;
 
-    if ((key = open_driver_key(device, KEY_READ | KEY_WRITE)) != INVALID_HANDLE_VALUE)
+    if (!(l = open_driver_key(device, KEY_READ | KEY_WRITE, &key)))
     {
         l = RegDeleteKeyW(key, emptyW);
         RegCloseKey(key);
-
-        SetLastError(l);
-        return !l;
     }
 
-    return FALSE;
+    SetLastError(l);
+    return !l;
 }
 
 struct PropertyMapEntry
@@ -3555,17 +3551,17 @@ HKEY WINAPI SetupDiOpenDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
     switch (KeyType)
     {
         case DIREG_DEV:
-            if ((l = RegOpenKeyExW(device->key, DeviceParameters, 0, samDesired, &key)))
-                key = INVALID_HANDLE_VALUE;
-            SetLastError(l);
+            l = RegOpenKeyExW(device->key, DeviceParameters, 0, samDesired, &key);
             break;
         case DIREG_DRV:
-            key = open_driver_key(device, samDesired);
+            l = open_driver_key(device, samDesired, &key);
             break;
         default:
-            WARN("unknown KeyType %d\n", KeyType);
+            FIXME("Unhandled type %#x.\n", KeyType);
+            l = ERROR_CALL_NOT_IMPLEMENTED;
     }
-    return key;
+    SetLastError(l == ERROR_FILE_NOT_FOUND ? ERROR_KEY_DOES_NOT_EXIST : l);
+    return l ? INVALID_HANDLE_VALUE : key;
 }
 
 /***********************************************************************
