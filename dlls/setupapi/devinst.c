@@ -1426,6 +1426,7 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_da
 {
     struct device *device;
     HKEY key = INVALID_HANDLE_VALUE;
+    LONG l;
 
     TRACE("devinfo %p, device_data %p, scope %d, profile %d, type %d, inf_handle %p, inf_section %s.\n",
             devinfo, device_data, Scope, HwProfile, KeyType, InfHandle, debugstr_w(InfSectionName));
@@ -1453,7 +1454,12 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_da
     switch (KeyType)
     {
         case DIREG_DEV:
-            key = SETUPDI_CreateDevKey(device);
+            if ((l = RegCreateKeyExW(device->key, DeviceParameters, 0, NULL, 0,
+                    KEY_READ | KEY_WRITE, NULL, &key, NULL)))
+            {
+                key = INVALID_HANDLE_VALUE;
+            }
+            SetLastError(l);
             break;
         case DIREG_DRV:
             key = create_driver_key(device);
@@ -3512,21 +3518,6 @@ BOOL WINAPI SetupDiSetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
     }
 }
 
-static HKEY SETUPDI_OpenDevKey(struct device *device, REGSAM samDesired)
-{
-    HKEY enumKey, key = INVALID_HANDLE_VALUE;
-    LONG l;
-
-    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_ALL_ACCESS,
-            NULL, &enumKey, NULL);
-    if (!l)
-    {
-        RegOpenKeyExW(enumKey, device->instanceId, 0, samDesired, &key);
-        RegCloseKey(enumKey);
-    }
-    return key;
-}
-
 /***********************************************************************
  *		SetupDiOpenDevRegKey (SETUPAPI.@)
  */
@@ -3535,6 +3526,7 @@ HKEY WINAPI SetupDiOpenDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
 {
     struct device *device;
     HKEY key = INVALID_HANDLE_VALUE;
+    LONG l;
 
     TRACE("devinfo %p, device_data %p, scope %d, profile %d, type %d, access %#x.\n",
             devinfo, device_data, Scope, HwProfile, KeyType, samDesired);
@@ -3563,7 +3555,9 @@ HKEY WINAPI SetupDiOpenDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
     switch (KeyType)
     {
         case DIREG_DEV:
-            key = SETUPDI_OpenDevKey(device, samDesired);
+            if ((l = RegOpenKeyExW(device->key, DeviceParameters, 0, samDesired, &key)))
+                key = INVALID_HANDLE_VALUE;
+            SetLastError(l);
             break;
         case DIREG_DRV:
             key = open_driver_key(device, samDesired);
@@ -3574,24 +3568,6 @@ HKEY WINAPI SetupDiOpenDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
     return key;
 }
 
-static BOOL SETUPDI_DeleteDevKey(struct device *device)
-{
-    HKEY enumKey;
-    BOOL ret = FALSE;
-    LONG l;
-
-    l = RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_ALL_ACCESS,
-            NULL, &enumKey, NULL);
-    if (!l)
-    {
-        ret = RegDeleteTreeW(enumKey, device->instanceId);
-        RegCloseKey(enumKey);
-    }
-    else
-        SetLastError(l);
-    return ret;
-}
-
 /***********************************************************************
  *		SetupDiDeleteDevRegKey (SETUPAPI.@)
  */
@@ -3600,6 +3576,7 @@ BOOL WINAPI SetupDiDeleteDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
 {
     struct device *device;
     BOOL ret = FALSE;
+    LONG l;
 
     TRACE("devinfo %p, device_data %p, scope %d, profile %d, type %d.\n",
             devinfo, device_data, Scope, HwProfile, KeyType);
@@ -3627,16 +3604,17 @@ BOOL WINAPI SetupDiDeleteDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
         FIXME("unimplemented for scope %d\n", Scope);
     switch (KeyType)
     {
-        case DIREG_DEV:
-            ret = SETUPDI_DeleteDevKey(device);
-            break;
         case DIREG_DRV:
             ret = delete_driver_key(device);
             break;
         case DIREG_BOTH:
-            ret = SETUPDI_DeleteDevKey(device);
-            if (ret)
-                ret = delete_driver_key(device);
+            if (!(ret = delete_driver_key(device)))
+                break;
+            /* fall through */
+        case DIREG_DEV:
+            l = RegDeleteKeyW(device->key, DeviceParameters);
+            SetLastError(l);
+            ret = !l;
             break;
         default:
             WARN("unknown KeyType %d\n", KeyType);
