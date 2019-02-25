@@ -586,7 +586,7 @@ static HKEY create_driver_key(struct device *device)
     return INVALID_HANDLE_VALUE;
 }
 
-static BOOL delete_driver_key(struct device *device)
+static LONG delete_driver_key(struct device *device)
 {
     HKEY key;
     LONG l;
@@ -597,8 +597,7 @@ static BOOL delete_driver_key(struct device *device)
         RegCloseKey(key);
     }
 
-    SetLastError(l);
-    return !l;
+    return l;
 }
 
 struct PropertyMapEntry
@@ -3571,7 +3570,6 @@ BOOL WINAPI SetupDiDeleteDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
         DWORD Scope, DWORD HwProfile, DWORD KeyType)
 {
     struct device *device;
-    BOOL ret = FALSE;
     LONG l;
 
     TRACE("devinfo %p, device_data %p, scope %d, profile %d, type %d.\n",
@@ -3601,21 +3599,21 @@ BOOL WINAPI SetupDiDeleteDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
     switch (KeyType)
     {
         case DIREG_DRV:
-            ret = delete_driver_key(device);
+            l = delete_driver_key(device);
             break;
         case DIREG_BOTH:
-            if (!(ret = delete_driver_key(device)))
+            if ((l = delete_driver_key(device)))
                 break;
             /* fall through */
         case DIREG_DEV:
             l = RegDeleteKeyW(device->key, DeviceParameters);
-            SetLastError(l);
-            ret = !l;
             break;
         default:
-            WARN("unknown KeyType %d\n", KeyType);
+            FIXME("Unhandled type %#x.\n", KeyType);
+            l = ERROR_CALL_NOT_IMPLEMENTED;
     }
-    return ret;
+    SetLastError(l);
+    return !l;
 }
 
 /***********************************************************************
