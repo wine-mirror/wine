@@ -3049,8 +3049,9 @@ static void test_wndproc(void)
     /* Remove the maximized state from the SYSCOMMAND test while we're not
      * interfering with a device. */
     ShowWindow(focus_window, SW_SHOWNORMAL);
-    filter_messages = focus_window;
 
+    /* On Windows 10 style change messages are delivered on device
+     * creation. */
     device_desc.device_window = focus_window;
     if (!(device = create_device(d3d8, focus_window, &device_desc)))
     {
@@ -3065,7 +3066,6 @@ static void test_wndproc(void)
     SetForegroundWindow(GetDesktopWindow());
     ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
             expect_messages->message, expect_messages->window);
-    ok(!windowposchanged_received, "Received WM_WINDOWPOSCHANGED but did not expect it.\n");
     expect_messages = NULL;
 
     /* The window is iconic even though no message was sent. */
@@ -3121,6 +3121,7 @@ static void test_wndproc(void)
     hr = IDirect3DDevice8_TestCooperativeLevel(device);
     ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
 
+    filter_messages = NULL;
     hr = reset_device(device, &device_desc);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
