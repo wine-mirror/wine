@@ -535,18 +535,65 @@ static HRESULT WINAPI topology_GetNodeByID(IMFTopology *iface, TOPOID id, IMFTop
     return topology_get_node_by_id(topology, id, node);
 }
 
+static HRESULT topology_add_node_of_type(const struct topology *topology, IMFTopologyNode *node,
+        MF_TOPOLOGY_TYPE filter, IMFCollection *collection)
+{
+    MF_TOPOLOGY_TYPE node_type;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFTopologyNode_GetNodeType(node, &node_type)))
+        return hr;
+
+    if (node_type != filter)
+        return S_OK;
+
+    return IMFCollection_AddElement(collection, (IUnknown *)node);
+}
+
+static HRESULT topology_get_node_collection(const struct topology *topology, MF_TOPOLOGY_TYPE node_type,
+        IMFCollection **collection)
+{
+    IMFTopologyNode *node;
+    unsigned int i = 0;
+    HRESULT hr;
+
+    if (!collection)
+        return E_POINTER;
+
+    if (FAILED(hr = MFCreateCollection(collection)))
+        return hr;
+
+    while (IMFCollection_GetElement(topology->nodes, i++, (IUnknown **)&node) == S_OK)
+    {
+        hr = topology_add_node_of_type(topology, node, node_type, *collection);
+        IMFTopologyNode_Release(node);
+        if (FAILED(hr))
+        {
+            IMFCollection_Release(*collection);
+            *collection = NULL;
+            break;
+        }
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI topology_GetSourceNodeCollection(IMFTopology *iface, IMFCollection **collection)
 {
-    FIXME("(%p)->(%p)\n", iface, collection);
+    struct topology *topology = impl_from_IMFTopology(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, collection);
+
+    return topology_get_node_collection(topology, MF_TOPOLOGY_SOURCESTREAM_NODE, collection);
 }
 
 static HRESULT WINAPI topology_GetOutputNodeCollection(IMFTopology *iface, IMFCollection **collection)
 {
-    FIXME("(%p)->(%p)\n", iface, collection);
+    struct topology *topology = impl_from_IMFTopology(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, collection);
+
+    return topology_get_node_collection(topology, MF_TOPOLOGY_OUTPUT_NODE, collection);
 }
 
 static const IMFTopologyVtbl topologyvtbl =

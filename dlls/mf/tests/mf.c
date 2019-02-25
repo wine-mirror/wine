@@ -35,8 +35,10 @@
 
 static void test_topology(void)
 {
+    IMFCollection *collection, *collection2;
     IMFTopologyNode *node, *node2, *node3;
     IMFTopology *topology;
+    DWORD size;
     WORD count;
     HRESULT hr;
     TOPOID id;
@@ -191,6 +193,114 @@ static void test_topology(void)
 
     IMFTopologyNode_Release(node);
     IMFTopologyNode_Release(node2);
+
+    /* Source/output collections. */
+    hr = IMFTopology_Clear(topology);
+    ok(hr == S_OK, "Failed to clear topology, hr %#x.\n", hr);
+
+    hr = IMFTopology_GetSourceNodeCollection(topology, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopology_GetSourceNodeCollection(topology, &collection);
+    ok(hr == S_OK, "Failed to get source node collection, hr %#x.\n", hr);
+    ok(!!collection, "Unexpected object pointer.\n");
+
+    hr = IMFTopology_GetSourceNodeCollection(topology, &collection2);
+    ok(hr == S_OK, "Failed to get source node collection, hr %#x.\n", hr);
+    ok(!!collection2, "Unexpected object pointer.\n");
+    ok(collection2 != collection, "Expected cloned collection.\n");
+
+    hr = IMFCollection_GetElementCount(collection, &size);
+    ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+    ok(!size, "Unexpected item count.\n");
+
+    hr = IMFCollection_AddElement(collection, (IUnknown *)collection);
+    ok(hr == S_OK, "Failed to add element, hr %#x.\n", hr);
+
+    hr = IMFCollection_GetElementCount(collection, &size);
+    ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+    ok(size == 1, "Unexpected item count.\n");
+
+    hr = IMFCollection_GetElementCount(collection2, &size);
+    ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+    ok(!size, "Unexpected item count.\n");
+
+    IMFCollection_Release(collection2);
+    IMFCollection_Release(collection);
+
+    /* Add some nodes. */
+    hr = IMFTopology_GetSourceNodeCollection(topology, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopology_GetOutputNodeCollection(topology, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    ok(hr == S_OK, "Failed to create a node, hr %#x.\n", hr);
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+    IMFTopologyNode_Release(node);
+
+    hr = IMFTopology_GetSourceNodeCollection(topology, &collection);
+    ok(hr == S_OK, "Failed to get source node collection, hr %#x.\n", hr);
+    ok(!!collection, "Unexpected object pointer.\n");
+    hr = IMFCollection_GetElementCount(collection, &size);
+    ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+    ok(size == 1, "Unexpected item count.\n");
+    IMFCollection_Release(collection);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TEE_NODE, &node);
+    ok(hr == S_OK, "Failed to create a node, hr %#x.\n", hr);
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+    IMFTopologyNode_Release(node);
+
+    hr = IMFTopology_GetSourceNodeCollection(topology, &collection);
+    ok(hr == S_OK, "Failed to get source node collection, hr %#x.\n", hr);
+    ok(!!collection, "Unexpected object pointer.\n");
+    hr = IMFCollection_GetElementCount(collection, &size);
+    ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+    ok(size == 1, "Unexpected item count.\n");
+    IMFCollection_Release(collection);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node);
+    ok(hr == S_OK, "Failed to create a node, hr %#x.\n", hr);
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+    IMFTopologyNode_Release(node);
+
+    hr = IMFTopology_GetSourceNodeCollection(topology, &collection);
+    ok(hr == S_OK, "Failed to get source node collection, hr %#x.\n", hr);
+    ok(!!collection, "Unexpected object pointer.\n");
+    hr = IMFCollection_GetElementCount(collection, &size);
+    ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+    ok(size == 1, "Unexpected item count.\n");
+    IMFCollection_Release(collection);
+
+    hr = IMFTopology_GetOutputNodeCollection(topology, &collection);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* before Win8 */, "Failed to get source node collection, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(!!collection, "Unexpected object pointer.\n");
+        hr = IMFCollection_GetElementCount(collection, &size);
+        ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+        ok(!size, "Unexpected item count.\n");
+        IMFCollection_Release(collection);
+
+        hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
+        ok(hr == S_OK, "Failed to create a node, hr %#x.\n", hr);
+        hr = IMFTopology_AddNode(topology, node);
+        ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+        IMFTopologyNode_Release(node);
+
+        hr = IMFTopology_GetOutputNodeCollection(topology, &collection);
+        ok(hr == S_OK, "Failed to get source node collection, hr %#x.\n", hr);
+        ok(!!collection, "Unexpected object pointer.\n");
+        hr = IMFCollection_GetElementCount(collection, &size);
+        ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+        ok(size == 1, "Unexpected item count.\n");
+        IMFCollection_Release(collection);
+    }
 
     IMFTopology_Release(topology);
 }
