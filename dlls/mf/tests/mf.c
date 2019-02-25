@@ -448,9 +448,31 @@ static void test_MFCreateSequencerSource(void)
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
 
+static void test_media_session(void)
+{
+    IMFMediaSession *session;
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
+
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
+
+    hr = IMFMediaSession_QueryInterface(session, &IID_IMFAttributes, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaSession_Release(session);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
+}
+
 START_TEST(mf)
 {
     test_topology();
     test_MFGetService();
     test_MFCreateSequencerSource();
+    test_media_session();
 }
