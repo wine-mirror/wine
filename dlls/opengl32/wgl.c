@@ -398,9 +398,9 @@ HDC WINAPI wglGetCurrentDC(void)
 }
 
 /***********************************************************************
- *		wglCreateContext (OPENGL32.@)
+ *		wgl_create_context wrapper for hooking
  */
-HGLRC WINAPI wglCreateContext(HDC hdc)
+static HGLRC wgl_create_context(HDC hdc)
 {
     HGLRC ret = 0;
     struct wgl_context *drv_ctx;
@@ -417,6 +417,14 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
     }
     if (!ret) funcs->wgl.p_wglDeleteContext( drv_ctx );
     return ret;
+}
+
+/***********************************************************************
+ *		wglCreateContext (OPENGL32.@)
+ */
+HGLRC WINAPI wglCreateContext(HDC hdc)
+{
+    return wgl_create_context(hdc);
 }
 
 /***********************************************************************
@@ -667,7 +675,7 @@ HGLRC WINAPI wglCreateLayerContext(HDC hdc,
   TRACE("(%p,%d)\n", hdc, iLayerPlane);
 
   if (iLayerPlane == 0) {
-      return wglCreateContext(hdc);
+      return wgl_create_context(hdc);
   }
   FIXME("no handler for layer %d\n", iLayerPlane);
 
@@ -1212,8 +1220,8 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
 
 static void fixed_to_double(POINTFX fixed, UINT em_size, GLdouble vertex[3])
 {
-    vertex[0] = (fixed.x.value + (GLdouble)fixed.x.fract / (1 << 16)) / em_size;  
-    vertex[1] = (fixed.y.value + (GLdouble)fixed.y.fract / (1 << 16)) / em_size;  
+    vertex[0] = (fixed.x.value + (GLdouble)fixed.x.fract / (1 << 16)) / em_size;
+    vertex[1] = (fixed.y.value + (GLdouble)fixed.y.fract / (1 << 16)) / em_size;
     vertex[2] = 0.0;
 }
 
@@ -1393,7 +1401,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
             lpgmf->gmfCellIncY = (float)gm.gmCellIncY / em_size;
 
             TRACE("%fx%f at %f,%f inc %f,%f\n", lpgmf->gmfBlackBoxX, lpgmf->gmfBlackBoxY,
-                  lpgmf->gmfptGlyphOrigin.x, lpgmf->gmfptGlyphOrigin.y, lpgmf->gmfCellIncX, lpgmf->gmfCellIncY); 
+                  lpgmf->gmfptGlyphOrigin.x, lpgmf->gmfptGlyphOrigin.y, lpgmf->gmfCellIncX, lpgmf->gmfCellIncY);
             lpgmf++;
         }
 
