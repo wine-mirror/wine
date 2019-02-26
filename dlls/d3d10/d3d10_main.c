@@ -27,7 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
-HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
+static HRESULT d3d10_create_device(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
         HMODULE swrast, UINT flags, UINT sdk_version, ID3D10Device **device)
 {
     IDXGIFactory *factory;
@@ -139,6 +139,12 @@ HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver
     return hr;
 }
 
+HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
+        HMODULE swrast, UINT flags, UINT sdk_version, ID3D10Device **device)
+{
+    return d3d10_create_device(adapter, driver_type, swrast, flags, sdk_version, device);
+}
+
 HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
         HMODULE swrast, UINT flags, UINT sdk_version, DXGI_SWAP_CHAIN_DESC *swapchain_desc,
         IDXGISwapChain **swapchain, ID3D10Device **device)
@@ -152,8 +158,9 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER
             adapter, debug_d3d10_driver_type(driver_type), swrast, flags, sdk_version,
             swapchain_desc, swapchain, device);
 
-    hr = D3D10CreateDevice(adapter, driver_type, swrast, flags, sdk_version, device);
-    if (FAILED(hr))
+    /* Avoid forwarding to D3D10CreateDevice(), since it breaks applications
+     * hooking these entry-points. */
+    if (FAILED(hr = d3d10_create_device(adapter, driver_type, swrast, flags, sdk_version, device)))
     {
         WARN("Failed to create a device, returning %#x\n", hr);
         *device = NULL;
