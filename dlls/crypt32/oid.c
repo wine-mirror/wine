@@ -190,7 +190,6 @@ static char *CRYPT_GetKeyName(DWORD dwEncodingType, LPCSTR pszFuncName,
 BOOL WINAPI CryptGetDefaultOIDDllList(HCRYPTOIDFUNCSET hFuncSet,
  DWORD dwEncodingType, LPWSTR pwszDllList, DWORD *pcchDllList)
 {
-    BOOL ret = TRUE;
     struct OIDFunctionSet *set = hFuncSet;
     char *keyName;
     HKEY key;
@@ -228,7 +227,7 @@ BOOL WINAPI CryptGetDefaultOIDDllList(HCRYPTOIDFUNCSET hFuncSet,
     }
     CryptMemFree(keyName);
 
-    return ret;
+    return TRUE;
 }
 
 BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
