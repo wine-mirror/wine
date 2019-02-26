@@ -1222,7 +1222,6 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
     if (SUCCEEDED(hr))
     {
         REFERENCE_TIME rtStart, rtStop;
-        REFERENCE_TIME rtSampleStart, rtSampleStop;
         DATAREQUEST *pDataRq = This->sample_list + buffer;
         DWORD dwBytes = 0;
 
@@ -1247,16 +1246,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         rtStart = MEDIATIME_FROM_BYTES(rtStart);
         rtStop = rtStart + MEDIATIME_FROM_BYTES(dwBytes);
 
-        IMediaSample_GetTime(pDataRq->pSample, &rtSampleStart, &rtSampleStop);
-        assert(rtStart == rtSampleStart);
-        assert(rtStop <= rtSampleStop);
-
         IMediaSample_SetTime(pDataRq->pSample, &rtStart, &rtStop);
-        assert(rtStart == rtSampleStart);
-        if (hr == S_OK)
-            assert(rtStop == rtSampleStop);
-        else
-            assert(rtStop == rtStart);
 
         This->sample_list[buffer].pSample = NULL;
         assert(This->oldest_sample < This->samples);
