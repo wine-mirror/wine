@@ -813,6 +813,66 @@ static void test_request(IAsyncReader *reader, IMemAllocator *allocator)
     IMediaSample_Release(sample2);
 }
 
+static void test_flush(IAsyncReader *reader, IMemAllocator *allocator)
+{
+    REFERENCE_TIME start_time, end_time;
+    IMediaSample *sample, *ret_sample;
+    BYTE buffer[20], *data;
+    DWORD_PTR cookie;
+    HRESULT hr;
+    int i;
+
+    IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    IMediaSample_GetPointer(sample, &data);
+
+    start_time = 0;
+    end_time = 512 * (LONGLONG)10000000;
+    hr = IMediaSample_SetTime(sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_BeginFlush(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_SyncRead(reader, 0, 20, buffer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < 20; i++)
+        ok(buffer[i] == i % 111, "Got wrong byte %02x at %u.\n", buffer[i], i);
+
+    start_time = 0;
+    end_time = 512 * (LONGLONG)10000000;
+    hr = IMediaSample_SetTime(sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_SyncReadAligned(reader, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < 512; i++)
+        ok(data[i] == i % 111, "Got wrong byte %02x at %u.\n", data[i], i);
+
+    hr = IAsyncReader_Request(reader, sample, 456);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_EndFlush(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_WaitForNext(reader, 0, &ret_sample, &cookie);
+    ok(hr == VFW_E_TIMEOUT, "Got hr %#x.\n", hr);
+
+    start_time = 0;
+    end_time = 512 * (LONGLONG)10000000;
+    hr = IAsyncReader_Request(reader, sample, 123);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAsyncReader_WaitForNext(reader, 1000, &ret_sample, &cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret_sample == sample, "Expected sample %p, got %p.\n", sample, ret_sample);
+    ok(cookie == 123, "Got cookie %lu.\n", cookie);
+
+    for (i = 0; i < 512; i++)
+        ok(data[i] == i % 111, "Got wrong byte %02x at %u.\n", data[i], i);
+
+    IMediaSample_Release(sample);
+}
+
 static void test_async_reader(void)
 {
     ALLOCATOR_PROPERTIES req_props = {2, 1024, 512, 0}, ret_props;
@@ -894,6 +954,7 @@ static void test_async_reader(void)
 
     test_sync_read_aligned(reader, allocator);
     test_request(reader, allocator);
+    test_flush(reader, allocator);
 
     IMemAllocator_Release(allocator);
     IAsyncReader_Release(reader);
