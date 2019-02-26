@@ -924,13 +924,13 @@ static void test_xtime_get(void)
     }
 
     /* Test parameter and return value */
-    before.sec = 0xdeadbeef, before.nsec = 0xdeadbeef;
+    before.sec = 0xdeadbeef; before.nsec = 0xdeadbeef;
     i = p_xtime_get(&before, 0);
     ok(i == 0, "expect xtime_get() to return 0, got: %d\n", i);
     ok(before.sec == 0xdeadbeef && before.nsec == 0xdeadbeef,
             "xtime_get() shouldn't have modified the xtime struct with the given option\n");
 
-    before.sec = 0xdeadbeef, before.nsec = 0xdeadbeef;
+    before.sec = 0xdeadbeef; before.nsec = 0xdeadbeef;
     i = p_xtime_get(&before, 1);
     ok(i == 1, "expect xtime_get() to return 1, got: %d\n", i);
     ok(before.sec != 0xdeadbeef && before.nsec != 0xdeadbeef,
