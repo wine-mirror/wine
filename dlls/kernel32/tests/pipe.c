@@ -3671,6 +3671,43 @@ static void test_namedpipe_session_id(void)
     CloseHandle(server);
 }
 
+static void test_multiple_instances(void)
+{
+    HANDLE server[2], client;
+    int i;
+    BOOL ret;
+    OVERLAPPED ov;
+
+    for (i = 0; i < ARRAY_SIZE(server); i++)
+    {
+        server[i] = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                                     PIPE_READMODE_BYTE | PIPE_WAIT, 2, 1024, 1024,
+                                     NMPWAIT_USE_DEFAULT_WAIT, NULL);
+        ok(server[i] != INVALID_HANDLE_VALUE, "got invalid handle\n");
+    }
+
+    client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "got invalid handle\n");
+
+    /* Show that this has connected to server[0] not server[1] */
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[1], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %d\n", GetLastError());
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[0], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_PIPE_CONNECTED, "got %d\n", GetLastError());
+
+    DisconnectNamedPipe(server[1]);
+    DisconnectNamedPipe(server[0]);
+    CloseHandle(client);
+    CloseHandle(server[1]);
+    CloseHandle(server[0]);
+}
+
 START_TEST(pipe)
 {
     char **argv;
@@ -3736,4 +3773,5 @@ START_TEST(pipe)
     test_TransactNamedPipe();
     test_namedpipe_process_id();
     test_namedpipe_session_id();
+    test_multiple_instances();
 }

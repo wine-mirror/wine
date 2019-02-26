@@ -1162,7 +1162,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->pipe_end.server_pid = get_process_id( current->process );
     init_async_queue( &server->listen_q );
 
-    list_add_head( &pipe->servers, &server->entry );
+    list_add_tail( &pipe->servers, &server->entry );
     if (!(server->pipe_end.fd = alloc_pseudo_fd( &pipe_server_fd_ops, &server->pipe_end.obj, options )))
     {
         release_object( server );
