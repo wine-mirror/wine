@@ -283,6 +283,12 @@ static void dereference_kernel_object( void *obj )
         header->type->release( obj );
 }
 
+static void ObReferenceObject( void *obj )
+{
+    TRACE( "(%p): stub\n", obj );
+}
+
+
 static const WCHAR file_type_name[] = {'F','i','l','e',0};
 
 static struct _OBJECT_TYPE file_type = {
@@ -2631,14 +2637,8 @@ NTSTATUS WINAPI ObReferenceObjectByName( UNICODE_STRING *ObjectName,
     }
 
     driver = WINE_RB_ENTRY_VALUE(entry, struct wine_driver, entry);
-    *Object = &driver->driver_obj;
+    ObReferenceObject( *Object = &driver->driver_obj );
     return STATUS_SUCCESS;
-}
-
-
-static void ObReferenceObject( void *obj )
-{
-    TRACE( "(%p): stub\n", obj );
 }
 
 
