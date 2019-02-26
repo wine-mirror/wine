@@ -1313,8 +1313,8 @@
 @ stub ZwCloseObjectAuditAlarm
 @ stdcall -private ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
 @ stdcall -private ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
-@ stdcall -private ZwCreateEvent(ptr long ptr long long) NtCreateEvent
-@ stdcall -private ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
+@ stdcall ZwCreateEvent(ptr long ptr long long) NtCreateEvent
+@ stdcall ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
 @ stdcall -private ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 @ stdcall -private ZwCreateKey(ptr long ptr long ptr long ptr) NtCreateKey
 @ stdcall -private ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
@@ -1326,7 +1326,7 @@
 @ stdcall -private ZwDeleteValueKey(long ptr) NtDeleteValueKey
 @ stdcall -private ZwDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) NtDeviceIoControlFile
 @ stdcall -private ZwDisplayString(ptr) NtDisplayString
-@ stdcall -private ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
+@ stdcall ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
 @ stdcall -private ZwDuplicateToken(long long ptr long long ptr) NtDuplicateToken
 @ stub ZwEnumerateBootEntries
 @ stdcall -private ZwEnumerateKey(long long long ptr long ptr) NtEnumerateKey

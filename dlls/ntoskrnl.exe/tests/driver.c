@@ -49,6 +49,10 @@ static int running_under_wine;
 static int winetest_debug;
 static int winetest_report_success;
 
+static POBJECT_TYPE *pExEventObjectType, *pIoFileObjectType, *pPsThreadType;
+
+void WINAPI ObfReferenceObject( void *obj );
+
 extern int CDECL _vsnprintf(char *str, size_t len, const char *format, __ms_va_list argptr);
 
 static void kvprintf(const char *format, __ms_va_list ap)
@@ -173,6 +177,21 @@ static void winetest_end_todo(void)
 #define todo_wine               todo_if(running_under_wine)
 #define todo_wine_if(is_todo)   todo_if((is_todo) && running_under_wine)
 #define win_skip(...)           win_skip_(__FILE__, __LINE__, __VA_ARGS__)
+
+static unsigned int strlenW( const WCHAR *str )
+{
+    const WCHAR *s = str;
+    while (*s) s++;
+    return s - str;
+}
+
+void *kmemcpy(void *dest, const void *src, SIZE_T n)
+{
+    const char *s = src;
+    char *d = dest;
+    while (n--) *d++ = *s++;
+    return dest;
+}
 
 static void *get_proc_address(const char *name)
 {
@@ -636,6 +655,113 @@ static void test_version(void)
     ok(*pNtBuildNumber == build, "Expected build number %u, got %u\n", build, *pNtBuildNumber);
 }
 
+static void WINAPI thread_proc(void *arg)
+{
+    PsTerminateSystemThread(STATUS_SUCCESS);
+}
+
+static void test_ob_reference(const WCHAR *test_path)
+{
+    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
+    HANDLE event_handle, file_handle, file_handle2, thread_handle;
+    void *obj1, *obj2;
+    UNICODE_STRING pathU;
+    IO_STATUS_BLOCK io;
+    WCHAR *tmp_path;
+    SIZE_T len;
+    NTSTATUS status;
+
+    static const WCHAR tmpW[] = {'.','t','m','p',0};
+
+    InitializeObjectAttributes(&attr, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+    status = ZwCreateEvent(&event_handle, SYNCHRONIZE, &attr, NotificationEvent, TRUE);
+    ok(!status, "ZwCreateEvent failed: %#x\n", status);
+
+    len = strlenW(test_path);
+    tmp_path = ExAllocatePool(PagedPool, len * sizeof(WCHAR) + sizeof(tmpW));
+    kmemcpy(tmp_path, test_path, len * sizeof(WCHAR));
+    kmemcpy(tmp_path + len, tmpW, sizeof(tmpW));
+
+    RtlInitUnicodeString(&pathU, tmp_path);
+    attr.ObjectName = &pathU;
+    attr.Attributes = OBJ_KERNEL_HANDLE;
+    status = ZwCreateFile(&file_handle,  DELETE | FILE_WRITE_DATA | SYNCHRONIZE, &attr, &io, NULL, 0, 0, FILE_CREATE,
+                          FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    ok(!status, "ZwCreateFile failed: %#x\n", status);
+    ExFreePool(tmp_path);
+
+    status = ZwDuplicateObject(NtCurrentProcess(), file_handle, NtCurrentProcess(), &file_handle2,
+                               0, OBJ_KERNEL_HANDLE, DUPLICATE_SAME_ACCESS);
+    ok(!status, "ZwDuplicateObject failed: %#x\n", status);
+
+    InitializeObjectAttributes(&attr, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+    status = PsCreateSystemThread(&thread_handle, SYNCHRONIZE, &attr, NULL, NULL, thread_proc, NULL);
+    ok(!status, "PsCreateSystemThread returned: %#x\n", status);
+
+    status = ObReferenceObjectByHandle(NULL, SYNCHRONIZE, *pExEventObjectType, KernelMode, &obj1, NULL);
+    todo_wine
+    ok(status == STATUS_INVALID_HANDLE, "ObReferenceObjectByHandle failed: %#x\n", status);
+    if (!status) ObDereferenceObject(obj1);
+
+    status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pIoFileObjectType, KernelMode, &obj1, NULL);
+    todo_wine
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "ObReferenceObjectByHandle returned: %#x\n", status);
+    if (!status) ObDereferenceObject(obj1);
+
+    status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pExEventObjectType, KernelMode, &obj1, NULL);
+    ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+
+    if (sizeof(void *) != 4) /* avoid dealing with fastcall */
+    {
+        ObfReferenceObject(obj1);
+        ObDereferenceObject(obj1);
+    }
+
+    status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pIoFileObjectType, KernelMode, &obj2, NULL);
+    todo_wine
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "ObReferenceObjectByHandle returned: %#x\n", status);
+    if (!status) ObDereferenceObject(obj2);
+
+    status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pExEventObjectType, KernelMode, &obj2, NULL);
+    ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+    ok(obj1 == obj2, "obj1 != obj2\n");
+
+    ObDereferenceObject(obj1);
+    ObDereferenceObject(obj2);
+
+    status = ObReferenceObjectByHandle(file_handle, SYNCHRONIZE, *pIoFileObjectType, KernelMode, &obj1, NULL);
+    ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+
+    status = ObReferenceObjectByHandle(file_handle2, SYNCHRONIZE, *pIoFileObjectType, KernelMode, &obj2, NULL);
+    ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+    ok(obj1 == obj2, "obj1 != obj2\n");
+
+    ObDereferenceObject(obj1);
+    ObDereferenceObject(obj2);
+
+    status = ObReferenceObjectByHandle(thread_handle, SYNCHRONIZE, *pPsThreadType, KernelMode, &obj1, NULL);
+    ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+
+    status = ObReferenceObjectByHandle(thread_handle, SYNCHRONIZE, *pPsThreadType, KernelMode, &obj2, NULL);
+    ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+    ok(obj1 == obj2, "obj1 != obj2\n");
+
+    ObDereferenceObject(obj1);
+    ObDereferenceObject(obj2);
+
+    status = ZwClose(thread_handle);
+    ok(!status, "ZwClose failed: %#x\n", status);
+
+    status = ZwClose(event_handle);
+    ok(!status, "ZwClose failed: %#x\n", status);
+
+    status = ZwClose(file_handle);
+    ok(!status, "ZwClose failed: %#x\n", status);
+
+    status = ZwClose(file_handle2);
+    ok(!status, "ZwClose failed: %#x\n", status);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -647,7 +773,6 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 
     if (!buffer)
         return STATUS_ACCESS_VIOLATION;
-
     if (length < sizeof(failures))
         return STATUS_BUFFER_TOO_SMALL;
 
@@ -660,6 +785,15 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     attr.Attributes = OBJ_KERNEL_HANDLE; /* needed to be accessible from system threads */
     ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
 
+    pExEventObjectType = get_proc_address("ExEventObjectType");
+    ok(!!pExEventObjectType, "ExEventObjectType not found\n");
+
+    pIoFileObjectType = get_proc_address("IoFileObjectType");
+    ok(!!pIoFileObjectType, "IofileObjectType not found\n");
+
+    pPsThreadType = get_proc_address("PsThreadType");
+    ok(!!pPsThreadType, "IofileObjectType not found\n");
+
     test_irp_struct(irp, device);
     test_currentprocess();
     test_mdl_map();
@@ -669,9 +803,10 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_version();
     test_stack_callout();
     test_lookaside_list();
+    test_ob_reference(test_input->path);
 
     /* print process report */
-    if (test_input->winetest_debug)
+    if (winetest_debug)
     {
         kprintf("%04x:ntoskrnl: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
             PsGetCurrentProcessId(), successes + failures + todo_successes + todo_failures,
