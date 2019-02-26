@@ -293,6 +293,7 @@ static const WCHAR file_type_name[] = {'F','i','l','e',0};
 
 static struct _OBJECT_TYPE file_type = {
     file_type_name,
+    free_kernel_object
 };
 
 POBJECT_TYPE IoFileObjectType = &file_type;
@@ -324,7 +325,7 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
 
     if (irp->Flags & IRP_CLOSE_OPERATION)
     {
-        HeapFree( GetProcessHeap(), 0, file );
+        dereference_kernel_object( file );
         irp->Tail.Overlay.OriginalFileObject = NULL;
     }
 
@@ -357,7 +358,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     FILE_OBJECT *file;
     DEVICE_OBJECT *device = wine_server_get_ptr( params->create.device );
 
-    if (!(file = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*file) ))) return STATUS_NO_MEMORY;
+    if (!(file = alloc_kernel_object( IoFileObjectType, sizeof(*file), 1 ))) return STATUS_NO_MEMORY;
 
     TRACE( "device %p -> file %p\n", device, file );
 
@@ -367,7 +368,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
 
     if (!(irp = IoAllocateIrp( device->StackSize, FALSE )))
     {
-        HeapFree( GetProcessHeap(), 0, file );
+        dereference_kernel_object( file );
         return STATUS_NO_MEMORY;
     }
 
@@ -412,7 +413,7 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
 
     if (!(irp = IoAllocateIrp( device->StackSize, FALSE )))
     {
-        HeapFree( GetProcessHeap(), 0, file );
+        dereference_kernel_object( file );
         return STATUS_NO_MEMORY;
     }
 
