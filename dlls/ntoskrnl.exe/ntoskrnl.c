@@ -369,16 +369,26 @@ NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE handle, ACCESS_MASK access,
 }
 
 
+static void *create_file_object( HANDLE handle );
+
 static const WCHAR file_type_name[] = {'F','i','l','e',0};
 
 static struct _OBJECT_TYPE file_type = {
     file_type_name,
-    NULL,
+    create_file_object,
     free_kernel_object
 };
 
 POBJECT_TYPE IoFileObjectType = &file_type;
 
+static void *create_file_object( HANDLE handle )
+{
+    FILE_OBJECT *file;
+    if (!(file = alloc_kernel_object( IoFileObjectType, sizeof(*file), 0 ))) return NULL;
+    file->Type = 5;  /* MSDN */
+    file->Size = sizeof(*file);
+    return file;
+}
 
 /* transfer result of IRP back to wineserver */
 static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp, void *context )

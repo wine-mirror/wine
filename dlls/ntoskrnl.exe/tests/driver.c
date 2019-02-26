@@ -664,6 +664,7 @@ static void test_ob_reference(const WCHAR *test_path)
 {
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     HANDLE event_handle, file_handle, file_handle2, thread_handle;
+    FILE_OBJECT *file;
     void *obj1, *obj2;
     UNICODE_STRING pathU;
     IO_STATUS_BLOCK io;
@@ -731,6 +732,9 @@ static void test_ob_reference(const WCHAR *test_path)
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
     todo_wine
     ok(obj1 == obj2, "obj1 != obj2\n");
+
+    file = obj1;
+    ok(file->Type == 5, "Type = %u\n", file->Type);
 
     ObDereferenceObject(obj1);
     ObDereferenceObject(obj2);
