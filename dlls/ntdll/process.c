@@ -815,9 +815,13 @@ static char **build_argv( const UNICODE_STRING *cmdlineW, int reserved )
         else if (*s == '\\') bcount++;  /* '\', count them */
         else if ((*s == '"') && ((bcount & 1) == 0))
         {
-            /* unescaped '"' */
-            in_quotes = !in_quotes;
-            bcount = 0;
+            if (in_quotes && s[1] == '"') s++;
+            else
+            {
+                /* unescaped '"' */
+                in_quotes = !in_quotes;
+                bcount = 0;
+            }
         }
         else bcount = 0; /* a regular character */
         s++;
@@ -864,7 +868,12 @@ static char **build_argv( const UNICODE_STRING *cmdlineW, int reserved )
                  */
                 d -= bcount/2;
                 s++;
-                in_quotes = !in_quotes;
+                if (in_quotes && *s == '"')
+                {
+                    *d++ = '"';
+                    s++;
+                }
+                else in_quotes = !in_quotes;
             }
             else
             {
