@@ -1218,7 +1218,8 @@ static const WCHAR device_type_name[] = {'D','e','v','i','c','e',0};
 
 static struct _OBJECT_TYPE device_type =
 {
-    device_type_name
+    device_type_name,
+    free_kernel_object
 };
 
 POBJECT_TYPE IoDeviceObjectType = &device_type;
@@ -1240,7 +1241,7 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
     TRACE( "(%p, %u, %s, %u, %x, %u, %p)\n",
            driver, ext_size, debugstr_us(name), type, characteristics, exclusive, ret_device );
 
-    if (!(device = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*device) + ext_size )))
+    if (!(device = alloc_kernel_object( IoDeviceObjectType, sizeof(DEVICE_OBJECT) + ext_size, 1 )))
         return STATUS_NO_MEMORY;
 
     SERVER_START_REQ( create_device )
@@ -1268,7 +1269,7 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
 
         *ret_device = device;
     }
-    else HeapFree( GetProcessHeap(), 0, device );
+    else free_kernel_object( device );
 
     return status;
 }
@@ -1296,7 +1297,7 @@ void WINAPI IoDeleteDevice( DEVICE_OBJECT *device )
         while (*prev && *prev != device) prev = &(*prev)->NextDevice;
         if (*prev) *prev = (*prev)->NextDevice;
         NtClose( device->Reserved );
-        HeapFree( GetProcessHeap(), 0, device );
+        dereference_kernel_object( device );
     }
 }
 
