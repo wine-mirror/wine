@@ -699,14 +699,10 @@ static void test_ob_reference(const WCHAR *test_path)
     ok(!status, "PsCreateSystemThread returned: %#x\n", status);
 
     status = ObReferenceObjectByHandle(NULL, SYNCHRONIZE, *pExEventObjectType, KernelMode, &obj1, NULL);
-    todo_wine
     ok(status == STATUS_INVALID_HANDLE, "ObReferenceObjectByHandle failed: %#x\n", status);
-    if (!status) ObDereferenceObject(obj1);
 
     status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pIoFileObjectType, KernelMode, &obj1, NULL);
-    todo_wine
     ok(status == STATUS_OBJECT_TYPE_MISMATCH, "ObReferenceObjectByHandle returned: %#x\n", status);
-    if (!status) ObDereferenceObject(obj1);
 
     status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pExEventObjectType, KernelMode, &obj1, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
@@ -718,12 +714,11 @@ static void test_ob_reference(const WCHAR *test_path)
     }
 
     status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pIoFileObjectType, KernelMode, &obj2, NULL);
-    todo_wine
     ok(status == STATUS_OBJECT_TYPE_MISMATCH, "ObReferenceObjectByHandle returned: %#x\n", status);
-    if (!status) ObDereferenceObject(obj2);
 
     status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pExEventObjectType, KernelMode, &obj2, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+    todo_wine
     ok(obj1 == obj2, "obj1 != obj2\n");
 
     ObDereferenceObject(obj1);
@@ -734,6 +729,7 @@ static void test_ob_reference(const WCHAR *test_path)
 
     status = ObReferenceObjectByHandle(file_handle2, SYNCHRONIZE, *pIoFileObjectType, KernelMode, &obj2, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+    todo_wine
     ok(obj1 == obj2, "obj1 != obj2\n");
 
     ObDereferenceObject(obj1);
@@ -744,6 +740,7 @@ static void test_ob_reference(const WCHAR *test_path)
 
     status = ObReferenceObjectByHandle(thread_handle, SYNCHRONIZE, *pPsThreadType, KernelMode, &obj2, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+    todo_wine
     ok(obj1 == obj2, "obj1 != obj2\n");
 
     ObDereferenceObject(obj1);

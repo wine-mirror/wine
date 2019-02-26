@@ -22,8 +22,9 @@
 #define __WINE_NTOSKRNL_PRIVATE_H
 
 struct _OBJECT_TYPE {
-    const WCHAR *name;      /* object type name used for type validation */
-    void (*release)(void*); /* called when the last reference is released */
+    const WCHAR *name;            /* object type name used for type validation */
+    void *(*constructor)(HANDLE); /* used for creating an object from server handle */
+    void (*release)(void*);       /* called when the last reference is released */
 };
 
 #ifdef __i386__

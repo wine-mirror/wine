@@ -275,6 +275,13 @@ void *alloc_kernel_object( POBJECT_TYPE type, SIZE_T size, LONG ref )
     return header + 1;
 }
 
+/* FIXME: Use ObReferenceObject instead. */
+static void reference_kernel_object( void *obj )
+{
+    struct object_header *header = (struct object_header*)obj - 1;
+    InterlockedIncrement( &header->ref );
+}
+
 /* FIXME: Use ObDereferenceObject instead. */
 static void dereference_kernel_object( void *obj )
 {
@@ -288,11 +295,66 @@ static void ObReferenceObject( void *obj )
     TRACE( "(%p): stub\n", obj );
 }
 
+static NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret )
+{
+    char buf[256];
+    OBJECT_TYPE_INFORMATION *type_info = (OBJECT_TYPE_INFORMATION *)buf;
+    ULONG size;
+    void *obj;
+    NTSTATUS status;
+
+    status = NtQueryObject(handle, ObjectTypeInformation, buf, sizeof(buf), &size);
+    if (status) return status;
+
+    if (!!RtlCompareUnicodeStrings(type->name, strlenW(type->name), type_info->TypeName.Buffer,
+                                   type_info->TypeName.Length / sizeof(WCHAR), FALSE))
+        return STATUS_OBJECT_TYPE_MISMATCH;
+
+    FIXME( "semi-stub: returning new %s object instance\n", debugstr_w(type->name) );
+
+    if (type->constructor)
+        obj = type->constructor( handle );
+    else
+    {
+        obj = alloc_kernel_object( type, 0, 0 );
+        FIXME( "No constructor for type %s returning empty %p object\n", debugstr_w(type->name), obj );
+    }
+    if (!obj) return STATUS_NO_MEMORY;
+
+    TRACE( "%p -> %p\n", handle, obj );
+    *ret = obj;
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           ObReferenceObjectByHandle    (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE handle, ACCESS_MASK access,
+                                           POBJECT_TYPE type,
+                                           KPROCESSOR_MODE mode, void **ptr,
+                                           POBJECT_HANDLE_INFORMATION info )
+{
+    NTSTATUS status;
+
+    TRACE( "%p %x %p %d %p %p\n", handle, access, type, mode, ptr, info );
+
+    if (mode != KernelMode)
+    {
+        FIXME("UserMode access not implemented\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    status = kernel_object_from_handle( handle, type, ptr );
+    if (!status) reference_kernel_object( *ptr );
+    return status;
+}
+
 
 static const WCHAR file_type_name[] = {'F','i','l','e',0};
 
 static struct _OBJECT_TYPE file_type = {
     file_type_name,
+    NULL,
     free_kernel_object
 };
 
@@ -1151,6 +1213,7 @@ static const WCHAR driver_type_name[] = {'D','r','i','v','e','r',0};
 static struct _OBJECT_TYPE driver_type =
 {
     driver_type_name,
+    NULL,
     free_driver_object
 };
 
@@ -1226,6 +1289,7 @@ static const WCHAR device_type_name[] = {'D','e','v','i','c','e',0};
 static struct _OBJECT_TYPE device_type =
 {
     device_type_name,
+    NULL,
     free_kernel_object
 };
 
@@ -2581,22 +2645,6 @@ VOID WINAPI MmUnmapIoSpace( PVOID BaseAddress, SIZE_T NumberOfBytes )
     FIXME( "stub: %p, %lu\n", BaseAddress, NumberOfBytes );
 }
 
-
- /***********************************************************************
- *           ObReferenceObjectByHandle    (NTOSKRNL.EXE.@)
- */
-NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE obj, ACCESS_MASK access,
-                                           POBJECT_TYPE type,
-                                           KPROCESSOR_MODE mode, PVOID* ptr,
-                                           POBJECT_HANDLE_INFORMATION info)
-{
-    FIXME( "stub: %p %x %p %d %p %p\n", obj, access, type, mode, ptr, info);
-
-    if(ptr)
-        *ptr = UlongToHandle(0xdeadbeaf);
-
-    return STATUS_SUCCESS;
-}
 
  /***********************************************************************
  *           ObReferenceObjectByName    (NTOSKRNL.EXE.@)
