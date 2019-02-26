@@ -275,24 +275,43 @@ void *alloc_kernel_object( POBJECT_TYPE type, SIZE_T size, LONG ref )
     return header + 1;
 }
 
-/* FIXME: Use ObReferenceObject instead. */
-static void reference_kernel_object( void *obj )
-{
-    struct object_header *header = (struct object_header*)obj - 1;
-    InterlockedIncrement( &header->ref );
-}
 
-/* FIXME: Use ObDereferenceObject instead. */
-static void dereference_kernel_object( void *obj )
+/***********************************************************************
+ *           ObDereferenceObject   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ObDereferenceObject( void *obj )
 {
     struct object_header *header = (struct object_header*)obj - 1;
-    if (!InterlockedDecrement( &header->ref ) && header->type->release)
-        header->type->release( obj );
+    LONG ref;
+
+    if (!obj)
+    {
+        FIXME("NULL obj\n");
+        return;
+    }
+
+    ref = InterlockedDecrement( &header->ref );
+    TRACE( "(%p) ref=%u\n", obj, ref );
+    if (!ref)
+    {
+        if (header->type->release) header->type->release( obj );
+        else FIXME( "no destructor\n" );
+    }
 }
 
 static void ObReferenceObject( void *obj )
 {
-    TRACE( "(%p): stub\n", obj );
+    struct object_header *header = (struct object_header*)obj - 1;
+    LONG ref;
+
+    if (!obj)
+    {
+        FIXME("NULL obj\n");
+        return;
+    }
+
+    ref = InterlockedIncrement( &header->ref );
+    TRACE( "(%p) ref=%u\n", obj, ref );
 }
 
 static NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret )
@@ -345,7 +364,7 @@ NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE handle, ACCESS_MASK access,
     }
 
     status = kernel_object_from_handle( handle, type, ptr );
-    if (!status) reference_kernel_object( *ptr );
+    if (!status) ObReferenceObject( *ptr );
     return status;
 }
 
@@ -387,7 +406,7 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
 
     if (irp->Flags & IRP_CLOSE_OPERATION)
     {
-        dereference_kernel_object( file );
+        ObDereferenceObject( file );
         irp->Tail.Overlay.OriginalFileObject = NULL;
     }
 
@@ -430,7 +449,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
 
     if (!(irp = IoAllocateIrp( device->StackSize, FALSE )))
     {
-        dereference_kernel_object( file );
+        ObDereferenceObject( file );
         return STATUS_NO_MEMORY;
     }
 
@@ -475,7 +494,7 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
 
     if (!(irp = IoAllocateIrp( device->StackSize, FALSE )))
     {
-        dereference_kernel_object( file );
+        ObDereferenceObject( file );
         return STATUS_NO_MEMORY;
     }
 
@@ -1251,7 +1270,7 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
     status = driver->driver_obj.DriverInit( &driver->driver_obj, &driver->driver_extension.ServiceKeyName );
     if (status)
     {
-        dereference_kernel_object( driver );
+        ObDereferenceObject( driver );
         return status;
     }
 
@@ -1280,7 +1299,7 @@ void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver_object )
     wine_rb_remove_key( &wine_drivers, &driver_object->DriverName );
     LeaveCriticalSection( &drivers_cs );
 
-    dereference_kernel_object( driver_object );
+    ObDereferenceObject( driver_object );
 }
 
 
@@ -1368,7 +1387,7 @@ void WINAPI IoDeleteDevice( DEVICE_OBJECT *device )
         while (*prev && *prev != device) prev = &(*prev)->NextDevice;
         if (*prev) *prev = (*prev)->NextDevice;
         NtClose( device->Reserved );
-        dereference_kernel_object( device );
+        ObDereferenceObject( device );
     }
 }
 
@@ -2701,15 +2720,6 @@ NTSTATUS WINAPI ObReferenceObjectByPointer(void *obj, ACCESS_MASK access,
     FIXME("(%p, %x, %p, %d): stub\n", obj, access, type, mode);
 
     return STATUS_NOT_IMPLEMENTED;
-}
-
-
-/***********************************************************************
- *           ObDereferenceObject   (NTOSKRNL.EXE.@)
- */
-void WINAPI ObDereferenceObject( void *obj )
-{
-    TRACE( "(%p): stub\n", obj );
 }
 
 
