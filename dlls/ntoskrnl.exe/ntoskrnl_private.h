@@ -23,6 +23,7 @@
 
 struct _OBJECT_TYPE {
     const WCHAR *name;      /* object type name used for type validation */
+    void (*release)(void*); /* called when the last reference is released */
 };
 
 #ifdef __i386__

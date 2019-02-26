@@ -98,11 +98,10 @@ static DWORD client_pid;
 
 struct wine_driver
 {
-    struct wine_rb_entry entry;
-
     DRIVER_OBJECT driver_obj;
     DRIVER_EXTENSION driver_extension;
     SERVICE_STATUS_HANDLE service_handle;
+    struct wine_rb_entry entry;
 };
 
 struct device_interface
@@ -251,6 +250,38 @@ static HANDLE get_device_manager(void)
     return ret;
 }
 
+
+struct object_header
+{
+    LONG ref;
+    POBJECT_TYPE type;
+};
+
+static void free_kernel_object( void *obj )
+{
+    struct object_header *header = (struct object_header *)obj - 1;
+    HeapFree( GetProcessHeap(), 0, header );
+}
+
+void *alloc_kernel_object( POBJECT_TYPE type, SIZE_T size, LONG ref )
+{
+    struct object_header *header;
+
+    if (!(header = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*header) + size)) )
+        return NULL;
+
+    header->ref = ref;
+    header->type = type;
+    return header + 1;
+}
+
+/* FIXME: Use ObDereferenceObject instead. */
+static void dereference_kernel_object( void *obj )
+{
+    struct object_header *header = (struct object_header*)obj - 1;
+    if (!InterlockedDecrement( &header->ref ) && header->type->release)
+        header->type->release( obj );
+}
 
 static const WCHAR file_type_name[] = {'F','i','l','e',0};
 
@@ -1100,11 +1131,20 @@ static NTSTATUS WINAPI unhandled_irp( DEVICE_OBJECT *device, IRP *irp )
 }
 
 
+static void free_driver_object( void *obj )
+{
+    struct wine_driver *driver = obj;
+    RtlFreeUnicodeString( &driver->driver_obj.DriverName );
+    RtlFreeUnicodeString( &driver->driver_obj.DriverExtension->ServiceKeyName );
+    free_kernel_object( driver );
+}
+
 static const WCHAR driver_type_name[] = {'D','r','i','v','e','r',0};
 
 static struct _OBJECT_TYPE driver_type =
 {
     driver_type_name,
+    free_driver_object
 };
 
 POBJECT_TYPE IoDriverObjectType = &driver_type;
@@ -1121,13 +1161,12 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
 
     TRACE("(%s, %p)\n", debugstr_us(name), init);
 
-    if (!(driver = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                    sizeof(*driver) )))
+    if (!(driver = alloc_kernel_object( IoDriverObjectType, sizeof(*driver), 1 )))
         return STATUS_NO_MEMORY;
 
     if ((status = RtlDuplicateUnicodeString( 1, name, &driver->driver_obj.DriverName )))
     {
-        RtlFreeHeap( GetProcessHeap(), 0, driver );
+        free_kernel_object( driver );
         return status;
     }
 
@@ -1142,9 +1181,7 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
     status = driver->driver_obj.DriverInit( &driver->driver_obj, &driver->driver_extension.ServiceKeyName );
     if (status)
     {
-        RtlFreeUnicodeString( &driver->driver_obj.DriverName );
-        RtlFreeUnicodeString( &driver->driver_extension.ServiceKeyName );
-        RtlFreeHeap( GetProcessHeap(), 0, driver );
+        dereference_kernel_object( driver );
         return status;
     }
 
@@ -1173,9 +1210,7 @@ void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver_object )
     wine_rb_remove_key( &wine_drivers, &driver_object->DriverName );
     LeaveCriticalSection( &drivers_cs );
 
-    RtlFreeUnicodeString( &driver_object->DriverName );
-    RtlFreeUnicodeString( &driver_object->DriverExtension->ServiceKeyName );
-    RtlFreeHeap( GetProcessHeap(), 0, CONTAINING_RECORD( driver_object, struct wine_driver, driver_obj ) );
+    dereference_kernel_object( driver_object );
 }
 
 
