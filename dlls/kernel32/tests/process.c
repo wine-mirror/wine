@@ -896,7 +896,7 @@ static void test_CommandLine(void)
 
     /* the basics */
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" \"C:\\Program Files\\my nice app.exe\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" \"C:\\Program Files\\my nice app.exe\" \"\"\"\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -905,9 +905,10 @@ static void test_CommandLine(void)
     CloseHandle(info.hThread);
     CloseHandle(info.hProcess);
 
-    okChildInt("Arguments", "argcA", 5);
+    okChildInt("Arguments", "argcA", 6);
     okChildString("Arguments", "argvA4", "C:\\Program Files\\my nice app.exe");
-    okChildString("Arguments", "argvA5", NULL);
+    okChildString("Arguments", "argvA5", "\"");
+    okChildString("Arguments", "argvA6", NULL);
     okChildString("Arguments", "CommandLineA", buffer);
     release_memory();
     DeleteFileA(resfile);
