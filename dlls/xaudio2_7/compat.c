@@ -923,7 +923,7 @@ static HRESULT WINAPI XA20SUB_SetOutputVoices(IXAudio20SubmixVoice *iface,
         const XAUDIO23_VOICE_SENDS *pSendList)
 {
     XA2VoiceImpl *This = impl_from_IXAudio20SubmixVoice(iface);
-    XAUDIO2_VOICE_SENDS sends, *psends;
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
     HRESULT hr;
 
     TRACE("%p, %p\n", This, pSendList);
@@ -1483,7 +1483,7 @@ static HRESULT WINAPI XA20M_SetOutputVoices(IXAudio20MasteringVoice *iface,
         const XAUDIO23_VOICE_SENDS *pSendList)
 {
     XA2VoiceImpl *This = impl_from_IXAudio20MasteringVoice(iface);
-    XAUDIO2_VOICE_SENDS sends, *psends;
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
     HRESULT hr;
 
     TRACE("%p, %p\n", This, pSendList);
@@ -2115,7 +2115,7 @@ static HRESULT WINAPI XA20_CreateSubmixVoice(IXAudio20 *iface,
         const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
     IXAudio2Impl *This = impl_from_IXAudio20(iface);
-    XAUDIO2_VOICE_SENDS sends, *psends;
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
     HRESULT hr;
 
     if(pSendList){
@@ -2350,7 +2350,7 @@ static HRESULT WINAPI XA22_CreateSubmixVoice(IXAudio22 *iface,
         const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
     IXAudio2Impl *This = impl_from_IXAudio22(iface);
-    XAUDIO2_VOICE_SENDS sends, *psends;
+    XAUDIO2_VOICE_SENDS sends, *psends = NULL;
     HRESULT hr;
 
     if(pSendList){
