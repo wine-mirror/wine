@@ -297,7 +297,7 @@ static void test_topology(void)
     IMFCollection_Release(collection);
 
     hr = IMFTopology_GetOutputNodeCollection(topology, &collection);
-    ok(hr == S_OK || broken(hr == E_FAIL) /* before Win8 */, "Failed to get source node collection, hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* before Win8 */, "Failed to get output node collection, hr %#x.\n", hr);
     if (SUCCEEDED(hr))
     {
         ok(!!collection, "Unexpected object pointer.\n");
@@ -313,7 +313,7 @@ static void test_topology(void)
         IMFTopologyNode_Release(node);
 
         hr = IMFTopology_GetOutputNodeCollection(topology, &collection);
-        ok(hr == S_OK, "Failed to get source node collection, hr %#x.\n", hr);
+        ok(hr == S_OK, "Failed to get output node collection, hr %#x.\n", hr);
         ok(!!collection, "Unexpected object pointer.\n");
         hr = IMFCollection_GetElementCount(collection, &size);
         ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
