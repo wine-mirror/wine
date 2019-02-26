@@ -687,7 +687,6 @@ static void test_sync_read_aligned(IAsyncReader *reader, IMemAllocator *allocato
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     len = IMediaSample_GetActualDataLength(sample);
-todo_wine
     ok(len == 512, "Got length %d.\n", len);
 
     for (i = 0; i < 512; i++)
@@ -702,7 +701,6 @@ todo_wine
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     len = IMediaSample_GetActualDataLength(sample);
-todo_wine
     ok(len == 88, "Got length %d.\n", len);
 
     for (i = 0; i < 88; i++)
@@ -717,7 +715,6 @@ todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     len = IMediaSample_GetActualDataLength(sample);
-todo_wine
     ok(len == 0, "Got length %d.\n", len);
 
     IMediaSample_Release(sample);

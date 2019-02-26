@@ -1292,6 +1292,8 @@ static BOOL sync_read(HANDLE file, LONGLONG offset, LONG length, BYTE *buffer, D
     ovl.u.s.Offset = (DWORD)offset;
     ovl.u.s.OffsetHigh = offset >> 32;
 
+    *read_len = 0;
+
     ret = ReadFile(file, buffer, length, NULL, &ovl);
     if (ret || GetLastError() == ERROR_IO_PENDING)
         ret = GetOverlappedResult(file, &ovl, read_len, TRUE);
@@ -1330,6 +1332,9 @@ static HRESULT WINAPI FileAsyncReader_SyncReadAligned(IAsyncReader *iface, IMedi
         else
             hr = HRESULT_FROM_WIN32(GetLastError());
     }
+
+    if (SUCCEEDED(hr))
+        IMediaSample_SetActualDataLength(sample, read_len);
 
     return hr;
 }
