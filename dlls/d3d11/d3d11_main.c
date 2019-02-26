@@ -136,7 +136,7 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
     return S_OK;
 }
 
-HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
+static HRESULT d3d11_create_device(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
         D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context)
 {
@@ -278,6 +278,14 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
     return (device_out || immediate_context) ? S_OK : S_FALSE;
 }
 
+HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
+        D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context)
+{
+    return d3d11_create_device(adapter, driver_type, swrast, flags, feature_levels,
+            levels, sdk_version, device_out, obtained_feature_level, immediate_context);
+}
+
 HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type,
         HMODULE swrast, UINT flags, const D3D_FEATURE_LEVEL *feature_levels, UINT levels,
         UINT sdk_version, const DXGI_SWAP_CHAIN_DESC *swapchain_desc, IDXGISwapChain **swapchain,
@@ -299,8 +307,10 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
     if (device_out)
         *device_out = NULL;
 
-    if (FAILED(hr = D3D11CreateDevice(adapter, driver_type, swrast, flags, feature_levels, levels, sdk_version,
-                    &device, obtained_feature_level, immediate_context)))
+    /* Avoid forwarding to D3D11CreateDevice(), since it breaks applications
+     * hooking these entry-points. */
+    if (FAILED(hr = d3d11_create_device(adapter, driver_type, swrast, flags, feature_levels,
+            levels, sdk_version, &device, obtained_feature_level, immediate_context)))
     {
         WARN("Failed to create a device, returning %#x.\n", hr);
         return hr;
