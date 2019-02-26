@@ -414,7 +414,7 @@ fail:
     DeleteFileW(filename);
 }
 
-START_TEST(avisplitter)
+START_TEST(avisplit)
 {
     CoInitialize(NULL);
 

@@ -2,7 +2,7 @@ TESTDLL   = quartz.dll
 IMPORTS   = oleaut32 ole32 advapi32 user32
 
 C_SRCS = \
-	avisplitter.c \
+	avisplit.c \
 	dsoundrender.c \
 	filesource.c \
 	filtergraph.c \
