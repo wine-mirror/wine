@@ -251,6 +251,16 @@ static HANDLE get_device_manager(void)
     return ret;
 }
 
+
+static const WCHAR file_type_name[] = {'F','i','l','e',0};
+
+static struct _OBJECT_TYPE file_type = {
+    file_type_name,
+};
+
+POBJECT_TYPE IoFileObjectType = &file_type;
+
+
 /* transfer result of IRP back to wineserver */
 static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
 {
@@ -1090,6 +1100,16 @@ static NTSTATUS WINAPI unhandled_irp( DEVICE_OBJECT *device, IRP *irp )
 }
 
 
+static const WCHAR driver_type_name[] = {'D','r','i','v','e','r',0};
+
+static struct _OBJECT_TYPE driver_type =
+{
+    driver_type_name,
+};
+
+POBJECT_TYPE IoDriverObjectType = &driver_type;
+
+
 /***********************************************************************
  *           IoCreateDriver   (NTOSKRNL.EXE.@)
  */
@@ -1157,6 +1177,16 @@ void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver_object )
     RtlFreeUnicodeString( &driver_object->DriverExtension->ServiceKeyName );
     RtlFreeHeap( GetProcessHeap(), 0, CONTAINING_RECORD( driver_object, struct wine_driver, driver_obj ) );
 }
+
+
+static const WCHAR device_type_name[] = {'D','e','v','i','c','e',0};
+
+static struct _OBJECT_TYPE device_type =
+{
+    device_type_name
+};
+
+POBJECT_TYPE IoDeviceObjectType = &device_type;
 
 
 /***********************************************************************
@@ -2169,6 +2199,17 @@ NTSTATUS WINAPI FsRtlRegisterUncProvider(PHANDLE MupHandle, PUNICODE_STRING Redi
     return STATUS_NOT_IMPLEMENTED;
 }
 
+
+static const WCHAR process_type_name[] = {'P','r','o','c','e','s','s',0};
+
+static struct _OBJECT_TYPE process_type =
+{
+    process_type_name
+};
+
+POBJECT_TYPE PsProcessType = &process_type;
+
+
 /***********************************************************************
  *           IoGetCurrentProcess / PsGetCurrentProcess   (NTOSKRNL.EXE.@)
  */
@@ -2177,6 +2218,17 @@ PEPROCESS WINAPI IoGetCurrentProcess(void)
     FIXME("() stub\n");
     return NULL;
 }
+
+
+static const WCHAR thread_type_name[] = {'T','h','r','e','a','d',0};
+
+static struct _OBJECT_TYPE thread_type =
+{
+    thread_type_name,
+};
+
+POBJECT_TYPE PsThreadType = &thread_type;
+
 
 /***********************************************************************
  *           KeGetCurrentThread / PsGetCurrentThread   (NTOSKRNL.EXE.@)
@@ -3983,3 +4035,12 @@ void WINAPI KeLeaveGuardedRegion(void)
 {
     FIXME("\n");
 }
+
+static const WCHAR token_type_name[] = {'T','o','k','e','n',0};
+
+static struct _OBJECT_TYPE token_type =
+{
+    token_type_name
+};
+
+POBJECT_TYPE SeTokenObjectType = &token_type;

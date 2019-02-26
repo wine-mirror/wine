@@ -186,6 +186,14 @@ void WINAPI KeInitializeEvent( PRKEVENT event, EVENT_TYPE type, BOOLEAN state )
     event->Header.WaitListHead.Flink = NULL;
 }
 
+static const WCHAR event_type_name[] = {'E','v','e','n','t',0};
+
+static struct _OBJECT_TYPE event_type = {
+    event_type_name,
+};
+
+POBJECT_TYPE ExEventObjectType = &event_type;
+
 /***********************************************************************
  *           KeSetEvent   (NTOSKRNL.EXE.@)
  */
@@ -266,6 +274,15 @@ LONG WINAPI KeReleaseSemaphore( PRKSEMAPHORE semaphore, KPRIORITY increment,
 
     return ret;
 }
+
+static const WCHAR semaphore_type_name[] = {'S','e','m','a','p','h','o','r','e',0};
+
+static struct _OBJECT_TYPE semaphore_type =
+{
+    semaphore_type_name
+};
+
+POBJECT_TYPE ExSemaphoreObjectType = &semaphore_type;
 
 /***********************************************************************
  *           KeInitializeMutex   (NTOSKRNL.EXE.@)

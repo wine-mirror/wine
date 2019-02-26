@@ -21,6 +21,10 @@
 #ifndef __WINE_NTOSKRNL_PRIVATE_H
 #define __WINE_NTOSKRNL_PRIVATE_H
 
+struct _OBJECT_TYPE {
+    const WCHAR *name;      /* object type name used for type validation */
+};
+
 #ifdef __i386__
 #define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
     __ASM_STDCALL_FUNC( name, 4, \

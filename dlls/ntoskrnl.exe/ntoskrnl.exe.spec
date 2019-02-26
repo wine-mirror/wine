@@ -138,7 +138,7 @@
 @ stub ExDesktopObjectType
 @ stub ExDisableResourceBoostLite
 @ stub ExEnumHandleTable
-@ stub ExEventObjectType
+@ extern ExEventObjectType
 @ stub ExExtendZone
 @ stdcall -norelay ExfUnblockPushLock(ptr ptr)
 @ stdcall ExFreePool(ptr)
@@ -179,7 +179,7 @@
 @ stub ExRegisterCallback
 @ stub ExReinitializeResourceLite
 @ stdcall ExReleaseResourceForThreadLite(ptr long)
-@ stub ExSemaphoreObjectType
+@ extern ExSemaphoreObjectType
 @ stub ExSetResourceOwnerPointer
 @ stub ExSetTimerResolution
 @ stub ExSystemExceptionFilter
@@ -369,13 +369,13 @@
 @ stub IoDetachDevice
 @ stub IoDeviceHandlerObjectSize
 @ stub IoDeviceHandlerObjectType
-@ stub IoDeviceObjectType
+@ extern IoDeviceObjectType
 @ stub IoDisconnectInterrupt
-@ stub IoDriverObjectType
+@ extern IoDriverObjectType
 @ stub IoEnqueueIrp
 @ stub IoEnumerateDeviceObjectList
 @ stub IoFastQueryNetworkAttributes
-@ stub IoFileObjectType
+@ extern IoFileObjectType
 @ stub IoForwardAndCatchIrp
 @ stub IoForwardIrpSynchronously
 @ stub IoFreeController
@@ -914,7 +914,7 @@
 @ stdcall PsLookupProcessByProcessId(ptr ptr)
 @ stub PsLookupProcessThreadByCid
 @ stub PsLookupThreadByThreadId
-@ stub PsProcessType
+@ extern PsProcessType
 @ stub PsReferenceImpersonationToken
 @ stub PsReferencePrimaryToken
 @ stdcall PsReferenceProcessFilePointer(ptr ptr)
@@ -942,7 +942,7 @@
 @ stub PsSetThreadHardErrorsAreDisabled
 @ stub PsSetThreadWin32Thread
 @ stdcall PsTerminateSystemThread(long)
-@ stub PsThreadType
+@ extern PsThreadType
 @ stdcall READ_REGISTER_BUFFER_UCHAR(ptr ptr long)
 @ stub READ_REGISTER_BUFFER_ULONG
 @ stub READ_REGISTER_BUFFER_USHORT
@@ -1275,7 +1275,7 @@
 @ stub SeTokenIsAdmin
 @ stub SeTokenIsRestricted
 @ stub SeTokenIsWriteRestricted
-@ stub SeTokenObjectType
+@ extern SeTokenObjectType
 @ stub SeTokenType
 @ stub SeUnlockSubjectContext
 @ stub SeUnregisterLogonSessionTerminatedRoutine
