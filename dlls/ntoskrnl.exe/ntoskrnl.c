@@ -41,6 +41,7 @@
 #include "dbt.h"
 #include "winreg.h"
 #include "setupapi.h"
+#include "ntsecapi.h"
 #include "ddk/csq.h"
 #include "ddk/ntddk.h"
 #include "ddk/ntifs.h"
@@ -4128,3 +4129,35 @@ static struct _OBJECT_TYPE token_type =
 };
 
 POBJECT_TYPE SeTokenObjectType = &token_type;
+
+/*************************************************************************
+ *           ExUuidCreate            (NTOSKRNL.@)
+ *
+ * Creates a 128bit UUID.
+ *
+ * RETURNS
+ *
+ *  STATUS_SUCCESS if successful.
+ *  RPC_NT_UUID_LOCAL_ONLY if UUID is only locally unique.
+ *
+ * NOTES
+ *
+ *  Follows RFC 4122, section 4.4 (Algorithms for Creating a UUID from
+ *  Truly Random or Pseudo-Random Numbers)
+ */
+NTSTATUS WINAPI ExUuidCreate(UUID *uuid)
+{
+    RtlGenRandom(uuid, sizeof(*uuid));
+    /* Clear the version bits and set the version (4) */
+    uuid->Data3 &= 0x0fff;
+    uuid->Data3 |= (4 << 12);
+    /* Set the topmost bits of Data4 (clock_seq_hi_and_reserved) as
+     * specified in RFC 4122, section 4.4.
+     */
+    uuid->Data4[0] &= 0x3f;
+    uuid->Data4[0] |= 0x80;
+
+    TRACE("%s\n", debugstr_guid(uuid));
+
+    return STATUS_SUCCESS;
+}

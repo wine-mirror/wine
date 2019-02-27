@@ -185,7 +185,7 @@
 @ stub ExSystemExceptionFilter
 @ stdcall ExSystemTimeToLocalTime(ptr ptr) RtlSystemTimeToLocalTime
 @ stub ExUnregisterCallback
-@ stub ExUuidCreate
+@ stdcall ExUuidCreate(ptr)
 @ stub ExVerifySuite
 @ stub ExWindowStationObjectType
 @ stub Exi386InterlockedDecrementLong
