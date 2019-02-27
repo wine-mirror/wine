@@ -538,7 +538,7 @@ struct ot_lookup_table
     WORD subtable[1];
 };
 
-#define GLYPH_NOT_COVERED ((unsigned int)~0u)
+#define GLYPH_NOT_COVERED (~0u)
 
 struct ot_coverage_format1
 {

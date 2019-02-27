@@ -2420,7 +2420,7 @@ static HRESULT create_fontfamily(struct dwrite_fontcollection *collection, UINT3
 BOOL is_system_collection(IDWriteFontCollection *collection)
 {
     void *obj;
-    return IDWriteFontCollection_QueryInterface(collection, &IID_issystemcollection, (void**)&obj) == S_OK;
+    return IDWriteFontCollection_QueryInterface(collection, &IID_issystemcollection, &obj) == S_OK;
 }
 
 static HRESULT WINAPI dwritesystemfontcollection_QueryInterface(IDWriteFontCollection1 *iface, REFIID riid, void **obj)
