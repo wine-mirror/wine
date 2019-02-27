@@ -47,7 +47,6 @@ typedef enum
     TYPE_STDCALL,      /* stdcall function (Win32) */
     TYPE_CDECL,        /* cdecl function (Win32) */
     TYPE_VARARGS,      /* varargs function (Win32) */
-    TYPE_THISCALL,     /* thiscall function (Win32 on i386) */
     TYPE_EXTERN,       /* external symbol (Win32) */
     TYPE_NBTYPES
 } ORD_TYPE;
@@ -173,6 +172,7 @@ struct strarray
 #define FLAG_REGISTER  0x10  /* use register calling convention */
 #define FLAG_PRIVATE   0x20  /* function is private (cannot be imported) */
 #define FLAG_ORDINAL   0x40  /* function should be imported by ordinal */
+#define FLAG_THISCALL  0x80  /* use thiscall calling convention */
 
 #define FLAG_FORWARD   0x100  /* function is a forwarded name */
 #define FLAG_EXT_LINK  0x200  /* function links to an external symbol */

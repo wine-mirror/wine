@@ -299,6 +299,12 @@ accessed through GetProcAddress.
 The entry point will be imported by ordinal instead of by name. The
 name is still exported.
 .TP
+.B -thiscall
+The function uses the
+.I thiscall
+calling convention (first parameter in %ecx register on i386).
+.TP
+.RE
 .BI -arch= cpu\fR[\fB,\fIcpu\fR]
 The entry point is only available on the specified CPU
 architecture(s). The names \fBwin32\fR and \fBwin64\fR match all
@@ -335,11 +341,6 @@ for a Win16 or Win32 function using the C calling convention
 .B varargs
 for a Win16 or Win32 function using the C calling convention with a
 variable number of arguments
-.TP
-.B thiscall
-for a Win32 function using the
-.I thiscall
-calling convention (first parameter in %ecx register on i386)
 .RE
 .PP
 .I args

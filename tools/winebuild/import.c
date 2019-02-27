@@ -466,7 +466,6 @@ static void check_undefined_exports( DLLSPEC *spec )
             case TYPE_STDCALL:
             case TYPE_CDECL:
             case TYPE_VARARGS:
-            case TYPE_THISCALL:
                 if (link_ext_symbols)
                 {
                     odp->flags |= FLAG_EXT_LINK;
@@ -1444,7 +1443,6 @@ static void build_unix_import_lib( DLLSPEC *spec )
         case TYPE_VARARGS:
         case TYPE_CDECL:
         case TYPE_STDCALL:
-        case TYPE_THISCALL:
             prefix = (!odp->name || (odp->flags & FLAG_ORDINAL)) ? import_ord_prefix : import_func_prefix;
             new_output_as_file( spec->file_name );
             output( "\t.text\n" );

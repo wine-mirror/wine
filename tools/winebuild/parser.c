@@ -56,7 +56,6 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "stdcall",      /* TYPE_STDCALL */
     "cdecl",        /* TYPE_CDECL */
     "varargs",      /* TYPE_VARARGS */
-    "thiscall",     /* TYPE_THISCALL */
     "extern"        /* TYPE_EXTERN */
 };
 
@@ -69,6 +68,7 @@ static const char * const FlagNames[] =
     "register",    /* FLAG_REGISTER */
     "private",     /* FLAG_PRIVATE */
     "ordinal",     /* FLAG_ORDINAL */
+    "thiscall",    /* FLAG_THISCALL */
     NULL
 };
 
@@ -287,10 +287,18 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
     }
 
     odp->u.func.nb_args = i;
-    if (odp->type == TYPE_THISCALL && (!i || odp->u.func.args[0] != ARG_PTR))
+    if (odp->flags & FLAG_THISCALL)
     {
-        error( "First argument of a thiscall function must be a pointer\n" );
-        return 0;
+        if (odp->type != TYPE_STDCALL)
+        {
+            error( "A thiscall function must use the stdcall convention\n" );
+            return 0;
+        }
+        if (!i || odp->u.func.args[0] != ARG_PTR)
+        {
+            error( "First argument of a thiscall function must be a pointer\n" );
+            return 0;
+        }
     }
     return 1;
 }
@@ -311,11 +319,6 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         error( "'stdcall' not supported for Win16\n" );
         return 0;
     }
-    if (!is_win32 && odp->type == TYPE_THISCALL)
-    {
-        error( "'thiscall' not supported for Win16\n" );
-        return 0;
-    }
     if (is_win32 && odp->type == TYPE_PASCAL)
     {
         error( "'pascal' not supported for Win32\n" );
@@ -326,6 +329,9 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
 
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
+
+    if (target_cpu != CPU_x86)
+        odp->flags &= ~FLAG_THISCALL;
 
     if (!(token = GetToken(1)))
     {
@@ -349,7 +355,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
             odp->flags |= FLAG_FORWARD;
         }
     }
-    if (target_cpu == CPU_x86 && odp->type == TYPE_THISCALL && !(odp->flags & FLAG_FORWARD))
+    if ((odp->flags & FLAG_THISCALL) && !(odp->flags & FLAG_FORWARD))
     {
         char *link_name = strmake( "__thiscall_%s", odp->link_name );
         free( odp->link_name );
@@ -506,6 +512,7 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
                     error( "Flag '%s' is not supported in Win32\n", FlagNames[i] );
                 break;
             case FLAG_RET64:
+            case FLAG_THISCALL:
                 if (spec->type == SPEC_WIN16)
                     error( "Flag '%s' is not supported in Win16\n", FlagNames[i] );
                 break;
@@ -538,8 +545,16 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
 
     if (odp->type >= TYPE_NBTYPES)
     {
-        error( "Expected type after ordinal, found '%s' instead\n", token );
-        goto error;
+        if (!strcmp( token, "thiscall" )) /* for backwards compatibility */
+        {
+            odp->type = TYPE_STDCALL;
+            odp->flags |= FLAG_THISCALL;
+        }
+        else
+        {
+            error( "Expected type after ordinal, found '%s' instead\n", token );
+            goto error;
+        }
     }
 
     if (!(token = GetToken(0))) goto error;
@@ -571,7 +586,6 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
     case TYPE_STDCALL:
     case TYPE_VARARGS:
     case TYPE_CDECL:
-    case TYPE_THISCALL:
         if (!parse_spec_export( odp, spec )) goto error;
         break;
     case TYPE_ABS:

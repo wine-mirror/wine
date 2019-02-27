@@ -58,7 +58,6 @@ static inline int needs_relay( const ORDDEF *odp )
     {
     case TYPE_STDCALL:
     case TYPE_CDECL:
-    case TYPE_THISCALL:
         break;
     case TYPE_STUB:
         if (odp->u.func.nb_args != -1) break;
@@ -129,7 +128,7 @@ static void get_arg_string( ORDDEF *odp, char str[MAX_ARGUMENTS + 1] )
             break;
         }
     }
-    if (target_cpu == CPU_x86 && odp->type == TYPE_THISCALL) str[0] = 't';
+    if (odp->flags & FLAG_THISCALL) str[0] = 't';
 
     /* append return value */
     if (get_ptr_size() == 4 && (odp->flags & FLAG_RET64))
@@ -225,7 +224,7 @@ static void output_relay_debug( DLLSPEC *spec )
         switch (target_cpu)
         {
         case CPU_x86:
-            if (odp->type == TYPE_THISCALL)  /* add the this pointer */
+            if (odp->flags & FLAG_THISCALL)  /* add the this pointer */
             {
                 output( "\tpopl %%eax\n" );
                 output( "\tpushl %%ecx\n" );
@@ -246,7 +245,7 @@ static void output_relay_debug( DLLSPEC *spec )
 
             output( "\tcall *4(%%eax)\n" );
             output_cfi( ".cfi_adjust_cfa_offset -8" );
-            if (odp->type == TYPE_STDCALL || odp->type == TYPE_THISCALL)
+            if (odp->type == TYPE_STDCALL)
                 output( "\tret $%u\n", get_args_size( odp ));
             else
                 output( "\tret\n" );
@@ -392,7 +391,6 @@ void output_exports( DLLSPEC *spec )
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
-        case TYPE_THISCALL:
             if (odp->flags & FLAG_FORWARD)
             {
                 output( "\t%s .L__wine_spec_forwards+%u\n", get_asm_ptr_keyword(), fwd_size );
@@ -953,7 +951,6 @@ void output_def_file( DLLSPEC *spec, int include_private )
             /* fall through */
         case TYPE_VARARGS:
         case TYPE_CDECL:
-        case TYPE_THISCALL:
             /* try to reduce output */
             if(strcmp(name, odp->link_name) || (odp->flags & FLAG_FORWARD))
                 output( "=%s", odp->link_name );
@@ -969,7 +966,8 @@ void output_def_file( DLLSPEC *spec, int include_private )
             else if (strcmp(name, odp->link_name)) /* try to reduce output */
             {
                 output( "=%s", odp->link_name );
-                if (!kill_at && target_cpu == CPU_x86) output( "@%d", at_param );
+                if (!kill_at && target_cpu == CPU_x86 && !(odp->flags & FLAG_THISCALL))
+                    output( "@%d", at_param );
             }
             break;
         }
