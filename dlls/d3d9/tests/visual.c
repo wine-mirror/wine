@@ -24518,8 +24518,9 @@ static void test_color_vertex(void)
 
 static void test_sysmem_draw(void)
 {
-    IDirect3DVertexBuffer9 *vb, *vb_s0, *vb_s1, *dst_vb;
+    IDirect3DVertexBuffer9 *vb, *vb_s0, *vb_s1, *dst_vb, *get_vb;
     IDirect3DVertexDeclaration9 *vertex_declaration;
+    unsigned int i, offset, stride;
     IDirect3DTexture9 *texture;
     IDirect3DIndexBuffer9 *ib;
     IDirect3DDevice9 *device;
@@ -24527,7 +24528,6 @@ static void test_sysmem_draw(void)
     D3DLOCKED_RECT lr;
     IDirect3D9 *d3d;
     D3DCOLOR colour;
-    unsigned int i;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -24713,6 +24713,53 @@ static void test_sysmem_draw(void)
     colour = getPixelColor(device, 320, 240);
     ok(color_match(colour, 0x00443322, 1), "Got unexpected colour 0x%08x.\n", colour);
 
+    /* Test that releasing but not unbinding a vertex buffer doesn't break. */
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, sizeof(*quad));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetIndices(device, ib);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = IDirect3DVertexBuffer9_Release(vb_s1);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
+    hr = IDirect3DDevice9_GetStreamSource(device, 1, &get_vb, &offset, &stride);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(get_vb == vb_s1, "Got unexpected vertex buffer %p.\n", get_vb);
+    refcount = IDirect3DVertexBuffer9_Release(get_vb);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 0, 2);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    colour = getPixelColor(device, 320, 240);
+    ok(color_match(colour, 0x00007f7f, 1), "Got unexpected colour 0x%08x.\n", colour);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb_s0, 0, sizeof(*quad_s0));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 0, 4, 0, 2);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    colour = getPixelColor(device, 320, 240);
+    ok(color_match(colour, 0x00007f7f, 1), "Got unexpected colour 0x%08x.\n", colour);
+
     hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &texture, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     memset(&lr, 0, sizeof(lr));
@@ -24742,7 +24789,6 @@ static void test_sysmem_draw(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     IDirect3DTexture9_Release(texture);
-    IDirect3DVertexBuffer9_Release(vb_s1);
     IDirect3DVertexBuffer9_Release(vb_s0);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
     IDirect3DIndexBuffer9_Release(ib);
