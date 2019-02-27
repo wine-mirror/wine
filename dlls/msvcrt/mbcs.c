@@ -2395,7 +2395,7 @@ MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
         }
     }
 
-    if(size<count && wcstr)
+    if(size<count)
         wcstr[size] = '\0';
 
     return size;
