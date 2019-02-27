@@ -21,11 +21,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "winver.h"
-#include "wincrypt.h"
+#include "bcrypt.h"
 #include "dbghelp.h"
 #include "ole2.h"
 #include "fusion.h"
@@ -807,9 +809,8 @@ HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token)
 {
     ULONG i, size;
     LONG offset;
-    BYTE *hashdata, *pubkey, *ptr;
-    HCRYPTPROV crypt;
-    HCRYPTHASH hash;
+    BYTE hashdata[20], *pubkey, *ptr;
+    BCRYPT_ALG_HANDLE alg;
     BYTE tokbytes[BYTES_PER_TOKEN];
     HRESULT hr = E_FAIL;
     LPWSTR tok;
@@ -833,29 +834,16 @@ HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token)
 
     pubkey = assembly_get_blob(assembly, idx, &size);
 
-    if (!CryptAcquireContextA(&crypt, NULL, NULL, PROV_RSA_FULL,
-                              CRYPT_VERIFYCONTEXT))
+    if (BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA1_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0) != STATUS_SUCCESS)
         return E_FAIL;
 
-    if (!CryptCreateHash(crypt, CALG_SHA1, 0, 0, &hash))
-        return E_FAIL;
-
-    if (!CryptHashData(hash, pubkey, size, 0))
-        return E_FAIL;
-
-    size = 0;
-    if (!CryptGetHashParam(hash, HP_HASHVAL, NULL, &size, 0))
-        return E_FAIL;
-
-    if (!(hashdata = heap_alloc(size)))
+    if (BCryptHash(alg, NULL, 0, pubkey, size, hashdata, sizeof(hashdata)) != STATUS_SUCCESS)
     {
-        hr = E_OUTOFMEMORY;
+        hr = E_FAIL;
         goto done;
     }
 
-    if (!CryptGetHashParam(hash, HP_HASHVAL, hashdata, &size, 0))
-        goto done;
-
+    size = sizeof(hashdata);
     for (i = size - 1; i >= size - 8; i--)
         tokbytes[size - i - 1] = hashdata[i];
 
@@ -871,10 +859,7 @@ HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPWSTR *token)
     hr = S_OK;
 
 done:
-    heap_free(hashdata);
-    CryptDestroyHash(hash);
-    CryptReleaseContext(crypt, 0);
-
+    BCryptCloseAlgorithmProvider(alg, 0);
     return hr;
 }
 
