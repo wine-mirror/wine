@@ -371,7 +371,11 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
         if (!is_ret_val( arg_types[i+1] )) TRACE( "," );
     }
     *nb_args = pos;
-    if (arg_types[0] == 't') *nb_args |= 0x80000000;  /* thiscall */
+    if (arg_types[0] == 't')
+    {
+        *nb_args |= 0x80000000;  /* thiscall/fastcall */
+        if (arg_types[1] == 't') *nb_args |= 0x40000000;  /* fastcall */
+    }
     TRACE( ") ret=%08x\n", stack[-1] );
     return entry_point->orig_func;
 }
@@ -416,9 +420,8 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "pushl 8(%ebp)\n\t"
                    "call " __ASM_NAME("relay_trace_entry") "\n\t"
                    /* copy the arguments*/
-                   "movl -16(%ebp),%ecx\n\t"  /* number of args */
+                   "movzwl -16(%ebp),%ecx\n\t"  /* number of args */
                    "jecxz 1f\n\t"
-                   "andl $0x7fffffff,%ecx\n\t"
                    "leal 0(,%ecx,4),%edx\n\t"
                    "subl %edx,%esp\n\t"
                    "andl $~15,%esp\n\t"
@@ -427,7 +430,10 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "rep; movsl\n\t"
                    "testl $0x80000000,-16(%ebp)\n\t"  /* thiscall */
                    "jz 1f\n\t"
-                   "popl %ecx\n"
+                   "popl %ecx\n\t"
+                   "testl $0x40000000,-16(%ebp)\n\t"  /* fastcall */
+                   "jz 1f\n\t"
+                   "popl %edx\n"
                    /* call the entry point */
                    "1:\tcall *%eax\n\t"
                    "movl %eax,%esi\n\t"
