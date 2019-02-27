@@ -3910,28 +3910,16 @@ static void test_swapchain_parameters(void)
     DestroyWindow(window);
 }
 
-static void test_swapchain_present(void)
+static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
 {
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     IDXGISwapChain *swapchain;
-    IDXGIAdapter *adapter;
     IDXGIFactory *factory;
-    IDXGIDevice *device;
     unsigned int i;
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device(0)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
-    hr = IDXGIDevice_GetAdapter(device, &adapter);
-    ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
-    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "Failed to get parent, hr %#x.\n", hr);
-    IDXGIAdapter_Release(adapter);
+    get_factory(device, is_d3d12, &factory);
 
     swapchain_desc.BufferDesc.Width = 800;
     swapchain_desc.BufferDesc.Height = 600;
@@ -3943,14 +3931,14 @@ static void test_swapchain_present(void)
     swapchain_desc.SampleDesc.Count = 1;
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchain_desc.BufferCount = 1;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
     swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
     swapchain_desc.Windowed = TRUE;
-    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
 
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-    ok(SUCCEEDED(hr), "Failed to create swapchain, hr %#x.\n", hr);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
 
     for (i = 0; i < 10; ++i)
     {
@@ -3962,11 +3950,9 @@ static void test_swapchain_present(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     IDXGISwapChain_Release(swapchain);
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(swapchain_desc.OutputWindow);
     refcount = IDXGIFactory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
 }
 
 static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
@@ -5028,7 +5014,6 @@ START_TEST(dxgi)
     queue_test(test_resize_target_wndproc);
     queue_test(test_create_factory);
     queue_test(test_private_data);
-    queue_test(test_swapchain_present);
     queue_test(test_maximum_frame_latency);
     queue_test(test_output_desc);
     queue_test(test_object_wrapping);
@@ -5046,6 +5031,7 @@ START_TEST(dxgi)
     test_swapchain_window_messages();
     test_swapchain_window_styles();
     run_on_d3d10(test_swapchain_resize);
+    run_on_d3d10(test_swapchain_present);
     run_on_d3d10(test_swapchain_backbuffer_index);
     run_on_d3d10(test_swapchain_formats);
 
@@ -5065,6 +5051,7 @@ START_TEST(dxgi)
     }
 
     run_on_d3d12(test_swapchain_resize);
+    run_on_d3d12(test_swapchain_present);
     run_on_d3d12(test_swapchain_backbuffer_index);
     run_on_d3d12(test_swapchain_formats);
 
