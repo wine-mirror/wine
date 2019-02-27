@@ -890,6 +890,8 @@ struct d3d12_swapchain
     VkSemaphore vk_semaphores[DXGI_MAX_SWAP_CHAIN_BUFFERS];
     ID3D12Resource *buffers[DXGI_MAX_SWAP_CHAIN_BUFFERS];
     unsigned int buffer_count;
+    unsigned int vk_swapchain_width;
+    unsigned int vk_swapchain_height;
 
     uint32_t current_buffer_index;
     struct dxgi_vk_funcs vk_funcs;
@@ -1209,8 +1211,12 @@ static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *s
         blit.srcOffsets[1].y = swapchain->desc.Height;
         blit.srcOffsets[1].z = 1;
         blit.dstSubresource = blit.srcSubresource;
-        blit.dstOffsets[0] = blit.srcOffsets[0];
-        blit.dstOffsets[1] = blit.srcOffsets[1];
+        blit.dstOffsets[0].x = 0;
+        blit.dstOffsets[0].y = 0;
+        blit.dstOffsets[0].z = 0;
+        blit.dstOffsets[1].x = swapchain->vk_swapchain_width;
+        blit.dstOffsets[1].y = swapchain->vk_swapchain_height;
+        blit.dstOffsets[1].z = 1;
 
         vk_funcs->p_vkCmdBlitImage(vk_cmd_buffer,
                 swapchain->vk_images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -1439,6 +1445,7 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     VkFormat vk_format, vk_swapchain_format;
     VkSurfaceCapabilitiesKHR surface_caps;
     VkSwapchainKHR vk_swapchain;
+    unsigned int width, height;
     VkImageUsageFlags usage;
     VkResult vr;
     HRESULT hr;
@@ -1468,16 +1475,22 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
         return DXGI_ERROR_UNSUPPORTED;
     }
 
-    if (swapchain->desc.Width > surface_caps.maxImageExtent.width
-            || swapchain->desc.Width < surface_caps.minImageExtent.width
-            || swapchain->desc.Height > surface_caps.maxImageExtent.height
-            || swapchain->desc.Height < surface_caps.minImageExtent.height)
+    width = swapchain->desc.Width;
+    height = swapchain->desc.Height;
+    width = max(width, surface_caps.minImageExtent.width);
+    width = min(width, surface_caps.maxImageExtent.width);
+    height = max(height, surface_caps.minImageExtent.height);
+    height = min(height, surface_caps.maxImageExtent.height);
+
+    if (width != swapchain->desc.Width || height != swapchain->desc.Height)
     {
-        FIXME("Swapchain dimensions %ux%u are not supported (%u-%u x %u-%u).\n",
+        WARN("Swapchain dimensions %ux%u are not supported (%u-%u x %u-%u).\n",
                 swapchain->desc.Width, swapchain->desc.Height,
                 surface_caps.minImageExtent.width, surface_caps.maxImageExtent.width,
                 surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
     }
+
+    TRACE("Vulkan swapchain extent %ux%u.\n", width, height);
 
     if (!(surface_caps.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR))
     {
@@ -1498,8 +1511,8 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     vk_swapchain_desc.minImageCount = swapchain->desc.BufferCount;
     vk_swapchain_desc.imageFormat = vk_swapchain_format;
     vk_swapchain_desc.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    vk_swapchain_desc.imageExtent.width = swapchain->desc.Width;
-    vk_swapchain_desc.imageExtent.height = swapchain->desc.Height;
+    vk_swapchain_desc.imageExtent.width = width;
+    vk_swapchain_desc.imageExtent.height = height;
     vk_swapchain_desc.imageArrayLayers = 1;
     vk_swapchain_desc.imageUsage = usage;
     vk_swapchain_desc.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -1520,6 +1533,8 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
         vk_funcs->p_vkDestroySwapchainKHR(swapchain->vk_device, swapchain->vk_swapchain, NULL);
 
     swapchain->vk_swapchain = vk_swapchain;
+    swapchain->vk_swapchain_width = width;
+    swapchain->vk_swapchain_height = height;
 
     if (FAILED(hr = d3d12_swapchain_create_buffers(swapchain, vk_swapchain_format, vk_format)))
         return hr;
