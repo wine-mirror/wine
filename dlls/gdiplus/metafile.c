@@ -3103,7 +3103,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (flags & 0x8000)
             {
-                stat = GdipCreateSolidFill(fill->data.Color, (GpSolidFill **)&solidfill);
+                stat = GdipCreateSolidFill(fill->data.Color, &solidfill);
                 if (stat != Ok)
                     return stat;
                 brush = (GpBrush *)solidfill;
@@ -3151,7 +3151,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (flags & 0x8000) /* S */
             {
-                stat = GdipCreateSolidFill(fill->BrushId, (GpSolidFill **)&solidfill);
+                stat = GdipCreateSolidFill(fill->BrushId, &solidfill);
                 if (stat != Ok)
                     return stat;
                 brush = (GpBrush *)solidfill;
@@ -3216,7 +3216,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (flags & 0x8000)
             {
-                stat = GdipCreateSolidFill(fill->BrushId, (GpSolidFill **)&solidfill);
+                stat = GdipCreateSolidFill(fill->BrushId, &solidfill);
                 if (stat != Ok)
                     return stat;
                 brush = (GpBrush *)solidfill;
@@ -3255,7 +3255,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (flags & 0x8000) /* S */
             {
-                stat = GdipCreateSolidFill(fill->BrushId, (GpSolidFill **)&solidfill);
+                stat = GdipCreateSolidFill(fill->BrushId, &solidfill);
                 if (stat != Ok)
                     return stat;
                 brush = (GpBrush *)solidfill;
