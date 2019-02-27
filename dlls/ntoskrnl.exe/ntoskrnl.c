@@ -2966,6 +2966,26 @@ NTSTATUS WINAPI PsTerminateSystemThread(NTSTATUS status)
 
 
 /***********************************************************************
+ *           PsSuspendProcess   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsSuspendProcess(PEPROCESS process)
+{
+    FIXME("stub: %p\n", process);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *           PsResumeProcess   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsResumeProcess(PEPROCESS process)
+{
+    FIXME("stub: %p\n", process);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           MmGetSystemRoutineAddress   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
