@@ -1527,8 +1527,7 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, 
     if (!src)
     {
         WARN("Invalid lpStrRet would crash under Win32!\n");
-        if (dest)
-            *dest = '\0';
+        *dest = '\0';
         return E_FAIL;
     }
 
