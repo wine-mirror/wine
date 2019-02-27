@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 Alistair Leslie-Hughes
+ * Copyright 2019 Vijay Kiran Kamuju
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -201,6 +202,91 @@ static void test_wmreader_interfaces(void)
     IWMReader_Release(reader);
 }
 
+static void test_wmsyncreader_interfaces(void)
+{
+    HRESULT hr;
+    IWMSyncReader      *reader;
+    IWMHeaderInfo      *header;
+    IWMHeaderInfo2     *header2;
+    IWMHeaderInfo3     *header3;
+    IWMProfile         *profile;
+    IWMProfile2        *profile2;
+    IWMProfile3        *profile3;
+    IWMPacketSize      *packet;
+    IWMPacketSize2     *packet2;
+    IWMReaderTimecode     *timecode;
+    IWMReaderPlaylistBurn *playlist;
+    IWMLanguageList       *langlist;
+
+    hr = WMCreateSyncReader( NULL, 0, &reader );
+    todo_wine ok(hr == S_OK, "WMCreateSyncReader failed 0x%08x\n", hr);
+    if(FAILED(hr))
+    {
+        skip("Failed to create IWMSyncReader\n");
+        return;
+    }
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMHeaderInfo, (void **)&header);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMHeaderInfo2, (void **)&header2);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMHeaderInfo3, (void **)&header3);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMProfile2, (void **)&profile2);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMProfile3, (void **)&profile3);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMPacketSize, (void **)&packet);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMPacketSize2, (void **)&packet2);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMReaderTimecode, (void **)&timecode);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMReaderPlaylistBurn, (void **)&playlist);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMSyncReader_QueryInterface(reader, &IID_IWMLanguageList, (void **)&langlist);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    if(packet)
+        IWMPacketSize_Release(packet);
+    if(packet2)
+        IWMPacketSize2_Release(packet2);
+    if(profile)
+        IWMProfile_Release(profile);
+    if(profile2)
+        IWMProfile2_Release(profile2);
+    if(profile3)
+        IWMProfile3_Release(profile3);
+    if(header)
+        IWMHeaderInfo_Release(header);
+    if(header2)
+        IWMHeaderInfo2_Release(header2);
+    if(header3)
+        IWMHeaderInfo3_Release(header3);
+    if(timecode)
+        IWMReaderTimecode_Release(timecode);
+    if(playlist)
+        IWMReaderPlaylistBurn_Release(playlist);
+    if(langlist)
+        IWMLanguageList_Release(langlist);
+
+
+    IWMSyncReader_Release(reader);
+}
+
+
 static void test_profile_manager_interfaces(void)
 {
     HRESULT hr;
@@ -262,6 +348,7 @@ START_TEST(wmvcore)
         return;
 
     test_wmreader_interfaces();
+    test_wmsyncreader_interfaces();
     test_wmwriter_interfaces();
     test_profile_manager_interfaces();
     test_WMCreateWriterPriv();
