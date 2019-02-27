@@ -1150,6 +1150,7 @@ static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *s
     VkCommandBufferBeginInfo begin_info;
     VkCommandPoolCreateInfo pool_info;
     VkImageBlit blit;
+    VkFilter filter;
     unsigned int i;
     VkResult vr;
 
@@ -1178,6 +1179,12 @@ static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *s
         WARN("Failed to allocate command buffers, vr %d.\n", vr);
         return hresult_from_vk_result(vr);
     }
+
+    if (swapchain->desc.Width != swapchain->vk_swapchain_width
+            || swapchain->desc.Height != swapchain->vk_swapchain_height)
+        filter = VK_FILTER_LINEAR;
+    else
+        filter = VK_FILTER_NEAREST;
 
     for (i = 0; i < swapchain->buffer_count; ++i)
     {
@@ -1221,7 +1228,7 @@ static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *s
         vk_funcs->p_vkCmdBlitImage(vk_cmd_buffer,
                 swapchain->vk_images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                 vk_swapchain_images[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                1, &blit, VK_FILTER_NEAREST);
+                1, &blit, filter);
 
         vk_cmd_image_barrier(vk_funcs, vk_cmd_buffer,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
