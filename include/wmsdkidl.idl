@@ -209,6 +209,14 @@ typedef struct _WMStreamPrioritizationRecord
     WORD wStreamNumber;
     BOOL fMandatory;
 } WM_STREAM_PRIORITY_RECORD;
+
+typedef struct _WMT_TIMECODE_EXTENSION_DATA
+{
+    WORD  wRange;
+    DWORD dwTimecode;
+    DWORD dwUserbits;
+    DWORD dwAmFlags;
+} WMT_TIMECODE_EXTENSION_DATA;
 #include <poppack.h>
 
 typedef struct _WM_PORT_NUMBER_RANGE
@@ -1058,6 +1066,69 @@ interface IWMSyncReader : IUnknown
 
 [
     object,
+    uuid(9f762fa7-a22e-428d-93c9-ac82f3aafe5a),
+    pointer_default( unique ),
+    local
+]
+interface IWMReaderAllocatorEx : IUnknown
+{
+    HRESULT AllocateForStreamEx(
+        [in] WORD wStreamNum,
+        [in] DWORD cbBuffer,
+        [out] INSSBuffer **ppBuffer,
+        [in] DWORD dwFlags,
+        [in] QWORD cnsSampleTime,
+        [in] QWORD cnsSampleDuration,
+        [in] void *pvContext);
+
+    HRESULT AllocateForOutputEx(
+        [in] WORD wOutputNum,
+        [in] DWORD cbBuffer,
+        [out] INSSBuffer **ppBuffer,
+        [in] DWORD dwFlags,
+        [in] QWORD cnsSampleTime,
+        [in] QWORD cnsSampleDuration,
+        [in] void *pvContext);
+}
+
+[
+    object,
+    uuid(faed3d21-1b6b-4af7-8bc6-3e189bbc187b),
+    pointer_default( unique ),
+    local
+]
+interface IWMSyncReader2 : IWMSyncReader
+{
+    HRESULT SetRangeByTimecode(
+        [in] WORD wStreamNum,
+        [in] WMT_TIMECODE_EXTENSION_DATA *pStart,
+        [in] WMT_TIMECODE_EXTENSION_DATA *pEnd);
+
+    HRESULT SetRangeByFrameEx(
+        [in] WORD wStreamNum,
+        [in] QWORD qwFrameNumber,
+        [in] LONGLONG cFramesToRead,
+        [out] QWORD *pcnsStartTime);
+
+    HRESULT SetAllocateForOutput(
+        [in] DWORD dwOutputNum,
+        [in] IWMReaderAllocatorEx *pAllocator);
+
+    HRESULT GetAllocateForOutput(
+        [in] DWORD dwOutputNum,
+        [out] IWMReaderAllocatorEx **ppAllocator);
+
+    HRESULT SetAllocateForStream(
+        [in] DWORD dwStreamNum,
+        [in] IWMReaderAllocatorEx *pAllocator);
+
+    HRESULT GetAllocateForStream(
+        [in] DWORD dwStreamNum,
+        [out] IWMReaderAllocatorEx **ppAllocator);
+}
+
+[
+    object,
     uuid(96406bd5-2b2b-11d3-b36b-00c04f6108ff),
     pointer_default(unique),
     local
@@ -1791,6 +1862,7 @@ cpp_quote("HRESULT WINAPI WMCheckURLExtension(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCheckURLScheme(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
 cpp_quote("HRESULT WINAPI WMCreateReader(IUnknown*,DWORD,IWMReader**);")
+cpp_quote("HRESULT WINAPI WMCreateSyncReader(IUnknown*,DWORD,IWMSyncReader**);")
 
 cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_Base,   0x00000000,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
 cpp_quote("EXTERN_GUID(WMMEDIATYPE_Video,     0x73646976,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
