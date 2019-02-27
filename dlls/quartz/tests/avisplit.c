@@ -24,6 +24,7 @@
 #include "wine/test.h"
 
 static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
+static const WCHAR source0_name[] = {'S','t','r','e','a','m',' ','0','0',0};
 
 static IBaseFilter *create_avi_splitter(void)
 {
@@ -270,6 +271,61 @@ todo_wine
     IPin_Release(pins[1]);
 
     IEnumPins_Release(enum1);
+    IFilterGraph2_Release(graph);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
+static void test_find_pin(void)
+{
+    static const WCHAR inputW[] = {'I','n','p','u','t',0};
+    const WCHAR *filename = load_resource(avifile);
+    IBaseFilter *filter = create_avi_splitter();
+    IFilterGraph2 *graph;
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+
+    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, source0_name, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, inputW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    graph = connect_input(filter, filename);
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, source0_name, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+todo_wine
+    ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+todo_wine
+    ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    IEnumPins_Release(enum_pins);
     IFilterGraph2_Release(graph);
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -525,6 +581,7 @@ START_TEST(avisplit)
 
     test_interfaces();
     test_enum_pins();
+    test_find_pin();
     test_filter_graph();
 
     CoUninitialize();
