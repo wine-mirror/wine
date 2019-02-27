@@ -1989,6 +1989,16 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
     if (swapchain->present_mode == present_mode)
         return S_OK;
 
+    /*
+     * We recreate the swapchain only when the current buffer index is 0, in order to preserve the
+     * expected back buffer index sequence.
+     */
+    if (swapchain->current_buffer_index)
+    {
+        WARN("Skipping sync interval change, current buffer index %u.\n", swapchain->current_buffer_index);
+        return S_OK;
+    }
+
     if (!swapchain->vk_images[swapchain->current_buffer_index])
     {
         FIXME("Cannot recreate swapchain without user images.\n");
