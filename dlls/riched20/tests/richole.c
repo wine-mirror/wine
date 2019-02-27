@@ -531,21 +531,21 @@ static void test_GetText(void)
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
   /* ITextSelection */
-  first = 0, lim = 4;
+  first = 0; lim = 4;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!lstrcmpW(bstr, bufW1), "got wrong text: %s\n", wine_dbgstr_w(bstr));
   SysFreeString(bstr);
 
-  first = 4, lim = 0;
+  first = 4; lim = 0;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!lstrcmpW(bstr, bufW1), "got wrong text: %s\n", wine_dbgstr_w(bstr));
   SysFreeString(bstr);
 
-  first = 1, lim = 1;
+  first = 1; lim = 1;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == S_OK, "ITextSelection_GetText\n");
@@ -557,35 +557,35 @@ static void test_GetText(void)
       ok(hres == E_INVALIDARG, "ITextSelection_GetText\n");
     }
 
-  first = 8, lim = 12;
+  first = 8; lim = 12;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!lstrcmpW(bstr, bufW3), "got wrong text: %s\n", wine_dbgstr_w(bstr));
   SysFreeString(bstr);
 
-  first = 8, lim = 13;
+  first = 8; lim = 13;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!lstrcmpW(bstr, bufW2), "got wrong text: %s\n", wine_dbgstr_w(bstr));
   SysFreeString(bstr);
 
-  first = 12, lim = 13;
+  first = 12; lim = 13;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!lstrcmpW(bstr, bufW5), "got wrong text: %s\n", wine_dbgstr_w(bstr));
   SysFreeString(bstr);
 
-  first = 0, lim = -1;
+  first = 0; lim = -1;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!lstrcmpW(bstr, bufW4), "got wrong text: %s\n", wine_dbgstr_w(bstr));
   SysFreeString(bstr);
 
-  first = -1, lim = 9;
+  first = -1; lim = 9;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == S_OK, "ITextSelection_GetText\n");
@@ -757,7 +757,7 @@ static void test_ITextRange_GetChar(void)
   ITextRange_Release(txtRge);
   release_interfaces(&w, &reOle, &txtDoc, NULL);
 
-  first = 0, lim = 0;
+  first = 0; lim = 0;
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
@@ -769,7 +769,7 @@ static void test_ITextRange_GetChar(void)
   ITextRange_Release(txtRge);
   release_interfaces(&w, &reOle, &txtDoc, NULL);
 
-  first = 12, lim = 12;
+  first = 12; lim = 12;
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
@@ -781,7 +781,7 @@ static void test_ITextRange_GetChar(void)
   ITextRange_Release(txtRge);
   release_interfaces(&w, &reOle, &txtDoc, NULL);
 
-  first = 13, lim = 13;
+  first = 13; lim = 13;
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
@@ -795,7 +795,7 @@ static void test_ITextRange_GetChar(void)
 
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
-  first = 12, lim = 12;
+  first = 12; lim = 12;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetChar(txtRge, NULL);
@@ -885,28 +885,28 @@ static void test_ITextSelection_GetChar(void)
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
-  first = 0, lim = 4;
+  first = 0; lim = 4;
   SendMessageA(w, EM_SETSEL, first, lim);
   pch = 0xdeadbeef;
   hres = ITextSelection_GetChar(txtSel, &pch);
   ok(hres == S_OK, "ITextSelection_GetChar\n");
   ok(pch == 'T', "got wrong char: %c\n", pch);
 
-  first = 0, lim = 0;
+  first = 0; lim = 0;
   SendMessageA(w, EM_SETSEL, first, lim);
   pch = 0xdeadbeef;
   hres = ITextSelection_GetChar(txtSel, &pch);
   ok(hres == S_OK, "ITextSelection_GetChar\n");
   ok(pch == 'T', "got wrong char: %c\n", pch);
 
-  first = 12, lim = 12;
+  first = 12; lim = 12;
   SendMessageA(w, EM_SETSEL, first, lim);
   pch = 0xdeadbeef;
   hres = ITextSelection_GetChar(txtSel, &pch);
   ok(hres == S_OK, "ITextSelection_GetChar\n");
   ok(pch == '\r', "got wrong char: %c\n", pch);
 
-  first = 13, lim = 13;
+  first = 13; lim = 13;
   SendMessageA(w, EM_SETSEL, first, lim);
   pch = 0xdeadbeef;
   hres = ITextSelection_GetChar(txtSel, &pch);
@@ -940,7 +940,7 @@ static void test_ITextRange_GetStart_GetEnd(void)
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
-  first = 1, lim = 6;
+  first = 1; lim = 6;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   start = 0xdeadbeef;
@@ -953,7 +953,7 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ok(end == 6, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
-  first = 6, lim = 1;
+  first = 6; lim = 1;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   start = 0xdeadbeef;
@@ -966,7 +966,7 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ok(end == 6, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
-  first = -1, lim = 13;
+  first = -1; lim = 13;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   start = 0xdeadbeef;
@@ -979,7 +979,7 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ok(end == 13, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
-  first = 13, lim = 13;
+  first = 13; lim = 13;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   start = 0xdeadbeef;
@@ -1159,7 +1159,7 @@ static void test_ITextSelection_GetStart_GetEnd(void)
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
-  first = 2, lim = 5;
+  first = 2; lim = 5;
   SendMessageA(w, EM_SETSEL, first, lim);
   start = 0xdeadbeef;
   hres = ITextSelection_GetStart(txtSel, &start);
@@ -1170,7 +1170,7 @@ static void test_ITextSelection_GetStart_GetEnd(void)
   ok(hres == S_OK, "ITextSelection_GetEnd\n");
   ok(end == 5, "got wrong end value: %d\n", end);
 
-  first = 5, lim = 2;
+  first = 5; lim = 2;
   SendMessageA(w, EM_SETSEL, first, lim);
   start = 0xdeadbeef;
   hres = ITextSelection_GetStart(txtSel, &start);
@@ -1181,7 +1181,7 @@ static void test_ITextSelection_GetStart_GetEnd(void)
   ok(hres == S_OK, "ITextSelection_GetEnd\n");
   ok(end == 5, "got wrong end value: %d\n", end);
 
-  first = 0, lim = -1;
+  first = 0; lim = -1;
   SendMessageA(w, EM_SETSEL, first, lim);
   start = 0xdeadbeef;
   hres = ITextSelection_GetStart(txtSel, &start);
@@ -1192,7 +1192,7 @@ static void test_ITextSelection_GetStart_GetEnd(void)
   ok(hres == S_OK, "ITextSelection_GetEnd\n");
   ok(end == 13, "got wrong end value: %d\n", end);
 
-  first = 13, lim = 13;
+  first = 13; lim = 13;
   SendMessageA(w, EM_SETSEL, first, lim);
   start = 0xdeadbeef;
   hres = ITextSelection_GetStart(txtSel, &start);
@@ -1365,7 +1365,7 @@ static void test_ITextRange_GetDuplicate(void)
 
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
-  first = 0, lim = 4;
+  first = 0; lim = 4;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "ITextDocument_Range fails 0x%x.\n", hres);
 
@@ -1408,7 +1408,7 @@ static void test_ITextRange_Collapse(void)
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
-  first = 4, lim = 8;
+  first = 4; lim = 8;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomTrue);
@@ -1470,7 +1470,7 @@ static void test_ITextRange_Collapse(void)
   ok(end == 4, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
-  first = 6, lim = 6;
+  first = 6; lim = 6;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomEnd);
@@ -1483,7 +1483,7 @@ static void test_ITextRange_Collapse(void)
   ok(end == 6, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
-  first = 8, lim = 8;
+  first = 8; lim = 8;
   hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomStart);
@@ -1519,7 +1519,7 @@ static void test_ITextSelection_Collapse(void)
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
-  first = 4, lim = 8;
+  first = 4; lim = 8;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_Collapse(txtSel, tomTrue);
   ok(hres == S_OK, "ITextSelection_Collapse\n");
@@ -1556,7 +1556,7 @@ static void test_ITextSelection_Collapse(void)
   ok(start == 4, "got wrong start value: %d\n", start);
   ok(end == 4, "got wrong end value: %d\n", end);
 
-  first = 6, lim = 6;
+  first = 6; lim = 6;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_Collapse(txtSel, tomEnd);
   ok(hres == S_FALSE, "ITextSelection_Collapse\n");
@@ -1564,7 +1564,7 @@ static void test_ITextSelection_Collapse(void)
   ok(start == 6, "got wrong start value: %d\n", start);
   ok(end == 6, "got wrong end value: %d\n", end);
 
-  first = 8, lim = 8;
+  first = 8; lim = 8;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_Collapse(txtSel, tomStart);
   ok(hres == S_FALSE, "ITextSelection_Collapse\n");
