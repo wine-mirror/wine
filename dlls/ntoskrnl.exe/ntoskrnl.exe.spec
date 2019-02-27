@@ -1,14 +1,14 @@
-@ stdcall -norelay ExAcquireFastMutexUnsafe(ptr)
+@ stdcall -fastcall ExAcquireFastMutexUnsafe(ptr)
 @ stub ExAcquireRundownProtection
 @ stub ExAcquireRundownProtectionEx
 @ stub ExInitializeRundownProtection
 @ stub ExInterlockedAddLargeStatistic
 @ stub ExInterlockedCompareExchange64
 @ stub ExInterlockedFlushSList
-@ stdcall -arch=i386 -norelay ExInterlockedPopEntrySList(ptr ptr) NTOSKRNL_ExInterlockedPopEntrySList
-@ stdcall -arch=i386 -norelay ExInterlockedPushEntrySList (ptr ptr ptr) NTOSKRNL_ExInterlockedPushEntrySList
+@ stdcall -fastcall -arch=i386 ExInterlockedPopEntrySList(ptr ptr) NTOSKRNL_ExInterlockedPopEntrySList
+@ stdcall -fastcall -arch=i386 ExInterlockedPushEntrySList (ptr ptr ptr) NTOSKRNL_ExInterlockedPushEntrySList
 @ stub ExReInitializeRundownProtection
-@ stdcall -norelay ExReleaseFastMutexUnsafe(ptr)
+@ stdcall -fastcall ExReleaseFastMutexUnsafe(ptr)
 @ stdcall ExReleaseResourceLite(ptr)
 @ stub ExReleaseRundownProtection
 @ stub ExReleaseRundownProtectionEx
@@ -22,7 +22,7 @@
 @ stub ExfInterlockedInsertTailList
 @ stub ExfInterlockedPopEntryList
 @ stub ExfInterlockedPushEntryList
-@ stdcall -norelay -arch=i386 ExfInterlockedRemoveHeadList(ptr ptr)
+@ stdcall -fastcall -arch=i386 ExfInterlockedRemoveHeadList(ptr ptr)
 @ stub ExfReleasePushLock
 @ stub Exfi386InterlockedDecrementLong
 @ stub Exfi386InterlockedExchangeUlong
@@ -30,35 +30,35 @@
 @ stdcall -arch=win64 ExpInterlockedPopEntrySList(ptr) RtlInterlockedPopEntrySList
 @ stdcall -arch=win64 ExpInterlockedPushEntrySList(ptr ptr) RtlInterlockedPushEntrySList
 @ stub HalExamineMBR
-@ stdcall -norelay InterlockedCompareExchange(ptr long long) NTOSKRNL_InterlockedCompareExchange
-@ stdcall -norelay InterlockedDecrement(ptr) NTOSKRNL_InterlockedDecrement
-@ stdcall -norelay InterlockedExchange(ptr long) NTOSKRNL_InterlockedExchange
-@ stdcall -norelay InterlockedExchangeAdd(ptr long) NTOSKRNL_InterlockedExchangeAdd
-@ stdcall -norelay InterlockedIncrement(ptr) NTOSKRNL_InterlockedIncrement
-@ stdcall -arch=win32 -norelay InterlockedPopEntrySList(ptr) NTOSKRNL_InterlockedPopEntrySList
-@ stdcall -arch=win32 -norelay InterlockedPushEntrySList(ptr ptr) NTOSKRNL_InterlockedPushEntrySList
+@ stdcall -fastcall InterlockedCompareExchange(ptr long long) NTOSKRNL_InterlockedCompareExchange
+@ stdcall -fastcall InterlockedDecrement(ptr) NTOSKRNL_InterlockedDecrement
+@ stdcall -fastcall InterlockedExchange(ptr long) NTOSKRNL_InterlockedExchange
+@ stdcall -fastcall InterlockedExchangeAdd(ptr long) NTOSKRNL_InterlockedExchangeAdd
+@ stdcall -fastcall InterlockedIncrement(ptr) NTOSKRNL_InterlockedIncrement
+@ stdcall -fastcall -arch=win32 InterlockedPopEntrySList(ptr) NTOSKRNL_InterlockedPopEntrySList
+@ stdcall -fastcall -arch=win32 InterlockedPushEntrySList(ptr ptr) NTOSKRNL_InterlockedPushEntrySList
 @ stdcall -arch=win64 ExQueryDepthSList(ptr) RtlQueryDepthSList
 @ stub IoAssignDriveLetters
 @ stub IoReadPartitionTable
 @ stub IoSetPartitionInformation
 @ stub IoWritePartitionTable
-@ stdcall -norelay IofCallDriver(ptr ptr)
-@ stdcall -norelay IofCompleteRequest(ptr long)
+@ stdcall -fastcall IofCallDriver(ptr ptr)
+@ stdcall -fastcall IofCompleteRequest(ptr long)
 @ stdcall -arch=arm,arm64,x86_64 KeAcquireInStackQueuedSpinLock(ptr ptr)
-@ stdcall -norelay KeAcquireInStackQueuedSpinLockAtDpcLevel(ptr ptr)
+@ stdcall -fastcall KeAcquireInStackQueuedSpinLockAtDpcLevel(ptr ptr)
 @ stdcall KeEnterGuardedRegion()
 @ stdcall KeExpandKernelStackAndCallout(ptr ptr long)
 @ stdcall KeExpandKernelStackAndCalloutEx(ptr ptr long long ptr)
 @ stdcall KeLeaveGuardedRegion()
 @ stdcall -arch=arm,arm64,x86_64 KeReleaseInStackQueuedSpinLock(ptr)
-@ stdcall -norelay KeReleaseInStackQueuedSpinLockFromDpcLevel(ptr)
+@ stdcall -fastcall KeReleaseInStackQueuedSpinLockFromDpcLevel(ptr)
 @ stub KeSetTimeUpdateNotifyRoutine
 @ stub KefAcquireSpinLockAtDpcLevel
 @ stub KefReleaseSpinLockFromDpcLevel
 @ stub KiAcquireSpinLock
 @ stub KiReleaseSpinLock
-@ stdcall -norelay ObfDereferenceObject(ptr)
-@ stdcall -norelay ObfReferenceObject(ptr)
+@ stdcall -fastcall ObfDereferenceObject(ptr)
+@ stdcall -fastcall ObfReferenceObject(ptr)
 @ stub RtlPrefetchMemoryNonTemporal
 @ cdecl -i386 -norelay RtlUlongByteSwap()
 @ cdecl -ret64 RtlUlonglongByteSwap(int64)
@@ -140,7 +140,7 @@
 @ stub ExEnumHandleTable
 @ extern ExEventObjectType
 @ stub ExExtendZone
-@ stdcall -norelay ExfUnblockPushLock(ptr ptr)
+@ stdcall -fastcall ExfUnblockPushLock(ptr ptr)
 @ stdcall ExFreePool(ptr)
 @ stdcall ExFreePoolWithTag(ptr long)
 @ stub ExFreeToPagedLookasideList

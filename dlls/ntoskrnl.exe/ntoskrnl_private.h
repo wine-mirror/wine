@@ -27,27 +27,24 @@ struct _OBJECT_TYPE {
     void (*release)(void*);       /* called when the last reference is released */
 };
 
+
 #ifdef __i386__
-#define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
-    __ASM_STDCALL_FUNC( name, 4, \
+#define DEFINE_FASTCALL1_WRAPPER(func) \
+    __ASM_GLOBAL_FUNC( __fastcall_ ## func, \
                        "popl %eax\n\t" \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(4))
-#define DEFINE_FASTCALL2_ENTRYPOINT( name ) \
-    __ASM_STDCALL_FUNC( name, 8, \
-                       "popl %eax\n\t" \
-                       "pushl %edx\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(8))
-#define DEFINE_FASTCALL3_ENTRYPOINT( name ) \
-    __ASM_STDCALL_FUNC( name, 12, \
+                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(4) )
+#define DEFINE_FASTCALL_WRAPPER(func,args) \
+    __ASM_GLOBAL_FUNC( __fastcall_ ## func, \
                        "popl %eax\n\t" \
                        "pushl %edx\n\t" \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(12))
+                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+#else
+#define DEFINE_FASTCALL1_WRAPPER(func) /* nothing */
+#define DEFINE_FASTCALL_WRAPPER(func,args) /* nothing */
 #endif
 
 #endif

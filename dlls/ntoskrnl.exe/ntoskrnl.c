@@ -1739,12 +1739,8 @@ NTSTATUS WINAPI IoCallDriver( DEVICE_OBJECT *device, IRP *irp )
 /***********************************************************************
  *           IofCallDriver   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( IofCallDriver )
-NTSTATUS WINAPI DECLSPEC_HIDDEN __regs_IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
-#else
+DEFINE_FASTCALL_WRAPPER( IofCallDriver, 8 )
 NTSTATUS WINAPI IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
-#endif
 {
     TRACE( "%p %p\n", device, irp );
     return IoCallDriver( device, irp );
@@ -2073,12 +2069,8 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
 /***********************************************************************
  *           IofCompleteRequest   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( IofCompleteRequest )
-void WINAPI DECLSPEC_HIDDEN __regs_IofCompleteRequest( IRP *irp, UCHAR priority_boost )
-#else
+DEFINE_FASTCALL_WRAPPER( IofCompleteRequest, 8 )
 void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
-#endif
 {
     TRACE( "%p %u\n", irp, priority_boost );
     IoCompleteRequest( irp, priority_boost );
@@ -2088,12 +2080,8 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
 /***********************************************************************
  *           InterlockedCompareExchange   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL3_ENTRYPOINT
-DEFINE_FASTCALL3_ENTRYPOINT( NTOSKRNL_InterlockedCompareExchange )
-LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
-#else
+DEFINE_FASTCALL_WRAPPER( NTOSKRNL_InterlockedCompareExchange, 12 )
 LONG WINAPI NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
-#endif
 {
     return InterlockedCompareExchange( dest, xchg, compare );
 }
@@ -2102,12 +2090,8 @@ LONG WINAPI NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg,
 /***********************************************************************
  *           InterlockedDecrement   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL1_ENTRYPOINT
-DEFINE_FASTCALL1_ENTRYPOINT( NTOSKRNL_InterlockedDecrement )
-LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedDecrement( LONG volatile *dest )
-#else
+DEFINE_FASTCALL1_WRAPPER( NTOSKRNL_InterlockedDecrement )
 LONG WINAPI NTOSKRNL_InterlockedDecrement( LONG volatile *dest )
-#endif
 {
     return InterlockedDecrement( dest );
 }
@@ -2116,12 +2100,8 @@ LONG WINAPI NTOSKRNL_InterlockedDecrement( LONG volatile *dest )
 /***********************************************************************
  *           InterlockedExchange   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_InterlockedExchange )
-LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedExchange( LONG volatile *dest, LONG val )
-#else
+DEFINE_FASTCALL_WRAPPER( NTOSKRNL_InterlockedExchange, 8 )
 LONG WINAPI NTOSKRNL_InterlockedExchange( LONG volatile *dest, LONG val )
-#endif
 {
     return InterlockedExchange( dest, val );
 }
@@ -2130,12 +2110,8 @@ LONG WINAPI NTOSKRNL_InterlockedExchange( LONG volatile *dest, LONG val )
 /***********************************************************************
  *           InterlockedExchangeAdd   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_InterlockedExchangeAdd )
-LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
-#else
+DEFINE_FASTCALL_WRAPPER( NTOSKRNL_InterlockedExchangeAdd, 8 )
 LONG WINAPI NTOSKRNL_InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
-#endif
 {
     return InterlockedExchangeAdd( dest, incr );
 }
@@ -2144,12 +2120,8 @@ LONG WINAPI NTOSKRNL_InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 /***********************************************************************
  *           InterlockedIncrement   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL1_ENTRYPOINT
-DEFINE_FASTCALL1_ENTRYPOINT( NTOSKRNL_InterlockedIncrement )
-LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedIncrement( LONG volatile *dest )
-#else
+DEFINE_FASTCALL1_WRAPPER( NTOSKRNL_InterlockedIncrement )
 LONG WINAPI NTOSKRNL_InterlockedIncrement( LONG volatile *dest )
-#endif
 {
     return InterlockedIncrement( dest );
 }
@@ -2736,12 +2708,8 @@ NTSTATUS WINAPI ObReferenceObjectByPointer(void *obj, ACCESS_MASK access,
 /***********************************************************************
  *           ObfReferenceObject   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL1_ENTRYPOINT
-DEFINE_FASTCALL1_ENTRYPOINT( ObfReferenceObject )
-void WINAPI DECLSPEC_HIDDEN __regs_ObfReferenceObject( void *obj )
-#else
+DEFINE_FASTCALL1_WRAPPER( ObfReferenceObject )
 void WINAPI ObfReferenceObject( void *obj )
-#endif
 {
     ObReferenceObject( obj );
 }
@@ -2750,12 +2718,8 @@ void WINAPI ObfReferenceObject( void *obj )
 /***********************************************************************
  *           ObfDereferenceObject   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL1_ENTRYPOINT
-DEFINE_FASTCALL1_ENTRYPOINT( ObfDereferenceObject )
-void WINAPI DECLSPEC_HIDDEN __regs_ObfDereferenceObject( void *obj )
-#else
+DEFINE_FASTCALL1_WRAPPER( ObfDereferenceObject )
 void WINAPI ObfDereferenceObject( void *obj )
-#endif
 {
     ObDereferenceObject( obj );
 }
@@ -4053,13 +4017,8 @@ typedef struct _EX_PUSH_LOCK_WAIT_BLOCK *PEX_PUSH_LOCK_WAIT_BLOCK;
 /*********************************************************************
  *           ExfUnblockPushLock    (NTOSKRNL.@)
  */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( ExfUnblockPushLock )
-void WINAPI DECLSPEC_HIDDEN __regs_ExfUnblockPushLock( EX_PUSH_LOCK *lock,
-                                                       PEX_PUSH_LOCK_WAIT_BLOCK block)
-#else
+DEFINE_FASTCALL_WRAPPER( ExfUnblockPushLock, 8 )
 void WINAPI ExfUnblockPushLock( EX_PUSH_LOCK *lock, PEX_PUSH_LOCK_WAIT_BLOCK block )
-#endif
 {
     FIXME( "stub: %p, %p\n", lock, block );
 }
