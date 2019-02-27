@@ -892,6 +892,7 @@ struct d3d12_swapchain
     unsigned int buffer_count;
     unsigned int vk_swapchain_width;
     unsigned int vk_swapchain_height;
+    VkPresentModeKHR present_mode;
 
     uint32_t current_buffer_index;
     struct dxgi_vk_funcs vk_funcs;
@@ -1019,6 +1020,51 @@ static HRESULT vk_select_memory_type(const struct dxgi_vk_funcs *vk_funcs,
 
     FIXME("Failed to find memory type (allowed types %#x).\n", memory_type_mask);
     return E_FAIL;
+}
+
+static BOOL d3d12_swapchain_is_present_mode_supported(struct d3d12_swapchain *swapchain,
+        VkPresentModeKHR present_mode)
+{
+    VkPhysicalDevice vk_physical_device = swapchain->vk_physical_device;
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    VkPresentModeKHR *modes;
+    uint32_t count, i;
+    BOOL supported;
+    VkResult vr;
+
+    if (present_mode == VK_PRESENT_MODE_FIFO_KHR)
+        return TRUE;
+
+    if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device,
+            swapchain->vk_surface, &count, NULL)) < 0)
+    {
+        WARN("Failed to get count of available present modes, vr %d.\n", vr);
+        return FALSE;
+    }
+
+    supported = FALSE;
+
+    if (!(modes = heap_calloc(count, sizeof(*modes))))
+        return FALSE;
+    if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device,
+            swapchain->vk_surface, &count, modes)) >= 0)
+    {
+        for (i = 0; i < count; ++i)
+        {
+            if (modes[i] == present_mode)
+            {
+                supported = TRUE;
+                break;
+            }
+        }
+    }
+    else
+    {
+        WARN("Failed to get available present modes, vr %d.\n", vr);
+    }
+    heap_free(modes);
+
+    return supported;
 }
 
 static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapchain, VkFormat vk_format)
@@ -1527,7 +1573,7 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     vk_swapchain_desc.pQueueFamilyIndices = NULL;
     vk_swapchain_desc.preTransform = surface_caps.currentTransform;
     vk_swapchain_desc.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    vk_swapchain_desc.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    vk_swapchain_desc.presentMode = swapchain->present_mode;
     vk_swapchain_desc.clipped = VK_TRUE;
     vk_swapchain_desc.oldSwapchain = swapchain->vk_swapchain;
     if ((vr = vk_funcs->p_vkCreateSwapchainKHR(vk_device, &vk_swapchain_desc, NULL, &vk_swapchain)) < 0)
@@ -1922,6 +1968,52 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetCoreWindow(IDXGISwapChain3 *
     return DXGI_ERROR_INVALID_CALL;
 }
 
+static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapchain,
+        unsigned int sync_interval)
+{
+    VkPresentModeKHR present_mode;
+    HRESULT hr;
+
+    switch (sync_interval)
+    {
+        case 0:
+            present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+            break;
+        default:
+            FIXME("Unsupported sync interval %u.\n", sync_interval);
+        case 1:
+            present_mode = VK_PRESENT_MODE_FIFO_KHR;
+            break;
+    }
+
+    if (swapchain->present_mode == present_mode)
+        return S_OK;
+
+    if (!swapchain->vk_images[swapchain->current_buffer_index])
+    {
+        FIXME("Cannot recreate swapchain without user images.\n");
+        return S_OK;
+    }
+
+    if (!d3d12_swapchain_is_present_mode_supported(swapchain, present_mode))
+    {
+        FIXME("Vulkan present mode %#x is not supported.\n", present_mode);
+        return S_OK;
+    }
+
+    d3d12_swapchain_destroy_buffers(swapchain, FALSE);
+
+    swapchain->present_mode = present_mode;
+
+    if (FAILED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
+    {
+        ERR("Failed to recreate Vulkan swapchain, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return d3d12_swapchain_acquire_next_image(swapchain);
+}
+
 static VkResult d3d12_swapchain_blit_buffer(struct d3d12_swapchain *swapchain, VkQueue vk_queue)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
@@ -1989,8 +2081,6 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface
         WARN("Invalid sync interval %u.\n", sync_interval);
         return DXGI_ERROR_INVALID_CALL;
     }
-    if (sync_interval != 1)
-        FIXME("Ignoring sync interval %u.\n", sync_interval);
 
     if (flags & ~DXGI_PRESENT_TEST)
         FIXME("Unimplemented flags %#x.\n", flags);
@@ -2002,6 +2092,9 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface
 
     if (present_parameters)
         FIXME("Ignored present parameters %p.\n", present_parameters);
+
+    if (FAILED(hr = d3d12_swapchain_set_sync_interval(swapchain, sync_interval)))
+        return hr;
 
     if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
     {
@@ -2390,6 +2483,8 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     swapchain->window = window;
     swapchain->desc = *swapchain_desc;
     swapchain->fullscreen_desc = *fullscreen_desc;
+
+    swapchain->present_mode = VK_PRESENT_MODE_FIFO_KHR;
 
     switch (swapchain_desc->SwapEffect)
     {
