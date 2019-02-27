@@ -939,6 +939,11 @@ int CDECL MSVCRT__get_tzname(MSVCRT_size_t *ret, char *buf, MSVCRT_size_t bufsiz
     *ret = strlen(timezone)+1;
     if(!buf && !bufsize)
         return 0;
+    if(*ret > bufsize)
+    {
+        buf[0] = 0;
+        return MSVCRT_ERANGE;
+    }
 
     strcpy(buf, timezone);
     return 0;
