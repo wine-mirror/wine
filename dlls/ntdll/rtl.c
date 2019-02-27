@@ -51,13 +51,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #ifdef __i386__
-#define DEFINE_FASTCALL4_ENTRYPOINT( name ) \
-    __ASM_STDCALL_FUNC( name, 16, \
+#define DEFINE_FASTCALL_WRAPPER(func,args) \
+    __ASM_GLOBAL_FUNC( __fastcall_ ## func, \
                        "popl %eax\n\t" \
                        "pushl %edx\n\t" \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(16))
+                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+#else
+#define DEFINE_FASTCALL_WRAPPER(func,args) /* nothing */
 #endif
 
 /* CRC polynomial 0xedb88320 */
@@ -1256,14 +1258,9 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
 /*************************************************************************
  * RtlInterlockedPushListSList   [NTDLL.@]
  */
-#ifdef DEFINE_FASTCALL4_ENTRYPOINT
-DEFINE_FASTCALL4_ENTRYPOINT(RtlInterlockedPushListSList)
-PSLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
-                                                                       PSLIST_ENTRY last, ULONG count)
-#else
+DEFINE_FASTCALL_WRAPPER(RtlInterlockedPushListSList, 16)
 PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
                                                 PSLIST_ENTRY last, ULONG count)
-#endif
 {
     return RtlInterlockedPushListSListEx(list, first, last, count);
 }

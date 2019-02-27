@@ -8,5 +8,5 @@
 @ stdcall -arch=i386 InterlockedIncrement(ptr) kernel32.InterlockedIncrement
 @ stdcall InterlockedPopEntrySList(ptr) kernel32.InterlockedPopEntrySList
 @ stdcall InterlockedPushEntrySList(ptr ptr) kernel32.InterlockedPushEntrySList
-@ stdcall -norelay InterlockedPushListSList(ptr ptr ptr long) kernel32.InterlockedPushListSList
+@ stdcall -fastcall InterlockedPushListSList(ptr ptr ptr long) kernel32.InterlockedPushListSList
 @ stdcall QueryDepthSList(ptr) kernel32.QueryDepthSList
