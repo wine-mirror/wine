@@ -1009,6 +1009,82 @@ static void test_swapchain_size_mismatch(void)
     destroy_test_context(&context);
 }
 
+static void test_swapchain_backbuffer_index(void)
+{
+    static const float green[] = {0.0f, 1.0f, 0.0f, 1.0f};
+    unsigned int previous_index, expected_index, index, i;
+    ID3D12GraphicsCommandList *command_list;
+    ID3D12Resource *backbuffers[2];
+    struct test_context_desc desc;
+    struct test_context context;
+    unsigned int sync_interval;
+    IDXGISwapChain3 *swapchain;
+    ID3D12CommandQueue *queue;
+    ID3D12Device *device;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    RECT rect;
+    BOOL ret;
+
+    desc.no_pipeline = TRUE;
+    if (!init_test_context(&context, &desc))
+        return;
+    device = context.device;
+    command_list = context.list;
+    queue = context.queue;
+
+    window = create_window(WS_VISIBLE);
+    ret = GetClientRect(window, &rect);
+    ok(ret, "Failed to get client rect.\n");
+    swapchain = create_swapchain(queue, window, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+
+    for (i = 0; i < ARRAY_SIZE(backbuffers); ++i)
+    {
+        hr = IDXGISwapChain3_GetBuffer(swapchain, i, &IID_ID3D12Resource, (void **)&backbuffers[i]);
+        ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", i, hr);
+    }
+
+    previous_index = 1;
+    for (i = 0; i < 20; ++i)
+    {
+        index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
+        ID3D12Device_CreateRenderTargetView(device, backbuffers[index], NULL, context.rtv);
+
+        expected_index = (previous_index + 1) % 2;
+        ok(index == expected_index, "Test %u: Got index %u, expected %u.\n", i, index, expected_index);
+
+        transition_sub_resource_state(command_list, backbuffers[index], 0,
+                D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, context.rtv, green, 0, NULL);
+        transition_sub_resource_state(command_list, backbuffers[index], 0,
+                D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        hr = ID3D12GraphicsCommandList_Close(command_list);
+        ok(hr == S_OK, "Failed to close command list, hr %#x.\n", hr);
+        exec_command_list(queue, command_list);
+
+        if (i <= 4 || (8 <= i && i <= 14))
+            sync_interval = 1;
+        else
+            sync_interval = 0;
+
+        hr = IDXGISwapChain3_Present(swapchain, sync_interval, 0);
+        ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
+
+        wait_queue_idle(device, queue);
+        reset_command_list(command_list, context.allocator);
+
+        previous_index = index;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(backbuffers); ++i)
+        ID3D12Resource_Release(backbuffers[i]);
+    refcount = IDXGISwapChain3_Release(swapchain);
+    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    DestroyWindow(window);
+    destroy_test_context(&context);
+}
+
 START_TEST(d3d12)
 {
     BOOL enable_debug_layer = FALSE;
@@ -1039,4 +1115,5 @@ START_TEST(d3d12)
     test_draw();
     test_swapchain_draw();
     test_swapchain_size_mismatch();
+    test_swapchain_backbuffer_index();
 }
