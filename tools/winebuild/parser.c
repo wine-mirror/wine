@@ -69,6 +69,7 @@ static const char * const FlagNames[] =
     "private",     /* FLAG_PRIVATE */
     "ordinal",     /* FLAG_ORDINAL */
     "thiscall",    /* FLAG_THISCALL */
+    "fastcall",    /* FLAG_FASTCALL */
     NULL
 };
 
@@ -300,6 +301,24 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
             return 0;
         }
     }
+    if (odp->flags & FLAG_FASTCALL)
+    {
+        if (odp->type != TYPE_STDCALL)
+        {
+            error( "A fastcall function must use the stdcall convention\n" );
+            return 0;
+        }
+        if (!i || (odp->u.func.args[0] != ARG_PTR && odp->u.func.args[0] != ARG_LONG))
+        {
+            error( "First argument of a fastcall function must be a pointer or integer\n" );
+            return 0;
+        }
+        if (i > 1 && odp->u.func.args[1] != ARG_PTR && odp->u.func.args[1] != ARG_LONG)
+        {
+            error( "Second argument of a fastcall function must be a pointer or integer\n" );
+            return 0;
+        }
+    }
     return 1;
 }
 
@@ -331,7 +350,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
 
     if (target_cpu != CPU_x86)
-        odp->flags &= ~FLAG_THISCALL;
+        odp->flags &= ~(FLAG_THISCALL | FLAG_FASTCALL);
 
     if (!(token = GetToken(1)))
     {
@@ -355,9 +374,10 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
             odp->flags |= FLAG_FORWARD;
         }
     }
-    if ((odp->flags & FLAG_THISCALL) && !(odp->flags & FLAG_FORWARD))
+    if ((odp->flags & (FLAG_THISCALL | FLAG_FASTCALL)) && !(odp->flags & FLAG_FORWARD))
     {
-        char *link_name = strmake( "__thiscall_%s", odp->link_name );
+        char *link_name = strmake( "__%s_%s", (odp->flags & FLAG_THISCALL) ? "thiscall" : "fastcall",
+                                   odp->link_name );
         free( odp->link_name );
         odp->link_name = link_name;
     }
@@ -513,6 +533,7 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
                 break;
             case FLAG_RET64:
             case FLAG_THISCALL:
+            case FLAG_FASTCALL:
                 if (spec->type == SPEC_WIN16)
                     error( "Flag '%s' is not supported in Win16\n", FlagNames[i] );
                 break;

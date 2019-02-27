@@ -128,7 +128,8 @@ static void get_arg_string( ORDDEF *odp, char str[MAX_ARGUMENTS + 1] )
             break;
         }
     }
-    if (odp->flags & FLAG_THISCALL) str[0] = 't';
+    if (odp->flags & (FLAG_THISCALL | FLAG_FASTCALL)) str[0] = 't';
+    if ((odp->flags & FLAG_FASTCALL) && odp->u.func.nb_args > 1) str[1] = 't';
 
     /* append return value */
     if (get_ptr_size() == 4 && (odp->flags & FLAG_RET64))
@@ -224,9 +225,10 @@ static void output_relay_debug( DLLSPEC *spec )
         switch (target_cpu)
         {
         case CPU_x86:
-            if (odp->flags & FLAG_THISCALL)  /* add the this pointer */
+            if (odp->flags & (FLAG_THISCALL | FLAG_FASTCALL))  /* add the register arguments */
             {
                 output( "\tpopl %%eax\n" );
+                if ((odp->flags & FLAG_FASTCALL) && get_args_size( odp ) > 4) output( "\tpushl %%edx\n" );
                 output( "\tpushl %%ecx\n" );
                 output( "\tpushl %%eax\n" );
             }
@@ -966,7 +968,7 @@ void output_def_file( DLLSPEC *spec, int include_private )
             else if (strcmp(name, odp->link_name)) /* try to reduce output */
             {
                 output( "=%s", odp->link_name );
-                if (!kill_at && target_cpu == CPU_x86 && !(odp->flags & FLAG_THISCALL))
+                if (!kill_at && target_cpu == CPU_x86 && !(odp->flags & (FLAG_THISCALL | FLAG_FASTCALL)))
                     output( "@%d", at_param );
             }
             break;

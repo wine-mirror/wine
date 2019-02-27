@@ -173,10 +173,11 @@ struct strarray
 #define FLAG_PRIVATE   0x20  /* function is private (cannot be imported) */
 #define FLAG_ORDINAL   0x40  /* function should be imported by ordinal */
 #define FLAG_THISCALL  0x80  /* use thiscall calling convention */
+#define FLAG_FASTCALL  0x100 /* use fastcall calling convention */
 
-#define FLAG_FORWARD   0x100  /* function is a forwarded name */
-#define FLAG_EXT_LINK  0x200  /* function links to an external symbol */
-#define FLAG_EXPORT32  0x400  /* 32-bit export in 16-bit spec file */
+#define FLAG_FORWARD   0x200  /* function is a forwarded name */
+#define FLAG_EXT_LINK  0x400  /* function links to an external symbol */
+#define FLAG_EXPORT32  0x800  /* 32-bit export in 16-bit spec file */
 
 #define FLAG_CPU(cpu)  (0x01000 << (cpu))
 #define FLAG_CPU_MASK  (FLAG_CPU(CPU_LAST + 1) - FLAG_CPU(0))
