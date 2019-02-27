@@ -1,5 +1,5 @@
 /*
- * Unit tests for the avi splitter functions
+ * AVI splitter filter unit tests
  *
  * Copyright (C) 2007 Google (Lei Zhang)
  * Copyright (C) 2008 Google (Maarten Lankhorst)
@@ -20,62 +20,56 @@
  */
 
 #define COBJMACROS
-
-#include "wine/test.h"
 #include "dshow.h"
-#include "tlhelp32.h"
+#include "wine/test.h"
 
-static IUnknown *pAviSplitter = NULL;
-
-static BOOL create_avisplitter(void)
+static IBaseFilter *create_avi_splitter(void)
 {
-    HRESULT hr;
-
-    hr = CoCreateInstance(&CLSID_AviSplitter, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IUnknown, (LPVOID*)&pAviSplitter);
-    return (hr == S_OK && pAviSplitter != NULL);
+    IBaseFilter *filter = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_AviSplitter, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return filter;
 }
 
-static void release_avisplitter(void)
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
 {
-    HRESULT hr;
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
 
-    Sleep(1000);
-    hr = IUnknown_Release(pAviSplitter);
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
 
-    /* Looks like wine has a reference leak somewhere on test_threads tests,
-     * it passes in windows
-     */
-    ok(hr == 0, "IUnknown_Release failed with %d\n", (INT)hr);
-
-    while (hr > 0)
-        hr = IUnknown_Release(pAviSplitter);
-    pAviSplitter = NULL;
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
 }
 
-static void test_query_interface(void)
+static void test_interfaces(void)
 {
-    HRESULT hr;
-    ULONG ref;
-    IUnknown *iface= NULL;
+    IBaseFilter *filter = create_avi_splitter();
 
-#define TEST_INTERFACE(riid,expected) do { \
-    hr = IUnknown_QueryInterface(pAviSplitter, &riid, (void**)&iface); \
-    ok( hr == expected, #riid" should %s got %08X\n", expected==S_OK ? "exist" : "not be present", GetLastError() ); \
-    if (hr == S_OK) { \
-        ref = IUnknown_Release(iface); \
-        ok(ref == 1, "Reference is %u, expected 1\n", ref); \
-    } \
-    iface = NULL; \
-    } while(0)
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
 
-    TEST_INTERFACE(IID_IBaseFilter,S_OK);
-    TEST_INTERFACE(IID_IMediaSeeking,E_NOINTERFACE);
-    TEST_INTERFACE(IID_IKsPropertySet,E_NOINTERFACE);
-    TEST_INTERFACE(IID_IMediaPosition,E_NOINTERFACE);
-    TEST_INTERFACE(IID_IQualityControl,E_NOINTERFACE);
-    TEST_INTERFACE(IID_IQualProp,E_NOINTERFACE);
-#undef TEST_INTERFACE
+    check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IBasicAudio, FALSE);
+    check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IKsPropertySet, FALSE);
+    check_interface(filter, &IID_IMediaPosition, FALSE);
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+    check_interface(filter, &IID_IPersistPropertyBag, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IQualityControl, FALSE);
+    check_interface(filter, &IID_IQualProp, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    IBaseFilter_Release(filter);
 }
 
 static void test_pin(IPin *pin)
@@ -93,18 +87,10 @@ static void test_pin(IPin *pin)
 static void test_basefilter(void)
 {
     IEnumPins *pin_enum = NULL;
-    IBaseFilter *base = NULL;
+    IBaseFilter *base = create_avi_splitter();
     IPin *pins[2];
     ULONG ref;
     HRESULT hr;
-
-    IUnknown_QueryInterface(pAviSplitter, &IID_IBaseFilter, (void **)&base);
-    if (base == NULL)
-    {
-        /* test_query_interface handles this case */
-        skip("No IBaseFilter\n");
-        return;
-    }
 
     hr = IBaseFilter_EnumPins(base, NULL);
     ok(hr == E_POINTER, "hr = %08x and not E_POINTER\n", hr);
@@ -169,7 +155,7 @@ static WCHAR *load_resource(const WCHAR *name)
 static void test_filter_graph(void)
 {
     IFileSourceFilter *pfile = NULL;
-    IBaseFilter *preader = NULL, *pavi = NULL;
+    IBaseFilter *preader = NULL, *pavi = create_avi_splitter();
     IEnumPins *enumpins = NULL;
     IPin *filepin = NULL, *avipin = NULL;
     HRESULT hr;
@@ -202,7 +188,7 @@ static void test_filter_graph(void)
         return;
     }
 
-    hr = IUnknown_QueryInterface(pAviSplitter, &IID_IFileSourceFilter,
+    hr = IUnknown_QueryInterface(pavi, &IID_IFileSourceFilter,
         (void **)&pfile);
     ok(hr == E_NOINTERFACE,
         "Avi splitter returns unexpected error: %08x\n", hr);
@@ -219,12 +205,6 @@ static void test_filter_graph(void)
     hr = IBaseFilter_QueryInterface(preader, &IID_IFileSourceFilter,
         (void**)&pfile);
     ok(hr == S_OK, "Could not get IFileSourceFilter: %08x\n", hr);
-    if (hr != S_OK)
-        goto fail;
-
-    hr = IUnknown_QueryInterface(pAviSplitter, &IID_IBaseFilter,
-        (void**)&pavi);
-    ok(hr == S_OK, "Could not get base filter: %08x\n", hr);
     if (hr != S_OK)
         goto fail;
 
@@ -418,17 +398,9 @@ START_TEST(avisplit)
 {
     CoInitialize(NULL);
 
-    if (!create_avisplitter())
-    {
-        skip("Could not create avisplitter\n");
-        return;
-    }
-
-    test_query_interface();
+    test_interfaces();
     test_basefilter();
     test_filter_graph();
-
-    release_avisplitter();
 
     CoUninitialize();
 }
