@@ -1,22 +1,22 @@
-@ stdcall -arch=i386 -norelay ExAcquireFastMutex(ptr)
-@ stdcall -arch=i386 -norelay ExReleaseFastMutex(ptr)
-@ stdcall -arch=i386 -norelay ExTryToAcquireFastMutex(ptr)
+@ stdcall -fastcall -arch=i386 ExAcquireFastMutex(ptr)
+@ stdcall -fastcall -arch=i386 ExReleaseFastMutex(ptr)
+@ stdcall -fastcall -arch=i386 ExTryToAcquireFastMutex(ptr)
 @ stub HalClearSoftwareInterrupt
 @ stub HalRequestSoftwareInterrupt
 @ stub HalSystemVectorDispatchEntry
-@ stdcall -arch=i386 -norelay KeAcquireInStackQueuedSpinLock(ptr ptr)
+@ stdcall -fastcall -arch=i386 KeAcquireInStackQueuedSpinLock(ptr ptr)
 @ stub KeAcquireInStackQueuedSpinLockRaiseToSynch
 @ stub KeAcquireQueuedSpinLock
 @ stub KeAcquireQueuedSpinLockRaiseToSynch
 @ stub KeAcquireSpinLockRaiseToSynch
-@ stdcall -arch=i386 -norelay KeReleaseInStackQueuedSpinLock(ptr)
+@ stdcall -fastcall -arch=i386 KeReleaseInStackQueuedSpinLock(ptr)
 @ stub KeReleaseQueuedSpinLock
 @ stub KeTryToAcquireQueuedSpinLock
 @ stub KeTryToAcquireQueuedSpinLockRaiseToSynch
-@ stdcall -arch=i386 -norelay KfAcquireSpinLock(ptr)
-@ stdcall -arch=arm,arm64,i386 -norelay KfLowerIrql(long)
-@ stdcall -arch=arm,arm64,i386 -norelay KfRaiseIrql(long)
-@ stdcall -arch=i386 -norelay KfReleaseSpinLock(ptr long)
+@ stdcall -fastcall -arch=i386 KfAcquireSpinLock(ptr)
+@ stdcall -fastcall -arch=arm,arm64,i386 KfLowerIrql(long)
+@ stdcall -fastcall -arch=arm,arm64,i386 KfRaiseIrql(long)
+@ stdcall -fastcall -arch=i386 KfReleaseSpinLock(ptr long)
 @ stub HalAcquireDisplayOwnership
 @ stub HalAdjustResourceList
 @ stub HalAllProcessorsStarted
