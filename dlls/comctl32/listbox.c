@@ -161,6 +161,11 @@ static ULONG_PTR get_item_data( const LB_DESCR *descr, UINT index )
     return (descr->style & LBS_NODATA) ? 0 : descr->items[index].data;
 }
 
+static void set_item_data( LB_DESCR *descr, UINT index, ULONG_PTR data )
+{
+    if (!(descr->style & LBS_NODATA)) descr->items[index].data = data;
+}
+
 static WCHAR *get_item_string( const LB_DESCR *descr, UINT index )
 {
     return HAS_STRINGS(descr) ? descr->items[index].str : NULL;
@@ -2684,7 +2689,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
             SetLastError(ERROR_INVALID_INDEX);
             return LB_ERR;
         }
-        if (!(descr->style & LBS_NODATA)) descr->items[wParam].data = lParam;
+        set_item_data(descr, wParam, lParam);
         /* undocumented: returns TRUE, not LB_OKAY (0) */
         return TRUE;
 
