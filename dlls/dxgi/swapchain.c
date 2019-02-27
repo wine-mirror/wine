@@ -1293,18 +1293,19 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
     resource_info.desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     resource_info.flags = VKD3D_RESOURCE_INITIAL_STATE_TRANSITION | VKD3D_RESOURCE_PRESENT_STATE_TRANSITION;
 
-    if (vk_swapchain_format != vk_format)
+    queue_desc = ID3D12CommandQueue_GetDesc(queue);
+    if (queue_desc.Type != D3D12_COMMAND_LIST_TYPE_DIRECT)
     {
-        queue_desc = ID3D12CommandQueue_GetDesc(queue);
-        if (queue_desc.Type != D3D12_COMMAND_LIST_TYPE_DIRECT)
-        {
-            /* vkCmdBlitImage() is only supported for Graphics queues. */
-            FIXME("Format conversion not implemented for command queue type %#x.\n", queue_desc.Type);
+        /* vkCmdBlitImage() is only supported for graphics queues. */
+        FIXME("Swapchain blit not implemented for command queue type %#x.\n", queue_desc.Type);
+        if (vk_swapchain_format != vk_format)
             return E_NOTIMPL;
-        }
-        queue_family_index = vkd3d_get_vk_queue_family_index(queue);
+    }
+    queue_family_index = vkd3d_get_vk_queue_family_index(queue);
 
-        TRACE("Creating user swapchain buffers for format conversion.\n");
+    if (queue_desc.Type == D3D12_COMMAND_LIST_TYPE_DIRECT)
+    {
+        TRACE("Creating user swapchain buffers.\n");
 
         if (FAILED(hr = d3d12_swapchain_create_user_buffers(swapchain, vk_format)))
             return hr;
