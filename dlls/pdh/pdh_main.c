@@ -898,9 +898,9 @@ PDH_STATUS WINAPI PdhLookupPerfNameByIndexA( LPCSTR machine, DWORD index, LPSTR 
     {
         int required = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL );
 
-        if (size && *size < required) ret = PDH_MORE_DATA;
+        if (*size < required) ret = PDH_MORE_DATA;
         else WideCharToMultiByte( CP_ACP, 0, bufferW, -1, buffer, required, NULL, NULL );
-        if (size) *size = required;
+        *size = required;
     }
     heap_free( machineW );
     return ret;
