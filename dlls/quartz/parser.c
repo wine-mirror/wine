@@ -85,7 +85,7 @@ static LONG WINAPI Parser_GetPinCount(BaseFilter *iface)
 
     TRACE("%p->()\n", This);
 
-    return This->cStreams;
+    return This->cStreams + 1;
 }
 
 static const BaseFilterFuncTable BaseFuncTable = {
