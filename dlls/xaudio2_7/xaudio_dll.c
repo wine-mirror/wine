@@ -1400,6 +1400,8 @@ static HRESULT WINAPI IXAudio2Impl_QueryInterface(IXAudio2 *iface, REFIID riid,
         *ppvObject = &This->IXAudio20_iface;
 #elif XAUDIO2_VER <= 2
         *ppvObject = &This->IXAudio22_iface;
+#elif XAUDIO2_VER <= 3
+        *ppvObject = &This->IXAudio23_iface;
 #elif XAUDIO2_VER <= 7
         *ppvObject = &This->IXAudio27_iface;
 #else
@@ -1902,6 +1904,8 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     object->IXAudio20_iface.lpVtbl = &XAudio20_Vtbl;
 #elif XAUDIO2_VER <= 2
     object->IXAudio22_iface.lpVtbl = &XAudio22_Vtbl;
+#elif XAUDIO2_VER <= 3
+    object->IXAudio23_iface.lpVtbl = &XAudio23_Vtbl;
 #elif XAUDIO2_VER <= 7
     object->IXAudio27_iface.lpVtbl = &XAudio27_Vtbl;
 #endif

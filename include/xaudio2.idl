@@ -1052,6 +1052,67 @@ interface IXAudio22 : IUnknown
 
 [
     object,
+    uuid(8bcf1f58-9fe7-4583-8ac6-e2adc465c8bb), /* all versions before 28 share IID_IXAudio */
+]
+/* XAudio2 2.3's IXAudio2 interface. Actually called IXAudio2 in the Nov 2008
+ * DX SDK */
+interface IXAudio23 : IUnknown
+{
+    HRESULT GetDeviceCount([out] UINT32* pCount);
+
+    HRESULT GetDeviceDetails(
+        [in] UINT32 Index,
+        [out] XAUDIO2_DEVICE_DETAILS* pDeviceDetails);
+
+    HRESULT Initialize(
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(XAUDIO2_DEFAULT_PROCESSOR)] XAUDIO2_PROCESSOR XAudio2Processor);
+
+    HRESULT RegisterForCallbacks([in] IXAudio2EngineCallback* pCallback);
+
+    void UnregisterForCallbacks([in] IXAudio2EngineCallback* pCallback);
+
+    HRESULT CreateSourceVoice(
+        [out] IXAudio2SourceVoice** ppSourceVoice,
+        [in] const WAVEFORMATEX* pSourceFormat,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(XAUDIO2_DEFAULT_FREQ_RATIO)] float MaxFrequencyRatio,
+        [in, defaultvalue(NULL)] IXAudio2VoiceCallback* pCallback,
+        [in, defaultvalue(NULL)] const XAUDIO23_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT CreateSubmixVoice(
+        [out] IXAudio2SubmixVoice** ppSubmixVoice,
+        [in] UINT32 InputChannels,
+        [in] UINT32 InputSampleRate,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(0)] UINT32 ProcessingStage,
+        [in, defaultvalue(NULL)] const XAUDIO23_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT CreateMasteringVoice(
+        [out] IXAudio2MasteringVoice** ppMasteringVoice,
+        [in, defaultvalue(XAUDIO2_DEFAULT_CHANNELS)] UINT32 InputChannels,
+        [in, defaultvalue(XAUDIO2_DEFAULT_SAMPLERATE)] UINT32 InputSampleRate,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(0)] UINT32 DeviceIndex,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT StartEngine();
+
+    void StopEngine();
+
+    HRESULT CommitChanges([in] UINT32 OperationSet);
+
+    void GetPerformanceData([out] XAUDIO2_PERFORMANCE_DATA* pPerfData);
+
+    [local] void SetDebugConfiguration(
+        [in] const XAUDIO2_DEBUG_CONFIGURATION* pDebugConfiguration,
+        [in, defaultvalue(NULL)] void* pReserved);
+}
+
+[
+    object,
     uuid(8bcf1f58-9fe7-4583-8ac6-e2adc465c8bb),
 ]
 /* XAudio2 2.7's IXAudio2 interface. Actually called IXAudio2 in the Jun 2010

@@ -111,6 +111,8 @@ typedef struct _IXAudio2Impl {
     IXAudio20 IXAudio20_iface;
 #elif XAUDIO2_VER <= 2
     IXAudio22 IXAudio22_iface;
+#elif XAUDIO2_VER <= 3
+    IXAudio23 IXAudio23_iface;
 #elif XAUDIO2_VER <= 7
     IXAudio27 IXAudio27_iface;
 #endif
@@ -158,6 +160,8 @@ extern XA2VoiceImpl *impl_from_IXAudio27MasteringVoice(IXAudio27MasteringVoice *
 extern const IXAudio20Vtbl XAudio20_Vtbl DECLSPEC_HIDDEN;
 #elif XAUDIO2_VER <= 2
 extern const IXAudio22Vtbl XAudio22_Vtbl DECLSPEC_HIDDEN;
+#elif XAUDIO2_VER <= 3
+extern const IXAudio23Vtbl XAudio23_Vtbl DECLSPEC_HIDDEN;
 #elif XAUDIO2_VER <= 7
 extern const IXAudio27Vtbl XAudio27_Vtbl DECLSPEC_HIDDEN;
 #endif
