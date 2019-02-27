@@ -4165,3 +4165,13 @@ void WINAPI MFHeapFree(void *p)
     TRACE("%p\n", p);
     HeapFree(GetProcessHeap(), 0, p);
 }
+
+/***********************************************************************
+ *      MFCreateMFByteStreamOnStreamEx (mfplat.@)
+ */
+HRESULT WINAPI MFCreateMFByteStreamOnStreamEx(IUnknown *stream, IMFByteStream **bytestream)
+{
+    FIXME("(%p, %p): stub\n", stream, bytestream);
+
+    return E_NOTIMPL;
+}

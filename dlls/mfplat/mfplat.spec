@@ -46,6 +46,7 @@
 @ stdcall MFCreateFile(long long long wstr ptr)
 @ stub MFCreateLegacyMediaBufferOnMFMediaBuffer
 @ stdcall MFCreateMFByteStreamOnStream(ptr ptr)
+@ stdcall MFCreateMFByteStreamOnStreamEx(ptr ptr)
 @ stub MFCreateMFVideoFormatFromMFMediaType
 @ stub MFCreateMediaBufferWrapper
 @ stdcall MFCreateMediaEvent(long ptr long ptr ptr)
