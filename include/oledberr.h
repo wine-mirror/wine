@@ -21,6 +21,14 @@
 #ifndef __WINE_OLEDBERR_H
 #define __WINE_OLEDBERR_H
 
+#define DB_E_BADACCESSORHANDLE              0x80040e00
+#define DB_E_ROWLIMITEXCEEDED               0x80040e01
+#define DB_E_READONLYACCESSOR               0x80040e02
+#define DB_E_SCHEMAVIOLATION                0x80040e03
+#define DB_E_BADROWHANDLE                   0x80040e04
+#define DB_E_OBJECTOPEN                     0x80040e05
+#define DB_E_BADCHAPTER                     0x80040e06
+#define DB_E_CANTCONVERTVALUE               0x80040e07
 #define DB_E_BADBINDINFO                    0x80040e08
 
 #define DB_E_ERRORSINCOMMAND                0x80040e14
