@@ -2690,7 +2690,19 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
  */
 LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
 {
-    return WIN_GetWindowLong( hwnd, offset, sizeof(LONG), FALSE );
+    switch (offset)
+    {
+#ifdef _WIN64
+    case GWLP_WNDPROC:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        WARN( "Invalid offset %d\n", offset );
+        SetLastError( ERROR_INVALID_INDEX );
+        return 0;
+#endif
+    default:
+        return WIN_GetWindowLong( hwnd, offset, sizeof(LONG), FALSE );
+    }
 }
 
 
@@ -2699,7 +2711,19 @@ LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
  */
 LONG WINAPI GetWindowLongW( HWND hwnd, INT offset )
 {
-    return WIN_GetWindowLong( hwnd, offset, sizeof(LONG), TRUE );
+    switch (offset)
+    {
+#ifdef _WIN64
+    case GWLP_WNDPROC:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        WARN( "Invalid offset %d\n", offset );
+        SetLastError( ERROR_INVALID_INDEX );
+        return 0;
+#endif
+    default:
+        return WIN_GetWindowLong( hwnd, offset, sizeof(LONG), TRUE );
+    }
 }
 
 
