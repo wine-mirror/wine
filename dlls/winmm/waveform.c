@@ -3124,9 +3124,9 @@ UINT WINAPI waveOutSetVolume(HWAVEOUT hWaveOut, DWORD in)
         return MMSYSERR_ERROR;
     }
 
-    vols[0] = (float)((DWORD)(in & 0xFFFF) / (float)0xFFFF);
+    vols[0] = (float)((in & 0xFFFF) / (float)0xFFFF);
     if(channels > 1)
-        vols[1] = (float)((DWORD)(in >> 16) / (float)0xFFFF);
+        vols[1] = (float)((in >> 16) / (float)0xFFFF);
 
     hr = IAudioStreamVolume_SetAllVolumes(device->volume, channels, vols);
     if(FAILED(hr)){
