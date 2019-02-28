@@ -2341,9 +2341,9 @@
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar
 @ cdecl hypot(double double) _hypot
-@ stub ilogb
-@ stub ilogbf
-@ stub ilogbl
+@ cdecl ilogb(double) MSVCR120_ilogb
+@ cdecl ilogbf(float) MSVCR120_ilogbf
+@ cdecl ilogbl(double) MSVCR120_ilogbl
 @ stub imaxabs
 @ stub imaxdiv
 @ cdecl is_wctype(long long) ntdll.iswctype

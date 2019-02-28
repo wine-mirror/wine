@@ -303,6 +303,12 @@
 /* Define to 1 if you have the `if_nameindex' function. */
 #undef HAVE_IF_NAMEINDEX
 
+/* Define to 1 if you have the `ilogb' function. */
+#undef HAVE_ILOGB
+
+/* Define to 1 if you have the `ilogbf' function. */
+#undef HAVE_ILOGBF
+
 /* Define to 1 if you have the `inet_addr' function. */
 #undef HAVE_INET_ADDR
 

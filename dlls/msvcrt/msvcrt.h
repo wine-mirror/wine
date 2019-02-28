@@ -41,6 +41,7 @@
 #include "windef.h"
 #include "winbase.h"
 
+#define MSVCRT_INT_MAX     0x7fffffff
 #define MSVCRT_LONG_MAX    0x7fffffff
 #define MSVCRT_LONG_MIN    (-MSVCRT_LONG_MAX-1)
 #define MSVCRT_ULONG_MAX   0xffffffff
@@ -1186,6 +1187,9 @@ printf_arg arg_clbk_positional(void*, int, int, __ms_va_list*) DECLSPEC_HIDDEN;
 #define MSVCRT_DBL_MIN 2.2250738585072014e-308
 #define MSVCRT__OVERFLOW  3
 #define MSVCRT__UNDERFLOW 4
+
+#define MSVCRT_FP_ILOGB0 (-MSVCRT_INT_MAX - 1)
+#define MSVCRT_FP_ILOGBNAN MSVCRT_INT_MAX
 
 typedef struct
 {
