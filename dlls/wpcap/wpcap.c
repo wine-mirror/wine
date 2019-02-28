@@ -24,6 +24,7 @@
 #undef SOCKET
 #undef INVALID_SOCKET
 
+#define USE_WS_PREFIX
 #include "winsock2.h"
 #include "windef.h"
 #include "winbase.h"
