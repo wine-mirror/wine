@@ -2737,7 +2737,19 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
  */
 LONG WINAPI DECLSPEC_HOTPATCH SetWindowLongA( HWND hwnd, INT offset, LONG newval )
 {
-    return WIN_SetWindowLong( hwnd, offset, sizeof(LONG), newval, FALSE );
+    switch (offset)
+    {
+#ifdef _WIN64
+    case GWLP_WNDPROC:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        WARN( "Invalid offset %d\n", offset );
+        SetLastError( ERROR_INVALID_INDEX );
+        return 0;
+#endif
+    default:
+        return WIN_SetWindowLong( hwnd, offset, sizeof(LONG), newval, FALSE );
+    }
 }
 
 
@@ -2811,8 +2823,21 @@ LONG WINAPI DECLSPEC_HOTPATCH SetWindowLongW(
     HWND hwnd,  /* [in] window to alter */
     INT offset, /* [in] offset, in bytes, of location to alter */
     LONG newval /* [in] new value of location */
-) {
-    return WIN_SetWindowLong( hwnd, offset, sizeof(LONG), newval, TRUE );
+)
+{
+    switch (offset)
+    {
+#ifdef _WIN64
+    case GWLP_WNDPROC:
+    case GWLP_HINSTANCE:
+    case GWLP_HWNDPARENT:
+        WARN("Invalid offset %d\n", offset );
+        SetLastError( ERROR_INVALID_INDEX );
+        return 0;
+#endif
+    default:
+        return WIN_SetWindowLong( hwnd, offset, sizeof(LONG), newval, TRUE );
+    }
 }
 
 

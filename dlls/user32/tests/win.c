@@ -6285,6 +6285,233 @@ static int check_error(DWORD actual, DWORD expected)
     return (!sets_last_error && (actual == 0xdeadbeef)) || (actual == expected);
 }
 
+static void test_set_window_long_size(void)
+{
+#ifdef _WIN64
+    WNDPROC wnd_proc, wnd_proc_2;
+    LONG_PTR retval;
+    HWND hwnd;
+    LONG ret;
+
+    /* It's not allowed to set or get 64-bit pointer values using 32-bit functions. */
+    hwnd = CreateWindowExA(0, "MainWindowClass", "Child window", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CHILD |
+            WS_MAXIMIZEBOX | WS_VISIBLE, 100, 100, 200, 200, hwndMain, 0, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "Failed to create test window.\n");
+
+    /* GWLP_WNDPROC */
+    SetLastError(0xdeadbeef);
+    wnd_proc = (WNDPROC)(LONG_PTR)GetWindowLongA(hwnd, GWLP_WNDPROC);
+todo_wine
+    ok(!wnd_proc && GetLastError() == ERROR_INVALID_INDEX, "Unexpected window proc.\n");
+
+    wnd_proc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC);
+    ok(!!wnd_proc, "Unexpected window proc.\n");
+
+    SetLastError(0xdeadbeef);
+    wnd_proc_2 = (WNDPROC)(LONG_PTR)SetWindowLongA(hwnd, GWLP_WNDPROC, 0xdeadbeef);
+    ok(!wnd_proc_2 && GetLastError() == ERROR_INVALID_INDEX, "Unexpected window proc.\n");
+
+    wnd_proc_2 = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC);
+    ok(wnd_proc_2 == wnd_proc, "Unexpected window proc.\n");
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowWord(hwnd, GWLP_WNDPROC);
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected return value.\n");
+
+    /* GWLP_USERDATA */
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, ((LONG_PTR)1 << 32) | 123);
+    ret = GetWindowLongA(hwnd, GWLP_USERDATA);
+    ok(ret == 123, "Unexpected user data %#x.\n", ret);
+    retval = GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    ok(retval > 123, "Unexpected user data.\n");
+    ret = GetWindowWord(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(ret == 123, "Unexpected user data %#x.\n", ret);
+    ret = SetWindowWord(hwnd, GWLP_USERDATA, 124);
+todo_wine
+    ok(ret == 123, "Unexpected user data %#x.\n", ret);
+    ret = GetWindowLongA(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(ret == 124, "Unexpected user data %#x.\n", ret);
+    retval = GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(retval == 124, "Unexpected user data.\n");
+
+    SetWindowLongA(hwnd, GWLP_USERDATA, (1 << 16) | 123);
+    ret = GetWindowLongA(hwnd, GWLP_USERDATA);
+    ok(ret == ((1 << 16) | 123), "Unexpected user data %#x.\n", ret);
+    ret = GetWindowWord(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(ret == 123, "Unexpected user data %#x.\n", ret);
+
+    ret = SetWindowWord(hwnd, GWLP_USERDATA, 124);
+todo_wine
+    ok(ret == 123, "Unexpected user data %#x.\n", ret);
+    ret = GetWindowLongA(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(ret == ((1 << 16) | 124), "Unexpected user data %#x.\n", ret);
+    ret = GetWindowWord(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(ret == 124, "Unexpected user data %#x.\n", ret);
+
+    /* GWLP_ID */
+    ret = SetWindowLongA(hwnd, GWLP_ID, 1);
+    ok(!ret, "Unexpected id %#x.\n", ret);
+
+    ret = GetWindowLongA(hwnd, GWLP_ID);
+    ok(ret == 1, "Unexpected id %#x.\n", ret);
+
+    ret = GetWindowLongW(hwnd, GWLP_ID);
+    ok(ret == 1, "Unexpected id %#x.\n", ret);
+
+    SetWindowLongPtrA(hwnd, GWLP_ID, ((LONG_PTR)1 << 32) | 123);
+    ret = GetWindowLongA(hwnd, GWLP_ID);
+    ok(ret == 123, "Unexpected id %#x.\n", ret);
+    ret = GetWindowLongW(hwnd, GWLP_ID);
+    ok(ret == 123, "Unexpected id %#x.\n", ret);
+    retval = GetWindowLongPtrA(hwnd, GWLP_ID);
+    ok(retval > 123, "Unexpected id.\n");
+    SetLastError(0xdeadbeef);
+    ret = GetWindowWord(hwnd, GWLP_ID);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected id %#x.\n", ret);
+
+    /* GWLP_HINSTANCE */
+    retval = GetWindowLongPtrA(hwnd, GWLP_HINSTANCE);
+    ok(retval == (LONG_PTR)GetModuleHandleA(NULL), "Unexpected instance %#lx.\n", retval);
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowLongA(hwnd, GWLP_HINSTANCE);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowLongW(hwnd, GWLP_HINSTANCE);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowWord(hwnd, GWLP_HINSTANCE);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = SetWindowLongA(hwnd, GWLP_HINSTANCE, 1);
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = SetWindowLongW(hwnd, GWLP_HINSTANCE, 1);
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
+
+    /* GWLP_HWNDPARENT */
+    SetLastError(0xdeadbeef);
+    ret = GetWindowLongA(hwnd, GWLP_HWNDPARENT);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected parent window %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = SetWindowLongA(hwnd, GWLP_HWNDPARENT, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected parent window %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = SetWindowLongW(hwnd, GWLP_HWNDPARENT, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected parent window %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowWord(hwnd, GWLP_HWNDPARENT);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected parent window %#x.\n", ret);
+
+    DestroyWindow(hwnd);
+#endif
+}
+
+static void test_set_window_word_size(void)
+{
+    WNDPROC wnd_proc, wnd_proc_2;
+    LONG_PTR retval;
+    HWND hwnd;
+    LONG ret;
+
+    /* It's not allowed to set or get 64-bit pointer values using 32-bit functions. */
+    hwnd = CreateWindowExA(0, "MainWindowClass", "Child window", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CHILD |
+            WS_MAXIMIZEBOX | WS_VISIBLE, 100, 100, 200, 200, hwndMain, 0, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "Failed to create test window.\n");
+
+    /* GWLP_WNDPROC */
+    wnd_proc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC);
+    ok(!!wnd_proc, "Unexpected window proc.\n");
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowWord(hwnd, GWLP_WNDPROC);
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected window proc.\n");
+
+    SetLastError(0xdeadbeef);
+    ret = SetWindowWord(hwnd, GWLP_WNDPROC, 0xbeef);
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected window proc.\n");
+
+    wnd_proc_2 = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC);
+    ok(wnd_proc_2 == wnd_proc, "Unexpected window proc.\n");
+
+    /* GWLP_USERDATA */
+    ret = SetWindowLongA(hwnd, GWLP_USERDATA, (1 << 16) | 123);
+    ok(!ret, "Unexpected user data %#x.\n", ret);
+    ret = GetWindowLongA(hwnd, GWLP_USERDATA);
+    ok(ret > 123, "Unexpected user data %#x.\n", ret);
+    ret = GetWindowWord(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(ret == 123, "Unexpected user data %#x.\n", ret);
+    ret = SetWindowWord(hwnd, GWLP_USERDATA, 124);
+todo_wine
+    ok(ret == 123, "Unexpected user data %#x.\n", ret);
+    ret = GetWindowWord(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(ret == 124, "Unexpected user data %#x.\n", ret);
+    ret = GetWindowLongA(hwnd, GWLP_USERDATA);
+todo_wine
+    ok(ret == ((1 << 16) | 124), "Unexpected user data %#x.\n", ret);
+
+    /* GWLP_ID */
+    ret = SetWindowLongA(hwnd, GWLP_ID, 1);
+    ok(!ret, "Unexpected id %#x.\n", ret);
+    ret = GetWindowLongA(hwnd, GWLP_ID);
+    ok(ret == 1, "Unexpected id %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowWord(hwnd, GWLP_ID);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected id %#x.\n", ret);
+    SetLastError(0xdeadbeef);
+    ret = SetWindowWord(hwnd, GWLP_ID, 2);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected id %#x.\n", ret);
+
+    /* GWLP_HINSTANCE */
+    retval = GetWindowLongPtrA(hwnd, GWLP_HINSTANCE);
+    ok(retval == (LONG_PTR)GetModuleHandleA(NULL), "Unexpected instance %#lx.\n", retval);
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowWord(hwnd, GWLP_HINSTANCE);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = SetWindowWord(hwnd, GWLP_HINSTANCE, 0xdead);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
+
+    /* GWLP_HWNDPARENT */
+    retval = GetWindowLongPtrA(hwnd, GWLP_HWNDPARENT);
+    ok(!!retval, "Unexpected parent window %#x.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = GetWindowWord(hwnd, GWLP_HWNDPARENT);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected parent window %#x.\n", ret);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_SetWindowLong(void)
 {
     LONG_PTR retval;
@@ -6326,6 +6553,9 @@ static void test_SetWindowLong(void)
         /* set it back to ANSI */
         SetWindowLongPtrA(hwndMain, GWLP_WNDPROC, 0);
     }
+
+    test_set_window_long_size();
+    test_set_window_word_size();
 }
 
 static LRESULT WINAPI check_style_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
