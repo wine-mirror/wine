@@ -85,7 +85,7 @@
 @ stub CoDisableCallCancellation
 @ stub CoDisconnectContext
 @ stdcall CoDisconnectObject(ptr long) ole32.CoDisconnectObject
-@ stub CoEnableCallCancellation
+@ stdcall CoEnableCallCancellation(ptr) ole32.CoEnableCallCancellation
 @ stdcall CoFreeUnusedLibraries() ole32.CoFreeUnusedLibraries
 @ stdcall CoFreeUnusedLibrariesEx(long long) ole32.CoFreeUnusedLibrariesEx
 @ stdcall CoGetActivationState(int128 long ptr) ole32.CoGetActivationState
