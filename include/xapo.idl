@@ -118,7 +118,7 @@ interface IXAPO : IUnknown
     void UnlockForProcess(void);
 
     void Process(UINT32 in_params_count, const XAPO_PROCESS_BUFFER_PARAMETERS *in_params,
-        UINT32 out_params_count, const XAPO_PROCESS_BUFFER_PARAMETERS *out_params,
+        UINT32 out_params_count, XAPO_PROCESS_BUFFER_PARAMETERS *out_params,
         BOOL enabled);
 
     UINT32 CalcInputFrames(UINT32 output_frames);

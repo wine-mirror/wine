@@ -175,7 +175,7 @@ static void WINAPI XAPOFX_UnlockForProcess(IXAPO *iface)
 static void WINAPI XAPOFX_Process(IXAPO *iface, UINT32 in_params_count,
         const XAPO_PROCESS_BUFFER_PARAMETERS *in_params,
         UINT32 out_params_count,
-        const XAPO_PROCESS_BUFFER_PARAMETERS *out_params, BOOL enabled)
+        XAPO_PROCESS_BUFFER_PARAMETERS *out_params, BOOL enabled)
 {
     XA2XAPOFXImpl *This = impl_from_IXAPO(iface);
     TRACE("%p, %u, %p, %u, %p, %u\n", This, in_params_count, in_params,
