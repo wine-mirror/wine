@@ -58,6 +58,9 @@ extern const CLSID CLSID_VBScriptRegExp;
 #define SET_EXPECT(func) \
     expect_ ## func = TRUE
 
+#define REF_EXPECT(func) \
+    (&expect_ ## func), (&called_ ## func)
+
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
@@ -127,6 +130,7 @@ DEFINE_EXPECT(OnScriptError);
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
+#define DISPID_TESTOBJ_KEYWORD      2002
 
 #define DISPID_COLLOBJ_RESET        3000
 
@@ -161,6 +165,13 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     CHAR buf[512];
     WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
     return lstrcmpA(buf, stra);
+}
+
+static int stricmp_wa(LPCWSTR strw, const char *stra)
+{
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
+    return lstrcmpiA(buf, stra);
 }
 
 static const char *vt2a(VARIANT *v)
@@ -756,17 +767,80 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
 static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    if(!strcmp_wa(bstrName, "propget")) {
-        CHECK_EXPECT(testobj_propget_d);
-        test_grfdex(grfdex, fdexNameCaseInsensitive);
-        *pid = DISPID_TESTOBJ_PROPGET;
-        return S_OK;
-    }
-    if(!strcmp_wa(bstrName, "propput")) {
-        CHECK_EXPECT(testobj_propput_d);
-        test_grfdex(grfdex, fdexNameCaseInsensitive);
-        *pid = DISPID_TESTOBJ_PROPPUT;
-        return S_OK;
+    typedef struct {
+          const char * const name;
+          DISPID pid;
+          BOOL *expect;
+          BOOL *called;
+    } dispid_t;
+
+    dispid_t dispids[] = {
+       { "propget", DISPID_TESTOBJ_PROPGET, REF_EXPECT(testobj_propget_d) },
+       { "propput", DISPID_TESTOBJ_PROPPUT, REF_EXPECT(testobj_propput_d) },
+       { "rem", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "true", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "false", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "not", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "and", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "or", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "xor", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "eqv", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "imp", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "is", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "mod", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "call", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "dim", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "sub", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "function", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "get", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "let", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "const", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "if", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "else", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "elseif", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "end", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "then", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "exit", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "while", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "wend", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "do", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "loop", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "until", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "for", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "to", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "each", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "in", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "select", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "case", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "byref", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "byval", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "option", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "nothing", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "empty", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "null", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "class", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "set", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "new", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "public", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "private", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "next", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "on", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "resume", DISPID_TESTOBJ_KEYWORD, NULL },
+       { "goto", DISPID_TESTOBJ_KEYWORD, NULL },
+    };
+
+    for (int i = 0; i < ARRAY_SIZE(dispids); i++) {
+        if(!stricmp_wa(bstrName, dispids[i].name)) {
+            dispid_t *d = &dispids[i];
+            if(d->expect) {
+               ok(*d->expect, "unexpected call %s\n", d->name);
+               *d->called = TRUE;
+               *d->expect = FALSE;
+            }
+            test_grfdex(grfdex, fdexNameCaseInsensitive);
+            *pid = d->pid;
+            return S_OK;
+        }
     }
 
     ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
@@ -830,6 +904,11 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
 
         ok(V_VT(pdp->rgvarg) == VT_I2, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
         ok(V_I2(pdp->rgvarg) == 1, "V_I2(psp->rgvargs) = %d\n", V_I2(pdp->rgvarg));
+        return S_OK;
+
+    case DISPID_TESTOBJ_KEYWORD:
+        V_VT(pvarRes) = VT_I2;
+        V_I2(pvarRes) = 10;
         return S_OK;
     }
 

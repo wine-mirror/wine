@@ -102,20 +102,21 @@ static statement_t *link_statements(statement_t*,statement_t*);
     double dbl;
 }
 
-%token tEOF tNL tREM tEMPTYBRACKETS
-%token tTRUE tFALSE
-%token tNOT tAND tOR tXOR tEQV tIMP tNEQ
-%token tIS tLTEQ tGTEQ tMOD
-%token tCALL tDIM tSUB tFUNCTION tGET tLET tCONST
-%token tIF tELSE tELSEIF tEND tTHEN tEXIT
-%token tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tEACH tIN
-%token tSELECT tCASE
-%token tBYREF tBYVAL
-%token tOPTION
-%token tSTOP
-%token tNOTHING tEMPTY tNULL
-%token tCLASS tSET tNEW tPUBLIC tPRIVATE tME
-%token tNEXT tON tRESUME tGOTO
+%token tEOF tNL tEMPTYBRACKETS
+%token tLTEQ tGTEQ tNEQ
+%token tSTOP tME tREM
+%token <string> tTRUE tFALSE
+%token <string> tNOT tAND tOR tXOR tEQV tIMP
+%token <string> tIS tMOD
+%token <string> tCALL tDIM tSUB tFUNCTION tGET tLET tCONST
+%token <string> tIF tELSE tELSEIF tEND tTHEN tEXIT
+%token <string> tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tEACH tIN
+%token <string> tSELECT tCASE
+%token <string> tBYREF tBYVAL
+%token <string> tOPTION
+%token <string> tNOTHING tEMPTY tNULL
+%token <string> tCLASS tSET tNEW tPUBLIC tPRIVATE
+%token <string> tNEXT tON tRESUME tGOTO
 %token <string> tIdentifier tString
 %token <string> tDEFAULT tERROR tEXPLICIT tPROPERTY tSTEP
 %token <lng> tLong tShort
@@ -137,7 +138,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <dim_decl> DimDeclList DimDecl
 %type <dim_list> DimList
 %type <const_decl> ConstDecl ConstDeclList
-%type <string> Identifier
+%type <string> Identifier DotIdentifier
 %type <case_clausule> CaseClausules
 
 %%
@@ -209,7 +210,7 @@ SimpleStatement
 
 MemberExpression
     : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
-    | CallExpression '.' Identifier         { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
+    | CallExpression '.' DotIdentifier      { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
 
 DimDeclList
     : DimDecl                               { $$ = $1; }
@@ -450,6 +451,59 @@ Identifier
     | tEXPLICIT      { $$ = $1; }
     | tPROPERTY      { $$ = $1; }
     | tSTEP          { $$ = $1; }
+
+/* most keywords can be an identifier after a dot */
+DotIdentifier
+    : Identifier     { $$ = $1; }
+    | tTRUE          { $$ = $1; }
+    | tFALSE         { $$ = $1; }
+    | tNOT           { $$ = $1; }
+    | tAND           { $$ = $1; }
+    | tOR            { $$ = $1; }
+    | tXOR           { $$ = $1; }
+    | tEQV           { $$ = $1; }
+    | tIMP           { $$ = $1; }
+    | tIS            { $$ = $1; }
+    | tMOD           { $$ = $1; }
+    | tCALL          { $$ = $1; }
+    | tDIM           { $$ = $1; }
+    | tSUB           { $$ = $1; }
+    | tFUNCTION      { $$ = $1; }
+    | tGET           { $$ = $1; }
+    | tLET           { $$ = $1; }
+    | tCONST         { $$ = $1; }
+    | tIF            { $$ = $1; }
+    | tELSE          { $$ = $1; }
+    | tELSEIF        { $$ = $1; }
+    | tEND           { $$ = $1; }
+    | tTHEN          { $$ = $1; }
+    | tEXIT          { $$ = $1; }
+    | tWHILE         { $$ = $1; }
+    | tWEND          { $$ = $1; }
+    | tDO            { $$ = $1; }
+    | tLOOP          { $$ = $1; }
+    | tUNTIL         { $$ = $1; }
+    | tFOR           { $$ = $1; }
+    | tTO            { $$ = $1; }
+    | tEACH          { $$ = $1; }
+    | tIN            { $$ = $1; }
+    | tSELECT        { $$ = $1; }
+    | tCASE          { $$ = $1; }
+    | tBYREF         { $$ = $1; }
+    | tBYVAL         { $$ = $1; }
+    | tOPTION        { $$ = $1; }
+    | tNOTHING       { $$ = $1; }
+    | tEMPTY         { $$ = $1; }
+    | tNULL          { $$ = $1; }
+    | tCLASS         { $$ = $1; }
+    | tSET           { $$ = $1; }
+    | tNEW           { $$ = $1; }
+    | tPUBLIC        { $$ = $1; }
+    | tPRIVATE       { $$ = $1; }
+    | tNEXT          { $$ = $1; }
+    | tON            { $$ = $1; }
+    | tRESUME        { $$ = $1; }
+    | tGOTO          { $$ = $1; }
 
 /* Most statements accept both new line and ':' as separators */
 StSep
