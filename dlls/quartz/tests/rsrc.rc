@@ -20,8 +20,14 @@
 
 #include "windef.h"
 
+/* ffmpeg -f lavfi -i smptebars -t 1 -r 1 -f avi -vcodec rawvideo -pix_fmt yuv420p -vf scale=32x24 test.avi */
 /* @makedep: test.avi */
 test.avi RCDATA "test.avi"
 
+/* ffmpeg -f lavfi -i smptebars -f lavfi -i "sine=frequency=1000" -t 0.04 -r 25 -f mpeg -vcodec mpeg1video -vf scale=32x24 -acodec mp2 test.mpg */
 /* @makedep: test.mpg */
 test.mpg RCDATA "test.mpg"
+
+/* ffmpeg -f lavfi -i "sine=frequency=500" -t 0.5 -ar 48000 -b:a 32k -f mp3 -acodec mp3 test.mp3 */
+/* @makedep: test.mp3 */
+test.mp3 RCDATA "test.mp3"

@@ -41,6 +41,7 @@ typedef struct TestFilterImpl
 
 static const WCHAR avifile[] = {'t','e','s','t','.','a','v','i',0};
 static const WCHAR mpegfile[] = {'t','e','s','t','.','m','p','g',0};
+static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
 
 static WCHAR *load_resource(const WCHAR *name)
 {
@@ -530,57 +531,63 @@ todo_wine
     IMediaFilter_Release(filter);
 }
 
-static void rungraph(IFilterGraph2 *graph)
+static void rungraph(IFilterGraph2 *graph, BOOL video)
 {
-    test_basic_video(graph);
+    if (video)
+        test_basic_video(graph);
     test_media_seeking(graph);
     test_state_change(graph);
     test_media_event(graph);
 }
 
-static HRESULT test_graph_builder_connect_file(WCHAR *filename)
+static HRESULT test_graph_builder_connect_file(WCHAR *filename, BOOL audio, BOOL video)
 {
     static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
-    static const WCHAR inW[] = {'I','n',0};
-    IBaseFilter *source_filter, *video_filter;
+    IBaseFilter *source_filter, *renderer;
     IPin *pin_in, *pin_out;
     IFilterGraph2 *graph;
-    IVideoWindow *window;
+    IEnumPins *enumpins;
     HRESULT hr;
+
+    if (video)
+        hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IBaseFilter, (void **)&renderer);
+    else
+        hr = CoCreateInstance(&CLSID_AudioRender, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IBaseFilter, (void **)&renderer);
+    if (hr == VFW_E_NO_AUDIO_HARDWARE)
+        return VFW_E_CANNOT_CONNECT;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     graph = create_graph();
 
-    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IVideoWindow, (void **)&window);
-    ok(hr == S_OK, "Failed to create VideoRenderer: %#x\n", hr);
+    IBaseFilter_EnumPins(renderer, &enumpins);
+    IEnumPins_Next(enumpins, 1, &pin_in, NULL);
+    IEnumPins_Release(enumpins);
 
     hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &source_filter);
     ok(hr == S_OK, "AddSourceFilter failed: %#x\n", hr);
 
-    hr = IVideoWindow_QueryInterface(window, &IID_IBaseFilter, (void **)&video_filter);
-    ok(hr == S_OK, "QueryInterface(IBaseFilter) failed: %#x\n", hr);
-    hr = IFilterGraph2_AddFilter(graph, video_filter, NULL);
+    hr = IFilterGraph2_AddFilter(graph, renderer, NULL);
     ok(hr == S_OK, "AddFilter failed: %#x\n", hr);
 
     hr = IBaseFilter_FindPin(source_filter, outputW, &pin_out);
     ok(hr == S_OK, "FindPin failed: %#x\n", hr);
-    hr = IBaseFilter_FindPin(video_filter, inW, &pin_in);
-    ok(hr == S_OK, "FindPin failed: %#x\n", hr);
     hr = IFilterGraph2_Connect(graph, pin_out, pin_in);
 
     if (SUCCEEDED(hr))
-        rungraph(graph);
+        rungraph(graph, video);
 
     IPin_Release(pin_in);
     IPin_Release(pin_out);
     IBaseFilter_Release(source_filter);
-    IBaseFilter_Release(video_filter);
-    IVideoWindow_Release(window);
+    IBaseFilter_Release(renderer);
     IFilterGraph2_Release(graph);
 
     return hr;
 }
 
-static void test_render_run(const WCHAR *file)
+static void test_render_run(const WCHAR *file, BOOL audio, BOOL video)
 {
     IFilterGraph2 *graph;
     HANDLE h;
@@ -608,19 +615,25 @@ static void test_render_run(const WCHAR *file)
         refs = IFilterGraph2_Release(graph);
         ok(!refs, "Graph has %u references\n", refs);
 
-        hr = test_graph_builder_connect_file(filename);
+        hr = test_graph_builder_connect_file(filename, audio, video);
         ok(hr == VFW_E_CANNOT_CONNECT, "got %#x\n", hr);
     }
     else
     {
-        ok(hr == S_OK || hr == VFW_S_AUDIO_NOT_RENDERED, "RenderFile failed: %x\n", hr);
-        rungraph(graph);
+        if (audio)
+            ok(hr == S_OK || hr == VFW_S_AUDIO_NOT_RENDERED, "Got hr %#x.\n", hr);
+        else
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+        rungraph(graph, video);
 
         refs = IFilterGraph2_Release(graph);
         ok(!refs, "Graph has %u references\n", refs);
 
-        hr = test_graph_builder_connect_file(filename);
-        ok(hr == S_OK || hr == VFW_S_PARTIAL_RENDER, "got %#x\n", hr);
+        hr = test_graph_builder_connect_file(filename, audio, video);
+        if (audio && video)
+            todo_wine ok(hr == VFW_S_PARTIAL_RENDER, "Got hr %#x.\n", hr);
+        else
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
     }
 
     /* check reference leaks */
@@ -737,7 +750,7 @@ todo_wine
     ok(SUCCEEDED(hr), "RenderFile failed: %x\n", hr);
 
     if (SUCCEEDED(hr))
-        rungraph(graph);
+        rungraph(graph, TRUE);
 
     return 0;
 }
@@ -3199,8 +3212,9 @@ START_TEST(filtergraph)
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     test_interfaces();
-    test_render_run(avifile);
-    test_render_run(mpegfile);
+    test_render_run(avifile, FALSE, TRUE);
+    test_render_run(mpegfile, TRUE, TRUE);
+    test_render_run(mp3file, TRUE, FALSE);
     test_enum_filters();
     test_graph_builder_render();
     test_graph_builder_connect();
