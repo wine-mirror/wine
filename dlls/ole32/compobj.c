@@ -5198,6 +5198,16 @@ HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
 }
 
 /***********************************************************************
+ *           CoDisableCallCancellation [OLE32.@]
+ */
+HRESULT WINAPI CoDisableCallCancellation(void *reserved)
+{
+    FIXME("(%p): stub\n", reserved);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *           CoEnableCallCancellation [OLE32.@]
  */
 HRESULT WINAPI CoEnableCallCancellation(void *reserved)

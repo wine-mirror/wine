@@ -82,7 +82,7 @@
 @ stub CoDeactivateObject
 @ stub CoDecodeProxy
 @ stub CoDecrementMTAUsage
-@ stub CoDisableCallCancellation
+@ stdcall CoDisableCallCancellation(ptr) ole32.CoDisableCallCancellation
 @ stub CoDisconnectContext
 @ stdcall CoDisconnectObject(ptr long) ole32.CoDisconnectObject
 @ stdcall CoEnableCallCancellation(ptr) ole32.CoEnableCallCancellation
