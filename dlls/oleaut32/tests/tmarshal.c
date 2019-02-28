@@ -410,7 +410,8 @@ static inline struct disp_obj *impl_from_ISomethingFromDispatch(ISomethingFromDi
 static HRESULT WINAPI disp_obj_QueryInterface(ISomethingFromDispatch *iface, REFIID iid, void **out)
 {
     if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IDispatch)
-            || IsEqualGUID(iid, &IID_ISomethingFromDispatch))
+            || IsEqualGUID(iid, &IID_ISomethingFromDispatch)
+            || IsEqualGUID(iid, &DIID_ItestIF4))
     {
         *out = iface;
         ISomethingFromDispatch_AddRef(iface);
@@ -3592,6 +3593,37 @@ static void test_external_connection(void)
     IStream_Release(stream);
 }
 
+static void test_marshal_dispinterface(void)
+{
+    static const LARGE_INTEGER zero;
+
+    ISomethingFromDispatch *disp_obj = create_disp_obj();
+    ITypeInfo *typeinfo = NULL;
+    IDispatch *proxy_disp;
+    IStream *stream;
+    HANDLE thread;
+    HRESULT hr;
+    ULONG ref;
+    DWORD tid;
+
+    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    tid = start_host_object(stream, &DIID_ItestIF4, (IUnknown *)disp_obj, MSHLFLAGS_NORMAL, &thread);
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(stream, &DIID_ItestIF4, (void **)&proxy_disp);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDispatch_GetTypeInfo(proxy_disp, 0xdeadbeef, 0, &typeinfo);
+    ok(hr == 0xbeefdead, "Got hr %#x.\n", hr);
+
+    ref = IDispatch_Release(proxy_disp);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    end_host_object(tid, thread);
+    ref = ISomethingFromDispatch_Release(disp_obj);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(tmarshal)
 {
     HRESULT hr;
@@ -3613,6 +3645,7 @@ START_TEST(tmarshal)
     test_StaticWidget();
     test_libattr();
     test_external_connection();
+    test_marshal_dispinterface();
 
     hr = UnRegisterTypeLib(&LIBID_TestTypelib, 2, 5, LOCALE_NEUTRAL,
                            sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
