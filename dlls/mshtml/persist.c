@@ -30,6 +30,7 @@
 #include "shlguid.h"
 #include "idispids.h"
 #include "mimeole.h"
+#include "shellapi.h"
 
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
@@ -1187,8 +1188,19 @@ static HRESULT WINAPI HlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfHLNF, L
     if(pwzJumpLocation)
         FIXME("JumpLocation not supported\n");
 
-    if(!This->doc_obj->client)
-        return navigate_new_window(This->window, This->window->uri, NULL, NULL, NULL);
+    if(!This->doc_obj->client) {
+        static const WCHAR szOpen[] = {'o','p','e','n',0};
+        HRESULT hres;
+        BSTR uri;
+
+        hres = IUri_GetAbsoluteUri(This->window->uri, &uri);
+        if (FAILED(hres))
+            return hres;
+
+        ShellExecuteW(NULL, szOpen, uri, NULL, NULL, SW_SHOW);
+        SysFreeString(uri);
+        return S_OK;
+    }
 
     return IOleObject_DoVerb(&This->IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
 }
