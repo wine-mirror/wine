@@ -434,7 +434,7 @@ HRESULT FileProtocol_Construct(IUnknown *outer, LPVOID *ppobj)
     ret->file = INVALID_HANDLE_VALUE;
     ret->priority = 0;
     ret->ref = 1;
-    ret->outer = outer ? outer : (IUnknown*)&ret->IUnknown_outer;
+    ret->outer = outer ? outer : &ret->IUnknown_outer;
 
     *ppobj = &ret->IUnknown_outer;
     return S_OK;
