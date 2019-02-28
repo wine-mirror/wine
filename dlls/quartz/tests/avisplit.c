@@ -120,7 +120,10 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static void test_interfaces(void)
 {
+    const WCHAR *filename = load_resource(avifile);
     IBaseFilter *filter = create_avi_splitter();
+    IFilterGraph2 *graph = connect_input(filter, filename);
+    IPin *pin;
 
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
@@ -140,7 +143,33 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
+    IBaseFilter_FindPin(filter, sink_name, &pin);
+
+    check_interface(pin, &IID_IPin, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMemInputPin, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, source0_name, &pin);
+
+    todo_wine check_interface(pin, &IID_IMediaPosition, TRUE);
+    check_interface(pin, &IID_IMediaSeeking, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+
+    IPin_Release(pin);
+
     IBaseFilter_Release(filter);
+    IFilterGraph2_Release(graph);
+    DeleteFileW(filename);
 }
 
 static void test_enum_pins(void)
