@@ -1031,7 +1031,7 @@ static HRESULT WINAPI PSFactoryBuffer_CreateStub(
 {
     CHECK_EXPECT(CreateStub);
 
-    ok(pUnkServer == (IUnknown*)&Test_Unknown, "unexpected pUnkServer %p\n", pUnkServer);
+    ok(pUnkServer == &Test_Unknown, "unexpected pUnkServer %p\n", pUnkServer);
     if(!ps_factory_buffer)
         return E_NOTIMPL;
 
@@ -3753,10 +3753,10 @@ static DWORD CALLBACK implicit_mta_proc(void *param)
     hr = CoRegisterMessageFilter(NULL, NULL);
     ok(hr == CO_E_NOT_SUPPORTED, "got %#x\n", hr);
 
-    hr = CoLockObjectExternal((IUnknown *)&Test_Unknown, TRUE, TRUE);
+    hr = CoLockObjectExternal(&Test_Unknown, TRUE, TRUE);
     ok_ole_success(hr, "CoLockObjectExternal");
 
-    hr = CoDisconnectObject((IUnknown *)&Test_Unknown, 0);
+    hr = CoDisconnectObject(&Test_Unknown, 0);
     ok_ole_success(hr, "CoDisconnectObject");
 
     return 0;

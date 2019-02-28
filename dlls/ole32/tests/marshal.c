@@ -329,7 +329,7 @@ static HRESULT WINAPI Test_IClassFactory_CreateInstance(
     LPVOID *ppvObj)
 {
     if (pUnkOuter) return CLASS_E_NOAGGREGATION;
-    return IUnknown_QueryInterface((IUnknown*)&Test_Unknown, riid, ppvObj);
+    return IUnknown_QueryInterface(&Test_Unknown, riid, ppvObj);
 }
 
 static HRESULT WINAPI Test_IClassFactory_LockServer(
