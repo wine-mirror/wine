@@ -16284,10 +16284,8 @@ msgid "Text documents (*.txt)"
 msgstr "Tekstitiedostot (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
-msgstr "Unicode-tekstitiedosto (*.txt)"
+msgstr "Unicode-tekstitiedostot (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"
