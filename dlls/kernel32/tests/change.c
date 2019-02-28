@@ -118,10 +118,12 @@ static void test_FindFirstChangeNotification(void)
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FindCloseChangeNotification error: %d\n",
        GetLastError());
 
-    ret = GetTempPathA(MAX_PATH, workdir);
+    ret = GetTempPathA(MAX_PATH, dirname1);
     ok(ret, "GetTempPathA error: %d\n", GetLastError());
 
-    lstrcatA(workdir, "testFileChangeNotification");
+    ret = GetTempFileNameA(dirname1, "ffc", 0, workdir);
+    ok(ret, "GetTempFileNameA error: %d\n", GetLastError());
+    DeleteFileA( workdir );
 
     ret = CreateDirectoryA(workdir, NULL);
     ok(ret, "CreateDirectoryA error: %d\n", GetLastError());
@@ -370,14 +372,14 @@ static void test_ffcnMultipleThreads(void)
     LONG r;
     DWORD filter, threadId, status, exitcode;
     HANDLE handles[2];
-    char path[MAX_PATH];
+    char tmp[MAX_PATH], path[MAX_PATH];
 
-    r = GetTempPathA(MAX_PATH, path);
+    r = GetTempPathA(MAX_PATH, tmp);
     ok(r, "GetTempPathA error: %d\n", GetLastError());
 
-    lstrcatA(path, "ffcnTestMultipleThreads");
-
-    RemoveDirectoryA(path);
+    r = GetTempFileNameA(tmp, "ffc", 0, path);
+    ok(r, "GetTempFileNameA error: %d\n", GetLastError());
+    DeleteFileA( path );
 
     r = CreateDirectoryA(path, NULL);
     ok(r, "CreateDirectoryA error: %d\n", GetLastError());
