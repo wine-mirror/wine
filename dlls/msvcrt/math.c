@@ -3433,4 +3433,35 @@ double CDECL MSVCR120_creal(_Dcomplex z)
     return z.x;
 }
 
+int CDECL MSVCR120_ilogb(double x)
+{
+    if (!x) return MSVCRT_FP_ILOGB0;
+    if (isnan(x)) return MSVCRT_FP_ILOGBNAN;
+    if (isinf(x)) return MSVCRT_INT_MAX;
+
+#ifdef HAVE_ILOGB
+    return ilogb(x);
+#else
+    return logb(x);
+#endif
+}
+
+int CDECL MSVCR120_ilogbf(float x)
+{
+    if (!x) return MSVCRT_FP_ILOGB0;
+    if (isnan(x)) return MSVCRT_FP_ILOGBNAN;
+    if (isinf(x)) return MSVCRT_INT_MAX;
+
+#ifdef HAVE_ILOGBF
+    return ilogbf(x);
+#else
+    return logbf(x);
+#endif
+}
+
+int CDECL MSVCR120_ilogbl(LDOUBLE x)
+{
+    return MSVCR120_ilogb(x);
+}
+
 #endif /* _MSVCR_VER>=120 */

@@ -2207,9 +2207,9 @@
 @ cdecl gets_s(ptr long) MSVCRT_gets_s
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar
-@ stub ilogb
-@ stub ilogbf
-@ stub ilogbl
+@ cdecl ilogb(double) MSVCR120_ilogb
+@ cdecl ilogbf(float) MSVCR120_ilogbf
+@ cdecl ilogbl(double) MSVCR120_ilogbl
 @ stub imaxabs
 @ stub imaxdiv
 @ cdecl is_wctype(long long) ntdll.iswctype
