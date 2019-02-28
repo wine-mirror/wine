@@ -949,6 +949,20 @@ int __cdecl __uncaught_exceptions(void)
 {
     return *UCRTBASE___processing_throw();
 }
+
+typedef struct
+{
+    EXCEPTION_RECORD *rec;
+    int *ref; /* not binary compatible with native */
+} exception_ptr;
+
+void __cdecl __ExceptionPtrCreate(exception_ptr *ep)
+{
+    TRACE("(%p)\n", ep);
+
+    ep->rec = NULL;
+    ep->ref = NULL;
+}
 #endif
 
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
