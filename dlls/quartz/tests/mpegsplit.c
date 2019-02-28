@@ -1,5 +1,5 @@
 /*
- * Unit tests for the MPEG-1 stream splitter functions
+ * MPEG-1 splitter filter unit tests
  *
  * Copyright 2015 Anton Baskanov
  *
@@ -19,40 +19,64 @@
  */
 
 #define COBJMACROS
-
-#include "wine/test.h"
 #include "dshow.h"
+#include "wine/test.h"
 
-static IUnknown *create_mpeg_splitter(void)
+static IBaseFilter *create_mpeg_splitter(void)
 {
-    IUnknown *mpeg_splitter = NULL;
-    HRESULT result = CoCreateInstance(&CLSID_MPEG1Splitter, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void **)&mpeg_splitter);
-    ok(S_OK == result, "got 0x%08x\n", result);
-    return mpeg_splitter;
+    IBaseFilter *filter = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_MPEG1Splitter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return filter;
 }
 
-static void test_query_interface(void)
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
 {
-    IUnknown *mpeg_splitter = create_mpeg_splitter();
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
 
-    IAMStreamSelect *stream_select = NULL;
-    HRESULT result = IUnknown_QueryInterface(
-            mpeg_splitter, &IID_IAMStreamSelect, (void **)&stream_select);
-    ok(S_OK == result, "got 0x%08x\n", result);
-    if (S_OK == result)
-    {
-        IAMStreamSelect_Release(stream_select);
-    }
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
 
-    IUnknown_Release(mpeg_splitter);
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IBaseFilter *filter = create_mpeg_splitter();
+
+    check_interface(filter, &IID_IAMStreamSelect, TRUE);
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+
+    check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IBasicAudio, FALSE);
+    check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IKsPropertySet, FALSE);
+    check_interface(filter, &IID_IMediaPosition, FALSE);
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+    check_interface(filter, &IID_IPersistPropertyBag, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IQualityControl, FALSE);
+    check_interface(filter, &IID_IQualProp, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    IBaseFilter_Release(filter);
 }
 
 START_TEST(mpegsplit)
 {
     CoInitialize(NULL);
 
-    test_query_interface();
+    test_interfaces();
 
     CoUninitialize();
 }
