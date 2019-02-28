@@ -6301,7 +6301,6 @@ static void test_set_window_long_size(void)
     /* GWLP_WNDPROC */
     SetLastError(0xdeadbeef);
     wnd_proc = (WNDPROC)(LONG_PTR)GetWindowLongA(hwnd, GWLP_WNDPROC);
-todo_wine
     ok(!wnd_proc && GetLastError() == ERROR_INVALID_INDEX, "Unexpected window proc.\n");
 
     wnd_proc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC);
@@ -6382,12 +6381,10 @@ todo_wine
 
     SetLastError(0xdeadbeef);
     ret = GetWindowLongA(hwnd, GWLP_HINSTANCE);
-todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = GetWindowLongW(hwnd, GWLP_HINSTANCE);
-todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected instance %#x.\n", ret);
 
     SetLastError(0xdeadbeef);
@@ -6406,7 +6403,6 @@ todo_wine
     /* GWLP_HWNDPARENT */
     SetLastError(0xdeadbeef);
     ret = GetWindowLongA(hwnd, GWLP_HWNDPARENT);
-todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_INDEX, "Unexpected parent window %#x.\n", ret);
 
     SetLastError(0xdeadbeef);
