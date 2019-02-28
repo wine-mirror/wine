@@ -828,8 +828,9 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
        { "resume", DISPID_TESTOBJ_KEYWORD, NULL },
        { "goto", DISPID_TESTOBJ_KEYWORD, NULL },
     };
+    int i;
 
-    for (int i = 0; i < ARRAY_SIZE(dispids); i++) {
+    for (i = 0; i < ARRAY_SIZE(dispids); i++) {
         if(!stricmp_wa(bstrName, dispids[i].name)) {
             dispid_t *d = &dispids[i];
             if(d->expect) {
