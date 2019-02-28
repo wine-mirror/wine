@@ -2334,6 +2334,10 @@ static void run_tests(void)
     parse_script_a("Option Explicit\nset test.setobj = testObj");
     CHECK_CALLED(global_setobj_i);
 
+    hres = parse_script_ar("dim x\nx = testObj.rem");
+    todo_wine
+    ok(hres == S_OK, "use of 'rem' as dot identifier failed: %x08\n", hres);
+
     SET_EXPECT(testobj_propget_d);
     SET_EXPECT(testobj_propget_i);
     parse_script_a("dim x\nx = testObj.propget");
