@@ -1444,15 +1444,19 @@ static HRESULT interp_new_obj(script_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.1.5 */
 static HRESULT interp_obj_prop(script_ctx_t *ctx)
 {
-    const BSTR name = get_op_bstr(ctx, 0);
+    jsstr_t *name_arg = get_op_str(ctx, 0);
     unsigned type = get_op_uint(ctx, 1);
+    const WCHAR *name;
     jsdisp_t *obj;
     jsval_t val;
     HRESULT hres;
 
-    TRACE("%s\n", debugstr_w(name));
+    TRACE("%s\n", debugstr_jsstr(name_arg));
 
     val = stack_pop(ctx);
+
+    /* FIXME: we should pass it as jsstr_t */
+    name = jsstr_flatten(name_arg);
 
     assert(is_object_instance(stack_top(ctx)));
     obj = as_jsdisp(get_object(stack_top(ctx)));

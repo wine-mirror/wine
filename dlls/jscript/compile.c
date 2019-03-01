@@ -262,6 +262,19 @@ static HRESULT push_instr_str(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
     return S_OK;
 }
 
+static HRESULT push_instr_str_uint(compiler_ctx_t *ctx, jsop_t op, jsstr_t *str, unsigned arg2)
+{
+    unsigned instr;
+
+    instr = push_instr(ctx, op);
+    if(!instr)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->u.arg[0].str = str;
+    instr_ptr(ctx, instr)->u.arg[1].uint = arg2;
+    return S_OK;
+}
+
 static HRESULT push_instr_bstr(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
 {
     unsigned instr;
@@ -833,26 +846,14 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
     return E_FAIL;
 }
 
-static HRESULT literal_as_bstr(compiler_ctx_t *ctx, literal_t *literal, BSTR *str)
+static HRESULT literal_as_string(compiler_ctx_t *ctx, literal_t *literal, jsstr_t **str)
 {
     switch(literal->type) {
     case LT_STRING:
-        *str = compiler_alloc_bstr(ctx, literal->u.wstr);
+        *str = compiler_alloc_string(ctx, literal->u.wstr);
         break;
-    case LT_DOUBLE: {
-        jsstr_t *jsstr;
-        HRESULT hres;
-
-        hres = double_to_string(literal->u.dval, &jsstr);
-        if(FAILED(hres))
-            return hres;
-
-        *str = compiler_alloc_bstr_len(ctx, NULL, jsstr_length(jsstr));
-        if(*str)
-            jsstr_flush(jsstr, *str);
-        jsstr_release(jsstr);
-        break;
-    }
+    case LT_DOUBLE:
+        return double_to_string(literal->u.dval, str);
     DEFAULT_UNREACHABLE;
     }
 
@@ -889,14 +890,14 @@ static HRESULT compile_array_literal(compiler_ctx_t *ctx, array_literal_expressi
 static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expression_t *expr)
 {
     property_definition_t *iter;
-    BSTR name;
+    jsstr_t *name;
     HRESULT hres;
 
     if(!push_instr(ctx, OP_new_obj))
         return E_OUTOFMEMORY;
 
     for(iter = expr->property_list; iter; iter = iter->next) {
-        hres = literal_as_bstr(ctx, iter->name, &name);
+        hres = literal_as_string(ctx, iter->name, &name);
         if(FAILED(hres))
             return hres;
 
@@ -904,7 +905,7 @@ static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expres
         if(FAILED(hres))
             return hres;
 
-        hres = push_instr_bstr_uint(ctx, OP_obj_prop, name, iter->type);
+        hres = push_instr_str_uint(ctx, OP_obj_prop, name, iter->type);
         if(FAILED(hres))
             return hres;
     }
