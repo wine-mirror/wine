@@ -667,8 +667,8 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PUT_SHORT(buffer, 0, 0x8000);
       PUT_SHORT(buffer, 2, 0xffff);
       PUT_SHORT(buffer, 4, 0x000a);
-      buffer[6] = 'P', buffer[7] = 'M';
-      buffer[8] = 'C', buffer[9] = 'C';
+      buffer[6] = 'P'; buffer[7] = 'M';
+      buffer[8] = 'C'; buffer[9] = 'C';
       if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 10))
 	      return FALSE;
 
