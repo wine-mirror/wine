@@ -114,6 +114,9 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
     HMODULE d3d11;
     HRESULT hr;
 
+    if (is_external_d3d11_available())
+        return create_external_d3d11_device(factory, adapter, flags, feature_levels, levels, device);
+
     TRACE("factory %p, adapter %p, flags %#x, feature_levels %p, levels %u, device %p.\n",
             factory, adapter, flags, feature_levels, levels, device);
 

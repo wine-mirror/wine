@@ -1,12 +1,14 @@
 MODULE    = d3d11.dll
 IMPORTLIB = d3d11
-IMPORTS   = dxguid uuid dxgi wined3d
+IMPORTS   = advapi32 user32 gdi32 dxguid uuid dxgi wined3d
+EXTRAINCL = $(DXVK_CFLAGS)
 
 C_SRCS = \
 	async.c \
 	buffer.c \
 	d3d11_main.c \
 	device.c \
+	external.c \
 	inputlayout.c \
 	shader.c \
 	state.c \

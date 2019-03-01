@@ -579,4 +579,11 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
         unsigned int flags, const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count, void **device);
 HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, UINT layer_count);
 
+/* external d3d library support */
+
+int is_external_d3d11_available(void);
+
+HRESULT create_external_d3d11_device(IDXGIFactory* factory, IDXGIAdapter *adapter, UINT flags,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, ID3D11Device **device_out);
+
 #endif /* __WINE_D3D11_PRIVATE_H */
