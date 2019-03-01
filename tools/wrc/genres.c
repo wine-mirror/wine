@@ -1465,7 +1465,7 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 	put_word(res, 0);
 	if(win32)
 		put_word(res, 0);	/* level ? */
-	put_string(res, blk->name, win32 ? str_unicode : str_char, TRUE, lang);
+	put_string(res, blk->name, win32 ? str_unicode : str_char, TRUE, NULL);
 	put_pad(res);
 	for(val = blk->values; val; val = val->next)
 	{
@@ -1479,7 +1479,7 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 			{
 				put_word(res, level);
 			}
-			put_string(res, val->key, win32 ? str_unicode : str_char, TRUE, lang);
+			put_string(res, val->key, win32 ? str_unicode : str_char, TRUE, NULL);
 			put_pad(res);
 			tag = res->size;
 			put_string(res, val->value.str, win32 ? str_unicode : str_char, TRUE, lang);
@@ -1500,7 +1500,7 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 			{
 				put_word(res, level);
 			}
-			put_string(res, val->key, win32 ? str_unicode : str_char, TRUE, lang);
+			put_string(res, val->key, win32 ? str_unicode : str_char, TRUE, NULL);
 			put_pad(res);
 			tag = res->size;
 			for(i = 0; i < val->value.words->nwords; i++)
@@ -1562,8 +1562,7 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 	put_word(res, 0);	/* ValueSize filled in later*/
 	if(win32)
 		put_word(res, 0);	/* Tree-level ? */
-	put_string(res, &vsvi, win32 ? str_unicode : str_char,
-                   TRUE, win32 ? ver->lvc.language : NULL);
+	put_string(res, &vsvi, win32 ? str_unicode : str_char, TRUE, NULL);
 	if(win32)
 		put_pad(res);
 	tag = res->size;
