@@ -117,7 +117,10 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static void test_interfaces(void)
 {
+    const WCHAR *filename = load_resource(mp3file);
     IBaseFilter *filter = create_mpeg_splitter();
+    IFilterGraph2 *graph = connect_input(filter, filename);
+    IPin *pin;
 
     check_interface(filter, &IID_IAMStreamSelect, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
@@ -138,7 +141,35 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
+    IBaseFilter_FindPin(filter, inputW, &pin);
+
+    todo_wine check_interface(pin, &IID_IMemInputPin, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, audioW, &pin);
+
+    check_interface(pin, &IID_IMediaSeeking, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+
+    IPin_Release(pin);
+
     IBaseFilter_Release(filter);
+    IFilterGraph2_Release(graph);
+    DeleteFileW(filename);
 }
 
 static void test_enum_pins(void)
