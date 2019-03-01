@@ -254,29 +254,6 @@ static HRESULT lock_user_queue(DWORD queue)
     return hr;
 }
 
-static HRESULT unlock_user_queue(DWORD queue)
-{
-    HRESULT hr = MF_E_INVALID_WORKQUEUE;
-    struct queue_handle *entry;
-
-    if (!(queue & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK))
-        return S_OK;
-
-    EnterCriticalSection(&queues_section);
-    entry = get_queue_obj(queue);
-    if (entry && entry->refcount)
-    {
-        if (--entry->refcount == 0)
-        {
-            entry->obj = next_free_user_queue;
-            next_free_user_queue = entry;
-        }
-        hr = S_OK;
-    }
-    LeaveCriticalSection(&queues_section);
-    return hr;
-}
-
 static void shutdown_queue(struct queue *queue)
 {
     struct work_item *item, *item2;
@@ -297,6 +274,31 @@ static void shutdown_queue(struct queue *queue)
     LeaveCriticalSection(&queue->cs);
 
     DeleteCriticalSection(&queue->cs);
+}
+
+static HRESULT unlock_user_queue(DWORD queue)
+{
+    HRESULT hr = MF_E_INVALID_WORKQUEUE;
+    struct queue_handle *entry;
+
+    if (!(queue & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK))
+        return S_OK;
+
+    EnterCriticalSection(&queues_section);
+    entry = get_queue_obj(queue);
+    if (entry && entry->refcount)
+    {
+        if (--entry->refcount == 0)
+        {
+            shutdown_queue((struct queue *)entry->obj);
+            heap_free(entry->obj);
+            entry->obj = next_free_user_queue;
+            next_free_user_queue = entry;
+        }
+        hr = S_OK;
+    }
+    LeaveCriticalSection(&queues_section);
+    return hr;
 }
 
 void shutdown_system_queues(void)
