@@ -417,6 +417,7 @@ static const IBaseFilterVtbl WAVEParser_Vtbl =
 
 HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
+    static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     HRESULT hr;
     WAVEParserImpl * This;
 
@@ -430,7 +431,10 @@ HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
     /* Note: This memory is managed by the transform filter once created */
     This = CoTaskMemAlloc(sizeof(WAVEParserImpl));
 
-    hr = Parser_Create(&(This->Parser), &WAVEParser_Vtbl, &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, WAVEParser_disconnect, WAVEParser_first_request, NULL, NULL, WAVEParserImpl_seek, NULL);
+    hr = Parser_Create(&This->Parser, &WAVEParser_Vtbl, &CLSID_WAVEParser,
+            sink_name, WAVEParser_Sample, WAVEParser_QueryAccept,
+            WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, WAVEParser_disconnect,
+            WAVEParser_first_request, NULL, NULL, WAVEParserImpl_seek, NULL);
 
     if (FAILED(hr))
         return hr;

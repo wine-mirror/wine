@@ -1429,6 +1429,7 @@ static const IBaseFilterVtbl AVISplitterImpl_Vtbl =
 
 HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
+    static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     HRESULT hr;
     AVISplitterImpl * This;
 
@@ -1445,7 +1446,11 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->streams = NULL;
     This->oldindex = NULL;
 
-    hr = Parser_Create(&(This->Parser), &AVISplitterImpl_Vtbl, &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Flush, AVISplitter_Disconnect, AVISplitter_first_request, AVISplitter_done_process, NULL, AVISplitter_seek, NULL);
+    hr = Parser_Create(&This->Parser, &AVISplitterImpl_Vtbl, &CLSID_AviSplitter,
+            sink_name, AVISplitter_Sample, AVISplitter_QueryAccept,
+            AVISplitter_InputPin_PreConnect, AVISplitter_Flush,
+            AVISplitter_Disconnect, AVISplitter_first_request,
+            AVISplitter_done_process, NULL, AVISplitter_seek, NULL);
 
     if (FAILED(hr))
         return hr;

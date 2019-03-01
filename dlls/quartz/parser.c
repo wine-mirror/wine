@@ -35,7 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl Parser_Seeking_Vtbl;
 static const IPinVtbl Parser_OutputPin_Vtbl;
 static const IPinVtbl Parser_InputPin_Vtbl;
@@ -93,7 +92,12 @@ static const BaseFilterFuncTable BaseFuncTable = {
     Parser_GetPinCount
 };
 
-HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, REQUESTPROC fnRequest, STOPPROCESSPROC fnDone, SourceSeeking_ChangeStop stop, SourceSeeking_ChangeStart start, SourceSeeking_ChangeRate rate)
+HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *Parser_Vtbl,
+        const CLSID* pClsid, const WCHAR *sink_name, PFN_PROCESS_SAMPLE fnProcessSample,
+        PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect,
+        PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, REQUESTPROC fnRequest,
+        STOPPROCESSPROC fnDone, SourceSeeking_ChangeStop stop,
+        SourceSeeking_ChangeStart start, SourceSeeking_ChangeRate rate)
 {
     HRESULT hr;
     PIN_INFO piInput;
@@ -109,7 +113,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = &pParser->filter.IBaseFilter_iface;
-    lstrcpynW(piInput.achName, wcsInputPinName, ARRAY_SIZE(piInput.achName));
+    lstrcpynW(piInput.achName, sink_name, ARRAY_SIZE(piInput.achName));
 
     if (!start)
         start = Parser_ChangeStart;
