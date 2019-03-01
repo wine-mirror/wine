@@ -25,6 +25,7 @@
 static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
 
 static const WCHAR inputW[] = {'I','n','p','u','t',0};
+static const WCHAR audioW[] = {'A','u','d','i','o',0};
 
 static IBaseFilter *create_mpeg_splitter(void)
 {
@@ -269,12 +270,66 @@ todo_wine
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_find_pin(void)
+{
+    static const WCHAR input_pinW[] = {'i','n','p','u','t',' ','p','i','n',0};
+    const WCHAR *filename = load_resource(mp3file);
+    IBaseFilter *filter = create_mpeg_splitter();
+    IFilterGraph2 *graph;
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+
+    hr = IBaseFilter_FindPin(filter, input_pinW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, inputW, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, audioW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    graph = connect_input(filter, filename);
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, inputW, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, audioW, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    IEnumPins_Release(enum_pins);
+    IFilterGraph2_Release(graph);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(mpegsplit)
 {
     CoInitialize(NULL);
 
     test_interfaces();
     test_enum_pins();
+    test_find_pin();
 
     CoUninitialize();
 }
