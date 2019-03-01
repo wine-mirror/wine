@@ -149,6 +149,7 @@ HRESULT dxgi_output_create(struct dxgi_adapter *adapter, struct dxgi_output **ou
 struct dxgi_adapter
 {
     IWineDXGIAdapter IWineDXGIAdapter_iface;
+    IWineDXGISwapChainHelper IWineDXGISwapChainHelper_iface;
     LONG refcount;
     struct wined3d_private_store private_store;
     UINT ordinal;

@@ -85,3 +85,55 @@ interface IWineDXGIAdapter : IDXGIAdapter4
 interface IWineDXGIFactory : IDXGIFactory5
 {
 }
+
+[
+    object,
+    local,
+    uuid(d922ca90-6152-41f9-8b44-47adaac22b40)
+]
+interface IWineDXGISwapChainHelper : IUnknown
+{
+    HRESULT get_monitor(
+        [in] HWND window,
+        [out] HMONITOR *monitor
+    );
+
+    HRESULT get_window_info(
+        [in] HWND window,
+        [out] RECT *rect,
+        [out] RECT *client_rect,
+        [out] LONG *style,
+        [out] LONG *exstyle
+    );
+
+    /* Clone of SetWindowPos */
+    HRESULT set_window_pos(
+        [in] HWND window,
+        [in] HWND hwnd_insert_after,
+        [in] RECT position,
+        [in] UINT flags
+    );
+
+    HRESULT resize_window(
+        [in] HWND window,
+        [in] UINT width,
+        [in] UINT height
+    );
+
+    HRESULT set_window_styles(
+        [in] HWND window,
+        [in] const LONG *style,
+        [in] const LONG *exstyle
+    );
+
+    HRESULT get_display_mode(
+        [in] HMONITOR monitor,
+        [in] DWORD mode_num,
+        [out] DXGI_MODE_DESC *mode
+    );
+
+    HRESULT set_display_mode(
+        [in] HMONITOR monitor,
+        [in] const DXGI_MODE_DESC *mode
+    );
+}

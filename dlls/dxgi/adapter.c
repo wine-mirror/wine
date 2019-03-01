@@ -31,6 +31,8 @@ static inline struct dxgi_adapter *impl_from_IWineDXGIAdapter(IWineDXGIAdapter *
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IWineDXGIAdapter *iface, REFIID iid, void **out)
 {
+    struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IWineDXGIAdapter)
@@ -44,6 +46,13 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IWineDXGIAdapter *i
     {
         IUnknown_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IWineDXGISwapChainHelper))
+    {
+        IUnknown_AddRef(iface);
+        *out = &adapter->IWineDXGISwapChainHelper_iface;
         return S_OK;
     }
 
@@ -392,6 +401,235 @@ static const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
     dxgi_adapter_GetDesc3,
 };
 
+static inline struct dxgi_adapter *impl_from_IWineDXGISwapChainHelper(IWineDXGISwapChainHelper *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_adapter, IWineDXGISwapChainHelper_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_QueryInterface(IWineDXGISwapChainHelper *iface,
+        REFIID iid, void **out)
+{
+    struct dxgi_adapter *adapter = impl_from_IWineDXGISwapChainHelper(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    return dxgi_adapter_QueryInterface(&adapter->IWineDXGIAdapter_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE dxgi_swapchain_helper_AddRef(IWineDXGISwapChainHelper *iface)
+{
+    struct dxgi_adapter *adapter = impl_from_IWineDXGISwapChainHelper(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return dxgi_adapter_AddRef(&adapter->IWineDXGIAdapter_iface);
+}
+
+static ULONG STDMETHODCALLTYPE dxgi_swapchain_helper_Release(IWineDXGISwapChainHelper *iface)
+{
+    struct dxgi_adapter *adapter = impl_from_IWineDXGISwapChainHelper(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return dxgi_adapter_Release(&adapter->IWineDXGIAdapter_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_get_monitor(IWineDXGISwapChainHelper *iface,
+        HWND window, HMONITOR *monitor)
+{
+    RECT window_rect = {0, 0, 0, 0};
+    POINT window_middle;
+
+    TRACE("iface %p, window %p, monitor %p.\n", iface, window, monitor);
+
+    if (!IsWindow(window) || !monitor)
+        return DXGI_ERROR_INVALID_CALL;
+
+    GetWindowRect(window, &window_rect);
+
+    window_middle.x = (window_rect.left + window_rect.right) / 2; 
+    window_middle.y = (window_rect.top + window_rect.bottom) / 2;
+
+    *monitor = MonitorFromPoint(window_middle, MONITOR_DEFAULTTOPRIMARY);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_get_window_info(IWineDXGISwapChainHelper *iface,
+        HWND window, RECT *rect, RECT *client_rect, LONG *style, LONG *exstyle)
+{
+    TRACE("iface %p, window %p, rect %p, style %p, exstyle %p.\n", iface, window, rect, style, exstyle);
+
+    if (!IsWindow(window))
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (rect)
+        GetWindowRect(window, rect);
+
+    if (client_rect)
+        GetClientRect(window, client_rect);
+
+    if (style)
+        *style = GetWindowLongW(window, GWL_STYLE);
+
+    if (exstyle)
+        *exstyle = GetWindowLongW(window, GWL_EXSTYLE);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_set_window_pos(IWineDXGISwapChainHelper *iface,
+        HWND window, HWND hwnd_insert_after, RECT position, UINT flags)
+{
+    TRACE("iface %p, window %p, hwnd_insert_after %p, position (%d,%d)-(%d,%d), flags %08x.\n", 
+            iface, window, hwnd_insert_after, position.left, position.top, position.right, position.bottom, flags);
+
+    if (!IsWindow(window))
+        return DXGI_ERROR_INVALID_CALL;
+
+    SetWindowPos(window, hwnd_insert_after, position.left, position.top, position.right - position.left, 
+            position.bottom - position.top, flags);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_resize_window(IWineDXGISwapChainHelper *iface,
+        HWND window, UINT width, UINT height)
+{
+    RECT old_rect = {0, 0, 0, 0};
+    RECT new_rect = {0, 0, 0, 0};
+
+    TRACE("iface %p, window %p, width %u, height %u.\n", iface, window, width, height);
+
+    if (!IsWindow(window))
+        return DXGI_ERROR_INVALID_CALL;
+
+    GetWindowRect(window, &old_rect);
+    SetRect(&new_rect, 0, 0, width, height);
+    AdjustWindowRectEx( &new_rect, GetWindowLongW(window, GWL_STYLE), FALSE, GetWindowLongW(window, GWL_EXSTYLE) );
+    SetRect(&new_rect, 0, 0, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top);
+    OffsetRect(&new_rect, old_rect.left, old_rect.top);
+    MoveWindow(window, new_rect.left, new_rect.top, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, TRUE);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_set_window_styles(IWineDXGISwapChainHelper *iface,
+        HWND window, const LONG *style, const LONG *exstyle)
+{
+    TRACE("iface %p, window %p, style %p, exstyle %p.\n", iface, window, style, exstyle);
+
+    if (!IsWindow(window))
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (style)
+        SetWindowLongW(window, GWL_STYLE, *style);
+
+    if (exstyle)
+        SetWindowLongW(window, GWL_EXSTYLE, *exstyle);
+
+    return S_OK;
+}
+
+static unsigned int GetMonitorFormatBpp(DXGI_FORMAT format)
+{
+    switch (format) {
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        case DXGI_FORMAT_R10G10B10A2_UNORM:
+            return 32;
+
+        case DXGI_FORMAT_R16G16B16A16_FLOAT:
+            return 64;
+
+        default:
+            WARN("Unknown format: %s\n", debug_dxgi_format(format));
+            return 32;
+    }
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_get_display_mode(IWineDXGISwapChainHelper *iface,
+        HMONITOR monitor, DWORD mode_num, DXGI_MODE_DESC *mode)
+{
+    MONITORINFOEXW mon_info;
+    DEVMODEW dev_mode = {};
+    DXGI_RATIONAL rate;
+
+    TRACE("iface %p, monitor %p, mode_num %u, mode %p.\n", iface, monitor, mode_num, mode);
+
+    mon_info.cbSize = sizeof(mon_info);
+    if (!GetMonitorInfoW(monitor, (MONITORINFO*)&mon_info))
+    {
+        ERR("Failed to query monitor info\n");
+        return E_FAIL;
+    }
+
+    dev_mode.dmSize = sizeof(dev_mode);
+    if (!EnumDisplaySettingsW(mon_info.szDevice, mode_num, &dev_mode))
+        return DXGI_ERROR_NOT_FOUND;
+
+    mode->Width = dev_mode.dmPelsWidth;
+    mode->Height = dev_mode.dmPelsHeight;
+    rate.Numerator = dev_mode.dmDisplayFrequency;
+    rate.Denominator = 1;
+    mode->RefreshRate = rate;
+    mode->Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; /* FIXME */
+    mode->ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE;
+    mode->Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_set_display_mode(IWineDXGISwapChainHelper *iface,
+        HMONITOR monitor, const DXGI_MODE_DESC *mode)
+{
+    MONITORINFOEXW mon_info;
+    DEVMODEW dev_mode = {};
+    LONG status;
+
+    TRACE("iface %p, monitor %p, mode %p.\n", iface, monitor, mode);
+    
+    mon_info.cbSize = sizeof(mon_info);
+    if (!GetMonitorInfoW(monitor, (MONITORINFO*)&mon_info))
+    {
+        ERR("Failed to query monitor info\n");
+        return E_FAIL;
+    }
+
+    dev_mode.dmSize = sizeof(dev_mode);
+    dev_mode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL;
+    dev_mode.dmPelsWidth = mode->Width;
+    dev_mode.dmPelsHeight = mode->Height;
+    dev_mode.dmBitsPerPel = GetMonitorFormatBpp(mode->Format);
+
+    if (mode->RefreshRate.Numerator)
+    {
+        dev_mode.dmFields |= DM_DISPLAYFREQUENCY;
+        dev_mode.dmDisplayFrequency = mode->RefreshRate.Numerator / mode->RefreshRate.Denominator;
+    }
+
+    TRACE("Setting Display Mode: %u x %u @ %u\n", dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency);
+
+    status = ChangeDisplaySettingsExW(mon_info.szDevice, &dev_mode, NULL, CDS_FULLSCREEN, NULL);
+
+    return status == DISP_CHANGE_SUCCESSFUL ? S_OK : DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+}
+
+static const struct IWineDXGISwapChainHelperVtbl dxgi_swapchain_helper_vtbl =
+{
+    dxgi_swapchain_helper_QueryInterface,
+    dxgi_swapchain_helper_AddRef,
+    dxgi_swapchain_helper_Release,
+    dxgi_swapchain_helper_get_monitor,
+    dxgi_swapchain_helper_get_window_info,
+    dxgi_swapchain_helper_set_window_pos,
+    dxgi_swapchain_helper_resize_window,
+    dxgi_swapchain_helper_set_window_styles,
+    dxgi_swapchain_helper_get_display_mode,
+    dxgi_swapchain_helper_set_display_mode
+};
+
 struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter(IDXGIAdapter *iface)
 {
     IWineDXGIAdapter *wine_adapter;
@@ -414,6 +652,7 @@ struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter(IDXGIAdapter *iface)
 static void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *factory, UINT ordinal)
 {
     adapter->IWineDXGIAdapter_iface.lpVtbl = &dxgi_adapter_vtbl;
+    adapter->IWineDXGISwapChainHelper_iface.lpVtbl = &dxgi_swapchain_helper_vtbl;
     adapter->refcount = 1;
     wined3d_private_store_init(&adapter->private_store);
     adapter->ordinal = ordinal;
