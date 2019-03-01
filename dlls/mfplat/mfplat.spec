@@ -17,7 +17,7 @@
 @ stub LFGetGlobalPool
 @ stub MFAddPeriodicCallback
 @ stdcall MFAllocateWorkQueue(ptr)
-@ stub MFAllocateWorkQueueEx
+@ stdcall MFAllocateWorkQueueEx(long ptr)
 @ stub MFAppendCollection
 @ stub MFAverageTimePerFrameToFrameRate
 @ stub MFBeginCreateFile

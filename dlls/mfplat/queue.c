@@ -388,6 +388,16 @@ HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue)
 }
 
 /***********************************************************************
+ *      MFAllocateWorkQueueEx (mfplat.@)
+ */
+HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue)
+{
+    TRACE("%d, %p.\n", queue_type, queue);
+
+    return alloc_user_queue(queue_type, queue);
+}
+
+/***********************************************************************
  *      MFLockWorkQueue (mfplat.@)
  */
 HRESULT WINAPI MFLockWorkQueue(DWORD queue)
