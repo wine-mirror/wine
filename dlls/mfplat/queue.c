@@ -345,11 +345,9 @@ static const IMFAsyncResultVtbl async_result_vtbl =
     async_result_GetStateNoAddRef,
 };
 
-HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback, IUnknown *state, IMFAsyncResult **out)
+static HRESULT create_async_result(IUnknown *object, IMFAsyncCallback *callback, IUnknown *state, IMFAsyncResult **out)
 {
     struct async_result *result;
-
-    TRACE("%p, %p, %p, %p.\n", object, callback, state, out);
 
     if (!out)
         return E_INVALIDARG;
@@ -374,7 +372,19 @@ HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback,
 
     *out = &result->result.AsyncResult;
 
+    TRACE("Created async result object %p.\n", *out);
+
     return S_OK;
+}
+
+/***********************************************************************
+ *      MFCreateAsyncResult (mfplat.@)
+ */
+HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback, IUnknown *state, IMFAsyncResult **out)
+{
+    TRACE("%p, %p, %p, %p.\n", object, callback, state, out);
+
+    return create_async_result(object, callback, state, out);
 }
 
 /***********************************************************************
