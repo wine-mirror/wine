@@ -16341,6 +16341,7 @@ static void test_create_input_layout(void)
         DXGI_FORMAT_R32_SINT,
         DXGI_FORMAT_R16_UINT,
         DXGI_FORMAT_R16_SINT,
+        DXGI_FORMAT_R8G8_UNORM,
         DXGI_FORMAT_R8_UINT,
         DXGI_FORMAT_R8_SINT,
     };
@@ -16357,7 +16358,7 @@ static void test_create_input_layout(void)
         layout_desc->Format = vertex_formats[i];
         hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
                 vs_code, sizeof(vs_code), &input_layout);
-        ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n",
+        ok(hr == S_OK, "Failed to create input layout for format %#x, hr %#x.\n",
                 vertex_formats[i], hr);
         refcount = get_refcount(device);
         ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n",
