@@ -88,7 +88,15 @@ DEFINE_GUID(MFMediaType_Video,         0x73646976, 0x0000, 0x0010, 0x80, 0x00, 0
 
 typedef unsigned __int64 MFWORKITEM_KEY;
 
+typedef enum
+{
+    MF_STANDARD_WORKQUEUE,
+    MF_WINDOW_WORKQUEUE,
+    MF_MULTITHREADED_WORKQUEUE,
+} MFASYNC_WORKQUEUE_TYPE;
+
 HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
+HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
 HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines);
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);

@@ -26,6 +26,8 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 
+#include "mfplat_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 #define FIRST_USER_QUEUE_HANDLE 5
@@ -33,26 +35,31 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 struct queue
 {
+    TP_POOL *pool;
+};
+
+struct queue_handle
+{
     void *obj;
     LONG refcount;
     WORD generation;
 };
 
-static struct queue user_queues[MAX_USER_QUEUE_HANDLES];
-static struct queue *next_free_user_queue;
-static struct queue *next_unused_user_queue = user_queues;
+static struct queue_handle user_queues[MAX_USER_QUEUE_HANDLES];
+static struct queue_handle *next_free_user_queue;
+static struct queue_handle *next_unused_user_queue = user_queues;
 static WORD queue_generation;
 
-static CRITICAL_SECTION user_queues_section;
-static CRITICAL_SECTION_DEBUG user_queues_critsect_debug =
+static CRITICAL_SECTION queues_section;
+static CRITICAL_SECTION_DEBUG queues_critsect_debug =
 {
-    0, 0, &user_queues_section,
-    { &user_queues_critsect_debug.ProcessLocksList, &user_queues_critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": user_queues_section") }
+    0, 0, &queues_section,
+    { &queues_critsect_debug.ProcessLocksList, &queues_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": queues_section") }
 };
-static CRITICAL_SECTION user_queues_section = { &user_queues_critsect_debug, -1, 0, 0, 0, 0 };
+static CRITICAL_SECTION queues_section = { &queues_critsect_debug, -1, 0, 0, 0, 0 };
 
-static struct queue *get_queue_obj(DWORD handle)
+static struct queue_handle *get_queue_obj(DWORD handle)
 {
     unsigned int idx = HIWORD(handle) - FIRST_USER_QUEUE_HANDLE;
 
@@ -65,12 +72,79 @@ static struct queue *get_queue_obj(DWORD handle)
     return NULL;
 }
 
-static HRESULT alloc_user_queue(DWORD *queue)
+enum system_queue_index
 {
-    struct queue *entry;
+    SYS_QUEUE_STANDARD = 0,
+    SYS_QUEUE_RT,
+    SYS_QUEUE_IO,
+    SYS_QUEUE_TIMER,
+    SYS_QUEUE_MULTITHREADED,
+    SYS_QUEUE_DO_NOT_USE,
+    SYS_QUEUE_LONG_FUNCTION,
+    SYS_QUEUE_COUNT,
+};
+
+static struct queue system_queues[SYS_QUEUE_COUNT];
+
+static void init_work_queue(MFASYNC_WORKQUEUE_TYPE queue_type, struct queue *queue)
+{
+    queue->pool = CreateThreadpool(NULL);
+}
+
+void init_system_queues(void)
+{
+    /* Always initialize standard queue, keep the rest lazy. */
+
+    EnterCriticalSection(&queues_section);
+
+    if (system_queues[SYS_QUEUE_STANDARD].pool)
+    {
+        LeaveCriticalSection(&queues_section);
+        return;
+    }
+
+    init_work_queue(MF_STANDARD_WORKQUEUE, &system_queues[SYS_QUEUE_STANDARD]);
+
+    LeaveCriticalSection(&queues_section);
+}
+
+static void shutdown_queue(struct queue *queue)
+{
+    if (!queue->pool)
+        return;
+
+    CloseThreadpool(queue->pool);
+    queue->pool = NULL;
+}
+
+void shutdown_system_queues(void)
+{
+    unsigned int i;
+
+    EnterCriticalSection(&queues_section);
+
+    for (i = 0; i < ARRAY_SIZE(system_queues); ++i)
+    {
+        shutdown_queue(&system_queues[i]);
+    }
+
+    LeaveCriticalSection(&queues_section);
+}
+
+static HRESULT alloc_user_queue(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue_id)
+{
+    struct queue_handle *entry;
+    struct queue *queue;
     unsigned int idx;
 
-    EnterCriticalSection(&user_queues_section);
+    *queue_id = MFASYNC_CALLBACK_QUEUE_UNDEFINED;
+
+    queue = heap_alloc_zero(sizeof(*queue));
+    if (!queue)
+        return E_OUTOFMEMORY;
+    init_work_queue(queue_type, queue);
+
+    EnterCriticalSection(&queues_section);
 
     entry = next_free_user_queue;
     if (entry)
@@ -79,17 +153,18 @@ static HRESULT alloc_user_queue(DWORD *queue)
         entry = next_unused_user_queue++;
     else
     {
-        LeaveCriticalSection(&user_queues_section);
+        LeaveCriticalSection(&queues_section);
         return E_OUTOFMEMORY;
     }
 
     entry->refcount = 1;
-    entry->obj = NULL;
+    entry->obj = queue;
     if (++queue_generation == 0xffff) queue_generation = 1;
     entry->generation = queue_generation;
     idx = entry - user_queues + FIRST_USER_QUEUE_HANDLE;
-    *queue = (idx << 16) | entry->generation;
-    LeaveCriticalSection(&user_queues_section);
+    *queue_id = (idx << 16) | entry->generation;
+
+    LeaveCriticalSection(&queues_section);
 
     return S_OK;
 }
@@ -97,31 +172,31 @@ static HRESULT alloc_user_queue(DWORD *queue)
 static HRESULT lock_user_queue(DWORD queue)
 {
     HRESULT hr = MF_E_INVALID_WORKQUEUE;
-    struct queue *entry;
+    struct queue_handle *entry;
 
     if (!(queue & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK))
         return S_OK;
 
-    EnterCriticalSection(&user_queues_section);
+    EnterCriticalSection(&queues_section);
     entry = get_queue_obj(queue);
     if (entry && entry->refcount)
     {
         entry->refcount++;
         hr = S_OK;
     }
-    LeaveCriticalSection(&user_queues_section);
+    LeaveCriticalSection(&queues_section);
     return hr;
 }
 
 static HRESULT unlock_user_queue(DWORD queue)
 {
     HRESULT hr = MF_E_INVALID_WORKQUEUE;
-    struct queue *entry;
+    struct queue_handle *entry;
 
     if (!(queue & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK))
         return S_OK;
 
-    EnterCriticalSection(&user_queues_section);
+    EnterCriticalSection(&queues_section);
     entry = get_queue_obj(queue);
     if (entry && entry->refcount)
     {
@@ -132,7 +207,7 @@ static HRESULT unlock_user_queue(DWORD queue)
         }
         hr = S_OK;
     }
-    LeaveCriticalSection(&user_queues_section);
+    LeaveCriticalSection(&queues_section);
     return hr;
 }
 
@@ -309,7 +384,7 @@ HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue)
 {
     TRACE("%p.\n", queue);
 
-    return alloc_user_queue(queue);
+    return alloc_user_queue(MF_STANDARD_WORKQUEUE, queue);
 }
 
 /***********************************************************************

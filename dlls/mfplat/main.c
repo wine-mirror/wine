@@ -36,6 +36,8 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
+#include "mfplat_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 static LONG platform_lock;
@@ -465,10 +467,15 @@ HRESULT WINAPI MFStartup(ULONG version, DWORD flags)
 #define MF_VERSION_XP   MAKELONG( MF_API_VERSION, 1 )
 #define MF_VERSION_WIN7 MAKELONG( MF_API_VERSION, 2 )
 
-    FIXME("(%u, %u): stub\n", version, flags);
+    TRACE("%#x, %#x.\n", version, flags);
 
-    if(version != MF_VERSION_XP && version != MF_VERSION_WIN7)
+    if (version != MF_VERSION_XP && version != MF_VERSION_WIN7)
         return MF_E_BAD_STARTUP_VERSION;
+
+    if (InterlockedIncrement(&platform_lock) == 1)
+    {
+        init_system_queues();
+    }
 
     return S_OK;
 }
@@ -478,7 +485,15 @@ HRESULT WINAPI MFStartup(ULONG version, DWORD flags)
  */
 HRESULT WINAPI MFShutdown(void)
 {
-    FIXME("(): stub\n");
+    TRACE("\n");
+
+    if (platform_lock <= 0)
+        return S_OK;
+
+    if (InterlockedExchangeAdd(&platform_lock, -1) == 1)
+    {
+        shutdown_system_queues();
+    }
 
     return S_OK;
 }
@@ -498,7 +513,10 @@ HRESULT WINAPI MFLockPlatform(void)
  */
 HRESULT WINAPI MFUnlockPlatform(void)
 {
-    InterlockedDecrement(&platform_lock);
+    if (InterlockedDecrement(&platform_lock) == 0)
+    {
+        shutdown_system_queues();
+    }
 
     return S_OK;
 }
