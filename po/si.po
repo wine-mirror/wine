@@ -1,11 +1,12 @@
 # Sinhala translations for Wine
 #
+# Isira Seneviratne <isirasen96@gmail.com>, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-02-26 08:34+0530\n"
+"PO-Revision-Date: 2019-03-01 11:27+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
@@ -2902,7 +2903,7 @@ msgstr ""
 
 #: cryptui.rc:172
 msgid "Enter Password"
-msgstr ""
+msgstr "මුර පදය ඇතුල් කරන්න"
 
 #: cryptui.rc:173
 msgid "You may password-protect a private key."
@@ -3030,7 +3031,7 @@ msgstr ""
 
 #: gdi32.rc:40
 msgid "Hangul"
-msgstr ""
+msgstr "හැන්ගුල්"
 
 #: gdi32.rc:41
 msgid "CHINESE_BIG5"
@@ -3038,7 +3039,7 @@ msgstr ""
 
 #: gdi32.rc:42
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "හැන්ගුල්(ජෝහාබ්)"
 
 #: gdi32.rc:43
 msgid "Symbol"
@@ -3046,7 +3047,7 @@ msgstr ""
 
 #: gdi32.rc:44
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gdi32.rc:45 wldap32.rc:112
 msgid "Other"
@@ -3447,7 +3448,7 @@ msgstr "තොට:"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
-msgstr ""
+msgstr "අන්තර්ජාල සැකසුම්"
 
 #: inetcpl.rc:32
 msgid "Configure Wine Internet Browser and related settings"
@@ -3538,8 +3539,9 @@ msgid "Error converting object to primitive type"
 msgstr ""
 
 #: jscript.rc:29
+#, fuzzy
 msgid "Invalid procedure call or argument"
-msgstr ""
+msgstr "අවලංගු"
 
 #: jscript.rc:30
 msgid "Subscript out of range"
@@ -3717,11 +3719,11 @@ msgstr ""
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "Wine කර්නලයේ DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
-msgstr ""
+msgstr "Wine"
 
 #: winerror.mc:28
 msgid "Success.\n"
@@ -3760,8 +3762,9 @@ msgid "Not enough memory.\n"
 msgstr "මතකය මදි.\n"
 
 #: winerror.mc:73
+#, fuzzy
 msgid "Invalid block.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:78
 msgid "Bad environment.\n"
@@ -3773,7 +3776,7 @@ msgstr ""
 
 #: winerror.mc:88
 msgid "Invalid access.\n"
-msgstr ""
+msgstr "අවලංගු ප්‍රවේශය.\n"
 
 #: winerror.mc:93
 msgid "Invalid data.\n"
@@ -3933,7 +3936,7 @@ msgstr "මුද්‍රණය අවලංගු කරලා.\n"
 
 #: winerror.mc:288
 msgid "Network name deleted.\n"
-msgstr ""
+msgstr "ජාලයේ නම මකල.\n"
 
 #: winerror.mc:293
 msgid "Network access denied.\n"
@@ -4020,8 +4023,9 @@ msgid "Too many semaphore requests.\n"
 msgstr ""
 
 #: winerror.mc:398
+#, fuzzy
 msgid "Invalid at interrupt time.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:403
 msgid "Semaphore owner died.\n"
@@ -4048,24 +4052,27 @@ msgid "Open failed.\n"
 msgstr ""
 
 #: winerror.mc:433
+#, fuzzy
 msgid "Buffer overflow.\n"
-msgstr ""
+msgstr "බෆරය "
 
 #: winerror.mc:443
 msgid "No more search handles.\n"
 msgstr ""
 
 #: winerror.mc:448
+#, fuzzy
 msgid "Invalid target handle.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:453
 msgid "Invalid IOCTL.\n"
 msgstr "අවලංගු IOCTL.\n"
 
 #: winerror.mc:458
+#, fuzzy
 msgid "Invalid verify switch.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:463
 msgid "Bad driver level.\n"
@@ -4081,7 +4088,7 @@ msgstr ""
 
 #: winerror.mc:478
 msgid "Insufficient buffer.\n"
-msgstr ""
+msgstr "බෆරය මදි.\n"
 
 #: winerror.mc:483
 msgid "Invalid name.\n"
@@ -4112,8 +4119,9 @@ msgid "Child process has not completed.\n"
 msgstr ""
 
 #: winerror.mc:518
+#, fuzzy
 msgid "Invalid use of direct access handle.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:523
 msgid "Negative seek.\n"
@@ -4261,11 +4269,12 @@ msgstr ""
 
 #: winerror.mc:708
 msgid "Invalid segment number.\n"
-msgstr ""
+msgstr "අවලංගු ඛණ්ඩය නොම්බරය.\n"
 
 #: winerror.mc:713
+#, fuzzy
 msgid "Invalid ordinal for %1.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:718
 msgid "File already exists.\n"
@@ -4273,23 +4282,26 @@ msgstr "ගොනුව දැනටමත් පවතිනවා.\n"
 
 #: winerror.mc:723
 msgid "Invalid flag number.\n"
-msgstr ""
+msgstr "අවලංගු සලකුණ නොම්බරය.\n"
 
 #: winerror.mc:728
 msgid "Semaphore name not found.\n"
 msgstr ""
 
 #: winerror.mc:733
+#, fuzzy
 msgid "Invalid starting code segment for %1.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:738
+#, fuzzy
 msgid "Invalid starting stack segment for %1.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:743
+#, fuzzy
 msgid "Invalid module type for %1.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:748
 msgid "Invalid EXE signature in %1.\n"
@@ -4309,7 +4321,7 @@ msgstr ""
 
 #: winerror.mc:768
 msgid "Invalid MinAllocSize in %1.\n"
-msgstr ""
+msgstr "අවලංගු MinAllocSize %1 ඇතුලෙ.\n"
 
 #: winerror.mc:773
 msgid "Dynlink from invalid ring.\n"
@@ -4321,7 +4333,7 @@ msgstr ""
 
 #: winerror.mc:783
 msgid "Invalid SEGDPL in %1.\n"
-msgstr ""
+msgstr "අවලංගු SEGDPL %1 ඇතුලෙ.\n"
 
 #: winerror.mc:788
 msgid "Auto data segment exceeds 64k.\n"
@@ -4360,8 +4372,9 @@ msgid "Error in use of filename wildcards.\n"
 msgstr ""
 
 #: winerror.mc:833
+#, fuzzy
 msgid "Invalid signal number.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:838
 msgid "Error setting signal handler.\n"
@@ -4405,11 +4418,12 @@ msgstr ""
 
 #: winerror.mc:888
 msgid "Session canceled.\n"
-msgstr ""
+msgstr "සැසිය අවලංගු කරල.\n"
 
 #: winerror.mc:893
+#, fuzzy
 msgid "Invalid extended attribute name.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:898
 msgid "Extended attribute list inconsistent.\n"
@@ -4440,8 +4454,9 @@ msgid "Extended attribute table full.\n"
 msgstr ""
 
 #: winerror.mc:933
+#, fuzzy
 msgid "Invalid extended attribute handle.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:938
 msgid "Extended attributes not supported.\n"
@@ -4464,8 +4479,9 @@ msgid "The oplock wasn't granted.\n"
 msgstr ""
 
 #: winerror.mc:963
+#, fuzzy
 msgid "Invalid oplock message received.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:968
 msgid "Message 0x%1 not found in file %2.\n"
@@ -4473,7 +4489,7 @@ msgstr ""
 
 #: winerror.mc:973
 msgid "Invalid address.\n"
-msgstr ""
+msgstr "අවලංගු යොමුව.\n"
 
 #: winerror.mc:978
 msgid "Arithmetic overflow.\n"
@@ -4525,7 +4541,7 @@ msgstr ""
 
 #: winerror.mc:1038
 msgid "Invalid flags.\n"
-msgstr ""
+msgstr "අවලංගු සලකුණු.\n"
 
 #: winerror.mc:1043
 msgid "Unrecognized volume.\n"
@@ -4604,8 +4620,9 @@ msgid "Dependent services are running.\n"
 msgstr ""
 
 #: winerror.mc:1138
+#, fuzzy
 msgid "Invalid service control.\n"
-msgstr ""
+msgstr "අවලංගු සේවාව"
 
 #: winerror.mc:1143
 msgid "Service request timeout.\n"
@@ -4625,7 +4642,7 @@ msgstr ""
 
 #: winerror.mc:1163
 msgid "Invalid service account.\n"
-msgstr ""
+msgstr "අවලංගු සේවාව ගිණුම.\n"
 
 #: winerror.mc:1168
 msgid "Service is disabled.\n"
@@ -4657,7 +4674,7 @@ msgstr ""
 
 #: winerror.mc:1203
 msgid "Database does not exist.\n"
-msgstr ""
+msgstr "දත්ත සමුදාය තියෙන්නේ නැහැ.\n"
 
 #: winerror.mc:1208
 msgid "Service-specific error.\n"
@@ -4680,8 +4697,9 @@ msgid "Service start-hang.\n"
 msgstr ""
 
 #: winerror.mc:1233
+#, fuzzy
 msgid "Invalid service lock.\n"
-msgstr ""
+msgstr "අවලංගු සේවාව"
 
 #: winerror.mc:1238
 msgid "Service marked for delete.\n"
@@ -4756,8 +4774,9 @@ msgid "Partition failure.\n"
 msgstr ""
 
 #: winerror.mc:1328
+#, fuzzy
 msgid "Invalid block length.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:1333
 msgid "Device not partitioned.\n"
@@ -4903,7 +4922,7 @@ msgstr ""
 
 #: winerror.mc:1508
 msgid "DDE failure.\n"
-msgstr ""
+msgstr "DDE දෝෂයක්.\n"
 
 #: winerror.mc:1513
 msgid "DLL not found.\n"
@@ -5003,7 +5022,7 @@ msgstr ""
 
 #: winerror.mc:1633
 msgid "Invalid device name.\n"
-msgstr ""
+msgstr "අවලංගු ආම්පන්නය නාමය.\n"
 
 #: winerror.mc:1638
 msgid "Connection unavailable.\n"
@@ -5018,8 +5037,9 @@ msgid "No network or bad path.\n"
 msgstr ""
 
 #: winerror.mc:1653
+#, fuzzy
 msgid "Invalid network provider name.\n"
-msgstr ""
+msgstr "අවලංගු ජාල"
 
 #: winerror.mc:1658
 msgid "Cannot open network connection profile.\n"
@@ -5031,7 +5051,7 @@ msgstr ""
 
 #: winerror.mc:1668
 msgid "Not a container.\n"
-msgstr ""
+msgstr "බහලුවක් නෙමෙයි.\n"
 
 #: winerror.mc:1673
 msgid "Extended error.\n"
@@ -5039,39 +5059,40 @@ msgstr ""
 
 #: winerror.mc:1678
 msgid "Invalid group name.\n"
-msgstr ""
+msgstr "අවලංගු සමූහය නාමය.\n"
 
 #: winerror.mc:1683
 msgid "Invalid computer name.\n"
-msgstr ""
+msgstr "අවලංගු පරිගණක නාමය.\n"
 
 #: winerror.mc:1688
 msgid "Invalid event name.\n"
-msgstr ""
+msgstr "අවලංගු සිද්ධිය නාමය.\n"
 
 #: winerror.mc:1693
 msgid "Invalid domain name.\n"
-msgstr ""
+msgstr "අවලංගු වසම් නාමය.\n"
 
 #: winerror.mc:1698
 msgid "Invalid service name.\n"
-msgstr ""
+msgstr "අවලංගු සේවාව නාමය.\n"
 
 #: winerror.mc:1703
 msgid "Invalid network name.\n"
-msgstr ""
+msgstr "අවලංගු ජාල නාමය.\n"
 
 #: winerror.mc:1708
 msgid "Invalid share name.\n"
-msgstr ""
+msgstr "අවලංගු හවුල නාමය.\n"
 
 #: winerror.mc:1718
 msgid "Invalid message name.\n"
-msgstr "අවලංගු පණිවිඩයේ නම.\n"
+msgstr "අවලංගු පණිවිඩයේ නාමය.\n"
 
 #: winerror.mc:1723
+#, fuzzy
 msgid "Invalid message destination.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:1728
 msgid "Session credential conflict.\n"
@@ -5087,7 +5108,7 @@ msgstr ""
 
 #: winerror.mc:1743
 msgid "No network.\n"
-msgstr ""
+msgstr "ජාලයක් නැහැ.\n"
 
 #: winerror.mc:1748
 msgid "Operation canceled by user.\n"
@@ -5099,7 +5120,7 @@ msgstr ""
 
 #: winerror.mc:1758 winerror.mc:3753
 msgid "Connection refused.\n"
-msgstr ""
+msgstr "සබැඳුම ප්‍රතික්ෂේප කරා.\n"
 
 #: winerror.mc:1763
 msgid "Connection gracefully closed.\n"
@@ -5115,11 +5136,11 @@ msgstr ""
 
 #: winerror.mc:1778
 msgid "Connection invalid.\n"
-msgstr ""
+msgstr "සබැඳුම වලංගු නැහැ.\n"
 
 #: winerror.mc:1783
 msgid "Connection is active.\n"
-msgstr ""
+msgstr "සබැඳුම සක්‍රියයි.\n"
 
 #: winerror.mc:1788
 msgid "Network unreachable.\n"
@@ -5247,11 +5268,12 @@ msgstr ""
 
 #: winerror.mc:1943
 msgid "Invalid owner.\n"
-msgstr ""
+msgstr "අවලංගු හිමිකරු.\n"
 
 #: winerror.mc:1948
+#, fuzzy
 msgid "Invalid primary group.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:1953
 msgid "No impersonation token.\n"
@@ -5279,11 +5301,11 @@ msgstr ""
 
 #: winerror.mc:1983
 msgid "Invalid account name.\n"
-msgstr ""
+msgstr "අවලංගු ගිණුම් නාමය.\n"
 
 #: winerror.mc:1988
 msgid "User already exists.\n"
-msgstr ""
+msgstr "පරිශීලකය දැනටමත් තියෙනවා.\n"
 
 #: winerror.mc:1993
 msgid "No such user.\n"
@@ -5291,7 +5313,7 @@ msgstr ""
 
 #: winerror.mc:1998
 msgid "Group already exists.\n"
-msgstr ""
+msgstr "සමූහය දැනටමත් තියෙනවා.\n"
 
 #: winerror.mc:2003
 msgid "No such group.\n"
@@ -5315,7 +5337,7 @@ msgstr "වැරදි මුර පදය.\n"
 
 #: winerror.mc:2028
 msgid "Ill-formed password.\n"
-msgstr ""
+msgstr "මුර පදය හොඳට හදල නැහැ.\n"
 
 #: winerror.mc:2033
 msgid "Password restriction.\n"
@@ -5330,12 +5352,13 @@ msgid "Account restriction.\n"
 msgstr ""
 
 #: winerror.mc:2048
+#, fuzzy
 msgid "Invalid logon hours.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2053
 msgid "Invalid workstation.\n"
-msgstr ""
+msgstr "අවලංගු සේවාස්ථානය.\n"
 
 #: winerror.mc:2058
 msgid "Password expired.\n"
@@ -5358,8 +5381,9 @@ msgid "LUIDs exhausted.\n"
 msgstr ""
 
 #: winerror.mc:2083
+#, fuzzy
 msgid "Invalid sub authority.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2088
 msgid "Invalid ACL.\n"
@@ -5370,8 +5394,9 @@ msgid "Invalid SID.\n"
 msgstr "අවලංගු SID.\n"
 
 #: winerror.mc:2098
+#, fuzzy
 msgid "Invalid security descriptor.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2103
 msgid "Bad inherited ACL.\n"
@@ -5386,16 +5411,18 @@ msgid "Server not disabled.\n"
 msgstr ""
 
 #: winerror.mc:2118
+#, fuzzy
 msgid "Invalid ID authority.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2123
 msgid "Allotted space exceeded.\n"
 msgstr ""
 
 #: winerror.mc:2128
+#, fuzzy
 msgid "Invalid group attributes.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2133
 msgid "Bad impersonation level.\n"
@@ -5422,24 +5449,27 @@ msgid "Can't access domain information.\n"
 msgstr ""
 
 #: winerror.mc:2163
+#, fuzzy
 msgid "Invalid server state.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2168
+#, fuzzy
 msgid "Invalid domain state.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2173
+#, fuzzy
 msgid "Invalid domain role.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2178
 msgid "No such domain.\n"
-msgstr ""
+msgstr "මෙහෙම වසමක් නැහැ.\n"
 
 #: winerror.mc:2183
 msgid "Domain already exists.\n"
-msgstr ""
+msgstr "වසම දැනටමත් පවතිනවා.\n"
 
 #: winerror.mc:2188
 msgid "Domain limit exceeded.\n"
@@ -5482,16 +5512,18 @@ msgid "Logon session ID collision.\n"
 msgstr ""
 
 #: winerror.mc:2238
+#, fuzzy
 msgid "Invalid logon type.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2243
 msgid "Cannot impersonate.\n"
 msgstr ""
 
 #: winerror.mc:2248
+#, fuzzy
 msgid "Invalid transaction state.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2253
 msgid "Security DB commit failure.\n"
@@ -5563,7 +5595,7 @@ msgstr ""
 
 #: winerror.mc:2343
 msgid "Invalid member.\n"
-msgstr ""
+msgstr "අවලංගු සාමාජිකයා.\n"
 
 #: winerror.mc:2348
 msgid "Too many SIDs.\n"
@@ -5618,16 +5650,17 @@ msgid "Invalid cursor handle.\n"
 msgstr "අවලංගු කර්සරයේ හසුරුව.\n"
 
 #: winerror.mc:2413
+#, fuzzy
 msgid "Invalid accelerator table handle.\n"
-msgstr ""
+msgstr "අවලංගු හසුරුව.\n"
 
 #: winerror.mc:2418
 msgid "Invalid hook handle.\n"
-msgstr ""
+msgstr "අවලංගු කොක්ක හසුරුව.\n"
 
 #: winerror.mc:2423
 msgid "Invalid DWP handle.\n"
-msgstr ""
+msgstr "අවලංගු DWP හසුරුව.\n"
 
 #: winerror.mc:2428
 msgid "Can't create top-level child window.\n"
@@ -5658,8 +5691,9 @@ msgid "Class has open windows.\n"
 msgstr ""
 
 #: winerror.mc:2463
+#, fuzzy
 msgid "Invalid index.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2468
 msgid "Invalid icon handle.\n"
@@ -5695,27 +5729,30 @@ msgstr ""
 
 #: winerror.mc:2508
 msgid "Invalid combo box message.\n"
-msgstr ""
+msgstr "අවලංගු සංයුක්ත කොටුවේ පණිවිඩය.\n"
 
 #: winerror.mc:2513
 msgid "Not a combo box window.\n"
 msgstr ""
 
 #: winerror.mc:2518
+#, fuzzy
 msgid "Invalid edit height.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2523
 msgid "DC not found.\n"
 msgstr ""
 
 #: winerror.mc:2528
+#, fuzzy
 msgid "Invalid hook filter.\n"
-msgstr ""
+msgstr "අවලංගු කොක්ක"
 
 #: winerror.mc:2533
+#, fuzzy
 msgid "Invalid filter procedure.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2538
 msgid "Hook procedure needs module handle.\n"
@@ -5735,11 +5772,11 @@ msgstr ""
 
 #: winerror.mc:2558
 msgid "Invalid list box message.\n"
-msgstr ""
+msgstr "අවලංගු ලැයිස්තු කොටුව පණිවිඩය.\n"
 
 #: winerror.mc:2563
 msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr ""
+msgstr "අවලංගු LB_SETCOUNT එකක් යවල.\n"
 
 #: winerror.mc:2568
 msgid "No tab stops on this list box.\n"
@@ -5758,8 +5795,9 @@ msgid "Window has no system menu.\n"
 msgstr ""
 
 #: winerror.mc:2588
+#, fuzzy
 msgid "Invalid message box style.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2593
 msgid "Invalid SPI parameter.\n"
@@ -5779,7 +5817,7 @@ msgstr ""
 
 #: winerror.mc:2613
 msgid "Invalid GW command.\n"
-msgstr ""
+msgstr "අවලංගු GW විධානය.\n"
 
 #: winerror.mc:2618
 msgid "Invalid thread ID.\n"
@@ -5803,7 +5841,7 @@ msgstr "අවලංගු අනුචලන තීරුවේ පරාසය
 
 #: winerror.mc:2643
 msgid "Invalid ShowWin command.\n"
-msgstr ""
+msgstr "අවලංගු ShowWin විධානය.\n"
 
 #: winerror.mc:2648
 msgid "No system resources.\n"
@@ -5835,7 +5873,7 @@ msgstr ""
 
 #: winerror.mc:2683
 msgid "Invalid keyboard handle.\n"
-msgstr ""
+msgstr "අවලංගු යතුරුපුවරුව හසුරුව.\n"
 
 #: winerror.mc:2688
 msgid "Hook type not allowed.\n"
@@ -5851,7 +5889,7 @@ msgstr "කාලඡේදනය.\n"
 
 #: winerror.mc:2703
 msgid "Invalid monitor handle.\n"
-msgstr ""
+msgstr "අවලංගු මොනිටරය හසුරුව.\n"
 
 #: winerror.mc:2708
 msgid "Event log file corrupt.\n"
@@ -5902,8 +5940,9 @@ msgid "Unknown property.\n"
 msgstr ""
 
 #: winerror.mc:2768
+#, fuzzy
 msgid "Invalid handle state.\n"
-msgstr ""
+msgstr "අවලංගු හසුරුව"
 
 #: winerror.mc:2773
 msgid "Bad configuration.\n"
@@ -5919,15 +5958,16 @@ msgstr ""
 
 #: winerror.mc:2788
 msgid "Wrong installation package version.\n"
-msgstr ""
+msgstr "වැරදි ස්ථාපන පැකේජය අනුවාදය.\n"
 
 #: winerror.mc:2793
 msgid "Product uninstalled.\n"
 msgstr ""
 
 #: winerror.mc:2798
+#, fuzzy
 msgid "Invalid query syntax.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2803
 msgid "Invalid field.\n"
@@ -5943,11 +5983,11 @@ msgstr ""
 
 #: winerror.mc:2818
 msgid "Installation package failed to open.\n"
-msgstr ""
+msgstr "ස්ථාපන පැකේජය ඇරෙන්න බැරි උනා.\n"
 
 #: winerror.mc:2823
 msgid "Installation package is invalid.\n"
-msgstr ""
+msgstr "ස්ථාපන පැකේජය වලංගු නැහැ.\n"
 
 #: winerror.mc:2828
 msgid "Installer user interface failed.\n"
@@ -5967,7 +6007,7 @@ msgstr ""
 
 #: winerror.mc:2848
 msgid "Installation package rejected.\n"
-msgstr ""
+msgstr "ස්ථාපන පැකේජය ප්‍රතික්ෂේප කරා.\n"
 
 #: winerror.mc:2853
 msgid "Function could not be called.\n"
@@ -6010,8 +6050,9 @@ msgid "Failed to open the patch package.\n"
 msgstr ""
 
 #: winerror.mc:2903
+#, fuzzy
 msgid "Invalid patch package.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2908
 msgid "Unsupported patch package.\n"
@@ -6022,8 +6063,9 @@ msgid "Another version is installed.\n"
 msgstr "වෙන අනුවාදයක් ස්ථාපන කරලා තියෙනවා.\n"
 
 #: winerror.mc:2918
+#, fuzzy
 msgid "Invalid command line.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2923
 msgid "Remote installation not allowed.\n"
@@ -6034,44 +6076,49 @@ msgid "Reboot initiated after successful install.\n"
 msgstr ""
 
 #: winerror.mc:2933
+#, fuzzy
 msgid "Invalid string binding.\n"
-msgstr ""
+msgstr "අවලංගු අනුලකුණු වැල"
 
 #: winerror.mc:2938
 msgid "Wrong kind of binding.\n"
 msgstr ""
 
 #: winerror.mc:2943
+#, fuzzy
 msgid "Invalid binding.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2948
 msgid "RPC protocol sequence not supported.\n"
 msgstr ""
 
 #: winerror.mc:2953
+#, fuzzy
 msgid "Invalid RPC protocol sequence.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2958
 msgid "Invalid string UUID.\n"
-msgstr ""
+msgstr "අවලංගු අනුලකුණු වැල UUID.\n"
 
 #: winerror.mc:2963
+#, fuzzy
 msgid "Invalid endpoint format.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2968
 msgid "Invalid network address.\n"
-msgstr ""
+msgstr "අවලංගු ජාල ලිපිනය.\n"
 
 #: winerror.mc:2973
 msgid "No endpoint found.\n"
 msgstr ""
 
 #: winerror.mc:2978
+#, fuzzy
 msgid "Invalid timeout value.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:2983
 msgid "Object UUID not found.\n"
@@ -6131,7 +6178,7 @@ msgstr ""
 
 #: winerror.mc:3053
 msgid "Invalid network options.\n"
-msgstr ""
+msgstr "අවලංගු ජාල විකල්ප.\n"
 
 #: winerror.mc:3058
 msgid "No RPC call active.\n"
@@ -6155,11 +6202,12 @@ msgstr ""
 
 #: winerror.mc:3088
 msgid "Invalid tag.\n"
-msgstr ""
+msgstr "අවලංගු ටැගය.\n"
 
 #: winerror.mc:3093
+#, fuzzy
 msgid "Invalid array bounds.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3098
 msgid "No entry name.\n"
@@ -6214,16 +6262,18 @@ msgid "Unknown authentication level.\n"
 msgstr ""
 
 #: winerror.mc:3163
+#, fuzzy
 msgid "Invalid authentication identity.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3168
 msgid "Unknown authorization service.\n"
 msgstr ""
 
 #: winerror.mc:3173
+#, fuzzy
 msgid "Invalid entry.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3178
 msgid "Can't perform operation.\n"
@@ -6243,7 +6293,7 @@ msgstr ""
 
 #: winerror.mc:3198
 msgid "Invalid version option.\n"
-msgstr ""
+msgstr "අවලංගු අනුවාදය විකල්පය.\n"
 
 #: winerror.mc:3203
 msgid "No more members.\n"
@@ -6271,7 +6321,7 @@ msgstr ""
 
 #: winerror.mc:3233
 msgid "Invalid network address family.\n"
-msgstr ""
+msgstr "අවලංගු ජාල ලිපිනය පවුල.\n"
 
 #: winerror.mc:3238
 msgid "Operation not supported.\n"
@@ -6350,8 +6400,9 @@ msgid "Bad stub data.\n"
 msgstr ""
 
 #: winerror.mc:3333
+#, fuzzy
 msgid "Invalid user buffer.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3338
 msgid "Unrecognized media.\n"
@@ -6411,15 +6462,15 @@ msgstr ""
 
 #: winerror.mc:3408
 msgid "Invalid separator file.\n"
-msgstr "වලංගු නැති වෙන්කරණ ගොනුව.\n"
+msgstr "අවලංගු වෙන්කරණ ගොනුව.\n"
 
 #: winerror.mc:3413
 msgid "Invalid priority.\n"
-msgstr ""
+msgstr "අවලංගු ප්‍රමුඛතාවය.\n"
 
 #: winerror.mc:3418
 msgid "Invalid printer name.\n"
-msgstr "වලංගු නැති මුද්‍රකයේ නම.\n"
+msgstr "අවලංගු මුද්‍රකයේ නම.\n"
 
 #: winerror.mc:3423
 msgid "Printer already exists.\n"
@@ -6427,15 +6478,16 @@ msgstr "මුද්‍රකය දැනටමත් පවතිනවා.\n"
 
 #: winerror.mc:3428
 msgid "Invalid printer command.\n"
-msgstr "වලංගු නැති මුද්‍රකය විධානය.\n"
+msgstr "අවලංගු මුද්‍රකය විධානය.\n"
 
 #: winerror.mc:3433
 msgid "Invalid data type.\n"
-msgstr ""
+msgstr "අවලංගු දත්ත වර්ගය.\n"
 
 #: winerror.mc:3438
+#, fuzzy
 msgid "Invalid environment.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3443
 msgid "No more bindings.\n"
@@ -6522,8 +6574,9 @@ msgid "Thread not canceled.\n"
 msgstr "පොට අවලංගු කරල නැහැ.\n"
 
 #: winerror.mc:3548
+#, fuzzy
 msgid "Invalid handle operation.\n"
-msgstr ""
+msgstr "අවලංගු හසුරුව"
 
 #: winerror.mc:3553
 msgid "Wrong serializing package version.\n"
@@ -6534,8 +6587,9 @@ msgid "Wrong stub version.\n"
 msgstr ""
 
 #: winerror.mc:3563
+#, fuzzy
 msgid "Invalid pipe object.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3568
 msgid "Wrong pipe order.\n"
@@ -6555,11 +6609,11 @@ msgstr ""
 
 #: winerror.mc:3588
 msgid "Invalid object.\n"
-msgstr "වලංගු නැති වස්තුව.\n"
+msgstr "අවලංගු වස්තුව.\n"
 
 #: winerror.mc:3593
 msgid "Invalid time.\n"
-msgstr "වලංගු නැති වෙලාව.\n"
+msgstr "අවලංගු වෙලාව.\n"
 
 #: winerror.mc:3598
 msgid "Invalid form name.\n"
@@ -6578,8 +6632,9 @@ msgid "Printer deleted.\n"
 msgstr "මුද්‍රකයව මකලා.\n"
 
 #: winerror.mc:3618
+#, fuzzy
 msgid "Invalid printer state.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3623
 msgid "User must change password.\n"
@@ -6594,28 +6649,32 @@ msgid "Account locked out.\n"
 msgstr ""
 
 #: winerror.mc:3638
+#, fuzzy
 msgid "Invalid pixel format.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3643
 msgid "Invalid driver.\n"
-msgstr "වලංගු නැති ධාවකයක්.\n"
+msgstr "අවලංගු ධාවකයක්.\n"
 
 #: winerror.mc:3648
+#, fuzzy
 msgid "Invalid object resolver set.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3653
 msgid "Incomplete RPC send.\n"
 msgstr ""
 
 #: winerror.mc:3658
+#, fuzzy
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3663
+#, fuzzy
 msgid "Invalid asynchronous RPC call.\n"
-msgstr ""
+msgstr "අවලංගු"
 
 #: winerror.mc:3668
 msgid "RPC pipe closed.\n"
@@ -6739,7 +6798,7 @@ msgstr ""
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
-msgstr ""
+msgstr "ජාලයේ මුර පදය ඇතුල් කරන්න"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "Please enter your username and password:"
@@ -6803,11 +6862,11 @@ msgstr "HTML ලේඛය"
 
 #: mshtml.rc:29
 msgid "Downloading from %s..."
-msgstr ""
+msgstr "%s එකිං බාගැනීම කරනවා..."
 
 #: mshtml.rc:28
 msgid "Done"
-msgstr ""
+msgstr "ඉවරයි"
 
 #: msi.rc:31
 msgid ""
@@ -7680,7 +7739,7 @@ msgstr ""
 #: oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "කාර්යබහුලයි"
 
 #: oleacc.rc:110
 msgctxt "object state"
@@ -7990,7 +8049,7 @@ msgstr "us"
 
 #: serialui.rc:28
 msgid "Settings for %s"
-msgstr ""
+msgstr "%s එකේ සැකසුම්"
 
 #: serialui.rc:31
 msgid "Baud Rate"
@@ -8080,7 +8139,7 @@ msgstr ""
 
 #: shdoclc.rc:56
 msgid "&Encoding"
-msgstr ""
+msgstr "සංකේතනය (&E)"
 
 #: shdoclc.rc:58
 msgid "Pr&int"
@@ -8528,7 +8587,7 @@ msgstr ""
 
 #: shell32.rc:141 winefile.rc:172 winefile.rc:114
 msgid "Attributes"
-msgstr ""
+msgstr "උපලක්‍ෂණ"
 
 #: shell32.rc:143
 msgid "Size available"
@@ -8536,7 +8595,7 @@ msgstr ""
 
 #: shell32.rc:145
 msgid "Comments"
-msgstr ""
+msgstr "සටහන්"
 
 #: shell32.rc:146
 msgid "Owner"
@@ -8726,7 +8785,7 @@ msgstr ""
 
 #: shell32.rc:236
 msgid "Downloads"
-msgstr ""
+msgstr "බාගැනීම්"
 
 #: shell32.rc:169
 msgid "Unable to create new Folder: Permission denied."
@@ -10523,7 +10582,7 @@ msgstr ""
 
 #: wldap32.rc:53
 msgid "Invalid Syntax"
-msgstr ""
+msgstr "අවලංගු රීති"
 
 #: wldap32.rc:64
 msgid "No Such Object"
@@ -10535,7 +10594,7 @@ msgstr "අන්වර්ථය ප්‍රශ්නයක්"
 
 #: wldap32.rc:66
 msgid "Invalid DN Syntax"
-msgstr ""
+msgstr "අවලංගු DN රීති"
 
 #: wldap32.rc:67
 msgid "Is Leaf"
@@ -10551,7 +10610,7 @@ msgstr ""
 
 #: wldap32.rc:81
 msgid "Invalid Credentials"
-msgstr ""
+msgstr "අවලංගු අක්තපත්‍ර"
 
 #: wldap32.rc:82
 msgid "Insufficient Rights"
@@ -10559,7 +10618,7 @@ msgstr ""
 
 #: wldap32.rc:83
 msgid "Busy"
-msgstr ""
+msgstr "කාර්යබහුලයි"
 
 #: wldap32.rc:84
 msgid "Unavailable"
@@ -11366,7 +11425,7 @@ msgstr ""
 
 #: hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
-msgstr "දෝෂය: විකල්පය '%c' වලංගු නැත.\n"
+msgstr "දෝෂය: අවලංගු විකල්පය '%c'.\n"
 
 #: hostname.rc:32
 msgid "Error: Could not get hostname: %u.\n"
@@ -12470,11 +12529,11 @@ msgstr ""
 
 #: reg.rc:40
 msgid "reg: Invalid key name\n"
-msgstr ""
+msgstr "reg: අවලංගු යතුරේ නම\n"
 
 #: reg.rc:41
 msgid "reg: Invalid command line parameters\n"
-msgstr ""
+msgstr "reg: අවලංගු විධාන රේඛා පරාමිති\n"
 
 #: reg.rc:42
 msgid "reg: Unable to access remote machine\n"
@@ -12547,11 +12606,11 @@ msgstr ""
 
 #: reg.rc:61
 msgid "reg: Invalid syntax. "
-msgstr ""
+msgstr "reg: අවලංගු රීති."
 
 #: reg.rc:62
 msgid "reg: Invalid option [%1]. "
-msgstr ""
+msgstr "reg: අවලංගු විකල්පය [%1]."
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
@@ -12611,7 +12670,7 @@ msgstr "යතුර (&K)"
 
 #: regedit.rc:49 regedit.rc:101 regedit.rc:123
 msgid "&String Value"
-msgstr ""
+msgstr "අනුලකුණු වැල අගය (&S)"
 
 #: regedit.rc:50 regedit.rc:102 regedit.rc:124
 msgid "&Binary Value"
@@ -12619,7 +12678,7 @@ msgstr ""
 
 #: regedit.rc:51 regedit.rc:103 regedit.rc:125
 msgid "&DWORD Value"
-msgstr ""
+msgstr "DWORD අගය (&D)"
 
 #: regedit.rc:52 regedit.rc:104 regedit.rc:126
 msgid "&Multi-String Value"
@@ -13221,7 +13280,7 @@ msgstr "දෝෂය: දන්නේ නැති හෝ වලංගු නැ
 
 #: taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "දෝෂය: වලංගු නැති විධාන රේඛා පරාමිතියක් සඳහන් කරලා.\n"
+msgstr "දෝෂය: අවලංගු විධාන රේඛා පරාමිතියක් සඳහන් කරලා.\n"
 
 #: taskkill.rc:33
 msgid "Error: One of options /im or /pid must be specified.\n"
@@ -13379,7 +13438,7 @@ msgstr ""
 
 #: taskmgr.rc:152 winedbg.rc:32
 msgid "&Debug"
-msgstr ""
+msgstr "නිදොසන්න (&D)"
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
@@ -13479,11 +13538,11 @@ msgstr ""
 
 #: taskmgr.rc:414
 msgid "CPU usage history"
-msgstr ""
+msgstr "CPU භාවිතය ඉතිහාසය"
 
 #: taskmgr.rc:415
 msgid "Memory usage history"
-msgstr ""
+msgstr "මතකය භාවිතය ඉතිහාසය"
 
 #: taskmgr.rc:428 taskmgr.rc:327
 msgid "Debug Channels"
@@ -13682,7 +13741,7 @@ msgstr ""
 
 #: taskmgr.rc:543
 msgid "&Session ID"
-msgstr ""
+msgstr "සැසියෙ ID (&S)"
 
 #: taskmgr.rc:545
 msgid "User &Name"
@@ -14028,7 +14087,7 @@ msgstr ""
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
-msgstr ""
+msgstr "අවලංගු විකල්පය"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
@@ -14040,7 +14099,7 @@ msgstr ""
 
 #: taskmgr.rc:323
 msgid "Not Responding"
-msgstr ""
+msgstr "ප්‍රතිචාර නොදක්වයි"
 
 #: taskmgr.rc:324
 msgid "Running"
@@ -14062,17 +14121,18 @@ msgid ""
 msgstr ""
 
 #: uninstaller.rc:31
+#, fuzzy
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "uninstaller:"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
-msgstr ""
+msgstr "uninstaller: '--remove' විකල්පයට පස්සෙන් යෙදුමක UUID එකක් තියෙන්න ඕනේ\n"
 
 #: uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr ""
+msgstr "uninstaller: අවලංගු විකල්පය [%1]\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -14244,7 +14304,7 @@ msgstr "වෙනස් කරන්න... (&E)"
 
 #: winecfg.rc:205
 msgid "Edit Override"
-msgstr ""
+msgstr "Override එක වෙනස් කරන්න"
 
 #: winecfg.rc:208
 msgid "Load order"
@@ -14354,7 +14414,7 @@ msgstr "ස්පීකර"
 
 #: winecfg.rc:288
 msgid "Appearance"
-msgstr ""
+msgstr "පෙනුම"
 
 #: winecfg.rc:289
 msgid "&Theme:"
@@ -14869,8 +14929,9 @@ msgid "wineconsole: Couldn't parse event id\n"
 msgstr ""
 
 #: wineconsole.rc:45
+#, fuzzy
 msgid "wineconsole: Invalid backend\n"
-msgstr ""
+msgstr "wineconsole: අවලංගු"
 
 #: wineconsole.rc:46
 msgid "wineconsole: Unrecognized command line option\n"
@@ -15126,15 +15187,15 @@ msgstr "Wine ගොනු කළමනාකරු"
 
 #: winefile.rc:98
 msgid "root fs"
-msgstr ""
+msgstr "root fs"
 
 #: winefile.rc:99
 msgid "unixfs"
-msgstr ""
+msgstr "unixfs"
 
 #: winefile.rc:101
 msgid "Shell"
-msgstr ""
+msgstr "කවචය"
 
 #: winefile.rc:109
 msgid "Creation date"
@@ -15358,7 +15419,7 @@ msgstr "දෝෂය: අන්වර්ථය සොයා ගත්තේ න�
 
 #: wmic.rc:30
 msgid "Error: Invalid query\n"
-msgstr "දෝෂය: විමසුම වලංගු නැහැ\n"
+msgstr "දෝෂය: අවලංගු විමසුම\n"
 
 #: wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
@@ -15718,7 +15779,7 @@ msgstr ""
 
 #: wordpad.rc:198
 msgid "Invalid number format."
-msgstr "වලංගු නැති නොම්බරේ හැඩතලය."
+msgstr "අවලංගු නොම්බරේ හැඩතලය."
 
 #: wordpad.rc:199
 msgid "OLE storage documents are not supported."
@@ -15754,11 +15815,11 @@ msgstr "Wordpad ආරම්භ කරන්න බැරි උනා"
 
 #: xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "පරාමිති ගාණ වලංගු නැහැ - xcopy /? ගහන්න උදව්වට\n"
+msgstr "අවලංගු පරාමිති ගාණ - xcopy /? ගහන්න උදව්වට\n"
 
 #: xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "පරාමිතිය '%1' වලංගු නැහැ - xcopy /? ගහන්න උදව්වට\n"
+msgstr "අවලංගු පරාමිතිය '%1' - xcopy /? ගහන්න උදව්වට\n"
 
 #: xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
