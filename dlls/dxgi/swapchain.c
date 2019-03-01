@@ -1421,7 +1421,7 @@ static VkResult d3d12_swapchain_acquire_next_image(struct d3d12_swapchain *swapc
     if ((vr = vk_funcs->p_vkAcquireNextImageKHR(vk_device, swapchain->vk_swapchain, UINT64_MAX,
             VK_NULL_HANDLE, vk_fence, &swapchain->current_buffer_index)) < 0)
     {
-        ERR("Failed to acquire next Vulkan image, vr %d.\n", vr);
+        WARN("Failed to acquire next Vulkan image, vr %d.\n", vr);
         return vr;
     }
 
@@ -2136,6 +2136,14 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface
     }
 
     vr = d3d12_swapchain_acquire_next_image(swapchain);
+    if (vr == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        TRACE("Recreating Vulkan swapchain.\n");
+        d3d12_swapchain_destroy_buffers(swapchain, FALSE);
+        return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
+    }
+    if (vr < 0)
+        ERR("Failed to acquire next Vulkan image, vr %d.\n", vr);
     return hresult_from_vk_result(vr);
 }
 
@@ -2570,6 +2578,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
 
     if ((vr = d3d12_swapchain_acquire_next_image(swapchain)) < 0)
     {
+        ERR("Failed to acquire Vulkan image, vr %d.\n", vr);
         d3d12_swapchain_destroy(swapchain);
         return hresult_from_vk_result(vr);
     }
