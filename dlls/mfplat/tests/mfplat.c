@@ -1058,12 +1058,11 @@ todo_wine
     ok(hr == S_OK, "Failed to cancel item, hr %#x.\n", hr);
 
     hr = MFCancelWorkItem(key);
-todo_wine
     ok(hr == MF_E_NOT_FOUND || broken(hr == S_OK) /* < win10 */, "Unexpected hr %#x.\n", hr);
 
     if (!pMFPutWaitingWorkItem)
     {
-        skip("Waiting items are not supported.\n");
+        win_skip("Waiting items are not supported.\n");
         return;
     }
 
@@ -1085,9 +1084,11 @@ todo_wine
     IMFAsyncResult_Release(result);
 
     hr = MFScheduleWorkItem(&callback, NULL, -5000, &key);
+todo_wine
     ok(hr == S_OK, "Failed to schedule item, hr %#x.\n", hr);
 
     hr = MFCancelWorkItem(key);
+todo_wine
     ok(hr == S_OK, "Failed to cancel item, hr %#x.\n", hr);
 
     hr = MFShutdown();

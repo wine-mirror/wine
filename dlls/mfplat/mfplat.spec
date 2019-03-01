@@ -120,6 +120,7 @@
 @ stub MFJoinIoPort
 @ stdcall MFLockPlatform()
 @ stdcall MFLockWorkQueue(long)
+@ stdcall MFPutWaitingWorkItem(long long ptr ptr)
 @ stdcall MFPutWorkItem(long ptr ptr)
 @ stdcall MFPutWorkItemEx(long ptr)
 @ stub MFRecordError
