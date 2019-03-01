@@ -543,6 +543,9 @@ static HRESULT alloc_user_queue(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue_
 
     *queue_id = MFASYNC_CALLBACK_QUEUE_UNDEFINED;
 
+    if (!is_platform_locked())
+        return MF_E_SHUTDOWN;
+
     queue = heap_alloc_zero(sizeof(*queue));
     if (!queue)
         return E_OUTOFMEMORY;

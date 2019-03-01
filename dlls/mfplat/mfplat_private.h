@@ -18,3 +18,4 @@
 
 extern void init_system_queues(void) DECLSPEC_HIDDEN;
 extern void shutdown_system_queues(void) DECLSPEC_HIDDEN;
+extern BOOL is_platform_locked(void) DECLSPEC_HIDDEN;

@@ -521,6 +521,11 @@ HRESULT WINAPI MFUnlockPlatform(void)
     return S_OK;
 }
 
+BOOL is_platform_locked(void)
+{
+    return platform_lock > 0;
+}
+
 /***********************************************************************
  *      MFCopyImage (mfplat.@)
  */

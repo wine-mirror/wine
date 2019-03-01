@@ -837,6 +837,7 @@ static void test_MFCreateAsyncResult(void)
 
 static void test_startup(void)
 {
+    DWORD queue;
     HRESULT hr;
 
     hr = MFStartup(MAKELONG(MF_API_VERSION, 0xdead), MFSTARTUP_FULL);
@@ -845,8 +846,58 @@ static void test_startup(void)
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
 
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+    hr = MFUnlockWorkQueue(queue);
+    ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+
     hr = MFShutdown();
-    ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    /* Already shut down, has no effect. */
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+    hr = MFUnlockWorkQueue(queue);
+    ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    /* Platform lock. */
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+    hr = MFUnlockWorkQueue(queue);
+    ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+
+    /* Unlocking implies shutdown. */
+    hr = MFUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#x.\n", hr);
+
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = MFLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#x.\n", hr);
+
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+    hr = MFUnlockWorkQueue(queue);
+    ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
 static void test_allocate_queue(void)
