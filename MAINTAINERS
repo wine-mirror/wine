@@ -68,6 +68,7 @@ P:	Józef Kucia <jkucia@codeweavers.com>
 P:	Matteo Bruni <mbruni@codeweavers.com>
 F:	dlls/d3d10*/
 F:	dlls/d3d11/
+F:	dlls/d3d12/
 F:	dlls/d3d8/
 F:	dlls/d3d9/
 F:	dlls/d3drm/
