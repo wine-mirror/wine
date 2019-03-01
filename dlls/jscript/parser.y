@@ -1566,7 +1566,7 @@ void parser_release(parser_ctx_t *ctx)
     heap_free(ctx);
 }
 
-HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval,
+HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval,
         parser_ctx_t **ret)
 {
     parser_ctx_t *parser_ctx;
@@ -1591,7 +1591,10 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     mark = heap_pool_mark(&ctx->tmp_heap);
     heap_pool_init(&parser_ctx->heap);
 
+    parser_ctx->compiler = compiler;
     parser_parse(parser_ctx);
+    parser_ctx->compiler = NULL;
+
     heap_pool_clear(mark);
     hres = parser_ctx->hres;
     if(FAILED(hres)) {

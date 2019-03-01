@@ -1201,8 +1201,7 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
 
     ret = parser_alloc(ctx, sizeof(literal_t));
     ret->type = LT_REGEXP;
-    ret->u.regexp.str = re;
-    ret->u.regexp.str_len = re_len;
+    ret->u.regexp.str = compiler_alloc_string_len(ctx->compiler, re, re_len);
     ret->u.regexp.flags = flags;
     return ret;
 }

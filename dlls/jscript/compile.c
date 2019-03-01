@@ -48,7 +48,7 @@ typedef struct {
     int ref;
 } function_local_t;
 
-typedef struct {
+typedef struct _compiler_ctx_t {
     parser_ctx_t *parser;
     bytecode_t *code;
 
@@ -130,7 +130,7 @@ static inline void *compiler_alloc(bytecode_t *code, size_t size)
     return heap_pool_alloc(&code->heap, size);
 }
 
-static jsstr_t *compiler_alloc_string_len(compiler_ctx_t *ctx, const WCHAR *str, unsigned len)
+jsstr_t *compiler_alloc_string_len(compiler_ctx_t *ctx, const WCHAR *str, unsigned len)
 {
     jsstr_t *new_str;
 
@@ -825,22 +825,8 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
         return push_instr(ctx, OP_null) ? S_OK : E_OUTOFMEMORY;
     case LT_STRING:
         return push_instr_str(ctx, OP_str, literal->u.wstr);
-    case LT_REGEXP: {
-        unsigned instr;
-        jsstr_t *str;
-
-        str = compiler_alloc_string_len(ctx, literal->u.regexp.str, literal->u.regexp.str_len);
-        if(!str)
-            return E_OUTOFMEMORY;
-
-        instr = push_instr(ctx, OP_regexp);
-        if(!instr)
-            return E_OUTOFMEMORY;
-
-        instr_ptr(ctx, instr)->u.arg[0].str = str;
-        instr_ptr(ctx, instr)->u.arg[1].uint = literal->u.regexp.flags;
-        return S_OK;
-    }
+    case LT_REGEXP:
+        return push_instr_str_uint(ctx, OP_regexp, literal->u.regexp.str, literal->u.regexp.flags);
     DEFAULT_UNREACHABLE;
     }
     return E_FAIL;
@@ -2480,7 +2466,7 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *args, 
         }
     }
 
-    hres = script_parse(ctx, compiler.code->source, delimiter, from_eval, &compiler.parser);
+    hres = script_parse(ctx, &compiler, compiler.code->source, delimiter, from_eval, &compiler.parser);
     if(FAILED(hres)) {
         release_bytecode(compiler.code);
         return hres;
