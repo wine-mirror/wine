@@ -245,14 +245,9 @@ static HRESULT push_instr_int(compiler_ctx_t *ctx, jsop_t op, LONG arg)
     return S_OK;
 }
 
-static HRESULT push_instr_str(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
+static HRESULT push_instr_str(compiler_ctx_t *ctx, jsop_t op, jsstr_t *str)
 {
     unsigned instr;
-    jsstr_t *str;
-
-    str = compiler_alloc_string(ctx, arg);
-    if(!str)
-        return E_OUTOFMEMORY;
 
     instr = push_instr(ctx, op);
     if(!instr)
@@ -490,13 +485,18 @@ static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *ex
     }
     case EXPR_MEMBER: {
         member_expression_t *member_expr = (member_expression_t*)expr;
+        jsstr_t *jsstr;
 
         hres = compile_expression(ctx, member_expr->expression, TRUE);
         if(FAILED(hres))
             return hres;
 
         /* FIXME: Potential optimization */
-        hres = push_instr_str(ctx, OP_str, member_expr->identifier);
+        jsstr = compiler_alloc_string(ctx, member_expr->identifier);
+        if(!jsstr)
+            return E_OUTOFMEMORY;
+
+        hres = push_instr_str(ctx, OP_str, jsstr);
         if(FAILED(hres))
             return hres;
 
@@ -689,13 +689,18 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
     }
     case EXPR_MEMBER: {
         member_expression_t *member_expr = (member_expression_t*)expr->expression;
+        jsstr_t *jsstr;
 
         hres = compile_expression(ctx, member_expr->expression, TRUE);
         if(FAILED(hres))
             return hres;
 
         /* FIXME: Potential optimization */
-        hres = push_instr_str(ctx, OP_str, member_expr->identifier);
+        jsstr = compiler_alloc_string(ctx, member_expr->identifier);
+        if(!jsstr)
+            return E_OUTOFMEMORY;
+
+        hres = push_instr_str(ctx, OP_str, jsstr);
         if(FAILED(hres))
             return hres;
 
@@ -824,7 +829,7 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
     case LT_NULL:
         return push_instr(ctx, OP_null) ? S_OK : E_OUTOFMEMORY;
     case LT_STRING:
-        return push_instr_str(ctx, OP_str, literal->u.wstr);
+        return push_instr_str(ctx, OP_str, compiler_alloc_string(ctx, literal->u.wstr));
     case LT_REGEXP:
         return push_instr_str_uint(ctx, OP_regexp, literal->u.regexp.str, literal->u.regexp.flags);
     DEFAULT_UNREACHABLE;
