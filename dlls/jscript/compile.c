@@ -829,7 +829,7 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
     case LT_NULL:
         return push_instr(ctx, OP_null) ? S_OK : E_OUTOFMEMORY;
     case LT_STRING:
-        return push_instr_str(ctx, OP_str, compiler_alloc_string(ctx, literal->u.wstr));
+        return push_instr_str(ctx, OP_str, literal->u.str);
     case LT_REGEXP:
         return push_instr_str_uint(ctx, OP_regexp, literal->u.regexp.str, literal->u.regexp.flags);
     DEFAULT_UNREACHABLE;
@@ -841,7 +841,7 @@ static HRESULT literal_as_string(compiler_ctx_t *ctx, literal_t *literal, jsstr_
 {
     switch(literal->type) {
     case LT_STRING:
-        *str = compiler_alloc_string(ctx, literal->u.wstr);
+        *str = literal->u.str;
         break;
     case LT_DOUBLE:
         return double_to_string(literal->u.dval, str);

@@ -79,7 +79,7 @@ typedef struct {
     literal_type_t type;
     union {
         double dval;
-        const WCHAR *wstr;
+        jsstr_t *str;
         BOOL bval;
         struct {
             jsstr_t *str;

@@ -37,7 +37,7 @@ typedef struct _statement_list_t {
     statement_t *tail;
 } statement_list_t;
 
-static literal_t *new_string_literal(parser_ctx_t*,const WCHAR*);
+static literal_t *new_string_literal(parser_ctx_t*,jsstr_t*);
 static literal_t *new_null_literal(parser_ctx_t*);
 
 typedef struct _property_list_t {
@@ -147,7 +147,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %union {
     int                     ival;
     const WCHAR             *srcptr;
-    LPCWSTR                 wstr;
+    jsstr_t                 *str;
     literal_t               *literal;
     struct _argument_list_t *argument_list;
     case_clausule_t         *case_clausule;
@@ -177,7 +177,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %token <identifier> tIdentifier
 %token <ival> tAssignOper tEqOper tShiftOper tRelOper
 %token <literal> tNumericLiteral tBooleanLiteral
-%token <wstr> tStringLiteral
+%token <str> tStringLiteral
 %token tEOF
 
 %type <source_elements> SourceElements
@@ -813,7 +813,7 @@ GetterSetterMethod
 
 /* Ecma-262 3rd Edition    11.1.5 */
 PropertyName
-        : IdentifierName        { $$ = new_string_literal(ctx, $1); }
+        : IdentifierName        { $$ = new_string_literal(ctx, compiler_alloc_string_len(ctx->compiler, $1, strlenW($1))); }
         | tStringLiteral        { $$ = new_string_literal(ctx, $1); }
         | tNumericLiteral       { $$ = $1; }
 
@@ -921,12 +921,12 @@ static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size
     return stat;
 }
 
-static literal_t *new_string_literal(parser_ctx_t *ctx, const WCHAR *str)
+static literal_t *new_string_literal(parser_ctx_t *ctx, jsstr_t *str)
 {
     literal_t *ret = parser_alloc(ctx, sizeof(literal_t));
 
     ret->type = LT_STRING;
-    ret->u.wstr = str;
+    ret->u.str = str;
 
     return ret;
 }
