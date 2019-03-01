@@ -954,6 +954,7 @@ static void test_swapchain_draw(void)
 static void test_swapchain_size_mismatch(void)
 {
     static const float green[] = {0.0f, 1.0f, 0.0f, 1.0f};
+    UINT64 frame_fence_value[MAX_FRAME_COUNT] = {0};
     ID3D12GraphicsCommandList *command_list;
     D3D12_CPU_DESCRIPTOR_HANDLE rtv;
     struct test_context_desc desc;
@@ -963,6 +964,8 @@ static void test_swapchain_size_mismatch(void)
     ID3D12CommandQueue *queue;
     unsigned int index, i;
     ID3D12Device *device;
+    ID3D12Fence *fence;
+    UINT64 fence_value;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -1010,12 +1013,28 @@ static void test_swapchain_size_mismatch(void)
     window = create_window(WS_VISIBLE);
     ret = GetClientRect(window, &rect);
     ok(ret, "Failed to get client rect.\n");
-    swapchain = create_swapchain(&context, window, 2, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+    swapchain = create_swapchain(&context, window, 4, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
 
+    hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, (void **)&fence);
+    ok(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(context.list); ++i)
+    {
+        hr = ID3D12GraphicsCommandList_Close(context.list[i]);
+        ok(hr == S_OK, "Failed to close command list %u, hr %#x.\n", i, hr);
+    }
+
+    fence_value = 1;
     for (i = 0; i < 20; ++i)
     {
         index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
+
+        hr = wait_for_fence(fence, frame_fence_value[index]);
+        ok(hr == S_OK, "Failed to wait for fence, hr %#x.\n", hr);
+
+        reset_command_list(&context, index);
         backbuffer = context.render_target[index];
+        command_list = context.list[index];
         rtv = context.rtv[index];
 
         transition_sub_resource_state(command_list, backbuffer, 0,
@@ -1030,13 +1049,21 @@ static void test_swapchain_size_mismatch(void)
         hr = IDXGISwapChain3_Present(swapchain, 1, 0);
         ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
 
-        wait_queue_idle(device, queue);
-        reset_command_list(&context, 0);
-
         if (i == 6)
+        {
+            wait_queue_idle(device, queue);
             MoveWindow(window, 0, 0, 100, 100, TRUE);
+        }
+
+        frame_fence_value[index] = fence_value;
+        hr = ID3D12CommandQueue_Signal(queue, fence, fence_value);
+        ok(hr == S_OK, "Failed to signal fence, hr %#x.\n", hr);
+        ++fence_value;
     }
 
+    wait_queue_idle(device, queue);
+
+    ID3D12Fence_Release(fence);
     destroy_render_targets(&context);
     refcount = IDXGISwapChain3_Release(swapchain);
     ok(!refcount, "Swapchain has %u references left.\n", refcount);
