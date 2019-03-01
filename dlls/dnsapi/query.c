@@ -218,6 +218,7 @@ static unsigned int dns_get_record_size( const ns_rr *rr )
         break;
     }
     case ns_t_null:
+    case ns_t_opt:
     {
         size += rr->rdlength - 1;
         break;
@@ -311,6 +312,15 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
         memcpy( r->Data.Null.Data, rr->rdata, rr->rdlength );
 
         *dlen = sizeof(DNS_NULL_DATA) + rr->rdlength - 1;
+        break;
+    }
+    case ns_t_opt:
+    {
+        r->Data.OPT.wDataLength = rr->rdlength;
+        r->Data.OPT.wPad        = 0;
+        memcpy( r->Data.OPT.Data, rr->rdata, rr->rdlength );
+
+        *dlen = sizeof(DNS_OPT_DATA) + rr->rdlength - 1;
         break;
     }
     case ns_t_cname:

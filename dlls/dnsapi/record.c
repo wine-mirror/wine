@@ -222,6 +222,16 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
             return FALSE;
         break;
     }
+    case DNS_TYPE_OPT:
+    {
+        if (r1->Data.Opt.wDataLength != r2->Data.Opt.wDataLength)
+            return FALSE;
+        /* ignore wPad */
+        if (memcmp( r1->Data.Opt.Data,
+                    r2->Data.Opt.Data, r1->Data.Opt.wDataLength ))
+            return FALSE;
+        break;
+    }
     case DNS_TYPE_AAAA:
     {
         for (i = 0; i < sizeof(IP6_ADDRESS)/sizeof(DWORD); i++)

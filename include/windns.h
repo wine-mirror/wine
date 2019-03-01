@@ -519,6 +519,14 @@ typedef struct
 DECL_WINELIB_TYPE_AW(DNS_WINSR_DATA)
 DECL_WINELIB_TYPE_AW(PDNS_WINSR_DATA)
 
+typedef struct
+{
+    WORD wDataLength;
+    WORD wPad;
+    BYTE Data[1];
+}
+DNS_OPT_DATA, *PDNS_OPT_DATA;
+
 typedef struct _DnsRecordA
 {
     struct _DnsRecordA *pNext;
@@ -552,6 +560,7 @@ typedef struct _DnsRecordA
         DNS_TSIG_DATAA TSIG, Tsig;
         DNS_WINS_DATA WINS, Wins;
         DNS_WINSR_DATAA WINSR, WinsR, NBSTAT, Nbstat;
+        DNS_OPT_DATA OPT, Opt;
     } Data;
 } DNS_RECORDA, *PDNS_RECORDA;
 
@@ -588,6 +597,7 @@ typedef struct _DnsRecordW
         DNS_TSIG_DATAW TSIG, Tsig;
         DNS_WINS_DATA WINS, Wins;
         DNS_WINSR_DATAW WINSR, WinsR, NBSTAT, Nbstat;
+        DNS_OPT_DATA OPT, Opt;
     } Data;
 } DNS_RECORDW, *PDNS_RECORDW;
 
