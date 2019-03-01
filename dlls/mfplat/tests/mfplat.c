@@ -44,6 +44,7 @@ static HRESULT (WINAPI *pMFCreateMemoryBuffer)(DWORD max_length, IMFMediaBuffer 
 static void*   (WINAPI *pMFHeapAlloc)(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
 static void    (WINAPI *pMFHeapFree)(void *p);
 static HRESULT (WINAPI *pMFPutWaitingWorkItem)(HANDLE event, LONG priority, IMFAsyncResult *result, MFWORKITEM_KEY *key);
+static HRESULT (WINAPI *pMFAllocateSerialWorkQueue)(DWORD queue, DWORD *serial_queue);
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -312,7 +313,8 @@ static void init_functions(void)
 {
     HMODULE mod = GetModuleHandleA("mfplat.dll");
 
-#define X(f) if (!(p##f = (void*)GetProcAddress(mod, #f))) return;
+#define X(f) p##f = (void*)GetProcAddress(mod, #f)
+    X(MFAllocateSerialWorkQueue);
     X(MFCopyImage);
     X(MFCreateSourceResolver);
     X(MFCreateMFByteStreamOnStream);
@@ -1092,6 +1094,63 @@ todo_wine
     ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
 }
 
+static void test_serial_queue(void)
+{
+    static const DWORD queue_ids[] =
+    {
+        MFASYNC_CALLBACK_QUEUE_STANDARD,
+        MFASYNC_CALLBACK_QUEUE_RT,
+        MFASYNC_CALLBACK_QUEUE_IO,
+        MFASYNC_CALLBACK_QUEUE_TIMER,
+        MFASYNC_CALLBACK_QUEUE_MULTITHREADED,
+        MFASYNC_CALLBACK_QUEUE_LONG_FUNCTION,
+    };
+    DWORD queue, serial_queue;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!pMFAllocateSerialWorkQueue)
+    {
+        skip("Serial queues are not supported.\n");
+        return;
+    }
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(queue_ids); ++i)
+    {
+        BOOL broken_types = queue_ids[i] == MFASYNC_CALLBACK_QUEUE_TIMER ||
+                queue_ids[i] == MFASYNC_CALLBACK_QUEUE_LONG_FUNCTION;
+
+        hr = pMFAllocateSerialWorkQueue(queue_ids[i], &serial_queue);
+        ok(hr == S_OK || broken(broken_types && hr == E_INVALIDARG) /* Win8 */,
+                "%u: failed to allocate a queue, hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = MFUnlockWorkQueue(serial_queue);
+            ok(hr == S_OK, "%u: failed to unlock the queue, hr %#x.\n", i, hr);
+        }
+    }
+
+    /* Chain them together. */
+    hr = pMFAllocateSerialWorkQueue(MFASYNC_CALLBACK_QUEUE_STANDARD, &serial_queue);
+    ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+
+    hr = pMFAllocateSerialWorkQueue(serial_queue, &queue);
+    ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+
+    hr = MFUnlockWorkQueue(serial_queue);
+    ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+
+    hr = MFUnlockWorkQueue(queue);
+    ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -1114,6 +1173,7 @@ START_TEST(mfplat)
     test_MFCreateCollection();
     test_MFHeapAlloc();
     test_scheduled_items();
+    test_serial_queue();
 
     CoUninitialize();
 }
