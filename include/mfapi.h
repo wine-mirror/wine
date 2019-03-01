@@ -115,6 +115,8 @@ HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result);
 HRESULT WINAPI MFLockPlatform(void);
 HRESULT WINAPI MFPutWorkItem(DWORD queue, IMFAsyncCallback *callback, IUnknown *state);
 HRESULT WINAPI MFPutWorkItemEx(DWORD queue, IMFAsyncResult *result);
+HRESULT WINAPI MFScheduleWorkItem(IMFAsyncCallback *callback, IUnknown *state, INT64 timeout, MFWORKITEM_KEY *key);
+HRESULT WINAPI MFScheduleWorkItemEx(IMFAsyncResult *result, INT64 timeout, MFWORKITEM_KEY *key);
 HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags, UINT32 cinput,
                            MFT_REGISTER_TYPE_INFO *input_types, UINT32 coutput,
                            MFT_REGISTER_TYPE_INFO *output_types, IMFAttributes *attributes);

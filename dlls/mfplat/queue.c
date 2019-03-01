@@ -385,3 +385,50 @@ HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result)
 
     return hr;
 }
+
+static HRESULT schedule_work_item(IMFAsyncResult *result, INT64 timeout, MFWORKITEM_KEY *key)
+{
+    FIXME("%p, %s, %p.\n", result, wine_dbgstr_longlong(timeout), key);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      MFScheduleWorkItemEx (mfplat.@)
+ */
+HRESULT WINAPI MFScheduleWorkItemEx(IMFAsyncResult *result, INT64 timeout, MFWORKITEM_KEY *key)
+{
+    TRACE("%p, %s, %p.\n", result, wine_dbgstr_longlong(timeout), key);
+
+    return schedule_work_item(result, timeout, key);
+}
+
+/***********************************************************************
+ *      MFScheduleWorkItemEx (mfplat.@)
+ */
+HRESULT WINAPI MFScheduleWorkItem(IMFAsyncCallback *callback, IUnknown *state, INT64 timeout, MFWORKITEM_KEY *key)
+{
+    IMFAsyncResult *result;
+    HRESULT hr;
+
+    TRACE("%p, %p, %s, %p.\n", callback, state, wine_dbgstr_longlong(timeout), key);
+
+    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+        return hr;
+
+    hr = schedule_work_item(result, timeout, key);
+
+    IMFAsyncResult_Release(result);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      MFCancelWorkItem (mfplat.@)
+ */
+HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key)
+{
+    FIXME("%s.\n", wine_dbgstr_longlong(key));
+
+    return E_NOTIMPL;
+}

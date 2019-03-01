@@ -28,7 +28,7 @@
 @ stub MFCalculateBitmapImageSize
 @ stub MFCalculateImageSize
 @ stub MFCancelCreateFile
-@ stub MFCancelWorkItem
+@ stdcall MFCancelWorkItem(int64)
 @ stub MFCompareFullToPartialMediaType
 @ stub MFCompareSockaddrAddresses
 @ stub MFConvertColorInfoFromDXVA
@@ -124,8 +124,8 @@
 @ stdcall MFPutWorkItemEx(long ptr)
 @ stub MFRecordError
 @ stub MFRemovePeriodicCallback
-@ stub MFScheduleWorkItem
-@ stub MFScheduleWorkItemEx
+@ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
+@ stdcall MFScheduleWorkItemEx(ptr int64 ptr)
 @ stub MFSerializeAttributesToStream
 @ stub MFSerializeEvent
 @ stub MFSerializeMediaTypeToStream

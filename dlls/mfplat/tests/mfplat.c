@@ -43,6 +43,7 @@ static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteS
 static HRESULT (WINAPI *pMFCreateMemoryBuffer)(DWORD max_length, IMFMediaBuffer **buffer);
 static void*   (WINAPI *pMFHeapAlloc)(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
 static void    (WINAPI *pMFHeapFree)(void *p);
+static HRESULT (WINAPI *pMFPutWaitingWorkItem)(HANDLE event, LONG priority, IMFAsyncResult *result, MFWORKITEM_KEY *key);
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -318,6 +319,7 @@ static void init_functions(void)
     X(MFCreateMemoryBuffer);
     X(MFHeapAlloc);
     X(MFHeapFree);
+    X(MFPutWaitingWorkItem);
 #undef X
 }
 
@@ -718,13 +720,13 @@ static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
 
 static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
 {
-    ok(0, "Unexpected call.\n");
+    ok(flags != NULL && queue != NULL, "Unexpected arguments.\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
-    ok(0, "Unexpected call.\n");
+    ok(result != NULL, "Unexpected result object.\n");
     return E_NOTIMPL;
 }
 
@@ -1035,6 +1037,61 @@ static void test_MFHeapAlloc(void)
     pMFHeapFree(res);
 }
 
+static void test_scheduled_items(void)
+{
+    IMFAsyncCallback callback = { &testcallbackvtbl };
+    IMFAsyncResult *result;
+    MFWORKITEM_KEY key, key2;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    hr = MFScheduleWorkItem(&callback, NULL, -5000, &key);
+todo_wine
+    ok(hr == S_OK, "Failed to schedule item, hr %#x.\n", hr);
+
+    hr = MFCancelWorkItem(key);
+todo_wine
+    ok(hr == S_OK, "Failed to cancel item, hr %#x.\n", hr);
+
+    hr = MFCancelWorkItem(key);
+todo_wine
+    ok(hr == MF_E_NOT_FOUND || broken(hr == S_OK) /* < win10 */, "Unexpected hr %#x.\n", hr);
+
+    if (!pMFPutWaitingWorkItem)
+    {
+        skip("Waiting items are not supported.\n");
+        return;
+    }
+
+    hr = MFCreateAsyncResult(NULL, &callback, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#x.\n", hr);
+
+    hr = pMFPutWaitingWorkItem(NULL, 0, result, &key);
+    ok(hr == S_OK, "Failed to add waiting item, hr %#x.\n", hr);
+
+    hr = pMFPutWaitingWorkItem(NULL, 0, result, &key2);
+    ok(hr == S_OK, "Failed to add waiting item, hr %#x.\n", hr);
+
+    hr = MFCancelWorkItem(key);
+    ok(hr == S_OK, "Failed to cancel item, hr %#x.\n", hr);
+
+    hr = MFCancelWorkItem(key2);
+    ok(hr == S_OK, "Failed to cancel item, hr %#x.\n", hr);
+
+    IMFAsyncResult_Release(result);
+
+    hr = MFScheduleWorkItem(&callback, NULL, -5000, &key);
+    ok(hr == S_OK, "Failed to schedule item, hr %#x.\n", hr);
+
+    hr = MFCancelWorkItem(key);
+    ok(hr == S_OK, "Failed to cancel item, hr %#x.\n", hr);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -1056,6 +1113,7 @@ START_TEST(mfplat)
     test_MFCopyImage();
     test_MFCreateCollection();
     test_MFHeapAlloc();
+    test_scheduled_items();
 
     CoUninitialize();
 }
