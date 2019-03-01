@@ -1086,7 +1086,7 @@ static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
             /* The caller has to free the serial number */
             if (*value)
             {
-                *serial_number = (WCHAR*)strdupAtoW(value);
+                *serial_number = strdupAtoW(value);
                 found_serial = 1;
             }
         }

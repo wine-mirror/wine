@@ -380,7 +380,7 @@ static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
     i = 0;
     LIST_FOR_EACH_ENTRY(ptr, &pnp_devset, struct pnp_device, entry)
     {
-        (*devices)->Objects[i] = (DEVICE_OBJECT*)ptr->device;
+        (*devices)->Objects[i] = ptr->device;
         i++;
     }
     LeaveCriticalSection(&device_list_cs);
