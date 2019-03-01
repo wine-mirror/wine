@@ -34,17 +34,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
  */
 #define WINE_VULKAN_ICD_VERSION 4
 
-/* All Vulkan structures use this structure for the first elements. */
-struct wine_vk_structure_header
-{
-    VkStructureType sType;
-    void *pNext;
-};
-
 #define wine_vk_find_struct(s, t) wine_vk_find_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
 static void *wine_vk_find_struct_(void *s, VkStructureType t)
 {
-    struct wine_vk_structure_header *header;
+    VkBaseOutStructure *header;
 
     for (header = s; header; header = header->pNext)
     {
@@ -250,7 +243,7 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
      */
     if (src->pNext)
     {
-        const struct wine_vk_structure_header *header;
+        const VkBaseInStructure *header;
 
         dst->pNext = NULL;
         for (header = src->pNext; header; header = header->pNext)
@@ -369,7 +362,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
      */
     if (src->pNext)
     {
-        const struct wine_vk_structure_header *header;
+        const VkBaseInStructure *header;
 
         for (header = src->pNext; header; header = header->pNext)
         {
@@ -997,8 +990,8 @@ void WINAPI wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index,
 
 void WINAPI wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *info, VkQueue *queue)
 {
-    const struct wine_vk_structure_header *chain;
     struct VkQueue_T *matching_queue;
+    const VkBaseInStructure *chain;
 
     TRACE("%p, %p, %p\n", device, info, queue);
 
@@ -1111,7 +1104,7 @@ VkResult WINAPI wine_vkQueueSubmit(VkQueue queue, uint32_t count,
         {
             ERR("Unable to allocate memory for comman buffers!\n");
             res = VK_ERROR_OUT_OF_HOST_MEMORY;
-            goto err;
+            goto done;
         }
 
         for (j = 0; j < num_command_buffers; j++)
@@ -1123,7 +1116,7 @@ VkResult WINAPI wine_vkQueueSubmit(VkQueue queue, uint32_t count,
 
     res = queue->device->funcs.p_vkQueueSubmit(queue->queue, count, submits_host, fence);
 
-err:
+done:
     for (i = 0; i < count; i++)
     {
         heap_free((void *)submits_host[i].pCommandBuffers);
