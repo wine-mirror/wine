@@ -1050,11 +1050,9 @@ static void test_scheduled_items(void)
     ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
 
     hr = MFScheduleWorkItem(&callback, NULL, -5000, &key);
-todo_wine
     ok(hr == S_OK, "Failed to schedule item, hr %#x.\n", hr);
 
     hr = MFCancelWorkItem(key);
-todo_wine
     ok(hr == S_OK, "Failed to cancel item, hr %#x.\n", hr);
 
     hr = MFCancelWorkItem(key);
@@ -1084,15 +1082,13 @@ todo_wine
     IMFAsyncResult_Release(result);
 
     hr = MFScheduleWorkItem(&callback, NULL, -5000, &key);
-todo_wine
     ok(hr == S_OK, "Failed to schedule item, hr %#x.\n", hr);
 
     hr = MFCancelWorkItem(key);
-todo_wine
     ok(hr == S_OK, "Failed to cancel item, hr %#x.\n", hr);
 
     hr = MFShutdown();
-    ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
 static void test_serial_queue(void)

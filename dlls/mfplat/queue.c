@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 #define MAX_USER_QUEUE_HANDLES 124
 
 #define WAIT_ITEM_KEY_MASK      (0x82000000)
+#define SCHEDULED_ITEM_KEY_MASK (0x80000000)
 
 static LONG next_item_key;
 
@@ -53,6 +54,7 @@ struct work_item
     union
     {
         TP_WAIT *wait_object;
+        TP_TIMER *timer_object;
     } u;
 };
 
@@ -414,6 +416,30 @@ static void CALLBACK waiting_item_cancelable_callback(TP_CALLBACK_INSTANCE *inst
     release_work_item(item);
 }
 
+static void CALLBACK scheduled_item_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
+{
+    struct work_item *item = context;
+
+    TRACE("result object %p.\n", item->result);
+
+    invoke_async_callback(item->result);
+
+    release_work_item(item);
+}
+
+static void CALLBACK scheduled_item_cancelable_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
+{
+    struct work_item *item = context;
+
+    TRACE("result object %p.\n", item->result);
+
+    queue_release_pending_item(item);
+
+    invoke_async_callback(item->result);
+
+    release_work_item(item);
+}
+
 static void queue_mark_item_pending(DWORD mask, struct work_item *item, MFWORKITEM_KEY *key)
 {
     *key = generate_item_key(mask);
@@ -450,6 +476,36 @@ static HRESULT queue_submit_wait(struct queue *queue, HANDLE event, LONG priorit
     return S_OK;
 }
 
+static HRESULT queue_submit_timer(struct queue *queue, IMFAsyncResult *result, INT64 timeout, MFWORKITEM_KEY *key)
+{
+    PTP_TIMER_CALLBACK callback;
+    struct work_item *item;
+    FILETIME filetime;
+    LARGE_INTEGER t;
+
+    if (!(item = alloc_work_item(queue, result)))
+        return E_OUTOFMEMORY;
+
+    if (key)
+    {
+        queue_mark_item_pending(SCHEDULED_ITEM_KEY_MASK, item, key);
+        callback = scheduled_item_cancelable_callback;
+    }
+    else
+        callback = scheduled_item_callback;
+
+    t.QuadPart = timeout * 1000 * 10;
+    filetime.dwLowDateTime = t.u.LowPart;
+    filetime.dwHighDateTime = t.u.HighPart;
+
+    item->u.timer_object = CreateThreadpoolTimer(callback, item, &queue->env);
+    SetThreadpoolTimer(item->u.timer_object, &filetime, 0, 0);
+
+    TRACE("dispatched %p.\n", result);
+
+    return S_OK;
+}
+
 static HRESULT queue_cancel_item(struct queue *queue, MFWORKITEM_KEY key)
 {
     HRESULT hr = MF_E_NOT_FOUND;
@@ -463,6 +519,8 @@ static HRESULT queue_cancel_item(struct queue *queue, MFWORKITEM_KEY key)
             key >>= 32;
             if ((key & WAIT_ITEM_KEY_MASK) == WAIT_ITEM_KEY_MASK)
                 CloseThreadpoolWait(item->u.wait_object);
+            else if ((key & SCHEDULED_ITEM_KEY_MASK) == SCHEDULED_ITEM_KEY_MASK)
+                CloseThreadpoolTimer(item->u.timer_object);
             else
                 WARN("Unknown item key mask %#x.\n", (DWORD)key);
             queue_release_pending_item(item);
@@ -771,9 +829,17 @@ HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result)
 
 static HRESULT schedule_work_item(IMFAsyncResult *result, INT64 timeout, MFWORKITEM_KEY *key)
 {
-    FIXME("%p, %s, %p.\n", result, wine_dbgstr_longlong(timeout), key);
+    struct queue *queue;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    if (FAILED(hr = grab_queue(MFASYNC_CALLBACK_QUEUE_TIMER, &queue)))
+        return hr;
+
+    TRACE("%p, %s, %p.\n", result, wine_dbgstr_longlong(timeout), key);
+
+    hr = queue_submit_timer(queue, result, timeout, key);
+
+    return hr;
 }
 
 /***********************************************************************
