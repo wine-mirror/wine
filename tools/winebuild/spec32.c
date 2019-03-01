@@ -968,7 +968,7 @@ void output_def_file( DLLSPEC *spec, int include_private )
             else if (strcmp(name, odp->link_name)) /* try to reduce output */
             {
                 output( "=%s", odp->link_name );
-                if (!kill_at && target_cpu == CPU_x86 && !(odp->flags & (FLAG_THISCALL | FLAG_FASTCALL)))
+                if (!kill_at && target_cpu == CPU_x86 && !(odp->flags & FLAG_THISCALL))
                     output( "@%d", at_param );
             }
             break;

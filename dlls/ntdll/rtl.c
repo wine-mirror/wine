@@ -52,7 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #ifdef __i386__
 #define DEFINE_FASTCALL_WRAPPER(func,args) \
-    __ASM_GLOBAL_FUNC( __fastcall_ ## func, \
+    __ASM_STDCALL_FUNC( __fastcall_ ## func, args, \
                        "popl %eax\n\t" \
                        "pushl %edx\n\t" \
                        "pushl %ecx\n\t" \
