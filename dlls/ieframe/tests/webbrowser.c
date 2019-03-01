@@ -4069,7 +4069,7 @@ static void test_SetAdvise(void)
     ok(!flags, "got %08x\n", aspects);
     ok(sink == NULL, "got %p\n", sink);
 
-    hr = IViewObject2_SetAdvise(view, DVASPECT_CONTENT, 0, (IAdviseSink *)&test_sink);
+    hr = IViewObject2_SetAdvise(view, DVASPECT_CONTENT, 0, &test_sink);
     ok(hr == S_OK, "got %08x\n", hr);
 
     aspects = flags = 0xdeadbeef;
