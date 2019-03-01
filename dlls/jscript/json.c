@@ -89,14 +89,14 @@ static HRESULT parse_json_string(json_parse_ctx_t *ctx, WCHAR **r)
         return E_OUTOFMEMORY;
     if(len)
         memcpy(buf, ptr, len*sizeof(WCHAR));
-    buf[len] = 0;
 
-    if(!unescape(buf)) {
+    if(!unescape(buf, &len)) {
         FIXME("unescape failed\n");
         heap_free(buf);
         return E_FAIL;
     }
 
+    buf[len] = 0;
     ctx->ptr++;
     *r = buf;
     return S_OK;

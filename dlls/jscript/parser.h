@@ -63,7 +63,7 @@ static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
 }
 
 BOOL is_identifier_char(WCHAR) DECLSPEC_HIDDEN;
-BOOL unescape(WCHAR*) DECLSPEC_HIDDEN;
+BOOL unescape(WCHAR*,size_t*) DECLSPEC_HIDDEN;
 HRESULT parse_decimal(const WCHAR**,const WCHAR*,double*) DECLSPEC_HIDDEN;
 
 typedef enum {

@@ -260,19 +260,20 @@ static BOOL skip_spaces(parser_ctx_t *ctx)
     return ctx->ptr != ctx->end;
 }
 
-BOOL unescape(WCHAR *str)
+BOOL unescape(WCHAR *str, size_t *len)
 {
-    WCHAR *pd, *p, c;
+    WCHAR *pd, *p, c, *end = str + *len;
     int i;
 
     pd = p = str;
-    while(*p) {
+    while(p < end) {
         if(*p != '\\') {
             *pd++ = *p++;
             continue;
         }
 
-        p++;
+        if(++p == end)
+            return FALSE;
 
         switch(*p) {
         case '\'':
@@ -296,6 +297,8 @@ BOOL unescape(WCHAR *str)
             c = '\r';
             break;
         case 'x':
+            if(p + 2 >= end)
+                return FALSE;
             i = hex_to_int(*++p);
             if(i == -1)
                 return FALSE;
@@ -307,6 +310,8 @@ BOOL unescape(WCHAR *str)
             c += i;
             break;
         case 'u':
+            if(p + 4 >= end)
+                return FALSE;
             i = hex_to_int(*++p);
             if(i == -1)
                 return FALSE;
@@ -330,9 +335,9 @@ BOOL unescape(WCHAR *str)
         default:
             if(isdigitW(*p)) {
                 c = *p++ - '0';
-                if(isdigitW(*p)) {
+                if(p < end && isdigitW(*p)) {
                     c = c*8 + (*p++ - '0');
-                    if(isdigitW(*p))
+                    if(p < end && isdigitW(*p))
                         c = c*8 + (*p++ - '0');
                 }
                 p--;
@@ -345,7 +350,7 @@ BOOL unescape(WCHAR *str)
         p++;
     }
 
-    *pd = 0;
+    *len = pd - str;
     return TRUE;
 }
 
@@ -372,7 +377,7 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret, WCHAR endc
 {
     const WCHAR *ptr = ++ctx->ptr;
     WCHAR *wstr;
-    int len;
+    size_t len;
 
     while(ctx->ptr < ctx->end && *ctx->ptr != endch) {
         if(*ctx->ptr++ == '\\')
@@ -386,15 +391,15 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret, WCHAR endc
 
     *ret = wstr = parser_alloc(ctx, (len+1)*sizeof(WCHAR));
     memcpy(wstr, ptr, len*sizeof(WCHAR));
-    wstr[len] = 0;
 
     ctx->ptr++;
 
-    if(!unescape(wstr)) {
+    if(!unescape(wstr, &len)) {
         WARN("unescape failed\n");
         return lex_error(ctx, E_FAIL);
     }
 
+    wstr[len] = 0;
     return tStringLiteral;
 }
 
