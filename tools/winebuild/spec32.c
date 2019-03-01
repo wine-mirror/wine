@@ -218,13 +218,14 @@ static void output_relay_debug( DLLSPEC *spec )
 
         if (!needs_relay( odp )) continue;
 
-        output( "\t.align %d\n", get_alignment(4) );
-        output( ".L__wine_spec_relay_entry_point_%d:\n", i );
-        output_cfi( ".cfi_startproc" );
-
         switch (target_cpu)
         {
         case CPU_x86:
+            output( "\t.align %d\n", get_alignment(4) );
+            output( "\t.long 0x90909090,0x90909090\n" );
+            output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+            output_cfi( ".cfi_startproc" );
+            output( "\t.byte 0x8b,0xff,0x55,0x8b,0xec,0x5d\n" );  /* hotpatch prolog */
             if (odp->flags & (FLAG_THISCALL | FLAG_FASTCALL))  /* add the register arguments */
             {
                 output( "\tpopl %%eax\n" );
@@ -251,6 +252,7 @@ static void output_relay_debug( DLLSPEC *spec )
                 output( "\tret $%u\n", get_args_size( odp ));
             else
                 output( "\tret\n" );
+            output_cfi( ".cfi_endproc" );
             break;
 
         case CPU_ARM:
@@ -263,6 +265,9 @@ static void output_relay_debug( DLLSPEC *spec )
                     has_float = is_float_arg( odp, j );
 
             val = (odp->u.func.args_str_offset << 16) | (i - spec->base);
+            output( "\t.align %d\n", get_alignment(4) );
+            output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+            output_cfi( ".cfi_startproc" );
             output( "\tpush {r0-r3}\n" );
             output( "\tmov r2, SP\n");
             if (has_float) output( "\tvpush {s0-s15}\n" );
@@ -279,10 +284,14 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tadd SP, #%u\n", 24 + (has_float ? 64 : 0) );
             output( "\tbx IP\n");
             output( "2:\t.long .L__wine_spec_relay_descr-1b\n" );
+            output_cfi( ".cfi_endproc" );
             break;
         }
 
         case CPU_ARM64:
+            output( "\t.align %d\n", get_alignment(4) );
+            output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+            output_cfi( ".cfi_startproc" );
             switch (odp->u.func.nb_args)
             {
             default:
@@ -314,9 +323,14 @@ static void output_relay_debug( DLLSPEC *spec )
             if (odp->u.func.nb_args)
                 output( "\tadd SP, SP, #%u\n", 8 * ((min(odp->u.func.nb_args, 8) + 1) & ~1) );
             output( "\tret\n");
+            output_cfi( ".cfi_endproc" );
             break;
 
         case CPU_x86_64:
+            output( "\t.align %d\n", get_alignment(4) );
+            output( "\t.long 0x90909090,0x90909090\n" );
+            output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+            output_cfi( ".cfi_startproc" );
             switch (odp->u.func.nb_args)
             {
             default: output( "\tmovq %%%s,32(%%rsp)\n", is_float_arg( odp, 3 ) ? "xmm3" : "r9" );
@@ -333,12 +347,12 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tleaq .L__wine_spec_relay_descr(%%rip),%%rcx\n" );
             output( "\tcallq *8(%%rcx)\n" );
             output( "\tret\n" );
+            output_cfi( ".cfi_endproc" );
             break;
 
         default:
             assert(0);
         }
-        output_cfi( ".cfi_endproc" );
     }
 }
 
