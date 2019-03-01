@@ -323,6 +323,77 @@ static void test_find_pin(void)
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_pin_info(void)
+{
+    const WCHAR *filename = load_resource(mp3file);
+    IBaseFilter *filter = create_mpeg_splitter();
+    ULONG ref, expect_ref;
+    IFilterGraph2 *graph;
+    PIN_DIRECTION dir;
+    PIN_INFO info;
+    HRESULT hr;
+    WCHAR *id;
+    IPin *pin;
+    BOOL ret;
+
+    graph = connect_input(filter, filename);
+
+    hr = IBaseFilter_FindPin(filter, inputW, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    expect_ref = get_refcount(filter);
+    ref = get_refcount(pin);
+    ok(ref == expect_ref, "Got unexpected refcount %d.\n", ref);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, inputW), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ref = get_refcount(filter);
+    ok(ref == expect_ref + 1, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    todo_wine ok(ref == expect_ref + 1, "Got unexpected refcount %d.\n", ref);
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, inputW), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, audioW, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, audioW), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_OUTPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, audioW), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    IPin_Release(pin);
+
+    IFilterGraph2_Release(graph);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(mpegsplit)
 {
     CoInitialize(NULL);
@@ -330,6 +401,7 @@ START_TEST(mpegsplit)
     test_interfaces();
     test_enum_pins();
     test_find_pin();
+    test_pin_info();
 
     CoUninitialize();
 }
