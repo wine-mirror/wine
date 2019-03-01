@@ -590,7 +590,7 @@ static char *demangle_datatype (char **str, compound_type *ct,
   if (!ct->expression)
     return NULL;
 
-  return (char *)(*str = iter);
+  return *str = iter;
 }
 
 
@@ -629,7 +629,7 @@ static char *get_constraints_convention_1 (char **str, compound_type *ct)
   char *iter = *str, **retval = str;
 
   if (ct->have_qualifiers)
-    return (char *)*str; /* Previously got constraints for this type */
+    return *str; /* Previously got constraints for this type */
 
   if (*iter == '?' || *iter == 'A')
   {
@@ -651,7 +651,7 @@ static char *get_constraints_convention_1 (char **str, compound_type *ct)
     }
   }
 
-  return (char *)(*retval = iter);
+  return *retval = iter;
 }
 
 
@@ -666,7 +666,7 @@ static char *get_constraints_convention_2 (char **str, compound_type *ct)
 
   /* FIXME: Why do arrays have both convention 1 & 2 constraints? */
   if (ct->have_qualifiers && ct->dest_type != 'Q')
-    return (char *)*str; /* Previously got constraints for this type */
+    return *str; /* Previously got constraints for this type */
 
   ct->have_qualifiers = TRUE; /* Even if none, we've got all we're getting */
 
@@ -687,7 +687,7 @@ static char *get_constraints_convention_2 (char **str, compound_type *ct)
     break;
   }
 
-  return (char *)(*retval = iter);
+  return *retval = iter;
 }
 
 

@@ -311,7 +311,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
 
   if (arg < 0)
   {
-    sym->return_text = (char*)type_str;
+    sym->return_text = type_str;
     sym->return_type = dest_type;
   }
   else
@@ -332,7 +332,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
       sym->arg_name [arg] = str_substring (proto_str, iter);
       proto_str = iter;
     }
-    sym->arg_text [arg] = (char*)type_str;
+    sym->arg_text [arg] = type_str;
 
   }
   return proto_str;

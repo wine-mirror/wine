@@ -413,7 +413,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
     if (memcmp(signature, "NB10", 4) == 0)
     {
 	const CODEVIEW_PDB_DATA* pdb_data;
-	pdb_data = (const void *)cv_base;
+	pdb_data = cv_base;
 
         printf("      Filepos:           0x%08lX\n", pdb_data->filepos);
 	printf("      TimeStamp:         %08X (%s)\n",
@@ -426,7 +426,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
     {
 	const OMFSignatureRSDS* rsds_data;
 
-	rsds_data = (const void *)cv_base;
+	rsds_data = cv_base;
 	printf("      Guid:              %s\n", get_guid_str(&rsds_data->guid));
 	printf("      Age:               %08X\n", rsds_data->age);
 	printf("      Filename:          %s\n", rsds_data->name);

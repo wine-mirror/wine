@@ -336,7 +336,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
             for (j = cfile; j < src->nSrcFiles && j < cfile + indx[i]; j++)
             {
                 /* FIXME: in some cases, it's a p_string but WHEN ? */
-                if (cstr + offset[j] >= (const char*)start_cstr /* wrap around */ &&
+                if (cstr + offset[j] >= start_cstr /* wrap around */ &&
                     cstr + offset[j] < (const char*)src + symbols->srcmodule_size)
                     printf("\t\t\tSource file: %s\n", cstr + offset[j]);
                 else
@@ -367,7 +367,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t\tAge:           %08u\n"
                    "\t\tfile1:         %s\n"
                    "\t\tfile2:         %s\n",
-                   (ULONG_PTR)((const char*)imp - (const char*)first),
+                   (ULONG_PTR)((const char*)imp - first),
                    imp->unknown1,
                    imp->unknown2,
                    imp->TimeDateStamp,

@@ -91,7 +91,7 @@ static int full_numeric_leaf(struct full_value* fv, const unsigned short int* le
 
         case LF_USHORT:
             length += 2;
-            fv->v.i = *(const unsigned short*)leaf;
+            fv->v.i = *leaf;
             break;
 
         case LF_LONG:
@@ -1490,7 +1490,7 @@ void codeview_dump_linetab2(const char* linetab, DWORD size, const char* strimag
             break;
         default:
             printf("%sblock end %x\n", pfx, lt2->header);
-            lt2 = (const struct codeview_linetab2*)((const char*)linetab + size);
+            lt2 = (const struct codeview_linetab2*)(linetab + size);
             continue;
         }
         lt2 = codeview_linetab2_next_block(lt2);
