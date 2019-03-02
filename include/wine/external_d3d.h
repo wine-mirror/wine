@@ -49,8 +49,6 @@ extern "C" {
 
   typedef HRESULT (*PFN_native_core_create_d3d10_device)(native_info,IDXGIFactory*,IDXGIAdapter*,UINT,D3D_FEATURE_LEVEL,ID3D10Device**);
 
-  extern native_info g_native_info;
-
 #ifdef __cplusplus
 }
 #endif
