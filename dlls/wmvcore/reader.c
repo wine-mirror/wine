@@ -2315,3 +2315,8 @@ HRESULT WINAPI WMCreateSyncReader(IUnknown *pcert, DWORD rights, IWMSyncReader *
 
     return S_OK;
 }
+
+HRESULT WINAPI WMCreateSyncReaderPriv(IWMSyncReader **syncreader)
+{
+    return WMCreateSyncReader(NULL, 0, syncreader);
+}
