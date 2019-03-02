@@ -1858,6 +1858,36 @@ interface IWMWriterPreprocess : IUnknown
         [in] DWORD flags);
 };
 
+[
+    object,
+    uuid(05e5ac9f-3fb6-4508-bb43-a4067ba1ebe8),
+    pointer_default(unique),
+    local
+]
+interface IWMLicenseBackup : IUnknown
+{
+    HRESULT BackupLicenses(
+        [in] DWORD dwFlags,
+        [in] IWMStatusCallback *pCallback);
+
+    HRESULT CancelLicenseBackup();
+}
+
+[
+    object,
+    uuid(c70b6334-a22e-4efb-a245-15e65a004a13),
+    pointer_default(unique),
+    local
+]
+interface IWMLicenseRestore : IUnknown
+{
+    HRESULT RestoreLicenses(
+        [in] DWORD dwFlags,
+        [in] IWMStatusCallback *pCallback);
+
+    HRESULT CancelLicenseRestore();
+}
+
 cpp_quote("HRESULT WINAPI WMCheckURLExtension(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCheckURLScheme(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
