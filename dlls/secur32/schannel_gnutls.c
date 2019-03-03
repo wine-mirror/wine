@@ -668,6 +668,7 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, ULONG *size)
         heap_free(path);
         return NULL;
     }
+    heap_free(path);
 
     if (!RegQueryValueExW(hkey, keyexchangeW, 0, &type, NULL, &len)) spec = AT_KEYEXCHANGE;
     else if (!RegQueryValueExW(hkey, signatureW, 0, &type, NULL, &len)) spec = AT_SIGNATURE;
@@ -699,7 +700,6 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, ULONG *size)
     else heap_free(buf);
 
     RegCloseKey(hkey);
-    heap_free(path);
     return ret;
 }
 
