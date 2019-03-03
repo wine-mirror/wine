@@ -3147,11 +3147,12 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
     return TRUE;
 }
 
-static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const struct wined3d_state *state)
+static unsigned int find_draw_buffers_mask(const struct wined3d_context *context, const struct wined3d_state *state)
 {
     struct wined3d_rendertarget_view * const *rts = state->fb->render_targets;
     struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
-    DWORD rt_mask, mask;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int rt_mask, mask;
     unsigned int i;
 
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
@@ -3160,7 +3161,7 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
         return context_generate_rt_mask_from_resource(rts[0]->resource);
 
     rt_mask = ps ? ps->reg_maps.rt_mask : 1;
-    rt_mask &= context->d3d_info->valid_rt_mask;
+    rt_mask &= (1u << gl_info->limits.buffers) - 1;
 
     mask = rt_mask;
     while (mask)
@@ -3176,7 +3177,7 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
 /* Context activation is done by the caller. */
 void context_state_fb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD rt_mask = find_draw_buffers_mask(context, state);
+    unsigned int rt_mask = find_draw_buffers_mask(context, state);
     const struct wined3d_fb_state *fb = state->fb;
     DWORD color_location = 0;
     DWORD *cur_mask;
