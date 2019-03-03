@@ -5138,7 +5138,9 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
     {
         double dbl;
 
-        VarR8FromDec(&V_DECIMAL(pVarIn), &dbl);
+        hRet = VarR8FromDec(&V_DECIMAL(pVarIn), &dbl);
+        if (FAILED(hRet))
+            break;
 
         if (dbl>0.0f)
             dbl = floor(dbl*pow(10,deci)+0.5);
@@ -5146,7 +5148,7 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
             dbl = ceil(dbl*pow(10,deci)-0.5);
 
         V_VT(pVarOut)=VT_DECIMAL;
-        VarDecFromR8(dbl, &V_DECIMAL(pVarOut));
+        hRet = VarDecFromR8(dbl, &V_DECIMAL(pVarOut));
         break;
     }
     /* cases we don't know yet */
