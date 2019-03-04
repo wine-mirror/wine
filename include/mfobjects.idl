@@ -553,6 +553,8 @@ interface IMFMediaEvent : IMFAttributes
     HRESULT GetValue([out] PROPVARIANT *pvValue);
 }
 
+cpp_quote("#define MF_EVENT_FLAG_NO_WAIT 0x00000001")
+
 [
     object,
     uuid(2cd0bd52-bcd5-4b89-b62c-eadc0c031e7d)
