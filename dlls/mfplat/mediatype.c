@@ -36,6 +36,7 @@ struct stream_desc
     struct attributes attributes;
     IMFStreamDescriptor IMFStreamDescriptor_iface;
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
+    DWORD identifier;
 };
 
 static inline struct media_type *impl_from_IMFMediaType(IMFMediaType *iface)
@@ -615,9 +616,13 @@ static HRESULT WINAPI stream_descriptor_CopyAllItems(IMFStreamDescriptor *iface,
 
 static HRESULT WINAPI stream_descriptor_GetStreamIdentifier(IMFStreamDescriptor *iface, DWORD *identifier)
 {
-    FIXME("%p, %p.\n", iface, identifier);
+    struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, identifier);
+
+    *identifier = stream_desc->identifier;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_descriptor_GetMediaTypeHandler(IMFStreamDescriptor *iface, IMFMediaTypeHandler **handler)
@@ -774,6 +779,8 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
     init_attribute_object(&object->attributes, 0);
     object->IMFStreamDescriptor_iface.lpVtbl = &streamdescriptorvtbl;
     object->IMFMediaTypeHandler_iface.lpVtbl = &mediatypehandlervtbl;
+    object->identifier = identifier;
+
     *descriptor = &object->IMFStreamDescriptor_iface;
 
     return S_OK;
