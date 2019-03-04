@@ -1494,7 +1494,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
          *   HANDLE32 SectionHandle       [in]     Section to be mapped
          *   DWORD    ProcessHandle       [in]     Process to be mapped into
          *   DWORD *  BaseAddress         [in/out] Address to be mapped at
-         *   DWORD    ZeroBits            [in]     (?? unclear ??)
+         *   DWORD    ZeroBits            [in]     Upper address bits that should be null, starting from bit 31
          *   DWORD    CommitSize          [in]     (?? unclear ??)
          *   LARGE_INTEGER *SectionOffset [in]     Offset within section
          *   DWORD *  ViewSize            [in]     Size of view
