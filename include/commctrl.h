@@ -216,11 +216,13 @@ typedef struct tagNMCHAR
 #define CDRF_DODEFAULT          0x0
 #define CDRF_NEWFONT            0x00000002
 #define CDRF_SKIPDEFAULT        0x00000004
+#define CDRF_DOERASE            0x00000008
 #define CDRF_NOTIFYPOSTPAINT    0x00000010
 #define CDRF_NOTIFYITEMDRAW     0x00000020
 #define CDRF_NOTIFYSUBITEMDRAW  0x00000020
 #define CDRF_NOTIFYPOSTERASE    0x00000040
 #define CDRF_NOTIFYITEMERASE    0x00000080      /*  obsolete ??? */
+#define CDRF_SKIPPOSTPAINT      0x00000100
 
 
 /* drawstage flags */
