@@ -45,6 +45,8 @@ static void*   (WINAPI *pMFHeapAlloc)(SIZE_T size, ULONG flags, char *file, int 
 static void    (WINAPI *pMFHeapFree)(void *p);
 static HRESULT (WINAPI *pMFPutWaitingWorkItem)(HANDLE event, LONG priority, IMFAsyncResult *result, MFWORKITEM_KEY *key);
 static HRESULT (WINAPI *pMFAllocateSerialWorkQueue)(DWORD queue, DWORD *serial_queue);
+static HRESULT (WINAPI *pMFAddPeriodicCallback)(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
+static HRESULT (WINAPI *pMFRemovePeriodicCallback)(DWORD key);
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -314,6 +316,7 @@ static void init_functions(void)
     HMODULE mod = GetModuleHandleA("mfplat.dll");
 
 #define X(f) p##f = (void*)GetProcAddress(mod, #f)
+    X(MFAddPeriodicCallback);
     X(MFAllocateSerialWorkQueue);
     X(MFCopyImage);
     X(MFCreateSourceResolver);
@@ -322,6 +325,7 @@ static void init_functions(void)
     X(MFHeapAlloc);
     X(MFHeapFree);
     X(MFPutWaitingWorkItem);
+    X(MFRemovePeriodicCallback);
 #undef X
 }
 
@@ -1199,6 +1203,49 @@ static void test_serial_queue(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static LONG periodic_counter;
+static void CALLBACK periodic_callback(IUnknown *context)
+{
+    InterlockedIncrement(&periodic_counter);
+}
+
+static void test_periodic_callback(void)
+{
+    DWORD period, key;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    period = 0;
+    hr = MFGetTimerPeriodicity(&period);
+    ok(hr == S_OK, "Failed to get timer perdiod, hr %#x.\n", hr);
+    ok(period == 10, "Unexpected period %u.\n", period);
+
+    if (!pMFAddPeriodicCallback)
+    {
+        win_skip("Periodic callbacks are not supported.\n");
+        MFShutdown();
+        return;
+    }
+
+    ok(periodic_counter == 0, "Unexpected counter value %u.\n", periodic_counter);
+
+    hr = pMFAddPeriodicCallback(periodic_callback, NULL, &key);
+    ok(hr == S_OK, "Failed to add periodic callback, hr %#x.\n", hr);
+    ok(key != 0, "Unexpected key %#x.\n", key);
+
+    Sleep(10 * period);
+
+    hr = pMFRemovePeriodicCallback(key);
+    ok(hr == S_OK, "Failed to remove callback, hr %#x.\n", hr);
+
+    ok(periodic_counter > 0, "Unexpected counter value %u.\n", periodic_counter);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -1222,6 +1269,7 @@ START_TEST(mfplat)
     test_MFHeapAlloc();
     test_scheduled_items();
     test_serial_queue();
+    test_periodic_callback();
 
     CoUninitialize();
 }

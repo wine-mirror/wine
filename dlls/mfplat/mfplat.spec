@@ -15,7 +15,7 @@
 @ stub GetAMSubtypeFromD3DFormat
 @ stub GetD3DFormatFromMFSubtype
 @ stub LFGetGlobalPool
-@ stub MFAddPeriodicCallback
+@ stdcall MFAddPeriodicCallback(ptr ptr ptr)
 @ stdcall MFAllocateWorkQueue(ptr)
 @ stdcall MFAllocateWorkQueueEx(long ptr)
 @ stub MFAppendCollection
@@ -100,7 +100,7 @@
 @ stub MFGetSockaddrFromNumericName
 @ stub MFGetStrideForBitmapInfoHeader
 @ stdcall MFGetSystemTime()
-@ stub MFGetTimerPeriodicity
+@ stdcall MFGetTimerPeriodicity(ptr)
 @ stub MFGetUncompressedVideoFormat
 @ stub MFGetWorkQueueMMCSSClass
 @ stub MFGetWorkQueueMMCSSTaskId
@@ -125,7 +125,7 @@
 @ stdcall MFPutWorkItem(long ptr ptr)
 @ stdcall MFPutWorkItemEx(long ptr)
 @ stub MFRecordError
-@ stub MFRemovePeriodicCallback
+@ stdcall MFRemovePeriodicCallback(long)
 @ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
 @ stdcall MFScheduleWorkItemEx(ptr int64 ptr)
 @ stub MFSerializeAttributesToStream

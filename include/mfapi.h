@@ -95,6 +95,9 @@ typedef enum
     MF_MULTITHREADED_WORKQUEUE,
 } MFASYNC_WORKQUEUE_TYPE;
 
+typedef void (CALLBACK *MFPERIODICCALLBACK)(IUnknown *context);
+
+HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
@@ -131,6 +134,7 @@ HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags
 HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name,
                            UINT32 flags, UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types,
                            UINT32 coutput, const MFT_REGISTER_TYPE_INFO* output_types);
+HRESULT WINAPI MFRemovePeriodicCallback(DWORD key);
 HRESULT WINAPI MFShutdown(void);
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags);
 HRESULT WINAPI MFUnlockPlatform(void);
