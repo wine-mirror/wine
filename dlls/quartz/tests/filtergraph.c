@@ -42,6 +42,7 @@ typedef struct TestFilterImpl
 static const WCHAR avifile[] = {'t','e','s','t','.','a','v','i',0};
 static const WCHAR mpegfile[] = {'t','e','s','t','.','m','p','g',0};
 static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
+static const WCHAR wavefile[] = {'t','e','s','t','.','w','a','v',0};
 
 static WCHAR *load_resource(const WCHAR *name)
 {
@@ -3215,6 +3216,7 @@ START_TEST(filtergraph)
     test_render_run(avifile, FALSE, TRUE);
     test_render_run(mpegfile, TRUE, TRUE);
     test_render_run(mp3file, TRUE, FALSE);
+    test_render_run(wavefile, TRUE, FALSE);
     test_enum_filters();
     test_graph_builder_render();
     test_graph_builder_connect();

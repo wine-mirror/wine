@@ -31,3 +31,7 @@ test.mpg RCDATA "test.mpg"
 /* ffmpeg -f lavfi -i "sine=frequency=500" -t 0.5 -ar 48000 -b:a 32k -f mp3 -acodec mp3 test.mp3 */
 /* @makedep: test.mp3 */
 test.mp3 RCDATA "test.mp3"
+
+/* ffmpeg -f lavfi -i "sine=frequency=600" -t 0.1 -ar 44100 -f wav -acodec pcm_u8 test.wav */
+/* @makedep: test.wav */
+test.wav RCDATA "test.wav"
