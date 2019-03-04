@@ -225,7 +225,7 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
     int len = 0;
 
     while(ctx->ptr < ctx->end) {
-        if(*ctx->ptr == '\n') {
+        if(*ctx->ptr == '\n' || *ctx->ptr == '\r') {
             FIXME("newline inside string literal\n");
             return 0;
         }
@@ -497,11 +497,14 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
         ret = parse_next_token(lval, ctx);
         if(ret == '_') {
             skip_spaces(ctx);
-            if(*ctx->ptr != '\n') {
+            if(*ctx->ptr != '\n' && *ctx->ptr != '\r') {
                 FIXME("'_' not followed by newline\n");
                 return 0;
             }
-            ctx->ptr++;
+            if(*ctx->ptr == '\r')
+                ctx->ptr++;
+            if(*ctx->ptr == '\n')
+                ctx->ptr++;
             continue;
         }
         if(ret != tNL || ctx->last_token != tNL)
