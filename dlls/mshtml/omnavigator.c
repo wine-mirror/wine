@@ -47,6 +47,7 @@ typedef struct {
 typedef struct {
     DispatchEx dispex;
     IHTMLDOMImplementation IHTMLDOMImplementation_iface;
+    IHTMLDOMImplementation2 IHTMLDOMImplementation2_iface;
 
     LONG ref;
 } HTMLDOMImplementation;
@@ -64,6 +65,8 @@ static HRESULT WINAPI HTMLDOMImplementation_QueryInterface(IHTMLDOMImplementatio
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IHTMLDOMImplementation, riid)) {
         *ppv = &This->IHTMLDOMImplementation_iface;
+    }else if(IsEqualGUID(&IID_IHTMLDOMImplementation2, riid)) {
+        *ppv = &This->IHTMLDOMImplementation2_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
@@ -157,6 +160,110 @@ static const IHTMLDOMImplementationVtbl HTMLDOMImplementationVtbl = {
     HTMLDOMImplementation_hasFeature
 };
 
+static inline HTMLDOMImplementation *impl_from_IHTMLDOMImplementation2(IHTMLDOMImplementation2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMImplementation, IHTMLDOMImplementation2_iface);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_QueryInterface(IHTMLDOMImplementation2 *iface, REFIID riid, void **ppv)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IHTMLDOMImplementation_QueryInterface(&This->IHTMLDOMImplementation_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLDOMImplementation2_AddRef(IHTMLDOMImplementation2 *iface)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IHTMLDOMImplementation_AddRef(&This->IHTMLDOMImplementation_iface);
+}
+
+static ULONG WINAPI HTMLDOMImplementation2_Release(IHTMLDOMImplementation2 *iface)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IHTMLDOMImplementation_Release(&This->IHTMLDOMImplementation_iface);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_GetTypeInfoCount(IHTMLDOMImplementation2 *iface, UINT *pctinfo)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_GetTypeInfo(IHTMLDOMImplementation2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_GetIDsOfNames(IHTMLDOMImplementation2 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_Invoke(IHTMLDOMImplementation2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_createDocumentType(IHTMLDOMImplementation2 *iface, BSTR name,
+        VARIANT *public_id, VARIANT *system_id, IDOMDocumentType **new_type)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    FIXME("(%p)->(%s %s %s %p)\n", This, debugstr_w(name), debugstr_variant(public_id),
+          debugstr_variant(system_id), new_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_createDocument(IHTMLDOMImplementation2 *iface, VARIANT *ns,
+        VARIANT *tag_name, IDOMDocumentType *document_type, IHTMLDocument7 **new_document)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    FIXME("(%p)->(%s %s %p %p)\n", This, debugstr_variant(ns), debugstr_variant(tag_name),
+          document_type, new_document);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplementation2 *iface, BSTR title,
+        IHTMLDocument7 **new_document)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(title), new_document);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_hasFeature(IHTMLDOMImplementation2 *iface, BSTR feature,
+        VARIANT version, VARIANT_BOOL *pfHasFeature)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+
+    FIXME("(%p)->(%s %s %p) returning false\n", This, debugstr_w(feature), debugstr_variant(&version), pfHasFeature);
+
+    *pfHasFeature = VARIANT_FALSE;
+    return S_OK;
+}
+
+static const IHTMLDOMImplementation2Vtbl HTMLDOMImplementation2Vtbl = {
+    HTMLDOMImplementation2_QueryInterface,
+    HTMLDOMImplementation2_AddRef,
+    HTMLDOMImplementation2_Release,
+    HTMLDOMImplementation2_GetTypeInfoCount,
+    HTMLDOMImplementation2_GetTypeInfo,
+    HTMLDOMImplementation2_GetIDsOfNames,
+    HTMLDOMImplementation2_Invoke,
+    HTMLDOMImplementation2_createDocumentType,
+    HTMLDOMImplementation2_createDocument,
+    HTMLDOMImplementation2_createHTMLDocument,
+    HTMLDOMImplementation2_hasFeature
+};
+
 static const tid_t HTMLDOMImplementation_iface_tids[] = {
     IHTMLDOMImplementation_tid,
     0
@@ -176,6 +283,7 @@ HRESULT create_dom_implementation(IHTMLDOMImplementation **ret)
         return E_OUTOFMEMORY;
 
     dom_implementation->IHTMLDOMImplementation_iface.lpVtbl = &HTMLDOMImplementationVtbl;
+    dom_implementation->IHTMLDOMImplementation2_iface.lpVtbl = &HTMLDOMImplementation2Vtbl;
     dom_implementation->ref = 1;
 
     init_dispex(&dom_implementation->dispex, (IUnknown*)&dom_implementation->IHTMLDOMImplementation_iface,
