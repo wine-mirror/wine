@@ -20,12 +20,15 @@
 
 #define COBJMACROS
 #include "dshow.h"
+#include "mmreg.h"
 #include "wine/test.h"
 
 static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
 
 static const WCHAR inputW[] = {'I','n','p','u','t',0};
 static const WCHAR audioW[] = {'A','u','d','i','o',0};
+
+static const GUID MEDIASUBTYPE_mp3 = {0x00000055,0x0000,0x0010,{0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71}};
 
 static IBaseFilter *create_mpeg_splitter(void)
 {
@@ -425,6 +428,296 @@ static void test_pin_info(void)
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_media_types(void)
+{
+    MPEG1WAVEFORMAT expect_wfx =
+    {
+        {WAVE_FORMAT_MPEG, 1, 48000, 8000, 192, 0, sizeof(MPEG1WAVEFORMAT) - sizeof(WAVEFORMATEX)},
+        ACM_MPEG_LAYER3, 64000, ACM_MPEG_SINGLECHANNEL, 0, 1, ACM_MPEG_PROTECTIONBIT | ACM_MPEG_ID_MPEG1, 0, 0
+    };
+    static const MPEGLAYER3WAVEFORMAT expect_mp3_wfx =
+    {
+        {WAVE_FORMAT_MPEGLAYER3, 1, 48000, 8000, 1, 0, sizeof(MPEGLAYER3WAVEFORMAT) - sizeof(WAVEFORMATEX)},
+        MPEGLAYER3_ID_MPEG, 0, 192, 1, 0
+    };
+
+    const WCHAR *filename = load_resource(mp3file);
+    AM_MEDIA_TYPE mt = {{0}}, *pmt, expect_mt = {{0}};
+    IBaseFilter *filter = create_mpeg_splitter();
+    IEnumMediaTypes *enummt;
+    IFilterGraph2 *graph;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+    BOOL ret;
+
+    IBaseFilter_FindPin(filter, inputW, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    expect_mt.majortype = MEDIATYPE_Stream;
+    expect_mt.bFixedSizeSamples = TRUE;
+    expect_mt.bTemporalCompression = TRUE;
+    expect_mt.lSampleSize = 1;
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    expect_mt.subtype = MEDIASUBTYPE_MPEG1System;
+    if (hr == S_OK)
+    {
+        ok(!memcmp(pmt, &expect_mt, sizeof(AM_MEDIA_TYPE)), "Media types didn't match.\n");
+        CoTaskMemFree(pmt);
+    }
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    expect_mt.subtype = MEDIASUBTYPE_MPEG1VideoCD;
+    if (hr == S_OK)
+    {
+        ok(!memcmp(pmt, &expect_mt, sizeof(AM_MEDIA_TYPE)), "Media types didn't match.\n");
+        CoTaskMemFree(pmt);
+    }
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    expect_mt.subtype = MEDIASUBTYPE_MPEG1Video;
+    if (hr == S_OK)
+    {
+        ok(!memcmp(pmt, &expect_mt, sizeof(AM_MEDIA_TYPE)), "Media types didn't match.\n");
+        CoTaskMemFree(pmt);
+    }
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    expect_mt.subtype = MEDIASUBTYPE_MPEG1Audio;
+    if (hr == S_OK)
+    {
+        ok(!memcmp(pmt, &expect_mt, sizeof(AM_MEDIA_TYPE)), "Media types didn't match.\n");
+        CoTaskMemFree(pmt);
+    }
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    mt.majortype = MEDIATYPE_Stream;
+    mt.subtype = MEDIASUBTYPE_MPEG1Audio;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_MPEG1Video;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_MPEG1VideoCD;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_MPEG1System;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_MPEG1AudioPayload;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_MPEG1Payload;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_MPEG1Packet;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    mt.subtype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    mt.majortype = MEDIATYPE_Audio;
+    mt.subtype = MEDIASUBTYPE_MPEG1Audio;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    mt.majortype = MEDIATYPE_Stream;
+    mt.bFixedSizeSamples = TRUE;
+    mt.bTemporalCompression = TRUE;
+    mt.lSampleSize = 123;
+    mt.formattype = FORMAT_WaveFormatEx;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    graph = connect_input(filter, filename);
+
+    /* Connecting input doesn't change the reported media types. */
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    expect_mt.subtype = MEDIASUBTYPE_MPEG1System;
+    if (hr == S_OK)
+    {
+        ok(!memcmp(pmt, &expect_mt, sizeof(AM_MEDIA_TYPE)), "Media types didn't match.\n");
+        CoTaskMemFree(pmt);
+    }
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, audioW, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    todo_wine ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_MPEG1AudioPayload), "Got subtype %s.\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    todo_wine ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    todo_wine ok(pmt->lSampleSize == 1, "Got sample size %u.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+    todo_wine ok(pmt->cbFormat == sizeof(MPEG1WAVEFORMAT), "Got format size %u.\n", pmt->cbFormat);
+    if (pmt->cbFormat == sizeof(MPEG1WAVEFORMAT))
+    {
+        /* Native will sometimes leave junk in the joint stereo flags. */
+        expect_wfx.fwHeadModeExt = ((MPEG1WAVEFORMAT *)pmt->pbFormat)->fwHeadModeExt;
+        ok(!memcmp(pmt->pbFormat, &expect_wfx, sizeof(MPEG1WAVEFORMAT)), "Format blocks didn't match.\n");
+    }
+
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->bFixedSizeSamples = FALSE;
+    pmt->bTemporalCompression = TRUE;
+    pmt->lSampleSize = 123;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->majortype = MEDIATYPE_Video;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->majortype = MEDIATYPE_Audio;
+
+    pmt->subtype = MEDIASUBTYPE_MPEG1Audio;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_MPEG1Packet;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_MPEG1Video;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_MPEG1AudioPayload;
+
+    pmt->formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->formattype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->formattype = FORMAT_WaveFormatEx;
+
+    CoTaskMemFree(pmt->pbFormat);
+    CoTaskMemFree(pmt);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr != S_OK)
+        goto done;
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_MPEG1Payload), "Got subtype %s.\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    ok(pmt->lSampleSize == 1, "Got sample size %u.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+    ok(pmt->cbFormat == sizeof(MPEG1WAVEFORMAT), "Got format size %u.\n", pmt->cbFormat);
+    /* Native will sometimes leave junk in the joint stereo flags. */
+    expect_wfx.fwHeadModeExt = ((MPEG1WAVEFORMAT *)pmt->pbFormat)->fwHeadModeExt;
+    ok(!memcmp(pmt->pbFormat, &expect_wfx, sizeof(MPEG1WAVEFORMAT)), "Format blocks didn't match.\n");
+
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    CoTaskMemFree(pmt->pbFormat);
+    CoTaskMemFree(pmt);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_mp3), "Got subtype %s.\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    ok(pmt->lSampleSize == 1, "Got sample size %u.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+    ok(pmt->cbFormat == sizeof(MPEGLAYER3WAVEFORMAT), "Got format size %u.\n", pmt->cbFormat);
+    ok(!memcmp(pmt->pbFormat, &expect_mp3_wfx, sizeof(MPEGLAYER3WAVEFORMAT)),
+            "Format blocks didn't match.\n");
+
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->bFixedSizeSamples = FALSE;
+    pmt->bTemporalCompression = TRUE;
+    pmt->lSampleSize = 123;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->majortype = MEDIATYPE_Video;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->majortype = MEDIATYPE_Audio;
+
+    pmt->subtype = MEDIASUBTYPE_MPEG1Audio;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_MPEG1Packet;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_MPEG1Video;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_MPEG1AudioPayload;
+
+    pmt->formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->formattype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->formattype = FORMAT_WaveFormatEx;
+
+    CoTaskMemFree(pmt->pbFormat);
+    CoTaskMemFree(pmt);
+
+done:
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+
+    IFilterGraph2_Release(graph);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(mpegsplit)
 {
     CoInitialize(NULL);
@@ -433,6 +726,7 @@ START_TEST(mpegsplit)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_media_types();
 
     CoUninitialize();
 }
