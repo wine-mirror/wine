@@ -734,16 +734,10 @@ void open_output_file(void)
     if (output_file_name)
     {
         if (strendswith( output_file_name, ".o" ))
-        {
-            output_file_source_name = get_temp_file_name( output_file_name, ".s" );
-            if (!(output_file = fopen( output_file_source_name, "w" )))
-                fatal_error( "Unable to create output file '%s'\n", output_file_name );
-        }
+            output_file_source_name = open_temp_output_file( ".s" );
         else
-        {
             if (!(output_file = fopen( output_file_name, "w" )))
                 fatal_error( "Unable to create output file '%s'\n", output_file_name );
-        }
     }
     else output_file = stdout;
 }
@@ -758,6 +752,18 @@ void close_output_file(void)
     if (fclose( output_file ) < 0) fatal_perror( "fclose" );
     if (output_file_source_name) assemble_file( output_file_source_name, output_file_name );
     output_file = NULL;
+}
+
+
+/*******************************************************************
+ *         open_temp_output_file
+ */
+char *open_temp_output_file( const char *suffix )
+{
+    char *tmp_file = get_temp_file_name( output_file_name, suffix );
+    if (!(output_file = fopen( tmp_file, "w" )))
+        fatal_error( "Unable to create output file '%s'\n", tmp_file );
+    return tmp_file;
 }
 
 

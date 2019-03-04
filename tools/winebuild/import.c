@@ -489,22 +489,20 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
     char *as_file, *obj_file;
     int i;
     unsigned int j;
-    FILE *f;
 
-    as_file = get_temp_file_name( output_file_name, ".s" );
-    if (!(f = fopen( as_file, "w" ))) fatal_error( "Cannot create %s\n", as_file );
-    fprintf( f, "\t.data\n" );
+    as_file = open_temp_output_file( ".s" );
+    output( "\t.data\n" );
 
     for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type == TYPE_STUB || odp->type == TYPE_ABS || odp->type == TYPE_VARIABLE) continue;
         if (odp->flags & FLAG_FORWARD) continue;
-        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(odp->link_name) );
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(odp->link_name) );
     }
     for (j = 0; j < extra_ld_symbols.count; j++)
-        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.str[j]) );
-    fclose( f );
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.str[j]) );
+    fclose( output_file );
 
     obj_file = get_temp_file_name( output_file_name, ".o" );
     assemble_file( as_file, obj_file );
@@ -1332,13 +1330,12 @@ void output_imports( DLLSPEC *spec )
 }
 
 /* create a new asm temp file */
-static void new_output_as_file( const char *prefix )
+static void new_output_as_file(void)
 {
-    char *name = get_temp_file_name( prefix, ".s" );
+    char *name;
 
     if (output_file) fclose( output_file );
-    if (!(output_file = fopen( name, "w" )))
-        fatal_error( "Unable to create output file '%s'\n", name );
+    name = open_temp_output_file( ".s" );
     strarray_add( &as_files, name, NULL );
 }
 
@@ -1381,9 +1378,7 @@ static void build_windows_import_lib( DLLSPEC *spec )
     char *def_file;
     const char *as_flags, *m_flag;
 
-    def_file = get_temp_file_name( output_file_name, ".def" );
-    if (!(output_file = fopen( def_file, "w" )))
-        fatal_error( "Unable to create output file '%s'\n", def_file );
+    def_file = open_temp_output_file( ".def" );
     output_def_file( spec, 0 );
     fclose( output_file );
 
@@ -1442,7 +1437,7 @@ static void build_unix_import_lib( DLLSPEC *spec )
         case TYPE_CDECL:
         case TYPE_STDCALL:
             prefix = (!odp->name || (odp->flags & FLAG_ORDINAL)) ? import_ord_prefix : import_func_prefix;
-            new_output_as_file( spec->file_name );
+            new_output_as_file();
             output( "\t.text\n" );
             output( "\n\t.align %d\n", get_alignment( get_ptr_size() ));
             output( "\t%s\n", func_declaration( name ) );
@@ -1461,7 +1456,7 @@ static void build_unix_import_lib( DLLSPEC *spec )
 
     if (!as_files.count)  /* create a dummy file to avoid empty import libraries */
     {
-        new_output_as_file( spec->file_name );
+        new_output_as_file();
         output( "\t.text\n" );
     }
 
