@@ -1509,9 +1509,12 @@ static void test_thread_context(void)
     struct expected
     {
         DWORD Eax, Ebx, Ecx, Edx, Esi, Edi, Ebp, Esp, Eip,
-            SegCs, SegDs, SegEs, SegFs, SegGs, SegSs, EFlags, prev_frame;
+            SegCs, SegDs, SegEs, SegFs, SegGs, SegSs, EFlags, prev_frame,
+            x87_control;
     } expect;
-    NTSTATUS (*func_ptr)( struct expected *res, void *func, void *arg1, void *arg2 ) = (void *)code_mem;
+    NTSTATUS (*func_ptr)( struct expected *res, void *func, void *arg1, void *arg2,
+            DWORD *new_x87_control ) = (void *)code_mem;
+    DWORD new_x87_control;
 
     static const BYTE call_func[] =
     {
@@ -1542,10 +1545,20 @@ static void test_thread_context(void)
         0x8f, 0x40, 0x3c, /* popl   0x3c(%eax) */
         0xff, 0x75, 0x00, /* pushl  0x0(%ebp) ; previous stack frame */
         0x8f, 0x40, 0x40, /* popl   0x40(%eax) */
+                          /* pushl $0x47f */
+        0x68, 0x7f, 0x04, 0x00, 0x00,
+        0x8f, 0x40, 0x44, /* popl  0x44(%eax) */
+        0xd9, 0x68, 0x44, /* fldcw 0x44(%eax) */
+
         0x8b, 0x00,       /* mov    (%eax),%eax */
         0xff, 0x75, 0x14, /* pushl  0x14(%ebp) */
         0xff, 0x75, 0x10, /* pushl  0x10(%ebp) */
         0xff, 0x55, 0x0c, /* call   *0xc(%ebp) */
+
+        0x8b, 0x55, 0x18, /* mov   0x18(%ebp),%edx */
+        0x9b, 0xd9, 0x3a, /* fstcw (%edx) */
+        0xdb, 0xe3,       /* fninit */
+
         0xc9,             /* leave */
         0xc3,             /* ret */
     };
@@ -1557,7 +1570,7 @@ static void test_thread_context(void)
 
     memset( &context, 0xcc, sizeof(context) );
     memset( &expect, 0xcc, sizeof(expect) );
-    func_ptr( &expect, pRtlCaptureContext, &context, 0 );
+    func_ptr( &expect, pRtlCaptureContext, &context, 0, &new_x87_control );
     trace( "expect: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x ebp=%08x esp=%08x "
            "eip=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
            expect.Eax, expect.Ebx, expect.Ecx, expect.Edx, expect.Esi, expect.Edi,
@@ -1593,8 +1606,9 @@ static void test_thread_context(void)
 
     memset( &context, 0xcc, sizeof(context) );
     memset( &expect, 0xcc, sizeof(expect) );
-    context.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS;
-    status = func_ptr( &expect, pNtGetContextThread, (void *)GetCurrentThread(), &context );
+    context.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_FLOATING_POINT;
+
+    status = func_ptr( &expect, pNtGetContextThread, (void *)GetCurrentThread(), &context, &new_x87_control );
     ok( status == STATUS_SUCCESS, "NtGetContextThread failed %08x\n", status );
     trace( "expect: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x ebp=%08x esp=%08x "
            "eip=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
@@ -1625,6 +1639,13 @@ static void test_thread_context(void)
     ok( context.SegFs == LOWORD(expect.SegFs), "wrong SegFs %08x/%08x\n", context.SegFs, expect.SegFs );
     ok( context.SegGs == LOWORD(expect.SegGs), "wrong SegGs %08x/%08x\n", context.SegGs, expect.SegGs );
     ok( context.SegSs == LOWORD(expect.SegSs), "wrong SegSs %08x/%08x\n", context.SegSs, expect.SegGs );
+
+    ok( LOWORD(context.FloatSave.ControlWord) == LOWORD(expect.x87_control),
+            "wrong x87 control word %#x/%#x.\n", context.FloatSave.ControlWord, expect.x87_control );
+    todo_wine ok( LOWORD(expect.x87_control) == LOWORD(new_x87_control),
+            "x87 control word changed in NtGetContextThread() %#x/%#x.\n",
+            LOWORD(expect.x87_control), LOWORD(new_x87_control) );
+
 #undef COMPARE
 }
 
