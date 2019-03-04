@@ -816,6 +816,7 @@ void output_spec16_file( DLLSPEC *spec16 )
     add_16bit_exports( spec32, spec16 );
 
     needs_get_pc_thunk = 0;
+    open_output_file();
     output_standard_file_header();
     output_module( spec32 );
     output_module16( spec16 );
@@ -831,6 +832,7 @@ void output_spec16_file( DLLSPEC *spec16 )
         output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec16->main_module );
     }
     output_gnu_stack_note();
+    close_output_file();
     free_dll_spec( spec32 );
 }
 

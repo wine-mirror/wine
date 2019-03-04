@@ -703,6 +703,7 @@ void BuildSpec32File( DLLSPEC *spec )
 {
     needs_get_pc_thunk = 0;
     resolve_imports( spec );
+    open_output_file();
     output_standard_file_header();
     output_module( spec );
     output_stubs( spec );
@@ -711,6 +712,7 @@ void BuildSpec32File( DLLSPEC *spec )
     if (needs_get_pc_thunk) output_get_pc_thunk();
     output_resources( spec );
     output_gnu_stack_note();
+    close_output_file();
 }
 
 

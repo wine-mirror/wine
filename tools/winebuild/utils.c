@@ -47,6 +47,7 @@
 
 static struct strarray tmp_files;
 static struct strarray empty_strarray;
+static const char *output_file_source_name;
 
 static const struct
 {
@@ -564,8 +565,10 @@ void init_output_buffer(void)
 
 void flush_output_buffer(void)
 {
+    open_output_file();
     if (fwrite( output_buffer, 1, output_buffer_pos, output_file ) != output_buffer_pos)
         fatal_error( "Error writing to %s\n", output_file_name );
+    close_output_file();
     free( output_buffer );
 }
 
@@ -720,6 +723,41 @@ void close_input_file( FILE *file )
     free( input_file_name );
     input_file_name = NULL;
     current_line = 0;
+}
+
+
+/*******************************************************************
+ *         open_output_file
+ */
+void open_output_file(void)
+{
+    if (output_file_name)
+    {
+        if (strendswith( output_file_name, ".o" ))
+        {
+            output_file_source_name = get_temp_file_name( output_file_name, ".s" );
+            if (!(output_file = fopen( output_file_source_name, "w" )))
+                fatal_error( "Unable to create output file '%s'\n", output_file_name );
+        }
+        else
+        {
+            if (!(output_file = fopen( output_file_name, "w" )))
+                fatal_error( "Unable to create output file '%s'\n", output_file_name );
+        }
+    }
+    else output_file = stdout;
+}
+
+
+/*******************************************************************
+ *         close_output_file
+ */
+void close_output_file(void)
+{
+    if (!output_file || !output_file_name) return;
+    if (fclose( output_file ) < 0) fatal_perror( "fclose" );
+    if (output_file_source_name) assemble_file( output_file_source_name, output_file_name );
+    output_file = NULL;
 }
 
 

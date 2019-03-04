@@ -1382,12 +1382,10 @@ static void build_windows_import_lib( DLLSPEC *spec )
     const char *as_flags, *m_flag;
 
     def_file = get_temp_file_name( output_file_name, ".def" );
-    fclose( output_file );
     if (!(output_file = fopen( def_file, "w" )))
         fatal_error( "Unable to create output file '%s'\n", def_file );
     output_def_file( spec, 0 );
     fclose( output_file );
-    output_file = NULL;
 
     args = find_tool( "dlltool", NULL );
     switch (target_cpu)
@@ -1484,5 +1482,4 @@ void output_import_lib( DLLSPEC *spec, char **argv )
         build_unix_import_lib( spec );
         build_library( output_file_name, argv, 1 );
     }
-    output_file_name = NULL;
 }

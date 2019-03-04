@@ -698,6 +698,4 @@ void output_res_o_file( DLLSPEC *spec )
     if (format)
         strarray_add( &args, "-F", format, NULL );
     spawn( args );
-
-    output_file_name = NULL;  /* so we don't try to assemble it */
 }

@@ -258,6 +258,8 @@ extern char *get_temp_file_name( const char *prefix, const char *suffix );
 extern void output_standard_file_header(void);
 extern FILE *open_input_file( const char *srcdir, const char *name );
 extern void close_input_file( FILE *file );
+extern void open_output_file(void);
+extern void close_output_file(void);
 extern void dump_bytes( const void *buffer, unsigned int size );
 extern int remove_stdcall_decoration( char *name );
 extern void assemble_file( const char *src_file, const char *obj_file );
