@@ -2481,6 +2481,9 @@ static void run_tests(void)
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
     parse_script_a("' comment\r"
+                   "x = _\r3\r"
+                   "x = _\n3\r"
+                   "x = _\r\n3\r"
                    "Sub testsub(arg)\r"
                    "If arg = 1 Then\r\r"
                    "Call reportSuccess()\n\n"
