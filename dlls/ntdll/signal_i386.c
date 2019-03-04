@@ -860,8 +860,26 @@ static inline void *init_handler( const ucontext_t *sigcontext, WORD *fs, WORD *
 static inline void save_fpu( CONTEXT *context )
 {
 #ifdef __GNUC__
+    struct
+    {
+        DWORD ControlWord;
+        DWORD StatusWord;
+        DWORD TagWord;
+        DWORD ErrorOffset;
+        DWORD ErrorSelector;
+        DWORD DataOffset;
+        DWORD DataSelector;
+    }
+    float_status;
+
     context->ContextFlags |= CONTEXT_FLOATING_POINT;
     __asm__ __volatile__( "fnsave %0; fwait" : "=m" (context->FloatSave) );
+
+    /* Reset unmasked exceptions status to avoid firing an exception. */
+    memcpy(&float_status, &context->FloatSave, sizeof(float_status));
+    float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
+
+    __asm__ __volatile__( "fldenv %0" : "=m" (float_status) );
 #endif
 }
 

@@ -1642,7 +1642,7 @@ static void test_thread_context(void)
 
     ok( LOWORD(context.FloatSave.ControlWord) == LOWORD(expect.x87_control),
             "wrong x87 control word %#x/%#x.\n", context.FloatSave.ControlWord, expect.x87_control );
-    todo_wine ok( LOWORD(expect.x87_control) == LOWORD(new_x87_control),
+    ok( LOWORD(expect.x87_control) == LOWORD(new_x87_control),
             "x87 control word changed in NtGetContextThread() %#x/%#x.\n",
             LOWORD(expect.x87_control), LOWORD(new_x87_control) );
 
