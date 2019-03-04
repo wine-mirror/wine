@@ -56,6 +56,13 @@ static void _test_provideclassinfo(IDispatch *disp, const GUID *guid, int line)
     ITypeInfo_Release(ti);
 }
 
+#define CHECK_BSTR_LENGTH(str) check_bstr_length(str, __LINE__)
+static void check_bstr_length(BSTR str, int line)
+{
+    ok_(__FILE__, line)(SysStringLen(str) == lstrlenW(str), "Unexpected string length %u vs %u.\n",
+            SysStringLen(str), lstrlenW(str));
+}
+
 static void test_wshshell(void)
 {
     static const WCHAR notepadW[] = {'n','o','t','e','p','a','d','.','e','x','e',0};
@@ -156,6 +163,7 @@ static void test_wshshell(void)
     hr = IWshCollection_Item(coll, &arg, &res);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&res) == VT_BSTR, "got res type %d\n", V_VT(&res));
+    CHECK_BSTR_LENGTH(V_BSTR(&res));
     SysFreeString(str);
     VariantClear(&res);
 
@@ -211,6 +219,7 @@ static void test_wshshell(void)
     hr = IWshEnvironment_get_Item(env, str, &ret);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(ret && *ret == 0, "got %s\n", wine_dbgstr_w(ret));
+    CHECK_BSTR_LENGTH(ret);
     SysFreeString(ret);
     SysFreeString(str);
 
@@ -219,6 +228,7 @@ static void test_wshshell(void)
     hr = IWshEnvironment_get_Item(env, str, &ret);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(ret && *ret != 0, "got %s\n", wine_dbgstr_w(ret));
+    CHECK_BSTR_LENGTH(ret);
     SysFreeString(ret);
     SysFreeString(str);
 
@@ -304,6 +314,7 @@ static void test_wshshell(void)
     hr = IWshShell3_get_CurrentDirectory(sh3, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(str && str[0] != 0, "got empty string\n");
+    CHECK_BSTR_LENGTH(str);
     SysFreeString(str);
 
     hr = IWshShell3_put_CurrentDirectory(sh3, NULL);
@@ -440,6 +451,7 @@ static void test_registry(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
     ok(!lstrcmpW(V_BSTR(&value), foobarW), "got %s\n", wine_dbgstr_w(V_BSTR(&value)));
+    CHECK_BSTR_LENGTH(V_BSTR(&value));
     VariantClear(&value);
     SysFreeString(name);
 
@@ -452,6 +464,7 @@ static void test_registry(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
     ok(SysStringLen(V_BSTR(&value)) == 6, "len %d\n", SysStringLen(V_BSTR(&value)));
+    CHECK_BSTR_LENGTH(V_BSTR(&value));
     VariantClear(&value);
     SysFreeString(name);
 
@@ -528,6 +541,7 @@ static void test_registry(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
     ok(!lstrcmpW(V_BSTR(&v), fooW), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    CHECK_BSTR_LENGTH(V_BSTR(&v));
     VariantClear(&v);
     VariantClear(&value);
 

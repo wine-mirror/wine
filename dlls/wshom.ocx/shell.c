@@ -455,14 +455,16 @@ static HRESULT WINAPI WshEnvironment_get_Item(IWshEnvironment *iface, BSTR name,
         return E_POINTER;
 
     len = GetEnvironmentVariableW(name, NULL, 0);
-    *value = SysAllocStringLen(NULL, len);
-    if (!*value)
-        return E_OUTOFMEMORY;
-
     if (len)
-        GetEnvironmentVariableW(name, *value, len+1);
+    {
+        *value = SysAllocStringLen(NULL, len - 1);
+        if (*value)
+            GetEnvironmentVariableW(name, *value, len);
+    }
+    else
+        *value = SysAllocStringLen(NULL, 0);
 
-    return S_OK;
+    return *value ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI WshEnvironment_put_Item(IWshEnvironment *iface, BSTR name, BSTR value)
