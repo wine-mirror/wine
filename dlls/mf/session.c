@@ -171,7 +171,11 @@ static HRESULT WINAPI mfsession_Close(IMFMediaSession *iface)
 
 static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
 {
+    struct media_session *session = impl_from_IMFMediaSession(iface);
+
     FIXME("(%p)\n", iface);
+
+    IMFMediaEventQueue_Shutdown(session->event_queue);
 
     return E_NOTIMPL;
 }

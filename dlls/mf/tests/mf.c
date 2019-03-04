@@ -33,6 +33,8 @@
 
 #include "wine/test.h"
 
+DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
 static void test_topology(void)
 {
     IMFCollection *collection, *collection2;
@@ -467,6 +469,175 @@ static void test_MFCreateSequencerSource(void)
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
 
+struct test_callback
+{
+    IMFAsyncCallback IMFAsyncCallback_iface;
+    HANDLE event;
+};
+
+static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_callback, IMFAsyncCallback_iface);
+}
+
+static HRESULT WINAPI testcallback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testcallback_AddRef(IMFAsyncCallback *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    ok(flags != NULL && queue != NULL, "Unexpected arguments.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    IMFMediaSession *session;
+    IUnknown *state, *obj;
+    HRESULT hr;
+
+    ok(result != NULL, "Unexpected result object.\n");
+
+    state = IMFAsyncResult_GetStateNoAddRef(result);
+    if (state && SUCCEEDED(IUnknown_QueryInterface(state, &IID_IMFMediaSession, (void **)&session)))
+    {
+        IMFMediaEvent *event;
+
+        hr = IMFMediaSession_EndGetEvent(session, result, &event);
+        ok(hr == S_OK, "Failed to finalize GetEvent, hr %#x.\n", hr);
+
+        hr = IMFAsyncResult_GetObject(result, &obj);
+        ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+        IMFMediaEvent_Release(event);
+
+        hr = IMFMediaSession_EndGetEvent(session, result, &event);
+        ok(hr == E_FAIL, "Unexpected result, hr %#x.\n", hr);
+
+        IMFMediaSession_Release(session);
+
+        SetEvent(callback->event);
+    }
+
+    return E_NOTIMPL;
+}
+
+static const IMFAsyncCallbackVtbl testcallbackvtbl =
+{
+    testcallback_QueryInterface,
+    testcallback_AddRef,
+    testcallback_Release,
+    testcallback_GetParameters,
+    testcallback_Invoke,
+};
+
+static void init_test_callback(struct test_callback *callback)
+{
+    callback->IMFAsyncCallback_iface.lpVtbl = &testcallbackvtbl;
+    callback->event = NULL;
+}
+
+static void test_session_events(IMFMediaSession *session)
+{
+    struct test_callback callback, callback2;
+    IMFAsyncResult *result;
+    IMFMediaEvent *event;
+    HRESULT hr;
+    DWORD ret;
+
+    init_test_callback(&callback);
+    init_test_callback(&callback2);
+
+    hr = IMFMediaSession_GetEvent(session, MF_EVENT_FLAG_NO_WAIT, &event);
+    ok(hr == MF_E_NO_EVENTS_AVAILABLE, "Unexpected hr %#x.\n", hr);
+
+    /* Async case. */
+    hr = IMFMediaSession_BeginGetEvent(session, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSession_BeginGetEvent(session, &callback.IMFAsyncCallback_iface, (IUnknown *)session);
+    ok(hr == S_OK, "Failed to Begin*, hr %#x.\n", hr);
+
+    /* Same callback, same state. */
+    hr = IMFMediaSession_BeginGetEvent(session, &callback.IMFAsyncCallback_iface, (IUnknown *)session);
+    ok(hr == MF_S_MULTIPLE_BEGIN, "Unexpected hr %#x.\n", hr);
+
+    /* Same callback, different state. */
+    hr = IMFMediaSession_BeginGetEvent(session, &callback.IMFAsyncCallback_iface, (IUnknown *)&callback);
+    ok(hr == MF_E_MULTIPLE_BEGIN, "Unexpected hr %#x.\n", hr);
+
+    /* Different callback, same state. */
+    hr = IMFMediaSession_BeginGetEvent(session, &callback2.IMFAsyncCallback_iface, (IUnknown *)session);
+    ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Unexpected hr %#x.\n", hr);
+
+    /* Different callback, different state. */
+    hr = IMFMediaSession_BeginGetEvent(session, &callback2.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface);
+    ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Unexpected hr %#x.\n", hr);
+
+    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    hr = IMFMediaSession_QueueEvent(session, MEError, &GUID_NULL, E_FAIL, NULL);
+    ok(hr == S_OK, "Failed to queue event, hr %#x.\n", hr);
+
+    ret = WaitForSingleObject(callback.event, 100);
+    ok(ret == WAIT_OBJECT_0, "Unexpected return value %#x.\n", ret);
+
+    CloseHandle(callback.event);
+
+    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#x.\n", hr);
+
+    hr = IMFMediaSession_EndGetEvent(session, result, &event);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    /* Shutdown behavior. */
+    hr = IMFMediaSession_Shutdown(session);
+todo_wine
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaSession_GetEvent(session, MF_EVENT_FLAG_NO_WAIT, &event);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSession_QueueEvent(session, MEError, &GUID_NULL, E_FAIL, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSession_BeginGetEvent(session, &callback.IMFAsyncCallback_iface, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSession_BeginGetEvent(session, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSession_EndGetEvent(session, result, &event);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    IMFAsyncResult_Release(result);
+
+    /* Already shut down. */
+    hr = IMFMediaSession_Shutdown(session);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+}
+
 static void test_media_session(void)
 {
     IMFMediaSession *session;
@@ -481,6 +652,8 @@ static void test_media_session(void)
 
     hr = IMFMediaSession_QueryInterface(session, &IID_IMFAttributes, (void **)&unk);
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    test_session_events(session);
 
     IMFMediaSession_Release(session);
 
