@@ -246,6 +246,7 @@ interface IHTMLDOMConstructor : IDispatch
     IDispatch *constructor()
 
 interface IHTMLDocument2;
+interface IHTMLDocument7;
 interface IHTMLElement2;
 interface IHTMLStyleSheetsCollection;
 interface IHTMLFrameBase;
@@ -5988,6 +5989,36 @@ coclass HTMLDOMTextNode
 }
 
 /*****************************************************************************
+ *    IDOMDocumentType interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510738-98b5-11cf-bb82-00aa00bdce0b)
+ ]
+interface IDOMDocumentType : IDispatch
+{
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_NAME)]
+    HRESULT name([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_ENTITIES)]
+    HRESULT entities([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_NOTATIONS)]
+    HRESULT notations([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_PUBLICID)]
+    HRESULT publicId([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_SYSTEMID)]
+    HRESULT systemId([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IDOMDOCUMENTTYPE_INTERNALSUBSET)]
+    HRESULT internalSubset([out, retval] VARIANT *p);
+}
+
+/*****************************************************************************
  *    IHTMLDOMImplementation interface
  */
 [
@@ -6003,6 +6034,83 @@ interface IHTMLDOMImplementation : IDispatch
         [in] BSTR bstrfeature,
         [optional, in] VARIANT version,
         [retval, out] VARIANT_BOOL *pfHasFeature);
+}
+
+/*****************************************************************************
+ *    IHTMLDOMImplementation2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051073c-98b5-11cf-bb82-00aa00bdce0b)
+    ]
+interface IHTMLDOMImplementation2 : IDispatch
+{
+    [id(DISPID_IHTMLDOMIMPLEMENTATION2_CREATEDOCUMENTTYPE)]
+    HRESULT createDocumentType(
+        [in] BSTR bstrQualifiedName,
+        [in] VARIANT *pvarPublicId,
+        [in] VARIANT *pvarSystemId,
+        [out, retval] IDOMDocumentType **newDocumentType);
+
+    [id(DISPID_IHTMLDOMIMPLEMENTATION2_CREATEDOCUMENT)]
+    HRESULT createDocument(
+        [in] VARIANT *pvarNS,
+        [in] VARIANT *pvarTagName,
+        [in] IDOMDocumentType *pDocumentType,
+        [out, retval] IHTMLDocument7 **ppnewDocument);
+
+    [id(DISPID_IHTMLDOMIMPLEMENTATION2_CREATEHTMLDOCUMENT)]
+    HRESULT createHTMLDocument(
+        [in] BSTR bstrTitle,
+        [out, retval] IHTMLDocument7 **ppnewDocument);
+
+    [id(DISPID_IHTMLDOMIMPLEMENTATION2_IE9_HASFEATURE)]
+    HRESULT hasFeature(
+        [in] BSTR bstrfeature,
+        [in, optional] VARIANT version,
+        [out, retval] VARIANT_BOOL *pfHasFeature);
+}
+
+/*****************************************************************************
+ *    DispHTMLDOMImplementation dispinterface
+ */
+[
+    hidden,
+    uuid(3050f58f-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLDOMImplementation
+{
+properties:
+methods:
+    [id(DISPID_IHTMLDOMIMPLEMENTATION_HASFEATURE)]
+    VARIANT_BOOL hasFeature(
+        [in] BSTR bstrfeature,
+        [in, optional] VARIANT version);
+
+    [id(DISPID_IHTMLDOMIMPLEMENTATION2_CREATEDOCUMENTTYPE)]
+    IDOMDocumentType *createDocumentType(
+        [in] BSTR bstrQualifiedName,
+        [in] VARIANT *pvarPublicId,
+        [in] VARIANT *pvarSystemId);
+
+    [id(DISPID_IHTMLDOMIMPLEMENTATION2_CREATEDOCUMENT)]
+    IHTMLDocument7 *createDocument(
+        [in] VARIANT *pvarNS,
+        [in] VARIANT *pvarTagName,
+        [in] IDOMDocumentType *pDocumentType);
+
+    [id(DISPID_IHTMLDOMIMPLEMENTATION2_CREATEHTMLDOCUMENT)]
+    IHTMLDocument7 *createHTMLDocument([in] BSTR bstrTitle);
+
+    [id(DISPID_IHTMLDOMIMPLEMENTATION2_IE9_HASFEATURE)]
+    VARIANT_BOOL ie9_hasFeature(
+        [in] BSTR bstrfeature,
+        [in, optional] VARIANT version);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
 }
 
 /*****************************************************************************
