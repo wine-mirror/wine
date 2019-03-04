@@ -4,4 +4,5 @@ IMPORTS   = advapi32 ole32
 
 C_SRCS = \
 	main.c \
+	mediatype.c \
 	queue.c

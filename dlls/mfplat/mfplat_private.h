@@ -16,6 +16,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "mfapi.h"
+
+typedef struct attributes
+{
+    IMFAttributes IMFAttributes_iface;
+    LONG ref;
+} mfattributes;
+
+extern void init_attribute_object(mfattributes *object, UINT32 size) DECLSPEC_HIDDEN;
+
 extern void init_system_queues(void) DECLSPEC_HIDDEN;
 extern void shutdown_system_queues(void) DECLSPEC_HIDDEN;
 extern BOOL is_platform_locked(void) DECLSPEC_HIDDEN;

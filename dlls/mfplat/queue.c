@@ -20,7 +20,6 @@
 
 #define COBJMACROS
 
-#include "mfapi.h"
 #include "mferror.h"
 
 #include "wine/debug.h"
