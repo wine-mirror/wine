@@ -11,7 +11,8 @@ C_SRCS = \
 	misc.c \
 	mpegsplit.c \
 	referenceclock.c \
-	videorenderer.c
+	videorenderer.c \
+	waveparser.c
 
 
 RC_SRCS = \
