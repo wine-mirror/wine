@@ -35,6 +35,7 @@ struct stream_desc
 {
     struct attributes attributes;
     IMFStreamDescriptor IMFStreamDescriptor_iface;
+    IMFMediaTypeHandler IMFMediaTypeHandler_iface;
 };
 
 static inline struct media_type *impl_from_IMFMediaType(IMFMediaType *iface)
@@ -45,6 +46,11 @@ static inline struct media_type *impl_from_IMFMediaType(IMFMediaType *iface)
 static inline struct stream_desc *impl_from_IMFStreamDescriptor(IMFStreamDescriptor *iface)
 {
     return CONTAINING_RECORD(iface, struct stream_desc, IMFStreamDescriptor_iface);
+}
+
+static struct stream_desc *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct stream_desc, IMFMediaTypeHandler_iface);
 }
 
 static HRESULT WINAPI mediatype_QueryInterface(IMFMediaType *iface, REFIID riid, void **out)
@@ -616,9 +622,14 @@ static HRESULT WINAPI stream_descriptor_GetStreamIdentifier(IMFStreamDescriptor 
 
 static HRESULT WINAPI stream_descriptor_GetMediaTypeHandler(IMFStreamDescriptor *iface, IMFMediaTypeHandler **handler)
 {
-    FIXME("%p, %p.\n", iface, handler);
+    struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, handler);
+
+    *handler = &stream_desc->IMFMediaTypeHandler_iface;
+    IMFStreamDescriptor_AddRef(iface);
+
+    return S_OK;
 }
 
 static const IMFStreamDescriptorVtbl streamdescriptorvtbl =
@@ -660,6 +671,92 @@ static const IMFStreamDescriptorVtbl streamdescriptorvtbl =
     stream_descriptor_GetMediaTypeHandler
 };
 
+static HRESULT WINAPI mediatype_handler_QueryInterface(IMFMediaTypeHandler *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFMediaTypeHandler) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFMediaTypeHandler_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI mediatype_handler_AddRef(IMFMediaTypeHandler *iface)
+{
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamDescriptor_AddRef(&stream_desc->IMFStreamDescriptor_iface);
+}
+
+static ULONG WINAPI mediatype_handler_Release(IMFMediaTypeHandler *iface)
+{
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamDescriptor_Release(&stream_desc->IMFStreamDescriptor_iface);
+}
+
+static HRESULT WINAPI mediatype_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface, IMFMediaType *in_type,
+        IMFMediaType **out_type)
+{
+    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mediatype_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
+{
+    FIXME("%p, %p.\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mediatype_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
+        IMFMediaType **type)
+{
+    FIXME("%p, %u, %p.\n", iface, index, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mediatype_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *type)
+{
+    FIXME("%p, %p.\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mediatype_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType **type)
+{
+    FIXME("%p, %p.\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mediatype_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
+{
+    FIXME("%p, %p.\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaTypeHandlerVtbl mediatypehandlervtbl =
+{
+    mediatype_handler_QueryInterface,
+    mediatype_handler_AddRef,
+    mediatype_handler_Release,
+    mediatype_handler_IsMediaTypeSupported,
+    mediatype_handler_GetMediaTypeCount,
+    mediatype_handler_GetMediaTypeByIndex,
+    mediatype_handler_SetCurrentMediaType,
+    mediatype_handler_GetCurrentMediaType,
+    mediatype_handler_GetMajorType,
+};
+
 /***********************************************************************
  *      MFCreateStreamDescriptor (mfplat.@)
  */
@@ -676,6 +773,7 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
 
     init_attribute_object(&object->attributes, 0);
     object->IMFStreamDescriptor_iface.lpVtbl = &streamdescriptorvtbl;
+    object->IMFMediaTypeHandler_iface.lpVtbl = &mediatypehandlervtbl;
     *descriptor = &object->IMFStreamDescriptor_iface;
 
     return S_OK;
