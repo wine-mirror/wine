@@ -74,6 +74,18 @@ HRESULT WINAPI WMCreateEditor(IWMMetadataEditor **editor)
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI WMCreateBackupRestorer(IUnknown *callback, IWMLicenseBackup **licBackup)
+{
+    FIXME("(%p %p): stub\n", callback, licBackup);
+
+    if (!callback)
+        return E_INVALIDARG;
+
+    *licBackup = NULL;
+
+    return E_NOTIMPL;
+}
+
 typedef struct {
     IWMProfileManager IWMProfileManager_iface;
     LONG ref;

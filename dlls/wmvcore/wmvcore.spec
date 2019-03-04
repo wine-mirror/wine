@@ -1,10 +1,10 @@
 @ stdcall WMCheckURLExtension(wstr)
 @ stdcall WMCheckURLScheme(wstr)
-@ stub WMCreateBackupRestorerPrivate
+@ stdcall WMCreateBackupRestorerPrivate(ptr ptr) WMCreateBackupRestorer
 @ stub WMIsAvailableOffline
 @ stub WMValidateData
 @ stdcall -private DllRegisterServer()
-@ stub WMCreateBackupRestorer
+@ stdcall WMCreateBackupRestorer(ptr ptr)
 @ stdcall WMCreateEditor(ptr)
 @ stub WMCreateIndexer
 @ stdcall WMCreateProfileManager(ptr)
