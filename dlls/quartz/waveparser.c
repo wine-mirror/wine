@@ -296,20 +296,14 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
 
     pos += chunk.cb;
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(chunk), (BYTE *)&chunk);
-    if (chunk.fcc == mmioFOURCC('f','a','c','t'))
+    while (chunk.fcc != mmioFOURCC('d','a','t','a'))
     {
-        FIXME("'fact' chunk not supported yet\n");
-	pos += sizeof(chunk) + chunk.cb;
-	hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(chunk), (BYTE *)&chunk);
+        FIXME("Ignoring %s chunk.\n", debugstr_fourcc(chunk.fcc));
+        pos += sizeof(chunk) + chunk.cb;
+        hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(chunk), (BYTE *)&chunk);
+        if (hr != S_OK)
+            return E_FAIL;
     }
-    if (chunk.fcc != mmioFOURCC('d','a','t','a'))
-    {
-        ERR("Expected 'data' chunk, but got %.04s\n", (LPSTR)&chunk.fcc);
-        return E_FAIL;
-    }
-
-    if (hr != S_OK)
-        return E_FAIL;
 
     pWAVEParser->StartOfFile = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFCHUNK));
     pWAVEParser->EndOfFile = MEDIATIME_FROM_BYTES(pos + chunk.cb + sizeof(RIFFCHUNK));

@@ -30,8 +30,16 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "dshow.h"
+#include "wine/debug.h"
 #include "wine/strmbase.h"
 #include "wine/list.h"
+
+static inline const char *debugstr_fourcc(DWORD fourcc)
+{
+    if (!fourcc) return "''";
+    return wine_dbg_sprintf("'%c%c%c%c'", (char)(fourcc), (char)(fourcc >> 8),
+            (char)(fourcc >> 16), (char)(fourcc >> 24));
+}
 
 /* see IAsyncReader::Request on MSDN for the explanation of this */
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
