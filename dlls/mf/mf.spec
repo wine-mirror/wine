@@ -78,6 +78,6 @@
 @ stub MFGetTopoNodeCurrentType
 @ stub MFReadSequencerSegmentOffset
 @ stub MFRequireProtectedEnvironment
-@ stub MFShutdownObject
+@ stdcall MFShutdownObject(ptr)
 @ stub MFTranscodeGetAudioOutputAvailableTypes
 @ stub MergePropertyStore

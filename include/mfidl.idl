@@ -329,6 +329,7 @@ cpp_quote("HRESULT WINAPI MFCreateTopoLoader(IMFTopoLoader **loader);")
 cpp_quote("HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array);")
 cpp_quote("HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID iid, void **obj);")
 cpp_quote("MFTIME  WINAPI MFGetSystemTime(void);")
+cpp_quote("HRESULT WINAPI MFShutdownObject(IUnknown *object);")
 
 [
     object,
@@ -379,6 +380,22 @@ interface IMFMediaSink : IUnknown
     HRESULT SetPresentationClock([in] IMFPresentationClock *clock);
     HRESULT GetPresentationClock([out] IMFPresentationClock **clock);
     HRESULT Shutdown();
+}
+
+typedef enum _MFSHUTDOWN_STATUS
+{
+    MFSHUTDOWN_INITIATED,
+    MFSHUTDOWN_COMPLETED,
+} MFSHUTDOWN_STATUS;
+
+[
+    object,
+    uuid(97ec2ea4-0e42-4937-97ac-9d6d328824e1)
+]
+interface IMFShutdown : IUnknown
+{
+    HRESULT Shutdown();
+    HRESULT GetShutdownStatus([out] MFSHUTDOWN_STATUS *status);
 }
 
 cpp_quote("#define MF_RESOLUTION_MEDIASOURCE                                           0x00000001")

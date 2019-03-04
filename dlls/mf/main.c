@@ -74,3 +74,21 @@ HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID riid, void
     IMFGetService_Release(gs);
     return hr;
 }
+
+/***********************************************************************
+ *      MFShutdownObject (mf.@)
+ */
+HRESULT WINAPI MFShutdownObject(IUnknown *object)
+{
+    IMFShutdown *shutdown;
+
+    TRACE("%p.\n", object);
+
+    if (object && SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFShutdown, (void **)&shutdown)))
+    {
+        IMFShutdown_Shutdown(shutdown);
+        IMFShutdown_Release(shutdown);
+    }
+
+    return S_OK;
+}

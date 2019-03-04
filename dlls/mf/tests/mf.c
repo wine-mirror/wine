@@ -502,6 +502,66 @@ static void test_topology_loader(void)
     IMFTopoLoader_Release(loader);
 }
 
+static HRESULT WINAPI testshutdown_QueryInterface(IMFShutdown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFShutdown) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFShutdown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testshutdown_AddRef(IMFShutdown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI testshutdown_Release(IMFShutdown *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI testshutdown_Shutdown(IMFShutdown *iface)
+{
+    return 0xdead;
+}
+
+static HRESULT WINAPI testshutdown_GetShutdownStatus(IMFShutdown *iface, MFSHUTDOWN_STATUS *status)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMFShutdownVtbl testshutdownvtbl =
+{
+    testshutdown_QueryInterface,
+    testshutdown_AddRef,
+    testshutdown_Release,
+    testshutdown_Shutdown,
+    testshutdown_GetShutdownStatus,
+};
+
+static void test_MFShutdownObject(void)
+{
+    IMFShutdown testshutdown = { &testshutdownvtbl };
+    IUnknown testshutdown2 = { &testservicevtbl };
+    HRESULT hr;
+
+    hr = MFShutdownObject(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFShutdownObject((IUnknown *)&testshutdown);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = MFShutdownObject(&testshutdown2);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -509,4 +569,5 @@ START_TEST(mf)
     test_MFGetService();
     test_MFCreateSequencerSource();
     test_media_session();
+    test_MFShutdownObject();
 }
