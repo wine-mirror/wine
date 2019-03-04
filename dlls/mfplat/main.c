@@ -28,7 +28,6 @@
 #include "winreg.h"
 
 #include "initguid.h"
-#include "mferror.h"
 
 #include "wine/heap.h"
 #include "wine/debug.h"

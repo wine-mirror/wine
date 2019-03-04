@@ -37,6 +37,10 @@ struct stream_desc
     IMFStreamDescriptor IMFStreamDescriptor_iface;
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
     DWORD identifier;
+    IMFMediaType **media_types;
+    unsigned int media_types_count;
+    IMFMediaType *current_type;
+    CRITICAL_SECTION cs;
 };
 
 static inline struct media_type *impl_from_IMFMediaType(IMFMediaType *iface)
@@ -416,11 +420,21 @@ static ULONG WINAPI stream_descriptor_Release(IMFStreamDescriptor *iface)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
     ULONG refcount = InterlockedDecrement(&stream_desc->attributes.ref);
+    unsigned int i;
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
     {
+        for (i = 0; i < stream_desc->media_types_count; ++i)
+        {
+            if (stream_desc->media_types[i])
+                IMFMediaType_Release(stream_desc->media_types[i]);
+        }
+        heap_free(stream_desc->media_types);
+        if (stream_desc->current_type)
+            IMFMediaType_Release(stream_desc->current_type);
+        DeleteCriticalSection(&stream_desc->cs);
         heap_free(stream_desc);
     }
 
@@ -715,31 +729,71 @@ static HRESULT WINAPI mediatype_handler_IsMediaTypeSupported(IMFMediaTypeHandler
 
 static HRESULT WINAPI mediatype_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
 {
-    FIXME("%p, %p.\n", iface, count);
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, count);
+
+    *count = stream_desc->media_types_count;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mediatype_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("%p, %u, %p.\n", iface, index, type);
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, type);
+
+    if (index >= stream_desc->media_types_count)
+        return MF_E_NO_MORE_TYPES;
+
+    if (stream_desc->media_types[index])
+    {
+        *type = stream_desc->media_types[index];
+        IMFMediaType_AddRef(*type);
+    }
+
+    return stream_desc->media_types[index] ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI mediatype_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    if (!type)
+        return E_POINTER;
+
+    EnterCriticalSection(&stream_desc->cs);
+    if (stream_desc->current_type)
+        IMFMediaType_Release(stream_desc->current_type);
+    stream_desc->current_type = type;
+    IMFMediaType_AddRef(stream_desc->current_type);
+    LeaveCriticalSection(&stream_desc->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mediatype_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType **type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    EnterCriticalSection(&stream_desc->cs);
+    if (stream_desc->current_type)
+    {
+        *type = stream_desc->current_type;
+        IMFMediaType_AddRef(*type);
+    }
+    else
+        hr = MF_E_NOT_INITIALIZED;
+    LeaveCriticalSection(&stream_desc->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI mediatype_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
@@ -769,10 +823,14 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
         IMFMediaType **types, IMFStreamDescriptor **descriptor)
 {
     struct stream_desc *object;
+    unsigned int i;
 
     TRACE("%d, %d, %p, %p.\n", identifier, count, types, descriptor);
 
-    object = heap_alloc(sizeof(*object));
+    if (!count)
+        return E_INVALIDARG;
+
+    object = heap_alloc_zero(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -780,6 +838,20 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
     object->IMFStreamDescriptor_iface.lpVtbl = &streamdescriptorvtbl;
     object->IMFMediaTypeHandler_iface.lpVtbl = &mediatypehandlervtbl;
     object->identifier = identifier;
+    object->media_types = heap_alloc(count * sizeof(*object->media_types));
+    if (!object->media_types)
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
+    for (i = 0; i < count; ++i)
+    {
+        object->media_types[i] = types[i];
+        if (object->media_types[i])
+            IMFMediaType_AddRef(object->media_types[i]);
+    }
+    object->media_types_count = count;
+    InitializeCriticalSection(&object->cs);
 
     *descriptor = &object->IMFStreamDescriptor_iface;
 

@@ -18,6 +18,7 @@
 
 #include "mfapi.h"
 #include "mfidl.h"
+#include "mferror.h"
 
 typedef struct attributes
 {
