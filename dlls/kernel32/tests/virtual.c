@@ -3945,7 +3945,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
     for (i = 0; i < ARRAY_SIZE(page_prot); i++)
     {
         SetLastError(0xdeadbeef);
-        hmap = CreateFileMappingW(hfile, NULL, page_prot[i] | sec_flags, 0, si.dwPageSize, NULL);
+        hmap = CreateFileMappingW(hfile, NULL, page_prot[i] | sec_flags, 0, 2*si.dwPageSize, NULL);
 
         if (readonly && (page_prot[i] == PAGE_READWRITE || page_prot[i] == PAGE_EXECUTE_READ
                     || page_prot[i] == PAGE_EXECUTE_READWRITE || page_prot[i] == PAGE_EXECUTE_WRITECOPY))
@@ -4062,7 +4062,8 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
             ret = VirtualQuery(base, &info, sizeof(info));
             ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
             ok(info.BaseAddress == base, "%d: (%04x) got %p, expected %p\n", j, view[j].access, info.BaseAddress, base);
-            ok(info.RegionSize == si.dwPageSize, "%d: (%04x) got %#lx != expected %#x\n", j, view[j].access, info.RegionSize, si.dwPageSize);
+            ok(info.RegionSize == 2*si.dwPageSize || (info.RegionSize == si.dwPageSize && (sec_flags & SEC_IMAGE)),
+               "%d: (%04x) got %#lx != expected %#x\n", j, view[j].access, info.RegionSize, 2*si.dwPageSize);
             if (sec_flags & SEC_IMAGE)
                 ok(info.Protect == PAGE_READONLY,
                     "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, info.Protect, view[j].prot);
@@ -4177,7 +4178,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
 
             if (!anon_mapping && is_compatible_protection(alloc_prot, PAGE_WRITECOPY))
             {
-                ret = VirtualProtect(base, si.dwPageSize, PAGE_WRITECOPY, &old_prot);
+                ret = VirtualProtect(base, sec_flags & SEC_IMAGE ? si.dwPageSize : 2*si.dwPageSize, PAGE_WRITECOPY, &old_prot);
                 todo_wine_if(readonly && view[j].prot != PAGE_WRITECOPY)
                 ok(ret, "VirtualProtect error %d, map %#x, view %#x\n", GetLastError(), page_prot[i], view[j].prot);
                 if (ret) *(DWORD*)base = 0xdeadbeef;
@@ -4186,9 +4187,21 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
                 todo_wine
                 ok(info.Protect == PAGE_READWRITE, "VirtualProtect wrong prot, map %#x, view %#x got %#x\n",
                    page_prot[i], view[j].prot, info.Protect );
+                todo_wine_if (!(sec_flags & SEC_IMAGE))
+                ok(info.RegionSize == si.dwPageSize, "wrong region size %#lx after write, map %#x, view %#x got %#x\n",
+                   info.RegionSize, page_prot[i], view[j].prot, info.Protect );
 
                 prev_prot = info.Protect;
                 alloc_prot = info.AllocationProtect;
+
+                if (!(sec_flags & SEC_IMAGE))
+                {
+                    ret = VirtualQuery((char*)base + si.dwPageSize, &info, sizeof(info));
+                    ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
+                    todo_wine_if(readonly && view[j].prot != PAGE_WRITECOPY)
+                    ok(info.Protect == PAGE_WRITECOPY, "wrong prot, map %#x, view %#x got %#x\n",
+                       page_prot[i], view[j].prot, info.Protect);
+                }
 
                 for (k = 0; k < ARRAY_SIZE(page_prot); k++)
                 {
@@ -4244,7 +4257,7 @@ static void test_mappings(void)
 
     hfile = CreateFileA(file_name, GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(hfile != INVALID_HANDLE_VALUE, "CreateFile(%s) error %d\n", file_name, GetLastError());
-    SetFilePointer(hfile, si.dwPageSize, NULL, FILE_BEGIN);
+    SetFilePointer(hfile, 2*si.dwPageSize, NULL, FILE_BEGIN);
     SetEndOfFile(hfile);
 
     test_mapping( hfile, SEC_COMMIT, FALSE );
