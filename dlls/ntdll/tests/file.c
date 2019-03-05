@@ -619,7 +619,7 @@ static void read_file_test(void)
     offset.QuadPart = 0;
     ResetEvent( event );
     status = pNtWriteFile( handle, event, apc, &apc_count, &iosb, text, strlen(text), &offset, NULL );
-    todo_wine ok( status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
+    ok( status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
             "wrong status %x.\n", status );
     if (status == STATUS_PENDING) WaitForSingleObject( event, 1000 );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
@@ -726,7 +726,7 @@ static void read_file_test(void)
     ResetEvent(event);
     status = pNtWriteFile(handle, event, apc, &apc_count, &iosb,
             aligned_buffer, sizeof(aligned_buffer), &offset, NULL);
-    todo_wine ok(status == STATUS_END_OF_FILE || status == STATUS_PENDING
+    ok(status == STATUS_END_OF_FILE || status == STATUS_PENDING
             || broken(status == STATUS_SUCCESS) /* before Vista */,
             "Wrong status %x.\n", status);
     ok(U(iosb).Status == STATUS_SUCCESS, "Wrong status %x.\n", U(iosb).Status);
@@ -3474,7 +3474,7 @@ static void test_file_completion_information(void)
     {
         SetLastError(0xdeadbeef);
         ret = WriteFile(h, buf, sizeof(buf), &num_bytes, &ov);
-        todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
+        ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
                 "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
         if (ret || GetLastError() != ERROR_IO_PENDING) break;
         ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
@@ -3504,7 +3504,7 @@ static void test_file_completion_information(void)
     {
         SetLastError(0xdeadbeef);
         ret = WriteFile(h, buf, sizeof(buf), &num_bytes, &ov);
-        todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
+        ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
                 "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
         if (ret || GetLastError() != ERROR_IO_PENDING) break;
         ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
@@ -3530,7 +3530,7 @@ static void test_file_completion_information(void)
     {
         SetLastError(0xdeadbeef);
         ret = WriteFile(h, buf, sizeof(buf), &num_bytes, &ov);
-        todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
+        ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
                 "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
         if (ret || GetLastError() != ERROR_IO_PENDING) break;
         ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
@@ -4367,7 +4367,7 @@ static void test_read_write(void)
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), &offset, NULL);
-    todo_wine ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
+    ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
             "expected STATUS_PENDING, got %#x.\n", status);
     if (status == STATUS_PENDING)
     {
@@ -4583,7 +4583,7 @@ static void test_read_write(void)
     iob.Information = -1;
     offset.QuadPart = (LONGLONG)-1 /* FILE_WRITE_TO_END_OF_FILE */;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, &offset, NULL);
-    todo_wine ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
+    ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
             "expected STATUS_PENDING, got %#x.\n", status);
     if (status == STATUS_PENDING)
     {
@@ -4626,7 +4626,7 @@ static void test_read_write(void)
     bytes = 0;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, "ABCD", 4, &bytes, &ovl);
-    todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
+    ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
             "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
     if (!ret)
     {
