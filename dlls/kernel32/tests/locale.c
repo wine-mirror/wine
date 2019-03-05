@@ -2362,6 +2362,13 @@ static void test_LCMapStringA(void)
     ok(ret == ret2, "lengths of sort keys must be equal\n");
     ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
 
+    /* test we get the same length when no dest buffer is provided */
+    ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       upper_case, lstrlenA(upper_case), NULL, 0);
+    ok(ret2, "LCMapStringA must succeed\n");
+    todo_wine
+    ok(ret == ret2, "lengths of sort keys must be equal (%d vs %d)\n", ret, ret2);
+
     /* test LCMAP_SORTKEY | NORM_IGNORECASE */
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | NORM_IGNORECASE,
                        upper_case, -1, buf, sizeof(buf));
