@@ -453,9 +453,10 @@ static inline D3DXHANDLE get_pass_handle(struct d3dx_pass *pass)
     return (D3DXHANDLE)pass;
 }
 
-static struct d3dx_technique *get_technique_by_name(struct d3dx9_base_effect *base, const char *name)
+static struct d3dx_technique *get_technique_by_name(struct d3dx_effect *effect, const char *name)
 {
-    UINT i;
+    struct d3dx9_base_effect *base = &effect->base_effect;
+    unsigned int i;
 
     if (!name) return NULL;
 
@@ -468,8 +469,9 @@ static struct d3dx_technique *get_technique_by_name(struct d3dx9_base_effect *ba
     return NULL;
 }
 
-static struct d3dx_technique *get_valid_technique(struct d3dx9_base_effect *base, D3DXHANDLE technique)
+static struct d3dx_technique *get_valid_technique(struct d3dx_effect *effect, D3DXHANDLE technique)
 {
+    struct d3dx9_base_effect *base = &effect->base_effect;
     unsigned int i;
 
     for (i = 0; i < base->technique_count; ++i)
@@ -478,7 +480,7 @@ static struct d3dx_technique *get_valid_technique(struct d3dx9_base_effect *base
             return &base->techniques[i];
     }
 
-    return get_technique_by_name(base, technique);
+    return get_technique_by_name(effect, technique);
 }
 
 static struct d3dx_pass *get_valid_pass(struct d3dx9_base_effect *base, D3DXHANDLE pass)
@@ -1163,7 +1165,7 @@ static unsigned int get_annotation_from_object(struct d3dx_effect *effect, D3DXH
     struct d3dx9_base_effect *base = &effect->base_effect;
     struct d3dx_parameter *param = get_valid_parameter(base, object);
     struct d3dx_pass *pass = get_valid_pass(base, object);
-    struct d3dx_technique *technique = get_valid_technique(base, object);
+    struct d3dx_technique *technique = get_valid_technique(effect, object);
 
     if (pass)
     {
@@ -3161,7 +3163,7 @@ static HRESULT WINAPI d3dx_effect_GetTechniqueDesc(ID3DXEffect *iface, D3DXHANDL
         D3DXTECHNIQUE_DESC *desc)
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
-    struct d3dx_technique *tech = technique ? get_valid_technique(&effect->base_effect, technique) : &effect->base_effect.techniques[0];
+    struct d3dx_technique *tech = technique ? get_valid_technique(effect, technique) : &effect->base_effect.techniques[0];
 
     TRACE("iface %p, technique %p, desc %p.\n", iface, technique, desc);
 
@@ -3357,7 +3359,7 @@ static D3DXHANDLE WINAPI d3dx_effect_GetTechnique(ID3DXEffect *iface, UINT index
 static D3DXHANDLE WINAPI d3dx_effect_GetTechniqueByName(ID3DXEffect *iface, const char *name)
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
-    struct d3dx_technique *tech = get_technique_by_name(&effect->base_effect, name);
+    struct d3dx_technique *tech = get_technique_by_name(effect, name);
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
@@ -3376,7 +3378,7 @@ static D3DXHANDLE WINAPI d3dx_effect_GetTechniqueByName(ID3DXEffect *iface, cons
 static D3DXHANDLE WINAPI d3dx_effect_GetPass(ID3DXEffect *iface, D3DXHANDLE technique, UINT index)
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
-    struct d3dx_technique *tech = get_valid_technique(&effect->base_effect, technique);
+    struct d3dx_technique *tech = get_valid_technique(effect, technique);
 
     TRACE("iface %p, technique %p, index %u.\n", iface, technique, index);
 
@@ -3394,7 +3396,7 @@ static D3DXHANDLE WINAPI d3dx_effect_GetPass(ID3DXEffect *iface, D3DXHANDLE tech
 static D3DXHANDLE WINAPI d3dx_effect_GetPassByName(ID3DXEffect *iface, D3DXHANDLE technique, const char *name)
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
-    struct d3dx_technique *tech = get_valid_technique(&effect->base_effect, technique);
+    struct d3dx_technique *tech = get_valid_technique(effect, technique);
 
     TRACE("iface %p, technique %p, name %s.\n", iface, technique, debugstr_a(name));
 
@@ -3860,15 +3862,14 @@ static HRESULT WINAPI d3dx_effect_GetPool(ID3DXEffect *iface, ID3DXEffectPool **
 
 static HRESULT WINAPI d3dx_effect_SetTechnique(ID3DXEffect *iface, D3DXHANDLE technique)
 {
-    struct d3dx_effect *This = impl_from_ID3DXEffect(iface);
-    struct d3dx9_base_effect *base = &This->base_effect;
-    struct d3dx_technique *tech = get_valid_technique(base, technique);
+    struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx_technique *tech = get_valid_technique(effect, technique);
 
-    TRACE("iface %p, technique %p\n", This, technique);
+    TRACE("iface %p, technique %p\n", iface, technique);
 
     if (tech)
     {
-        This->active_technique = tech;
+        effect->active_technique = tech;
         TRACE("Technique %p\n", tech);
         return D3D_OK;
     }
@@ -3891,7 +3892,7 @@ static HRESULT WINAPI d3dx_effect_ValidateTechnique(ID3DXEffect *iface, D3DXHAND
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
     struct d3dx9_base_effect *base = &effect->base_effect;
-    struct d3dx_technique *tech = get_valid_technique(base, technique);
+    struct d3dx_technique *tech = get_valid_technique(effect, technique);
     HRESULT ret = D3D_OK;
     unsigned int i, j;
 
@@ -3947,7 +3948,7 @@ static HRESULT WINAPI d3dx_effect_FindNextValidTechnique(ID3DXEffect *iface, D3D
 
     if (technique)
     {
-        if (!(prev_tech = get_valid_technique(base, technique)))
+        if (!(prev_tech = get_valid_technique(effect, technique)))
             return D3DERR_INVALIDCALL;
 
         for (i = 0; i < base->technique_count; ++i)
@@ -4090,7 +4091,7 @@ static BOOL WINAPI d3dx_effect_IsParameterUsed(ID3DXEffect *iface, D3DXHANDLE pa
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(&effect->base_effect, parameter);
-    struct d3dx_technique *tech = get_valid_technique(&effect->base_effect, technique);
+    struct d3dx_technique *tech = get_valid_technique(effect, technique);
     BOOL ret;
 
     TRACE("iface %p, parameter %p, technique %p.\n", iface, parameter, technique);
