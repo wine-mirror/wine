@@ -36,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const WCHAR wcsOutputPinName[] = {'o','u','t','p','u','t',' ','p','i','n',0};
+static const WCHAR outputW[] = {'o','u','t','p','u','t',0};
 
 typedef struct WAVEParserImpl
 {
@@ -256,7 +256,7 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = &pWAVEParser->Parser.filter.IBaseFilter_iface;
-    lstrcpynW(piOutput.achName, wcsOutputPinName, ARRAY_SIZE(piOutput.achName));
+    lstrcpynW(piOutput.achName, outputW, ARRAY_SIZE(piOutput.achName));
 
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     pos += sizeof(list);
