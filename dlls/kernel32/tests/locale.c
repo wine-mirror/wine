@@ -2366,7 +2366,6 @@ static void test_LCMapStringA(void)
     ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
                        upper_case, lstrlenA(upper_case), NULL, 0);
     ok(ret2, "LCMapStringA must succeed\n");
-    todo_wine
     ok(ret == ret2, "lengths of sort keys must be equal (%d vs %d)\n", ret, ret2);
 
     /* test LCMAP_SORTKEY | NORM_IGNORECASE */
