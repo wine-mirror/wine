@@ -153,7 +153,6 @@ struct d3dx9_base_effect
     struct d3dx_effect *effect;
 
     UINT technique_count;
-    UINT object_count;
 
     struct d3dx_top_level_parameter *parameters;
     struct d3dx_technique *techniques;
@@ -176,6 +175,7 @@ struct d3dx_effect
 
     struct d3dx9_base_effect base_effect;
     unsigned int parameter_count;
+    unsigned int object_count;
 
     struct ID3DXEffectStateManager *manager;
     struct IDirect3DDevice9 *device;
@@ -707,7 +707,7 @@ static void d3dx9_base_effect_cleanup(struct d3dx9_base_effect *base)
 
     if (base->objects)
     {
-        for (i = 0; i < base->object_count; ++i)
+        for (i = 0; i < base->effect->object_count; ++i)
         {
             free_object(&base->objects[i]);
         }
@@ -6270,10 +6270,10 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
 
     skip_dword_unknown(&ptr, 1);
 
-    read_dword(&ptr, &base->object_count);
-    TRACE("Object count: %u.\n", base->object_count);
+    read_dword(&ptr, &effect->object_count);
+    TRACE("Object count: %u.\n", effect->object_count);
 
-    base->objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*base->objects) * base->object_count);
+    base->objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*base->objects) * effect->object_count);
     if (!base->objects)
     {
         ERR("Out of memory.\n");
@@ -6399,7 +6399,7 @@ err_out:
 
     if (base->objects)
     {
-        for (i = 0; i < base->object_count; ++i)
+        for (i = 0; i < effect->object_count; ++i)
         {
             free_object(&base->objects[i]);
         }
