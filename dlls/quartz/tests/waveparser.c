@@ -432,6 +432,125 @@ todo_wine
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_media_types(void)
+{
+    static const WAVEFORMATEX expect_wfx = {WAVE_FORMAT_PCM, 1, 44100, 44100, 1, 8, 0};
+
+    const WCHAR *filename = load_resource(wavefile);
+    IBaseFilter *filter = create_wave_parser();
+    AM_MEDIA_TYPE mt = {{0}}, *pmt;
+    IEnumMediaTypes *enummt;
+    IFilterGraph2 *graph;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+    BOOL ret;
+
+    IBaseFilter_FindPin(filter, sink_name, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    mt.majortype = MEDIATYPE_Stream;
+    mt.subtype = MEDIASUBTYPE_WAVE;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.bFixedSizeSamples = TRUE;
+    mt.bTemporalCompression = TRUE;
+    mt.lSampleSize = 123;
+    mt.formattype = FORMAT_VideoInfo;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Stream;
+
+    mt.subtype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.subtype = MEDIASUBTYPE_WAVE;
+
+    graph = connect_input(filter, filename);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, source_name, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    ok(pmt->lSampleSize == 1, "Got sample size %u.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+    ok(pmt->cbFormat == sizeof(WAVEFORMATEX), "Got format size %u.\n", pmt->cbFormat);
+    ok(!memcmp(pmt->pbFormat, &expect_wfx, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
+
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->bFixedSizeSamples = FALSE;
+    pmt->bTemporalCompression = TRUE;
+    pmt->lSampleSize = 123;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->majortype = MEDIATYPE_Audio;
+
+    pmt->subtype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_WAVE;
+
+    pmt->formattype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    CoTaskMemFree(pmt->pbFormat);
+    CoTaskMemFree(pmt);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+
+    IFilterGraph2_Release(graph);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(waveparser)
 {
     CoInitialize(NULL);
@@ -440,6 +559,7 @@ START_TEST(waveparser)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_media_types();
 
     CoUninitialize();
 }
