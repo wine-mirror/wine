@@ -35,9 +35,20 @@ struct memory_buffer
     DWORD current_length;
 };
 
+struct sample
+{
+    struct attributes attributes;
+    IMFSample IMFSample_iface;
+};
+
 static inline struct memory_buffer *impl_from_IMFMediaBuffer(IMFMediaBuffer *iface)
 {
     return CONTAINING_RECORD(iface, struct memory_buffer, IMFMediaBuffer_iface);
+}
+
+static inline struct sample *impl_from_IMFSample(IMFSample *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample, IMFSample_iface);
 }
 
 static HRESULT WINAPI memory_buffer_QueryInterface(IMFMediaBuffer *iface, REFIID riid, void **out)
@@ -213,4 +224,402 @@ HRESULT WINAPI MFCreateAlignedMemoryBuffer(DWORD max_length, DWORD alignment, IM
     TRACE("%u, %u, %p.\n", max_length, alignment, buffer);
 
     return create_memory_buffer(max_length, alignment, buffer);
+}
+
+static HRESULT WINAPI sample_QueryInterface(IMFSample *iface, REFIID riid, void **out)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFSample) ||
+            IsEqualIID(riid, &IID_IMFAttributes) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFSample_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI sample_AddRef(IMFSample *iface)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    ULONG refcount = InterlockedIncrement(&sample->attributes.ref);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI sample_Release(IMFSample *iface)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    ULONG refcount = InterlockedDecrement(&sample->attributes.ref);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(sample);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI sample_GetItem(IMFSample *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetItem(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_GetItemType(IMFSample *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetItemType(&sample->attributes.IMFAttributes_iface, key, type);
+}
+
+static HRESULT WINAPI sample_CompareItem(IMFSample *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_CompareItem(&sample->attributes.IMFAttributes_iface, key, value, result);
+}
+
+static HRESULT WINAPI sample_Compare(IMFSample *iface, IMFAttributes *theirs, MF_ATTRIBUTES_MATCH_TYPE type,
+        BOOL *result)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_Compare(&sample->attributes.IMFAttributes_iface, theirs, type, result);
+}
+
+static HRESULT WINAPI sample_GetUINT32(IMFSample *iface, REFGUID key, UINT32 *value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetUINT32(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_GetUINT64(IMFSample *iface, REFGUID key, UINT64 *value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetUINT64(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_GetDouble(IMFSample *iface, REFGUID key, double *value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetDouble(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_GetGUID(IMFSample *iface, REFGUID key, GUID *value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetGUID(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_GetStringLength(IMFSample *iface, REFGUID key, UINT32 *length)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetStringLength(&sample->attributes.IMFAttributes_iface, key, length);
+}
+
+static HRESULT WINAPI sample_GetString(IMFSample *iface, REFGUID key, WCHAR *value, UINT32 size, UINT32 *length)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetString(&sample->attributes.IMFAttributes_iface, key, value, size, length);
+}
+
+static HRESULT WINAPI sample_GetAllocatedString(IMFSample *iface, REFGUID key, WCHAR **value, UINT32 *length)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetAllocatedString(&sample->attributes.IMFAttributes_iface, key, value, length);
+}
+
+static HRESULT WINAPI sample_GetBlobSize(IMFSample *iface, REFGUID key, UINT32 *size)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetBlobSize(&sample->attributes.IMFAttributes_iface, key, size);
+}
+
+static HRESULT WINAPI sample_GetBlob(IMFSample *iface, REFGUID key, UINT8 *buf, UINT32 bufsize, UINT32 *blobsize)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetBlob(&sample->attributes.IMFAttributes_iface, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI sample_GetAllocatedBlob(IMFSample *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetAllocatedBlob(&sample->attributes.IMFAttributes_iface, key, buf, size);
+}
+
+static HRESULT WINAPI sample_GetUnknown(IMFSample *iface, REFGUID key, REFIID riid, void **ppv)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetUnknown(&sample->attributes.IMFAttributes_iface, key, riid, ppv);
+}
+
+static HRESULT WINAPI sample_SetItem(IMFSample *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_SetItem(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_DeleteItem(IMFSample *iface, REFGUID key)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_DeleteItem(&sample->attributes.IMFAttributes_iface, key);
+}
+
+static HRESULT WINAPI sample_DeleteAllItems(IMFSample *iface)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_DeleteAllItems(&sample->attributes.IMFAttributes_iface);
+}
+
+static HRESULT WINAPI sample_SetUINT32(IMFSample *iface, REFGUID key, UINT32 value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_SetUINT32(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_SetUINT64(IMFSample *iface, REFGUID key, UINT64 value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_SetUINT64(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_SetDouble(IMFSample *iface, REFGUID key, double value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_SetDouble(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_SetGUID(IMFSample *iface, REFGUID key, REFGUID value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_SetGUID(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_SetString(IMFSample *iface, REFGUID key, const WCHAR *value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_SetString(&sample->attributes.IMFAttributes_iface, key, value);
+}
+
+static HRESULT WINAPI sample_SetBlob(IMFSample *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_SetBlob(&sample->attributes.IMFAttributes_iface, key, buf, size);
+}
+
+static HRESULT WINAPI sample_SetUnknown(IMFSample *iface, REFGUID key, IUnknown *unknown)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_SetUnknown(&sample->attributes.IMFAttributes_iface, key, unknown);
+}
+
+static HRESULT WINAPI sample_LockStore(IMFSample *iface)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_LockStore(&sample->attributes.IMFAttributes_iface);
+}
+
+static HRESULT WINAPI sample_UnlockStore(IMFSample *iface)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_UnlockStore(&sample->attributes.IMFAttributes_iface);
+}
+
+static HRESULT WINAPI sample_GetCount(IMFSample *iface, UINT32 *items)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetCount(&sample->attributes.IMFAttributes_iface, items);
+}
+
+static HRESULT WINAPI sample_GetItemByIndex(IMFSample *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_GetItemByIndex(&sample->attributes.IMFAttributes_iface, index, key, value);
+}
+
+static HRESULT WINAPI sample_CopyAllItems(IMFSample *iface, IMFAttributes *dest)
+{
+    FIXME("%p, %p.\n", iface, dest);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_GetSampleFlags(IMFSample *iface, DWORD *flags)
+{
+    FIXME("%p, %p.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_SetSampleFlags(IMFSample *iface, DWORD flags)
+{
+    FIXME("%p, %#x.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_GetSampleTime(IMFSample *iface, LONGLONG *sampletime)
+{
+    FIXME("%p, %p.\n", iface, sampletime);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_SetSampleTime(IMFSample *iface, LONGLONG sampletime)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(sampletime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_GetSampleDuration(IMFSample *iface, LONGLONG *duration)
+{
+    FIXME("%p, %p.\n", iface, duration);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_SetSampleDuration(IMFSample *iface, LONGLONG duration)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(duration));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_GetBufferCount(IMFSample *iface, DWORD *count)
+{
+    FIXME("%p, %p.\n", iface, count);
+
+    if (*count)
+        *count = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI sample_GetBufferByIndex(IMFSample *iface, DWORD index, IMFMediaBuffer **buffer)
+{
+    FIXME("%p, %u, %p.\n", iface, index, buffer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_ConvertToContiguousBuffer(IMFSample *iface, IMFMediaBuffer **buffer)
+{
+    FIXME("%p, %p.\n", iface, buffer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_AddBuffer(IMFSample *iface, IMFMediaBuffer *buffer)
+{
+    FIXME("%p, %p.\n", iface, buffer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_RemoveBufferByIndex(IMFSample *iface, DWORD index)
+{
+    FIXME("%p, %u.\n", iface, index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_RemoveAllBuffers(IMFSample *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_GetTotalLength(IMFSample *iface, DWORD *length)
+{
+    FIXME("%p, %p.\n", iface, length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_CopyToBuffer(IMFSample *iface, IMFMediaBuffer *buffer)
+{
+    FIXME("%p, %p.\n", iface, buffer);
+
+    return E_NOTIMPL;
+}
+
+static const IMFSampleVtbl samplevtbl =
+{
+    sample_QueryInterface,
+    sample_AddRef,
+    sample_Release,
+    sample_GetItem,
+    sample_GetItemType,
+    sample_CompareItem,
+    sample_Compare,
+    sample_GetUINT32,
+    sample_GetUINT64,
+    sample_GetDouble,
+    sample_GetGUID,
+    sample_GetStringLength,
+    sample_GetString,
+    sample_GetAllocatedString,
+    sample_GetBlobSize,
+    sample_GetBlob,
+    sample_GetAllocatedBlob,
+    sample_GetUnknown,
+    sample_SetItem,
+    sample_DeleteItem,
+    sample_DeleteAllItems,
+    sample_SetUINT32,
+    sample_SetUINT64,
+    sample_SetDouble,
+    sample_SetGUID,
+    sample_SetString,
+    sample_SetBlob,
+    sample_SetUnknown,
+    sample_LockStore,
+    sample_UnlockStore,
+    sample_GetCount,
+    sample_GetItemByIndex,
+    sample_CopyAllItems,
+    sample_GetSampleFlags,
+    sample_SetSampleFlags,
+    sample_GetSampleTime,
+    sample_SetSampleTime,
+    sample_GetSampleDuration,
+    sample_SetSampleDuration,
+    sample_GetBufferCount,
+    sample_GetBufferByIndex,
+    sample_ConvertToContiguousBuffer,
+    sample_AddBuffer,
+    sample_RemoveBufferByIndex,
+    sample_RemoveAllBuffers,
+    sample_GetTotalLength,
+    sample_CopyToBuffer,
+};
+
+/***********************************************************************
+ *      MFCreateSample (mfplat.@)
+ */
+HRESULT WINAPI MFCreateSample(IMFSample **sample)
+{
+    struct sample *object;
+
+    TRACE("%p.\n", sample);
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    init_attribute_object(&object->attributes, 0);
+    object->IMFSample_iface.lpVtbl = &samplevtbl;
+
+    *sample = &object->IMFSample_iface;
+
+    return S_OK;
 }
