@@ -42,7 +42,6 @@ static HRESULT (WINAPI *pMFCopyImage)(BYTE *dest, LONG deststride, const BYTE *s
         DWORD width, DWORD lines);
 static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
-static HRESULT (WINAPI *pMFCreateMemoryBuffer)(DWORD max_length, IMFMediaBuffer **buffer);
 static void*   (WINAPI *pMFHeapAlloc)(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
 static void    (WINAPI *pMFHeapFree)(void *p);
 static HRESULT (WINAPI *pMFPutWaitingWorkItem)(HANDLE event, LONG priority, IMFAsyncResult *result, MFWORKITEM_KEY *key);
@@ -323,7 +322,6 @@ static void init_functions(void)
     X(MFCopyImage);
     X(MFCreateSourceResolver);
     X(MFCreateMFByteStreamOnStream);
-    X(MFCreateMemoryBuffer);
     X(MFHeapAlloc);
     X(MFHeapFree);
     X(MFPutWaitingWorkItem);
@@ -602,23 +600,17 @@ static void test_MFCreateFile(void)
     DeleteFileW(newfilename);
 }
 
-static void test_MFCreateMemoryBuffer(void)
+static void test_system_memory_buffer(void)
 {
     IMFMediaBuffer *buffer;
     HRESULT hr;
     DWORD length, max;
     BYTE *data, *data2;
 
-    if(!pMFCreateMemoryBuffer)
-    {
-        win_skip("MFCreateMemoryBuffer() not found\n");
-        return;
-    }
-
-    hr = pMFCreateMemoryBuffer(1024, NULL);
+    hr = MFCreateMemoryBuffer(1024, NULL);
     ok(hr == E_INVALIDARG || hr == E_POINTER, "got 0x%08x\n", hr);
 
-    hr = pMFCreateMemoryBuffer(0, &buffer);
+    hr = MFCreateMemoryBuffer(0, &buffer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if(buffer)
     {
@@ -629,7 +621,7 @@ static void test_MFCreateMemoryBuffer(void)
         IMFMediaBuffer_Release(buffer);
     }
 
-    hr = pMFCreateMemoryBuffer(1024, &buffer);
+    hr = MFCreateMemoryBuffer(1024, &buffer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IMFMediaBuffer_GetMaxLength(buffer, NULL);
@@ -684,6 +676,40 @@ static void test_MFCreateMemoryBuffer(void)
     /* Extra Unlock */
     hr = IMFMediaBuffer_Unlock(buffer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IMFMediaBuffer_Release(buffer);
+
+    /* Aligned buffer. */
+    hr = MFCreateAlignedMemoryBuffer(201, MF_8_BYTE_ALIGNMENT, &buffer);
+    ok(hr == S_OK, "Failed to create memory buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get current length, hr %#x.\n", hr);
+    ok(length == 0, "Unexpected current length %u.\n", length);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 1);
+    ok(hr == S_OK, "Failed to set current length, hr %#x.\n", hr);
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get current length, hr %#x.\n", hr);
+    ok(length == 1, "Unexpected current length %u.\n", length);
+
+    hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get max length, hr %#x.\n", hr);
+    ok(length == 201, "Unexpected max length %u.\n", length);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 202);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get max length, hr %#x.\n", hr);
+    ok(length == 201, "Unexpected max length %u.\n", length);
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 10);
+    ok(hr == S_OK, "Failed to set current length, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
+    ok(hr == S_OK, "Failed to lock, hr %#x.\n", hr);
+    ok(max == 201 && length == 10, "Unexpected length.\n");
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Failed to unlock, hr %#x.\n", hr);
 
     IMFMediaBuffer_Release(buffer);
 }
@@ -1518,7 +1544,7 @@ START_TEST(mfplat)
     test_MFSample();
     test_MFCreateFile();
     test_MFCreateMFByteStreamOnStream();
-    test_MFCreateMemoryBuffer();
+    test_system_memory_buffer();
     test_source_resolver();
     test_MFCreateAsyncResult();
     test_allocate_queue();

@@ -97,11 +97,27 @@ typedef enum
 
 typedef void (CALLBACK *MFPERIODICCALLBACK)(IUnknown *context);
 
+#define MF_1_BYTE_ALIGNMENT       0x00000000
+#define MF_2_BYTE_ALIGNMENT       0x00000001
+#define MF_4_BYTE_ALIGNMENT       0x00000003
+#define MF_8_BYTE_ALIGNMENT       0x00000007
+#define MF_16_BYTE_ALIGNMENT      0x0000000f
+#define MF_32_BYTE_ALIGNMENT      0x0000001f
+#define MF_64_BYTE_ALIGNMENT      0x0000003f
+#define MF_128_BYTE_ALIGNMENT     0x0000007f
+#define MF_256_BYTE_ALIGNMENT     0x000000ff
+#define MF_512_BYTE_ALIGNMENT     0x000001ff
+#define MF_1024_BYTE_ALIGNMENT    0x000003ff
+#define MF_2048_BYTE_ALIGNMENT    0x000007ff
+#define MF_4096_BYTE_ALIGNMENT    0x00000fff
+#define MF_8192_BYTE_ALIGNMENT    0x00001fff
+
 HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
 HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines);
+HRESULT WINAPI MFCreateAlignedMemoryBuffer(DWORD max_length, DWORD alignment, IMFMediaBuffer **buffer);
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);
 HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback, IUnknown *state, IMFAsyncResult **result);
 HRESULT WINAPI MFCreateCollection(IMFCollection **collection);
