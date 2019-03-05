@@ -1391,6 +1391,16 @@ IRichEditOle_fnGetObject(IRichEditOle *me, LONG iob,
         else
             reobj = cursor.pRun->member.run.reobj;
     }
+    else if (iob == REO_IOB_SELECTION)
+    {
+        ME_Cursor *from, *to;
+
+        ME_GetSelection(This->editor, &from, &to);
+        if (!from->pRun->member.run.reobj)
+            return E_INVALIDARG;
+        else
+            reobj = from->pRun->member.run.reobj;
+    }
     else
     {
         if (iob > IRichEditOle_GetObjectCount(me))

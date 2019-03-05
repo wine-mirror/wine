@@ -3328,6 +3328,61 @@ static void test_InsertObject(void)
   /* received_reo4 didn't be zeroed in E_INVALIDARG case */
   CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo2.polesite, 2);
 
+  SendMessageA(hwnd, EM_SETSEL, 0, 1);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 1;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo1.polesite, 1);
+
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo3.polesite, 3);
+
+  SendMessageA(hwnd, EM_SETSEL, 2, 3);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo2.polesite, 2);
+
+  SendMessageA(hwnd, EM_SETSEL, 0, 2);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo1.polesite, 1);
+
+  SendMessageA(hwnd, EM_SETSEL, 1, 3);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo3.polesite, 3);
+
+  SendMessageA(hwnd, EM_SETSEL, 2, 0);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo1.polesite, 1);
+
+  SendMessageA(hwnd, EM_SETSEL, 0, 6);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo1.polesite, 1);
+
+  SendMessageA(hwnd, EM_SETSEL, 4, 5);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == E_INVALIDARG, "IRichEditOle_GetObject should fail: 0x%08x\n", hr);
+
   release_interfaces(&hwnd, &reole, &doc, NULL);
 }
 
