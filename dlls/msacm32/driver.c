@@ -600,8 +600,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     return MMSYSERR_NOERROR;
  gotError:
     WARN("failed: ret = %08x\n", ret);
-    if (pad && !pad->hDrvr)
-	HeapFree(MSACM_hHeap, 0, pad);
+    HeapFree(MSACM_hHeap, 0, pad);
     return ret;
 }
 
