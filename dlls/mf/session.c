@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "mfidl.h"
 #include "mfapi.h"
+#include "mferror.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -38,9 +39,41 @@ struct media_session
     IMFMediaEventQueue *event_queue;
 };
 
+struct presentation_clock
+{
+    IMFPresentationClock IMFPresentationClock_iface;
+    IMFRateControl IMFRateControl_iface;
+    IMFTimer IMFTimer_iface;
+    IMFShutdown IMFShutdown_iface;
+    LONG refcount;
+    IMFPresentationTimeSource *time_source;
+    MFCLOCK_STATE state;
+    CRITICAL_SECTION cs;
+};
+
 static inline struct media_session *impl_from_IMFMediaSession(IMFMediaSession *iface)
 {
     return CONTAINING_RECORD(iface, struct media_session, IMFMediaSession_iface);
+}
+
+static struct presentation_clock *impl_from_IMFPresentationClock(IMFPresentationClock *iface)
+{
+    return CONTAINING_RECORD(iface, struct presentation_clock, IMFPresentationClock_iface);
+}
+
+static struct presentation_clock *impl_from_IMFRateControl(IMFRateControl *iface)
+{
+    return CONTAINING_RECORD(iface, struct presentation_clock, IMFRateControl_iface);
+}
+
+static struct presentation_clock *impl_from_IMFTimer(IMFTimer *iface)
+{
+    return CONTAINING_RECORD(iface, struct presentation_clock, IMFTimer_iface);
+}
+
+static struct presentation_clock *impl_from_IMFShutdown(IMFShutdown *iface)
+{
+    return CONTAINING_RECORD(iface, struct presentation_clock, IMFShutdown_iface);
 }
 
 static HRESULT WINAPI mfsession_QueryInterface(IMFMediaSession *iface, REFIID riid, void **out)
@@ -248,6 +281,354 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     }
 
     *session = &object->IMFMediaSession_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI present_clock_QueryInterface(IMFPresentationClock *iface, REFIID riid, void **out)
+{
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFPresentationClock) ||
+            IsEqualIID(riid, &IID_IMFClock) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = &clock->IMFPresentationClock_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFRateControl))
+    {
+        *out = &clock->IMFRateControl_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFTimer))
+    {
+        *out = &clock->IMFTimer_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFShutdown))
+    {
+        *out = &clock->IMFShutdown_iface;
+    }
+    else
+    {
+        WARN("Unsupported %s.\n", debugstr_guid(riid));
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI present_clock_AddRef(IMFPresentationClock *iface)
+{
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+    ULONG refcount = InterlockedIncrement(&clock->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI present_clock_Release(IMFPresentationClock *iface)
+{
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+    ULONG refcount = InterlockedDecrement(&clock->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        if (clock->time_source)
+            IMFPresentationTimeSource_Release(clock->time_source);
+        DeleteCriticalSection(&clock->cs);
+        heap_free(clock);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI present_clock_GetClockCharacteristics(IMFPresentationClock *iface, DWORD *flags)
+{
+    FIXME("%p, %p.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_GetCorrelatedTime(IMFPresentationClock *iface, DWORD reserved,
+        LONGLONG *clock_time, MFTIME *system_time)
+{
+    FIXME("%p, %#x, %p, %p.\n", iface, reserved, clock_time, system_time);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_GetContinuityKey(IMFPresentationClock *iface, DWORD *key)
+{
+    TRACE("%p, %p.\n", iface, key);
+
+    *key = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI present_clock_GetState(IMFPresentationClock *iface, DWORD reserved, MFCLOCK_STATE *state)
+{
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+
+    TRACE("%p, %#x, %p.\n", iface, reserved, state);
+
+    EnterCriticalSection(&clock->cs);
+    *state = clock->state;
+    LeaveCriticalSection(&clock->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI present_clock_GetProperties(IMFPresentationClock *iface, MFCLOCK_PROPERTIES *props)
+{
+    FIXME("%p, %p.\n", iface, props);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_SetTimeSource(IMFPresentationClock *iface,
+        IMFPresentationTimeSource *time_source)
+{
+    FIXME("%p, %p.\n", iface, time_source);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_GetTimeSource(IMFPresentationClock *iface,
+        IMFPresentationTimeSource **time_source)
+{
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %p.\n", iface, time_source);
+
+    EnterCriticalSection(&clock->cs);
+    if (clock->time_source)
+    {
+        *time_source = clock->time_source;
+        IMFPresentationTimeSource_AddRef(*time_source);
+    }
+    else
+        hr = MF_E_CLOCK_NO_TIME_SOURCE;
+    LeaveCriticalSection(&clock->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI present_clock_GetTime(IMFPresentationClock *iface, MFTIME *time)
+{
+    FIXME("%p, %p.\n", iface, time);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_AddClockStateSink(IMFPresentationClock *iface, IMFClockStateSink *state_sink)
+{
+    FIXME("%p, %p.\n", iface, state_sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_RemoveClockStateSink(IMFPresentationClock *iface,
+        IMFClockStateSink *state_sink)
+{
+    FIXME("%p, %p.\n", iface, state_sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_Start(IMFPresentationClock *iface, LONGLONG start_offset)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(start_offset));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_Stop(IMFPresentationClock *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_Pause(IMFPresentationClock *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IMFPresentationClockVtbl presentationclockvtbl =
+{
+    present_clock_QueryInterface,
+    present_clock_AddRef,
+    present_clock_Release,
+    present_clock_GetClockCharacteristics,
+    present_clock_GetCorrelatedTime,
+    present_clock_GetContinuityKey,
+    present_clock_GetState,
+    present_clock_GetProperties,
+    present_clock_SetTimeSource,
+    present_clock_GetTimeSource,
+    present_clock_GetTime,
+    present_clock_AddClockStateSink,
+    present_clock_RemoveClockStateSink,
+    present_clock_Start,
+    present_clock_Stop,
+    present_clock_Pause,
+};
+
+static HRESULT WINAPI present_clock_rate_control_QueryInterface(IMFRateControl *iface, REFIID riid, void **out)
+{
+    struct presentation_clock *clock = impl_from_IMFRateControl(iface);
+    return IMFPresentationClock_QueryInterface(&clock->IMFPresentationClock_iface, riid, out);
+}
+
+static ULONG WINAPI present_clock_rate_control_AddRef(IMFRateControl *iface)
+{
+    struct presentation_clock *clock = impl_from_IMFRateControl(iface);
+    return IMFPresentationClock_AddRef(&clock->IMFPresentationClock_iface);
+}
+
+static ULONG WINAPI present_clock_rate_control_Release(IMFRateControl *iface)
+{
+    struct presentation_clock *clock = impl_from_IMFRateControl(iface);
+    return IMFPresentationClock_Release(&clock->IMFPresentationClock_iface);
+}
+
+static HRESULT WINAPI present_clock_rate_SetRate(IMFRateControl *iface, BOOL thin, float rate)
+{
+    FIXME("%p, %d, %f.\n", iface, thin, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_rate_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
+{
+    FIXME("%p, %p, %p.\n", iface, thin, rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFRateControlVtbl presentclockratecontrolvtbl =
+{
+    present_clock_rate_control_QueryInterface,
+    present_clock_rate_control_AddRef,
+    present_clock_rate_control_Release,
+    present_clock_rate_SetRate,
+    present_clock_rate_GetRate,
+};
+
+static HRESULT WINAPI present_clock_timer_QueryInterface(IMFTimer *iface, REFIID riid, void **out)
+{
+    struct presentation_clock *clock = impl_from_IMFTimer(iface);
+    return IMFPresentationClock_QueryInterface(&clock->IMFPresentationClock_iface, riid, out);
+}
+
+static ULONG WINAPI present_clock_timer_AddRef(IMFTimer *iface)
+{
+    struct presentation_clock *clock = impl_from_IMFTimer(iface);
+    return IMFPresentationClock_AddRef(&clock->IMFPresentationClock_iface);
+}
+
+static ULONG WINAPI present_clock_timer_Release(IMFTimer *iface)
+{
+    struct presentation_clock *clock = impl_from_IMFTimer(iface);
+    return IMFPresentationClock_Release(&clock->IMFPresentationClock_iface);
+}
+
+static HRESULT WINAPI present_clock_timer_SetTimer(IMFTimer *iface, DWORD flags, LONGLONG time,
+        IMFAsyncCallback *callback, IUnknown *state, IUnknown **cancel_key)
+{
+    FIXME("%p, %#x, %s, %p, %p, %p.\n", iface, flags, wine_dbgstr_longlong(time), callback, state, cancel_key);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_timer_CancelTimer(IMFTimer *iface, IUnknown *cancel_key)
+{
+    FIXME("%p, %p.\n", iface, cancel_key);
+
+    return E_NOTIMPL;
+}
+
+static const IMFTimerVtbl presentclocktimervtbl =
+{
+    present_clock_timer_QueryInterface,
+    present_clock_timer_AddRef,
+    present_clock_timer_Release,
+    present_clock_timer_SetTimer,
+    present_clock_timer_CancelTimer,
+};
+
+static HRESULT WINAPI present_clock_shutdown_QueryInterface(IMFShutdown *iface, REFIID riid, void **out)
+{
+    struct presentation_clock *clock = impl_from_IMFShutdown(iface);
+    return IMFPresentationClock_QueryInterface(&clock->IMFPresentationClock_iface, riid, out);
+}
+
+static ULONG WINAPI present_clock_shutdown_AddRef(IMFShutdown *iface)
+{
+    struct presentation_clock *clock = impl_from_IMFShutdown(iface);
+    return IMFPresentationClock_AddRef(&clock->IMFPresentationClock_iface);
+}
+
+static ULONG WINAPI present_clock_shutdown_Release(IMFShutdown *iface)
+{
+    struct presentation_clock *clock = impl_from_IMFShutdown(iface);
+    return IMFPresentationClock_Release(&clock->IMFPresentationClock_iface);
+}
+
+static HRESULT WINAPI present_clock_shutdown_Shutdown(IMFShutdown *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI present_clock_shutdown_GetShutdownStatus(IMFShutdown *iface, MFSHUTDOWN_STATUS *status)
+{
+    FIXME("%p, %p.\n", iface, status);
+
+    return E_NOTIMPL;
+}
+
+static const IMFShutdownVtbl presentclockshutdownvtbl =
+{
+    present_clock_shutdown_QueryInterface,
+    present_clock_shutdown_AddRef,
+    present_clock_shutdown_Release,
+    present_clock_shutdown_Shutdown,
+    present_clock_shutdown_GetShutdownStatus,
+};
+
+/***********************************************************************
+ *      MFCreatePresentationClock (mf.@)
+ */
+HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock)
+{
+    struct presentation_clock *object;
+
+    TRACE("%p.\n", clock);
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFPresentationClock_iface.lpVtbl = &presentationclockvtbl;
+    object->IMFRateControl_iface.lpVtbl = &presentclockratecontrolvtbl;
+    object->IMFTimer_iface.lpVtbl = &presentclocktimervtbl;
+    object->IMFShutdown_iface.lpVtbl = &presentclockshutdownvtbl;
+    object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
+
+    *clock = &object->IMFPresentationClock_iface;
 
     return S_OK;
 }

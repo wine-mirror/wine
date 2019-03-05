@@ -735,6 +735,68 @@ static void test_MFShutdownObject(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static void test_presentation_clock(void)
+{
+    IMFPresentationTimeSource *time_source;
+    IMFRateControl *rate_control;
+    IMFPresentationClock *clock;
+    MFCLOCK_PROPERTIES props;
+    IMFShutdown *shutdown;
+    LONGLONG clock_time;
+    MFCLOCK_STATE state;
+    IMFTimer *timer;
+    MFTIME systime;
+    DWORD value;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    hr = MFCreatePresentationClock(&clock);
+    ok(hr == S_OK, "Failed to create presentation clock, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetTimeSource(clock, &time_source);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetClockCharacteristics(clock, &value);
+todo_wine
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    value = 1;
+    hr = IMFPresentationClock_GetContinuityKey(clock, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 0, "Unexpected value %u.\n", value);
+
+    hr = IMFPresentationClock_GetProperties(clock, &props);
+todo_wine
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetState(clock, 0, &state);
+    ok(hr == S_OK, "Failed to get state, hr %#x.\n", hr);
+    ok(state == MFCLOCK_STATE_INVALID, "Unexpected state %d.\n", state);
+
+    hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, &clock_time, &systime);
+todo_wine
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control);
+    ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
+    IMFRateControl_Release(rate_control);
+
+    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFTimer, (void **)&timer);
+    ok(hr == S_OK, "Failed to get timer interface, hr %#x.\n", hr);
+    IMFTimer_Release(timer);
+
+    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFShutdown, (void **)&shutdown);
+    ok(hr == S_OK, "Failed to get shutdown interface, hr %#x.\n", hr);
+    IMFShutdown_Release(shutdown);
+
+    IMFPresentationClock_Release(clock);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -743,4 +805,5 @@ START_TEST(mf)
     test_MFCreateSequencerSource();
     test_media_session();
     test_MFShutdownObject();
+    test_presentation_clock();
 }

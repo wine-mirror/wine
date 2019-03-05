@@ -72,6 +72,37 @@ interface IMFClock : IUnknown
 
 [
     object,
+    uuid(88ddcd21-03c3-4275-91ed-55ee3929328f)
+]
+interface IMFRateControl : IUnknown
+{
+    HRESULT SetRate(
+            [in] BOOL thin,
+            [in] float rate);
+    HRESULT GetRate(
+            [in, out, unique] BOOL *thin,
+            [in, out, unique] float *rate);
+}
+
+[
+    object,
+    uuid(e56e4cbd-8f70-49d8-a0f8-edb3d6ab9bf2),
+    local
+]
+interface IMFTimer : IUnknown
+{
+    HRESULT SetTimer(
+            [in] DWORD flags,
+            [in] LONGLONG time,
+            [in] IMFAsyncCallback *callback,
+            [in] IUnknown *state,
+            [out] IUnknown **key);
+    HRESULT CancelTimer(
+            [in] IUnknown *key);
+}
+
+[
+    object,
     uuid(83cf873a-f6da-4bc8-823f-bacfd55dc430),
 ]
 interface IMFTopologyNode : IMFAttributes
@@ -319,6 +350,7 @@ interface IMFSequencerSource : IUnknown
 cpp_quote("HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session);")
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **bytestream);" )
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStreamEx(IUnknown *stream, IMFByteStream **bytestream);")
+cpp_quote("HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock);")
 cpp_quote("HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequencerSource **seq_source);" )
 cpp_quote("HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver);")
 cpp_quote("HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD cMediaTypes,")
@@ -360,7 +392,31 @@ interface IMFMediaSource : IMFMediaEventGenerator
 }
 
 interface IMFStreamSink;
-interface IMFPresentationClock;
+
+[
+    object,
+    uuid(7ff12cce-f76f-41c2-863b-1666c8e5e139)
+]
+interface IMFPresentationTimeSource : IMFClock
+{
+    HRESULT GetUnderlyingClock([out] IMFClock **clock);
+}
+
+[
+    object,
+    uuid(868ce85c-8ea9-4f55-ab82-b009a910a805)
+]
+interface IMFPresentationClock : IMFClock
+{
+    HRESULT SetTimeSource([in] IMFPresentationTimeSource *time_source);
+    HRESULT GetTimeSource([out] IMFPresentationTimeSource **time_source);
+    HRESULT GetTime([out] MFTIME *time);
+    HRESULT AddClockStateSink([in] IMFClockStateSink *state_sink);
+    HRESULT RemoveClockStateSink([in] IMFClockStateSink *state_sink);
+    HRESULT Start([in] LONGLONG start_offset);
+    HRESULT Stop();
+    HRESULT Pause();
+}
 
 [
     object,

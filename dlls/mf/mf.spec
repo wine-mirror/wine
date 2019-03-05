@@ -45,7 +45,7 @@
 @ stub MFCreatePMPHost
 @ stub MFCreatePMPMediaSession
 @ stub MFCreatePMPServer
-@ stub MFCreatePresentationClock
+@ stdcall MFCreatePresentationClock(ptr)
 @ stub MFCreatePresentationDescriptorFromASFProfile
 @ stub MFCreateProxyLocator
 @ stub MFCreateRemoteDesktopPlugin
