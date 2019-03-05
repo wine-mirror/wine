@@ -55,7 +55,7 @@
 @ stdcall MFCreateMemoryBuffer(long ptr)
 @ stub MFCreateMemoryStream
 @ stub MFCreatePathFromURL
-@ stub MFCreatePresentationDescriptor
+@ stdcall MFCreatePresentationDescriptor(long ptr ptr)
 @ stdcall MFCreateSample(ptr)
 @ stub MFCreateSocket
 @ stub MFCreateSocketListener

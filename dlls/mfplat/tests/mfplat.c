@@ -1429,6 +1429,81 @@ static void test_event_queue(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static void test_presentation_descriptor(void)
+{
+    IMFStreamDescriptor *stream_desc[2], *stream_desc2;
+    IMFPresentationDescriptor *pd, *pd2;
+    IMFMediaType *media_type;
+    unsigned int i;
+    BOOL selected;
+    DWORD count;
+    HRESULT hr;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(stream_desc); ++i)
+    {
+        hr = MFCreateStreamDescriptor(0, 1, &media_type, &stream_desc[i]);
+        ok(hr == S_OK, "Failed to create descriptor, hr %#x.\n", hr);
+    }
+
+    hr = MFCreatePresentationDescriptor(ARRAY_SIZE(stream_desc), stream_desc, &pd);
+    ok(hr == S_OK, "Failed to create presentation descriptor, hr %#x.\n", hr);
+
+    hr = IMFPresentationDescriptor_GetStreamDescriptorCount(pd, &count);
+    ok(count == ARRAY_SIZE(stream_desc), "Unexpected count %u.\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, i, &selected, &stream_desc2);
+        ok(hr == S_OK, "Failed to get stream descriptor, hr %#x.\n", hr);
+        ok(!selected, "Unexpected selected state.\n");
+        ok(stream_desc[i] == stream_desc2, "Unexpected object.\n");
+        IMFStreamDescriptor_Release(stream_desc2);
+    }
+
+    hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, 10, &selected, &stream_desc2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationDescriptor_SelectStream(pd, 10);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationDescriptor_SelectStream(pd, 0);
+    ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
+
+    hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, 0, &selected, &stream_desc2);
+    ok(hr == S_OK, "Failed to get stream descriptor, hr %#x.\n", hr);
+    ok(!!selected, "Unexpected selected state.\n");
+    IMFStreamDescriptor_Release(stream_desc2);
+
+    hr = IMFPresentationDescriptor_Clone(pd, &pd2);
+    ok(hr == S_OK, "Failed to clone, hr %#x.\n", hr);
+
+    hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd2, 0, &selected, &stream_desc2);
+    ok(hr == S_OK, "Failed to get stream descriptor, hr %#x.\n", hr);
+    ok(!!selected, "Unexpected selected state.\n");
+    IMFStreamDescriptor_Release(stream_desc2);
+
+    IMFPresentationDescriptor_Release(pd);
+
+    for (i = 0; i < ARRAY_SIZE(stream_desc); ++i)
+    {
+        IMFStreamDescriptor_Release(stream_desc[i]);
+    }
+
+    /* Partially initialized array. */
+    hr = MFCreateStreamDescriptor(0, 1, &media_type, &stream_desc[1]);
+    ok(hr == S_OK, "Failed to create descriptor, hr %#x.\n", hr);
+    stream_desc[0] = NULL;
+
+    hr = MFCreatePresentationDescriptor(ARRAY_SIZE(stream_desc), stream_desc, &pd);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    IMFStreamDescriptor_Release(stream_desc[1]);
+    IMFMediaType_Release(media_type);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -1454,6 +1529,7 @@ START_TEST(mfplat)
     test_serial_queue();
     test_periodic_callback();
     test_event_queue();
+    test_presentation_descriptor();
 
     CoUninitialize();
 }
