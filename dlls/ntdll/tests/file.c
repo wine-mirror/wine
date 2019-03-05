@@ -619,7 +619,8 @@ static void read_file_test(void)
     offset.QuadPart = 0;
     ResetEvent( event );
     status = pNtWriteFile( handle, event, apc, &apc_count, &iosb, text, strlen(text), &offset, NULL );
-    ok( status == STATUS_SUCCESS || status == STATUS_PENDING, "wrong status %x\n", status );
+    todo_wine ok( status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
+            "wrong status %x.\n", status );
     if (status == STATUS_PENDING) WaitForSingleObject( event, 1000 );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == strlen(text), "wrong info %lu\n", iosb.Information );
@@ -725,7 +726,8 @@ static void read_file_test(void)
     ResetEvent(event);
     status = pNtWriteFile(handle, event, apc, &apc_count, &iosb,
             aligned_buffer, sizeof(aligned_buffer), &offset, NULL);
-    ok(status == STATUS_END_OF_FILE || status == STATUS_PENDING || status == STATUS_SUCCESS,
+    todo_wine ok(status == STATUS_END_OF_FILE || status == STATUS_PENDING
+            || broken(status == STATUS_SUCCESS) /* before Vista */,
             "Wrong status %x.\n", status);
     ok(U(iosb).Status == STATUS_SUCCESS, "Wrong status %x.\n", U(iosb).Status);
     ok(iosb.Information == sizeof(aligned_buffer), "Wrong info %lu.\n", iosb.Information);
@@ -3472,6 +3474,8 @@ static void test_file_completion_information(void)
     {
         SetLastError(0xdeadbeef);
         ret = WriteFile(h, buf, sizeof(buf), &num_bytes, &ov);
+        todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
+                "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
         if (ret || GetLastError() != ERROR_IO_PENDING) break;
         ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
         ok(ret, "GetOverlappedResult failed, error %u\n", GetLastError());
@@ -3490,8 +3494,6 @@ static void test_file_completion_information(void)
         ok(key == 0xdeadbeef, "expected 0xdeadbeef, got %lx\n", key);
         ok(pov == &ov, "expected %p, got %p\n", &ov, pov);
     }
-    else
-        win_skip("WriteFile never returned TRUE\n");
 
     info.Flags = FILE_SKIP_COMPLETION_PORT_ON_SUCCESS;
     status = pNtSetInformationFile(h, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
@@ -3502,6 +3504,8 @@ static void test_file_completion_information(void)
     {
         SetLastError(0xdeadbeef);
         ret = WriteFile(h, buf, sizeof(buf), &num_bytes, &ov);
+        todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
+                "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
         if (ret || GetLastError() != ERROR_IO_PENDING) break;
         ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
         ok(ret, "GetOverlappedResult failed, error %u\n", GetLastError());
@@ -3516,8 +3520,6 @@ static void test_file_completion_information(void)
         ok(!ret, "GetQueuedCompletionStatus succeeded\n");
         ok(pov == NULL, "expected NULL, got %p\n", pov);
     }
-    else
-        win_skip("WriteFile never returned TRUE\n");
 
     info.Flags = 0;
     status = pNtSetInformationFile(h, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
@@ -3528,6 +3530,8 @@ static void test_file_completion_information(void)
     {
         SetLastError(0xdeadbeef);
         ret = WriteFile(h, buf, sizeof(buf), &num_bytes, &ov);
+        todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* Before Vista */,
+                "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
         if (ret || GetLastError() != ERROR_IO_PENDING) break;
         ret = GetOverlappedResult(h, &ov, &num_bytes, TRUE);
         ok(ret, "GetOverlappedResult failed, error %u\n", GetLastError());
@@ -3544,8 +3548,6 @@ static void test_file_completion_information(void)
         ok(!ret, "GetQueuedCompletionStatus succeeded\n");
         ok(pov == NULL, "expected NULL, got %p\n", pov);
     }
-    else
-        win_skip("WriteFile never returned TRUE\n");
 
     CloseHandle(port);
     CloseHandle(h);
@@ -4365,7 +4367,8 @@ static void test_read_write(void)
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), &offset, NULL);
-    ok(status == STATUS_PENDING || status == STATUS_SUCCESS /* before Vista */, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
+    todo_wine ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
+            "expected STATUS_PENDING, got %#x.\n", status);
     if (status == STATUS_PENDING)
     {
         ret = WaitForSingleObject(hfile, 3000);
@@ -4580,7 +4583,8 @@ static void test_read_write(void)
     iob.Information = -1;
     offset.QuadPart = (LONGLONG)-1 /* FILE_WRITE_TO_END_OF_FILE */;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, &offset, NULL);
-    ok(status == STATUS_PENDING || status == STATUS_SUCCESS /* before Vista */, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
+    todo_wine ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
+            "expected STATUS_PENDING, got %#x.\n", status);
     if (status == STATUS_PENDING)
     {
         ret = WaitForSingleObject(hfile, 3000);
@@ -4622,10 +4626,10 @@ static void test_read_write(void)
     bytes = 0;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, "ABCD", 4, &bytes, &ovl);
-    /* WriteFile return value depends on Windows version and testing it is not practical */
+    todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
+            "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
     if (!ret)
     {
-        ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
         ok(bytes == 0, "bytes %u\n", bytes);
         ret = WaitForSingleObject(hfile, 3000);
         ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
