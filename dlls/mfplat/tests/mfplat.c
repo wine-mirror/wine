@@ -714,18 +714,86 @@ static void test_system_memory_buffer(void)
     IMFMediaBuffer_Release(buffer);
 }
 
-static void test_MFSample(void)
+static void test_sample(void)
 {
+    IMFMediaBuffer *buffer, *buffer2;
+    DWORD count, flags, length;
     IMFSample *sample;
+    LONGLONG time;
     HRESULT hr;
-    UINT32 count;
 
     hr = MFCreateSample( &sample );
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IMFSample_GetBufferCount(sample, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = IMFSample_GetBufferCount(sample, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 0, "got %d\n", count);
+
+    hr = IMFSample_GetSampleFlags(sample, &flags);
+    ok(hr == S_OK, "Failed to get sample flags, hr %#x.\n", hr);
+    ok(!flags, "Unexpected flags %#x.\n", flags);
+
+    hr = IMFSample_GetSampleTime(sample, &time);
+todo_wine
+    ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleDuration(sample, &time);
+todo_wine
+    ok(hr == MF_E_NO_SAMPLE_DURATION, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_RemoveBufferByIndex(sample, 0);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_RemoveAllBuffers(sample);
+    ok(hr == S_OK, "Failed to remove all, hr %#x.\n", hr);
+
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "Failed to get total length, hr %#x.\n", hr);
+    ok(!length, "Unexpected total length %u.\n", length);
+
+    hr = MFCreateMemoryBuffer(16, &buffer);
+    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+    ok(count == 2, "Unexpected buffer count %u.\n", count);
+
+    hr = IMFSample_GetBufferByIndex(sample, 0, &buffer2);
+    ok(hr == S_OK, "Failed to get buffer, hr %#x.\n", hr);
+    ok(buffer2 == buffer, "Unexpected object.\n");
+    IMFMediaBuffer_Release(buffer2);
+
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "Failed to get total length, hr %#x.\n", hr);
+    ok(!length, "Unexpected total length %u.\n", length);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 2);
+    ok(hr == S_OK, "Failed to set current length, hr %#x.\n", hr);
+
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "Failed to get total length, hr %#x.\n", hr);
+    ok(length == 4, "Unexpected total length %u.\n", length);
+
+    hr = IMFSample_RemoveBufferByIndex(sample, 1);
+    ok(hr == S_OK, "Failed to remove buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "Failed to get total length, hr %#x.\n", hr);
+    ok(length == 2, "Unexpected total length %u.\n", length);
+
+    IMFMediaBuffer_Release(buffer);
 
     IMFSample_Release(sample);
 }
@@ -1541,7 +1609,7 @@ START_TEST(mfplat)
     test_MFCreateMediaType();
     test_MFCreateMediaEvent();
     test_MFCreateAttributes();
-    test_MFSample();
+    test_sample();
     test_MFCreateFile();
     test_MFCreateMFByteStreamOnStream();
     test_system_memory_buffer();

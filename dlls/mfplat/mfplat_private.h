@@ -20,6 +20,8 @@
 #include "mfidl.h"
 #include "mferror.h"
 
+#include "wine/heap.h"
+
 typedef struct attributes
 {
     IMFAttributes IMFAttributes_iface;
@@ -31,3 +33,30 @@ extern void init_attribute_object(mfattributes *object, UINT32 size) DECLSPEC_HI
 extern void init_system_queues(void) DECLSPEC_HIDDEN;
 extern void shutdown_system_queues(void) DECLSPEC_HIDDEN;
 extern BOOL is_platform_locked(void) DECLSPEC_HIDDEN;
+
+static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+{
+    size_t new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+
+    return TRUE;
+}
