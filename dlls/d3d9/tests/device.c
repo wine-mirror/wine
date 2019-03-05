@@ -7319,12 +7319,20 @@ static void test_mipmap_gen(void)
 
     for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8,
+                D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, formats[i]);
+        ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+
         hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                 D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, formats[i]);
         if (SUCCEEDED(hr))
         {
             /* i.e. there is no difference between the D3D_OK and the
              * D3DOK_NOAUTOGEN cases. */
+            hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
+                    formats[i], D3DPOOL_SYSTEMMEM, &texture, 0);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
             hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
                     formats[i], D3DPOOL_DEFAULT, &texture, 0);
             ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
