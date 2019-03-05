@@ -2013,7 +2013,10 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     UINT btn_type = get_button_type( dwStyle );
     int part = (btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON) ? BP_RADIOBUTTON : BP_CHECKBOX;
     WCHAR *text = get_button_text(infoPtr);
+    NMCUSTOMDRAW nmcd;
+    LRESULT cdrf;
     LOGFONTW lf;
+    HWND parent;
     BOOL created_font = FALSE;
 
     HRESULT hr = GetThemeFont(theme, hDC, part, state, TMT_FONT, &lf);
@@ -2036,6 +2039,7 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
     GetClientRect(infoPtr->hwnd, &bgRect);
     GetThemeBackgroundContentRect(theme, hDC, part, state, &bgRect, &textRect);
+    init_custom_draw(&nmcd, infoPtr, hDC, &bgRect);
 
     if (dtFlags & DT_SINGLELINE) /* Center the checkbox / radio button to the text. */
         bgRect.top = bgRect.top + (textRect.bottom - textRect.top - sz.cy) / 2;
@@ -2045,13 +2049,39 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     bgRect.right = bgRect.left + sz.cx;
     textRect.left = bgRect.right + 6;
 
-    DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
+    parent = GetParent(infoPtr->hwnd);
+    if (!parent) parent = infoPtr->hwnd;
 
+    /* Send erase notifications */
+    cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
+    if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
+
+    DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
     DrawThemeBackground(theme, hDC, part, state, &bgRect, NULL);
-    if (text)
+
+    if (cdrf & CDRF_NOTIFYPOSTERASE)
     {
+        nmcd.dwDrawStage = CDDS_POSTERASE;
+        SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
+    }
+
+    /* Send paint notifications */
+    nmcd.dwDrawStage = CDDS_PREPAINT;
+    cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
+    if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
+
+    if (!(cdrf & CDRF_DOERASE) && text)
         DrawThemeText(theme, hDC, part, state, text, lstrlenW(text), dtFlags, 0, &textRect);
 
+    if (cdrf & CDRF_NOTIFYPOSTPAINT)
+    {
+        nmcd.dwDrawStage = CDDS_POSTPAINT;
+        SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
+    }
+    if (cdrf & CDRF_SKIPPOSTPAINT) goto cleanup;
+
+    if (text)
+    {
         if (focused)
         {
             RECT focusRect;
@@ -2069,6 +2099,7 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         heap_free(text);
     }
 
+cleanup:
     if (created_font) DeleteObject(font);
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
