@@ -11671,11 +11671,6 @@ static void test_swapchain_parameters(void)
 
 static void test_check_device_format(void)
 {
-    static const D3DFORMAT adapter_formats[] =
-    {
-        D3DFMT_A8R8G8B8,
-        D3DFMT_X8R8G8B8,
-    };
     static const D3DFORMAT mipmap_autogen_formats[] =
     {
         D3DFMT_R8G8B8,
@@ -11689,11 +11684,11 @@ static void test_check_device_format(void)
         D3DFMT_A4R4G4B4,
     };
 
-    D3DFORMAT adapter_format, format;
     BOOL render_target_supported;
     D3DDEVTYPE device_type;
-    unsigned int i, j;
+    D3DFORMAT format;
     IDirect3D9 *d3d;
+    unsigned int i;
     HRESULT hr;
 
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -11750,29 +11745,32 @@ static void test_check_device_format(void)
             D3DUSAGE_SOFTWAREPROCESSING, D3DRTYPE_INDEXBUFFER, D3DFMT_INDEX16);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
-    for (i = 0; i  < ARRAY_SIZE(adapter_formats); ++i)
+    hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8,
+            0, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8);
+    ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            0, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8);
+    ok(hr == D3D_OK || broken(hr == D3DERR_NOTAVAILABLE) /* Testbot Windows <= 7 */,
+            "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(mipmap_autogen_formats); ++i)
     {
-        adapter_format = adapter_formats[i];
+        format = mipmap_autogen_formats[i];
 
-        for (j = 0; j < ARRAY_SIZE(mipmap_autogen_formats); ++j)
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, format);
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+        render_target_supported = hr == D3D_OK;
+
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, format);
+        if (render_target_supported)
         {
-            format = mipmap_autogen_formats[j];
-
-            hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, adapter_format,
-                    D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, format);
-            ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
-            render_target_supported = hr == D3D_OK;
-
-            hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, adapter_format,
-                    D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, format);
-            if (render_target_supported)
-            {
-                ok(hr == D3D_OK || hr == D3DOK_NOAUTOGEN, "Got unexpected hr %#x.\n", hr);
-            }
-            else
-            {
-                ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
-            }
+            ok(hr == D3D_OK || hr == D3DOK_NOAUTOGEN, "Got unexpected hr %#x.\n", hr);
+        }
+        else
+        {
+            ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
         }
     }
 
