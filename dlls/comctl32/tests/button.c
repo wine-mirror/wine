@@ -39,8 +39,9 @@ static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
 /****************** button message test *************************/
 #define ID_BUTTON 0x000e
 
-#define COMBINED_SEQ_INDEX 0
-#define NUM_MSG_SEQUENCES  1
+#define COMBINED_SEQ_INDEX  0
+#define PARENT_CD_SEQ_INDEX 1
+#define NUM_MSG_SEQUENCES   2
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
@@ -152,11 +153,39 @@ static LRESULT CALLBACK button_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     return ret;
 }
 
+static struct
+{
+    DWORD button;
+    UINT line;
+    UINT state;
+    DWORD ret;
+    BOOL empty;
+} test_cd;
+
+#define set_test_cd_state(s) do { \
+    test_cd.state = (s); \
+    test_cd.empty = TRUE; \
+    test_cd.line = __LINE__; \
+} while (0)
+
+#define set_test_cd_ret(r) do { \
+    test_cd.ret = (r); \
+    test_cd.empty = TRUE; \
+    test_cd.line = __LINE__; \
+} while (0)
+
+static void disable_test_cd(void)
+{
+    test_cd.line = 0;
+}
+
 static LRESULT WINAPI test_parent_wndproc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
     static LONG beginpaint_counter = 0;
+    static HDC cd_first_hdc;
     struct message msg = { 0 };
+    NMCUSTOMDRAW *cd = (NMCUSTOMDRAW*)lParam;
     LRESULT ret;
 
     if (ignore_message( message )) return 0;
@@ -174,6 +203,53 @@ static LRESULT WINAPI test_parent_wndproc(HWND hwnd, UINT message, WPARAM wParam
         msg.wParam = wParam;
         msg.lParam = lParam;
         add_message(sequences, COMBINED_SEQ_INDEX, &msg);
+    }
+
+    if (message == WM_NOTIFY && cd->hdr.code == NM_CUSTOMDRAW && test_cd.line)
+    {
+        /* Ignore an inconsistency across Windows versions */
+        UINT state = cd->uItemState & ~CDIS_SHOWKEYBOARDCUES;
+
+        /* Some Windows configurations paint twice with different DC */
+        if (test_cd.empty)
+        {
+            cd_first_hdc = cd->hdc;
+            test_cd.empty = FALSE;
+        }
+
+        ok_(__FILE__,test_cd.line)(!(cd->dwDrawStage & CDDS_ITEM),
+            "[%u] CDDS_ITEM is set\n", test_cd.button);
+
+        ok_(__FILE__,test_cd.line)(state == test_cd.state,
+            "[%u] expected uItemState %u, got %u\n", test_cd.button,
+            test_cd.state, state);
+
+        msg.message = message;
+        msg.flags = sent|parent|wparam|lparam|id|custdraw;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        msg.id = NM_CUSTOMDRAW;
+        msg.stage = cd->dwDrawStage;
+        if (cd->hdc == cd_first_hdc)
+            add_message(sequences, PARENT_CD_SEQ_INDEX, &msg);
+
+        ret = test_cd.ret;
+        switch (msg.stage)
+        {
+            case CDDS_PREERASE:
+                ret &= ~CDRF_NOTIFYPOSTPAINT;
+                cd->dwItemSpec = 0xdeadbeef;
+                break;
+            case CDDS_PREPAINT:
+                ret &= ~CDRF_NOTIFYPOSTERASE;
+                break;
+            case CDDS_POSTERASE:
+            case CDDS_POSTPAINT:
+                ok_(__FILE__,test_cd.line)(cd->dwItemSpec == 0xdeadbeef,
+                    "[%u] NMCUSTOMDRAW was not shared, stage %u\n", test_cd.button, msg.stage);
+                break;
+        }
+        return ret;
     }
 
     if (message == WM_PAINT)
@@ -453,6 +529,46 @@ static const struct message setcheck_radio_redraw_seq[] =
     { 0 }
 };
 
+static const struct message empty_cd_seq[] = { { 0 } };
+
+static const struct message pre_cd_seq[] =
+{
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREERASE },
+    { 0 }
+};
+
+static const struct message pre_pre_cd_seq[] =
+{
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREERASE },
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREPAINT },
+    { 0 }
+};
+
+static const struct message pre_post_pre_cd_seq[] =
+{
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREERASE },
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_POSTERASE },
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREPAINT },
+    { 0 }
+};
+
+static const struct message pre_pre_post_cd_seq[] =
+{
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREERASE },
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREPAINT },
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_POSTPAINT },
+    { 0 }
+};
+
+static const struct message pre_post_pre_post_cd_seq[] =
+{
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREERASE },
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_POSTERASE },
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREPAINT },
+    { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_POSTPAINT },
+    { 0 }
+};
+
 static HWND create_button(DWORD style, HWND parent)
 {
     HMENU menuid = 0;
@@ -471,6 +587,13 @@ static HWND create_button(DWORD style, HWND parent)
 
 static void test_button_messages(void)
 {
+    enum cd_seq_type
+    {
+        cd_seq_empty,
+        cd_seq_normal,
+        cd_seq_optional
+    };
+
     static const struct
     {
         DWORD style;
@@ -481,55 +604,74 @@ static void test_button_messages(void)
         const struct message *setstate;
         const struct message *clearstate;
         const struct message *setcheck;
+        enum cd_seq_type cd_setfocus_type;
+        enum cd_seq_type cd_setstyle_type;
+        enum cd_seq_type cd_setstate_type;
+        enum cd_seq_type cd_setcheck_type;
     } button[] = {
         { BS_PUSHBUTTON, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON,
           setfocus_seq, killfocus_seq, setstyle_seq,
-          setstate_seq, setstate_seq, setcheck_ignored_seq },
+          setstate_seq, setstate_seq, setcheck_ignored_seq,
+          cd_seq_normal, cd_seq_normal, cd_seq_normal, cd_seq_optional },
         { BS_DEFPUSHBUTTON, DLGC_BUTTON | DLGC_DEFPUSHBUTTON,
           setfocus_seq, killfocus_seq, setstyle_seq,
-          setstate_seq, setstate_seq, setcheck_ignored_seq },
+          setstate_seq, setstate_seq, setcheck_ignored_seq,
+          cd_seq_normal, cd_seq_normal, cd_seq_normal, cd_seq_optional },
         { BS_CHECKBOX, DLGC_BUTTON,
           setfocus_static_seq, killfocus_static_seq, setstyle_static_seq,
-          setstate_static_seq, setstate_static_seq, setcheck_static_seq },
+          setstate_static_seq, setstate_static_seq, setcheck_static_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_optional },
         { BS_AUTOCHECKBOX, DLGC_BUTTON,
           setfocus_static_seq, killfocus_static_seq, setstyle_static_seq,
-          setstate_static_seq, setstate_static_seq, setcheck_static_seq },
+          setstate_static_seq, setstate_static_seq, setcheck_static_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_optional },
         { BS_RADIOBUTTON, DLGC_BUTTON | DLGC_RADIOBUTTON,
           setfocus_static_seq, killfocus_static_seq, setstyle_static_seq,
-          setstate_static_seq, setstate_static_seq, setcheck_radio_redraw_seq },
+          setstate_static_seq, setstate_static_seq, setcheck_radio_redraw_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_optional },
         { BS_3STATE, DLGC_BUTTON,
           setfocus_static_seq, killfocus_static_seq, setstyle_static_seq,
-          setstate_static_seq, setstate_static_seq, setcheck_static_seq },
+          setstate_static_seq, setstate_static_seq, setcheck_static_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_optional },
         { BS_AUTO3STATE, DLGC_BUTTON,
           setfocus_static_seq, killfocus_static_seq, setstyle_static_seq,
-          setstate_static_seq, setstate_static_seq, setcheck_static_seq },
+          setstate_static_seq, setstate_static_seq, setcheck_static_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_optional },
         { BS_GROUPBOX, DLGC_STATIC,
           setfocus_groupbox_seq, killfocus_static_seq, setstyle_static_seq,
-          setstate_static_seq, setstate_static_seq, setcheck_ignored_seq },
+          setstate_static_seq, setstate_static_seq, setcheck_ignored_seq,
+          cd_seq_empty, cd_seq_empty, cd_seq_empty, cd_seq_empty },
         { BS_USERBUTTON, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON,
           setfocus_seq, killfocus_seq, setstyle_user_seq,
-          setstate_user_seq, clearstate_seq, setcheck_ignored_seq },
+          setstate_user_seq, clearstate_seq, setcheck_ignored_seq,
+          cd_seq_normal, cd_seq_empty, cd_seq_empty, cd_seq_empty },
         { BS_AUTORADIOBUTTON, DLGC_BUTTON | DLGC_RADIOBUTTON,
           setfocus_static_seq, killfocus_static_seq, setstyle_static_seq,
-          setstate_static_seq, setstate_static_seq, setcheck_radio_redraw_seq },
+          setstate_static_seq, setstate_static_seq, setcheck_radio_redraw_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_optional },
         { BS_OWNERDRAW, DLGC_BUTTON,
           setfocus_ownerdraw_seq, killfocus_ownerdraw_seq, setstyle_ownerdraw_seq,
-          setstate_ownerdraw_seq, clearstate_ownerdraw_seq, setcheck_ignored_seq },
+          setstate_ownerdraw_seq, clearstate_ownerdraw_seq, setcheck_ignored_seq,
+          cd_seq_empty, cd_seq_empty, cd_seq_empty, cd_seq_empty },
         { BS_SPLITBUTTON, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON | DLGC_WANTARROWS,
           setfocus_seq, killfocus_seq, setstyle_seq,
-          setstate_seq, setstate_seq, setcheck_ignored_seq },
+          setstate_seq, setstate_seq, setcheck_ignored_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_empty },
         { BS_DEFSPLITBUTTON, DLGC_BUTTON | DLGC_DEFPUSHBUTTON | DLGC_WANTARROWS,
           setfocus_seq, killfocus_seq, setstyle_seq,
-          setstate_seq, setstate_seq, setcheck_ignored_seq },
+          setstate_seq, setstate_seq, setcheck_ignored_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_empty },
         { BS_COMMANDLINK, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON,
           setfocus_seq, killfocus_seq, setstyle_seq,
-          setstate_seq, setstate_seq, setcheck_ignored_seq },
+          setstate_seq, setstate_seq, setcheck_ignored_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_empty },
         { BS_DEFCOMMANDLINK, DLGC_BUTTON | DLGC_DEFPUSHBUTTON,
           setfocus_seq, killfocus_seq, setstyle_seq,
-          setstate_seq, setstate_seq, setcheck_ignored_seq },
+          setstate_seq, setstate_seq, setcheck_ignored_seq,
+          cd_seq_optional, cd_seq_optional, cd_seq_optional, cd_seq_empty }
     };
     LOGFONTA logfont = { 0 };
-    const struct message *seq;
+    const struct message *seq, *cd_seq;
     HFONT zfont, hfont2;
     unsigned int i;
     HWND hwnd, parent;
@@ -557,6 +699,11 @@ static void test_button_messages(void)
     hfont2 = CreateFontIndirectA(&logfont);
     ok(hfont2 != NULL, "Failed to create Tahoma font\n");
 
+#define check_cd_seq(type, context) do { \
+        if (button[i].type != cd_seq_optional || !test_cd.empty) \
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, cd_seq, "[CustomDraw] " context, FALSE); \
+    } while(0)
+
     for (i = 0; i < ARRAY_SIZE(button); i++)
     {
         HFONT prevfont, hfont;
@@ -564,6 +711,7 @@ static void test_button_messages(void)
         DWORD style, state;
         HDC hdc;
 
+        test_cd.button = button[i].style;
         hwnd = create_button(button[i].style, parent);
         ok(hwnd != NULL, "Failed to create a button.\n");
 
@@ -591,7 +739,10 @@ static void test_button_messages(void)
         SetFocus(0);
         flush_events();
         SetFocus(0);
+        cd_seq = (button[i].cd_setfocus_type == cd_seq_empty) ? empty_cd_seq : pre_pre_cd_seq;
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        set_test_cd_ret(CDRF_DODEFAULT);
+        set_test_cd_state(CDIS_FOCUS);
 
         todo = button[i].style != BS_OWNERDRAW;
         ok(GetFocus() == 0, "expected focus 0, got %p\n", GetFocus());
@@ -599,18 +750,25 @@ static void test_button_messages(void)
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
         ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setfocus, "SetFocus(hwnd) on a button", todo);
+        check_cd_seq(cd_setfocus_type, "SetFocus(hwnd)");
 
+        set_test_cd_state(0);
         SetFocus(0);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
         ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].killfocus, "SetFocus(0) on a button", FALSE);
+        check_cd_seq(cd_setfocus_type, "SetFocus(0)");
         ok(GetFocus() == 0, "expected focus 0, got %p\n", GetFocus());
+
+        cd_seq = (button[i].cd_setstyle_type == cd_seq_empty) ? empty_cd_seq : pre_pre_cd_seq;
+        set_test_cd_state(0);
 
         SendMessageA(hwnd, BM_SETSTYLE, button[i].style | BS_BOTTOM, TRUE);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
         todo = button[i].style == BS_OWNERDRAW;
         ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setstyle, "BM_SETSTYLE on a button", todo);
+        check_cd_seq(cd_setstyle_type, "BM_SETSTYLE");
 
         style = GetWindowLongA(hwnd, GWL_STYLE);
         style &= ~(WS_VISIBLE | WS_CHILD | BS_NOTIFY);
@@ -620,12 +778,15 @@ static void test_button_messages(void)
         state = SendMessageA(hwnd, BM_GETSTATE, 0, 0);
         ok(state == 0, "expected state 0, got %04x\n", state);
 
+        cd_seq = (button[i].cd_setstate_type == cd_seq_empty) ? empty_cd_seq : pre_pre_cd_seq;
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        set_test_cd_state(CDIS_SELECTED);
 
         SendMessageA(hwnd, BM_SETSTATE, TRUE, 0);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
         ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setstate, "BM_SETSTATE/TRUE on a button", FALSE);
+        check_cd_seq(cd_setstate_type, "BM_SETSTATE/TRUE");
 
         state = SendMessageA(hwnd, BM_GETSTATE, 0, 0);
         ok(state == BST_PUSHED, "expected state 0x0004, got %04x\n", state);
@@ -635,11 +796,13 @@ static void test_button_messages(void)
         ok(style == button[i].style, "expected style %04x got %04x\n", button[i].style, style);
 
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        set_test_cd_state(0);
 
         SendMessageA(hwnd, BM_SETSTATE, FALSE, 0);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
         ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].clearstate, "BM_SETSTATE/FALSE on a button", FALSE);
+        check_cd_seq(cd_setstate_type, "BM_SETSTATE/FALSE");
 
         state = SendMessageA(hwnd, BM_GETSTATE, 0, 0);
         ok(state == 0, "expected state 0, got %04x\n", state);
@@ -651,7 +814,9 @@ static void test_button_messages(void)
         state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
         ok(state == BST_UNCHECKED, "expected BST_UNCHECKED, got %04x\n", state);
 
+        cd_seq = (button[i].cd_setcheck_type == cd_seq_empty) ? empty_cd_seq : pre_pre_cd_seq;
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        set_test_cd_state(0);
 
         if (button[i].style == BS_RADIOBUTTON ||
             button[i].style == BS_AUTORADIOBUTTON)
@@ -665,6 +830,7 @@ static void test_button_messages(void)
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
         ok_sequence(sequences, COMBINED_SEQ_INDEX, seq, "BM_SETCHECK on a button", FALSE);
+        check_cd_seq(cd_setcheck_type, "BM_SETCHECK");
 
         state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
         ok(state == BST_UNCHECKED, "expected BST_UNCHECKED, got %04x\n", state);
@@ -674,11 +840,13 @@ static void test_button_messages(void)
         ok(style == button[i].style, "expected style %04x got %04x\n", button[i].style, style);
 
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        set_test_cd_state(0);
 
         SendMessageA(hwnd, BM_SETCHECK, BST_CHECKED, 0);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
         ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setcheck, "BM_SETCHECK on a button", FALSE);
+        check_cd_seq(cd_setcheck_type, "BM_SETCHECK");
 
         state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
         if (button[i].style == BS_PUSHBUTTON ||
@@ -726,8 +894,48 @@ static void test_button_messages(void)
 
         DeleteDC(hdc);
 
+        /* Test Custom Draw return values */
+        if (button[i].cd_setfocus_type != cd_seq_empty &&
+            broken(button[i].style != BS_USERBUTTON) /* WinXP */)
+        {
+            static const struct
+            {
+                const char *context;
+                LRESULT val;
+                const struct message *seq;
+            } ret[] = {
+                { "CDRF_DODEFAULT", CDRF_DODEFAULT, pre_pre_cd_seq },
+                { "CDRF_DOERASE", CDRF_DOERASE, pre_pre_cd_seq },
+                { "CDRF_SKIPDEFAULT", CDRF_SKIPDEFAULT, pre_cd_seq },
+                { "CDRF_SKIPDEFAULT | CDRF_NOTIFYPOSTERASE | CDRF_NOTIFYPOSTPAINT",
+                   CDRF_SKIPDEFAULT | CDRF_NOTIFYPOSTERASE | CDRF_NOTIFYPOSTPAINT, pre_cd_seq },
+                { "CDRF_NOTIFYPOSTERASE", CDRF_NOTIFYPOSTERASE, pre_post_pre_cd_seq },
+                { "CDRF_NOTIFYPOSTPAINT", CDRF_NOTIFYPOSTPAINT, pre_pre_post_cd_seq },
+                { "CDRF_NOTIFYPOSTERASE | CDRF_NOTIFYPOSTPAINT",
+                   CDRF_NOTIFYPOSTERASE | CDRF_NOTIFYPOSTPAINT, pre_post_pre_post_cd_seq },
+            };
+            UINT k;
+
+            for (k = 0; k < ARRAY_SIZE(ret); k++)
+            {
+                disable_test_cd();
+                SetFocus(0);
+                set_test_cd_ret(ret[k].val);
+                set_test_cd_state(CDIS_FOCUS);
+                SetFocus(hwnd);
+                flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+                while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+                if (button[i].cd_setfocus_type != cd_seq_optional || !test_cd.empty)
+                    ok_sequence(sequences, PARENT_CD_SEQ_INDEX, ret[k].seq, ret[k].context, FALSE);
+            }
+        }
+
+        disable_test_cd();
         DestroyWindow(hwnd);
     }
+
+#undef check_cd_seq
 
     DeleteObject(hfont2);
     DestroyWindow(parent);
