@@ -287,10 +287,11 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
 
     amt.majortype = MEDIATYPE_Audio;
     amt.formattype = FORMAT_WaveFormatEx;
-    amt.cbFormat = chunk.cb;
+    amt.cbFormat = max(chunk.cb, sizeof(WAVEFORMATEX));
     amt.pbFormat = CoTaskMemAlloc(amt.cbFormat);
+    memset(amt.pbFormat, 0, amt.cbFormat);
     amt.pUnk = NULL;
-    IAsyncReader_SyncRead(This->pReader, pos, amt.cbFormat, amt.pbFormat);
+    IAsyncReader_SyncRead(This->pReader, pos, chunk.cb, amt.pbFormat);
     amt.subtype = MEDIATYPE_Audio;
     amt.subtype.Data1 = ((WAVEFORMATEX*)amt.pbFormat)->wFormatTag;
 
