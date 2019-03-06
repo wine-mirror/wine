@@ -378,15 +378,15 @@ void output_exports( DLLSPEC *spec )
     output( "\t.long 0\n" );                       /* Characteristics */
     output( "\t.long 0\n" );                       /* TimeDateStamp */
     output( "\t.long 0\n" );                       /* MajorVersion/MinorVersion */
-    output( "\t.long .L__wine_spec_exp_names-.L__wine_spec_rva_base\n" ); /* Name */
+    output_rva( ".L__wine_spec_exp_names" );       /* Name */
     output( "\t.long %u\n", spec->base );          /* Base */
     output( "\t.long %u\n", nr_exports );          /* NumberOfFunctions */
     output( "\t.long %u\n", spec->nb_names );      /* NumberOfNames */
-    output( "\t.long .L__wine_spec_exports_funcs-.L__wine_spec_rva_base\n" ); /* AddressOfFunctions */
+    output_rva( ".L__wine_spec_exports_funcs " );  /* AddressOfFunctions */
     if (spec->nb_names)
     {
-        output( "\t.long .L__wine_spec_exp_name_ptrs-.L__wine_spec_rva_base\n" ); /* AddressOfNames */
-        output( "\t.long .L__wine_spec_exp_ordinals-.L__wine_spec_rva_base\n" );  /* AddressOfNameOrdinals */
+        output_rva( ".L__wine_spec_exp_name_ptrs" ); /* AddressOfNames */
+        output_rva( ".L__wine_spec_exp_ordinals" );  /* AddressOfNameOrdinals */
     }
     else
     {
@@ -440,7 +440,7 @@ void output_exports( DLLSPEC *spec )
         output( "\n.L__wine_spec_exp_name_ptrs:\n" );
         for (i = 0; i < spec->nb_names; i++)
         {
-            output( "\t.long .L__wine_spec_exp_names+%u-.L__wine_spec_rva_base\n", namepos );
+            output_rva( ".L__wine_spec_exp_names + %u", namepos );
             namepos += strlen(spec->names[i]->name) + 1;
         }
 
@@ -636,8 +636,7 @@ void output_module( DLLSPEC *spec )
     output( "\t.short %u,%u\n",           /* Major/MinorSubsystemVersion */
              spec->subsystem_major, spec->subsystem_minor );
     output( "\t.long 0\n" );                          /* Win32VersionValue */
-    output( "\t.long %s-.L__wine_spec_rva_base\n",    /* SizeOfImage */
-             asm_name("_end") );
+    output_rva( "%s", asm_name("_end") ); /* SizeOfImage */
     output( "\t.long %u\n", page_size );  /* SizeOfHeaders */
     output( "\t.long 0\n" );              /* CheckSum */
     output( "\t.short 0x%04x\n",          /* Subsystem */
@@ -652,20 +651,26 @@ void output_module( DLLSPEC *spec )
     output( "\t.long 16\n" );             /* NumberOfRvaAndSizes */
 
     if (spec->base <= spec->limit)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
-        output( "\t.long .L__wine_spec_exports-.L__wine_spec_rva_base,"
-                 ".L__wine_spec_exports_end-.L__wine_spec_exports\n" );
+    {
+        output_rva( ".L__wine_spec_exports" );
+        output( "\t.long .L__wine_spec_exports_end-.L__wine_spec_exports\n" );
+    }
     else
         output( "\t.long 0,0\n" );
 
     if (has_imports())   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
-        output( "\t.long .L__wine_spec_imports-.L__wine_spec_rva_base,"
-                 ".L__wine_spec_imports_end-.L__wine_spec_imports\n" );
+    {
+        output_rva( ".L__wine_spec_imports" );
+        output( "\t.long .L__wine_spec_imports_end-.L__wine_spec_imports\n" );
+    }
     else
         output( "\t.long 0,0\n" );
 
     if (spec->nb_resources)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
-        output( "\t.long .L__wine_spec_resources-.L__wine_spec_rva_base,"
-                 ".L__wine_spec_resources_end-.L__wine_spec_resources\n" );
+    {
+        output_rva( ".L__wine_spec_resources" );
+        output( "\t.L__wine_spec_resources_end-.L__wine_spec_resources\n" );
+    }
     else
         output( "\t.long 0,0\n" );
 

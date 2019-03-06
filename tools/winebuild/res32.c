@@ -476,8 +476,10 @@ void output_resources( DLLSPEC *spec )
     /* dump the resource data entries */
 
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
-        output( "\t.long .L__wine_spec_res_%d-.L__wine_spec_rva_base,%u,0,0\n",
-                i, res->data_size );
+    {
+        output_rva( ".L__wine_spec_res_%d", i );
+        output( "\t.long %u,0,0\n", res->data_size );
+    }
 
     /* dump the name strings */
 

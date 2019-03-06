@@ -1107,6 +1107,28 @@ void output_cfi( const char *format, ... )
     va_end( valist );
 }
 
+/* output an RVA pointer */
+void output_rva( const char *format, ... )
+{
+    va_list valist;
+
+    va_start( valist, format );
+    switch (target_platform)
+    {
+    case PLATFORM_WINDOWS:
+        output( "\t.rva " );
+        vfprintf( output_file, format, valist );
+        fputc( '\n', output_file );
+        break;
+    default:
+        output( "\t.long " );
+        vfprintf( output_file, format, valist );
+        output( " - .L__wine_spec_rva_base\n" );
+        break;
+    }
+    va_end( valist );
+}
+
 /* output the GNU note for non-exec stack */
 void output_gnu_stack_note(void)
 {

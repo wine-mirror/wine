@@ -722,14 +722,11 @@ static void output_immediate_imports(void)
     j = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        output( "\t.long .L__wine_spec_import_data_names+%d-.L__wine_spec_rva_base\n",  /* OriginalFirstThunk */
-                 j * get_ptr_size() );
+        output_rva( ".L__wine_spec_import_data_names + %d", j * get_ptr_size() ); /* OriginalFirstThunk */
         output( "\t.long 0\n" );     /* TimeDateStamp */
         output( "\t.long 0\n" );     /* ForwarderChain */
-        output( "\t.long .L__wine_spec_import_name_%s-.L__wine_spec_rva_base\n", /* Name */
-                 import->c_name );
-        output( "\t.long .L__wine_spec_import_data_ptrs+%d-.L__wine_spec_rva_base\n",  /* FirstThunk */
-                 j * get_ptr_size() );
+        output_rva( ".L__wine_spec_import_name_%s", import->c_name ); /* Name */
+        output_rva( ".L__wine_spec_import_data_ptrs + %d", j * get_ptr_size() );  /* FirstThunk */
         j += import->nb_imports + 1;
     }
     output( "\t.long 0\n" );     /* OriginalFirstThunk */
