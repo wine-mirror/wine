@@ -15481,6 +15481,15 @@ static void test_fetch4(void)
         0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
         0x0000ffff,                                                             /* end                        */
     };
+    static const DWORD ps_code_3d[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x0200001f, 0x80000005, 0x900f0000,                                     /* dcl_texcoord v0            */
+        0x0200001f, 0xa0000000, 0xa00f0800,                                     /* dcl_volume s0              */
+        0x03000042, 0x800f0000, 0x90e40000, 0xa0e40800,                         /* texld r0, v0, s0           */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+        0x0000ffff,                                                             /* end                        */
+    };
 
     static const struct
     {
@@ -15510,6 +15519,8 @@ static void test_fetch4(void)
         D3DCOLOR colour_amd[16];
         D3DCOLOR colour_intel[16];
         D3DCOLOR colour_fetch4_off[16];
+        D3DCOLOR colour_3d_fetch4_off[16];
+        D3DCOLOR colour_3d_amd_zround[16];
     }
     expected_colours =
     {
@@ -15532,6 +15543,16 @@ static void test_fetch4(void)
          0x02020202, 0xf2f2f2f2, 0xf1f1f1f1, 0x01010101,
          0x04040404, 0xf4f4f4f4, 0xf3f3f3f3, 0x03030303,
          0x23232323, 0x22222222, 0x21212121, 0x20202020},
+        /* Fetch4 off on 3D textures. */
+        {0xff020202, 0xfff2f2f2, 0xfff1f1f1, 0xff010101,
+         0xff050505, 0xfff4f4f4, 0xfff3f3f3, 0xff030303,
+         0xff232323, 0xff222222, 0xff212121, 0xff202020,
+         0xff131313, 0xff121212, 0xff111111, 0xff101010},
+        /* Fetch4 on, 3D texture without nearest z rounding. */
+        {0x02f204f4, 0xf2f1f4f3, 0xf101f303, 0x01010303,
+         0x04f42322, 0xf4f32221, 0xf3032120, 0x03032020,
+         0x23221312, 0x22211211, 0x21201110, 0x20201010,
+         0x13121312, 0x12111211, 0x11101110, 0x10101010},
     };
 
     static const DWORD fetch4_data[] = {0x10111213, 0x01f1f202, 0x03f3f404, 0x20212223};
@@ -15618,15 +15639,18 @@ static void test_fetch4(void)
         },
     };
 
-    D3DCOLOR colour, colour_amd, colour_intel, colour_off;
+    D3DCOLOR colour, colour_amd, colour_intel, colour_off, colour_zround;
     IDirect3DPixelShader9 *ps[ARRAY_SIZE(shaders)];
+    IDirect3DVolumeTexture9 *texture_3d;
     IDirect3DSurface9 *original_rt;
+    IDirect3DPixelShader9 *ps_3d;
     struct surface_readback rb;
     IDirect3DVertexShader9 *vs;
     IDirect3DTexture9 *texture;
     IDirect3DDevice9 *device;
     unsigned int i, j, x, y;
     D3DLOCKED_RECT lr;
+    D3DLOCKED_BOX lb;
     IDirect3D9 *d3d;
     ULONG refcount;
     D3DCAPS9 caps;
@@ -15681,6 +15705,8 @@ static void test_fetch4(void)
         hr = IDirect3DDevice9_CreatePixelShader(device, shaders[i].ps_code, &ps[i]);
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     }
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code_3d, &ps_3d);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE4(0));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -15818,12 +15844,70 @@ static void test_fetch4(void)
         IDirect3DTexture9_Release(tex);
     }
 
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 2, 1, 0, D3DFMT_L8, D3DPOOL_MANAGED, &texture_3d, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVolumeTexture9_LockBox(texture_3d, 0, &lb, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(fetch4_data); ++i)
+    {
+        memcpy((BYTE *)lb.pBits + i * lb.RowPitch, &fetch4_data[i], sizeof(fetch4_data[i]));
+        /* Shift the lower level, to keep it different. */
+        memcpy((BYTE *)lb.pBits + i * lb.RowPitch + lb.SlicePitch, &fetch4_data[(i + 1) % 4], sizeof(fetch4_data[i]));
+    }
+    hr = IDirect3DVolumeTexture9_UnlockBox(texture_3d, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture_3d);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Test Fetch4 with 3D textures. */
+    for (i = 0; i < 2; ++i)
+    {
+        hr = IDirect3DDevice9_SetVertexShader(device, i ? vs : NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShader(device, i ? ps_3d : NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        get_rt_readback(original_rt, &rb);
+        for (j = 0; j < ARRAY_SIZE(expected_colours.colour_amd); ++j)
+        {
+            x = expected_colours.x[j % 4];
+            y = expected_colours.y[j / 4];
+            colour_amd = expected_colours.colour_amd[j];
+            colour_intel = expected_colours.colour_intel[j];
+            colour_off = expected_colours.colour_3d_fetch4_off[j];
+            colour_zround = expected_colours.colour_3d_amd_zround[j];
+            colour = get_readback_color(&rb, x, y);
+
+            /* Note: Fetch4 on 3D textures have different results based on the vendor/driver
+             *  - AMD "HD 5700" rounds to nearest "z" texel, and does fetch4 normally on .xy
+             *  - AMD "R500" has fetch4 disabled
+             *  - AMD "R580" has fetch4 enabled sampling at .xy0
+             *  - Intel UHD 620 sample with fetch4 at .xy0 */
+            ok(color_match(colour, colour_off, 2) || broken(color_match(colour, colour_zround, 2)
+                    || color_match(colour, colour_intel, 2) || color_match(colour, colour_amd, 2)),
+                    "Test 3D %s: Got unexpected colour 0x%08x at (%u, %u).\n", shaders[i].name, colour, x, y);
+        }
+        release_surface_readback(&rb);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    IDirect3DVolumeTexture9_Release(texture_3d);
     IDirect3DTexture9_Release(texture);
     for (i = 0; i < ARRAY_SIZE(ps); ++i)
     {
         if (ps[i])
             IDirect3DPixelShader9_Release(ps[i]);
     }
+    IDirect3DPixelShader9_Release(ps_3d);
     IDirect3DVertexShader9_Release(vs);
     IDirect3DSurface9_Release(original_rt);
     refcount = IDirect3DDevice9_Release(device);
