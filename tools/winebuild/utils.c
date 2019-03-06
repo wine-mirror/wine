@@ -1039,8 +1039,10 @@ const char *asm_name( const char *sym )
 
     switch (target_platform)
     {
-    case PLATFORM_APPLE:
     case PLATFORM_WINDOWS:
+        if (target_cpu != CPU_x86) return sym;
+        /* fall through */
+    case PLATFORM_APPLE:
         if (sym[0] == '.' && sym[1] == 'L') return sym;
         free( buffer );
         buffer = strmake( "_%s", sym );
@@ -1061,7 +1063,7 @@ const char *func_declaration( const char *func )
         return "";
     case PLATFORM_WINDOWS:
         free( buffer );
-        buffer = strmake( ".def _%s; .scl 2; .type 32; .endef", func );
+        buffer = strmake( ".def %s%s; .scl 2; .type 32; .endef", target_cpu == CPU_x86 ? "_" : "", func );
         break;
     default:
         free( buffer );
@@ -1164,7 +1166,8 @@ const char *asm_globl( const char *func )
         buffer = strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
         break;
     case PLATFORM_WINDOWS:
-        buffer = strmake( "\t.globl _%s\n_%s:", func, func );
+        buffer = strmake( "\t.globl %s%s\n%s%s:", target_cpu == CPU_x86 ? "_" : "", func,
+                          target_cpu == CPU_x86 ? "_" : "", func );
         break;
     default:
         buffer = strmake( "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
