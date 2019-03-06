@@ -577,6 +577,8 @@ static HRESULT alloc_user_queue(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue_
     else
     {
         LeaveCriticalSection(&queues_section);
+        heap_free(queue);
+        WARN("Out of user queue handles.\n");
         return E_OUTOFMEMORY;
     }
 
