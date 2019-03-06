@@ -15639,16 +15639,75 @@ static void test_fetch4(void)
         },
     };
 
+    static const struct
+    {
+        D3DCOLOR colour_off, colour_amd, colour_intel;
+        unsigned int x, y;
+    }
+    expected_depth[][4] =
+    {
+        {
+            /* Shadow samplers. */
+            {0xffffffff, 0xffffffff, 0xffffffff,  20,  15},
+            {0xffffffff, 0xffffffff, 0xffffffff, 260,  15},
+            {0x00000000, 0x00000000, 0x00000000,  20, 255},
+            {0x00000000, 0x00000000, 0x00000000, 260, 135},
+        },
+        {
+            /* DF16. */
+            {0xfffe0000, 0xfedfdfbf, 0xffffffff,  20,  15},
+            {0xff9f0000, 0x9f7f7f5f, 0x9fbfbf9f, 260,  15},
+            {0xff800000, 0x7f5f5f3f, 0x9f809f80,  20, 255},
+            {0xff600000, 0x5f3f3f1f, 0x80809f60, 260, 135},
+        },
+        {
+            /* DF24. */
+            {0xffff0000, 0xffdfdfbf, 0xffffffff,  20,  15},
+            {0xff9f0000, 0x9f7f7f5f, 0x9fbfbf9f, 260,  15},
+            {0xff800000, 0x7f5f5f3f, 0x9f809f80,  20, 255},
+            {0xff600000, 0x5f3f3f1f, 0x80809f60, 260, 135},
+        },
+        {
+            /* INTZ. */
+            {0xffffffff, 0xffdfdfbf, 0xffffffff,  20,  15},
+            {0x9f9f9f9f, 0x9f7f7f5f, 0x9fbfbf9f, 260,  15},
+            {0x7f7f7f7f, 0x7f5f5f3f, 0x9f809f80,  20, 255},
+            {0x5f5f5f5f, 0x5f3f3f1f, 0x80809f60, 260, 135},
+        }
+    };
+
+    static const struct
+    {
+        const char *name;
+        D3DFORMAT format;
+        unsigned int index;
+    }
+    depth_tests[] =
+    {
+        {"D16_LOCKABLE",  D3DFMT_D16_LOCKABLE,         0},
+        {"D32",           D3DFMT_D32,                  0},
+        {"D15S1",         D3DFMT_D15S1,                0},
+        {"D24S8",         D3DFMT_D24S8,                0},
+        {"D24X8",         D3DFMT_D24X8,                0},
+        {"D24X4S4",       D3DFMT_D24X4S4,              0},
+        {"D16",           D3DFMT_D16,                  0},
+        {"D32F_LOCKABLE", D3DFMT_D32F_LOCKABLE,        0},
+        {"D24FS8",        D3DFMT_D24FS8,               0},
+        {"DF16",          MAKEFOURCC('D','F','1','6'), 1},
+        {"DF24",          MAKEFOURCC('D','F','2','4'), 2},
+        {"INTZ",          MAKEFOURCC('I','N','T','Z'), 3},
+    };
+
     D3DCOLOR colour, colour_amd, colour_intel, colour_off, colour_zround;
     IDirect3DPixelShader9 *ps[ARRAY_SIZE(shaders)];
     IDirect3DVolumeTexture9 *texture_3d;
-    IDirect3DSurface9 *original_rt;
+    IDirect3DSurface9 *original_rt, *rt;
     IDirect3DPixelShader9 *ps_3d;
     struct surface_readback rb;
     IDirect3DVertexShader9 *vs;
     IDirect3DTexture9 *texture;
+    unsigned int i, j, k, x, y;
     IDirect3DDevice9 *device;
-    unsigned int i, j, x, y;
     D3DLOCKED_RECT lr;
     D3DLOCKED_BOX lb;
     IDirect3D9 *d3d;
@@ -15681,6 +15740,9 @@ static void test_fetch4(void)
         goto done;
     }
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 8, 8, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_L8, D3DPOOL_MANAGED, &texture, NULL);
@@ -15900,6 +15962,114 @@ static void test_fetch4(void)
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     }
 
+    /* Test Fetch4 with depth textures. */
+    for (i = 0; i < ARRAY_SIZE(depth_tests); ++i)
+    {
+        D3DFORMAT format = depth_tests[i].format;
+        IDirect3DTexture9 *depth_texture;
+        IDirect3DSurface9 *ds;
+
+        if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, format)))
+        {
+            skip("Skipping %s depth test, unsupported format.\n", depth_tests[i].name);
+            continue;
+        }
+
+        hr = IDirect3DDevice9_CreateTexture(device, 8, 8, 1,
+                D3DUSAGE_DEPTHSTENCIL, format, D3DPOOL_DEFAULT, &depth_texture, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DTexture9_GetSurfaceLevel(depth_texture, 0, &ds);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0,
+                D3DSAMP_MIPMAPLODBIAS, MAKEFOURCC('G','E','T','1'));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        /* Setup the depth/stencil surface. */
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        /* Render to the depth surface. */
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        IDirect3DSurface9_Release(ds);
+        hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)depth_texture);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        /* Set a shader for depth sampling, otherwise Windows does not show
+         * anything. */
+        hr = IDirect3DDevice9_SetVertexShader(device, vs);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShader(device, ps[1]); /* texld */
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (j = 0; j < 2; ++j)
+        {
+            hr = IDirect3DDevice9_SetSamplerState(device, 0,
+                    D3DSAMP_MIPMAPLODBIAS, MAKEFOURCC('G','E','T', j ? '4' : '1' ));
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+            /* Do the actual shadow mapping. */
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+            get_rt_readback(original_rt, &rb);
+            for (k = 0; k < ARRAY_SIZE(expected_depth[depth_tests[i].index]); ++k)
+            {
+                x = expected_depth[depth_tests[i].index][k].x;
+                y = expected_depth[depth_tests[i].index][k].y;
+                colour_amd = expected_depth[depth_tests[i].index][k].colour_amd;
+                colour_intel = expected_depth[depth_tests[i].index][k].colour_intel;
+                colour_off = expected_depth[depth_tests[i].index][k].colour_off;
+                colour = get_readback_color(&rb, x, y);
+
+                /* When Fetch4 is off, ignore the .g and .b channels on
+                 * windows. Some implementations will replicate the .r channel
+                 * to .g and .b, others will return 0 for .g and .b. */
+                if (!j)
+                    ok(color_match(colour, colour_off, 2)
+                            || broken(color_match(colour & 0x00ff0000, colour_off & 0x00ff0000, 2)),
+                            "Test off: Got unexpected colour 0x%08x for format %s at (%u, %u).\n",
+                            colour, depth_tests[i].name, x, y);
+                else
+                    ok(color_match(colour, colour_amd, 2) || broken(color_match(colour, colour_intel, 2)),
+                            "Test on: Got unexpected colour 0x%08x for format %s at (%u, %u).\n",
+                            colour, depth_tests[i].name, x, y);
+            }
+            release_surface_readback(&rb);
+
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        }
+
+        hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        IDirect3DTexture9_Release(depth_texture);
+    }
+
     IDirect3DVolumeTexture9_Release(texture_3d);
     IDirect3DTexture9_Release(texture);
     for (i = 0; i < ARRAY_SIZE(ps); ++i)
@@ -15909,6 +16079,7 @@ static void test_fetch4(void)
     }
     IDirect3DPixelShader9_Release(ps_3d);
     IDirect3DVertexShader9_Release(vs);
+    IDirect3DSurface9_Release(rt);
     IDirect3DSurface9_Release(original_rt);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
