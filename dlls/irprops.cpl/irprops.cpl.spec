@@ -8,7 +8,7 @@
 @ stub BluetoothEnumerateInstalledServices
 @ stub BluetoothFindBrowseGroupClose
 @ stub BluetoothFindClassIdClose
-@ stub BluetoothFindDeviceClose
+@ stdcall BluetoothFindDeviceClose(ptr) bthprops.cpl.BluetoothFindDeviceClose
 @ stub BluetoothFindFirstBrowseGroup
 @ stub BluetoothFindFirstClassId
 @ stdcall BluetoothFindFirstDevice(ptr ptr) bthprops.cpl.BluetoothFindFirstDevice

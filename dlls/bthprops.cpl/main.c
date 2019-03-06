@@ -60,3 +60,13 @@ BOOL WINAPI BluetoothFindRadioClose(HBLUETOOTH_RADIO_FIND find)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/*********************************************************************
+ *  BluetoothFindDeviceClose
+ */
+BOOL WINAPI BluetoothFindDeviceClose(HBLUETOOTH_DEVICE_FIND find)
+{
+    FIXME("(%p): stub!\n", find);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
