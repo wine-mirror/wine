@@ -879,7 +879,7 @@ static inline void save_fpu( CONTEXT *context )
     memcpy(&float_status, &context->FloatSave, sizeof(float_status));
     float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
 
-    __asm__ __volatile__( "fldenv %0" : "=m" (float_status) );
+    __asm__ __volatile__( "fldenv %0" : : "m" (float_status) );
 #endif
 }
 
