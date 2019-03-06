@@ -15443,6 +15443,44 @@ static void test_fetch4(void)
         0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
         0x0000ffff,                                                             /* end                        */
     };
+    /* Fetch4 uses the same D3D state as LOD bias, and therefore disables LOD
+     * handling. Texldd/texldb/texldl give the same result as plain texld. */
+    /* NOTE: The Radeon HD 5700 driver 8.17.10.1404 disables Fetch4 on these
+     * instructions. */
+    static const DWORD ps_code_texldd[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x0200001f, 0x80000005, 0x900f0000,                                     /* dcl_texcoord v0            */
+        0x0200001f, 0x90000000, 0xa00f0800,                                     /* dcl_2d s0                  */
+        0x05000051, 0xa00f0000, 0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000, /* def c0, 0.5, 0.5, 0.5, 0.5 */
+        0x05000051, 0xa00f0001, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, /* def c0, 1.0, 1.0, 1.0, 1.0 */
+        0x02000001, 0x800f0002, 0xa0e40000,                                     /* mov r2, c0                 */
+        0x0500005d, 0x800f0000, 0x90e40000, 0xa0e40800, 0xa0e40000, 0x80e40002, /* texldd r0, v0, s0, c0, r2  */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+        0x0000ffff,                                                             /* end                        */
+    };
+    static const DWORD ps_code_texldb[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x0200001f, 0x80000005, 0x900f0000,                                     /* dcl_texcoord v0            */
+        0x0200001f, 0x90000000, 0xa00f0800,                                     /* dcl_2d s0                  */
+        0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x40a00000, 0x40a00000, /* def c0, 0.0, 0.0, 5.0, 5.0 */
+        0x03000002, 0x800f0000, 0x90e40000, 0xa0e40000,                         /* add r0, v0, c0             */
+        0x03020042, 0x800f0000, 0x80e40000, 0xa0e40800,                         /* texldb r0, r0, s0          */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+        0x0000ffff,                                                             /* end                        */
+    };
+    static const DWORD ps_code_texldl[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x0200001f, 0x80000005, 0x900f0000,                                     /* dcl_texcoord v0            */
+        0x0200001f, 0x90000000, 0xa00f0800,                                     /* dcl_2d s0                  */
+        0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x3f000000, 0x3f000000, /* def c0, 0.0, 0.0, 0.5, 0.5 */
+        0x03000002, 0x800f0000, 0x90e40000, 0xa0e40000,                         /* add r0, v0, c0             */
+        0x0300005f, 0x800f0000, 0x80e40000, 0xa0e40800,                         /* texldl r0, r0, s0          */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+        0x0000ffff,                                                             /* end                        */
+    };
 
     static const struct
     {
@@ -15503,6 +15541,9 @@ static void test_fetch4(void)
         {"texld",      ps_code_texld,   0, FALSE, 0},
         {"texldp",     ps_code_texldp,  2, FALSE, 0},
         {"texld_yzwx", ps_code_swizzle, 0, TRUE , 0},
+        {"texldd",     ps_code_texldd,  0, FALSE, 0},
+        {"texldb",     ps_code_texldb,  0, FALSE, 0},
+        {"texldl",     ps_code_texldl,  0, FALSE, 0},
         {"FFP_proj",   NULL,            2, FALSE, D3DTTFF_PROJECTED},
         {"FFP_proj3",  NULL,            4, FALSE, D3DTTFF_COUNT3 | D3DTTFF_PROJECTED},
     };
