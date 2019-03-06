@@ -247,6 +247,11 @@ static void test_Locate(void)
         todo_wine ok(err == ICERR_OK, "Query MSVC->RGB16 height<0: %d\n", err);
         bo.biHeight = -bo.biHeight;
 
+        bo.biBitCount = 24;
+        err = ICDecompressQuery(h, &bi, &bo);
+        ok(err == ICERR_OK, "Query MSVC 16->24: %d\n", err);
+        bo.biBitCount = 16;
+
         bi.biCompression = mmioFOURCC('m','s','v','c');
         err = ICDecompressQuery(h, &bi, &bo);
         ok(err == ICERR_BADFORMAT, "Query msvc->RGB16: %d\n", err);
