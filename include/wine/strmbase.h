@@ -212,7 +212,6 @@ typedef struct TransformFilter
 	BaseFilter filter;
 
 	IPin **ppPins;
-	ULONG npins;
 	AM_MEDIA_TYPE pmt;
 	CRITICAL_SECTION csReceive;
 

@@ -144,22 +144,20 @@ static HRESULT WINAPI TransformFilter_Output_GetMediaType(BasePin *This, int iPo
     return S_OK;
 }
 
-static IPin* WINAPI TransformFilter_GetPin(BaseFilter *iface, int pos)
+static IPin *WINAPI TransformFilter_GetPin(BaseFilter *iface, int index)
 {
-    TransformFilter *This = impl_from_BaseFilter(iface);
+    TransformFilter *filter = impl_from_BaseFilter(iface);
 
-    if (pos >= This->npins || pos < 0)
+    if (index >= 2 || index < 0)
         return NULL;
 
-    IPin_AddRef(This->ppPins[pos]);
-    return This->ppPins[pos];
+    IPin_AddRef(filter->ppPins[index]);
+    return filter->ppPins[index];
 }
 
 static LONG WINAPI TransformFilter_GetPinCount(BaseFilter *iface)
 {
-    TransformFilter *This = impl_from_BaseFilter(iface);
-
-    return (This->npins+1);
+    return 2;
 }
 
 static const BaseFilterFuncTable tfBaseFuncTable = {
@@ -203,7 +201,6 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
     /* pTransformFilter is already allocated */
     pTransformFilter->pFuncsTable = pFuncsTable;
     ZeroMemory(&pTransformFilter->pmt, sizeof(pTransformFilter->pmt));
-    pTransformFilter->npins = 2;
 
     pTransformFilter->ppPins = CoTaskMemAlloc(2 * sizeof(IPin *));
 
@@ -314,7 +311,7 @@ ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
     {
         ULONG i;
 
-        for (i = 0; i < This->npins; i++)
+        for (i = 0; i < 2; i++)
         {
             IPin *pConnectedTo;
 
