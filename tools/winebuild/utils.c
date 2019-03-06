@@ -449,6 +449,9 @@ struct strarray get_ld_command(void)
         case PLATFORM_FREEBSD:
             strarray_add( &args, "-m", (force_pointer_size == 8) ? "elf_x86_64_fbsd" : "elf_i386_fbsd", NULL );
             break;
+        case PLATFORM_WINDOWS:
+            strarray_add( &args, "-m", (force_pointer_size == 8) ? "i386pep" : "i386pe", NULL );
+            break;
         default:
             switch(target_cpu)
             {
