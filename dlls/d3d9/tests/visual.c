@@ -15493,6 +15493,15 @@ static void test_fetch4(void)
         {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f, 4.0f, 2.0f}},
         {{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 4.0f, 2.0f}},
         {{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 4.0f, 2.0f}},
+    },
+    quad2[] =
+    {
+        /* Tilted on the z-axis to get a depth gradient in the depth test. */
+        /* Note: Using 0.55f-0.6f to avoid rounding errors on depth tests. */
+        {{-1.0f,  1.0f, 1.0f}, {0.0f, 0.0f, 0.6f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f, 0.6f, 0.0f}},
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.6f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.6f, 0.0f}},
     };
 
     static const struct
@@ -15546,6 +15555,67 @@ static void test_fetch4(void)
         {"texldl",     ps_code_texldl,  0, FALSE, 0},
         {"FFP_proj",   NULL,            2, FALSE, D3DTTFF_PROJECTED},
         {"FFP_proj3",  NULL,            4, FALSE, D3DTTFF_COUNT3 | D3DTTFF_PROJECTED},
+    };
+
+    static const struct
+    {
+        const char *name;
+        D3DFORMAT format;
+        DWORD data;
+        unsigned int x, y;
+        unsigned int w, h;
+        D3DCOLOR colour_amd[3];
+        D3DCOLOR colour_intel[3];
+        BOOL todo;
+    }
+    format_tests[] =
+    {
+        /* Enabled formats */
+        {
+            "L8", D3DFMT_L8,
+            0xff804010, 360, 30, 2, 2,
+            {0x40400000, 0x40400000, 0x10400000},
+            {0x40101040, 0x40101040, 0x40101040},
+        },
+        {
+            "L16", D3DFMT_L16,
+            0xff804010, 360, 30, 2, 2,
+            {0xffff0000, 0xffff0000, 0x40ff0000},
+            {0xff4040ff, 0xff4040ff, 0xff4040ff},
+        },
+        {
+            "R16F", D3DFMT_R16F,
+            0x38003c00, 360, 30, 2, 2,
+            {0x80800000, 0x80800000, 0xff800000},
+            {0x80ffff80, 0x80ffff80, 0x80ffff80},
+        },
+        {
+            "R32F", D3DFMT_R32F,
+            0x3f000000, 360, 30, 2, 2,
+            {0x00000000, 0x00000000, 0x80000000},
+            {0x00808000, 0x00808000, 0x00808000},
+        },
+        {
+            "ATI1", MAKEFOURCC('A','T','I','1'),
+            0xb97700ff, 360, 30, 4, 4,
+            {0x6d6d6d6d, 0x6d6d6d6d, 0x49494949},
+            {0xff6d00ff, 0xff6d00ff, 0xff4900ff},
+        },
+        /* Unsupported on Intel, broken in Wine. */
+        {
+            "A8", D3DFMT_A8,
+            0xff804010, 360, 30, 2, 2,
+            {0x40400000, 0x40400000, 0x10400000},
+            {0x00000000, 0x00000000, 0x00000000},
+            TRUE,
+        },
+        /* Unsupported format. */
+        {
+            "A8R8G8B8", D3DFMT_A8R8G8B8,
+            0xff804010, 360, 270, 2, 2,
+            {0x00000000, 0x00000000, 0xff804010},
+            {0x00000000, 0x00000000, 0xff804010},
+        },
     };
 
     D3DCOLOR colour, colour_amd, colour_intel, colour_off;
@@ -15694,6 +15764,58 @@ static void test_fetch4(void)
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Test Fetch4 format support. */
+    for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
+    {
+        IDirect3DTexture9 *tex;
+
+        hr = IDirect3DDevice9_CreateTexture(device, format_tests[i].w, format_tests[i].h,
+                1, 0, format_tests[i].format, D3DPOOL_MANAGED, &tex, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DTexture9_LockRect(tex, 0, &lr, NULL, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        memcpy(lr.pBits, &format_tests[i].data, 4);
+        hr = IDirect3DTexture9_UnlockRect(tex, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)tex);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (j = 0; j < ARRAY_SIZE(format_tests[i].colour_amd); ++j)
+        {
+            hr = IDirect3DDevice9_SetVertexShader(device, ps[j] ? vs : NULL);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetPixelShader(device,  ps[j]);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+            get_rt_readback(original_rt, &rb);
+            colour_amd = format_tests[i].colour_amd[j];
+            colour_intel = format_tests[i].colour_intel[j];
+            colour = get_readback_color(&rb, format_tests[i].x, format_tests[i].y);
+            /* On windows just test the R channel, since G/B might be 0xff or 0x00. */
+            todo_wine_if(format_tests[i].todo)
+                ok(color_match(colour, colour_amd, 2) || broken(color_match(colour, colour_intel, 2))
+                        || broken(color_match(colour & 0x00ff0000, colour_amd & 0x00ff0000, 2)),
+                        "Test %s on %s: Got unexpected colour 0x%08x at (%u, %u).\n",
+                        shaders[j].name, format_tests[i].name, colour, format_tests[i].x, format_tests[i].y);
+            release_surface_readback(&rb);
+
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        }
+        IDirect3DTexture9_Release(tex);
     }
 
     IDirect3DTexture9_Release(texture);
