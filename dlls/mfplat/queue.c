@@ -185,6 +185,8 @@ static HRESULT grab_queue(DWORD queue_id, struct queue **ret)
     MFASYNC_WORKQUEUE_TYPE queue_type;
     struct queue_handle *entry;
 
+    *ret = NULL;
+
     if (!system_queues[SYS_QUEUE_STANDARD].pool)
         return MF_E_SHUTDOWN;
 
