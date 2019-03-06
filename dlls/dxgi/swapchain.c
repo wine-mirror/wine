@@ -85,7 +85,7 @@ BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc)
         case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
             min_buffer_count = 2;
 
-            if (!dxgi_validate_flip_swap_effect_format(desc->Format))
+            if (desc->Format && !dxgi_validate_flip_swap_effect_format(desc->Format))
                 return FALSE;
 
             if (desc->SampleDesc.Count != 1 || desc->SampleDesc.Quality)
@@ -738,6 +738,9 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
      */
     if (!implicit)
     {
+        if (desc->backbuffer_format == WINED3DFMT_UNKNOWN)
+            return E_INVALIDARG;
+
         if (FAILED(hr = IWineDXGIAdapter_GetParent(device->adapter, &IID_IDXGIFactory,
                 (void **)&swapchain->factory)))
         {
@@ -2603,6 +2606,9 @@ HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *qu
     struct d3d12_swapchain *object;
     ID3D12Device *device;
     HRESULT hr;
+
+    if (swapchain_desc->Format == DXGI_FORMAT_UNKNOWN)
+        return DXGI_ERROR_INVALID_CALL;
 
     if (!fullscreen_desc)
     {
