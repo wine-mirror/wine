@@ -22,6 +22,11 @@
 #include "dshow.h"
 #include "wine/test.h"
 
+static const WCHAR sink_id[] = {'I','n',0};
+static const WCHAR source_id[] = {'O','u','t',0};
+static const WCHAR sink_name[] = {'X','F','o','r','m',' ','I','n',0};
+static const WCHAR source_name[] = {'X','F','o','r','m',' ','O','u','t',0};
+
 static IBaseFilter *create_avi_dec(void)
 {
     IBaseFilter *filter = NULL;
@@ -203,12 +208,56 @@ todo_wine
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_find_pin(void)
+{
+    static const WCHAR input_pinW[] = {'i','n','p','u','t',' ','p','i','n',0};
+    static const WCHAR output_pinW[] = {'o','u','t','p','u','t',' ','p','i','n',0};
+    IBaseFilter *filter = create_avi_dec();
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Pins didn't match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Pins didn't match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_FindPin(filter, source_name, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_FindPin(filter, input_pinW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_FindPin(filter, output_pinW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    IEnumPins_Release(enum_pins);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(avidec)
 {
     CoInitialize(NULL);
 
     test_interfaces();
     test_enum_pins();
+    test_find_pin();
 
     CoUninitialize();
 }
