@@ -149,6 +149,13 @@ static void print_adapter_info(void)
             adapter_desc.VendorId, adapter_desc.DeviceId);
 }
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
 static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
 {
@@ -896,7 +903,6 @@ static void test_swapchain_draw(void)
     window = create_window(WS_VISIBLE);
     ret = GetClientRect(window, &rect);
     ok(ret, "Failed to get client rect.\n");
-    set_viewport(&context.viewport, 0.0f, 0.0f, rect.right, rect.bottom, 0.0f, 1.0f);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -947,6 +953,74 @@ static void test_swapchain_draw(void)
         reset_command_list(&context, 0);
     }
 
+    DestroyWindow(window);
+    destroy_test_context(&context);
+}
+
+static void test_swapchain_refcount(void)
+{
+    const unsigned int buffer_count = 4;
+    struct test_context_desc desc;
+    struct test_context context;
+    IDXGISwapChain3 *swapchain;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    RECT rect;
+    BOOL ret;
+
+    desc.no_pipeline = TRUE;
+    if (!init_test_context(&context, &desc))
+        return;
+
+    window = create_window(WS_VISIBLE);
+    ret = GetClientRect(window, &rect);
+    ok(ret, "Failed to get client rect.\n");
+    swapchain = create_swapchain(&context, window, buffer_count, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+
+    for (i = 0; i < buffer_count; ++i)
+    {
+        refcount = get_refcount(swapchain);
+        todo_wine ok(refcount == 2, "Got refcount %u.\n", refcount);
+        ID3D12Resource_Release(context.render_target[i]);
+        context.render_target[i] = NULL;
+    }
+    refcount = get_refcount(swapchain);
+    ok(refcount == 1, "Got refcount %u.\n", refcount);
+
+    refcount = IDXGISwapChain3_AddRef(swapchain);
+    ok(refcount == 2, "Got refcount %u.\n", refcount);
+    hr = IDXGISwapChain3_GetBuffer(swapchain, 0, &IID_ID3D12Resource, (void **)&context.render_target[0]);
+    ok(hr == S_OK, "Failed to get swapchain buffer, hr %#x.\n", hr);
+    refcount = get_refcount(swapchain);
+    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+
+    refcount = ID3D12Resource_AddRef(context.render_target[0]);
+    ok(refcount == 2, "Got refcount %u.\n", refcount);
+    refcount = get_refcount(swapchain);
+    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+
+    hr = IDXGISwapChain3_GetBuffer(swapchain, 1, &IID_ID3D12Resource, (void **)&context.render_target[1]);
+    ok(hr == S_OK, "Failed to get swapchain buffer, hr %#x.\n", hr);
+    refcount = get_refcount(swapchain);
+    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+
+    ID3D12Resource_Release(context.render_target[0]);
+    ID3D12Resource_Release(context.render_target[0]);
+    context.render_target[0] = NULL;
+    refcount = get_refcount(swapchain);
+    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+
+    refcount = IDXGISwapChain3_Release(swapchain);
+    todo_wine ok(refcount == 2, "Got refcount %u.\n", refcount);
+    ID3D12Resource_Release(context.render_target[1]);
+    context.render_target[1] = NULL;
+    refcount = get_refcount(swapchain);
+    ok(refcount == 1, "Got refcount %u.\n", refcount);
+
+    refcount = IDXGISwapChain3_Release(swapchain);
+    ok(!refcount, "Swapchain has %u references left.\n", refcount);
     DestroyWindow(window);
     destroy_test_context(&context);
 }
@@ -1192,6 +1266,7 @@ START_TEST(d3d12)
     test_interfaces();
     test_draw();
     test_swapchain_draw();
+    test_swapchain_refcount();
     test_swapchain_size_mismatch();
     test_swapchain_backbuffer_index();
 }
