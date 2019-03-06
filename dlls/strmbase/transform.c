@@ -39,8 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
-static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
-static const WCHAR wcsOutputPinName[] = {'o','u','t','p','u','t',' ','p','i','n',0};
+static const WCHAR wcsInputPinName[] = {'I','n',0};
+static const WCHAR wcsOutputPinName[] = {'O','u','t',0};
 
 static const IPinVtbl TransformFilter_InputPin_Vtbl;
 static const IPinVtbl TransformFilter_OutputPin_Vtbl;
