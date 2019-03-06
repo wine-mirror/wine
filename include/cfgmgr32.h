@@ -175,6 +175,23 @@ typedef CHAR *DEVNODEID_A, *DEVINSTID_A;
 typedef WCHAR *DEVNODEID_W, *DEVINSTID_W;
 typedef ULONG REGDISPOSITION;
 
+typedef enum _PNP_VETO_TYPE
+{
+    PNP_VetoTypeUnknown,
+    PNP_VetoLegacyDevice,
+    PNP_VetoPendingClose,
+    PNP_VetoWindowsApp,
+    PNP_VetoWindowsService,
+    PNP_VetoOutstandingOpen,
+    PNP_VetoDevice,
+    PNP_VetoDriver,
+    PNP_VetoIllegalDeviceRequest,
+    PNP_VetoInsufficientPower,
+    PNP_VetoNonDisableable,
+    PNP_VetoLegacyDriver,
+    PNP_VetoInsufficientRights
+} PNP_VETO_TYPE, *PPNP_VETO_TYPE;
+
 DECL_WINELIB_CFGMGR32_TYPE_AW(DEVNODEID)
 DECL_WINELIB_CFGMGR32_TYPE_AW(DEVINSTID)
 
@@ -213,6 +230,9 @@ CMAPI CONFIGRET WINAPI CM_Locate_DevNodeW(PDEVINST,DEVINSTID_W,ULONG);
 #define     CM_Locate_DevNode WINELIB_NAME_AW(CM_Locate_DevNode)
 CMAPI CONFIGRET WINAPI CM_Open_DevNode_Key(DEVINST dnDevInst, REGSAM access, ULONG ulHardwareProfile,
                                            REGDISPOSITION disposition, PHKEY phkDevice, ULONG ulFlags);
+CMAPI CONFIGRET WINAPI CM_Request_Device_EjectA(DEVINST dev, PPNP_VETO_TYPE type, LPSTR name, ULONG length, ULONG flags);
+CMAPI CONFIGRET WINAPI CM_Request_Device_EjectW(DEVINST dev, PPNP_VETO_TYPE type, LPWSTR name, ULONG length, ULONG flags);
+#define     CM_Request_Device_Eject WINELIB_NAME_AW(CM_Get_Device_ID_List_Ex)
 
 #ifdef __cplusplus
 }

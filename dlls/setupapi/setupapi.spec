@@ -168,8 +168,8 @@
 @ stub CM_Remove_SubTree_Ex
 @ stub CM_Remove_Unmarked_Children
 @ stub CM_Remove_Unmarked_Children_Ex
-@ stub CM_Request_Device_EjectA
-@ stub CM_Request_Device_EjectW
+@ stdcall CM_Request_Device_EjectA(ptr ptr ptr long long)
+@ stdcall CM_Request_Device_EjectW(ptr ptr ptr long long)
 @ stub CM_Request_Eject_PC
 @ stub CM_Reset_Children_Marks
 @ stub CM_Reset_Children_Marks_Ex
