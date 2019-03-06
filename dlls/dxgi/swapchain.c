@@ -1070,7 +1070,7 @@ static BOOL d3d12_swapchain_is_present_mode_supported(struct d3d12_swapchain *sw
     return supported;
 }
 
-static BOOL d3d12_swapchain_have_user_images(struct d3d12_swapchain *swapchain)
+static BOOL d3d12_swapchain_has_user_images(struct d3d12_swapchain *swapchain)
 {
     return !!swapchain->vk_images[0];
 }
@@ -1089,7 +1089,7 @@ static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapc
     VkResult vr;
     HRESULT hr;
 
-    if (d3d12_swapchain_have_user_images(swapchain))
+    if (d3d12_swapchain_has_user_images(swapchain))
         return S_OK;
 
     memset(&image_info, 0, sizeof(image_info));
@@ -1461,7 +1461,7 @@ static void d3d12_swapchain_destroy_buffers(struct d3d12_swapchain *swapchain, B
 
     for (i = 0; i < swapchain->buffer_count; ++i)
     {
-        if (swapchain->buffers[i] && (destroy_user_buffers || !d3d12_swapchain_have_user_images(swapchain)))
+        if (swapchain->buffers[i] && (destroy_user_buffers || !d3d12_swapchain_has_user_images(swapchain)))
         {
             vkd3d_resource_decref(swapchain->buffers[i]);
             swapchain->buffers[i] = NULL;
@@ -2007,7 +2007,7 @@ static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapcha
         return S_OK;
     }
 
-    if (!d3d12_swapchain_have_user_images(swapchain))
+    if (!d3d12_swapchain_has_user_images(swapchain))
     {
         FIXME("Cannot recreate swapchain without user images.\n");
         return S_OK;
@@ -2040,7 +2040,7 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
     present_info.pImageIndices = &swapchain->current_buffer_index;
     present_info.pResults = NULL;
 
-    if (d3d12_swapchain_have_user_images(swapchain))
+    if (d3d12_swapchain_has_user_images(swapchain))
     {
         /* blit */
         submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -2108,7 +2108,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface
     {
         vkd3d_release_vk_queue(swapchain->command_queue);
 
-        if (!d3d12_swapchain_have_user_images(swapchain))
+        if (!d3d12_swapchain_has_user_images(swapchain))
         {
             FIXME("Cannot recreate swapchain without user images.\n");
             return DXGI_STATUS_MODE_CHANGED;
@@ -2141,7 +2141,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface
     vr = d3d12_swapchain_acquire_next_image(swapchain);
     if (vr == VK_ERROR_OUT_OF_DATE_KHR)
     {
-        if (!d3d12_swapchain_have_user_images(swapchain))
+        if (!d3d12_swapchain_has_user_images(swapchain))
         {
             FIXME("Cannot recreate swapchain without user images.\n");
             return DXGI_STATUS_MODE_CHANGED;
