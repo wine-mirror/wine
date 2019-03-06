@@ -329,16 +329,37 @@ UINT WINAPI DECLSPEC_HOTPATCH GetRawInputBuffer(RAWINPUT *data, UINT *data_size,
  */
 UINT WINAPI GetRawInputDeviceInfoA(HANDLE device, UINT command, void *data, UINT *data_size)
 {
-    UINT ret;
-
     TRACE("device %p, command %#x, data %p, data_size %p.\n",
             device, command, data, data_size);
 
-    ret = GetRawInputDeviceInfoW(device, command, data, data_size);
-    if (command == RIDI_DEVICENAME && ret && ret != ~0U)
-        ret = WideCharToMultiByte(CP_ACP, 0, data, -1, data, *data_size, NULL, NULL);
+    /* RIDI_DEVICENAME data_size is in chars, not bytes */
+    if (command == RIDI_DEVICENAME)
+    {
+        WCHAR *nameW;
+        UINT ret, nameW_sz;
 
-    return ret;
+        if (!data_size) return ~0U;
+
+        nameW_sz = *data_size;
+
+        if (data && nameW_sz > 0)
+            nameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * nameW_sz);
+        else
+            nameW = NULL;
+
+        ret = GetRawInputDeviceInfoW(device, command, nameW, &nameW_sz);
+
+        if (ret && ret != ~0U)
+            WideCharToMultiByte(CP_ACP, 0, nameW, -1, data, *data_size, NULL, NULL);
+
+        *data_size = nameW_sz;
+
+        HeapFree(GetProcessHeap(), 0, nameW);
+
+        return ret;
+    }
+
+    return GetRawInputDeviceInfoW(device, command, data, data_size);
 }
 
 /***********************************************************************
@@ -366,18 +387,18 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
     case RIDI_DEVICENAME:
         if (device == WINE_MOUSE_HANDLE)
         {
-            s = sizeof(mouse_name);
+            s = ARRAY_SIZE(mouse_name);
             name = mouse_name;
         }
         else if (device == WINE_KEYBOARD_HANDLE)
         {
-            s = sizeof(keyboard_name);
+            s = ARRAY_SIZE(keyboard_name);
             name = keyboard_name;
         }
         else
         {
             hid_device = device;
-            s = (strlenW(hid_device->path) + 1) * sizeof(WCHAR);
+            s = strlenW(hid_device->path) + 1;
             name = hid_device->path;
         }
         break;
@@ -402,7 +423,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
 
     if (command == RIDI_DEVICENAME)
     {
-        memcpy(data, name, s);
+        memcpy(data, name, s * sizeof(WCHAR));
         return s;
     }
 

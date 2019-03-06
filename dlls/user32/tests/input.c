@@ -80,6 +80,8 @@ static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 static BOOL (WINAPI *pGetCurrentInputMessageSource)( INPUT_MESSAGE_SOURCE *source );
 static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEPOINT, int, DWORD);
 static UINT (WINAPI *pGetRawInputDeviceList) (PRAWINPUTDEVICELIST, PUINT, UINT);
+static UINT (WINAPI *pGetRawInputDeviceInfoW) (HANDLE, UINT, void *, UINT *);
+static UINT (WINAPI *pGetRawInputDeviceInfoA) (HANDLE, UINT, void *, UINT *);
 
 #define MAXKEYEVENTS 12
 #define MAXKEYMESSAGES MAXKEYEVENTS /* assuming a key event generates one
@@ -164,6 +166,8 @@ static void init_function_pointers(void)
     GET_PROC(GetCurrentInputMessageSource);
     GET_PROC(GetMouseMovePointsEx);
     GET_PROC(GetRawInputDeviceList);
+    GET_PROC(GetRawInputDeviceInfoW);
+    GET_PROC(GetRawInputDeviceInfoA);
 #undef GET_PROC
 }
 
@@ -1555,7 +1559,7 @@ static void test_GetMouseMovePointsEx(void)
 static void test_GetRawInputDeviceList(void)
 {
     RAWINPUTDEVICELIST devices[32];
-    UINT ret, oret, devcount, odevcount;
+    UINT ret, oret, devcount, odevcount, i;
     DWORD err;
 
     SetLastError(0xdeadbeef);
@@ -1586,6 +1590,53 @@ static void test_GetRawInputDeviceList(void)
     /* devcount contains now the correct number of devices */
     ret = pGetRawInputDeviceList(devices, &devcount, sizeof(devices[0]));
     ok(ret > 0, "expected non-zero\n");
+
+    for(i = 0; i < devcount; ++i)
+    {
+        WCHAR name[128];
+        char nameA[128];
+        UINT sz, len;
+        RID_DEVICE_INFO info;
+
+        /* get required buffer size */
+        name[0] = '\0';
+        sz = 5;
+        ret = pGetRawInputDeviceInfoW(devices[i].hDevice, RIDI_DEVICENAME, name, &sz);
+        ok(ret == -1, "GetRawInputDeviceInfo gave wrong failure: %d\n", err);
+        ok(sz > 5 && sz < ARRAY_SIZE(name), "Size should have been set and not too large (got: %u)\n", sz);
+
+        /* buffer size for RIDI_DEVICENAME is in CHARs, not BYTEs */
+        ret = pGetRawInputDeviceInfoW(devices[i].hDevice, RIDI_DEVICENAME, name, &sz);
+        ok(ret == sz, "GetRawInputDeviceInfo gave wrong return: %d\n", err);
+        len = lstrlenW(name);
+        ok(len + 1 == ret, "GetRawInputDeviceInfo returned wrong length (name: %u, ret: %u)\n", len + 1, ret);
+
+        /* test A variant with same size */
+        ret = pGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICENAME, nameA, &sz);
+        ok(ret == sz, "GetRawInputDeviceInfoA gave wrong return: %d\n", err);
+        len = strlen(nameA);
+        ok(len + 1 == ret, "GetRawInputDeviceInfoA returned wrong length (name: %u, ret: %u)\n", len + 1, ret);
+
+        /* buffer size for RIDI_DEVICEINFO is in BYTEs */
+        memset(&info, 0, sizeof(info));
+        info.cbSize = sizeof(info);
+        sz = sizeof(info) - 1;
+        ret = pGetRawInputDeviceInfoW(devices[i].hDevice, RIDI_DEVICEINFO, &info, &sz);
+        ok(ret == -1, "GetRawInputDeviceInfo gave wrong failure: %d\n", err);
+        ok(sz == sizeof(info), "GetRawInputDeviceInfo set wrong size\n");
+
+        ret = pGetRawInputDeviceInfoW(devices[i].hDevice, RIDI_DEVICEINFO, &info, &sz);
+        ok(ret == sizeof(info), "GetRawInputDeviceInfo gave wrong return: %d\n", err);
+        ok(sz == sizeof(info), "GetRawInputDeviceInfo set wrong size\n");
+        ok(info.dwType == devices[i].dwType, "GetRawInputDeviceInfo set wrong type: 0x%x\n", info.dwType);
+
+        memset(&info, 0, sizeof(info));
+        info.cbSize = sizeof(info);
+        ret = pGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &info, &sz);
+        ok(ret == sizeof(info), "GetRawInputDeviceInfo gave wrong return: %d\n", err);
+        ok(sz == sizeof(info), "GetRawInputDeviceInfo set wrong size\n");
+        ok(info.dwType == devices[i].dwType, "GetRawInputDeviceInfo set wrong type: 0x%x\n", info.dwType);
+    }
 
     /* check if variable changes from larger to smaller value */
     devcount = odevcount = ARRAY_SIZE(devices);
