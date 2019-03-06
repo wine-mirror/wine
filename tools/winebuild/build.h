@@ -299,6 +299,7 @@ extern void output_exports( DLLSPEC *spec );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
 extern void output_resources( DLLSPEC *spec );
 extern void output_bin_resources( DLLSPEC *spec, unsigned int start_rva );
+extern void output_spec32_file( DLLSPEC *spec );
 extern void output_fake_module( DLLSPEC *spec );
 extern void output_def_file( DLLSPEC *spec, int include_private );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
@@ -310,8 +311,6 @@ extern void output_spec16_file( DLLSPEC *spec );
 extern void output_fake_module16( DLLSPEC *spec16 );
 extern void output_res_o_file( DLLSPEC *spec );
 extern void output_asm_relays16(void);
-
-extern void BuildSpec32File( DLLSPEC *spec );
 
 extern void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 );
 extern int parse_spec_file( FILE *file, DLLSPEC *spec );

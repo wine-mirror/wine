@@ -645,7 +645,7 @@ int main(int argc, char **argv)
                 output_spec16_file( spec );
                 break;
             case SPEC_WIN32:
-                BuildSpec32File( spec );
+                output_spec32_file( spec );
                 break;
             default: assert(0);
         }

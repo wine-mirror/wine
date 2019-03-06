@@ -695,11 +695,11 @@ void output_module( DLLSPEC *spec )
 
 
 /*******************************************************************
- *         BuildSpec32File
+ *         output_spec32_file
  *
  * Build a Win32 C file from a spec file.
  */
-void BuildSpec32File( DLLSPEC *spec )
+void output_spec32_file( DLLSPEC *spec )
 {
     needs_get_pc_thunk = 0;
     resolve_imports( spec );
