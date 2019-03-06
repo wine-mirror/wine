@@ -1,5 +1,4 @@
 /*
- *
  * Copyright 2014 Austin English
  *
  * This library is free software; you can redistribute it and/or
@@ -44,6 +43,8 @@ struct system_time_source
     IMFPresentationTimeSource IMFPresentationTimeSource_iface;
     IMFClockStateSink IMFClockStateSink_iface;
     LONG refcount;
+    MFCLOCK_STATE state;
+    CRITICAL_SECTION cs;
 };
 
 static struct system_time_source *impl_from_IMFPresentationTimeSource(IMFPresentationTimeSource *iface)
@@ -3085,7 +3086,10 @@ static ULONG WINAPI system_time_source_Release(IMFPresentationTimeSource *iface)
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        DeleteCriticalSection(&source->cs);
         heap_free(source);
+    }
 
     return refcount;
 }
@@ -3120,9 +3124,15 @@ static HRESULT WINAPI system_time_source_GetContinuityKey(IMFPresentationTimeSou
 static HRESULT WINAPI system_time_source_GetState(IMFPresentationTimeSource *iface, DWORD reserved,
         MFCLOCK_STATE *state)
 {
-    FIXME("%p, %#x, %p.\n", iface, reserved, state);
+    struct system_time_source *source = impl_from_IMFPresentationTimeSource(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x, %p.\n", iface, reserved, state);
+
+    EnterCriticalSection(&source->cs);
+    *state = source->state;
+    LeaveCriticalSection(&source->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI system_time_source_GetProperties(IMFPresentationTimeSource *iface, MFCLOCK_PROPERTIES *props)
@@ -3170,32 +3180,107 @@ static ULONG WINAPI system_time_source_sink_Release(IMFClockStateSink *iface)
     return IMFPresentationTimeSource_Release(&source->IMFPresentationTimeSource_iface);
 }
 
-static HRESULT WINAPI system_time_source_sink_OnClockStart(IMFClockStateSink *iface, MFTIME system_time, LONGLONG start_offset)
+enum clock_command
 {
-    FIXME("%p, %s, %s.\n", iface, wine_dbgstr_longlong(system_time), wine_dbgstr_longlong(start_offset));
+    CLOCK_CMD_START = 0,
+    CLOCK_CMD_STOP,
+    CLOCK_CMD_PAUSE,
+    CLOCK_CMD_RESTART,
+    CLOCK_CMD_MAX,
+};
 
-    return E_NOTIMPL;
+static HRESULT system_time_source_change_state(struct system_time_source *source, enum clock_command command)
+{
+    static const BYTE state_change_is_allowed[MFCLOCK_STATE_PAUSED+1][CLOCK_CMD_MAX] =
+    {   /*              S  S* P  R */
+        /* INVALID */ { 1, 0, 1, 0 },
+        /* RUNNING */ { 1, 1, 1, 0 },
+        /* STOPPED */ { 1, 1, 0, 0 },
+        /* PAUSED  */ { 1, 1, 0, 1 },
+    };
+    static const MFCLOCK_STATE states[CLOCK_CMD_MAX] =
+    {
+        /* CLOCK_CMD_START   */ MFCLOCK_STATE_RUNNING,
+        /* CLOCK_CMD_STOP    */ MFCLOCK_STATE_STOPPED,
+        /* CLOCK_CMD_PAUSE   */ MFCLOCK_STATE_PAUSED,
+        /* CLOCK_CMD_RESTART */ MFCLOCK_STATE_RUNNING,
+    };
+
+    /* Special case that go against usual state change vs return value behavior. */
+    if (source->state == MFCLOCK_STATE_INVALID && command == CLOCK_CMD_STOP)
+        return S_OK;
+
+    if (!state_change_is_allowed[source->state][command])
+        return MF_E_INVALIDREQUEST;
+
+    source->state = states[command];
+
+    return S_OK;
+}
+
+static HRESULT WINAPI system_time_source_sink_OnClockStart(IMFClockStateSink *iface, MFTIME system_time,
+        LONGLONG start_offset)
+{
+    struct system_time_source *source = impl_from_IMFClockStateSink(iface);
+    HRESULT hr;
+
+    TRACE("%p, %s, %s.\n", iface, wine_dbgstr_longlong(system_time), wine_dbgstr_longlong(start_offset));
+
+    EnterCriticalSection(&source->cs);
+    hr = system_time_source_change_state(source, CLOCK_CMD_START);
+    LeaveCriticalSection(&source->cs);
+
+    /* FIXME: update timestamps */
+
+    return hr;
 }
 
 static HRESULT WINAPI system_time_source_sink_OnClockStop(IMFClockStateSink *iface, MFTIME system_time)
 {
-    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+    struct system_time_source *source = impl_from_IMFClockStateSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+
+    EnterCriticalSection(&source->cs);
+    hr = system_time_source_change_state(source, CLOCK_CMD_STOP);
+    LeaveCriticalSection(&source->cs);
+
+    /* FIXME: update timestamps */
+
+    return hr;
 }
 
 static HRESULT WINAPI system_time_source_sink_OnClockPause(IMFClockStateSink *iface, MFTIME system_time)
 {
-    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+    struct system_time_source *source = impl_from_IMFClockStateSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+
+    EnterCriticalSection(&source->cs);
+    hr = system_time_source_change_state(source, CLOCK_CMD_PAUSE);
+    LeaveCriticalSection(&source->cs);
+
+    /* FIXME: update timestamps */
+
+    return hr;
 }
 
 static HRESULT WINAPI system_time_source_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME system_time)
 {
-    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+    struct system_time_source *source = impl_from_IMFClockStateSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+
+    EnterCriticalSection(&source->cs);
+    hr = system_time_source_change_state(source, CLOCK_CMD_RESTART);
+    LeaveCriticalSection(&source->cs);
+
+    /* FIXME: update timestamps */
+
+    return hr;
 }
 
 static HRESULT WINAPI system_time_source_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME system_time, float rate)
@@ -3226,13 +3311,14 @@ HRESULT WINAPI MFCreateSystemTimeSource(IMFPresentationTimeSource **time_source)
 
     TRACE("%p.\n", time_source);
 
-    object = heap_alloc(sizeof(*object));
+    object = heap_alloc_zero(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
     object->IMFPresentationTimeSource_iface.lpVtbl = &systemtimesourcevtbl;
     object->IMFClockStateSink_iface.lpVtbl = &systemtimesourcesinkvtbl;
     object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
 
     *time_source = &object->IMFPresentationTimeSource_iface;
 

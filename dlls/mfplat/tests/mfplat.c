@@ -1598,11 +1598,46 @@ static void test_presentation_descriptor(void)
     IMFMediaType_Release(media_type);
 }
 
+enum clock_action
+{
+    CLOCK_START,
+    CLOCK_STOP,
+    CLOCK_PAUSE,
+    CLOCK_RESTART,
+};
+
 static void test_system_time_source(void)
 {
+    static const struct clock_state_test
+    {
+        enum clock_action action;
+        MFCLOCK_STATE state;
+        BOOL is_invalid;
+    }
+    clock_state_change[] =
+    {
+        { CLOCK_STOP, MFCLOCK_STATE_INVALID },
+        { CLOCK_RESTART, MFCLOCK_STATE_INVALID, TRUE },
+        { CLOCK_PAUSE, MFCLOCK_STATE_PAUSED },
+        { CLOCK_PAUSE, MFCLOCK_STATE_PAUSED, TRUE },
+        { CLOCK_STOP, MFCLOCK_STATE_STOPPED },
+        { CLOCK_STOP, MFCLOCK_STATE_STOPPED },
+        { CLOCK_RESTART, MFCLOCK_STATE_STOPPED, TRUE },
+        { CLOCK_START, MFCLOCK_STATE_RUNNING },
+        { CLOCK_START, MFCLOCK_STATE_RUNNING },
+        { CLOCK_RESTART, MFCLOCK_STATE_RUNNING, TRUE },
+        { CLOCK_PAUSE, MFCLOCK_STATE_PAUSED },
+        { CLOCK_START, MFCLOCK_STATE_RUNNING },
+        { CLOCK_PAUSE, MFCLOCK_STATE_PAUSED },
+        { CLOCK_RESTART, MFCLOCK_STATE_RUNNING },
+        { CLOCK_RESTART, MFCLOCK_STATE_RUNNING, TRUE },
+        { CLOCK_STOP, MFCLOCK_STATE_STOPPED },
+        { CLOCK_PAUSE, MFCLOCK_STATE_STOPPED, TRUE },
+    };
     IMFPresentationTimeSource *time_source;
     IMFClockStateSink *statesink;
     MFCLOCK_STATE state;
+    unsigned int i;
     DWORD value;
     HRESULT hr;
 
@@ -1620,12 +1655,38 @@ static void test_system_time_source(void)
     ok(value == 0, "Unexpected value %u.\n", value);
 
     hr = IMFPresentationTimeSource_GetState(time_source, 0, &state);
-todo_wine {
     ok(hr == S_OK, "Failed to get state, hr %#x.\n", hr);
     ok(state == MFCLOCK_STATE_INVALID, "Unexpected state %d.\n", state);
-}
+
     hr = IMFPresentationTimeSource_QueryInterface(time_source, &IID_IMFClockStateSink, (void **)&statesink);
     ok(hr == S_OK, "Failed to get state sink, hr %#x.\n", hr);
+
+    /* State changes. */
+    for (i = 0; i < ARRAY_SIZE(clock_state_change); ++i)
+    {
+        switch (clock_state_change[i].action)
+        {
+            case CLOCK_STOP:
+                hr = IMFClockStateSink_OnClockStop(statesink, 0);
+                break;
+            case CLOCK_RESTART:
+                hr = IMFClockStateSink_OnClockRestart(statesink, 0);
+                break;
+            case CLOCK_PAUSE:
+                hr = IMFClockStateSink_OnClockPause(statesink, 0);
+                break;
+            case CLOCK_START:
+                hr = IMFClockStateSink_OnClockStart(statesink, 0, 0);
+                break;
+            default:
+                ;
+        }
+        ok(hr == (clock_state_change[i].is_invalid ? MF_E_INVALIDREQUEST : S_OK), "%u: unexpected hr %#x.\n", i, hr);
+        hr = IMFPresentationTimeSource_GetState(time_source, 0, &state);
+        ok(hr == S_OK, "%u: failed to get state, hr %#x.\n", i, hr);
+        ok(state == clock_state_change[i].state, "%u: unexpected state %d.\n", i, state);
+    }
+
     IMFClockStateSink_Release(statesink);
 
     IMFPresentationTimeSource_Release(time_source);
