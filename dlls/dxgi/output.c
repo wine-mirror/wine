@@ -34,6 +34,47 @@ static void dxgi_mode_from_wined3d(DXGI_MODE_DESC *mode, const struct wined3d_di
     mode->Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
 }
 
+static void dxgi_mode1_from_wined3d(DXGI_MODE_DESC1 *mode, const struct wined3d_display_mode *wined3d_mode)
+{
+    mode->Width = wined3d_mode->width;
+    mode->Height = wined3d_mode->height;
+    mode->RefreshRate.Numerator = wined3d_mode->refresh_rate;
+    mode->RefreshRate.Denominator = 1;
+    mode->Format = dxgi_format_from_wined3dformat(wined3d_mode->format_id);
+    mode->ScanlineOrdering = wined3d_mode->scanline_ordering;
+    mode->Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
+    mode->Stereo = FALSE; /* FIXME */
+}
+
+static HRESULT dxgi_output_find_closest_matching_mode(struct dxgi_output *output,
+        struct wined3d_display_mode *mode, IUnknown *device)
+{
+    struct dxgi_adapter *adapter;
+    struct wined3d *wined3d;
+    HRESULT hr;
+
+    if (!mode->width != !mode->height)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (mode->format_id == WINED3DFMT_UNKNOWN && !device)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (mode->format_id == WINED3DFMT_UNKNOWN)
+    {
+        FIXME("Matching formats to device not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    wined3d_mutex_lock();
+    adapter = output->adapter;
+    wined3d = adapter->factory->wined3d;
+
+    hr = wined3d_find_closest_matching_adapter_mode(wined3d, adapter->ordinal, mode);
+    wined3d_mutex_unlock();
+
+    return hr;
+}
+
 static inline struct dxgi_output *impl_from_IDXGIOutput4(IDXGIOutput4 *iface)
 {
     return CONTAINING_RECORD(iface, struct dxgi_output, IDXGIOutput4_iface);
@@ -234,33 +275,13 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode(IDXGIOutput
 {
     struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
     struct wined3d_display_mode wined3d_mode;
-    struct dxgi_adapter *adapter;
-    struct wined3d *wined3d;
     HRESULT hr;
 
-    TRACE("iface %p, mode %p, closest_match %p, device %p.\n", iface, mode, closest_match, device);
+    TRACE("iface %p, mode %s, closest_match %p, device %p.\n",
+            iface, debug_dxgi_mode(mode), closest_match, device);
 
-    if ((!mode->Width && mode->Height) || (mode->Width && !mode->Height))
-        return DXGI_ERROR_INVALID_CALL;
-
-    if (mode->Format == DXGI_FORMAT_UNKNOWN && !device)
-        return DXGI_ERROR_INVALID_CALL;
-
-    TRACE("Mode: %s.\n", debug_dxgi_mode(mode));
-    if (mode->Format == DXGI_FORMAT_UNKNOWN)
-    {
-        FIXME("Matching formats to device not implemented.\n");
-        return E_NOTIMPL;
-    }
-
-    adapter = output->adapter;
-    wined3d = adapter->factory->wined3d;
-
-    wined3d_mutex_lock();
     wined3d_display_mode_from_dxgi(&wined3d_mode, mode);
-    hr = wined3d_find_closest_matching_adapter_mode(wined3d, adapter->ordinal, &wined3d_mode);
-    wined3d_mutex_unlock();
-
+    hr = dxgi_output_find_closest_matching_mode(output, &wined3d_mode, device);
     if (SUCCEEDED(hr))
     {
         dxgi_mode_from_wined3d(closest_match, &wined3d_mode);
@@ -366,10 +387,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList1(IDXGIOutput4 *i
 static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode1(IDXGIOutput4 *iface,
         const DXGI_MODE_DESC1 *mode, DXGI_MODE_DESC1 *closest_match, IUnknown *device)
 {
-    FIXME("iface %p, mode %p, closest_match %p, device %p stub!\n",
-            iface, mode, closest_match, device);
+    struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
+    struct wined3d_display_mode wined3d_mode;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, mode %s, closest_match %p, device %p.\n",
+            iface, debug_dxgi_mode1(mode), closest_match, device);
+
+    wined3d_display_mode_from_dxgi1(&wined3d_mode, mode);
+    hr = dxgi_output_find_closest_matching_mode(output, &wined3d_mode, device);
+    if (SUCCEEDED(hr))
+    {
+        dxgi_mode1_from_wined3d(closest_match, &wined3d_mode);
+        TRACE("Returning %s.\n", debug_dxgi_mode1(closest_match));
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplaySurfaceData1(IDXGIOutput4 *iface,
