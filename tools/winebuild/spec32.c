@@ -138,6 +138,21 @@ static void get_arg_string( ORDDEF *odp, char str[MAX_ARGUMENTS + 1] )
         strcpy( str + i, "I" );
 }
 
+static void output_data_directories( const char *names[16] )
+{
+    int i;
+
+    for (i = 0; i < 16; i++)
+    {
+        if (names[i])
+        {
+            output_rva( "%s", names[i] );
+            output( "\t.long %s_end - %s\n", names[i], names[i] );
+        }
+        else output( "\t.long 0,0\n" );
+    }
+}
+
 /*******************************************************************
  *         build_args_string
  */
@@ -546,6 +561,7 @@ void output_module( DLLSPEC *spec )
 {
     int machine = 0;
     unsigned int page_size = get_page_size();
+    const char *data_dirs[16] = { NULL };
 
     /* Reserve some space for the PE header */
 
@@ -650,43 +666,14 @@ void output_module( DLLSPEC *spec )
     output( "\t.long 0\n" );              /* LoaderFlags */
     output( "\t.long 16\n" );             /* NumberOfRvaAndSizes */
 
-    if (spec->base <= spec->limit)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
-    {
-        output_rva( ".L__wine_spec_exports" );
-        output( "\t.long .L__wine_spec_exports_end-.L__wine_spec_exports\n" );
-    }
-    else
-        output( "\t.long 0,0\n" );
+    if (spec->base <= spec->limit)
+        data_dirs[0] = ".L__wine_spec_exports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
+    if (has_imports())
+        data_dirs[1] = ".L__wine_spec_imports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
+    if (spec->nb_resources)
+        data_dirs[2] = ".L__wine_spec_resources"; /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
 
-    if (has_imports())   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
-    {
-        output_rva( ".L__wine_spec_imports" );
-        output( "\t.long .L__wine_spec_imports_end-.L__wine_spec_imports\n" );
-    }
-    else
-        output( "\t.long 0,0\n" );
-
-    if (spec->nb_resources)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
-    {
-        output_rva( ".L__wine_spec_resources" );
-        output( "\t.L__wine_spec_resources_end-.L__wine_spec_resources\n" );
-    }
-    else
-        output( "\t.long 0,0\n" );
-
-    output( "\t.long 0,0\n" );  /* DataDirectory[3] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[4] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[5] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[6] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[7] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[8] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[9] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[10] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[11] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[12] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[13] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[14] */
-    output( "\t.long 0,0\n" );  /* DataDirectory[15] */
+    output_data_directories( data_dirs );
 
     output( "\n\t%s\n", get_asm_string_section() );
     output( "%s\n", asm_globl("__wine_spec_file_name") );
