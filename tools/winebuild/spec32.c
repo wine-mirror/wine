@@ -685,7 +685,6 @@ void output_module( DLLSPEC *spec )
 
     output( "\n\t%s\n", get_asm_string_section() );
     output( "%s\n", asm_globl("__wine_spec_file_name") );
-    output( ".L__wine_spec_file_name:\n" );
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
     if (target_platform == PLATFORM_APPLE)
         output( "\t.lcomm %s,4\n", asm_name("_end") );

@@ -1187,14 +1187,14 @@ static void output_external_link_imports( DLLSPEC *spec )
 void output_stubs( DLLSPEC *spec )
 {
     const char *name, *exp_name;
-    int i, count;
+    int i;
 
     if (!has_stubs( spec )) return;
 
     output( "\n/* stub functions */\n\n" );
     output( "\t.text\n" );
 
-    for (i = count = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
@@ -1231,7 +1231,6 @@ void output_stubs( DLLSPEC *spec )
                 {
                     output( "\tleal .L%s_string-1b(%%eax),%%ecx\n", name );
                     output( "\tmovl %%ecx,4(%%esp)\n" );
-                    count++;
                 }
                 else
                     output( "\tmovl $%d,4(%%esp)\n", odp->ordinal );
@@ -1241,10 +1240,7 @@ void output_stubs( DLLSPEC *spec )
             else
             {
                 if (exp_name)
-                {
                     output( "\tmovl $.L%s_string,4(%%esp)\n", name );
-                    count++;
-                }
                 else
                     output( "\tmovl $%d,4(%%esp)\n", odp->ordinal );
                 output( "\tmovl $.L__wine_spec_file_name,(%%esp)\n" );
@@ -1256,10 +1252,7 @@ void output_stubs( DLLSPEC *spec )
             output_cfi( ".cfi_adjust_cfa_offset 8" );
             output( "\tleaq .L__wine_spec_file_name(%%rip),%%rdi\n" );
             if (exp_name)
-            {
                 output( "leaq .L%s_string(%%rip),%%rsi\n", name );
-                count++;
-            }
             else
                 output( "\tmovq $%d,%%rsi\n", odp->ordinal );
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
@@ -1269,24 +1262,19 @@ void output_stubs( DLLSPEC *spec )
             output( "\tadd r0,PC\n");
             output( "\tldr r1,2f+4\n");
             output( "1:" );
-            if (exp_name)
-            {
-                output( "\tadd r1,PC\n");
-                count++;
-            }
+            if (exp_name) output( "\tadd r1,PC\n");
             output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
             output( "2:\t.long .L__wine_spec_file_name-1b\n" );
             if (exp_name) output( "\t.long .L%s_string-2b\n", name );
             else output( "\t.long %u\n", odp->ordinal );
             break;
         case CPU_ARM64:
-            output( "\tadrp x0, %s\n", asm_name("__wine_spec_file_name") );
-            output( "\tadd x0, x0, #:lo12:%s\n", asm_name("__wine_spec_file_name") );
+            output( "\tadrp x0, .L__wine_spec_file_name\n" );
+            output( "\tadd x0, x0, #:lo12:.L__wine_spec_file_name\n" );
             if (exp_name)
             {
                 output( "\tadrp x1, .L%s_string\n", name );
                 output( "\tadd x1, x1, #:lo12:.L%s_string\n", name );
-                count++;
             }
             else
                 output( "\tmov x1, %u\n", odp->ordinal );
@@ -1301,20 +1289,19 @@ void output_stubs( DLLSPEC *spec )
         output_function_size( name );
     }
 
-    if (count)
+    output( "\t%s\n", get_asm_string_section() );
+    output( ".L__wine_spec_file_name:\n" );
+    output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
+    for (i = 0; i < spec->nb_entry_points; i++)
     {
-        output( "\t%s\n", get_asm_string_section() );
-        for (i = 0; i < spec->nb_entry_points; i++)
+        ORDDEF *odp = &spec->entry_points[i];
+        if (odp->type != TYPE_STUB) continue;
+        exp_name = odp->name ? odp->name : odp->export_name;
+        if (exp_name)
         {
-            ORDDEF *odp = &spec->entry_points[i];
-            if (odp->type != TYPE_STUB) continue;
-            exp_name = odp->name ? odp->name : odp->export_name;
-            if (exp_name)
-            {
-                name = get_stub_name( odp, spec );
-                output( ".L%s_string:\n", name );
-                output( "\t%s \"%s\"\n", get_asm_string_keyword(), exp_name );
-            }
+            name = get_stub_name( odp, spec );
+            output( ".L%s_string:\n", name );
+            output( "\t%s \"%s\"\n", get_asm_string_keyword(), exp_name );
         }
     }
 }
