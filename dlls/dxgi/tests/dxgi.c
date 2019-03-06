@@ -1963,20 +1963,23 @@ static void test_get_containing_output(void)
         {
             ret = SetWindowPos(swapchain_desc.OutputWindow, 0, points[i].x, points[i].y,
                     0, 0, SWP_NOSIZE | SWP_NOZORDER);
-            ok(ret, "SetWindowPos failed.\n");
+            ok(ret, "Faled to set window position.\n");
 
             monitor = MonitorFromWindow(swapchain_desc.OutputWindow, MONITOR_DEFAULTTONEAREST);
-            ok(!!monitor, "MonitorFromWindow failed.\n");
+            ok(!!monitor, "Failed to get monitor from window.\n");
 
             monitor_info.cbSize = sizeof(monitor_info);
             ret = GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info);
             ok(ret, "Failed to get monitor info.\n");
 
             hr = IDXGISwapChain_GetContainingOutput(swapchain, &output);
-            ok(SUCCEEDED(hr), "GetContainingOutput failed, hr %#x.\n", hr);
+            ok(hr == S_OK || broken(hr == DXGI_ERROR_UNSUPPORTED),
+                    "Failed to get containing output, hr %#x.\n", hr);
+            if (hr == DXGI_ERROR_UNSUPPORTED)
+                continue;
             ok(!!output, "Got unexpected containing output %p.\n", output);
             hr = IDXGIOutput_GetDesc(output, &output_desc);
-            ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+            ok(hr == S_OK, "Failed to get output desc, hr %#x.\n", hr);
             refcount = IDXGIOutput_Release(output);
             ok(!refcount, "IDXGIOutput has %u references left.\n", refcount);
 
