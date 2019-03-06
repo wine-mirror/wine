@@ -57,6 +57,13 @@ typedef struct _MFCLOCK_PROPERTIES
     DWORD            dwClockJitter;
 } MFCLOCK_PROPERTIES;
 
+typedef enum _MFCLOCK_CHARACTERISTICS_FLAGS
+{
+    MFCLOCK_CHARACTERISTICS_FLAG_FREQUENCY_10MHZ = 0x00000002,
+    MFCLOCK_CHARACTERISTICS_FLAG_ALWAYS_RUNNING  = 0x00000004,
+    MFCLOCK_CHARACTERISTICS_FLAG_IS_SYSTEM_CLOCK = 0x00000008,
+} MFCLOCK_CHARACTERISTICS_FLAGS;
+
 [
     object,
     uuid(2eb1e945-18b8-4139-9b1a-d5d584818530),
@@ -357,6 +364,7 @@ cpp_quote("HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequenc
 cpp_quote("HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver);")
 cpp_quote("HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD cMediaTypes,")
 cpp_quote("     IMFMediaType **types, IMFStreamDescriptor **descriptor);")
+cpp_quote("HRESULT WINAPI MFCreateSystemTimeSource(IMFPresentationTimeSource **time_source);")
 cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")
 cpp_quote("HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode **node);")
 cpp_quote("HRESULT WINAPI MFCreateTopoLoader(IMFTopoLoader **loader);")

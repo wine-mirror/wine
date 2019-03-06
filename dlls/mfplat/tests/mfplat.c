@@ -1598,6 +1598,39 @@ static void test_presentation_descriptor(void)
     IMFMediaType_Release(media_type);
 }
 
+static void test_system_time_source(void)
+{
+    IMFPresentationTimeSource *time_source;
+    IMFClockStateSink *statesink;
+    MFCLOCK_STATE state;
+    DWORD value;
+    HRESULT hr;
+
+    hr = MFCreateSystemTimeSource(&time_source);
+    ok(hr == S_OK, "Failed to create time source, hr %#x.\n", hr);
+
+    hr = IMFPresentationTimeSource_GetClockCharacteristics(time_source, &value);
+    ok(hr == S_OK, "Failed to get flags, hr %#x.\n", hr);
+    ok(value == (MFCLOCK_CHARACTERISTICS_FLAG_FREQUENCY_10MHZ | MFCLOCK_CHARACTERISTICS_FLAG_IS_SYSTEM_CLOCK),
+            "Unexpected flags %#x.\n", value);
+
+    value = 1;
+    hr = IMFPresentationTimeSource_GetContinuityKey(time_source, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 0, "Unexpected value %u.\n", value);
+
+    hr = IMFPresentationTimeSource_GetState(time_source, 0, &state);
+todo_wine {
+    ok(hr == S_OK, "Failed to get state, hr %#x.\n", hr);
+    ok(state == MFCLOCK_STATE_INVALID, "Unexpected state %d.\n", state);
+}
+    hr = IMFPresentationTimeSource_QueryInterface(time_source, &IID_IMFClockStateSink, (void **)&statesink);
+    ok(hr == S_OK, "Failed to get state sink, hr %#x.\n", hr);
+    IMFClockStateSink_Release(statesink);
+
+    IMFPresentationTimeSource_Release(time_source);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -1624,6 +1657,7 @@ START_TEST(mfplat)
     test_periodic_callback();
     test_event_queue();
     test_presentation_descriptor();
+    test_system_time_source();
 
     CoUninitialize();
 }
