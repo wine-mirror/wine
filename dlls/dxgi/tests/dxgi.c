@@ -608,6 +608,26 @@ static void wait_queue_idle_(unsigned int line, ID3D12Device *device, ID3D12Comm
     ID3D12Fence_Release(fence);
 }
 
+#define wait_device_idle(a) wait_device_idle_(__LINE__, a)
+static void wait_device_idle_(unsigned int line, IUnknown *device)
+{
+    ID3D12Device *d3d12_device;
+    ID3D12CommandQueue *queue;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(device, &IID_ID3D12CommandQueue, (void **)&queue);
+    if (hr != S_OK)
+        return;
+
+    hr = ID3D12CommandQueue_GetDevice(queue, &IID_ID3D12Device, (void **)&d3d12_device);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get d3d12 device, hr %#x.\n", hr);
+
+    wait_queue_idle_(line, d3d12_device, queue);
+
+    ID3D12CommandQueue_Release(queue);
+    ID3D12Device_Release(d3d12_device);
+}
+
 #define get_factory(a, b, c) get_factory_(__LINE__, a, b, c)
 static void get_factory_(unsigned int line, IUnknown *device, BOOL is_d3d12, IDXGIFactory **factory)
 {
@@ -3952,6 +3972,8 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
     hr = IDXGISwapChain_Present(swapchain, 0, 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
+    wait_device_idle(device);
+
     IDXGISwapChain_Release(swapchain);
     DestroyWindow(swapchain_desc.OutputWindow);
     refcount = IDXGIFactory_Release(factory);
@@ -4030,6 +4052,8 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
             hr = IDXGISwapChain3_Present(swapchain3, 0, 0);
             ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         }
+
+        wait_device_idle(device);
 
         IDXGISwapChain3_Release(swapchain3);
         refcount = IDXGISwapChain_Release(swapchain);
