@@ -6185,6 +6185,17 @@ BOOL WINAPI SaferGetPolicyInformation(DWORD scope, SAFER_POLICY_INFO_CLASS class
 }
 
 /******************************************************************************
+ * SaferIdentifyLevel   [ADVAPI32.@]
+ */
+BOOL WINAPI SaferIdentifyLevel(DWORD count, SAFER_CODE_PROPERTIES *properties, SAFER_LEVEL_HANDLE *handle,
+                               void *reserved)
+{
+    FIXME("(%u %p %p %p) stub\n", count, properties, handle, reserved);
+    *handle = (SAFER_LEVEL_HANDLE)0xdeadbeef;
+    return TRUE;
+}
+
+/******************************************************************************
  * SaferSetLevelInformation   [ADVAPI32.@]
  */
 BOOL WINAPI SaferSetLevelInformation(SAFER_LEVEL_HANDLE handle, SAFER_OBJECT_INFO_CLASS infotype,

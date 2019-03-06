@@ -717,7 +717,7 @@
 @ stdcall SaferCreateLevel(long long long ptr ptr)
 # @ stub SaferGetLevelInformation
 @ stdcall SaferGetPolicyInformation(long long long ptr ptr ptr)
-# @ stub SaferIdentifyLevel
+@ stdcall SaferIdentifyLevel(long ptr ptr ptr)
 # @ stub SaferRecordEventLogEntry
 @ stdcall SaferSetLevelInformation(ptr long ptr long)
 # @ stub SaferSetPolicyInformation
