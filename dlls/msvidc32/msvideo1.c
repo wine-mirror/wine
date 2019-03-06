@@ -70,6 +70,11 @@ typedef struct Msvideo1Context {
     int depth;
 } Msvideo1Context;
 
+static inline int get_stride(int width, int depth)
+{
+    return ((depth * width + 31) >> 3) & ~3;
+}
+
 static void 
 msvideo1_decode_8bit( int width, int height, const unsigned char *buf, int buf_size,
                       unsigned char *pixels, int stride)
@@ -362,12 +367,17 @@ CRAM_DecompressGetFormat( Msvideo1Context *info, LPBITMAPINFO in, LPBITMAPINFO o
     if (in->bmiHeader.biBitCount <= 8)
         size += in->bmiHeader.biClrUsed * sizeof(RGBQUAD);
 
+    if (in->bmiHeader.biBitCount != 8 && in->bmiHeader.biBitCount != 16)
+        return ICERR_BADFORMAT;
+
     if( out )
     {
         memcpy( out, in, size );
+        out->bmiHeader.biWidth = in->bmiHeader.biWidth & ~1;
+        out->bmiHeader.biHeight = in->bmiHeader.biHeight & ~1;
         out->bmiHeader.biCompression = BI_RGB;
-        out->bmiHeader.biSizeImage = in->bmiHeader.biHeight
-                                   * in->bmiHeader.biWidth *4;
+        out->bmiHeader.biSizeImage = in->bmiHeader.biHeight *
+                                     get_stride(out->bmiHeader.biWidth, out->bmiHeader.biBitCount);
         return ICERR_OK;
     }
 
@@ -398,6 +408,8 @@ static LRESULT CRAM_DecompressBegin( Msvideo1Context *info, LPBITMAPINFO in, LPB
 static void convert_depth(char *input, int depth_in, char *output, BITMAPINFOHEADER *out_hdr)
 {
     int x, y;
+    int stride_in  = get_stride(out_hdr->biWidth, depth_in);
+    int stride_out = get_stride(out_hdr->biWidth, out_hdr->biBitCount);
 
     if (depth_in == 16 && out_hdr->biBitCount == 24)
     {
@@ -409,15 +421,17 @@ static void convert_depth(char *input, int depth_in, char *output, BITMAPINFOHEA
             0xc5, 0xce, 0xd6, 0xde, 0xe6, 0xef, 0xf7, 0xff,
         };
 
-        WORD *src = (WORD *)input;
         for (y = 0; y < out_hdr->biHeight; y++)
         {
+            WORD *src_row = (WORD *)(input + y * stride_in);
+            char *out_row = output + y * stride_out;
+
             for (x = 0; x < out_hdr->biWidth; x++)
             {
-                WORD pixel = *src++;
-                *output++ = convert_5to8[(pixel & 0x7c00u) >> 10];
-                *output++ = convert_5to8[(pixel & 0x03e0u) >> 5];
-                *output++ = convert_5to8[(pixel & 0x001fu)];
+                WORD pixel = *src_row++;
+                *out_row++ = convert_5to8[(pixel & 0x7c00u) >> 10];
+                *out_row++ = convert_5to8[(pixel & 0x03e0u) >> 5];
+                *out_row++ = convert_5to8[(pixel & 0x001fu)];
             }
         }
     }
@@ -439,7 +453,6 @@ static LRESULT CRAM_Decompress( Msvideo1Context *info, ICDECOMPRESS *icd, DWORD 
 
     width  = icd->lpbiInput->biWidth;
     height = icd->lpbiInput->biHeight;
-    stride = width; /* in bytes or 16bit words */
     sz = icd->lpbiInput->biSizeImage;
 
     output = icd->lpOutput;
@@ -452,11 +465,13 @@ static LRESULT CRAM_Decompress( Msvideo1Context *info, ICDECOMPRESS *icd, DWORD 
 
     if (info->depth == 8)
     {
+        stride = get_stride(width, 8);
         msvideo1_decode_8bit( width, height, icd->lpInput, sz,
                               output, stride );
     }
     else
     {
+        stride = get_stride(width, 16) / 2;
         msvideo1_decode_16bit( width, height, icd->lpInput, sz,
                                output, stride );
     }
@@ -484,7 +499,6 @@ static LRESULT CRAM_DecompressEx( Msvideo1Context *info, ICDECOMPRESSEX *icd, DW
 
     width  = icd->lpbiSrc->biWidth;
     height = icd->lpbiSrc->biHeight;
-    stride = width;
     sz = icd->lpbiSrc->biSizeImage;
 
     output = icd->lpDst;
@@ -497,11 +511,13 @@ static LRESULT CRAM_DecompressEx( Msvideo1Context *info, ICDECOMPRESSEX *icd, DW
 
     if (info->depth == 8)
     {
+        stride = get_stride(width, 8);
         msvideo1_decode_8bit( width, height, icd->lpSrc, sz, 
                               output, stride );
     }
     else
     {
+        stride = get_stride(width, 16) / 2;
         msvideo1_decode_16bit( width, height, icd->lpSrc, sz,
                                output, stride );
     }
