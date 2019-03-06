@@ -2138,7 +2138,14 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface
     vr = d3d12_swapchain_acquire_next_image(swapchain);
     if (vr == VK_ERROR_OUT_OF_DATE_KHR)
     {
+        if (!d3d12_swapchain_have_user_images(swapchain))
+        {
+            FIXME("Cannot recreate swapchain without user images.\n");
+            return DXGI_STATUS_MODE_CHANGED;
+        }
+
         TRACE("Recreating Vulkan swapchain.\n");
+
         d3d12_swapchain_destroy_buffers(swapchain, FALSE);
         return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
     }
