@@ -15396,6 +15396,280 @@ done:
     DestroyWindow(window);
 }
 
+static void test_fetch4(void)
+{
+    static const DWORD vs_code[] =
+    {
+        0xfffe0300,                                                             /* vs_3_0                 */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0        */
+        0x0200001f, 0x80000005, 0x900f0001,                                     /* dcl_texcoord v1        */
+        0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0        */
+        0x0200001f, 0x80000005, 0xe00f0001,                                     /* dcl_texcoord o1        */
+        0x02000001, 0xe00f0000, 0x90e40000,                                     /* mov o0, v0             */
+        0x02000001, 0xe00f0001, 0x90e40001,                                     /* mov o1, v1             */
+        0x0000ffff,
+    };
+    static const DWORD ps_code_texld[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x0200001f, 0x80000005, 0x900f0000,                                     /* dcl_texcoord v0            */
+        0x0200001f, 0x90000000, 0xa00f0800,                                     /* dcl_2d s0                  */
+        0x03000042, 0x800f0000, 0x90e40000, 0xa0e40800,                         /* texld r0, v0, s0           */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+        0x0000ffff,                                                             /* end                        */
+    };
+    /* AMD and Wine use the projection on Fetch4, Intel UHD ignores it. */
+    static const DWORD ps_code_texldp[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x0200001f, 0x80000005, 0x900f0000,                                     /* dcl_texcoord v0            */
+        0x0200001f, 0x90000000, 0xa00f0800,                                     /* dcl_2d s0                  */
+        /* The idea here is that if we project from .z, we get a 4x zoom. From
+         * .w a 2x zoom. */
+        0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x40800000, 0x40000000, /* def c0, 0.0, 0.0, 4.0, 2.0 */
+        0x02000001, 0x80030000, 0x90f40000,                                     /* mov r0.xy, v0.xyww         */
+        0x02000001, 0x800c0000, 0xa0e00000,                                     /* mov r0.zw, c0.xxzw         */
+        0x03010042, 0x800f0000, 0x80e40000, 0xa0e40800,                         /* texldp r0, r0, s0          */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+        0x0000ffff,                                                             /* end                        */
+    };
+    static const DWORD ps_code_swizzle[] =
+    {
+        /* Test texld when sampling with a .yzwx swizzle. */
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x0200001f, 0x80000005, 0x900f0000,                                     /* dcl_texcoord v0            */
+        0x0200001f, 0x90000000, 0xa00f0800,                                     /* dcl_2d s0                  */
+        0x03000042, 0x800f0000, 0x90e40000, 0xa0390800,                         /* texld r0, v0, s0.yzwx      */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+        0x0000ffff,                                                             /* end                        */
+    };
+
+    static const struct
+    {
+        struct vec3 position;
+        struct vec4 texcoord;
+    }
+    quad[] =
+    {
+        {{-1.0f,  1.0f, 1.0f}, {0.0f, 0.0f, 4.0f, 2.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f, 4.0f, 2.0f}},
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 4.0f, 2.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 4.0f, 2.0f}},
+    };
+
+    static const struct
+    {
+        unsigned int x[4], y[4];
+        D3DCOLOR colour_amd[16];
+        D3DCOLOR colour_intel[16];
+        D3DCOLOR colour_fetch4_off[16];
+    }
+    expected_colours =
+    {
+        /* Sample positions. */
+        {40, 200, 360, 520},
+        {30, 150, 270, 390},
+        /* AMD implementation (-0.5 texel offsets). */
+        {0x131202f2, 0x1211f2f1, 0x1110f101, 0x10100101,
+         0x02f204f4, 0xf2f1f4f3, 0xf101f303, 0x01010303,
+         0x04f42322, 0xf4f32221, 0xf3032120, 0x03032020,
+         0x23222322, 0x22212221, 0x21202120, 0x20202020},
+        /* Intel UHD 620 implementation (no texel offsets).
+         * We treat the Intel results as broken. */
+        {0x13131313, 0x12131312, 0x11121211, 0x10111110,
+         0x13021302, 0x120213f2, 0x11f212f1, 0x10f11101,
+         0x02040204, 0xf20402f4, 0xf1f4f2f3, 0x01f3f103,
+         0x04230423, 0xf4230422, 0xf322f421, 0x0321f320},
+        /* Fetch4 off on 2D textures. */
+        {0x13131313, 0x12121212, 0x11111111, 0x10101010,
+         0x02020202, 0xf2f2f2f2, 0xf1f1f1f1, 0x01010101,
+         0x04040404, 0xf4f4f4f4, 0xf3f3f3f3, 0x03030303,
+         0x23232323, 0x22222222, 0x21212121, 0x20202020},
+    };
+
+    static const DWORD fetch4_data[] = {0x10111213, 0x01f1f202, 0x03f3f404, 0x20212223};
+
+    static const struct
+    {
+        const char *name;
+        const DWORD *ps_code;
+        unsigned int projection;
+        BOOL swizzled;
+        DWORD ttff_flags;
+    }
+    shaders[] =
+    {
+        {"FFP",        NULL,            0, FALSE, 0},
+        {"texld",      ps_code_texld,   0, FALSE, 0},
+        {"texldp",     ps_code_texldp,  2, FALSE, 0},
+        {"texld_yzwx", ps_code_swizzle, 0, TRUE , 0},
+        {"FFP_proj",   NULL,            2, FALSE, D3DTTFF_PROJECTED},
+        {"FFP_proj3",  NULL,            4, FALSE, D3DTTFF_COUNT3 | D3DTTFF_PROJECTED},
+    };
+
+    D3DCOLOR colour, colour_amd, colour_intel, colour_off;
+    IDirect3DPixelShader9 *ps[ARRAY_SIZE(shaders)];
+    IDirect3DSurface9 *original_rt;
+    struct surface_readback rb;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DTexture9 *texture;
+    IDirect3DDevice9 *device;
+    unsigned int i, j, x, y;
+    D3DLOCKED_RECT lr;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, MAKEFOURCC('D','F','2','4'))))
+    {
+        skip("No DF24 support, skipping Fetch4 test.\n");
+        goto done;
+    }
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(3, 0))
+    {
+        skip("No pixel shader 3.0 support, skipping FETCH4 test.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_L8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(fetch4_data); ++i)
+        memcpy((BYTE *)lr.pBits + i * lr.Pitch, &fetch4_data[i], sizeof(fetch4_data[i]));
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_code, &vs);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(shaders); ++i)
+    {
+        if (!shaders[i].ps_code)
+        {
+            ps[i] = NULL;
+            continue;
+        }
+
+        hr = IDirect3DDevice9_CreatePixelShader(device, shaders[i].ps_code, &ps[i]);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE4(0));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_ALWAYS);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* According to the documentation, Fetch4 is enabled when
+     * D3DSAMP_MIPMAPLODBIAS == GET4 and D3DSAMP_MAGFILTER == D3DTEXF_POINT.
+     * In practice, it seems that only GET4 is required.
+     *
+     * AMD r500 hardware always uses POINT filtering with Fetch4. The driver
+     * later on corrected this by adding a -0.5 texel offset. */
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPMAPLODBIAS, MAKEFOURCC('G','E','T','4'));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    /* Fetch4 should work with any texture wrapping mode, and does in Wine.
+     * However, AMD RX 580 devices force clamping when fetch4 is on.
+     * No other driver/hardware does this, but to avoid problems, we test with
+     * CLAMP on. */
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSW, D3DTADDRESS_CLAMP);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Test basic Fetch4 sampling. */
+    for (i = 0; i < ARRAY_SIZE(shaders); ++i)
+    {
+        hr = IDirect3DDevice9_SetVertexShader(device, ps[i] ? vs : NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShader(device, ps[i]);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, shaders[i].ttff_flags);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        get_rt_readback(original_rt, &rb);
+        for (j = 0; j < ARRAY_SIZE(expected_colours.colour_amd); ++j)
+        {
+            unsigned int projection = shaders[i].projection;
+
+            x = expected_colours.x[j % 4];
+            y = expected_colours.y[j / 4];
+            colour_amd = expected_colours.colour_amd[j];
+            if (projection)
+                colour_amd = expected_colours.colour_amd[j / 4 / projection * 4 + (j % 4) / projection];
+            if (shaders[i].swizzled)
+                colour_amd = (colour_amd << 8) | (colour_amd >> 24);
+            colour_intel = expected_colours.colour_intel[j];
+            colour_off = expected_colours.colour_fetch4_off[j];
+            colour = get_readback_color(&rb, x, y);
+
+            ok(color_match(colour, colour_amd, 1) || broken(color_match(colour, colour_intel, 1))
+                    || broken(color_match(colour, colour_off, 1)),
+                    "Test %s: Got unexpected colour 0x%08x at (%u, %u).\n",
+                    shaders[i].name, colour, x, y);
+        }
+        release_surface_readback(&rb);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    IDirect3DTexture9_Release(texture);
+    for (i = 0; i < ARRAY_SIZE(ps); ++i)
+    {
+        if (ps[i])
+            IDirect3DPixelShader9_Release(ps[i]);
+    }
+    IDirect3DVertexShader9_Release(vs);
+    IDirect3DSurface9_Release(original_rt);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 static void shadow_test(void)
 {
     static const DWORD ps_code[] =
@@ -24895,6 +25169,7 @@ START_TEST(visual)
     depth_buffer2_test();
     depth_blit_test();
     intz_test();
+    test_fetch4();
     shadow_test();
     fp_special_test();
     depth_bounds_test();
