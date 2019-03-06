@@ -419,7 +419,7 @@ void output_exports( DLLSPEC *spec )
             }
             else
             {
-                output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(odp->link_name) );
+                output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( odp )));
             }
             break;
         case TYPE_STUB:
@@ -977,15 +977,9 @@ void output_def_file( DLLSPEC *spec, int include_private )
             int at_param = get_args_size( odp );
             if (!kill_at && target_cpu == CPU_x86) output( "@%d", at_param );
             if  (odp->flags & FLAG_FORWARD)
-            {
                 output( "=%s", odp->link_name );
-            }
             else if (strcmp(name, odp->link_name)) /* try to reduce output */
-            {
-                output( "=%s", odp->link_name );
-                if (!kill_at && target_cpu == CPU_x86 && !(odp->flags & FLAG_THISCALL))
-                    output( "@%d", at_param );
-            }
+                output( "=%s", get_link_name( odp ));
             break;
         }
         default:

@@ -268,6 +268,7 @@ extern DLLSPEC *alloc_dll_spec(void);
 extern void free_dll_spec( DLLSPEC *spec );
 extern char *make_c_identifier( const char *str );
 extern const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec );
+extern const char *get_link_name( const ORDDEF *odp );
 extern int get_cpu_from_name( const char *name );
 extern unsigned int get_alignment(unsigned int align);
 extern unsigned int get_page_size(void);

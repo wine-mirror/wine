@@ -894,6 +894,21 @@ const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec )
     return buffer;
 }
 
+/* return the stdcall-decorated name for an entry point */
+const char *get_link_name( const ORDDEF *odp )
+{
+    static char *buffer;
+
+    if (!kill_at && target_platform == PLATFORM_WINDOWS && target_cpu == CPU_x86 &&
+        odp->type == TYPE_STDCALL && !(odp->flags & FLAG_THISCALL))
+    {
+        free( buffer );
+        buffer = strmake( "%s@%u", odp->link_name, get_args_size( odp ));
+        return buffer;
+    }
+    return odp->link_name;
+}
+
 /* parse a cpu name and return the corresponding value */
 int get_cpu_from_name( const char *name )
 {
