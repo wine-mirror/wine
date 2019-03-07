@@ -228,6 +228,70 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 }
 
 
+#ifdef __APPLE__
+
+/***********************************************************************
+ *           reserve_area
+ *
+ * Reserve as much memory as possible in the given area.
+ */
+static inline void reserve_area( void *addr, void *end )
+{
+#ifdef __i386__
+    static const mach_vm_address_t max_address = VM_MAX_ADDRESS;
+#else
+    static const mach_vm_address_t max_address = MACH_VM_MAX_ADDRESS;
+#endif
+    mach_vm_address_t address = (mach_vm_address_t)addr;
+    mach_vm_address_t end_address = (mach_vm_address_t)end;
+
+    if (!end_address || max_address < end_address)
+        end_address = max_address;
+
+    while (address < end_address)
+    {
+        mach_vm_address_t hole_address = address;
+        kern_return_t ret;
+        mach_vm_size_t size;
+        vm_region_basic_info_data_64_t info;
+        mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
+        mach_port_t dummy_object_name = MACH_PORT_NULL;
+
+        /* find the mapped region at or above the current address. */
+        ret = mach_vm_region(mach_task_self(), &address, &size, VM_REGION_BASIC_INFO_64,
+                             (vm_region_info_t)&info, &count, &dummy_object_name);
+        if (ret != KERN_SUCCESS)
+        {
+            address = max_address;
+            size = 0;
+        }
+
+        if (end_address < address)
+            address = end_address;
+        if (hole_address < address)
+        {
+            /* found a hole, attempt to reserve it. */
+            size_t hole_size = address - hole_address;
+            mach_vm_address_t alloc_address = hole_address;
+
+            ret = mach_vm_map( mach_task_self(), &alloc_address, hole_size, 0, VM_FLAGS_FIXED,
+                               MEMORY_OBJECT_NULL, 0, 0, PROT_NONE, VM_PROT_ALL, VM_INHERIT_COPY );
+            if (!ret)
+                wine_mmap_add_reserved_area( (void*)hole_address, hole_size );
+            else if (ret == KERN_NO_SPACE)
+            {
+                /* something filled (part of) the hole before we could.
+                   go back and look again. */
+                address = hole_address;
+                continue;
+            }
+        }
+        address += size;
+    }
+}
+
+#else
+
 /***********************************************************************
  *		mmap_reserve
  *
@@ -297,6 +361,7 @@ static inline void reserve_area( void *addr, void *end )
 #endif
 }
 
+#endif /* __APPLE__ */
 
 #ifdef __i386__
 /***********************************************************************
