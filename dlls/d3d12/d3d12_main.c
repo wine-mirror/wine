@@ -45,6 +45,15 @@ HRESULT WINAPI D3D12GetDebugInterface(REFIID iid, void **debug)
     return DXGI_ERROR_SDK_COMPONENT_MISSING;
 }
 
+HRESULT WINAPI D3D12EnableExperimentalFeatures(UINT feature_count,
+        const IID *iids, void *configurations, UINT *configurations_sizes)
+{
+    FIXME("feature_count %u, iids %p, configurations %p, configurations_sizes %p stub!\n",
+            feature_count, iids, configurations, configurations_sizes);
+
+    return E_NOINTERFACE;
+}
+
 static HRESULT d3d12_signal_event(HANDLE event)
 {
     return SetEvent(event) ? S_OK : E_FAIL;

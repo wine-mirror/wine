@@ -2180,3 +2180,6 @@ typedef HRESULT (__stdcall *PFN_D3D12_CREATE_DEVICE)(IUnknown *adapter,
 typedef HRESULT (__stdcall *PFN_D3D12_GET_DEBUG_INTERFACE)(REFIID iid, void **debug);
 
 [local] HRESULT __stdcall D3D12GetDebugInterface(REFIID iid, void **debug);
+
+[local] HRESULT __stdcall D3D12EnableExperimentalFeatures(UINT feature_count,
+        const IID *iids, void *configurations, UINT *configurations_sizes);
