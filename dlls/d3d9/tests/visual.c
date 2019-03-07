@@ -1383,7 +1383,7 @@ static void test_clear_different_size_surfaces(void)
     ok(hr == D3D_OK, "Failed to create render target surface, hr %#x.\n", hr);
 
     if (SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            D3DFMT_A8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, D3DFMT_D16_LOCKABLE)))
+            D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, D3DFMT_D16_LOCKABLE)))
     {
         ds_format = D3DFMT_D16_LOCKABLE;
     }
