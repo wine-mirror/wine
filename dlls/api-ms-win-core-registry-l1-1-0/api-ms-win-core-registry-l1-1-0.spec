@@ -17,8 +17,8 @@
 @ stdcall RegGetKeySecurity(long long ptr ptr) advapi32.RegGetKeySecurity
 @ stdcall RegGetValueA(long str str long ptr ptr ptr) advapi32.RegGetValueA
 @ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr) advapi32.RegGetValueW
-@ stub RegLoadAppKeyA
-@ stub RegLoadAppKeyW
+@ stdcall RegLoadAppKeyA(str ptr long long long) advapi32.RegLoadAppKeyA
+@ stdcall RegLoadAppKeyW(wstr ptr long long long) advapi32.RegLoadAppKeyW
 @ stdcall RegLoadKeyA(long str str) advapi32.RegLoadKeyA
 @ stdcall RegLoadKeyW(long wstr wstr) advapi32.RegLoadKeyW
 @ stdcall RegLoadMUIStringA(long str str long ptr long str) advapi32.RegLoadMUIStringA

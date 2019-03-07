@@ -3514,3 +3514,33 @@ LONG WINAPI RegDisableReflectionKey(HKEY base)
     FIXME("%p: stub\n", base);
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ * RegLoadAppKeyA [ADVAPI32.@]
+ *
+ */
+LSTATUS WINAPI RegLoadAppKeyA(const char *file, HKEY *result, REGSAM sam, DWORD options, DWORD reserved)
+{
+    FIXME("%s %p %u %u %u: stub\n", wine_dbgstr_a(file), result, sam, options, reserved);
+
+    if (!file || reserved)
+        return ERROR_INVALID_PARAMETER;
+
+    *result = (HKEY)0xdeadbeef;
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ * RegLoadAppKeyW [ADVAPI32.@]
+ *
+ */
+LSTATUS WINAPI RegLoadAppKeyW(const WCHAR *file, HKEY *result, REGSAM sam, DWORD options, DWORD reserved)
+{
+    FIXME("%s %p %u %u %u: stub\n", wine_dbgstr_w(file), result, sam, options, reserved);
+
+    if (!file || reserved)
+        return ERROR_INVALID_PARAMETER;
+
+    *result = (HKEY)0xdeadbeef;
+    return ERROR_SUCCESS;
+}

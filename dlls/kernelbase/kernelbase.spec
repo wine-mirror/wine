@@ -1288,8 +1288,8 @@
 # @ stub RegKrnResetAppKeyLoaded
 # @ stub RegKrnSetDllHasThreadStateGlobal
 # @ stub RegKrnSetTermsrvRegistryExtensionFlags
-# @ stub RegLoadAppKeyA
-# @ stub RegLoadAppKeyW
+@ stdcall RegLoadAppKeyA(str ptr long long long) advapi32.RegLoadAppKeyA
+@ stdcall RegLoadAppKeyW(wstr ptr long long long) advapi32.RegLoadAppKeyW
 @ stdcall -private RegLoadKeyA(long str str) kernel32.RegLoadKeyA
 @ stdcall -private RegLoadKeyW(long wstr wstr) kernel32.RegLoadKeyW
 @ stdcall -private RegLoadMUIStringA(long str str long ptr long str) kernel32.RegLoadMUIStringA

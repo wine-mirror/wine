@@ -648,8 +648,8 @@
 @ stdcall RegGetKeySecurity(long long ptr ptr)
 @ stdcall RegGetValueA(long str str long ptr ptr ptr)
 @ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr)
-# @ stub RegLoadAppKeyA
-# @ stub RegLoadAppKeyW
+@ stdcall RegLoadAppKeyA(str ptr long long long)
+@ stdcall RegLoadAppKeyW(wstr ptr long long long)
 @ stdcall RegLoadKeyA(long str str)
 @ stdcall RegLoadKeyW(long wstr wstr)
 @ stdcall RegLoadMUIStringA(long str str long ptr long str)
