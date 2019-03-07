@@ -1,0 +1,13 @@
+@ stub AmsiCloseSession
+@ stub AmsiInitialize
+@ stub AmsiOpenSession
+@ stub AmsiScanBuffer
+@ stub AmsiScanString
+@ stub AmsiUacInitialize
+@ stub AmsiUacScan
+@ stub AmsiUacUninitialize
+@ stub AmsiUninitialize
+@ stub DllCanUnloadNow
+@ stub DllGetClassObject
+@ stub DllRegisterServer
+@ stub DllUnregisterServer
