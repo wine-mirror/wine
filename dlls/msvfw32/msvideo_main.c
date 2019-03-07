@@ -41,6 +41,7 @@
 #include "msvideo_private.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/list.h"
 
 /* Drivers32 settings */
 #define HKLM_DRIVERS32 "Software\\Microsoft\\Windows NT\\CurrentVersion\\Drivers32"
@@ -108,10 +109,10 @@ struct _reg_driver
     DWORD       fccHandler;
     DRIVERPROC  proc;
     LPWSTR      name;
-    reg_driver* next;
+    struct list entry;
 };
 
-static reg_driver* reg_driver_list = NULL;
+static struct list reg_driver_list = LIST_INIT(reg_driver_list);
 
 HMODULE MSVFW32_hModule;
 
@@ -358,13 +359,14 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
     TRACE("(%s,%s,%p,%p,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), (void*)lParam, szDesc, wFlags);
 
     /* Check if a driver is already registered */
-    for (driver = reg_driver_list; driver; driver = driver->next)
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
     {
         if (!compare_fourcc(fccType, driver->fccType) &&
             !compare_fourcc(fccHandler, driver->fccHandler))
-            break;
+        {
+            return FALSE;
+        }
     }
-    if (driver) return FALSE;
 
     /* Register the driver */
     if (!(driver = heap_alloc_zero(sizeof(*driver))))
@@ -392,9 +394,7 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
         return FALSE;
     }
 
-   /* Insert our driver in the list*/
-   driver->next = reg_driver_list;
-   reg_driver_list = driver;
+    list_add_tail(&reg_driver_list, &driver->entry);
 
     return TRUE;
 }
@@ -404,28 +404,23 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
  */
 BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags) 
 {
-    reg_driver** pdriver;
-    reg_driver*  drv;
+    reg_driver *driver;
 
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wFlags);
 
-    /* Check if a driver is already registered */
-    for (pdriver = &reg_driver_list; *pdriver; pdriver = &(*pdriver)->next)
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
     {
-        if (!compare_fourcc(fccType, (*pdriver)->fccType) &&
-            !compare_fourcc(fccHandler, (*pdriver)->fccHandler))
-            break;
+        if (!compare_fourcc(fccType, driver->fccType)
+                && !compare_fourcc(fccHandler, driver->fccHandler))
+        {
+            list_remove(&driver->entry);
+            heap_free(driver->name);
+            heap_free(driver);
+            return TRUE;
+        }
     }
-    if (!*pdriver)
-        return FALSE;
 
-    /* Remove the driver from the list */
-    drv = *pdriver;
-    *pdriver = (*pdriver)->next;
-    heap_free(drv->name);
-    heap_free(drv);
-    
-    return TRUE;  
+    return FALSE;
 }
 
 
@@ -437,10 +432,10 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
 {
     WCHAR		codecname[10];
     ICOPEN		icopen;
-    HDRVR		hdrv;
     WINE_HIC*           whic;
     static const WCHAR  drv32W[] = {'d','r','i','v','e','r','s','3','2','\0'};
     reg_driver*         driver;
+    HDRVR hdrv = NULL;
 
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode);
 
@@ -465,21 +460,21 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         }
     }
 
-    /* Check if there is a registered driver that matches */
-    driver = reg_driver_list;
-    while(driver)
-        if (!compare_fourcc(fccType, driver->fccType) &&
-            !compare_fourcc(fccHandler, driver->fccHandler)) {
-	    fccType = driver->fccType;
-	    fccHandler = driver->fccHandler;
-	    break;
-        } else
-            driver = driver->next;
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
+    {
+        if (!compare_fourcc(fccType, driver->fccType)
+                && !compare_fourcc(fccHandler, driver->fccHandler))
+        {
+            if (driver->proc)
+                return ICOpenFunction(driver->fccType, driver->fccHandler, wMode, driver->proc);
+            else
+            {
+                if (!(hdrv = OpenDriver(driver->name, NULL, (LPARAM)&icopen)))
+                    return NULL;
+            }
+        }
+    }
 
-    if (driver && driver->proc)
-        /* The driver has been registered at runtime with its driverproc */
-        return ICOpenFunction(fccType, fccHandler, wMode, driver->proc);
-  
     /* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the
      * same layout as ICOPEN
      */
@@ -493,7 +488,8 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     icopen.pV2Reserved = NULL;
     icopen.dnDevNode   = 0; /* FIXME */
 
-    if (!driver) {
+    if (!hdrv)
+    {
         /* normalize to lower case as in 'vidc' */
         ((char*)&fccType)[0] = tolower(((char*)&fccType)[0]);
         ((char*)&fccType)[1] = tolower(((char*)&fccType)[1]);
@@ -509,11 +505,6 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         hdrv = OpenDriver(codecname, drv32W, (LPARAM)&icopen);
         if (!hdrv)
             return 0;
-    } else {
-        /* The driver has been registered at runtime with its name */
-        hdrv = OpenDriver(driver->name, NULL, (LPARAM)&icopen);
-        if (!hdrv) 
-            return 0; 
     }
 
     if (!(whic = heap_alloc(sizeof(*whic))))
