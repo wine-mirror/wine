@@ -1206,23 +1206,29 @@ BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 
 /* Helpers for the GetCompositionString functions */
 
-static INT CopyCompStringIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE target, INT tlen,
-                                     BOOL unicode )
+/* Source encoding is defined by context, source length is always given in respective characters. Destination buffer
+   length is always in bytes. */
+static INT CopyCompStringIMEtoClient(const InputContextData *data, const void *src, INT src_len, void *dst,
+        INT dst_len, BOOL unicode)
 {
-    INT rc;
+    int char_size = unicode ? sizeof(WCHAR) : sizeof(char);
+    INT ret;
 
-    if (is_himc_ime_unicode(data) && !unicode)
-        rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)source, slen, (LPSTR)target, tlen, NULL, NULL);
-    else if (!is_himc_ime_unicode(data) && unicode)
-        rc = MultiByteToWideChar(CP_ACP, 0, (LPSTR)source, slen, (LPWSTR)target, tlen) * sizeof(WCHAR);
+    if (is_himc_ime_unicode(data) ^ unicode)
+    {
+        if (unicode)
+            ret = MultiByteToWideChar(CP_ACP, 0, src, src_len, dst, dst_len);
+        else
+            ret = WideCharToMultiByte(CP_ACP, 0, src, src_len, dst, dst_len, NULL, NULL);
+        ret *= char_size;
+    }
     else
     {
-        int dlen = (unicode)?sizeof(WCHAR):sizeof(CHAR);
-        memcpy( target, source, min(slen,tlen)*dlen);
-        rc = slen*dlen;
+        ret = min(src_len * char_size, dst_len);
+        memcpy(dst, src, ret);
     }
 
-    return rc;
+    return ret;
 }
 
 static INT CopyCompAttrIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE ssource, INT sslen,
