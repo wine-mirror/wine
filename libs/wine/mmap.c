@@ -165,23 +165,29 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
 #elif defined(__APPLE__)
 
 #include <mach/mach_init.h>
-#include <mach/vm_map.h>
+#include <mach/mach_vm.h>
 
 /*
- * On Darwin, we can use the Mach call vm_allocate to allocate
- * anonymous memory at the specified address, and then use mmap with
- * MAP_FIXED to replace the mapping.
+ * On Darwin, we can use the Mach call mach_vm_map to allocate
+ * anonymous memory at the specified address and then, if necessary, use
+ * mmap with MAP_FIXED to replace the mapping.
  */
 static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
                            int fildes, off_t off)
 {
-    vm_address_t result = (vm_address_t)addr;
+    mach_vm_address_t result = (mach_vm_address_t)addr;
+    int vm_flags = VM_FLAGS_FIXED;
 
-    if (!vm_allocate(mach_task_self(),&result,len,0))
+    if (flags & MAP_NOCACHE)
+        vm_flags |= VM_FLAGS_NO_CACHE;
+    if (!mach_vm_map( mach_task_self(), &result, len, 0, vm_flags, MEMORY_OBJECT_NULL,
+                      0, 0, prot, VM_PROT_ALL, VM_INHERIT_COPY ))
     {
-        if (mmap( (void *)result, len, prot, flags | MAP_FIXED, fildes, off ) != MAP_FAILED)
+        flags |= MAP_FIXED;
+        if (((flags & ~(MAP_NORESERVE | MAP_NOCACHE)) == (MAP_ANON | MAP_FIXED | MAP_PRIVATE)) ||
+            mmap( (void *)result, len, prot, flags, fildes, off ) != MAP_FAILED)
             return 1;
-        vm_deallocate(mach_task_self(),result,len);
+        mach_vm_deallocate(mach_task_self(),result,len);
     }
     return 0;
 }
