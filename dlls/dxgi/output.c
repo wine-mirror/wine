@@ -305,8 +305,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode(IDXGIOutput
     struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
-    TRACE("iface %p, mode %s, closest_match %p, device %p.\n",
-            iface, debug_dxgi_mode(mode), closest_match, device);
+    TRACE("iface %p, mode %p, closest_match %p, device %p.\n",
+            iface, mode, closest_match, device);
+
+    TRACE("Mode: %s.\n", debug_dxgi_mode(mode));
 
     wined3d_display_mode_from_dxgi(&wined3d_mode, mode);
     hr = dxgi_output_find_closest_matching_mode(output, &wined3d_mode, device);
@@ -422,8 +424,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode1(IDXGIOutpu
     struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
-    TRACE("iface %p, mode %s, closest_match %p, device %p.\n",
-            iface, debug_dxgi_mode1(mode), closest_match, device);
+    TRACE("iface %p, mode %p, closest_match %p, device %p.\n",
+            iface, mode, closest_match, device);
+
+    TRACE("Mode: %s.\n", debug_dxgi_mode1(mode));
 
     wined3d_display_mode_from_dxgi1(&wined3d_mode, mode);
     hr = dxgi_output_find_closest_matching_mode(output, &wined3d_mode, device);
