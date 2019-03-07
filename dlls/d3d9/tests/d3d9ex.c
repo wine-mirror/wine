@@ -3215,11 +3215,11 @@ static void test_wndproc(void)
 
         if (!(tests[i].create_flags & CREATE_DEVICE_NOWINDOWCHANGES))
         {
-            ok(windowpos.hwnd == device_window && !windowpos.hwndInsertAfter
+            ok(windowpos.hwnd == device_window
                     && !windowpos.x && !windowpos.y && !windowpos.cx && !windowpos.cy
                     && windowpos.flags == (SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE),
-                    "Got unexpected WINDOWPOS hwnd=%p, insertAfter=%p, x=%d, y=%d, cx=%d, cy=%d, flags=%x\n",
-                    windowpos.hwnd, windowpos.hwndInsertAfter, windowpos.x, windowpos.y, windowpos.cx,
+                    "Got unexpected WINDOWPOS hwnd=%p, x=%d, y=%d, cx=%d, cy=%d, flags=%x\n",
+                    windowpos.hwnd, windowpos.x, windowpos.y, windowpos.cx,
                     windowpos.cy, windowpos.flags);
         }
 
