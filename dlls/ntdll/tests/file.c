@@ -635,7 +635,7 @@ static void read_file_test(void)
     offset.QuadPart = 0;
     ResetEvent( event );
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, strlen(text) + 10, &offset, NULL );
-    todo_wine ok(status == STATUS_PENDING
+    ok(status == STATUS_PENDING
             || broken(status == STATUS_SUCCESS) /* before Vista */,
             "wrong status %x.\n", status);
     if (status == STATUS_PENDING) WaitForSingleObject( event, 1000 );
@@ -4450,7 +4450,7 @@ static void test_read_write(void)
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, 0, &bytes, &ovl);
-    todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
+    ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
             "Unexpected result, ret %#x, GetLastError() %u.\n", ret, GetLastError());
     ret = GetLastError();
     ok(bytes == 0, "bytes %u\n", bytes);
@@ -4479,7 +4479,7 @@ static void test_read_write(void)
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, NULL, 0, &bytes, &ovl);
-    todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
+    ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
             "Unexpected result, ret %#x, GetLastError() %u.\n", ret, GetLastError());
     ret = GetLastError();
     ok(bytes == 0, "bytes %u\n", bytes);
@@ -4524,7 +4524,7 @@ static void test_read_write(void)
     iob.Information = -1;
     offset.QuadPart = sizeof(contents);
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
-    todo_wine ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
+    ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
             "expected STATUS_PENDING, got %#x.\n", status);
     if (status == STATUS_PENDING)
     {
@@ -4550,7 +4550,7 @@ static void test_read_write(void)
     bytes = 0;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
-    todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
+    ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
             "Unexpected result, ret %#x, GetLastError() %u.\n", ret, GetLastError());
     if (!ret)
         ok(bytes == 0, "bytes %u\n", bytes);
@@ -4598,7 +4598,7 @@ static void test_read_write(void)
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
-    todo_wine ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
+    ok(status == STATUS_PENDING || broken(status == STATUS_SUCCESS) /* before Vista */,
             "expected STATUS_PENDING, got %#x.\n", status);
     if (status == STATUS_PENDING)
     {
@@ -4658,7 +4658,7 @@ static void test_read_write(void)
     bytes = 0;
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
-    todo_wine ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
+    ok((!ret && GetLastError() == ERROR_IO_PENDING) || broken(ret) /* before Vista */,
             "Unexpected result %#x, GetLastError() %u.\n", ret, GetLastError());
     if (!ret)
     {

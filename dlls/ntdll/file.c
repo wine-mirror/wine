@@ -1013,7 +1013,7 @@ err:
         if (status != STATUS_PENDING && hEvent) NtResetEvent( hEvent, NULL );
     }
 
-    ret_status = async_read && (options & FILE_NO_INTERMEDIATE_BUFFERING) && status == STATUS_SUCCESS
+    ret_status = async_read && type == FD_TYPE_FILE && status == STATUS_SUCCESS
             ? STATUS_PENDING : status;
 
     if (send_completion) NTDLL_AddCompletion( hFile, cvalue, status, total, ret_status == STATUS_PENDING );
