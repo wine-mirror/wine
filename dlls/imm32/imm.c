@@ -1217,7 +1217,7 @@ static INT CopyCompStringIMEtoClient(const InputContextData *data, const void *s
     if (is_himc_ime_unicode(data) ^ unicode)
     {
         if (unicode)
-            ret = MultiByteToWideChar(CP_ACP, 0, src, src_len, dst, dst_len);
+            ret = MultiByteToWideChar(CP_ACP, 0, src, src_len, dst, dst_len / sizeof(WCHAR));
         else
             ret = WideCharToMultiByte(CP_ACP, 0, src, src_len, dst, dst_len, NULL, NULL);
         ret *= char_size;
