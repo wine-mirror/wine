@@ -119,8 +119,15 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION threaddata_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 static BOOL disable_ime;
 
-#define is_himc_ime_unicode(p)  (p->immKbd->imeInfo.fdwProperty & IME_PROP_UNICODE)
-#define is_kbd_ime_unicode(p)  (p->imeInfo.fdwProperty & IME_PROP_UNICODE)
+static inline BOOL is_himc_ime_unicode(const InputContextData *data)
+{
+    return !!(data->immKbd->imeInfo.fdwProperty & IME_PROP_UNICODE);
+}
+
+static inline BOOL is_kbd_ime_unicode(const ImmHkl *hkl)
+{
+    return !!(hkl->imeInfo.fdwProperty & IME_PROP_UNICODE);
+}
 
 static BOOL IMM_DestroyContext(HIMC hIMC);
 static InputContextData* get_imc_data(HIMC hIMC);
