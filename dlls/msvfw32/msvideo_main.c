@@ -102,8 +102,7 @@ static const char *wine_dbgstr_icerr( int ret )
 
 static WINE_HIC*        MSVIDEO_FirstHic /* = NULL */;
 
-typedef struct _reg_driver reg_driver;
-struct _reg_driver
+struct reg_driver
 {
     DWORD       fccType;
     DWORD       fccHandler;
@@ -271,7 +270,7 @@ BOOL VFWAPI ICInfo(DWORD type, DWORD handler, ICINFO *info)
 {
     char name_buf[10], buf[2048];
     DWORD ret_type, ret_handler;
-    reg_driver *driver;
+    struct reg_driver *driver;
     DWORD i, count = 0;
     LONG res;
     HKEY key;
@@ -327,7 +326,7 @@ BOOL VFWAPI ICInfo(DWORD type, DWORD handler, ICINFO *info)
         }
     }
 
-    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, struct reg_driver, entry)
     {
         if (type && compare_fourcc(type, driver->fccType)) continue;
         if (compare_fourcc(handler, driver->fccHandler) && handler != count++) continue;
@@ -348,12 +347,12 @@ static DWORD IC_HandleRef = 1;
  */
 BOOL VFWAPI ICInstall(DWORD type, DWORD handler, LPARAM lparam, char *desc, UINT flags)
 {
-    reg_driver *driver;
+    struct reg_driver *driver;
 
     TRACE("type %s, handler %s, lparam %#lx, desc %s, flags %#x.\n",
             wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), lparam, debugstr_a(desc), flags);
 
-    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, struct reg_driver, entry)
     {
         if (!compare_fourcc(type, driver->fccType)
                 && !compare_fourcc(handler, driver->fccHandler))
@@ -400,7 +399,7 @@ BOOL VFWAPI ICInstall(DWORD type, DWORD handler, LPARAM lparam, char *desc, UINT
  */
 BOOL VFWAPI ICRemove(DWORD type, DWORD handler, UINT flags)
 {
-    reg_driver *driver;
+    struct reg_driver *driver;
     char value[10];
     HKEY key;
     LONG res;
@@ -408,7 +407,7 @@ BOOL VFWAPI ICRemove(DWORD type, DWORD handler, UINT flags)
     TRACE("type %s, handler %s, flags %#x.\n",
             wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), flags);
 
-    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, struct reg_driver, entry)
     {
         if (!compare_fourcc(type, driver->fccType)
                 && !compare_fourcc(handler, driver->fccHandler))
@@ -444,7 +443,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     ICOPEN		icopen;
     WINE_HIC*           whic;
     static const WCHAR  drv32W[] = {'d','r','i','v','e','r','s','3','2','\0'};
-    reg_driver*         driver;
+    struct reg_driver *driver;
     HDRVR hdrv = NULL;
 
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode);
@@ -470,7 +469,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         }
     }
 
-    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, struct reg_driver, entry)
     {
         if (!compare_fourcc(fccType, driver->fccType)
                 && !compare_fourcc(fccHandler, driver->fccHandler))
