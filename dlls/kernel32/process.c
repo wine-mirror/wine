@@ -344,11 +344,6 @@ static enum binary_type get_binary_info( HANDLE hfile, pe_image_info_t *info )
         case 2: return BINARY_UNIX_EXE;
         case 8: return BINARY_UNIX_LIB;
         }
-        switch(header.macho.filetype)
-        {
-        case 2: return BINARY_UNIX_EXE;
-        case 8: return BINARY_UNIX_LIB;
-        }
     }
     return BINARY_UNKNOWN;
 }
