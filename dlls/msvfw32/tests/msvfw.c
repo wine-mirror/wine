@@ -429,13 +429,10 @@ todo_wine
 
     memset(&enum_info, 0x55, sizeof(enum_info));
     enum_info.dwSize = sizeof(enum_info);
-todo_wine {
     ok(ICInfo(test_type, test_handler, &enum_info), "Expected success.\n");
     ok(!enum_info.fccType, "Got unexpected type %#x.\n", enum_info.fccType);
     ok(!enum_info.fccHandler, "Got unexpected handler %#x.\n", enum_info.fccHandler);
-}
     ok(!enum_info.dwFlags, "Got unexpected flags %#x.\n", enum_info.dwFlags);
-todo_wine
     ok(enum_info.dwVersion == 0xdeadbeef, "Got unexpected version %#x.\n", enum_info.dwVersion);
     ok(enum_info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", enum_info.dwVersionICM);
     ok(!enum_info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(enum_info.szName));
@@ -445,13 +442,10 @@ todo_wine
     /* Functions installed after msvfw32 is loaded are enumerated. */
     memset(&enum_info, 0x55, sizeof(enum_info));
     enum_info.dwSize = sizeof(enum_info);
-todo_wine {
     ok(ICInfo(test_type, 0, &enum_info), "Expected success.\n");
     ok(!enum_info.fccType, "Got unexpected type %#x.\n", enum_info.fccType);
-}
     ok(!enum_info.fccHandler, "Got unexpected handler %#x.\n", enum_info.fccHandler);
     ok(!enum_info.dwFlags, "Got unexpected flags %#x.\n", enum_info.dwFlags);
-todo_wine
     ok(enum_info.dwVersion == 0xdeadbeef, "Got unexpected version %#x.\n", enum_info.dwVersion);
     ok(enum_info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", enum_info.dwVersionICM);
     ok(!enum_info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(enum_info.szName));

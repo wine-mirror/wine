@@ -271,6 +271,7 @@ BOOL VFWAPI ICInfo(DWORD type, DWORD handler, ICINFO *info)
 {
     char name_buf[10], buf[2048];
     DWORD ret_type, ret_handler;
+    reg_driver *driver;
     DWORD i, count = 0;
     LONG res;
     HKEY key;
@@ -324,6 +325,14 @@ BOOL VFWAPI ICInfo(DWORD type, DWORD handler, ICINFO *info)
             TRACE("Returning codec %s, driver %s.\n", debugstr_an(s, 8), debugstr_a(s + 10));
             return TRUE;
         }
+    }
+
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
+    {
+        if (type && compare_fourcc(type, driver->fccType)) continue;
+        if (compare_fourcc(handler, driver->fccHandler) && handler != count++) continue;
+        if (driver->proc(0, NULL, ICM_GETINFO, (DWORD_PTR)info, sizeof(*info)) == sizeof(*info))
+            return TRUE;
     }
 
     info->fccType = type;
