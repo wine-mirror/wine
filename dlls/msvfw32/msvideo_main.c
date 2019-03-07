@@ -623,89 +623,69 @@ LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb)
     return ret;
 }
 
-typedef struct {
-    DWORD fccType;
-    DWORD fccHandler;
-    LPBITMAPINFOHEADER lpbiIn;
-    LPBITMAPINFOHEADER lpbiOut;
-    WORD wMode;
-    DWORD querymsg;
-    HIC hic;
-} driver_info_t;
-
-static HIC try_driver(driver_info_t *info)
-{
-    HIC   hic;
-
-    if ((hic = ICOpen(info->fccType, info->fccHandler, info->wMode))) 
-    {
-	if (!ICSendMessage(hic, info->querymsg, (DWORD_PTR)info->lpbiIn, (DWORD_PTR)info->lpbiOut))
-	    return hic;
-	ICClose(hic);
-    }
-    return 0;
-}
-
-static BOOL ICLocate_enum_handler(const char *name, const char *driver, unsigned int nr, void *param)
-{
-    driver_info_t *info = param;
-    info->fccHandler = mmioStringToFOURCCA(name + 5, 0);
-    info->hic = try_driver(info);
-    return info->hic != 0;
-}
-
 /***********************************************************************
- *		ICLocate			[MSVFW32.@]
+ *              ICLocate                        [MSVFW32.@]
  */
-HIC VFWAPI ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
-                    LPBITMAPINFOHEADER lpbiOut, WORD wMode)
+HIC VFWAPI ICLocate(DWORD type, DWORD handler, BITMAPINFOHEADER *in,
+        BITMAPINFOHEADER *out, WORD mode)
 {
-    driver_info_t info;
+    ICINFO info = {sizeof(info)};
+    UINT msg;
+    HIC hic;
+    DWORD i;
 
-    TRACE("(%s,%s,%p,%p,0x%04x)\n", 
-          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), lpbiIn, lpbiOut, wMode);
+    TRACE("type %s, handler %s, in %p, out %p, mode %u.\n",
+            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), in, out, mode);
 
-    info.fccType = fccType;
-    info.fccHandler = fccHandler;
-    info.lpbiIn = lpbiIn;
-    info.lpbiOut = lpbiOut;
-    info.wMode = wMode;
-
-    switch (wMode) 
+    switch (mode)
     {
     case ICMODE_FASTCOMPRESS:
     case ICMODE_COMPRESS:
-        info.querymsg = ICM_COMPRESS_QUERY;
+        msg = ICM_COMPRESS_QUERY;
         break;
     case ICMODE_FASTDECOMPRESS:
     case ICMODE_DECOMPRESS:
-        info.querymsg = ICM_DECOMPRESS_QUERY;
+        msg = ICM_DECOMPRESS_QUERY;
         break;
     case ICMODE_DRAW:
-        info.querymsg = ICM_DRAW_QUERY;
+        msg = ICM_DRAW_QUERY;
         break;
     default:
-        WARN("Unknown mode (%d)\n", wMode);
+        FIXME("Unhandled mode %#x.\n", mode);
         return 0;
     }
 
-    /* Easy case: handler/type match, we just fire a query and return */
-    info.hic = try_driver(&info);
-    /* If it didn't work, try each driver in turn. 32 bit codecs only. */
-    /* FIXME: Move this to an init routine? */
-    if (!info.hic) enum_drivers(fccType, ICLocate_enum_handler, &info);
-
-    if (info.hic) 
+    if ((hic = ICOpen(type, handler, mode)))
     {
-        TRACE("=> %p\n", info.hic);
-	return info.hic;
+        if (!ICSendMessage(hic, msg, (DWORD_PTR)in, (DWORD_PTR)out))
+        {
+            TRACE("Found codec %s.%s.\n", wine_dbgstr_fcc(type),
+                    wine_dbgstr_fcc(handler));
+            return hic;
+        }
+        ICClose(hic);
     }
 
-    if (fccType == streamtypeVIDEO) 
-        return ICLocate(ICTYPE_VIDEO, fccHandler, lpbiIn, lpbiOut, wMode);
-    
-    ERR("Required media codec '%s %s' not found!\n",
-         wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler));
+    for (i = 0; ICInfo(type, i, &info); ++i)
+    {
+        if ((hic = ICOpen(info.fccType, info.fccHandler, mode)))
+        {
+            if (!ICSendMessage(hic, msg, (DWORD_PTR)in, (DWORD_PTR)out))
+            {
+                TRACE("Found codec %s.%s.\n", wine_dbgstr_fcc(info.fccType),
+                        wine_dbgstr_fcc(info.fccHandler));
+                return hic;
+            }
+            ICClose(hic);
+        }
+    }
+
+    if (type == streamtypeVIDEO)
+        return ICLocate(ICTYPE_VIDEO, handler, in, out, mode);
+
+    WARN("Could not find a driver for codec %s.%s.\n",
+            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler));
+
     return 0;
 }
 
