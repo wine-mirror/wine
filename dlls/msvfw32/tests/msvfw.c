@@ -358,14 +358,12 @@ static void test_ICInfo(void)
     ok(!ICInfo(ICTYPE_VIDEO, mmioFOURCC('f','a','k','e'), &info), "expected failure\n");
     ok(info.fccType == ICTYPE_VIDEO, "got 0x%08x\n", info.fccType);
     ok(info.fccHandler == mmioFOURCC('f','a','k','e'), "got 0x%08x\n", info.fccHandler);
-todo_wine {
     ok(!info.dwFlags, "Got unexpected flags %#x.\n", info.dwFlags);
     ok(!info.dwVersion, "Got unexpected version %#x.\n", info.dwVersion);
     ok(info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", info.dwVersionICM);
     ok(!info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szName));
     ok(!info.szDescription[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szDescription));
     ok(!info.szDriver[0], "Got unexpected driver %s.\n", wine_dbgstr_w(info.szDriver));
-}
 
     if (!RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT"
             "\\CurrentVersion\\Drivers32", 0, KEY_ALL_ACCESS, &key))
@@ -386,14 +384,13 @@ todo_wine
         ok(ICInfo(test_type, test_handler, &info), "Expected success.\n");
         ok(info.fccType == test_type, "Got unexpected type %#x.\n", info.fccType);
         ok(info.fccHandler == test_handler, "Got unexpected handler %#x.\n", info.fccHandler);
-todo_wine {
         ok(!info.dwFlags, "Got unexpected flags %#x.\n", info.dwFlags);
         ok(!info.dwVersion, "Got unexpected version %#x.\n", info.dwVersion);
         ok(info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", info.dwVersionICM);
         ok(!info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szName));
         ok(!info.szDescription[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szDescription));
+todo_wine
         ok(!lstrcmpW(info.szDriver, bogusW), "Got unexpected driver %s.\n", wine_dbgstr_w(info.szDriver));
-}
 
         /* Drivers installed after msvfw32 is loaded are not enumerated. */
         ok(!ICInfo(test_type, 0, &info), "Expected failure.\n");
@@ -439,13 +436,14 @@ todo_wine {
     ok(ICInfo(test_type, test_handler, &enum_info), "Expected success.\n");
     ok(!enum_info.fccType, "Got unexpected type %#x.\n", enum_info.fccType);
     ok(!enum_info.fccHandler, "Got unexpected handler %#x.\n", enum_info.fccHandler);
+}
     ok(!enum_info.dwFlags, "Got unexpected flags %#x.\n", enum_info.dwFlags);
+todo_wine
     ok(enum_info.dwVersion == 0xdeadbeef, "Got unexpected version %#x.\n", enum_info.dwVersion);
     ok(enum_info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", enum_info.dwVersionICM);
     ok(!enum_info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(enum_info.szName));
     ok(!enum_info.szDescription[0], "Got unexpected name %s.\n", wine_dbgstr_w(enum_info.szDescription));
     ok(!enum_info.szDriver[0], "Got unexpected driver %s.\n", wine_dbgstr_w(enum_info.szDriver));
-}
 
     /* Functions installed after msvfw32 is loaded are enumerated. */
     memset(&enum_info, 0x55, sizeof(enum_info));
@@ -455,14 +453,13 @@ todo_wine {
     ok(!enum_info.fccType, "Got unexpected type %#x.\n", enum_info.fccType);
 }
     ok(!enum_info.fccHandler, "Got unexpected handler %#x.\n", enum_info.fccHandler);
-todo_wine {
     ok(!enum_info.dwFlags, "Got unexpected flags %#x.\n", enum_info.dwFlags);
+todo_wine
     ok(enum_info.dwVersion == 0xdeadbeef, "Got unexpected version %#x.\n", enum_info.dwVersion);
     ok(enum_info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", enum_info.dwVersionICM);
     ok(!enum_info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(enum_info.szName));
     ok(!enum_info.szDescription[0], "Got unexpected name %s.\n", wine_dbgstr_w(enum_info.szDescription));
     ok(!enum_info.szDriver[0], "Got unexpected driver %s.\n", wine_dbgstr_w(enum_info.szDriver));
-}
 
     ret = ICRemove(test_type, test_handler, 0);
     ok(ret, "Failed to remove driver.\n");

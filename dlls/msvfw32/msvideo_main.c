@@ -234,53 +234,6 @@ static DWORD get_size_image(LONG width, LONG height, WORD depth)
     return ret;
 }
 
-typedef BOOL (*enum_handler_t)(const char *name, const char *driver, unsigned int index, void *param);
-
-static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
-{
-    char fccTypeStr[4];
-    char name_buf[10];
-    char buf[2048];
-
-    DWORD i, cnt = 0, lRet;
-    BOOL result = FALSE;
-    HKEY hKey;
-
-    fourcc_to_string(fccTypeStr, fccType);
-
-    /* first, go through the registry entries */
-    lRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE, HKLM_DRIVERS32, 0, KEY_QUERY_VALUE, &hKey);
-    if (lRet == ERROR_SUCCESS) 
-    {
-        i = 0;
-        for (;;)
-        {
-            DWORD name_len = 10, driver_len = 128;
-            lRet = RegEnumValueA(hKey, i++, name_buf, &name_len, 0, 0, (BYTE *)buf, &driver_len);
-            if (lRet == ERROR_NO_MORE_ITEMS) break;
-            if (name_len != 9 || name_buf[4] != '.') continue;
-            if (fccType && strncasecmp(name_buf, fccTypeStr, 4)) continue;
-            if ((result = handler(name_buf, buf, cnt++, param))) break;
-        }
-        RegCloseKey( hKey );
-    }
-    if (result) return result;
-
-    /* if that didn't work, go through the values in system.ini */
-    if (GetPrivateProfileSectionA("drivers32", buf, sizeof(buf), "system.ini")) 
-    {
-        char *s;
-        for (s = buf; *s; s += strlen(s) + 1)
-        {
-            if (s[4] != '.' || s[9] != '=') continue;
-            if (fccType && strncasecmp(s, fccTypeStr, 4)) continue;
-            if ((result = handler(s, s + 10, cnt++, param))) break;
-        }
-    }
-
-    return result;
-}
-
 /******************************************************************
  *		MSVIDEO_GetHicPtr
  *
@@ -305,27 +258,6 @@ DWORD WINAPI VideoForWindowsVersion(void)
     return 0x040003B6; /* 4.950 */
 }
 
-static BOOL ICInfo_enum_handler(const char *name, const char *driver, unsigned int nr, void *param)
-{
-    ICINFO *lpicinfo = param;
-    DWORD fccType = mmioStringToFOURCCA(name, 0);
-    DWORD fccHandler = mmioStringToFOURCCA(name + 5, 0);
-
-    if (lpicinfo->fccHandler != nr && compare_fourcc(lpicinfo->fccHandler, fccHandler))
-        return FALSE;
-
-    lpicinfo->fccType = fccType;
-    lpicinfo->fccHandler = fccHandler;
-    lpicinfo->dwFlags = 0;
-    lpicinfo->dwVersion = 0;
-    lpicinfo->dwVersionICM = ICVERSION;
-    lpicinfo->szName[0] = 0;
-    lpicinfo->szDescription[0] = 0;
-    MultiByteToWideChar(CP_ACP, 0, driver, -1, lpicinfo->szDriver, ARRAY_SIZE(lpicinfo->szDriver));
-
-    return TRUE;
-}
-
 /***********************************************************************
  *		ICInfo				[MSVFW32.@]
  * Get information about an installable compressor. Return TRUE if there
@@ -336,14 +268,69 @@ static BOOL ICInfo_enum_handler(const char *name, const char *driver, unsigned i
  *   fccHandler  [I] real fcc for handler or <n>th compressor
  *   lpicinfo    [O] information about compressor
  */
-BOOL VFWAPI ICInfo( DWORD fccType, DWORD fccHandler, ICINFO *lpicinfo)
+BOOL VFWAPI ICInfo(DWORD type, DWORD handler, ICINFO *info)
 {
-    TRACE("(%s,%s,%p)\n",
-          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), lpicinfo);
+    char name_buf[10], buf[2048];
+    DWORD ret_type, ret_handler;
+    DWORD i, count = 0;
+    LONG res;
+    HKEY key;
 
-    lpicinfo->fccType = fccType;
-    lpicinfo->fccHandler = fccHandler;
-    return enum_drivers(fccType, ICInfo_enum_handler, lpicinfo);
+    TRACE("type %s, handler %s, info %p.\n",
+            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), info);
+
+    memset(info, 0, sizeof(*info));
+    info->dwSize = sizeof(*info);
+    info->dwVersionICM = ICVERSION;
+
+    if (!RegOpenKeyExA(HKEY_LOCAL_MACHINE, HKLM_DRIVERS32, 0, KEY_QUERY_VALUE, &key))
+    {
+        i = 0;
+        for (;;)
+        {
+            DWORD name_len = ARRAY_SIZE(name_buf), driver_len = ARRAY_SIZE(info->szDriver);
+
+            res = RegEnumValueA(key, i++, name_buf, &name_len, 0, 0, (BYTE *)buf, &driver_len);
+            if (res == ERROR_NO_MORE_ITEMS) break;
+
+            if (name_len != 9 || name_buf[4] != '.') continue;
+            ret_type = mmioStringToFOURCCA(name_buf, 0);
+            ret_handler = mmioStringToFOURCCA(name_buf + 5, 0);
+            if (type && compare_fourcc(type, ret_type)) continue;
+            if (compare_fourcc(handler, ret_handler) && handler != count++) continue;
+
+            info->fccType = ret_type;
+            info->fccHandler = ret_handler;
+            MultiByteToWideChar(CP_ACP, 0, buf, -1, info->szDriver, ARRAY_SIZE(info->szDriver));
+            TRACE("Returning codec %s, driver %s.\n", debugstr_a(name_buf), debugstr_a(buf));
+            return TRUE;
+        }
+        RegCloseKey(key);
+    }
+
+    if (GetPrivateProfileSectionA("drivers32", buf, sizeof(buf), "system.ini"))
+    {
+        char *s;
+        for (s = buf; *s; s += strlen(s) + 1)
+        {
+            if (s[4] != '.' || s[9] != '=') continue;
+            ret_type = mmioStringToFOURCCA(s, 0);
+            ret_handler = mmioStringToFOURCCA(s + 5, 0);
+            if (type && compare_fourcc(type, ret_type)) continue;
+            if (compare_fourcc(handler, ret_handler) && handler != count++) continue;
+
+            info->fccType = ret_type;
+            info->fccHandler = ret_handler;
+            MultiByteToWideChar(CP_ACP, 0, s + 10, -1, info->szDriver, ARRAY_SIZE(info->szDriver));
+            TRACE("Returning codec %s, driver %s.\n", debugstr_an(s, 8), debugstr_a(s + 10));
+            return TRUE;
+        }
+    }
+
+    info->fccType = type;
+    info->fccHandler = handler;
+    WARN("No driver found for codec %s.%s.\n", wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler));
+    return FALSE;
 }
 
 static DWORD IC_HandleRef = 1;
