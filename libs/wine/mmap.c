@@ -55,7 +55,9 @@ struct reserved_area
 };
 
 static struct list reserved_areas = LIST_INIT(reserved_areas);
+#ifndef __APPLE__
 static const unsigned int granularity_mask = 0xffff;  /* reserved areas have 64k granularity */
+#endif
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -419,8 +421,10 @@ void mmap_init(void)
 #ifdef __i386__
     struct reserved_area *area;
     struct list *ptr;
+#ifndef __APPLE__
     char stack;
     char * const stack_ptr = &stack;
+#endif
     char *user_space_limit = (char *)0x7ffe0000;
 
     reserve_malloc_space( 8 * 1024 * 1024 );
@@ -444,6 +448,7 @@ void mmap_init(void)
         }
     }
 
+#ifndef __APPLE__
     if (stack_ptr >= user_space_limit)
     {
         char *end = 0;
@@ -457,7 +462,9 @@ void mmap_init(void)
 #endif
         reserve_area( base, end );
     }
-    else reserve_area( user_space_limit, 0 );
+    else
+#endif
+        reserve_area( user_space_limit, 0 );
 
     /* reserve the DOS area if not already done */
 
