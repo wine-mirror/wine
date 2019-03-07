@@ -40,6 +40,7 @@
 #include "vfw.h"
 #include "msvideo_private.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 /* Drivers32 settings */
 #define HKLM_DRIVERS32 "Software\\Microsoft\\Windows NT\\CurrentVersion\\Drivers32"
@@ -366,8 +367,8 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
     if (driver) return FALSE;
 
     /* Register the driver */
-    driver = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(reg_driver));
-    if (!driver) goto oom;
+    if (!(driver = heap_alloc_zero(sizeof(*driver))))
+        return FALSE;
     driver->fccType = fccType;
     driver->fccHandler = fccHandler;
 
@@ -375,29 +376,27 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
     {
     case ICINSTALL_FUNCTION:
         driver->proc = (DRIVERPROC)lParam;
-	driver->name = NULL;
         break;
     case ICINSTALL_DRIVER:
-	driver->proc = NULL;
         len = MultiByteToWideChar(CP_ACP, 0, (char*)lParam, -1, NULL, 0);
-        driver->name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if (!driver->name) goto oom;
+        if (!(driver->name = heap_alloc(len * sizeof(WCHAR))))
+        {
+            heap_free(driver);
+            return FALSE;
+        }
         MultiByteToWideChar(CP_ACP, 0, (char*)lParam, -1, driver->name, len);
-	break;
+        break;
     default:
-	ERR("Invalid flags!\n");
-	HeapFree(GetProcessHeap(), 0, driver);
-	return FALSE;
-   }
+        ERR("Invalid flags!\n");
+        heap_free(driver);
+        return FALSE;
+    }
 
    /* Insert our driver in the list*/
    driver->next = reg_driver_list;
    reg_driver_list = driver;
-    
-   return TRUE;
-oom:
-   HeapFree(GetProcessHeap(), 0, driver);
-   return FALSE;
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -423,8 +422,8 @@ BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags)
     /* Remove the driver from the list */
     drv = *pdriver;
     *pdriver = (*pdriver)->next;
-    HeapFree(GetProcessHeap(), 0, drv->name);
-    HeapFree(GetProcessHeap(), 0, drv);
+    heap_free(drv->name);
+    heap_free(drv);
     
     return TRUE;  
 }
@@ -517,8 +516,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
             return 0; 
     }
 
-    whic = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_HIC));
-    if (!whic)
+    if (!(whic = heap_alloc(sizeof(*whic))))
     {
         CloseDriver(hdrv, 0, 0);
         return FALSE;
@@ -557,8 +555,8 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, DRIVERPRO
     icopen.pV2Reserved = NULL;
     icopen.dnDevNode   = 0; /* FIXME */
 
-    whic = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_HIC));
-    if (!whic) return 0;
+    if (!(whic = heap_alloc(sizeof(*whic))))
+        return NULL;
 
     whic->driverproc   = lpfnHandler;
     while (MSVIDEO_GetHicPtr((HIC)(ULONG_PTR)IC_HandleRef) != NULL) IC_HandleRef++;
@@ -573,7 +571,7 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, DRIVERPRO
     {
         WARN("DRV_LOAD failed for hic %p\n", whic->hic);
         MSVIDEO_FirstHic = whic->next;
-        HeapFree(GetProcessHeap(), 0, whic);
+        heap_free(whic);
         return 0;
     }
     /* return value is not checked */
@@ -587,7 +585,7 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, DRIVERPRO
     {
         WARN("DRV_OPEN failed for hic %p\n", whic->hic);
         MSVIDEO_FirstHic = whic->next;
-        HeapFree(GetProcessHeap(), 0, whic);
+        heap_free(whic);
         return 0;
     }
 
@@ -925,7 +923,7 @@ static BOOL enum_compressors(HWND list, COMPVARS *pcv, BOOL enum_all)
 
             idx = SendMessageW(list, CB_ADDSTRING, 0, (LPARAM)icinfo.szDescription);
 
-            ic = HeapAlloc(GetProcessHeap(), 0, sizeof(struct codec_info));
+            ic = heap_alloc(sizeof(*ic));
             ic->icinfo = icinfo;
             ic->hic = hic;
             SendMessageW(list, CB_SETITEMDATA, idx, (LPARAM)ic);
@@ -978,7 +976,7 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
         LoadStringW(MSVFW32_hModule, IDS_FULLFRAMES, buf, 128);
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_ADDSTRING, 0, (LPARAM)buf);
 
-        ic = HeapAlloc(GetProcessHeap(), 0, sizeof(struct codec_info));
+        ic = heap_alloc(sizeof(*ic));
         ic->icinfo.fccType = streamtypeVIDEO;
         ic->icinfo.fccHandler = comptypeDIB;
         ic->hic = 0;
@@ -1099,7 +1097,7 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
                 if (!ic || (LONG_PTR)ic == CB_ERR) break;
 
                 if (ic->hic) ICClose(ic->hic);
-                HeapFree(GetProcessHeap(), 0, ic);
+                heap_free(ic);
             }
 
             EndDialog(hdlg, LOWORD(wparam) == IDOK);
@@ -1171,23 +1169,25 @@ BOOL VFWAPI ICCompressorChoose(HWND hwnd, UINT uiFlags, LPVOID pvIn,
  */
 void VFWAPI ICCompressorFree(PCOMPVARS pc)
 {
-  TRACE("(%p)\n",pc);
+    TRACE("(%p)\n", pc);
 
-  if (pc != NULL && pc->cbSize == sizeof(COMPVARS)) {
-    if (pc->hic != NULL) {
-      ICClose(pc->hic);
-      pc->hic = NULL;
+    if (pc && pc->cbSize == sizeof(COMPVARS))
+    {
+        if (pc->hic)
+        {
+            ICClose(pc->hic);
+            pc->hic = NULL;
+        }
+        heap_free(pc->lpbiIn);
+        pc->lpbiIn = NULL;
+        heap_free(pc->lpBitsOut);
+        pc->lpBitsOut = NULL;
+        heap_free(pc->lpBitsPrev);
+        pc->lpBitsPrev = NULL;
+        heap_free(pc->lpState);
+        pc->lpState = NULL;
+        pc->dwFlags = 0;
     }
-    HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-    pc->lpbiIn = NULL;
-    HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
-    pc->lpBitsOut = NULL;
-    HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
-    pc->lpBitsPrev = NULL;
-    HeapFree(GetProcessHeap(), 0, pc->lpState);
-    pc->lpState = NULL;
-    pc->dwFlags = 0;
-  }
 }
 
 /***********************************************************************
@@ -1297,7 +1297,7 @@ LRESULT WINAPI ICClose(HIC hic)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, whic);
+    heap_free(whic);
     return 0;
 }
 
@@ -1382,8 +1382,7 @@ HANDLE VFWAPI ICImageDecompress(
 		cbHdr = ICDecompressGetFormatSize(hic,lpbiIn);
 		if ( cbHdr < sizeof(BITMAPINFOHEADER) )
 			goto err;
-		pHdr = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,cbHdr+sizeof(RGBQUAD)*256);
-		if ( pHdr == NULL )
+		if (!(pHdr = heap_alloc_zero(cbHdr + sizeof(RGBQUAD) * 256)))
 			goto err;
 		if ( ICDecompressGetFormat( hic, lpbiIn, pHdr ) != ICERR_OK )
 			goto err;
@@ -1438,7 +1437,7 @@ err:
 		ICDecompressEnd( hic );
 	if ( bReleaseIC )
 		ICClose(hic);
-        HeapFree(GetProcessHeap(),0,pHdr);
+        heap_free(pHdr);
 	if ( pMem != NULL )
 		GlobalUnlock( hMem );
 	if ( !bSucceeded && hMem != NULL )
@@ -1509,14 +1508,14 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
 
 static void clear_compvars(PCOMPVARS pc)
 {
-    HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-    HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
-    HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
-    HeapFree(GetProcessHeap(), 0, pc->lpState);
+    heap_free(pc->lpbiIn);
+    heap_free(pc->lpBitsPrev);
+    heap_free(pc->lpBitsOut);
+    heap_free(pc->lpState);
     pc->lpbiIn = pc->lpBitsPrev = pc->lpBitsOut = pc->lpState = NULL;
     if (pc->dwFlags & 0x80000000)
     {
-        HeapFree(GetProcessHeap(), 0, pc->lpbiOut);
+        heap_free(pc->lpbiOut);
         pc->lpbiOut = NULL;
         pc->dwFlags &= ~0x80000000;
     }
@@ -1542,15 +1541,13 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
      */
     DWORD ret;
     ICCOMPRESS* icComp;
-    pc->lpbiIn = HeapAlloc(GetProcessHeap(), 0, sizeof(BITMAPINFO));
-    if (!pc->lpbiIn)
+
+    if (!(pc->lpbiIn = heap_alloc(sizeof(BITMAPINFO))))
         return FALSE;
 
     *pc->lpbiIn = *lpbiIn;
 
-    pc->lpState = HeapAlloc(GetProcessHeap(), 0, sizeof(ICCOMPRESS)
-                            + sizeof(*icComp->lpckid) + sizeof(*icComp->lpdwFlags));
-    if (!pc->lpState)
+    if (!(pc->lpState = heap_alloc(sizeof(ICCOMPRESS) + sizeof(*icComp->lpckid) + sizeof(*icComp->lpdwFlags))))
         goto error;
 
     pc->cbState = sizeof(ICCOMPRESS);
@@ -1563,8 +1560,7 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
         if (size <= 0)
             goto error;
 
-        pc->lpbiOut = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-        if (!pc->lpbiOut)
+        if (!(pc->lpbiOut = heap_alloc_zero(size)))
             goto error;
         /* Flag to show that we allocated lpbiOut for proper cleanup */
         pc->dwFlags |= 0x80000000;
@@ -1600,13 +1596,11 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
           pc->lpbiOut->bmiHeader.biSizeImage);
 
     /* Buffer for compressed frame data */
-    pc->lpBitsOut = HeapAlloc(GetProcessHeap(), 0, pc->lpbiOut->bmiHeader.biSizeImage);
-    if (!pc->lpBitsOut)
+    if (!(pc->lpBitsOut = heap_alloc(pc->lpbiOut->bmiHeader.biSizeImage)))
         goto error;
 
     /* Buffer for previous compressed frame data */
-    pc->lpBitsPrev = HeapAlloc(GetProcessHeap(), 0, pc->lpbiOut->bmiHeader.biSizeImage);
-    if (!pc->lpBitsPrev)
+    if (!(pc->lpBitsPrev = heap_alloc(pc->lpbiOut->bmiHeader.biSizeImage)))
         goto error;
 
     TRACE("Compvars:\n"
