@@ -11,6 +11,7 @@ SOURCES = \
 	advpub.h \
 	af_irda.h \
 	amaudio.h \
+	amsi.idl \
 	amstream.idl \
 	amvideo.idl \
 	appcompatapi.h \

@@ -1,1 +1,4 @@
 MODULE    = amsi.dll
+
+C_SRCS = \
+	main.c
