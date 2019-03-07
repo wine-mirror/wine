@@ -735,8 +735,37 @@ static void test_MFShutdownObject(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+enum clock_action
+{
+    CLOCK_START,
+    CLOCK_STOP,
+    CLOCK_PAUSE,
+};
+
 static void test_presentation_clock(void)
 {
+    static const struct clock_state_test
+    {
+        enum clock_action action;
+        MFCLOCK_STATE clock_state;
+        MFCLOCK_STATE source_state;
+        HRESULT hr;
+    }
+    clock_state_change[] =
+    {
+        { CLOCK_STOP, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_INVALID },
+        { CLOCK_PAUSE, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_INVALID, MF_E_INVALIDREQUEST },
+        { CLOCK_STOP, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_INVALID, MF_E_CLOCK_STATE_ALREADY_SET },
+        { CLOCK_START, MFCLOCK_STATE_RUNNING, MFCLOCK_STATE_RUNNING },
+        { CLOCK_START, MFCLOCK_STATE_RUNNING, MFCLOCK_STATE_RUNNING },
+        { CLOCK_PAUSE, MFCLOCK_STATE_PAUSED, MFCLOCK_STATE_PAUSED },
+        { CLOCK_PAUSE, MFCLOCK_STATE_PAUSED, MFCLOCK_STATE_PAUSED, MF_E_CLOCK_STATE_ALREADY_SET },
+        { CLOCK_STOP, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_STOPPED },
+        { CLOCK_START, MFCLOCK_STATE_RUNNING, MFCLOCK_STATE_RUNNING },
+        { CLOCK_STOP, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_STOPPED },
+        { CLOCK_STOP, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_STOPPED, MF_E_CLOCK_STATE_ALREADY_SET },
+        { CLOCK_PAUSE, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_STOPPED, MF_E_INVALIDREQUEST },
+    };
     IMFPresentationTimeSource *time_source;
     IMFRateControl *rate_control;
     IMFPresentationClock *clock;
@@ -746,6 +775,7 @@ static void test_presentation_clock(void)
     MFCLOCK_STATE state;
     IMFTimer *timer;
     MFTIME systime;
+    unsigned int i;
     DWORD value;
     HRESULT hr;
 
@@ -778,6 +808,43 @@ todo_wine
     hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, &clock_time, &systime);
 todo_wine
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    /* Set default time source. */
+    hr = MFCreateSystemTimeSource(&time_source);
+    ok(hr == S_OK, "Failed to create time source, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_SetTimeSource(clock, time_source);
+    ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
+
+    /* State changes. */
+    for (i = 0; i < ARRAY_SIZE(clock_state_change); ++i)
+    {
+        switch (clock_state_change[i].action)
+        {
+            case CLOCK_STOP:
+                hr = IMFPresentationClock_Stop(clock);
+                break;
+            case CLOCK_PAUSE:
+                hr = IMFPresentationClock_Pause(clock);
+                break;
+            case CLOCK_START:
+                hr = IMFPresentationClock_Start(clock, 0);
+                break;
+            default:
+                ;
+        }
+        ok(hr == clock_state_change[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+
+        hr = IMFPresentationTimeSource_GetState(time_source, 0, &state);
+        ok(hr == S_OK, "%u: failed to get state, hr %#x.\n", i, hr);
+        ok(state == clock_state_change[i].source_state, "%u: unexpected state %d.\n", i, state);
+
+        hr = IMFPresentationClock_GetState(clock, 0, &state);
+        ok(hr == S_OK, "%u: failed to get state, hr %#x.\n", i, hr);
+        ok(state == clock_state_change[i].clock_state, "%u: unexpected state %d.\n", i, state);
+    }
+
+    IMFPresentationTimeSource_Release(time_source);
 
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control);
     ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
