@@ -29,6 +29,7 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -37,6 +38,12 @@ struct media_session
     IMFMediaSession IMFMediaSession_iface;
     LONG refcount;
     IMFMediaEventQueue *event_queue;
+};
+
+struct clock_sink
+{
+    struct list entry;
+    IMFClockStateSink *state_sink;
 };
 
 struct presentation_clock
@@ -49,6 +56,7 @@ struct presentation_clock
     IMFPresentationTimeSource *time_source;
     IMFClockStateSink *time_source_sink;
     MFCLOCK_STATE state;
+    struct list sinks;
     CRITICAL_SECTION cs;
 };
 
@@ -335,6 +343,7 @@ static ULONG WINAPI present_clock_Release(IMFPresentationClock *iface)
 {
     struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
     ULONG refcount = InterlockedDecrement(&clock->refcount);
+    struct clock_sink *sink, *sink2;
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
@@ -344,6 +353,12 @@ static ULONG WINAPI present_clock_Release(IMFPresentationClock *iface)
             IMFPresentationTimeSource_Release(clock->time_source);
         if (clock->time_source_sink)
             IMFClockStateSink_Release(clock->time_source_sink);
+        LIST_FOR_EACH_ENTRY_SAFE(sink, sink2, &clock->sinks, struct clock_sink, entry)
+        {
+            list_remove(&sink->entry);
+            IMFClockStateSink_Release(sink->state_sink);
+            heap_free(sink);
+        }
         DeleteCriticalSection(&clock->cs);
         heap_free(clock);
     }
@@ -453,17 +468,69 @@ static HRESULT WINAPI present_clock_GetTime(IMFPresentationClock *iface, MFTIME 
 
 static HRESULT WINAPI present_clock_AddClockStateSink(IMFPresentationClock *iface, IMFClockStateSink *state_sink)
 {
-    FIXME("%p, %p.\n", iface, state_sink);
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+    struct clock_sink *sink, *cur;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, state_sink);
+
+    if (!state_sink)
+        return E_INVALIDARG;
+
+    sink = heap_alloc(sizeof(*sink));
+    if (!sink)
+        return E_OUTOFMEMORY;
+
+    sink->state_sink = state_sink;
+    IMFClockStateSink_AddRef(sink->state_sink);
+
+    EnterCriticalSection(&clock->cs);
+    LIST_FOR_EACH_ENTRY(cur, &clock->sinks, struct clock_sink, entry)
+    {
+        if (cur->state_sink == state_sink)
+        {
+            hr = E_INVALIDARG;
+            break;
+        }
+    }
+    if (SUCCEEDED(hr))
+        list_add_tail(&clock->sinks, &sink->entry);
+    LeaveCriticalSection(&clock->cs);
+
+    if (FAILED(hr))
+    {
+        IMFClockStateSink_Release(sink->state_sink);
+        heap_free(sink);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI present_clock_RemoveClockStateSink(IMFPresentationClock *iface,
         IMFClockStateSink *state_sink)
 {
-    FIXME("%p, %p.\n", iface, state_sink);
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+    struct clock_sink *sink;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, state_sink);
+
+    if (!state_sink)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&clock->cs);
+    LIST_FOR_EACH_ENTRY(sink, &clock->sinks, struct clock_sink, entry)
+    {
+        if (sink->state_sink == state_sink)
+        {
+            IMFClockStateSink_Release(sink->state_sink);
+            list_remove(&sink->entry);
+            heap_free(sink);
+            break;
+        }
+    }
+    LeaveCriticalSection(&clock->cs);
+
+    return S_OK;
 }
 
 enum clock_command
@@ -731,6 +798,7 @@ HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock)
     object->IMFTimer_iface.lpVtbl = &presentclocktimervtbl;
     object->IMFShutdown_iface.lpVtbl = &presentclockshutdownvtbl;
     object->refcount = 1;
+    list_init(&object->sinks);
     InitializeCriticalSection(&object->cs);
 
     *clock = &object->IMFPresentationClock_iface;

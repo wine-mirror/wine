@@ -742,6 +742,67 @@ enum clock_action
     CLOCK_PAUSE,
 };
 
+static HRESULT WINAPI test_clock_sink_QueryInterface(IMFClockStateSink *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFClockStateSink) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFClockStateSink_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_clock_sink_AddRef(IMFClockStateSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_clock_sink_Release(IMFClockStateSink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME system_time, LONGLONG offset)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME system_time)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME system_time)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME system_time)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME system_time, float rate)
+{
+    return E_NOTIMPL;
+}
+
+static const IMFClockStateSinkVtbl test_clock_sink_vtbl =
+{
+    test_clock_sink_QueryInterface,
+    test_clock_sink_AddRef,
+    test_clock_sink_Release,
+    test_clock_sink_OnClockStart,
+    test_clock_sink_OnClockStop,
+    test_clock_sink_OnClockPause,
+    test_clock_sink_OnClockRestart,
+    test_clock_sink_OnClockSetRate,
+};
+
 static void test_presentation_clock(void)
 {
     static const struct clock_state_test
@@ -766,6 +827,7 @@ static void test_presentation_clock(void)
         { CLOCK_STOP, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_STOPPED, MF_E_CLOCK_STATE_ALREADY_SET },
         { CLOCK_PAUSE, MFCLOCK_STATE_STOPPED, MFCLOCK_STATE_STOPPED, MF_E_INVALIDREQUEST },
     };
+    IMFClockStateSink test_sink = { &test_clock_sink_vtbl };
     IMFPresentationTimeSource *time_source;
     IMFRateControl *rate_control;
     IMFPresentationClock *clock;
@@ -808,6 +870,25 @@ todo_wine
     hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, &clock_time, &systime);
 todo_wine
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    /* Sinks. */
+    hr = IMFPresentationClock_AddClockStateSink(clock, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_AddClockStateSink(clock, &test_sink);
+    ok(hr == S_OK, "Failed to add a sink, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_AddClockStateSink(clock, &test_sink);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_RemoveClockStateSink(clock, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_RemoveClockStateSink(clock, &test_sink);
+    ok(hr == S_OK, "Failed to remove sink, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_RemoveClockStateSink(clock, &test_sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Set default time source. */
     hr = MFCreateSystemTimeSource(&time_source);
