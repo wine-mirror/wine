@@ -108,7 +108,6 @@ struct _reg_driver
     DWORD       fccType;
     DWORD       fccHandler;
     DRIVERPROC  proc;
-    LPWSTR      name;
     struct list entry;
 };
 
@@ -336,75 +335,90 @@ BOOL VFWAPI ICInfo(DWORD type, DWORD handler, ICINFO *info)
 static DWORD IC_HandleRef = 1;
 
 /***********************************************************************
- *		ICInstall			[MSVFW32.@]
+ *              ICInstall                       [MSVFW32.@]
  */
-BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDesc, UINT wFlags) 
-{
-    reg_driver* driver;
-    unsigned len;
-
-    TRACE("(%s,%s,%p,%p,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), (void*)lParam, szDesc, wFlags);
-
-    /* Check if a driver is already registered */
-    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
-    {
-        if (!compare_fourcc(fccType, driver->fccType) &&
-            !compare_fourcc(fccHandler, driver->fccHandler))
-        {
-            return FALSE;
-        }
-    }
-
-    /* Register the driver */
-    if (!(driver = heap_alloc_zero(sizeof(*driver))))
-        return FALSE;
-    driver->fccType = fccType;
-    driver->fccHandler = fccHandler;
-
-    switch(wFlags)
-    {
-    case ICINSTALL_FUNCTION:
-        driver->proc = (DRIVERPROC)lParam;
-        break;
-    case ICINSTALL_DRIVER:
-        len = MultiByteToWideChar(CP_ACP, 0, (char*)lParam, -1, NULL, 0);
-        if (!(driver->name = heap_alloc(len * sizeof(WCHAR))))
-        {
-            heap_free(driver);
-            return FALSE;
-        }
-        MultiByteToWideChar(CP_ACP, 0, (char*)lParam, -1, driver->name, len);
-        break;
-    default:
-        ERR("Invalid flags!\n");
-        heap_free(driver);
-        return FALSE;
-    }
-
-    list_add_tail(&reg_driver_list, &driver->entry);
-
-    return TRUE;
-}
-
-/***********************************************************************
- *		ICRemove			[MSVFW32.@]
- */
-BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags) 
+BOOL VFWAPI ICInstall(DWORD type, DWORD handler, LPARAM lparam, char *desc, UINT flags)
 {
     reg_driver *driver;
 
-    TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wFlags);
+    TRACE("type %s, handler %s, lparam %#lx, desc %s, flags %#x.\n",
+            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), lparam, debugstr_a(desc), flags);
 
     LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
     {
-        if (!compare_fourcc(fccType, driver->fccType)
-                && !compare_fourcc(fccHandler, driver->fccHandler))
+        if (!compare_fourcc(type, driver->fccType)
+                && !compare_fourcc(handler, driver->fccHandler))
+        {
+            return FALSE;
+        }
+    }
+
+    switch (flags)
+    {
+    case ICINSTALL_FUNCTION:
+        if (!(driver = heap_alloc_zero(sizeof(*driver))))
+            return FALSE;
+        driver->fccType = type;
+        driver->fccHandler = handler;
+        driver->proc = (DRIVERPROC)lparam;
+        list_add_tail(&reg_driver_list, &driver->entry);
+        return TRUE;
+    case ICINSTALL_DRIVER:
+    {
+        const char *driver = (const char *)lparam;
+        char value[10];
+        HKEY key;
+        LONG res;
+
+        if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, HKLM_DRIVERS32, 0, KEY_SET_VALUE, &key))
+            return FALSE;
+        fourcc_to_string(value, type);
+        value[4] = '.';
+        fourcc_to_string(value + 5, handler);
+        value[9] = 0;
+        res = RegSetValueExA(key, value, 0, REG_SZ, (const BYTE *)driver, strlen(driver) + 1);
+        RegCloseKey(key);
+        return !res;
+    }
+    default:
+        FIXME("Unhandled flags %#x.\n", flags);
+        return FALSE;
+    }
+}
+
+/***********************************************************************
+ *              ICRemove                        [MSVFW32.@]
+ */
+BOOL VFWAPI ICRemove(DWORD type, DWORD handler, UINT flags)
+{
+    reg_driver *driver;
+    char value[10];
+    HKEY key;
+    LONG res;
+
+    TRACE("type %s, handler %s, flags %#x.\n",
+            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), flags);
+
+    LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, reg_driver, entry)
+    {
+        if (!compare_fourcc(type, driver->fccType)
+                && !compare_fourcc(handler, driver->fccHandler))
         {
             list_remove(&driver->entry);
-            heap_free(driver->name);
             heap_free(driver);
             return TRUE;
         }
+    }
+
+    if (!RegOpenKeyExA(HKEY_LOCAL_MACHINE, HKLM_DRIVERS32, 0, KEY_SET_VALUE, &key))
+    {
+        fourcc_to_string(value, type);
+        value[4] = '.';
+        fourcc_to_string(value + 5, handler);
+        value[9] = 0;
+        res = RegDeleteValueA(key, value);
+        RegCloseKey(key);
+        return !res;
     }
 
     return FALSE;
@@ -452,13 +466,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         if (!compare_fourcc(fccType, driver->fccType)
                 && !compare_fourcc(fccHandler, driver->fccHandler))
         {
-            if (driver->proc)
-                return ICOpenFunction(driver->fccType, driver->fccHandler, wMode, driver->proc);
-            else
-            {
-                if (!(hdrv = OpenDriver(driver->name, NULL, (LPARAM)&icopen)))
-                    return NULL;
-            }
+            return ICOpenFunction(driver->fccType, driver->fccHandler, wMode, driver->proc);
         }
     }
 

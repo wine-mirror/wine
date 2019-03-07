@@ -373,14 +373,11 @@ static void test_ICInfo(void)
 
         size = sizeof(buffer);
         res = RegQueryValueExA(key, "wine.test", NULL, NULL, (BYTE *)buffer, &size);
-todo_wine {
         ok(!res, "Failed to query value, error %d.\n", res);
         ok(!strcmp(buffer, "bogus"), "Got unexpected value \"%s\".\n", buffer);
-}
 
         memset(&info, 0x55, sizeof(info));
         info.dwSize = sizeof(info);
-todo_wine
         ok(ICInfo(test_type, test_handler, &info), "Expected success.\n");
         ok(info.fccType == test_type, "Got unexpected type %#x.\n", info.fccType);
         ok(info.fccHandler == test_handler, "Got unexpected handler %#x.\n", info.fccHandler);
@@ -389,10 +386,10 @@ todo_wine
         ok(info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", info.dwVersionICM);
         ok(!info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szName));
         ok(!info.szDescription[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szDescription));
-todo_wine
         ok(!lstrcmpW(info.szDriver, bogusW), "Got unexpected driver %s.\n", wine_dbgstr_w(info.szDriver));
 
         /* Drivers installed after msvfw32 is loaded are not enumerated. */
+todo_wine
         ok(!ICInfo(test_type, 0, &info), "Expected failure.\n");
 
         ret = ICRemove(test_type, test_handler, 0);
