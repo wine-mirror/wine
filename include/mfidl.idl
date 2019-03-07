@@ -412,6 +412,8 @@ interface IMFPresentationTimeSource : IMFClock
     HRESULT GetUnderlyingClock([out] IMFClock **clock);
 }
 
+cpp_quote("#define PRESENTATION_CURRENT_POSITION 0x7fffffffffffffff")
+
 [
     object,
     uuid(868ce85c-8ea9-4f55-ab82-b009a910a805)
