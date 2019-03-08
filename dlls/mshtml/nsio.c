@@ -806,7 +806,7 @@ static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString
         return S_OK;
     }
 
-    if(This->uri->is_doc_uri) {
+    if(This->load_flags & LOAD_DOCUMENT_URI) {
         WARN("Document channel with no MIME set. Assuming text/html\n");
         nsACString_SetData(aContentType, "text/html");
         return S_OK;
@@ -1074,6 +1074,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
     HTMLOuterWindow *window = NULL;
+    BOOL is_document_channel;
     BOOL cancel = FALSE;
     nsresult nsres = NS_OK;
 
@@ -1095,7 +1096,8 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         }
     }
 
-    if(This->uri->is_doc_uri) {
+    is_document_channel = !!(This->load_flags & LOAD_DOCUMENT_URI);
+    if(is_document_channel) {
         window = get_channel_window(This);
         if(window)
             set_uri_window(This->uri, window);
@@ -1121,7 +1123,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         return NS_ERROR_UNEXPECTED;
     }
 
-    if(This->uri->is_doc_uri && window == window->doc_obj->basedoc.window) {
+    if(is_document_channel && window == window->doc_obj->basedoc.window) {
         if(This->uri->channel_bsc) {
             channelbsc_set_channel(This->uri->channel_bsc, This, aListener, aContext);
 
@@ -1141,7 +1143,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     }
 
     if(!cancel)
-        nsres = async_open(This, window, This->uri->is_doc_uri, aListener, aContext);
+        nsres = async_open(This, window, is_document_channel, aListener, aContext);
 
     if(NS_SUCCEEDED(nsres) && This->load_group) {
         nsres = nsILoadGroup_AddRequest(This->load_group, (nsIRequest*)&This->nsIHttpChannel_iface,
