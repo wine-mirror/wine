@@ -456,9 +456,8 @@ static HRESULT WINAPI sample_GetItemByIndex(IMFSample *iface, UINT32 index, GUID
 
 static HRESULT WINAPI sample_CopyAllItems(IMFSample *iface, IMFAttributes *dest)
 {
-    FIXME("%p, %p.\n", iface, dest);
-
-    return E_NOTIMPL;
+    struct sample *sample = impl_from_IMFSample(iface);
+    return IMFAttributes_CopyAllItems(&sample->attributes.IMFAttributes_iface, dest);
 }
 
 static HRESULT WINAPI sample_GetSampleFlags(IMFSample *iface, DWORD *flags)
