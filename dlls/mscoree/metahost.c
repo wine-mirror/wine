@@ -39,6 +39,7 @@
 #include "metahost.h"
 #include "fusion.h"
 #include "wine/list.h"
+#include "wine/heap.h"
 #include "mscoree_private.h"
 
 #include "wine/debug.h"
@@ -86,6 +87,7 @@ typedef void (CDECL *MonoProfilerRuntimeShutdownBeginCallback) (MonoProfiler *pr
 
 MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
 MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status);
+const char* (CDECL *mono_assembly_name_get_name)(MonoAssemblyName *aname);
 MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
 void (CDECL *mono_callspec_set_assembly)(MonoAssembly *assembly);
 MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
@@ -193,6 +195,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
 
         LOAD_MONO_FUNCTION(mono_assembly_get_image);
         LOAD_MONO_FUNCTION(mono_assembly_load_from);
+        LOAD_MONO_FUNCTION(mono_assembly_name_get_name);
         LOAD_MONO_FUNCTION(mono_assembly_open);
         LOAD_MONO_FUNCTION(mono_config_parse);
         LOAD_MONO_FUNCTION(mono_class_from_mono_type);
@@ -1180,6 +1183,274 @@ HRESULT CLRMetaHostPolicy_CreateInstance(REFIID riid, void **ppobj)
     return ICLRMetaHostPolicy_QueryInterface(&GlobalCLRMetaHostPolicy.ICLRMetaHostPolicy_iface, riid, ppobj);
 }
 
+/*
+ * Assembly search override settings:
+ *
+ * WINE_MONO_OVERRIDES=*,Gac=n
+ *  Never search the GAC for libraries.
+ *
+ * WINE_MONO_OVERRIDES=Microsoft.Xna.Framework,Gac=n
+ *  Never search the GAC for Microsoft.Xna.Framework
+ *
+ * WINE_MONO_OVERRIDES=Microsoft.Xna.Framework.*,Gac=n;Microsoft.Xna.Framework.GamerServices,Gac=y
+ *  Never search the GAC for Microsoft.Xna.Framework, or any library starting
+ *  with Microsoft.Xna.Framework, except for Microsoft.Xna.Framework.GamerServices
+ */
+
+/* assembly search override flags */
+#define ASSEMBLY_SEARCH_GAC 1
+#define ASSEMBLY_SEARCH_UNDEFINED 2
+#define ASSEMBLY_SEARCH_DEFAULT ASSEMBLY_SEARCH_GAC
+
+typedef struct override_entry {
+    char *name;
+    DWORD flags;
+    struct list entry;
+} override_entry;
+
+static struct list env_overrides = LIST_INIT(env_overrides);
+
+#define IS_OPTION_TRUE(ch) \
+    ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+#define IS_OPTION_FALSE(ch) \
+    ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
+
+static void parse_override_entry(override_entry *entry, const char *string, int string_len)
+{
+    const char *next_key, *equals, *value;
+    UINT kvp_len, key_len;
+
+    entry->flags = ASSEMBLY_SEARCH_DEFAULT;
+
+    while (string && string_len > 0)
+    {
+        next_key = memchr(string, ',', string_len);
+
+        if (next_key)
+        {
+            kvp_len = next_key - string;
+            next_key++;
+        }
+        else
+            kvp_len = string_len;
+
+        equals = memchr(string, '=', kvp_len);
+
+        if (equals)
+        {
+            key_len = equals - string;
+            value = equals + 1;
+            switch (key_len) {
+            case 3:
+                if (!strncasecmp(string, "gac", 3)) {
+                    if (IS_OPTION_TRUE(*value))
+                        entry->flags |= ASSEMBLY_SEARCH_GAC;
+                    else if (IS_OPTION_FALSE(*value))
+                        entry->flags &= ~ASSEMBLY_SEARCH_GAC;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+        string = next_key;
+        string_len -= kvp_len + 1;
+    }
+}
+
+static BOOL WINAPI parse_env_overrides(INIT_ONCE *once, void *param, void **context)
+{
+    const char *override_string = getenv("WINE_MONO_OVERRIDES");
+    struct override_entry *entry;
+
+    if (override_string)
+    {
+        const char *entry_start;
+
+        entry_start = override_string;
+
+        while (entry_start && *entry_start)
+        {
+            const char *next_entry, *basename_end;
+            UINT entry_len;
+
+            next_entry = strchr(entry_start, ';');
+
+            if (next_entry)
+            {
+                entry_len = next_entry - entry_start;
+                next_entry++;
+            }
+            else
+                entry_len = strlen(entry_start);
+
+            basename_end = memchr(entry_start, ',', entry_len);
+
+            if (!basename_end)
+            {
+                entry_start = next_entry;
+                continue;
+            }
+
+            entry = heap_alloc_zero(sizeof(*entry));
+            if (!entry)
+            {
+                ERR("out of memory\n");
+                break;
+            }
+
+            entry->name = heap_alloc_zero(basename_end - entry_start + 1);
+            if (!entry->name)
+            {
+                ERR("out of memory\n");
+                heap_free(entry);
+                break;
+            }
+
+            memcpy(entry->name, entry_start, basename_end - entry_start);
+
+            entry_len -= basename_end - entry_start + 1;
+            entry_start = basename_end + 1;
+
+            parse_override_entry(entry, entry_start, entry_len);
+
+            list_add_tail(&env_overrides, &entry->entry);
+
+            entry_start = next_entry;
+        }
+    }
+
+    return TRUE;
+}
+
+static DWORD get_basename_search_flags(const char *basename, MonoAssemblyName *aname, HKEY userkey, HKEY appkey)
+{
+    struct override_entry *entry;
+    char buffer[256];
+    DWORD buffer_size;
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+    InitOnceExecuteOnce(&init_once, parse_env_overrides, NULL, NULL);
+
+    LIST_FOR_EACH_ENTRY(entry, &env_overrides, override_entry, entry)
+    {
+        if (strcmp(basename, entry->name) == 0)
+        {
+            return entry->flags;
+        }
+    }
+
+    buffer_size = sizeof(buffer);
+    if (appkey && !RegQueryValueExA(appkey, basename, 0, NULL, (LPBYTE)buffer, &buffer_size))
+    {
+        override_entry reg_entry;
+
+        memset(&reg_entry, 0, sizeof(reg_entry));
+
+        parse_override_entry(&reg_entry, buffer, strlen(buffer));
+
+        return reg_entry.flags;
+    }
+
+    buffer_size = sizeof(buffer);
+    if (userkey && !RegQueryValueExA(userkey, basename, 0, NULL, (LPBYTE)buffer, &buffer_size))
+    {
+        override_entry reg_entry;
+
+        memset(&reg_entry, 0, sizeof(reg_entry));
+
+        parse_override_entry(&reg_entry, buffer, strlen(buffer));
+
+        return reg_entry.flags;
+    }
+
+    return ASSEMBLY_SEARCH_UNDEFINED;
+}
+
+static HKEY get_app_overrides_key(void)
+{
+    static const WCHAR subkeyW[] = {'\\','M','o','n','o','\\','A','s','m','O','v','e','r','r','i','d','e','s',0};
+    WCHAR bufferW[MAX_PATH+18];
+    HKEY appkey = 0;
+    DWORD len;
+
+    len = (GetModuleFileNameW( 0, bufferW, MAX_PATH ));
+    if (len && len < MAX_PATH)
+    {
+        HKEY tmpkey;
+        WCHAR *p, *appname = bufferW;
+        if ((p = strrchrW( appname, '/' ))) appname = p + 1;
+        if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
+        strcatW( appname, subkeyW );
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Mono\AsmOverrides */
+        if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
+        {
+            if (RegOpenKeyW( tmpkey, appname, &appkey )) appkey = 0;
+            RegCloseKey( tmpkey );
+        }
+    }
+
+    return appkey;
+}
+
+static DWORD get_assembly_search_flags(MonoAssemblyName *aname)
+{
+    const char *name = mono_assembly_name_get_name(aname);
+    char *name_copy, *name_end;
+    DWORD result;
+    HKEY appkey = 0, userkey;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Mono\AsmOverrides */
+    if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Mono\\AsmOverrides", &userkey )) userkey = 0;
+
+    appkey = get_app_overrides_key();
+
+    result = get_basename_search_flags(name, aname, userkey, appkey);
+    if (result != ASSEMBLY_SEARCH_UNDEFINED)
+    {
+        if (userkey) RegCloseKey(userkey);
+        if (appkey) RegCloseKey(appkey);
+        return result;
+    }
+
+    name_copy = heap_alloc((strlen(name) + 3) * sizeof(WCHAR));
+    if (!name_copy)
+    {
+        ERR("out of memory\n");
+        if (userkey) RegCloseKey(userkey);
+        if (appkey) RegCloseKey(appkey);
+        return ASSEMBLY_SEARCH_DEFAULT;
+    }
+
+    strcpy(name_copy, name);
+    name_end = name_copy + strlen(name);
+
+    do
+    {
+        strcpy(name_end, ".*");
+        result = get_basename_search_flags(name_copy, aname, userkey, appkey);
+        if (result != ASSEMBLY_SEARCH_UNDEFINED) break;
+
+        *name_end = 0;
+        name_end = strrchr(name_copy, '.');
+    } while (name_end != NULL);
+
+    /* default flags */
+    if (result == ASSEMBLY_SEARCH_UNDEFINED)
+    {
+        result = get_basename_search_flags("*", aname, userkey, appkey);
+        if (result == ASSEMBLY_SEARCH_UNDEFINED)
+            result = ASSEMBLY_SEARCH_DEFAULT;
+    }
+
+    heap_free(name_copy);
+    if (appkey) RegCloseKey(appkey);
+    if (userkey) RegCloseKey(userkey);
+
+    return result;
+}
+
 HRESULT get_file_from_strongname(WCHAR* stringnameW, WCHAR* assemblies_path, int path_length)
 {
     HRESULT hr=S_OK;
@@ -1229,6 +1500,7 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
     WCHAR path[MAX_PATH];
     char *pathA;
     MonoImageOpenStatus stat;
+    DWORD search_flags;
 
     stringname = mono_stringify_assembly_name(aname);
 
@@ -1236,38 +1508,45 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
 
     if (!stringname) return NULL;
 
+    search_flags = get_assembly_search_flags(aname);
+
     /* FIXME: We should search the given paths before the GAC. */
 
-    stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, stringname, -1, NULL, 0);
-
-    stringnameW = HeapAlloc(GetProcessHeap(), 0, stringnameW_size * sizeof(WCHAR));
-    if (stringnameW)
+    if ((search_flags & ASSEMBLY_SEARCH_GAC) != 0)
     {
-        MultiByteToWideChar(CP_UTF8, 0, stringname, -1, stringnameW, stringnameW_size);
+        stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, stringname, -1, NULL, 0);
 
-        hr = get_file_from_strongname(stringnameW, path, MAX_PATH);
-
-        HeapFree(GetProcessHeap(), 0, stringnameW);
-    }
-    else
-        hr = E_OUTOFMEMORY;
-
-    if (SUCCEEDED(hr))
-    {
-        TRACE("found: %s\n", debugstr_w(path));
-
-        pathA = WtoA(path);
-
-        if (pathA)
+        stringnameW = HeapAlloc(GetProcessHeap(), 0, stringnameW_size * sizeof(WCHAR));
+        if (stringnameW)
         {
-            result = mono_assembly_open(pathA, &stat);
+            MultiByteToWideChar(CP_UTF8, 0, stringname, -1, stringnameW, stringnameW_size);
 
-            if (!result)
-                ERR("Failed to load %s, status=%u\n", debugstr_w(path), stat);
+            hr = get_file_from_strongname(stringnameW, path, MAX_PATH);
 
-            HeapFree(GetProcessHeap(), 0, pathA);
+            HeapFree(GetProcessHeap(), 0, stringnameW);
+        }
+        else
+            hr = E_OUTOFMEMORY;
+
+        if (SUCCEEDED(hr))
+        {
+            TRACE("found: %s\n", debugstr_w(path));
+
+            pathA = WtoA(path);
+
+            if (pathA)
+            {
+                result = mono_assembly_open(pathA, &stat);
+
+                if (!result)
+                    ERR("Failed to load %s, status=%u\n", debugstr_w(path), stat);
+
+                HeapFree(GetProcessHeap(), 0, pathA);
+            }
         }
     }
+    else
+        TRACE("skipping Windows GAC search due to override setting\n");
 
     mono_free(stringname);
 

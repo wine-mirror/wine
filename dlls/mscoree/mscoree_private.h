@@ -144,6 +144,7 @@ extern BOOL is_mono_started DECLSPEC_HIDDEN;
 
 extern MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
 extern MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status) DECLSPEC_HIDDEN;
+extern const char* (CDECL *mono_assembly_name_get_name)(MonoAssemblyName *aname) DECLSPEC_HIDDEN;
 extern MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status) DECLSPEC_HIDDEN;
 extern void (CDECL *mono_callspec_set_assembly)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
 extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type) DECLSPEC_HIDDEN;
