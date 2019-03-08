@@ -739,7 +739,7 @@ static HICON extract_icon(IShellFolder* folder, LPCITEMIDLIST pidl)
 {
 	IExtractIconW* pExtract;
 
-	if (SUCCEEDED(IShellFolder_GetUIObjectOf(folder, 0, 1, (LPCITEMIDLIST*)&pidl, &IID_IExtractIconW, 0, (LPVOID*)&pExtract))) {
+	if (SUCCEEDED(IShellFolder_GetUIObjectOf(folder, 0, 1, &pidl, &IID_IExtractIconW, 0, (void**)&pExtract))) {
 		WCHAR path[_MAX_PATH];
 		unsigned flags;
 		HICON hicon;
