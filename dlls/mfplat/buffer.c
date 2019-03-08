@@ -525,7 +525,7 @@ static HRESULT WINAPI sample_GetBufferCount(IMFSample *iface, DWORD *count)
 
     EnterCriticalSection(&sample->cs);
     *count = sample->buffer_count;
-    EnterCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->cs);
 
     return S_OK;
 }
