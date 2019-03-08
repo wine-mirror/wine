@@ -734,6 +734,12 @@ static void test_sample(void)
     ok(hr == S_OK, "Failed to get sample flags, hr %#x.\n", hr);
     ok(!flags, "Unexpected flags %#x.\n", flags);
 
+    hr = IMFSample_SetSampleFlags(sample, 0x123);
+    ok(hr == S_OK, "Failed to set sample flags, hr %#x.\n", hr);
+    hr = IMFSample_GetSampleFlags(sample, &flags);
+    ok(hr == S_OK, "Failed to get sample flags, hr %#x.\n", hr);
+    ok(flags == 0x123, "Unexpected flags %#x.\n", flags);
+
     hr = IMFSample_GetSampleTime(sample, &time);
 todo_wine
     ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);

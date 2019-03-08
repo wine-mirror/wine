@@ -475,9 +475,15 @@ static HRESULT WINAPI sample_GetSampleFlags(IMFSample *iface, DWORD *flags)
 
 static HRESULT WINAPI sample_SetSampleFlags(IMFSample *iface, DWORD flags)
 {
-    FIXME("%p, %#x.\n", iface, flags);
+    struct sample *sample = impl_from_IMFSample(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, flags);
+
+    EnterCriticalSection(&sample->cs);
+    sample->flags = flags;
+    LeaveCriticalSection(&sample->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_GetSampleTime(IMFSample *iface, LONGLONG *sampletime)
