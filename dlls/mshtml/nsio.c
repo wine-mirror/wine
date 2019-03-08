@@ -60,7 +60,6 @@ struct  nsWineURI {
     nsChannelBSC *channel_bsc;
     IUri *uri;
     IUriBuilder *uri_builder;
-    char *origin_charset;
     BOOL is_mutable;
     DWORD scheme;
 };
@@ -154,7 +153,7 @@ static HRESULT combine_url(IUri *base_uri, const WCHAR *rel_url, IUri **ret)
     return hres;
 }
 
-static nsresult create_nsuri(IUri*,const char*,nsWineURI**);
+static nsresult create_nsuri(IUri*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
 {
@@ -316,7 +315,7 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
 
     if(window->uri_nofrag) {
         nsWineURI *referrer_uri;
-        nsres = create_nsuri(window->uri_nofrag, NULL, &referrer_uri);
+        nsres = create_nsuri(window->uri_nofrag, &referrer_uri);
         if(NS_SUCCEEDED(nsres)) {
             nsres = nsIDocShellLoadInfo_SetReferrer(load_info, (nsIURI*)&referrer_uri->nsIFileURL_iface);
             assert(nsres == NS_OK);
@@ -2265,7 +2264,6 @@ static nsrefcnt NSAPI nsURI_Release(nsIFileURL *iface)
             IUri_Release(This->uri);
         if(This->uri_builder)
             IUriBuilder_Release(This->uri_builder);
-        heap_free(This->origin_charset);
         heap_free(This);
     }
 
@@ -2762,7 +2760,7 @@ static nsresult NSAPI nsURI_Clone(nsIFileURL *iface, nsIURI **_retval)
     if(!ensure_uri(This))
         return NS_ERROR_UNEXPECTED;
 
-    nsres = create_nsuri(This->uri, This->origin_charset, &wine_uri);
+    nsres = create_nsuri(This->uri, &wine_uri);
     if(NS_FAILED(nsres)) {
         WARN("create_nsuri failed: %08x\n", nsres);
         return nsres;
@@ -2847,7 +2845,7 @@ static nsresult NSAPI nsURI_GetOriginCharset(nsIFileURL *iface, nsACString *aOri
 
     TRACE("(%p)->(%p)\n", This, aOriginCharset);
 
-    nsACString_SetData(aOriginCharset, This->origin_charset);
+    nsACString_SetData(aOriginCharset, NULL); /* assume utf-8, we store URI as utf-16 anyway */
     return NS_OK;
 }
 
@@ -2944,7 +2942,7 @@ static nsresult NSAPI nsURI_CloneIgnoreRef(nsIFileURL *iface, nsIURI **_retval)
     if(!uri)
         return NS_ERROR_FAILURE;
 
-    nsres = create_nsuri(uri, This->origin_charset, &wine_uri);
+    nsres = create_nsuri(uri, &wine_uri);
     IUri_Release(uri);
     if(NS_FAILED(nsres)) {
         WARN("create_nsuri failed: %08x\n", nsres);
@@ -3339,7 +3337,7 @@ static const nsIStandardURLVtbl nsStandardURLVtbl = {
     nsStandardURL_SetDefaultPort
 };
 
-static nsresult create_nsuri(IUri *iuri, const char *origin_charset, nsWineURI **_retval)
+static nsresult create_nsuri(IUri *iuri, nsWineURI **_retval)
 {
     nsWineURI *ret;
     HRESULT hres;
@@ -3360,14 +3358,6 @@ static nsresult create_nsuri(IUri *iuri, const char *origin_charset, nsWineURI *
     if(FAILED(hres))
         ret->scheme = URL_SCHEME_UNKNOWN;
 
-    if(origin_charset && *origin_charset && strcmp(origin_charset, "UTF-8")) {
-        ret->origin_charset = heap_strdupA(origin_charset);
-        if(!ret->origin_charset) {
-            nsIFileURL_Release(&ret->nsIFileURL_iface);
-            return NS_ERROR_OUT_OF_MEMORY;
-        }
-    }
-
     TRACE("retval=%p\n", ret);
     *_retval = ret;
     return NS_OK;
@@ -3375,7 +3365,9 @@ static nsresult create_nsuri(IUri *iuri, const char *origin_charset, nsWineURI *
 
 HRESULT create_doc_uri(IUri *iuri, nsWineURI **ret)
 {
-    return create_nsuri(iuri, NULL, ret);
+    nsresult nsres;
+    nsres = create_nsuri(iuri, ret);
+    return NS_SUCCEEDED(nsres) ? S_OK : E_OUTOFMEMORY;
 }
 
 static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
@@ -3416,7 +3408,7 @@ HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsC
     if(FAILED(hres))
         return hres;
 
-    nsres = create_nsuri(iuri, NULL, &uri);
+    nsres = create_nsuri(iuri, &uri);
     IUri_Release(iuri);
     if(NS_FAILED(nsres))
         return E_FAIL;
@@ -3789,7 +3781,7 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
     if(FAILED(hres))
         return NS_SUCCESS_DEFAULT_ACTION;
 
-    nsres = create_nsuri(urlmon_uri, NULL, &wine_uri);
+    nsres = create_nsuri(urlmon_uri, &wine_uri);
     IUri_Release(urlmon_uri);
     if(base_wine_uri)
         nsIFileURL_Release(&base_wine_uri->nsIFileURL_iface);
