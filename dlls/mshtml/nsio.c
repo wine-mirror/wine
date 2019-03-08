@@ -1045,21 +1045,23 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
     is_document_channel = !!(This->load_flags & LOAD_DOCUMENT_URI);
 
-    if(is_document_channel && window == window->doc_obj->basedoc.window) {
+    if(is_document_channel) {
         if(This->uri->channel_bsc) {
             channelbsc_set_channel(This->uri->channel_bsc, This, aListener, aContext);
+            cancel = TRUE;
+        }
 
-            if(window->doc_obj->mime) {
+        if(window == window->doc_obj->basedoc.window) {
+            if(!This->uri->channel_bsc) {
+                /* top window navigation initiated by Gecko */
+                nsres = before_async_open(This, window->doc_obj->nscontainer, &cancel);
+                if(NS_SUCCEEDED(nsres)  && cancel) {
+                    TRACE("canceled\n");
+                    nsres = NS_BINDING_ABORTED;
+                }
+            }else if(window->doc_obj->mime) {
                 heap_free(This->content_type);
                 This->content_type = heap_strdupWtoA(window->doc_obj->mime);
-            }
-
-            cancel = TRUE;
-        }else {
-            nsres = before_async_open(This, window->doc_obj->nscontainer, &cancel);
-            if(NS_SUCCEEDED(nsres)  && cancel) {
-                TRACE("canceled\n");
-                nsres = NS_BINDING_ABORTED;
             }
         }
     }
