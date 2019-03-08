@@ -387,7 +387,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
 
     set_ready_state(window, READYSTATE_LOADING);
 
-    hres = create_doc_uri(window, uri, &nsuri);
+    hres = create_doc_uri(uri, &nsuri);
     if(!nav_uri)
         IUri_Release(uri);
     if(SUCCEEDED(hres)) {

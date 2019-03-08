@@ -57,7 +57,6 @@ struct  nsWineURI {
 
     LONG ref;
 
-    windowref_t *window_ref;
     nsChannelBSC *channel_bsc;
     IUri *uri;
     IUriBuilder *uri_builder;
@@ -156,7 +155,7 @@ static HRESULT combine_url(IUri *base_uri, const WCHAR *rel_url, IUri **ret)
     return hres;
 }
 
-static nsresult create_nsuri(IUri*,HTMLOuterWindow*,const char*,nsWineURI**);
+static nsresult create_nsuri(IUri*,const char*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
 {
@@ -304,7 +303,7 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
 
     if(window->uri_nofrag) {
         nsWineURI *referrer_uri;
-        nsres = create_nsuri(window->uri_nofrag, window, NULL, &referrer_uri);
+        nsres = create_nsuri(window->uri_nofrag, NULL, &referrer_uri);
         if(NS_SUCCEEDED(nsres)) {
             nsres = nsIDocShellLoadInfo_SetReferrer(load_info, (nsIURI*)&referrer_uri->nsIFileURL_iface);
             assert(nsres == NS_OK);
@@ -327,23 +326,6 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
     }
 
     return S_OK;
-}
-
-static void set_uri_window(nsWineURI *This, HTMLOuterWindow *window)
-{
-    if(This->window_ref) {
-        if(This->window_ref->window == window)
-            return;
-        TRACE("Changing %p -> %p\n", This->window_ref->window, window);
-        windowref_release(This->window_ref);
-    }
-
-    if(window) {
-        windowref_addref(window->window_ref);
-        This->window_ref = window->window_ref;
-    }else {
-        This->window_ref = NULL;
-    }
 }
 
 static inline BOOL is_http_channel(nsChannel *This)
@@ -1062,8 +1044,6 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     }
 
     is_document_channel = !!(This->load_flags & LOAD_DOCUMENT_URI);
-    if(is_document_channel)
-        set_uri_window(This->uri, window);
 
     if(is_document_channel && window == window->doc_obj->basedoc.window) {
         if(This->uri->channel_bsc) {
@@ -2266,8 +2246,6 @@ static nsrefcnt NSAPI nsURI_Release(nsIFileURL *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->window_ref)
-            windowref_release(This->window_ref);
         if(This->uri)
             IUri_Release(This->uri);
         if(This->uri_builder)
@@ -2769,8 +2747,7 @@ static nsresult NSAPI nsURI_Clone(nsIFileURL *iface, nsIURI **_retval)
     if(!ensure_uri(This))
         return NS_ERROR_UNEXPECTED;
 
-    nsres = create_nsuri(This->uri, This->window_ref ? This->window_ref->window : NULL,
-            This->origin_charset, &wine_uri);
+    nsres = create_nsuri(This->uri, This->origin_charset, &wine_uri);
     if(NS_FAILED(nsres)) {
         WARN("create_nsuri failed: %08x\n", nsres);
         return nsres;
@@ -2952,8 +2929,7 @@ static nsresult NSAPI nsURI_CloneIgnoreRef(nsIFileURL *iface, nsIURI **_retval)
     if(!uri)
         return NS_ERROR_FAILURE;
 
-    nsres = create_nsuri(uri, This->window_ref ? This->window_ref->window : NULL,
-            This->origin_charset, &wine_uri);
+    nsres = create_nsuri(uri, This->origin_charset, &wine_uri);
     IUri_Release(uri);
     if(NS_FAILED(nsres)) {
         WARN("create_nsuri failed: %08x\n", nsres);
@@ -3348,8 +3324,7 @@ static const nsIStandardURLVtbl nsStandardURLVtbl = {
     nsStandardURL_SetDefaultPort
 };
 
-static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window,
-        const char *origin_charset, nsWineURI **_retval)
+static nsresult create_nsuri(IUri *iuri, const char *origin_charset, nsWineURI **_retval)
 {
     nsWineURI *ret;
     HRESULT hres;
@@ -3362,8 +3337,6 @@ static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window,
     ret->nsIStandardURL_iface.lpVtbl = &nsStandardURLVtbl;
     ret->ref = 1;
     ret->is_mutable = TRUE;
-
-    set_uri_window(ret, window);
 
     IUri_AddRef(iuri);
     ret->uri = iuri;
@@ -3385,12 +3358,12 @@ static nsresult create_nsuri(IUri *iuri, HTMLOuterWindow *window,
     return NS_OK;
 }
 
-HRESULT create_doc_uri(HTMLOuterWindow *window, IUri *iuri, nsWineURI **ret)
+HRESULT create_doc_uri(IUri *iuri, nsWineURI **ret)
 {
     nsWineURI *uri;
     nsresult nsres;
 
-    nsres = create_nsuri(iuri, window, NULL, &uri);
+    nsres = create_nsuri(iuri, NULL, &uri);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -3428,7 +3401,6 @@ static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
 
 HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsChannel **ret)
 {
-    HTMLOuterWindow *window = NULL;
     nsChannel *channel;
     nsWineURI *uri;
     IUri *iuri;
@@ -3439,9 +3411,7 @@ HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsC
     if(FAILED(hres))
         return hres;
 
-    if(orig_channel->uri->window_ref)
-        window = orig_channel->uri->window_ref->window;
-    nsres = create_nsuri(iuri, window, NULL, &uri);
+    nsres = create_nsuri(iuri, NULL, &uri);
     IUri_Release(iuri);
     if(NS_FAILED(nsres))
         return E_FAIL;
@@ -3760,7 +3730,6 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
 {
     nsWineURI *wine_uri, *base_wine_uri = NULL;
     WCHAR new_spec[INTERNET_MAX_URL_LENGTH];
-    HTMLOuterWindow *window = NULL;
     const char *spec = NULL;
     UINT cp = CP_UTF8;
     IUri *urlmon_uri;
@@ -3782,8 +3751,6 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
         if(NS_SUCCEEDED(nsres)) {
             if(!ensure_uri(base_wine_uri))
                 return NS_ERROR_UNEXPECTED;
-            if(base_wine_uri->window_ref)
-                window = base_wine_uri->window_ref->window;
         }else {
             WARN("Could not get base nsWineURI: %08x\n", nsres);
         }
@@ -3817,7 +3784,7 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
     if(FAILED(hres))
         return NS_SUCCESS_DEFAULT_ACTION;
 
-    nsres = create_nsuri(urlmon_uri, window, NULL, &wine_uri);
+    nsres = create_nsuri(urlmon_uri, NULL, &wine_uri);
     IUri_Release(urlmon_uri);
     if(base_wine_uri)
         nsIFileURL_Release(&base_wine_uri->nsIFileURL_iface);

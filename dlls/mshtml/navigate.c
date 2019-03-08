@@ -2442,7 +2442,7 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
         }
     }
 
-    hres = create_doc_uri(window, uri, &nsuri);
+    hres = create_doc_uri(uri, &nsuri);
     if(FAILED(hres))
         return hres;
 

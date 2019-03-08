@@ -238,9 +238,6 @@ static void release_outer_window(HTMLOuterWindow *This)
     if(This->frame_element)
         This->frame_element->content_window = NULL;
 
-    This->window_ref->window = NULL;
-    windowref_release(This->window_ref);
-
     if(This->nswindow)
         nsIDOMWindow_Release(This->nswindow);
     if(This->window_proxy)
@@ -3554,16 +3551,7 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
     window->base.outer_window = window;
     window->base.inner_window = NULL;
 
-    window->window_ref = heap_alloc(sizeof(windowref_t));
-    if(!window->window_ref) {
-        heap_free(window);
-        return E_OUTOFMEMORY;
-    }
-
     window->doc_obj = doc_obj;
-
-    window->window_ref->window = window;
-    window->window_ref->ref = 1;
 
     if(nswindow) {
         nsresult nsres;

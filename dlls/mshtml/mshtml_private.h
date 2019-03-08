@@ -453,11 +453,6 @@ typedef struct {
     HTMLInnerWindow *window;
 } OmHistory;
 
-typedef struct {
-    HTMLOuterWindow *window;
-    LONG ref;
-}  windowref_t;
-
 typedef struct nsChannelBSC nsChannelBSC;
 
 struct HTMLWindow {
@@ -483,7 +478,6 @@ struct HTMLWindow {
 struct HTMLOuterWindow {
     HTMLWindow base;
 
-    windowref_t *window_ref;
     LONG task_magic;
 
     HTMLDocumentObj *doc_obj;
@@ -1319,17 +1313,6 @@ static inline char *heap_strndupWtoU(LPCWSTR str, unsigned len)
     }
 
     return ret;
-}
-
-static inline void windowref_addref(windowref_t *ref)
-{
-    InterlockedIncrement(&ref->ref);
-}
-
-static inline void windowref_release(windowref_t *ref)
-{
-    if(!InterlockedDecrement(&ref->ref))
-        heap_free(ref);
 }
 
 static inline VARIANT_BOOL variant_bool(BOOL b)
