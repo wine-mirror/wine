@@ -2581,8 +2581,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 lerror:
     if (!bSuccess)
     {
-        if(lpwfs)
-            WININET_Release( &lpwfs->hdr );
+        WININET_Release(&lpwfs->hdr);
         return NULL;
     }
 
