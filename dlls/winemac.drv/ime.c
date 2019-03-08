@@ -144,8 +144,8 @@ static int updateField(DWORD origLen, DWORD origOffset, DWORD currentOffset,
 
 static HIMCC updateCompStr(HIMCC old, LPCWSTR compstr, DWORD len, DWORD *flags)
 {
-    /* we need to make sure the CompStr, CompClaus and CompAttr fields are all
-     * set and correct */
+    /* We need to make sure the CompStr, CompClause and CompAttr fields are all
+     * set and correct. */
     int needed_size;
     HIMCC   rc;
     LPBYTE newdata = NULL;
