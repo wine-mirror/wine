@@ -902,53 +902,6 @@ static nsresult NSAPI nsChannel_Open2(nsIHttpChannel *iface, nsIInputStream **_r
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static HTMLOuterWindow *get_window_from_load_group(nsChannel *This)
-{
-    HTMLOuterWindow *window;
-    nsIChannel *channel;
-    nsIRequest *req;
-    nsWineURI *wine_uri;
-    nsIURI *uri;
-    nsresult nsres;
-
-    nsres = nsILoadGroup_GetDefaultLoadRequest(This->load_group, &req);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDefaultLoadRequest failed: %08x\n", nsres);
-        return NULL;
-    }
-
-    if(!req)
-        return NULL;
-
-    nsres = nsIRequest_QueryInterface(req, &IID_nsIChannel, (void**)&channel);
-    nsIRequest_Release(req);
-    if(NS_FAILED(nsres)) {
-        WARN("Could not get nsIChannel interface: %08x\n", nsres);
-        return NULL;
-    }
-
-    nsres = nsIChannel_GetURI(channel, &uri);
-    nsIChannel_Release(channel);
-    if(NS_FAILED(nsres)) {
-        ERR("GetURI failed: %08x\n", nsres);
-        return NULL;
-    }
-
-    nsres = nsIURI_QueryInterface(uri, &IID_nsWineURI, (void**)&wine_uri);
-    nsIURI_Release(uri);
-    if(NS_FAILED(nsres)) {
-        TRACE("Could not get nsWineURI: %08x\n", nsres);
-        return NULL;
-    }
-
-    window = wine_uri->window_ref ? wine_uri->window_ref->window : NULL;
-    if(window)
-        IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
-    nsIFileURL_Release(&wine_uri->nsIFileURL_iface);
-
-    return window;
-}
-
 static HTMLOuterWindow *get_channel_window(nsChannel *This)
 {
     nsIWebProgress *web_progress = NULL;
@@ -1102,32 +1055,15 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         }
     }
 
-    is_document_channel = !!(This->load_flags & LOAD_DOCUMENT_URI);
-    if(is_document_channel) {
-        window = get_channel_window(This);
-        if(window)
-            set_uri_window(This->uri, window);
-    }
-
-    if(!window) {
-        if(This->uri->window_ref && This->uri->window_ref->window) {
-            window = This->uri->window_ref->window;
-            IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
-        }else {
-            /* FIXME: Analyze removing get_window_from_load_group call */
-            if(This->load_group)
-                window = get_window_from_load_group(This);
-            if(!window)
-                window = get_channel_window(This);
-            if(window)
-                set_uri_window(This->uri, window);
-        }
-    }
-
+    window = get_channel_window(This);
     if(!window) {
         ERR("window = NULL\n");
         return NS_ERROR_UNEXPECTED;
     }
+
+    is_document_channel = !!(This->load_flags & LOAD_DOCUMENT_URI);
+    if(is_document_channel)
+        set_uri_window(This->uri, window);
 
     if(is_document_channel && window == window->doc_obj->basedoc.window) {
         if(This->uri->channel_bsc) {
