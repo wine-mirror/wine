@@ -20,12 +20,16 @@
 
 #define COBJMACROS
 #include "dshow.h"
+#include "vfw.h"
 #include "wine/test.h"
 
 static const WCHAR sink_id[] = {'I','n',0};
 static const WCHAR source_id[] = {'O','u','t',0};
 static const WCHAR sink_name[] = {'X','F','o','r','m',' ','I','n',0};
 static const WCHAR source_name[] = {'X','F','o','r','m',' ','O','u','t',0};
+
+static const DWORD test_handler = mmioFOURCC('w','t','s','t');
+static const GUID test_subtype = {mmioFOURCC('w','t','s','t'),0x0000,0x0010,{0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71}};
 
 static IBaseFilter *create_avi_dec(void)
 {
@@ -41,6 +45,27 @@ static ULONG get_refcount(void *iface)
     IUnknown *unknown = iface;
     IUnknown_AddRef(unknown);
     return IUnknown_Release(unknown);
+}
+
+static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
+        LPARAM lparam1, LPARAM lparam2)
+{
+    if (winetest_debug > 1)
+        trace("id %#lx, driver %p, msg %#x, lparam1 %#lx, lparam2 %#lx.\n",
+                id, driver, msg, lparam1, lparam2);
+
+    switch (msg)
+    {
+    case ICM_DECOMPRESS_QUERY:
+    {
+        BITMAPINFOHEADER *in = (BITMAPINFOHEADER *)lparam1;
+        return in->biBitCount == 16 ? ICERR_OK : ICERR_BADFORMAT;
+    }
+    default:
+        return 1;
+    }
+
+    return 1;
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -349,14 +374,102 @@ static void test_pin_info(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_media_types(void)
+{
+    IBaseFilter *filter = create_avi_dec();
+    AM_MEDIA_TYPE mt = {{0}}, *pmt;
+    VIDEOINFOHEADER vih = {0};
+    IEnumMediaTypes *enummt;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    mt.majortype = MEDIATYPE_Video;
+    mt.subtype = test_subtype;
+    mt.formattype = FORMAT_VideoInfo;
+    mt.cbFormat = sizeof(VIDEOINFOHEADER);
+    mt.pbFormat = (BYTE *)&vih;
+    vih.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    vih.bmiHeader.biCompression = test_handler;
+    vih.bmiHeader.biWidth = 32;
+    vih.bmiHeader.biHeight = 24;
+    vih.bmiHeader.biBitCount = 16;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    vih.bmiHeader.biBitCount = 32;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    vih.bmiHeader.biBitCount = 16;
+
+    mt.bFixedSizeSamples = TRUE;
+    mt.bTemporalCompression = TRUE;
+    mt.lSampleSize = 123;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Some versions of quartz check the major type; some do not. */
+
+    mt.subtype = MEDIASUBTYPE_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.subtype = MEDIASUBTYPE_RGB24;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.subtype = test_subtype;
+
+    mt.formattype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_VideoInfo;
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, source_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(avidec)
 {
+    BOOL ret;
+
+    ret = ICInstall(ICTYPE_VIDEO, test_handler, (LPARAM)vfw_driver_proc, NULL, ICINSTALL_FUNCTION);
+    ok(ret, "Failed to install driver.\n");
+
     CoInitialize(NULL);
 
     test_interfaces();
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_media_types();
 
     CoUninitialize();
+
+    ret = ICRemove(ICTYPE_VIDEO, test_handler, 0);
+    ok(ret, "Failed to remove driver.\n");
 }

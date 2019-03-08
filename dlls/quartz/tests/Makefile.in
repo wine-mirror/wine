@@ -1,5 +1,5 @@
 TESTDLL   = quartz.dll
-IMPORTS   = oleaut32 ole32 advapi32 user32
+IMPORTS   = oleaut32 ole32 advapi32 user32 msvfw32
 
 C_SRCS = \
 	avidec.c \
