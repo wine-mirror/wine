@@ -309,16 +309,26 @@ static HRESULT WINAPI mediatype_CopyAllItems(IMFMediaType *iface, IMFAttributes 
 
 static HRESULT WINAPI mediatype_GetMajorType(IMFMediaType *iface, GUID *guid)
 {
-    FIXME("%p, %p.\n", iface, guid);
-
-    return E_NOTIMPL;
+    struct media_type *media_type = impl_from_IMFMediaType(iface);
+    TRACE("%p, %p.\n", iface, guid);
+    return IMFAttributes_GetGUID(&media_type->attributes.IMFAttributes_iface, &MF_MT_MAJOR_TYPE, guid);
 }
 
 static HRESULT WINAPI mediatype_IsCompressedFormat(IMFMediaType *iface, BOOL *compressed)
 {
-    FIXME("%p, %p.\n", iface, compressed);
+    struct media_type *media_type = impl_from_IMFMediaType(iface);
+    UINT32 value;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, compressed);
+
+    hr = IMFAttributes_GetUINT32(&media_type->attributes.IMFAttributes_iface, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value);
+    if (FAILED(hr))
+        value = 0;
+
+    *compressed = !value;
+
+    return hr;
 }
 
 static HRESULT WINAPI mediatype_IsEqual(IMFMediaType *iface, IMFMediaType *type, DWORD *flags)
