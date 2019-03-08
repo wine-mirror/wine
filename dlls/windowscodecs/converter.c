@@ -1348,7 +1348,7 @@ static HRESULT copypixels_to_8bppGray(struct FormatConverter *This, const WICRec
     if (!srcdata) return E_OUTOFMEMORY;
 
     hr = copypixels_to_24bppBGR(This, prc, srcstride, srcdatasize, srcdata, source_format);
-    if (SUCCEEDED(hr) && prc)
+    if (SUCCEEDED(hr))
     {
         INT x, y;
         BYTE *src = srcdata, *dst = pbBuffer;
@@ -1438,7 +1438,7 @@ static HRESULT copypixels_to_8bppIndexed(struct FormatConverter *This, const WIC
     if (!srcdata) return E_OUTOFMEMORY;
 
     hr = copypixels_to_24bppBGR(This, prc, srcstride, srcdatasize, srcdata, source_format);
-    if (SUCCEEDED(hr) && prc)
+    if (SUCCEEDED(hr))
     {
         INT x, y;
         BYTE *src = srcdata, *dst = pbBuffer;
