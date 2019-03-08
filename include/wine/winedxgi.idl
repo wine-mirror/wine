@@ -20,6 +20,9 @@
 
 import "dxgi1_6.idl";
 
+cpp_quote("#include \"wine/vulkan.h\"")
+cpp_quote("#include \"wine/vulkan_driver.h\"")
+
 [
     object,
     local,
@@ -86,6 +89,13 @@ interface IWineDXGIFactory : IDXGIFactory5
 {
 }
 
+cpp_quote("#if 0")
+typedef LONGLONG VkSurfaceKHR;
+typedef LONGLONG VkInstance;
+typedef void* PFN_vkGetInstanceProcAddr;
+typedef int VkResult;
+cpp_quote("#endif")
+
 [
     object,
     local,
@@ -135,5 +145,15 @@ interface IWineDXGISwapChainHelper : IUnknown
     HRESULT set_display_mode(
         [in] HMONITOR monitor,
         [in] const DXGI_MODE_DESC *mode
+    );
+
+    HRESULT get_vulkan_func_finder(
+        [out] PFN_vkGetInstanceProcAddr *func_finder
+    );
+
+    VkResult create_surface(
+        [in] HWND window,
+        [in] VkInstance instance,
+        [out] VkSurfaceKHR *surface
     );
 }

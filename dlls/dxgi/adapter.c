@@ -616,6 +616,49 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_set_display_mode(IWineDXG
     return status == DISP_CHANGE_SUCCESSFUL ? S_OK : DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
 }
 
+static const struct vulkan_funcs *vk_funcs = NULL;
+
+static HRESULT STDMETHODCALLTYPE dxgi_swapchain_helper_get_vulkan_func_finder(IWineDXGISwapChainHelper *iface,
+        PFN_vkGetInstanceProcAddr *func_finder)
+{
+    if (!vk_funcs)
+    {
+        HDC hdc = GetDC(0);
+        vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
+        ReleaseDC(0, hdc);
+    }
+
+    if (vk_funcs)
+        *func_finder = (PFN_vkGetInstanceProcAddr) vk_funcs->p_vkGetInstanceProcAddr;
+
+    return S_OK;
+}
+
+static VkResult STDMETHODCALLTYPE dxgi_swapchain_helper_create_surface(IWineDXGISwapChainHelper *iface,
+        HWND window, VkInstance instance, VkSurfaceKHR *surface)
+{
+    HINSTANCE hinstance;
+    VkWin32SurfaceCreateInfoKHR info;
+
+    if (!vk_funcs)
+    {
+        HDC hdc = GetDC(0);
+        vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
+        ReleaseDC(0, hdc);
+    }
+
+    hinstance = (HINSTANCE) GetWindowLongPtrW(window, GWLP_HINSTANCE);
+
+    info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    info.pNext = NULL;
+    info.flags = 0;
+    info.hinstance = hinstance;
+    info.hwnd = window;
+
+    return vk_funcs->p_vkCreateWin32SurfaceKHR(instance, &info, NULL, surface);
+}
+
+
 static const struct IWineDXGISwapChainHelperVtbl dxgi_swapchain_helper_vtbl =
 {
     dxgi_swapchain_helper_QueryInterface,
@@ -627,7 +670,9 @@ static const struct IWineDXGISwapChainHelperVtbl dxgi_swapchain_helper_vtbl =
     dxgi_swapchain_helper_resize_window,
     dxgi_swapchain_helper_set_window_styles,
     dxgi_swapchain_helper_get_display_mode,
-    dxgi_swapchain_helper_set_display_mode
+    dxgi_swapchain_helper_set_display_mode,
+    dxgi_swapchain_helper_get_vulkan_func_finder,
+    dxgi_swapchain_helper_create_surface
 };
 
 struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter(IDXGIAdapter *iface)
