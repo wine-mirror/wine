@@ -61,7 +61,6 @@ struct  nsWineURI {
     IUri *uri;
     IUriBuilder *uri_builder;
     char *origin_charset;
-    BOOL is_doc_uri;
     BOOL is_mutable;
     DWORD scheme;
 };
@@ -3376,17 +3375,7 @@ static nsresult create_nsuri(IUri *iuri, const char *origin_charset, nsWineURI *
 
 HRESULT create_doc_uri(IUri *iuri, nsWineURI **ret)
 {
-    nsWineURI *uri;
-    nsresult nsres;
-
-    nsres = create_nsuri(iuri, NULL, &uri);
-    if(NS_FAILED(nsres))
-        return E_FAIL;
-
-    uri->is_doc_uri = TRUE;
-
-    *ret = uri;
-    return S_OK;
+    return create_nsuri(iuri, NULL, ret);
 }
 
 static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
@@ -3872,24 +3861,6 @@ static const nsIIOServiceHookVtbl nsIOServiceHookVtbl = {
 };
 
 static nsIIOServiceHook nsIOServiceHook = { &nsIOServiceHookVtbl };
-
-nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, cpp_bool *_retval)
-{
-    nsWineURI *wine_uri;
-    nsresult nsres;
-
-    *_retval = FALSE;
-
-    nsres = nsIURI_QueryInterface(uri, &IID_nsWineURI, (void**)&wine_uri);
-    if(NS_FAILED(nsres)) {
-        WARN("Could not get nsWineURI: %08x\n", nsres);
-        return NS_ERROR_NOT_IMPLEMENTED;
-    }
-
-    wine_uri->is_doc_uri = TRUE;
-    nsIFileURL_Release(&wine_uri->nsIFileURL_iface);
-    return NS_OK;
-}
 
 void init_nsio(nsIComponentManager *component_manager)
 {

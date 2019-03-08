@@ -1612,7 +1612,6 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
     NSContainer *This = impl_from_nsIURIContentListener(iface);
     nsACString spec_str;
     const char *spec;
-    nsresult nsres;
 
     nsACString_Init(&spec_str, NULL);
     nsIURI_GetSpec(aURI, &spec_str);
@@ -1622,11 +1621,7 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 
     nsACString_Finish(&spec_str);
 
-    nsres = on_start_uri_open(This, aURI, _retval);
-    if(NS_FAILED(nsres))
-        return nsres;
-
-    return !*_retval && This->content_listener
+    return This->content_listener
         ? nsIURIContentListener_OnStartURIOpen(This->content_listener, aURI, _retval)
         : NS_OK;
 }
