@@ -252,6 +252,20 @@ static nsresult before_async_open(nsChannel *channel, NSContainer *container, BO
     if(FAILED(hres))
         return NS_ERROR_FAILURE;
 
+    if(doc->hostui) {
+        OLECHAR *new_url;
+        hres = IDocHostUIHandler_TranslateUrl(doc->hostui, 0, display_uri, &new_url);
+        if(hres == S_OK && new_url) {
+            if(strcmpW(display_uri, new_url)) {
+                FIXME("TranslateUrl returned new URL %s -> %s\n", debugstr_w(display_uri), debugstr_w(new_url));
+                CoTaskMemFree(new_url);
+                *cancel = TRUE;
+                return NS_OK;
+            }
+            CoTaskMemFree(new_url);
+        }
+    }
+
     if(!exec_shldocvw_67(doc, display_uri)) {
         SysFreeString(display_uri);
         *cancel = FALSE;
@@ -3859,33 +3873,6 @@ static const nsIIOServiceHookVtbl nsIOServiceHookVtbl = {
 
 static nsIIOServiceHook nsIOServiceHook = { &nsIOServiceHookVtbl };
 
-static BOOL translate_url(HTMLDocumentObj *doc, nsWineURI *uri)
-{
-    OLECHAR *new_url = NULL;
-    WCHAR *url;
-    BOOL ret = FALSE;
-    HRESULT hres;
-
-    if(!doc->hostui || !ensure_uri(uri))
-        return FALSE;
-
-    hres = IUri_GetDisplayUri(uri->uri, &url);
-    if(FAILED(hres))
-        return FALSE;
-
-    hres = IDocHostUIHandler_TranslateUrl(doc->hostui, 0, url, &new_url);
-    if(hres == S_OK && new_url) {
-        if(strcmpW(url, new_url)) {
-            FIXME("TranslateUrl returned new URL %s -> %s\n", debugstr_w(url), debugstr_w(new_url));
-            ret = TRUE;
-        }
-        CoTaskMemFree(new_url);
-    }
-
-    SysFreeString(url);
-    return ret;
-}
-
 nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, cpp_bool *_retval)
 {
     nsWineURI *wine_uri;
@@ -3899,13 +3886,7 @@ nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, cpp_bool *_ret
         return NS_ERROR_NOT_IMPLEMENTED;
     }
 
-    if(!wine_uri->is_doc_uri) {
-        wine_uri->is_doc_uri = TRUE;
-
-        if(nscontainer->doc)
-            *_retval = translate_url(nscontainer->doc, wine_uri);
-    }
-
+    wine_uri->is_doc_uri = TRUE;
     nsIFileURL_Release(&wine_uri->nsIFileURL_iface);
     return NS_OK;
 }
