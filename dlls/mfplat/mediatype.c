@@ -302,9 +302,8 @@ static HRESULT WINAPI mediatype_GetItemByIndex(IMFMediaType *iface, UINT32 index
 
 static HRESULT WINAPI mediatype_CopyAllItems(IMFMediaType *iface, IMFAttributes *dest)
 {
-    FIXME("%p, %p.\n", iface, dest);
-
-    return E_NOTIMPL;
+    struct media_type *media_type = impl_from_IMFMediaType(iface);
+    return IMFAttributes_CopyAllItems(&media_type->attributes.IMFAttributes_iface, dest);
 }
 
 static HRESULT WINAPI mediatype_GetMajorType(IMFMediaType *iface, GUID *guid)
