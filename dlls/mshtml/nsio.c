@@ -951,7 +951,7 @@ static HTMLOuterWindow *get_window_from_load_group(nsChannel *This)
 
 static HTMLOuterWindow *get_channel_window(nsChannel *This)
 {
-    nsIWebProgress *web_progress;
+    nsIWebProgress *web_progress = NULL;
     mozIDOMWindowProxy *mozwindow;
     HTMLOuterWindow *window;
     nsresult nsres;
@@ -960,25 +960,31 @@ static HTMLOuterWindow *get_channel_window(nsChannel *This)
         nsIRequestObserver *req_observer;
 
         nsres = nsILoadGroup_GetGroupObserver(This->load_group, &req_observer);
-        if(NS_FAILED(nsres) || !req_observer) {
+        if(NS_FAILED(nsres)) {
             ERR("GetGroupObserver failed: %08x\n", nsres);
             return NULL;
         }
 
-        nsres = nsIRequestObserver_QueryInterface(req_observer, &IID_nsIWebProgress, (void**)&web_progress);
-        nsIRequestObserver_Release(req_observer);
-        if(NS_FAILED(nsres)) {
-            ERR("Could not get nsIWebProgress iface: %08x\n", nsres);
-            return NULL;
+        if(req_observer) {
+            nsres = nsIRequestObserver_QueryInterface(req_observer, &IID_nsIWebProgress, (void**)&web_progress);
+            nsIRequestObserver_Release(req_observer);
+            if(NS_FAILED(nsres)) {
+                ERR("Could not get nsIWebProgress iface: %08x\n", nsres);
+                return NULL;
+            }
         }
-    }else if(This->notif_callback) {
+    }
+
+    if(!web_progress && This->notif_callback) {
         nsres = nsIInterfaceRequestor_GetInterface(This->notif_callback, &IID_nsIWebProgress, (void**)&web_progress);
         if(NS_FAILED(nsres)) {
             ERR("GetInterface(IID_nsIWebProgress failed: %08x\n", nsres);
             return NULL;
         }
-    }else {
-        ERR("no load group nor notif callback\n");
+    }
+
+    if(!web_progress) {
+        ERR("Could not find nsIWebProgress\n");
         return NULL;
     }
 
