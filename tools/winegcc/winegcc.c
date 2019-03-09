@@ -800,27 +800,6 @@ static void add_library( struct options *opts, strarray *lib_dirs, strarray *fil
     free(fullname);
 }
 
-/* hack a main or WinMain function to work around Mingw's lack of Unicode support */
-static const char *mingw_unicode_hack( struct options *opts )
-{
-    char *main_stub = get_temp_file( opts->output_name, ".c" );
-
-    create_file( main_stub, 0644,
-                 "typedef unsigned short wchar_t;\n"
-                 "extern void * __stdcall LoadLibraryA(const char *);\n"
-                 "extern void * __stdcall GetProcAddress(void *,const char *);\n"
-                 "extern int wmain( int argc, wchar_t *argv[] );\n\n"
-                 "int main( int argc, char *argv[] )\n{\n"
-                 "    int wargc;\n"
-                 "    wchar_t **wargv, **wenv;\n"
-                 "    void *msvcrt = LoadLibraryA( \"msvcrt.dll\" );\n"
-                 "    void (*__wgetmainargs)(int *argc, wchar_t** *wargv, wchar_t** *wenvp, int expand_wildcards,\n"
-                 "                           int *new_mode) = GetProcAddress( msvcrt, \"__wgetmainargs\" );\n"
-                 "    __wgetmainargs( &wargc, &wargv, &wenv, 0, 0 );\n"
-                 "    return wmain( wargc, wargv );\n}\n" );
-    return compile_to_object( opts, main_stub, NULL );
-}
-
 static void build(struct options* opts)
 {
     strarray *lib_dirs, *files;
@@ -972,6 +951,7 @@ static void build(struct options* opts)
             strarray_add(link_args, opts->gui_app ? "-mwindows" : "-mconsole");
         }
 
+        if (opts->unicode_app) strarray_add(link_args, "-municode");
         if (opts->nodefaultlibs) strarray_add(link_args, "-nodefaultlibs");
         if (opts->nostartfiles) strarray_add(link_args, "-nostartfiles" );
 
@@ -996,9 +976,6 @@ static void build(struct options* opts)
 
         if (opts->large_address_aware && opts->target_cpu == CPU_x86)
             strarray_add( link_args, "-Wl,--large-address-aware" );
-
-        if (opts->unicode_app && !opts->shared)
-            strarray_add(link_args, mingw_unicode_hack(opts));
 
         for ( j = 0; j < lib_dirs->size; j++ )
             strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
