@@ -425,6 +425,36 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         strarray_add( flags, strmake( "-Wl,-soname,%s.so", output_name ));
         break;
 
+    case PLATFORM_WINDOWS:
+    case PLATFORM_CYGWIN:
+        if (opts->shared)
+        {
+            strarray_add( flags, "-shared" );
+            strarray_add( flags, "-Wl,--kill-at" );
+        }
+        else strarray_add( flags, opts->gui_app ? "-mwindows" : "-mconsole" );
+
+        if (opts->unicode_app) strarray_add( flags, "-municode" );
+        if (opts->nodefaultlibs) strarray_add( flags, "-nodefaultlibs" );
+        if (opts->nostartfiles) strarray_add( flags, "-nostartfiles" );
+
+        if (opts->subsystem)
+        {
+            strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
+            if (!strcmp( opts->subsystem, "native" ))
+            {
+                const char *entry = opts->target_cpu == CPU_x86 ? "_DriverEntry@8" : "DriverEntry";
+                strarray_add( flags, strmake( "-Wl,--entry,%s", entry ));
+            }
+        }
+
+        if (opts->image_base) strarray_add( flags, strmake("-Wl,--image-base,%s", opts->image_base ));
+
+        if (opts->large_address_aware && opts->target_cpu == CPU_x86)
+            strarray_add( flags, "-Wl,--large-address-aware" );
+
+        return flags;
+
     default:
         if (opts->image_base)
         {
@@ -906,7 +936,6 @@ static void build(struct options* opts)
     /* mark the files with their appropriate type */
     spec_file = lang = 0;
     files = strarray_alloc();
-    link_args = strarray_alloc();
     for ( j = 0; j < opts->files->size; j++ )
     {
 	const char* file = opts->files->base[j];
@@ -961,7 +990,7 @@ static void build(struct options* opts)
         if (opts->win16_app)
             error( "Building 16-bit code is not supported for Windows\n" );
 
-        strarray_addall(link_args, get_translator(opts));
+        link_args = get_link_args( opts, output_name );
 
         if (opts->shared)
         {
@@ -979,41 +1008,11 @@ static void build(struct options* opts)
             spawn(opts->prefix, spec_args, 0);
             strarray_free(spec_args);
 
-            strarray_add(link_args, "-shared");
-            if (verbose) strarray_add(link_args, "-v");
-            strarray_add(link_args, "-Wl,--kill-at");
             strarray_add(link_args, spec_def_name);
         }
-        else
-        {
-            strarray_add(link_args, opts->gui_app ? "-mwindows" : "-mconsole");
-        }
-
-        if (opts->unicode_app) strarray_add(link_args, "-municode");
-        if (opts->nodefaultlibs) strarray_add(link_args, "-nodefaultlibs");
-        if (opts->nostartfiles) strarray_add(link_args, "-nostartfiles" );
-
-        if (opts->subsystem)
-        {
-            strarray_add(link_args, strmake("-Wl,--subsystem,%s", opts->subsystem));
-            if (!strcmp( opts->subsystem, "native" ))
-            {
-                const char *entry = opts->target_cpu == CPU_x86 ? "_DriverEntry@8" : "DriverEntry";
-                strarray_add(link_args, strmake( "-Wl,--entry,%s", entry ));
-            }
-        }
-
-        for ( j = 0 ; j < opts->linker_args->size ; j++ )
-            strarray_add(link_args, opts->linker_args->base[j]);
 
         strarray_add(link_args, "-o");
         strarray_add(link_args, output_file);
-
-        if (opts->image_base)
-            strarray_add(link_args, strmake("-Wl,--image-base,%s", opts->image_base));
-
-        if (opts->large_address_aware && opts->target_cpu == CPU_x86)
-            strarray_add( link_args, "-Wl,--large-address-aware" );
 
         for ( j = 0; j < lib_dirs->size; j++ )
             strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
