@@ -1631,9 +1631,6 @@
 /* Define to a macro to define an assembly function */
 #undef __ASM_DEFINE_FUNC
 
-/* Define to a macro to generate an assembly function directive */
-#undef __ASM_FUNC
-
 /* Define to a macro to generate an assembly function with C calling
    convention */
 #undef __ASM_GLOBAL_FUNC

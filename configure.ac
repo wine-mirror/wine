@@ -710,7 +710,6 @@ AC_SUBST(WINELOADER_LDFLAGS,"")
 AC_SUBST(WINEPRELOADER_LDFLAGS,"")
 LIBEXT="so"
 DLLEXT=".so"
-IMPLIBEXT="def"
 WINE_PATH_SONAME_TOOLS
 WINE_CONFIG_HELPERS
 
@@ -724,7 +723,6 @@ case $host_os in
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     LIBEXT="dll"
     DLLEXT=""
-    IMPLIBEXT="a"
     dnl Disable modules that can't be used on Windows
     enable_iphlpapi=${enable_iphlpapi:-no}
     enable_kernel32=${enable_kernel32:-no}
@@ -736,13 +734,6 @@ case $host_os in
     dnl Disable dependencies that are not useful on Windows
     with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
-
-    dnl Mingw needs explicit msvcrt for linking libwine and winsock for wininet
-    crtlibs=""
-    case $host_os in
-        mingw32*)
-          crtlibs="-lmsvcrt" ;;
-    esac
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.dll")
     AC_SUBST(LIBWINE_IMPORTLIB,"libwine.a")
@@ -2058,19 +2049,14 @@ AC_CACHE_CHECK([how to define a function in assembly code], ac_cv_asm_func_def,
       ac_cv_asm_func_def=".type 2",
       ac_cv_asm_func_def="unknown")])]))
 
-AH_TEMPLATE(__ASM_FUNC,[Define to a macro to generate an assembly function directive])
 case "$ac_cv_asm_func_def" in
   ".def")
-     AC_DEFINE([__ASM_FUNC(name)], [".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"])
      asm_func_header=".def $asm_name_prefix\" #name suffix \"; .scl 2; .type 32; .endef" ;;
   ".type @function")
-     AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",@function"])
      asm_func_header=".type $asm_name_prefix\" #name suffix \",@function" ;;
   ".type 2")
-     AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",2"])
      asm_func_header=".type $asm_name_prefix\" #name suffix \",2" ;;
   *)
-     AC_DEFINE([__ASM_FUNC(name)], [""])
      asm_func_header="" ;;
 esac
 

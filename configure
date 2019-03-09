@@ -7788,7 +7788,6 @@ WINEPRELOADER_LDFLAGS=""
 
 LIBEXT="so"
 DLLEXT=".so"
-IMPLIBEXT="def"
 # Extract the first word of "ldd", so it can be a program name with args.
 set dummy ldd; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -8153,7 +8152,6 @@ fi
 
     LIBEXT="dll"
     DLLEXT=""
-    IMPLIBEXT="a"
         enable_iphlpapi=${enable_iphlpapi:-no}
     enable_kernel32=${enable_kernel32:-no}
     enable_msvcrt=${enable_msvcrt:-no}
@@ -8163,12 +8161,6 @@ fi
     enable_server=${enable_server:-no}
         with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
-
-        crtlibs=""
-    case $host_os in
-        mingw32*)
-          crtlibs="-lmsvcrt" ;;
-    esac
 
     LIBWINE_SHAREDLIB="libwine.dll"
 
@@ -16560,23 +16552,14 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_asm_func_def" >&5
 $as_echo "$ac_cv_asm_func_def" >&6; }
 
-
 case "$ac_cv_asm_func_def" in
   ".def")
-     $as_echo "#define __ASM_FUNC(name) \".def \" __ASM_NAME(name) \"; .scl 2; .type 32; .endef\"" >>confdefs.h
-
      asm_func_header=".def $asm_name_prefix\" #name suffix \"; .scl 2; .type 32; .endef" ;;
   ".type @function")
-     $as_echo "#define __ASM_FUNC(name) \".type \" __ASM_NAME(name) \",@function\"" >>confdefs.h
-
      asm_func_header=".type $asm_name_prefix\" #name suffix \",@function" ;;
   ".type 2")
-     $as_echo "#define __ASM_FUNC(name) \".type \" __ASM_NAME(name) \",2\"" >>confdefs.h
-
      asm_func_header=".type $asm_name_prefix\" #name suffix \",2" ;;
   *)
-     $as_echo "#define __ASM_FUNC(name) \"\"" >>confdefs.h
-
      asm_func_header="" ;;
 esac
 
