@@ -3,18 +3,15 @@
 
 #include "d3d11_private.h"
 
-#define EXTERNAL_D3D_NO_WINDOWS_H
-#define EXTERNAL_D3D_NO_VULKAN_H
 #include "wine/library.h"
-#include "wine/vulkan.h"
-#include "wine/vulkan_driver.h"
-#include "wine/external_d3d.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
+typedef HRESULT (WINAPI* PFN_D3D11_CORE_CREATE_DEVICE)(IDXGIFactory*,IDXGIAdapter*,UINT,const D3D_FEATURE_LEVEL*,
+    UINT,ID3D11Device**);
+
 static void* external_d3d_lib;
-static const struct vulkan_funcs *vulkan_funcs;
-static PFN_native_core_create_d3d11_device pfn_native_core_create_d3d11_device;
+static PFN_D3D11_CORE_CREATE_DEVICE pfn_native_core_create_d3d11_device;
 
 static char* get_desired_d3d_library(void)
 {
@@ -23,7 +20,6 @@ static char* get_desired_d3d_library(void)
     DWORD type, size;
     char buffer[MAX_PATH+10];
     DWORD len;
-    LSTATUS status;
 
     static char* external_d3d_lib_name = NULL;
 
@@ -54,9 +50,9 @@ static char* get_desired_d3d_library(void)
 
     size = MAX_PATH;
 
-    if (defkey) status = RegQueryValueExA(defkey, "external_d3d", 0, &type, (BYTE *)external_d3d_lib_name, &size);
+    if (defkey) RegQueryValueExA(defkey, "external_d3d", 0, &type, (BYTE *)external_d3d_lib_name, &size);
     if (type != REG_SZ && appkey)
-        status = RegQueryValueExA(appkey, "external_d3d", 0, &type, (BYTE *)external_d3d_lib_name, &size);
+        RegQueryValueExA(appkey, "external_d3d", 0, &type, (BYTE *)external_d3d_lib_name, &size);
     if (type != REG_SZ)
     {
         HeapFree(GetProcessHeap(), 0, external_d3d_lib_name);
@@ -83,45 +79,18 @@ int is_external_d3d11_available(void)
             ERR("External D3D Library %s could not be found\n", lib_name);
             return 0;
         } else {
-            HDC hdc;
-
-            pfn_native_core_create_d3d11_device = wine_dlsym(external_d3d_lib, "native_core_create_d3d11_device", NULL, 0);
-
-            hdc = GetDC(0);
-            vulkan_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
-            ReleaseDC(0, hdc);
+            pfn_native_core_create_d3d11_device = wine_dlsym(external_d3d_lib, "D3D11CoreCreateDevice", NULL, 0);
         }
     }
     
     return 1;
 }
 
-static VkResult create_vulkan_surface(VkInstance instance, void *window, VkSurfaceKHR *surface)
-{
-    HINSTANCE window_instance = (HINSTANCE) GetWindowLongPtrA(window, GWLP_HINSTANCE);
-
-    VkWin32SurfaceCreateInfoKHR info;
-    info.sType      = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    info.pNext      = NULL;
-    info.flags      = 0;
-    info.hinstance  = window_instance;
-    info.hwnd       = window;
-
-    return vulkan_funcs->p_vkCreateWin32SurfaceKHR(instance, &info, NULL, surface);
-}
-
-static native_info info =
-{
-    NULL,
-    create_vulkan_surface
-};
-
 HRESULT create_external_d3d11_device(IDXGIFactory *factory, IDXGIAdapter *adapter, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, ID3D11Device **device_out)
 {
-    info.pfn_vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr) vulkan_funcs->p_vkGetInstanceProcAddr;
 
     TRACE("Calling external D3D11 library's entry-point\n");
-    return pfn_native_core_create_d3d11_device(info, factory, adapter, flags, feature_levels,
+    return pfn_native_core_create_d3d11_device(factory, adapter, flags, feature_levels,
             levels, device_out);
 }
