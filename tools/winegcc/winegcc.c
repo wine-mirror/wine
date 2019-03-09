@@ -213,6 +213,7 @@ struct options
     const char* section_align;
     const char* lib_suffix;
     const char* subsystem;
+    const char* prelink;
     strarray* prefix;
     strarray* lib_dirs;
     strarray* linker_args;
@@ -378,9 +379,17 @@ static int try_link( const strarray *prefix, const strarray *link_tool, const ch
     return ret;
 }
 
-static const strarray* get_lddllflags( const struct options *opts, const strarray *link_tool )
+static strarray *get_link_args( struct options *opts, const char *output_name )
 {
+    const strarray *link_tool = get_translator( opts );
     strarray *flags = strarray_alloc();
+    unsigned int i;
+
+    strarray_addall( flags, link_tool );
+    for (i = 0; i < opts->linker_args->size; i++) strarray_add( flags, opts->linker_args->base[i] );
+
+    if (verbose > 1) strarray_add( flags, "-v" );
+
     switch (opts->target_platform)
     {
     case PLATFORM_APPLE:
@@ -392,34 +401,64 @@ static const strarray* get_lddllflags( const struct options *opts, const strarra
             strarray_add( flags, "-read_only_relocs" );
             strarray_add( flags, "warning" );
         }
+        if (opts->image_base)
+        {
+            strarray_add( flags, "-image_base" );
+            strarray_add( flags, opts->image_base );
+        }
+        if (opts->strip) strarray_add( flags, "-x" );
+        return flags;
+
+    case PLATFORM_SOLARIS:
+        {
+            char *mapfile = get_temp_file( output_name, ".map" );
+            const char *align = opts->section_align ? opts->section_align : "0x1000";
+
+            create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", align, align );
+            strarray_add( flags, strmake("-Wl,-M,%s", mapfile) );
+            strarray_add( tmp_files, mapfile );
+        }
         break;
 
     case PLATFORM_ANDROID:
-    case PLATFORM_SOLARIS:
-    case PLATFORM_UNSPECIFIED:
-        strarray_add( flags, "-shared" );
-        strarray_add( flags, "-Wl,-Bsymbolic" );
-
-        /* Try all options first - this is likely to succeed on modern compilers */
-        if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic "
-                       "-Wl,-z,defs -Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
-        {
-            strarray_add( flags, "-Wl,-z,defs" );
-            strarray_add( flags, "-Wl,-init,__wine_spec_init,-fini,__wine_spec_fini" );
-        }
-        else /* otherwise figure out which ones are allowed */
-        {
-            if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic -Wl,-z,defs" ))
-                strarray_add( flags, "-Wl,-z,defs" );
-            if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic "
-                           "-Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
-                strarray_add( flags, "-Wl,-init,__wine_spec_init,-fini,__wine_spec_fini" );
-        }
+        /* the Android loader requires a soname for all libraries */
+        strarray_add( flags, strmake( "-Wl,-soname,%s.so", output_name ));
         break;
 
     default:
-        assert(0);
+        if (opts->image_base)
+        {
+            if (!try_link( opts->prefix, link_tool, strmake("-Wl,-Ttext-segment=%s", opts->image_base)) )
+                strarray_add( flags, strmake("-Wl,-Ttext-segment=%s", opts->image_base) );
+            else
+                opts->prelink = PRELINK;
+        }
+        if (!try_link( opts->prefix, link_tool, "-Wl,-z,max-page-size=0x1000"))
+            strarray_add( flags, "-Wl,-z,max-page-size=0x1000");
+        break;
     }
+
+    /* generic Unix shared library flags */
+
+    strarray_add( flags, "-shared" );
+    strarray_add( flags, "-Wl,-Bsymbolic" );
+
+    /* Try all options first - this is likely to succeed on modern compilers */
+    if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic "
+                   "-Wl,-z,defs -Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
+    {
+        strarray_add( flags, "-Wl,-z,defs" );
+        strarray_add( flags, "-Wl,-init,__wine_spec_init,-fini,__wine_spec_fini" );
+    }
+    else /* otherwise figure out which ones are allowed */
+    {
+        if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic -Wl,-z,defs" ))
+            strarray_add( flags, "-Wl,-z,defs" );
+        if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic "
+                       "-Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
+            strarray_add( flags, "-Wl,-init,__wine_spec_init,-fini,__wine_spec_fini" );
+    }
+
     return flags;
 }
 
@@ -807,7 +846,6 @@ static void build(struct options* opts)
     char *output_file;
     const char *spec_o_name;
     const char *output_name, *spec_file, *lang;
-    const char *prelink = NULL;
     int generate_app_loader = 1;
     int fake_module = 0;
     unsigned int j;
@@ -1151,52 +1189,10 @@ static void build(struct options* opts)
     if (fake_module) return;  /* nothing else to do */
 
     /* link everything together now */
-    strarray_addall(link_args, get_translator(opts));
-    strarray_addall(link_args, get_lddllflags(opts, link_args));
+    link_args = get_link_args( opts, output_name );
 
     strarray_add(link_args, "-o");
     strarray_add(link_args, strmake("%s.so", output_file));
-
-    for ( j = 0 ; j < opts->linker_args->size ; j++ ) 
-        strarray_add(link_args, opts->linker_args->base[j]);
-
-    switch (opts->target_platform)
-    {
-    case PLATFORM_APPLE:
-        if (opts->image_base)
-        {
-            strarray_add(link_args, "-image_base");
-            strarray_add(link_args, opts->image_base);
-        }
-        if (opts->strip)
-            strarray_add(link_args, "-Wl,-x");
-        break;
-    case PLATFORM_SOLARIS:
-        {
-            char *mapfile = get_temp_file( output_name, ".map" );
-            const char *align = opts->section_align ? opts->section_align : "0x1000";
-
-            create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", align, align );
-            strarray_add(link_args, strmake("-Wl,-M,%s", mapfile));
-            strarray_add(tmp_files, mapfile);
-        }
-        break;
-    case PLATFORM_ANDROID:
-        /* the Android loader requires a soname for all libraries */
-        strarray_add( link_args, strmake( "-Wl,-soname,%s.so", output_name ));
-        break;
-    default:
-        if (opts->image_base)
-        {
-            if (!try_link(opts->prefix, link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base)))
-                strarray_add(link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base));
-            else
-                prelink = PRELINK;
-        }
-        if (!try_link(opts->prefix, link_args, "-Wl,-z,max-page-size=0x1000"))
-            strarray_add(link_args, "-Wl,-z,max-page-size=0x1000");
-        break;
-    }
 
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
@@ -1229,12 +1225,12 @@ static void build(struct options* opts)
     strarray_free (link_args);
 
     /* set the base address with prelink if linker support is not present */
-    if (prelink && !opts->target)
+    if (opts->prelink && !opts->target)
     {
-        if (prelink[0] && strcmp(prelink,"false"))
+        if (opts->prelink[0] && strcmp(opts->prelink,"false"))
         {
             strarray *prelink_args = strarray_alloc();
-            strarray_add(prelink_args, prelink);
+            strarray_add(prelink_args, opts->prelink);
             strarray_add(prelink_args, "--reloc-only");
             strarray_add(prelink_args, opts->image_base);
             strarray_add(prelink_args, strmake("%s.so", output_file));
