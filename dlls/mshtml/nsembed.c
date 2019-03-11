@@ -2158,6 +2158,7 @@ HRESULT create_gecko_browser(HTMLDocumentObj *doc, GeckoBrowser **_ret)
     ret->doc = doc;
     ret->ref = 1;
     list_init(&ret->document_nodes);
+    list_init(&ret->outer_windows);
 
     hres = init_browser(ret);
     if(SUCCEEDED(hres))
@@ -2177,6 +2178,12 @@ void detach_gecko_browser(GeckoBrowser *This)
         HTMLDocumentNode *doc = LIST_ENTRY(list_head(&This->document_nodes), HTMLDocumentNode, browser_entry);
         list_remove(&doc->browser_entry);
         doc->browser = NULL;
+    }
+
+    while(!list_empty(&This->outer_windows)) {
+        HTMLOuterWindow *window = LIST_ENTRY(list_head(&This->outer_windows), HTMLOuterWindow, browser_entry);
+        list_remove(&window->browser_entry);
+        window->browser = NULL;
     }
 
     ShowWindow(This->hwnd, SW_HIDE);

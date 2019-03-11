@@ -216,6 +216,11 @@ static ULONG WINAPI HTMLWindow2_AddRef(IHTMLWindow2 *iface)
 
 static void release_outer_window(HTMLOuterWindow *This)
 {
+    if(This->browser) {
+        list_remove(&This->browser_entry);
+        This->browser = NULL;
+    }
+
     if(This->pending_window) {
         abort_window_bindings(This->pending_window);
         This->pending_window->base.outer_window = NULL;
@@ -970,7 +975,7 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
     if(replace)
         FIXME("unsupported relace argument\n");
 
-    if(!window->doc_obj || !window->uri_nofrag)
+    if(!window->browser || !window->uri_nofrag)
         return E_UNEXPECTED;
 
     if(name && *name == '_') {
@@ -3547,6 +3552,8 @@ HRESULT create_outer_window(GeckoBrowser *browser, mozIDOMWindowProxy *mozwindow
     window->base.inner_window = NULL;
 
     window->doc_obj = browser->doc;
+    window->browser = browser;
+    list_add_head(&browser->outer_windows, &window->browser_entry);
 
     mozIDOMWindowProxy_AddRef(mozwindow);
     window->window_proxy = mozwindow;
@@ -3630,7 +3637,7 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
         return E_FAIL;
     }
 
-    hres = create_document_node(nshtmldoc, outer_window->doc_obj->nscontainer, window, &window->doc);
+    hres = create_document_node(nshtmldoc, outer_window->browser, window, &window->doc);
     nsIDOMHTMLDocument_Release(nshtmldoc);
     if(FAILED(hres))
         return hres;

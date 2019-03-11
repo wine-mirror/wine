@@ -486,6 +486,9 @@ struct HTMLOuterWindow {
     HTMLOuterWindow *parent;
     HTMLFrameBase *frame_element;
 
+    GeckoBrowser *browser;
+    struct list browser_entry;
+
     READYSTATE readystate;
     BOOL readystate_locked;
     unsigned readystate_pending;
@@ -724,6 +727,7 @@ struct GeckoBrowser {
     HWND hwnd;
 
     struct list document_nodes;
+    struct list outer_windows;
 };
 
 typedef struct {
