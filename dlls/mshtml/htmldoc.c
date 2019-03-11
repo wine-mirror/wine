@@ -4911,6 +4911,11 @@ void detach_document_node(HTMLDocumentNode *doc)
         IHTMLWindow2_Release(&doc->window->base.IHTMLWindow2_iface);
         doc->window = NULL;
     }
+
+    if(doc->browser) {
+        list_remove(&doc->browser_entry);
+        doc->browser = NULL;
+    }
 }
 
 static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
@@ -5193,6 +5198,9 @@ HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, H
     doc_init_events(doc);
 
     doc->node.vtbl = &HTMLDocumentNodeImplVtbl;
+
+    list_add_head(&browser->document_nodes, &doc->browser_entry);
+    doc->browser = browser;
 
     *ret = doc;
     return S_OK;

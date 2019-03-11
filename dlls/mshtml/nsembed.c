@@ -1359,6 +1359,8 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->doc)
+            detach_gecko_browser(This);
         if(This->weak_reference) {
             This->weak_reference->browser = NULL;
             nsIWeakReference_Release(&This->weak_reference->nsIWeakReference_iface);
@@ -2155,6 +2157,7 @@ HRESULT create_gecko_browser(HTMLDocumentObj *doc, GeckoBrowser **_ret)
 
     ret->doc = doc;
     ret->ref = 1;
+    list_init(&ret->document_nodes);
 
     hres = init_browser(ret);
     if(SUCCEEDED(hres))
@@ -2169,6 +2172,12 @@ void detach_gecko_browser(GeckoBrowser *This)
     TRACE("(%p)\n", This);
 
     This->doc = NULL;
+
+    while(!list_empty(&This->document_nodes)) {
+        HTMLDocumentNode *doc = LIST_ENTRY(list_head(&This->document_nodes), HTMLDocumentNode, browser_entry);
+        list_remove(&doc->browser_entry);
+        doc->browser = NULL;
+    }
 
     ShowWindow(This->hwnd, SW_HIDE);
     SetParent(This->hwnd, NULL);

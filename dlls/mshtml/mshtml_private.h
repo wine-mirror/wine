@@ -722,6 +722,8 @@ struct GeckoBrowser {
     nsIURIContentListener *content_listener;
 
     HWND hwnd;
+
+    struct list document_nodes;
 };
 
 typedef struct {
@@ -829,6 +831,9 @@ struct HTMLDocumentNode {
     LONG ref;
 
     HTMLInnerWindow *window;
+
+    GeckoBrowser *browser;
+    struct list browser_entry;
 
     compat_mode_t document_mode;
     BOOL document_mode_locked;
