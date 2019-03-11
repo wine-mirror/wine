@@ -20,6 +20,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define COBJMACROS
 #define VK_NO_PROTOTYPES
 #define VKD3D_NO_VULKAN_H
 #define VKD3D_NO_WIN32_TYPES
@@ -30,6 +31,7 @@
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 
+#include "dxgi1_6.h"
 #include "d3d12.h"
 
 #include <vkd3d.h>
@@ -116,12 +118,58 @@ static const struct vulkan_funcs *get_vk_funcs(void)
     return vk_funcs;
 }
 
+static HRESULT d3d12_get_adapter(IUnknown **adapter, LUID *luid)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+    IDXGIFactory4 *factory = NULL;
+    IDXGIAdapter *dxgi_adapter;
+    HRESULT hr;
+
+    if (!*adapter)
+    {
+        if (FAILED(hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory)))
+        {
+            WARN("Failed to create DXGI factory, hr %#x.\n", hr);
+            goto done;
+        }
+
+        if (FAILED(hr = IDXGIFactory4_EnumAdapters(factory, 0, &dxgi_adapter)))
+        {
+            WARN("Failed to enumerate primary adapter, hr %#x.\n", hr);
+            goto done;
+        }
+    }
+    else if (FAILED(hr = IUnknown_QueryInterface(*adapter, &IID_IDXGIAdapter, (void **)&dxgi_adapter)))
+    {
+        WARN("Invalid adapter %p, hr %#x.\n", adapter, hr);
+        goto done;
+    }
+
+    if (SUCCEEDED(hr = IDXGIAdapter_GetDesc(dxgi_adapter, &adapter_desc)))
+    {
+        *adapter = (IUnknown *)dxgi_adapter;
+        *luid = adapter_desc.AdapterLuid;
+    }
+    else
+    {
+        IDXGIAdapter_Release(dxgi_adapter);
+    }
+
+done:
+    if (factory)
+        IDXGIFactory4_Release(factory);
+
+    return hr;
+}
+
 HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_feature_level,
         REFIID iid, void **device)
 {
     struct vkd3d_instance_create_info instance_create_info;
     struct vkd3d_device_create_info device_create_info;
     const struct vulkan_funcs *vk_funcs;
+    LUID adapter_luid;
+    HRESULT hr;
 
     static const char * const instance_extensions[] =
     {
@@ -142,7 +190,9 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
         return E_FAIL;
     }
 
-    FIXME("Ignoring adapter %p.\n", adapter);
+    /* FIXME: Get VkPhysicalDevice for IDXGIAdapter. */
+    if (FAILED(hr = d3d12_get_adapter(&adapter, &adapter_luid)))
+        return hr;
 
     memset(&instance_create_info, 0, sizeof(instance_create_info));
     instance_create_info.type = VKD3D_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -161,8 +211,12 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     device_create_info.instance_create_info = &instance_create_info;
     device_create_info.device_extensions = device_extensions;
     device_create_info.device_extension_count = ARRAY_SIZE(device_extensions);
+    device_create_info.parent = adapter;
+    device_create_info.adapter_luid = adapter_luid;
 
-    return vkd3d_create_device(&device_create_info, iid, device);
+    hr = vkd3d_create_device(&device_create_info, iid, device);
+    IUnknown_Release(adapter);
+    return hr;
 }
 
 HRESULT WINAPI D3D12CreateRootSignatureDeserializer(const void *data, SIZE_T data_size,
