@@ -3673,15 +3673,21 @@ static void test_namedpipe_session_id(void)
 
 static void test_multiple_instances(void)
 {
-    HANDLE server[2], client;
+    HANDLE server[4], client;
     int i;
     BOOL ret;
     OVERLAPPED ov;
 
+    if(!pCancelIoEx)
+    {
+        win_skip("Skiping multiple instance tests on too old Windows\n");
+        return;
+    }
+
     for (i = 0; i < ARRAY_SIZE(server); i++)
     {
         server[i] = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                                     PIPE_READMODE_BYTE | PIPE_WAIT, 2, 1024, 1024,
+                                     PIPE_READMODE_BYTE | PIPE_WAIT, ARRAY_SIZE(server), 1024, 1024,
                                      NMPWAIT_USE_DEFAULT_WAIT, NULL);
         ok(server[i] != INVALID_HANDLE_VALUE, "got invalid handle\n");
     }
@@ -3689,10 +3695,10 @@ static void test_multiple_instances(void)
     client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(client != INVALID_HANDLE_VALUE, "got invalid handle\n");
 
-    /* Show that this has connected to server[0] not server[1] */
+    /* Show that this has connected to server[0] not any other one */
 
     memset(&ov, 0, sizeof(ov));
-    ret = ConnectNamedPipe(server[1], &ov);
+    ret = ConnectNamedPipe(server[2], &ov);
     ok(ret == FALSE, "got %d\n", ret);
     ok(GetLastError() == ERROR_IO_PENDING, "got %d\n", GetLastError());
 
@@ -3701,11 +3707,105 @@ static void test_multiple_instances(void)
     ok(ret == FALSE, "got %d\n", ret);
     ok(GetLastError() == ERROR_PIPE_CONNECTED, "got %d\n", GetLastError());
 
-    DisconnectNamedPipe(server[1]);
-    DisconnectNamedPipe(server[0]);
     CloseHandle(client);
-    CloseHandle(server[1]);
-    CloseHandle(server[0]);
+
+    /* The next connected server is server[1], doesn't matter that server[2] has pending listeners */
+
+    client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "got invalid handle\n");
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[2], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %d\n", GetLastError());
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[1], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_PIPE_CONNECTED, "got %d\n", GetLastError());
+
+    CloseHandle(client);
+
+    /* server[2] is connected next */
+
+    client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "got invalid handle\n");
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[2], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_PIPE_CONNECTED, "got %d\n", GetLastError());
+
+    CloseHandle(client);
+
+    /* Disconnect in order server[0] and server[2] */
+
+    DisconnectNamedPipe(server[0]);
+    DisconnectNamedPipe(server[2]);
+
+    /* Put into listening state server[2] and server[0] */
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[2], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %d\n", GetLastError());
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[0], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %d\n", GetLastError());
+
+    /* server[3] is connected next */
+
+    client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "got invalid handle\n");
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[3], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_PIPE_CONNECTED, "got %d\n", GetLastError());
+
+    CloseHandle(client);
+
+    /* server[2], which stasted listening first, will be connected next */
+
+    client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "got invalid handle\n");
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[2], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_PIPE_CONNECTED, "got %d\n", GetLastError());
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[0], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %d\n", GetLastError());
+
+    CloseHandle(client);
+
+    /* Finally server[0] is connected */
+
+    client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "got invalid handle\n");
+
+    memset(&ov, 0, sizeof(ov));
+    ret = ConnectNamedPipe(server[0], &ov);
+    ok(ret == FALSE, "got %d\n", ret);
+    ok(GetLastError() == ERROR_PIPE_CONNECTED, "got %d\n", GetLastError());
+
+    CloseHandle(client);
+
+    /* No more listening pipes available */
+    DisconnectNamedPipe(server[0]);
+    client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PIPE_BUSY, "got %p(%u)\n", client, GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(server); i++)
+    {
+        DisconnectNamedPipe(server[i]);
+        CloseHandle(server[i]);
+    }
 }
 
 START_TEST(pipe)
