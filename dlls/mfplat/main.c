@@ -1919,6 +1919,19 @@ struct resolver_queued_result
     enum resolved_object_origin origin;
 };
 
+struct resolver_cancel_object
+{
+    IUnknown IUnknown_iface;
+    LONG refcount;
+    union
+    {
+        IUnknown *handler;
+        IMFByteStreamHandler *stream_handler;
+    } u;
+    IUnknown *cancel_cookie;
+    enum resolved_object_origin origin;
+};
+
 typedef struct source_resolver
 {
     IMFSourceResolver IMFSourceResolver_iface;
@@ -1976,9 +1989,98 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
 
         if (data->hEvent)
             SetEvent(data->hEvent);
+        else
+        {
+            IUnknown *caller_state = IMFAsyncResult_GetStateNoAddRef(inner_result);
+            IMFAsyncResult *caller_result;
+
+            if (SUCCEEDED(MFCreateAsyncResult(queued_result->object, data->pCallback, caller_state, &caller_result)))
+            {
+                MFInvokeCallback(caller_result);
+                IMFAsyncResult_Release(caller_result);
+            }
+        }
     }
     else
         heap_free(queued_result);
+
+    return S_OK;
+}
+
+static struct resolver_cancel_object *impl_cancel_obj_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct resolver_cancel_object, IUnknown_iface);
+}
+
+static HRESULT WINAPI resolver_cancel_object_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI resolver_cancel_object_AddRef(IUnknown *iface)
+{
+    struct resolver_cancel_object *object = impl_cancel_obj_from_IUnknown(iface);
+    return InterlockedIncrement(&object->refcount);
+}
+
+static ULONG WINAPI resolver_cancel_object_Release(IUnknown *iface)
+{
+    struct resolver_cancel_object *object = impl_cancel_obj_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&object->refcount);
+
+    if (!refcount)
+    {
+        if (object->cancel_cookie)
+            IUnknown_Release(object->cancel_cookie);
+        IUnknown_Release(object->u.handler);
+        heap_free(object);
+    }
+
+    return refcount;
+}
+
+static const IUnknownVtbl resolver_cancel_object_vtbl =
+{
+    resolver_cancel_object_QueryInterface,
+    resolver_cancel_object_AddRef,
+    resolver_cancel_object_Release,
+};
+
+static struct resolver_cancel_object *unsafe_impl_cancel_obj_from_IUnknown(IUnknown *iface)
+{
+    if (!iface)
+        return NULL;
+
+    return (iface->lpVtbl == &resolver_cancel_object_vtbl) ?
+            CONTAINING_RECORD(iface, struct resolver_cancel_object, IUnknown_iface) : NULL;
+}
+
+static HRESULT resolver_create_cancel_object(IUnknown *handler, enum resolved_object_origin origin,
+        IUnknown *cancel_cookie, IUnknown **cancel_object)
+{
+    struct resolver_cancel_object *object;
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IUnknown_iface.lpVtbl = &resolver_cancel_object_vtbl;
+    object->refcount = 1;
+    object->u.handler = handler;
+    IUnknown_AddRef(object->u.handler);
+    object->cancel_cookie = cancel_cookie;
+    IUnknown_AddRef(object->cancel_cookie);
+    object->origin = origin;
+
+    *cancel_object = &object->IUnknown_iface;
 
     return S_OK;
 }
@@ -2160,7 +2262,7 @@ static HRESULT resolver_end_create_object(struct source_resolver *resolver, enum
     return hr;
 }
 
-static HRESULT WINAPI mfsourceresolver_QueryInterface(IMFSourceResolver *iface, REFIID riid, void **obj)
+static HRESULT WINAPI source_resolver_QueryInterface(IMFSourceResolver *iface, REFIID riid, void **obj)
 {
     mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
 
@@ -2309,49 +2411,86 @@ static HRESULT WINAPI mfsourceresolver_EndCreateObjectFromURL(IMFSourceResolver 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mfsourceresolver_BeginCreateObjectFromByteStream(IMFSourceResolver *iface, IMFByteStream *stream,
-    const WCHAR *url, DWORD flags, IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback,
-    IUnknown *unk_state)
+static HRESULT WINAPI source_resolver_BeginCreateObjectFromByteStream(IMFSourceResolver *iface, IMFByteStream *stream,
+        const WCHAR *url, DWORD flags, IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback,
+        IUnknown *state)
 {
-    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
+    IMFByteStreamHandler *handler;
+    IUnknown *inner_cookie = NULL;
+    IMFAsyncResult *result;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p, %s, %#x, %p, %p, %p, %p): stub\n", This, stream, debugstr_w(url), flags, props, cancel_cookie,
-        callback, unk_state);
+    TRACE("%p, %p, %s, %#x, %p, %p, %p, %p.\n", iface, stream, debugstr_w(url), flags, props, cancel_cookie,
+            callback, state);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = resolver_get_bytestream_handler(stream, url, flags, &handler)))
+        return hr;
+
+    if (cancel_cookie)
+        *cancel_cookie = NULL;
+
+    hr = MFCreateAsyncResult((IUnknown *)handler, callback, state, &result);
+    IMFByteStreamHandler_Release(handler);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IMFByteStreamHandler_BeginCreateObject(handler, stream, url, flags, props,
+            cancel_cookie ? &inner_cookie : NULL, &resolver->stream_callback, (IUnknown *)result);
+
+    /* Cancel object wraps underlying handler cancel cookie with context necessary to call CancelObjectCreate(). */
+    if (SUCCEEDED(hr) && inner_cookie)
+        resolver_create_cancel_object((IUnknown *)handler, OBJECT_FROM_BYTESTREAM, inner_cookie, cancel_cookie);
+
+    IMFAsyncResult_Release(result);
+
+    return hr;
 }
 
-static HRESULT WINAPI mfsourceresolver_EndCreateObjectFromByteStream(IMFSourceResolver *iface, IMFAsyncResult *result,
-    MF_OBJECT_TYPE *obj_type, IUnknown **object)
+static HRESULT WINAPI source_resolver_EndCreateObjectFromByteStream(IMFSourceResolver *iface, IMFAsyncResult *result,
+        MF_OBJECT_TYPE *obj_type, IUnknown **object)
 {
-    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
 
-    FIXME("(%p)->(%p, %p, %p): stub\n", This, result, obj_type, object);
+    TRACE("%p, %p, %p, %p.\n", iface, result, obj_type, object);
 
-    return E_NOTIMPL;
+    return resolver_end_create_object(resolver, OBJECT_FROM_BYTESTREAM, result, obj_type, object);
 }
 
-static HRESULT WINAPI mfsourceresolver_CancelObjectCreation(IMFSourceResolver *iface, IUnknown *cancel_cookie)
+static HRESULT WINAPI source_resolver_CancelObjectCreation(IMFSourceResolver *iface, IUnknown *cancel_cookie)
 {
-    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    struct resolver_cancel_object *object;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p): stub\n", This, cancel_cookie);
+    TRACE("%p, %p.\n", iface, cancel_cookie);
 
-    return E_NOTIMPL;
+    if (!(object = unsafe_impl_cancel_obj_from_IUnknown(cancel_cookie)))
+        return E_UNEXPECTED;
+
+    switch (object->origin)
+    {
+        case OBJECT_FROM_BYTESTREAM:
+            hr = IMFByteStreamHandler_CancelObjectCreation(object->u.stream_handler, object->cancel_cookie);
+            break;
+        default:
+            hr = E_UNEXPECTED;
+    }
+
+    return hr;
 }
 
 static const IMFSourceResolverVtbl mfsourceresolvervtbl =
 {
-   mfsourceresolver_QueryInterface,
-   source_resolver_AddRef,
-   source_resolver_Release,
-   mfsourceresolver_CreateObjectFromURL,
-   source_resolver_CreateObjectFromByteStream,
-   mfsourceresolver_BeginCreateObjectFromURL,
-   mfsourceresolver_EndCreateObjectFromURL,
-   mfsourceresolver_BeginCreateObjectFromByteStream,
-   mfsourceresolver_EndCreateObjectFromByteStream,
-   mfsourceresolver_CancelObjectCreation,
+    source_resolver_QueryInterface,
+    source_resolver_AddRef,
+    source_resolver_Release,
+    mfsourceresolver_CreateObjectFromURL,
+    source_resolver_CreateObjectFromByteStream,
+    mfsourceresolver_BeginCreateObjectFromURL,
+    mfsourceresolver_EndCreateObjectFromURL,
+    source_resolver_BeginCreateObjectFromByteStream,
+    source_resolver_EndCreateObjectFromByteStream,
+    source_resolver_CancelObjectCreation,
 };
 
 /***********************************************************************
