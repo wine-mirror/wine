@@ -40,6 +40,11 @@ static BOOL compare_color(DWORD c1, DWORD c2, unsigned int max_diff)
     return TRUE;
 }
 
+static BOOL equal_luid(LUID a, LUID b)
+{
+    return a.LowPart == b.LowPart && a.HighPart == b.HighPart;
+}
+
 static unsigned int format_size(DXGI_FORMAT format)
 {
     switch (format)
@@ -282,6 +287,25 @@ static ID3D12PipelineState *create_pipeline_state_(unsigned int line, ID3D12Devi
     return pipeline_state;
 }
 
+#define create_command_queue(a, b) create_command_queue_(__LINE__, a, b)
+static ID3D12CommandQueue *create_command_queue_(unsigned int line,
+        ID3D12Device *device, D3D12_COMMAND_LIST_TYPE type)
+{
+    D3D12_COMMAND_QUEUE_DESC command_queue_desc;
+    ID3D12CommandQueue *queue;
+    HRESULT hr;
+
+    command_queue_desc.Type = type;
+    command_queue_desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    command_queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    command_queue_desc.NodeMask = 0;
+    hr = ID3D12Device_CreateCommandQueue(device, &command_queue_desc,
+            &IID_ID3D12CommandQueue, (void **)&queue);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create command queue, hr %#x.\n", hr);
+
+    return queue;
+}
+
 struct test_context_desc
 {
     BOOL no_pipeline;
@@ -381,7 +405,6 @@ static void create_render_target_(unsigned int line, struct test_context *contex
 static BOOL init_test_context_(unsigned int line, struct test_context *context,
         const struct test_context_desc *desc)
 {
-    D3D12_COMMAND_QUEUE_DESC command_queue_desc;
     D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc;
     unsigned int rtv_size;
     ID3D12Device *device;
@@ -397,13 +420,7 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context,
     }
     device = context->device;
 
-    command_queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    command_queue_desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    command_queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    command_queue_desc.NodeMask = 0;
-    hr = ID3D12Device_CreateCommandQueue(device, &command_queue_desc,
-            &IID_ID3D12CommandQueue, (void **)&context->queue);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create command queue, hr %#x.\n", hr);
+    context->queue = create_command_queue_(line, device, D3D12_COMMAND_LIST_TYPE_DIRECT);
 
     for (i = 0; i < ARRAY_SIZE(context->allocator); ++i)
     {
@@ -577,11 +594,9 @@ static HWND create_window(DWORD style)
     return CreateWindowA("static", "d3d12_test", style, 0, 0, 256, 256, NULL, NULL, NULL, NULL);
 }
 
-static IDXGISwapChain3 *create_swapchain(struct test_context *context, HWND window,
-        unsigned int buffer_count, DXGI_FORMAT format, unsigned int width, unsigned int height)
+static IDXGISwapChain3 *create_swapchain(struct test_context *context, ID3D12CommandQueue *queue,
+        HWND window, unsigned int buffer_count, DXGI_FORMAT format, unsigned int width, unsigned int height)
 {
-    ID3D12CommandQueue *queue = context->queue;
-    ID3D12Device *device = context->device;
     IDXGISwapChain1 *swapchain1;
     DXGI_SWAP_CHAIN_DESC1 desc;
     IDXGISwapChain3 *swapchain;
@@ -591,7 +606,8 @@ static IDXGISwapChain3 *create_swapchain(struct test_context *context, HWND wind
 
     assert(buffer_count <= MAX_FRAME_COUNT);
 
-    destroy_render_targets(context);
+    if (context)
+        destroy_render_targets(context);
 
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
     ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
@@ -617,15 +633,18 @@ static IDXGISwapChain3 *create_swapchain(struct test_context *context, HWND wind
     ok(hr == S_OK, "Failed to query IDXGISwapChain3, hr %#x.\n", hr);
     IDXGISwapChain1_Release(swapchain1);
 
-    for (i = 0; i < buffer_count; ++i)
+    if (context)
     {
-        hr = IDXGISwapChain3_GetBuffer(swapchain, i, &IID_ID3D12Resource, (void **)&context->render_target[i]);
-        ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", i, hr);
-        ID3D12Device_CreateRenderTargetView(device, context->render_target[i], NULL, context->rtv[i]);
-    }
+        set_viewport(&context->viewport, 0.0f, 0.0f, width, height, 0.0f, 1.0f);
+        SetRect(&context->scissor_rect, 0, 0, width, height);
 
-    set_viewport(&context->viewport, 0.0f, 0.0f, width, height, 0.0f, 1.0f);
-    SetRect(&context->scissor_rect, 0, 0, width, height);
+        for (i = 0; i < buffer_count; ++i)
+        {
+            hr = IDXGISwapChain3_GetBuffer(swapchain, i, &IID_ID3D12Resource, (void **)&context->render_target[i]);
+            ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", i, hr);
+            ID3D12Device_CreateRenderTargetView(context->device, context->render_target[i], NULL, context->rtv[i]);
+        }
+    }
 
     return swapchain;
 }
@@ -808,6 +827,90 @@ static void test_interfaces(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_device(void)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+    IDXGISwapChain3 *swapchain;
+    ID3D12CommandQueue *queue;
+    LUID adapter_luid, luid;
+    IDXGIFactory4 *factory;
+    IDXGIAdapter *adapter;
+    ID3D12Device *device;
+    IDXGIOutput *output;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    RECT rect;
+    BOOL ret;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIFactory4_EnumAdapters(factory, 0, &adapter);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    IDXGIFactory4_Release(factory);
+
+    hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    adapter_luid = adapter_desc.AdapterLuid;
+
+    refcount = get_refcount(adapter);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    hr = D3D12CreateDevice((IUnknown *)adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    refcount = IDXGIAdapter_Release(adapter);
+    ok(refcount >= 1, "Got unexpected refcount %u.\n", refcount);
+    adapter = NULL;
+
+    luid = ID3D12Device_GetAdapterLuid(device);
+    ok(equal_luid(luid, adapter_luid), "Got LUID %08x:%08x, expected %08x:%08x.\n",
+            luid.HighPart, luid.LowPart, adapter_luid.HighPart, adapter_luid.LowPart);
+
+    queue = create_command_queue(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+    window = create_window(WS_VISIBLE);
+    ret = GetClientRect(window, &rect);
+    ok(ret, "Failed to get client rect.\n");
+    swapchain = create_swapchain(NULL, queue, window, 2, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+
+    hr = IDXGISwapChain3_GetContainingOutput(swapchain, &output);
+    if (hr != DXGI_ERROR_UNSUPPORTED)
+    {
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDXGIOutput_GetParent(output, &IID_IDXGIAdapter, (void **)&adapter);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        IDXGIOutput_Release(output);
+
+        memset(&adapter_desc, 0, sizeof(adapter_desc));
+        hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        IDXGIAdapter_Release(adapter);
+
+        ok(equal_luid(adapter_desc.AdapterLuid, adapter_luid),
+                "Got LUID %08x:%08x, expected %08x:%08x.\n",
+                adapter_desc.AdapterLuid.HighPart, adapter_desc.AdapterLuid.LowPart,
+                adapter_luid.HighPart, adapter_luid.LowPart);
+    }
+    else
+    {
+        skip("GetContaingOutput() is not supported.\n");
+    }
+
+    refcount = IDXGISwapChain3_Release(swapchain);
+    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    DestroyWindow(window);
+    ID3D12CommandQueue_Release(queue);
+
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_draw(void)
 {
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -909,7 +1012,7 @@ static void test_swapchain_draw(void)
         context.pipeline_state = create_pipeline_state(device,
                 context.root_signature, tests[i].format, &ps);
 
-        swapchain = create_swapchain(&context, window, 2, tests[i].format, rect.right, rect.bottom);
+        swapchain = create_swapchain(&context, queue, window, 2, tests[i].format, rect.right, rect.bottom);
         index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
         backbuffer = context.render_target[index];
         rtv = context.rtv[index];
@@ -977,7 +1080,8 @@ static void test_swapchain_refcount(void)
     window = create_window(WS_VISIBLE);
     ret = GetClientRect(window, &rect);
     ok(ret, "Failed to get client rect.\n");
-    swapchain = create_swapchain(&context, window, buffer_count, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+    swapchain = create_swapchain(&context, context.queue, window,
+            buffer_count, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
 
     for (i = 0; i < buffer_count; ++i)
     {
@@ -1054,7 +1158,7 @@ static void test_swapchain_size_mismatch(void)
     queue = context.queue;
 
     window = CreateWindowA("static", "d3d12_test", WS_VISIBLE, 0, 0, 200, 200, NULL, NULL, NULL, NULL);
-    swapchain = create_swapchain(&context, window, 2, DXGI_FORMAT_B8G8R8A8_UNORM, 400, 400);
+    swapchain = create_swapchain(&context, queue, window, 2, DXGI_FORMAT_B8G8R8A8_UNORM, 400, 400);
     index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
     backbuffer = context.render_target[index];
     rtv = context.rtv[index];
@@ -1087,7 +1191,7 @@ static void test_swapchain_size_mismatch(void)
     window = create_window(WS_VISIBLE);
     ret = GetClientRect(window, &rect);
     ok(ret, "Failed to get client rect.\n");
-    swapchain = create_swapchain(&context, window, 4, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+    swapchain = create_swapchain(&context, queue, window, 4, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
 
     hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, (void **)&fence);
     ok(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
@@ -1177,7 +1281,8 @@ static void test_swapchain_backbuffer_index(void)
     window = create_window(WS_VISIBLE);
     ret = GetClientRect(window, &rect);
     ok(ret, "Failed to get client rect.\n");
-    swapchain = create_swapchain(&context, window, buffer_count, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+    swapchain = create_swapchain(&context, queue, window,
+            buffer_count, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
 
     hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, (void **)&fence);
     ok(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
@@ -1264,6 +1369,7 @@ START_TEST(d3d12)
     print_adapter_info();
 
     test_interfaces();
+    test_create_device();
     test_draw();
     test_swapchain_draw();
     test_swapchain_refcount();
