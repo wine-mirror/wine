@@ -1080,6 +1080,8 @@ struct rawinput_device
 @REQ(event_op)
     obj_handle_t  handle;       /* handle to event */
     int           op;           /* event operation (see below) */
+@REPLY
+    int           state;        /* previous state */
 @END
 enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 

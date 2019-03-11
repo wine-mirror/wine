@@ -1247,6 +1247,8 @@ struct event_op_request
 struct event_op_reply
 {
     struct reply_header __header;
+    int           state;
+    char __pad_12[4];
 };
 enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 
@@ -6554,6 +6556,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 572
+#define SERVER_PROTOCOL_VERSION 573
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

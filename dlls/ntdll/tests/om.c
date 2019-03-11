@@ -1622,7 +1622,6 @@ static void test_event(void)
 
     status = pNtPulseEvent(Event, &prev_state);
     ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
-    todo_wine
     ok( !prev_state, "prev_state = %x\n", prev_state );
 
     status = pNtQueryEvent(Event, EventBasicInformation, &info, sizeof(info), NULL);
@@ -1643,17 +1642,14 @@ static void test_event(void)
 
     status = pNtSetEvent( Event, &prev_state );
     ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
-    todo_wine
     ok( !prev_state, "prev_state = %x\n", prev_state );
 
     status = pNtSetEvent( Event, &prev_state );
     ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
-    todo_wine
     ok( prev_state == 1, "prev_state = %x\n", prev_state );
 
     status = pNtResetEvent( Event, &prev_state );
     ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
-    todo_wine
     ok( prev_state == 1, "prev_state = %x\n", prev_state );
 
     status = pNtResetEvent( Event, &prev_state );
@@ -1670,7 +1666,6 @@ static void test_event(void)
 
     status = pNtPulseEvent( Event, &prev_state );
     ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
-    todo_wine
     ok( prev_state == 1, "prev_state = %x\n", prev_state );
 
     pNtClose(Event);

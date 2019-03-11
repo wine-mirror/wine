@@ -1594,6 +1594,11 @@ static void dump_event_op_request( const struct event_op_request *req )
     fprintf( stderr, ", op=%d", req->op );
 }
 
+static void dump_event_op_reply( const struct event_op_reply *req )
+{
+    fprintf( stderr, " state=%d", req->state );
+}
+
 static void dump_query_event_request( const struct query_event_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4865,7 +4870,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_thread_reply,
     (dump_func)dump_select_reply,
     (dump_func)dump_create_event_reply,
-    NULL,
+    (dump_func)dump_event_op_reply,
     (dump_func)dump_query_event_reply,
     (dump_func)dump_open_event_reply,
     (dump_func)dump_create_keyed_event_reply,

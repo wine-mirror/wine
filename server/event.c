@@ -311,6 +311,7 @@ DECL_HANDLER(event_op)
     struct event *event;
 
     if (!(event = get_event_obj( current->process, req->handle, EVENT_MODIFY_STATE ))) return;
+    reply->state = event->signaled;
     switch(req->op)
     {
     case PULSE_EVENT:

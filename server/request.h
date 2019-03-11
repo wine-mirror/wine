@@ -931,6 +931,8 @@ C_ASSERT( sizeof(struct create_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct event_op_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct event_op_request, op) == 16 );
 C_ASSERT( sizeof(struct event_op_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct event_op_reply, state) == 8 );
+C_ASSERT( sizeof(struct event_op_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct query_event_request, handle) == 12 );
 C_ASSERT( sizeof(struct query_event_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct query_event_reply, manual_reset) == 8 );
