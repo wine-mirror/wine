@@ -874,9 +874,6 @@ static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResul
 
         IMFMediaEvent_Release(event);
 
-        hr = IMFMediaEventQueue_EndGetEvent(queue, result, &event);
-        ok(hr == E_FAIL, "Unexpected result, hr %#x.\n", hr);
-
         IMFMediaEventQueue_Release(queue);
 
         SetEvent(callback->event);
