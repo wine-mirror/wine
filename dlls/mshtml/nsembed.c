@@ -82,7 +82,7 @@ static nsIFile *profile_directory, *plugin_directory;
 
 static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
 
-static ATOM nscontainer_class;
+static ATOM browser_class;
 static WCHAR gecko_path[MAX_PATH];
 static unsigned gecko_path_len;
 
@@ -350,13 +350,13 @@ static nsIDirectoryServiceProvider2 nsDirectoryServiceProvider2 =
 
 static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    NSContainer *This;
+    GeckoBrowser *This;
     nsresult nsres;
 
     static const WCHAR wszTHIS[] = {'T','H','I','S',0};
 
     if(msg == WM_CREATE) {
-        This = *(NSContainer**)lParam;
+        This = *(GeckoBrowser**)lParam;
         SetPropW(hwnd, wszTHIS, This);
     }else {
         This = GetPropW(hwnd, wszTHIS);
@@ -386,7 +386,7 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 }
 
 
-static void register_nscontainer_class(void)
+static void register_browser_class(void)
 {
     static WNDCLASSEXW wndclass = {
         sizeof(WNDCLASSEXW),
@@ -397,7 +397,7 @@ static void register_nscontainer_class(void)
         NULL,
     };
     wndclass.hInstance = hInst;
-    nscontainer_class = RegisterClassExW(&wndclass);
+    browser_class = RegisterClassExW(&wndclass);
 }
 
 static BOOL install_wine_gecko(void)
@@ -1068,7 +1068,7 @@ HRESULT nsnode_to_nsstring(nsIDOMNode *nsnode, nsAString *str)
     return hres;
 }
 
-void get_editor_controller(NSContainer *This)
+void get_editor_controller(GeckoBrowser *This)
 {
     nsIEditingSession *editing_session = NULL;
     nsIControllerContext *ctrlctx;
@@ -1169,7 +1169,7 @@ BOOL is_gecko_path(const char *path)
     return ret;
 }
 
-void set_viewer_zoom(NSContainer *nscontainer, float factor)
+void set_viewer_zoom(GeckoBrowser *browser, float factor)
 {
     nsIContentViewer *content_viewer;
     nsIDocShell *doc_shell;
@@ -1177,7 +1177,7 @@ void set_viewer_zoom(NSContainer *nscontainer, float factor)
 
     TRACE("Setting to %f\n", factor);
 
-    nsres = get_nsinterface((nsISupports*)nscontainer->navigation, &IID_nsIDocShell, (void**)&doc_shell);
+    nsres = get_nsinterface((nsISupports*)browser->navigation, &IID_nsIDocShell, (void**)&doc_shell);
     assert(nsres == NS_OK);
 
     nsres = nsIDocShell_GetContentViewer(doc_shell, &content_viewer);
@@ -1191,14 +1191,14 @@ void set_viewer_zoom(NSContainer *nscontainer, float factor)
     nsIContentViewer_Release(content_viewer);
 }
 
-float get_viewer_zoom(NSContainer *nscontainer)
+float get_viewer_zoom(GeckoBrowser *browser)
 {
     nsIContentViewer *content_viewer;
     nsIDocShell *doc_shell;
     nsresult nsres;
     float factor;
 
-    nsres = get_nsinterface((nsISupports*)nscontainer->navigation, &IID_nsIDocShell, (void**)&doc_shell);
+    nsres = get_nsinterface((nsISupports*)browser->navigation, &IID_nsIDocShell, (void**)&doc_shell);
     assert(nsres == NS_OK);
 
     nsres = nsIDocShell_GetContentViewer(doc_shell, &content_viewer);
@@ -1219,7 +1219,7 @@ struct nsWeakReference {
 
     LONG ref;
 
-    NSContainer *nscontainer;
+    GeckoBrowser *browser;
 };
 
 static inline nsWeakReference *impl_from_nsIWeakReference(nsIWeakReference *iface)
@@ -1266,7 +1266,7 @@ static nsrefcnt NSAPI nsWeakReference_Release(nsIWeakReference *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        assert(!This->nscontainer);
+        assert(!This->browser);
         heap_free(This);
     }
 
@@ -1278,10 +1278,10 @@ static nsresult NSAPI nsWeakReference_QueryReferent(nsIWeakReference *iface,
 {
     nsWeakReference *This = impl_from_nsIWeakReference(iface);
 
-    if(!This->nscontainer)
+    if(!This->browser)
         return NS_ERROR_NULL_POINTER;
 
-    return nsIWebBrowserChrome_QueryInterface(&This->nscontainer->nsIWebBrowserChrome_iface, riid, result);
+    return nsIWebBrowserChrome_QueryInterface(&This->browser->nsIWebBrowserChrome_iface, riid, result);
 }
 
 static const nsIWeakReferenceVtbl nsWeakReferenceVtbl = {
@@ -1295,15 +1295,15 @@ static const nsIWeakReferenceVtbl nsWeakReferenceVtbl = {
  *      nsIWebBrowserChrome interface
  */
 
-static inline NSContainer *impl_from_nsIWebBrowserChrome(nsIWebBrowserChrome *iface)
+static inline GeckoBrowser *impl_from_nsIWebBrowserChrome(nsIWebBrowserChrome *iface)
 {
-    return CONTAINING_RECORD(iface, NSContainer, nsIWebBrowserChrome_iface);
+    return CONTAINING_RECORD(iface, GeckoBrowser, nsIWebBrowserChrome_iface);
 }
 
 static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *iface,
         nsIIDRef riid, void **result)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
 
     *result = NULL;
     if(IsEqualGUID(&IID_nsISupports, riid)) {
@@ -1343,7 +1343,7 @@ static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *ifa
 
 static nsrefcnt NSAPI nsWebBrowserChrome_AddRef(nsIWebBrowserChrome *iface)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
@@ -1353,14 +1353,14 @@ static nsrefcnt NSAPI nsWebBrowserChrome_AddRef(nsIWebBrowserChrome *iface)
 
 static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         if(This->weak_reference) {
-            This->weak_reference->nscontainer = NULL;
+            This->weak_reference->browser = NULL;
             nsIWeakReference_Release(&This->weak_reference->nsIWeakReference_iface);
         }
         heap_free(This);
@@ -1372,7 +1372,7 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
 static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
         UINT32 statusType, const PRUnichar *status)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     TRACE("(%p)->(%d %s)\n", This, statusType, debugstr_w(status));
     return NS_OK;
 }
@@ -1380,7 +1380,7 @@ static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
 static nsresult NSAPI nsWebBrowserChrome_GetWebBrowser(nsIWebBrowserChrome *iface,
         nsIWebBrowser **aWebBrowser)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
 
     TRACE("(%p)->(%p)\n", This, aWebBrowser);
 
@@ -1396,7 +1396,7 @@ static nsresult NSAPI nsWebBrowserChrome_GetWebBrowser(nsIWebBrowserChrome *ifac
 static nsresult NSAPI nsWebBrowserChrome_SetWebBrowser(nsIWebBrowserChrome *iface,
         nsIWebBrowser *aWebBrowser)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
 
     TRACE("(%p)->(%p)\n", This, aWebBrowser);
 
@@ -1409,7 +1409,7 @@ static nsresult NSAPI nsWebBrowserChrome_SetWebBrowser(nsIWebBrowserChrome *ifac
 static nsresult NSAPI nsWebBrowserChrome_GetChromeFlags(nsIWebBrowserChrome *iface,
         UINT32 *aChromeFlags)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%p)\n", This, aChromeFlags);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -1417,14 +1417,14 @@ static nsresult NSAPI nsWebBrowserChrome_GetChromeFlags(nsIWebBrowserChrome *ifa
 static nsresult NSAPI nsWebBrowserChrome_SetChromeFlags(nsIWebBrowserChrome *iface,
         UINT32 aChromeFlags)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%08x)\n", This, aChromeFlags);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsWebBrowserChrome_DestroyBrowserWindow(nsIWebBrowserChrome *iface)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     TRACE("(%p)\n", This);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -1432,21 +1432,21 @@ static nsresult NSAPI nsWebBrowserChrome_DestroyBrowserWindow(nsIWebBrowserChrom
 static nsresult NSAPI nsWebBrowserChrome_SizeBrowserTo(nsIWebBrowserChrome *iface,
         LONG aCX, LONG aCY)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%d %d)\n", This, aCX, aCY);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsWebBrowserChrome_ShowAsModal(nsIWebBrowserChrome *iface)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)\n", This);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsWebBrowserChrome_IsWindowModal(nsIWebBrowserChrome *iface, cpp_bool *_retval)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%p)\n", This, _retval);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -1454,7 +1454,7 @@ static nsresult NSAPI nsWebBrowserChrome_IsWindowModal(nsIWebBrowserChrome *ifac
 static nsresult NSAPI nsWebBrowserChrome_ExitModalEventLoop(nsIWebBrowserChrome *iface,
         nsresult aStatus)
 {
-    NSContainer *This = impl_from_nsIWebBrowserChrome(iface);
+    GeckoBrowser *This = impl_from_nsIWebBrowserChrome(iface);
     WARN("(%p)->(%08x)\n", This, aStatus);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -1479,34 +1479,34 @@ static const nsIWebBrowserChromeVtbl nsWebBrowserChromeVtbl = {
  *      nsIContextMenuListener interface
  */
 
-static inline NSContainer *impl_from_nsIContextMenuListener(nsIContextMenuListener *iface)
+static inline GeckoBrowser *impl_from_nsIContextMenuListener(nsIContextMenuListener *iface)
 {
-    return CONTAINING_RECORD(iface, NSContainer, nsIContextMenuListener_iface);
+    return CONTAINING_RECORD(iface, GeckoBrowser, nsIContextMenuListener_iface);
 }
 
 static nsresult NSAPI nsContextMenuListener_QueryInterface(nsIContextMenuListener *iface,
         nsIIDRef riid, void **result)
 {
-    NSContainer *This = impl_from_nsIContextMenuListener(iface);
+    GeckoBrowser *This = impl_from_nsIContextMenuListener(iface);
     return nsIWebBrowserChrome_QueryInterface(&This->nsIWebBrowserChrome_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsContextMenuListener_AddRef(nsIContextMenuListener *iface)
 {
-    NSContainer *This = impl_from_nsIContextMenuListener(iface);
+    GeckoBrowser *This = impl_from_nsIContextMenuListener(iface);
     return nsIWebBrowserChrome_AddRef(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsrefcnt NSAPI nsContextMenuListener_Release(nsIContextMenuListener *iface)
 {
-    NSContainer *This = impl_from_nsIContextMenuListener(iface);
+    GeckoBrowser *This = impl_from_nsIContextMenuListener(iface);
     return nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuListener *iface,
         UINT32 aContextFlags, nsIDOMEvent *aEvent, nsIDOMNode *aNode)
 {
-    NSContainer *This = impl_from_nsIContextMenuListener(iface);
+    GeckoBrowser *This = impl_from_nsIContextMenuListener(iface);
     nsIDOMMouseEvent *mouse_event;
     HTMLDOMNode *node;
     DOMEvent *event;
@@ -1582,34 +1582,34 @@ static const nsIContextMenuListenerVtbl nsContextMenuListenerVtbl = {
  *      nsIURIContentListener interface
  */
 
-static inline NSContainer *impl_from_nsIURIContentListener(nsIURIContentListener *iface)
+static inline GeckoBrowser *impl_from_nsIURIContentListener(nsIURIContentListener *iface)
 {
-    return CONTAINING_RECORD(iface, NSContainer, nsIURIContentListener_iface);
+    return CONTAINING_RECORD(iface, GeckoBrowser, nsIURIContentListener_iface);
 }
 
 static nsresult NSAPI nsURIContentListener_QueryInterface(nsIURIContentListener *iface,
         nsIIDRef riid, void **result)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
     return nsIWebBrowserChrome_QueryInterface(&This->nsIWebBrowserChrome_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsURIContentListener_AddRef(nsIURIContentListener *iface)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
     return nsIWebBrowserChrome_AddRef(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsrefcnt NSAPI nsURIContentListener_Release(nsIURIContentListener *iface)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
     return nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener *iface,
                                                           nsIURI *aURI, cpp_bool *_retval)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
     nsACString spec_str;
     const char *spec;
 
@@ -1630,7 +1630,7 @@ static nsresult NSAPI nsURIContentListener_DoContent(nsIURIContentListener *ifac
         const nsACString *aContentType, cpp_bool aIsContentPreferred, nsIRequest *aRequest,
         nsIStreamListener **aContentHandler, cpp_bool *_retval)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
 
     TRACE("(%p)->(%p %x %p %p %p)\n", This, aContentType, aIsContentPreferred,
             aRequest, aContentHandler, _retval);
@@ -1644,7 +1644,7 @@ static nsresult NSAPI nsURIContentListener_DoContent(nsIURIContentListener *ifac
 static nsresult NSAPI nsURIContentListener_IsPreferred(nsIURIContentListener *iface,
         const char *aContentType, char **aDesiredContentType, cpp_bool *_retval)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_a(aContentType), aDesiredContentType, _retval);
 
@@ -1661,7 +1661,7 @@ static nsresult NSAPI nsURIContentListener_CanHandleContent(nsIURIContentListene
         const char *aContentType, cpp_bool aIsContentPreferred, char **aDesiredContentType,
         cpp_bool *_retval)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
 
     TRACE("(%p)->(%s %x %p %p)\n", This, debugstr_a(aContentType), aIsContentPreferred,
             aDesiredContentType, _retval);
@@ -1675,7 +1675,7 @@ static nsresult NSAPI nsURIContentListener_CanHandleContent(nsIURIContentListene
 static nsresult NSAPI nsURIContentListener_GetLoadCookie(nsIURIContentListener *iface,
         nsISupports **aLoadCookie)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
 
     WARN("(%p)->(%p)\n", This, aLoadCookie);
 
@@ -1687,7 +1687,7 @@ static nsresult NSAPI nsURIContentListener_GetLoadCookie(nsIURIContentListener *
 static nsresult NSAPI nsURIContentListener_SetLoadCookie(nsIURIContentListener *iface,
         nsISupports *aLoadCookie)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
 
     WARN("(%p)->(%p)\n", This, aLoadCookie);
 
@@ -1699,7 +1699,7 @@ static nsresult NSAPI nsURIContentListener_SetLoadCookie(nsIURIContentListener *
 static nsresult NSAPI nsURIContentListener_GetParentContentListener(nsIURIContentListener *iface,
         nsIURIContentListener **aParentContentListener)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
 
     TRACE("(%p)->(%p)\n", This, aParentContentListener);
 
@@ -1713,7 +1713,7 @@ static nsresult NSAPI nsURIContentListener_GetParentContentListener(nsIURIConten
 static nsresult NSAPI nsURIContentListener_SetParentContentListener(nsIURIContentListener *iface,
         nsIURIContentListener *aParentContentListener)
 {
-    NSContainer *This = impl_from_nsIURIContentListener(iface);
+    GeckoBrowser *This = impl_from_nsIURIContentListener(iface);
 
     TRACE("(%p)->(%p)\n", This, aParentContentListener);
 
@@ -1748,34 +1748,34 @@ static const nsIURIContentListenerVtbl nsURIContentListenerVtbl = {
  *      nsIEmbeddinSiteWindow interface
  */
 
-static inline NSContainer *impl_from_nsIEmbeddingSiteWindow(nsIEmbeddingSiteWindow *iface)
+static inline GeckoBrowser *impl_from_nsIEmbeddingSiteWindow(nsIEmbeddingSiteWindow *iface)
 {
-    return CONTAINING_RECORD(iface, NSContainer, nsIEmbeddingSiteWindow_iface);
+    return CONTAINING_RECORD(iface, GeckoBrowser, nsIEmbeddingSiteWindow_iface);
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_QueryInterface(nsIEmbeddingSiteWindow *iface,
         nsIIDRef riid, void **result)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
     return nsIWebBrowserChrome_QueryInterface(&This->nsIWebBrowserChrome_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsEmbeddingSiteWindow_AddRef(nsIEmbeddingSiteWindow *iface)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
     return nsIWebBrowserChrome_AddRef(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsrefcnt NSAPI nsEmbeddingSiteWindow_Release(nsIEmbeddingSiteWindow *iface)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
     return nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow *iface,
         UINT32 flags, LONG x, LONG y, LONG cx, LONG cy)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
     WARN("(%p)->(%08x %d %d %d %d)\n", This, flags, x, y, cx, cy);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -1783,7 +1783,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetDimensions(nsIEmbeddingSiteWindow
 static nsresult NSAPI nsEmbeddingSiteWindow_GetDimensions(nsIEmbeddingSiteWindow *iface,
         UINT32 flags, LONG *x, LONG *y, LONG *cx, LONG *cy)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
     RECT r;
 
     TRACE("(%p)->(%x %p %p %p %p)\n", This, flags, x, y, cx, cy);
@@ -1806,7 +1806,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetDimensions(nsIEmbeddingSiteWindow
 
 static nsresult NSAPI nsEmbeddingSiteWindow_SetFocus(nsIEmbeddingSiteWindow *iface)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
 
     TRACE("(%p)\n", This);
 
@@ -1816,7 +1816,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetFocus(nsIEmbeddingSiteWindow *ifa
 static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow *iface,
         cpp_bool *aVisibility)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
 
     TRACE("(%p)->(%p)\n", This, aVisibility);
 
@@ -1827,7 +1827,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetVisibility(nsIEmbeddingSiteWindow
 static nsresult NSAPI nsEmbeddingSiteWindow_SetVisibility(nsIEmbeddingSiteWindow *iface,
         cpp_bool aVisibility)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
 
     TRACE("(%p)->(%x)\n", This, aVisibility);
 
@@ -1837,7 +1837,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetVisibility(nsIEmbeddingSiteWindow
 static nsresult NSAPI nsEmbeddingSiteWindow_GetTitle(nsIEmbeddingSiteWindow *iface,
         PRUnichar **aTitle)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
     WARN("(%p)->(%p)\n", This, aTitle);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -1845,7 +1845,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetTitle(nsIEmbeddingSiteWindow *ifa
 static nsresult NSAPI nsEmbeddingSiteWindow_SetTitle(nsIEmbeddingSiteWindow *iface,
         const PRUnichar *aTitle)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
     WARN("(%p)->(%s)\n", This, debugstr_w(aTitle));
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -1853,7 +1853,7 @@ static nsresult NSAPI nsEmbeddingSiteWindow_SetTitle(nsIEmbeddingSiteWindow *ifa
 static nsresult NSAPI nsEmbeddingSiteWindow_GetSiteWindow(nsIEmbeddingSiteWindow *iface,
         void **aSiteWindow)
 {
-    NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
+    GeckoBrowser *This = impl_from_nsIEmbeddingSiteWindow(iface);
 
     TRACE("(%p)->(%p)\n", This, aSiteWindow);
 
@@ -1875,34 +1875,34 @@ static const nsIEmbeddingSiteWindowVtbl nsEmbeddingSiteWindowVtbl = {
     nsEmbeddingSiteWindow_GetSiteWindow
 };
 
-static inline NSContainer *impl_from_nsITooltipListener(nsITooltipListener *iface)
+static inline GeckoBrowser *impl_from_nsITooltipListener(nsITooltipListener *iface)
 {
-    return CONTAINING_RECORD(iface, NSContainer, nsITooltipListener_iface);
+    return CONTAINING_RECORD(iface, GeckoBrowser, nsITooltipListener_iface);
 }
 
 static nsresult NSAPI nsTooltipListener_QueryInterface(nsITooltipListener *iface, nsIIDRef riid,
         void **result)
 {
-    NSContainer *This = impl_from_nsITooltipListener(iface);
+    GeckoBrowser *This = impl_from_nsITooltipListener(iface);
     return nsIWebBrowserChrome_QueryInterface(&This->nsIWebBrowserChrome_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsTooltipListener_AddRef(nsITooltipListener *iface)
 {
-    NSContainer *This = impl_from_nsITooltipListener(iface);
+    GeckoBrowser *This = impl_from_nsITooltipListener(iface);
     return nsIWebBrowserChrome_AddRef(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsrefcnt NSAPI nsTooltipListener_Release(nsITooltipListener *iface)
 {
-    NSContainer *This = impl_from_nsITooltipListener(iface);
+    GeckoBrowser *This = impl_from_nsITooltipListener(iface);
     return nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsresult NSAPI nsTooltipListener_OnShowTooltip(nsITooltipListener *iface,
         LONG aXCoord, LONG aYCoord, const PRUnichar *aTipText)
 {
-    NSContainer *This = impl_from_nsITooltipListener(iface);
+    GeckoBrowser *This = impl_from_nsITooltipListener(iface);
 
     if (This->doc)
         show_tooltip(This->doc, aXCoord, aYCoord, aTipText);
@@ -1912,7 +1912,7 @@ static nsresult NSAPI nsTooltipListener_OnShowTooltip(nsITooltipListener *iface,
 
 static nsresult NSAPI nsTooltipListener_OnHideTooltip(nsITooltipListener *iface)
 {
-    NSContainer *This = impl_from_nsITooltipListener(iface);
+    GeckoBrowser *This = impl_from_nsITooltipListener(iface);
 
     if (This->doc)
         hide_tooltip(This->doc);
@@ -1928,34 +1928,34 @@ static const nsITooltipListenerVtbl nsTooltipListenerVtbl = {
     nsTooltipListener_OnHideTooltip
 };
 
-static inline NSContainer *impl_from_nsIInterfaceRequestor(nsIInterfaceRequestor *iface)
+static inline GeckoBrowser *impl_from_nsIInterfaceRequestor(nsIInterfaceRequestor *iface)
 {
-    return CONTAINING_RECORD(iface, NSContainer, nsIInterfaceRequestor_iface);
+    return CONTAINING_RECORD(iface, GeckoBrowser, nsIInterfaceRequestor_iface);
 }
 
 static nsresult NSAPI nsInterfaceRequestor_QueryInterface(nsIInterfaceRequestor *iface,
         nsIIDRef riid, void **result)
 {
-    NSContainer *This = impl_from_nsIInterfaceRequestor(iface);
+    GeckoBrowser *This = impl_from_nsIInterfaceRequestor(iface);
     return nsIWebBrowserChrome_QueryInterface(&This->nsIWebBrowserChrome_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsInterfaceRequestor_AddRef(nsIInterfaceRequestor *iface)
 {
-    NSContainer *This = impl_from_nsIInterfaceRequestor(iface);
+    GeckoBrowser *This = impl_from_nsIInterfaceRequestor(iface);
     return nsIWebBrowserChrome_AddRef(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsrefcnt NSAPI nsInterfaceRequestor_Release(nsIInterfaceRequestor *iface)
 {
-    NSContainer *This = impl_from_nsIInterfaceRequestor(iface);
+    GeckoBrowser *This = impl_from_nsIInterfaceRequestor(iface);
     return nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsresult NSAPI nsInterfaceRequestor_GetInterface(nsIInterfaceRequestor *iface,
         nsIIDRef riid, void **result)
 {
-    NSContainer *This = impl_from_nsIInterfaceRequestor(iface);
+    GeckoBrowser *This = impl_from_nsIInterfaceRequestor(iface);
 
     if(IsEqualGUID(&IID_mozIDOMWindowProxy, riid)) {
         TRACE("(%p)->(IID_nsIDOMWindow %p)\n", This, result);
@@ -1972,34 +1972,34 @@ static const nsIInterfaceRequestorVtbl nsInterfaceRequestorVtbl = {
     nsInterfaceRequestor_GetInterface
 };
 
-static inline NSContainer *impl_from_nsISupportsWeakReference(nsISupportsWeakReference *iface)
+static inline GeckoBrowser *impl_from_nsISupportsWeakReference(nsISupportsWeakReference *iface)
 {
-    return CONTAINING_RECORD(iface, NSContainer, nsISupportsWeakReference_iface);
+    return CONTAINING_RECORD(iface, GeckoBrowser, nsISupportsWeakReference_iface);
 }
 
 static nsresult NSAPI nsSupportsWeakReference_QueryInterface(nsISupportsWeakReference *iface,
         nsIIDRef riid, void **result)
 {
-    NSContainer *This = impl_from_nsISupportsWeakReference(iface);
+    GeckoBrowser *This = impl_from_nsISupportsWeakReference(iface);
     return nsIWebBrowserChrome_QueryInterface(&This->nsIWebBrowserChrome_iface, riid, result);
 }
 
 static nsrefcnt NSAPI nsSupportsWeakReference_AddRef(nsISupportsWeakReference *iface)
 {
-    NSContainer *This = impl_from_nsISupportsWeakReference(iface);
+    GeckoBrowser *This = impl_from_nsISupportsWeakReference(iface);
     return nsIWebBrowserChrome_AddRef(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsrefcnt NSAPI nsSupportsWeakReference_Release(nsISupportsWeakReference *iface)
 {
-    NSContainer *This = impl_from_nsISupportsWeakReference(iface);
+    GeckoBrowser *This = impl_from_nsISupportsWeakReference(iface);
     return nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
 }
 
 static nsresult NSAPI nsSupportsWeakReference_GetWeakReference(nsISupportsWeakReference *iface,
         nsIWeakReference **_retval)
 {
-    NSContainer *This = impl_from_nsISupportsWeakReference(iface);
+    GeckoBrowser *This = impl_from_nsISupportsWeakReference(iface);
 
     TRACE("(%p)->(%p)\n", This, _retval);
 
@@ -2010,7 +2010,7 @@ static nsresult NSAPI nsSupportsWeakReference_GetWeakReference(nsISupportsWeakRe
 
         This->weak_reference->nsIWeakReference_iface.lpVtbl = &nsWeakReferenceVtbl;
         This->weak_reference->ref = 1;
-        This->weak_reference->nscontainer = This;
+        This->weak_reference->browser = This;
     }
 
     *_retval = &This->weak_reference->nsIWeakReference_iface;
@@ -2025,33 +2025,33 @@ static const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
     nsSupportsWeakReference_GetWeakReference
 };
 
-static HRESULT init_nscontainer(NSContainer *nscontainer)
+static HRESULT init_browser(GeckoBrowser *browser)
 {
     nsIWebBrowserSetup *wbsetup;
     nsIScrollable *scrollable;
     nsresult nsres;
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
-            NULL, &IID_nsIWebBrowser, (void**)&nscontainer->webbrowser);
+            NULL, &IID_nsIWebBrowser, (void**)&browser->webbrowser);
     if(NS_FAILED(nsres)) {
         ERR("Creating WebBrowser failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    nsres = nsIWebBrowser_SetContainerWindow(nscontainer->webbrowser, &nscontainer->nsIWebBrowserChrome_iface);
+    nsres = nsIWebBrowser_SetContainerWindow(browser->webbrowser, &browser->nsIWebBrowserChrome_iface);
     if(NS_FAILED(nsres)) {
         ERR("SetContainerWindow failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    nsres = nsIWebBrowser_QueryInterface(nscontainer->webbrowser, &IID_nsIBaseWindow,
-            (void**)&nscontainer->window);
+    nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIBaseWindow,
+            (void**)&browser->window);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIBaseWindow interface: %08x\n", nsres);
         return E_FAIL;
     }
 
-    nsres = nsIWebBrowser_QueryInterface(nscontainer->webbrowser, &IID_nsIWebBrowserSetup,
+    nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIWebBrowserSetup,
                                          (void**)&wbsetup);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(wbsetup, SETUP_IS_CHROME_WRAPPER, FALSE);
@@ -2065,55 +2065,55 @@ static HRESULT init_nscontainer(NSContainer *nscontainer)
         return E_FAIL;
     }
 
-    nsres = nsIWebBrowser_QueryInterface(nscontainer->webbrowser, &IID_nsIWebNavigation,
-            (void**)&nscontainer->navigation);
+    nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIWebNavigation,
+            (void**)&browser->navigation);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIWebNavigation interface: %08x\n", nsres);
         return E_FAIL;
     }
 
-    nsres = nsIWebBrowser_QueryInterface(nscontainer->webbrowser, &IID_nsIWebBrowserFocus,
-            (void**)&nscontainer->focus);
+    nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIWebBrowserFocus,
+            (void**)&browser->focus);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIWebBrowserFocus interface: %08x\n", nsres);
         return E_FAIL;
     }
 
-    if(!nscontainer_class) {
-        register_nscontainer_class();
-        if(!nscontainer_class)
+    if(!browser_class) {
+        register_browser_class();
+        if(!browser_class)
             return E_FAIL;
     }
 
-    nscontainer->hwnd = CreateWindowExW(0, wszNsContainer, NULL,
+    browser->hwnd = CreateWindowExW(0, wszNsContainer, NULL,
             WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, 100, 100,
-            GetDesktopWindow(), NULL, hInst, nscontainer);
-    if(!nscontainer->hwnd) {
+            GetDesktopWindow(), NULL, hInst, browser);
+    if(!browser->hwnd) {
         WARN("Could not create window\n");
         return E_FAIL;
     }
 
-    nsres = nsIBaseWindow_InitWindow(nscontainer->window, nscontainer->hwnd, NULL, 0, 0, 100, 100);
+    nsres = nsIBaseWindow_InitWindow(browser->window, browser->hwnd, NULL, 0, 0, 100, 100);
     if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIBaseWindow_Create(nscontainer->window);
+        nsres = nsIBaseWindow_Create(browser->window);
         if(NS_FAILED(nsres)) {
             WARN("Creating window failed: %08x\n", nsres);
             return E_FAIL;
         }
 
-        nsIBaseWindow_SetVisibility(nscontainer->window, FALSE);
-        nsIBaseWindow_SetEnabled(nscontainer->window, FALSE);
+        nsIBaseWindow_SetVisibility(browser->window, FALSE);
+        nsIBaseWindow_SetEnabled(browser->window, FALSE);
     }else {
         ERR("InitWindow failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    nsres = nsIWebBrowser_SetParentURIContentListener(nscontainer->webbrowser,
-            &nscontainer->nsIURIContentListener_iface);
+    nsres = nsIWebBrowser_SetParentURIContentListener(browser->webbrowser,
+            &browser->nsIURIContentListener_iface);
     if(NS_FAILED(nsres))
         ERR("SetParentURIContentListener failed: %08x\n", nsres);
 
-    nsres = nsIWebBrowser_QueryInterface(nscontainer->webbrowser, &IID_nsIScrollable, (void**)&scrollable);
+    nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIScrollable, (void**)&scrollable);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIScrollable_SetDefaultScrollbarPreferences(scrollable,
                 ScrollOrientation_Y, Scrollbar_Always);
@@ -2133,15 +2133,15 @@ static HRESULT init_nscontainer(NSContainer *nscontainer)
     return S_OK;
 }
 
-HRESULT create_nscontainer(HTMLDocumentObj *doc, NSContainer **_ret)
+HRESULT create_gecko_browser(HTMLDocumentObj *doc, GeckoBrowser **_ret)
 {
-    NSContainer *ret;
+    GeckoBrowser *ret;
     HRESULT hres;
 
     if(!load_gecko())
         return CLASS_E_CLASSNOTAVAILABLE;
 
-    ret = heap_alloc_zero(sizeof(NSContainer));
+    ret = heap_alloc_zero(sizeof(GeckoBrowser));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -2156,7 +2156,7 @@ HRESULT create_nscontainer(HTMLDocumentObj *doc, NSContainer **_ret)
     ret->doc = doc;
     ret->ref = 1;
 
-    hres = init_nscontainer(ret);
+    hres = init_browser(ret);
     if(SUCCEEDED(hres))
         *_ret = ret;
     else
@@ -2164,7 +2164,7 @@ HRESULT create_nscontainer(HTMLDocumentObj *doc, NSContainer **_ret)
     return hres;
 }
 
-void NSContainer_Release(NSContainer *This)
+void detach_gecko_browser(GeckoBrowser *This)
 {
     TRACE("(%p)\n", This);
 

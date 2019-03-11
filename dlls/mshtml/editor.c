@@ -113,7 +113,7 @@ void set_dirty(HTMLDocument *This, VARIANT_BOOL dirty)
     }
 }
 
-static void do_ns_editor_command(NSContainer *This, const char *cmd)
+static void do_ns_editor_command(GeckoBrowser *This, const char *cmd)
 {
     nsresult nsres;
 
@@ -125,7 +125,7 @@ static void do_ns_editor_command(NSContainer *This, const char *cmd)
         ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
 }
 
-static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsICommandParams *nsparam)
+static nsresult get_ns_command_state(GeckoBrowser *This, const char *cmd, nsICommandParams *nsparam)
 {
     nsICommandManager *cmdmgr;
     nsresult nsres;

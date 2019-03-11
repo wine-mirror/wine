@@ -5325,7 +5325,7 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
         release_dispex(&This->dispex);
 
         if(This->nscontainer)
-            NSContainer_Release(This->nscontainer);
+            detach_gecko_browser(This->nscontainer);
         heap_free(This);
 
         /* Force cycle collection */
@@ -5456,7 +5456,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
 
     HTMLDocument_View_Init(doc);
 
-    hres = create_nscontainer(doc, &doc->nscontainer);
+    hres = create_gecko_browser(doc, &doc->nscontainer);
     if(FAILED(hres)) {
         ERR("Failed to init Gecko, returning CLASS_E_CLASSNOTAVAILABLE\n");
         htmldoc_release(&doc->basedoc);

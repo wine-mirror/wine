@@ -378,7 +378,7 @@ typedef struct HTMLOuterWindow HTMLOuterWindow;
 typedef struct HTMLDocumentNode HTMLDocumentNode;
 typedef struct HTMLDocumentObj HTMLDocumentObj;
 typedef struct HTMLFrameBase HTMLFrameBase;
-typedef struct NSContainer NSContainer;
+typedef struct GeckoBrowser GeckoBrowser;
 typedef struct HTMLAttributeCollection HTMLAttributeCollection;
 
 typedef enum {
@@ -654,7 +654,7 @@ struct HTMLDocumentObj {
 
     LONG ref;
 
-    NSContainer *nscontainer;
+    GeckoBrowser *nscontainer;
 
     IOleClientSite *client;
     IDocHostUIHandler *hostui;
@@ -698,7 +698,7 @@ struct HTMLDocumentObj {
 
 typedef struct nsWeakReference nsWeakReference;
 
-struct NSContainer {
+struct GeckoBrowser {
     nsIWebBrowserChrome      nsIWebBrowserChrome_iface;
     nsIContextMenuListener   nsIContextMenuListener_iface;
     nsIURIContentListener    nsIURIContentListener_iface;
@@ -895,8 +895,8 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement*,IHTMLCurrentStyle**) DECLSPEC_HIDDE
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*,const cpc_entry_t*) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*) DECLSPEC_HIDDEN;
 
-HRESULT create_nscontainer(HTMLDocumentObj*,NSContainer**) DECLSPEC_HIDDEN;
-void NSContainer_Release(NSContainer*) DECLSPEC_HIDDEN;
+HRESULT create_gecko_browser(HTMLDocumentObj*,GeckoBrowser**) DECLSPEC_HIDDEN;
+void detach_gecko_browser(GeckoBrowser*) DECLSPEC_HIDDEN;
 
 compat_mode_t lock_document_mode(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
@@ -923,8 +923,8 @@ void register_nsservice(nsIComponentRegistrar*,nsIServiceManager*) DECLSPEC_HIDD
 void init_nsio(nsIComponentManager*) DECLSPEC_HIDDEN;
 void release_nsio(void) DECLSPEC_HIDDEN;
 BOOL is_gecko_path(const char*) DECLSPEC_HIDDEN;
-void set_viewer_zoom(NSContainer*,float) DECLSPEC_HIDDEN;
-float get_viewer_zoom(NSContainer*) DECLSPEC_HIDDEN;
+void set_viewer_zoom(GeckoBrowser*,float) DECLSPEC_HIDDEN;
+float get_viewer_zoom(GeckoBrowser*) DECLSPEC_HIDDEN;
 
 void init_node_cc(void) DECLSPEC_HIDDEN;
 
@@ -953,7 +953,7 @@ HRESULT return_nsform(nsresult,nsIDOMHTMLFormElement*,IHTMLFormElement**) DECLSP
 
 nsICommandParams *create_nscommand_params(void) DECLSPEC_HIDDEN;
 HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*) DECLSPEC_HIDDEN;
-void get_editor_controller(NSContainer*) DECLSPEC_HIDDEN;
+void get_editor_controller(GeckoBrowser*) DECLSPEC_HIDDEN;
 nsresult get_nsinterface(nsISupports*,REFIID,void**) DECLSPEC_HIDDEN;
 nsIWritableVariant *create_nsvariant(void) DECLSPEC_HIDDEN;
 nsIXMLHttpRequest *create_nsxhr(nsIDOMWindow *nswindow) DECLSPEC_HIDDEN;

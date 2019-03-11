@@ -66,7 +66,7 @@ static void paint_document(HTMLDocumentObj *This)
     EndPaint(This->hwnd, &ps);
 }
 
-static void activate_gecko(NSContainer *This)
+static void activate_gecko(GeckoBrowser *This)
 {
     TRACE("(%p) %p\n", This, This->window);
 

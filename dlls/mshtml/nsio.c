@@ -235,7 +235,7 @@ static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, BSTR url)
     return TRUE;
 }
 
-static nsresult before_async_open(nsChannel *channel, NSContainer *container, BOOL *cancel)
+static nsresult before_async_open(nsChannel *channel, GeckoBrowser *container, BOOL *cancel)
 {
     HTMLDocumentObj *doc = container->doc;
     BSTR display_uri;

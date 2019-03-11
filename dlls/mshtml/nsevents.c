@@ -119,7 +119,7 @@ static nsrefcnt NSAPI nsDOMEventListener_Release(nsIDOMEventListener *iface)
     return release_listener(This->This);
 }
 
-static BOOL is_doc_child_focus(NSContainer *nscontainer)
+static BOOL is_doc_child_focus(GeckoBrowser *nscontainer)
 {
     HWND hwnd;
 
