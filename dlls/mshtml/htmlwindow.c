@@ -3532,10 +3532,11 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
     return S_OK;
 }
 
-HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
+HRESULT create_outer_window(GeckoBrowser *browser, mozIDOMWindowProxy *mozwindow,
         HTMLOuterWindow *parent, HTMLOuterWindow **ret)
 {
     HTMLOuterWindow *window;
+    nsresult nsres;
     HRESULT hres;
 
     window = alloc_window(sizeof(HTMLOuterWindow));
@@ -3545,17 +3546,12 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
     window->base.outer_window = window;
     window->base.inner_window = NULL;
 
-    window->doc_obj = doc_obj;
+    window->doc_obj = browser->doc;
 
-    if(nswindow) {
-        nsresult nsres;
-
-        nsIDOMWindow_AddRef(nswindow);
-        window->nswindow = nswindow;
-
-        nsres = nsIDOMWindow_QueryInterface(nswindow, &IID_mozIDOMWindowProxy, (void**)&window->window_proxy);
-        assert(nsres == NS_OK);
-    }
+    mozIDOMWindowProxy_AddRef(mozwindow);
+    window->window_proxy = mozwindow;
+    nsres = mozIDOMWindowProxy_QueryInterface(mozwindow, &IID_nsIDOMWindow, (void**)&window->nswindow);
+    assert(nsres == NS_OK);
 
     window->scriptmode = parent ? parent->scriptmode : SCRIPTMODE_GECKO;
     window->readystate = READYSTATE_UNINITIALIZED;

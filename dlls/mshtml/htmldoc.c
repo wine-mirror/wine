@@ -5445,7 +5445,6 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
 {
     mozIDOMWindowProxy *mozwindow;
     HTMLDocumentObj *doc;
-    nsIDOMWindow *nswindow = NULL;
     nsresult nsres;
     HRESULT hres;
 
@@ -5497,13 +5496,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     if(NS_FAILED(nsres))
         ERR("GetContentDOMWindow failed: %08x\n", nsres);
 
-    nsres = mozIDOMWindowProxy_QueryInterface(mozwindow, &IID_nsIDOMWindow, (void**)&nswindow);
-    mozIDOMWindowProxy_Release(mozwindow);
-    assert(nsres == NS_OK);
-
-    hres = HTMLOuterWindow_Create(doc, nswindow, NULL /* FIXME */, &doc->basedoc.window);
-    if(nswindow)
-        nsIDOMWindow_Release(nswindow);
+    hres = create_outer_window(doc->nscontainer, mozwindow, NULL, &doc->basedoc.window);
     if(FAILED(hres)) {
         htmldoc_release(&doc->basedoc);
         return hres;
