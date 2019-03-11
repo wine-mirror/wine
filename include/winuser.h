@@ -4052,7 +4052,6 @@ WINUSERAPI UINT        WINAPI PrivateExtractIconExA(LPCSTR,int,HICON*,HICON*,UIN
 WINUSERAPI UINT        WINAPI PrivateExtractIconExW(LPCWSTR,int,HICON*,HICON*,UINT);
 WINUSERAPI UINT        WINAPI PrivateExtractIconsA(LPCSTR,int,int,int,HICON*,UINT*,UINT,UINT);
 WINUSERAPI UINT        WINAPI PrivateExtractIconsW(LPCWSTR,int,int,int,HICON*,UINT*,UINT,UINT);
-WINUSERAPI BOOL        WINAPI PtInRect(const RECT*,POINT);
 WINUSERAPI HWND        WINAPI RealChildWindowFromPoint(HWND,POINT);
 WINUSERAPI UINT        WINAPI RealGetWindowClassA(HWND,LPSTR,UINT);
 WINUSERAPI UINT        WINAPI RealGetWindowClassW(HWND,LPWSTR,UINT);
@@ -4281,6 +4280,7 @@ WINUSERAPI BOOL        WINAPI EqualRect(const RECT*,const RECT*);
 WINUSERAPI BOOL        WINAPI InflateRect(LPRECT,INT,INT);
 WINUSERAPI BOOL        WINAPI IsRectEmpty(const RECT*);
 WINUSERAPI BOOL        WINAPI OffsetRect(LPRECT,INT,INT);
+WINUSERAPI BOOL        WINAPI PtInRect(const RECT*,POINT);
 WINUSERAPI BOOL        WINAPI SetRect(LPRECT,INT,INT,INT,INT);
 WINUSERAPI BOOL        WINAPI SetRectEmpty(LPRECT);
 
@@ -4319,6 +4319,13 @@ static inline BOOL WINAPI OffsetRect(LPRECT rect, INT x, INT y)
     rect->top    += y;
     rect->bottom += y;
     return TRUE;
+}
+
+static inline BOOL WINAPI PtInRect(const RECT *rect, POINT pt)
+{
+    if (!rect) return FALSE;
+    return ((pt.x >= rect->left) && (pt.x < rect->right) &&
+            (pt.y >= rect->top) && (pt.y < rect->bottom));
 }
 
 static inline BOOL WINAPI SetRect(LPRECT rect, INT left, INT top, INT right, INT bottom)
