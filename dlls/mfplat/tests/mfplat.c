@@ -904,7 +904,10 @@ static void test_MFCreateAsyncResult(void)
     IUnknown *state, *object;
     MFASYNCRESULT *data;
     ULONG refcount;
+    HANDLE event;
+    DWORD flags;
     HRESULT hr;
+    BOOL ret;
 
     init_test_callback(&callback);
 
@@ -991,6 +994,35 @@ static void test_MFCreateAsyncResult(void)
     ok(!refcount, "Unexpected refcount %u\n.", refcount);
     refcount = IMFAsyncResult_Release(result);
     ok(!refcount, "Unexpected refcount %u\n.", refcount);
+
+    /* Event handle is closed on release. */
+    hr = MFCreateAsyncResult(NULL, NULL, NULL, &result);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    data = (MFASYNCRESULT *)result;
+    data->hEvent = event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(data->hEvent != NULL, "Failed to create event.\n");
+    ret = GetHandleInformation(event, &flags);
+    ok(ret, "Failed to get handle info.\n");
+
+    refcount = IMFAsyncResult_Release(result);
+    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+    ret = GetHandleInformation(event, &flags);
+    ok(!ret, "Expected handle to be closed.\n");
+
+    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    data = (MFASYNCRESULT *)result;
+    data->hEvent = event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(data->hEvent != NULL, "Failed to create event.\n");
+    ret = GetHandleInformation(event, &flags);
+    ok(ret, "Failed to get handle info.\n");
+
+    refcount = IMFAsyncResult_Release(result);
+    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+    ret = GetHandleInformation(event, &flags);
+    ok(!ret, "Expected handle to be closed.\n");
 }
 
 static void test_startup(void)
@@ -1693,6 +1725,40 @@ static void test_system_time_source(void)
     IMFPresentationTimeSource_Release(time_source);
 }
 
+static void test_MFInvokeCallback(void)
+{
+    struct test_callback callback;
+    IMFAsyncResult *result;
+    MFASYNCRESULT *data;
+    ULONG refcount;
+    HRESULT hr;
+    DWORD ret;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    init_test_callback(&callback);
+
+    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    data = (MFASYNCRESULT *)result;
+    data->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(data->hEvent != NULL, "Failed to create event.\n");
+
+    hr = MFInvokeCallback(result);
+    ok(hr == S_OK, "Failed to invoke, hr %#x.\n", hr);
+
+    ret = WaitForSingleObject(data->hEvent, 100);
+    ok(ret == WAIT_TIMEOUT, "Expected timeout, ret %#x.\n", ret);
+
+    refcount = IMFAsyncResult_Release(result);
+    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -1720,6 +1786,7 @@ START_TEST(mfplat)
     test_event_queue();
     test_presentation_descriptor();
     test_system_time_source();
+    test_MFInvokeCallback();
 
     CoUninitialize();
 }

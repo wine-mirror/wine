@@ -649,6 +649,8 @@ static ULONG WINAPI async_result_Release(IMFAsyncResult *iface)
             IUnknown_Release(result->object);
         if (result->state)
             IUnknown_Release(result->state);
+        if (result->result.hEvent)
+            CloseHandle(result->result.hEvent);
         heap_free(result);
 
         MFUnlockPlatform();
