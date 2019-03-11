@@ -126,15 +126,13 @@ static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIAN
 static void detach_inner_window(HTMLInnerWindow *window)
 {
     HTMLOuterWindow *outer_window = window->base.outer_window;
+    HTMLDocumentNode *doc = window->doc;
 
     if(outer_window && outer_window->doc_obj && outer_window == outer_window->doc_obj->basedoc.window)
         window->doc->basedoc.cp_container.forward_container = NULL;
 
-    if(window->doc) {
-        detach_events(window->doc);
-        while(!list_empty(&window->doc->plugin_hosts))
-            detach_plugin_host(LIST_ENTRY(list_head(&window->doc->plugin_hosts), PluginHost, entry));
-    }
+    if(doc)
+        detach_document_node(doc);
 
     abort_window_bindings(window);
     remove_target_tasks(window->task_magic);

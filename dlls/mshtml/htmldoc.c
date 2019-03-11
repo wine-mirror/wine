@@ -4885,31 +4885,39 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
+void detach_document_node(HTMLDocumentNode *doc)
+{
+    unsigned i;
+
+    while(!list_empty(&doc->plugin_hosts))
+        detach_plugin_host(LIST_ENTRY(list_head(&doc->plugin_hosts), PluginHost, entry));
+
+    detach_events(doc);
+    detach_selection(doc);
+    detach_ranges(doc);
+
+    for(i=0; i < doc->elem_vars_cnt; i++)
+        heap_free(doc->elem_vars[i]);
+    heap_free(doc->elem_vars);
+    doc->elem_vars_cnt = 0;
+
+    if(doc->catmgr) {
+        ICatInformation_Release(doc->catmgr);
+        doc->catmgr = NULL;
+    }
+
+    if(!doc->nsdoc && doc->window) {
+        /* document fragments own reference to inner window */
+        IHTMLWindow2_Release(&doc->window->base.IHTMLWindow2_iface);
+        doc->window = NULL;
+    }
+}
+
 static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 {
     HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
-    unsigned i;
 
-    for(i=0; i < This->elem_vars_cnt; i++)
-        heap_free(This->elem_vars[i]);
-    heap_free(This->elem_vars);
-
-    detach_events(This);
-    if(This->catmgr)
-        ICatInformation_Release(This->catmgr);
-
-    detach_selection(This);
-    detach_ranges(This);
-
-    while(!list_empty(&This->plugin_hosts))
-        detach_plugin_host(LIST_ENTRY(list_head(&This->plugin_hosts), PluginHost, entry));
-
-    if(!This->nsdoc && This->window) {
-        /* document fragments own reference to inner window */
-        IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
-        This->window = NULL;
-    }
-
+    detach_document_node(This);
     heap_free(This->event_vector);
     ConnectionPointContainer_Destroy(&This->basedoc.cp_container);
 }
