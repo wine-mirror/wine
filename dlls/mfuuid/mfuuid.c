@@ -23,6 +23,9 @@
 #include "strmif.h"
 #include "mediaobj.h"
 
+#undef EXTERN_GUID
+#define EXTERN_GUID DEFINE_GUID
+
 #include "initguid.h"
 
 #include "mfapi.h"

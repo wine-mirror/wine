@@ -26,17 +26,13 @@
 #include "winuser.h"
 #include "winreg.h"
 
+#undef INITGUID
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mferror.h"
 #include "mfreadwrite.h"
 
 #include "wine/test.h"
-
-#include "initguid.h"
-DEFINE_GUID(MF_READWRITE_MMCSS_PRIORITY_AUDIO,0x273db885, 0x2de2, 0x4db2, 0xa6, 0xa7, 0xfd, 0xb6, 0x6f, 0xb4, 0x0b, 0x61);
-DEFINE_GUID(MF_READWRITE_MMCSS_CLASS_AUDIO,   0x430847da, 0x0890, 0x4b0e, 0x93, 0x8c, 0x05, 0x43, 0x32, 0xc5, 0x47, 0xe1);
-DEFINE_GUID(CLSID_MFReadWriteClassFactory, 0x48e2ed0f, 0x98c2, 0x4a37, 0xbe, 0xd5, 0x16, 0x63, 0x12, 0xdd, 0xd8, 0x3f);
 
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
 
