@@ -774,6 +774,21 @@ static void check_sub_resource_uint_(unsigned int line, ID3D12Resource *texture,
     release_resource_readback(&rb);
 }
 
+static void test_ordinals(void)
+{
+    PFN_D3D12_CREATE_DEVICE pfn_D3D12CreateDevice, pfn_101;
+    HMODULE d3d12;
+
+    d3d12 = GetModuleHandleA("d3d12.dll");
+    ok(!!d3d12, "Failed to get module handle.\n");
+
+    pfn_D3D12CreateDevice = (void *)GetProcAddress(d3d12, "D3D12CreateDevice");
+    ok(!!pfn_D3D12CreateDevice, "Failed to get D3D12CreateDevice() proc address.\n");
+
+    pfn_101 = (void *)GetProcAddress(d3d12, (const char *)101);
+    ok(pfn_101 == pfn_D3D12CreateDevice, "Got %p, expected %p.\n", pfn_101, pfn_D3D12CreateDevice);
+}
+
 static void test_interfaces(void)
 {
     D3D12_COMMAND_QUEUE_DESC desc;
@@ -1368,6 +1383,7 @@ START_TEST(d3d12)
 
     print_adapter_info();
 
+    test_ordinals();
     test_interfaces();
     test_create_device();
     test_draw();
