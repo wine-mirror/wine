@@ -27,6 +27,7 @@
 #include "winreg.h"
 
 #include "initguid.h"
+#include "ole2.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"

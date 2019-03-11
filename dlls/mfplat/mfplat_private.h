@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#undef INITGUID
+#include <guiddef.h>
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mferror.h"
