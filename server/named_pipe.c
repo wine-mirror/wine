@@ -1173,6 +1173,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     }
     allow_fd_caching( server->pipe_end.fd );
     set_fd_signaled( server->pipe_end.fd, 1 );
+    async_wake_up( &pipe->waiters, STATUS_SUCCESS );
     return server;
 }
 
