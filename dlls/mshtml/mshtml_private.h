@@ -713,6 +713,8 @@ struct GeckoBrowser {
     nsIBaseWindow *window;
     nsIWebBrowserFocus *focus;
 
+    HTMLOuterWindow *content_window;
+
     nsIEditor *editor;
     nsIController *editor_controller;
 

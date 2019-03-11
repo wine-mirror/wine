@@ -2029,9 +2029,11 @@ static const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
 
 static HRESULT init_browser(GeckoBrowser *browser)
 {
+    mozIDOMWindowProxy *mozwindow;
     nsIWebBrowserSetup *wbsetup;
     nsIScrollable *scrollable;
     nsresult nsres;
+    HRESULT hres;
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
             NULL, &IID_nsIWebBrowser, (void**)&browser->webbrowser);
@@ -2132,7 +2134,15 @@ static HRESULT init_browser(GeckoBrowser *browser)
         ERR("Could not get nsIScrollable: %08x\n", nsres);
     }
 
-    return S_OK;
+    nsres = nsIWebBrowser_GetContentDOMWindow(browser->webbrowser, &mozwindow);
+    if(NS_FAILED(nsres)) {
+        ERR("GetContentDOMWindow failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = create_outer_window(browser, mozwindow, NULL, &browser->content_window);
+    mozIDOMWindowProxy_Release(mozwindow);
+    return hres;
 }
 
 HRESULT create_gecko_browser(HTMLDocumentObj *doc, GeckoBrowser **_ret)
@@ -2173,6 +2183,11 @@ void detach_gecko_browser(GeckoBrowser *This)
     TRACE("(%p)\n", This);
 
     This->doc = NULL;
+
+    if(This->content_window) {
+        IHTMLWindow2_Release(&This->content_window->base.IHTMLWindow2_iface);
+        This->content_window = NULL;
+    }
 
     while(!list_empty(&This->document_nodes)) {
         HTMLDocumentNode *doc = LIST_ENTRY(list_head(&This->document_nodes), HTMLDocumentNode, browser_entry);
