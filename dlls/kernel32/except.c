@@ -364,12 +364,11 @@ static BOOL start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 	{
 	    /* ok, our event has been set... we're the winning thread */
 	    BOOL	ret = start_debugger( epointers, hRunOnce );
-	    DWORD	tmp;
 
 	    if (!ret)
 	    {
 		/* so that the other threads won't be stuck */
-		NtSetEvent( hRunOnce, &tmp );
+		NtSetEvent( hRunOnce, NULL );
 	    }
 	    return ret;
 	}
