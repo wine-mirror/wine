@@ -852,6 +852,7 @@ cleanup:
 
 static PFN_vkd3d_acquire_vk_queue vkd3d_acquire_vk_queue;
 static PFN_vkd3d_create_image_resource vkd3d_create_image_resource;
+static PFN_vkd3d_get_device_parent vkd3d_get_device_parent;
 static PFN_vkd3d_get_vk_device vkd3d_get_vk_device;
 static PFN_vkd3d_get_vk_format vkd3d_get_vk_format;
 static PFN_vkd3d_get_vk_physical_device vkd3d_get_vk_physical_device;
@@ -1936,9 +1937,26 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeTarget(IDXGISwapChain3 *i
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetContainingOutput(IDXGISwapChain3 *iface,
         IDXGIOutput **output)
 {
-    FIXME("iface %p, output %p stub!\n", iface, output);
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+    IUnknown *device_parent;
+    IDXGIAdapter *adapter;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, output %p.\n", iface, output);
+
+    device_parent = vkd3d_get_device_parent(swapchain->device);
+
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(device_parent, &IID_IDXGIAdapter, (void **)&adapter)))
+    {
+        hr = dxgi_get_output_from_window(adapter, swapchain->window, output);
+        IDXGIAdapter_Release(adapter);
+    }
+    else
+    {
+        WARN("Failed to get adapter, hr %#x.\n", hr);
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFrameStatistics(IDXGISwapChain3 *iface,
@@ -2407,6 +2425,7 @@ static BOOL load_vkd3d_functions(void *vkd3d_handle)
 #define LOAD_FUNCPTR(f) if (!(f = wine_dlsym(vkd3d_handle, #f, NULL, 0))) return FALSE;
     LOAD_FUNCPTR(vkd3d_acquire_vk_queue)
     LOAD_FUNCPTR(vkd3d_create_image_resource)
+    LOAD_FUNCPTR(vkd3d_get_device_parent)
     LOAD_FUNCPTR(vkd3d_get_vk_device)
     LOAD_FUNCPTR(vkd3d_get_vk_format)
     LOAD_FUNCPTR(vkd3d_get_vk_physical_device)
