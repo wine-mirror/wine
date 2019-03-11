@@ -2434,6 +2434,14 @@ PMDL WINAPI MmAllocatePagesForMdl(PHYSICAL_ADDRESS lowaddress, PHYSICAL_ADDRESS 
 }
 
 /***********************************************************************
+ *           MmBuildMdlForNonPagedPool   (NTOSKRNL.EXE.@)
+ */
+void WINAPI MmBuildMdlForNonPagedPool(MDL *mdl)
+{
+    FIXME("stub: %p\n", mdl);
+}
+
+/***********************************************************************
  *           MmCreateSection   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI MmCreateSection( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
