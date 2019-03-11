@@ -185,6 +185,58 @@ interface IMFMediaSession : IMFMediaEventGenerator
 
 [
     object,
+    uuid(bb420aa4-765b-4a1f-91fe-d6a8a143924c),
+    local
+]
+interface IMFByteStreamHandler : IUnknown
+{
+    HRESULT BeginCreateObject(
+            [in] IMFByteStream *stream,
+            [in] const WCHAR *url,
+            [in] DWORD flags,
+            [in] IPropertyStore *props,
+            [out] IUnknown **cancel_cookie,
+            [in] IMFAsyncCallback *callback,
+            [in] IUnknown *state);
+
+    HRESULT EndCreateObject(
+            [in] IMFAsyncResult *result,
+            [out] MF_OBJECT_TYPE *obj_type,
+            [out] IUnknown **object);
+
+    HRESULT CancelObjectCreation(
+            [in] IUnknown *cancel_cookie);
+
+    HRESULT GetMaxNumberOfBytesRequiredForResolution(
+            [out] QWORD *bytes);
+}
+
+[
+    object,
+    uuid(6d4c7b74-52a0-4bb7-b0db-55f29f47a668),
+    local
+]
+interface IMFSchemeHandler : IUnknown
+{
+    HRESULT BeginCreateObject(
+            [in] const WCHAR *url,
+            [in] DWORD flags,
+            [in] IPropertyStore *props,
+            [out] IUnknown **cancel_cookie,
+            [in] IMFAsyncCallback *callback,
+            [in] IUnknown *state);
+
+    HRESULT EndCreateObject(
+            [in] IMFAsyncResult *result,
+            [out] MF_OBJECT_TYPE *obj_type,
+            [out] IUnknown **object);
+
+    HRESULT CancelObjectCreation(
+            [in] IUnknown *cancel_cookie);
+}
+
+[
+    object,
     uuid(fbe5a32d-a497-4b61-bb85-97b1a848a6e3)
 ]
 interface IMFSourceResolver : IUnknown
