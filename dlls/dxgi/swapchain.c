@@ -110,6 +110,46 @@ BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc)
     return TRUE;
 }
 
+static HRESULT dxgi_get_output_from_window(IDXGIAdapter *adapter, HWND window, IDXGIOutput **dxgi_output)
+{
+    DXGI_OUTPUT_DESC desc;
+    IDXGIOutput *output;
+    unsigned int index;
+    HMONITOR monitor;
+    HRESULT hr;
+
+    if (!(monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST)))
+    {
+        WARN("Failed to get monitor from window.\n");
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    index = 0;
+    while ((hr = IDXGIAdapter_EnumOutputs(adapter, index, &output)) == S_OK)
+    {
+        if (FAILED(hr = IDXGIOutput_GetDesc(output, &desc)))
+        {
+            WARN("Failed to get output desc %u, hr %#x.\n", index, hr);
+            ++index;
+            continue;
+        }
+
+        if (desc.Monitor == monitor)
+        {
+            *dxgi_output = output;
+            return S_OK;
+        }
+
+        IDXGIOutput_Release(output);
+        ++index;
+    }
+    if (hr != DXGI_ERROR_NOT_FOUND)
+        WARN("Failed to enumerate outputs, hr %#x.\n", hr);
+
+    WARN("Output could not be found.\n");
+    return DXGI_ERROR_NOT_FOUND;
+}
+
 static inline struct d3d11_swapchain *d3d11_swapchain_from_IDXGISwapChain1(IDXGISwapChain1 *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d11_swapchain, IDXGISwapChain1_iface);
@@ -450,6 +490,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeTarget(IDXGISwapChain1 *i
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapChain1 *iface, IDXGIOutput **output)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
+    struct wined3d_swapchain_desc swapchain_desc;
     IDXGIAdapter *adapter;
     IDXGIDevice *device;
     HRESULT hr;
@@ -462,25 +503,26 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapCh
         return S_OK;
     }
 
-    if (FAILED(hr = d3d11_swapchain_GetDevice(iface, &IID_IDXGIDevice, (void **)&device)))
-        return hr;
-
-    hr = IDXGIDevice_GetAdapter(device, &adapter);
-    IDXGIDevice_Release(device);
-    if (FAILED(hr))
+    if (SUCCEEDED(hr = d3d11_swapchain_GetDevice(iface, &IID_IDXGIDevice, (void **)&device)))
     {
-        WARN("GetAdapter failed, hr %#x.\n", hr);
-        return hr;
+        hr = IDXGIDevice_GetAdapter(device, &adapter);
+        IDXGIDevice_Release(device);
     }
 
-    if (SUCCEEDED(IDXGIAdapter_EnumOutputs(adapter, 1, output)))
+    if (SUCCEEDED(hr))
     {
-        FIXME("Adapter has got multiple outputs, returning the first one.\n");
-        IDXGIOutput_Release(*output);
+        wined3d_mutex_lock();
+        wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &swapchain_desc);
+        wined3d_mutex_unlock();
+
+        hr = dxgi_get_output_from_window(adapter, swapchain_desc.device_window, output);
+        IDXGIAdapter_Release(adapter);
+    }
+    else
+    {
+        WARN("Failed to get adapter, hr %#x.\n", hr);
     }
 
-    hr = IDXGIAdapter_EnumOutputs(adapter, 0, output);
-    IDXGIAdapter_Release(adapter);
     return hr;
 }
 
