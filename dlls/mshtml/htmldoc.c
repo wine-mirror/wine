@@ -5163,8 +5163,9 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     return doc;
 }
 
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLInnerWindow *window, HTMLDocumentNode **ret)
+HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, HTMLInnerWindow *window, HTMLDocumentNode **ret)
 {
+    HTMLDocumentObj *doc_obj = browser->doc;
     HTMLDocumentNode *doc;
 
     doc = alloc_doc_node(doc_obj, window);

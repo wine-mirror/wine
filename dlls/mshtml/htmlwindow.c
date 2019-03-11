@@ -3627,10 +3627,8 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
 
     assert(!window->doc);
 
-    if(!outer_window) {
-        ERR("NULL outer window\n");
+    if(!outer_window)
         return E_UNEXPECTED;
-    }
 
     nsres = nsIDOMWindow_GetDocument(outer_window->nswindow, &nsdoc);
     if(NS_FAILED(nsres) || !nsdoc) {
@@ -3645,7 +3643,7 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
         return E_FAIL;
     }
 
-    hres = create_doc_from_nsdoc(nshtmldoc, outer_window->doc_obj, window, &window->doc);
+    hres = create_document_node(nshtmldoc, outer_window->doc_obj->nscontainer, window, &window->doc);
     nsIDOMHTMLDocument_Release(nshtmldoc);
     if(FAILED(hres))
         return hres;
