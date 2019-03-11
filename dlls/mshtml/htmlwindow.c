@@ -66,19 +66,6 @@ static inline BOOL is_outer_window(HTMLWindow *window)
     return &window->outer_window->base == window;
 }
 
-static void release_children(HTMLOuterWindow *This)
-{
-    HTMLOuterWindow *child;
-
-    while(!list_empty(&This->children)) {
-        child = LIST_ENTRY(list_tail(&This->children), HTMLOuterWindow, sibling_entry);
-
-        list_remove(&child->sibling_entry);
-        child->parent = NULL;
-        IHTMLWindow2_Release(&child->base.IHTMLWindow2_iface);
-    }
-}
-
 static HRESULT get_location(HTMLInnerWindow *This, HTMLLocation **ret)
 {
     if(This->location) {
@@ -99,7 +86,7 @@ void get_top_window(HTMLOuterWindow *window, HTMLOuterWindow **ret)
 {
     HTMLOuterWindow *iter;
 
-    for(iter = window; iter->parent; iter = iter->parent);
+    for(iter = window; iter->parent && iter->parent; iter = iter->parent);
     *ret = iter;
 }
 
@@ -127,6 +114,18 @@ static void detach_inner_window(HTMLInnerWindow *window)
 {
     HTMLOuterWindow *outer_window = window->base.outer_window;
     HTMLDocumentNode *doc = window->doc;
+
+    while(!list_empty(&window->children)) {
+        HTMLOuterWindow *child = LIST_ENTRY(list_tail(&window->children), HTMLOuterWindow, sibling_entry);
+
+        list_remove(&child->sibling_entry);
+        child->parent = NULL;
+
+        if(child->base.inner_window)
+            detach_inner_window(child->base.inner_window);
+
+        IHTMLWindow2_Release(&child->base.IHTMLWindow2_iface);
+    }
 
     if(outer_window && outer_window->doc_obj && outer_window == outer_window->doc_obj->basedoc.window)
         window->doc->basedoc.cp_container.forward_container = NULL;
@@ -228,7 +227,6 @@ static void release_outer_window(HTMLOuterWindow *This)
     set_current_uri(This, NULL);
     if(This->base.inner_window)
         detach_inner_window(This->base.inner_window);
-    release_children(This);
 
     if(This->secmgr)
         IInternetSecurityManager_Release(This->secmgr);
@@ -3515,6 +3513,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
     if(!window)
         return E_OUTOFMEMORY;
 
+    list_init(&window->children);
     list_init(&window->script_hosts);
     list_init(&window->bindings);
     list_init(&window->script_queue);
@@ -3565,7 +3564,6 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
     window->readystate = READYSTATE_UNINITIALIZED;
     window->task_magic = get_task_target_magic();
 
-    list_init(&window->children);
     wine_rb_put(&window_map, window->window_proxy, &window->entry);
 
     hres = create_pending_window(window, NULL);
@@ -3586,7 +3584,7 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
         window->parent = parent;
-        list_add_tail(&parent->children, &window->sibling_entry);
+        list_add_tail(&parent->base.inner_window->children, &window->sibling_entry);
     }
 
     TRACE("%p inner_window %p\n", window, window->base.inner_window);

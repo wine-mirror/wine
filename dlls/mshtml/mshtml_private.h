@@ -501,7 +501,6 @@ struct HTMLOuterWindow {
 
     IInternetSecurityManager *secmgr;
 
-    struct list children;
     struct list sibling_entry;
     struct wine_rb_entry entry;
 };
@@ -512,6 +511,7 @@ struct HTMLInnerWindow {
 
     HTMLDocumentNode *doc;
 
+    struct list children;
     struct list script_hosts;
 
     IHTMLEventObj *event;
