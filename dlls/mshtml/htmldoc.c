@@ -5446,6 +5446,10 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
         return E_INVALIDARG;
     }
 
+    /* ensure that security manager is initialized */
+    if(!get_security_manager())
+        return E_OUTOFMEMORY;
+
     doc = heap_alloc_zero(sizeof(HTMLDocumentObj));
     if(!doc)
         return E_OUTOFMEMORY;

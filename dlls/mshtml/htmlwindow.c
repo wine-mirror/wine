@@ -228,9 +228,6 @@ static void release_outer_window(HTMLOuterWindow *This)
     if(This->base.inner_window)
         detach_inner_window(This->base.inner_window);
 
-    if(This->secmgr)
-        IInternetSecurityManager_Release(This->secmgr);
-
     if(This->frame_element)
         This->frame_element->content_window = NULL;
 
@@ -3569,12 +3566,6 @@ HRESULT HTMLOuterWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow,
     hres = create_pending_window(window, NULL);
     if(SUCCEEDED(hres))
         hres = update_window_doc(window->pending_window);
-    if(FAILED(hres)) {
-        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
-        return hres;
-    }
-
-    hres = CoInternetCreateSecurityManager(NULL, &window->secmgr, 0);
     if(FAILED(hres)) {
         IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
         return hres;

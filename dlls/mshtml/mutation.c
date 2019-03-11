@@ -818,6 +818,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
     if(This->document_mode == COMPAT_MODE_QUIRKS) {
         nsIDOMDocumentType *nsdoctype;
+
         nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMDocumentType, (void**)&nsdoctype);
         if(NS_SUCCEEDED(nsres)) {
             compat_mode_t mode = COMPAT_MODE_IE7;
@@ -835,7 +836,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
                  * X-UA-Compatible version, allow configuration and default to higher version
                  * (once it's well supported).
                  */
-                hres = IInternetSecurityManager_MapUrlToZone(window->secmgr, window->url, &zone, 0);
+                hres = IInternetSecurityManager_MapUrlToZone(get_security_manager(), window->url, &zone, 0);
                 if(SUCCEEDED(hres) && zone == URLZONE_INTERNET)
                     mode = COMPAT_MODE_IE8;
             }

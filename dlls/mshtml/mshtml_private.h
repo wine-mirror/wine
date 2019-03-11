@@ -499,8 +499,6 @@ struct HTMLOuterWindow {
 
     SCRIPTMODE scriptmode;
 
-    IInternetSecurityManager *secmgr;
-
     struct list sibling_entry;
     struct wine_rb_entry entry;
 };
@@ -1330,5 +1328,6 @@ UINT cp_from_charset_string(BSTR) DECLSPEC_HIDDEN;
 BSTR charset_string_from_cp(UINT) DECLSPEC_HIDDEN;
 HINSTANCE get_shdoclc(void) DECLSPEC_HIDDEN;
 void set_statustext(HTMLDocumentObj*,INT,LPCWSTR) DECLSPEC_HIDDEN;
+IInternetSecurityManager *get_security_manager(void) DECLSPEC_HIDDEN;
 
 extern HINSTANCE hInst DECLSPEC_HIDDEN;

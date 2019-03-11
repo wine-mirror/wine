@@ -54,6 +54,7 @@ DWORD mshtml_tls = TLS_OUT_OF_INDEXES;
 static HINSTANCE shdoclc = NULL;
 static WCHAR *status_strings[IDS_STATUS_LAST-IDS_STATUS_FIRST+1];
 static IMultiLanguage2 *mlang;
+static IInternetSecurityManager *security_manager;
 static unsigned global_max_compat_mode = COMPAT_MODE_IE11;
 static struct list compat_config = LIST_INIT(compat_config);
 
@@ -116,6 +117,23 @@ BSTR charset_string_from_cp(UINT cp)
     }
 
     return SysAllocString(info.wszWebCharset);
+}
+
+IInternetSecurityManager *get_security_manager(void)
+{
+    if(!security_manager) {
+        IInternetSecurityManager *manager;
+        HRESULT hres;
+
+        hres = CoInternetCreateSecurityManager(NULL, &manager, 0);
+        if(FAILED(hres))
+            return NULL;
+
+        if(InterlockedCompareExchangePointer((void**)&security_manager, manager, NULL))
+            IInternetSecurityManager_Release(manager);
+    }
+
+    return security_manager;
 }
 
 static BOOL read_compat_mode(HKEY key, compat_mode_t *r)
@@ -266,6 +284,8 @@ static void process_detach(void)
         TlsFree(mshtml_tls);
     if(mlang)
         IMultiLanguage2_Release(mlang);
+    if(security_manager)
+        IInternetSecurityManager_Release(security_manager);
 
     free_strings();
 }

@@ -62,7 +62,7 @@ static BOOL use_gecko_script(HTMLOuterWindow *window)
     DWORD zone;
     HRESULT hres;
 
-    hres = IInternetSecurityManager_MapUrlToZone(window->secmgr, window->url, &zone, 0);
+    hres = IInternetSecurityManager_MapUrlToZone(get_security_manager(), window->url, &zone, 0);
     if(FAILED(hres)) {
         WARN("Could not map %s to zone: %08x\n", debugstr_w(window->url), hres);
         return TRUE;
