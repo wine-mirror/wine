@@ -27,6 +27,15 @@ struct _OBJECT_TYPE {
     void (*release)(void*);       /* called when the last reference is released */
 };
 
+extern POBJECT_TYPE ExEventObjectType;
+extern POBJECT_TYPE ExSemaphoreObjectType;
+extern POBJECT_TYPE IoDeviceObjectType;
+extern POBJECT_TYPE IoDriverObjectType;
+extern POBJECT_TYPE IoFileObjectType;
+extern POBJECT_TYPE PsProcessType;
+extern POBJECT_TYPE PsThreadType;
+extern POBJECT_TYPE SeTokenObjectType;
+
 
 #ifdef __i386__
 #define DEFINE_FASTCALL1_WRAPPER(func) \

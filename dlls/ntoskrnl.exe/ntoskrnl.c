@@ -315,6 +315,18 @@ static void ObReferenceObject( void *obj )
     TRACE( "(%p) ref=%u\n", obj, ref );
 }
 
+static const POBJECT_TYPE *known_types[] =
+{
+    &ExEventObjectType,
+    &ExSemaphoreObjectType,
+    &IoDeviceObjectType,
+    &IoDriverObjectType,
+    &IoFileObjectType,
+    &PsProcessType,
+    &PsThreadType,
+    &SeTokenObjectType
+};
+
 static NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret )
 {
     char buf[256];
@@ -326,8 +338,24 @@ static NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, voi
     status = NtQueryObject(handle, ObjectTypeInformation, buf, sizeof(buf), &size);
     if (status) return status;
 
-    if (!!RtlCompareUnicodeStrings(type->name, strlenW(type->name), type_info->TypeName.Buffer,
-                                   type_info->TypeName.Length / sizeof(WCHAR), FALSE))
+    if (!type)
+    {
+        size_t i;
+        for (i = 0; i < ARRAY_SIZE(known_types); i++)
+        {
+            type = *known_types[i];
+            if (!RtlCompareUnicodeStrings( type->name, strlenW(type->name), type_info->TypeName.Buffer,
+                                           type_info->TypeName.Length / sizeof(WCHAR), FALSE ))
+                break;
+        }
+        if (i == ARRAY_SIZE(known_types))
+        {
+            FIXME("Unsupported type %s\n", debugstr_us(&type_info->TypeName));
+            return STATUS_INVALID_HANDLE;
+        }
+    }
+    else if (!!RtlCompareUnicodeStrings( type->name, strlenW(type->name), type_info->TypeName.Buffer,
+                                         type_info->TypeName.Length / sizeof(WCHAR), FALSE ))
         return STATUS_OBJECT_TYPE_MISMATCH;
 
     FIXME( "semi-stub: returning new %s object instance\n", debugstr_w(type->name) );
