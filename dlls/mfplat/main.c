@@ -2088,7 +2088,7 @@ HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver)
     return S_OK;
 }
 
-typedef struct _mfmediaevent
+typedef struct media_event
 {
     mfattributes attributes;
     IMFMediaEvent IMFMediaEvent_iface;
@@ -2139,14 +2139,15 @@ static ULONG WINAPI mfmediaevent_AddRef(IMFMediaEvent *iface)
 
 static ULONG WINAPI mfmediaevent_Release(IMFMediaEvent *iface)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    ULONG ref = InterlockedDecrement(&This->attributes.ref);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+    ULONG ref = InterlockedDecrement(&event->attributes.ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("(%p) ref=%u\n", iface, ref);
 
     if (!ref)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        PropVariantClear(&event->value);
+        heap_free(event);
     }
 
     return ref;
