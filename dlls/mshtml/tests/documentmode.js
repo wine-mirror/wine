@@ -198,6 +198,8 @@ function test_javascript() {
         test_exposed("defineProperties", Object, v >= 8);
     }
 
+    test_exposed("getPrototypeOf", Object, v >= 9);
+
     test_parses("if(false) { o.default; }", v >= 9);
     test_parses("if(false) { o.with; }", v >= 9);
     test_parses("if(false) { o.if; }", v >= 9);

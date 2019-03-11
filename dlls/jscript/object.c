@@ -34,6 +34,8 @@ static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','
 
 static const WCHAR getOwnPropertyDescriptorW[] =
     {'g','e','t','O','w','n','P','r','o','p','e','r','t','y','D','e','s','c','r','i','p','t','o','r',0};
+static const WCHAR getPrototypeOfW[] =
+    {'g','e','t','P','r','o','t','o','t','y','p','e','O','f',0};
 static const WCHAR definePropertyW[] = {'d','e','f','i','n','e','P','r','o','p','e','r','t','y',0};
 
 static const WCHAR definePropertiesW[] = {'d','e','f','i','n','e','P','r','o','p','e','r','t','i','e','s',0};
@@ -519,10 +521,36 @@ static HRESULT Object_getOwnPropertyDescriptor(script_ctx_t *ctx, vdisp_t *jsthi
     return hres;
 }
 
+static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+                                     unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    jsdisp_t *obj;
+
+    if(!argc || !is_object_instance(argv[0])) {
+        FIXME("invalid arguments\n");
+        return E_NOTIMPL;
+    }
+
+    TRACE("(%s)\n", debugstr_jsval(argv[1]));
+
+    obj = to_jsdisp(get_object(argv[0]));
+    if(!obj) {
+        FIXME("Non-JS object\n");
+        return E_NOTIMPL;
+    }
+
+    if(r)
+        *r = obj->prototype
+            ? jsval_obj(jsdisp_addref(obj->prototype))
+            : jsval_null();
+    return S_OK;
+}
+
 static const builtin_prop_t ObjectConstr_props[] = {
     {definePropertiesW,         Object_defineProperties,            PROPF_ES5|PROPF_METHOD|2},
     {definePropertyW,           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
-    {getOwnPropertyDescriptorW, Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2}
+    {getOwnPropertyDescriptorW, Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2},
+    {getPrototypeOfW,           Object_getPrototypeOf,              PROPF_ES5|PROPF_METHOD|1}
 };
 
 static const builtin_info_t ObjectConstr_info = {

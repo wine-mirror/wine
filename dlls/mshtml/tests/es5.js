@@ -592,6 +592,33 @@ function test_string_split() {
     next_test();
 }
 
+function test_getPrototypeOf() {
+    ok(Object.getPrototypeOf(new Object()) === Object.prototype,
+       "Object.getPrototypeOf(new Object()) !== Object.prototype");
+
+    function Constr() {}
+    var obj = new Constr();
+    ok(Object.getPrototypeOf(Constr.prototype) === Object.prototype,
+       "Object.getPrototypeOf(Constr.prototype) !== Object.prototype");
+    ok(Object.getPrototypeOf(obj) === Constr.prototype,
+       "Object.getPrototypeOf(obj) !== Constr.prototype");
+
+    var proto = new Object();
+    Constr.prototype = proto;
+    ok(Object.getPrototypeOf(obj) != proto,
+       "Object.getPrototypeOf(obj) == proto");
+    obj = new Constr();
+    ok(Object.getPrototypeOf(obj) === proto,
+       "Object.getPrototypeOf(obj) !== proto");
+    ok(Object.getPrototypeOf(obj, 2, 3, 4) === proto,
+       "Object.getPrototypeOf(obj) !== proto");
+
+    ok(Object.getPrototypeOf(Object.prototype) === null,
+       "Object.getPrototypeOf(Object.prototype) !== null");
+
+    next_test();
+}
+
 var tests = [
     test_date_now,
     test_toISOString,
@@ -604,5 +631,6 @@ var tests = [
     test_property_definitions,
     test_string_trim,
     test_global_properties,
-    test_string_split
+    test_string_split,
+    test_getPrototypeOf
 ];
