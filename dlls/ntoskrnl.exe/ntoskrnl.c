@@ -4197,3 +4197,12 @@ NTSTATUS WINAPI ExUuidCreate(UUID *uuid)
 
     return STATUS_SUCCESS;
 }
+
+/***********************************************************************
+ *           ExSetTimerResolution   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI ExSetTimerResolution(ULONG time, BOOLEAN set_resolution)
+{
+    FIXME("stub: %u %d\n", time, set_resolution);
+    return KeQueryTimeIncrement();
+}
