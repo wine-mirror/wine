@@ -3641,19 +3641,6 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
     if(FAILED(hres))
         return hres;
 
-    if(outer_window->browser->usermode == EDITMODE) {
-        nsAString mode_str;
-        nsresult nsres;
-
-        static const PRUnichar onW[] = {'o','n',0};
-
-        nsAString_InitDepend(&mode_str, onW);
-        nsres = nsIDOMHTMLDocument_SetDesignMode(window->doc->nsdoc, &mode_str);
-        nsAString_Finish(&mode_str);
-        if(NS_FAILED(nsres))
-            ERR("SetDesignMode failed: %08x\n", nsres);
-    }
-
     if(window != outer_window->pending_window) {
         ERR("not current pending window\n");
         return S_OK;

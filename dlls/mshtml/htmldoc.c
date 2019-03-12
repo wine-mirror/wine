@@ -5202,6 +5202,19 @@ HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, H
     list_add_head(&browser->document_nodes, &doc->browser_entry);
     doc->browser = browser;
 
+    if(browser->usermode == EDITMODE) {
+        nsAString mode_str;
+        nsresult nsres;
+
+        static const PRUnichar onW[] = {'o','n',0};
+
+        nsAString_InitDepend(&mode_str, onW);
+        nsres = nsIDOMHTMLDocument_SetDesignMode(doc->nsdoc, &mode_str);
+        nsAString_Finish(&mode_str);
+        if(NS_FAILED(nsres))
+            ERR("SetDesignMode failed: %08x\n", nsres);
+    }
+
     *ret = doc;
     return S_OK;
 }
