@@ -129,6 +129,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 static void test_interfaces(void)
 {
     IBaseFilter *filter = create_dsound_render();
+    IPin *pin;
 
     check_interface(filter, &IID_IAMDirectSound, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
@@ -150,6 +151,18 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IQualProp, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    check_interface(pin, &IID_IPin, TRUE);
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
     IBaseFilter_Release(filter);
 }
 
