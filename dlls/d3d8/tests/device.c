@@ -9475,6 +9475,8 @@ static void test_draw_primitive(void)
     ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetStreamSource(device, 0, vertex_buffer, sizeof(*quad));
     ok(SUCCEEDED(hr), "SetStreamSource failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CreateIndexBuffer(device, sizeof(indices), 0, D3DFMT_INDEX16,
             D3DPOOL_DEFAULT, &index_buffer);
