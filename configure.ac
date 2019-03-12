@@ -2162,7 +2162,6 @@ AC_CHECK_FUNCS(\
 	getifaddrs \
 	getopt_long_only \
 	getpwuid \
-	gettimeofday \
 	getuid \
 	kqueue \
 	lstat \
