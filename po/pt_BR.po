@@ -15431,8 +15431,12 @@ msgid "Drive configuration"
 msgstr "Configuração de unidades"
 
 #: winecfg.rc:233
+#, fuzzy
+#| msgid ""
+#| "Failed to connect to the mount manager, the drive configuration cannot be "
+#| "edited."
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 "Falha de conexão com o gerenciador de montagem, a configuração da unidade "
@@ -15722,11 +15726,17 @@ msgid "System drive"
 msgstr "Unidade do sistema"
 
 #: winecfg.rc:76
+#, fuzzy
+#| msgid ""
+#| "Are you sure you want to delete drive C?\n"
+#| "\n"
+#| "Most Windows applications expect drive C to exist, and will die messily "
+#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "Tem certeza que deseja excluir a unidade C?\n"
 "\n"

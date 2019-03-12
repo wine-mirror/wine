@@ -15815,8 +15815,12 @@ msgid "Drive configuration"
 msgstr "Configuration des lecteurs"
 
 #: winecfg.rc:233
+#, fuzzy
+#| msgid ""
+#| "Failed to connect to the mount manager, the drive configuration cannot be "
+#| "edited."
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 "N'a pu se connecter au gestionnaire de montage : la configuration du lecteur "
@@ -16106,11 +16110,17 @@ msgid "System drive"
 msgstr "Lecteur système"
 
 #: winecfg.rc:76
+#, fuzzy
+#| msgid ""
+#| "Are you sure you want to delete drive C?\n"
+#| "\n"
+#| "Most Windows applications expect drive C to exist, and will die messily "
+#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "Êtes-vous sûr de vouloir supprimer le lecteur C ?\n"
 "\n"
