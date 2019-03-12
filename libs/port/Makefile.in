@@ -90,7 +90,6 @@ C_SRCS = \
 	isnan.c \
 	lstat.c \
 	mbtowc.c \
-	memcpy_unaligned.c \
 	memmove.c \
 	mkstemps.c \
 	normalize.c \

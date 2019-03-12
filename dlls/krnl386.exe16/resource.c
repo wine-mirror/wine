@@ -380,8 +380,8 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId, FARPROC
     {
         if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, typeId )))
             break;
-        memcpy_unaligned( &prevHandler, &pTypeInfo->resloader, sizeof(FARPROC16) );
-        memcpy_unaligned( &pTypeInfo->resloader, &resourceHandler, sizeof(FARPROC16) );
+        prevHandler = pTypeInfo->resloader;
+        pTypeInfo->resloader = resourceHandler;
         pTypeInfo = next_typeinfo(pTypeInfo);
     }
     if (!prevHandler) prevHandler = get_default_res_handler();
@@ -1031,8 +1031,7 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
         }
         else
         {
-            FARPROC16 resloader;
-            memcpy_unaligned( &resloader, &pTypeInfo->resloader, sizeof(FARPROC16) );
+            FARPROC16 resloader = pTypeInfo->resloader;
             if (resloader && resloader != get_default_res_handler())
             {
                 WORD args[3];

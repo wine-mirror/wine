@@ -333,7 +333,7 @@ static void NE_InitResourceHandler( HMODULE16 hModule )
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->ne_rsrctab + 2);
     while(pTypeInfo->type_id)
     {
-        memcpy_unaligned( &pTypeInfo->resloader, &proc, sizeof(FARPROC16) );
+        pTypeInfo->resloader = proc;
         pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo + 1) + pTypeInfo->count * sizeof(NE_NAMEINFO));
     }
 }

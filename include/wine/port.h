@@ -368,15 +368,6 @@ int symlink(const char *from, const char *to);
 int usleep (unsigned int useconds);
 #endif /* !defined(HAVE_USLEEP) */
 
-#ifdef __i386__
-static inline void *memcpy_unaligned( void *dst, const void *src, size_t size )
-{
-    return memcpy( dst, src, size );
-}
-#else
-extern void *memcpy_unaligned( void *dst, const void *src, size_t size );
-#endif /* __i386__ */
-
 extern int mkstemps(char *template, int suffix_len);
 
 /* Process creation flags */
@@ -532,7 +523,6 @@ extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compa
 #define interlocked_xchg_ptr    __WINE_NOT_PORTABLE(interlocked_xchg_ptr)
 #define interlocked_xchg_add    __WINE_NOT_PORTABLE(interlocked_xchg_add)
 #define lstat                   __WINE_NOT_PORTABLE(lstat)
-#define memcpy_unaligned        __WINE_NOT_PORTABLE(memcpy_unaligned)
 #undef memmove
 #define memmove                 __WINE_NOT_PORTABLE(memmove)
 #define pread                   __WINE_NOT_PORTABLE(pread)
