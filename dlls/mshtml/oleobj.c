@@ -270,7 +270,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     if(This->doc_obj->client) {
         IOleClientSite_Release(This->doc_obj->client);
         This->doc_obj->client = NULL;
-        This->doc_obj->usermode = UNKNOWN_USERMODE;
+        This->doc_obj->nscontainer->usermode = UNKNOWN_USERMODE;
     }
 
     if(This->doc_obj->client_cmdtrg) {
@@ -433,7 +433,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                 OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
     }
 
-    if(This->doc_obj->usermode == UNKNOWN_USERMODE)
+    if(This->doc_obj->nscontainer->usermode == UNKNOWN_USERMODE)
         IOleControl_OnAmbientPropertyChange(&This->IOleControl_iface, DISPID_AMBIENT_USERMODE);
 
     IOleControl_OnAmbientPropertyChange(&This->IOleControl_iface,
@@ -886,10 +886,10 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
 
         if(V_VT(&res) == VT_BOOL) {
             if(V_BOOL(&res)) {
-                This->doc_obj->usermode = BROWSEMODE;
+                This->doc_obj->nscontainer->usermode = BROWSEMODE;
             }else {
                 FIXME("edit mode is not supported\n");
-                This->doc_obj->usermode = EDITMODE;
+                This->doc_obj->nscontainer->usermode = EDITMODE;
             }
         }else {
             FIXME("usermode=%s\n", debugstr_variant(&res));

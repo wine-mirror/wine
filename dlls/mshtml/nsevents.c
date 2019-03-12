@@ -175,14 +175,14 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
     HTMLDocumentNode *doc = This->This->doc;
     HTMLDocumentObj *doc_obj;
 
-    if(!doc)
+    if(!doc || !doc->browser)
         return NS_ERROR_FAILURE;
     doc_obj = doc->basedoc.doc_obj;
 
     TRACE("(%p)->(%p)\n", doc, event);
 
     update_doc(doc_obj, UPDATE_UI);
-    if(doc_obj->usermode == EDITMODE)
+    if(doc->browser->usermode == EDITMODE)
         handle_edit_event(&doc_obj->basedoc, event);
 
     return NS_OK;
@@ -198,7 +198,7 @@ static void handle_docobj_load(HTMLDocumentObj *doc)
         doc->nscontainer->editor_controller = NULL;
     }
 
-    if(doc->usermode == EDITMODE)
+    if(doc->nscontainer->usermode == EDITMODE)
         handle_edit_load(&doc->basedoc);
 
     if(doc->client) {
@@ -262,7 +262,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         update_title(doc_obj);
     }
 
-    if(doc_obj && doc_obj->usermode!=EDITMODE && doc_obj->doc_object_service
+    if(doc_obj && doc_obj->nscontainer->usermode != EDITMODE && doc_obj->doc_object_service
        && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
         IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
                 &doc->basedoc.window->base.IHTMLWindow2_iface, 0);

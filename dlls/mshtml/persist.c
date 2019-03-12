@@ -230,7 +230,7 @@ static void set_progress_proc(task_t *_task)
         IOleCommandTarget_Release(olecmd);
     }
 
-    if(doc->usermode == EDITMODE && doc->hostui) {
+    if(doc->nscontainer->usermode == EDITMODE && doc->hostui) {
         DOCHOSTUIINFO hostinfo;
 
         memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
@@ -884,7 +884,7 @@ static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
 
     TRACE("(%p)\n", This);
 
-    if(This->doc_obj->usermode == EDITMODE)
+    if(This->doc_obj->nscontainer->usermode == EDITMODE)
         return editor_is_dirty(This);
 
     return S_FALSE;
@@ -934,7 +934,7 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, IStream 
     heap_free(str);
 
     if(fClearDirty)
-        set_dirty(This, VARIANT_FALSE);
+        set_dirty(This->doc_obj->nscontainer, VARIANT_FALSE);
 
     return S_OK;
 }

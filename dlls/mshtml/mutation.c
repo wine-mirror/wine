@@ -262,7 +262,7 @@ static void parse_complete(HTMLDocumentObj *doc)
 {
     TRACE("(%p)\n", doc);
 
-    if(doc->usermode == EDITMODE)
+    if(doc->nscontainer->usermode == EDITMODE)
         init_editor(&doc->basedoc);
 
     call_explorer_69(doc);
@@ -271,7 +271,7 @@ static void parse_complete(HTMLDocumentObj *doc)
     call_property_onchanged(&doc->basedoc.cp_container, 1005);
     call_explorer_69(doc);
 
-    if(doc->webbrowser && doc->usermode != EDITMODE && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
+    if(doc->webbrowser && doc->nscontainer->usermode != EDITMODE && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
         IDocObjectService_FireNavigateComplete2(doc->doc_object_service, &doc->basedoc.window->base.IHTMLWindow2_iface, 0);
 
     /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */

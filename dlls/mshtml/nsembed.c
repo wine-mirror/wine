@@ -2168,6 +2168,7 @@ HRESULT create_gecko_browser(HTMLDocumentObj *doc, GeckoBrowser **_ret)
     ret->doc = doc;
     ret->ref = 1;
     ret->script_mode = SCRIPTMODE_ACTIVESCRIPT;
+    ret->usermode = UNKNOWN_USERMODE;
     list_init(&ret->document_nodes);
     list_init(&ret->outer_windows);
 

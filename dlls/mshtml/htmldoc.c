@@ -5458,7 +5458,6 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->basedoc.doc_obj = doc;
     doc->is_mhtml = is_mhtml;
 
-    doc->usermode = UNKNOWN_USERMODE;
     doc->task_magic = get_task_target_magic();
 
     HTMLDocument_View_Init(doc);

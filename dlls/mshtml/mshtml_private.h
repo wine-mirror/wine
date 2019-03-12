@@ -683,7 +683,6 @@ struct HTMLDocumentObj {
     BOOL has_popup;
     INT download_state;
 
-    USERMODE usermode;
     LPWSTR mime;
 
     DWORD update;
@@ -727,6 +726,7 @@ struct GeckoBrowser {
 
     HWND hwnd;
     SCRIPTMODE script_mode;
+    USERMODE usermode;
 
     struct list document_nodes;
     struct list outer_windows;
@@ -1142,7 +1142,7 @@ HRESULT editor_exec_cut(HTMLDocument*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT editor_exec_paste(HTMLDocument*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 void handle_edit_load(HTMLDocument*) DECLSPEC_HIDDEN;
 HRESULT editor_is_dirty(HTMLDocument*) DECLSPEC_HIDDEN;
-void set_dirty(HTMLDocument*,VARIANT_BOOL) DECLSPEC_HIDDEN;
+void set_dirty(GeckoBrowser*,VARIANT_BOOL) DECLSPEC_HIDDEN;
 
 extern DWORD mshtml_tls DECLSPEC_HIDDEN;
 

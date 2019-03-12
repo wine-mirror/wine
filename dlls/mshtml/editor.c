@@ -95,19 +95,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR fontW[] = {'f','o','n','t',0};
 static const WCHAR sizeW[] = {'s','i','z','e',0};
 
-void set_dirty(HTMLDocument *This, VARIANT_BOOL dirty)
+void set_dirty(GeckoBrowser *browser, VARIANT_BOOL dirty)
 {
     nsresult nsres;
 
-    if(This->doc_obj->usermode != EDITMODE || !This->doc_obj->nscontainer || !This->doc_obj->nscontainer->editor)
+    if(browser->usermode != EDITMODE || !browser->editor)
         return;
 
     if(dirty) {
-        nsres = nsIEditor_IncrementModificationCount(This->doc_obj->nscontainer->editor, 1);
+        nsres = nsIEditor_IncrementModificationCount(browser->editor, 1);
         if(NS_FAILED(nsres))
             ERR("IncrementModificationCount failed: %08x\n", nsres);
     }else {
-        nsres = nsIEditor_ResetModificationCount(This->doc_obj->nscontainer->editor);
+        nsres = nsIEditor_ResetModificationCount(browser->editor);
         if(NS_FAILED(nsres))
             ERR("ResetModificationCount failed: %08x\n", nsres);
     }
@@ -149,7 +149,7 @@ static DWORD query_ns_edit_status(HTMLDocument *This, const char *nscmd)
     nsICommandParams *nsparam;
     cpp_bool b = FALSE;
 
-    if(This->doc_obj->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
+    if(This->doc_node->browser->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
     if(This->doc_obj->nscontainer && nscmd) {
@@ -186,7 +186,7 @@ static DWORD query_align_status(HTMLDocument *This, const WCHAR *align)
     cpp_bool b;
     nsresult nsres;
 
-    if(This->doc_obj->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
+    if(This->doc_node->browser->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
     nsAString_Init(&justify_str, align);
@@ -376,7 +376,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
 
     nsAString_Finish(&size_str);
 
-    set_dirty(This, VARIANT_TRUE);
+    set_dirty(This->doc_node->browser, VARIANT_TRUE);
 }
 
 static void handle_arrow_key(HTMLDocument *This, nsIDOMEvent *event, nsIDOMKeyEvent *key_event, const char * const cmds[4])
@@ -691,7 +691,7 @@ static HRESULT query_justify(HTMLDocument *This, OLECMD *cmd)
     case IDM_JUSTIFYLEFT:
         TRACE("(%p) IDM_JUSTIFYLEFT\n", This);
         /* FIXME: We should set OLECMDF_LATCHED only if it's set explicitly. */
-        if(This->doc_obj->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
+        if(This->doc_node->browser->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
             cmd->cmdf = OLECMDF_SUPPORTED;
         else
             cmd->cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
@@ -925,7 +925,7 @@ static HRESULT exec_setdirty(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         return S_OK;
 
     if(V_VT(in) == VT_BOOL)
-        set_dirty(This, V_BOOL(in));
+        set_dirty(This->doc_node->browser, V_BOOL(in));
     else
         FIXME("unsupported arg %s\n", debugstr_variant(in));
 
@@ -1240,10 +1240,10 @@ HRESULT setup_edit_mode(HTMLDocumentObj *doc)
     IMoniker *mon;
     HRESULT hres;
 
-    if(doc->usermode == EDITMODE)
+    if(doc->nscontainer->usermode == EDITMODE)
         return S_OK;
 
-    doc->usermode = EDITMODE;
+    doc->nscontainer->usermode = EDITMODE;
 
     if(doc->basedoc.window->mon) {
         CLSID clsid = IID_NULL;

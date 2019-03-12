@@ -583,7 +583,7 @@ static HRESULT exec_mshtml_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *i
 {
     TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
 
-    if(This->doc_obj->usermode == EDITMODE)
+    if(This->doc_node->browser->usermode == EDITMODE)
         return editor_exec_copy(This, cmdexecopt, in, out);
 
     do_ns_command(This, NSCMD_COPY, NULL);
@@ -604,7 +604,7 @@ static HRESULT exec_mshtml_cut(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in
 
     TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
 
-    if(This->doc_obj->usermode == EDITMODE)
+    if(This->doc_node->browser->usermode == EDITMODE)
         return editor_exec_cut(This, cmdexecopt, in, out);
 
     clipboard_commands = get_clipboard_commands(This);
@@ -635,7 +635,7 @@ static HRESULT exec_mshtml_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *
 
     TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
 
-    if(This->doc_obj->usermode == EDITMODE)
+    if(This->doc_node->browser->usermode == EDITMODE)
         return editor_exec_paste(This, cmdexecopt, in, out);
 
     clipboard_commands = get_clipboard_commands(This);
@@ -667,7 +667,7 @@ static HRESULT exec_browsemode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in
     if(in || out)
         FIXME("unsupported args\n");
 
-    This->doc_obj->usermode = BROWSEMODE;
+    This->doc_node->browser->usermode = BROWSEMODE;
 
     return S_OK;
 }

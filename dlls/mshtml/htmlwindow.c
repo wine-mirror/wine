@@ -3641,7 +3641,7 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
     if(FAILED(hres))
         return hres;
 
-    if(outer_window->doc_obj->usermode == EDITMODE) {
+    if(outer_window->browser->usermode == EDITMODE) {
         nsAString mode_str;
         nsresult nsres;
 
