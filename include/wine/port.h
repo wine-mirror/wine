@@ -344,10 +344,6 @@ int strncasecmp(const char *str1, const char *str2, size_t n);
 size_t strnlen( const char *str, size_t maxlen );
 #endif /* !defined(HAVE_STRNLEN) */
 
-#ifndef HAVE_STRERROR
-const char *strerror(int err);
-#endif /* !defined(HAVE_STRERROR) */
-
 #ifndef HAVE_STRCASECMP
 # ifndef HAVE__STRICMP
 int strcasecmp(const char *str1, const char *str2);
@@ -524,7 +520,6 @@ extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compa
 #define spawnvp                 __WINE_NOT_PORTABLE(spawnvp)
 #define statvfs                 __WINE_NOT_PORTABLE(statvfs)
 #define strcasecmp              __WINE_NOT_PORTABLE(strcasecmp)
-#define strerror                __WINE_NOT_PORTABLE(strerror)
 #define strncasecmp             __WINE_NOT_PORTABLE(strncasecmp)
 #define strnlen                 __WINE_NOT_PORTABLE(strnlen)
 #define usleep                  __WINE_NOT_PORTABLE(usleep)

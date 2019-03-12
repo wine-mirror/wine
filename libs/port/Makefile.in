@@ -99,7 +99,6 @@ C_SRCS = \
 	spawn.c \
 	statvfs.c \
 	strcasecmp.c \
-	strerror.c \
 	strncasecmp.c \
 	strnlen.c \
 	symlink.c \

@@ -2190,7 +2190,6 @@ AC_CHECK_FUNCS(\
 	statvfs \
 	strcasecmp \
 	strdup \
-	strerror \
 	strncasecmp \
 	strnlen \
 	strtold \
