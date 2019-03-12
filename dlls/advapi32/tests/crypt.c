@@ -273,7 +273,6 @@ static void test_incorrect_api_usage(void)
     result = pCryptAcquireContextA(&hProv2, szBadKeySet, NULL, PROV_RSA_FULL, 
                                    CRYPT_DELETEKEYSET);
     ok (result, "%d\n", GetLastError());
-todo_wine
     ok (hProv2 == 0, "%ld\n", hProv2);
     if (!result) return;
 
@@ -1183,7 +1182,6 @@ static void test_container_sd(void)
     ret = CryptAcquireContextA(&prov, "winetest", "Microsoft Enhanced Cryptographic Provider v1.0",
                                PROV_RSA_FULL, CRYPT_MACHINE_KEYSET|CRYPT_DELETEKEYSET);
     ok(ret, "got %u\n", GetLastError());
-todo_wine
     ok(prov == 0, "got %ld\n", prov);
 }
 
