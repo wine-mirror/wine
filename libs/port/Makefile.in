@@ -83,7 +83,6 @@ C_SRCS = \
 	fold.c \
 	fstatvfs.c \
 	getopt.c \
-	getopt1.c \
 	interlocked.c \
 	isfinite.c \
 	isinf.c \
