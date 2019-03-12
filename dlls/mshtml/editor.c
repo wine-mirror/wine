@@ -1181,11 +1181,11 @@ const cmdtable_t editmode_cmds[] = {
     {0,NULL,NULL}
 };
 
-void init_editor(HTMLDocument *This)
+void init_editor(HTMLDocumentNode *doc)
 {
-    update_doc(This->doc_obj, UPDATE_UI);
+    update_doc(doc->browser->doc, UPDATE_UI);
 
-    set_ns_fontname(This->doc_node, "Times New Roman");
+    set_ns_fontname(doc, "Times New Roman");
 }
 
 HRESULT browser_is_dirty(GeckoBrowser *browser)

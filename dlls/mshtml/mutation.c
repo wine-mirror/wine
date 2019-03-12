@@ -263,7 +263,7 @@ static void parse_complete(HTMLDocumentObj *doc)
     TRACE("(%p)\n", doc);
 
     if(doc->nscontainer->usermode == EDITMODE)
-        init_editor(&doc->basedoc);
+        init_editor(doc->basedoc.doc_node);
 
     call_explorer_69(doc);
     if(doc->view_sink)

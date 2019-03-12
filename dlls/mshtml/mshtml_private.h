@@ -1135,7 +1135,7 @@ HRESULT do_query_service(IUnknown*,REFGUID,REFIID,void**) DECLSPEC_HIDDEN;
 
 /* editor */
 HRESULT setup_edit_mode(HTMLDocumentObj*) DECLSPEC_HIDDEN;
-void init_editor(HTMLDocument*) DECLSPEC_HIDDEN;
+void init_editor(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void handle_edit_event(HTMLDocumentNode*,nsIDOMEvent*) DECLSPEC_HIDDEN;
 HRESULT editor_exec_copy(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT editor_exec_cut(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
