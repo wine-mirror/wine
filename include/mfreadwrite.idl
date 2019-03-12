@@ -151,3 +151,4 @@ cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *str
 cpp_quote( "                                                  IMFSourceReader **reader);" )
 cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes," )
 cpp_quote( "                                                   IMFSourceReader **reader);" )
+cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromURL(const WCHAR *url, IMFAttributes *attributes, IMFSourceReader **reader);" )

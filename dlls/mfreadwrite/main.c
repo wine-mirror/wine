@@ -273,6 +273,47 @@ static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttrib
     return hr;
 }
 
+static HRESULT create_source_reader_from_url(const WCHAR *url, IMFAttributes *attributes, REFIID riid, void **out)
+{
+    IMFSourceResolver *resolver;
+    IUnknown *object = NULL;
+    MF_OBJECT_TYPE obj_type;
+    IMFMediaSource *source;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateSourceResolver(&resolver)))
+        return hr;
+
+    hr = IMFSourceResolver_CreateObjectFromURL(resolver, url, MF_RESOLUTION_MEDIASOURCE, NULL, &obj_type,
+            (IUnknown **)&object);
+    if (SUCCEEDED(hr))
+    {
+        switch (obj_type)
+        {
+            case MF_OBJECT_BYTESTREAM:
+                hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, (IMFByteStream *)object, NULL,
+                        MF_RESOLUTION_MEDIASOURCE, NULL, &obj_type, (IUnknown **)&source);
+                break;
+            case MF_OBJECT_MEDIASOURCE:
+                source = (IMFMediaSource *)object;
+                IMFMediaSource_AddRef(source);
+                break;
+            default:
+                WARN("Unknown object type %d.\n", obj_type);
+                hr = E_UNEXPECTED;
+        }
+        IUnknown_Release(object);
+    }
+
+    IMFSourceResolver_Release(resolver);
+    if (FAILED(hr))
+        return hr;
+
+    hr = create_source_reader_from_source(source, attributes, riid, out);
+    IMFMediaSource_Release(source);
+    return hr;
+}
+
 static HRESULT WINAPI sink_writer_QueryInterface(IMFSinkWriter *iface, REFIID riid, void **out)
 {
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
@@ -480,6 +521,16 @@ HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAt
     return create_source_reader_from_source(source, attributes, &IID_IMFSourceReader, (void **)reader);
 }
 
+/***********************************************************************
+ *      MFCreateSourceReaderFromURL (mfreadwrite.@)
+ */
+HRESULT WINAPI MFCreateSourceReaderFromURL(const WCHAR *url, IMFAttributes *attributes, IMFSourceReader **reader)
+{
+    TRACE("%s, %p, %p.\n", debugstr_w(url), attributes, reader);
+
+    return create_source_reader_from_url(url, attributes, &IID_IMFSourceReader, (void **)reader);
+}
+
 static HRESULT WINAPI readwrite_factory_QueryInterface(IMFReadWriteClassFactory *iface, REFIID riid, void **out)
 {
     if (IsEqualIID(riid, &IID_IMFReadWriteClassFactory) ||
@@ -508,7 +559,14 @@ static ULONG WINAPI readwrite_factory_Release(IMFReadWriteClassFactory *iface)
 static HRESULT WINAPI readwrite_factory_CreateInstanceFromURL(IMFReadWriteClassFactory *iface, REFCLSID clsid,
         const WCHAR *url, IMFAttributes *attributes, REFIID riid, void **out)
 {
-    FIXME("%s, %s, %p, %s, %p.\n", debugstr_guid(clsid), debugstr_w(url), attributes, debugstr_guid(riid), out);
+    TRACE("%s, %s, %p, %s, %p.\n", debugstr_guid(clsid), debugstr_w(url), attributes, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(clsid, &CLSID_MFSourceReader))
+    {
+        return create_source_reader_from_url(url, attributes, &IID_IMFSourceReader, out);
+    }
+
+    FIXME("Unsupported %s.\n", debugstr_guid(clsid));
 
     return E_NOTIMPL;
 }
