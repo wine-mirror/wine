@@ -2568,10 +2568,9 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
 /*************************************************************
  * init_system_links
  */
-static BOOL init_system_links(void)
+static void init_system_links(void)
 {
     HKEY hkey;
-    BOOL ret = FALSE;
     DWORD type, max_val, max_data, val_len, data_len, index;
     WCHAR *value, *data;
     WCHAR *entry, *next;
@@ -2717,7 +2716,6 @@ skip_internal:
         }
     }
     list_add_tail(&system_links, &system_font_link->entry);
-    return ret;
 }
 
 static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
