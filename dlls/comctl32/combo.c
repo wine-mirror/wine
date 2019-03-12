@@ -1020,7 +1020,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
         else
         {
             if (nItems > lphc->visibleItems)
-            nItems = lphc->visibleItems;
+                nItems = lphc->visibleItems;
             nDroppedHeight = nItems * nIHeight + COMBO_YBORDERSIZE();
         }
    }
