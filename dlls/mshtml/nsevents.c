@@ -197,7 +197,7 @@ static void handle_docobj_load(HTMLDocumentObj *doc)
     }
 
     if(doc->nscontainer->usermode == EDITMODE)
-        handle_edit_load(&doc->basedoc);
+        setup_editor_controller(doc->nscontainer);
 
     if(doc->client) {
         hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);

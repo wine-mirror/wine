@@ -488,11 +488,6 @@ void handle_edit_event(HTMLDocumentNode *doc, nsIDOMEvent *event)
     nsIDOMKeyEvent_Release(key_event);
 }
 
-void handle_edit_load(HTMLDocument *This)
-{
-    get_editor_controller(This->doc_obj->nscontainer);
-}
-
 static void set_ns_fontname(HTMLDocumentNode *doc, const char *fontname)
 {
     nsICommandParams *nsparam = create_nscommand_params();

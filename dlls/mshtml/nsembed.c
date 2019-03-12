@@ -1068,7 +1068,7 @@ HRESULT nsnode_to_nsstring(nsIDOMNode *nsnode, nsAString *str)
     return hres;
 }
 
-void get_editor_controller(GeckoBrowser *This)
+void setup_editor_controller(GeckoBrowser *This)
 {
     nsIEditingSession *editing_session = NULL;
     nsIControllerContext *ctrlctx;

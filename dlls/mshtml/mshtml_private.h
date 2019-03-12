@@ -962,7 +962,7 @@ HRESULT return_nsform(nsresult,nsIDOMHTMLFormElement*,IHTMLFormElement**) DECLSP
 
 nsICommandParams *create_nscommand_params(void) DECLSPEC_HIDDEN;
 HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*) DECLSPEC_HIDDEN;
-void get_editor_controller(GeckoBrowser*) DECLSPEC_HIDDEN;
+void setup_editor_controller(GeckoBrowser*) DECLSPEC_HIDDEN;
 nsresult get_nsinterface(nsISupports*,REFIID,void**) DECLSPEC_HIDDEN;
 nsIWritableVariant *create_nsvariant(void) DECLSPEC_HIDDEN;
 nsIXMLHttpRequest *create_nsxhr(nsIDOMWindow *nswindow) DECLSPEC_HIDDEN;
@@ -1140,7 +1140,6 @@ void handle_edit_event(HTMLDocumentNode*,nsIDOMEvent*) DECLSPEC_HIDDEN;
 HRESULT editor_exec_copy(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT editor_exec_cut(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT editor_exec_paste(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
-void handle_edit_load(HTMLDocument*) DECLSPEC_HIDDEN;
 HRESULT browser_is_dirty(GeckoBrowser*) DECLSPEC_HIDDEN;
 void set_dirty(GeckoBrowser*,VARIANT_BOOL) DECLSPEC_HIDDEN;
 
