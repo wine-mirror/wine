@@ -68,6 +68,17 @@ interface IWineDXGIDeviceParent : IUnknown
     struct wined3d_device_parent *get_wined3d_device_parent();
 }
 
+struct wine_dxgi_adapter_info
+{
+    GUID driver_uuid;
+    GUID device_uuid;
+
+    DWORD vendor_id;
+    DWORD device_id;
+
+    LUID luid;
+};
+
 [
     object,
     local,
@@ -75,6 +86,7 @@ interface IWineDXGIDeviceParent : IUnknown
 ]
 interface IWineDXGIAdapter : IDXGIAdapter4
 {
+    HRESULT get_adapter_info([out] struct wine_dxgi_adapter_info *info);
 }
 
 [

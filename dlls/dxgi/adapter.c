@@ -364,6 +364,28 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc3(IWineDXGIAdapter *iface, 
     return dxgi_adapter_get_desc(adapter, desc);
 }
 
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_get_adapter_info(IWineDXGIAdapter *iface,
+        struct wine_dxgi_adapter_info *info)
+{
+    struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
+    struct wined3d_adapter_identifier adapter_id;
+    HRESULT hr;
+
+    TRACE("iface %p, info %p.\n", iface, info);
+
+    memset(&adapter_id, 0, sizeof(adapter_id));
+    if (SUCCEEDED(hr = wined3d_get_adapter_identifier(adapter->factory->wined3d, adapter->ordinal, 0, &adapter_id)))
+    {
+        info->driver_uuid = adapter_id.driver_uuid;
+        info->device_uuid = adapter_id.device_uuid;
+        info->vendor_id = adapter_id.vendor_id;
+        info->device_id = adapter_id.device_id;
+        info->luid = adapter_id.adapter_luid;
+    }
+
+    return hr;
+}
+
 static const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
 {
     dxgi_adapter_QueryInterface,
@@ -390,6 +412,8 @@ static const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
     dxgi_adapter_UnregisterVideoMemoryBudgetChangeNotification,
     /* IDXGIAdapter4 methods */
     dxgi_adapter_GetDesc3,
+    /* IWineDXGIAdapter methods */
+    dxgi_adapter_get_adapter_info,
 };
 
 struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter(IDXGIAdapter *iface)
