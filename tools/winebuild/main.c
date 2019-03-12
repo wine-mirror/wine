@@ -645,7 +645,8 @@ int main(int argc, char **argv)
                 output_spec16_file( spec );
                 break;
             case SPEC_WIN32:
-                output_spec32_file( spec );
+                if (target_platform == PLATFORM_WINDOWS) output_pe_module( spec );
+                else output_spec32_file( spec );
                 break;
             default: assert(0);
         }

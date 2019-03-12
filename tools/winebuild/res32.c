@@ -441,7 +441,7 @@ void output_resources( DLLSPEC *spec )
     /* output the resource directories */
 
     output( "\n/* resources */\n\n" );
-    output( "\t.data\n" );
+    output( "\t.section %s\n", target_platform == PLATFORM_WINDOWS ? ".rsrc" : ".data" );
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
     output( ".L__wine_spec_resources:\n" );
 
@@ -498,9 +498,12 @@ void output_resources( DLLSPEC *spec )
         output( ".L__wine_spec_res_%d:\n", i );
         dump_res_data( res );
     }
-    output( ".L__wine_spec_resources_end:\n" );
-    output( "\t.byte 0\n" );
 
+    if (target_platform != PLATFORM_WINDOWS)
+    {
+        output( ".L__wine_spec_resources_end:\n" );
+        output( "\t.byte 0\n" );
+    }
     free_resource_tree( tree );
 }
 

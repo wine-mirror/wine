@@ -384,7 +384,7 @@ void output_exports( DLLSPEC *spec )
     if (!nr_exports) return;
 
     output( "\n/* export table */\n\n" );
-    output( "\t.data\n" );
+    output( "\t.section %s\n", target_platform == PLATFORM_WINDOWS ? ".edata" : ".data" );
     output( "\t.align %d\n", get_alignment(4) );
     output( ".L__wine_spec_exports:\n" );
 
@@ -492,6 +492,9 @@ void output_exports( DLLSPEC *spec )
                 output( "\t%s \"%s\"\n", get_asm_string_keyword(), odp->link_name );
         }
     }
+
+    if (target_platform == PLATFORM_WINDOWS) return;
+
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
     output( ".L__wine_spec_exports_end:\n" );
 
@@ -703,6 +706,24 @@ void output_spec32_file( DLLSPEC *spec )
     if (needs_get_pc_thunk) output_get_pc_thunk();
     output_resources( spec );
     output_gnu_stack_note();
+    close_output_file();
+}
+
+
+/*******************************************************************
+ *         output_pe_module
+ *
+ * Build a PE from a spec file.
+ */
+void output_pe_module( DLLSPEC *spec )
+{
+    UsePIC = 0;
+    resolve_imports( spec );
+    open_output_file();
+    output_standard_file_header();
+    output_stubs( spec );
+    output_exports( spec );
+    output_resources( spec );
     close_output_file();
 }
 
