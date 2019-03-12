@@ -332,9 +332,106 @@ static HRESULT WINAPI mediatype_IsCompressedFormat(IMFMediaType *iface, BOOL *co
 
 static HRESULT WINAPI mediatype_IsEqual(IMFMediaType *iface, IMFMediaType *type, DWORD *flags)
 {
-    FIXME("%p, %p, %p.\n", iface, type, flags);
+    const DWORD full_equality_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES |
+            MF_MEDIATYPE_EQUAL_FORMAT_DATA | MF_MEDIATYPE_EQUAL_FORMAT_USER_DATA;
+    struct media_type *media_type = impl_from_IMFMediaType(iface);
+    struct comparand
+    {
+        IMFAttributes *type;
+        PROPVARIANT value;
+        UINT32 count;
+        GUID guid;
+        HRESULT hr;
+    } left, right, swp;
+    unsigned int i;
+    BOOL result;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, type, flags);
+
+    *flags = 0;
+
+    left.type = &media_type->attributes.IMFAttributes_iface;
+    right.type = (IMFAttributes *)type;
+
+    if (FAILED(IMFAttributes_GetGUID(left.type, &MF_MT_MAJOR_TYPE, &left.guid)))
+        return E_INVALIDARG;
+
+    if (FAILED(IMFAttributes_GetGUID(right.type, &MF_MT_MAJOR_TYPE, &right.guid)))
+        return E_INVALIDARG;
+
+    if (IsEqualGUID(&left.guid, &right.guid))
+        *flags |= MF_MEDIATYPE_EQUAL_MAJOR_TYPES;
+
+    /* Subtypes equal or both missing. */
+    left.hr = IMFAttributes_GetGUID(left.type, &MF_MT_SUBTYPE, &left.guid);
+    right.hr = IMFAttributes_GetGUID(right.type, &MF_MT_SUBTYPE, &right.guid);
+
+    if ((SUCCEEDED(left.hr) && SUCCEEDED(right.hr) && IsEqualGUID(&left.guid, &right.guid)) ||
+           (FAILED(left.hr) && FAILED(right.hr)))
+    {
+        *flags |= MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
+    }
+
+    /* Format data */
+    IMFAttributes_GetCount(left.type, &left.count);
+    IMFAttributes_GetCount(right.type, &right.count);
+
+    if (right.count < left.count)
+    {
+        swp = left;
+        left = right;
+        right = swp;
+    }
+
+    *flags |= MF_MEDIATYPE_EQUAL_FORMAT_DATA;
+
+    for (i = 0; i < left.count; ++i)
+    {
+        PROPVARIANT value;
+        GUID key;
+
+        if (SUCCEEDED(IMFAttributes_GetItemByIndex(left.type, i, &key, &value)))
+        {
+            if (IsEqualGUID(&key, &MF_MT_USER_DATA) ||
+                    IsEqualGUID(&key, &MF_MT_FRAME_RATE_RANGE_MIN) ||
+                    IsEqualGUID(&key, &MF_MT_FRAME_RATE_RANGE_MAX))
+            {
+                PropVariantClear(&value);
+                continue;
+            }
+
+            result = FALSE;
+            IMFAttributes_CompareItem(right.type, &key, &value, &result);
+            PropVariantClear(&value);
+            if (!result)
+            {
+                *flags &= ~MF_MEDIATYPE_EQUAL_FORMAT_DATA;
+                break;
+            }
+        }
+    }
+
+    /* User data */
+    PropVariantInit(&left.value);
+    left.hr = IMFAttributes_GetItem(left.type, &MF_MT_USER_DATA, &left.value);
+    PropVariantInit(&right.value);
+    right.hr = IMFAttributes_GetItem(right.type, &MF_MT_USER_DATA, &right.value);
+
+    if (SUCCEEDED(left.hr) && SUCCEEDED(left.hr))
+    {
+        result = FALSE;
+        IMFAttributes_CompareItem(left.type, &MF_MT_USER_DATA, &left.value, &result);
+    }
+    else if (FAILED(left.hr) && FAILED(left.hr))
+        result = TRUE;
+
+    PropVariantClear(&left.value);
+    PropVariantClear(&right.value);
+
+    if (result)
+        *flags |= MF_MEDIATYPE_EQUAL_FORMAT_USER_DATA;
+
+    return *flags == full_equality_flags ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI mediatype_GetRepresentation(IMFMediaType *iface, GUID guid, void **representation)
