@@ -1928,6 +1928,7 @@ struct resolver_cancel_object
     {
         IUnknown *handler;
         IMFByteStreamHandler *stream_handler;
+        IMFSchemeHandler *scheme_handler;
     } u;
     IUnknown *cancel_cookie;
     enum resolved_object_origin origin;
@@ -1977,12 +1978,12 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
     switch (origin)
     {
         case OBJECT_FROM_BYTESTREAM:
-            queued_result->hr = IMFByteStreamHandler_EndCreateObject(handler.stream_handler, result, &queued_result->obj_type,
-                    &queued_result->object);
+            queued_result->hr = IMFByteStreamHandler_EndCreateObject(handler.stream_handler, result,
+                    &queued_result->obj_type, &queued_result->object);
             break;
         case OBJECT_FROM_URL:
-            queued_result->hr = IMFSchemeHandler_EndCreateObject(handler.scheme_handler, result, &queued_result->obj_type,
-                    &queued_result->object);
+            queued_result->hr = IMFSchemeHandler_EndCreateObject(handler.scheme_handler, result,
+                    &queued_result->obj_type, &queued_result->object);
             break;
         default:
             queued_result->hr = E_FAIL;
@@ -2528,25 +2529,47 @@ fallback:
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mfsourceresolver_BeginCreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
-    DWORD flags, IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback, IUnknown *unk_state)
+static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
+        DWORD flags, IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback, IUnknown *state)
 {
-    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
+    IMFSchemeHandler *handler;
+    IUnknown *inner_cookie = NULL;
+    IMFAsyncResult *result;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s, %#x, %p, %p, %p, %p): stub\n", This, debugstr_w(url), flags, props, cancel_cookie,
-        callback, unk_state);
+    TRACE("%p, %s, %#x, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = resolver_get_scheme_handler(url, flags, &handler)))
+        return hr;
+
+    if (cancel_cookie)
+        *cancel_cookie = NULL;
+
+    hr = MFCreateAsyncResult((IUnknown *)handler, callback, state, &result);
+    IMFSchemeHandler_Release(handler);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, cancel_cookie ? &inner_cookie : NULL,
+            &resolver->url_callback, (IUnknown *)result);
+
+    if (SUCCEEDED(hr) && inner_cookie)
+        resolver_create_cancel_object((IUnknown *)handler, OBJECT_FROM_URL, inner_cookie, cancel_cookie);
+
+    IMFAsyncResult_Release(result);
+
+    return hr;
 }
 
-static HRESULT WINAPI mfsourceresolver_EndCreateObjectFromURL(IMFSourceResolver *iface, IMFAsyncResult *result,
-    MF_OBJECT_TYPE *obj_type, IUnknown **object)
+static HRESULT WINAPI source_resolver_EndCreateObjectFromURL(IMFSourceResolver *iface, IMFAsyncResult *result,
+        MF_OBJECT_TYPE *obj_type, IUnknown **object)
 {
-    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
 
-    FIXME("(%p)->(%p, %p, %p): stub\n", This, result, obj_type, object);
+    TRACE("%p, %p, %p, %p.\n", iface, result, obj_type, object);
 
-    return E_NOTIMPL;
+    return resolver_end_create_object(resolver, OBJECT_FROM_URL, result, obj_type, object);
 }
 
 static HRESULT WINAPI source_resolver_BeginCreateObjectFromByteStream(IMFSourceResolver *iface, IMFByteStream *stream,
@@ -2610,6 +2633,9 @@ static HRESULT WINAPI source_resolver_CancelObjectCreation(IMFSourceResolver *if
         case OBJECT_FROM_BYTESTREAM:
             hr = IMFByteStreamHandler_CancelObjectCreation(object->u.stream_handler, object->cancel_cookie);
             break;
+        case OBJECT_FROM_URL:
+            hr = IMFSchemeHandler_CancelObjectCreation(object->u.scheme_handler, object->cancel_cookie);
+            break;
         default:
             hr = E_UNEXPECTED;
     }
@@ -2624,8 +2650,8 @@ static const IMFSourceResolverVtbl mfsourceresolvervtbl =
     source_resolver_Release,
     source_resolver_CreateObjectFromURL,
     source_resolver_CreateObjectFromByteStream,
-    mfsourceresolver_BeginCreateObjectFromURL,
-    mfsourceresolver_EndCreateObjectFromURL,
+    source_resolver_BeginCreateObjectFromURL,
+    source_resolver_EndCreateObjectFromURL,
     source_resolver_BeginCreateObjectFromByteStream,
     source_resolver_EndCreateObjectFromByteStream,
     source_resolver_CancelObjectCreation,
