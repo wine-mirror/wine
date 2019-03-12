@@ -1115,8 +1115,8 @@ HRESULT elem_unique_id(unsigned id, BSTR *p) DECLSPEC_HIDDEN;
 /* commands */
 typedef struct {
     DWORD id;
-    HRESULT (*query)(HTMLDocument*,OLECMD*);
-    HRESULT (*exec)(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
+    HRESULT (*query)(HTMLDocumentNode*,OLECMD*);
+    HRESULT (*exec)(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*);
 } cmdtable_t;
 
 extern const cmdtable_t editmode_cmds[] DECLSPEC_HIDDEN;
@@ -1137,9 +1137,9 @@ HRESULT do_query_service(IUnknown*,REFGUID,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT setup_edit_mode(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void init_editor(HTMLDocument*) DECLSPEC_HIDDEN;
 void handle_edit_event(HTMLDocumentNode*,nsIDOMEvent*) DECLSPEC_HIDDEN;
-HRESULT editor_exec_copy(HTMLDocument*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT editor_exec_cut(HTMLDocument*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT editor_exec_paste(HTMLDocument*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT editor_exec_copy(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT editor_exec_cut(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT editor_exec_paste(HTMLDocumentNode*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 void handle_edit_load(HTMLDocument*) DECLSPEC_HIDDEN;
 HRESULT browser_is_dirty(GeckoBrowser*) DECLSPEC_HIDDEN;
 void set_dirty(GeckoBrowser*,VARIANT_BOOL) DECLSPEC_HIDDEN;

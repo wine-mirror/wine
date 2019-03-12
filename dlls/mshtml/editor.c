@@ -144,17 +144,17 @@ static nsresult get_ns_command_state(GeckoBrowser *This, const char *cmd, nsICom
     return nsres;
 }
 
-static DWORD query_ns_edit_status(HTMLDocument *This, const char *nscmd)
+static DWORD query_ns_edit_status(HTMLDocumentNode *doc, const char *nscmd)
 {
     nsICommandParams *nsparam;
     cpp_bool b = FALSE;
 
-    if(This->doc_node->browser->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
+    if(doc->browser->usermode != EDITMODE || doc->basedoc.window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
-    if(This->doc_obj->nscontainer && nscmd) {
+    if(nscmd) {
         nsparam = create_nscommand_params();
-        get_ns_command_state(This->doc_obj->nscontainer, nscmd, nsparam);
+        get_ns_command_state(doc->browser, nscmd, nsparam);
 
         nsICommandParams_GetBooleanValue(nsparam, NSSTATE_ALL, &b);
 
@@ -164,33 +164,30 @@ static DWORD query_ns_edit_status(HTMLDocument *This, const char *nscmd)
     return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (b ? OLECMDF_LATCHED : 0);
 }
 
-static void set_ns_align(HTMLDocument *This, const char *align_str)
+static void set_ns_align(HTMLDocumentNode *doc, const char *align_str)
 {
     nsICommandParams *nsparam;
-
-    if(!This->doc_obj->nscontainer)
-        return;
 
     nsparam = create_nscommand_params();
     nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, align_str);
 
-    do_ns_command(This->doc_node, NSCMD_ALIGN, nsparam);
+    do_ns_command(doc, NSCMD_ALIGN, nsparam);
 
     nsICommandParams_Release(nsparam);
 }
 
-static DWORD query_align_status(HTMLDocument *This, const WCHAR *align)
+static DWORD query_align_status(HTMLDocumentNode *doc, const WCHAR *align)
 {
     DWORD ret = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
     nsAString justify_str;
     cpp_bool b;
     nsresult nsres;
 
-    if(This->doc_node->browser->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
+    if(doc->browser->usermode != EDITMODE || doc->basedoc.window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
     nsAString_Init(&justify_str, align);
-    nsres = nsIDOMHTMLDocument_QueryCommandState(This->doc_node->nsdoc, &justify_str, &b);
+    nsres = nsIDOMHTMLDocument_QueryCommandState(doc->nsdoc, &justify_str, &b);
     nsAString_Finish(&justify_str);
     if(NS_SUCCEEDED(nsres) && b)
         ret |= OLECMDF_LATCHED;
@@ -199,12 +196,12 @@ static DWORD query_align_status(HTMLDocument *This, const WCHAR *align)
 }
 
 
-static nsISelection *get_ns_selection(HTMLDocument *This)
+static nsISelection *get_ns_selection(HTMLDocumentNode *doc)
 {
     nsISelection *nsselection = NULL;
     nsresult nsres;
 
-    nsres = nsIDOMWindow_GetSelection(This->window->nswindow, &nsselection);
+    nsres = nsIDOMWindow_GetSelection(doc->basedoc.window->nswindow, &nsselection);
     if(NS_FAILED(nsres))
         ERR("GetSelection failed %08x\n", nsres);
 
@@ -259,9 +256,9 @@ static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_
     nsIDOMNodeList_Release(node_list);
 }
 
-static void get_font_size(HTMLDocument *This, WCHAR *ret)
+static void get_font_size(HTMLDocumentNode *doc, WCHAR *ret)
 {
-    nsISelection *nsselection = get_ns_selection(This);
+    nsISelection *nsselection = get_ns_selection(doc);
     nsIDOMElement *elem = NULL;
     nsIDOMNode *node = NULL, *tmp_node;
     nsAString tag_str;
@@ -320,7 +317,7 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
         nsIDOMNode_Release(node);
 }
 
-static void set_font_size(HTMLDocument *This, LPCWSTR size)
+static void set_font_size(HTMLDocumentNode *doc, LPCWSTR size)
 {
     nsISelection *nsselection;
     cpp_bool collapsed;
@@ -330,12 +327,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
     nsAString size_str;
     nsAString val_str;
 
-    if(!This->doc_node->nsdoc) {
-        WARN("NULL nsdoc\n");
-        return;
-    }
-
-    nsselection = get_ns_selection(This);
+    nsselection = get_ns_selection(doc);
     if(!nsselection)
         return;
 
@@ -348,7 +340,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
         }
     }
 
-    create_nselem(This->doc_node, fontW, &elem);
+    create_nselem(doc, fontW, &elem);
 
     nsAString_InitDepend(&size_str, sizeW);
     nsAString_InitDepend(&val_str, size);
@@ -376,7 +368,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
 
     nsAString_Finish(&size_str);
 
-    set_dirty(This->doc_node->browser, VARIANT_TRUE);
+    set_dirty(doc->browser, VARIANT_TRUE);
 }
 
 static void handle_arrow_key(HTMLDocumentNode *doc, nsIDOMEvent *event, nsIDOMKeyEvent *key_event, const char * const cmds[4])
@@ -501,34 +493,28 @@ void handle_edit_load(HTMLDocument *This)
     get_editor_controller(This->doc_obj->nscontainer);
 }
 
-static void set_ns_fontname(HTMLDocument *This, const char *fontname)
+static void set_ns_fontname(HTMLDocumentNode *doc, const char *fontname)
 {
     nsICommandParams *nsparam = create_nscommand_params();
 
     nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, fontname);
-    do_ns_command(This->doc_node, NSCMD_FONTFACE, nsparam);
+    do_ns_command(doc, NSCMD_FONTFACE, nsparam);
     nsICommandParams_Release(nsparam);
 }
 
-static HRESULT exec_delete(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_delete(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)->(%p %p)\n", This, in, out);
+    TRACE("(%p)->(%p %p)\n", doc, in, out);
 
-    if(This->doc_obj->nscontainer)
-        do_ns_editor_command(This->doc_obj->nscontainer, NSCMD_DELETECHARFORWARD);
+    do_ns_editor_command(doc->browser, NSCMD_DELETECHARFORWARD);
 
-    update_doc(This->doc_obj, UPDATE_UI);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_fontname(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)->(%p %p)\n", This, in, out);
-
-    if(!This->doc_obj->nscontainer) {
-        update_doc(This->doc_obj, UPDATE_UI);
-        return E_FAIL;
-    }
+    TRACE("(%p)->(%p %p)\n", doc, in, out);
 
     if(in) {
         char *stra;
@@ -541,10 +527,10 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
         TRACE("%s\n", debugstr_w(V_BSTR(in)));
 
         stra = heap_strdupWtoA(V_BSTR(in));
-        set_ns_fontname(This, stra);
+        set_ns_fontname(doc, stra);
         heap_free(stra);
 
-        update_doc(This->doc_obj, UPDATE_UI);
+        update_doc(doc->browser->doc, UPDATE_UI);
     }
 
     if(out) {
@@ -559,7 +545,7 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 
         nsparam = create_nscommand_params();
 
-        nsres = get_ns_command_state(This->doc_obj->nscontainer, NSCMD_FONTFACE, nsparam);
+        nsres = get_ns_command_state(doc->browser, NSCMD_FONTFACE, nsparam);
         if(NS_FAILED(nsres))
             return S_OK;
 
@@ -578,9 +564,9 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
     return S_OK;
 }
 
-static HRESULT exec_forecolor(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_forecolor(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)->(%p %p)\n", This, in, out);
+    TRACE("(%p)->(%p %p)\n", doc, in, out);
 
     if(in) {
         if(V_VT(in) == VT_I4) {
@@ -591,14 +577,14 @@ static HRESULT exec_forecolor(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
                     V_I4(in)&0xff, (V_I4(in)>>8)&0xff, (V_I4(in)>>16)&0xff);
 
             nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, color_str);
-            do_ns_command(This->doc_node, NSCMD_FONTCOLOR, nsparam);
+            do_ns_command(doc, NSCMD_FONTCOLOR, nsparam);
 
             nsICommandParams_Release(nsparam);
         }else {
             FIXME("unsupported forecolor %s\n", debugstr_variant(in));
         }
 
-        update_doc(This->doc_obj, UPDATE_UI);
+        update_doc(doc->browser->doc, UPDATE_UI);
     }
 
     if(out) {
@@ -609,14 +595,14 @@ static HRESULT exec_forecolor(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     return S_OK;
 }
 
-static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_fontsize(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)->(%p %p)\n", This, in, out);
+    TRACE("(%p)->(%p %p)\n", doc, in, out);
 
     if(out) {
         WCHAR val[10] = {0};
 
-        get_font_size(This, val);
+        get_font_size(doc, val);
         V_VT(out) = VT_I4;
         V_I4(out) = strtolW(val, NULL, 10);
     }
@@ -627,189 +613,189 @@ static HRESULT exec_fontsize(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
             WCHAR size[10];
             static const WCHAR format[] = {'%','d',0};
             wsprintfW(size, format, V_I4(in));
-            set_font_size(This, size);
+            set_font_size(doc, size);
             break;
         }
         case VT_BSTR:
-            set_font_size(This, V_BSTR(in));
+            set_font_size(doc, V_BSTR(in));
             break;
         default:
             FIXME("unsupported fontsize %s\n", debugstr_variant(in));
         }
 
-        update_doc(This->doc_obj, UPDATE_UI);
+        update_doc(doc->browser->doc, UPDATE_UI);
     }
 
     return S_OK;
 }
 
-static HRESULT exec_font(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_font(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
 
-    FIXME("(%p)->(%p %p)\n", This, in, out);
+    FIXME("(%p)->(%p %p)\n", doc, in, out);
     return E_NOTIMPL;
 }
 
-static HRESULT exec_bold(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_bold(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This->doc_node, NSCMD_BOLD, NULL);
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_BOLD, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_italic(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_italic(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This->doc_node, NSCMD_ITALIC, NULL);
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_ITALIC, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT query_justify(HTMLDocument *This, OLECMD *cmd)
+static HRESULT query_justify(HTMLDocumentNode *doc, OLECMD *cmd)
 {
     static const PRUnichar justifycenterW[] = {'j','u','s','t','i','f','y','c','e','n','t','e','r',0};
     static const PRUnichar justifyrightW[] = {'j','u','s','t','i','f','y','r','i','g','h','t',0};
 
     switch(cmd->cmdID) {
     case IDM_JUSTIFYCENTER:
-        TRACE("(%p) IDM_JUSTIFYCENTER\n", This);
-        cmd->cmdf = query_align_status(This, justifycenterW);
+        TRACE("(%p) IDM_JUSTIFYCENTER\n", doc);
+        cmd->cmdf = query_align_status(doc, justifycenterW);
         break;
     case IDM_JUSTIFYLEFT:
-        TRACE("(%p) IDM_JUSTIFYLEFT\n", This);
+        TRACE("(%p) IDM_JUSTIFYLEFT\n", doc);
         /* FIXME: We should set OLECMDF_LATCHED only if it's set explicitly. */
-        if(This->doc_node->browser->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
+        if(doc->browser->usermode != EDITMODE || doc->basedoc.window->readystate < READYSTATE_INTERACTIVE)
             cmd->cmdf = OLECMDF_SUPPORTED;
         else
             cmd->cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
         break;
     case IDM_JUSTIFYRIGHT:
-        TRACE("(%p) IDM_JUSTIFYRIGHT\n", This);
-        cmd->cmdf = query_align_status(This, justifyrightW);
+        TRACE("(%p) IDM_JUSTIFYRIGHT\n", doc);
+        cmd->cmdf = query_align_status(doc, justifyrightW);
         break;
     }
 
     return S_OK;
 }
 
-static HRESULT exec_justifycenter(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_justifycenter(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    set_ns_align(This, NSALIGN_CENTER);
-    update_doc(This->doc_obj, UPDATE_UI);
+    set_ns_align(doc, NSALIGN_CENTER);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_justifyleft(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_justifyleft(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    set_ns_align(This, NSALIGN_LEFT);
-    update_doc(This->doc_obj, UPDATE_UI);
+    set_ns_align(doc, NSALIGN_LEFT);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_justifyright(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_justifyright(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    set_ns_align(This, NSALIGN_RIGHT);
-    update_doc(This->doc_obj, UPDATE_UI);
+    set_ns_align(doc, NSALIGN_RIGHT);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_underline(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_underline(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This->doc_node, NSCMD_UNDERLINE, NULL);
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_UNDERLINE, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_horizontalline(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_horizontalline(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This->doc_node, NSCMD_INSERTHR, NULL);
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_INSERTHR, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_orderlist(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_orderlist(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This->doc_node, NSCMD_OL, NULL);
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_OL, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_unorderlist(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_unorderlist(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This->doc_node, NSCMD_UL, NULL);
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_UL, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_indent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_indent(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This->doc_node, NSCMD_INDENT, NULL);
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_INDENT, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_outdent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_outdent(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This->doc_node, NSCMD_OUTDENT, NULL);
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_OUTDENT, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
-static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_composesettings(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     WCHAR *ptr;
 
@@ -818,25 +804,25 @@ static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIAN
         return E_INVALIDARG;
     }
 
-    TRACE("(%p)->(%x %s)\n", This, cmdexecopt, debugstr_w(V_BSTR(in)));
+    TRACE("(%p)->(%x %s)\n", doc, cmdexecopt, debugstr_w(V_BSTR(in)));
 
-    update_doc(This->doc_obj, UPDATE_UI);
+    update_doc(doc->browser->doc, UPDATE_UI);
 
     ptr = V_BSTR(in);
     if(*ptr == '1')
-        exec_bold(This, cmdexecopt, NULL, NULL);
+        exec_bold(doc, cmdexecopt, NULL, NULL);
     ptr = strchrW(ptr, ',');
     if(!ptr)
         return S_OK;
 
     if(*++ptr == '1')
-        exec_italic(This, cmdexecopt, NULL, NULL);
+        exec_italic(doc, cmdexecopt, NULL, NULL);
     ptr = strchrW(ptr, ',');
     if(!ptr)
         return S_OK;
 
     if(*++ptr == '1')
-        exec_underline(This, cmdexecopt, NULL, NULL);
+        exec_underline(doc, cmdexecopt, NULL, NULL);
     ptr = strchrW(ptr, ',');
     if(!ptr)
         return S_OK;
@@ -847,7 +833,7 @@ static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIAN
         V_VT(&v) = VT_I4;
         V_I4(&v) = *ptr-'0';
 
-        exec_fontsize(This, cmdexecopt, &v, NULL);
+        exec_fontsize(doc, cmdexecopt, &v, NULL);
     }
     ptr = strchrW(ptr, ',');
     if(!ptr)
@@ -872,7 +858,7 @@ static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIAN
         V_VT(&v) = VT_BSTR;
         V_BSTR(&v) = SysAllocString(ptr);
 
-        exec_fontname(This, cmdexecopt, &v, NULL);
+        exec_fontname(doc, cmdexecopt, &v, NULL);
 
         SysFreeString(V_BSTR(&v));
     }
@@ -880,108 +866,96 @@ static HRESULT exec_composesettings(HTMLDocument *This, DWORD cmdexecopt, VARIAN
     return S_OK;
 }
 
-HRESULT editor_exec_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+HRESULT editor_exec_copy(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    update_doc(This->doc_obj, UPDATE_UI);
-
-    if(!This->doc_obj->nscontainer)
-        return E_FAIL;
-
-    do_ns_editor_command(This->doc_obj->nscontainer, NSCMD_COPY);
+    update_doc(doc->browser->doc, UPDATE_UI);
+    do_ns_editor_command(doc->browser, NSCMD_COPY);
     return S_OK;
 }
 
-HRESULT editor_exec_cut(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+HRESULT editor_exec_cut(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    update_doc(This->doc_obj, UPDATE_UI);
-
-    if(!This->doc_obj->nscontainer)
-        return E_FAIL;
-
-    do_ns_editor_command(This->doc_obj->nscontainer, NSCMD_CUT);
+    update_doc(doc->browser->doc, UPDATE_UI);
+    do_ns_editor_command(doc->browser, NSCMD_CUT);
     return S_OK;
 }
 
-HRESULT editor_exec_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+HRESULT editor_exec_paste(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    update_doc(This->doc_obj, UPDATE_UI);
-
-    if(!This->doc_obj->nscontainer)
-        return E_FAIL;
-
-    do_ns_editor_command(This->doc_obj->nscontainer, NSCMD_PASTE);
+    update_doc(doc->browser->doc, UPDATE_UI);
+    do_ns_editor_command(doc->browser, NSCMD_PASTE);
     return S_OK;
 }
 
-static HRESULT exec_setdirty(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_setdirty(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
-    TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
+    TRACE("(%p)->(%08x %p %p)\n", doc, cmdexecopt, in, out);
 
     if(!in)
         return S_OK;
 
     if(V_VT(in) == VT_BOOL)
-        set_dirty(This->doc_node->browser, V_BOOL(in));
+        set_dirty(doc->browser, V_BOOL(in));
     else
         FIXME("unsupported arg %s\n", debugstr_variant(in));
 
     return S_OK;
 }
 
-static HRESULT query_edit_status(HTMLDocument *This, OLECMD *cmd)
+static HRESULT query_edit_status(HTMLDocumentNode *doc, OLECMD *cmd)
 {
     switch(cmd->cmdID) {
     case IDM_DELETE:
         TRACE("CGID_MSHTML: IDM_DELETE\n");
-        cmd->cmdf = query_ns_edit_status(This, NULL);
+        cmd->cmdf = query_ns_edit_status(doc, NULL);
         break;
     case IDM_FONTNAME:
         TRACE("CGID_MSHTML: IDM_FONTNAME\n");
-        cmd->cmdf = query_ns_edit_status(This, NULL);
+        cmd->cmdf = query_ns_edit_status(doc, NULL);
         break;
     case IDM_FONTSIZE:
         TRACE("CGID_MSHTML: IDM_FONTSIZE\n");
-        cmd->cmdf = query_ns_edit_status(This, NULL);
+        cmd->cmdf = query_ns_edit_status(doc, NULL);
         break;
     case IDM_BOLD:
         TRACE("CGID_MSHTML: IDM_BOLD\n");
-        cmd->cmdf = query_ns_edit_status(This, NSCMD_BOLD);
+        cmd->cmdf = query_ns_edit_status(doc, NSCMD_BOLD);
         break;
     case IDM_FORECOLOR:
         TRACE("CGID_MSHTML: IDM_FORECOLOR\n");
-        cmd->cmdf = query_ns_edit_status(This, NULL);
+        cmd->cmdf = query_ns_edit_status(doc, NULL);
         break;
     case IDM_ITALIC:
         TRACE("CGID_MSHTML: IDM_ITALIC\n");
-        cmd->cmdf = query_ns_edit_status(This, NSCMD_ITALIC);
+        cmd->cmdf = query_ns_edit_status(doc, NSCMD_ITALIC);
         break;
     case IDM_UNDERLINE:
         TRACE("CGID_MSHTML: IDM_UNDERLINE\n");
-        cmd->cmdf = query_ns_edit_status(This, NSCMD_UNDERLINE);
+        cmd->cmdf = query_ns_edit_status(doc, NSCMD_UNDERLINE);
         break;
     case IDM_HORIZONTALLINE:
         TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
-        cmd->cmdf = query_ns_edit_status(This, NULL);
+        cmd->cmdf = query_ns_edit_status(doc, NULL);
         break;
     case IDM_ORDERLIST:
         TRACE("CGID_MSHTML: IDM_ORDERLIST\n");
-        cmd->cmdf = query_ns_edit_status(This, NSCMD_OL);
+        cmd->cmdf = query_ns_edit_status(doc, NSCMD_OL);
         break;
     case IDM_UNORDERLIST:
         TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
-        cmd->cmdf = query_ns_edit_status(This, NSCMD_UL);
+        cmd->cmdf = query_ns_edit_status(doc, NSCMD_UL);
         break;
     case IDM_INDENT:
         TRACE("CGID_MSHTML: IDM_INDENT\n");
-        cmd->cmdf = query_ns_edit_status(This, NULL);
+        cmd->cmdf = query_ns_edit_status(doc, NULL);
         break;
     case IDM_OUTDENT:
         TRACE("CGID_MSHTML: IDM_OUTDENT\n");
-        cmd->cmdf = query_ns_edit_status(This, NULL);
+        cmd->cmdf = query_ns_edit_status(doc, NULL);
         break;
     case IDM_HYPERLINK:
         TRACE("CGID_MSHTML: IDM_HYPERLINK\n");
-        cmd->cmdf = query_ns_edit_status(This, NULL);
+        cmd->cmdf = query_ns_edit_status(doc, NULL);
         break;
     }
 
@@ -1098,7 +1072,7 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
     }
 }
 
-static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
+static HRESULT exec_hyperlink(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
     nsAString href_str, ns_url;
     nsIHTMLEditor *html_editor;
@@ -1112,7 +1086,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     static const WCHAR aW[] = {'a',0};
     static const WCHAR hrefW[] = {'h','r','e','f',0};
 
-    TRACE("%p, 0x%x, %p, %p\n", This, cmdexecopt, in, out);
+    TRACE("%p, 0x%x, %p, %p\n", doc, cmdexecopt, in, out);
 
     if (cmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER)
     {
@@ -1130,17 +1104,17 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
             return OLECMDERR_E_CANCELED;
     }
 
-    if(!This->doc_node->nsdoc) {
+    if(!doc->nsdoc) {
         WARN("NULL nsdoc\n");
         return E_UNEXPECTED;
     }
 
-    nsselection = get_ns_selection(This);
+    nsselection = get_ns_selection(doc);
     if (!nsselection)
         return E_FAIL;
 
     /* create an element for the link */
-    create_nselem(This->doc_node, aW, &anchor_elem);
+    create_nselem(doc, aW, &anchor_elem);
 
     nsAString_InitDepend(&href_str, hrefW);
     nsAString_InitDepend(&ns_url, url);
@@ -1154,7 +1128,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
         nsIDOMNode *unused_node;
         nsIDOMText *text_node;
 
-        nsIDOMHTMLDocument_CreateTextNode(This->doc_node->nsdoc, &ns_url, &text_node);
+        nsIDOMHTMLDocument_CreateTextNode(doc->nsdoc, &ns_url, &text_node);
 
         /* wrap the <a> tags around the text element */
         nsIDOMElement_AppendChild(anchor_elem, (nsIDOMNode*)text_node, &unused_node);
@@ -1164,7 +1138,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
 
     nsAString_Finish(&ns_url);
 
-    nsIEditor_QueryInterface(This->doc_obj->nscontainer->editor, &IID_nsIHTMLEditor, (void **)&html_editor);
+    nsIEditor_QueryInterface(doc->browser->editor, &IID_nsIHTMLEditor, (void **)&html_editor);
     if (html_editor) {
         nsresult nsres;
 
@@ -1216,7 +1190,7 @@ void init_editor(HTMLDocument *This)
 {
     update_doc(This->doc_obj, UPDATE_UI);
 
-    set_ns_fontname(This, "Times New Roman");
+    set_ns_fontname(This->doc_node, "Times New Roman");
 }
 
 HRESULT browser_is_dirty(GeckoBrowser *browser)
