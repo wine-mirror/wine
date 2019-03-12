@@ -1,5 +1,5 @@
 /*
- * Unit tests for DSound Renderer functions
+ * DirectSound renderer filter unit tests
  *
  * Copyright (C) 2010 Maarten Lankhorst for CodeWeavers
  * Copyright (C) 2007 Google (Lei Zhang)
@@ -20,12 +20,11 @@
  */
 
 #define COBJMACROS
-
-#include "wine/test.h"
 #include "dshow.h"
 #include "initguid.h"
 #include "dsound.h"
 #include "amaudio.h"
+#include "wine/test.h"
 
 #define QI_SUCCEED(iface, riid, ppv) hr = IUnknown_QueryInterface(iface, &riid, (LPVOID*)&ppv); \
     ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr); \
@@ -55,63 +54,42 @@ static void release_dsound_renderer(void)
     ok(hr == 0, "IUnknown_Release failed with %x\n", hr);
 }
 
-static HRESULT WINAPI PB_QueryInterface(IPropertyBag *iface, REFIID riid, void **ppv)
+static void test_property_bag(void)
 {
-    ok(0, "Should not be called\n");
-    *ppv = NULL;
-    return E_NOINTERFACE;
-}
+    IPersistPropertyBag *ppb;
+    ICreateDevEnum *devenum;
+    IEnumMoniker *enummon;
+    IPropertyBag *propbag;
+    IMoniker *mon;
+    HRESULT hr;
 
-static ULONG WINAPI PB_AddRef(IPropertyBag *iface)
-{
-    ok(0, "Should not be called\n");
-    return 2;
-}
+    CoCreateInstance(&CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
+            &IID_ICreateDevEnum, (void **)&devenum);
+    ICreateDevEnum_CreateClassEnumerator(devenum, &CLSID_AudioRendererCategory, &enummon, 0);
 
-static ULONG WINAPI PB_Release(IPropertyBag *iface)
-{
-    ok(0, "Should not be called\n");
-    return 1;
-}
-
-static HRESULT WINAPI PB_Read(IPropertyBag *iface, LPCOLESTR name, VARIANT *var, IErrorLog *log)
-{
-    static const WCHAR dsguid[] = { 'D','S','G','u','i','d', 0 };
-    char temp[50];
-    WideCharToMultiByte(CP_ACP, 0, name, -1, temp, sizeof(temp)-1, NULL, NULL);
-    temp[sizeof(temp)-1] = 0;
-    trace("Trying to read %s, type %u\n", temp, var->n1.n2.vt);
-    if (!lstrcmpW(name, dsguid))
+    while (IEnumMoniker_Next(enummon, 1, &mon, NULL) == S_OK)
     {
-        static const WCHAR defaultplayback[] =
-        {
-            '{','D','E','F','0','0','0','0','0','-',
-            '9','C','6','D','-','4','7','E','D','-',
-            'A','A','F','1','-','4','D','D','A','8',
-            'F','2','B','5','C','0','3','}',0
-        };
-        ok(var->n1.n2.vt == VT_BSTR, "Wrong type asked: %u\n", var->n1.n2.vt);
-        var->n1.n2.n3.bstrVal = SysAllocString(defaultplayback);
-        return S_OK;
+        hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IPersistPropertyBag, (void **)&ppb);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (hr != S_OK) break;
+
+        IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&propbag);
+
+        hr = IPersistPropertyBag_InitNew(ppb);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IPersistPropertyBag_Load(ppb, propbag, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        IPersistPropertyBag_Release(ppb);
+        IPropertyBag_Release(propbag);
+        IMoniker_Release(mon);
     }
-    ok(0, "Unknown property '%s' queried\n", temp);
-    return E_FAIL;
-}
 
-static HRESULT WINAPI PB_Write(IPropertyBag *iface, LPCOLESTR name, VARIANT *var)
-{
-    ok(0, "Should not be called\n");
-    return E_FAIL;
+    IEnumMoniker_Release(enummon);
+    ICreateDevEnum_Release(devenum);
 }
-
-static IPropertyBagVtbl PB_Vtbl =
-{
-    PB_QueryInterface,
-    PB_AddRef,
-    PB_Release,
-    PB_Read,
-    PB_Write
-};
 
 static void test_query_interface(void)
 {
@@ -140,12 +118,6 @@ static void test_query_interface(void)
     QI_SUCCEED(pDSRender, IID_IDirectSound3DBuffer, ds3dbuf);
     RELEASE_EXPECT(ds3dbuf, 1);
     QI_SUCCEED(pDSRender, IID_IPersistPropertyBag, ppb);
-    if (ppb)
-    {
-        IPropertyBag bag = { &PB_Vtbl };
-        hr = IPersistPropertyBag_Load(ppb, &bag, NULL);
-        ok(hr == S_OK, "Couldn't load default device: %08x\n", hr);
-    }
     RELEASE_EXPECT(ppb, 1);
     }
     QI_SUCCEED(pDSRender, IID_IMediaPosition, pMediaPosition);
@@ -224,6 +196,7 @@ START_TEST(dsoundrender)
     if (!create_dsound_renderer())
         return;
 
+    test_property_bag();
     test_query_interface();
     test_basefilter();
 
