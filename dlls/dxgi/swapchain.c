@@ -150,6 +150,17 @@ static HRESULT dxgi_get_output_from_window(IDXGIAdapter *adapter, HWND window, I
     return DXGI_ERROR_NOT_FOUND;
 }
 
+static HWND d3d11_swapchain_get_hwnd(struct d3d11_swapchain *swapchain)
+{
+    struct wined3d_swapchain_desc wined3d_desc;
+
+    wined3d_mutex_lock();
+    wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
+    wined3d_mutex_unlock();
+
+    return wined3d_desc.device_window;
+}
+
 static inline struct d3d11_swapchain *d3d11_swapchain_from_IDXGISwapChain1(IDXGISwapChain1 *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d11_swapchain, IDXGISwapChain1_iface);
@@ -490,7 +501,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeTarget(IDXGISwapChain1 *i
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapChain1 *iface, IDXGIOutput **output)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
-    struct wined3d_swapchain_desc swapchain_desc;
     IDXGIAdapter *adapter;
     IDXGIDevice *device;
     HRESULT hr;
@@ -511,11 +521,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapCh
 
     if (SUCCEEDED(hr))
     {
-        wined3d_mutex_lock();
-        wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &swapchain_desc);
-        wined3d_mutex_unlock();
-
-        hr = dxgi_get_output_from_window(adapter, swapchain_desc.device_window, output);
+        HWND hwnd = d3d11_swapchain_get_hwnd(swapchain);
+        hr = dxgi_get_output_from_window(adapter, hwnd, output);
         IDXGIAdapter_Release(adapter);
     }
     else
@@ -611,7 +618,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenDesc(IDXGISwapChai
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetHwnd(IDXGISwapChain1 *iface, HWND *hwnd)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
-    struct wined3d_swapchain_desc wined3d_desc;
 
     TRACE("iface %p, hwnd %p.\n", iface, hwnd);
 
@@ -621,11 +627,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetHwnd(IDXGISwapChain1 *iface,
         return DXGI_ERROR_INVALID_CALL;
     }
 
-    wined3d_mutex_lock();
-    wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
-    wined3d_mutex_unlock();
-
-    *hwnd = wined3d_desc.device_window;
+    *hwnd = d3d11_swapchain_get_hwnd(swapchain);
     return S_OK;
 }
 
