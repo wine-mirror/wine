@@ -406,7 +406,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
             strarray_add( flags, "-image_base" );
             strarray_add( flags, opts->image_base );
         }
-        if (opts->strip) strarray_add( flags, "-x" );
+        if (opts->strip) strarray_add( flags, "-Wl,-x" );
         return flags;
 
     case PLATFORM_SOLARIS:
