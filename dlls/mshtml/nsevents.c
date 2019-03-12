@@ -173,17 +173,15 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
 {
     nsEventListener *This = impl_from_nsIDOMEventListener(iface);
     HTMLDocumentNode *doc = This->This->doc;
-    HTMLDocumentObj *doc_obj;
 
     if(!doc || !doc->browser)
         return NS_ERROR_FAILURE;
-    doc_obj = doc->basedoc.doc_obj;
 
     TRACE("(%p)->(%p)\n", doc, event);
 
-    update_doc(doc_obj, UPDATE_UI);
+    update_doc(doc->browser->doc, UPDATE_UI);
     if(doc->browser->usermode == EDITMODE)
-        handle_edit_event(&doc_obj->basedoc, event);
+        handle_edit_event(doc, event);
 
     return NS_OK;
 }
