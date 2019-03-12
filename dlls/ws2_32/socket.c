@@ -2628,6 +2628,12 @@ static int WS2_send( int fd, struct ws2_async *wsa, int flags )
 
     while ((ret = sendmsg(fd, &hdr, flags)) == -1)
     {
+        if (errno == EISCONN)
+        {
+            hdr.msg_name = 0;
+            hdr.msg_namelen = 0;
+            continue;
+        }
         if (errno != EINTR)
             return -1;
     }
