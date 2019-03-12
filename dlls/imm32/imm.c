@@ -1231,33 +1231,40 @@ static INT CopyCompStringIMEtoClient(const InputContextData *data, const void *s
     return ret;
 }
 
-static INT CopyCompAttrIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE ssource, INT sslen,
-                                   LPBYTE target, INT tlen, BOOL unicode )
+/* Composition string encoding is defined by context, returned attributes correspond to string, converted according to
+   passed mode. String length is in characters, attributes are in byte arrays. */
+static INT CopyCompAttrIMEtoClient(const InputContextData *data, const BYTE *src, INT src_len, const void *comp_string,
+        INT str_len, BYTE *dst, INT dst_len, BOOL unicode)
 {
+    union
+    {
+        const void *str;
+        const WCHAR *strW;
+        const char *strA;
+    } string;
     INT rc;
+
+    string.str = comp_string;
 
     if (is_himc_ime_unicode(data) && !unicode)
     {
-        rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)ssource, sslen, NULL, 0, NULL, NULL);
-        if (tlen)
+        rc = WideCharToMultiByte(CP_ACP, 0, string.strW, str_len, NULL, 0, NULL, NULL);
+        if (dst_len)
         {
-            const BYTE *src = source;
-            LPBYTE dst = target;
             int i, j = 0, k = 0;
 
-            if (rc < tlen)
-                tlen = rc;
-            for (i = 0; i < sslen; ++i)
+            if (rc < dst_len)
+                dst_len = rc;
+            for (i = 0; i < str_len; ++i)
             {
                 int len;
 
-                len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ssource + i, 1,
-                                          NULL, 0, NULL, NULL);
+                len = WideCharToMultiByte(CP_ACP, 0, string.strW + i, 1, NULL, 0, NULL, NULL);
                 for (; len > 0; --len)
                 {
                     dst[j++] = src[k];
 
-                    if (j >= tlen)
+                    if (j >= dst_len)
                         goto end;
                 }
                 ++k;
@@ -1268,23 +1275,21 @@ static INT CopyCompAttrIMEtoClient(InputContextData *data, LPBYTE source, INT sl
     }
     else if (!is_himc_ime_unicode(data) && unicode)
     {
-        rc = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ssource, sslen, NULL, 0);
-        if (tlen)
+        rc = MultiByteToWideChar(CP_ACP, 0, string.strA, str_len, NULL, 0);
+        if (dst_len)
         {
-            const BYTE *src = source;
-            LPBYTE dst = target;
             int i, j = 0;
 
-            if (rc < tlen)
-                tlen = rc;
-            for (i = 0; i < sslen; ++i)
+            if (rc < dst_len)
+                dst_len = rc;
+            for (i = 0; i < str_len; ++i)
             {
-                if (IsDBCSLeadByte(((LPSTR)ssource)[i]))
+                if (IsDBCSLeadByte(string.strA[i]))
                     continue;
 
                 dst[j++] = src[i];
 
-                if (j >= tlen)
+                if (j >= dst_len)
                     break;
             }
             rc = j;
@@ -1292,8 +1297,8 @@ static INT CopyCompAttrIMEtoClient(InputContextData *data, LPBYTE source, INT sl
     }
     else
     {
-        memcpy( target, source, min(slen,tlen));
-        rc = slen;
+        memcpy(dst, src, min(src_len, dst_len));
+        rc = src_len;
     }
 
     return rc;
