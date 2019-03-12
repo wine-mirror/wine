@@ -4178,7 +4178,7 @@ static BOOL init_freetype(void)
                        ((FT_Version.minor <<  8) & 0x00ff00) |
                        ((FT_Version.patch      ) & 0x0000ff);
 
-    /* In Freetype < 2.8.1 v40's FT_LOAD_TARGET_MONO has broken advance widths. */
+    /* In FreeType < 2.8.1 v40's FT_LOAD_TARGET_MONO has broken advance widths. */
     if (pFT_Property_Set && FT_SimpleVersion < FT_VERSION_VALUE(2, 8, 1))
     {
         FT_UInt interpreter_version = 35;
