@@ -4140,7 +4140,7 @@ static void test_frame_latency(void)
 
     hr = IDirect3DDevice9Ex_GetMaximumFrameLatency(device, &latency);
     ok(SUCCEEDED(hr), "Failed to get max frame latency, hr %#x.\n", hr);
-    ok(latency == 3, "Unexpected default max frame latency %u.\n", latency);
+    ok(latency == 3 || !latency, "Unexpected default max frame latency %u.\n", latency);
 
     hr = IDirect3DDevice9Ex_SetMaximumFrameLatency(device, 30);
     ok(SUCCEEDED(hr), "Failed to set max frame latency, hr %#x.\n", hr);
