@@ -1908,6 +1908,7 @@ static const IMFMediaSourceVtbl mfsourcevtbl =
 enum resolved_object_origin
 {
     OBJECT_FROM_BYTESTREAM,
+    OBJECT_FROM_URL,
 };
 
 struct resolver_queued_result
@@ -1937,6 +1938,7 @@ typedef struct source_resolver
     IMFSourceResolver IMFSourceResolver_iface;
     LONG refcount;
     IMFAsyncCallback stream_callback;
+    IMFAsyncCallback url_callback;
     CRITICAL_SECTION cs;
     struct list pending;
 } mfsourceresolver;
@@ -1951,6 +1953,11 @@ static struct source_resolver *impl_from_stream_IMFAsyncCallback(IMFAsyncCallbac
     return CONTAINING_RECORD(iface, struct source_resolver, stream_callback);
 }
 
+static struct source_resolver *impl_from_url_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct source_resolver, url_callback);
+}
+
 static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enum resolved_object_origin origin,
         IMFAsyncResult *result)
 {
@@ -1960,6 +1967,7 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
     {
         IUnknown *handler;
         IMFByteStreamHandler *stream_handler;
+        IMFSchemeHandler *scheme_handler;
     } handler;
 
     queued_result = heap_alloc(sizeof(*queued_result));
@@ -1970,6 +1978,10 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
     {
         case OBJECT_FROM_BYTESTREAM:
             queued_result->hr = IMFByteStreamHandler_EndCreateObject(handler.stream_handler, result, &queued_result->obj_type,
+                    &queued_result->object);
+            break;
+        case OBJECT_FROM_URL:
+            queued_result->hr = IMFSchemeHandler_EndCreateObject(handler.scheme_handler, result, &queued_result->obj_type,
                     &queued_result->object);
             break;
         default:
@@ -2132,6 +2144,34 @@ static const IMFAsyncCallbackVtbl source_resolver_callback_stream_vtbl =
     source_resolver_callback_stream_Invoke,
 };
 
+static ULONG WINAPI source_resolver_callback_url_AddRef(IMFAsyncCallback *iface)
+{
+    struct source_resolver *resolver = impl_from_url_IMFAsyncCallback(iface);
+    return IMFSourceResolver_AddRef(&resolver->IMFSourceResolver_iface);
+}
+
+static ULONG WINAPI source_resolver_callback_url_Release(IMFAsyncCallback *iface)
+{
+    struct source_resolver *resolver = impl_from_url_IMFAsyncCallback(iface);
+    return IMFSourceResolver_Release(&resolver->IMFSourceResolver_iface);
+}
+
+static HRESULT WINAPI source_resolver_callback_url_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct source_resolver *resolver = impl_from_url_IMFAsyncCallback(iface);
+
+    return resolver_handler_end_create(resolver, OBJECT_FROM_URL, result);
+}
+
+static const IMFAsyncCallbackVtbl source_resolver_callback_url_vtbl =
+{
+    source_resolver_callback_QueryInterface,
+    source_resolver_callback_url_AddRef,
+    source_resolver_callback_url_Release,
+    source_resolver_callback_GetParameters,
+    source_resolver_callback_url_Invoke,
+};
+
 static HRESULT resolver_create_registered_handler(HKEY hkey, REFIID riid, void **handler)
 {
     unsigned int j = 0, name_length, type;
@@ -2220,6 +2260,73 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
     }
 
     CoTaskMemFree(mimeW);
+    return hr;
+}
+
+static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSchemeHandler **handler)
+{
+    static const char schemehandlerspath[] = "Software\\Microsoft\\Windows Media Foundation\\SchemeHandlers";
+    static const HKEY hkey_roots[2] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
+    const WCHAR *ptr = url;
+    unsigned int len, i;
+    WCHAR *scheme;
+    HRESULT hr;
+
+    /* RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
+    while (*ptr)
+    {
+        WCHAR ch = tolowerW(*ptr);
+
+        if (*ptr == '*' && ptr == url)
+        {
+             ptr++;
+             break;
+        }
+        else if (!(*ptr >= '0' && *ptr <= '9') &&
+                !(ch >= 'a' && ch <= 'z') &&
+                *ptr != '+' && *ptr != '-' && *ptr != '.')
+        {
+            break;
+        }
+
+        ptr++;
+    }
+
+    /* Schemes must end with a ':' */
+    if (ptr == url || *ptr != ':')
+        return MF_E_UNSUPPORTED_SCHEME;
+
+    len = ptr - url;
+    scheme = heap_alloc((len + 1) * sizeof(WCHAR));
+    if (!scheme)
+        return E_OUTOFMEMORY;
+
+    memcpy(scheme, url, len * sizeof(WCHAR));
+    scheme[len] = 0;
+
+    /* FIXME: check local handlers first */
+
+    for (i = 0, hr = E_FAIL; i < ARRAY_SIZE(hkey_roots); ++i)
+    {
+        HKEY hkey, hkey_handler;
+
+        if (RegOpenKeyA(hkey_roots[i], schemehandlerspath, &hkey))
+            continue;
+
+        if (!RegOpenKeyW(hkey, scheme, &hkey_handler))
+        {
+            hr = resolver_create_registered_handler(hkey_handler, &IID_IMFSchemeHandler, (void **)handler);
+            RegCloseKey(hkey_handler);
+        }
+
+        RegCloseKey(hkey);
+
+        if (SUCCEEDED(hr))
+            break;
+    }
+
+    heap_free(scheme);
+
     return hr;
 }
 
@@ -2318,14 +2425,45 @@ static ULONG WINAPI source_resolver_Release(IMFSourceResolver *iface)
     return refcount;
 }
 
-static HRESULT WINAPI mfsourceresolver_CreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
-    DWORD flags, IPropertyStore *props, MF_OBJECT_TYPE *obj_type, IUnknown **object)
+static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
+        DWORD flags, IPropertyStore *props, MF_OBJECT_TYPE *obj_type, IUnknown **object)
 {
-    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
+    IMFSchemeHandler *handler;
+    IMFAsyncResult *result;
+    MFASYNCRESULT *data;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s, %#x, %p, %p, %p): stub\n", This, debugstr_w(url), flags, props, obj_type, object);
+    TRACE("%p, %s, %#x, %p, %p, %p\n", iface, debugstr_w(url), flags, props, obj_type, object);
 
-    return E_NOTIMPL;
+    if (!url || !obj_type || !object)
+        return E_POINTER;
+
+    if (FAILED(hr = resolver_get_scheme_handler(url, flags, &handler)))
+        return hr;
+
+    hr = MFCreateAsyncResult((IUnknown *)handler, NULL, NULL, &result);
+    IMFSchemeHandler_Release(handler);
+    if (FAILED(hr))
+        return hr;
+
+    data = (MFASYNCRESULT *)result;
+    data->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, NULL, &resolver->stream_callback,
+            (IUnknown *)result);
+    if (FAILED(hr))
+    {
+        IMFAsyncResult_Release(result);
+        return hr;
+    }
+
+    WaitForSingleObject(data->hEvent, INFINITE);
+
+    hr = resolver_end_create_object(resolver, OBJECT_FROM_URL, result, obj_type, object);
+    IMFAsyncResult_Release(result);
+
+    return hr;
 }
 
 static HRESULT WINAPI source_resolver_CreateObjectFromByteStream(IMFSourceResolver *iface, IMFByteStream *stream,
@@ -2484,7 +2622,7 @@ static const IMFSourceResolverVtbl mfsourceresolvervtbl =
     source_resolver_QueryInterface,
     source_resolver_AddRef,
     source_resolver_Release,
-    mfsourceresolver_CreateObjectFromURL,
+    source_resolver_CreateObjectFromURL,
     source_resolver_CreateObjectFromByteStream,
     mfsourceresolver_BeginCreateObjectFromURL,
     mfsourceresolver_EndCreateObjectFromURL,
@@ -2511,6 +2649,7 @@ HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver)
 
     object->IMFSourceResolver_iface.lpVtbl = &mfsourceresolvervtbl;
     object->stream_callback.lpVtbl = &source_resolver_callback_stream_vtbl;
+    object->url_callback.lpVtbl = &source_resolver_callback_url_vtbl;
     object->refcount = 1;
     list_init(&object->pending);
     InitializeCriticalSection(&object->cs);
