@@ -780,7 +780,7 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
     BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    BaseRendererImpl_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
@@ -1017,6 +1017,7 @@ static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
 
 HRESULT VideoRenderer_create(IUnknown *pUnkOuter, void **ppv)
 {
+    static const WCHAR sink_name[] = {'I','n',0};
     HRESULT hr;
     VideoRendererImpl * pVideoRenderer;
 
@@ -1039,9 +1040,9 @@ HRESULT VideoRenderer_create(IUnknown *pUnkOuter, void **ppv)
     else
         pVideoRenderer->outer_unk = &pVideoRenderer->IUnknown_inner;
 
-    hr = BaseRenderer_Init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl, pUnkOuter,
-            &CLSID_VideoRenderer, (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"),
-            &BaseFuncTable);
+    hr = strmbase_renderer_init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl,
+            pUnkOuter, &CLSID_VideoRenderer, sink_name,
+            (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"), &BaseFuncTable);
 
     if (FAILED(hr))
         goto fail;

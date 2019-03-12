@@ -30,9 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
-static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
-static const WCHAR wcsAltInputPinName[] = {'I','n',0};
-
 static inline BaseInputPin *impl_BaseInputPin_from_IPin( IPin *iface )
 {
     return CONTAINING_RECORD(iface, BaseInputPin, pin.IPin_iface);
@@ -238,8 +235,9 @@ static const BaseInputPinFuncTable input_BaseInputFuncTable = {
 };
 
 
-HRESULT WINAPI BaseRenderer_Init(BaseRenderer * This, const IBaseFilterVtbl *Vtbl, IUnknown *pUnkOuter, const CLSID *pClsid,
-    DWORD_PTR DebugInfo, const BaseRendererFuncTable* pBaseFuncsTable)
+HRESULT WINAPI strmbase_renderer_init(BaseRenderer *This, const IBaseFilterVtbl *Vtbl,
+        IUnknown *pUnkOuter, const CLSID *pClsid, const WCHAR *sink_name, DWORD_PTR DebugInfo,
+        const BaseRendererFuncTable *pBaseFuncsTable)
 {
     PIN_INFO piInput;
     HRESULT hr;
@@ -251,7 +249,7 @@ HRESULT WINAPI BaseRenderer_Init(BaseRenderer * This, const IBaseFilterVtbl *Vtb
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = &This->filter.IBaseFilter_iface;
-    lstrcpynW(piInput.achName, wcsInputPinName, ARRAY_SIZE(piInput.achName));
+    lstrcpynW(piInput.achName, sink_name, ARRAY_SIZE(piInput.achName));
 
     hr = BaseInputPin_Construct(&BaseRenderer_InputPin_Vtbl, sizeof(BaseInputPin), &piInput,
             &input_BaseInputFuncTable, &This->filter.csFilter, NULL, (IPin **)&This->pInputPin);
@@ -417,25 +415,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
     LeaveCriticalSection(&This->csRenderLock);
 
     return hr;
-}
-
-HRESULT WINAPI BaseRendererImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
-{
-    BaseRenderer *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_w(Id), ppPin);
-
-    if (!Id || !ppPin)
-        return E_POINTER;
-
-    if (!lstrcmpiW(Id,wcsInputPinName) || !lstrcmpiW(Id,wcsAltInputPinName))
-    {
-        *ppPin = &This->pInputPin->pin.IPin_iface;
-        IPin_AddRef(*ppPin);
-        return S_OK;
-    }
-    *ppPin = NULL;
-    return VFW_E_NOT_FOUND;
 }
 
 HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)

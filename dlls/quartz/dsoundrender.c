@@ -617,6 +617,8 @@ static const BaseRendererFuncTable BaseFuncTable = {
 
 HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
+    static const WCHAR sink_name[] = {'A','u','d','i','o',' ','I','n','p','u','t',' ','p','i','n',' ','(','r','e','n','d','e','r','e','d',')',0};
+
     HRESULT hr;
     DSoundRenderImpl * pDSoundRender;
 
@@ -632,7 +634,10 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
         return E_OUTOFMEMORY;
     ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
 
-    hr = BaseRenderer_Init(&pDSoundRender->renderer, &DSoundRender_Vtbl, (IUnknown*)pDSoundRender, &CLSID_DSoundRender, (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), &BaseFuncTable);
+    hr = strmbase_renderer_init(&pDSoundRender->renderer, &DSoundRender_Vtbl,
+            (IUnknown *)&pDSoundRender->renderer. filter.IBaseFilter_iface,
+            &CLSID_DSoundRender, sink_name,
+            (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), &BaseFuncTable);
 
     BasicAudio_Init(&pDSoundRender->basicAudio,&IBasicAudio_Vtbl);
     pDSoundRender->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;
@@ -794,7 +799,7 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
     BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    BaseRendererImpl_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo

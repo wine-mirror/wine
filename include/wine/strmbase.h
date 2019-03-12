@@ -634,7 +634,6 @@ typedef struct BaseRendererFuncTable {
 HRESULT WINAPI BaseRendererImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
 ULONG   WINAPI BaseRendererImpl_Release(IBaseFilter * iface);
 HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSample);
-HRESULT WINAPI BaseRendererImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin);
 HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface);
 HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
 HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface);
@@ -645,7 +644,9 @@ HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(BaseRenderer *iface);
 
-HRESULT WINAPI BaseRenderer_Init(BaseRenderer *This, const IBaseFilterVtbl *Vtbl, IUnknown *pUnkOuter, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseRendererFuncTable* pBaseFuncsTable);
+HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtbl *vtbl,
+        IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name, DWORD_PTR debug_info,
+        const BaseRendererFuncTable *func_table);
 
 #ifdef __IBasicAudio_FWD_DEFINED__
 typedef struct tagBasicAudio

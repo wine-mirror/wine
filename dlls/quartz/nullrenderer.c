@@ -180,7 +180,7 @@ static const IBaseFilterVtbl NullRenderer_Vtbl =
     BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    BaseRendererImpl_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
@@ -224,6 +224,8 @@ static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
 
 HRESULT NullRenderer_create(IUnknown *pUnkOuter, void **ppv)
 {
+    static const WCHAR sink_name[] = {'I','n',0};
+
     HRESULT hr;
     NullRendererImpl *pNullRenderer;
 
@@ -240,9 +242,9 @@ HRESULT NullRenderer_create(IUnknown *pUnkOuter, void **ppv)
     else
         pNullRenderer->outer_unk = &pNullRenderer->IUnknown_inner;
 
-    hr = BaseRenderer_Init(&pNullRenderer->renderer, &NullRenderer_Vtbl, pUnkOuter,
-            &CLSID_NullRenderer, (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"),
-            &RendererFuncTable);
+    hr = strmbase_renderer_init(&pNullRenderer->renderer, &NullRenderer_Vtbl, pUnkOuter,
+            &CLSID_NullRenderer, sink_name,
+            (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), &RendererFuncTable);
 
     if (FAILED(hr))
     {

@@ -935,7 +935,7 @@ static const IBaseFilterVtbl VMR_Vtbl =
     BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    BaseRendererImpl_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
@@ -2368,6 +2368,8 @@ static const IVMRSurfaceAllocatorNotify9Vtbl VMR9_SurfaceAllocatorNotify_Vtbl =
 
 static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
 {
+    static const WCHAR sink_name[] = {'V','M','R',' ','I','n','p','u','t','0',0};
+
     HRESULT hr;
     struct quartz_vmr* pVMR;
 
@@ -2409,11 +2411,13 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
 
     if (IsEqualGUID(clsid, &CLSID_VideoMixingRenderer))
-        hr = BaseRenderer_Init(&pVMR->renderer, &VMR_Vtbl, outer_unk, &CLSID_VideoMixingRenderer,
-                               (DWORD_PTR)(__FILE__ ": VMR7Impl.csFilter"), &BaseFuncTable);
+        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer_unk,
+                &CLSID_VideoMixingRenderer, sink_name,
+                (DWORD_PTR)(__FILE__ ": VMR7Impl.csFilter"), &BaseFuncTable);
     else
-        hr = BaseRenderer_Init(&pVMR->renderer, &VMR_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9,
-                               (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
+        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer_unk,
+                &CLSID_VideoMixingRenderer9, sink_name,
+                (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
 
     if (FAILED(hr))
         goto fail;
