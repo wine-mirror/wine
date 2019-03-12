@@ -89,7 +89,6 @@ C_SRCS = \
 	isnan.c \
 	lstat.c \
 	mbtowc.c \
-	memmove.c \
 	mkstemps.c \
 	normalize.c \
 	poll.c \

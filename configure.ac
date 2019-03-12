@@ -2165,7 +2165,6 @@ AC_CHECK_FUNCS(\
 	getuid \
 	kqueue \
 	lstat \
-	memmove \
 	mmap \
 	pclose \
 	pipe2 \

@@ -292,10 +292,6 @@ long lrintf(float x);
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
 
-#ifndef HAVE_MEMMOVE
-void *memmove(void *dest, const void *src, size_t len);
-#endif /* !defined(HAVE_MEMMOVE) */
-
 #ifndef HAVE_POLL
 struct pollfd
 {
@@ -523,8 +519,6 @@ extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compa
 #define interlocked_xchg_ptr    __WINE_NOT_PORTABLE(interlocked_xchg_ptr)
 #define interlocked_xchg_add    __WINE_NOT_PORTABLE(interlocked_xchg_add)
 #define lstat                   __WINE_NOT_PORTABLE(lstat)
-#undef memmove
-#define memmove                 __WINE_NOT_PORTABLE(memmove)
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
 #define spawnvp                 __WINE_NOT_PORTABLE(spawnvp)
