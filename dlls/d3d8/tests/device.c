@@ -7739,6 +7739,7 @@ static void test_writeonly_resource(void)
 
 static void test_lost_device(void)
 {
+    D3DADAPTER_IDENTIFIER8 identifier;
     struct device_desc device_desc;
     IDirect3DDevice8 *device;
     IDirect3D8 *d3d;
@@ -7750,6 +7751,8 @@ static void test_lost_device(void)
     window = create_window();
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
+    hr = IDirect3D8_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
     device_desc.device_window = window;
     device_desc.width = registry_mode.dmPelsWidth;
     device_desc.height = registry_mode.dmPelsHeight;
@@ -7767,6 +7770,13 @@ static void test_lost_device(void)
         IDirect3DDevice8_Release(device);
         goto done;
     }
+    if (adapter_is_warp(&identifier))
+    {
+        win_skip("Windows 10 WARP crashes during this test.\n");
+        IDirect3DDevice8_Release(device);
+        goto done;
+    }
+
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
