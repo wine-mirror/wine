@@ -1073,9 +1073,9 @@ static void test_MFCreateAsyncResult(void)
     ok(state == (IUnknown *)result, "Unexpected state.\n");
 
     refcount = IMFAsyncResult_Release(result2);
-    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
     refcount = IMFAsyncResult_Release(result);
-    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
 
     /* Event handle is closed on release. */
     hr = MFCreateAsyncResult(NULL, NULL, NULL, &result);
@@ -1088,7 +1088,7 @@ static void test_MFCreateAsyncResult(void)
     ok(ret, "Failed to get handle info.\n");
 
     refcount = IMFAsyncResult_Release(result);
-    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
     ret = GetHandleInformation(event, &flags);
     ok(!ret, "Expected handle to be closed.\n");
 
@@ -1102,7 +1102,7 @@ static void test_MFCreateAsyncResult(void)
     ok(ret, "Failed to get handle info.\n");
 
     refcount = IMFAsyncResult_Release(result);
-    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
     ret = GetHandleInformation(event, &flags);
     ok(!ret, "Expected handle to be closed.\n");
 }
@@ -1835,7 +1835,7 @@ static void test_MFInvokeCallback(void)
     ok(ret == WAIT_TIMEOUT, "Expected timeout, ret %#x.\n", ret);
 
     refcount = IMFAsyncResult_Release(result);
-    ok(!refcount, "Unexpected refcount %u\n.", refcount);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
