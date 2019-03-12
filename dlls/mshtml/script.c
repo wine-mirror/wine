@@ -1269,8 +1269,7 @@ static ScriptHost *get_elem_script_host(HTMLInnerWindow *window, HTMLScriptEleme
         return NULL;
     }
 
-    if(IsEqualGUID(&CLSID_JScript, &guid)
-       && (!window->base.outer_window || window->base.outer_window->scriptmode != SCRIPTMODE_ACTIVESCRIPT)) {
+    if(IsEqualGUID(&CLSID_JScript, &guid) && (!window->doc->browser || window->doc->browser->script_mode != SCRIPTMODE_ACTIVESCRIPT)) {
         TRACE("Ignoring JScript\n");
         return NULL;
     }
@@ -1343,7 +1342,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
     }
 
     if(IsEqualGUID(&CLSID_JScript, &guid)
-       && (!window->base.outer_window || window->base.outer_window->scriptmode != SCRIPTMODE_ACTIVESCRIPT)) {
+       && (!window->doc->browser || window->doc->browser->script_mode != SCRIPTMODE_ACTIVESCRIPT)) {
         TRACE("Ignoring JScript\n");
         return NULL;
     }
@@ -1670,27 +1669,44 @@ static BOOL is_jscript_available(void)
     return available;
 }
 
-void set_script_mode(HTMLOuterWindow *window, SCRIPTMODE mode)
+static BOOL use_gecko_script(IUri *uri)
+{
+    BSTR display_uri;
+    DWORD zone;
+    HRESULT hres;
+
+    hres = IUri_GetDisplayUri(uri, &display_uri);
+    if(FAILED(hres))
+        return FALSE;
+
+    hres = IInternetSecurityManager_MapUrlToZone(get_security_manager(), display_uri, &zone, 0);
+    SysFreeString(display_uri);
+    if(FAILED(hres)) {
+        WARN("Could not map %s to zone: %08x\n", debugstr_w(display_uri), hres);
+        return TRUE;
+    }
+
+    TRACE("zone %d\n", zone);
+    return zone == URLZONE_UNTRUSTED;
+}
+
+void update_browser_script_mode(GeckoBrowser *browser, IUri *uri)
 {
     nsIWebBrowserSetup *setup;
     nsresult nsres;
 
-    if(mode == SCRIPTMODE_ACTIVESCRIPT && !is_jscript_available()) {
+    if(!is_jscript_available()) {
         TRACE("jscript.dll not available\n");
-        window->scriptmode = SCRIPTMODE_GECKO;
+        browser->script_mode = SCRIPTMODE_GECKO;
         return;
     }
 
-    window->scriptmode = mode;
+    browser->script_mode = use_gecko_script(uri) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT;
 
-    if(!window->doc_obj->nscontainer || !window->doc_obj->nscontainer->webbrowser)
-        return;
-
-    nsres = nsIWebBrowser_QueryInterface(window->doc_obj->nscontainer->webbrowser,
-            &IID_nsIWebBrowserSetup, (void**)&setup);
+    nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIWebBrowserSetup, (void**)&setup);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(setup, SETUP_ALLOW_JAVASCRIPT,
-                window->scriptmode == SCRIPTMODE_GECKO);
+                browser->script_mode == SCRIPTMODE_GECKO);
 
         if(NS_SUCCEEDED(nsres))
             nsres = nsIWebBrowserSetup_SetProperty(setup, SETUP_DISABLE_NOSCRIPT, TRUE);

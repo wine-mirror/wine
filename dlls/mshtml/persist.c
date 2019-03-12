@@ -57,21 +57,6 @@ typedef struct {
     LPOLESTR url;
 } download_proc_task_t;
 
-static BOOL use_gecko_script(HTMLOuterWindow *window)
-{
-    DWORD zone;
-    HRESULT hres;
-
-    hres = IInternetSecurityManager_MapUrlToZone(get_security_manager(), window->url, &zone, 0);
-    if(FAILED(hres)) {
-        WARN("Could not map %s to zone: %08x\n", debugstr_w(window->url), hres);
-        return TRUE;
-    }
-
-    TRACE("zone %d\n", zone);
-    return zone == URLZONE_UNTRUSTED;
-}
-
 static void notify_travellog_update(HTMLDocumentObj *doc)
 {
     IOleCommandTarget *cmdtrg;
@@ -179,7 +164,9 @@ void set_current_mon(HTMLOuterWindow *This, IMoniker *mon, DWORD flags)
     set_current_uri(This, uri);
     if(uri)
         IUri_Release(uri);
-    set_script_mode(This, use_gecko_script(This) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
+
+    if(is_main_content_window(This))
+        update_browser_script_mode(This->browser, uri);
 }
 
 HRESULT create_uri(const WCHAR *uri_str, DWORD flags, IUri **uri)

@@ -3560,7 +3560,6 @@ HRESULT create_outer_window(GeckoBrowser *browser, mozIDOMWindowProxy *mozwindow
     nsres = mozIDOMWindowProxy_QueryInterface(mozwindow, &IID_nsIDOMWindow, (void**)&window->nswindow);
     assert(nsres == NS_OK);
 
-    window->scriptmode = parent ? parent->scriptmode : SCRIPTMODE_GECKO;
     window->readystate = READYSTATE_UNINITIALIZED;
     window->task_magic = get_task_target_magic();
 

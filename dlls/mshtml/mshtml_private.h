@@ -381,11 +381,6 @@ typedef struct HTMLFrameBase HTMLFrameBase;
 typedef struct GeckoBrowser GeckoBrowser;
 typedef struct HTMLAttributeCollection HTMLAttributeCollection;
 
-typedef enum {
-    SCRIPTMODE_GECKO,
-    SCRIPTMODE_ACTIVESCRIPT
-} SCRIPTMODE;
-
 typedef struct ScriptHost ScriptHost;
 
 typedef enum {
@@ -499,8 +494,6 @@ struct HTMLOuterWindow {
     IUri *uri_nofrag;
     BSTR url;
     DWORD load_flags;
-
-    SCRIPTMODE scriptmode;
 
     struct list sibling_entry;
     struct wine_rb_entry entry;
@@ -699,6 +692,12 @@ struct HTMLDocumentObj {
 
 typedef struct nsWeakReference nsWeakReference;
 
+
+typedef enum {
+    SCRIPTMODE_GECKO,
+    SCRIPTMODE_ACTIVESCRIPT
+} SCRIPTMODE;
+
 struct GeckoBrowser {
     nsIWebBrowserChrome      nsIWebBrowserChrome_iface;
     nsIContextMenuListener   nsIContextMenuListener_iface;
@@ -727,6 +726,7 @@ struct GeckoBrowser {
     nsIURIContentListener *content_listener;
 
     HWND hwnd;
+    SCRIPTMODE script_mode;
 
     struct list document_nodes;
     struct list outer_windows;
@@ -998,6 +998,10 @@ HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**) DECL
 BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr) DECLSPEC_HIDDEN;
 HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret) DECLSPEC_HIDDEN;
 
+static inline BOOL is_main_content_window(HTMLOuterWindow *window)
+{
+    return window->browser && window == window->browser->content_window;
+}
 
 struct HTMLAttributeCollection {
     DispatchEx dispex;
