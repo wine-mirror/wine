@@ -2181,11 +2181,15 @@ HRESULT create_gecko_browser(HTMLDocumentObj *doc, GeckoBrowser **_ret)
 
 void detach_gecko_browser(GeckoBrowser *This)
 {
+    nsIDOMWindowUtils *window_utils = NULL;
+
     TRACE("(%p)\n", This);
 
     This->doc = NULL;
 
     if(This->content_window) {
+        get_nsinterface((nsISupports*)This->content_window->nswindow, &IID_nsIDOMWindowUtils, (void**)&window_utils);
+
         IHTMLWindow2_Release(&This->content_window->base.IHTMLWindow2_iface);
         This->content_window = NULL;
     }
@@ -2243,6 +2247,12 @@ void detach_gecko_browser(GeckoBrowser *This)
     }
 
     nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
+
+    /* Force cycle collection */
+    if(window_utils) {
+        nsIDOMWindowUtils_CycleCollect(window_utils, NULL, 0);
+        nsIDOMWindowUtils_Release(window_utils);
+    }
 }
 
 /*

@@ -5300,11 +5300,6 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
     TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
-        nsIDOMWindowUtils *window_utils = NULL;
-
-        if(This->basedoc.window && This->basedoc.window->nswindow)
-            get_nsinterface((nsISupports*)This->basedoc.window->nswindow, &IID_nsIDOMWindowUtils, (void**)&window_utils);
-
         if(This->basedoc.doc_node) {
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             htmldoc_release(&This->basedoc.doc_node->basedoc);
@@ -5344,12 +5339,6 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
         if(This->nscontainer)
             detach_gecko_browser(This->nscontainer);
         heap_free(This);
-
-        /* Force cycle collection */
-        if(window_utils) {
-            nsIDOMWindowUtils_CycleCollect(window_utils, NULL, 0);
-            nsIDOMWindowUtils_Release(window_utils);
-        }
     }
 
     return ref;
