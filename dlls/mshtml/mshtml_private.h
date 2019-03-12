@@ -1141,7 +1141,7 @@ HRESULT editor_exec_copy(HTMLDocument*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT editor_exec_cut(HTMLDocument*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT editor_exec_paste(HTMLDocument*,DWORD,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
 void handle_edit_load(HTMLDocument*) DECLSPEC_HIDDEN;
-HRESULT editor_is_dirty(HTMLDocument*) DECLSPEC_HIDDEN;
+HRESULT browser_is_dirty(GeckoBrowser*) DECLSPEC_HIDDEN;
 void set_dirty(GeckoBrowser*,VARIANT_BOOL) DECLSPEC_HIDDEN;
 
 extern DWORD mshtml_tls DECLSPEC_HIDDEN;

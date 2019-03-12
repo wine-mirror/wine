@@ -884,10 +884,7 @@ static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
 
     TRACE("(%p)\n", This);
 
-    if(This->doc_obj->nscontainer->usermode == EDITMODE)
-        return editor_is_dirty(This);
-
-    return S_FALSE;
+    return browser_is_dirty(This->doc_obj->nscontainer);
 }
 
 static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream *pStm)

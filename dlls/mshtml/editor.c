@@ -1223,15 +1223,14 @@ void init_editor(HTMLDocument *This)
     set_ns_fontname(This, "Times New Roman");
 }
 
-HRESULT editor_is_dirty(HTMLDocument *This)
+HRESULT browser_is_dirty(GeckoBrowser *browser)
 {
     cpp_bool modified;
 
-    if(!This->doc_obj->nscontainer || !This->doc_obj->nscontainer->editor)
+    if(browser->usermode != EDITMODE || !browser->editor)
         return S_FALSE;
 
-    nsIEditor_GetDocumentModified(This->doc_obj->nscontainer->editor, &modified);
-
+    nsIEditor_GetDocumentModified(browser->editor, &modified);
     return modified ? S_OK : S_FALSE;
 }
 
