@@ -818,21 +818,6 @@ static strarray *get_winebuild_args(struct options *opts)
     return spec_args;
 }
 
-static const char* compile_resources_to_object(struct options* opts, const strarray *resources,
-                                               const char *res_o_name)
-{
-    strarray *winebuild_args = get_winebuild_args( opts );
-
-    strarray_add( winebuild_args, "--resources" );
-    strarray_add( winebuild_args, "-o" );
-    strarray_add( winebuild_args, res_o_name );
-    strarray_addall( winebuild_args, resources );
-
-    spawn( opts->prefix, winebuild_args, 0 );
-    strarray_free( winebuild_args );
-    return res_o_name;
-}
-
 /* check if there is a static lib associated to a given dll */
 static char *find_static_lib( const char *dll )
 {
@@ -873,11 +858,12 @@ static void build(struct options* opts)
 {
     strarray *lib_dirs, *files;
     strarray *spec_args, *link_args;
-    char *output_file;
+    char *output_file, *output_path;
     const char *spec_o_name;
     const char *output_name, *spec_file, *lang;
     int generate_app_loader = 1;
     int fake_module = 0;
+    int is_pe = (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN);
     unsigned int j;
 
     /* NOTE: for the files array we'll use the following convention:
@@ -900,7 +886,7 @@ static void build(struct options* opts)
     }
 
     /* generate app loader only for .exe */
-    if (opts->shared || strendswith(output_file, ".so"))
+    if (opts->shared || is_pe || strendswith(output_file, ".so"))
 	generate_app_loader = 0;
 
     if (strendswith(output_file, ".fake")) fake_module = 1;
@@ -912,6 +898,7 @@ static void build(struct options* opts)
     else output_name = output_file;
     if (!strchr(output_name, '.'))
         output_file = strmake("%s.%s", output_file, opts->shared ? "dll" : "exe");
+    output_path = is_pe ? output_file : strmake( "%s.so", output_file );
 
     /* get the filename from the path */
     if ((output_name = strrchr(output_file, '/'))) output_name++;
@@ -980,118 +967,19 @@ static void build(struct options* opts)
 	    lang = file;
     }
 
-    /* building for Windows is completely different */
-
-    if (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN)
-    {
-        strarray *resources = strarray_alloc();
-        char *res_o_name = NULL;
-
-        if (opts->win16_app)
-            error( "Building 16-bit code is not supported for Windows\n" );
-
-        link_args = get_link_args( opts, output_name );
-
-        if (opts->shared)
-        {
-            /* run winebuild to generate the .def file */
-            char *spec_def_name = get_temp_file(output_name, ".spec.def");
-            spec_args = get_winebuild_args( opts );
-            strarray_add(spec_args, "--def");
-            strarray_add(spec_args, "-o");
-            strarray_add(spec_args, spec_def_name);
-            if (spec_file)
-            {
-                strarray_add(spec_args, "--export");
-                strarray_add(spec_args, spec_file);
-            }
-            spawn(opts->prefix, spec_args, 0);
-            strarray_free(spec_args);
-
-            strarray_add(link_args, spec_def_name);
-        }
-
-        strarray_add(link_args, "-o");
-        strarray_add(link_args, output_file);
-
-        for ( j = 0; j < lib_dirs->size; j++ )
-            strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
-
-        if (!opts->nodefaultlibs)
-        {
-            add_library(opts, lib_dirs, files, "winecrt0");
-            add_library(opts, lib_dirs, files, "kernel32");
-            add_library(opts, lib_dirs, files, "ntdll");
-        }
-        if (!opts->shared && opts->use_msvcrt && opts->target_platform == PLATFORM_CYGWIN)
-            add_library(opts, lib_dirs, files, "msvcrt");
-
-        for ( j = 0; j < files->size; j++ )
-        {
-            const char* name = files->base[j] + 2;
-
-            switch(files->base[j][1])
-            {
-            case 'l':
-            case 'd':
-                strarray_add(link_args, strmake("-l%s", name));
-                break;
-            case 's':
-            case 'o':
-                strarray_add(link_args, name);
-                break;
-            case 'a':
-                if (!opts->lib_suffix && strchr(name, '/'))
-                {
-                    /* turn the path back into -Ldir -lfoo options
-                     * this makes sure that we use the specified libs even
-                     * when mingw adds its own import libs to the link */
-                    char *lib = xstrdup( name );
-                    char *p = strrchr( lib, '/' );
-
-                    *p++ = 0;
-                    if (!strncmp( p, "lib", 3 ))
-                    {
-                        char *ext = strrchr( p, '.' );
-
-                        if (ext) *ext = 0;
-                        p += 3;
-                        strarray_add(link_args, strmake("-L%s", lib ));
-                        strarray_add(link_args, strmake("-l%s", p ));
-                        free( lib );
-                        break;
-                    }
-                    free( lib );
-                }
-                strarray_add(link_args, name);
-                break;
-            case 'r':
-                if (!res_o_name)
-                {
-                    res_o_name = get_temp_file( output_name, ".res.o" );
-                    strarray_add( link_args, res_o_name );
-                }
-                strarray_add( resources, name );
-                break;
-            }
-        }
-
-        if (res_o_name) compile_resources_to_object( opts, resources, res_o_name );
-
-        spawn(opts->prefix, link_args, 0);
-        strarray_free (resources);
-        strarray_free (link_args);
-        strarray_free (lib_dirs);
-        strarray_free (files);
-        return;
-    }
+    if (opts->win16_app && is_pe)
+        error( "Building 16-bit code is not supported for Windows\n" );
 
     /* add the default libraries, if needed */
-    if (!opts->nostdlib && opts->use_msvcrt) add_library(opts, lib_dirs, files, "msvcrt");
 
-    if (!opts->wine_objdir && !opts->nodefaultlibs) 
+    if (!opts->nostdlib && opts->use_msvcrt && opts->target_platform != PLATFORM_WINDOWS)
     {
-        if (opts->gui_app) 
+        if (!is_pe || !opts->shared) add_library(opts, lib_dirs, files, "msvcrt");
+    }
+
+    if (!opts->wine_objdir && !opts->nodefaultlibs)
+    {
+        if (opts->gui_app)
 	{
 	    add_library(opts, lib_dirs, files, "shell32");
 	    add_library(opts, lib_dirs, files, "comdlg32");
@@ -1108,7 +996,7 @@ static void build(struct options* opts)
         add_library(opts, lib_dirs, files, "kernel32");
         add_library(opts, lib_dirs, files, "ntdll");
     }
-    if (!opts->nostdlib) add_library(opts, lib_dirs, files, "wine");
+    if (!opts->nostdlib && !is_pe) add_library(opts, lib_dirs, files, "wine");
 
     /* run winebuild to generate the .spec.o file */
     spec_args = get_winebuild_args( opts );
@@ -1191,7 +1079,7 @@ static void build(struct options* opts)
     link_args = get_link_args( opts, output_name );
 
     strarray_add(link_args, "-o");
-    strarray_add(link_args, strmake("%s.so", output_file));
+    strarray_add(link_args, output_path);
 
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
@@ -1207,14 +1095,38 @@ static void build(struct options* opts)
 		strarray_add(link_args, strmake("-l%s", name));
 		break;
 	    case 's':
-	    case 'a':
 	    case 'o':
+		strarray_add(link_args, name);
+		break;
+	    case 'a':
+                if (is_pe && !opts->lib_suffix && strchr(name, '/'))
+                {
+                    /* turn the path back into -Ldir -lfoo options
+                     * this makes sure that we use the specified libs even
+                     * when mingw adds its own import libs to the link */
+                    char *lib = xstrdup( name );
+                    char *p = strrchr( lib, '/' );
+
+                    *p++ = 0;
+                    if (!strncmp( p, "lib", 3 ))
+                    {
+                        char *ext = strrchr( p, '.' );
+
+                        if (ext) *ext = 0;
+                        p += 3;
+                        strarray_add(link_args, strmake("-L%s", lib ));
+                        strarray_add(link_args, strmake("-l%s", p ));
+                        free( lib );
+                        break;
+                    }
+                    free( lib );
+                }
 		strarray_add(link_args, name);
 		break;
 	}
     }
 
-    if (!opts->nostdlib) 
+    if (!opts->nostdlib && !is_pe)
     {
 	strarray_add(link_args, "-lm");
 	strarray_add(link_args, "-lc");
@@ -1232,7 +1144,7 @@ static void build(struct options* opts)
             strarray_add(prelink_args, opts->prelink);
             strarray_add(prelink_args, "--reloc-only");
             strarray_add(prelink_args, opts->image_base);
-            strarray_add(prelink_args, strmake("%s.so", output_file));
+            strarray_add(prelink_args, output_path);
             spawn(opts->prefix, prelink_args, 1);
             strarray_free(prelink_args);
         }
