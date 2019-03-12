@@ -9282,6 +9282,11 @@ static void test_draw_primitive(void)
     ok(stride == sizeof(*quad), "Unexpected stride %u.\n", stride);
     IDirect3DVertexBuffer8_Release(current_vb);
 
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, quad, 0);
+    ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, quad, sizeof(*quad));
+    ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
     hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, sizeof(*quad));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
 
@@ -9307,6 +9312,13 @@ static void test_draw_primitive(void)
     ok(current_ib == index_buffer, "Unexpected index buffer %p.\n", current_ib);
     ok(base_vertex_index == 1, "Unexpected base vertex index %u.\n", base_vertex_index);
     IDirect3DIndexBuffer8_Release(current_ib);
+
+    hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 0,
+            indices, D3DFMT_INDEX16, quad, 0);
+    ok(SUCCEEDED(hr), "DrawIndexedPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
+            indices, D3DFMT_INDEX16, quad, 0);
+    ok(SUCCEEDED(hr), "DrawIndexedPrimitiveUP failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
             indices, D3DFMT_INDEX16, quad, sizeof(*quad));
