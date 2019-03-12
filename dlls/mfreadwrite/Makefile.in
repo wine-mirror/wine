@@ -1,6 +1,6 @@
 MODULE    = mfreadwrite.dll
 IMPORTLIB = mfreadwrite
-IMPORTS   = mfuuid uuid
+IMPORTS   = mfuuid uuid mfplat
 
 C_SRCS = \
 	main.c
