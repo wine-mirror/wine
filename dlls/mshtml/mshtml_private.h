@@ -1121,7 +1121,7 @@ typedef struct {
 
 extern const cmdtable_t editmode_cmds[] DECLSPEC_HIDDEN;
 
-void do_ns_command(HTMLDocument*,const char*,nsICommandParams*) DECLSPEC_HIDDEN;
+void do_ns_command(HTMLDocumentNode*,const char*,nsICommandParams*) DECLSPEC_HIDDEN;
 
 /* timer */
 #define UPDATE_UI       0x0001

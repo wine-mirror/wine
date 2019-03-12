@@ -174,7 +174,7 @@ static void set_ns_align(HTMLDocument *This, const char *align_str)
     nsparam = create_nscommand_params();
     nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, align_str);
 
-    do_ns_command(This, NSCMD_ALIGN, nsparam);
+    do_ns_command(This->doc_node, NSCMD_ALIGN, nsparam);
 
     nsICommandParams_Release(nsparam);
 }
@@ -506,7 +506,7 @@ static void set_ns_fontname(HTMLDocument *This, const char *fontname)
     nsICommandParams *nsparam = create_nscommand_params();
 
     nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, fontname);
-    do_ns_command(This, NSCMD_FONTFACE, nsparam);
+    do_ns_command(This->doc_node, NSCMD_FONTFACE, nsparam);
     nsICommandParams_Release(nsparam);
 }
 
@@ -591,7 +591,7 @@ static HRESULT exec_forecolor(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
                     V_I4(in)&0xff, (V_I4(in)>>8)&0xff, (V_I4(in)>>16)&0xff);
 
             nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, color_str);
-            do_ns_command(This, NSCMD_FONTCOLOR, nsparam);
+            do_ns_command(This->doc_node, NSCMD_FONTCOLOR, nsparam);
 
             nsICommandParams_Release(nsparam);
         }else {
@@ -657,9 +657,7 @@ static HRESULT exec_bold(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARI
     if(in || out)
         FIXME("unsupported args\n");
 
-    if(This->doc_obj->nscontainer)
-        do_ns_command(This, NSCMD_BOLD, NULL);
-
+    do_ns_command(This->doc_node, NSCMD_BOLD, NULL);
     update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }
@@ -671,9 +669,7 @@ static HRESULT exec_italic(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VA
     if(in || out)
         FIXME("unsupported args\n");
 
-    if(This->doc_obj->nscontainer)
-        do_ns_command(This, NSCMD_ITALIC, NULL);
-
+    do_ns_command(This->doc_node, NSCMD_ITALIC, NULL);
     update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }
@@ -748,7 +744,7 @@ static HRESULT exec_underline(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This, NSCMD_UNDERLINE, NULL);
+    do_ns_command(This->doc_node, NSCMD_UNDERLINE, NULL);
     update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }
@@ -760,7 +756,7 @@ static HRESULT exec_horizontalline(HTMLDocument *This, DWORD cmdexecopt, VARIANT
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This, NSCMD_INSERTHR, NULL);
+    do_ns_command(This->doc_node, NSCMD_INSERTHR, NULL);
     update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }
@@ -772,7 +768,7 @@ static HRESULT exec_orderlist(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This, NSCMD_OL, NULL);
+    do_ns_command(This->doc_node, NSCMD_OL, NULL);
     update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }
@@ -784,7 +780,7 @@ static HRESULT exec_unorderlist(HTMLDocument *This, DWORD cmdexecopt, VARIANT *i
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This, NSCMD_UL, NULL);
+    do_ns_command(This->doc_node, NSCMD_UL, NULL);
     update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }
@@ -796,7 +792,7 @@ static HRESULT exec_indent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VA
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This, NSCMD_INDENT, NULL);
+    do_ns_command(This->doc_node, NSCMD_INDENT, NULL);
     update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }
@@ -808,7 +804,7 @@ static HRESULT exec_outdent(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, V
     if(in || out)
         FIXME("unsupported args\n");
 
-    do_ns_command(This, NSCMD_OUTDENT, NULL);
+    do_ns_command(This->doc_node, NSCMD_OUTDENT, NULL);
     update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }

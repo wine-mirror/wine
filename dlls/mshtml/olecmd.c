@@ -40,23 +40,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_COPY "cmd_copy"
 #define NSCMD_SELECTALL           "cmd_selectAll"
 
-void do_ns_command(HTMLDocument *This, const char *cmd, nsICommandParams *nsparam)
+void do_ns_command(HTMLDocumentNode *doc, const char *cmd, nsICommandParams *nsparam)
 {
     nsICommandManager *cmdmgr;
     nsresult nsres;
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n", doc);
 
-    if(!This->doc_obj || !This->doc_obj->nscontainer)
+    if(!doc->browser || !doc->window)
         return;
 
-    nsres = get_nsinterface((nsISupports*)This->doc_obj->nscontainer->webbrowser, &IID_nsICommandManager, (void**)&cmdmgr);
+    nsres = get_nsinterface((nsISupports*)doc->browser->webbrowser, &IID_nsICommandManager, (void**)&cmdmgr);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsICommandManager: %08x\n", nsres);
         return;
     }
 
-    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, This->window->window_proxy);
+    nsres = nsICommandManager_DoCommand(cmdmgr, cmd, nsparam, doc->window->base.outer_window->window_proxy);
     if(NS_FAILED(nsres))
         ERR("DoCommand(%s) failed: %08x\n", debugstr_a(cmd), nsres);
 
@@ -355,7 +355,7 @@ static HRESULT exec_copy(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, 
 {
     TRACE("(%p)->(%d %s %p)\n", This, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
-    do_ns_command(This, NSCMD_COPY, NULL);
+    do_ns_command(This->doc_node, NSCMD_COPY, NULL);
     return S_OK;
 }
 
@@ -385,15 +385,18 @@ static HRESULT exec_rendo(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
 
 static HRESULT exec_select_all(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *in, VARIANT *out)
 {
+    HTMLDocumentNode *doc = This->doc_node;
+
     TRACE("(%p)\n", This);
 
     if(in || out)
         FIXME("unsupported args\n");
 
-    if(This->doc_obj->nscontainer)
-        do_ns_command(This, NSCMD_SELECTALL, NULL);
+    if(!doc->browser)
+        return E_UNEXPECTED;
 
-    update_doc(This->doc_obj, UPDATE_UI);
+    do_ns_command(doc, NSCMD_SELECTALL, NULL);
+    update_doc(doc->browser->doc, UPDATE_UI);
     return S_OK;
 }
 
@@ -586,7 +589,7 @@ static HRESULT exec_mshtml_copy(HTMLDocument *This, DWORD cmdexecopt, VARIANT *i
     if(This->doc_node->browser->usermode == EDITMODE)
         return editor_exec_copy(This, cmdexecopt, in, out);
 
-    do_ns_command(This, NSCMD_COPY, NULL);
+    do_ns_command(This->doc_node, NSCMD_COPY, NULL);
     return S_OK;
 }
 
