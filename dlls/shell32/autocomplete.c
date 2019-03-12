@@ -923,13 +923,12 @@ static HRESULT WINAPI IAutoComplete2_fnEnable(
     BOOL fEnable)
 {
     IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%s)\n", This, (fEnable)?"true":"false");
 
     This->enabled = fEnable;
 
-    return hr;
+    return S_OK;
 }
 
 /******************************************************************************
@@ -1063,13 +1062,12 @@ static HRESULT WINAPI IAutoComplete2_fnGetOptions(
     DWORD *pdwFlag)
 {
     IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-    HRESULT hr = S_OK;
 
     TRACE("(%p) -> (%p)\n", This, pdwFlag);
 
     *pdwFlag = This->options;
 
-    return hr;
+    return S_OK;
 }
 
 /**************************************************************************
