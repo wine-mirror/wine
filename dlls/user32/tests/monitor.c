@@ -195,7 +195,7 @@ static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index
             sscanf(device->DeviceID, "\\\\?\\DISPLAY#Default_Monitor#%[^#]#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}", buffer) == 1 || /* win8+ */
             (!lstrcmpiA(buffer, device_id_prefix) &&
              sscanf(device->DeviceID + sizeof(device_id_prefix) - 1, "%04d", &number) == 1), /* XP/2003 ignores EDD_GET_DEVICE_INTERFACE_NAME */
-            "#%d: wrong DeviceID : %s \n", monitor_index, device->DeviceID);
+            "#%d: wrong DeviceID : %s\n", monitor_index, device->DeviceID);
     }
     else
     {
