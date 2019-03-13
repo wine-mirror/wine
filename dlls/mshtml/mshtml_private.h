@@ -871,7 +871,8 @@ struct HTMLDocumentNode {
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT MHTMLDocument_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-HRESULT create_document_node(nsIDOMHTMLDocument*,GeckoBrowser*,HTMLInnerWindow*,HTMLDocumentNode**) DECLSPEC_HIDDEN;
+HRESULT create_document_node(nsIDOMHTMLDocument*,GeckoBrowser*,HTMLInnerWindow*,
+                             compat_mode_t,HTMLDocumentNode**) DECLSPEC_HIDDEN;
 
 HRESULT create_outer_window(GeckoBrowser*,mozIDOMWindowProxy*,HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
 HRESULT update_window_doc(HTMLInnerWindow*) DECLSPEC_HIDDEN;
@@ -885,7 +886,8 @@ IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
 HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;
 HRESULT create_performance(IHTMLPerformance**) DECLSPEC_HIDDEN;
 HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
-HRESULT create_dom_implementation(IHTMLDOMImplementation**) DECLSPEC_HIDDEN;
+HRESULT create_dom_implementation(HTMLDocumentNode*,IHTMLDOMImplementation**) DECLSPEC_HIDDEN;
+void detach_dom_implementation(IHTMLDOMImplementation*) DECLSPEC_HIDDEN;
 
 HRESULT create_storage(IHTMLStorage**) DECLSPEC_HIDDEN;
 

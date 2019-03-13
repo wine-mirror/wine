@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -50,6 +51,9 @@ typedef struct {
     IHTMLDOMImplementation2 IHTMLDOMImplementation2_iface;
 
     LONG ref;
+
+    nsIDOMDOMImplementation *implementation;
+    GeckoBrowser *browser;
 } HTMLDOMImplementation;
 
 static inline HTMLDOMImplementation *impl_from_IHTMLDOMImplementation(IHTMLDOMImplementation *iface)
@@ -97,6 +101,9 @@ static ULONG WINAPI HTMLDOMImplementation_Release(IHTMLDOMImplementation *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        assert(!This->browser);
+        if(This->implementation)
+            nsIDOMDOMImplementation_Release(This->implementation);
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -235,8 +242,37 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
         IHTMLDocument7 **new_document)
 {
     HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    HTMLDocumentNode *new_document_node;
+    nsIDOMHTMLDocument *html_doc;
+    nsIDOMDocument *doc;
+    nsAString title_str;
+    nsresult nsres;
+    HRESULT hres;
+
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(title), new_document);
-    return E_NOTIMPL;
+
+    if(!This->browser)
+        return E_UNEXPECTED;
+
+    nsAString_InitDepend(&title_str, title);
+    nsres = nsIDOMDOMImplementation_CreateHTMLDocument(This->implementation, &title_str, &doc);
+    nsAString_Finish(&title_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateHTMLDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(doc, &IID_nsIDOMHTMLDocument, (void**)&html_doc);
+    nsIDOMDocument_Release(doc);
+    assert(nsres == NS_OK);
+
+    hres = create_document_node(html_doc, This->browser, NULL, dispex_compat_mode(&This->dispex), &new_document_node);
+    nsIDOMHTMLDocument_Release(html_doc);
+    if(FAILED(hres))
+        return hres;
+
+    *new_document = &new_document_node->basedoc.IHTMLDocument7_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMImplementation2_hasFeature(IHTMLDOMImplementation2 *iface, BSTR feature,
@@ -274,9 +310,13 @@ static dispex_static_data_t HTMLDOMImplementation_dispex = {
     HTMLDOMImplementation_iface_tids
 };
 
-HRESULT create_dom_implementation(IHTMLDOMImplementation **ret)
+HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementation **ret)
 {
     HTMLDOMImplementation *dom_implementation;
+    nsresult nsres;
+
+    if(!doc_node->browser)
+        return E_UNEXPECTED;
 
     dom_implementation = heap_alloc_zero(sizeof(*dom_implementation));
     if(!dom_implementation)
@@ -285,12 +325,26 @@ HRESULT create_dom_implementation(IHTMLDOMImplementation **ret)
     dom_implementation->IHTMLDOMImplementation_iface.lpVtbl = &HTMLDOMImplementationVtbl;
     dom_implementation->IHTMLDOMImplementation2_iface.lpVtbl = &HTMLDOMImplementation2Vtbl;
     dom_implementation->ref = 1;
+    dom_implementation->browser = doc_node->browser;
 
-    init_dispex(&dom_implementation->dispex, (IUnknown*)&dom_implementation->IHTMLDOMImplementation_iface,
-            &HTMLDOMImplementation_dispex);
+    init_dispex_with_compat_mode(&dom_implementation->dispex, (IUnknown*)&dom_implementation->IHTMLDOMImplementation_iface,
+                                 &HTMLDOMImplementation_dispex, doc_node->document_mode);
+
+    nsres = nsIDOMHTMLDocument_GetImplementation(doc_node->nsdoc, &dom_implementation->implementation);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDOMImplementation failed: %08x\n", nsres);
+        IHTMLDOMImplementation_Release(&dom_implementation->IHTMLDOMImplementation_iface);
+        return E_FAIL;
+    }
 
     *ret = &dom_implementation->IHTMLDOMImplementation_iface;
     return S_OK;
+}
+
+void detach_dom_implementation(IHTMLDOMImplementation *iface)
+{
+    HTMLDOMImplementation *dom_implementation = impl_from_IHTMLDOMImplementation(iface);
+    dom_implementation->browser = NULL;
 }
 
 typedef struct {

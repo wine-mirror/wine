@@ -2821,7 +2821,7 @@ static HRESULT WINAPI HTMLDocument5_get_implementation(IHTMLDocument5 *iface, IH
     if(!doc_node->dom_implementation) {
         HRESULT hres;
 
-        hres = create_dom_implementation(&doc_node->dom_implementation);
+        hres = create_dom_implementation(doc_node, &doc_node->dom_implementation);
         if(FAILED(hres))
             return hres;
     }
@@ -4892,6 +4892,12 @@ void detach_document_node(HTMLDocumentNode *doc)
     while(!list_empty(&doc->plugin_hosts))
         detach_plugin_host(LIST_ENTRY(list_head(&doc->plugin_hosts), PluginHost, entry));
 
+    if(doc->dom_implementation) {
+        detach_dom_implementation(doc->dom_implementation);
+        IHTMLDOMImplementation_Release(doc->dom_implementation);
+        doc->dom_implementation = NULL;
+    }
+
     detach_events(doc);
     detach_selection(doc);
     detach_ranges(doc);
@@ -5154,7 +5160,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     doc->ref = 1;
     doc->basedoc.doc_node = doc;
     doc->basedoc.doc_obj = doc_obj;
-    doc->basedoc.window = window->base.outer_window;
+    doc->basedoc.window = window ? window->base.outer_window : NULL;
     doc->window = window;
 
     init_doc(&doc->basedoc, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
@@ -5168,7 +5174,8 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     return doc;
 }
 
-HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, HTMLInnerWindow *window, HTMLDocumentNode **ret)
+HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, HTMLInnerWindow *window,
+                             compat_mode_t parent_mode, HTMLDocumentNode **ret)
 {
     HTMLDocumentObj *doc_obj = browser->doc;
     HTMLDocumentNode *doc;
@@ -5177,16 +5184,13 @@ HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, H
     if(!doc)
         return E_OUTOFMEMORY;
 
-    if(window->base.outer_window->parent) {
-        compat_mode_t parent_mode = window->base.outer_window->parent->base.inner_window->doc->document_mode;
-        TRACE("parent mode %u\n", parent_mode);
-        if(parent_mode >= COMPAT_MODE_IE9) {
-            doc->document_mode = parent_mode;
-            lock_document_mode(doc);
-        }
+    if(parent_mode >= COMPAT_MODE_IE9) {
+        TRACE("using parent mode %u\n", parent_mode);
+        doc->document_mode = parent_mode;
+        lock_document_mode(doc);
     }
 
-    if(!doc_obj->basedoc.window || window->base.outer_window == doc_obj->basedoc.window)
+    if(!doc_obj->basedoc.window || (window && is_main_content_window(window->base.outer_window)))
         doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc, &HTMLDocumentNode_dispex);
