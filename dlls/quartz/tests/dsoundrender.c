@@ -146,6 +146,7 @@ static void test_interfaces(void)
 
     todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
     check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IDispatch, FALSE);
     check_interface(filter, &IID_IKsPropertySet, FALSE);
     check_interface(filter, &IID_IPin, FALSE);
     check_interface(filter, &IID_IQualProp, FALSE);
@@ -336,6 +337,70 @@ static void test_pin_info(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_basic_audio(void)
+{
+    IBaseFilter *filter = create_dsound_render();
+    LONG balance, volume;
+    ITypeInfo *typeinfo;
+    IBasicAudio *audio;
+    TYPEATTR *typeattr;
+    ULONG ref, count;
+    HRESULT hr;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IBasicAudio, (void **)&audio);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicAudio_get_Balance(audio, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicAudio_get_Balance(audio, &balance);
+    if (hr != VFW_E_MONO_AUDIO_HW)
+    {
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(balance == 0, "Got balance %d.\n", balance);
+
+        hr = IBasicAudio_put_Balance(audio, DSBPAN_LEFT - 1);
+        ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+        hr = IBasicAudio_put_Balance(audio, DSBPAN_LEFT);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IBasicAudio_get_Balance(audio, &balance);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(balance == DSBPAN_LEFT, "Got balance %d.\n", balance);
+    }
+
+    hr = IBasicAudio_get_Volume(audio, &volume);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(volume == 0, "Got volume %d.\n", volume);
+
+    hr = IBasicAudio_put_Volume(audio, DSBVOLUME_MIN - 1);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IBasicAudio_put_Volume(audio, DSBVOLUME_MIN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicAudio_get_Volume(audio, &volume);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(volume == DSBVOLUME_MIN, "Got volume %d.\n", volume);
+
+    hr = IBasicAudio_GetTypeInfoCount(audio, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+
+    hr = IBasicAudio_GetTypeInfo(audio, 0, 0, &typeinfo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
+    ok(IsEqualGUID(&typeattr->guid, &IID_IBasicAudio), "Got IID %s.\n", wine_dbgstr_guid(&typeattr->guid));
+    ITypeInfo_Release(typeinfo);
+
+    IBasicAudio_Release(audio);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_pin(IPin *pin)
 {
     IMemInputPin *mpin = NULL;
@@ -415,6 +480,7 @@ START_TEST(dsoundrender)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_basic_audio();
     test_basefilter();
 
     CoUninitialize();
