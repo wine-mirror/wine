@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -211,10 +212,38 @@ static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReader *iface, DWO
 }
 
 static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface, DWORD index,
-        REFGUID guid, PROPVARIANT *attr)
+        REFGUID guid, PROPVARIANT *value)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, 0x%08x, %s, %p\n", This, index, debugstr_guid(guid), attr);
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    HRESULT hr;
+
+    TRACE("%p, %#x, %s, %p.\n", iface, index, debugstr_guid(guid), value);
+
+    switch (index)
+    {
+        case MF_SOURCE_READER_MEDIASOURCE:
+            if (IsEqualGUID(guid, &MF_SOURCE_READER_MEDIASOURCE_CHARACTERISTICS))
+            {
+                DWORD flags;
+
+                if (FAILED(hr = IMFMediaSource_GetCharacteristics(reader->source, &flags)))
+                    return hr;
+
+                value->vt = VT_UI4;
+                value->u.ulVal = flags;
+                return S_OK;
+            }
+            else
+            {
+                FIXME("Unsupported source attribute %s.\n", debugstr_guid(guid));
+                return E_NOTIMPL;
+            }
+            break;
+        default:
+            FIXME("Unsupported index %#x.\n", index);
+            return E_NOTIMPL;
+    }
+
     return E_NOTIMPL;
 }
 
