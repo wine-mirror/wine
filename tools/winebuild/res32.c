@@ -441,7 +441,7 @@ void output_resources( DLLSPEC *spec )
     /* output the resource directories */
 
     output( "\n/* resources */\n\n" );
-    output( "\t.section %s\n", target_platform == PLATFORM_WINDOWS ? ".rsrc" : ".data" );
+    output( "\t%s\n", get_asm_rsrc_section() );
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
     output( ".L__wine_spec_resources:\n" );
 

@@ -384,7 +384,7 @@ void output_exports( DLLSPEC *spec )
     if (!nr_exports) return;
 
     output( "\n/* export table */\n\n" );
-    output( "\t.section %s\n", target_platform == PLATFORM_WINDOWS ? ".edata" : ".data" );
+    output( "\t%s\n", get_asm_export_section() );
     output( "\t.align %d\n", get_alignment(4) );
     output( ".L__wine_spec_exports:\n" );
 

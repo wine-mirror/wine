@@ -1201,12 +1201,32 @@ const char *get_asm_string_keyword(void)
     }
 }
 
+const char *get_asm_export_section(void)
+{
+    switch (target_platform)
+    {
+    case PLATFORM_APPLE:   return ".data";
+    case PLATFORM_WINDOWS: return ".section .edata";
+    default:               return ".section .data";
+    }
+}
+
 const char *get_asm_rodata_section(void)
 {
     switch (target_platform)
     {
     case PLATFORM_APPLE: return ".const";
     default:             return ".section .rodata";
+    }
+}
+
+const char *get_asm_rsrc_section(void)
+{
+    switch (target_platform)
+    {
+    case PLATFORM_APPLE:   return ".data";
+    case PLATFORM_WINDOWS: return ".section .rsrc";
+    default:               return ".section .data";
     }
 }
 
