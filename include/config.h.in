@@ -110,9 +110,6 @@
 /* Define if you have the daylight variable */
 #undef HAVE_DAYLIGHT
 
-/* Define to 1 if you have the <direct.h> header file. */
-#undef HAVE_DIRECT_H
-
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 
@@ -332,9 +329,6 @@
 
 /* Define to 1 if you have the <IOKit/IOKitLib.h> header file. */
 #undef HAVE_IOKIT_IOKITLIB_H
-
-/* Define to 1 if you have the <io.h> header file. */
-#undef HAVE_IO_H
 
 /* Define to 1 if you have the `isfinite' function. */
 #undef HAVE_ISFINITE
@@ -764,9 +758,6 @@
 
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
-
-/* Define to 1 if you have the <process.h> header file. */
-#undef HAVE_PROCESS_H
 
 /* Define to 1 if you have the `proc_pidinfo' function. */
 #undef HAVE_PROC_PIDINFO

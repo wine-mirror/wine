@@ -36,21 +36,24 @@
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_DIRECT_H
-# include <direct.h>
-#endif
-#ifdef HAVE_IO_H
-# include <io.h>
-#endif
-#ifdef HAVE_PROCESS_H
-# include <process.h>
-#endif
 #include <string.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
+
+/****************************************************************
+ * Hard-coded values for the Windows platform
+ */
+
+#ifdef _WIN32
+
+#include <direct.h>
+#include <io.h>
+#include <process.h>
+
+#endif  /* _WIN32 */
 
 /****************************************************************
  * Type definitions

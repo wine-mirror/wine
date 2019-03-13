@@ -7296,7 +7296,6 @@ for ac_header in \
 	asm/types.h \
 	asm/user.h \
 	curses.h \
-	direct.h \
 	dirent.h \
 	dlfcn.h \
 	elf.h \
@@ -7309,7 +7308,6 @@ for ac_header in \
 	gsm/gsm.h \
 	ieeefp.h \
 	inet/mib2.h \
-	io.h \
 	kstat.h \
 	libproc.h \
 	link.h \
@@ -7344,7 +7342,6 @@ for ac_header in \
 	pcap/pcap.h \
 	poll.h \
 	port.h \
-	process.h \
 	pthread.h \
 	pwd.h \
 	sched.h \

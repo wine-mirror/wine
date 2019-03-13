@@ -433,7 +433,6 @@ AC_CHECK_HEADERS(\
 	asm/types.h \
 	asm/user.h \
 	curses.h \
-	direct.h \
 	dirent.h \
 	dlfcn.h \
 	elf.h \
@@ -446,7 +445,6 @@ AC_CHECK_HEADERS(\
 	gsm/gsm.h \
 	ieeefp.h \
 	inet/mib2.h \
-	io.h \
 	kstat.h \
 	libproc.h \
 	link.h \
@@ -481,7 +479,6 @@ AC_CHECK_HEADERS(\
 	pcap/pcap.h \
 	poll.h \
 	port.h \
-	process.h \
 	pthread.h \
 	pwd.h \
 	sched.h \
