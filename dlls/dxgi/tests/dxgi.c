@@ -106,10 +106,11 @@ static void run_queued_tests(void)
     heap_free(threads);
 }
 
-static ULONG get_refcount(IUnknown *iface)
+static ULONG get_refcount(void *iface)
 {
-    IUnknown_AddRef(iface);
-    return IUnknown_Release(iface);
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
 }
 
 #define check_interface(a, b, c, d) check_interface_(__LINE__, a, b, c, d)
@@ -1418,10 +1419,10 @@ static void test_create_swapchain(void)
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
     ok(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
 
-    expected_refcount = get_refcount((IUnknown *)adapter);
-    refcount = get_refcount((IUnknown *)factory);
+    expected_refcount = get_refcount(adapter);
+    refcount = get_refcount(factory);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
-    refcount = get_refcount((IUnknown *)device);
+    refcount = get_refcount(device);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
     creation_desc.OutputWindow = NULL;
@@ -1441,11 +1442,11 @@ static void test_create_swapchain(void)
     hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
     ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
 
-    refcount = get_refcount((IUnknown *)adapter);
+    refcount = get_refcount(adapter);
     ok(refcount >= expected_refcount, "Got refcount %u, expected >= %u.\n", refcount, expected_refcount);
-    refcount = get_refcount((IUnknown *)factory);
+    refcount = get_refcount(factory);
     todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
-    refcount = get_refcount((IUnknown *)device);
+    refcount = get_refcount(device);
     ok(refcount == 3, "Got unexpected refcount %u.\n", refcount);
 
     hr = IDXGISwapChain_GetDesc(swapchain, NULL);
@@ -1492,7 +1493,7 @@ static void test_create_swapchain(void)
     refcount = IDXGISwapChain_Release(swapchain);
     ok(!refcount, "Swapchain has %u references left.\n", refcount);
 
-    refcount = get_refcount((IUnknown *)factory);
+    refcount = get_refcount(factory);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
     for (i = 0; i < ARRAY_SIZE(refresh_list); ++i)
@@ -3210,23 +3211,23 @@ static void test_private_data(void)
     ok(!ptr, "Got unexpected pointer %p.\n", ptr);
     ok(size == sizeof(IUnknown *), "Got unexpected size %u.\n", size);
 
-    refcount = get_refcount((IUnknown *)test_object);
+    refcount = get_refcount(test_object);
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid,
             (IUnknown *)test_object);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected_refcount = refcount + 1;
-    refcount = get_refcount((IUnknown *)test_object);
+    refcount = get_refcount(test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid,
             (IUnknown *)test_object);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    refcount = get_refcount((IUnknown *)test_object);
+    refcount = get_refcount(test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected_refcount--;
-    refcount = get_refcount((IUnknown *)test_object);
+    refcount = get_refcount(test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid,
@@ -3235,7 +3236,7 @@ static void test_private_data(void)
     size = sizeof(data);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, size, data);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    refcount = get_refcount((IUnknown *)test_object);
+    refcount = get_refcount(test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, 42, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -3252,7 +3253,7 @@ static void test_private_data(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(size == sizeof(test_object), "Got unexpected size %u.\n", size);
     expected_refcount++;
-    refcount = get_refcount((IUnknown *)test_object);
+    refcount = get_refcount(test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     if (ptr)
         IUnknown_Release(ptr);
@@ -3267,7 +3268,7 @@ static void test_private_data(void)
     hr = IDXGIDevice_GetPrivateData(device, &dxgi_private_data_test_guid, &size, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(size == sizeof(device), "Got unexpected size %u.\n", size);
-    refcount = get_refcount((IUnknown *)test_object);
+    refcount = get_refcount(test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     size = 1;
@@ -4263,13 +4264,13 @@ static void test_output_desc(void)
         hr = IDXGIFactory_EnumAdapters(factory, i, &adapter2);
         ok(SUCCEEDED(hr), "Failed to enumerate adapter %u, hr %#x.\n", i, hr);
         ok(adapter != adapter2, "Expected to get new instance of IDXGIAdapter, %p == %p.\n", adapter, adapter2);
-        refcount = get_refcount((IUnknown *)adapter);
+        refcount = get_refcount(adapter);
         ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
         IDXGIAdapter_Release(adapter2);
 
-        refcount = get_refcount((IUnknown *)factory);
+        refcount = get_refcount(factory);
         ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
-        refcount = get_refcount((IUnknown *)adapter);
+        refcount = get_refcount(adapter);
         ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
 
         for (j = 0; ; ++j)
@@ -4285,15 +4286,15 @@ static void test_output_desc(void)
             hr = IDXGIAdapter_EnumOutputs(adapter, j, &output2);
             ok(SUCCEEDED(hr), "Failed to enumerate output %u on adapter %u, hr %#x.\n", j, i, hr);
             ok(output != output2, "Expected to get new instance of IDXGIOutput, %p == %p.\n", output, output2);
-            refcount = get_refcount((IUnknown *)output);
+            refcount = get_refcount(output);
             ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
             IDXGIOutput_Release(output2);
 
-            refcount = get_refcount((IUnknown *)factory);
+            refcount = get_refcount(factory);
             ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
-            refcount = get_refcount((IUnknown *)adapter);
+            refcount = get_refcount(adapter);
             ok(refcount == 2, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
-            refcount = get_refcount((IUnknown *)output);
+            refcount = get_refcount(output);
             ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
 
             hr = IDXGIOutput_GetDesc(output, &desc);
@@ -4310,12 +4311,12 @@ static void test_output_desc(void)
                     wine_dbgstr_rect(&monitor_info.rcMonitor));
 
             IDXGIOutput_Release(output);
-            refcount = get_refcount((IUnknown *)adapter);
+            refcount = get_refcount(adapter);
             ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
         }
 
         IDXGIAdapter_Release(adapter);
-        refcount = get_refcount((IUnknown *)factory);
+        refcount = get_refcount(factory);
         ok(refcount == 1, "Get unexpected refcount %u.\n", refcount);
     }
 
