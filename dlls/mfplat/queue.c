@@ -62,7 +62,7 @@ struct work_item
 struct queue
 {
     TP_POOL *pool;
-    TP_CALLBACK_ENVIRON env;
+    TP_CALLBACK_ENVIRON_V3 env;
     CRITICAL_SECTION cs;
     struct list pending_items;
 };
@@ -163,10 +163,13 @@ static void init_work_queue(MFASYNC_WORKQUEUE_TYPE queue_type, struct queue *que
     unsigned int max_thread;
 
     queue->pool = CreateThreadpool(NULL);
-    queue->env.Version = 1;
+    memset(&queue->env, 0, sizeof(queue->env));
+    queue->env.Version = 3;
+    queue->env.Size = sizeof(queue->env);
     queue->env.Pool = queue->pool;
     queue->env.CleanupGroup = CreateThreadpoolCleanupGroup();
     queue->env.CleanupGroupCancelCallback = standard_queue_cleanup_callback;
+    queue->env.CallbackPriority = TP_CALLBACK_PRIORITY_NORMAL;
     list_init(&queue->pending_items);
     InitializeCriticalSection(&queue->cs);
 
@@ -344,7 +347,7 @@ static HRESULT queue_submit_item(struct queue *queue, IMFAsyncResult *result)
     if (!(item = alloc_work_item(queue, result)))
         return E_OUTOFMEMORY;
 
-    work_object = CreateThreadpoolWork(standard_queue_worker, item, &queue->env);
+    work_object = CreateThreadpoolWork(standard_queue_worker, item, (TP_CALLBACK_ENVIRON *)&queue->env);
     SubmitThreadpoolWork(work_object);
 
     TRACE("dispatched %p.\n", result);
@@ -483,7 +486,7 @@ static HRESULT queue_submit_wait(struct queue *queue, HANDLE event, LONG priorit
     else
         callback = waiting_item_callback;
 
-    item->u.wait_object = CreateThreadpoolWait(callback, item, &queue->env);
+    item->u.wait_object = CreateThreadpoolWait(callback, item, (TP_CALLBACK_ENVIRON *)&queue->env);
     SetThreadpoolWait(item->u.wait_object, event, NULL);
 
     TRACE("dispatched %p.\n", result);
@@ -516,7 +519,7 @@ static HRESULT queue_submit_timer(struct queue *queue, IMFAsyncResult *result, I
     filetime.dwLowDateTime = t.u.LowPart;
     filetime.dwHighDateTime = t.u.HighPart;
 
-    item->u.timer_object = CreateThreadpoolTimer(callback, item, &queue->env);
+    item->u.timer_object = CreateThreadpoolTimer(callback, item, (TP_CALLBACK_ENVIRON *)&queue->env);
     SetThreadpoolTimer(item->u.timer_object, &filetime, period, 0);
 
     TRACE("dispatched %p.\n", result);
