@@ -2930,11 +2930,8 @@ static HRESULT WINAPI mfmediaevent_GetItemByIndex(IMFMediaEvent *iface, UINT32 i
 
 static HRESULT WINAPI mfmediaevent_CopyAllItems(IMFMediaEvent *iface, IMFAttributes *dest)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-
-    FIXME("%p, %p\n", This, dest);
-
-    return E_NOTIMPL;
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+    return IMFAttributes_CopyAllItems(&event->attributes.IMFAttributes_iface, dest);
 }
 
 static HRESULT WINAPI mfmediaevent_GetType(IMFMediaEvent *iface, MediaEventType *type)
