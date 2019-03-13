@@ -1,5 +1,5 @@
 /*
- * Unit tests for Direct Show functions - IReferenceClock
+ * System clock unit tests
  *
  * Copyright (C) 2007 Alex Villacís Lasso
  *
@@ -19,30 +19,45 @@
  */
 
 #define COBJMACROS
-
-#include "wine/test.h"
-#include "uuids.h"
 #include "dshow.h"
-#include "control.h"
+#include "wine/test.h"
 
-static void test_IReferenceClock_query_interface(const char * clockdesc, IReferenceClock * pClock)
+static IReferenceClock *create_system_clock(void)
 {
-    HRESULT hr;
-    IUnknown *pF;
+    IReferenceClock *filter = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IReferenceClock, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return filter;
+}
 
-    hr = IReferenceClock_QueryInterface(pClock, &IID_IUnknown, (void**)&pF);
-    ok(hr == S_OK, "IReferenceClock_QueryInterface returned %x\n", hr);
-    ok(pF != NULL, "pF is NULL\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(pF);
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
 
-    hr = IReferenceClock_QueryInterface(pClock, &IID_IDirectDraw, (void**)&pF);
-    ok(hr == E_NOINTERFACE, "IReferenceClock_QueryInterface returned %x\n", hr);
-    ok(pF == NULL, "pF is not NULL\n");
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
 
-    hr = IReferenceClock_QueryInterface(pClock, &IID_IReferenceClock, (void**)&pF);
-    ok(hr == S_OK, "IReferenceClock_QueryInterface returned %x\n", hr);
-    ok(pF != NULL, "pF is NULL\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(pF);
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IReferenceClock *clock = create_system_clock();
+    ULONG ref;
+
+    check_interface(clock, &IID_IReferenceClock, TRUE);
+    check_interface(clock, &IID_IUnknown, TRUE);
+
+    check_interface(clock, &IID_IDirectDraw, FALSE);
+
+    ref = IReferenceClock_Release(clock);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 /* The following method expects a reference clock that will keep ticking for
@@ -99,7 +114,6 @@ static void test_IReferenceClock_SystemClock(void)
     ok(hr == S_OK, "Unable to create reference clock from system clock %x\n", hr);
     if (hr == S_OK)
     {
-        test_IReferenceClock_query_interface("SystemClock", pReferenceClock);
 	test_IReferenceClock_methods("SystemClock", pReferenceClock);
 	IReferenceClock_Release(pReferenceClock);
     }
@@ -109,6 +123,7 @@ START_TEST(systemclock)
 {
     CoInitialize(NULL);
 
+    test_interfaces();
     test_IReferenceClock_SystemClock();
 
     CoUninitialize();
