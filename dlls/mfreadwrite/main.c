@@ -70,10 +70,11 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources( mfinstance );
 }
 
-typedef struct _srcreader
+typedef struct source_reader
 {
     IMFSourceReader IMFSourceReader_iface;
-    LONG ref;
+    LONG refcount;
+    IMFMediaSource *source;
 } srcreader;
 
 struct sink_writer
@@ -117,7 +118,7 @@ static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReader *iface, REFIID r
 static ULONG WINAPI src_reader_AddRef(IMFSourceReader *iface)
 {
     srcreader *This = impl_from_IMFSourceReader(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->refcount);
 
     TRACE("(%p) ref=%u\n", This, ref);
 
@@ -126,17 +127,18 @@ static ULONG WINAPI src_reader_AddRef(IMFSourceReader *iface)
 
 static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    ULONG refcount = InterlockedDecrement(&reader->refcount);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        IMFMediaSource_Release(reader->source);
+        heap_free(reader);
     }
 
-    return ref;
+    return refcount;
 }
 
 static HRESULT WINAPI src_reader_GetStreamSelection(IMFSourceReader *iface, DWORD index, BOOL *selected)
@@ -244,7 +246,9 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
         return E_OUTOFMEMORY;
 
     object->IMFSourceReader_iface.lpVtbl = &srcreader_vtbl;
-    object->ref = 1;
+    object->refcount = 1;
+    object->source = source;
+    IMFMediaSource_AddRef(object->source);
 
     hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
     IMFSourceReader_Release(&object->IMFSourceReader_iface);
