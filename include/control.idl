@@ -42,7 +42,8 @@ library QuartzTypeLib
     [
         object,
         uuid(56a868b1-0ad4-11ce-b03a-0020af0ba770),
-        pointer_default(unique)
+        oleautomation,
+        dual,
     ]
     interface IMediaControl : IDispatch
     {
@@ -52,8 +53,8 @@ library QuartzTypeLib
         HRESULT GetState( [in] LONG msTimeout, [out] OAFilterState *pfs );
         HRESULT RenderFile( [in] BSTR strFilename );
         HRESULT AddSourceFilter( [in] BSTR strFilename, [out] IDispatch **ppUnk );
-        [propget] HRESULT FilterCollection( [out] IDispatch **ppUnk );
-        [propget] HRESULT RegFilterCollection( [out] IDispatch **ppUnk );
+        [propget] HRESULT FilterCollection( [out, retval] IDispatch **ppUnk );
+        [propget] HRESULT RegFilterCollection( [out, retval] IDispatch **ppUnk );
         HRESULT StopWhenReady();
     }
 
@@ -64,7 +65,8 @@ library QuartzTypeLib
     [
         object,
         uuid(56a868b3-0ad4-11ce-b03a-0020af0ba770),
-        pointer_default(unique)
+        oleautomation,
+        dual,
     ]
     interface IBasicAudio : IDispatch
     {
@@ -81,7 +83,8 @@ library QuartzTypeLib
     [
         object,
         uuid(56a868b4-0ad4-11ce-b03a-0020af0ba770),
-        pointer_default(unique)
+        oleautomation,
+        dual,
     ]
     interface IVideoWindow : IDispatch
     {
@@ -133,7 +136,8 @@ library QuartzTypeLib
     [
         object,
         uuid(56a868b5-0ad4-11ce-b03a-0020af0ba770),
-        pointer_default(unique)
+        oleautomation,
+        dual,
     ]
     interface IBasicVideo : IDispatch
     {
@@ -168,9 +172,9 @@ library QuartzTypeLib
         HRESULT GetVideoPaletteEntries( [in] LONG StartIndex,
                                         [in] LONG Entries,
                                         [out] LONG *pRetrieved,
-                                        [out, size_is(Entries), length_is(*pRetrieved)] LONG *pPalette );
+                                        [out] LONG *pPalette );
         HRESULT GetCurrentImage( [in, out] LONG *pBufferSize,
-                                 [out, size_is(*pBufferSize), length_is(*pBufferSize)] LONG *pDIBImage );
+                                 [out] LONG *pDIBImage );
         HRESULT IsUsingDefaultSource();
         HRESULT IsUsingDefaultDestination();
     }
@@ -193,7 +197,8 @@ library QuartzTypeLib
     [
         object,
         uuid(56a868b6-0ad4-11ce-b03a-0020af0ba770),
-        pointer_default(unique)
+        oleautomation,
+        dual,
     ]
     interface IMediaEvent : IDispatch
     {
@@ -212,7 +217,6 @@ library QuartzTypeLib
     [
         object,
         uuid(56a868c0-0ad4-11ce-b03a-0020af0ba770),
-        pointer_default(unique)
     ]
     interface IMediaEventEx : IMediaEvent
     {
@@ -228,21 +232,22 @@ library QuartzTypeLib
     [
         object,
         uuid(56a868b2-0ad4-11ce-b03a-0020af0ba770),
-        pointer_default(unique)
+        oleautomation,
+        dual,
     ]
     interface IMediaPosition : IDispatch
     {
-        HRESULT get_Duration( [out] REFTIME *plength );
-        HRESULT put_CurrentPosition( [in] REFTIME llTime );
-        HRESULT get_CurrentPosition( [out] REFTIME *pllTime );
-        HRESULT get_StopTime( [out] REFTIME *pllTime );
-        HRESULT put_StopTime( [in] REFTIME llTime );
-        HRESULT get_PrerollTime( [out] REFTIME *pllTime );
-        HRESULT put_PrerollTime( [in] REFTIME llTime );
-        HRESULT put_Rate( [in] double dRate );
-        HRESULT get_Rate( [out] double *pdRate );
-        HRESULT CanSeekForward( [out] LONG *pCanSeekForward );
-        HRESULT CanSeekBackward( [out] LONG *pCanSeekBackward );
+        [propget] HRESULT Duration( [out, retval] REFTIME *plength );
+        [propput] HRESULT CurrentPosition( [in] REFTIME llTime );
+        [propget] HRESULT CurrentPosition( [out, retval] REFTIME *pllTime );
+        [propget] HRESULT StopTime( [out, retval] REFTIME *pllTime );
+        [propput] HRESULT StopTime( [in] REFTIME llTime );
+        [propget] HRESULT PrerollTime( [out, retval] REFTIME *pllTime );
+        [propput] HRESULT PrerollTime( [in] REFTIME llTime );
+        [propput] HRESULT Rate( [in] double dRate );
+        [propget] HRESULT Rate( [out, retval] double *pdRate );
+        HRESULT CanSeekForward( [out, retval] LONG *pCanSeekForward );
+        HRESULT CanSeekBackward( [out, retval] LONG *pCanSeekBackward );
     }
 
 } /* library QuartzTypeLib */
