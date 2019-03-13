@@ -53,13 +53,18 @@
 #include <io.h>
 #include <process.h>
 
-#endif  /* _WIN32 */
+#ifdef _MSC_VER
 
-/****************************************************************
- * Type definitions
- */
+typedef int mode_t;
+typedef long off_t;
+typedef int pid_t;
+typedef int ssize_t;
 
-#if !defined(_MSC_VER) && !defined(__int64)
+#endif /* _MSC_VER */
+
+#else  /* _WIN32 */
+
+#ifndef __int64
 #  if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN64)
 #    define __int64 long
 #  else
@@ -67,21 +72,12 @@
 #  endif
 #endif
 
-#ifndef HAVE_MODE_T
-typedef int mode_t;
-#endif
-#ifndef HAVE_OFF_T
-typedef long off_t;
-#endif
-#ifndef HAVE_PID_T
-typedef int pid_t;
-#endif
-#ifndef HAVE_SIZE_T
-typedef unsigned int size_t;
-#endif
-#ifndef HAVE_SSIZE_T
-typedef int ssize_t;
-#endif
+#endif  /* _WIN32 */
+
+/****************************************************************
+ * Type definitions
+ */
+
 #ifndef HAVE_FSBLKCNT_T
 typedef unsigned long fsblkcnt_t;
 #endif

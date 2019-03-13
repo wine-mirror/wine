@@ -549,9 +549,6 @@
 /* Define to 1 if you have the `log2f' function. */
 #undef HAVE_LOG2F
 
-/* Define to 1 if the system has the type `long long'. */
-#undef HAVE_LONG_LONG
-
 /* Define to 1 if you have the `lrint' function. */
 #undef HAVE_LRINT
 
@@ -605,9 +602,6 @@
 
 /* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
-
-/* Define to 1 if the system has the type `mode_t'. */
-#undef HAVE_MODE_T
 
 /* Define to 1 if you have the `mousemask' function. */
 #undef HAVE_MOUSEMASK
@@ -699,9 +693,6 @@
 /* Define to 1 if `_msg_ptr' is a member of `ns_msg'. */
 #undef HAVE_NS_MSG__MSG_PTR
 
-/* Define to 1 if the system has the type `off_t'. */
-#undef HAVE_OFF_T
-
 /* Define if mkdir takes only one argument */
 #undef HAVE_ONE_ARG_MKDIR
 
@@ -722,9 +713,6 @@
 
 /* Define to 1 if you have the `pclose' function. */
 #undef HAVE_PCLOSE
-
-/* Define to 1 if the system has the type `pid_t'. */
-#undef HAVE_PID_T
 
 /* Define to 1 if you have the `pipe2' function. */
 #undef HAVE_PIPE2
@@ -891,17 +879,11 @@
 /* Define to 1 if the system has the type `sigset_t'. */
 #undef HAVE_SIGSET_T
 
-/* Define to 1 if the system has the type `size_t'. */
-#undef HAVE_SIZE_T
-
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 
 /* Define to 1 if you have the `socketpair' function. */
 #undef HAVE_SOCKETPAIR
-
-/* Define to 1 if the system has the type `ssize_t'. */
-#undef HAVE_SSIZE_T
 
 /* Define to 1 if you have the `SSLCopyPeerCertificates' function. */
 #undef HAVE_SSLCOPYPEERCERTIFICATES

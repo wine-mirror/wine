@@ -17471,60 +17471,6 @@ _ACEOF
     ;;
 esac
 
-ac_fn_c_check_type "$LINENO" "mode_t" "ac_cv_type_mode_t" "$ac_includes_default"
-if test "x$ac_cv_type_mode_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_MODE_T 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "off_t" "ac_cv_type_off_t" "$ac_includes_default"
-if test "x$ac_cv_type_off_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_OFF_T 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "pid_t" "ac_cv_type_pid_t" "$ac_includes_default"
-if test "x$ac_cv_type_pid_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_PID_T 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "size_t" "ac_cv_type_size_t" "$ac_includes_default"
-if test "x$ac_cv_type_size_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_SIZE_T 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "ssize_t" "ac_cv_type_ssize_t" "$ac_includes_default"
-if test "x$ac_cv_type_ssize_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_SSIZE_T 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "long long" "ac_cv_type_long_long" "$ac_includes_default"
-if test "x$ac_cv_type_long_long" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_LONG_LONG 1
-_ACEOF
-
-
-fi
 ac_fn_c_check_type "$LINENO" "fsblkcnt_t" "ac_cv_type_fsblkcnt_t" "$ac_includes_default"
 if test "x$ac_cv_type_fsblkcnt_t" = xyes; then :
 
