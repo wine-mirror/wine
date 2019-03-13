@@ -267,10 +267,7 @@ static VkPhysicalDevice d3d12_get_vk_physical_device(struct vkd3d_instance *inst
     }
 
     if (!vk_physical_device)
-    {
         FIXME("Could not find Vulkan physical device for DXGI adapter.\n");
-        vk_physical_device = vk_physical_devices[0];
-    }
 
 done:
     heap_free(vk_physical_devices);
@@ -284,7 +281,6 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     struct vkd3d_instance_create_info instance_create_info;
     struct vkd3d_device_create_info device_create_info;
     struct wine_dxgi_adapter_info adapter_info;
-    VkPhysicalDevice vk_physical_device;
     const struct vulkan_funcs *vk_funcs;
     struct vkd3d_instance *instance;
     IWineDXGIAdapter *wine_adapter;
@@ -344,15 +340,12 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
         goto done;
     }
 
-    if (!(vk_physical_device = d3d12_get_vk_physical_device(instance, vk_funcs, &adapter_info)))
-        goto done_instance;
-
     device_create_info.type = VKD3D_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_create_info.next = NULL;
     device_create_info.minimum_feature_level = minimum_feature_level;
     device_create_info.instance = instance;
     device_create_info.instance_create_info = NULL;
-    device_create_info.vk_physical_device = vk_physical_device;
+    device_create_info.vk_physical_device = d3d12_get_vk_physical_device(instance, vk_funcs, &adapter_info);
     device_create_info.device_extensions = device_extensions;
     device_create_info.device_extension_count = ARRAY_SIZE(device_extensions);
     device_create_info.parent = (IUnknown *)wine_adapter;
@@ -360,7 +353,6 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
 
     hr = vkd3d_create_device(&device_create_info, iid, device);
 
-done_instance:
     vkd3d_instance_decref(instance);
 
 done:
