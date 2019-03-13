@@ -22,6 +22,8 @@
 #include "dshow.h"
 #include "wine/test.h"
 
+static ULONGLONG (WINAPI *pGetTickCount64)(void);
+
 static IReferenceClock *create_system_clock(void)
 {
     IReferenceClock *filter = NULL;
@@ -60,71 +62,48 @@ static void test_interfaces(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
-/* The following method expects a reference clock that will keep ticking for
- * at least 5 seconds since its creation. This method assumes no other methods
- * were called on the IReferenceClock interface since its creation.
- */
-static void test_IReferenceClock_methods(const char * clockdesc, IReferenceClock * pClock)
+static void test_get_time(void)
 {
+    IReferenceClock *clock = create_system_clock();
+    REFERENCE_TIME time1, time2;
     HRESULT hr;
-    REFERENCE_TIME time1;
-    REFERENCE_TIME time2;
-    LONG diff;
+    ULONG ref;
 
-    /* Test response from invalid (NULL) argument */
-    hr = IReferenceClock_GetTime(pClock, NULL);
-    ok (hr == E_POINTER, "%s - Expected E_POINTER (0x%08x), got 0x%08x\n", clockdesc, E_POINTER, hr);
+    hr = IReferenceClock_GetTime(clock, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
-    /* Test response for valid value - try 1 */
-    /* TODO: test whether Windows actually returns S_FALSE in its first invocation */
-    time1 = (REFERENCE_TIME)0xdeadbeef;
-    hr = IReferenceClock_GetTime(pClock, &time1);
-    ok (hr == S_FALSE || hr == S_OK, "%s - Expected S_OK or S_FALSE, got 0x%08x\n", clockdesc, hr);
-    ok (time1 != 0xdeadbeef, "%s - value was NOT changed on return!\n", clockdesc);
+    hr = IReferenceClock_GetTime(clock, &time1);
+    if (pGetTickCount64)
+        time2 = GetTickCount64() * 10000;
+    else
+        time2 = GetTickCount() * 10000;
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time1 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %s.\n",
+            wine_dbgstr_longlong(time1));
+    todo_wine ok(abs(time1 - time2) < 20 * 10000, "Expected about %s, got %s.\n",
+            wine_dbgstr_longlong(time2), wine_dbgstr_longlong(time1));
 
-    /* Test response for valid value - try 2 */
-    time2 = (REFERENCE_TIME)0xdeadbeef;
-    hr = IReferenceClock_GetTime(pClock, &time2);
-    ok (hr == S_FALSE || hr == S_OK, "%s - Expected S_OK or S_FALSE, got 0x%08x\n", clockdesc, hr);
-    ok (time2 != 0xdeadbeef, "%s - value was NOT changed on return!\n", clockdesc);
+    hr = IReferenceClock_GetTime(clock, &time2);
+    ok(hr == (time2 == time1 ? S_FALSE : S_OK), "Got hr %#x.\n", hr);
 
-    /* In case the second invocation managed to return S_FALSE, MSDN says the
-       returned time is the same as the previous one. */
-    ok ((hr != S_FALSE || time1 == time2), "%s - returned S_FALSE, but values not equal!\n", clockdesc);
+    Sleep(100);
+    hr = IReferenceClock_GetTime(clock, &time2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time2 - time1 > 98 * 10000, "Expected about %s, but got %s.\n",
+            wine_dbgstr_longlong(time1 + 98 * 10000), wine_dbgstr_longlong(time2));
 
-    time1 = time2;
-    Sleep(1000); /* Sleep for at least 1 second */
-    hr = IReferenceClock_GetTime(pClock, &time2);
-    /* After a 1-second sleep, there is no excuse to get S_FALSE (see TODO above) */
-    ok (hr == S_OK, "%s - Expected S_OK, got 0x%08x\n", clockdesc, hr);
-
-    /* FIXME: How much deviation should be allowed after a sleep? */
-    /* 0.3% is common, and 0.4% is sometimes observed. */
-    diff = time2 - time1;
-    ok (9940000 <= diff && diff <= 10240000, "%s - Expected difference around 10000000, got %u\n", clockdesc, diff);
-
-}
-
-static void test_IReferenceClock_SystemClock(void)
-{
-    IReferenceClock * pReferenceClock;
-    HRESULT hr;
-
-    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&pReferenceClock);
-    ok(hr == S_OK, "Unable to create reference clock from system clock %x\n", hr);
-    if (hr == S_OK)
-    {
-	test_IReferenceClock_methods("SystemClock", pReferenceClock);
-	IReferenceClock_Release(pReferenceClock);
-    }
+    ref = IReferenceClock_Release(clock);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 START_TEST(systemclock)
 {
     CoInitialize(NULL);
 
+    pGetTickCount64 = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetTickCount64");
+
     test_interfaces();
-    test_IReferenceClock_SystemClock();
+    test_get_time();
 
     CoUninitialize();
 }
