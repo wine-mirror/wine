@@ -745,12 +745,12 @@ static HRESULT WINAPI HTMLDocument_get_referrer(IHTMLDocument2 *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLDocument_get_location(IHTMLDocument2 *iface, IHTMLLocation **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument2(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument2(iface)->doc_node;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc_node->nsdoc) {
-        WARN("NULL nsdoc\n");
+    if(!This->nsdoc || !This->window) {
+        WARN("NULL window\n");
         return E_UNEXPECTED;
     }
 
