@@ -1573,9 +1573,9 @@ static nsresult NSAPI HTMLDOMNode_unlink(void *p)
     }
 
     if(This->doc && &This->doc->node != This) {
-        HTMLDocument *doc = &This->doc->basedoc;
+        HTMLDocumentNode *doc = This->doc;
         This->doc = NULL;
-        htmldoc_release(doc);
+        htmldoc_release(&doc->basedoc);
     }else {
         This->doc = NULL;
     }
