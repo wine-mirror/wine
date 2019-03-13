@@ -123,7 +123,9 @@
 @ stdcall MFLockWorkQueue(long)
 @ stdcall MFPutWaitingWorkItem(long long ptr ptr)
 @ stdcall MFPutWorkItem(long ptr ptr)
+@ stdcall MFPutWorkItem2(long long ptr ptr)
 @ stdcall MFPutWorkItemEx(long ptr)
+@ stdcall MFPutWorkItemEx2(long long ptr)
 @ stub MFRecordError
 @ stdcall MFRemovePeriodicCallback(long)
 @ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
