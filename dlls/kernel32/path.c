@@ -538,8 +538,16 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
  */
 BOOLEAN WINAPI CreateSymbolicLinkA(LPCSTR link, LPCSTR target, DWORD flags)
 {
-    FIXME("(%s %s %ld): stub\n", debugstr_a(link), debugstr_a(target), flags);
-    return TRUE;
+    WCHAR *linkW, *targetW;
+    BOOL ret;
+
+    if (!(linkW = FILE_name_AtoW( link, FALSE ))) return FALSE;
+    if (!(targetW = FILE_name_AtoW( target, TRUE ))) return FALSE;
+
+    ret = CreateSymbolicLinkW( linkW, targetW, flags );
+
+    HeapFree( GetProcessHeap(), 0, targetW );
+    return ret;
 }
 
 /*************************************************************************
