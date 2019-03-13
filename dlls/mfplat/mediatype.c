@@ -750,9 +750,8 @@ static HRESULT WINAPI stream_descriptor_GetItemByIndex(IMFStreamDescriptor *ifac
 
 static HRESULT WINAPI stream_descriptor_CopyAllItems(IMFStreamDescriptor *iface, IMFAttributes *dest)
 {
-    FIXME("%p, %p.\n", iface, dest);
-
-    return E_NOTIMPL;
+    struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
+    return IMFAttributes_CopyAllItems(&stream_desc->attributes.IMFAttributes_iface, dest);
 }
 
 static HRESULT WINAPI stream_descriptor_GetStreamIdentifier(IMFStreamDescriptor *iface, DWORD *identifier)
