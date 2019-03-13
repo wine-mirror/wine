@@ -53,7 +53,21 @@
 #include <io.h>
 #include <process.h>
 
+#define mkdir(path,mode) mkdir(path)
+
 #ifdef _MSC_VER
+
+#define ftruncate chsize
+#define isfinite(x) _finite(x)
+#define isinf(x) (!(_finite(x) || _isnan(x)))
+#define isnan(x) _isnan(x)
+#define popen _popen
+#define pclose _pclose
+#define snprintf _snprintf
+#define strtoll _strtoi64
+#define strtoull _strtoui64
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
 
 typedef int mode_t;
 typedef long off_t;
@@ -113,42 +127,6 @@ struct statvfs
 #define RTLD_LAZY    0x001
 #define RTLD_NOW     0x002
 #define RTLD_GLOBAL  0x100
-#endif
-
-#ifdef HAVE_ONE_ARG_MKDIR
-#define mkdir(path,mode) mkdir(path)
-#endif
-
-#if !defined(HAVE_FTRUNCATE) && defined(HAVE_CHSIZE)
-#define ftruncate chsize
-#endif
-
-#if !defined(HAVE_POPEN) && defined(HAVE__POPEN)
-#define popen _popen
-#endif
-
-#if !defined(HAVE_PCLOSE) && defined(HAVE__PCLOSE)
-#define pclose _pclose
-#endif
-
-#if !defined(HAVE_STRDUP) && defined(HAVE__STRDUP)
-#define strdup _strdup
-#endif
-
-#if !defined(HAVE_SNPRINTF) && defined(HAVE__SNPRINTF)
-#define snprintf _snprintf
-#endif
-
-#if !defined(HAVE_VSNPRINTF) && defined(HAVE__VSNPRINTF)
-#define vsnprintf _vsnprintf
-#endif
-
-#if !defined(HAVE_STRTOLL) && defined(HAVE__STRTOI64)
-#define strtoll _strtoi64
-#endif
-
-#if !defined(HAVE_STRTOULL) && defined(HAVE__STRTOUI64)
-#define strtoull _strtoui64
 #endif
 
 #ifndef S_ISLNK
@@ -331,25 +309,9 @@ float rintf(float x);
 int statvfs( const char *path, struct statvfs *buf );
 #endif
 
-#ifndef HAVE_STRNCASECMP
-# ifndef HAVE__STRNICMP
-int strncasecmp(const char *str1, const char *str2, size_t n);
-# else
-# define strncasecmp _strnicmp
-# endif
-#endif /* !defined(HAVE_STRNCASECMP) */
-
 #ifndef HAVE_STRNLEN
 size_t strnlen( const char *str, size_t maxlen );
 #endif /* !defined(HAVE_STRNLEN) */
-
-#ifndef HAVE_STRCASECMP
-# ifndef HAVE__STRICMP
-int strcasecmp(const char *str1, const char *str2);
-# else
-# define strcasecmp _stricmp
-# endif
-#endif /* !defined(HAVE_STRCASECMP) */
 
 #ifndef HAVE_SYMLINK
 int symlink(const char *from, const char *to);
@@ -516,10 +478,7 @@ extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compa
 #define lstat                   __WINE_NOT_PORTABLE(lstat)
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
-#define spawnvp                 __WINE_NOT_PORTABLE(spawnvp)
 #define statvfs                 __WINE_NOT_PORTABLE(statvfs)
-#define strcasecmp              __WINE_NOT_PORTABLE(strcasecmp)
-#define strncasecmp             __WINE_NOT_PORTABLE(strncasecmp)
 #define strnlen                 __WINE_NOT_PORTABLE(strnlen)
 #define usleep                  __WINE_NOT_PORTABLE(usleep)
 

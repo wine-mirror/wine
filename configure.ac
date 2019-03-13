@@ -2127,20 +2127,8 @@ CFLAGS="$CFLAGS $BUILTINFLAG"
 AC_CHECK_FUNCS(\
         __res_get_state \
         __res_getservers \
-	_finite \
-	_isnan \
-	_pclose \
-	_popen \
-	_snprintf \
 	_spawnvp \
-	_strdup \
-	_stricmp \
-	_strnicmp \
-	_strtoi64 \
-	_strtoui64 \
-	_vsnprintf \
 	asctime_r \
-	chsize \
 	dlopen \
 	epoll_create \
 	ffs \
@@ -2150,7 +2138,6 @@ AC_CHECK_FUNCS(\
 	fpclass \
 	fstatfs \
 	fstatvfs \
-	ftruncate \
 	futimens \
 	futimes \
 	futimesat \
@@ -2163,10 +2150,8 @@ AC_CHECK_FUNCS(\
 	kqueue \
 	lstat \
 	mmap \
-	pclose \
 	pipe2 \
 	poll \
-	popen \
 	port_create \
 	prctl \
 	pread \
@@ -2182,23 +2167,16 @@ AC_CHECK_FUNCS(\
 	settimeofday \
 	sigaltstack \
 	sigprocmask \
-	snprintf \
 	statfs \
 	statvfs \
-	strcasecmp \
-	strdup \
-	strncasecmp \
 	strnlen \
 	strtold \
-	strtoll \
-	strtoull \
 	symlink \
 	sysinfo \
 	tcdrain \
 	thr_kill2 \
 	timegm \
-	usleep \
-	vsnprintf
+	usleep
 )
 CFLAGS="$ac_save_CFLAGS"
 
@@ -2281,15 +2259,6 @@ then
 fi
 WINE_NOTICE_WITH(ldap,[test "x$LDAP_LIBS" = "x"],
                  [libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported.])
-
-AC_CACHE_CHECK([whether mkdir takes only one argument],
-   	wine_cv_one_arg_mkdir,
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/stat.h>]],[[mkdir("foo");]])],
-                          [wine_cv_one_arg_mkdir=yes],[wine_cv_one_arg_mkdir=no]))
-if test "$wine_cv_one_arg_mkdir" = "yes"
-then
-  AC_DEFINE(HAVE_ONE_ARG_MKDIR, 1, [Define if mkdir takes only one argument])
-fi
 
 AC_CACHE_CHECK([for sched_setaffinity],wine_cv_have_sched_setaffinity,
                 AC_LINK_IFELSE([AC_LANG_PROGRAM(

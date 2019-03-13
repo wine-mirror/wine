@@ -80,9 +80,6 @@
 /* Define to 1 if you have the `cbrtf' function. */
 #undef HAVE_CBRTF
 
-/* Define to 1 if you have the `chsize' function. */
-#undef HAVE_CHSIZE
-
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -206,9 +203,6 @@
 
 /* Define to 1 if you have the <ft2build.h> header file. */
 #undef HAVE_FT2BUILD_H
-
-/* Define to 1 if you have the `ftruncate' function. */
-#undef HAVE_FTRUNCATE
 
 /* Define to 1 if the system has the type `FT_TrueTypeEngineType'. */
 #undef HAVE_FT_TRUETYPEENGINETYPE
@@ -693,9 +687,6 @@
 /* Define to 1 if `_msg_ptr' is a member of `ns_msg'. */
 #undef HAVE_NS_MSG__MSG_PTR
 
-/* Define if mkdir takes only one argument */
-#undef HAVE_ONE_ARG_MKDIR
-
 /* Define to 1 if OpenAL is available */
 #undef HAVE_OPENAL
 
@@ -711,9 +702,6 @@
 /* Define to 1 if you have the <pcap/pcap.h> header file. */
 #undef HAVE_PCAP_PCAP_H
 
-/* Define to 1 if you have the `pclose' function. */
-#undef HAVE_PCLOSE
-
 /* Define to 1 if you have the `pipe2' function. */
 #undef HAVE_PIPE2
 
@@ -725,9 +713,6 @@
 
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
-
-/* Define to 1 if you have the `popen' function. */
-#undef HAVE_POPEN
 
 /* Define to 1 if you have the `port_create' function. */
 #undef HAVE_PORT_CREATE
@@ -879,9 +864,6 @@
 /* Define to 1 if the system has the type `sigset_t'. */
 #undef HAVE_SIGSET_T
 
-/* Define to 1 if you have the `snprintf' function. */
-#undef HAVE_SNPRINTF
-
 /* Define to 1 if you have the `socketpair' function. */
 #undef HAVE_SOCKETPAIR
 
@@ -903,20 +885,11 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define to 1 if you have the `strcasecmp' function. */
-#undef HAVE_STRCASECMP
-
-/* Define to 1 if you have the `strdup' function. */
-#undef HAVE_STRDUP
-
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the `strncasecmp' function. */
-#undef HAVE_STRNCASECMP
 
 /* Define to 1 if you have the `strnlen' function. */
 #undef HAVE_STRNLEN
@@ -926,12 +899,6 @@
 
 /* Define to 1 if you have the `strtold' function. */
 #undef HAVE_STRTOLD
-
-/* Define to 1 if you have the `strtoll' function. */
-#undef HAVE_STRTOLL
-
-/* Define to 1 if you have the `strtoull' function. */
-#undef HAVE_STRTOULL
 
 /* Define to 1 if `d_reclen' is a member of `struct dirent'. */
 #undef HAVE_STRUCT_DIRENT_D_RECLEN
@@ -1269,9 +1236,6 @@
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #undef HAVE_VALGRIND_VALGRIND_H
 
-/* Define to 1 if you have the `vsnprintf' function. */
-#undef HAVE_VSNPRINTF
-
 /* Define to 1 if you have the <X11/extensions/shape.h> header file. */
 #undef HAVE_X11_EXTENSIONS_SHAPE_H
 
@@ -1368,41 +1332,8 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
 
-/* Define to 1 if you have the `_finite' function. */
-#undef HAVE__FINITE
-
-/* Define to 1 if you have the `_isnan' function. */
-#undef HAVE__ISNAN
-
-/* Define to 1 if you have the `_pclose' function. */
-#undef HAVE__PCLOSE
-
-/* Define to 1 if you have the `_popen' function. */
-#undef HAVE__POPEN
-
-/* Define to 1 if you have the `_snprintf' function. */
-#undef HAVE__SNPRINTF
-
 /* Define to 1 if you have the `_spawnvp' function. */
 #undef HAVE__SPAWNVP
-
-/* Define to 1 if you have the `_strdup' function. */
-#undef HAVE__STRDUP
-
-/* Define to 1 if you have the `_stricmp' function. */
-#undef HAVE__STRICMP
-
-/* Define to 1 if you have the `_strnicmp' function. */
-#undef HAVE__STRNICMP
-
-/* Define to 1 if you have the `_strtoi64' function. */
-#undef HAVE__STRTOI64
-
-/* Define to 1 if you have the `_strtoui64' function. */
-#undef HAVE__STRTOUI64
-
-/* Define to 1 if you have the `_vsnprintf' function. */
-#undef HAVE__VSNPRINTF
 
 /* Define to 1 if you have the `__builtin_clz' built-in function. */
 #undef HAVE___BUILTIN_CLZ

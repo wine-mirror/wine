@@ -31,14 +31,6 @@ int isfinite(double x)
   return finite(x);
 }
 
-#elif defined(HAVE_FLOAT_H) && defined(HAVE__FINITE)
-#include <float.h>
-
-int isfinite(double x)
-{
-  return _finite(x);
-}
-
 #else
 #error No isfinite() implementation available.
 #endif

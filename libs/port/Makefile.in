@@ -98,8 +98,6 @@ C_SRCS = \
 	rint.c \
 	spawn.c \
 	statvfs.c \
-	strcasecmp.c \
-	strncasecmp.c \
 	strnlen.c \
 	symlink.c \
 	usleep.c \

@@ -16709,20 +16709,8 @@ CFLAGS="$CFLAGS $BUILTINFLAG"
 for ac_func in \
         __res_get_state \
         __res_getservers \
-	_finite \
-	_isnan \
-	_pclose \
-	_popen \
-	_snprintf \
 	_spawnvp \
-	_strdup \
-	_stricmp \
-	_strnicmp \
-	_strtoi64 \
-	_strtoui64 \
-	_vsnprintf \
 	asctime_r \
-	chsize \
 	dlopen \
 	epoll_create \
 	ffs \
@@ -16732,7 +16720,6 @@ for ac_func in \
 	fpclass \
 	fstatfs \
 	fstatvfs \
-	ftruncate \
 	futimens \
 	futimes \
 	futimesat \
@@ -16745,10 +16732,8 @@ for ac_func in \
 	kqueue \
 	lstat \
 	mmap \
-	pclose \
 	pipe2 \
 	poll \
-	popen \
 	port_create \
 	prctl \
 	pread \
@@ -16764,23 +16749,16 @@ for ac_func in \
 	settimeofday \
 	sigaltstack \
 	sigprocmask \
-	snprintf \
 	statfs \
 	statvfs \
-	strcasecmp \
-	strdup \
-	strncasecmp \
 	strnlen \
 	strtold \
-	strtoll \
-	strtoull \
 	symlink \
 	sysinfo \
 	tcdrain \
 	thr_kill2 \
 	timegm \
-	usleep \
-	vsnprintf
+	usleep
 
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -17325,38 +17303,6 @@ if test "x$LDAP_LIBS" = "x"; then :
   *)   as_fn_error $? "libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported.
 This is an error since --with-ldap was requested." "$LINENO" 5 ;;
 esac
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether mkdir takes only one argument" >&5
-$as_echo_n "checking whether mkdir takes only one argument... " >&6; }
-if ${wine_cv_one_arg_mkdir+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/stat.h>
-int
-main ()
-{
-mkdir("foo");
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  wine_cv_one_arg_mkdir=yes
-else
-  wine_cv_one_arg_mkdir=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_one_arg_mkdir" >&5
-$as_echo "$wine_cv_one_arg_mkdir" >&6; }
-if test "$wine_cv_one_arg_mkdir" = "yes"
-then
-
-$as_echo "#define HAVE_ONE_ARG_MKDIR 1" >>confdefs.h
 
 fi
 
