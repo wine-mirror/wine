@@ -517,12 +517,21 @@ static void test_tp_simple(void)
     memset(&environment3, 0, sizeof(environment3));
     environment3.Version = 3;
     environment3.Pool = pool;
-    environment3.CallbackPriority = TP_CALLBACK_PRIORITY_NORMAL;
     environment3.Size = sizeof(environment3);
+
+    for (i = 0; i < 3; ++i)
+    {
+        environment3.CallbackPriority = TP_CALLBACK_PRIORITY_HIGH + i;
+        status = pTpSimpleTryPost(simple_cb, semaphore, (TP_CALLBACK_ENVIRON *)&environment3);
+        ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+        result = WaitForSingleObject(semaphore, 1000);
+        ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    }
+
+    environment3.CallbackPriority = 10;
     status = pTpSimpleTryPost(simple_cb, semaphore, (TP_CALLBACK_ENVIRON *)&environment3);
-    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
-    result = WaitForSingleObject(semaphore, 1000);
-    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(status == STATUS_INVALID_PARAMETER || broken(!status) /* Vista does not support priorities */,
+            "TpSimpleTryPost failed with status %x\n", status);
 
     /* test with invalid version number */
     memset(&environment, 0, sizeof(environment));
