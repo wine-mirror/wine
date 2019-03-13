@@ -77,10 +77,10 @@ static void test_get_time(void)
         time2 = GetTickCount64() * 10000;
     else
         time2 = GetTickCount() * 10000;
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time1 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %s.\n",
             wine_dbgstr_longlong(time1));
-    todo_wine ok(abs(time1 - time2) < 20 * 10000, "Expected about %s, got %s.\n",
+    ok(abs(time1 - time2) < 20 * 10000, "Expected about %s, got %s.\n",
             wine_dbgstr_longlong(time2), wine_dbgstr_longlong(time1));
 
     hr = IReferenceClock_GetTime(clock, &time2);

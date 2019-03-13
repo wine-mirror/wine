@@ -44,8 +44,7 @@ typedef struct SystemClockImpl {
   HANDLE         adviseThread;
   DWORD          adviseThreadId;
   BOOL           adviseThreadActive;
-  REFERENCE_TIME lastRefTime;
-  DWORD	         lastTimeTickCount;
+  REFERENCE_TIME last_time;
   CRITICAL_SECTION safe;
 
   SystemClockAdviseEntry* pSingleShotAdvise;
@@ -240,26 +239,28 @@ static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
   return ref;
 }
 
-static HRESULT WINAPI SystemClockImpl_GetTime(IReferenceClock* iface, REFERENCE_TIME* pTime) {
-  SystemClockImpl *This = impl_from_IReferenceClock(iface);
-  DWORD curTimeTickCount;
-  HRESULT hr = S_OK;
+static HRESULT WINAPI SystemClockImpl_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
+{
+    SystemClockImpl *clock = impl_from_IReferenceClock(iface);
+    REFERENCE_TIME ret;
+    HRESULT hr;
 
-  TRACE("(%p, %p)\n", This, pTime);
+    TRACE("clock %p, time %p.\n", clock, time);
 
-  if (NULL == pTime) {
-    return E_POINTER;
-  }
+    if (!time) {
+        return E_POINTER;
+    }
 
-  curTimeTickCount = GetTickCount();
+    ret = GetTickCount64() * 10000;
 
-  EnterCriticalSection(&This->safe);
-  if (This->lastTimeTickCount == curTimeTickCount) hr = S_FALSE;
-  This->lastRefTime += (REFERENCE_TIME) (DWORD) (curTimeTickCount - This->lastTimeTickCount) * (REFERENCE_TIME) 10000;
-  This->lastTimeTickCount = curTimeTickCount;
-  *pTime = This->lastRefTime;
-  LeaveCriticalSection(&This->safe);
-  return hr;
+    EnterCriticalSection(&clock->safe);
+
+    hr = (ret == clock->last_time) ? S_FALSE : S_OK;
+    *time = clock->last_time = ret;
+
+    LeaveCriticalSection(&clock->safe);
+
+    return hr;
 }
 
 static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock* iface, REFERENCE_TIME rtBaseTime, REFERENCE_TIME rtStreamTime, HEVENT hEvent, DWORD_PTR* pdwAdviseCookie) {
@@ -389,7 +390,6 @@ HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv) {
   obj->IReferenceClock_iface.lpVtbl = &SystemClock_Vtbl;
   obj->ref = 0;  /* will be inited by QueryInterface */
 
-  obj->lastTimeTickCount = GetTickCount();
   InitializeCriticalSection(&obj->safe);
   obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SystemClockImpl.safe");
 
