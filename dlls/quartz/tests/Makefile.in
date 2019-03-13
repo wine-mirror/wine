@@ -12,7 +12,7 @@ C_SRCS = \
 	memallocator.c \
 	misc.c \
 	mpegsplit.c \
-	referenceclock.c \
+	systemclock.c \
 	videorenderer.c \
 	waveparser.c
 

@@ -105,7 +105,7 @@ static void test_IReferenceClock_SystemClock(void)
     }
 }
 
-START_TEST(referenceclock)
+START_TEST(systemclock)
 {
     CoInitialize(NULL);
 
