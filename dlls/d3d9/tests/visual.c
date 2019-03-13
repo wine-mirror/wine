@@ -8747,8 +8747,7 @@ static void test_vshader_input(void)
          *
          * A test app for this behavior is Half Life 2 Episode 2 in dxlevel 95, and related games(Portal, TF2).
          */
-        ok(color == 0x000000ff || color == 0x00808080 || color == 0x00000000
-                || broken(color_match(color, D3DCOLOR_ARGB(0x00, 0x0b, 0x75, 0x80), 1)),
+        ok(color == 0x000000ff || color == 0x00808080 || color == 0x00000000 || broken(warp),
                 "Got unexpected color 0x%08x for quad 2 (different colors).\n", color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
