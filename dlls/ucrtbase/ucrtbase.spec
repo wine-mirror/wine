@@ -758,7 +758,7 @@
 @ stub _o____lc_collate_cp_func
 @ stub _o____lc_locale_name_func
 @ stub _o____mb_cur_max_func
-@ stub _o___acrt_iob_func
+@ cdecl _o___acrt_iob_func(long) MSVCRT___acrt_iob_func
 @ stub _o___conio_common_vcprintf
 @ stub _o___conio_common_vcprintf_p
 @ stub _o___conio_common_vcprintf_s
@@ -807,10 +807,10 @@
 @ stub _o___pctype_func
 @ stub _o___pwctype_func
 @ stub _o___std_exception_copy
-@ stub _o___std_exception_destroy
+@ cdecl _o___std_exception_destroy(ptr) MSVCRT___std_exception_destroy
 @ cdecl _o___std_type_info_destroy_list(ptr) MSVCRT_type_info_destroy_list
 @ stub _o___std_type_info_name
-@ stub _o___stdio_common_vfprintf
+@ cdecl _o___stdio_common_vfprintf(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf
 @ stub _o___stdio_common_vfprintf_p
 @ stub _o___stdio_common_vfprintf_s
 @ stub _o___stdio_common_vfscanf
@@ -818,11 +818,11 @@
 @ stub _o___stdio_common_vfwprintf_p
 @ stub _o___stdio_common_vfwprintf_s
 @ stub _o___stdio_common_vfwscanf
-@ stub _o___stdio_common_vsnprintf_s
+@ cdecl _o___stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) MSVCRT__stdio_common_vsnprintf_s
 @ stub _o___stdio_common_vsnwprintf_s
 @ stub _o___stdio_common_vsprintf
 @ stub _o___stdio_common_vsprintf_p
-@ stub _o___stdio_common_vsprintf_s
+@ cdecl _o___stdio_common_vsprintf_s(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf_s
 @ stub _o___stdio_common_vsscanf
 @ stub _o___stdio_common_vswprintf
 @ stub _o___stdio_common_vswprintf_p
@@ -904,7 +904,7 @@
 @ stub _o__endthread
 @ stub _o__endthreadex
 @ stub _o__eof
-@ stub _o__errno
+@ cdecl _o__errno() MSVCRT__errno
 @ stub _o__except1
 @ cdecl _o__execute_onexit_table(ptr) MSVCRT__execute_onexit_table
 @ stub _o__execv
@@ -945,7 +945,7 @@
 @ stub _o__findnext64
 @ stub _o__findnext64i32
 @ stub _o__flushall
-@ stub _o__fpclass
+@ cdecl _o__fpclass(double) MSVCRT__fpclass
 @ stub _o__fpclassf
 @ stub _o__fputc_nolock
 @ stub _o__fputchar
@@ -1649,15 +1649,15 @@
 @ stub _o_getwchar
 @ stub _o_hypot
 @ stub _o_is_wctype
-@ stub _o_isalnum
-@ stub _o_isalpha
+@ cdecl _o_isalnum(long) MSVCRT_isalnum
+@ cdecl _o_isalpha(long) MSVCRT_isalpha
 @ stub _o_isblank
 @ stub _o_iscntrl
-@ stub _o_isdigit
+@ cdecl _o_isdigit(long) MSVCRT_isdigit
 @ stub _o_isgraph
 @ stub _o_isleadbyte
 @ stub _o_islower
-@ stub _o_isprint
+@ cdecl _o_isprint(long) MSVCRT_isprint
 @ stub _o_ispunct
 @ stub _o_isspace
 @ stub _o_isupper
@@ -1740,12 +1740,12 @@
 @ stub _o_puts
 @ stub _o_putwc
 @ stub _o_putwchar
-@ stub _o_qsort
+@ cdecl _o_qsort(ptr long long ptr) MSVCRT_qsort
 @ stub _o_qsort_s
 @ stub _o_raise
 @ stub _o_rand
 @ stub _o_rand_s
-@ stub _o_realloc
+@ cdecl _o_realloc(ptr long) MSVCRT_realloc
 @ stub _o_remainder
 @ stub _o_remainderf
 @ stub _o_remainderl
@@ -1778,7 +1778,7 @@
 @ stub _o_sqrt
 @ stub _o_sqrtf
 @ stub _o_srand
-@ stub _o_strcat_s
+@ cdecl _o_strcat_s(str long str) MSVCRT_strcat_s
 @ stub _o_strcoll
 @ stub _o_strcpy_s
 @ stub _o_strerror
@@ -1793,7 +1793,7 @@
 @ stub _o_strtol
 @ stub _o_strtold
 @ stub _o_strtoll
-@ stub _o_strtoul
+@ cdecl _o_strtoul(str ptr long) MSVCRT_strtoul
 @ stub _o_strtoull
 @ stub _o_system
 @ stub _o_tan
@@ -1806,7 +1806,7 @@
 @ stub _o_tgammal
 @ stub _o_tmpfile_s
 @ stub _o_tmpnam_s
-@ stub _o_tolower
+@ cdecl _o_tolower(long) MSVCRT__tolower
 @ cdecl _o_toupper(long) MSVCRT__toupper
 @ stub _o_towlower
 @ stub _o_towupper
