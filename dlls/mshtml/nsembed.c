@@ -2197,8 +2197,7 @@ void detach_gecko_browser(GeckoBrowser *This)
 
     while(!list_empty(&This->document_nodes)) {
         HTMLDocumentNode *doc = LIST_ENTRY(list_head(&This->document_nodes), HTMLDocumentNode, browser_entry);
-        list_remove(&doc->browser_entry);
-        doc->browser = NULL;
+        detach_document_node(doc);
     }
 
     while(!list_empty(&This->outer_windows)) {
