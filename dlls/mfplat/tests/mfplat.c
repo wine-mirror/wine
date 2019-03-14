@@ -35,6 +35,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(DUMMY_CLSID, 0x12345678,0x1234,0x1234,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19);
 DEFINE_GUID(DUMMY_GUID1, 0x12345678,0x1234,0x1234,0x21,0x21,0x21,0x21,0x21,0x21,0x21,0x21);
 DEFINE_GUID(DUMMY_GUID2, 0x12345678,0x1234,0x1234,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22);
+DEFINE_GUID(DUMMY_GUID3, 0x12345678,0x1234,0x1234,0x23,0x23,0x23,0x23,0x23,0x23,0x23,0x23);
 
 #undef INITGUID
 #include <guiddef.h>
@@ -42,6 +43,7 @@ DEFINE_GUID(DUMMY_GUID2, 0x12345678,0x1234,0x1234,0x22,0x22,0x22,0x22,0x22,0x22,
 #include "mfidl.h"
 #include "mferror.h"
 #include "mfreadwrite.h"
+#include "propvarutil.h"
 
 #include "wine/test.h"
 
@@ -498,9 +500,10 @@ static void test_MFCreateMediaEvent(void)
 
 static void test_MFCreateAttributes(void)
 {
+    PROPVARIANT propvar, ret_propvar;
     IMFAttributes *attributes;
-    HRESULT hr;
     UINT32 count;
+    HRESULT hr;
 
     hr = MFCreateAttributes( &attributes, 3 );
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -516,6 +519,86 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_GetCount(attributes, &count);
     todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
     todo_wine ok(count == 1, "got %d\n", count);
+
+    IMFAttributes_Release(attributes);
+
+    hr = MFCreateAttributes(&attributes, 0);
+    ok(hr == S_OK, "Failed to create attributes object, hr %#x.\n", hr);
+
+    PropVariantInit(&propvar);
+    propvar.vt = MF_ATTRIBUTE_UINT32;
+    U(propvar).ulVal = 123;
+    hr = IMFAttributes_SetItem(attributes, &DUMMY_GUID1, &propvar);
+    ok(hr == S_OK, "Failed to set item, hr %#x.\n", hr);
+    PropVariantInit(&ret_propvar);
+    ret_propvar.vt = MF_ATTRIBUTE_UINT32;
+    U(ret_propvar).ulVal = 0xdeadbeef;
+    hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, &ret_propvar);
+    ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
+    ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
+    PropVariantClear(&ret_propvar);
+
+    PropVariantInit(&ret_propvar);
+    ret_propvar.vt = MF_ATTRIBUTE_STRING;
+    U(ret_propvar).pwszVal = NULL;
+    hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, &ret_propvar);
+    ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
+    ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
+    PropVariantClear(&ret_propvar);
+
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = MF_ATTRIBUTE_UINT64;
+    U(propvar).uhVal.QuadPart = 65536;
+    hr = IMFAttributes_SetItem(attributes, &DUMMY_GUID1, &propvar);
+    ok(hr == S_OK, "Failed to set item, hr %#x.\n", hr);
+    PropVariantInit(&ret_propvar);
+    ret_propvar.vt = MF_ATTRIBUTE_UINT32;
+    U(ret_propvar).ulVal = 0xdeadbeef;
+    hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, &ret_propvar);
+    ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
+    ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
+    PropVariantClear(&ret_propvar);
+    PropVariantClear(&propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_I4;
+    U(propvar).lVal = 123;
+    hr = IMFAttributes_SetItem(attributes, &DUMMY_GUID2, &propvar);
+    ok(hr == MF_E_INVALIDTYPE, "Failed to set item, hr %#x.\n", hr);
+    PropVariantInit(&ret_propvar);
+    ret_propvar.vt = MF_ATTRIBUTE_UINT32;
+    U(ret_propvar).lVal = 0xdeadbeef;
+    hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID2, &ret_propvar);
+    ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
+    PropVariantClear(&propvar);
+    ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
+    PropVariantClear(&ret_propvar);
+
+    PropVariantInit(&propvar);
+    propvar.vt = MF_ATTRIBUTE_UINT32;
+    U(propvar).ulVal = 123;
+    hr = IMFAttributes_SetItem(attributes, &DUMMY_GUID3, &propvar);
+    ok(hr == S_OK, "Failed to set item, hr %#x.\n", hr);
+
+    hr = IMFAttributes_DeleteItem(attributes, &DUMMY_GUID2);
+    todo_wine ok(hr == S_OK, "Failed to delete item, hr %#x.\n", hr);
+
+    hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID3, &ret_propvar);
+    ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
+    ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
+    PropVariantClear(&ret_propvar);
+    PropVariantClear(&propvar);
+
+    propvar.vt = MF_ATTRIBUTE_UINT64;
+    U(propvar).uhVal.QuadPart = 65536;
+
+    hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, &ret_propvar);
+    ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
+    ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
+    PropVariantClear(&ret_propvar);
+    PropVariantClear(&propvar);
 
     IMFAttributes_Release(attributes);
 }
