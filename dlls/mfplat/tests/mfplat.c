@@ -583,7 +583,10 @@ static void test_MFCreateAttributes(void)
     ok(hr == S_OK, "Failed to set item, hr %#x.\n", hr);
 
     hr = IMFAttributes_DeleteItem(attributes, &DUMMY_GUID2);
-    todo_wine ok(hr == S_OK, "Failed to delete item, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to delete item, hr %#x.\n", hr);
+
+    hr = IMFAttributes_DeleteItem(attributes, &DUMMY_GUID2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID3, &ret_propvar);
     ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
