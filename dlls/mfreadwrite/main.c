@@ -318,7 +318,7 @@ static HRESULT create_source_reader_from_url(const WCHAR *url, IMFAttributes *at
         return hr;
 
     hr = IMFSourceResolver_CreateObjectFromURL(resolver, url, MF_RESOLUTION_MEDIASOURCE, NULL, &obj_type,
-            (IUnknown **)&object);
+            &object);
     if (SUCCEEDED(hr))
     {
         switch (obj_type)
