@@ -506,10 +506,10 @@ static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *
 
     TRACE("(%p)->(%p)\n", This, phwnd);
 
-    if(!This->window || !This->window->base.outer_window || !This->window->base.outer_window->doc_obj)
+    if(!This->window || !This->window->base.outer_window)
         return E_UNEXPECTED;
 
-    *phwnd = This->window->base.outer_window->doc_obj->hwnd;
+    *phwnd = This->window->base.outer_window->browser->doc->hwnd;
     return S_OK;
 }
 
