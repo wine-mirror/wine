@@ -666,16 +666,16 @@ static HRESULT WINAPI OmHistory_Invoke(IOmHistory *iface, DISPID dispIdMember, R
 static HRESULT WINAPI OmHistory_get_length(IOmHistory *iface, short *p)
 {
     OmHistory *This = impl_from_IOmHistory(iface);
+    GeckoBrowser *browser = NULL;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->window || !This->window->base.outer_window->doc_obj
-            || !This->window->base.outer_window->doc_obj->travel_log) {
-        *p = 0;
-    }else {
-        *p = ITravelLog_CountEntries(This->window->base.outer_window->doc_obj->travel_log,
-                This->window->base.outer_window->doc_obj->browser_service);
-    }
+    if(This->window && This->window->base.outer_window)
+        browser = This->window->base.outer_window->browser;
+
+    *p = browser->doc->travel_log
+        ? ITravelLog_CountEntries(browser->doc->travel_log, browser->doc->browser_service)
+        : 0;
     return S_OK;
 }
 
