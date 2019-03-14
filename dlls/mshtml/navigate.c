@@ -2002,7 +2002,7 @@ static void navigate_javascript_proc(task_t *_task)
         return;
     }
 
-    set_download_state(window->doc_obj, 1);
+    set_download_state(window->browser->doc, 1);
 
     V_VT(&v) = VT_EMPTY;
     hres = exec_script(window->base.inner_window, code, jscriptW, &v);
@@ -2012,10 +2012,10 @@ static void navigate_javascript_proc(task_t *_task)
         VariantClear(&v);
     }
 
-    if(window->doc_obj->view_sink)
-        IAdviseSink_OnViewChange(window->doc_obj->view_sink, DVASPECT_CONTENT, -1);
+    if(window->browser->doc->view_sink)
+        IAdviseSink_OnViewChange(window->browser->doc->view_sink, DVASPECT_CONTENT, -1);
 
-    set_download_state(window->doc_obj, 0);
+    set_download_state(window->browser->doc, 0);
 }
 
 static void navigate_javascript_task_destr(task_t *_task)
@@ -2118,9 +2118,9 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
 
     SysFreeString(frag);
 
-    if(window->doc_obj->doc_object_service) {
-        IDocObjectService_FireNavigateComplete2(window->doc_obj->doc_object_service, &window->base.IHTMLWindow2_iface, 0x10);
-        IDocObjectService_FireDocumentComplete(window->doc_obj->doc_object_service, &window->base.IHTMLWindow2_iface, 0);
+    if(window->browser->doc->doc_object_service) {
+        IDocObjectService_FireNavigateComplete2(window->browser->doc->doc_object_service, &window->base.IHTMLWindow2_iface, 0x10);
+        IDocObjectService_FireDocumentComplete(window->browser->doc->doc_object_service, &window->base.IHTMLWindow2_iface, 0);
 
     }
 
