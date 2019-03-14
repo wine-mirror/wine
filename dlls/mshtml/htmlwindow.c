@@ -3567,8 +3567,6 @@ HRESULT create_outer_window(GeckoBrowser *browser, mozIDOMWindowProxy *mozwindow
 
     window->base.outer_window = window;
     window->base.inner_window = NULL;
-
-    window->doc_obj = browser->doc;
     window->browser = browser;
     list_add_head(&browser->outer_windows, &window->browser_entry);
 

@@ -5321,10 +5321,8 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             htmldoc_release(&This->basedoc.doc_node->basedoc);
         }
-        if(This->basedoc.window) {
-            This->basedoc.window->doc_obj = NULL;
+        if(This->basedoc.window)
             IHTMLWindow2_Release(&This->basedoc.window->base.IHTMLWindow2_iface);
-        }
         if(This->advise_holder)
             IOleAdviseHolder_Release(This->advise_holder);
 
@@ -5497,8 +5495,6 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
 
     doc->basedoc.window = doc->nscontainer->content_window;
     IHTMLWindow2_AddRef(&doc->basedoc.window->base.IHTMLWindow2_iface);
-
-    doc->basedoc.window->doc_obj = doc;
 
     if(!doc->basedoc.doc_node && doc->basedoc.window->base.inner_window->doc) {
         doc->basedoc.doc_node = doc->basedoc.window->base.inner_window->doc;

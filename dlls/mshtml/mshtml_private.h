@@ -475,7 +475,6 @@ struct HTMLOuterWindow {
 
     LONG task_magic;
 
-    HTMLDocumentObj *doc_obj;
     nsIDOMWindow *nswindow;
     mozIDOMWindowProxy *window_proxy;
     HTMLOuterWindow *parent;
