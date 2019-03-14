@@ -628,17 +628,18 @@ static ULONG WINAPI mfattributes_AddRef(IMFAttributes *iface)
 
 static ULONG WINAPI mfattributes_Release(IMFAttributes *iface)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    ULONG refcount = InterlockedDecrement(&attributes->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        clear_attributes_object(attributes);
+        heap_free(attributes);
     }
 
-    return ref;
+    return refcount;
 }
 
 static HRESULT WINAPI mfattributes_GetItem(IMFAttributes *iface, REFGUID key, PROPVARIANT *value)
@@ -909,10 +910,34 @@ static const IMFAttributesVtbl mfattributes_vtbl =
     mfattributes_CopyAllItems
 };
 
-void init_attribute_object(mfattributes *object, UINT32 size)
+HRESULT init_attributes_object(struct attributes *object, UINT32 size)
 {
-    object->ref = 1;
     object->IMFAttributes_iface.lpVtbl = &mfattributes_vtbl;
+    object->ref = 1;
+    InitializeCriticalSection(&object->cs);
+
+    object->attributes = NULL;
+    object->count = 0;
+    object->capacity = 0;
+    if (!mf_array_reserve((void **)&object->attributes, &object->capacity, size,
+                          sizeof(*object->attributes)))
+    {
+        DeleteCriticalSection(&object->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
+void clear_attributes_object(struct attributes *object)
+{
+    size_t i;
+
+    for (i = 0; i < object->count; i++)
+        PropVariantClear(&object->attributes[i].value);
+    heap_free(object->attributes);
+
+    DeleteCriticalSection(&object->cs);
 }
 
 /***********************************************************************
@@ -920,15 +945,20 @@ void init_attribute_object(mfattributes *object, UINT32 size)
  */
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size)
 {
-    mfattributes *object;
+    struct attributes *object;
+    HRESULT hr;
 
     TRACE("%p, %d\n", attributes, size);
 
-    object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
-    if(!object)
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
         return E_OUTOFMEMORY;
 
-    init_attribute_object(object, size);
+    if (FAILED(hr = init_attributes_object(object, size)))
+    {
+        heap_free(object);
+        return hr;
+    }
     *attributes = &object->IMFAttributes_iface;
 
     return S_OK;
@@ -990,6 +1020,7 @@ static ULONG WINAPI mfbytestream_Release(IMFByteStream *iface)
 
     if (!ref)
     {
+        clear_attributes_object(&This->attributes);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1223,6 +1254,7 @@ static const IMFAttributesVtbl mfbytestream_attributes_vtbl =
 HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **bytestream)
 {
     mfbytestream *object;
+    HRESULT hr;
 
     TRACE("(%p, %p): stub\n", stream, bytestream);
 
@@ -1230,7 +1262,11 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
     if(!object)
         return E_OUTOFMEMORY;
 
-    init_attribute_object(&object->attributes, 0);
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
     object->IMFByteStream_iface.lpVtbl = &mfbytestream_vtbl;
     object->attributes.IMFAttributes_iface.lpVtbl = &mfbytestream_attributes_vtbl;
 
@@ -1248,6 +1284,7 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     DWORD filecreation_disposition = 0;
     DWORD fileattributes = 0;
     HANDLE file;
+    HRESULT hr;
 
     FIXME("(%d, %d, %d, %s, %p): stub\n", accessmode, openmode, flags, debugstr_w(url), bytestream);
 
@@ -1301,7 +1338,11 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     if(!object)
         return E_OUTOFMEMORY;
 
-    init_attribute_object(&object->attributes, 0);
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
     object->IMFByteStream_iface.lpVtbl = &mfbytestream_vtbl;
     object->attributes.IMFAttributes_iface.lpVtbl = &mfbytestream_attributes_vtbl;
 
@@ -1457,6 +1498,7 @@ static ULONG WINAPI mfpresentationdescriptor_Release(IMFPresentationDescriptor *
 
     if (!ref)
     {
+        clear_attributes_object(&This->attributes);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1855,7 +1897,7 @@ static HRESULT WINAPI mfsource_CreatePresentationDescriptor(IMFMediaSource *ifac
     if (!object)
         return E_OUTOFMEMORY;
 
-    init_attribute_object(&object->attributes, 0);
+    init_attributes_object(&object->attributes, 0);
     object->IMFPresentationDescriptor_iface.lpVtbl = &mfpresentationdescriptor_vtbl;
 
     *descriptor = &object->IMFPresentationDescriptor_iface;
@@ -2754,6 +2796,7 @@ static ULONG WINAPI mfmediaevent_Release(IMFMediaEvent *iface)
 
     if (!ref)
     {
+        clear_attributes_object(&event->attributes);
         PropVariantClear(&event->value);
         heap_free(event);
     }
@@ -3035,6 +3078,7 @@ HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HR
                                   const PROPVARIANT *value, IMFMediaEvent **event)
 {
     mfmediaevent *object;
+    HRESULT hr;
 
     TRACE("%#x, %s, %08x, %p, %p\n", type, debugstr_guid(extended_type), status, value, event);
 
@@ -3042,7 +3086,11 @@ HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HR
     if(!object)
         return E_OUTOFMEMORY;
 
-    init_attribute_object(&object->attributes, 0);
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
     object->IMFMediaEvent_iface.lpVtbl = &mfmediaevent_vtbl;
 
     object->type = type;

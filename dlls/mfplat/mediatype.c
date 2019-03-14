@@ -116,6 +116,7 @@ static ULONG WINAPI mediatype_Release(IMFMediaType *iface)
 
     if (!refcount)
     {
+        clear_attributes_object(&media_type->attributes);
         heap_free(media_type);
     }
 
@@ -496,6 +497,7 @@ static const IMFMediaTypeVtbl mediatypevtbl =
 HRESULT WINAPI MFCreateMediaType(IMFMediaType **media_type)
 {
     struct media_type *object;
+    HRESULT hr;
 
     TRACE("%p.\n", media_type);
 
@@ -506,7 +508,11 @@ HRESULT WINAPI MFCreateMediaType(IMFMediaType **media_type)
     if (!object)
         return E_OUTOFMEMORY;
 
-    init_attribute_object(&object->attributes, 0);
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
     object->IMFMediaType_iface.lpVtbl = &mediatypevtbl;
 
     *media_type = &object->IMFMediaType_iface;
@@ -561,6 +567,7 @@ static ULONG WINAPI stream_descriptor_Release(IMFStreamDescriptor *iface)
         heap_free(stream_desc->media_types);
         if (stream_desc->current_type)
             IMFMediaType_Release(stream_desc->current_type);
+        clear_attributes_object(&stream_desc->attributes);
         DeleteCriticalSection(&stream_desc->cs);
         heap_free(stream_desc);
     }
@@ -950,6 +957,7 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
 {
     struct stream_desc *object;
     unsigned int i;
+    HRESULT hr;
 
     TRACE("%d, %d, %p, %p.\n", identifier, count, types, descriptor);
 
@@ -960,14 +968,19 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
     if (!object)
         return E_OUTOFMEMORY;
 
-    init_attribute_object(&object->attributes, 0);
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
     object->IMFStreamDescriptor_iface.lpVtbl = &streamdescriptorvtbl;
     object->IMFMediaTypeHandler_iface.lpVtbl = &mediatypehandlervtbl;
     object->identifier = identifier;
     object->media_types = heap_alloc(count * sizeof(*object->media_types));
+    InitializeCriticalSection(&object->cs);
     if (!object->media_types)
     {
-        heap_free(object);
+        IMFStreamDescriptor_Release(&object->IMFStreamDescriptor_iface);
         return E_OUTOFMEMORY;
     }
     for (i = 0; i < count; ++i)
@@ -977,7 +990,6 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
             IMFMediaType_AddRef(object->media_types[i]);
     }
     object->media_types_count = count;
-    InitializeCriticalSection(&object->cs);
 
     *descriptor = &object->IMFStreamDescriptor_iface;
 
@@ -1027,6 +1039,7 @@ static ULONG WINAPI presentation_descriptor_Release(IMFPresentationDescriptor *i
             if (presentation_desc->descriptors[i].descriptor)
                 IMFStreamDescriptor_Release(presentation_desc->descriptors[i].descriptor);
         }
+        clear_attributes_object(&presentation_desc->attributes);
         DeleteCriticalSection(&presentation_desc->cs);
         heap_free(presentation_desc->descriptors);
         heap_free(presentation_desc);
@@ -1369,16 +1382,19 @@ static const IMFPresentationDescriptorVtbl presentationdescriptorvtbl =
 
 static HRESULT presentation_descriptor_init(struct presentation_desc *object, DWORD count)
 {
-    init_attribute_object(&object->attributes, 0);
+    HRESULT hr;
+
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+        return hr;
     object->IMFPresentationDescriptor_iface.lpVtbl = &presentationdescriptorvtbl;
     object->descriptors = heap_alloc_zero(count * sizeof(*object->descriptors));
+    InitializeCriticalSection(&object->cs);
     if (!object->descriptors)
     {
-        heap_free(object);
+        IMFPresentationDescriptor_Release(&object->IMFPresentationDescriptor_iface);
         return E_OUTOFMEMORY;
     }
     object->count = count;
-    InitializeCriticalSection(&object->cs);
 
     return S_OK;
 }

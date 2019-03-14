@@ -271,6 +271,7 @@ static ULONG WINAPI sample_Release(IMFSample *iface)
     {
         for (i = 0; i < sample->buffer_count; ++i)
             IMFMediaBuffer_Release(sample->buffers[i]);
+        clear_attributes_object(&sample->attributes);
         DeleteCriticalSection(&sample->cs);
         heap_free(sample->buffers);
         heap_free(sample);
@@ -704,6 +705,7 @@ static const IMFSampleVtbl samplevtbl =
 HRESULT WINAPI MFCreateSample(IMFSample **sample)
 {
     struct sample *object;
+    HRESULT hr;
 
     TRACE("%p.\n", sample);
 
@@ -711,7 +713,12 @@ HRESULT WINAPI MFCreateSample(IMFSample **sample)
     if (!object)
         return E_OUTOFMEMORY;
 
-    init_attribute_object(&object->attributes, 0);
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
+
     object->IMFSample_iface.lpVtbl = &samplevtbl;
     InitializeCriticalSection(&object->cs);
 
