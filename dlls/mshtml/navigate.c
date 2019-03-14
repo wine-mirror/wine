@@ -590,22 +590,22 @@ static ULONG WINAPI BindCallbackRedirect_Release(IBindCallbackRedirect *iface)
 static HRESULT WINAPI BindCallbackRedirect_Redirect(IBindCallbackRedirect *iface, const WCHAR *url, VARIANT_BOOL *vbCancel)
 {
     BSCallback *This = impl_from_IBindCallbackRedirect(iface);
-    HTMLDocumentObj *doc_obj;
+    GeckoBrowser *browser;
     BOOL cancel = FALSE;
     BSTR frame_name = NULL;
     HRESULT hres = S_OK;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(url), vbCancel);
 
-    if(This->window && This->window->base.outer_window && (doc_obj = This->window->base.outer_window->doc_obj)
-       && doc_obj->doc_object_service) {
-        if(This->window->base.outer_window != doc_obj->basedoc.window) {
+    if(This->window && This->window->base.outer_window && (browser = This->window->base.outer_window->browser)
+       && browser->doc->doc_object_service) {
+        if(is_main_content_window(This->window->base.outer_window)) {
             hres = IHTMLWindow2_get_name(&This->window->base.IHTMLWindow2_iface, &frame_name);
             if(FAILED(hres))
                 return hres;
         }
 
-        hres = IDocObjectService_FireBeforeNavigate2(doc_obj->doc_object_service, NULL, url, 0x40,
+        hres = IDocObjectService_FireBeforeNavigate2(browser->doc->doc_object_service, NULL, url, 0x40,
                                                      frame_name, NULL, 0, NULL, TRUE, &cancel);
         SysFreeString(frame_name);
     }
