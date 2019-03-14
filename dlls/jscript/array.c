@@ -49,6 +49,7 @@ static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
 static const WCHAR unshiftW[] = {'u','n','s','h','i','f','t',0};
 static const WCHAR indexOfW[] = {'i','n','d','e','x','O','f',0};
+static const WCHAR mapW[] = {'m','a','p',0};
 
 static const WCHAR default_separatorW[] = {',',0};
 
@@ -1044,6 +1045,67 @@ static HRESULT Array_indexOf(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
     return S_OK;
 }
 
+static HRESULT Array_map(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    IDispatch *context_this = NULL, *callback;
+    jsval_t callback_args[3], mapped_value;
+    jsdisp_t *jsthis, *array;
+    DWORD length, k;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = get_length(ctx, vthis, &jsthis, &length);
+    if(FAILED(hres)) {
+        FIXME("Could not get length\n");
+        return hres;
+    }
+
+    /* Fixme check IsCallable */
+    if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
+        FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
+        return E_INVALIDARG;
+    }
+    callback = get_object(argv[0]);
+
+    if(argc > 1) {
+        if(!is_object_instance(argv[1]) || !get_object(argv[1])) {
+            FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
+            return E_NOTIMPL;
+        }
+        context_this = get_object(argv[1]);
+    }
+
+    hres = create_array(ctx, length, &array);
+    if(FAILED(hres))
+        return hres;
+
+    for(k = 0; k < length; k++) {
+        hres = jsdisp_get_idx(jsthis, k, &callback_args[0]);
+        if(hres == DISP_E_UNKNOWNNAME)
+            continue;
+        if(FAILED(hres))
+            break;
+
+        callback_args[1] = jsval_number(k);
+        callback_args[2] = jsval_obj(jsthis);
+        hres = disp_call_value(ctx, callback, context_this, DISPATCH_METHOD, 3, callback_args, &mapped_value);
+        jsval_release(callback_args[0]);
+        if(FAILED(hres))
+            break;
+
+        hres = jsdisp_propput_idx(array, k, mapped_value);
+        if(FAILED(hres))
+            break;
+    }
+
+    if(SUCCEEDED(hres) && r)
+        *r = jsval_obj(array);
+    else
+        jsdisp_release(array);
+    return hres;
+}
+
 /* ECMA-262 3rd Edition    15.4.4.13 */
 static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
@@ -1146,6 +1208,7 @@ static const builtin_prop_t Array_props[] = {
     {indexOfW,               Array_indexOf,              PROPF_METHOD|PROPF_ES5|1},
     {joinW,                  Array_join,                 PROPF_METHOD|1},
     {lengthW,                NULL,0,                     Array_get_length, Array_set_length},
+    {mapW,                   Array_map,                  PROPF_METHOD|PROPF_ES5|1},
     {popW,                   Array_pop,                  PROPF_METHOD},
     {pushW,                  Array_push,                 PROPF_METHOD|1},
     {reverseW,               Array_reverse,              PROPF_METHOD},

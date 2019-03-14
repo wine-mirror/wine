@@ -130,6 +130,50 @@ function test_isArray() {
     next_test();
 }
 
+function test_array_map() {
+    var calls, m, arr, ctx;
+
+    /* basic map call with context */
+    calls = "";
+    arr = [1,2,3];
+    ctx = {};
+    m = arr.map(function(x, i, a) {
+        ok(this === ctx, "this != ctx");
+        ok(i === x - 1, "i = " + i);
+        ok(a === arr, "a != arr");
+        calls += x + ",";
+        return x * 2;
+    }, ctx);
+    ok(calls === "1,2,3,", "calls = " + calls);
+    ok(m.join() === "2,4,6", "m = " + m);
+
+    /* non-array object as this argument */
+    calls = "";
+    arr = { 1: "one", 2: "two", 3: "three", length: 3 };
+    m = Array.prototype.map.call(arr, function(x, i) {
+        calls += i + ":" + x + ",";
+        return x + "!";
+    });
+    ok(calls === "1:one,2:two,", "calls = " + calls);
+    ok(m.join() === ",one!,two!", "m = " + m);
+    ok(!("0" in m), "0 is in m");
+
+    /* mutate array in callback */
+    calls = "";
+    arr = [1,2,3];
+    m = Array.prototype.map.call(arr, function(x, i) {
+        calls += i + ":" + x + ",";
+        for(var j = i; j < arr.length; j++)
+            arr[j]++;
+        arr.push(i * i);
+        return x - 1;
+    });
+    ok(calls === "0:1,1:3,2:5,", "calls = " + calls);
+    ok(m.join() === "0,2,4", "m = " + m);
+
+    next_test();
+}
+
 function test_identifier_keywords() {
     var o = {
         if: 1,
@@ -625,6 +669,7 @@ var tests = [
     test_indexOf,
     test_array_forEach,
     test_isArray,
+    test_array_map,
     test_identifier_keywords,
     test_getOwnPropertyDescriptor,
     test_defineProperty,
