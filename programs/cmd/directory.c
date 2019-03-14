@@ -337,7 +337,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
     /* Work out the number of columns */
     WINE_TRACE("%d entries, maxwidth=%d, widest=%d\n", entry_count, max_width, widest);
     if (wide || orderByCol) {
-      numCols = max(1, (int)max_width / widest);
+      numCols = max(1, max_width / widest);
       numRows = entry_count / numCols;
       if (entry_count % numCols) numRows++;
     } else {
