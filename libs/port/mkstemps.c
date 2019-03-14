@@ -65,7 +65,6 @@ mkstemps (
   static const char letters[]
     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   static unsigned __int64 value;
-  struct timeval tv;
   char *XXXXXX;
   size_t len;
   int count;
@@ -80,9 +79,14 @@ mkstemps (
 
   XXXXXX = &template[len - 6 - suffix_len];
 
-  /* Get some more or less random data.  */
-  gettimeofday (&tv, NULL);
-  value += ((unsigned __int64) tv.tv_usec << 16) ^ tv.tv_sec ^ getpid ();
+#ifndef _WIN32
+  {
+      struct timeval tv;
+      gettimeofday( &tv, NULL );
+      value += ((unsigned __int64) tv.tv_usec << 16) ^ tv.tv_sec;
+  }
+#endif
+  value += getpid();
 
   for (count = 0; count < TMP_MAX; ++count)
     {
