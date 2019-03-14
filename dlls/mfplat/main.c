@@ -34,6 +34,7 @@
 #include "wine/list.h"
 
 #include "mfplat_private.h"
+#include "mfreadwrite.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -532,6 +533,62 @@ HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG sr
     return S_OK;
 }
 
+struct guid_def
+{
+    const GUID *guid;
+    const char *name;
+};
+
+static int debug_compare_guid(const void *a, const void *b)
+{
+    const GUID *guid = a;
+    const struct guid_def *guid_def = b;
+    return memcmp(guid, guid_def->guid, sizeof(*guid));
+}
+
+static const char *debugstr_attr(const GUID *guid)
+{
+    static const struct guid_def guid_defs[] =
+    {
+#define X(g) { &(g), #g }
+        X(MF_READWRITE_MMCSS_CLASS),
+        X(MF_SINK_WRITER_ENCODER_CONFIG),
+        X(MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS),
+        X(MF_MT_PIXEL_ASPECT_RATIO),
+        X(MF_MT_AVG_BITRATE),
+        X(MF_MT_ALL_SAMPLES_INDEPENDENT),
+        X(MF_MT_FRAME_SIZE),
+        X(MF_SINK_WRITER_ASYNC_CALLBACK),
+        X(MF_MT_FRAME_RATE_RANGE_MAX),
+        X(MF_MT_USER_DATA),
+        X(MF_READWRITE_DISABLE_CONVERTERS),
+        X(MF_READWRITE_MMCSS_PRIORITY_AUDIO),
+        X(MF_BYTESTREAM_ORIGIN_NAME),
+        X(MF_BYTESTREAM_CONTENT_TYPE),
+        X(MF_BYTESTREAM_DURATION),
+        X(MF_BYTESTREAM_LAST_MODIFIED_TIME),
+        X(MF_MT_FRAME_RATE_RANGE_MIN),
+        X(MF_BYTESTREAM_IFO_FILE_URI),
+        X(MF_BYTESTREAM_DLNA_PROFILE_ID),
+        X(MF_MT_MAJOR_TYPE),
+        X(MF_MT_SUBTYPE),
+        X(MF_SINK_WRITER_D3D_MANAGER),
+        X(MF_MT_INTERLACE_MODE),
+        X(MF_READWRITE_MMCSS_PRIORITY),
+        X(MF_SINK_WRITER_DISABLE_THROTTLING),
+        X(MF_READWRITE_D3D_OPTIONAL),
+        X(MF_READWRITE_MMCSS_CLASS_AUDIO),
+        X(MF_MT_FRAME_RATE),
+#undef X
+    };
+    struct guid_def *ret = NULL;
+
+    if (guid)
+        ret = bsearch(guid, guid_defs, ARRAY_SIZE(guid_defs), sizeof(*guid_defs), debug_compare_guid);
+
+    return ret ? wine_dbg_sprintf("%s", ret->name) : wine_dbgstr_guid(guid);
+}
+
 static inline mfattributes *impl_from_IMFAttributes(IMFAttributes *iface)
 {
     return CONTAINING_RECORD(iface, mfattributes, IMFAttributes_iface);
@@ -586,27 +643,21 @@ static ULONG WINAPI mfattributes_Release(IMFAttributes *iface)
 
 static HRESULT WINAPI mfattributes_GetItem(IMFAttributes *iface, REFGUID key, PROPVARIANT *value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_GetItemType(IMFAttributes *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), type);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), type);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p, %p\n", This, debugstr_guid(key), value, result);
+    FIXME("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
 
     return E_NOTIMPL;
 }
@@ -623,45 +674,35 @@ static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *
 
 static HRESULT WINAPI mfattributes_GetUINT32(IMFAttributes *iface, REFGUID key, UINT32 *value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_GetUINT64(IMFAttributes *iface, REFGUID key, UINT64 *value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_GetDouble(IMFAttributes *iface, REFGUID key, double *value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_GetGUID(IMFAttributes *iface, REFGUID key, GUID *value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), value);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_GetStringLength(IMFAttributes *iface, REFGUID key, UINT32 *length)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), length);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), length);
 
     return E_NOTIMPL;
 }
@@ -669,9 +710,7 @@ static HRESULT WINAPI mfattributes_GetStringLength(IMFAttributes *iface, REFGUID
 static HRESULT WINAPI mfattributes_GetString(IMFAttributes *iface, REFGUID key, WCHAR *value,
                 UINT32 size, UINT32 *length)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p, %d, %p\n", This, debugstr_guid(key), value, size, length);
+    FIXME("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), value, size, length);
 
     return E_NOTIMPL;
 }
@@ -679,18 +718,14 @@ static HRESULT WINAPI mfattributes_GetString(IMFAttributes *iface, REFGUID key, 
 static HRESULT WINAPI mfattributes_GetAllocatedString(IMFAttributes *iface, REFGUID key,
                                       WCHAR **value, UINT32 *length)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p, %p\n", This, debugstr_guid(key), value, length);
+    FIXME("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_GetBlobSize(IMFAttributes *iface, REFGUID key, UINT32 *size)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), size);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), size);
 
     return E_NOTIMPL;
 }
@@ -698,45 +733,35 @@ static HRESULT WINAPI mfattributes_GetBlobSize(IMFAttributes *iface, REFGUID key
 static HRESULT WINAPI mfattributes_GetBlob(IMFAttributes *iface, REFGUID key, UINT8 *buf,
                 UINT32 bufsize, UINT32 *blobsize)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p, %d, %p\n", This, debugstr_guid(key), buf, bufsize, blobsize);
+    FIXME("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_GetAllocatedBlob(IMFAttributes *iface, REFGUID key, UINT8 **buf, UINT32 *size)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p, %p\n", This, debugstr_guid(key), buf, size);
+    FIXME("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_GetUnknown(IMFAttributes *iface, REFGUID key, REFIID riid, void **ppv)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %s, %p\n", This, debugstr_guid(key), debugstr_guid(riid), ppv);
+    FIXME("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), ppv);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_SetItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT Value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), Value);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), Value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_DeleteItem(IMFAttributes *iface, REFGUID key)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s\n", This, debugstr_guid(key));
+    FIXME("%p, %s.\n", iface, debugstr_attr(key));
 
     return E_NOTIMPL;
 }
@@ -752,63 +777,49 @@ static HRESULT WINAPI mfattributes_DeleteAllItems(IMFAttributes *iface)
 
 static HRESULT WINAPI mfattributes_SetUINT32(IMFAttributes *iface, REFGUID key, UINT32 value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %d\n", This, debugstr_guid(key), value);
+    FIXME("%p, %s, %d.\n", iface, debugstr_attr(key), value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_SetUINT64(IMFAttributes *iface, REFGUID key, UINT64 value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %s\n", This, debugstr_guid(key), wine_dbgstr_longlong(value));
+    FIXME("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_SetDouble(IMFAttributes *iface, REFGUID key, double value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %f\n", This, debugstr_guid(key), value);
+    FIXME("%p, %s, %f.\n", iface, debugstr_attr(key), value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_SetGUID(IMFAttributes *iface, REFGUID key, REFGUID value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %s\n", This, debugstr_guid(key), debugstr_guid(value));
+    FIXME("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_SetString(IMFAttributes *iface, REFGUID key, const WCHAR *value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %s\n", This, debugstr_guid(key), debugstr_w(value));
+    FIXME("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_SetBlob(IMFAttributes *iface, REFGUID key, const UINT8 *buf, UINT32 size)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p, %d\n", This, debugstr_guid(key), buf, size);
+    FIXME("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfattributes_SetUnknown(IMFAttributes *iface, REFGUID key, IUnknown *unknown)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-
-    FIXME("%p, %s, %p\n", This, debugstr_guid(key), unknown);
+    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
 
     return E_NOTIMPL;
 }
