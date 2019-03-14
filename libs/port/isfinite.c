@@ -21,7 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifndef HAVE_ISFINITE
+#if !defined(HAVE_ISFINITE) && !defined(isfinite)
 
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>

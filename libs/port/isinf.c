@@ -21,7 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifndef HAVE_ISINF
+#if !defined(HAVE_ISINF) && !defined(isinf)
 
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>

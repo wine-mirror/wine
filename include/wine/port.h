@@ -86,6 +86,30 @@ typedef int ssize_t;
 #  endif
 #endif
 
+#ifndef HAVE_ISFINITE
+int isfinite(double x);
+#endif
+
+#ifndef HAVE_ISINF
+int isinf(double x);
+#endif
+
+#ifndef HAVE_ISNAN
+int isnan(double x);
+#endif
+
+/* Process creation flags */
+#ifndef _P_WAIT
+# define _P_WAIT    0
+# define _P_NOWAIT  1
+# define _P_OVERLAY 2
+# define _P_NOWAITO 3
+# define _P_DETACH  4
+#endif
+#ifndef HAVE__SPAWNVP
+extern int _spawnvp(int mode, const char *cmdname, const char * const argv[]);
+#endif
+
 #endif  /* _WIN32 */
 
 /****************************************************************
@@ -237,18 +261,6 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 int ffs( int x );
 #endif
 
-#ifndef HAVE_ISFINITE
-int isfinite(double x);
-#endif
-
-#ifndef HAVE_ISINF
-int isinf(double x);
-#endif
-
-#ifndef HAVE_ISNAN
-int isnan(double x);
-#endif
-
 #ifndef HAVE_LLRINT
 __int64 llrint(double x);
 #endif
@@ -322,18 +334,6 @@ int usleep (unsigned int useconds);
 #endif /* !defined(HAVE_USLEEP) */
 
 extern int mkstemps(char *template, int suffix_len);
-
-/* Process creation flags */
-#ifndef _P_WAIT
-# define _P_WAIT    0
-# define _P_NOWAIT  1
-# define _P_OVERLAY 2
-# define _P_NOWAITO 3
-# define _P_DETACH  4
-#endif
-#ifndef HAVE__SPAWNVP
-extern int _spawnvp(int mode, const char *cmdname, const char * const argv[]);
-#endif
 
 /* Interlocked functions */
 

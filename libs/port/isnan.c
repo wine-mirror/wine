@@ -21,7 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifndef HAVE_ISNAN
+#if !defined(HAVE_ISNAN) && !defined(isnan)
 
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
