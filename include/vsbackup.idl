@@ -63,7 +63,7 @@ interface IVssBackupComponents : IUnknown
     HRESULT GetWriterStatus([in] UINT index, [out] VSS_ID *instance, [out] VSS_ID *id, [out] BSTR *writer,
             [out] VSS_WRITER_STATE *status, [out] HRESULT *failure);
     HRESULT SetBackupSucceeded([in] VSS_ID instance, [in] VSS_ID id, [in] VSS_COMPONENT_TYPE ct,
-            [in] LPCWSTR path, [in] LPCWSTR name, [in] BOOL succeded);
+            [in] LPCWSTR path, [in] LPCWSTR name, [in] BOOL succeeded);
     HRESULT SetBackupOptions([in] VSS_ID id, [in] VSS_COMPONENT_TYPE ct, [in] LPCWSTR path,
             [in] LPCWSTR name, [in] LPCWSTR options);
     HRESULT SetSelectedForRestore([in] VSS_ID id, [in] VSS_COMPONENT_TYPE ct, [in] LPCWSTR path,
