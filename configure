@@ -15600,11 +15600,11 @@ LIBS="-lvkd3d $VKD3D_LIBS $LIBS"
 #ifdef __cplusplus
 extern "C"
 #endif
-char vkd3d_create_device ();
+char vkd3d_get_dxgi_format ();
 int
 main ()
 {
-return vkd3d_create_device ();
+return vkd3d_get_dxgi_format ();
   ;
   return 0;
 }
@@ -15644,9 +15644,9 @@ test -z "$VKD3D_LIBS" || VKD3D_LIBS=`echo " $VKD3D_LIBS" | sed 's/ -L\([^/]\)/ -
 fi
 if test "x$ac_cv_lib_soname_vkd3d" = "x"; then :
   case "x$with_vkd3d" in
-  x)   as_fn_append wine_notices "|vkd3d ${notice_platform}development files not found, Direct3D 12 won't be supported." ;;
+  x)   as_fn_append wine_notices "|vkd3d ${notice_platform}development files not found (or too old), Direct3D 12 won't be supported." ;;
   xno) ;;
-  *)   as_fn_error $? "vkd3d ${notice_platform}development files not found, Direct3D 12 won't be supported.
+  *)   as_fn_error $? "vkd3d ${notice_platform}development files not found (or too old), Direct3D 12 won't be supported.
 This is an error since --with-vkd3d was requested." "$LINENO" 5 ;;
 esac
 

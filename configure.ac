@@ -1873,10 +1873,10 @@ dnl **** Check for vkd3d ****
 if test "x$with_vkd3d" != "xno"
 then
     WINE_PACKAGE_FLAGS(VKD3D,[libvkd3d],,,,
-        [WINE_CHECK_SONAME(vkd3d,vkd3d_create_device,,,[$VKD3D_LIBS])])
+        [WINE_CHECK_SONAME(vkd3d,vkd3d_get_dxgi_format,,,[$VKD3D_LIBS])])
 fi
 WINE_NOTICE_WITH(vkd3d,[test "x$ac_cv_lib_soname_vkd3d" = "x"],
-                 [vkd3d ${notice_platform}development files not found, Direct3D 12 won't be supported.])
+                 [vkd3d ${notice_platform}development files not found (or too old), Direct3D 12 won't be supported.])
 test "x$ac_cv_lib_soname_vkd3d" != "x" || enable_d3d12=${enable_d3d12:-no}
 
 dnl **** Check for gcc specific options ****
