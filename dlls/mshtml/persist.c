@@ -115,9 +115,9 @@ void set_current_mon(HTMLOuterWindow *This, IMoniker *mon, DWORD flags)
     HRESULT hres;
 
     if(This->mon) {
-        if(This->doc_obj && !(flags & (BINDING_REPLACE|BINDING_REFRESH))) {
-            if(This == This->doc_obj->basedoc.window)
-                notify_travellog_update(This->doc_obj);
+        if(This->browser && !(flags & (BINDING_REPLACE|BINDING_REFRESH))) {
+            if(is_main_content_window(This))
+                notify_travellog_update(This->browser->doc);
             else
                 TRACE("Skipping travellog update for frame navigation.\n");
         }
@@ -351,8 +351,8 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
     IUri *uri;
     HRESULT hres;
 
-    if(window->doc_obj && window->doc_obj->basedoc.window == window)
-        doc_obj = window->doc_obj;
+    if(is_main_content_window(window))
+        doc_obj = window->browser->doc;
 
     hres = IMoniker_GetDisplayName(mon, pibc, NULL, &url);
     if(FAILED(hres)) {
@@ -436,8 +436,8 @@ static void notif_readystate(HTMLOuterWindow *window)
 
     window->readystate_pending = FALSE;
 
-    if(window->doc_obj && window->doc_obj->basedoc.window == window)
-        call_property_onchanged(&window->doc_obj->basedoc.cp_container, DISPID_READYSTATE);
+    if(is_main_content_window(window))
+        call_property_onchanged(&window->browser->doc->basedoc.cp_container, DISPID_READYSTATE);
 
     hres = create_document_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, &event);
     if(SUCCEEDED(hres)) {

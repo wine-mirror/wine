@@ -127,7 +127,7 @@ static void detach_inner_window(HTMLInnerWindow *window)
         IHTMLWindow2_Release(&child->base.IHTMLWindow2_iface);
     }
 
-    if(outer_window && outer_window->doc_obj && outer_window == outer_window->doc_obj->basedoc.window)
+    if(outer_window && is_main_content_window(outer_window))
         window->doc->basedoc.cp_container.forward_container = NULL;
 
     if(doc)
