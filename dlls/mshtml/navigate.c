@@ -2404,7 +2404,10 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
 
     TRACE("%s\n", debugstr_w(display_uri));
 
-    if(window->doc_obj && window->doc_obj->webbrowser) {
+    if(!window->browser)
+        return E_UNEXPECTED;
+
+    if(window->browser->doc->webbrowser) {
         DWORD post_data_len = request_data ? request_data->post_data_len : 0;
         void *post_data = post_data_len ? request_data->post_data : NULL;
         const WCHAR *headers = request_data ? request_data->headers : NULL;
@@ -2413,13 +2416,13 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
             BSTR frame_name = NULL;
             BOOL cancel = FALSE;
 
-            if(window != window->doc_obj->basedoc.window) {
+            if(!is_main_content_window(window)) {
                 hres = IHTMLWindow2_get_name(&window->base.IHTMLWindow2_iface, &frame_name);
                 if(FAILED(hres))
                     return hres;
             }
 
-            hres = IDocObjectService_FireBeforeNavigate2(window->doc_obj->doc_object_service, NULL, display_uri, 0x40,
+            hres = IDocObjectService_FireBeforeNavigate2(window->browser->doc->doc_object_service, NULL, display_uri, 0x40,
                     frame_name, post_data, post_data_len ? post_data_len+1 : 0, headers, TRUE, &cancel);
             SysFreeString(frame_name);
             if(SUCCEEDED(hres) && cancel) {
@@ -2428,11 +2431,11 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
             }
         }
 
-        if(window == window->doc_obj->basedoc.window)
+        if(is_main_content_window(window))
             return super_navigate(window, uri, flags, headers, post_data, post_data_len);
     }
 
-    if(window->doc_obj && window == window->doc_obj->basedoc.window) {
+    if(is_main_content_window(window)) {
         BOOL cancel;
 
         hres = hlink_frame_navigate(&window->base.inner_window->doc->basedoc, display_uri, NULL, 0, &cancel);
@@ -2478,10 +2481,10 @@ static HRESULT translate_uri(HTMLOuterWindow *window, IUri *orig_uri, BSTR *ret_
     if(FAILED(hres))
         return hres;
 
-    if(window->doc_obj && window->doc_obj->hostui) {
+    if(window->browser->doc->hostui) {
         OLECHAR *translated_url = NULL;
 
-        hres = IDocHostUIHandler_TranslateUrl(window->doc_obj->hostui, 0, display_uri,
+        hres = IDocHostUIHandler_TranslateUrl(window->browser->doc->hostui, 0, display_uri,
                 &translated_url);
         if(hres == S_OK && translated_url) {
             TRACE("%08x %s -> %s\n", hres, debugstr_w(display_uri), debugstr_w(translated_url));
