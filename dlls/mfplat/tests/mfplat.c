@@ -494,29 +494,31 @@ static void test_MFCreateMediaEvent(void)
     IMFMediaEvent_Release(mediaevent);
 }
 
+#define CHECK_ATTR_COUNT(obj, expected) check_attr_count(obj, expected, __LINE__)
+static void check_attr_count(IMFAttributes* obj, UINT32 expected, int line)
+{
+    UINT32 count = expected + 1;
+    HRESULT hr = IMFAttributes_GetCount(obj, &count);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get attributes count, hr %#x.\n", hr);
+    ok_(__FILE__, line)(count == expected, "Unexpected count %u, expected %u.\n", count, expected);
+}
+
 static void test_MFCreateAttributes(void)
 {
     PROPVARIANT propvar, ret_propvar;
     IMFAttributes *attributes;
-    UINT32 count, value;
     UINT64 value64;
+    UINT32 value;
     HRESULT hr;
     GUID key;
 
     hr = MFCreateAttributes( &attributes, 3 );
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    count = 88;
-    hr = IMFAttributes_GetCount(attributes, &count);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count == 0, "got %d\n", count);
-
+    CHECK_ATTR_COUNT(attributes, 0);
     hr = IMFAttributes_SetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 123);
     ok(hr == S_OK, "Failed to set UINT32 value, hr %#x.\n", hr);
-
-    hr = IMFAttributes_GetCount(attributes, &count);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(count == 1, "got %d\n", count);
+    CHECK_ATTR_COUNT(attributes, 1);
 
     value = 0xdeadbeef;
     hr = IMFAttributes_GetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, &value);
@@ -530,6 +532,7 @@ static void test_MFCreateAttributes(void)
 
     hr = IMFAttributes_SetUINT64(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 65536);
     ok(hr == S_OK, "Failed to set UINT64 value, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 1);
 
     hr = IMFAttributes_GetUINT64(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, &value64);
     ok(hr == S_OK, "Failed to get UINT64 value, hr %#x.\n", hr);
@@ -557,6 +560,7 @@ static void test_MFCreateAttributes(void)
     ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
     ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
     PropVariantClear(&ret_propvar);
+    CHECK_ATTR_COUNT(attributes, 1);
 
     PropVariantInit(&ret_propvar);
     ret_propvar.vt = MF_ATTRIBUTE_STRING;
@@ -581,6 +585,7 @@ static void test_MFCreateAttributes(void)
     ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
     PropVariantClear(&ret_propvar);
     PropVariantClear(&propvar);
+    CHECK_ATTR_COUNT(attributes, 1);
 
     PropVariantInit(&propvar);
     propvar.vt = VT_I4;
@@ -604,9 +609,11 @@ static void test_MFCreateAttributes(void)
 
     hr = IMFAttributes_DeleteItem(attributes, &DUMMY_GUID2);
     ok(hr == S_OK, "Failed to delete item, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 2);
 
     hr = IMFAttributes_DeleteItem(attributes, &DUMMY_GUID2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 2);
 
     hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID3, &ret_propvar);
     ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);

@@ -993,14 +993,15 @@ static HRESULT WINAPI mfattributes_UnlockStore(IMFAttributes *iface)
 
 static HRESULT WINAPI mfattributes_GetCount(IMFAttributes *iface, UINT32 *items)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
 
-    FIXME("%p, %p\n", This, items);
+    TRACE("%p, %p.\n", iface, items);
 
-    if(items)
-        *items = 0;
+    EnterCriticalSection(&attributes->cs);
+    *items = attributes->count;
+    LeaveCriticalSection(&attributes->cs);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI mfattributes_GetItemByIndex(IMFAttributes *iface, UINT32 index, GUID *key, PROPVARIANT *value)
