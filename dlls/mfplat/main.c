@@ -671,7 +671,7 @@ static HRESULT attributes_get_item(struct attributes *attributes, const GUID *ke
     attribute = attributes_find_item(attributes, key, NULL);
     if (attribute)
     {
-        if (attribute->value.vt == value->vt)
+        if (attribute->value.vt == value->vt && !(value->vt == VT_UNKNOWN && !attribute->value.u.punkVal))
             hr = PropVariantCopy(value, &attribute->value);
         else
             hr = MF_E_INVALIDTYPE;
@@ -866,9 +866,19 @@ static HRESULT WINAPI mfattributes_GetAllocatedBlob(IMFAttributes *iface, REFGUI
 
 static HRESULT WINAPI mfattributes_GetUnknown(IMFAttributes *iface, REFGUID key, REFIID riid, void **ppv)
 {
-    FIXME("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), ppv);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), ppv);
+
+    PropVariantInit(&attrval);
+    attrval.vt = VT_UNKNOWN;
+    hr = attributes_get_item(attributes, key, &attrval);
+    if (SUCCEEDED(hr))
+        hr = IUnknown_QueryInterface(attrval.u.punkVal, riid, ppv);
+    PropVariantClear(&attrval);
+    return hr;
 }
 
 static HRESULT attributes_set_item(struct attributes *attributes, REFGUID key, REFPROPVARIANT value)
@@ -1023,9 +1033,14 @@ static HRESULT WINAPI mfattributes_SetBlob(IMFAttributes *iface, REFGUID key, co
 
 static HRESULT WINAPI mfattributes_SetUnknown(IMFAttributes *iface, REFGUID key, IUnknown *unknown)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+
+    attrval.vt = VT_UNKNOWN;
+    attrval.u.punkVal = unknown;
+    return attributes_set_item(attributes, key, &attrval);
 }
 
 static HRESULT WINAPI mfattributes_LockStore(IMFAttributes *iface)

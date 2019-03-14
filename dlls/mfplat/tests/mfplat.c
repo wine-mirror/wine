@@ -511,6 +511,7 @@ static void test_MFCreateAttributes(void)
     UINT32 value, string_length;
     IMFAttributes *attributes;
     double double_value;
+    IUnknown *unk_value;
     WCHAR bufferW[256];
     UINT64 value64;
     WCHAR *string;
@@ -688,6 +689,30 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_GetStringLength(attributes, &GUID_NULL, &string_length);
     ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
     ok(string_length == 0xdeadbeef, "Unexpected length %u.\n", string_length);
+
+    /* VT_UNKNOWN */
+    hr = IMFAttributes_SetUnknown(attributes, &DUMMY_GUID2, (IUnknown *)attributes);
+    ok(hr == S_OK, "Failed to set value, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 4);
+
+    hr = IMFAttributes_GetUnknown(attributes, &DUMMY_GUID2, &IID_IUnknown, (void **)&unk_value);
+    ok(hr == S_OK, "Failed to get value, hr %#x.\n", hr);
+    IUnknown_Release(unk_value);
+
+    hr = IMFAttributes_GetUnknown(attributes, &DUMMY_GUID2, &IID_IMFAttributes, (void **)&unk_value);
+    ok(hr == S_OK, "Failed to get value, hr %#x.\n", hr);
+    IUnknown_Release(unk_value);
+
+    hr = IMFAttributes_GetUnknown(attributes, &DUMMY_GUID2, &IID_IStream, (void **)&unk_value);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFAttributes_SetUnknown(attributes, &DUMMY_CLSID, NULL);
+    ok(hr == S_OK, "Failed to set value, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 5);
+
+    unk_value = NULL;
+    hr = IMFAttributes_GetUnknown(attributes, &DUMMY_CLSID, &IID_IUnknown, (void **)&unk_value);
+    ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
 
     IMFAttributes_Release(attributes);
 }
