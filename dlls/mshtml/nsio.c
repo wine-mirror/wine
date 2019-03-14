@@ -1063,17 +1063,17 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             cancel = TRUE;
         }
 
-        if(window == window->doc_obj->basedoc.window) {
+        if(is_main_content_window(window)) {
             if(!This->uri->channel_bsc) {
                 /* top window navigation initiated by Gecko */
-                nsres = before_async_open(This, window->doc_obj->nscontainer, &cancel);
+                nsres = before_async_open(This, window->browser, &cancel);
                 if(NS_SUCCEEDED(nsres)  && cancel) {
                     TRACE("canceled\n");
                     nsres = NS_BINDING_ABORTED;
                 }
-            }else if(window->doc_obj->mime) {
+            }else if(window->browser->doc->mime) {
                 heap_free(This->content_type);
-                This->content_type = heap_strdupWtoA(window->doc_obj->mime);
+                This->content_type = heap_strdupWtoA(window->browser->doc->mime);
             }
         }
     }
