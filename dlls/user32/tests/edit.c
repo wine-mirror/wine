@@ -1451,7 +1451,6 @@ static void test_margins_usefontinfo(UINT charset)
     HDC hdc;
     TEXTMETRICW tm;
     SIZE size;
-    BOOL cjk_charset;
     LOGFONTA lf;
     HFONT hfont;
     RECT rect;
@@ -1486,29 +1485,14 @@ static void test_margins_usefontinfo(UINT charset)
         return;
     }
     expect = MAKELONG(size.cx / 2, size.cx / 2);
-    cjk_charset = is_cjk_charset(hdc);
-
     hfont = SelectObject(hdc, hfont);
     ReleaseDC(hwnd, hdc);
 
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     ok(margins == 0, "got %x\n", margins);
-    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
-    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    if (!cjk_charset)
-        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
-    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
-    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    if (!cjk_charset)
-        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
-    else
-    {
-        ok(HIWORD(margins) <= HIWORD(expect), "%d: got %d\n", charset, HIWORD(margins));
-        ok(LOWORD(margins) <= LOWORD(expect), "%d: got %d\n", charset, LOWORD(margins));
-        expect = margins;
-    }
+    expect = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     DestroyWindow(hwnd);
 
     threshold = HIWORD(expect) + LOWORD(expect) + size.cx * 2;
@@ -1560,6 +1544,74 @@ static void test_margins_usefontinfo(UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     ok(margins == empty_expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+    DestroyWindow(hwnd);
+
+    DeleteObject(hfont);
+}
+
+static void test_margins_default(UINT charset)
+{
+    HWND hwnd;
+    HDC hdc;
+    TEXTMETRICW tm;
+    SIZE size;
+    BOOL cjk_charset;
+    LOGFONTA lf;
+    HFONT hfont;
+    RECT rect;
+    INT margins, expect;
+    const UINT small_margins = MAKELONG(1, 5);
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = -11;
+    lf.lfWeight = FW_NORMAL;
+    lf.lfCharSet = charset;
+    strcpy(lf.lfFaceName, "Tahoma");
+
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != NULL, "got %p\n", hfont);
+
+    /* Big window rectangle */
+    hwnd = CreateWindowExA(0, "Edit", "A", WS_POPUP, 0, 0, 5000, 1000, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "got %p\n", hwnd);
+    GetClientRect(hwnd, &rect);
+    ok(!IsRectEmpty(&rect), "got rect %s\n", wine_dbgstr_rect(&rect));
+
+    hdc = GetDC(hwnd);
+    hfont = SelectObject(hdc, hfont);
+    size.cx = GdiGetCharDimensions( hdc, &tm, &size.cy );
+    if ((charset != tm.tmCharSet && charset != DEFAULT_CHARSET) ||
+        !(tm.tmPitchAndFamily & (TMPF_TRUETYPE | TMPF_VECTOR))) {
+        skip("%s for charset %d isn't available\n", lf.lfFaceName, charset);
+        hfont = SelectObject(hdc, hfont);
+        ReleaseDC(hwnd, hdc);
+        DestroyWindow(hwnd);
+        DeleteObject(hfont);
+        return;
+    }
+    expect = MAKELONG(size.cx / 2, size.cx / 2);
+    cjk_charset = is_cjk_charset(hdc);
+
+    hfont = SelectObject(hdc, hfont);
+    ReleaseDC(hwnd, hdc);
+
+    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    ok(margins == 0, "got %x\n", margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
+    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    if (!cjk_charset)
+        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
+    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    if (!cjk_charset)
+        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+    else
+    {
+        ok(HIWORD(margins) <= HIWORD(expect), "%d: got %d\n", charset, HIWORD(margins));
+        ok(LOWORD(margins) <= LOWORD(expect), "%d: got %d\n", charset, LOWORD(margins));
+    }
     DestroyWindow(hwnd);
 
     DeleteObject(hfont);
@@ -1639,6 +1691,13 @@ static void test_margins(void)
        but not by < Win 8 and Win 10. */
 
     test_margins_usefontinfo(DEFAULT_CHARSET);
+
+    test_margins_default(ANSI_CHARSET);
+    test_margins_default(EASTEUROPE_CHARSET);
+
+    test_margins_default(SHIFTJIS_CHARSET);
+    test_margins_default(HANGUL_CHARSET);
+    test_margins_default(CHINESEBIG5_CHARSET);
 }
 
 static INT CALLBACK find_font_proc(const LOGFONTA *elf, const TEXTMETRICA *ntm, DWORD type, LPARAM lParam)
