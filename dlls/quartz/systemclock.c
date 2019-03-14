@@ -122,7 +122,7 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
       SetEvent(it->hEvent);
       /** ... and Release it */
       QUARTZ_RemoveAviseEntryFromQueue(This, it);
-      CoTaskMemFree(it);
+      heap_free(it);
       it = nextit;
     }
     if (NULL != it) timeOut = (DWORD) ((it->rtBaseTime + it->rtIntervalTime) - curTime) / (REFERENCE_TIME)10000;
@@ -234,7 +234,7 @@ static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
     }
     This->safe.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->safe);
-    CoTaskMemFree(This);
+    heap_free(This);
   }
   return ref;
 }
@@ -279,11 +279,9 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock* iface, REFEREN
   if (NULL == pdwAdviseCookie) {
     return E_POINTER;
   }
-  pEntry = CoTaskMemAlloc(sizeof(SystemClockAdviseEntry));
-  if (NULL == pEntry) {
+
+  if (!(pEntry = heap_alloc_zero(sizeof(*pEntry))))
     return E_OUTOFMEMORY;
-  }
-  ZeroMemory(pEntry, sizeof(SystemClockAdviseEntry));
 
   pEntry->hEvent = (HANDLE) hEvent;
   pEntry->rtBaseTime = rtBaseTime + rtStreamTime;
@@ -315,11 +313,9 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface, REF
   if (NULL == pdwAdviseCookie) {
     return E_POINTER;
   }
-  pEntry = CoTaskMemAlloc(sizeof(SystemClockAdviseEntry));
-  if (NULL == pEntry) {
+
+  if (!(pEntry = heap_alloc_zero(sizeof(*pEntry))))
     return E_OUTOFMEMORY;
-  }
-  ZeroMemory(pEntry, sizeof(SystemClockAdviseEntry));
 
   pEntry->hEvent = (HANDLE) hSemaphore;
   pEntry->rtBaseTime = rtStartTime;
@@ -355,7 +351,7 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock* iface, DWORD_PTR
   }
 
   QUARTZ_RemoveAviseEntryFromQueue(This, pEntry);
-  CoTaskMemFree(pEntry);
+  heap_free(pEntry);
 
   SystemClockPostMessageToAdviseThread(This, ADVISE_REMOVE);
 
@@ -375,23 +371,22 @@ static const IReferenceClockVtbl SystemClock_Vtbl =
     SystemClockImpl_Unadvise
 };
 
-HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv) {
-  SystemClockImpl* obj = NULL;
+HRESULT QUARTZ_CreateSystemClock(IUnknown *outer, void **out)
+{
+    SystemClockImpl *object;
   
-  TRACE("(%p,%p)\n", ppv, pUnkOuter);
-  
-  obj = CoTaskMemAlloc(sizeof(SystemClockImpl));
-  if (NULL == obj) 	{
-    *ppv = NULL;
-    return E_OUTOFMEMORY;
-  }
-  ZeroMemory(obj, sizeof(SystemClockImpl));
+    TRACE("outer %p, out %p.\n", outer, out);
 
-  obj->IReferenceClock_iface.lpVtbl = &SystemClock_Vtbl;
-  obj->ref = 0;  /* will be inited by QueryInterface */
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+    {
+        *out = NULL;
+        return E_OUTOFMEMORY;
+    }
 
-  InitializeCriticalSection(&obj->safe);
-  obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SystemClockImpl.safe");
+    object->IReferenceClock_iface.lpVtbl = &SystemClock_Vtbl;
 
-  return SystemClockImpl_QueryInterface(&obj->IReferenceClock_iface, &IID_IReferenceClock, ppv);
+    InitializeCriticalSection(&object->safe);
+    object->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SystemClockImpl.safe");
+
+    return SystemClockImpl_QueryInterface(&object->IReferenceClock_iface, &IID_IReferenceClock, out);
 }

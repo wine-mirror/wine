@@ -31,6 +31,7 @@
 #include "winuser.h"
 #include "dshow.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/strmbase.h"
 #include "wine/list.h"
 
