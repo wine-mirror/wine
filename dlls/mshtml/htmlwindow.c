@@ -3306,10 +3306,10 @@ static HRESULT WINAPI HTMLWindowSP_QueryService(IServiceProvider *iface, REFGUID
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_mshtml_guid(guidService), debugstr_mshtml_guid(riid), ppv);
 
-    if(!This->outer_window->doc_obj)
+    if(!This->outer_window || !This->outer_window->browser)
         return E_NOINTERFACE;
 
-    return IServiceProvider_QueryService(&This->outer_window->doc_obj->basedoc.IServiceProvider_iface,
+    return IServiceProvider_QueryService(&This->outer_window->browser->doc->basedoc.IServiceProvider_iface,
             guidService, riid, ppv);
 }
 
