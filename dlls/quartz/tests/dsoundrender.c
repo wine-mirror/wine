@@ -394,6 +394,7 @@ static void test_basic_audio(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
     ok(IsEqualGUID(&typeattr->guid, &IID_IBasicAudio), "Got IID %s.\n", wine_dbgstr_guid(&typeattr->guid));
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
     ITypeInfo_Release(typeinfo);
 
     IBasicAudio_Release(audio);
