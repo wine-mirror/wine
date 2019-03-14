@@ -1394,13 +1394,13 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
     BSTR unk;
     HRESULT hres;
 
-    if(!This->is_doc_channel || !This->bsc.window)
+    if(!This->is_doc_channel || !This->bsc.window || !This->bsc.window->base.outer_window
+       || !This->bsc.window->base.outer_window->browser)
         return;
 
     outer_window = This->bsc.window->base.outer_window;
-
-    doc = outer_window->doc_obj;
-    if(!doc || !doc->doc_object_service || !doc->client)
+    doc = outer_window->browser->doc;
+    if(!doc->doc_object_service || !doc->client)
         return;
 
     hres = IDocObjectService_IsErrorUrl(doc->doc_object_service,
@@ -1590,10 +1590,10 @@ static void handle_extern_mime_navigation(nsChannelBSC *This)
     VARIANT flags;
     HRESULT hres;
 
-    if(!This->bsc.window || !This->bsc.window->base.outer_window || !This->bsc.window->base.outer_window->doc_obj)
+    if(!This->bsc.window || !This->bsc.window->base.outer_window || !This->bsc.window->base.outer_window->browser)
         return;
 
-    doc_obj = This->bsc.window->base.outer_window->doc_obj;
+    doc_obj = This->bsc.window->base.outer_window->browser->doc;
 
     hres = IOleClientSite_QueryInterface(doc_obj->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
