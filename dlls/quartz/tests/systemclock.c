@@ -96,6 +96,88 @@ static void test_get_time(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_advise(void)
+{
+    IReferenceClock *clock = create_system_clock();
+    HANDLE event, semaphore;
+    REFERENCE_TIME current;
+    DWORD_PTR cookie;
+    unsigned int i;
+    HRESULT hr;
+    ULONG ref;
+
+    event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    semaphore = CreateSemaphoreA(NULL, 0, 10, NULL);
+
+    hr = IReferenceClock_GetTime(clock, &current);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdviseTime(clock, current, 500 * 10000, (HEVENT)event, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdviseTime(clock, -1000 * 10000, 500 * 10000, (HEVENT)event, &cookie);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdviseTime(clock, current, 500 * 10000, (HEVENT)event, &cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(WaitForSingleObject(event, 480) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+    ok(!WaitForSingleObject(event, 40), "Event should be signaled.\n");
+
+    hr = IReferenceClock_Unadvise(clock, cookie);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    ResetEvent(event);
+    hr = IReferenceClock_GetTime(clock, &current);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+    hr = IReferenceClock_AdviseTime(clock, current, 500 * 10000, (HEVENT)event, &cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IReferenceClock_Unadvise(clock, cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(WaitForSingleObject(event, 520) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+
+    ResetEvent(event);
+    hr = IReferenceClock_GetTime(clock, &current);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+    hr = IReferenceClock_AdviseTime(clock, current + 500 * 10000, 0, (HEVENT)event, &cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(WaitForSingleObject(event, 480) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+    ok(!WaitForSingleObject(event, 40), "Event should be signaled.\n");
+
+    hr = IReferenceClock_GetTime(clock, &current);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdvisePeriodic(clock, current, 500 * 10000, (HSEMAPHORE)semaphore, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdvisePeriodic(clock, current, 0, (HSEMAPHORE)semaphore, &cookie);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdvisePeriodic(clock, current, -500 * 10000, (HSEMAPHORE)semaphore, &cookie);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdvisePeriodic(clock, -500 * 10000, 1000 * 10000, (HSEMAPHORE)semaphore, &cookie);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdvisePeriodic(clock, current, 500 * 10000, (HSEMAPHORE)semaphore, &cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!WaitForSingleObject(semaphore, 10), "Semaphore should be signaled.\n");
+    for (i = 0; i < 5; ++i)
+    {
+        ok(WaitForSingleObject(semaphore, 480) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
+        ok(!WaitForSingleObject(semaphore, 40), "Semaphore should be signaled.\n");
+    }
+
+    hr = IReferenceClock_Unadvise(clock, cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(WaitForSingleObject(semaphore, 520) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
+
+    CloseHandle(event);
+    CloseHandle(semaphore);
+
+    ref = IReferenceClock_Release(clock);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(systemclock)
 {
     CoInitialize(NULL);
@@ -104,6 +186,7 @@ START_TEST(systemclock)
 
     test_interfaces();
     test_get_time();
+    test_advise();
 
     CoUninitialize();
 }
