@@ -74,7 +74,7 @@ static void test_get_time(void)
 
     hr = IReferenceClock_GetTime(clock, &time1);
     if (pGetTickCount64)
-        time2 = GetTickCount64() * 10000;
+        time2 = pGetTickCount64() * 10000;
     else
         time2 = GetTickCount() * 10000;
     ok(hr == S_OK, "Got hr %#x.\n", hr);
