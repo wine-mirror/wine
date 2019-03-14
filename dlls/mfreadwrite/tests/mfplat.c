@@ -67,7 +67,7 @@ static void test_MFCreateSourceReaderFromByteStream(void)
     todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IMFAttributes_SetUINT32(attributes, &MF_READWRITE_MMCSS_PRIORITY_AUDIO, 0);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);

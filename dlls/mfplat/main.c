@@ -20,6 +20,7 @@
 #include <string.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -35,6 +36,7 @@
 
 #include "mfplat_private.h"
 #include "mfreadwrite.h"
+#include "propvarutil.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -659,6 +661,29 @@ static struct attribute *attributes_find_item(struct attributes *attributes, REF
     return NULL;
 }
 
+static HRESULT attributes_get_item(struct attributes *attributes, const GUID *key, PROPVARIANT *value)
+{
+    struct attribute *attribute;
+    HRESULT hr;
+
+    EnterCriticalSection(&attributes->cs);
+
+    attribute = attributes_find_item(attributes, key, NULL);
+    if (attribute)
+    {
+        if (attribute->value.vt == value->vt)
+            hr = PropVariantCopy(value, &attribute->value);
+        else
+            hr = MF_E_INVALIDTYPE;
+    }
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+
+    LeaveCriticalSection(&attributes->cs);
+
+    return hr;
+}
+
 static HRESULT WINAPI mfattributes_GetItem(IMFAttributes *iface, REFGUID key, PROPVARIANT *value)
 {
     struct attributes *attributes = impl_from_IMFAttributes(iface);
@@ -705,16 +730,34 @@ static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *
 
 static HRESULT WINAPI mfattributes_GetUINT32(IMFAttributes *iface, REFGUID key, UINT32 *value)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    PropVariantInit(&attrval);
+    attrval.vt = VT_UI4;
+    hr = attributes_get_item(attributes, key, &attrval);
+    if (SUCCEEDED(hr))
+        hr = PropVariantToUInt32(&attrval, value);
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_GetUINT64(IMFAttributes *iface, REFGUID key, UINT64 *value)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    PropVariantInit(&attrval);
+    attrval.vt = VT_UI8;
+    hr = attributes_get_item(attributes, key, &attrval);
+    if (SUCCEEDED(hr))
+        hr = PropVariantToUInt64(&attrval, value);
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_GetDouble(IMFAttributes *iface, REFGUID key, double *value)
@@ -873,16 +916,26 @@ static HRESULT WINAPI mfattributes_DeleteAllItems(IMFAttributes *iface)
 
 static HRESULT WINAPI mfattributes_SetUINT32(IMFAttributes *iface, REFGUID key, UINT32 value)
 {
-    FIXME("%p, %s, %d.\n", iface, debugstr_attr(key), value);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %d.\n", iface, debugstr_attr(key), value);
+
+    attrval.vt = VT_UI4;
+    attrval.u.ulVal = value;
+    return attributes_set_item(attributes, key, &attrval);
 }
 
 static HRESULT WINAPI mfattributes_SetUINT64(IMFAttributes *iface, REFGUID key, UINT64 value)
 {
-    FIXME("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+
+    attrval.vt = VT_UI8;
+    attrval.u.uhVal.QuadPart = value;
+    return attributes_set_item(attributes, key, &attrval);
 }
 
 static HRESULT WINAPI mfattributes_SetDouble(IMFAttributes *iface, REFGUID key, double value)
@@ -3481,7 +3534,7 @@ static HRESULT WINAPI eventqueue_QueueEventParamUnk(IMFMediaEventQueue *iface, M
     TRACE("%p, %d, %s, %#x, %p.\n", iface, event_type, debugstr_guid(extended_type), status, unk);
 
     value.vt = VT_UNKNOWN;
-    value.punkVal = unk;
+    value.u.punkVal = unk;
 
     if (FAILED(hr = MFCreateMediaEvent(event_type, extended_type, status, &value, &event)))
         return hr;

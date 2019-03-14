@@ -359,25 +359,21 @@ todo_wine
     ok(compressed, "Unexpected value %d.\n", compressed);
 
     hr = IMFMediaType_SetUINT32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, 0);
-todo_wine
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
     compressed = FALSE;
     hr = IMFMediaType_IsCompressedFormat(mediatype, &compressed);
-todo_wine
     ok(hr == S_OK, "Failed to get media type property, hr %#x.\n", hr);
     ok(compressed, "Unexpected value %d.\n", compressed);
 
     hr = IMFMediaType_SetUINT32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1);
-todo_wine
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
     compressed = TRUE;
     hr = IMFMediaType_IsCompressedFormat(mediatype, &compressed);
-todo_wine {
     ok(hr == S_OK, "Failed to get media type property, hr %#x.\n", hr);
     ok(!compressed, "Unexpected value %d.\n", compressed);
-}
+
     hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
     todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -502,7 +498,8 @@ static void test_MFCreateAttributes(void)
 {
     PROPVARIANT propvar, ret_propvar;
     IMFAttributes *attributes;
-    UINT32 count;
+    UINT32 count, value;
+    UINT64 value64;
     HRESULT hr;
     GUID key;
 
@@ -514,12 +511,34 @@ static void test_MFCreateAttributes(void)
     todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 0, "got %d\n", count);
 
-    hr = IMFAttributes_SetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 0);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IMFAttributes_SetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 123);
+    ok(hr == S_OK, "Failed to set UINT32 value, hr %#x.\n", hr);
 
     hr = IMFAttributes_GetCount(attributes, &count);
     todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
     todo_wine ok(count == 1, "got %d\n", count);
+
+    value = 0xdeadbeef;
+    hr = IMFAttributes_GetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, &value);
+    ok(hr == S_OK, "Failed to get UINT32 value, hr %#x.\n", hr);
+    ok(value == 123, "Unexpected value %u, expected: 123.\n", value);
+
+    value64 = 0xdeadbeef;
+    hr = IMFAttributes_GetUINT64(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, &value64);
+    ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
+    ok(value64 == 0xdeadbeef, "Unexpected value.\n");
+
+    hr = IMFAttributes_SetUINT64(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 65536);
+    ok(hr == S_OK, "Failed to set UINT64 value, hr %#x.\n", hr);
+
+    hr = IMFAttributes_GetUINT64(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, &value64);
+    ok(hr == S_OK, "Failed to get UINT64 value, hr %#x.\n", hr);
+    ok(value64 == 65536, "Unexpected value.\n");
+
+    value = 0xdeadbeef;
+    hr = IMFAttributes_GetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, &value);
+    ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
+    ok(value == 0xdeadbeef, "Unexpected value.\n");
 
     IMFAttributes_Release(attributes);
 
