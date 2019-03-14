@@ -1320,12 +1320,12 @@ static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
     nsChannel *nschannel = This->nschannel;
-    HTMLDocumentObj *doc_obj;
+    GeckoBrowser *browser;
     HRESULT hres;
 
     if(This->is_doc_channel && This->bsc.window && This->bsc.window->base.outer_window
-       && (doc_obj = This->bsc.window->base.outer_window->doc_obj)) {
-        if(doc_obj->hostinfo.dwFlags & DOCHOSTUIFLAG_ENABLE_REDIRECT_NOTIFICATION)
+       && (browser = This->bsc.window->base.outer_window->browser)) {
+        if(browser->doc->hostinfo.dwFlags & DOCHOSTUIFLAG_ENABLE_REDIRECT_NOTIFICATION)
             This->bsc.bindinfo_options |= BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS;
     }
 
