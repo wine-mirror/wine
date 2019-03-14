@@ -1561,6 +1561,7 @@ static void test_margins_default(UINT charset)
     RECT rect;
     INT margins, expect;
     const UINT small_margins = MAKELONG(1, 5);
+    const WCHAR EditW[] = {'E','d','i','t',0}, strW[] = {'W',0};
 
     memset(&lf, 0, sizeof(lf));
     lf.lfHeight = -11;
@@ -1571,8 +1572,8 @@ static void test_margins_default(UINT charset)
     hfont = CreateFontIndirectA(&lf);
     ok(hfont != NULL, "got %p\n", hfont);
 
-    /* Big window rectangle */
-    hwnd = CreateWindowExA(0, "Edit", "A", WS_POPUP, 0, 0, 5000, 1000, NULL, NULL, NULL, NULL);
+    /* Unicode version */
+    hwnd = CreateWindowExW(0, EditW, strW, WS_POPUP, 0, 0, 5000, 1000, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "got %p\n", hwnd);
     GetClientRect(hwnd, &rect);
     ok(!IsRectEmpty(&rect), "got rect %s\n", wine_dbgstr_rect(&rect));
@@ -1594,6 +1595,31 @@ static void test_margins_default(UINT charset)
 
     hfont = SelectObject(hdc, hfont);
     ReleaseDC(hwnd, hdc);
+
+    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    ok(margins == 0, "got %x\n", margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
+    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    if (!cjk_charset)
+        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
+    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    if (!cjk_charset)
+        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+    else
+    {
+        ok(HIWORD(margins) <= HIWORD(expect), "%d: got %d\n", charset, HIWORD(margins));
+        ok(LOWORD(margins) <= LOWORD(expect), "%d: got %d\n", charset, LOWORD(margins));
+    }
+    DestroyWindow(hwnd);
+
+    /* ANSI version */
+    hwnd = CreateWindowExA(0, "Edit", "A", WS_POPUP, 0, 0, 5000, 1000, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "got %p\n", hwnd);
+    GetClientRect(hwnd, &rect);
+    ok(!IsRectEmpty(&rect), "got rect %s\n", wine_dbgstr_rect(&rect));
 
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     ok(margins == 0, "got %x\n", margins);
