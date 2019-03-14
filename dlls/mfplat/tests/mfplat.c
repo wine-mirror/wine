@@ -44,6 +44,7 @@ DEFINE_GUID(DUMMY_GUID3, 0x12345678,0x1234,0x1234,0x23,0x23,0x23,0x23,0x23,0x23,
 #include "mferror.h"
 #include "mfreadwrite.h"
 #include "propvarutil.h"
+#include "strsafe.h"
 
 #include "wine/test.h"
 
@@ -285,7 +286,7 @@ static void test_source_resolver(void)
                                  (void **)&attributes);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, file_type);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to set string value, hr %#x.\n", hr);
     IMFAttributes_Release(attributes);
 
     hr = IMFSourceResolver_CreateObjectFromByteStream(
@@ -505,11 +506,14 @@ static void check_attr_count(IMFAttributes* obj, UINT32 expected, int line)
 
 static void test_MFCreateAttributes(void)
 {
+    static const WCHAR stringW[] = {'W','i','n','e',0};
     PROPVARIANT propvar, ret_propvar;
+    UINT32 value, string_length;
     IMFAttributes *attributes;
     double double_value;
+    WCHAR bufferW[256];
     UINT64 value64;
-    UINT32 value;
+    WCHAR *string;
     HRESULT hr;
     GUID key;
 
@@ -648,6 +652,42 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_GetDouble(attributes, &GUID_NULL, &double_value);
     ok(hr == S_OK, "Failed to get double value, hr %#x.\n", hr);
     ok(double_value == 22.0, "Unexpected value: %f, expected: 22.0.\n", double_value);
+
+    hr = IMFAttributes_SetString(attributes, &DUMMY_GUID1, stringW);
+    ok(hr == S_OK, "Failed to set string attribute, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 3);
+
+    hr = IMFAttributes_GetStringLength(attributes, &DUMMY_GUID1, &string_length);
+    ok(hr == S_OK, "Failed to get string length, hr %#x.\n", hr);
+    ok(string_length == lstrlenW(stringW), "Unexpected length %u.\n", string_length);
+
+    string_length = 0xdeadbeef;
+    hr = IMFAttributes_GetAllocatedString(attributes, &DUMMY_GUID1, &string, &string_length);
+    ok(hr == S_OK, "Failed to get allocated string, hr %#x.\n", hr);
+    ok(!lstrcmpW(string, stringW), "Unexpected string %s.\n", wine_dbgstr_w(string));
+    ok(string_length == lstrlenW(stringW), "Unexpected length %u.\n", string_length);
+    CoTaskMemFree(string);
+
+    string_length = 0xdeadbeef;
+    hr = IMFAttributes_GetString(attributes, &DUMMY_GUID1, bufferW, ARRAY_SIZE(bufferW), &string_length);
+    ok(hr == S_OK, "Failed to get string value, hr %#x.\n", hr);
+    ok(!lstrcmpW(bufferW, stringW), "Unexpected string %s.\n", wine_dbgstr_w(bufferW));
+    ok(string_length == lstrlenW(stringW), "Unexpected length %u.\n", string_length);
+    memset(bufferW, 0, sizeof(bufferW));
+
+    hr = IMFAttributes_GetString(attributes, &DUMMY_GUID1, bufferW, ARRAY_SIZE(bufferW), NULL);
+    ok(hr == S_OK, "Failed to get string value, hr %#x.\n", hr);
+    ok(!lstrcmpW(bufferW, stringW), "Unexpected string %s.\n", wine_dbgstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+
+    hr = IMFAttributes_GetString(attributes, &DUMMY_GUID1, bufferW, 1, NULL);
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(!bufferW[0], "Unexpected string %s.\n", wine_dbgstr_w(bufferW));
+
+    string_length = 0xdeadbeef;
+    hr = IMFAttributes_GetStringLength(attributes, &GUID_NULL, &string_length);
+    ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
+    ok(string_length == 0xdeadbeef, "Unexpected length %u.\n", string_length);
 
     IMFAttributes_Release(attributes);
 }
