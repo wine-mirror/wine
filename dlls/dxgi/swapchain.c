@@ -1799,13 +1799,186 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDevice(IDXGISwapChain3 *ifac
 
 /* IDXGISwapChain methods */
 
+static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapchain,
+        unsigned int sync_interval)
+{
+    VkPresentModeKHR present_mode;
+
+    switch (sync_interval)
+    {
+        case 0:
+            present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+            break;
+        default:
+            FIXME("Unsupported sync interval %u.\n", sync_interval);
+        case 1:
+            present_mode = VK_PRESENT_MODE_FIFO_KHR;
+            break;
+    }
+
+    if (swapchain->present_mode == present_mode)
+        return S_OK;
+
+    /*
+     * We recreate the swapchain only when the current buffer index is 0, in order to preserve the
+     * expected back buffer index sequence.
+     */
+    if (swapchain->current_buffer_index)
+    {
+        WARN("Skipping sync interval change, current buffer index %u.\n", swapchain->current_buffer_index);
+        return S_OK;
+    }
+
+    if (!d3d12_swapchain_has_user_images(swapchain))
+    {
+        FIXME("Cannot recreate swapchain without user images.\n");
+        return S_OK;
+    }
+
+    if (!d3d12_swapchain_is_present_mode_supported(swapchain, present_mode))
+    {
+        FIXME("Vulkan present mode %#x is not supported.\n", present_mode);
+        return S_OK;
+    }
+
+    d3d12_swapchain_destroy_buffers(swapchain, FALSE);
+    swapchain->present_mode = present_mode;
+    return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
+}
+
+static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkQueue vk_queue)
+{
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    VkPresentInfoKHR present_info;
+    VkSubmitInfo submit_info;
+    VkResult vr;
+
+    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.pNext = NULL;
+    present_info.waitSemaphoreCount = 0;
+    present_info.pWaitSemaphores = NULL;
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = &swapchain->vk_swapchain;
+    present_info.pImageIndices = &swapchain->current_buffer_index;
+    present_info.pResults = NULL;
+
+    if (d3d12_swapchain_has_user_images(swapchain))
+    {
+        /* blit */
+        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submit_info.pNext = NULL;
+        submit_info.waitSemaphoreCount = 0;
+        submit_info.pWaitSemaphores = NULL;
+        submit_info.pWaitDstStageMask = NULL;
+        submit_info.commandBufferCount = 1;
+        submit_info.pCommandBuffers = &swapchain->vk_cmd_buffers[swapchain->current_buffer_index];
+        submit_info.signalSemaphoreCount = 1;
+        submit_info.pSignalSemaphores = &swapchain->vk_semaphores[swapchain->current_buffer_index];
+
+        if ((vr = vk_funcs->p_vkQueueSubmit(vk_queue, 1, &submit_info, VK_NULL_HANDLE)) < 0)
+        {
+            ERR("Failed to blit swapchain buffer, vr %d.\n", vr);
+            return vr;
+        }
+
+        present_info.waitSemaphoreCount = 1;
+        present_info.pWaitSemaphores = &swapchain->vk_semaphores[swapchain->current_buffer_index];
+    }
+
+    return vk_funcs->p_vkQueuePresentKHR(vk_queue, &present_info);
+}
+
+static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
+        unsigned int sync_interval, unsigned int flags)
+{
+    VkQueue vk_queue;
+    VkResult vr;
+    HRESULT hr;
+
+    if (sync_interval > 4)
+    {
+        WARN("Invalid sync interval %u.\n", sync_interval);
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    if (flags & ~DXGI_PRESENT_TEST)
+        FIXME("Unimplemented flags %#x.\n", flags);
+    if (flags & DXGI_PRESENT_TEST)
+    {
+        WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
+        return S_OK;
+    }
+
+    if (FAILED(hr = d3d12_swapchain_set_sync_interval(swapchain, sync_interval)))
+        return hr;
+
+    if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
+    {
+        ERR("Failed to acquire Vulkan queue.\n");
+        return E_FAIL;
+    }
+
+    vr = d3d12_swapchain_queue_present(swapchain, vk_queue);
+    if (vr == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        vkd3d_release_vk_queue(swapchain->command_queue);
+
+        if (!d3d12_swapchain_has_user_images(swapchain))
+        {
+            FIXME("Cannot recreate swapchain without user images.\n");
+            return DXGI_STATUS_MODE_CHANGED;
+        }
+
+        TRACE("Recreating Vulkan swapchain.\n");
+
+        d3d12_swapchain_destroy_buffers(swapchain, FALSE);
+        if (FAILED(hr = d3d12_swapchain_recreate_vulkan_swapchain(swapchain)))
+            return hr;
+
+        if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
+        {
+            ERR("Failed to acquire Vulkan queue.\n");
+            return E_FAIL;
+        }
+
+        if ((vr = d3d12_swapchain_queue_present(swapchain, vk_queue)) < 0)
+            ERR("Failed to present after recreating swapchain, vr %d.\n", vr);
+    }
+
+    vkd3d_release_vk_queue(swapchain->command_queue);
+
+    if (vr < 0)
+    {
+        ERR("Failed to queue present, vr %d.\n", vr);
+        return hresult_from_vk_result(vr);
+    }
+
+    vr = d3d12_swapchain_acquire_next_image(swapchain);
+    if (vr == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        if (!d3d12_swapchain_has_user_images(swapchain))
+        {
+            FIXME("Cannot recreate swapchain without user images.\n");
+            return DXGI_STATUS_MODE_CHANGED;
+        }
+
+        TRACE("Recreating Vulkan swapchain.\n");
+
+        d3d12_swapchain_destroy_buffers(swapchain, FALSE);
+        return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
+    }
+    if (vr < 0)
+        ERR("Failed to acquire next Vulkan image, vr %d.\n", vr);
+    return hresult_from_vk_result(vr);
+}
+
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present(IDXGISwapChain3 *iface, UINT sync_interval, UINT flags)
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
 
     TRACE("iface %p, sync_interval %u, flags %#x.\n", iface, sync_interval, flags);
 
-    return IDXGISwapChain3_Present1(&swapchain->IDXGISwapChain3_iface, sync_interval, flags, NULL);
+    return d3d12_swapchain_present(swapchain, sync_interval, flags);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetBuffer(IDXGISwapChain3 *iface,
@@ -2045,184 +2218,18 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetCoreWindow(IDXGISwapChain3 *
     return DXGI_ERROR_INVALID_CALL;
 }
 
-static HRESULT d3d12_swapchain_set_sync_interval(struct d3d12_swapchain *swapchain,
-        unsigned int sync_interval)
-{
-    VkPresentModeKHR present_mode;
-
-    switch (sync_interval)
-    {
-        case 0:
-            present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-            break;
-        default:
-            FIXME("Unsupported sync interval %u.\n", sync_interval);
-        case 1:
-            present_mode = VK_PRESENT_MODE_FIFO_KHR;
-            break;
-    }
-
-    if (swapchain->present_mode == present_mode)
-        return S_OK;
-
-    /*
-     * We recreate the swapchain only when the current buffer index is 0, in order to preserve the
-     * expected back buffer index sequence.
-     */
-    if (swapchain->current_buffer_index)
-    {
-        WARN("Skipping sync interval change, current buffer index %u.\n", swapchain->current_buffer_index);
-        return S_OK;
-    }
-
-    if (!d3d12_swapchain_has_user_images(swapchain))
-    {
-        FIXME("Cannot recreate swapchain without user images.\n");
-        return S_OK;
-    }
-
-    if (!d3d12_swapchain_is_present_mode_supported(swapchain, present_mode))
-    {
-        FIXME("Vulkan present mode %#x is not supported.\n", present_mode);
-        return S_OK;
-    }
-
-    d3d12_swapchain_destroy_buffers(swapchain, FALSE);
-    swapchain->present_mode = present_mode;
-    return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
-}
-
-static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain, VkQueue vk_queue)
-{
-    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
-    VkPresentInfoKHR present_info;
-    VkSubmitInfo submit_info;
-    VkResult vr;
-
-    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    present_info.pNext = NULL;
-    present_info.waitSemaphoreCount = 0;
-    present_info.pWaitSemaphores = NULL;
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains = &swapchain->vk_swapchain;
-    present_info.pImageIndices = &swapchain->current_buffer_index;
-    present_info.pResults = NULL;
-
-    if (d3d12_swapchain_has_user_images(swapchain))
-    {
-        /* blit */
-        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submit_info.pNext = NULL;
-        submit_info.waitSemaphoreCount = 0;
-        submit_info.pWaitSemaphores = NULL;
-        submit_info.pWaitDstStageMask = NULL;
-        submit_info.commandBufferCount = 1;
-        submit_info.pCommandBuffers = &swapchain->vk_cmd_buffers[swapchain->current_buffer_index];
-        submit_info.signalSemaphoreCount = 1;
-        submit_info.pSignalSemaphores = &swapchain->vk_semaphores[swapchain->current_buffer_index];
-
-        if ((vr = vk_funcs->p_vkQueueSubmit(vk_queue, 1, &submit_info, VK_NULL_HANDLE)) < 0)
-        {
-            ERR("Failed to blit swapchain buffer, vr %d.\n", vr);
-            return vr;
-        }
-
-        present_info.waitSemaphoreCount = 1;
-        present_info.pWaitSemaphores = &swapchain->vk_semaphores[swapchain->current_buffer_index];
-    }
-
-    return vk_funcs->p_vkQueuePresentKHR(vk_queue, &present_info);
-}
-
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_Present1(IDXGISwapChain3 *iface,
         UINT sync_interval, UINT flags, const DXGI_PRESENT_PARAMETERS *present_parameters)
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
-    VkQueue vk_queue;
-    VkResult vr;
-    HRESULT hr;
 
     TRACE("iface %p, sync_interval %u, flags %#x, present_parameters %p.\n",
             iface, sync_interval, flags, present_parameters);
 
-    if (sync_interval > 4)
-    {
-        WARN("Invalid sync interval %u.\n", sync_interval);
-        return DXGI_ERROR_INVALID_CALL;
-    }
-
-    if (flags & ~DXGI_PRESENT_TEST)
-        FIXME("Unimplemented flags %#x.\n", flags);
-    if (flags & DXGI_PRESENT_TEST)
-    {
-        WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
-        return S_OK;
-    }
-
     if (present_parameters)
         FIXME("Ignored present parameters %p.\n", present_parameters);
 
-    if (FAILED(hr = d3d12_swapchain_set_sync_interval(swapchain, sync_interval)))
-        return hr;
-
-    if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
-    {
-        ERR("Failed to acquire Vulkan queue.\n");
-        return E_FAIL;
-    }
-
-    vr = d3d12_swapchain_queue_present(swapchain, vk_queue);
-    if (vr == VK_ERROR_OUT_OF_DATE_KHR)
-    {
-        vkd3d_release_vk_queue(swapchain->command_queue);
-
-        if (!d3d12_swapchain_has_user_images(swapchain))
-        {
-            FIXME("Cannot recreate swapchain without user images.\n");
-            return DXGI_STATUS_MODE_CHANGED;
-        }
-
-        TRACE("Recreating Vulkan swapchain.\n");
-
-        d3d12_swapchain_destroy_buffers(swapchain, FALSE);
-        if (FAILED(hr = d3d12_swapchain_recreate_vulkan_swapchain(swapchain)))
-            return hr;
-
-        if (!(vk_queue = vkd3d_acquire_vk_queue(swapchain->command_queue)))
-        {
-            ERR("Failed to acquire Vulkan queue.\n");
-            return E_FAIL;
-        }
-
-        if ((vr = d3d12_swapchain_queue_present(swapchain, vk_queue)) < 0)
-            ERR("Failed to present after recreating swapchain, vr %d.\n", vr);
-    }
-
-    vkd3d_release_vk_queue(swapchain->command_queue);
-
-    if (vr < 0)
-    {
-        ERR("Failed to queue present, vr %d.\n", vr);
-        return hresult_from_vk_result(vr);
-    }
-
-    vr = d3d12_swapchain_acquire_next_image(swapchain);
-    if (vr == VK_ERROR_OUT_OF_DATE_KHR)
-    {
-        if (!d3d12_swapchain_has_user_images(swapchain))
-        {
-            FIXME("Cannot recreate swapchain without user images.\n");
-            return DXGI_STATUS_MODE_CHANGED;
-        }
-
-        TRACE("Recreating Vulkan swapchain.\n");
-
-        d3d12_swapchain_destroy_buffers(swapchain, FALSE);
-        return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
-    }
-    if (vr < 0)
-        ERR("Failed to acquire next Vulkan image, vr %d.\n", vr);
-    return hresult_from_vk_result(vr);
+    return d3d12_swapchain_present(swapchain, sync_interval, flags);
 }
 
 static BOOL STDMETHODCALLTYPE d3d12_swapchain_IsTemporaryMonoSupported(IDXGISwapChain3 *iface)
