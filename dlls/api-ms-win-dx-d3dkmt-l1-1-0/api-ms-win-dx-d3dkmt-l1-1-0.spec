@@ -6,7 +6,7 @@
 @ stub D3DKMTCheckOcclusion
 @ stub D3DKMTCheckSharedResourceAccess
 @ stub D3DKMTCheckVidPnExclusiveOwnership
-@ stub D3DKMTCloseAdapter
+@ stdcall D3DKMTCloseAdapter(ptr) gdi32.D3DKMTCloseAdapter
 @ stub D3DKMTConfigureSharedResource
 @ stub D3DKMTCreateAllocation
 @ stub D3DKMTCreateAllocation2

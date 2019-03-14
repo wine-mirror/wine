@@ -26,12 +26,16 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "ddrawgdi.h"
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "winternl.h"
+#include "ddk/d3dkmthk.h"
 
 #include "gdi_private.h"
 #include "wine/unicode.h"
@@ -1252,4 +1256,13 @@ NTSTATUS WINAPI D3DKMTEscape( const void *pData )
 {
     FIXME("(%p): stub\n", pData);
     return STATUS_NO_MEMORY;
+}
+
+/******************************************************************************
+ *		D3DKMTCloseAdapter [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
+{
+    FIXME("(%p): stub\n", desc);
+    return STATUS_SUCCESS;
 }

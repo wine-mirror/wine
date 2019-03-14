@@ -21,6 +21,11 @@
 
 #include <d3dukmdt.h>
 
+typedef struct _D3DKMT_CLOSEADAPTER
+{
+    D3DKMT_HANDLE hAdapter;
+} D3DKMT_CLOSEADAPTER;
+
 typedef struct _D3DKMT_CREATEDCFROMMEMORY
 {
     void *pMemory;
@@ -45,6 +50,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+NTSTATUS WINAPI D3DKMTCloseAdapter(const D3DKMT_CLOSEADAPTER *desc);
 NTSTATUS WINAPI D3DKMTCreateDCFromMemory(D3DKMT_CREATEDCFROMMEMORY *desc);
 NTSTATUS WINAPI D3DKMTDestroyDCFromMemory(const D3DKMT_DESTROYDCFROMMEMORY *desc);
 
