@@ -1549,7 +1549,7 @@ static void test_margins_usefontinfo(UINT charset)
     DeleteObject(hfont);
 }
 
-static void test_margins_default(UINT charset)
+static void test_margins_default(const char* facename, UINT charset)
 {
     HWND hwnd;
     HDC hdc;
@@ -1567,7 +1567,7 @@ static void test_margins_default(UINT charset)
     lf.lfHeight = -11;
     lf.lfWeight = FW_NORMAL;
     lf.lfCharSet = charset;
-    strcpy(lf.lfFaceName, "Tahoma");
+    strcpy(lf.lfFaceName, facename);
 
     hfont = CreateFontIndirectA(&lf);
     ok(hfont != NULL, "got %p\n", hfont);
@@ -1602,16 +1602,16 @@ static void test_margins_default(UINT charset)
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     if (!cjk_charset)
-        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+        ok(margins == expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     if (!cjk_charset)
-        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+        ok(margins == expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
     else
     {
-        ok(HIWORD(margins) <= HIWORD(expect), "%d: got %d\n", charset, HIWORD(margins));
-        ok(LOWORD(margins) <= LOWORD(expect), "%d: got %d\n", charset, LOWORD(margins));
+        ok(HIWORD(margins) <= HIWORD(expect), "%s:%d: got %d\n", facename, charset, HIWORD(margins));
+        ok(LOWORD(margins) <= LOWORD(expect), "%s:%d: got %d\n", facename, charset, LOWORD(margins));
     }
     DestroyWindow(hwnd);
 
@@ -1627,20 +1627,37 @@ static void test_margins_default(UINT charset)
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     if (!cjk_charset)
-        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+        ok(margins == expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     if (!cjk_charset)
-        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+        ok(margins == expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
     else
     {
-        ok(HIWORD(margins) <= HIWORD(expect), "%d: got %d\n", charset, HIWORD(margins));
-        ok(LOWORD(margins) <= LOWORD(expect), "%d: got %d\n", charset, LOWORD(margins));
+        ok(HIWORD(margins) <= HIWORD(expect), "%s:%d: got %d\n", facename, charset, HIWORD(margins));
+        ok(LOWORD(margins) <= LOWORD(expect), "%s:%d: got %d\n", facename, charset, LOWORD(margins));
     }
     DestroyWindow(hwnd);
 
     DeleteObject(hfont);
+}
+
+static INT CALLBACK find_font_proc(const LOGFONTA *elf, const TEXTMETRICA *ntm, DWORD type, LPARAM lParam)
+{
+    return 0;
+}
+
+static BOOL is_font_installed(const char*name)
+{
+    HDC hdc = GetDC(NULL);
+    BOOL ret = FALSE;
+
+    if (!EnumFontFamiliesA(hdc, name, find_font_proc, 0))
+        ret = TRUE;
+
+    ReleaseDC(NULL, hdc);
+    return ret;
 }
 
 static void test_margins(void)
@@ -1718,17 +1735,26 @@ static void test_margins(void)
 
     test_margins_usefontinfo(DEFAULT_CHARSET);
 
-    test_margins_default(ANSI_CHARSET);
-    test_margins_default(EASTEUROPE_CHARSET);
+    test_margins_default("Tahoma", ANSI_CHARSET);
+    test_margins_default("Tahoma", EASTEUROPE_CHARSET);
 
-    test_margins_default(SHIFTJIS_CHARSET);
-    test_margins_default(HANGUL_CHARSET);
-    test_margins_default(CHINESEBIG5_CHARSET);
-}
+    test_margins_default("Tahoma", HANGUL_CHARSET);
+    test_margins_default("Tahoma", CHINESEBIG5_CHARSET);
 
-static INT CALLBACK find_font_proc(const LOGFONTA *elf, const TEXTMETRICA *ntm, DWORD type, LPARAM lParam)
-{
-    return 0;
+    if (is_font_installed("MS PGothic"))
+        test_margins_default("MS PGothic", SHIFTJIS_CHARSET);
+    else
+        skip("MS PGothic is not available, skipping some margin tests\n");
+
+    if (is_font_installed("Ume P Gothic"))
+        test_margins_default("Ume P Gothic", SHIFTJIS_CHARSET);
+    else
+        skip("Ume P Gothic is not available, skipping some margin tests\n");
+
+    if (is_font_installed("SimSun"))
+        test_margins_default("SimSun", GB2312_CHARSET);
+    else
+        skip("SimSun is not available, skipping some margin tests\n");
 }
 
 static void test_margins_font_change(void)
@@ -1737,15 +1763,12 @@ static void test_margins_font_change(void)
     DWORD margins, font_margins;
     LOGFONTA lf;
     HFONT hfont, hfont2;
-    HDC hdc = GetDC(0);
 
-    if(EnumFontFamiliesA(hdc, "Arial", find_font_proc, 0))
+    if (!is_font_installed("Arial"))
     {
-        trace("Arial not found - skipping font change margin tests\n");
-        ReleaseDC(0, hdc);
+        skip("Arial not found - skipping font change margin tests\n");
         return;
     }
-    ReleaseDC(0, hdc);
 
     hwEdit = create_child_editcontrol(0, 0);
 
