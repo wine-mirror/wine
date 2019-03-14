@@ -2139,10 +2139,10 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
     if(!uri_nofrag)
         return E_FAIL;
 
-    if(window->doc_obj->client && !(flags & BINDING_REFRESH)) {
+    if(window->browser->doc->client && !(flags & BINDING_REFRESH)) {
         IOleCommandTarget *cmdtrg;
 
-        hres = IOleClientSite_QueryInterface(window->doc_obj->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
+        hres = IOleClientSite_QueryInterface(window->browser->doc->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
         if(SUCCEEDED(hres)) {
             VARIANT in, out;
             BSTR url_str;
@@ -2187,7 +2187,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         return hres;
     }
 
-    prepare_for_binding(&window->doc_obj->basedoc, mon, flags);
+    prepare_for_binding(&window->browser->doc->basedoc, mon, flags);
 
     hres = IUri_GetScheme(uri, &scheme);
     if(SUCCEEDED(hres) && scheme == URL_SCHEME_JAVASCRIPT) {
@@ -2203,7 +2203,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         /* Why silently? */
         window->readystate = READYSTATE_COMPLETE;
         if(!(flags & BINDING_FROMHIST))
-            call_docview_84(window->doc_obj);
+            call_docview_84(window->browser->doc);
 
         IUri_AddRef(uri);
         task->window = window;
@@ -2228,7 +2228,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         /* Silently and repeated when real loading starts? */
         window->readystate = READYSTATE_LOADING;
         if(!(flags & (BINDING_FROMHIST|BINDING_REFRESH)))
-            call_docview_84(window->doc_obj);
+            call_docview_84(window->browser->doc);
 
         task->window = window;
         task->bscallback = bsc;
