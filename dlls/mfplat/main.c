@@ -762,9 +762,18 @@ static HRESULT WINAPI mfattributes_GetUINT64(IMFAttributes *iface, REFGUID key, 
 
 static HRESULT WINAPI mfattributes_GetDouble(IMFAttributes *iface, REFGUID key, double *value)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    PropVariantInit(&attrval);
+    attrval.vt = VT_R8;
+    hr = attributes_get_item(attributes, key, &attrval);
+    if (SUCCEEDED(hr))
+        hr = PropVariantToDouble(&attrval, value);
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_GetGUID(IMFAttributes *iface, REFGUID key, GUID *value)
@@ -940,9 +949,14 @@ static HRESULT WINAPI mfattributes_SetUINT64(IMFAttributes *iface, REFGUID key, 
 
 static HRESULT WINAPI mfattributes_SetDouble(IMFAttributes *iface, REFGUID key, double value)
 {
-    FIXME("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+
+    attrval.vt = VT_R8;
+    attrval.u.dblVal = value;
+    return attributes_set_item(attributes, key, &attrval);
 }
 
 static HRESULT WINAPI mfattributes_SetGUID(IMFAttributes *iface, REFGUID key, REFGUID value)

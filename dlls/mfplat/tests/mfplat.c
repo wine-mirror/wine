@@ -507,6 +507,7 @@ static void test_MFCreateAttributes(void)
 {
     PROPVARIANT propvar, ret_propvar;
     IMFAttributes *attributes;
+    double double_value;
     UINT64 value64;
     UINT32 value;
     HRESULT hr;
@@ -638,6 +639,15 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_GetItemByIndex(attributes, 100, &key, &ret_propvar);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     PropVariantClear(&ret_propvar);
+
+    hr = IMFAttributes_SetDouble(attributes, &GUID_NULL, 22.0);
+    ok(hr == S_OK, "Failed to set double value, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 3);
+
+    double_value = 0xdeadbeef;
+    hr = IMFAttributes_GetDouble(attributes, &GUID_NULL, &double_value);
+    ok(hr == S_OK, "Failed to get double value, hr %#x.\n", hr);
+    ok(double_value == 22.0, "Unexpected value: %f, expected: 22.0.\n", double_value);
 
     IMFAttributes_Release(attributes);
 }
