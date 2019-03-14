@@ -621,6 +621,9 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(message));
 
+    if(!This->outer_window || !This->outer_window->browser)
+        return E_UNEXPECTED;
+
     if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, title, ARRAY_SIZE(title))) {
         WARN("Could not load message box title: %d\n", GetLastError());
         return S_OK;
@@ -635,7 +638,7 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
         msg[MAX_MESSAGE_LEN] = 0;
     }
 
-    MessageBoxW(This->outer_window->doc_obj->hwnd, msg, title, MB_ICONWARNING);
+    MessageBoxW(This->outer_window->browser->doc->hwnd, msg, title, MB_ICONWARNING);
     if(msg != message)
         heap_free(msg);
     return S_OK;
@@ -649,7 +652,10 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(message), confirmed);
 
-    if(!confirmed) return E_INVALIDARG;
+    if(!confirmed)
+        return E_INVALIDARG;
+    if(!This->outer_window || !This->outer_window->browser)
+        return E_UNEXPECTED;
 
     if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle, ARRAY_SIZE(wszTitle))) {
         WARN("Could not load message box title: %d\n", GetLastError());
@@ -657,7 +663,7 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
         return S_OK;
     }
 
-    if(MessageBoxW(This->outer_window->doc_obj->hwnd, message, wszTitle,
+    if(MessageBoxW(This->outer_window->browser->doc->hwnd, message, wszTitle,
                 MB_OKCANCEL|MB_ICONQUESTION)==IDOK)
         *confirmed = VARIANT_TRUE;
     else *confirmed = VARIANT_FALSE;
@@ -742,6 +748,9 @@ static HRESULT WINAPI HTMLWindow2_prompt(IHTMLWindow2 *iface, BSTR message,
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(message), debugstr_w(dststr), textdata);
 
+    if(!This->outer_window || !This->outer_window->browser)
+        return E_UNEXPECTED;
+
     if(textdata) V_VT(textdata) = VT_NULL;
 
     arg.message = message;
@@ -749,7 +758,7 @@ static HRESULT WINAPI HTMLWindow2_prompt(IHTMLWindow2 *iface, BSTR message,
     arg.textdata = textdata;
 
     DialogBoxParamW(hInst, MAKEINTRESOURCEW(ID_PROMPT_DIALOG),
-            This->outer_window->doc_obj->hwnd, prompt_dlgproc, (LPARAM)&arg);
+            This->outer_window->browser->doc->hwnd, prompt_dlgproc, (LPARAM)&arg);
     return S_OK;
 }
 
@@ -874,12 +883,12 @@ static HRESULT WINAPI HTMLWindow2_close(IHTMLWindow2 *iface)
 
     TRACE("(%p)\n", This);
 
-    if(!window->doc_obj) {
+    if(!window || !window->browser) {
         FIXME("No document object\n");
         return E_FAIL;
     }
 
-    if(!notify_webbrowser_close(window, window->doc_obj))
+    if(!notify_webbrowser_close(window, window->browser->doc))
         return S_OK;
 
     FIXME("default action not implemented\n");
@@ -975,7 +984,7 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
     if(replace)
         FIXME("unsupported relace argument\n");
 
-    if(!window->browser || !window->uri_nofrag)
+    if(!window || !window->browser || !window->uri_nofrag)
         return E_UNEXPECTED;
 
     if(name && *name == '_') {
@@ -1332,8 +1341,10 @@ static HRESULT WINAPI HTMLWindow2_focus(IHTMLWindow2 *iface)
 
     TRACE("(%p)->()\n", This);
 
-    if(This->outer_window->doc_obj)
-        SetFocus(This->outer_window->doc_obj->hwnd);
+    if(!This->outer_window || !This->outer_window->browser)
+        return E_UNEXPECTED;
+
+    SetFocus(This->outer_window->browser->doc->hwnd);
     return S_OK;
 }
 
@@ -1499,12 +1510,15 @@ static HRESULT WINAPI HTMLWindow2_get_external(IHTMLWindow2 *iface, IDispatch **
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->outer_window || !This->outer_window->browser)
+        return E_UNEXPECTED;
+
     *p = NULL;
 
-    if(!This->outer_window->doc_obj->hostui)
+    if(!This->outer_window->browser->doc->hostui)
         return S_OK;
 
-    return IDocHostUIHandler_GetExternal(This->outer_window->doc_obj->hostui, p);
+    return IDocHostUIHandler_GetExternal(This->outer_window->browser->doc->hostui, p);
 }
 
 static const IHTMLWindow2Vtbl HTMLWindow2Vtbl = {
