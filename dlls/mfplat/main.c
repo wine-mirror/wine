@@ -952,11 +952,24 @@ static HRESULT WINAPI mfattributes_GetCount(IMFAttributes *iface, UINT32 *items)
 
 static HRESULT WINAPI mfattributes_GetItemByIndex(IMFAttributes *iface, UINT32 index, GUID *key, PROPVARIANT *value)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    HRESULT hr = S_OK;
 
-    FIXME("%p, %d, %p, %p\n", This, index, key, value);
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&attributes->cs);
+
+    if (index < attributes->count)
+    {
+        *key = attributes->attributes[index].key;
+        PropVariantCopy(value, &attributes->attributes[index].value);
+    }
+    else
+        hr = E_INVALIDARG;
+
+    LeaveCriticalSection(&attributes->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_CopyAllItems(IMFAttributes *iface, IMFAttributes *dest)

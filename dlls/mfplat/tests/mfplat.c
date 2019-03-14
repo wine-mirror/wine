@@ -504,6 +504,7 @@ static void test_MFCreateAttributes(void)
     IMFAttributes *attributes;
     UINT32 count;
     HRESULT hr;
+    GUID key;
 
     hr = MFCreateAttributes( &attributes, 3 );
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -602,6 +603,15 @@ static void test_MFCreateAttributes(void)
     ok(!PropVariantCompareEx(&propvar, &ret_propvar, 0, 0), "Unexpected item value.\n");
     PropVariantClear(&ret_propvar);
     PropVariantClear(&propvar);
+
+    /* Item ordering is not consistent across Windows version. */
+    hr = IMFAttributes_GetItemByIndex(attributes, 0, &key, &ret_propvar);
+    ok(hr == S_OK, "Failed to get item, hr %#x.\n", hr);
+    PropVariantClear(&ret_propvar);
+
+    hr = IMFAttributes_GetItemByIndex(attributes, 100, &key, &ret_propvar);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    PropVariantClear(&ret_propvar);
 
     IMFAttributes_Release(attributes);
 }
