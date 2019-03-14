@@ -3672,10 +3672,11 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
     outer_window->base.inner_window = window;
     outer_window->pending_window = NULL;
 
-    if(outer_window->doc_obj->basedoc.window == outer_window || !outer_window->doc_obj->basedoc.window) {
-        if(outer_window->doc_obj->basedoc.doc_node)
-            htmldoc_release(&outer_window->doc_obj->basedoc.doc_node->basedoc);
-        outer_window->doc_obj->basedoc.doc_node = window->doc;
+    if(is_main_content_window(outer_window) || !outer_window->browser->content_window) {
+        HTMLDocumentObj *doc_obj = outer_window->browser->doc;
+        if(doc_obj->basedoc.doc_node)
+            htmldoc_release(&doc_obj->basedoc.doc_node->basedoc);
+        doc_obj->basedoc.doc_node = window->doc;
         htmldoc_addref(&window->doc->basedoc);
     }
 
