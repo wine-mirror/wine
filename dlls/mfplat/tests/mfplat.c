@@ -714,6 +714,10 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_GetUnknown(attributes, &DUMMY_CLSID, &IID_IUnknown, (void **)&unk_value);
     ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFAttributes_DeleteAllItems(attributes);
+    ok(hr == S_OK, "Failed to delete items, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 0);
+
     IMFAttributes_Release(attributes);
 }
 
