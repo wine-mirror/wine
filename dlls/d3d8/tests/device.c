@@ -9630,6 +9630,67 @@ todo_wine {
     DestroyWindow(window);
 }
 
+static void test_get_display_mode(void)
+{
+    IDirect3DDevice8 *device;
+    struct device_desc desc;
+    D3DDISPLAYMODE mode;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_GetDisplayMode(device, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+    IDirect3D8_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    desc.device_window = window;
+    desc.width = 640;
+    desc.height = 480;
+    desc.flags = CREATE_DEVICE_FULLSCREEN;
+    if (!(device = create_device(d3d, window, &desc)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_GetDisplayMode(device, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Width == 640, "Unexpected width %u.\n", mode.Width);
+    ok(mode.Height == 480, "Unexpected width %u.\n", mode.Height);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+    IDirect3D8_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Width == 640, "Unexpected width %u.\n", mode.Width);
+    ok(mode.Height == 480, "Unexpected width %u.\n", mode.Height);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = GetModuleHandleA("d3d8.dll");
@@ -9744,6 +9805,7 @@ START_TEST(device)
     test_resource_access();
     test_multiply_transform();
     test_draw_primitive();
+    test_get_display_mode();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
