@@ -2686,8 +2686,11 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
     TRACE("(%p)->(%s %s %s %s %s %s %x)\n", This, debugstr_w(url), debugstr_w(arg2), debugstr_w(arg3), debugstr_w(arg4),
           debugstr_variant(post_data_var), debugstr_variant(headers_var), flags);
 
-    if(window->doc_obj->hostui) {
-        hres = IDocHostUIHandler_TranslateUrl(window->doc_obj->hostui, 0, url, &translated_url);
+    if(!window || !window->browser)
+        return E_UNEXPECTED;
+
+    if(window->browser->doc->hostui) {
+        hres = IDocHostUIHandler_TranslateUrl(window->browser->doc->hostui, 0, url, &translated_url);
         if(hres != S_OK)
             translated_url = NULL;
     }
