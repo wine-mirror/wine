@@ -427,12 +427,12 @@ static void refresh_proc(task_t *_task)
 
     window->readystate = READYSTATE_UNINITIALIZED;
 
-    if(window->doc_obj && window->doc_obj->client_cmdtrg) {
+    if(window->browser && window->browser->doc->client_cmdtrg) {
         VARIANT var;
 
         V_VT(&var) = VT_I4;
         V_I4(&var) = 0;
-        IOleCommandTarget_Exec(window->doc_obj->client_cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+        IOleCommandTarget_Exec(window->browser->doc->client_cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
     }
 
     load_uri(task->window, task->window->uri, BINDING_REFRESH|BINDING_NOFRAG);
