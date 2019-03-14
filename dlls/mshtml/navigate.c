@@ -2253,8 +2253,11 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
     nsChannelBSC *bsc;
     HRESULT hres;
 
-    if (window->doc_obj->client) {
-        hres = do_query_service((IUnknown*)window->doc_obj->client, &SID_SNewWindowManager,
+    if(!window->browser)
+        return E_UNEXPECTED;
+
+    if (window->browser->doc->client) {
+        hres = do_query_service((IUnknown*)window->browser->doc->client, &SID_SNewWindowManager,
                                 &IID_INewWindowManager, (void**)&new_window_mgr);
         if (FAILED(hres)) {
             FIXME("No INewWindowManager\n");
@@ -2272,8 +2275,8 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
         }
 
         hres = INewWindowManager_EvaluateNewWindow(new_window_mgr, display_uri, name, context_url,
-                NULL, FALSE, window->doc_obj->has_popup ? 0 : NWMF_FIRST, 0);
-        window->doc_obj->has_popup = TRUE;
+                NULL, FALSE, window->browser->doc->has_popup ? 0 : NWMF_FIRST, 0);
+        window->browser->doc->has_popup = TRUE;
         SysFreeString(display_uri);
         SysFreeString(context_url);
         INewWindowManager_Release(new_window_mgr);
