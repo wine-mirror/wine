@@ -350,7 +350,6 @@ if(0)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IMFMediaType_GetMajorType(mediatype, &guid);
-todo_wine
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
 
     compressed = FALSE;
@@ -376,13 +375,12 @@ todo_wine
     ok(!compressed, "Unexpected value %d.\n", compressed);
 
     hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to set GUID value, hr %#x.\n", hr);
 
     hr = IMFMediaType_GetMajorType(mediatype, &guid);
-todo_wine {
     ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
     ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected major type.\n");
-}
+
     /* IsEqual() */
     hr = MFCreateMediaType(&mediatype2);
     ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
@@ -394,19 +392,16 @@ todo_wine {
 
     /* Different major types. */
     hr = IMFMediaType_SetGUID(mediatype2, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
-todo_wine
     ok(hr == S_OK, "Failed to set major type, hr %#x.\n", hr);
 
     flags = 0;
     hr = IMFMediaType_IsEqual(mediatype, mediatype2, &flags);
-todo_wine {
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
     ok(flags == (MF_MEDIATYPE_EQUAL_FORMAT_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_USER_DATA),
             "Unexpected flags %#x.\n", flags);
-}
+
     /* Same major types, different subtypes. */
     hr = IMFMediaType_SetGUID(mediatype2, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
-todo_wine
     ok(hr == S_OK, "Failed to set major type, hr %#x.\n", hr);
 
     flags = 0;
@@ -417,13 +412,12 @@ todo_wine {
             | MF_MEDIATYPE_EQUAL_FORMAT_USER_DATA), "Unexpected flags %#x.\n", flags);
 }
     hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
-todo_wine
     ok(hr == S_OK, "Failed to set subtype, hr %#x.\n", hr);
 
     flags = 0;
     hr = IMFMediaType_IsEqual(mediatype, mediatype2, &flags);
-todo_wine {
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+todo_wine {
     ok(flags == (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_DATA | MF_MEDIATYPE_EQUAL_FORMAT_USER_DATA),
             "Unexpected flags %#x.\n", flags);
 }
