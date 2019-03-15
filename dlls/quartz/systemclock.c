@@ -82,7 +82,6 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
   struct list *entry;
   DWORD timeOut = INFINITE;
   MSG msg;
-  HRESULT hr;
   REFERENCE_TIME curTime;
 
   TRACE("(%p): Main Loop\n", This);
@@ -91,12 +90,8 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
     if (timeOut > 0) MsgWaitForMultipleObjects(0, NULL, FALSE, timeOut, QS_POSTMESSAGE|QS_SENDMESSAGE|QS_TIMER);
     
     EnterCriticalSection(&This->safe);
-    /*timeOut = IReferenceClock_OnTimerUpdated(This); */
-    hr = IReferenceClock_GetTime(&This->IReferenceClock_iface, &curTime);
-    if (FAILED(hr)) {
-      timeOut = INFINITE;
-      goto outrefresh;
-    }
+
+    curTime = GetTickCount64() * 10000;
 
     /** First SingleShots Advice: sorted list */
     LIST_FOR_EACH_ENTRY_SAFE(sink, cursor, &This->single_sinks, struct advise_sink, entry)
@@ -128,7 +123,6 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
       timeOut = min(timeOut, ((sink->rtBaseTime + sink->rtIntervalTime) - curTime) / 10000);
     }
 
-outrefresh:
     LeaveCriticalSection(&This->safe);
     
     while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
