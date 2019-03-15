@@ -872,24 +872,84 @@ static HRESULT WINAPI mfattributes_GetAllocatedString(IMFAttributes *iface, REFG
 
 static HRESULT WINAPI mfattributes_GetBlobSize(IMFAttributes *iface, REFGUID key, UINT32 *size)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    struct attribute *attribute;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+
+    EnterCriticalSection(&attributes->cs);
+
+    attribute = attributes_find_item(attributes, key, NULL);
+    if (attribute)
+    {
+        if (attribute->value.vt == MF_ATTRIBUTE_BLOB)
+            *size = attribute->value.u.caub.cElems;
+        else
+            hr = MF_E_INVALIDTYPE;
+    }
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+
+    LeaveCriticalSection(&attributes->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_GetBlob(IMFAttributes *iface, REFGUID key, UINT8 *buf,
                 UINT32 bufsize, UINT32 *blobsize)
 {
-    FIXME("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    struct attribute *attribute;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+
+    EnterCriticalSection(&attributes->cs);
+
+    attribute = attributes_find_item(attributes, key, NULL);
+    if (attribute)
+    {
+        if (attribute->value.vt == MF_ATTRIBUTE_BLOB)
+        {
+            UINT32 size = attribute->value.u.caub.cElems;
+
+            if (bufsize >= size)
+                hr = PropVariantToBuffer(&attribute->value, buf, size);
+            else
+                hr = E_NOT_SUFFICIENT_BUFFER;
+
+            if (blobsize)
+                *blobsize = size;
+        }
+        else
+            hr = MF_E_INVALIDTYPE;
+    }
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+
+    LeaveCriticalSection(&attributes->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_GetAllocatedBlob(IMFAttributes *iface, REFGUID key, UINT8 **buf, UINT32 *size)
 {
-    FIXME("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+
+    attrval.vt = VT_VECTOR | VT_UI1;
+    hr = attributes_get_item(attributes, key, &attrval);
+    if (SUCCEEDED(hr))
+    {
+        *buf = attrval.u.caub.pElems;
+        *size = attrval.u.caub.cElems;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_GetUnknown(IMFAttributes *iface, REFGUID key, REFIID riid, void **ppv)
@@ -1070,9 +1130,15 @@ static HRESULT WINAPI mfattributes_SetString(IMFAttributes *iface, REFGUID key, 
 
 static HRESULT WINAPI mfattributes_SetBlob(IMFAttributes *iface, REFGUID key, const UINT8 *buf, UINT32 size)
 {
-    FIXME("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    PROPVARIANT attrval;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+
+    attrval.vt = VT_VECTOR | VT_UI1;
+    attrval.u.caub.cElems = size;
+    attrval.u.caub.pElems = (UINT8 *)buf;
+    return attributes_set_item(attributes, key, &attrval);
 }
 
 static HRESULT WINAPI mfattributes_SetUnknown(IMFAttributes *iface, REFGUID key, IUnknown *unknown)

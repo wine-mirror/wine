@@ -501,9 +501,11 @@ static void check_attr_count(IMFAttributes* obj, UINT32 expected, int line)
 static void test_MFCreateAttributes(void)
 {
     static const WCHAR stringW[] = {'W','i','n','e',0};
+    static const UINT8 blob[] = {0,1,2,3,4,5};
     IMFAttributes *attributes, *attributes1;
+    UINT8 blob_value[256], *blob_buf = NULL;
+    UINT32 value, string_length, size;
     PROPVARIANT propvar, ret_propvar;
-    UINT32 value, string_length;
     double double_value;
     IUnknown *unk_value;
     WCHAR bufferW[256];
@@ -723,6 +725,40 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_CopyAllItems(attributes1, attributes);
     ok(hr == S_OK, "Failed to copy items, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 0);
+
+    /* Blob */
+    hr = IMFAttributes_SetBlob(attributes, &DUMMY_GUID1, blob, sizeof(blob));
+    ok(hr == S_OK, "Failed to set blob attribute, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 1);
+    hr = IMFAttributes_GetBlobSize(attributes, &DUMMY_GUID1, &size);
+    ok(hr == S_OK, "Failed to get blob size, hr %#x.\n", hr);
+    ok(size == sizeof(blob), "Unexpected blob size %u.\n", size);
+
+    hr = IMFAttributes_GetBlobSize(attributes, &DUMMY_GUID2, &size);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    size = 0;
+    hr = IMFAttributes_GetBlob(attributes, &DUMMY_GUID1, blob_value, sizeof(blob_value), &size);
+    ok(hr == S_OK, "Failed to get blob, hr %#x.\n", hr);
+    ok(size == sizeof(blob), "Unexpected blob size %u.\n", size);
+    ok(!memcmp(blob_value, blob, size), "Unexpected blob.\n");
+
+    hr = IMFAttributes_GetBlob(attributes, &DUMMY_GUID2, blob_value, sizeof(blob_value), &size);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    memset(blob_value, 0, sizeof(blob_value));
+    size = 0;
+    hr = IMFAttributes_GetAllocatedBlob(attributes, &DUMMY_GUID1, &blob_buf, &size);
+    ok(hr == S_OK, "Failed to get allocated blob, hr %#x.\n", hr);
+    ok(size == sizeof(blob), "Unexpected blob size %u.\n", size);
+    ok(!memcmp(blob_buf, blob, size), "Unexpected blob.\n");
+    CoTaskMemFree(blob_buf);
+
+    hr = IMFAttributes_GetAllocatedBlob(attributes, &DUMMY_GUID2, &blob_buf, &size);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFAttributes_GetBlob(attributes, &DUMMY_GUID1, blob_value, sizeof(blob) - 1, NULL);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
 
     IMFAttributes_Release(attributes);
     IMFAttributes_Release(attributes1);
