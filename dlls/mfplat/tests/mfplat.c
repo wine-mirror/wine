@@ -507,9 +507,9 @@ static void check_attr_count(IMFAttributes* obj, UINT32 expected, int line)
 static void test_MFCreateAttributes(void)
 {
     static const WCHAR stringW[] = {'W','i','n','e',0};
+    IMFAttributes *attributes, *attributes1;
     PROPVARIANT propvar, ret_propvar;
     UINT32 value, string_length;
-    IMFAttributes *attributes;
     double double_value;
     IUnknown *unk_value;
     WCHAR bufferW[256];
@@ -714,11 +714,24 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_GetUnknown(attributes, &DUMMY_CLSID, &IID_IUnknown, (void **)&unk_value);
     ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFAttributes_DeleteAllItems(attributes);
+    /* CopyAllItems() */
+    hr = MFCreateAttributes(&attributes1, 0);
+    ok(hr == S_OK, "Failed to create attributes object, hr %#x.\n", hr);
+    hr = IMFAttributes_CopyAllItems(attributes, attributes1);
+    ok(hr == S_OK, "Failed to copy items, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 5);
+    CHECK_ATTR_COUNT(attributes1, 5);
+
+    hr = IMFAttributes_DeleteAllItems(attributes1);
     ok(hr == S_OK, "Failed to delete items, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes1, 0);
+
+    hr = IMFAttributes_CopyAllItems(attributes1, attributes);
+    ok(hr == S_OK, "Failed to copy items, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 0);
 
     IMFAttributes_Release(attributes);
+    IMFAttributes_Release(attributes1);
 }
 
 static void test_MFCreateMFByteStreamOnStream(void)
