@@ -34,18 +34,16 @@ struct advise_sink
 };
 
 typedef struct SystemClockImpl {
-  IReferenceClock IReferenceClock_iface;
-  LONG ref;
+    IReferenceClock IReferenceClock_iface;
+    LONG ref;
 
-  /** IReferenceClock */
-  HANDLE         adviseThread;
-  DWORD          adviseThreadId;
-  BOOL           adviseThreadActive;
-  REFERENCE_TIME last_time;
-  CRITICAL_SECTION safe;
+    BOOL thread_created;
+    HANDLE thread, notify_event, stop_event;
+    REFERENCE_TIME last_time;
+    CRITICAL_SECTION safe;
 
-  /* These lists are ordered by expiration time (soonest first). */
-  struct list single_sinks, periodic_sinks;
+    /* These lists are ordered by expiration time (soonest first). */
+    struct list single_sinks, periodic_sinks;
 } SystemClockImpl;
 
 static inline SystemClockImpl *impl_from_IReferenceClock(IReferenceClock *iface)
@@ -70,25 +68,17 @@ static void insert_advise_sink(struct advise_sink *sink, struct list *queue)
     list_add_tail(queue, &sink->entry);
 }
 
-#define MAX_REFTIME            (REFERENCE_TIME)(0x7FFFFFFFFFFFFFFF)
-#define ADVISE_EXIT            (WM_APP + 0)
-#define ADVISE_REMOVE          (WM_APP + 2)
-#define ADVISE_ADD_SINGLESHOT  (WM_APP + 4)
-#define ADVISE_ADD_PERIODIC    (WM_APP + 8)
-
 static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
   SystemClockImpl* This = lpParam;
   struct advise_sink *sink, *cursor;
   struct list *entry;
   DWORD timeOut = INFINITE;
-  MSG msg;
   REFERENCE_TIME curTime;
+  HANDLE handles[2] = {This->stop_event, This->notify_event};
 
   TRACE("(%p): Main Loop\n", This);
 
   while (TRUE) {
-    if (timeOut > 0) MsgWaitForMultipleObjects(0, NULL, FALSE, timeOut, QS_POSTMESSAGE|QS_SENDMESSAGE|QS_TIMER);
-    
     EnterCriticalSection(&This->safe);
 
     curTime = GetTickCount64() * 10000;
@@ -124,58 +114,21 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
     }
 
     LeaveCriticalSection(&This->safe);
-    
-    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
-      /** if hwnd we suppose that is a windows event ... */
-      if  (NULL != msg.hwnd) {
-	TranslateMessage(&msg);
-	DispatchMessageW(&msg);
-      } else {
-	switch (msg.message) {	    
-	case WM_QUIT:
-	case ADVISE_EXIT:
-	  goto outofthread;
-	case ADVISE_ADD_SINGLESHOT:
-	case ADVISE_ADD_PERIODIC:
-	  /** set timeout to 0 to do a rescan now */
-	  timeOut = 0;
-	  break;
-	case ADVISE_REMOVE:
-	  /** hmmmm what we can do here ... */
-	  timeOut = INFINITE;
-	  break;
-	default:
-	  ERR("Unhandled message %u. Critical Path\n", msg.message);
-	  break;
-	}
-      }
-    }
-  }
 
-outofthread:
-  TRACE("(%p): Exiting\n", This);
-  return 0;
+    if (WaitForMultipleObjects(2, handles, FALSE, timeOut) == 0)
+        return 0;
+  }
 }
-/*static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) { */
 
-static BOOL SystemClockPostMessageToAdviseThread(SystemClockImpl* This, UINT iMsg) {
-  if (FALSE == This->adviseThreadActive) {
-    BOOL res;
-    This->adviseThread = CreateThread(NULL, 0, SystemClockAdviseThread, This, 0, &This->adviseThreadId);
-    if (NULL == This->adviseThread) return FALSE;
-    SetThreadPriority(This->adviseThread, THREAD_PRIORITY_TIME_CRITICAL);
-    This->adviseThreadActive = TRUE;
-    while(1) {
-      res = PostThreadMessageW(This->adviseThreadId, iMsg, 0, 0);
-      /* Let the thread creates its message queue (with MsgWaitForMultipleObjects call) by yielding and retrying */
-      if (!res && (GetLastError() == ERROR_INVALID_THREAD_ID))
-	Sleep(0);
-      else
-	break;
+static void notify_thread(SystemClockImpl *clock)
+{
+    if (!InterlockedCompareExchange(&clock->thread_created, TRUE, FALSE))
+    {
+        clock->thread = CreateThread(NULL, 0, SystemClockAdviseThread, clock, 0, NULL);
+        clock->notify_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        clock->stop_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     }
-    return res;
-  }
-  return PostThreadMessageW(This->adviseThreadId, iMsg, 0, 0);
+    SetEvent(clock->notify_event);
 }
 
 static ULONG WINAPI SystemClockImpl_AddRef(IReferenceClock* iface) {
@@ -203,20 +156,28 @@ static HRESULT WINAPI SystemClockImpl_QueryInterface(IReferenceClock* iface, REF
   return E_NOINTERFACE;
 }
 
-static ULONG WINAPI SystemClockImpl_Release(IReferenceClock* iface) {
-  SystemClockImpl *This = impl_from_IReferenceClock(iface);
-  ULONG ref = InterlockedDecrement(&This->ref);
-  TRACE("(%p): ReleaseRef to %d\n", This, ref);
-  if (ref == 0) {
-    if (This->adviseThreadActive && SystemClockPostMessageToAdviseThread(This, ADVISE_EXIT)) {
-      WaitForSingleObject(This->adviseThread, INFINITE);
-      CloseHandle(This->adviseThread);
+static ULONG WINAPI SystemClockImpl_Release(IReferenceClock *iface)
+{
+    SystemClockImpl *clock = impl_from_IReferenceClock(iface);
+    ULONG refcount = InterlockedDecrement(&clock->ref);
+
+    TRACE("%p decreasing refcount to %u.\n", clock, refcount);
+
+    if (!refcount)
+    {
+        if (clock->thread)
+        {
+            SetEvent(clock->stop_event);
+            WaitForSingleObject(clock->thread, INFINITE);
+            CloseHandle(clock->thread);
+            CloseHandle(clock->notify_event);
+            CloseHandle(clock->stop_event);
+        }
+        clock->safe.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&clock->safe);
+        heap_free(clock);
     }
-    This->safe.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->safe);
-    heap_free(This);
-  }
-  return ref;
+    return refcount;
 }
 
 static HRESULT WINAPI SystemClockImpl_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
@@ -272,7 +233,7 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock *iface,
     insert_advise_sink(sink, &clock->single_sinks);
     LeaveCriticalSection(&clock->safe);
 
-    SystemClockPostMessageToAdviseThread(clock, ADVISE_ADD_SINGLESHOT);
+    notify_thread(clock);
 
     *cookie = (DWORD_PTR)sink;
     return S_OK;
@@ -307,7 +268,7 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface,
     insert_advise_sink(sink, &clock->periodic_sinks);
     LeaveCriticalSection(&clock->safe);
 
-    SystemClockPostMessageToAdviseThread(clock, ADVISE_ADD_PERIODIC);
+    notify_thread(clock);
 
     *cookie = (DWORD_PTR)sink;
     return S_OK;
@@ -328,7 +289,6 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR
         {
             list_remove(&sink->entry);
             heap_free(sink);
-            SystemClockPostMessageToAdviseThread(clock, ADVISE_REMOVE);
             LeaveCriticalSection(&clock->safe);
             return S_OK;
         }
@@ -340,7 +300,6 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR
         {
             list_remove(&sink->entry);
             heap_free(sink);
-            SystemClockPostMessageToAdviseThread(clock, ADVISE_REMOVE);
             LeaveCriticalSection(&clock->safe);
             return S_OK;
         }
