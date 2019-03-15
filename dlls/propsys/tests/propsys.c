@@ -660,6 +660,7 @@ static void test_PropVariantToStringAlloc(void)
 static void test_PropVariantCompare(void)
 {
     PROPVARIANT empty, null, emptyarray, i2_0, i2_2, i4_large, i4_largeneg, i4_2, str_2, str_02, str_b;
+    PROPVARIANT clsid_null, clsid, clsid2;
     INT res;
     static const WCHAR str_2W[] = {'2', 0};
     static const WCHAR str_02W[] = {'0', '2', 0};
@@ -704,6 +705,12 @@ static void test_PropVariantCompare(void)
     str_02.u.bstrVal = SysAllocString(str_02W);
     str_b.vt = VT_BSTR;
     str_b.u.bstrVal = SysAllocString(str_bW);
+    clsid_null.vt = VT_CLSID;
+    clsid_null.u.puuid = NULL;
+    clsid.vt = VT_CLSID;
+    clsid.u.puuid = (GUID *)&dummy_guid;
+    clsid2.vt = VT_CLSID;
+    clsid2.u.puuid = (GUID *)&GUID_NULL;
 
     res = PropVariantCompareEx(&empty, &empty, 0, 0);
     ok(res == 0, "res=%i\n", res);
@@ -771,6 +778,34 @@ static void test_PropVariantCompare(void)
 
     res = PropVariantCompareEx(&i4_large, &str_b, 0, 0);
     todo_wine ok(res == -5 /* ??? */, "res=%i\n", res);
+
+    /* VT_CLSID */
+    res = PropVariantCompareEx(&clsid_null, &clsid_null, 0, 0);
+    ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&clsid_null, &clsid_null, 0, PVCF_TREATEMPTYASGREATERTHAN);
+    ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&clsid, &clsid, 0, 0);
+    ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&clsid, &clsid2, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&clsid2, &clsid, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&clsid_null, &clsid, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&clsid, &clsid_null, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&clsid_null, &clsid, 0, PVCF_TREATEMPTYASGREATERTHAN);
+    ok(res == 1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&clsid, &clsid_null, 0, PVCF_TREATEMPTYASGREATERTHAN);
+    ok(res == -1, "res=%i\n", res);
 
     SysFreeString(str_2.u.bstrVal);
     SysFreeString(str_02.u.bstrVal);

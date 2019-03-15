@@ -807,6 +807,9 @@ static BOOL isemptyornull(const PROPVARIANT *propvar)
         }
         return i == propvar->u.parray->cDims;
     }
+    if (propvar->vt == VT_CLSID)
+        return !propvar->u.puuid;
+
     /* FIXME: vectors, byrefs, errors? */
     return FALSE;
 }
@@ -893,8 +896,12 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
         else
             res = lstrcmpA(propvar1->u.pszVal, propvar2_converted->u.pszVal);
         break;
+    case VT_CLSID:
+        res = memcmp(propvar1->u.puuid, propvar2->u.puuid, sizeof(*propvar1->u.puuid));
+        if (res) res = res > 0 ? 1 : -1;
+        break;
     default:
-        FIXME("vartype %d not handled\n", propvar1->vt);
+        FIXME("vartype %#x not handled\n", propvar1->vt);
         res = -1;
         break;
     }
