@@ -1510,6 +1510,8 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
 {
     WCHAR id[MAX_DEVICE_ID_LEN];
     struct DeviceInfoSet *set;
+    HKEY enum_hkey;
+    HKEY instance_hkey;
     struct device *device;
 
     TRACE("devinfo %p, name %s, class %s, description %s, hwnd %p, flags %#x, device_data %p.\n",
@@ -1570,6 +1572,18 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
     }
     else
     {
+        /* Check if instance is already in registry */
+        RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_READ, NULL, &enum_hkey, NULL);
+        if (!RegOpenKeyExW(enum_hkey, name, 0, KEY_READ, &instance_hkey))
+        {
+            RegCloseKey(instance_hkey);
+            RegCloseKey(enum_hkey);
+            SetLastError(ERROR_DEVINST_ALREADY_EXISTS);
+            return FALSE;
+        }
+        RegCloseKey(enum_hkey);
+
+        /* Check if instance is already in set */
         strcpyW(id, name);
         LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
         {
