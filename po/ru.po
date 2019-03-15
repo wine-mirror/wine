@@ -4164,7 +4164,7 @@ msgstr "Истекло время ожидания семафора.\n"
 msgid "Insufficient buffer.\n"
 msgstr "Недостаточный объём буфера.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "Неверное имя.\n"
 
@@ -5736,7 +5736,7 @@ msgstr "Класс не существует.\n"
 msgid "Class has open windows.\n"
 msgstr "С классом связаны открытые окна.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Неверный индекс.\n"
 
@@ -6816,6 +6816,406 @@ msgstr "Невозможно отправить почту: не установ�
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "Отправка почты"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:32
+#, fuzzy
+#| msgid "Installation platform not supported.\n"
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Платформа для установки не поддерживается.\n"
+
+#: mferror.mc:39
+#, fuzzy
+#| msgid "Byte count too small.\n"
+msgid "Buffer is too small.\n"
+msgstr "Число байт слишком мало.\n"
+
+#: mferror.mc:46
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Invalid request.\n"
+msgstr "Неверный синтаксис запроса.\n"
+
+#: mferror.mc:53
+#, fuzzy
+#| msgid "Invalid segment number.\n"
+msgid "Invalid stream number.\n"
+msgstr "Неверный номер сегмента.\n"
+
+#: mferror.mc:60
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid media type.\n"
+msgstr "Неверный тип данных.\n"
+
+#: mferror.mc:67
+#, fuzzy
+#| msgid "No more entries.\n"
+msgid "No more input is accepted.\n"
+msgstr "Больше записей нет.\n"
+
+#: mferror.mc:74
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object is not initialized.\n"
+msgstr "UUID объекта не найден.\n"
+
+#: mferror.mc:81
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Representation is not supported.\n"
+msgstr "Операция не поддерживается.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported service.\n"
+msgstr "Неподдерживаемый тип.\n"
+
+#: mferror.mc:102
+#, fuzzy
+#| msgid "Unexpected network error.\n"
+msgid "Unexpected error.\n"
+msgstr "Неожиданная сетевая ошибка.\n"
+
+#: mferror.mc:116
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid type.\n"
+msgstr "Неверное время.\n"
+
+#: mferror.mc:123
+#, fuzzy
+#| msgid "Invalid pixel format.\n"
+msgid "Invalid file format.\n"
+msgstr "Неверный формат пикселей.\n"
+
+#: mferror.mc:137
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid timestamp.\n"
+msgstr "Неверное время.\n"
+
+#: mferror.mc:144
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported scheme.\n"
+msgstr "Неподдерживаемый тип.\n"
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported bytestream type.\n"
+msgstr "Неподдерживаемый тип.\n"
+
+#: mferror.mc:158
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported time format.\n"
+msgstr "Неподдерживаемый тип.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid stream data.\n"
+msgstr "Неверные данные.\n"
+
+#: mferror.mc:186
+#, fuzzy
+#| msgid "Help not available."
+msgid "Realtime support is not available.\n"
+msgstr "Справка не доступна."
+
+#: mferror.mc:193
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate.\n"
+msgstr "Неподдерживаемый тип.\n"
+
+#: mferror.mc:200
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported thinning.\n"
+msgstr "Неподдерживаемый тип.\n"
+
+#: mferror.mc:207
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Reversing is not supported.\n"
+msgstr "Сетевой запрос не поддерживается.\n"
+
+#: mferror.mc:214
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported rate transition.\n"
+msgstr "Неподдерживаемый уровень авторизации.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object or value wasn't found.\n"
+msgstr "UUID объекта не найден.\n"
+
+#: mferror.mc:235
+#, fuzzy
+#| msgid "Help not available."
+msgid "Value is not available.\n"
+msgstr "Справка не доступна."
+
+#: mferror.mc:242
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not available.\n"
+msgstr "Справка не доступна."
+
+#: mferror.mc:263
+#, fuzzy
+#| msgid "Extended attributes not supported.\n"
+msgid "Multiple subscribers are not supported.\n"
+msgstr "Расширенные атрибуты не поддерживаются.\n"
+
+#: mferror.mc:270
+#, fuzzy
+#| msgid "The driver was not enabled."
+msgid "The timer was orphaned.\n"
+msgstr "Драйвер не был подключен."
+
+#: mferror.mc:277
+#, fuzzy
+#| msgid "Character translation table open failed.\n"
+msgid "State transition is pending.\n"
+msgstr "Открыть таблицу преобразования символов не удалось.\n"
+
+#: mferror.mc:284
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported state transition.\n"
+msgstr "Неподдерживаемый уровень авторизации.\n"
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "An internal error has occurred.\n"
+msgid "Unrecoverable error occurred.\n"
+msgstr "Произошла внутренняя ошибка.\n"
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+#, fuzzy
+#| msgid "Temporary directory not writable.\n"
+msgid "Sample is not writable.\n"
+msgstr "Временный каталог недоступен для записи.\n"
+
+#: mferror.mc:312
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Key is invalid.\n"
+msgstr "Неверный путь.\n"
+
+#: mferror.mc:319
+#, fuzzy
+#| msgid "Wrong stub version.\n"
+msgid "Bad startup version.\n"
+msgstr "Неверная версия заглушки.\n"
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported caption.\n"
+msgstr "Неподдерживаемый тип.\n"
+
+#: mferror.mc:333
+#, fuzzy
+#| msgid "Invalid workstation.\n"
+msgid "Invalid position.\n"
+msgstr "Вход на этом компьютере не разрешён.\n"
+
+#: mferror.mc:340
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Attribute is not found.\n"
+msgstr "Файл не найден.\n"
+
+#: mferror.mc:347
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property type is not allowed.\n"
+msgstr "Тип обработчика не допустим.\n"
+
+#: mferror.mc:354
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Property type is not supported.\n"
+msgstr "Операция не поддерживается.\n"
+
+#: mferror.mc:361
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is empty.\n"
+msgstr "Каталог не пуст.\n"
+
+#: mferror.mc:368
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is not empty.\n"
+msgstr "Каталог не пуст.\n"
+
+#: mferror.mc:375
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Vector property is not allowed.\n"
+msgstr "Тип обработчика не допустим.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation was cancelled.\n"
+msgstr "Операция прервана пользователем.\n"
+
+#: mferror.mc:396
+#, fuzzy
+#| msgid "Server not disabled.\n"
+msgid "Bytestream is not seekable.\n"
+msgstr "Сервер не отключен.\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+#| msgid "Cannot create service thread.\n"
+msgid "Cannot parse bytestream.\n"
+msgstr "Не удалось создать поток службы.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+#| msgid "Unknown interface.\n"
+msgid "Unknown bytestream length.\n"
+msgstr "Неизвестный интерфейс.\n"
+
+#: mferror.mc:431
+#, fuzzy
+#| msgid "Invalid index.\n"
+msgid "Invalid work queue index.\n"
+msgstr "Неверный индекс.\n"
+
+#: mferror.mc:438
+#, fuzzy
+#| msgid "No logon servers available.\n"
+msgid "No events available.\n"
+msgstr "Нет серверов входа в сеть.\n"
+
+#: mferror.mc:445
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Connection invalid.\n"
+msgid "Optional node is invalid.\n"
+msgstr "Неверное соединение.\n"
+
+#: mferror.mc:459
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "Не удалось найти принтер."
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "Module not found.\n"
+msgid "Codec was not found.\n"
+msgstr "Модуль не найден.\n"
+
+#: mferror.mc:473
+#, fuzzy
+#| msgid "Cannot get call handle.\n"
+msgid "Cannot connect topology nodes.\n"
+msgstr "Не удалось получить дескриптор вызова.\n"
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Topology request is not supported.\n"
+msgstr "Сетевой запрос не поддерживается.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Invalid group attributes.\n"
+msgid "Invalid topology time attributes.\n"
+msgstr "Неверные атрибуты группы.\n"
+
+#: mferror.mc:494
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Presentation descriptor is missing.\n"
+msgstr "Источник установочных файлов отсутствует.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Stream descriptor is missing.\n"
+msgstr "Отсутствует индекс.\n"
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Stream descriptor is not selected.\n"
+msgstr "Устройство не подключено.\n"
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Source is missing.\n"
+msgstr "Отсутствует индекс.\n"
+
+#: mferror.mc:529
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:536
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:543
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Clock state was already set.\n"
+msgstr "Класс уже существует.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

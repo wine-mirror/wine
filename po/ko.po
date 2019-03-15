@@ -4139,7 +4139,7 @@ msgstr "세마포어 시간 만료.\n"
 msgid "Insufficient buffer.\n"
 msgstr "충분하지 않은 버퍼.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "올바르지 않은 이름.\n"
 
@@ -5711,7 +5711,7 @@ msgstr "클래스가 없습니다.\n"
 msgid "Class has open windows.\n"
 msgstr "클래스는 연 상태의 창을 가지고 있습니다.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "올바르지 않은 인덱스.\n"
 
@@ -6790,6 +6790,406 @@ msgstr "설치된 MAPI 메일 클라이언트가 없어서 메일 보내기 실�
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "메일 보내기"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:32
+#, fuzzy
+#| msgid "Installation platform not supported.\n"
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "설치 플랫폼을 지원하지 않음.\n"
+
+#: mferror.mc:39
+#, fuzzy
+#| msgid "Byte count too small.\n"
+msgid "Buffer is too small.\n"
+msgstr "바이트 카운트가 너무 작습니다.\n"
+
+#: mferror.mc:46
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Invalid request.\n"
+msgstr "잘못된 쿼리 구문.\n"
+
+#: mferror.mc:53
+#, fuzzy
+#| msgid "Invalid segment number.\n"
+msgid "Invalid stream number.\n"
+msgstr "올바르지 않은 세그멘트 번호.\n"
+
+#: mferror.mc:60
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid media type.\n"
+msgstr "올바르지 않은 데이터 형식.\n"
+
+#: mferror.mc:67
+#, fuzzy
+#| msgid "No more entries.\n"
+msgid "No more input is accepted.\n"
+msgstr "더 이상 엔트리가 없습니다.\n"
+
+#: mferror.mc:74
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object is not initialized.\n"
+msgstr "UUID 객체를 찾을 수 없습니다.\n"
+
+#: mferror.mc:81
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Representation is not supported.\n"
+msgstr "이 작업은 지원하지 않습니다.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported service.\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:102
+#, fuzzy
+#| msgid "Unexpected network error.\n"
+msgid "Unexpected error.\n"
+msgstr "예기치 않은 네트워크 오류.\n"
+
+#: mferror.mc:116
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid type.\n"
+msgstr "올바르지 않은 시간.\n"
+
+#: mferror.mc:123
+#, fuzzy
+#| msgid "Invalid pixel format.\n"
+msgid "Invalid file format.\n"
+msgstr "올바르지 않은 픽셀 형식.\n"
+
+#: mferror.mc:137
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid timestamp.\n"
+msgstr "올바르지 않은 시간.\n"
+
+#: mferror.mc:144
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported scheme.\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported bytestream type.\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:158
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported time format.\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid stream data.\n"
+msgstr "올바르지 않은 데이터.\n"
+
+#: mferror.mc:186
+#, fuzzy
+#| msgid "Help not available."
+msgid "Realtime support is not available.\n"
+msgstr "도움말은 가능하지않습니다."
+
+#: mferror.mc:193
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate.\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:200
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported thinning.\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:207
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Reversing is not supported.\n"
+msgstr "지원되지 않는 요청.\n"
+
+#: mferror.mc:214
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported rate transition.\n"
+msgstr "지원하지 않는 인증 레벨.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object or value wasn't found.\n"
+msgstr "UUID 객체를 찾을 수 없습니다.\n"
+
+#: mferror.mc:235
+#, fuzzy
+#| msgid "Help not available."
+msgid "Value is not available.\n"
+msgstr "도움말은 가능하지않습니다."
+
+#: mferror.mc:242
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not available.\n"
+msgstr "도움말은 가능하지않습니다."
+
+#: mferror.mc:263
+#, fuzzy
+#| msgid "Extended attributes not supported.\n"
+msgid "Multiple subscribers are not supported.\n"
+msgstr "지원되지 않는 확장 속성.\n"
+
+#: mferror.mc:270
+#, fuzzy
+#| msgid "The driver was not enabled."
+msgid "The timer was orphaned.\n"
+msgstr "드라이버를 사용할 수 없습니다."
+
+#: mferror.mc:277
+#, fuzzy
+#| msgid "Character translation table open failed.\n"
+msgid "State transition is pending.\n"
+msgstr "문자변환테이블 열기 실패.\n"
+
+#: mferror.mc:284
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported state transition.\n"
+msgstr "지원하지 않는 인증 레벨.\n"
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "An internal error has occurred.\n"
+msgid "Unrecoverable error occurred.\n"
+msgstr "내부 오류 발생.\n"
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+#, fuzzy
+#| msgid "Temporary directory not writable.\n"
+msgid "Sample is not writable.\n"
+msgstr "임시 디렉터리에 기록할 수 없음.\n"
+
+#: mferror.mc:312
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Key is invalid.\n"
+msgstr "올바르지 않은 경로.\n"
+
+#: mferror.mc:319
+#, fuzzy
+#| msgid "Wrong stub version.\n"
+msgid "Bad startup version.\n"
+msgstr "잘못된 스텁 버전.\n"
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported caption.\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:333
+#, fuzzy
+#| msgid "Invalid workstation.\n"
+msgid "Invalid position.\n"
+msgstr "올바르지 않은 워크스테이션.\n"
+
+#: mferror.mc:340
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Attribute is not found.\n"
+msgstr "파일을 찾을 수 없습니다.\n"
+
+#: mferror.mc:347
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property type is not allowed.\n"
+msgstr "허용되지 않은 훅 형식.\n"
+
+#: mferror.mc:354
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Property type is not supported.\n"
+msgstr "이 작업은 지원하지 않습니다.\n"
+
+#: mferror.mc:361
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is empty.\n"
+msgstr "디렉터리가 비워 있지 않습니다.\n"
+
+#: mferror.mc:368
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is not empty.\n"
+msgstr "디렉터리가 비워 있지 않습니다.\n"
+
+#: mferror.mc:375
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Vector property is not allowed.\n"
+msgstr "허용되지 않은 훅 형식.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation was cancelled.\n"
+msgstr "작업이 사용자에 위해 취소됨.\n"
+
+#: mferror.mc:396
+#, fuzzy
+#| msgid "Server not disabled.\n"
+msgid "Bytestream is not seekable.\n"
+msgstr "서버가 가능하지 않지가 않음.\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+#| msgid "Cannot create service thread.\n"
+msgid "Cannot parse bytestream.\n"
+msgstr "서비스 스레드 만들기 실패.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+#| msgid "Unknown interface.\n"
+msgid "Unknown bytestream length.\n"
+msgstr "알 수 없는 인터페이스.\n"
+
+#: mferror.mc:431
+#, fuzzy
+#| msgid "Invalid index.\n"
+msgid "Invalid work queue index.\n"
+msgstr "올바르지 않은 인덱스.\n"
+
+#: mferror.mc:438
+#, fuzzy
+#| msgid "No logon servers available.\n"
+msgid "No events available.\n"
+msgstr "로그온 서버를 이용할 수 없습니다.\n"
+
+#: mferror.mc:445
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Connection invalid.\n"
+msgid "Optional node is invalid.\n"
+msgstr "올바르지 않은 연결.\n"
+
+#: mferror.mc:459
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "프린터를 찾을 수 없습니다."
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "Module not found.\n"
+msgid "Codec was not found.\n"
+msgstr "모듈을 찾을 수 없습니다.\n"
+
+#: mferror.mc:473
+#, fuzzy
+#| msgid "Cannot get call handle.\n"
+msgid "Cannot connect topology nodes.\n"
+msgstr "호출 핸들을 얻을 수 없습니다.\n"
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Topology request is not supported.\n"
+msgstr "지원되지 않는 요청.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Invalid group attributes.\n"
+msgid "Invalid topology time attributes.\n"
+msgstr "올바르지 않은 그룹 속성.\n"
+
+#: mferror.mc:494
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Presentation descriptor is missing.\n"
+msgstr "설치 원본이 없음.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Stream descriptor is missing.\n"
+msgstr "인덱스가 빠짐.\n"
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Stream descriptor is not selected.\n"
+msgstr "장치가 연결되지 않았습니다.\n"
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Source is missing.\n"
+msgstr "인덱스가 빠짐.\n"
+
+#: mferror.mc:529
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:536
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:543
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Clock state was already set.\n"
+msgstr "클래스는 이미 존재합니다.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

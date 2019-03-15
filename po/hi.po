@@ -4070,7 +4070,7 @@ msgstr ""
 msgid "Insufficient buffer.\n"
 msgstr "डिज़िटल (&t).\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr ""
 
@@ -5642,7 +5642,7 @@ msgstr ""
 msgid "Class has open windows.\n"
 msgstr ""
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr ""
 
@@ -6720,6 +6720,292 @@ msgstr ""
 
 #: mapi32.rc:32
 msgid "Send Mail"
+msgstr ""
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:32
+msgid "Media Foundation platform is not initialized.\n"
+msgstr ""
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr ""
+
+#: mferror.mc:46
+msgid "Invalid request.\n"
+msgstr ""
+
+#: mferror.mc:53
+msgid "Invalid stream number.\n"
+msgstr ""
+
+#: mferror.mc:60
+msgid "Invalid media type.\n"
+msgstr ""
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr ""
+
+#: mferror.mc:74
+msgid "Object is not initialized.\n"
+msgstr ""
+
+#: mferror.mc:81
+msgid "Representation is not supported.\n"
+msgstr ""
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+msgid "Unsupported service.\n"
+msgstr ""
+
+#: mferror.mc:102
+msgid "Unexpected error.\n"
+msgstr ""
+
+#: mferror.mc:116
+msgid "Invalid type.\n"
+msgstr ""
+
+#: mferror.mc:123
+msgid "Invalid file format.\n"
+msgstr ""
+
+#: mferror.mc:137
+msgid "Invalid timestamp.\n"
+msgstr ""
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr ""
+
+#: mferror.mc:151
+msgid "Unsupported bytestream type.\n"
+msgstr ""
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr ""
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+msgid "Invalid stream data.\n"
+msgstr ""
+
+#: mferror.mc:186
+msgid "Realtime support is not available.\n"
+msgstr ""
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr ""
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr ""
+
+#: mferror.mc:207
+msgid "Reversing is not supported.\n"
+msgstr ""
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr ""
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+msgid "Object or value wasn't found.\n"
+msgstr ""
+
+#: mferror.mc:235
+msgid "Value is not available.\n"
+msgstr ""
+
+#: mferror.mc:242
+msgid "Clock is not available.\n"
+msgstr ""
+
+#: mferror.mc:263
+msgid "Multiple subscribers are not supported.\n"
+msgstr ""
+
+#: mferror.mc:270
+msgid "The timer was orphaned.\n"
+msgstr ""
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr ""
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr ""
+
+#: mferror.mc:291
+msgid "Unrecoverable error occurred.\n"
+msgstr ""
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr ""
+
+#: mferror.mc:312
+msgid "Key is invalid.\n"
+msgstr ""
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr ""
+
+#: mferror.mc:326
+msgid "Unsupported caption.\n"
+msgstr ""
+
+#: mferror.mc:333
+msgid "Invalid position.\n"
+msgstr ""
+
+#: mferror.mc:340
+msgid "Attribute is not found.\n"
+msgstr ""
+
+#: mferror.mc:347
+msgid "Property type is not allowed.\n"
+msgstr ""
+
+#: mferror.mc:354
+msgid "Property type is not supported.\n"
+msgstr ""
+
+#: mferror.mc:361
+#, fuzzy
+msgid "Property is empty.\n"
+msgstr "सूचना (&o)"
+
+#: mferror.mc:368
+#, fuzzy
+msgid "Property is not empty.\n"
+msgstr "सूचना (&o)"
+
+#: mferror.mc:375
+msgid "Vector property is not allowed.\n"
+msgstr ""
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+msgid "Operation was cancelled.\n"
+msgstr ""
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr ""
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+msgid "Cannot parse bytestream.\n"
+msgstr ""
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+msgid "Unknown bytestream length.\n"
+msgstr ""
+
+#: mferror.mc:431
+msgid "Invalid work queue index.\n"
+msgstr ""
+
+#: mferror.mc:438
+msgid "No events available.\n"
+msgstr ""
+
+#: mferror.mc:445
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:452
+msgid "Optional node is invalid.\n"
+msgstr ""
+
+#: mferror.mc:459
+msgid "Cannot find decryptor.\n"
+msgstr ""
+
+#: mferror.mc:466
+msgid "Codec was not found.\n"
+msgstr ""
+
+#: mferror.mc:473
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:480
+msgid "Topology request is not supported.\n"
+msgstr ""
+
+#: mferror.mc:487
+msgid "Invalid topology time attributes.\n"
+msgstr ""
+
+#: mferror.mc:494
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:501
+msgid "Presentation descriptor is missing.\n"
+msgstr ""
+
+#: mferror.mc:508
+msgid "Stream descriptor is missing.\n"
+msgstr ""
+
+#: mferror.mc:515
+msgid "Stream descriptor is not selected.\n"
+msgstr ""
+
+#: mferror.mc:522
+msgid "Source is missing.\n"
+msgstr ""
+
+#: mferror.mc:529
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:536
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Clock state was already set.\n"
 msgstr ""
 
 #: mpr.rc:35 wininet.rc:37

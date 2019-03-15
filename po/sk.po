@@ -4136,7 +4136,7 @@ msgstr ""
 msgid "Insufficient buffer.\n"
 msgstr "Digi&tálne.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "Nesprávny názov.\n"
 
@@ -5732,7 +5732,7 @@ msgstr "Cesta neexistuje.\n"
 msgid "Class has open windows.\n"
 msgstr ""
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr ""
 
@@ -6839,6 +6839,369 @@ msgstr ""
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr ""
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:32
+msgid "Media Foundation platform is not initialized.\n"
+msgstr ""
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr ""
+
+#: mferror.mc:46
+#, fuzzy
+#| msgid "Invalid drive.\n"
+msgid "Invalid request.\n"
+msgstr "Nesprávne zariadenie.\n"
+
+#: mferror.mc:53
+#, fuzzy
+#| msgid "Invalid parameter.\n"
+msgid "Invalid stream number.\n"
+msgstr "Nesprávny parameter.\n"
+
+#: mferror.mc:60
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid media type.\n"
+msgstr "Nesprávne údaje.\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr ""
+
+#: mferror.mc:74
+#, fuzzy
+msgid "Object is not initialized.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: mferror.mc:81
+msgid "Representation is not supported.\n"
+msgstr ""
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported service.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:102
+#, fuzzy
+#| msgid "Unexpected network error.\n"
+msgid "Unexpected error.\n"
+msgstr "Neočakávaná sieťová chyba.\n"
+
+#: mferror.mc:116
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid type.\n"
+msgstr "Nesprávne údaje.\n"
+
+#: mferror.mc:123
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid file format.\n"
+msgstr "Nesprávne údaje.\n"
+
+#: mferror.mc:137
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid timestamp.\n"
+msgstr "Nesprávne údaje.\n"
+
+#: mferror.mc:144
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported scheme.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported bytestream type.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:158
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported time format.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid stream data.\n"
+msgstr "Nesprávne údaje.\n"
+
+#: mferror.mc:186
+#, fuzzy
+#| msgid "Help not available."
+msgid "Realtime support is not available.\n"
+msgstr "Nápoveda nedostupná."
+
+#: mferror.mc:193
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:200
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported thinning.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:207
+msgid "Reversing is not supported.\n"
+msgstr ""
+
+#: mferror.mc:214
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate transition.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+msgid "Object or value wasn't found.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: mferror.mc:235
+#, fuzzy
+#| msgid "Help not available."
+msgid "Value is not available.\n"
+msgstr "Nápoveda nedostupná."
+
+#: mferror.mc:242
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not available.\n"
+msgstr "Nápoveda nedostupná."
+
+#: mferror.mc:263
+msgid "Multiple subscribers are not supported.\n"
+msgstr ""
+
+#: mferror.mc:270
+#, fuzzy
+#| msgid "The device door is open.\n"
+msgid "The timer was orphaned.\n"
+msgstr "Dvierka zariadenia sú otvorené; .\n"
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr ""
+
+#: mferror.mc:284
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported state transition.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Unrecoverable error occurred.\n"
+msgstr "Chyba tlačiarne."
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+#, fuzzy
+#| msgid "Server not disabled.\n"
+msgid "Sample is not writable.\n"
+msgstr "Server nezablokovaný.\n"
+
+#: mferror.mc:312
+msgid "Key is invalid.\n"
+msgstr ""
+
+#: mferror.mc:319
+#, fuzzy
+#| msgid "Bad network response.\n"
+msgid "Bad startup version.\n"
+msgstr "Zlá odpoveď siete.\n"
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported caption.\n"
+msgstr "Nepodporovaný typ.\n"
+
+#: mferror.mc:333
+#, fuzzy
+#| msgid "Invalid function.\n"
+msgid "Invalid position.\n"
+msgstr "Nesprávna funkcia.\n"
+
+#: mferror.mc:340
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Attribute is not found.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: mferror.mc:347
+#, fuzzy
+msgid "Property type is not allowed.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: mferror.mc:354
+#, fuzzy
+msgid "Property type is not supported.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: mferror.mc:361
+#, fuzzy
+msgid "Property is empty.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: mferror.mc:368
+#, fuzzy
+msgid "Property is not empty.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: mferror.mc:375
+#, fuzzy
+msgid "Vector property is not allowed.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation was cancelled.\n"
+msgstr "Operácia prerušená užívateľom.\n"
+
+#: mferror.mc:396
+#, fuzzy
+#| msgid "Server not disabled.\n"
+msgid "Bytestream is not seekable.\n"
+msgstr "Server nezablokovaný.\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+#| msgid "Cannot create.\n"
+msgid "Cannot parse bytestream.\n"
+msgstr "Nemožno vytvoriť.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+msgid "Unknown bytestream length.\n"
+msgstr "Neznámy ovládač tlačiarne.\n"
+
+#: mferror.mc:431
+#, fuzzy
+#| msgid "Invalid network address.\n"
+msgid "Invalid work queue index.\n"
+msgstr "Nesprávna sieťová adresa.\n"
+
+#: mferror.mc:438
+#, fuzzy
+msgid "No events available.\n"
+msgstr "Nie je k dispozícii; .\n"
+
+#: mferror.mc:445
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:452
+msgid "Optional node is invalid.\n"
+msgstr ""
+
+#: mferror.mc:459
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "Nemožno nájsť tlačiareň."
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "Module not found.\n"
+msgid "Codec was not found.\n"
+msgstr "Modul nenájdený.\n"
+
+#: mferror.mc:473
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:480
+msgid "Topology request is not supported.\n"
+msgstr ""
+
+#: mferror.mc:487
+msgid "Invalid topology time attributes.\n"
+msgstr ""
+
+#: mferror.mc:494
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:501
+msgid "Presentation descriptor is missing.\n"
+msgstr ""
+
+#: mferror.mc:508
+msgid "Stream descriptor is missing.\n"
+msgstr ""
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Stream descriptor is not selected.\n"
+msgstr "Zariadenie je nepripojené.\n"
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Source is missing.\n"
+msgstr "Zdroj sa používa.\n"
+
+#: mferror.mc:529
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:536
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:543
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "Clock state was already set.\n"
+msgstr "Súbor už existuje.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

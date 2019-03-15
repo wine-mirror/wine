@@ -19,6 +19,8 @@
 #ifndef __WINE_MFERROR_H
 #define __WINE_MFERROR_H
 
+#define FACILITY_MF 0xd
+
 #define MF_E_PLATFORM_NOT_INITIALIZED                 _HRESULT_TYPEDEF_(0xc00d36b0)
 #define MF_E_BUFFERTOOSMALL                           _HRESULT_TYPEDEF_(0xc00d36b1)
 #define MF_E_INVALIDREQUEST                           _HRESULT_TYPEDEF_(0xc00d36b2)

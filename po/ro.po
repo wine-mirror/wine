@@ -4162,7 +4162,7 @@ msgstr ""
 msgid "Insufficient buffer.\n"
 msgstr "Drepturi insuficiente.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "Nume nevalid.\n"
 
@@ -5765,7 +5765,7 @@ msgstr "Clasa nu există.\n"
 msgid "Class has open windows.\n"
 msgstr "Clasa are ferestre deschise.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Index nevalid.\n"
 
@@ -6899,6 +6899,386 @@ msgstr ""
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "Trimite emailul"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:32
+#, fuzzy
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Încetarea operațiunilor.\n"
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr ""
+
+#: mferror.mc:46
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Invalid request.\n"
+msgstr "Sintaxă de interogare nevalidă.\n"
+
+#: mferror.mc:53
+#, fuzzy
+#| msgid "Invalid segment number.\n"
+msgid "Invalid stream number.\n"
+msgstr "Număr de segment nevalid.\n"
+
+#: mferror.mc:60
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid media type.\n"
+msgstr "Tip de date nevalide.\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr ""
+
+#: mferror.mc:74
+#, fuzzy
+msgid "Object is not initialized.\n"
+msgstr "calea %s nu a fost găsită.\n"
+
+#: mferror.mc:81
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Representation is not supported.\n"
+msgstr "Operația nu este suportată.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported service.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:102
+#, fuzzy
+#| msgid "Unexpected network error.\n"
+msgid "Unexpected error.\n"
+msgstr "Eroare de rețea neașteptată.\n"
+
+#: mferror.mc:116
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid type.\n"
+msgstr "Timp nevalid.\n"
+
+#: mferror.mc:123
+#, fuzzy
+msgid "Invalid file format.\n"
+msgstr "Formatul de număr nu este valid."
+
+#: mferror.mc:137
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid timestamp.\n"
+msgstr "Timp nevalid.\n"
+
+#: mferror.mc:144
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported scheme.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported bytestream type.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:158
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported time format.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid stream data.\n"
+msgstr "Date nevalide.\n"
+
+#: mferror.mc:186
+#, fuzzy
+#| msgid "Help not available."
+msgid "Realtime support is not available.\n"
+msgstr "Nu este disponibil ajutor."
+
+#: mferror.mc:193
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:200
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported thinning.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:207
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Reversing is not supported.\n"
+msgstr "Cerere nesusținută.\n"
+
+#: mferror.mc:214
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate transition.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+msgid "Object or value wasn't found.\n"
+msgstr "calea %s nu a fost găsită.\n"
+
+#: mferror.mc:235
+#, fuzzy
+#| msgid "Help not available."
+msgid "Value is not available.\n"
+msgstr "Nu este disponibil ajutor."
+
+#: mferror.mc:242
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not available.\n"
+msgstr "Nu este disponibil ajutor."
+
+#: mferror.mc:263
+#, fuzzy
+msgid "Multiple subscribers are not supported.\n"
+msgstr "Documentele de depozitare OLE nu sunt suportate."
+
+#: mferror.mc:270
+#, fuzzy
+#| msgid "The driver was not enabled."
+msgid "The timer was orphaned.\n"
+msgstr "Driverul nu a fost activat."
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr ""
+
+#: mferror.mc:284
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported state transition.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Unrecoverable error occurred.\n"
+msgstr "S-a produs o eroare la tipărire."
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+#, fuzzy
+msgid "Sample is not writable.\n"
+msgstr "Driverul nu a fost activat."
+
+#: mferror.mc:312
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Key is invalid.\n"
+msgstr "Calea nu este validă.\n"
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr ""
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported caption.\n"
+msgstr "Tip fără suport.\n"
+
+#: mferror.mc:333
+#, fuzzy
+msgid "Invalid position.\n"
+msgstr "Opțiune nevalidă.\n"
+
+#: mferror.mc:340
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Attribute is not found.\n"
+msgstr "Fișierul nu a fost găsit.\n"
+
+#: mferror.mc:347
+#, fuzzy
+msgid "Property type is not allowed.\n"
+msgstr "Destinația pentru GOTO nu a fost găsită.\n"
+
+#: mferror.mc:354
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Property type is not supported.\n"
+msgstr "Operația nu este suportată.\n"
+
+#: mferror.mc:361
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is empty.\n"
+msgstr "Dosarul nu este gol.\n"
+
+#: mferror.mc:368
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is not empty.\n"
+msgstr "Dosarul nu este gol.\n"
+
+#: mferror.mc:375
+#, fuzzy
+msgid "Vector property is not allowed.\n"
+msgstr "Destinația pentru GOTO nu a fost găsită.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation was cancelled.\n"
+msgstr "Operația a fost anulată de utilizator.\n"
+
+#: mferror.mc:396
+#, fuzzy
+msgid "Bytestream is not seekable.\n"
+msgstr "Driverul nu a fost activat."
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+#| msgid "Cannot create.\n"
+msgid "Cannot parse bytestream.\n"
+msgstr "Nu se poate crea.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+#| msgid "Unknown interface.\n"
+msgid "Unknown bytestream length.\n"
+msgstr "Interfață necunoscută.\n"
+
+#: mferror.mc:431
+#, fuzzy
+#| msgid "Invalid index.\n"
+msgid "Invalid work queue index.\n"
+msgstr "Index nevalid.\n"
+
+#: mferror.mc:438
+#, fuzzy
+#| msgid "No more data available.\n"
+msgid "No events available.\n"
+msgstr "Nu mai sunt date disponibile.\n"
+
+#: mferror.mc:445
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Connection invalid.\n"
+msgid "Optional node is invalid.\n"
+msgstr "Conexiune nevalidă.\n"
+
+#: mferror.mc:459
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "Nu pot găsi imprimanta."
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "Module not found.\n"
+msgid "Codec was not found.\n"
+msgstr "Modul negăsit.\n"
+
+#: mferror.mc:473
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Topology request is not supported.\n"
+msgstr "Cerere nesusținută.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Invalid timeout value.\n"
+msgid "Invalid topology time attributes.\n"
+msgstr "Valoare temporizare nevalidă.\n"
+
+#: mferror.mc:494
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Presentation descriptor is missing.\n"
+msgstr "Lipsește sursa de instalare.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Stream descriptor is missing.\n"
+msgstr "Indicele lipsește.\n"
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Stream descriptor is not selected.\n"
+msgstr "Dispozitivul nu este conectat.\n"
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Source is missing.\n"
+msgstr "Indicele lipsește.\n"
+
+#: mferror.mc:529
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:536
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:543
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Clock state was already set.\n"
+msgstr "Clasa există deja.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

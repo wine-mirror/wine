@@ -1,0 +1,4 @@
+MODULE    = mferror.dll
+
+MC_SRCS = \
+	mferror.mc

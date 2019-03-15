@@ -4230,7 +4230,7 @@ msgstr ""
 msgid "Insufficient buffer.\n"
 msgstr "אין די הרשאות.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 #, fuzzy
 msgid "Invalid name.\n"
 msgstr "Error: Invalid key name.\n"
@@ -5910,7 +5910,7 @@ msgstr "הנתיב אינו קיים.\n"
 msgid "Class has open windows.\n"
 msgstr "סגירת החלון.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 #, fuzzy
 msgid "Invalid index.\n"
 msgstr "אפשרות שגויה.\n"
@@ -7095,6 +7095,339 @@ msgstr "שליחת הודעת הדוא״ל נכשלה כיוון שאין לך �
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "שליחת דוא״ל"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:32
+#, fuzzy
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "מסמכי אחסון OLE אינם נתמכים.\n"
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr ""
+
+#: mferror.mc:46
+#, fuzzy
+msgid "Invalid request.\n"
+msgstr "תבנית המספרים שגויה.\n"
+
+#: mferror.mc:53
+#, fuzzy
+msgid "Invalid stream number.\n"
+msgstr "תבנית המספרים שגויה.\n"
+
+#: mferror.mc:60
+#, fuzzy
+msgid "Invalid media type.\n"
+msgstr "אפשרות שגויה.\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr ""
+
+#: mferror.mc:74
+#, fuzzy
+msgid "Object is not initialized.\n"
+msgstr "הקובץ לא נמצא.\n"
+
+#: mferror.mc:81
+#, fuzzy
+msgid "Representation is not supported.\n"
+msgstr "מסמכי אחסון OLE אינם נתמכים.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+#, fuzzy
+msgid "Unsupported service.\n"
+msgstr "Specify service name to stop.\n"
+
+#: mferror.mc:102
+#, fuzzy
+msgid "Unexpected error.\n"
+msgstr "Syntax error.\n"
+
+#: mferror.mc:116
+#, fuzzy
+msgid "Invalid type.\n"
+msgstr "אפשרות שגויה.\n"
+
+#: mferror.mc:123
+#, fuzzy
+msgid "Invalid file format.\n"
+msgstr "תבנית המספרים שגויה.\n"
+
+#: mferror.mc:137
+#, fuzzy
+msgid "Invalid timestamp.\n"
+msgstr "אפשרות שגויה.\n"
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr ""
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Unsupported bytestream type.\n"
+msgstr "Error: Command line not supported\n"
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr ""
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+msgid "Invalid stream data.\n"
+msgstr "נתונים שגויים.\n"
+
+#: mferror.mc:186
+#, fuzzy
+msgid "Realtime support is not available.\n"
+msgstr "הגודל הזמין.\n"
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr ""
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr ""
+
+#: mferror.mc:207
+#, fuzzy
+msgid "Reversing is not supported.\n"
+msgstr "מסמכי אחסון OLE אינם נתמכים.\n"
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr ""
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+msgid "Object or value wasn't found.\n"
+msgstr "הקובץ לא נמצא.\n"
+
+#: mferror.mc:235
+#, fuzzy
+msgid "Value is not available.\n"
+msgstr "הגודל הזמין.\n"
+
+#: mferror.mc:242
+#, fuzzy
+msgid "Clock is not available.\n"
+msgstr "לא זמינה; .\n"
+
+#: mferror.mc:263
+#, fuzzy
+msgid "Multiple subscribers are not supported.\n"
+msgstr "מסמכי אחסון OLE אינם נתמכים.\n"
+
+#: mferror.mc:270
+#, fuzzy
+msgid "The timer was orphaned.\n"
+msgstr "דלת המדפסת פתוחה; .\n"
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr ""
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr ""
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Unrecoverable error occurred.\n"
+msgstr "אירעה שגיאת מדפסת."
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr ""
+
+#: mferror.mc:312
+#, fuzzy
+msgid "Key is invalid.\n"
+msgstr "התאריך על האישור שגוי."
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr ""
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Support Information"
+msgid "Unsupported caption.\n"
+msgstr "פרטי תמיכה"
+
+#: mferror.mc:333
+#, fuzzy
+msgid "Invalid position.\n"
+msgstr "אפשרות שגויה.\n"
+
+#: mferror.mc:340
+#, fuzzy
+msgid "Attribute is not found.\n"
+msgstr "הקובץ לא נמצא.\n"
+
+#: mferror.mc:347
+#, fuzzy
+msgid "Property type is not allowed.\n"
+msgstr "Target to GOTO not found.\n"
+
+#: mferror.mc:354
+#, fuzzy
+msgid "Property type is not supported.\n"
+msgstr "מסמכי אחסון OLE אינם נתמכים.\n"
+
+#: mferror.mc:361
+#, fuzzy
+msgid "Property is empty.\n"
+msgstr "Directory &Only.\n"
+
+#: mferror.mc:368
+#, fuzzy
+msgid "Property is not empty.\n"
+msgstr "Directory &Only.\n"
+
+#: mferror.mc:375
+#, fuzzy
+msgid "Vector property is not allowed.\n"
+msgstr "Target to GOTO not found.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+msgid "Operation was cancelled.\n"
+msgstr "תכניות התקנה.\n"
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr ""
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+msgid "Cannot parse bytestream.\n"
+msgstr "לא ניתן למצוא את המדפסת."
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+msgid "Unknown bytestream length.\n"
+msgstr "מקור לא ידוע.\n"
+
+#: mferror.mc:431
+#, fuzzy
+msgid "Invalid work queue index.\n"
+msgstr "אפשרות שגויה.\n"
+
+#: mferror.mc:438
+#, fuzzy
+msgid "No events available.\n"
+msgstr "לא זמינה; .\n"
+
+#: mferror.mc:445
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:452
+#, fuzzy
+msgid "Optional node is invalid.\n"
+msgstr "חיבור רשת מקומית.\n"
+
+#: mferror.mc:459
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "לא ניתן למצוא את המדפסת."
+
+#: mferror.mc:466
+#, fuzzy
+msgid "Codec was not found.\n"
+msgstr "הקובץ לא נמצא.\n"
+
+#: mferror.mc:473
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+msgid "Topology request is not supported.\n"
+msgstr "מסמכי אחסון OLE אינם נתמכים.\n"
+
+#: mferror.mc:487
+#, fuzzy
+msgid "Invalid topology time attributes.\n"
+msgstr "אפשרות שגויה.\n"
+
+#: mferror.mc:494
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:501
+#, fuzzy
+msgid "Presentation descriptor is missing.\n"
+msgstr "תכניות התקנה.\n"
+
+#: mferror.mc:508
+#, fuzzy
+msgid "Stream descriptor is missing.\n"
+msgstr "תכניות התקנה.\n"
+
+#: mferror.mc:515
+#, fuzzy
+msgid "Stream descriptor is not selected.\n"
+msgstr "הקובץ לא נמצא.\n"
+
+#: mferror.mc:522
+#, fuzzy
+msgid "Source is missing.\n"
+msgstr "תכניות התקנה.\n"
+
+#: mferror.mc:529
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:536
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:543
+#, fuzzy
+msgid "Clock state was already set.\n"
+msgstr "הפתחה %s כבר קיימת.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
