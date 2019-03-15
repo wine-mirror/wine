@@ -48,6 +48,7 @@ struct msidb_state
     BOOL create_database;
     BOOL import_tables;
     BOOL export_tables;
+    BOOL short_filenames;
     struct list add_stream_list;
     struct list extract_stream_list;
     struct list kill_stream_list;
@@ -92,6 +93,7 @@ static void show_usage( void )
         "  -f folder         Folder in which to open/save the tables.\n"
         "  -i                Import tables into database.\n"
         "  -k file.cab       Kill (remove) stream/cabinet file from _Streams table.\n"
+        "  -s                Export with short filenames (eight character max).\n"
         "  -x file.cab       Extract stream/cabinet file from _Streams table.\n"
     );
 }
@@ -163,6 +165,9 @@ static int process_argument( struct msidb_state *state, int i, int argc, WCHAR *
         state->kill_streams = TRUE;
         list_append( &state->kill_stream_list, argv[i + 1] );
         return 2;
+    case 's':
+        state->short_filenames = TRUE;
+        return 1;
     case 'x':
         if (i + 1 >= argc) return 0;
         state->extract_streams = TRUE;
@@ -458,7 +463,9 @@ static int import_tables( struct msidb_state *state )
 
 static int export_table( struct msidb_state *state, const WCHAR *table_name )
 {
-    const WCHAR format[] = { '%','s','.','i','d','t',0 };
+    const WCHAR format_dos[] = { '%','.','8','s','.','i','d','t',0 }; /* truncate to 8 characters */
+    const WCHAR format_full[] = { '%','s','.','i','d','t',0 };
+    const WCHAR *format = (state->short_filenames ? format_dos : format_full);
     WCHAR table_path[MAX_PATH];
     UINT ret;
 
