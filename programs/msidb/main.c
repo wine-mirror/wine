@@ -43,10 +43,12 @@ struct msidb_state
     WCHAR *table_folder;
     MSIHANDLE database_handle;
     BOOL add_streams;
+    BOOL extract_streams;
     BOOL kill_streams;
     BOOL create_database;
     BOOL import_tables;
     struct list add_stream_list;
+    struct list extract_stream_list;
     struct list kill_stream_list;
     struct list table_list;
 };
@@ -88,6 +90,7 @@ static void show_usage( void )
         "  -f folder         Folder in which to open/save the tables.\n"
         "  -i                Import tables into database.\n"
         "  -k file.cab       Kill (remove) stream/cabinet file from _Streams table.\n"
+        "  -x file.cab       Extract stream/cabinet file from _Streams table.\n"
     );
 }
 
@@ -98,20 +101,22 @@ static int valid_state( struct msidb_state *state )
         FIXME( "GUI operation is not currently supported.\n" );
         return 0;
     }
-    if (state->table_folder == NULL && !state->add_streams && !state->kill_streams)
+    if (state->table_folder == NULL && !state->add_streams && !state->kill_streams
+        && !state->extract_streams)
     {
         ERR( "No table folder specified (-f option).\n" );
         show_usage();
         return 0;
     }
     if (!state->create_database && !state->import_tables && !state->add_streams
-        && !state->kill_streams)
+        && !state->kill_streams && !state->extract_streams)
     {
-        ERR( "No mode flag specified (-a, -c, -i, -k).\n" );
+        ERR( "No mode flag specified (-a, -c, -i, -k, -x).\n" );
         show_usage();
         return 0;
     }
-    if (list_empty( &state->table_list ) && !state->add_streams && !state->kill_streams)
+    if (list_empty( &state->table_list ) && !state->add_streams && !state->kill_streams
+        && !state->extract_streams)
     {
         ERR( "No tables specified.\n" );
         return 0;
@@ -152,6 +157,11 @@ static int process_argument( struct msidb_state *state, int i, int argc, WCHAR *
         if (i + 1 >= argc) return 0;
         state->kill_streams = TRUE;
         list_append( &state->kill_stream_list, argv[i + 1] );
+        return 2;
+    case 'x':
+        if (i + 1 >= argc) return 0;
+        state->extract_streams = TRUE;
+        list_append( &state->extract_stream_list, argv[i + 1] );
         return 2;
     default:
         break;
@@ -322,6 +332,97 @@ static int kill_streams( struct msidb_state *state )
     return 1;
 }
 
+static int extract_stream( struct msidb_state *state, const WCHAR *stream_filename )
+{
+    static const WCHAR select_command[] =
+        {'S','E','L','E','C','T',' ','D','a','t','a',' ','F','R','O','M',' ','_','S','t','r','e','a','m','s',' ',
+         'W','H','E','R','E',' ','N','a','m','e',' ','=',' ','?',0};
+    HANDLE file = INVALID_HANDLE_VALUE;
+    MSIHANDLE view = 0, record = 0;
+    DWORD read_size, write_size;
+    char buffer[1024];
+    UINT ret;
+
+    file = CreateFileW( stream_filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        ret = ERROR_FILE_NOT_FOUND;
+        ERR( "Failed to open destination file %s.\n", wine_dbgstr_w(stream_filename) );
+        goto cleanup;
+    }
+    ret = MsiDatabaseOpenViewW( state->database_handle, select_command, &view );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to open _Streams table.\n" );
+        goto cleanup;
+    }
+    record = MsiCreateRecord( 1 );
+    if (record == 0)
+    {
+        ERR( "Failed to create MSI record.\n" );
+        ret = ERROR_OUTOFMEMORY;
+        goto cleanup;
+    }
+    ret = MsiRecordSetStringW( record, 1, stream_filename );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to add stream filename to MSI record.\n" );
+        goto cleanup;
+    }
+    ret = MsiViewExecute( view, record );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to query stream from _Streams table.\n" );
+        goto cleanup;
+    }
+    MsiCloseHandle( record );
+    record = 0;
+    ret = MsiViewFetch( view, &record );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to query row from _Streams table.\n" );
+        goto cleanup;
+    }
+    read_size = sizeof(buffer);
+    while (read_size == sizeof(buffer))
+    {
+        ret = MsiRecordReadStream( record, 1, buffer, &read_size );
+        if (ret != ERROR_SUCCESS)
+        {
+            ERR( "Failed to read stream from _Streams table.\n" );
+            goto cleanup;
+        }
+        if (!WriteFile( file, buffer, read_size, &write_size, NULL ) || read_size != write_size)
+        {
+            ret = ERROR_WRITE_FAULT;
+            ERR( "Failed to write stream to destination file.\n" );
+            goto cleanup;
+        }
+    }
+
+cleanup:
+    if (record)
+        MsiCloseHandle( record );
+    if (view)
+        MsiViewClose( view );
+    if (file != INVALID_HANDLE_VALUE)
+        CloseHandle( file );
+    return (ret == ERROR_SUCCESS);
+}
+
+static int extract_streams( struct msidb_state *state )
+{
+    struct msidb_listentry *data;
+
+    LIST_FOR_EACH_ENTRY( data, &state->extract_stream_list, struct msidb_listentry, entry )
+    {
+        if (!extract_stream( state, data->name ))
+            return 0; /* failed, do not commit changes */
+    }
+    return 1;
+}
+
 static int import_table( struct msidb_state *state, const WCHAR *table_name )
 {
     const WCHAR format[] = { '%','.','8','s','.','i','d','t',0 }; /* truncate to 8 characters */
@@ -358,6 +459,7 @@ int wmain( int argc, WCHAR *argv[] )
 
     memset( &state, 0x0, sizeof(state) );
     list_init( &state.add_stream_list );
+    list_init( &state.extract_stream_list );
     list_init( &state.kill_stream_list );
     list_init( &state.table_list );
     /* process and validate all the command line flags */
@@ -377,6 +479,8 @@ int wmain( int argc, WCHAR *argv[] )
     }
     if (state.add_streams && !add_streams( &state ))
         goto cleanup; /* failed, do not commit changes */
+    if (state.extract_streams && !extract_streams( &state ))
+        goto cleanup; /* failed, do not commit changes */
     if (state.import_tables && !import_tables( &state ))
         goto cleanup; /* failed, do not commit changes */
     if (state.kill_streams && !kill_streams( &state ))
@@ -386,6 +490,7 @@ int wmain( int argc, WCHAR *argv[] )
 cleanup:
     close_database( &state, ret == 0 );
     list_free( &state.add_stream_list );
+    list_free( &state.extract_stream_list );
     list_free( &state.kill_stream_list );
     list_free( &state.table_list );
     return ret;
