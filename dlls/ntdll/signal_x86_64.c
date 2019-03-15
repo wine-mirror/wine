@@ -4232,7 +4232,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
         new_context.Rip = *(ULONG64 *)context->Rsp;
         new_context.Rsp = context->Rsp + sizeof(ULONG64);
-        dispatch.EstablisherFrame = new_context.Rsp;
+        dispatch.EstablisherFrame = context->Rsp;
         dispatch.LanguageHandler = NULL;
 
     unwind_done:
