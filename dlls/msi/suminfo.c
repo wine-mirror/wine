@@ -23,6 +23,7 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 
+#include "stdio.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -1094,6 +1095,114 @@ end:
 
     msiobj_release( &si->hdr );
     return r;
+}
+
+static UINT save_prop( MSISUMMARYINFO *si, HANDLE handle, UINT row )
+{
+    static const char fmt_systemtime[] = "%04u/%02u/%02u %02u:%02u:%02u";
+    char data[36]; /* largest string: YYYY/MM/DD hh:mm:ss */
+    static const char fmt_begin[] = "%u\t";
+    static const char data_end[] = "\r\n";
+    static const char fmt_int[] = "%u";
+    UINT r, data_type, len;
+    SYSTEMTIME system_time;
+    FILETIME file_time;
+    INT int_value;
+    awstring str;
+    DWORD sz;
+
+    str.unicode = FALSE;
+    str.str.a = NULL;
+    len = 0;
+    r = get_prop( si, row, &data_type, &int_value, &file_time, &str, &len );
+    if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
+        return r;
+    if (data_type == VT_EMPTY)
+        return ERROR_SUCCESS; /* property not set */
+    sz = sprintf( data, fmt_begin, row );
+    if (!WriteFile( handle, data, sz, &sz, NULL ))
+        return ERROR_WRITE_FAULT;
+
+    switch( data_type )
+    {
+    case VT_I2:
+    case VT_I4:
+        sz = sprintf( data, fmt_int, int_value );
+        if (!WriteFile( handle, data, sz, &sz, NULL ))
+            return ERROR_WRITE_FAULT;
+        break;
+    case VT_LPSTR:
+        len++;
+        if (!(str.str.a = msi_alloc( len )))
+            return ERROR_OUTOFMEMORY;
+        r = get_prop( si, row, NULL, NULL, NULL, &str, &len );
+        if (r != ERROR_SUCCESS)
+        {
+            msi_free( str.str.a );
+            return r;
+        }
+        sz = len;
+        if (!WriteFile( handle, str.str.a, sz, &sz, NULL ))
+        {
+            msi_free( str.str.a );
+            return ERROR_WRITE_FAULT;
+        }
+        msi_free( str.str.a );
+        break;
+    case VT_FILETIME:
+        if (!FileTimeToSystemTime( &file_time, &system_time ))
+            return ERROR_FUNCTION_FAILED;
+        sz = sprintf( data, fmt_systemtime, system_time.wYear, system_time.wMonth,
+                      system_time.wDay, system_time.wHour, system_time.wMinute,
+                      system_time.wSecond );
+        if (!WriteFile( handle, data, sz, &sz, NULL ))
+            return ERROR_WRITE_FAULT;
+        break;
+    case VT_EMPTY:
+        /* cannot reach here, property not set */
+        break;
+    default:
+        FIXME( "Unknown property variant type\n" );
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    sz = ARRAY_SIZE(data_end) - 1;
+    if (!WriteFile( handle, data_end, sz, &sz, NULL ))
+        return ERROR_WRITE_FAULT;
+
+    return ERROR_SUCCESS;
+}
+
+UINT msi_export_suminfo( MSIDATABASE *db, HANDLE handle )
+{
+    UINT i, r, num_rows;
+    MSISUMMARYINFO *si;
+
+    r = msi_get_suminfo( db->storage, 0, &si );
+    if (r != ERROR_SUCCESS)
+        r = msi_get_db_suminfo( db, 0, &si );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    num_rows = get_property_count( si->property );
+    if (!num_rows)
+    {
+        msiobj_release( &si->hdr );
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    for (i = 0; i < num_rows; i++)
+    {
+        r = save_prop( si, handle, i );
+        if (r != ERROR_SUCCESS)
+        {
+            msiobj_release( &si->hdr );
+            return r;
+        }
+    }
+
+    msiobj_release( &si->hdr );
+    return ERROR_SUCCESS;
 }
 
 UINT WINAPI MsiSummaryInfoPersist( MSIHANDLE handle )
