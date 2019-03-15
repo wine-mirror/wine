@@ -846,7 +846,7 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
     else
         propvar2_converted = propvar2;
 
-#define CMP_INT_VALUE(var) do { \
+#define CMP_NUM_VALUE(var) do { \
     if (propvar1->u.var > propvar2_converted->u.var) \
         res = 1; \
     else if (propvar1->u.var < propvar2_converted->u.var) \
@@ -858,28 +858,34 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
     switch (propvar1->vt)
     {
     case VT_I1:
-        CMP_INT_VALUE(cVal);
+        CMP_NUM_VALUE(cVal);
         break;
     case VT_UI1:
-        CMP_INT_VALUE(bVal);
+        CMP_NUM_VALUE(bVal);
         break;
     case VT_I2:
-        CMP_INT_VALUE(iVal);
+        CMP_NUM_VALUE(iVal);
         break;
     case VT_UI2:
-        CMP_INT_VALUE(uiVal);
+        CMP_NUM_VALUE(uiVal);
         break;
     case VT_I4:
-        CMP_INT_VALUE(lVal);
+        CMP_NUM_VALUE(lVal);
         break;
     case VT_UI4:
-        CMP_INT_VALUE(uiVal);
+        CMP_NUM_VALUE(uiVal);
         break;
     case VT_I8:
-        CMP_INT_VALUE(hVal.QuadPart);
+        CMP_NUM_VALUE(hVal.QuadPart);
         break;
     case VT_UI8:
-        CMP_INT_VALUE(uhVal.QuadPart);
+        CMP_NUM_VALUE(uhVal.QuadPart);
+        break;
+    case VT_R4:
+        CMP_NUM_VALUE(fltVal);
+        break;
+    case VT_R8:
+        CMP_NUM_VALUE(dblVal);
         break;
     case VT_BSTR:
     case VT_LPWSTR:

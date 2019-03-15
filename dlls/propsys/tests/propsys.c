@@ -660,7 +660,7 @@ static void test_PropVariantToStringAlloc(void)
 static void test_PropVariantCompare(void)
 {
     PROPVARIANT empty, null, emptyarray, i2_0, i2_2, i4_large, i4_largeneg, i4_2, str_2, str_02, str_b;
-    PROPVARIANT clsid_null, clsid, clsid2;
+    PROPVARIANT clsid_null, clsid, clsid2, r4_0, r4_2, r8_0, r8_2;
     INT res;
     static const WCHAR str_2W[] = {'2', 0};
     static const WCHAR str_02W[] = {'0', '2', 0};
@@ -711,6 +711,14 @@ static void test_PropVariantCompare(void)
     clsid.u.puuid = (GUID *)&dummy_guid;
     clsid2.vt = VT_CLSID;
     clsid2.u.puuid = (GUID *)&GUID_NULL;
+    r4_0.vt = VT_R4;
+    r4_0.u.fltVal = 0.0f;
+    r4_2.vt = VT_R4;
+    r4_2.u.fltVal = 2.0f;
+    r8_0.vt = VT_R8;
+    r8_0.u.dblVal = 0.0;
+    r8_2.vt = VT_R8;
+    r8_2.u.dblVal = 2.0;
 
     res = PropVariantCompareEx(&empty, &empty, 0, 0);
     ok(res == 0, "res=%i\n", res);
@@ -806,6 +814,29 @@ static void test_PropVariantCompare(void)
 
     res = PropVariantCompareEx(&clsid, &clsid_null, 0, PVCF_TREATEMPTYASGREATERTHAN);
     ok(res == -1, "res=%i\n", res);
+
+    /* VT_R4/VT_R8 */
+    res = PropVariantCompareEx(&r4_0, &r8_0, 0, 0);
+todo_wine
+    ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&r4_0, &r4_0, 0, 0);
+    ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&r4_0, &r4_2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&r4_2, &r4_0, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&r8_0, &r8_0, 0, 0);
+    ok(res == 0, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&r8_0, &r8_2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&r8_2, &r8_0, 0, 0);
+    ok(res == 1, "res=%i\n", res);
 
     SysFreeString(str_2.u.bstrVal);
     SysFreeString(str_02.u.bstrVal);
