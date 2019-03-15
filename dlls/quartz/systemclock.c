@@ -106,11 +106,11 @@ static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
     {
       if (sink->rtBaseTime <= curTime)
       {
-        DWORD periods = (curTime - sink->rtBaseTime) / sink->rtIntervalTime;
+        DWORD periods = ((curTime - sink->rtBaseTime) / sink->rtIntervalTime) + 1;
         ReleaseSemaphore(sink->hEvent, periods, NULL);
         sink->rtBaseTime += periods * sink->rtIntervalTime;
       }
-      timeOut = min(timeOut, ((sink->rtBaseTime + sink->rtIntervalTime) - curTime) / 10000);
+      timeOut = min(timeOut, (sink->rtBaseTime - curTime) / 10000);
     }
 
     LeaveCriticalSection(&This->safe);

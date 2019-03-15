@@ -160,7 +160,7 @@ static void test_advise(void)
 
     hr = IReferenceClock_AdvisePeriodic(clock, current, 500 * 10000, (HSEMAPHORE)semaphore, &cookie);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!WaitForSingleObject(semaphore, 10), "Semaphore should be signaled.\n");
+    ok(!WaitForSingleObject(semaphore, 10), "Semaphore should be signaled.\n");
     for (i = 0; i < 5; ++i)
     {
         ok(WaitForSingleObject(semaphore, 480) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
