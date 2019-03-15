@@ -3317,6 +3317,92 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
 }
 
 /***********************************************************************
+ *              SetupDiOpenDeviceInfoW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO devinfo, PCWSTR instance_id, HWND hwnd_parent, DWORD flags,
+                                   PSP_DEVINFO_DATA device_data)
+{
+    struct DeviceInfoSet *set;
+    struct device *device = NULL, *enum_device;
+    WCHAR classW[40];
+    GUID guid;
+    HKEY enumKey = NULL;
+    HKEY instanceKey = NULL;
+    DWORD phantom;
+    DWORD size;
+    DWORD error = ERROR_NO_SUCH_DEVINST;
+
+    TRACE("%p %s %p 0x%08x %p\n", devinfo, debugstr_w(instance_id), hwnd_parent, flags, device_data);
+
+    if (!(set = get_device_set(devinfo)))
+        return FALSE;
+
+    if (!instance_id)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (hwnd_parent)
+        FIXME("hwnd_parent unsupported\n");
+
+    if (flags)
+        FIXME("flags unsupported: 0x%08x\n", flags);
+
+    RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &enumKey, NULL);
+    /* Instance needs to be already existent in registry, if not, report ERROR_NO_SUCH_DEVINST */
+    if (RegOpenKeyExW(enumKey, instance_id, 0, KEY_READ, &instanceKey))
+        goto done;
+
+    /* If it's an unregistered instance, aka phantom instance, report ERROR_NO_SUCH_DEVINST */
+    size = sizeof(phantom);
+    if (!RegQueryValueExW(instanceKey, Phantom, NULL, NULL, (BYTE *)&phantom, &size))
+        goto done;
+
+    /* Check class GUID */
+    size = sizeof(classW);
+    if (RegQueryValueExW(instanceKey, ClassGUID, NULL, NULL, (BYTE *)classW, &size))
+        goto done;
+
+    classW[37] = 0;
+    UuidFromStringW(&classW[1], &guid);
+
+    if (!IsEqualGUID(&set->ClassGuid, &GUID_NULL) && !IsEqualGUID(&guid, &set->ClassGuid))
+    {
+        error = ERROR_CLASS_MISMATCH;
+        goto done;
+    }
+
+    /* If current set already contains a same instance, don't create new ones */
+    LIST_FOR_EACH_ENTRY(enum_device, &set->devices, struct device, entry)
+    {
+        if (!strcmpiW(instance_id, enum_device->instanceId))
+        {
+            device = enum_device;
+            break;
+        }
+    }
+
+    if (!device && !(device = SETUPDI_CreateDeviceInfo(set, &guid, instance_id, FALSE)))
+        goto done;
+
+    if (!device_data || device_data->cbSize == sizeof(SP_DEVINFO_DATA))
+    {
+        if (device_data)
+            copy_device_data(device_data, device);
+        error = NO_ERROR;
+    }
+    else
+        error = ERROR_INVALID_USER_BUFFER;
+
+done:
+    RegCloseKey(instanceKey);
+    RegCloseKey(enumKey);
+    SetLastError(error);
+    return !error;
+}
+
+/***********************************************************************
  *		SetupDiOpenDeviceInterfaceW (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiOpenDeviceInterfaceW(

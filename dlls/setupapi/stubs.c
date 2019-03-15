@@ -323,17 +323,6 @@ BOOL WINAPI SetupDiOpenDeviceInfoA(HDEVINFO DeviceInfoSet, PCSTR DeviceInstanceI
 }
 
 /***********************************************************************
- *      SetupDiOpenDeviceInfoW (SETUPAPI.@)
- */
-BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO DeviceInfoSet, PCWSTR DeviceInstanceId,
-        HWND hwndParent, DWORD OpenFlags, PSP_DEVINFO_DATA DeviceInfoData)
-{
-    FIXME("%p %s %p 0x%08x %p: stub\n", DeviceInfoSet, debugstr_w(DeviceInstanceId),
-          hwndParent, OpenFlags, DeviceInfoData);
-    return FALSE;
-}
-
-/***********************************************************************
  *      CM_Locate_DevNodeA (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags)
