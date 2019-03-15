@@ -51,7 +51,7 @@
 # @ stub AuditQueryGlobalSaclW
 # @ stub AuditQueryPerUserPolicy
 # @ stub AuditQuerySecurity
-# @ stub AuditQuerySystemPolicy
+@ stdcall AuditQuerySystemPolicy(ptr long ptr)
 # @ stub AuditSetGlobalSaclA
 # @ stub AuditSetGlobalSaclW
 # @ stub AuditSetPerUserPolicy

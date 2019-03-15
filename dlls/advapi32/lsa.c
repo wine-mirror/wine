@@ -1072,3 +1072,15 @@ NTSTATUS WINAPI LsaLookupPrivilegeDisplayName(LSA_HANDLE handle, LSA_UNICODE_STR
 
     return STATUS_NO_SUCH_PRIVILEGE;
 }
+
+/******************************************************************************
+ * AuditQuerySystemPolicy [ADVAPI32.@]
+ *
+ */
+BOOLEAN WINAPI AuditQuerySystemPolicy(const GUID* guids, ULONG count, AUDIT_POLICY_INFORMATION** policy)
+{
+
+    FIXME("(%p, %d, %p)\n", guids, count, policy);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

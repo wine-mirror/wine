@@ -349,6 +349,13 @@ typedef enum _POLICY_NOTIFICATION_INFORMATION_CLASS
     PolicyNotifyMachineAccountPasswordInformation
 } POLICY_NOTIFICATION_INFORMATION_CLASS, *PPOLICY_NOTIFICATION_INFORMATION_CLASS;
 
+typedef struct _AUDIT_POLICY_INFORMATION
+{
+    GUID    AuditSubCategoryGuid;
+    ULONG   AuditingInformation;
+    GUID    AuditCategoryGuid;
+} AUDIT_POLICY_INFORMATION, *PAUDIT_POLICY_INFORMATION;
+
 #define MICROSOFT_KERBEROS_NAME_A "Kerberos"
 #if defined(_MSC_VER)
 #define MICROSOFT_KERBEROS_NAME_W L"Kerberos"
@@ -457,6 +464,8 @@ typedef struct _KERB_PURGE_TKT_CACHE_REQUEST
 #define RtlGenRandom                    SystemFunction036
 #define RtlEncryptMemory                SystemFunction040
 #define RtlDecryptMemory                SystemFunction041
+
+BOOLEAN WINAPI AuditQuerySystemPolicy(const GUID*,ULONG,AUDIT_POLICY_INFORMATION**);
 
 BOOLEAN WINAPI RtlGenRandom(PVOID,ULONG);
 NTSTATUS WINAPI RtlEncryptMemory(PVOID,ULONG,ULONG);
