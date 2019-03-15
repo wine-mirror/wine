@@ -3317,6 +3317,26 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
 }
 
 /***********************************************************************
+ *              SetupDiOpenDeviceInfoA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiOpenDeviceInfoA(HDEVINFO devinfo, PCSTR instance_id, HWND hwnd_parent, DWORD flags,
+                                   PSP_DEVINFO_DATA device_data)
+{
+    WCHAR instance_idW[MAX_DEVICE_ID_LEN];
+
+    TRACE("%p %s %p 0x%08x %p\n", devinfo, debugstr_a(instance_id), hwnd_parent, flags, device_data);
+
+    if (!instance_id || strlen(instance_id) >= MAX_DEVICE_ID_LEN)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, instance_id, -1, instance_idW, ARRAY_SIZE(instance_idW));
+    return SetupDiOpenDeviceInfoW(devinfo, instance_idW, hwnd_parent, flags, device_data);
+}
+
+/***********************************************************************
  *              SetupDiOpenDeviceInfoW (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO devinfo, PCWSTR instance_id, HWND hwnd_parent, DWORD flags,

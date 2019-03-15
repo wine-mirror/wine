@@ -312,17 +312,6 @@ BOOL WINAPI SetupDiGetClassImageIndex(PSP_CLASSIMAGELIST_DATA ClassImageListData
 }
 
 /***********************************************************************
- *      SetupDiOpenDeviceInfoA (SETUPAPI.@)
- */
-BOOL WINAPI SetupDiOpenDeviceInfoA(HDEVINFO DeviceInfoSet, PCSTR DeviceInstanceId,
-        HWND hwndParent, DWORD OpenFlags, PSP_DEVINFO_DATA DeviceInfoData)
-{
-    FIXME("%p %s %p 0x%08x %p: stub\n", DeviceInfoSet, debugstr_a(DeviceInstanceId),
-          hwndParent, OpenFlags, DeviceInfoData);
-    return FALSE;
-}
-
-/***********************************************************************
  *      CM_Locate_DevNodeA (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags)
