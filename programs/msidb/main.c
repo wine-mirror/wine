@@ -47,6 +47,7 @@ struct msidb_state
     BOOL kill_streams;
     BOOL create_database;
     BOOL import_tables;
+    BOOL export_tables;
     struct list add_stream_list;
     struct list extract_stream_list;
     struct list kill_stream_list;
@@ -87,6 +88,7 @@ static void show_usage( void )
         "  -a file.cab       Add stream/cabinet file to _Streams table.\n"
         "  -c                Create database file (instead of opening existing file).\n"
         "  -d package.msi    Path to the database file.\n"
+        "  -e                Export tables from database.\n"
         "  -f folder         Folder in which to open/save the tables.\n"
         "  -i                Import tables into database.\n"
         "  -k file.cab       Kill (remove) stream/cabinet file from _Streams table.\n"
@@ -108,10 +110,10 @@ static int valid_state( struct msidb_state *state )
         show_usage();
         return 0;
     }
-    if (!state->create_database && !state->import_tables && !state->add_streams
-        && !state->kill_streams && !state->extract_streams)
+    if (!state->create_database && !state->import_tables && !state->export_tables
+        && !state->add_streams&& !state->kill_streams && !state->extract_streams)
     {
-        ERR( "No mode flag specified (-a, -c, -i, -k, -x).\n" );
+        ERR( "No mode flag specified (-a, -c, -e, -i, -k, -x).\n" );
         show_usage();
         return 0;
     }
@@ -146,6 +148,9 @@ static int process_argument( struct msidb_state *state, int i, int argc, WCHAR *
         if (i + 1 >= argc) return 0;
         state->database_file = argv[i + 1];
         return 2;
+    case 'e':
+        state->export_tables = TRUE;
+        return 1;
     case 'f':
         if (i + 1 >= argc) return 0;
         state->table_folder = argv[i + 1];
@@ -451,6 +456,34 @@ static int import_tables( struct msidb_state *state )
     return 1;
 }
 
+static int export_table( struct msidb_state *state, const WCHAR *table_name )
+{
+    const WCHAR format[] = { '%','s','.','i','d','t',0 };
+    WCHAR table_path[MAX_PATH];
+    UINT ret;
+
+    snprintfW( table_path, sizeof(table_path)/sizeof(WCHAR), format, table_name );
+    ret = MsiDatabaseExportW( state->database_handle, table_name, state->table_folder, table_path );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to export table '%s', error %d.\n", wine_dbgstr_w(table_name), ret );
+        return 0;
+    }
+    return 1;
+}
+
+static int export_tables( struct msidb_state *state )
+{
+    struct msidb_listentry *data;
+
+    LIST_FOR_EACH_ENTRY( data, &state->table_list, struct msidb_listentry, entry )
+    {
+        if (!export_table( state, data->name ))
+            return 0; /* failed, do not commit changes */
+    }
+    return 1;
+}
+
 int wmain( int argc, WCHAR *argv[] )
 {
     struct msidb_state state;
@@ -478,6 +511,8 @@ int wmain( int argc, WCHAR *argv[] )
         goto cleanup;
     }
     if (state.add_streams && !add_streams( &state ))
+        goto cleanup; /* failed, do not commit changes */
+    if (state.export_tables && !export_tables( &state ))
         goto cleanup; /* failed, do not commit changes */
     if (state.extract_streams && !extract_streams( &state ))
         goto cleanup; /* failed, do not commit changes */
