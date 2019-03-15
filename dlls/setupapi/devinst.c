@@ -723,6 +723,7 @@ static void delete_device(struct device *device)
 static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     const GUID *class, const WCHAR *instanceid, BOOL phantom)
 {
+    const DWORD one = 1;
     struct device *device;
     WCHAR guidstr[39];
 
@@ -751,6 +752,9 @@ static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     device->devnode = alloc_devnode(device);
     device->removed = FALSE;
     list_add_tail(&set->devices, &device->entry);
+
+    if (phantom)
+        RegSetValueExW(device->key, Phantom, 0, REG_DWORD, (const BYTE *)&one, sizeof(one));
 
     SETUPDI_GuidToString(class, guidstr);
     SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CLASSGUID,
