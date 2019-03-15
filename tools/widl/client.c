@@ -291,7 +291,7 @@ static void write_serialize_function(FILE *file, const type_t *type, const type_
                                      const char *func_name, const char *ret_type)
 {
     enum stub_mode mode = get_stub_mode();
-    static int emited_pickling_info;
+    static int emitted_pickling_info;
 
     if (iface && !type->typestring_offset)
     {
@@ -301,7 +301,7 @@ static void write_serialize_function(FILE *file, const type_t *type, const type_
         return;
     }
 
-    if (!emited_pickling_info && iface && mode != MODE_Os)
+    if (!emitted_pickling_info && iface && mode != MODE_Os)
     {
         fprintf(file, "static const MIDL_TYPE_PICKLING_INFO __MIDL_TypePicklingInfo =\n");
         fprintf(file, "{\n");
@@ -312,7 +312,7 @@ static void write_serialize_function(FILE *file, const type_t *type, const type_
         fprintf(file, "    0\n");
         fprintf(file, "};\n");
         fprintf(file, "\n");
-        emited_pickling_info = 1;
+        emitted_pickling_info = 1;
     }
 
     /* FIXME: Assuming explicit handle */
