@@ -683,8 +683,9 @@ static void free_technique(struct d3dx_technique *technique)
     technique->name = NULL;
 }
 
-static void d3dx9_base_effect_cleanup(struct d3dx9_base_effect *base)
+static void d3dx9_base_effect_cleanup(struct d3dx_effect *effect)
 {
+    struct d3dx9_base_effect *base = &effect->base_effect;
     unsigned int i;
 
     TRACE("base %p.\n", base);
@@ -693,7 +694,7 @@ static void d3dx9_base_effect_cleanup(struct d3dx9_base_effect *base)
 
     if (base->parameters)
     {
-        for (i = 0; i < base->effect->parameter_count; ++i)
+        for (i = 0; i < effect->parameter_count; ++i)
             free_top_level_parameter(&base->parameters[i]);
         HeapFree(GetProcessHeap(), 0, base->parameters);
         base->parameters = NULL;
@@ -707,14 +708,14 @@ static void d3dx9_base_effect_cleanup(struct d3dx9_base_effect *base)
         base->techniques = NULL;
     }
 
-    if (base->effect->objects)
+    if (effect->objects)
     {
-        for (i = 0; i < base->effect->object_count; ++i)
+        for (i = 0; i < effect->object_count; ++i)
         {
-            free_object(&base->effect->objects[i]);
+            free_object(&effect->objects[i]);
         }
-        HeapFree(GetProcessHeap(), 0, base->effect->objects);
-        base->effect->objects = NULL;
+        heap_free(effect->objects);
+        effect->objects = NULL;
     }
 }
 
@@ -722,7 +723,7 @@ static void free_effect(struct d3dx_effect *effect)
 {
     TRACE("Free effect %p\n", effect);
 
-    d3dx9_base_effect_cleanup(&effect->base_effect);
+    d3dx9_base_effect_cleanup(effect);
 
     if (effect->pool)
     {
@@ -6302,7 +6303,7 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
                             debugstr_a(skip_constants[i]), j);
                     HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
                     HeapFree(GetProcessHeap(), 0, skip_constants);
-                    d3dx9_base_effect_cleanup(base);
+                    d3dx9_base_effect_cleanup(effect);
                     return D3DERR_INVALIDCALL;
                 }
             }
