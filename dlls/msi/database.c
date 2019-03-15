@@ -918,50 +918,66 @@ end:
     return r;
 }
 
-static UINT msi_export_record( HANDLE handle, MSIRECORD *row, UINT start )
+static UINT msi_export_field( HANDLE handle, MSIRECORD *row, UINT field )
 {
-    UINT i, count, len, r = ERROR_SUCCESS;
-    const char *sep;
     char *buffer;
-    DWORD sz;
+    BOOL ret;
+    DWORD sz = 0x100;
+    UINT r;
 
-    len = 0x100;
-    buffer = msi_alloc( len );
-    if ( !buffer )
+    buffer = msi_alloc( sz );
+    if (!buffer)
         return ERROR_OUTOFMEMORY;
 
-    count = MSI_RecordGetFieldCount( row );
-    for ( i=start; i<=count; i++ )
+    r = MSI_RecordGetStringA( row, field, buffer, &sz );
+    if (r == ERROR_MORE_DATA)
     {
-        sz = len;
-        r = MSI_RecordGetStringA( row, i, buffer, &sz );
-        if (r == ERROR_MORE_DATA)
-        {
-            char *p = msi_realloc( buffer, sz + 1 );
-            if (!p)
-                break;
-            len = sz + 1;
-            buffer = p;
-        }
-        sz = len;
-        r = MSI_RecordGetStringA( row, i, buffer, &sz );
-        if (r != ERROR_SUCCESS)
-            break;
+        char *tmp;
 
-        if (!WriteFile( handle, buffer, sz, &sz, NULL ))
+        sz++; /* leave room for NULL terminator */
+        tmp = msi_realloc( buffer, sz );
+        if (!tmp)
         {
-            r = ERROR_FUNCTION_FAILED;
-            break;
+            msi_free( buffer );
+            return ERROR_OUTOFMEMORY;
         }
+        buffer = tmp;
+
+        r = MSI_RecordGetStringA( row, field, buffer, &sz );
+        if (r != ERROR_SUCCESS)
+        {
+            msi_free( buffer );
+            return r;
+        }
+    }
+    else if (r != ERROR_SUCCESS)
+    {
+        msi_free( buffer );
+        return r;
+    }
+
+    ret = WriteFile( handle, buffer, sz, &sz, NULL );
+    msi_free( buffer );
+    return ret ? ERROR_SUCCESS : ERROR_FUNCTION_FAILED;
+}
+
+static UINT msi_export_record( HANDLE handle, MSIRECORD *row, UINT start )
+{
+    UINT i, count, r = ERROR_SUCCESS;
+    const char *sep;
+    DWORD sz;
+
+    count = MSI_RecordGetFieldCount( row );
+    for (i = start; i <= count; i++)
+    {
+        r = msi_export_field( handle, row, i );
+        if (r != ERROR_SUCCESS)
+            return r;
 
         sep = (i < count) ? "\t" : "\r\n";
         if (!WriteFile( handle, sep, strlen(sep), &sz, NULL ))
-        {
-            r = ERROR_FUNCTION_FAILED;
-            break;
-        }
+            return ERROR_FUNCTION_FAILED;
     }
-    msi_free( buffer );
     return r;
 }
 
