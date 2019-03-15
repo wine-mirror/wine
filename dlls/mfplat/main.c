@@ -1075,20 +1075,24 @@ static HRESULT WINAPI mfattributes_SetUnknown(IMFAttributes *iface, REFGUID key,
 
 static HRESULT WINAPI mfattributes_LockStore(IMFAttributes *iface)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
 
-    FIXME("%p\n", This);
+    TRACE("%p.\n", iface);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&attributes->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mfattributes_UnlockStore(IMFAttributes *iface)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
 
-    FIXME("%p\n", This);
+    TRACE("%p.\n", iface);
 
-    return E_NOTIMPL;
+    LeaveCriticalSection(&attributes->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mfattributes_GetCount(IMFAttributes *iface, UINT32 *items)
