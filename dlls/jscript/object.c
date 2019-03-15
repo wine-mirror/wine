@@ -32,6 +32,7 @@ static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
 
+static const WCHAR createW[] = {'c','r','e','a','t','e',0};
 static const WCHAR getOwnPropertyDescriptorW[] =
     {'g','e','t','O','w','n','P','r','o','p','e','r','t','y','D','e','s','c','r','i','p','t','o','r',0};
 static const WCHAR getPrototypeOfW[] =
@@ -521,6 +522,45 @@ static HRESULT Object_getOwnPropertyDescriptor(script_ctx_t *ctx, vdisp_t *jsthi
     return hres;
 }
 
+static HRESULT Object_create(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+                             unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    jsdisp_t *proto = NULL, *obj;
+    HRESULT hres;
+
+    if(!argc || (!is_object_instance(argv[0]) && !is_null(argv[0]))) {
+        FIXME("Invalid arg\n");
+        return E_INVALIDARG;
+    }
+
+    TRACE("(%s)\n", debugstr_jsval(argv[0]));
+
+    if(argc > 1) {
+        FIXME("Unsupported properties argument %s\n", debugstr_jsval(argv[1]));
+        return E_NOTIMPL;
+    }
+
+    if(argc && is_object_instance(argv[0])) {
+        if(get_object(argv[0]))
+            proto = to_jsdisp(get_object(argv[0]));
+        if(!proto) {
+            FIXME("Non-JS prototype\n");
+            return E_NOTIMPL;
+        }
+    }else if(!is_null(argv[0])) {
+        FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
+        return E_INVALIDARG;
+    }
+
+    if(r) {
+        hres = create_dispex(ctx, NULL, proto, &obj);
+        if(FAILED(hres))
+            return hres;
+        *r = jsval_obj(obj);
+    }
+    return S_OK;
+}
+
 static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
                                      unsigned argc, jsval_t *argv, jsval_t *r)
 {
@@ -547,6 +587,7 @@ static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
 }
 
 static const builtin_prop_t ObjectConstr_props[] = {
+    {createW,                   Object_create,                      PROPF_ES5|PROPF_METHOD|2},
     {definePropertiesW,         Object_defineProperties,            PROPF_ES5|PROPF_METHOD|2},
     {definePropertyW,           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
     {getOwnPropertyDescriptorW, Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2},

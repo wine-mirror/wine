@@ -637,6 +637,9 @@ function test_string_split() {
 }
 
 function test_getPrototypeOf() {
+    ok(Object.create.length === 2, "Object.create.length = " + Object.create.length);
+    ok(Object.getPrototypeOf.length === 1, "Object.getPrototypeOf.length = " + Object.getPrototypeOf.length);
+
     ok(Object.getPrototypeOf(new Object()) === Object.prototype,
        "Object.getPrototypeOf(new Object()) !== Object.prototype");
 
@@ -659,6 +662,15 @@ function test_getPrototypeOf() {
 
     ok(Object.getPrototypeOf(Object.prototype) === null,
        "Object.getPrototypeOf(Object.prototype) !== null");
+
+    obj = Object.create(proto = { test: 1 });
+    ok(Object.getPrototypeOf(obj) === proto,
+       "Object.getPrototypeOf(obj) !== proto");
+    ok(obj.test === 1, "obj.test = " + obj.test);
+
+    obj = Object.create(null);
+    ok(!("toString" in obj), "toString is in obj");
+    ok(Object.getPrototypeOf(obj) === null, "Object.getPrototypeOf(obj) = " + Object.getPrototypeOf(obj));
 
     next_test();
 }
