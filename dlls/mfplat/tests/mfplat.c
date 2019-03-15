@@ -406,21 +406,19 @@ todo_wine
 
     flags = 0;
     hr = IMFMediaType_IsEqual(mediatype, mediatype2, &flags);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(flags == (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_DATA
             | MF_MEDIATYPE_EQUAL_FORMAT_USER_DATA), "Unexpected flags %#x.\n", flags);
-}
+
     hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
     ok(hr == S_OK, "Failed to set subtype, hr %#x.\n", hr);
 
     flags = 0;
     hr = IMFMediaType_IsEqual(mediatype, mediatype2, &flags);
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
-todo_wine {
     ok(flags == (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_DATA | MF_MEDIATYPE_EQUAL_FORMAT_USER_DATA),
             "Unexpected flags %#x.\n", flags);
-}
+
     IMFMediaType_Release(mediatype2);
     IMFMediaType_Release(mediatype);
 }
@@ -511,6 +509,7 @@ static void test_MFCreateAttributes(void)
     WCHAR bufferW[256];
     UINT64 value64;
     WCHAR *string;
+    BOOL result;
     HRESULT hr;
     GUID key;
 
@@ -650,6 +649,18 @@ static void test_MFCreateAttributes(void)
     ok(hr == S_OK, "Failed to get double value, hr %#x.\n", hr);
     ok(double_value == 22.0, "Unexpected value: %f, expected: 22.0.\n", double_value);
 
+    propvar.vt = MF_ATTRIBUTE_UINT64;
+    U(propvar).uhVal.QuadPart = 22;
+    hr = IMFAttributes_CompareItem(attributes, &GUID_NULL, &propvar, &result);
+    ok(hr == S_OK, "Failed to compare items, hr %#x.\n", hr);
+    ok(!result, "Unexpected result.\n");
+
+    propvar.vt = MF_ATTRIBUTE_DOUBLE;
+    U(propvar).dblVal = 22.0;
+    hr = IMFAttributes_CompareItem(attributes, &GUID_NULL, &propvar, &result);
+    ok(hr == S_OK, "Failed to compare items, hr %#x.\n", hr);
+    ok(result, "Unexpected result.\n");
+
     hr = IMFAttributes_SetString(attributes, &DUMMY_GUID1, stringW);
     ok(hr == S_OK, "Failed to set string attribute, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 3);
@@ -721,6 +732,12 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_DeleteAllItems(attributes1);
     ok(hr == S_OK, "Failed to delete items, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes1, 0);
+
+    propvar.vt = MF_ATTRIBUTE_UINT64;
+    U(propvar).uhVal.QuadPart = 22;
+    hr = IMFAttributes_CompareItem(attributes, &GUID_NULL, &propvar, &result);
+    ok(hr == S_OK, "Failed to compare items, hr %#x.\n", hr);
+    ok(!result, "Unexpected result.\n");
 
     hr = IMFAttributes_CopyAllItems(attributes1, attributes);
     ok(hr == S_OK, "Failed to copy items, hr %#x.\n", hr);

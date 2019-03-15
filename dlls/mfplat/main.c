@@ -731,9 +731,21 @@ static HRESULT WINAPI mfattributes_GetItemType(IMFAttributes *iface, REFGUID key
 
 static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
 {
-    FIXME("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    struct attribute *attribute;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+
+    *result = FALSE;
+
+    EnterCriticalSection(&attributes->cs);
+
+    if ((attribute = attributes_find_item(attributes, key, NULL)))
+        *result = !PropVariantCompareEx(&attribute->value, value, PVCU_DEFAULT, PVCF_DEFAULT);
+
+    LeaveCriticalSection(&attributes->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *theirs, MF_ATTRIBUTES_MATCH_TYPE type,
