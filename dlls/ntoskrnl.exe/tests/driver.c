@@ -126,7 +126,7 @@ static void WINAPIV ok_(const char *file, int line, int condition, const char *m
     __ms_va_end(args);
 }
 
-void vskip_(const char *file, int line, const char *msg, __ms_va_list args)
+static void vskip_(const char *file, int line, const char *msg, __ms_va_list args)
 {
     const char *current_file;
 
@@ -141,7 +141,7 @@ void vskip_(const char *file, int line, const char *msg, __ms_va_list args)
     skipped++;
 }
 
-void WINAPIV win_skip_(const char *file, int line, const char *msg, ...)
+static void WINAPIV win_skip_(const char *file, int line, const char *msg, ...)
 {
     __ms_va_list args;
     __ms_va_start(args, msg);
@@ -185,7 +185,7 @@ static unsigned int strlenW( const WCHAR *str )
     return s - str;
 }
 
-void *kmemcpy(void *dest, const void *src, SIZE_T n)
+static void *kmemcpy(void *dest, const void *src, SIZE_T n)
 {
     const char *s = src;
     char *d = dest;
