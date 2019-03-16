@@ -914,7 +914,7 @@ static void test_create_device(void)
     }
     else
     {
-        skip("GetContaingOutput() is not supported.\n");
+        skip("GetContainingOutput() is not supported.\n");
     }
 
     refcount = IDXGISwapChain3_Release(swapchain);
