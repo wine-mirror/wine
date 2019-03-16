@@ -108,29 +108,31 @@ static void notify_thread(SystemClockImpl *clock)
     SetEvent(clock->notify_event);
 }
 
-static ULONG WINAPI SystemClockImpl_AddRef(IReferenceClock* iface) {
-  SystemClockImpl *This = impl_from_IReferenceClock(iface);
-  ULONG ref = InterlockedIncrement(&This->ref);
+static HRESULT WINAPI SystemClockImpl_QueryInterface(IReferenceClock *iface, REFIID iid, void **out)
+{
+    SystemClockImpl *clock = impl_from_IReferenceClock(iface);
+    TRACE("clock %p, iid %s, out %p.\n", clock, debugstr_guid(iid), out);
 
-  TRACE("(%p): AddRef from %d\n", This, ref - 1);
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IReferenceClock))
+    {
+        IReferenceClock_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
 
-  return ref;
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI SystemClockImpl_QueryInterface(IReferenceClock* iface, REFIID riid, void** ppobj) {
-  SystemClockImpl *This = impl_from_IReferenceClock(iface);
-  TRACE("(%p, %s,%p)\n", This, debugstr_guid(riid), ppobj);
-  
-  if (IsEqualIID (riid, &IID_IUnknown) || 
-      IsEqualIID (riid, &IID_IReferenceClock)) {
-    SystemClockImpl_AddRef(iface);
-    *ppobj = &This->IReferenceClock_iface;
-    return S_OK;
-  }
-  
-  *ppobj = NULL;
-  WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppobj);
-  return E_NOINTERFACE;
+static ULONG WINAPI SystemClockImpl_AddRef(IReferenceClock *iface)
+{
+    SystemClockImpl *clock = impl_from_IReferenceClock(iface);
+    ULONG refcount = InterlockedIncrement(&clock->ref);
+
+    TRACE("%p increasing refcount to %u.\n", clock, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI SystemClockImpl_Release(IReferenceClock *iface)
