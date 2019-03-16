@@ -3680,7 +3680,7 @@ static void test_multiple_instances(void)
 
     if(!pCancelIoEx)
     {
-        win_skip("Skiping multiple instance tests on too old Windows\n");
+        win_skip("Skipping multiple instance tests on too old Windows\n");
         return;
     }
 
