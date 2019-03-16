@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <msi.h>
 #include <msiquery.h>
+#include <shlwapi.h>
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -433,17 +434,14 @@ static int extract_streams( struct msidb_state *state )
     return 1;
 }
 
-static int import_table( struct msidb_state *state, const WCHAR *table_name )
+static int import_table( struct msidb_state *state, const WCHAR *table_path )
 {
-    const WCHAR format[] = { '%','.','8','s','.','i','d','t',0 }; /* truncate to 8 characters */
-    WCHAR table_path[MAX_PATH];
     UINT ret;
 
-    snprintfW( table_path, ARRAY_SIZE(table_path), format, table_name );
     ret = MsiDatabaseImportW( state->database_handle, state->table_folder, table_path );
     if (ret != ERROR_SUCCESS)
     {
-        ERR( "Failed to import table '%s', error %d.\n", wine_dbgstr_w(table_name), ret );
+        ERR( "Failed to import table '%s', error %d.\n", wine_dbgstr_w(table_path), ret );
         return 0;
     }
     return 1;
@@ -451,11 +449,23 @@ static int import_table( struct msidb_state *state, const WCHAR *table_name )
 
 static int import_tables( struct msidb_state *state )
 {
+    const WCHAR idt_ext[] = { '.','i','d','t',0 };
     struct msidb_listentry *data;
 
     LIST_FOR_EACH_ENTRY( data, &state->table_list, struct msidb_listentry, entry )
     {
-        if (!import_table( state, data->name ))
+        WCHAR *table_name = data->name;
+        WCHAR table_path[MAX_PATH];
+        WCHAR *ext;
+
+        /* permit specifying tables by filename (*.idt) */
+        if ((ext = PathFindExtensionW( table_name )) == NULL || lstrcmpW( ext, idt_ext ) != 0)
+        {
+            const WCHAR format[] = { '%','.','8','s','.','i','d','t',0 }; /* truncate to 8 characters */
+            snprintfW( table_path, ARRAY_SIZE(table_path), format, table_name );
+            table_name = table_path;
+        }
+        if (!import_table( state, table_name ))
             return 0; /* failed, do not commit changes */
     }
     return 1;
