@@ -45,8 +45,7 @@ typedef struct SystemClockImpl {
     REFERENCE_TIME last_time;
     CRITICAL_SECTION cs;
 
-    /* These lists are ordered by expiration time (soonest first). */
-    struct list single_sinks, periodic_sinks;
+    struct list sinks;
 } SystemClockImpl;
 
 static inline SystemClockImpl *impl_from_IReferenceClock(IReferenceClock *iface)
@@ -54,73 +53,48 @@ static inline SystemClockImpl *impl_from_IReferenceClock(IReferenceClock *iface)
     return CONTAINING_RECORD(iface, SystemClockImpl, IReferenceClock_iface);
 }
 
-static void insert_advise_sink(struct advise_sink *sink, struct list *queue)
+static DWORD WINAPI SystemClockAdviseThread(void *param)
 {
-    REFERENCE_TIME due_time = sink->due_time + sink->period;
-    struct advise_sink *cursor;
+    SystemClockImpl *clock = param;
+    struct advise_sink *sink, *cursor;
+    REFERENCE_TIME current_time;
+    DWORD timeout = INFINITE;
+    HANDLE handles[2] = {clock->stop_event, clock->notify_event};
 
-    LIST_FOR_EACH_ENTRY(cursor, queue, struct advise_sink, entry)
+    TRACE("Starting advise thread for clock %p.\n", clock);
+
+    for (;;)
     {
-        if (cursor->due_time + cursor->period > due_time)
+        EnterCriticalSection(&clock->cs);
+
+        current_time = GetTickCount64() * 10000;
+
+        LIST_FOR_EACH_ENTRY_SAFE(sink, cursor, &clock->sinks, struct advise_sink, entry)
         {
-            list_add_before(&cursor->entry, &sink->entry);
-            return;
+            if (sink->due_time <= current_time)
+            {
+                if (sink->period)
+                {
+                    DWORD periods = ((current_time - sink->due_time) / sink->period) + 1;
+                    ReleaseSemaphore(sink->handle, periods, NULL);
+                    sink->due_time += periods * sink->period;
+                }
+                else
+                {
+                    SetEvent(sink->handle);
+                    list_remove(&sink->entry);
+                    heap_free(sink);
+                }
+            }
+
+            timeout = min(timeout, (sink->due_time - current_time) / 10000);
         }
+
+        LeaveCriticalSection(&clock->cs);
+
+        if (WaitForMultipleObjects(2, handles, FALSE, timeout) == 0)
+            return 0;
     }
-
-    list_add_tail(queue, &sink->entry);
-}
-
-static DWORD WINAPI SystemClockAdviseThread(LPVOID lpParam) {
-  SystemClockImpl* This = lpParam;
-  struct advise_sink *sink, *cursor;
-  struct list *entry;
-  DWORD timeOut = INFINITE;
-  REFERENCE_TIME curTime;
-  HANDLE handles[2] = {This->stop_event, This->notify_event};
-
-  TRACE("(%p): Main Loop\n", This);
-
-  while (TRUE) {
-    EnterCriticalSection(&This->cs);
-
-    curTime = GetTickCount64() * 10000;
-
-    /** First SingleShots Advice: sorted list */
-    LIST_FOR_EACH_ENTRY_SAFE(sink, cursor, &This->single_sinks, struct advise_sink, entry)
-    {
-      if (sink->due_time + sink->period > curTime)
-        break;
-
-      SetEvent(sink->handle);
-      list_remove(&sink->entry);
-      heap_free(sink);
-    }
-
-    if ((entry = list_head(&This->single_sinks)))
-    {
-      sink = LIST_ENTRY(entry, struct advise_sink, entry);
-      timeOut = (sink->due_time + sink->period - curTime) / 10000;
-    }
-    else timeOut = INFINITE;
-
-    /** Now Periodics Advice: semi sorted list (sort cannot be used) */
-    LIST_FOR_EACH_ENTRY(sink, &This->periodic_sinks, struct advise_sink, entry)
-    {
-      if (sink->due_time <= curTime)
-      {
-        DWORD periods = ((curTime - sink->due_time) / sink->period) + 1;
-        ReleaseSemaphore(sink->handle, periods, NULL);
-        sink->due_time += periods * sink->period;
-      }
-      timeOut = min(timeOut, (sink->due_time - curTime) / 10000);
-    }
-
-    LeaveCriticalSection(&This->cs);
-
-    if (WaitForMultipleObjects(2, handles, FALSE, timeOut) == 0)
-        return 0;
-  }
 }
 
 static void notify_thread(SystemClockImpl *clock)
@@ -234,7 +208,7 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock *iface,
     sink->cookie = InterlockedIncrement(&cookie_counter);
 
     EnterCriticalSection(&clock->cs);
-    insert_advise_sink(sink, &clock->single_sinks);
+    list_add_tail(&clock->sinks, &sink->entry);
     LeaveCriticalSection(&clock->cs);
 
     notify_thread(clock);
@@ -270,7 +244,7 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface,
     sink->cookie = InterlockedIncrement(&cookie_counter);
 
     EnterCriticalSection(&clock->cs);
-    insert_advise_sink(sink, &clock->periodic_sinks);
+    list_add_tail(&clock->sinks, &sink->entry);
     LeaveCriticalSection(&clock->cs);
 
     notify_thread(clock);
@@ -288,18 +262,7 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR
 
     EnterCriticalSection(&clock->cs);
 
-    LIST_FOR_EACH_ENTRY(sink, &clock->single_sinks, struct advise_sink, entry)
-    {
-        if (sink->cookie == cookie)
-        {
-            list_remove(&sink->entry);
-            heap_free(sink);
-            LeaveCriticalSection(&clock->cs);
-            return S_OK;
-        }
-    }
-
-    LIST_FOR_EACH_ENTRY(sink, &clock->periodic_sinks, struct advise_sink, entry)
+    LIST_FOR_EACH_ENTRY(sink, &clock->sinks, struct advise_sink, entry)
     {
         if (sink->cookie == cookie)
         {
@@ -339,8 +302,7 @@ HRESULT QUARTZ_CreateSystemClock(IUnknown *outer, void **out)
     }
 
     object->IReferenceClock_iface.lpVtbl = &SystemClock_Vtbl;
-    list_init(&object->single_sinks);
-    list_init(&object->periodic_sinks);
+    list_init(&object->sinks);
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SystemClockImpl.cs");
 
