@@ -26,11 +26,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+static int cookie_counter;
+
 struct advise_sink
 {
     struct list entry;
     HANDLE handle;
     REFERENCE_TIME due_time, period;
+    int cookie;
 };
 
 typedef struct SystemClockImpl {
@@ -228,6 +231,7 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock *iface,
     sink->handle = (HANDLE)event;
     sink->due_time = base + offset;
     sink->period = 0;
+    sink->cookie = InterlockedIncrement(&cookie_counter);
 
     EnterCriticalSection(&clock->cs);
     insert_advise_sink(sink, &clock->single_sinks);
@@ -235,7 +239,7 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock *iface,
 
     notify_thread(clock);
 
-    *cookie = (DWORD_PTR)sink;
+    *cookie = sink->cookie;
     return S_OK;
 }
 
@@ -263,6 +267,7 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface,
     sink->handle = (HANDLE)semaphore;
     sink->due_time = start;
     sink->period = period;
+    sink->cookie = InterlockedIncrement(&cookie_counter);
 
     EnterCriticalSection(&clock->cs);
     insert_advise_sink(sink, &clock->periodic_sinks);
@@ -270,7 +275,7 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface,
 
     notify_thread(clock);
 
-    *cookie = (DWORD_PTR)sink;
+    *cookie = sink->cookie;
     return S_OK;
 }
 
@@ -285,7 +290,7 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR
 
     LIST_FOR_EACH_ENTRY(sink, &clock->single_sinks, struct advise_sink, entry)
     {
-        if (sink == (struct advise_sink *)cookie)
+        if (sink->cookie == cookie)
         {
             list_remove(&sink->entry);
             heap_free(sink);
@@ -296,7 +301,7 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR
 
     LIST_FOR_EACH_ENTRY(sink, &clock->periodic_sinks, struct advise_sink, entry)
     {
-        if (sink == (struct advise_sink *)cookie)
+        if (sink->cookie == cookie)
         {
             list_remove(&sink->entry);
             heap_free(sink);
