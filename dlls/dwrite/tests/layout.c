@@ -3931,7 +3931,7 @@ static void test_SetTextAlignment(void)
         count = 0;
         hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAY_SIZE(clusters), &count);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        if (lstrlenW(stringsW[i]))
+        if (stringsW[i][0])
             ok(count > 0, "got %u\n", count);
         else
             ok(count == 0, "got %u\n", count);
@@ -3981,7 +3981,7 @@ static void test_SetTextAlignment(void)
         ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
         IDWriteTextLayout_Release(layout);
 
-        if (lstrlenW(stringsW[i]) > 0) {
+        if (stringsW[i][0]) {
             /* max width less than total run width, trailing alignment */
             hr = IDWriteTextFormat_SetWordWrapping(format, DWRITE_WORD_WRAPPING_NO_WRAP);
             ok(hr == S_OK, "got 0x%08x\n", hr);
