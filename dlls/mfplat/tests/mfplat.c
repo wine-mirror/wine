@@ -825,7 +825,7 @@ static void test_MFCreateMFByteStreamOnStream(void)
 
     if (hr != S_OK)
     {
-        win_skip("Can not retrieve IMFAttributes interface from IMFByteStream\n");
+        win_skip("Cannot retrieve IMFAttributes interface from IMFByteStream\n");
         IStream_Release(stream);
         IMFByteStream_Release(bytestream);
         return;
