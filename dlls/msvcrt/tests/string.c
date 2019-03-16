@@ -3047,6 +3047,23 @@ static void test_atoi(void)
     ok(r == 0, "atoi(4294967296) = %d\n", r);
 }
 
+static void test_atol(void)
+{
+    int r;
+
+    r = atol("0");
+    ok(r == 0, "atol(0) = %d\n", r);
+
+    r = atol("-1");
+    ok(r == -1, "atol(-1) = %d\n", r);
+
+    r = atol("1");
+    ok(r == 1, "atol(1) = %d\n", r);
+
+    r = atol("4294967296");
+    ok(r == 0, "atol(4294967296) = %d\n", r);
+}
+
 static void test_atof(void)
 {
     double d;
@@ -3831,6 +3848,7 @@ START_TEST(string)
     test__stricmp();
     test__wcstoi64();
     test_atoi();
+    test_atol();
     test_atof();
     test_strncpy();
     test_strxfrm();
