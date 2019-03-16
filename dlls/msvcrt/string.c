@@ -1109,7 +1109,11 @@ MSVCRT_long CDECL MSVCRT__atol_l(const char *str, MSVCRT__locale_t locale)
  */
 MSVCRT_long CDECL MSVCRT_atol(const char *str)
 {
+#if _MSVCR_VER == 0
+    return MSVCRT_atoi(str);
+#else
     return MSVCRT__atol_l(str, NULL);
+#endif
 }
 
 #if _MSVCR_VER>=120
