@@ -450,6 +450,7 @@ static int import_table( struct msidb_state *state, const WCHAR *table_path )
 static int import_tables( struct msidb_state *state )
 {
     const WCHAR idt_ext[] = { '.','i','d','t',0 };
+    const WCHAR wildcard[] = { '*',0 };
     struct msidb_listentry *data;
 
     LIST_FOR_EACH_ENTRY( data, &state->table_list, struct msidb_listentry, entry )
@@ -458,6 +459,41 @@ static int import_tables( struct msidb_state *state )
         WCHAR table_path[MAX_PATH];
         WCHAR *ext;
 
+        /* permit specifying tables with wildcards ('Feature*') */
+        if (strstrW( table_name, wildcard ) != NULL)
+        {
+            WIN32_FIND_DATAW f;
+            HANDLE handle;
+            WCHAR *path;
+            DWORD len;
+
+            len = strlenW( state->table_folder ) + 1 + strlenW( table_name ) + 1; /* %s/%s\0 */
+            path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+            if (path == NULL)
+                return 0;
+            lstrcpyW( path, state->table_folder );
+            PathAddBackslashW( path );
+            lstrcatW( path, table_name );
+            handle = FindFirstFileW( path, &f );
+            HeapFree( GetProcessHeap(), 0, path );
+            if (handle == INVALID_HANDLE_VALUE)
+                return 0;
+            do
+            {
+                if (f.cFileName[0] == '.' && !f.cFileName[1]) continue;
+                if (f.cFileName[0] == '.' && f.cFileName[1] == '.' && !f.cFileName[2]) continue;
+                if (f.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+                if ((ext = PathFindExtensionW( f.cFileName )) == NULL) continue;
+                if (lstrcmpW( ext, idt_ext ) != 0) continue;
+                if (!import_table( state, f.cFileName ))
+                {
+                    FindClose( handle );
+                    return 0; /* failed, do not commit changes */
+                }
+            } while (FindNextFileW( handle, &f ));
+            FindClose( handle );
+            continue;
+        }
         /* permit specifying tables by filename (*.idt) */
         if ((ext = PathFindExtensionW( table_name )) == NULL || lstrcmpW( ext, idt_ext ) != 0)
         {
