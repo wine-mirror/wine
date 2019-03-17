@@ -1224,8 +1224,13 @@ static INT CopyCompStringIMEtoClient(const InputContextData *data, const void *s
     }
     else
     {
-        ret = min(src_len * char_size, dst_len);
-        memcpy(dst, src, ret);
+        if (dst_len)
+        {
+            ret = min(src_len * char_size, dst_len);
+            memcpy(dst, src, ret);
+        }
+        else
+            ret = src_len * char_size;
     }
 
     return ret;

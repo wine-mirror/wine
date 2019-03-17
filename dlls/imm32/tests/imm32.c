@@ -473,6 +473,18 @@ static void test_ImmGetCompositionString(void)
         len = ImmGetCompositionStringW(imc, GCS_COMPSTR, wstring, wlen - 1);
         ok(len == wlen - 1, "Unexpected length %d.\n", len);
         ok(!memcmp(wstring, string, wlen - 1), "Unexpected buffer contents.\n");
+
+        /* Get the size of the required output buffer. */
+        memset(wstring, 0x1a, sizeof(wstring));
+        memset(cstring, 0x1a, sizeof(cstring));
+
+        len = ImmGetCompositionStringA(imc, GCS_COMPSTR, cstring, 0);
+        ok(len == alen, "Unexpected length %d.\n", len);
+        ok(cstring[0] == 0x1a, "Unexpected buffer contents %s.\n", cstring);
+
+        len = ImmGetCompositionStringW(imc, GCS_COMPSTR, wstring, 0);
+        ok(len == wlen, "Unexpected length %d.\n", len);
+        ok(wstring[0] == 0x1a1a, "Unexpected buffer contents.\n");
     }
     else
         win_skip("Composition string isn't available\n");
