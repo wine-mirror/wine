@@ -3157,8 +3157,8 @@ int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * bu
   memset(buf,0,sizeof(struct MSVCRT__stat64));
 
   /* FIXME: rdev isn't drive num, despite what the docs says-what is it? */
-  if (MSVCRT_iswalpha(*path))
-    buf->st_dev = buf->st_rdev = toupperW(*path - 'A'); /* drive num */
+  if (MSVCRT_iswalpha(*path) && path[1] == ':')
+    buf->st_dev = buf->st_rdev = toupperW(*path) - 'A'; /* drive num */
   else
     buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
 
