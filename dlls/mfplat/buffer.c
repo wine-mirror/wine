@@ -34,6 +34,12 @@ struct memory_buffer
     DWORD current_length;
 };
 
+enum sample_prop_flags
+{
+    SAMPLE_PROP_HAS_DURATION  = 1 << 0,
+    SAMPLE_PROP_HAS_TIMESTAMP = 1 << 1,
+};
+
 struct sample
 {
     struct attributes attributes;
@@ -44,6 +50,9 @@ struct sample
     size_t capacity;
     DWORD flags;
     CRITICAL_SECTION cs;
+    DWORD prop_flags;
+    LONGLONG duration;
+    LONGLONG timestamp;
 };
 
 static inline struct memory_buffer *impl_from_IMFMediaBuffer(IMFMediaBuffer *iface)
@@ -487,32 +496,66 @@ static HRESULT WINAPI sample_SetSampleFlags(IMFSample *iface, DWORD flags)
     return S_OK;
 }
 
-static HRESULT WINAPI sample_GetSampleTime(IMFSample *iface, LONGLONG *sampletime)
+static HRESULT WINAPI sample_GetSampleTime(IMFSample *iface, LONGLONG *timestamp)
 {
-    FIXME("%p, %p.\n", iface, sampletime);
+    struct sample *sample = impl_from_IMFSample(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, timestamp);
+
+    EnterCriticalSection(&sample->cs);
+    if (sample->prop_flags & SAMPLE_PROP_HAS_TIMESTAMP)
+        *timestamp = sample->timestamp;
+    else
+        hr = MF_E_NO_SAMPLE_TIMESTAMP;
+    LeaveCriticalSection(&sample->cs);
+
+    return hr;
 }
 
-static HRESULT WINAPI sample_SetSampleTime(IMFSample *iface, LONGLONG sampletime)
+static HRESULT WINAPI sample_SetSampleTime(IMFSample *iface, LONGLONG timestamp)
 {
-    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(sampletime));
+    struct sample *sample = impl_from_IMFSample(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(timestamp));
+
+    EnterCriticalSection(&sample->cs);
+    sample->timestamp = timestamp;
+    sample->prop_flags |= SAMPLE_PROP_HAS_TIMESTAMP;
+    LeaveCriticalSection(&sample->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_GetSampleDuration(IMFSample *iface, LONGLONG *duration)
 {
-    FIXME("%p, %p.\n", iface, duration);
+    struct sample *sample = impl_from_IMFSample(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, duration);
+
+    EnterCriticalSection(&sample->cs);
+    if (sample->prop_flags & SAMPLE_PROP_HAS_DURATION)
+        *duration = sample->duration;
+    else
+        hr = MF_E_NO_SAMPLE_DURATION;
+    LeaveCriticalSection(&sample->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_SetSampleDuration(IMFSample *iface, LONGLONG duration)
 {
-    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(duration));
+    struct sample *sample = impl_from_IMFSample(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(duration));
+
+    EnterCriticalSection(&sample->cs);
+    sample->duration = duration;
+    sample->prop_flags |= SAMPLE_PROP_HAS_DURATION;
+    LeaveCriticalSection(&sample->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_GetBufferCount(IMFSample *iface, DWORD *count)

@@ -1280,12 +1280,18 @@ static void test_sample(void)
 {
     IMFMediaBuffer *buffer, *buffer2;
     DWORD count, flags, length;
+    IMFAttributes *attributes;
     IMFSample *sample;
     LONGLONG time;
     HRESULT hr;
 
     hr = MFCreateSample( &sample );
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IMFSample_QueryInterface(sample, &IID_IMFAttributes, (void **)&attributes);
+    ok(hr == S_OK, "Failed to get attributes interface, hr %#x.\n", hr);
+
+    CHECK_ATTR_COUNT(attributes, 0);
 
     hr = IMFSample_GetBufferCount(sample, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
@@ -1305,11 +1311,9 @@ static void test_sample(void)
     ok(flags == 0x123, "Unexpected flags %#x.\n", flags);
 
     hr = IMFSample_GetSampleTime(sample, &time);
-todo_wine
     ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSample_GetSampleDuration(sample, &time);
-todo_wine
     ok(hr == MF_E_NO_SAMPLE_DURATION, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
@@ -1363,6 +1367,23 @@ todo_wine
 
     IMFMediaBuffer_Release(buffer);
 
+    /* Duration */
+    hr = IMFSample_SetSampleDuration(sample, 10);
+    ok(hr == S_OK, "Failed to set duration, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 0);
+    hr = IMFSample_GetSampleDuration(sample, &time);
+    ok(hr == S_OK, "Failed to get sample duration, hr %#x.\n", hr);
+    ok(time == 10, "Unexpected duration.\n");
+
+    /* Timestamp */
+    hr = IMFSample_SetSampleTime(sample, 1);
+    ok(hr == S_OK, "Failed to set timestamp, hr %#x.\n", hr);
+    CHECK_ATTR_COUNT(attributes, 0);
+    hr = IMFSample_GetSampleTime(sample, &time);
+    ok(hr == S_OK, "Failed to get sample time, hr %#x.\n", hr);
+    ok(time == 1, "Unexpected timestamp.\n");
+
+    IMFAttributes_Release(attributes);
     IMFSample_Release(sample);
 }
 
