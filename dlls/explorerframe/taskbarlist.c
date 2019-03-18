@@ -234,9 +234,9 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_SetThumbnailTooltip(ITaskbarList4 
                                                                   HWND hwnd,
                                                                   LPCWSTR pszTip)
 {
-    FIXME("iface %p, hwnd %p, pszTip %s stub!\n", iface, hwnd, debugstr_w(pszTip));
+    FIXME("iface %p, hwnd %p, pszTip %s stub, faking success!\n", iface, hwnd, debugstr_w(pszTip));
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE taskbar_list_SetThumbnailClip(ITaskbarList4 *iface,
