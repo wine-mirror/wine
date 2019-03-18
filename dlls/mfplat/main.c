@@ -757,7 +757,10 @@ static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key
     EnterCriticalSection(&attributes->cs);
 
     if ((attribute = attributes_find_item(attributes, key, NULL)))
-        *result = !PropVariantCompareEx(&attribute->value, value, PVCU_DEFAULT, PVCF_DEFAULT);
+    {
+        *result = attribute->value.vt == value->vt &&
+                !PropVariantCompareEx(&attribute->value, value, PVCU_DEFAULT, PVCF_DEFAULT);
+    }
 
     LeaveCriticalSection(&attributes->cs);
 
