@@ -45,7 +45,7 @@
 
 #define __ASM_VTABLE(name,funcs) \
     __asm__(".data\n" \
-            "\t.align 8\n" \
+            "\t.balign 8\n" \
             "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
             "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
@@ -57,7 +57,7 @@
 
 #define __ASM_VTABLE(name,funcs) \
     __asm__(".data\n" \
-            "\t.align 4\n" \
+            "\t.balign 4\n" \
             "\t.long " __ASM_NAME(#name "_rtti") "\n" \
             "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
