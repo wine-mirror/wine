@@ -37,6 +37,7 @@
 #include "mfplat_private.h"
 #include "mfreadwrite.h"
 #include "propvarutil.h"
+#include "strsafe.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -857,7 +858,8 @@ static HRESULT WINAPI mfattributes_GetUINT32(IMFAttributes *iface, REFGUID key, 
     attrval.vt = VT_UI4;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        hr = PropVariantToUInt32(&attrval, value);
+        *value = attrval.u.ulVal;
+
     return hr;
 }
 
@@ -873,7 +875,8 @@ static HRESULT WINAPI mfattributes_GetUINT64(IMFAttributes *iface, REFGUID key, 
     attrval.vt = VT_UI8;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        hr = PropVariantToUInt64(&attrval, value);
+        *value = attrval.u.uhVal.QuadPart;
+
     return hr;
 }
 
@@ -889,7 +892,8 @@ static HRESULT WINAPI mfattributes_GetDouble(IMFAttributes *iface, REFGUID key, 
     attrval.vt = VT_R8;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        hr = PropVariantToDouble(&attrval, value);
+        *value = attrval.u.dblVal;
+
     return hr;
 }
 
@@ -905,7 +909,7 @@ static HRESULT WINAPI mfattributes_GetGUID(IMFAttributes *iface, REFGUID key, GU
     attrval.vt = VT_CLSID;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        hr = PropVariantToGUID(&attrval, value);
+        *value = *attrval.u.puuid;
 
     return hr;
 }
@@ -913,17 +917,25 @@ static HRESULT WINAPI mfattributes_GetGUID(IMFAttributes *iface, REFGUID key, GU
 static HRESULT WINAPI mfattributes_GetStringLength(IMFAttributes *iface, REFGUID key, UINT32 *length)
 {
     struct attributes *attributes = impl_from_IMFAttributes(iface);
-    PROPVARIANT attrval;
-    HRESULT hr;
+    struct attribute *attribute;
+    HRESULT hr = S_OK;
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
 
-    PropVariantInit(&attrval);
-    attrval.vt = VT_LPWSTR;
-    hr = attributes_get_item(attributes, key, &attrval);
-    if (SUCCEEDED(hr) && length)
-        *length = lstrlenW(attrval.u.pwszVal);
-    PropVariantClear(&attrval);
+    EnterCriticalSection(&attributes->cs);
+
+    attribute = attributes_find_item(attributes, key, NULL);
+    if (attribute)
+    {
+        if (attribute->value.vt == MF_ATTRIBUTE_STRING)
+            *length = strlenW(attribute->value.u.pwszVal);
+        else
+            hr = MF_E_INVALIDTYPE;
+    }
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+
+    LeaveCriticalSection(&attributes->cs);
 
     return hr;
 }
@@ -932,19 +944,35 @@ static HRESULT WINAPI mfattributes_GetString(IMFAttributes *iface, REFGUID key, 
         UINT32 size, UINT32 *length)
 {
     struct attributes *attributes = impl_from_IMFAttributes(iface);
-    PROPVARIANT attrval;
-    HRESULT hr;
+    struct attribute *attribute;
+    HRESULT hr = S_OK;
 
     TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), value, size, length);
 
-    PropVariantInit(&attrval);
-    attrval.vt = VT_LPWSTR;
-    hr = attributes_get_item(attributes, key, &attrval);
-    if (SUCCEEDED(hr))
-        hr = PropVariantToString(&attrval, value, size);
-    if (SUCCEEDED(hr) && length)
-        *length = lstrlenW(value);
-    PropVariantClear(&attrval);
+    EnterCriticalSection(&attributes->cs);
+
+    attribute = attributes_find_item(attributes, key, NULL);
+    if (attribute)
+    {
+        if (attribute->value.vt == MF_ATTRIBUTE_STRING)
+        {
+            int len = strlenW(attribute->value.u.pwszVal);
+
+            if (length)
+                *length = len;
+
+            if (size <= len)
+                return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+            memcpy(value, attribute->value.u.pwszVal, (len + 1) * sizeof(WCHAR));
+        }
+        else
+            hr = MF_E_INVALIDTYPE;
+    }
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+
+    LeaveCriticalSection(&attributes->cs);
 
     return hr;
 }

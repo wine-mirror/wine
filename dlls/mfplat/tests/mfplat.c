@@ -708,9 +708,11 @@ static void test_attributes(void)
     ok(!lstrcmpW(bufferW, stringW), "Unexpected string %s.\n", wine_dbgstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
 
-    hr = IMFAttributes_GetString(attributes, &DUMMY_GUID1, bufferW, 1, NULL);
+    string_length = 0;
+    hr = IMFAttributes_GetString(attributes, &DUMMY_GUID1, bufferW, 1, &string_length);
     ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
     ok(!bufferW[0], "Unexpected string %s.\n", wine_dbgstr_w(bufferW));
+    ok(string_length, "Unexpected length.\n");
 
     string_length = 0xdeadbeef;
     hr = IMFAttributes_GetStringLength(attributes, &GUID_NULL, &string_length);
