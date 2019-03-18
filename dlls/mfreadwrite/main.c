@@ -76,6 +76,7 @@ typedef struct source_reader
     IMFSourceReader IMFSourceReader_iface;
     LONG refcount;
     IMFMediaSource *source;
+    IMFPresentationDescriptor *descriptor;
 } srcreader;
 
 struct sink_writer
@@ -135,6 +136,8 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 
     if (!refcount)
     {
+        if (reader->descriptor)
+            IMFPresentationDescriptor_Release(reader->descriptor);
         IMFMediaSource_Release(reader->source);
         heap_free(reader);
     }
@@ -279,7 +282,12 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     object->source = source;
     IMFMediaSource_AddRef(object->source);
 
+    if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(object->source, &object->descriptor)))
+        goto failed;
+
     hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
+
+failed:
     IMFSourceReader_Release(&object->IMFSourceReader_iface);
     return hr;
 }
