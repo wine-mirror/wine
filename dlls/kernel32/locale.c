@@ -4226,6 +4226,7 @@ void LOCALE_Init(void)
            mac_cptable->info.codepage, unix_cp );
 
     setlocale(LC_NUMERIC, "C");  /* FIXME: oleaut32 depends on this */
+    setlocale(LC_CTYPE, "C"); /* Fixes issues when tr_TR.UTF-8 locale is used */
 }
 
 static HANDLE NLS_RegOpenKey(HANDLE hRootKey, LPCWSTR szKeyName)
