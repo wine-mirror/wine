@@ -1449,15 +1449,18 @@ static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResul
 
             hr = IMFMediaEventQueue_GetEvent(queue, 0, &event);
             ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Failed to get event, hr %#x.\n", hr);
-        }
 
-        hr = IMFMediaEventQueue_EndGetEvent(queue, result, &event);
-        ok(hr == S_OK, "Failed to finalize GetEvent, hr %#x.\n", hr);
+            hr = IMFMediaEventQueue_EndGetEvent(queue, result, &event);
+            ok(hr == S_OK, "Failed to finalize GetEvent, hr %#x.\n", hr);
+
+            hr = IMFMediaEventQueue_EndGetEvent(queue, result, &event);
+            ok(hr == E_FAIL, "Unexpected result, hr %#x.\n", hr);
+
+            IMFMediaEvent_Release(event);
+        }
 
         hr = IMFAsyncResult_GetObject(result, &obj);
         ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
-
-        IMFMediaEvent_Release(event);
 
         IMFMediaEventQueue_Release(queue);
 
