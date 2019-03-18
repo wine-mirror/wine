@@ -496,14 +496,27 @@ static void check_attr_count(IMFAttributes* obj, UINT32 expected, int line)
     ok_(__FILE__, line)(count == expected, "Unexpected count %u, expected %u.\n", count, expected);
 }
 
-static void test_MFCreateAttributes(void)
+#define CHECK_ATTR_TYPE(obj, key, expected) check_attr_type(obj, key, expected, __LINE__)
+static void check_attr_type(IMFAttributes *obj, const GUID *key, MF_ATTRIBUTE_TYPE expected, int line)
+{
+    MF_ATTRIBUTE_TYPE type;
+    HRESULT hr;
+
+    hr = IMFAttributes_GetItemType(obj, key, &type);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get item type, hr %#x.\n", hr);
+    ok_(__FILE__, line)(type == expected, "Unexpected item type %d, expected %d.\n", type, expected);
+}
+
+static void test_attributes(void)
 {
     static const WCHAR stringW[] = {'W','i','n','e',0};
     static const UINT8 blob[] = {0,1,2,3,4,5};
     IMFAttributes *attributes, *attributes1;
     UINT8 blob_value[256], *blob_buf = NULL;
+    MF_ATTRIBUTES_MATCH_TYPE match_type;
     UINT32 value, string_length, size;
     PROPVARIANT propvar, ret_propvar;
+    MF_ATTRIBUTE_TYPE type;
     double double_value;
     IUnknown *unk_value;
     WCHAR bufferW[256];
@@ -516,10 +529,14 @@ static void test_MFCreateAttributes(void)
     hr = MFCreateAttributes( &attributes, 3 );
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IMFAttributes_GetItemType(attributes, &GUID_NULL, &type);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
     CHECK_ATTR_COUNT(attributes, 0);
     hr = IMFAttributes_SetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 123);
     ok(hr == S_OK, "Failed to set UINT32 value, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 1);
+    CHECK_ATTR_TYPE(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, MF_ATTRIBUTE_UINT32);
 
     value = 0xdeadbeef;
     hr = IMFAttributes_GetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, &value);
@@ -534,6 +551,7 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_SetUINT64(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 65536);
     ok(hr == S_OK, "Failed to set UINT64 value, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 1);
+    CHECK_ATTR_TYPE(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, MF_ATTRIBUTE_UINT64);
 
     hr = IMFAttributes_GetUINT64(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, &value64);
     ok(hr == S_OK, "Failed to get UINT64 value, hr %#x.\n", hr);
@@ -643,6 +661,7 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_SetDouble(attributes, &GUID_NULL, 22.0);
     ok(hr == S_OK, "Failed to set double value, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 3);
+    CHECK_ATTR_TYPE(attributes, &GUID_NULL, MF_ATTRIBUTE_DOUBLE);
 
     double_value = 0xdeadbeef;
     hr = IMFAttributes_GetDouble(attributes, &GUID_NULL, &double_value);
@@ -664,6 +683,7 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_SetString(attributes, &DUMMY_GUID1, stringW);
     ok(hr == S_OK, "Failed to set string attribute, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 3);
+    CHECK_ATTR_TYPE(attributes, &DUMMY_GUID1, MF_ATTRIBUTE_STRING);
 
     hr = IMFAttributes_GetStringLength(attributes, &DUMMY_GUID1, &string_length);
     ok(hr == S_OK, "Failed to get string length, hr %#x.\n", hr);
@@ -701,6 +721,7 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_SetUnknown(attributes, &DUMMY_GUID2, (IUnknown *)attributes);
     ok(hr == S_OK, "Failed to set value, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 4);
+    CHECK_ATTR_TYPE(attributes, &DUMMY_GUID2, MF_ATTRIBUTE_IUNKNOWN);
 
     hr = IMFAttributes_GetUnknown(attributes, &DUMMY_GUID2, &IID_IUnknown, (void **)&unk_value);
     ok(hr == S_OK, "Failed to get value, hr %#x.\n", hr);
@@ -747,6 +768,7 @@ static void test_MFCreateAttributes(void)
     hr = IMFAttributes_SetBlob(attributes, &DUMMY_GUID1, blob, sizeof(blob));
     ok(hr == S_OK, "Failed to set blob attribute, hr %#x.\n", hr);
     CHECK_ATTR_COUNT(attributes, 1);
+    CHECK_ATTR_TYPE(attributes, &DUMMY_GUID1, MF_ATTRIBUTE_BLOB);
     hr = IMFAttributes_GetBlobSize(attributes, &DUMMY_GUID1, &size);
     ok(hr == S_OK, "Failed to get blob size, hr %#x.\n", hr);
     ok(size == sizeof(blob), "Unexpected blob size %u.\n", size);
@@ -776,6 +798,203 @@ static void test_MFCreateAttributes(void)
 
     hr = IMFAttributes_GetBlob(attributes, &DUMMY_GUID1, blob_value, sizeof(blob) - 1, NULL);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+
+    IMFAttributes_Release(attributes);
+    IMFAttributes_Release(attributes1);
+
+    /* Compare() */
+    hr = MFCreateAttributes(&attributes, 0);
+    ok(hr == S_OK, "Failed to create attributes object, hr %#x.\n", hr);
+    hr = MFCreateAttributes(&attributes1, 0);
+    ok(hr == S_OK, "Failed to create attributes object, hr %#x.\n", hr);
+
+    hr = IMFAttributes_Compare(attributes, attributes, MF_ATTRIBUTES_MATCH_SMALLER + 1, &result);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    for (match_type = MF_ATTRIBUTES_MATCH_OUR_ITEMS; match_type <= MF_ATTRIBUTES_MATCH_SMALLER; ++match_type)
+    {
+        result = FALSE;
+        hr = IMFAttributes_Compare(attributes, attributes, match_type, &result);
+        ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+        ok(result, "Unexpected result %d.\n", result);
+
+        result = FALSE;
+        hr = IMFAttributes_Compare(attributes, attributes1, match_type, &result);
+        ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+        ok(result, "Unexpected result %d.\n", result);
+    }
+
+    hr = IMFAttributes_SetUINT32(attributes, &DUMMY_GUID1, 1);
+    ok(hr == S_OK, "Failed to set value, hr %#x.\n", hr);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_INTERSECTION, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_SMALLER, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    hr = IMFAttributes_SetUINT32(attributes1, &DUMMY_GUID1, 2);
+    ok(hr == S_OK, "Failed to set value, hr %#x.\n", hr);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_THEIR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_INTERSECTION, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_SMALLER, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_THEIR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_INTERSECTION, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_SMALLER, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    hr = IMFAttributes_SetUINT32(attributes1, &DUMMY_GUID1, 1);
+    ok(hr == S_OK, "Failed to set value, hr %#x.\n", hr);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_THEIR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_INTERSECTION, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_SMALLER, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_THEIR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_INTERSECTION, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_SMALLER, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    hr = IMFAttributes_SetUINT32(attributes1, &DUMMY_GUID2, 2);
+    ok(hr == S_OK, "Failed to set value, hr %#x.\n", hr);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_THEIR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_INTERSECTION, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes, attributes1, MF_ATTRIBUTES_MATCH_SMALLER, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_THEIR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = TRUE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(!result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_INTERSECTION, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
+
+    result = FALSE;
+    hr = IMFAttributes_Compare(attributes1, attributes, MF_ATTRIBUTES_MATCH_SMALLER, &result);
+    ok(hr == S_OK, "Failed to compare, hr %#x.\n", hr);
+    ok(result, "Unexpected result %d.\n", result);
 
     IMFAttributes_Release(attributes);
     IMFAttributes_Release(attributes1);
@@ -2112,7 +2331,7 @@ START_TEST(mfplat)
     test_register();
     test_media_type();
     test_MFCreateMediaEvent();
-    test_MFCreateAttributes();
+    test_attributes();
     test_sample();
     test_MFCreateFile();
     test_MFCreateMFByteStreamOnStream();

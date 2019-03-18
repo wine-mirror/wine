@@ -724,9 +724,24 @@ static HRESULT WINAPI mfattributes_GetItem(IMFAttributes *iface, REFGUID key, PR
 
 static HRESULT WINAPI mfattributes_GetItemType(IMFAttributes *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    struct attribute *attribute;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+
+    EnterCriticalSection(&attributes->cs);
+
+    if ((attribute = attributes_find_item(attributes, key, NULL)))
+    {
+        *type = attribute->value.vt;
+    }
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+
+    LeaveCriticalSection(&attributes->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
@@ -748,14 +763,86 @@ static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key
     return S_OK;
 }
 
-static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *theirs, MF_ATTRIBUTES_MATCH_TYPE type,
-                BOOL *result)
+static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *theirs,
+        MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    IMFAttributes *smaller, *other;
+    MF_ATTRIBUTE_TYPE type;
+    HRESULT hr = S_OK;
+    UINT32 count;
+    BOOL result;
+    size_t i;
 
-    FIXME("%p, %p, %d, %p\n", This, theirs, type, result);
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, match_type, ret);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = IMFAttributes_GetCount(theirs, &count)))
+        return hr;
+
+    EnterCriticalSection(&attributes->cs);
+
+    result = TRUE;
+
+    switch (match_type)
+    {
+        case MF_ATTRIBUTES_MATCH_OUR_ITEMS:
+            for (i = 0; i < attributes->count; ++i)
+            {
+                if (FAILED(hr = IMFAttributes_CompareItem(theirs, &attributes->attributes[i].key,
+                        &attributes->attributes[i].value, &result)))
+                    break;
+                if (!result)
+                    break;
+            }
+            break;
+        case MF_ATTRIBUTES_MATCH_THEIR_ITEMS:
+            hr = IMFAttributes_Compare(theirs, iface, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+            break;
+        case MF_ATTRIBUTES_MATCH_ALL_ITEMS:
+            if (count != attributes->count)
+            {
+                result = FALSE;
+                break;
+            }
+            for (i = 0; i < count; ++i)
+            {
+                if (FAILED(hr = IMFAttributes_CompareItem(theirs, &attributes->attributes[i].key,
+                        &attributes->attributes[i].value, &result)))
+                    break;
+                if (!result)
+                    break;
+            }
+            break;
+        case MF_ATTRIBUTES_MATCH_INTERSECTION:
+            for (i = 0; i < attributes->count; ++i)
+            {
+                if (FAILED(IMFAttributes_GetItemType(theirs, &attributes->attributes[i].key, &type)))
+                    continue;
+
+                if (FAILED(hr = IMFAttributes_CompareItem(theirs, &attributes->attributes[i].key,
+                        &attributes->attributes[i].value, &result)))
+                    break;
+
+                if (!result)
+                    break;
+            }
+            break;
+        case MF_ATTRIBUTES_MATCH_SMALLER:
+            smaller = attributes->count > count ? theirs : iface;
+            other = attributes->count > count ? iface : theirs;
+            hr = IMFAttributes_Compare(smaller, other, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+            break;
+        default:
+            WARN("Unknown match type %d.\n", match_type);
+            hr = E_INVALIDARG;
+    }
+
+    LeaveCriticalSection(&attributes->cs);
+
+    if (SUCCEEDED(hr))
+        *ret = result;
+
+    return hr;
 }
 
 static HRESULT WINAPI mfattributes_GetUINT32(IMFAttributes *iface, REFGUID key, UINT32 *value)
