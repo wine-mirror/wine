@@ -380,6 +380,7 @@ void output_exports( DLLSPEC *spec )
 {
     int i, fwd_size = 0;
     int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
+    const char *func_ptr = (target_platform == PLATFORM_WINDOWS) ? ".rva" : get_asm_ptr_keyword();
 
     if (!nr_exports) return;
 
@@ -415,7 +416,8 @@ void output_exports( DLLSPEC *spec )
     for (i = spec->base; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
-        if (!odp) output( "\t%s 0\n", get_asm_ptr_keyword() );
+        if (!odp) output( "\t%s 0\n",
+                          (target_platform == PLATFORM_WINDOWS) ? ".long" : get_asm_ptr_keyword() );
         else switch(odp->type)
         {
         case TYPE_EXTERN:
@@ -424,22 +426,20 @@ void output_exports( DLLSPEC *spec )
         case TYPE_CDECL:
             if (odp->flags & FLAG_FORWARD)
             {
-                output( "\t%s .L__wine_spec_forwards+%u\n", get_asm_ptr_keyword(), fwd_size );
+                output( "\t%s .L__wine_spec_forwards+%u\n", func_ptr, fwd_size );
                 fwd_size += strlen(odp->link_name) + 1;
             }
             else if (odp->flags & FLAG_EXT_LINK)
             {
-                output( "\t%s %s_%s\n",
-                         get_asm_ptr_keyword(), asm_name("__wine_spec_ext_link"), odp->link_name );
+                output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_ext_link"), odp->link_name );
             }
             else
             {
-                output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( odp )));
+                output( "\t%s %s\n", func_ptr, asm_name( get_link_name( odp )));
             }
             break;
         case TYPE_STUB:
-            output( "\t%s %s\n", get_asm_ptr_keyword(),
-                     asm_name( get_stub_name( odp, spec )) );
+            output( "\t%s %s\n", func_ptr, asm_name( get_stub_name( odp, spec )) );
             break;
         default:
             assert(0);
