@@ -3,7 +3,7 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright (c) 2015-2018 The Khronos Group Inc.
+ * Copyright (c) 2015-2019 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -842,6 +842,15 @@ static inline void convert_VkMemoryRequirements2KHR_host_to_win(const VkMemoryRe
     out->sType = in->sType;
     out->pNext = in->pNext;
     convert_VkMemoryRequirements_host_to_win(&in->memoryRequirements, &out->memoryRequirements);
+}
+
+static inline void convert_VkBufferDeviceAddressInfoEXT_win_to_host(const VkBufferDeviceAddressInfoEXT *in, VkBufferDeviceAddressInfoEXT_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->buffer = in->buffer;
 }
 
 static inline void convert_VkBufferMemoryRequirementsInfo2_win_to_host(const VkBufferMemoryRequirementsInfo2 *in, VkBufferMemoryRequirementsInfo2_host *out)
@@ -2614,6 +2623,23 @@ static void WINAPI wine_vkGetAccelerationStructureMemoryRequirementsNV(VkDevice 
 #endif
 }
 
+static VkDeviceAddress WINAPI wine_vkGetBufferDeviceAddressEXT(VkDevice device, const VkBufferDeviceAddressInfoEXT *pInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkDeviceAddress result;
+    VkBufferDeviceAddressInfoEXT_host pInfo_host;
+    TRACE("%p, %p\n", device, pInfo);
+
+    convert_VkBufferDeviceAddressInfoEXT_win_to_host(pInfo, &pInfo_host);
+    result = device->funcs.p_vkGetBufferDeviceAddressEXT(device->device, &pInfo_host);
+
+    return result;
+#else
+    TRACE("%p, %p\n", device, pInfo);
+    return device->funcs.p_vkGetBufferDeviceAddressEXT(device->device, pInfo);
+#endif
+}
+
 void WINAPI wine_vkGetBufferMemoryRequirements(VkDevice device, VkBuffer buffer, VkMemoryRequirements *pMemoryRequirements)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -3446,6 +3472,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkFreeMemory", &wine_vkFreeMemory},
     {"vkGetAccelerationStructureHandleNV", &wine_vkGetAccelerationStructureHandleNV},
     {"vkGetAccelerationStructureMemoryRequirementsNV", &wine_vkGetAccelerationStructureMemoryRequirementsNV},
+    {"vkGetBufferDeviceAddressEXT", &wine_vkGetBufferDeviceAddressEXT},
     {"vkGetBufferMemoryRequirements", &wine_vkGetBufferMemoryRequirements},
     {"vkGetBufferMemoryRequirements2", &wine_vkGetBufferMemoryRequirements2},
     {"vkGetBufferMemoryRequirements2KHR", &wine_vkGetBufferMemoryRequirements2KHR},
@@ -3588,14 +3615,18 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_texture_gather_bias_lod",
     "VK_EXT_astc_decode_mode",
     "VK_EXT_blend_operation_advanced",
+    "VK_EXT_buffer_device_address",
     "VK_EXT_conditional_rendering",
     "VK_EXT_conservative_rasterization",
+    "VK_EXT_depth_clip_enable",
     "VK_EXT_depth_range_unrestricted",
     "VK_EXT_descriptor_indexing",
     "VK_EXT_discard_rectangles",
+    "VK_EXT_filter_cubic",
     "VK_EXT_fragment_density_map",
     "VK_EXT_global_priority",
     "VK_EXT_inline_uniform_block",
+    "VK_EXT_memory_budget",
     "VK_EXT_pci_bus_info",
     "VK_EXT_post_depth_coverage",
     "VK_EXT_sample_locations",
@@ -3618,6 +3649,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_bind_memory2",
     "VK_KHR_create_renderpass2",
     "VK_KHR_dedicated_allocation",
+    "VK_KHR_depth_stencil_resolve",
     "VK_KHR_descriptor_update_template",
     "VK_KHR_device_group",
     "VK_KHR_draw_indirect_count",
@@ -3635,6 +3667,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_sampler_ycbcr_conversion",
     "VK_KHR_shader_atomic_int64",
     "VK_KHR_shader_draw_parameters",
+    "VK_KHR_shader_float_controls",
     "VK_KHR_storage_buffer_storage_class",
     "VK_KHR_swapchain",
     "VK_KHR_swapchain_mutable_format",

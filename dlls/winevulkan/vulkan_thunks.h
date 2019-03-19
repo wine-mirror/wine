@@ -3,7 +3,7 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright (c) 2015-2018 The Khronos Group Inc.
+ * Copyright (c) 2015-2019 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -471,6 +471,13 @@ typedef struct VkMemoryRequirements2KHR_host
     void *pNext;
     VkMemoryRequirements_host memoryRequirements;
 } VkMemoryRequirements2KHR_host;
+
+typedef struct VkBufferDeviceAddressInfoEXT_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkBuffer buffer;
+} VkBufferDeviceAddressInfoEXT_host;
 
 typedef struct VkBufferMemoryRequirementsInfo2_host
 {
@@ -1039,6 +1046,11 @@ struct vulkan_device_funcs
     void (*p_vkGetAccelerationStructureMemoryRequirementsNV)(VkDevice, const VkAccelerationStructureMemoryRequirementsInfoNV *, VkMemoryRequirements2KHR *);
 #endif
 #if defined(USE_STRUCT_CONVERSION)
+    VkDeviceAddress (*p_vkGetBufferDeviceAddressEXT)(VkDevice, const VkBufferDeviceAddressInfoEXT_host *);
+#else
+    VkDeviceAddress (*p_vkGetBufferDeviceAddressEXT)(VkDevice, const VkBufferDeviceAddressInfoEXT *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
     void (*p_vkGetBufferMemoryRequirements)(VkDevice, VkBuffer, VkMemoryRequirements_host *);
 #else
     void (*p_vkGetBufferMemoryRequirements)(VkDevice, VkBuffer, VkMemoryRequirements *);
@@ -1373,6 +1385,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkFreeMemory) \
     USE_VK_FUNC(vkGetAccelerationStructureHandleNV) \
     USE_VK_FUNC(vkGetAccelerationStructureMemoryRequirementsNV) \
+    USE_VK_FUNC(vkGetBufferDeviceAddressEXT) \
     USE_VK_FUNC(vkGetBufferMemoryRequirements) \
     USE_VK_FUNC(vkGetBufferMemoryRequirements2) \
     USE_VK_FUNC(vkGetBufferMemoryRequirements2KHR) \
