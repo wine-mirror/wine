@@ -239,6 +239,30 @@ function test_style_properties() {
     ok(style.zIndex === 1, "zIndex = " + style.zIndex);
     ok(style["z-index"] === 1, "z-index = " + style["z-index"]);
 
+    style.setProperty("border-width", "5px");
+    ok(style.borderWidth === "5px", "style.borderWidth = " + style.borderWidth);
+
+    try {
+        style.setProperty("border-width", 6);
+        ok(style.borderWidth === "5px", "style.borderWidth = " + style.borderWidth);
+    }catch(e) {
+        win_skip("skipping setProperty tests on too old IE version");
+        next_test();
+        return;
+    }
+
+    style.setProperty("border-width", "7px", "test");
+    ok(style.borderWidth === "5px", "style.borderWidth = " + style.borderWidth);
+
+    style.setProperty("border-width", "6px", "");
+    ok(style.borderWidth === "6px", "style.borderWidth = " + style.borderWidth);
+
+    style.setProperty("border-width", "7px", "important");
+    ok(style.borderWidth === "7px", "style.borderWidth = " + style.borderWidth);
+
+    style.setProperty("border-width", "8px", undefined);
+    ok(style.borderWidth === "7px", "style.borderWidth = " + style.borderWidth);
+
     next_test();
 }
 

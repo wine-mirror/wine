@@ -933,7 +933,7 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     return S_OK;
 }
 
-static HRESULT var_to_styleval(HTMLStyle *style, const VARIANT *v, styleid_t sid, WCHAR *buf, const WCHAR **ret)
+static HRESULT var_to_styleval(HTMLStyle *style, const VARIANT *v, const style_tbl_entry_t *entry, WCHAR *buf, const WCHAR **ret)
 {
     switch(V_VT(v)) {
     case VT_NULL:
@@ -949,7 +949,7 @@ static HRESULT var_to_styleval(HTMLStyle *style, const VARIANT *v, styleid_t sid
         return S_OK;
 
     case VT_I4: {
-        unsigned flags = dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9 ? style_tbl[sid].flags : 0;
+        unsigned flags = entry && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9 ? entry->flags : 0;
         static const WCHAR formatW[] = {'%','d',0};
         static const WCHAR hex_formatW[] = {'#','%','0','6','x',0};
 
@@ -1008,7 +1008,7 @@ static HRESULT set_style_property_var(HTMLStyle *style, styleid_t sid, VARIANT *
     WCHAR buf[14];
     HRESULT hres;
 
-    hres = var_to_styleval(style, value, sid, buf, &val);
+    hres = var_to_styleval(style, value, &style_tbl[sid], buf, &val);
     if(FAILED(hres))
         return hres;
 
@@ -1615,7 +1615,7 @@ static HRESULT WINAPI HTMLStyle_put_backgroundPositionX(IHTMLStyle *iface, VARIA
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    hres = var_to_styleval(This, &v, STYLEID_BACKGROUND_POSITION_X, buf, &val);
+    hres = var_to_styleval(This, &v, &style_tbl[STYLEID_BACKGROUND_POSITION_X], buf, &val);
     if(FAILED(hres))
         return hres;
 
@@ -1708,7 +1708,7 @@ static HRESULT WINAPI HTMLStyle_put_backgroundPositionY(IHTMLStyle *iface, VARIA
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    hres = var_to_styleval(This, &v, STYLEID_BACKGROUND_POSITION, buf, &val);
+    hres = var_to_styleval(This, &v, &style_tbl[STYLEID_BACKGROUND_POSITION], buf, &val);
     if(FAILED(hres))
         return hres;
 
@@ -5194,11 +5194,45 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_removeProperty(IHTMLCSSStyleDeclar
     return return_nsstr(nsres, &ret_str, pbstrPropertyValue);
 }
 
-static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclaration *iface, BSTR bstrPropertyName, VARIANT *pvarPropertyValue, VARIANT *pvarPropertyPriority)
+static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclaration *iface, BSTR name, VARIANT *value, VARIANT *priority)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(bstrPropertyName), pvarPropertyValue, pvarPropertyPriority);
-    return E_NOTIMPL;
+    nsAString priority_str, name_str, value_str;
+    const style_tbl_entry_t *style_entry;
+    const WCHAR *val;
+    WCHAR buf[14];
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(name), debugstr_variant(value), debugstr_variant(priority));
+
+    style_entry = lookup_style_tbl(name);
+    hres = var_to_styleval(This, value, style_entry, buf, &val);
+    if(FAILED(hres))
+        return hres;
+
+    if(priority) {
+        if(V_VT(priority) != VT_BSTR) {
+            WARN("invalid priority type %s\n", debugstr_variant(priority));
+            return S_OK;
+        }
+        nsAString_InitDepend(&priority_str, V_BSTR(priority));
+    }else {
+        nsAString_InitDepend(&priority_str, NULL);
+    }
+
+    nsAString_InitDepend(&name_str, style_entry ? style_entry->name : name);
+    nsAString_InitDepend(&value_str, val);
+    nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &name_str, &value_str, &priority_str);
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&value_str);
+    nsAString_Finish(&priority_str);
+    if(NS_FAILED(nsres)) {
+        FIXME("SetProperty failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_item(IHTMLCSSStyleDeclaration *iface, LONG index, BSTR *pbstrPropertyName)
