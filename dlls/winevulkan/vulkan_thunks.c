@@ -3252,6 +3252,12 @@ VkResult WINAPI wine_vkResetFences(VkDevice device, uint32_t fenceCount, const V
     return device->funcs.p_vkResetFences(device->device, fenceCount, pFences);
 }
 
+static void WINAPI wine_vkResetQueryPoolEXT(VkDevice device, VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount)
+{
+    TRACE("%p, 0x%s, %u, %u\n", device, wine_dbgstr_longlong(queryPool), firstQuery, queryCount);
+    device->funcs.p_vkResetQueryPoolEXT(device->device, queryPool, firstQuery, queryCount);
+}
+
 VkResult WINAPI wine_vkSetEvent(VkDevice device, VkEvent event)
 {
     TRACE("%p, 0x%s\n", device, wine_dbgstr_longlong(event));
@@ -3516,6 +3522,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkResetDescriptorPool", &wine_vkResetDescriptorPool},
     {"vkResetEvent", &wine_vkResetEvent},
     {"vkResetFences", &wine_vkResetFences},
+    {"vkResetQueryPoolEXT", &wine_vkResetQueryPoolEXT},
     {"vkSetEvent", &wine_vkSetEvent},
     {"vkTrimCommandPool", &wine_vkTrimCommandPool},
     {"vkTrimCommandPoolKHR", &wine_vkTrimCommandPoolKHR},
@@ -3625,6 +3632,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_filter_cubic",
     "VK_EXT_fragment_density_map",
     "VK_EXT_global_priority",
+    "VK_EXT_host_query_reset",
     "VK_EXT_inline_uniform_block",
     "VK_EXT_memory_budget",
     "VK_EXT_pci_bus_info",

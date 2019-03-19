@@ -1136,6 +1136,7 @@ struct vulkan_device_funcs
     VkResult (*p_vkResetDescriptorPool)(VkDevice, VkDescriptorPool, VkDescriptorPoolResetFlags);
     VkResult (*p_vkResetEvent)(VkDevice, VkEvent);
     VkResult (*p_vkResetFences)(VkDevice, uint32_t, const VkFence *);
+    void (*p_vkResetQueryPoolEXT)(VkDevice, VkQueryPool, uint32_t, uint32_t);
     VkResult (*p_vkSetEvent)(VkDevice, VkEvent);
     void (*p_vkTrimCommandPool)(VkDevice, VkCommandPool, VkCommandPoolTrimFlags);
     void (*p_vkTrimCommandPoolKHR)(VkDevice, VkCommandPool, VkCommandPoolTrimFlags);
@@ -1428,6 +1429,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkResetDescriptorPool) \
     USE_VK_FUNC(vkResetEvent) \
     USE_VK_FUNC(vkResetFences) \
+    USE_VK_FUNC(vkResetQueryPoolEXT) \
     USE_VK_FUNC(vkSetEvent) \
     USE_VK_FUNC(vkTrimCommandPool) \
     USE_VK_FUNC(vkTrimCommandPoolKHR) \

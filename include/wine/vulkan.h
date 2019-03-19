@@ -288,6 +288,8 @@
 #define VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME "VK_EXT_buffer_device_address"
 #define VK_EXT_SEPARATE_STENCIL_USAGE_SPEC_VERSION 1
 #define VK_EXT_SEPARATE_STENCIL_USAGE_EXTENSION_NAME "VK_EXT_separate_stencil_usage"
+#define VK_EXT_HOST_QUERY_RESET_SPEC_VERSION 1
+#define VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME "VK_EXT_host_query_reset"
 
 #define VK_MAKE_VERSION(major, minor, patch) \
     (((major) << 22) | ((minor) << 12) | (patch))
@@ -2078,6 +2080,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_EXT = 1000244001,
     VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT = 1000244002,
     VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO_EXT = 1000246000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT = 1000261000,
     VK_STRUCTURE_TYPE_MAX_ENUM = 0x7fffffff,
 } VkStructureType;
 
@@ -4214,6 +4217,13 @@ typedef struct VkPhysicalDeviceFragmentDensityMapFeaturesEXT
     VkBool32 fragmentDensityMapNonSubsampledImages;
 } VkPhysicalDeviceFragmentDensityMapFeaturesEXT;
 
+typedef struct VkPhysicalDeviceHostQueryResetFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 hostQueryReset;
+} VkPhysicalDeviceHostQueryResetFeaturesEXT;
+
 typedef struct VkPhysicalDeviceInlineUniformBlockPropertiesEXT
 {
     VkStructureType sType;
@@ -5431,6 +5441,7 @@ typedef VkResult (VKAPI_PTR *PFN_vkResetCommandPool)(VkDevice, VkCommandPool, Vk
 typedef VkResult (VKAPI_PTR *PFN_vkResetDescriptorPool)(VkDevice, VkDescriptorPool, VkDescriptorPoolResetFlags);
 typedef VkResult (VKAPI_PTR *PFN_vkResetEvent)(VkDevice, VkEvent);
 typedef VkResult (VKAPI_PTR *PFN_vkResetFences)(VkDevice, uint32_t, const VkFence *);
+typedef void (VKAPI_PTR *PFN_vkResetQueryPoolEXT)(VkDevice, VkQueryPool, uint32_t, uint32_t);
 typedef VkResult (VKAPI_PTR *PFN_vkSetEvent)(VkDevice, VkEvent);
 typedef void (VKAPI_PTR *PFN_vkTrimCommandPool)(VkDevice, VkCommandPool, VkCommandPoolTrimFlags);
 typedef void (VKAPI_PTR *PFN_vkTrimCommandPoolKHR)(VkDevice, VkCommandPool, VkCommandPoolTrimFlags);
@@ -5684,6 +5695,7 @@ VkResult VKAPI_CALL vkResetCommandPool(VkDevice device, VkCommandPool commandPoo
 VkResult VKAPI_CALL vkResetDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorPoolResetFlags flags);
 VkResult VKAPI_CALL vkResetEvent(VkDevice device, VkEvent event);
 VkResult VKAPI_CALL vkResetFences(VkDevice device, uint32_t fenceCount, const VkFence *pFences);
+void VKAPI_CALL vkResetQueryPoolEXT(VkDevice device, VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount);
 VkResult VKAPI_CALL vkSetEvent(VkDevice device, VkEvent event);
 void VKAPI_CALL vkTrimCommandPool(VkDevice device, VkCommandPool commandPool, VkCommandPoolTrimFlags flags);
 void VKAPI_CALL vkTrimCommandPoolKHR(VkDevice device, VkCommandPool commandPool, VkCommandPoolTrimFlags flags);
