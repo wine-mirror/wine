@@ -3678,7 +3678,6 @@ static const char * const vk_device_extensions[] =
     "VK_NV_corner_sampled_image",
     "VK_NV_dedicated_allocation",
     "VK_NV_device_diagnostic_checkpoints",
-    "VK_NV_external_memory",
     "VK_NV_fill_rectangle",
     "VK_NV_fragment_coverage_to_color",
     "VK_NV_fragment_shader_barycentric",

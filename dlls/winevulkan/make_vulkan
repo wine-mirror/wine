@@ -83,17 +83,20 @@ WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
 EXT_BASE = 1000000000
 EXT_BLOCK_SIZE = 1000
 
-# In general instance extensions can't be automatically generated
-# and need custom wrappers due to e.g. win32 / X11 specific code.
-# List of supported instance extensions.
-SUPPORTED_INSTANCE_EXTENSIONS = [
-    "VK_KHR_device_group_creation",
-    "VK_KHR_get_physical_device_properties2",
-    "VK_KHR_surface",
-    "VK_KHR_win32_surface",
-]
-
 BLACKLISTED_EXTENSIONS = [
+    # Instance extensions
+    "VK_EXT_debug_utils",
+    "VK_EXT_swapchain_colorspace",
+    "VK_EXT_validation_features",
+    "VK_EXT_validation_flags",
+    "VK_KHR_display",
+    "VK_KHR_external_fence_capabilities",
+    "VK_KHR_external_memory_capabilities",
+    "VK_KHR_get_surface_capabilities2",
+    "VK_KHR_surface_protected_capabilities",
+    "VK_NV_external_memory_capabilities",
+
+    # Device extensions
     "VK_AMD_display_native_hdr",
     "VK_AMD_memory_overallocation_behavior",
     # Handling of VK_EXT_debug_report requires some consideration. The win32
@@ -2401,6 +2404,11 @@ class VkRegistry(object):
         version = tuple(map(int, version.group('major', 'minor')))
         return version <= WINE_VK_VERSION
 
+    def _is_extension_supported(self, extension):
+        # We disable some extensions as either we haven't implemented
+        # support yet or because they are for platforms other than win32.
+        return extension not in BLACKLISTED_EXTENSIONS
+
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
         def mark_bitmask_dependencies(bitmask, types):
@@ -2587,15 +2595,12 @@ class VkRegistry(object):
                 LOGGER.debug("Skipping experimental extension: {0}".format(ext_name))
                 continue
 
-            # Instance extensions often require a custom implementation, so filter.
-            ext_type = ext.attrib["type"]
-            if ext_type == "instance" and not ext_name in SUPPORTED_INSTANCE_EXTENSIONS:
-                LOGGER.debug("Skipping instance extension: {0}".format(ext_name))
-                continue
+            platform = ext.attrib.get("platform")
+            if platform and platform != "win32":
+                LOGGER.debug("Skipping extensions {0} for platform {1}".format(ext_name, platform))
+                continue;
 
-            # We disable some extensions as either we haven't implemented
-            # support yet or because they are for platforms other than win32.
-            if ext_name in BLACKLISTED_EXTENSIONS:
+            if not self._is_extension_supported(ext_name):
                 LOGGER.debug("Skipping blacklisted extension: {0}".format(ext_name))
                 continue
             elif "requires" in ext.attrib:
@@ -2626,7 +2631,7 @@ class VkRegistry(object):
                     continue
 
                 required_extension = require.attrib.get("extension")
-                if required_extension and required_extension in BLACKLISTED_EXTENSIONS:
+                if required_extension and not self._is_extension_supported(required_extension):
                     continue
 
                 # Pull in any commands we need. We infer types to pull in from the command
@@ -2636,7 +2641,7 @@ class VkRegistry(object):
                     self._mark_command_required(cmd_name)
 
             # Store a list with extensions.
-            ext_info = {"name" : ext_name, "type" : ext_type}
+            ext_info = {"name" : ext_name, "type" : ext.attrib["type"]}
             extensions.append(ext_info)
 
         # Sort in alphabetical order.
