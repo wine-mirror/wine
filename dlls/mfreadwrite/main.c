@@ -214,6 +214,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 
     if (!refcount)
     {
+        IMFMediaSource_Shutdown(reader->source);
         if (reader->descriptor)
             IMFPresentationDescriptor_Release(reader->descriptor);
         IMFMediaSource_Release(reader->source);
