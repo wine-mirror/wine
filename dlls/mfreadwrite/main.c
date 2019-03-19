@@ -297,12 +297,44 @@ static HRESULT WINAPI src_reader_SetStreamSelection(IMFSourceReader *iface, DWOR
     return S_OK;
 }
 
-static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWORD index, DWORD typeindex,
+static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWORD index, DWORD type_index,
             IMFMediaType **type)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, 0x%08x, %d, %p\n", This, index, typeindex, type);
-    return E_NOTIMPL;
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    IMFMediaTypeHandler *handler;
+    IMFStreamDescriptor *sd;
+    BOOL selected;
+    HRESULT hr;
+
+    TRACE("%p, %#x, %#x, %p.\n", iface, index, type_index, type);
+
+    switch (index)
+    {
+        case MF_SOURCE_READER_FIRST_VIDEO_STREAM:
+            index = reader->first_video_stream_index;
+            break;
+        case MF_SOURCE_READER_FIRST_AUDIO_STREAM:
+            index = reader->first_audio_stream_index;
+            break;
+        default:
+            ;
+    }
+
+    if (FAILED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(reader->descriptor, index, &selected, &sd)))
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
+    IMFStreamDescriptor_Release(sd);
+    if (FAILED(hr))
+        return hr;
+
+    if (type_index == MF_SOURCE_READER_CURRENT_TYPE_INDEX)
+        hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, type);
+    else
+        hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, type_index, type);
+    IMFMediaTypeHandler_Release(handler);
+
+    return hr;
 }
 
 static HRESULT WINAPI src_reader_GetCurrentMediaType(IMFSourceReader *iface, DWORD index, IMFMediaType **type)
