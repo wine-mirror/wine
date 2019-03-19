@@ -48,7 +48,7 @@ static void init_functions(void)
 static void test_MFCreateSourceReaderFromByteStream(void)
 {
     static const WCHAR audio[] = {'A','u','d','i','o',0};
-    IMFSourceReader *source;
+    IMFSourceReader *source = NULL;
     IMFAttributes *attributes;
     IMFByteStream *bytestream = NULL;
     IStream *stream = NULL;
@@ -76,6 +76,7 @@ static void test_MFCreateSourceReaderFromByteStream(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = MFCreateSourceReaderFromByteStream(bytestream, attributes, &source);
+todo_wine
     ok(hr == S_OK || hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
 
     if(stream)

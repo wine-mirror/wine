@@ -74,6 +74,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 typedef struct source_reader
 {
     IMFSourceReader IMFSourceReader_iface;
+    IMFAsyncCallback source_events_callback;
     LONG refcount;
     IMFMediaSource *source;
     IMFPresentationDescriptor *descriptor;
@@ -90,10 +91,87 @@ static inline srcreader *impl_from_IMFSourceReader(IMFSourceReader *iface)
     return CONTAINING_RECORD(iface, srcreader, IMFSourceReader_iface);
 }
 
+static struct source_reader *impl_from_source_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct source_reader, source_events_callback);
+}
+
 static inline struct sink_writer *impl_from_IMFSinkWriter(IMFSinkWriter *iface)
 {
     return CONTAINING_RECORD(iface, struct sink_writer, IMFSinkWriter_iface);
 }
+
+static HRESULT WINAPI source_reader_source_events_callback_QueryInterface(IMFAsyncCallback *iface,
+        REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI source_reader_source_events_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct source_reader *reader = impl_from_source_callback_IMFAsyncCallback(iface);
+    return IMFSourceReader_AddRef(&reader->IMFSourceReader_iface);
+}
+
+static ULONG WINAPI source_reader_source_events_callback_Release(IMFAsyncCallback *iface)
+{
+    struct source_reader *reader = impl_from_source_callback_IMFAsyncCallback(iface);
+    return IMFSourceReader_Release(&reader->IMFSourceReader_iface);
+}
+
+static HRESULT WINAPI source_reader_source_events_callback_GetParameters(IMFAsyncCallback *iface,
+        DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct source_reader *reader = impl_from_source_callback_IMFAsyncCallback(iface);
+    MediaEventType event_type;
+    IMFMediaSource *source;
+    IMFMediaEvent *event;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, result);
+
+    source = (IMFMediaSource *)IMFAsyncResult_GetStateNoAddRef(result);
+
+    if (FAILED(hr = IMFMediaSource_EndGetEvent(source, result, &event)))
+        return hr;
+
+    IMFMediaEvent_GetType(event, &event_type);
+
+    TRACE("Got event %u.\n", event_type);
+
+    IMFMediaEvent_Release(event);
+
+    IMFMediaSource_BeginGetEvent(source, &reader->source_events_callback,
+        (IUnknown *)source);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl source_events_callback_vtbl =
+{
+    source_reader_source_events_callback_QueryInterface,
+    source_reader_source_events_callback_AddRef,
+    source_reader_source_events_callback_Release,
+    source_reader_source_events_callback_GetParameters,
+    source_reader_source_events_callback_Invoke,
+};
 
 static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReader *iface, REFIID riid, void **out)
 {
@@ -273,17 +351,24 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     srcreader *object;
     HRESULT hr;
 
-    object = heap_alloc(sizeof(*object));
+    object = heap_alloc_zero(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
     object->IMFSourceReader_iface.lpVtbl = &srcreader_vtbl;
+    object->source_events_callback.lpVtbl = &source_events_callback_vtbl;
     object->refcount = 1;
     object->source = source;
     IMFMediaSource_AddRef(object->source);
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(object->source, &object->descriptor)))
         goto failed;
+
+    if (FAILED(hr = IMFMediaSource_BeginGetEvent(object->source, &object->source_events_callback,
+            (IUnknown *)object->source)))
+    {
+        goto failed;
+    }
 
     hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
 
