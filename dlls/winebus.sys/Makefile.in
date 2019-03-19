@@ -2,7 +2,7 @@ MODULE    = winebus.sys
 IMPORTS   = ntoskrnl setupapi
 EXTRALIBS = $(IOKIT_LIBS) $(UDEV_LIBS)
 EXTRAINCL = $(UDEV_CFLAGS) $(SDL2_CFLAGS)
-EXTRADLLFLAGS = -Wb,--subsystem,native
+EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	bus_iohid.c \
