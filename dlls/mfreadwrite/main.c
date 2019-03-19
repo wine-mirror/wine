@@ -317,8 +317,7 @@ static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface
             }
             else
             {
-                FIXME("Unsupported source attribute %s.\n", debugstr_guid(guid));
-                return E_NOTIMPL;
+                return IMFPresentationDescriptor_GetItem(reader->descriptor, guid, value);
             }
             break;
         default:
