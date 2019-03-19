@@ -25,7 +25,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
 #include "ole2.h"
 #include "rpcproxy.h"
 
@@ -288,9 +287,39 @@ static HRESULT WINAPI src_reader_Flush(IMFSourceReader *iface, DWORD index)
 static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReader *iface, DWORD index, REFGUID service,
         REFIID riid, void **object)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, 0x%08x, %s, %s, %p\n", This, index, debugstr_guid(service), debugstr_guid(riid), object);
-    return E_NOTIMPL;
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    IUnknown *obj = NULL;
+    HRESULT hr;
+
+    TRACE("%p, %#x, %s, %s, %p\n", iface, index, debugstr_guid(service), debugstr_guid(riid), object);
+
+    switch (index)
+    {
+        case MF_SOURCE_READER_MEDIASOURCE:
+            obj = (IUnknown *)reader->source;
+            break;
+        default:
+            FIXME("Unsupported index %#x.\n", index);
+            return E_NOTIMPL;
+    }
+
+    if (IsEqualGUID(service, &GUID_NULL))
+    {
+        hr = IUnknown_QueryInterface(obj, riid, object);
+    }
+    else
+    {
+        IMFGetService *gs;
+
+        hr = IUnknown_QueryInterface(obj, &IID_IMFGetService, (void **)&gs);
+        if (SUCCEEDED(hr))
+        {
+            hr = IMFGetService_GetService(gs, service, riid, object);
+            IMFGetService_Release(gs);
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface, DWORD index,
