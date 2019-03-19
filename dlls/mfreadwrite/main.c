@@ -30,6 +30,8 @@
 
 #undef INITGUID
 #include <guiddef.h>
+#include "mfapi.h"
+#include "mferror.h"
 #include "mfidl.h"
 #include "mfreadwrite.h"
 
@@ -77,6 +79,8 @@ typedef struct source_reader
     LONG refcount;
     IMFMediaSource *source;
     IMFPresentationDescriptor *descriptor;
+    DWORD first_audio_stream_index;
+    DWORD first_video_stream_index;
 } srcreader;
 
 struct sink_writer
@@ -374,6 +378,40 @@ struct IMFSourceReaderVtbl srcreader_vtbl =
     src_reader_GetPresentationAttribute
 };
 
+static DWORD reader_get_first_stream_index(IMFPresentationDescriptor *descriptor, const GUID *major)
+{
+    unsigned int count, i;
+    BOOL selected;
+    HRESULT hr;
+    GUID guid;
+
+    if (FAILED(IMFPresentationDescriptor_GetStreamDescriptorCount(descriptor, &count)))
+        return MF_SOURCE_READER_INVALID_STREAM_INDEX;
+
+    for (i = 0; i < count; ++i)
+    {
+        IMFMediaTypeHandler *handler;
+        IMFStreamDescriptor *sd;
+
+        if (SUCCEEDED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(descriptor, i, &selected, &sd)))
+        {
+            hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
+            IMFStreamDescriptor_Release(sd);
+            if (SUCCEEDED(hr))
+            {
+                hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
+                IMFMediaTypeHandler_Release(handler);
+                if (SUCCEEDED(hr) && IsEqualGUID(&guid, major))
+                {
+                    return i;
+                }
+            }
+        }
+    }
+
+    return MF_SOURCE_READER_INVALID_STREAM_INDEX;
+}
+
 static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttributes *attributes,
         REFIID riid, void **out)
 {
@@ -392,6 +430,16 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(object->source, &object->descriptor)))
         goto failed;
+
+    /* At least one major type has to be set. */
+    object->first_audio_stream_index = reader_get_first_stream_index(object->descriptor, &MFMediaType_Audio);
+    object->first_video_stream_index = reader_get_first_stream_index(object->descriptor, &MFMediaType_Video);
+
+    if (object->first_audio_stream_index == MF_SOURCE_READER_INVALID_STREAM_INDEX &&
+            object->first_video_stream_index == MF_SOURCE_READER_INVALID_STREAM_INDEX)
+    {
+        hr = MF_E_ATTRIBUTENOTFOUND;
+    }
 
     if (FAILED(hr = IMFMediaSource_BeginGetEvent(object->source, &object->source_events_callback,
             (IUnknown *)object->source)))
