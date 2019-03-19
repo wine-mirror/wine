@@ -86,7 +86,6 @@ EXT_BLOCK_SIZE = 1000
 BLACKLISTED_EXTENSIONS = [
     # Instance extensions
     "VK_EXT_debug_utils",
-    "VK_EXT_swapchain_colorspace",
     "VK_EXT_validation_features",
     "VK_EXT_validation_flags",
     "VK_KHR_display",
