@@ -229,16 +229,72 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 
 static HRESULT WINAPI src_reader_GetStreamSelection(IMFSourceReader *iface, DWORD index, BOOL *selected)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, 0x%08x, %p\n", This, index, selected);
-    return E_NOTIMPL;
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    IMFStreamDescriptor *sd;
+
+    TRACE("%p, %#x, %p.\n", iface, index, selected);
+
+    switch (index)
+    {
+        case MF_SOURCE_READER_FIRST_VIDEO_STREAM:
+            index = reader->first_video_stream_index;
+            break;
+        case MF_SOURCE_READER_FIRST_AUDIO_STREAM:
+            index = reader->first_audio_stream_index;
+            break;
+        default:
+            ;
+    }
+
+    if (FAILED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(reader->descriptor, index, selected, &sd)))
+        return MF_E_INVALIDSTREAMNUMBER;
+    IMFStreamDescriptor_Release(sd);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI src_reader_SetStreamSelection(IMFSourceReader *iface, DWORD index, BOOL selected)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, 0x%08x, %d\n", This, index, selected);
-    return E_NOTIMPL;
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    unsigned int count;
+    HRESULT hr;
+
+    TRACE("%p, %#x, %d.\n", iface, index, selected);
+
+    switch (index)
+    {
+        case MF_SOURCE_READER_FIRST_VIDEO_STREAM:
+            index = reader->first_video_stream_index;
+            break;
+        case MF_SOURCE_READER_FIRST_AUDIO_STREAM:
+            index = reader->first_audio_stream_index;
+            break;
+        case MF_SOURCE_READER_ALL_STREAMS:
+            if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorCount(reader->descriptor, &count)))
+                return hr;
+
+            for (index = 0; index < count; ++index)
+            {
+                if (selected)
+                    IMFPresentationDescriptor_SelectStream(reader->descriptor, index);
+                else
+                    IMFPresentationDescriptor_DeselectStream(reader->descriptor, index);
+            }
+
+            return S_OK;
+        default:
+            ;
+    }
+
+    if (selected)
+        hr = IMFPresentationDescriptor_SelectStream(reader->descriptor, index);
+    else
+        hr = IMFPresentationDescriptor_DeselectStream(reader->descriptor, index);
+
+    if (FAILED(hr))
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWORD index, DWORD typeindex,
