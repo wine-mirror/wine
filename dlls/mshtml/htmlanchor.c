@@ -174,6 +174,27 @@ HRESULT handle_link_click_event(HTMLElement *element, nsAString *href_str, nsASt
     return hres;
 }
 
+static IUri *get_anchor_uri(HTMLAnchorElement *anchor)
+{
+    nsAString href_str;
+    IUri *uri = NULL;
+    nsresult nsres;
+
+    nsAString_Init(&href_str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetHref(anchor->nsanchor, &href_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *href;
+
+        nsAString_GetData(&href_str, &href);
+        create_uri(href, 0, &uri);
+    }else {
+        ERR("GetHref failed: %08x\n", nsres);
+    }
+
+    nsAString_Finish(&href_str);
+    return uri;
+}
+
 static inline HTMLAnchorElement *impl_from_IHTMLAnchorElement(IHTMLAnchorElement *iface)
 {
     return CONTAINING_RECORD(iface, HTMLAnchorElement, IHTMLAnchorElement_iface);
@@ -481,8 +502,37 @@ static HRESULT WINAPI HTMLAnchorElement_put_protocol(IHTMLAnchorElement *iface, 
 static HRESULT WINAPI HTMLAnchorElement_get_protocol(IHTMLAnchorElement *iface, BSTR *p)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    BSTR scheme;
+    size_t len;
+    IUri *uri;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    uri = get_anchor_uri(This);
+    if(!uri) {
+        WARN("Could not create IUri\n");
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = IUri_GetSchemeName(uri, &scheme);
+    IUri_Release(uri);
+    if(FAILED(hres))
+        return hres;
+
+    len = SysStringLen(scheme);
+    if(len) {
+        *p = SysAllocStringLen(scheme, len + 1);
+        if(*p)
+            (*p)[len] = ':';
+        else
+            hres = E_OUTOFMEMORY;
+    }else {
+        *p = NULL;
+    }
+    SysFreeString(scheme);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_search(IHTMLAnchorElement *iface, BSTR v)
