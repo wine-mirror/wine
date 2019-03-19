@@ -440,8 +440,15 @@ static HRESULT WINAPI HTMLAnchorElement_put_host(IHTMLAnchorElement *iface, BSTR
 static HRESULT WINAPI HTMLAnchorElement_get_host(IHTMLAnchorElement *iface, BSTR *p)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* FIXME: IE always appends port number, even if it's implicit default number */
+    nsAString_InitDepend(&str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetHost(This->nsanchor, &str);
+    return return_nsstr(nsres, &str, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_hostname(IHTMLAnchorElement *iface, BSTR v)

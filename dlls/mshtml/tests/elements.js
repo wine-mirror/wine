@@ -119,6 +119,30 @@ function test_iframe() {
     });
 }
 
+function test_anchor() {
+    var iframe = document.body.firstChild;
+    var anchor = document.createElement("a");
+
+    var anchor_tests = [
+        { href: "http://www.winehq.org:123/about", protocol: "http:", host: "www.winehq.org:123" },
+        { href: "https://www.winehq.org:123/about", protocol: "https:", host: "www.winehq.org:123" },
+        { href: "about:blank", protocol: "about:", host: "" },
+        { href: "file:///c:/dir/file.html", protocol: "file:", host: "" },
+        { href: "http://www.winehq.org/about", protocol: "http:", host: "www.winehq.org:80", todo_host: true },
+        { href: "https://www.winehq.org/about", protocol: "https:", host: "www.winehq.org:443", todo_host: true },
+    ];
+
+    for(var i in anchor_tests) {
+        var t = anchor_tests[i];
+        anchor.href = t.href;
+        ok(anchor.protocol === t.protocol, "anchor(" + t.href + ").protocol = " + anchor.protocol);
+        todo_wine_if("todo_host" in t).
+        ok(anchor.host === t.host, "anchor(" + t.href + ").host = " + anchor.host);
+    }
+
+    next_test();
+}
+
 function test_getElementsByClassName() {
     var elems;
 
@@ -273,6 +297,7 @@ var tests = [
     test_getElementsByClassName,
     test_head,
     test_iframe,
+    test_anchor,
     test_query_selector,
     test_compare_position,
     test_document_owner,
