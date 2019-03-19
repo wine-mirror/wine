@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-02-27 09:09+0530\n"
-"Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
+"PO-Revision-Date: 2019-03-19 15:03+0000\n"
+"Last-Translator: Oliver Henning <oliver.henning@gmail.com>\n"
 "Language-Team: German\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -1633,7 +1633,7 @@ msgstr "Unternehmensstamm-OID"
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "Attrapenunterzeichner"
+msgstr "Attrappenunterzeichner"
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
@@ -2207,7 +2207,7 @@ msgstr "Zertifikatsspeicher wählen"
 
 #: cryptui.rc:276
 msgid "Select the certificate store you want to use:"
-msgstr "Zertifikatsspeicher wählen den Sie benutzen möchten:"
+msgstr "Zertifikatsspeicher wählen, den Sie benutzen möchten:"
 
 #: cryptui.rc:279
 msgid "&Show physical stores"
@@ -2436,7 +2436,7 @@ msgstr "&Verstärkte Sicherheit aktivieren"
 
 #: cryptui.rc:427
 msgid "Delete the private &key if the export is successful"
-msgstr "Priva&ten Schlüssel löschen wenn der Export erfolgreich war"
+msgstr "Priva&ten Schlüssel löschen, wenn der Export erfolgreich war"
 
 #: cryptui.rc:444
 msgid "Completing the Certificate Export Wizard"
@@ -2518,7 +2518,7 @@ msgstr "Dieses Zertifikat hat eine ungültige Signatur."
 
 #: cryptui.rc:43
 msgid "This certificate has expired or is not yet valid."
-msgstr "Dieses Zertifikat ist entweder abgelaufen, oder noch nicht gültig."
+msgstr "Dieses Zertifikat ist entweder abgelaufen oder noch nicht gültig."
 
 #: cryptui.rc:44
 msgid "This certificate's validity period exceeds that of its issuer."
@@ -16950,7 +16950,7 @@ msgstr "Die Datei konnte nicht gespeichert werden."
 #: wordpad.rc:201
 msgid "You do not have access to save the file."
 msgstr ""
-"Sie haben keine ausreichende Zugriffsberechtigung um die Datei zu speichern."
+"Sie haben keine ausreichende Zugriffsberechtigung, um die Datei zu speichern."
 
 #: wordpad.rc:202
 msgid "Could not open the file."
@@ -16959,7 +16959,7 @@ msgstr "Die Datei konnte nicht geöffnet werden."
 #: wordpad.rc:203
 msgid "You do not have access to open the file."
 msgstr ""
-"Sie haben keine ausreichende Zugriffsberechtigung um die Datei zu öffnen."
+"Sie haben keine ausreichende Zugriffsberechtigung, um die Datei zu öffnen."
 
 #: wordpad.rc:204
 msgid "Printing not implemented."
