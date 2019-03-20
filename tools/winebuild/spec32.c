@@ -934,7 +934,7 @@ void output_fake_module( DLLSPEC *spec )
  *
  * Build a Win32 def file from a spec file.
  */
-void output_def_file( DLLSPEC *spec, int include_private )
+void output_def_file( DLLSPEC *spec, int include_stubs )
 {
     DLLSPEC *spec32 = NULL;
     const char *name;
@@ -961,16 +961,14 @@ void output_def_file( DLLSPEC *spec, int include_private )
     for (i = total = 0; i < spec->nb_entry_points; i++)
     {
         const ORDDEF *odp = &spec->entry_points[i];
-        int is_data = 0;
+        int is_data = 0, is_private = odp->flags & FLAG_PRIVATE;
 
         if (odp->name) name = odp->name;
         else if (odp->export_name) name = odp->export_name;
         else continue;
 
-        if (!(odp->flags & FLAG_PRIVATE)) total++;
-        else if (!include_private) continue;
-
-        if (odp->type == TYPE_STUB) continue;
+        if (!is_private) total++;
+        if (!include_stubs && odp->type == TYPE_STUB) continue;
 
         output( "  %s", name );
 
@@ -995,13 +993,17 @@ void output_def_file( DLLSPEC *spec, int include_private )
                 output( "=%s", get_link_name( odp ));
             break;
         }
+        case TYPE_STUB:
+            if (!kill_at && target_cpu == CPU_x86) output( "@%d", get_args_size( odp ));
+            is_private = 1;
+            break;
         default:
             assert(0);
         }
         output( " @%d", odp->ordinal );
         if (!odp->name || (odp->flags & FLAG_ORDINAL)) output( " NONAME" );
         if (is_data) output( " DATA" );
-        if (odp->flags & FLAG_PRIVATE) output( " PRIVATE" );
+        if (is_private) output( " PRIVATE" );
         output( "\n" );
     }
     if (!total) warning( "%s: Import library doesn't export anything\n", spec->file_name );
