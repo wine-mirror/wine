@@ -43,6 +43,7 @@ struct import_func
     const char *name;
     const char *export_name;
     int         ordinal;
+    int         hint;
 };
 
 struct import
@@ -332,7 +333,8 @@ struct import *add_static_import_dll( const char *name )
 }
 
 /* add a function to the list of imports from a given dll */
-static void add_import_func( struct import *imp, const char *name, const char *export_name, int ordinal )
+static void add_import_func( struct import *imp, const char *name, const char *export_name,
+                             int ordinal, int hint )
 {
     if (imp->nb_imports == imp->max_imports)
     {
@@ -343,6 +345,7 @@ static void add_import_func( struct import *imp, const char *name, const char *e
     imp->imports[imp->nb_imports].name = name;
     imp->imports[imp->nb_imports].export_name = export_name;
     imp->imports[imp->nb_imports].ordinal = ordinal;
+    imp->imports[imp->nb_imports].hint = hint;
     imp->nb_imports++;
 }
 
@@ -361,9 +364,9 @@ static void add_undef_import( const char *name, int is_ordinal )
 
     import = add_static_import_dll( dll_name );
     if (is_ordinal)
-        add_import_func( import, NULL, xstrdup( p ), ordinal );
+        add_import_func( import, NULL, xstrdup( p ), ordinal, 0 );
     else
-        add_import_func( import, xstrdup( p ), NULL, ordinal );
+        add_import_func( import, xstrdup( p ), NULL, ordinal, 0 );
 }
 
 /* get the default entry point for a given spec file */
@@ -587,7 +590,7 @@ void resolve_dll_imports( DLLSPEC *spec, struct list *list )
                 else
                 {
                     add_import_func( imp, (odp->flags & FLAG_NONAME) ? NULL : odp->name,
-                                     odp->export_name, odp->ordinal );
+                                     odp->export_name, odp->ordinal, odp->hint );
                     remove_name( &undef_symbols, j-- );
                 }
             }
@@ -769,7 +772,7 @@ static void output_immediate_imports(void)
             if (!func->name) continue;
             output( "\t.align %d\n", get_alignment(2) );
             output( ".L__wine_spec_import_data_%s_%s:\n", import->c_name, func->name );
-            output( "\t.short %d\n", func->ordinal );
+            output( "\t.short %d\n", func->hint );
             output( "\t%s \"%s\"\n", get_asm_string_keyword(), func->name );
         }
     }

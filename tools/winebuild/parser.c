@@ -756,6 +756,7 @@ static void assign_names( DLLSPEC *spec )
 
         /* sort the list of names */
         qsort( spec->names, spec->nb_names, sizeof(spec->names[0]), name_compare );
+        for (i = 0; i < spec->nb_names; i++) spec->names[i]->hint = i;
     }
 }
 

@@ -98,6 +98,7 @@ typedef struct
 {
     ORD_TYPE    type;
     int         ordinal;
+    int         hint;
     int         lineno;
     int         flags;
     char       *name;         /* public name of this function */
