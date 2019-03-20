@@ -179,7 +179,7 @@
 @ stub vkGetPhysicalDeviceDisplayPlanePropertiesKHR
 @ stub vkGetPhysicalDeviceDisplayPropertiesKHR
 @ stub vkGetPhysicalDeviceExternalBufferProperties
-@ stub vkGetPhysicalDeviceExternalFenceProperties
+@ stdcall vkGetPhysicalDeviceExternalFenceProperties(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceExternalFenceProperties
 @ stub vkGetPhysicalDeviceExternalSemaphoreProperties
 @ stdcall vkGetPhysicalDeviceFeatures(ptr ptr) winevulkan.wine_vkGetPhysicalDeviceFeatures
 @ stdcall vkGetPhysicalDeviceFeatures2(ptr ptr) winevulkan.wine_vkGetPhysicalDeviceFeatures2

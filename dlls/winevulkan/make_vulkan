@@ -89,7 +89,6 @@ BLACKLISTED_EXTENSIONS = [
     "VK_EXT_validation_features",
     "VK_EXT_validation_flags",
     "VK_KHR_display",
-    "VK_KHR_external_fence_capabilities",
     "VK_KHR_external_memory_capabilities",
     "VK_KHR_get_surface_capabilities2",
     "VK_KHR_surface_protected_capabilities",
@@ -164,8 +163,9 @@ FUNCTION_OVERRIDES = {
     "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : False },
     "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : False},
-    "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkEnumeratePhysicalDeviceGroups" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
 
     # Device functions
     "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
@@ -195,6 +195,9 @@ FUNCTION_OVERRIDES = {
     "vkDestroySwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkQueuePresentKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
+
+    # VK_KHR_external_fence_capabilities
+    "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : False},
 
     # VK_KHR_device_group_creation
     "vkEnumeratePhysicalDeviceGroupsKHR" : {"dispatch" : True, "driver" : False, "thunk" : False},
