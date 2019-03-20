@@ -283,7 +283,9 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
         }
     } else if ( type == REG_DWORD ) {
         static const WCHAR x[] = {'%','x',0};
-        wsprintfW(stringValueData, x, *((DWORD*)stringValueData));
+        DWORD value = *((DWORD*)stringValueData);
+        stringValueData = heap_xrealloc(stringValueData, 64);
+        wsprintfW(stringValueData, x, value);
 	if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
 	    DWORD val;
 	    CHAR* valueA = GetMultiByteString(stringValueData);
