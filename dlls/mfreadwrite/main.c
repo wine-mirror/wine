@@ -82,6 +82,7 @@ typedef struct source_reader
     DWORD first_audio_stream_index;
     DWORD first_video_stream_index;
     IMFSourceReaderCallback *async_callback;
+    BOOL shutdown_on_release;
 } srcreader;
 
 struct sink_writer
@@ -220,7 +221,8 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
     {
         if (reader->async_callback)
             IMFSourceReaderCallback_Release(reader->async_callback);
-        IMFMediaSource_Shutdown(reader->source);
+        if (reader->shutdown_on_release)
+            IMFMediaSource_Shutdown(reader->source);
         if (reader->descriptor)
             IMFPresentationDescriptor_Release(reader->descriptor);
         IMFMediaSource_Release(reader->source);
@@ -504,7 +506,7 @@ static DWORD reader_get_first_stream_index(IMFPresentationDescriptor *descriptor
 }
 
 static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttributes *attributes,
-        REFIID riid, void **out)
+        BOOL shutdown_on_release, REFIID riid, void **out)
 {
     srcreader *object;
     HRESULT hr;
@@ -573,7 +575,7 @@ static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttrib
     if (FAILED(hr))
         return hr;
 
-    hr = create_source_reader_from_source(source, attributes, riid, out);
+    hr = create_source_reader_from_source(source, attributes, TRUE, riid, out);
     IMFMediaSource_Release(source);
     return hr;
 }
@@ -621,7 +623,7 @@ static HRESULT create_source_reader_from_url(const WCHAR *url, IMFAttributes *at
     if (FAILED(hr))
         return hr;
 
-    hr = create_source_reader_from_source(source, attributes, riid, out);
+    hr = create_source_reader_from_source(source, attributes, TRUE, riid, out);
     IMFMediaSource_Release(source);
     return hr;
 }
@@ -828,9 +830,14 @@ HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *stream, IMFAttr
 HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes,
                                                    IMFSourceReader **reader)
 {
+    UINT32 disconnect = 0;
+
     TRACE("%p, %p, %p.\n", source, attributes, reader);
 
-    return create_source_reader_from_source(source, attributes, &IID_IMFSourceReader, (void **)reader);
+    if (attributes)
+        IMFAttributes_GetUINT32(attributes, &MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, &disconnect);
+
+    return create_source_reader_from_source(source, attributes, !disconnect, &IID_IMFSourceReader, (void **)reader);
 }
 
 /***********************************************************************
@@ -902,7 +909,13 @@ static HRESULT WINAPI readwrite_factory_CreateInstanceFromObject(IMFReadWriteCla
         if (stream)
             hr = create_source_reader_from_stream(stream, attributes, riid, out);
         else if (source)
-            hr = create_source_reader_from_source(source, attributes, riid, out);
+        {
+            UINT32 disconnect = 0;
+
+            if (attributes)
+                IMFAttributes_GetUINT32(attributes, &MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, &disconnect);
+            hr = create_source_reader_from_source(source, attributes, !disconnect, riid, out);
+        }
 
         if (source)
             IMFMediaSource_Release(source);
