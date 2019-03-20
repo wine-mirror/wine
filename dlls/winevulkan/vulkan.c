@@ -303,7 +303,7 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
                     break;
 
                 default:
-                    FIXME("Application requested a linked structure of type %#x.\n", header->sType);
+                    FIXME("Application requested a linked structure of type %u.\n", header->sType);
             }
         }
     }
@@ -408,7 +408,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
                     break;
 
                 default:
-                    FIXME("Application requested a linked structure of type %#x.\n", header->sType);
+                    FIXME("Application requested a linked structure of type %u.\n", header->sType);
             }
         }
     }
@@ -1028,7 +1028,7 @@ void WINAPI wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *in
     TRACE("%p, %p, %p\n", device, info, queue);
 
     if ((chain = info->pNext))
-        FIXME("Ignoring a linked structure of type %#x.\n", chain->sType);
+        FIXME("Ignoring a linked structure of type %u.\n", chain->sType);
 
     matching_queue = &device->queues[info->queueFamilyIndex][info->queueIndex];
     if (matching_queue->flags != info->flags)
