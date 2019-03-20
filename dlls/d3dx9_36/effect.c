@@ -152,8 +152,6 @@ struct d3dx9_base_effect
 {
     struct d3dx_effect *effect;
 
-    UINT technique_count;
-
     struct d3dx_top_level_parameter *parameters;
     struct d3dx_technique *techniques;
 
@@ -170,6 +168,7 @@ struct d3dx_effect
 
     struct d3dx9_base_effect base_effect;
     unsigned int parameter_count;
+    unsigned int technique_count;
     unsigned int object_count;
     struct d3dx_object *objects;
     struct wine_rb_tree param_tree;
@@ -459,7 +458,7 @@ static struct d3dx_technique *get_technique_by_name(struct d3dx_effect *effect, 
 
     if (!name) return NULL;
 
-    for (i = 0; i < base->technique_count; ++i)
+    for (i = 0; i < effect->technique_count; ++i)
     {
         if (!strcmp(base->techniques[i].name, name))
             return &base->techniques[i];
@@ -473,7 +472,7 @@ static struct d3dx_technique *get_valid_technique(struct d3dx_effect *effect, D3
     struct d3dx9_base_effect *base = &effect->base_effect;
     unsigned int i;
 
-    for (i = 0; i < base->technique_count; ++i)
+    for (i = 0; i < effect->technique_count; ++i)
     {
         if (get_technique_handle(&base->techniques[i]) == technique)
             return &base->techniques[i];
@@ -487,7 +486,7 @@ static struct d3dx_pass *get_valid_pass(struct d3dx_effect *effect, D3DXHANDLE p
     struct d3dx9_base_effect *base = &effect->base_effect;
     unsigned int i, k;
 
-    for (i = 0; i < base->technique_count; ++i)
+    for (i = 0; i < effect->technique_count; ++i)
     {
         struct d3dx_technique *technique = &base->techniques[i];
 
@@ -701,7 +700,7 @@ static void d3dx9_base_effect_cleanup(struct d3dx_effect *effect)
 
     if (base->techniques)
     {
-        for (i = 0; i < base->technique_count; ++i)
+        for (i = 0; i < effect->technique_count; ++i)
             free_technique(&base->techniques[i]);
         HeapFree(GetProcessHeap(), 0, base->techniques);
         base->techniques = NULL;
@@ -1859,7 +1858,7 @@ static HRESULT WINAPI d3dx_effect_GetDesc(ID3DXEffect *iface, D3DXEFFECT_DESC *d
     desc->Creator = NULL;
     desc->Functions = 0;
     desc->Parameters = effect->parameter_count;
-    desc->Techniques = effect->base_effect.technique_count;
+    desc->Techniques = effect->technique_count;
 
     return D3D_OK;
 }
@@ -2122,7 +2121,7 @@ static D3DXHANDLE WINAPI d3dx_effect_GetTechnique(ID3DXEffect *iface, UINT index
 
     TRACE("iface %p, index %u.\n", iface, index);
 
-    if (index >= effect->base_effect.technique_count)
+    if (index >= effect->technique_count)
     {
         WARN("Invalid argument specified.\n");
         return NULL;
@@ -3659,7 +3658,7 @@ static HRESULT WINAPI d3dx_effect_FindNextValidTechnique(ID3DXEffect *iface, D3D
         if (!(prev_tech = get_valid_technique(effect, technique)))
             return D3DERR_INVALIDCALL;
 
-        for (i = 0; i < base->technique_count; ++i)
+        for (i = 0; i < effect->technique_count; ++i)
         {
             tech = &base->techniques[i];
             if (tech == prev_tech)
@@ -3674,7 +3673,7 @@ static HRESULT WINAPI d3dx_effect_FindNextValidTechnique(ID3DXEffect *iface, D3D
         i = 0;
     }
 
-    for (; i < base->technique_count; ++i)
+    for (; i < effect->technique_count; ++i)
     {
         tech = &base->techniques[i];
         if (SUCCEEDED(d3dx_effect_ValidateTechnique(iface, get_technique_handle(tech))))
@@ -5837,9 +5836,10 @@ static HRESULT d3dx_parse_resource(struct d3dx_effect *effect, const char *data,
         struct d3dx_technique *technique;
         struct d3dx_pass *pass;
 
-        if (technique_index >= base->technique_count)
+        if (technique_index >= effect->technique_count)
         {
-            FIXME("Index out of bounds: technique_index %u >= technique_count %u\n", technique_index, base->technique_count);
+            FIXME("Index out of bounds: technique_index %u >= technique_count %u.\n", technique_index,
+                  effect->technique_count);
             return E_FAIL;
         }
 
@@ -5972,8 +5972,8 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
     read_dword(&ptr, &effect->parameter_count);
     TRACE("Parameter count: %u.\n", effect->parameter_count);
 
-    read_dword(&ptr, &base->technique_count);
-    TRACE("Technique count: %u.\n", base->technique_count);
+    read_dword(&ptr, &effect->technique_count);
+    TRACE("Technique count: %u.\n", effect->technique_count);
 
     skip_dword_unknown(&ptr, 1);
 
@@ -6016,10 +6016,9 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
         }
     }
 
-    if (base->technique_count)
+    if (effect->technique_count)
     {
-        base->techniques = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                sizeof(*base->techniques) * base->technique_count);
+        base->techniques = heap_alloc_zero(sizeof(*base->techniques) * effect->technique_count);
         if (!base->techniques)
         {
             ERR("Out of memory.\n");
@@ -6027,7 +6026,7 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
             goto err_out;
         }
 
-        for (i = 0; i < base->technique_count; ++i)
+        for (i = 0; i < effect->technique_count; ++i)
         {
             TRACE("Parsing technique %u.\n", i);
             hr = d3dx_parse_effect_technique(effect, &base->techniques[i], data, &ptr, effect->objects);
@@ -6089,7 +6088,7 @@ err_out:
 
     if (base->techniques)
     {
-        for (i = 0; i < base->technique_count; ++i)
+        for (i = 0; i < effect->technique_count; ++i)
             free_technique(&base->techniques[i]);
         HeapFree(GetProcessHeap(), 0, base->techniques);
         base->techniques = NULL;
@@ -6292,7 +6291,7 @@ static HRESULT d3dx9_base_effect_init(struct d3dx_effect *effect, const char *da
         param = get_parameter_by_name(effect, NULL, skip_constants[i]);
         if (param)
         {
-            for (j = 0; j < base->technique_count; ++j)
+            for (j = 0; j < effect->technique_count; ++j)
             {
                 if (is_parameter_used(param, &base->techniques[j]))
                 {
