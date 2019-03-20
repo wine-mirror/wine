@@ -120,7 +120,6 @@ BLACKLISTED_EXTENSIONS = [
     "VK_KHR_external_semaphore",
     "VK_KHR_shader_float16_int8",
     # Relates to external_semaphore and needs type conversions in bitflags.
-    "VK_KHR_external_semaphore_capabilities",
     "VK_KHR_shared_presentable_image", # Needs WSI work.
     "VK_KHR_win32_keyed_mutex",
     "VK_NV_cooperative_matrix",
@@ -166,6 +165,7 @@ FUNCTION_OVERRIDES = {
     "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
     "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
     "vkGetPhysicalDeviceImageFormatProperties2" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
 
     # Device functions
@@ -203,6 +203,9 @@ FUNCTION_OVERRIDES = {
     # VK_KHR_external_memory_capabilities
     "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : False},
     "vkGetPhysicalDeviceImageFormatProperties2KHR" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
+
+    # VK_KHR_external_semaphore_capabilities
+    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : False},
 
     # VK_KHR_device_group_creation
     "vkEnumeratePhysicalDeviceGroupsKHR" : {"dispatch" : True, "driver" : False, "thunk" : False},

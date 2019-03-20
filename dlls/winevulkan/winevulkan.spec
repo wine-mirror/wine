@@ -183,7 +183,7 @@
 @ stub vkGetPhysicalDeviceDisplayPropertiesKHR
 @ stdcall -private wine_vkGetPhysicalDeviceExternalBufferProperties(ptr ptr ptr)
 @ stdcall -private wine_vkGetPhysicalDeviceExternalFenceProperties(ptr ptr ptr)
-@ stub vkGetPhysicalDeviceExternalSemaphoreProperties
+@ stdcall -private wine_vkGetPhysicalDeviceExternalSemaphoreProperties(ptr ptr ptr)
 @ stdcall -private wine_vkGetPhysicalDeviceFeatures(ptr ptr)
 @ stdcall -private wine_vkGetPhysicalDeviceFeatures2(ptr ptr)
 @ stdcall -private wine_vkGetPhysicalDeviceFormatProperties(ptr long ptr)
