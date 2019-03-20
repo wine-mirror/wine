@@ -207,6 +207,8 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
     UNICODE_STRING nameW;
     WCHAR dev_name[256];
     HDEVINFO devinfo;
+    SP_DEVINFO_DATA data = {sizeof(data)};
+    WCHAR *instance = NULL;
     NTSTATUS status;
     DWORD length;
 
@@ -258,26 +260,31 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
 
     LeaveCriticalSection(&device_list_cs);
 
-    devinfo = SetupDiGetClassDevsW(class, NULL, NULL, DIGCF_DEVICEINTERFACE);
-    if (devinfo)
+    devinfo = SetupDiCreateDeviceInfoList(class, NULL);
+    if (devinfo == INVALID_HANDLE_VALUE)
     {
-        SP_DEVINFO_DATA data;
-        WCHAR *instance;
-
-        data.cbSize = sizeof(data);
-        if (!(instance = get_instance_id(device)))
-            ERR("failed to generate instance id\n");
-        else if (!SetupDiCreateDeviceInfoW(devinfo, instance, class, NULL, NULL, DICD_INHERIT_CLASSDRVS, &data))
-            ERR("failed to create device info: %x\n", GetLastError());
-        else if (!SetupDiRegisterDeviceInfo(devinfo, &data, 0, NULL, NULL, NULL))
-            ERR("failed to register device info: %x\n", GetLastError());
-
-        HeapFree(GetProcessHeap(), 0, instance);
-        SetupDiDestroyDeviceInfoList(devinfo);
+        ERR("failed to create device info list, error %#x\n", GetLastError());
+        goto error;
     }
-    else
-        ERR("failed to get ClassDevs: %x\n", GetLastError());
 
+    instance = get_instance_id(device);
+    if (!instance)
+    {
+        ERR("failed to generate instance id\n");
+        goto error;
+    }
+
+    if (SetupDiCreateDeviceInfoW(devinfo, instance, class, NULL, NULL, DICD_INHERIT_CLASSDRVS, &data))
+    {
+        if (!SetupDiRegisterDeviceInfo(devinfo, &data, 0, NULL, NULL, NULL))
+            ERR("failed to register device info, error %#x\n", GetLastError());
+    }
+    else if (GetLastError() != ERROR_DEVINST_ALREADY_EXISTS)
+        ERR("failed to create device info, error %#x\n", GetLastError());
+
+error:
+    HeapFree(GetProcessHeap(), 0, instance);
+    SetupDiDestroyDeviceInfoList(devinfo);
     return device;
 }
 
