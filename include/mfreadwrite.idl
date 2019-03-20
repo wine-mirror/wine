@@ -90,6 +90,27 @@ cpp_quote("EXTERN_GUID(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING,            0xfb
 cpp_quote("EXTERN_GUID(MF_SOURCE_READER_MEDIASOURCE_CHARACTERISTICS,        0x6d23f5c8, 0xc5d7, 0x4a9b, 0x99, 0x71, 0x5d, 0x11, 0xf8, 0xbc, 0xa8, 0x80);")
 cpp_quote("EXTERN_GUID(MF_SOURCE_READER_MEDIASOURCE_CONFIG,                 0x9085abeb, 0x0354, 0x48f9, 0xab, 0xb5, 0x20, 0x0d, 0xf8, 0x38, 0xc6, 0x8e);")
 
+[
+    object,
+    uuid(deec8d99-fa1d-4d82-84c2-2c8969944867),
+    local
+]
+interface IMFSourceReaderCallback : IUnknown
+{
+    HRESULT OnReadSample(
+            [in] HRESULT hr,
+            [in] DWORD stream_index,
+            [in] DWORD stream_flags,
+            [in] LONGLONG timestamp,
+            [in] IMFSample *sample);
+
+    HRESULT OnFlush([in] DWORD stream_index);
+
+    HRESULT OnEvent(
+            [in] DWORD stream_index,
+            [in] IMFMediaEvent *event);
+}
+
 interface IMFMediaSource;
 
 [

@@ -81,6 +81,7 @@ typedef struct source_reader
     IMFPresentationDescriptor *descriptor;
     DWORD first_audio_stream_index;
     DWORD first_video_stream_index;
+    IMFSourceReaderCallback *async_callback;
 } srcreader;
 
 struct sink_writer
@@ -217,6 +218,8 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 
     if (!refcount)
     {
+        if (reader->async_callback)
+            IMFSourceReaderCallback_Release(reader->async_callback);
         IMFMediaSource_Shutdown(reader->source);
         if (reader->descriptor)
             IMFPresentationDescriptor_Release(reader->descriptor);
@@ -534,6 +537,10 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     {
         goto failed;
     }
+
+    if (attributes)
+        IMFAttributes_GetUnknown(attributes, &MF_SOURCE_READER_ASYNC_CALLBACK, &IID_IMFSourceReaderCallback,
+                (void **)&object->async_callback);
 
     hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
 
