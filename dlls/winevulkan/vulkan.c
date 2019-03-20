@@ -207,6 +207,20 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
     return queues;
 }
 
+static void *convert_VkPhysicalDeviceFeatures2(const void *src)
+{
+    const VkPhysicalDeviceFeatures2 *in = src;
+    VkPhysicalDeviceFeatures2 *out;
+
+    if (!(out = heap_alloc(sizeof(*out))))
+        return NULL;
+
+    *out = *in;
+    out->pNext = NULL;
+
+    return out;
+}
+
 static void *convert_VkDeviceGroupDeviceCreateInfo(const void *src)
 {
     const VkDeviceGroupDeviceCreateInfo *in = src;
@@ -248,12 +262,15 @@ static void *convert_VkPhysicalDeviceHostQueryResetFeaturesEXT(const void *src)
 static void wine_vk_device_free_create_info(VkDeviceCreateInfo *create_info)
 {
     VkPhysicalDeviceHostQueryResetFeaturesEXT *host_query_reset_features;
+    VkPhysicalDeviceFeatures2 *device_features;
     VkDeviceGroupDeviceCreateInfo *group_info;
 
+    device_features = wine_vk_find_struct(create_info, PHYSICAL_DEVICE_FEATURES_2);
     group_info = wine_vk_find_struct(create_info, DEVICE_GROUP_DEVICE_CREATE_INFO);
     host_query_reset_features = wine_vk_find_struct(create_info, PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT);
     create_info->pNext = NULL;
 
+    heap_free(device_features);
     if (group_info)
     {
         heap_free((void *)group_info->pPhysicalDevices);
@@ -292,6 +309,12 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
 
                 case VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO:
                     if (!(dst_header->pNext = convert_VkDeviceGroupDeviceCreateInfo(header)))
+                        goto err;
+                    dst_header = dst_header->pNext;
+                    break;
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2:
+                    if (!(dst_header->pNext = convert_VkPhysicalDeviceFeatures2(header)))
                         goto err;
                     dst_header = dst_header->pNext;
                     break;
