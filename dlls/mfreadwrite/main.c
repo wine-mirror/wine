@@ -423,6 +423,8 @@ static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface
         REFGUID guid, PROPVARIANT *value)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    IMFStreamDescriptor *sd;
+    BOOL selected;
     HRESULT hr;
 
     TRACE("%p, %#x, %s, %p.\n", iface, index, debugstr_guid(guid), value);
@@ -446,12 +448,23 @@ static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface
                 return IMFPresentationDescriptor_GetItem(reader->descriptor, guid, value);
             }
             break;
+        case MF_SOURCE_READER_FIRST_VIDEO_STREAM:
+            index = reader->first_video_stream_index;
+            break;
+        case MF_SOURCE_READER_FIRST_AUDIO_STREAM:
+            index = reader->first_audio_stream_index;
+            break;
         default:
-            FIXME("Unsupported index %#x.\n", index);
-            return E_NOTIMPL;
+            ;
     }
 
-    return E_NOTIMPL;
+    if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(reader->descriptor, index, &selected, &sd)))
+        return hr;
+
+    hr = IMFStreamDescriptor_GetItem(sd, guid, value);
+    IMFStreamDescriptor_Release(sd);
+
+    return hr;
 }
 
 struct IMFSourceReaderVtbl srcreader_vtbl =
