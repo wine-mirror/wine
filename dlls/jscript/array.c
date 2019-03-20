@@ -1074,11 +1074,12 @@ static HRESULT Array_map(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned
     callback = get_object(argv[0]);
 
     if(argc > 1) {
-        if(!is_object_instance(argv[1]) || !get_object(argv[1])) {
+        if(is_object_instance(argv[1]) && get_object(argv[1])) {
+            context_this = get_object(argv[1]);
+        }else if(!is_undefined(argv[1])) {
             FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
             return E_NOTIMPL;
         }
-        context_this = get_object(argv[1]);
     }
 
     hres = create_array(ctx, length, &array);

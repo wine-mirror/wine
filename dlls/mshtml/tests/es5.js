@@ -178,6 +178,13 @@ function test_array_map() {
     ok(calls === "0:1,1:3,2:5,", "calls = " + calls);
     ok(m.join() === "0,2,4", "m = " + m);
 
+    [1,2].map(function() {
+        ok(this === window, "this != window");
+    });
+    [1,2].map(function() {
+        ok(this === window, "this != window");
+    }, undefined);
+
     next_test();
 }
 
