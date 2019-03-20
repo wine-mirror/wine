@@ -286,7 +286,7 @@ static const platform_vtbl iohid_vtbl =
 static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
 {
     DEVICE_OBJECT *device;
-    DWORD vid, pid, version;
+    DWORD vid, pid, version, uid;
     CFStringRef str = NULL;
     WCHAR serial_string[256];
     BOOL is_gamepad = FALSE;
@@ -298,6 +298,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     version = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVersionNumberKey)));
     str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDSerialNumberKey));
     if (str) CFStringToWSTR(str, serial_string, ARRAY_SIZE(serial_string));
+    uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
 
     if (IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) ||
        IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick))
@@ -344,7 +345,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
         }
     }
 
-    device = bus_create_hid_device(iohid_driver_obj, busidW, vid, pid, version, 0, str?serial_string:NULL, is_gamepad, &GUID_DEVCLASS_IOHID, &iohid_vtbl, sizeof(struct platform_private));
+    device = bus_create_hid_device(iohid_driver_obj, busidW, vid, pid, version, uid, str?serial_string:NULL, is_gamepad, &GUID_DEVCLASS_IOHID, &iohid_vtbl, sizeof(struct platform_private));
     if (!device)
         ERR("Failed to create device\n");
     else
