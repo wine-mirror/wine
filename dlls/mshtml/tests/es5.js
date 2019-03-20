@@ -109,6 +109,13 @@ function test_array_forEach() {
     test(new String("abc"), [[0,"a"],[1,"b"],[2,"c"]]);
     test([], []);
 
+    [1,2].forEach(function() {
+        ok(this === window, "this != window");
+    });
+    [1,2].forEach(function() {
+        ok(this === window, "this != window");
+    }, undefined);
+
     next_test();
 }
 
