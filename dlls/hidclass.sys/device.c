@@ -90,26 +90,24 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 
     RtlInitUnicodeString( &nameW, ext->device_name);
 
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_HIDCLASS, NULL, NULL, DIGCF_DEVICEINTERFACE);
-    if (!devinfo)
+    devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_HIDCLASS, NULL);
+    if (devinfo == INVALID_HANDLE_VALUE)
     {
         FIXME( "failed to get ClassDevs %x\n", GetLastError());
         return STATUS_UNSUCCESSFUL;
     }
     Data.cbSize = sizeof(Data);
-    if (!SetupDiCreateDeviceInfoW(devinfo, ext->instance_id, &GUID_DEVCLASS_HIDCLASS, NULL, NULL, DICD_INHERIT_CLASSDRVS, &Data))
+    if (SetupDiCreateDeviceInfoW(devinfo, ext->instance_id, &GUID_DEVCLASS_HIDCLASS, NULL, NULL, DICD_INHERIT_CLASSDRVS, &Data))
     {
-        if (GetLastError() == ERROR_DEVINST_ALREADY_EXISTS)
+        if (!SetupDiRegisterDeviceInfo(devinfo, &Data, 0, NULL, NULL, NULL))
         {
-            SetupDiDestroyDeviceInfoList(devinfo);
-            return STATUS_SUCCESS;
+            FIXME( "failed to register device info %x\n", GetLastError());
+            goto error;
         }
-        FIXME( "failed to Create Device Info %x\n", GetLastError());
-        goto error;
     }
-    if (!SetupDiRegisterDeviceInfo( devinfo, &Data, 0, NULL, NULL, NULL ))
+    else if (GetLastError() != ERROR_DEVINST_ALREADY_EXISTS)
     {
-        FIXME( "failed to Register Device Info %x\n", GetLastError());
+        FIXME( "failed to create device info %x\n", GetLastError());
         goto error;
     }
     SetupDiDestroyDeviceInfoList(devinfo);
