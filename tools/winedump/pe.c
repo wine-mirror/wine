@@ -1193,14 +1193,14 @@ static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il, DWORD thunk_rv
     for (; il->u1.Ordinal; il++, thunk_rva += sizeof(LONGLONG))
     {
         if (IMAGE_SNAP_BY_ORDINAL64(il->u1.Ordinal))
-            printf("  %4u  <by ordinal>\n", (DWORD)IMAGE_ORDINAL64(il->u1.Ordinal));
+            printf("  %08x  %4u  <by ordinal>\n", thunk_rva, (DWORD)IMAGE_ORDINAL64(il->u1.Ordinal));
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
             if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
-                printf("  %4u  %s %x\n", iibn->Hint, iibn->Name, thunk_rva);
+                printf("  %08x  %4u  %s\n", thunk_rva, iibn->Hint, iibn->Name);
         }
     }
 }
@@ -1211,14 +1211,14 @@ static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset, DW
     for (; il->u1.Ordinal; il++, thunk_rva += sizeof(DWORD))
     {
         if (IMAGE_SNAP_BY_ORDINAL32(il->u1.Ordinal))
-            printf("  %4u  <by ordinal>\n", IMAGE_ORDINAL32(il->u1.Ordinal));
+            printf("  %08x  %4u  <by ordinal>\n", thunk_rva, IMAGE_ORDINAL32(il->u1.Ordinal));
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData - offset, sizeof(DWORD));
             if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
-                printf("  %4u  %s %x\n", iibn->Hint, iibn->Name, thunk_rva);
+                printf("  %08x  %4u  %s\n", thunk_rva, iibn->Hint, iibn->Name);
         }
     }
 }
@@ -1245,7 +1245,7 @@ static	void	dump_dir_imported_functions(void)
 	printf("  ForwarderChain:  %08X\n", importDesc->ForwarderChain);
 	printf("  First thunk RVA: %08X\n", (DWORD)importDesc->FirstThunk);
 
-	printf("  Ordn  Name\n");
+	printf("   Thunk    Ordn  Name\n");
 
 	il = (importDesc->u.OriginalFirstThunk != 0) ?
 	    RVA((DWORD)importDesc->u.OriginalFirstThunk, sizeof(DWORD)) :
@@ -1335,7 +1335,7 @@ static void dump_dir_delay_imported_functions(void)
         printf("  TimeDateStamp:   %08X (%s)\n",
                importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
 
-        printf("  Ordn  Name\n");
+        printf("   Thunk    Ordn  Name\n");
 
         il = RVA(importDesc->ImportNameTableRVA - offset, sizeof(DWORD));
 
