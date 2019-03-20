@@ -359,9 +359,21 @@ static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWO
 
 static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFGUID format, REFPROPVARIANT position)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, %s, %p\n", This, debugstr_guid(format), position);
-    return E_NOTIMPL;
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    DWORD flags;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(format), position);
+
+    /* FIXME: fail if we got pending samples. */
+
+    if (FAILED(hr = IMFMediaSource_GetCharacteristics(reader->source, &flags)))
+        return hr;
+
+    if (!(flags & MFMEDIASOURCE_CAN_SEEK))
+        return MF_E_INVALIDREQUEST;
+
+    return IMFMediaSource_Start(reader->source, reader->descriptor, format, position);
 }
 
 static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index,
