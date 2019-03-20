@@ -2900,38 +2900,32 @@ VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties(VkPhysicalDevice p
 #endif
 }
 
-VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
+VkResult thunk_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkImageFormatProperties2_host pImageFormatProperties_host;
-    TRACE("%p, %p, %p\n", physicalDevice, pImageFormatInfo, pImageFormatProperties);
-
     convert_VkImageFormatProperties2_win_to_host(pImageFormatProperties, &pImageFormatProperties_host);
     result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(physicalDevice->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
 
     convert_VkImageFormatProperties2_host_to_win(&pImageFormatProperties_host, pImageFormatProperties);
     return result;
 #else
-    TRACE("%p, %p, %p\n", physicalDevice, pImageFormatInfo, pImageFormatProperties);
     return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(physicalDevice->phys_dev, pImageFormatInfo, pImageFormatProperties);
 #endif
 }
 
-static VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
+VkResult thunk_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo, VkImageFormatProperties2 *pImageFormatProperties)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkImageFormatProperties2_host pImageFormatProperties_host;
-    TRACE("%p, %p, %p\n", physicalDevice, pImageFormatInfo, pImageFormatProperties);
-
     convert_VkImageFormatProperties2_win_to_host(pImageFormatProperties, &pImageFormatProperties_host);
     result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(physicalDevice->phys_dev, pImageFormatInfo, &pImageFormatProperties_host);
 
     convert_VkImageFormatProperties2_host_to_win(&pImageFormatProperties_host, pImageFormatProperties);
     return result;
 #else
-    TRACE("%p, %p, %p\n", physicalDevice, pImageFormatInfo, pImageFormatProperties);
     return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(physicalDevice->phys_dev, pImageFormatInfo, pImageFormatProperties);
 #endif
 }
@@ -3544,6 +3538,8 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkEnumeratePhysicalDeviceGroups", &wine_vkEnumeratePhysicalDeviceGroups},
     {"vkEnumeratePhysicalDeviceGroupsKHR", &wine_vkEnumeratePhysicalDeviceGroupsKHR},
     {"vkEnumeratePhysicalDevices", &wine_vkEnumeratePhysicalDevices},
+    {"vkGetPhysicalDeviceExternalBufferProperties", &wine_vkGetPhysicalDeviceExternalBufferProperties},
+    {"vkGetPhysicalDeviceExternalBufferPropertiesKHR", &wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR},
     {"vkGetPhysicalDeviceExternalFenceProperties", &wine_vkGetPhysicalDeviceExternalFenceProperties},
     {"vkGetPhysicalDeviceExternalFencePropertiesKHR", &wine_vkGetPhysicalDeviceExternalFencePropertiesKHR},
     {"vkGetPhysicalDeviceFeatures", &wine_vkGetPhysicalDeviceFeatures},
@@ -3711,6 +3707,7 @@ static const char * const vk_instance_extensions[] =
     "VK_EXT_swapchain_colorspace",
     "VK_KHR_device_group_creation",
     "VK_KHR_external_fence_capabilities",
+    "VK_KHR_external_memory_capabilities",
     "VK_KHR_get_physical_device_properties2",
     "VK_KHR_surface",
     "VK_KHR_win32_surface",

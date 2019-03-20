@@ -178,7 +178,7 @@
 @ stdcall vkGetInstanceProcAddr(ptr str) winevulkan.wine_vkGetInstanceProcAddr
 @ stub vkGetPhysicalDeviceDisplayPlanePropertiesKHR
 @ stub vkGetPhysicalDeviceDisplayPropertiesKHR
-@ stub vkGetPhysicalDeviceExternalBufferProperties
+@ stdcall vkGetPhysicalDeviceExternalBufferProperties(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceExternalBufferProperties
 @ stdcall vkGetPhysicalDeviceExternalFenceProperties(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceExternalFenceProperties
 @ stub vkGetPhysicalDeviceExternalSemaphoreProperties
 @ stdcall vkGetPhysicalDeviceFeatures(ptr ptr) winevulkan.wine_vkGetPhysicalDeviceFeatures

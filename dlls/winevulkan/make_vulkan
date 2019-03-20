@@ -89,7 +89,6 @@ BLACKLISTED_EXTENSIONS = [
     "VK_EXT_validation_features",
     "VK_EXT_validation_flags",
     "VK_KHR_display",
-    "VK_KHR_external_memory_capabilities",
     "VK_KHR_get_surface_capabilities2",
     "VK_KHR_surface_protected_capabilities",
     "VK_NV_external_memory_capabilities",
@@ -165,7 +164,9 @@ FUNCTION_OVERRIDES = {
     "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkEnumeratePhysicalDeviceGroups" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
     "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceImageFormatProperties2" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
 
     # Device functions
     "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
@@ -198,6 +199,10 @@ FUNCTION_OVERRIDES = {
 
     # VK_KHR_external_fence_capabilities
     "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : False},
+
+    # VK_KHR_external_memory_capabilities
+    "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceImageFormatProperties2KHR" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
 
     # VK_KHR_device_group_creation
     "vkEnumeratePhysicalDeviceGroupsKHR" : {"dispatch" : True, "driver" : False, "thunk" : False},
@@ -418,9 +423,12 @@ class VkFunction(object):
 
         # For some functions we need some extra metadata from FUNCTION_OVERRIDES.
         func_info = FUNCTION_OVERRIDES.get(self.name, None)
-        self.dispatch = func_info["dispatch"] if func_info is not None else True
-        self.driver = func_info["driver"] if func_info is not None else False
-        self.thunk_needed = func_info["thunk"] if func_info is not None else True
+        self.dispatch = func_info["dispatch"] if func_info else True
+        self.driver = func_info["driver"] if func_info else False
+        self.thunk_needed = func_info["thunk"] if func_info else True
+        self.private_thunk = func_info["private_thunk"] if func_info and "private_thunk" in func_info else False
+        if self.private_thunk:
+            self.thunk_needed = True
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
@@ -531,6 +539,9 @@ class VkFunction(object):
     def needs_thunk(self):
         return self.thunk_needed
 
+    def needs_private_thunk(self):
+        return self.private_thunk
+
     def pfn(self, prefix="p", call_conv=None, conv=False):
         """ Create function pointer. """
 
@@ -588,7 +599,10 @@ class VkFunction(object):
         return proto
 
     def body(self):
-        body = "    {0}".format(self.trace())
+        body = ""
+
+        if not self.needs_private_thunk():
+            body += "    {0}".format(self.trace())
 
         params = ", ".join([p.variable(conv=False) for p in self.params])
 
@@ -617,7 +631,8 @@ class VkFunction(object):
             else:
                 body += "    {0}_host {1}_host;\n".format(p.type, p.name)
 
-        body += "    {0}\n".format(self.trace())
+        if not self.needs_private_thunk():
+            body += "    {0}\n".format(self.trace())
 
         # Call any win_to_host conversion calls.
         for p in self.params:
@@ -1981,9 +1996,13 @@ class VkGenerator(object):
                 continue
 
             # Exports symbols for Core functions.
-            if not vk_func.is_core_func():
+            if not vk_func.is_core_func() and not vk_func.needs_private_thunk():
                 f.write("static ")
-            f.write(vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
+
+            if vk_func.needs_private_thunk():
+                f.write(vk_func.thunk(prefix="thunk_"))
+            else:
+                f.write(vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
         for vk_func in self.registry.device_funcs:
@@ -2080,13 +2099,21 @@ class VkGenerator(object):
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required() or vk_func.is_global_func() or vk_func.needs_thunk():
+            if not vk_func.is_required() or vk_func.is_global_func():
+                continue
+            if vk_func.needs_thunk() and not vk_func.needs_private_thunk():
                 continue
 
             if vk_func.is_core_func():
                 f.write("{0};\n".format(vk_func.prototype("WINAPI", prefix="wine_")))
             else:
                 f.write("{0};\n".format(vk_func.prototype("WINAPI", prefix="wine_", postfix="DECLSPEC_HIDDEN")))
+        f.write("\n")
+
+        f.write("/* Private thunks */\n")
+        for vk_func in self.registry.funcs.values():
+            if vk_func.needs_private_thunk():
+                f.write("{0};\n".format(vk_func.prototype(prefix="thunk_", postfix="DECLSPEC_HIDDEN")))
         f.write("\n")
 
         for struct in self.host_structs:

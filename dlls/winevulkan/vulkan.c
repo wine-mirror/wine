@@ -1271,6 +1271,62 @@ void WINAPI wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(VkPhysicalDevice 
     properties->externalFenceFeatures = 0;
 }
 
+void WINAPI wine_vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceExternalBufferInfo *buffer_info, VkExternalBufferProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, buffer_info, properties);
+    memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
+}
+
+void WINAPI wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceExternalBufferInfo *buffer_info, VkExternalBufferProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, buffer_info, properties);
+    memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
+}
+
+VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceImageFormatInfo2 *format_info, VkImageFormatProperties2 *properties)
+{
+    VkExternalImageFormatProperties *external_image_properties;
+    VkResult res;
+
+    TRACE("%p, %p, %p\n", phys_dev, format_info, properties);
+
+    res = thunk_vkGetPhysicalDeviceImageFormatProperties2(phys_dev, format_info, properties);
+
+    if ((external_image_properties = wine_vk_find_struct(properties, EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
+    {
+        VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
+        p->externalMemoryFeatures = 0;
+        p->exportFromImportedHandleTypes = 0;
+        p->compatibleHandleTypes = 0;
+    }
+
+    return res;
+}
+
+VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceImageFormatInfo2 *format_info, VkImageFormatProperties2 *properties)
+{
+    VkExternalImageFormatProperties *external_image_properties;
+    VkResult res;
+
+    TRACE("%p, %p, %p\n", phys_dev, format_info, properties);
+
+    res = thunk_vkGetPhysicalDeviceImageFormatProperties2KHR(phys_dev, format_info, properties);
+
+    if ((external_image_properties = wine_vk_find_struct(properties, EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
+    {
+        VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
+        p->externalMemoryFeatures = 0;
+        p->exportFromImportedHandleTypes = 0;
+        p->compatibleHandleTypes = 0;
+    }
+
+    return res;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
     TRACE("%p, %u, %p\n", hinst, reason, reserved);
