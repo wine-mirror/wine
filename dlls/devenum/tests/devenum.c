@@ -33,6 +33,7 @@
 #include "mmddk.h"
 #include "vfw.h"
 #include "dmoreg.h"
+#include "setupapi.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -122,7 +123,8 @@ static void test_devenum(IBindCtx *bind_ctx)
                 ok(hr == S_OK, "IMoniker_BindToStorage failed with error %x\n", hr);
 
                 hr = IPropertyBag_Read(prop_bag, friendly_name, &var, NULL);
-                ok(hr == S_OK, "IPropertyBag_Read failed: %#x\n", hr);
+                ok((hr == S_OK) | (hr == ERROR_KEY_DOES_NOT_EXIST),
+					"IPropertyBag_Read failed: %#x\n", hr);
 
                 if (winetest_debug > 1)
                     trace("  %s %s\n", wine_dbgstr_w(displayname), wine_dbgstr_w(V_BSTR(&var)));
