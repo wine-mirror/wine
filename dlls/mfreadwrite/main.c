@@ -545,6 +545,7 @@ failed:
 static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttributes *attributes,
         REFIID riid, void **out)
 {
+    IPropertyStore *props = NULL;
     IMFSourceResolver *resolver;
     MF_OBJECT_TYPE obj_type;
     IMFMediaSource *source;
@@ -553,9 +554,15 @@ static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttrib
     if (FAILED(hr = MFCreateSourceResolver(&resolver)))
         return hr;
 
-    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
+    if (attributes)
+        IMFAttributes_GetUnknown(attributes, &MF_SOURCE_READER_MEDIASOURCE_CONFIG, &IID_IPropertyStore,
+                (void **)&props);
+
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, props,
             &obj_type, (IUnknown **)&source);
     IMFSourceResolver_Release(resolver);
+    if (props)
+        IPropertyStore_Release(props);
     if (FAILED(hr))
         return hr;
 
@@ -566,6 +573,7 @@ static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttrib
 
 static HRESULT create_source_reader_from_url(const WCHAR *url, IMFAttributes *attributes, REFIID riid, void **out)
 {
+    IPropertyStore *props = NULL;
     IMFSourceResolver *resolver;
     IUnknown *object = NULL;
     MF_OBJECT_TYPE obj_type;
@@ -575,7 +583,11 @@ static HRESULT create_source_reader_from_url(const WCHAR *url, IMFAttributes *at
     if (FAILED(hr = MFCreateSourceResolver(&resolver)))
         return hr;
 
-    hr = IMFSourceResolver_CreateObjectFromURL(resolver, url, MF_RESOLUTION_MEDIASOURCE, NULL, &obj_type,
+    if (attributes)
+        IMFAttributes_GetUnknown(attributes, &MF_SOURCE_READER_MEDIASOURCE_CONFIG, &IID_IPropertyStore,
+                (void **)&props);
+
+    hr = IMFSourceResolver_CreateObjectFromURL(resolver, url, MF_RESOLUTION_MEDIASOURCE, props, &obj_type,
             &object);
     if (SUCCEEDED(hr))
     {
@@ -583,7 +595,7 @@ static HRESULT create_source_reader_from_url(const WCHAR *url, IMFAttributes *at
         {
             case MF_OBJECT_BYTESTREAM:
                 hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, (IMFByteStream *)object, NULL,
-                        MF_RESOLUTION_MEDIASOURCE, NULL, &obj_type, (IUnknown **)&source);
+                        MF_RESOLUTION_MEDIASOURCE, props, &obj_type, (IUnknown **)&source);
                 break;
             case MF_OBJECT_MEDIASOURCE:
                 source = (IMFMediaSource *)object;
@@ -597,6 +609,8 @@ static HRESULT create_source_reader_from_url(const WCHAR *url, IMFAttributes *at
     }
 
     IMFSourceResolver_Release(resolver);
+    if (props)
+        IPropertyStore_Release(props);
     if (FAILED(hr))
         return hr;
 
