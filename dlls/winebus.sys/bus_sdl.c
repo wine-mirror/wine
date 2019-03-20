@@ -38,6 +38,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ddk/hidtypes.h"
@@ -106,6 +107,7 @@ MAKE_FUNCPTR(SDL_HapticRunEffect);
 MAKE_FUNCPTR(SDL_HapticStopAll);
 MAKE_FUNCPTR(SDL_JoystickIsHaptic);
 MAKE_FUNCPTR(SDL_memset);
+MAKE_FUNCPTR(SDL_GameControllerAddMapping);
 #endif
 static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
@@ -890,9 +892,14 @@ static void process_device_event(SDL_Event *event)
         set_mapped_report_from_event(event);
 }
 
+typedef struct _thread_args {
+    HANDLE event;
+    UNICODE_STRING *registry_path;
+} thread_arguments;
+
 static DWORD CALLBACK deviceloop_thread(void *args)
 {
-    HANDLE init_done = args;
+    thread_arguments *thread_args = args;
     SDL_Event event;
 
     if (pSDL_Init(SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC) < 0)
@@ -904,7 +911,58 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     pSDL_JoystickEventState(SDL_ENABLE);
     pSDL_GameControllerEventState(SDL_ENABLE);
 
-    SetEvent(init_done);
+    /* Process mappings */
+    if (pSDL_GameControllerAddMapping != NULL)
+    {
+        HANDLE key;
+        OBJECT_ATTRIBUTES attr;
+        WCHAR buffer[MAX_PATH];
+        UNICODE_STRING regpath = {0, sizeof(buffer), buffer};
+        static const WCHAR szPath[] = {'\\','m','a','p',0};
+
+        RtlCopyUnicodeString(&regpath, thread_args->registry_path);
+        RtlAppendUnicodeToString(&regpath, szPath);
+        InitializeObjectAttributes(&attr, &regpath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+        if (NtOpenKey(&key, KEY_ALL_ACCESS, &attr) == STATUS_SUCCESS)
+        {
+            DWORD index = 0;
+            CHAR *buffer = NULL;
+            DWORD buffer_len = 0;
+            LSTATUS rc;
+
+            do {
+                CHAR name[255];
+                DWORD name_len;
+                DWORD type;
+                DWORD data_len = buffer_len;
+
+                name_len = sizeof(name);
+                rc = RegEnumValueA(key, index, name, &name_len, NULL, &type, (LPBYTE)buffer, &data_len);
+                if (rc == ERROR_MORE_DATA || buffer == NULL)
+                {
+                    if (buffer)
+                        buffer = HeapReAlloc(GetProcessHeap(), 0, buffer, data_len);
+                    else
+                        buffer = HeapAlloc(GetProcessHeap(), 0, data_len);
+                    buffer_len = data_len;
+
+                    name_len = sizeof(name);
+                    rc = RegEnumValueA(key, index, name, &name_len, NULL, &type, (LPBYTE)buffer, &data_len);
+                }
+
+                if (rc == STATUS_SUCCESS)
+                {
+                    TRACE("Setting mapping %s...\n",debugstr_an(buffer,29));
+                    pSDL_GameControllerAddMapping(buffer);
+                    index ++;
+                }
+            } while (rc == STATUS_SUCCESS);
+            HeapFree(GetProcessHeap(), 0, buffer);
+            NtClose(key);
+        }
+    }
+
+    SetEvent(thread_args->event);
 
     while (1)
         while (pSDL_WaitEvent(&event) != 0)
@@ -926,6 +984,7 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
 
     HANDLE events[2];
     DWORD result;
+    thread_arguments args;
 
     TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
     if (sdl_handle == NULL)
@@ -969,6 +1028,7 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         LOAD_FUNCPTR(SDL_HapticStopAll);
         LOAD_FUNCPTR(SDL_JoystickIsHaptic);
         LOAD_FUNCPTR(SDL_memset);
+        LOAD_FUNCPTR(SDL_GameControllerAddMapping);
 #undef LOAD_FUNCPTR
         pSDL_JoystickGetProduct = wine_dlsym(sdl_handle, "SDL_JoystickGetProduct", NULL, 0);
         pSDL_JoystickGetProductVersion = wine_dlsym(sdl_handle, "SDL_JoystickGetProductVersion", NULL, 0);
@@ -983,7 +1043,9 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
 
     if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
         goto error;
-    if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, events[0], 0, NULL)))
+    args.event = events[0];
+    args.registry_path = registry_path;
+    if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, &args, 0, NULL)))
     {
         CloseHandle(events[0]);
         goto error;
