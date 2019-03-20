@@ -85,45 +85,50 @@ EXT_BLOCK_SIZE = 1000
 
 BLACKLISTED_EXTENSIONS = [
     # Instance extensions
-    "VK_EXT_debug_utils",
-    "VK_EXT_validation_features",
-    "VK_EXT_validation_flags",
-    "VK_KHR_display",
-    "VK_KHR_get_surface_capabilities2",
-    "VK_KHR_surface_protected_capabilities",
-    "VK_NV_external_memory_capabilities",
-
-    # Device extensions
-    "VK_AMD_display_native_hdr",
-    "VK_AMD_memory_overallocation_behavior",
+    "VK_EXT_debug_report",
     # Handling of VK_EXT_debug_report requires some consideration. The win32
     # loader already provides it for us and it is somewhat usable. If we add
     # plumbing down to the native layer, we will get each message twice as we
     # use 2 loaders (win32+native), but we may get output from the driver.
     # In any case callback conversion is required.
+    "VK_EXT_debug_utils",
+    "VK_EXT_validation_features",
+    "VK_EXT_validation_flags",
+    "VK_KHR_display", # Needs WSI work.
+    "VK_KHR_get_surface_capabilities2",
+    "VK_KHR_surface_protected_capabilities",
+
+    # Device extensions
+    "VK_AMD_display_native_hdr",
     "VK_EXT_calibrated_timestamps",
-    "VK_EXT_debug_report",
+    "VK_AMD_memory_overallocation_behavior",
     "VK_EXT_display_control", # Requires VK_EXT_display_surface_counter
-    "VK_EXT_external_memory_dma_buf", # Linux specific
+    "VK_EXT_external_memory_host",
     "VK_EXT_full_screen_exclusive",
     "VK_EXT_hdr_metadata", # Needs WSI work.
-    "VK_EXT_image_drm_format_modifier",
     "VK_EXT_memory_priority",
     "VK_EXT_pipeline_creation_feedback",
     "VK_EXT_ycbcr_image_arrays",
     "VK_GOOGLE_display_timing",
-    "VK_KHR_display", # Needs WSI work.
-    "VK_KHR_external_fence",
-    "VK_KHR_external_fence_fd",
     "VK_KHR_external_fence_win32",
-    "VK_KHR_external_memory",
-    "VK_KHR_external_semaphore",
+    "VK_KHR_external_memory_win32",
+    "VK_KHR_external_semaphore_win32",
     "VK_KHR_shader_float16_int8",
     # Relates to external_semaphore and needs type conversions in bitflags.
     "VK_KHR_shared_presentable_image", # Needs WSI work.
     "VK_KHR_win32_keyed_mutex",
     "VK_NV_cooperative_matrix",
     "VK_NV_dedicated_allocation_image_aliasing",
+
+    # Extensions for other platforms
+    "VK_EXT_external_memory_dma_buf",
+    "VK_EXT_image_drm_format_modifier",
+    "VK_KHR_external_fence_fd",
+    "VK_KHR_external_memory_fd",
+    "VK_KHR_external_semaphore_fd",
+
+    # Deprecated extensions
+    "VK_NV_external_memory_capabilities",
     "VK_NV_external_memory_win32",
 ]
 
