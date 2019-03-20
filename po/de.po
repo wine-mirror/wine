@@ -11058,9 +11058,13 @@ msgstr ""
 "aus. Sie können sie nicht zusammen verwenden."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "Der angegebene MIDI-Anschluss wird bereits verwendet. Warten Sie, bis der "
 "Anschluss frei ist, und versuchen Sie es erneut."
@@ -11079,9 +11083,13 @@ msgid "An error occurred with the specified port."
 msgstr "Es ist ein Fehler mit dem angegebenen Anschluss aufgetreten."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Alle Multimediazeitgeber werden von anderen Anwendungen verwendet. Beenden "
 "Sie eine dieser Anwendungen, und versuchen Sie es erneut."

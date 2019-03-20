@@ -11188,9 +11188,13 @@ msgstr ""
 "صيغة التوقيت في نقطة الاغنية وفي SMPTE متطابقة ، ولا يمكنك استخدامهما معًا."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr "منفذ المقطوعات مستخدم بالفعل ، انتظر حتى تحرر ثم جرب مجددًا"
 
 #: winmm.rc:131
@@ -11206,9 +11210,13 @@ msgid "An error occurred with the specified port."
 msgstr "حدث خطأ في المنفذ المحدد."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "جميع مؤقتات الوسائط مستخدمة بواسطة تطبيقات أخرى . اخرج من تلك التطبيقات ثم "
 "حاول مجددًا."

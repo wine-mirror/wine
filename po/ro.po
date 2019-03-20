@@ -11205,9 +11205,13 @@ msgstr ""
 "puteți utiliza împreună."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "Portul MIDI specificat este deja utilizat. Așteptați până când va fi liber, "
 "apoi încercați din nou."
@@ -11225,9 +11229,13 @@ msgid "An error occurred with the specified port."
 msgstr "A apărut o eroare la portul specificat."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Toate cronometrele multimedia sunt utilizate de alte aplicații. Închideți "
 "una dintre aceste aplicații, apoi încercați din nou."

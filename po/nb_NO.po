@@ -11023,9 +11023,13 @@ msgid ""
 msgstr "Tidsformatet til \"song pointer\" og SMPTE kan ikke brukes sammen."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "Den oppgitte MIDI-porten er allerede i bruk. Vent til den er ledig og prøv "
 "igjen."
@@ -11043,9 +11047,13 @@ msgid "An error occurred with the specified port."
 msgstr "En feil oppstod med den oppgitte porten."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Alle multimediatidtakere brukes av andre programmer. Avslutt ett av disse "
 "programmene og prøv igjen."

@@ -11112,9 +11112,13 @@ msgid ""
 msgstr "「歌曲指標」的時間格式和 SMPTE 彼此互斥。您無法一起使用它們。"
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr "指定的 MIDI 通訊埠已在使用中。等到它可用時；然後再試一次。"
 
 #: winmm.rc:131
@@ -11130,9 +11134,13 @@ msgid "An error occurred with the specified port."
 msgstr "指定的通訊埠發生了錯誤。"
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "所有多媒體計時器正被其他應用程式使用中。離開其中某一個應用程式；然後再試一"
 "次。"

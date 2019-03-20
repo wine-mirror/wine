@@ -11283,9 +11283,13 @@ msgstr ""
 "Nem használhatja együtt ezeket."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "A megadott MIDI port már foglalt. Várjon a felszabadulásáig, azután próbálja "
 "újból."
@@ -11303,9 +11307,13 @@ msgid "An error occurred with the specified port."
 msgstr "Egy hiba keletkezett a megadott porton."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Minden multimédia időzítőt egyéb alkalmazások foglalják le. Lépjen ki "
 "egyikből, azután próálja újból."

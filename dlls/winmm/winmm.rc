@@ -124,12 +124,12 @@ MCIERR_FILE_READ, 		"Cannot read the specified file. Make sure the file is still
 MCIERR_FILE_WRITE, 		"Cannot write to the specified file. Make sure you have enough disk space or are still connected to the network."
 MCIERR_SEQ_DIV_INCOMPATIBLE, 	"The time formats of the ""song pointer"" and SMPTE are mutually exclusive. You can't use them together."
 MCIERR_SEQ_NOMIDIPRESENT, 	"The system has no installed MIDI devices. Use the Drivers option from the Control Panel to install a MIDI driver."
-MCIERR_SEQ_PORT_INUSE, 		"The specified MIDI port is already in use. Wait until it is free; then try again."
+MCIERR_SEQ_PORT_INUSE, 		"The specified MIDI port is already in use. Wait until it is free, and then try again."
 MCIERR_SEQ_PORT_MAPNODEVICE, 	"The current MIDI Mapper setup refers to a MIDI device that is not installed on the system."
 MCIERR_SEQ_PORT_MISCERROR, 	"An error occurred with the specified port."
 MCIERR_SEQ_PORT_NONEXISTENT, 	"The specified MIDI device is not installed on the system. Use the Drivers option from the Control Panel to install a MIDI device."
 MCIERR_SEQ_PORTUNSPECIFIED, 	"The system doesn't have a current MIDI port specified."
-MCIERR_SEQ_TIMER, 		"All multimedia timers are being used by other applications. Quit one of these applications; then, try again."
+MCIERR_SEQ_TIMER, 		"All multimedia timers are being used by other applications. Quit one of these applications, and then try again."
 
 /* mixer UI */
 IDS_MAPPER_NAME,		"Wine Sound Mapper"

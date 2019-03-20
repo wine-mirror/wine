@@ -10966,9 +10966,13 @@ msgstr ""
 "다."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "저정한 MIDI 포트는 이미 사용 중입니다. 사용할 수 있을 때까지 기다른 다음 다"
 "시 시도하십시오."
@@ -10986,9 +10990,13 @@ msgid "An error occurred with the specified port."
 msgstr "지정한 포트에 오류가 발생했습니다."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "모든 멀티미디어 타이머는 다른 프로그램에서 사용되고 있습니다. 이들 프로그램 "
 "중 하나를 종료한 다음 다시 시도하십시오."

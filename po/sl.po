@@ -11319,9 +11319,13 @@ msgid ""
 msgstr "Sočasna uporaba oblik zapisa časa \"song-pointer\" in SMPTE ni mogoča."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "Navedena MIDI naprava je že v uporabi. Počakajte, da bo prosta, in poskusite "
 "znova."
@@ -11339,9 +11343,13 @@ msgid "An error occurred with the specified port."
 msgstr "Na navedenih vratih je prišlo do napake."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Vse predstavne števce uporabljajo drugi programi. Zaprite enega od teh "
 "programov in poskusite znova."

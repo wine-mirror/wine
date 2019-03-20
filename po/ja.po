@@ -10993,9 +10993,13 @@ msgstr ""
 "「ソングポインタ」とSMPTEの時間フォーマットを同時に使用することはできません。"
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "指定されたMIDIポートは使用中です。MIDIポートが開放されるまで待ってからやり直"
 "して下さい。"
@@ -11014,9 +11018,13 @@ msgid "An error occurred with the specified port."
 msgstr "指定されたポートでエラーが発生しました。"
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "全てのマルチメディアタイマは他のアプリケーションによって使用されています。タ"
 "イマを使用しているアプリケーションを一つ終了してからやり直して下さい。"

@@ -10897,9 +10897,13 @@ msgstr ""
 "kartu."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "Nurodytas MIDI prievadas jau naudojamas. Palaukite, kol jis bus laisvas ir "
 "mėginkite vėl."
@@ -10917,9 +10921,13 @@ msgid "An error occurred with the specified port."
 msgstr "Įvyko klaida su nurodytu prievadu."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Visi įvairialypės terpės laikmačiai yra naudojami kitų programų. Išeikite iš "
 "vienos tokios programos ir mėginkite vėl."
