@@ -4,7 +4,7 @@
 #@ stub ConfigCiFinalPolicy
 #@ stub ConfigCiPackageFamilyNameCheck
 @ stdcall CryptCATAdminAcquireContext(ptr ptr long)
-#@ stub CryptCATAdminAcquireContext2
+@ stdcall CryptCATAdminAcquireContext2(ptr ptr wstr ptr long)
 @ stdcall CryptCATAdminAddCatalog(long wstr wstr long)
 @ stdcall CryptCATAdminCalcHashFromFileHandle(long ptr ptr long)
 #@ stub CryptCATAdminCalcHashFromFileHandle2
