@@ -24,7 +24,9 @@
 #define VK_NO_PROTOTYPES
 #define VKD3D_NO_VULKAN_H
 #define VKD3D_NO_WIN32_TYPES
+#ifndef USE_WIN32_VULKAN
 #define WINE_VK_HOST
+#endif
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -42,6 +44,34 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d12);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
+
+#ifdef USE_WIN32_VULKAN
+
+/* FIXME: We should unload vulkan-1.dll. */
+static PFN_vkGetInstanceProcAddr load_vulkan(void)
+{
+    HMODULE vulkan = LoadLibraryA("vulkan-1.dll");
+    return (void *)GetProcAddress(vulkan, "vkGetInstanceProcAddr");
+}
+
+#else
+
+static PFN_vkGetInstanceProcAddr load_vulkan(void)
+{
+    const struct vulkan_funcs *vk_funcs;
+    HDC hdc;
+
+    hdc = GetDC(0);
+    vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
+    ReleaseDC(0, hdc);
+
+    if (vk_funcs)
+        return (PFN_vkGetInstanceProcAddr)vk_funcs->p_vkGetInstanceProcAddr;
+
+    return NULL;
+}
+
+#endif  /* USE_WIN32_VULKAN */
 
 HRESULT WINAPI D3D12GetDebugInterface(REFIID iid, void **debug)
 {
@@ -111,17 +141,6 @@ static HRESULT d3d12_join_thread(void *handle)
     return ret == WAIT_OBJECT_0 ? S_OK : E_FAIL;
 }
 
-static const struct vulkan_funcs *get_vk_funcs(void)
-{
-    const struct vulkan_funcs *vk_funcs;
-    HDC hdc;
-
-    hdc = GetDC(0);
-    vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
-    ReleaseDC(0, hdc);
-    return vk_funcs;
-}
-
 static HRESULT d3d12_get_adapter(IWineDXGIAdapter **wine_adapter, IUnknown *adapter)
 {
     IDXGIAdapter *dxgi_adapter = NULL;
@@ -157,20 +176,25 @@ done:
     return hr;
 }
 
-static BOOL check_vk_instance_extension(const struct vulkan_funcs *vk_funcs, const char *name)
+static BOOL check_vk_instance_extension(VkInstance vk_instance,
+        PFN_vkGetInstanceProcAddr pfn_vkGetInstanceProcAddr, const char *name)
 {
+    PFN_vkEnumerateInstanceExtensionProperties pfn_vkEnumerateInstanceExtensionProperties;
     VkExtensionProperties *properties;
     BOOL ret = FALSE;
     unsigned int i;
     uint32_t count;
 
-    if (vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &count, NULL) < 0)
+    pfn_vkEnumerateInstanceExtensionProperties
+            = (void *)pfn_vkGetInstanceProcAddr(vk_instance, "vkEnumerateInstanceExtensionProperties");
+
+    if (pfn_vkEnumerateInstanceExtensionProperties(NULL, &count, NULL) < 0)
         return FALSE;
 
     if (!(properties = heap_calloc(count, sizeof(*properties))))
         return FALSE;
 
-    if (vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &count, properties) >= 0)
+    if (pfn_vkEnumerateInstanceExtensionProperties(NULL, &count, properties) >= 0)
     {
         for (i = 0; i < count; ++i)
         {
@@ -187,7 +211,7 @@ static BOOL check_vk_instance_extension(const struct vulkan_funcs *vk_funcs, con
 }
 
 static VkPhysicalDevice d3d12_get_vk_physical_device(struct vkd3d_instance *instance,
-        const struct vulkan_funcs *vk_funcs, const struct wine_dxgi_adapter_info *adapter_info)
+        PFN_vkGetInstanceProcAddr pfn_vkGetInstanceProcAddr, const struct wine_dxgi_adapter_info *adapter_info)
 {
     PFN_vkGetPhysicalDeviceProperties2 pfn_vkGetPhysicalDeviceProperties2 = NULL;
     PFN_vkGetPhysicalDeviceProperties pfn_vkGetPhysicalDeviceProperties;
@@ -204,11 +228,11 @@ static VkPhysicalDevice d3d12_get_vk_physical_device(struct vkd3d_instance *inst
 
     vk_instance = vkd3d_instance_get_vk_instance(instance);
 
-    pfn_vkEnumeratePhysicalDevices = vk_funcs->p_vkGetInstanceProcAddr(vk_instance, "vkEnumeratePhysicalDevices");
+    pfn_vkEnumeratePhysicalDevices = (void *)pfn_vkGetInstanceProcAddr(vk_instance, "vkEnumeratePhysicalDevices");
 
-    pfn_vkGetPhysicalDeviceProperties = vk_funcs->p_vkGetInstanceProcAddr(vk_instance, "vkGetPhysicalDeviceProperties");
-    if (check_vk_instance_extension(vk_funcs, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
-        pfn_vkGetPhysicalDeviceProperties2 = vk_funcs->p_vkGetInstanceProcAddr(vk_instance, "vkGetPhysicalDeviceProperties2KHR");
+    pfn_vkGetPhysicalDeviceProperties = (void *)pfn_vkGetInstanceProcAddr(vk_instance, "vkGetPhysicalDeviceProperties");
+    if (check_vk_instance_extension(vk_instance, pfn_vkGetInstanceProcAddr, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+        pfn_vkGetPhysicalDeviceProperties2 = (void *)pfn_vkGetInstanceProcAddr(vk_instance, "vkGetPhysicalDeviceProperties2KHR");
 
     if ((vr = pfn_vkEnumeratePhysicalDevices(vk_instance, &count, NULL)) < 0)
     {
@@ -279,9 +303,9 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
 {
     struct vkd3d_optional_instance_extensions_info optional_extensions_info;
     struct vkd3d_instance_create_info instance_create_info;
+    PFN_vkGetInstanceProcAddr pfn_vkGetInstanceProcAddr;
     struct vkd3d_device_create_info device_create_info;
     struct wine_dxgi_adapter_info adapter_info;
-    const struct vulkan_funcs *vk_funcs;
     struct vkd3d_instance *instance;
     IWineDXGIAdapter *wine_adapter;
     HRESULT hr;
@@ -303,9 +327,9 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     TRACE("adapter %p, minimum_feature_level %#x, iid %s, device %p.\n",
             adapter, minimum_feature_level, debugstr_guid(iid), device);
 
-    if (!(vk_funcs = get_vk_funcs()))
+    if (!(pfn_vkGetInstanceProcAddr = load_vulkan()))
     {
-        ERR_(winediag)("Failed to load Wine Vulkan driver.\n");
+        ERR_(winediag)("Failed to load Vulkan library.\n");
         return E_FAIL;
     }
 
@@ -329,8 +353,7 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     instance_create_info.pfn_create_thread = d3d12_create_thread;
     instance_create_info.pfn_join_thread = d3d12_join_thread;
     instance_create_info.wchar_size = sizeof(WCHAR);
-    instance_create_info.pfn_vkGetInstanceProcAddr
-            = (PFN_vkGetInstanceProcAddr)vk_funcs->p_vkGetInstanceProcAddr;
+    instance_create_info.pfn_vkGetInstanceProcAddr = pfn_vkGetInstanceProcAddr;
     instance_create_info.instance_extensions = instance_extensions;
     instance_create_info.instance_extension_count = ARRAY_SIZE(instance_extensions);
 
@@ -345,7 +368,7 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     device_create_info.minimum_feature_level = minimum_feature_level;
     device_create_info.instance = instance;
     device_create_info.instance_create_info = NULL;
-    device_create_info.vk_physical_device = d3d12_get_vk_physical_device(instance, vk_funcs, &adapter_info);
+    device_create_info.vk_physical_device = d3d12_get_vk_physical_device(instance, pfn_vkGetInstanceProcAddr, &adapter_info);
     device_create_info.device_extensions = device_extensions;
     device_create_info.device_extension_count = ARRAY_SIZE(device_extensions);
     device_create_info.parent = (IUnknown *)wine_adapter;
