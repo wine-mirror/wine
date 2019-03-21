@@ -1398,6 +1398,1132 @@ interface IHTMLCSSStyleDeclaration : IDispatch
     HRESULT msTransformOrigin([out, retval] BSTR *p);
 }
 
+#define WINE_IHTMLCSSSTYLEDECLARATION_DISPINTERFACE_DECL                \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LENGTH)]               \
+    long length();                                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PARENTRULE)]           \
+    VARIANT parentRule();                                               \
+                                                                        \
+    [id(DISPID_IHTMLCSSSTYLEDECLARATION_GETPROPERTYVALUE)]              \
+    BSTR getPropertyValue([in] BSTR bstrPropertyName);                  \
+                                                                        \
+    [id(DISPID_IHTMLCSSSTYLEDECLARATION_GETPROPERTYPRIORITY)]           \
+    BSTR getPropertyPriority([in] BSTR bstrPropertyName);               \
+                                                                        \
+    [id(DISPID_IHTMLCSSSTYLEDECLARATION_REMOVEPROPERTY)]                \
+    BSTR removeProperty([in] BSTR bstrPropertyName);                    \
+                                                                        \
+    [id(DISPID_IHTMLCSSSTYLEDECLARATION_SETPROPERTY)]                   \
+    void setProperty(                                                   \
+        [in] BSTR bstrPropertyName,                                     \
+        [in] VARIANT *pvarPropertyValue,                                \
+        [in, defaultvalue(NULL)] VARIANT *pvarPropertyPriority);        \
+                                                                        \
+    [id(DISPID_IHTMLCSSSTYLEDECLARATION_ITEM)]                          \
+    BSTR item([in] long index);                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTFAMILY), displaybind, bindable] \
+    void fontFamily(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTFAMILY), displaybind, bindable] \
+    BSTR fontFamily();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTSTYLE), displaybind, bindable] \
+    void fontStyle(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTSTYLE), displaybind, bindable] \
+    BSTR fontStyle();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTVARIANT), displaybind, bindable] \
+    void fontVariant(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTVARIANT), displaybind, bindable] \
+    BSTR fontVariant();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTWEIGHT), displaybind, bindable] \
+    void fontWeight(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTWEIGHT), displaybind, bindable] \
+    BSTR fontWeight();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTSIZE), displaybind, bindable] \
+    void fontSize(VARIANT v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTSIZE), displaybind, bindable] \
+    VARIANT fontSize();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONT), displaybind, bindable, nonbrowsable] \
+    void font(BSTR v);                                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONT), displaybind, bindable, nonbrowsable] \
+    BSTR font();                                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_COLOR), displaybind, bindable] \
+    void color(VARIANT v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_COLOR), displaybind, bindable] \
+    VARIANT color();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUND), displaybind, bindable, nonbrowsable] \
+    void background(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUND), displaybind, bindable, nonbrowsable] \
+    BSTR background();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDCOLOR), displaybind, bindable] \
+    void backgroundColor(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDCOLOR), displaybind, bindable] \
+    VARIANT backgroundColor();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDIMAGE), displaybind, bindable] \
+    void backgroundImage(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDIMAGE), displaybind, bindable] \
+    BSTR backgroundImage();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDREPEAT), displaybind, bindable] \
+    void backgroundRepeat(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDREPEAT), displaybind, bindable] \
+    BSTR backgroundRepeat();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDATTACHMENT), displaybind, bindable] \
+    void backgroundAttachment(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDATTACHMENT), displaybind, bindable] \
+    BSTR backgroundAttachment();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITION), displaybind, bindable] \
+    void backgroundPosition(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITION), displaybind, bindable] \
+    BSTR backgroundPosition();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONX), displaybind, bindable] \
+    void backgroundPositionX(VARIANT v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONX), displaybind, bindable] \
+    VARIANT backgroundPositionX();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONY), displaybind, bindable] \
+    void backgroundPositionY(VARIANT v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONY), displaybind, bindable] \
+    VARIANT backgroundPositionY();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_WORDSPACING), displaybind, bindable] \
+    void wordSpacing(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_WORDSPACING), displaybind, bindable] \
+    VARIANT wordSpacing();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LETTERSPACING), displaybind, bindable] \
+    void letterSpacing(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LETTERSPACING), displaybind, bindable] \
+    VARIANT letterSpacing();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTDECORATION), displaybind, bindable] \
+    void textDecoration(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTDECORATION), displaybind, bindable] \
+    BSTR textDecoration();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_VERTICALALIGN), displaybind, bindable] \
+    void verticalAlign(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_VERTICALALIGN), displaybind, bindable] \
+    VARIANT verticalAlign();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTTRANSFORM), displaybind, bindable] \
+    void textTransform(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTTRANSFORM), displaybind, bindable] \
+    BSTR textTransform();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTALIGN), displaybind, bindable] \
+    void textAlign(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTALIGN), displaybind, bindable] \
+    BSTR textAlign();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTINDENT), displaybind, bindable] \
+    void textIndent(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTINDENT), displaybind, bindable] \
+    VARIANT textIndent();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LINEHEIGHT), displaybind, bindable] \
+    void lineHeight(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LINEHEIGHT), displaybind, bindable] \
+    VARIANT lineHeight();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGINTOP), displaybind, bindable] \
+    void marginTop(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGINTOP), displaybind, bindable] \
+    VARIANT marginTop();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGINRIGHT), displaybind, bindable] \
+    void marginRight(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGINRIGHT), displaybind, bindable] \
+    VARIANT marginRight();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGINBOTTOM), displaybind, bindable] \
+    void marginBottom(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGINBOTTOM), displaybind, bindable] \
+    VARIANT marginBottom();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGINLEFT), displaybind, bindable] \
+    void marginLeft(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGINLEFT), displaybind, bindable] \
+    VARIANT marginLeft();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGIN), displaybind, bindable, nonbrowsable] \
+    void margin(BSTR v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARGIN), displaybind, bindable, nonbrowsable] \
+    BSTR margin();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGTOP), displaybind, bindable] \
+    void paddingTop(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGTOP), displaybind, bindable] \
+    VARIANT paddingTop();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGRIGHT), displaybind, bindable] \
+    void paddingRight(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGRIGHT), displaybind, bindable] \
+    VARIANT paddingRight();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGBOTTOM), displaybind, bindable] \
+    void paddingBottom(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGBOTTOM), displaybind, bindable] \
+    VARIANT paddingBottom();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGLEFT), displaybind, bindable] \
+    void paddingLeft(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDINGLEFT), displaybind, bindable] \
+    VARIANT paddingLeft();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDING), displaybind, bindable, nonbrowsable] \
+    void padding(BSTR v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PADDING), displaybind, bindable, nonbrowsable] \
+    BSTR padding();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDER), displaybind, bindable, nonbrowsable] \
+    void border(BSTR v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDER), displaybind, bindable, nonbrowsable] \
+    BSTR border();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOP), displaybind, bindable] \
+    void borderTop(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOP), displaybind, bindable] \
+    BSTR borderTop();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHT), displaybind, bindable] \
+    void borderRight(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHT), displaybind, bindable] \
+    BSTR borderRight();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOM), displaybind, bindable] \
+    void borderBottom(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOM), displaybind, bindable] \
+    BSTR borderBottom();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFT), displaybind, bindable] \
+    void borderLeft(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFT), displaybind, bindable] \
+    BSTR borderLeft();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERCOLOR), displaybind, bindable] \
+    void borderColor(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERCOLOR), displaybind, bindable] \
+    BSTR borderColor();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPCOLOR), displaybind, bindable] \
+    void borderTopColor(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPCOLOR), displaybind, bindable] \
+    VARIANT borderTopColor();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTCOLOR), displaybind, bindable] \
+    void borderRightColor(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTCOLOR), displaybind, bindable] \
+    VARIANT borderRightColor();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMCOLOR), displaybind, bindable] \
+    void borderBottomColor(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMCOLOR), displaybind, bindable] \
+    VARIANT borderBottomColor();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTCOLOR), displaybind, bindable] \
+    void borderLeftColor(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTCOLOR), displaybind, bindable] \
+    VARIANT borderLeftColor();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERWIDTH), displaybind, bindable] \
+    void borderWidth(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERWIDTH), displaybind, bindable] \
+    BSTR borderWidth();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPWIDTH), displaybind, bindable] \
+    void borderTopWidth(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPWIDTH), displaybind, bindable] \
+    VARIANT borderTopWidth();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTWIDTH), displaybind, bindable] \
+    void borderRightWidth(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTWIDTH), displaybind, bindable] \
+    VARIANT borderRightWidth();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMWIDTH), displaybind, bindable] \
+    void borderBottomWidth(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMWIDTH), displaybind, bindable] \
+    VARIANT borderBottomWidth();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTWIDTH), displaybind, bindable] \
+    void borderLeftWidth(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTWIDTH), displaybind, bindable] \
+    VARIANT borderLeftWidth();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERSTYLE), displaybind, bindable] \
+    void borderStyle(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERSTYLE), displaybind, bindable] \
+    BSTR borderStyle();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPSTYLE), displaybind, bindable] \
+    void borderTopStyle(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPSTYLE), displaybind, bindable] \
+    BSTR borderTopStyle();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTSTYLE), displaybind, bindable] \
+    void borderRightStyle(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRIGHTSTYLE), displaybind, bindable] \
+    BSTR borderRightStyle();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMSTYLE), displaybind, bindable] \
+    void borderBottomStyle(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMSTYLE), displaybind, bindable] \
+    BSTR borderBottomStyle();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTSTYLE), displaybind, bindable] \
+    void borderLeftStyle(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERLEFTSTYLE), displaybind, bindable] \
+    BSTR borderLeftStyle();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_WIDTH), displaybind, bindable] \
+    void width(VARIANT v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_WIDTH), displaybind, bindable] \
+    VARIANT width();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_HEIGHT), displaybind, bindable] \
+    void height(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_HEIGHT), displaybind, bindable] \
+    VARIANT height();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STYLEFLOAT), displaybind, bindable] \
+    void styleFloat(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STYLEFLOAT), displaybind, bindable] \
+    BSTR styleFloat();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLEAR), displaybind, bindable] \
+    void clear(BSTR v);                                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLEAR), displaybind, bindable] \
+    BSTR clear();                                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_DISPLAY), displaybind, bindable] \
+    void display(BSTR v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_DISPLAY), displaybind, bindable] \
+    BSTR display();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_VISIBILITY), displaybind, bindable] \
+    void visibility(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_VISIBILITY), displaybind, bindable] \
+    BSTR visibility();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLETYPE), displaybind, bindable] \
+    void listStyleType(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLETYPE), displaybind, bindable] \
+    BSTR listStyleType();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLEPOSITION), displaybind, bindable] \
+    void listStylePosition(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLEPOSITION), displaybind, bindable] \
+    BSTR listStylePosition();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLEIMAGE), displaybind, bindable] \
+    void listStyleImage(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLEIMAGE), displaybind, bindable] \
+    BSTR listStyleImage();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLE), displaybind, bindable, nonbrowsable] \
+    void listStyle(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LISTSTYLE), displaybind, bindable, nonbrowsable] \
+    BSTR listStyle();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_WHITESPACE), displaybind, bindable] \
+    void whiteSpace(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_WHITESPACE), displaybind, bindable] \
+    BSTR whiteSpace();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TOP), displaybind, bindable] \
+    void top(VARIANT v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TOP), displaybind, bindable] \
+    VARIANT top();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LEFT), displaybind, bindable] \
+    void left(VARIANT v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LEFT), displaybind, bindable] \
+    VARIANT left();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_ZINDEX), displaybind, bindable] \
+    void zIndex(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_ZINDEX), displaybind, bindable] \
+    VARIANT zIndex();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOW), displaybind, bindable] \
+    void overflow(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOW), displaybind, bindable] \
+    BSTR overflow();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_PAGEBREAKBEFORE), displaybind, bindable] \
+    void pageBreakBefore(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PAGEBREAKBEFORE), displaybind, bindable] \
+    BSTR pageBreakBefore();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_PAGEBREAKAFTER), displaybind, bindable] \
+    void pageBreakAfter(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PAGEBREAKAFTER), displaybind, bindable] \
+    BSTR pageBreakAfter();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CSSTEXT), displaybind, bindable, nonbrowsable] \
+    void cssText(BSTR v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CSSTEXT), displaybind, bindable, nonbrowsable] \
+    BSTR cssText();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CURSOR), displaybind, bindable] \
+    void cursor(BSTR v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CURSOR), displaybind, bindable] \
+    BSTR cursor();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIP), displaybind, bindable] \
+    void clip(BSTR v);                                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIP), displaybind, bindable] \
+    BSTR clip();                                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FILTER), displaybind, bindable] \
+    void filter(BSTR v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FILTER), displaybind, bindable] \
+    BSTR filter();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TABLELAYOUT), displaybind, bindable] \
+    void tableLayout(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TABLELAYOUT), displaybind, bindable] \
+    BSTR tableLayout();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERCOLLAPSE), displaybind, bindable] \
+    void borderCollapse(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERCOLLAPSE), displaybind, bindable] \
+    BSTR borderCollapse();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_DIRECTION), displaybind, bindable] \
+    void direction(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_DIRECTION), displaybind, bindable] \
+    BSTR direction();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BEHAVIOR), displaybind, bindable] \
+    void behavior(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BEHAVIOR), displaybind, bindable] \
+    BSTR behavior();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_POSITION), displaybind, bindable] \
+    void position(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_POSITION), displaybind, bindable] \
+    BSTR position();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_UNICODEBIDI), displaybind, bindable] \
+    void unicodeBidi(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_UNICODEBIDI), displaybind, bindable] \
+    BSTR unicodeBidi();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BOTTOM), displaybind, bindable] \
+    void bottom(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BOTTOM), displaybind, bindable] \
+    VARIANT bottom();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_RIGHT), displaybind, bindable] \
+    void right(VARIANT v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_RIGHT), displaybind, bindable] \
+    VARIANT right();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_IMEMODE), displaybind, bindable] \
+    void imeMode(BSTR v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_IMEMODE), displaybind, bindable] \
+    BSTR imeMode();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_RUBYALIGN), displaybind, bindable] \
+    void rubyAlign(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_RUBYALIGN), displaybind, bindable] \
+    BSTR rubyAlign();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_RUBYPOSITION), displaybind, bindable] \
+    void rubyPosition(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_RUBYPOSITION), displaybind, bindable] \
+    BSTR rubyPosition();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_RUBYOVERHANG), displaybind, bindable] \
+    void rubyOverhang(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_RUBYOVERHANG), displaybind, bindable] \
+    BSTR rubyOverhang();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDCHAR), displaybind, bindable] \
+    void layoutGridChar(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDCHAR), displaybind, bindable] \
+    VARIANT layoutGridChar();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDLINE), displaybind, bindable] \
+    void layoutGridLine(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDLINE), displaybind, bindable] \
+    VARIANT layoutGridLine();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDMODE), displaybind, bindable] \
+    void layoutGridMode(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDMODE), displaybind, bindable] \
+    BSTR layoutGridMode();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDTYPE), displaybind, bindable] \
+    void layoutGridType(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDTYPE), displaybind, bindable] \
+    BSTR layoutGridType();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRID), displaybind, bindable, nonbrowsable] \
+    void layoutGrid(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRID), displaybind, bindable, nonbrowsable] \
+    BSTR layoutGrid();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTAUTOSPACE), displaybind, bindable] \
+    void textAutospace(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTAUTOSPACE), displaybind, bindable] \
+    BSTR textAutospace();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_WORDBREAK), displaybind, bindable] \
+    void wordBreak(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_WORDBREAK), displaybind, bindable] \
+    BSTR wordBreak();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LINEBREAK), displaybind, bindable] \
+    void lineBreak(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LINEBREAK), displaybind, bindable] \
+    BSTR lineBreak();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTJUSTIFY), displaybind, bindable] \
+    void textJustify(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTJUSTIFY), displaybind, bindable] \
+    BSTR textJustify();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTJUSTIFYTRIM), displaybind, bindable] \
+    void textJustifyTrim(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTJUSTIFYTRIM), displaybind, bindable] \
+    BSTR textJustifyTrim();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTKASHIDA), displaybind, bindable] \
+    void textKashida(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTKASHIDA), displaybind, bindable] \
+    VARIANT textKashida();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOWX), displaybind, bindable] \
+    void overflowX(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOWX), displaybind, bindable] \
+    BSTR overflowX();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOWY), displaybind, bindable] \
+    void overflowY(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOWY), displaybind, bindable] \
+    BSTR overflowY();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_ACCELERATOR), displaybind, bindable] \
+    void accelerator(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_ACCELERATOR), displaybind, bindable] \
+    BSTR accelerator();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTFLOW), displaybind, bindable] \
+    void layoutFlow(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTFLOW), displaybind, bindable] \
+    BSTR layoutFlow();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_ZOOM), displaybind, bindable] \
+    void zoom(VARIANT v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_ZOOM), displaybind, bindable] \
+    VARIANT zoom();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_WORDWRAP), displaybind, bindable] \
+    void wordWrap(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_WORDWRAP), displaybind, bindable] \
+    BSTR wordWrap();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTUNDERLINEPOSITION), displaybind, bindable] \
+    void textUnderlinePosition(BSTR v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTUNDERLINEPOSITION), displaybind, bindable] \
+    BSTR textUnderlinePosition();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARBASECOLOR), displaybind, bindable] \
+    void scrollbarBaseColor(VARIANT v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARBASECOLOR), displaybind, bindable] \
+    VARIANT scrollbarBaseColor();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARFACECOLOR), displaybind, bindable] \
+    void scrollbarFaceColor(VARIANT v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARFACECOLOR), displaybind, bindable] \
+    VARIANT scrollbarFaceColor();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBAR3DLIGHTCOLOR), displaybind, bindable] \
+    void scrollbar3dLightColor(VARIANT v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBAR3DLIGHTCOLOR), displaybind, bindable] \
+    VARIANT scrollbar3dLightColor();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARSHADOWCOLOR), displaybind, bindable] \
+    void scrollbarShadowColor(VARIANT v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARSHADOWCOLOR), displaybind, bindable] \
+    VARIANT scrollbarShadowColor();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARHIGHLIGHTCOLOR), displaybind, bindable] \
+    void scrollbarHighlightColor(VARIANT v);                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARHIGHLIGHTCOLOR), displaybind, bindable] \
+    VARIANT scrollbarHighlightColor();                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARDARKSHADOWCOLOR), displaybind, bindable] \
+    void scrollbarDarkShadowColor(VARIANT v);                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARDARKSHADOWCOLOR), displaybind, bindable] \
+    VARIANT scrollbarDarkShadowColor();                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARARROWCOLOR), displaybind, bindable] \
+    void scrollbarArrowColor(VARIANT v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARARROWCOLOR), displaybind, bindable] \
+    VARIANT scrollbarArrowColor();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARTRACKCOLOR), displaybind, bindable] \
+    void scrollbarTrackColor(VARIANT v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARTRACKCOLOR), displaybind, bindable] \
+    VARIANT scrollbarTrackColor();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_WRITINGMODE), displaybind, bindable] \
+    void writingMode(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_WRITINGMODE), displaybind, bindable] \
+    BSTR writingMode();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTALIGNLAST), displaybind, bindable] \
+    void textAlignLast(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTALIGNLAST), displaybind, bindable] \
+    BSTR textAlignLast();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTKASHIDASPACE), displaybind, bindable] \
+    void textKashidaSpace(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTKASHIDASPACE), displaybind, bindable] \
+    VARIANT textKashidaSpace();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTOVERFLOW), displaybind, bindable] \
+    void textOverflow(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTOVERFLOW), displaybind, bindable] \
+    BSTR textOverflow();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MINHEIGHT), displaybind, bindable] \
+    void minHeight(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MINHEIGHT), displaybind, bindable] \
+    VARIANT minHeight();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MSINTERPOLATIONMODE), displaybind, bindable] \
+    void msInterpolationMode(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MSINTERPOLATIONMODE), displaybind, bindable] \
+    BSTR msInterpolationMode();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MAXHEIGHT), displaybind, bindable] \
+    void maxHeight(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MAXHEIGHT), displaybind, bindable] \
+    VARIANT maxHeight();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MINWIDTH), displaybind, bindable] \
+    void minWidth(VARIANT v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MINWIDTH), displaybind, bindable] \
+    VARIANT minWidth();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MAXWIDTH), displaybind, bindable] \
+    void maxWidth(VARIANT v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MAXWIDTH), displaybind, bindable] \
+    VARIANT maxWidth();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CONTENT), displaybind, bindable] \
+    void content(BSTR v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CONTENT), displaybind, bindable] \
+    BSTR content();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CAPTIONSIDE), displaybind, bindable] \
+    void captionSide(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CAPTIONSIDE), displaybind, bindable] \
+    BSTR captionSide();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_COUNTERINCREMENT), displaybind, bindable] \
+    void counterIncrement(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_COUNTERINCREMENT), displaybind, bindable] \
+    BSTR counterIncrement();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_COUNTERRESET), displaybind, bindable] \
+    void counterReset(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_COUNTERRESET), displaybind, bindable] \
+    BSTR counterReset();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINE), displaybind, bindable] \
+    void outline(BSTR v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINE), displaybind, bindable] \
+    BSTR outline();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINEWIDTH), displaybind, bindable] \
+    void outlineWidth(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINEWIDTH), displaybind, bindable] \
+    VARIANT outlineWidth();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINESTYLE), displaybind, bindable] \
+    void outlineStyle(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINESTYLE), displaybind, bindable] \
+    BSTR outlineStyle();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINECOLOR), displaybind, bindable] \
+    void outlineColor(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINECOLOR), displaybind, bindable] \
+    VARIANT outlineColor();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BOXSIZING), displaybind, bindable] \
+    void boxSizing(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BOXSIZING), displaybind, bindable] \
+    BSTR boxSizing();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERSPACING), displaybind, bindable] \
+    void borderSpacing(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERSPACING), displaybind, bindable] \
+    BSTR borderSpacing();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_ORPHANS), displaybind, bindable] \
+    void orphans(VARIANT v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_ORPHANS), displaybind, bindable] \
+    VARIANT orphans();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_WIDOWS), displaybind, bindable] \
+    void widows(VARIANT v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_WIDOWS), displaybind, bindable] \
+    VARIANT widows();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_PAGEBREAKINSIDE), displaybind, bindable] \
+    void pageBreakInside(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_PAGEBREAKINSIDE), displaybind, bindable] \
+    BSTR pageBreakInside();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_EMPTYCELLS), displaybind, bindable] \
+    void emptyCells(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_EMPTYCELLS), displaybind, bindable] \
+    BSTR emptyCells();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MSBLOCKPROGRESSION), displaybind, bindable] \
+    void msBlockProgression(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MSBLOCKPROGRESSION), displaybind, bindable] \
+    BSTR msBlockProgression();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_QUOTES), displaybind, bindable] \
+    void quotes(BSTR v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_QUOTES), displaybind, bindable] \
+    BSTR quotes();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_ALIGNMENTBASELINE), displaybind, bindable] \
+    void alignmentBaseline(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_ALIGNMENTBASELINE), displaybind, bindable] \
+    BSTR alignmentBaseline();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BASELINESHIFT), displaybind, bindable] \
+    void baselineShift(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BASELINESHIFT), displaybind, bindable] \
+    VARIANT baselineShift();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_DOMINANTBASELINE), displaybind, bindable] \
+    void dominantBaseline(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_DOMINANTBASELINE), displaybind, bindable] \
+    BSTR dominantBaseline();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTSIZEADJUST), displaybind, bindable] \
+    void fontSizeAdjust(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTSIZEADJUST), displaybind, bindable] \
+    VARIANT fontSizeAdjust();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTSTRETCH), displaybind, bindable] \
+    void fontStretch(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FONTSTRETCH), displaybind, bindable] \
+    BSTR fontStretch();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_OPACITY), displaybind, bindable] \
+    void opacity(VARIANT v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_OPACITY), displaybind, bindable] \
+    VARIANT opacity();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPPATH), displaybind, bindable] \
+    void clipPath(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPPATH), displaybind, bindable] \
+    BSTR clipPath();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPRULE), displaybind, bindable] \
+    void clipRule(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPRULE), displaybind, bindable] \
+    BSTR clipRule();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FILL), displaybind, bindable] \
+    void fill(BSTR v);                                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FILL), displaybind, bindable] \
+    BSTR fill();                                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FILLOPACITY), displaybind, bindable] \
+    void fillOpacity(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FILLOPACITY), displaybind, bindable] \
+    VARIANT fillOpacity();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_FILLRULE), displaybind, bindable] \
+    void fillRule(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_FILLRULE), displaybind, bindable] \
+    BSTR fillRule();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_KERNING), displaybind, bindable] \
+    void kerning(VARIANT v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_KERNING), displaybind, bindable] \
+    VARIANT kerning();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARKER), displaybind, bindable] \
+    void marker(BSTR v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARKER), displaybind, bindable] \
+    BSTR marker();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARKEREND), displaybind, bindable] \
+    void markerEnd(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARKEREND), displaybind, bindable] \
+    BSTR markerEnd();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARKERMID), displaybind, bindable] \
+    void markerMid(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARKERMID), displaybind, bindable] \
+    BSTR markerMid();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARKERSTART), displaybind, bindable] \
+    void markerStart(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MARKERSTART), displaybind, bindable] \
+    BSTR markerStart();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MASK), displaybind, bindable] \
+    void mask(BSTR v);                                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MASK), displaybind, bindable] \
+    BSTR mask();                                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_POINTEREVENTS), displaybind, bindable] \
+    void pointerEvents(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_POINTEREVENTS), displaybind, bindable] \
+    BSTR pointerEvents();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STOPCOLOR), displaybind, bindable] \
+    void stopColor(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STOPCOLOR), displaybind, bindable] \
+    VARIANT stopColor();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STOPOPACITY), displaybind, bindable] \
+    void stopOpacity(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STOPOPACITY), displaybind, bindable] \
+    VARIANT stopOpacity();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKE), displaybind, bindable] \
+    void stroke(BSTR v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKE), displaybind, bindable] \
+    BSTR stroke();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEDASHARRAY), displaybind, bindable] \
+    void strokeDasharray(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEDASHARRAY), displaybind, bindable] \
+    BSTR strokeDasharray();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEDASHOFFSET), displaybind, bindable] \
+    void strokeDashoffset(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEDASHOFFSET), displaybind, bindable] \
+    VARIANT strokeDashoffset();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKELINECAP), displaybind, bindable] \
+    void strokeLinecap(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKELINECAP), displaybind, bindable] \
+    BSTR strokeLinecap();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKELINEJOIN), displaybind, bindable] \
+    void strokeLinejoin(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKELINEJOIN), displaybind, bindable] \
+    BSTR strokeLinejoin();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEMITERLIMIT), displaybind, bindable] \
+    void strokeMiterlimit(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEMITERLIMIT), displaybind, bindable] \
+    VARIANT strokeMiterlimit();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEOPACITY), displaybind, bindable] \
+    void strokeOpacity(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEOPACITY), displaybind, bindable] \
+    VARIANT strokeOpacity();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEWIDTH), displaybind, bindable] \
+    void strokeWidth(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_STROKEWIDTH), displaybind, bindable] \
+    VARIANT strokeWidth();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTANCHOR), displaybind, bindable] \
+    void textAnchor(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_TEXTANCHOR), displaybind, bindable] \
+    BSTR textAnchor();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_GLYPHORIENTATIONHORIZONTAL), displaybind, bindable] \
+    void glyphOrientationHorizontal(VARIANT v);                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_GLYPHORIENTATIONHORIZONTAL), displaybind, bindable] \
+    VARIANT glyphOrientationHorizontal();                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_GLYPHORIENTATIONVERTICAL), displaybind, bindable] \
+    void glyphOrientationVertical(VARIANT v);                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_GLYPHORIENTATIONVERTICAL), displaybind, bindable] \
+    VARIANT glyphOrientationVertical();                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRADIUS), displaybind, bindable] \
+    void borderRadius(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERRADIUS), displaybind, bindable] \
+    BSTR borderRadius();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPLEFTRADIUS), displaybind, bindable] \
+    void borderTopLeftRadius(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPLEFTRADIUS), displaybind, bindable] \
+    BSTR borderTopLeftRadius();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPRIGHTRADIUS), displaybind, bindable] \
+    void borderTopRightRadius(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERTOPRIGHTRADIUS), displaybind, bindable] \
+    BSTR borderTopRightRadius();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMRIGHTRADIUS), displaybind, bindable] \
+    void borderBottomRightRadius(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMRIGHTRADIUS), displaybind, bindable] \
+    BSTR borderBottomRightRadius();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMLEFTRADIUS), displaybind, bindable] \
+    void borderBottomLeftRadius(BSTR v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BORDERBOTTOMLEFTRADIUS), displaybind, bindable] \
+    BSTR borderBottomLeftRadius();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPTOP), displaybind, bindable, hidden] \
+    void clipTop(VARIANT v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPTOP), displaybind, bindable, hidden] \
+    VARIANT clipTop();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPRIGHT), displaybind, bindable, hidden] \
+    void clipRight(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPRIGHT), displaybind, bindable, hidden] \
+    VARIANT clipRight();                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPBOTTOM), displaybind, bindable, hidden] \
+    VARIANT clipBottom();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPLEFT), displaybind, bindable, hidden] \
+    void clipLeft(VARIANT v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CLIPLEFT), displaybind, bindable, hidden] \
+    VARIANT clipLeft();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_CSSFLOAT), displaybind, bindable] \
+    void cssFloat(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_CSSFLOAT), displaybind, bindable] \
+    BSTR cssFloat();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDCLIP), displaybind, bindable] \
+    void backgroundClip(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDCLIP), displaybind, bindable] \
+    BSTR backgroundClip();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDORIGIN), displaybind, bindable] \
+    void backgroundOrigin(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDORIGIN), displaybind, bindable] \
+    BSTR backgroundOrigin();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDSIZE), displaybind, bindable] \
+    void backgroundSize(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDSIZE), displaybind, bindable] \
+    BSTR backgroundSize();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_BOXSHADOW), displaybind, bindable] \
+    void boxShadow(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_BOXSHADOW), displaybind, bindable] \
+    BSTR boxShadow();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MSTRANSFORM), displaybind, bindable] \
+    void msTransform(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MSTRANSFORM), displaybind, bindable] \
+    BSTR msTransform();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION_MSTRANSFORMORIGIN), displaybind, bindable] \
+    void msTransformOrigin(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION_MSTRANSFORMORIGIN), displaybind, bindable] \
+    BSTR msTransformOrigin()
+
 /*****************************************************************************
  *    IHTMLCSSStyleDeclaration2 interface
  */
@@ -2093,6 +3219,1083 @@ interface IHTMLCSSStyleDeclaration2 : IDispatch
     [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONFILLMODE), displaybind, bindable]
     HRESULT animationFillMode([out, retval] BSTR *p);
 }
+
+#define WINE_IHTMLCSSSTYLEDECLARATION2_DISPINTERFACE_DECL               \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLCHAINING), displaybind, bindable] \
+    void msScrollChaining(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLCHAINING), displaybind, bindable] \
+    BSTR msScrollChaining();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMING), displaybind, bindable] \
+    void msContentZooming(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMING), displaybind, bindable] \
+    BSTR msContentZooming();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMSNAPTYPE), displaybind, bindable] \
+    void msContentZoomSnapType(BSTR v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMSNAPTYPE), displaybind, bindable] \
+    BSTR msContentZoomSnapType();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLRAILS), displaybind, bindable] \
+    void msScrollRails(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLRAILS), displaybind, bindable] \
+    BSTR msScrollRails();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMCHAINING), displaybind, bindable] \
+    void msContentZoomChaining(BSTR v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMCHAINING), displaybind, bindable] \
+    BSTR msContentZoomChaining();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPTYPE), displaybind, bindable] \
+    void msScrollSnapType(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPTYPE), displaybind, bindable] \
+    BSTR msScrollSnapType();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMLIMIT), displaybind, bindable] \
+    void msContentZoomLimit(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMLIMIT), displaybind, bindable] \
+    BSTR msContentZoomLimit();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMSNAP), displaybind, bindable] \
+    void msContentZoomSnap(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMSNAP), displaybind, bindable] \
+    BSTR msContentZoomSnap();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMSNAPPOINTS), displaybind, bindable] \
+    void msContentZoomSnapPoints(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMSNAPPOINTS), displaybind, bindable] \
+    BSTR msContentZoomSnapPoints();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMLIMITMIN), displaybind, bindable] \
+    void msContentZoomLimitMin(VARIANT v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMLIMITMIN), displaybind, bindable] \
+    VARIANT msContentZoomLimitMin();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMLIMITMAX), displaybind, bindable] \
+    void msContentZoomLimitMax(VARIANT v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSCONTENTZOOMLIMITMAX), displaybind, bindable] \
+    VARIANT msContentZoomLimitMax();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPX), displaybind, bindable] \
+    void msScrollSnapX(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPX), displaybind, bindable] \
+    BSTR msScrollSnapX();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPY), displaybind, bindable] \
+    void msScrollSnapY(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPY), displaybind, bindable] \
+    BSTR msScrollSnapY();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPPOINTSX), displaybind, bindable] \
+    void msScrollSnapPointsX(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPPOINTSX), displaybind, bindable] \
+    BSTR msScrollSnapPointsX();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPPOINTSY), displaybind, bindable] \
+    void msScrollSnapPointsY(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLSNAPPOINTSY), displaybind, bindable] \
+    BSTR msScrollSnapPointsY();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDCOLUMN), displaybind, bindable] \
+    void msGridColumn(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDCOLUMN), displaybind, bindable] \
+    VARIANT msGridColumn();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDCOLUMNALIGN), displaybind, bindable] \
+    void msGridColumnAlign(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDCOLUMNALIGN), displaybind, bindable] \
+    BSTR msGridColumnAlign();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDCOLUMNS), displaybind, bindable] \
+    void msGridColumns(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDCOLUMNS), displaybind, bindable] \
+    BSTR msGridColumns();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDCOLUMNSPAN), displaybind, bindable] \
+    void msGridColumnSpan(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDCOLUMNSPAN), displaybind, bindable] \
+    VARIANT msGridColumnSpan();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDROW), displaybind, bindable] \
+    void msGridRow(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDROW), displaybind, bindable] \
+    VARIANT msGridRow();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDROWALIGN), displaybind, bindable] \
+    void msGridRowAlign(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDROWALIGN), displaybind, bindable] \
+    BSTR msGridRowAlign();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDROWS), displaybind, bindable] \
+    void msGridRows(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDROWS), displaybind, bindable] \
+    BSTR msGridRows();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDROWSPAN), displaybind, bindable] \
+    void msGridRowSpan(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSGRIDROWSPAN), displaybind, bindable] \
+    VARIANT msGridRowSpan();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSWRAPTHROUGH), displaybind, bindable] \
+    void msWrapThrough(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSWRAPTHROUGH), displaybind, bindable] \
+    BSTR msWrapThrough();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSWRAPMARGIN), displaybind, bindable] \
+    void msWrapMargin(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSWRAPMARGIN), displaybind, bindable] \
+    VARIANT msWrapMargin();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSWRAPFLOW), displaybind, bindable] \
+    void msWrapFlow(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSWRAPFLOW), displaybind, bindable] \
+    BSTR msWrapFlow();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONNAME), displaybind, bindable] \
+    void msAnimationName(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONNAME), displaybind, bindable] \
+    BSTR msAnimationName();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONDURATION), displaybind, bindable] \
+    void msAnimationDuration(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONDURATION), displaybind, bindable] \
+    BSTR msAnimationDuration();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONTIMINGFUNCTION), displaybind, bindable] \
+    void msAnimationTimingFunction(BSTR v);                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONTIMINGFUNCTION), displaybind, bindable] \
+    BSTR msAnimationTimingFunction();                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONDELAY), displaybind, bindable] \
+    void msAnimationDelay(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONDELAY), displaybind, bindable] \
+    BSTR msAnimationDelay();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONDIRECTION), displaybind, bindable] \
+    void msAnimationDirection(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONDIRECTION), displaybind, bindable] \
+    BSTR msAnimationDirection();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONPLAYSTATE), displaybind, bindable] \
+    void msAnimationPlayState(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONPLAYSTATE), displaybind, bindable] \
+    BSTR msAnimationPlayState();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONITERATIONCOUNT), displaybind, bindable] \
+    void msAnimationIterationCount(BSTR v);                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONITERATIONCOUNT), displaybind, bindable] \
+    BSTR msAnimationIterationCount();                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATION), displaybind, bindable] \
+    void msAnimation(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATION), displaybind, bindable] \
+    BSTR msAnimation();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONFILLMODE), displaybind, bindable] \
+    void msAnimationFillMode(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSANIMATIONFILLMODE), displaybind, bindable] \
+    BSTR msAnimationFillMode();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLORINTERPOLATIONFILTERS), displaybind, bindable] \
+    void colorInterpolationFilters(BSTR v);                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLORINTERPOLATIONFILTERS), displaybind, bindable] \
+    BSTR colorInterpolationFilters();                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNCOUNT), displaybind, bindable] \
+    void columnCount(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNCOUNT), displaybind, bindable] \
+    VARIANT columnCount();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNWIDTH), displaybind, bindable] \
+    void columnWidth(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNWIDTH), displaybind, bindable] \
+    VARIANT columnWidth();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNGAP), displaybind, bindable] \
+    void columnGap(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNGAP), displaybind, bindable] \
+    VARIANT columnGap();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNFILL), displaybind, bindable] \
+    void columnFill(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNFILL), displaybind, bindable] \
+    BSTR columnFill();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNSPAN), displaybind, bindable] \
+    void columnSpan(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNSPAN), displaybind, bindable] \
+    BSTR columnSpan();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNS), displaybind, bindable, nonbrowsable] \
+    void columns(BSTR v);                                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNS), displaybind, bindable, nonbrowsable] \
+    BSTR columns();                                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULE), displaybind, bindable] \
+    void columnRule(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULE), displaybind, bindable] \
+    BSTR columnRule();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULECOLOR), displaybind, bindable] \
+    void columnRuleColor(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULECOLOR), displaybind, bindable] \
+    VARIANT columnRuleColor();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULESTYLE), displaybind, bindable] \
+    void columnRuleStyle(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULESTYLE), displaybind, bindable] \
+    BSTR columnRuleStyle();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULEWIDTH), displaybind, bindable] \
+    void columnRuleWidth(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULEWIDTH), displaybind, bindable] \
+    VARIANT columnRuleWidth();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_BREAKBEFORE), displaybind, bindable] \
+    void breakBefore(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_BREAKBEFORE), displaybind, bindable] \
+    BSTR breakBefore();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_BREAKAFTER), displaybind, bindable] \
+    void breakAfter(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_BREAKAFTER), displaybind, bindable] \
+    BSTR breakAfter();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_BREAKINSIDE), displaybind, bindable] \
+    void breakInside(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_BREAKINSIDE), displaybind, bindable] \
+    BSTR breakInside();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_FLOODCOLOR), displaybind, bindable] \
+    void floodColor(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_FLOODCOLOR), displaybind, bindable] \
+    VARIANT floodColor();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_FLOODOPACITY), displaybind, bindable] \
+    void floodOpacity(VARIANT v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_FLOODOPACITY), displaybind, bindable] \
+    VARIANT floodOpacity();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_LIGHTINGCOLOR), displaybind, bindable] \
+    void lightingColor(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_LIGHTINGCOLOR), displaybind, bindable] \
+    VARIANT lightingColor();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMITXMIN), displaybind, bindable] \
+    void msScrollLimitXMin(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMITXMIN), displaybind, bindable] \
+    VARIANT msScrollLimitXMin();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMITYMIN), displaybind, bindable] \
+    void msScrollLimitYMin(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMITYMIN), displaybind, bindable] \
+    VARIANT msScrollLimitYMin();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMITXMAX), displaybind, bindable] \
+    void msScrollLimitXMax(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMITXMAX), displaybind, bindable] \
+    VARIANT msScrollLimitXMax();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMITYMAX), displaybind, bindable] \
+    void msScrollLimitYMax(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMITYMAX), displaybind, bindable] \
+    VARIANT msScrollLimitYMax();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMIT), displaybind, bindable] \
+    void msScrollLimit(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLLIMIT), displaybind, bindable] \
+    BSTR msScrollLimit();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TEXTSHADOW), displaybind, bindable] \
+    void textShadow(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TEXTSHADOW), displaybind, bindable] \
+    BSTR textShadow();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLOWFROM), displaybind, bindable] \
+    void msFlowFrom(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLOWFROM), displaybind, bindable] \
+    BSTR msFlowFrom();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLOWINTO), displaybind, bindable] \
+    void msFlowInto(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLOWINTO), displaybind, bindable] \
+    BSTR msFlowInto();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHYPHENS), displaybind, bindable] \
+    void msHyphens(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHYPHENS), displaybind, bindable] \
+    BSTR msHyphens();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHYPHENATELIMITZONE), displaybind, bindable] \
+    void msHyphenateLimitZone(VARIANT v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHYPHENATELIMITZONE), displaybind, bindable] \
+    VARIANT msHyphenateLimitZone();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHYPHENATELIMITCHARS), displaybind, bindable] \
+    void msHyphenateLimitChars(BSTR v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHYPHENATELIMITCHARS), displaybind, bindable] \
+    BSTR msHyphenateLimitChars();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHYPHENATELIMITLINES), displaybind, bindable] \
+    void msHyphenateLimitLines(VARIANT v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHYPHENATELIMITLINES), displaybind, bindable] \
+    VARIANT msHyphenateLimitLines();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHIGHCONTRASTADJUST), displaybind, bindable] \
+    void msHighContrastAdjust(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSHIGHCONTRASTADJUST), displaybind, bindable] \
+    BSTR msHighContrastAdjust();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ENABLEBACKGROUND), displaybind, bindable] \
+    void enableBackground(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ENABLEBACKGROUND), displaybind, bindable] \
+    BSTR enableBackground();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFONTFEATURESETTINGS), displaybind, bindable] \
+    void msFontFeatureSettings(BSTR v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFONTFEATURESETTINGS), displaybind, bindable] \
+    BSTR msFontFeatureSettings();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSUSERSELECT), displaybind, bindable] \
+    void msUserSelect(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSUSERSELECT), displaybind, bindable] \
+    BSTR msUserSelect();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSOVERFLOWSTYLE), displaybind, bindable] \
+    void msOverflowStyle(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSOVERFLOWSTYLE), displaybind, bindable] \
+    BSTR msOverflowStyle();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSFORMSTYLE), displaybind, bindable] \
+    void msTransformStyle(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSFORMSTYLE), displaybind, bindable] \
+    BSTR msTransformStyle();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSBACKFACEVISIBILITY), displaybind, bindable] \
+    void msBackfaceVisibility(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSBACKFACEVISIBILITY), displaybind, bindable] \
+    BSTR msBackfaceVisibility();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSPERSPECTIVE), displaybind, bindable] \
+    void msPerspective(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSPERSPECTIVE), displaybind, bindable] \
+    VARIANT msPerspective();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSPERSPECTIVEORIGIN), displaybind, bindable] \
+    void msPerspectiveOrigin(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSPERSPECTIVEORIGIN), displaybind, bindable] \
+    BSTR msPerspectiveOrigin();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITIONPROPERTY), displaybind, bindable] \
+    void msTransitionProperty(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITIONPROPERTY), displaybind, bindable] \
+    BSTR msTransitionProperty();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITIONDURATION), displaybind, bindable] \
+    void msTransitionDuration(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITIONDURATION), displaybind, bindable] \
+    BSTR msTransitionDuration();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITIONTIMINGFUNCTION), displaybind, bindable] \
+    void msTransitionTimingFunction(BSTR v);                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITIONTIMINGFUNCTION), displaybind, bindable] \
+    BSTR msTransitionTimingFunction();                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITIONDELAY), displaybind, bindable] \
+    void msTransitionDelay(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITIONDELAY), displaybind, bindable] \
+    BSTR msTransitionDelay();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITION), displaybind, bindable] \
+    void msTransition(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITION), displaybind, bindable] \
+    BSTR msTransition();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTOUCHACTION), displaybind, bindable] \
+    void msTouchAction(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTOUCHACTION), displaybind, bindable] \
+    BSTR msTouchAction();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLTRANSLATION), displaybind, bindable] \
+    void msScrollTranslation(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSSCROLLTRANSLATION), displaybind, bindable] \
+    BSTR msScrollTranslation();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEX), displaybind, bindable] \
+    void msFlex(BSTR v);                                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEX), displaybind, bindable] \
+    BSTR msFlex();                                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXPOSITIVE), displaybind, bindable] \
+    void msFlexPositive(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXPOSITIVE), displaybind, bindable] \
+    VARIANT msFlexPositive();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXNEGATIVE), displaybind, bindable] \
+    void msFlexNegative(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXNEGATIVE), displaybind, bindable] \
+    VARIANT msFlexNegative();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXPREFERREDSIZE), displaybind, bindable] \
+    void msFlexPreferredSize(VARIANT v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXPREFERREDSIZE), displaybind, bindable] \
+    VARIANT msFlexPreferredSize();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXFLOW), displaybind, bindable] \
+    void msFlexFlow(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXFLOW), displaybind, bindable] \
+    BSTR msFlexFlow();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXDIRECTION), displaybind, bindable] \
+    void msFlexDirection(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXDIRECTION), displaybind, bindable] \
+    BSTR msFlexDirection();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXWRAP), displaybind, bindable] \
+    void msFlexWrap(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXWRAP), displaybind, bindable] \
+    BSTR msFlexWrap();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXALIGN), displaybind, bindable] \
+    void msFlexAlign(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXALIGN), displaybind, bindable] \
+    BSTR msFlexAlign();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXITEMALIGN), displaybind, bindable] \
+    void msFlexItemAlign(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXITEMALIGN), displaybind, bindable] \
+    BSTR msFlexItemAlign();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXPACK), displaybind, bindable] \
+    void msFlexPack(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXPACK), displaybind, bindable] \
+    BSTR msFlexPack();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXLINEPACK), displaybind, bindable] \
+    void msFlexLinePack(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXLINEPACK), displaybind, bindable] \
+    BSTR msFlexLinePack();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXORDER), displaybind, bindable] \
+    void msFlexOrder(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSFLEXORDER), displaybind, bindable] \
+    VARIANT msFlexOrder();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTOUCHSELECT), displaybind, bindable] \
+    void msTouchSelect(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_MSTOUCHSELECT), displaybind, bindable] \
+    BSTR msTouchSelect();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORM), displaybind, bindable] \
+    void transform(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORM), displaybind, bindable] \
+    BSTR transform();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORMORIGIN), displaybind, bindable] \
+    void transformOrigin(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORMORIGIN), displaybind, bindable] \
+    BSTR transformOrigin();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORMSTYLE), displaybind, bindable] \
+    void transformStyle(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORMSTYLE), displaybind, bindable] \
+    BSTR transformStyle();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_BACKFACEVISIBILITY), displaybind, bindable] \
+    void backfaceVisibility(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_BACKFACEVISIBILITY), displaybind, bindable] \
+    BSTR backfaceVisibility();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_PERSPECTIVE), displaybind, bindable] \
+    void perspective(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_PERSPECTIVE), displaybind, bindable] \
+    VARIANT perspective();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_PERSPECTIVEORIGIN), displaybind, bindable] \
+    void perspectiveOrigin(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_PERSPECTIVEORIGIN), displaybind, bindable] \
+    BSTR perspectiveOrigin();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITIONPROPERTY), displaybind, bindable] \
+    void transitionProperty(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITIONPROPERTY), displaybind, bindable] \
+    BSTR transitionProperty();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITIONDURATION), displaybind, bindable] \
+    void transitionDuration(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITIONDURATION), displaybind, bindable] \
+    BSTR transitionDuration();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITIONTIMINGFUNCTION), displaybind, bindable] \
+    void transitionTimingFunction(BSTR v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITIONTIMINGFUNCTION), displaybind, bindable] \
+    BSTR transitionTimingFunction();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITIONDELAY), displaybind, bindable] \
+    void transitionDelay(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITIONDELAY), displaybind, bindable] \
+    BSTR transitionDelay();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITION), displaybind, bindable] \
+    void transition(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITION), displaybind, bindable] \
+    BSTR transition();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_FONTFEATURESETTINGS), displaybind, bindable] \
+    void fontFeatureSettings(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_FONTFEATURESETTINGS), displaybind, bindable] \
+    BSTR fontFeatureSettings();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONNAME), displaybind, bindable] \
+    void animationName(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONNAME), displaybind, bindable] \
+    BSTR animationName();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONDURATION), displaybind, bindable] \
+    void animationDuration(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONDURATION), displaybind, bindable] \
+    BSTR animationDuration();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONTIMINGFUNCTION), displaybind, bindable] \
+    void animationTimingFunction(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONTIMINGFUNCTION), displaybind, bindable] \
+    BSTR animationTimingFunction();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONDELAY), displaybind, bindable] \
+    void animationDelay(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONDELAY), displaybind, bindable] \
+    BSTR animationDelay();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONDIRECTION), displaybind, bindable] \
+    void animationDirection(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONDIRECTION), displaybind, bindable] \
+    BSTR animationDirection();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONPLAYSTATE), displaybind, bindable] \
+    void animationPlayState(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONPLAYSTATE), displaybind, bindable] \
+    BSTR animationPlayState();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONITERATIONCOUNT), displaybind, bindable] \
+    void animationIterationCount(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONITERATIONCOUNT), displaybind, bindable] \
+    BSTR animationIterationCount();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATION), displaybind, bindable] \
+    void animation(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATION), displaybind, bindable] \
+    BSTR animation();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONFILLMODE), displaybind, bindable] \
+    void animationFillMode(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONFILLMODE), displaybind, bindable] \
+    BSTR animationFillMode()
+
+#define WINE_IHTMLCSSSTYLEDECLARATION3_DISPINTERFACE_DECL               \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEX), displaybind, bindable] \
+    void flex(BSTR v);                                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEX), displaybind, bindable] \
+    BSTR flex();                                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXDIRECTION), displaybind, bindable] \
+    void flexDirection(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXDIRECTION), displaybind, bindable] \
+    BSTR flexDirection();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXWRAP), displaybind, bindable] \
+    void flexWrap(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXWRAP), displaybind, bindable] \
+    BSTR flexWrap();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXFLOW), displaybind, bindable] \
+    void flexFlow(BSTR v);                                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXFLOW), displaybind, bindable] \
+    BSTR flexFlow();                                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXGROW), displaybind, bindable] \
+    void flexGrow(VARIANT v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXGROW), displaybind, bindable] \
+    VARIANT flexGrow();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXSHRINK), displaybind, bindable] \
+    void flexShrink(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXSHRINK), displaybind, bindable] \
+    VARIANT flexShrink();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXBASIS), displaybind, bindable] \
+    void flexBasis(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_FLEXBASIS), displaybind, bindable] \
+    VARIANT flexBasis();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_JUSTIFYCONTENT), displaybind, bindable] \
+    void justifyContent(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_JUSTIFYCONTENT), displaybind, bindable] \
+    BSTR justifyContent();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_ALIGNITEMS), displaybind, bindable] \
+    void alignItems(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_ALIGNITEMS), displaybind, bindable] \
+    BSTR alignItems();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_ALIGNSELF), displaybind, bindable] \
+    void alignSelf(BSTR v);                                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_ALIGNSELF), displaybind, bindable] \
+    BSTR alignSelf();                                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_ALIGNCONTENT), displaybind, bindable] \
+    void alignContent(BSTR v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_ALIGNCONTENT), displaybind, bindable] \
+    BSTR alignContent();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGE), displaybind, bindable, nonbrowsable] \
+    void borderImage(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGE), displaybind, bindable, nonbrowsable] \
+    BSTR borderImage();                                                 \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGESOURCE), displaybind, bindable] \
+    void borderImageSource(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGESOURCE), displaybind, bindable] \
+    BSTR borderImageSource();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGESLICE), displaybind, bindable] \
+    void borderImageSlice(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGESLICE), displaybind, bindable] \
+    BSTR borderImageSlice();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGEWIDTH), displaybind, bindable] \
+    void borderImageWidth(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGEWIDTH), displaybind, bindable] \
+    BSTR borderImageWidth();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGEOUTSET), displaybind, bindable] \
+    void borderImageOutset(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGEOUTSET), displaybind, bindable] \
+    BSTR borderImageOutset();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGEREPEAT), displaybind, bindable] \
+    void borderImageRepeat(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_BORDERIMAGEREPEAT), displaybind, bindable] \
+    BSTR borderImageRepeat();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_MSIMEALIGN), displaybind, bindable] \
+    void msImeAlign(BSTR v);                                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_MSIMEALIGN), displaybind, bindable] \
+    BSTR msImeAlign();                                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_MSTEXTCOMBINEHORIZONTAL), displaybind, bindable] \
+    void msTextCombineHorizontal(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_MSTEXTCOMBINEHORIZONTAL), displaybind, bindable] \
+    BSTR msTextCombineHorizontal();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION3_TOUCHACTION), displaybind, bindable] \
+    void touchAction(BSTR v);                                           \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION3_TOUCHACTION), displaybind, bindable] \
+    BSTR touchAction()
+
+#define WINE_IHTMLCSSSTYLEDECLARATION4_DISPINTERFACE_DECL               \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITAPPEARANCE), displaybind, bindable] \
+    void webkitAppearance(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITAPPEARANCE), displaybind, bindable] \
+    BSTR webkitAppearance();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITUSERSELECT), displaybind, bindable] \
+    void webkitUserSelect(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITUSERSELECT), displaybind, bindable] \
+    BSTR webkitUserSelect();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXALIGN), displaybind, bindable] \
+    void webkitBoxAlign(BSTR v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXALIGN), displaybind, bindable] \
+    BSTR webkitBoxAlign();                                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXORDINALGROUP), displaybind, bindable] \
+    void webkitBoxOrdinalGroup(VARIANT v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXORDINALGROUP), displaybind, bindable] \
+    VARIANT webkitBoxOrdinalGroup();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXPACK), displaybind, bindable] \
+    void webkitBoxPack(BSTR v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXPACK), displaybind, bindable] \
+    BSTR webkitBoxPack();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXFLEX), displaybind, bindable] \
+    void webkitBoxFlex(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXFLEX), displaybind, bindable] \
+    VARIANT webkitBoxFlex();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXORIENT), displaybind, bindable] \
+    void webkitBoxOrient(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXORIENT), displaybind, bindable] \
+    BSTR webkitBoxOrient();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXDIRECTION), displaybind, bindable] \
+    void webkitBoxDirection(BSTR v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXDIRECTION), displaybind, bindable] \
+    BSTR webkitBoxDirection();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSFORM), displaybind, bindable] \
+    void webkitTransform(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSFORM), displaybind, bindable] \
+    BSTR webkitTransform();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDSIZE), displaybind, bindable] \
+    void webkitBackgroundSize(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDSIZE), displaybind, bindable] \
+    BSTR webkitBackgroundSize();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKFACEVISIBILITY), displaybind, bindable] \
+    void webkitBackfaceVisibility(BSTR v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKFACEVISIBILITY), displaybind, bindable] \
+    BSTR webkitBackfaceVisibility();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATION), displaybind, bindable] \
+    void webkitAnimation(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATION), displaybind, bindable] \
+    BSTR webkitAnimation();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITION), displaybind, bindable] \
+    void webkitTransition(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITION), displaybind, bindable] \
+    BSTR webkitTransition();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONNAME), displaybind, bindable] \
+    void webkitAnimationName(BSTR v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONNAME), displaybind, bindable] \
+    BSTR webkitAnimationName();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONDURATION), displaybind, bindable] \
+    void webkitAnimationDuration(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONDURATION), displaybind, bindable] \
+    BSTR webkitAnimationDuration();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONTIMINGFUNCTION), displaybind, bindable] \
+    void webkitAnimationTimingFunction(BSTR v);                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONTIMINGFUNCTION), displaybind, bindable] \
+    BSTR webkitAnimationTimingFunction();                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONDELAY), displaybind, bindable] \
+    void webkitAnimationDelay(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONDELAY), displaybind, bindable] \
+    BSTR webkitAnimationDelay();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONITERATIONCOUNT), displaybind, bindable] \
+    void webkitAnimationIterationCount(BSTR v);                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONITERATIONCOUNT), displaybind, bindable] \
+    BSTR webkitAnimationIterationCount();                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONDIRECTION), displaybind, bindable] \
+    void webkitAnimationDirection(BSTR v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONDIRECTION), displaybind, bindable] \
+    BSTR webkitAnimationDirection();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONPLAYSTATE), displaybind, bindable] \
+    void webkitAnimationPlayState(BSTR v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONPLAYSTATE), displaybind, bindable] \
+    BSTR webkitAnimationPlayState();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITIONPROPERTY), displaybind, bindable] \
+    void webkitTransitionProperty(BSTR v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITIONPROPERTY), displaybind, bindable] \
+    BSTR webkitTransitionProperty();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITIONDURATION), displaybind, bindable] \
+    void webkitTransitionDuration(BSTR v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITIONDURATION), displaybind, bindable] \
+    BSTR webkitTransitionDuration();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITIONTIMINGFUNCTION), displaybind, bindable] \
+    void webkitTransitionTimingFunction(BSTR v);                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITIONTIMINGFUNCTION), displaybind, bindable] \
+    BSTR webkitTransitionTimingFunction();                              \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITIONDELAY), displaybind, bindable] \
+    void webkitTransitionDelay(BSTR v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSITIONDELAY), displaybind, bindable] \
+    BSTR webkitTransitionDelay();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDATTACHMENT), displaybind, bindable] \
+    void webkitBackgroundAttachment(BSTR v);                            \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDATTACHMENT), displaybind, bindable] \
+    BSTR webkitBackgroundAttachment();                                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDCOLOR), displaybind, bindable] \
+    void webkitBackgroundColor(VARIANT v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDCOLOR), displaybind, bindable] \
+    VARIANT webkitBackgroundColor();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDCLIP), displaybind, bindable] \
+    void webkitBackgroundClip(BSTR v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDCLIP), displaybind, bindable] \
+    BSTR webkitBackgroundClip();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDIMAGE), displaybind, bindable] \
+    void webkitBackgroundImage(BSTR v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDIMAGE), displaybind, bindable] \
+    BSTR webkitBackgroundImage();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDREPEAT), displaybind, bindable] \
+    void webkitBackgroundRepeat(BSTR v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDREPEAT), displaybind, bindable] \
+    BSTR webkitBackgroundRepeat();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDORIGIN), displaybind, bindable] \
+    void webkitBackgroundOrigin(BSTR v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDORIGIN), displaybind, bindable] \
+    BSTR webkitBackgroundOrigin();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDPOSITION), displaybind, bindable] \
+    void webkitBackgroundPosition(BSTR v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDPOSITION), displaybind, bindable] \
+    BSTR webkitBackgroundPosition();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDPOSITIONX), displaybind, bindable] \
+    void webkitBackgroundPositionX(VARIANT v);                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDPOSITIONX), displaybind, bindable] \
+    VARIANT webkitBackgroundPositionX();                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDPOSITIONY), displaybind, bindable] \
+    void webkitBackgroundPositionY(VARIANT v);                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUNDPOSITIONY), displaybind, bindable] \
+    VARIANT webkitBackgroundPositionY();                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUND), displaybind, bindable, nonbrowsable] \
+    void webkitBackground(BSTR v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBACKGROUND), displaybind, bindable, nonbrowsable] \
+    BSTR webkitBackground();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSFORMORIGIN), displaybind, bindable] \
+    void webkitTransformOrigin(BSTR v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTRANSFORMORIGIN), displaybind, bindable] \
+    BSTR webkitTransformOrigin();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_MSTEXTSIZEADJUST), displaybind, bindable] \
+    void msTextSizeAdjust(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_MSTEXTSIZEADJUST), displaybind, bindable] \
+    VARIANT msTextSizeAdjust();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTEXTSIZEADJUST), displaybind, bindable] \
+    void webkitTextSizeAdjust(VARIANT v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITTEXTSIZEADJUST), displaybind, bindable] \
+    VARIANT webkitTextSizeAdjust();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGE), displaybind, bindable, nonbrowsable] \
+    void webkitBorderImage(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGE), displaybind, bindable, nonbrowsable] \
+    BSTR webkitBorderImage();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGESOURCE), displaybind, bindable] \
+    void webkitBorderImageSource(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGESOURCE), displaybind, bindable] \
+    BSTR webkitBorderImageSource();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGESLICE), displaybind, bindable] \
+    void webkitBorderImageSlice(BSTR v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGESLICE), displaybind, bindable] \
+    BSTR webkitBorderImageSlice();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGEWIDTH), displaybind, bindable] \
+    void webkitBorderImageWidth(BSTR v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGEWIDTH), displaybind, bindable] \
+    BSTR webkitBorderImageWidth();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGEOUTSET), displaybind, bindable] \
+    void webkitBorderImageOutset(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGEOUTSET), displaybind, bindable] \
+    BSTR webkitBorderImageOutset();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGEREPEAT), displaybind, bindable] \
+    void webkitBorderImageRepeat(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBORDERIMAGEREPEAT), displaybind, bindable] \
+    BSTR webkitBorderImageRepeat();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXSIZING), displaybind, bindable] \
+    void webkitBoxSizing(BSTR v);                                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITBOXSIZING), displaybind, bindable] \
+    BSTR webkitBoxSizing();                                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONFILLMODE), displaybind, bindable] \
+    void webkitAnimationFillMode(BSTR v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLCSSSTYLEDECLARATION4_WEBKITANIMATIONFILLMODE), displaybind, bindable] \
+    BSTR webkitAnimationFillMode()
 
 /*****************************************************************************
  *    IHTMLFiltersCollection interface
@@ -4641,6 +6844,23 @@ coclass HTMLStyle
     interface IHTMLStyle4;
     interface IHTMLStyle5;
     interface IHTMLStyle6;
+}
+
+/*****************************************************************************
+ *    DispHTMLW3CComputedStyle dispinterface
+ */
+[
+    hidden,
+    uuid(30590070-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLW3CComputedStyle
+{
+properties:
+methods:
+    WINE_IHTMLCSSSTYLEDECLARATION_DISPINTERFACE_DECL;
+    WINE_IHTMLCSSSTYLEDECLARATION2_DISPINTERFACE_DECL;
+    WINE_IHTMLCSSSTYLEDECLARATION3_DISPINTERFACE_DECL;
+    WINE_IHTMLCSSSTYLEDECLARATION4_DISPINTERFACE_DECL;
 }
 
 /*****************************************************************************
