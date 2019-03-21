@@ -1249,9 +1249,8 @@ static HRESULT WINAPI presentation_descriptor_GetItemByIndex(IMFPresentationDesc
 
 static HRESULT WINAPI presentation_descriptor_CopyAllItems(IMFPresentationDescriptor *iface, IMFAttributes *dest)
 {
-    FIXME("%p, %p.\n", iface, dest);
-
-    return E_NOTIMPL;
+    struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
+    return IMFAttributes_CopyAllItems(&presentation_desc->attributes.IMFAttributes_iface, dest);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetStreamDescriptorCount(IMFPresentationDescriptor *iface, DWORD *count)
