@@ -490,7 +490,7 @@
 @ stub IoWMIDeviceObjectToInstanceName
 @ stub IoWMIExecuteMethod
 @ stub IoWMIHandleToInstanceName
-@ stub IoWMIOpenBlock
+@ stdcall IoWMIOpenBlock(ptr long ptr)
 @ stub IoWMIQueryAllData
 @ stub IoWMIQueryAllDataMultiple
 @ stub IoWMIQuerySingleInstance

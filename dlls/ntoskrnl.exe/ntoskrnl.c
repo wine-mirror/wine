@@ -3072,6 +3072,15 @@ NTSTATUS WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT DeviceObject, ULONG Acti
 }
 
 /*****************************************************
+ *           IoWMIOpenBlock   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoWMIOpenBlock(LPCGUID guid, ULONG desired_access, PVOID *data_block_obj)
+{
+    FIXME("(%p %u %p) stub\n", guid, desired_access, data_block_obj);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/*****************************************************
  *           PsSetLoadImageNotifyRoutine   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE routine)
