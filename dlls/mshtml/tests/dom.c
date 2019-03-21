@@ -6924,6 +6924,7 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
         IHTMLDocument2 *new_document2;
         IHTMLDocument7 *new_document;
         IHTMLLocation *location;
+        IHTMLWindow2 *window;
 
         str = a2bstr("test");
         hres = IHTMLDOMImplementation2_createHTMLDocument(dom_implementation2, str, &new_document);
@@ -6932,8 +6933,19 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
         test_disp((IUnknown*)new_document, &DIID_DispHTMLDocument, &CLSID_HTMLDocument, "[object]");
         test_ifaces((IUnknown*)new_document, doc_node_iids);
 
+        hres = IHTMLDocument7_get_defaultView(new_document, &window);
+        ok(hres == S_OK, "get_defaultView returned: %08x\n", hres);
+        ok(!window, "window = %p\n", window);
+
+        hres = IHTMLDocument7_get_parentWindow(new_document, &window);
+        ok(hres == S_OK, "get_parentWindow returned: %08x\n", hres);
+        ok(!window, "window = %p\n", window);
+
         hres = IHTMLDocument7_QueryInterface(new_document, &IID_IHTMLDocument2, (void**)&new_document2);
         ok(hres == S_OK, "Could not get IHTMLDocument2 iface: %08x\n", hres);
+
+        hres = IHTMLDocument2_get_parentWindow(new_document2, &window);
+        ok(hres == E_FAIL, "get_parentWindow returned: %08x\n", hres);
 
         hres = IHTMLDocument2_get_location(new_document2, &location);
         ok(hres == E_UNEXPECTED, "get_location returned: %08x\n", hres);
