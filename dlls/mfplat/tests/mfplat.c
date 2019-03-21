@@ -2387,7 +2387,6 @@ static void test_stream_descriptor(void)
     ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaTypeHandler_GetMajorType(type_handler, &major_type);
-todo_wine
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(media_types); ++i)
@@ -2408,6 +2407,16 @@ todo_wine
 
     hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type);
     ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &major_type);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set major type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &major_type);
+    ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
+    ok(IsEqualGUID(&major_type, &MFMediaType_Audio), "Unexpected major type.\n");
 
     hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
     ok(hr == S_OK, "Failed to get type count, hr %#x.\n", hr);

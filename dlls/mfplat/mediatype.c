@@ -931,9 +931,19 @@ static HRESULT WINAPI mediatype_handler_GetCurrentMediaType(IMFMediaTypeHandler 
 
 static HRESULT WINAPI mediatype_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    EnterCriticalSection(&stream_desc->cs);
+    if (stream_desc->current_type)
+        hr = IMFMediaType_GetGUID(stream_desc->current_type, &MF_MT_MAJOR_TYPE, type);
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+    LeaveCriticalSection(&stream_desc->cs);
+
+    return hr;
 }
 
 static const IMFMediaTypeHandlerVtbl mediatypehandlervtbl =
