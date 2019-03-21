@@ -47,6 +47,7 @@ DEFINE_GUID(DUMMY_GUID3, 0x12345678,0x1234,0x1234,0x23,0x23,0x23,0x23,0x23,0x23,
 #include "strsafe.h"
 
 #include "wine/test.h"
+#include "wine/heap.h"
 
 static BOOL is_win8_plus;
 
@@ -2520,6 +2521,33 @@ static void test_MFCompareFullToPartialMediaType(void)
     IMFMediaType_Release(partial_type);
 }
 
+static void test_attributes_serialization(void)
+{
+    IMFAttributes *attributes;
+    UINT8 *buffer;
+    UINT32 size;
+    HRESULT hr;
+
+    hr = MFCreateAttributes(&attributes, 0);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    hr = MFGetAttributesAsBlobSize(attributes, &size);
+    ok(hr == S_OK, "Failed to get blob size, hr %#x.\n", hr);
+    ok(size == 8, "Got size %u.\n", size);
+
+    buffer = heap_alloc(size);
+
+    hr = MFGetAttributesAsBlob(attributes, buffer, size);
+    ok(hr == S_OK, "Failed to serialize, hr %#x.\n", hr);
+
+    hr = MFGetAttributesAsBlob(attributes, buffer, size - 1);
+    ok(hr == MF_E_BUFFERTOOSMALL, "Unexpected hr %#x.\n", hr);
+
+    heap_free(buffer);
+
+    IMFAttributes_Release(attributes);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -2551,6 +2579,7 @@ START_TEST(mfplat)
     test_stream_descriptor();
     test_MFCalculateImageSize();
     test_MFCompareFullToPartialMediaType();
+    test_attributes_serialization();
 
     CoUninitialize();
 }

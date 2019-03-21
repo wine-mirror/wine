@@ -85,8 +85,8 @@
 @ stub MFFrameRateToAverageTimePerFrame
 @ stub MFFreeAdaptersAddresses
 @ stub MFGetAdaptersAddresses
-@ stub MFGetAttributesAsBlob
-@ stub MFGetAttributesAsBlobSize
+@ stdcall MFGetAttributesAsBlob(ptr ptr long)
+@ stdcall MFGetAttributesAsBlobSize(ptr ptr)
 @ stub MFGetConfigurationDWORD
 @ stub MFGetConfigurationPolicy
 @ stub MFGetConfigurationStore
