@@ -330,6 +330,8 @@ static enum install_res install_from_default_dir(void)
         ret = install_from_unix_file(INSTALL_DATADIR "/wine/", addon->subdir_name, addon->file_name);
     if (ret == INSTALL_NEXT && strcmp(INSTALL_DATADIR, "/usr/share"))
         ret = install_from_unix_file("/usr/share/wine/", addon->subdir_name, addon->file_name);
+    if (ret == INSTALL_NEXT)
+        ret = install_from_unix_file("/opt/wine/", addon->subdir_name, addon->file_name);
     return ret;
 }
 
@@ -794,6 +796,7 @@ BOOL install_addon(addon_t addon_type)
      * - $datadir/$addon_subdir/
      * - $INSTALL_DATADIR/wine/$addon_subdir/
      * - /usr/share/wine/$addon_subdir/
+     * - /opt/wine/$addon_subdir/
      * - download from URL stored in $url_config_key value of HKCU/Software/Wine/$config_key key
      */
     if (install_from_registered_dir() == INSTALL_NEXT
