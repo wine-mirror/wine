@@ -27,7 +27,9 @@
 #define VKD3D_NO_PROTOTYPES
 #define VKD3D_NO_VULKAN_H
 #define VKD3D_NO_WIN32_TYPES
+#ifndef USE_WIN32_VULKAN
 #define WINE_VK_HOST
+#endif
 #include "wine/library.h"
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
@@ -858,6 +860,67 @@ cleanup:
 
 #ifdef SONAME_LIBVKD3D
 
+#ifdef USE_WIN32_VULKAN
+
+static void *load_library(const char *name)
+{
+    return LoadLibraryA(name);
+}
+
+static void *get_library_proc(void *handle, const char *name)
+{
+    return (void *)GetProcAddress(handle, name);
+}
+
+static void close_library(void *handle)
+{
+    if (handle)
+        FreeLibrary(handle);
+}
+
+static PFN_vkGetInstanceProcAddr load_vulkan(void **vulkan_handle)
+{
+    *vulkan_handle = LoadLibraryA("vulkan-1.dll");
+    return (void *)GetProcAddress(*vulkan_handle, "vkGetInstanceProcAddr");
+}
+
+#else
+
+static void *load_library(const char *name)
+{
+    return wine_dlopen(name, RTLD_NOW, NULL, 0);
+}
+
+static void *get_library_proc(void *handle, const char *name)
+{
+    return wine_dlsym(handle, name, NULL, 0);
+}
+
+static void close_library(void *handle)
+{
+    if (handle)
+        wine_dlclose(handle, NULL, 0);
+}
+
+static PFN_vkGetInstanceProcAddr load_vulkan(void **vulkan_handle)
+{
+    const struct vulkan_funcs *vk_funcs;
+    HDC hdc;
+
+    *vulkan_handle = NULL;
+
+    hdc = GetDC(0);
+    vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
+    ReleaseDC(0, hdc);
+
+    if (vk_funcs)
+        return (PFN_vkGetInstanceProcAddr)vk_funcs->p_vkGetInstanceProcAddr;
+
+    return NULL;
+}
+
+#endif  /* USE_WIN32_VULKAN */
+
 static PFN_vkd3d_acquire_vk_queue vkd3d_acquire_vk_queue;
 static PFN_vkd3d_create_image_resource vkd3d_create_image_resource;
 static PFN_vkd3d_get_device_parent vkd3d_get_device_parent;
@@ -908,6 +971,8 @@ struct dxgi_vk_funcs
     PFN_vkQueueWaitIdle p_vkQueueWaitIdle;
     PFN_vkResetFences p_vkResetFences;
     PFN_vkWaitForFences p_vkWaitForFences;
+
+    void *vulkan_module;
 };
 
 static HRESULT hresult_from_vk_result(VkResult vr)
@@ -1705,6 +1770,7 @@ static ULONG STDMETHODCALLTYPE d3d12_swapchain_AddRef(IDXGISwapChain3 *iface)
 static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    void *vulkan_module = vk_funcs->vulkan_module;
 
     d3d12_swapchain_destroy_buffers(swapchain, TRUE);
 
@@ -1727,6 +1793,8 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
 
     if (swapchain->factory)
         IWineDXGIFactory_Release(swapchain->factory);
+
+    close_library(vulkan_module);
 }
 
 static ULONG STDMETHODCALLTYPE d3d12_swapchain_Release(IDXGISwapChain3 *iface)
@@ -2424,20 +2492,9 @@ static const struct IDXGISwapChain3Vtbl d3d12_swapchain_vtbl =
     d3d12_swapchain_ResizeBuffers1,
 };
 
-static const struct vulkan_funcs *get_vk_funcs(void)
-{
-    const struct vulkan_funcs *vk_funcs;
-    HDC hdc;
-
-    hdc = GetDC(0);
-    vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
-    ReleaseDC(0, hdc);
-    return vk_funcs;
-}
-
 static BOOL load_vkd3d_functions(void *vkd3d_handle)
 {
-#define LOAD_FUNCPTR(f) if (!(f = wine_dlsym(vkd3d_handle, #f, NULL, 0))) return FALSE;
+#define LOAD_FUNCPTR(f) if (!(f = get_library_proc(vkd3d_handle, #f))) return FALSE;
     LOAD_FUNCPTR(vkd3d_acquire_vk_queue)
     LOAD_FUNCPTR(vkd3d_create_image_resource)
     LOAD_FUNCPTR(vkd3d_get_device_parent)
@@ -2461,13 +2518,13 @@ static BOOL WINAPI init_vkd3d_once(INIT_ONCE *once, void *param, void **context)
 {
     TRACE("Loading vkd3d %s.\n", SONAME_LIBVKD3D);
 
-    if (!(vkd3d_handle = wine_dlopen(SONAME_LIBVKD3D, RTLD_NOW, NULL, 0)))
+    if (!(vkd3d_handle = load_library(SONAME_LIBVKD3D)))
         return FALSE;
 
     if (!load_vkd3d_functions(vkd3d_handle))
     {
         ERR("Failed to load vkd3d functions.\n");
-        wine_dlclose(vkd3d_handle, NULL, 0);
+        close_library(vkd3d_handle);
         vkd3d_handle = NULL;
         return FALSE;
     }
@@ -2484,20 +2541,24 @@ static BOOL init_vkd3d(void)
 
 static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, VkDevice vk_device)
 {
-    const struct vulkan_funcs *vk;
+    PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
+    PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
 
-    if (!(vk = get_vk_funcs()))
+    dxgi->vulkan_module = NULL;
+
+    if (!(vkGetInstanceProcAddr = load_vulkan(&dxgi->vulkan_module)))
     {
-        ERR_(winediag)("Failed to load Wine Vulkan driver.\n");
+        ERR_(winediag)("Failed to load Vulkan.\n");
         return FALSE;
     }
 
-    dxgi->p_vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)vk->p_vkGetInstanceProcAddr;
+    vkGetDeviceProcAddr = (void *)vkGetInstanceProcAddr(vk_instance, "vkGetDeviceProcAddr");
 
 #define LOAD_INSTANCE_PFN(name) \
-    if (!(dxgi->p_##name = vk->p_vkGetInstanceProcAddr(vk_instance, #name))) \
+    if (!(dxgi->p_##name = (void *)vkGetInstanceProcAddr(vk_instance, #name))) \
     { \
         ERR("Failed to get instance proc "#name".\n"); \
+        close_library(dxgi->vulkan_module); \
         return FALSE; \
     }
     LOAD_INSTANCE_PFN(vkCreateWin32SurfaceKHR)
@@ -2511,9 +2572,10 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, Vk
 #undef LOAD_INSTANCE_PFN
 
 #define LOAD_DEVICE_PFN(name) \
-    if (!(dxgi->p_##name = vk->p_vkGetDeviceProcAddr(vk_device, #name))) \
+    if (!(dxgi->p_##name = (void *)vkGetDeviceProcAddr(vk_device, #name))) \
     { \
         ERR("Failed to get device proc "#name".\n"); \
+        close_library(dxgi->vulkan_module); \
         return FALSE; \
     }
     LOAD_DEVICE_PFN(vkAcquireNextImageKHR)
