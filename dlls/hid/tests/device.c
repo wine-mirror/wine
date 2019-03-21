@@ -82,7 +82,8 @@ static void run_for_each_device(device_test *test)
             ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n",
                 wine_dbgstr_w(data->DevicePath), GetLastError());
 
-            test(file);
+            if (file != INVALID_HANDLE_VALUE)
+                test(file);
 
             CloseHandle(file);
         }
