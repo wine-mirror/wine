@@ -2429,6 +2429,57 @@ static void test_stream_descriptor(void)
     IMFStreamDescriptor_Release(stream_desc);
 }
 
+static void test_MFCalculateImageSize(void)
+{
+    static const struct image_size_test
+    {
+        const GUID *subtype;
+        UINT32 width;
+        UINT32 height;
+        UINT32 size;
+    }
+    image_size_tests[] =
+    {
+        { &MFVideoFormat_RGB8, 3, 5, 20 },
+        { &MFVideoFormat_RGB8, 1, 1, 4 },
+        { &MFVideoFormat_RGB555, 3, 5, 40 },
+        { &MFVideoFormat_RGB555, 1, 1, 4 },
+        { &MFVideoFormat_RGB565, 3, 5, 40 },
+        { &MFVideoFormat_RGB565, 1, 1, 4 },
+        { &MFVideoFormat_RGB24, 3, 5, 60 },
+        { &MFVideoFormat_RGB24, 1, 1, 4 },
+        { &MFVideoFormat_RGB32, 3, 5, 60 },
+        { &MFVideoFormat_RGB32, 1, 1, 4 },
+        { &MFVideoFormat_ARGB32, 3, 5, 60 },
+        { &MFVideoFormat_ARGB32, 1, 1, 4 },
+        { &MFVideoFormat_A2R10G10B10, 3, 5, 60 },
+        { &MFVideoFormat_A2R10G10B10, 1, 1, 4 },
+        { &MFVideoFormat_A16B16G16R16F, 3, 5, 120 },
+        { &MFVideoFormat_A16B16G16R16F, 1, 1, 8 },
+    };
+    unsigned int i;
+    UINT32 size;
+    HRESULT hr;
+
+    size = 1;
+    hr = MFCalculateImageSize(&IID_IUnknown, 1, 1, &size);
+    ok(hr == E_INVALIDARG || broken(hr == S_OK) /* Vista */, "Unexpected hr %#x.\n", hr);
+    ok(size == 0, "Unexpected size %u.\n", size);
+
+    for (i = 0; i < ARRAY_SIZE(image_size_tests); ++i)
+    {
+        /* Those are supported since Win10. */
+        BOOL is_broken = IsEqualGUID(image_size_tests[i].subtype, &MFVideoFormat_A16B16G16R16F) ||
+                IsEqualGUID(image_size_tests[i].subtype, &MFVideoFormat_A2R10G10B10);
+
+        hr = MFCalculateImageSize(image_size_tests[i].subtype, image_size_tests[i].width,
+                image_size_tests[i].height, &size);
+        ok(hr == S_OK || (is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#x.\n", i, hr);
+        ok(size == image_size_tests[i].size, "%u: unexpected image size %u, expected %u.\n", i, size,
+            image_size_tests[i].size);
+    }
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -2458,6 +2509,7 @@ START_TEST(mfplat)
     test_system_time_source();
     test_MFInvokeCallback();
     test_stream_descriptor();
+    test_MFCalculateImageSize();
 
     CoUninitialize();
 }

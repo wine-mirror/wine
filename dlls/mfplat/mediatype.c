@@ -1449,3 +1449,50 @@ HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor *
 
     return S_OK;
 }
+
+struct uncompressed_video_format
+{
+    const GUID *subtype;
+    unsigned int bytes_per_pixel;
+};
+
+static int uncompressed_video_format_compare(const void *a, const void *b)
+{
+    const GUID *guid = a;
+    const struct uncompressed_video_format *format = b;
+    return memcmp(guid, format->subtype, sizeof(*guid));
+}
+
+/***********************************************************************
+ *      MFCalculateImageSize (mfplat.@)
+ */
+HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height, UINT32 *size)
+{
+    static const struct uncompressed_video_format video_formats[] =
+    {
+        { &MFVideoFormat_RGB24,         3 },
+        { &MFVideoFormat_ARGB32,        4 },
+        { &MFVideoFormat_RGB32,         4 },
+        { &MFVideoFormat_RGB565,        2 },
+        { &MFVideoFormat_RGB555,        2 },
+        { &MFVideoFormat_A2R10G10B10,   4 },
+        { &MFVideoFormat_RGB8,          1 },
+        { &MFVideoFormat_A16B16G16R16F, 8 },
+    };
+    struct uncompressed_video_format *format;
+
+    TRACE("%s, %u, %u, %p.\n", debugstr_guid(subtype), width, height, size);
+
+    format = bsearch(subtype, video_formats, ARRAY_SIZE(video_formats), sizeof(*video_formats),
+            uncompressed_video_format_compare);
+    if (format)
+    {
+         *size = ((width * format->bytes_per_pixel + 3) & ~3) * height;
+    }
+    else
+    {
+         *size = 0;
+    }
+
+    return format ? S_OK : E_INVALIDARG;
+}

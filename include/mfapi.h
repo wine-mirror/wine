@@ -48,11 +48,25 @@ extern "C" {
     DEFINE_GUID(name, format, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 
 #ifndef DIRECT3D_VERSION
-#define D3DFMT_X8R8G8B8     22
+#define D3DFMT_R8G8B8         20
+#define D3DFMT_A8R8G8B8       21
+#define D3DFMT_X8R8G8B8       22
+#define D3DFMT_R5G6B5         23
+#define D3DFMT_X1R5G5B5       24
+#define D3DFMT_A2B10G10R10    31
+#define D3DFMT_P8             41
+#define D3DFMT_A16B16G16R16F 113
 #endif
 
-DEFINE_MEDIATYPE_GUID(MFVideoFormat_WMV3,      MAKEFOURCC('W','M','V','3'));
-DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB32,     D3DFMT_X8R8G8B8);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_WMV3,          MAKEFOURCC('W','M','V','3'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB8,          D3DFMT_P8);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB555,        D3DFMT_X1R5G5B5);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB565,        D3DFMT_R5G6B5);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB24,         D3DFMT_R8G8B8);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB32,         D3DFMT_X8R8G8B8);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB32,        D3DFMT_A8R8G8B8);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_A2R10G10B10,   D3DFMT_A2B10G10R10);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_A16B16G16R16F, D3DFMT_A16B16G16R16F);
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
 typedef struct tagMFASYNCRESULT : public IMFAsyncResult {
@@ -172,6 +186,7 @@ typedef void (CALLBACK *MFPERIODICCALLBACK)(IUnknown *context);
 HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
+HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height, UINT32 *size);
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
 HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines);
 HRESULT WINAPI MFCreateAlignedMemoryBuffer(DWORD max_length, DWORD alignment, IMFMediaBuffer **buffer);

@@ -26,7 +26,7 @@
 @ stub MFBeginUnregisterWorkQueueWithMMCSS
 @ stub MFBlockThread
 @ stub MFCalculateBitmapImageSize
-@ stub MFCalculateImageSize
+@ stdcall MFCalculateImageSize(ptr long long ptr)
 @ stub MFCancelCreateFile
 @ stdcall MFCancelWorkItem(int64)
 @ stub MFCompareFullToPartialMediaType
