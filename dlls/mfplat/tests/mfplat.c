@@ -2347,6 +2347,79 @@ static void test_MFInvokeCallback(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static void test_stream_descriptor(void)
+{
+    IMFMediaType *media_types[2], *media_type;
+    IMFMediaTypeHandler *type_handler;
+    IMFStreamDescriptor *stream_desc;
+    GUID major_type;
+    DWORD id, count;
+    unsigned int i;
+    HRESULT hr;
+
+    hr = MFCreateStreamDescriptor(123, 0, NULL, &stream_desc);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(media_types); ++i)
+    {
+        hr = MFCreateMediaType(&media_types[i]);
+        ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+    }
+
+    hr = MFCreateStreamDescriptor(123, 0, media_types, &stream_desc);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateStreamDescriptor(123, ARRAY_SIZE(media_types), media_types, &stream_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamDescriptor_GetStreamIdentifier(stream_desc, &id);
+    ok(hr == S_OK, "Failed to get descriptor id, hr %#x.\n", hr);
+    ok(id == 123, "Unexpected id %#x.\n", id);
+
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(stream_desc, &type_handler);
+    ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
+    ok(hr == S_OK, "Failed to get type count, hr %#x.\n", hr);
+    ok(count == ARRAY_SIZE(media_types), "Unexpected type count.\n");
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &major_type);
+todo_wine
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(media_types); ++i)
+    {
+        hr = IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, i, &media_type);
+        ok(hr == S_OK, "Failed to get media type, hr %#x.\n", hr);
+        ok(media_type == media_types[i], "Unexpected object.\n");
+
+        if (SUCCEEDED(hr))
+            IMFMediaType_Release(media_type);
+    }
+
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, 2, &media_type);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type);
+    ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
+    ok(hr == S_OK, "Failed to get type count, hr %#x.\n", hr);
+    ok(count == ARRAY_SIZE(media_types), "Unexpected type count.\n");
+
+    IMFMediaType_Release(media_type);
+
+    IMFMediaTypeHandler_Release(type_handler);
+
+    IMFStreamDescriptor_Release(stream_desc);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -2375,6 +2448,7 @@ START_TEST(mfplat)
     test_presentation_descriptor();
     test_system_time_source();
     test_MFInvokeCallback();
+    test_stream_descriptor();
 
     CoUninitialize();
 }
