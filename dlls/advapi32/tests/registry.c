@@ -1951,7 +1951,8 @@ static void test_reg_query_info(void)
     memset(classbufferW, 0x55, sizeof(classbufferW));
     classlen = 1;
     ret = RegQueryInfoKeyW(subkey, classbufferW, &classlen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(ret == ERROR_INSUFFICIENT_BUFFER, "ret = %d\n", ret);
+    /* failure-code changed to ERROR_MORE_DATA in recent win10  */
+    ok((ret == ERROR_INSUFFICIENT_BUFFER) || (ret == ERROR_MORE_DATA), "ret = %d\n", ret);
     ok(classlen == 0 /* win8 */ ||
        classlen == strlen(subkey_class), "classlen = %u\n", classlen);
     memset(expectbufferW, 0x55, sizeof(expectbufferW));
