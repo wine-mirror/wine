@@ -107,7 +107,7 @@
 @ stdcall MFHeapAlloc(long long str long long)
 @ stdcall MFHeapFree(ptr)
 @ stub MFInitAMMediaTypeFromMFMediaType
-@ stub MFInitAttributesFromBlob
+@ stdcall MFInitAttributesFromBlob(ptr ptr long)
 @ stub MFInitMediaTypeFromAMMediaType
 @ stub MFInitMediaTypeFromMFVideoFormat
 @ stub MFInitMediaTypeFromMPEG1VideoInfo

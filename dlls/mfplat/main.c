@@ -1509,6 +1509,7 @@ struct attributes_store_item
     union
     {
         double f;
+        UINT32 i32;
         UINT64 i64;
         struct
         {
@@ -1587,7 +1588,7 @@ static void attributes_serialize_write(struct attr_serialize_context *context, c
     context->ptr += size;
 }
 
-static void attributes_serialize_write_item(struct attr_serialize_context *context, struct attributes_store_item *item,
+static BOOL attributes_serialize_write_item(struct attr_serialize_context *context, struct attributes_store_item *item,
         const void *value)
 {
     switch (item->type)
@@ -1606,8 +1607,10 @@ static void attributes_serialize_write_item(struct attr_serialize_context *conte
             context->size -= item->u.subheader.size;
             break;
         default:
-            ;
+            return FALSE;
     }
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1619,6 +1622,7 @@ HRESULT WINAPI MFGetAttributesAsBlob(IMFAttributes *attributes, UINT8 *buffer, U
     struct attr_serialize_context context;
     unsigned int required_size, i;
     PROPVARIANT value;
+    UINT32 count;
     HRESULT hr;
 
     TRACE("%p, %p, %u.\n", attributes, buffer, size);
@@ -1636,11 +1640,12 @@ HRESULT WINAPI MFGetAttributesAsBlob(IMFAttributes *attributes, UINT8 *buffer, U
     IMFAttributes_LockStore(attributes);
 
     header.magic = ATTRIBUTES_STORE_MAGIC;
-    IMFAttributes_GetCount(attributes, &header.count);
+    header.count = 0; /* Will be updated later */
+    IMFAttributes_GetCount(attributes, &count);
 
     attributes_serialize_write(&context, &header, sizeof(header));
 
-    for (i = 0; i < header.count; ++i)
+    for (i = 0; i < count; ++i)
     {
         struct attributes_store_item item;
         const void *data = NULL;
@@ -1678,14 +1683,116 @@ HRESULT WINAPI MFGetAttributesAsBlob(IMFAttributes *attributes, UINT8 *buffer, U
                 WARN("Unknown attribute type %#x.\n", value.vt);
         }
 
-        attributes_serialize_write_item(&context, &item, data);
+        if (attributes_serialize_write_item(&context, &item, data))
+            header.count++;
 
         PropVariantClear(&value);
     }
 
+    memcpy(context.buffer, &header, sizeof(header));
+
     IMFAttributes_UnlockStore(attributes);
 
     return S_OK;
+}
+
+static HRESULT attributes_deserialize_read(struct attr_serialize_context *context, void *value, unsigned int size)
+{
+    if (context->size < (context->ptr - context->buffer) + size)
+        return E_INVALIDARG;
+
+    memcpy(value, context->ptr, size);
+    context->ptr += size;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFInitAttributesFromBlob (mfplat.@)
+ */
+HRESULT WINAPI MFInitAttributesFromBlob(IMFAttributes *dest, const UINT8 *buffer, UINT size)
+{
+    struct attr_serialize_context context;
+    struct attributes_store_header header;
+    struct attributes_store_item item;
+    IMFAttributes *attributes;
+    unsigned int i;
+    HRESULT hr;
+
+    TRACE("%p, %p, %u.\n", dest, buffer, size);
+
+    context.buffer = (UINT8 *)buffer;
+    context.ptr = (UINT8 *)buffer;
+    context.size = size;
+
+    /* Validate buffer structure. */
+    if (FAILED(hr = attributes_deserialize_read(&context, &header, sizeof(header))))
+        return hr;
+
+    if (header.magic != ATTRIBUTES_STORE_MAGIC)
+        return E_UNEXPECTED;
+
+    if (FAILED(hr = MFCreateAttributes(&attributes, header.count)))
+        return hr;
+
+    for (i = 0; i < header.count; ++i)
+    {
+        if (FAILED(hr = attributes_deserialize_read(&context, &item, sizeof(item))))
+            break;
+
+        hr = E_UNEXPECTED;
+
+        switch (item.type)
+        {
+            case MF_ATTRIBUTE_UINT32:
+                hr = IMFAttributes_SetUINT32(attributes, &item.key, item.u.i32);
+                break;
+            case MF_ATTRIBUTE_UINT64:
+                hr = IMFAttributes_SetUINT64(attributes, &item.key, item.u.i64);
+                break;
+            case MF_ATTRIBUTE_DOUBLE:
+                hr = IMFAttributes_SetDouble(attributes, &item.key, item.u.f);
+                break;
+            case MF_ATTRIBUTE_GUID:
+                if (item.u.subheader.size == sizeof(GUID) &&
+                        item.u.subheader.offset + item.u.subheader.size <= context.size)
+                {
+                    hr = IMFAttributes_SetGUID(attributes, &item.key,
+                            (const GUID *)(context.buffer + item.u.subheader.offset));
+                }
+                break;
+            case MF_ATTRIBUTE_STRING:
+                if (item.u.subheader.size >= sizeof(WCHAR) &&
+                        item.u.subheader.offset + item.u.subheader.size <= context.size)
+                {
+                    hr = IMFAttributes_SetString(attributes, &item.key,
+                            (const WCHAR *)(context.buffer + item.u.subheader.offset));
+                }
+                break;
+            case MF_ATTRIBUTE_BLOB:
+                if (item.u.subheader.size > 0 && item.u.subheader.offset + item.u.subheader.size <= context.size)
+                {
+                    hr = IMFAttributes_SetBlob(attributes, &item.key, context.buffer + item.u.subheader.offset,
+                            item.u.subheader.size);
+                }
+                break;
+            default:
+                ;
+        }
+
+        if (FAILED(hr))
+            break;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        IMFAttributes_DeleteAllItems(dest);
+        hr = IMFAttributes_CopyAllItems(attributes, dest);
+    }
+
+    IMFAttributes_Release(attributes);
+
+    return hr;
 }
 
 typedef struct _mfbytestream

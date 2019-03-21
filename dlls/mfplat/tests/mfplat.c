@@ -2523,12 +2523,22 @@ static void test_MFCompareFullToPartialMediaType(void)
 
 static void test_attributes_serialization(void)
 {
-    IMFAttributes *attributes;
+    static const WCHAR textW[] = {'T','e','x','t',0};
+    static const UINT8 blob[] = {1,2,3};
+    IMFAttributes *attributes, *dest;
+    UINT32 size, count, value32;
+    double value_dbl;
+    UINT64 value64;
     UINT8 *buffer;
-    UINT32 size;
+    IUnknown *obj;
     HRESULT hr;
+    WCHAR *str;
+    GUID guid;
 
     hr = MFCreateAttributes(&attributes, 0);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    hr = MFCreateAttributes(&dest, 0);
     ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
 
     hr = MFGetAttributesAsBlobSize(attributes, &size);
@@ -2543,9 +2553,67 @@ static void test_attributes_serialization(void)
     hr = MFGetAttributesAsBlob(attributes, buffer, size - 1);
     ok(hr == MF_E_BUFFERTOOSMALL, "Unexpected hr %#x.\n", hr);
 
+    hr = MFInitAttributesFromBlob(dest, buffer, size - 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFAttributes_SetUINT32(dest, &MF_MT_MAJOR_TYPE, 1);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = MFInitAttributesFromBlob(dest, buffer, size);
+    ok(hr == S_OK, "Failed to deserialize, hr %#x.\n", hr);
+
+    /* Previous items are cleared. */
+    hr = IMFAttributes_GetCount(dest, &count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+    ok(count == 0, "Unexpected count %u.\n", count);
+
     heap_free(buffer);
 
+    /* Set some attributes of various types. */
+    IMFAttributes_SetUINT32(attributes, &MF_MT_MAJOR_TYPE, 456);
+    IMFAttributes_SetUINT64(attributes, &MF_MT_SUBTYPE, 123);
+    IMFAttributes_SetDouble(attributes, &IID_IUnknown, 0.5);
+    IMFAttributes_SetUnknown(attributes, &IID_IMFAttributes, (IUnknown *)attributes);
+    IMFAttributes_SetGUID(attributes, &GUID_NULL, &IID_IUnknown);
+    IMFAttributes_SetString(attributes, &DUMMY_CLSID, textW);
+    IMFAttributes_SetBlob(attributes, &DUMMY_GUID1, blob, sizeof(blob));
+
+    hr = MFGetAttributesAsBlobSize(attributes, &size);
+    ok(hr == S_OK, "Failed to get blob size, hr %#x.\n", hr);
+    ok(size > 8, "Got unexpected size %u.\n", size);
+
+    buffer = heap_alloc(size);
+    hr = MFGetAttributesAsBlob(attributes, buffer, size);
+    ok(hr == S_OK, "Failed to serialize, hr %#x.\n", hr);
+    hr = MFInitAttributesFromBlob(dest, buffer, size);
+    ok(hr == S_OK, "Failed to deserialize, hr %#x.\n", hr);
+    heap_free(buffer);
+
+    hr = IMFAttributes_GetUINT32(dest, &MF_MT_MAJOR_TYPE, &value32);
+    ok(hr == S_OK, "Failed to get get uint32 value, hr %#x.\n", hr);
+    ok(value32 == 456, "Unexpected value %u.\n", value32);
+    hr = IMFAttributes_GetUINT64(dest, &MF_MT_SUBTYPE, &value64);
+    ok(hr == S_OK, "Failed to get get uint64 value, hr %#x.\n", hr);
+    ok(value64 == 123, "Unexpected value.\n");
+    hr = IMFAttributes_GetDouble(dest, &IID_IUnknown, &value_dbl);
+    ok(hr == S_OK, "Failed to get get double value, hr %#x.\n", hr);
+    ok(value_dbl == 0.5, "Unexpected value.\n");
+    hr = IMFAttributes_GetUnknown(dest, &IID_IMFAttributes, &IID_IUnknown, (void **)&obj);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+    hr = IMFAttributes_GetGUID(dest, &GUID_NULL, &guid);
+    ok(hr == S_OK, "Failed to get guid value, hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &IID_IUnknown), "Unexpected guid.\n");
+    hr = IMFAttributes_GetAllocatedString(dest, &DUMMY_CLSID, &str, &size);
+    ok(hr == S_OK, "Failed to get string value, hr %#x.\n", hr);
+    ok(!lstrcmpW(str, textW), "Unexpected string.\n");
+    CoTaskMemFree(str);
+    hr = IMFAttributes_GetAllocatedBlob(dest, &DUMMY_GUID1, &buffer, &size);
+    ok(hr == S_OK, "Failed to get blob value, hr %#x.\n", hr);
+    ok(!memcmp(buffer, blob, sizeof(blob)), "Unexpected blob.\n");
+    CoTaskMemFree(buffer);
+
     IMFAttributes_Release(attributes);
+    IMFAttributes_Release(dest);
 }
 
 START_TEST(mfplat)
