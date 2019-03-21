@@ -4905,7 +4905,8 @@ void detach_document_node(HTMLDocumentNode *doc)
     for(i=0; i < doc->elem_vars_cnt; i++)
         heap_free(doc->elem_vars[i]);
     heap_free(doc->elem_vars);
-    doc->elem_vars_cnt = 0;
+    doc->elem_vars_cnt = doc->elem_vars_size = 0;
+    doc->elem_vars = NULL;
 
     if(doc->catmgr) {
         ICatInformation_Release(doc->catmgr);
