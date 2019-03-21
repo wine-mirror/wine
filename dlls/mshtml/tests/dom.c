@@ -6925,6 +6925,7 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
         IHTMLDocument7 *new_document;
         IHTMLLocation *location;
         IHTMLWindow2 *window;
+        IDispatch *disp;
 
         str = a2bstr("test");
         hres = IHTMLDOMImplementation2_createHTMLDocument(dom_implementation2, str, &new_document);
@@ -6946,6 +6947,9 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
 
         hres = IHTMLDocument2_get_parentWindow(new_document2, &window);
         ok(hres == E_FAIL, "get_parentWindow returned: %08x\n", hres);
+
+        hres = IHTMLDocument2_get_Script(new_document2, &disp);
+        ok(hres == E_PENDING, "get_Script returned: %08x\n", hres);
 
         hres = IHTMLDocument2_get_location(new_document2, &location);
         ok(hres == E_UNEXPECTED, "get_location returned: %08x\n", hres);

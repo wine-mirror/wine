@@ -213,12 +213,12 @@ static HRESULT WINAPI HTMLDocument_Invoke(IHTMLDocument2 *iface, DISPID dispIdMe
 static HRESULT WINAPI HTMLDocument_get_Script(IHTMLDocument2 *iface, IDispatch **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = (IDispatch*)&This->window->base.IHTMLWindow2_iface;
-    IDispatch_AddRef(*p);
-    return S_OK;
+    hres = IHTMLDocument7_get_parentWindow(&This->IHTMLDocument7_iface, (IHTMLWindow2**)p);
+    return hres == S_OK && !*p ? E_PENDING : hres;
 }
 
 static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCollection **p)
