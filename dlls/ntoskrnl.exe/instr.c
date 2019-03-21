@@ -473,6 +473,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 #define REX_R   4
 #define REX_W   8
 
+#define MSR_LSTAR   0xc0000082
+
 #define REGMODRM_MOD( regmodrm, rex )   ((regmodrm) >> 6)
 #define REGMODRM_REG( regmodrm, rex )   (((regmodrm) >> 3) & 7) | (((rex) & REX_R) ? 8 : 0)
 #define REGMODRM_RM( regmodrm, rex )    (((regmodrm) & 7) | (((rex) & REX_B) ? 8 : 0))
@@ -583,6 +585,12 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
     /* FIXME: we assume that all segments have a base of 0 */
     return (BYTE *)(base + (index << ss));
 #undef GET_VAL
+}
+
+
+static void fake_syscall_function(void)
+{
+    TRACE("() stub\n");
 }
 
 
@@ -755,6 +763,24 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             default: return ExceptionContinueSearch;
             }
             context->Rip += prefixlen + 3;
+            return ExceptionContinueExecution;
+        }
+        case 0x32: /* rdmsr */
+        {
+            ULONG reg = context->Rcx;
+            TRACE("rdmsr CR 0x%08x\n", reg);
+            switch (reg)
+            {
+            case MSR_LSTAR:
+            {
+                ULONG_PTR syscall_address = (ULONG_PTR)fake_syscall_function;
+                context->Rdx = (ULONG)(syscall_address >> 32);
+                context->Rax = (ULONG)syscall_address;
+                break;
+            }
+            default: return ExceptionContinueSearch;
+            }
+            context->Rip += prefixlen + 2;
             return ExceptionContinueExecution;
         }
         case 0xb6: /* movzx Eb, Gv */
