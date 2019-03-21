@@ -1760,9 +1760,10 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
 
 void detach_ranges(HTMLDocumentNode *This)
 {
-    HTMLTxtRange *iter;
+    HTMLTxtRange *iter, *next;
 
-    LIST_FOR_EACH_ENTRY(iter, &This->range_list, HTMLTxtRange, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(iter, next, &This->range_list, HTMLTxtRange, entry) {
         iter->doc = NULL;
+        list_remove(&iter->entry);
     }
 }
