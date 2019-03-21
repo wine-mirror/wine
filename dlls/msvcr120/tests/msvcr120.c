@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <limits.h>
+#include <wctype.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -205,6 +206,8 @@ static double (__cdecl *p_creal)(_Dcomplex);
 static double (__cdecl *p_nexttoward)(double, double);
 static float (__cdecl *p_nexttowardf)(float, double);
 static double (__cdecl *p_nexttowardl)(double, double);
+static wctrans_t (__cdecl *p_wctrans)(const char*);
+static wint_t (__cdecl *p_towctrans)(wint_t, wctrans_t);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -268,6 +271,8 @@ static BOOL init(void)
     SET(p_nexttoward, "nexttoward");
     SET(p_nexttowardf, "nexttowardf");
     SET(p_nexttowardl, "nexttowardl");
+    SET(p_wctrans, "wctrans");
+    SET(p_towctrans, "towctrans");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QEAA@XZ");
@@ -1052,6 +1057,37 @@ static void test_nexttoward(void)
     ok(e == -1, "Expected no error, got %d.\n", e);
 }
 
+static void test_towctrans(void)
+{
+    wchar_t ret;
+
+    ret = p_wctrans("tolower");
+    ok(ret == 2, "wctrans returned %d, expected 2\n", ret);
+    ret = p_wctrans("toupper");
+    ok(ret == 1, "wctrans returned %d, expected 1\n", ret);
+    ret = p_wctrans("toLower");
+    ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
+    ret = p_wctrans("");
+    ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
+    if(0) { /* crashes on windows */
+        ret = p_wctrans(NULL);
+        ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
+    }
+
+    ret = p_towctrans('t', 2);
+    ok(ret == 't', "towctrans('t', 2) returned %c, expected t\n", ret);
+    ret = p_towctrans('T', 2);
+    ok(ret == 't', "towctrans('T', 2) returned %c, expected t\n", ret);
+    ret = p_towctrans('T', 0);
+    ok(ret == 't', "towctrans('T', 0) returned %c, expected t\n", ret);
+    ret = p_towctrans('T', 3);
+    ok(ret == 't', "towctrans('T', 3) returned %c, expected t\n", ret);
+    ret = p_towctrans('t', 1);
+    ok(ret == 'T', "towctrans('t', 1) returned %c, expected T\n", ret);
+    ret = p_towctrans('T', 1);
+    ok(ret == 'T', "towctrans('T', 1) returned %c, expected T\n", ret);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -1072,4 +1108,5 @@ START_TEST(msvcr120)
     test_vsscanf();
     test__Cbuild();
     test_nexttoward();
+    test_towctrans();
 }
