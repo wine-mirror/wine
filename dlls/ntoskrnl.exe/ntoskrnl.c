@@ -397,6 +397,15 @@ NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE handle, ACCESS_MASK access,
     return status;
 }
 
+/***********************************************************************
+ *           ObGetObjectType (NTOSKRNL.EXE.@)
+ */
+POBJECT_TYPE WINAPI ObGetObjectType( void *object )
+{
+    struct object_header *header = (struct object_header *)object - 1;
+    return header->type;
+}
+
 
 static void *create_file_object( HANDLE handle );
 
@@ -2790,16 +2799,6 @@ USHORT WINAPI ObGetFilterVersion(void)
     FIXME( "stub:\n" );
 
     return OB_FLT_REGISTRATION_VERSION;
-}
-
-/***********************************************************************
- *           ObGetObjectType (NTOSKRNL.EXE.@)
- */
-POBJECT_TYPE WINAPI ObGetObjectType(void *object)
-{
-    FIXME("stub: %p\n", object);
-
-    return NULL;
 }
 
 /***********************************************************************

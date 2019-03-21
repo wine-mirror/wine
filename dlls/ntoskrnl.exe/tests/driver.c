@@ -662,10 +662,12 @@ static void WINAPI thread_proc(void *arg)
 
 static void test_ob_reference(const WCHAR *test_path)
 {
+    POBJECT_TYPE (WINAPI *pObGetObjectType)(void*);
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     HANDLE event_handle, file_handle, file_handle2, thread_handle;
     FILE_OBJECT *file;
     void *obj1, *obj2;
+    POBJECT_TYPE obj1_type;
     UNICODE_STRING pathU;
     IO_STATUS_BLOCK io;
     WCHAR *tmp_path;
@@ -673,6 +675,10 @@ static void test_ob_reference(const WCHAR *test_path)
     NTSTATUS status;
 
     static const WCHAR tmpW[] = {'.','t','m','p',0};
+
+    pObGetObjectType = get_proc_address("ObGetObjectType");
+    if (!pObGetObjectType)
+        win_skip("ObGetObjectType not found\n");
 
     InitializeObjectAttributes(&attr, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
     status = ZwCreateEvent(&event_handle, SYNCHRONIZE, &attr, NotificationEvent, TRUE);
@@ -707,6 +713,12 @@ static void test_ob_reference(const WCHAR *test_path)
 
     status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, NULL, KernelMode, &obj1, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+
+    if (pObGetObjectType)
+    {
+        obj1_type = pObGetObjectType(obj1);
+        ok(obj1_type == *pExEventObjectType, "ObGetObjectType returned %p\n", obj1_type);
+    }
 
     if (sizeof(void *) != 4) /* avoid dealing with fastcall */
     {
