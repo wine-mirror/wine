@@ -2069,3 +2069,30 @@ BOOL msvcrt_init_locale(void)
     _setmbcp(_MB_CP_ANSI);
     return TRUE;
 }
+
+#if _MSVCR_VER >= 120
+/*********************************************************************
+ *      wctrans (MSVCR120.@)
+ */
+MSVCRT_wctrans_t CDECL MSVCR120_wctrans(const char *property)
+{
+    static const char str_tolower[] = "tolower";
+    static const char str_toupper[] = "toupper";
+
+    if(!strcmp(property, str_tolower))
+        return 2;
+    if(!strcmp(property, str_toupper))
+        return 1;
+    return 0;
+}
+
+/*********************************************************************
+ *      towctrans (MSVCR120.@)
+ */
+MSVCRT_wint_t CDECL MSVCR120_towctrans(MSVCRT_wint_t c, MSVCRT_wctrans_t category)
+{
+    if(category == 1)
+        return MSVCRT__towupper_l(c, NULL);
+    return MSVCRT__towlower_l(c, NULL);
+}
+#endif

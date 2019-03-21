@@ -119,4 +119,4 @@
 @ cdecl wctob(long) ucrtbase.wctob
 @ cdecl wctomb(ptr long) ucrtbase.wctomb
 @ cdecl wctomb_s(ptr ptr long long) ucrtbase.wctomb_s
-@ stub wctrans
+@ cdecl wctrans(str) ucrtbase.wctrans

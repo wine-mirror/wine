@@ -151,7 +151,7 @@
 @ cdecl strxfrm(ptr str long) ucrtbase.strxfrm
 @ cdecl tolower(long) ucrtbase.tolower
 @ cdecl toupper(long) ucrtbase.toupper
-@ stub towctrans
+@ cdecl towctrans(long long) ucrtbase.towctrans
 @ cdecl towlower(long) ucrtbase.towlower
 @ cdecl towupper(long) ucrtbase.towupper
 @ cdecl wcscat(wstr wstr) ucrtbase.wcscat
