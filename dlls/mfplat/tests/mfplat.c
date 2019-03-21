@@ -2480,6 +2480,46 @@ static void test_MFCalculateImageSize(void)
     }
 }
 
+static void test_MFCompareFullToPartialMediaType(void)
+{
+    IMFMediaType *full_type, *partial_type;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = MFCreateMediaType(&full_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&partial_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    ret = MFCompareFullToPartialMediaType(full_type, partial_type);
+    ok(!ret, "Unexpected result %d.\n", ret);
+
+    hr = IMFMediaType_SetGUID(full_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set major type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(partial_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set major type, hr %#x.\n", hr);
+
+    ret = MFCompareFullToPartialMediaType(full_type, partial_type);
+    ok(ret, "Unexpected result %d.\n", ret);
+
+    hr = IMFMediaType_SetGUID(full_type, &MF_MT_SUBTYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set major type, hr %#x.\n", hr);
+
+    ret = MFCompareFullToPartialMediaType(full_type, partial_type);
+    ok(ret, "Unexpected result %d.\n", ret);
+
+    hr = IMFMediaType_SetGUID(partial_type, &MF_MT_SUBTYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to set major type, hr %#x.\n", hr);
+
+    ret = MFCompareFullToPartialMediaType(full_type, partial_type);
+    ok(!ret, "Unexpected result %d.\n", ret);
+
+    IMFMediaType_Release(full_type);
+    IMFMediaType_Release(partial_type);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -2510,6 +2550,7 @@ START_TEST(mfplat)
     test_MFInvokeCallback();
     test_stream_descriptor();
     test_MFCalculateImageSize();
+    test_MFCompareFullToPartialMediaType();
 
     CoUninitialize();
 }

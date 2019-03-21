@@ -29,7 +29,7 @@
 @ stdcall MFCalculateImageSize(ptr long long ptr)
 @ stub MFCancelCreateFile
 @ stdcall MFCancelWorkItem(int64)
-@ stub MFCompareFullToPartialMediaType
+@ stdcall MFCompareFullToPartialMediaType(ptr ptr)
 @ stub MFCompareSockaddrAddresses
 @ stub MFConvertColorInfoFromDXVA
 @ stub MFConvertColorInfoToDXVA

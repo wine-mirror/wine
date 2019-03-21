@@ -1496,3 +1496,22 @@ HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height
 
     return format ? S_OK : E_INVALIDARG;
 }
+
+/***********************************************************************
+ *      MFCompareFullToPartialMediaType (mfplat.@)
+ */
+BOOL WINAPI MFCompareFullToPartialMediaType(IMFMediaType *full_type, IMFMediaType *partial_type)
+{
+    BOOL result;
+    GUID major;
+
+    TRACE("%p, %p.\n", full_type, partial_type);
+
+    if (FAILED(IMFMediaType_GetMajorType(partial_type, &major)))
+        return FALSE;
+
+    if (FAILED(IMFMediaType_Compare(partial_type, (IMFAttributes *)full_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result)))
+        return FALSE;
+
+    return result;
+}
