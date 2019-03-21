@@ -6806,403 +6806,287 @@ msgstr "Lähetä postia"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "Aloituspyyntö on jo tehty.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "Asennusalustaa ei tueta.\n"
+msgstr "Media Foundation platform -kirjastoa ei ole alustettu.\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "Tavumäärä on liian pieni.\n"
+msgstr "Puskuri on liian pieni.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "Kyselyn syntaksi ei kelpaa.\n"
+msgstr "Pyyntö ei kelpaa.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "Segmentin numero ei kelpaa.\n"
+msgstr "Virran numero ei kelpaa.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "Tietotyyppi ei kelpaa.\n"
+msgstr "Mediatyyppi ei kelpaa.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "Ei enempää merkintöjä.\n"
+msgstr "Enempää syötettä ei hyväksytä.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "Objektin UUID:tä ei löydy.\n"
+msgstr "Objektia ei ole alustettu.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "Tehtävää ei tueta.\n"
+msgstr "Esitystapaa ei tueta.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "Ehdotettujen mediatyyppien listalla ei ole enempää tyyppejä.\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "Tyyppiä ei tueta.\n"
+msgstr "Palvelua ei tueta.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Odottamaton verkkovirhe.\n"
+msgstr "Odottamaton virhe.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "Aika ei kelpaa.\n"
+msgstr "Tyyppi ei kelpaa.\n"
 
 #: mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "Pikselimuoto ei kelpaa.\n"
+msgstr "Tiedostomuoto ei kelpaa.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "Aika ei kelpaa.\n"
+msgstr "Aikaleima ei kelpaa.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "Tyyppiä ei tueta.\n"
+msgstr "Skeemaa ei tueta.\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "Tyyppiä ei tueta.\n"
+msgstr "Tavuvirran tyyppiä ei tueta.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "Tyyppiä ei tueta.\n"
+msgstr "Ajan muotoa ei tueta.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "Näytteelle ei ole asetettu aikaleimaa.\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "Näytteelle ei ole asetettu kestoa.\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Data ei kelpaa.\n"
+msgstr "Virran data ei kelpaa.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "Ohjetta ei saatavilla."
+msgstr "Reaaliaikaisuus ei ole käytettävissä.\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "Tyyppiä ei tueta.\n"
+msgstr "Nopeutta ei tueta.\n"
 
 #: mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "Tyyppiä ei tueta.\n"
+msgstr "Ohennusta ei tueta.\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "Pyyntöä ei tueta.\n"
+msgstr "Kääntämistä ei tueta.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "Valtuutuksen tasoa ei tueta.\n"
+msgstr "Nopeuden vaihtoa ei tueta.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "Nopeuden vaihto sivuutettiin.\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "Objektin UUID:tä ei löydy.\n"
+msgstr "Objektia tai arvoa ei löydy.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "Ohjetta ei saatavilla."
+msgstr "Arvo ei saatavilla.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "Ohjetta ei saatavilla."
+msgstr "Kello ei saatavilla.\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "Lisämääritteitä ei tueta.\n"
+msgstr "Useaa listautujaa ei tueta.\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "Ajuri ei ollut käytössä."
+msgstr "Ajastin jäi orvoksi.\n"
 
 #: mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "Merkistönmuunnostaulua ei saatu avattua.\n"
+msgstr "Tilan muutos odottaa.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "Valtuutuksen tasoa ei tueta.\n"
+msgstr "Tilan muutosta ei tueta.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "On tapahtunut sisäinen virhe.\n"
+msgstr "On tapahtunut peruuttamaton virhe.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "Näytteellä on liian monta puskuria.\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "Väliaikaishakemistoon ei voida kirjoittaa.\n"
+msgstr "Näyte ei ole kirjoitettava.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "Polku on viallinen.\n"
+msgstr "Avain on viallinen.\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "Väärä tyngän versio.\n"
+msgstr "Käynnistysversio ei kelpaa.\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "Tyyppiä ei tueta.\n"
+msgstr "Tekstiä ei tueta.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "Työasema ei kelpaa.\n"
+msgstr "Paikka ei kelpaa.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "Tiedostoa ei löydy.\n"
+msgstr "Attribuuttia ei löydy.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "Koukun tyyppi ei ole sallittu.\n"
+msgstr "Ominaisuuden tyyppi ei ole sallittu.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "Tehtävää ei tueta.\n"
+msgstr "Ominaisuuden tyyppiä ei tueta.\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "Hakemisto ei ole tyhjä.\n"
+msgstr "Ominaisuus on tyhjä.\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "Hakemisto ei ole tyhjä.\n"
+msgstr "Ominaisuus ei ole tyhjä.\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "Koukun tyyppi ei ole sallittu.\n"
+msgstr "Vektoriominaisuus ei ole sallittu.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "Vektoriominaisuus vaaditaan.\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "Käyttäjän keskeyttämä.\n"
+msgstr "Toimenpide keskeytettiin.\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "Palvelin käytössä.\n"
+msgstr "Tavuvirta ei ole haettava.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "Alusta ei ole käytettävissä turvatilassa.\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "Ei voida luoda palvelusäiettä.\n"
+msgstr "Tavuvirtaa ei voida jäsentää.\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "Lähteen jäsentäjälle on annettu toisensa poissulkevia valitsimia.\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "Tuntematon rajapinta.\n"
+msgstr "Tavuvirran pituutta ei tiedetä.\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "Indeksi ei kelpaa.\n"
+msgstr "Työjonon indeksi ei kelpaa.\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "Ei kirjautumispalvelimia saatavilla.\n"
+msgstr "Tapahtumia ei ole saatavilla.\n"
 
 #: mferror.mc:445
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Shutdown() kutsuttu.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "Yhteys viallinen.\n"
+msgstr "Valinnainen solmu ei kelpaa.\n"
 
 #: mferror.mc:459
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "Tulostinta ei löydy."
+msgstr "Salaukselle ei löydy purkajaa.\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "Moduulia ei löydy.\n"
+msgstr "Koodekkia ei löydy.\n"
 
 #: mferror.mc:473
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "Kutsun kahvaa ei saada.\n"
+msgstr "Topologian solmuja ei voida yhdistää.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "Pyyntöä ei tueta.\n"
+msgstr "Topologiapyyntöä ei tueta.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "Ryhmäominaisuudet eivät kelpaa.\n"
+msgstr "Topologian aika-attribuutit eivät kelpaa.\n"
 
 #: mferror.mc:494
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "Topologiassa on silmukoita.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "Asennuksen lähde puuttuu.\n"
+msgstr "Esitystavan kuvaus puuttuu.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "Hakemisto puuttuu.\n"
+msgstr "Virran kuvaus puuttuu.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "Laite ei ole yhdistetty.\n"
+msgstr "Virran kuvausta ei ole valittu.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Hakemisto puuttuu.\n"
+msgstr "Lähde puuttuu.\n"
 
 #: mferror.mc:529
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "Topologianlatain ei tue ulostulojen aktivointeja.\n"
 
 #: mferror.mc:536
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "Kellolle ei ole asetettu ajan lähdettä.\n"
 
 #: mferror.mc:543
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "Luokka on jo käytössä.\n"
+msgstr "Kellon tila oli jo asetettu.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
