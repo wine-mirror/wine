@@ -1887,7 +1887,10 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         ["[false,{},{\"x\": []}]", [false,{},{x:[]}]],
         ["0", 0],
         ["- 1", -1],
-        ["1e2147483648", Infinity]
+        ["1e2147483648", Infinity],
+        ["0.5", 0.5],
+        ["0e5", 0],
+        [".5", 0.5]
     ];
 
     function json_cmp(x, y) {

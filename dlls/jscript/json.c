@@ -261,19 +261,12 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
             skip_spaces(ctx);
         }
 
-        if(!isdigitW(*ctx->ptr))
+        if(*ctx->ptr == '0' && ctx->ptr + 1 < ctx->end && isdigitW(ctx->ptr[1]))
             break;
 
-        if(*ctx->ptr == '0') {
-            ctx->ptr++;
-            n = 0;
-            if(is_identifier_char(*ctx->ptr))
-                break;
-        }else {
-            hres = parse_decimal(&ctx->ptr, ctx->end, &n);
-            if(FAILED(hres))
-                return hres;
-        }
+        hres = parse_decimal(&ctx->ptr, ctx->end, &n);
+        if(FAILED(hres))
+            break;
 
         *r = jsval_number(sign*n);
         return S_OK;
