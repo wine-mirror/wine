@@ -2582,6 +2582,7 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
     IStream_AddRef(object->stream);
     position.QuadPart = 0;
     IStream_Seek(object->stream, position, STREAM_SEEK_SET, NULL);
+    object->capabilities = MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE;
 
     *bytestream = &object->IMFByteStream_iface;
 

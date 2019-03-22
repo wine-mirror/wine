@@ -1091,7 +1091,6 @@ static void test_MFCreateMFByteStreamOnStream(void)
 
     hr = IMFByteStream_GetCapabilities(bytestream, &caps);
     ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);
-todo_wine
     ok(caps == (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE), "Unexpected caps %#x.\n", caps);
 
     hr = IMFByteStream_Close(bytestream);
@@ -1102,7 +1101,6 @@ todo_wine
 
     hr = IMFByteStream_GetCapabilities(bytestream, &caps);
     ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);
-todo_wine
     ok(caps == (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE), "Unexpected caps %#x.\n", caps);
 
     caps = 0;
