@@ -206,7 +206,7 @@ HRESULT WINAPI PropVariantToInt64(REFPROPVARIANT propvarIn, LONGLONG *ret)
     TRACE("%p,%p\n", propvarIn, ret);
 
     hr = PROPVAR_ConvertNumber(propvarIn, 64, TRUE, &res);
-    if (SUCCEEDED(hr)) *ret = (LONGLONG)res;
+    if (SUCCEEDED(hr)) *ret = res;
     return hr;
 }
 
