@@ -1515,3 +1515,75 @@ BOOL WINAPI MFCompareFullToPartialMediaType(IMFMediaType *full_type, IMFMediaTyp
 
     return result;
 }
+
+/***********************************************************************
+ *      MFWrapMediaType (mfplat.@)
+ */
+HRESULT WINAPI MFWrapMediaType(IMFMediaType *original, REFGUID major, REFGUID subtype, IMFMediaType **ret)
+{
+    IMFMediaType *mediatype;
+    UINT8 *buffer;
+    UINT32 size;
+    HRESULT hr;
+
+    TRACE("%p, %s, %s, %p.\n", original, debugstr_guid(major), debugstr_guid(subtype), ret);
+
+    if (FAILED(hr = MFGetAttributesAsBlobSize((IMFAttributes *)original, &size)))
+        return hr;
+
+    if (!(buffer = heap_alloc(size)))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = MFGetAttributesAsBlob((IMFAttributes *)original, buffer, size)))
+        goto failed;
+
+    if (FAILED(hr = MFCreateMediaType(&mediatype)))
+        goto failed;
+
+    if (FAILED(hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, major)))
+        goto failed;
+
+    if (FAILED(hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, subtype)))
+        goto failed;
+
+    if (FAILED(hr = IMFMediaType_SetBlob(mediatype, &MF_MT_WRAPPED_TYPE, buffer, size)))
+        goto failed;
+
+    *ret = mediatype;
+
+failed:
+    heap_free(buffer);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      MFUnwrapMediaType (mfplat.@)
+ */
+HRESULT WINAPI MFUnwrapMediaType(IMFMediaType *wrapper, IMFMediaType **ret)
+{
+    IMFMediaType *mediatype;
+    UINT8 *buffer;
+    UINT32 size;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", wrapper, ret);
+
+    if (FAILED(hr = MFCreateMediaType(&mediatype)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaType_GetAllocatedBlob(wrapper, &MF_MT_WRAPPED_TYPE, &buffer, &size)))
+    {
+        IMFMediaType_Release(mediatype);
+        return hr;
+    }
+
+    hr = MFInitAttributesFromBlob((IMFAttributes *)mediatype, buffer, size);
+    CoTaskMemFree(buffer);
+    if (FAILED(hr))
+        return hr;
+
+    *ret = mediatype;
+
+    return S_OK;
+}

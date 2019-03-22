@@ -152,9 +152,9 @@
 @ stub MFUnblockThread
 @ stdcall MFUnlockPlatform()
 @ stdcall MFUnlockWorkQueue(long)
-@ stub MFUnwrapMediaType
+@ stdcall MFUnwrapMediaType(ptr ptr)
 @ stub MFValidateMediaTypeSize
-@ stub MFWrapMediaType
+@ stdcall MFWrapMediaType(ptr ptr ptr ptr)
 @ stub MFllMulDiv
 @ stub PropVariantFromStream
 @ stub PropVariantToStream

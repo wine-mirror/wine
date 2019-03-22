@@ -2616,6 +2616,62 @@ static void test_attributes_serialization(void)
     IMFAttributes_Release(dest);
 }
 
+static void test_wrapped_media_type(void)
+{
+    IMFMediaType *mediatype, *mediatype2;
+    UINT32 count, type;
+    HRESULT hr;
+    GUID guid;
+
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = MFUnwrapMediaType(mediatype, &mediatype2);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetUINT32(mediatype, &GUID_NULL, 1);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(mediatype, &DUMMY_GUID1, 2);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to set GUID value, hr %#x.\n", hr);
+
+    hr = MFWrapMediaType(mediatype, &MFMediaType_Audio, &IID_IUnknown, &mediatype2);
+    ok(hr == S_OK, "Failed to create wrapped media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_GetGUID(mediatype2, &MF_MT_MAJOR_TYPE, &guid);
+    ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type.\n");
+
+    hr = IMFMediaType_GetGUID(mediatype2, &MF_MT_SUBTYPE, &guid);
+    ok(hr == S_OK, "Failed to get subtype, hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &IID_IUnknown), "Unexpected major type.\n");
+
+    hr = IMFMediaType_GetCount(mediatype2, &count);
+    ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
+    ok(count == 3, "Unexpected count %u.\n", count);
+
+    hr = IMFMediaType_GetItemType(mediatype2, &MF_MT_WRAPPED_TYPE, &type);
+    ok(hr == S_OK, "Failed to get item type, hr %#x.\n", hr);
+    ok(type == MF_ATTRIBUTE_BLOB, "Unexpected item type.\n");
+
+    IMFMediaType_Release(mediatype);
+
+    hr = MFUnwrapMediaType(mediatype2, &mediatype);
+    ok(hr == S_OK, "Failed to unwrap, hr %#x.\n", hr);
+
+    hr = IMFMediaType_GetGUID(mediatype, &MF_MT_MAJOR_TYPE, &guid);
+    ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected major type.\n");
+
+    hr = IMFMediaType_GetGUID(mediatype, &MF_MT_SUBTYPE, &guid);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaType_Release(mediatype);
+    IMFMediaType_Release(mediatype2);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -2648,6 +2704,7 @@ START_TEST(mfplat)
     test_MFCalculateImageSize();
     test_MFCompareFullToPartialMediaType();
     test_attributes_serialization();
+    test_wrapped_media_type();
 
     CoUninitialize();
 }
