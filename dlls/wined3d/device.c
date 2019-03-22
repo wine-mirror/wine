@@ -3533,7 +3533,7 @@ DWORD CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *
     return device->state.texture_states[stage][state];
 }
 
-HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
+void CDECL wined3d_device_set_texture(struct wined3d_device *device,
         UINT stage, struct wined3d_texture *texture)
 {
     struct wined3d_texture *prev;
@@ -3547,7 +3547,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     if (stage >= ARRAY_SIZE(device->state.textures))
     {
         WARN("Ignoring invalid stage %u.\n", stage);
-        return WINED3D_OK;
+        return;
     }
 
     if (texture)
@@ -3559,7 +3559,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     if (device->recording)
     {
         device->recording->changed.textures |= 1u << stage;
-        return WINED3D_OK;
+        return;
     }
 
     prev = device->state.textures[stage];
@@ -3568,7 +3568,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     if (texture == prev)
     {
         TRACE("App is setting the same texture again, nothing to do.\n");
-        return WINED3D_OK;
+        return;
     }
 
     TRACE("Setting new texture to %p.\n", texture);
@@ -3580,7 +3580,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     if (prev)
         wined3d_texture_decref(prev);
 
-    return WINED3D_OK;
+    return;
 }
 
 struct wined3d_texture * CDECL wined3d_device_get_texture(const struct wined3d_device *device, UINT stage)
