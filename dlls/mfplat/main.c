@@ -651,24 +651,19 @@ static inline mfattributes *impl_from_IMFAttributes(IMFAttributes *iface)
 
 static HRESULT WINAPI mfattributes_QueryInterface(IMFAttributes *iface, REFIID riid, void **out)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), out);
-
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_IMFAttributes))
+    if (IsEqualIID(riid, &IID_IMFAttributes) ||
+            IsEqualGUID(riid, &IID_IUnknown))
     {
-        *out = &This->IMFAttributes_iface;
-    }
-    else
-    {
-        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
-        *out = NULL;
-        return E_NOINTERFACE;
+        *out = iface;
+        IMFAttributes_AddRef(iface);
+        return S_OK;
     }
 
-    IUnknown_AddRef((IUnknown*)*out);
-    return S_OK;
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI mfattributes_AddRef(IMFAttributes *iface)
