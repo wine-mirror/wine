@@ -4051,21 +4051,21 @@ static void test_lighting(void)
         {&mat_nonaffine, translatedquad, 0x000000ff, "Lit quad with non-affine matrix"},
     };
 
-    HWND window;
-    IDirect3D3 *d3d;
+    DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
+    IDirect3DViewport3 *viewport, *viewport2;
+    DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+    IDirect3DMaterial3 *material;
+    D3DMATERIALHANDLE mat_handle;
     IDirect3DDevice3 *device;
     IDirectDrawSurface4 *rt;
-    IDirect3DViewport3 *viewport;
-    IDirect3DMaterial3 *material;
     IDirect3DLight *light;
-    D3DMATERIALHANDLE mat_handle;
     D3DLIGHT2 light_desc;
-    HRESULT hr;
-    DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
-    DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
+    IDirect3D3 *d3d;
     D3DCOLOR color;
     ULONG refcount;
     unsigned int i;
+    HWND window;
+    HRESULT hr;
 
     window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
@@ -4160,9 +4160,16 @@ static void test_lighting(void)
     U4(light_desc.dcvColor).a = 1.0f;
     U3(light_desc.dvDirection).z = 1.0f;
     hr = IDirect3DLight_SetLight(light, (D3DLIGHT *)&light_desc);
-    ok(SUCCEEDED(hr), "Failed to set light, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DViewport3_AddLight(viewport, light);
-    ok(SUCCEEDED(hr), "Failed to add a light to the viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DViewport3_AddLight(viewport, light);
+    ok(hr == D3DERR_LIGHTHASVIEWPORT, "Got unexpected hr %#x.\n", hr);
+
+    viewport2 = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DViewport3_AddLight(viewport2, light);
+    ok(hr == D3DERR_LIGHTHASVIEWPORT, "Got unexpected hr %#x.\n", hr);
+    IDirect3DViewport3_Release(viewport2);
 
     hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
