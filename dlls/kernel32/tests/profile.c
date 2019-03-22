@@ -153,9 +153,7 @@ static void test_profile_string(void)
 
     /* works only in unicode, ascii crashes */
     ret=GetPrivateProfileStringW(sW, emptyW, emptyW, bufW, ARRAY_SIZE(bufW), TESTFILE2W);
-    todo_wine
     ok(ret == 10, "expected 10, got %u\n", ret);
-    todo_wine
     ok(!lstrcmpW(valnokeyW,bufW), "expected %s, got %s\n",
         wine_dbgstr_w(valnokeyW), wine_dbgstr_w(bufW) );
 
