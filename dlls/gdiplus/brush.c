@@ -67,7 +67,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             *clone = heap_alloc_zero(sizeof(GpPathGradient));
             if (!*clone) return OutOfMemory;
 
-            src = (GpPathGradient*) brush,
+            src = (GpPathGradient*) brush;
             dest = (GpPathGradient*) *clone;
 
             memcpy(dest, src, sizeof(GpPathGradient));
