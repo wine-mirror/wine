@@ -47,11 +47,25 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #ifdef USE_WIN32_VULKAN
 
+static HMODULE vulkan_module;
+
 /* FIXME: We should unload vulkan-1.dll. */
+static BOOL WINAPI load_vulkan_dll_once(INIT_ONCE *once, void *param, void **context)
+{
+    vulkan_module = LoadLibraryA("vulkan-1.dll");
+    return TRUE;
+}
+
 static PFN_vkGetInstanceProcAddr load_vulkan(void)
 {
-    HMODULE vulkan = LoadLibraryA("vulkan-1.dll");
-    return (void *)GetProcAddress(vulkan, "vkGetInstanceProcAddr");
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+    InitOnceExecuteOnce(&init_once, load_vulkan_dll_once, NULL, NULL);
+
+    if (vulkan_module)
+        return (void *)GetProcAddress(vulkan_module, "vkGetInstanceProcAddr");
+
+    return NULL;
 }
 
 #else
