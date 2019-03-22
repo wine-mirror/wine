@@ -6029,25 +6029,25 @@ static void test_lighting(void)
         {&mat_nonaffine, translatedquad, 0x000000ff, "Lit quad with non-affine matrix"},
     };
 
-    HWND window;
-    IDirect3D *d3d;
-    IDirect3DDevice *device;
-    IDirectDraw *ddraw;
-    IDirectDrawSurface *rt;
-    IDirect3DViewport *viewport;
-    IDirect3DMaterial *material;
-    IDirect3DLight *light;
+    D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
+    IDirect3DViewport *viewport, *viewport2;
     IDirect3DExecuteBuffer *execute_buffer;
     D3DEXECUTEBUFFERDESC exec_desc;
     D3DMATERIALHANDLE mat_handle;
-    D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
+    IDirect3DMaterial *material;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    IDirect3DLight *light;
     D3DLIGHT light_desc;
-    HRESULT hr;
-    D3DCOLOR color;
-    void *ptr;
+    IDirectDraw *ddraw;
     UINT inst_length;
     ULONG refcount;
     unsigned int i;
+    IDirect3D *d3d;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    void *ptr;
 
     window = create_window();
     ddraw = create_ddraw();
@@ -6202,9 +6202,16 @@ static void test_lighting(void)
     U4(light_desc.dcvColor).a = 1.0f;
     U3(light_desc.dvDirection).z = 1.0f;
     hr = IDirect3DLight_SetLight(light, &light_desc);
-    ok(SUCCEEDED(hr), "Failed to set light, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DViewport_AddLight(viewport, light);
-    ok(SUCCEEDED(hr), "Failed to add a light to the viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DViewport_AddLight(viewport, light);
+    ok(hr == D3DERR_LIGHTHASVIEWPORT, "Got unexpected hr %#x.\n", hr);
+
+    viewport2 = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DViewport_AddLight(viewport2, light);
+    ok(hr == D3DERR_LIGHTHASVIEWPORT, "Got unexpected hr %#x.\n", hr);
+    destroy_viewport(device, viewport2);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
