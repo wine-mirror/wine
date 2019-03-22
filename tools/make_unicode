@@ -1031,8 +1031,7 @@ sub dump_uni2cp_table($$)
 
     # output all the subtables into a single array
 
-    printf OUTPUT "static const unsigned %s uni2cp_low[%d] =\n{\n",
-                  $width == 8 ? "char" : "short", ($index + 1) * 256 - $removed;
+    printf OUTPUT "static const unsigned %s uni2cp_low[] =\n{\n", $width == 8 ? "char" : "short";
 
     my $format = $width == 8 ? "0x%02x" : "0x%04x";
     for (my $i = $index = 0; $i < 257; $i++)
