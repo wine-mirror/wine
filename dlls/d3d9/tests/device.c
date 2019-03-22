@@ -2731,7 +2731,7 @@ static void test_depthstenciltest(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     if(pDepthStencil) IDirect3DSurface9_Release(pDepthStencil);
-    if(pDevice) IDirect3D9_Release(pDevice);
+    IDirect3D9_Release(pDevice);
 
     /* Now see if autodepthstencil disable is honored. First, without a format set */
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
@@ -2765,7 +2765,7 @@ static void test_depthstenciltest(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == D3DZB_FALSE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
 
-    if(pDevice) IDirect3D9_Release(pDevice);
+    IDirect3D9_Release(pDevice);
 
     /* Next, try EnableAutoDepthStencil FALSE with a depth stencil format set */
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
