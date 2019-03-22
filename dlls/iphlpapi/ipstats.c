@@ -823,11 +823,8 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
                         *ptr='\0';
 
                     for (i = 0; i < ARRAY_SIZE(ipstatlist); i++)
-                        if (!strcasecmp(buf, ipstatlist[i].name))
-                        {
-                            if (sscanf(value, "%d", &res)) *ipstatlist[i].elem = res;
-                            continue;
-                        }
+                        if (!strcasecmp(buf, ipstatlist[i].name) && sscanf(value, "%d", &res))
+                            *ipstatlist[i].elem = res;
                 }
                 fclose(fp);
                 ret = NO_ERROR;
@@ -1213,11 +1210,8 @@ DWORD WINAPI GetUdpStatisticsEx(PMIB_UDPSTATS stats, DWORD family)
                         *ptr='\0';
 
                     for (i = 0; i < ARRAY_SIZE(udpstatlist); i++)
-                        if (!strcasecmp(buf, udpstatlist[i].name))
-                        {
-                            if (sscanf(value, "%d", &res)) *udpstatlist[i].elem = res;
-                            continue;
-                        }
+                        if (!strcasecmp(buf, udpstatlist[i].name) && sscanf(value, "%d", &res))
+                            *udpstatlist[i].elem = res;
                 }
                 fclose(fp);
                 ret = NO_ERROR;
