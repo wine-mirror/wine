@@ -211,6 +211,48 @@ interface IMFByteStreamHandler : IUnknown
             [out] QWORD *bytes);
 }
 
+typedef [public] struct _MF_LEAKY_BUCKET_PAIR
+{
+    DWORD dwBitrate;
+    DWORD msBufferWindow;
+} MF_LEAKY_BUCKET_PAIR;
+
+typedef [public] struct _MFBYTESTREAM_BUFFERING_PARAMS
+{
+    QWORD cbTotalFileSize;
+    QWORD cbPlayableDataSize;
+    MF_LEAKY_BUCKET_PAIR *prgBuckets;
+    DWORD cBuckets;
+    QWORD qwNetBufferingTime;
+    QWORD qwExtraBufferingTimeDuringSeek;
+    QWORD qwPlayDuration;
+    float dRate;
+} MFBYTESTREAM_BUFFERING_PARAMS;
+
+[
+    object,
+    uuid(6d66d782-1d4f-4db7-8c63-cb8c77f1ef5e),
+]
+interface IMFByteStreamBuffering : IUnknown
+{
+    HRESULT SetBufferingParams(
+            [in] MFBYTESTREAM_BUFFERING_PARAMS *params);
+
+    HRESULT EnableBuffering(
+            [in] BOOL enable);
+
+    HRESULT StopBuffering();
+}
+
+[
+    object,
+    uuid(f5042ea4-7a96-4a75-aa7b-2be1ef7f88d5),
+]
+interface IMFByteStreamCacheControl : IUnknown
+{
+    HRESULT StopBackgroundTransfer();
+}
+
 [
     object,
     uuid(6d4c7b74-52a0-4bb7-b0db-55f29f47a668),

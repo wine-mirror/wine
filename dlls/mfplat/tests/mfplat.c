@@ -1009,9 +1009,10 @@ static void test_MFCreateMFByteStreamOnStream(void)
     IMFByteStream *bytestream2;
     IStream *stream;
     IMFAttributes *attributes = NULL;
+    DWORD caps, written, count;
     IUnknown *unknown;
+    ULONG ref, size;
     HRESULT hr;
-    ULONG ref;
 
     if(!pMFCreateMFByteStreamOnStream)
     {
@@ -1021,6 +1022,10 @@ static void test_MFCreateMFByteStreamOnStream(void)
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    caps = 0xffff0000;
+    hr = IStream_Write(stream, &caps, sizeof(caps), &written);
+    ok(hr == S_OK, "Failed to write, hr %#x.\n", hr);
 
     hr = pMFCreateMFByteStreamOnStream(stream, &bytestream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1054,6 +1059,9 @@ static void test_MFCreateMFByteStreamOnStream(void)
     }
 
     ok(attributes != NULL, "got NULL\n");
+    hr = IMFAttributes_GetCount(attributes, &count);
+    ok(hr == S_OK, "Failed to get attributes count, hr %#x.\n", hr);
+    ok(count == 0, "Unexpected attributes count %u.\n", count);
 
     hr = IMFAttributes_QueryInterface(attributes, &IID_IUnknown,
                                  (void **)&unknown);
@@ -1069,18 +1077,55 @@ static void test_MFCreateMFByteStreamOnStream(void)
     ref = IMFByteStream_Release(bytestream2);
     ok(ref == 2, "got %u\n", ref);
 
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFByteStreamBuffering, (void **)&unknown);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFByteStreamCacheControl, (void **)&unknown);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFMediaEventGenerator, (void **)&unknown);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFGetService, (void **)&unknown);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFByteStream_GetCapabilities(bytestream, &caps);
+    ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);
+todo_wine
+    ok(caps == (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE), "Unexpected caps %#x.\n", caps);
+
+    hr = IMFByteStream_Close(bytestream);
+    ok(hr == S_OK, "Failed to close, hr %#x.\n", hr);
+
+    hr = IMFByteStream_Close(bytestream);
+    ok(hr == S_OK, "Failed to close, hr %#x.\n", hr);
+
+    hr = IMFByteStream_GetCapabilities(bytestream, &caps);
+    ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);
+todo_wine
+    ok(caps == (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE), "Unexpected caps %#x.\n", caps);
+
+    caps = 0;
+    hr = IMFByteStream_Read(bytestream, (BYTE *)&caps, sizeof(caps), &size);
+    ok(hr == S_OK, "Failed to read from stream, hr %#x.\n", hr);
+    ok(caps == 0xffff0000, "Unexpected content.\n");
+
     IMFAttributes_Release(attributes);
     IMFByteStream_Release(bytestream);
     IStream_Release(stream);
 }
 
-static void test_MFCreateFile(void)
+static void test_file_stream(void)
 {
     IMFByteStream *bytestream;
     IMFByteStream *bytestream2;
     IMFAttributes *attributes = NULL;
-    HRESULT hr;
+    MF_ATTRIBUTE_TYPE item_type;
+    DWORD caps, count;
     WCHAR *filename;
+    IUnknown *unk;
+    HRESULT hr;
+    WCHAR *str;
 
     static const WCHAR newfilename[] = {'n','e','w','.','m','p','4',0};
 
@@ -1093,10 +1138,57 @@ static void test_MFCreateFile(void)
                       MF_FILEFLAGS_NONE, filename, &bytestream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFByteStreamBuffering, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFByteStreamCacheControl, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFMediaEventGenerator, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFGetService, (void **)&unk);
+todo_wine
+    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+
+    hr = IMFByteStream_GetCapabilities(bytestream, &caps);
+    ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);
+    if (is_win8_plus)
+    {
+todo_wine
+        ok(caps == (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE | MFBYTESTREAM_DOES_NOT_USE_NETWORK),
+            "Unexpected caps %#x.\n", caps);
+    }
+    else
+        ok(caps == (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE), "Unexpected caps %#x.\n", caps);
+
     hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFAttributes,
                                  (void **)&attributes);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(attributes != NULL, "got NULL\n");
+
+    hr = IMFAttributes_GetCount(attributes, &count);
+    ok(hr == S_OK, "Failed to get attributes count, hr %#x.\n", hr);
+todo_wine
+    ok(count == 2, "Unexpected attributes count %u.\n", count);
+
+    /* Original file name. */
+    hr = IMFAttributes_GetAllocatedString(attributes, &MF_BYTESTREAM_ORIGIN_NAME, &str, &count);
+todo_wine
+    ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(!lstrcmpW(str, filename), "Unexpected name %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+}
+    /* Modification time. */
+    hr = IMFAttributes_GetItemType(attributes, &MF_BYTESTREAM_LAST_MODIFIED_TIME, &item_type);
+todo_wine {
+    ok(hr == S_OK, "Failed to get item type, hr %#x.\n", hr);
+    ok(item_type == MF_ATTRIBUTE_BLOB, "Unexpected item type.\n");
+}
     IMFAttributes_Release(attributes);
 
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST,
@@ -2684,7 +2776,7 @@ START_TEST(mfplat)
     test_MFCreateMediaEvent();
     test_attributes();
     test_sample();
-    test_MFCreateFile();
+    test_file_stream();
     test_MFCreateMFByteStreamOnStream();
     test_system_memory_buffer();
     test_source_resolver();

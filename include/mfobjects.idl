@@ -613,6 +613,7 @@ cpp_quote("#define MFBYTESTREAM_IS_DIRECTORY               0x00000080")
 cpp_quote("#define MFBYTESTREAM_HAS_SLOW_SEEK              0x00000100")
 cpp_quote("#define MFBYTESTREAM_IS_PARTIALLY_DOWNLOADED    0x00000200")
 cpp_quote("#define MFBYTESTREAM_SHARE_WRITE                0x00000400")
+cpp_quote("#define MFBYTESTREAM_DOES_NOT_USE_NETWORK       0x00000800")
 
 cpp_quote("#define MFBYTESTREAM_SEEK_FLAG_CANCEL_PENDING_IO  0x00000001")
 
