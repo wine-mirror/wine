@@ -295,6 +295,8 @@ static void release_inner_window(HTMLInnerWindow *This)
 
     if(This->session_storage)
         IHTMLStorage_Release(This->session_storage);
+    if(This->local_storage)
+        IHTMLStorage_Release(This->local_storage);
 
     if(This->mon)
         IMoniker_Release(This->mon);
@@ -2123,7 +2125,7 @@ static HRESULT WINAPI HTMLWindow6_get_sessionStorage(IHTMLWindow6 *iface, IHTMLS
 {
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
     if(!This->inner_window->session_storage) {
         HRESULT hres;
@@ -2141,8 +2143,20 @@ static HRESULT WINAPI HTMLWindow6_get_sessionStorage(IHTMLWindow6 *iface, IHTMLS
 static HRESULT WINAPI HTMLWindow6_get_localStorage(IHTMLWindow6 *iface, IHTMLStorage **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->inner_window->local_storage) {
+        HRESULT hres;
+
+        hres = create_storage(&This->inner_window->local_storage);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    IHTMLStorage_AddRef(This->inner_window->local_storage);
+    *p = This->inner_window->local_storage;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow6_put_onhashchange(IHTMLWindow6 *iface, VARIANT v)

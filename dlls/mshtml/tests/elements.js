@@ -290,6 +290,14 @@ function test_style_properties() {
     next_test();
 }
 
+function test_storage() {
+    ok(typeof(window.sessionStorage) === "object",
+       "typeof(window.sessionStorage) = " + typeof(window.sessionStorage));
+    ok(typeof(window.localStorage) === "object",
+       "typeof(window.localStorage) = " + typeof(window.localStorage));
+    next_test();
+}
+
 var tests = [
     test_input_selection,
     test_textContent,
@@ -301,5 +309,6 @@ var tests = [
     test_query_selector,
     test_compare_position,
     test_document_owner,
-    test_style_properties
+    test_style_properties,
+    test_storage
 ];

@@ -515,6 +515,7 @@ struct HTMLInnerWindow {
     IHTMLScreen *screen;
     OmHistory *history;
     IHTMLStorage *session_storage;
+    IHTMLStorage *local_storage;
 
     BOOL performance_initialized;
     VARIANT performance;
