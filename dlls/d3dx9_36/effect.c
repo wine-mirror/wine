@@ -1768,6 +1768,8 @@ static inline struct d3dx_effect_pool *impl_from_ID3DXEffectPool(ID3DXEffectPool
     return CONTAINING_RECORD(iface, struct d3dx_effect_pool, ID3DXEffectPool_iface);
 }
 
+static inline struct d3dx_effect_pool *unsafe_impl_from_ID3DXEffectPool(ID3DXEffectPool *iface);
+
 static inline struct d3dx_effect *impl_from_ID3DXEffect(ID3DXEffect *iface)
 {
     return CONTAINING_RECORD(iface, struct d3dx_effect, ID3DXEffect_iface);
@@ -6164,8 +6166,8 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
 
     if (pool)
     {
+        effect->pool = unsafe_impl_from_ID3DXEffectPool(pool);
         pool->lpVtbl->AddRef(pool);
-        effect->pool = impl_from_ID3DXEffectPool(pool);
     }
 
     IDirect3DDevice9_AddRef(device);
@@ -6476,6 +6478,15 @@ static const struct ID3DXEffectPoolVtbl ID3DXEffectPool_Vtbl =
     d3dx_effect_pool_AddRef,
     d3dx_effect_pool_Release
 };
+
+static inline struct d3dx_effect_pool *unsafe_impl_from_ID3DXEffectPool(ID3DXEffectPool *iface)
+{
+    if (!iface)
+        return NULL;
+
+    assert(iface->lpVtbl == &ID3DXEffectPool_Vtbl);
+    return impl_from_ID3DXEffectPool(iface);
+}
 
 HRESULT WINAPI D3DXCreateEffectPool(ID3DXEffectPool **pool)
 {
