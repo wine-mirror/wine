@@ -644,9 +644,9 @@ static const char *debugstr_attr(const GUID *guid)
     return ret ? wine_dbg_sprintf("%s", ret->name) : wine_dbgstr_guid(guid);
 }
 
-static inline mfattributes *impl_from_IMFAttributes(IMFAttributes *iface)
+static inline struct attributes *impl_from_IMFAttributes(IMFAttributes *iface)
 {
-    return CONTAINING_RECORD(iface, mfattributes, IMFAttributes_iface);
+    return CONTAINING_RECORD(iface, struct attributes, IMFAttributes_iface);
 }
 
 static HRESULT WINAPI mfattributes_QueryInterface(IMFAttributes *iface, REFIID riid, void **out)
@@ -668,12 +668,12 @@ static HRESULT WINAPI mfattributes_QueryInterface(IMFAttributes *iface, REFIID r
 
 static ULONG WINAPI mfattributes_AddRef(IMFAttributes *iface)
 {
-    mfattributes *This = impl_from_IMFAttributes(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+    ULONG refcount = InterlockedIncrement(&attributes->ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    return ref;
+    return refcount;
 }
 
 static ULONG WINAPI mfattributes_Release(IMFAttributes *iface)
@@ -1792,7 +1792,7 @@ HRESULT WINAPI MFInitAttributesFromBlob(IMFAttributes *dest, const UINT8 *buffer
 
 typedef struct _mfbytestream
 {
-    mfattributes attributes;
+    struct attributes attributes;
     IMFByteStream IMFByteStream_iface;
 } mfbytestream;
 
@@ -2273,7 +2273,7 @@ HRESULT WINAPI MFGetPluginControl(IMFPluginControl **ret)
 
 typedef struct _mfpresentationdescriptor
 {
-    mfattributes attributes;
+    struct attributes attributes;
     IMFPresentationDescriptor IMFPresentationDescriptor_iface;
 } mfpresentationdescriptor;
 
@@ -3566,7 +3566,7 @@ HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver)
 
 typedef struct media_event
 {
-    mfattributes attributes;
+    struct attributes attributes;
     IMFMediaEvent IMFMediaEvent_iface;
 
     MediaEventType type;
