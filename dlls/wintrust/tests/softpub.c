@@ -1150,6 +1150,16 @@ static void test_wintrust_digest(void)
             { CERT_E_CHAINING, TRUE }, { S_OK, FALSE }
         },
         {
+            {{ SelfSignedFile32, sizeof(SelfSignedFile32) },
+             { Dummy, sizeof(Dummy) }},
+            { TRUST_E_NOSIGNATURE, TRUE }, { TRUST_E_NOSIGNATURE, TRUE }
+        },
+        {
+            {{ Dummy, sizeof(Dummy) },
+             { SelfSignedFile32 + sizeof(Dummy), sizeof(SelfSignedFile32) - sizeof(Dummy) }},
+            { TRUST_E_SUBJECT_FORM_UNKNOWN, FALSE }, { TRUST_E_NOSIGNATURE, TRUE }
+        },
+        {
             {{ SelfSignedFile32, 19 },
              { Dummy, sizeof(Dummy) },
              { SelfSignedFile32 + 19 + sizeof(Dummy), sizeof(SelfSignedFile32) - 19 - sizeof(Dummy) }},
@@ -1168,6 +1178,16 @@ static void test_wintrust_digest(void)
         {
             {{ SelfSignedFile64, sizeof(SelfSignedFile64) }},
             { CERT_E_CHAINING, TRUE }, { S_OK, FALSE }
+        },
+        {
+            {{ SelfSignedFile64, sizeof(SelfSignedFile64) },
+             { Dummy, sizeof(Dummy) }},
+            { TRUST_E_NOSIGNATURE, TRUE }, { TRUST_E_NOSIGNATURE, TRUE }
+        },
+        {
+            {{ Dummy, sizeof(Dummy) },
+             { SelfSignedFile64 + sizeof(Dummy), sizeof(SelfSignedFile64) - sizeof(Dummy) }},
+            { TRUST_E_SUBJECT_FORM_UNKNOWN, FALSE }, { TRUST_E_NOSIGNATURE, TRUE }
         },
         {
             {{ SelfSignedFile64, 19 },
