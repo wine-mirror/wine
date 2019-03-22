@@ -1169,24 +1169,19 @@ todo_wine
 
     hr = IMFAttributes_GetCount(attributes, &count);
     ok(hr == S_OK, "Failed to get attributes count, hr %#x.\n", hr);
-todo_wine
     ok(count == 2, "Unexpected attributes count %u.\n", count);
 
     /* Original file name. */
     hr = IMFAttributes_GetAllocatedString(attributes, &MF_BYTESTREAM_ORIGIN_NAME, &str, &count);
-todo_wine
     ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
-if (SUCCEEDED(hr))
-{
     ok(!lstrcmpW(str, filename), "Unexpected name %s.\n", wine_dbgstr_w(str));
     CoTaskMemFree(str);
-}
+
     /* Modification time. */
     hr = IMFAttributes_GetItemType(attributes, &MF_BYTESTREAM_LAST_MODIFIED_TIME, &item_type);
-todo_wine {
     ok(hr == S_OK, "Failed to get item type, hr %#x.\n", hr);
     ok(item_type == MF_ATTRIBUTE_BLOB, "Unexpected item type.\n");
-}
+
     IMFAttributes_Release(attributes);
 
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST,

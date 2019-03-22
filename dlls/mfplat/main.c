@@ -2632,6 +2632,7 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     DWORD filesharemode = FILE_SHARE_READ;
     DWORD filecreation_disposition = 0;
     DWORD fileattributes = 0;
+    FILETIME writetime;
     HANDLE file;
     HRESULT hr;
 
@@ -2680,15 +2681,16 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     if(file == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(GetLastError());
 
-    /* Close the file again, since we don't do anything with it yet */
-    CloseHandle(file);
-
     object = heap_alloc_zero(sizeof(*object));
     if (!object)
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
     {
+        CloseHandle(file);
+        return E_OUTOFMEMORY;
+    }
+
+    if (FAILED(hr = init_attributes_object(&object->attributes, 2)))
+    {
+        CloseHandle(file);
         heap_free(object);
         return hr;
     }
@@ -2699,7 +2701,17 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     InitializeCriticalSection(&object->cs);
     list_init(&object->pending);
 
+    if (GetFileTime(file, NULL, NULL, &writetime))
+    {
+        IMFAttributes_SetBlob(&object->attributes.IMFAttributes_iface, &MF_BYTESTREAM_LAST_MODIFIED_TIME,
+                (const UINT8 *)&writetime, sizeof(writetime));
+    }
+
+    IMFAttributes_SetString(&object->attributes.IMFAttributes_iface, &MF_BYTESTREAM_ORIGIN_NAME, url);
+
     *bytestream = &object->IMFByteStream_iface;
+
+    CloseHandle(file);
 
     return S_OK;
 }
