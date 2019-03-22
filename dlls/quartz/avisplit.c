@@ -955,10 +955,8 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
 
         for (x = 0; x < This->Parser.cStreams; ++x)
         {
-            if ((DWORD)This->streams[x].frames != This->streams[x].streamheader.dwLength)
-            {
-                FIXME("stream %u: frames found: %u, frames meant to be found: %u\n", x, (DWORD)This->streams[x].frames, This->streams[x].streamheader.dwLength);
-            }
+            if (This->streams[x].frames != This->streams[x].streamheader.dwLength)
+                FIXME("stream %u: frames found: %u, frames meant to be found: %u\n", x, This->streams[x].frames, This->streams[x].streamheader.dwLength);
         }
 
     }
