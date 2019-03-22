@@ -1146,10 +1146,8 @@ static void test_file_stream(void)
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFGetService, (void **)&unk);
-todo_wine
     ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(unk);
+    IUnknown_Release(unk);
 
     hr = IMFByteStream_GetCapabilities(bytestream, &caps);
     ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);

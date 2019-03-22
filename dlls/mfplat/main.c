@@ -1795,6 +1795,7 @@ typedef struct bytestream
 {
     struct attributes attributes;
     IMFByteStream IMFByteStream_iface;
+    IMFGetService IMFGetService_iface;
     IMFAsyncCallback read_callback;
     IMFAsyncCallback write_callback;
     IStream *stream;
@@ -1807,6 +1808,11 @@ typedef struct bytestream
 static inline mfbytestream *impl_from_IMFByteStream(IMFByteStream *iface)
 {
     return CONTAINING_RECORD(iface, mfbytestream, IMFByteStream_iface);
+}
+
+static struct bytestream *impl_bytestream_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct bytestream, IMFGetService_iface);
 }
 
 static struct bytestream *impl_from_read_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -2013,9 +2019,13 @@ static HRESULT WINAPI bytestream_QueryInterface(IMFByteStream *iface, REFIID rii
     {
         *out = &stream->attributes.IMFAttributes_iface;
     }
+    else if (stream->IMFGetService_iface.lpVtbl && IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *out = &stream->IMFGetService_iface;
+    }
     else
     {
-        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
+        WARN("Unsupported %s.\n", debugstr_guid(riid));
         *out = NULL;
         return E_NOINTERFACE;
     }
@@ -2621,6 +2631,40 @@ static const IMFAsyncCallbackVtbl bytestream_file_write_callback_vtbl =
     bytestream_file_write_callback_Invoke,
 };
 
+static HRESULT WINAPI bytestream_file_getservice_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct bytestream *stream = impl_bytestream_from_IMFGetService(iface);
+    return IMFByteStream_QueryInterface(&stream->IMFByteStream_iface, riid, obj);
+}
+
+static ULONG WINAPI bytestream_file_getservice_AddRef(IMFGetService *iface)
+{
+    struct bytestream *stream = impl_bytestream_from_IMFGetService(iface);
+    return IMFByteStream_AddRef(&stream->IMFByteStream_iface);
+}
+
+static ULONG WINAPI bytestream_file_getservice_Release(IMFGetService *iface)
+{
+    struct bytestream *stream = impl_bytestream_from_IMFGetService(iface);
+    return IMFByteStream_Release(&stream->IMFByteStream_iface);
+}
+
+static HRESULT WINAPI bytestream_file_getservice_GetService(IMFGetService *iface, REFGUID service,
+        REFIID riid, void **obj)
+{
+    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl bytestream_file_getservice_vtbl =
+{
+    bytestream_file_getservice_QueryInterface,
+    bytestream_file_getservice_AddRef,
+    bytestream_file_getservice_Release,
+    bytestream_file_getservice_GetService,
+};
+
 /***********************************************************************
  *      MFCreateFile (mfplat.@)
  */
@@ -2696,6 +2740,7 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     }
     object->IMFByteStream_iface.lpVtbl = &mfbytestream_vtbl;
     object->attributes.IMFAttributes_iface.lpVtbl = &mfbytestream_attributes_vtbl;
+    object->IMFGetService_iface.lpVtbl = &bytestream_file_getservice_vtbl;
     object->read_callback.lpVtbl = &bytestream_file_read_callback_vtbl;
     object->write_callback.lpVtbl = &bytestream_file_write_callback_vtbl;
     InitializeCriticalSection(&object->cs);
