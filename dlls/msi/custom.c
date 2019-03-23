@@ -477,7 +477,7 @@ static void handle_msi_break(LPCSTR target)
 }
 
 static WCHAR ncalrpcW[] = {'n','c','a','l','r','p','c',0};
-static WCHAR endpoint_lrpcW[] = {'m','s','i',0};
+static WCHAR endpoint_fmtW[] = {'m','s','i','%','x',0};
 
 #ifdef __i386__
 /* wrapper for apps that don't declare the thread function correctly */
@@ -502,7 +502,7 @@ static UINT custom_proc_wrapper( MsiCustomActionEntryPoint entry, MSIHANDLE hins
 }
 #endif
 
-UINT CDECL __wine_msi_call_dll_function(const GUID *guid)
+UINT CDECL __wine_msi_call_dll_function(DWORD client_pid, const GUID *guid)
 {
     MsiCustomActionEntryPoint fn;
     MSIHANDLE remote_package = 0;
@@ -519,7 +519,10 @@ UINT CDECL __wine_msi_call_dll_function(const GUID *guid)
 
     if (!rpc_handle)
     {
-        status = RpcStringBindingComposeW(NULL, ncalrpcW, NULL, endpoint_lrpcW, NULL, &binding_str);
+        WCHAR endpoint[12];
+
+        sprintfW(endpoint, endpoint_fmtW, client_pid);
+        status = RpcStringBindingComposeW(NULL, ncalrpcW, NULL, endpoint, NULL, &binding_str);
         if (status != RPC_S_OK)
         {
             ERR("RpcStringBindingCompose failed: %#x\n", status);
@@ -740,8 +743,11 @@ static msi_custom_action_info *do_msidbCustomActionTypeDll(
 
     if (!package->rpc_server_started)
     {
+        WCHAR endpoint[12];
+
+        sprintfW(endpoint, endpoint_fmtW, GetCurrentProcessId());
         status = RpcServerUseProtseqEpW(ncalrpcW, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
-            endpoint_lrpcW, NULL);
+            endpoint, NULL);
         if (status != RPC_S_OK)
         {
             ERR("RpcServerUseProtseqEp failed: %#x\n", status);
