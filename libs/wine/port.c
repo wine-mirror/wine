@@ -33,6 +33,7 @@
 #ifndef __ANDROID__
 const void *libwine_port_functions[] =
 {
+    wine_compare_string,
     wine_cp_enum_table,
     wine_cp_get_table,
     wine_cp_mbstowcs,

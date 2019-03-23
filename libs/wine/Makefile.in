@@ -1,15 +1,12 @@
 EXTRALIBS = $(DL_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS)
-EXTRADEFS = -DWINE_UNICODE_API=""
 
 C_SRCS = \
-	collation.c \
 	config.c \
 	debug.c \
 	ldt.c \
 	loader.c \
 	mmap.c \
 	port.c \
-	sortkey.c \
 	string.c
 
 EXTRA_OBJS = version.o

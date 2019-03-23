@@ -844,7 +844,7 @@ sub READ_SORTKEYS_FILE()
 
 ################################################################
 # build the sort keys table
-sub DUMP_SORTKEYS($@)
+sub dump_sortkeys($@)
 {
     my ($filename, @keys) = @_;
 
@@ -868,8 +868,9 @@ sub DUMP_SORTKEYS($@)
     printf OUTPUT "/* Unicode collation element table */\n";
     printf OUTPUT "/* generated from %s */\n", "$REPORTS/$SORTKEYS";
     printf OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
-    printf OUTPUT "const unsigned int collation_table[%d] =\n{\n", $ranges*256;
+    printf OUTPUT "const unsigned int DECLSPEC_HIDDEN collation_table[%d] =\n{\n", $ranges*256;
     printf OUTPUT "    /* index */\n";
     printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%08x", 0, @offsets );
 
@@ -2767,7 +2768,7 @@ sub REPLACE_IN_FILE($@)
 chdir ".." if -f "./make_unicode";
 READ_DEFAULTS( $DEFAULTS );
 dump_case_mappings( "libs/port/casemap.c" );
-DUMP_SORTKEYS( "libs/wine/collation.c", READ_SORTKEYS_FILE() );
+dump_sortkeys( "libs/port/collation.c", READ_SORTKEYS_FILE() );
 dump_compose_table( "libs/port/compose.c" );
 dump_decompose_table( "libs/port/decompose.c" );
 dump_ctype_tables( "libs/port/wctype.c" );
