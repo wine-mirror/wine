@@ -1891,7 +1891,7 @@ sub dump_simple_mapping($$@)
     my $def = shift;
     my @array = compress_array( 256, $def, @_[0..65535] );
 
-    printf OUTPUT "const unsigned short %s[%d] =\n{\n", $name, $#array+1;
+    printf OUTPUT "const unsigned short DECLSPEC_HIDDEN %s[%d] =\n{\n", $name, $#array+1;
     printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[0..255] );
     printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
 }
@@ -2178,7 +2178,7 @@ sub dump_nameprep($)
 
 ################################################################
 # dump the ctype tables
-sub DUMP_CTYPE_TABLES($)
+sub dump_ctype_tables($)
 {
     my $filename = shift;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
@@ -2770,7 +2770,7 @@ DUMP_CASE_MAPPINGS( "libs/wine/casemap.c" );
 DUMP_SORTKEYS( "libs/wine/collation.c", READ_SORTKEYS_FILE() );
 dump_compose_table( "libs/port/compose.c" );
 dump_decompose_table( "libs/port/decompose.c" );
-DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
+dump_ctype_tables( "libs/port/wctype.c" );
 dump_digit_folding( "libs/port/digitmap.c" );
 dump_combining_class( "libs/port/combclass.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );

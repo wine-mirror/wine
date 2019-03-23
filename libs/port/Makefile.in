@@ -102,4 +102,5 @@ C_SRCS = \
 	symlink.c \
 	usleep.c \
 	utf8.c \
-	wctomb.c
+	wctomb.c \
+	wctype.c
