@@ -345,7 +345,7 @@ static HRESULT WINAPI MSTASK_ITask_CreateTrigger(ITask *iface, WORD *idx, ITaskT
     new_trigger->wStartHour = time.wHour;
     new_trigger->wStartMinute = time.wMinute;
     new_trigger->rgFlags = TASK_TRIGGER_FLAG_DISABLED;
-    new_trigger->TriggerType = TASK_TIME_TRIGGER_DAILY,
+    new_trigger->TriggerType = TASK_TIME_TRIGGER_DAILY;
     new_trigger->Type.Daily.DaysInterval = 1;
 
     *idx = This->trigger_count++;
