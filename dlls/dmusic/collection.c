@@ -499,13 +499,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface,
         struct list *listEntry;
 
         TRACE("*** IDirectMusicCollection (%p) ***\n", &This->IDirectMusicCollection_iface);
-        if (This->dmobj.desc.dwValidData & DMUS_OBJ_OBJECT)
-            TRACE(" - GUID = %s\n", debugstr_dmguid(&This->dmobj.desc.guidObject));
-        if (This->dmobj.desc.dwValidData & DMUS_OBJ_VERSION)
-            TRACE(" - Version = %i,%i,%i,%i\n", (This->dmobj.desc.vVersion.dwVersionMS >> 8) & 0x0000FFFF, This->dmobj.desc.vVersion.dwVersionMS & 0x0000FFFF,
-                  (This->dmobj.desc.vVersion.dwVersionLS >> 8) & 0x0000FFFF, This->dmobj.desc.vVersion.dwVersionLS & 0x0000FFFF);
-        if (This->dmobj.desc.dwValidData & DMUS_OBJ_NAME)
-            TRACE(" - Name = %s\n", debugstr_w(This->dmobj.desc.wszName));
+        dump_DMUS_OBJECTDESC(&This->dmobj.desc);
 
         TRACE(" - Collection header:\n");
         TRACE("    - cInstruments: %d\n", This->pHeader->cInstruments);
