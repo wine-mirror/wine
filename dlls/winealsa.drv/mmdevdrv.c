@@ -803,8 +803,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
         return E_UNEXPECTED;
     }
 
-    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient_iface,
-        (IUnknown **)&This->pUnkFTMarshal);
+    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient_iface, &This->pUnkFTMarshal);
     if (FAILED(hr)) {
         HeapFree(GetProcessHeap(), 0, This);
         return hr;
