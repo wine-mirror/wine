@@ -86,7 +86,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAlloc( void *addr, SIZE_T size, DWORD typ
  *	Success: Base address of allocated region of pages.
  *	Failure: NULL.
  */
-LPVOID WINAPI VirtualAllocEx( HANDLE hProcess, LPVOID addr, SIZE_T size,
+LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocEx( HANDLE hProcess, LPVOID addr, SIZE_T size,
     DWORD type, DWORD protect )
 {
     LPVOID ret = addr;
