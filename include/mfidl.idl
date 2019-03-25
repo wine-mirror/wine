@@ -255,6 +255,24 @@ interface IMFByteStreamCacheControl : IUnknown
 
 [
     object,
+    uuid(64976bfa-fb61-4041-9069-8c9a5f659beb),
+]
+interface IMFByteStreamTimeSeek : IUnknown
+{
+    HRESULT IsTimeSeekSupported(
+            [out] BOOL *is_supported);
+
+    HRESULT TimeSeek(
+            [in] QWORD position);
+
+    HRESULT GetTimeSeekResult(
+            [out] QWORD *start_time,
+            [out] QWORD *stop_time,
+            [out] QWORD *duration);
+}
+
+[
+    object,
     uuid(6d4c7b74-52a0-4bb7-b0db-55f29f47a668),
     local
 ]

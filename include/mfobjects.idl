@@ -646,6 +646,23 @@ typedef enum  {
 
 [
     object,
+    uuid(8feed468-6f7e-440d-869a-49bdd283ad0d),
+]
+interface IMFSampleOutputStream : IUnknown
+{
+    HRESULT BeginWriteSample(
+            [in] IMFSample *sample,
+            [in] IMFAsyncCallback *callback,
+            [in] IUnknown *state);
+
+    HRESULT EndWriteSample(
+            [in] IMFAsyncResult *result);
+
+    HRESULT Close();
+}
+
+[
+    object,
     uuid(5bc8a76b-869a-46a3-9b03-fa218a66aebe)
 ]
 interface IMFCollection : IUnknown
