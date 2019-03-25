@@ -1183,6 +1183,7 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     static const WCHAR csdversionW[] = {'C','S','D','V','e','r','s','i','o','n',0};
     static const WCHAR freephysicalmemoryW[] = {'F','r','e','e','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
     static const WCHAR nameW[] = {'N','a','m','e',0};
+    static const WCHAR operatingsystemskuW[] = {'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m','S','K','U',0};
     static const WCHAR osproductsuiteW[] = {'O','S','P','r','o','d','u','c','t','S','u','i','t','e',0};
     static const WCHAR ostypeW[] = {'O','S','T','y','p','e',0};
     static const WCHAR suitemaskW[] = {'S','u','i','t','e','M','a','s','k',0};
@@ -1261,6 +1262,18 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
     trace( "name: %s\n", wine_dbgstr_w(V_BSTR( &val )) );
     VariantClear( &val );
+
+    type = 0xdeadbeef;
+    VariantInit( &val );
+    hr = IWbemClassObject_Get( obj, operatingsystemskuW, 0, &val, &type, NULL );
+    ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* winxp */, "failed to get operatingsystemsku %08x\n", hr );
+    if (hr == S_OK)
+    {
+        ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+        trace( "operatingsystemsku: %08x\n", V_I4( &val ) );
+        VariantClear( &val );
+    }
 
     type = 0xdeadbeef;
     VariantInit( &val );

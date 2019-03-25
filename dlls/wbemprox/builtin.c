@@ -312,6 +312,8 @@ static const WCHAR prop_numlogicalprocessorsW[] =
     {'N','u','m','b','e','r','O','f','L','o','g','i','c','a','l','P','r','o','c','e','s','s','o','r','s',0};
 static const WCHAR prop_numprocessorsW[] =
     {'N','u','m','b','e','r','O','f','P','r','o','c','e','s','s','o','r','s',0};
+static const WCHAR prop_operatingsystemskuW[] =
+    {'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m','S','K','U',0};
 static const WCHAR prop_osarchitectureW[] =
     {'O','S','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_oslanguageW[] =
@@ -584,6 +586,7 @@ static const struct column col_os[] =
     { prop_localdatetimeW,          CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localeW,                 CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_operatingsystemskuW,     CIM_UINT32, VT_I4 },
     { prop_osarchitectureW,         CIM_STRING },
     { prop_oslanguageW,             CIM_UINT32, VT_I4 },
     { prop_osproductsuiteW,         CIM_UINT32, VT_I4 },
@@ -1009,6 +1012,7 @@ struct record_operatingsystem
     const WCHAR *localdatetime;
     const WCHAR *locale;
     const WCHAR *name;
+    UINT32       operatingsystemsku;
     const WCHAR *osarchitecture;
     UINT32       oslanguage;
     UINT32       osproductsuite;
@@ -3116,6 +3120,12 @@ static WCHAR *get_osversion( OSVERSIONINFOEXW *ver )
     if (ret) sprintfW( ret, fmtW, ver->dwMajorVersion, ver->dwMinorVersion, ver->dwBuildNumber );
     return ret;
 }
+static DWORD get_operatingsystemsku(void)
+{
+    DWORD ret = PRODUCT_UNDEFINED;
+    GetProductInfo( 6, 0, 0, 0, &ret );
+    return ret;
+}
 
 static enum fill_status fill_os( struct table *table, const struct expr *cond )
 {
@@ -3141,6 +3151,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->localdatetime          = get_localdatetime();
     rec->locale                 = get_locale();
     rec->name                   = get_osname( rec->caption );
+    rec->operatingsystemsku     = get_operatingsystemsku();
     rec->osarchitecture         = get_osarchitecture();
     rec->oslanguage             = GetSystemDefaultLangID();
     rec->osproductsuite         = 2461140; /* Windows XP Professional  */
