@@ -949,7 +949,7 @@ static HRESULT var_to_styleval(HTMLStyle *style, const VARIANT *v, const style_t
         return S_OK;
 
     case VT_I4: {
-        unsigned flags = entry && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9 ? entry->flags : 0;
+        unsigned flags = entry && dispex_compat_mode(&style->css_style.dispex) < COMPAT_MODE_IE9 ? entry->flags : 0;
         static const WCHAR formatW[] = {'%','d',0};
         static const WCHAR hex_formatW[] = {'#','%','0','6','x',0};
 
@@ -975,7 +975,7 @@ static inline HRESULT set_style_property(HTMLStyle *style, styleid_t sid, const 
     WCHAR *val = NULL;
     HRESULT hres;
 
-    if(value && *value && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9) {
+    if(value && *value && dispex_compat_mode(&style->css_style.dispex) < COMPAT_MODE_IE9) {
         unsigned flags = style_tbl[sid].flags;
 
         if(style_tbl[sid].allowed_values) {
@@ -1147,12 +1147,12 @@ HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t s
 
 static inline HRESULT get_style_property(HTMLStyle *This, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_property(This->css_style.nsstyle, sid, dispex_compat_mode(&This->dispex), p);
+    return get_nsstyle_property(This->css_style.nsstyle, sid, dispex_compat_mode(&This->css_style.dispex), p);
 }
 
 static inline HRESULT get_style_property_var(HTMLStyle *This, styleid_t sid, VARIANT *v)
 {
-    return get_nsstyle_property_var(This->css_style.nsstyle, sid, dispex_compat_mode(&This->dispex), v);
+    return get_nsstyle_property_var(This->css_style.nsstyle, sid, dispex_compat_mode(&This->css_style.dispex), v);
 }
 
 static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR exval, VARIANT_BOOL *p)
@@ -1301,7 +1301,7 @@ static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, v
         *ppv = &This->IHTMLStyle5_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle6, riid)) {
         *ppv = &This->IHTMLStyle6_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->css_style.dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -1334,7 +1334,7 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
         assert(!This->elem);
         if(This->css_style.nsstyle)
             nsIDOMCSSStyleDeclaration_Release(This->css_style.nsstyle);
-        release_dispex(&This->dispex);
+        release_dispex(&This->css_style.dispex);
         heap_free(This);
     }
 
@@ -1344,14 +1344,14 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
 static HRESULT WINAPI HTMLStyle_GetTypeInfoCount(IHTMLStyle *iface, UINT *pctinfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLStyle_GetTypeInfo(IHTMLStyle *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLStyle_GetIDsOfNames(IHTMLStyle *iface, REFIID riid,
@@ -1359,7 +1359,7 @@ static HRESULT WINAPI HTMLStyle_GetIDsOfNames(IHTMLStyle *iface, REFIID riid,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -1368,7 +1368,7 @@ static HRESULT WINAPI HTMLStyle_Invoke(IHTMLStyle *iface, DISPID dispIdMember,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -3108,7 +3108,7 @@ static void update_filter(HTMLStyle *This)
 
     static const WCHAR alphaW[] = {'a','l','p','h','a'};
 
-    if(dispex_compat_mode(&This->dispex) >= COMPAT_MODE_IE10)
+    if(dispex_compat_mode(&This->css_style.dispex) >= COMPAT_MODE_IE10)
         return;
 
     ptr = This->elem->filter;
@@ -3323,11 +3323,11 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 
     style_entry = lookup_style_tbl(strAttributeName);
     if(!style_entry) {
-        compat_mode_t compat_mode = dispex_compat_mode(&This->dispex);
+        compat_mode_t compat_mode = dispex_compat_mode(&This->css_style.dispex);
         DISPID dispid;
         unsigned i;
 
-        hres = IDispatchEx_GetDispID(&This->dispex.IDispatchEx_iface, strAttributeName,
+        hres = IDispatchEx_GetDispID(&This->css_style.dispex.IDispatchEx_iface, strAttributeName,
                 (lFlags&1) ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
         if(hres != S_OK) {
             *pfSuccess = VARIANT_FALSE;
@@ -3341,7 +3341,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         }
 
         if(i == ARRAY_SIZE(style_tbl))
-            return remove_attribute(&This->dispex, dispid, pfSuccess);
+            return remove_attribute(&This->css_style.dispex, dispid, pfSuccess);
         style_entry = style_tbl+i;
     }
 
@@ -3594,14 +3594,14 @@ static ULONG WINAPI HTMLStyle2_Release(IHTMLStyle2 *iface)
 static HRESULT WINAPI HTMLStyle2_GetTypeInfoCount(IHTMLStyle2 *iface, UINT *pctinfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle2(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLStyle2_GetTypeInfo(IHTMLStyle2 *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle2(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLStyle2_GetIDsOfNames(IHTMLStyle2 *iface, REFIID riid,
@@ -3609,7 +3609,7 @@ static HRESULT WINAPI HTMLStyle2_GetIDsOfNames(IHTMLStyle2 *iface, REFIID riid,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLStyle *This = impl_from_IHTMLStyle2(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -3618,7 +3618,7 @@ static HRESULT WINAPI HTMLStyle2_Invoke(IHTMLStyle2 *iface, DISPID dispIdMember,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLStyle *This = impl_from_IHTMLStyle2(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -4197,14 +4197,14 @@ static ULONG WINAPI HTMLStyle3_Release(IHTMLStyle3 *iface)
 static HRESULT WINAPI HTMLStyle3_GetTypeInfoCount(IHTMLStyle3 *iface, UINT *pctinfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLStyle3_GetTypeInfo(IHTMLStyle3 *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLStyle3_GetIDsOfNames(IHTMLStyle3 *iface, REFIID riid,
@@ -4212,7 +4212,7 @@ static HRESULT WINAPI HTMLStyle3_GetIDsOfNames(IHTMLStyle3 *iface, REFIID riid,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -4221,7 +4221,7 @@ static HRESULT WINAPI HTMLStyle3_Invoke(IHTMLStyle3 *iface, DISPID dispIdMember,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -4254,7 +4254,7 @@ static HRESULT WINAPI HTMLStyle3_put_zoom(IHTMLStyle3 *iface, VARIANT v)
     if(V_VT(&v) != VT_I4 || V_I4(&v) != 1)
         WARN("stub for %s\n", debugstr_variant(&v));
 
-    hres = dispex_get_dprop_ref(&This->dispex, zoomW, TRUE, &var);
+    hres = dispex_get_dprop_ref(&This->css_style.dispex, zoomW, TRUE, &var);
     if(FAILED(hres))
         return hres;
 
@@ -4269,7 +4269,7 @@ static HRESULT WINAPI HTMLStyle3_get_zoom(IHTMLStyle3 *iface, VARIANT *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = dispex_get_dprop_ref(&This->dispex, zoomW, FALSE, &var);
+    hres = dispex_get_dprop_ref(&This->css_style.dispex, zoomW, FALSE, &var);
     if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(p) = VT_BSTR;
         V_BSTR(p) = NULL;
@@ -4539,14 +4539,14 @@ static ULONG WINAPI HTMLStyle4_Release(IHTMLStyle4 *iface)
 static HRESULT WINAPI HTMLStyle4_GetTypeInfoCount(IHTMLStyle4 *iface, UINT *pctinfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle4(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLStyle4_GetTypeInfo(IHTMLStyle4 *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle4(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLStyle4_GetIDsOfNames(IHTMLStyle4 *iface, REFIID riid,
@@ -4554,7 +4554,7 @@ static HRESULT WINAPI HTMLStyle4_GetIDsOfNames(IHTMLStyle4 *iface, REFIID riid,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLStyle *This = impl_from_IHTMLStyle4(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -4563,7 +4563,7 @@ static HRESULT WINAPI HTMLStyle4_Invoke(IHTMLStyle4 *iface, DISPID dispIdMember,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLStyle *This = impl_from_IHTMLStyle4(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -4642,21 +4642,21 @@ static ULONG WINAPI HTMLStyle5_Release(IHTMLStyle5 *iface)
 static HRESULT WINAPI HTMLStyle5_GetTypeInfoCount(IHTMLStyle5 *iface, UINT *pctinfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle5(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLStyle5_GetTypeInfo(IHTMLStyle5 *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle5(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLStyle5_GetIDsOfNames(IHTMLStyle5 *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     HTMLStyle *This = impl_from_IHTMLStyle5(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -4665,7 +4665,7 @@ static HRESULT WINAPI HTMLStyle5_Invoke(IHTMLStyle5 *iface, DISPID dispIdMember,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLStyle *This = impl_from_IHTMLStyle5(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -4784,21 +4784,21 @@ static ULONG WINAPI HTMLStyle6_Release(IHTMLStyle6 *iface)
 static HRESULT WINAPI HTMLStyle6_GetTypeInfoCount(IHTMLStyle6 *iface, UINT *pctinfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle6(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLStyle6_GetTypeInfo(IHTMLStyle6 *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLStyle *This = impl_from_IHTMLStyle6(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLStyle6_GetIDsOfNames(IHTMLStyle6 *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     HTMLStyle *This = impl_from_IHTMLStyle6(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -4807,7 +4807,7 @@ static HRESULT WINAPI HTMLStyle6_Invoke(IHTMLStyle6 *iface, DISPID dispIdMember,
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLStyle *This = impl_from_IHTMLStyle6(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -5118,7 +5118,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_GetTypeInfoCount(IHTMLCSSStyleDecl
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, pctinfo);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_GetTypeInfo(IHTMLCSSStyleDeclaration *iface,
@@ -5126,7 +5126,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_GetTypeInfo(IHTMLCSSStyleDeclarati
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_GetIDsOfNames(IHTMLCSSStyleDeclaration *iface,
@@ -5134,7 +5134,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_GetIDsOfNames(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p %p %u %u %p)\n", This, riid, rgszNames, cNames, lcid, rgDispId);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames,
+    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames,
                                      cNames, lcid, rgDispId);
 }
 
@@ -5145,7 +5145,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_Invoke(IHTMLCSSStyleDeclaration *i
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%d %p %u %u %p %p %p %p)\n", This, dispIdMember, riid, lcid, wFlags,
           pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
                               wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -8243,7 +8243,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetTypeInfoCount(IHTMLCSSStyleDec
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     TRACE("(%p)->(%p)\n", This, pctinfo);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetTypeInfo(IHTMLCSSStyleDeclaration2 *iface,
@@ -8251,7 +8251,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetTypeInfo(IHTMLCSSStyleDeclarat
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetIDsOfNames(IHTMLCSSStyleDeclaration2 *iface,
@@ -8259,7 +8259,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetIDsOfNames(IHTMLCSSStyleDeclar
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     TRACE("(%p)->(%p %p %u %u %p)\n", This, riid, rgszNames, cNames, lcid, rgDispId);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames,
+    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames,
                                      cNames, lcid, rgDispId);
 }
 
@@ -8270,7 +8270,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_Invoke(IHTMLCSSStyleDeclaration2 
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     TRACE("(%p)->(%d %p %u %u %p %p %p %p)\n", This, dispIdMember, riid, lcid, wFlags,
           pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
                               wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -10210,7 +10210,7 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
 
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
 
-    init_dispex_with_compat_mode(&style->dispex, (IUnknown*)&style->IHTMLStyle_iface, &HTMLStyle_dispex,
+    init_dispex_with_compat_mode(&style->css_style.dispex, (IUnknown*)&style->IHTMLStyle_iface, &HTMLStyle_dispex,
                                  dispex_compat_mode(&elem->node.event_target.dispex));
 
     *ret = style;

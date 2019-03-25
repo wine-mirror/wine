@@ -17,11 +17,11 @@
  */
 
 typedef struct {
+    DispatchEx dispex;
     nsIDOMCSSStyleDeclaration *nsstyle;
 } CSSStyle;
 
 struct HTMLStyle {
-    DispatchEx dispex;
     CSSStyle css_style;
     IHTMLStyle  IHTMLStyle_iface;
     IHTMLStyle2 IHTMLStyle2_iface;
