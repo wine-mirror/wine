@@ -27,6 +27,8 @@ struct _OBJECT_TYPE {
     void (*release)(void*);       /* called when the last reference is released */
 };
 
+void *alloc_kernel_object( POBJECT_TYPE type, HANDLE handle, SIZE_T size, LONG ref ) DECLSPEC_HIDDEN;
+
 extern POBJECT_TYPE ExEventObjectType;
 extern POBJECT_TYPE ExSemaphoreObjectType;
 extern POBJECT_TYPE IoDeviceObjectType;

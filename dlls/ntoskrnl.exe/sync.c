@@ -76,6 +76,13 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
     EnterCriticalSection( &sync_cs );
     for (i = 0; i < count; i++)
     {
+        if (objs[i]->WaitListHead.Blink == INVALID_HANDLE_VALUE)
+        {
+            FIXME("unsupported on kernel objects\n");
+            handles[i] = INVALID_HANDLE_VALUE;
+            continue;
+        }
+
         ++*((ULONG_PTR *)&objs[i]->WaitListHead.Flink);
         if (!objs[i]->WaitListHead.Blink)
         {
@@ -126,6 +133,8 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
                 break;
             }
         }
+
+        if (objs[i]->WaitListHead.Blink == INVALID_HANDLE_VALUE) continue;
 
         if (!--*((ULONG_PTR *)&objs[i]->WaitListHead.Flink))
         {
@@ -186,10 +195,24 @@ void WINAPI KeInitializeEvent( PRKEVENT event, EVENT_TYPE type, BOOLEAN state )
     event->Header.WaitListHead.Flink = NULL;
 }
 
+static void *create_event_object( HANDLE handle )
+{
+    EVENT_BASIC_INFORMATION info;
+    KEVENT *event;
+
+    if (!(event = alloc_kernel_object( ExEventObjectType, handle, sizeof(*event), 0 ))) return NULL;
+
+    if (!NtQueryEvent( handle, EventBasicInformation, &info, sizeof(info), NULL ))
+        KeInitializeEvent( event, info.EventType, info.EventState );
+    event->Header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
+    return event;
+}
+
 static const WCHAR event_type_name[] = {'E','v','e','n','t',0};
 
 static struct _OBJECT_TYPE event_type = {
     event_type_name,
+    create_event_object
 };
 
 POBJECT_TYPE ExEventObjectType = &event_type;
@@ -200,15 +223,23 @@ POBJECT_TYPE ExEventObjectType = &event_type;
 LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
 {
     HANDLE handle;
-    LONG ret;
+    ULONG ret = 0;
 
     TRACE("event %p, increment %d, wait %u.\n", event, increment, wait);
 
-    EnterCriticalSection( &sync_cs );
-    ret = InterlockedExchange( &event->Header.SignalState, TRUE );
-    if ((handle = event->Header.WaitListHead.Blink))
-        SetEvent( handle );
-    LeaveCriticalSection( &sync_cs );
+    if (event->Header.WaitListHead.Blink != INVALID_HANDLE_VALUE)
+    {
+        EnterCriticalSection( &sync_cs );
+        ret = InterlockedExchange( &event->Header.SignalState, TRUE );
+        if ((handle = event->Header.WaitListHead.Blink))
+            SetEvent( handle );
+        LeaveCriticalSection( &sync_cs );
+    }
+    else
+    {
+        FIXME("unsupported on kernel objects\n");
+        event->Header.SignalState = TRUE;
+    }
 
     return ret;
 }
@@ -219,15 +250,23 @@ LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
 LONG WINAPI KeResetEvent( PRKEVENT event )
 {
     HANDLE handle;
-    LONG ret;
+    ULONG ret = 0;
 
     TRACE("event %p.\n", event);
 
-    EnterCriticalSection( &sync_cs );
-    ret = InterlockedExchange( &event->Header.SignalState, FALSE );
-    if ((handle = event->Header.WaitListHead.Blink))
-        ResetEvent( handle );
-    LeaveCriticalSection( &sync_cs );
+    if (event->Header.WaitListHead.Blink != INVALID_HANDLE_VALUE)
+    {
+        EnterCriticalSection( &sync_cs );
+        ret = InterlockedExchange( &event->Header.SignalState, FALSE );
+        if ((handle = event->Header.WaitListHead.Blink))
+            ResetEvent( handle );
+        LeaveCriticalSection( &sync_cs );
+    }
+    else
+    {
+        FIXME("unsupported on kernel objects\n");
+        event->Header.SignalState = FALSE;
+    }
 
     return ret;
 }

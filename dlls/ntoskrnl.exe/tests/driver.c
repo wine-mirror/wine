@@ -308,6 +308,14 @@ static NTSTATUS wait_multiple(ULONG count, void *objs[], WAIT_TYPE wait_type, UL
     return KeWaitForMultipleObjects(count, objs, wait_type, Executive, KernelMode, FALSE, &integer, NULL);
 }
 
+static NTSTATUS wait_single_handle(HANDLE handle, ULONGLONG timeout)
+{
+    LARGE_INTEGER integer;
+
+    integer.QuadPart = timeout;
+    return ZwWaitForSingleObject(handle, FALSE, &integer);
+}
+
 static void run_thread(PKSTART_ROUTINE proc, void *arg)
 {
     OBJECT_ATTRIBUTES attr = {0};
@@ -341,11 +349,13 @@ static void WINAPI mutex_thread(void *arg)
 static void test_sync(void)
 {
     KSEMAPHORE semaphore, semaphore2;
-    KEVENT manual_event, auto_event;
+    KEVENT manual_event, auto_event, *event;
     KTIMER timer;
     LARGE_INTEGER timeout;
+    OBJECT_ATTRIBUTES attr;
     void *objs[2];
     NTSTATUS ret;
+    HANDLE handle;
     int i;
 
     KeInitializeEvent(&manual_event, NotificationEvent, FALSE);
@@ -439,6 +449,33 @@ static void test_sync(void)
 
     ret = wait_multiple(2, objs, WaitAny, 0);
     ok(ret == 1, "got %#x\n", ret);
+
+    InitializeObjectAttributes(&attr, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+    ret = ZwCreateEvent(&handle, SYNCHRONIZE, &attr, NotificationEvent, TRUE);
+    ok(!ret, "ZwCreateEvent failed: %#x\n", ret);
+
+    ret = ObReferenceObjectByHandle(handle, SYNCHRONIZE, *pExEventObjectType, KernelMode, (void **)&event, NULL);
+    ok(!ret, "ObReferenceObjectByHandle failed: %#x\n", ret);
+
+    ret = wait_single(event, 0);
+    todo_wine
+    ok(ret == 0, "got %#x\n", ret);
+    KeResetEvent(event);
+    ret = wait_single(event, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+    ret = wait_single_handle(handle, 0);
+    todo_wine
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeSetEvent(event, 0, FALSE);
+    ret = wait_single(event, 0);
+    todo_wine
+    ok(ret == 0, "got %#x\n", ret);
+    ret = wait_single_handle(handle, 0);
+    ok(!ret, "got %#x\n", ret);
+
+    ZwClose(handle);
+    ObDereferenceObject(event);
 
     /* test semaphores */
     KeInitializeSemaphore(&semaphore, 0, 5);
@@ -731,14 +768,12 @@ static void test_ob_reference(const WCHAR *test_path)
 
     status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, *pExEventObjectType, KernelMode, &obj2, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
-    todo_wine
     ok(obj1 == obj2, "obj1 != obj2\n");
 
     ObDereferenceObject(obj2);
 
     status = ObReferenceObjectByHandle(event_handle, SYNCHRONIZE, NULL, KernelMode, &obj2, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
-    todo_wine
     ok(obj1 == obj2, "obj1 != obj2\n");
 
     ObDereferenceObject(obj2);
