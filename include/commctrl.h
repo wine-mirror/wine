@@ -1096,6 +1096,16 @@ typedef struct tagNMBCHOTITEM
 #define BS_COMMANDLINK          0x0000000E
 #define BS_DEFCOMMANDLINK       0x0000000F
 
+#define BCSIF_GLYPH             0x00000001
+#define BCSIF_IMAGE             0x00000002
+#define BCSIF_STYLE             0x00000004
+#define BCSIF_SIZE              0x00000008
+
+#define BCSS_NOSPLIT            0x00000001
+#define BCSS_STRETCH            0x00000002
+#define BCSS_ALIGNLEFT          0x00000004
+#define BCSS_IMAGE              0x00000008
+
 /* Button macros */
 #define Button_SetNote(button, note)  \
   (BOOL)SNDMSG(button, BCM_SETNOTE, 0, (LPARAM)(note))
