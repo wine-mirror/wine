@@ -1444,7 +1444,7 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         else
         {
             MSIFOLDER *folder = msi_get_loaded_folder( package, comp->Directory );
-            remove_folder( folder );
+            if (folder) remove_folder( folder );
         }
     }
     return ERROR_SUCCESS;
