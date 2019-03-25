@@ -224,7 +224,7 @@ POBJECT_TYPE ExEventObjectType = &event_type;
 LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
 {
     HANDLE handle;
-    ULONG ret = 0;
+    LONG ret = 0;
 
     TRACE("event %p, increment %d, wait %u.\n", event, increment, wait);
 
@@ -238,7 +238,11 @@ LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
     }
     else
     {
-        FIXME("unsupported on kernel objects\n");
+        if ((handle = kernel_object_handle( event, EVENT_MODIFY_STATE )))
+        {
+            NtSetEvent( handle, &ret );
+            NtClose( handle );
+        }
         event->Header.SignalState = TRUE;
     }
 
@@ -251,7 +255,7 @@ LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
 LONG WINAPI KeResetEvent( PRKEVENT event )
 {
     HANDLE handle;
-    ULONG ret = 0;
+    LONG ret = 0;
 
     TRACE("event %p.\n", event);
 
@@ -265,7 +269,11 @@ LONG WINAPI KeResetEvent( PRKEVENT event )
     }
     else
     {
-        FIXME("unsupported on kernel objects\n");
+        if ((handle = kernel_object_handle( event, EVENT_MODIFY_STATE )))
+        {
+            NtResetEvent( handle, &ret );
+            NtClose( handle );
+        }
         event->Header.SignalState = FALSE;
     }
 
