@@ -233,6 +233,7 @@ struct kernel_object
     struct device_manager  *manager;
     client_ptr_t            user_ptr;
     struct object          *object;
+    int                     owned;
     struct list             list_entry;
     struct wine_rb_entry    rb_entry;
 };
@@ -274,6 +275,7 @@ static struct kernel_object *set_kernel_object( struct device_manager *manager, 
     kernel_object->manager  = manager;
     kernel_object->user_ptr = user_ptr;
     kernel_object->object   = obj;
+    kernel_object->owned    = 0;
 
     if (wine_rb_put( &manager->kernel_objects, &user_ptr, &kernel_object->rb_entry ))
     {
@@ -284,6 +286,21 @@ static struct kernel_object *set_kernel_object( struct device_manager *manager, 
 
     list_add_head( list, &kernel_object->list_entry );
     return kernel_object;
+}
+
+static struct kernel_object *kernel_object_from_ptr( struct device_manager *manager, client_ptr_t client_ptr )
+{
+    struct wine_rb_entry *entry = wine_rb_get( &manager->kernel_objects, &client_ptr );
+    return entry ? WINE_RB_ENTRY_VALUE( entry, struct kernel_object, rb_entry ) : NULL;
+}
+
+static void grab_kernel_object( struct kernel_object *ptr )
+{
+    if (!ptr->owned)
+    {
+        grab_object( ptr->object );
+        ptr->owned = 1;
+    }
 }
 
 static void irp_call_dump( struct object *obj, int verbose )
@@ -685,6 +702,7 @@ static void device_manager_destroy( struct object *obj )
         kernel_object = WINE_RB_ENTRY_VALUE( manager->kernel_objects.root, struct kernel_object, rb_entry );
         wine_rb_remove( &manager->kernel_objects, &kernel_object->rb_entry );
         list_remove( &kernel_object->list_entry );
+        if (kernel_object->owned) release_object( kernel_object->object );
         free( kernel_object );
     }
 
@@ -717,6 +735,7 @@ void free_kernel_objects( struct object *obj )
     while ((ptr = list_head( list )))
     {
         struct kernel_object *kernel_object = LIST_ENTRY( ptr, struct kernel_object, list_entry );
+        assert( !kernel_object->owned );
         list_remove( &kernel_object->list_entry );
         wine_rb_remove( &kernel_object->manager->kernel_objects, &kernel_object->rb_entry );
         free( kernel_object );
@@ -888,5 +907,45 @@ DECL_HANDLER(set_kernel_object_ptr)
         set_error( STATUS_INVALID_HANDLE );
 
     release_object( object );
+    release_object( manager );
+}
+
+
+/* grab server object reference from kernel object pointer */
+DECL_HANDLER(grab_kernel_object)
+{
+    struct device_manager *manager;
+    struct kernel_object *ref;
+
+    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
+                                                             0, &device_manager_ops )))
+        return;
+
+    if ((ref = kernel_object_from_ptr( manager, req->user_ptr )) && !ref->owned)
+        grab_kernel_object( ref );
+    else
+        set_error( STATUS_INVALID_HANDLE );
+
+    release_object( manager );
+}
+
+
+/* release server object reference from kernel object pointer */
+DECL_HANDLER(release_kernel_object)
+{
+    struct device_manager *manager;
+    struct kernel_object *ref;
+
+    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
+                                                             0, &device_manager_ops )))
+        return;
+
+    if ((ref = kernel_object_from_ptr( manager, req->user_ptr )) && ref->owned)
+    {
+        ref->owned = 0;
+        release_object( ref->object );
+    }
+    else set_error( STATUS_INVALID_HANDLE );
+
     release_object( manager );
 }

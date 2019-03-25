@@ -3640,6 +3640,20 @@ struct handle_info
 @END
 
 
+/* Grab server object reference from kernel object pointer */
+@REQ(grab_kernel_object)
+    obj_handle_t manager;         /* handle to the device manager */
+    client_ptr_t user_ptr;        /* kernel object pointer */
+@END
+
+
+/* Release server object reference from kernel object pointer */
+@REQ(release_kernel_object)
+    obj_handle_t manager;         /* handle to the device manager */
+    client_ptr_t user_ptr;        /* kernel object pointer */
+@END
+
+
 /* Make the current process a system process */
 @REQ(make_process_system)
 @REPLY

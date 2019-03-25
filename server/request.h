@@ -378,6 +378,8 @@ DECL_HANDLER(delete_device);
 DECL_HANDLER(get_next_device_request);
 DECL_HANDLER(get_kernel_object_ptr);
 DECL_HANDLER(set_kernel_object_ptr);
+DECL_HANDLER(grab_kernel_object);
+DECL_HANDLER(release_kernel_object);
 DECL_HANDLER(make_process_system);
 DECL_HANDLER(get_token_statistics);
 DECL_HANDLER(create_completion);
@@ -677,6 +679,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_next_device_request,
     (req_handler)req_get_kernel_object_ptr,
     (req_handler)req_set_kernel_object_ptr,
+    (req_handler)req_grab_kernel_object,
+    (req_handler)req_release_kernel_object,
     (req_handler)req_make_process_system,
     (req_handler)req_get_token_statistics,
     (req_handler)req_create_completion,
@@ -2298,6 +2302,12 @@ C_ASSERT( FIELD_OFFSET(struct set_kernel_object_ptr_request, manager) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_kernel_object_ptr_request, handle) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_kernel_object_ptr_request, user_ptr) == 24 );
 C_ASSERT( sizeof(struct set_kernel_object_ptr_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct grab_kernel_object_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct grab_kernel_object_request, user_ptr) == 16 );
+C_ASSERT( sizeof(struct grab_kernel_object_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct release_kernel_object_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct release_kernel_object_request, user_ptr) == 16 );
+C_ASSERT( sizeof(struct release_kernel_object_request) == 24 );
 C_ASSERT( sizeof(struct make_process_system_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct make_process_system_reply, event) == 8 );
 C_ASSERT( sizeof(struct make_process_system_reply) == 16 );

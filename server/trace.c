@@ -4316,6 +4316,18 @@ static void dump_set_kernel_object_ptr_request( const struct set_kernel_object_p
     dump_uint64( ", user_ptr=", &req->user_ptr );
 }
 
+static void dump_grab_kernel_object_request( const struct grab_kernel_object_request *req )
+{
+    fprintf( stderr, " manager=%04x", req->manager );
+    dump_uint64( ", user_ptr=", &req->user_ptr );
+}
+
+static void dump_release_kernel_object_request( const struct release_kernel_object_request *req )
+{
+    fprintf( stderr, " manager=%04x", req->manager );
+    dump_uint64( ", user_ptr=", &req->user_ptr );
+}
+
 static void dump_make_process_system_request( const struct make_process_system_request *req )
 {
 }
@@ -4831,6 +4843,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_next_device_request_request,
     (dump_func)dump_get_kernel_object_ptr_request,
     (dump_func)dump_set_kernel_object_ptr_request,
+    (dump_func)dump_grab_kernel_object_request,
+    (dump_func)dump_release_kernel_object_request,
     (dump_func)dump_make_process_system_request,
     (dump_func)dump_get_token_statistics_request,
     (dump_func)dump_create_completion_request,
@@ -5126,6 +5140,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_get_next_device_request_reply,
     (dump_func)dump_get_kernel_object_ptr_reply,
+    NULL,
+    NULL,
     NULL,
     (dump_func)dump_make_process_system_reply,
     (dump_func)dump_get_token_statistics_reply,
@@ -5423,6 +5439,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_next_device_request",
     "get_kernel_object_ptr",
     "set_kernel_object_ptr",
+    "grab_kernel_object",
+    "release_kernel_object",
     "make_process_system",
     "get_token_statistics",
     "create_completion",

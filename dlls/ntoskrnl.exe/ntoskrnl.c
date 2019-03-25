@@ -290,6 +290,14 @@ void *alloc_kernel_object( POBJECT_TYPE type, HANDLE handle, SIZE_T size, LONG r
     return header + 1;
 }
 
+static CRITICAL_SECTION obref_cs;
+static CRITICAL_SECTION_DEBUG obref_critsect_debug =
+{
+    0, 0, &obref_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": obref_cs") }
+};
+static CRITICAL_SECTION obref_cs = { &obref_critsect_debug, -1, 0, 0, 0, 0 };
 
 /***********************************************************************
  *           ObDereferenceObject   (NTOSKRNL.EXE.@)
@@ -305,13 +313,29 @@ void WINAPI ObDereferenceObject( void *obj )
         return;
     }
 
-    ref = InterlockedDecrement( &header->ref );
+    EnterCriticalSection( &obref_cs );
+
+    ref = --header->ref;
     TRACE( "(%p) ref=%u\n", obj, ref );
     if (!ref)
     {
-        if (header->type->release) header->type->release( obj );
-        else FIXME( "no destructor\n" );
+        if (header->type->release)
+        {
+            header->type->release( obj );
+        }
+        else
+        {
+            SERVER_START_REQ( release_kernel_object )
+            {
+                req->manager  = wine_server_obj_handle( get_device_manager() );
+                req->user_ptr = wine_server_client_ptr( obj );
+                if (wine_server_call( req )) FIXME( "failed to release %p\n", obj );
+            }
+            SERVER_END_REQ;
+        }
     }
+
+    LeaveCriticalSection( &obref_cs );
 }
 
 static void ObReferenceObject( void *obj )
@@ -325,8 +349,22 @@ static void ObReferenceObject( void *obj )
         return;
     }
 
-    ref = InterlockedIncrement( &header->ref );
+    EnterCriticalSection( &obref_cs );
+
+    ref = ++header->ref;
     TRACE( "(%p) ref=%u\n", obj, ref );
+    if (ref == 1)
+    {
+        SERVER_START_REQ( grab_kernel_object )
+        {
+            req->manager  = wine_server_obj_handle( get_device_manager() );
+            req->user_ptr = wine_server_client_ptr( obj );
+            if (wine_server_call( req )) FIXME( "failed to grab %p reference\n", obj );
+        }
+        SERVER_END_REQ;
+    }
+
+    LeaveCriticalSection( &obref_cs );
 }
 
 static const POBJECT_TYPE *known_types[] =
