@@ -334,7 +334,7 @@ static struct irp_call *create_irp( struct device_file *file, const irp_params_t
 {
     struct irp_call *irp;
 
-    if (!file->device->manager)  /* it has been deleted */
+    if (file && !file->device->manager)  /* it has been deleted */
     {
         set_error( STATUS_FILE_DELETED );
         return NULL;
@@ -342,7 +342,7 @@ static struct irp_call *create_irp( struct device_file *file, const irp_params_t
 
     if ((irp = alloc_object( &irp_call_ops )))
     {
-        irp->file     = (struct device_file *)grab_object( file );
+        irp->file     = file ? (struct device_file *)grab_object( file ) : NULL;
         irp->thread   = NULL;
         irp->async    = NULL;
         irp->params   = *params;
@@ -411,15 +411,11 @@ static void device_destroy( struct object *obj )
     if (device->manager) list_remove( &device->entry );
 }
 
-static void add_irp_to_queue( struct device_file *file, struct irp_call *irp, struct thread *thread )
+static void add_irp_to_queue( struct device_manager *manager, struct irp_call *irp, struct thread *thread )
 {
-    struct device_manager *manager = file->device->manager;
-
-    assert( manager );
-
     grab_object( irp );  /* grab reference for queued irp */
     irp->thread = thread ? (struct thread *)grab_object( thread ) : NULL;
-    list_add_tail( &file->requests, &irp->dev_entry );
+    if (irp->file) list_add_tail( &irp->file->requests, &irp->dev_entry );
     list_add_tail( &manager->requests, &irp->mgr_entry );
     if (list_head( &manager->requests ) == &irp->mgr_entry) wake_up( &manager->obj, 0 );  /* first one */
 }
@@ -468,7 +464,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
 
         if ((irp = create_irp( file, &params, NULL )))
         {
-            add_irp_to_queue( file, irp, NULL );
+            add_irp_to_queue( device->manager, irp, NULL );
             release_object( irp );
         }
     }
@@ -504,7 +500,7 @@ static int device_file_close_handle( struct object *obj, struct process *process
 
         if ((irp = create_irp( file, &params, NULL )))
         {
-            add_irp_to_queue( file, irp, NULL );
+            add_irp_to_queue( file->device->manager, irp, NULL );
             release_object( irp );
         }
     }
@@ -557,7 +553,7 @@ static int queue_irp( struct device_file *file, const irp_params_t *params, stru
 
     fd_queue_async( file->fd, async, ASYNC_TYPE_WAIT );
     irp->async = (struct async *)grab_object( async );
-    add_irp_to_queue( file, irp, current );
+    add_irp_to_queue( file->device->manager, irp, current );
     release_object( irp );
     set_error( STATUS_PENDING );
     return 1;
@@ -711,6 +707,14 @@ static void device_manager_destroy( struct object *obj )
         struct device *device = LIST_ENTRY( ptr, struct device, entry );
         delete_device( device );
     }
+
+    while ((ptr = list_head( &manager->requests )))
+    {
+        struct irp_call *irp = LIST_ENTRY( ptr, struct irp_call, mgr_entry );
+        list_remove( &irp->mgr_entry );
+        assert( !irp->file && !irp->async );
+        release_object( irp );
+    }
 }
 
 static struct device_manager *create_device_manager(void)
@@ -837,13 +841,14 @@ DECL_HANDLER(get_next_device_request)
         reply->in_size = iosb->in_size;
         reply->out_size = iosb->out_size;
         if (iosb->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
-        else if ((reply->next = alloc_handle( current->process, irp, 0, 0 )))
+        else if (!irp->file || (reply->next = alloc_handle( current->process, irp, 0, 0 )))
         {
             set_reply_data_ptr( iosb->in_data, iosb->in_size );
             iosb->in_data = NULL;
             iosb->in_size = 0;
             list_remove( &irp->mgr_entry );
             list_init( &irp->mgr_entry );
+            if (!irp->file) release_object( irp ); /* no longer on manager queue */
         }
     }
     else set_error( STATUS_PENDING );
