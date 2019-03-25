@@ -22,6 +22,7 @@ typedef void *(*style_qi_t)(CSSStyle*,REFIID);
 struct CSSStyle {
     DispatchEx dispex;
     IHTMLCSSStyleDeclaration IHTMLCSSStyleDeclaration_iface;
+    IHTMLCSSStyleDeclaration2 IHTMLCSSStyleDeclaration2_iface;
 
     LONG ref;
     style_qi_t qi;
@@ -37,7 +38,6 @@ struct HTMLStyle {
     IHTMLStyle4 IHTMLStyle4_iface;
     IHTMLStyle5 IHTMLStyle5_iface;
     IHTMLStyle6 IHTMLStyle6_iface;
-    IHTMLCSSStyleDeclaration2 IHTMLCSSStyleDeclaration2_iface;
 
     HTMLElement *elem;
 };

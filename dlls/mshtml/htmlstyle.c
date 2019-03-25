@@ -1276,8 +1276,6 @@ static void *HTMLStyle_QI(CSSStyle *css_style, REFIID riid)
 {
     HTMLStyle *This = CONTAINING_RECORD(css_style, HTMLStyle, css_style);
 
-    if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration2, riid))
-        return &This->IHTMLCSSStyleDeclaration2_iface;
     if(IsEqualGUID(&IID_IHTMLStyle, riid))
         return &This->IHTMLStyle_iface;
     if(IsEqualGUID(&IID_IHTMLStyle2, riid))
@@ -4900,6 +4898,8 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_QueryInterface(IHTMLCSSStyleDeclar
         *ppv = &This->IHTMLCSSStyleDeclaration_iface;
     }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration, riid)) {
         *ppv = &This->IHTMLCSSStyleDeclaration_iface;
+    }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration2, riid)) {
+        *ppv = &This->IHTMLCSSStyleDeclaration2_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else if(!This->qi || !(*ppv = This->qi(This, riid))) {
@@ -8224,52 +8224,52 @@ static const IHTMLCSSStyleDeclarationVtbl HTMLCSSStyleDeclarationVtbl = {
     HTMLCSSStyleDeclaration_get_msTransformOrigin
 };
 
-static inline HTMLStyle *impl_from_IHTMLCSSStyleDeclaration2(IHTMLCSSStyleDeclaration2 *iface)
+static inline CSSStyle *impl_from_IHTMLCSSStyleDeclaration2(IHTMLCSSStyleDeclaration2 *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLStyle, IHTMLCSSStyleDeclaration2_iface);
+    return CONTAINING_RECORD(iface, CSSStyle, IHTMLCSSStyleDeclaration2_iface);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_QueryInterface(IHTMLCSSStyleDeclaration2 *iface,
         REFIID riid, void **ppv)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    return IHTMLStyle_QueryInterface(&This->IHTMLStyle_iface, riid, ppv);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    return IHTMLCSSStyleDeclaration_QueryInterface(&This->IHTMLCSSStyleDeclaration_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLCSSStyleDeclaration2_AddRef(IHTMLCSSStyleDeclaration2 *iface)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    return IHTMLStyle_AddRef(&This->IHTMLStyle_iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    return IHTMLCSSStyleDeclaration_AddRef(&This->IHTMLCSSStyleDeclaration_iface);
 }
 
 static ULONG WINAPI HTMLCSSStyleDeclaration2_Release(IHTMLCSSStyleDeclaration2 *iface)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    return IHTMLStyle_Release(&This->IHTMLStyle_iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    return IHTMLCSSStyleDeclaration_Release(&This->IHTMLCSSStyleDeclaration_iface);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetTypeInfoCount(IHTMLCSSStyleDeclaration2 *iface,
         UINT *pctinfo)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     TRACE("(%p)->(%p)\n", This, pctinfo);
-    return IDispatchEx_GetTypeInfoCount(&This->css_style.dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetTypeInfo(IHTMLCSSStyleDeclaration2 *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-    return IDispatchEx_GetTypeInfo(&This->css_style.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_GetIDsOfNames(IHTMLCSSStyleDeclaration2 *iface,
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     TRACE("(%p)->(%p %p %u %u %p)\n", This, riid, rgszNames, cNames, lcid, rgDispId);
-    return IDispatchEx_GetIDsOfNames(&This->css_style.dispex.IDispatchEx_iface, riid, rgszNames,
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames,
                                      cNames, lcid, rgDispId);
 }
 
@@ -8277,1605 +8277,1605 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_Invoke(IHTMLCSSStyleDeclaration2 
         DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     TRACE("(%p)->(%d %p %u %u %p %p %p %p)\n", This, dispIdMember, riid, lcid, wFlags,
           pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return IDispatchEx_Invoke(&This->css_style.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
                               wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollChaining(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollChaining(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msContentZooming(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msContentZooming(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msContentZoomSnapType(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msContentZoomSnapType(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollRails(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollRails(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msContentZoomChaining(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msContentZoomChaining(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollSnapType(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollSnapType(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msContentZoomLimit(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msContentZoomLimit(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msContentZoomSnap(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msContentZoomSnap(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msContentZoomSnapPoints(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msContentZoomSnapPoints(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msContentZoomLimitMin(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msContentZoomLimitMin(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msContentZoomLimitMax(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msContentZoomLimitMax(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollSnapX(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollSnapX(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollSnapY(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollSnapY(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollSnapPointsX(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollSnapPointsX(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollSnapPointsY(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollSnapPointsY(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msGridColumn(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msGridColumn(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msGridColumnAlign(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msGridColumnAlign(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msGridColumns(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msGridColumns(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msGridColumnSpan(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msGridColumnSpan(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msGridRow(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msGridRow(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msGridRowAlign(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msGridRowAlign(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msGridRows(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msGridRows(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msGridRowSpan(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msGridRowSpan(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msWrapThrough(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msWrapThrough(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msWrapMargin(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msWrapMargin(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msWrapFlow(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msWrapFlow(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimationName(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimationName(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimationDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimationDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimationTimingFunction(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimationTimingFunction(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimationDelay(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimationDelay(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimationDirection(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimationDirection(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimationPlayState(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimationPlayState(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimationIterationCount(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimationIterationCount(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimation(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimation(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msAnimationFillMode(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msAnimationFillMode(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_colorInterpolationFilters(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_colorInterpolationFilters(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnCount(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnCount(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnGap(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnGap(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnFill(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnFill(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnSpan(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnSpan(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columns(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columns(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRule(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRule(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_breakBefore(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_breakBefore(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_breakAfter(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_breakAfter(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_breakInside(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_breakInside(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_floodColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_floodColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_floodOpacity(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_floodOpacity(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_lightingColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_lightingColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollLimitXMin(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollLimitXMin(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollLimitYMin(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollLimitYMin(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollLimitXMax(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollLimitXMax(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollLimitYMax(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollLimitYMax(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollLimit(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollLimit(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_textShadow(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_textShadow(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlowFrom(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlowFrom(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlowInto(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlowInto(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msHyphens(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msHyphens(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msHyphenateLimitZone(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msHyphenateLimitZone(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msHyphenateLimitChars(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msHyphenateLimitChars(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msHyphenateLimitLines(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msHyphenateLimitLines(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msHighContrastAdjust(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msHighContrastAdjust(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_enableBackground(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_enableBackground(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFontFeatureSettings(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFontFeatureSettings(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msUserSelect(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msUserSelect(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msOverflowStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msOverflowStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTransformStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTransformStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msBackfaceVisibility(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msBackfaceVisibility(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msPerspective(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msPerspective(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msPerspectiveOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msPerspectiveOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTransitionProperty(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTransitionProperty(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTransitionDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTransitionDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTransitionTimingFunction(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTransitionTimingFunction(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTransitionDelay(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTransitionDelay(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTransition(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTransition(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTouchAction(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTouchAction(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msScrollTranslation(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msScrollTranslation(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlex(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlex(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexPositive(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexPositive(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexNegative(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexNegative(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexPreferredSize(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexPreferredSize(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexFlow(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexFlow(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexDirection(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexDirection(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexWrap(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexWrap(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexAlign(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexAlign(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexItemAlign(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexItemAlign(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexPack(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexPack(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexLinePack(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexLinePack(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msFlexOrder(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msFlexOrder(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTouchSelect(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTouchSelect(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transform(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transform(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transformOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transformOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transformStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transformStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_backfaceVisibility(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_backfaceVisibility(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_perspective(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_perspective(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_perspectiveOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_perspectiveOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transitionProperty(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transitionProperty(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transitionDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transitionDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transitionTimingFunction(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transitionTimingFunction(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transitionDelay(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transitionDelay(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transition(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transition(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_fontFeatureSettings(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_fontFeatureSettings(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationName(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationName(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationTimingFunction(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationTimingFunction(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationDelay(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationDelay(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationDirection(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationDirection(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationPlayState(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationPlayState(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationIterationCount(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationIterationCount(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animation(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animation(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationFillMode(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationFillMode(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
-    HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
+    CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
     FIXME("(%p)->(%p)\n", This, p);
     return E_NOTIMPL;
 }
@@ -10193,6 +10193,7 @@ static void init_css_style(CSSStyle *style, nsIDOMCSSStyleDeclaration *nsstyle, 
                            dispex_static_data_t *dispex_info, compat_mode_t compat_mode)
 {
     style->IHTMLCSSStyleDeclaration_iface.lpVtbl = &HTMLCSSStyleDeclarationVtbl;
+    style->IHTMLCSSStyleDeclaration2_iface.lpVtbl = &HTMLCSSStyleDeclaration2Vtbl;
     style->ref = 1;
     style->qi = qi;
     style->nsstyle = nsstyle;
@@ -10224,7 +10225,6 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
     style->IHTMLStyle4_iface.lpVtbl = &HTMLStyle4Vtbl;
     style->IHTMLStyle5_iface.lpVtbl = &HTMLStyle5Vtbl;
     style->IHTMLStyle6_iface.lpVtbl = &HTMLStyle6Vtbl;
-    style->IHTMLCSSStyleDeclaration2_iface.lpVtbl = &HTMLCSSStyleDeclaration2Vtbl;
 
     style->elem = elem;
 
