@@ -2339,33 +2339,10 @@ static HRESULT WINAPI bytestream_BeginWrite(IMFByteStream *iface, const BYTE *da
         IMFAsyncCallback *callback, IUnknown *state)
 {
     struct bytestream *stream = impl_from_IMFByteStream(iface);
-    struct async_stream_op *op;
-    IMFAsyncResult *request;
-    HRESULT hr;
 
     TRACE("%p, %p, %u, %p, %p.\n", iface, data, size, callback, state);
 
-    op = heap_alloc(sizeof(*op));
-    if (!op)
-        return E_OUTOFMEMORY;
-
-    op->IUnknown_iface.lpVtbl = &async_stream_op_vtbl;
-    op->refcount = 1;
-    op->u.src = data;
-    op->requested_length = size;
-    op->type = ASYNC_STREAM_OP_WRITE;
-    if (FAILED(hr = MFCreateAsyncResult((IUnknown *)iface, callback, state, &op->caller)))
-        goto failed;
-
-    if (FAILED(hr = MFCreateAsyncResult(&op->IUnknown_iface, &stream->write_callback, NULL, &request)))
-        goto failed;
-
-    MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_STANDARD, request);
-    IMFAsyncResult_Release(request);
-
-failed:
-    IUnknown_Release(&op->IUnknown_iface);
-    return hr;
+    return bytestream_create_io_request(stream, ASYNC_STREAM_OP_WRITE, data, size, callback, state);
 }
 
 static HRESULT WINAPI bytestream_EndWrite(IMFByteStream *iface, IMFAsyncResult *result, ULONG *written)
