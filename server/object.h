@@ -89,6 +89,8 @@ struct object_ops
     /* open a file object to access this object */
     struct object *(*open_file)(struct object *, unsigned int access, unsigned int sharing,
                                 unsigned int options);
+    /* return list of kernel objects */
+    struct list *(*get_kernel_obj_list)(struct object *);
     /* close a handle to this object */
     int (*close_handle)(struct object *,struct process *,obj_handle_t);
     /* destroy on refcount == 0 */
@@ -141,6 +143,7 @@ extern void *open_named_object( struct object *parent, const struct object_ops *
 extern void unlink_named_object( struct object *obj );
 extern void make_object_static( struct object *obj );
 extern struct namespace *create_namespace( unsigned int hash_size );
+extern void free_kernel_objects( struct object *obj );
 /* grab/release_object can take any pointer, but you better make sure */
 /* that the thing pointed to starts with a struct object... */
 extern struct object *grab_object( void *obj );
@@ -163,6 +166,7 @@ extern int no_link_name( struct object *obj, struct object_name *name, struct ob
 extern void default_unlink_name( struct object *obj, struct object_name *name );
 extern struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
                                     unsigned int options );
+extern struct list *no_kernel_obj_list( struct object *obj );
 extern int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 extern void no_destroy( struct object *obj );
 #ifdef DEBUG_OBJECTS

@@ -425,6 +425,7 @@ void release_object( void *ptr )
         assert( !obj->handle_count );
         /* if the refcount is 0, nobody can be in the wait queue */
         assert( list_empty( &obj->wait_queue ));
+        free_kernel_objects( obj );
         unlink_named_object( obj );
         obj->ops->destroy( obj );
         free_object( obj );
