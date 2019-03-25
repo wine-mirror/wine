@@ -78,8 +78,7 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
     {
         if (objs[i]->WaitListHead.Blink == INVALID_HANDLE_VALUE)
         {
-            FIXME("unsupported on kernel objects\n");
-            handles[i] = INVALID_HANDLE_VALUE;
+            handles[i] = kernel_object_handle( objs[i], SYNCHRONIZE );
             continue;
         }
 
@@ -134,9 +133,11 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
             }
         }
 
-        if (objs[i]->WaitListHead.Blink == INVALID_HANDLE_VALUE) continue;
-
-        if (!--*((ULONG_PTR *)&objs[i]->WaitListHead.Flink))
+        if (objs[i]->WaitListHead.Blink == INVALID_HANDLE_VALUE)
+        {
+            NtClose( handles[i] );
+        }
+        else if (!--*((ULONG_PTR *)&objs[i]->WaitListHead.Flink))
         {
             switch (objs[i]->Type)
             {

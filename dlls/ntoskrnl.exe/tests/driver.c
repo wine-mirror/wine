@@ -458,10 +458,10 @@ static void test_sync(void)
     ok(!ret, "ObReferenceObjectByHandle failed: %#x\n", ret);
 
     ret = wait_single(event, 0);
-    todo_wine
     ok(ret == 0, "got %#x\n", ret);
     KeResetEvent(event);
     ret = wait_single(event, 0);
+    todo_wine
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
     ret = wait_single_handle(handle, 0);
     todo_wine
@@ -469,7 +469,6 @@ static void test_sync(void)
 
     KeSetEvent(event, 0, FALSE);
     ret = wait_single(event, 0);
-    todo_wine
     ok(ret == 0, "got %#x\n", ret);
     ret = wait_single_handle(handle, 0);
     ok(!ret, "got %#x\n", ret);

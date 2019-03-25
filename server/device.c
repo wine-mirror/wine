@@ -969,3 +969,22 @@ DECL_HANDLER(release_kernel_object)
 
     release_object( manager );
 }
+
+
+/* get handle from kernel object pointer */
+DECL_HANDLER(get_kernel_object_handle)
+{
+    struct device_manager *manager;
+    struct kernel_object *ref;
+
+    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
+                                                             0, &device_manager_ops )))
+        return;
+
+    if ((ref = kernel_object_from_ptr( manager, req->user_ptr )))
+        reply->handle = alloc_handle( current->process, ref->object, req->access, 0 );
+    else
+        set_error( STATUS_INVALID_HANDLE );
+
+    release_object( manager );
+}

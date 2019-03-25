@@ -3660,6 +3660,16 @@ struct handle_info
 @END
 
 
+/* Get handle from kernel object pointer */
+@REQ(get_kernel_object_handle)
+    obj_handle_t manager;         /* handle to the device manager */
+    client_ptr_t user_ptr;        /* kernel object pointer */
+    unsigned int access;          /* wanted access rights */
+@REPLY
+    obj_handle_t handle;          /* kernel object handle */
+@END
+
+
 /* Make the current process a system process */
 @REQ(make_process_system)
 @REPLY
