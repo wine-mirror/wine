@@ -35,7 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(imagehlp);
  */
 static LIST_ENTRY image_list = { &image_list, &image_list };
 
-DECLSPEC_HIDDEN extern HANDLE IMAGEHLP_hHeap;
 
 /***********************************************************************
  *		GetImageConfigInformation (IMAGEHLP.@)
@@ -74,12 +73,12 @@ PLOADED_IMAGE WINAPI ImageLoad(PCSTR dll_name, PCSTR dll_path)
 
     TRACE("(%s, %s)\n", dll_name, dll_path);
 
-    image = HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(*image));
+    image = HeapAlloc(GetProcessHeap(), 0, sizeof(*image));
     if (!image) return NULL;
 
     if (!MapAndLoad(dll_name, dll_path, image, TRUE, TRUE))
     {
-        HeapFree(IMAGEHLP_hHeap, 0, image);
+        HeapFree(GetProcessHeap(), 0, image);
         return NULL;
     }
 
@@ -121,7 +120,7 @@ BOOL WINAPI ImageUnload(PLOADED_IMAGE loaded_image)
     entry->Flink->Blink = entry->Blink;
 
     UnMapAndLoad(loaded_image);
-    HeapFree(IMAGEHLP_hHeap, 0, loaded_image);
+    HeapFree(GetProcessHeap(), 0, loaded_image);
 
     return TRUE;
 }
