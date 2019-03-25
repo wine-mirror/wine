@@ -1561,185 +1561,29 @@ static HRESULT WINAPI HTMLStyle_get_backgroundPosition(IHTMLStyle *iface, BSTR *
 static HRESULT WINAPI HTMLStyle_put_backgroundPositionX(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    WCHAR buf[14], *pos_val;
-    nsAString pos_str;
-    const WCHAR *val;
-    DWORD val_len;
-    HRESULT hres;
-
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
-
-    hres = var_to_styleval(&This->css_style, &v, &style_tbl[STYLEID_BACKGROUND_POSITION_X], buf, &val);
-    if(FAILED(hres))
-        return hres;
-
-    val_len = val ? strlenW(val) : 0;
-
-    nsAString_Init(&pos_str, NULL);
-    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
-    if(SUCCEEDED(hres)) {
-        const PRUnichar *pos, *posy;
-        DWORD posy_len;
-
-        nsAString_GetData(&pos_str, &pos);
-        posy = strchrW(pos, ' ');
-        if(!posy) {
-            static const WCHAR zero_pxW[] = {' ','0','p','x',0};
-
-            TRACE("no space in %s\n", debugstr_w(pos));
-            posy = zero_pxW;
-        }
-
-        posy_len = strlenW(posy);
-        pos_val = heap_alloc((val_len+posy_len+1)*sizeof(WCHAR));
-        if(pos_val) {
-            if(val_len)
-                memcpy(pos_val, val, val_len*sizeof(WCHAR));
-            if(posy_len)
-                memcpy(pos_val+val_len, posy, posy_len*sizeof(WCHAR));
-            pos_val[val_len+posy_len] = 0;
-        }else {
-            hres = E_OUTOFMEMORY;
-        }
-    }
-    nsAString_Finish(&pos_str);
-    if(FAILED(hres))
-        return hres;
-
-    TRACE("setting position to %s\n", debugstr_w(pos_val));
-    hres = set_style_property(&This->css_style, STYLEID_BACKGROUND_POSITION, pos_val);
-    heap_free(pos_val);
-    return hres;
+    return IHTMLCSSStyleDeclaration_put_backgroundPositionX(&This->IHTMLCSSStyleDeclaration_iface, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundPositionX(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    nsAString pos_str;
-    BSTR ret;
-    HRESULT hres;
-
     TRACE("(%p)->(%p)\n", This, p);
-
-    nsAString_Init(&pos_str, NULL);
-    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
-    if(SUCCEEDED(hres)) {
-        const PRUnichar *pos, *space;
-
-        nsAString_GetData(&pos_str, &pos);
-        space = strchrW(pos, ' ');
-        if(!space) {
-            WARN("no space in %s\n", debugstr_w(pos));
-            space = pos + strlenW(pos);
-        }
-
-        if(space != pos) {
-            ret = SysAllocStringLen(pos, space-pos);
-            if(!ret)
-                hres = E_OUTOFMEMORY;
-        }else {
-            ret = NULL;
-        }
-    }
-    nsAString_Finish(&pos_str);
-    if(FAILED(hres))
-        return hres;
-
-    TRACE("returning %s\n", debugstr_w(ret));
-    V_VT(p) = VT_BSTR;
-    V_BSTR(p) = ret;
-    return S_OK;
+    return IHTMLCSSStyleDeclaration_get_backgroundPositionX(&This->IHTMLCSSStyleDeclaration_iface, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundPositionY(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    WCHAR buf[14], *pos_val;
-    nsAString pos_str;
-    const WCHAR *val;
-    DWORD val_len;
-    HRESULT hres;
-
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
-
-    hres = var_to_styleval(&This->css_style, &v, &style_tbl[STYLEID_BACKGROUND_POSITION], buf, &val);
-    if(FAILED(hres))
-        return hres;
-
-    val_len = val ? strlenW(val) : 0;
-
-    nsAString_Init(&pos_str, NULL);
-    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
-    if(SUCCEEDED(hres)) {
-        const PRUnichar *pos, *space;
-        DWORD posx_len;
-
-        nsAString_GetData(&pos_str, &pos);
-        space = strchrW(pos, ' ');
-        if(space) {
-            space++;
-        }else {
-            static const WCHAR zero_pxW[] = {'0','p','x',' ',0};
-
-            TRACE("no space in %s\n", debugstr_w(pos));
-            pos = zero_pxW;
-            space = pos + ARRAY_SIZE(zero_pxW)-1;
-        }
-
-        posx_len = space-pos;
-
-        pos_val = heap_alloc((posx_len+val_len+1)*sizeof(WCHAR));
-        if(pos_val) {
-            memcpy(pos_val, pos, posx_len*sizeof(WCHAR));
-            if(val_len)
-                memcpy(pos_val+posx_len, val, val_len*sizeof(WCHAR));
-            pos_val[posx_len+val_len] = 0;
-        }else {
-            hres = E_OUTOFMEMORY;
-        }
-    }
-    nsAString_Finish(&pos_str);
-    if(FAILED(hres))
-        return hres;
-
-    TRACE("setting position to %s\n", debugstr_w(pos_val));
-    hres = set_style_property(&This->css_style, STYLEID_BACKGROUND_POSITION, pos_val);
-    heap_free(pos_val);
-    return hres;
+    return IHTMLCSSStyleDeclaration_put_backgroundPositionY(&This->IHTMLCSSStyleDeclaration_iface, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundPositionY(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    nsAString pos_str;
-    BSTR ret;
-    HRESULT hres;
-
     TRACE("(%p)->(%p)\n", This, p);
-
-    nsAString_Init(&pos_str, NULL);
-    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
-    if(SUCCEEDED(hres)) {
-        const PRUnichar *pos, *posy;
-
-        nsAString_GetData(&pos_str, &pos);
-        posy = strchrW(pos, ' ');
-        if(posy) {
-            ret = SysAllocString(posy+1);
-            if(!ret)
-                hres = E_OUTOFMEMORY;
-        }else {
-            ret = NULL;
-        }
-    }
-    nsAString_Finish(&pos_str);
-    if(FAILED(hres))
-        return hres;
-
-    TRACE("returning %s\n", debugstr_w(ret));
-    V_VT(p) = VT_BSTR;
-    V_BSTR(p) = ret;
-    return S_OK;
+    return IHTMLCSSStyleDeclaration_get_backgroundPositionY(&This->IHTMLCSSStyleDeclaration_iface, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_wordSpacing(IHTMLStyle *iface, VARIANT v)
@@ -5402,29 +5246,185 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundPosition(IHTMLCSSSty
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSStyleDeclaration *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
+    WCHAR buf[14], *pos_val;
+    nsAString pos_str;
+    const WCHAR *val;
+    DWORD val_len;
+    HRESULT hres;
+
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return IHTMLStyle_put_backgroundPositionX(&This->IHTMLStyle_iface, v);
+
+    hres = var_to_styleval(&This->css_style, &v, &style_tbl[STYLEID_BACKGROUND_POSITION_X], buf, &val);
+    if(FAILED(hres))
+        return hres;
+
+    val_len = val ? strlenW(val) : 0;
+
+    nsAString_Init(&pos_str, NULL);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    if(SUCCEEDED(hres)) {
+        const PRUnichar *pos, *posy;
+        DWORD posy_len;
+
+        nsAString_GetData(&pos_str, &pos);
+        posy = strchrW(pos, ' ');
+        if(!posy) {
+            static const WCHAR zero_pxW[] = {' ','0','p','x',0};
+
+            TRACE("no space in %s\n", debugstr_w(pos));
+            posy = zero_pxW;
+        }
+
+        posy_len = strlenW(posy);
+        pos_val = heap_alloc((val_len+posy_len+1)*sizeof(WCHAR));
+        if(pos_val) {
+            if(val_len)
+                memcpy(pos_val, val, val_len*sizeof(WCHAR));
+            if(posy_len)
+                memcpy(pos_val+val_len, posy, posy_len*sizeof(WCHAR));
+            pos_val[val_len+posy_len] = 0;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+    }
+    nsAString_Finish(&pos_str);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("setting position to %s\n", debugstr_w(pos_val));
+    hres = set_style_property(&This->css_style, STYLEID_BACKGROUND_POSITION, pos_val);
+    heap_free(pos_val);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundPositionX(IHTMLCSSStyleDeclaration *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
+    nsAString pos_str;
+    BSTR ret;
+    HRESULT hres;
+
     TRACE("(%p)->(%p)\n", This, p);
-    return IHTMLStyle_get_backgroundPositionX(&This->IHTMLStyle_iface, p);
+
+    nsAString_Init(&pos_str, NULL);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    if(SUCCEEDED(hres)) {
+        const PRUnichar *pos, *space;
+
+        nsAString_GetData(&pos_str, &pos);
+        space = strchrW(pos, ' ');
+        if(!space) {
+            WARN("no space in %s\n", debugstr_w(pos));
+            space = pos + strlenW(pos);
+        }
+
+        if(space != pos) {
+            ret = SysAllocStringLen(pos, space-pos);
+            if(!ret)
+                hres = E_OUTOFMEMORY;
+        }else {
+            ret = NULL;
+        }
+    }
+    nsAString_Finish(&pos_str);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("returning %s\n", debugstr_w(ret));
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionY(IHTMLCSSStyleDeclaration *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
+    WCHAR buf[14], *pos_val;
+    nsAString pos_str;
+    const WCHAR *val;
+    DWORD val_len;
+    HRESULT hres;
+
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return IHTMLStyle_put_backgroundPositionY(&This->IHTMLStyle_iface, v);
+
+    hres = var_to_styleval(&This->css_style, &v, &style_tbl[STYLEID_BACKGROUND_POSITION], buf, &val);
+    if(FAILED(hres))
+        return hres;
+
+    val_len = val ? strlenW(val) : 0;
+
+    nsAString_Init(&pos_str, NULL);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    if(SUCCEEDED(hres)) {
+        const PRUnichar *pos, *space;
+        DWORD posx_len;
+
+        nsAString_GetData(&pos_str, &pos);
+        space = strchrW(pos, ' ');
+        if(space) {
+            space++;
+        }else {
+            static const WCHAR zero_pxW[] = {'0','p','x',' ',0};
+
+            TRACE("no space in %s\n", debugstr_w(pos));
+            pos = zero_pxW;
+            space = pos + ARRAY_SIZE(zero_pxW)-1;
+        }
+
+        posx_len = space-pos;
+
+        pos_val = heap_alloc((posx_len+val_len+1)*sizeof(WCHAR));
+        if(pos_val) {
+            memcpy(pos_val, pos, posx_len*sizeof(WCHAR));
+            if(val_len)
+                memcpy(pos_val+posx_len, val, val_len*sizeof(WCHAR));
+            pos_val[posx_len+val_len] = 0;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+    }
+    nsAString_Finish(&pos_str);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("setting position to %s\n", debugstr_w(pos_val));
+    hres = set_style_property(&This->css_style, STYLEID_BACKGROUND_POSITION, pos_val);
+    heap_free(pos_val);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundPositionY(IHTMLCSSStyleDeclaration *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
+    nsAString pos_str;
+    BSTR ret;
+    HRESULT hres;
+
     TRACE("(%p)->(%p)\n", This, p);
-    return IHTMLStyle_get_backgroundPositionY(&This->IHTMLStyle_iface, p);
+
+    nsAString_Init(&pos_str, NULL);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    if(SUCCEEDED(hres)) {
+        const PRUnichar *pos, *posy;
+
+        nsAString_GetData(&pos_str, &pos);
+        posy = strchrW(pos, ' ');
+        if(posy) {
+            ret = SysAllocString(posy+1);
+            if(!ret)
+                hres = E_OUTOFMEMORY;
+        }else {
+            ret = NULL;
+        }
+    }
+    nsAString_Finish(&pos_str);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("returning %s\n", debugstr_w(ret));
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_wordSpacing(IHTMLCSSStyleDeclaration *iface, VARIANT v)
