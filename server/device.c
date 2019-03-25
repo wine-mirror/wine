@@ -243,6 +243,49 @@ static int compare_kernel_object( const void *k, const struct wine_rb_entry *ent
     return memcmp( k, &ptr->user_ptr, sizeof(client_ptr_t) );
 }
 
+static struct kernel_object *kernel_object_from_obj( struct device_manager *manager, struct object *obj )
+{
+    struct kernel_object *kernel_object;
+    struct list *list;
+
+    if (!(list = obj->ops->get_kernel_obj_list( obj ))) return NULL;
+    LIST_FOR_EACH_ENTRY( kernel_object, list, struct kernel_object, list_entry )
+    {
+        if (kernel_object->manager != manager) continue;
+        return kernel_object;
+    }
+    return NULL;
+}
+
+static client_ptr_t get_kernel_object_ptr( struct device_manager *manager, struct object *obj )
+{
+    struct kernel_object *kernel_object = kernel_object_from_obj( manager, obj );
+    return kernel_object ? kernel_object->user_ptr : 0;
+}
+
+static struct kernel_object *set_kernel_object( struct device_manager *manager, struct object *obj, client_ptr_t user_ptr )
+{
+    struct kernel_object *kernel_object;
+    struct list *list;
+
+    if (!(list = obj->ops->get_kernel_obj_list( obj ))) return NULL;
+
+    if (!(kernel_object = malloc( sizeof(*kernel_object) ))) return NULL;
+    kernel_object->manager  = manager;
+    kernel_object->user_ptr = user_ptr;
+    kernel_object->object   = obj;
+
+    if (wine_rb_put( &manager->kernel_objects, &user_ptr, &kernel_object->rb_entry ))
+    {
+        /* kernel_object pointer already set */
+        free( kernel_object );
+        return NULL;
+    }
+
+    list_add_head( list, &kernel_object->list_entry );
+    return kernel_object;
+}
+
 static void irp_call_dump( struct object *obj, int verbose )
 {
     struct irp_call *irp = (struct irp_call *)obj;
@@ -802,4 +845,48 @@ DECL_HANDLER(set_irp_result)
         close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
         release_object( irp );
     }
+}
+
+
+/* get kernel pointer from server object */
+DECL_HANDLER(get_kernel_object_ptr)
+{
+    struct device_manager *manager;
+    struct object *object = NULL;
+
+    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
+                                                             0, &device_manager_ops )))
+        return;
+
+    if ((object = get_handle_obj( current->process, req->handle, 0, NULL )))
+    {
+        reply->user_ptr = get_kernel_object_ptr( manager, object );
+        release_object( object );
+    }
+
+    release_object( manager );
+}
+
+
+/* associate kernel pointer with server object */
+DECL_HANDLER(set_kernel_object_ptr)
+{
+    struct device_manager *manager;
+    struct object *object = NULL;
+
+    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
+                                                             0, &device_manager_ops )))
+        return;
+
+    if (!(object = get_handle_obj( current->process, req->handle, 0, NULL )))
+    {
+        release_object( manager );
+        return;
+    }
+
+    if (!set_kernel_object( manager, object, req->user_ptr ))
+        set_error( STATUS_INVALID_HANDLE );
+
+    release_object( object );
+    release_object( manager );
 }

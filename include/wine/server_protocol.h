@@ -5247,6 +5247,36 @@ struct get_next_device_request_reply
 
 
 
+struct get_kernel_object_ptr_request
+{
+    struct request_header __header;
+    obj_handle_t manager;
+    obj_handle_t handle;
+    char __pad_20[4];
+};
+struct get_kernel_object_ptr_reply
+{
+    struct reply_header __header;
+    client_ptr_t user_ptr;
+};
+
+
+
+struct set_kernel_object_ptr_request
+{
+    struct request_header __header;
+    obj_handle_t manager;
+    obj_handle_t handle;
+    char __pad_20[4];
+    client_ptr_t user_ptr;
+};
+struct set_kernel_object_ptr_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct make_process_system_request
 {
     struct request_header __header;
@@ -5933,6 +5963,8 @@ enum request
     REQ_create_device,
     REQ_delete_device,
     REQ_get_next_device_request,
+    REQ_get_kernel_object_ptr,
+    REQ_set_kernel_object_ptr,
     REQ_make_process_system,
     REQ_get_token_statistics,
     REQ_create_completion,
@@ -6231,6 +6263,8 @@ union generic_request
     struct create_device_request create_device_request;
     struct delete_device_request delete_device_request;
     struct get_next_device_request_request get_next_device_request_request;
+    struct get_kernel_object_ptr_request get_kernel_object_ptr_request;
+    struct set_kernel_object_ptr_request set_kernel_object_ptr_request;
     struct make_process_system_request make_process_system_request;
     struct get_token_statistics_request get_token_statistics_request;
     struct create_completion_request create_completion_request;
@@ -6527,6 +6561,8 @@ union generic_reply
     struct create_device_reply create_device_reply;
     struct delete_device_reply delete_device_reply;
     struct get_next_device_request_reply get_next_device_request_reply;
+    struct get_kernel_object_ptr_reply get_kernel_object_ptr_reply;
+    struct set_kernel_object_ptr_reply set_kernel_object_ptr_reply;
     struct make_process_system_reply make_process_system_reply;
     struct get_token_statistics_reply get_token_statistics_reply;
     struct create_completion_reply create_completion_reply;
@@ -6556,6 +6592,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 573
+#define SERVER_PROTOCOL_VERSION 574
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

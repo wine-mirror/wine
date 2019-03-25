@@ -264,12 +264,26 @@ static void free_kernel_object( void *obj )
     HeapFree( GetProcessHeap(), 0, header );
 }
 
-void *alloc_kernel_object( POBJECT_TYPE type, SIZE_T size, LONG ref )
+void *alloc_kernel_object( POBJECT_TYPE type, HANDLE handle, SIZE_T size, LONG ref )
 {
     struct object_header *header;
 
     if (!(header = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*header) + size)) )
         return NULL;
+
+    if (handle)
+    {
+        NTSTATUS status;
+        SERVER_START_REQ( set_kernel_object_ptr )
+        {
+            req->manager  = wine_server_obj_handle( get_device_manager() );
+            req->handle   = wine_server_obj_handle( handle );
+            req->user_ptr = wine_server_client_ptr( header + 1 );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        if (status) FIXME( "set_object_reference failed: %#x\n", status );
+    }
 
     header->ref = ref;
     header->type = type;
@@ -327,51 +341,91 @@ static const POBJECT_TYPE *known_types[] =
     &SeTokenObjectType
 };
 
+static CRITICAL_SECTION handle_map_cs;
+static CRITICAL_SECTION_DEBUG handle_map_critsect_debug =
+{
+    0, 0, &handle_map_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": handle_map_cs") }
+};
+static CRITICAL_SECTION handle_map_cs = { &handle_map_critsect_debug, -1, 0, 0, 0, 0 };
+
 static NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret )
 {
-    char buf[256];
-    OBJECT_TYPE_INFORMATION *type_info = (OBJECT_TYPE_INFORMATION *)buf;
-    ULONG size;
+    struct object_header *header;
     void *obj;
     NTSTATUS status;
 
-    status = NtQueryObject(handle, ObjectTypeInformation, buf, sizeof(buf), &size);
-    if (status) return status;
+    EnterCriticalSection( &handle_map_cs );
 
-    if (!type)
+    SERVER_START_REQ( get_kernel_object_ptr )
     {
-        size_t i;
-        for (i = 0; i < ARRAY_SIZE(known_types); i++)
-        {
-            type = *known_types[i];
-            if (!RtlCompareUnicodeStrings( type->name, strlenW(type->name), type_info->TypeName.Buffer,
-                                           type_info->TypeName.Length / sizeof(WCHAR), FALSE ))
-                break;
-        }
-        if (i == ARRAY_SIZE(known_types))
-        {
-            FIXME("Unsupported type %s\n", debugstr_us(&type_info->TypeName));
-            return STATUS_INVALID_HANDLE;
-        }
+        req->manager = wine_server_obj_handle( get_device_manager() );
+        req->handle  = wine_server_obj_handle( handle );
+        status = wine_server_call( req );
+        obj = wine_server_get_ptr( reply->user_ptr );
     }
-    else if (!!RtlCompareUnicodeStrings( type->name, strlenW(type->name), type_info->TypeName.Buffer,
-                                         type_info->TypeName.Length / sizeof(WCHAR), FALSE ))
-        return STATUS_OBJECT_TYPE_MISMATCH;
+    SERVER_END_REQ;
+    if (status)
+    {
+        LeaveCriticalSection( &handle_map_cs );
+        return status;
+    }
 
-    FIXME( "semi-stub: returning new %s object instance\n", debugstr_w(type->name) );
-
-    if (type->constructor)
-        obj = type->constructor( handle );
+    if (obj)
+    {
+        header = (struct object_header *)obj - 1;
+        if (type && header->type != type) status = STATUS_OBJECT_TYPE_MISMATCH;
+    }
     else
     {
-        obj = alloc_kernel_object( type, 0, 0 );
-        FIXME( "No constructor for type %s returning empty %p object\n", debugstr_w(type->name), obj );
-    }
-    if (!obj) return STATUS_NO_MEMORY;
+        char buf[256];
+        OBJECT_TYPE_INFORMATION *type_info = (OBJECT_TYPE_INFORMATION *)buf;
+        ULONG size;
 
-    TRACE( "%p -> %p\n", handle, obj );
-    *ret = obj;
-    return STATUS_SUCCESS;
+        status = NtQueryObject( handle, ObjectTypeInformation, buf, sizeof(buf), &size );
+        if (status)
+        {
+            LeaveCriticalSection( &handle_map_cs );
+            return status;
+        }
+        if (!type)
+        {
+            size_t i;
+            for (i = 0; i < ARRAY_SIZE(known_types); i++)
+            {
+                type = *known_types[i];
+                if (!RtlCompareUnicodeStrings( type->name, strlenW(type->name), type_info->TypeName.Buffer,
+                                               type_info->TypeName.Length / sizeof(WCHAR), FALSE ))
+                    break;
+            }
+            if (i == ARRAY_SIZE(known_types))
+            {
+                FIXME("Unsupported type %s\n", debugstr_us(&type_info->TypeName));
+                LeaveCriticalSection( &handle_map_cs );
+                return STATUS_INVALID_HANDLE;
+            }
+        }
+        else if (RtlCompareUnicodeStrings( type->name, strlenW(type->name), type_info->TypeName.Buffer,
+                                           type_info->TypeName.Length / sizeof(WCHAR), FALSE) )
+        {
+            LeaveCriticalSection( &handle_map_cs );
+            return STATUS_OBJECT_TYPE_MISMATCH;
+        }
+
+        if (type->constructor)
+            obj = type->constructor( handle );
+        else
+        {
+            FIXME( "No constructor for type %s\n", debugstr_w(type->name) );
+            obj = alloc_kernel_object( type, handle, 0, 0 );
+        }
+        if (!obj) status = STATUS_NO_MEMORY;
+    }
+
+    LeaveCriticalSection( &handle_map_cs );
+    if (!status) *ret = obj;
+    return status;
 }
 
 /***********************************************************************
@@ -422,7 +476,7 @@ POBJECT_TYPE IoFileObjectType = &file_type;
 static void *create_file_object( HANDLE handle )
 {
     FILE_OBJECT *file;
-    if (!(file = alloc_kernel_object( IoFileObjectType, sizeof(*file), 0 ))) return NULL;
+    if (!(file = alloc_kernel_object( IoFileObjectType, handle, sizeof(*file), 0 ))) return NULL;
     file->Type = 5;  /* MSDN */
     file->Size = sizeof(*file);
     return file;
@@ -487,7 +541,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     FILE_OBJECT *file;
     DEVICE_OBJECT *device = wine_server_get_ptr( params->create.device );
 
-    if (!(file = alloc_kernel_object( IoFileObjectType, sizeof(*file), 1 ))) return STATUS_NO_MEMORY;
+    if (!(file = alloc_kernel_object( IoFileObjectType, NULL, sizeof(*file), 1 ))) return STATUS_NO_MEMORY;
 
     TRACE( "device %p -> file %p\n", device, file );
 
@@ -1298,7 +1352,7 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
 
     TRACE("(%s, %p)\n", debugstr_us(name), init);
 
-    if (!(driver = alloc_kernel_object( IoDriverObjectType, sizeof(*driver), 1 )))
+    if (!(driver = alloc_kernel_object( IoDriverObjectType, NULL, sizeof(*driver), 1 )))
         return STATUS_NO_MEMORY;
 
     if ((status = RtlDuplicateUnicodeString( 1, name, &driver->driver_obj.DriverName )))
@@ -1379,7 +1433,7 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
     TRACE( "(%p, %u, %s, %u, %x, %u, %p)\n",
            driver, ext_size, debugstr_us(name), type, characteristics, exclusive, ret_device );
 
-    if (!(device = alloc_kernel_object( IoDeviceObjectType, sizeof(DEVICE_OBJECT) + ext_size, 1 )))
+    if (!(device = alloc_kernel_object( IoDeviceObjectType, NULL, sizeof(DEVICE_OBJECT) + ext_size, 1 )))
         return STATUS_NO_MEMORY;
 
     SERVER_START_REQ( create_device )

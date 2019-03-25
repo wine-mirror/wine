@@ -4298,6 +4298,24 @@ static void dump_get_next_device_request_reply( const struct get_next_device_req
     dump_varargs_bytes( ", next_data=", cur_size );
 }
 
+static void dump_get_kernel_object_ptr_request( const struct get_kernel_object_ptr_request *req )
+{
+    fprintf( stderr, " manager=%04x", req->manager );
+    fprintf( stderr, ", handle=%04x", req->handle );
+}
+
+static void dump_get_kernel_object_ptr_reply( const struct get_kernel_object_ptr_reply *req )
+{
+    dump_uint64( " user_ptr=", &req->user_ptr );
+}
+
+static void dump_set_kernel_object_ptr_request( const struct set_kernel_object_ptr_request *req )
+{
+    fprintf( stderr, " manager=%04x", req->manager );
+    fprintf( stderr, ", handle=%04x", req->handle );
+    dump_uint64( ", user_ptr=", &req->user_ptr );
+}
+
 static void dump_make_process_system_request( const struct make_process_system_request *req )
 {
 }
@@ -4811,6 +4829,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_device_request,
     (dump_func)dump_delete_device_request,
     (dump_func)dump_get_next_device_request_request,
+    (dump_func)dump_get_kernel_object_ptr_request,
+    (dump_func)dump_set_kernel_object_ptr_request,
     (dump_func)dump_make_process_system_request,
     (dump_func)dump_get_token_statistics_request,
     (dump_func)dump_create_completion_request,
@@ -5105,6 +5125,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_device_reply,
     NULL,
     (dump_func)dump_get_next_device_request_reply,
+    (dump_func)dump_get_kernel_object_ptr_reply,
+    NULL,
     (dump_func)dump_make_process_system_reply,
     (dump_func)dump_get_token_statistics_reply,
     (dump_func)dump_create_completion_reply,
@@ -5399,6 +5421,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_device",
     "delete_device",
     "get_next_device_request",
+    "get_kernel_object_ptr",
+    "set_kernel_object_ptr",
     "make_process_system",
     "get_token_statistics",
     "create_completion",

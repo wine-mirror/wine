@@ -3623,6 +3623,23 @@ struct handle_info
 @END
 
 
+/* Get kernel pointer from server object */
+@REQ(get_kernel_object_ptr)
+    obj_handle_t manager;         /* handle to the device manager */
+    obj_handle_t handle;          /* object handle */
+@REPLY
+    client_ptr_t user_ptr;        /* kernel object pointer */
+@END
+
+
+/* Associate kernel pointer with server object */
+@REQ(set_kernel_object_ptr)
+    obj_handle_t manager;         /* handle to the device manager */
+    obj_handle_t handle;          /* object handle */
+    client_ptr_t user_ptr;        /* kernel object pointer */
+@END
+
+
 /* Make the current process a system process */
 @REQ(make_process_system)
 @REPLY
