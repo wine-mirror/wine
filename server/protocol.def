@@ -699,6 +699,12 @@ typedef union
         ioctl_code_t     code;      /* ioctl code */
         client_ptr_t     file;      /* opaque ptr for the file object */
     } ioctl;
+    struct
+    {
+        unsigned int     major;     /* IRP_MJ_DEVICE_CLEANUP */
+        int              __pad;
+        client_ptr_t     obj;       /* opaque ptr for the freed object */
+    } cleanup;
 } irp_params_t;
 
 /* information about a PE image mapping, roughly equivalent to SECTION_IMAGE_INFORMATION */

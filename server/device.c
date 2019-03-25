@@ -739,7 +739,22 @@ void free_kernel_objects( struct object *obj )
     while ((ptr = list_head( list )))
     {
         struct kernel_object *kernel_object = LIST_ENTRY( ptr, struct kernel_object, list_entry );
+        struct irp_call *irp;
+        irp_params_t params;
+
         assert( !kernel_object->owned );
+
+        /* abuse IRP_MJ_CLEANUP to request client to free no longer valid kernel object */
+        memset( &params, 0, sizeof(params) );
+        params.cleanup.major = IRP_MJ_CLEANUP;
+        params.cleanup.obj   = kernel_object->user_ptr;
+
+        if ((irp = create_irp( NULL, &params, NULL )))
+        {
+            add_irp_to_queue( kernel_object->manager, irp, NULL );
+            release_object( irp );
+        }
+
         list_remove( &kernel_object->list_entry );
         wine_rb_remove( &kernel_object->manager->kernel_objects, &kernel_object->rb_entry );
         free( kernel_object );

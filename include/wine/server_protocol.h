@@ -683,6 +683,12 @@ typedef union
         ioctl_code_t     code;
         client_ptr_t     file;
     } ioctl;
+    struct
+    {
+        unsigned int     major;
+        int              __pad;
+        client_ptr_t     obj;
+    } cleanup;
 } irp_params_t;
 
 

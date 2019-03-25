@@ -833,6 +833,18 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
     return STATUS_SUCCESS;
 }
 
+/* This is not a real IRP_MJ_CLEANUP dispatcher. We use it to notify client that server
+ * object associated with kernel object is freed so that we may free it on client side
+ * as well. */
+static NTSTATUS dispatch_cleanup( const irp_params_t *params, void *in_buff, ULONG in_size,
+                                  ULONG out_size, HANDLE irp_handle )
+{
+    void *obj = wine_server_get_ptr( params->cleanup.obj );
+    TRACE( "freeing %p object\n", obj );
+    free_kernel_object( obj );
+    return STATUS_SUCCESS;
+}
+
 typedef NTSTATUS (*dispatch_func)( const irp_params_t *params, void *in_buff, ULONG in_size,
                                    ULONG out_size, HANDLE irp_handle );
 
@@ -856,7 +868,7 @@ static const dispatch_func dispatch_funcs[IRP_MJ_MAXIMUM_FUNCTION + 1] =
     NULL,              /* IRP_MJ_INTERNAL_DEVICE_CONTROL */
     NULL,              /* IRP_MJ_SHUTDOWN */
     NULL,              /* IRP_MJ_LOCK_CONTROL */
-    NULL,              /* IRP_MJ_CLEANUP */
+    dispatch_cleanup,  /* IRP_MJ_CLEANUP */
     NULL,              /* IRP_MJ_CREATE_MAILSLOT */
     NULL,              /* IRP_MJ_QUERY_SECURITY */
     NULL,              /* IRP_MJ_SET_SECURITY */
