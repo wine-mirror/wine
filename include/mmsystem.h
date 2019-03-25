@@ -483,7 +483,9 @@ typedef struct waveformat_tag {
     WORD	nBlockAlign;
 } WAVEFORMAT, *LPWAVEFORMAT;
 
+#ifndef WAVE_FORMAT_PCM
 #define WAVE_FORMAT_PCM     1
+#endif
 
 typedef struct pcmwaveformat_tag {
     WAVEFORMAT	wf;

@@ -48,6 +48,7 @@ extern "C" {
     DEFINE_GUID(name, format, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 
 #ifndef DIRECT3D_VERSION
+#define LOCAL_D3DFMT_DEFINES   1
 #define D3DFMT_R8G8B8         20
 #define D3DFMT_A8R8G8B8       21
 #define D3DFMT_X8R8G8B8       22
@@ -55,10 +56,13 @@ extern "C" {
 #define D3DFMT_X1R5G5B5       24
 #define D3DFMT_A2B10G10R10    31
 #define D3DFMT_P8             41
+#define D3DFMT_L8             50
+#define D3DFMT_D16            80
+#define D3DFMT_L16            81
 #define D3DFMT_A16B16G16R16F 113
 #endif
 
-DEFINE_MEDIATYPE_GUID(MFVideoFormat_WMV3,          MAKEFOURCC('W','M','V','3'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_Base,          0);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB8,          D3DFMT_P8);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB555,        D3DFMT_X1R5G5B5);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB565,        D3DFMT_R5G6B5);
@@ -67,6 +71,121 @@ DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB32,         D3DFMT_X8R8G8B8);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB32,        D3DFMT_A8R8G8B8);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_A2R10G10B10,   D3DFMT_A2B10G10R10);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_A16B16G16R16F, D3DFMT_A16B16G16R16F);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_L8,            D3DFMT_L8);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_L16,           D3DFMT_L16);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_D16,           D3DFMT_D16);
+
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_420O,          MAKEFOURCC('4','2','0','O'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_DVSL,          MAKEFOURCC('d','v','s','l'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_DVSD,          MAKEFOURCC('d','v','s','d'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_DVHD,          MAKEFOURCC('d','v','h','d'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_DV25,          MAKEFOURCC('d','v','2','5'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_DV50,          MAKEFOURCC('d','v','5','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_DVH1,          MAKEFOURCC('d','v','h','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_DVC,           MAKEFOURCC('d','v','c',' '));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_v210,          MAKEFOURCC('v','2','1','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_v216,          MAKEFOURCC('v','2','1','6'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_v410,          MAKEFOURCC('v','4','1','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_AI44,          MAKEFOURCC('A','I','4','4'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_AV1,           MAKEFOURCC('A','V','0','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_AYUV,          MAKEFOURCC('A','Y','U','V'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_H263,          MAKEFOURCC('H','2','6','3'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_H264,          MAKEFOURCC('H','2','6','4'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_H265,          MAKEFOURCC('H','2','6','5'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_HEVC,          MAKEFOURCC('H','E','V','C'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_HEVC_ES,       MAKEFOURCC('H','E','V','S'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_I420,          MAKEFOURCC('I','4','2','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IYUV,          MAKEFOURCC('I','Y','U','V'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_M4S2,          MAKEFOURCC('M','4','S','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_MJPG,          MAKEFOURCC('M','J','P','G'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_MP43,          MAKEFOURCC('M','P','4','3'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_MP4S,          MAKEFOURCC('M','P','4','S'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_MP4V,          MAKEFOURCC('M','P','4','V'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_MPG1,          MAKEFOURCC('M','P','G','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_MSS1,          MAKEFOURCC('M','S','S','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_MSS2,          MAKEFOURCC('M','S','S','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_NV11,          MAKEFOURCC('N','V','1','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_NV12,          MAKEFOURCC('N','V','1','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ORAW,          MAKEFOURCC('O','R','A','W'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_P010,          MAKEFOURCC('P','0','1','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_P016,          MAKEFOURCC('P','0','1','6'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_P210,          MAKEFOURCC('P','2','1','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_P216,          MAKEFOURCC('P','2','1','6'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_UYVY,          MAKEFOURCC('U','Y','V','Y'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_VP10,          MAKEFOURCC('V','P','1','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_VP80,          MAKEFOURCC('V','P','8','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_VP90,          MAKEFOURCC('V','P','9','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_Y210,          MAKEFOURCC('Y','2','1','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_Y216,          MAKEFOURCC('Y','2','1','6'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_Y410,          MAKEFOURCC('Y','4','1','0'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_Y416,          MAKEFOURCC('Y','4','1','6'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_Y41P,          MAKEFOURCC('Y','4','1','P'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_Y41T,          MAKEFOURCC('Y','4','1','T'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_Y42T,          MAKEFOURCC('Y','4','2','T'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_YUY2,          MAKEFOURCC('Y','U','Y','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_YV12,          MAKEFOURCC('Y','V','1','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_YVYU,          MAKEFOURCC('Y','V','Y','U'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_YVU9,          MAKEFOURCC('Y','V','U','9'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_WMV1,          MAKEFOURCC('W','M','V','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_WMV2,          MAKEFOURCC('W','M','V','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_WMV3,          MAKEFOURCC('W','M','V','3'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_WVC1,          MAKEFOURCC('W','V','C','1'));
+
+DEFINE_GUID(MFVideoFormat_Base_HDCP, 0xeac3b9d5, 0xbd14, 0x4237, 0x8f, 0x1f, 0xba, 0xb4, 0x28, 0xe4, 0x93, 0x12);
+DEFINE_GUID(MFVideoFormat_H264_ES,   0x3f40f4f0, 0x5622, 0x4ff8, 0xb6, 0xd8, 0xa1, 0x7a, 0x58, 0x4b, 0xee, 0x5e);
+DEFINE_GUID(MFVideoFormat_H264_HDCP, 0x5d0ce9dd, 0x9817, 0x49da, 0xbd, 0xfd, 0xf5, 0xf5, 0xb9, 0x8f, 0x18, 0xa6);
+DEFINE_GUID(MFVideoFormat_HEVC_HDCP, 0x3cfe0fe6, 0x05c4, 0x47dc, 0x9d, 0x70, 0x4b, 0xdb, 0x29, 0x59, 0x72, 0x0f);
+DEFINE_GUID(MFVideoFormat_MPEG2,     0xe06d8026, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x5f, 0x6c, 0xbb, 0xea);
+
+#define MFVideoFormat_MPG2 MFVideoFormat_MPEG2
+
+#ifdef LOCAL_D3DFMT_DEFINES
+#undef D3DFMT_R8G8B8
+#undef D3DFMT_A8R8G8B8
+#undef D3DFMT_X8R8G8B8
+#undef D3DFMT_R5G6B5
+#undef D3DFMT_X1R5G5B5
+#undef D3DFMT_A2B10G10R10
+#undef D3DFMT_P8
+#undef D3DFMT_L8
+#undef D3DFMT_D16
+#undef D3DFMT_L16
+#undef D3DFMT_A16B16G16R16F
+#undef LOCAL_D3DFMT_DEFINES
+#endif
+
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_Base,              0);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_AAC,               WAVE_FORMAT_MPEG_HEAAC);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_ADTS,              WAVE_FORMAT_MPEG_ADTS_AAC);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_ALAC,              WAVE_FORMAT_ALAC);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_AMR_NB,            WAVE_FORMAT_AMR_NB);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_AMR_WB,            WAVE_FORMAT_AMR_WB);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_AMR_WP,            WAVE_FORMAT_AMR_WP);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_Dolby_AC3_SPDIF,   WAVE_FORMAT_DOLBY_AC3_SPDIF);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_DRM,               WAVE_FORMAT_DRM);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_DTS,               WAVE_FORMAT_DTS);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_Float,             WAVE_FORMAT_IEEE_FLOAT);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_FLAC,              WAVE_FORMAT_FLAC);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_MP3,               WAVE_FORMAT_MPEGLAYER3);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_MPEG,              WAVE_FORMAT_MPEG);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_MSP1,              WAVE_FORMAT_WMAVOICE9);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_Opus,              WAVE_FORMAT_OPUS);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_PCM,               WAVE_FORMAT_PCM);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_WMAudioV8,         WAVE_FORMAT_WMAUDIO2);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_WMAudioV9,         WAVE_FORMAT_WMAUDIO3);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_WMAudio_Lossless,  WAVE_FORMAT_WMAUDIO_LOSSLESS);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_WMASPDIF,          WAVE_FORMAT_WMASPDIF);
+
+DEFINE_GUID(MFAudioFormat_AAC_HDCP,             0x419bce76, 0x8b72, 0x400f, 0xad, 0xeb, 0x84, 0xb5, 0x7d, 0x63, 0x48, 0x4d);
+DEFINE_GUID(MFAudioFormat_ADTS_HDCP,            0xda4963a3, 0x14d8, 0x4dcf, 0x92, 0xb7, 0x19, 0x3e, 0xb8, 0x43, 0x63, 0xdb);
+DEFINE_GUID(MFAudioFormat_Base_HDCP,            0x3884b5bc, 0xe277, 0x43fd, 0x98, 0x3d, 0x03, 0x8a, 0xa8, 0xd9, 0xb6, 0x05);
+DEFINE_GUID(MFAudioFormat_Dolby_AC3,            0xe06d802c, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x5f, 0x6c, 0xbb, 0xea);
+DEFINE_GUID(MFAudioFormat_Dolby_AC3_HDCP,       0x97663a80, 0x8ffb, 0x4445, 0xa6, 0xba, 0x79, 0x2d, 0x90, 0x8f, 0x49, 0x7f);
+DEFINE_GUID(MFAudioFormat_Dolby_DDPlus,         0xa7fb87af, 0x2d02, 0x42fb, 0xa4, 0xd4, 0x05, 0xcd, 0x93, 0x84, 0x3b, 0xdd);
+DEFINE_GUID(MFAudioFormat_Float_SpatialObjects, 0xfa39cd94, 0xbc64, 0x4ab1, 0x9b, 0x71, 0xdc, 0xd0, 0x9d, 0x5a, 0x7e, 0x7a);
+DEFINE_GUID(MFAudioFormat_LPCM,                 0xe06d8032, 0xdb46, 0x11cf, 0xb4, 0xd1, 0x00, 0x80, 0x5f, 0x6c, 0xbb, 0xea);
+DEFINE_GUID(MFAudioFormat_PCM_HDCP,             0xa5e7ff01, 0x8411, 0x4acc, 0xa8, 0x65, 0x5f, 0x49, 0x41, 0x28, 0x8d, 0x80);
+DEFINE_GUID(MFAudioFormat_Vorbis,               0x8d2fd10b, 0x5841, 0x4a6b, 0x89, 0x05, 0x58, 0x8f, 0xec, 0x1a, 0xde, 0xd9);
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
 typedef struct tagMFASYNCRESULT : public IMFAsyncResult {

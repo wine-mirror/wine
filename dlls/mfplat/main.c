@@ -686,6 +686,136 @@ static const char *debugstr_attr(const GUID *guid)
     return ret ? wine_dbg_sprintf("%s", ret->name) : wine_dbgstr_guid(guid);
 }
 
+static const char *debugstr_mf_guid(const GUID *guid)
+{
+    static const struct guid_def guid_defs[] =
+    {
+#define X(g) { &(g), #g }
+        X(MFAudioFormat_ADTS),
+        X(MFAudioFormat_PCM),
+        X(MFAudioFormat_PCM_HDCP),
+        X(MFAudioFormat_Float),
+        X(MFAudioFormat_DTS),
+        X(MFAudioFormat_DRM),
+        X(MFAudioFormat_MSP1),
+        X(MFAudioFormat_Vorbis),
+        X(MFAudioFormat_AAC),
+        X(MFVideoFormat_RGB24),
+        X(MFVideoFormat_ARGB32),
+        X(MFVideoFormat_RGB32),
+        X(MFVideoFormat_RGB565),
+        X(MFVideoFormat_RGB555),
+        X(MFVideoFormat_A2R10G10B10),
+        X(MFMediaType_Script),
+        X(MFMediaType_Image),
+        X(MFMediaType_HTML),
+        X(MFMediaType_Binary),
+        X(MFVideoFormat_MPEG2),
+        X(MFMediaType_FileTransfer),
+        X(MFVideoFormat_RGB8),
+        X(MFAudioFormat_Dolby_AC3),
+        X(MFVideoFormat_L8),
+        X(MFAudioFormat_LPCM),
+        X(MFVideoFormat_420O),
+        X(MFVideoFormat_AI44),
+        X(MFVideoFormat_AV1),
+        X(MFVideoFormat_AYUV),
+        X(MFVideoFormat_H263),
+        X(MFVideoFormat_H264),
+        X(MFVideoFormat_H265),
+        X(MFVideoFormat_HEVC),
+        X(MFVideoFormat_HEVC_ES),
+        X(MFVideoFormat_I420),
+        X(MFVideoFormat_IYUV),
+        X(MFVideoFormat_M4S2),
+        X(MFVideoFormat_MJPG),
+        X(MFVideoFormat_MP43),
+        X(MFVideoFormat_MP4S),
+        X(MFVideoFormat_MP4V),
+        X(MFVideoFormat_MPG1),
+        X(MFVideoFormat_MSS1),
+        X(MFVideoFormat_MSS2),
+        X(MFVideoFormat_NV11),
+        X(MFVideoFormat_NV12),
+        X(MFVideoFormat_ORAW),
+        X(MFAudioFormat_Opus),
+        X(MFVideoFormat_D16),
+        X(MFAudioFormat_MPEG),
+        X(MFVideoFormat_P010),
+        X(MFVideoFormat_P016),
+        X(MFVideoFormat_P210),
+        X(MFVideoFormat_P216),
+        X(MFVideoFormat_L16),
+        X(MFAudioFormat_MP3),
+        X(MFVideoFormat_UYVY),
+        X(MFVideoFormat_VP10),
+        X(MFVideoFormat_VP80),
+        X(MFVideoFormat_VP90),
+        X(MFVideoFormat_WMV1),
+        X(MFVideoFormat_WMV2),
+        X(MFVideoFormat_WMV3),
+        X(MFVideoFormat_WVC1),
+        X(MFVideoFormat_Y210),
+        X(MFVideoFormat_Y216),
+        X(MFVideoFormat_Y410),
+        X(MFVideoFormat_Y416),
+        X(MFVideoFormat_Y41P),
+        X(MFVideoFormat_Y41T),
+        X(MFVideoFormat_Y42T),
+        X(MFVideoFormat_YUY2),
+        X(MFVideoFormat_YV12),
+        X(MFVideoFormat_YVU9),
+        X(MFVideoFormat_YVYU),
+        X(MFAudioFormat_WMAudioV8),
+        X(MFAudioFormat_ALAC),
+        X(MFAudioFormat_AMR_NB),
+        X(MFMediaType_Audio),
+        X(MFAudioFormat_WMAudioV9),
+        X(MFAudioFormat_AMR_WB),
+        X(MFAudioFormat_WMAudio_Lossless),
+        X(MFAudioFormat_AMR_WP),
+        X(MFAudioFormat_WMASPDIF),
+        X(MFVideoFormat_DV25),
+        X(MFVideoFormat_DV50),
+        X(MFVideoFormat_DVC),
+        X(MFVideoFormat_DVH1),
+        X(MFVideoFormat_DVHD),
+        X(MFVideoFormat_DVSD),
+        X(MFVideoFormat_DVSL),
+        X(MFVideoFormat_A16B16G16R16F),
+        X(MFVideoFormat_v210),
+        X(MFVideoFormat_v216),
+        X(MFVideoFormat_v410),
+        X(MFMediaType_Video),
+        X(MFAudioFormat_AAC_HDCP),
+        X(MFAudioFormat_Dolby_AC3_HDCP),
+        X(MFMediaType_Subtitle),
+        X(MFMediaType_Stream),
+        X(MFAudioFormat_Dolby_AC3_SPDIF),
+        X(MFAudioFormat_Float_SpatialObjects),
+        X(MFMediaType_SAMI),
+        X(MFAudioFormat_ADTS_HDCP),
+        X(MFAudioFormat_FLAC),
+        X(MFAudioFormat_Dolby_DDPlus),
+        X(MFMediaType_MultiplexedFrames),
+        X(MFAudioFormat_Base_HDCP),
+        X(MFVideoFormat_Base_HDCP),
+        X(MFVideoFormat_H264_HDCP),
+        X(MFVideoFormat_HEVC_HDCP),
+        X(MFMediaType_Default),
+        X(MFMediaType_Protected),
+        X(MFVideoFormat_H264_ES),
+        X(MFMediaType_Perception),
+#undef X
+    };
+    struct guid_def *ret = NULL;
+
+    if (guid)
+        ret = bsearch(guid, guid_defs, ARRAY_SIZE(guid_defs), sizeof(*guid_defs), debug_compare_guid);
+
+    return ret ? wine_dbg_sprintf("%s", ret->name) : wine_dbgstr_guid(guid);
+}
+
 static inline struct attributes *impl_from_IMFAttributes(IMFAttributes *iface)
 {
     return CONTAINING_RECORD(iface, struct attributes, IMFAttributes_iface);
@@ -1311,7 +1441,7 @@ static HRESULT WINAPI mfattributes_SetGUID(IMFAttributes *iface, REFGUID key, RE
     struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
 
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
 
     InitPropVariantFromCLSID(value, &attrval);
     return attributes_set_item(attributes, key, &attrval);

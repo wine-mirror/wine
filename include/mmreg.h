@@ -77,11 +77,17 @@ typedef struct _WAVEFORMATEX {
 
 /* WAVE form wFormatTag IDs */
 #define  WAVE_FORMAT_UNKNOWN			0x0000	/*  Microsoft Corporation  */
+#ifndef  WAVE_FORMAT_PCM
+#define  WAVE_FORMAT_PCM			0x0001
+#endif
 #define  WAVE_FORMAT_ADPCM			0x0002	/*  Microsoft Corporation  */
 #define  WAVE_FORMAT_IEEE_FLOAT			0x0003	/*  Microsoft Corporation  */
 #define  WAVE_FORMAT_IBM_CVSD			0x0005	/*  IBM Corporation  */
 #define  WAVE_FORMAT_ALAW			0x0006	/*  Microsoft Corporation  */
 #define  WAVE_FORMAT_MULAW			0x0007	/*  Microsoft Corporation  */
+#define  WAVE_FORMAT_DTS			0x0008
+#define  WAVE_FORMAT_DRM			0x0009
+#define  WAVE_FORMAT_WMAVOICE9			0x000a
 #define  WAVE_FORMAT_OKI_ADPCM			0x0010	/*  OKI  */
 #define  WAVE_FORMAT_DVI_ADPCM			0x0011	/*  Intel Corporation  */
 #define  WAVE_FORMAT_IMA_ADPCM			(WAVE_FORMAT_DVI_ADPCM)	/*  Intel Corporation  */
@@ -110,6 +116,11 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_MPEG			0x0050	/*  Microsoft Corporation  */
 #define  WAVE_FORMAT_MPEGLAYER3			0x0055
 #define  WAVE_FORMAT_MSRT24			0x0082  /*  Microsoft Corporation */
+#define  WAVE_FORMAT_DOLBY_AC3_SPDIF		0x0092
+#define  WAVE_FORMAT_WMAUDIO2			0x0161
+#define  WAVE_FORMAT_WMAUDIO3			0x0162
+#define  WAVE_FORMAT_WMAUDIO_LOSSLESS		0x0163
+#define  WAVE_FORMAT_WMASPDIF			0x0164
 #define  WAVE_FORMAT_CREATIVE_ADPCM		0x0200	/*  Creative Labs, Inc  */
 #define  WAVE_FORMAT_CREATIVE_FASTSPEECH8	0x0202	/*  Creative Labs, Inc  */
 #define  WAVE_FORMAT_CREATIVE_FASTSPEECH10	0x0203	/*  Creative Labs, Inc  */
@@ -119,6 +130,14 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_OLICELP			0x1002	/*  Ing C. Olivetti & C., S.p.A.  */
 #define  WAVE_FORMAT_OLISBC			0x1003	/*  Ing C. Olivetti & C., S.p.A.  */
 #define  WAVE_FORMAT_OLIOPR			0x1004	/*  Ing C. Olivetti & C., S.p.A.  */
+#define  WAVE_FORMAT_MPEG_ADTS_AAC		0x1600
+#define  WAVE_FORMAT_MPEG_HEAAC			0x1610
+#define  WAVE_FORMAT_ALAC			0x6c61
+#define  WAVE_FORMAT_OPUS			0x704f
+#define  WAVE_FORMAT_AMR_NB			0x7361
+#define  WAVE_FORMAT_AMR_WB			0x7362
+#define  WAVE_FORMAT_AMR_WP			0x7363
+#define  WAVE_FORMAT_FLAC			0xf1ac
 
 #ifndef MM_MICROSOFT
 #define MM_MICROSOFT 0x01
