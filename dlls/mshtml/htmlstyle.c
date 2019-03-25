@@ -986,7 +986,7 @@ static inline HRESULT set_style_property(HTMLStyle *style, styleid_t sid, const 
             }
             if(!*iter) {
                 WARN("invalid value %s\n", debugstr_w(value));
-                set_nsstyle_property(style->nsstyle, sid, emptyW);
+                set_nsstyle_property(style->css_style.nsstyle, sid, emptyW);
                 return E_INVALIDARG;
             }
         }
@@ -997,7 +997,7 @@ static inline HRESULT set_style_property(HTMLStyle *style, styleid_t sid, const 
             val = fix_url_value(value);
     }
 
-    hres = set_nsstyle_property(style->nsstyle, sid, val ? val : value);
+    hres = set_nsstyle_property(style->css_style.nsstyle, sid, val ? val : value);
     heap_free(val);
     return hres;
 }
@@ -1147,12 +1147,12 @@ HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t s
 
 static inline HRESULT get_style_property(HTMLStyle *This, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_property(This->nsstyle, sid, dispex_compat_mode(&This->dispex), p);
+    return get_nsstyle_property(This->css_style.nsstyle, sid, dispex_compat_mode(&This->dispex), p);
 }
 
 static inline HRESULT get_style_property_var(HTMLStyle *This, styleid_t sid, VARIANT *v)
 {
-    return get_nsstyle_property_var(This->nsstyle, sid, dispex_compat_mode(&This->dispex), v);
+    return get_nsstyle_property_var(This->css_style.nsstyle, sid, dispex_compat_mode(&This->dispex), v);
 }
 
 static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR exval, VARIANT_BOOL *p)
@@ -1162,7 +1162,7 @@ static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR ex
 
     nsAString_Init(&str_value, NULL);
 
-    get_nsstyle_attr_nsval(This->nsstyle, sid, &str_value);
+    get_nsstyle_attr_nsval(This->css_style.nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
     *p = variant_bool(!strcmpW(value, exval));
@@ -1204,7 +1204,7 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
 
     nsAString_Init(&str_value, NULL);
 
-    hres = get_nsstyle_attr_nsval(This->nsstyle, sid, &str_value);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, sid, &str_value);
     if(hres == S_OK)
     {
         WCHAR *ptr;
@@ -1240,7 +1240,7 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
 
     nsAString_Init(&str_value, NULL);
 
-    hres = get_nsstyle_attr_nsval(This->nsstyle, sid, &str_value);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, sid, &str_value);
     if(hres == S_OK) {
         WCHAR *ptr = NULL;
         const PRUnichar *value;
@@ -1332,8 +1332,8 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
 
     if(!ref) {
         assert(!This->elem);
-        if(This->nsstyle)
-            nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
+        if(This->css_style.nsstyle)
+            nsIDOMCSSStyleDeclaration_Release(This->css_style.nsstyle);
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -1622,7 +1622,7 @@ static HRESULT WINAPI HTMLStyle_put_backgroundPositionX(IHTMLStyle *iface, VARIA
     val_len = val ? strlenW(val) : 0;
 
     nsAString_Init(&pos_str, NULL);
-    hres = get_nsstyle_attr_nsval(This->nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
     if(SUCCEEDED(hres)) {
         const PRUnichar *pos, *posy;
         DWORD posy_len;
@@ -1668,7 +1668,7 @@ static HRESULT WINAPI HTMLStyle_get_backgroundPositionX(IHTMLStyle *iface, VARIA
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&pos_str, NULL);
-    hres = get_nsstyle_attr_nsval(This->nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
     if(SUCCEEDED(hres)) {
         const PRUnichar *pos, *space;
 
@@ -1715,7 +1715,7 @@ static HRESULT WINAPI HTMLStyle_put_backgroundPositionY(IHTMLStyle *iface, VARIA
     val_len = val ? strlenW(val) : 0;
 
     nsAString_Init(&pos_str, NULL);
-    hres = get_nsstyle_attr_nsval(This->nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
     if(SUCCEEDED(hres)) {
         const PRUnichar *pos, *space;
         DWORD posx_len;
@@ -1764,7 +1764,7 @@ static HRESULT WINAPI HTMLStyle_get_backgroundPositionY(IHTMLStyle *iface, VARIA
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&pos_str, NULL);
-    hres = get_nsstyle_attr_nsval(This->nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    hres = get_nsstyle_attr_nsval(This->css_style.nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
     if(SUCCEEDED(hres)) {
         const PRUnichar *pos, *posy;
 
@@ -3093,7 +3093,7 @@ static void set_opacity(HTMLStyle *This, const WCHAR *val)
     nsAString_InitDepend(&val_str, val);
     nsAString_InitDepend(&empty_str, emptyW);
 
-    nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &name_str, &val_str, &empty_str);
+    nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->css_style.nsstyle, &name_str, &val_str, &empty_str);
     if(NS_FAILED(nsres))
         ERR("SetProperty failed: %08x\n", nsres);
 
@@ -3356,7 +3356,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 
     nsAString_InitDepend(&name_str, style_entry->name);
     nsAString_Init(&ret_str, NULL);
-    nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->nsstyle, &name_str, &ret_str);
+    nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->css_style.nsstyle, &name_str, &ret_str);
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *ret;
         nsAString_GetData(&ret_str, &ret);
@@ -5189,7 +5189,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_removeProperty(IHTMLCSSStyleDeclar
     style_entry = lookup_style_tbl(bstrPropertyName);
     nsAString_InitDepend(&name_str, style_entry ? style_entry->name : bstrPropertyName);
     nsAString_Init(&ret_str, NULL);
-    nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->nsstyle, &name_str, &ret_str);
+    nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->css_style.nsstyle, &name_str, &ret_str);
     nsAString_Finish(&name_str);
     return return_nsstr(nsres, &ret_str, pbstrPropertyValue);
 }
@@ -5223,7 +5223,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclarati
 
     nsAString_InitDepend(&name_str, style_entry ? style_entry->name : name);
     nsAString_InitDepend(&value_str, val);
-    nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &name_str, &value_str, &priority_str);
+    nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->css_style.nsstyle, &name_str, &value_str, &priority_str);
     nsAString_Finish(&name_str);
     nsAString_Finish(&value_str);
     nsAString_Finish(&priority_str);
@@ -6231,7 +6231,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_cssText(IHTMLCSSStyleDeclarati
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     nsAString_InitDepend(&text_str, v);
-    nsres = nsIDOMCSSStyleDeclaration_SetCssText(This->nsstyle, &text_str);
+    nsres = nsIDOMCSSStyleDeclaration_SetCssText(This->css_style.nsstyle, &text_str);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
         FIXME("SetCssStyle failed: %08x\n", nsres);
@@ -6251,7 +6251,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_cssText(IHTMLCSSStyleDeclarati
 
     /* NOTE: Quicks mode should use different formatting (uppercase, no ';' at the end of rule). */
     nsAString_Init(&text_str, NULL);
-    nsres = nsIDOMCSSStyleDeclaration_GetCssText(This->nsstyle, &text_str);
+    nsres = nsIDOMCSSStyleDeclaration_GetCssText(This->css_style.nsstyle, &text_str);
     return return_nsstr(nsres, &text_str, p);
 }
 
@@ -10205,7 +10205,7 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
     style->IHTMLCSSStyleDeclaration2_iface.lpVtbl = &HTMLCSSStyleDeclaration2Vtbl;
 
     style->ref = 1;
-    style->nsstyle = nsstyle;
+    style->css_style.nsstyle = nsstyle;
     style->elem = elem;
 
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);

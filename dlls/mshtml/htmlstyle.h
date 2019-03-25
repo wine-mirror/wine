@@ -16,8 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+typedef struct {
+    nsIDOMCSSStyleDeclaration *nsstyle;
+} CSSStyle;
+
 struct HTMLStyle {
     DispatchEx dispex;
+    CSSStyle css_style;
     IHTMLStyle  IHTMLStyle_iface;
     IHTMLStyle2 IHTMLStyle2_iface;
     IHTMLStyle3 IHTMLStyle3_iface;
@@ -29,7 +34,6 @@ struct HTMLStyle {
 
     LONG ref;
 
-    nsIDOMCSSStyleDeclaration *nsstyle;
     HTMLElement *elem;
 };
 
