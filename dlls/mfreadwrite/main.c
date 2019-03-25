@@ -838,6 +838,35 @@ HRESULT WINAPI MFCreateSinkWriterFromMediaSink(IMFMediaSink *sink, IMFAttributes
     return create_sink_writer_from_sink(sink, attributes, &IID_IMFSinkWriter, (void **)writer);
 }
 
+static HRESULT create_source_reader_from_object(IUnknown *unk, IMFAttributes *attributes, REFIID riid, void **out)
+{
+    IMFMediaSource *source = NULL;
+    IMFByteStream *stream = NULL;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMFMediaSource, (void **)&source);
+    if (FAILED(hr))
+        hr = IUnknown_QueryInterface(unk, &IID_IMFByteStream, (void **)&stream);
+
+    if (source)
+    {
+        UINT32 disconnect = 0;
+
+        if (attributes)
+            IMFAttributes_GetUINT32(attributes, &MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, &disconnect);
+        hr = create_source_reader_from_source(source, attributes, !disconnect, riid, out);
+    }
+    else if (stream)
+        hr = create_source_reader_from_stream(stream, attributes, riid, out);
+
+    if (source)
+        IMFMediaSource_Release(source);
+    if (stream)
+        IMFByteStream_Release(stream);
+
+    return hr;
+}
+
 /***********************************************************************
  *      MFCreateSourceReaderFromByteStream (mfreadwrite.@)
  */
@@ -846,23 +875,18 @@ HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *stream, IMFAttr
 {
     TRACE("%p, %p, %p.\n", stream, attributes, reader);
 
-    return create_source_reader_from_stream(stream, attributes, &IID_IMFSourceReader, (void **)reader);
+    return create_source_reader_from_object((IUnknown *)stream, attributes, &IID_IMFSourceReader, (void **)reader);
 }
 
 /***********************************************************************
  *      MFCreateSourceReaderFromMediaSource (mfreadwrite.@)
  */
 HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes,
-                                                   IMFSourceReader **reader)
+        IMFSourceReader **reader)
 {
-    UINT32 disconnect = 0;
-
     TRACE("%p, %p, %p.\n", source, attributes, reader);
 
-    if (attributes)
-        IMFAttributes_GetUINT32(attributes, &MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, &disconnect);
-
-    return create_source_reader_from_source(source, attributes, !disconnect, &IID_IMFSourceReader, (void **)reader);
+    return create_source_reader_from_object((IUnknown *)source, attributes, &IID_IMFSourceReader, (void **)reader);
 }
 
 /***********************************************************************
@@ -924,30 +948,7 @@ static HRESULT WINAPI readwrite_factory_CreateInstanceFromObject(IMFReadWriteCla
 
     if (IsEqualGUID(clsid, &CLSID_MFSourceReader))
     {
-        IMFMediaSource *source = NULL;
-        IMFByteStream *stream = NULL;
-
-        hr = IUnknown_QueryInterface(unk, &IID_IMFByteStream, (void **)&stream);
-        if (FAILED(hr))
-            hr = IUnknown_QueryInterface(unk, &IID_IMFMediaSource, (void **)&source);
-
-        if (stream)
-            hr = create_source_reader_from_stream(stream, attributes, riid, out);
-        else if (source)
-        {
-            UINT32 disconnect = 0;
-
-            if (attributes)
-                IMFAttributes_GetUINT32(attributes, &MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, &disconnect);
-            hr = create_source_reader_from_source(source, attributes, !disconnect, riid, out);
-        }
-
-        if (source)
-            IMFMediaSource_Release(source);
-        if (stream)
-            IMFByteStream_Release(stream);
-
-        return hr;
+        return create_source_reader_from_object(unk, attributes, riid, out);
     }
     else if (IsEqualGUID(clsid, &CLSID_MFSinkWriter))
     {
