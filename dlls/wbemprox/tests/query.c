@@ -1438,6 +1438,7 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
 {
     static const WCHAR capacityW[] = {'C','a','p','a','c','i','t','y',0};
     static const WCHAR memorytypeW[] = {'M','e','m','o','r','y','T','y','p','e',0};
+    static const WCHAR devicelocatorW[] = {'D','e','v','i','c','e','L','o','c','a','t','o','r',0};
     static const WCHAR queryW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
          'P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
@@ -1468,6 +1469,15 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
         ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
         ok( type == CIM_UINT64, "unexpected type 0x%x\n", type );
         trace( "capacity %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, devicelocatorW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "failed to get devicelocator %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "devicelocator %s\n", wine_dbgstr_w(V_BSTR( &val )) );
         VariantClear( &val );
 
         type = 0xdeadbeef;
