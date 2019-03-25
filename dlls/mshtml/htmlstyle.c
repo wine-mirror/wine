@@ -1280,65 +1280,19 @@ static inline HTMLStyle *impl_from_IHTMLStyle(IHTMLStyle *iface)
 static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, void **ppv)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLStyle_iface;
-    }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration, riid)) {
-        *ppv = &This->IHTMLCSSStyleDeclaration_iface;
-    }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration2, riid)) {
-        *ppv = &This->IHTMLCSSStyleDeclaration2_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyle, riid)) {
-        *ppv = &This->IHTMLStyle_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyle2, riid)) {
-        *ppv = &This->IHTMLStyle2_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyle3, riid)) {
-        *ppv = &This->IHTMLStyle3_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyle4, riid)) {
-        *ppv = &This->IHTMLStyle4_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyle5, riid)) {
-        *ppv = &This->IHTMLStyle5_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyle6, riid)) {
-        *ppv = &This->IHTMLStyle6_iface;
-    }else if(dispex_query_interface(&This->css_style.dispex, riid, ppv)) {
-        return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("unsupported iface %s\n", debugstr_mshtml_guid(riid));
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return IHTMLCSSStyleDeclaration_QueryInterface(&This->IHTMLCSSStyleDeclaration_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLStyle_AddRef(IHTMLStyle *iface)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    return ref;
+    return IHTMLCSSStyleDeclaration_AddRef(&This->IHTMLCSSStyleDeclaration_iface);
 }
 
 static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if(!ref) {
-        assert(!This->elem);
-        if(This->css_style.nsstyle)
-            nsIDOMCSSStyleDeclaration_Release(This->css_style.nsstyle);
-        release_dispex(&This->css_style.dispex);
-        heap_free(This);
-    }
-
-    return ref;
+    return IHTMLCSSStyleDeclaration_Release(&This->IHTMLCSSStyleDeclaration_iface);
 }
 
 static HRESULT WINAPI HTMLStyle_GetTypeInfoCount(IHTMLStyle *iface, UINT *pctinfo)
@@ -5098,19 +5052,64 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_QueryInterface(IHTMLCSSStyleDeclar
         REFIID riid, void **ppv)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    return IHTMLStyle_QueryInterface(&This->IHTMLStyle_iface, riid, ppv);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &This->IHTMLStyle_iface;
+    }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration, riid)) {
+        *ppv = &This->IHTMLCSSStyleDeclaration_iface;
+    }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration2, riid)) {
+        *ppv = &This->IHTMLCSSStyleDeclaration2_iface;
+    }else if(IsEqualGUID(&IID_IHTMLStyle, riid)) {
+        *ppv = &This->IHTMLStyle_iface;
+    }else if(IsEqualGUID(&IID_IHTMLStyle2, riid)) {
+        *ppv = &This->IHTMLStyle2_iface;
+    }else if(IsEqualGUID(&IID_IHTMLStyle3, riid)) {
+        *ppv = &This->IHTMLStyle3_iface;
+    }else if(IsEqualGUID(&IID_IHTMLStyle4, riid)) {
+        *ppv = &This->IHTMLStyle4_iface;
+    }else if(IsEqualGUID(&IID_IHTMLStyle5, riid)) {
+        *ppv = &This->IHTMLStyle5_iface;
+    }else if(IsEqualGUID(&IID_IHTMLStyle6, riid)) {
+        *ppv = &This->IHTMLStyle6_iface;
+    }else if(dispex_query_interface(&This->css_style.dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("unsupported iface %s\n", debugstr_mshtml_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI HTMLCSSStyleDeclaration_AddRef(IHTMLCSSStyleDeclaration *iface)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    return IHTMLStyle_AddRef(&This->IHTMLStyle_iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
 static ULONG WINAPI HTMLCSSStyleDeclaration_Release(IHTMLCSSStyleDeclaration *iface)
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    return IHTMLStyle_Release(&This->IHTMLStyle_iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        if(This->css_style.nsstyle)
+            nsIDOMCSSStyleDeclaration_Release(This->css_style.nsstyle);
+        release_dispex(&This->css_style.dispex);
+        heap_free(This);
+    }
+
+    return ref;
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_GetTypeInfoCount(IHTMLCSSStyleDeclaration *iface,
