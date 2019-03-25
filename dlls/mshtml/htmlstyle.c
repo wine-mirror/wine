@@ -1145,9 +1145,9 @@ HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t s
     return S_OK;
 }
 
-static inline HRESULT get_style_property(HTMLStyle *This, styleid_t sid, BSTR *p)
+static inline HRESULT get_style_property(CSSStyle *style, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_property(This->css_style.nsstyle, sid, dispex_compat_mode(&This->css_style.dispex), p);
+    return get_nsstyle_property(style->nsstyle, sid, dispex_compat_mode(&style->dispex), p);
 }
 
 static inline HRESULT get_style_property_var(HTMLStyle *This, styleid_t sid, VARIANT *v)
@@ -1341,7 +1341,7 @@ static HRESULT WINAPI HTMLStyle_get_fontFamily(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_FONT_FAMILY, p);
+    return get_style_property(&This->css_style, STYLEID_FONT_FAMILY, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_fontStyle(IHTMLStyle *iface, BSTR v)
@@ -1359,7 +1359,7 @@ static HRESULT WINAPI HTMLStyle_get_fontStyle(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_FONT_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_FONT_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_fontVariant(IHTMLStyle *iface, BSTR v)
@@ -1379,7 +1379,7 @@ static HRESULT WINAPI HTMLStyle_get_fontVariant(IHTMLStyle *iface, BSTR *p)
     if(!p)
        return E_INVALIDARG;
 
-    return get_style_property(This, STYLEID_FONT_VARIANT, p);
+    return get_style_property(&This->css_style, STYLEID_FONT_VARIANT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_fontWeight(IHTMLStyle *iface, BSTR v)
@@ -1397,7 +1397,7 @@ static HRESULT WINAPI HTMLStyle_get_fontWeight(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_FONT_WEIGHT, p);
+    return get_style_property(&This->css_style, STYLEID_FONT_WEIGHT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_fontSize(IHTMLStyle *iface, VARIANT v)
@@ -1465,7 +1465,7 @@ static HRESULT WINAPI HTMLStyle_get_background(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BACKGROUND, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundColor(IHTMLStyle *iface, VARIANT v)
@@ -1501,7 +1501,7 @@ static HRESULT WINAPI HTMLStyle_get_backgroundImage(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BACKGROUND_IMAGE, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_IMAGE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundRepeat(IHTMLStyle *iface, BSTR v)
@@ -1519,7 +1519,7 @@ static HRESULT WINAPI HTMLStyle_get_backgroundRepeat(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BACKGROUND_REPEAT, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_REPEAT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundAttachment(IHTMLStyle *iface, BSTR v)
@@ -1537,7 +1537,7 @@ static HRESULT WINAPI HTMLStyle_get_backgroundAttachment(IHTMLStyle *iface, BSTR
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BACKGROUND_ATTACHMENT, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_ATTACHMENT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundPosition(IHTMLStyle *iface, BSTR v)
@@ -1555,7 +1555,7 @@ static HRESULT WINAPI HTMLStyle_get_backgroundPosition(IHTMLStyle *iface, BSTR *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BACKGROUND_POSITION, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_POSITION, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundPositionX(IHTMLStyle *iface, VARIANT v)
@@ -1789,7 +1789,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecoration(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_TEXT_DECORATION, p);
+    return get_style_property(&This->css_style, STYLEID_TEXT_DECORATION, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationNone(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1915,7 +1915,7 @@ static HRESULT WINAPI HTMLStyle_get_textTransform(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_TEXT_TRANSFORM, p);
+    return get_style_property(&This->css_style, STYLEID_TEXT_TRANSFORM, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textAlign(IHTMLStyle *iface, BSTR v)
@@ -1933,7 +1933,7 @@ static HRESULT WINAPI HTMLStyle_get_textAlign(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_TEXT_ALIGN, p);
+    return get_style_property(&This->css_style, STYLEID_TEXT_ALIGN, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textIndent(IHTMLStyle *iface, VARIANT v)
@@ -2048,7 +2048,7 @@ static HRESULT WINAPI HTMLStyle_get_margin(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_MARGIN, p);
+    return get_style_property(&This->css_style, STYLEID_MARGIN, p);
 }
 
 static HRESULT WINAPI HTMLStyle_get_marginLeft(IHTMLStyle *iface, VARIANT *p)
@@ -2145,7 +2145,7 @@ static HRESULT WINAPI HTMLStyle_get_padding(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_PADDING, p);
+    return get_style_property(&This->css_style, STYLEID_PADDING, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_border(IHTMLStyle *iface, BSTR v)
@@ -2163,7 +2163,7 @@ static HRESULT WINAPI HTMLStyle_get_border(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BORDER, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderTop(IHTMLStyle *iface, BSTR v)
@@ -2177,7 +2177,7 @@ static HRESULT WINAPI HTMLStyle_get_borderTop(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_TOP, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_TOP, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderRight(IHTMLStyle *iface, BSTR v)
@@ -2191,7 +2191,7 @@ static HRESULT WINAPI HTMLStyle_get_borderRight(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_RIGHT, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_RIGHT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderBottom(IHTMLStyle *iface, BSTR v)
@@ -2205,7 +2205,7 @@ static HRESULT WINAPI HTMLStyle_get_borderBottom(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_BOTTOM, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_BOTTOM, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderLeft(IHTMLStyle *iface, BSTR v)
@@ -2223,7 +2223,7 @@ static HRESULT WINAPI HTMLStyle_get_borderLeft(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BORDER_LEFT, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_LEFT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderColor(IHTMLStyle *iface, BSTR v)
@@ -2241,7 +2241,7 @@ static HRESULT WINAPI HTMLStyle_get_borderColor(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BORDER_COLOR, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_COLOR, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderTopColor(IHTMLStyle *iface, VARIANT v)
@@ -2327,7 +2327,7 @@ static HRESULT WINAPI HTMLStyle_get_borderWidth(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_WIDTH, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_WIDTH, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderTopWidth(IHTMLStyle *iface, VARIANT v)
@@ -2446,7 +2446,7 @@ static HRESULT WINAPI HTMLStyle_get_borderStyle(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderTopStyle(IHTMLStyle *iface, BSTR v)
@@ -2460,7 +2460,7 @@ static HRESULT WINAPI HTMLStyle_get_borderTopStyle(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_TOP_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_TOP_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderRightStyle(IHTMLStyle *iface, BSTR v)
@@ -2474,7 +2474,7 @@ static HRESULT WINAPI HTMLStyle_get_borderRightStyle(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_RIGHT_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_RIGHT_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderBottomStyle(IHTMLStyle *iface, BSTR v)
@@ -2488,7 +2488,7 @@ static HRESULT WINAPI HTMLStyle_get_borderBottomStyle(IHTMLStyle *iface, BSTR *p
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_BOTTOM_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_BOTTOM_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_borderLeftStyle(IHTMLStyle *iface, BSTR v)
@@ -2502,7 +2502,7 @@ static HRESULT WINAPI HTMLStyle_get_borderLeftStyle(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_LEFT_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_LEFT_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_width(IHTMLStyle *iface, VARIANT v)
@@ -2556,7 +2556,7 @@ static HRESULT WINAPI HTMLStyle_get_styleFloat(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_FLOAT, p);
+    return get_style_property(&This->css_style, STYLEID_FLOAT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_clear(IHTMLStyle *iface, BSTR v)
@@ -2574,7 +2574,7 @@ static HRESULT WINAPI HTMLStyle_get_clear(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_CLEAR, p);
+    return get_style_property(&This->css_style, STYLEID_CLEAR, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_display(IHTMLStyle *iface, BSTR v)
@@ -2592,7 +2592,7 @@ static HRESULT WINAPI HTMLStyle_get_display(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_DISPLAY, p);
+    return get_style_property(&This->css_style, STYLEID_DISPLAY, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_visibility(IHTMLStyle *iface, BSTR v)
@@ -2610,7 +2610,7 @@ static HRESULT WINAPI HTMLStyle_get_visibility(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_VISIBILITY, p);
+    return get_style_property(&This->css_style, STYLEID_VISIBILITY, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_listStyleType(IHTMLStyle *iface, BSTR v)
@@ -2628,7 +2628,7 @@ static HRESULT WINAPI HTMLStyle_get_listStyleType(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_LISTSTYLETYPE, p);
+    return get_style_property(&This->css_style, STYLEID_LISTSTYLETYPE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_listStylePosition(IHTMLStyle *iface, BSTR v)
@@ -2646,7 +2646,7 @@ static HRESULT WINAPI HTMLStyle_get_listStylePosition(IHTMLStyle *iface, BSTR *p
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_LISTSTYLEPOSITION, p);
+    return get_style_property(&This->css_style, STYLEID_LISTSTYLEPOSITION, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_listStyleImage(IHTMLStyle *iface, BSTR v)
@@ -2678,7 +2678,7 @@ static HRESULT WINAPI HTMLStyle_get_listStyle(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_LIST_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_LIST_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_whiteSpace(IHTMLStyle *iface, BSTR v)
@@ -2696,7 +2696,7 @@ static HRESULT WINAPI HTMLStyle_get_whiteSpace(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_WHITE_SPACE, p);
+    return get_style_property(&This->css_style, STYLEID_WHITE_SPACE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_top(IHTMLStyle *iface, VARIANT v)
@@ -2779,7 +2779,7 @@ static HRESULT WINAPI HTMLStyle_get_overflow(IHTMLStyle *iface, BSTR *p)
     if(!p)
        return E_INVALIDARG;
 
-    return get_style_property(This, STYLEID_OVERFLOW, p);
+    return get_style_property(&This->css_style, STYLEID_OVERFLOW, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pageBreakBefore(IHTMLStyle *iface, BSTR v)
@@ -2797,7 +2797,7 @@ static HRESULT WINAPI HTMLStyle_get_pageBreakBefore(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_PAGE_BREAK_BEFORE, p);
+    return get_style_property(&This->css_style, STYLEID_PAGE_BREAK_BEFORE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pageBreakAfter(IHTMLStyle *iface, BSTR v)
@@ -2815,7 +2815,7 @@ static HRESULT WINAPI HTMLStyle_get_pageBreakAfter(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_PAGE_BREAK_AFTER, p);
+    return get_style_property(&This->css_style, STYLEID_PAGE_BREAK_AFTER, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_cssText(IHTMLStyle *iface, BSTR v)
@@ -3013,7 +3013,7 @@ static HRESULT WINAPI HTMLStyle_get_cursor(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_CURSOR, p);
+    return get_style_property(&This->css_style, STYLEID_CURSOR, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_clip(IHTMLStyle *iface, BSTR v)
@@ -3031,7 +3031,7 @@ static HRESULT WINAPI HTMLStyle_get_clip(IHTMLStyle *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_CLIP, p);
+    return get_style_property(&This->css_style, STYLEID_CLIP, p);
 }
 
 static void set_opacity(HTMLStyle *This, const WCHAR *val)
@@ -3591,7 +3591,7 @@ static HRESULT WINAPI HTMLStyle2_get_tableLayout(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_TABLE_LAYOUT, p);
+    return get_style_property(&This->css_style, STYLEID_TABLE_LAYOUT, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_borderCollapse(IHTMLStyle2 *iface, BSTR v)
@@ -3609,7 +3609,7 @@ static HRESULT WINAPI HTMLStyle2_get_borderCollapse(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BORDER_COLLAPSE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_COLLAPSE, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_direction(IHTMLStyle2 *iface, BSTR v)
@@ -3627,7 +3627,7 @@ static HRESULT WINAPI HTMLStyle2_get_direction(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_DIRECTION, p);
+    return get_style_property(&This->css_style, STYLEID_DIRECTION, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_behavior(IHTMLStyle2 *iface, BSTR v)
@@ -3680,7 +3680,7 @@ static HRESULT WINAPI HTMLStyle2_get_position(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_POSITION, p);
+    return get_style_property(&This->css_style, STYLEID_POSITION, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_unicodeBidi(IHTMLStyle2 *iface, BSTR v)
@@ -4014,7 +4014,7 @@ static HRESULT WINAPI HTMLStyle2_get_overflowX(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_OVERFLOW_X, p);
+    return get_style_property(&This->css_style, STYLEID_OVERFLOW_X, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_overflowY(IHTMLStyle2 *iface, BSTR v)
@@ -4032,7 +4032,7 @@ static HRESULT WINAPI HTMLStyle2_get_overflowY(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_OVERFLOW_Y, p);
+    return get_style_property(&This->css_style, STYLEID_OVERFLOW_Y, p);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_accelerator(IHTMLStyle2 *iface, BSTR v)
@@ -4250,7 +4250,7 @@ static HRESULT WINAPI HTMLStyle3_get_wordWrap(IHTMLStyle3 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_WORD_WRAP, p);
+    return get_style_property(&This->css_style, STYLEID_WORD_WRAP, p);
 }
 
 static HRESULT WINAPI HTMLStyle3_put_textUnderlinePosition(IHTMLStyle3 *iface, BSTR v)
@@ -4836,7 +4836,7 @@ static HRESULT WINAPI HTMLStyle6_get_outline(IHTMLStyle6 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_OUTLINE, p);
+    return get_style_property(&This->css_style, STYLEID_OUTLINE, p);
 }
 
 static HRESULT WINAPI HTMLStyle6_put_outlineWidth(IHTMLStyle6 *iface, VARIANT v)
@@ -4896,7 +4896,7 @@ static HRESULT WINAPI HTMLStyle6_get_boxSizing(IHTMLStyle6 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BOX_SIZING, p);
+    return get_style_property(&This->css_style, STYLEID_BOX_SIZING, p);
 }
 
 static HRESULT WINAPI HTMLStyle6_put_borderSpacing(IHTMLStyle6 *iface, BSTR v)
@@ -4914,7 +4914,7 @@ static HRESULT WINAPI HTMLStyle6_get_borderSpacing(IHTMLStyle6 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_style_property(This, STYLEID_BORDER_SPACING, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_SPACING, p);
 }
 
 static HRESULT WINAPI HTMLStyle6_put_orphans(IHTMLStyle6 *iface, VARIANT v)
@@ -5252,7 +5252,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_fontFamily(IHTMLCSSStyleDeclar
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_FONT_FAMILY, p);
+    return get_style_property(&This->css_style, STYLEID_FONT_FAMILY, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_fontStyle(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5266,7 +5266,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_fontStyle(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_FONT_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_FONT_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_fontVariant(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5280,7 +5280,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_fontVariant(IHTMLCSSStyleDecla
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_FONT_VARIANT, p);
+    return get_style_property(&This->css_style, STYLEID_FONT_VARIANT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_fontWeight(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5294,7 +5294,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_fontWeight(IHTMLCSSStyleDeclar
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_FONT_WEIGHT, p);
+    return get_style_property(&This->css_style, STYLEID_FONT_WEIGHT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_fontSize(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -5350,7 +5350,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_background(IHTMLCSSStyleDeclar
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BACKGROUND, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundColor(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -5378,7 +5378,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundImage(IHTMLCSSStyleD
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BACKGROUND_IMAGE, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_IMAGE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundRepeat(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5392,7 +5392,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundRepeat(IHTMLCSSStyle
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BACKGROUND_REPEAT, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_REPEAT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundAttachment(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5406,7 +5406,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundAttachment(IHTMLCSSS
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BACKGROUND_ATTACHMENT, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_ATTACHMENT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPosition(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5420,7 +5420,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundPosition(IHTMLCSSSty
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BACKGROUND_POSITION, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_POSITION, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -5490,7 +5490,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_textDecoration(IHTMLCSSStyleDe
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_TEXT_DECORATION, p);
+    return get_style_property(&This->css_style, STYLEID_TEXT_DECORATION, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_verticalAlign(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -5518,7 +5518,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_textTransform(IHTMLCSSStyleDec
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_TEXT_TRANSFORM, p);
+    return get_style_property(&This->css_style, STYLEID_TEXT_TRANSFORM, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_textAlign(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5532,7 +5532,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_textAlign(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_TEXT_ALIGN, p);
+    return get_style_property(&This->css_style, STYLEID_TEXT_ALIGN, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_textIndent(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -5630,7 +5630,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_margin(IHTMLCSSStyleDeclaratio
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_MARGIN, p);
+    return get_style_property(&This->css_style, STYLEID_MARGIN, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_paddingTop(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -5700,7 +5700,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_padding(IHTMLCSSStyleDeclarati
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_PADDING, p);
+    return get_style_property(&This->css_style, STYLEID_PADDING, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_border(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5714,7 +5714,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_border(IHTMLCSSStyleDeclaratio
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderTop(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5728,7 +5728,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderTop(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_TOP, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_TOP, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderRight(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5742,7 +5742,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderRight(IHTMLCSSStyleDecla
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_RIGHT, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_RIGHT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderBottom(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5756,7 +5756,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderBottom(IHTMLCSSStyleDecl
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_BOTTOM, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_BOTTOM, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderLeft(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5770,7 +5770,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderLeft(IHTMLCSSStyleDeclar
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_LEFT, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_LEFT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderColor(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5784,7 +5784,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderColor(IHTMLCSSStyleDecla
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_COLOR, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_COLOR, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderTopColor(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -5854,7 +5854,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderWidth(IHTMLCSSStyleDecla
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_WIDTH, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_WIDTH, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderTopWidth(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -5924,7 +5924,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderStyle(IHTMLCSSStyleDecla
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderTopStyle(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5938,7 +5938,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderTopStyle(IHTMLCSSStyleDe
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_TOP_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_TOP_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderRightStyle(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5952,7 +5952,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderRightStyle(IHTMLCSSStyle
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_RIGHT_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_RIGHT_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderBottomStyle(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5966,7 +5966,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderBottomStyle(IHTMLCSSStyl
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_BOTTOM_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_BOTTOM_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderLeftStyle(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -5980,7 +5980,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderLeftStyle(IHTMLCSSStyleD
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_LEFT_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_LEFT_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_width(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -6022,7 +6022,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_styleFloat(IHTMLCSSStyleDeclar
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_FLOAT, p);
+    return get_style_property(&This->css_style, STYLEID_FLOAT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_clear(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6036,7 +6036,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_clear(IHTMLCSSStyleDeclaration
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_CLEAR, p);
+    return get_style_property(&This->css_style, STYLEID_CLEAR, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_display(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6050,7 +6050,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_display(IHTMLCSSStyleDeclarati
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_DISPLAY, p);
+    return get_style_property(&This->css_style, STYLEID_DISPLAY, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_visibility(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6064,7 +6064,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_visibility(IHTMLCSSStyleDeclar
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_VISIBILITY, p);
+    return get_style_property(&This->css_style, STYLEID_VISIBILITY, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_listStyleType(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6120,7 +6120,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_listStyle(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_LIST_STYLE, p);
+    return get_style_property(&This->css_style, STYLEID_LIST_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_whiteSpace(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6134,7 +6134,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_whiteSpace(IHTMLCSSStyleDeclar
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_WHITE_SPACE, p);
+    return get_style_property(&This->css_style, STYLEID_WHITE_SPACE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_top(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -6190,7 +6190,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_overflow(IHTMLCSSStyleDeclarat
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_OVERFLOW, p);
+    return get_style_property(&This->css_style, STYLEID_OVERFLOW, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_pageBreakBefore(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6204,7 +6204,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_pageBreakBefore(IHTMLCSSStyleD
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_PAGE_BREAK_BEFORE, p);
+    return get_style_property(&This->css_style, STYLEID_PAGE_BREAK_BEFORE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_pageBreakAfter(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6218,7 +6218,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_pageBreakAfter(IHTMLCSSStyleDe
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_PAGE_BREAK_AFTER, p);
+    return get_style_property(&This->css_style, STYLEID_PAGE_BREAK_AFTER, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_cssText(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6265,7 +6265,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_cursor(IHTMLCSSStyleDeclaratio
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_CURSOR, p);
+    return get_style_property(&This->css_style, STYLEID_CURSOR, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_clip(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6279,7 +6279,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_clip(IHTMLCSSStyleDeclaration 
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_CLIP, p);
+    return get_style_property(&This->css_style, STYLEID_CLIP, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_filter(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6293,7 +6293,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_filter(IHTMLCSSStyleDeclaratio
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_FILTER, p);
+    return get_style_property(&This->css_style, STYLEID_FILTER, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_tableLayout(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6307,7 +6307,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_tableLayout(IHTMLCSSStyleDecla
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_TABLE_LAYOUT, p);
+    return get_style_property(&This->css_style, STYLEID_TABLE_LAYOUT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderCollapse(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6321,7 +6321,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderCollapse(IHTMLCSSStyleDe
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_COLLAPSE, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_COLLAPSE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_direction(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6335,7 +6335,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_direction(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_DIRECTION, p);
+    return get_style_property(&This->css_style, STYLEID_DIRECTION, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_behavior(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6363,7 +6363,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_position(IHTMLCSSStyleDeclarat
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_POSITION, p);
+    return get_style_property(&This->css_style, STYLEID_POSITION, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_unicodeBidi(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6629,7 +6629,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_overflowX(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_OVERFLOW_X, p);
+    return get_style_property(&This->css_style, STYLEID_OVERFLOW_X, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_overflowY(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6643,7 +6643,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_overflowY(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_OVERFLOW_Y, p);
+    return get_style_property(&This->css_style, STYLEID_OVERFLOW_Y, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_accelerator(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -6699,7 +6699,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_wordWrap(IHTMLCSSStyleDeclarat
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_WORD_WRAP, p);
+    return get_style_property(&This->css_style, STYLEID_WORD_WRAP, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_textUnderlinePosition(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -7021,7 +7021,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_outline(IHTMLCSSStyleDeclarati
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_OUTLINE, p);
+    return get_style_property(&This->css_style, STYLEID_OUTLINE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_outlineWidth(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -7077,7 +7077,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_boxSizing(IHTMLCSSStyleDeclara
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BOX_SIZING, p);
+    return get_style_property(&This->css_style, STYLEID_BOX_SIZING, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_borderSpacing(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -7091,7 +7091,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_borderSpacing(IHTMLCSSStyleDec
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BORDER_SPACING, p);
+    return get_style_property(&This->css_style, STYLEID_BORDER_SPACING, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_orphans(IHTMLCSSStyleDeclaration *iface, VARIANT v)
@@ -7742,7 +7742,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_cssFloat(IHTMLCSSStyleDeclarat
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_FLOAT, p);
+    return get_style_property(&This->css_style, STYLEID_FLOAT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundClip(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -7756,7 +7756,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundClip(IHTMLCSSStyleDe
 {
     HTMLStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_style_property(This, STYLEID_BACKGROUND_CLIP, p);
+    return get_style_property(&This->css_style, STYLEID_BACKGROUND_CLIP, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundOrigin(IHTMLCSSStyleDeclaration *iface, BSTR v)
