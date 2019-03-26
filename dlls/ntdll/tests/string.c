@@ -24,6 +24,7 @@
 #include <stdlib.h>
 
 #include "ntdll_test.h"
+#include "winnls.h"
 
 
 /* Function ptrs for ntdll calls */
@@ -62,6 +63,7 @@ static void*    (__cdecl *p_bsearch)(void *,void*,size_t,size_t, int(__cdecl *co
 static int      (WINAPIV *p__snprintf)(char *, size_t, const char *, ...);
 
 static int      (__cdecl *p_tolower)(int);
+static int      (__cdecl *p_toupper)(int);
 
 static void InitFunctionPtrs(void)
 {
@@ -102,6 +104,7 @@ static void InitFunctionPtrs(void)
         p__snprintf = (void *)GetProcAddress(hntdll, "_snprintf");
 
         p_tolower = (void *)GetProcAddress(hntdll, "tolower");
+        p_toupper = (void *)GetProcAddress(hntdll, "toupper");
     } /* if */
 }
 
@@ -1350,6 +1353,34 @@ static void test_tolower(void)
     }
 }
 
+static void test_toupper(void)
+{
+
+    int i, ret, exp_ret;
+    char str[2], *p;
+    WCHAR wc;
+
+    ok(p_toupper != NULL, "toupper is not available\n");
+
+    for (i = -512; i < 0xffff; i++)
+    {
+        str[0] = i;
+        str[1] = i >> 8;
+        p = str;
+        wc = RtlAnsiCharToUnicodeChar( &p );
+        wc = RtlUpcaseUnicodeChar( wc );
+        ret = WideCharToMultiByte( CP_ACP, 0, &wc, 1, str, 2, NULL, NULL );
+        ok(ret == 1 || ret == 2, "WideCharToMultiByte returned %d\n", ret);
+        if (ret == 2)
+            exp_ret = (unsigned char)str[1] + ((unsigned char)str[0] << 8);
+        else
+            exp_ret = (unsigned char)str[0];
+
+        ret = p_toupper(i);
+        ok(ret == exp_ret, "toupper(%x) = %x, expected %x\n", i, ret, exp_ret);
+    }
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -1387,4 +1418,5 @@ START_TEST(string)
     if (p__snprintf)
         test__snprintf();
     test_tolower();
+    test_toupper();
 }
