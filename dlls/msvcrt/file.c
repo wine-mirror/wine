@@ -3007,7 +3007,7 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
 		 as a drive letter
   */
   if (isalpha(*path)&& (*(path+1)==':'))
-    buf->st_dev = buf->st_rdev = toupper(*path) - 'A'; /* drive num */
+    buf->st_dev = buf->st_rdev = MSVCRT__toupper_l(*path, NULL) - 'A'; /* drive num */
   else
     buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
 

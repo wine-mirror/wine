@@ -417,7 +417,7 @@ unsigned int CDECL _mbctoupper(unsigned int c)
       FIXME("Handle MBC chars\n");
       return c;
     }
-    return toupper(c); /* ASCII CP or SB char */
+    return MSVCRT__toupper_l(c, NULL); /* ASCII CP or SB char */
 }
 
 /*********************************************************************
@@ -1977,7 +1977,7 @@ unsigned char* CDECL _mbsupr(unsigned char* s)
       *s++=c;
     }
   }
-  else for ( ; *s; s++) *s = toupper(*s);
+  else for ( ; *s; s++) *s = MSVCRT__toupper_l(*s, NULL);
   return ret;
 }
 
@@ -2011,7 +2011,7 @@ int CDECL _mbsupr_s(unsigned char* s, MSVCRT_size_t len)
       *s++=c;
     }
   }
-  else for ( ; *s && len > 0; s++, len--) *s = toupper(*s);
+  else for ( ; *s && len > 0; s++, len--) *s = MSVCRT__toupper_l(*s, NULL);
   if (*s)
   {
     *s = '\0';
