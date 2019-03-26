@@ -848,14 +848,35 @@ void nsAString_Finish(nsAString *str)
     NS_StringContainerFinish(str);
 }
 
+static HRESULT map_nsresult(nsresult nsres)
+{
+    switch(nsres) {
+    case NS_OK:
+        return S_OK;
+    case NS_ERROR_OUT_OF_MEMORY:
+        return E_OUTOFMEMORY;
+    case NS_ERROR_NOT_IMPLEMENTED:
+        return E_NOTIMPL;
+    case NS_NOINTERFACE:
+        return E_NOINTERFACE;
+    case NS_ERROR_INVALID_POINTER:
+        return E_POINTER;
+    case NS_ERROR_INVALID_ARG:
+        return E_INVALIDARG;
+    case NS_ERROR_UNEXPECTED:
+        return E_UNEXPECTED;
+    }
+    return E_FAIL;
+}
+
 HRESULT return_nsstr(nsresult nsres, nsAString *nsstr, BSTR *p)
 {
     const PRUnichar *str;
 
     if(NS_FAILED(nsres)) {
-        ERR("failed: %08x\n", nsres);
+        WARN("failed: %08x\n", nsres);
         nsAString_Finish(nsstr);
-        return E_FAIL;
+        return map_nsresult(nsres);
     }
 
     nsAString_GetData(nsstr, &str);
