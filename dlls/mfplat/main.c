@@ -2823,6 +2823,7 @@ static const IMFGetServiceVtbl bytestream_file_getservice_vtbl =
 HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
                             LPCWSTR url, IMFByteStream **bytestream)
 {
+    DWORD capabilities = MFBYTESTREAM_IS_SEEKABLE | MFBYTESTREAM_DOES_NOT_USE_NETWORK;
     struct bytestream *object;
     DWORD fileaccessmode = 0;
     DWORD filesharemode = FILE_SHARE_READ;
@@ -2838,12 +2839,15 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     {
         case MF_ACCESSMODE_READ:
             fileaccessmode = GENERIC_READ;
+            capabilities |= MFBYTESTREAM_IS_READABLE;
             break;
         case MF_ACCESSMODE_WRITE:
             fileaccessmode = GENERIC_WRITE;
+            capabilities |= MFBYTESTREAM_IS_WRITABLE;
             break;
         case MF_ACCESSMODE_READWRITE:
             fileaccessmode = GENERIC_READ | GENERIC_WRITE;
+            capabilities |= (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_WRITABLE);
             break;
     }
 
@@ -2897,6 +2901,7 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     object->write_callback.lpVtbl = &bytestream_file_write_callback_vtbl;
     InitializeCriticalSection(&object->cs);
     list_init(&object->pending);
+    object->capabilities = capabilities;
     object->hfile = file;
 
     if (GetFileTime(file, NULL, NULL, &writetime))

@@ -1153,7 +1153,6 @@ static void test_file_stream(void)
     ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);
     if (is_win8_plus)
     {
-todo_wine
         ok(caps == (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE | MFBYTESTREAM_DOES_NOT_USE_NETWORK),
             "Unexpected caps %#x.\n", caps);
     }
