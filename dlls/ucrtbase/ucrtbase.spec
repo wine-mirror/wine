@@ -279,7 +279,7 @@
 @ varargs _execle(str str)
 @ varargs _execlp(str str)
 @ varargs _execlpe(str str)
-@ cdecl _execute_onexit_table(ptr) MSVCRT__execute_onexit_table
+@ cdecl _execute_onexit_table(ptr)
 @ cdecl _execv(str ptr)
 @ cdecl _execve(str ptr ptr) MSVCRT__execve
 @ cdecl _execvp(str ptr)
@@ -419,7 +419,7 @@
 @ cdecl _i64tow(int64 ptr long) ntdll._i64tow
 @ cdecl _i64tow_s(int64 ptr long long) MSVCRT__i64tow_s
 @ cdecl _initialize_narrow_environment()
-@ cdecl _initialize_onexit_table(ptr) MSVCRT__initialize_onexit_table
+@ cdecl _initialize_onexit_table(ptr)
 @ cdecl _initialize_wide_environment()
 @ cdecl _initterm(ptr ptr)
 @ cdecl _initterm_e(ptr ptr)
@@ -906,7 +906,7 @@
 @ stub _o__eof
 @ cdecl _o__errno() MSVCRT__errno
 @ stub _o__except1
-@ cdecl _o__execute_onexit_table(ptr) MSVCRT__execute_onexit_table
+@ cdecl _o__execute_onexit_table(ptr) _execute_onexit_table
 @ stub _o__execv
 @ stub _o__execve
 @ stub _o__execvp
@@ -1029,7 +1029,7 @@
 @ stub _o__i64tow
 @ stub _o__i64tow_s
 @ stub _o__initialize_narrow_environment
-@ cdecl _o__initialize_onexit_table(ptr) MSVCRT__initialize_onexit_table
+@ cdecl _o__initialize_onexit_table(ptr) _initialize_onexit_table
 @ cdecl _o__initialize_wide_environment() _initialize_wide_environment
 @ stub _o__invalid_parameter_noinfo
 @ stub _o__invalid_parameter_noinfo_noreturn
@@ -1316,7 +1316,7 @@
 @ stub _o__read
 @ stub _o__realloc_base
 @ stub _o__recalloc
-@ cdecl _o__register_onexit_function(ptr ptr) MSVCRT__register_onexit_function
+@ cdecl _o__register_onexit_function(ptr ptr) _register_onexit_function
 @ stub _o__resetstkoflw
 @ stub _o__rmdir
 @ stub _o__rmtmp
@@ -1861,7 +1861,7 @@
 @ cdecl _read(long ptr long) MSVCRT__read
 @ cdecl _realloc_base(ptr long)
 @ cdecl _recalloc(ptr long long)
-@ cdecl _register_onexit_function(ptr ptr) MSVCRT__register_onexit_function
+@ cdecl _register_onexit_function(ptr ptr)
 @ cdecl _register_thread_local_exe_atexit_callback(ptr)
 @ cdecl _resetstkoflw() MSVCRT__resetstkoflw
 @ cdecl _rmdir(str) MSVCRT__rmdir

@@ -25,6 +25,7 @@ C_SRCS = \
 	math.c \
 	mbcs.c \
 	misc.c \
+	onexit.c \
 	process.c \
 	scanf.c \
 	scheduler.c \
