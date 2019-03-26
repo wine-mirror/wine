@@ -43,7 +43,7 @@ IUnknown * CALLBACK Gstreamer_YUV2RGB_create(IUnknown *pUnkOuter, HRESULT *phr);
 IUnknown * CALLBACK Gstreamer_YUV2ARGB_create(IUnknown *pUnkOuter, HRESULT *phr);
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr);
 
-DWORD Gstreamer_init(void);
+BOOL init_gstreamer(void) DECLSPEC_HIDDEN;
 
 GstFlowReturn got_data(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 GstFlowReturn request_buffer(GstPad *pad, guint64 ofs, guint size, GstCaps *caps, GstBuffer **buf) DECLSPEC_HIDDEN;

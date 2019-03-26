@@ -626,7 +626,7 @@ IUnknown * CALLBACK Gstreamer_Mp3_create(IUnknown *punkouter, HRESULT *phr)
 
     TRACE("%p %p\n", punkouter, phr);
 
-    if (!Gstreamer_init())
+    if (!init_gstreamer())
     {
         *phr = E_FAIL;
         return NULL;
@@ -769,7 +769,7 @@ IUnknown * CALLBACK Gstreamer_YUV2RGB_create(IUnknown *punkouter, HRESULT *phr)
 
     TRACE("%p %p\n", punkouter, phr);
 
-    if (!Gstreamer_init())
+    if (!init_gstreamer())
     {
         *phr = E_FAIL;
         return NULL;
@@ -871,7 +871,7 @@ IUnknown * CALLBACK Gstreamer_YUV2ARGB_create(IUnknown *punkouter, HRESULT *phr)
 
     TRACE("%p %p\n", punkouter, phr);
 
-    if (!Gstreamer_init())
+    if (!init_gstreamer())
     {
         *phr = E_FAIL;
         return NULL;
@@ -1004,7 +1004,7 @@ IUnknown * CALLBACK Gstreamer_AudioConvert_create(IUnknown *punkouter, HRESULT *
 
     TRACE("%p %p\n", punkouter, phr);
 
-    if (!Gstreamer_init())
+    if (!init_gstreamer())
     {
         *phr = E_FAIL;
         return NULL;

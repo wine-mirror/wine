@@ -1230,7 +1230,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
 
     TRACE("%p %p\n", pUnkOuter, phr);
 
-    if (!Gstreamer_init())
+    if (!init_gstreamer())
     {
         *phr = E_FAIL;
         return NULL;
