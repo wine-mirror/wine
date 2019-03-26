@@ -97,7 +97,7 @@ static void remap_synonym(char *name)
   unsigned int i;
   for (i = 0; i < ARRAY_SIZE(_country_synonyms); i += 2)
   {
-    if (!strcasecmp(_country_synonyms[i],name))
+    if (!MSVCRT__stricmp(_country_synonyms[i],name))
     {
       TRACE(":Mapping synonym %s to %s\n",name,_country_synonyms[i+1]);
       strcpy(name, _country_synonyms[i+1]);
@@ -140,7 +140,7 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp, BOO
   /* Partial matches are only allowed on language/country names */
   len = strlen(cmp);
   if(exact || len<=3)
-    return !strcasecmp(cmp, buff);
+    return !MSVCRT__stricmp(cmp, buff);
   else
     return !strncasecmp(cmp, buff, len);
 }
@@ -264,7 +264,7 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *s
     if(!search.search_country[0] && !search.search_codepage[0])
         remap_synonym(search.search_language);
 
-    if(!strcasecmp(search.search_country, "China"))
+    if(!MSVCRT__stricmp(search.search_country, "China"))
         strcpy(search.search_country, "People's Republic of China");
 
     EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
@@ -291,10 +291,10 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *s
                 memcpy(search.found_codepage,search.search_codepage,MAX_ELEM_LEN);
             else {
                 /* Special codepage values: OEM & ANSI */
-                if (!strcasecmp(search.search_codepage,"OCP")) {
+                if (!MSVCRT__stricmp(search.search_codepage,"OCP")) {
                     GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
                             search.found_codepage, MAX_ELEM_LEN);
-                } else if (!strcasecmp(search.search_codepage,"ACP")) {
+                } else if (!MSVCRT__stricmp(search.search_codepage,"ACP")) {
                     GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
                             search.found_codepage, MAX_ELEM_LEN);
                 } else

@@ -123,7 +123,7 @@ static inline int u_strcmp( const unsigned char *s1, const unsigned char *s2 )
 
 static inline int u_strcasecmp( const unsigned char *s1, const unsigned char *s2 )
 {
-  return strcasecmp( (const char*)s1, (const char*)s2 );
+  return MSVCRT__stricmp( (const char*)s1, (const char*)s2 );
 }
 
 static inline int u_strncmp( const unsigned char *s1, const unsigned char *s2, MSVCRT_size_t len )

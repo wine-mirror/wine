@@ -1148,6 +1148,7 @@ int __cdecl      MSVCRT__toupper_l(int,MSVCRT__locale_t);
 int __cdecl      MSVCRT__tolower_l(int,MSVCRT__locale_t);
 int __cdecl      MSVCRT__towupper_l(MSVCRT_wint_t,MSVCRT__locale_t);
 int __cdecl      MSVCRT__towlower_l(MSVCRT_wint_t,MSVCRT__locale_t);
+int __cdecl      MSVCRT__stricmp(const char*, const char*);
 int __cdecl      MSVCRT__strnicmp(const char*, const char*, MSVCRT_size_t);
 int __cdecl      MSVCRT__strnicoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
 int __cdecl      MSVCRT__strncoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);

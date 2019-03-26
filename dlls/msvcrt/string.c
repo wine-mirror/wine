@@ -641,7 +641,7 @@ int CDECL MSVCRT__stricoll_l( const char* str1, const char* str2, MSVCRT__locale
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strcasecmp(str1, str2);
+        return MSVCRT__stricmp(str1, str2);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
             str1, -1, str2, -1)-CSTR_EQUAL;
 }
