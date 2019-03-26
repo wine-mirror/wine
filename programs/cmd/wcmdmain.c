@@ -505,7 +505,7 @@ WCHAR *WCMD_strip_quotes(WCHAR *cmd) {
   while((*dest=*src) != '\0') {
       if (*src=='\"')
           lastq=dest;
-      dest++, src++;
+      dest++; src++;
   }
   lastquote = lastq;
   if (lastq) {
