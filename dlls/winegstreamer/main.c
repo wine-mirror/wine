@@ -262,7 +262,8 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
     BOOL *status = param;
     char argv0[] = "wine";
     char argv1[] = "--gst-disable-registry-fork";
-    char **argv = HeapAlloc(GetProcessHeap(), 0, sizeof(char *)*3);
+    char *args[3];
+    char **argv = args;
     int argc = 2;
     GError *err = NULL;
 
@@ -272,12 +273,8 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
     argv[1] = argv1;
     argv[2] = NULL;
     *status = gst_init_check(&argc, &argv, &err);
-    HeapFree(GetProcessHeap(), 0, argv);
-    if (err) {
-        ERR("Failed to initialize gstreamer: %s\n", err->message);
-        g_error_free(err);
-    }
-    if (*status) {
+    if (*status)
+    {
         HINSTANCE newhandle;
         /* Unloading glib is a bad idea.. it installs atexit handlers,
          * so never unload the dll after loading */
@@ -287,6 +284,11 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
             ERR("Could not pin module %p\n", hInst);
 
         start_dispatch_thread();
+    }
+    else if (err)
+    {
+        ERR("Failed to initialize gstreamer: %s\n", debugstr_a(err->message));
+        g_error_free(err);
     }
 
     return TRUE;
