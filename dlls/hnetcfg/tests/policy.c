@@ -60,6 +60,9 @@ static void test_policy2_rules(INetFwPolicy2 *policy2)
         INetFwServiceRestriction_Release(restriction);
     }
 
+    hr = INetFwRules_get__NewEnum(rules, NULL);
+    ok(hr == E_POINTER, "got %08x\n", hr);
+
     INetFwRules_Release(rules);
     INetFwRules_Release(rules2);
 }
