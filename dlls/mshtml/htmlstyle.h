@@ -140,8 +140,8 @@ HRESULT HTMLStyle_Create(HTMLElement*,HTMLStyle**) DECLSPEC_HIDDEN;
 void init_css_style(CSSStyle*,nsIDOMCSSStyleDeclaration*,style_qi_t,
                     dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 
-HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration*,styleid_t,compat_mode_t,BSTR*) DECLSPEC_HIDDEN;
-HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration*,styleid_t,compat_mode_t,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT get_style_property(CSSStyle*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
+HRESULT get_style_property_var(CSSStyle*,styleid_t,VARIANT*) DECLSPEC_HIDDEN;
 
 HRESULT get_elem_style(HTMLElement*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
 HRESULT set_elem_style(HTMLElement*,styleid_t,const WCHAR*) DECLSPEC_HIDDEN;

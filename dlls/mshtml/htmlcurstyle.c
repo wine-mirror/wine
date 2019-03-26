@@ -45,12 +45,12 @@ struct HTMLCurrentStyle {
 
 static inline HRESULT get_current_style_property(HTMLCurrentStyle *current_style, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_property(current_style->css_style.nsstyle, sid, COMPAT_MODE_QUIRKS, p);
+    return get_style_property(&current_style->css_style, sid, p);
 }
 
 static inline HRESULT get_current_style_property_var(HTMLCurrentStyle *This, styleid_t sid, VARIANT *v)
 {
-    return get_nsstyle_property_var(This->css_style.nsstyle, sid, COMPAT_MODE_QUIRKS, v);
+    return get_style_property_var(&This->css_style, sid, v);
 }
 
 static inline HTMLCurrentStyle *impl_from_IHTMLCurrentStyle(IHTMLCurrentStyle *iface)

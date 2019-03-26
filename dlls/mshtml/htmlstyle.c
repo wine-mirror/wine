@@ -1077,7 +1077,7 @@ static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
     return S_OK;
 }
 
-HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, compat_mode_t compat_mode, BSTR *p)
+static HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, compat_mode_t compat_mode, BSTR *p)
 {
     nsAString str_value;
     const PRUnichar *value;
@@ -1095,7 +1095,7 @@ HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
     return hres;
 }
 
-HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, compat_mode_t compat_mode, VARIANT *p)
+static HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, compat_mode_t compat_mode, VARIANT *p)
 {
     unsigned flags = style_tbl[sid].flags;
     nsAString str_value;
@@ -1145,12 +1145,12 @@ HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t s
     return S_OK;
 }
 
-static inline HRESULT get_style_property(CSSStyle *style, styleid_t sid, BSTR *p)
+HRESULT get_style_property(CSSStyle *style, styleid_t sid, BSTR *p)
 {
     return get_nsstyle_property(style->nsstyle, sid, dispex_compat_mode(&style->dispex), p);
 }
 
-static inline HRESULT get_style_property_var(CSSStyle *style, styleid_t sid, VARIANT *v)
+HRESULT get_style_property_var(CSSStyle *style, styleid_t sid, VARIANT *v)
 {
     return get_nsstyle_property_var(style->nsstyle, sid, dispex_compat_mode(&style->dispex), v);
 }
