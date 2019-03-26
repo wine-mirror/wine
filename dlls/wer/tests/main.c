@@ -1,7 +1,7 @@
 /*
  * Unit test suite for windows error reporting in Vista and above
  *
- * Copyright 2010 Detlef Riekenberg
+ * Copyright 2010,2019 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -207,8 +207,8 @@ static void  test_WerReportCreate(void)
     hr = WerReportCreate(empty, WerReportCritical, NULL, &report);
     ok(hr == E_INVALIDARG, "got 0x%x and %p(expected E_INVALIDARG)\n", hr, report);
 
-    /* WER_REPORT_TYPE is not checked during WerReportCreate */
-    for (i = 0; i <= WerReportInvalid + 1; i++) {
+    /* a valid WER_REPORT_TYPE works */
+    for (i = 0; i < WerReportInvalid; i++) {
         report = (void *) 0xdeadbeef;
         hr = WerReportCreate(appcrash, i, NULL, &report);
         ok(hr == S_OK, "%d: got 0x%x and %p (expected S_OK)\n", i, hr, report);
@@ -217,9 +217,27 @@ static void  test_WerReportCreate(void)
         ok(hr == S_OK, "%d: got 0x%x for %p (expected S_OK)\n", i, hr, report);
 
     }
+
+    /* values for WER_REPORT_TYPE are checked and invalid values are rejected since recent win10,
+       but older windows versions did not check the report type and WerReportCreate always succeeded */
+
+    report = (void *) 0xdeadbeef;
+    hr = WerReportCreate(appcrash, WerReportInvalid, NULL, &report);
+    ok((hr == E_INVALIDARG) | broken(hr == S_OK),
+        "%d: got 0x%x and %p (expected E_INVALIDARG or a broken S_OK)\n", i, hr, report);
+    if (hr == S_OK) {
+        hr = WerReportCloseHandle(report);
+        ok(hr == S_OK, "%d: got 0x%x for %p (expected S_OK)\n", i, hr, report);
+    }
+
     report = (void *) 0xdeadbeef;
     hr = WerReportCreate(appcrash, 42, NULL, &report);
-    ok(hr == S_OK, "42: got 0x%x and %p (expected S_OK)\n", hr, report);
+    ok((hr == E_INVALIDARG) | broken(hr == S_OK),
+        "%d: got 0x%x and %p (expected E_INVALIDARG or a broken S_OK)\n", i, hr, report);
+    if (hr == S_OK) {
+        hr = WerReportCloseHandle(report);
+        ok(hr == S_OK, "%d: got 0x%x for %p (expected S_OK)\n", i, hr, report);
+    }
 
     /* multiple active reports are possible */
     memset(table, 0, sizeof(table));
