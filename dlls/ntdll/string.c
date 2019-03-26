@@ -258,21 +258,36 @@ INT __cdecl _memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
 
 
 /*********************************************************************
+ *                  _strnicmp   (NTDLL.@)
+ */
+int __cdecl _strnicmp( LPCSTR str1, LPCSTR str2, size_t n )
+{
+    int l1, l2;
+
+    while (n--)
+    {
+        l1 = (unsigned char)NTDLL_tolower(*str1);
+        l2 = (unsigned char)NTDLL_tolower(*str2);
+        if (l1 != l2)
+        {
+            if (sizeof(void *) > sizeof(int)) return l1 - l2;
+            return l1 - l2 > 0 ? 1 : -1;
+        }
+        if (!l1) return 0;
+        str1++;
+        str2++;
+    }
+    return 0;
+}
+
+
+/*********************************************************************
  *                  _stricmp   (NTDLL.@)
  *                  _strcmpi   (NTDLL.@)
  */
 int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 )
 {
-    return strcasecmp( str1, str2 );
-}
-
-
-/*********************************************************************
- *                  _strnicmp   (NTDLL.@)
- */
-int __cdecl _strnicmp( LPCSTR str1, LPCSTR str2, size_t n )
-{
-    return strncasecmp( str1, str2, n );
+    return _strnicmp( str1, str2, -1 );
 }
 
 

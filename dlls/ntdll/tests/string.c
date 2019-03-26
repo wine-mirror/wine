@@ -64,6 +64,7 @@ static int      (WINAPIV *p__snprintf)(char *, size_t, const char *, ...);
 
 static int      (__cdecl *p_tolower)(int);
 static int      (__cdecl *p_toupper)(int);
+static int      (__cdecl *p__strnicmp)(LPCSTR,LPCSTR,size_t);
 
 static void InitFunctionPtrs(void)
 {
@@ -105,6 +106,7 @@ static void InitFunctionPtrs(void)
 
         p_tolower = (void *)GetProcAddress(hntdll, "tolower");
         p_toupper = (void *)GetProcAddress(hntdll, "toupper");
+        p__strnicmp = (void *)GetProcAddress(hntdll, "_strnicmp");
     } /* if */
 }
 
@@ -1381,6 +1383,29 @@ static void test_toupper(void)
     }
 }
 
+static void test__strnicmp(void)
+{
+    BOOL is_win64 = (sizeof(void *) > sizeof(int));
+    int ret;
+
+    ok(p__strnicmp != NULL, "_strnicmp is not available\n");
+
+    ret = p__strnicmp("a", "C", 1);
+    ok(ret == (is_win64 ? -2 : -1), "_strnicmp returned %d\n", ret);
+    ret = p__strnicmp("a", "c", 1);
+    ok(ret == (is_win64 ? -2 : -1), "_strnicmp returned %d\n", ret);
+    ret = p__strnicmp("C", "a", 1);
+    ok(ret == (is_win64 ? 2 : 1), "_strnicmp returned %d\n", ret);
+    ret = p__strnicmp("c", "a", 1);
+    ok(ret == (is_win64 ? 2 : 1), "_strnicmp returned %d\n", ret);
+    ret = p__strnicmp("ijk0", "IJK1", 3);
+    ok(!ret, "_strnicmp returned %d\n", ret);
+    ret = p__strnicmp("ijk0", "IJK1", 4);
+    ok(ret == -1, "_strnicmp returned %d\n", ret);
+    ret = p__strnicmp("ijk\0X", "IJK\0Y", 5);
+    ok(!ret, "_strnicmp returned %d\n", ret);
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -1419,4 +1444,5 @@ START_TEST(string)
         test__snprintf();
     test_tolower();
     test_toupper();
+    test__strnicmp();
 }
