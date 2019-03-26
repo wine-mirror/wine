@@ -258,5 +258,6 @@ NTSTATUS WINAPI RtlHashUnicodeString(PCUNICODE_STRING,BOOLEAN,ULONG,ULONG*);
 void     WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 
 /* string functions */
+int __cdecl NTDLL_tolower( int c );
 int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 );
 #endif
