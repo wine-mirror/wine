@@ -274,7 +274,7 @@ static ULONG WINAPI IDataObject_fnRelease(IDataObject *iface)
 	{
 	  TRACE(" destroying IDataObject(%p)\n",This);
 	  _ILFreeaPidl(This->apidl, This->cidl);
-	  ILFree(This->pidl),
+          ILFree(This->pidl);
 	  heap_free(This);
 	}
 	return refCount;
