@@ -20,6 +20,7 @@ C_SRCS = \
 	exit.c \
 	file.c \
 	heap.c \
+	iob.c \
 	locale.c \
 	lock.c \
 	main.c \

@@ -779,19 +779,11 @@ static int msvcrt_int_to_base32_w(int num, MSVCRT_wchar_t *str)
 }
 
 /*********************************************************************
- *		__iob_func(MSVCRT.@)
+ *		__p__iob  (MSVCRT.@)
  */
-MSVCRT_FILE * CDECL MSVCRT___iob_func(void)
+MSVCRT_FILE * CDECL __p__iob(void)
 {
  return &MSVCRT__iob[0];
-}
-
-/*********************************************************************
- *		__acrt_iob_func(UCRTBASE.@)
- */
-MSVCRT_FILE * CDECL MSVCRT___acrt_iob_func(unsigned idx)
-{
- return &MSVCRT__iob[idx];
 }
 
 /*********************************************************************

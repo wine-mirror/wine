@@ -72,7 +72,7 @@
 @ cdecl ___lc_locale_name_func()
 @ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
 @ cdecl ___mb_cur_max_l_func(ptr)
-@ cdecl __acrt_iob_func(long) MSVCRT___acrt_iob_func
+@ cdecl __acrt_iob_func(long)
 @ cdecl __conio_common_vcprintf(int64 str ptr ptr) MSVCRT__conio_common_vcprintf
 @ stub __conio_common_vcprintf_p
 @ stub __conio_common_vcprintf_s
@@ -758,7 +758,7 @@
 @ stub _o____lc_collate_cp_func
 @ stub _o____lc_locale_name_func
 @ stub _o____mb_cur_max_func
-@ cdecl _o___acrt_iob_func(long) MSVCRT___acrt_iob_func
+@ cdecl _o___acrt_iob_func(long) __acrt_iob_func
 @ stub _o___conio_common_vcprintf
 @ stub _o___conio_common_vcprintf_p
 @ stub _o___conio_common_vcprintf_s
