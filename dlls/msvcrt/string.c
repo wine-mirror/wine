@@ -362,23 +362,25 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
         p++;
 
 #if _MSVCR_VER >= 140
-    if(tolower(p[0]) == 'i' && tolower(p[1]) == 'n' && tolower(p[2]) == 'f') {
+    if(MSVCRT__tolower_l(p[0], locale) == 'i' && MSVCRT__tolower_l(p[1], locale) == 'n'
+            && MSVCRT__tolower_l(p[2], locale) == 'f') {
         if(end)
             *end = (char*) &p[3];
-        if(tolower(p[3]) == 'i' && tolower(p[4]) == 'n' && tolower(p[5]) == 'i' &&
-           tolower(p[6]) == 't' && tolower(p[7]) == 'y' && end)
+        if(MSVCRT__tolower_l(p[3], locale) == 'i' && MSVCRT__tolower_l(p[4], locale) == 'n'
+            && MSVCRT__tolower_l(p[5], locale) == 'i' && MSVCRT__tolower_l(p[6], locale) == 't'
+            && MSVCRT__tolower_l(p[7], locale) == 'y' && end)
             *end = (char*) &p[8];
         return sign*INFINITY;
     }
-    if(tolower(p[0]) == 'n' &&
-       tolower(p[1]) == 'a' &&
-       tolower(p[2]) == 'n') {
+    if(MSVCRT__tolower_l(p[0], locale) == 'n' &&
+       MSVCRT__tolower_l(p[1], locale) == 'a' &&
+       MSVCRT__tolower_l(p[2], locale) == 'n') {
         if(end)
             *end = (char*) &p[3];
         return NAN;
     }
 
-    if(p[0] == '0' && tolower(p[1]) == 'x') {
+    if(p[0] == '0' && MSVCRT__tolower_l(p[1], locale) == 'x') {
         base = 16;
         expcnt = 2;
         p += 2;
@@ -963,7 +965,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && *nptr=='0' && tolower(*(nptr+1))=='x') {
+    if((base==0 || base==16) && *nptr=='0' && MSVCRT__tolower_l(*(nptr+1), locale)=='x') {
         base = 16;
         nptr += 2;
     }
@@ -976,7 +978,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     }
 
     while(*nptr) {
-        char cur = tolower(*nptr);
+        char cur = MSVCRT__tolower_l(*nptr, locale);
         int v;
 
         if(cur>='0' && cur<='9') {
@@ -1215,7 +1217,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && *nptr=='0' && tolower(*(nptr+1))=='x') {
+    if((base==0 || base==16) && *nptr=='0' && MSVCRT__tolower_l(*(nptr+1), locale)=='x') {
         base = 16;
         nptr += 2;
     }
@@ -1228,7 +1230,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     }
 
     while(*nptr) {
-        char cur = tolower(*nptr);
+        char cur = MSVCRT__tolower_l(*nptr, locale);
         int v;
 
         if(cur>='0' && cur<='9') {

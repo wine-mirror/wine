@@ -3020,8 +3020,9 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
-      unsigned int ext = tolower(path[plen-1]) | (tolower(path[plen-2]) << 8) |
-                                 (tolower(path[plen-3]) << 16);
+      unsigned int ext = MSVCRT__tolower_l(path[plen-1], NULL) |
+          (MSVCRT__tolower_l(path[plen-2], NULL) << 8) |
+          (MSVCRT__tolower_l(path[plen-3], NULL) << 16);
       if (ext == EXE || ext == BAT || ext == CMD || ext == COM)
           mode |= ALL_S_IEXEC;
     }

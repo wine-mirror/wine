@@ -404,7 +404,7 @@ unsigned int CDECL _mbctolower(unsigned int c)
       FIXME("Handle MBC chars\n");
       return c;
     }
-    return tolower(c); /* ASCII CP or SB char */
+    return MSVCRT__tolower_l(c, NULL); /* ASCII CP or SB char */
 }
 
 /*********************************************************************
@@ -1909,7 +1909,7 @@ unsigned char* CDECL _mbslwr(unsigned char* s)
       *s++=c;
     }
   }
-  else for ( ; *s; s++) *s = tolower(*s);
+  else for ( ; *s; s++) *s = MSVCRT__tolower_l(*s, NULL);
   return ret;
 }
 
@@ -1943,7 +1943,7 @@ int CDECL _mbslwr_s(unsigned char* s, MSVCRT_size_t len)
       *s++=c;
     }
   }
-  else for ( ; *s && len > 0; s++, len--) *s = tolower(*s);
+  else for ( ; *s && len > 0; s++, len--) *s = MSVCRT__tolower_l(*s, NULL);
   if (*s)
   {
     *s = '\0';
