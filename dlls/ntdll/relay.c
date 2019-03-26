@@ -889,7 +889,7 @@ void RELAY_SetupDLL( HMODULE module )
     data->module = module;
     data->base   = exports->Base;
     len = strlen( (char *)module + exports->Name );
-    if (len > 4 && !strcasecmp( (char *)module + exports->Name + len - 4, ".dll" )) len -= 4;
+    if (len > 4 && !_stricmp( (char *)module + exports->Name + len - 4, ".dll" )) len -= 4;
     len = min( len, sizeof(data->dllname) - 1 );
     memcpy( data->dllname, (char *)module + exports->Name, len );
     data->dllname[len] = 0;
@@ -1054,7 +1054,7 @@ void SNOOP_SetupDLL(HMODULE hmod)
     (*dll)->nrofordinals = exports->NumberOfFunctions;
     strcpy( (*dll)->name, name );
     p = (*dll)->name + strlen((*dll)->name) - 4;
-    if (p > (*dll)->name && !strcasecmp( p, ".dll" )) *p = 0;
+    if (p > (*dll)->name && !_stricmp( p, ".dll" )) *p = 0;
 
     size = exports->NumberOfFunctions * sizeof(SNOOP_FUN);
     addr = NULL;

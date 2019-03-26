@@ -1200,19 +1200,19 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             while (isspace(*value)) value++;
             if ((s = strchr(value,'\n')))
                 *s='\0';
-            if (!strcasecmp(line, "CPU architecture"))
+            if (!_stricmp(line, "CPU architecture"))
             {
                 if (isdigit(value[0]))
                     info->Level = atoi(value);
                 continue;
             }
-            if (!strcasecmp(line, "CPU revision"))
+            if (!_stricmp(line, "CPU revision"))
             {
                 if (isdigit(value[0]))
                     info->Revision = atoi(value);
                 continue;
             }
-            if (!strcasecmp(line, "features"))
+            if (!_stricmp(line, "features"))
             {
                 if (strstr(value, "vfpv3"))
                     user_shared_data->ProcessorFeatures[PF_ARM_VFP_32_REGISTERS_AVAILABLE] = TRUE;
@@ -1268,19 +1268,19 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             while (isspace(*value)) value++;
             if ((s = strchr(value,'\n')))
                 *s='\0';
-            if (!strcasecmp(line, "CPU architecture"))
+            if (!_stricmp(line, "CPU architecture"))
             {
                 if (isdigit(value[0]))
                     info->Level = atoi(value);
                 continue;
             }
-            if (!strcasecmp(line, "CPU revision"))
+            if (!_stricmp(line, "CPU revision"))
             {
                 if (isdigit(value[0]))
                     info->Revision = atoi(value);
                 continue;
             }
-            if (!strcasecmp(line, "Features"))
+            if (!_stricmp(line, "Features"))
             {
                 if (strstr(value, "crc32"))
                     user_shared_data->ProcessorFeatures[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE] = TRUE;
@@ -2927,7 +2927,7 @@ static ULONG mhz_from_cpuinfo(void)
             while ((s >= line) && isspace(*s)) s--;
             *(s + 1) = '\0';
             value++;
-            if (!strcasecmp(line, "cpu MHz")) {
+            if (!_stricmp(line, "cpu MHz")) {
                 sscanf(value, " %lf", &cmz);
                 break;
             }
