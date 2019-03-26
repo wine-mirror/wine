@@ -311,7 +311,7 @@ LPSTR __cdecl _strupr( LPSTR str )
 LPSTR __cdecl _strlwr( LPSTR str )
 {
     LPSTR ret = str;
-    for ( ; *str; str++) *str = tolower(*str);
+    for ( ; *str; str++) *str = NTDLL_tolower(*str);
     return ret;
 }
 
