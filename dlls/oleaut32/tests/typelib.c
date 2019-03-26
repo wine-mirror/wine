@@ -1138,9 +1138,9 @@ static int WINAPI int_func( int a0, int a1, int a2, int a3, int a4 )
 
 static double WINAPI double_func( double a0, float a1, double a2, int a3 )
 {
-    ok( a0 == 1.2, "wrong arg0 %f\n", (double)a0 );
+    ok( a0 == 1.2, "wrong arg0 %f\n", a0 );
     ok( a1 == 3.25, "wrong arg1 %f\n", (double)a1 );
-    ok( a2 == 1.2e12, "wrong arg2 %f\n", (double)a2);
+    ok( a2 == 1.2e12, "wrong arg2 %f\n", a2);
     ok( a3 == -4433.0, "wrong arg3 %f\n", (double)a3 );
     return 4321;
 }
