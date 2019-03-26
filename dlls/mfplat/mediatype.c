@@ -318,17 +318,18 @@ static HRESULT WINAPI mediatype_IsCompressedFormat(IMFMediaType *iface, BOOL *co
 {
     struct media_type *media_type = impl_from_IMFMediaType(iface);
     UINT32 value;
-    HRESULT hr;
 
     TRACE("%p, %p.\n", iface, compressed);
 
-    hr = IMFAttributes_GetUINT32(&media_type->attributes.IMFAttributes_iface, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value);
-    if (FAILED(hr))
+    if (FAILED(IMFAttributes_GetUINT32(&media_type->attributes.IMFAttributes_iface,
+            &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)))
+    {
         value = 0;
+    }
 
     *compressed = !value;
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI mediatype_IsEqual(IMFMediaType *iface, IMFMediaType *type, DWORD *flags)

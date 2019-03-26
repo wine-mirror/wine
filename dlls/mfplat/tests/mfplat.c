@@ -355,7 +355,6 @@ if(0)
 
     compressed = FALSE;
     hr = IMFMediaType_IsCompressedFormat(mediatype, &compressed);
-todo_wine
     ok(hr == S_OK, "Failed to get media type property, hr %#x.\n", hr);
     ok(compressed, "Unexpected value %d.\n", compressed);
 
