@@ -323,6 +323,10 @@ typedef struct
     void *tail;
 } critical_section;
 
+#define MTX_PLAIN 0x1
+#define MTX_TRY 0x2
+#define MTX_TIMED 0x4
+#define MTX_RECURSIVE 0x100
 typedef struct
 {
     DWORD flags;
@@ -335,6 +339,7 @@ static int (__cdecl *p__Mtx_init)(_Mtx_t*, int);
 static void (__cdecl *p__Mtx_destroy)(_Mtx_t*);
 static int (__cdecl *p__Mtx_lock)(_Mtx_t*);
 static int (__cdecl *p__Mtx_unlock)(_Mtx_t*);
+static int (__cdecl *p__Mtx_trylock)(_Mtx_t*);
 
 /* cnd */
 typedef void *_Cnd_t;
@@ -801,6 +806,8 @@ static BOOL init(void)
             "_Mtx_lock");
     SET(p__Mtx_unlock,
             "_Mtx_unlock");
+    SET(p__Mtx_trylock,
+            "_Mtx_trylock");
 
     SET(p__Cnd_init,
             "_Cnd_init");
@@ -2438,6 +2445,42 @@ static void test__Pad(void)
     CloseHandle(_Pad__Launch_returned);
 }
 
+static void test__Mtx(void)
+{
+#
+    static int flags[] =
+    {
+        0, MTX_PLAIN, MTX_TRY, MTX_TIMED, MTX_RECURSIVE,
+        MTX_PLAIN|MTX_TRY, MTX_PLAIN|MTX_RECURSIVE, MTX_PLAIN|0xbeef
+    };
+    _Mtx_t mtx;
+    int i, r, expect;
+
+    for (i=0; i<ARRAY_SIZE(flags); i++)
+    {
+        if (flags[i] == MTX_PLAIN || flags[i] & MTX_RECURSIVE)
+            expect = 0;
+        else
+            expect = 3;
+
+        r = p__Mtx_init(&mtx, flags[i]);
+        ok(!r, "failed to init mtx (flags %x)\n", flags[i]);
+
+        r = p__Mtx_trylock(&mtx);
+        ok(!r, "_Mtx_trylock returned %x (flags %x)\n", r, flags[i]);
+        r = p__Mtx_trylock(&mtx);
+        ok(r == expect, "_Mtx_trylock returned %x (flags %x)\n", r, flags[i]);
+        if(!r) p__Mtx_unlock(&mtx);
+
+        r = p__Mtx_lock(&mtx);
+        ok(r == expect, "_Mtx_lock returned %x (flags %x)\n", r, flags[i]);
+        if(!r) p__Mtx_unlock(&mtx);
+
+        p__Mtx_unlock(&mtx);
+        p__Mtx_destroy(&mtx);
+    }
+}
+
 static void test_threads__Mtx(void)
 {
     void *mtx = NULL;
@@ -3341,6 +3384,7 @@ START_TEST(msvcp120)
     test_thrd();
     test_cnd();
     test__Pad();
+    test__Mtx();
     test_threads__Mtx();
 
     test_vector_base_v4__Segment_index_of();
