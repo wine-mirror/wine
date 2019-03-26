@@ -66,6 +66,7 @@ static HRESULT FtpProtocol_open_request(Protocol *prot, IUri *uri, DWORD request
         HINTERNET internet_session, IInternetBindInfo *bind_info)
 {
     FtpProtocol *This = impl_from_Protocol(prot);
+    DWORD path_size = 0;
     BSTR url;
     HRESULT hres;
 
@@ -73,16 +74,18 @@ static HRESULT FtpProtocol_open_request(Protocol *prot, IUri *uri, DWORD request
     if(FAILED(hres))
         return hres;
 
-    This->base.request = InternetOpenUrlW(internet_session, url, NULL, 0,
-            request_flags|INTERNET_FLAG_EXISTING_CONNECT|INTERNET_FLAG_PASSIVE,
-            (DWORD_PTR)&This->base);
-    SysFreeString(url);
-    if (!This->base.request && GetLastError() != ERROR_IO_PENDING) {
-        WARN("InternetOpenUrl failed: %d\n", GetLastError());
-        return INET_E_RESOURCE_NOT_FOUND;
+    hres = UrlUnescapeW(url, NULL, &path_size, URL_UNESCAPE_INPLACE);
+    if(SUCCEEDED(hres)) {
+        This->base.request = InternetOpenUrlW(internet_session, url, NULL, 0,
+                request_flags|INTERNET_FLAG_EXISTING_CONNECT|INTERNET_FLAG_PASSIVE,
+                (DWORD_PTR)&This->base);
+        if (!This->base.request && GetLastError() != ERROR_IO_PENDING) {
+            WARN("InternetOpenUrl failed: %d\n", GetLastError());
+            hres = INET_E_RESOURCE_NOT_FOUND;
+        }
     }
-
-    return S_OK;
+    SysFreeString(url);
+    return hres;
 }
 
 static HRESULT FtpProtocol_end_request(Protocol *prot)
