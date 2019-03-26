@@ -240,14 +240,13 @@ static void test_RtlIsNameLegalDOS8Dot3(void)
         ok( spaces == test->spaces, "Wrong spaces value %d/%d for '%s'\n", spaces, test->spaces, test->path );
         if (strlen(test->path) <= 12)
         {
+            STRING test_str;
             char str[13];
-            int i;
             strcpy( str, test->path );
-            for (i = 0; str[i]; i++) str[i] = toupper(str[i]);
-            ok( oem_ret.Length == strlen(test->path), "Wrong length %d/%d for '%s'\n",
-                oem_ret.Length, lstrlenA(test->path), test->path );
-            ok( !memcmp( oem_ret.Buffer, str, oem_ret.Length ),
-                "Wrong string '%.*s'/'%s'\n", oem_ret.Length, oem_ret.Buffer, str );
+            RtlInitString( &test_str, str );
+            RtlUpperString( &test_str, &test_str );
+            ok( !RtlCompareString(&oem_ret, &test_str, FALSE),
+                "Wrong string '%.*s'/'%s'\n", oem_ret.Length, oem_ret.Buffer, test->path );
         }
     }
 }
