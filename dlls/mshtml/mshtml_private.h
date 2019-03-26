@@ -56,6 +56,7 @@
 #define NS_ERROR_NOT_AVAILABLE    ((nsresult)0x80040111L)
 #define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
 #define NS_ERROR_UNEXPECTED       ((nsresult)0x8000ffffL)
+#define NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR ((nsresult)0x80530007)
 
 #define NS_ERROR_MODULE_NETWORK    6
 
@@ -958,6 +959,7 @@ void nsAString_InitDepend(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
 UINT32 nsAString_GetData(const nsAString*,const PRUnichar**) DECLSPEC_HIDDEN;
 void nsAString_Finish(nsAString*) DECLSPEC_HIDDEN;
 
+HRESULT map_nsresult(nsresult) DECLSPEC_HIDDEN;
 HRESULT return_nsstr(nsresult,nsAString*,BSTR*) DECLSPEC_HIDDEN;
 HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, VARIANT *p) DECLSPEC_HIDDEN;
 HRESULT return_nsform(nsresult,nsIDOMHTMLFormElement*,IHTMLFormElement**) DECLSPEC_HIDDEN;

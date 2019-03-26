@@ -921,16 +921,13 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     nsAString_InitDepend(&str_name, style_tbl[sid].name);
     nsAString_InitDepend(&str_value, value);
     nsAString_InitDepend(&str_empty, emptyW);
-
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, &str_value, &str_empty);
-    if(NS_FAILED(nsres))
-        ERR("SetProperty failed: %08x\n", nsres);
-
     nsAString_Finish(&str_name);
     nsAString_Finish(&str_value);
     nsAString_Finish(&str_empty);
-
-    return S_OK;
+    if(NS_FAILED(nsres))
+        WARN("SetProperty failed: %08x\n", nsres);
+    return map_nsresult(nsres);
 }
 
 static HRESULT var_to_styleval(CSSStyle *style, const VARIANT *v, const style_tbl_entry_t *entry, WCHAR *buf, const WCHAR **ret)
@@ -1023,12 +1020,9 @@ static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, stylei
     nsAString_InitDepend(&str_name, style_tbl[sid].name);
     nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(nsstyle, &str_name, value);
     nsAString_Finish(&str_name);
-    if(NS_FAILED(nsres)) {
-        ERR("SetProperty failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    return S_OK;
+    if(NS_FAILED(nsres))
+        WARN("GetPropertyValue failed: %08x\n", nsres);
+    return map_nsresult(nsres);
 }
 
 static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
@@ -3179,11 +3173,11 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         nsAString_GetData(&ret_str, &ret);
         *pfSuccess = variant_bool(*ret);
     }else {
-        ERR("RemoveProperty failed: %08x\n", nsres);
+        WARN("RemoveProperty failed: %08x\n", nsres);
     }
     nsAString_Finish(&name_str);
     nsAString_Finish(&ret_str);
-    return NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLStyle_toString(IHTMLStyle *iface, BSTR *String)
@@ -5063,12 +5057,9 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclarati
     nsAString_Finish(&name_str);
     nsAString_Finish(&value_str);
     nsAString_Finish(&priority_str);
-    if(NS_FAILED(nsres)) {
-        FIXME("SetProperty failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    return S_OK;
+    if(NS_FAILED(nsres))
+        WARN("SetProperty failed: %08x\n", nsres);
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_item(IHTMLCSSStyleDeclaration *iface, LONG index, BSTR *pbstrPropertyName)

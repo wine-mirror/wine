@@ -6750,6 +6750,27 @@ static void test_xmlhttprequest(IHTMLWindow5 *window)
     VariantClear(&var);
 }
 
+static void test_read_only_style(IHTMLCSSStyleDeclaration *style)
+{
+    BSTR none = a2bstr("none"), display = a2bstr("display"), str;
+    VARIANT v;
+    HRESULT hres;
+
+    hres = IHTMLCSSStyleDeclaration_put_display(style, none);
+    ok(hres == 0x80700007, "put_display failed: %08x\n", hres);
+
+    hres = IHTMLCSSStyleDeclaration_removeProperty(style, display, &str);
+    ok(hres == 0x80700007, "removeProperty failed: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = none;
+    hres = IHTMLCSSStyleDeclaration_setProperty(style, display, &v, NULL);
+    ok(hres == 0x80700007, "setProperty returned: %08x\n", hres);
+
+    SysFreeString(none);
+    SysFreeString(display);
+}
+
 static void test_window(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window, *window2, *self, *parent;
@@ -7099,10 +7120,19 @@ static void test_defaults(IHTMLDocument2 *doc)
         test_ifaces((IUnknown*)cstyle, cstyle_iids);
 
         hres = IHTMLCurrentStyle_QueryInterface(cstyle, &IID_IHTMLCurrentStyle4, (void**)&unk);
-        if(SUCCEEDED(hres))
+        if(SUCCEEDED(hres)) {
+            IHTMLCSSStyleDeclaration *css_style;
+
+            hres = IHTMLCurrentStyle_QueryInterface(cstyle, &IID_IHTMLCSSStyleDeclaration, (void**)&css_style);
+            if(SUCCEEDED(hres)) {
+                test_read_only_style(css_style);
+                IHTMLCSSStyleDeclaration_Release(css_style);
+            }else {
+                win_skip("IHTMLCSSStyleDeclaration not supported\n");
+            }
+
             IUnknown_Release(unk);
-        else
-        {
+        }else {
            /*IE6 doesn't have interface */
            win_skip("IID_IHTMLCurrentStyle4 not supported\n");
         }

@@ -848,7 +848,7 @@ void nsAString_Finish(nsAString *str)
     NS_StringContainerFinish(str);
 }
 
-static HRESULT map_nsresult(nsresult nsres)
+HRESULT map_nsresult(nsresult nsres)
 {
     switch(nsres) {
     case NS_OK:
@@ -865,6 +865,8 @@ static HRESULT map_nsresult(nsresult nsres)
         return E_INVALIDARG;
     case NS_ERROR_UNEXPECTED:
         return E_UNEXPECTED;
+    case NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR:
+        return 0x80700007; /* according to tests */
     }
     return E_FAIL;
 }
