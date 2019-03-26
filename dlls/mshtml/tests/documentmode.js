@@ -98,6 +98,8 @@ function test_window_props() {
     var v = document.documentMode;
 
     test_exposed("postMessage", true);
+    test_exposed("sessionStorage", true);
+    test_exposed("localStorage", true);
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
@@ -145,6 +147,19 @@ function test_style_props() {
     test_exposed("z-index", true);
     test_exposed("filter", true);
     test_exposed("pixelTop", true);
+    test_exposed("float", true);
+    test_exposed("css-float", false);
+    test_exposed("style-float", false);
+    test_exposed("setProperty", v >= 9);
+    test_exposed("removeProperty", v >= 9);
+    test_exposed("background-clip", v >= 9);
+
+    style = document.body.currentStyle;
+
+    test_exposed("zIndex", true);
+    test_exposed("z-index", true);
+    test_exposed("filter", true);
+    test_exposed("pixelTop", false);
     test_exposed("float", true);
     test_exposed("css-float", false);
     test_exposed("style-float", false);

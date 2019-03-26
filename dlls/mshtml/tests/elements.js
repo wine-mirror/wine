@@ -234,6 +234,7 @@ function test_document_owner() {
 
 function test_style_properties() {
     var style = document.body.style;
+    var current_style = document.body.currentStyle;
     var val;
 
     style.cssFloat = "left";
@@ -294,6 +295,11 @@ function test_style_properties() {
 
     style.setProperty("border-width", "8px", undefined);
     ok(style.borderWidth === "7px", "style.borderWidth = " + style.borderWidth);
+
+    style.clip = "rect(1px 1px 10px 10px)";
+    ok(style.clip === "rect(1px, 1px, 10px, 10px)", "style.clip = " + style.clip);
+    ok(current_style.clip === "rect(1px, 1px, 10px, 10px)",
+       "current_style.clip = " + current_style.clip);
 
     next_test();
 }

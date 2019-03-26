@@ -10128,7 +10128,7 @@ static const IHTMLCSSStyleDeclaration2Vtbl HTMLCSSStyleDeclaration2Vtbl = {
     HTMLCSSStyleDeclaration2_get_animationFillMode
 };
 
-static HRESULT HTMLStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT CSSStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     const style_tbl_entry_t *style_entry;
 
@@ -10146,15 +10146,15 @@ static HRESULT HTMLStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, 
     return DISP_E_UNKNOWNNAME;
 }
 
-static void HTMLStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     if(mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, NULL);
 }
 
-static const dispex_static_data_vtbl_t HTMLStyle_dispex_vtbl = {
+const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl = {
     NULL,
-    HTMLStyle_get_dispid,
+    CSSStyle_get_dispid,
     NULL,
     NULL
 };
@@ -10169,10 +10169,10 @@ static const tid_t HTMLStyle_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLStyle_dispex = {
-    &HTMLStyle_dispex_vtbl,
+    &CSSStyle_dispex_vtbl,
     DispHTMLStyle_tid,
     HTMLStyle_iface_tids,
-    HTMLStyle_init_dispex_info
+    CSSStyle_init_dispex_info
 };
 
 static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration **ret)
