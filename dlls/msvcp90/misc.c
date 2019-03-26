@@ -681,7 +681,10 @@ __ASM_GLOBAL_FUNC(call_thiscall_func,
 
 #endif /* __i386__ */
 
-#define MTX_MULTI_LOCK 0x100
+#define MTX_PLAIN 0x1
+#define MTX_TRY 0x2
+#define MTX_TIMED 0x4
+#define MTX_RECURSIVE 0x100
 #define MTX_LOCKED 3
 typedef struct
 {
@@ -703,7 +706,7 @@ typedef _Mtx_t *_Mtx_arg_t;
 
 void __cdecl _Mtx_init_in_situ(_Mtx_t mtx, int flags)
 {
-    if(flags & ~MTX_MULTI_LOCK)
+    if(flags & ~(MTX_PLAIN | MTX_TRY | MTX_TIMED | MTX_RECURSIVE))
         FIXME("unknown flags ignored: %x\n", flags);
 
     mtx->flags = flags;
@@ -740,7 +743,8 @@ int __cdecl _Mtx_lock(_Mtx_arg_t mtx)
     if(MTX_T_FROM_ARG(mtx)->thread_id != GetCurrentThreadId()) {
         call_func1(critical_section_lock, &MTX_T_FROM_ARG(mtx)->cs);
         MTX_T_FROM_ARG(mtx)->thread_id = GetCurrentThreadId();
-    }else if(!(MTX_T_FROM_ARG(mtx)->flags & MTX_MULTI_LOCK)) {
+    }else if(!(MTX_T_FROM_ARG(mtx)->flags & MTX_RECURSIVE)
+            && MTX_T_FROM_ARG(mtx)->flags != MTX_PLAIN) {
         return MTX_LOCKED;
     }
 
@@ -764,7 +768,8 @@ int __cdecl _Mtx_trylock(_Mtx_arg_t mtx)
         if(!call_func1(critical_section_trylock, &MTX_T_FROM_ARG(mtx)->cs))
             return MTX_LOCKED;
         MTX_T_FROM_ARG(mtx)->thread_id = GetCurrentThreadId();
-    }else if(!(MTX_T_FROM_ARG(mtx)->flags & MTX_MULTI_LOCK)) {
+    }else if(!(MTX_T_FROM_ARG(mtx)->flags & MTX_RECURSIVE)
+            && MTX_T_FROM_ARG(mtx)->flags != MTX_PLAIN) {
         return MTX_LOCKED;
     }
 
