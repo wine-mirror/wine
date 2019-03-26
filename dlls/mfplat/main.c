@@ -1971,6 +1971,7 @@ typedef struct bytestream
     IMFAsyncCallback read_callback;
     IMFAsyncCallback write_callback;
     IStream *stream;
+    HANDLE hfile;
     QWORD position;
     DWORD capabilities;
     struct list pending;
@@ -2235,6 +2236,8 @@ static ULONG WINAPI bytestream_Release(IMFByteStream *iface)
         DeleteCriticalSection(&stream->cs);
         if (stream->stream)
             IStream_Release(stream->stream);
+        if (stream->hfile)
+            CloseHandle(stream->hfile);
         heap_free(stream);
     }
 
@@ -2820,7 +2823,7 @@ static const IMFGetServiceVtbl bytestream_file_getservice_vtbl =
 HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
                             LPCWSTR url, IMFByteStream **bytestream)
 {
-    mfbytestream *object;
+    struct bytestream *object;
     DWORD fileaccessmode = 0;
     DWORD filesharemode = FILE_SHARE_READ;
     DWORD filecreation_disposition = 0;
@@ -2894,6 +2897,7 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     object->write_callback.lpVtbl = &bytestream_file_write_callback_vtbl;
     InitializeCriticalSection(&object->cs);
     list_init(&object->pending);
+    object->hfile = file;
 
     if (GetFileTime(file, NULL, NULL, &writetime))
     {
@@ -2904,8 +2908,6 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
     IMFAttributes_SetString(&object->attributes.IMFAttributes_iface, &MF_BYTESTREAM_ORIGIN_NAME, url);
 
     *bytestream = &object->IMFByteStream_iface;
-
-    CloseHandle(file);
 
     return S_OK;
 }
