@@ -267,7 +267,7 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
     int argc = 2;
     GError *err = NULL;
 
-    TRACE("initializing\n");
+    TRACE("Initializing...\n");
 
     argv[0] = argv0;
     argv[1] = argv1;
@@ -276,6 +276,10 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
     if (*status)
     {
         HINSTANCE newhandle;
+
+        TRACE("Inititialized, version %s. Built with %d.%d.%d.\n", gst_version_string(),
+                GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
+
         /* Unloading glib is a bad idea.. it installs atexit handlers,
          * so never unload the dll after loading */
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
