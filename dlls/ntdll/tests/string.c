@@ -61,6 +61,7 @@ static void     (__cdecl *p_qsort)(void *,size_t,size_t, int(__cdecl *compar)(co
 static void*    (__cdecl *p_bsearch)(void *,void*,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
 static int      (WINAPIV *p__snprintf)(char *, size_t, const char *, ...);
 
+static int      (__cdecl *p_tolower)(int);
 
 static void InitFunctionPtrs(void)
 {
@@ -99,6 +100,8 @@ static void InitFunctionPtrs(void)
 	p_bsearch= (void *)GetProcAddress(hntdll, "bsearch");
 
         p__snprintf = (void *)GetProcAddress(hntdll, "_snprintf");
+
+        p_tolower = (void *)GetProcAddress(hntdll, "tolower");
     } /* if */
 }
 
@@ -1327,6 +1330,26 @@ static void test__snprintf(void)
     ok(!strcmp(buffer, teststring), "_snprintf returned buffer '%s', expected '%s'.\n", buffer, teststring);
 }
 
+static void test_tolower(void)
+{
+    int i, ret, exp_ret;
+
+    if (!GetProcAddress(GetModuleHandleA("ntdll"), "NtRemoveIoCompletionEx"))
+    {
+        win_skip("tolower tests\n");
+        return;
+    }
+
+    ok(p_tolower != NULL, "tolower is not available\n");
+
+    for (i = -512; i < 512; i++)
+    {
+        exp_ret = (char)i >= 'A' && (char)i <= 'Z' ? i - 'A' + 'a' : i;
+        ret = p_tolower(i);
+        ok(ret == exp_ret, "tolower(%d) = %d\n", i, ret);
+    }
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -1363,4 +1386,5 @@ START_TEST(string)
         test_bsearch();
     if (p__snprintf)
         test__snprintf();
+    test_tolower();
 }

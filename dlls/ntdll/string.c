@@ -218,6 +218,15 @@ void * __cdecl _memccpy( void *dst, const void *src, int c, size_t n )
 
 
 /*********************************************************************
+ *                  tolower   (NTDLL.@)
+ */
+int __cdecl NTDLL_tolower( int c )
+{
+    return (char)c >= 'A' && (char)c <= 'Z' ? c - 'A' + 'a' : c;
+}
+
+
+/*********************************************************************
  *                  _memicmp   (NTDLL.@)
  *
  * Compare two blocks of memory as strings, ignoring case.
@@ -304,15 +313,6 @@ LPSTR __cdecl _strlwr( LPSTR str )
     LPSTR ret = str;
     for ( ; *str; str++) *str = tolower(*str);
     return ret;
-}
-
-
-/*********************************************************************
- *                  tolower   (NTDLL.@)
- */
-int __cdecl NTDLL_tolower( int c )
-{
-    return tolower( c );
 }
 
 
