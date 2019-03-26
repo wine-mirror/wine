@@ -133,7 +133,7 @@ static inline int u_strncmp( const unsigned char *s1, const unsigned char *s2, M
 
 static inline int u_strncasecmp( const unsigned char *s1, const unsigned char *s2, MSVCRT_size_t len )
 {
-  return strncasecmp( (const char*)s1, (const char*)s2, len );
+  return MSVCRT__strnicmp( (const char*)s1, (const char*)s2, len );
 }
 
 static inline unsigned char *u_strchr( const unsigned char *s, unsigned char x )

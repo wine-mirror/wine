@@ -694,7 +694,7 @@ int CDECL MSVCRT__strnicoll_l( const char* str1, const char* str2, MSVCRT_size_t
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strncasecmp(str1, str2, count);
+        return MSVCRT__strnicmp(str1, str2, count);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
             str1, MSVCRT_strnlen(str1, count),
             str2, MSVCRT_strnlen(str2, count))-CSTR_EQUAL;
@@ -1960,7 +1960,6 @@ int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len
 int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
     int c1, c2;
 
     if(s1==NULL || s2==NULL)
@@ -1968,14 +1967,6 @@ int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
 
     if(!count)
         return 0;
-
-    if(!locale)
-        locinfo = get_locinfo();
-    else
-        locinfo = locale->locinfo;
-
-    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE])
-        return strncasecmp(s1, s2, count);
 
     do {
         c1 = MSVCRT__tolower_l(*s1++, locale);

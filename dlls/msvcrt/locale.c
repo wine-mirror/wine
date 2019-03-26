@@ -142,7 +142,7 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp, BOO
   if(exact || len<=3)
     return !MSVCRT__stricmp(cmp, buff);
   else
-    return !strncasecmp(cmp, buff, len);
+    return !MSVCRT__strnicmp(cmp, buff, len);
 }
 
 static BOOL CALLBACK
