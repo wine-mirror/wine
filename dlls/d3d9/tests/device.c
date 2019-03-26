@@ -13341,7 +13341,7 @@ static void test_get_display_mode(void)
     hr = IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
-    IDirect3D9_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &mode);
+    hr = IDirect3D9_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &mode);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
     hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
@@ -13371,7 +13371,7 @@ static void test_get_display_mode(void)
     ok(mode.Width == 640, "Unexpected width %u.\n", mode.Width);
     ok(mode.Height == 480, "Unexpected width %u.\n", mode.Height);
     ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
-    IDirect3D9_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &mode);
+    hr = IDirect3D9_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &mode);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ok(mode.Width == 640, "Unexpected width %u.\n", mode.Width);
     ok(mode.Height == 480, "Unexpected width %u.\n", mode.Height);
