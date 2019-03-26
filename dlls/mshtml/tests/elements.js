@@ -238,6 +238,10 @@ function test_style_properties() {
 
     style.cssFloat = "left";
     ok(style.cssFloat === "left", "cssFloat = " + style.cssFloat);
+    ok(style.getPropertyValue("float") === "left",
+       'style.getPropertyValue("float") = ' + style.getPropertyValue("float"));
+    ok(style.getPropertyValue("cssFloat") === "",
+       'style.getPropertyValue("cssFloat") = ' + style.getPropertyValue("cssFloat"));
 
     val = style.removeProperty("float");
     ok(val === "left", "removeProperty() returned " + val);
@@ -262,6 +266,10 @@ function test_style_properties() {
     style["z-index"] = 1;
     ok(style.zIndex === 1, "zIndex = " + style.zIndex);
     ok(style["z-index"] === 1, "z-index = " + style["z-index"]);
+    ok(style.getPropertyValue("z-index") === "1",
+       'style.getPropertyValue("x-index") = ' + style.getPropertyValue("z-index"));
+    ok(style.getPropertyValue("zIndex") === "",
+       'style.getPropertyValue("xIndex") = ' + style.getPropertyValue("zIndex"));
 
     style.setProperty("border-width", "5px");
     ok(style.borderWidth === "5px", "style.borderWidth = " + style.borderWidth);

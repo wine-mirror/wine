@@ -4989,11 +4989,21 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_parentRule(IHTMLCSSStyleDeclar
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLCSSStyleDeclaration_getPropertyValue(IHTMLCSSStyleDeclaration *iface, BSTR bstrPropertyName, BSTR *pbstrPropertyValue)
+static HRESULT WINAPI HTMLCSSStyleDeclaration_getPropertyValue(IHTMLCSSStyleDeclaration *iface, BSTR name, BSTR *value)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrPropertyName), pbstrPropertyValue);
-    return E_NOTIMPL;
+    const style_tbl_entry_t *style_entry;
+    nsAString name_str, value_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), value);
+
+    style_entry = lookup_style_tbl(name);
+    nsAString_InitDepend(&name_str, style_entry ? style_entry->name : name);
+    nsAString_InitDepend(&value_str, NULL);
+    nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(This->nsstyle, &name_str, &value_str);
+    nsAString_Finish(&name_str);
+    return return_nsstr(nsres, &value_str, value);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_getPropertyPriority(IHTMLCSSStyleDeclaration *iface, BSTR bstrPropertyName, BSTR *pbstrPropertyPriority)
