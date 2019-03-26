@@ -238,6 +238,10 @@ static HRESULT WINAPI netfw_rules_get__NewEnum(
     fw_rules *This = impl_from_INetFwRules( iface );
 
     FIXME("%p, %p\n", This, newEnum);
+
+    if (!newEnum) return E_POINTER;
+    *newEnum = NULL;
+
     return E_NOTIMPL;
 }
 
