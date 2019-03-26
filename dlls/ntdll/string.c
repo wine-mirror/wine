@@ -249,7 +249,7 @@ INT __cdecl _memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
     int ret = 0;
     while (len--)
     {
-        if ((ret = tolower(*s1) - tolower(*s2))) break;
+        if ((ret = NTDLL_tolower(*s1) - NTDLL_tolower(*s2))) break;
         s1++;
         s2++;
     }
