@@ -275,17 +275,17 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
     *status = gst_init_check(&argc, &argv, &err);
     if (*status)
     {
-        HINSTANCE newhandle;
+        HINSTANCE handle;
 
         TRACE("Inititialized, version %s. Built with %d.%d.%d.\n", gst_version_string(),
                 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 
         /* Unloading glib is a bad idea.. it installs atexit handlers,
          * so never unload the dll after loading */
-        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                           (LPCWSTR)hInst, &newhandle);
-        if (!newhandle)
-            ERR("Could not pin module %p\n", hInst);
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                (LPCWSTR)hInst, &handle);
+        if (!handle)
+            ERR("Failed to pin module %p.\n", hInst);
 
         start_dispatch_thread();
     }
