@@ -10199,8 +10199,8 @@ static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration 
     return S_OK;
 }
 
-static void init_css_style(CSSStyle *style, nsIDOMCSSStyleDeclaration *nsstyle, style_qi_t qi,
-                           dispex_static_data_t *dispex_info, compat_mode_t compat_mode)
+void init_css_style(CSSStyle *style, nsIDOMCSSStyleDeclaration *nsstyle, style_qi_t qi,
+                    dispex_static_data_t *dispex_info, compat_mode_t compat_mode)
 {
     style->IHTMLCSSStyleDeclaration_iface.lpVtbl = &HTMLCSSStyleDeclarationVtbl;
     style->IHTMLCSSStyleDeclaration2_iface.lpVtbl = &HTMLCSSStyleDeclaration2Vtbl;
