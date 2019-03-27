@@ -147,7 +147,6 @@ typedef nsISupports nsISupportsArray;
 typedef nsISupports nsIContentFilter;
 typedef nsISupports nsIDOMMediaList;
 typedef nsISupports nsIDOMHTMLTableSectionElement;
-typedef nsISupports nsIDOMClientRectList;
 typedef nsISupports nsINode;
 typedef nsISupports nsIDOMUserDataHandler;
 typedef nsISupports nsISHEntry;
@@ -1011,6 +1010,17 @@ interface nsIDOMClientRect : nsISupports
     nsresult GetBottom(float *aBottom);
     nsresult GetWidth(float *aWidth);
     nsresult GetHeight(float *aHeight);
+}
+
+[
+    object,
+    uuid(f474c567-cbcb-458f-abad-ae42363da287),
+    local
+]
+interface nsIDOMClientRectList : nsISupports
+{
+    nsresult GetLength(uint32_t *aLength);
+    nsresult Item(UINT32 index, nsIDOMClientRect **_retval);
 }
 
 [

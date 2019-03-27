@@ -5161,6 +5161,7 @@ static void _test_doc_set_title(unsigned line, IHTMLDocument2 *doc, const char *
 
 static void test_elem_bounding_client_rect(IUnknown *unk)
 {
+    IHTMLRectCollection *rects;
     IHTMLRect *rect, *rect2;
     IHTMLElement2 *elem2;
     LONG l;
@@ -5199,6 +5200,13 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
     ok(l != 0xdeadbeef, "l = 0xdeadbeef\n");
 
     IHTMLRect_Release(rect);
+
+    hres = IHTMLElement2_getClientRects(elem2, &rects);
+    ok(hres == S_OK, "getClientRects failed: %08x\n", hres);
+
+    test_disp((IUnknown*)rects, &IID_IHTMLRectCollection, NULL, "[object]");
+
+    IHTMLRectCollection_Release(rects);
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, const char *n,
