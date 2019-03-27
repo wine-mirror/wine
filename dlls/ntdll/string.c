@@ -306,7 +306,7 @@ int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 )
 LPSTR __cdecl _strupr( LPSTR str )
 {
     LPSTR ret = str;
-    for ( ; *str; str++) *str = toupper(*str);
+    for ( ; *str; str++) *str = RtlUpperChar(*str);
     return ret;
 }
 
