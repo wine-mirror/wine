@@ -25,6 +25,7 @@
 #include <string.h>
 #include <sys/types.h>
 
+#define WINE_UNICODE_INLINE  /* nothing */
 #include "wine/unicode.h"
 #include "wine/library.h"
 
@@ -33,6 +34,8 @@
 #ifndef __ANDROID__
 const void *libwine_port_functions[] =
 {
+    strtolW,
+    vsnprintfW,
     wine_compare_string,
     wine_cp_enum_table,
     wine_cp_get_table,

@@ -6,8 +6,7 @@ C_SRCS = \
 	ldt.c \
 	loader.c \
 	mmap.c \
-	port.c \
-	string.c
+	port.c
 
 EXTRA_OBJS = version.o
 
