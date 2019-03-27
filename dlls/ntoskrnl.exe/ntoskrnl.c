@@ -1474,8 +1474,6 @@ static const WCHAR device_type_name[] = {'D','e','v','i','c','e',0};
 static struct _OBJECT_TYPE device_type =
 {
     device_type_name,
-    NULL,
-    free_kernel_object
 };
 
 POBJECT_TYPE IoDeviceObjectType = &device_type;
@@ -1491,7 +1489,6 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
 {
     NTSTATUS status;
     DEVICE_OBJECT *device;
-    HANDLE handle = 0;
     HANDLE manager = get_device_manager();
 
     TRACE( "(%p, %u, %s, %u, %x, %u, %p)\n",
@@ -1500,34 +1497,32 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
     if (!(device = alloc_kernel_object( IoDeviceObjectType, NULL, sizeof(DEVICE_OBJECT) + ext_size, 1 )))
         return STATUS_NO_MEMORY;
 
+    device->DriverObject    = driver;
+    device->DeviceExtension = device + 1;
+    device->DeviceType      = type;
+    device->StackSize       = 1;
+
+    device->NextDevice   = driver->DeviceObject;
+    driver->DeviceObject = device;
+
     SERVER_START_REQ( create_device )
     {
-        req->access     = 0;
-        req->attributes = 0;
         req->rootdir    = 0;
         req->manager    = wine_server_obj_handle( manager );
         req->user_ptr   = wine_server_client_ptr( device );
         if (name) wine_server_add_data( req, name->Buffer, name->Length );
-        if (!(status = wine_server_call( req ))) handle = wine_server_ptr_handle( reply->handle );
+        status = wine_server_call( req );
     }
     SERVER_END_REQ;
 
-    if (status == STATUS_SUCCESS)
+    if (status)
     {
-        device->DriverObject    = driver;
-        device->DeviceExtension = device + 1;
-        device->DeviceType      = type;
-        device->StackSize       = 1;
-        device->Reserved        = handle;
-
-        device->NextDevice   = driver->DeviceObject;
-        driver->DeviceObject = device;
-
-        *ret_device = device;
+        free_kernel_object( device );
+        return status;
     }
-    else free_kernel_object( device );
 
-    return status;
+    *ret_device = device;
+    return STATUS_SUCCESS;
 }
 
 
@@ -1542,7 +1537,8 @@ void WINAPI IoDeleteDevice( DEVICE_OBJECT *device )
 
     SERVER_START_REQ( delete_device )
     {
-        req->handle = wine_server_obj_handle( device->Reserved );
+        req->manager = wine_server_obj_handle( get_device_manager() );
+        req->device  = wine_server_client_ptr( device );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -1552,7 +1548,6 @@ void WINAPI IoDeleteDevice( DEVICE_OBJECT *device )
         DEVICE_OBJECT **prev = &device->DriverObject->DeviceObject;
         while (*prev && *prev != device) prev = &(*prev)->NextDevice;
         if (*prev) *prev = (*prev)->NextDevice;
-        NtClose( device->Reserved );
         ObDereferenceObject( device );
     }
 }

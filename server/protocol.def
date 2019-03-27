@@ -3596,20 +3596,17 @@ struct handle_info
 
 /* Create a device */
 @REQ(create_device)
-    unsigned int access;          /* wanted access rights */
-    unsigned int attributes;      /* object attributes */
     obj_handle_t rootdir;         /* root directory */
     client_ptr_t user_ptr;        /* opaque ptr for use by client */
     obj_handle_t manager;         /* device manager */
     VARARG(name,unicode_str);     /* object name */
-@REPLY
-    obj_handle_t handle;          /* handle to the device */
 @END
 
 
 /* Delete a device */
 @REQ(delete_device)
-    obj_handle_t handle;          /* handle to the device */
+    obj_handle_t manager;         /* handle to the device manager */
+    client_ptr_t device;          /* pointer to the device */
 @END
 
 
