@@ -672,6 +672,10 @@ UINT WINAPI MsiSourceListAddMediaDiskA(LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD,
 UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR, LPCWSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPCWSTR, LPCWSTR);
 #define     MsiSourceListAddMediaDisk WINELIB_NAME_AW(MsiSourceListAddMediaDisk)
 
+UINT WINAPI MsiSourceListForceResolutionA(const CHAR*, const CHAR*, DWORD);
+UINT WINAPI MsiSourceListForceResolutionW(const WCHAR*, const WCHAR*, DWORD);
+#define     MsiSourceListForceResolution WINELIB_NAME_AW(MsiSourceListForceResolution)
+
 UINT WINAPI MsiEnumPatchesA(LPCSTR, DWORD, LPSTR, LPSTR, LPDWORD);
 UINT WINAPI MsiEnumPatchesW(LPCWSTR, DWORD, LPWSTR, LPWSTR, LPDWORD);
 #define     MsiEnumPatches WINELIB_NAME_AW(MsiEnumPatches)
