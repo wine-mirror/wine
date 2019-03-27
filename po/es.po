@@ -12240,8 +12240,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -13891,7 +13891,9 @@ msgstr "El archivo `%s' ya existe. No se ha sobrescrito."
 
 #: progman.rc:80
 msgid "Save group as `%s' to prevent overwriting original files."
-msgstr "Guardar el grupo como `%s' para prevenir la sobrescritura de los archivos originales."
+msgstr ""
+"Guardar el grupo como `%s' para prevenir la sobrescritura de los archivos "
+"originales."
 
 #: progman.rc:84
 msgid "Libraries (*.dll)"
