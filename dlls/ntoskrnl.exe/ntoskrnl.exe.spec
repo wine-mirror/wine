@@ -1395,7 +1395,7 @@
 @ stdcall -private ZwSetDefaultLocale(long long) NtSetDefaultLocale
 @ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
-@ stdcall -private ZwSetEvent(long ptr) NtSetEvent
+@ stdcall ZwSetEvent(long ptr) NtSetEvent
 @ stdcall -private ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
 @ stdcall -private ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
 @ stdcall -private ZwSetInformationObject(long long ptr long) NtSetInformationObject

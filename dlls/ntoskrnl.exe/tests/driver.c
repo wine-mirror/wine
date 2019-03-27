@@ -474,6 +474,33 @@ static void test_sync(void)
     ZwClose(handle);
     ObDereferenceObject(event);
 
+    event = IoCreateSynchronizationEvent(NULL, &handle);
+    ok(event != NULL, "IoCreateSynchronizationEvent failed\n");
+
+    ret = wait_single(event, 0);
+    ok(ret == 0, "got %#x\n", ret);
+    KeResetEvent(event);
+    ret = wait_single(event, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+    ret = wait_single_handle(handle, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = ZwSetEvent(handle, NULL);
+    ok(!ret, "NtSetEvent returned %#x\n", ret);
+    ret = wait_single(event, 0);
+    ok(ret == 0, "got %#x\n", ret);
+    ret = wait_single_handle(handle, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    KeSetEvent(event, 0, FALSE);
+    ret = wait_single_handle(handle, 0);
+    ok(!ret, "got %#x\n", ret);
+    ret = wait_single(event, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = ZwClose(handle);
+    ok(!ret, "ZwClose returned %#x\n", ret);
+
     /* test semaphores */
     KeInitializeSemaphore(&semaphore, 0, 5);
 

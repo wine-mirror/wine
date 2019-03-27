@@ -402,7 +402,7 @@ static CRITICAL_SECTION_DEBUG handle_map_critsect_debug =
 };
 static CRITICAL_SECTION handle_map_cs = { &handle_map_critsect_debug, -1, 0, 0, 0, 0 };
 
-static NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret )
+NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret )
 {
     struct object_header *header;
     void *obj;
@@ -3288,15 +3288,6 @@ BOOLEAN WINAPI Ke386SetIoAccessMap(ULONG flag, PVOID buffer)
 {
     FIXME("(%d %p) stub\n", flag, buffer);
     return FALSE;
-}
-
-/*****************************************************
- *           IoCreateSynchronizationEvent (NTOSKRNL.EXE.@)
- */
-PKEVENT WINAPI IoCreateSynchronizationEvent(PUNICODE_STRING name, PHANDLE handle)
-{
-    FIXME("(%p %p) stub\n", name, handle);
-    return (KEVENT *)0xdeadbeaf;
 }
 
 /*****************************************************
