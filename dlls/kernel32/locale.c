@@ -339,7 +339,7 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 static int charset_cmp( const void *name, const void *entry )
 {
     const struct charset_entry *charset = entry;
-    return strcasecmp( name, charset->charset_name );
+    return _strnicmp( name, charset->charset_name, -1 );
 }
 
 /***********************************************************************

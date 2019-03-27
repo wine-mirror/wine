@@ -1391,7 +1391,7 @@
 @ cdecl -private _strcmpi(str str) _stricmp
 @ cdecl -private _stricmp(str str)
 @ cdecl -private _strlwr(str)
-@ cdecl -private _strnicmp(str str long)
+@ cdecl _strnicmp(str str long) #add _strnicmp to importlib so it can be used instead of strncasecmp
 @ cdecl -private _strupr(str)
 @ cdecl -private _tolower(long) NTDLL__tolower
 @ cdecl -private _toupper(long) NTDLL__toupper

@@ -2886,6 +2886,8 @@ NTSYSAPI NTSTATUS  WINAPI RtlpUnWaitCriticalSection(RTL_CRITICAL_SECTION *);
 NTSYSAPI NTSTATUS  WINAPI vDbgPrintEx(ULONG,ULONG,LPCSTR,__ms_va_list);
 NTSYSAPI NTSTATUS  WINAPI vDbgPrintExWithPrefix(LPCSTR,ULONG,ULONG,LPCSTR,__ms_va_list);
 
+NTSYSAPI int __cdecl _strnicmp(LPCSTR,LPCSTR,size_t);
+
 /* 32-bit only functions */
 
 #ifndef _WIN64

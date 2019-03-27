@@ -301,8 +301,8 @@ static void create_hardware_branch(void)
                     fgets(cStr, sizeof(cStr), procfile);
                     fclose(procfile);
                     nType = DRIVE_UNKNOWN;
-                    if (strncasecmp(cStr, "disk", 4)  == 0) nType = DRIVE_FIXED;
-                    if (strncasecmp(cStr, "cdrom", 5) == 0) nType = DRIVE_CDROM;
+                    if (_strnicmp(cStr, "disk", 4)  == 0) nType = DRIVE_FIXED;
+                    if (_strnicmp(cStr, "cdrom", 5) == 0) nType = DRIVE_CDROM;
 
                     if (nType == DRIVE_UNKNOWN) continue;
                 }
