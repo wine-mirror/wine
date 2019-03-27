@@ -463,6 +463,14 @@ static const IID * const cstyle_iids[] = {
     NULL
 };
 
+static const IID * const computed_style_iids[] = {
+    &IID_IUnknown,
+    &IID_IDispatch,
+    &IID_IDispatchEx,
+    &IID_IHTMLCSSStyleDeclaration,
+    NULL
+};
+
 static const IID * const img_factory_iids[] = {
     &IID_IUnknown,
     &IID_IDispatch,
@@ -6879,7 +6887,10 @@ static void test_window(IHTMLDocument2 *doc)
 
     hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow7, (void**)&window7);
     if(SUCCEEDED(hres)) {
+        IHTMLCSSStyleDeclaration *computed_style;
         IHTMLPerformance *performance;
+        IHTMLDOMNode *node;
+        IHTMLElement *elem;
 
         ok(window7 != NULL, "window7 == NULL\n");
 
@@ -6907,6 +6918,25 @@ static void test_window(IHTMLDocument2 *doc)
 
             IHTMLWindow7_Release(window7);
         }
+
+        hres = IHTMLDocument2_get_body(doc, &elem);
+        ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+        hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLDOMNode, (void**)&node);
+        ok(hres == S_OK, "Could not get IHTMLDOMNode iface: %08x\n", hres);
+
+        hres = IHTMLWindow7_getComputedStyle(window7, node, NULL, &computed_style);
+        ok(hres == S_OK, "getComputedStyle failed: %08x\n", hres);
+
+        test_disp((IUnknown*)computed_style, &DIID_DispHTMLW3CComputedStyle, NULL, "[object]");
+        test_ifaces((IUnknown*)computed_style, computed_style_iids);
+
+        test_read_only_style(computed_style);
+
+        IHTMLCSSStyleDeclaration_Release(computed_style);
+
+        IHTMLDOMNode_Release(node);
+        IHTMLElement_Release(elem);
     }else {
         win_skip("IHTMLWindow7 not supported\n");
     }

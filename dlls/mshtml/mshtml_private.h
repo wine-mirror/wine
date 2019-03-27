@@ -128,6 +128,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispHTMLTextAreaElement) \
     XDIID(DispHTMLTitleElement) \
     XDIID(DispHTMLUnknownElement) \
+    XDIID(DispHTMLW3CComputedStyle) \
     XDIID(DispHTMLWindow2) \
     XDIID(DispHTMLXMLHttpRequest) \
     XDIID(HTMLDocumentEvents) \

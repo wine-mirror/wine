@@ -38,6 +38,7 @@
 #include "mshtml_private.h"
 #include "htmlevent.h"
 #include "htmlscript.h"
+#include "htmlstyle.h"
 #include "pluginhost.h"
 #include "binding.h"
 #include "resource.h"
@@ -2322,8 +2323,42 @@ static HRESULT WINAPI HTMLWindow7_getComputedStyle(IHTMLWindow7 *iface, IHTMLDOM
                                                    BSTR pseudo_elt, IHTMLCSSStyleDeclaration **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    FIXME("(%p)->(%p %s %p)\n", This, node, debugstr_w(pseudo_elt), p);
-    return E_NOTIMPL;
+    nsIDOMCSSStyleDeclaration *nsstyle;
+    nsAString pseudo_elt_str;
+    HTMLElement *element;
+    IHTMLElement *elem;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %s %p)\n", This, node, debugstr_w(pseudo_elt), p);
+
+    if(!This->outer_window)
+        return E_UNEXPECTED;
+
+    hres = IHTMLDOMNode_QueryInterface(node, &IID_IHTMLElement, (void**)&elem);
+    if(FAILED(hres))
+        return hres;
+
+    element = unsafe_impl_from_IHTMLElement(elem);
+    if(!element) {
+        WARN("Not our element\n");
+        IHTMLElement_Release(elem);
+        return E_INVALIDARG;
+    }
+
+    nsAString_Init(&pseudo_elt_str, NULL);
+    nsres = nsIDOMWindow_GetComputedStyle(This->outer_window->nswindow, element->dom_element,
+                                          &pseudo_elt_str, &nsstyle);
+    IHTMLElement_Release(elem);
+    nsAString_Finish(&pseudo_elt_str);
+    if(NS_FAILED(nsres)) {
+        FIXME("GetComputedStyle failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = create_computed_style(nsstyle, p);
+    nsIDOMCSSStyleDeclaration_Release(nsstyle);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLWindow7_get_styleMedia(IHTMLWindow7 *iface, IHTMLStyleMedia **p)

@@ -10236,6 +10236,28 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
     return S_OK;
 }
 
+static const tid_t HTMLW3CComputedStyle_iface_tids[] = {
+    0
+};
+static dispex_static_data_t HTMLW3CComputedStyle_dispex = {
+    &CSSStyle_dispex_vtbl,
+    DispHTMLW3CComputedStyle_tid,
+    HTMLW3CComputedStyle_iface_tids,
+    CSSStyle_init_dispex_info
+};
+
+HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, IHTMLCSSStyleDeclaration **p)
+{
+    CSSStyle *style;
+
+    if(!(style = heap_alloc_zero(sizeof(*style))))
+        return E_OUTOFMEMORY;
+
+    init_css_style(style, nsstyle, NULL, &HTMLW3CComputedStyle_dispex, COMPAT_MODE_IE11);
+    *p = &style->IHTMLCSSStyleDeclaration_iface;
+    return S_OK;
+}
+
 HRESULT get_elem_style(HTMLElement *elem, styleid_t styleid, BSTR *ret)
 {
     nsIDOMCSSStyleDeclaration *style;
