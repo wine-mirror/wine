@@ -650,8 +650,15 @@ static HRESULT WINAPI HTMLRectCollection_Invoke(IHTMLRectCollection *iface, DISP
 static HRESULT WINAPI HTMLRectCollection_get_length(IHTMLRectCollection *iface, LONG *p)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    UINT32 length;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMClientRectList_GetLength(This->rect_list, &length);
+    assert(nsres == NS_OK);
+    *p = length;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLRectCollection_get__newEnum(IHTMLRectCollection *iface, IUnknown **p)
@@ -681,12 +688,82 @@ static const IHTMLRectCollectionVtbl HTMLRectCollectionVtbl = {
     HTMLRectCollection_item
 };
 
+static inline HTMLRectCollection *HTMLRectCollection_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLRectCollection, dispex);
+}
+
+static HRESULT HTMLRectCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+    UINT32 len = 0;
+    DWORD idx = 0;
+    WCHAR *ptr;
+
+    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+        idx = idx*10 + (*ptr-'0');
+    if(*ptr)
+        return DISP_E_UNKNOWNNAME;
+
+    nsIDOMClientRectList_GetLength(This->rect_list, &len);
+    if(idx >= len)
+        return DISP_E_UNKNOWNNAME;
+
+    *dispid = MSHTML_DISPID_CUSTOM_MIN + idx;
+    TRACE("ret %x\n", *dispid);
+    return S_OK;
+}
+
+static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        nsIDOMClientRect *rect;
+        IHTMLRect *html_rect;
+        nsresult nsres;
+        HRESULT hres;
+
+        nsres = nsIDOMClientRectList_Item(This->rect_list, id - MSHTML_DISPID_CUSTOM_MIN, &rect);
+        if(NS_FAILED(nsres) || !rect) {
+            WARN("Unknown item\n");
+            return DISP_E_UNKNOWNNAME;
+        }
+
+        hres = create_html_rect(rect, &html_rect);
+        nsIDOMClientRect_Release(rect);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = (IDispatch*)html_rect;
+        break;
+    }
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
+    NULL,
+    HTMLRectCollection_get_dispid,
+    HTMLRectCollection_invoke,
+    NULL
+};
 static const tid_t HTMLRectCollection_iface_tids[] = {
     IHTMLRectCollection_tid,
     0
 };
 static dispex_static_data_t HTMLRectCollection_dispex = {
-    NULL,
+    &HTMLRectCollection_dispex_vtbl,
     IHTMLRectCollection_tid,
     HTMLRectCollection_iface_tids
 };

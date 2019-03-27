@@ -211,6 +211,23 @@ function test_compare_position() {
     next_test();
 }
 
+function test_rects() {
+    document.body.innerHTML = '<div>test</div>';
+    var elem = document.body.firstChild;
+    var rects = elem.getClientRects();
+    var rect = elem.getBoundingClientRect();
+
+    ok(rects.length === 1, "rect.length = " + rects.length);
+    ok(rects[0].top === rect.top, "rects[0].top = " + rects[0].top + " rect.top = " + rect.top);
+    ok(rects[0].bottom === rect.bottom, "rects[0].bottom = " + rects[0].bottom + " rect.bottom = " + rect.bottom);
+
+    elem = document.createElement("style");
+    rects = elem.getClientRects();
+    ok(rects.length === 0, "rect.length = " + rects.length);
+
+    next_test();
+}
+
 function test_document_owner() {
     var node;
 
@@ -339,6 +356,7 @@ var tests = [
     test_anchor,
     test_query_selector,
     test_compare_position,
+    test_rects,
     test_document_owner,
     test_style_properties,
     test_storage
