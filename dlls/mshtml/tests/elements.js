@@ -235,6 +235,7 @@ function test_document_owner() {
 function test_style_properties() {
     var style = document.body.style;
     var current_style = document.body.currentStyle;
+    var computed_style = window.getComputedStyle(document.body);
     var val;
 
     style.cssFloat = "left";
@@ -300,6 +301,22 @@ function test_style_properties() {
     ok(style.clip === "rect(1px, 1px, 10px, 10px)", "style.clip = " + style.clip);
     ok(current_style.clip === "rect(1px, 1px, 10px, 10px)",
        "current_style.clip = " + current_style.clip);
+    ok(computed_style.clip === "rect(1px, 1px, 10px, 10px)",
+       "computed_style.clip = " + current_style.clip);
+
+    document.body.style.zIndex = 2;
+    ok(current_style.zIndex === 2, "current_style.zIndex = " + current_style.zIndex);
+    ok(computed_style.zIndex === 2, "computed_style.zIndex = " + computed_style.zIndex);
+
+    try {
+        current_style.zIndex = 1;
+        ok(false, "expected exception");
+    }catch(e) {}
+
+    try {
+        computed_style.zIndex = 1;
+        ok(false, "expected exception");
+    }catch(e) {}
 
     next_test();
 }
