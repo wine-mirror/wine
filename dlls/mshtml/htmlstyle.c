@@ -3158,6 +3158,8 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 
     /* filter property is a special case */
     if(style_entry->compat_dispid == DISPID_IHTMLSTYLE_FILTER) {
+        if(!This->elem)
+            return E_UNEXPECTED;
         *pfSuccess = variant_bool(This->elem->filter && *This->elem->filter);
         heap_free(This->elem->filter);
         This->elem->filter = NULL;
