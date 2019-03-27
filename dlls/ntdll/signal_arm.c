@@ -283,9 +283,12 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
 void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context );
 __ASM_GLOBAL_FUNC( set_cpu_context,
                    ".arm\n\t"
-                   "ldr r1, [r0, #0x44]\n\t"  /* context->Cpsr */
-                   "msr CPSR_f, r1\n\t"
+                   "ldr r2, [r0, #0x44]\n\t"  /* context->Cpsr */
+                   "tst r2, #0x20\n\t"        /* thumb? */
                    "ldr r1, [r0, #0x40]\n\t"  /* context->Pc */
+                   "orrne r1, r1, #1\n\t"     /* Adjust PC according to thumb */
+                   "biceq r1, r1, #1\n\t"     /* Adjust PC according to arm */
+                   "msr CPSR_f, r2\n\t"
                    "ldr lr, [r0, #0x3c]\n\t"  /* context->Lr */
                    "ldr sp, [r0, #0x38]\n\t"  /* context->Sp */
                    "push {r1}\n\t"
