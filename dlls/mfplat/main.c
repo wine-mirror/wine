@@ -2013,6 +2013,7 @@ struct async_stream_op
         const BYTE *src;
         BYTE *dest;
     } u;
+    QWORD position;
     ULONG requested_length;
     ULONG actual_length;
     IMFAsyncResult *caller;
@@ -2087,6 +2088,7 @@ static HRESULT bytestream_create_io_request(struct bytestream *stream, enum asyn
     op->IUnknown_iface.lpVtbl = &async_stream_op_vtbl;
     op->refcount = 1;
     op->u.src = data;
+    op->position = stream->position;
     op->requested_length = size;
     op->type = type;
     if (FAILED(hr = MFCreateAsyncResult((IUnknown *)&stream->IMFByteStream_iface, callback, state, &op->caller)))
@@ -2645,7 +2647,7 @@ static HRESULT WINAPI bytestream_stream_read_callback_Invoke(IMFAsyncCallback *i
 
     op = impl_async_stream_op_from_IUnknown(object);
 
-    position.QuadPart = stream->position;
+    position.QuadPart = op->position;
     if (SUCCEEDED(hr = IStream_Seek(stream->stream, position, STREAM_SEEK_SET, NULL)))
     {
         if (SUCCEEDED(hr = IStream_Read(stream->stream, op->u.dest, op->requested_length, &op->actual_length)))
@@ -2676,7 +2678,7 @@ static HRESULT WINAPI bytestream_stream_write_callback_Invoke(IMFAsyncCallback *
 
     op = impl_async_stream_op_from_IUnknown(object);
 
-    position.QuadPart = stream->position;
+    position.QuadPart = op->position;
     if (SUCCEEDED(hr = IStream_Seek(stream->stream, position, STREAM_SEEK_SET, NULL)))
     {
         if (SUCCEEDED(hr = IStream_Write(stream->stream, op->u.src, op->requested_length, &op->actual_length)))
