@@ -4211,7 +4211,16 @@ static void test_lighting(void)
 
     light_desc.dwFlags = D3DLIGHT_ACTIVE;
     hr = IDirect3DLight_SetLight(light, (D3DLIGHT *)&light_desc);
-    ok(SUCCEEDED(hr), "Failed to set light, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DViewport3_DeleteLight(viewport, light);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    light_desc.dwFlags = 0;
+    hr = IDirect3DLight_GetLight(light, (D3DLIGHT *)&light_desc);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(light_desc.dwFlags == D3DLIGHT_ACTIVE, "Got unexpected flags %#x.\n", light_desc.dwFlags);
+
+    hr = IDirect3DViewport3_AddLight(viewport, light);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
