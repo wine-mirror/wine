@@ -4966,7 +4966,8 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 {
     HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
 
-    detach_document_node(This);
+    TRACE("(%p)\n", This);
+
     heap_free(This->event_vector);
     ConnectionPointContainer_Destroy(&This->basedoc.cp_container);
 }
@@ -4994,6 +4995,7 @@ static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
         nsIDOMHTMLDocument *nsdoc = This->nsdoc;
 
         release_document_mutation(This);
+        detach_document_node(This);
         This->nsdoc = NULL;
         nsIDOMHTMLDocument_Release(nsdoc);
         This->window = NULL;
