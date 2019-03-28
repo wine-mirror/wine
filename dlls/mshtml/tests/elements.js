@@ -200,11 +200,17 @@ function test_query_selector() {
 
     var e = document.querySelector("nomatch");
     ok(e === null, "e = " + e);
+    e = document.body.querySelector("nomatch");
+    ok(e === null, "e = " + e);
 
     e = document.querySelector(".class1");
     ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
+    e = document.body.querySelector(".class1");
+    ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
 
     e = document.querySelector("a");
+    ok(e.tagName === "A", "e.tagName = " + e.tagName);
+    e = document.body.querySelector("a");
     ok(e.tagName === "A", "e.tagName = " + e.tagName);
 
     next_test();
