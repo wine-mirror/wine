@@ -279,9 +279,11 @@ function test_document_owner() {
 }
 
 function test_style_properties() {
-    var style = document.body.style;
-    var current_style = document.body.currentStyle;
-    var computed_style = window.getComputedStyle(document.body);
+    document.body.innerHTML = '<div>test</div><svg></svg>';
+    var elem = document.body.firstChild;
+    var style = elem.style;
+    var current_style = elem.currentStyle;
+    var computed_style = window.getComputedStyle(elem);
     var val;
 
     style.cssFloat = "left";
@@ -350,7 +352,7 @@ function test_style_properties() {
     ok(computed_style.clip === "rect(1px, 1px, 10px, 10px)",
        "computed_style.clip = " + current_style.clip);
 
-    document.body.style.zIndex = 2;
+    style.zIndex = 2;
     ok(current_style.zIndex === 2, "current_style.zIndex = " + current_style.zIndex);
     ok(computed_style.zIndex === 2, "computed_style.zIndex = " + computed_style.zIndex);
 
@@ -363,6 +365,12 @@ function test_style_properties() {
         computed_style.zIndex = 1;
         ok(false, "expected exception");
     }catch(e) {}
+
+    elem = elem.nextSibling;
+    computed_style = window.getComputedStyle(elem);
+
+    elem.style.zIndex = 4;
+    ok(computed_style.zIndex === 4, "computed_style.zIndex = " + computed_style.zIndex);
 
     next_test();
 }

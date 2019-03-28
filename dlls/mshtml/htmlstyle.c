@@ -10171,6 +10171,7 @@ static dispex_static_data_t HTMLStyle_dispex = {
 static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration **ret)
 {
     nsIDOMElementCSSInlineStyle *nselemstyle;
+    nsIDOMSVGElement *svg_element;
     nsresult nsres;
 
     if(!elem->dom_element) {
@@ -10180,16 +10181,29 @@ static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration 
 
     nsres = nsIDOMElement_QueryInterface(elem->dom_element, &IID_nsIDOMElementCSSInlineStyle,
             (void**)&nselemstyle);
-    assert(nsres == NS_OK);
-
-    nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, ret);
-    nsIDOMElementCSSInlineStyle_Release(nselemstyle);
-    if(NS_FAILED(nsres)) {
-        ERR("GetStyle failed: %08x\n", nsres);
-        return E_FAIL;
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, ret);
+        nsIDOMElementCSSInlineStyle_Release(nselemstyle);
+        if(NS_FAILED(nsres)) {
+            ERR("GetStyle failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+        return S_OK;
     }
 
-    return S_OK;
+    nsres = nsIDOMElement_QueryInterface(elem->dom_element, &IID_nsIDOMSVGElement, (void**)&svg_element);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIDOMSVGElement_GetStyle(svg_element, ret);
+        nsIDOMSVGElement_Release(svg_element);
+        if(NS_FAILED(nsres)) {
+            ERR("GetStyle failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+        return S_OK;
+    }
+
+    FIXME("Unsupported element type\n");
+    return E_NOTIMPL;
 }
 
 void init_css_style(CSSStyle *style, nsIDOMCSSStyleDeclaration *nsstyle, style_qi_t qi,

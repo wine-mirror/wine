@@ -1154,6 +1154,19 @@ interface nsIDOMHTMLElement : nsIDOMElement
 
 [
     object,
+    uuid(c63517c5-8bab-4cd1-8694-bccafc32a195),
+    local
+]
+interface nsIDOMSVGElement : nsIDOMElement
+{
+    nsresult GetOwnerSVGElement(nsIDOMSVGElement **aOwnerSVGElement);
+    nsresult GetViewportElement(nsIDOMSVGElement **aViewportElement);
+    nsresult GetSVGClassName(nsISupports **aClassName);
+    nsresult GetStyle(nsIDOMCSSStyleDeclaration **aStyle);
+}
+
+[
+    object,
     uuid(59b80014-00f5-412d-846f-725494122d42),
     local
 ]
