@@ -174,15 +174,19 @@ function test_createElementNS() {
 
     elem = document.createElementNS(null, "test");
     ok(elem.tagName === "test", "elem.tagName = " + elem.tagName);
+    ok(elem.namespaceURI === null, "elem.namespaceURI = " + elem.namespaceURI);
 
     elem = document.createElementNS(svg_ns, "test");
     ok(elem.tagName === "test", "elem.tagName = " + elem.tagName);
+    ok(elem.namespaceURI === svg_ns, "elem.namespaceURI = " + elem.namespaceURI);
 
     elem = document.createElementNS(svg_ns, "svg");
     ok(elem.tagName === "svg", "elem.tagName = " + elem.tagName);
+    ok(elem.namespaceURI === svg_ns, "elem.namespaceURI = " + elem.namespaceURI);
 
     elem = document.createElementNS("test", "svg");
     ok(elem.tagName === "svg", "elem.tagName = " + elem.tagName);
+    ok(elem.namespaceURI === "test", "elem.namespaceURI = " + elem.namespaceURI);
 
     next_test();
 }
