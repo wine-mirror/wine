@@ -168,6 +168,25 @@ function test_getElementsByClassName() {
     next_test();
 }
 
+function test_createElementNS() {
+    var svg_ns = "http://www.w3.org/2000/svg";
+    var elem;
+
+    elem = document.createElementNS(null, "test");
+    ok(elem.tagName === "test", "elem.tagName = " + elem.tagName);
+
+    elem = document.createElementNS(svg_ns, "test");
+    ok(elem.tagName === "test", "elem.tagName = " + elem.tagName);
+
+    elem = document.createElementNS(svg_ns, "svg");
+    ok(elem.tagName === "svg", "elem.tagName = " + elem.tagName);
+
+    elem = document.createElementNS("test", "svg");
+    ok(elem.tagName === "svg", "elem.tagName = " + elem.tagName);
+
+    next_test();
+}
+
 function test_query_selector() {
     document.body.innerHTML = '<div class="class1">'
         + '<div class="class1"></div>'
@@ -351,6 +370,7 @@ var tests = [
     test_textContent,
     test_ElementTraversal,
     test_getElementsByClassName,
+    test_createElementNS,
     test_head,
     test_iframe,
     test_anchor,

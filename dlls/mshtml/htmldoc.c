@@ -3288,8 +3288,39 @@ static HRESULT WINAPI HTMLDocument7_getElementsByTagNameNS(IHTMLDocument7 *iface
 static HRESULT WINAPI HTMLDocument7_createElementNS(IHTMLDocument7 *iface, VARIANT *pvarNS, BSTR bstrTag, IHTMLElement **newElem)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(bstrTag), newElem);
-    return E_NOTIMPL;
+    nsIDOMElement *dom_element;
+    HTMLElement *element;
+    nsAString ns, tag;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(bstrTag), newElem);
+
+    if(!This->doc_node->nsdoc) {
+        FIXME("NULL nsdoc\n");
+        return E_FAIL;
+    }
+
+    if(pvarNS && V_VT(pvarNS) != VT_NULL && V_VT(pvarNS) != VT_BSTR)
+        FIXME("Unsupported namespace %s\n", debugstr_variant(pvarNS));
+
+    nsAString_InitDepend(&ns, pvarNS && V_VT(pvarNS) == VT_BSTR ? V_BSTR(pvarNS) : NULL);
+    nsAString_InitDepend(&tag, bstrTag);
+    nsres = nsIDOMHTMLDocument_CreateElementNS(This->doc_node->nsdoc, &ns, &tag, &dom_element);
+    nsAString_Finish(&ns);
+    nsAString_Finish(&tag);
+    if(NS_FAILED(nsres)) {
+        WARN("CreateElementNS failed: %08x\n", nsres);
+        return map_nsresult(nsres);
+    }
+
+    hres = HTMLElement_Create(This->doc_node, (nsIDOMNode*)dom_element, FALSE, &element);
+    nsIDOMElement_Release(dom_element);
+    if(FAILED(hres))
+        return hres;
+
+    *newElem = &element->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument7_createAttributeNS(IHTMLDocument7 *iface, VARIANT *pvarNS,
