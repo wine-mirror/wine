@@ -1361,7 +1361,7 @@ static void test_FileCollection(void)
 static void test_DriveCollection(void)
 {
     IDriveCollection *drives;
-    IEnumVARIANT *enumvar, *clone;
+    IEnumVARIANT *enumvar;
     ULONG fetched;
     VARIANT var;
     HRESULT hr;
@@ -1398,12 +1398,7 @@ static void test_DriveCollection(void)
     hr = IEnumVARIANT_Skip(enumvar, 1);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 
-    hr = IEnumVARIANT_Reset(enumvar);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IEnumVARIANT_Clone(enumvar, &clone);
-    if(hr == S_OK)
-        test_clone(enumvar, TRUE);
+    test_clone(enumvar, TRUE);
 
     while (IEnumVARIANT_Next(enumvar, 1, &var, &fetched) == S_OK) {
         IDrive *drive = (IDrive*)V_DISPATCH(&var);
