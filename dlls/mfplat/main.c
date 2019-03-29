@@ -4802,7 +4802,7 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
     data = (MFASYNCRESULT *)result;
     data->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, NULL, &resolver->stream_callback,
+    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, NULL, &resolver->url_callback,
             (IUnknown *)result);
     if (FAILED(hr))
     {
