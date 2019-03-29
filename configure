@@ -1564,6 +1564,7 @@ enable_traffic
 enable_twain_32
 enable_tzres
 enable_ucrtbase
+enable_uianimation
 enable_uiautomationcore
 enable_uiribbon
 enable_unicows
@@ -19970,6 +19971,7 @@ wine_fn_config_makefile dlls/typelib.dll16 enable_win16
 wine_fn_config_makefile dlls/tzres enable_tzres
 wine_fn_config_makefile dlls/ucrtbase enable_ucrtbase
 wine_fn_config_makefile dlls/ucrtbase/tests enable_tests
+wine_fn_config_makefile dlls/uianimation enable_uianimation
 wine_fn_config_makefile dlls/uiautomationcore enable_uiautomationcore
 wine_fn_config_makefile dlls/uiautomationcore/tests enable_tests
 wine_fn_config_makefile dlls/uiribbon enable_uiribbon
