@@ -31,7 +31,6 @@ my @dll_groups =
   "msvcirt",
   "msvcrt40",
   "msvcrt20",
-  "msvcrtd",
   "crtdll",
  ],
  [
