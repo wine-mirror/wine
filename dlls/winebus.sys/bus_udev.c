@@ -674,23 +674,23 @@ static NTSTATUS hidraw_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer,
 
 static NTSTATUS hidraw_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
 {
-    struct udev_device *hiddev;
+    struct udev_device *usbdev;
     struct platform_private *private = impl_from_DEVICE_OBJECT(device);
     WCHAR *str = NULL;
 
-    hiddev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "hid", NULL);
-    if (hiddev)
+    usbdev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "usb", "usb_device");
+    if (usbdev)
     {
         switch (index)
         {
             case HID_STRING_ID_IPRODUCT:
-                str = get_sysattr_string(hiddev, "product");
+                str = get_sysattr_string(usbdev, "product");
                 break;
             case HID_STRING_ID_IMANUFACTURER:
-                str = get_sysattr_string(hiddev, "manufacturer");
+                str = get_sysattr_string(usbdev, "manufacturer");
                 break;
             case HID_STRING_ID_ISERIALNUMBER:
-                str = get_sysattr_string(hiddev, "serial");
+                str = get_sysattr_string(usbdev, "serial");
                 break;
             default:
                 ERR("Unhandled string index %08x\n", index);
