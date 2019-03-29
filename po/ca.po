@@ -13545,9 +13545,8 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "El fitxer `%s' existeix. No s'ha sobreescrit."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
-msgstr ""
-"Desa el grup com a `%s per a evitar sobreescriure els fitxers originals."
+msgid "Save group as `%s' to prevent overwriting original files."
+msgstr "Desa el grup com a `%s' per a evitar sobreescriure els fitxers originals."
 
 #: progman.rc:84
 msgid "Libraries (*.dll)"

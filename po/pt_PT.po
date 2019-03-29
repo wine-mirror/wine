@@ -13526,7 +13526,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Ficheiro '%s' existe. Não sobreescrever."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr ""
 "Gravar grupo como '%s' para prevenir a sobreescrita dos ficheiros originais."
 

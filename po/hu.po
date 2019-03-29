@@ -13807,7 +13807,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "`%s' fájl létezik, ezért nem felülírható."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr ""
 "%s csoport mentése másként, megakadályozza az eredeti fájlok felülírását."
 

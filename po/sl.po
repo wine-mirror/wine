@@ -13838,7 +13838,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Datoteka `%s' že obstaja in ni bila prepisana."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "Shranite skupino kot `%s' in s tem preprečite prepis izvirnih datotek."
 
 #: progman.rc:84

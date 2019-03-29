@@ -13770,7 +13770,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "檔案 %s 已經存在。不覆蓋已有檔案。"
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "將程式組儲存為 %s 可以避免復蓋已有的檔案。"
 
 #: progman.rc:84

@@ -13433,7 +13433,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "`%s' が存在します。上書きしません。"
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "元のファイルを上書きしないため、グループを `%s' として保存しました。"
 
 #: progman.rc:84

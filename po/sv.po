@@ -13517,7 +13517,7 @@ msgstr "Filen '%s' fanns redan, och skrevs ej över."
 
 # TODO: closing quote missing?
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "Spara grupp som '%s' för att undvika att skriva över filer."
 
 #: progman.rc:84

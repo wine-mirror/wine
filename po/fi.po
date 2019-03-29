@@ -13302,7 +13302,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Tiedosto '%s' on olemassa. Ei kirjoitettu yli."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr ""
 "Tallenna ryhmä nimellä '%s' estääksesi kirjoittamisen alkuperäisen tiedoston "
 "yli."

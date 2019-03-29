@@ -13405,7 +13405,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "파일 '%s'이(가) 존재합니다. 덮어 쓸 수 없습니다."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "원본 파일을 덮어쓰는 것을 패해서 '%s'로 저장합니다."
 
 #: progman.rc:84

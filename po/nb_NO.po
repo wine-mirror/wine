@@ -13460,7 +13460,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Filen %s fantes allerede, og ble ikke overskrevet."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "Lagre gruppe som \"%s\" for å unngå å overskrive filer."
 
 #: progman.rc:84

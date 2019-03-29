@@ -13817,10 +13817,8 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Het bestand `%s' bestaat reeds. Het is niet overschreven."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
-msgstr ""
-"Groep opslaan als `%s om het overschrijven van originele bestanden te "
-"voorkomen."
+msgid "Save group as `%s' to prevent overwriting original files."
+msgstr "Groep opslaan als `%s' om het overschrijven van originele bestanden te voorkomen."
 
 #: progman.rc:84
 msgid "Libraries (*.dll)"

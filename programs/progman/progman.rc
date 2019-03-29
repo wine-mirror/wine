@@ -50,7 +50,7 @@ MAIN_MENU MENU
    MENUITEM "&Side by side\tShift+F4",  PM_SIDE_BY_SIDE
    MENUITEM "&Arrange Icons",       PM_ARRANGE
  }
- 
+
 POPUP "&Help" {
    MENUITEM "&Contents\tF1",            PM_CONTENTS
    MENUITEM "&About Program Manager",   PM_ABOUT_WINE
@@ -76,7 +76,7 @@ IDS_OUT_OF_MEMORY,		"Out of memory."
 IDS_WINHELP_ERROR,		"Help not available."
 IDS_UNKNOWN_FEATURE_s,		"Unknown feature in %s"
 IDS_FILE_NOT_OVERWRITTEN_s,	"File `%s' exists. Not overwritten."
-IDS_SAVE_GROUP_AS_s,		"Save group as `%s to prevent overwriting original files."
+IDS_SAVE_GROUP_AS_s,		"Save group as `%s' to prevent overwriting original files."
 IDS_NO_HOT_KEY,			"#msgctxt#hotkey#None"
 IDS_ALL_FILES,			"All files (*.*)"
 IDS_PROGRAMS,			"Programs"
