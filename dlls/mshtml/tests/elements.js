@@ -207,6 +207,8 @@ function test_query_selector() {
     ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
     e = document.body.querySelector(".class1");
     ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
+    ok(e.msMatchesSelector(".class1") === true, "msMatchesSelector returned " + e.msMatchesSelector(".class1"));
+    ok(e.msMatchesSelector(".class2") === false, "msMatchesSelector returned " + e.msMatchesSelector(".class2"));
 
     e = document.querySelector("a");
     ok(e.tagName === "A", "e.tagName = " + e.tagName);

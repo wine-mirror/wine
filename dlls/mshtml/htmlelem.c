@@ -4514,8 +4514,27 @@ static HRESULT WINAPI HTMLElement6_getElementsByClassName(IHTMLElement6 *iface, 
 static HRESULT WINAPI HTMLElement6_msMatchesSelector(IHTMLElement6 *iface, BSTR v, VARIANT_BOOL *pfMatches)
 {
     HTMLElement *This = impl_from_IHTMLElement6(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(v), pfMatches);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    cpp_bool b;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pfMatches);
+
+    if(!This->dom_element) {
+        FIXME("No dom element\n");
+        return E_UNEXPECTED;
+    }
+
+    nsAString_InitDepend(&nsstr, v);
+    nsres = nsIDOMElement_MozMatchesSelector(This->dom_element, &nsstr, &b);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        WARN("MozMatchesSelector failed: %08x\n", nsres);
+        return map_nsresult(nsres);
+    }
+
+    *pfMatches = b;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement6_put_onabort(IHTMLElement6 *iface, VARIANT v)
