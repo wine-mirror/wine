@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-03-28 14:46+0530\n"
+"PO-Revision-Date: 2019-03-29 20:25+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
@@ -127,7 +127,7 @@ msgid ""
 "details."
 msgstr ""
 "Wine වලට Gecko පැකේජයක් සොයා ගන්න බැරි උනා අවශ්ය වෙන්නේ HTML යෙදුන යෙදුම් හරියට වැඩ "
-"කරන්නට. Wine වලට ඔයා වෙනුවෙන් ඒක ස්වයංක්රීයවට බාගත කරන්න හා ස්ථාපන කරන්න පුළුවන්.\n"
+"කරන්නට. Wine වලට ඔයා වෙනුවෙන් ඒක ස්වයංක්රීයවට බාගත කරන්න හා ස්ථාපනය කරන්න පුළුවන්.\n"
 "\n"
 "සටහන: නිර්දේශ කරලා තියෙන්නේ ඔබගේ බෙදාහැරීම එකේ පැකේජ පාවිච්චි කරන්න. <a href="
 "\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> බලන්න "
@@ -173,7 +173,7 @@ msgid ""
 "details."
 msgstr ""
 "Wine වලට wine-mono පැකේජයක් සොයා ගන්න බැරි උනා අවශ්ය වෙන්නේ .NET යෙදුම් හරියට වැඩ "
-"කරන්නට. Wine වලට ඔයා වෙනුවෙන් ඒක ස්වයංක්රීයවට බාගත කරන්න හා ස්ථාපන කරන්න පුළුවන්.\n"
+"කරන්නට. Wine වලට ඔයා වෙනුවෙන් ඒක ස්වයංක්රීයවට බාගත කරන්න හා ස්ථාපනය කරන්න පුළුවන්.\n"
 "\n"
 "සටහන: නිර්දේශ කරලා තියෙන්නේ ඔබගේ බෙදාහැරීම එකේ පැකේජ පාවිච්චි කරන්න. <a href="
 "\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> බලන්න විස්තර "
@@ -188,7 +188,8 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"ඔබට ඉඩ දෙනවා අලුත් මෘදුකාංග ස්ථාපන කරන්නට, හෝ තියෙන මෘදුකාංග ඔබගේ පරිගණකෙන් ඉවත් කරන්නට."
+"ඔබට ඉඩ දෙනවා අලුත් මෘදුකාංග ස්ථාපනය කරන්නට, හෝ තියෙන මෘදුකාංග ඔබගේ පරිගණකෙන් ඉවත් "
+"කරන්නට."
 
 #: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
 msgid "Applications"
@@ -199,7 +200,7 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"'%s' අස්ථාපකය ක්රියාත්මක කරන්න බැහැ. ඔබට මේ ක්‍රමලේඛයේ අස්ථාපන සටහන රෙජිස්ටරයෙන් ඉවත් "
+"'%s' අස්ථාපකය ක්රියාත්මක කරන්න බැහැ. ඔබට මේ ක්‍රමලේඛයේ අස්ථාපනය සටහන රෙජිස්ටරයෙන් ඉවත් "
 "කරන්න ඕනෙද?"
 
 #: appwiz.rc:36
@@ -468,7 +469,7 @@ msgstr "ධාවක (&V):"
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
 #: winefile.rc:173
 msgid "&Read Only"
-msgstr "කියවීම පමණි (&R)"
+msgstr "කියවීම් පමණි (&R)"
 
 #: comdlg32.rc:179
 msgid "Save As..."
@@ -1390,9 +1391,8 @@ msgid "Certificate Type"
 msgstr "සහතික වර්ගය"
 
 #: crypt32.rc:62
-#, fuzzy
 msgid "Certificate Manifold"
-msgstr "සහතික"
+msgstr "සහතික Manifold"
 
 #: crypt32.rc:63
 msgid "Netscape Cert Type"
@@ -1516,7 +1516,7 @@ msgstr "CRL නොම්බරය"
 
 #: crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "ඩෙල්ටා CRL දර්ශකය"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
@@ -2819,7 +2819,7 @@ msgstr ""
 
 #: cryptui.rc:127
 msgid "Protects e-mail messages"
-msgstr ""
+msgstr "ඊමේල් පණිවිඩ ආරක්ෂා කරනවා"
 
 #: cryptui.rc:128
 msgid "Allows secure communication over the Internet"
@@ -3033,7 +3033,7 @@ msgstr "ජපන්"
 
 #: gdi32.rc:39
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "චීන GB2312"
 
 #: gdi32.rc:40
 msgid "Hangul"
@@ -3041,7 +3041,7 @@ msgstr "හැන්ගුල්"
 
 #: gdi32.rc:41
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "චීන BIG5"
 
 #: gdi32.rc:42
 msgid "Hangul(Johab)"
@@ -3277,7 +3277,7 @@ msgstr "ප්‍රියතමයන් (&F)"
 
 #: ieframe.rc:55 regedit.rc:74
 msgid "&Add to Favorites..."
-msgstr ""
+msgstr "ප්‍රියතමයන් වලට එක් කරන්න... (&A)"
 
 #: ieframe.rc:60
 msgid "&About Internet Explorer"
@@ -3395,11 +3395,12 @@ msgid ""
 msgstr ""
 
 #: inetcpl.rc:79
-#, fuzzy
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
-msgstr "මුර පද\n"
+msgstr ""
+"මුර පද\n"
+"සුරැකපු මුර පද ඔබ පෝරම් වලට ඇතුල් කරපු."
 
 #: inetcpl.rc:82 progman.rc:67
 msgid "Delete"
@@ -4178,7 +4179,7 @@ msgstr ""
 
 #: winerror.mc:583
 msgid "Same drive.\n"
-msgstr ""
+msgstr "එකම ධාවකය.\n"
 
 #: winerror.mc:588
 msgid "Not top-level directory.\n"
@@ -4338,7 +4339,7 @@ msgstr ""
 
 #: winerror.mc:778
 msgid "IOPL not enabled.\n"
-msgstr "IOPL සක්රීය කරල නැහැ.\n"
+msgstr "IOPL සබල කරල නැහැ.\n"
 
 #: winerror.mc:783
 msgid "Invalid SEGDPL in %1.\n"
@@ -4905,21 +4906,19 @@ msgstr ""
 
 #: winerror.mc:1478
 msgid "Newer windows version needed.\n"
-msgstr "අලුත් windows අනුවාදයක් අවශ්යයි.\n"
+msgstr "අලුත් Windows අනුවාදයක් අවශ්යයි.\n"
 
 #: winerror.mc:1483
 msgid "Wrong operating system.\n"
 msgstr "මෙහෙයුම් පද්ධතිය වැරදි.\n"
 
 #: winerror.mc:1488
-#, fuzzy
 msgid "Single-instance application.\n"
-msgstr "යෙදුම.\n"
+msgstr "එක අවස්ථාව යෙදුම.\n"
 
 #: winerror.mc:1493
-#, fuzzy
 msgid "Real-mode application.\n"
-msgstr "යෙදුම.\n"
+msgstr "තාත්වික ප්‍රකාරය යෙදුම.\n"
 
 #: winerror.mc:1498
 msgid "Invalid DLL.\n"
@@ -5046,9 +5045,8 @@ msgid "No network or bad path.\n"
 msgstr ""
 
 #: winerror.mc:1653
-#, fuzzy
 msgid "Invalid network provider name.\n"
-msgstr "අවලංගු ජාල"
+msgstr "අවලංගු ජාල සපයන්නා නම.\n"
 
 #: winerror.mc:1658
 msgid "Cannot open network connection profile.\n"
@@ -5064,39 +5062,39 @@ msgstr "බහලුවක් නෙමෙයි.\n"
 
 #: winerror.mc:1673
 msgid "Extended error.\n"
-msgstr ""
+msgstr "විස්තෘත දෝෂයක්.\n"
 
 #: winerror.mc:1678
 msgid "Invalid group name.\n"
-msgstr "අවලංගු සමූහය නාමය.\n"
+msgstr "අවලංගු සමූහය නම.\n"
 
 #: winerror.mc:1683
 msgid "Invalid computer name.\n"
-msgstr "අවලංගු පරිගණක නාමය.\n"
+msgstr "අවලංගු පරිගණක නම.\n"
 
 #: winerror.mc:1688
 msgid "Invalid event name.\n"
-msgstr "අවලංගු සිද්ධිය නාමය.\n"
+msgstr "අවලංගු සිද්ධිය නම.\n"
 
 #: winerror.mc:1693
 msgid "Invalid domain name.\n"
-msgstr "අවලංගු වසම් නාමය.\n"
+msgstr "අවලංගු වසම් නම.\n"
 
 #: winerror.mc:1698
 msgid "Invalid service name.\n"
-msgstr "අවලංගු සේවාව නාමය.\n"
+msgstr "අවලංගු සේවාව නම.\n"
 
 #: winerror.mc:1703
 msgid "Invalid network name.\n"
-msgstr "අවලංගු ජාල නාමය.\n"
+msgstr "අවලංගු ජාල නම.\n"
 
 #: winerror.mc:1708
 msgid "Invalid share name.\n"
-msgstr "අවලංගු හවුල නාමය.\n"
+msgstr "අවලංගු හවුල නම.\n"
 
 #: winerror.mc:1718
 msgid "Invalid message name.\n"
-msgstr "අවලංගු පණිවිඩයේ නාමය.\n"
+msgstr "අවලංගු පණිවිඩයේ නම.\n"
 
 #: winerror.mc:1723
 msgid "Invalid message destination.\n"
@@ -5152,19 +5150,19 @@ msgstr "සබැඳුම සක්‍රියයි.\n"
 
 #: winerror.mc:1788
 msgid "Network unreachable.\n"
-msgstr ""
+msgstr "ජාලයට ලඟාවිය නොහැකිය.\n"
 
 #: winerror.mc:1793
 msgid "Host unreachable.\n"
-msgstr ""
+msgstr "සත්කාරකයට ලඟාවිය නොහැකිය.\n"
 
 #: winerror.mc:1798
 msgid "Protocol unreachable.\n"
-msgstr ""
+msgstr "ප්‍රොටෝකෝලයට ලඟාවිය නොහැකිය.\n"
 
 #: winerror.mc:1803
 msgid "Port unreachable.\n"
-msgstr ""
+msgstr "තොට ලඟාවිය නොහැකිය.\n"
 
 #: winerror.mc:1808
 msgid "Request aborted.\n"
@@ -5279,9 +5277,8 @@ msgid "Invalid owner.\n"
 msgstr "අවලංගු හිමිකරු.\n"
 
 #: winerror.mc:1948
-#, fuzzy
 msgid "Invalid primary group.\n"
-msgstr "අවලංගු"
+msgstr "අවලංගු මූලික සමූහය.\n"
 
 #: winerror.mc:1953
 msgid "No impersonation token.\n"
@@ -5309,7 +5306,7 @@ msgstr ""
 
 #: winerror.mc:1983
 msgid "Invalid account name.\n"
-msgstr "අවලංගු ගිණුම් නාමය.\n"
+msgstr "අවලංගු ගිණුම් නම.\n"
 
 #: winerror.mc:1988
 msgid "User already exists.\n"
@@ -5360,7 +5357,6 @@ msgid "Account restriction.\n"
 msgstr ""
 
 #: winerror.mc:2048
-#, fuzzy
 msgid "Invalid logon hours.\n"
 msgstr "අවලංගු යොමුකය පැය.\n"
 
@@ -5401,23 +5397,20 @@ msgid "Invalid SID.\n"
 msgstr "අවලංගු SID එකක්.\n"
 
 #: winerror.mc:2098
-#, fuzzy
 msgid "Invalid security descriptor.\n"
-msgstr "අවලංගු"
+msgstr "අවලංගු ආරක්ෂණය සූචකයක්.\n"
 
 #: winerror.mc:2103
 msgid "Bad inherited ACL.\n"
-msgstr ""
+msgstr "හොඳ නැති උරුම වී තිබෙන්නේ ACL එකක්.\n"
 
 #: winerror.mc:2108
-#, fuzzy
 msgid "Server disabled.\n"
-msgstr "සේවාදායකය"
+msgstr "සේවාදායකය අක්‍රිය කරලා.\n"
 
 #: winerror.mc:2113
-#, fuzzy
 msgid "Server not disabled.\n"
-msgstr "සේවාදායකය"
+msgstr "සේවාදායකය අක්‍රිය කරලා නැහැ.\n"
 
 #: winerror.mc:2118
 msgid "Invalid ID authority.\n"
@@ -5449,7 +5442,7 @@ msgstr "හොඳ නැති සංකේතය වර්ගය.\n"
 
 #: winerror.mc:2153
 msgid "No security on object.\n"
-msgstr ""
+msgstr "වස්තුවට ආරක්ෂණය නැහැ.\n"
 
 #: winerror.mc:2158
 msgid "Can't access domain information.\n"
@@ -5681,11 +5674,11 @@ msgstr ""
 
 #: winerror.mc:2448
 msgid "Class already exists.\n"
-msgstr ""
+msgstr "පන්තිය දැනටමත් තියෙනවා.\n"
 
 #: winerror.mc:2453
 msgid "Class does not exist.\n"
-msgstr ""
+msgstr "පන්තිය තියෙන්නෙ නැහැ.\n"
 
 #: winerror.mc:2458
 msgid "Class has open windows.\n"
@@ -6022,7 +6015,7 @@ msgstr "දත්ත වර්ගය ගැලපෙන්නේ නැහැ.\n
 
 #: winerror.mc:2873 winerror.mc:3083
 msgid "Unsupported type.\n"
-msgstr ""
+msgstr "වර්ගය සහාය නොදක්වයි.\n"
 
 #: winerror.mc:2878
 msgid "Creation failed.\n"
@@ -6045,13 +6038,12 @@ msgid "Failed to open the patch package.\n"
 msgstr ""
 
 #: winerror.mc:2903
-#, fuzzy
 msgid "Invalid patch package.\n"
-msgstr "අවලංගු"
+msgstr "අවලංගු සිදුර පැකේජය.\n"
 
 #: winerror.mc:2908
 msgid "Unsupported patch package.\n"
-msgstr ""
+msgstr "සිදුර පැකේජය සිදුර පැකේජය.\n"
 
 #: winerror.mc:2913
 msgid "Another version is installed.\n"
@@ -6094,9 +6086,8 @@ msgid "Invalid string UUID.\n"
 msgstr "අවලංගු අනුලකුණු වැල UUID.\n"
 
 #: winerror.mc:2963
-#, fuzzy
 msgid "Invalid endpoint format.\n"
-msgstr "අවලංගු"
+msgstr "අවලංගු අවසන් ලක්ෂ්‍යය ආකෘතිය.\n"
 
 #: winerror.mc:2968
 msgid "Invalid network address.\n"
@@ -6104,10 +6095,9 @@ msgstr "අවලංගු ජාල ලිපිනය.\n"
 
 #: winerror.mc:2973
 msgid "No endpoint found.\n"
-msgstr ""
+msgstr "අවසන් ලක්ෂ්‍යයක් හම්බු උනේ නැහැ.\n"
 
 #: winerror.mc:2978
-#, fuzzy
 msgid "Invalid timeout value.\n"
 msgstr "අවලංගු කාලඡේදනය අගය.\n"
 
@@ -6209,11 +6199,11 @@ msgstr "අවලංගු නමේ රීතිය.\n"
 
 #: winerror.mc:3108
 msgid "Unsupported name syntax.\n"
-msgstr ""
+msgstr "නම රීති සහාය නොදක්වයි.\n"
 
 #: winerror.mc:3113
 msgid "No network address.\n"
-msgstr ""
+msgstr "ජාල ලිපිනය නැහැ.\n"
 
 #: winerror.mc:3118
 msgid "Duplicate endpoint.\n"
@@ -6261,9 +6251,8 @@ msgid "Unknown authorization service.\n"
 msgstr ""
 
 #: winerror.mc:3173
-#, fuzzy
 msgid "Invalid entry.\n"
-msgstr "අවලංගු"
+msgstr "අවලංගු සටහනක්.\n"
 
 #: winerror.mc:3178
 msgid "Can't perform operation.\n"
@@ -6307,7 +6296,7 @@ msgstr ""
 
 #: winerror.mc:3228
 msgid "Name service unavailable.\n"
-msgstr ""
+msgstr "නම සේවාව ලද නොහැකි.\n"
 
 #: winerror.mc:3233
 msgid "Invalid network address family.\n"
@@ -6331,7 +6320,7 @@ msgstr "RPC ශුන්ය-ලෙස-බෙදීම.\n"
 
 #: winerror.mc:3258
 msgid "Address error.\n"
-msgstr ""
+msgstr "ලිපින දෝෂයක්.\n"
 
 #: winerror.mc:3263
 msgid "Floating-point divide-by-zero.\n"
@@ -6566,9 +6555,8 @@ msgid "Invalid handle operation.\n"
 msgstr "අවලංගු හසුරුව මෙහෙයුම.\n"
 
 #: winerror.mc:3553
-#, fuzzy
 msgid "Wrong serializing package version.\n"
-msgstr "වැරදි පැකේජය අනුවාදය.\n"
+msgstr "වැරදි අනුක්‍රමගත කිරීමට පැකේජය අනුවාදය.\n"
 
 #: winerror.mc:3558
 msgid "Wrong stub version.\n"
@@ -6624,7 +6612,7 @@ msgstr "අවලංගු මුද්‍රකය තත්වය.\n"
 
 #: winerror.mc:3623
 msgid "User must change password.\n"
-msgstr ""
+msgstr "පරිශීලකයට මුර පදය වෙනස් කරන්න ඕනේ.\n"
 
 #: winerror.mc:3628
 msgid "Domain controller not found.\n"
@@ -6656,9 +6644,8 @@ msgid "Invalid asynchronous RPC handle.\n"
 msgstr "අවලංගු අසමමුහුර්ත RPC හසුරුවක්.\n"
 
 #: winerror.mc:3663
-#, fuzzy
 msgid "Invalid asynchronous RPC call.\n"
-msgstr "අවලංගු"
+msgstr "අවලංගු අසමමුහුර්ත RPC කෝල් එකක්.\n"
 
 #: winerror.mc:3668
 msgid "RPC pipe closed.\n"
@@ -6746,7 +6733,7 @@ msgstr "පෙදෙසි තොටක් එක් කරන්න"
 
 #: localui.rc:42
 msgid "&Enter the port name to add:"
-msgstr ""
+msgstr "එක් කරන තොට නම ඇතුල් කරන්න (&E):"
 
 #: localui.rc:51
 msgid "Configure LPT Port"
@@ -6824,7 +6811,7 @@ msgstr ""
 
 #: mferror.mc:95
 msgid "Unsupported service.\n"
-msgstr ""
+msgstr "සේවාව සහාය නොදක්වයි.\n"
 
 #: mferror.mc:102
 msgid "Unexpected error.\n"
@@ -6848,11 +6835,11 @@ msgstr ""
 
 #: mferror.mc:151
 msgid "Unsupported bytestream type.\n"
-msgstr ""
+msgstr "Bytestream වර්ගය සහාය නොදක්වයි.\n"
 
 #: mferror.mc:158
 msgid "Unsupported time format.\n"
-msgstr ""
+msgstr "වෙලාව ආකෘතිය සහාය නොදක්වයි.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
@@ -6872,7 +6859,7 @@ msgstr "යථා කාල සහාය ලද හැකි නැහැ.\n"
 
 #: mferror.mc:193
 msgid "Unsupported rate.\n"
-msgstr ""
+msgstr "ශීඝ්‍රතාව සහාය නොදක්වයි.\n"
 
 #: mferror.mc:200
 msgid "Unsupported thinning.\n"
@@ -6885,10 +6872,8 @@ msgid "Reversing is not supported.\n"
 msgstr "වෙන අනුවාදයක් ස්ථාපන කරලා තියෙනවා.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "No Unicode translation.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "යුනිකෝඩ් පරිවර්තනයක් නැහැ.\n"
+msgstr "ශීඝ්‍රතාව සංක්‍රාන්තිය සහාය නොදක්වයි.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
@@ -6918,13 +6903,11 @@ msgstr "ආම්පන්නයේ දොර ඇරලා තියෙන්න
 
 #: mferror.mc:277
 msgid "State transition is pending.\n"
-msgstr ""
+msgstr "තත්වය සංක්‍රාන්තිය වෙන්න යනවා.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "No Unicode translation.\n"
 msgid "Unsupported state transition.\n"
-msgstr "යුනිකෝඩ් පරිවර්තනයක් නැහැ.\n"
+msgstr "තත්වය සංක්‍රාන්තිය සහාය නොදක්වයි.\n"
 
 #: mferror.mc:291
 msgid "Unrecoverable error occurred.\n"
@@ -6947,10 +6930,8 @@ msgid "Bad startup version.\n"
 msgstr ""
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Support Information"
 msgid "Unsupported caption.\n"
-msgstr "තොරතුරු සඳහා සහාය"
+msgstr "කැප්ෂනය සහාය නොදක්වයි.\n"
 
 #: mferror.mc:333
 msgid "Invalid position.\n"
@@ -6967,10 +6948,8 @@ msgid "Property type is not allowed.\n"
 msgstr "වෙන අනුවාදයක් ස්ථාපන කරලා තියෙනවා.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Error: Command line not supported\n"
 msgid "Property type is not supported.\n"
-msgstr "දෝෂය: විධාන රේඛාව සහාය නොදක්වයි\n"
+msgstr "ගුණාංග වර්ගය සහාය නොදක්වයි.\n"
 
 #: mferror.mc:361
 msgid "Property is empty.\n"
@@ -7088,7 +7067,7 @@ msgstr "ජාලයේ මුර පදය ඇතුල් කරන්න"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "Please enter your username and password:"
-msgstr ""
+msgstr "කරුණාකරලා ඔබගේ පරිශීලක නමයි හා මුර පදයයි ඇතුල් කරන්න:"
 
 #: mpr.rc:39 wininet.rc:41
 msgid "Proxy"
@@ -7217,9 +7196,9 @@ msgstr ""
 "\t/x {පැකේජය|නිෂ්පාදන_කේතය} [ගුණාංගය]\n"
 "නිෂ්පාදනයක් ප්රචාරය කරන්න:\n"
 "\t/j[u|m] පැකේජය [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patch_package [ගුණාංගය]\n"
-"\t/p patch_package /a පැකේජය [ගුණාංගය]\n"
+"සිදුරක් යොදන්න:\n"
+"\t/p සිදුර_පැකේජය [ගුණාංගය]\n"
+"\t/p සිදුර_පැකේජය /a පැකේජය [ගුණාංගය]\n"
 "Log and user interface modifiers for the above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] log_file\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -7317,7 +7296,7 @@ msgstr ""
 
 #: msi.rc:108
 msgid "Validating install"
-msgstr ""
+msgstr "ස්ථාපනය වලංගු කරනවා"
 
 #: msi.rc:109
 msgid "Evaluating launch conditions"
@@ -7582,7 +7561,7 @@ msgstr "ෆොන්ටය: [1]"
 
 #: msi.rc:184 msi.rc:205
 msgid "MIME Content Type: [1], Extension: [2]"
-msgstr ""
+msgstr "MIME අන්තර්ගතයේ වර්ගය: [1], දිගුව: [2]"
 
 #: msi.rc:185 msi.rc:206
 msgid "ProgId: [1]"
@@ -7726,8 +7705,9 @@ msgid "kB/s"
 msgstr "kB/s"
 
 #: msvfw32.rc:28
+#, fuzzy
 msgid "Full Frames (Uncompressed)"
-msgstr ""
+msgstr "මුළු රාමු"
 
 #: msvidc32.rc:29
 msgid "Wine Video 1 video codec"
@@ -7883,7 +7863,7 @@ msgstr "ලුහුඬු සටහනේ අයිතමය"
 
 #: oleacc.rc:68
 msgid "page tab"
-msgstr ""
+msgstr "පිටු ටැබ"
 
 #: oleacc.rc:69
 msgid "property page"
@@ -7975,25 +7955,23 @@ msgstr "සුදු ඉඩ"
 
 #: oleacc.rc:91
 msgid "page tab list"
-msgstr ""
+msgstr "පිටු ටැබ ලැයිස්තුව"
 
 #: oleacc.rc:92
 msgid "clock"
 msgstr "ඔරලෝසුව"
 
 #: oleacc.rc:93
-#, fuzzy
 msgid "split button"
-msgstr "බොත්තම"
+msgstr "වෙන්කිරීම් බොත්තම"
 
 #: oleacc.rc:94
 msgid "IP address"
 msgstr "IP යොමුව"
 
 #: oleacc.rc:95
-#, fuzzy
 msgid "outline button"
-msgstr "බොත්තම"
+msgstr "ලුහුඬු බොත්තම"
 
 #: oleacc.rc:97
 msgctxt "object state"
@@ -8008,27 +7986,27 @@ msgstr "ලද නොහැකි"
 #: oleacc.rc:99
 msgctxt "object state"
 msgid "selected"
-msgstr ""
+msgstr "තෝරගත්"
 
 #: oleacc.rc:100
 msgctxt "object state"
 msgid "focused"
-msgstr ""
+msgstr "අවධානය යොමු කළ"
 
 #: oleacc.rc:101
 msgctxt "object state"
 msgid "pressed"
-msgstr ""
+msgstr "ඔබන ලදී"
 
 #: oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "සලකුණු කළ"
 
 #: oleacc.rc:103
 msgctxt "object state"
 msgid "mixed"
-msgstr ""
+msgstr "මිශ්‍ර"
 
 #: oleacc.rc:104
 msgctxt "object state"
@@ -8388,7 +8366,7 @@ msgstr "දත්ත බිටු"
 
 #: serialui.rc:39
 msgid "Stop Bits"
-msgstr ""
+msgstr "නවත්තන බිටු"
 
 #: setupapi.rc:39
 msgid "Copying Files..."
@@ -8902,7 +8880,7 @@ msgstr "වර්ගය"
 
 #: shell32.rc:140
 msgid "Modified"
-msgstr ""
+msgstr "සැකසුම"
 
 #: shell32.rc:141 winefile.rc:172 winefile.rc:114
 msgid "Attributes"
@@ -9108,7 +9086,7 @@ msgstr "බාගැනීම්"
 
 #: shell32.rc:169
 msgid "Unable to create new Folder: Permission denied."
-msgstr ""
+msgstr "අලුත් ෆෝල්ඩරයක් හදන්න බැහැ: අවසර නැත."
 
 #: shell32.rc:170
 msgid "Error during creation of a new folder"
@@ -10223,7 +10201,7 @@ msgstr "පිහිටුම"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
-msgstr ""
+msgstr "බල ප්‍රදේශය"
 
 #: wininet.rc:57
 msgid "Authentication Required"
@@ -10954,7 +10932,7 @@ msgstr ""
 
 #: wldap32.rc:86
 msgid "Loop Detected"
-msgstr ""
+msgstr "ලූපයක් හමුවිය"
 
 #: wldap32.rc:92
 msgid "Sort Control Missing"
@@ -11038,7 +11016,7 @@ msgstr "මතකය නැහැ"
 
 #: wldap32.rc:123
 msgid "Can't connect to the LDAP server"
-msgstr ""
+msgstr "LDAP සේවාදායකයට සබඳින්න බැහැ"
 
 #: wldap32.rc:124
 msgid "Operation not supported by this version of the LDAP protocol"
@@ -11054,7 +11032,7 @@ msgstr "පණිවිඩය ඇතුලෙ ප්‍රතිඵලක් න
 
 #: wldap32.rc:127
 msgid "More results returned"
-msgstr ""
+msgstr "තව ප්‍රතිඵල් ආපසු ඇවිල්ලා"
 
 #: wldap32.rc:128
 msgid "Loop while handling referrals"
@@ -11097,6 +11075,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - ගොනු උපලක්‍ෂණ පෙන්නනවා හෝ වෙනස් කරනවා.\n"
+"\n"
+"රීති:\n"
+"ATTRIB [+R | -R] [+A | -A] [+S | -S] [+H | -H] [ධාවකය:][පෙත][ගොනුව නම]\n"
+"       [/S [/D]]\n"
+"\n"
+"කොහෙද:\n"
+"\n"
+"  +   උපලක්‍ෂණයක් දානවා.\n"
+"  -   උපලක්‍ෂණයක් මකනවා.\n"
+"  R   කියවීම් පමණි ගොනුවක උපලක්‍ෂණයක්.\n"
+"  A   සංරක්ෂිතයේ ගොනුවක උපලක්‍ෂණයක්.\n"
+"  S   පද්ධතියේ ගොනුවක උපලක්‍ෂණයක්.\n"
+"  H   හංගපු ගොනුවක උපලක්‍ෂණයක්.\n"
+"  [ධාවකය:][පෙත][ගොනුව නම]\n"
+"      සකසන්න ඕනේ ගොනුවක් හෝ ගොනු නිශ්චය කරනවා.\n"
+"  /S  මේ ෆෝල්ඩරය හා යට ෆෝල්ඩර් වල ඇතුලේ ගැලපෙන ගොනු සකසනවා.\n"
+"  /D  ෆෝල්ඩර් උත් සකසනවා.\n"
 
 #: clock.rc:32
 msgid "Ana&log"
@@ -11558,9 +11554,9 @@ msgid ""
 msgstr ""
 "CMD ඇතුලෙ තියෙන විධාන මේවා:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
-"ATTRIB\t\tDOS ගොනුව උපලක්ෂණ පෙන්නන්න හෝ වෙනස් කරන්න\n"
+"ATTRIB\t\tDOS ගොනුව උපලක්‍ෂණ පෙන්නන්න හෝ වෙනස් කරන්න\n"
 "CALL\t\tInvoke a batch file from inside another\n"
-"CD (CHDIR)\tChange current default directory\n"
+"CD (CHDIR)\tවත්මන් ඩිරෙක්ටරිය වෙනස් කරන්න\n"
 "CHOICE\t\tWait for an keypress from a selectable list\n"
 "CLS\t\tකොන්සෝලයේ තිරය මකන්න\n"
 "COPY\t\tගොනුව පිටපත් කරන්න\n"
@@ -11589,7 +11585,7 @@ msgstr ""
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
 "TYPE\t\tType the contents of a text file\n"
-"VER\t\tShow the current version of CMD\n"
+"VER\t\tCMD වත්මන් අනුවාදය පෙන්නන්න\n"
 "VOL\t\tShow the volume label of a disk device\n"
 "XCOPY\t\tCopy source files or directory trees to a destination\n"
 "EXIT\t\tCMD වහන්න\n"
@@ -11644,7 +11640,7 @@ msgstr "%1 සඳහා උදවු නැහැ\n"
 
 #: cmd.rc:378
 msgid "Target to GOTO not found\n"
-msgstr ""
+msgstr "GOTO වල ඉලක්කය හම්බු උනේ නැහැ\n"
 
 #: cmd.rc:379
 msgid "Current Date is %1\n"
@@ -11656,11 +11652,11 @@ msgstr "වත්මන් වෙලාව %1\n"
 
 #: cmd.rc:381
 msgid "Enter new date: "
-msgstr "අලුත් දිනයක් ඇතුල්කරන්න:"
+msgstr "අලුත් දිනයක් ඇතුල් කරන්න: "
 
 #: cmd.rc:382
 msgid "Enter new time: "
-msgstr "අලුත් වෙලාවක් ඇතුල්කරන්න:"
+msgstr "අලුත් වෙලාවක් ඇතුල් කරන්න: "
 
 #: cmd.rc:383
 msgid "Environment variable %1 not defined\n"
@@ -11731,7 +11727,7 @@ msgstr "තව? "
 
 #: cmd.rc:399
 msgid "The input line is too long.\n"
-msgstr ""
+msgstr "ආදාන පේලිය දිග වැඩි.\n"
 
 #: cmd.rc:400
 msgid "Volume in drive %1!c! is %2\n"
@@ -11856,7 +11852,7 @@ msgstr "සම-සම"
 
 #: ipconfig.rc:41
 msgid "Mixed"
-msgstr ""
+msgstr "මිශ්‍ර"
 
 #: ipconfig.rc:42
 msgid "Hybrid"
@@ -11872,11 +11868,11 @@ msgstr ""
 
 #: ipconfig.rc:46
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP සබල කර ඇත"
 
 #: ipconfig.rc:49
 msgid "Default gateway"
-msgstr ""
+msgstr "නිශ්චය කළ ද්වාරය"
 
 #: ipconfig.rc:50
 msgid "IPv6 address"
@@ -11896,6 +11892,13 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
+"මේ විධානයේ රීති මෙහෙම:\n"
+"\n"
+"NET විධානය [විස්තාරක]\n"
+"    -හෝ-\n"
+"NET විධානය /HELP\n"
+"\n"
+"'විධානය' කියන්නේ HELP, START, STOP or USE වලින් එකක්.\n"
 
 #: net.rc:31
 msgid ""
@@ -11906,6 +11909,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"මේ විධානයේ රීති මෙහෙම:\n"
+"\n"
+"NET START [සේවාව]\n"
+"\n"
+"ධාවන කරන සේවා ලැයිස්තුව පෙන්නනවා 'සේවාව' බැහැර කරොත්. 'සේවාව' කියන්නේ ධාවන කරන්න ඕනේ "
+"සේවාවේ නම.\n"
 
 #: net.rc:32
 msgid ""
@@ -11927,7 +11936,7 @@ msgstr ""
 
 #: net.rc:34
 msgid "Could not stop service %1\n"
-msgstr ""
+msgstr "%1 සේවාව නවත්තන්න බැරි උනා\n"
 
 #: net.rc:35
 msgid "Could not get handle to service control manager.\n"
@@ -11935,7 +11944,7 @@ msgstr ""
 
 #: net.rc:36
 msgid "Could not get handle to service.\n"
-msgstr ""
+msgstr "සේවාවට හසුරුවක් ගන්න බැරි උනා.\n"
 
 #: net.rc:37
 msgid "The %1 service is starting.\n"
@@ -11985,7 +11994,7 @@ msgstr ""
 
 #: net.rc:49
 msgid "Disconnected"
-msgstr ""
+msgstr "විසන්ධි කර ඇත"
 
 #: net.rc:50
 msgid "A network error occurred"
@@ -12013,11 +12022,11 @@ msgstr ""
 
 #: netstat.rc:32
 msgid "Local Address"
-msgstr ""
+msgstr "පෙදෙසි ලිපිනය"
 
 #: netstat.rc:33
 msgid "Foreign Address"
-msgstr ""
+msgstr "විදේශීය ලිපිනය"
 
 #: netstat.rc:34
 msgid "State"
@@ -12061,7 +12070,7 @@ msgstr "දන්නේ නැති ප්‍රොටොකෝල"
 
 #: netstat.rc:44
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "TCP සංඛ්‍යාලේඛන IPv4 වලට"
 
 #: netstat.rc:45
 msgid "Active Opens"
@@ -12612,7 +12621,7 @@ msgstr "COM පුස්තකාලයෙ වස්තු"
 
 #: oleview.rc:134
 msgid "All Objects"
-msgstr ""
+msgstr "සියලු වස්තු"
 
 #: oleview.rc:135
 msgid "Application IDs"
@@ -12632,7 +12641,7 @@ msgstr "අතුරුමුහුණත්"
 
 #: oleview.rc:140
 msgid "Registry"
-msgstr ""
+msgstr "රෙජිස්තරය"
 
 #: oleview.rc:141
 msgid "Implementation"
@@ -12660,7 +12669,7 @@ msgstr ""
 
 #: oleview.rc:151
 msgid "Inherited Interfaces"
-msgstr ""
+msgstr "උරුම වී අතුරුමුහුණත්"
 
 #: oleview.rc:126
 msgid "Save as an .IDL or .H file"
@@ -12680,7 +12689,7 @@ msgstr "අලුත්... (&N)"
 
 #: progman.rc:34
 msgid "O&pen\tEnter"
-msgstr "අරින්න\tEnter"
+msgstr "විවෘත කරන්න\tEnter"
 
 #: progman.rc:35 winefile.rc:30
 msgid "&Move...\tF7"
@@ -12728,16 +12737,15 @@ msgstr ""
 
 #: progman.rc:51
 msgid "&Side by side\tShift+F4"
-msgstr ""
+msgstr "දෙපස\tShift+F4"
 
 #: progman.rc:52
 msgid "&Arrange Icons"
 msgstr ""
 
 #: progman.rc:57
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "ගැන (&A)"
+msgstr "ක්‍රමලේඛ කළමනාකාරකය ගැන (&A)"
 
 #: progman.rc:103
 msgid "Program &group"
@@ -12821,7 +12829,7 @@ msgstr ""
 
 #: progman.rc:63
 msgid "Program Manager"
-msgstr ""
+msgstr "ක්‍රමලේඛ කළමනාකාරකය"
 
 #: progman.rc:65 winhlp32.rc:83
 msgid "WARNING"
@@ -12833,11 +12841,11 @@ msgstr "තොරතුරු"
 
 #: progman.rc:68
 msgid "Delete group `%s'?"
-msgstr ""
+msgstr "`%s' සමූහය මකන්නද?"
 
 #: progman.rc:69
 msgid "Delete program `%s'?"
-msgstr ""
+msgstr "`%s' ක්‍රමලේඛය මකන්නද?"
 
 #: progman.rc:70
 msgid "Not implemented"
@@ -12867,7 +12875,7 @@ msgstr "දන්නේ නැති වි‍ශේෂාංගයක් %s ඇ
 
 #: progman.rc:79
 msgid "File `%s' exists. Not overwritten."
-msgstr "'%s' ගොනුව තියෙනවා. උඩින් ලියුවේ නැහැ."
+msgstr "`%s' ගොනුව තියෙනවා. උඩින් ලියුවේ නැහැ."
 
 #: progman.rc:80
 msgid "Save group as `%s to prevent overwriting original files."
@@ -13116,9 +13124,8 @@ msgid "&Remove Favorite..."
 msgstr "ප්‍රියතමය ඉවත් කරන්න... (&R)"
 
 #: regedit.rc:80
-#, fuzzy
 msgid "&About Registry Editor"
-msgstr "ගැන (&A)"
+msgstr "රෙජිස්තරය සකසනය ගැන (&A)"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:230
 msgid "Expand"
@@ -13150,11 +13157,11 @@ msgstr "යතුරු"
 
 #: regedit.rc:282
 msgid "Value names"
-msgstr ""
+msgstr "අගයන් වල නම්"
 
 #: regedit.rc:283
 msgid "Value content"
-msgstr ""
+msgstr "අගය අන්තර්ගතය"
 
 #: regedit.rc:284
 msgid "Whole string only"
@@ -14550,7 +14557,7 @@ msgid ""
 msgstr ""
 "Wine යෙදුම් අස්ථාපකය\n"
 "\n"
-"යෙදුම් අස්ථාපන කරනවා දැනට පාවිච්චි කරන Wine prefix එකින්.\n"
+"යෙදුම් අස්ථාපනය කරනවා දැනට පාවිච්චි කරන Wine prefix එකින්.\n"
 "\n"
 
 #: uninstaller.rc:43
@@ -14994,7 +15001,7 @@ msgstr ""
 
 #: winecfg.rc:60
 msgid "disabled"
-msgstr ""
+msgstr "අබලිත"
 
 #: winecfg.rc:61
 msgid "Default Settings"
@@ -15017,9 +15024,8 @@ msgid "Autodetect"
 msgstr "ස්වයං අනාවරිත"
 
 #: winecfg.rc:70
-#, fuzzy
 msgid "Local hard disk"
-msgstr "දෘඩ තැටිය"
+msgstr "පෙදෙසි දෘඩ තැටිය"
 
 #: winecfg.rc:71
 msgid "Network share"
@@ -16222,7 +16228,7 @@ msgstr "අවලංගු නොම්බරේ හැඩතලය."
 
 #: wordpad.rc:199
 msgid "OLE storage documents are not supported."
-msgstr ""
+msgstr "OLE ගබඩා ලේඛ සහාය නොදක්වයි."
 
 #: wordpad.rc:200
 msgid "Could not save the file."
