@@ -550,7 +550,7 @@ static int debug_compare_guid(const void *a, const void *b)
     return memcmp(guid, guid_def->guid, sizeof(*guid));
 }
 
-static const char *debugstr_attr(const GUID *guid)
+const char *debugstr_attr(const GUID *guid)
 {
     static const struct guid_def guid_defs[] =
     {
