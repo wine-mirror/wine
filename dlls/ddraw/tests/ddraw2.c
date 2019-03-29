@@ -505,6 +505,26 @@ static IDirect3DMaterial2 *create_diffuse_material(IDirect3DDevice2 *device, flo
     return create_material(device, &mat);
 }
 
+static IDirect3DMaterial2 *create_diffuse_and_ambient_material(IDirect3DDevice2 *device,
+        float r, float g, float b, float a)
+{
+    D3DMATERIAL mat;
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U(mat).diffuse).r = r;
+    U2(U(mat).diffuse).g = g;
+    U3(U(mat).diffuse).b = b;
+    U4(U(mat).diffuse).a = a;
+
+    U1(U(mat).ambient).r = r;
+    U2(U(mat).ambient).g = g;
+    U3(U(mat).ambient).b = b;
+    U4(U(mat).ambient).a = a;
+
+    return create_material(device, &mat);
+}
+
 static IDirect3DMaterial2 *create_specular_material(IDirect3DDevice2 *device,
         float r, float g, float b, float a, float power)
 {
@@ -7042,10 +7062,10 @@ static void test_lighting(void)
     }
     tests[] =
     {
-        {&mat, nquad, 0x000000ff, "Lit quad with light"},
-        {&mat_singular, nquad, 0x000000b4, "Lit quad with singular world matrix"},
-        {&mat_transf, rotatedquad, 0x000000ff, "Lit quad with transformation matrix"},
-        {&mat_nonaffine, translatedquad, 0x000000ff, "Lit quad with non-affine matrix"},
+        {&mat, nquad, 0x000060ff, "Lit quad with light"},
+        {&mat_singular, nquad, 0x00004db4, "Lit quad with singular world matrix"},
+        {&mat_transf, rotatedquad, 0x000060ff, "Lit quad with transformation matrix"},
+        {&mat_nonaffine, translatedquad, 0x000060ff, "Lit quad with non-affine matrix"},
     };
 
     IDirect3DViewport2 *viewport, *viewport2;
@@ -7074,16 +7094,16 @@ static void test_lighting(void)
     }
 
     hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    material = create_diffuse_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
+    material = create_diffuse_and_ambient_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
     viewport_set_background(device, viewport, material);
 
     hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
@@ -7143,17 +7163,19 @@ static void test_lighting(void)
     ok(color == 0x00ffffff, "Lit quad with normals has color 0x%08x.\n", color);
 
     hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
-    ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_AMBIENT, 0xff002000);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3D2_CreateLight(d3d, &light, NULL);
-    ok(SUCCEEDED(hr), "Failed to create a light object, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     memset(&light_desc, 0, sizeof(light_desc));
     light_desc.dwSize = sizeof(light_desc);
     light_desc.dltType = D3DLIGHT_DIRECTIONAL;
     U1(light_desc.dcvColor).r = 0.0f;
-    U2(light_desc.dcvColor).g = 0.0f;
+    U2(light_desc.dcvColor).g = 0.25f;
     U3(light_desc.dcvColor).b = 1.0f;
     U4(light_desc.dcvColor).a = 1.0f;
     U3(light_desc.dvDirection).z = 1.0f;
@@ -7170,20 +7192,20 @@ static void test_lighting(void)
     destroy_viewport(device, viewport2);
 
     hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice2_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice2_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, D3DVT_VERTEX, nquad,
             4, indices, 6, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice2_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     color = get_surface_color(rt, 320, 240);
-    ok(color == 0x00000000, "Lit quad with no light has color 0x%08x.\n", color);
+    ok(color == 0x00002000, "Lit quad with no light has color 0x%08x.\n", color);
 
     light_desc.dwFlags = D3DLIGHT_ACTIVE;
     hr = IDirect3DLight_SetLight(light, (D3DLIGHT *)&light_desc);
