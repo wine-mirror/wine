@@ -34,6 +34,7 @@
 #include "winreg.h"
 #include "shellapi.h"
 #include "shlwapi.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winemapi);
@@ -121,7 +122,7 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
 
         if (address)
         {
-            if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
+            if (!_strnicmp(address, smtp, sizeof(smtp) - 1))
                 address += sizeof(smtp) - 1;
 
             switch (message->lpRecips[i].ulRecipClass)
@@ -213,7 +214,7 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
 
         if (address)
         {
-            if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
+            if (!_strnicmp(address, smtp, sizeof(smtp) - 1))
                 address += sizeof(smtp) - 1;
 
             switch (message->lpRecips[i].ulRecipClass)
