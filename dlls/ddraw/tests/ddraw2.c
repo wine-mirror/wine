@@ -7373,18 +7373,6 @@ static void test_specular_lighting(void)
         {320, 360, 0x002c2c2c},
         {480, 360, 0x006e6e6e},
     },
-    expected_point_side[] =
-    {
-        {160, 120, 0x00000000},
-        {320, 120, 0x00000000},
-        {480, 120, 0x00000000},
-        {160, 240, 0x00000000},
-        {320, 240, 0x00000000},
-        {480, 240, 0x00000000},
-        {160, 360, 0x00000000},
-        {320, 360, 0x00000000},
-        {480, 360, 0x00000000},
-    },
     expected_point_far[] =
     {
         {160, 120, 0x00000000},
@@ -7392,6 +7380,18 @@ static void test_specular_lighting(void)
         {480, 120, 0x00000000},
         {160, 240, 0x00000000},
         {320, 240, 0x00ffffff},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
+    },
+    expected_zero[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00000000},
         {480, 240, 0x00000000},
         {160, 360, 0x00000000},
         {320, 360, 0x00000000},
@@ -7410,8 +7410,13 @@ static void test_specular_lighting(void)
         {&point, 30.0f, expected_point_local, ARRAY_SIZE(expected_point_local)},
         {&spot, 30.0f, expected_spot_local, ARRAY_SIZE(expected_spot_local)},
         {&parallelpoint, 30.0f, expected_parallelpoint, ARRAY_SIZE(expected_parallelpoint)},
-        {&point_side, 0.0f, expected_point_side, ARRAY_SIZE(expected_point_side)},
+        {&point_side, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
         {&point_far, 1.0f, expected_point_far, ARRAY_SIZE(expected_point_far)},
+        {&directional, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&spot, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&parallelpoint, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point_far, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
     };
     IDirect3D2 *d3d;
     IDirect3DDevice2 *device;
