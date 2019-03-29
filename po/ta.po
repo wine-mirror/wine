@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-03-19 09:17+0530\n"
+"PO-Revision-Date: 2019-03-29 20:31+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Tamil\n"
 "Language: ta\n"
@@ -200,7 +200,7 @@ msgstr "பதிப்பு"
 
 #: appwiz.rc:41
 msgid "Installation programs"
-msgstr ""
+msgstr "நிறுவல் நிரல்கள்"
 
 #: appwiz.rc:42
 msgid "Programs (*.exe)"
@@ -209,7 +209,7 @@ msgstr "நிரல்கள் (*.exe)"
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
 #: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
-msgstr ""
+msgstr "அனைத்து கோப்புகள் (*.*)"
 
 #: appwiz.rc:46
 msgid "&Modify/Remove"
@@ -217,11 +217,11 @@ msgstr ""
 
 #: appwiz.rc:51
 msgid "Downloading..."
-msgstr ""
+msgstr "பதிவிறக்குகிறது..."
 
 #: appwiz.rc:52
 msgid "Installing..."
-msgstr ""
+msgstr "நிறுவுகிறது..."
 
 #: appwiz.rc:53
 msgid ""
@@ -331,7 +331,7 @@ msgstr ""
 
 #: comctl32.rc:86
 msgid "Finish"
-msgstr ""
+msgstr "முடிப்பு"
 
 #: comctl32.rc:97
 msgid "Customize Toolbar"
@@ -340,11 +340,11 @@ msgstr ""
 #: comctl32.rc:100 comctl32.rc:57 cryptui.rc:356 ieframe.rc:43 oleview.rc:83
 #: oleview.rc:187 oleview.rc:200 oleview.rc:212 taskmgr.rc:139
 msgid "&Close"
-msgstr ""
+msgstr "மூடு (&C)"
 
 #: comctl32.rc:101
 msgid "R&eset"
-msgstr ""
+msgstr "மீட்டமை (&E)"
 
 #: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
 #: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
@@ -382,7 +382,7 @@ msgstr ""
 
 #: comctl32.rc:42
 msgid "Separator"
-msgstr ""
+msgstr "பிரிப்பான்"
 
 #: comctl32.rc:47 progman.rc:81
 msgctxt "hotkey"
@@ -412,11 +412,11 @@ msgstr ""
 #: comctl32.rc:31 cryptui.rc:235 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
-msgstr ""
+msgstr "மூடு"
 
 #: comctl32.rc:36
 msgid "Today:"
-msgstr ""
+msgstr "இன்று:"
 
 #: comctl32.rc:37
 msgid "Go to today"
@@ -425,7 +425,7 @@ msgstr ""
 #: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
 #: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
 msgid "Open"
-msgstr ""
+msgstr "திற"
 
 #: comdlg32.rc:160 comdlg32.rc:182
 msgid "File &Name:"
@@ -450,11 +450,11 @@ msgstr ""
 
 #: comdlg32.rc:179
 msgid "Save As..."
-msgstr ""
+msgstr "இவ்வாறு சேமி..."
 
 #: comdlg32.rc:192 comdlg32.rc:145
 msgid "Save As"
-msgstr ""
+msgstr "இவ்வாறு சேமி"
 
 #: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
 #: wordpad.rc:173
@@ -551,11 +551,11 @@ msgstr ""
 
 #: comdlg32.rc:250 wineconsole.rc:85
 msgid "Font"
-msgstr ""
+msgstr "எழுத்துரு"
 
 #: comdlg32.rc:253
 msgid "&Font:"
-msgstr ""
+msgstr "எழுத்துரு (&F):"
 
 #: comdlg32.rc:256
 msgid "Font St&yle:"
@@ -579,7 +579,7 @@ msgstr ""
 
 #: comdlg32.rc:269 winecfg.rc:292
 msgid "&Color:"
-msgstr ""
+msgstr "நிறம் (&C):"
 
 #: comdlg32.rc:272
 msgid "Sample"
@@ -810,7 +810,7 @@ msgstr ""
 
 #: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
-msgstr ""
+msgstr "திற (&O)"
 
 #: comdlg32.rc:515
 msgid "File name:"
@@ -1028,7 +1028,7 @@ msgstr ""
 
 #: comdlg32.rc:142 ieframe.rc:35
 msgid "&Save"
-msgstr ""
+msgstr "சேமி (&S)"
 
 #: comdlg32.rc:143
 msgid "Save &in:"
@@ -1036,7 +1036,7 @@ msgstr ""
 
 #: comdlg32.rc:144
 msgid "Save"
-msgstr ""
+msgstr "சேமி"
 
 #: comdlg32.rc:146
 msgid "Open File"
@@ -1959,11 +1959,11 @@ msgstr ""
 
 #: crypt32.rc:222 cryptui.rc:166 oleaut32.rc:32 wininet.rc:83 ipconfig.rc:47
 msgid "Yes"
-msgstr ""
+msgstr "ஆம்"
 
 #: crypt32.rc:223 cryptui.rc:167 oleaut32.rc:33 wininet.rc:84 ipconfig.rc:48
 msgid "No"
-msgstr ""
+msgstr "இல்லை"
 
 #: crypt32.rc:224
 msgid "Digital Signature"
@@ -2584,7 +2584,7 @@ msgstr ""
 
 #: cryptui.rc:82
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 செய்திகள் (*.spc; *.p7b)"
 
 #: cryptui.rc:84
 msgid "Please select a file."
@@ -2628,7 +2628,7 @@ msgstr ""
 
 #: cryptui.rc:96
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 செய்தி"
 
 #: cryptui.rc:97
 msgid "Personal Information Exchange"
@@ -2644,7 +2644,7 @@ msgstr ""
 
 #: cryptui.rc:101
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:103
 msgid "<Advanced Purposes>"
@@ -2814,7 +2814,7 @@ msgstr ""
 
 #: cryptui.rc:160
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 செய்திகள் (*.p7b)"
 
 #: cryptui.rc:161
 msgid "Personal Information Exchange (*.pfx)"
@@ -3184,7 +3184,7 @@ msgstr ""
 
 #: ieframe.rc:34 view.rc:33 winhlp32.rc:32
 msgid "&Open..."
-msgstr ""
+msgstr "திற... (&O)"
 
 #: ieframe.rc:36 notepad.rc:33 wordpad.rc:34
 msgid "Save &as..."
@@ -3236,7 +3236,7 @@ msgstr ""
 
 #: ieframe.rc:94
 msgid "Open:"
-msgstr ""
+msgstr "திற:"
 
 #: ieframe.rc:70
 msgctxt "home page"
@@ -6716,7 +6716,7 @@ msgstr ""
 
 #: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
-msgstr ""
+msgstr "இவ்வாறு சேமி... (&S)"
 
 #: msacm32.rc:42
 msgid "&Format:"
@@ -7147,7 +7147,7 @@ msgstr ""
 
 #: msi.rc:183 msi.rc:204
 msgid "Font: [1]"
-msgstr ""
+msgstr "எழுத்துரு: [1]"
 
 #: msi.rc:184 msi.rc:205
 msgid "MIME Content Type: [1], Extension: [2]"
@@ -10660,7 +10660,7 @@ msgstr ""
 
 #: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
-msgstr ""
+msgstr "எழுத்துரு... (&F)"
 
 #: clock.rc:37
 msgid "&Without Titlebar"
@@ -11812,15 +11812,15 @@ msgstr ""
 
 #: notepad.rc:85
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "யூனிகோட் (UTF-16)"
 
 #: notepad.rc:86
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "யூனிகோட் (UTF-16 big-endian)"
 
 #: notepad.rc:87
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "யூனிகோட் (UTF-8)"
 
 #: notepad.rc:94
 msgid ""
@@ -11918,7 +11918,7 @@ msgstr ""
 
 #: oleview.rc:82
 msgid "&Save as..."
-msgstr ""
+msgstr "இவ்வாறு சேமி... (&S)"
 
 #: oleview.rc:87
 msgid "&Group by type kind"
@@ -14693,7 +14693,7 @@ msgstr ""
 
 #: wineconsole.rc:88
 msgid "&Font"
-msgstr ""
+msgstr "எழுத்துரு (&F)"
 
 #: wineconsole.rc:90
 msgid "&Color"
