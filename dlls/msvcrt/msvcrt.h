@@ -79,7 +79,11 @@ typedef unsigned long MSVCRT_size_t;
 typedef long MSVCRT_intptr_t;
 typedef unsigned long MSVCRT_uintptr_t;
 #endif
+#ifdef _CRTDLL
+typedef short MSVCRT__dev_t;
+#else
 typedef unsigned int   MSVCRT__dev_t;
+#endif
 typedef int MSVCRT__off_t;
 typedef int MSVCRT_clock_t;
 typedef int MSVCRT___time32_t;

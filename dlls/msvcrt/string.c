@@ -2076,3 +2076,47 @@ MSVCRT_size_t __cdecl MSVCRT___strncnt(const char *str, MSVCRT_size_t size)
 
     return ret;
 }
+
+
+#ifdef _CRTDLL
+/*********************************************************************
+ *		_strdec (CRTDLL.@)
+ */
+char * CDECL _strdec(const char *str1, const char *str2)
+{
+    return (char *)(str2 - 1);
+}
+
+/*********************************************************************
+ *		_strinc (CRTDLL.@)
+ */
+char * CDECL _strinc(const char *str)
+{
+    return (char *)(str + 1);
+}
+
+/*********************************************************************
+ *		_strnextc (CRTDLL.@)
+ */
+unsigned int CDECL _strnextc(const char *str)
+{
+    return (unsigned char)str[0];
+}
+
+/*********************************************************************
+ *		_strninc (CRTDLL.@)
+ */
+char * CDECL _strninc(const char *str, size_t len)
+{
+    return (char *)(str + len);
+}
+
+/*********************************************************************
+ *		_strspnp (CRTDLL.@)
+ */
+char * CDECL _strspnp( const char *str1, const char *str2)
+{
+    str1 += strspn( str1, str2 );
+    return *str1 ? (char*)str1 : NULL;
+}
+#endif

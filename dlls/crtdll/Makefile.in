@@ -1,5 +1,34 @@
+EXTRADEFS = -D_MT -D_MSVCR_VER=0 -D_CRTDLL
 MODULE    = crtdll.dll
-IMPORTS   = msvcrt
+PARENTSRC = ../msvcrt
+DELAYIMPORTS = advapi32 user32
 
 C_SRCS = \
-	crtdll_main.c
+	cpp.c \
+	console.c \
+	ctype.c \
+	data.c \
+	dir.c \
+	environ.c \
+	locale.c \
+	errno.c \
+	exit.c \
+	except.c \
+	except_arm.c \
+	except_arm64.c \
+	except_i386.c \
+	except_x86_64.c \
+	lock.c \
+	file.c \
+	heap.c \
+	math.c \
+	mbcs.c \
+	misc.c \
+	process.c \
+	main.c \
+	string.c \
+	scanf.c \
+	time.c \
+	undname.c \
+	thread.c \
+	wcs.c

@@ -39,6 +39,13 @@ unsigned int MSVCRT__osplatform = 0;
 unsigned int MSVCRT__winmajor = 0;
 unsigned int MSVCRT__winminor = 0;
 unsigned int MSVCRT__winver = 0;
+#ifdef _CRTDLL
+unsigned int CRTDLL__basemajor_dll = 0;
+unsigned int CRTDLL__baseminor_dll = 0;
+unsigned int CRTDLL__baseversion_dll = 0;
+unsigned int CRTDLL__cpumode_dll = 1;
+unsigned int CRTDLL__osmode_dll = 1;
+#endif
 unsigned int MSVCRT___setlc_active = 0;
 unsigned int MSVCRT___unguarded_readlc_active = 0;
 double MSVCRT__HUGE = 0;
@@ -337,6 +344,11 @@ void msvcrt_init_args(void)
   MSVCRT__osplatform = osvi.dwPlatformId;
   TRACE( "winver %08x winmajor %08x winminor %08x osver %08x\n",
           MSVCRT__winver, MSVCRT__winmajor, MSVCRT__winminor, MSVCRT__osver);
+#ifdef _CRTDLL
+  CRTDLL__baseversion_dll = (GetVersion() >> 16);
+  CRTDLL__basemajor_dll   = CRTDLL__baseversion_dll >> 8;
+  CRTDLL__baseminor_dll   = CRTDLL__baseversion_dll & 0xff;
+#endif
 
   MSVCRT__HUGE = HUGE_VAL;
   MSVCRT___setlc_active = 0;
@@ -477,6 +489,17 @@ int CDECL __getmainargs(int *argc, char** *argv, char** *envp,
         MSVCRT__set_new_mode( *new_mode );
     return 0;
 }
+
+#ifdef _CRTDLL
+/*********************************************************************
+ *                  __GetMainArgs  (CRTDLL.@)
+ */
+void CDECL __GetMainArgs( int *argc, char ***argv, char ***envp, int expand_wildcards )
+{
+    int new_mode = 0;
+    __getmainargs( argc, argv, envp, expand_wildcards, &new_mode );
+}
+#endif
 
 static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
 {
