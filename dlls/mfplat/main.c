@@ -4259,6 +4259,7 @@ struct resolver_queued_result
     IUnknown *object;
     MF_OBJECT_TYPE obj_type;
     HRESULT hr;
+    IMFAsyncResult *inner_result;
     enum resolved_object_origin origin;
 };
 
@@ -4313,7 +4314,7 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
         IMFSchemeHandler *scheme_handler;
     } handler;
 
-    queued_result = heap_alloc(sizeof(*queued_result));
+    queued_result = heap_alloc_zero(sizeof(*queued_result));
 
     IMFAsyncResult_GetObject(inner_result, &handler.handler);
 
@@ -4336,6 +4337,12 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
     if (SUCCEEDED(queued_result->hr))
     {
         MFASYNCRESULT *data = (MFASYNCRESULT *)inner_result;
+
+        if (data->hEvent)
+        {
+            queued_result->inner_result = inner_result;
+            IMFAsyncResult_AddRef(queued_result->inner_result);
+        }
 
         /* Push resolved object type and created object, so we don't have to guess on End*() call. */
         EnterCriticalSection(&resolver->cs);
@@ -4687,7 +4694,7 @@ static HRESULT resolver_end_create_object(struct source_resolver *resolver, enum
 
     LIST_FOR_EACH_ENTRY(iter, &resolver->pending, struct resolver_queued_result, entry)
     {
-        if (iter->object == object && iter->origin == origin)
+        if (iter->inner_result == result || (iter->object == object && iter->origin == origin))
         {
             list_remove(&iter->entry);
             queued_result = iter;
@@ -4704,6 +4711,8 @@ static HRESULT resolver_end_create_object(struct source_resolver *resolver, enum
         *out = queued_result->object;
         *obj_type = queued_result->obj_type;
         hr = queued_result->hr;
+        if (queued_result->inner_result)
+            IMFAsyncResult_Release(queued_result->inner_result);
         heap_free(queued_result);
     }
     else
