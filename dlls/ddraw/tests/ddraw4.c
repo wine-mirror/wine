@@ -4374,18 +4374,6 @@ static void test_specular_lighting(void)
         {320, 360, 0x002c2c2c},
         {480, 360, 0x006e6e6e},
     },
-    expected_point_side[] =
-    {
-        {160, 120, 0x00000000},
-        {320, 120, 0x00000000},
-        {480, 120, 0x00000000},
-        {160, 240, 0x00000000},
-        {320, 240, 0x00000000},
-        {480, 240, 0x00000000},
-        {160, 360, 0x00000000},
-        {320, 360, 0x00000000},
-        {480, 360, 0x00000000},
-    },
     expected_point_far[] =
     {
         {160, 120, 0x00000000},
@@ -4393,6 +4381,18 @@ static void test_specular_lighting(void)
         {480, 120, 0x00000000},
         {160, 240, 0x00000000},
         {320, 240, 0x00ffffff},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
+    },
+    expected_zero[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00000000},
         {480, 240, 0x00000000},
         {160, 360, 0x00000000},
         {320, 360, 0x00000000},
@@ -4415,8 +4415,14 @@ static void test_specular_lighting(void)
         {&point, TRUE, 30.0f, expected_point, ARRAY_SIZE(expected_point)},
         {&spot, TRUE, 30.0f, expected_spot, ARRAY_SIZE(expected_spot)},
         {&parallelpoint, TRUE, 30.0f, expected_parallelpoint, ARRAY_SIZE(expected_parallelpoint)},
-        {&point_side, TRUE, 0.0f, expected_point_side, ARRAY_SIZE(expected_point_side)},
+        {&point_side, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
         {&point_far, TRUE, 1.0f, expected_point_far, ARRAY_SIZE(expected_point_far)},
+        {&directional, FALSE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&directional, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&spot, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&parallelpoint, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point_far, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
     };
     IDirect3D3 *d3d;
     IDirect3DDevice3 *device;
