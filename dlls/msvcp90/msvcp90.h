@@ -20,6 +20,7 @@
 #include "windef.h"
 #include "cxx.h"
 
+#define CXX_EXCEPTION       0xe06d7363
 #define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
 
 typedef unsigned char MSVCP_bool;
