@@ -525,6 +525,26 @@ interface IMFMediaSource : IMFMediaEventGenerator
     HRESULT Shutdown();
 }
 
+[
+    object,
+    uuid(d182108f-4ec6-443f-aa42-a71106ec825f),
+]
+interface IMFMediaStream : IMFMediaEventGenerator
+{
+    HRESULT GetMediaSource(
+        [out] IMFMediaSource **source);
+
+    HRESULT GetStreamDescriptor(
+        [out] IMFStreamDescriptor **descriptor);
+
+    [local]
+    HRESULT RequestSample(
+        [in] IUnknown *token);
+
+    [call_as(RequestSample)]
+    HRESULT RemoteRequestSample();
+}
+
 interface IMFStreamSink;
 
 [
