@@ -32,10 +32,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 static MSVCRT_purecall_handler purecall_handler = NULL;
 
 static MSVCRT__onexit_table_t MSVCRT_atexit_table;
-static MSVCRT__onexit_table_t MSVCRT_quick_exit_table;
 
 typedef void (__stdcall *_tls_callback_type)(void*,ULONG,void*);
 static _tls_callback_type tls_atexit_callback;
+
+static CRITICAL_SECTION MSVCRT_onexit_cs;
+static CRITICAL_SECTION_DEBUG MSVCRT_onexit_cs_debug =
+{
+    0, 0, &MSVCRT_onexit_cs,
+    { &MSVCRT_onexit_cs_debug.ProcessLocksList, &MSVCRT_onexit_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": MSVCRT_onexit_cs") }
+};
+static CRITICAL_SECTION MSVCRT_onexit_cs = { &MSVCRT_onexit_cs_debug, -1, 0, 0, 0, 0 };
 
 extern int MSVCRT_app_type;
 extern MSVCRT_wchar_t *MSVCRT__wpgmptr;
@@ -45,15 +53,93 @@ static int MSVCRT_error_mode = MSVCRT__OUT_TO_DEFAULT;
 
 void (*CDECL _aexit_rtn)(int) = MSVCRT__exit;
 
-extern int CDECL _initialize_onexit_table(MSVCRT__onexit_table_t *table);
-extern int CDECL _register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
-extern int CDECL _execute_onexit_table(MSVCRT__onexit_table_t *table);
+static int initialize_onexit_table(MSVCRT__onexit_table_t *table)
+{
+    if (!table)
+        return -1;
+
+    if (table->_first == table->_end)
+        table->_last = table->_end = table->_first = NULL;
+    return 0;
+}
+
+static int register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func)
+{
+    if (!table)
+        return -1;
+
+    EnterCriticalSection(&MSVCRT_onexit_cs);
+    if (!table->_first)
+    {
+        table->_first = MSVCRT_calloc(32, sizeof(void *));
+        if (!table->_first)
+        {
+            WARN("failed to allocate initial table.\n");
+            LeaveCriticalSection(&MSVCRT_onexit_cs);
+            return -1;
+        }
+        table->_last = table->_first;
+        table->_end = table->_first + 32;
+    }
+
+    /* grow if full */
+    if (table->_last == table->_end)
+    {
+        int len = table->_end - table->_first;
+        MSVCRT__onexit_t *tmp = MSVCRT_realloc(table->_first, 2 * len * sizeof(void *));
+        if (!tmp)
+        {
+            WARN("failed to grow table.\n");
+            LeaveCriticalSection(&MSVCRT_onexit_cs);
+            return -1;
+        }
+        table->_first = tmp;
+        table->_end = table->_first + 2 * len;
+        table->_last = table->_first + len;
+    }
+
+    *table->_last = func;
+    table->_last++;
+    LeaveCriticalSection(&MSVCRT_onexit_cs);
+    return 0;
+}
+
+static int execute_onexit_table(MSVCRT__onexit_table_t *table)
+{
+    MSVCRT__onexit_t *func;
+    MSVCRT__onexit_table_t copy;
+
+    if (!table)
+        return -1;
+
+    EnterCriticalSection(&MSVCRT_onexit_cs);
+    if (!table->_first || table->_first >= table->_last)
+    {
+        LeaveCriticalSection(&MSVCRT_onexit_cs);
+        return 0;
+    }
+    copy._first = table->_first;
+    copy._last  = table->_last;
+    copy._end   = table->_end;
+    memset(table, 0, sizeof(*table));
+    initialize_onexit_table(table);
+    LeaveCriticalSection(&MSVCRT_onexit_cs);
+
+    for (func = copy._last - 1; func >= copy._first; func--)
+    {
+        if (*func)
+           (*func)();
+    }
+
+    MSVCRT_free(copy._first);
+    return 0;
+}
 
 static void call_atexit(void)
 {
     /* Note: should only be called with the exit lock held */
     if (tls_atexit_callback) tls_atexit_callback(NULL, DLL_PROCESS_DETACH, NULL);
-    _execute_onexit_table(&MSVCRT_atexit_table);
+    execute_onexit_table(&MSVCRT_atexit_table);
 }
 
 /*********************************************************************
@@ -269,7 +355,7 @@ MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
     return NULL;
 
   LOCK_EXIT;
-  _register_onexit_function(&MSVCRT_atexit_table, func);
+  register_onexit_function(&MSVCRT_atexit_table, func);
   UNLOCK_EXIT;
 
   return func;
@@ -309,23 +395,26 @@ int CDECL MSVCRT_atexit(void (__cdecl *func)(void))
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
 }
 
+#if _MSVCR_VER >= 140
+static MSVCRT__onexit_table_t MSVCRT_quick_exit_table;
+
 /*********************************************************************
  *             _crt_at_quick_exit (UCRTBASE.@)
  */
 int CDECL MSVCRT__crt_at_quick_exit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
-  return _register_onexit_function(&MSVCRT_quick_exit_table, (MSVCRT__onexit_t)func);
+  return register_onexit_function(&MSVCRT_quick_exit_table, (MSVCRT__onexit_t)func);
 }
 
 /*********************************************************************
- *             quick_exit (MSVCRT.@)
+ *             quick_exit (UCRTBASE.@)
  */
 void CDECL MSVCRT_quick_exit(int exitcode)
 {
   TRACE("(%d)\n", exitcode);
 
-  _execute_onexit_table(&MSVCRT_quick_exit_table);
+  execute_onexit_table(&MSVCRT_quick_exit_table);
   MSVCRT__exit(exitcode);
 }
 
@@ -337,6 +426,37 @@ int CDECL MSVCRT__crt_atexit(void (__cdecl *func)(void))
   TRACE("(%p)\n", func);
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
 }
+
+/*********************************************************************
+ *		_initialize_onexit_table (UCRTBASE.@)
+ */
+int CDECL MSVCRT__initialize_onexit_table(MSVCRT__onexit_table_t *table)
+{
+    TRACE("(%p)\n", table);
+
+    return initialize_onexit_table(table);
+}
+
+/*********************************************************************
+ *		_register_onexit_function (UCRTBASE.@)
+ */
+int CDECL MSVCRT__register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func)
+{
+    TRACE("(%p %p)\n", table, func);
+
+    return register_onexit_function(table, func);
+}
+
+/*********************************************************************
+ *		_execute_onexit_table (UCRTBASE.@)
+ */
+int CDECL MSVCRT__execute_onexit_table(MSVCRT__onexit_table_t *table)
+{
+    TRACE("(%p)\n", table);
+
+    return execute_onexit_table(table);
+}
+#endif
 
 /*********************************************************************
  *		_register_thread_local_exe_atexit_callback (UCRTBASE.@)
