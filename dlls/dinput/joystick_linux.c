@@ -239,6 +239,14 @@ static INT find_joystick_devices(void)
                         joydev.dev_axes_map[j] = j;
                         found_axes++;
                     }
+                    else if (axes_map[j] <= 10)
+                    {
+                        /* Axes 8 through 10 are Wheel, Gas and Brake,
+                         * remap to 0, 1 and 2
+                         */
+                        joydev.dev_axes_map[j] = axes_map[j] - 8;
+                        found_axes++;
+                    }
                     else if (axes_map[j] == 16 ||
                              axes_map[j] == 17)
                     {
