@@ -75,6 +75,21 @@ typedef struct _WAVEFORMATEX {
 } WAVEFORMATEX, *PWAVEFORMATEX, *NPWAVEFORMATEX, *LPWAVEFORMATEX;
 #endif /* _WAVEFORMATEX_ */
 
+#ifndef  WAVE_FORMAT_PCM
+typedef struct waveformat_tag {
+  WORD    wFormatTag;
+  WORD    nChannels;
+  DWORD   nSamplesPerSec;
+  DWORD   nAvgBytesPerSec;
+  WORD    nBlockAlign;
+} WAVEFORMAT, *PWAVEFORMAT, *NPWAVEFORMAT, *LPWAVEFORMAT;
+
+typedef struct pcmwaveformat_tag {
+  WAVEFORMAT  wf;
+  WORD        wBitsPerSample;
+} PCMWAVEFORMAT, *PPCMWAVEFORMAT, *NPPCMWAVEFORMAT, *LPPCMWAVEFORMAT;
+#endif /* WAVE_FORMAT_PCM */
+
 /* WAVE form wFormatTag IDs */
 #define  WAVE_FORMAT_UNKNOWN			0x0000	/*  Microsoft Corporation  */
 #ifndef  WAVE_FORMAT_PCM
@@ -117,6 +132,8 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_MPEGLAYER3			0x0055
 #define  WAVE_FORMAT_MSRT24			0x0082  /*  Microsoft Corporation */
 #define  WAVE_FORMAT_DOLBY_AC3_SPDIF		0x0092
+#define  WAVE_FORMAT_RAW_AAC1   		0x00FF
+#define  WAVE_FORMAT_MSAUDIO1			0x0160
 #define  WAVE_FORMAT_WMAUDIO2			0x0161
 #define  WAVE_FORMAT_WMAUDIO3			0x0162
 #define  WAVE_FORMAT_WMAUDIO_LOSSLESS		0x0163
@@ -124,6 +141,7 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_CREATIVE_ADPCM		0x0200	/*  Creative Labs, Inc  */
 #define  WAVE_FORMAT_CREATIVE_FASTSPEECH8	0x0202	/*  Creative Labs, Inc  */
 #define  WAVE_FORMAT_CREATIVE_FASTSPEECH10	0x0203	/*  Creative Labs, Inc  */
+#define  WAVE_FORMAT_GENERIC_PASSTHRU   	0x0249
 #define  WAVE_FORMAT_FM_TOWNS_SND		0x0300	/*  Fujitsu Corp.  */
 #define  WAVE_FORMAT_OLIGSM			0x1000	/*  Ing C. Olivetti & C., S.p.A.  */
 #define  WAVE_FORMAT_OLIADPCM			0x1001	/*  Ing C. Olivetti & C., S.p.A.  */
@@ -131,13 +149,18 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_OLISBC			0x1003	/*  Ing C. Olivetti & C., S.p.A.  */
 #define  WAVE_FORMAT_OLIOPR			0x1004	/*  Ing C. Olivetti & C., S.p.A.  */
 #define  WAVE_FORMAT_MPEG_ADTS_AAC		0x1600
+#define  WAVE_FORMAT_MPEG_RAW_AAC   		0x1601
+#define  WAVE_FORMAT_MPEG_LOAS			0x1602
 #define  WAVE_FORMAT_MPEG_HEAAC			0x1610
+#define  WAVE_FORMAT_DTS2			0x2001
 #define  WAVE_FORMAT_ALAC			0x6c61
 #define  WAVE_FORMAT_OPUS			0x704f
 #define  WAVE_FORMAT_AMR_NB			0x7361
 #define  WAVE_FORMAT_AMR_WB			0x7362
 #define  WAVE_FORMAT_AMR_WP			0x7363
+#define  WAVE_FORMAT_MPEG_AAC			0xa106
 #define  WAVE_FORMAT_FLAC			0xf1ac
+
 
 #ifndef MM_MICROSOFT
 #define MM_MICROSOFT 0x01
@@ -147,6 +170,9 @@ typedef struct _WAVEFORMATEX {
 #define MM_MSFT_ACM_GSM610 0x24
 #define MM_MSFT_ACM_G711 0x25
 #define MM_MSFT_ACM_PCM 0x26
+#define MM_MSFT_ACM_WMAUDIO 39
+#define MM_MSFT_ACM_MSAUDIO1 39
+#define MM_MSFT_ACM_WMAUDIO2 101
 
 #define MM_FRAUNHOFER_IIS 0xAC
 #define MM_FHGIIS_MPEGLAYER3_DECODE 0x09
@@ -174,6 +200,15 @@ typedef struct adpcmwaveformat_tag {
 } ADPCMWAVEFORMAT;
 typedef ADPCMWAVEFORMAT *PADPCMWAVEFORMAT,
 	*NPADPCMWAVEFORMAT, *LPADPCMWAVEFORMAT;
+
+typedef struct drmwaveformat_tag {
+	WAVEFORMATEX    wfx;
+	WORD            wReserved;
+	ULONG           ulContentId;
+	WAVEFORMATEX    wfxSecure;
+} DRMWAVEFORMAT;
+typedef DRMWAVEFORMAT *PDRMWAVEFORMAT, *NPDRMWAVEFORMAT,
+	*LPDRMWAVEFORMAT;
 
 typedef struct dvi_adpcmwaveformat_tag {
 	WAVEFORMATEX    wfx;
@@ -410,7 +445,9 @@ typedef struct mpeg1waveformat_tag {
 	WORD		fwHeadFlags;
 	DWORD		dwPTSLow;
 	DWORD		dwPTSHigh;
-} MPEG1WAVEFORMAT,* PMPEG1WAVEFORMAT;
+} MPEG1WAVEFORMAT;
+typedef MPEG1WAVEFORMAT *PMPEG1WAVEFORMAT,
+	*NPMPEG1WAVEFORMAT, *LPMPEG1WAVEFORMAT;
 
 #define	ACM_MPEG_LAYER1		0x0001
 #define	ACM_MPEG_LAYER2		0x0002
@@ -434,6 +471,8 @@ typedef struct mpeglayer3waveformat_tag {
 	WORD		nFramesPerBlock;
 	WORD		nCodecDelay;
 } MPEGLAYER3WAVEFORMAT;
+typedef MPEGLAYER3WAVEFORMAT *PMPEGLAYER3WAVEFORMAT,
+	*NPMPEGLAYER3WAVEFORMAT, *LPMPEGLAYER3WAVEFORMAT;
 
 #define MPEGLAYER3_WFX_EXTRA_BYTES   12
 
@@ -444,6 +483,42 @@ typedef struct mpeglayer3waveformat_tag {
 #define MPEGLAYER3_FLAG_PADDING_ISO	0x00000000
 #define MPEGLAYER3_FLAG_PADDING_ON	0x00000001
 #define MPEGLAYER3_FLAG_PADDING_OFF	0x00000002
+
+typedef struct msaudio1waveformat_tag {
+	WAVEFORMATEX wfx;
+	WORD         wSamplesPerBlock;
+	WORD         wEncodeOptions;
+} MSAUDIO1WAVEFORMAT, *LPMSAUDIO1WAVEFORMAT;
+
+#define WMAUDIO_BITS_PER_SAMPLE 16
+#define WMAUDIO_MAX_CHANNELS     2
+
+#define MSAUDIO1_BITS_PER_SAMPLE     WMAUDIO_BITS_PER_SAMPLE
+#define MSAUDIO1_MAX_CHANNELS        WMAUDIO_MAX_CHANNELS
+#define MSAUDIO1_WFX_EXTRA_BYTES     (sizeof(MSAUDIO1WAVEFORMAT) - sizeof(WAVEFORMATEX))
+
+typedef struct wmaudio2waveformat_tag {
+	WAVEFORMATEX wfx;
+	DWORD        dwSamplesPerBlock;
+	WORD         wEncodeOptions;
+	DWORD        dwSuperBlockAlign;
+} WMAUDIO2WAVEFORMAT, *LPWMAUDIO2WAVEFORMAT;
+
+#define WMAUDIO2_BITS_PER_SAMPLE     WMAUDIO_BITS_PER_SAMPLE
+#define WMAUDIO2_MAX_CHANNELS        WMAUDIO_MAX_CHANNELS
+#define WMAUDIO2_WFX_EXTRA_BYTES     (sizeof(WMAUDIO2WAVEFORMAT) - sizeof(WAVEFORMATEX))
+
+typedef struct wmaudio3waveformat_tag {
+	WAVEFORMATEX wfx;
+	WORD         wValidBitsPerSample;
+	DWORD        dwChannelMask;
+	DWORD        dwReserved1;
+	DWORD        dwReserved2;
+	WORD         wEncodeOptions;
+	WORD         wReserved3;
+} WMAUDIO3WAVEFORMAT, *LPWMAUDIO3WAVEFORMAT;
+
+#define WMAUDIO3_WFX_EXTRA_BYTES     (sizeof(WMAUDIO3WAVEFORMAT) - sizeof(WAVEFORMATEX))
 
 #ifdef GUID_DEFINED
 
@@ -498,7 +573,6 @@ typedef WAVEFORMATIEEEFLOATEX*  LPWAVEFORMATIEEEFLOATEX;
 #define SPEAKER_ALL                     0x80000000
 
 #endif /* _SPEAKER_POSITIONS_ */
-
 
 /* DIB stuff */
 
