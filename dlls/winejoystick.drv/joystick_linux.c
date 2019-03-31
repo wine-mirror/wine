@@ -280,10 +280,13 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
 	    switch (jstck->axesMap[i]) {
 	    case 0: /* X */
 	    case 1: /* Y */
+	    case 8: /* Wheel */
+	    case 9: /* Gas */
 		lpCaps->wNumAxes++;
 		break;
 	    case 2: /* Z */
 	    case 6: /* Throttle */
+	    case 10: /* Brake */
 		lpCaps->wNumAxes++;
 		lpCaps->wCaps |= JOYCAPS_HASZ;
 		break;
@@ -365,13 +368,16 @@ LRESULT driver_joyGetPosEx(DWORD_PTR dwDevID, LPJOYINFOEX lpInfo)
 	if (ev.type == (JS_EVENT_AXIS)) {
 	    switch (jstck->axesMap[ev.number]) {
 	    case 0: /* X */
+	    case 8: /* Wheel */
 		jstck->x = ev.value;
 		break;
 	    case 1: /* Y */
+	    case 9: /* Gas */
 		jstck->y = ev.value;
 		break;
 	    case 2: /* Z */
 	    case 6: /* Throttle */
+	    case 10: /* Brake */
 		jstck->z = ev.value;
 		break;
 	    case 5: /* Rz */
