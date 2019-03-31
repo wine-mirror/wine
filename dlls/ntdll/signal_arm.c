@@ -1058,6 +1058,16 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD a
     return TRUE;
 }
 
+/**********************************************************************
+ *              RtlInstallFunctionTableCallback   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlInstallFunctionTableCallback( DWORD table, DWORD base, DWORD length,
+                                               PGET_RUNTIME_FUNCTION_CALLBACK callback, PVOID context, PCWSTR dll )
+{
+    FIXME( "%x %x %d %p %p %s: stub\n", table, base, length, callback, context, wine_dbgstr_w(dll) );
+    return TRUE;
+}
+
 /*************************************************************************
  *              RtlAddGrowableFunctionTable   (NTDLL.@)
  */

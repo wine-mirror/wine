@@ -721,7 +721,7 @@
 # @ stub RtlInitializeStackTraceDataBase
 @ stub RtlInsertElementGenericTable
 @ stdcall RtlInsertElementGenericTableAvl(ptr ptr long ptr)
-@ cdecl -arch=x86_64 RtlInstallFunctionTableCallback(long long long ptr ptr wstr)
+@ cdecl -arch=arm,arm64,x86_64 RtlInstallFunctionTableCallback(long long long ptr ptr wstr)
 @ stdcall RtlInt64ToUnicodeString(int64 long ptr)
 @ stdcall RtlIntegerToChar(long long long ptr)
 @ stdcall RtlIntegerToUnicodeString(long long ptr)

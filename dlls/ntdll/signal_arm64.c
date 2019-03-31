@@ -637,7 +637,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD *rec;
     ucontext_t *context = ucontext;
-    DWORD *orig_pc = PC_sig(context);
+    DWORD *orig_pc = (DWORD *)PC_sig(context);
 
     /* check for page fault inside the thread stack */
     if (signal == SIGSEGV &&
@@ -974,6 +974,16 @@ void signal_init_process(void)
 BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_PTR addr )
 {
     FIXME( "%p %u %lx: stub\n", table, count, addr );
+    return TRUE;
+}
+
+/**********************************************************************
+ *              RtlInstallFunctionTableCallback   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlInstallFunctionTableCallback( ULONG_PTR table, ULONG_PTR base, DWORD length,
+                                               PGET_RUNTIME_FUNCTION_CALLBACK callback, PVOID context, PCWSTR dll )
+{
+    FIXME( "%lx %lx %d %p %p %s: stub\n", table, base, length, callback, context, wine_dbgstr_w(dll) );
     return TRUE;
 }
 
