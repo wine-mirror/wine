@@ -291,6 +291,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_NO_DATA                                      232
 #define ERROR_PIPE_NOT_CONNECTED                           233
 #define ERROR_MORE_DATA                                    234
+#define ERROR_NO_WORK_DONE                                 235
 #define ERROR_VC_DISCONNECTED                              240
 #define ERROR_INVALID_EA_NAME                              254
 #define ERROR_EA_LIST_INCONSISTENT                         255

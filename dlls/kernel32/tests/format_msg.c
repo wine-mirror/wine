@@ -155,7 +155,7 @@ static void test_message_from_string_wide(void)
     error = GetLastError();
     ok(!lstrcmpW(empty, out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==0, "succeeded: r=%d\n", r);
-    ok(error==0xdeadbeef, "last error %u\n", error);
+    ok((error==0xdeadbeef) || (error == ERROR_NO_WORK_DONE), "last error %u\n", error);
 
     /* format placeholder with no specifier */
     SetLastError(0xdeadbeef);
@@ -443,7 +443,7 @@ static void test_message_from_string(void)
     r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(!memcmp(out, init_buf, sizeof(init_buf)), "Expected the buffer to be untouched\n");
     ok(r==0, "succeeded: r=%d\n", r);
-    ok(GetLastError()==0xdeadbeef,
+    ok((GetLastError()==0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
        "last error %u\n", GetLastError());
 
     /* format placeholder with no specifier */
@@ -745,7 +745,8 @@ static void test_message_ignore_inserts(void)
                          ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageA to return 0, got %d\n", ret);
     ok(!memcmp(out, init_buf, sizeof(init_buf)), "Expected the output buffer to be untouched\n");
-    ok(GetLastError() == 0xdeadbeef, "Expected GetLastError() to return 0xdeadbeef, got %u\n", GetLastError());
+    ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
+        "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     /* Insert sequences are ignored. */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "test%1%2!*.*s!%99", 0, 0, out,
@@ -855,7 +856,8 @@ static void test_message_ignore_inserts_wide(void)
                          ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %d\n", ret);
     ok(!lstrcmpW(empty, out), "Expected the output buffer to be the empty string, got %s\n", wine_dbgstr_w(out));
-    ok(GetLastError() == 0xdeadbeef, "Expected GetLastError() to return 0xdeadbeef, got %u\n", GetLastError());
+    ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
+      "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     /* Insert sequences are ignored. */
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_t12oos99, 0, 0, out,
@@ -1294,8 +1296,8 @@ static void test_message_allocate_buffer(void)
                          "", 0, 0, (char *)&buf, 0, NULL);
     ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
     ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
-    ok(GetLastError() == 0xdeadbeef,
-       "Expected last error to be untouched, got %u\n", GetLastError());
+    ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
+       "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     buf = (char *)0xdeadbeef;
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
@@ -1391,8 +1393,8 @@ static void test_message_allocate_buffer_wide(void)
                          empty, 0, 0, (WCHAR *)&buf, 0, NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
     ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
-    ok(GetLastError() == 0xdeadbeef,
-       "Expected last error to be untouched, got %u\n", GetLastError());
+    ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
+       "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
@@ -1522,6 +1524,7 @@ static void test_message_from_hmodule(void)
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
     ok(error == ERROR_RESOURCE_LANG_NOT_FOUND ||
+       error == ERROR_RESOURCE_TYPE_NOT_FOUND ||
        error == ERROR_MR_MID_NOT_FOUND ||
        error == ERROR_MUI_FILE_NOT_FOUND ||
        error == ERROR_MUI_FILE_NOT_LOADED,
@@ -1533,6 +1536,7 @@ static void test_message_from_hmodule(void)
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
     ok(error == ERROR_RESOURCE_LANG_NOT_FOUND ||
+       error == ERROR_RESOURCE_TYPE_NOT_FOUND ||
        error == ERROR_MR_MID_NOT_FOUND ||
        error == ERROR_MUI_FILE_NOT_FOUND ||
        error == ERROR_MUI_FILE_NOT_LOADED,
