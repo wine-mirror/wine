@@ -870,7 +870,7 @@ static const VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( const VS_VERSION
 
     while ((char *)child < (char *)info + info->wLength )
     {
-        if (!strncasecmp( child->szKey, szKey, cbKey ) && !child->szKey[cbKey])
+        if (!_strnicmp( child->szKey, szKey, cbKey ) && !child->szKey[cbKey])
             return child;
 
 	if (!(child->wLength)) return NULL;
