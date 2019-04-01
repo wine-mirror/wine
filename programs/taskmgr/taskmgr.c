@@ -76,35 +76,6 @@ static void Draw3dRect(HDC hDC, int x, int y, int cx, int cy, COLORREF clrTopLef
     FillSolidRect2(hDC, x, y + cy, cx, -1, clrBottomRight);
 }
 
-void Font_DrawText(HDC hDC, LPWSTR lpwszText, int x, int y)
-{
-    HDC        hFontDC;
-    HBITMAP    hFontBitmap;
-    HBITMAP    hOldBitmap;
-    int        i;
-
-    hFontDC = CreateCompatibleDC(hDC);
-    hFontBitmap = LoadBitmapW(hInst, MAKEINTRESOURCEW(IDB_FONT));
-    hOldBitmap = SelectObject(hFontDC, hFontBitmap);
-
-    for (i = 0; lpwszText[i]; i++) {
-        if ((lpwszText[i] >= '0') && (lpwszText[i] <= '9')) {
-            BitBlt(hDC, x + (i * 8), y, 8, 11, hFontDC, (lpwszText[i] - '0') * 8, 0, SRCCOPY);
-        }
-        else if (lpwszText[i] == 'K')
-        {
-            BitBlt(hDC, x + (i * 8), y, 8, 11, hFontDC, 80, 0, SRCCOPY);
-        }
-        else if (lpwszText[i] == '%')
-        {
-            BitBlt(hDC, x + (i * 8), y, 8, 11, hFontDC, 88, 0, SRCCOPY);
-        }
-    }
-    SelectObject(hFontDC, hOldBitmap);
-    DeleteObject(hFontBitmap);
-    DeleteDC(hFontDC);
-}
-
 static BOOL OnCreate(HWND hWnd)
 {
     HMENU   hMenu;

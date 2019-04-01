@@ -609,6 +609,3 @@ IDB_TRAYMASK            BITMAP traymask.bmp
 
 /* @makedep: trayicon.bmp */
 IDB_TRAYICON            BITMAP trayicon.bmp
-
-/* @makedep: font.bmp */
-IDB_FONT                BITMAP font.bmp
