@@ -817,6 +817,129 @@ static const char *debugstr_mf_guid(const GUID *guid)
     return ret ? wine_dbg_sprintf("%s", ret->name) : wine_dbgstr_guid(guid);
 }
 
+struct event_id
+{
+    DWORD id;
+    const char *name;
+};
+
+static int debug_event_id(const void *a, const void *b)
+{
+    const DWORD *id = a;
+    const struct event_id *event_id = b;
+    return *id - event_id->id;
+}
+
+static const char *debugstr_eventid(DWORD event)
+{
+    static const struct event_id
+    {
+        DWORD id;
+        const char *name;
+    }
+    event_ids[] =
+    {
+#define X(e) { e, #e }
+        X(MEUnknown),
+        X(MEError),
+        X(MEExtendedType),
+        X(MENonFatalError),
+        X(MESessionUnknown),
+        X(MESessionTopologySet),
+        X(MESessionTopologiesCleared),
+        X(MESessionStarted),
+        X(MESessionPaused),
+        X(MESessionStopped),
+        X(MESessionClosed),
+        X(MESessionEnded),
+        X(MESessionRateChanged),
+        X(MESessionScrubSampleComplete),
+        X(MESessionCapabilitiesChanged),
+        X(MESessionTopologyStatus),
+        X(MESessionNotifyPresentationTime),
+        X(MENewPresentation),
+        X(MELicenseAcquisitionStart),
+        X(MELicenseAcquisitionCompleted),
+        X(MEIndividualizationStart),
+        X(MEIndividualizationCompleted),
+        X(MEEnablerProgress),
+        X(MEEnablerCompleted),
+        X(MEPolicyError),
+        X(MEPolicyReport),
+        X(MEBufferingStarted),
+        X(MEBufferingStopped),
+        X(MEConnectStart),
+        X(MEConnectEnd),
+        X(MEReconnectStart),
+        X(MEReconnectEnd),
+        X(MERendererEvent),
+        X(MESessionStreamSinkFormatChanged),
+        X(MESourceUnknown),
+        X(MESourceStarted),
+        X(MEStreamStarted),
+        X(MESourceSeeked),
+        X(MEStreamSeeked),
+        X(MENewStream),
+        X(MEUpdatedStream),
+        X(MESourceStopped),
+        X(MEStreamStopped),
+        X(MESourcePaused),
+        X(MEStreamPaused),
+        X(MEEndOfPresentation),
+        X(MEEndOfStream),
+        X(MEMediaSample),
+        X(MEStreamTick),
+        X(MEStreamThinMode),
+        X(MEStreamFormatChanged),
+        X(MESourceRateChanged),
+        X(MEEndOfPresentationSegment),
+        X(MESourceCharacteristicsChanged),
+        X(MESourceRateChangeRequested),
+        X(MESourceMetadataChanged),
+        X(MESequencerSourceTopologyUpdated),
+        X(MESinkUnknown),
+        X(MEStreamSinkStarted),
+        X(MEStreamSinkStopped),
+        X(MEStreamSinkPaused),
+        X(MEStreamSinkRateChanged),
+        X(MEStreamSinkRequestSample),
+        X(MEStreamSinkMarker),
+        X(MEStreamSinkPrerolled),
+        X(MEStreamSinkScrubSampleComplete),
+        X(MEStreamSinkFormatChanged),
+        X(MEStreamSinkDeviceChanged),
+        X(MEQualityNotify),
+        X(MESinkInvalidated),
+        X(MEAudioSessionNameChanged),
+        X(MEAudioSessionVolumeChanged),
+        X(MEAudioSessionDeviceRemoved),
+        X(MEAudioSessionServerShutdown),
+        X(MEAudioSessionGroupingParamChanged),
+        X(MEAudioSessionIconChanged),
+        X(MEAudioSessionFormatChanged),
+        X(MEAudioSessionDisconnected),
+        X(MEAudioSessionExclusiveModeOverride),
+        X(METrustUnknown),
+        X(MEPolicyChanged),
+        X(MEContentProtectionMessage),
+        X(MEPolicySet),
+        X(MEWMDRMLicenseBackupCompleted),
+        X(MEWMDRMLicenseBackupProgress),
+        X(MEWMDRMLicenseRestoreCompleted),
+        X(MEWMDRMLicenseRestoreProgress),
+        X(MEWMDRMLicenseAcquisitionCompleted),
+        X(MEWMDRMIndividualizationCompleted),
+        X(MEWMDRMIndividualizationProgress),
+        X(MEWMDRMProximityCompleted),
+        X(MEWMDRMLicenseStoreCleaned),
+        X(MEWMDRMRevocationDownloadCompleted),
+#undef X
+    };
+
+    struct event_id *ret = bsearch(&event, event_ids, ARRAY_SIZE(event_ids), sizeof(*event_ids), debug_event_id);
+    return ret ? wine_dbg_sprintf("%s", ret->name) : wine_dbg_sprintf("%u", event);
+}
+
 static inline struct attributes *impl_from_IMFAttributes(IMFAttributes *iface)
 {
     return CONTAINING_RECORD(iface, struct attributes, IMFAttributes_iface);
@@ -5378,7 +5501,7 @@ HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HR
     mfmediaevent *object;
     HRESULT hr;
 
-    TRACE("%#x, %s, %08x, %p, %p\n", type, debugstr_guid(extended_type), status, value, event);
+    TRACE("%s, %s, %08x, %p, %p\n", debugstr_eventid(type), debugstr_guid(extended_type), status, value, event);
 
     object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
     if(!object)
@@ -5400,6 +5523,8 @@ HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HR
         PropVariantCopy(&object->value, value);
 
     *event = &object->IMFMediaEvent_iface;
+
+    TRACE("Created event %p.\n", *event);
 
     return S_OK;
 }
@@ -5650,7 +5775,7 @@ static HRESULT WINAPI eventqueue_QueueEventParamVar(IMFMediaEventQueue *iface, M
     IMFMediaEvent *event;
     HRESULT hr;
 
-    TRACE("%p, %d, %s, %#x, %p\n", iface, event_type, debugstr_guid(extended_type), status, value);
+    TRACE("%p, %s, %s, %#x, %p\n", iface, debugstr_eventid(event_type), debugstr_guid(extended_type), status, value);
 
     if (FAILED(hr = MFCreateMediaEvent(event_type, extended_type, status, value, &event)))
         return hr;
@@ -5668,7 +5793,7 @@ static HRESULT WINAPI eventqueue_QueueEventParamUnk(IMFMediaEventQueue *iface, M
     PROPVARIANT value;
     HRESULT hr;
 
-    TRACE("%p, %d, %s, %#x, %p.\n", iface, event_type, debugstr_guid(extended_type), status, unk);
+    TRACE("%p, %s, %s, %#x, %p.\n", iface, debugstr_eventid(event_type), debugstr_guid(extended_type), status, unk);
 
     value.vt = VT_UNKNOWN;
     value.u.punkVal = unk;
