@@ -29,7 +29,6 @@
 #include <commctrl.h>
 #include <winnt.h>
 
-#include "wine/unicode.h"
 #include "taskmgr.h"
 #include "perfdata.h"
 

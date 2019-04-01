@@ -28,7 +28,6 @@
 #include <commctrl.h>
 #include <winnt.h>
 
-#include "wine/unicode.h"
 #include "taskmgr.h"
 #include "perfdata.h"
 
@@ -82,15 +81,15 @@ static void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
      */
     if (CpuUsage == 100)
     {
-        sprintfW(Text, wszFormatI, (int)CpuUsage);
+        swprintf(Text, wszFormatI, (int)CpuUsage);
     }
     else if (CpuUsage < 10)
     {
-        sprintfW(Text, wszFormatII, (int)CpuUsage);
+        swprintf(Text, wszFormatII, (int)CpuUsage);
     }
     else
     {
-        sprintfW(Text, wszFormatIII, (int)CpuUsage);
+        swprintf(Text, wszFormatIII, (int)CpuUsage);
     }
     
     /*
@@ -252,13 +251,13 @@ static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
     CommitChargeTotal = (ULONGLONG)PerfDataGetCommitChargeTotalK();
     CommitChargeLimit = (ULONGLONG)PerfDataGetCommitChargeLimitK();
 
-    sprintfW(Text, wszFormat, (int)CommitChargeTotal);
+    swprintf(Text, wszFormat, (int)CommitChargeTotal);
     
     /*
      * Draw the font text onto the graph
      * The bottom 20 pixels are reserved for the text
      */
-    Font_DrawText(hDC, Text, ((rcClient.right - rcClient.left) - (strlenW(Text) * 8)) / 2, rcClient.bottom - 11 - 5);
+    Font_DrawText(hDC, Text, ((rcClient.right - rcClient.left) - (lstrlenW(Text) * 8)) / 2, rcClient.bottom - 11 - 5);
 
     /*
      * Now we have to draw the graph
