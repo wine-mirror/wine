@@ -1513,6 +1513,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
     HKEY enum_hkey;
     HKEY instance_hkey;
     struct device *device;
+    LONG l;
 
     TRACE("devinfo %p, name %s, class %s, description %s, hwnd %p, flags %#x, device_data %p.\n",
             devinfo, debugstr_w(name), debugstr_guid(class), debugstr_w(description),
@@ -1540,8 +1541,8 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
     }
     if ((flags & DICD_GENERATE_ID))
     {
-        static const WCHAR formatW[] = {'R','O','O','T','\\','%','s','\\','%','0','4','d',0};
-        int instance_id, highest_id = -1;
+        static const WCHAR formatW[] = {'R','O','O','T','\\','%','s','\\','%','0','4','u',0};
+        unsigned int instance_id;
 
         if (strchrW(name, '\\'))
         {
@@ -1549,25 +1550,20 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
             return FALSE;
         }
 
-        LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
+        for (instance_id = 0; ; ++instance_id)
         {
-            const WCHAR *instance_str = strrchrW(device->instanceId, '\\');
-            WCHAR *endptr;
+            if (snprintfW(id, ARRAY_SIZE(id), formatW, name, instance_id) == -1)
+            {
+                SetLastError(ERROR_INVALID_DEVINST_NAME);
+                return FALSE;
+            }
 
-            if (instance_str)
-                instance_str++;
-            else
-                instance_str = device->instanceId;
-
-            instance_id = strtoulW(instance_str, &endptr, 10);
-            if (*instance_str && !*endptr)
-                highest_id = max(highest_id, instance_id);
-        }
-
-        if (snprintfW(id, ARRAY_SIZE(id), formatW, name, highest_id + 1) == -1)
-        {
-            SetLastError(ERROR_INVALID_DEVINST_NAME);
-            return FALSE;
+            RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_READ, NULL, &enum_hkey, NULL);
+            if (!(l = RegOpenKeyExW(enum_hkey, id, 0, KEY_READ, &instance_hkey)))
+                RegCloseKey(instance_hkey);
+            if (l == ERROR_FILE_NOT_FOUND)
+                break;
+            RegCloseKey(enum_hkey);
         }
     }
     else
