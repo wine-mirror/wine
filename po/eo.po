@@ -7039,76 +7039,134 @@ msgid "No events available.\n"
 msgstr "Neniuj pliaj datumoj haveblas.\n"
 
 #: mferror.mc:445
-msgid "Shutdown() was called.\n"
+msgid "Invalid media source state transition\n"
 msgstr ""
 
 #: mferror.mc:452
+msgid "End of media stream has been reached\n"
+msgstr ""
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:466
+msgid "Media stream has no duration set\n"
+msgstr ""
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property is read-only\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property is not allowed\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Media source is not started\n"
+msgstr "La aparato ne estas konektita.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Support Information"
+msgid "Unsupported media format\n"
+msgstr "Informoj pri Helpo"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state\n"
+msgstr ""
+
+#: mferror.mc:522
+msgid "No media streams were selected\n"
+msgstr ""
+
+#: mferror.mc:529
+msgid "Unsupported media source characteristics\n"
+msgstr ""
+
+#: mferror.mc:536
 #, fuzzy
 #| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
 msgstr "Konekto nevalida.\n"
 
-#: mferror.mc:459
+#: mferror.mc:543
 #, fuzzy
 #| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
 msgstr "Mi ne povas trovi la printilon."
 
-#: mferror.mc:466
+#: mferror.mc:550
 #, fuzzy
 #| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
 msgstr "Modulo ne estis trovita.\n"
 
-#: mferror.mc:473
+#: mferror.mc:557
 msgid "Cannot connect topology nodes.\n"
 msgstr ""
 
-#: mferror.mc:480
+#: mferror.mc:564
 msgid "Topology request is not supported.\n"
 msgstr ""
 
-#: mferror.mc:487
+#: mferror.mc:571
 msgid "Invalid topology time attributes.\n"
 msgstr ""
 
-#: mferror.mc:494
+#: mferror.mc:578
 msgid "Found loops in topology.\n"
 msgstr ""
 
-#: mferror.mc:501
+#: mferror.mc:585
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
 msgstr "instala fonto mankas.\n"
 
-#: mferror.mc:508
+#: mferror.mc:592
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Stream descriptor is missing.\n"
 msgstr "instala fonto mankas.\n"
 
-#: mferror.mc:515
+#: mferror.mc:599
 #, fuzzy
 #| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
 msgstr "La aparato ne estas konektita.\n"
 
-#: mferror.mc:522
+#: mferror.mc:606
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Source is missing.\n"
 msgstr "instala fonto mankas.\n"
 
-#: mferror.mc:529
+#: mferror.mc:613
 msgid "Topology loader does not support sink activates.\n"
 msgstr ""
 
-#: mferror.mc:536
+#: mferror.mc:620
 msgid "Clock has no time source set.\n"
 msgstr ""
 
-#: mferror.mc:543
+#: mferror.mc:627
 #, fuzzy
 #| msgid "File already exists.\n"
 msgid "Clock state was already set.\n"

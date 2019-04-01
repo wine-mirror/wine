@@ -7228,82 +7228,148 @@ msgid "No events available.\n"
 msgstr "Nessun server di logon disponibile.\n"
 
 #: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Invalid media source state transition\n"
+msgstr "Livello autorizzazione non supportato.\n"
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "End of media stream has been reached\n"
+msgstr "Il registro è stato recuperato.\n"
+
+#: mferror.mc:459
 msgid "Shutdown() was called.\n"
 msgstr ""
 
-#: mferror.mc:452
+#: mferror.mc:466
+msgid "Media stream has no duration set\n"
+msgstr ""
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found\n"
+msgstr "Insieme di proprietà non trovato.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is read-only\n"
+msgstr "Cartella non vuota.\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property is not allowed\n"
+msgstr "Tipo di aggancio non permesso.\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is not started\n"
+msgstr "Risorsa in uso.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media format\n"
+msgstr "Tipo non supportato.\n"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state\n"
+msgstr ""
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No media streams were selected\n"
+msgstr "Nessun dato rilevato.\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media source characteristics\n"
+msgstr "Tipo non supportato.\n"
+
+#: mferror.mc:536
 #, fuzzy
 #| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
 msgstr "Connessione non valida.\n"
 
-#: mferror.mc:459
+#: mferror.mc:543
 #, fuzzy
 #| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
 msgstr "Stampante non trovata."
 
-#: mferror.mc:466
+#: mferror.mc:550
 #, fuzzy
 #| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
 msgstr "Modulo non trovato.\n"
 
-#: mferror.mc:473
+#: mferror.mc:557
 #, fuzzy
 #| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
 msgstr "Impossibile ottenere l'handle di chiamata.\n"
 
-#: mferror.mc:480
+#: mferror.mc:564
 #, fuzzy
 #| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
 msgstr "Richiesta non supportata.\n"
 
-#: mferror.mc:487
+#: mferror.mc:571
 #, fuzzy
 #| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
 msgstr "Attributi del gruppo non validi.\n"
 
-#: mferror.mc:494
+#: mferror.mc:578
 msgid "Found loops in topology.\n"
 msgstr ""
 
-#: mferror.mc:501
+#: mferror.mc:585
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
 msgstr "Sorgente di installazione mancante.\n"
 
-#: mferror.mc:508
+#: mferror.mc:592
 #, fuzzy
 #| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
 msgstr "Indice mancante.\n"
 
-#: mferror.mc:515
+#: mferror.mc:599
 #, fuzzy
 #| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
 msgstr "Unità non connessa.\n"
 
-#: mferror.mc:522
+#: mferror.mc:606
 #, fuzzy
 #| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
 msgstr "Indice mancante.\n"
 
-#: mferror.mc:529
+#: mferror.mc:613
 msgid "Topology loader does not support sink activates.\n"
 msgstr ""
 
-#: mferror.mc:536
+#: mferror.mc:620
 msgid "Clock has no time source set.\n"
 msgstr ""
 
-#: mferror.mc:543
+#: mferror.mc:627
 #, fuzzy
 #| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"

@@ -7110,82 +7110,148 @@ msgid "No events available.\n"
 msgstr "로그온 서버를 이용할 수 없습니다.\n"
 
 #: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Invalid media source state transition\n"
+msgstr "지원하지 않는 인증 레벨.\n"
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "End of media stream has been reached\n"
+msgstr "레지스트리는 복구되었습니다.\n"
+
+#: mferror.mc:459
 msgid "Shutdown() was called.\n"
 msgstr ""
 
-#: mferror.mc:452
+#: mferror.mc:466
+msgid "Media stream has no duration set\n"
+msgstr ""
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found\n"
+msgstr "속성 집합을 찾을 수 없습니다.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is read-only\n"
+msgstr "디렉터리가 비워 있지 않습니다.\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property is not allowed\n"
+msgstr "허용되지 않은 훅 형식.\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is not started\n"
+msgstr "리소스 사용 중.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media format\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state\n"
+msgstr ""
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No media streams were selected\n"
+msgstr "감지된 데이터가 없습니다.\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media source characteristics\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: mferror.mc:536
 #, fuzzy
 #| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
 msgstr "올바르지 않은 연결.\n"
 
-#: mferror.mc:459
+#: mferror.mc:543
 #, fuzzy
 #| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
 msgstr "프린터를 찾을 수 없습니다."
 
-#: mferror.mc:466
+#: mferror.mc:550
 #, fuzzy
 #| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
 msgstr "모듈을 찾을 수 없습니다.\n"
 
-#: mferror.mc:473
+#: mferror.mc:557
 #, fuzzy
 #| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
 msgstr "호출 핸들을 얻을 수 없습니다.\n"
 
-#: mferror.mc:480
+#: mferror.mc:564
 #, fuzzy
 #| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
 msgstr "지원되지 않는 요청.\n"
 
-#: mferror.mc:487
+#: mferror.mc:571
 #, fuzzy
 #| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
 msgstr "올바르지 않은 그룹 속성.\n"
 
-#: mferror.mc:494
+#: mferror.mc:578
 msgid "Found loops in topology.\n"
 msgstr ""
 
-#: mferror.mc:501
+#: mferror.mc:585
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
 msgstr "설치 원본이 없음.\n"
 
-#: mferror.mc:508
+#: mferror.mc:592
 #, fuzzy
 #| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
 msgstr "인덱스가 빠짐.\n"
 
-#: mferror.mc:515
+#: mferror.mc:599
 #, fuzzy
 #| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
 msgstr "장치가 연결되지 않았습니다.\n"
 
-#: mferror.mc:522
+#: mferror.mc:606
 #, fuzzy
 #| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
 msgstr "인덱스가 빠짐.\n"
 
-#: mferror.mc:529
+#: mferror.mc:613
 msgid "Topology loader does not support sink activates.\n"
 msgstr ""
 
-#: mferror.mc:536
+#: mferror.mc:620
 msgid "Clock has no time source set.\n"
 msgstr ""
 
-#: mferror.mc:543
+#: mferror.mc:627
 #, fuzzy
 #| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"

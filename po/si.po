@@ -7001,63 +7001,123 @@ msgid "No events available.\n"
 msgstr "සිද්ධීන් ලද හැකි නැහැ.\n"
 
 #: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported state transition.\n"
+msgid "Invalid media source state transition\n"
+msgstr "තත්වය සංක්‍රාන්තිය සහාය නොදක්වයි.\n"
+
+#: mferror.mc:452
+msgid "End of media stream has been reached\n"
+msgstr ""
+
+#: mferror.mc:459
 msgid "Shutdown() was called.\n"
 msgstr "Shutdown() කෝල් කරා.\n"
 
-#: mferror.mc:452
-msgid "Optional node is invalid.\n"
-msgstr "විකල්පයකි නෝඩය වලංගු නැහැ.\n"
-
-#: mferror.mc:459
-msgid "Cannot find decryptor.\n"
-msgstr "විසංයුක්ත කරන්නා සොයාගන්න බැහැ.\n"
-
 #: mferror.mc:466
-msgid "Codec was not found.\n"
-msgstr "කොඩෙක් එක හම්බු උනේ නැහැ.\n"
+msgid "Media stream has no duration set\n"
+msgstr ""
 
 #: mferror.mc:473
-msgid "Cannot connect topology nodes.\n"
+msgid "Media format was recognized but is invalid\n"
 msgstr ""
 
 #: mferror.mc:480
+#, fuzzy
+#| msgid "Codec was not found.\n"
+msgid "Property wasn't found\n"
+msgstr "කොඩෙක් එක හම්බු උනේ නැහැ.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Property is empty.\n"
+msgid "Property is read-only\n"
+msgstr "ගුණාංගය හිස්.\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Another version is installed.\n"
+msgid "Property is not allowed\n"
+msgstr "වෙන අනුවාදයක් ස්ථාපන කරලා තියෙනවා.\n"
+
+#: mferror.mc:501
+msgid "Media source is not started\n"
+msgstr ""
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported time format.\n"
+msgid "Unsupported media format\n"
+msgstr "වෙලාව ආකෘතිය සහාය නොදක්වයි.\n"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state\n"
+msgstr ""
+
+#: mferror.mc:522
+msgid "No media streams were selected\n"
+msgstr ""
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported time format.\n"
+msgid "Unsupported media source characteristics\n"
+msgstr "වෙලාව ආකෘතිය සහාය නොදක්වයි.\n"
+
+#: mferror.mc:536
+msgid "Optional node is invalid.\n"
+msgstr "විකල්පයකි නෝඩය වලංගු නැහැ.\n"
+
+#: mferror.mc:543
+msgid "Cannot find decryptor.\n"
+msgstr "විසංයුක්ත කරන්නා සොයාගන්න බැහැ.\n"
+
+#: mferror.mc:550
+msgid "Codec was not found.\n"
+msgstr "කොඩෙක් එක හම්බු උනේ නැහැ.\n"
+
+#: mferror.mc:557
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:564
 msgid "Topology request is not supported.\n"
 msgstr ""
 
-#: mferror.mc:487
+#: mferror.mc:571
 #, fuzzy
 msgid "Invalid topology time attributes.\n"
 msgstr "අවලංගු"
 
-#: mferror.mc:494
+#: mferror.mc:578
 msgid "Found loops in topology.\n"
 msgstr ""
 
-#: mferror.mc:501
+#: mferror.mc:585
 msgid "Presentation descriptor is missing.\n"
 msgstr ""
 
-#: mferror.mc:508
+#: mferror.mc:592
 msgid "Stream descriptor is missing.\n"
 msgstr ""
 
-#: mferror.mc:515
+#: mferror.mc:599
 msgid "Stream descriptor is not selected.\n"
 msgstr ""
 
-#: mferror.mc:522
+#: mferror.mc:606
 msgid "Source is missing.\n"
 msgstr "මූලය නැහැ.\n"
 
-#: mferror.mc:529
+#: mferror.mc:613
 msgid "Topology loader does not support sink activates.\n"
 msgstr ""
 
-#: mferror.mc:536
+#: mferror.mc:620
 msgid "Clock has no time source set.\n"
 msgstr "ඔරලෝසුවට කාල මූලයක් නැහැ.\n"
 
-#: mferror.mc:543
+#: mferror.mc:627
 msgid "Clock state was already set.\n"
 msgstr "ඔරලෝසුවේ තත්වය සකස් කරල තිබුනේ.\n"
 

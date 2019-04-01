@@ -7029,62 +7029,128 @@ msgid "No events available.\n"
 msgstr "Tapahtumia ei ole saatavilla.\n"
 
 #: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported state transition.\n"
+msgid "Invalid media source state transition\n"
+msgstr "Tilan muutosta ei tueta.\n"
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "End of media stream has been reached\n"
+msgstr "Rekisteri on palautettu.\n"
+
+#: mferror.mc:459
 msgid "Shutdown() was called.\n"
 msgstr "Shutdown() kutsuttu.\n"
 
-#: mferror.mc:452
+#: mferror.mc:466
+msgid "Media stream has no duration set\n"
+msgstr ""
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found\n"
+msgstr "Ominaisuusjoukkoa ei löytynyt.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Property is empty.\n"
+msgid "Property is read-only\n"
+msgstr "Ominaisuus on tyhjä.\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Property type is not allowed.\n"
+msgid "Property is not allowed\n"
+msgstr "Ominaisuuden tyyppi ei ole sallittu.\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is not started\n"
+msgstr "Resurssi on käytössä.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported time format.\n"
+msgid "Unsupported media format\n"
+msgstr "Ajan muotoa ei tueta.\n"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state\n"
+msgstr ""
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No media streams were selected\n"
+msgstr "Dataa ei löytynyt.\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported time format.\n"
+msgid "Unsupported media source characteristics\n"
+msgstr "Ajan muotoa ei tueta.\n"
+
+#: mferror.mc:536
 msgid "Optional node is invalid.\n"
 msgstr "Valinnainen solmu ei kelpaa.\n"
 
-#: mferror.mc:459
+#: mferror.mc:543
 msgid "Cannot find decryptor.\n"
 msgstr "Salaukselle ei löydy purkajaa.\n"
 
-#: mferror.mc:466
+#: mferror.mc:550
 msgid "Codec was not found.\n"
 msgstr "Koodekkia ei löydy.\n"
 
-#: mferror.mc:473
+#: mferror.mc:557
 msgid "Cannot connect topology nodes.\n"
 msgstr "Topologian solmuja ei voida yhdistää.\n"
 
-#: mferror.mc:480
+#: mferror.mc:564
 msgid "Topology request is not supported.\n"
 msgstr "Topologiapyyntöä ei tueta.\n"
 
-#: mferror.mc:487
+#: mferror.mc:571
 msgid "Invalid topology time attributes.\n"
 msgstr "Topologian aika-attribuutit eivät kelpaa.\n"
 
-#: mferror.mc:494
+#: mferror.mc:578
 msgid "Found loops in topology.\n"
 msgstr "Topologiassa on silmukoita.\n"
 
-#: mferror.mc:501
+#: mferror.mc:585
 msgid "Presentation descriptor is missing.\n"
 msgstr "Esitystavan kuvaus puuttuu.\n"
 
-#: mferror.mc:508
+#: mferror.mc:592
 msgid "Stream descriptor is missing.\n"
 msgstr "Virran kuvaus puuttuu.\n"
 
-#: mferror.mc:515
+#: mferror.mc:599
 msgid "Stream descriptor is not selected.\n"
 msgstr "Virran kuvausta ei ole valittu.\n"
 
-#: mferror.mc:522
+#: mferror.mc:606
 msgid "Source is missing.\n"
 msgstr "Lähde puuttuu.\n"
 
-#: mferror.mc:529
+#: mferror.mc:613
 msgid "Topology loader does not support sink activates.\n"
 msgstr "Topologianlatain ei tue ulostulojen aktivointeja.\n"
 
-#: mferror.mc:536
+#: mferror.mc:620
 msgid "Clock has no time source set.\n"
 msgstr "Kellolle ei ole asetettu ajan lähdettä.\n"
 
-#: mferror.mc:543
+#: mferror.mc:627
 msgid "Clock state was already set.\n"
 msgstr "Kellon tila oli jo asetettu.\n"
 

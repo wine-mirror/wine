@@ -7128,82 +7128,148 @@ msgid "No events available.\n"
 msgstr "沒有可用的登錄伺服器。\n"
 
 #: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Invalid media source state transition\n"
+msgstr "不受支援的授權等級。\n"
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "End of media stream has been reached\n"
+msgstr "註冊表已復原。\n"
+
+#: mferror.mc:459
 msgid "Shutdown() was called.\n"
 msgstr ""
 
-#: mferror.mc:452
+#: mferror.mc:466
+msgid "Media stream has no duration set\n"
+msgstr ""
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found\n"
+msgstr "找不到屬性集。\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is read-only\n"
+msgstr "目錄不是空的。\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property is not allowed\n"
+msgstr "不允許攔截型態。\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is not started\n"
+msgstr "資源使用中。\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media format\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state\n"
+msgstr ""
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No media streams were selected\n"
+msgstr "偵測不到資料。\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media source characteristics\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:536
 #, fuzzy
 #| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
 msgstr "連線無效。\n"
 
-#: mferror.mc:459
+#: mferror.mc:543
 #, fuzzy
 #| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
 msgstr "找不到印表機。"
 
-#: mferror.mc:466
+#: mferror.mc:550
 #, fuzzy
 #| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
 msgstr "找不到模組。\n"
 
-#: mferror.mc:473
+#: mferror.mc:557
 #, fuzzy
 #| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
 msgstr "無法提取呼叫控柄。\n"
 
-#: mferror.mc:480
+#: mferror.mc:564
 #, fuzzy
 #| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
 msgstr "要求不受支援。\n"
 
-#: mferror.mc:487
+#: mferror.mc:571
 #, fuzzy
 #| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
 msgstr "無效的群組屬性。\n"
 
-#: mferror.mc:494
+#: mferror.mc:578
 msgid "Found loops in topology.\n"
 msgstr ""
 
-#: mferror.mc:501
+#: mferror.mc:585
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
 msgstr "本功能的安裝來源不存在。\n"
 
-#: mferror.mc:508
+#: mferror.mc:592
 #, fuzzy
 #| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
 msgstr "索引遺失。\n"
 
-#: mferror.mc:515
+#: mferror.mc:599
 #, fuzzy
 #| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
 msgstr "裝置未連接。\n"
 
-#: mferror.mc:522
+#: mferror.mc:606
 #, fuzzy
 #| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
 msgstr "索引遺失。\n"
 
-#: mferror.mc:529
+#: mferror.mc:613
 msgid "Topology loader does not support sink activates.\n"
 msgstr ""
 
-#: mferror.mc:536
+#: mferror.mc:620
 msgid "Clock has no time source set.\n"
 msgstr ""
 
-#: mferror.mc:543
+#: mferror.mc:627
 #, fuzzy
 #| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"

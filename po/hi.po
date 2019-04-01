@@ -6949,62 +6949,113 @@ msgid "No events available.\n"
 msgstr ""
 
 #: mferror.mc:445
-msgid "Shutdown() was called.\n"
+msgid "Invalid media source state transition\n"
 msgstr ""
 
 #: mferror.mc:452
-msgid "Optional node is invalid.\n"
+msgid "End of media stream has been reached\n"
 msgstr ""
 
 #: mferror.mc:459
-msgid "Cannot find decryptor.\n"
+msgid "Shutdown() was called.\n"
 msgstr ""
 
 #: mferror.mc:466
-msgid "Codec was not found.\n"
+msgid "Media stream has no duration set\n"
 msgstr ""
 
 #: mferror.mc:473
-msgid "Cannot connect topology nodes.\n"
+msgid "Media format was recognized but is invalid\n"
 msgstr ""
 
 #: mferror.mc:480
-msgid "Topology request is not supported.\n"
-msgstr ""
+#, fuzzy
+msgid "Property wasn't found\n"
+msgstr "सूचना (&o)"
 
 #: mferror.mc:487
-msgid "Invalid topology time attributes.\n"
-msgstr ""
+#, fuzzy
+msgid "Property is read-only\n"
+msgstr "सूचना (&o)"
 
 #: mferror.mc:494
-msgid "Found loops in topology.\n"
-msgstr ""
+#, fuzzy
+msgid "Property is not allowed\n"
+msgstr "सूचना (&o)"
 
 #: mferror.mc:501
-msgid "Presentation descriptor is missing.\n"
+msgid "Media source is not started\n"
 msgstr ""
 
 #: mferror.mc:508
-msgid "Stream descriptor is missing.\n"
+msgid "Unsupported media format\n"
 msgstr ""
 
 #: mferror.mc:515
-msgid "Stream descriptor is not selected.\n"
+msgid "Media source is in wrong state\n"
 msgstr ""
 
 #: mferror.mc:522
-msgid "Source is missing.\n"
+msgid "No media streams were selected\n"
 msgstr ""
 
 #: mferror.mc:529
-msgid "Topology loader does not support sink activates.\n"
+msgid "Unsupported media source characteristics\n"
 msgstr ""
 
 #: mferror.mc:536
-msgid "Clock has no time source set.\n"
+msgid "Optional node is invalid.\n"
 msgstr ""
 
 #: mferror.mc:543
+msgid "Cannot find decryptor.\n"
+msgstr ""
+
+#: mferror.mc:550
+msgid "Codec was not found.\n"
+msgstr ""
+
+#: mferror.mc:557
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:564
+msgid "Topology request is not supported.\n"
+msgstr ""
+
+#: mferror.mc:571
+msgid "Invalid topology time attributes.\n"
+msgstr ""
+
+#: mferror.mc:578
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:585
+msgid "Presentation descriptor is missing.\n"
+msgstr ""
+
+#: mferror.mc:592
+msgid "Stream descriptor is missing.\n"
+msgstr ""
+
+#: mferror.mc:599
+msgid "Stream descriptor is not selected.\n"
+msgstr ""
+
+#: mferror.mc:606
+msgid "Source is missing.\n"
+msgstr ""
+
+#: mferror.mc:613
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:627
 msgid "Clock state was already set.\n"
 msgstr ""
 
