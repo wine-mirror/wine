@@ -1441,6 +1441,28 @@ static HRESULT WINAPI Widget_rect(IWidget *iface, RECT in, RECT *out, RECT *in_p
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_complex_struct(IWidget *iface, struct complex in)
+{
+    HRESULT hr;
+
+    ok(in.c == 98, "Got char %d.\n", in.c);
+    ok(in.i == 76543, "Got int %d.\n", in.i);
+    ok(*in.pi == 2, "Got int pointer %d.\n", *in.pi);
+    ok(**in.ppi == 10, "Got int double pointer %d.\n", **in.ppi);
+    hr = ISomethingFromDispatch_anotherfn(in.iface);
+    ok(hr == 0x01234567, "Got wrong hr %#x.\n", hr);
+    hr = ISomethingFromDispatch_anotherfn(*in.iface_ptr);
+    ok(hr == 0x01234567, "Got wrong hr %#x.\n", hr);
+    ok(!lstrcmpW(in.bstr, test_bstr2), "Got string %s.\n", wine_dbgstr_w(in.bstr));
+    ok(V_VT(&in.var) == VT_I4, "Got wrong type %u.\n", V_VT(&in.var));
+    ok(V_I4(&in.var) == 123, "Got wrong value %d.\n", V_I4(&in.var));
+    ok(!memcmp(&in.mystruct, &test_mystruct1, sizeof(MYSTRUCT)), "Structs didn't match.\n");
+    ok(!memcmp(in.arr, test_array1, sizeof(array_t)), "Arrays didn't match.\n");
+    ok(in.myint == 456, "Got int %d.\n", in.myint);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI Widget_array(IWidget *iface, array_t in, array_t out, array_t in_out)
 {
     static const array_t empty = {0};
@@ -1600,6 +1622,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_mystruct_ptr_ptr,
     Widget_thin_struct,
     Widget_rect,
+    Widget_complex_struct,
     Widget_array,
     Widget_variant_array,
     Widget_mystruct_array,
@@ -2500,6 +2523,9 @@ static void test_marshal_struct(IWidget *widget, IDispatch *disp)
 {
     MYSTRUCT out, in_ptr, in_out, *in_ptr_ptr;
     RECT rect_out, rect_in_ptr, rect_in_out;
+    ISomethingFromDispatch *sfd;
+    struct complex complex;
+    int i, i2, *pi = &i2;
     HRESULT hr;
 
     memcpy(&out, &test_mystruct2, sizeof(MYSTRUCT));
@@ -2531,6 +2557,25 @@ static void test_marshal_struct(IWidget *widget, IDispatch *disp)
     ok(EqualRect(&rect_out, &test_rect5), "Rects didn't match.\n");
     ok(EqualRect(&rect_in_ptr, &test_rect3), "Rects didn't match.\n");
     ok(EqualRect(&rect_in_out, &test_rect7), "Rects didn't match.\n");
+
+    /* Test complex structs. */
+    complex.c = 98;
+    complex.i = 76543;
+    i = 2;
+    complex.pi = &i;
+    i2 = 10;
+    complex.ppi = &pi;
+    complex.iface = create_disp_obj();
+    sfd = create_disp_obj();
+    complex.iface_ptr = &sfd;
+    complex.bstr = SysAllocString(test_bstr2);
+    V_VT(&complex.var) = VT_I4;
+    V_I4(&complex.var) = 123;
+    memcpy(&complex.mystruct, &test_mystruct1, sizeof(MYSTRUCT));
+    memcpy(complex.arr, test_array1, sizeof(array_t));
+    complex.myint = 456;
+    hr = IWidget_complex_struct(widget, complex);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
 static void test_marshal_array(IWidget *widget, IDispatch *disp)
