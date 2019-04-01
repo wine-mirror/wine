@@ -205,6 +205,29 @@ static unsigned int type_memsize(ITypeInfo *typeinfo, TYPEDESC *desc)
     }
 }
 
+static BOOL type_pointer_is_iface(ITypeInfo *typeinfo, TYPEDESC *tdesc)
+{
+    ITypeInfo *refinfo;
+    BOOL ret = FALSE;
+    TYPEATTR *attr;
+
+    if (tdesc->vt == VT_USERDEFINED)
+    {
+        ITypeInfo_GetRefTypeInfo(typeinfo, tdesc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        if (attr->typekind == TKIND_INTERFACE
+                || attr->typekind == TKIND_DISPATCH
+                || attr->typekind == TKIND_COCLASS)
+            ret = TRUE;
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+    }
+
+    return ret;
+}
+
 static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc);
 
 static unsigned char get_struct_fc(ITypeInfo *typeinfo, TYPEATTR *attr)
@@ -530,26 +553,10 @@ static HRESULT get_param_pointer_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int 
         break;
     case VT_PTR:
         *flags |= MustFree;
-
-        if (tdesc->lptdesc->vt == VT_USERDEFINED)
+        if (type_pointer_is_iface(typeinfo, tdesc->lptdesc))
         {
-            ITypeInfo_GetRefTypeInfo(typeinfo, tdesc->lptdesc->hreftype, &refinfo);
-            ITypeInfo_GetTypeAttr(refinfo, &attr);
-
-            switch (attr->typekind)
-            {
-            case TKIND_INTERFACE:
-            case TKIND_DISPATCH:
-            case TKIND_COCLASS:
-                if (is_in && is_out)
-                    *server_size = sizeof(void *);
-                break;
-            default:
+            if (is_in && is_out)
                 *server_size = sizeof(void *);
-            }
-
-            ITypeInfo_ReleaseTypeAttr(refinfo, attr);
-            ITypeInfo_Release(refinfo);
         }
         else
             *server_size = sizeof(void *);
