@@ -466,6 +466,9 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         infoPtr->hwnd = hWnd;
         infoPtr->parent = cs->hwndParent;
         infoPtr->style = cs->style;
+        infoPtr->split_style = BCSS_STRETCH;
+        infoPtr->glyph = (HIMAGELIST)0x36;  /* Marlett down arrow char code */
+        infoPtr->glyph_size.cx = get_default_glyph_size(infoPtr);
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
 
@@ -877,6 +880,22 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
             infoPtr->glyph_size.cx = get_default_glyph_size(infoPtr);
 
         /* Windows doesn't invalidate or redraw it, so we don't, either */
+        return TRUE;
+    }
+
+    case BCM_GETSPLITINFO:
+    {
+        BUTTON_SPLITINFO *info = (BUTTON_SPLITINFO*)lParam;
+
+        if (!info) return FALSE;
+
+        if (info->mask & BCSIF_STYLE)
+            info->uSplitStyle = infoPtr->split_style;
+        if (info->mask & (BCSIF_GLYPH | BCSIF_IMAGE))
+            info->himlGlyph = infoPtr->glyph;
+        if (info->mask & BCSIF_SIZE)
+            info->size = infoPtr->glyph_size;
+
         return TRUE;
     }
 
