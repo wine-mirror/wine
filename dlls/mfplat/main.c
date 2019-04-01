@@ -1028,13 +1028,10 @@ static HRESULT attributes_get_item(struct attributes *attributes, const GUID *ke
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetItem(IMFAttributes *iface, REFGUID key, PROPVARIANT *value)
+HRESULT attributes_GetItem(struct attributes *attributes, REFGUID key, PROPVARIANT *value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     struct attribute *attribute;
     HRESULT hr;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1048,13 +1045,10 @@ static HRESULT WINAPI mfattributes_GetItem(IMFAttributes *iface, REFGUID key, PR
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetItemType(IMFAttributes *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+HRESULT attributes_GetItemType(struct attributes *attributes, REFGUID key, MF_ATTRIBUTE_TYPE *type)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     struct attribute *attribute;
     HRESULT hr = S_OK;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1070,12 +1064,9 @@ static HRESULT WINAPI mfattributes_GetItemType(IMFAttributes *iface, REFGUID key
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+HRESULT attributes_CompareItem(struct attributes *attributes, REFGUID key, REFPROPVARIANT value, BOOL *result)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     struct attribute *attribute;
-
-    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
 
     *result = FALSE;
 
@@ -1092,18 +1083,15 @@ static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key
     return S_OK;
 }
 
-static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *theirs,
+HRESULT attributes_Compare(struct attributes *attributes, IMFAttributes *theirs,
         MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     IMFAttributes *smaller, *other;
     MF_ATTRIBUTE_TYPE type;
     HRESULT hr = S_OK;
     UINT32 count;
     BOOL result;
     size_t i;
-
-    TRACE("%p, %p, %d, %p.\n", iface, theirs, match_type, ret);
 
     if (FAILED(hr = IMFAttributes_GetCount(theirs, &count)))
         return hr;
@@ -1125,7 +1113,7 @@ static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *
             }
             break;
         case MF_ATTRIBUTES_MATCH_THEIR_ITEMS:
-            hr = IMFAttributes_Compare(theirs, iface, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+            hr = IMFAttributes_Compare(theirs, &attributes->IMFAttributes_iface, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
             break;
         case MF_ATTRIBUTES_MATCH_ALL_ITEMS:
             if (count != attributes->count)
@@ -1157,8 +1145,8 @@ static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *
             }
             break;
         case MF_ATTRIBUTES_MATCH_SMALLER:
-            smaller = attributes->count > count ? theirs : iface;
-            other = attributes->count > count ? iface : theirs;
+            smaller = attributes->count > count ? theirs : &attributes->IMFAttributes_iface;
+            other = attributes->count > count ? &attributes->IMFAttributes_iface : theirs;
             hr = IMFAttributes_Compare(smaller, other, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
             break;
         default:
@@ -1174,13 +1162,10 @@ static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetUINT32(IMFAttributes *iface, REFGUID key, UINT32 *value)
+HRESULT attributes_GetUINT32(struct attributes *attributes, REFGUID key, UINT32 *value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
     HRESULT hr;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     PropVariantInit(&attrval);
     attrval.vt = VT_UI4;
@@ -1191,13 +1176,10 @@ static HRESULT WINAPI mfattributes_GetUINT32(IMFAttributes *iface, REFGUID key, 
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetUINT64(IMFAttributes *iface, REFGUID key, UINT64 *value)
+HRESULT attributes_GetUINT64(struct attributes *attributes, REFGUID key, UINT64 *value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
     HRESULT hr;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     PropVariantInit(&attrval);
     attrval.vt = VT_UI8;
@@ -1208,13 +1190,10 @@ static HRESULT WINAPI mfattributes_GetUINT64(IMFAttributes *iface, REFGUID key, 
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetDouble(IMFAttributes *iface, REFGUID key, double *value)
+HRESULT attributes_GetDouble(struct attributes *attributes, REFGUID key, double *value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
     HRESULT hr;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     PropVariantInit(&attrval);
     attrval.vt = VT_R8;
@@ -1225,13 +1204,10 @@ static HRESULT WINAPI mfattributes_GetDouble(IMFAttributes *iface, REFGUID key, 
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetGUID(IMFAttributes *iface, REFGUID key, GUID *value)
+HRESULT attributes_GetGUID(struct attributes *attributes, REFGUID key, GUID *value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
     HRESULT hr;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     PropVariantInit(&attrval);
     attrval.vt = VT_CLSID;
@@ -1242,13 +1218,10 @@ static HRESULT WINAPI mfattributes_GetGUID(IMFAttributes *iface, REFGUID key, GU
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetStringLength(IMFAttributes *iface, REFGUID key, UINT32 *length)
+HRESULT attributes_GetStringLength(struct attributes *attributes, REFGUID key, UINT32 *length)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     struct attribute *attribute;
     HRESULT hr = S_OK;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1268,14 +1241,11 @@ static HRESULT WINAPI mfattributes_GetStringLength(IMFAttributes *iface, REFGUID
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetString(IMFAttributes *iface, REFGUID key, WCHAR *value,
+HRESULT attributes_GetString(struct attributes *attributes, REFGUID key, WCHAR *value,
         UINT32 size, UINT32 *length)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     struct attribute *attribute;
     HRESULT hr = S_OK;
-
-    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), value, size, length);
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1305,13 +1275,10 @@ static HRESULT WINAPI mfattributes_GetString(IMFAttributes *iface, REFGUID key, 
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetAllocatedString(IMFAttributes *iface, REFGUID key, WCHAR **value, UINT32 *length)
+HRESULT attributes_GetAllocatedString(struct attributes *attributes, REFGUID key, WCHAR **value, UINT32 *length)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
     HRESULT hr;
-
-    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
 
     PropVariantInit(&attrval);
     attrval.vt = VT_LPWSTR;
@@ -1325,13 +1292,10 @@ static HRESULT WINAPI mfattributes_GetAllocatedString(IMFAttributes *iface, REFG
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetBlobSize(IMFAttributes *iface, REFGUID key, UINT32 *size)
+HRESULT attributes_GetBlobSize(struct attributes *attributes, REFGUID key, UINT32 *size)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     struct attribute *attribute;
     HRESULT hr = S_OK;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1351,14 +1315,10 @@ static HRESULT WINAPI mfattributes_GetBlobSize(IMFAttributes *iface, REFGUID key
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetBlob(IMFAttributes *iface, REFGUID key, UINT8 *buf,
-                UINT32 bufsize, UINT32 *blobsize)
+HRESULT attributes_GetBlob(struct attributes *attributes, REFGUID key, UINT8 *buf, UINT32 bufsize, UINT32 *blobsize)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     struct attribute *attribute;
     HRESULT hr;
-
-    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1388,13 +1348,10 @@ static HRESULT WINAPI mfattributes_GetBlob(IMFAttributes *iface, REFGUID key, UI
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetAllocatedBlob(IMFAttributes *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+HRESULT attributes_GetAllocatedBlob(struct attributes *attributes, REFGUID key, UINT8 **buf, UINT32 *size)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
     HRESULT hr;
-
-    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
 
     attrval.vt = VT_VECTOR | VT_UI1;
     hr = attributes_get_item(attributes, key, &attrval);
@@ -1407,19 +1364,16 @@ static HRESULT WINAPI mfattributes_GetAllocatedBlob(IMFAttributes *iface, REFGUI
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_GetUnknown(IMFAttributes *iface, REFGUID key, REFIID riid, void **ppv)
+HRESULT attributes_GetUnknown(struct attributes *attributes, REFGUID key, REFIID riid, void **out)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
     HRESULT hr;
-
-    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), ppv);
 
     PropVariantInit(&attrval);
     attrval.vt = VT_UNKNOWN;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        hr = IUnknown_QueryInterface(attrval.u.punkVal, riid, ppv);
+        hr = IUnknown_QueryInterface(attrval.u.punkVal, riid, out);
     PropVariantClear(&attrval);
     return hr;
 }
@@ -1452,12 +1406,9 @@ static HRESULT attributes_set_item(struct attributes *attributes, REFGUID key, R
     return S_OK;
 }
 
-static HRESULT WINAPI mfattributes_SetItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value)
+HRESULT attributes_SetItem(struct attributes *attributes, REFGUID key, REFPROPVARIANT value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT empty;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
     switch (value->vt)
     {
@@ -1476,13 +1427,10 @@ static HRESULT WINAPI mfattributes_SetItem(IMFAttributes *iface, REFGUID key, RE
     }
 }
 
-static HRESULT WINAPI mfattributes_DeleteItem(IMFAttributes *iface, REFGUID key)
+HRESULT attributes_DeleteItem(struct attributes *attributes, REFGUID key)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     struct attribute *attribute;
     size_t index = 0;
-
-    TRACE("%p, %s.\n", iface, debugstr_attr(key));
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1503,12 +1451,8 @@ static HRESULT WINAPI mfattributes_DeleteItem(IMFAttributes *iface, REFGUID key)
     return S_OK;
 }
 
-static HRESULT WINAPI mfattributes_DeleteAllItems(IMFAttributes *iface)
+HRESULT attributes_DeleteAllItems(struct attributes *attributes)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
-
-    TRACE("%p.\n", iface);
-
     EnterCriticalSection(&attributes->cs);
 
     while (attributes->count)
@@ -1524,71 +1468,53 @@ static HRESULT WINAPI mfattributes_DeleteAllItems(IMFAttributes *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI mfattributes_SetUINT32(IMFAttributes *iface, REFGUID key, UINT32 value)
+HRESULT attributes_SetUINT32(struct attributes *attributes, REFGUID key, UINT32 value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
-
-    TRACE("%p, %s, %d.\n", iface, debugstr_attr(key), value);
 
     attrval.vt = VT_UI4;
     attrval.u.ulVal = value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
-static HRESULT WINAPI mfattributes_SetUINT64(IMFAttributes *iface, REFGUID key, UINT64 value)
+HRESULT attributes_SetUINT64(struct attributes *attributes, REFGUID key, UINT64 value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
-
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
 
     attrval.vt = VT_UI8;
     attrval.u.uhVal.QuadPart = value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
-static HRESULT WINAPI mfattributes_SetDouble(IMFAttributes *iface, REFGUID key, double value)
+HRESULT attributes_SetDouble(struct attributes *attributes, REFGUID key, double value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
-
-    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
 
     attrval.vt = VT_R8;
     attrval.u.dblVal = value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
-static HRESULT WINAPI mfattributes_SetGUID(IMFAttributes *iface, REFGUID key, REFGUID value)
+HRESULT attributes_SetGUID(struct attributes *attributes, REFGUID key, REFGUID value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
-
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
 
     InitPropVariantFromCLSID(value, &attrval);
     return attributes_set_item(attributes, key, &attrval);
 }
 
-static HRESULT WINAPI mfattributes_SetString(IMFAttributes *iface, REFGUID key, const WCHAR *value)
+HRESULT attributes_SetString(struct attributes *attributes, REFGUID key, const WCHAR *value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
-
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
 
     attrval.vt = VT_LPWSTR;
     attrval.u.pwszVal = (WCHAR *)value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
-static HRESULT WINAPI mfattributes_SetBlob(IMFAttributes *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+HRESULT attributes_SetBlob(struct attributes *attributes, REFGUID key, const UINT8 *buf, UINT32 size)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
-
-    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
 
     attrval.vt = VT_VECTOR | VT_UI1;
     attrval.u.caub.cElems = size;
@@ -1596,59 +1522,41 @@ static HRESULT WINAPI mfattributes_SetBlob(IMFAttributes *iface, REFGUID key, co
     return attributes_set_item(attributes, key, &attrval);
 }
 
-static HRESULT WINAPI mfattributes_SetUnknown(IMFAttributes *iface, REFGUID key, IUnknown *unknown)
+HRESULT attributes_SetUnknown(struct attributes *attributes, REFGUID key, IUnknown *unknown)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     PROPVARIANT attrval;
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
 
     attrval.vt = VT_UNKNOWN;
     attrval.u.punkVal = unknown;
     return attributes_set_item(attributes, key, &attrval);
 }
 
-static HRESULT WINAPI mfattributes_LockStore(IMFAttributes *iface)
+HRESULT attributes_LockStore(struct attributes *attributes)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
-
-    TRACE("%p.\n", iface);
-
     EnterCriticalSection(&attributes->cs);
 
     return S_OK;
 }
 
-static HRESULT WINAPI mfattributes_UnlockStore(IMFAttributes *iface)
+HRESULT attributes_UnlockStore(struct attributes *attributes)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
-
-    TRACE("%p.\n", iface);
-
     LeaveCriticalSection(&attributes->cs);
 
     return S_OK;
 }
 
-static HRESULT WINAPI mfattributes_GetCount(IMFAttributes *iface, UINT32 *items)
+HRESULT attributes_GetCount(struct attributes *attributes, UINT32 *count)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
-
-    TRACE("%p, %p.\n", iface, items);
-
     EnterCriticalSection(&attributes->cs);
-    *items = attributes->count;
+    *count = attributes->count;
     LeaveCriticalSection(&attributes->cs);
 
     return S_OK;
 }
 
-static HRESULT WINAPI mfattributes_GetItemByIndex(IMFAttributes *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+HRESULT attributes_GetItemByIndex(struct attributes *attributes, UINT32 index, GUID *key, PROPVARIANT *value)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     HRESULT hr = S_OK;
-
-    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1666,13 +1574,10 @@ static HRESULT WINAPI mfattributes_GetItemByIndex(IMFAttributes *iface, UINT32 i
     return hr;
 }
 
-static HRESULT WINAPI mfattributes_CopyAllItems(IMFAttributes *iface, IMFAttributes *dest)
+HRESULT attributes_CopyAllItems(struct attributes *attributes, IMFAttributes *dest)
 {
-    struct attributes *attributes = impl_from_IMFAttributes(iface);
     HRESULT hr = S_OK;
     size_t i;
-
-    TRACE("%p, %p.\n", iface, dest);
 
     EnterCriticalSection(&attributes->cs);
 
@@ -1692,6 +1597,279 @@ static HRESULT WINAPI mfattributes_CopyAllItems(IMFAttributes *iface, IMFAttribu
     LeaveCriticalSection(&attributes->cs);
 
     return hr;
+}
+
+static HRESULT WINAPI mfattributes_GetItem(IMFAttributes *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetItem(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_GetItemType(IMFAttributes *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+
+    return attributes_GetItemType(attributes, key, type);
+}
+
+static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+
+    return attributes_CompareItem(attributes, key, value, result);
+}
+
+static HRESULT WINAPI mfattributes_Compare(IMFAttributes *iface, IMFAttributes *theirs,
+        MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, match_type, ret);
+
+    return attributes_Compare(attributes, theirs, match_type, ret);
+}
+
+static HRESULT WINAPI mfattributes_GetUINT32(IMFAttributes *iface, REFGUID key, UINT32 *value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT32(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_GetUINT64(IMFAttributes *iface, REFGUID key, UINT64 *value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT64(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_GetDouble(IMFAttributes *iface, REFGUID key, double *value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetDouble(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_GetGUID(IMFAttributes *iface, REFGUID key, GUID *value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetGUID(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_GetStringLength(IMFAttributes *iface, REFGUID key, UINT32 *length)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
+
+    return attributes_GetStringLength(attributes, key, length);
+}
+
+static HRESULT WINAPI mfattributes_GetString(IMFAttributes *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), value, size, length);
+
+    return attributes_GetString(attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI mfattributes_GetAllocatedString(IMFAttributes *iface, REFGUID key, WCHAR **value, UINT32 *length)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
+
+    return attributes_GetAllocatedString(attributes, key, value, length);
+}
+
+static HRESULT WINAPI mfattributes_GetBlobSize(IMFAttributes *iface, REFGUID key, UINT32 *size)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+
+    return attributes_GetBlobSize(attributes, key, size);
+}
+
+static HRESULT WINAPI mfattributes_GetBlob(IMFAttributes *iface, REFGUID key, UINT8 *buf,
+                UINT32 bufsize, UINT32 *blobsize)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+
+    return attributes_GetBlob(attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI mfattributes_GetAllocatedBlob(IMFAttributes *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_GetAllocatedBlob(attributes, key, buf, size);
+}
+
+static HRESULT WINAPI mfattributes_GetUnknown(IMFAttributes *iface, REFGUID key, REFIID riid, void **out)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), out);
+
+    return attributes_GetUnknown(attributes, key, riid, out);
+}
+
+static HRESULT WINAPI mfattributes_SetItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetItem(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_DeleteItem(IMFAttributes *iface, REFGUID key)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_attr(key));
+
+    return attributes_DeleteItem(attributes, key);
+}
+
+static HRESULT WINAPI mfattributes_DeleteAllItems(IMFAttributes *iface)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_DeleteAllItems(attributes);
+}
+
+static HRESULT WINAPI mfattributes_SetUINT32(IMFAttributes *iface, REFGUID key, UINT32 value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetUINT32(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_SetUINT64(IMFAttributes *iface, REFGUID key, UINT64 value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+
+    return attributes_SetUINT64(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_SetDouble(IMFAttributes *iface, REFGUID key, double value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetDouble(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_SetGUID(IMFAttributes *iface, REFGUID key, REFGUID value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
+
+    return attributes_SetGUID(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_SetString(IMFAttributes *iface, REFGUID key, const WCHAR *value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
+
+    return attributes_SetString(attributes, key, value);
+}
+
+static HRESULT WINAPI mfattributes_SetBlob(IMFAttributes *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_SetBlob(attributes, key, buf, size);
+}
+
+static HRESULT WINAPI mfattributes_SetUnknown(IMFAttributes *iface, REFGUID key, IUnknown *unknown)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+
+    return attributes_SetUnknown(attributes, key, unknown);
+}
+
+static HRESULT WINAPI mfattributes_LockStore(IMFAttributes *iface)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_LockStore(attributes);
+}
+
+static HRESULT WINAPI mfattributes_UnlockStore(IMFAttributes *iface)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_UnlockStore(attributes);
+}
+
+static HRESULT WINAPI mfattributes_GetCount(IMFAttributes *iface, UINT32 *count)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return attributes_GetCount(attributes, count);
+}
+
+static HRESULT WINAPI mfattributes_GetItemByIndex(IMFAttributes *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return attributes_GetItemByIndex(attributes, index, key, value);
+}
+
+static HRESULT WINAPI mfattributes_CopyAllItems(IMFAttributes *iface, IMFAttributes *dest)
+{
+    struct attributes *attributes = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return attributes_CopyAllItems(attributes, dest);
 }
 
 static const IMFAttributesVtbl mfattributes_vtbl =

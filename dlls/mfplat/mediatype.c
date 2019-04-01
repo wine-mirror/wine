@@ -133,7 +133,7 @@ static HRESULT WINAPI mediatype_GetItem(IMFMediaType *iface, REFGUID key, PROPVA
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
-    return IMFAttributes_GetItem(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_GetItem(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_GetItemType(IMFMediaType *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
@@ -142,7 +142,7 @@ static HRESULT WINAPI mediatype_GetItemType(IMFMediaType *iface, REFGUID key, MF
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
 
-    return IMFAttributes_GetItemType(&media_type->attributes.IMFAttributes_iface, key, type);
+    return attributes_GetItemType(&media_type->attributes, key, type);
 }
 
 static HRESULT WINAPI mediatype_CompareItem(IMFMediaType *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
@@ -151,7 +151,7 @@ static HRESULT WINAPI mediatype_CompareItem(IMFMediaType *iface, REFGUID key, RE
 
     TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
 
-    return IMFAttributes_CompareItem(&media_type->attributes.IMFAttributes_iface, key, value, result);
+    return attributes_CompareItem(&media_type->attributes, key, value, result);
 }
 
 static HRESULT WINAPI mediatype_Compare(IMFMediaType *iface, IMFAttributes *attrs, MF_ATTRIBUTES_MATCH_TYPE type,
@@ -161,7 +161,7 @@ static HRESULT WINAPI mediatype_Compare(IMFMediaType *iface, IMFAttributes *attr
 
     TRACE("%p, %p, %d, %p.\n", iface, attrs, type, result);
 
-    return IMFAttributes_Compare(&media_type->attributes.IMFAttributes_iface, attrs, type, result);
+    return attributes_Compare(&media_type->attributes, attrs, type, result);
 }
 
 static HRESULT WINAPI mediatype_GetUINT32(IMFMediaType *iface, REFGUID key, UINT32 *value)
@@ -170,7 +170,7 @@ static HRESULT WINAPI mediatype_GetUINT32(IMFMediaType *iface, REFGUID key, UINT
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
-    return IMFAttributes_GetUINT32(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_GetUINT32(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_GetUINT64(IMFMediaType *iface, REFGUID key, UINT64 *value)
@@ -179,7 +179,7 @@ static HRESULT WINAPI mediatype_GetUINT64(IMFMediaType *iface, REFGUID key, UINT
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
-    return IMFAttributes_GetUINT64(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_GetUINT64(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_GetDouble(IMFMediaType *iface, REFGUID key, double *value)
@@ -188,7 +188,7 @@ static HRESULT WINAPI mediatype_GetDouble(IMFMediaType *iface, REFGUID key, doub
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
-    return IMFAttributes_GetDouble(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_GetDouble(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_GetGUID(IMFMediaType *iface, REFGUID key, GUID *value)
@@ -197,7 +197,7 @@ static HRESULT WINAPI mediatype_GetGUID(IMFMediaType *iface, REFGUID key, GUID *
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
-    return IMFAttributes_GetGUID(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_GetGUID(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_GetStringLength(IMFMediaType *iface, REFGUID key, UINT32 *length)
@@ -206,7 +206,7 @@ static HRESULT WINAPI mediatype_GetStringLength(IMFMediaType *iface, REFGUID key
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
 
-    return IMFAttributes_GetStringLength(&media_type->attributes.IMFAttributes_iface, key, length);
+    return attributes_GetStringLength(&media_type->attributes, key, length);
 }
 
 static HRESULT WINAPI mediatype_GetString(IMFMediaType *iface, REFGUID key, WCHAR *value,
@@ -216,7 +216,7 @@ static HRESULT WINAPI mediatype_GetString(IMFMediaType *iface, REFGUID key, WCHA
 
     TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), value, size, length);
 
-    return IMFAttributes_GetString(&media_type->attributes.IMFAttributes_iface, key, value, size, length);
+    return attributes_GetString(&media_type->attributes, key, value, size, length);
 }
 
 static HRESULT WINAPI mediatype_GetAllocatedString(IMFMediaType *iface, REFGUID key,
@@ -226,7 +226,7 @@ static HRESULT WINAPI mediatype_GetAllocatedString(IMFMediaType *iface, REFGUID 
 
     TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
 
-    return IMFAttributes_GetAllocatedString(&media_type->attributes.IMFAttributes_iface, key, value, length);
+    return attributes_GetAllocatedString(&media_type->attributes, key, value, length);
 }
 
 static HRESULT WINAPI mediatype_GetBlobSize(IMFMediaType *iface, REFGUID key, UINT32 *size)
@@ -235,7 +235,7 @@ static HRESULT WINAPI mediatype_GetBlobSize(IMFMediaType *iface, REFGUID key, UI
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
 
-    return IMFAttributes_GetBlobSize(&media_type->attributes.IMFAttributes_iface, key, size);
+    return attributes_GetBlobSize(&media_type->attributes, key, size);
 }
 
 static HRESULT WINAPI mediatype_GetBlob(IMFMediaType *iface, REFGUID key, UINT8 *buf,
@@ -245,7 +245,7 @@ static HRESULT WINAPI mediatype_GetBlob(IMFMediaType *iface, REFGUID key, UINT8 
 
     TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
 
-    return IMFAttributes_GetBlob(&media_type->attributes.IMFAttributes_iface, key, buf, bufsize, blobsize);
+    return attributes_GetBlob(&media_type->attributes, key, buf, bufsize, blobsize);
 }
 
 static HRESULT WINAPI mediatype_GetAllocatedBlob(IMFMediaType *iface, REFGUID key, UINT8 **buf, UINT32 *size)
@@ -254,7 +254,7 @@ static HRESULT WINAPI mediatype_GetAllocatedBlob(IMFMediaType *iface, REFGUID ke
 
     TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
 
-    return IMFAttributes_GetAllocatedBlob(&media_type->attributes.IMFAttributes_iface, key, buf, size);
+    return attributes_GetAllocatedBlob(&media_type->attributes, key, buf, size);
 }
 
 static HRESULT WINAPI mediatype_GetUnknown(IMFMediaType *iface, REFGUID key, REFIID riid, void **obj)
@@ -263,7 +263,7 @@ static HRESULT WINAPI mediatype_GetUnknown(IMFMediaType *iface, REFGUID key, REF
 
     TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), obj);
 
-    return IMFAttributes_GetUnknown(&media_type->attributes.IMFAttributes_iface, key, riid, obj);
+    return attributes_GetUnknown(&media_type->attributes, key, riid, obj);
 }
 
 static HRESULT WINAPI mediatype_SetItem(IMFMediaType *iface, REFGUID key, REFPROPVARIANT value)
@@ -272,7 +272,7 @@ static HRESULT WINAPI mediatype_SetItem(IMFMediaType *iface, REFGUID key, REFPRO
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
 
-    return IMFAttributes_SetItem(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_SetItem(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_DeleteItem(IMFMediaType *iface, REFGUID key)
@@ -281,7 +281,7 @@ static HRESULT WINAPI mediatype_DeleteItem(IMFMediaType *iface, REFGUID key)
 
     TRACE("%p, %s.\n", iface, debugstr_attr(key));
 
-    return IMFAttributes_DeleteItem(&media_type->attributes.IMFAttributes_iface, key);
+    return attributes_DeleteItem(&media_type->attributes, key);
 }
 
 static HRESULT WINAPI mediatype_DeleteAllItems(IMFMediaType *iface)
@@ -290,7 +290,7 @@ static HRESULT WINAPI mediatype_DeleteAllItems(IMFMediaType *iface)
 
     TRACE("%p.\n", iface);
 
-    return IMFAttributes_DeleteAllItems(&media_type->attributes.IMFAttributes_iface);
+    return attributes_DeleteAllItems(&media_type->attributes);
 }
 
 static HRESULT WINAPI mediatype_SetUINT32(IMFMediaType *iface, REFGUID key, UINT32 value)
@@ -299,7 +299,7 @@ static HRESULT WINAPI mediatype_SetUINT32(IMFMediaType *iface, REFGUID key, UINT
 
     TRACE("%p, %s, %u.\n", iface, debugstr_attr(key), value);
 
-    return IMFAttributes_SetUINT32(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_SetUINT32(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_SetUINT64(IMFMediaType *iface, REFGUID key, UINT64 value)
@@ -308,7 +308,7 @@ static HRESULT WINAPI mediatype_SetUINT64(IMFMediaType *iface, REFGUID key, UINT
 
     TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
 
-    return IMFAttributes_SetUINT64(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_SetUINT64(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_SetDouble(IMFMediaType *iface, REFGUID key, double value)
@@ -317,7 +317,7 @@ static HRESULT WINAPI mediatype_SetDouble(IMFMediaType *iface, REFGUID key, doub
 
     TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
 
-    return IMFAttributes_SetDouble(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_SetDouble(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_SetGUID(IMFMediaType *iface, REFGUID key, REFGUID value)
@@ -326,7 +326,7 @@ static HRESULT WINAPI mediatype_SetGUID(IMFMediaType *iface, REFGUID key, REFGUI
 
     TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
 
-    return IMFAttributes_SetGUID(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_SetGUID(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_SetString(IMFMediaType *iface, REFGUID key, const WCHAR *value)
@@ -335,7 +335,7 @@ static HRESULT WINAPI mediatype_SetString(IMFMediaType *iface, REFGUID key, cons
 
     TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
 
-    return IMFAttributes_SetString(&media_type->attributes.IMFAttributes_iface, key, value);
+    return attributes_SetString(&media_type->attributes, key, value);
 }
 
 static HRESULT WINAPI mediatype_SetBlob(IMFMediaType *iface, REFGUID key, const UINT8 *buf, UINT32 size)
@@ -344,7 +344,7 @@ static HRESULT WINAPI mediatype_SetBlob(IMFMediaType *iface, REFGUID key, const 
 
     TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
 
-    return IMFAttributes_SetBlob(&media_type->attributes.IMFAttributes_iface, key, buf, size);
+    return attributes_SetBlob(&media_type->attributes, key, buf, size);
 }
 
 static HRESULT WINAPI mediatype_SetUnknown(IMFMediaType *iface, REFGUID key, IUnknown *unknown)
@@ -353,7 +353,7 @@ static HRESULT WINAPI mediatype_SetUnknown(IMFMediaType *iface, REFGUID key, IUn
 
     TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
 
-    return IMFAttributes_SetUnknown(&media_type->attributes.IMFAttributes_iface, key, unknown);
+    return attributes_SetUnknown(&media_type->attributes, key, unknown);
 }
 
 static HRESULT WINAPI mediatype_LockStore(IMFMediaType *iface)
@@ -362,7 +362,7 @@ static HRESULT WINAPI mediatype_LockStore(IMFMediaType *iface)
 
     TRACE("%p.\n", iface);
 
-    return IMFAttributes_LockStore(&media_type->attributes.IMFAttributes_iface);
+    return attributes_LockStore(&media_type->attributes);
 }
 
 static HRESULT WINAPI mediatype_UnlockStore(IMFMediaType *iface)
@@ -371,7 +371,7 @@ static HRESULT WINAPI mediatype_UnlockStore(IMFMediaType *iface)
 
     TRACE("%p.\n", iface);
 
-    return IMFAttributes_UnlockStore(&media_type->attributes.IMFAttributes_iface);
+    return attributes_UnlockStore(&media_type->attributes);
 }
 
 static HRESULT WINAPI mediatype_GetCount(IMFMediaType *iface, UINT32 *count)
@@ -380,7 +380,7 @@ static HRESULT WINAPI mediatype_GetCount(IMFMediaType *iface, UINT32 *count)
 
     TRACE("%p, %p.\n", iface, count);
 
-    return IMFAttributes_GetCount(&media_type->attributes.IMFAttributes_iface, count);
+    return attributes_GetCount(&media_type->attributes, count);
 }
 
 static HRESULT WINAPI mediatype_GetItemByIndex(IMFMediaType *iface, UINT32 index, GUID *key, PROPVARIANT *value)
@@ -389,7 +389,7 @@ static HRESULT WINAPI mediatype_GetItemByIndex(IMFMediaType *iface, UINT32 index
 
     TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
 
-    return IMFAttributes_GetItemByIndex(&media_type->attributes.IMFAttributes_iface, index, key, value);
+    return attributes_GetItemByIndex(&media_type->attributes, index, key, value);
 }
 
 static HRESULT WINAPI mediatype_CopyAllItems(IMFMediaType *iface, IMFAttributes *dest)
@@ -398,14 +398,16 @@ static HRESULT WINAPI mediatype_CopyAllItems(IMFMediaType *iface, IMFAttributes 
 
     TRACE("%p, %p.\n", iface, dest);
 
-    return IMFAttributes_CopyAllItems(&media_type->attributes.IMFAttributes_iface, dest);
+    return attributes_CopyAllItems(&media_type->attributes, dest);
 }
 
 static HRESULT WINAPI mediatype_GetMajorType(IMFMediaType *iface, GUID *guid)
 {
     struct media_type *media_type = impl_from_IMFMediaType(iface);
+
     TRACE("%p, %p.\n", iface, guid);
-    return IMFAttributes_GetGUID(&media_type->attributes.IMFAttributes_iface, &MF_MT_MAJOR_TYPE, guid);
+
+    return attributes_GetGUID(&media_type->attributes, &MF_MT_MAJOR_TYPE, guid);
 }
 
 static HRESULT WINAPI mediatype_IsCompressedFormat(IMFMediaType *iface, BOOL *compressed)
@@ -415,8 +417,7 @@ static HRESULT WINAPI mediatype_IsCompressedFormat(IMFMediaType *iface, BOOL *co
 
     TRACE("%p, %p.\n", iface, compressed);
 
-    if (FAILED(IMFAttributes_GetUINT32(&media_type->attributes.IMFAttributes_iface,
-            &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)))
+    if (FAILED(attributes_GetUINT32(&media_type->attributes, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)))
     {
         value = 0;
     }
