@@ -215,6 +215,13 @@ static inline UINT get_button_type( LONG window_style )
     return (window_style & BS_TYPEMASK);
 }
 
+static inline BOOL button_centers_text( LONG window_style )
+{
+    /* Push button's text is centered by default, same for split buttons */
+    UINT type = get_button_type(window_style);
+    return type <= BS_DEFPUSHBUTTON || type == BS_SPLITBUTTON || type == BS_DEFSPLITBUTTON;
+}
+
 /* paint a button of any type */
 static inline void paint_button( BUTTON_INFO *infoPtr, LONG style, UINT action )
 {
@@ -308,9 +315,7 @@ static UINT BUTTON_BStoDT( DWORD style, DWORD ex_style )
         case BS_RIGHT:  dtStyle |= DT_RIGHT;  break;
         case BS_CENTER: dtStyle |= DT_CENTER; break;
         default:
-            /* Pushbutton's text is centered by default */
-            if (get_button_type(style) <= BS_DEFPUSHBUTTON) dtStyle |= DT_CENTER;
-            /* all other flavours have left aligned text */
+            if (button_centers_text(style)) dtStyle |= DT_CENTER;
     }
 
     if (ex_style & WS_EX_RIGHT) dtStyle = DT_RIGHT | (dtStyle & ~(DT_LEFT | DT_CENTER));
@@ -984,8 +989,7 @@ static void BUTTON_PositionRect(LONG style, const RECT *outerRect, RECT *innerRe
 
     if (!(style & BS_CENTER))
     {
-        /* Push button's text is centered by default, all other types have left aligned text */
-        if (get_button_type(style) <= BS_DEFPUSHBUTTON)
+        if (button_centers_text(style))
             style |= BS_CENTER;
         else
             style |= BS_LEFT;
