@@ -497,6 +497,11 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
         case TKIND_RECORD:
             off = write_struct_tfs(refinfo, str, len, attr);
             break;
+        case TKIND_INTERFACE:
+        case TKIND_DISPATCH:
+        case TKIND_COCLASS:
+            assert(0);
+            break;
         case TKIND_ALIAS:
             off = write_type_tfs(refinfo, str, len, &attr->tdescAlias, toplevel, onstack);
             break;
