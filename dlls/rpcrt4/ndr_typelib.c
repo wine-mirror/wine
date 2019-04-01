@@ -246,6 +246,7 @@ static unsigned char get_struct_member_fc(ITypeInfo *typeinfo, TYPEDESC *tdesc)
         return (sizeof(void *) == 4) ? FC_PSTRUCT : FC_BOGUS_STRUCT;
     case VT_CY:
         return FC_STRUCT;
+    case VT_VARIANT:
     case VT_UNKNOWN:
     case VT_DISPATCH:
         return FC_BOGUS_STRUCT;
@@ -358,7 +359,12 @@ static size_t write_struct_tfs(ITypeInfo *typeinfo, unsigned char *str,
         size_t *len, TYPEATTR *attr)
 {
     unsigned char fc = get_struct_fc(typeinfo, attr);
+    unsigned int struct_offset = 0;
+    unsigned char basetype;
     size_t off = *len;
+    TYPEDESC *tdesc;
+    VARDESC *desc;
+    WORD i;
 
     if (fc != FC_STRUCT)
         FIXME("fc %02x not implemented\n", fc);
@@ -366,7 +372,30 @@ static size_t write_struct_tfs(ITypeInfo *typeinfo, unsigned char *str,
     WRITE_CHAR (str, *len, FC_STRUCT);
     WRITE_CHAR (str, *len, attr->cbAlignment - 1);
     WRITE_SHORT(str, *len, attr->cbSizeInstance);
-    WRITE_CHAR (str, *len, FC_PAD);
+
+    for (i = 0; i < attr->cVars; i++)
+    {
+        ITypeInfo_GetVarDesc(typeinfo, i, &desc);
+        tdesc = &desc->elemdescVar.tdesc;
+
+        /* This may not match the intended alignment, but we don't have enough
+         * information to determine that. This should always give the correct
+         * layout. */
+        if ((struct_offset & 7) && !(desc->oInst & 7))
+            WRITE_CHAR(str, *len, FC_ALIGNM8);
+        else if ((struct_offset & 3) && !(desc->oInst & 3))
+            WRITE_CHAR(str, *len, FC_ALIGNM4);
+        else if ((struct_offset & 1) && !(desc->oInst & 1))
+            WRITE_CHAR(str, *len, FC_ALIGNM2);
+        struct_offset = desc->oInst + type_memsize(typeinfo, tdesc);
+
+        if ((basetype = get_basetype(typeinfo, tdesc)))
+            WRITE_CHAR(str, *len, basetype);
+
+        ITypeInfo_ReleaseVarDesc(typeinfo, desc);
+    }
+    if (!(*len & 1))
+        WRITE_CHAR (str, *len, FC_PAD);
     WRITE_CHAR (str, *len, FC_END);
 
     return off;
