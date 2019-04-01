@@ -19,71 +19,60 @@
  */
 
 #define COBJMACROS
-
-#include "wine/test.h"
 #include "dshow.h"
+#include "wine/test.h"
 
-#define QI_SUCCEED(iface, riid, ppv) hr = IUnknown_QueryInterface(iface, &riid, (LPVOID*)&ppv); \
-    ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr); \
-    ok(ppv != NULL, "Pointer is NULL\n");
-
-#define RELEASE_EXPECT(iface, num) if (iface) { \
-    hr = IUnknown_Release((IUnknown*)iface); \
-    ok(hr == num, "IUnknown_Release should return %d, got %d\n", num, hr); \
+static IBaseFilter *create_video_renderer(void)
+{
+    IBaseFilter *filter = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return filter;
 }
 
-static IUnknown *pVideoRenderer = NULL;
-
-static int create_video_renderer(void)
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
 {
-    HRESULT hr;
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
 
-    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IUnknown, (LPVOID*)&pVideoRenderer);
-    return (hr == S_OK && pVideoRenderer != NULL);
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
 }
 
-static void release_video_renderer(void)
+static void test_interfaces(void)
 {
-    HRESULT hr;
+    IBaseFilter *filter = create_video_renderer();
 
-    hr = IUnknown_Release(pVideoRenderer);
-    ok(hr == 0, "IUnknown_Release failed with %x\n", hr);
-}
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IBasicVideo, TRUE);
+    todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
+    todo_wine check_interface(filter, &IID_IDirectDrawVideo, TRUE);
+    todo_wine check_interface(filter, &IID_IKsPropertySet, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IMediaPosition, TRUE);
+    check_interface(filter, &IID_IMediaSeeking, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IQualityControl, TRUE);
+    todo_wine check_interface(filter, &IID_IQualProp, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+    check_interface(filter, &IID_IVideoWindow, TRUE);
 
-static void test_query_interface(void)
-{
-    HRESULT hr;
-    IBaseFilter *pBaseFilter = NULL;
-    IBasicVideo *pBasicVideo = NULL;
-    IDirectDrawVideo *pDirectDrawVideo = NULL;
-    IKsPropertySet *pKsPropertySet = NULL;
-    IMediaPosition *pMediaPosition = NULL;
-    IMediaSeeking *pMediaSeeking = NULL;
-    IQualityControl *pQualityControl = NULL;
-    IQualProp *pQualProp = NULL;
-    IVideoWindow *pVideoWindow = NULL;
+    todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IBasicAudio, FALSE);
+    check_interface(filter, &IID_IDispatch, FALSE);
+    check_interface(filter, &IID_IOverlay, FALSE);
+    check_interface(filter, &IID_IPersistPropertyBag, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
 
-    QI_SUCCEED(pVideoRenderer, IID_IBaseFilter, pBaseFilter);
-    RELEASE_EXPECT(pBaseFilter, 1);
-    QI_SUCCEED(pVideoRenderer, IID_IBasicVideo, pBasicVideo);
-    RELEASE_EXPECT(pBasicVideo, 1);
-    QI_SUCCEED(pVideoRenderer, IID_IMediaSeeking, pMediaSeeking);
-    RELEASE_EXPECT(pMediaSeeking, 1);
-    QI_SUCCEED(pVideoRenderer, IID_IQualityControl, pQualityControl);
-    RELEASE_EXPECT(pQualityControl, 1);
-    todo_wine {
-    QI_SUCCEED(pVideoRenderer, IID_IDirectDrawVideo, pDirectDrawVideo);
-    RELEASE_EXPECT(pDirectDrawVideo, 1);
-    QI_SUCCEED(pVideoRenderer, IID_IKsPropertySet, pKsPropertySet);
-    RELEASE_EXPECT(pKsPropertySet, 1);
-    QI_SUCCEED(pVideoRenderer, IID_IQualProp, pQualProp);
-    RELEASE_EXPECT(pQualProp, 1);
-    }
-    QI_SUCCEED(pVideoRenderer, IID_IMediaPosition, pMediaPosition);
-    RELEASE_EXPECT(pMediaPosition, 1);
-    QI_SUCCEED(pVideoRenderer, IID_IVideoWindow, pVideoWindow);
-    RELEASE_EXPECT(pVideoWindow, 1);
+    IBaseFilter_Release(filter);
 }
 
 static void test_pin(IPin *pin)
@@ -105,18 +94,10 @@ static void test_pin(IPin *pin)
 static void test_basefilter(void)
 {
     IEnumPins *pin_enum = NULL;
-    IBaseFilter *base = NULL;
+    IBaseFilter *base = create_video_renderer();
     IPin *pins[2];
     ULONG ref;
     HRESULT hr;
-
-    IUnknown_QueryInterface(pVideoRenderer, &IID_IBaseFilter, (void **)&base);
-    if (base == NULL)
-    {
-        /* test_query_interface handles this case */
-        skip("No IBaseFilter\n");
-        return;
-    }
 
     hr = IBaseFilter_EnumPins(base, NULL);
     ok(hr == E_POINTER, "hr = %08x and not E_POINTER\n", hr);
@@ -153,13 +134,9 @@ static void test_basefilter(void)
 START_TEST(videorenderer)
 {
     CoInitialize(NULL);
-    if (!create_video_renderer())
-        return;
 
-    test_query_interface();
+    test_interfaces();
     test_basefilter();
-
-    release_video_renderer();
 
     CoUninitialize();
 }
