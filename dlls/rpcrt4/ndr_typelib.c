@@ -220,6 +220,8 @@ static BOOL type_pointer_is_iface(ITypeInfo *typeinfo, TYPEDESC *tdesc)
                 || attr->typekind == TKIND_DISPATCH
                 || attr->typekind == TKIND_COCLASS)
             ret = TRUE;
+        else if (attr->typekind == TKIND_ALIAS)
+            ret = type_pointer_is_iface(refinfo, &attr->tdescAlias);
 
         ITypeInfo_ReleaseTypeAttr(refinfo, attr);
         ITypeInfo_Release(refinfo);
@@ -280,6 +282,8 @@ static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc)
             fc = FC_LGFARRAY;
         else if (attr->typekind == TKIND_RECORD && get_struct_fc(refinfo, attr) == FC_STRUCT)
             fc = FC_LGFARRAY;
+        else if (attr->typekind == TKIND_ALIAS)
+            fc = get_array_fc(refinfo, &attr->tdescAlias);
         else
             fc = FC_BOGUS_ARRAY;
 
@@ -492,6 +496,9 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
         {
         case TKIND_RECORD:
             off = write_struct_tfs(refinfo, str, len, attr);
+            break;
+        case TKIND_ALIAS:
+            off = write_type_tfs(refinfo, str, len, &attr->tdescAlias, toplevel, onstack);
             break;
         default:
             FIXME("unhandled kind %u\n", attr->typekind);
