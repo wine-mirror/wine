@@ -101,6 +101,7 @@ static int (__cdecl *p__atodbl_l)(_CRT_DOUBLE*,char*,_locale_t);
 static double (__cdecl *p__atof_l)(const char*,_locale_t);
 static double (__cdecl *p__strtod_l)(const char *,char**,_locale_t);
 static int (__cdecl *p__strnset_s)(char*,size_t,int,size_t);
+static int (__cdecl *p__wcsnset_s)(wchar_t*,size_t,wchar_t,size_t);
 static int (__cdecl *p__wcsset_s)(wchar_t*,size_t,wchar_t);
 static size_t (__cdecl *p__mbsnlen)(const unsigned char*, size_t);
 static int (__cdecl *p__mbccpy_s)(unsigned char*, size_t, int*, const unsigned char*);
@@ -3221,6 +3222,45 @@ static void test__strnset_s(void)
     ok(!buf[0] && buf[1]=='c' && buf[2]=='b', "buf = %s\n", buf);
 }
 
+static void test__wcsnset_s(void)
+{
+    wchar_t text[] = { 't','e','x','t',0 };
+    int r;
+
+    if(!p__wcsnset_s) {
+        win_skip("_wcsnset_s not available\n");
+        return;
+    }
+
+    r = p__wcsnset_s(NULL, 0, 'a', 0);
+    ok(r == 0, "r = %d\n", r);
+
+    r = p__wcsnset_s(text, 0, 'a', 1);
+    ok(r == EINVAL, "r = %d\n", r);
+    ok(text[0] == 't', "text[0] = %d\n", text[0]);
+
+    r = p__wcsnset_s(NULL, 2, 'a', 1);
+    ok(r == EINVAL, "r = %d\n", r);
+
+    r = p__wcsnset_s(text, 2, 'a', 3);
+    ok(r == EINVAL, "r = %d\n", r);
+    ok(text[0] == 0, "text[0] = %d\n", text[0]);
+    ok(text[1] == 'e', "text[1] = %d\n", text[1]);
+
+    text[0] = 't';
+    r = p__wcsnset_s(text, 5, 'a', 1);
+    ok(r == 0, "r = %d\n", r);
+    ok(text[0] == 'a', "text[0] = %d\n", text[0]);
+    ok(text[1] == 'e', "text[1] = %d\n", text[1]);
+
+    text[1] = 0;
+    r = p__wcsnset_s(text, 5, 'b', 3);
+    ok(r == 0, "r = %d\n", r);
+    ok(text[0] == 'b', "text[0] = %d\n", text[0]);
+    ok(text[1] == 0, "text[1] = %d\n", text[1]);
+    ok(text[2] == 'x', "text[2] = %d\n", text[2]);
+}
+
 static void test__wcsset_s(void)
 {
     wchar_t str[10];
@@ -3758,6 +3798,7 @@ START_TEST(string)
     p__atof_l = (void*)GetProcAddress(hMsvcrt, "_atof_l");
     p__strtod_l = (void*)GetProcAddress(hMsvcrt, "_strtod_l");
     p__strnset_s = (void*)GetProcAddress(hMsvcrt, "_strnset_s");
+    p__wcsnset_s = (void*)GetProcAddress(hMsvcrt, "_wcsnset_s");
     p__wcsset_s = (void*)GetProcAddress(hMsvcrt, "_wcsset_s");
     p__mbsnlen = (void*)GetProcAddress(hMsvcrt, "_mbsnlen");
     p__mbccpy_s = (void*)GetProcAddress(hMsvcrt, "_mbccpy_s");
@@ -3824,6 +3865,7 @@ START_TEST(string)
     test_strncpy();
     test_strxfrm();
     test__strnset_s();
+    test__wcsnset_s();
     test__wcsset_s();
     test__mbscmp();
     test__ismbclx();
