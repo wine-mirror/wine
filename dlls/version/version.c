@@ -1128,16 +1128,22 @@ static int testFileExistenceA( char const * path, char const * file, BOOL excl )
 
     fileinfo.cBytes = sizeof(OFSTRUCT);
 
-    strcpy(filename, path);
-    filenamelen = strlen(filename);
+    if (path)
+    {
+        strcpy(filename, path);
+        filenamelen = strlen(filename);
 
-    /* Add a trailing \ if necessary */
-    if(filenamelen) {
-	if(filename[filenamelen - 1] != '\\')
-	    strcat(filename, "\\");
+        /* Add a trailing \ if necessary */
+        if(filenamelen)
+        {
+            if(filename[filenamelen - 1] != '\\')
+                strcat(filename, "\\");
+        }
+        else /* specify the current directory */
+            strcpy(filename, ".\\");
     }
-    else /* specify the current directory */
-	strcpy(filename, ".\\");
+    else
+        filename[0] = 0;
 
     /* Create the full pathname */
     strcat(filename, file);
@@ -1227,10 +1233,10 @@ DWORD WINAPI VerFindFileA(
         {
             if(testFileExistenceA(destDir, lpszFilename, FALSE)) curDir = destDir;
             else if(lpszAppDir && testFileExistenceA(lpszAppDir, lpszFilename, FALSE))
-            {
                 curDir = lpszAppDir;
+
+            if(!testFileExistenceA(systemDir, lpszFilename, FALSE))
                 retval |= VFF_CURNEDEST;
-            }
         }
     }
     else /* not a shared file */
@@ -1241,15 +1247,17 @@ DWORD WINAPI VerFindFileA(
             GetWindowsDirectoryA( winDir, MAX_PATH );
             if(testFileExistenceA(destDir, lpszFilename, FALSE)) curDir = destDir;
             else if(testFileExistenceA(winDir, lpszFilename, FALSE))
-            {
                 curDir = winDir;
-                retval |= VFF_CURNEDEST;
-            }
             else if(testFileExistenceA(systemDir, lpszFilename, FALSE))
-            {
                 curDir = systemDir;
-                retval |= VFF_CURNEDEST;
+
+            if (lpszAppDir && lpszAppDir[0])
+            {
+                if(!testFileExistenceA(lpszAppDir, lpszFilename, FALSE))
+                    retval |= VFF_CURNEDEST;
             }
+            else if(testFileExistenceA(NULL, lpszFilename, FALSE))
+                retval |= VFF_CURNEDEST;
         }
     }
 

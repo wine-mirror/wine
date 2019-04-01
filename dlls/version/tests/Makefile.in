@@ -1,5 +1,5 @@
 TESTDLL   = version.dll
-IMPORTS   = version
+IMPORTS   = version shell32
 
 C_SRCS = \
 	info.c \
