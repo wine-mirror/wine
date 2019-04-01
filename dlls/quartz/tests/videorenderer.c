@@ -22,6 +22,8 @@
 #include "dshow.h"
 #include "wine/test.h"
 
+static const WCHAR sink_id[] = {'I','n',0};
+
 static IBaseFilter *create_video_renderer(void)
 {
     IBaseFilter *filter = NULL;
@@ -176,6 +178,35 @@ todo_wine
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_find_pin(void)
+{
+    static const WCHAR input_pinW[] = {'i','n','p','u','t',' ','p','i','n',0};
+    IBaseFilter *filter = create_video_renderer();
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_FindPin(filter, input_pinW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    IEnumPins_Release(enum_pins);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_pin(IPin *pin)
 {
     IMemInputPin *mpin = NULL;
@@ -238,6 +269,7 @@ START_TEST(videorenderer)
 
     test_interfaces();
     test_enum_pins();
+    test_find_pin();
     test_basefilter();
 
     CoUninitialize();
