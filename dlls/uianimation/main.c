@@ -23,12 +23,16 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "objbase.h"
+#include "rpcproxy.h"
 
 #include "uianimation.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uianimation);
+
+static HINSTANCE hinstance;
 
 BOOL WINAPI DllMain( HINSTANCE dll, DWORD reason, LPVOID reserved )
 {
@@ -39,8 +43,44 @@ BOOL WINAPI DllMain( HINSTANCE dll, DWORD reason, LPVOID reserved )
     case DLL_WINE_PREATTACH:
         return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
+        hinstance = dll;
         DisableThreadLibraryCalls( dll );
         break;
     }
     return TRUE;
+}
+
+/******************************************************************
+ *             DllGetClassObject
+ */
+HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
+{
+    FIXME( "(%s %s %p)\n", debugstr_guid( clsid ), debugstr_guid( iid ), obj );
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/******************************************************************
+ *              DllCanUnloadNow
+ */
+HRESULT WINAPI DllCanUnloadNow( void )
+{
+    TRACE( "()\n" );
+    return S_FALSE;
+}
+
+/***********************************************************************
+ *          DllRegisterServer
+ */
+HRESULT WINAPI DllRegisterServer( void )
+{
+    return __wine_register_resources( hinstance );
+}
+
+/***********************************************************************
+ *          DllUnregisterServer
+ */
+HRESULT WINAPI DllUnregisterServer( void )
+{
+    return __wine_unregister_resources( hinstance );
 }
