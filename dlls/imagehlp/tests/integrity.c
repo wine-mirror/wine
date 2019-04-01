@@ -363,20 +363,20 @@ static void test_pe_checksum(void)
     checksum_orig = checksum_new = 0xdeadbeef;
     ret = pCheckSumMappedFile(modinfo.lpBaseOfDll, (char *)nt_header - (char *)modinfo.lpBaseOfDll,
                               &checksum_orig, &checksum_new);
-    ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p", ret);
+    ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok((checksum_orig == 0) || (checksum_orig == checksum_correct), "Expected %x, got %x\n", checksum_correct, checksum_orig);
     ok(checksum_new != 0 && checksum_new != 0xdeadbeef, "Got unexpected value %x\n", checksum_new);
 
     checksum_orig = checksum_new = 0xdeadbeef;
     ret = pCheckSumMappedFile(modinfo.lpBaseOfDll, sizeof(IMAGE_DOS_HEADER),
                               &checksum_orig, &checksum_new);
-    ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p", ret);
+    ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok((checksum_orig == 0) || (checksum_orig == checksum_correct), "Expected %x, got %x\n", checksum_correct, checksum_orig);
     ok(checksum_new != 0 && checksum_new != 0xdeadbeef, "Got unexpected value %x\n", checksum_new);
 
     checksum_orig = checksum_new = 0xdeadbeef;
     ret = pCheckSumMappedFile(modinfo.lpBaseOfDll, 0, &checksum_orig, &checksum_new);
-    ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p", ret);
+    ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok((checksum_orig == 0xdeadbeef) || (checksum_orig == checksum_correct), "Expected %x, got %x\n", checksum_correct, checksum_orig);
     todo_wine ok((checksum_new == 0xdeadbeef) || (checksum_new != 0 && checksum_new != 0xdeadbeef), "Got unexpected value %x\n", checksum_new);
 
