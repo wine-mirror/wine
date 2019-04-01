@@ -355,23 +355,41 @@ static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc)
         return FC_BOGUS_ARRAY;
 }
 
-static size_t write_struct_tfs(ITypeInfo *typeinfo, unsigned char *str,
+static BOOL type_is_non_iface_pointer(ITypeInfo *typeinfo, TYPEDESC *desc)
+{
+    if (desc->vt == VT_PTR)
+        return !type_pointer_is_iface(typeinfo, desc->lptdesc);
+    else if (desc->vt == VT_USERDEFINED)
+    {
+        ITypeInfo *refinfo;
+        TYPEATTR *attr;
+        BOOL ret;
+
+        ITypeInfo_GetRefTypeInfo(typeinfo, desc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        if (attr->typekind == TKIND_ALIAS)
+            ret = type_is_non_iface_pointer(refinfo, &attr->tdescAlias);
+        else
+            ret = FALSE;
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+
+        return ret;
+    }
+    else
+        return FALSE;
+}
+
+static void write_struct_members(ITypeInfo *typeinfo, unsigned char *str,
         size_t *len, TYPEATTR *attr)
 {
-    unsigned char fc = get_struct_fc(typeinfo, attr);
     unsigned int struct_offset = 0;
     unsigned char basetype;
-    size_t off = *len;
     TYPEDESC *tdesc;
     VARDESC *desc;
     WORD i;
-
-    if (fc != FC_STRUCT)
-        FIXME("fc %02x not implemented\n", fc);
-
-    WRITE_CHAR (str, *len, FC_STRUCT);
-    WRITE_CHAR (str, *len, attr->cbAlignment - 1);
-    WRITE_SHORT(str, *len, attr->cbSizeInstance);
 
     for (i = 0; i < attr->cVars; i++)
     {
@@ -391,12 +409,205 @@ static size_t write_struct_tfs(ITypeInfo *typeinfo, unsigned char *str,
 
         if ((basetype = get_basetype(typeinfo, tdesc)))
             WRITE_CHAR(str, *len, basetype);
+        else if (type_is_non_iface_pointer(typeinfo, tdesc))
+            WRITE_CHAR(str, *len, FC_POINTER);
+        else
+        {
+            WRITE_CHAR(str, *len, FC_EMBEDDED_COMPLEX);
+            WRITE_CHAR(str, *len, 0);
+            WRITE_SHORT(str, *len, 0);
+        }
 
         ITypeInfo_ReleaseVarDesc(typeinfo, desc);
     }
     if (!(*len & 1))
         WRITE_CHAR (str, *len, FC_PAD);
     WRITE_CHAR (str, *len, FC_END);
+}
+
+static void write_simple_struct_tfs(ITypeInfo *typeinfo, unsigned char *str,
+        size_t *len, TYPEATTR *attr)
+{
+    write_struct_members(typeinfo, str, len, attr);
+}
+
+static BOOL type_needs_pointer_deref(ITypeInfo *typeinfo, TYPEDESC *desc)
+{
+    if (desc->vt == VT_PTR || desc->vt == VT_UNKNOWN || desc->vt == VT_DISPATCH)
+        return TRUE;
+    else if (desc->vt == VT_USERDEFINED)
+    {
+        ITypeInfo *refinfo;
+        BOOL ret = FALSE;
+        TYPEATTR *attr;
+
+        ITypeInfo_GetRefTypeInfo(typeinfo, desc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        if (attr->typekind == TKIND_ALIAS)
+            ret = type_needs_pointer_deref(refinfo, &attr->tdescAlias);
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+
+        return ret;
+    }
+    else
+        return FALSE;
+}
+
+static void write_complex_struct_pointer_layout(ITypeInfo *typeinfo,
+        TYPEDESC *desc, unsigned char *str, size_t *len)
+{
+    unsigned char basetype;
+
+    if (desc->vt == VT_PTR && !type_pointer_is_iface(typeinfo, desc->lptdesc))
+    {
+        WRITE_CHAR(str, *len, FC_UP);
+        if ((basetype = get_basetype(typeinfo, desc->lptdesc)))
+        {
+            WRITE_CHAR(str, *len, FC_SIMPLE_POINTER);
+            WRITE_CHAR(str, *len, basetype);
+            WRITE_CHAR(str, *len, FC_PAD);
+        }
+        else
+        {
+            if (type_needs_pointer_deref(typeinfo, desc->lptdesc))
+                WRITE_CHAR(str, *len, FC_POINTER_DEREF);
+            else
+                WRITE_CHAR(str, *len, 0);
+            WRITE_SHORT(str, *len, 0);
+        }
+    }
+    else if (desc->vt == VT_USERDEFINED)
+    {
+        ITypeInfo *refinfo;
+        TYPEATTR *attr;
+
+        ITypeInfo_GetRefTypeInfo(typeinfo, desc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        if (attr->typekind == TKIND_ALIAS)
+            write_complex_struct_pointer_layout(refinfo, &attr->tdescAlias, str, len);
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+    }
+}
+
+static size_t write_complex_struct_pointer_ref(ITypeInfo *typeinfo,
+        TYPEDESC *desc, unsigned char *str, size_t *len)
+{
+    if (desc->vt == VT_PTR && !type_pointer_is_iface(typeinfo, desc->lptdesc)
+            && !get_basetype(typeinfo, desc->lptdesc))
+    {
+        return write_type_tfs(typeinfo, str, len, desc->lptdesc, FALSE, FALSE);
+    }
+    else if (desc->vt == VT_USERDEFINED)
+    {
+        ITypeInfo *refinfo;
+        TYPEATTR *attr;
+        size_t ret = 0;
+
+        ITypeInfo_GetRefTypeInfo(typeinfo, desc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        if (attr->typekind == TKIND_ALIAS)
+            ret = write_complex_struct_pointer_ref(refinfo, &attr->tdescAlias, str, len);
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+
+        return ret;
+    }
+
+    return 0;
+}
+
+static void write_complex_struct_tfs(ITypeInfo *typeinfo, unsigned char *str,
+        size_t *len, TYPEATTR *attr)
+{
+    size_t pointer_layout_offset, pointer_layout, member_layout, ref;
+    unsigned int struct_offset = 0;
+    TYPEDESC *tdesc;
+    VARDESC *desc;
+    WORD i;
+
+    WRITE_SHORT(str, *len, 0);  /* conformant array description */
+    pointer_layout_offset = *len;
+    WRITE_SHORT(str, *len, 0);  /* pointer layout; will be filled in later */
+    member_layout = *len;
+
+    /* First pass: write the struct members and pointer layout, but do not yet
+     * write the offsets for embedded complexes and pointer refs. These must be
+     * handled after we write the whole struct description, since it must be
+     * contiguous. */
+
+    write_struct_members(typeinfo, str, len, attr);
+
+    pointer_layout = *len;
+    if (str) *((short *)(str + pointer_layout_offset)) = pointer_layout - pointer_layout_offset;
+
+    for (i = 0; i < attr->cVars; i++)
+    {
+        ITypeInfo_GetVarDesc(typeinfo, i, &desc);
+        write_complex_struct_pointer_layout(typeinfo, &desc->elemdescVar.tdesc, str, len);
+        ITypeInfo_ReleaseVarDesc(typeinfo, desc);
+    }
+
+    /* Second pass: write types for embedded complexes and non-simple pointers. */
+
+    struct_offset = 0;
+
+    for (i = 0; i < attr->cVars; i++)
+    {
+        ITypeInfo_GetVarDesc(typeinfo, i, &desc);
+        tdesc = &desc->elemdescVar.tdesc;
+
+        if (struct_offset != desc->oInst)
+            member_layout++; /* alignment directive */
+        struct_offset = desc->oInst + type_memsize(typeinfo, tdesc);
+
+        if (get_basetype(typeinfo, tdesc))
+            member_layout++;
+        else if (type_is_non_iface_pointer(typeinfo, tdesc))
+        {
+            member_layout++;
+            if ((ref = write_complex_struct_pointer_ref(typeinfo, tdesc, str, len)))
+            {
+                if (str) *((short *)(str + pointer_layout + 2)) = ref - (pointer_layout + 2);
+            }
+            pointer_layout += 4;
+        }
+        else
+        {
+            ref = write_type_tfs(typeinfo, str, len, tdesc, FALSE, FALSE);
+            if (str) *((short *)(str + member_layout + 2)) = ref - (member_layout + 2);
+            member_layout += 4;
+        }
+
+        ITypeInfo_ReleaseVarDesc(typeinfo, desc);
+    }
+}
+
+static size_t write_struct_tfs(ITypeInfo *typeinfo, unsigned char *str,
+        size_t *len, TYPEATTR *attr)
+{
+    unsigned char fc = get_struct_fc(typeinfo, attr);
+    size_t off = *len;
+
+    /* For the sake of simplicity, write pointer structs as complex structs. */
+    if (fc == FC_PSTRUCT)
+        fc = FC_BOGUS_STRUCT;
+
+    WRITE_CHAR (str, *len, fc);
+    WRITE_CHAR (str, *len, attr->cbAlignment - 1);
+    WRITE_SHORT(str, *len, attr->cbSizeInstance);
+
+    if (fc == FC_STRUCT)
+        write_simple_struct_tfs(typeinfo, str, len, attr);
+    else if (fc == FC_BOGUS_STRUCT)
+        write_complex_struct_tfs(typeinfo, str, len, attr);
 
     return off;
 }
