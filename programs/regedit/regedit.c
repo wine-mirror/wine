@@ -22,7 +22,6 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <shellapi.h>
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "main.h"
@@ -113,7 +112,7 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
             WCHAR *realname = NULL;
             FILE *reg_file;
 
-            if (!strcmpW(filename, hyphen))
+            if (!lstrcmpW(filename, hyphen))
                 reg_file = stdin;
             else
             {
@@ -197,7 +196,7 @@ BOOL ProcessCmdLine(WCHAR *cmdline)
         if (argv[i][1] && argv[i][2] && argv[i][2] != ':')
             break; /* This is a file path beginning with '/'. */
 
-        switch (toupperW(argv[i][1]))
+        switch (towupper(argv[i][1]))
         {
         case '?':
             error_exit(STRING_USAGE);

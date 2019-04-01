@@ -26,7 +26,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
@@ -243,7 +242,7 @@ static void get_last_key(HWND hwndTV)
         HTREEITEM selection = NULL;
         if (RegQueryValueExW(hkey, wszLastKey, NULL, NULL, (LPBYTE)wszVal, &dwSize) == ERROR_SUCCESS)
         {
-            if (strcmpW(wszVal, g_pChildWnd->szPath))
+            if (lstrcmpW(wszVal, g_pChildWnd->szPath))
                 selection = FindPathInTree(hwndTV, wszVal);
         }
 
