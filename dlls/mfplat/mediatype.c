@@ -20,6 +20,10 @@
 
 #include "mfplat_private.h"
 
+#include "initguid.h"
+#include "ks.h"
+#include "ksmedia.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
@@ -1676,6 +1680,79 @@ HRESULT WINAPI MFUnwrapMediaType(IMFMediaType *wrapper, IMFMediaType **ret)
         return hr;
 
     *ret = mediatype;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFCreateWaveFormatExFromMFMediaType (mfplat.@)
+ */
+HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVEFORMATEX **ret_format,
+        UINT32 *size, UINT32 flags)
+{
+    WAVEFORMATEXTENSIBLE *format_ext = NULL;
+    WAVEFORMATEX *format;
+    GUID major, subtype;
+    UINT32 value;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p, %#x.\n", mediatype, ret_format, size, flags);
+
+    if (FAILED(hr = IMFMediaType_GetGUID(mediatype, &MF_MT_MAJOR_TYPE, &major)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaType_GetGUID(mediatype, &MF_MT_SUBTYPE, &subtype)))
+        return hr;
+
+    if (!IsEqualGUID(&major, &MFMediaType_Audio))
+        return E_INVALIDARG;
+
+    if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM))
+    {
+        FIXME("Unsupported audio format %s.\n", debugstr_guid(&subtype));
+        return E_NOTIMPL;
+    }
+
+    /* FIXME: probably WAVE_FORMAT_MPEG/WAVE_FORMAT_MPEGLAYER3 should be handled separately. */
+    if (flags == MFWaveFormatExConvertFlag_ForceExtensible)
+    {
+        format_ext = CoTaskMemAlloc(sizeof(*format_ext));
+        *size = sizeof(*format_ext);
+        format = (WAVEFORMATEX *)format_ext;
+    }
+    else
+    {
+        format = CoTaskMemAlloc(sizeof(*format));
+        *size = sizeof(*format);
+    }
+
+    if (!format)
+        return E_OUTOFMEMORY;
+
+    memset(format, 0, *size);
+
+    format->wFormatTag = format_ext ? WAVE_FORMAT_EXTENSIBLE : WAVE_FORMAT_PCM;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, &value)))
+        format->nChannels = value;
+    IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &format->nSamplesPerSec);
+    IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &format->nAvgBytesPerSec);
+    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &value)))
+        format->nBlockAlign = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BITS_PER_SAMPLE, &value)))
+        format->wBitsPerSample = value;
+    if (format_ext)
+    {
+        format->cbSize = sizeof(*format_ext) - sizeof(*format);
+
+        if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &value)))
+            format_ext->Samples.wSamplesPerBlock = value;
+
+        IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, &format_ext->dwChannelMask);
+        memcpy(&format_ext->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM, sizeof(format_ext->SubFormat));
+    }
+
+    *ret_format = format;
 
     return S_OK;
 }

@@ -344,6 +344,12 @@ typedef void (CALLBACK *MFPERIODICCALLBACK)(IUnknown *context);
 #define MF_4096_BYTE_ALIGNMENT    0x00000fff
 #define MF_8192_BYTE_ALIGNMENT    0x00001fff
 
+typedef enum _MFWaveFormatExConvertFlags
+{
+    MFWaveFormatExConvertFlag_Normal = 0,
+    MFWaveFormatExConvertFlag_ForceExtensible = 1,
+} MFWaveFormatExConvertFlags;
+
 HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
@@ -363,6 +369,7 @@ HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HR
 HRESULT WINAPI MFCreateMediaType(IMFMediaType **type);
 HRESULT WINAPI MFCreateSample(IMFSample **sample);
 HRESULT WINAPI MFCreateMemoryBuffer(DWORD max_length, IMFMediaBuffer **buffer);
+HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *type, WAVEFORMATEX **format, UINT32 *size, UINT32 flags);
 void *  WINAPI MFHeapAlloc(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
 void    WINAPI MFHeapFree(void *ptr);
 HRESULT WINAPI MFGetAttributesAsBlob(IMFAttributes *attributes, UINT8 *buffer, UINT size);

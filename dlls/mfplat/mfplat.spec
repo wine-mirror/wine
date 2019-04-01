@@ -74,7 +74,7 @@
 @ stub MFCreateVideoMediaTypeFromSubtype
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader2
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader
-@ stub MFCreateWaveFormatExFromMFMediaType
+@ stdcall MFCreateWaveFormatExFromMFMediaType(ptr ptr ptr long)
 @ stub MFDeserializeAttributesFromStream
 @ stub MFDeserializeEvent
 @ stub MFDeserializeMediaTypeFromStream
