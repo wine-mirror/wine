@@ -326,9 +326,13 @@ static unsigned char get_struct_fc(ITypeInfo *typeinfo, TYPEATTR *attr)
 
 static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc)
 {
-    if (get_basetype(typeinfo, desc))
+    switch (desc->vt)
+    {
+    case VT_CY:
         return FC_LGFARRAY;
-    else if (desc->vt == VT_USERDEFINED)
+    case VT_CARRAY:
+        return get_array_fc(typeinfo, &desc->lpadesc->tdescElem);
+    case VT_USERDEFINED:
     {
         ITypeInfo *refinfo;
         TYPEATTR *attr;
@@ -351,8 +355,9 @@ static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc)
 
         return fc;
     }
-    else
-        return FC_BOGUS_ARRAY;
+    default:
+        return get_basetype(typeinfo, desc) ? FC_LGFARRAY : FC_BOGUS_ARRAY;
+    }
 }
 
 static BOOL type_is_non_iface_pointer(ITypeInfo *typeinfo, TYPEDESC *desc)
@@ -616,13 +621,10 @@ static size_t write_array_tfs(ITypeInfo *typeinfo, unsigned char *str,
     size_t *len, ARRAYDESC *desc)
 {
     unsigned char fc = get_array_fc(typeinfo, &desc->tdescElem);
-    ULONG size = type_memsize(typeinfo, &desc->tdescElem);
     unsigned char basetype;
     size_t ref = 0, off;
+    ULONG size = 1;
     USHORT i;
-
-    if (fc != FC_LGFARRAY)
-        FIXME("complex arrays not implemented\n");
 
     if (!(basetype = get_basetype(typeinfo, &desc->tdescElem)))
         ref = write_type_tfs(typeinfo, str, len, &desc->tdescElem, FALSE, FALSE);
@@ -633,9 +635,20 @@ static size_t write_array_tfs(ITypeInfo *typeinfo, unsigned char *str,
 
     off = *len;
 
-    WRITE_CHAR(str, *len, FC_LGFARRAY);
+    WRITE_CHAR(str, *len, fc);
     WRITE_CHAR(str, *len, 0);
-    WRITE_INT (str, *len, size);
+    if (fc == FC_BOGUS_ARRAY)
+    {
+        WRITE_SHORT(str, *len, size);
+        WRITE_INT(str, *len, 0xffffffff); /* conformance */
+        WRITE_INT(str, *len, 0xffffffff); /* variance */
+    }
+    else
+    {
+        size *= type_memsize(typeinfo, &desc->tdescElem);
+        WRITE_INT(str, *len, size);
+    }
+
     if (basetype)
         WRITE_CHAR(str, *len, basetype);
     else
