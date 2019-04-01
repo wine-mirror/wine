@@ -4,6 +4,7 @@ IMPORTS   = opengl32 user32 gdi32 advapi32
 
 C_SRCS = \
 	adapter_gl.c \
+	adapter_vk.c \
 	arb_program_shader.c \
 	ati_fragment_shader.c \
 	buffer.c \
