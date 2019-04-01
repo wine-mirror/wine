@@ -2972,7 +2972,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
 
     if(protocol == FTP_TEST)
     {
-        /* FTP url dont have any escape characters, so convert the url to what is expected */
+        /* FTP urls don't have any escape characters so convert the url to what is expected */
         DWORD size = 0;
         UrlUnescapeW(current_url, NULL, &size, URL_UNESCAPE_INPLACE);
     }
