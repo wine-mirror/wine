@@ -675,187 +675,278 @@ static ULONG WINAPI stream_descriptor_Release(IMFStreamDescriptor *iface)
 static HRESULT WINAPI stream_descriptor_GetItem(IMFStreamDescriptor *iface, REFGUID key, PROPVARIANT *value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetItem(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetItem(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_GetItemType(IMFStreamDescriptor *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetItemType(&stream_desc->attributes.IMFAttributes_iface, key, type);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+
+    return attributes_GetItemType(&stream_desc->attributes, key, type);
 }
 
 static HRESULT WINAPI stream_descriptor_CompareItem(IMFStreamDescriptor *iface, REFGUID key, REFPROPVARIANT value,
         BOOL *result)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_CompareItem(&stream_desc->attributes.IMFAttributes_iface, key, value, result);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+
+    return attributes_CompareItem(&stream_desc->attributes, key, value, result);
 }
 
 static HRESULT WINAPI stream_descriptor_Compare(IMFStreamDescriptor *iface, IMFAttributes *theirs,
         MF_ATTRIBUTES_MATCH_TYPE type, BOOL *result)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_Compare(&stream_desc->attributes.IMFAttributes_iface, theirs, type, result);
+
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, type, result);
+
+    return attributes_Compare(&stream_desc->attributes, theirs, type, result);
 }
 
 static HRESULT WINAPI stream_descriptor_GetUINT32(IMFStreamDescriptor *iface, REFGUID key, UINT32 *value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetUINT32(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT32(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_GetUINT64(IMFStreamDescriptor *iface, REFGUID key, UINT64 *value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetUINT64(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT64(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_GetDouble(IMFStreamDescriptor *iface, REFGUID key, double *value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetDouble(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetDouble(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_GetGUID(IMFStreamDescriptor *iface, REFGUID key, GUID *value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetGUID(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetGUID(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_GetStringLength(IMFStreamDescriptor *iface, REFGUID key, UINT32 *length)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetStringLength(&stream_desc->attributes.IMFAttributes_iface, key, length);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
+
+    return attributes_GetStringLength(&stream_desc->attributes, key, length);
 }
 
 static HRESULT WINAPI stream_descriptor_GetString(IMFStreamDescriptor *iface, REFGUID key, WCHAR *value,
         UINT32 size, UINT32 *length)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetString(&stream_desc->attributes.IMFAttributes_iface, key, value, size, length);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), value, size, length);
+
+    return attributes_GetString(&stream_desc->attributes, key, value, size, length);
 }
 
 static HRESULT WINAPI stream_descriptor_GetAllocatedString(IMFStreamDescriptor *iface, REFGUID key,
         WCHAR **value, UINT32 *length)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetAllocatedString(&stream_desc->attributes.IMFAttributes_iface, key, value, length);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
+
+    return attributes_GetAllocatedString(&stream_desc->attributes, key, value, length);
 }
 
 static HRESULT WINAPI stream_descriptor_GetBlobSize(IMFStreamDescriptor *iface, REFGUID key, UINT32 *size)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetBlobSize(&stream_desc->attributes.IMFAttributes_iface, key, size);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+
+    return attributes_GetBlobSize(&stream_desc->attributes, key, size);
 }
 
 static HRESULT WINAPI stream_descriptor_GetBlob(IMFStreamDescriptor *iface, REFGUID key, UINT8 *buf,
         UINT32 bufsize, UINT32 *blobsize)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetBlob(&stream_desc->attributes.IMFAttributes_iface, key, buf, bufsize, blobsize);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+
+    return attributes_GetBlob(&stream_desc->attributes, key, buf, bufsize, blobsize);
 }
 
 static HRESULT WINAPI stream_descriptor_GetAllocatedBlob(IMFStreamDescriptor *iface, REFGUID key, UINT8 **buf,
         UINT32 *size)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetAllocatedBlob(&stream_desc->attributes.IMFAttributes_iface, key, buf, size);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_GetAllocatedBlob(&stream_desc->attributes, key, buf, size);
 }
 
-static HRESULT WINAPI stream_descriptor_GetUnknown(IMFStreamDescriptor *iface, REFGUID key, REFIID riid, void **ppv)
+static HRESULT WINAPI stream_descriptor_GetUnknown(IMFStreamDescriptor *iface, REFGUID key, REFIID riid, void **out)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetUnknown(&stream_desc->attributes.IMFAttributes_iface, key, riid, ppv);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), out);
+
+    return attributes_GetUnknown(&stream_desc->attributes, key, riid, out);
 }
 
 static HRESULT WINAPI stream_descriptor_SetItem(IMFStreamDescriptor *iface, REFGUID key, REFPROPVARIANT value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_SetItem(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetItem(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_DeleteItem(IMFStreamDescriptor *iface, REFGUID key)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_DeleteItem(&stream_desc->attributes.IMFAttributes_iface, key);
+
+    TRACE("%p, %s.\n", iface, debugstr_attr(key));
+
+    return attributes_DeleteItem(&stream_desc->attributes, key);
 }
 
 static HRESULT WINAPI stream_descriptor_DeleteAllItems(IMFStreamDescriptor *iface)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_DeleteAllItems(&stream_desc->attributes.IMFAttributes_iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_DeleteAllItems(&stream_desc->attributes);
 }
 
 static HRESULT WINAPI stream_descriptor_SetUINT32(IMFStreamDescriptor *iface, REFGUID key, UINT32 value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_SetUINT32(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetUINT32(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_SetUINT64(IMFStreamDescriptor *iface, REFGUID key, UINT64 value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_SetUINT64(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+
+    return attributes_SetUINT64(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_SetDouble(IMFStreamDescriptor *iface, REFGUID key, double value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_SetDouble(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetDouble(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_SetGUID(IMFStreamDescriptor *iface, REFGUID key, REFGUID value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_SetGUID(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+
+    return attributes_SetGUID(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_SetString(IMFStreamDescriptor *iface, REFGUID key, const WCHAR *value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_SetString(&stream_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
+
+    return attributes_SetString(&stream_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_SetBlob(IMFStreamDescriptor *iface, REFGUID key, const UINT8 *buf, UINT32 size)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_SetBlob(&stream_desc->attributes.IMFAttributes_iface, key, buf, size);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_SetBlob(&stream_desc->attributes, key, buf, size);
 }
 
 static HRESULT WINAPI stream_descriptor_SetUnknown(IMFStreamDescriptor *iface, REFGUID key, IUnknown *unknown)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_SetUnknown(&stream_desc->attributes.IMFAttributes_iface, key, unknown);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+
+    return attributes_SetUnknown(&stream_desc->attributes, key, unknown);
 }
 
 static HRESULT WINAPI stream_descriptor_LockStore(IMFStreamDescriptor *iface)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_LockStore(&stream_desc->attributes.IMFAttributes_iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_LockStore(&stream_desc->attributes);
 }
 
 static HRESULT WINAPI stream_descriptor_UnlockStore(IMFStreamDescriptor *iface)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_UnlockStore(&stream_desc->attributes.IMFAttributes_iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_UnlockStore(&stream_desc->attributes);
 }
 
-static HRESULT WINAPI stream_descriptor_GetCount(IMFStreamDescriptor *iface, UINT32 *items)
+static HRESULT WINAPI stream_descriptor_GetCount(IMFStreamDescriptor *iface, UINT32 *count)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetCount(&stream_desc->attributes.IMFAttributes_iface, items);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return attributes_GetCount(&stream_desc->attributes, count);
 }
 
-static HRESULT WINAPI stream_descriptor_GetItemByIndex(IMFStreamDescriptor *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+static HRESULT WINAPI stream_descriptor_GetItemByIndex(IMFStreamDescriptor *iface, UINT32 index, GUID *key,
+        PROPVARIANT *value)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_GetItemByIndex(&stream_desc->attributes.IMFAttributes_iface, index, key, value);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return attributes_GetItemByIndex(&stream_desc->attributes, index, key, value);
 }
 
 static HRESULT WINAPI stream_descriptor_CopyAllItems(IMFStreamDescriptor *iface, IMFAttributes *dest)
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
-    return IMFAttributes_CopyAllItems(&stream_desc->attributes.IMFAttributes_iface, dest);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return attributes_CopyAllItems(&stream_desc->attributes, dest);
 }
 
 static HRESULT WINAPI stream_descriptor_GetStreamIdentifier(IMFStreamDescriptor *iface, DWORD *identifier)
