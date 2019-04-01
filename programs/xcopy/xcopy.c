@@ -46,7 +46,6 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <wine/debug.h>
-#include <wine/unicode.h>
 #include "xcopy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xcopy);
