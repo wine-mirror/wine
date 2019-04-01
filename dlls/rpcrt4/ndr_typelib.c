@@ -106,9 +106,13 @@ static unsigned short write_oleaut_tfs(VARTYPE vt)
     return 0;
 }
 
-static unsigned char get_base_type(VARTYPE vt)
+static unsigned char get_basetype(ITypeInfo *typeinfo, TYPEDESC *desc)
 {
-    switch (vt)
+    ITypeInfo *refinfo;
+    unsigned char ret;
+    TYPEATTR *attr;
+
+    switch (desc->vt)
     {
     case VT_I1:     return FC_SMALL;
     case VT_BOOL:
@@ -126,6 +130,18 @@ static unsigned char get_base_type(VARTYPE vt)
     case VT_R4:     return FC_FLOAT;
     case VT_DATE:
     case VT_R8:     return FC_DOUBLE;
+    case VT_USERDEFINED:
+        ITypeInfo_GetRefTypeInfo(typeinfo, desc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+        if (attr->typekind == TKIND_ENUM)
+            ret = FC_ENUM32;
+        else if (attr->typekind == TKIND_ALIAS)
+            ret = get_basetype(refinfo, &attr->tdescAlias);
+        else
+            ret = 0;
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+        return ret;
     default:        return 0;
     }
 }
@@ -210,7 +226,7 @@ static unsigned char get_struct_fc(ITypeInfo *typeinfo, TYPEATTR *attr)
                 fc = FC_BOGUS_STRUCT;
             break;
         default:
-            if (!get_base_type(vt))
+            if (!get_basetype(typeinfo, &desc->elemdescVar.tdesc))
             {
                 FIXME("unhandled type %u\n", vt);
                 fc = FC_BOGUS_STRUCT;
@@ -226,7 +242,7 @@ static unsigned char get_struct_fc(ITypeInfo *typeinfo, TYPEATTR *attr)
 
 static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc)
 {
-    if (get_base_type(desc->vt))
+    if (get_basetype(typeinfo, desc))
         return FC_LGFARRAY;
     else if (desc->vt == VT_USERDEFINED)
     {
@@ -283,7 +299,7 @@ static size_t write_array_tfs(ITypeInfo *typeinfo, unsigned char *str,
     if (fc != FC_LGFARRAY)
         FIXME("complex arrays not implemented\n");
 
-    if (!(basetype = get_base_type(desc->tdescElem.vt)))
+    if (!(basetype = get_basetype(typeinfo, &desc->tdescElem)))
         ref = write_type_tfs(typeinfo, str, len, &desc->tdescElem, FALSE, FALSE);
 
     /* In theory arrays should be nested, but there's no reason not to marshal
@@ -401,7 +417,7 @@ static size_t write_pointer_tfs(ITypeInfo *typeinfo, unsigned char *str,
         ITypeInfo_ReleaseTypeAttr(refinfo, attr);
         ITypeInfo_Release(refinfo);
     }
-    else if ((basetype = get_base_type(desc->vt)))
+    else if ((basetype = get_basetype(typeinfo, desc)))
     {
         assert(!toplevel); /* toplevel base-type pointers should use IsSimpleRef */
         WRITE_CHAR(str, *len, FC_UP);
@@ -466,7 +482,7 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
         break;
     default:
         /* base types are always embedded directly */
-        assert(!get_base_type(desc->vt));
+        assert(!get_basetype(typeinfo, desc));
         FIXME("unhandled type %u\n", desc->vt);
         off = *len;
         WRITE_SHORT(str, *len, 0);
@@ -584,7 +600,7 @@ static HRESULT get_param_pointer_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int 
         *tfs_tdesc = tdesc;
         if (!is_in && is_out)
             *server_size = type_memsize(typeinfo, tdesc);
-        if ((*basetype = get_base_type(tdesc->vt)))
+        if ((*basetype = get_basetype(typeinfo, tdesc)))
             *flags |= IsBasetype;
         break;
     }
@@ -662,7 +678,7 @@ static HRESULT get_param_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int is_in,
         ITypeInfo_Release(refinfo);
         break;
     default:
-        if ((*basetype = get_base_type(tdesc->vt)))
+        if ((*basetype = get_basetype(typeinfo, tdesc)))
             *flags |= IsBasetype;
         else
         {
@@ -749,7 +765,7 @@ static void write_proc_func_header(ITypeInfo *typeinfo, FUNCDESC *desc,
     WRITE_SHORT(proc, *proclen, 0);  /* NotifyIndex */
     for (param_idx = 0; param_idx < desc->cParams && param_idx < 3; param_idx++)
     {
-        basetype = get_base_type(desc->lprgelemdescParam[param_idx].tdesc.vt);
+        basetype = get_basetype(typeinfo, &desc->lprgelemdescParam[param_idx].tdesc);
         if (basetype == FC_FLOAT)
             float_mask |= (1 << ((param_idx + 1) * 2));
         else if (basetype == FC_DOUBLE)
