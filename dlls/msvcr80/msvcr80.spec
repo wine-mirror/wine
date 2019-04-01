@@ -1186,7 +1186,7 @@
 @ cdecl _wcsnicoll(wstr wstr long) MSVCRT__wcsnicoll
 @ cdecl _wcsnicoll_l(wstr wstr long ptr) MSVCRT__wcsnicoll_l
 @ cdecl _wcsnset(wstr long long) MSVCRT__wcsnset
-@ stub _wcsnset_s
+@ cdecl _wcsnset_s(wstr long long long) MSVCRT__wcsnset_s
 @ cdecl _wcsrev(wstr) MSVCRT__wcsrev
 @ cdecl _wcsset(wstr long) MSVCRT__wcsset
 @ cdecl _wcsset_s(wstr long long) MSVCRT__wcsset_s
