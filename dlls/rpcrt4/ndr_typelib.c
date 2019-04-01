@@ -231,33 +231,91 @@ static BOOL type_pointer_is_iface(ITypeInfo *typeinfo, TYPEDESC *tdesc)
 }
 
 static unsigned char get_array_fc(ITypeInfo *typeinfo, TYPEDESC *desc);
+static unsigned char get_struct_fc(ITypeInfo *typeinfo, TYPEATTR *attr);
+
+static unsigned char get_struct_member_fc(ITypeInfo *typeinfo, TYPEDESC *tdesc)
+{
+    unsigned char fc;
+    ITypeInfo *refinfo;
+    TYPEATTR *attr;
+
+    switch (tdesc->vt)
+    {
+    case VT_BSTR:
+    case VT_SAFEARRAY:
+        return (sizeof(void *) == 4) ? FC_PSTRUCT : FC_BOGUS_STRUCT;
+    case VT_CY:
+        return FC_STRUCT;
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+        return FC_BOGUS_STRUCT;
+    case VT_CARRAY:
+        if (get_array_fc(typeinfo, &tdesc->lpadesc->tdescElem) == FC_BOGUS_ARRAY)
+            return FC_BOGUS_STRUCT;
+        return FC_STRUCT;
+    case VT_PTR:
+        if (type_pointer_is_iface(typeinfo, tdesc))
+            fc = FC_BOGUS_STRUCT;
+        else
+            fc = (sizeof(void *) == 4) ? FC_PSTRUCT : FC_BOGUS_STRUCT;
+        break;
+    case VT_USERDEFINED:
+        ITypeInfo_GetRefTypeInfo(typeinfo, tdesc->hreftype, &refinfo);
+        ITypeInfo_GetTypeAttr(refinfo, &attr);
+
+        switch (attr->typekind)
+        {
+        case TKIND_ENUM:
+            fc = FC_STRUCT;
+            break;
+        case TKIND_RECORD:
+            fc = get_struct_fc(refinfo, attr);
+            break;
+        case TKIND_INTERFACE:
+        case TKIND_DISPATCH:
+        case TKIND_COCLASS:
+            fc = FC_BOGUS_STRUCT;
+            break;
+        case TKIND_ALIAS:
+            fc = get_struct_member_fc(refinfo, &attr->tdescAlias);
+            break;
+        default:
+            FIXME("Unhandled kind %#x.\n", attr->typekind);
+            fc = FC_BOGUS_STRUCT;
+            break;
+        }
+
+        ITypeInfo_ReleaseTypeAttr(refinfo, attr);
+        ITypeInfo_Release(refinfo);
+        break;
+    default:
+        if (get_basetype(typeinfo, tdesc))
+            return FC_STRUCT;
+        else
+        {
+            FIXME("Unhandled type %u.\n", tdesc->vt);
+            return FC_BOGUS_STRUCT;
+        }
+    }
+
+    return fc;
+}
 
 static unsigned char get_struct_fc(ITypeInfo *typeinfo, TYPEATTR *attr)
 {
-    unsigned char fc = FC_STRUCT;
+    unsigned char fc = FC_STRUCT, member_fc;
     VARDESC *desc;
-    VARTYPE vt;
     WORD i;
 
     for (i = 0; i < attr->cVars; i++)
     {
         ITypeInfo_GetVarDesc(typeinfo, i, &desc);
-        vt = desc->elemdescVar.tdesc.vt;
 
-        switch (vt)
-        {
-        case VT_CARRAY:
-            if (get_array_fc(typeinfo, &desc->elemdescVar.tdesc.lpadesc->tdescElem) == FC_BOGUS_ARRAY)
-                fc = FC_BOGUS_STRUCT;
-            break;
-        default:
-            if (!get_basetype(typeinfo, &desc->elemdescVar.tdesc))
-            {
-                FIXME("unhandled type %u\n", vt);
-                fc = FC_BOGUS_STRUCT;
-            }
-            break;
-        }
+        member_fc = get_struct_member_fc(typeinfo, &desc->elemdescVar.tdesc);
+        if (member_fc == FC_BOGUS_STRUCT)
+            fc = FC_BOGUS_STRUCT;
+        else if (member_fc == FC_PSTRUCT && fc != FC_BOGUS_STRUCT)
+            fc = FC_PSTRUCT;
 
         ITypeInfo_ReleaseVarDesc(typeinfo, desc);
     }
