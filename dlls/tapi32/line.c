@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wingdi.h"
 #include "winreg.h"
 #include "winnls.h"
@@ -845,7 +846,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
             == ERROR_SUCCESS){
         DWORD size_val;
         i++;
-        if( strncasecmp(loc_key_name, "location", 8)  ||
+        if( _strnicmp(loc_key_name, "location", 8)  ||
                 (RegOpenKeyA(hkLocations, loc_key_name, &hsubkey)
                  != ERROR_SUCCESS))
             continue;
@@ -907,7 +908,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
                     ERROR_SUCCESS){
                 DWORD size_val;
                 i++;
-                if( strncasecmp(card_key_name, "card", 4)  || ERROR_SUCCESS !=
+                if( _strnicmp(card_key_name, "card", 4)  || ERROR_SUCCESS !=
                         (RegOpenKeyA(hkCards, card_key_name, &hsubkey) ))
                     continue;
                 numcards++;
@@ -984,7 +985,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
             == ERROR_SUCCESS){
         DWORD size_val;
         i++;
-        if( strncasecmp(loc_key_name, "location", 8)  ||
+        if( _strnicmp(loc_key_name, "location", 8)  ||
                 (RegOpenKeyA(hkLocations, loc_key_name, &hsubkey)
                  != ERROR_SUCCESS))
             continue;
@@ -1077,7 +1078,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
                 ERROR_SUCCESS){
             DWORD size_val;
             i++;
-            if( strncasecmp(card_key_name, "card", 4)  ||
+            if( _strnicmp(card_key_name, "card", 4)  ||
                     (RegOpenKeyA(hkCards, card_key_name, &hsubkey) != ERROR_SUCCESS))
                 continue;
             size_val=sizeof(DWORD);
