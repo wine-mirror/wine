@@ -3250,6 +3250,7 @@ static void test__wcsset_s(void)
     str[1] = 0;
     str[2] = 'b';
     r = p__wcsset_s(str, 3, 'c');
+    ok(r == 0, "r = %d\n", r);
     ok(str[0] == 'c', "str[0] = %d\n", str[0]);
     ok(str[1] == 0, "str[1] = %d\n", str[1]);
     ok(str[2] == 'b', "str[2] = %d\n", str[2]);
