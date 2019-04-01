@@ -65,6 +65,9 @@ interface ID3DX10ThreadPump : IUnknown
     HRESULT GetQueueStatus([in] UINT *queue, [in] UINT *processqueue, [in] UINT *devicequeue);
 }
 
+cpp_quote("#ifdef __cplusplus")
+cpp_quote("extern \"C\" {")
+cpp_quote("#endif")
 cpp_quote("HRESULT WINAPI D3DX10UnsetAllDeviceObjects(ID3D10Device *device);")
 cpp_quote("HRESULT WINAPI D3DX10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,")
 cpp_quote("        HMODULE swrast, unsigned int flags, ID3D10Device **device);")
@@ -72,3 +75,6 @@ cpp_quote("HRESULT WINAPI D3DX10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, 
 cpp_quote("        HMODULE swrast, unsigned int flags, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain,")
 cpp_quote("        ID3D10Device **device);")
 cpp_quote("HRESULT WINAPI D3DX10GetFeatureLevel1(ID3D10Device *device, ID3D10Device1 **device1);")
+cpp_quote("#ifdef __cplusplus")
+cpp_quote("}")
+cpp_quote("#endif")
