@@ -72,6 +72,11 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources( mfinstance );
 }
 
+struct media_stream
+{
+    IMFMediaType *current;
+};
+
 typedef struct source_reader
 {
     IMFSourceReader IMFSourceReader_iface;
@@ -83,6 +88,9 @@ typedef struct source_reader
     DWORD first_video_stream_index;
     IMFSourceReaderCallback *async_callback;
     BOOL shutdown_on_release;
+    struct media_stream *streams;
+    DWORD stream_count;
+    CRITICAL_SECTION cs;
 } srcreader;
 
 struct sink_writer
@@ -214,6 +222,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     ULONG refcount = InterlockedDecrement(&reader->refcount);
+    unsigned int i;
 
     TRACE("%p, refcount %d.\n", iface, refcount);
 
@@ -226,6 +235,14 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
         if (reader->descriptor)
             IMFPresentationDescriptor_Release(reader->descriptor);
         IMFMediaSource_Release(reader->source);
+
+        for (i = 0; i < reader->stream_count; ++i)
+        {
+            if (reader->streams[i].current)
+                IMFMediaType_Release(reader->streams[i].current);
+        }
+        heap_free(reader->streams);
+        DeleteCriticalSection(&reader->cs);
         heap_free(reader);
     }
 
@@ -344,17 +361,70 @@ static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWOR
 
 static HRESULT WINAPI src_reader_GetCurrentMediaType(IMFSourceReader *iface, DWORD index, IMFMediaType **type)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, 0x%08x, %p\n", This, index, type);
-    return E_NOTIMPL;
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    HRESULT hr;
+
+    TRACE("%p, %#x, %p.\n", iface, index, type);
+
+    switch (index)
+    {
+        case MF_SOURCE_READER_FIRST_VIDEO_STREAM:
+            index = reader->first_video_stream_index;
+            break;
+        case MF_SOURCE_READER_FIRST_AUDIO_STREAM:
+            index = reader->first_audio_stream_index;
+            break;
+        default:
+            ;
+    }
+
+    if (index >= reader->stream_count)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    if (FAILED(hr = MFCreateMediaType(type)))
+        return hr;
+
+    EnterCriticalSection(&reader->cs);
+
+    hr = IMFMediaType_CopyAllItems(reader->streams[index].current, (IMFAttributes *)*type);
+
+    LeaveCriticalSection(&reader->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWORD index, DWORD *reserved,
         IMFMediaType *type)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, 0x%08x, %p, %p\n", This, index, reserved, type);
-    return E_NOTIMPL;
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    HRESULT hr;
+
+    TRACE("%p, %#x, %p, %p.\n", iface, index, reserved, type);
+
+    switch (index)
+    {
+        case MF_SOURCE_READER_FIRST_VIDEO_STREAM:
+            index = reader->first_video_stream_index;
+            break;
+        case MF_SOURCE_READER_FIRST_AUDIO_STREAM:
+            index = reader->first_audio_stream_index;
+            break;
+        default:
+            ;
+    }
+
+    if (index >= reader->stream_count)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    /* FIXME: validate passed type and current presentation state. */
+
+    EnterCriticalSection(&reader->cs);
+
+    hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *)reader->streams[index].current);
+
+    LeaveCriticalSection(&reader->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFGUID format, REFPROPVARIANT position)
@@ -533,7 +603,8 @@ static DWORD reader_get_first_stream_index(IMFPresentationDescriptor *descriptor
 static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttributes *attributes,
         BOOL shutdown_on_release, REFIID riid, void **out)
 {
-    srcreader *object;
+    struct source_reader *object;
+    unsigned int i;
     HRESULT hr;
 
     object = heap_alloc_zero(sizeof(*object));
@@ -545,8 +616,51 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     object->refcount = 1;
     object->source = source;
     IMFMediaSource_AddRef(object->source);
+    InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(object->source, &object->descriptor)))
+        goto failed;
+
+    if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorCount(object->descriptor, &object->stream_count)))
+        goto failed;
+
+    if (!(object->streams = heap_alloc_zero(object->stream_count * sizeof(*object->streams))))
+    {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
+
+    /* Set initial current media types. */
+    for (i = 0; i < object->stream_count; ++i)
+    {
+        IMFMediaTypeHandler *handler;
+        IMFStreamDescriptor *sd;
+        IMFMediaType *src_type;
+        BOOL selected;
+
+        if (FAILED(hr = MFCreateMediaType(&object->streams[i].current)))
+            break;
+
+        if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(object->descriptor, i, &selected, &sd)))
+            break;
+
+        hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
+        IMFStreamDescriptor_Release(sd);
+        if (FAILED(hr))
+            break;
+
+        hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, &src_type);
+        IMFMediaTypeHandler_Release(handler);
+        if (FAILED(hr))
+            break;
+
+        hr = IMFMediaType_CopyAllItems(src_type, (IMFAttributes *)object->streams[i].current);
+        IMFMediaType_Release(src_type);
+        if (FAILED(hr))
+            break;
+    }
+
+    if (FAILED(hr))
         goto failed;
 
     /* At least one major type has to be set. */
