@@ -687,7 +687,7 @@ const char *debugstr_attr(const GUID *guid)
     return ret ? wine_dbg_sprintf("%s", ret->name) : wine_dbgstr_guid(guid);
 }
 
-static const char *debugstr_mf_guid(const GUID *guid)
+const char *debugstr_mf_guid(const GUID *guid)
 {
     static const struct guid_def guid_defs[] =
     {

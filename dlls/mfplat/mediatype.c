@@ -1759,7 +1759,7 @@ HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height
     };
     struct uncompressed_video_format *format;
 
-    TRACE("%s, %u, %u, %p.\n", debugstr_guid(subtype), width, height, size);
+    TRACE("%s, %u, %u, %p.\n", debugstr_mf_guid(subtype), width, height, size);
 
     format = bsearch(subtype, video_formats, ARRAY_SIZE(video_formats), sizeof(*video_formats),
             uncompressed_video_format_compare);

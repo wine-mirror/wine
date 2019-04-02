@@ -43,6 +43,7 @@ struct attributes
 extern HRESULT init_attributes_object(struct attributes *object, UINT32 size) DECLSPEC_HIDDEN;
 extern void clear_attributes_object(struct attributes *object) DECLSPEC_HIDDEN;
 extern const char *debugstr_attr(const GUID *guid) DECLSPEC_HIDDEN;
+extern const char *debugstr_mf_guid(const GUID *guid) DECLSPEC_HIDDEN;
 
 extern HRESULT attributes_GetItem(struct attributes *object, REFGUID key, PROPVARIANT *value) DECLSPEC_HIDDEN;
 extern HRESULT attributes_GetItemType(struct attributes *object, REFGUID key, MF_ATTRIBUTE_TYPE *type) DECLSPEC_HIDDEN;
