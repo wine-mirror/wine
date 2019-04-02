@@ -834,7 +834,6 @@ static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
     {
         TRACE("Destroying\n");
         BaseControlWindow_Destroy(&This->baseControlWindow);
-        FreeLibrary(This->hD3d9);
 
         if (This->allocator)
             IVMRSurfaceAllocatorEx9_Release(This->allocator);
@@ -848,6 +847,7 @@ static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
             This->allocator_d3d9_dev = NULL;
         }
 
+        FreeLibrary(This->hD3d9);
         CoTaskMemFree(This);
     }
     return refCount;
