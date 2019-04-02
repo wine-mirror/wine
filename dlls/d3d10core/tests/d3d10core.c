@@ -738,9 +738,14 @@ static WORD get_readback_u16(struct resource_readback *rb, unsigned int x, unsig
     return *(WORD *)get_readback_data(rb, x, y, sizeof(WORD));
 }
 
-static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y)
+static DWORD get_readback_u32(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
     return *(DWORD *)get_readback_data(rb, x, y, sizeof(DWORD));
+}
+
+static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y)
+{
+    return get_readback_u32(rb, x, y);
 }
 
 static float get_readback_float(struct resource_readback *rb, unsigned int x, unsigned int y)
@@ -851,6 +856,38 @@ static void check_readback_data_u16_(unsigned int line, struct resource_readback
 done:
     ok_(__FILE__, line)(all_match,
             "Got 0x%04x, expected 0x%04x at (%u, %u), sub-resource %u.\n",
+            value, expected_value, x, y, rb->sub_resource_idx);
+}
+
+#define check_readback_data_u24(a, b, c, d, e) check_readback_data_u24_(__LINE__, a, b, c, d, e)
+static void check_readback_data_u24_(unsigned int line, struct resource_readback *rb,
+        const RECT *rect, unsigned int shift, DWORD expected_value, BYTE max_diff)
+{
+    unsigned int x = 0, y = 0;
+    BOOL all_match = FALSE;
+    RECT default_rect;
+    DWORD value = 0;
+
+    if (!rect)
+    {
+        SetRect(&default_rect, 0, 0, rb->width, rb->height);
+        rect = &default_rect;
+    }
+
+    for (y = rect->top; y < rect->bottom; ++y)
+    {
+        for (x = rect->left; x < rect->right; ++x)
+        {
+            value = get_readback_u32(rb, x, y) >> shift;
+            if (abs((int)value - (int)expected_value) > max_diff)
+                goto done;
+        }
+    }
+    all_match = TRUE;
+
+done:
+    ok_(__FILE__, line)(all_match,
+            "Got 0x%06x, expected 0x%06x at (%u, %u), sub-resource %u.\n",
             value, expected_value, x, y, rb->sub_resource_idx);
 }
 
@@ -15524,10 +15561,10 @@ static void test_depth_bias(void)
     struct resource_readback rb;
     ID3D10DepthStencilView *dsv;
     unsigned int expected_value;
-    unsigned int x, y, i, j, k;
     ID3D10RasterizerState *rs;
     ID3D10Texture2D *texture;
     unsigned int format_idx;
+    unsigned int y, i, j, k;
     unsigned int shift = 0;
     ID3D10Device *device;
     float *depth_values;
@@ -15667,19 +15704,7 @@ static void test_depth_bias(void)
                             depth = min(max(0.0f, quads[i].z + bias), 1.0f);
 
                             get_texture_readback(texture, 0, &rb);
-                            for (y = 0; y < texture_desc.Height; ++y)
-                            {
-                                expected_value = depth * 16777215.0f + 0.5f;
-                                for (x = 0; x < texture_desc.Width; ++x)
-                                {
-                                    u32 = get_readback_data(&rb, x, y, sizeof(*u32));
-                                    u32_value = *u32 >> shift;
-                                    ok(abs(u32_value - expected_value) <= 1,
-                                            "Got value %#x (%.8e), expected %#x (%.8e).\n",
-                                            u32_value, u32_value / 16777215.0f,
-                                            expected_value, expected_value / 16777215.0f);
-                                }
-                            }
+                            check_readback_data_u24(&rb, NULL, shift, depth * 16777215.0f + 0.5f, 1);
                             release_resource_readback(&rb);
                             break;
                         case DXGI_FORMAT_D16_UNORM:
