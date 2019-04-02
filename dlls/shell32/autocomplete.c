@@ -63,8 +63,10 @@ typedef struct
     WCHAR **enum_strs;
     HWND hwndEdit;
     HWND hwndListBox;
+    HWND hwndListBoxOwner;
     WNDPROC wpOrigEditProc;
     WNDPROC wpOrigLBoxProc;
+    WNDPROC wpOrigLBoxOwnerProc;
     WCHAR *txtbackup;
     WCHAR *quickComplete;
     IEnumString *enumstr;
@@ -283,7 +285,7 @@ static void free_enum_strs(IAutoCompleteImpl *ac)
 
 static void hide_listbox(IAutoCompleteImpl *ac, HWND hwnd, BOOL reset)
 {
-    ShowWindow(hwnd, SW_HIDE);
+    ShowWindow(ac->hwndListBoxOwner, SW_HIDE);
     SendMessageW(hwnd, LB_RESETCONTENT, 0, 0);
     if (reset) free_enum_strs(ac);
 }
@@ -301,7 +303,7 @@ static void show_listbox(IAutoCompleteImpl *ac)
     height = SendMessageW(ac->hwndListBox, LB_GETITEMHEIGHT, 0, 0) * min(cnt + 1, 7);
     width = r.right - r.left;
 
-    SetWindowPos(ac->hwndListBox, HWND_TOP, r.left, r.bottom + 1, width, height,
+    SetWindowPos(ac->hwndListBoxOwner, HWND_TOP, r.left, r.bottom + 1, width, height,
                  SWP_SHOWWINDOW | SWP_NOACTIVATE);
 }
 
@@ -338,7 +340,7 @@ static BOOL select_item_with_return_key(IAutoCompleteImpl *ac, HWND hwnd)
     if (!(ac->options & ACO_AUTOSUGGEST))
         return FALSE;
 
-    if (IsWindowVisible(hwndListBox))
+    if (IsWindowVisible(ac->hwndListBoxOwner))
     {
         INT sel = SendMessageW(hwndListBox, LB_GETCURSEL, 0, 0);
         if (sel >= 0)
@@ -612,8 +614,8 @@ static void destroy_autocomplete_object(IAutoCompleteImpl *ac)
 {
     ac->hwndEdit = NULL;
     free_enum_strs(ac);
-    if (ac->hwndListBox)
-        DestroyWindow(ac->hwndListBox);
+    if (ac->hwndListBoxOwner)
+        DestroyWindow(ac->hwndListBoxOwner);
     IAutoComplete2_Release(&ac->IAutoComplete2_iface);
 }
 
@@ -627,7 +629,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
     {
         case VK_ESCAPE:
             /* When pressing ESC, Windows hides the auto-suggest listbox, if visible */
-            if ((ac->options & ACO_AUTOSUGGEST) && IsWindowVisible(ac->hwndListBox))
+            if ((ac->options & ACO_AUTOSUGGEST) && IsWindowVisible(ac->hwndListBoxOwner))
             {
                 hide_listbox(ac, ac->hwndListBox, FALSE);
                 ac->no_fwd_char = 0x1B;  /* ESC char */
@@ -666,7 +668,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
             break;
         case VK_TAB:
             if ((ac->options & (ACO_AUTOSUGGEST | ACO_USETAB)) == (ACO_AUTOSUGGEST | ACO_USETAB)
-                && IsWindowVisible(ac->hwndListBox) && !(GetKeyState(VK_CONTROL) & 0x8000))
+                && IsWindowVisible(ac->hwndListBoxOwner) && !(GetKeyState(VK_CONTROL) & 0x8000))
             {
                 ac->no_fwd_char = '\t';
                 return change_selection(ac, hwnd, wParam);
@@ -684,7 +686,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
             if (!(ac->options & ACO_AUTOSUGGEST))
                 break;
 
-            if (!IsWindowVisible(ac->hwndListBox))
+            if (!IsWindowVisible(ac->hwndListBoxOwner))
             {
                 if (ac->options & ACO_UPDOWNKEYDROPSLIST)
                 {
@@ -725,7 +727,9 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         case WM_KILLFOCUS:
             if (This->options & ACO_AUTOSUGGEST)
             {
-                if ((HWND)wParam == This->hwndListBox) break;
+                if (This->hwndListBoxOwner == (HWND)wParam ||
+                    This->hwndListBoxOwner == GetAncestor((HWND)wParam, GA_PARENT))
+                    break;
                 hide_listbox(This, This->hwndListBox, FALSE);
             }
 
@@ -737,7 +741,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             WINDOWPOS *pos = (WINDOWPOS*)lParam;
 
             if ((pos->flags & (SWP_NOMOVE | SWP_NOSIZE)) != (SWP_NOMOVE | SWP_NOSIZE) &&
-                This->hwndListBox && IsWindowVisible(This->hwndListBox))
+                This->hwndListBoxOwner && IsWindowVisible(This->hwndListBoxOwner))
                 show_listbox(This);
             break;
         }
@@ -772,7 +776,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                                           ? autoappend_flag_yes : autoappend_flag_no);
             return ret;
         case WM_MOUSEWHEEL:
-            if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBox))
+            if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBoxOwner))
                 return SendMessageW(This->hwndListBox, WM_MOUSEWHEEL, wParam, lParam);
             break;
         case WM_SETFONT:
@@ -821,12 +825,37 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     return CallWindowProcW(This->wpOrigLBoxProc, hwnd, uMsg, wParam, lParam);
 }
 
+static LRESULT APIENTRY ACLBoxOwnerSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    IAutoCompleteImpl *This = (IAutoCompleteImpl*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+
+    switch (uMsg)
+    {
+        case WM_MOUSEACTIVATE:
+            return MA_NOACTIVATE;
+        case WM_SIZE:
+            SetWindowPos(This->hwndListBox, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam),
+                         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER | SWP_DEFERERASE);
+            break;
+    }
+    return CallWindowProcW(This->wpOrigLBoxOwnerProc, hwnd, uMsg, wParam, lParam);
+}
+
 static void create_listbox(IAutoCompleteImpl *This)
 {
+    This->hwndListBoxOwner = CreateWindowExW(WS_EX_NOACTIVATE, WC_STATICW, NULL,
+                                             WS_BORDER | WS_POPUP | WS_CLIPCHILDREN,
+                                             0, 0, 0, 0, NULL, NULL, shell32_hInstance, NULL);
+    if (!This->hwndListBoxOwner)
+    {
+        This->options &= ~ACO_AUTOSUGGEST;
+        return;
+    }
+
     /* FIXME : The listbox should be resizable with the mouse. WS_THICKFRAME looks ugly */
     This->hwndListBox = CreateWindowExW(WS_EX_NOACTIVATE, WC_LISTBOXW, NULL,
-                                    WS_BORDER | WS_POPUP | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT,
-                                    0, 0, 0, 0, NULL, NULL, shell32_hInstance, NULL);
+                                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT,
+                                        0, 0, 0, 0, This->hwndListBoxOwner, NULL, shell32_hInstance, NULL);
 
     if (This->hwndListBox) {
         HFONT edit_font;
@@ -834,13 +863,19 @@ static void create_listbox(IAutoCompleteImpl *This)
         This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
         SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
 
+        This->wpOrigLBoxOwnerProc = (WNDPROC)SetWindowLongPtrW(This->hwndListBoxOwner, GWLP_WNDPROC, (LONG_PTR)ACLBoxOwnerSubclassProc);
+        SetWindowLongPtrW(This->hwndListBoxOwner, GWLP_USERDATA, (LONG_PTR)This);
+
         /* Use the same font as the edit control, as it gets destroyed before it anyway */
         edit_font = (HFONT)SendMessageW(This->hwndEdit, WM_GETFONT, 0, 0);
         if (edit_font)
             SendMessageW(This->hwndListBox, WM_SETFONT, (WPARAM)edit_font, FALSE);
+        return;
     }
-    else
-        This->options &= ~ACO_AUTOSUGGEST;
+
+    DestroyWindow(This->hwndListBoxOwner);
+    This->hwndListBoxOwner = NULL;
+    This->options &= ~ACO_AUTOSUGGEST;
 }
 
 /**************************************************************************
@@ -1148,7 +1183,7 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnGetDropDownStatus(
 
     TRACE("(%p) -> (%p, %p)\n", This, pdwFlags, ppwszString);
 
-    dropped = IsWindowVisible(This->hwndListBox);
+    dropped = IsWindowVisible(This->hwndListBoxOwner);
 
     if (pdwFlags)
         *pdwFlags = (dropped ? ACDD_VISIBLE : 0);
@@ -1189,7 +1224,7 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnResetEnumerator(
     if (This->hwndEdit)
     {
         free_enum_strs(This);
-        if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBox))
+        if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBoxOwner))
             autocomplete_text(This, This->hwndEdit, autoappend_flag_displayempty);
     }
     return S_OK;
