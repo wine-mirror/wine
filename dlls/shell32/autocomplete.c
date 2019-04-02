@@ -399,16 +399,11 @@ static BOOL select_item_with_return_key(IAutoCompleteImpl *ac, HWND hwnd)
         INT sel = SendMessageW(hwndListBox, LB_GETCURSEL, 0, 0);
         if (sel >= 0)
         {
-            UINT len = SendMessageW(hwndListBox, LB_GETTEXTLEN, sel, 0);
-            if ((text = heap_alloc((len + 1) * sizeof(WCHAR))))
-            {
-                len = SendMessageW(hwndListBox, LB_GETTEXT, sel, (LPARAM)text);
-                set_text_and_selection(ac, hwnd, text, 0, len);
-                hide_listbox(ac, hwndListBox, TRUE);
-                ac->no_fwd_char = '\r';  /* RETURN char */
-                heap_free(text);
-                return TRUE;
-            }
+            text = ac->listbox_strs[sel];
+            set_text_and_selection(ac, hwnd, text, 0, strlenW(text));
+            hide_listbox(ac, hwndListBox, TRUE);
+            ac->no_fwd_char = '\r';  /* RETURN char */
+            return TRUE;
         }
     }
     hide_listbox(ac, hwndListBox, TRUE);
@@ -417,6 +412,9 @@ static BOOL select_item_with_return_key(IAutoCompleteImpl *ac, HWND hwnd)
 
 static LRESULT change_selection(IAutoCompleteImpl *ac, HWND hwnd, UINT key)
 {
+    WCHAR *msg;
+    UINT len;
+
     INT count = SendMessageW(ac->hwndListBox, LB_GETCOUNT, 0, 0);
     INT sel = SendMessageW(ac->hwndListBox, LB_GETCURSEL, 0, 0);
     if (key == VK_PRIOR || key == VK_NEXT)
@@ -457,21 +455,11 @@ static LRESULT change_selection(IAutoCompleteImpl *ac, HWND hwnd, UINT key)
         sel = ((sel + 1) >= count) ? -1 : sel + 1;
 
     SendMessageW(ac->hwndListBox, LB_SETCURSEL, sel, 0);
-    if (sel >= 0)
-    {
-        WCHAR *msg;
-        UINT len = SendMessageW(ac->hwndListBox, LB_GETTEXTLEN, sel, 0);
-        if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
-            return 0;
-        len = SendMessageW(ac->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
-        set_text_and_selection(ac, hwnd, msg, len, len);
-        heap_free(msg);
-    }
-    else
-    {
-        UINT len = strlenW(ac->txtbackup);
-        set_text_and_selection(ac, hwnd, ac->txtbackup, len, len);
-    }
+
+    msg = (sel >= 0) ? ac->listbox_strs[sel] : ac->txtbackup;
+    len = strlenW(msg);
+    set_text_and_selection(ac, hwnd, msg, len, len);
+
     return 0;
 }
 
@@ -597,9 +585,7 @@ static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
     SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
 
     ac->listbox_strs = str + start;
-    SendMessageW(ac->hwndListBox, LB_INITSTORAGE, end - start, 0);
-    for (; start < end; start++)
-        SendMessageW(ac->hwndListBox, LB_INSERTSTRING, -1, (LPARAM)str[start]);
+    SendMessageW(ac->hwndListBox, LB_SETCOUNT, end - start, 0);
 
     show_listbox(ac);
     SendMessageW(ac->hwndListBox, WM_SETREDRAW, TRUE, 0);
@@ -860,7 +846,7 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
     WCHAR *msg;
-    int sel, len;
+    INT sel;
 
     switch (uMsg) {
         case WM_MOUSEACTIVATE:
@@ -873,13 +859,9 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             sel = SendMessageW(hwnd, LB_GETCURSEL, 0, 0);
             if (sel < 0)
                 return 0;
-            len = SendMessageW(hwnd, LB_GETTEXTLEN, sel, 0);
-            if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
-                return 0;
-            len = SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
-            set_text_and_selection(This, This->hwndEdit, msg, 0, len);
+            msg = This->listbox_strs[sel];
+            set_text_and_selection(This, This->hwndEdit, msg, 0, strlenW(msg));
             hide_listbox(This, hwnd, TRUE);
-            heap_free(msg);
             return 0;
     }
     return CallWindowProcW(This->wpOrigLBoxProc, hwnd, uMsg, wParam, lParam);
@@ -918,7 +900,7 @@ static void create_listbox(IAutoCompleteImpl *This)
 
     /* FIXME : The listbox should be resizable with the mouse. WS_THICKFRAME looks ugly */
     This->hwndListBox = CreateWindowExW(WS_EX_NOACTIVATE, WC_LISTBOXW, NULL,
-                                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_HASSTRINGS | LBS_OWNERDRAWFIXED | LBS_NOINTEGRALHEIGHT,
+                                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NODATA | LBS_OWNERDRAWFIXED | LBS_NOINTEGRALHEIGHT,
                                         0, 0, 0, 0, This->hwndListBoxOwner, NULL, shell32_hInstance, NULL);
 
     if (This->hwndListBox) {
@@ -1259,11 +1241,12 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnGetDropDownStatus(
             sel = SendMessageW(This->hwndListBox, LB_GETCURSEL, 0, 0);
             if (sel >= 0)
             {
-                DWORD len;
+                WCHAR *str = This->listbox_strs[sel];
+                size_t size = (strlenW(str) + 1) * sizeof(*str);
 
-                len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
-                *ppwszString = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
-                SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)*ppwszString);
+                if (!(*ppwszString = CoTaskMemAlloc(size)))
+                    return E_OUTOFMEMORY;
+                memcpy(*ppwszString, str, size);
             }
             else
                 *ppwszString = NULL;
