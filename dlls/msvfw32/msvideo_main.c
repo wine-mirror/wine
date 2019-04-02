@@ -35,6 +35,7 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "wingdi.h"
+#include "winternl.h"
 #include "winuser.h"
 #include "commdlg.h"
 #include "vfw.h"
@@ -220,7 +221,7 @@ static int compare_fourcc(DWORD fcc1, DWORD fcc2)
   char fcc_str2[4];
   fourcc_to_string(fcc_str1, fcc1);
   fourcc_to_string(fcc_str2, fcc2);
-  return strncasecmp(fcc_str1, fcc_str2, 4);
+  return _strnicmp(fcc_str1, fcc_str2, 4);
 }
 
 static DWORD get_size_image(LONG width, LONG height, WORD depth)
