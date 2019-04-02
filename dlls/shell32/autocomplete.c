@@ -301,7 +301,8 @@ static void show_listbox(IAutoCompleteImpl *ac)
     height = SendMessageW(ac->hwndListBox, LB_GETITEMHEIGHT, 0, 0) * min(cnt + 1, 7);
     width = r.right - r.left;
 
-    SetWindowPos(ac->hwndListBox, HWND_TOP, r.left, r.bottom + 1, width, height, SWP_SHOWWINDOW);
+    SetWindowPos(ac->hwndListBox, HWND_TOP, r.left, r.bottom + 1, width, height,
+                 SWP_SHOWWINDOW | SWP_NOACTIVATE);
 }
 
 static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *str, size_t str_len)
@@ -798,6 +799,8 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     int sel, len;
 
     switch (uMsg) {
+        case WM_MOUSEACTIVATE:
+            return MA_NOACTIVATE;
         case WM_MOUSEMOVE:
             sel = SendMessageW(hwnd, LB_ITEMFROMPOINT, 0, lParam);
             SendMessageW(hwnd, LB_SETCURSEL, sel, 0);
@@ -821,16 +824,15 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 static void create_listbox(IAutoCompleteImpl *This)
 {
     /* FIXME : The listbox should be resizable with the mouse. WS_THICKFRAME looks ugly */
-    This->hwndListBox = CreateWindowExW(0, WC_LISTBOXW, NULL,
-                                    WS_BORDER | WS_CHILD | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
-                                    0, 0, 0, 0, GetParent(This->hwndEdit), NULL, shell32_hInstance, NULL);
+    This->hwndListBox = CreateWindowExW(WS_EX_NOACTIVATE, WC_LISTBOXW, NULL,
+                                    WS_BORDER | WS_POPUP | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT,
+                                    0, 0, 0, 0, NULL, NULL, shell32_hInstance, NULL);
 
     if (This->hwndListBox) {
         HFONT edit_font;
 
         This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
         SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
-        SetParent(This->hwndListBox, HWND_DESKTOP);
 
         /* Use the same font as the edit control, as it gets destroyed before it anyway */
         edit_font = (HFONT)SendMessageW(This->hwndEdit, WM_GETFONT, 0, 0);
