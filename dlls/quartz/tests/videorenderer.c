@@ -269,6 +269,74 @@ todo_wine
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_media_types(void)
+{
+    IBaseFilter *filter = create_video_renderer();
+    AM_MEDIA_TYPE *mt, req_mt = {{0}};
+    VIDEOINFOHEADER vih =
+    {
+        {0}, {0}, 0, 0, 0,
+        {sizeof(BITMAPINFOHEADER), 32, 24, 1, 0, BI_RGB}
+    };
+    IEnumMediaTypes *enummt;
+    unsigned int i;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    static const GUID *subtype_tests[] =
+    {
+        &MEDIASUBTYPE_RGB8,
+        &MEDIASUBTYPE_RGB565,
+        &MEDIASUBTYPE_RGB24,
+        &MEDIASUBTYPE_RGB32,
+    };
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &mt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    req_mt.majortype = MEDIATYPE_Video;
+    req_mt.formattype = FORMAT_VideoInfo;
+    req_mt.cbFormat = sizeof(VIDEOINFOHEADER);
+    req_mt.pbFormat = (BYTE *)&vih;
+
+    for (i = 0; i < ARRAY_SIZE(subtype_tests); ++i)
+    {
+        req_mt.subtype = *subtype_tests[i];
+        hr = IPin_QueryAccept(pin, &req_mt);
+        ok(hr == S_OK, "Got hr %#x for subtype %s.\n", hr, wine_dbgstr_guid(subtype_tests[i]));
+    }
+
+    req_mt.subtype = MEDIASUBTYPE_NULL;
+    hr = IPin_QueryAccept(pin, &req_mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    req_mt.subtype = MEDIASUBTYPE_RGB24;
+
+    req_mt.majortype = MEDIATYPE_NULL;
+    hr = IPin_QueryAccept(pin, &req_mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    req_mt.majortype = MEDIATYPE_Video;
+
+    req_mt.formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, &req_mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    req_mt.formattype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &req_mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_pin(IPin *pin)
 {
     IMemInputPin *mpin = NULL;
@@ -333,6 +401,7 @@ START_TEST(videorenderer)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_media_types();
     test_basefilter();
 
     CoUninitialize();
