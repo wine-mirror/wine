@@ -4,7 +4,7 @@
 
 #include "wine/unicode.h"
 
-const WCHAR DECLSPEC_HIDDEN wine_casemap_lower[4259] =
+const WCHAR wine_casemap_lower[4259] =
 {
     /* index */
     0x01bf, 0x02bf, 0x03bf, 0x044f, 0x054f, 0x064f, 0x0100, 0x0100,
@@ -562,7 +562,7 @@ const WCHAR DECLSPEC_HIDDEN wine_casemap_lower[4259] =
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
 };
 
-const WCHAR DECLSPEC_HIDDEN wine_casemap_upper[4828] =
+const WCHAR wine_casemap_upper[4828] =
 {
     /* index */
     0x019f, 0x029f, 0x039f, 0x045a, 0x0556, 0x0656, 0x0100, 0x0100,

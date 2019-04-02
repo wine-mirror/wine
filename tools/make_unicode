@@ -1599,7 +1599,7 @@ sub dump_mirroring($)
     print OUTPUT "/* generated from $UNIDATA/BidiMirroring.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"wine/unicode.h\"\n\n";
-    dump_case_table( "wine_mirror_map", @mirror_table );
+    dump_case_table( "DECLSPEC_HIDDEN wine_mirror_map", @mirror_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -1757,9 +1757,9 @@ sub dump_digit_folding($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
-    dump_case_table( "wine_digitmap",  @digitmap_table );
+    dump_case_table( "DECLSPEC_HIDDEN wine_digitmap",  @digitmap_table );
     print OUTPUT "\n";
-    dump_case_table( "wine_compatmap", @compatmap_table );
+    dump_case_table( "DECLSPEC_HIDDEN wine_compatmap", @compatmap_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -1836,7 +1836,7 @@ sub dump_case_table($@)
 
     # dump the table
 
-    printf OUTPUT "const WCHAR DECLSPEC_HIDDEN %s[%d] =\n", $name, $index * 256 + 512 - $removed;
+    printf OUTPUT "const WCHAR %s[%d] =\n", $name, $index * 256 + 512 - $removed;
     printf OUTPUT "{\n    /* index */\n";
     printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", 256, @filled );
     printf OUTPUT "    /* defaults */\n";
@@ -1892,7 +1892,7 @@ sub dump_simple_mapping($$@)
     my $def = shift;
     my @array = compress_array( 256, $def, @_[0..65535] );
 
-    printf OUTPUT "const unsigned short DECLSPEC_HIDDEN %s[%d] =\n{\n", $name, $#array+1;
+    printf OUTPUT "const unsigned short %s[%d] =\n{\n", $name, $#array+1;
     printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[0..255] );
     printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
 }
