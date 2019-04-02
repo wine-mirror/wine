@@ -28,6 +28,7 @@
 #include "winver.h"
 #include "winnls.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wownt32.h"
@@ -892,7 +893,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
             bufLen = ARRAY_SIZE(buf);
 	    lRet = RegEnumKeyExA(hKey, i, buf, &bufLen, 0, 0, 0, &lastWrite);
 	    if (lRet != ERROR_SUCCESS) continue;
-	    if (strncasecmp(buf, "vid", 3)) continue;
+	    if (_strnicmp(buf, "vid", 3)) continue;
 	    if (nr--) continue;
 	    fnLen = sizeof(fn);
 	    lRet = RegQueryValueExA(hKey, buf, 0, 0, (LPBYTE)fn, &fnLen);
@@ -907,7 +908,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
     {
 	for (s = buf; *s; s += strlen(s) + 1)
 	{
-	    if (strncasecmp(s, "vid", 3)) continue;
+	    if (_strnicmp(s, "vid", 3)) continue;
 	    if (nr--) continue;
 	    if (GetPrivateProfileStringA("drivers32", s, NULL, fn, sizeof(fn), "system.ini"))
 		found = TRUE;
