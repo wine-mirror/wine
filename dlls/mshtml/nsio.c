@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "ole2.h"
 #include "shlguid.h"
 #include "wininet.h"
@@ -1181,7 +1182,7 @@ static nsresult NSAPI nsChannel_SetRequestMethod(nsIHttpChannel *iface,
 
     nsACString_GetData(aRequestMethod, &method);
     for(i=0; i < ARRAY_SIZE(request_method_strings); i++) {
-        if(!strcasecmp(method, request_method_strings[i])) {
+        if(!_strnicmp(method, request_method_strings[i], -1)) {
             This->request_method = i;
             return NS_OK;
         }
@@ -3708,11 +3709,11 @@ static BOOL is_gecko_special_uri(const char *spec)
     unsigned int i;
 
     for(i=0; i < ARRAY_SIZE(special_schemes); i++) {
-        if(!strncasecmp(spec, special_schemes[i], strlen(special_schemes[i])))
+        if(!_strnicmp(spec, special_schemes[i], strlen(special_schemes[i])))
             return TRUE;
     }
 
-    if(!strncasecmp(spec, "file:", 5)) {
+    if(!_strnicmp(spec, "file:", 5)) {
         const char *ptr = spec+5;
         while(*ptr == '/')
             ptr++;
@@ -3753,7 +3754,7 @@ static nsresult NSAPI nsIOServiceHook_NewURI(nsIIOServiceHook *iface, const nsAC
         }
     }
 
-    if(aOriginCharset && *aOriginCharset && strncasecmp(aOriginCharset, "utf", 3)) {
+    if(aOriginCharset && *aOriginCharset && _strnicmp(aOriginCharset, "utf", 3)) {
         BSTR charset;
         int len;
 
