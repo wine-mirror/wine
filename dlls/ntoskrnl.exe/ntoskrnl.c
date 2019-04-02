@@ -4101,7 +4101,7 @@ void * __cdecl NTOSKRNL_memset( void *dst, int c, size_t n )
  */
 int __cdecl NTOSKRNL__stricmp( LPCSTR str1, LPCSTR str2 )
 {
-    return strcasecmp( str1, str2 );
+    return _strnicmp( str1, str2, -1 );
 }
 
 /*********************************************************************
@@ -4109,7 +4109,7 @@ int __cdecl NTOSKRNL__stricmp( LPCSTR str1, LPCSTR str2 )
  */
 int __cdecl NTOSKRNL__strnicmp( LPCSTR str1, LPCSTR str2, size_t n )
 {
-    return strncasecmp( str1, str2, n );
+    return _strnicmp( str1, str2, n );
 }
 
 /*********************************************************************
