@@ -270,6 +270,8 @@ typedef enum _MFVideoTransferMatrix {
     MFVideoTransferMatrix_BT709        = 1,
     MFVideoTransferMatrix_BT601        = 2,
     MFVideoTransferMatrix_SMPTE240M    = 3,
+    MFVideoTransferMatrix_BT2020_10    = 4,
+    MFVideoTransferMatrix_BT2020_12    = 5,
     MFVideoTransferMatrix_Last,
     MFVideoTransferMatrix_ForceDWORD   = 0x7fffffff
 } MFVideoTransferMatrix;
