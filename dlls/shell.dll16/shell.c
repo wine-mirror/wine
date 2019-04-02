@@ -40,6 +40,7 @@
 #include "wingdi.h"
 #include "shlobj.h"
 #include "shlwapi.h"
+#include "winternl.h"
 
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
@@ -358,7 +359,7 @@ static LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 
   l = strlen(entry);
   for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
-  { if( strncasecmp(lpEnv, entry, l) )
+  { if( _strnicmp(lpEnv, entry, l) )
       continue;
 	if( !*(lpEnv+l) )
 	    return (lpEnv + l); 		/* empty entry */
