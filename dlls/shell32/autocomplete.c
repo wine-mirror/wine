@@ -801,23 +801,21 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         case WM_MOUSEMOVE:
             sel = SendMessageW(hwnd, LB_ITEMFROMPOINT, 0, lParam);
             SendMessageW(hwnd, LB_SETCURSEL, sel, 0);
-            break;
+            return 0;
         case WM_LBUTTONDOWN:
             sel = SendMessageW(hwnd, LB_GETCURSEL, 0, 0);
             if (sel < 0)
-                break;
+                return 0;
             len = SendMessageW(hwnd, LB_GETTEXTLEN, sel, 0);
             if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
-                break;
+                return 0;
             len = SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
             set_text_and_selection(This, This->hwndEdit, msg, 0, len);
             hide_listbox(This, hwnd, TRUE);
             heap_free(msg);
-            break;
-        default:
-            return CallWindowProcW(This->wpOrigLBoxProc, hwnd, uMsg, wParam, lParam);
+            return 0;
     }
-    return 0;
+    return CallWindowProcW(This->wpOrigLBoxProc, hwnd, uMsg, wParam, lParam);
 }
 
 static void create_listbox(IAutoCompleteImpl *This)
