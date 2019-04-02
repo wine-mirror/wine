@@ -136,6 +136,12 @@ int WINAPIV sprintf(char *buf, const char *fmt, ...)
     __ms_va_end(valist);
     return ret;
 }
+
+int __cdecl _vsnprintf( char *buf, size_t size, const char *fmt, __ms_va_list args )
+{
+    return __stdio_common_vsprintf( UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR,
+                                    buf, size, fmt, NULL, args );
+}
 #endif
 
 static void init_cxx_funcs(void)
