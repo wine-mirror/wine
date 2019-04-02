@@ -1246,10 +1246,11 @@ static HRESULT WINAPI VMR7FilterConfig_GetRenderingPrefs(IVMRFilterConfig *iface
 
 static HRESULT WINAPI VMR7FilterConfig_SetRenderingMode(IVMRFilterConfig *iface, DWORD mode)
 {
-    struct quartz_vmr *This = impl_from_IVMRFilterConfig(iface);
+    struct quartz_vmr *filter = impl_from_IVMRFilterConfig(iface);
 
-    FIXME("(%p/%p)->(%u) stub\n", iface, This, mode);
-    return E_NOTIMPL;
+    TRACE("iface %p, mode %#x.\n", iface, mode);
+
+    return IVMRFilterConfig9_SetRenderingMode(&filter->IVMRFilterConfig9_iface, mode);
 }
 
 static HRESULT WINAPI VMR7FilterConfig_GetRenderingMode(IVMRFilterConfig *iface, DWORD *mode)

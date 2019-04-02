@@ -40,14 +40,14 @@ static void test_filter_config(void)
     ok(mode == VMRMode_Windowed, "Got mode %#x.\n", mode);
 
     hr = IVMRFilterConfig_SetRenderingMode(config, VMRMode_Windowed);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig_GetRenderingMode(config, &mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(mode == VMRMode_Windowed, "Got mode %#x.\n", mode);
 
     hr = IVMRFilterConfig_SetRenderingMode(config, VMRMode_Windowed);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
     ref = IVMRFilterConfig_Release(config);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -57,14 +57,14 @@ static void test_filter_config(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig_SetRenderingMode(config, VMRMode_Windowless);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig_GetRenderingMode(config, &mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(mode == VMRMode_Windowless, "Got mode %#x.\n", mode);
+    ok(mode == VMRMode_Windowless, "Got mode %#x.\n", mode);
 
     hr = IVMRFilterConfig_SetRenderingMode(config, VMRMode_Windowed);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
     ref = IVMRFilterConfig_Release(config);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -74,14 +74,14 @@ static void test_filter_config(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig_SetRenderingMode(config, VMRMode_Renderless);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig_GetRenderingMode(config, &mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(mode == VMRMode_Renderless, "Got mode %#x.\n", mode);
+    ok(mode == VMRMode_Renderless, "Got mode %#x.\n", mode);
 
     hr = IVMRFilterConfig_SetRenderingMode(config, VMRMode_Windowless);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
     ref = IVMRFilterConfig_Release(config);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -111,11 +111,11 @@ static void test_filter_config(void)
         /* Despite MSDN, you can still change the rendering mode after setting the
          * stream count. */
         hr = IVMRFilterConfig_SetRenderingMode(config, VMRMode_Windowless);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         hr = IVMRFilterConfig_GetRenderingMode(config, &mode);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
-        todo_wine ok(mode == VMRMode_Windowless, "Got mode %#x.\n", mode);
+        ok(mode == VMRMode_Windowless, "Got mode %#x.\n", mode);
 
         hr = IVMRFilterConfig_GetNumberOfStreams(config, &count);
         todo_wine {
