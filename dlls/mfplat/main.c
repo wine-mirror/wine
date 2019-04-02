@@ -5405,186 +5405,276 @@ static ULONG WINAPI mfmediaevent_Release(IMFMediaEvent *iface)
 
 static HRESULT WINAPI mfmediaevent_GetItem(IMFMediaEvent *iface, REFGUID key, PROPVARIANT *value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetItem(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetItem(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_GetItemType(IMFMediaEvent *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetItemType(&This->attributes.IMFAttributes_iface, key, type);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+
+    return attributes_GetItemType(&event->attributes, key, type);
 }
 
 static HRESULT WINAPI mfmediaevent_CompareItem(IMFMediaEvent *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_CompareItem(&This->attributes.IMFAttributes_iface, key, value, result);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+
+    return attributes_CompareItem(&event->attributes, key, value, result);
 }
 
 static HRESULT WINAPI mfmediaevent_Compare(IMFMediaEvent *iface, IMFAttributes *attrs, MF_ATTRIBUTES_MATCH_TYPE type,
-                BOOL *result)
+        BOOL *result)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_Compare(&This->attributes.IMFAttributes_iface, attrs, type, result);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, attrs, type, result);
+
+    return attributes_Compare(&event->attributes, attrs, type, result);
 }
 
 static HRESULT WINAPI mfmediaevent_GetUINT32(IMFMediaEvent *iface, REFGUID key, UINT32 *value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetUINT32(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT32(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_GetUINT64(IMFMediaEvent *iface, REFGUID key, UINT64 *value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetUINT64(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT64(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_GetDouble(IMFMediaEvent *iface, REFGUID key, double *value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetDouble(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetDouble(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_GetGUID(IMFMediaEvent *iface, REFGUID key, GUID *value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetGUID(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetGUID(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_GetStringLength(IMFMediaEvent *iface, REFGUID key, UINT32 *length)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetStringLength(&This->attributes.IMFAttributes_iface, key, length);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
+
+    return attributes_GetStringLength(&event->attributes, key, length);
 }
 
 static HRESULT WINAPI mfmediaevent_GetString(IMFMediaEvent *iface, REFGUID key, WCHAR *value,
-                UINT32 size, UINT32 *length)
+        UINT32 size, UINT32 *length)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetString(&This->attributes.IMFAttributes_iface, key, value, size, length);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), value, size, length);
+
+    return attributes_GetString(&event->attributes, key, value, size, length);
 }
 
 static HRESULT WINAPI mfmediaevent_GetAllocatedString(IMFMediaEvent *iface, REFGUID key,
-                WCHAR **value, UINT32 *length)
+        WCHAR **value, UINT32 *length)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetAllocatedString(&This->attributes.IMFAttributes_iface, key, value, length);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
+
+    return attributes_GetAllocatedString(&event->attributes, key, value, length);
 }
 
 static HRESULT WINAPI mfmediaevent_GetBlobSize(IMFMediaEvent *iface, REFGUID key, UINT32 *size)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetBlobSize(&This->attributes.IMFAttributes_iface, key, size);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+
+    return attributes_GetBlobSize(&event->attributes, key, size);
 }
 
 static HRESULT WINAPI mfmediaevent_GetBlob(IMFMediaEvent *iface, REFGUID key, UINT8 *buf,
-                UINT32 bufsize, UINT32 *blobsize)
+        UINT32 bufsize, UINT32 *blobsize)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetBlob(&This->attributes.IMFAttributes_iface, key, buf, bufsize, blobsize);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+
+    return attributes_GetBlob(&event->attributes, key, buf, bufsize, blobsize);
 }
 
 static HRESULT WINAPI mfmediaevent_GetAllocatedBlob(IMFMediaEvent *iface, REFGUID key, UINT8 **buf, UINT32 *size)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetAllocatedBlob(&This->attributes.IMFAttributes_iface, key, buf, size);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_GetAllocatedBlob(&event->attributes, key, buf, size);
 }
 
-static HRESULT WINAPI mfmediaevent_GetUnknown(IMFMediaEvent *iface, REFGUID key, REFIID riid, void **ppv)
+static HRESULT WINAPI mfmediaevent_GetUnknown(IMFMediaEvent *iface, REFGUID key, REFIID riid, void **out)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetUnknown(&This->attributes.IMFAttributes_iface, key, riid, ppv);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), out);
+
+    return attributes_GetUnknown(&event->attributes, key, riid, out);
 }
 
 static HRESULT WINAPI mfmediaevent_SetItem(IMFMediaEvent *iface, REFGUID key, REFPROPVARIANT value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_SetItem(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetItem(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_DeleteItem(IMFMediaEvent *iface, REFGUID key)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_DeleteItem(&This->attributes.IMFAttributes_iface, key);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_attr(key));
+
+    return attributes_DeleteItem(&event->attributes, key);
 }
 
 static HRESULT WINAPI mfmediaevent_DeleteAllItems(IMFMediaEvent *iface)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_DeleteAllItems(&This->attributes.IMFAttributes_iface);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_DeleteAllItems(&event->attributes);
 }
 
 static HRESULT WINAPI mfmediaevent_SetUINT32(IMFMediaEvent *iface, REFGUID key, UINT32 value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_SetUINT32(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetUINT32(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_SetUINT64(IMFMediaEvent *iface, REFGUID key, UINT64 value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_SetUINT64(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+
+    return attributes_SetUINT64(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_SetDouble(IMFMediaEvent *iface, REFGUID key, double value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_SetDouble(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetDouble(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_SetGUID(IMFMediaEvent *iface, REFGUID key, REFGUID value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_SetGUID(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+
+    return attributes_SetGUID(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_SetString(IMFMediaEvent *iface, REFGUID key, const WCHAR *value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_SetString(&This->attributes.IMFAttributes_iface, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
+
+    return attributes_SetString(&event->attributes, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_SetBlob(IMFMediaEvent *iface, REFGUID key, const UINT8 *buf, UINT32 size)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_SetBlob(&This->attributes.IMFAttributes_iface, key, buf, size);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_SetBlob(&event->attributes, key, buf, size);
 }
 
 static HRESULT WINAPI mfmediaevent_SetUnknown(IMFMediaEvent *iface, REFGUID key, IUnknown *unknown)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_SetUnknown(&This->attributes.IMFAttributes_iface, key, unknown);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+
+    return attributes_SetUnknown(&event->attributes, key, unknown);
 }
 
 static HRESULT WINAPI mfmediaevent_LockStore(IMFMediaEvent *iface)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_LockStore(&This->attributes.IMFAttributes_iface);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_LockStore(&event->attributes);
 }
 
 static HRESULT WINAPI mfmediaevent_UnlockStore(IMFMediaEvent *iface)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_UnlockStore(&This->attributes.IMFAttributes_iface);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_UnlockStore(&event->attributes);
 }
 
-static HRESULT WINAPI mfmediaevent_GetCount(IMFMediaEvent *iface, UINT32 *items)
+static HRESULT WINAPI mfmediaevent_GetCount(IMFMediaEvent *iface, UINT32 *count)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetCount(&This->attributes.IMFAttributes_iface, items);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return attributes_GetCount(&event->attributes, count);
 }
 
 static HRESULT WINAPI mfmediaevent_GetItemByIndex(IMFMediaEvent *iface, UINT32 index, GUID *key, PROPVARIANT *value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_GetItemByIndex(&This->attributes.IMFAttributes_iface, index, key, value);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return attributes_GetItemByIndex(&event->attributes, index, key, value);
 }
 
 static HRESULT WINAPI mfmediaevent_CopyAllItems(IMFMediaEvent *iface, IMFAttributes *dest)
 {
     struct media_event *event = impl_from_IMFMediaEvent(iface);
-    return IMFAttributes_CopyAllItems(&event->attributes.IMFAttributes_iface, dest);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return attributes_CopyAllItems(&event->attributes, dest);
 }
 
 static HRESULT WINAPI mfmediaevent_GetType(IMFMediaEvent *iface, MediaEventType *type)
