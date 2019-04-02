@@ -1250,195 +1250,285 @@ static HRESULT WINAPI presentation_descriptor_GetItem(IMFPresentationDescriptor 
         PROPVARIANT *value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetItem(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetItem(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetItemType(IMFPresentationDescriptor *iface, REFGUID key,
         MF_ATTRIBUTE_TYPE *type)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetItemType(&presentation_desc->attributes.IMFAttributes_iface, key, type);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+
+    return attributes_GetItemType(&presentation_desc->attributes, key, type);
 }
 
 static HRESULT WINAPI presentation_descriptor_CompareItem(IMFPresentationDescriptor *iface, REFGUID key,
         REFPROPVARIANT value, BOOL *result)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_CompareItem(&presentation_desc->attributes.IMFAttributes_iface, key, value, result);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+
+    return attributes_CompareItem(&presentation_desc->attributes, key, value, result);
 }
 
 static HRESULT WINAPI presentation_descriptor_Compare(IMFPresentationDescriptor *iface, IMFAttributes *attrs,
         MF_ATTRIBUTES_MATCH_TYPE type, BOOL *result)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_Compare(&presentation_desc->attributes.IMFAttributes_iface, attrs, type, result);
+
+    TRACE("%p, %p, %d, %p.\n", iface, attrs, type, result);
+
+    return attributes_Compare(&presentation_desc->attributes, attrs, type, result);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetUINT32(IMFPresentationDescriptor *iface, REFGUID key, UINT32 *value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetUINT32(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT32(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetUINT64(IMFPresentationDescriptor *iface, REFGUID key, UINT64 *value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetUINT64(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT64(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetDouble(IMFPresentationDescriptor *iface, REFGUID key, double *value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetDouble(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetDouble(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetGUID(IMFPresentationDescriptor *iface, REFGUID key, GUID *value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetGUID(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetGUID(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetStringLength(IMFPresentationDescriptor *iface, REFGUID key,
         UINT32 *length)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetStringLength(&presentation_desc->attributes.IMFAttributes_iface, key, length);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
+
+    return attributes_GetStringLength(&presentation_desc->attributes, key, length);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetString(IMFPresentationDescriptor *iface, REFGUID key, WCHAR *value,
         UINT32 size, UINT32 *length)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetString(&presentation_desc->attributes.IMFAttributes_iface, key, value, size, length);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), value, size, length);
+
+    return attributes_GetString(&presentation_desc->attributes, key, value, size, length);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetAllocatedString(IMFPresentationDescriptor *iface, REFGUID key,
         WCHAR **value, UINT32 *length)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetAllocatedString(&presentation_desc->attributes.IMFAttributes_iface, key, value, length);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
+
+    return attributes_GetAllocatedString(&presentation_desc->attributes, key, value, length);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetBlobSize(IMFPresentationDescriptor *iface, REFGUID key, UINT32 *size)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetBlobSize(&presentation_desc->attributes.IMFAttributes_iface, key, size);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+
+    return attributes_GetBlobSize(&presentation_desc->attributes, key, size);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetBlob(IMFPresentationDescriptor *iface, REFGUID key, UINT8 *buf,
         UINT32 bufsize, UINT32 *blobsize)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetBlob(&presentation_desc->attributes.IMFAttributes_iface, key, buf, bufsize, blobsize);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+
+    return attributes_GetBlob(&presentation_desc->attributes, key, buf, bufsize, blobsize);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetAllocatedBlob(IMFPresentationDescriptor *iface, REFGUID key,
         UINT8 **buf, UINT32 *size)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetAllocatedBlob(&presentation_desc->attributes.IMFAttributes_iface, key, buf, size);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_GetAllocatedBlob(&presentation_desc->attributes, key, buf, size);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetUnknown(IMFPresentationDescriptor *iface, REFGUID key,
-        REFIID riid, void **ppv)
+        REFIID riid, void **out)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetUnknown(&presentation_desc->attributes.IMFAttributes_iface, key, riid, ppv);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), out);
+
+    return attributes_GetUnknown(&presentation_desc->attributes, key, riid, out);
 }
 
 static HRESULT WINAPI presentation_descriptor_SetItem(IMFPresentationDescriptor *iface, REFGUID key,
         REFPROPVARIANT value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_SetItem(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetItem(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_DeleteItem(IMFPresentationDescriptor *iface, REFGUID key)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_DeleteItem(&presentation_desc->attributes.IMFAttributes_iface, key);
+
+    TRACE("%p, %s.\n", iface, debugstr_attr(key));
+
+    return attributes_DeleteItem(&presentation_desc->attributes, key);
 }
 
 static HRESULT WINAPI presentation_descriptor_DeleteAllItems(IMFPresentationDescriptor *iface)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_DeleteAllItems(&presentation_desc->attributes.IMFAttributes_iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_DeleteAllItems(&presentation_desc->attributes);
 }
 
 static HRESULT WINAPI presentation_descriptor_SetUINT32(IMFPresentationDescriptor *iface, REFGUID key, UINT32 value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_SetUINT32(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetUINT32(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_SetUINT64(IMFPresentationDescriptor *iface, REFGUID key, UINT64 value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_SetUINT64(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+
+    return attributes_SetUINT64(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_SetDouble(IMFPresentationDescriptor *iface, REFGUID key, double value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_SetDouble(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetDouble(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_SetGUID(IMFPresentationDescriptor *iface, REFGUID key, REFGUID value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_SetGUID(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+
+    return attributes_SetGUID(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_SetString(IMFPresentationDescriptor *iface, REFGUID key,
         const WCHAR *value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_SetString(&presentation_desc->attributes.IMFAttributes_iface, key, value);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
+
+    return attributes_SetString(&presentation_desc->attributes, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_SetBlob(IMFPresentationDescriptor *iface, REFGUID key, const UINT8 *buf,
         UINT32 size)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_SetBlob(&presentation_desc->attributes.IMFAttributes_iface, key, buf, size);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_SetBlob(&presentation_desc->attributes, key, buf, size);
 }
 
 static HRESULT WINAPI presentation_descriptor_SetUnknown(IMFPresentationDescriptor *iface, REFGUID key,
         IUnknown *unknown)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_SetUnknown(&presentation_desc->attributes.IMFAttributes_iface, key, unknown);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+
+    return attributes_SetUnknown(&presentation_desc->attributes, key, unknown);
 }
 
 static HRESULT WINAPI presentation_descriptor_LockStore(IMFPresentationDescriptor *iface)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_LockStore(&presentation_desc->attributes.IMFAttributes_iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_LockStore(&presentation_desc->attributes);
 }
 
 static HRESULT WINAPI presentation_descriptor_UnlockStore(IMFPresentationDescriptor *iface)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_UnlockStore(&presentation_desc->attributes.IMFAttributes_iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_UnlockStore(&presentation_desc->attributes);
 }
 
-static HRESULT WINAPI presentation_descriptor_GetCount(IMFPresentationDescriptor *iface, UINT32 *items)
+static HRESULT WINAPI presentation_descriptor_GetCount(IMFPresentationDescriptor *iface, UINT32 *count)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetCount(&presentation_desc->attributes.IMFAttributes_iface, items);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return attributes_GetCount(&presentation_desc->attributes, count);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetItemByIndex(IMFPresentationDescriptor *iface, UINT32 index, GUID *key,
         PROPVARIANT *value)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_GetItemByIndex(&presentation_desc->attributes.IMFAttributes_iface, index, key, value);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return attributes_GetItemByIndex(&presentation_desc->attributes, index, key, value);
 }
 
 static HRESULT WINAPI presentation_descriptor_CopyAllItems(IMFPresentationDescriptor *iface, IMFAttributes *dest)
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
-    return IMFAttributes_CopyAllItems(&presentation_desc->attributes.IMFAttributes_iface, dest);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return attributes_CopyAllItems(&presentation_desc->attributes, dest);
 }
 
 static HRESULT WINAPI presentation_descriptor_GetStreamDescriptorCount(IMFPresentationDescriptor *iface, DWORD *count)
