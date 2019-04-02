@@ -728,9 +728,14 @@ static void *get_readback_data(struct resource_readback *rb, unsigned int x, uns
     return (BYTE *)rb->map_desc.pData + y * rb->map_desc.RowPitch + x * byte_width;
 }
 
-static BYTE get_readback_byte(struct resource_readback *rb, unsigned int x, unsigned int y)
+static BYTE get_readback_u8(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
     return *(BYTE *)get_readback_data(rb, x, y, sizeof(BYTE));
+}
+
+static WORD get_readback_u16(struct resource_readback *rb, unsigned int x, unsigned int y)
+{
+    return *(WORD *)get_readback_data(rb, x, y, sizeof(WORD));
 }
 
 static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y)
@@ -785,12 +790,12 @@ static DWORD get_texture_color(ID3D10Texture2D *texture, unsigned int x, unsigne
     return color;
 }
 
-#define check_readback_data_byte(a, b, c, d) check_readback_data_byte_(__LINE__, a, b, c, d)
-static void check_readback_data_byte_(unsigned int line, struct resource_readback *rb,
+#define check_readback_data_u8(a, b, c, d) check_readback_data_u8_(__LINE__, a, b, c, d)
+static void check_readback_data_u8_(unsigned int line, struct resource_readback *rb,
         const RECT *rect, BYTE expected_value, BYTE max_diff)
 {
     unsigned int x = 0, y = 0;
-    BOOL all_match = TRUE;
+    BOOL all_match = FALSE;
     RECT default_rect;
     BYTE value = 0;
 
@@ -804,18 +809,48 @@ static void check_readback_data_byte_(unsigned int line, struct resource_readbac
     {
         for (x = rect->left; x < rect->right; ++x)
         {
-            value = get_readback_byte(rb, x, y);
-            if (!compare_color(value, expected_value, max_diff))
-            {
-                all_match = FALSE;
-                break;
-            }
+            value = get_readback_u8(rb, x, y);
+            if (abs((int)value - (int)expected_value) > max_diff)
+                goto done;
         }
-        if (!all_match)
-            break;
     }
+    all_match = TRUE;
+
+done:
     ok_(__FILE__, line)(all_match,
             "Got 0x%02x, expected 0x%02x at (%u, %u), sub-resource %u.\n",
+            value, expected_value, x, y, rb->sub_resource_idx);
+}
+
+#define check_readback_data_u16(a, b, c, d) check_readback_data_u16_(__LINE__, a, b, c, d)
+static void check_readback_data_u16_(unsigned int line, struct resource_readback *rb,
+        const RECT *rect, WORD expected_value, BYTE max_diff)
+{
+    unsigned int x = 0, y = 0;
+    BOOL all_match = FALSE;
+    RECT default_rect;
+    WORD value = 0;
+
+    if (!rect)
+    {
+        SetRect(&default_rect, 0, 0, rb->width, rb->height);
+        rect = &default_rect;
+    }
+
+    for (y = rect->top; y < rect->bottom; ++y)
+    {
+        for (x = rect->left; x < rect->right; ++x)
+        {
+            value = get_readback_u16(rb, x, y);
+            if (abs((int)value - (int)expected_value) > max_diff)
+                goto done;
+        }
+    }
+    all_match = TRUE;
+
+done:
+    ok_(__FILE__, line)(all_match,
+            "Got 0x%04x, expected 0x%04x at (%u, %u), sub-resource %u.\n",
             value, expected_value, x, y, rb->sub_resource_idx);
 }
 
@@ -824,7 +859,7 @@ static void check_readback_data_color_(unsigned int line, struct resource_readba
         const RECT *rect, DWORD expected_color, BYTE max_diff)
 {
     unsigned int x = 0, y = 0;
-    BOOL all_match = TRUE;
+    BOOL all_match = FALSE;
     RECT default_rect;
     DWORD color = 0;
 
@@ -840,14 +875,12 @@ static void check_readback_data_color_(unsigned int line, struct resource_readba
         {
             color = get_readback_color(rb, x, y);
             if (!compare_color(color, expected_color, max_diff))
-            {
-                all_match = FALSE;
-                break;
-            }
+                goto done;
         }
-        if (!all_match)
-            break;
     }
+    all_match = TRUE;
+
+done:
     ok_(__FILE__, line)(all_match,
             "Got 0x%08x, expected 0x%08x at (%u, %u), sub-resource %u.\n",
             color, expected_color, x, y, rb->sub_resource_idx);
@@ -15590,14 +15623,7 @@ static void test_depth_bias(void)
                 break;
             case DXGI_FORMAT_D16_UNORM:
                 get_texture_readback(texture, 0, &rb);
-                for (y = 0; y < texture_desc.Height; ++y)
-                {
-                    for (x = 0; x < texture_desc.Width; ++x)
-                    {
-                        u16 = get_readback_data(&rb, x, y, sizeof(*u16));
-                        ok(*u16 == 0xffff, "Got unexpected value %#x.\n", *u16);
-                    }
-                }
+                check_readback_data_u16(&rb, NULL, 0xffffu, 0);
                 release_resource_readback(&rb);
                 break;
             default:
@@ -15662,17 +15688,7 @@ static void test_depth_bias(void)
                             depth = min(max(0.0f, quads[i].z + bias), 1.0f);
 
                             get_texture_readback(texture, 0, &rb);
-                            for (y = 0; y < texture_desc.Height; ++y)
-                            {
-                                expected_value = depth * 65535.0f + 0.5f;
-                                for (x = 0; x < texture_desc.Width; ++x)
-                                {
-                                    u16 = get_readback_data(&rb, x, y, sizeof(*u16));
-                                    ok(abs(*u16 - expected_value) <= 1,
-                                            "Got value %#x (%.8e), expected %#x (%.8e).\n",
-                                            *u16, *u16 / 65535.0f, expected_value, expected_value / 65535.0f);
-                                }
-                            }
+                            check_readback_data_u16(&rb, NULL, depth * 65535.0f + 0.5f, 1);
                             release_resource_readback(&rb);
                             break;
                         default:
@@ -17864,7 +17880,7 @@ static void test_render_a8(void)
         ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
         draw_quad(&test_context);
         get_texture_readback(texture, 0, &rb);
-        check_readback_data_byte(&rb, NULL, 0xff, 0);
+        check_readback_data_u8(&rb, NULL, 0xff, 0);
         release_resource_readback(&rb);
 
         ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, black);
