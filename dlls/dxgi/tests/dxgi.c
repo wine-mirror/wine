@@ -5041,6 +5041,8 @@ START_TEST(dxgi)
     registry_mode.dmSize = sizeof(registry_mode);
     ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");
 
+    use_mt = !getenv("WINETEST_NO_MT_D3D");
+
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
     {

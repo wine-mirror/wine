@@ -17925,6 +17925,8 @@ START_TEST(d3d10core)
     unsigned int argc, i;
     char **argv;
 
+    use_mt = !getenv("WINETEST_NO_MT_D3D");
+
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
     {
