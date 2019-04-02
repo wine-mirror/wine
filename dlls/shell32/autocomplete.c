@@ -61,6 +61,7 @@ typedef struct
     BOOL enabled;
     UINT enum_strs_num;
     WCHAR **enum_strs;
+    WCHAR **listbox_strs;
     HWND hwndEdit;
     HWND hwndListBox;
     HWND hwndListBoxOwner;
@@ -296,7 +297,6 @@ static void show_listbox(IAutoCompleteImpl *ac)
     UINT cnt, width, height;
 
     GetWindowRect(ac->hwndEdit, &r);
-    SendMessageW(ac->hwndListBox, LB_CARETOFF, 0, 0);
 
     /* Windows XP displays 7 lines at most, then it uses a scroll bar */
     cnt    = SendMessageW(ac->hwndListBox, LB_GETCOUNT, 0, 0);
@@ -305,6 +305,60 @@ static void show_listbox(IAutoCompleteImpl *ac)
 
     SetWindowPos(ac->hwndListBoxOwner, HWND_TOP, r.left, r.bottom + 1, width, height,
                  SWP_SHOWWINDOW | SWP_NOACTIVATE);
+}
+
+static void set_listbox_font(IAutoCompleteImpl *ac, HFONT font)
+{
+    /* We have to calculate the item height manually due to owner-drawn */
+    HFONT old_font = NULL;
+    UINT height = 16;
+    HDC hdc;
+
+    if ((hdc = GetDCEx(ac->hwndListBox, 0, DCX_CACHE)))
+    {
+        TEXTMETRICW metrics;
+        if (font) old_font = SelectObject(hdc, font);
+        if (GetTextMetricsW(hdc, &metrics))
+            height = metrics.tmHeight;
+        if (old_font) SelectObject(hdc, old_font);
+        ReleaseDC(ac->hwndListBox, hdc);
+    }
+    SendMessageW(ac->hwndListBox, WM_SETFONT, (WPARAM)font, FALSE);
+    SendMessageW(ac->hwndListBox, LB_SETITEMHEIGHT, 0, height);
+}
+
+static BOOL draw_listbox_item(IAutoCompleteImpl *ac, DRAWITEMSTRUCT *info, UINT id)
+{
+    COLORREF old_text, old_bk;
+    HDC hdc = info->hDC;
+    UINT state;
+    WCHAR *str;
+
+    if (info->CtlType != ODT_LISTBOX || info->CtlID != id ||
+        id != (UINT)GetWindowLongPtrW(ac->hwndListBox, GWLP_ID))
+        return FALSE;
+
+    if ((INT)info->itemID < 0 || info->itemAction == ODA_FOCUS)
+        return TRUE;
+
+    state = info->itemState;
+    if (state & ODS_SELECTED)
+    {
+        old_bk = SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+        old_text = SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+    }
+
+    str = ac->listbox_strs[info->itemID];
+    ExtTextOutW(hdc, info->rcItem.left + 1, info->rcItem.top,
+                ETO_OPAQUE | ETO_CLIPPED, &info->rcItem, str,
+                strlenW(str), NULL);
+
+    if (state & ODS_SELECTED)
+    {
+        SetBkColor(hdc, old_bk);
+        SetTextColor(hdc, old_text);
+    }
+    return TRUE;
 }
 
 static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *str, size_t str_len)
@@ -541,6 +595,8 @@ static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
 
     SendMessageW(ac->hwndListBox, WM_SETREDRAW, FALSE, 0);
     SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
+
+    ac->listbox_strs = str + start;
     SendMessageW(ac->hwndListBox, LB_INITSTORAGE, end - start, 0);
     for (; start < end; start++)
         SendMessageW(ac->hwndListBox, LB_INSERTSTRING, -1, (LPARAM)str[start]);
@@ -582,7 +638,11 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
 
     size = len + 1;
     if (!(text = heap_alloc(size * sizeof(WCHAR))))
+    {
+        /* Reset the listbox to prevent potential crash from ResetEnumerator */
+        SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
         return;
+    }
     len = SendMessageW(hwnd, WM_GETTEXT, size, (LPARAM)text);
     if (len + 1 != size)
         text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
@@ -781,7 +841,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             break;
         case WM_SETFONT:
             if (This->hwndListBox)
-                SendMessageW(This->hwndListBox, WM_SETFONT, wParam, lParam);
+                set_listbox_font(This, (HFONT)wParam);
             break;
         case WM_DESTROY:
         {
@@ -833,6 +893,10 @@ static LRESULT APIENTRY ACLBoxOwnerSubclassProc(HWND hwnd, UINT uMsg, WPARAM wPa
     {
         case WM_MOUSEACTIVATE:
             return MA_NOACTIVATE;
+        case WM_DRAWITEM:
+            if (draw_listbox_item(This, (DRAWITEMSTRUCT*)lParam, wParam))
+                return TRUE;
+            break;
         case WM_SIZE:
             SetWindowPos(This->hwndListBox, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam),
                          SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER | SWP_DEFERERASE);
@@ -854,7 +918,7 @@ static void create_listbox(IAutoCompleteImpl *This)
 
     /* FIXME : The listbox should be resizable with the mouse. WS_THICKFRAME looks ugly */
     This->hwndListBox = CreateWindowExW(WS_EX_NOACTIVATE, WC_LISTBOXW, NULL,
-                                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT,
+                                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_HASSTRINGS | LBS_OWNERDRAWFIXED | LBS_NOINTEGRALHEIGHT,
                                         0, 0, 0, 0, This->hwndListBoxOwner, NULL, shell32_hInstance, NULL);
 
     if (This->hwndListBox) {
@@ -869,7 +933,7 @@ static void create_listbox(IAutoCompleteImpl *This)
         /* Use the same font as the edit control, as it gets destroyed before it anyway */
         edit_font = (HFONT)SendMessageW(This->hwndEdit, WM_GETFONT, 0, 0);
         if (edit_font)
-            SendMessageW(This->hwndListBox, WM_SETFONT, (WPARAM)edit_font, FALSE);
+            set_listbox_font(This, edit_font);
         return;
     }
 
