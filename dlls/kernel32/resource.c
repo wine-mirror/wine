@@ -617,7 +617,7 @@ BOOL WINAPI FreeResource( HGLOBAL handle )
 /**********************************************************************
  *	    SizeofResource   (KERNEL32.@)
  */
-DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
+DWORD WINAPI DECLSPEC_HOTPATCH SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
 {
     if (!hRsrc) return 0;
     return ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;
