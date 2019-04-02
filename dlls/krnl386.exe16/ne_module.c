@@ -113,34 +113,6 @@ static inline BOOL contains_path( LPCSTR name )
 
 
 /***********************************************************************
- *              NE_strcasecmp
- *
- * locale-independent case conversion for module lookups
- */
-static int NE_strcasecmp( const char *str1, const char *str2 )
-{
-    int ret = 0;
-    for ( ; ; str1++, str2++)
-        if ((ret = RtlUpperChar(*str1) - RtlUpperChar(*str2)) || !*str1) break;
-    return ret;
-}
-
-
-/***********************************************************************
- *              NE_strncasecmp
- *
- * locale-independent case conversion for module lookups
- */
-static int NE_strncasecmp( const char *str1, const char *str2, int len )
-{
-    int ret = 0;
-    for ( ; len > 0; len--, str1++, str2++)
-        if ((ret = RtlUpperChar(*str1) - RtlUpperChar(*str2)) || !*str1) break;
-    return ret;
-}
-
-
-/***********************************************************************
  *           NE_GetPtr
  */
 NE_MODULE *NE_GetPtr( HMODULE16 hModule )
@@ -1461,7 +1433,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	 * 'i' compare is just a quickfix until the loader handles that
 	 * correctly. -MM 990705
 	 */
-        if ((*name_table == len) && !NE_strncasecmp(tmpstr, (const char*)name_table+1, len))
+        if ((*name_table == len) && !_strnicmp(tmpstr, (const char*)name_table+1, len))
             return hModule;
     }
 
@@ -1500,7 +1472,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!NE_strcasecmp(loadedfn, s))
+	if (!_strnicmp(loadedfn, s, -1))
 	    return hModule;
     }
     return 0;
@@ -1820,7 +1792,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
             loadedfn--;
         }
         /* case insensitive compare ... */
-        if (!NE_strcasecmp(loadedfn, s))
+        if (!_strnicmp(loadedfn, s, -1))
             return hModule;
     }
     /* If basename (without ext) matches the module name of a module:
@@ -1837,7 +1809,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
         if (pModule->ne_flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->ne_restab;
-        if ((*name_table == len) && !NE_strncasecmp(s, (const char*)name_table+1, len))
+        if ((*name_table == len) && !_strnicmp(s, (const char*)name_table+1, len))
             return hModule;
     }
 
