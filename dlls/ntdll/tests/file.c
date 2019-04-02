@@ -4463,8 +4463,7 @@ static void test_read_write(void)
         bytes = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
-        ok(ret, "GetOverlappedResult should report TRUE\n");
-        ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+        ok(ret, "GetOverlappedResult returned FALSE with %u (expected TRUE)\n", GetLastError());
         ok(bytes == 0, "expected 0, read %u\n", bytes);
         ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
         ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
@@ -4492,8 +4491,7 @@ static void test_read_write(void)
         bytes = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         ret = GetOverlappedResult(hfile, &ovl, &bytes, TRUE);
-        ok(ret, "GetOverlappedResult should report TRUE\n");
-        ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+        ok(ret, "GetOverlappedResult returned FALSE with %u (expected TRUE)\n", GetLastError());
         ok(bytes == 0, "expected 0, read %u\n", bytes);
         ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
         ok(ovl.InternalHigh == 0, "expected 0, got %lu\n", ovl.InternalHigh);
