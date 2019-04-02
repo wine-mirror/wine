@@ -29,6 +29,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "ole2.h"
 
 #include "corerror.h"
@@ -1242,7 +1243,7 @@ static void parse_override_entry(override_entry *entry, const char *string, int 
             value = equals + 1;
             switch (key_len) {
             case 3:
-                if (!strncasecmp(string, "gac", 3)) {
+                if (!_strnicmp(string, "gac", 3)) {
                     if (IS_OPTION_TRUE(*value))
                         entry->flags |= ASSEMBLY_SEARCH_GAC;
                     else if (IS_OPTION_FALSE(*value))
