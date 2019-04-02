@@ -224,7 +224,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 	if (strchr(fun->name,'_')) {
 		char *s=strchr(fun->name,'_');
 
-		if (!strncasecmp(s,"_thunkdata",10)) {
+		if (!_strnicmp(s,"_thunkdata",10)) {
 			HeapFree(GetProcessHeap(),0,fun->name);
 			fun->name = NULL;
 			return origfun;
