@@ -23,6 +23,9 @@
 
 #include <stdarg.h>
 #include <windef.h>
+#ifndef _NTSYSTEM_
+#include <winbase.h>
+#endif
 #ifndef GUID_DEFINED
 #include <guiddef.h>
 #endif
@@ -157,6 +160,7 @@ extern int __wine_dbg_set_channel_flags( struct __wine_debug_channel *channel,
                                          unsigned char set, unsigned char clear );
 extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
                                       struct __wine_debug_functions *old_funcs, size_t size );
+extern const char * __cdecl __wine_dbg_strdup( const char *str );
 
 /*
  * Exported definitions and macros
@@ -165,13 +169,101 @@ extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_f
 /* These functions return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
-extern const char *wine_dbgstr_an( const char * s, int n );
-extern const char *wine_dbgstr_wn( const WCHAR *s, int n );
 extern const char *wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 
 extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 extern int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *ch, const char *func,
                          const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
+
+static inline const char *wine_dbgstr_an( const char *str, int n )
+{
+    static const char hex[16] = "0123456789abcdef";
+    char buffer[300], *dst = buffer;
+
+    if (!str) return "(null)";
+    if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
+#ifndef _NTSYSTEM_
+    if (IsBadStringPtrA( str, n )) return "(invalid)";
+#endif
+    if (n == -1) for (n = 0; str[n]; n++) ;
+    *dst++ = '"';
+    while (n-- > 0 && dst <= buffer + sizeof(buffer) - 9)
+    {
+        unsigned char c = *str++;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        default:
+            if (c < ' ' || c >= 127)
+            {
+                *dst++ = '\\';
+                *dst++ = 'x';
+                *dst++ = hex[(c >> 4) & 0x0f];
+                *dst++ = hex[c & 0x0f];
+            }
+            else *dst++ = c;
+        }
+    }
+    *dst++ = '"';
+    if (n > 0)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst = 0;
+    return __wine_dbg_strdup( buffer );
+}
+
+static inline const char *wine_dbgstr_wn( const WCHAR *str, int n )
+{
+    static const char hex[16] = "0123456789abcdef";
+    char buffer[300], *dst = buffer;
+
+    if (!str) return "(null)";
+    if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
+#ifndef _NTSYSTEM_
+    if (IsBadStringPtrW( str, n )) return "(invalid)";
+#endif
+    if (n == -1) for (n = 0; str[n]; n++) ;
+    *dst++ = 'L';
+    *dst++ = '"';
+    while (n-- > 0 && dst <= buffer + sizeof(buffer) - 10)
+    {
+        WCHAR c = *str++;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        default:
+            if (c < ' ' || c >= 127)
+            {
+                *dst++ = '\\';
+                *dst++ = hex[(c >> 12) & 0x0f];
+                *dst++ = hex[(c >> 8) & 0x0f];
+                *dst++ = hex[(c >> 4) & 0x0f];
+                *dst++ = hex[c & 0x0f];
+            }
+            else *dst++ = c;
+        }
+    }
+    *dst++ = '"';
+    if (n > 0)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst = 0;
+    return __wine_dbg_strdup( buffer );
+}
 
 static inline const char *wine_dbgstr_a( const char *s )
 {

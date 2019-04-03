@@ -30,6 +30,8 @@
 # include <sys/stat.h>
 #endif
 
+#define wine_dbgstr_an wine_dbgstr_an_inline
+#define wine_dbgstr_wn wine_dbgstr_wn_inline
 #include "wine/debug.h"
 #include "wine/library.h"
 
@@ -420,11 +422,13 @@ static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_ch
 
 /* wrappers to use the function pointers */
 
+#undef wine_dbgstr_an
 const char *wine_dbgstr_an( const char * s, int n )
 {
     return funcs.dbgstr_an(s, n);
 }
 
+#undef wine_dbgstr_wn
 const char *wine_dbgstr_wn( const WCHAR *s, int n )
 {
     return funcs.dbgstr_wn(s, n);

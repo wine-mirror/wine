@@ -41,8 +41,6 @@
 WINE_DECLARE_DEBUG_CHANNEL(pid);
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 
-static struct __wine_debug_functions default_funcs;
-
 static BOOL init_done;
 static struct debug_info initial_info;  /* debug info for initial thread */
 
@@ -77,49 +75,17 @@ static void release_temp_buffer( char *ptr, size_t size )
 }
 
 /***********************************************************************
- *		NTDLL_dbgstr_an
+ *		__wine_dbg_strdup  (NTDLL.@)
  */
-static const char *NTDLL_dbgstr_an( const char *src, int n )
+const char * __cdecl __wine_dbg_strdup( const char *str )
 {
-    const char *res;
     struct debug_info *info = get_info();
-    /* save current position to restore it on exception */
-    char *old_pos = info->str_pos;
+    char *res = info->str_pos;
+    size_t n = strlen( str ) + 1;
 
-    __TRY
-    {
-        res = default_funcs.dbgstr_an( src, n );
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        release_temp_buffer( old_pos, 0 );
-        return "(invalid)";
-    }
-    __ENDTRY
-    return res;
-}
-
-/***********************************************************************
- *		NTDLL_dbgstr_wn
- */
-static const char *NTDLL_dbgstr_wn( const WCHAR *src, int n )
-{
-    const char *res;
-    struct debug_info *info = get_info();
-    /* save current position to restore it on exception */
-    char *old_pos = info->str_pos;
-
-    __TRY
-    {
-        res = default_funcs.dbgstr_wn( src, n );
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        release_temp_buffer( old_pos, 0 );
-        return "(invalid)";
-    }
-    __ENDTRY
-     return res;
+    if (res + n > &info->strings[sizeof(info->strings)]) res = info->strings;
+    info->str_pos = res + n;
+    return strcpy( res, str );
 }
 
 /***********************************************************************
@@ -195,8 +161,8 @@ static const struct __wine_debug_functions funcs =
 {
     get_temp_buffer,
     release_temp_buffer,
-    NTDLL_dbgstr_an,
-    NTDLL_dbgstr_wn,
+    wine_dbgstr_an,
+    wine_dbgstr_wn,
     NTDLL_dbg_vprintf,
     NTDLL_dbg_vlog
 };
@@ -210,5 +176,5 @@ void debug_init(void)
     if (!initial_info.out_pos) initial_info.out_pos = initial_info.output;
     ntdll_get_thread_data()->debug_info = &initial_info;
     init_done = TRUE;
-    __wine_dbg_set_functions( &funcs, &default_funcs, sizeof(funcs) );
+    __wine_dbg_set_functions( &funcs, NULL, sizeof(funcs) );
 }

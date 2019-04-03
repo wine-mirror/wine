@@ -1505,6 +1505,9 @@
 @ cdecl wine_server_send_fd(long)
 @ cdecl __wine_make_process_system()
 
+# Debugging
+@ cdecl -norelay __wine_dbg_strdup(str)
+
 # Virtual memory
 @ cdecl __wine_locked_recvmsg(long ptr long)
 
