@@ -45,8 +45,6 @@
 #include "wine/library.h"
 #include "wine/list.h"
 
-#ifdef HAVE_MMAP
-
 struct reserved_area
 {
     struct list entry;
@@ -684,11 +682,3 @@ int wine_mmap_enum_reserved_areas( int (*enum_func)(void *base, size_t size, voi
     }
     return ret;
 }
-
-#else /* HAVE_MMAP */
-
-void mmap_init(void)
-{
-}
-
-#endif

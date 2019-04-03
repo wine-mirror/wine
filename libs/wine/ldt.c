@@ -33,7 +33,7 @@
 #include "winbase.h"
 #include "wine/library.h"
 
-#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
+#ifdef __i386__
 
 #ifdef __linux__
 

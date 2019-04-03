@@ -246,11 +246,9 @@ static void init_server_dir( dev_t dev, ino_t ino )
 
 #ifdef __ANDROID__  /* there's no /tmp dir on Android */
     root = build_path( config_dir, ".wineserver" );
-#elif defined(HAVE_GETUID)
+#else
     root = xmalloc( sizeof(server_root_prefix) + 12 );
     sprintf( root, "%s-%u", server_root_prefix, getuid() );
-#else
-    root = xstrdup( server_root_prefix );
 #endif
 
     server_dir = xmalloc( strlen(root) + sizeof(server_dir_prefix) + 2*sizeof(dev) + 2*sizeof(ino) + 2 );
@@ -285,8 +283,6 @@ static void init_paths(void)
     const char *home = getenv( "HOME" );
     const char *user = NULL;
     const char *prefix = getenv( "WINEPREFIX" );
-
-#ifdef HAVE_GETPWUID
     char uid_str[32];
     struct passwd *pwd = getpwuid( getuid() );
 
@@ -300,10 +296,6 @@ static void init_paths(void)
         sprintf( uid_str, "%lu", (unsigned long)getuid() );
         user = uid_str;
     }
-#else  /* HAVE_GETPWUID */
-    if (!(user = getenv( "USER" )))
-        fatal_error( "cannot determine your user name, set the USER environment variable\n" );
-#endif  /* HAVE_GETPWUID */
     user_name = xstrdup( user );
 
     /* build config_dir */
@@ -335,10 +327,7 @@ static void init_paths(void)
         }
     }
     if (!S_ISDIR(st.st_mode)) fatal_error( "%s is not a directory\n", config_dir );
-#ifdef HAVE_GETUID
     if (st.st_uid != getuid()) fatal_error( "%s is not owned by you\n", config_dir );
-#endif
-
     init_server_dir( st.st_dev, st.st_ino );
 }
 
