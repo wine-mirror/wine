@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbgeng);
 struct debug_client
 {
     IDebugClient IDebugClient_iface;
+    IDebugDataSpaces IDebugDataSpaces_iface;
     LONG refcount;
 };
 
@@ -45,21 +46,35 @@ static struct debug_client *impl_from_IDebugClient(IDebugClient *iface)
     return CONTAINING_RECORD(iface, struct debug_client, IDebugClient_iface);
 }
 
+static struct debug_client *impl_from_IDebugDataSpaces(IDebugDataSpaces *iface)
+{
+    return CONTAINING_RECORD(iface, struct debug_client, IDebugDataSpaces_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE debugclient_QueryInterface(IDebugClient *iface, REFIID riid, void **obj)
 {
+    struct debug_client *debug_client = impl_from_IDebugClient(iface);
+
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IDebugClient) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        iface->lpVtbl->AddRef(iface);
-        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IDebugDataSpaces))
+    {
+        *obj = &debug_client->IDebugDataSpaces_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
-    *obj = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
 }
 
 static ULONG STDMETHODCALLTYPE debugclient_AddRef(IDebugClient *iface)
@@ -467,6 +482,216 @@ static const IDebugClientVtbl debugclientvtbl =
     debugclient_FlushCallbacks,
 };
 
+static HRESULT STDMETHODCALLTYPE debugdataspaces_QueryInterface(IDebugDataSpaces *iface, REFIID riid, void **obj)
+{
+    struct debug_client *debug_client = impl_from_IDebugDataSpaces(iface);
+    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
+    return IUnknown_QueryInterface(unk, riid, obj);
+}
+
+static ULONG STDMETHODCALLTYPE debugdataspaces_AddRef(IDebugDataSpaces *iface)
+{
+    struct debug_client *debug_client = impl_from_IDebugDataSpaces(iface);
+    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
+    return IUnknown_AddRef(unk);
+}
+
+static ULONG STDMETHODCALLTYPE debugdataspaces_Release(IDebugDataSpaces *iface)
+{
+    struct debug_client *debug_client = impl_from_IDebugDataSpaces(iface);
+    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
+    return IUnknown_Release(unk);
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadVirtual(IDebugDataSpaces *iface, ULONG64 offset, void *buffer,
+        ULONG buffer_size, ULONG *read_len)
+{
+    FIXME("%p, %s, %p, %u, %p stub.\n", iface, wine_dbgstr_longlong(offset), buffer, buffer_size, read_len);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_WriteVirtual(IDebugDataSpaces *iface, ULONG64 offset, void *buffer,
+        ULONG buffer_size, ULONG *written)
+{
+    FIXME("%p, %s, %p, %u, %p stub.\n", iface, wine_dbgstr_longlong(offset), buffer, buffer_size, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_SearchVirtual(IDebugDataSpaces *iface, ULONG64 offset, ULONG64 length,
+        void *pattern, ULONG pattern_size, ULONG pattern_granularity, ULONG64 *ret_offset)
+{
+    FIXME("%p, %s, %s, %p, %u, %u, %p stub.\n", iface, wine_dbgstr_longlong(offset), wine_dbgstr_longlong(length),
+            pattern, pattern_size, pattern_granularity, ret_offset);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadVirtualUncached(IDebugDataSpaces *iface, ULONG64 offset,
+        void *buffer, ULONG buffer_size, ULONG *read_len)
+{
+    FIXME("%p, %s, %p, %u, %p stub.\n", iface, wine_dbgstr_longlong(offset), buffer, buffer_size, read_len);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_WriteVirtualUncached(IDebugDataSpaces *iface, ULONG64 offset,
+        void *buffer, ULONG buffer_size, ULONG *written)
+{
+    FIXME("%p, %s, %p, %u, %p stub.\n", iface, wine_dbgstr_longlong(offset), buffer, buffer_size, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadPointersVirtual(IDebugDataSpaces *iface, ULONG count,
+        ULONG64 offset, ULONG64 *pointers)
+{
+    FIXME("%p, %u, %s, %p stub.\n", iface, count, wine_dbgstr_longlong(offset), pointers);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_WritePointersVirtual(IDebugDataSpaces *iface, ULONG count,
+        ULONG64 offset, ULONG64 *pointers)
+{
+    FIXME("%p, %u, %s, %p stub.\n", iface, count, wine_dbgstr_longlong(offset), pointers);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadPhysical(IDebugDataSpaces *iface, ULONG64 offset, void *buffer,
+        ULONG buffer_size, ULONG *read_len)
+{
+    FIXME("%p, %s, %p, %u, %p stub.\n", iface, wine_dbgstr_longlong(offset), buffer, buffer_size, read_len);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_WritePhysical(IDebugDataSpaces *iface, ULONG64 offset, void *buffer,
+        ULONG buffer_size, ULONG *written)
+{
+    FIXME("%p, %s, %p, %u, %p stub.\n", iface, wine_dbgstr_longlong(offset), buffer, buffer_size, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadControl(IDebugDataSpaces *iface, ULONG processor, ULONG64 offset,
+        void *buffer, ULONG buffer_size, ULONG *read_len)
+{
+    FIXME("%p, %u, %s, %p, %u, %p stub.\n", iface, processor, wine_dbgstr_longlong(offset), buffer, buffer_size, read_len);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_WriteControl(IDebugDataSpaces *iface, ULONG processor, ULONG64 offset,
+        void *buffer, ULONG buffer_size, ULONG *written)
+{
+    FIXME("%p, %u, %s, %p, %u, %p stub.\n", iface, processor, wine_dbgstr_longlong(offset), buffer, buffer_size, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadIo(IDebugDataSpaces *iface, ULONG type, ULONG bus_number,
+        ULONG address_space, ULONG64 offset, void *buffer, ULONG buffer_size, ULONG *read_len)
+{
+    FIXME("%p, %u, %u, %u, %s, %p, %u, %p stub.\n", iface, type, bus_number, address_space, wine_dbgstr_longlong(offset),
+            buffer, buffer_size, read_len);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_WriteIo(IDebugDataSpaces *iface, ULONG type, ULONG bus_number,
+        ULONG address_space, ULONG64 offset, void *buffer, ULONG buffer_size, ULONG *written)
+{
+    FIXME("%p, %u, %u, %u, %s, %p, %u, %p stub.\n", iface, type, bus_number, address_space, wine_dbgstr_longlong(offset),
+            buffer, buffer_size, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadMsr(IDebugDataSpaces *iface, ULONG msr, ULONG64 *value)
+{
+    FIXME("%p, %u, %p stub.\n", iface, msr, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_WriteMsr(IDebugDataSpaces *iface, ULONG msr, ULONG64 value)
+{
+    FIXME("%p, %u, %s stub.\n", iface, msr, wine_dbgstr_longlong(value));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadBusData(IDebugDataSpaces *iface, ULONG data_type,
+        ULONG bus_number, ULONG slot_number, ULONG offset, void *buffer, ULONG buffer_size, ULONG *read_len)
+{
+    FIXME("%p, %u, %u, %u, %u, %p, %u, %p stub.\n", iface, data_type, bus_number, slot_number, offset, buffer,
+            buffer_size, read_len);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_WriteBusData(IDebugDataSpaces *iface, ULONG data_type,
+        ULONG bus_number, ULONG slot_number, ULONG offset, void *buffer, ULONG buffer_size, ULONG *written)
+{
+    FIXME("%p, %u, %u, %u, %u, %p, %u, %p stub.\n", iface, data_type, bus_number, slot_number, offset, buffer,
+            buffer_size, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_CheckLowMemory(IDebugDataSpaces *iface)
+{
+    FIXME("%p stub.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadDebuggerData(IDebugDataSpaces *iface, ULONG index, void *buffer,
+        ULONG buffer_size, ULONG *data_size)
+{
+    FIXME("%p, %u, %p, %u, %p stub.\n", iface, index, buffer, buffer_size, data_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadProcessorSystemData(IDebugDataSpaces *iface, ULONG processor,
+        ULONG index, void *buffer, ULONG buffer_size, ULONG *data_size)
+{
+    FIXME("%p, %u, %u, %p, %u, %p stub.\n", iface, processor, index, buffer, buffer_size, data_size);
+
+    return E_NOTIMPL;
+}
+
+static const IDebugDataSpacesVtbl debugdataspacesvtbl =
+{
+    debugdataspaces_QueryInterface,
+    debugdataspaces_AddRef,
+    debugdataspaces_Release,
+    debugdataspaces_ReadVirtual,
+    debugdataspaces_WriteVirtual,
+    debugdataspaces_SearchVirtual,
+    debugdataspaces_ReadVirtualUncached,
+    debugdataspaces_WriteVirtualUncached,
+    debugdataspaces_ReadPointersVirtual,
+    debugdataspaces_WritePointersVirtual,
+    debugdataspaces_ReadPhysical,
+    debugdataspaces_WritePhysical,
+    debugdataspaces_ReadControl,
+    debugdataspaces_WriteControl,
+    debugdataspaces_ReadIo,
+    debugdataspaces_WriteIo,
+    debugdataspaces_ReadMsr,
+    debugdataspaces_WriteMsr,
+    debugdataspaces_ReadBusData,
+    debugdataspaces_WriteBusData,
+    debugdataspaces_CheckLowMemory,
+    debugdataspaces_ReadDebuggerData,
+    debugdataspaces_ReadProcessorSystemData,
+};
+
 /************************************************************
 *                    DebugExtensionInitialize   (DBGENG.@)
 *
@@ -508,6 +733,7 @@ HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
         return E_OUTOFMEMORY;
 
     debug_client->IDebugClient_iface.lpVtbl = &debugclientvtbl;
+    debug_client->IDebugDataSpaces_iface.lpVtbl = &debugdataspacesvtbl;
     debug_client->refcount = 1;
 
     unk = (IUnknown *)&debug_client->IDebugClient_iface;
