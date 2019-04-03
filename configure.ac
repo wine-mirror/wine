@@ -33,8 +33,7 @@ AC_ARG_ENABLE(win64, AS_HELP_STRING([--enable-win64],[build a Win64 emulator on 
 AC_ARG_ENABLE(tests, AS_HELP_STRING([--disable-tests],[do not build the regression tests]))
 AC_ARG_ENABLE(maintainer-mode, AS_HELP_STRING([--enable-maintainer-mode],[enable maintainer-specific build rules]))
 
-AC_ARG_WITH(alsa,      AS_HELP_STRING([--without-alsa],[do not use the Alsa sound support]),
-            [if test "x$withval" = "xno"; then ac_cv_header_sys_asoundlib_h=no; ac_cv_header_alsa_asoundlib_h=no; fi])
+AC_ARG_WITH(alsa,      AS_HELP_STRING([--without-alsa],[do not use the Alsa sound support]))
 AC_ARG_WITH(capi,      AS_HELP_STRING([--without-capi],[do not use CAPI (ISDN support)]))
 AC_ARG_WITH(cms,       AS_HELP_STRING([--without-cms],[do not use CMS (color management support)]))
 AC_ARG_WITH(coreaudio, AS_HELP_STRING([--without-coreaudio],[do not use the CoreAudio sound support]),
@@ -427,7 +426,6 @@ AC_CHECK_HEADERS(\
 	QuickTime/ImageCompression.h \
 	Security/Security.h \
 	alias.h \
-	alsa/asoundlib.h \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
@@ -488,7 +486,6 @@ AC_CHECK_HEADERS(\
 	stdbool.h \
 	stdint.h \
 	stropts.h \
-	sys/asoundlib.h \
 	sys/attr.h \
 	sys/auxv.h \
 	sys/cdio.h \
@@ -1490,11 +1487,7 @@ fi
 
 dnl **** Check for pthread functions ****
 WINE_CHECK_LIB_FUNCS(\
-        pthread_attr_get_np \
-        pthread_getattr_np \
         pthread_getthreadid_np \
-        pthread_get_stackaddr_np \
-        pthread_get_stacksize_np,
         [$PTHREAD_LIBS])
 
 dnl **** Check for zlib ****
@@ -1561,14 +1554,10 @@ test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes || enable_winegstreamer=${en
 
 dnl **** Check for ALSA 1.x ****
 AC_SUBST(ALSA_LIBS,"")
-if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
+if test "x$with_alsa" != "xno"
 then
     AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access_mask,
-        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_ALSA_ASOUNDLIB_H
-#include <alsa/asoundlib.h>
-#elif defined(HAVE_SYS_ASOUNDLIB_H)
-#include <sys/asoundlib.h>
-#endif]], [[snd_pcm_hw_params_get_access_mask(NULL, NULL)]])],
+        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <alsa/asoundlib.h>]], [[snd_pcm_hw_params_get_access_mask(NULL, NULL)]])],
                         [ALSA_LIBS="-lasound"])])
 fi
 test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
@@ -2121,7 +2110,6 @@ AC_CHECK_FUNCS(\
         __res_get_state \
         __res_getservers \
 	_spawnvp \
-	asctime_r \
 	dlopen \
 	epoll_create \
 	ffs \
@@ -2138,11 +2126,8 @@ AC_CHECK_FUNCS(\
 	getauxval \
 	getifaddrs \
 	getopt_long_only \
-	getpwuid \
-	getuid \
 	kqueue \
 	lstat \
-	mmap \
 	pipe2 \
 	poll \
 	port_create \
@@ -2156,9 +2141,7 @@ AC_CHECK_FUNCS(\
 	select \
 	setproctitle \
 	setprogname \
-	setrlimit \
 	settimeofday \
-	sigaltstack \
 	sigprocmask \
 	statfs \
 	statvfs \
@@ -2207,8 +2190,6 @@ AC_CHECK_FUNCS(\
 	inet_network \
 	inet_ntop \
 	inet_pton \
-	sendmsg \
-	socketpair \
 )
 
 dnl Check for clock_gettime which may be in -lrt
@@ -2626,20 +2607,6 @@ AC_CHECK_MEMBERS([struct ifreq.ifr_hwaddr],,,
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif])
-
-dnl Check for the external timezone variables timezone and daylight
-AC_CACHE_CHECK([for timezone variable], ac_cv_have_timezone,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[timezone = 1]])],[ac_cv_have_timezone="yes"],[ac_cv_have_timezone="no"]))
-if test "$ac_cv_have_timezone" = "yes"
-then
-    AC_DEFINE(HAVE_TIMEZONE, 1, [Define if you have the timezone variable])
-fi
-AC_CACHE_CHECK([for daylight variable], ac_cv_have_daylight,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[daylight = 1]])],[ac_cv_have_daylight="yes"],[ac_cv_have_daylight="no"]))
-if test "$ac_cv_have_daylight" = "yes"
-then
-    AC_DEFINE(HAVE_DAYLIGHT, 1, [Define if you have the daylight variable])
-fi
 
 dnl Check for isfinite
 ac_save_LIBS="$LIBS"

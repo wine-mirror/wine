@@ -19,9 +19,6 @@
 /* Define to 1 if you have the <alias.h> header file. */
 #undef HAVE_ALIAS_H
 
-/* Define to 1 if you have the <alsa/asoundlib.h> header file. */
-#undef HAVE_ALSA_ASOUNDLIB_H
-
 /* Define to 1 if you have the <AL/al.h> header file. */
 #undef HAVE_AL_AL_H
 
@@ -34,9 +31,6 @@
 
 /* Define to 1 if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
-
-/* Define to 1 if you have the `asctime_r' function. */
-#undef HAVE_ASCTIME_R
 
 /* Define to 1 if you have the `asinh' function. */
 #undef HAVE_ASINH
@@ -103,9 +97,6 @@
 
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
-
-/* Define if you have the daylight variable */
-#undef HAVE_DAYLIGHT
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
@@ -246,17 +237,11 @@
 /* Define to 1 if you have the `getprotobynumber' function. */
 #undef HAVE_GETPROTOBYNUMBER
 
-/* Define to 1 if you have the `getpwuid' function. */
-#undef HAVE_GETPWUID
-
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 
 /* Define to 1 if you have the <gettext-po.h> header file. */
 #undef HAVE_GETTEXT_PO_H
-
-/* Define to 1 if you have the `getuid' function. */
-#undef HAVE_GETUID
 
 /* Define to 1 if you have the `gnutls_cipher_init' function. */
 #undef HAVE_GNUTLS_CIPHER_INIT
@@ -591,9 +576,6 @@
 /* Define to 1 if you have the <Metal/Metal.h> header file. */
 #undef HAVE_METAL_METAL_H
 
-/* Define to 1 if you have the `mmap' function. */
-#undef HAVE_MMAP
-
 /* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
 
@@ -735,20 +717,8 @@
 /* Define to 1 if you have the `proc_pidinfo' function. */
 #undef HAVE_PROC_PIDINFO
 
-/* Define to 1 if you have the `pthread_attr_get_np' function. */
-#undef HAVE_PTHREAD_ATTR_GET_NP
-
-/* Define to 1 if you have the `pthread_getattr_np' function. */
-#undef HAVE_PTHREAD_GETATTR_NP
-
 /* Define to 1 if you have the `pthread_getthreadid_np' function. */
 #undef HAVE_PTHREAD_GETTHREADID_NP
-
-/* Define to 1 if you have the `pthread_get_stackaddr_np' function. */
-#undef HAVE_PTHREAD_GET_STACKADDR_NP
-
-/* Define to 1 if you have the `pthread_get_stacksize_np' function. */
-#undef HAVE_PTHREAD_GET_STACKSIZE_NP
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
@@ -831,17 +801,11 @@
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
 
-/* Define to 1 if you have the `sendmsg' function. */
-#undef HAVE_SENDMSG
-
 /* Define to 1 if you have the `setproctitle' function. */
 #undef HAVE_SETPROCTITLE
 
 /* Define to 1 if you have the `setprogname' function. */
 #undef HAVE_SETPROGNAME
-
-/* Define to 1 if you have the `setrlimit' function. */
-#undef HAVE_SETRLIMIT
 
 /* Define to 1 if you have the `settimeofday' function. */
 #undef HAVE_SETTIMEOFDAY
@@ -852,9 +816,6 @@
 /* Define if sigaddset is supported */
 #undef HAVE_SIGADDSET
 
-/* Define to 1 if you have the `sigaltstack' function. */
-#undef HAVE_SIGALTSTACK
-
 /* Define to 1 if `si_fd' is a member of `siginfo_t'. */
 #undef HAVE_SIGINFO_T_SI_FD
 
@@ -863,9 +824,6 @@
 
 /* Define to 1 if the system has the type `sigset_t'. */
 #undef HAVE_SIGSET_T
-
-/* Define to 1 if you have the `socketpair' function. */
-#undef HAVE_SOCKETPAIR
 
 /* Define to 1 if you have the `SSLCopyPeerCertificates' function. */
 #undef HAVE_SSLCOPYPEERCERTIFICATES
@@ -1034,9 +992,6 @@
 
 /* Define to 1 if you have the `sysinfo' function. */
 #undef HAVE_SYSINFO
-
-/* Define to 1 if you have the <sys/asoundlib.h> header file. */
-#undef HAVE_SYS_ASOUNDLIB_H
 
 /* Define to 1 if you have the <sys/attr.h> header file. */
 #undef HAVE_SYS_ATTR_H
@@ -1208,9 +1163,6 @@
 
 /* Define to 1 if you have the `timegm' function. */
 #undef HAVE_TIMEGM
-
-/* Define if you have the timezone variable */
-#undef HAVE_TIMEZONE
 
 /* Define to 1 if you have the `trunc' function. */
 #undef HAVE_TRUNC
