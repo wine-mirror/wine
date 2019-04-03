@@ -1427,6 +1427,214 @@ static void register_parent_class(void)
     RegisterClassA(&cls);
 }
 
+static void test_bcm_splitinfo(HWND hwnd)
+{
+    UINT button = GetWindowLongA(hwnd, GWL_STYLE) & BS_TYPEMASK;
+    int glyph_size = GetSystemMetrics(SM_CYMENUCHECK);
+    int border_w = GetSystemMetrics(SM_CXEDGE) * 2;
+    BUTTON_SPLITINFO info, dummy;
+    HIMAGELIST img;
+    BOOL ret;
+
+    memset(&info, 0xCC, sizeof(info));
+    info.mask = 0;
+    memcpy(&dummy, &info, sizeof(info));
+
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    if (ret != TRUE)
+    {
+        static BOOL once;
+        if (!once)
+            win_skip("BCM_GETSPLITINFO message is unavailable. Skipping related tests\n");  /* Pre-Vista */
+        once = TRUE;
+        return;
+    }
+    ok(!memcmp(&info, &dummy, sizeof(info)), "[%u] split info struct was changed with mask = 0\n", button);
+
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, 0);
+    ok(ret == FALSE, "[%u] expected FALSE, got %d\n", button, ret);
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, 0);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+
+    info.mask = BCSIF_GLYPH | BCSIF_SIZE | BCSIF_STYLE;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_GLYPH | BCSIF_SIZE | BCSIF_STYLE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == (HIMAGELIST)0x36, "[%u] expected 0x36 default glyph, got 0x%p\n", button, info.himlGlyph);
+    ok(info.uSplitStyle == BCSS_STRETCH, "[%u] expected 0x%08x default style, got 0x%08x\n", button, BCSS_STRETCH, info.uSplitStyle);
+    ok(info.size.cx == glyph_size, "[%u] expected %d default size.cx, got %d\n", button, glyph_size, info.size.cx);
+    ok(info.size.cy == 0, "[%u] expected 0 default size.cy, got %d\n", button, info.size.cy);
+
+    info.mask = BCSIF_SIZE;
+    info.size.cx = glyph_size + 7;
+    info.size.cy = 0;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.size.cx = info.size.cy = 0xdeadbeef;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == BCSIF_SIZE, "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.size.cx == glyph_size + 7, "[%u] expected %d, got %d\n", button, glyph_size + 7, info.size.cx);
+    ok(info.size.cy == 0, "[%u] expected 0, got %d\n", button, info.size.cy);
+
+    /* Invalid size.cx resets it to default glyph size, while size.cy is stored */
+    info.size.cx = 0;
+    info.size.cy = -20;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.size.cx = info.size.cy = 0xdeadbeef;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == BCSIF_SIZE, "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.size.cx == glyph_size, "[%u] expected %d, got %d\n", button, glyph_size, info.size.cx);
+    ok(info.size.cy == -20, "[%u] expected -20, got %d\n", button, info.size.cy);
+
+    info.size.cx = -glyph_size - 7;
+    info.size.cy = -10;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.size.cx = info.size.cy = 0xdeadbeef;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == BCSIF_SIZE, "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.size.cx == glyph_size, "[%u] expected %d, got %d\n", button, glyph_size, info.size.cx);
+    ok(info.size.cy == -10, "[%u] expected -10, got %d\n", button, info.size.cy);
+
+    /* Set to a valid size other than glyph_size */
+    info.mask = BCSIF_SIZE;
+    info.size.cx = glyph_size + 7;
+    info.size.cy = 11;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.size.cx = info.size.cy = 0xdeadbeef;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == BCSIF_SIZE, "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.size.cx == glyph_size + 7, "[%u] expected %d, got %d\n", button, glyph_size + 7, info.size.cx);
+    ok(info.size.cy == 11, "[%u] expected 11, got %d\n", button, info.size.cy);
+
+    /* Change the glyph, size.cx should be automatically adjusted and size.cy set to 0 */
+    dummy.mask = BCSIF_GLYPH;
+    dummy.himlGlyph = (HIMAGELIST)0x35;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&dummy);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.mask = BCSIF_GLYPH | BCSIF_SIZE;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_GLYPH | BCSIF_SIZE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == (HIMAGELIST)0x35, "[%u] expected 0x35, got %p\n", button, info.himlGlyph);
+    ok(info.size.cx == glyph_size, "[%u] expected %d, got %d\n", button, glyph_size, info.size.cx);
+    ok(info.size.cy == 0, "[%u] expected 0, got %d\n", button, info.size.cy);
+
+    /* Unless the size is specified manually */
+    dummy.mask = BCSIF_GLYPH | BCSIF_SIZE;
+    dummy.himlGlyph = (HIMAGELIST)0x34;
+    dummy.size.cx = glyph_size + 11;
+    dummy.size.cy = 7;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&dummy);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_GLYPH | BCSIF_SIZE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == (HIMAGELIST)0x34, "[%u] expected 0x34, got %p\n", button, info.himlGlyph);
+    ok(info.size.cx == glyph_size + 11, "[%u] expected %d, got %d\n", button, glyph_size, info.size.cx);
+    ok(info.size.cy == 7, "[%u] expected 7, got %d\n", button, info.size.cy);
+
+    /* Add the BCSS_IMAGE style manually with the wrong BCSIF_GLYPH mask, should treat it as invalid image */
+    info.mask = BCSIF_GLYPH | BCSIF_STYLE;
+    info.himlGlyph = (HIMAGELIST)0x37;
+    info.uSplitStyle = BCSS_IMAGE;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.mask |= BCSIF_SIZE;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_GLYPH | BCSIF_STYLE | BCSIF_SIZE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == (HIMAGELIST)0x37, "[%u] expected 0x37, got %p\n", button, info.himlGlyph);
+    ok(info.uSplitStyle == BCSS_IMAGE, "[%u] expected 0x%08x style, got 0x%08x\n", button, BCSS_IMAGE, info.uSplitStyle);
+    ok(info.size.cx == border_w, "[%u] expected %d, got %d\n", button, border_w, info.size.cx);
+    ok(info.size.cy == 0, "[%u] expected 0, got %d\n", button, info.size.cy);
+
+    /* Change the size to prevent ambiguity */
+    dummy.mask = BCSIF_SIZE;
+    dummy.size.cx = glyph_size + 5;
+    dummy.size.cy = 4;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&dummy);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_GLYPH | BCSIF_STYLE | BCSIF_SIZE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == (HIMAGELIST)0x37, "[%u] expected 0x37, got %p\n", button, info.himlGlyph);
+    ok(info.uSplitStyle == BCSS_IMAGE, "[%u] expected 0x%08x style, got 0x%08x\n", button, BCSS_IMAGE, info.uSplitStyle);
+    ok(info.size.cx == glyph_size + 5, "[%u] expected %d, got %d\n", button, glyph_size + 5, info.size.cx);
+    ok(info.size.cy == 4, "[%u] expected 4, got %d\n", button, info.size.cy);
+
+    /* Now remove the BCSS_IMAGE style manually with the wrong BCSIF_IMAGE mask */
+    info.mask = BCSIF_IMAGE | BCSIF_STYLE;
+    info.himlGlyph = (HIMAGELIST)0x35;
+    info.uSplitStyle = BCSS_STRETCH;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.mask |= BCSIF_SIZE;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_IMAGE | BCSIF_STYLE | BCSIF_SIZE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == (HIMAGELIST)0x35, "[%u] expected 0x35, got %p\n", button, info.himlGlyph);
+    ok(info.uSplitStyle == BCSS_STRETCH, "[%u] expected 0x%08x style, got 0x%08x\n", button, BCSS_STRETCH, info.uSplitStyle);
+    ok(info.size.cx == glyph_size, "[%u] expected %d, got %d\n", button, glyph_size, info.size.cx);
+    ok(info.size.cy == 0, "[%u] expected 0, got %d\n", button, info.size.cy);
+
+    /* Add a proper valid image, the BCSS_IMAGE style should be set automatically */
+    img = pImageList_Create(42, 33, ILC_COLOR, 1, 1);
+    ok(img != NULL, "[%u] failed to create ImageList\n", button);
+    info.mask = BCSIF_IMAGE;
+    info.himlGlyph = img;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.mask |= BCSIF_STYLE | BCSIF_SIZE;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_IMAGE | BCSIF_STYLE | BCSIF_SIZE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == img, "[%u] expected %p, got %p\n", button, img, info.himlGlyph);
+    ok(info.uSplitStyle == (BCSS_IMAGE | BCSS_STRETCH), "[%u] expected 0x%08x style, got 0x%08x\n", button, BCSS_IMAGE | BCSS_STRETCH, info.uSplitStyle);
+    ok(info.size.cx == 42 + border_w, "[%u] expected %d, got %d\n", button, 42 + border_w, info.size.cx);
+    ok(info.size.cy == 0, "[%u] expected 0, got %d\n", button, info.size.cy);
+    pImageList_Destroy(img);
+    dummy.mask = BCSIF_SIZE;
+    dummy.size.cx = glyph_size + 5;
+    dummy.size.cy = 4;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&dummy);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+
+    /* Change it to a glyph; when both specified, BCSIF_GLYPH takes priority */
+    info.mask = BCSIF_GLYPH | BCSIF_IMAGE;
+    info.himlGlyph = (HIMAGELIST)0x37;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.mask |= BCSIF_STYLE | BCSIF_SIZE;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_GLYPH | BCSIF_IMAGE | BCSIF_STYLE | BCSIF_SIZE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == (HIMAGELIST)0x37, "[%u] expected 0x37, got %p\n", button, info.himlGlyph);
+    ok(info.uSplitStyle == BCSS_STRETCH, "[%u] expected 0x%08x style, got 0x%08x\n", button, BCSS_STRETCH, info.uSplitStyle);
+    ok(info.size.cx == glyph_size, "[%u] expected %d, got %d\n", button, glyph_size, info.size.cx);
+    ok(info.size.cy == 0, "[%u] expected 0, got %d\n", button, info.size.cy);
+
+    /* Try a NULL image */
+    info.mask = BCSIF_IMAGE;
+    info.himlGlyph = NULL;
+    ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    info.mask |= BCSIF_STYLE | BCSIF_SIZE;
+    ret = SendMessageA(hwnd, BCM_GETSPLITINFO, 0, (LPARAM)&info);
+    ok(ret == TRUE, "[%u] expected TRUE, got %d\n", button, ret);
+    ok(info.mask == (BCSIF_IMAGE | BCSIF_STYLE | BCSIF_SIZE), "[%u] wrong mask, got %u\n", button, info.mask);
+    ok(info.himlGlyph == NULL, "[%u] expected NULL, got %p\n", button, info.himlGlyph);
+    ok(info.uSplitStyle == (BCSS_IMAGE | BCSS_STRETCH), "[%u] expected 0x%08x style, got 0x%08x\n", button, BCSS_IMAGE | BCSS_STRETCH, info.uSplitStyle);
+    ok(info.size.cx == border_w, "[%u] expected %d, got %d\n", button, border_w, info.size.cx);
+    ok(info.size.cy == 0, "[%u] expected 0, got %d\n", button, info.size.cy);
+}
+
 static void test_button_data(void)
 {
     static const DWORD styles[] =
@@ -1478,6 +1686,9 @@ static void test_button_data(void)
             ok(desc->parent == parent, "Unexpected 'parent' field.\n");
             ok(desc->style == (WS_CHILD | BS_NOTIFY | styles[i]), "Unexpected 'style' field.\n");
         }
+
+        /* Data set and retrieved by these messages is valid for all buttons */
+        test_bcm_splitinfo(hwnd);
 
         DestroyWindow(hwnd);
     }
