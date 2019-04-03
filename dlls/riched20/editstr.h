@@ -442,6 +442,8 @@ typedef struct tagME_TextEditor
   /* Cache previously set scrollbar info */
   SCROLLINFO vert_si, horz_si;
 
+  int caret_height;
+  BOOL caret_hidden;
   BOOL bMouseCaptured;
   int wheel_remain;
   struct list style_list;

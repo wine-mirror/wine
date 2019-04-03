@@ -43,7 +43,6 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
 
   ME_InitContext(&c, editor, hDC);
   SetBkMode(hDC, TRANSPARENT);
-  ME_MoveCaret(editor);
   item = editor->pBuffer->pFirst->next;
   /* This context point is an offset for the paragraph positions stored
    * during wrapping. It shouldn't be modified during painting. */

@@ -1802,9 +1802,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   if (!(format & SFF_SELECTION)) {
     ME_ClearTempStyle(editor);
   }
-  ITextHost_TxShowCaret(editor->texthost, FALSE);
-  ME_MoveCaret(editor);
-  ITextHost_TxShowCaret(editor->texthost, TRUE);
+  update_caret(editor);
   ME_SendSelChange(editor);
   ME_SendRequestResize(editor, FALSE);
 
@@ -2158,8 +2156,7 @@ static int handle_EM_EXSETSEL( ME_TextEditor *editor, int to, int from )
     ME_InvalidateSelection( editor );
     end = ME_SetSelection( editor, to, from );
     ME_InvalidateSelection( editor );
-    ITextHost_TxShowCaret( editor->texthost, FALSE );
-    ME_ShowCaret( editor );
+    update_caret( editor );
     ME_SendSelChange( editor );
 
     return end;
@@ -3118,6 +3115,8 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->bHaveFocus = FALSE;
   ed->bDialogMode = FALSE;
   ed->bMouseCaptured = FALSE;
+  ed->caret_hidden = FALSE;
+  ed->caret_height = 0;
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
     ed->pFontCache[i].nRefs = 0;
@@ -3529,7 +3528,7 @@ static LRESULT ME_WmCreate(ME_TextEditor *editor, LPARAM lParam, BOOL unicode)
 
   ME_CommitUndo(editor);
   ME_WrapMarkedParagraphs(editor);
-  ME_MoveCaret(editor);
+  update_caret(editor);
   return 0;
 }
 
@@ -4511,7 +4510,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     break;
   case WM_SETFOCUS:
     editor->bHaveFocus = TRUE;
-    ME_ShowCaret(editor);
+    create_caret(editor);
+    update_caret(editor);
     ME_SendOldNotify(editor, EN_SETFOCUS);
     if (!editor->bHideSelection && !(editor->styleFlags & ES_NOHIDESEL))
         ME_InvalidateSelection( editor );
@@ -4520,7 +4520,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     editor->bHaveFocus = FALSE;
     editor->wheel_remain = 0;
-    ME_HideCaret(editor);
+    hide_caret(editor);
+    DestroyCaret();
     ME_SendOldNotify(editor, EN_KILLFOCUS);
     if (!editor->bHideSelection && !(editor->styleFlags & ES_NOHIDESEL))
         ME_InvalidateSelection( editor );
@@ -4978,6 +4979,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       RECT rc;
       PAINTSTRUCT ps;
 
+      update_caret(editor);
       hDC = BeginPaint(editor->hWnd, &ps);
       if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
         ME_SendOldNotify(editor, EN_UPDATE);
