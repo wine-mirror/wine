@@ -186,6 +186,7 @@ static LRESULT WINAPI test_parent_wndproc(HWND hwnd, UINT message, WPARAM wParam
     static HDC cd_first_hdc;
     struct message msg = { 0 };
     NMCUSTOMDRAW *cd = (NMCUSTOMDRAW*)lParam;
+    NMBCDROPDOWN *bcd = (NMBCDROPDOWN*)lParam;
     LRESULT ret;
 
     if (ignore_message( message )) return 0;
@@ -250,6 +251,29 @@ static LRESULT WINAPI test_parent_wndproc(HWND hwnd, UINT message, WPARAM wParam
                 break;
         }
         return ret;
+    }
+
+    if (message == WM_NOTIFY && bcd->hdr.code == BCN_DROPDOWN)
+    {
+        UINT button = GetWindowLongW(bcd->hdr.hwndFrom, GWL_STYLE) & BS_TYPEMASK;
+        RECT rc;
+
+        GetClientRect(bcd->hdr.hwndFrom, &rc);
+
+        ok(bcd->hdr.hwndFrom != NULL, "Received BCN_DROPDOWN with no hwnd attached, wParam %lu id %lu\n",
+           wParam, bcd->hdr.idFrom);
+        ok(bcd->hdr.idFrom == wParam, "[%u] Mismatch between wParam (%lu) and idFrom (%lu)\n",
+           button, wParam, bcd->hdr.idFrom);
+        ok(EqualRect(&rc, &bcd->rcButton), "[%u] Wrong rcButton, expected %s got %s\n",
+           button, wine_dbgstr_rect(&rc), wine_dbgstr_rect(&bcd->rcButton));
+
+        msg.message = message;
+        msg.flags = sent|parent|wparam|lparam|id;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        msg.id = BCN_DROPDOWN;
+        add_message(sequences, COMBINED_SEQ_INDEX, &msg);
+        return 0;
     }
 
     if (message == WM_PAINT)
@@ -566,6 +590,20 @@ static const struct message pre_post_pre_post_cd_seq[] =
     { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_POSTERASE },
     { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREPAINT },
     { WM_NOTIFY, sent|parent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_POSTPAINT },
+    { 0 }
+};
+
+static const struct message bcn_dropdown_seq[] =
+{
+    { WM_KEYDOWN, sent|wparam|lparam, VK_DOWN, 0 },
+    { BCM_SETDROPDOWNSTATE, sent|wparam|lparam|defwinproc, 1, 0 },
+    { WM_NOTIFY, sent|parent|id, 0, 0, BCN_DROPDOWN },
+    { BCM_SETDROPDOWNSTATE, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_KEYUP, sent|wparam|lparam, VK_DOWN, 0xc0000000 },
+    { WM_PAINT, sent },
+    { WM_DRAWITEM, sent|parent|optional },  /* for owner draw button */
+    { WM_PAINT, sent|optional },            /* sometimes sent rarely */
+    { WM_DRAWITEM, sent|parent|optional },
     { 0 }
 };
 
@@ -932,6 +970,17 @@ static void test_button_messages(void)
         }
 
         disable_test_cd();
+
+        if (!broken(LOBYTE(LOWORD(GetVersion())) < 6))  /* not available pre-Vista */
+        {
+            /* Send down arrow key to make the buttons send the drop down notification */
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            SendMessageW(hwnd, WM_KEYDOWN, VK_DOWN, 0);
+            SendMessageW(hwnd, WM_KEYUP, VK_DOWN, 0xc0000000);
+            while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+            ok_sequence(sequences, COMBINED_SEQ_INDEX, bcn_dropdown_seq, "BCN_DROPDOWN from the button", FALSE);
+        }
+
         DestroyWindow(hwnd);
     }
 
