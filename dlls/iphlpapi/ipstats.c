@@ -302,7 +302,7 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
             while ((ptr = fgets(buf, sizeof(buf), fp)))
             {
                 while (*ptr && isspace(*ptr)) ptr++;
-                if (strncasecmp(ptr, name, nameLen) == 0 && *(ptr + nameLen) == ':')
+                if (_strnicmp(ptr, name, nameLen) == 0 && *(ptr + nameLen) == ':')
                 {
                     ptr += nameLen + 1;
                     sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u",
@@ -433,10 +433,10 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
 
             while ((ptr = fgets(buf, sizeof(buf), fp)))
             {
-                if (strncasecmp(buf, hdr, sizeof(hdr) - 1)) continue;
+                if (_strnicmp(buf, hdr, sizeof(hdr) - 1)) continue;
                 /* last line was a header, get another */
                 if (!(ptr = fgets(buf, sizeof(buf), fp))) break;
-                if (!strncasecmp(buf, hdr, sizeof(hdr) - 1))
+                if (!_strnicmp(buf, hdr, sizeof(hdr) - 1))
                 {
                     ptr += sizeof(hdr);
                     sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
@@ -657,13 +657,13 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
                     if ((ptr = strchr(value, '\n')))
                         *ptr='\0';
 
-                    if (!strcasecmp(buf, "Icmp6InMsgs"))
+                    if (!_strnicmp(buf, "Icmp6InMsgs", -1))
                     {
                         if (sscanf(value, "%d", &res)) stats->icmpInStats.dwMsgs = res;
                         continue;
                     }
 
-                    if (!strcasecmp(buf, "Icmp6InErrors"))
+                    if (!_strnicmp(buf, "Icmp6InErrors", -1))
                     {
                         if (sscanf(value, "%d", &res)) stats->icmpInStats.dwErrors = res;
                         continue;
@@ -671,7 +671,7 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
 
                     for (i = 0; i < ARRAY_SIZE(icmpinstatlist); i++)
                     {
-                        if (!strcasecmp(buf, icmpinstatlist[i].name))
+                        if (!_strnicmp(buf, icmpinstatlist[i].name, -1))
                         {
                             if (sscanf(value, "%d", &res))
                                 stats->icmpInStats.rgdwTypeCount[icmpinstatlist[i].pos] = res;
@@ -679,13 +679,13 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
                         }
                     }
 
-                    if (!strcasecmp(buf, "Icmp6OutMsgs"))
+                    if (!_strnicmp(buf, "Icmp6OutMsgs", -1))
                     {
                         if (sscanf(value, "%d", &res)) stats->icmpOutStats.dwMsgs = res;
                         continue;
                     }
 
-                    if (!strcasecmp(buf, "Icmp6OutErrors"))
+                    if (!_strnicmp(buf, "Icmp6OutErrors", -1))
                     {
                         if (sscanf(value, "%d", &res)) stats->icmpOutStats.dwErrors = res;
                         continue;
@@ -693,7 +693,7 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
 
                     for (i = 0; i < ARRAY_SIZE(icmpoutstatlist); i++)
                     {
-                        if (!strcasecmp(buf, icmpoutstatlist[i].name))
+                        if (!_strnicmp(buf, icmpoutstatlist[i].name, -1))
                         {
                             if (sscanf(value, "%d", &res))
                                 stats->icmpOutStats.rgdwTypeCount[icmpoutstatlist[i].pos] = res;
@@ -823,7 +823,7 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
                         *ptr='\0';
 
                     for (i = 0; i < ARRAY_SIZE(ipstatlist); i++)
-                        if (!strcasecmp(buf, ipstatlist[i].name) && sscanf(value, "%d", &res))
+                        if (!_strnicmp(buf, ipstatlist[i].name, -1) && sscanf(value, "%d", &res))
                             *ipstatlist[i].elem = res;
                 }
                 fclose(fp);
@@ -847,10 +847,10 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
 
             while ((ptr = fgets(buf, sizeof(buf), fp)))
             {
-                if (strncasecmp(buf, hdr, sizeof(hdr) - 1)) continue;
+                if (_strnicmp(buf, hdr, sizeof(hdr) - 1)) continue;
                 /* last line was a header, get another */
                 if (!(ptr = fgets(buf, sizeof(buf), fp))) break;
-                if (!strncasecmp(buf, hdr, sizeof(hdr) - 1))
+                if (!_strnicmp(buf, hdr, sizeof(hdr) - 1))
                 {
                     ptr += sizeof(hdr);
                     sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
@@ -1029,10 +1029,10 @@ DWORD WINAPI GetTcpStatisticsEx(PMIB_TCPSTATS stats, DWORD family)
 
             while ((ptr = fgets(buf, sizeof(buf), fp)))
             {
-                if (strncasecmp(buf, hdr, sizeof(hdr) - 1)) continue;
+                if (_strnicmp(buf, hdr, sizeof(hdr) - 1)) continue;
                 /* last line was a header, get another */
                 if (!(ptr = fgets(buf, sizeof(buf), fp))) break;
-                if (!strncasecmp(buf, hdr, sizeof(hdr) - 1))
+                if (!_strnicmp(buf, hdr, sizeof(hdr) - 1))
                 {
                     ptr += sizeof(hdr);
                     sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u %u %u",
@@ -1210,7 +1210,7 @@ DWORD WINAPI GetUdpStatisticsEx(PMIB_UDPSTATS stats, DWORD family)
                         *ptr='\0';
 
                     for (i = 0; i < ARRAY_SIZE(udpstatlist); i++)
-                        if (!strcasecmp(buf, udpstatlist[i].name) && sscanf(value, "%d", &res))
+                        if (!_strnicmp(buf, udpstatlist[i].name, -1) && sscanf(value, "%d", &res))
                             *udpstatlist[i].elem = res;
                 }
                 fclose(fp);
@@ -1234,10 +1234,10 @@ DWORD WINAPI GetUdpStatisticsEx(PMIB_UDPSTATS stats, DWORD family)
 
             while ((ptr = fgets(buf, sizeof(buf), fp)))
             {
-                if (strncasecmp(buf, hdr, sizeof(hdr) - 1)) continue;
+                if (_strnicmp(buf, hdr, sizeof(hdr) - 1)) continue;
                 /* last line was a header, get another */
                 if (!(ptr = fgets(buf, sizeof(buf), fp))) break;
-                if (!strncasecmp(buf, hdr, sizeof(hdr) - 1))
+                if (!_strnicmp(buf, hdr, sizeof(hdr) - 1))
                 {
                     ptr += sizeof(hdr);
                     sscanf( ptr, "%u %u %u %u %u",
