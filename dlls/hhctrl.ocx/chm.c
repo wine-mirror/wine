@@ -595,7 +595,7 @@ WCHAR *GetDocumentTitle(CHMInfo *info, LPCWSTR document)
 
         TRACE("%s\n", node.buf);
 
-        if(!strcasecmp(node_name.buf, "title")) {
+        if(!_strnicmp(node_name.buf, "title", -1)) {
             if(next_content(&stream, &content) && content.len > 1)
             {
                 document_title = strdupnAtoW(&content.buf[1], content.len-1);

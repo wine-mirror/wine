@@ -102,7 +102,7 @@ static WCHAR *SearchCHM_File(IStorage *pStorage, const WCHAR *file, const char *
             char *text = &content.buf[1];
             int textlen = content.len-1;
 
-            if(!strcasecmp(node_name.buf, "title"))
+            if(!_strnicmp(node_name.buf, "title", -1))
             {
                 int wlen = MultiByteToWideChar(CP_ACP, 0, text, textlen, NULL, 0);
                 title = heap_alloc((wlen+1)*sizeof(WCHAR));
