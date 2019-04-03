@@ -22,6 +22,10 @@
 #include <shtypes.h>
 #include <shlwapi.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum tagPROPVAR_CHANGE_FLAGS
 {
     PVCHF_DEFAULT           = 0x00000000,
@@ -120,7 +124,12 @@ inline HRESULT InitPropVariantFromInt64(LONGLONG llVal, PROPVARIANT *ppropvar)
     return S_OK;
 }
 
-#endif
+#endif /* NO_PROPVAR_INLINES */
+#endif /* __cplusplus */
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __WINE_PROPVARUTIL_H */
