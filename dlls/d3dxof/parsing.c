@@ -26,6 +26,7 @@
 
 #include "winbase.h"
 #include "wingdi.h"
+#include "winternl.h"
 
 #include "d3dxof_private.h"
 #include "dxfile.h"
@@ -405,7 +406,7 @@ static BOOL is_keyword(parse_buffer* buf, const char* keyword)
 
   if (!read_bytes(buf, tmp, len))
     return FALSE;
-  if (strncasecmp(tmp, keyword, len))
+  if (_strnicmp(tmp, keyword, len))
   {
     rewind_bytes(buf, len);
     return FALSE;
@@ -972,7 +973,7 @@ static BOOL parse_template_members_list(parse_buffer * buf)
         cur_member->idx_template = 1;
         while (cur_member->idx_template < buf->pdxf->nb_xtemplates)
         {
-          if (!strcasecmp((char*)buf->value, buf->pdxf->xtemplates[cur_member->idx_template].name))
+          if (!_strnicmp((char*)buf->value, buf->pdxf->xtemplates[cur_member->idx_template].name, -1))
             break;
           cur_member->idx_template++;
         }
@@ -1176,7 +1177,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         /* To do template lookup */
         for (j = 0; j < buf->pdxf->nb_xtemplates; j++)
         {
-          if (!strcasecmp(buf->pdxf->xtemplates[pt->members[i].idx_template].name, buf->pdxf->xtemplates[j].name))
+          if (!_strnicmp(buf->pdxf->xtemplates[pt->members[i].idx_template].name, buf->pdxf->xtemplates[j].name, -1))
           {
             buf->pxt[buf->level] = &buf->pdxf->xtemplates[j];
             break;
@@ -1392,7 +1393,7 @@ BOOL parse_object(parse_buffer * buf)
   /* To do template lookup */
   for (i = 0; i < buf->pdxf->nb_xtemplates; i++)
   {
-    if (!strcasecmp((char*)buf->value, buf->pdxf->xtemplates[i].name))
+    if (!_strnicmp((char*)buf->value, buf->pdxf->xtemplates[i].name, -1))
     {
       buf->pxt[buf->level] = &buf->pdxf->xtemplates[i];
       memcpy(&buf->pxo->type, &buf->pdxf->xtemplates[i].class_id, 16);
