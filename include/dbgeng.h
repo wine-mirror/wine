@@ -28,6 +28,8 @@ DEFINE_GUID(IID_IDebugEventCallbacks,     0x337be28b, 0x5036, 0x4d72, 0xb6, 0xbf
 DEFINE_GUID(IID_IDebugClient,             0x27fe5639, 0x8407, 0x4f47, 0x83, 0x64, 0xee, 0x11, 0x8f, 0xb0, 0x8a, 0xc8);
 DEFINE_GUID(IID_IDebugDataSpaces,         0x88f7dfab, 0x3ea7, 0x4c3a, 0xae, 0xfb, 0xc4, 0xe8, 0x10, 0x61, 0x73, 0xaa);
 DEFINE_GUID(IID_IDebugSymbols,            0x8c31e98c, 0x983a, 0x48a5, 0x90, 0x16, 0x6f, 0xe5, 0xd6, 0x67, 0xa9, 0x50);
+DEFINE_GUID(IID_IDebugControl,            0x5182e668, 0x105e, 0x416e, 0xad, 0x92, 0x24, 0xef, 0x80, 0x04, 0x24, 0xba);
+DEFINE_GUID(IID_IDebugControl2,           0xd4366723, 0x44df, 0x4bed, 0x8c, 0x7e, 0x4c, 0x05, 0x42, 0x4f, 0x45, 0x88);
 
 typedef struct _DEBUG_MODULE_PARAMETERS
 {
@@ -57,6 +59,83 @@ typedef struct _DEBUG_STACK_FRAME
     BOOL Virtual;
     ULONG FrameNumber;
 } DEBUG_STACK_FRAME, *PDEBUG_STACK_FRAME;
+
+typedef struct _DEBUG_VALUE
+{
+    union
+    {
+        UCHAR I8;
+        USHORT I16;
+        ULONG I32;
+        struct
+        {
+            ULONG64 I64;
+            BOOL Nat;
+        };
+        float F32;
+        double F64;
+        UCHAR F80Bytes[10];
+        UCHAR F82Bytes[11];
+        UCHAR F128Bytes[16];
+        UCHAR VI8[16];
+        USHORT VI16[8];
+        ULONG VI32[4];
+        ULONG64 VI64[2];
+        float VF32[4];
+        double VF64[2];
+        struct
+        {
+            ULONG LowPart;
+            ULONG HighPart;
+        } I64Parts32;
+        struct
+        {
+            ULONG64 LowPart;
+            LONG64 HighPart;
+        } F128Parts64;
+        UCHAR RawBytes[24];
+    };
+    ULONG TailOfRawBytes;
+    ULONG Type;
+} DEBUG_VALUE, *PDEBUG_VALUE;
+
+typedef struct _DEBUG_BREAKPOINT_PARAMETERS
+{
+    ULONG64 Offset;
+    ULONG Id;
+    ULONG BreakType;
+    ULONG ProcType;
+    ULONG Flags;
+    ULONG DataSize;
+    ULONG DataAccessType;
+    ULONG PassCount;
+    ULONG CurrentPassCount;
+    ULONG MatchThread;
+    ULONG CommandSize;
+    ULONG OffsetExpressionSize;
+} DEBUG_BREAKPOINT_PARAMETERS, *PDEBUG_BREAKPOINT_PARAMETERS;
+
+typedef struct _WINDBG_EXTENSION_APIS32 *PWINDBG_EXTENSION_APIS32;
+typedef struct _WINDBG_EXTENSION_APIS64 *PWINDBG_EXTENSION_APIS64;
+
+typedef struct _DEBUG_SPECIFIC_FILTER_PARAMETERS
+{
+    ULONG ExecutionOption;
+    ULONG ContinueOption;
+    ULONG TextSize;
+    ULONG CommandSize;
+    ULONG ArgumentSize;
+} DEBUG_SPECIFIC_FILTER_PARAMETERS, *PDEBUG_SPECIFIC_FILTER_PARAMETERS;
+
+typedef struct _DEBUG_EXCEPTION_FILTER_PARAMETERS
+{
+    ULONG ExecutionOption;
+    ULONG ContinueOption;
+    ULONG TextSize;
+    ULONG CommandSize;
+    ULONG SecondCommandSize;
+    ULONG ExceptionCode;
+} DEBUG_EXCEPTION_FILTER_PARAMETERS, *PDEBUG_EXCEPTION_FILTER_PARAMETERS;
 
 #define INTERFACE IDebugBreakpoint
 DECLARE_INTERFACE_(IDebugBreakpoint, IUnknown)
@@ -313,6 +392,256 @@ DECLARE_INTERFACE_(IDebugSymbols, IUnknown)
             ULONG buffer_size, ULONG *found_size) PURE;
     STDMETHOD(GetSourceFileLineOffsets)(THIS_ const char *file, ULONG64 *buffer, ULONG buffer_lines,
             ULONG *file_lines) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugControl
+DECLARE_INTERFACE_(IDebugControl, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugControl */
+    STDMETHOD(GetInterrupt)(THIS) PURE;
+    STDMETHOD(SetInterrupt)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetIterruptTimeout)(THIS_ ULONG *timeout) PURE;
+    STDMETHOD(SetInterruptTimeout)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(GetLogFile)(THIS_ char *buffer, ULONG buffer_size, ULONG *file_size, BOOL *append) PURE;
+    STDMETHOD(OpenLogFile)(THIS_ const char *file, BOOL append) PURE;
+    STDMETHOD(CloseLogFile)(THIS) PURE;
+    STDMETHOD(GetLogMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(SetLogMask)(THIS_ ULONG mask) PURE;
+    STDMETHOD(Input)(THIS_ char *buffer, ULONG buffer_size, ULONG *input_size) PURE;
+    STDMETHOD(ReturnInput)(THIS_ const char *buffer) PURE;
+    STDMETHODV(Output)(THIS_ ULONG mask, const char *format, ...) PURE;
+    STDMETHOD(OutputVaList)(THIS_ ULONG mask, const char *format, __ms_va_list args) PURE;
+    STDMETHODV(ControlledOutput)(THIS_ ULONG output_control, ULONG mask, const char *format, ...) PURE;
+    STDMETHOD(ControlledOutputVaList)(THIS_ ULONG output_control, ULONG mask, const char *format,
+            __ms_va_list args) PURE;
+    STDMETHODV(OutputPrompt)(THIS_ ULONG output_control, const char *format, ...) PURE;
+    STDMETHOD(OutputPromptVaList)(THIS_ ULONG output_control, const char *format, __ms_va_list args) PURE;
+    STDMETHOD(GetPromptText)(THIS_ char *buffer, ULONG buffer_size, ULONG *text_size) PURE;
+    STDMETHOD(OutputCurrentState)(THIS_ ULONG output_control, ULONG flags) PURE;
+    STDMETHOD(OutputVersionInformation)(THIS_ ULONG output_control) PURE;
+    STDMETHOD(GetNotifyEventHandle)(THIS_ ULONG64 *handle) PURE;
+    STDMETHOD(SetNotifyEventHandle)(THIS_ ULONG64 handle) PURE;
+    STDMETHOD(Assemble)(THIS_ ULONG64 offset, const char *code, ULONG64 *end_offset) PURE;
+    STDMETHOD(Disassemble)(THIS_ ULONG64 offset, ULONG flags, char *buffer, ULONG buffer_size, ULONG *disassm_size,
+            ULONG64 *end_offset) PURE;
+    STDMETHOD(GetDisassembleEffectiveOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(OutputDisassembly)(THIS_ ULONG output_control, ULONG64 offset, ULONG flags, ULONG64 *end_offset) PURE;
+    STDMETHOD(OutputDisassemblyLines)(THIS_ ULONG output_control, ULONG prev_lines, ULONG total_lines, ULONG64 offset,
+            ULONG flags, ULONG *offset_line, ULONG64 *start_offset, ULONG64 *end_offset, ULONG64 *line_offsets) PURE;
+    STDMETHOD(GetNearInstruction)(THIS_ ULONG64 offset, LONG delta, ULONG64 *instr_offset) PURE;
+    STDMETHOD(GetStackTrace)(THIS_ ULONG64 frame_offset, ULONG64 stack_offset, ULONG64 instr_offset,
+            DEBUG_STACK_FRAME *frames, ULONG frames_size, ULONG *frames_filled) PURE;
+    STDMETHOD(GetReturnOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(OutputStackTrace)(THIS_ ULONG output_control, DEBUG_STACK_FRAME *frames, ULONG frames_size,
+            ULONG flags) PURE;
+    STDMETHOD(GetDebuggeeType)(THIS_ ULONG *_class, ULONG *qualifier) PURE;
+    STDMETHOD(GetActualProcessorType)(THIS_ ULONG *type) PURE;
+    STDMETHOD(GetExecutingProcessorType)(THIS_ ULONG *type) PURE;
+    STDMETHOD(GetNumberPossibleExecutingProcessorTypes)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetPossibleExecutingProcessorTypes)(THIS_ ULONG start, ULONG count, ULONG *types) PURE;
+    STDMETHOD(GetNumberProcessors)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetSystemVersion)(THIS_ ULONG *platform_id, ULONG *major, ULONG *minor, char *sp_string,
+            ULONG sp_string_size, ULONG *sp_string_used, ULONG *sp_number, char *build_string, ULONG build_string_size,
+            ULONG *build_string_used) PURE;
+    STDMETHOD(GetPageSize)(THIS_ ULONG *size) PURE;
+    STDMETHOD(IsPointer64Bit)(THIS) PURE;
+    STDMETHOD(ReadBugCheckData)(THIS_ ULONG *code, ULONG64 *arg1, ULONG64 *arg2, ULONG64 *arg3, ULONG64 *arg4) PURE;
+    STDMETHOD(GetNumberSupportedProcessorTypes)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetSupportedProcessorTypes)(THIS_ ULONG start, ULONG count, ULONG *types) PURE;
+    STDMETHOD(GetProcessorTypeNames)(THIS_ ULONG type, char *full_name, ULONG full_name_buffer_size,
+            ULONG *full_name_size, char *abbrev_name, ULONG abbrev_name_buffer_size, ULONG *abbrev_name_size) PURE;
+    STDMETHOD(GetEffectiveProcessorType)(THIS_ ULONG *type) PURE;
+    STDMETHOD(SetEffectiveProcessorType)(THIS_ ULONG type) PURE;
+    STDMETHOD(GetExecutionStatus)(THIS_ ULONG *status) PURE;
+    STDMETHOD(SetExecutionStatus)(THIS_ ULONG status) PURE;
+    STDMETHOD(GetCodeLevel)(THIS_ ULONG *level) PURE;
+    STDMETHOD(SetCodeLevel)(THIS_ ULONG level) PURE;
+    STDMETHOD(GetEngineOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddEngineOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveEngineOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetEngineOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(GetSystemErrorControl)(THIS_ ULONG *output_level, ULONG *break_level) PURE;
+    STDMETHOD(SetSystemErrorControl)(THIS_ ULONG output_level, ULONG break_level) PURE;
+    STDMETHOD(GetTextMacro)(THIS_ ULONG slot, char *buffer, ULONG buffer_size, ULONG *macro_size) PURE;
+    STDMETHOD(SetTextMacro)(THIS_ ULONG slot, const char *macro) PURE;
+    STDMETHOD(GetRadix)(THIS_ ULONG *radix) PURE;
+    STDMETHOD(SetRadix)(THIS_ ULONG radix) PURE;
+    STDMETHOD(Evaluate)(THIS_ const char *expression, ULONG desired_type, DEBUG_VALUE *value,
+            ULONG *remainder_index) PURE;
+    STDMETHOD(CoerceValue)(THIS_ DEBUG_VALUE input, ULONG output_type, DEBUG_VALUE *output) PURE;
+    STDMETHOD(CoerceValues)(THIS_ ULONG count, DEBUG_VALUE *input, ULONG *output_types, DEBUG_VALUE *output) PURE;
+    STDMETHOD(Execute)(THIS_ ULONG output_control, const char *command, ULONG flags) PURE;
+    STDMETHOD(ExecuteCommandFile)(THIS_ ULONG output_control, const char *command_file, ULONG flags) PURE;
+    STDMETHOD(GetNumberBreakpoints)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetBreakpointByIndex)(THIS_ ULONG index, IDebugBreakpoint **bp) PURE;
+    STDMETHOD(GetBreakpointById)(THIS_ ULONG id, IDebugBreakpoint **bp) PURE;
+    STDMETHOD(GetBreakpointParameters)(THIS_ ULONG count, ULONG *ids, ULONG start,
+            DEBUG_BREAKPOINT_PARAMETERS *parameters) PURE;
+    STDMETHOD(AddBreakpoint)(THIS_ ULONG type, ULONG desired_id, IDebugBreakpoint **bp) PURE;
+    STDMETHOD(RemoveBreakpoint)(THIS_ IDebugBreakpoint *bp) PURE;
+    STDMETHOD(AddExtension)(THIS_ const char *path, ULONG flags, ULONG64 *handle) PURE;
+    STDMETHOD(RemoveExtension)(THIS_ ULONG64 handle) PURE;
+    STDMETHOD(GetExtensionByPath)(THIS_ const char *path, ULONG64 *handle) PURE;
+    STDMETHOD(CallExtension)(THIS_ ULONG64 handle, const char *function, const char *args) PURE;
+    STDMETHOD(GetExtensionFunction)(THIS_ ULONG64 handle, const char *name, void *function) PURE;
+    STDMETHOD(GetWindbgExtensionApis32)(THIS_ PWINDBG_EXTENSION_APIS32 api) PURE;
+    STDMETHOD(GetWindbgExtensionApis64)(THIS_ PWINDBG_EXTENSION_APIS64 api) PURE;
+    STDMETHOD(GetNumberEventFilters)(THIS_ ULONG *specific_events, ULONG *specific_exceptions,
+            ULONG *arbitrary_exceptions) PURE;
+    STDMETHOD(GetEventFilterText)(THIS_ ULONG index, char *buffer, ULONG buffer_size, ULONG *text_size) PURE;
+    STDMETHOD(GetEventFilterCommand)(THIS_ ULONG index, char *buffer, ULONG buffer_size, ULONG *command_size) PURE;
+    STDMETHOD(SetEventFilterCommand)(THIS_ ULONG index, const char *command) PURE;
+    STDMETHOD(GetSpecificFilterParameters)(THIS_ ULONG start, ULONG count,
+            DEBUG_SPECIFIC_FILTER_PARAMETERS *parameters) PURE;
+    STDMETHOD(SetSpecificFilterParameters)(THIS_ ULONG start, ULONG count,
+            DEBUG_SPECIFIC_FILTER_PARAMETERS *parameters) PURE;
+    STDMETHOD(GetSpecificFilterArgument)(THIS_ ULONG index, char *buffer, ULONG buffer_size,
+            ULONG *argument_size) PURE;
+    STDMETHOD(SetSpecificFilterArgument)(THIS_ ULONG index, const char *argument) PURE;
+    STDMETHOD(GetExceptionFilterParameters)(THIS_ ULONG count, ULONG *codes, ULONG start,
+            DEBUG_EXCEPTION_FILTER_PARAMETERS *parameters) PURE;
+    STDMETHOD(SetExceptionFilterParameters)(THIS_ ULONG count, DEBUG_EXCEPTION_FILTER_PARAMETERS *parameters) PURE;
+    STDMETHOD(GetExceptionFilterSecondCommand)(THIS_ ULONG index, char *buffer, ULONG buffer_size,
+            ULONG *command_size) PURE;
+    STDMETHOD(SetExceptionFilterSecondCommand)(THIS_ ULONG index, const char *command) PURE;
+    STDMETHOD(WaitForEvent)(THIS_ ULONG flags, ULONG timeout) PURE;
+    STDMETHOD(GetLastEventInformation)(THIS_ ULONG *type, ULONG *pid, ULONG *tid, void *extra_info,
+            ULONG extra_info_size, ULONG *extra_info_used, char *description, ULONG desc_size, ULONG *desc_used) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugControl2
+DECLARE_INTERFACE_(IDebugControl2, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugControl */
+    STDMETHOD(GetInterrupt)(THIS) PURE;
+    STDMETHOD(SetInterrupt)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetIterruptTimeout)(THIS_ ULONG *timeout) PURE;
+    STDMETHOD(SetInterruptTimeout)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(GetLogFile)(THIS_ char *buffer, ULONG buffer_size, ULONG *file_size, BOOL *append) PURE;
+    STDMETHOD(OpenLogFile)(THIS_ const char *file, BOOL append) PURE;
+    STDMETHOD(CloseLogFile)(THIS) PURE;
+    STDMETHOD(GetLogMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(SetLogMask)(THIS_ ULONG mask) PURE;
+    STDMETHOD(Input)(THIS_ char *buffer, ULONG buffer_size, ULONG *input_size) PURE;
+    STDMETHOD(ReturnInput)(THIS_ const char *buffer) PURE;
+    STDMETHODV(Output)(THIS_ ULONG mask, const char *format, ...) PURE;
+    STDMETHOD(OutputVaList)(THIS_ ULONG mask, const char *format, __ms_va_list args) PURE;
+    STDMETHODV(ControlledOutput)(THIS_ ULONG output_control, ULONG mask, const char *format, ...) PURE;
+    STDMETHOD(ControlledOutputVaList)(THIS_ ULONG output_control, ULONG mask, const char *format,
+            __ms_va_list args) PURE;
+    STDMETHODV(OutputPrompt)(THIS_ ULONG output_control, const char *format, ...) PURE;
+    STDMETHOD(OutputPromptVaList)(THIS_ ULONG output_control, const char *format, __ms_va_list args) PURE;
+    STDMETHOD(GetPromptText)(THIS_ char *buffer, ULONG buffer_size, ULONG *text_size) PURE;
+    STDMETHOD(OutputCurrentState)(THIS_ ULONG output_control, ULONG flags) PURE;
+    STDMETHOD(OutputVersionInformation)(THIS_ ULONG output_control) PURE;
+    STDMETHOD(GetNotifyEventHandle)(THIS_ ULONG64 *handle) PURE;
+    STDMETHOD(SetNotifyEventHandle)(THIS_ ULONG64 handle) PURE;
+    STDMETHOD(Assemble)(THIS_ ULONG64 offset, const char *code, ULONG64 *end_offset) PURE;
+    STDMETHOD(Disassemble)(THIS_ ULONG64 offset, ULONG flags, char *buffer, ULONG buffer_size, ULONG *disassm_size,
+            ULONG64 *end_offset) PURE;
+    STDMETHOD(GetDisassembleEffectiveOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(OutputDisassembly)(THIS_ ULONG output_control, ULONG64 offset, ULONG flags, ULONG64 *end_offset) PURE;
+    STDMETHOD(OutputDisassemblyLines)(THIS_ ULONG output_control, ULONG prev_lines, ULONG total_lines, ULONG64 offset,
+            ULONG flags, ULONG *offset_line, ULONG64 *start_offset, ULONG64 *end_offset, ULONG64 *line_offsets) PURE;
+    STDMETHOD(GetNearInstruction)(THIS_ ULONG64 offset, LONG delta, ULONG64 *instr_offset) PURE;
+    STDMETHOD(GetStackTrace)(THIS_ ULONG64 frame_offset, ULONG64 stack_offset, ULONG64 instr_offset,
+            DEBUG_STACK_FRAME *frames, ULONG frames_size, ULONG *frames_filled) PURE;
+    STDMETHOD(GetReturnOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(OutputStackTrace)(THIS_ ULONG output_control, DEBUG_STACK_FRAME *frames, ULONG frames_size,
+            ULONG flags) PURE;
+    STDMETHOD(GetDebuggeeType)(THIS_ ULONG *_class, ULONG *qualifier) PURE;
+    STDMETHOD(GetActualProcessorType)(THIS_ ULONG *type) PURE;
+    STDMETHOD(GetExecutingProcessorType)(THIS_ ULONG *type) PURE;
+    STDMETHOD(GetNumberPossibleExecutingProcessorTypes)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetPossibleExecutingProcessorTypes)(THIS_ ULONG start, ULONG count, ULONG *types) PURE;
+    STDMETHOD(GetNumberProcessors)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetSystemVersion)(THIS_ ULONG *platform_id, ULONG *major, ULONG *minor, char *sp_string,
+            ULONG sp_string_size, ULONG *sp_string_used, ULONG *sp_number, char *build_string, ULONG build_string_size,
+            ULONG *build_string_used) PURE;
+    STDMETHOD(GetPageSize)(THIS_ ULONG *size) PURE;
+    STDMETHOD(IsPointer64Bit)(THIS) PURE;
+    STDMETHOD(ReadBugCheckData)(THIS_ ULONG *code, ULONG64 *arg1, ULONG64 *arg2, ULONG64 *arg3, ULONG64 *arg4) PURE;
+    STDMETHOD(GetNumberSupportedProcessorTypes)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetSupportedProcessorTypes)(THIS_ ULONG start, ULONG count, ULONG *types) PURE;
+    STDMETHOD(GetProcessorTypeNames)(THIS_ ULONG type, char *full_name, ULONG full_name_buffer_size,
+            ULONG *full_name_size, char *abbrev_name, ULONG abbrev_name_buffer_size, ULONG *abbrev_name_size) PURE;
+    STDMETHOD(GetEffectiveProcessorType)(THIS_ ULONG *type) PURE;
+    STDMETHOD(SetEffectiveProcessorType)(THIS_ ULONG type) PURE;
+    STDMETHOD(GetExecutionStatus)(THIS_ ULONG *status) PURE;
+    STDMETHOD(SetExecutionStatus)(THIS_ ULONG status) PURE;
+    STDMETHOD(GetCodeLevel)(THIS_ ULONG *level) PURE;
+    STDMETHOD(SetCodeLevel)(THIS_ ULONG level) PURE;
+    STDMETHOD(GetEngineOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddEngineOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveEngineOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetEngineOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(GetSystemErrorControl)(THIS_ ULONG *output_level, ULONG *break_level) PURE;
+    STDMETHOD(SetSystemErrorControl)(THIS_ ULONG output_level, ULONG break_level) PURE;
+    STDMETHOD(GetTextMacro)(THIS_ ULONG slot, char *buffer, ULONG buffer_size, ULONG *macro_size) PURE;
+    STDMETHOD(SetTextMacro)(THIS_ ULONG slot, const char *macro) PURE;
+    STDMETHOD(GetRadix)(THIS_ ULONG *radix) PURE;
+    STDMETHOD(SetRadix)(THIS_ ULONG radix) PURE;
+    STDMETHOD(Evaluate)(THIS_ const char *expression, ULONG desired_type, DEBUG_VALUE *value,
+            ULONG *remainder_index) PURE;
+    STDMETHOD(CoerceValue)(THIS_ DEBUG_VALUE input, ULONG output_type, DEBUG_VALUE *output) PURE;
+    STDMETHOD(CoerceValues)(THIS_ ULONG count, DEBUG_VALUE *input, ULONG *output_types, DEBUG_VALUE *output) PURE;
+    STDMETHOD(Execute)(THIS_ ULONG output_control, const char *command, ULONG flags) PURE;
+    STDMETHOD(ExecuteCommandFile)(THIS_ ULONG output_control, const char *command_file, ULONG flags) PURE;
+    STDMETHOD(GetNumberBreakpoints)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetBreakpointByIndex)(THIS_ ULONG index, IDebugBreakpoint **bp) PURE;
+    STDMETHOD(GetBreakpointById)(THIS_ ULONG id, IDebugBreakpoint **bp) PURE;
+    STDMETHOD(GetBreakpointParameters)(THIS_ ULONG count, ULONG *ids, ULONG start,
+            DEBUG_BREAKPOINT_PARAMETERS *parameters) PURE;
+    STDMETHOD(AddBreakpoint)(THIS_ ULONG type, ULONG desired_id, IDebugBreakpoint **bp) PURE;
+    STDMETHOD(RemoveBreakpoint)(THIS_ IDebugBreakpoint *bp) PURE;
+    STDMETHOD(AddExtension)(THIS_ const char *path, ULONG flags, ULONG64 *handle) PURE;
+    STDMETHOD(RemoveExtension)(THIS_ ULONG64 handle) PURE;
+    STDMETHOD(GetExtensionByPath)(THIS_ const char *path, ULONG64 *handle) PURE;
+    STDMETHOD(CallExtension)(THIS_ ULONG64 handle, const char *function, const char *args) PURE;
+    STDMETHOD(GetExtensionFunction)(THIS_ ULONG64 handle, const char *name, void *function) PURE;
+    STDMETHOD(GetWindbgExtensionApis32)(THIS_ PWINDBG_EXTENSION_APIS32 api) PURE;
+    STDMETHOD(GetWindbgExtensionApis64)(THIS_ PWINDBG_EXTENSION_APIS64 api) PURE;
+    STDMETHOD(GetNumberEventFilters)(THIS_ ULONG *specific_events, ULONG *specific_exceptions,
+            ULONG *arbitrary_exceptions) PURE;
+    STDMETHOD(GetEventFilterText)(THIS_ ULONG index, char *buffer, ULONG buffer_size, ULONG *text_size) PURE;
+    STDMETHOD(GetEventFilterCommand)(THIS_ ULONG index, char *buffer, ULONG buffer_size, ULONG *command_size) PURE;
+    STDMETHOD(SetEventFilterCommand)(THIS_ ULONG index, const char *command) PURE;
+    STDMETHOD(GetSpecificFilterParameters)(THIS_ ULONG start, ULONG count,
+            DEBUG_SPECIFIC_FILTER_PARAMETERS *parameters) PURE;
+    STDMETHOD(SetSpecificFilterParameters)(THIS_ ULONG start, ULONG count,
+            DEBUG_SPECIFIC_FILTER_PARAMETERS *parameters) PURE;
+    STDMETHOD(GetSpecificFilterArgument)(THIS_ ULONG index, char *buffer, ULONG buffer_size,
+            ULONG *argument_size) PURE;
+    STDMETHOD(SetSpecificFilterArgument)(THIS_ ULONG index, const char *argument) PURE;
+    STDMETHOD(GetExceptionFilterParameters)(THIS_ ULONG count, ULONG *codes, ULONG start,
+            DEBUG_EXCEPTION_FILTER_PARAMETERS *parameters) PURE;
+    STDMETHOD(SetExceptionFilterParameters)(THIS_ ULONG count, DEBUG_EXCEPTION_FILTER_PARAMETERS *parameters) PURE;
+    STDMETHOD(GetExceptionFilterSecondCommand)(THIS_ ULONG index, char *buffer, ULONG buffer_size,
+            ULONG *command_size) PURE;
+    STDMETHOD(SetExceptionFilterSecondCommand)(THIS_ ULONG index, const char *command) PURE;
+    STDMETHOD(WaitForEvent)(THIS_ ULONG flags, ULONG timeout) PURE;
+    STDMETHOD(GetLastEventInformation)(THIS_ ULONG *type, ULONG *pid, ULONG *tid, void *extra_info,
+            ULONG extra_info_size, ULONG *extra_info_used, char *description, ULONG desc_size, ULONG *desc_used) PURE;
+    /* IDebugControl2 */
+    STDMETHOD(GetCurrentTimeDate)(THIS_ ULONG timedate) PURE;
+    STDMETHOD(GetCurrentSystemUpTime)(THIS_ ULONG uptime) PURE;
+    STDMETHOD(GetDumpFormatFlags)(THIS_ ULONG *flags) PURE;
+    STDMETHOD(GetNumberTextPlacements)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetNumberTextReplacement)(THIS_ const char *src_text, ULONG index, char *src_buffer,
+            ULONG src_buffer_size, ULONG *src_size, char *dst_buffer, ULONG dst_buffer_size, ULONG *dst_size) PURE;
+    STDMETHOD(SetTextReplacement)(THIS_ const char *src_text, const char *dst_text) PURE;
+    STDMETHOD(RemoveTextReplacements)(THIS) PURE;
+    STDMETHOD(OutputTextReplacements)(THIS_ ULONG output_control, ULONG flags) PURE;
 };
 #undef INTERFACE
 
