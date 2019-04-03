@@ -1359,6 +1359,7 @@ enable_jsproxy
 enable_kerberos
 enable_kernel32
 enable_kernelbase
+enable_ksecdd_sys
 enable_ksuser
 enable_ktmw32
 enable_l3codeca_acm
@@ -20214,6 +20215,7 @@ wine_fn_config_makefile dlls/kernelbase enable_kernelbase
 wine_fn_config_makefile dlls/kernelbase/tests enable_tests
 wine_fn_config_makefile dlls/keyboard.drv16 enable_win16
 wine_fn_config_makefile dlls/krnl386.exe16 enable_win16
+wine_fn_config_makefile dlls/ksecdd.sys enable_ksecdd_sys
 wine_fn_config_makefile dlls/ksuser enable_ksuser
 wine_fn_config_makefile dlls/ktmw32 enable_ktmw32
 wine_fn_config_makefile dlls/l3codeca.acm enable_l3codeca_acm
