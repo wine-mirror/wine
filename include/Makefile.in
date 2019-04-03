@@ -143,6 +143,7 @@ SOURCES = \
 	dbccmd.idl \
 	dbcses.idl \
 	dbdsad.idl \
+	dbgeng.h \
 	dbghelp.h \
 	dbinit.idl \
 	dbprop.idl \
