@@ -6509,7 +6509,7 @@ struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
         unsigned int i;
         for (i = 0; i < ARRAY_SIZE(protocols); i++)
         {
-            if (strcasecmp( protocols[i].names[0], name )) continue;
+            if (_strnicmp( protocols[i].names[0], name, -1 )) continue;
             retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
                                    protocols[i].prot );
             break;
