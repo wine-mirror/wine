@@ -1896,7 +1896,18 @@ static void test_bcm_get_ideal_size(void)
     static const DWORD aligns[] = {0,         BS_TOP,     BS_LEFT,        BS_RIGHT,   BS_BOTTOM,
                                    BS_CENTER, BS_VCENTER, BS_RIGHTBUTTON, WS_EX_RIGHT};
     DWORD default_style = WS_TABSTOP | WS_POPUP | WS_VISIBLE;
-    const LONG client_width = 400, client_height = 200;
+    const LONG client_width = 400, client_height = 200, extra_width = 123, large_height = 500;
+    struct
+    {
+        DWORD style;
+        LONG extra_width;
+    } pushtype[] =
+    {
+        { BS_PUSHBUTTON, 0 },
+        { BS_DEFPUSHBUTTON, 0 },
+        { BS_SPLITBUTTON, extra_width * 2 + GetSystemMetrics(SM_CXEDGE) },
+        { BS_DEFSPLITBUTTON, extra_width * 2 + GetSystemMetrics(SM_CXEDGE) }
+    };
     LONG image_width, height, line_count, text_width;
     HFONT hfont, prev_font;
     DWORD style, type;
@@ -1912,7 +1923,7 @@ static void test_bcm_get_ideal_size(void)
     HIMAGELIST himl;
     BUTTON_IMAGELIST biml = {0};
     RECT rect;
-    INT i, j;
+    INT i, j, k;
 
     /* Check for NULL pointer handling */
     hwnd = CreateWindowA(WC_BUTTONA, button_text, BS_PUSHBUTTON | default_style, 0, 0, client_width, client_height,
@@ -1953,118 +1964,144 @@ static void test_bcm_get_ideal_size(void)
         return;
     }
 
-    /* Tests for image placements */
-    /* Prepare bitmap */
-    image_width = 48;
-    height = 48;
-    hdc = GetDC(0);
-    hmask = CreateCompatibleBitmap(hdc, image_width, height);
-    hbmp = CreateCompatibleBitmap(hdc, image_width, height);
+#define set_split_info(hwnd) do { \
+    BUTTON_SPLITINFO _info; \
+    int _ret; \
+    _info.mask = BCSIF_SIZE; \
+    _info.size.cx = extra_width; \
+    _info.size.cy = large_height; \
+    _ret = SendMessageA(hwnd, BCM_SETSPLITINFO, 0, (LPARAM)&_info); \
+    ok(_ret == TRUE, "Expected BCM_SETSPLITINFO message to return true\n"); \
+} while (0)
 
-    /* Only bitmap for push button, ideal size should be enough for image and text */
-    hwnd = CreateWindowA(WC_BUTTONA, button_text, BS_DEFPUSHBUTTON | BS_BITMAP | default_style, 0, 0, client_width,
-                         client_height, NULL, NULL, 0, NULL);
-    ok(hwnd != NULL, "Expect hwnd not NULL\n");
-    SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hbmp);
-    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
-    ZeroMemory(&size, sizeof(size));
-    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
-    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
-    /* Ideal size contains text rect even show bitmap only */
-    ok((size.cx >= image_width + text_width && size.cy >= max(height, tm.tmHeight)),
-            "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx, image_width + text_width,
-            size.cy, max(height, tm.tmHeight));
-    DestroyWindow(hwnd);
-
-    /* Image alignments when button has bitmap and text*/
-    for (i = 0; i < ARRAY_SIZE(aligns); i++)
-        for (j = 0; j < ARRAY_SIZE(aligns); j++)
-        {
-            style = BS_DEFPUSHBUTTON | default_style | aligns[i] | aligns[j];
-            hwnd = CreateWindowA(WC_BUTTONA, button_text, style, 0, 0, client_width, client_height, NULL, NULL, 0, NULL);
-            ok(hwnd != NULL, "Expect hwnd not NULL\n");
-            SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hbmp);
-            SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
-            ZeroMemory(&size, sizeof(size));
-            ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
-            ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
-            if (!(style & (BS_CENTER | BS_VCENTER)) || ((style & BS_CENTER) && (style & BS_CENTER) != BS_CENTER)
-                || !(style & BS_VCENTER) || (style & BS_VCENTER) == BS_VCENTER)
-                ok((size.cx >= image_width + text_width && size.cy >= max(height, tm.tmHeight)),
-                   "Style: 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx,
-                   image_width + text_width, size.cy, max(height, tm.tmHeight));
-            else
-                ok((size.cx >= max(text_width, height) && size.cy >= height + tm.tmHeight),
-                   "Style: 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx,
-                   max(text_width, height), size.cy, height + tm.tmHeight);
-            DestroyWindow(hwnd);
-        }
-
-    /* Image list alignments */
-    himl = pImageList_Create(image_width, height, ILC_COLOR, 1, 1);
-    pImageList_Add(himl, hbmp, 0);
-    biml.himl = himl;
-    for (i = 0; i < ARRAY_SIZE(imagelist_aligns); i++)
+    for (k = 0; k < ARRAY_SIZE(pushtype); k++)
     {
-        biml.uAlign = imagelist_aligns[i];
-        hwnd = CreateWindowA(WC_BUTTONA, button_text, BS_DEFPUSHBUTTON | default_style, 0, 0, client_width,
-            client_height, NULL, NULL, 0, NULL);
+        /* Tests for image placements */
+        /* Prepare bitmap */
+        image_width = 48;
+        height = 48;
+        hdc = GetDC(0);
+        hmask = CreateCompatibleBitmap(hdc, image_width, height);
+        hbmp = CreateCompatibleBitmap(hdc, image_width, height);
+
+        /* Only bitmap for push button, ideal size should be enough for image and text */
+        hwnd = CreateWindowA(WC_BUTTONA, button_text, pushtype[k].style | BS_BITMAP | default_style, 0, 0, client_width,
+                             client_height, NULL, NULL, 0, NULL);
         ok(hwnd != NULL, "Expect hwnd not NULL\n");
+        set_split_info(hwnd);
+        SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hbmp);
         SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
-        SendMessageA(hwnd, BCM_SETIMAGELIST, 0, (LPARAM)&biml);
         ZeroMemory(&size, sizeof(size));
         ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
         ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
-        if (biml.uAlign == BUTTON_IMAGELIST_ALIGN_TOP || biml.uAlign == BUTTON_IMAGELIST_ALIGN_BOTTOM)
-            ok((size.cx >= max(text_width, height) && size.cy >= height + tm.tmHeight),
-               "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n", biml.uAlign, size.cx,
-               max(text_width, height), size.cy, height + tm.tmHeight);
-        else if (biml.uAlign == BUTTON_IMAGELIST_ALIGN_LEFT || biml.uAlign == BUTTON_IMAGELIST_ALIGN_RIGHT)
-            ok((size.cx >= image_width + text_width && size.cy >= max(height, tm.tmHeight)),
-               "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n", biml.uAlign, size.cx,
-               image_width + text_width, size.cy, max(height, tm.tmHeight));
-        else
-            ok(size.cx >= image_width && size.cy >= height, "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n",
-               biml.uAlign, size.cx, image_width, size.cy, height);
+        /* Ideal size contains text rect even show bitmap only */
+        ok(size.cx >= image_width + text_width + pushtype[k].extra_width && size.cy >= max(height, tm.tmHeight),
+                "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx,
+                image_width + text_width + pushtype[k].extra_width, size.cy, max(height, tm.tmHeight));
+        ok(size.cy < large_height, "Expect ideal cy %d < %d\n", size.cy, large_height);
+        DestroyWindow(hwnd);
+
+        /* Image alignments when button has bitmap and text*/
+        for (i = 0; i < ARRAY_SIZE(aligns); i++)
+            for (j = 0; j < ARRAY_SIZE(aligns); j++)
+            {
+                style = pushtype[k].style | default_style | aligns[i] | aligns[j];
+                hwnd = CreateWindowA(WC_BUTTONA, button_text, style, 0, 0, client_width, client_height, NULL, NULL, 0, NULL);
+                ok(hwnd != NULL, "Expect hwnd not NULL\n");
+                set_split_info(hwnd);
+                SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hbmp);
+                SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+                ZeroMemory(&size, sizeof(size));
+                ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+                ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+                if (!(style & (BS_CENTER | BS_VCENTER)) || ((style & BS_CENTER) && (style & BS_CENTER) != BS_CENTER)
+                    || !(style & BS_VCENTER) || (style & BS_VCENTER) == BS_VCENTER)
+                    ok(size.cx >= image_width + text_width + pushtype[k].extra_width && size.cy >= max(height, tm.tmHeight),
+                       "Style: 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx,
+                       image_width + text_width + pushtype[k].extra_width, size.cy, max(height, tm.tmHeight));
+                else
+                    ok(size.cx >= max(text_width, height) + pushtype[k].extra_width && size.cy >= height + tm.tmHeight,
+                       "Style: 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx,
+                       max(text_width, height) + pushtype[k].extra_width, size.cy, height + tm.tmHeight);
+                ok(size.cy < large_height, "Expect ideal cy %d < %d\n", size.cy, large_height);
+                DestroyWindow(hwnd);
+            }
+
+        /* Image list alignments */
+        himl = pImageList_Create(image_width, height, ILC_COLOR, 1, 1);
+        pImageList_Add(himl, hbmp, 0);
+        biml.himl = himl;
+        for (i = 0; i < ARRAY_SIZE(imagelist_aligns); i++)
+        {
+            biml.uAlign = imagelist_aligns[i];
+            hwnd = CreateWindowA(WC_BUTTONA, button_text, pushtype[k].style | default_style, 0, 0, client_width,
+                client_height, NULL, NULL, 0, NULL);
+            ok(hwnd != NULL, "Expect hwnd not NULL\n");
+            set_split_info(hwnd);
+            SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+            SendMessageA(hwnd, BCM_SETIMAGELIST, 0, (LPARAM)&biml);
+            ZeroMemory(&size, sizeof(size));
+            ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+            ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+            if (biml.uAlign == BUTTON_IMAGELIST_ALIGN_TOP || biml.uAlign == BUTTON_IMAGELIST_ALIGN_BOTTOM)
+                ok(size.cx >= max(text_width, height) + pushtype[k].extra_width && size.cy >= height + tm.tmHeight,
+                   "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n", biml.uAlign, size.cx,
+                   max(text_width, height) + pushtype[k].extra_width, size.cy, height + tm.tmHeight);
+            else if (biml.uAlign == BUTTON_IMAGELIST_ALIGN_LEFT || biml.uAlign == BUTTON_IMAGELIST_ALIGN_RIGHT)
+                ok(size.cx >= image_width + text_width + pushtype[k].extra_width && size.cy >= max(height, tm.tmHeight),
+                   "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n", biml.uAlign, size.cx,
+                   image_width + text_width + pushtype[k].extra_width, size.cy, max(height, tm.tmHeight));
+            else
+                ok(size.cx >= image_width + pushtype[k].extra_width && size.cy >= height,
+                   "Align:%d expect ideal cx %d >= %d and ideal cy %d >= %d\n",
+                   biml.uAlign, size.cx, image_width + pushtype[k].extra_width, size.cy, height);
+            ok(size.cy < large_height, "Expect ideal cy %d < %d\n", size.cy, large_height);
+            DestroyWindow(hwnd);
+        }
+
+        /* Icon as image */
+        /* Create icon from bitmap */
+        ZeroMemory(&icon_info, sizeof(icon_info));
+        icon_info.fIcon = TRUE;
+        icon_info.hbmMask = hmask;
+        icon_info.hbmColor = hbmp;
+        hicon = CreateIconIndirect(&icon_info);
+
+        /* Only icon, ideal size should be enough for image and text */
+        hwnd = CreateWindowA(WC_BUTTONA, button_text, pushtype[k].style | BS_ICON | default_style, 0, 0, client_width,
+                             client_height, NULL, NULL, 0, NULL);
+        ok(hwnd != NULL, "Expect hwnd not NULL\n");
+        set_split_info(hwnd);
+        SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hicon);
+        SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+        ZeroMemory(&size, sizeof(size));
+        ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+        ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+        /* Ideal size contains text rect even show icons only */
+        ok(size.cx >= image_width + text_width + pushtype[k].extra_width && size.cy >= max(height, tm.tmHeight),
+           "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx,
+           image_width + text_width + pushtype[k].extra_width, size.cy, max(height, tm.tmHeight));
+        ok(size.cy < large_height, "Expect ideal cy %d < %d\n", size.cy, large_height);
+        DestroyWindow(hwnd);
+
+        /* Show icon and text */
+        hwnd = CreateWindowA(WC_BUTTONA, button_text, pushtype[k].style | default_style, 0, 0, client_width,
+            client_height, NULL, NULL, 0, NULL);
+        ok(hwnd != NULL, "Expect hwnd not NULL\n");
+        set_split_info(hwnd);
+        SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hicon);
+        SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
+        ZeroMemory(&size, sizeof(size));
+        ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+        ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
+        ok(size.cx >= image_width + text_width + pushtype[k].extra_width && size.cy >= max(height, tm.tmHeight),
+           "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx,
+           image_width + text_width + pushtype[k].extra_width, size.cy, max(height, tm.tmHeight));
+        ok(size.cy < large_height, "Expect ideal cy %d < %d\n", size.cy, large_height);
         DestroyWindow(hwnd);
     }
 
-    /* Icon as image */
-    /* Create icon from bitmap */
-    ZeroMemory(&icon_info, sizeof(icon_info));
-    icon_info.fIcon = TRUE;
-    icon_info.hbmMask = hmask;
-    icon_info.hbmColor = hbmp;
-    hicon = CreateIconIndirect(&icon_info);
-
-    /* Only icon, ideal size should be enough for image and text */
-    hwnd = CreateWindowA(WC_BUTTONA, button_text, BS_DEFPUSHBUTTON | BS_ICON | default_style, 0, 0, client_width,
-                         client_height, NULL, NULL, 0, NULL);
-    ok(hwnd != NULL, "Expect hwnd not NULL\n");
-    SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hicon);
-    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
-    ZeroMemory(&size, sizeof(size));
-    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
-    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
-    /* Ideal size contains text rect even show icons only */
-    ok((size.cx >= image_width + text_width && size.cy >= max(height, tm.tmHeight)),
-       "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx, image_width + text_width, size.cy,
-       max(height, tm.tmHeight));
-    DestroyWindow(hwnd);
-
-    /* Show icon and text */
-    hwnd = CreateWindowA(WC_BUTTONA, button_text, BS_DEFPUSHBUTTON | default_style, 0, 0, client_width,
-        client_height, NULL, NULL, 0, NULL);
-    ok(hwnd != NULL, "Expect hwnd not NULL\n");
-    SendMessageA(hwnd, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hicon);
-    SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, (LPARAM)TRUE);
-    ZeroMemory(&size, sizeof(size));
-    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
-    ok(ret, "Expect BCM_GETIDEALSIZE message to return true\n");
-    ok((size.cx >= image_width + text_width && size.cy >= max(height, tm.tmHeight)),
-       "Expect ideal cx %d >= %d and ideal cy %d >= %d\n", size.cx, image_width + text_width, size.cy,
-       max(height, tm.tmHeight));
-    DestroyWindow(hwnd);
+#undef set_split_info
 
     /* Checkbox */
     /* Both bitmap and text for checkbox, ideal size is only enough for text because it doesn't support image(but not image list)*/
