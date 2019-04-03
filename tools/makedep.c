@@ -3095,7 +3095,6 @@ static void output_module( struct makefile *make )
     }
     else
     {
-        strarray_add( &all_libs, "-lwine" );
         strarray_add( &make->all_targets, make->module );
         add_install_rule( make, make->module, make->module,
                           strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
@@ -3242,22 +3241,6 @@ static void output_shared_lib( struct makefile *make )
                           strmake( "y$(libdir)/%s", names.str[i] ));
     }
     strarray_addall( &make->all_targets, names );
-}
-
-
-/*******************************************************************
- *         output_import_lib
- */
-static void output_import_lib( struct makefile *make )
-{
-    char *def_file = replace_extension( make->importlib, ".a", ".def" );
-
-    /* stand-alone import lib (for libwine) */
-    if (!strncmp( def_file, "lib", 3 )) def_file += 3;
-    output( "%s: %s\n", obj_dir_path( make, make->importlib ), src_dir_path( make, def_file ));
-    output( "\t%s -l $@ -d %s\n", dlltool, src_dir_path( make, def_file ));
-    add_install_rule( make, make->importlib, make->importlib, strmake( "d$(libdir)/%s", make->importlib ));
-    strarray_add( &make->all_targets, make->importlib );
 }
 
 
@@ -3713,12 +3696,8 @@ static void output_sources( struct makefile *make )
     if (make->staticlib) output_static_lib( make );
     else if (make->module) output_module( make );
     else if (make->testdll) output_test_module( make );
-    else
-    {
-        if (make->importlib) output_import_lib( make );
-        if (make->sharedlib) output_shared_lib( make );
-        if (make->programs.count) output_programs( make );
-    }
+    else if (make->sharedlib) output_shared_lib( make );
+    else if (make->programs.count) output_programs( make );
 
     for (i = 0; i < make->scripts.count; i++)
         add_install_rule( make, make->scripts.str[i], make->scripts.str[i],

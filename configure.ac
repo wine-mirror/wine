@@ -731,13 +731,6 @@ case $host_os in
     dnl Disable dependencies that are not useful on Windows
     with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
-
-    AC_SUBST(LIBWINE_SHAREDLIB,"libwine.dll")
-    AC_SUBST(LIBWINE_IMPORTLIB,"libwine.a")
-    AC_SUBST(LIBWINE_LDFLAGS,"-shared \$(srcdir)/wine.def")
-    AC_SUBST(LIBWINE_DEPENDS,"wine.def")
-    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/libwine.dll"
-    TOP_INSTALL_DEV="$TOP_INSTALL_DEV libs/wine/libwine.a"
     ;;
 
   darwin*|macosx*)
