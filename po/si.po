@@ -4905,7 +4905,7 @@ msgid "Too many links.\n"
 msgstr "සබැඳි වැඩි.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "අලුත් Windows අනුවාදයක් අවශ්යයි.\n"
 
 #: winerror.mc:1483

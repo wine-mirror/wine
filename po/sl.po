@@ -5035,7 +5035,7 @@ msgid "Too many links.\n"
 msgstr "Preveč povezav.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Zahtevana je novejša različica sistema Windows.\n"
 
 #: winerror.mc:1483

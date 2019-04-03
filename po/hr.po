@@ -4979,7 +4979,7 @@ msgid "Too many links.\n"
 msgstr "Previše poveznica.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Potrebna novija verzija Windowsa.\n"
 
 #: winerror.mc:1483

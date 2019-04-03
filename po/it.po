@@ -5042,7 +5042,7 @@ msgid "Too many links.\n"
 msgstr "Troppi collegamenti.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Necessaria una versione di Windows più nuova.\n"
 
 #: winerror.mc:1483

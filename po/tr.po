@@ -4952,7 +4952,7 @@ msgid "Too many links.\n"
 msgstr "Çok fazla bağlantı.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Daha yeni Windows sürümü gerekli.\n"
 
 #: winerror.mc:1483

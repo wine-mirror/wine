@@ -4964,7 +4964,7 @@ msgid "Too many links.\n"
 msgstr "Demasiados links.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "É necessária uma versão de Windows mais recente.\n"
 
 #: winerror.mc:1483

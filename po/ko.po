@@ -4932,7 +4932,7 @@ msgid "Too many links.\n"
 msgstr "너무 많은 링크.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "더 최신의 Windows 버전이 필요합니다.\n"
 
 #: winerror.mc:1483

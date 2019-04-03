@@ -5033,7 +5033,7 @@ msgid "Too many links.\n"
 msgstr "Túl sok hivatkozás.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Újabb Windows verzió szükséges.\n"
 
 #: winerror.mc:1483

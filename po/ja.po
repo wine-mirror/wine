@@ -4943,7 +4943,7 @@ msgid "Too many links.\n"
 msgstr "これ以上リンクを設定できません。\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "より新しい Windows バージョンが必要です。\n"
 
 #: winerror.mc:1483

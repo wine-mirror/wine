@@ -4944,7 +4944,7 @@ msgid "Too many links.\n"
 msgstr "太多鏈結。\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "需要較新 Windows 版本。\n"
 
 #: winerror.mc:1483

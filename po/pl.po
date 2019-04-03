@@ -4991,7 +4991,7 @@ msgid "Too many links.\n"
 msgstr "Zbyt dużo dowiązań.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Potrzebna nowsza wersja okien.\n"
 
 #: winerror.mc:1483
