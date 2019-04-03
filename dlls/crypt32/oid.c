@@ -29,6 +29,7 @@
 #define CRYPT_OID_INFO_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "winuser.h"
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -118,7 +119,7 @@ HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR pszFuncName,
     EnterCriticalSection(&funcSetCS);
     LIST_FOR_EACH_ENTRY(cursor, &funcSets, struct OIDFunctionSet, next)
     {
-        if (!strcasecmp(pszFuncName, cursor->name))
+        if (!_strnicmp(pszFuncName, cursor->name, -1))
         {
             ret = cursor;
             break;
@@ -403,7 +404,7 @@ BOOL WINAPI CryptGetOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
                 if (!IS_INTOID(pszOID))
                 {
                     if (!IS_INTOID(function->entry.pszOID) &&
-                     !strcasecmp(function->entry.pszOID, pszOID))
+                     !_strnicmp(function->entry.pszOID, pszOID, -1))
                     {
                         *ppvFuncAddr = function->entry.pvFuncAddr;
                         *phFuncAddr = NULL; /* FIXME: what should it be? */
