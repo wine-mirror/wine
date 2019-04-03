@@ -156,9 +156,7 @@ struct __wine_debug_functions
                      const char *function, const char *format, va_list args );
 };
 
-extern unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel );
-extern int __wine_dbg_set_channel_flags( struct __wine_debug_channel *channel,
-                                         unsigned char set, unsigned char clear );
+extern unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel );
 extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
                                       struct __wine_debug_functions *old_funcs, size_t size );
 extern const char * __cdecl __wine_dbg_strdup( const char *str );

@@ -30,6 +30,7 @@
 # include <sys/stat.h>
 #endif
 
+#define __wine_dbg_get_channel_flags __wine_dbg_get_channel_flags_inline
 #define wine_dbg_sprintf wine_dbg_sprintf_inline
 #define wine_dbg_printf wine_dbg_printf_inline
 #define wine_dbgstr_an wine_dbgstr_an_inline
@@ -61,6 +62,7 @@ static int cmp_name( const void *p1, const void *p2 )
 }
 
 /* get the flags to use for a given channel, possibly setting them too in case of lazy init */
+#undef __wine_dbg_get_channel_flags
 unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
 {
     if (nb_debug_options == -1) debug_init();
