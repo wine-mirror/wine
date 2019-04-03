@@ -27,6 +27,36 @@ DEFINE_GUID(IID_IDebugOutputCallbacks,    0x4bf58045, 0xd654, 0x4c40, 0xb0, 0xaf
 DEFINE_GUID(IID_IDebugEventCallbacks,     0x337be28b, 0x5036, 0x4d72, 0xb6, 0xbf, 0xc4, 0x5f, 0xbb, 0x9f, 0x2e, 0xaa);
 DEFINE_GUID(IID_IDebugClient,             0x27fe5639, 0x8407, 0x4f47, 0x83, 0x64, 0xee, 0x11, 0x8f, 0xb0, 0x8a, 0xc8);
 DEFINE_GUID(IID_IDebugDataSpaces,         0x88f7dfab, 0x3ea7, 0x4c3a, 0xae, 0xfb, 0xc4, 0xe8, 0x10, 0x61, 0x73, 0xaa);
+DEFINE_GUID(IID_IDebugSymbols,            0x8c31e98c, 0x983a, 0x48a5, 0x90, 0x16, 0x6f, 0xe5, 0xd6, 0x67, 0xa9, 0x50);
+
+typedef struct _DEBUG_MODULE_PARAMETERS
+{
+    ULONG64 Base;
+    ULONG Size;
+    ULONG TimeDateStamp;
+    ULONG Checksum;
+    ULONG Flags;
+    ULONG SymbolType;
+    ULONG ImageNameSize;
+    ULONG ModuleNameSize;
+    ULONG LoadedImageNameSize;
+    ULONG SymbolFileNameSize;
+    ULONG MappedImageNameSize;
+    ULONG64 Reserved[2];
+} DEBUG_MODULE_PARAMETERS, *PDEBUG_MODULE_PARAMETERS;
+
+typedef struct _DEBUG_STACK_FRAME
+{
+    ULONG64 InstructionOffset;
+    ULONG64 ReturnOffset;
+    ULONG64 FrameOffset;
+    ULONG64 StackOffset;
+    ULONG64 FuncTableEntry;
+    ULONG64 Params[4];
+    ULONG64 Reserved[6];
+    BOOL Virtual;
+    ULONG FrameNumber;
+} DEBUG_STACK_FRAME, *PDEBUG_STACK_FRAME;
 
 #define INTERFACE IDebugBreakpoint
 DECLARE_INTERFACE_(IDebugBreakpoint, IUnknown)
@@ -36,6 +66,18 @@ DECLARE_INTERFACE_(IDebugBreakpoint, IUnknown)
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /* IDebugBreakpoint */
+    /* FIXME */
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugSymbolGroup
+DECLARE_INTERFACE_(IDebugSymbolGroup, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugSymbolGroup */
     /* FIXME */
 };
 #undef INTERFACE
@@ -195,6 +237,82 @@ DECLARE_INTERFACE_(IDebugDataSpaces, IUnknown)
     STDMETHOD(ReadDebuggerData)(THIS_ ULONG index, void *buffer, ULONG buffer_size, ULONG *data_size) PURE;
     STDMETHOD(ReadProcessorSystemData)(THIS_ ULONG processor, ULONG index, void *buffer, ULONG buffer_size,
             ULONG *data_size) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugSymbols
+DECLARE_INTERFACE_(IDebugSymbols, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugSymbols */
+    STDMETHOD(GetSymbolOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddSymbolOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveSymbolOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetSymbolOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(GetNameByOffset)(THIS_ ULONG64 offset, char *buffer, ULONG buffer_size, ULONG *name_size,
+            ULONG64 *displacement) PURE;
+    STDMETHOD(GetOffsetByName)(THIS_ const char *symbol, ULONG64 *offset) PURE;
+    STDMETHOD(GetNearNameByOffset)(THIS_ ULONG64 offset, LONG delta, char *buffer, ULONG buffer_size,ULONG *name_size,
+            ULONG64 *displacement) PURE;
+    STDMETHOD(GetLineByOffset)(THIS_ ULONG64 offset, ULONG *line, char *buffer, ULONG buffer_size, ULONG *file_size,
+            ULONG64 *displacement) PURE;
+    STDMETHOD(GetOffsetByLine)(THIS_ ULONG line, const char *file, ULONG64 *offset) PURE;
+    STDMETHOD(GetNumberModules)(THIS_ ULONG *loaded, ULONG *unloaded) PURE;
+    STDMETHOD(GetModuleByIndex)(THIS_ ULONG index, ULONG64 *base) PURE;
+    STDMETHOD(GetModuleByModuleName)(THIS_ const char *name, ULONG start_index, ULONG *index, ULONG64 *base) PURE;
+    STDMETHOD(GetModuleByOffset)(THIS_ ULONG64 offset, ULONG start_index, ULONG *index, ULONG64 *base) PURE;
+    STDMETHOD(GetModuleNames)(THIS_ ULONG index, ULONG64 base, char *image_name, ULONG image_name_buffer_size,
+            ULONG *image_name_size, char *module_name, ULONG module_name_buffer_size, ULONG *module_name_size,
+            char *loaded_image_name, ULONG loaded_image_name_buffer_size, ULONG *loaded_image_size) PURE;
+    STDMETHOD(GetModuleParameters)(THIS_ ULONG count, ULONG64 *bases, ULONG start,
+            DEBUG_MODULE_PARAMETERS *parameters) PURE;
+    STDMETHOD(GetSymbolModule)(THIS_ const char *symbol, ULONG64 *base) PURE;
+    STDMETHOD(GetTypeName)(THIS_ ULONG64 base, ULONG type_id, char *buffer, ULONG buffer_size, ULONG *name_size) PURE;
+    STDMETHOD(GetTypeId)(THIS_ ULONG64 base, ULONG type_id, ULONG *size) PURE;
+    STDMETHOD(GetFieldOffset)(THIS_ ULONG64 base, ULONG type_id, const char *field, ULONG *offset) PURE;
+    STDMETHOD(GetSymbolTypeId)(THIS_ const char *symbol, ULONG *type_id, ULONG64 *base) PURE;
+    STDMETHOD(GetOffsetTypeId)(THIS_ ULONG64 offset, ULONG *type_id, ULONG64 *base) PURE;
+    STDMETHOD(ReadTypedDataVirtual)(THIS_ ULONG64 offset, ULONG64 base, ULONG type_id, void *buffer,
+            ULONG buffer_size, ULONG *read_len) PURE;
+    STDMETHOD(WriteTypedDataVirtual)(THIS_ ULONG64 offset, ULONG64 base, ULONG type_id, void *buffer,
+            ULONG buffer_size, ULONG *written) PURE;
+    STDMETHOD(OutputTypedDataVirtual)(THIS_ ULONG output_control, ULONG64 offset, ULONG64 base, ULONG type_id,
+            ULONG flags) PURE;
+    STDMETHOD(ReadTypedDataPhysical)(THIS_ ULONG64 offset, ULONG64 base, ULONG type_id, void *buffer,
+            ULONG buffer_size, ULONG *read_len) PURE;
+    STDMETHOD(WriteTypedDataPhysical)(THIS_ ULONG64 offset, ULONG64 base, ULONG type_id, void *buffer,
+            ULONG buffer_size, ULONG *written) PURE;
+    STDMETHOD(OutputTypedDataPhysical)(THIS_ ULONG output_control, ULONG64 offset, ULONG64 base, ULONG type_id,
+            ULONG flags) PURE;
+    STDMETHOD(GetScope)(THIS_ ULONG64 *instr_offset, DEBUG_STACK_FRAME *frame, void *scope_context,
+            ULONG scope_context_size) PURE;
+    STDMETHOD(SetScope)(THIS_ ULONG64 instr_offset, DEBUG_STACK_FRAME *frame, void *scope_context,
+            ULONG scope_context_size) PURE;
+    STDMETHOD(ResetScope)(THIS) PURE;
+    STDMETHOD(GetScopeSymbolGroup)(THIS_ ULONG flags, IDebugSymbolGroup *update, IDebugSymbolGroup **symbols) PURE;
+    STDMETHOD(CreateSymbolGroup)(THIS_ IDebugSymbolGroup **group) PURE;
+    STDMETHOD(StartSymbolMatch)(THIS_ const char *pattern, ULONG64 *handle) PURE;
+    STDMETHOD(GetNextSymbolMatch)(THIS_ ULONG64 handle, char *buffer, ULONG buffer_size, ULONG *match_size,
+            ULONG64 *offset) PURE;
+    STDMETHOD(EndSymbolMatch)(THIS_ ULONG64 handle) PURE;
+    STDMETHOD(Reload)(THIS_ const char *path) PURE;
+    STDMETHOD(GetSymbolPath)(THIS_ char *buffer, ULONG buffer_size, ULONG *path_size) PURE;
+    STDMETHOD(SetSymbolPath)(THIS_ const char *path) PURE;
+    STDMETHOD(AppendSymbolPath)(THIS_ const char *path) PURE;
+    STDMETHOD(GetImagePath)(THIS_ char *buffer, ULONG buffer_size, ULONG *path_size) PURE;
+    STDMETHOD(SetImagePath)(THIS_ const char *path) PURE;
+    STDMETHOD(AppendImagePath)(THIS_ const char *path) PURE;
+    STDMETHOD(GetSourcePath)(THIS_ char *buffer, ULONG buffer_size, ULONG *path_size) PURE;
+    STDMETHOD(GetSourcePathElement)(THIS_ ULONG index, char *buffer, ULONG buffer_size, ULONG *element_size) PURE;
+    STDMETHOD(SetSourcePath)(THIS_ const char *path) PURE;
+    STDMETHOD(AppendSourcePath)(THIS_ const char *path) PURE;
+    STDMETHOD(FindSourceFile)(THIS_ ULONG start, const char *file, ULONG flags, ULONG *found_element, char *buffer,
+            ULONG buffer_size, ULONG *found_size) PURE;
+    STDMETHOD(GetSourceFileLineOffsets)(THIS_ const char *file, ULONG64 *buffer, ULONG buffer_lines,
+            ULONG *file_lines) PURE;
 };
 #undef INTERFACE
 
