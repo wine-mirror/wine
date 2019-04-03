@@ -23,11 +23,13 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
 
 static const char * (__cdecl *p__wine_dbg_strdup)( const char *str );
+static int (__cdecl *p__wine_dbg_output)( const char *str );
 
 static void load_func( void **func, const char *name, void *def )
 {
@@ -53,10 +55,21 @@ static const char * __cdecl fallback__wine_dbg_strdup( const char *str )
     return ret;
 }
 
+static int __cdecl fallback__wine_dbg_output( const char *str )
+{
+    return fwrite( str, 1, strlen(str), stderr );
+}
+
 const char * __cdecl __wine_dbg_strdup( const char *str )
 {
     LOAD_FUNC( __wine_dbg_strdup );
     return p__wine_dbg_strdup( str );
+}
+
+int __cdecl __wine_dbg_output( const char *str )
+{
+    LOAD_FUNC( __wine_dbg_output );
+    return p__wine_dbg_output( str );
 }
 
 #endif  /* _WIN32 */
