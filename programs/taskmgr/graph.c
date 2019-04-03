@@ -26,6 +26,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include <shlwapi.h>
 #include <winnt.h>
 
 #include "taskmgr.h"
@@ -239,8 +240,6 @@ static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
 /* Top bars that are "unused", i.e. are dark green, representing free memory */
     int                i;
 
-    static const WCHAR    wszFormat[] = {'%','d','K',0};
-    
     /*
      * Get the client area rectangle
      */
@@ -257,7 +256,10 @@ static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
     CommitChargeTotal = (ULONGLONG)PerfDataGetCommitChargeTotalK();
     CommitChargeLimit = (ULONGLONG)PerfDataGetCommitChargeLimitK();
 
-    swprintf(Text, wszFormat, (int)CommitChargeTotal);
+    if (CommitChargeTotal < 1024)
+        StrFormatKBSizeW(CommitChargeTotal, Text, ARRAY_SIZE(Text));
+    else
+        StrFormatByteSizeW(CommitChargeTotal, Text, ARRAY_SIZE(Text));
     
     /*
      * Draw the font text onto the graph
