@@ -29,9 +29,15 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 
+WINE_DECLARE_DEBUG_CHANNEL(pid);
+WINE_DECLARE_DEBUG_CHANNEL(timestamp);
+
 static const char * (__cdecl *p__wine_dbg_strdup)( const char *str );
 static int (__cdecl *p__wine_dbg_output)( const char *str );
 static unsigned char (__cdecl *p__wine_dbg_get_channel_flags)( struct __wine_debug_channel *channel );
+static int (__cdecl *p__wine_dbg_header)( enum __wine_debug_class cls,
+                                          struct __wine_debug_channel *channel,
+                                          const char *function );
 
 static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 
@@ -39,6 +45,7 @@ static unsigned char default_flags = (1 << __WINE_DBCL_ERR) | (1 << __WINE_DBCL_
 static int nb_debug_options = -1;
 static int options_size;
 static struct __wine_debug_channel *debug_options;
+static DWORD partial_line_tid;  /* id of the last thread to output a partial line */
 
 static void load_func( void **func, const char *name, void *def )
 {
@@ -163,7 +170,36 @@ static const char * __cdecl fallback__wine_dbg_strdup( const char *str )
 
 static int __cdecl fallback__wine_dbg_output( const char *str )
 {
-    return fwrite( str, 1, strlen(str), stderr );
+    size_t len = strlen( str );
+
+    if (!len) return 0;
+    interlocked_xchg( (LONG *)&partial_line_tid, str[len - 1] != '\n' ? GetCurrentThreadId() : 0 );
+    return fwrite( str, 1, len, stderr );
+}
+
+static int __cdecl fallback__wine_dbg_header( enum __wine_debug_class cls,
+                                              struct __wine_debug_channel *channel,
+                                              const char *function )
+{
+    char buffer[200], *pos = buffer;
+
+    if (!(__wine_dbg_get_channel_flags( channel ) & (1 << cls))) return -1;
+
+    /* skip header if partial line and no other thread came in between */
+    if (partial_line_tid == GetCurrentThreadId()) return 0;
+
+    if (TRACE_ON(timestamp))
+    {
+        ULONG ticks = GetTickCount();
+        pos += sprintf( pos, "%3u.%03u:", ticks / 1000, ticks % 1000 );
+    }
+    if (TRACE_ON(pid)) pos += sprintf( pos, "%04x:", GetCurrentProcessId() );
+    pos += sprintf( pos, "%04x:", GetCurrentThreadId() );
+    if (function && cls < ARRAY_SIZE( debug_classes ))
+        snprintf( pos, sizeof(buffer) - (pos - buffer), "%s:%s:%s ",
+                  debug_classes[cls], channel->name, function );
+
+    return fwrite( buffer, 1, strlen(buffer), stderr );
 }
 
 static unsigned char __cdecl fallback__wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
@@ -203,6 +239,13 @@ unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel 
 {
     LOAD_FUNC( __wine_dbg_get_channel_flags );
     return p__wine_dbg_get_channel_flags( channel );
+}
+
+int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                               const char *function )
+{
+    LOAD_FUNC( __wine_dbg_header );
+    return p__wine_dbg_header( cls, channel, function );
 }
 
 #endif  /* _WIN32 */
