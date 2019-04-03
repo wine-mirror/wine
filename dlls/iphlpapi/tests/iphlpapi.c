@@ -285,9 +285,6 @@ static void testGetIpAddrTable(void)
           ok (buf->table[i].wType != 0, "Test[%d]: expected wType > 0\n", i);
           trace("Entry[%d]: addr %s, dwIndex %u, wType 0x%x\n", i,
                 ntoa(buf->table[i].dwAddr), buf->table[i].dwIndex, buf->table[i].wType);
-          /* loopback must never be the first when more than one interface is found */
-          if (buf->table[i].dwAddr ==  htonl(INADDR_LOOPBACK))
-              ok(buf->dwNumEntries == 1 || i, "Loopback interface in wrong first position\n");
         }
       }
       HeapFree(GetProcessHeap(), 0, buf);
