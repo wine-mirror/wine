@@ -74,6 +74,20 @@ static void release_temp_buffer( char *ptr, size_t size )
     info->str_pos = ptr + size;
 }
 
+/* add a string to the output buffer */
+static int append_output( struct debug_info *info, const char *str, size_t len )
+{
+    if (len >= sizeof(info->output) - (info->out_pos - info->output))
+    {
+       fprintf( stderr, "wine_dbg_output: debugstr buffer overflow (contents: '%s')\n", info->output );
+       info->out_pos = info->output;
+       abort();
+    }
+    memcpy( info->out_pos, str, len );
+    info->out_pos += len;
+    return len;
+}
+
 /***********************************************************************
  *		__wine_dbg_strdup  (NTDLL.@)
  */
@@ -86,6 +100,26 @@ const char * __cdecl __wine_dbg_strdup( const char *str )
     if (res + n > &info->strings[sizeof(info->strings)]) res = info->strings;
     info->str_pos = res + n;
     return strcpy( res, str );
+}
+
+/***********************************************************************
+ *		__wine_dbg_output  (NTDLL.@)
+ */
+int __cdecl __wine_dbg_output( const char *str )
+{
+    struct debug_info *info = get_info();
+    const char *end = strrchr( str, '\n' );
+    int ret = 0;
+
+    if (end)
+    {
+        ret += append_output( info, str, end + 1 - str );
+        write( 2, info->output, info->out_pos - info->output );
+        info->out_pos = info->output;
+        str = end + 1;
+    }
+    if (*str) ret += append_output( info, str, strlen( str ));
+    return ret;
 }
 
 /***********************************************************************

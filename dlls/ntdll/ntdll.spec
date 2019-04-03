@@ -1506,6 +1506,7 @@
 @ cdecl __wine_make_process_system()
 
 # Debugging
+@ cdecl -norelay __wine_dbg_output(str)
 @ cdecl -norelay __wine_dbg_strdup(str)
 
 # Virtual memory

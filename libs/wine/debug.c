@@ -31,6 +31,7 @@
 #endif
 
 #define wine_dbg_sprintf wine_dbg_sprintf_inline
+#define wine_dbg_printf wine_dbg_printf_inline
 #define wine_dbgstr_an wine_dbgstr_an_inline
 #define wine_dbgstr_wn wine_dbgstr_wn_inline
 #include "wine/debug.h"
@@ -217,6 +218,7 @@ static void debug_init(void)
 }
 
 /* varargs wrapper for funcs.dbg_vprintf */
+#undef wine_dbg_printf
 int wine_dbg_printf( const char *format, ... )
 {
     int ret;

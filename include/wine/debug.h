@@ -162,6 +162,7 @@ extern int __wine_dbg_set_channel_flags( struct __wine_debug_channel *channel,
 extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
                                       struct __wine_debug_functions *old_funcs, size_t size );
 extern const char * __cdecl __wine_dbg_strdup( const char *str );
+extern int __cdecl __wine_dbg_output( const char *str );
 
 /*
  * Exported definitions and macros
@@ -171,7 +172,6 @@ extern const char * __cdecl __wine_dbg_strdup( const char *str );
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
 
-extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 extern int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *ch, const char *func,
                          const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
 
@@ -197,6 +197,18 @@ static inline const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format
     vsnprintf( buffer, sizeof(buffer), format, args );
     __wine_dbg_va_end( args );
     return __wine_dbg_strdup( buffer );
+}
+
+static int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
+static inline int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... )
+{
+    char buffer[1024];
+    __wine_dbg_va_list args;
+
+    __wine_dbg_va_start( args, format );
+    vsnprintf( buffer, sizeof(buffer), format, args );
+    __wine_dbg_va_end( args );
+    return __wine_dbg_output( buffer );
 }
 
 static inline const char *wine_dbgstr_an( const char *str, int n )
