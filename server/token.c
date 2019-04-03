@@ -305,8 +305,7 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     owner = sd_get_owner( sd );
     if (owner)
     {
-        size_t needed_size = security_sid_len( owner );
-        if ((sd->owner_len < sizeof(SID)) || (needed_size > sd->owner_len))
+        if ((sd->owner_len < sizeof(SID)) || (security_sid_len( owner ) > sd->owner_len))
             return FALSE;
     }
     offset += sd->owner_len;
@@ -317,8 +316,7 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     group = sd_get_group( sd );
     if (group)
     {
-        size_t needed_size = security_sid_len( group );
-        if ((sd->group_len < sizeof(SID)) || (needed_size > sd->group_len))
+        if ((sd->group_len < sizeof(SID)) || (security_sid_len( group ) > sd->group_len))
             return FALSE;
     }
     offset += sd->group_len;
