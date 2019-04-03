@@ -2334,7 +2334,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
       if (name && (vkey == VK_SHIFT || vkey == VK_CONTROL || vkey == VK_MENU))
       {
           char* idx = strrchr(name, '_');
-          if (idx && (strcasecmp(idx, "_r") == 0 || strcasecmp(idx, "_l") == 0))
+          if (idx && (_strnicmp(idx, "_r", -1) == 0 || _strnicmp(idx, "_l", -1) == 0))
           {
               LeaveCriticalSection( &kbd_section );
               TRACE("found scan=%04x keyc=%u keysym=%lx modified_string=%s\n",
