@@ -43,11 +43,18 @@ WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 
 static struct __wine_debug_functions default_funcs;
 
-/* ---------------------------------------------------------------------- */
+static BOOL init_done;
+static struct debug_info initial_info;  /* debug info for initial thread */
 
 /* get the debug info pointer for the current thread */
 static inline struct debug_info *get_info(void)
 {
+    if (!init_done)
+    {
+        if (!initial_info.str_pos) initial_info.str_pos = initial_info.strings;
+        if (!initial_info.out_pos) initial_info.out_pos = initial_info.output;
+        return &initial_info;
+    }
     return ntdll_get_thread_data()->debug_info;
 }
 
@@ -199,5 +206,9 @@ static const struct __wine_debug_functions funcs =
  */
 void debug_init(void)
 {
+    if (!initial_info.str_pos) initial_info.str_pos = initial_info.strings;
+    if (!initial_info.out_pos) initial_info.out_pos = initial_info.output;
+    ntdll_get_thread_data()->debug_info = &initial_info;
+    init_done = TRUE;
     __wine_dbg_set_functions( &funcs, &default_funcs, sizeof(funcs) );
 }

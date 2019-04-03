@@ -163,7 +163,6 @@ void thread_init(void)
     LARGE_INTEGER now;
     NTSTATUS status;
     struct ntdll_thread_data *thread_data;
-    static struct debug_info debug_info;  /* debug info for initial thread */
 
     virtual_init();
 
@@ -231,13 +230,9 @@ void thread_init(void)
     thread_data->reply_fd   = -1;
     thread_data->wait_fd[0] = -1;
     thread_data->wait_fd[1] = -1;
-    thread_data->debug_info = &debug_info;
 
     signal_init_thread( teb );
     virtual_init_threading();
-
-    debug_info.str_pos = debug_info.strings;
-    debug_info.out_pos = debug_info.output;
     debug_init();
 
     /* setup the server connection */
