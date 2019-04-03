@@ -28,14 +28,8 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <ctype.h>
 
 #include "wine/debug.h"
-#include "wine/exception.h"
-#include "wine/library.h"
-#include "wine/unicode.h"
-#include "winnt.h"
-#include "winternl.h"
 #include "ntdll_misc.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(pid);
@@ -60,24 +54,6 @@ static inline struct debug_info *get_info(void)
         return &initial_info;
     }
     return ntdll_get_thread_data()->debug_info;
-}
-
-/* allocate some tmp space for a string */
-static char *get_temp_buffer( size_t n )
-{
-    struct debug_info *info = get_info();
-    char *res = info->str_pos;
-
-    if (res + n >= &info->strings[sizeof(info->strings)]) res = info->strings;
-    info->str_pos = res + n;
-    return res;
-}
-
-/* release extra space that we requested in get_temp_buffer() */
-static void release_temp_buffer( char *ptr, size_t size )
-{
-    struct debug_info *info = get_info();
-    info->str_pos = ptr + size;
 }
 
 /* add a string to the output buffer */
@@ -308,85 +284,6 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
 }
 
 /***********************************************************************
- *		NTDLL_dbg_vprintf
- */
-static int NTDLL_dbg_vprintf( const char *format, va_list args )
-{
-    struct debug_info *info = get_info();
-    int end;
-
-    int ret = vsnprintf( info->out_pos, sizeof(info->output) - (info->out_pos - info->output),
-                         format, args );
-
-    /* make sure we didn't exceed the buffer length
-     * the two checks are due to glibc changes in vsnprintfs return value
-     * the buffer size can be exceeded in case of a missing \n in
-     * debug output */
-    if ((ret == -1) || (ret >= sizeof(info->output) - (info->out_pos - info->output)))
-    {
-       fprintf( stderr, "wine_dbg_vprintf: debugstr buffer overflow (contents: '%s')\n",
-                info->output);
-       info->out_pos = info->output;
-       abort();
-    }
-
-    for (end = ret; end > 0; end--) if (info->out_pos[end - 1] == '\n') break;
-
-    if (!end) info->out_pos += ret;
-    else
-    {
-        char *pos = info->output;
-        write( 2, pos, info->out_pos + end - pos );
-        /* move beginning of next line to start of buffer */
-        memmove( pos, info->out_pos + end, ret - end );
-        info->out_pos = pos + ret - end;
-    }
-    return ret;
-}
-
-/***********************************************************************
- *		NTDLL_dbg_vlog
- */
-static int NTDLL_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
-                           const char *function, const char *format, va_list args )
-{
-    static const char * const classes[] = { "fixme", "err", "warn", "trace" };
-    struct debug_info *info = get_info();
-    int ret = 0;
-
-    /* only print header if we are at the beginning of the line */
-    if (info->out_pos == info->output || info->out_pos[-1] == '\n')
-    {
-        if (TRACE_ON(timestamp))
-        {
-            ULONG ticks = NtGetTickCount();
-            ret = wine_dbg_printf( "%3u.%03u:", ticks / 1000, ticks % 1000 );
-        }
-        if (TRACE_ON(pid))
-            ret += wine_dbg_printf( "%04x:", GetCurrentProcessId() );
-        ret += wine_dbg_printf( "%04x:", GetCurrentThreadId() );
-        if (*format == '\1')  /* special magic to avoid standard prefix */
-            format++;
-        else if (cls < ARRAY_SIZE( classes ))
-            ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel->name, function );
-    }
-    if (format)
-        ret += NTDLL_dbg_vprintf( format, args );
-    return ret;
-}
-
-
-static const struct __wine_debug_functions funcs =
-{
-    get_temp_buffer,
-    release_temp_buffer,
-    wine_dbgstr_an,
-    wine_dbgstr_wn,
-    NTDLL_dbg_vprintf,
-    NTDLL_dbg_vlog
-};
-
-/***********************************************************************
  *		debug_init
  */
 void debug_init(void)
@@ -395,5 +292,4 @@ void debug_init(void)
     if (!initial_info.out_pos) initial_info.out_pos = initial_info.output;
     ntdll_get_thread_data()->debug_info = &initial_info;
     init_done = TRUE;
-    __wine_dbg_set_functions( &funcs, NULL, sizeof(funcs) );
 }

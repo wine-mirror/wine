@@ -145,20 +145,7 @@ struct __wine_debug_channel
 
 #endif  /* !__GNUC__ && !__SUNPRO_C */
 
-struct __wine_debug_functions
-{
-    char * (*get_temp_buffer)( size_t n );
-    void   (*release_temp_buffer)( char *buffer, size_t n );
-    const char * (*dbgstr_an)( const char * s, int n );
-    const char * (*dbgstr_wn)( const WCHAR *s, int n );
-    int (*dbg_vprintf)( const char *format, va_list args );
-    int (*dbg_vlog)( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
-                     const char *function, const char *format, va_list args );
-};
-
 extern unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel );
-extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
-                                      struct __wine_debug_functions *old_funcs, size_t size );
 extern const char * __cdecl __wine_dbg_strdup( const char *str );
 extern int __cdecl __wine_dbg_output( const char *str );
 extern int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,

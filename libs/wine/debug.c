@@ -39,9 +39,16 @@
 #include "wine/debug.h"
 #include "wine/library.h"
 
-#if defined(__MINGW32__) || defined(_MSC_VER)
-WINE_DECLARE_DEBUG_CHANNEL(pid);
-#endif
+struct __wine_debug_functions
+{
+    char * (*get_temp_buffer)( size_t n );
+    void   (*release_temp_buffer)( char *buffer, size_t n );
+    const char * (*dbgstr_an)( const char * s, int n );
+    const char * (*dbgstr_wn)( const WCHAR *s, int n );
+    int (*dbg_vprintf)( const char *format, va_list args );
+    int (*dbg_vlog)( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                     const char *function, const char *format, va_list args );
+};
 
 static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 
@@ -416,11 +423,6 @@ static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_ch
 {
     int ret = 0;
 
-#if defined(__MINGW32__) || defined(_MSC_VER)
-    if (TRACE_ON(pid))
-        ret += wine_dbg_printf( "%04x:", GetCurrentProcessId() );
-    ret += wine_dbg_printf( "%04x:", GetCurrentThreadId() );
-#endif
     if (cls < ARRAY_SIZE(debug_classes))
         ret += wine_dbg_printf( "%s:%s:%s ", debug_classes[cls], channel->name, func );
     if (format)
