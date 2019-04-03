@@ -393,6 +393,72 @@ static void test_enum_pins(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_find_pin(void)
+{
+    static const WCHAR input_pinW[] = {'i','n','p','u','t',' ','p','i','n',0};
+    static const WCHAR inW[] = {'I','n',0};
+
+    WCHAR sink_id[] = {'V','M','R',' ','I','n','p','u','t','0',0};
+    IBaseFilter *filter = create_vmr7(0);
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    IBaseFilter_EnumPins(filter, &enum_pins);
+
+    hr = IBaseFilter_FindPin(filter, input_pinW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, inW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Pins did not match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    sink_id[9] = '1';
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    if (SUCCEEDED(set_mixing_mode(filter)))
+    {
+        IEnumPins_Reset(enum_pins);
+
+        sink_id[9] = '0';
+        hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(pin == pin2, "Pins did not match.\n");
+        IPin_Release(pin);
+        IPin_Release(pin2);
+
+        sink_id[9] = '1';
+        hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(pin == pin2, "Pins did not match.\n");
+        IPin_Release(pin);
+        IPin_Release(pin2);
+
+        sink_id[9] = '2';
+        hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+        ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    }
+    else
+        skip("Mixing mode is not supported.\n");
+
+    IEnumPins_Release(enum_pins);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(vmr7)
 {
     CoInitialize(NULL);
@@ -400,6 +466,7 @@ START_TEST(vmr7)
     test_filter_config();
     test_interfaces();
     test_enum_pins();
+    test_find_pin();
 
     CoUninitialize();
 }
