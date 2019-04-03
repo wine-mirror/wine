@@ -33,9 +33,6 @@
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
 
 #include "build.h"
 
@@ -540,18 +537,13 @@ void init_input_buffer( const char *file )
 {
     int fd;
     struct stat st;
+    unsigned char *buffer;
 
     if ((fd = open( file, O_RDONLY | O_BINARY )) == -1) fatal_perror( "Cannot open %s", file );
     if ((fstat( fd, &st ) == -1)) fatal_perror( "Cannot stat %s", file );
     if (!st.st_size) fatal_error( "%s is an empty file\n", file );
-#ifdef	HAVE_MMAP
-    if ((input_buffer = mmap( NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0 )) == (void*)-1)
-#endif
-    {
-        unsigned char *buffer = xmalloc( st.st_size );
-        if (read( fd, buffer, st.st_size ) != st.st_size) fatal_error( "Cannot read %s\n", file );
-        input_buffer = buffer;
-    }
+    input_buffer = buffer = xmalloc( st.st_size );
+    if (read( fd, buffer, st.st_size ) != st.st_size) fatal_error( "Cannot read %s\n", file );
     close( fd );
     input_buffer_filename = xstrdup( file );
     input_buffer_size = st.st_size;
