@@ -24,6 +24,7 @@
 #include "wine/port.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
