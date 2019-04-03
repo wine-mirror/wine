@@ -3240,7 +3240,8 @@ cleanup:
 
 static void test_set_stream_source(void)
 {
-    IDirect3DVertexBuffer9 *vb;
+    IDirect3DVertexBuffer9 *vb, *current_vb;
+    unsigned int offset, stride;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d9;
     ULONG refcount;
@@ -3273,7 +3274,24 @@ static void test_set_stream_source(void)
     hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 3, 32);
     ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 4, 32);
-    ok(SUCCEEDED(hr), "Failed to set the stream source, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!current_vb, "Got unexpected vb %p.\n", current_vb);
+    ok(offset == 4, "Got unexpected offset %u.\n", offset);
+    ok(stride == 32, "Got unexpected stride %u.\n", stride);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(current_vb == vb, "Got unexpected vb %p.\n", current_vb);
+    IDirect3DVertexBuffer9_Release(current_vb);
+    ok(!offset, "Got unexpected offset %u.\n", offset);
+    ok(!stride, "Got unexpected stride %u.\n", stride);
 
     /* Try to set the NULL buffer with an offset and stride 0 */
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
