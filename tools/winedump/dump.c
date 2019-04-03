@@ -34,9 +34,6 @@
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
 #include <fcntl.h>
 
 #include "windef.h"
@@ -260,13 +257,8 @@ BOOL dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
     if (fstat(fd, &s) < 0) fatal("Can't get size");
     dump_total_len = s.st_size;
 
-#ifdef HAVE_MMAP
-    if ((dump_base = mmap(NULL, dump_total_len, PROT_READ, MAP_PRIVATE, fd, 0)) == (void *)-1)
-#endif
-    {
-        if (!(dump_base = malloc( dump_total_len ))) fatal( "Out of memory" );
-        if ((unsigned long)read( fd, dump_base, dump_total_len ) != dump_total_len) fatal( "Cannot read file" );
-    }
+    if (!(dump_base = malloc( dump_total_len ))) fatal( "Out of memory" );
+    if ((unsigned long)read( fd, dump_base, dump_total_len ) != dump_total_len) fatal( "Cannot read file" );
 
     printf("Contents of %s: %ld bytes\n\n", name, dump_total_len);
 
@@ -286,12 +278,7 @@ BOOL dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
     }
 
     if (ret) printf("Done dumping %s\n", name);
-#ifdef HAVE_MMAP
-    if (munmap(dump_base, dump_total_len) == -1)
-#endif
-    {
-        free( dump_base );
-    }
+    free( dump_base );
     close(fd);
 
     return ret;
