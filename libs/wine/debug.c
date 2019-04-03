@@ -30,6 +30,7 @@
 # include <sys/stat.h>
 #endif
 
+#define wine_dbg_sprintf wine_dbg_sprintf_inline
 #define wine_dbgstr_an wine_dbgstr_an_inline
 #define wine_dbgstr_wn wine_dbgstr_wn_inline
 #include "wine/debug.h"
@@ -228,6 +229,7 @@ int wine_dbg_printf( const char *format, ... )
 }
 
 /* printf with temp buffer allocation */
+#undef wine_dbg_sprintf
 const char *wine_dbg_sprintf( const char *format, ... )
 {
     static const int max_size = 200;

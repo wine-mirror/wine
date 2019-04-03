@@ -22,6 +22,7 @@
 #define __WINE_WINE_DEBUG_H
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <windef.h>
 #ifndef _NTSYSTEM_
 #include <winbase.h>
@@ -169,11 +170,34 @@ extern const char * __cdecl __wine_dbg_strdup( const char *str );
 /* These functions return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
-extern const char *wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 
 extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 extern int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *ch, const char *func,
                          const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
+
+#if (defined(__x86_64__) || defined(__aarch64__)) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
+# define __wine_dbg_cdecl __cdecl
+# define __wine_dbg_va_list __builtin_ms_va_list
+# define __wine_dbg_va_start(list,arg) __builtin_ms_va_start(list,arg)
+# define __wine_dbg_va_end(list) __builtin_ms_va_end(list)
+#else
+# define __wine_dbg_cdecl
+# define __wine_dbg_va_list va_list
+# define __wine_dbg_va_start(list,arg) va_start(list,arg)
+# define __wine_dbg_va_end(list) va_end(list)
+#endif
+
+static const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
+static inline const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format, ... )
+{
+    char buffer[200];
+    __wine_dbg_va_list args;
+
+    __wine_dbg_va_start( args, format );
+    vsnprintf( buffer, sizeof(buffer), format, args );
+    __wine_dbg_va_end( args );
+    return __wine_dbg_strdup( buffer );
+}
 
 static inline const char *wine_dbgstr_an( const char *str, int n )
 {
