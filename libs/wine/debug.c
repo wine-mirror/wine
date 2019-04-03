@@ -33,6 +33,7 @@
 #define __wine_dbg_get_channel_flags __wine_dbg_get_channel_flags_inline
 #define wine_dbg_sprintf wine_dbg_sprintf_inline
 #define wine_dbg_printf wine_dbg_printf_inline
+#define wine_dbg_log wine_dbg_log_inline
 #define wine_dbgstr_an wine_dbgstr_an_inline
 #define wine_dbgstr_wn wine_dbgstr_wn_inline
 #include "wine/debug.h"
@@ -252,6 +253,7 @@ const char *wine_dbg_sprintf( const char *format, ... )
 
 
 /* varargs wrapper for funcs.dbg_vlog */
+#undef wine_dbg_log
 int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
                   const char *func, const char *format, ... )
 {

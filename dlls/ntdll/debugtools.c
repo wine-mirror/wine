@@ -276,6 +276,38 @@ int __cdecl __wine_dbg_output( const char *str )
 }
 
 /***********************************************************************
+ *		__wine_dbg_header  (NTDLL.@)
+ */
+int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                               const char *function )
+{
+    static const char * const classes[] = { "fixme", "err", "warn", "trace" };
+    struct debug_info *info = get_info();
+    char buffer[200], *pos = buffer;
+
+    if (!(__wine_dbg_get_channel_flags( channel ) & (1 << cls))) return -1;
+
+    /* only print header if we are at the beginning of the line */
+    if (info->out_pos > info->output) return 0;
+
+    if (init_done)
+    {
+        if (TRACE_ON(timestamp))
+        {
+            ULONG ticks = NtGetTickCount();
+            pos += sprintf( pos, "%3u.%03u:", ticks / 1000, ticks % 1000 );
+        }
+        if (TRACE_ON(pid)) pos += sprintf( pos, "%04x:", GetCurrentProcessId() );
+        pos += sprintf( pos, "%04x:", GetCurrentThreadId() );
+    }
+    if (function && cls < ARRAY_SIZE( classes ))
+        snprintf( pos, sizeof(buffer) - (pos - buffer), "%s:%s:%s ",
+                  classes[cls], channel->name, function );
+
+    return append_output( info, buffer, strlen( buffer ));
+}
+
+/***********************************************************************
  *		NTDLL_dbg_vprintf
  */
 static int NTDLL_dbg_vprintf( const char *format, va_list args )

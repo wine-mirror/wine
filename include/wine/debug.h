@@ -161,6 +161,8 @@ extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_f
                                       struct __wine_debug_functions *old_funcs, size_t size );
 extern const char * __cdecl __wine_dbg_strdup( const char *str );
 extern int __cdecl __wine_dbg_output( const char *str );
+extern int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                                      const char *function );
 
 /*
  * Exported definitions and macros
@@ -169,9 +171,6 @@ extern int __cdecl __wine_dbg_output( const char *str );
 /* These functions return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
-
-extern int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *ch, const char *func,
-                         const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
 
 #if (defined(__x86_64__) || defined(__aarch64__)) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
 # define __wine_dbg_cdecl __cdecl
@@ -207,6 +206,31 @@ static inline int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... )
     vsnprintf( buffer, sizeof(buffer), format, args );
     __wine_dbg_va_end( args );
     return __wine_dbg_output( buffer );
+}
+
+static int __wine_dbg_cdecl wine_dbg_log( enum __wine_debug_class cls,
+                                          struct __wine_debug_channel *channel, const char *func,
+                                          const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
+static inline int __wine_dbg_cdecl wine_dbg_log( enum __wine_debug_class cls,
+                                                 struct __wine_debug_channel *channel,
+                                                 const char *function, const char *format, ... )
+{
+    char buffer[1024];
+    __wine_dbg_va_list args;
+    int ret;
+
+    if (*format == '\1')  /* special magic to avoid standard prefix */
+    {
+        format++;
+        function = NULL;
+    }
+    if ((ret = __wine_dbg_header( cls, channel, function )) == -1) return ret;
+
+    __wine_dbg_va_start( args, format );
+    vsnprintf( buffer, sizeof(buffer), format, args );
+    __wine_dbg_va_end( args );
+    ret += __wine_dbg_output( buffer );
+    return ret;
 }
 
 static inline const char *wine_dbgstr_an( const char *str, int n )
