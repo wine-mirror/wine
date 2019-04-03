@@ -367,8 +367,7 @@ static void start_thread( struct startup_info *info )
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     struct debug_info debug_info;
 
-    debug_info.str_pos = debug_info.strings;
-    debug_info.out_pos = debug_info.output;
+    debug_info.str_pos = debug_info.out_pos = 0;
     thread_data->debug_info = &debug_info;
     thread_data->pthread_id = pthread_self();
 

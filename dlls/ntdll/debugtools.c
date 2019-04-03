@@ -47,25 +47,20 @@ static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 /* get the debug info pointer for the current thread */
 static inline struct debug_info *get_info(void)
 {
-    if (!init_done)
-    {
-        if (!initial_info.str_pos) initial_info.str_pos = initial_info.strings;
-        if (!initial_info.out_pos) initial_info.out_pos = initial_info.output;
-        return &initial_info;
-    }
+    if (!init_done) return &initial_info;
     return ntdll_get_thread_data()->debug_info;
 }
 
 /* add a string to the output buffer */
 static int append_output( struct debug_info *info, const char *str, size_t len )
 {
-    if (len >= sizeof(info->output) - (info->out_pos - info->output))
+    if (len >= sizeof(info->output) - info->out_pos)
     {
        fprintf( stderr, "wine_dbg_output: debugstr buffer overflow (contents: '%s')\n", info->output );
-       info->out_pos = info->output;
+       info->out_pos = 0;
        abort();
     }
-    memcpy( info->out_pos, str, len );
+    memcpy( info->output + info->out_pos, str, len );
     info->out_pos += len;
     return len;
 }
@@ -223,12 +218,13 @@ unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel 
 const char * __cdecl __wine_dbg_strdup( const char *str )
 {
     struct debug_info *info = get_info();
-    char *res = info->str_pos;
+    unsigned int pos = info->str_pos;
     size_t n = strlen( str ) + 1;
 
-    if (res + n > &info->strings[sizeof(info->strings)]) res = info->strings;
-    info->str_pos = res + n;
-    return strcpy( res, str );
+    assert( n <= sizeof(info->strings) );
+    if (pos + n > sizeof(info->strings)) pos = 0;
+    info->str_pos = pos + n;
+    return memcpy( info->strings + pos, str, n );
 }
 
 /***********************************************************************
@@ -243,8 +239,8 @@ int __cdecl __wine_dbg_output( const char *str )
     if (end)
     {
         ret += append_output( info, str, end + 1 - str );
-        write( 2, info->output, info->out_pos - info->output );
-        info->out_pos = info->output;
+        write( 2, info->output, info->out_pos );
+        info->out_pos = 0;
         str = end + 1;
     }
     if (*str) ret += append_output( info, str, strlen( str ));
@@ -264,7 +260,7 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
     if (!(__wine_dbg_get_channel_flags( channel ) & (1 << cls))) return -1;
 
     /* only print header if we are at the beginning of the line */
-    if (info->out_pos > info->output) return 0;
+    if (info->out_pos) return 0;
 
     if (init_done)
     {
@@ -288,8 +284,6 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
  */
 void debug_init(void)
 {
-    if (!initial_info.str_pos) initial_info.str_pos = initial_info.strings;
-    if (!initial_info.out_pos) initial_info.out_pos = initial_info.output;
     ntdll_get_thread_data()->debug_info = &initial_info;
     init_done = TRUE;
 }
