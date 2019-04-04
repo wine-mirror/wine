@@ -770,7 +770,7 @@ HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, co
     return D3D_OK;
 }
 
-static BOOL convert_dib_to_bmp(void **data, UINT *size)
+static BOOL convert_dib_to_bmp(const void **data, unsigned int *size)
 {
     ULONG header_size;
     ULONG count = 0;
@@ -878,7 +878,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize,
     }
 
     /* In case of DIB file, convert it to BMP */
-    dib = convert_dib_to_bmp((void**)&data, &datasize);
+    dib = convert_dib_to_bmp(&data, &datasize);
 
     hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
 
@@ -1154,7 +1154,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     }
 
     if (imginfo.ImageFileFormat == D3DXIFF_DIB)
-        convert_dib_to_bmp((void**)&pSrcData, &SrcDataSize);
+        convert_dib_to_bmp(&pSrcData, &SrcDataSize);
 
     if (FAILED(WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory)))
         goto cleanup_err;
