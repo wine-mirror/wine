@@ -28,6 +28,7 @@
 #include "winerror.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "winternl.h"
 
 #include "psdrv.h"
 #include "wine/debug.h"
@@ -168,7 +169,7 @@ BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
 
     /* Look for a matching font family */
     for(family = physDev->pi->Fonts; family; family = family->next) {
-        if(!strcasecmp(FaceName, family->FamilyName))
+        if(!_strnicmp(FaceName, family->FamilyName, -1))
 	    break;
     }
 
