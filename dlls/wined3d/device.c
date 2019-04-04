@@ -1388,6 +1388,7 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
         wined3d_buffer_decref(device->update_stateblock_state->streams[stream_idx].buffer);
     device->update_stateblock_state->streams[stream_idx].buffer = buffer;
     device->update_stateblock_state->streams[stream_idx].stride = stride;
+    device->update_stateblock_state->streams[stream_idx].offset = offset;
 
     if (device->recording)
     {
