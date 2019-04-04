@@ -24,9 +24,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <windef.h>
-#ifndef _NTSYSTEM_
 #include <winbase.h>
-#endif
 #ifndef GUID_DEFINED
 #include <guiddef.h>
 #endif
@@ -227,9 +225,7 @@ static inline const char *wine_dbgstr_an( const char *str, int n )
 
     if (!str) return "(null)";
     if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
-#ifndef _NTSYSTEM_
     if (IsBadStringPtrA( str, n )) return "(invalid)";
-#endif
     if (n == -1) for (n = 0; str[n]; n++) ;
     *dst++ = '"';
     while (n-- > 0 && dst <= buffer + sizeof(buffer) - 9)
@@ -271,9 +267,7 @@ static inline const char *wine_dbgstr_wn( const WCHAR *str, int n )
 
     if (!str) return "(null)";
     if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
-#ifndef _NTSYSTEM_
     if (IsBadStringPtrW( str, n )) return "(invalid)";
-#endif
     if (n == -1) for (n = 0; str[n]; n++) ;
     *dst++ = 'L';
     *dst++ = '"';
