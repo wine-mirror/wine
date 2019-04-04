@@ -440,14 +440,14 @@ Severity=Error
 Facility=MF
 SymbolicName=MF_E_INVALID_STATE_TRANSITION
 Language=ENU
-Invalid media source state transition
+Invalid media source state transition.
 .
 MessageId=16004
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_END_OF_STREAM
 Language=ENU
-End of media stream has been reached
+End of media stream has been reached.
 .
 MessageId=16005
 Severity=Error
@@ -461,70 +461,70 @@ Severity=Error
 Facility=MF
 SymbolicName=MF_E_NO_DURATION
 Language=ENU
-Media stream has no duration set
+Media stream has no duration set.
 .
 MessageId=16012
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_INVALID_FORMAT
 Language=ENU
-Media format was recognized but is invalid
+Media format was recognized but is invalid.
 .
 MessageId=16013
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_PROPERTY_NOT_FOUND
 Language=ENU
-Property wasn't found
+Property wasn't found.
 .
 MessageId=16014
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_PROPERTY_READ_ONLY
 Language=ENU
-Property is read-only
+Property is read-only.
 .
 MessageId=16015
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_PROPERTY_NOT_ALLOWED
 Language=ENU
-Property is not allowed
+Property is not allowed.
 .
 MessageId=16017
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_MEDIA_SOURCE_NOT_STARTED
 Language=ENU
-Media source is not started
+Media source is not started.
 .
 MessageId=16024
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_UNSUPPORTED_FORMAT
 Language=ENU
-Unsupported media format
+Unsupported media format.
 .
 MessageId=16027
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_MEDIA_SOURCE_WRONGSTATE
 Language=ENU
-Media source is in wrong state
+Media source is in wrong state.
 .
 MessageId=16028
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_MEDIA_SOURCE_NO_STREAMS_SELECTED
 Language=ENU
-No media streams were selected
+No media streams were selected.
 .
 MessageId=16030
 Severity=Error
 Facility=MF
 SymbolicName=MF_E_UNSUPPORTED_CHARACTERISTICS
 Language=ENU
-Unsupported media source characteristics
+Unsupported media source characteristics.
 .
 MessageId=21006
 Severity=Error

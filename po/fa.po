@@ -7062,11 +7062,11 @@ msgid "No events available.\n"
 msgstr "اطلاعات.\n"
 
 #: mferror.mc:445
-msgid "Invalid media source state transition\n"
+msgid "Invalid media source state transition.\n"
 msgstr ""
 
 #: mferror.mc:452
-msgid "End of media stream has been reached\n"
+msgid "End of media stream has been reached.\n"
 msgstr ""
 
 #: mferror.mc:459
@@ -7074,48 +7074,49 @@ msgid "Shutdown() was called.\n"
 msgstr ""
 
 #: mferror.mc:466
-msgid "Media stream has no duration set\n"
+msgid "Media stream has no duration set.\n"
 msgstr ""
 
 #: mferror.mc:473
-msgid "Media format was recognized but is invalid\n"
+msgid "Media format was recognized but is invalid.\n"
 msgstr ""
 
 #: mferror.mc:480
 #, fuzzy
-msgid "Property wasn't found\n"
+msgid "Property wasn't found.\n"
 msgstr "'%s' پیدا نشد."
 
 #: mferror.mc:487
 #, fuzzy
-msgid "Property is read-only\n"
+msgid "Property is read-only.\n"
 msgstr "'%s' پیدا نشد."
 
 #: mferror.mc:494
 #, fuzzy
-msgid "Property is not allowed\n"
+msgid "Property is not allowed.\n"
 msgstr "'%s' پیدا نشد."
 
 #: mferror.mc:501
-msgid "Media source is not started\n"
+msgid "Media source is not started.\n"
 msgstr ""
 
 #: mferror.mc:508
 #, fuzzy
-msgid "Unsupported media format\n"
+msgid "Unsupported media format.\n"
 msgstr "اطلاعات"
 
 #: mferror.mc:515
-msgid "Media source is in wrong state\n"
+msgid "Media source is in wrong state.\n"
 msgstr ""
 
 #: mferror.mc:522
-msgid "No media streams were selected\n"
+msgid "No media streams were selected.\n"
 msgstr ""
 
 #: mferror.mc:529
-msgid "Unsupported media source characteristics\n"
-msgstr ""
+#, fuzzy
+msgid "Unsupported media source characteristics.\n"
+msgstr "اطلاعات"
 
 #: mferror.mc:536
 msgid "Optional node is invalid.\n"

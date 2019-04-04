@@ -7220,11 +7220,12 @@ msgid "No events available.\n"
 msgstr "Не е наличен; .\n"
 
 #: mferror.mc:445
-msgid "Invalid media source state transition\n"
-msgstr ""
+#, fuzzy
+msgid "Invalid media source state transition.\n"
+msgstr "Невалидни знаци в пътя.\n"
 
 #: mferror.mc:452
-msgid "End of media stream has been reached\n"
+msgid "End of media stream has been reached.\n"
 msgstr ""
 
 #: mferror.mc:459
@@ -7232,49 +7233,52 @@ msgid "Shutdown() was called.\n"
 msgstr ""
 
 #: mferror.mc:466
-msgid "Media stream has no duration set\n"
-msgstr ""
+#, fuzzy
+msgid "Media stream has no duration set.\n"
+msgstr "Файлът не е намерен.\n"
 
 #: mferror.mc:473
-msgid "Media format was recognized but is invalid\n"
+msgid "Media format was recognized but is invalid.\n"
 msgstr ""
 
 #: mferror.mc:480
 #, fuzzy
-msgid "Property wasn't found\n"
+msgid "Property wasn't found.\n"
 msgstr "Файлът не е намерен.\n"
 
 #: mferror.mc:487
 #, fuzzy
-msgid "Property is read-only\n"
+msgid "Property is read-only.\n"
 msgstr "Файлът не е намерен.\n"
 
 #: mferror.mc:494
 #, fuzzy
-msgid "Property is not allowed\n"
+msgid "Property is not allowed.\n"
 msgstr "Файлът не е намерен.\n"
 
 #: mferror.mc:501
 #, fuzzy
-msgid "Media source is not started\n"
+msgid "Media source is not started.\n"
 msgstr "Файлът не е намерен.\n"
 
 #: mferror.mc:508
 #, fuzzy
-msgid "Unsupported media format\n"
+msgid "Unsupported media format.\n"
 msgstr "Информация"
 
 #: mferror.mc:515
-msgid "Media source is in wrong state\n"
-msgstr ""
+#, fuzzy
+msgid "Media source is in wrong state.\n"
+msgstr "Файлът не е намерен.\n"
 
 #: mferror.mc:522
-msgid "No media streams were selected\n"
+msgid "No media streams were selected.\n"
 msgstr ""
 
 #: mferror.mc:529
-msgid "Unsupported media source characteristics\n"
-msgstr ""
+#, fuzzy
+msgid "Unsupported media source characteristics.\n"
+msgstr "Информация"
 
 #: mferror.mc:536
 #, fuzzy

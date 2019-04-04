@@ -7040,11 +7040,15 @@ msgid "No events available.\n"
 msgstr "Nėra pasiekiamų įvykių.\n"
 
 #: mferror.mc:445
-msgid "Invalid media source state transition\n"
+#, fuzzy
+#| msgid "Invalid media source state transition\n"
+msgid "Invalid media source state transition.\n"
 msgstr "Neteisingas medijos šaltinio būsenos perėjimas\n"
 
 #: mferror.mc:452
-msgid "End of media stream has been reached\n"
+#, fuzzy
+#| msgid "End of media stream has been reached\n"
+msgid "End of media stream has been reached.\n"
 msgstr "Pasiekta medijos srauto pabaiga\n"
 
 #: mferror.mc:459
@@ -7052,43 +7056,63 @@ msgid "Shutdown() was called.\n"
 msgstr "Shutdown() buvo iškviesta.\n"
 
 #: mferror.mc:466
-msgid "Media stream has no duration set\n"
+#, fuzzy
+#| msgid "Media stream has no duration set\n"
+msgid "Media stream has no duration set.\n"
 msgstr "Medijos srautui nenustatyta trukmė\n"
 
 #: mferror.mc:473
-msgid "Media format was recognized but is invalid\n"
+#, fuzzy
+#| msgid "Media format was recognized but is invalid\n"
+msgid "Media format was recognized but is invalid.\n"
 msgstr "Medijos formatas atpažintas, bet neteisingas\n"
 
 #: mferror.mc:480
-msgid "Property wasn't found\n"
+#, fuzzy
+#| msgid "Property wasn't found\n"
+msgid "Property wasn't found.\n"
 msgstr "Savybė nerasta\n"
 
 #: mferror.mc:487
-msgid "Property is read-only\n"
+#, fuzzy
+#| msgid "Property is read-only\n"
+msgid "Property is read-only.\n"
 msgstr "Savybė tik skaitymui\n"
 
 #: mferror.mc:494
-msgid "Property is not allowed\n"
+#, fuzzy
+#| msgid "Property is not allowed\n"
+msgid "Property is not allowed.\n"
 msgstr "Savybė neleidžiama\n"
 
 #: mferror.mc:501
-msgid "Media source is not started\n"
+#, fuzzy
+#| msgid "Media source is not started\n"
+msgid "Media source is not started.\n"
 msgstr "Medijos šaltinis nepradėtas\n"
 
 #: mferror.mc:508
-msgid "Unsupported media format\n"
+#, fuzzy
+#| msgid "Unsupported media format\n"
+msgid "Unsupported media format.\n"
 msgstr "Nepalaikomas medijos formatas\n"
 
 #: mferror.mc:515
-msgid "Media source is in wrong state\n"
+#, fuzzy
+#| msgid "Media source is in wrong state\n"
+msgid "Media source is in wrong state.\n"
 msgstr "Medijos šaltinis neteisingoje būsenoje\n"
 
 #: mferror.mc:522
-msgid "No media streams were selected\n"
+#, fuzzy
+#| msgid "No media streams were selected\n"
+msgid "No media streams were selected.\n"
 msgstr "Nepasirinktas nė vienas medijos srautas\n"
 
 #: mferror.mc:529
-msgid "Unsupported media source characteristics\n"
+#, fuzzy
+#| msgid "Unsupported media source characteristics\n"
+msgid "Unsupported media source characteristics.\n"
 msgstr "Nepalaikomos medijos šaltinio charakteristikos\n"
 
 #: mferror.mc:536

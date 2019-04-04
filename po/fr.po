@@ -7187,13 +7187,13 @@ msgstr "Aucun serveur de connexion disponible.\n"
 #: mferror.mc:445
 #, fuzzy
 #| msgid "Unsupported authorization level.\n"
-msgid "Invalid media source state transition\n"
+msgid "Invalid media source state transition.\n"
 msgstr "Niveau d'autorisation non pris en charge.\n"
 
 #: mferror.mc:452
 #, fuzzy
 #| msgid "Registry has been recovered.\n"
-msgid "End of media stream has been reached\n"
+msgid "End of media stream has been reached.\n"
 msgstr "Le registre a été restauré.\n"
 
 #: mferror.mc:459
@@ -7201,57 +7201,61 @@ msgid "Shutdown() was called.\n"
 msgstr ""
 
 #: mferror.mc:466
-msgid "Media stream has no duration set\n"
-msgstr ""
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media stream has no duration set.\n"
+msgstr "Le registre a été restauré.\n"
 
 #: mferror.mc:473
-msgid "Media format was recognized but is invalid\n"
+msgid "Media format was recognized but is invalid.\n"
 msgstr ""
 
 #: mferror.mc:480
 #, fuzzy
 #| msgid "Property set not found.\n"
-msgid "Property wasn't found\n"
+msgid "Property wasn't found.\n"
 msgstr "Jeu de propriétés introuvable.\n"
 
 #: mferror.mc:487
 #, fuzzy
 #| msgid "Directory is not empty.\n"
-msgid "Property is read-only\n"
+msgid "Property is read-only.\n"
 msgstr "Le répertoire n'est pas vide.\n"
 
 #: mferror.mc:494
 #, fuzzy
 #| msgid "Hook type not allowed.\n"
-msgid "Property is not allowed\n"
+msgid "Property is not allowed.\n"
 msgstr "Type de point d'entrée non autorisé.\n"
 
 #: mferror.mc:501
 #, fuzzy
 #| msgid "Resource in use.\n"
-msgid "Media source is not started\n"
+msgid "Media source is not started.\n"
 msgstr "Ressource en cours d'utilisation.\n"
 
 #: mferror.mc:508
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Unsupported media format\n"
+msgid "Unsupported media format.\n"
 msgstr "Type non pris en charge.\n"
 
 #: mferror.mc:515
-msgid "Media source is in wrong state\n"
-msgstr ""
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is in wrong state.\n"
+msgstr "Ressource en cours d'utilisation.\n"
 
 #: mferror.mc:522
 #, fuzzy
 #| msgid "No data detected.\n"
-msgid "No media streams were selected\n"
+msgid "No media streams were selected.\n"
 msgstr "Aucune donnée détectée.\n"
 
 #: mferror.mc:529
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Unsupported media source characteristics\n"
+msgid "Unsupported media source characteristics.\n"
 msgstr "Type non pris en charge.\n"
 
 #: mferror.mc:536

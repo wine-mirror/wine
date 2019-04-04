@@ -7222,13 +7222,13 @@ msgstr "Strežniki prijave niso na voljo.\n"
 #: mferror.mc:445
 #, fuzzy
 #| msgid "Unsupported authorization level.\n"
-msgid "Invalid media source state transition\n"
+msgid "Invalid media source state transition.\n"
 msgstr "Nepodprta raven overitve.\n"
 
 #: mferror.mc:452
 #, fuzzy
 #| msgid "Registry has been recovered.\n"
-msgid "End of media stream has been reached\n"
+msgid "End of media stream has been reached.\n"
 msgstr "Register je bil obnovljen.\n"
 
 #: mferror.mc:459
@@ -7236,57 +7236,61 @@ msgid "Shutdown() was called.\n"
 msgstr ""
 
 #: mferror.mc:466
-msgid "Media stream has no duration set\n"
-msgstr ""
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media stream has no duration set.\n"
+msgstr "Register je bil obnovljen.\n"
 
 #: mferror.mc:473
-msgid "Media format was recognized but is invalid\n"
+msgid "Media format was recognized but is invalid.\n"
 msgstr ""
 
 #: mferror.mc:480
 #, fuzzy
 #| msgid "Property set not found.\n"
-msgid "Property wasn't found\n"
+msgid "Property wasn't found.\n"
 msgstr "Nastavljene lastnosti ni mogoče najti.\n"
 
 #: mferror.mc:487
 #, fuzzy
 #| msgid "Directory is not empty.\n"
-msgid "Property is read-only\n"
+msgid "Property is read-only.\n"
 msgstr "Mapa ni prazna.\n"
 
 #: mferror.mc:494
 #, fuzzy
 #| msgid "Hook type not allowed.\n"
-msgid "Property is not allowed\n"
+msgid "Property is not allowed.\n"
 msgstr "Vrsta kljuke ni dovoljena.\n"
 
 #: mferror.mc:501
 #, fuzzy
 #| msgid "Resource in use.\n"
-msgid "Media source is not started\n"
+msgid "Media source is not started.\n"
 msgstr "Sredstvo je v uporabi.\n"
 
 #: mferror.mc:508
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Unsupported media format\n"
+msgid "Unsupported media format.\n"
 msgstr "Nepodprta vrsta.\n"
 
 #: mferror.mc:515
-msgid "Media source is in wrong state\n"
-msgstr ""
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is in wrong state.\n"
+msgstr "Sredstvo je v uporabi.\n"
 
 #: mferror.mc:522
 #, fuzzy
 #| msgid "No data detected.\n"
-msgid "No media streams were selected\n"
+msgid "No media streams were selected.\n"
 msgstr "Ni zaznanih podatkov.\n"
 
 #: mferror.mc:529
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Unsupported media source characteristics\n"
+msgid "Unsupported media source characteristics.\n"
 msgstr "Nepodprta vrsta.\n"
 
 #: mferror.mc:536

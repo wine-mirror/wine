@@ -7000,11 +7000,13 @@ msgid "No events available.\n"
 msgstr "සිද්ධීන් ලද හැකි නැහැ.\n"
 
 #: mferror.mc:445
-msgid "Invalid media source state transition\n"
+#, fuzzy
+#| msgid "Invalid media source state transition\n"
+msgid "Invalid media source state transition.\n"
 msgstr "අවලංගු මාධ්‍ය මූලයේ තත්වය සංක්‍රාන්තිය\n"
 
 #: mferror.mc:452
-msgid "End of media stream has been reached\n"
+msgid "End of media stream has been reached.\n"
 msgstr ""
 
 #: mferror.mc:459
@@ -7012,45 +7014,61 @@ msgid "Shutdown() was called.\n"
 msgstr "Shutdown() කෝල් කරා.\n"
 
 #: mferror.mc:466
-msgid "Media stream has no duration set\n"
-msgstr ""
+#, fuzzy
+#| msgid "Media source is in wrong state\n"
+msgid "Media stream has no duration set.\n"
+msgstr "මාධ්‍ය මූලය වැරදි තත්වයක ඉන්නේ\n"
 
 #: mferror.mc:473
-msgid "Media format was recognized but is invalid\n"
+#, fuzzy
+#| msgid "Media format was recognized but is invalid\n"
+msgid "Media format was recognized but is invalid.\n"
 msgstr "මාධ්‍ය ආකෘතිය හදුනාගන්නවා හැබැයි වලංගු නැහැ\n"
 
 #: mferror.mc:480
-msgid "Property wasn't found\n"
+#, fuzzy
+#| msgid "Property wasn't found\n"
+msgid "Property wasn't found.\n"
 msgstr "ගුණාංගය හම්බු උනේ නැහැ\n"
 
 #: mferror.mc:487
-msgid "Property is read-only\n"
+#, fuzzy
+#| msgid "Property is read-only\n"
+msgid "Property is read-only.\n"
 msgstr "ගුණාංගය කියවීම් පමණි\n"
 
 #: mferror.mc:494
 #, fuzzy
 #| msgid "Another version is installed.\n"
-msgid "Property is not allowed\n"
+msgid "Property is not allowed.\n"
 msgstr "වෙන අනුවාදයක් ස්ථාපන කරලා තියෙනවා.\n"
 
 #: mferror.mc:501
-msgid "Media source is not started\n"
-msgstr ""
+#, fuzzy
+#| msgid "Media source is in wrong state\n"
+msgid "Media source is not started.\n"
+msgstr "මාධ්‍ය මූලය වැරදි තත්වයක ඉන්නේ\n"
 
 #: mferror.mc:508
-msgid "Unsupported media format\n"
+#, fuzzy
+#| msgid "Unsupported media format\n"
+msgid "Unsupported media format.\n"
 msgstr "මාධ්‍ය ආකෘතිය සහාය නොදක්වයි\n"
 
 #: mferror.mc:515
-msgid "Media source is in wrong state\n"
+#, fuzzy
+#| msgid "Media source is in wrong state\n"
+msgid "Media source is in wrong state.\n"
 msgstr "මාධ්‍ය මූලය වැරදි තත්වයක ඉන්නේ\n"
 
 #: mferror.mc:522
-msgid "No media streams were selected\n"
+msgid "No media streams were selected.\n"
 msgstr ""
 
 #: mferror.mc:529
-msgid "Unsupported media source characteristics\n"
+#, fuzzy
+#| msgid "Unsupported media source characteristics\n"
+msgid "Unsupported media source characteristics.\n"
 msgstr "මාධ්‍ය මූලයේ ගුණාංග සහාය නොදක්වයි\n"
 
 #: mferror.mc:536
