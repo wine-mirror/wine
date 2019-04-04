@@ -667,7 +667,7 @@ static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path)
     return (attributes != INVALID_FILE_ATTRIBUTES);
 }
 
-static BOOL get_mono_path(LPWSTR path)
+static BOOL get_mono_path_local(LPWSTR path)
 {
     static const WCHAR subdir_mono[] = {'\\','m','o','n','o','\\','m','o','n','o','-','2','.','0', 0};
     WCHAR base_path[MAX_PATH], mono_dll_path[MAX_PATH];
@@ -683,6 +683,39 @@ static BOOL get_mono_path(LPWSTR path)
     }
 
     return FALSE;
+}
+
+static BOOL get_mono_path_registry(LPWSTR path)
+{
+    static const WCHAR keyname[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','M','o','n','o',0};
+    static const WCHAR valuename[] = {'R','u','n','t','i','m','e','P','a','t','h',0};
+    WCHAR base_path[MAX_PATH], mono_dll_path[MAX_PATH];
+    HKEY hkey;
+    DWORD res, valuesize;
+    BOOL ret=FALSE;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Mono */
+    res = RegOpenKeyW(HKEY_CURRENT_USER, keyname, &hkey);
+    if (res != ERROR_SUCCESS)
+        return FALSE;
+
+    valuesize = sizeof(base_path);
+    res = RegGetValueW(hkey, NULL, valuename, RRF_RT_REG_SZ, NULL, base_path, &valuesize);
+    if (res == ERROR_SUCCESS && find_mono_dll(base_path, mono_dll_path))
+    {
+        strcpyW(path, base_path);
+        ret = TRUE;
+    }
+
+    RegCloseKey(hkey);
+
+    return ret;
+}
+
+static BOOL get_mono_path(LPWSTR path)
+{
+    return get_mono_path_local(path) ||
+        get_mono_path_registry(path);
 }
 
 struct InstalledRuntimeEnum
