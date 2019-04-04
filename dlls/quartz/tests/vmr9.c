@@ -24,6 +24,24 @@
 #include "vmr9.h"
 #include "wine/test.h"
 
+static IBaseFilter *create_vmr9(DWORD mode)
+{
+    IBaseFilter *filter = NULL;
+    IVMRFilterConfig9 *config;
+    HRESULT hr = CoCreateInstance(&CLSID_VideoMixingRenderer9, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (mode)
+    {
+        hr = IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IVMRFilterConfig9_SetRenderingMode(config, mode);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IVMRFilterConfig9_Release(config);
+    }
+    return filter;
+}
+
 static void test_filter_config(void)
 {
     IVMRFilterConfig9 *config;
@@ -125,6 +143,98 @@ static void test_filter_config(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IBaseFilter *filter = create_vmr9(0);
+    ULONG ref;
+
+    check_interface(filter, &IID_IAMCertifiedOutputProtection, TRUE);
+    check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IBasicVideo, TRUE);
+    todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
+    todo_wine check_interface(filter, &IID_IKsPropertySet, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IMediaPosition, TRUE);
+    check_interface(filter, &IID_IMediaSeeking, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IQualityControl, TRUE);
+    todo_wine check_interface(filter, &IID_IQualProp, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+    check_interface(filter, &IID_IVideoWindow, TRUE);
+    todo_wine check_interface(filter, &IID_IVMRAspectRatioControl9, TRUE);
+    todo_wine check_interface(filter, &IID_IVMRDeinterlaceControl9, TRUE);
+    check_interface(filter, &IID_IVMRFilterConfig9, TRUE);
+    todo_wine check_interface(filter, &IID_IVMRMixerBitmap9, TRUE);
+    check_interface(filter, &IID_IVMRMonitorConfig9, TRUE);
+
+    check_interface(filter, &IID_IBasicAudio, FALSE);
+    check_interface(filter, &IID_IDirectDrawVideo, FALSE);
+    check_interface(filter, &IID_IPersistPropertyBag, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IVMRAspectRatioControl, FALSE);
+    check_interface(filter, &IID_IVMRDeinterlaceControl, FALSE);
+    todo_wine check_interface(filter, &IID_IVMRFilterConfig, FALSE);
+    check_interface(filter, &IID_IVMRMixerBitmap, FALSE);
+    check_interface(filter, &IID_IVMRMixerControl, FALSE);
+    check_interface(filter, &IID_IVMRMixerControl9, FALSE);
+    todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+
+    IBaseFilter_Release(filter);
+    filter = create_vmr9(VMR9Mode_Windowless);
+
+    check_interface(filter, &IID_IVMRMonitorConfig9, TRUE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, TRUE);
+
+    todo_wine check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IBasicVideo2, FALSE);
+    todo_wine check_interface(filter, &IID_IVideoWindow, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+    check_interface(filter, &IID_IVMRMixerControl, FALSE);
+    check_interface(filter, &IID_IVMRMixerControl9, FALSE);
+    todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
+    todo_wine check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
+
+    IBaseFilter_Release(filter);
+    filter = create_vmr9(VMR9Mode_Renderless);
+
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, TRUE);
+
+    todo_wine check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IBasicVideo2, FALSE);
+    todo_wine check_interface(filter, &IID_IVideoWindow, FALSE);
+    check_interface(filter, &IID_IVMRMixerControl, FALSE);
+    todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
+    todo_wine check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
+    todo_wine check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -141,6 +251,7 @@ START_TEST(vmr9)
     IBaseFilter_Release(filter);
 
     test_filter_config();
+    test_interfaces();
 
     CoUninitialize();
 }
