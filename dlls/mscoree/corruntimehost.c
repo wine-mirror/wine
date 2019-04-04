@@ -1524,6 +1524,8 @@ __int32 WINAPI _CorExeMain(void)
         mono_runtime_quit();
     }
 
+    ExitProcess(exit_code);
+
     return exit_code;
 }
 
