@@ -27,6 +27,7 @@
 #include "wincrypt.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include "mssign32_private.h"
 
@@ -83,4 +84,10 @@ HRESULT WINAPI SignerSignEx(DWORD flags, SIGNER_SUBJECT_INFO *subject_info, SIGN
     FIXME("%x %p %p %p %p %s %p %p %p stub\n", flags, subject_info, signer_cert, signature_info, provider_info,
                     wine_dbgstr_w(http_time_stamp), request, sip_data, signer_cert);
     return E_NOTIMPL;
+}
+
+HRESULT WINAPI SignerFreeSignerContext(SIGNER_CONTEXT *signer_context)
+{
+    heap_free(signer_context);
+    return S_OK;
 }
