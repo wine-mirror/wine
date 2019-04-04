@@ -7283,7 +7283,7 @@ static void test_begin_end_state_block(void)
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CreateStateBlock(device, D3DSBT_ALL, &stateblock2);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_GetRenderState(device, D3DRS_LIGHTING, &value);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
