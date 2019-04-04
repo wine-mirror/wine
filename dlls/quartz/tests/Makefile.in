@@ -15,6 +15,7 @@ C_SRCS = \
 	systemclock.c \
 	videorenderer.c \
 	vmr7.c \
+	vmr9.c \
 	waveparser.c
 
 
