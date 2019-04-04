@@ -7277,7 +7277,7 @@ static void test_begin_end_state_block(void)
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_ApplyStateBlock(device, stateblock);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CaptureStateBlock(device, stateblock);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
@@ -7297,7 +7297,7 @@ static void test_begin_end_state_block(void)
 
     hr = IDirect3DDevice8_GetRenderState(device, D3DRS_LIGHTING, &value);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(value == TRUE, "Got unexpected value %#x.\n", value);
+    ok(value == TRUE, "Got unexpected value %#x.\n", value);
 
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
