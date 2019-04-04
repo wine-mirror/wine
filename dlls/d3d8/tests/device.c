@@ -2310,6 +2310,55 @@ cleanup:
     DestroyWindow(window);
 }
 
+static void test_set_stream_source(void)
+{
+    IDirect3DVertexBuffer8 *vb, *current_vb;
+    IDirect3DDevice8 *device;
+    unsigned int stride;
+    IDirect3D8 *d3d8;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d8, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d8, window, NULL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        goto cleanup;
+    }
+
+    hr = IDirect3DDevice8_CreateVertexBuffer(device, 512, 0, 0, D3DPOOL_DEFAULT, &vb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, vb, 32);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_GetStreamSource(device, 0, &current_vb, &stride);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!current_vb, "Got unexpected vb %p.\n", current_vb);
+    ok(stride == 32, "Got unexpected stride %u.\n", stride);
+
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, vb, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_GetStreamSource(device, 0, &current_vb, &stride);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(current_vb == vb, "Got unexpected vb %p.\n", current_vb);
+    IDirect3DVertexBuffer8_Release(current_vb);
+    ok(!stride, "Got unexpected stride %u.\n", stride);
+
+    IDirect3DVertexBuffer8_Release(vb);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+cleanup:
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
 static void test_render_zero_triangles(void)
 {
     IDirect3DDevice8 *device;
@@ -9774,6 +9823,7 @@ START_TEST(device)
     test_shader();
     test_limits();
     test_lights();
+    test_set_stream_source();
     test_ApplyStateBlock();
     test_render_zero_triangles();
     test_depth_stencil_reset();
