@@ -15852,8 +15852,8 @@ static void test_begin_end_state_block(void)
 
     stateblock2 = 0xdeadbeef;
     hr = IDirect3DDevice7_EndStateBlock(device, &stateblock2);
-    todo_wine ok(hr == D3DERR_NOTINBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(stateblock2 == 0xdeadbeef, "Got unexpected stateblock %#x.\n", stateblock2);
+    ok(hr == D3DERR_NOTINBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
+    ok(stateblock2 == 0xdeadbeef, "Got unexpected stateblock %#x.\n", stateblock2);
 
     hr = IDirect3DDevice7_GetRenderState(device, D3DRENDERSTATE_LIGHTING, &value);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
