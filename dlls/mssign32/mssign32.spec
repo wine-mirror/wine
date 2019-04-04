@@ -24,7 +24,7 @@
 @ stub SignerCreateTimeStampRequest
 @ stub SignerFreeSignerContext
 @ stub SignerSign
-@ stub SignerSignEx
+@ stdcall SignerSignEx(long ptr ptr ptr ptr wstr ptr ptr ptr)
 @ stub SignerTimeStamp
 @ stub SignerTimeStampEx
 @ stub SpcGetCertFromKey
