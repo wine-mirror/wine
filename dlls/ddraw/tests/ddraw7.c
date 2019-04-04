@@ -15863,7 +15863,7 @@ static void test_begin_end_state_block(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_BeginStateBlock(device);
-    todo_wine ok(hr == D3DERR_INBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_ApplyStateBlock(device, stateblock);
     todo_wine ok(hr == D3DERR_INBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
