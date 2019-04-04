@@ -15822,6 +15822,77 @@ static void test_clipper_refcount(void)
     DestroyWindow(window);
 }
 
+static void test_begin_end_state_block(void)
+{
+    DWORD stateblock, stateblock2;
+    IDirect3DDevice7 *device;
+    ULONG refcount;
+    DWORD value;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create 3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_BeginStateBlock(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    stateblock = 0xdeadbeef;
+    hr = IDirect3DDevice7_EndStateBlock(device, &stateblock);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!!stateblock && stateblock != 0xdeadbeef, "Got unexpected stateblock %#x.\n", stateblock);
+
+    stateblock2 = 0xdeadbeef;
+    hr = IDirect3DDevice7_EndStateBlock(device, &stateblock2);
+    todo_wine ok(hr == D3DERR_NOTINBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(stateblock2 == 0xdeadbeef, "Got unexpected stateblock %#x.\n", stateblock2);
+
+    hr = IDirect3DDevice7_GetRenderState(device, D3DRENDERSTATE_LIGHTING, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == TRUE, "Got unexpected value %#x.\n", value);
+
+    hr = IDirect3DDevice7_BeginStateBlock(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_BeginStateBlock(device);
+    todo_wine ok(hr == D3DERR_INBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_ApplyStateBlock(device, stateblock);
+    todo_wine ok(hr == D3DERR_INBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_CaptureStateBlock(device, stateblock);
+    todo_wine ok(hr == D3DERR_INBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_CreateStateBlock(device, D3DSBT_ALL, &stateblock2);
+    todo_wine ok(hr == D3DERR_INBEGINSTATEBLOCK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_GetRenderState(device, D3DRENDERSTATE_LIGHTING, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == TRUE, "Got unexpected value %#x.\n", value);
+
+    hr = IDirect3DDevice7_EndStateBlock(device, &stateblock2);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_ApplyStateBlock(device, stateblock2);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_GetRenderState(device, D3DRENDERSTATE_LIGHTING, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(value == TRUE, "Got unexpected value %#x.\n", value);
+
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -15966,4 +16037,5 @@ START_TEST(ddraw7)
     test_multiply_transform();
     test_alphatest();
     test_clipper_refcount();
+    test_begin_end_state_block();
 }
