@@ -712,10 +712,75 @@ static BOOL get_mono_path_registry(LPWSTR path)
     return ret;
 }
 
+static BOOL get_mono_path_unix(const char *unix_dir, LPWSTR path)
+{
+    static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
+    LPWSTR dos_dir;
+    WCHAR mono_dll_path[MAX_PATH];
+    BOOL ret;
+
+    if (!p_wine_get_dos_file_name)
+    {
+        p_wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleA("kernel32"), "wine_get_dos_file_name");
+        if (!p_wine_get_dos_file_name)
+            return FALSE;
+    }
+
+    dos_dir = p_wine_get_dos_file_name(unix_dir);
+    if (!dos_dir)
+        return FALSE;
+
+    ret = find_mono_dll(dos_dir, mono_dll_path);
+    if (ret)
+        strcpyW(path, dos_dir);
+
+    heap_free(dos_dir);
+
+    return ret;
+}
+
+static BOOL get_mono_path_datadir(LPWSTR path)
+{
+    const char *data_dir;
+    char *package_dir;
+    int len;
+    BOOL ret;
+
+    if((data_dir = wine_get_data_dir()))
+    {
+        len = strlen(data_dir);
+        package_dir = heap_alloc(len + sizeof("/mono/wine-mono-" WINE_MONO_VERSION));
+        memcpy(package_dir, data_dir, len);
+        strcpy(package_dir+len, "/mono/wine-mono-" WINE_MONO_VERSION);
+    }
+    else if((data_dir = wine_get_build_dir()))
+    {
+        len = strlen(data_dir);
+        package_dir = heap_alloc(len + sizeof("/../wine-mono-" WINE_MONO_VERSION));
+        memcpy(package_dir, data_dir, len);
+        strcpy(package_dir+len, "/../wine-mono-" WINE_MONO_VERSION);
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    ret = get_mono_path_unix(package_dir, path);
+
+    heap_free(package_dir);
+
+    return ret;
+}
+
 static BOOL get_mono_path(LPWSTR path)
 {
     return get_mono_path_local(path) ||
-        get_mono_path_registry(path);
+        get_mono_path_registry(path) ||
+        get_mono_path_datadir(path) ||
+        get_mono_path_unix(INSTALL_DATADIR "/wine/mono/wine-mono-" WINE_MONO_VERSION, path) ||
+        (strcmp(INSTALL_DATADIR, "/usr/share") &&
+         get_mono_path_unix("/usr/share/wine/mono/wine-mono-" WINE_MONO_VERSION, path)) ||
+        get_mono_path_unix("/opt/wine/mono/wine-mono-" WINE_MONO_VERSION, path);
 }
 
 struct InstalledRuntimeEnum
