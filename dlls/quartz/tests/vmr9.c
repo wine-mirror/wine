@@ -450,6 +450,68 @@ static void test_find_pin(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_pin_info(void)
+{
+    WCHAR sink_id[] = {'V','M','R',' ','I','n','p','u','t','0',0};
+    IBaseFilter *filter = create_vmr9(0);
+    PIN_DIRECTION dir;
+    ULONG count, ref;
+    PIN_INFO info;
+    HRESULT hr;
+    WCHAR *id;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, &count);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+
+    if (SUCCEEDED(set_mixing_mode(filter)))
+    {
+        sink_id[9] = '1';
+
+        IBaseFilter_FindPin(filter, sink_id, &pin);
+        hr = IPin_QueryPinInfo(pin, &info);
+        ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+        ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+        ok(!lstrcmpW(info.achName, sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+        IBaseFilter_Release(info.pFilter);
+
+        hr = IPin_QueryDirection(pin, &dir);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+        hr = IPin_QueryId(pin, &id);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+        CoTaskMemFree(id);
+
+        hr = IPin_QueryInternalConnections(pin, NULL, &count);
+        ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+        IPin_Release(pin);
+    }
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -469,6 +531,7 @@ START_TEST(vmr9)
     test_interfaces();
     test_enum_pins();
     test_find_pin();
+    test_pin_info();
 
     CoUninitialize();
 }
