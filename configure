@@ -853,6 +853,7 @@ with_hal
 with_jpeg
 with_krb5
 with_ldap
+with_mingw
 with_mpg123
 with_netapi
 with_openal
@@ -2522,6 +2523,7 @@ Optional Packages:
   --without-jpeg          do not use JPEG
   --without-krb5          do not use krb5 (Kerberos)
   --without-ldap          do not use LDAP
+  --without-mingw         do not use the MinGW cross-compiler
   --without-mpg123        do not use the mpg123 library
   --without-netapi        do not use the Samba NetAPI library
   --without-openal        do not use OpenAL
@@ -3942,6 +3944,12 @@ fi
 # Check whether --with-ldap was given.
 if test "${with_ldap+set}" = set; then :
   withval=$with_ldap; if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi
+fi
+
+
+# Check whether --with-mingw was given.
+if test "${with_mingw+set}" = set; then :
+  withval=$with_mingw;
 fi
 
 
@@ -5504,6 +5512,7 @@ case $host in
     ;;
   *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}
+    with_mingw=${with_mingw:-no}
     CFLAGS="$CFLAGS -D_WIN32"
     ;;
 esac
@@ -9592,9 +9601,10 @@ test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDL
 
 CROSSTARGET=""
 
-if test "x$enable_tests" != xno -a "$LIBEXT" != "dll"
+if test "x$with_mingw" != xno
 then
-    case "$host_cpu" in
+    case "x$with_mingw" in
+      x|xyes) case "$host_cpu" in
   aarch64*)
     ac_prefix_list="aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc" ;;
   arm*)
@@ -9651,7 +9661,9 @@ fi
   test -n "$CROSSCC" && break
 done
 test -n "$CROSSCC" || CROSSCC="false"
-
+ ;;
+      *) CROSSCC=$with_mingw ;;
+    esac
     if test "$CROSSCC" != "false"
     then
         ac_save_CC="$CC"
@@ -9691,6 +9703,15 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         CROSSCFLAGS=${CROSSCFLAGS:-$CFLAGS}
 
     fi
+fi
+if test "x$CROSSTARGET" = "x"; then :
+  case "x$with_mingw" in
+  x)   as_fn_append wine_notices "|MinGW compiler not found, cross-compiling PE files won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "MinGW compiler not found, cross-compiling PE files won't be supported.
+This is an error since --with-mingw was requested." "$LINENO" 5 ;;
+esac
+
 fi
 
 

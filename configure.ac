@@ -61,6 +61,7 @@ AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]))
 AC_ARG_WITH(krb5,      AS_HELP_STRING([--without-krb5],[do not use krb5 (Kerberos)]))
 AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
             [if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi])
+AC_ARG_WITH(mingw,     AS_HELP_STRING([--without-mingw],[do not use the MinGW cross-compiler]))
 AC_ARG_WITH(mpg123,    AS_HELP_STRING([--without-mpg123],[do not use the mpg123 library]))
 AC_ARG_WITH(netapi,    AS_HELP_STRING([--without-netapi],[do not use the Samba NetAPI library]))
 AC_ARG_WITH(openal,    AS_HELP_STRING([--without-openal],[do not use OpenAL]),
@@ -140,6 +141,7 @@ case $host in
     ;;
   *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}
+    with_mingw=${with_mingw:-no}
     CFLAGS="$CFLAGS -D_WIN32"
     ;;
 esac
@@ -991,9 +993,12 @@ test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDL
 
 dnl Check for cross compiler to build test programs
 AC_SUBST(CROSSTARGET,"")
-if test "x$enable_tests" != xno -a "$LIBEXT" != "dll"
+if test "x$with_mingw" != xno
 then
-    WINE_CHECK_MINGW_PROG(CROSSCC,false)
+    case "x$with_mingw" in
+      x|xyes) WINE_CHECK_MINGW_PROG(CROSSCC,false) ;;
+      *) CROSSCC=$with_mingw ;;
+    esac
     if test "$CROSSCC" != "false"
     then
         ac_save_CC="$CC"
@@ -1016,6 +1021,8 @@ then
         AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-$CFLAGS})
     fi
 fi
+WINE_NOTICE_WITH(mingw,[test "x$CROSSTARGET" = "x"],
+                 [MinGW compiler not found, cross-compiling PE files won't be supported.])
 
 dnl **** Check for pthread ****
 
