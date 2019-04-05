@@ -178,8 +178,10 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID riid, BOO
 
 static void test_interfaces(void)
 {
+    WCHAR sink_id[] = {'V','M','R',' ','I','n','p','u','t','0',0};
     IBaseFilter *filter = create_vmr9(0);
     ULONG ref;
+    IPin *pin;
 
     check_interface(filter, &IID_IAMCertifiedOutputProtection, TRUE);
     check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
@@ -220,6 +222,20 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    todo_wine check_interface(pin, &IID_IOverlay, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
+
     IBaseFilter_Release(filter);
     filter = create_vmr9(VMR9Mode_Windowless);
 
@@ -236,6 +252,20 @@ static void test_interfaces(void)
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
     todo_wine check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
 
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    todo_wine check_interface(pin, &IID_IOverlay, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
+
     IBaseFilter_Release(filter);
     filter = create_vmr9(VMR9Mode_Renderless);
 
@@ -250,6 +280,20 @@ static void test_interfaces(void)
     todo_wine check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    todo_wine check_interface(pin, &IID_IOverlay, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
 
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
