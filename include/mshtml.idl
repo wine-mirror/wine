@@ -16099,6 +16099,1428 @@ coclass HTMLUnknownElement
 }
 
 /*****************************************************************************
+ *    ISVGAnimatedEnumeration interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104c9-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedEnumeration : IDispatch
+{
+    [propput, id(DISPID_ISVGANIMATEDENUMERATION_BASEVAL)]
+    HRESULT baseVal([in] USHORT v);
+
+    [propget, id(DISPID_ISVGANIMATEDENUMERATION_BASEVAL)]
+    HRESULT baseVal([out, retval] USHORT *p);
+
+    [propput, id(DISPID_ISVGANIMATEDENUMERATION_ANIMVAL)]
+    HRESULT animVal([in] USHORT v);
+
+    [propget, id(DISPID_ISVGANIMATEDENUMERATION_ANIMVAL)]
+    HRESULT animVal([out, retval] USHORT *p);
+}
+
+interface ISVGSVGElement;
+
+/*****************************************************************************
+ *    ISVGElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104c5-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGElement : IDispatch
+{
+    [propput, id(DISPID_ISVGELEMENT_XMLBASE)]
+    HRESULT xmlbase([in] BSTR v);
+
+    [propget, id(DISPID_ISVGELEMENT_XMLBASE)]
+    HRESULT xmlbase([out, retval] BSTR *p);
+
+    [propputref, id(DISPID_ISVGELEMENT_OWNERSVGELEMENT)]
+    HRESULT ownerSVGElement([in] ISVGSVGElement *v);
+
+    [propget, id(DISPID_ISVGELEMENT_OWNERSVGELEMENT)]
+    HRESULT ownerSVGElement([out, retval] ISVGSVGElement **p);
+
+    [propputref, id(DISPID_ISVGELEMENT_VIEWPORTELEMENT)]
+    HRESULT viewportElement([in] ISVGElement *v);
+
+    [propget, id(DISPID_ISVGELEMENT_VIEWPORTELEMENT)]
+    HRESULT viewportElement([out, retval] ISVGElement **p);
+
+    [propputref, id(DISPID_ISVGELEMENT_FOCUSABLE)]
+    HRESULT focusable([in] ISVGAnimatedEnumeration *v);
+
+    [propget, id(DISPID_ISVGELEMENT_FOCUSABLE)]
+    HRESULT focusable([out, retval] ISVGAnimatedEnumeration **p);
+}
+
+#define WINE_ISVGELEMENT_DISPINTERFACE_DECL                     \
+    [propput, id(DISPID_ISVGELEMENT_XMLBASE)]                   \
+    void xmlbase(BSTR v);                                       \
+                                                                \
+    [propget, id(DISPID_ISVGELEMENT_XMLBASE)]                   \
+    BSTR xmlbase();                                             \
+                                                                \
+    [propputref, id(DISPID_ISVGELEMENT_OWNERSVGELEMENT)]        \
+    void ownerSVGElement(ISVGSVGElement *v);                    \
+                                                                \
+    [propget, id(DISPID_ISVGELEMENT_OWNERSVGELEMENT)]           \
+    ISVGSVGElement *ownerSVGElement();                          \
+                                                                \
+    [propputref, id(DISPID_ISVGELEMENT_VIEWPORTELEMENT)]        \
+    void viewportElement(ISVGElement *v);                       \
+                                                                \
+    [propget, id(DISPID_ISVGELEMENT_VIEWPORTELEMENT)]           \
+    ISVGElement *viewportElement();                             \
+                                                                \
+    [propputref, id(DISPID_ISVGELEMENT_FOCUSABLE)]              \
+    void focusable(ISVGAnimatedEnumeration *v);                 \
+                                                                \
+    [propget, id(DISPID_ISVGELEMENT_FOCUSABLE)]                 \
+    ISVGAnimatedEnumeration *focusable()
+
+
+/*****************************************************************************
+ *    DispSVGElement dispinterface
+ */
+[
+    hidden,
+    uuid(30590000-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispSVGElement
+{
+properties:
+methods:
+    WINE_ISVGELEMENT_DISPINTERFACE_DECL;
+    WINE_IHTMLELEMENT_DISPINTERFACE_DECL;
+}
+
+/*****************************************************************************
+ *    ISVGLength interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104cf-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGLength : IDispatch
+{
+    [propput, id(DISPID_ISVGLENGTH_UNITTYPE)]
+    HRESULT unitType([in] short v);
+
+    [propget, id(DISPID_ISVGLENGTH_UNITTYPE)]
+    HRESULT unitType([out, retval] short *p);
+
+    [propput, id(DISPID_ISVGLENGTH_VALUE)]
+    HRESULT value([in] float v);
+
+    [propget, id(DISPID_ISVGLENGTH_VALUE)]
+    HRESULT value([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGLENGTH_VALUEINSPECIFIEDUNITS)]
+    HRESULT valueInSpecifiedUnits([in] float v);
+
+    [propget, id(DISPID_ISVGLENGTH_VALUEINSPECIFIEDUNITS)]
+    HRESULT valueInSpecifiedUnits([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGLENGTH_VALUEASSTRING)]
+    HRESULT valueAsString([in] BSTR v);
+
+    [propget, id(DISPID_ISVGLENGTH_VALUEASSTRING)]
+    HRESULT valueAsString([out, retval] BSTR *p);
+
+    [id(DISPID_ISVGLENGTH_NEWVALUESPECIFIEDUNITS)]
+    HRESULT newValueSpecifiedUnits(
+        [in] short unitType,
+        [in] float valueInSpecifiedUnits);
+
+    [id(DISPID_ISVGLENGTH_CONVERTTOSPECIFIEDUNITS)]
+    HRESULT convertToSpecifiedUnits([in] short unitType);
+}
+
+/*****************************************************************************
+ *    ISVGAnimatedLength interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104d0-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedLength : IDispatch
+{
+    [propputref, id(DISPID_ISVGANIMATEDLENGTH_BASEVAL)]
+    HRESULT baseVal([in] ISVGLength *v);
+
+    [propget, id(DISPID_ISVGANIMATEDLENGTH_BASEVAL)]
+    HRESULT baseVal([out, retval] ISVGLength **p);
+
+    [propputref, id(DISPID_ISVGANIMATEDLENGTH_ANIMVAL)]
+    HRESULT animVal([in] ISVGLength *v);
+
+    [propget, id(DISPID_ISVGANIMATEDLENGTH_ANIMVAL)]
+    HRESULT animVal([out, retval] ISVGLength **p);
+}
+
+/*****************************************************************************
+ *    ISVGRect interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104d7-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGRect : IDispatch
+{
+    [propput, id(DISPID_ISVGRECT_X)]
+    HRESULT x([in] float v);
+
+    [propget, id(DISPID_ISVGRECT_X)]
+    HRESULT x([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGRECT_Y)]
+    HRESULT y([in] float v);
+
+    [propget, id(DISPID_ISVGRECT_Y)]
+    HRESULT y([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGRECT_WIDTH)]
+    HRESULT width([in] float v);
+
+    [propget, id(DISPID_ISVGRECT_WIDTH)]
+    HRESULT width([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGRECT_HEIGHT)]
+    HRESULT height([in] float v);
+
+    [propget, id(DISPID_ISVGRECT_HEIGHT)]
+    HRESULT height([out, retval] float *p);
+}
+
+/*****************************************************************************
+ *    ISVGViewSpec interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104e2-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGViewSpec : IDispatch
+{
+}
+
+/*****************************************************************************
+ *    ISVGMatrix interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104f6-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGMatrix : IDispatch
+{
+    [propput, id(DISPID_ISVGMATRIX_A)]
+    HRESULT a([in] float v);
+
+    [propget, id(DISPID_ISVGMATRIX_A)]
+    HRESULT a([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGMATRIX_B)]
+    HRESULT b([in] float v);
+
+    [propget, id(DISPID_ISVGMATRIX_B)]
+    HRESULT b([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGMATRIX_C)]
+    HRESULT c([in] float v);
+
+    [propget, id(DISPID_ISVGMATRIX_C)]
+    HRESULT c([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGMATRIX_D)]
+    HRESULT d([in] float v);
+
+    [propget, id(DISPID_ISVGMATRIX_D)]
+    HRESULT d([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGMATRIX_E)]
+    HRESULT e([in] float v);
+
+    [propget, id(DISPID_ISVGMATRIX_E)]
+    HRESULT e([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGMATRIX_F)]
+    HRESULT f([in] float v);
+
+    [propget, id(DISPID_ISVGMATRIX_F)]
+    HRESULT f([out, retval] float *p);
+
+    [id(DISPID_ISVGMATRIX_MULTIPLY)]
+    HRESULT multiply(
+        [in] ISVGMatrix *secondMatrix,
+        [out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_INVERSE)]
+    HRESULT inverse([out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_TRANSLATE)]
+    HRESULT translate(
+        [in] float x,
+        [in] float y,
+        [out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_SCALE)]
+    HRESULT scale(
+        [in] float scaleFactor,
+        [out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_SCALENONUNIFORM)]
+    HRESULT scaleNonUniform(
+        [in] float scaleFactorX,
+        [in] float scaleFactorY,
+        [out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_ROTATE)]
+    HRESULT rotate(
+        [in] float angle,
+        [out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_ROTATEFROMVECTOR)]
+    HRESULT rotateFromVector(
+        [in] float x,
+        [in] float y,
+        [out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_FLIPX)]
+    HRESULT flipX([out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_FLIPY)]
+    HRESULT flipY([out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_SKEWX)]
+    HRESULT skewX(
+        [in] float angle,
+        [out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGMATRIX_SKEWY)]
+    HRESULT skewY(
+        [in] float angle,
+        [out, retval] ISVGMatrix **p);
+}
+
+/*****************************************************************************
+ *    ISVGPoint interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104f4-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGPoint : IDispatch
+{
+    [propput, id(DISPID_ISVGPOINT_X)]
+    HRESULT x([in] float v);
+
+    [propget, id(DISPID_ISVGPOINT_X)]
+    HRESULT x([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGPOINT_Y)]
+    HRESULT y([in] float v);
+
+    [propget, id(DISPID_ISVGPOINT_Y)]
+    HRESULT y([out, retval] float *p);
+
+    [id(DISPID_ISVGPOINT_MATRIXTRANSFORM)]
+    HRESULT matrixTransform(
+        [in] ISVGMatrix *pMatrix,
+        [out, retval] ISVGPoint **p);
+}
+
+/*****************************************************************************
+ *    ISVGNumber interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104cb-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGNumber : IDispatch
+{
+    [propput, id(DISPID_ISVGNUMBER_VALUE)]
+    HRESULT value([in] float v);
+
+    [propget, id(DISPID_ISVGNUMBER_VALUE)]
+    HRESULT value([out, retval] float *p);
+}
+
+/*****************************************************************************
+ *    ISVGAngle interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104d3-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAngle : IDispatch
+{
+    [propput, id(DISPID_ISVGANGLE_UNITTYPE)]
+    HRESULT unitType([in] short v);
+
+    [propget, id(DISPID_ISVGANGLE_UNITTYPE)]
+    HRESULT unitType([out, retval] short *p);
+
+    [propput, id(DISPID_ISVGANGLE_VALUE)]
+    HRESULT value([in] float v);
+
+    [propget, id(DISPID_ISVGANGLE_VALUE)]
+    HRESULT value([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGANGLE_VALUEINSPECIFIEDUNITS)]
+    HRESULT valueInSpecifiedUnits([in] float v);
+
+    [propget, id(DISPID_ISVGANGLE_VALUEINSPECIFIEDUNITS)]
+    HRESULT valueInSpecifiedUnits([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGANGLE_VALUEASSTRING)]
+    HRESULT valueAsString([in] BSTR v);
+
+    [propget, id(DISPID_ISVGANGLE_VALUEASSTRING)]
+    HRESULT valueAsString([out, retval] BSTR *p);
+
+    [id(DISPID_ISVGANGLE_NEWVALUESPECIFIEDUNITS)]
+    HRESULT newValueSpecifiedUnits(
+        [in] short unitType,
+        [in] float valueInSpecifiedUnits);
+
+    [id(DISPID_ISVGANGLE_CONVERTTOSPECIFIEDUNITS)]
+    HRESULT convertToSpecifiedUnits([in] short unitType);
+}
+
+/*****************************************************************************
+ *    ISVGStringList interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104c8-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGStringList : IDispatch
+{
+    [propput, id(DISPID_ISVGSTRINGLIST_NUMBEROFITEMS)]
+    HRESULT numberOfItems([in] long v);
+
+    [propget, id(DISPID_ISVGSTRINGLIST_NUMBEROFITEMS)]
+    HRESULT numberOfItems([out, retval] long *p);
+
+    [id(DISPID_ISVGSTRINGLIST_CLEAR)]
+    HRESULT clear();
+
+    [id(DISPID_ISVGSTRINGLIST_INITIALIZE)]
+    HRESULT initialize(
+        [in] BSTR newItem,
+        [out, retval] BSTR *p);
+
+    [id(DISPID_ISVGSTRINGLIST_GETITEM)]
+    HRESULT getItem(
+        [in] long index,
+        [out, retval] BSTR *p);
+
+    [id(DISPID_ISVGSTRINGLIST_INSERTITEMBEFORE)]
+    HRESULT insertItemBefore(
+        [in] BSTR newItem,
+        [in] long index,
+        [out, retval] BSTR *p);
+
+    [id(DISPID_ISVGSTRINGLIST_REPLACEITEM)]
+    HRESULT replaceItem(
+        [in] BSTR newItem,
+        [in] long index,
+        [out, retval] BSTR *p);
+
+    [id(DISPID_ISVGSTRINGLIST_REMOVEITEM)]
+    HRESULT removeItem(
+        [in] long index,
+        [out, retval] BSTR *p);
+
+    [id(DISPID_ISVGSTRINGLIST_APPENDITEM)]
+    HRESULT appendItem(
+        [in] BSTR newItem,
+        [out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    ISVGTransform interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104f7-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGTransform : IDispatch
+{
+    [propput, id(DISPID_ISVGTRANSFORM_TYPE)]
+    HRESULT type([in] short v);
+
+    [propget, id(DISPID_ISVGTRANSFORM_TYPE)]
+    HRESULT type([out, retval] short *p);
+
+    [propputref, id(DISPID_ISVGTRANSFORM_MATRIX)]
+    HRESULT matrix([in] ISVGMatrix *v);
+
+    [propget, id(DISPID_ISVGTRANSFORM_MATRIX)]
+    HRESULT matrix([out, retval] ISVGMatrix **p);
+
+    [propput, id(DISPID_ISVGTRANSFORM_ANGLE)]
+    HRESULT angle([in] float v);
+
+    [propget, id(DISPID_ISVGTRANSFORM_ANGLE)]
+    HRESULT angle([out, retval] float *p);
+
+    [id(DISPID_ISVGTRANSFORM_SETMATRIX)]
+    HRESULT setMatrix([in] ISVGMatrix *matrix);
+
+    [id(DISPID_ISVGTRANSFORM_SETTRANSLATE)]
+    HRESULT setTranslate(
+        [in] float tx,
+        [in] float ty);
+
+    [id(DISPID_ISVGTRANSFORM_SETSCALE)]
+    HRESULT setScale(
+        [in] float sx,
+        [in] float sy);
+
+    [id(DISPID_ISVGTRANSFORM_SETROTATE)]
+    HRESULT setRotate(
+        [in] float angle,
+        [in] float cx,
+        [in] float cy);
+
+    [id(DISPID_ISVGTRANSFORM_SETSKEWX)]
+    HRESULT setSkewX([in] float angle);
+
+    [id(DISPID_ISVGTRANSFORM_SETSKEWY)]
+    HRESULT setSkewY([in] float angle);
+}
+
+/*****************************************************************************
+ *    ISVGTransformList interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104f8-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGTransformList : IDispatch
+{
+    [propput, id(DISPID_ISVGTRANSFORMLIST_NUMBEROFITEMS)]
+    HRESULT numberOfItems([in] long v);
+
+    [propget, id(DISPID_ISVGTRANSFORMLIST_NUMBEROFITEMS)]
+    HRESULT numberOfItems([out, retval] long *p);
+
+    [id(DISPID_ISVGTRANSFORMLIST_CLEAR)]
+    HRESULT clear();
+
+    [id(DISPID_ISVGTRANSFORMLIST_INITIALIZE)]
+    HRESULT initialize(
+        [in] ISVGTransform *newItem,
+        [out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGTRANSFORMLIST_GETITEM)]
+    HRESULT getItem(
+        [in] long index,
+        [out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGTRANSFORMLIST_INSERTITEMBEFORE)]
+    HRESULT insertItemBefore(
+        [in] ISVGTransform *newItem,
+        [in] long index,
+        [out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGTRANSFORMLIST_REPLACEITEM)]
+    HRESULT replaceItem(
+        [in] ISVGTransform *newItem,
+        [in] long index,
+        [out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGTRANSFORMLIST_REMOVEITEM)]
+    HRESULT removeItem(
+        [in] long index,
+        [out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGTRANSFORMLIST_APPENDITEM)]
+    HRESULT appendItem(
+        [in] ISVGTransform *newItem,
+        [out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGTRANSFORMLIST_CREATESVGTRANSFORMFROMMATRIX)]
+    HRESULT createSVGTransformFromMatrix(
+        [in] ISVGMatrix *newItem,
+        [out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGTRANSFORMLIST_CONSOLIDATE)]
+    HRESULT consolidate([out, retval] ISVGTransform **p);
+}
+
+/*****************************************************************************
+ *    ISVGAnimatedTransformList interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104f9-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedTransformList : IDispatch
+{
+    [propputref, id(DISPID_ISVGANIMATEDTRANSFORMLIST_BASEVAL)]
+    HRESULT baseVal([in] ISVGTransformList *v);
+
+    [propget, id(DISPID_ISVGANIMATEDTRANSFORMLIST_BASEVAL)]
+    HRESULT baseVal([out, retval] ISVGTransformList **p);
+
+    [propputref, id(DISPID_ISVGANIMATEDTRANSFORMLIST_ANIMVAL)]
+    HRESULT animVal([in] ISVGTransformList *v);
+
+    [propget, id(DISPID_ISVGANIMATEDTRANSFORMLIST_ANIMVAL)]
+    HRESULT animVal([out, retval] ISVGTransformList **p);
+}
+
+/*****************************************************************************
+ *    ISVGAnimatedBoolean interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104c6-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedBoolean : IDispatch
+{
+    [propput, id(DISPID_ISVGANIMATEDBOOLEAN_BASEVAL)]
+    HRESULT baseVal([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_ISVGANIMATEDBOOLEAN_BASEVAL)]
+    HRESULT baseVal([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_ISVGANIMATEDBOOLEAN_ANIMVAL)]
+    HRESULT animVal([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_ISVGANIMATEDBOOLEAN_ANIMVAL)]
+    HRESULT animVal([out, retval] VARIANT_BOOL *p);
+}
+
+/*****************************************************************************
+ *    ISVGAnimatedString interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104c7-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedString : IDispatch
+{
+    [propput, id(DISPID_ISVGANIMATEDSTRING_BASEVAL)]
+    HRESULT baseVal([in] BSTR v);
+
+    [propget, id(DISPID_ISVGANIMATEDSTRING_BASEVAL)]
+    HRESULT baseVal([out, retval] BSTR *p);
+
+    [propget, id(DISPID_ISVGANIMATEDSTRING_ANIMVAL)]
+    HRESULT animVal([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    ISVGAnimatedRect interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104d8-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedRect : IDispatch
+{
+    [propputref, id(DISPID_ISVGANIMATEDRECT_BASEVAL)]
+    HRESULT baseVal([in] ISVGRect *v);
+
+    [propget, id(DISPID_ISVGANIMATEDRECT_BASEVAL)]
+    HRESULT baseVal([out, retval] ISVGRect **p);
+
+    [propputref, id(DISPID_ISVGANIMATEDRECT_ANIMVAL)]
+    HRESULT animVal([in] ISVGRect *v);
+
+    [propget, id(DISPID_ISVGANIMATEDRECT_ANIMVAL)]
+    HRESULT animVal([out, retval] ISVGRect **p);
+}
+
+/*****************************************************************************
+ *    ISVGPreserveAspectRatio interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104fa-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGPreserveAspectRatio : IDispatch
+{
+    [propput, id(DISPID_ISVGPRESERVEASPECTRATIO_ALIGN)]
+    HRESULT align([in] short v);
+
+    [propget, id(DISPID_ISVGPRESERVEASPECTRATIO_ALIGN)]
+    HRESULT align([out, retval] short *p);
+
+    [propput, id(DISPID_ISVGPRESERVEASPECTRATIO_MEETORSLICE)]
+    HRESULT meetOrSlice([in] short v);
+
+    [propget, id(DISPID_ISVGPRESERVEASPECTRATIO_MEETORSLICE)]
+    HRESULT meetOrSlice([out, retval] short *p);
+}
+
+/*****************************************************************************
+ *    ISVGAnimatedPreserveAspectRatio interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104fb-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedPreserveAspectRatio : IDispatch
+{
+    [propputref, id(DISPID_ISVGANIMATEDPRESERVEASPECTRATIO_BASEVAL)]
+    HRESULT baseVal([in] ISVGPreserveAspectRatio *v);
+
+    [propget, id(DISPID_ISVGANIMATEDPRESERVEASPECTRATIO_BASEVAL)]
+    HRESULT baseVal([retval, out] ISVGPreserveAspectRatio **p);
+
+    [propputref, id(DISPID_ISVGANIMATEDPRESERVEASPECTRATIO_ANIMVAL)]
+    HRESULT animVal([in] ISVGPreserveAspectRatio *v);
+
+    [propget, id(DISPID_ISVGANIMATEDPRESERVEASPECTRATIO_ANIMVAL)]
+    HRESULT animVal([out, retval] ISVGPreserveAspectRatio **p);
+}
+
+/*****************************************************************************
+ *    ISVGTransformable interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104dc-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGTransformable : IDispatch
+{
+    [propget, id(DISPID_ISVGTRANSFORMABLE_TRANSFORM)]
+    HRESULT transform([out, retval] ISVGAnimatedTransformList **p);
+}
+
+#define WINE_ISVGTRANSFORMABLE_DISPINTERFACE_DECL       \
+    [propget, id(DISPID_ISVGTRANSFORMABLE_TRANSFORM)]   \
+    ISVGAnimatedTransformList *transform()
+
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104dd-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGTests : IDispatch
+{
+    [propget, id(DISPID_ISVGTESTS_REQUIREDFEATURES)]
+    HRESULT requiredFeatures([out, retval] ISVGStringList **p);
+
+    [propget, id(DISPID_ISVGTESTS_REQUIREDEXTENSIONS)]
+    HRESULT requiredExtensions([out, retval] ISVGStringList **p);
+
+    [propget, id(DISPID_ISVGTESTS_SYSTEMLANGUAGE)]
+    HRESULT systemLanguage([out, retval] ISVGStringList **p);
+
+    [id(DISPID_ISVGTESTS_HASEXTENSION)]
+    HRESULT hasExtension(
+        [in] BSTR extension,
+        [out, retval] VARIANT_BOOL *p);
+}
+
+#define WINE_ISVGTESTS_DISPINTERFACE_DECL               \
+    [propget, id(DISPID_ISVGTESTS_REQUIREDFEATURES)]    \
+    ISVGStringList *requiredFeatures();                 \
+                                                        \
+    [propget, id(DISPID_ISVGTESTS_REQUIREDEXTENSIONS)]  \
+    ISVGStringList *requiredExtensions();               \
+                                                        \
+    [propget, id(DISPID_ISVGTESTS_SYSTEMLANGUAGE)]      \
+    ISVGStringList *systemLanguage();                   \
+                                                        \
+    [id(DISPID_ISVGTESTS_HASEXTENSION)]                 \
+    VARIANT_BOOL hasExtension([in] BSTR extension)
+
+/*****************************************************************************
+ *    ISVGLangSpace interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104de-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGLangSpace : IDispatch
+{
+    [propput, id(DISPID_ISVGLANGSPACE_XMLLANG)]
+    HRESULT xmllang([in] BSTR v);
+
+    [propget, id(DISPID_ISVGLANGSPACE_XMLLANG)]
+    HRESULT xmllang([out, retval] BSTR *p);
+
+    [propput, id(DISPID_ISVGLANGSPACE_XMLSPACE)]
+    HRESULT xmlspace([in] BSTR v);
+
+    [propget, id(DISPID_ISVGLANGSPACE_XMLSPACE)]
+    HRESULT xmlspace([out, retval] BSTR *p);
+}
+
+#define WINE_ISVGLANGSPACE_DISPINTERFACE_DECL       \
+    [propput, id(DISPID_ISVGLANGSPACE_XMLLANG)]     \
+    void xmllang(BSTR v);                           \
+                                                    \
+    [propget, id(DISPID_ISVGLANGSPACE_XMLLANG)]     \
+    BSTR xmllang();                                 \
+                                                    \
+    [propput, id(DISPID_ISVGLANGSPACE_XMLSPACE)]    \
+    void xmlspace(BSTR v);                          \
+                                                    \
+    [propget, id(DISPID_ISVGLANGSPACE_XMLSPACE)]    \
+    BSTR xmlspace()
+
+/*****************************************************************************
+ *    ISVGExternalResourcesRequired interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104df-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGExternalResourcesRequired : IDispatch
+{
+    [propget, id(DISPID_ISVGEXTERNALRESOURCESREQUIRED_EXTERNALRESOURCESREQUIRED)]
+    HRESULT externalResourcesRequired([out, retval] ISVGAnimatedBoolean **p);
+}
+
+#define WINE_ISVGEXTERNALRESOURCESREQUIRED_DISPINTERFACE_DECL                     \
+    [propget, id(DISPID_ISVGEXTERNALRESOURCESREQUIRED_EXTERNALRESOURCESREQUIRED)] \
+    ISVGAnimatedBoolean *externalResourcesRequired()
+
+/*****************************************************************************
+ *    ISVGStylable interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104da-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGStylable : IDispatch
+{
+    [propget, id(DISPID_ISVGSTYLABLE_CLASSNAME)]
+    HRESULT className([out, retval] ISVGAnimatedString **p);
+}
+
+#define WINE_ISVGSTYLABLE_DISPINTERFACE_DECL            \
+    [propget, id(DISPID_ISVGSTYLABLE_CLASSNAME)]        \
+    ISVGAnimatedString *className()
+
+/*****************************************************************************
+ *    ISVGLocatable interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104db-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGLocatable : IDispatch
+{
+    [propget, id(DISPID_ISVGLOCATABLE_NEARESTVIEWPORTELEMENT)]
+    HRESULT nearestViewportElement([out, retval] ISVGElement **p);
+
+    [propget, id(DISPID_ISVGLOCATABLE_FARTHESTVIEWPORTELEMENT)]
+    HRESULT farthestViewportElement([out, retval] ISVGElement **p);
+
+    [id(DISPID_ISVGLOCATABLE_GETBBOX)]
+    HRESULT getBBox([out, retval] ISVGRect **p);
+
+    [id(DISPID_ISVGLOCATABLE_GETCTM)]
+    HRESULT getCTM([out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGLOCATABLE_GETSCREENCTM)]
+    HRESULT getScreenCTM([out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGLOCATABLE_GETTRANSFORMTOELEMENT)]
+    HRESULT getTransformToElement(
+        [in] ISVGElement *pElement,
+        [out, retval] ISVGMatrix **p);
+}
+
+#define WINE_ISVGLOCATABLE_DISPINTERFACE_DECL                   \
+    [propget, id(DISPID_ISVGLOCATABLE_NEARESTVIEWPORTELEMENT)]  \
+    ISVGElement *nearestViewportElement();                      \
+                                                                \
+    [propget, id(DISPID_ISVGLOCATABLE_FARTHESTVIEWPORTELEMENT)] \
+    ISVGElement *farthestViewportElement();                     \
+                                                                \
+    [id(DISPID_ISVGLOCATABLE_GETBBOX)]                          \
+    ISVGRect *getBBox();                                        \
+                                                                \
+    [id(DISPID_ISVGLOCATABLE_GETCTM)]                           \
+    ISVGMatrix *getCTM();                                       \
+                                                                \
+    [id(DISPID_ISVGLOCATABLE_GETSCREENCTM)]                     \
+    ISVGMatrix *getScreenCTM();                                 \
+                                                                \
+    [id(DISPID_ISVGLOCATABLE_GETTRANSFORMTOELEMENT)]            \
+    ISVGMatrix *getTransformToElement([in] ISVGElement *pElement)
+
+/*****************************************************************************
+ *    ISVGFitToViewBox interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104e0-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGFitToViewBox : IDispatch
+{
+    [propget, id(DISPID_ISVGFITTOVIEWBOX_VIEWBOX)]
+    HRESULT viewBox([out, retval] ISVGAnimatedRect **p);
+
+    [propputref, id(DISPID_ISVGFITTOVIEWBOX_PRESERVEASPECTRATIO)]
+    HRESULT preserveAspectRatio([in] ISVGAnimatedPreserveAspectRatio *v);
+
+    [propget, id(DISPID_ISVGFITTOVIEWBOX_PRESERVEASPECTRATIO)]
+    HRESULT preserveAspectRatio([out, retval] ISVGAnimatedPreserveAspectRatio **p);
+}
+
+#define WINE_ISVGFITTOVIEWBOX_DISPINTERFACE_DECL                        \
+    [propget, id(DISPID_ISVGFITTOVIEWBOX_VIEWBOX)]                      \
+    ISVGAnimatedRect *viewBox();                                        \
+                                                                        \
+    [propputref, id(DISPID_ISVGFITTOVIEWBOX_PRESERVEASPECTRATIO)]       \
+    void preserveAspectRatio(ISVGAnimatedPreserveAspectRatio *v);       \
+                                                                        \
+    [propget, id(DISPID_ISVGFITTOVIEWBOX_PRESERVEASPECTRATIO)]          \
+    ISVGAnimatedPreserveAspectRatio *preserveAspectRatio()
+
+/*****************************************************************************
+ *    ISVGZoomAndPan interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104e1-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGZoomAndPan : IDispatch
+{
+    [propget, id(DISPID_ISVGZOOMANDPAN_ZOOMANDPAN)]
+    HRESULT zoomAndPan([out, retval] short *p);
+}
+
+#define WINE_ISVGZOOMANDPAN_DISPINTERFACE_DECL          \
+    [propget, id(DISPID_ISVGZOOMANDPAN_ZOOMANDPAN)]     \
+    short zoomAndPan()
+
+/*****************************************************************************
+ *    ISVGSVGElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104e7-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGSVGElement : IDispatch
+{
+    [propputref, id(DISPID_ISVGSVGELEMENT_X)]
+    HRESULT x([in] ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_X)]
+    HRESULT x([out, retval] ISVGAnimatedLength **p);
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_Y)]
+    HRESULT y([in] ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_Y)]
+    HRESULT y([out, retval] ISVGAnimatedLength **p);
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_WIDTH)]
+    HRESULT width([in] ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_WIDTH)]
+    HRESULT width([out, retval] ISVGAnimatedLength **p);
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_HEIGHT)]
+    HRESULT height([in] ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_HEIGHT)]
+    HRESULT height([out, retval] ISVGAnimatedLength **p);
+
+    [propput, id(DISPID_ISVGSVGELEMENT_CONTENTSCRIPTTYPE)]
+    HRESULT contentScriptType([in] BSTR v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CONTENTSCRIPTTYPE)]
+    HRESULT contentScriptType([out, retval] BSTR *p);
+
+    [propput, id(DISPID_ISVGSVGELEMENT_CONTENTSTYLETYPE)]
+    HRESULT contentStyleType([in] BSTR v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CONTENTSTYLETYPE)]
+    HRESULT contentStyleType([out, retval] BSTR *p);
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_VIEWPORT)]
+    HRESULT viewport([in] ISVGRect *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_VIEWPORT)]
+    HRESULT viewport([out, retval] ISVGRect **p);
+
+    [propput, id(DISPID_ISVGSVGELEMENT_PIXELUNITTOMILLIMETERX)]
+    HRESULT pixelUnitToMillimeterX([in] float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_PIXELUNITTOMILLIMETERX)]
+    HRESULT pixelUnitToMillimeterX([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGSVGELEMENT_PIXELUNITTOMILLIMETERY)]
+    HRESULT pixelUnitToMillimeterY([in] float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_PIXELUNITTOMILLIMETERY)]
+    HRESULT pixelUnitToMillimeterY([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGSVGELEMENT_SCREENPIXELTOMILLIMETERX)]
+    HRESULT screenPixelToMillimeterX([in] float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_SCREENPIXELTOMILLIMETERX)]
+    HRESULT screenPixelToMillimeterX([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGSVGELEMENT_SCREENPIXELTOMILLIMETERY)]
+    HRESULT screenPixelToMillimeterY([in] float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_SCREENPIXELTOMILLIMETERY)]
+    HRESULT screenPixelToMillimeterY([out, retval] float *p);
+
+    [propput, id(DISPID_ISVGSVGELEMENT_USECURRENTVIEW)]
+    HRESULT useCurrentView([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_USECURRENTVIEW)]
+    HRESULT useCurrentView([out, retval] VARIANT_BOOL *p);
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_CURRENTVIEW)]
+    HRESULT currentView([in] ISVGViewSpec *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CURRENTVIEW)]
+    HRESULT currentView([out, retval] ISVGViewSpec **p);
+
+    [propput, id(DISPID_ISVGSVGELEMENT_CURRENTSCALE)]
+    HRESULT currentScale([in] float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CURRENTSCALE)]
+    HRESULT currentScale([out, retval] float *p);
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_CURRENTTRANSLATE)]
+    HRESULT currentTranslate([in] ISVGPoint *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CURRENTTRANSLATE)]
+    HRESULT currentTranslate([out, retval] ISVGPoint **p);
+
+    [id(DISPID_ISVGSVGELEMENT_SUSPENDREDRAW)]
+    HRESULT suspendRedraw(
+        [in] ULONG maxWaitMilliseconds,
+        [out, retval] ULONG *p);
+
+    [id(DISPID_ISVGSVGELEMENT_UNSUSPENDREDRAW)]
+    HRESULT unsuspendRedraw([in] ULONG suspendHandeID);
+
+    [id(DISPID_ISVGSVGELEMENT_UNSUSPENDREDRAWALL)]
+    HRESULT unsuspendRedrawAll();
+
+    [id(DISPID_ISVGSVGELEMENT_FORCEREDRAW)]
+    HRESULT forceRedraw();
+
+    [id(DISPID_ISVGSVGELEMENT_PAUSEANIMATIONS)]
+    HRESULT pauseAnimations();
+
+    [id(DISPID_ISVGSVGELEMENT_UNPAUSEANIMATIONS)]
+    HRESULT unpauseAnimations();
+
+    [id(DISPID_ISVGSVGELEMENT_ANIMATIONSPAUSED)]
+    HRESULT animationsPaused([out, retval] VARIANT_BOOL *p);
+
+    [id(DISPID_ISVGSVGELEMENT_GETCURRENTTIME)]
+    HRESULT getCurrentTime([out, retval] float *p);
+
+    [id(DISPID_ISVGSVGELEMENT_SETCURRENTTIME)]
+    HRESULT setCurrentTime([in] float seconds);
+
+    [id(DISPID_ISVGSVGELEMENT_GETINTERSECTIONLIST)]
+    HRESULT getIntersectionList(
+        [in] ISVGRect *rect,
+        [in] ISVGElement *referenceElement,
+        [out, retval] VARIANT *p);
+
+    [id(DISPID_ISVGSVGELEMENT_GETENCLOSURELIST)]
+    HRESULT getEnclosureList(
+        [in] ISVGRect *rect,
+        [in] ISVGElement *referenceElement,
+        [out, retval] VARIANT *p);
+
+    [id(DISPID_ISVGSVGELEMENT_CHECKINTERSECTION)]
+    HRESULT checkIntersection(
+        [in] ISVGElement *element,
+        [in] ISVGRect *rect,
+        [out, retval] VARIANT_BOOL *p);
+
+    [id(DISPID_ISVGSVGELEMENT_CHECKENCLOSURE)]
+    HRESULT checkEnclosure(
+        [in] ISVGElement *element,
+        [in] ISVGRect *rect,
+        [out, retval] VARIANT_BOOL *p);
+
+    [id(DISPID_ISVGSVGELEMENT_DESELECTALL)]
+    HRESULT deselectAll();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGNUMBER)]
+    HRESULT createSVGNumber([out, retval] ISVGNumber **p);
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGLENGTH)]
+    HRESULT createSVGLength([out, retval] ISVGLength **p);
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGANGLE)]
+    HRESULT createSVGAngle([out, retval] ISVGAngle **p);
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGPOINT)]
+    HRESULT createSVGPoint([out, retval] ISVGPoint **p);
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGMATRIX)]
+    HRESULT createSVGMatrix([out, retval] ISVGMatrix **p);
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGRECT)]
+    HRESULT createSVGRect([out, retval] ISVGRect **p);
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGTRANSFORM)]
+    HRESULT createSVGTransform([out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGTRANSFORMFROMMATRIX)]
+    HRESULT createSVGTransformFromMatrix(
+        [in] ISVGMatrix *matrix,
+        [out, retval] ISVGTransform **p);
+
+    [id(DISPID_ISVGSVGELEMENT_GETELEMENTBYID)]
+    HRESULT getElementById(
+        [in] BSTR elementId,
+        [out, retval] IHTMLElement **p);
+}
+
+/*****************************************************************************
+ *    DispSVGSVGElement dispinterface
+ */
+[
+    hidden,
+    uuid(30590001-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispSVGSVGElement
+{
+properties:
+methods:
+    [propputref, id(DISPID_ISVGSVGELEMENT_X)]
+    void x(ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_X)]
+    ISVGAnimatedLength *x();
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_Y)]
+    void y(ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_Y)]
+    ISVGAnimatedLength *y();
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_WIDTH)]
+    void width(ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_WIDTH)]
+    ISVGAnimatedLength *width();
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_HEIGHT)]
+    void height(ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_HEIGHT)]
+    ISVGAnimatedLength *height();
+
+    [propput, id(DISPID_ISVGSVGELEMENT_CONTENTSCRIPTTYPE)]
+    void contentScriptType(BSTR v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CONTENTSCRIPTTYPE)]
+    BSTR contentScriptType();
+
+    [propput, id(DISPID_ISVGSVGELEMENT_CONTENTSTYLETYPE)]
+    void contentStyleType(BSTR v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CONTENTSTYLETYPE)]
+    BSTR contentStyleType();
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_VIEWPORT)]
+    void viewport(ISVGRect *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_VIEWPORT)]
+    ISVGRect *viewport();
+
+    [propput, id(DISPID_ISVGSVGELEMENT_PIXELUNITTOMILLIMETERX)]
+    void pixelUnitToMillimeterX(float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_PIXELUNITTOMILLIMETERX)]
+    float pixelUnitToMillimeterX();
+
+    [propput, id(DISPID_ISVGSVGELEMENT_PIXELUNITTOMILLIMETERY)]
+    void pixelUnitToMillimeterY(float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_PIXELUNITTOMILLIMETERY)]
+    float pixelUnitToMillimeterY();
+
+    [propput, id(DISPID_ISVGSVGELEMENT_SCREENPIXELTOMILLIMETERX)]
+    void screenPixelToMillimeterX(float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_SCREENPIXELTOMILLIMETERX)]
+    float screenPixelToMillimeterX();
+
+    [propput, id(DISPID_ISVGSVGELEMENT_SCREENPIXELTOMILLIMETERY)]
+    void screenPixelToMillimeterY(float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_SCREENPIXELTOMILLIMETERY)]
+    float screenPixelToMillimeterY();
+
+    [propput, id(DISPID_ISVGSVGELEMENT_USECURRENTVIEW)]
+    void useCurrentView(VARIANT_BOOL v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_USECURRENTVIEW)]
+    VARIANT_BOOL useCurrentView();
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_CURRENTVIEW)]
+    void currentView(ISVGViewSpec *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CURRENTVIEW)]
+    ISVGViewSpec *currentView();
+
+    [propput, id(DISPID_ISVGSVGELEMENT_CURRENTSCALE)]
+    void currentScale(float v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CURRENTSCALE)]
+    float currentScale();
+
+    [propputref, id(DISPID_ISVGSVGELEMENT_CURRENTTRANSLATE)]
+    void currentTranslate(ISVGPoint *v);
+
+    [propget, id(DISPID_ISVGSVGELEMENT_CURRENTTRANSLATE)]
+    ISVGPoint *currentTranslate();
+
+    [id(DISPID_ISVGSVGELEMENT_SUSPENDREDRAW)]
+    ULONG suspendRedraw([in] ULONG maxWaitMilliseconds);
+
+    [id(DISPID_ISVGSVGELEMENT_UNSUSPENDREDRAW)]
+    void unsuspendRedraw([in] ULONG suspendHandeID);
+
+    [id(DISPID_ISVGSVGELEMENT_UNSUSPENDREDRAWALL)]
+    void unsuspendRedrawAll();
+
+    [id(DISPID_ISVGSVGELEMENT_FORCEREDRAW)]
+    void forceRedraw();
+
+    [id(DISPID_ISVGSVGELEMENT_PAUSEANIMATIONS)]
+    void pauseAnimations();
+
+    [id(DISPID_ISVGSVGELEMENT_UNPAUSEANIMATIONS)]
+    void unpauseAnimations();
+
+    [id(DISPID_ISVGSVGELEMENT_ANIMATIONSPAUSED)]
+    VARIANT_BOOL animationsPaused();
+
+    [id(DISPID_ISVGSVGELEMENT_GETCURRENTTIME)]
+    float getCurrentTime();
+
+    [id(DISPID_ISVGSVGELEMENT_SETCURRENTTIME)]
+    void setCurrentTime([in] float seconds);
+
+    [id(DISPID_ISVGSVGELEMENT_GETINTERSECTIONLIST)]
+    VARIANT getIntersectionList([in] ISVGRect *rect,[in] ISVGElement *referenceElement);
+
+    [id(DISPID_ISVGSVGELEMENT_GETENCLOSURELIST)]
+    VARIANT getEnclosureList(
+        [in] ISVGRect *rect,
+        [in] ISVGElement *referenceElement);
+
+    [id(DISPID_ISVGSVGELEMENT_CHECKINTERSECTION)]
+    VARIANT_BOOL checkIntersection(
+        [in] ISVGElement *element,
+        [in] ISVGRect *rect);
+
+    [id(DISPID_ISVGSVGELEMENT_CHECKENCLOSURE)]
+    VARIANT_BOOL checkEnclosure(
+        [in] ISVGElement *element,
+        [in] ISVGRect *rect);
+
+    [id(DISPID_ISVGSVGELEMENT_DESELECTALL)]
+    void deselectAll();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGNUMBER)]
+    ISVGNumber *createSVGNumber();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGLENGTH)]
+    ISVGLength *createSVGLength();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGANGLE)]
+    ISVGAngle *createSVGAngle();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGPOINT)]
+    ISVGPoint *createSVGPoint();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGMATRIX)]
+    ISVGMatrix *createSVGMatrix();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGRECT)]
+    ISVGRect *createSVGRect();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGTRANSFORM)]
+    ISVGTransform *createSVGTransform();
+
+    [id(DISPID_ISVGSVGELEMENT_CREATESVGTRANSFORMFROMMATRIX)]
+    ISVGTransform *createSVGTransformFromMatrix([in] ISVGMatrix *matrix);
+
+    [id(DISPID_ISVGSVGELEMENT_GETELEMENTBYID)]
+    IHTMLElement *getElementById([in] BSTR elementId);
+
+    WINE_ISVGELEMENT_DISPINTERFACE_DECL;
+    WINE_ISVGTESTS_DISPINTERFACE_DECL;
+    WINE_ISVGLANGSPACE_DISPINTERFACE_DECL;
+    WINE_ISVGEXTERNALRESOURCESREQUIRED_DISPINTERFACE_DECL;
+    WINE_ISVGSTYLABLE_DISPINTERFACE_DECL;
+    WINE_ISVGLOCATABLE_DISPINTERFACE_DECL;
+    WINE_ISVGFITTOVIEWBOX_DISPINTERFACE_DECL;
+    WINE_ISVGZOOMANDPAN_DISPINTERFACE_DECL;
+}
+
+[
+    noncreatable,
+    uuid(30510574-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass SVGSVGElement
+{
+    [default]         dispinterface DispSVGSVGElement;
+    [source, default] dispinterface HTMLElementEvents;
+    [source]          dispinterface HTMLElementEvents2;
+                      interface ISVGSVGElement;
+                      interface ISVGElement;
+                      interface ISVGTests;
+                      interface ISVGLangSpace;
+                      interface ISVGExternalResourcesRequired;
+                      interface ISVGStylable;
+                      interface ISVGLocatable;
+                      interface ISVGFitToViewBox;
+                      interface ISVGZoomAndPan;
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510514-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGCircleElement : IDispatch
+{
+    [propputref, id(DISPID_ISVGCIRCLEELEMENT_CX)]
+    HRESULT cx([in] ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGCIRCLEELEMENT_CX)]
+    HRESULT cx([out, retval] ISVGAnimatedLength **p);
+
+    [propputref, id(DISPID_ISVGCIRCLEELEMENT_CY)]
+    HRESULT cy([in] ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGCIRCLEELEMENT_CY)]
+    HRESULT cy([out, retval] ISVGAnimatedLength **p);
+
+    [propputref, id(DISPID_ISVGCIRCLEELEMENT_R)]
+    HRESULT r([in] ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGCIRCLEELEMENT_R)]
+    HRESULT r([out, retval] ISVGAnimatedLength **p);
+}
+
+[
+    hidden,
+    uuid(3059000a-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispSVGCircleElement
+{
+properties:
+methods:
+    [propputref, id(DISPID_ISVGCIRCLEELEMENT_CX)]
+    void cx(ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGCIRCLEELEMENT_CX)]
+    ISVGAnimatedLength *cx();
+
+    [propputref, id(DISPID_ISVGCIRCLEELEMENT_CY)]
+    void cy(ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGCIRCLEELEMENT_CY)]
+    ISVGAnimatedLength *cy();
+
+    [propputref, id(DISPID_ISVGCIRCLEELEMENT_R)]
+    void r(ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGCIRCLEELEMENT_R)]
+    ISVGAnimatedLength *r();
+
+    WINE_ISVGTESTS_DISPINTERFACE_DECL;
+    WINE_ISVGTRANSFORMABLE_DISPINTERFACE_DECL;
+    WINE_ISVGLOCATABLE_DISPINTERFACE_DECL;
+    WINE_ISVGELEMENT_DISPINTERFACE_DECL;
+}
+
+[
+    noncreatable,
+    uuid(30510578-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass SVGCircleElement
+{
+    [default]         dispinterface DispSVGCircleElement;
+    [source, default] dispinterface HTMLElementEvents;
+    [source]          dispinterface HTMLElementEvents2;
+                      interface ISVGCircleElement;
+                      interface ISVGTests;
+                      interface ISVGTransformable;
+                      interface ISVGLocatable;
+                      interface ISVGElement;
+}
+
+/*****************************************************************************
  *    IOmHistory interface
  */
 [
