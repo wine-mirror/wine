@@ -1012,7 +1012,7 @@
 @ cdecl _ltoa(long ptr long) msvcrt._ltoa
 @ cdecl _ltow(long ptr long) msvcrt._ltow
 @ cdecl _makepath(ptr str str str str) msvcrt._makepath
-@ cdecl _matherr(ptr) msvcrt._matherr
+@ cdecl _matherr(ptr) MSVCRT20__matherr
 @ cdecl _mbbtombc(long) msvcrt._mbbtombc
 @ cdecl _mbbtype(long long) msvcrt._mbbtype
 @ cdecl _mbccpy(ptr ptr) msvcrt._mbccpy

@@ -683,7 +683,6 @@
 @ cdecl _makepath(ptr str str str str) MSVCRT__makepath
 @ cdecl _makepath_s(ptr long str str str str) MSVCRT__makepath_s
 # stub _malloc_dbg(long long str long)
-@ cdecl _matherr(ptr) MSVCRT__matherr
 @ cdecl _mbbtombc(long)
 # stub _mbbtombc_l(long ptr)
 @ cdecl _mbbtype(long long)

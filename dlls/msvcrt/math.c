@@ -62,24 +62,26 @@ void msvcrt_init_math(void)
 }
 
 /*********************************************************************
- *      _matherr (MSVCRT.@)
+ *      _matherr (CRTDLL.@)
  */
 int CDECL MSVCRT__matherr(struct MSVCRT__exception *e)
 {
-    int ret;
+    return 0;
+}
 
-    if (e)
-        TRACE("(%p = {%d, \"%s\", %g, %g, %g})\n", e, e->type, e->name, e->arg1, e->arg2, e->retval);
-    else
-        TRACE("(null)\n");
+
+static void math_error(int type, const char *name, double arg1, double arg2, double retval)
+{
+    TRACE("(%d, %s, %g, %g, %g)\n", type, debugstr_a(name), arg1, arg2, retval);
 
     if (MSVCRT_default_matherr_func)
     {
-        ret = MSVCRT_default_matherr_func(e);
-        if (ret) return ret;
+        struct MSVCRT__exception exception = {type, (char *)name, arg1, arg2, retval};
+
+        if (MSVCRT_default_matherr_func(&exception)) return;
     }
 
-    switch (e->type)
+    switch (type)
     {
     case _DOMAIN:
         *MSVCRT__errno() = MSVCRT_EDOM;
@@ -94,8 +96,6 @@ int CDECL MSVCRT__matherr(struct MSVCRT__exception *e)
     default:
         ERR("Unhandled math error!\n");
     }
-
-    return 0;
 }
 
 /*********************************************************************
@@ -105,12 +105,6 @@ void CDECL MSVCRT___setusermatherr(MSVCRT_matherr_func func)
 {
     MSVCRT_default_matherr_func = func;
     TRACE("new matherr handler %p\n", func);
-}
-
-static inline void math_error(int type, const char *name, double arg1, double arg2, double retval)
-{
-    struct MSVCRT__exception exception = {type, (char *)name, arg1, arg2, retval};
-    MSVCRT__matherr(&exception);
 }
 
 /*********************************************************************
