@@ -20,11 +20,9 @@
 
 #ifdef _WIN32
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -54,7 +52,7 @@ static void load_func( void **func, const char *name, void *def )
     {
         HMODULE module = GetModuleHandleA( "ntdll.dll" );
         void *proc = GetProcAddress( module, name );
-        interlocked_xchg_ptr( func, proc ? proc : def );
+        InterlockedExchangePointer( func, proc ? proc : def );
     }
 }
 #define LOAD_FUNC(name) load_func( (void **)&p ## name, #name, fallback ## name )
@@ -164,8 +162,8 @@ static const char * __cdecl fallback__wine_dbg_strdup( const char *str )
     char *ret = _strdup( str );
     int idx;
 
-    idx = interlocked_xchg_add( &pos, 1 ) % ARRAY_SIZE(list);
-    free( interlocked_xchg_ptr( (void **)&list[idx], ret ));
+    idx = InterlockedIncrement( &pos ) % ARRAY_SIZE(list);
+    free( InterlockedExchangePointer( (void **)&list[idx], ret ));
     return ret;
 }
 
@@ -174,7 +172,7 @@ static int __cdecl fallback__wine_dbg_output( const char *str )
     size_t len = strlen( str );
 
     if (!len) return 0;
-    interlocked_xchg( (LONG *)&partial_line_tid, str[len - 1] != '\n' ? GetCurrentThreadId() : 0 );
+    InterlockedExchange( (LONG *)&partial_line_tid, str[len - 1] != '\n' ? GetCurrentThreadId() : 0 );
     return fwrite( str, 1, len, stderr );
 }
 
