@@ -972,11 +972,6 @@ static void build(struct options* opts)
 
     /* add the default libraries, if needed */
 
-    if (!opts->nostdlib && opts->use_msvcrt && opts->target_platform != PLATFORM_WINDOWS)
-    {
-        if (!is_pe || !opts->shared) add_library(opts, lib_dirs, files, "msvcrt");
-    }
-
     if (!opts->wine_objdir && !opts->nodefaultlibs)
     {
         if (opts->gui_app)
@@ -991,6 +986,7 @@ static void build(struct options* opts)
 
     if (!opts->nodefaultlibs)
     {
+        if (opts->use_msvcrt) add_library(opts, lib_dirs, files, "msvcrt");
         add_library(opts, lib_dirs, files, "winecrt0");
         if (opts->win16_app) add_library(opts, lib_dirs, files, "kernel");
         add_library(opts, lib_dirs, files, "kernel32");
@@ -1108,7 +1104,7 @@ static void build(struct options* opts)
                     char *p = strrchr( lib, '/' );
 
                     *p++ = 0;
-                    if (!strncmp( p, "lib", 3 ))
+                    if (!strncmp( p, "lib", 3 ) && strcmp( p, "libmsvcrt.a" ))
                     {
                         char *ext = strrchr( p, '.' );
 
