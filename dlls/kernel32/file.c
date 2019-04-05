@@ -2236,7 +2236,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 /*************************************************************************
  *           FindClose   (KERNEL32.@)
  */
-BOOL WINAPI FindClose( HANDLE handle )
+BOOL WINAPI DECLSPEC_HOTPATCH FindClose( HANDLE handle )
 {
     FIND_FIRST_INFO *info = handle;
 
