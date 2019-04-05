@@ -1019,6 +1019,42 @@ then
                           [AC_MSG_RESULT([no])])
         CC="$ac_save_CC"
         AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-$CFLAGS})
+        AC_SUBST(EXTRACROSSCFLAGS,"-DWINE_CROSSTEST -Wall")
+
+        dnl clang needs to be told to fail on unknown options
+        saved_CFLAGS=$CFLAGS
+        WINE_TRY_CROSSCFLAGS([-fno-strict-aliasing])
+        WINE_TRY_CROSSCFLAGS([-Werror=unknown-warning-option])
+        WINE_TRY_CROSSCFLAGS([-Wdeclaration-after-statement])
+        WINE_TRY_CROSSCFLAGS([-Wempty-body])
+        WINE_TRY_CROSSCFLAGS([-Wignored-qualifiers])
+        WINE_TRY_CROSSCFLAGS([-Wpacked-not-aligned],[EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-packed-not-aligned"])
+        WINE_TRY_CROSSCFLAGS([-Wpragma-pack],[EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-pragma-pack"])
+        WINE_TRY_CROSSCFLAGS([-Wshift-overflow=2])
+        WINE_TRY_CROSSCFLAGS([-Wstrict-prototypes])
+        WINE_TRY_CROSSCFLAGS([-Wtype-limits])
+        WINE_TRY_CROSSCFLAGS([-Wunused-but-set-parameter])
+        WINE_TRY_CROSSCFLAGS([-Wvla])
+        WINE_TRY_CROSSCFLAGS([-Wwrite-strings])
+        WINE_TRY_CROSSCFLAGS([-Wpointer-arith])
+        WINE_TRY_CROSSCFLAGS([-Wlogical-op])
+
+        case $host_cpu in
+          *i[[3456789]]86*) WINE_TRY_CROSSCFLAGS([-fno-omit-frame-pointer]) ;;
+          x86_64) WINE_TRY_CROSSCFLAGS([-Wno-format]) ;;
+        esac
+
+        CFLAGS=$saved_CFLAGS
+
+        dnl Default to dwarf-2 debug info
+        for ac_flag in $CFLAGS; do
+          case $ac_flag in
+            -g) WINE_TRY_CROSSCFLAGS([-gdwarf-2])
+                WINE_TRY_CROSSCFLAGS([-gstrict-dwarf]) ;;
+          esac
+        done
+
+        test "x$enable_maintainer_mode" != "xyes" || WINE_TRY_CROSSCFLAGS([-Werror])
     fi
 fi
 WINE_NOTICE_WITH(mingw,[test "x$CROSSTARGET" = "x"],

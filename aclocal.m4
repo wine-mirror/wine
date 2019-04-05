@@ -149,6 +149,29 @@ CFLAGS=$ac_wine_try_cflags_saved])
 AS_VAR_IF([ac_var],[yes],[m4_default([$2], [EXTRACFLAGS="$EXTRACFLAGS $1"])], [$3])dnl
 AS_VAR_POPDEF([ac_var])])
 
+dnl **** Check if we can link an empty program with special CFLAGS ****
+dnl
+dnl Usage: WINE_TRY_CROSSCFLAGS(flags,[action-if-yes,[action-if-no]])
+dnl
+dnl The default action-if-yes is to append the flags to EXTRACROSSCFLAGS.
+dnl
+AC_DEFUN([WINE_TRY_CROSSCFLAGS],
+[AS_VAR_PUSHDEF([ac_var], ac_cv_cflags_[[$1]])dnl
+AC_CACHE_CHECK([whether the cross-compiler supports $1], ac_var,
+[ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_cc=$CC
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS $1"
+CC="$CROSSCC"
+ac_exeext=".exe"
+AC_LINK_IFELSE([AC_LANG_SOURCE([[int main(int argc, char **argv) { return 0; }]])],
+               [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
+CFLAGS=$ac_wine_try_cflags_saved
+CC=$ac_wine_try_cflags_saved_cc
+ac_exeext=$ac_wine_try_cflags_saved_exeext])
+AS_VAR_IF([ac_var],[yes],[m4_default([$2], [EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS $1"])], [$3])dnl
+AS_VAR_POPDEF([ac_var])])
+
 dnl **** Check if we can link an empty shared lib (no main) with special CFLAGS ****
 dnl
 dnl Usage: WINE_TRY_SHLIB_FLAGS(flags,[action-if-yes,[action-if-no]])

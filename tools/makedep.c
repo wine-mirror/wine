@@ -132,6 +132,7 @@ static struct strarray dll_flags;
 static struct strarray target_flags;
 static struct strarray msvcrt_flags;
 static struct strarray extra_cflags;
+static struct strarray extra_cross_cflags;
 static struct strarray cpp_flags;
 static struct strarray unwind_flags;
 static struct strarray libs;
@@ -2958,7 +2959,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output_filenames( make->define_args );
         output_filenames( extradefs );
         if (make->use_msvcrt) output_filenames( msvcrt_flags );
-        output_filename( "-DWINE_CROSSTEST" );
+        output_filenames( extra_cross_cflags );
         output_filenames( cpp_flags );
         output_filename( "$(CROSSCFLAGS)" );
         output( "\n" );
@@ -4200,6 +4201,7 @@ int main( int argc, char *argv[] )
     msvcrt_flags = get_expanded_make_var_array( top_makefile, "MSVCRTFLAGS" );
     dll_flags    = get_expanded_make_var_array( top_makefile, "DLLFLAGS" );
     extra_cflags = get_expanded_make_var_array( top_makefile, "EXTRACFLAGS" );
+    extra_cross_cflags = get_expanded_make_var_array( top_makefile, "EXTRACROSSCFLAGS" );
     cpp_flags    = get_expanded_make_var_array( top_makefile, "CPPFLAGS" );
     unwind_flags = get_expanded_make_var_array( top_makefile, "UNWINDFLAGS" );
     libs         = get_expanded_make_var_array( top_makefile, "LIBS" );
