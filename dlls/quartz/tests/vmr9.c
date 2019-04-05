@@ -36,7 +36,7 @@ static IBaseFilter *create_vmr9(DWORD mode)
         hr = IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IVMRFilterConfig9_SetRenderingMode(config, mode);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK || broken(hr == E_FAIL), "Got hr %#x.\n", hr);
         IVMRFilterConfig9_Release(config);
     }
     return filter;
@@ -65,7 +65,7 @@ static void test_filter_config(void)
     ok(mode == VMRMode_Windowed, "Got mode %#x.\n", mode);
 
     hr = IVMRFilterConfig9_SetRenderingMode(config, VMR9Mode_Windowed);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_FAIL), "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetRenderingMode(config, &mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -82,7 +82,7 @@ static void test_filter_config(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_SetRenderingMode(config, VMR9Mode_Windowless);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_FAIL), "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetRenderingMode(config, &mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -134,7 +134,7 @@ static void test_filter_config(void)
     /* Despite MSDN, you can still change the rendering mode after setting the
      * stream count. */
     hr = IVMRFilterConfig9_SetRenderingMode(config, VMR9Mode_Windowless);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_FAIL), "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetRenderingMode(config, &mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -150,19 +150,30 @@ static void test_filter_config(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
-#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
-static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+#define check_interface_broken(a, b, c) check_interface_(__LINE__, a, b, c, TRUE)
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c, FALSE)
+static HRESULT check_interface_(unsigned int line, void *iface, REFIID riid, BOOL supported, BOOL is_broken)
 {
-    IUnknown *iface = iface_ptr;
-    HRESULT hr, expected_hr;
-    IUnknown *unk;
+    HRESULT hr, expected_hr, broken_hr;
+    IUnknown *unknown = iface, *out;
 
-    expected_hr = supported ? S_OK : E_NOINTERFACE;
+    if (supported)
+    {
+        expected_hr = S_OK;
+        broken_hr = E_NOINTERFACE;
+    }
+    else
+    {
+        expected_hr = E_NOINTERFACE;
+        broken_hr = S_OK;
+    }
 
-    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    hr = IUnknown_QueryInterface(unknown, riid, (void **)&out);
+    ok_(__FILE__, line)(hr == expected_hr || broken(is_broken && hr == broken_hr),
+            "Got hr %#x, expected %#x.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
-        IUnknown_Release(unk);
+        IUnknown_Release(out);
+    return hr;
 }
 
 static void test_interfaces(void)
@@ -188,7 +199,9 @@ static void test_interfaces(void)
     todo_wine check_interface(filter, &IID_IVMRDeinterlaceControl9, TRUE);
     check_interface(filter, &IID_IVMRFilterConfig9, TRUE);
     todo_wine check_interface(filter, &IID_IVMRMixerBitmap9, TRUE);
-    check_interface(filter, &IID_IVMRMonitorConfig9, TRUE);
+    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
+     * insufficient support. */
+    check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
 
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IDirectDrawVideo, FALSE);
@@ -210,7 +223,7 @@ static void test_interfaces(void)
     IBaseFilter_Release(filter);
     filter = create_vmr9(VMR9Mode_Windowless);
 
-    check_interface(filter, &IID_IVMRMonitorConfig9, TRUE);
+    check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
     check_interface(filter, &IID_IVMRWindowlessControl9, TRUE);
 
     todo_wine check_interface(filter, &IID_IBasicVideo, FALSE);
