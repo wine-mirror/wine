@@ -2057,7 +2057,7 @@ static struct strarray add_default_libraries( const struct makefile *make, struc
     struct strarray all_libs = empty_strarray;
     unsigned int i, j;
 
-    strarray_add( &all_libs, "-lwine_port" );
+    if (!make->use_msvcrt) strarray_add( &all_libs, "-lwine_port" );
     strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
     strarray_addall( &all_libs, libs );
 
