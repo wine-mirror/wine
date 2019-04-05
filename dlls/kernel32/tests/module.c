@@ -430,6 +430,11 @@ static void testLoadLibraryEx(void)
     ok(hmodule != 0, "Expected valid module handle\n");
 
     SetLastError(0xdeadbeef);
+    ret = FreeLibrary( (HMODULE)((ULONG_PTR)hmodule + 0x1230));
+    ok(!ret, "Free succeeded on wrong handle\n");
+    ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ret = FreeLibrary(hmodule);
     ok(ret, "Expected to be able to free the module, failed with %d\n", GetLastError());
     SetLastError(0xdeadbeef);

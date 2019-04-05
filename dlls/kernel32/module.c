@@ -1102,6 +1102,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
 
     if ((ULONG_PTR)hLibModule & 3) /* this is a datafile module */
     {
+        void *ptr = (void *)((ULONG_PTR)hLibModule & ~3);
+        if (!RtlImageNtHeader( ptr ))
+        {
+            SetLastError( ERROR_BAD_EXE_FORMAT );
+            return FALSE;
+        }
         if ((ULONG_PTR)hLibModule & 1)
         {
             struct exclusive_datafile *file;
@@ -1119,7 +1125,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
             }
             LdrUnlockLoaderLock( 0, magic );
         }
-        return UnmapViewOfFile( (void *)((ULONG_PTR)hLibModule & ~3) );
+        return UnmapViewOfFile( ptr );
     }
 
     if ((nts = LdrUnloadDll( hLibModule )) == STATUS_SUCCESS) retv = TRUE;
