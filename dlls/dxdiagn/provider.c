@@ -1627,7 +1627,7 @@ static HRESULT fill_filter_data_information(IDxDiagContainerImpl_Container *subc
     if (FAILED(hr))
         goto cleanup;
 
-    hr = IAMFilterData_ParseFilterData(pFilterData, pData, cb, (BYTE **)&ppRF);
+    hr = IAMFilterData_ParseFilterData(pFilterData, pData, cb, &ppRF);
     if (FAILED(hr))
         goto cleanup;
     pRF = ((REGFILTER2**)ppRF)[0];
