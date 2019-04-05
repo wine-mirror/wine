@@ -141,7 +141,8 @@ static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, 
     DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
 
     win=NULL;
-    rc=waveInOpen(&win,device,pwfx,(DWORD_PTR)hevent,0,CALLBACK_EVENT|flags);
+    flags |= CALLBACK_EVENT;
+    rc=waveInOpen(&win,device,pwfx,(DWORD_PTR)hevent,0,flags);
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
        rc==MMSYSERR_NOTENABLED || rc==MMSYSERR_NODRIVER ||
@@ -154,8 +155,7 @@ static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, 
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
        "waveInOpen(%s): format=%dx%2dx%d flags=%x(%s) rc=%s\n",
        dev_name(device),pwfx->nSamplesPerSec,pwfx->wBitsPerSample,
-       pwfx->nChannels,CALLBACK_EVENT|flags,
-       wave_open_flags(CALLBACK_EVENT|flags),wave_in_error(rc));
+       pwfx->nChannels,flags,wave_open_flags(flags),wave_in_error(rc));
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & format))
         trace(" Reason: The device lists this format as supported in its "
@@ -261,10 +261,9 @@ static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, 
            rc==MMSYSERR_ALLOCATED ||
            ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
             !(pcaps->dwFormats & format)),
-           "waveOutOpen(%s) format=%dx%2dx%d flags=%x(%s) rc=%s\n",
+           "waveOutOpen(%s) format=%dx%2dx%d flags=CALLBACK_EVENT rc=%s\n",
            dev_name(device),pwfx->nSamplesPerSec,pwfx->wBitsPerSample,
-           pwfx->nChannels,CALLBACK_EVENT|flags,
-           wave_open_flags(CALLBACK_EVENT),wave_out_error(rc));
+           pwfx->nChannels,wave_out_error(rc));
         if (rc==MMSYSERR_NOERROR)
         {
             rc=waveOutPrepareHeader(wout, &frag, sizeof(frag));
