@@ -85,6 +85,7 @@ static DWORD WINAPI SystemClockAdviseThread(void *param)
                     SetEvent(sink->handle);
                     list_remove(&sink->entry);
                     heap_free(sink);
+                    continue;
                 }
             }
 
