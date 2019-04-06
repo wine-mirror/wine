@@ -308,7 +308,8 @@ static void test_source_resolver(void)
 
     IMFSourceResolver_Release(resolver);
 
-    MFShutdown();
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     DeleteFileW(filename);
 }
@@ -1787,7 +1788,7 @@ static void test_allocate_queue(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = MFShutdown();
-    ok(hr == S_OK, "Failed to shutdown, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
 static void test_MFCopyImage(void)
@@ -2074,7 +2075,8 @@ static void test_periodic_callback(void)
     if (!pMFAddPeriodicCallback)
     {
         win_skip("Periodic callbacks are not supported.\n");
-        MFShutdown();
+        hr = MFShutdown();
+        ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
         return;
     }
 
