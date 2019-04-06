@@ -79,10 +79,8 @@ static void test_MFCreateSourceReaderFromByteStream(void)
 todo_wine
     ok(hr == S_OK || hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
 
-    if(stream)
-        IStream_Release(stream);
-    if(bytestream)
-        IMFByteStream_Release(bytestream);
+    IStream_Release(stream);
+    IMFByteStream_Release(bytestream);
     IMFAttributes_Release(attributes);
     if(source)
         IMFSourceReader_Release(source);
