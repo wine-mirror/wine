@@ -862,7 +862,23 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     else if (IsEqualGUID(class, &CLSID_VideoInputDeviceCategory))
         register_avicap_devices();
 
-    return create_EnumMoniker(class, out);
+    if (SUCCEEDED(hr = create_EnumMoniker(class, out)))
+    {
+        IMoniker *mon;
+        hr = IEnumMoniker_Next(*out, 1, &mon, NULL);
+        if (hr == S_OK)
+        {
+            IMoniker_Release(mon);
+            IEnumMoniker_Reset(*out);
+        }
+        else
+        {
+            IEnumMoniker_Release(*out);
+            *out = NULL;
+        }
+    }
+
+    return hr;
 }
 
 /**********************************************************************
