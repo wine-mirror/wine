@@ -1260,9 +1260,9 @@ HRESULT attributes_GetString(struct attributes *attributes, REFGUID key, WCHAR *
                 *length = len;
 
             if (size <= len)
-                return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-            memcpy(value, attribute->value.u.pwszVal, (len + 1) * sizeof(WCHAR));
+                hr = STRSAFE_E_INSUFFICIENT_BUFFER;
+            else
+                memcpy(value, attribute->value.u.pwszVal, (len + 1) * sizeof(WCHAR));
         }
         else
             hr = MF_E_INVALIDTYPE;
