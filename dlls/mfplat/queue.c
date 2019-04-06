@@ -1066,7 +1066,8 @@ static HRESULT WINAPI periodic_callback_Invoke(IMFAsyncCallback *iface, IMFAsync
     struct periodic_callback *callback = impl_from_IMFAsyncCallback(iface);
     IUnknown *context = NULL;
 
-    IMFAsyncResult_GetObject(result, &context);
+    if (FAILED(IMFAsyncResult_GetObject(result, &context)))
+        WARN("Expected object to be set for result object.\n");
 
     callback->callback(context);
 
