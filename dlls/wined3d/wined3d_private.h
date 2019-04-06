@@ -2756,6 +2756,8 @@ struct wined3d_adapter_vk
 
     struct wined3d_vk_info vk_info;
     VkPhysicalDevice physical_device;
+
+    VkPhysicalDeviceLimits device_limits;
 };
 
 static inline struct wined3d_adapter_vk *wined3d_adapter_vk(struct wined3d_adapter *adapter)
