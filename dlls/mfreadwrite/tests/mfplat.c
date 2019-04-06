@@ -120,5 +120,6 @@ START_TEST(mfplat)
     test_MFCreateSourceReaderFromByteStream();
     test_factory();
 
-    MFShutdown();
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
