@@ -156,7 +156,7 @@ dnl
 dnl The default action-if-yes is to append the flags to EXTRACROSSCFLAGS.
 dnl
 AC_DEFUN([WINE_TRY_CROSSCFLAGS],
-[AS_VAR_PUSHDEF([ac_var], ac_cv_cflags_[[$1]])dnl
+[AS_VAR_PUSHDEF([ac_var], ac_cv_crosscflags_[[$1]])dnl
 AC_CACHE_CHECK([whether the cross-compiler supports $1], ac_var,
 [ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_cc=$CC

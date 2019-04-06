@@ -9710,7 +9710,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-strict-aliasing" >&5
 $as_echo_n "checking whether the cross-compiler supports -fno-strict-aliasing... " >&6; }
-if ${ac_cv_cflags__fno_strict_aliasing+:} false; then :
+if ${ac_cv_crosscflags__fno_strict_aliasing+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9724,9 +9724,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__fno_strict_aliasing=yes
+  ac_cv_crosscflags__fno_strict_aliasing=yes
 else
-  ac_cv_cflags__fno_strict_aliasing=no
+  ac_cv_crosscflags__fno_strict_aliasing=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9734,14 +9734,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fno_strict_aliasing" >&5
-$as_echo "$ac_cv_cflags__fno_strict_aliasing" >&6; }
-if test "x$ac_cv_cflags__fno_strict_aliasing" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__fno_strict_aliasing" >&5
+$as_echo "$ac_cv_crosscflags__fno_strict_aliasing" >&6; }
+if test "x$ac_cv_crosscflags__fno_strict_aliasing" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -fno-strict-aliasing"
 fi
                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=unknown-warning-option" >&5
 $as_echo_n "checking whether the cross-compiler supports -Werror=unknown-warning-option... " >&6; }
-if ${ac_cv_cflags__Werror_unknown_warning_option+:} false; then :
+if ${ac_cv_crosscflags__Werror_unknown_warning_option+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9755,9 +9755,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Werror_unknown_warning_option=yes
+  ac_cv_crosscflags__Werror_unknown_warning_option=yes
 else
-  ac_cv_cflags__Werror_unknown_warning_option=no
+  ac_cv_crosscflags__Werror_unknown_warning_option=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9765,14 +9765,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror_unknown_warning_option" >&5
-$as_echo "$ac_cv_cflags__Werror_unknown_warning_option" >&6; }
-if test "x$ac_cv_cflags__Werror_unknown_warning_option" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Werror_unknown_warning_option" >&5
+$as_echo "$ac_cv_crosscflags__Werror_unknown_warning_option" >&6; }
+if test "x$ac_cv_crosscflags__Werror_unknown_warning_option" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Werror=unknown-warning-option"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wdeclaration-after-statement" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wdeclaration-after-statement... " >&6; }
-if ${ac_cv_cflags__Wdeclaration_after_statement+:} false; then :
+if ${ac_cv_crosscflags__Wdeclaration_after_statement+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9786,9 +9786,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wdeclaration_after_statement=yes
+  ac_cv_crosscflags__Wdeclaration_after_statement=yes
 else
-  ac_cv_cflags__Wdeclaration_after_statement=no
+  ac_cv_crosscflags__Wdeclaration_after_statement=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9796,14 +9796,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wdeclaration_after_statement" >&5
-$as_echo "$ac_cv_cflags__Wdeclaration_after_statement" >&6; }
-if test "x$ac_cv_cflags__Wdeclaration_after_statement" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wdeclaration_after_statement" >&5
+$as_echo "$ac_cv_crosscflags__Wdeclaration_after_statement" >&6; }
+if test "x$ac_cv_crosscflags__Wdeclaration_after_statement" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wdeclaration-after-statement"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wempty-body" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wempty-body... " >&6; }
-if ${ac_cv_cflags__Wempty_body+:} false; then :
+if ${ac_cv_crosscflags__Wempty_body+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9817,9 +9817,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wempty_body=yes
+  ac_cv_crosscflags__Wempty_body=yes
 else
-  ac_cv_cflags__Wempty_body=no
+  ac_cv_crosscflags__Wempty_body=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9827,14 +9827,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wempty_body" >&5
-$as_echo "$ac_cv_cflags__Wempty_body" >&6; }
-if test "x$ac_cv_cflags__Wempty_body" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wempty_body" >&5
+$as_echo "$ac_cv_crosscflags__Wempty_body" >&6; }
+if test "x$ac_cv_crosscflags__Wempty_body" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wempty-body"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wignored-qualifiers" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wignored-qualifiers... " >&6; }
-if ${ac_cv_cflags__Wignored_qualifiers+:} false; then :
+if ${ac_cv_crosscflags__Wignored_qualifiers+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9848,9 +9848,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wignored_qualifiers=yes
+  ac_cv_crosscflags__Wignored_qualifiers=yes
 else
-  ac_cv_cflags__Wignored_qualifiers=no
+  ac_cv_crosscflags__Wignored_qualifiers=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9858,14 +9858,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wignored_qualifiers" >&5
-$as_echo "$ac_cv_cflags__Wignored_qualifiers" >&6; }
-if test "x$ac_cv_cflags__Wignored_qualifiers" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wignored_qualifiers" >&5
+$as_echo "$ac_cv_crosscflags__Wignored_qualifiers" >&6; }
+if test "x$ac_cv_crosscflags__Wignored_qualifiers" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wignored-qualifiers"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpacked-not-aligned" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wpacked-not-aligned... " >&6; }
-if ${ac_cv_cflags__Wpacked_not_aligned+:} false; then :
+if ${ac_cv_crosscflags__Wpacked_not_aligned+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9879,9 +9879,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wpacked_not_aligned=yes
+  ac_cv_crosscflags__Wpacked_not_aligned=yes
 else
-  ac_cv_cflags__Wpacked_not_aligned=no
+  ac_cv_crosscflags__Wpacked_not_aligned=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9889,14 +9889,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wpacked_not_aligned" >&5
-$as_echo "$ac_cv_cflags__Wpacked_not_aligned" >&6; }
-if test "x$ac_cv_cflags__Wpacked_not_aligned" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wpacked_not_aligned" >&5
+$as_echo "$ac_cv_crosscflags__Wpacked_not_aligned" >&6; }
+if test "x$ac_cv_crosscflags__Wpacked_not_aligned" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-packed-not-aligned"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpragma-pack" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wpragma-pack... " >&6; }
-if ${ac_cv_cflags__Wpragma_pack+:} false; then :
+if ${ac_cv_crosscflags__Wpragma_pack+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9910,9 +9910,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wpragma_pack=yes
+  ac_cv_crosscflags__Wpragma_pack=yes
 else
-  ac_cv_cflags__Wpragma_pack=no
+  ac_cv_crosscflags__Wpragma_pack=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9920,14 +9920,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wpragma_pack" >&5
-$as_echo "$ac_cv_cflags__Wpragma_pack" >&6; }
-if test "x$ac_cv_cflags__Wpragma_pack" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wpragma_pack" >&5
+$as_echo "$ac_cv_crosscflags__Wpragma_pack" >&6; }
+if test "x$ac_cv_crosscflags__Wpragma_pack" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-pragma-pack"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wshift-overflow=2" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wshift-overflow=2... " >&6; }
-if ${ac_cv_cflags__Wshift_overflow_2+:} false; then :
+if ${ac_cv_crosscflags__Wshift_overflow_2+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9941,9 +9941,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wshift_overflow_2=yes
+  ac_cv_crosscflags__Wshift_overflow_2=yes
 else
-  ac_cv_cflags__Wshift_overflow_2=no
+  ac_cv_crosscflags__Wshift_overflow_2=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9951,14 +9951,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wshift_overflow_2" >&5
-$as_echo "$ac_cv_cflags__Wshift_overflow_2" >&6; }
-if test "x$ac_cv_cflags__Wshift_overflow_2" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wshift_overflow_2" >&5
+$as_echo "$ac_cv_crosscflags__Wshift_overflow_2" >&6; }
+if test "x$ac_cv_crosscflags__Wshift_overflow_2" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wshift-overflow=2"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wstrict-prototypes" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wstrict-prototypes... " >&6; }
-if ${ac_cv_cflags__Wstrict_prototypes+:} false; then :
+if ${ac_cv_crosscflags__Wstrict_prototypes+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -9972,9 +9972,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wstrict_prototypes=yes
+  ac_cv_crosscflags__Wstrict_prototypes=yes
 else
-  ac_cv_cflags__Wstrict_prototypes=no
+  ac_cv_crosscflags__Wstrict_prototypes=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9982,14 +9982,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wstrict_prototypes" >&5
-$as_echo "$ac_cv_cflags__Wstrict_prototypes" >&6; }
-if test "x$ac_cv_cflags__Wstrict_prototypes" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wstrict_prototypes" >&5
+$as_echo "$ac_cv_crosscflags__Wstrict_prototypes" >&6; }
+if test "x$ac_cv_crosscflags__Wstrict_prototypes" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wstrict-prototypes"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wtype-limits" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wtype-limits... " >&6; }
-if ${ac_cv_cflags__Wtype_limits+:} false; then :
+if ${ac_cv_crosscflags__Wtype_limits+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10003,9 +10003,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wtype_limits=yes
+  ac_cv_crosscflags__Wtype_limits=yes
 else
-  ac_cv_cflags__Wtype_limits=no
+  ac_cv_crosscflags__Wtype_limits=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10013,14 +10013,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wtype_limits" >&5
-$as_echo "$ac_cv_cflags__Wtype_limits" >&6; }
-if test "x$ac_cv_cflags__Wtype_limits" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wtype_limits" >&5
+$as_echo "$ac_cv_crosscflags__Wtype_limits" >&6; }
+if test "x$ac_cv_crosscflags__Wtype_limits" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wtype-limits"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wunused-but-set-parameter" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wunused-but-set-parameter... " >&6; }
-if ${ac_cv_cflags__Wunused_but_set_parameter+:} false; then :
+if ${ac_cv_crosscflags__Wunused_but_set_parameter+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10034,9 +10034,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wunused_but_set_parameter=yes
+  ac_cv_crosscflags__Wunused_but_set_parameter=yes
 else
-  ac_cv_cflags__Wunused_but_set_parameter=no
+  ac_cv_crosscflags__Wunused_but_set_parameter=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10044,14 +10044,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wunused_but_set_parameter" >&5
-$as_echo "$ac_cv_cflags__Wunused_but_set_parameter" >&6; }
-if test "x$ac_cv_cflags__Wunused_but_set_parameter" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wunused_but_set_parameter" >&5
+$as_echo "$ac_cv_crosscflags__Wunused_but_set_parameter" >&6; }
+if test "x$ac_cv_crosscflags__Wunused_but_set_parameter" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wunused-but-set-parameter"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wvla" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wvla... " >&6; }
-if ${ac_cv_cflags__Wvla+:} false; then :
+if ${ac_cv_crosscflags__Wvla+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10065,9 +10065,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wvla=yes
+  ac_cv_crosscflags__Wvla=yes
 else
-  ac_cv_cflags__Wvla=no
+  ac_cv_crosscflags__Wvla=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10075,14 +10075,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wvla" >&5
-$as_echo "$ac_cv_cflags__Wvla" >&6; }
-if test "x$ac_cv_cflags__Wvla" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wvla" >&5
+$as_echo "$ac_cv_crosscflags__Wvla" >&6; }
+if test "x$ac_cv_crosscflags__Wvla" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wvla"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wwrite-strings" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wwrite-strings... " >&6; }
-if ${ac_cv_cflags__Wwrite_strings+:} false; then :
+if ${ac_cv_crosscflags__Wwrite_strings+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10096,9 +10096,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wwrite_strings=yes
+  ac_cv_crosscflags__Wwrite_strings=yes
 else
-  ac_cv_cflags__Wwrite_strings=no
+  ac_cv_crosscflags__Wwrite_strings=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10106,14 +10106,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wwrite_strings" >&5
-$as_echo "$ac_cv_cflags__Wwrite_strings" >&6; }
-if test "x$ac_cv_cflags__Wwrite_strings" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wwrite_strings" >&5
+$as_echo "$ac_cv_crosscflags__Wwrite_strings" >&6; }
+if test "x$ac_cv_crosscflags__Wwrite_strings" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wwrite-strings"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wpointer-arith" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wpointer-arith... " >&6; }
-if ${ac_cv_cflags__Wpointer_arith+:} false; then :
+if ${ac_cv_crosscflags__Wpointer_arith+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10127,9 +10127,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wpointer_arith=yes
+  ac_cv_crosscflags__Wpointer_arith=yes
 else
-  ac_cv_cflags__Wpointer_arith=no
+  ac_cv_crosscflags__Wpointer_arith=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10137,14 +10137,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wpointer_arith" >&5
-$as_echo "$ac_cv_cflags__Wpointer_arith" >&6; }
-if test "x$ac_cv_cflags__Wpointer_arith" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wpointer_arith" >&5
+$as_echo "$ac_cv_crosscflags__Wpointer_arith" >&6; }
+if test "x$ac_cv_crosscflags__Wpointer_arith" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wpointer-arith"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wlogical-op" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wlogical-op... " >&6; }
-if ${ac_cv_cflags__Wlogical_op+:} false; then :
+if ${ac_cv_crosscflags__Wlogical_op+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10158,9 +10158,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wlogical_op=yes
+  ac_cv_crosscflags__Wlogical_op=yes
 else
-  ac_cv_cflags__Wlogical_op=no
+  ac_cv_crosscflags__Wlogical_op=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10168,16 +10168,16 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wlogical_op" >&5
-$as_echo "$ac_cv_cflags__Wlogical_op" >&6; }
-if test "x$ac_cv_cflags__Wlogical_op" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wlogical_op" >&5
+$as_echo "$ac_cv_crosscflags__Wlogical_op" >&6; }
+if test "x$ac_cv_crosscflags__Wlogical_op" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wlogical-op"
 fi
 
         case $host_cpu in
           *i[3456789]86*) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-omit-frame-pointer" >&5
 $as_echo_n "checking whether the cross-compiler supports -fno-omit-frame-pointer... " >&6; }
-if ${ac_cv_cflags__fno_omit_frame_pointer+:} false; then :
+if ${ac_cv_crosscflags__fno_omit_frame_pointer+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10191,9 +10191,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__fno_omit_frame_pointer=yes
+  ac_cv_crosscflags__fno_omit_frame_pointer=yes
 else
-  ac_cv_cflags__fno_omit_frame_pointer=no
+  ac_cv_crosscflags__fno_omit_frame_pointer=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10201,14 +10201,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fno_omit_frame_pointer" >&5
-$as_echo "$ac_cv_cflags__fno_omit_frame_pointer" >&6; }
-if test "x$ac_cv_cflags__fno_omit_frame_pointer" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__fno_omit_frame_pointer" >&5
+$as_echo "$ac_cv_crosscflags__fno_omit_frame_pointer" >&6; }
+if test "x$ac_cv_crosscflags__fno_omit_frame_pointer" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -fno-omit-frame-pointer"
 fi ;;
           x86_64) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wno-format" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wno-format... " >&6; }
-if ${ac_cv_cflags__Wno_format+:} false; then :
+if ${ac_cv_crosscflags__Wno_format+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10222,9 +10222,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wno_format=yes
+  ac_cv_crosscflags__Wno_format=yes
 else
-  ac_cv_cflags__Wno_format=no
+  ac_cv_crosscflags__Wno_format=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10232,9 +10232,9 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wno_format" >&5
-$as_echo "$ac_cv_cflags__Wno_format" >&6; }
-if test "x$ac_cv_cflags__Wno_format" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wno_format" >&5
+$as_echo "$ac_cv_crosscflags__Wno_format" >&6; }
+if test "x$ac_cv_crosscflags__Wno_format" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-format"
 fi ;;
         esac
@@ -10243,7 +10243,7 @@ fi ;;
           case $ac_flag in
             -g) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gdwarf-2" >&5
 $as_echo_n "checking whether the cross-compiler supports -gdwarf-2... " >&6; }
-if ${ac_cv_cflags__gdwarf_2+:} false; then :
+if ${ac_cv_crosscflags__gdwarf_2+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10257,9 +10257,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__gdwarf_2=yes
+  ac_cv_crosscflags__gdwarf_2=yes
 else
-  ac_cv_cflags__gdwarf_2=no
+  ac_cv_crosscflags__gdwarf_2=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10267,14 +10267,14 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__gdwarf_2" >&5
-$as_echo "$ac_cv_cflags__gdwarf_2" >&6; }
-if test "x$ac_cv_cflags__gdwarf_2" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__gdwarf_2" >&5
+$as_echo "$ac_cv_crosscflags__gdwarf_2" >&6; }
+if test "x$ac_cv_crosscflags__gdwarf_2" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gdwarf-2"
 fi
                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gstrict-dwarf" >&5
 $as_echo_n "checking whether the cross-compiler supports -gstrict-dwarf... " >&6; }
-if ${ac_cv_cflags__gstrict_dwarf+:} false; then :
+if ${ac_cv_crosscflags__gstrict_dwarf+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10288,9 +10288,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__gstrict_dwarf=yes
+  ac_cv_crosscflags__gstrict_dwarf=yes
 else
-  ac_cv_cflags__gstrict_dwarf=no
+  ac_cv_crosscflags__gstrict_dwarf=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10298,9 +10298,9 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__gstrict_dwarf" >&5
-$as_echo "$ac_cv_cflags__gstrict_dwarf" >&6; }
-if test "x$ac_cv_cflags__gstrict_dwarf" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__gstrict_dwarf" >&5
+$as_echo "$ac_cv_crosscflags__gstrict_dwarf" >&6; }
+if test "x$ac_cv_crosscflags__gstrict_dwarf" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gstrict-dwarf"
 fi ;;
           esac
@@ -10310,7 +10310,7 @@ fi ;;
         then
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror" >&5
 $as_echo_n "checking whether the cross-compiler supports -Werror... " >&6; }
-if ${ac_cv_cflags__Werror+:} false; then :
+if ${ac_cv_crosscflags__Werror+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
@@ -10324,9 +10324,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Werror=yes
+  ac_cv_crosscflags__Werror=yes
 else
-  ac_cv_cflags__Werror=no
+  ac_cv_crosscflags__Werror=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -10334,9 +10334,9 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror" >&5
-$as_echo "$ac_cv_cflags__Werror" >&6; }
-if test "x$ac_cv_cflags__Werror" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Werror" >&5
+$as_echo "$ac_cv_crosscflags__Werror" >&6; }
+if test "x$ac_cv_crosscflags__Werror" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Werror"
 fi
         fi
