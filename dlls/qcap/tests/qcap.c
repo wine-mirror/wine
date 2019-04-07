@@ -1832,7 +1832,7 @@ static void test_AviCo(void)
     ok(hres == S_OK, "QueryPinInfo failed: %08x\n", hres);
     ok(pin_info.pFilter == avico, "pin_info.pFilter != avico\n");
     ok(pin_info.dir == PINDIR_INPUT, "pin_info.dir = %d\n", pin_info.dir);
-    ok(!lstrcmpW(pin_info.achName, inputW), "pin_info.achName = %s\n", wine_dbgstr_w(pin_info.achName));
+    todo_wine ok(!lstrcmpW(pin_info.achName, inputW), "pin_info.achName = %s\n", wine_dbgstr_w(pin_info.achName));
 
     hres = IEnumPins_Next(enum_pins, 1, &out_pin, NULL);
     ok(hres == S_OK, "Next failed: %08x\n", hres);
@@ -1841,7 +1841,7 @@ static void test_AviCo(void)
     ok(hres == S_OK, "QueryPinInfo failed: %08x\n", hres);
     ok(pin_info.pFilter == avico, "pin_info.pFilter != avico\n");
     ok(pin_info.dir == PINDIR_OUTPUT, "pin_info.dir = %d\n", pin_info.dir);
-    ok(!lstrcmpW(pin_info.achName, outputW), "pin_info.achName = %s\n", wine_dbgstr_w(pin_info.achName));
+    todo_wine ok(!lstrcmpW(pin_info.achName, outputW), "pin_info.achName = %s\n", wine_dbgstr_w(pin_info.achName));
 
     IEnumPins_Release(enum_pins);
 

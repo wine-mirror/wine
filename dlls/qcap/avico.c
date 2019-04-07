@@ -690,8 +690,8 @@ static const BaseOutputPinFuncTable AVICompressorBaseOutputPinVtbl = {
 
 IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
 {
-    PIN_INFO in_pin_info  = {NULL, PINDIR_INPUT,  {'I','n','p','u','t',0}};
-    PIN_INFO out_pin_info = {NULL, PINDIR_OUTPUT, {'O','u','t','p','u','t',0}};
+    PIN_INFO in_pin_info  = {NULL, PINDIR_INPUT,  {'I','n',0}};
+    PIN_INFO out_pin_info = {NULL, PINDIR_OUTPUT, {'O','u','t',0}};
     AVICompressor *compressor;
     HRESULT hres;
 
