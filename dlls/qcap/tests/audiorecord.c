@@ -58,6 +58,92 @@ static void test_interfaces(IBaseFilter *filter)
     check_interface(filter, &IID_IVideoWindow, FALSE);
 }
 
+static HRESULT WINAPI property_bag_QueryInterface(IPropertyBag *iface, REFIID iid, void **out)
+{
+    ok(0, "Unexpected call (iid %s).\n", wine_dbgstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI property_bag_AddRef(IPropertyBag *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return 2;
+}
+
+static ULONG WINAPI property_bag_Release(IPropertyBag *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return 1;
+}
+
+static const WCHAR waveinidW[] = {'W','a','v','e','I','n','I','d',0};
+static const WCHAR usemixerW[] = {'U','s','e','M','i','x','e','r',0};
+static int ppb_id;
+static unsigned int ppb_got_read;
+
+static HRESULT WINAPI property_bag_Read(IPropertyBag *iface, const WCHAR *name, VARIANT *var, IErrorLog *log)
+{
+    if (!lstrcmpW(name, usemixerW))
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    todo_wine ok(!lstrcmpW(name, waveinidW), "Got unexpected name %s.\n", wine_dbgstr_w(name));
+    ok(V_VT(var) == VT_I4, "Got unexpected type %u.\n", V_VT(var));
+    ok(!log, "Got unexpected error log %p.\n", log);
+    ppb_got_read++;
+    return S_OK;
+}
+
+static HRESULT WINAPI property_bag_Write(IPropertyBag *iface, const WCHAR *name, VARIANT *var)
+{
+    ok(0, "Unexpected call (name %s).\n", wine_dbgstr_w(name));
+    return E_FAIL;
+}
+
+static const IPropertyBagVtbl property_bag_vtbl =
+{
+    property_bag_QueryInterface,
+    property_bag_AddRef,
+    property_bag_Release,
+    property_bag_Read,
+    property_bag_Write,
+};
+
+static void test_property_bag(IMoniker *mon)
+{
+    IPropertyBag property_bag = {&property_bag_vtbl};
+    IPropertyBag *devenum_bag;
+    IPersistPropertyBag *ppb;
+    VARIANT var;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IPropertyBag, (void **)&devenum_bag);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    VariantInit(&var);
+    hr = IPropertyBag_Read(devenum_bag, waveinidW, &var, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ppb_id = V_I4(&var);
+
+    hr = CoCreateInstance(&CLSID_AudioRecord, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IPersistPropertyBag, (void **)&ppb);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPersistPropertyBag_InitNew(ppb);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ppb_got_read = 0;
+    hr = IPersistPropertyBag_Load(ppb, &property_bag, NULL);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* 8+, intermittent */, "Got hr %#x.\n", hr);
+    ok(ppb_got_read == 1, "Got %u calls to Read().\n", ppb_got_read);
+
+    ref = IPersistPropertyBag_Release(ppb);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+
+    VariantClear(&var);
+    IPropertyBag_Release(devenum_bag);
+}
+
 START_TEST(audiorecord)
 {
     ICreateDevEnum *devenum;
@@ -88,6 +174,8 @@ START_TEST(audiorecord)
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         trace("Testing device %s.\n", wine_dbgstr_w(name));
         CoTaskMemFree(name);
+
+        test_property_bag(mon);
 
         hr = IMoniker_BindToObject(mon, NULL, NULL, &IID_IBaseFilter, (void **)&filter);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
