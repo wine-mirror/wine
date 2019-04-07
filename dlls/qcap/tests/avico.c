@@ -23,6 +23,11 @@
 #include "vfw.h"
 #include "wine/test.h"
 
+static const WCHAR sink_id[] = {'I','n',0};
+static const WCHAR source_id[] = {'O','u','t',0};
+static const WCHAR sink_name[] = {'I','n','p','u','t',0};
+static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
+
 static const DWORD test_fourcc = mmioFOURCC('w','t','s','t');
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -186,6 +191,39 @@ static void test_enum_pins(IBaseFilter *filter)
     IEnumPins_Release(enum1);
 }
 
+static void test_find_pin(IBaseFilter *filter)
+{
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Pins didn't match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Pins didn't match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_FindPin(filter, source_name, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    IEnumPins_Release(enum_pins);
+}
+
 static LRESULT CALLBACK driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         LPARAM lparam1, LPARAM lparam2)
 {
@@ -253,6 +291,7 @@ START_TEST(avico)
 
             test_interfaces(filter);
             test_enum_pins(filter);
+            test_find_pin(filter);
 
             ref = IBaseFilter_Release(filter);
             ok(!ref, "Got outstanding refcount %d.\n", ref);
