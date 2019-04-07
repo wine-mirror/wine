@@ -4,7 +4,7 @@
 @ stub HidD_GetConfiguration
 @ stdcall HidD_GetFeature(long ptr long)
 @ stdcall HidD_GetHidGuid(ptr)
-@ stub HidD_GetIndexedString
+@ stdcall HidD_GetIndexedString(ptr long ptr long)
 @ stdcall HidD_GetInputReport(long ptr long)
 @ stdcall HidD_GetManufacturerString(long ptr long)
 @ stub HidD_GetMsGenreDescriptor
