@@ -1,7 +1,8 @@
 TESTDLL   = qcap.dll
-IMPORTS   = strmiids uuid oleaut32 ole32 advapi32
+IMPORTS   = strmiids uuid oleaut32 ole32 advapi32 msvfw32
 
 C_SRCS = \
 	audiorecord.c \
+	avico.c \
 	qcap.c \
 	smartteefilter.c
