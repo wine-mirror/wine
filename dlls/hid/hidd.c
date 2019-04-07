@@ -157,3 +157,9 @@ BOOLEAN WINAPI HidD_SetOutputReport(HANDLE HidDeviceObject, void *ReportBuffer, 
     TRACE("(%p %p %u)\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
     return sync_ioctl(HidDeviceObject, IOCTL_HID_SET_OUTPUT_REPORT, ReportBuffer, ReportBufferLength, NULL, 0);
 }
+
+BOOLEAN WINAPI HidD_GetIndexedString(HANDLE file, ULONG index, void *buffer, ULONG length)
+{
+    TRACE("file %p, index %u, buffer %p, length %u.\n", file, index, buffer, length);
+    return sync_ioctl(file, IOCTL_HID_GET_INDEXED_STRING, &index, sizeof(index), buffer, length);
+}
