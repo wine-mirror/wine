@@ -224,6 +224,57 @@ static void test_find_pin(IBaseFilter *filter)
     IEnumPins_Release(enum_pins);
 }
 
+static void test_pin_info(IBaseFilter *filter)
+{
+    PIN_DIRECTION dir;
+    PIN_INFO info;
+    HRESULT hr;
+    WCHAR *id;
+    IPin *pin;
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+    todo_wine ok(!lstrcmpW(info.achName, sink_name), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
+    todo_wine ok(!lstrcmpW(info.achName, source_name), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_OUTPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, source_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    IPin_Release(pin);
+}
+
 static LRESULT CALLBACK driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         LPARAM lparam1, LPARAM lparam2)
 {
@@ -292,6 +343,7 @@ START_TEST(avico)
             test_interfaces(filter);
             test_enum_pins(filter);
             test_find_pin(filter);
+            test_pin_info(filter);
 
             ref = IBaseFilter_Release(filter);
             ok(!ref, "Got outstanding refcount %d.\n", ref);
