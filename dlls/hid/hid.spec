@@ -1,4 +1,4 @@
-@ stub HidD_FlushQueue
+@ stdcall HidD_FlushQueue(ptr)
 @ stdcall HidD_FreePreparsedData(ptr)
 @ stdcall HidD_GetAttributes(long ptr)
 @ stub HidD_GetConfiguration
