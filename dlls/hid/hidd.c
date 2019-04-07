@@ -163,3 +163,9 @@ BOOLEAN WINAPI HidD_GetIndexedString(HANDLE file, ULONG index, void *buffer, ULO
     TRACE("file %p, index %u, buffer %p, length %u.\n", file, index, buffer, length);
     return sync_ioctl(file, IOCTL_HID_GET_INDEXED_STRING, &index, sizeof(index), buffer, length);
 }
+
+BOOLEAN WINAPI HidD_FlushQueue(HANDLE file)
+{
+    TRACE("file %p.\n", file);
+    return sync_ioctl(file, IOCTL_HID_FLUSH_QUEUE, NULL, 0, NULL, 0);
+}
