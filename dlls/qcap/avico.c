@@ -323,7 +323,7 @@ static HRESULT WINAPI AVICompressorPropertyBag_Load(IPersistPropertyBag *iface, 
 
     TRACE("(%p)->(%p %p)\n", This, pPropBag, pErrorLog);
 
-    V_VT(&v) = VT_EMPTY;
+    V_VT(&v) = VT_BSTR;
     hres = IPropertyBag_Read(pPropBag, fcc_handlerW, &v, NULL);
     if(FAILED(hres)) {
         WARN("Could not read FccHandler: %08x\n", hres);

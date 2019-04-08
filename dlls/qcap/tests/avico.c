@@ -355,7 +355,7 @@ static unsigned int ppb_got_read;
 static HRESULT WINAPI property_bag_Read(IPropertyBag *iface, const WCHAR *name, VARIANT *var, IErrorLog *log)
 {
     ok(!lstrcmpW(name, fcchandlerW), "Got unexpected name %s.\n", wine_dbgstr_w(name));
-    todo_wine ok(V_VT(var) == VT_BSTR, "Got unexpected type %u.\n", V_VT(var));
+    ok(V_VT(var) == VT_BSTR, "Got unexpected type %u.\n", V_VT(var));
     ok(!log, "Got unexpected error log %p.\n", log);
     V_BSTR(var) = SysAllocString(ppb_handler);
     ppb_got_read++;
@@ -403,7 +403,7 @@ static void test_property_bag(IMoniker *mon)
 
     ppb_got_read = 0;
     hr = IPersistPropertyBag_Load(ppb, &property_bag, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ppb_got_read == 1, "Got %u calls to Read().\n", ppb_got_read);
 
     ref = IPersistPropertyBag_Release(ppb);
