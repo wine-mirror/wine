@@ -93,9 +93,8 @@ static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
 /* tid of the thread running client request */
 static DWORD request_thread;
 
-/* pid/tid of the client thread */
+/* tid of the client thread */
 static DWORD client_tid;
-static DWORD client_pid;
 
 struct wine_driver
 {
@@ -980,7 +979,6 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 irp        = wine_server_ptr_handle( reply->next );
                 irp_params = reply->params;
                 client_tid = reply->client_tid;
-                client_pid = reply->client_pid;
                 in_size    = reply->in_size;
                 out_size   = reply->out_size;
             }
@@ -2482,12 +2480,17 @@ PEPROCESS WINAPI IoGetCurrentProcess(void)
 
 static void *create_thread_object( HANDLE handle )
 {
+    THREAD_BASIC_INFORMATION info;
     struct _KTHREAD *thread;
 
     if (!(thread = alloc_kernel_object( PsThreadType, handle, sizeof(*thread), 0 ))) return NULL;
 
     thread->header.Type = 6;
     thread->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
+
+    if (!NtQueryInformationThread( handle, ThreadBasicInformation, &info, sizeof(info), NULL ))
+        thread->id = info.ClientId;
+
     return thread;
 }
 
@@ -2971,9 +2974,7 @@ NTSTATUS WINAPI PsCreateSystemThread(PHANDLE ThreadHandle, ULONG DesiredAccess,
  */
 HANDLE WINAPI PsGetCurrentProcessId(void)
 {
-    if (GetCurrentThreadId() == request_thread)
-        return UlongToHandle(client_pid);
-    return UlongToHandle(GetCurrentProcessId());
+    return KeGetCurrentThread()->id.UniqueProcess;
 }
 
 
@@ -2982,9 +2983,7 @@ HANDLE WINAPI PsGetCurrentProcessId(void)
  */
 HANDLE WINAPI PsGetCurrentThreadId(void)
 {
-    if (GetCurrentThreadId() == request_thread)
-        return UlongToHandle(client_tid);
-    return UlongToHandle(GetCurrentThreadId());
+    return KeGetCurrentThread()->id.UniqueThread;
 }
 
 

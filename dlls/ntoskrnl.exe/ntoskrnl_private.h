@@ -31,6 +31,7 @@ struct _OBJECT_TYPE
 struct _KTHREAD
 {
     DISPATCHER_HEADER header;
+    CLIENT_ID id;
 };
 
 void *alloc_kernel_object( POBJECT_TYPE type, HANDLE handle, SIZE_T size, LONG ref ) DECLSPEC_HIDDEN;
