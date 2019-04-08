@@ -27,6 +27,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winuser.h"
 #include "objbase.h"
 #include "ole2.h"
@@ -765,13 +766,13 @@ static void init_content_encoding(MimeBody *body, header_t *header)
 {
     const char *encoding = header->value.u.pszVal;
 
-    if(!strcasecmp(encoding, "base64"))
+    if(!_strnicmp(encoding, "base64", -1))
         body->encoding = IET_BASE64;
-    else if(!strcasecmp(encoding, "quoted-printable"))
+    else if(!_strnicmp(encoding, "quoted-printable", -1))
         body->encoding = IET_QP;
-    else if(!strcasecmp(encoding, "7bit"))
+    else if(!_strnicmp(encoding, "7bit", -1))
         body->encoding = IET_7BIT;
-    else if(!strcasecmp(encoding, "8bit"))
+    else if(!_strnicmp(encoding, "8bit", -1))
         body->encoding = IET_8BIT;
     else
         FIXME("unknown encoding %s\n", debugstr_a(encoding));
