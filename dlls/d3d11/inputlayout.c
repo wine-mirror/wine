@@ -21,6 +21,7 @@
 #include "wine/port.h"
 
 #include "d3d11_private.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
@@ -32,7 +33,7 @@ static struct wined3d_shader_signature_element *shader_find_signature_element(co
 
     for (i = 0; i < s->element_count; ++i)
     {
-        if (!strcasecmp(e[i].semantic_name, semantic_name) && e[i].semantic_idx == semantic_idx
+        if (!_strnicmp(e[i].semantic_name, semantic_name, -1) && e[i].semantic_idx == semantic_idx
                 && e[i].stream_idx == stream_idx)
             return &e[i];
     }

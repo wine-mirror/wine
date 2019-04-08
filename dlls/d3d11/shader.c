@@ -21,6 +21,7 @@
 #include "wine/port.h"
 
 #include "d3d11_private.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
@@ -1026,7 +1027,7 @@ static HRESULT validate_stream_output_entries(const D3D11_SO_DECLARATION_ENTRY *
                 continue;
 
             if (e1->Stream == e2->Stream
-                    && !strcasecmp(e1->SemanticName, e2->SemanticName)
+                    && !_strnicmp(e1->SemanticName, e2->SemanticName, -1)
                     && e1->SemanticIndex == e2->SemanticIndex
                     && e1->StartComponent < e2->StartComponent + e2->ComponentCount
                     && e1->StartComponent + e1->ComponentCount > e2->StartComponent)
