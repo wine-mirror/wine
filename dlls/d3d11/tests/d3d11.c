@@ -14311,6 +14311,7 @@ static void test_clear_buffer_unordered_access_view(void)
     unsigned int i, x;
     ULONG refcount;
     HRESULT hr;
+    RECT rect;
 
     static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
     static const struct uvec4 fe_uvec4 = {0xfefefefe, 0xfefefefe, 0xfefefefe, 0xfefefefe};
@@ -14397,10 +14398,10 @@ static void test_clear_buffer_unordered_access_view(void)
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     buffer_desc.StructureByteStride = 4;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, NULL, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_UNKNOWN;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -14408,28 +14409,23 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 4;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            uvec4 = x < U(uav_desc).Buffer.NumElements ? fe_uvec4 : uvec4_data[i];
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, U(uav_desc).Buffer.NumElements, 1);
+        check_readback_data_color(&rb, &rect, fe_uvec4.x, 0);
+        SetRect(&rect, U(uav_desc).Buffer.NumElements, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
     }
 
@@ -14440,7 +14436,7 @@ static void test_clear_buffer_unordered_access_view(void)
     /* Raw buffer views */
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -14448,32 +14444,27 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     U(uav_desc).Buffer.FirstElement = 8;
     U(uav_desc).Buffer.NumElements = 8;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, U(uav_desc).Buffer.FirstElement, 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
+        SetRect(&rect, U(uav_desc).Buffer.FirstElement, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, fe_uvec4.x, 0);
         release_resource_readback(&rb);
     }
 
@@ -14484,7 +14475,7 @@ static void test_clear_buffer_unordered_access_view(void)
     /* Typed buffer views */
     buffer_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_SINT;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -14492,32 +14483,27 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     U(uav_desc).Buffer.FirstElement = 9;
     U(uav_desc).Buffer.NumElements = 7;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, U(uav_desc).Buffer.FirstElement, 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
+        SetRect(&rect, U(uav_desc).Buffer.FirstElement, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, fe_uvec4.x, 0);
         release_resource_readback(&rb);
     }
 
@@ -14530,11 +14516,11 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 4;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     U(uav_desc).Buffer.FirstElement = 2;
     U(uav_desc).Buffer.NumElements = 2;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
@@ -14577,11 +14563,11 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     U(uav_desc).Buffer.FirstElement = 8;
     U(uav_desc).Buffer.NumElements = 8;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
