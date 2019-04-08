@@ -133,38 +133,38 @@ static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
 
   clsid = &ptemplate->class_id;
 
-  DPRINTF("template %s\n", ptemplate->name);
-  DPRINTF("{\n");
-  DPRINTF(CLSIDFMT "\n", clsid->Data1, clsid->Data2, clsid->Data3, clsid->Data4[0],
+  wine_dbg_printf("template %s\n", ptemplate->name);
+  wine_dbg_printf("{\n");
+  wine_dbg_printf(CLSIDFMT "\n", clsid->Data1, clsid->Data2, clsid->Data3, clsid->Data4[0],
   clsid->Data4[1], clsid->Data4[2], clsid->Data4[3], clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7]);
   for (j = 0; j < ptemplate->nb_members; j++)
   {
     if (ptemplate->members[j].nb_dims)
-      DPRINTF("array ");
+      wine_dbg_printf("array ");
     if (ptemplate->members[j].type == TOKEN_NAME)
-      DPRINTF("%s ", templates_array[ptemplate->members[j].idx_template].name);
+      wine_dbg_printf("%s ", templates_array[ptemplate->members[j].idx_template].name);
     else
-      DPRINTF("%s ", get_primitive_string(ptemplate->members[j].type));
-    DPRINTF("%s", ptemplate->members[j].name);
+      wine_dbg_printf("%s ", get_primitive_string(ptemplate->members[j].type));
+    wine_dbg_printf("%s", ptemplate->members[j].name);
     for (k = 0; k < ptemplate->members[j].nb_dims; k++)
     {
       if (ptemplate->members[j].dim_fixed[k])
-        DPRINTF("[%d]", ptemplate->members[j].dim_value[k]);
+        wine_dbg_printf("[%d]", ptemplate->members[j].dim_value[k]);
       else
-        DPRINTF("[%s]", ptemplate->members[ptemplate->members[j].dim_value[k]].name);
+        wine_dbg_printf("[%s]", ptemplate->members[ptemplate->members[j].dim_value[k]].name);
     }
-    DPRINTF(";\n");
+    wine_dbg_printf(";\n");
   }
   if (ptemplate->open)
-    DPRINTF("[...]\n");
+    wine_dbg_printf("[...]\n");
   else if (ptemplate->nb_children)
   {
-    DPRINTF("[%s", ptemplate->children[0]);
+    wine_dbg_printf("[%s", ptemplate->children[0]);
     for (j = 1; j < ptemplate->nb_children; j++)
-      DPRINTF(",%s", ptemplate->children[j]);
-    DPRINTF("]\n");
+      wine_dbg_printf(",%s", ptemplate->children[j]);
+    wine_dbg_printf("]\n");
   }
-  DPRINTF("}\n");
+  wine_dbg_printf("}\n");
 }
 
 static BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size)
