@@ -210,15 +210,6 @@ static void *get_proc_address(const char *name)
     return ret;
 }
 
-static void test_currentprocess(void)
-{
-    PEPROCESS current;
-
-    current = IoGetCurrentProcess();
-todo_wine
-    ok(current != NULL, "Expected current process to be non-NULL\n");
-}
-
 static FILE_OBJECT *last_created_file;
 
 static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
@@ -314,6 +305,21 @@ static NTSTATUS wait_single_handle(HANDLE handle, ULONGLONG timeout)
 
     integer.QuadPart = timeout;
     return ZwWaitForSingleObject(handle, FALSE, &integer);
+}
+
+static void test_currentprocess(void)
+{
+    PEPROCESS current;
+    PETHREAD thread;
+    NTSTATUS ret;
+
+    current = IoGetCurrentProcess();
+todo_wine
+    ok(current != NULL, "Expected current process to be non-NULL\n");
+
+    thread = PsGetCurrentThread();
+    ret = wait_single( thread, 0 );
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
 }
 
 static void run_thread(PKSTART_ROUTINE proc, void *arg)

@@ -961,6 +961,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
 
     for (;;)
     {
+        NtCurrentTeb()->Reserved5[1] = NULL;
         if (!in_buff && !(in_buff = HeapAlloc( GetProcessHeap(), 0, in_size )))
         {
             ERR( "failed to allocate buffer\n" );
@@ -2506,8 +2507,22 @@ POBJECT_TYPE PsThreadType = &thread_type;
  */
 PRKTHREAD WINAPI KeGetCurrentThread(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    struct _KTHREAD *thread = NtCurrentTeb()->Reserved5[1];
+
+    if (!thread)
+    {
+        HANDLE handle = GetCurrentThread();
+
+        /* FIXME: we shouldn't need it, GetCurrentThread() should be client thread already */
+        if (GetCurrentThreadId() == request_thread) handle = OpenThread( 0, FALSE, client_tid );
+
+        kernel_object_from_handle( handle, PsThreadType, (void**)&thread );
+        if (handle != GetCurrentThread()) NtClose( handle );
+
+        NtCurrentTeb()->Reserved5[1] = thread;
+    }
+
+    return thread;
 }
 
 /***********************************************************************
