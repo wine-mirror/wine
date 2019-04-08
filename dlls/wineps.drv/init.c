@@ -158,7 +158,7 @@ do \
 { \
     if (fields & flag) \
     { \
-        if (add_space++) DPRINTF(" "); \
+        if (add_space++) TRACE(" "); \
         TRACE(#flag); \
         fields &= ~flag; \
     } \
