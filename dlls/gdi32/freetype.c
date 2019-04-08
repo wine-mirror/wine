@@ -2875,7 +2875,7 @@ static void load_fontconfig_fonts(void)
         len = strlen( file );
         if(len < 4) continue;
         ext = &file[ len - 3 ];
-        if(strcasecmp(ext, "pfa") && strcasecmp(ext, "pfb"))
+        if(_strnicmp(ext, "pfa", -1) && _strnicmp(ext, "pfb", -1))
             AddFontToList(file, NULL, 0,
                           ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE | ADDFONT_AA_FLAGS(aa_flags) );
     }
