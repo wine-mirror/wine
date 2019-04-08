@@ -822,7 +822,6 @@ static void test_ob_reference(const WCHAR *test_path)
 
     status = ObReferenceObjectByHandle(thread_handle, SYNCHRONIZE, *pPsThreadType, KernelMode, &obj2, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
-    todo_wine
     ok(obj1 == obj2, "obj1 != obj2\n");
 
     ObDereferenceObject(obj1);
