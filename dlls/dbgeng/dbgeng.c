@@ -872,7 +872,16 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetTypeName(IDebugSymbols *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE debugsymbols_GetTypeId(IDebugSymbols *iface, ULONG64 base, ULONG type_id, ULONG *size)
+static HRESULT STDMETHODCALLTYPE debugsymbols_GetTypeId(IDebugSymbols *iface, ULONG64 base, const char *name,
+        ULONG *type_id)
+{
+    FIXME("%p, %s, %s, %p stub.\n", iface, wine_dbgstr_longlong(base), debugstr_a(name), type_id);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugsymbols_GetTypeSize(IDebugSymbols *iface, ULONG64 base, ULONG type_id,
+        ULONG *size)
 {
     FIXME("%p, %s, %u, %p stub.\n", iface, wine_dbgstr_longlong(base), type_id, size);
 
@@ -1140,6 +1149,7 @@ static const IDebugSymbolsVtbl debugsymbolsvtbl =
     debugsymbols_GetSymbolModule,
     debugsymbols_GetTypeName,
     debugsymbols_GetTypeId,
+    debugsymbols_GetTypeSize,
     debugsymbols_GetFieldOffset,
     debugsymbols_GetSymbolTypeId,
     debugsymbols_GetOffsetTypeId,
