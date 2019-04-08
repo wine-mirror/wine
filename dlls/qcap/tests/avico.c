@@ -54,6 +54,8 @@ static ULONG get_refcount(void *iface)
 
 static void test_interfaces(IBaseFilter *filter)
 {
+    IPin *pin;
+
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
     check_interface(filter, &IID_IPersist, TRUE);
@@ -71,6 +73,29 @@ static void test_interfaces(IBaseFilter *filter)
     check_interface(filter, &IID_IQualProp, FALSE);
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
+    IBaseFilter_FindPin(filter, source_id, &pin);
+
+    todo_wine check_interface(pin, &IID_IMediaPosition, TRUE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+
+    IPin_Release(pin);
 }
 
 static void test_enum_pins(IBaseFilter *filter)
