@@ -9669,7 +9669,14 @@ test -n "$CROSSCC" || CROSSCC="false"
     if test "$CROSSCC" != "false"
     then
         ac_save_CC="$CC"
+        saved_CFLAGS=$CFLAGS
+        CROSSCFLAGS=${CROSSCFLAGS:-$CFLAGS}
+
+        EXTRACROSSCFLAGS="-DWINE_CROSSTEST -Wall"
+
+
         CC="$CROSSCC"
+        CFLAGS=$CROSSCFLAGS
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CROSSCC works" >&5
 $as_echo_n "checking whether $CROSSCC works... " >&6; }
         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -9701,13 +9708,6 @@ else
 $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-        CC="$ac_save_CC"
-        CROSSCFLAGS=${CROSSCFLAGS:-$CFLAGS}
-
-        EXTRACROSSCFLAGS="-DWINE_CROSSTEST -Wall"
-
-
-                saved_CFLAGS=$CFLAGS
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-strict-aliasing" >&5
 $as_echo_n "checking whether the cross-compiler supports -fno-strict-aliasing... " >&6; }
 if ${ac_cv_cflags__fno_strict_aliasing+:} false; then :
@@ -9739,7 +9739,7 @@ $as_echo "$ac_cv_cflags__fno_strict_aliasing" >&6; }
 if test "x$ac_cv_cflags__fno_strict_aliasing" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -fno-strict-aliasing"
 fi
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=unknown-warning-option" >&5
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=unknown-warning-option" >&5
 $as_echo_n "checking whether the cross-compiler supports -Werror=unknown-warning-option... " >&6; }
 if ${ac_cv_cflags__Werror_unknown_warning_option+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -10239,9 +10239,7 @@ if test "x$ac_cv_cflags__Wno_format" = xyes; then :
 fi ;;
         esac
 
-        CFLAGS=$saved_CFLAGS
-
-                for ac_flag in $CFLAGS; do
+                for ac_flag in $CROSSCFLAGS; do
           case $ac_flag in
             -g) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gdwarf-2" >&5
 $as_echo_n "checking whether the cross-compiler supports -gdwarf-2... " >&6; }
@@ -10308,7 +10306,9 @@ fi ;;
           esac
         done
 
-        test "x$enable_maintainer_mode" != "xyes" || { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror" >&5
+        if test "x$enable_maintainer_mode" = xyes
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror" >&5
 $as_echo_n "checking whether the cross-compiler supports -Werror... " >&6; }
 if ${ac_cv_cflags__Werror+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -10339,6 +10339,10 @@ $as_echo "$ac_cv_cflags__Werror" >&6; }
 if test "x$ac_cv_cflags__Werror" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Werror"
 fi
+        fi
+
+        CFLAGS=$saved_CFLAGS
+        CC="$ac_save_CC"
     fi
 fi
 if test "x$CROSSTARGET" = "x"; then :

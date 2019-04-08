@@ -1002,7 +1002,12 @@ then
     if test "$CROSSCC" != "false"
     then
         ac_save_CC="$CC"
+        saved_CFLAGS=$CFLAGS
+        AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-$CFLAGS})
+        AC_SUBST(EXTRACROSSCFLAGS,"-DWINE_CROSSTEST -Wall")
+
         CC="$CROSSCC"
+        CFLAGS=$CROSSCFLAGS
         AC_MSG_CHECKING([whether $CROSSCC works])
         AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
                           [AC_MSG_RESULT([yes])
@@ -1017,13 +1022,8 @@ then
                                shift
                            done],
                           [AC_MSG_RESULT([no])])
-        CC="$ac_save_CC"
-        AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-$CFLAGS})
-        AC_SUBST(EXTRACROSSCFLAGS,"-DWINE_CROSSTEST -Wall")
-
-        dnl clang needs to be told to fail on unknown options
-        saved_CFLAGS=$CFLAGS
         WINE_TRY_CROSSCFLAGS([-fno-strict-aliasing])
+        dnl clang needs to be told to fail on unknown options
         WINE_TRY_CROSSCFLAGS([-Werror=unknown-warning-option])
         WINE_TRY_CROSSCFLAGS([-Wdeclaration-after-statement])
         WINE_TRY_CROSSCFLAGS([-Wempty-body])
@@ -1044,17 +1044,21 @@ then
           x86_64) WINE_TRY_CROSSCFLAGS([-Wno-format]) ;;
         esac
 
-        CFLAGS=$saved_CFLAGS
-
         dnl Default to dwarf-2 debug info
-        for ac_flag in $CFLAGS; do
+        for ac_flag in $CROSSCFLAGS; do
           case $ac_flag in
             -g) WINE_TRY_CROSSCFLAGS([-gdwarf-2])
                 WINE_TRY_CROSSCFLAGS([-gstrict-dwarf]) ;;
           esac
         done
 
-        test "x$enable_maintainer_mode" != "xyes" || WINE_TRY_CROSSCFLAGS([-Werror])
+        if test "x$enable_maintainer_mode" = xyes
+        then
+            WINE_TRY_CROSSCFLAGS([-Werror])
+        fi
+
+        CFLAGS=$saved_CFLAGS
+        CC="$ac_save_CC"
     fi
 fi
 WINE_NOTICE_WITH(mingw,[test "x$CROSSTARGET" = "x"],
