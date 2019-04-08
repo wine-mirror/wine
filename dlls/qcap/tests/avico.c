@@ -325,6 +325,11 @@ static LRESULT CALLBACK driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         lstrcpyW(info->szDescription, nameW);
         return sizeof(ICINFO);
     }
+    case ICM_COMPRESS_QUERY:
+    {
+        BITMAPINFO *in = (BITMAPINFO *)lparam1;
+        return in->bmiHeader.biBitCount == 16 ? ICERR_OK : ICERR_BADFORMAT;
+    }
     }
 
     return 0;
@@ -413,6 +418,78 @@ static void test_property_bag(IMoniker *mon)
     IPropertyBag_Release(devenum_bag);
 }
 
+static void test_media_types(IBaseFilter *filter)
+{
+    VIDEOINFOHEADER vih =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biBitCount = 16,
+        .bmiHeader.biCompression = BI_RGB,
+    };
+    AM_MEDIA_TYPE mt = {}, *pmt;
+    IEnumMediaTypes *enummt;
+    HRESULT hr;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    mt.majortype = MEDIATYPE_Video;
+    mt.formattype = FORMAT_VideoInfo;
+    mt.cbFormat = sizeof(VIDEOINFOHEADER);
+    mt.pbFormat = (BYTE *)&vih;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    vih.bmiHeader.biBitCount = 32;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    vih.bmiHeader.biBitCount = 16;
+
+    mt.bFixedSizeSamples = TRUE;
+    mt.bTemporalCompression = TRUE;
+    mt.lSampleSize = 123;
+    mt.subtype = MEDIASUBTYPE_RGB565;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    mt.subtype = MEDIASUBTYPE_WAVE;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.formattype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_VideoInfo;
+
+    mt.majortype = MEDIATYPE_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Video;
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, source_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+}
+
 START_TEST(avico)
 {
     static const WCHAR test_display_name[] = {'@','d','e','v','i','c','e',':',
@@ -452,6 +529,7 @@ START_TEST(avico)
             test_enum_pins(filter);
             test_find_pin(filter);
             test_pin_info(filter);
+            test_media_types(filter);
 
             ref = IBaseFilter_Release(filter);
             ok(!ref, "Got outstanding refcount %d.\n", ref);
