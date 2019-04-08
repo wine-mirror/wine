@@ -1011,13 +1011,9 @@ DWORD WINAPIV SSCall(
     DWORD i,ret;
     DWORD *args = ((DWORD *)&fun) + 1;
 
-    if(TRACE_ON(thunk))
-    {
-      DPRINTF("(%d,0x%08x,%p,[",nr,flags,fun);
-      for (i=0;i<nr/4;i++)
-          DPRINTF("0x%08x,",args[i]);
-      DPRINTF("])\n");
-    }
+    TRACE("(%d,0x%08x,%p,[",nr,flags,fun);
+    for (i = 0; i < nr/4; i++) TRACE("0x%08x,",args[i]);
+    TRACE("])\n");
     ret = call_entry_point( fun, nr / sizeof(DWORD), args );
     TRACE(" returning %d ...\n",ret);
     return ret;
@@ -2525,10 +2521,10 @@ DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
 
         for (i=0;i<x/2;i++) {
                 WORD    a = VA_ARG16(args,WORD);
-                DPRINTF("%04x ",a);
+                FIXME("%04x ",a);
         }
         calladdr = VA_ARG16(args,DWORD);
         stack16_pop( 3*sizeof(WORD) + x + sizeof(DWORD) );
-        DPRINTF(") calling address was 0x%08x\n",calladdr);
+        FIXME(") calling address was 0x%08x\n",calladdr);
         return 0;
 }
