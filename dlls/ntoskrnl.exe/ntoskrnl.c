@@ -1502,9 +1502,6 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
     device->DeviceType      = type;
     device->StackSize       = 1;
 
-    device->NextDevice   = driver->DeviceObject;
-    driver->DeviceObject = device;
-
     SERVER_START_REQ( create_device )
     {
         req->rootdir    = 0;
@@ -1520,6 +1517,9 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
         free_kernel_object( device );
         return status;
     }
+
+    device->NextDevice   = driver->DeviceObject;
+    driver->DeviceObject = device;
 
     *ret_device = device;
     return STATUS_SUCCESS;
