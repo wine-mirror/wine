@@ -4285,8 +4285,8 @@ static void dump_get_next_device_request_reply( const struct get_next_device_req
 {
     dump_irp_params( " params=", &req->params );
     fprintf( stderr, ", next=%04x", req->next );
-    fprintf( stderr, ", client_pid=%04x", req->client_pid );
     fprintf( stderr, ", client_tid=%04x", req->client_tid );
+    dump_uint64( ", client_thread=", &req->client_thread );
     fprintf( stderr, ", in_size=%u", req->in_size );
     fprintf( stderr, ", out_size=%u", req->out_size );
     dump_varargs_bytes( ", next_data=", cur_size );

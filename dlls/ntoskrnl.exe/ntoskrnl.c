@@ -981,6 +981,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 client_tid = reply->client_tid;
                 in_size    = reply->in_size;
                 out_size   = reply->out_size;
+                NtCurrentTeb()->Reserved5[1] = wine_server_get_ptr( reply->client_thread );
             }
             else
             {

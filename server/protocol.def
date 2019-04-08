@@ -3618,8 +3618,8 @@ struct handle_info
 @REPLY
     irp_params_t params;          /* irp parameters */
     obj_handle_t next;            /* handle to the next irp */
-    process_id_t client_pid;      /* pid of process calling irp */
     thread_id_t  client_tid;      /* tid of thread calling irp */
+    client_ptr_t client_thread;   /* pointer to thread object of calling irp */
     data_size_t  in_size;         /* total needed input size */
     data_size_t  out_size;        /* needed output size */
     VARARG(next_data,bytes);      /* input data of the next irp */

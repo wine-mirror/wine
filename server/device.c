@@ -866,8 +866,8 @@ DECL_HANDLER(get_next_device_request)
         irp = LIST_ENTRY( ptr, struct irp_call, mgr_entry );
         if (irp->thread)
         {
-            reply->client_pid = get_process_id( irp->thread->process );
-            reply->client_tid = get_thread_id( irp->thread );
+            reply->client_thread = get_kernel_object_ptr( manager, &irp->thread->obj );
+            reply->client_tid    = get_thread_id( irp->thread );
         }
         reply->params = irp->params;
         iosb = irp->iosb;
