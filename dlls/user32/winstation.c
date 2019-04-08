@@ -83,26 +83,26 @@ static HANDLE get_winstations_dir_handle(void)
 /***********************************************************************
  *              CreateWindowStationA  (USER32.@)
  */
-HWINSTA WINAPI CreateWindowStationA( LPCSTR name, DWORD reserved, ACCESS_MASK access,
+HWINSTA WINAPI CreateWindowStationA( LPCSTR name, DWORD flags, ACCESS_MASK access,
                                      LPSECURITY_ATTRIBUTES sa )
 {
     WCHAR buffer[MAX_PATH];
 
-    if (!name) return CreateWindowStationW( NULL, reserved, access, sa );
+    if (!name) return CreateWindowStationW( NULL, flags, access, sa );
 
     if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    return CreateWindowStationW( buffer, reserved, access, sa );
+    return CreateWindowStationW( buffer, flags, access, sa );
 }
 
 
 /***********************************************************************
  *              CreateWindowStationW  (USER32.@)
  */
-HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD reserved, ACCESS_MASK access,
+HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD flags, ACCESS_MASK access,
                                      LPSECURITY_ATTRIBUTES sa )
 {
     HANDLE ret;
@@ -117,7 +117,8 @@ HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD reserved, ACCESS_MASK a
     {
         req->flags      = 0;
         req->access     = access;
-        req->attributes = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
+        req->attributes = OBJ_CASE_INSENSITIVE |
+                          ((flags & CWF_CREATE_ONLY) ? 0 : OBJ_OPENIF) |
                           ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
         req->rootdir    = wine_server_obj_handle( get_winstations_dir_handle() );
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
