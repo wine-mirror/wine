@@ -102,7 +102,6 @@
 #undef SetRect
 #undef ShowCursor
 #undef UnionRect
-#undef DPRINTF
 #endif
 
 #include "wine/library.h"

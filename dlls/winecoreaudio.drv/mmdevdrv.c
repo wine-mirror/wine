@@ -50,7 +50,6 @@
 #undef GetCurrentThread
 #undef GetCurrentProcess
 #undef _CDECL
-#undef DPRINTF
 
 #include "windef.h"
 #include "winbase.h"

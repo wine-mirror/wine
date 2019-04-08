@@ -26,7 +26,6 @@
 #include <CoreServices/CoreServices.h>
 #undef GetCurrentThread
 #undef LoadResource
-#undef DPRINTF
 #endif
 
 #include "windef.h"

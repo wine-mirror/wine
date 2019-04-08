@@ -83,7 +83,6 @@
 #undef SetRect
 #undef ShowCursor
 #undef UnionRect
-#undef DPRINTF
 
 #include <pthread.h>
 

@@ -67,7 +67,6 @@
 #undef CompareString
 #undef GetCurrentThread
 #undef _CDECL
-#undef DPRINTF
 #undef GetCurrentProcess
 #undef AnimatePalette
 #undef EqualRgn
@@ -103,7 +102,6 @@
 
 #undef ULONG
 #undef HRESULT
-#undef DPRINTF
 #undef STDMETHODCALLTYPE
 
 #define COBJMACROS

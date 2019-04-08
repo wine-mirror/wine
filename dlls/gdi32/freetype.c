@@ -61,7 +61,6 @@
 #undef CompareString
 #undef GetCurrentThread
 #undef _CDECL
-#undef DPRINTF
 #undef GetCurrentProcess
 #undef AnimatePalette
 #undef EqualRgn

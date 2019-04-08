@@ -34,7 +34,6 @@
 #include <CoreServices/CoreServices.h>
 #undef GetCurrentThread
 #undef LoadResource
-#undef DPRINTF
 #endif
 
 #include "winsock2.h"
