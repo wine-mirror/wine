@@ -2479,11 +2479,23 @@ PEPROCESS WINAPI IoGetCurrentProcess(void)
 }
 
 
+static void *create_thread_object( HANDLE handle )
+{
+    struct _KTHREAD *thread;
+
+    if (!(thread = alloc_kernel_object( PsThreadType, handle, sizeof(*thread), 0 ))) return NULL;
+
+    thread->header.Type = 6;
+    thread->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
+    return thread;
+}
+
 static const WCHAR thread_type_name[] = {'T','h','r','e','a','d',0};
 
 static struct _OBJECT_TYPE thread_type =
 {
     thread_type_name,
+    create_thread_object
 };
 
 POBJECT_TYPE PsThreadType = &thread_type;

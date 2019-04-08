@@ -726,6 +726,7 @@ static void test_ob_reference(const WCHAR *test_path)
     POBJECT_TYPE (WINAPI *pObGetObjectType)(void*);
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     HANDLE event_handle, file_handle, file_handle2, thread_handle;
+    DISPATCHER_HEADER *header;
     FILE_OBJECT *file;
     void *obj1, *obj2;
     POBJECT_TYPE obj1_type;
@@ -823,6 +824,12 @@ static void test_ob_reference(const WCHAR *test_path)
     status = ObReferenceObjectByHandle(thread_handle, SYNCHRONIZE, *pPsThreadType, KernelMode, &obj2, NULL);
     ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
     ok(obj1 == obj2, "obj1 != obj2\n");
+
+    header = obj1;
+    ok(header->Type == 6, "Type = %u\n", header->Type);
+
+    status = wait_single(header, 0);
+    ok(status == 0 || status == STATUS_TIMEOUT, "got %#x\n", status);
 
     ObDereferenceObject(obj1);
     ObDereferenceObject(obj2);

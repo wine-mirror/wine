@@ -21,10 +21,16 @@
 #ifndef __WINE_NTOSKRNL_PRIVATE_H
 #define __WINE_NTOSKRNL_PRIVATE_H
 
-struct _OBJECT_TYPE {
+struct _OBJECT_TYPE
+{
     const WCHAR *name;            /* object type name used for type validation */
     void *(*constructor)(HANDLE); /* used for creating an object from server handle */
     void (*release)(void*);       /* called when the last reference is released */
+};
+
+struct _KTHREAD
+{
+    DISPATCHER_HEADER header;
 };
 
 void *alloc_kernel_object( POBJECT_TYPE type, HANDLE handle, SIZE_T size, LONG ref ) DECLSPEC_HIDDEN;
