@@ -3803,7 +3803,7 @@ msgstr "අවලංගු ධාවකය.\n"
 
 #: winerror.mc:108
 msgid "Can't delete current directory.\n"
-msgstr ""
+msgstr "වත්මන් ඩිරෙක්ටරිය මකන්න බැහැ.\n"
 
 #: winerror.mc:113
 msgid "Not same device.\n"
@@ -3903,7 +3903,7 @@ msgstr ""
 
 #: winerror.mc:233
 msgid "Bad network path.\n"
-msgstr ""
+msgstr "හොඳ නැති ජාලය පෙත.\n"
 
 #: winerror.mc:238
 msgid "Network busy.\n"
@@ -4080,9 +4080,8 @@ msgid "Invalid IOCTL.\n"
 msgstr "අවලංගු IOCTL.\n"
 
 #: winerror.mc:458
-#, fuzzy
 msgid "Invalid verify switch.\n"
-msgstr "අවලංගු"
+msgstr "අවලංගු verify ස්විචය.\n"
 
 #: winerror.mc:463
 msgid "Bad driver level.\n"
@@ -4553,7 +4552,7 @@ msgstr "අවලංගු සලකුණු.\n"
 
 #: winerror.mc:1043
 msgid "Unrecognized volume.\n"
-msgstr ""
+msgstr "හඳුනගත්තු නැති පංගුවක්.\n"
 
 #: winerror.mc:1048
 msgid "File invalid.\n"
@@ -4711,9 +4710,8 @@ msgid "Invalid service lock.\n"
 msgstr "අවලංගු සේවාව අගුල.\n"
 
 #: winerror.mc:1238
-#, fuzzy
 msgid "Service marked for delete.\n"
-msgstr "සේවාව"
+msgstr "සේවාව සලකුණු කරලා මැකීමට.\n"
 
 #: winerror.mc:1243
 msgid "Service exists.\n"
@@ -6151,11 +6149,11 @@ msgstr ""
 
 #: winerror.mc:3043
 msgid "RPC server unavailable.\n"
-msgstr ""
+msgstr "RPC සේවාදායකය ලද නොහැකි.\n"
 
 #: winerror.mc:3048
 msgid "RPC server too busy.\n"
-msgstr ""
+msgstr "RPC සේවාදායකය කාර්යබහුල වැඩි.\n"
 
 #: winerror.mc:3053
 msgid "Invalid network options.\n"
@@ -6211,7 +6209,7 @@ msgstr ""
 
 #: winerror.mc:3123
 msgid "Unknown authentication type.\n"
-msgstr ""
+msgstr "දන්නේ නැති සත්‍යාපනය වර්ගයක්.\n"
 
 #: winerror.mc:3128
 msgid "Maximum calls too low.\n"
@@ -6247,7 +6245,7 @@ msgstr "අවලංගු සත්‍යාපන අනන්‍යතාව�
 
 #: winerror.mc:3168
 msgid "Unknown authorization service.\n"
-msgstr ""
+msgstr "දන්නේ නැති අනුමැතිය සේවාවක්.\n"
 
 #: winerror.mc:3173
 msgid "Invalid entry.\n"
@@ -6799,10 +6797,8 @@ msgid "Object is not initialized.\n"
 msgstr "වස්තුව ආරම්භනය කරල නැහැ.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Error: Process self-termination is not permitted.\n"
 msgid "Representation is not supported.\n"
-msgstr "දෝෂය: ක්රියාවලියක් තමංම නතර කරන්න බැහැ.\n"
+msgstr "ඉදිරිපත්කිරීම සහාය නොදක්වයි.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
@@ -6865,10 +6861,8 @@ msgid "Unsupported thinning.\n"
 msgstr "Thinning සහාය නොදක්වයි.\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Another version is installed.\n"
 msgid "Reversing is not supported.\n"
-msgstr "වෙන අනුවාදයක් ස්ථාපන කරලා තියෙනවා.\n"
+msgstr "ප්‍රතිවර්තනය කිරීම සහාය නොදක්වයි.\n"
 
 #: mferror.mc:214
 msgid "Unsupported rate transition.\n"
@@ -6941,10 +6935,8 @@ msgid "Attribute is not found.\n"
 msgstr "උපලක්ෂණය හම්බු උනේ නැහැ.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Another version is installed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "වෙන අනුවාදයක් ස්ථාපන කරලා තියෙනවා.\n"
+msgstr "ගුණාංග වර්ගය අවසර නැහැ.\n"
 
 #: mferror.mc:354
 msgid "Property type is not supported.\n"
@@ -7000,10 +6992,8 @@ msgid "No events available.\n"
 msgstr "සිද්ධීන් ලද හැකි නැහැ.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Invalid media source state transition\n"
 msgid "Invalid media source state transition.\n"
-msgstr "අවලංගු මාධ්‍ය මූලයේ තත්වය සංක්‍රාන්තිය\n"
+msgstr "අවලංගු මාධ්‍ය මූලයේ තත්වය සංක්‍රාන්තිය.\n"
 
 #: mferror.mc:452
 msgid "End of media stream has been reached.\n"
@@ -7020,28 +7010,20 @@ msgid "Media stream has no duration set.\n"
 msgstr "මාධ්‍ය මූලය වැරදි තත්වයක ඉන්නේ\n"
 
 #: mferror.mc:473
-#, fuzzy
-#| msgid "Media format was recognized but is invalid\n"
 msgid "Media format was recognized but is invalid.\n"
-msgstr "මාධ්‍ය ආකෘතිය හදුනාගන්නවා හැබැයි වලංගු නැහැ\n"
+msgstr "මාධ්‍ය ආකෘතිය හදුනාගන්නවා හැබැයි වලංගු නැහැ.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property wasn't found\n"
 msgid "Property wasn't found.\n"
-msgstr "ගුණාංගය හම්බු උනේ නැහැ\n"
+msgstr "ගුණාංගය හම්බු උනේ නැහැ.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Property is read-only\n"
 msgid "Property is read-only.\n"
-msgstr "ගුණාංගය කියවීම් පමණි\n"
+msgstr "ගුණාංගය කියවීම් පමණි.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Another version is installed.\n"
 msgid "Property is not allowed.\n"
-msgstr "වෙන අනුවාදයක් ස්ථාපන කරලා තියෙනවා.\n"
+msgstr "ගුණාංගය අවසර නැහැ.\n"
 
 #: mferror.mc:501
 #, fuzzy
@@ -7050,26 +7032,20 @@ msgid "Media source is not started.\n"
 msgstr "මාධ්‍ය මූලය වැරදි තත්වයක ඉන්නේ\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported media format\n"
 msgid "Unsupported media format.\n"
-msgstr "මාධ්‍ය ආකෘතිය සහාය නොදක්වයි\n"
+msgstr "මාධ්‍ය ආකෘතිය සහාය නොදක්වයි.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Media source is in wrong state\n"
 msgid "Media source is in wrong state.\n"
-msgstr "මාධ්‍ය මූලය වැරදි තත්වයක ඉන්නේ\n"
+msgstr "මාධ්‍ය මූලය වැරදි තත්වයක ඉන්නේ.\n"
 
 #: mferror.mc:522
 msgid "No media streams were selected.\n"
 msgstr ""
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported media source characteristics\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "මාධ්‍ය මූලයේ ගුණාංග සහාය නොදක්වයි\n"
+msgstr "මාධ්‍ය මූලයේ ගුණාංග සහාය නොදක්වයි.\n"
 
 #: mferror.mc:536
 msgid "Optional node is invalid.\n"
@@ -7763,7 +7739,7 @@ msgstr ""
 
 #: msvfw32.rc:53
 msgid "&Data Rate"
-msgstr ""
+msgstr "දත්ත අනුපාතය (&D)"
 
 #: msvfw32.rc:55
 msgid "kB/s"
@@ -8917,7 +8893,7 @@ msgstr "හංගලා (&I)"
 
 #: shell32.rc:372 shell32.rc:409 winefile.rc:175
 msgid "&Archive"
-msgstr ""
+msgstr "සංරක්ෂිතය (&A)"
 
 #: shell32.rc:386
 msgid "Open with:"
@@ -11872,7 +11848,7 @@ msgstr "අපේක්ෂා කරේ මෙහෙයුම්කාරකය�
 
 #: cmd.rc:408
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "වරහන් ගැලපෙන්නේ නැහැ.\n"
 
 #: cmd.rc:409
 msgid ""
@@ -12142,7 +12118,7 @@ msgstr "තත්වය"
 
 #: netstat.rc:35
 msgid "Interface Statistics"
-msgstr ""
+msgstr "අතුරුමුහුණත සංඛ්‍යාලේඛන"
 
 #: netstat.rc:36
 msgid "Sent"
@@ -12573,11 +12549,11 @@ msgstr "පද්ධති සිටුවම්"
 
 #: oleview.rc:171
 msgid "&Enable Distributed COM"
-msgstr ""
+msgstr "DCOM සබල කරන්න (&E)"
 
 #: oleview.rc:172
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr ""
+msgstr "දුරස්ථ සබැඳුම් සබල කරන්න (Win95 විතරක්)"
 
 #: oleview.rc:173
 msgid ""
@@ -12860,7 +12836,7 @@ msgstr "ක්‍රමලේඛ කළමනාකාරකය ගැන (&A)"
 
 #: progman.rc:103
 msgid "Program &group"
-msgstr ""
+msgstr "ක්‍රමලේඛ සමූහය (&G)"
 
 #: progman.rc:105
 msgid "&Program"
@@ -12896,7 +12872,7 @@ msgstr ""
 
 #: progman.rc:156
 msgid "&Group file:"
-msgstr ""
+msgstr "සමූහය ගොනුව (&G):"
 
 #: progman.rc:168
 msgid "Program Attributes"
@@ -13156,7 +13132,7 @@ msgstr "reg: රෙජිස්තරයේ යතුර '%1' අරින්න
 
 #: reg.rc:69
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "reg: හඳුනගත්තු නැති escape sequence එකක් [\\%1!c!]\n"
 
 #: reg.rc:70
 msgid "REG EXPORT key_name file.reg [/y]\n"
@@ -13168,7 +13144,7 @@ msgstr "reg: අවලංගු පද්ධතිය යතුර [%1]\n"
 
 #: reg.rc:72
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr ""
+msgstr "'%1' ගොනුව දැනටමත් තියෙනවා. ඔබට ඒක උඩින් ලියන්න ඕනෙද?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -13488,7 +13464,7 @@ msgstr ""
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr "regedit: අවලංගු හෝ දන්නෙ නැති ස්විචයක් [%1]\n"
+msgstr "regedit: අවලංගු හෝ හඳුනගත්තු නැති ස්විචයක් [%1]\n"
 
 #: regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
@@ -13530,7 +13506,7 @@ msgstr ""
 
 #: regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "regedit: හඳුනගත්තු නැති escape sequence එකක් [\\%1!c!]\n"
 
 #: regedit.rc:420
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
@@ -13772,7 +13748,7 @@ msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
-"regsvr32: අවලංගු හෝ දන්නේ නැති ස්විචය [%1]\n"
+"regsvr32: අවලංගු හෝ හඳුනගත්තු නැති ස්විචය [%1]\n"
 "\n"
 
 #: regsvr32.rc:42
@@ -15518,7 +15494,7 @@ msgstr "wineconsole: අවලංගු බැකන්ඩ් එකක්\n"
 
 #: wineconsole.rc:46
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: දන්නෙ නැති විධාන රේඛා විකල්පය\n"
+msgstr "wineconsole: හඳුනගත්තු නැති විධාන රේඛා විකල්පය\n"
 
 #: wineconsole.rc:47
 msgid "Starts a program in a Wine console\n"
@@ -16062,7 +16038,7 @@ msgstr "අනුලකුණ ආකෘතිය (&F)"
 
 #: wordpad.rc:64
 msgid "&Def. char format"
-msgstr ""
+msgstr "පෙරනිමි අනුලකුණ ආකෘතිය (&D)"
 
 #: wordpad.rc:65
 msgid "Paragrap&h format"
@@ -16186,7 +16162,7 @@ msgstr "පෙළ ගැසුම"
 
 #: wordpad.rc:250
 msgid "Tabs"
-msgstr ""
+msgstr "ටැබ"
 
 #: wordpad.rc:253
 msgid "Tab stops"
@@ -16434,6 +16410,9 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
+"'%1' කියන්නේ ගොනුවක නමක් හෝ ඩිරෙක්ටරියක් ද\n"
+"ඉලක්කය උඩ?\n"
+"(F - ගොනුවක්, D - ඩිරෙක්ටරියක්)\n"
 
 #: xcopy.rc:38
 msgid "%1? (Yes|No)\n"
