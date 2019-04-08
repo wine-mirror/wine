@@ -14524,31 +14524,36 @@ static void test_clear_buffer_unordered_access_view(void)
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
+        const struct uvec4 *data = NULL;
+        BOOL all_match;
+
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4); ++x)
+        for (x = 0, all_match = TRUE; x < buffer_desc.ByteWidth / sizeof(uvec4); ++x)
         {
-            const struct uvec4 *data = get_readback_uvec4(&rb, x, 0);
             const struct uvec4 broken_result = {uvec4.x, uvec4.x, uvec4.x, uvec4.x}; /* Intel */
-            ok(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result)),
-                    "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
-                    data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, i);
+            data = get_readback_uvec4(&rb, x, 0);
+            if (!(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result))))
+                all_match = FALSE;
         }
+        ok(all_match, "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
+                data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, x);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4); ++x)
+        for (x = 0, all_match = TRUE; x < buffer_desc.ByteWidth / sizeof(uvec4); ++x)
         {
-            const struct uvec4 *data = get_readback_uvec4(&rb, x, 0);
             struct uvec4 broken_result;
+            data = get_readback_uvec4(&rb, x, 0);
             uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
             broken_result.x = broken_result.y = broken_result.z = broken_result.w = uvec4.x;
-            ok(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result)),
-                    "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
-                    data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, i);
+            if (!(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result))))
+                all_match = FALSE;
         }
+        ok(all_match, "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
+                data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, x);
         release_resource_readback(&rb);
     }
 
@@ -14574,17 +14579,16 @@ static void test_clear_buffer_unordered_access_view(void)
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-            todo_wine check_rgba_sint8(get_readback_color(&rb, x, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, 0, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, 7, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, 15, 0, 0), &uvec4);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
-            todo_wine check_rgba_sint8(get_readback_color(&rb, x, 0, 0), &uvec4);
-        }
+        todo_wine check_rgba_sint8(get_readback_color(&rb, 0, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, U(uav_desc).Buffer.FirstElement - 1, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, U(uav_desc).Buffer.FirstElement, 0, 0), &fe_uvec4);
         release_resource_readback(&rb);
     }
 
