@@ -28,6 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winternl.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "winreg.h"
@@ -211,9 +212,9 @@ static SysMouseImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
     get_app_key(&hkey, &appkey);
     if (!get_config_key(hkey, appkey, "MouseWarpOverride", buffer, sizeof(buffer)))
     {
-        if (!strcasecmp(buffer, "disable"))
+        if (!_strnicmp(buffer, "disable", -1))
             newDevice->warp_override = WARP_DISABLE;
-        else if (!strcasecmp(buffer, "force"))
+        else if (!_strnicmp(buffer, "force", -1))
             newDevice->warp_override = WARP_FORCE_ON;
     }
     if (appkey) RegCloseKey(appkey);
