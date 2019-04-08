@@ -41,6 +41,7 @@ struct debug_client
     IDebugSymbols IDebugSymbols_iface;
     IDebugControl2 IDebugControl2_iface;
     LONG refcount;
+    ULONG engine_options;
 };
 
 static struct debug_client *impl_from_IDebugClient(IDebugClient *iface)
@@ -1572,30 +1573,52 @@ static HRESULT STDMETHODCALLTYPE debugcontrol_SetCodeLevel(IDebugControl2 *iface
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_GetEngineOptions(IDebugControl2 *iface, ULONG *options)
 {
-    FIXME("%p, %p stub.\n", iface, options);
+    struct debug_client *debug_client = impl_from_IDebugControl2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, options);
+
+    *options = debug_client->engine_options;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_AddEngineOptions(IDebugControl2 *iface, ULONG options)
 {
-    FIXME("%p, %#x stub.\n", iface, options);
+    struct debug_client *debug_client = impl_from_IDebugControl2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, options);
+
+    if (options & ~DEBUG_ENGOPT_ALL)
+        return E_INVALIDARG;
+
+    debug_client->engine_options |= options;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_RemoveEngineOptions(IDebugControl2 *iface, ULONG options)
 {
-    FIXME("%p, %#x stub.\n", iface, options);
+    struct debug_client *debug_client = impl_from_IDebugControl2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, options);
+
+    debug_client->engine_options &= ~options;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_SetEngineOptions(IDebugControl2 *iface, ULONG options)
 {
-    FIXME("%p, %#x stub.\n", iface, options);
+    struct debug_client *debug_client = impl_from_IDebugControl2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, options);
+
+    if (options & ~DEBUG_ENGOPT_ALL)
+        return E_INVALIDARG;
+
+    debug_client->engine_options = options;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_GetSystemErrorControl(IDebugControl2 *iface, ULONG *output_level,
@@ -2100,7 +2123,7 @@ HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
 
     TRACE("%s, %p.\n", debugstr_guid(riid), obj);
 
-    debug_client = heap_alloc(sizeof(*debug_client));
+    debug_client = heap_alloc_zero(sizeof(*debug_client));
     if (!debug_client)
         return E_OUTOFMEMORY;
 
