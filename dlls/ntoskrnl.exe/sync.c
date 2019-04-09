@@ -880,3 +880,67 @@ BOOLEAN WINAPI ExAcquireResourceSharedLite( ERESOURCE *resource, BOOLEAN wait )
 
     return TRUE;
 }
+
+/***********************************************************************
+ *           ExAcquireSharedStarveExclusive  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI ExAcquireSharedStarveExclusive( ERESOURCE *resource, BOOLEAN wait )
+{
+    OWNER_ENTRY *entry;
+    KIRQL irql;
+
+    TRACE("resource %p, wait %u.\n", resource, wait);
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    entry = resource_get_shared_entry( resource, (ERESOURCE_THREAD)KeGetCurrentThread() );
+
+    if (resource->Flag & ResourceOwnedExclusive)
+    {
+        if (resource->OwnerEntry.OwnerThread == (ERESOURCE_THREAD)KeGetCurrentThread())
+        {
+            resource->ActiveEntries++;
+            KeReleaseSpinLock( &resource->SpinLock, irql );
+            return TRUE;
+        }
+    }
+    /* We are starving exclusive waiters, but we cannot steal the resource out
+     * from under an exclusive waiter who is about to acquire it. (Because of
+     * locking, and because exclusive waiters are always waked first, this is
+     * guaranteed to be the case if the resource is unowned and there are
+     * exclusive waiters.) */
+    else if (!(!resource->ActiveEntries && resource->NumberOfExclusiveWaiters))
+    {
+        entry->OwnerCount++;
+        resource->ActiveEntries++;
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return TRUE;
+    }
+
+    if (!wait)
+    {
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return FALSE;
+    }
+
+    if (!resource->SharedWaiters)
+    {
+        resource->SharedWaiters = heap_alloc( sizeof(*resource->SharedWaiters) );
+        KeInitializeSemaphore( resource->SharedWaiters, 0, INT_MAX );
+    }
+    resource->NumberOfSharedWaiters++;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    KeWaitForSingleObject( resource->SharedWaiters, Executive, KernelMode, FALSE, NULL );
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    entry->OwnerCount++;
+    resource->ActiveEntries++;
+    resource->NumberOfSharedWaiters--;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    return TRUE;
+}

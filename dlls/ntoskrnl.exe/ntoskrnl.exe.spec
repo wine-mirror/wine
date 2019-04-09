@@ -122,7 +122,7 @@
 @ stub DbgSetDebugFilterState
 @ stdcall ExAcquireResourceExclusiveLite(ptr long)
 @ stdcall ExAcquireResourceSharedLite(ptr long)
-@ stub ExAcquireSharedStarveExclusive
+@ stdcall ExAcquireSharedStarveExclusive(ptr long)
 @ stub ExAcquireSharedWaitForExclusive
 @ stub ExAllocateFromPagedLookasideList
 @ stdcall ExAllocatePool(long long)
