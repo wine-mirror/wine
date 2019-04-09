@@ -4763,6 +4763,74 @@ static void test_flush_buffers_file(void)
     DeleteFileA(buffer);
 }
 
+static void test_file_readonly_access(void)
+{
+    static const DWORD default_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    static const WCHAR fooW[] = {'f', 'o', 'o', 0};
+    WCHAR path[MAX_PATH];
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    IO_STATUS_BLOCK io;
+    HANDLE handle;
+    NTSTATUS status;
+    DWORD ret;
+
+    /* Set up */
+    GetTempPathW(MAX_PATH, path);
+    GetTempFileNameW(path, fooW, 0, path);
+    DeleteFileW(path);
+    pRtlDosPathNameToNtPathName_U(path, &nameW, NULL, NULL);
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = NULL;
+    attr.ObjectName = &nameW;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = pNtCreateFile(&handle, FILE_GENERIC_WRITE, &attr, &io, NULL, FILE_ATTRIBUTE_READONLY, default_sharing,
+                           FILE_CREATE, 0, NULL, 0);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+    CloseHandle(handle);
+
+    /* NtCreateFile FILE_GENERIC_WRITE */
+    status = pNtCreateFile(&handle, FILE_GENERIC_WRITE, &attr, &io, NULL, FILE_ATTRIBUTE_NORMAL, default_sharing,
+                           FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0);
+    ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#x.\n", status);
+
+    /* NtCreateFile DELETE without FILE_DELETE_ON_CLOSE */
+    status = pNtCreateFile(&handle, DELETE, &attr, &io, NULL, FILE_ATTRIBUTE_NORMAL, default_sharing, FILE_OPEN,
+                           FILE_NON_DIRECTORY_FILE, NULL, 0);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+    CloseHandle(handle);
+
+    /* NtCreateFile DELETE with FILE_DELETE_ON_CLOSE */
+    status = pNtCreateFile(&handle, SYNCHRONIZE | DELETE, &attr, &io, NULL, FILE_ATTRIBUTE_NORMAL, default_sharing,
+                           FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0);
+    ok(status == STATUS_CANNOT_DELETE, "expected STATUS_CANNOT_DELETE, got %#x.\n", status);
+
+    /* NtOpenFile GENERIC_WRITE */
+    status = pNtOpenFile(&handle, GENERIC_WRITE, &attr, &io, default_sharing, FILE_NON_DIRECTORY_FILE);
+    ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#x.\n", status);
+
+    /* NtOpenFile DELETE without FILE_DELETE_ON_CLOSE */
+    status = pNtOpenFile(&handle, DELETE, &attr, &io, default_sharing, FILE_NON_DIRECTORY_FILE);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+    CloseHandle(handle);
+
+    /* NtOpenFile DELETE with FILE_DELETE_ON_CLOSE */
+    status = pNtOpenFile(&handle, DELETE, &attr, &io, default_sharing, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE);
+    ok(status == STATUS_CANNOT_DELETE, "expected STATUS_CANNOT_DELETE, got %#x.\n", status);
+
+    ret = GetFileAttributesW(path);
+    ok(ret & FILE_ATTRIBUTE_READONLY, "got wrong attribute: %#x.\n", ret);
+
+    /* Clean up */
+    pRtlFreeUnicodeString(&nameW);
+    SetFileAttributesW(path, FILE_ATTRIBUTE_NORMAL);
+    DeleteFileW(path);
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -4827,6 +4895,7 @@ START_TEST(file)
     test_file_id_information();
     test_file_access_information();
     test_file_mode();
+    test_file_readonly_access();
     test_query_volume_information_file();
     test_query_attribute_information_file();
     test_ioctl();
