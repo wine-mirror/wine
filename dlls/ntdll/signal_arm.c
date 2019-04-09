@@ -142,10 +142,24 @@ struct UNWIND_INFO
  *
  * Get the trap code for a signal.
  */
-static inline enum arm_trap_code get_trap_code( const ucontext_t *sigcontext )
+static inline enum arm_trap_code get_trap_code( int signal, const ucontext_t *sigcontext )
 {
 #ifdef TRAP_sig
-    return TRAP_sig(sigcontext);
+    enum arm_trap_code trap = TRAP_sig(sigcontext);
+    if (trap)
+        return trap;
+    /* trap is 0 on arm64 kernel */
+    switch (signal)
+    {
+    case SIGILL:
+        return TRAP_ARM_PRIVINFLT;
+    case SIGSEGV:
+        return TRAP_ARM_PAGEFLT;
+    case SIGBUS:
+        return TRAP_ARM_ALIGNFLT;
+    default:
+        return trap;
+    }
 #else
     return TRAP_ARM_UNKNOWN;  /* unknown trap code */
 #endif
@@ -718,7 +732,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     ucontext_t *context = ucontext;
 
     /* check for page fault inside the thread stack */
-    if (get_trap_code(context) == TRAP_ARM_PAGEFLT &&
+    if (get_trap_code(signal, context) == TRAP_ARM_PAGEFLT &&
         (char *)info->si_addr >= (char *)NtCurrentTeb()->DeallocationStack &&
         (char *)info->si_addr < (char *)NtCurrentTeb()->Tib.StackBase &&
         virtual_handle_stack_fault( info->si_addr ))
@@ -735,7 +749,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     rec = setup_exception( context, raise_segv_exception );
     if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) return;
 
-    switch(get_trap_code(context))
+    switch(get_trap_code(signal, context))
     {
     case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
         rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
@@ -756,7 +770,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         rec->ExceptionInformation[1] = 0xffffffff;
         break;
     default:
-        ERR("Got unexpected trap %d\n", get_trap_code(context));
+        ERR("Got unexpected trap %d\n", get_trap_code(signal, context));
         rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
