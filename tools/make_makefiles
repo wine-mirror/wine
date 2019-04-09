@@ -445,6 +445,7 @@ sub update_makefiles(@)
             if ($file =~ /^programs\//)
             {
                 die "APPMODE should be defined in $file" unless defined $make{"APPMODE"} ;
+                die "APPMODE should contain -mconsole or -mwindows in $file" unless $make{"APPMODE"} =~ /-m(console|windows)/;
                 die "Invalid MODULE in $file" unless $name =~ /\./ || $make{"MODULE"} eq "$name.exe";
             }
             else

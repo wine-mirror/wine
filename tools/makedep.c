@@ -170,7 +170,6 @@ struct makefile
     struct strarray define_args;
     struct strarray programs;
     struct strarray scripts;
-    struct strarray appmode;
     struct strarray imports;
     struct strarray subdirs;
     struct strarray delayimports;
@@ -195,6 +194,7 @@ struct makefile
     int             disabled;
     int             use_msvcrt;
     int             is_win16;
+    int             is_exe;
     struct makefile **submakes;
 
     /* values generated at output time */
@@ -2143,11 +2143,11 @@ static struct strarray get_default_imports( const struct makefile *make )
     struct strarray ret = empty_strarray;
 
     if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) return ret;
-    if (strarray_exists( &make->appmode, "-mno-cygwin" )) strarray_add( &ret, "msvcrt" );
+    if (strarray_exists( &make->extradllflags, "-mno-cygwin" )) strarray_add( &ret, "msvcrt" );
+    strarray_add( &ret, "winecrt0" );
     if (make->is_win16) strarray_add( &ret, "kernel" );
     strarray_add( &ret, "kernel32" );
     strarray_add( &ret, "ntdll" );
-    strarray_add( &ret, "winecrt0" );
     return ret;
 }
 
@@ -3070,8 +3070,7 @@ static void output_module( struct makefile *make )
     char *spec_file = NULL;
     unsigned int i;
 
-    if (!make->appmode.count)
-        spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
+    if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, 0 ));
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->imports, 0 ));
     add_import_libs( make, &dep_libs, get_default_imports( make ), 0 );  /* dependencies only */
@@ -3106,10 +3105,10 @@ static void output_module( struct makefile *make )
     output_winegcc_command( make, 0 );
     if (spec_file)
     {
-        output( " -shared %s", spec_file );
-        output_filenames( make->extradllflags );
+        output_filename( "-shared" );
+        output_filename( spec_file );
     }
-    else output_filenames( make->appmode );
+    output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->object_files );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
@@ -3257,7 +3256,7 @@ static void output_test_module( struct makefile *make )
     strarray_add( &make->clean_files, strmake( "%s%s", stripped, ext ));
     output( "%s%s:\n", obj_dir_path( make, testmodule ), ext );
     output_winegcc_command( make, !!crosstarget );
-    output_filenames( make->appmode );
+    output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
@@ -3267,7 +3266,7 @@ static void output_test_module( struct makefile *make )
     output_winegcc_command( make, !!crosstarget );
     output_filename( "-s" );
     output_filename( strmake( "-Wb,-F,%s", testmodule ));
-    output_filenames( make->appmode );
+    output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
@@ -3469,7 +3468,7 @@ static void output_subdirs( struct makefile *make )
             if (!submake->staticlib)
             {
                 strarray_add( &builddeps_deps, subdir );
-                if (!submake->appmode.count)
+                if (!submake->is_exe)
                 {
                     output( "manpages htmlpages sgmlpages xmlpages::\n" );
                     output( "\t@cd %s && $(MAKE) $@\n", subdir );
@@ -3977,7 +3976,6 @@ static void load_sources( struct makefile *make )
 
     make->programs      = get_expanded_make_var_array( make, "PROGRAMS" );
     make->scripts       = get_expanded_make_var_array( make, "SCRIPTS" );
-    make->appmode       = get_expanded_make_var_array( make, "APPMODE" );
     make->imports       = get_expanded_make_var_array( make, "IMPORTS" );
     make->delayimports  = get_expanded_make_var_array( make, "DELAYIMPORTS" );
     make->extradllflags = get_expanded_make_var_array( make, "EXTRADLLFLAGS" );
@@ -3987,9 +3985,12 @@ static void load_sources( struct makefile *make )
 
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
+    strarray_addall( &make->extradllflags, get_expanded_make_var_array( make, "APPMODE" ));
     make->disabled   = make->base_dir && strarray_exists( &disabled_dirs, make->base_dir );
-    make->is_win16   = strarray_exists( &make->extradllflags, "-m16" ) || strarray_exists( &make->appmode, "-m16" );
-    make->use_msvcrt = strarray_exists( &make->appmode, "-mno-cygwin" );
+    make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );
+    make->use_msvcrt = strarray_exists( &make->extradllflags, "-mno-cygwin" );
+    make->is_exe     = strarray_exists( &make->extradllflags, "-mconsole" ) ||
+                       strarray_exists( &make->extradllflags, "-mwindows" );
 
     for (i = 0; i < make->imports.count && !make->use_msvcrt; i++)
         make->use_msvcrt = !strncmp( make->imports.str[i], "msvcr", 5 ) ||
