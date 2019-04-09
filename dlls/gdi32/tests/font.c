@@ -48,6 +48,7 @@ static BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC 
 static BOOL  (WINAPI *pGetCharABCWidthsFloatW)(HDC hdc, UINT first, UINT last, LPABCFLOAT abc);
 static BOOL  (WINAPI *pGetCharWidth32A)(HDC hdc, UINT first, UINT last, LPINT buffer);
 static BOOL  (WINAPI *pGetCharWidth32W)(HDC hdc, UINT first, UINT last, LPINT buffer);
+static BOOL  (WINAPI *pGetCharWidthInfo)(HDC hdc, void *);
 static DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
 static DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
@@ -94,6 +95,7 @@ static void init(void)
     pGetCharABCWidthsFloatW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsFloatW");
     pGetCharWidth32A = (void *)GetProcAddress(hgdi32, "GetCharWidth32A");
     pGetCharWidth32W = (void *)GetProcAddress(hgdi32, "GetCharWidth32W");
+    pGetCharWidthInfo = (void *)GetProcAddress(hgdi32, "GetCharWidthInfo");
     pGetFontUnicodeRanges = (void *)GetProcAddress(hgdi32, "GetFontUnicodeRanges");
     pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
     pGetGlyphIndicesW = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesW");
@@ -7004,6 +7006,189 @@ static void test_long_names(void)
     ReleaseDC(NULL, dc);
 }
 
+typedef struct
+{
+    USHORT majorVersion;
+    USHORT minorVersion;
+    SHORT  ascender;
+    SHORT  descender;
+    SHORT  lineGap;
+    USHORT advanceWidthMax;
+    SHORT  minLeftSideBearing;
+    SHORT  minRightSideBearing;
+    SHORT  xMaxExtent;
+    SHORT  caretSlopeRise;
+    SHORT  caretSlopeRun;
+    SHORT  caretOffset;
+    SHORT  reserved[4];
+    SHORT  metricDataFormat;
+    SHORT  numberOfHMetrics;
+} TT_Hori_Header;
+
+static void test_GetCharWidthInfo(void)
+{
+    HDC hdc;
+    HFONT hfont, hfont_prev;
+    LOGFONTA lf;
+    BOOL r;
+    DWORD ret, i;
+    OUTLINETEXTMETRICA otm;
+    TT_Hori_Header hhea;
+    struct char_width_info
+    {
+        INT lsb, rsb, unk;
+    } info, info2;
+    SHORT minLeftSideBearing, minRightSideBearing;
+    POINT pt[2];
+    const char* face_list[] = { "Symbol", "Ume Gothic", "MS Gothic" };
+
+    if (!pGetCharWidthInfo)
+    {
+        win_skip("GetCharWidthInfo is unavailable\n");
+        return;
+    }
+
+    hdc = GetDC(NULL);
+
+    /* test default (System) font */
+    memset(&info, 0xaa, sizeof(info));
+    r = pGetCharWidthInfo(hdc, &info);
+    if (r) /* win10 1803 succeeds */
+    {
+        ok(info.lsb == 0, "expected 0, got %d\n", info.lsb);
+        ok(info.rsb == 0, "expected 0, got %d\n", info.rsb);
+        ok(info.unk == 0, "expected 0, got %d\n", info.unk);
+    }
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfWeight = FW_NORMAL;
+    lf.lfCharSet = ANSI_CHARSET;
+    strcpy(lf.lfFaceName, "Tahoma");
+    hfont = CreateFontIndirectA(&lf);
+    hfont_prev = SelectObject(hdc, hfont);
+    ok(hfont_prev != NULL, "SelectObject failed\n");
+
+    ret = GetOutlineTextMetricsA(hdc, sizeof(otm), &otm);
+    ok(ret != 0, "GetOutlineTextMetricsA failed\n");
+    DeleteObject(SelectObject(hdc, hfont_prev));
+
+    /* test Tahoma at the em square size */
+    lf.lfHeight = -(int)otm.otmEMSquare;
+    hfont = CreateFontIndirectA(&lf);
+    hfont_prev = SelectObject(hdc, hfont);
+    ok(hfont_prev != NULL, "SelectObject failed\n");
+
+    ret = GetFontData(hdc, MS_MAKE_TAG('h','h','e','a'), 0, &hhea, sizeof(hhea));
+    ok(ret == sizeof(hhea), "got %u\n", ret);
+    minLeftSideBearing = GET_BE_WORD(hhea.minLeftSideBearing);
+    minRightSideBearing = GET_BE_WORD(hhea.minRightSideBearing);
+
+    memset(&info, 0xaa, sizeof(info));
+    r = pGetCharWidthInfo(hdc, &info);
+    ok(r, "GetCharWidthInfo failed\n");
+    ok(info.lsb == minLeftSideBearing, "expected %d, got %d\n", minLeftSideBearing, info.lsb);
+    ok(info.rsb == minRightSideBearing, "expected %d, got %d\n", minRightSideBearing, info.rsb);
+
+    DeleteObject(SelectObject(hdc, hfont_prev));
+
+    /* these values are scaled, try with smaller size */
+    lf.lfHeight /= 3;
+    hfont = CreateFontIndirectA(&lf);
+    hfont_prev = SelectObject(hdc, hfont);
+    ok(hfont_prev != NULL, "SelectObject failed\n");
+
+    memset(&info2, 0xaa, sizeof(info2));
+    r = pGetCharWidthInfo(hdc, &info2);
+    ok(r, "pGetCharWidthInfo failed\n");
+    ok(info2.lsb == info.lsb/3, "expected %d, got %d\n", info.lsb/3, info2.lsb);
+    ok(info2.rsb == info.rsb/3, "expected %d, got %d\n", info.rsb/3, info2.rsb);
+
+    DeleteObject(SelectObject(hdc, hfont_prev));
+    ReleaseDC(NULL, hdc);
+
+    /* test with another mapping mode */
+    hdc = GetDC(NULL);
+    SetMapMode(hdc, MM_ISOTROPIC);
+    SetWindowExtEx(hdc, 2, 2, NULL);
+    SetViewportExtEx(hdc, 1, 1, NULL);
+
+    memset(pt, 0, sizeof(pt));
+    pt[0].y = otm.otmEMSquare;
+    DPtoLP(hdc, pt, 1);
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfWeight = FW_NORMAL;
+    lf.lfCharSet = ANSI_CHARSET;
+    lf.lfHeight = -abs(pt[0].y);
+    strcpy(lf.lfFaceName, "Tahoma");
+    hfont = CreateFontIndirectA(&lf);
+    hfont_prev = SelectObject(hdc, hfont);
+    ok(hfont_prev != NULL, "SelectObject failed\n");
+
+    memset(&info2, 0xaa, sizeof(info2));
+    r = pGetCharWidthInfo(hdc, &info2);
+    ok(r, "GetCharWidthInfo failed\n");
+    pt[0].x = info.lsb; pt[0].y = 0;
+    pt[1].x = info.rsb; pt[1].y = 0;
+    DPtoLP(hdc, pt, 2);
+    ok(pt[0].x == info2.lsb, "expected %d, got %d\n", pt[0].x, info2.lsb);
+    ok(pt[1].x == info2.rsb, "expected %d, got %d\n", pt[1].x, info2.rsb);
+
+    DeleteObject(SelectObject(hdc, hfont_prev));
+    ReleaseDC(NULL, hdc);
+
+    /* test with synthetic fonts */
+    hdc = GetDC(NULL);
+    for (i = 0; i < ARRAY_SIZE(face_list); i++)
+    {
+        const char* face = face_list[i];
+        if (!is_truetype_font_installed(face))
+        {
+            skip("%s is not installed\n", face);
+            continue;
+        }
+        memset(&lf, 0, sizeof(lf));
+        lf.lfWeight = FW_NORMAL;
+        lf.lfItalic = FALSE;
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfHeight = -256;
+        strcpy(lf.lfFaceName, face);
+        hfont = CreateFontIndirectA(&lf);
+        hfont_prev = SelectObject(hdc, hfont);
+
+        memset(&info, 0xaa, sizeof(info));
+        r = pGetCharWidthInfo(hdc, &info);
+        ok(r, "%s: GetCharWidthInfo failed\n", face);
+
+        /* test with synthetic bold */
+        lf.lfWeight = FW_BOLD;
+        lf.lfItalic = FALSE;
+        hfont = CreateFontIndirectA(&lf);
+        DeleteObject(SelectObject(hdc, hfont));
+
+        memset(&info2, 0xaa, sizeof(info2));
+        r = pGetCharWidthInfo(hdc, &info2);
+        ok(r, "%s: GetCharWidthInfo failed\n", face);
+        ok(info.lsb == info2.lsb, "%s: expected %d, got %d\n", face, info.lsb, info2.lsb);
+        ok(info.rsb == info2.rsb, "%s: expected %d, got %d\n", face, info.rsb, info2.rsb);
+
+        /* test with synthetic italic */
+        lf.lfWeight = FW_NORMAL;
+        lf.lfItalic = TRUE;
+        hfont = CreateFontIndirectA(&lf);
+        DeleteObject(SelectObject(hdc, hfont));
+
+        memset(&info2, 0xaa, sizeof(info2));
+        r = pGetCharWidthInfo(hdc, &info2);
+        ok(r, "%s: GetCharWidthInfo failed\n", face);
+        todo_wine ok(info.lsb > info2.lsb, "%s: expected less than %d, got %d\n", face, info.lsb, info2.lsb);
+        todo_wine ok(info.rsb > info2.rsb, "%s: expected less than %d, got %d\n", face, info.rsb, info2.rsb);
+        DeleteObject(SelectObject(hdc, hfont_prev));
+    }
+
+    ReleaseDC(NULL, hdc);
+}
+
 START_TEST(font)
 {
     static const char *test_names[] =
@@ -7072,6 +7257,7 @@ START_TEST(font)
     test_GetTextMetrics2("Arial", -55);
     test_GetTextMetrics2("Arial", -110);
     test_GetCharacterPlacement();
+    test_GetCharWidthInfo();
     test_CreateFontIndirect();
     test_CreateFontIndirectEx();
     test_oemcharset();
