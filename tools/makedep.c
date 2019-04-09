@@ -2224,6 +2224,28 @@ static struct strarray get_shared_lib_names( const char *libname )
 
 
 /*******************************************************************
+ *         output_winegcc_command
+ */
+static void output_winegcc_command( struct makefile *make, int cross )
+{
+    output( "\t%s -o $@", tools_path( make, "winegcc" ));
+    output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
+    if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
+    if (cross)
+    {
+        output_filename( "-b" );
+        output_filename( crosstarget );
+        output_filename( "--lib-suffix=.cross.a" );
+    }
+    else
+    {
+        output_filenames( target_flags );
+        output_filenames( unwind_flags );
+    }
+}
+
+
+/*******************************************************************
  *         output_symlink_rule
  *
  * Output a rule to create a symlink.
@@ -2870,11 +2892,8 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
     output( "\n" );
-    output( "\t%s -s -o $@", tools_path( make, "winegcc" ));
-    output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
-    if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
-    output_filenames( target_flags );
-    output_filenames( unwind_flags );
+    output_winegcc_command( make, 0 );
+    output_filename( "-s" );
     output_filenames( dll_flags );
     output_filename( "-shared" );
     output_filename( source->filename );
@@ -2903,10 +2922,8 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
         output_filename( tools_path( make, "winebuild" ));
         output_filename( tools_path( make, "winegcc" ));
         output( "\n" );
-        output( "\t%s -s -o $@ -b %s", tools_path( make, "winegcc" ), crosstarget );
-        output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
-        if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
-        output_filename( "--lib-suffix=.cross.a" );
+        output_winegcc_command( make, 1 );
+        output_filename( "-s" );
         output_filenames( dll_flags );
         output_filename( "-shared" );
         output_filename( source->filename );
@@ -3107,11 +3124,7 @@ static void output_module( struct makefile *make )
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
     output( "\n" );
-    output( "\t%s -o $@", tools_path( make, "winegcc" ));
-    output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
-    if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
-    output_filenames( target_flags );
-    output_filenames( unwind_flags );
+    output_winegcc_command( make, 0 );
     if (spec_file)
     {
         output( " -shared %s", spec_file );
@@ -3262,22 +3275,15 @@ static void output_test_module( struct makefile *make )
     strarray_add( &make->all_targets, strmake( "%s%s", testmodule, dll_ext ));
     strarray_add( &make->clean_files, strmake( "%s%s", stripped, dll_ext ));
     output( "%s%s:\n", obj_dir_path( make, testmodule ), dll_ext );
-    output( "\t%s -o $@", tools_path( make, "winegcc" ));
-    output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
-    if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
-    output_filenames( target_flags );
-    output_filenames( unwind_flags );
+    output_winegcc_command( make, 0 );
     output_filenames( make->appmode );
     output_filenames_obj_dir( make, make->object_files );
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
     output( "%s%s:\n", obj_dir_path( make, stripped ), dll_ext );
-    output( "\t%s -s -o $@", tools_path( make, "winegcc" ));
-    output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
-    if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
-    output_filenames( target_flags );
-    output_filenames( unwind_flags );
+    output_winegcc_command( make, 0 );
+    output_filename( "-s" );
     output_filename( strmake( "-Wb,-F,%s", testmodule ));
     output_filenames( make->appmode );
     output_filenames_obj_dir( make, make->object_files );
@@ -3314,10 +3320,7 @@ static void output_test_module( struct makefile *make )
         output_filename( tools_path( make, "winebuild" ));
         output_filename( tools_path( make, "winegcc" ));
         output( "\n" );
-        output( "\t%s -o $@ -b %s", tools_path( make, "winegcc" ), crosstarget );
-        output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
-        if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
-        output_filename( "--lib-suffix=.cross.a" );
+        output_winegcc_command( make, 1 );
         output_filenames_obj_dir( make, make->crossobj_files );
         output_filenames( all_libs );
         output_filename( "$(LDFLAGS)" );
