@@ -23,6 +23,7 @@
 
 #include "initguid.h"
 #include "d3dcompiler_private.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
@@ -1627,10 +1628,14 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
 
             if (d[i].Register == 0xffffffff)
             {
-                if (!strcasecmp(d[i].SemanticName, "sv_depth")) d[i].SystemValueType = D3D_NAME_DEPTH;
-                if (!strcasecmp(d[i].SemanticName, "sv_coverage")) d[i].SystemValueType = D3D_NAME_COVERAGE;
-                if (!strcasecmp(d[i].SemanticName, "sv_depthgreaterequal")) d[i].SystemValueType = D3D_NAME_DEPTH_GREATER_EQUAL;
-                if (!strcasecmp(d[i].SemanticName, "sv_depthlessequal")) d[i].SystemValueType = D3D_NAME_DEPTH_LESS_EQUAL;
+                if (!_strnicmp(d[i].SemanticName, "sv_depth", -1))
+                    d[i].SystemValueType = D3D_NAME_DEPTH;
+                else if (!_strnicmp(d[i].SemanticName, "sv_coverage", -1))
+                    d[i].SystemValueType = D3D_NAME_COVERAGE;
+                else if (!_strnicmp(d[i].SemanticName, "sv_depthgreaterequal", -1))
+                    d[i].SystemValueType = D3D_NAME_DEPTH_GREATER_EQUAL;
+                else if (!_strnicmp(d[i].SemanticName, "sv_depthlessequal", -1))
+                    d[i].SystemValueType = D3D_NAME_DEPTH_LESS_EQUAL;
             }
             else
             {
