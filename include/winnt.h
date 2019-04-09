@@ -412,10 +412,10 @@ extern "C++" { \
 # define EXTERN_C    extern
 #endif
 
-#define STDMETHODCALLTYPE       __stdcall
-#define STDMETHODVCALLTYPE      __cdecl
-#define STDAPICALLTYPE          __stdcall
-#define STDAPIVCALLTYPE         __cdecl
+#define STDMETHODCALLTYPE       WINAPI
+#define STDMETHODVCALLTYPE      WINAPIV
+#define STDAPICALLTYPE          WINAPI
+#define STDAPIVCALLTYPE         WINAPIV
 
 #define STDAPI                  EXTERN_C HRESULT STDAPICALLTYPE
 #define STDAPI_(type)           EXTERN_C type STDAPICALLTYPE
