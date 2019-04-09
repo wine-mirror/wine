@@ -3365,14 +3365,6 @@ NTSTATUS WINAPI ExDeleteResourceLite(PERESOURCE resource)
 }
 
 /***********************************************************************
- *           ExReleaseResourceForThreadLite   (NTOSKRNL.EXE.@)
- */
-void WINAPI ExReleaseResourceForThreadLite( PERESOURCE resource, ERESOURCE_THREAD tid )
-{
-    FIXME( "stub: %p %lu\n", resource, tid );
-}
-
-/***********************************************************************
  *           KeEnterCriticalRegion  (NTOSKRNL.EXE.@)
  */
 void WINAPI KeEnterCriticalRegion(void)
