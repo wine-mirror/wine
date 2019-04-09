@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include <limits.h>
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -742,6 +743,25 @@ NTSTATUS WINAPI ExInitializeResourceLite( ERESOURCE *resource )
     return STATUS_SUCCESS;
 }
 
+/* Find an existing entry in the shared owner list, or create a new one. */
+static OWNER_ENTRY *resource_get_shared_entry( ERESOURCE *resource, ERESOURCE_THREAD thread )
+{
+    ULONG i, count;
+
+    for (i = 0; i < resource->OwnerEntry.TableSize; ++i)
+    {
+        if (resource->OwnerTable[i].OwnerThread == thread)
+            return &resource->OwnerTable[i];
+    }
+
+    count = ++resource->OwnerEntry.TableSize;
+    resource->OwnerTable = heap_realloc(resource->OwnerTable, count * sizeof(*resource->OwnerTable));
+    resource->OwnerTable[count - 1].OwnerThread = thread;
+    resource->OwnerTable[count - 1].OwnerCount = 0;
+
+    return &resource->OwnerTable[count - 1];
+}
+
 /***********************************************************************
  *           ExAcquireResourceExclusiveLite  (NTOSKRNL.EXE.@)
  */
@@ -793,6 +813,68 @@ BOOLEAN WINAPI ExAcquireResourceExclusiveLite( ERESOURCE *resource, BOOLEAN wait
     resource->OwnerEntry.OwnerThread = (ERESOURCE_THREAD)KeGetCurrentThread();
     resource->ActiveEntries++;
     resource->NumberOfExclusiveWaiters--;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           ExAcquireResourceSharedLite  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI ExAcquireResourceSharedLite( ERESOURCE *resource, BOOLEAN wait )
+{
+    OWNER_ENTRY *entry;
+    KIRQL irql;
+
+    TRACE("resource %p, wait %u.\n", resource, wait);
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    entry = resource_get_shared_entry( resource, (ERESOURCE_THREAD)KeGetCurrentThread() );
+
+    if (resource->Flag & ResourceOwnedExclusive)
+    {
+        if (resource->OwnerEntry.OwnerThread == (ERESOURCE_THREAD)KeGetCurrentThread())
+        {
+            /* We own the resource exclusively, so increase recursion. */
+            resource->ActiveEntries++;
+            KeReleaseSpinLock( &resource->SpinLock, irql );
+            return TRUE;
+        }
+    }
+    else if (entry->OwnerCount || !resource->NumberOfExclusiveWaiters)
+    {
+        /* Either we already own the resource shared, or there are no exclusive
+         * owners or waiters, so we can grab it shared. */
+        entry->OwnerCount++;
+        resource->ActiveEntries++;
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return TRUE;
+    }
+
+    if (!wait)
+    {
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return FALSE;
+    }
+
+    if (!resource->SharedWaiters)
+    {
+        resource->SharedWaiters = heap_alloc( sizeof(*resource->SharedWaiters) );
+        KeInitializeSemaphore( resource->SharedWaiters, 0, INT_MAX );
+    }
+    resource->NumberOfSharedWaiters++;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    KeWaitForSingleObject( resource->SharedWaiters, Executive, KernelMode, FALSE, NULL );
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    entry->OwnerCount++;
+    resource->ActiveEntries++;
+    resource->NumberOfSharedWaiters--;
 
     KeReleaseSpinLock( &resource->SpinLock, irql );
 
