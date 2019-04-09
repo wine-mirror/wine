@@ -4225,14 +4225,6 @@ NTSTATUS WINAPI DbgQueryDebugFilterState(ULONG component, ULONG level)
 }
 
 /*********************************************************************
- *           ExReleaseResourceLite    (NTOSKRNL.@)
- */
-void WINAPI ExReleaseResourceLite(PERESOURCE resource)
-{
-    FIXME("stub: %p\n", resource);
-}
-
-/*********************************************************************
  *           PsGetProcessWow64Process    (NTOSKRNL.@)
  */
 PVOID WINAPI PsGetProcessWow64Process(PEPROCESS process)

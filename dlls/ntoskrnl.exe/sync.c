@@ -1066,3 +1066,12 @@ void WINAPI ExReleaseResourceForThreadLite( ERESOURCE *resource, ERESOURCE_THREA
 
     KeReleaseSpinLock( &resource->SpinLock, irql );
 }
+
+/***********************************************************************
+ *           ExReleaseResourceLite  (NTOSKRNL.EXE.@)
+ */
+DEFINE_FASTCALL1_WRAPPER( ExReleaseResourceLite )
+void WINAPI ExReleaseResourceLite( ERESOURCE *resource )
+{
+    ExReleaseResourceForThreadLite( resource, (ERESOURCE_THREAD)KeGetCurrentThread() );
+}
