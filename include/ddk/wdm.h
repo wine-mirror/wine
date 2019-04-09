@@ -153,12 +153,63 @@ typedef struct _KWAIT_BLOCK {
     USHORT WaitType;
 } KWAIT_BLOCK, *PKWAIT_BLOCK, *RESTRICTED_POINTER PRKWAIT_BLOCK;
 
+typedef struct _OWNER_ENTRY
+{
+    ERESOURCE_THREAD OwnerThread;
+    union
+    {
+        struct
+        {
+            ULONG IoPriorityBoosted : 1;
+            ULONG OwnerReferenced : 1;
+            ULONG IoQoSPriorityBoosted : 1;
+            ULONG OwnerCount : 29;
+        };
+        ULONG TableSize;
+    };
+} OWNER_ENTRY, *POWNER_ENTRY;
+
+#define ResourceNeverExclusive       0x0010
+#define ResourceReleaseByOtherThread 0x0020
+#define ResourceOwnedExclusive       0x0080
+
+typedef struct _ERESOURCE
+{
+    LIST_ENTRY SystemResourcesList;
+    OWNER_ENTRY *OwnerTable;
+    SHORT ActiveCount;
+    union
+    {
+        USHORT Flag;
+        struct
+        {
+            UCHAR ReservedLowFlags;
+            UCHAR WaiterPriority;
+        };
+    };
+    KSEMAPHORE *SharedWaiters;
+    KEVENT *ExclusiveWaiters;
+    OWNER_ENTRY OwnerEntry;
+    ULONG ActiveEntries;
+    ULONG ContentionCount;
+    ULONG NumberOfSharedWaiters;
+    ULONG NumberOfExclusiveWaiters;
+#ifdef _WIN64
+    void *Reserved2;
+#endif
+    union
+    {
+        void *Address;
+        ULONG_PTR CreatorBackTraceIndex;
+    };
+    KSPIN_LOCK SpinLock;
+} ERESOURCE, *PERESOURCE;
+
 typedef struct _IO_TIMER *PIO_TIMER;
 typedef struct _IO_TIMER_ROUTINE *PIO_TIMER_ROUTINE;
 typedef struct _ETHREAD *PETHREAD;
 typedef struct _KTHREAD *PKTHREAD, *PRKTHREAD;
 typedef struct _EPROCESS *PEPROCESS;
-typedef struct _ERESOURCE *PERESOURCE;
 typedef struct _IO_WORKITEM *PIO_WORKITEM;
 typedef struct _PAGED_LOOKASIDE_LIST *PPAGED_LOOKASIDE_LIST;
 typedef struct _OBJECT_TYPE *POBJECT_TYPE;
@@ -1469,6 +1520,7 @@ void      WINAPI ExDeleteNPagedLookasideList(PNPAGED_LOOKASIDE_LIST);
 void      WINAPI ExFreePool(PVOID);
 void      WINAPI ExFreePoolWithTag(PVOID,ULONG);
 void      WINAPI ExInitializeNPagedLookasideList(PNPAGED_LOOKASIDE_LIST,PALLOCATE_FUNCTION,PFREE_FUNCTION,ULONG,SIZE_T,ULONG,USHORT);
+NTSTATUS  WINAPI ExInitializeResourceLite(ERESOURCE*);
 PSLIST_ENTRY WINAPI ExInterlockedPopEntrySList(PSLIST_HEADER,PKSPIN_LOCK);
 PSLIST_ENTRY WINAPI ExInterlockedPushEntrySList(PSLIST_HEADER,PSLIST_ENTRY,PKSPIN_LOCK);
 LIST_ENTRY * WINAPI ExInterlockedRemoveHeadList(LIST_ENTRY*,KSPIN_LOCK*);

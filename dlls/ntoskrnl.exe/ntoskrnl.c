@@ -2370,17 +2370,6 @@ void WINAPI ExFreePoolWithTag( void *ptr, ULONG tag )
     HeapFree( GetProcessHeap(), 0, ptr );
 }
 
-
-/***********************************************************************
- *           ExInitializeResourceLite   (NTOSKRNL.EXE.@)
- */
-NTSTATUS WINAPI ExInitializeResourceLite(PERESOURCE Resource)
-{
-    FIXME( "stub: %p\n", Resource );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
 /***********************************************************************
  *           ExInitializeNPagedLookasideList   (NTOSKRNL.EXE.@)
  */

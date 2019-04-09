@@ -717,3 +717,13 @@ void WINAPI ExReleaseFastMutexUnsafe( FAST_MUTEX *mutex )
     if (count < 1)
         KeSetEvent( &mutex->Event, IO_NO_INCREMENT, FALSE );
 }
+
+/***********************************************************************
+ *           ExInitializeResourceLite   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ExInitializeResourceLite( ERESOURCE *resource )
+{
+    TRACE("resource %p.\n", resource);
+    memset(resource, 0, sizeof(*resource));
+    return STATUS_SUCCESS;
+}
