@@ -839,23 +839,28 @@ failed:
 static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
 {
     static const UINT8 asfmagic[] = {0x30,0x26,0xb2,0x75,0x8e,0x66,0xcf,0x11,0xa6,0xd9,0x00,0xaa,0x00,0x62,0xce,0x6c};
+    static const UINT8 wavmagic[] = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
+    static const UINT8 wavmask[]  = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
     static const WCHAR asfW[] = {'.','a','s','f',0};
+    static const WCHAR wavW[] = {'.','w','a','v',0};
     static const struct stream_content_url_hint
     {
         const UINT8 *magic;
         UINT32 magic_len;
         const WCHAR *url;
+        const UINT8 *mask;
     }
     url_hints[] =
     {
         { asfmagic, sizeof(asfmagic), asfW },
+        { wavmagic, sizeof(wavmagic), wavW, wavmask },
     };
+    UINT8 buffer[4 * sizeof(unsigned int)];
     IMFAttributes *attributes;
     UINT32 length = 0;
-    UINT8 buffer[16];
+    unsigned int i, j;
     DWORD caps = 0;
     QWORD position;
-    unsigned int i;
     HRESULT hr;
 
     *url = NULL;
@@ -888,6 +893,15 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
 
     for (i = 0; i < ARRAY_SIZE(url_hints); ++i)
     {
+        if (url_hints[i].mask)
+        {
+            unsigned int *mask = (unsigned int *)url_hints[i].mask;
+            unsigned int *data = (unsigned int *)buffer;
+
+            for (j = 0; j < sizeof(buffer) / sizeof(unsigned int); ++j)
+                data[j] &= mask[j];
+
+        }
         if (!memcmp(buffer, url_hints[i].magic, min(url_hints[i].magic_len, length)))
         {
             *url = url_hints[i].url;
