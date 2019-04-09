@@ -3356,15 +3356,6 @@ NTSTATUS WINAPI IoCsqInitialize(PIO_CSQ csq, PIO_CSQ_INSERT_IRP insert_irp, PIO_
 }
 
 /***********************************************************************
- *           ExDeleteResourceLite  (NTOSKRNL.EXE.@)
- */
-NTSTATUS WINAPI ExDeleteResourceLite(PERESOURCE resource)
-{
-    FIXME("(%p): stub\n", resource);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/***********************************************************************
  *           KeEnterCriticalRegion  (NTOSKRNL.EXE.@)
  */
 void WINAPI KeEnterCriticalRegion(void)

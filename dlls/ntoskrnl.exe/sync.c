@@ -743,6 +743,18 @@ NTSTATUS WINAPI ExInitializeResourceLite( ERESOURCE *resource )
     return STATUS_SUCCESS;
 }
 
+/***********************************************************************
+ *           ExDeleteResourceLite   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ExDeleteResourceLite( ERESOURCE *resource )
+{
+    TRACE("resource %p.\n", resource);
+    heap_free(resource->OwnerTable);
+    heap_free(resource->ExclusiveWaiters);
+    heap_free(resource->SharedWaiters);
+    return STATUS_SUCCESS;
+}
+
 /* Find an existing entry in the shared owner list, or create a new one. */
 static OWNER_ENTRY *resource_get_shared_entry( ERESOURCE *resource, ERESOURCE_THREAD thread )
 {
