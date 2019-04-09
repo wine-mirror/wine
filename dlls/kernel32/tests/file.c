@@ -3672,7 +3672,7 @@ static void test_ReplaceFileA(void)
      */
     SetLastError(0xdeadbeef);
     ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
-    todo_wine ok(ret == 0 && GetLastError() == ERROR_ACCESS_DENIED, "ReplaceFileA: unexpected error %d\n", GetLastError());
+    ok(ret == 0 && GetLastError() == ERROR_ACCESS_DENIED, "ReplaceFileA: unexpected error %d\n", GetLastError());
     /* make sure that the replacement file still exists */
     hReplacementFile = CreateFileA(replacement, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     ok(hReplacementFile != INVALID_HANDLE_VALUE ||
@@ -3704,7 +3704,7 @@ static void test_ReplaceFileA(void)
        "unexpected error, replaced file should be able to be opened %d\n", GetLastError());
     /*Calling ReplaceFileA on an exe should succeed*/
     ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
-    todo_wine ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
+    ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
     CloseHandle(hReplacedFile);
 
     /* replacement file still exists, make pass w/o "replaced" */
