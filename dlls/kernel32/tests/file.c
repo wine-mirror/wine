@@ -5228,6 +5228,75 @@ static void test_overlapped_read(void)
     ok(ret, "Unexpected error %u.\n", GetLastError());
 }
 
+static void test_file_readonly_access(void)
+{
+    static const DWORD default_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    static const CHAR prefix[] = "pfx";
+    CHAR file_name[MAX_PATH], file_name2[MAX_PATH];
+    CHAR temp_path[MAX_PATH];
+    HANDLE handle;
+    DWORD error;
+    DWORD ret;
+
+    /* Set up */
+    ret = GetTempPathA(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathA error %d\n", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, file_name);
+    ok(ret != 0, "GetTempFileNameA error %d\n", GetLastError());
+    ret = DeleteFileA(file_name);
+    ok(ret, "expect success\n");
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, file_name2);
+    ok(ret != 0, "GetTempFileNameA error %d\n", GetLastError());
+    ret = DeleteFileA(file_name2);
+    ok(ret, "expect success\n");
+
+    handle = CreateFileA(file_name, 0, default_sharing, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+    CloseHandle(handle);
+
+    /* CreateFile GENERIC_WRITE */
+    SetLastError(0xdeadbeef);
+    handle = CreateFileA(file_name, GENERIC_WRITE, default_sharing, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    error = GetLastError();
+    ok(handle == INVALID_HANDLE_VALUE, "expect failure\n");
+    ok(error == ERROR_ACCESS_DENIED, "wrong error code: %#x\n", error);
+
+    /* CreateFile DELETE without FILE_FLAG_DELETE_ON_CLOSE */
+    handle = CreateFileA(file_name, DELETE, default_sharing, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    ok(handle != INVALID_HANDLE_VALUE, "expect success\n");
+    CloseHandle(handle);
+
+    /* CreateFile DELETE with FILE_FLAG_DELETE_ON_CLOSE */
+    SetLastError(0xdeadbeef);
+    handle = CreateFileA(file_name, DELETE, default_sharing, NULL, OPEN_EXISTING,
+                         FILE_FLAG_DELETE_ON_CLOSE | FILE_ATTRIBUTE_NORMAL, 0);
+    error = GetLastError();
+    ok(handle == INVALID_HANDLE_VALUE, "expect failure\n");
+    ok(error == ERROR_ACCESS_DENIED, "wrong error code: %#x\n", error);
+
+    ret = MoveFileA(file_name, file_name2);
+    ok(ret, "expect success\n");
+    ret = MoveFileA(file_name2, file_name);
+    ok(ret, "expect success\n");
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteFileA(file_name);
+    error = GetLastError();
+    ok(!ret, "expect failure\n");
+    ok(error == ERROR_ACCESS_DENIED, "wrong error code: %#x\n", error);
+
+    ret = GetFileAttributesA(file_name);
+    ok(ret & FILE_ATTRIBUTE_READONLY, "got wrong attribute: %#x.\n", ret);
+
+    /* Clean up */
+    SetFileAttributesA(file_name, FILE_ATTRIBUTE_NORMAL);
+    ret = DeleteFileA(file_name);
+    ok(ret, "DeleteFileA: error %d\n", GetLastError());
+}
+
 START_TEST(file)
 {
     char temp_path[MAX_PATH];
@@ -5298,4 +5367,5 @@ START_TEST(file)
     test_GetFileAttributesExW();
     test_post_completion();
     test_overlapped_read();
+    test_file_readonly_access();
 }
