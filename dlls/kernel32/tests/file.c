@@ -3664,6 +3664,7 @@ static void test_ReplaceFileA(void)
        "ReplaceFileA: unexpected error %d\n", GetLastError());
 
     /* re-create replacement file for pass w/ backup (backup-file not existing) */
+    DeleteFileA(replacement);
     ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameA error (replacement) %d\n", GetLastError());
     ret = DeleteFileA(backup);
@@ -3679,6 +3680,7 @@ static void test_ReplaceFileA(void)
         removeBackup = TRUE;
 
     /* re-create replacement file for pass w/ no permissions to "replaced" */
+    DeleteFileA(replacement);
     ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameA error (replacement) %d\n", GetLastError());
     ret = SetFileAttributesA(replaced, FILE_ATTRIBUTE_READONLY);
@@ -3700,20 +3702,24 @@ static void test_ReplaceFileA(void)
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
        "SetFileAttributesA: error setting to normal %d\n", GetLastError());
 
+    /* replacement readonly */
+    DeleteFileA(replacement);
+    ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
+    ok(ret != 0, "GetTempFileNameA error (replacement) %#x\n", GetLastError());
+    ret = SetFileAttributesA(replacement, FILE_ATTRIBUTE_READONLY);
+    ok(ret, "SetFileAttributesA: error setting to readonly %#x\n", GetLastError());
+    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "ReplaceFileA: unexpected error %#x\n", GetLastError());
+    ret = SetFileAttributesA(replacement, FILE_ATTRIBUTE_NORMAL);
+    ok(ret, "SetFileAttributesA: error setting to normal %#x\n", GetLastError());
+
     /* re-create replacement file for pass w/ replaced opened with
      * the same permissions as an exe (Replicating an exe trying to
      * replace itself)
      */
+    DeleteFileA(replacement);
     ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameA error (replacement) %d\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    /* make sure that the replacement file still exists */
-    hReplacementFile = CreateFileA(replacement, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
-    ok(hReplacementFile != INVALID_HANDLE_VALUE ||
-       broken(GetLastError() == ERROR_FILE_NOT_FOUND), /* win2k */
-       "unexpected error, replacement file should still exist %d\n", GetLastError());
-    CloseHandle(hReplacementFile);
 
     /* make sure that the replaced file is opened like an exe*/
     hReplacedFile = CreateFileA(replaced, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
@@ -3722,6 +3728,17 @@ static void test_ReplaceFileA(void)
     /*Calling ReplaceFileA on an exe should succeed*/
     ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     todo_wine ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
+    CloseHandle(hReplacedFile);
+
+    /* replace file while replacement is opened */
+    ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
+    ok(ret != 0, "GetTempFileNameA error (replacement) %d\n", GetLastError());
+    CreateFileA(replacement, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
+    ok(hReplacementFile != INVALID_HANDLE_VALUE, "unexpected error, replacement file should be able to be opened %d\n",
+       GetLastError());
+    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ok(!ret, "expect failure\n");
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "expect ERROR_SHARING_VIOLATION, got %#x.\n", GetLastError());
     CloseHandle(hReplacedFile);
 
     /* replacement file still exists, make pass w/o "replaced" */
