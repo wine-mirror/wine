@@ -8418,6 +8418,40 @@ static BOOL freetype_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar, L
 }
 
 /*************************************************************
+ * freetype_GetCharWidthInfo
+ */
+static BOOL freetype_GetCharWidthInfo( PHYSDEV dev, void* ptr )
+{
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+    struct char_width_info *info = ptr;
+    TT_HoriHeader *pHori;
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetCharWidthInfo );
+        return dev->funcs->pGetCharWidthInfo( dev, ptr );
+    }
+
+    TRACE("%p, %p\n", physdev->font, info);
+
+    if (FT_IS_SCALABLE(physdev->font->ft_face) &&
+        (pHori = pFT_Get_Sfnt_Table(physdev->font->ft_face, ft_sfnt_hhea)))
+    {
+        FT_Fixed em_scale;
+        em_scale = MulDiv(physdev->font->ppem, 1 << 16,
+                          physdev->font->ft_face->units_per_EM);
+        info->lsb = (SHORT)pFT_MulFix(pHori->min_Left_Side_Bearing,  em_scale);
+        info->rsb = (SHORT)pFT_MulFix(pHori->min_Right_Side_Bearing, em_scale);
+    }
+    else
+        info->lsb = info->rsb = 0;
+
+    info->unk = 0;
+
+    return TRUE;
+}
+
+/*************************************************************
  * freetype_GetCharABCWidths
  */
 static BOOL freetype_GetCharABCWidths( PHYSDEV dev, UINT firstChar, UINT lastChar, LPABC buffer )
@@ -9112,6 +9146,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_GetCharABCWidths,          /* pGetCharABCWidths */
     freetype_GetCharABCWidthsI,         /* pGetCharABCWidthsI */
     freetype_GetCharWidth,              /* pGetCharWidth */
+    freetype_GetCharWidthInfo,          /* pGetCharWidthInfo */
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     freetype_GetFontData,               /* pGetFontData */

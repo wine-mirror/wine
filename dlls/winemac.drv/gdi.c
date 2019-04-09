@@ -300,6 +300,7 @@ static const struct gdi_dc_funcs macdrv_funcs =
     NULL,                                   /* pGetCharABCWidths */
     NULL,                                   /* pGetCharABCWidthsI */
     NULL,                                   /* pGetCharWidth */
+    NULL,                                   /* pGetCharWidthInfo */
     macdrv_GetDeviceCaps,                   /* pGetDeviceCaps */
     macdrv_GetDeviceGammaRamp,              /* pGetDeviceGammaRamp */
     NULL,                                   /* pGetFontData */

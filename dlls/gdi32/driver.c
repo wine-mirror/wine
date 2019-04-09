@@ -310,6 +310,11 @@ static BOOL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffe
     return FALSE;
 }
 
+static BOOL nulldrv_GetCharWidthInfo( PHYSDEV dev, void *info )
+{
+    return FALSE;
+}
+
 static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     int bpp;
@@ -756,6 +761,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_GetCharABCWidths,           /* pGetCharABCWidths */
     nulldrv_GetCharABCWidthsI,          /* pGetCharABCWidthsI */
     nulldrv_GetCharWidth,               /* pGetCharWidth */
+    nulldrv_GetCharWidthInfo,           /* pGetCharWidthInfo */
     nulldrv_GetDeviceCaps,              /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
     nulldrv_GetFontData,                /* pGetFontData */

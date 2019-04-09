@@ -251,7 +251,7 @@
 @ stdcall GetCharWidthFloatA(long long long ptr)
 @ stdcall GetCharWidthFloatW(long long long ptr)
 @ stdcall GetCharWidthI(ptr long long ptr ptr)
-# @ stub GetCharWidthInfo
+@ stdcall GetCharWidthInfo(ptr ptr)
 @ stdcall GetCharWidthW(long long long long) GetCharWidth32W
 @ stub GetCharWidthWOW
 @ stdcall GetCharacterPlacementA(long str long long ptr long)

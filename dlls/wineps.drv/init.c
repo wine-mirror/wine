@@ -818,6 +818,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     PSDRV_GetCharWidth,                 /* pGetCharWidth */
+    NULL,                               /* pGetCharWidthInfo */
     PSDRV_GetDeviceCaps,                /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */
