@@ -417,6 +417,7 @@ static void msvcrt_set_fd(ioinfo *fdinfo, HANDLE hand, int flag)
   fdinfo->lookahead[2] = '\n';
   fdinfo->exflag &= EF_CRIT_INIT;
 
+  if (hand == MSVCRT_NO_CONSOLE) hand = 0;
   switch (fdinfo-MSVCRT___pioinfo[0])
   {
   case 0: SetStdHandle(STD_INPUT_HANDLE,  hand); break;
