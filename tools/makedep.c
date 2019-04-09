@@ -205,6 +205,7 @@ struct makefile
     struct strarray uninstall_files;
     struct strarray object_files;
     struct strarray crossobj_files;
+    struct strarray res_files;
     struct strarray c2man_files;
     struct strarray dlldata_files;
     struct strarray implib_objs;
@@ -2567,8 +2568,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     unsigned int i;
 
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
-    strarray_add( &make->object_files, strmake( "%s.res", obj ));
-    if (crosstarget) strarray_add( &make->crossobj_files, strmake( "%s.res", obj ));
+    strarray_add( &make->res_files, strmake( "%s.res", obj ));
     output( "%s.res: %s\n", obj_dir_path( make, obj ), source->filename );
     output( "\t%s -o $@", tools_path( make, "wrc" ) );
     if (make->is_win16) output_filename( "-m16" );
@@ -2622,8 +2622,7 @@ static void output_source_mc( struct makefile *make, struct incl_file *source, c
 {
     unsigned int i;
 
-    strarray_add( &make->object_files, strmake( "%s.res", obj ));
-    if (crosstarget) strarray_add( &make->crossobj_files, strmake( "%s.res", obj ));
+    strarray_add( &make->res_files, strmake( "%s.res", obj ));
     strarray_add( &make->clean_files, strmake( "%s.pot", obj ));
     output( "%s.res: %s\n", obj_dir_path( make, obj ), source->filename );
     output( "\t%s -U -O res -o $@ %s", tools_path( make, "wmc" ), source->filename );
@@ -2652,8 +2651,7 @@ static void output_source_mc( struct makefile *make, struct incl_file *source, c
  */
 static void output_source_res( struct makefile *make, struct incl_file *source, const char *obj )
 {
-    strarray_add( &make->object_files, source->name );
-    if (crosstarget) strarray_add( &make->crossobj_files, source->name );
+    strarray_add( &make->res_files, source->name );
 }
 
 
@@ -2883,8 +2881,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     obj_name = strmake( "%s%s", obj_dir_path( make, obj ), crosstarget ? ".cross.o" : ".o" );
 
     strarray_add( &make->clean_files, dll_name );
-    strarray_add( &make->object_files, strmake( "%s.res", obj ));
-    if (crosstarget) strarray_add( &make->crossobj_files, strmake( "%s.res", obj ));
+    strarray_add( &make->res_files, strmake( "%s.res", obj ));
     output( "%s.res: %s\n", obj_dir_path( make, obj ), obj_dir_path( make, dll_name ));
     output( "\techo \"%s.dll TESTDLL \\\"%s\\\"\" | %s -o $@\n", obj,
             obj_dir_path( make, dll_name ), tools_path( make, "wrc" ));
@@ -3101,6 +3098,7 @@ static void output_module( struct makefile *make )
     }
     if (spec_file) output_filename( spec_file );
     output_filenames_obj_dir( make, make->object_files );
+    output_filenames_obj_dir( make, make->res_files );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
@@ -3113,6 +3111,7 @@ static void output_module( struct makefile *make )
     }
     else output_filenames( make->appmode );
     output_filenames_obj_dir( make, make->object_files );
+    output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
@@ -3260,6 +3259,7 @@ static void output_test_module( struct makefile *make )
     output_winegcc_command( make, !!crosstarget );
     output_filenames( make->appmode );
     output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
@@ -3269,11 +3269,13 @@ static void output_test_module( struct makefile *make )
     output_filename( strmake( "-Wb,-F,%s", testmodule ));
     output_filenames( make->appmode );
     output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
     output( "%s%s %s%s:", obj_dir_path( make, testmodule ), ext, obj_dir_path( make, stripped ), ext );
     output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
+    output_filenames_obj_dir( make, make->res_files );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
@@ -3621,7 +3623,7 @@ static void output_sources( struct makefile *make )
                 if (top_makefile->submakes[i]->testdll && !top_makefile->submakes[i]->disabled)
                     strarray_add( &tests, top_makefile->submakes[i]->testdll );
         for (i = 0; i < tests.count; i++)
-            strarray_add( &make->object_files, replace_extension( tests.str[i], ".dll", "_test.res" ));
+            strarray_add( &make->res_files, replace_extension( tests.str[i], ".dll", "_test.res" ));
     }
 
     if (make->dlldata_files.count)
@@ -3674,7 +3676,8 @@ static void output_sources( struct makefile *make )
     }
 
     strarray_addall( &make->clean_files, make->object_files );
-    strarray_addall_uniq( &make->clean_files, make->crossobj_files );
+    strarray_addall( &make->clean_files, make->crossobj_files );
+    strarray_addall( &make->clean_files, make->res_files );
     strarray_addall( &make->clean_files, make->all_targets );
     strarray_addall( &make->clean_files, make->extra_targets );
 
