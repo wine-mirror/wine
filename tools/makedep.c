@@ -2922,7 +2922,6 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
                        (source->file->flags & FLAG_C_IMPLIB) ||
                        (make->module && make->staticlib)));
     int need_obj = (!need_cross ||
-                    (make->testdll && !is_dll_src) ||
                     (source->file->flags & FLAG_C_IMPLIB) ||
                     (make->module && make->staticlib));
 
@@ -2973,7 +2972,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
             output( "\t%s $(RUNTESTFLAGS) -T %s -M %s -p %s%s %s && touch $@\n",
                     top_src_dir_path( make, "tools/runtest" ), top_obj_dir_path( make, "" ),
                     make->testdll, replace_extension( make->testdll, ".dll", "_test.exe" ),
-                    dll_ext, obj );
+                    crosstarget ? "" : dll_ext, obj );
         }
     }
     if (need_obj) output_filename( strmake( "%s.o", obj_dir_path( make, obj )));
@@ -3249,32 +3248,32 @@ static void output_test_module( struct makefile *make )
     char *stripped = replace_extension( make->testdll, ".dll", "_test-stripped.exe" );
     char *testres = replace_extension( make->testdll, ".dll", "_test.res" );
     struct strarray dep_libs = empty_strarray;
-    struct strarray all_libs = add_import_libs( make, &dep_libs, make->imports, 0 );
+    struct strarray all_libs = add_import_libs( make, &dep_libs, make->imports, !!crosstarget );
     int parent_disabled = 0;
+    const char *ext = crosstarget ? "" : dll_ext;
 
-    add_import_libs( make, &dep_libs, get_default_imports( make ), 0 );  /* dependencies only */
+    add_import_libs( make, &dep_libs, get_default_imports( make ), !!crosstarget ); /* dependencies only */
     strarray_addall( &all_libs, libs );
-    strarray_add( &make->all_targets, strmake( "%s%s", testmodule, dll_ext ));
-    strarray_add( &make->clean_files, strmake( "%s%s", stripped, dll_ext ));
-    output( "%s%s:\n", obj_dir_path( make, testmodule ), dll_ext );
-    output_winegcc_command( make, 0 );
+    strarray_add( &make->all_targets, strmake( "%s%s", testmodule, ext ));
+    strarray_add( &make->clean_files, strmake( "%s%s", stripped, ext ));
+    output( "%s%s:\n", obj_dir_path( make, testmodule ), ext );
+    output_winegcc_command( make, !!crosstarget );
     output_filenames( make->appmode );
-    output_filenames_obj_dir( make, make->object_files );
+    output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
-    output( "%s%s:\n", obj_dir_path( make, stripped ), dll_ext );
-    output_winegcc_command( make, 0 );
+    output( "%s%s:\n", obj_dir_path( make, stripped ), ext );
+    output_winegcc_command( make, !!crosstarget );
     output_filename( "-s" );
     output_filename( strmake( "-Wb,-F,%s", testmodule ));
     output_filenames( make->appmode );
-    output_filenames_obj_dir( make, make->object_files );
+    output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
-    output( "%s%s %s%s:", obj_dir_path( make, testmodule ), dll_ext,
-            obj_dir_path( make, stripped ), dll_ext );
-    output_filenames_obj_dir( make, make->object_files );
+    output( "%s%s %s%s:", obj_dir_path( make, testmodule ), ext, obj_dir_path( make, stripped ), ext );
+    output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
@@ -3283,37 +3282,9 @@ static void output_test_module( struct makefile *make )
     if (!make->disabled && !strarray_exists( &disabled_dirs, "programs/winetest" ))
         output( "all: %s/%s\n", top_obj_dir_path( make, "programs/winetest" ), testres );
     output( "%s/%s: %s%s\n", top_obj_dir_path( make, "programs/winetest" ), testres,
-            obj_dir_path( make, stripped ), dll_ext );
+            obj_dir_path( make, stripped ), ext );
     output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | %s -o $@\n",
-            testmodule, obj_dir_path( make, stripped ), dll_ext, tools_path( make, "wrc" ));
-
-    if (crosstarget)
-    {
-        char *crosstest = replace_extension( make->testdll, ".dll", "_crosstest.exe" );
-
-        dep_libs = empty_strarray;
-        all_libs = add_import_libs( make, &dep_libs, make->imports, 1 );
-        add_import_libs( make, &dep_libs, get_default_imports( make ), 1 );  /* dependencies only */
-        strarray_addall( &all_libs, libs );
-        strarray_add( &make->clean_files, crosstest );
-        output( "%s:", obj_dir_path( make, crosstest ));
-        output_filenames_obj_dir( make, make->crossobj_files );
-        output_filenames( dep_libs );
-        output_filename( tools_path( make, "winebuild" ));
-        output_filename( tools_path( make, "winegcc" ));
-        output( "\n" );
-        output_winegcc_command( make, 1 );
-        output_filenames_obj_dir( make, make->crossobj_files );
-        output_filenames( all_libs );
-        output_filename( "$(LDFLAGS)" );
-        output( "\n" );
-        if (!make->disabled)
-        {
-            output( "%s: %s\n", obj_dir_path( make, "crosstest" ), obj_dir_path( make, crosstest ));
-            strarray_add( &make->phony_targets, obj_dir_path( make, "crosstest" ));
-            if (make->obj_dir) output( "crosstest: %s\n", obj_dir_path( make, "crosstest" ));
-        }
-    }
+            testmodule, obj_dir_path( make, stripped ), ext, tools_path( make, "wrc" ));
 
     if (strendswith( make->base_dir, "/tests" ))
     {
@@ -3322,7 +3293,7 @@ static void output_test_module( struct makefile *make )
         parent_disabled = strarray_exists( &disabled_dirs, dir );
     }
     output_filenames_obj_dir( make, make->ok_files );
-    output( ": %s%s ../%s%s\n", testmodule, dll_ext, make->testdll, dll_ext );
+    output( ": %s%s ../%s%s\n", testmodule, ext, make->testdll, dll_ext );
     output( "check test:" );
     if (!make->disabled && !parent_disabled) output_filenames_obj_dir( make, make->ok_files );
     output( "\n" );
@@ -3423,7 +3394,6 @@ static void output_subdirs( struct makefile *make )
     struct strarray tools_deps = empty_strarray;
     struct strarray tooldeps_deps = empty_strarray;
     struct strarray winetest_deps = empty_strarray;
-    struct strarray crosstest_deps = empty_strarray;
     unsigned int i, j;
 
     strarray_addall( &distclean_files, make->distclean_files );
@@ -3511,15 +3481,6 @@ static void output_subdirs( struct makefile *make )
             output( "\t@cd %s && $(MAKE) test\n", subdir );
             strarray_add( &winetest_deps, subdir );
             strarray_add( &builddeps_deps, subdir );
-            if (crosstarget)
-            {
-                char *target = base_dir_path( submake, "crosstest" );
-                output( "crosstest: %s\n", target );
-                output( "%s: dummy\n", target );
-                output( "\t@cd %s && $(MAKE) crosstest\n", subdir );
-                strarray_add( &crosstest_deps, target );
-                strarray_add( &builddeps_deps, target );
-            }
         }
         else
         {
@@ -3592,12 +3553,6 @@ static void output_subdirs( struct makefile *make )
         strarray_add( &make->phony_targets, "check" );
         strarray_add( &make->phony_targets, "test" );
     }
-    output( "crosstest:" );
-    output_filenames( crosstest_deps );
-    output( "\n" );
-    if (!crosstest_deps.count)
-        output( "\t@echo \"crosstest is not supported (mingw not installed?)\" && false\n" );
-    strarray_add( &make->phony_targets, "crosstest" );
 
     output( "clean::\n");
     output_rm_filenames( clean_files );
@@ -3617,7 +3572,6 @@ static void output_subdirs( struct makefile *make )
     strarray_add( &make->phony_targets, "distclean" );
     strarray_add( &make->phony_targets, "testclean" );
     strarray_addall( &make->phony_targets, all_deps );
-    strarray_addall( &make->phony_targets, crosstest_deps );
 
     strarray_addall( &make->clean_files, symlinks );
     strarray_addall( &build_deps, tools_deps );

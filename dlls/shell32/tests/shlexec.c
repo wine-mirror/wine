@@ -2829,7 +2829,7 @@ static void test_directory(void)
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
-    todo_wine okChildPath("longPath", path);
+    okChildPath("longPath", path);
     SetCurrentDirectoryA(curdir);
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
@@ -2842,7 +2842,7 @@ static void test_directory(void)
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
-    todo_wine okChildPath("longPath", path);
+    okChildPath("longPath", path);
 
     /* Specify it through an environment variable */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
@@ -2854,7 +2854,7 @@ static void test_directory(void)
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
-    todo_wine okChildPath("longPath", path);
+    okChildPath("longPath", path);
 
     /* Not a colon-separated directory list */
     sprintf(dirpath, "%s:%s", curdir, tmpdir);

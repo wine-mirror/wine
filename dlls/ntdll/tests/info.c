@@ -60,12 +60,6 @@ static DWORD one_before_last_pid = 0;
 #define FIRM 0x4649524D
 #define RSMB 0x52534D42
 
-#ifdef linux
-static const int firmware_todo = 0;
-#else
-static const int firmware_todo = 1;
-#endif
-
 static BOOL InitFunctionPtrs(void)
 {
     /* All needed functions are NT based, so using GetModuleHandle is a good check */
@@ -873,7 +867,6 @@ static void test_query_firmware(void)
     sfti->Action = SystemFirmwareTable_Get;
 
     status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &len1);
-todo_wine_if(firmware_todo)
     ok(status == STATUS_BUFFER_TOO_SMALL, "Expected STATUS_BUFFER_TOO_SMALL, got %08x\n", status);
     ok(len1 >= min_sfti_len, "Expected length >= %u, got %u\n", min_sfti_len, len1);
     ok(sfti->TableBufferLength == len1 - min_sfti_len,
@@ -883,7 +876,6 @@ todo_wine_if(firmware_todo)
     ok(!!sfti, "Failed to allocate memory\n");
 
     status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, len1, &len2);
-todo_wine_if(firmware_todo)
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok(len2 == len1, "Expected length %u, got %u\n", len1, len2);
     ok(sfti->TableBufferLength == len1 - min_sfti_len,
