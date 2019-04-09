@@ -944,3 +944,65 @@ BOOLEAN WINAPI ExAcquireSharedStarveExclusive( ERESOURCE *resource, BOOLEAN wait
 
     return TRUE;
 }
+
+/***********************************************************************
+ *           ExAcquireSharedWaitForExclusive  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI ExAcquireSharedWaitForExclusive( ERESOURCE *resource, BOOLEAN wait )
+{
+    OWNER_ENTRY *entry;
+    KIRQL irql;
+
+    TRACE("resource %p, wait %u.\n", resource, wait);
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    entry = resource_get_shared_entry( resource, (ERESOURCE_THREAD)KeGetCurrentThread() );
+
+    if (resource->Flag & ResourceOwnedExclusive)
+    {
+        if (resource->OwnerEntry.OwnerThread == (ERESOURCE_THREAD)KeGetCurrentThread())
+        {
+            /* We own the resource exclusively, so increase recursion. */
+            resource->ActiveEntries++;
+            KeReleaseSpinLock( &resource->SpinLock, irql );
+            return TRUE;
+        }
+    }
+    /* We may only grab the resource if there are no exclusive waiters, even if
+     * we already own it shared. */
+    else if (!resource->NumberOfExclusiveWaiters)
+    {
+        entry->OwnerCount++;
+        resource->ActiveEntries++;
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return TRUE;
+    }
+
+    if (!wait)
+    {
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return FALSE;
+    }
+
+    if (!resource->SharedWaiters)
+    {
+        resource->SharedWaiters = heap_alloc( sizeof(*resource->SharedWaiters) );
+        KeInitializeSemaphore( resource->SharedWaiters, 0, INT_MAX );
+    }
+    resource->NumberOfSharedWaiters++;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    KeWaitForSingleObject( resource->SharedWaiters, Executive, KernelMode, FALSE, NULL );
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    entry->OwnerCount++;
+    resource->ActiveEntries++;
+    resource->NumberOfSharedWaiters--;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    return TRUE;
+}

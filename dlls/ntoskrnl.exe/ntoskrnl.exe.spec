@@ -123,7 +123,7 @@
 @ stdcall ExAcquireResourceExclusiveLite(ptr long)
 @ stdcall ExAcquireResourceSharedLite(ptr long)
 @ stdcall ExAcquireSharedStarveExclusive(ptr long)
-@ stub ExAcquireSharedWaitForExclusive
+@ stdcall ExAcquireSharedWaitForExclusive(ptr long)
 @ stub ExAllocateFromPagedLookasideList
 @ stdcall ExAllocatePool(long long)
 @ stdcall ExAllocatePoolWithQuota(long long)
