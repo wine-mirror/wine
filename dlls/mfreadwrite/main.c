@@ -74,6 +74,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 
 struct media_stream
 {
+    IMFMediaStream *stream;
     IMFMediaType *current;
     DWORD id;
 };
@@ -82,6 +83,7 @@ typedef struct source_reader
 {
     IMFSourceReader IMFSourceReader_iface;
     IMFAsyncCallback source_events_callback;
+    IMFAsyncCallback stream_events_callback;
     LONG refcount;
     IMFMediaSource *source;
     IMFPresentationDescriptor *descriptor;
@@ -108,6 +110,11 @@ static inline srcreader *impl_from_IMFSourceReader(IMFSourceReader *iface)
 static struct source_reader *impl_from_source_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct source_reader, source_events_callback);
+}
+
+static struct source_reader *impl_from_stream_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct source_reader, stream_events_callback);
 }
 
 static inline struct sink_writer *impl_from_IMFSinkWriter(IMFSinkWriter *iface)
@@ -151,6 +158,77 @@ static HRESULT WINAPI source_reader_source_events_callback_GetParameters(IMFAsyn
     return E_NOTIMPL;
 }
 
+static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IMFMediaEvent *event)
+{
+    IMFStreamDescriptor *sd;
+    IMFMediaStream *stream;
+    PROPVARIANT value;
+    unsigned int i;
+    DWORD id = 0;
+    HRESULT hr;
+
+    PropVariantInit(&value);
+    if (FAILED(hr = IMFMediaEvent_GetValue(event, &value)))
+    {
+        WARN("Failed to get event value, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (value.vt != VT_UNKNOWN || !value.u.punkVal)
+    {
+        WARN("Unexpected value type %d.\n", value.vt);
+        PropVariantClear(&value);
+        return E_UNEXPECTED;
+    }
+
+    hr = IUnknown_QueryInterface(value.u.punkVal, &IID_IMFMediaStream, (void **)&stream);
+    PropVariantClear(&value);
+    if (FAILED(hr))
+    {
+        WARN("Unexpected object type.\n");
+        return hr;
+    }
+
+    TRACE("Got new stream %p.\n", stream);
+
+    if (SUCCEEDED(hr = IMFMediaStream_GetStreamDescriptor(stream, &sd)))
+    {
+        hr = IMFStreamDescriptor_GetStreamIdentifier(sd, &id);
+        IMFStreamDescriptor_Release(sd);
+    }
+
+    if (FAILED(hr))
+    {
+        WARN("Unidentified stream %p, hr %#x.\n", stream, hr);
+        IMFMediaStream_Release(stream);
+        return hr;
+    }
+
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        if (id == reader->streams[i].id)
+        {
+            if (!InterlockedCompareExchangePointer((void **)&reader->streams[i].stream, stream, NULL))
+            {
+                IMFMediaStream_AddRef(reader->streams[i].stream);
+                if (FAILED(hr = IMFMediaStream_BeginGetEvent(stream, &reader->stream_events_callback,
+                        (IUnknown *)stream)))
+                {
+                    WARN("Failed to subscribe to stream events, hr %#x.\n", hr);
+                }
+            }
+            break;
+        }
+    }
+
+    if (i == reader->stream_count)
+        WARN("Stream with id %#x was not present in presentation descriptor.\n", id);
+
+    IMFMediaStream_Release(stream);
+
+    return hr;
+}
+
 static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct source_reader *reader = impl_from_source_callback_IMFAsyncCallback(iface);
@@ -170,10 +248,21 @@ static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallba
 
     TRACE("Got event %u.\n", event_type);
 
+    switch (event_type)
+    {
+        case MENewStream:
+            hr = source_reader_new_stream_handler(reader, event);
+            break;
+        default:
+            ;
+    }
+
+    if (FAILED(hr))
+        WARN("Failed while handling %d event, hr %#x.\n", event_type, hr);
+
     IMFMediaEvent_Release(event);
 
-    IMFMediaSource_BeginGetEvent(source, &reader->source_events_callback,
-        (IUnknown *)source);
+    IMFMediaSource_BeginGetEvent(source, iface, (IUnknown *)source);
 
     return S_OK;
 }
@@ -185,6 +274,52 @@ static const IMFAsyncCallbackVtbl source_events_callback_vtbl =
     source_reader_source_events_callback_Release,
     source_reader_source_events_callback_GetParameters,
     source_reader_source_events_callback_Invoke,
+};
+
+static ULONG WINAPI source_reader_stream_events_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct source_reader *reader = impl_from_stream_callback_IMFAsyncCallback(iface);
+    return IMFSourceReader_AddRef(&reader->IMFSourceReader_iface);
+}
+
+static ULONG WINAPI source_reader_stream_events_callback_Release(IMFAsyncCallback *iface)
+{
+    struct source_reader *reader = impl_from_stream_callback_IMFAsyncCallback(iface);
+    return IMFSourceReader_Release(&reader->IMFSourceReader_iface);
+}
+
+static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    MediaEventType event_type;
+    IMFMediaStream *stream;
+    IMFMediaEvent *event;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, result);
+
+    stream = (IMFMediaStream *)IMFAsyncResult_GetStateNoAddRef(result);
+
+    if (FAILED(hr = IMFMediaStream_EndGetEvent(stream, result, &event)))
+        return hr;
+
+    IMFMediaEvent_GetType(event, &event_type);
+
+    TRACE("Got event %u.\n", event_type);
+
+    IMFMediaEvent_Release(event);
+
+    IMFMediaStream_BeginGetEvent(stream, iface, (IUnknown *)stream);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl stream_events_callback_vtbl =
+{
+    source_reader_source_events_callback_QueryInterface,
+    source_reader_stream_events_callback_AddRef,
+    source_reader_stream_events_callback_Release,
+    source_reader_source_events_callback_GetParameters,
+    source_reader_stream_events_callback_Invoke,
 };
 
 static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReader *iface, REFIID riid, void **out)
@@ -239,6 +374,8 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 
         for (i = 0; i < reader->stream_count; ++i)
         {
+            if (reader->streams[i].stream)
+                IMFMediaStream_Release(reader->streams[i].stream);
             if (reader->streams[i].current)
                 IMFMediaType_Release(reader->streams[i].current);
         }
@@ -614,6 +751,7 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
 
     object->IMFSourceReader_iface.lpVtbl = &srcreader_vtbl;
     object->source_events_callback.lpVtbl = &source_events_callback_vtbl;
+    object->stream_events_callback.lpVtbl = &stream_events_callback_vtbl;
     object->refcount = 1;
     object->source = source;
     IMFMediaSource_AddRef(object->source);
