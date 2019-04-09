@@ -75,6 +75,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 struct media_stream
 {
     IMFMediaType *current;
+    DWORD id;
 };
 
 typedef struct source_reader
@@ -643,6 +644,9 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
 
         if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(object->descriptor, i, &selected, &sd)))
             break;
+
+        if (FAILED(hr = IMFStreamDescriptor_GetStreamIdentifier(sd, &object->streams[i].id)))
+            WARN("Failed to get stream identifier, hr %#x.\n", hr);
 
         hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
         IMFStreamDescriptor_Release(sd);
