@@ -30,6 +30,7 @@
 #include "ddk/wdm.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include "ntoskrnl_private.h"
 
@@ -718,6 +719,19 @@ void WINAPI ExReleaseFastMutexUnsafe( FAST_MUTEX *mutex )
         KeSetEvent( &mutex->Event, IO_NO_INCREMENT, FALSE );
 }
 
+/* Use of the fields of an ERESOURCE structure seems to vary wildly between
+ * Windows versions. The below implementation uses them as follows:
+ *
+ * OwnerTable - contains a list of shared owners, including threads which do
+ *              not currently own the resource
+ * OwnerTable[i].OwnerThread - shared owner TID
+ * OwnerTable[i].OwnerCount - recursion count of this shared owner (may be 0)
+ * OwnerEntry.OwnerThread - the owner TID if exclusively owned
+ * OwnerEntry.TableSize - the number of entries in OwnerTable, including threads
+ *                        which do not currently own the resource
+ * ActiveEntries - total number of acquisitions (incl. recursive ones)
+ */
+
 /***********************************************************************
  *           ExInitializeResourceLite   (NTOSKRNL.EXE.@)
  */
@@ -726,4 +740,61 @@ NTSTATUS WINAPI ExInitializeResourceLite( ERESOURCE *resource )
     TRACE("resource %p.\n", resource);
     memset(resource, 0, sizeof(*resource));
     return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           ExAcquireResourceExclusiveLite  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI ExAcquireResourceExclusiveLite( ERESOURCE *resource, BOOLEAN wait )
+{
+    KIRQL irql;
+
+    TRACE("resource %p, wait %u.\n", resource, wait);
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    if (resource->OwnerEntry.OwnerThread == (ERESOURCE_THREAD)KeGetCurrentThread())
+    {
+        resource->ActiveEntries++;
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return TRUE;
+    }
+    /* In order to avoid a race between waiting for the ExclusiveWaiters event
+     * and grabbing the lock, do not grab the resource if it is unclaimed but
+     * has waiters; instead queue ourselves. */
+    else if (!resource->ActiveEntries && !resource->NumberOfExclusiveWaiters && !resource->NumberOfSharedWaiters)
+    {
+        resource->Flag |= ResourceOwnedExclusive;
+        resource->OwnerEntry.OwnerThread = (ERESOURCE_THREAD)KeGetCurrentThread();
+        resource->ActiveEntries++;
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return TRUE;
+    }
+    else if (!wait)
+    {
+        KeReleaseSpinLock( &resource->SpinLock, irql );
+        return FALSE;
+    }
+
+    if (!resource->ExclusiveWaiters)
+    {
+        resource->ExclusiveWaiters = heap_alloc( sizeof(*resource->ExclusiveWaiters) );
+        KeInitializeEvent( resource->ExclusiveWaiters, SynchronizationEvent, FALSE );
+    }
+    resource->NumberOfExclusiveWaiters++;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    KeWaitForSingleObject( resource->ExclusiveWaiters, Executive, KernelMode, FALSE, NULL );
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    resource->Flag |= ResourceOwnedExclusive;
+    resource->OwnerEntry.OwnerThread = (ERESOURCE_THREAD)KeGetCurrentThread();
+    resource->ActiveEntries++;
+    resource->NumberOfExclusiveWaiters--;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    return TRUE;
 }

@@ -1512,6 +1512,7 @@ static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routi
 
 NTSTATUS  WINAPI DbgQueryDebugFilterState(ULONG, ULONG);
 void      WINAPI ExAcquireFastMutexUnsafe(PFAST_MUTEX);
+BOOLEAN   WINAPI ExAcquireResourceExclusiveLite(ERESOURCE*,BOOLEAN);
 PVOID     WINAPI ExAllocatePool(POOL_TYPE,SIZE_T);
 PVOID     WINAPI ExAllocatePoolWithQuota(POOL_TYPE,SIZE_T);
 PVOID     WINAPI ExAllocatePoolWithTag(POOL_TYPE,SIZE_T,ULONG);

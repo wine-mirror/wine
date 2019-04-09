@@ -3356,15 +3356,6 @@ NTSTATUS WINAPI IoCsqInitialize(PIO_CSQ csq, PIO_CSQ_INSERT_IRP insert_irp, PIO_
 }
 
 /***********************************************************************
- *           ExAcquireResourceExclusiveLite  (NTOSKRNL.EXE.@)
- */
-BOOLEAN WINAPI ExAcquireResourceExclusiveLite( PERESOURCE resource, BOOLEAN wait )
-{
-    FIXME( ":%p %u stub\n", resource, wait );
-    return TRUE;
-}
-
-/***********************************************************************
  *           ExDeleteResourceLite  (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI ExDeleteResourceLite(PERESOURCE resource)
