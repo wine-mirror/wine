@@ -310,6 +310,8 @@
 #define VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME "VK_EXT_buffer_device_address"
 #define VK_EXT_SEPARATE_STENCIL_USAGE_SPEC_VERSION 1
 #define VK_EXT_SEPARATE_STENCIL_USAGE_EXTENSION_NAME "VK_EXT_separate_stencil_usage"
+#define VK_EXT_YCBCR_IMAGE_ARRAYS_SPEC_VERSION 1
+#define VK_EXT_YCBCR_IMAGE_ARRAYS_EXTENSION_NAME "VK_EXT_ycbcr_image_arrays"
 #define VK_EXT_HOST_QUERY_RESET_SPEC_VERSION 1
 #define VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME "VK_EXT_host_query_reset"
 
@@ -2119,6 +2121,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_EXT = 1000244001,
     VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT = 1000244002,
     VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO_EXT = 1000246000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT = 1000252000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT = 1000261000,
     VK_STRUCTURE_TYPE_MAX_ENUM = 0x7fffffff,
 } VkStructureType;
@@ -3125,6 +3128,13 @@ typedef struct VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT
     void *pNext;
     uint32_t maxVertexAttribDivisor;
 } VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT;
+
+typedef struct VkPhysicalDeviceYcbcrImageArraysFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 ycbcrImageArrays;
+} VkPhysicalDeviceYcbcrImageArraysFeaturesEXT;
 
 typedef struct VkPipelineColorBlendAdvancedStateCreateInfoEXT
 {

@@ -1945,6 +1945,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceYcbcrImageArraysFeaturesEXT *in = (const VkPhysicalDeviceYcbcrImageArraysFeaturesEXT *)in_header;
+            VkPhysicalDeviceYcbcrImageArraysFeaturesEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->ycbcrImageArrays = in->ycbcrImageArrays;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         default:
             FIXME("Application requested a linked structure of type %u.\n", in_header->sType);
         }
@@ -4324,6 +4340,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_transform_feedback",
     "VK_EXT_validation_cache",
     "VK_EXT_vertex_attribute_divisor",
+    "VK_EXT_ycbcr_image_arrays",
     "VK_GOOGLE_decorate_string",
     "VK_GOOGLE_hlsl_functionality1",
     "VK_IMG_filter_cubic",

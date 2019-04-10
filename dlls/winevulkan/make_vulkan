@@ -105,7 +105,6 @@ BLACKLISTED_EXTENSIONS = [
     "VK_EXT_full_screen_exclusive",
     "VK_EXT_hdr_metadata", # Needs WSI work.
     "VK_EXT_pipeline_creation_feedback",
-    "VK_EXT_ycbcr_image_arrays",
     "VK_GOOGLE_display_timing",
     "VK_KHR_external_fence_win32",
     "VK_KHR_external_memory_win32",
