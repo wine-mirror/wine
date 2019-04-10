@@ -1343,6 +1343,43 @@ static inline void free_VkCopyDescriptorSet_array(VkCopyDescriptorSet_host *in, 
 
 #endif /* USE_STRUCT_CONVERSION */
 
+VkResult convert_VkInstanceCreateInfo_struct_chain(const void *pNext, VkInstanceCreateInfo *out_struct)
+{
+    VkBaseOutStructure *out_header = (VkBaseOutStructure *)out_struct;
+    const VkBaseInStructure *in_header;
+
+    out_header->pNext = NULL;
+
+    for (in_header = pNext; in_header; in_header = in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO:
+        case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:
+            break;
+
+        default:
+            FIXME("Application requested a linked structure of type %u.\n", in_header->sType);
+        }
+    }
+
+    return VK_SUCCESS;
+}
+
+void free_VkInstanceCreateInfo_struct_chain(VkInstanceCreateInfo *s)
+{
+    VkBaseOutStructure *header = (void *)s->pNext;
+
+    while (header)
+    {
+        void *prev = header;
+        header = header->pNext;
+        heap_free(prev);
+    }
+
+    s->pNext = NULL;
+}
+
 VkResult WINAPI wine_vkAcquireNextImage2KHR(VkDevice device, const VkAcquireNextImageInfoKHR *pAcquireInfo, uint32_t *pImageIndex)
 {
 #if defined(USE_STRUCT_CONVERSION)

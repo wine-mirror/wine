@@ -765,6 +765,9 @@ typedef struct VkCopyDescriptorSet_host
 } VkCopyDescriptorSet_host;
 
 
+VkResult convert_VkInstanceCreateInfo_struct_chain(const void *pNext, VkInstanceCreateInfo *out_struct) DECLSPEC_HIDDEN;
+void free_VkInstanceCreateInfo_struct_chain(VkInstanceCreateInfo *s) DECLSPEC_HIDDEN;
+
 /* For use by vkDevice and children */
 struct vulkan_device_funcs
 {

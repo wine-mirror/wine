@@ -407,36 +407,15 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
         VkInstanceCreateInfo *dst)
 {
     unsigned int i;
+    VkResult res;
 
     *dst = *src;
 
-    /* Application and loader can pass in a chain of extensions through pNext.
-     * We can't blindly pass these through as often these contain callbacks or
-     * they can even be pass structures for loader / ICD internal use. For now
-     * we ignore everything in pNext chain, but we print FIXMEs.
-     */
-    if (src->pNext)
+    if ((res = convert_VkInstanceCreateInfo_struct_chain(src->pNext, dst)) < 0)
     {
-        const VkBaseInStructure *header;
-
-        for (header = src->pNext; header; header = header->pNext)
-        {
-            switch (header->sType)
-            {
-                case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:
-                    /* Can be used to register new dispatchable object types
-                     * to the loader. We should ignore it as it will confuse the
-                     * host its loader.
-                     */
-                    break;
-
-                default:
-                    FIXME("Application requested a linked structure of type %u.\n", header->sType);
-            }
-        }
+        WARN("Failed to convert VkInstanceCreateInfo pNext chain, res=%d.\n", res);
+        return res;
     }
-    /* For now don't support anything. */
-    dst->pNext = NULL;
 
     /* ICDs don't support any layers, so nothing to copy. Modern versions of the loader
      * filter this data out as well.
@@ -452,6 +431,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
         if (!wine_vk_instance_extension_supported(extension_name))
         {
             WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
+            free_VkInstanceCreateInfo_struct_chain(dst);
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
     }
@@ -771,6 +751,7 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     }
 
     res = vk_funcs->p_vkCreateInstance(&create_info_host, NULL /* allocator */, &object->instance);
+    free_VkInstanceCreateInfo_struct_chain(&create_info_host);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create instance, res=%d\n", res);
