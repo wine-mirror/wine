@@ -19163,6 +19163,8 @@ for ac_func in \
 	powl \
 	remainder \
 	remainderf \
+	remquo \
+	remquof \
 	rint \
 	rintf \
 	round \

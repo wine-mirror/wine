@@ -308,9 +308,9 @@
 @ cdecl remainder(double double) ucrtbase.remainder
 @ cdecl remainderf(float float) ucrtbase.remainderf
 @ cdecl remainderl(double double) ucrtbase.remainderl
-@ stub remquo
-@ stub remquof
-@ stub remquol
+@ cdecl remquo(double double ptr) ucrtbase.remquo
+@ cdecl remquof(float float ptr) ucrtbase.remquof
+@ cdecl remquol(double double ptr) ucrtbase.remquol
 @ cdecl rint(double) ucrtbase.rint
 @ cdecl rintf(float) ucrtbase.rintf
 @ cdecl rintl(double) ucrtbase.rintl

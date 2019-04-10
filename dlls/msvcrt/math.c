@@ -3273,6 +3273,44 @@ LDOUBLE CDECL MSVCR120_remainderl(LDOUBLE x, LDOUBLE y)
 }
 
 /*********************************************************************
+ *      remquo (MSVCR120.@)
+ */
+double CDECL MSVCR120_remquo(double x, double y, int *quo)
+{
+#ifdef HAVE_REMQUO
+    if(!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(isnan(y) || y==0.0) *MSVCRT__errno() = MSVCRT_EDOM;
+    return remquo(x, y, quo);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0;
+#endif
+}
+
+/*********************************************************************
+ *      remquof (MSVCR120.@)
+ */
+float CDECL MSVCR120_remquof(float x, float y, int *quo)
+{
+#ifdef HAVE_REMQUOF
+    if(!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(isnan(y) || y==0.0f) *MSVCRT__errno() = MSVCRT_EDOM;
+    return remquof(x, y, quo);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0f;
+#endif
+}
+
+/*********************************************************************
+ *      remquol (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_remquol(LDOUBLE x, LDOUBLE y, int *quo)
+{
+    return MSVCR120_remquo(x, y, quo);
+}
+
+/*********************************************************************
  *      lgamma (MSVCR120.@)
  */
 double CDECL MSVCR120_lgamma(double x)

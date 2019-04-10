@@ -2328,9 +2328,9 @@
 @ cdecl remainderf(float float) MSVCR120_remainderf
 @ cdecl remainderl(double double) MSVCR120_remainderl
 @ cdecl remove(str) MSVCRT_remove
-@ stub remquo
-@ stub remquof
-@ stub remquol
+@ cdecl remquo(double double ptr) MSVCR120_remquo
+@ cdecl remquof(float float ptr) MSVCR120_remquof
+@ cdecl remquol(double double ptr) MSVCR120_remquol
 @ cdecl rename(str str) MSVCRT_rename
 @ cdecl rewind(ptr) MSVCRT_rewind
 @ cdecl rint(double) MSVCR120_rint

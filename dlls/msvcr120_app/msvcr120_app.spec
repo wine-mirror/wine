@@ -1991,9 +1991,9 @@
 @ cdecl remainderf(float float) msvcr120.remainderf
 @ cdecl remainderl(double double) msvcr120.remainderl
 @ cdecl remove(str) msvcr120.remove
-@ stub remquo
-@ stub remquof
-@ stub remquol
+@ cdecl remquo(double double ptr) msvcr120.remquo
+@ cdecl remquof(float float ptr) msvcr120.remquof
+@ cdecl remquol(double double ptr) msvcr120.remquol
 @ cdecl rename(str str) msvcr120.rename
 @ cdecl rewind(ptr) msvcr120.rewind
 @ cdecl rint(double) msvcr120.rint
