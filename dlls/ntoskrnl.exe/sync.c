@@ -1125,3 +1125,22 @@ ULONG WINAPI ExGetSharedWaiterCount( ERESOURCE *resource )
 
     return count;
 }
+
+/***********************************************************************
+ *           ExIsResourceAcquiredExclusiveLite   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI ExIsResourceAcquiredExclusiveLite( ERESOURCE *resource )
+{
+    BOOLEAN ret;
+    KIRQL irql;
+
+    TRACE("resource %p.\n", resource);
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    ret = (resource->OwnerEntry.OwnerThread == (ERESOURCE_THREAD)KeGetCurrentThread());
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    return ret;
+}

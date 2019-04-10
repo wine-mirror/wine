@@ -165,7 +165,7 @@
 @ stub ExInterlockedPushEntryList
 @ stdcall ExInterlockedRemoveHeadList(ptr ptr)
 @ stub ExIsProcessorFeaturePresent
-@ stub ExIsResourceAcquiredExclusiveLite
+@ stdcall ExIsResourceAcquiredExclusiveLite(ptr)
 @ stub ExIsResourceAcquiredSharedLite
 @ stdcall ExLocalTimeToSystemTime(ptr ptr) RtlLocalTimeToSystemTime
 @ stub ExNotifyCallback
