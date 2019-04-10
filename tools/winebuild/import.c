@@ -548,6 +548,8 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
     name = ldcombine_files( spec, argv );
 
     cmd = strmake( "%s -u %s", prog, name );
+    if (verbose)
+        fprintf( stderr, "%s\n", cmd );
     if (!(f = popen( cmd, "r" )))
         fatal_error( "Cannot execute '%s'\n", cmd );
 
