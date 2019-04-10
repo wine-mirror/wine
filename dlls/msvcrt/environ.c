@@ -310,3 +310,19 @@ int CDECL _wgetenv_s(MSVCRT_size_t *pReturnValue, MSVCRT_wchar_t *buffer, MSVCRT
     strcpyW(buffer, e);
     return 0;
 }
+
+/*********************************************************************
+ *		_get_environ (MSVCRT.@)
+ */
+void CDECL MSVCRT__get_environ(char ***ptr)
+{
+    *ptr = MSVCRT__environ;
+}
+
+/*********************************************************************
+ *		_get_wenviron (MSVCRT.@)
+ */
+void CDECL MSVCRT__get_wenviron(MSVCRT_wchar_t ***ptr)
+{
+    *ptr = MSVCRT__wenviron;
+}

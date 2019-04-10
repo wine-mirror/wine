@@ -501,7 +501,7 @@
 @ cdecl _gcvt_s(ptr long  double long) MSVCRT__gcvt_s
 @ cdecl _get_current_locale() MSVCRT__get_current_locale
 @ cdecl _get_doserrno(ptr)
-# stub _get_environ(ptr)
+@ cdecl _get_environ(ptr) MSVCRT__get_environ
 @ cdecl _get_errno(ptr)
 # stub _get_fileinfo(ptr)
 @ cdecl _get_fmode(ptr) MSVCRT__get_fmode
@@ -512,7 +512,7 @@
 @ cdecl _get_output_format() MSVCRT__get_output_format
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_sbh_threshold()
-# stub _get_wenviron(ptr)
+@ cdecl _get_wenviron(ptr) MSVCRT__get_wenviron
 @ cdecl _get_winmajor(ptr) MSVCRT__get_winmajor
 @ cdecl _get_winminor(ptr) MSVCRT__get_winminor
 # stub _get_winver(ptr)
