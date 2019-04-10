@@ -221,6 +221,7 @@ FUNCTION_OVERRIDES = {
 }
 
 STRUCT_CHAIN_CONVERSIONS = [
+    "VkDeviceCreateInfo",
     "VkInstanceCreateInfo",
 ]
 
