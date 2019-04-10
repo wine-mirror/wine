@@ -9768,7 +9768,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Werror_unknown_warning_option" >&5
 $as_echo "$ac_cv_crosscflags__Werror_unknown_warning_option" >&6; }
 if test "x$ac_cv_crosscflags__Werror_unknown_warning_option" = xyes; then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Werror=unknown-warning-option"
+  CFLAGS="$CFLAGS -Werror=unknown-warning-option"
 fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wdeclaration-after-statement" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wdeclaration-after-statement... " >&6; }
