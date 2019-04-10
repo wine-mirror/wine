@@ -1526,6 +1526,23 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR:
+        {
+            const VkPhysicalDeviceFloat16Int8FeaturesKHR *in = (const VkPhysicalDeviceFloat16Int8FeaturesKHR *)in_header;
+            VkPhysicalDeviceFloat16Int8FeaturesKHR *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->shaderFloat16 = in->shaderFloat16;
+            out->shaderInt8 = in->shaderInt8;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT:
         {
             const VkPhysicalDeviceHostQueryResetFeaturesEXT *in = (const VkPhysicalDeviceHostQueryResetFeaturesEXT *)in_header;
@@ -4337,6 +4354,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_sampler_ycbcr_conversion",
     "VK_KHR_shader_atomic_int64",
     "VK_KHR_shader_draw_parameters",
+    "VK_KHR_shader_float16_int8",
     "VK_KHR_shader_float_controls",
     "VK_KHR_storage_buffer_storage_class",
     "VK_KHR_swapchain",
