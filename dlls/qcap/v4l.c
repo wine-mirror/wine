@@ -94,8 +94,6 @@ static BOOL video_init(void)
 #endif
 }
 
-typedef void (* Renderer)(const Capture *, LPBYTE bufferin, const BYTE *stream);
-
 struct _Capture
 {
     UINT width, height, bitDepth, fps, outputwidth, outputheight;
@@ -107,36 +105,10 @@ struct _Capture
     int fd, mmap;
     BOOL iscommitted, stopped;
 
-    __u32 pixelformat;
-    int depth;
-
     int image_size;
     unsigned char *image_data;
 
     HANDLE thread;
-    Renderer renderer;
-};
-
-static void renderer_RGB(const Capture *capBox, LPBYTE bufferin, const BYTE *stream);
-static void renderer_YUV(const Capture *capBox, LPBYTE bufferin, const BYTE *stream);
-
-static const struct
-{
-    int depth;
-    __u32 pixelformat;
-    Renderer renderer;
-}
-renderlist_V4l[] =
-{
-    {24, V4L2_PIX_FMT_BGR24, renderer_RGB},
-    {32, V4L2_PIX_FMT_BGR32, renderer_RGB},
-    {16, V4L2_PIX_FMT_YUYV, renderer_YUV},
-    {16, V4L2_PIX_FMT_UYVY, renderer_YUV},
-    {12, V4L2_PIX_FMT_Y41P, renderer_YUV},
-    {16, V4L2_PIX_FMT_YUV422P, renderer_YUV},
-    {12, V4L2_PIX_FMT_YUV411P, renderer_YUV},
-    {12, V4L2_PIX_FMT_YUV420, renderer_YUV},
-    {10, V4L2_PIX_FMT_YUV410, renderer_YUV},
 };
 
 static int xioctl(int fd, int request, void * arg)
@@ -153,7 +125,7 @@ static int xioctl(int fd, int request, void * arg)
 /* Prepare the capture buffers */
 static HRESULT V4l_Prepare(Capture *device)
 {
-    device->image_size = device->depth * device->height * device->width / 8;
+    device->image_size = device->height * device->width * 3;
     if (!(device->image_data = heap_alloc(device->image_size)))
         return E_OUTOFMEMORY;
     return S_OK;
@@ -347,70 +319,6 @@ HRESULT qcap_driver_set_prop(Capture *device, VideoProcAmpProperty property,
     return S_OK;
 }
 
-static void renderer_RGB(const Capture *device, BYTE *bufferin, const BYTE *stream)
-{
-    int size = device->height * device->width * device->depth / 8;
-    int pointer, offset;
-
-    switch (device->pixelformat)
-    {
-    case V4L2_PIX_FMT_BGR24:
-        memcpy(bufferin, stream, size);
-        break;
-    case V4L2_PIX_FMT_BGR32:
-        pointer = 0;
-        offset = 1;
-        while (pointer + offset <= size)
-        {
-            bufferin[pointer] = stream[pointer + offset];
-            pointer++;
-            bufferin[pointer] = stream[pointer + offset];
-            pointer++;
-            bufferin[pointer] = stream[pointer + offset];
-            pointer++;
-            offset++;
-        }
-        break;
-    default:
-        FIXME("Unhandled pixel format %#x.\n", device->pixelformat);
-        return;
-    }
-}
-
-static void renderer_YUV(const Capture *device, BYTE *bufferin, const BYTE *stream)
-{
-    enum YUV_Format format;
-
-    switch (device->pixelformat)
-    {
-    case V4L2_PIX_FMT_YUYV:
-        format = YUYV;
-        break;
-    case V4L2_PIX_FMT_UYVY:
-        format = UYVY;
-        break;
-    case V4L2_PIX_FMT_Y41P:
-        format = UYYVYY;
-        break;
-    case V4L2_PIX_FMT_YUV422P:
-        format = YUVP_421;
-        break;
-    case V4L2_PIX_FMT_YUV411P:
-        format = YUVP_441;
-        break;
-    case V4L2_PIX_FMT_YUV420:
-        format = YUVP_422;
-        break;
-    case V4L2_PIX_FMT_YUV410:
-        format = YUVP_444;
-        break;
-    default:
-        FIXME("Unhandled pixel format %#x.\n", device->pixelformat);
-        return;
-    }
-    YUV_To_RGB24(format, bufferin, stream, device->width, device->height);
-}
-
 static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
 {
     /* the whole image needs to be reversed,
@@ -522,7 +430,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             IMediaSample_GetPointer(pSample, &pTarget);
             /* FIXME: Check return values.. */
             V4l_GetFrame(capBox, &pInput);
-            capBox->renderer(capBox, pOutput, pInput);
+            memcpy(pOutput, pInput, len);
             Resize(capBox, pTarget, pOutput);
             hr = BaseOutputPinImpl_Deliver((BaseOutputPin *)capBox->pOut, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
@@ -659,57 +567,10 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
     return S_OK;
 }
 
-static int negotiate_format(Capture *device)
-{
-    struct v4l2_format format = {0};
-    int fd = device->fd;
-    unsigned int i;
-
-    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-
-    if (xioctl(fd, VIDIOC_G_FMT, &format) == -1)
-    {
-        ERR("Failed to get device format: %s\n", strerror(errno));
-        return -1;
-    }
-
-    for (i = 0; i < ARRAY_SIZE(renderlist_V4l); ++i)
-    {
-        if (renderlist_V4l[i].pixelformat == format.fmt.pix.pixelformat)
-        {
-            TRACE("Using device-reported format %#x.\n", format.fmt.pix.pixelformat);
-            device->depth = renderlist_V4l[i].depth;
-            device->renderer = renderlist_V4l[i].renderer;
-            device->pixelformat = format.fmt.pix.pixelformat;
-            device->width = format.fmt.pix.width;
-            device->height = format.fmt.pix.height;
-            return 0;
-        }
-    }
-
-    for (i = 0; i < ARRAY_SIZE(renderlist_V4l); ++i)
-    {
-        format.fmt.pix.pixelformat = renderlist_V4l[i].pixelformat;
-        if (!xioctl(fd, VIDIOC_S_FMT, &format)
-                && format.fmt.pix.pixelformat == renderlist_V4l[i].pixelformat)
-        {
-            TRACE("Using format %#x.\n", format.fmt.pix.pixelformat);
-            device->depth = renderlist_V4l[i].depth;
-            device->renderer = renderlist_V4l[i].renderer;
-            device->pixelformat = format.fmt.pix.pixelformat;
-            device->width = format.fmt.pix.width;
-            device->height = format.fmt.pix.height;
-            return 0;
-        }
-    }
-
-    FIXME("Could not negotiate an acceptable format.\n");
-    return -1;
-}
-
 Capture * qcap_driver_init( IPin *pOut, USHORT card )
 {
     struct v4l2_capability caps = {{0}};
+    struct v4l2_format format = {0};
     Capture *device = NULL;
     BOOL have_libv4l2;
     char path[20];
@@ -762,11 +623,25 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
         goto error;
     }
 
-    if (negotiate_format(device) == -1)
+    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (xioctl(fd, VIDIOC_G_FMT, &format) == -1)
+    {
+        ERR("Failed to get device format: %s\n", strerror(errno));
         goto error;
+    }
 
-    device->outputwidth = device->width;
-    device->outputheight = device->height;
+    format.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
+    if (xioctl(fd, VIDIOC_S_FMT, &format) == -1
+            || format.fmt.pix.pixelformat != V4L2_PIX_FMT_BGR24)
+    {
+        ERR("Failed to set pixel format: %s\n", strerror(errno));
+        if (!have_libv4l2)
+            ERR_(winediag)("You may need libv4l2 to use this device.\n");
+        goto error;
+    }
+
+    device->outputwidth = device->width = format.fmt.pix.width;
+    device->outputheight = device->height = format.fmt.pix.height;
     device->swresize = FALSE;
     device->bitDepth = 24;
     device->pOut = pOut;
