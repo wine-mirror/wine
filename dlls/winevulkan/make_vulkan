@@ -112,7 +112,6 @@ BLACKLISTED_EXTENSIONS = [
     # Relates to external_semaphore and needs type conversions in bitflags.
     "VK_KHR_shared_presentable_image", # Needs WSI work.
     "VK_KHR_win32_keyed_mutex",
-    "VK_NV_dedicated_allocation_image_aliasing",
 
     # Extensions for other platforms
     "VK_EXT_external_memory_dma_buf",

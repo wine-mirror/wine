@@ -1811,6 +1811,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEDICATED_ALLOCATION_IMAGE_ALIASING_FEATURES_NV:
+        {
+            const VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV *in = (const VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV *)in_header;
+            VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->dedicatedAllocationImageAliasing = in->dedicatedAllocationImageAliasing;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV:
         {
             const VkPhysicalDeviceShadingRateImageFeaturesNV *in = (const VkPhysicalDeviceShadingRateImageFeaturesNV *)in_header;
@@ -4407,6 +4423,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_cooperative_matrix",
     "VK_NV_corner_sampled_image",
     "VK_NV_dedicated_allocation",
+    "VK_NV_dedicated_allocation_image_aliasing",
     "VK_NV_device_diagnostic_checkpoints",
     "VK_NV_fill_rectangle",
     "VK_NV_fragment_coverage_to_color",
