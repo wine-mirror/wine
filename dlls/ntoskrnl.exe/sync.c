@@ -1106,3 +1106,22 @@ ULONG WINAPI ExGetExclusiveWaiterCount( ERESOURCE *resource )
 
     return count;
 }
+
+/***********************************************************************
+ *           ExGetSharedWaiterCount   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI ExGetSharedWaiterCount( ERESOURCE *resource )
+{
+    ULONG count;
+    KIRQL irql;
+
+    TRACE("resource %p.\n", resource);
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    count = resource->NumberOfSharedWaiters;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    return count;
+}

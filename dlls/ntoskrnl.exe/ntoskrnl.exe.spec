@@ -148,7 +148,7 @@
 @ stub ExGetCurrentProcessorCpuUsage
 @ stdcall ExGetExclusiveWaiterCount(ptr)
 @ stub ExGetPreviousMode
-@ stub ExGetSharedWaiterCount
+@ stdcall ExGetSharedWaiterCount(ptr)
 @ stdcall ExInitializeNPagedLookasideList(ptr ptr ptr long long long long)
 @ stdcall ExInitializePagedLookasideList(ptr ptr ptr long long long long)
 @ stdcall ExInitializeResourceLite(ptr)
