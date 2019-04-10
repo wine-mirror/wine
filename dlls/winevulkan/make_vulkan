@@ -101,7 +101,6 @@ BLACKLISTED_EXTENSIONS = [
     # Device extensions
     "VK_AMD_display_native_hdr",
     "VK_EXT_calibrated_timestamps",
-    "VK_AMD_memory_overallocation_behavior",
     "VK_EXT_display_control", # Requires VK_EXT_display_surface_counter
     "VK_EXT_external_memory_host",
     "VK_EXT_full_screen_exclusive",

@@ -1828,6 +1828,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_DEVICE_MEMORY_OVERALLOCATION_CREATE_INFO_AMD:
+        {
+            const VkDeviceMemoryOverallocationCreateInfoAMD *in = (const VkDeviceMemoryOverallocationCreateInfoAMD *)in_header;
+            VkDeviceMemoryOverallocationCreateInfoAMD *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->overallocationBehavior = in->overallocationBehavior;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT:
         {
             const VkPhysicalDeviceFragmentDensityMapFeaturesEXT *in = (const VkPhysicalDeviceFragmentDensityMapFeaturesEXT *)in_header;
@@ -4225,6 +4241,7 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_gcn_shader",
     "VK_AMD_gpu_shader_half_float",
     "VK_AMD_gpu_shader_int16",
+    "VK_AMD_memory_overallocation_behavior",
     "VK_AMD_mixed_attachment_samples",
     "VK_AMD_negative_viewport_height",
     "VK_AMD_rasterization_order",
