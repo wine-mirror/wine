@@ -1874,6 +1874,11 @@ static struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd, const RECT *wi
 
     if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId()) return NULL;
 
+    /* Recreate the parent gl_drawable now that we know there are child windows
+     * that will need clipping support.
+     */
+    sync_gl_drawable( parent, TRUE );
+
     display = thread_init_display();
     init_clip_window();  /* make sure the clip window is initialized in this thread */
 
@@ -2206,6 +2211,12 @@ void CDECL X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 done:
     release_win_data( data );
     set_gl_drawable_parent( hwnd, parent );
+
+    /* Recreate the parent gl_drawable now that we know there are child windows
+     * that will need clipping support.
+     */
+    sync_gl_drawable( parent, TRUE );
+
     fetch_icon_data( hwnd, 0, 0 );
 }
 
@@ -2369,7 +2380,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
                               data->client_rect.bottom - data->client_rect.top !=
                               old_client_rect.bottom - old_client_rect.top));
         release_win_data( data );
-        if (needs_resize) sync_gl_drawable( hwnd );
+        if (needs_resize) sync_gl_drawable( hwnd, FALSE );
         return;
     }
 
