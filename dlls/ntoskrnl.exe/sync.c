@@ -1087,3 +1087,22 @@ void WINAPI ExReleaseResourceLite( ERESOURCE *resource )
 {
     ExReleaseResourceForThreadLite( resource, (ERESOURCE_THREAD)KeGetCurrentThread() );
 }
+
+/***********************************************************************
+ *           ExGetExclusiveWaiterCount   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI ExGetExclusiveWaiterCount( ERESOURCE *resource )
+{
+    ULONG count;
+    KIRQL irql;
+
+    TRACE("resource %p.\n", resource);
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    count = resource->NumberOfExclusiveWaiters;
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    return count;
+}

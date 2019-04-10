@@ -146,7 +146,7 @@
 @ stub ExFreeToPagedLookasideList
 @ stub ExGetCurrentProcessorCounts
 @ stub ExGetCurrentProcessorCpuUsage
-@ stub ExGetExclusiveWaiterCount
+@ stdcall ExGetExclusiveWaiterCount(ptr)
 @ stub ExGetPreviousMode
 @ stub ExGetSharedWaiterCount
 @ stdcall ExInitializeNPagedLookasideList(ptr ptr ptr long long long long)
