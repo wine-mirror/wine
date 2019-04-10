@@ -215,6 +215,7 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
             packet->pkContext = ptr->handle;
 
             /* translate packet data to the context */
+            packet->pkChanged = packet->pkChanged & ptr->context.lcPktData;
 
             /* Scale  as per documentation */
             packet->pkY = ScaleForContext(packet->pkY, ptr->context.lcInOrgY,
