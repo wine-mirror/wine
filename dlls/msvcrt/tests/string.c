@@ -3098,29 +3098,33 @@ static void test_atof(void)
 static void test_strncpy(void)
 {
 #define TEST_STRNCPY_LEN 10
+    /* use function pointer to bypass gcc builtin */
+    char *(__cdecl *p_strncpy)(char*,const char*,size_t);
     char *ret;
     char dst[TEST_STRNCPY_LEN + 1];
     char not_null_terminated[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
 
+    p_strncpy = (void *)GetProcAddress( GetModuleHandleA("msvcrt.dll"), "strncpy");
+
     /* strlen(src) > TEST_STRNCPY_LEN */
-    ret = strncpy(dst, "01234567890123456789", TEST_STRNCPY_LEN);
+    ret = p_strncpy(dst, "01234567890123456789", TEST_STRNCPY_LEN);
     ok(ret == dst, "ret != dst\n");
     ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
 
     /* without null-terminated */
-    ret = strncpy(dst, not_null_terminated, TEST_STRNCPY_LEN);
+    ret = p_strncpy(dst, not_null_terminated, TEST_STRNCPY_LEN);
     ok(ret == dst, "ret != dst\n");
     ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
 
     /* strlen(src) < TEST_STRNCPY_LEN */
     strcpy(dst, "0123456789");
-    ret = strncpy(dst, "012345", TEST_STRNCPY_LEN);
+    ret = p_strncpy(dst, "012345", TEST_STRNCPY_LEN);
     ok(ret == dst, "ret != dst\n");
     ok(!strcmp(dst, "012345"), "dst != 012345\n");
     ok(dst[TEST_STRNCPY_LEN - 1] == '\0', "dst[TEST_STRNCPY_LEN - 1] != 0\n");
 
     /* strlen(src) == TEST_STRNCPY_LEN */
-    ret = strncpy(dst, "0123456789", TEST_STRNCPY_LEN);
+    ret = p_strncpy(dst, "0123456789", TEST_STRNCPY_LEN);
     ok(ret == dst, "ret != dst\n");
     ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
 }
