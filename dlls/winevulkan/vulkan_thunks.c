@@ -1894,6 +1894,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceMemoryPriorityFeaturesEXT *in = (const VkPhysicalDeviceMemoryPriorityFeaturesEXT *)in_header;
+            VkPhysicalDeviceMemoryPriorityFeaturesEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->memoryPriority = in->memoryPriority;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_ADDRESS_FEATURES_EXT:
         {
             const VkPhysicalDeviceBufferAddressFeaturesEXT *in = (const VkPhysicalDeviceBufferAddressFeaturesEXT *)in_header;
@@ -4268,6 +4284,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_host_query_reset",
     "VK_EXT_inline_uniform_block",
     "VK_EXT_memory_budget",
+    "VK_EXT_memory_priority",
     "VK_EXT_pci_bus_info",
     "VK_EXT_post_depth_coverage",
     "VK_EXT_queue_family_foreign",
