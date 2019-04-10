@@ -32,7 +32,7 @@
 #include "wine/debug.h"
 
 /* This is not used if V4L support is missing */
-#if defined(HAVE_LINUX_VIDEODEV_H) || defined(HAVE_LIBV4L1_H)
+#ifdef HAVE_LINUX_VIDEODEV2_H
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 

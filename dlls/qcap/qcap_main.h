@@ -20,6 +20,7 @@
 #ifndef _QCAP_MAIN_H_DEFINED
 #define _QCAP_MAIN_H_DEFINED
 
+#include "wine/heap.h"
 #include "wine/strmbase.h"
 
 extern DWORD ObjectRefCount(BOOL increment) DECLSPEC_HIDDEN;

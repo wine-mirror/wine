@@ -81,7 +81,7 @@ AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner
 AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
 AC_ARG_WITH(tiff,      AS_HELP_STRING([--without-tiff],[do not use TIFF]))
 AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (plug and play support)]))
-AC_ARG_WITH(v4l,       AS_HELP_STRING([--without-v4l],[do not use v4l1 (v4l support)]))
+AC_ARG_WITH(v4l2,      AS_HELP_STRING([--without-v4l2],[do not use v4l2 (video capture)]))
 AC_ARG_WITH(vkd3d,     AS_HELP_STRING([--without-vkd3d],[do not use vkd3d (Direct3D 12 support)]))
 AC_ARG_WITH(vulkan,    AS_HELP_STRING([--without-vulkan],[do not use Vulkan]))
 AC_ARG_WITH(xcomposite,AS_HELP_STRING([--without-xcomposite],[do not use the Xcomposite extension]),
@@ -674,7 +674,7 @@ AC_CHECK_HEADERS([pthread_np.h],,,
 #include <pthread.h>
 #endif])
 
-AC_CHECK_HEADERS([linux/videodev.h linux/videodev2.h libv4l1.h],,,
+AC_CHECK_HEADERS([linux/videodev2.h],,,
 [#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -1417,13 +1417,13 @@ fi
 WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],
                  [libsane ${notice_platform}development files not found, scanners won't be supported.])
 
-dnl **** Check for libv4l1 ****
-if test "x$with_v4l" != "xno"
+dnl **** Check for libv4l2 ****
+if test "x$with_v4l2" != "xno"
 then
-    WINE_CHECK_SONAME(v4l1,v4l1_open,,,)
+    WINE_CHECK_SONAME(v4l2,v4l2_open)
 fi
-WINE_NOTICE_WITH(v4l,[test "x$ac_cv_lib_soname_v4l1" = "x"],
-                 [libv4l ${notice_platform}development files not found.])
+WINE_NOTICE_WITH(v4l2,[test "x$ac_cv_lib_soname_v4l2" = "x"],
+                 [libv4l2 ${notice_platform}development files not found.])
 
 dnl **** Check for libgphoto2 ****
 if test "x$with_gphoto" != "xno"

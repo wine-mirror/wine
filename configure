@@ -870,7 +870,7 @@ with_sane
 with_sdl
 with_tiff
 with_udev
-with_v4l
+with_v4l2
 with_vkd3d
 with_vulkan
 with_xcomposite
@@ -2541,7 +2541,7 @@ Optional Packages:
   --without-sdl           do not use SDL
   --without-tiff          do not use TIFF
   --without-udev          do not use udev (plug and play support)
-  --without-v4l           do not use v4l1 (v4l support)
+  --without-v4l2          do not use v4l2 (video capture)
   --without-vkd3d         do not use vkd3d (Direct3D 12 support)
   --without-vulkan        do not use Vulkan
   --without-xcomposite    do not use the Xcomposite extension
@@ -4045,9 +4045,9 @@ if test "${with_udev+set}" = set; then :
 fi
 
 
-# Check whether --with-v4l was given.
-if test "${with_v4l+set}" = set; then :
-  withval=$with_v4l;
+# Check whether --with-v4l2 was given.
+if test "${with_v4l2+set}" = set; then :
+  withval=$with_v4l2;
 fi
 
 
@@ -7734,10 +7734,9 @@ fi
 done
 
 
-for ac_header in linux/videodev.h linux/videodev2.h libv4l1.h
+for ac_header in linux/videodev2.h
 do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_SYS_TIME_H
+  ac_fn_c_check_header_compile "$LINENO" "linux/videodev2.h" "ac_cv_header_linux_videodev2_h" "#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include <sys/types.h>
@@ -7745,9 +7744,9 @@ ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE
 #include <asm/types.h>
 #endif
 "
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+if test "x$ac_cv_header_linux_videodev2_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+#define HAVE_LINUX_VIDEODEV2_H 1
 _ACEOF
 
 fi
@@ -13483,15 +13482,15 @@ esac
 
 fi
 
-if test "x$with_v4l" != "xno"
+if test "x$with_v4l2" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lv4l1" >&5
-$as_echo_n "checking for -lv4l1... " >&6; }
-if ${ac_cv_lib_soname_v4l1+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lv4l2" >&5
+$as_echo_n "checking for -lv4l2... " >&6; }
+if ${ac_cv_lib_soname_v4l2+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lv4l1  $LIBS"
+LIBS="-lv4l2  $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13501,22 +13500,22 @@ LIBS="-lv4l1  $LIBS"
 #ifdef __cplusplus
 extern "C"
 #endif
-char v4l1_open ();
+char v4l2_open ();
 int
 main ()
 {
-return v4l1_open ();
+return v4l2_open ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   case "$LIBEXT" in
-    dll) ac_cv_lib_soname_v4l1=`$ac_cv_path_LDD conftest.exe | grep "v4l1" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_v4l1=`$OTOOL -L conftest$ac_exeext | grep "libv4l1\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libv4l1\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_v4l1=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libv4l1\\.$LIBEXT" | sed -e "s/^.*\\[\\(libv4l1\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_v4l1:+false} :; then :
-  ac_cv_lib_soname_v4l1=`$LDD conftest$ac_exeext | grep "libv4l1\\.$LIBEXT" | sed -e "s/^.*\(libv4l1\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+    dll) ac_cv_lib_soname_v4l2=`$ac_cv_path_LDD conftest.exe | grep "v4l2" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_v4l2=`$OTOOL -L conftest$ac_exeext | grep "libv4l2\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libv4l2\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_v4l2=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libv4l2\\.$LIBEXT" | sed -e "s/^.*\\[\\(libv4l2\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_v4l2:+false} :; then :
+  ac_cv_lib_soname_v4l2=`$LDD conftest$ac_exeext | grep "libv4l2\\.$LIBEXT" | sed -e "s/^.*\(libv4l2\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
 fi
@@ -13524,27 +13523,27 @@ rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_check_soname_save_LIBS
 fi
-if ${ac_cv_lib_soname_v4l1:+false} :; then :
+if ${ac_cv_lib_soname_v4l2:+false} :; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
 
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_v4l1" >&5
-$as_echo "$ac_cv_lib_soname_v4l1" >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_v4l2" >&5
+$as_echo "$ac_cv_lib_soname_v4l2" >&6; }
 
 cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBV4L1 "$ac_cv_lib_soname_v4l1"
+#define SONAME_LIBV4L2 "$ac_cv_lib_soname_v4l2"
 _ACEOF
 
 
 fi
 fi
-if test "x$ac_cv_lib_soname_v4l1" = "x"; then :
-  case "x$with_v4l" in
-  x)   as_fn_append wine_notices "|libv4l ${notice_platform}development files not found." ;;
+if test "x$ac_cv_lib_soname_v4l2" = "x"; then :
+  case "x$with_v4l2" in
+  x)   as_fn_append wine_notices "|libv4l2 ${notice_platform}development files not found." ;;
   xno) ;;
-  *)   as_fn_error $? "libv4l ${notice_platform}development files not found.
-This is an error since --with-v4l was requested." "$LINENO" 5 ;;
+  *)   as_fn_error $? "libv4l2 ${notice_platform}development files not found.
+This is an error since --with-v4l2 was requested." "$LINENO" 5 ;;
 esac
 
 fi
