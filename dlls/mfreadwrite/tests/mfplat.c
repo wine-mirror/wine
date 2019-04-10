@@ -79,47 +79,6 @@ static IMFByteStream *get_resource_stream(const char *name)
     return bytestream;
 }
 
-static void test_MFCreateSourceReaderFromByteStream(void)
-{
-    static const WCHAR audio[] = {'A','u','d','i','o',0};
-    IMFSourceReader *reader = NULL;
-    IMFAttributes *attributes;
-    IMFByteStream *bytestream = NULL;
-    IStream *stream = NULL;
-    HRESULT hr;
-
-    if(!pMFCreateMFByteStreamOnStream)
-    {
-        win_skip("MFCreateMFByteStreamOnStream() not found\n");
-        return;
-    }
-
-    hr = MFCreateAttributes( &attributes, 3 );
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr =  IMFAttributes_SetString(attributes, &MF_READWRITE_MMCSS_CLASS_AUDIO, audio);
-    ok(hr == S_OK, "Failed to set string value, hr %#x.\n", hr);
-
-    hr = IMFAttributes_SetUINT32(attributes, &MF_READWRITE_MMCSS_PRIORITY_AUDIO, 0);
-    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
-
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = pMFCreateMFByteStreamOnStream(stream, &bytestream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = MFCreateSourceReaderFromByteStream(bytestream, attributes, &reader);
-todo_wine
-    ok(hr == S_OK || hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
-
-    IStream_Release(stream);
-    IMFByteStream_Release(bytestream);
-    IMFAttributes_Release(attributes);
-    if (reader)
-        IMFSourceReader_Release(reader);
-}
-
 static void test_factory(void)
 {
     IMFReadWriteClassFactory *factory, *factory2;
@@ -237,7 +196,10 @@ static void test_source_reader(void)
     HRESULT hr;
 
     if (!pMFCreateMFByteStreamOnStream)
+    {
+        win_skip("MFCreateMFByteStreamOnStream() not found\n");
         return;
+    }
 
     stream = get_resource_stream("test.wav");
 
@@ -379,7 +341,6 @@ START_TEST(mfplat)
 
     init_functions();
 
-    test_MFCreateSourceReaderFromByteStream();
     test_factory();
     test_source_reader();
 
