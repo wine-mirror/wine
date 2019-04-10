@@ -310,6 +310,8 @@
 #define VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME "VK_EXT_buffer_device_address"
 #define VK_EXT_SEPARATE_STENCIL_USAGE_SPEC_VERSION 1
 #define VK_EXT_SEPARATE_STENCIL_USAGE_EXTENSION_NAME "VK_EXT_separate_stencil_usage"
+#define VK_NV_COOPERATIVE_MATRIX_SPEC_VERSION 1
+#define VK_NV_COOPERATIVE_MATRIX_EXTENSION_NAME "VK_NV_cooperative_matrix"
 #define VK_EXT_YCBCR_IMAGE_ARRAYS_SPEC_VERSION 1
 #define VK_EXT_YCBCR_IMAGE_ARRAYS_EXTENSION_NAME "VK_EXT_ycbcr_image_arrays"
 #define VK_EXT_HOST_QUERY_RESET_SPEC_VERSION 1
@@ -790,6 +792,22 @@ typedef enum VkComponentSwizzle
     VK_COMPONENT_SWIZZLE_A = 6,
     VK_COMPONENT_SWIZZLE_MAX_ENUM = 0x7fffffff,
 } VkComponentSwizzle;
+
+typedef enum VkComponentTypeNV
+{
+    VK_COMPONENT_TYPE_FLOAT16_NV = 0,
+    VK_COMPONENT_TYPE_FLOAT32_NV = 1,
+    VK_COMPONENT_TYPE_FLOAT64_NV = 2,
+    VK_COMPONENT_TYPE_SINT8_NV = 3,
+    VK_COMPONENT_TYPE_SINT16_NV = 4,
+    VK_COMPONENT_TYPE_SINT32_NV = 5,
+    VK_COMPONENT_TYPE_SINT64_NV = 6,
+    VK_COMPONENT_TYPE_UINT8_NV = 7,
+    VK_COMPONENT_TYPE_UINT16_NV = 8,
+    VK_COMPONENT_TYPE_UINT32_NV = 9,
+    VK_COMPONENT_TYPE_UINT64_NV = 10,
+    VK_COMPONENT_TYPE_NV_MAX_ENUM = 0x7fffffff,
+} VkComponentTypeNV;
 
 typedef enum VkCompositeAlphaFlagBitsKHR
 {
@@ -1798,6 +1816,15 @@ typedef enum VkSamplerYcbcrRange
     VK_SAMPLER_YCBCR_RANGE_MAX_ENUM = 0x7fffffff,
 } VkSamplerYcbcrRange;
 
+typedef enum VkScopeNV
+{
+    VK_SCOPE_DEVICE_NV = 1,
+    VK_SCOPE_WORKGROUP_NV = 2,
+    VK_SCOPE_SUBGROUP_NV = 3,
+    VK_SCOPE_QUEUE_FAMILY_NV = 5,
+    VK_SCOPE_NV_MAX_ENUM = 0x7fffffff,
+} VkScopeNV;
+
 typedef enum VkSemaphoreImportFlagBits
 {
     VK_SEMAPHORE_IMPORT_TEMPORARY_BIT = 0x00000001,
@@ -2121,6 +2148,9 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_EXT = 1000244001,
     VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT = 1000244002,
     VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO_EXT = 1000246000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV = 1000249000,
+    VK_STRUCTURE_TYPE_COOPERATIVE_MATRIX_PROPERTIES_NV = 1000249001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV = 1000249002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT = 1000252000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT = 1000261000,
     VK_STRUCTURE_TYPE_MAX_ENUM = 0x7fffffff,
@@ -2386,6 +2416,20 @@ typedef struct VkConditionalRenderingBeginInfoEXT
     VkDeviceSize WINE_VK_ALIGN(8) offset;
     VkConditionalRenderingFlagsEXT flags;
 } VkConditionalRenderingBeginInfoEXT;
+
+typedef struct VkCooperativeMatrixPropertiesNV
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t MSize;
+    uint32_t NSize;
+    uint32_t KSize;
+    VkComponentTypeNV AType;
+    VkComponentTypeNV BType;
+    VkComponentTypeNV CType;
+    VkComponentTypeNV DType;
+    VkScopeNV scope;
+} VkCooperativeMatrixPropertiesNV;
 
 typedef struct VkDedicatedAllocationBufferCreateInfoNV
 {
@@ -2718,6 +2762,13 @@ typedef struct VkPhysicalDeviceConservativeRasterizationPropertiesEXT
     VkBool32 fullyCoveredFragmentShaderInputVariable;
     VkBool32 conservativeRasterizationPostDepthCoverage;
 } VkPhysicalDeviceConservativeRasterizationPropertiesEXT;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixPropertiesNV
+{
+    VkStructureType sType;
+    void *pNext;
+    VkShaderStageFlags cooperativeMatrixSupportedStages;
+} VkPhysicalDeviceCooperativeMatrixPropertiesNV;
 
 typedef struct VkPhysicalDeviceDepthStencilResolvePropertiesKHR
 {
@@ -3734,6 +3785,14 @@ typedef struct VkPhysicalDeviceBufferAddressFeaturesEXT
     VkBool32 bufferDeviceAddressCaptureReplay;
     VkBool32 bufferDeviceAddressMultiDevice;
 } VkPhysicalDeviceBufferAddressFeaturesEXT;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixFeaturesNV
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 cooperativeMatrix;
+    VkBool32 cooperativeMatrixRobustBufferAccess;
+} VkPhysicalDeviceCooperativeMatrixFeaturesNV;
 
 typedef struct VkPhysicalDeviceDepthClipEnableFeaturesEXT
 {
@@ -5493,6 +5552,7 @@ typedef void (VKAPI_PTR *PFN_vkGetImageSparseMemoryRequirements2KHR)(VkDevice, c
 typedef void (VKAPI_PTR *PFN_vkGetImageSubresourceLayout)(VkDevice, VkImage, const VkImageSubresource *, VkSubresourceLayout *);
 typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetInstanceProcAddr)(VkInstance, const char *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
+typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV)(VkPhysicalDevice, uint32_t *, VkCooperativeMatrixPropertiesNV *);
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceExternalBufferProperties)(VkPhysicalDevice, const VkPhysicalDeviceExternalBufferInfo *, VkExternalBufferProperties *);
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceExternalBufferPropertiesKHR)(VkPhysicalDevice, const VkPhysicalDeviceExternalBufferInfo *, VkExternalBufferProperties *);
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceExternalFenceProperties)(VkPhysicalDevice, const VkPhysicalDeviceExternalFenceInfo *, VkExternalFenceProperties *);
@@ -5754,6 +5814,7 @@ void VKAPI_CALL vkGetImageSparseMemoryRequirements2KHR(VkDevice device, const Vk
 void VKAPI_CALL vkGetImageSubresourceLayout(VkDevice device, VkImage image, const VkImageSubresource *pSubresource, VkSubresourceLayout *pLayout);
 PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char *pName);
 VkResult VKAPI_CALL vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties);
+VkResult VKAPI_CALL vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixPropertiesNV *pProperties);
 void VKAPI_CALL vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo, VkExternalBufferProperties *pExternalBufferProperties);
 void VKAPI_CALL vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo, VkExternalBufferProperties *pExternalBufferProperties);
 void VKAPI_CALL vkGetPhysicalDeviceExternalFenceProperties(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalFenceInfo *pExternalFenceInfo, VkExternalFenceProperties *pExternalFenceProperties);

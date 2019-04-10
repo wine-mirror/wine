@@ -1945,6 +1945,23 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV:
+        {
+            const VkPhysicalDeviceCooperativeMatrixFeaturesNV *in = (const VkPhysicalDeviceCooperativeMatrixFeaturesNV *)in_header;
+            VkPhysicalDeviceCooperativeMatrixFeaturesNV *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->cooperativeMatrix = in->cooperativeMatrix;
+            out->cooperativeMatrixRobustBufferAccess = in->cooperativeMatrixRobustBufferAccess;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT:
         {
             const VkPhysicalDeviceYcbcrImageArraysFeaturesEXT *in = (const VkPhysicalDeviceYcbcrImageArraysFeaturesEXT *)in_header;
@@ -3534,6 +3551,12 @@ static VkResult WINAPI wine_vkGetMemoryHostPointerPropertiesEXT(VkDevice device,
     return device->funcs.p_vkGetMemoryHostPointerPropertiesEXT(device->device, handleType, pHostPointer, pMemoryHostPointerProperties);
 }
 
+static VkResult WINAPI wine_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixPropertiesNV *pProperties)
+{
+    TRACE("%p, %p, %p\n", physicalDevice, pPropertyCount, pProperties);
+    return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(physicalDevice->phys_dev, pPropertyCount, pProperties);
+}
+
 void WINAPI wine_vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures *pFeatures)
 {
     TRACE("%p, %p\n", physicalDevice, pFeatures);
@@ -4226,6 +4249,7 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkEnumeratePhysicalDeviceGroups", &wine_vkEnumeratePhysicalDeviceGroups},
     {"vkEnumeratePhysicalDeviceGroupsKHR", &wine_vkEnumeratePhysicalDeviceGroupsKHR},
     {"vkEnumeratePhysicalDevices", &wine_vkEnumeratePhysicalDevices},
+    {"vkGetPhysicalDeviceCooperativeMatrixPropertiesNV", &wine_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV},
     {"vkGetPhysicalDeviceExternalBufferProperties", &wine_vkGetPhysicalDeviceExternalBufferProperties},
     {"vkGetPhysicalDeviceExternalBufferPropertiesKHR", &wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR},
     {"vkGetPhysicalDeviceExternalFenceProperties", &wine_vkGetPhysicalDeviceExternalFenceProperties},
@@ -4380,6 +4404,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_vulkan_memory_model",
     "VK_NV_clip_space_w_scaling",
     "VK_NV_compute_shader_derivatives",
+    "VK_NV_cooperative_matrix",
     "VK_NV_corner_sampled_image",
     "VK_NV_dedicated_allocation",
     "VK_NV_device_diagnostic_checkpoints",
