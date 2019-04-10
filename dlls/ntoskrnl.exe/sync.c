@@ -1144,3 +1144,28 @@ BOOLEAN WINAPI ExIsResourceAcquiredExclusiveLite( ERESOURCE *resource )
 
     return ret;
 }
+
+/***********************************************************************
+ *           ExIsResourceAcquiredSharedLite   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI ExIsResourceAcquiredSharedLite( ERESOURCE *resource )
+{
+    ULONG ret;
+    KIRQL irql;
+
+    TRACE("resource %p.\n", resource);
+
+    KeAcquireSpinLock( &resource->SpinLock, &irql );
+
+    if (resource->OwnerEntry.OwnerThread == (ERESOURCE_THREAD)KeGetCurrentThread())
+        ret = resource->ActiveEntries;
+    else
+    {
+        OWNER_ENTRY *entry = resource_get_shared_entry( resource, (ERESOURCE_THREAD)KeGetCurrentThread() );
+        ret = entry->OwnerCount;
+    }
+
+    KeReleaseSpinLock( &resource->SpinLock, irql );
+
+    return ret;
+}

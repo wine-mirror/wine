@@ -166,7 +166,7 @@
 @ stdcall ExInterlockedRemoveHeadList(ptr ptr)
 @ stub ExIsProcessorFeaturePresent
 @ stdcall ExIsResourceAcquiredExclusiveLite(ptr)
-@ stub ExIsResourceAcquiredSharedLite
+@ stdcall ExIsResourceAcquiredSharedLite(ptr)
 @ stdcall ExLocalTimeToSystemTime(ptr ptr) RtlLocalTimeToSystemTime
 @ stub ExNotifyCallback
 @ stub ExQueryPoolBlockSize
