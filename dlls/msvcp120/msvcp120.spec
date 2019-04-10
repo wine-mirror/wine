@@ -1852,7 +1852,7 @@
 @ cdecl -arch=arm ?clear@ios_base@std@@QAAXI@Z(ptr long) ios_base_clear_unsigned
 @ thiscall -arch=i386 ?clear@ios_base@std@@QAEXI@Z(ptr long) ios_base_clear_unsigned
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXI@Z(ptr long) ios_base_clear_unsigned
-@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A clog
+@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A MSVCP_clog
 @ cdecl -arch=arm ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAAAAV12@ABV12@@Z(ptr ptr) basic_ios_char_copyfmt
 @ thiscall -arch=i386 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEAAV12@ABV12@@Z(ptr ptr) basic_ios_char_copyfmt
 @ cdecl -arch=win64 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAAEAV12@AEBV12@@Z(ptr ptr) basic_ios_char_copyfmt

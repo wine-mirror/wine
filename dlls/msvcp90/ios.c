@@ -15454,11 +15454,11 @@ struct {
     int vtordisp;
 #endif
     basic_ios_char vbase;
-} clog = { { 0 } };
-C_ASSERT(sizeof(clog) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_char, 0)+sizeof(basic_ios_char));
+} MSVCP_clog = { { 0 } };
+C_ASSERT(sizeof(MSVCP_clog) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_char, 0)+sizeof(basic_ios_char));
 /* ?_Ptr_clog@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 /* ?_Ptr_clog@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
-basic_ostream_char *_Ptr_clog = &clog.obj;
+basic_ostream_char *_Ptr_clog = &MSVCP_clog.obj;
 
 static basic_filebuf_wchar filebuf_short_log;
 /* ?wclog@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A */
@@ -15529,7 +15529,7 @@ void __cdecl ios_base_Init__Init_dtor(void *this)
     if(!ios_base_Init__Init_cnt) {
         basic_ostream_char_flush(&cout.obj);
         basic_ostream_char_flush(&cerr.obj);
-        basic_ostream_char_flush(&clog.obj);
+        basic_ostream_char_flush(&MSVCP_clog.obj);
     }
 }
 
@@ -15907,7 +15907,7 @@ void init_io(void *base)
     basic_ostream_wchar_ctor(&wcerr.obj, &filebuf_wchar_stderr.base, FALSE/*FIXME*/, TRUE);
 
     basic_filebuf_char_ctor_file(&filebuf_char_log, stderr);
-    basic_ostream_char_ctor(&clog.obj, &filebuf_char_log.base, FALSE/*FIXME*/, TRUE);
+    basic_ostream_char_ctor(&MSVCP_clog.obj, &filebuf_char_log.base, FALSE/*FIXME*/, TRUE);
 
     basic_filebuf_short_ctor_file(&filebuf_short_log, stderr);
     basic_ostream_short_ctor(&uclog.obj, &filebuf_short_log.base, FALSE/*FIXME*/, TRUE);
@@ -15945,7 +15945,7 @@ void free_io(void)
     basic_ostream_wchar_vbase_dtor(&wcerr.obj);
     basic_filebuf_wchar_dtor(&filebuf_wchar_stderr);
 
-    basic_ostream_char_vbase_dtor(&clog.obj);
+    basic_ostream_char_vbase_dtor(&MSVCP_clog.obj);
     basic_filebuf_char_dtor(&filebuf_char_log);
 
     basic_ostream_wchar_vbase_dtor(&uclog.obj);

@@ -1309,7 +1309,7 @@
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXH_N@Z(ptr long long) ios_base_clear_reraise
 @ thiscall -arch=win32 ?clear@ios_base@std@@QAEXI@Z(ptr long) ios_base_clear_unsigned
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXI@Z(ptr long) ios_base_clear_unsigned
-@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A clog
+@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A MSVCP_clog
 @ thiscall -arch=win32 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEAAV12@ABV12@@Z(ptr ptr) basic_ios_char_copyfmt
 @ cdecl -arch=win64 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAAEAV12@AEBV12@@Z(ptr ptr) basic_ios_char_copyfmt
 @ thiscall -arch=win32 ?copyfmt@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEAAV12@ABV12@@Z(ptr ptr) basic_ios_wchar_copyfmt
