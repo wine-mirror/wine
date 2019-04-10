@@ -576,7 +576,6 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
     char path[20];
     int fd;
 
-    YUV_Init();
     have_libv4l2 = video_init();
 
     if (!(device = CoTaskMemAlloc(sizeof(*device))))
