@@ -27,11 +27,16 @@ DEFINE_GUID(IID_IDebugOutputCallbacks,    0x4bf58045, 0xd654, 0x4c40, 0xb0, 0xaf
 DEFINE_GUID(IID_IDebugEventCallbacks,     0x337be28b, 0x5036, 0x4d72, 0xb6, 0xbf, 0xc4, 0x5f, 0xbb, 0x9f, 0x2e, 0xaa);
 DEFINE_GUID(IID_IDebugClient,             0x27fe5639, 0x8407, 0x4f47, 0x83, 0x64, 0xee, 0x11, 0x8f, 0xb0, 0x8a, 0xc8);
 DEFINE_GUID(IID_IDebugDataSpaces,         0x88f7dfab, 0x3ea7, 0x4c3a, 0xae, 0xfb, 0xc4, 0xe8, 0x10, 0x61, 0x73, 0xaa);
+DEFINE_GUID(IID_IDebugDataSpaces2,        0x7a5e852f, 0x96e9, 0x468f, 0xac, 0x1b, 0x0b, 0x3a, 0xdd, 0xc4, 0xa0, 0x49);
 DEFINE_GUID(IID_IDebugSymbols,            0x8c31e98c, 0x983a, 0x48a5, 0x90, 0x16, 0x6f, 0xe5, 0xd6, 0x67, 0xa9, 0x50);
 DEFINE_GUID(IID_IDebugSymbols2,           0x3a707211, 0xafdd, 0x4495, 0xad, 0x4f, 0x56, 0xfe, 0xcd, 0xf8, 0x16, 0x3f);
 DEFINE_GUID(IID_IDebugSymbols3,           0xf02fbecc, 0x50ac, 0x4f36, 0x9a, 0xd9, 0xc9, 0x75, 0xe8, 0xf3, 0x2f, 0xf8);
 DEFINE_GUID(IID_IDebugControl,            0x5182e668, 0x105e, 0x416e, 0xad, 0x92, 0x24, 0xef, 0x80, 0x04, 0x24, 0xba);
 DEFINE_GUID(IID_IDebugControl2,           0xd4366723, 0x44df, 0x4bed, 0x8c, 0x7e, 0x4c, 0x05, 0x42, 0x4f, 0x45, 0x88);
+DEFINE_GUID(IID_IDebugAdvanced,           0xf2df5f53, 0x071f, 0x47bd, 0x9d, 0xe6, 0x57, 0x34, 0xc3, 0xfe, 0xd6, 0x89);
+DEFINE_GUID(IID_IDebugSystemObjects,      0x6b86fe2c, 0x2c4f, 0x4f0c, 0x9d, 0xa2, 0x17, 0x43, 0x11, 0xac, 0xc3, 0x27);
+DEFINE_GUID(IID_IDebugSystemObjects2,     0x0ae9f5ff, 0x1852, 0x4679, 0xb0, 0x55, 0x49, 0x4b, 0xee, 0x64, 0x07, 0xee);
+DEFINE_GUID(IID_IDebugSystemObjects3,     0xe9676e2f, 0xe286, 0x4ea3, 0xb0, 0xf9, 0xdf, 0xe5, 0xd9, 0xfc, 0x33, 0x0e);
 
 /* Engine options */
 #define DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION         0x00000001
@@ -154,6 +159,7 @@ typedef struct _DEBUG_BREAKPOINT_PARAMETERS
 
 typedef struct _WINDBG_EXTENSION_APIS32 *PWINDBG_EXTENSION_APIS32;
 typedef struct _WINDBG_EXTENSION_APIS64 *PWINDBG_EXTENSION_APIS64;
+typedef struct _MEMORY_BASIC_INFORMATION64 *PMEMORY_BASIC_INFORMATION64;
 
 typedef struct _DEBUG_SPECIFIC_FILTER_PARAMETERS
 {
@@ -411,6 +417,54 @@ DECLARE_INTERFACE_(IDebugDataSpaces, IUnknown)
     STDMETHOD(ReadDebuggerData)(THIS_ ULONG index, void *buffer, ULONG buffer_size, ULONG *data_size) PURE;
     STDMETHOD(ReadProcessorSystemData)(THIS_ ULONG processor, ULONG index, void *buffer, ULONG buffer_size,
             ULONG *data_size) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugDataSpaces2
+DECLARE_INTERFACE_(IDebugDataSpaces2, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugDataSpaces */
+    STDMETHOD(ReadVirtual)(THIS_ ULONG64 offset, void *buffer, ULONG buffer_size, ULONG *read_len) PURE;
+    STDMETHOD(WriteVirtual)(THIS_ ULONG64 offset, void *buffer, ULONG buffer_size, ULONG *written) PURE;
+    STDMETHOD(SearchVirtual)(THIS_ ULONG64 offset, ULONG64 length, void *pattern, ULONG pattern_size,
+            ULONG pattern_granularity, ULONG64 *ret_offset) PURE;
+    STDMETHOD(ReadVirtualUncached)(THIS_ ULONG64 offset, void *buffer, ULONG buffer_size, ULONG *read_len) PURE;
+    STDMETHOD(WriteVirtualUncached)(THIS_ ULONG64 offset, void *buffer, ULONG buffer_size, ULONG *written) PURE;
+    STDMETHOD(ReadPointersVirtual)(THIS_ ULONG count, ULONG64 offset, ULONG64 *pointers) PURE;
+    STDMETHOD(WritePointersVirtual)(THIS_ ULONG count, ULONG64 offset, ULONG64 *pointers) PURE;
+    STDMETHOD(ReadPhysical)(THIS_ ULONG64 offset, void *buffer, ULONG buffer_size, ULONG *read_len) PURE;
+    STDMETHOD(WritePhysical)(THIS_ ULONG64 offset, void *buffer, ULONG buffer_size, ULONG *written) PURE;
+    STDMETHOD(ReadControl)(THIS_ ULONG processor, ULONG64 offset, void *buffer, ULONG buffer_size,
+            ULONG *read_len) PURE;
+    STDMETHOD(WriteControl)(THIS_ ULONG processor, ULONG64 offset, void *buffer, ULONG buffer_size,
+            ULONG *written) PURE;
+    STDMETHOD(ReadIo)(THIS_ ULONG type, ULONG bus_number, ULONG address_space, ULONG64 offset, void *buffer,
+            ULONG buffer_size, ULONG *read_len) PURE;
+    STDMETHOD(WriteIo)(THIS_ ULONG type, ULONG bus_number, ULONG address_space, ULONG64 offset, void *buffer,
+            ULONG buffer_size, ULONG *written) PURE;
+    STDMETHOD(ReadMsr)(THIS_ ULONG msr, ULONG64 *value) PURE;
+    STDMETHOD(WriteMsr)(THIS_ ULONG msr, ULONG64 value) PURE;
+    STDMETHOD(ReadBusData)(THIS_ ULONG data_type, ULONG bus_number, ULONG slot_number, ULONG offset, void *buffer,
+            ULONG buffer_size, ULONG *read_len) PURE;
+    STDMETHOD(WriteBusData)(THIS_ ULONG data_type, ULONG bus_number, ULONG slot_number, ULONG offset, void *buffer,
+            ULONG buffer_size, ULONG *written) PURE;
+    STDMETHOD(CheckLowMemory)(THIS) PURE;
+    STDMETHOD(ReadDebuggerData)(THIS_ ULONG index, void *buffer, ULONG buffer_size, ULONG *data_size) PURE;
+    STDMETHOD(ReadProcessorSystemData)(THIS_ ULONG processor, ULONG index, void *buffer, ULONG buffer_size,
+            ULONG *data_size) PURE;
+    /* IDebugDataSpaces2 */
+    STDMETHOD(VirtualToPhysical)(THIS_ ULONG64 virt, ULONG64 *physical) PURE;
+    STDMETHOD(GetVirtualTranslationPhysicalOffsets)(THIS_ ULONG64 virt, ULONG64 *offsets, ULONG offsets_size,
+            ULONG *levels) PURE;
+    STDMETHOD(ReadHandleData)(THIS_ ULONG64 handle, ULONG datatype, void *buffer, ULONG buffer_size,
+            ULONG *data_size) PURE;
+    STDMETHOD(FillVirtual)(THIS_ ULONG64 start, ULONG size, void *pattern, ULONG pattern_size, ULONG *filled) PURE;
+    STDMETHOD(FillPhysical)(THIS_ ULONG64 start, ULONG size, void *pattern, ULONG pattern_size, ULONG *filled) PURE;
+    STDMETHOD(QueryVirtual)(THIS_ ULONG64 offset, PMEMORY_BASIC_INFORMATION64 info) PURE;
 };
 #undef INTERFACE
 
@@ -1021,6 +1075,159 @@ DECLARE_INTERFACE_(IDebugControl2, IUnknown)
     STDMETHOD(SetTextReplacement)(THIS_ const char *src_text, const char *dst_text) PURE;
     STDMETHOD(RemoveTextReplacements)(THIS) PURE;
     STDMETHOD(OutputTextReplacements)(THIS_ ULONG output_control, ULONG flags) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugAdvanced
+DECLARE_INTERFACE_(IDebugAdvanced, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugAdvanced */
+    STDMETHOD(GetThreadContext)(THIS_ void *context, ULONG context_size) PURE;
+    STDMETHOD(SetThreadContext)(THIS_ void *context, ULONG context_size) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugSystemObjects
+DECLARE_INTERFACE_(IDebugSystemObjects, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugSystemObjects */
+    STDMETHOD(GetEventThread)(THIS_ ULONG *id) PURE;
+    STDMETHOD(GetEventProcess)(THIS_ ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadId)(THIS_ ULONG *id) PURE;
+    STDMETHOD(SetCurrentThreadId)(THIS_ ULONG id) PURE;
+    STDMETHOD(SetCurrentProcessId)(THIS_ ULONG id) PURE;
+    STDMETHOD(GetNumberThreads)(THIS_ ULONG *number) PURE;
+    STDMETHOD(GetTotalNumberThreads)(THIS_ ULONG *total, ULONG *largest_process) PURE;
+    STDMETHOD(GetThreadIdsByIndex)(THIS_ ULONG start, ULONG count, ULONG *ids, ULONG *sysids) PURE;
+    STDMETHOD(GetThreadIdByProcessor)(THIS_ ULONG processor, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetThreadIdByDataOffset)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadTeb)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetThreadIdByTeb)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadSystemId)(THIS_ ULONG *sysid) PURE;
+    STDMETHOD(GetThreadIdBySystemId)(THIS_ ULONG sysid, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadHandle)(THIS_ ULONG64 *handle) PURE;
+    STDMETHOD(GetThreadIdByHandle)(THIS_ ULONG64 handle, ULONG *id) PURE;
+    STDMETHOD(GetNumberProcesses)(THIS_ ULONG *number) PURE;
+    STDMETHOD(GetProcessIdsByIndex)(THIS_ ULONG start, ULONG count, ULONG *ids, ULONG *sysids) PURE;
+    STDMETHOD(GetCurrentProcessDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetProcessIdByDataOffset)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessPeb)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetProcessIdByPeb)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessSystemId)(THIS_ ULONG *sysid) PURE;
+    STDMETHOD(GetProcessIdBySystemId)(THIS_ ULONG sysid, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessHandle)(THIS_ ULONG64 *handle) PURE;
+    STDMETHOD(GetProcessIdByHandle)(THIS_ ULONG64 handle, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessExecutableName)(THIS_ char *buffer, ULONG buffer_size, ULONG *exe_size) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugSystemObjects2
+DECLARE_INTERFACE_(IDebugSystemObjects2, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugSystemObjects */
+    STDMETHOD(GetEventThread)(THIS_ ULONG *id) PURE;
+    STDMETHOD(GetEventProcess)(THIS_ ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadId)(THIS_ ULONG *id) PURE;
+    STDMETHOD(SetCurrentThreadId)(THIS_ ULONG id) PURE;
+    STDMETHOD(SetCurrentProcessId)(THIS_ ULONG id) PURE;
+    STDMETHOD(GetNumberThreads)(THIS_ ULONG *number) PURE;
+    STDMETHOD(GetTotalNumberThreads)(THIS_ ULONG *total, ULONG *largest_process) PURE;
+    STDMETHOD(GetThreadIdsByIndex)(THIS_ ULONG start, ULONG count, ULONG *ids, ULONG *sysids) PURE;
+    STDMETHOD(GetThreadIdByProcessor)(THIS_ ULONG processor, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetThreadIdByDataOffset)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadTeb)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetThreadIdByTeb)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadSystemId)(THIS_ ULONG *sysid) PURE;
+    STDMETHOD(GetThreadIdBySystemId)(THIS_ ULONG sysid, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadHandle)(THIS_ ULONG64 *handle) PURE;
+    STDMETHOD(GetThreadIdByHandle)(THIS_ ULONG64 handle, ULONG *id) PURE;
+    STDMETHOD(GetNumberProcesses)(THIS_ ULONG *number) PURE;
+    STDMETHOD(GetProcessIdsByIndex)(THIS_ ULONG start, ULONG count, ULONG *ids, ULONG *sysids) PURE;
+    STDMETHOD(GetCurrentProcessDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetProcessIdByDataOffset)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessPeb)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetProcessIdByPeb)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessSystemId)(THIS_ ULONG *sysid) PURE;
+    STDMETHOD(GetProcessIdBySystemId)(THIS_ ULONG sysid, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessHandle)(THIS_ ULONG64 *handle) PURE;
+    STDMETHOD(GetProcessIdByHandle)(THIS_ ULONG64 handle, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessExecutableName)(THIS_ char *buffer, ULONG buffer_size, ULONG *exe_size) PURE;
+    /* IDebugSystemObjects2 */
+    STDMETHOD(GetCurrentProcessUpTime)(THIS_ ULONG *uptime) PURE;
+    STDMETHOD(GetImplicitThreadDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(SetImplicitThreadDataOffset)(THIS_ ULONG64 offset) PURE;
+    STDMETHOD(GetImplicitProcessDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(SetImplicitProcessDataOffset)(THIS_ ULONG64 offset) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugSystemObjects3
+DECLARE_INTERFACE_(IDebugSystemObjects3, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugSystemObjects */
+    STDMETHOD(GetEventThread)(THIS_ ULONG *id) PURE;
+    STDMETHOD(GetEventProcess)(THIS_ ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadId)(THIS_ ULONG *id) PURE;
+    STDMETHOD(SetCurrentThreadId)(THIS_ ULONG id) PURE;
+    STDMETHOD(SetCurrentProcessId)(THIS_ ULONG id) PURE;
+    STDMETHOD(GetNumberThreads)(THIS_ ULONG *number) PURE;
+    STDMETHOD(GetTotalNumberThreads)(THIS_ ULONG *total, ULONG *largest_process) PURE;
+    STDMETHOD(GetThreadIdsByIndex)(THIS_ ULONG start, ULONG count, ULONG *ids, ULONG *sysids) PURE;
+    STDMETHOD(GetThreadIdByProcessor)(THIS_ ULONG processor, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetThreadIdByDataOffset)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadTeb)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetThreadIdByTeb)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadSystemId)(THIS_ ULONG *sysid) PURE;
+    STDMETHOD(GetThreadIdBySystemId)(THIS_ ULONG sysid, ULONG *id) PURE;
+    STDMETHOD(GetCurrentThreadHandle)(THIS_ ULONG64 *handle) PURE;
+    STDMETHOD(GetThreadIdByHandle)(THIS_ ULONG64 handle, ULONG *id) PURE;
+    STDMETHOD(GetNumberProcesses)(THIS_ ULONG *number) PURE;
+    STDMETHOD(GetProcessIdsByIndex)(THIS_ ULONG start, ULONG count, ULONG *ids, ULONG *sysids) PURE;
+    STDMETHOD(GetCurrentProcessDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetProcessIdByDataOffset)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessPeb)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(GetProcessIdByPeb)(THIS_ ULONG64 offset, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessSystemId)(THIS_ ULONG *sysid) PURE;
+    STDMETHOD(GetProcessIdBySystemId)(THIS_ ULONG sysid, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessHandle)(THIS_ ULONG64 *handle) PURE;
+    STDMETHOD(GetProcessIdByHandle)(THIS_ ULONG64 handle, ULONG *id) PURE;
+    STDMETHOD(GetCurrentProcessExecutableName)(THIS_ char *buffer, ULONG buffer_size, ULONG *exe_size) PURE;
+    /* IDebugSystemObjects2 */
+    STDMETHOD(GetCurrentProcessUpTime)(THIS_ ULONG *uptime) PURE;
+    STDMETHOD(GetImplicitThreadDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(SetImplicitThreadDataOffset)(THIS_ ULONG64 offset) PURE;
+    STDMETHOD(GetImplicitProcessDataOffset)(THIS_ ULONG64 *offset) PURE;
+    STDMETHOD(SetImplicitProcessDataOffset)(THIS_ ULONG64 offset) PURE;
+    /* IDebugSystemObjects3 */
+    STDMETHOD(GetEventSystem)(THIS_ ULONG *id) PURE;
+    STDMETHOD(GetCurrentSystemId)(THIS_ ULONG *id) PURE;
+    STDMETHOD(SetCurrentSystemId)(THIS_ ULONG id) PURE;
+    STDMETHOD(GetNumberSystems)(THIS_ ULONG *number) PURE;
+    STDMETHOD(GetSystemIdsByIndex)(THIS_ ULONG start, ULONG count, ULONG *ids) PURE;
+    STDMETHOD(GetTotalNumberThreadsAndProcesses)(THIS_ ULONG *total_threads, ULONG *total_processes,
+            ULONG *largest_process_threads, ULONG *largest_system_threads, ULONG *largest_system_processes) PURE;
+    STDMETHOD(GetCurrentSystemServer)(THIS_ ULONG64 *server) PURE;
+    STDMETHOD(GetSystemByServer)(THIS_ ULONG64 server, ULONG *id) PURE;
+    STDMETHOD(GetCurrentSystemServerName)(THIS_ char *buffer, ULONG buffer_size, ULONG *name_size) PURE;
 };
 #undef INTERFACE
 
