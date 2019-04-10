@@ -254,6 +254,8 @@
 #define VK_EXT_GLOBAL_PRIORITY_EXTENSION_NAME "VK_EXT_global_priority"
 #define VK_KHR_8BIT_STORAGE_SPEC_VERSION 1
 #define VK_KHR_8BIT_STORAGE_EXTENSION_NAME "VK_KHR_8bit_storage"
+#define VK_EXT_EXTERNAL_MEMORY_HOST_SPEC_VERSION 1
+#define VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME "VK_EXT_external_memory_host"
 #define VK_AMD_BUFFER_MARKER_SPEC_VERSION 1
 #define VK_AMD_BUFFER_MARKER_EXTENSION_NAME "VK_AMD_buffer_marker"
 #define VK_KHR_SHADER_ATOMIC_INT64_SPEC_VERSION 1
@@ -970,6 +972,8 @@ typedef enum VkExternalMemoryHandleTypeFlagBits
     VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT = 0x00000010,
     VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT = 0x00000020,
     VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT = 0x00000040,
+    VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT = 0x00000080,
+    VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_MAPPED_FOREIGN_MEMORY_BIT_EXT = 0x00000100,
     VK_EXTERNAL_MEMORY_HANDLE_TYPE_FLAG_BITS_MAX_ENUM = 0x7fffffff,
 } VkExternalMemoryHandleTypeFlagBits;
 
@@ -2077,6 +2081,9 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT = 1000170001,
     VK_STRUCTURE_TYPE_DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_EXT = 1000174000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR = 1000177000,
+    VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT = 1000178000,
+    VK_STRUCTURE_TYPE_MEMORY_HOST_POINTER_PROPERTIES_EXT = 1000178001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT = 1000178002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR = 1000180000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD = 1000185000,
     VK_STRUCTURE_TYPE_DEVICE_MEMORY_OVERALLOCATION_CREATE_INFO_AMD = 1000189000,
@@ -2636,6 +2643,13 @@ typedef struct VkMemoryBarrier
     VkAccessFlags srcAccessMask;
     VkAccessFlags dstAccessMask;
 } VkMemoryBarrier;
+
+typedef struct VkMemoryHostPointerPropertiesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t memoryTypeBits;
+} VkMemoryHostPointerPropertiesEXT;
 
 typedef struct VkMemoryRequirements
 {
@@ -4258,6 +4272,13 @@ typedef struct VkPhysicalDeviceDriverPropertiesKHR
     VkConformanceVersionKHR conformanceVersion;
 } VkPhysicalDeviceDriverPropertiesKHR;
 
+typedef struct VkPhysicalDeviceExternalMemoryHostPropertiesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceSize WINE_VK_ALIGN(8) minImportedHostPointerAlignment;
+} VkPhysicalDeviceExternalMemoryHostPropertiesEXT;
+
 typedef struct VkPhysicalDeviceFragmentDensityMapFeaturesEXT
 {
     VkStructureType sType;
@@ -4867,6 +4888,14 @@ typedef struct VkImageFormatProperties2
     VkImageFormatProperties WINE_VK_ALIGN(8) imageFormatProperties;
 } VkImageFormatProperties2;
 
+typedef struct VkImportMemoryHostPointerInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkExternalMemoryHandleTypeFlagBits handleType;
+    void *pHostPointer;
+} VkImportMemoryHostPointerInfoEXT;
+
 typedef struct VkMemoryHeap
 {
     VkDeviceSize WINE_VK_ALIGN(8) size;
@@ -5442,6 +5471,7 @@ typedef void (VKAPI_PTR *PFN_vkGetImageSparseMemoryRequirements2)(VkDevice, cons
 typedef void (VKAPI_PTR *PFN_vkGetImageSparseMemoryRequirements2KHR)(VkDevice, const VkImageSparseMemoryRequirementsInfo2 *, uint32_t *, VkSparseImageMemoryRequirements2 *);
 typedef void (VKAPI_PTR *PFN_vkGetImageSubresourceLayout)(VkDevice, VkImage, const VkImageSubresource *, VkSubresourceLayout *);
 typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetInstanceProcAddr)(VkInstance, const char *);
+typedef VkResult (VKAPI_PTR *PFN_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceExternalBufferProperties)(VkPhysicalDevice, const VkPhysicalDeviceExternalBufferInfo *, VkExternalBufferProperties *);
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceExternalBufferPropertiesKHR)(VkPhysicalDevice, const VkPhysicalDeviceExternalBufferInfo *, VkExternalBufferProperties *);
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceExternalFenceProperties)(VkPhysicalDevice, const VkPhysicalDeviceExternalFenceInfo *, VkExternalFenceProperties *);
@@ -5702,6 +5732,7 @@ void VKAPI_CALL vkGetImageSparseMemoryRequirements2(VkDevice device, const VkIma
 void VKAPI_CALL vkGetImageSparseMemoryRequirements2KHR(VkDevice device, const VkImageSparseMemoryRequirementsInfo2 *pInfo, uint32_t *pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements);
 void VKAPI_CALL vkGetImageSubresourceLayout(VkDevice device, VkImage image, const VkImageSubresource *pSubresource, VkSubresourceLayout *pLayout);
 PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char *pName);
+VkResult VKAPI_CALL vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties);
 void VKAPI_CALL vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo, VkExternalBufferProperties *pExternalBufferProperties);
 void VKAPI_CALL vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo, VkExternalBufferProperties *pExternalBufferProperties);
 void VKAPI_CALL vkGetPhysicalDeviceExternalFenceProperties(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalFenceInfo *pExternalFenceInfo, VkExternalFenceProperties *pExternalFenceProperties);

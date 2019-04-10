@@ -1124,6 +1124,7 @@ struct vulkan_device_funcs
 #else
     void (*p_vkGetImageSubresourceLayout)(VkDevice, VkImage, const VkImageSubresource *, VkSubresourceLayout *);
 #endif
+    VkResult (*p_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
     VkResult (*p_vkGetPipelineCacheData)(VkDevice, VkPipelineCache, size_t *, void *);
     VkResult (*p_vkGetQueryPoolResults)(VkDevice, VkQueryPool, uint32_t, uint32_t, size_t, void *, VkDeviceSize, VkQueryResultFlags);
     void (*p_vkGetQueueCheckpointDataNV)(VkQueue, uint32_t *, VkCheckpointDataNV *);
@@ -1425,6 +1426,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetImageSparseMemoryRequirements2) \
     USE_VK_FUNC(vkGetImageSparseMemoryRequirements2KHR) \
     USE_VK_FUNC(vkGetImageSubresourceLayout) \
+    USE_VK_FUNC(vkGetMemoryHostPointerPropertiesEXT) \
     USE_VK_FUNC(vkGetPipelineCacheData) \
     USE_VK_FUNC(vkGetQueryPoolResults) \
     USE_VK_FUNC(vkGetQueueCheckpointDataNV) \

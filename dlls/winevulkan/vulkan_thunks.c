@@ -3495,6 +3495,12 @@ void WINAPI wine_vkGetImageSubresourceLayout(VkDevice device, VkImage image, con
 #endif
 }
 
+static VkResult WINAPI wine_vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties)
+{
+    TRACE("%p, %#x, %p, %p\n", device, handleType, pHostPointer, pMemoryHostPointerProperties);
+    return device->funcs.p_vkGetMemoryHostPointerPropertiesEXT(device->device, handleType, pHostPointer, pMemoryHostPointerProperties);
+}
+
 void WINAPI wine_vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures *pFeatures)
 {
     TRACE("%p, %p\n", physicalDevice, pFeatures);
@@ -4143,6 +4149,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetImageSparseMemoryRequirements2", &wine_vkGetImageSparseMemoryRequirements2},
     {"vkGetImageSparseMemoryRequirements2KHR", &wine_vkGetImageSparseMemoryRequirements2KHR},
     {"vkGetImageSubresourceLayout", &wine_vkGetImageSubresourceLayout},
+    {"vkGetMemoryHostPointerPropertiesEXT", &wine_vkGetMemoryHostPointerPropertiesEXT},
     {"vkGetPipelineCacheData", &wine_vkGetPipelineCacheData},
     {"vkGetQueryPoolResults", &wine_vkGetQueryPoolResults},
     {"vkGetQueueCheckpointDataNV", &wine_vkGetQueueCheckpointDataNV},
@@ -4278,6 +4285,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_depth_range_unrestricted",
     "VK_EXT_descriptor_indexing",
     "VK_EXT_discard_rectangles",
+    "VK_EXT_external_memory_host",
     "VK_EXT_filter_cubic",
     "VK_EXT_fragment_density_map",
     "VK_EXT_global_priority",
