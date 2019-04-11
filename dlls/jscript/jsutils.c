@@ -894,6 +894,14 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
         }
         break;
     }
+    case VT_UI2: {
+        UINT32 i;
+
+        hres = to_uint32(ctx, val, &i);
+        if(SUCCEEDED(hres))
+            V_UI2(dst) = i;
+        break;
+    }
     case VT_R8: {
         double n;
         hres = to_number(ctx, val, &n);
