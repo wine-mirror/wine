@@ -105,9 +105,6 @@ struct _Capture
     int fd, mmap;
     BOOL iscommitted, stopped;
 
-    int image_size;
-    unsigned char *image_data;
-
     HANDLE thread;
 };
 
@@ -367,10 +364,11 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     HRESULT hr;
     IMediaSample *pSample = NULL;
     ULONG framecount = 0;
-    unsigned char *pTarget;
+    unsigned char *pTarget, *image_data;
+    unsigned int image_size;
 
-    capBox->image_size = capBox->height * capBox->width * 3;
-    if (!(capBox->image_data = heap_alloc(capBox->image_size)))
+    image_size = capBox->height * capBox->width * 3;
+    if (!(image_data = heap_alloc(image_size)))
     {
         ERR("Failed to allocate memory.\n");
         capBox->thread = 0;
@@ -399,7 +397,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
 
             IMediaSample_GetPointer(pSample, &pTarget);
 
-            while (video_read(capBox->fd, capBox->image_data, capBox->image_size) == -1)
+            while (video_read(capBox->fd, image_data, image_size) == -1)
             {
                 if (errno != EAGAIN)
                 {
@@ -408,7 +406,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
                 }
             }
 
-            Resize(capBox, pTarget, capBox->image_data);
+            Resize(capBox, pTarget, image_data);
             hr = BaseOutputPinImpl_Deliver((BaseOutputPin *)capBox->pOut, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
@@ -416,7 +414,6 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
         if (FAILED(hr) && hr != VFW_E_NOT_CONNECTED)
         {
             TRACE("Return %x, stop IFilterGraph\n", hr);
-            heap_free(capBox->image_data);
             capBox->thread = 0;
             capBox->stopped = TRUE;
             break;
@@ -425,6 +422,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     }
 
     LeaveCriticalSection(&capBox->CritSect);
+    heap_free(image_data);
     return 0;
 }
 
@@ -535,7 +533,6 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
             if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
                 WARN("Decommitting allocator: %x\n", hr);
         }
-        heap_free(capBox->image_data);
     }
 
     *state = State_Stopped;
