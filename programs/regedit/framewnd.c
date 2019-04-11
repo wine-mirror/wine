@@ -426,7 +426,8 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn)
         LoadStringW(hInst, IDS_FILEDIALOG_FILTER_REG, filter_reg, MAX_PATH);
         LoadStringW(hInst, IDS_FILEDIALOG_FILTER_REG4, filter_reg4, MAX_PATH);
         LoadStringW(hInst, IDS_FILEDIALOG_FILTER_ALL, filter_all, MAX_PATH);
-        swprintf( FilterBuffer, filterW, filter_reg, 0, 0, filter_reg4, 0, 0, filter_all, 0, 0 );
+        swprintf( FilterBuffer, ARRAY_SIZE(FilterBuffer), filterW,
+                  filter_reg, 0, 0, filter_reg4, 0, 0, filter_all, 0, 0 );
     }
     pofn->lpstrFilter = FilterBuffer;
     pofn->nFilterIndex = 1;

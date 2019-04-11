@@ -92,7 +92,7 @@ static size_t export_value_name(HANDLE hFile, WCHAR *name, size_t len)
     {
         WCHAR *str = escape_string(name, len, &line_len);
         WCHAR *buf = heap_xalloc((line_len + 4) * sizeof(WCHAR));
-        line_len = swprintf(buf, quoted_fmt, str);
+        line_len = swprintf(buf, line_len + 4, quoted_fmt, str);
         write_file(hFile, buf);
         heap_free(buf);
         heap_free(str);
@@ -116,7 +116,7 @@ static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
         len = size / sizeof(WCHAR) - 1;
     str = escape_string(data, len, &line_len);
     *buf = heap_xalloc((line_len + 3) * sizeof(WCHAR));
-    swprintf(*buf, fmt, str);
+    swprintf(*buf, line_len + 3, fmt, str);
     heap_free(str);
 }
 
@@ -125,7 +125,7 @@ static void export_dword_data(WCHAR **buf, DWORD *data)
     static const WCHAR fmt[] = {'d','w','o','r','d',':','%','0','8','x',0};
 
     *buf = heap_xalloc(15 * sizeof(WCHAR));
-    swprintf(*buf, fmt, *data);
+    swprintf(*buf, 15, fmt, *data);
 }
 
 static size_t export_hex_data_type(HANDLE hFile, DWORD type)
@@ -142,7 +142,7 @@ static size_t export_hex_data_type(HANDLE hFile, DWORD type)
     else
     {
         WCHAR *buf = heap_xalloc(15 * sizeof(WCHAR));
-        line_len = swprintf(buf, hexp_fmt, type);
+        line_len = swprintf(buf, 15, hexp_fmt, type);
         write_file(hFile, buf);
         heap_free(buf);
     }
@@ -168,7 +168,7 @@ static void export_hex_data(HANDLE hFile, WCHAR **buf, DWORD type,
 
     for (i = 0, pos = 0; i < size; i++)
     {
-        pos += swprintf(*buf + pos, fmt, ((BYTE *)data)[i]);
+        pos += swprintf(*buf + pos, 3, fmt, ((BYTE *)data)[i]);
         if (i == num_commas) break;
         (*buf)[pos++] = ',';
         (*buf)[pos] = 0;
@@ -233,7 +233,7 @@ static void export_key_name(HANDLE hFile, WCHAR *name)
     WCHAR *buf;
 
     buf = heap_xalloc((lstrlenW(name) + 7) * sizeof(WCHAR));
-    swprintf(buf, fmt, name);
+    swprintf(buf, lstrlenW(name) + 7, fmt, name);
     write_file(hFile, buf);
     heap_free(buf);
 }

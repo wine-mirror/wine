@@ -83,15 +83,15 @@ static void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
      */
     if (CpuUsage == 100)
     {
-        swprintf(Text, wszFormatI, (int)CpuUsage);
+        swprintf(Text, ARRAY_SIZE(Text), wszFormatI, (int)CpuUsage);
     }
     else if (CpuUsage < 10)
     {
-        swprintf(Text, wszFormatII, (int)CpuUsage);
+        swprintf(Text, ARRAY_SIZE(Text), wszFormatII, (int)CpuUsage);
     }
     else
     {
-        swprintf(Text, wszFormatIII, (int)CpuUsage);
+        swprintf(Text, ARRAY_SIZE(Text), wszFormatIII, (int)CpuUsage);
     }
     
     /*

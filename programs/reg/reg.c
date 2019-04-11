@@ -539,7 +539,7 @@ static WCHAR *reg_data_to_wchar(DWORD type, const BYTE *src, DWORD size_bytes)
             buffer = heap_xalloc((size_bytes * 2 + 1) * sizeof(WCHAR));
             ptr = buffer;
             for (i = 0; i < size_bytes; i++)
-                ptr += swprintf(ptr, fmt, src[i]);
+                ptr += swprintf(ptr, 3, fmt, src[i]);
             break;
         }
         case REG_DWORD:
@@ -550,7 +550,7 @@ static WCHAR *reg_data_to_wchar(DWORD type, const BYTE *src, DWORD size_bytes)
             static const WCHAR fmt[] = {'0','x','%','x',0};
 
             buffer = heap_xalloc((zero_x_dword + 1) * sizeof(WCHAR));
-            swprintf(buffer, fmt, *(DWORD *)src);
+            swprintf(buffer, zero_x_dword + 1, fmt, *(DWORD *)src);
             break;
         }
         case REG_MULTI_SZ:
@@ -635,7 +635,7 @@ WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD 
     static const WCHAR fmt[] = {'%','s','\\','%','s',0};
 
     subkey_path = heap_xalloc((path_len + subkey_len + 2) * sizeof(WCHAR));
-    swprintf(subkey_path, fmt, path, subkey_name);
+    swprintf(subkey_path, path_len + subkey_len + 2, fmt, path, subkey_name);
 
     return subkey_path;
 }
@@ -856,7 +856,7 @@ static WCHAR *get_long_key(HKEY root, WCHAR *path)
 
     len += lstrlenW(path) + 1; /* add one for the backslash */
     long_key = heap_xalloc((len + 1) * sizeof(WCHAR));
-    swprintf(long_key, fmt, root_rels[i].long_name, path);
+    swprintf(long_key, len + 1, fmt, root_rels[i].long_name, path);
     return long_key;
 }
 

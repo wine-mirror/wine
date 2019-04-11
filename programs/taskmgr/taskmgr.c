@@ -698,7 +698,7 @@ LPWSTR GetLastErrorText(LPWSTR lpwszBuf, DWORD dwSize)
         lpwszBuf[0] = '\0';
     } else {
         lpwszTemp[lstrlenW(lpwszTemp)-2] = '\0';  /* remove cr and newline character */
-        swprintf(lpwszBuf, wszFormat, lpwszTemp, GetLastError());
+        swprintf(lpwszBuf, dwSize, wszFormat, lpwszTemp, GetLastError());
     }
     if (lpwszTemp) {
         LocalFree(lpwszTemp);
