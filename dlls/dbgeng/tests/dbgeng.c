@@ -247,7 +247,6 @@ static void test_attach(void)
     ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
 
     hr = client->lpVtbl->SetEventCallbacks(client, &event_callbacks);
-todo_wine
     ok(hr == S_OK, "Failed to set event callbacks, hr %#x.\n", hr);
 
     event = CreateEventA(NULL, FALSE, FALSE, event_name);

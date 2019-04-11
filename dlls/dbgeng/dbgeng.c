@@ -51,6 +51,7 @@ struct debug_client
     LONG refcount;
     ULONG engine_options;
     struct list targets;
+    IDebugEventCallbacks *event_callbacks;
 };
 
 static struct debug_client *impl_from_IDebugClient(IDebugClient *iface)
@@ -133,6 +134,8 @@ static ULONG STDMETHODCALLTYPE debugclient_Release(IDebugClient *iface)
             list_remove(&cur->entry);
             heap_free(cur);
         }
+        if (debug_client->event_callbacks)
+            debug_client->event_callbacks->lpVtbl->Release(debug_client->event_callbacks);
         heap_free(debug_client);
     }
 
@@ -467,16 +470,31 @@ static HRESULT STDMETHODCALLTYPE debugclient_OutputIdentity(IDebugClient *iface,
 
 static HRESULT STDMETHODCALLTYPE debugclient_GetEventCallbacks(IDebugClient *iface, IDebugEventCallbacks **callbacks)
 {
-    FIXME("%p, %p stub.\n", iface, callbacks);
+    struct debug_client *debug_client = impl_from_IDebugClient(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, callbacks);
+
+    if (debug_client->event_callbacks)
+    {
+        *callbacks = debug_client->event_callbacks;
+        (*callbacks)->lpVtbl->AddRef(*callbacks);
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugclient_SetEventCallbacks(IDebugClient *iface, IDebugEventCallbacks *callbacks)
 {
-    FIXME("%p, %p stub.\n", iface, callbacks);
+    struct debug_client *debug_client = impl_from_IDebugClient(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, callbacks);
+
+    if (debug_client->event_callbacks)
+        debug_client->event_callbacks->lpVtbl->Release(debug_client->event_callbacks);
+    if ((debug_client->event_callbacks = callbacks))
+        debug_client->event_callbacks->lpVtbl->AddRef(debug_client->event_callbacks);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugclient_FlushCallbacks(IDebugClient *iface)
