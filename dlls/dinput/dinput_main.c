@@ -1781,7 +1781,7 @@ static DWORD WINAPI hook_thread_proc(void *param)
         DispatchMessageW(&msg);
     }
 
-    return 0;
+    FreeLibraryAndExitThread(DINPUT_instance, 0);
 }
 
 static DWORD hook_thread_id;
@@ -1798,15 +1798,16 @@ static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0
 static BOOL check_hook_thread(void)
 {
     static HANDLE hook_thread;
+    HMODULE module;
 
     EnterCriticalSection(&dinput_hook_crit);
 
     TRACE("IDirectInputs left: %d\n", list_count(&direct_input_list));
     if (!list_empty(&direct_input_list) && !hook_thread)
     {
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR*)DINPUT_instance, &module);
         hook_thread_event = CreateEventW(NULL, FALSE, FALSE, NULL);
         hook_thread = CreateThread(NULL, 0, hook_thread_proc, hook_thread_event, 0, &hook_thread_id);
-        LeaveCriticalSection(&dinput_hook_crit);
     }
     else if (list_empty(&direct_input_list) && hook_thread)
     {
@@ -1821,16 +1822,11 @@ static BOOL check_hook_thread(void)
 
         hook_thread_id = 0;
         PostThreadMessageW(tid, WM_USER+0x10, 0, 0);
-        LeaveCriticalSection(&dinput_hook_crit);
-
-        /* wait for hook thread to exit */
-        WaitForSingleObject(hook_thread, INFINITE);
         CloseHandle(hook_thread);
         hook_thread = NULL;
     }
-    else
-        LeaveCriticalSection(&dinput_hook_crit);
 
+    LeaveCriticalSection(&dinput_hook_crit);
     return hook_thread_id != 0;
 }
 
