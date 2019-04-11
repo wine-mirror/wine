@@ -17521,6 +17521,394 @@ coclass SVGCircleElement
 }
 
 /*****************************************************************************
+ *    ISVGTextContentElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051051a-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGTextContentElement : IDispatch
+{
+    [propputref, id(DISPID_ISVGTEXTCONTENTELEMENT_TEXTLENGTH)]
+    HRESULT textLength([in] ISVGAnimatedLength *v);
+
+    [propget, id(DISPID_ISVGTEXTCONTENTELEMENT_TEXTLENGTH)]
+    HRESULT textLength([out, retval] ISVGAnimatedLength **p);
+
+    [propputref, id(DISPID_ISVGTEXTCONTENTELEMENT_LENGTHADJUST)]
+    HRESULT lengthAdjust([in] ISVGAnimatedEnumeration *v);
+
+    [propget, id(DISPID_ISVGTEXTCONTENTELEMENT_LENGTHADJUST)]
+    HRESULT lengthAdjust([out, retval] ISVGAnimatedEnumeration **p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETNUMBEROFCHARS)]
+    HRESULT getNumberOfChars([out, retval] long *p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETCOMPUTEDTEXTLENGTH)]
+    HRESULT getComputedTextLength([out, retval] float *p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETSUBSTRINGLENGTH)]
+    HRESULT getSubStringLength(
+        [in] long charnum,
+        [in] long nchars,
+        [out, retval] float *p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETSTARTPOSITIONOFCHAR)]
+    HRESULT getStartPositionOfChar(
+        [in] long charnum,
+        [out, retval] ISVGPoint **p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETENDPOSITIONOFCHAR)]
+    HRESULT getEndPositionOfChar(
+        [in] long charnum,
+        [out, retval] ISVGPoint **p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETEXTENTOFCHAR)]
+    HRESULT getExtentOfChar(
+        [in] long charnum,
+        [out, retval] ISVGRect **p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETROTATIONOFCHAR)]
+    HRESULT getRotationOfChar(
+        [in] long charnum,
+        [out, retval] float *p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETCHARNUMATPOSITION)]
+    HRESULT getCharNumAtPosition(
+        [in] ISVGPoint *point,
+        [out, retval] long *p);
+
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_SELECTSUBSTRING)]
+    HRESULT selectSubString(
+        [in] long charnum,
+        [in] long nchars);
+}
+
+#define WINE_ISVGTEXTCONTENTELEMENT_DISPINTERFACE_DECL              \
+    [propputref, id(DISPID_ISVGTEXTCONTENTELEMENT_TEXTLENGTH)]      \
+    void textLength(ISVGAnimatedLength *v);                         \
+                                                                    \
+    [propget, id(DISPID_ISVGTEXTCONTENTELEMENT_TEXTLENGTH)]         \
+    ISVGAnimatedLength *textLength();                               \
+                                                                    \
+    [propputref, id(DISPID_ISVGTEXTCONTENTELEMENT_LENGTHADJUST)]    \
+    void lengthAdjust(ISVGAnimatedEnumeration *v);                  \
+                                                                    \
+    [propget, id(DISPID_ISVGTEXTCONTENTELEMENT_LENGTHADJUST)]       \
+    ISVGAnimatedEnumeration *lengthAdjust();                        \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETNUMBEROFCHARS)]            \
+    long getNumberOfChars();                                        \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETCOMPUTEDTEXTLENGTH)]       \
+    float getComputedTextLength();                                  \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETSUBSTRINGLENGTH)]          \
+    float getSubStringLength(                                       \
+        [in] long charnum,                                          \
+        [in] long nchars);                                          \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETSTARTPOSITIONOFCHAR)]      \
+    ISVGPoint *getStartPositionOfChar([in] long charnum);           \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETENDPOSITIONOFCHAR)]        \
+    ISVGPoint *getEndPositionOfChar([in] long charnum);             \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETEXTENTOFCHAR)]             \
+    ISVGRect *getExtentOfChar([in] long charnum);                   \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETROTATIONOFCHAR)]           \
+    float getRotationOfChar([in] long charnum);                     \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_GETCHARNUMATPOSITION)]        \
+    long getCharNumAtPosition([in] ISVGPoint *point);               \
+                                                                    \
+    [id(DISPID_ISVGTEXTCONTENTELEMENT_SELECTSUBSTRING)]             \
+    void selectSubString(                                           \
+        [in] long charnum,                                          \
+        [in] long nchars)
+
+
+/*****************************************************************************
+ *    ISVGLengthList interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104d1-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGLengthList : IDispatch
+{
+    [propput, id(DISPID_ISVGLENGTHLIST_NUMBEROFITEMS)]
+    HRESULT numberOfItems([in] long v);
+
+    [propget, id(DISPID_ISVGLENGTHLIST_NUMBEROFITEMS)]
+    HRESULT numberOfItems([out, retval] long *p);
+
+    [id(DISPID_ISVGLENGTHLIST_CLEAR)]
+    HRESULT clear();
+
+    [id(DISPID_ISVGLENGTHLIST_INITIALIZE)]
+    HRESULT initialize(
+        [in] ISVGLength *newItem,
+        [out, retval] ISVGLength **p);
+
+    [id(DISPID_ISVGLENGTHLIST_GETITEM)]
+    HRESULT getItem(
+        [in] long index,
+        [out, retval] ISVGLength **p);
+
+    [id(DISPID_ISVGLENGTHLIST_INSERTITEMBEFORE)]
+    HRESULT insertItemBefore(
+        [in] ISVGLength *newItem,
+        [in] long index,
+        [out, retval] ISVGLength **p);
+
+    [id(DISPID_ISVGLENGTHLIST_REPLACEITEM)]
+    HRESULT replaceItem(
+        [in] ISVGLength *newItem,
+        [in] long index,
+        [out, retval] ISVGLength **p);
+
+    [id(DISPID_ISVGLENGTHLIST_REMOVEITEM)]
+    HRESULT removeItem(
+        [in] long index,
+        [out, retval] ISVGLength **p);
+
+    [id(DISPID_ISVGLENGTHLIST_APPENDITEM)]
+    HRESULT appendItem(
+        [in] ISVGLength *newItem,
+        [out, retval] ISVGLength **p);
+}
+
+/*****************************************************************************
+ *    ISVGAnimatedLengthList interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104d2-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedLengthList : IDispatch
+{
+    [propputref, id(DISPID_ISVGANIMATEDLENGTHLIST_BASEVAL)]
+    HRESULT baseVal([in] ISVGLengthList *v);
+
+    [propget, id(DISPID_ISVGANIMATEDLENGTHLIST_BASEVAL)]
+    HRESULT baseVal([out, retval] ISVGLengthList **p);
+
+    [propputref, id(DISPID_ISVGANIMATEDLENGTHLIST_ANIMVAL)]
+    HRESULT animVal([in] ISVGLengthList *v);
+
+    [propget, id(DISPID_ISVGANIMATEDLENGTHLIST_ANIMVAL)]
+    HRESULT animVal([out, retval] ISVGLengthList **p);
+}
+
+/*****************************************************************************
+ *    ISVGNumberList interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104cd-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGNumberList : IDispatch
+{
+    [propput, id(DISPID_ISVGNUMBERLIST_NUMBEROFITEMS)]
+    HRESULT numberOfItems([in] long v);
+
+    [propget, id(DISPID_ISVGNUMBERLIST_NUMBEROFITEMS)]
+    HRESULT numberOfItems([out, retval] long *p);
+
+    [id(DISPID_ISVGNUMBERLIST_CLEAR)]
+    HRESULT clear();
+
+    [id(DISPID_ISVGNUMBERLIST_INITIALIZE)]
+    HRESULT initialize(
+        [in] ISVGNumber *newItem,
+        [out, retval] ISVGNumber **p);
+
+    [id(DISPID_ISVGNUMBERLIST_GETITEM)]
+    HRESULT getItem(
+        [in] long index,
+        [out, retval] ISVGNumber **p);
+
+    [id(DISPID_ISVGNUMBERLIST_INSERTITEMBEFORE)]
+    HRESULT insertItemBefore(
+        [in] ISVGNumber *newItem,
+        [in] long index,
+        [out, retval] ISVGNumber **p);
+
+    [id(DISPID_ISVGNUMBERLIST_REPLACEITEM)]
+    HRESULT replaceItem(
+        [in] ISVGNumber *newItem,
+        [in] long index,
+        [out, retval] ISVGNumber **p);
+
+    [id(DISPID_ISVGNUMBERLIST_REMOVEITEM)]
+    HRESULT removeItem(
+        [in] long index,
+        [out, retval] ISVGNumber **p);
+
+    [id(DISPID_ISVGNUMBERLIST_APPENDITEM)]
+    HRESULT appendItem(
+        [in] ISVGNumber *newItem,
+        [out, retval] ISVGNumber **p);
+}
+
+/*****************************************************************************
+ *    ISVGAnimatedNumberList interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104ce-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGAnimatedNumberList : IDispatch
+{
+    [propputref, id(DISPID_ISVGANIMATEDNUMBERLIST_BASEVAL)]
+    HRESULT baseVal([in] ISVGNumberList *v);
+
+    [propget, id(DISPID_ISVGANIMATEDNUMBERLIST_BASEVAL)]
+    HRESULT baseVal([out, retval] ISVGNumberList **p);
+
+    [propputref, id(DISPID_ISVGANIMATEDNUMBERLIST_ANIMVAL)]
+    HRESULT animVal([in] ISVGNumberList *v);
+
+    [propget, id(DISPID_ISVGANIMATEDNUMBERLIST_ANIMVAL)]
+    HRESULT animVal([out, retval] ISVGNumberList **p);
+}
+
+/*****************************************************************************
+ *    ISVGTextPositioningElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051051b-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGTextPositioningElement : IDispatch
+{
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_X)]
+    HRESULT x([in] ISVGAnimatedLengthList *v);
+
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_X)]
+    HRESULT x([out, retval] ISVGAnimatedLengthList **p);
+
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_Y)]
+    HRESULT y([in] ISVGAnimatedLengthList *v);
+
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_Y)]
+    HRESULT y([out, retval] ISVGAnimatedLengthList **p);
+
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_DX)]
+    HRESULT dx([in] ISVGAnimatedLengthList *v);
+
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_DX)]
+    HRESULT dx([out, retval] ISVGAnimatedLengthList **p);
+
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_DY)]
+    HRESULT dy([in] ISVGAnimatedLengthList *v);
+
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_DY)]
+    HRESULT dy([out, retval] ISVGAnimatedLengthList **p);
+
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_ROTATE)]
+    HRESULT rotate([in] ISVGAnimatedNumberList *v);
+
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_ROTATE)]
+    HRESULT rotate([out, retval] ISVGAnimatedNumberList **p);
+}
+
+#define WINE_ISVGTEXTPOSITIONINGELEMENT_DISPINTERFACE_DECL      \
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_X)]       \
+    void x(ISVGAnimatedLengthList *v);                          \
+                                                                \
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_X)]          \
+    ISVGAnimatedLengthList *x();                                \
+                                                                \
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_Y)]       \
+    void y(ISVGAnimatedLengthList *v);                          \
+                                                                \
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_Y)]          \
+    ISVGAnimatedLengthList *y();                                \
+                                                                \
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_DX)]      \
+    void dx(ISVGAnimatedLengthList *v);                         \
+                                                                \
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_DX)]         \
+    ISVGAnimatedLengthList *dx();                               \
+                                                                \
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_DY)]      \
+    void dy(ISVGAnimatedLengthList *v);                         \
+                                                                \
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_DY)]         \
+    ISVGAnimatedLengthList *dy();                               \
+                                                                \
+    [propputref, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_ROTATE)]  \
+    void rotate(ISVGAnimatedNumberList *v);                     \
+                                                                \
+    [propget, id(DISPID_ISVGTEXTPOSITIONINGELEMENT_ROTATE)]     \
+    ISVGAnimatedNumberList *rotate()
+
+
+/*****************************************************************************
+ *    ISVGTSpanElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051051d-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISVGTSpanElement : IDispatch
+{
+}
+
+[
+    hidden,
+    uuid(3059003a-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispSVGTSpanElement
+{
+ properties:
+methods:
+    WINE_ISVGTEXTPOSITIONINGELEMENT_DISPINTERFACE_DECL;
+    WINE_ISVGTEXTCONTENTELEMENT_DISPINTERFACE_DECL;
+    WINE_ISVGELEMENT_DISPINTERFACE_DECL;
+    WINE_ISVGTESTS_DISPINTERFACE_DECL;
+    WINE_ISVGLANGSPACE_DISPINTERFACE_DECL;
+    WINE_ISVGEXTERNALRESOURCESREQUIRED_DISPINTERFACE_DECL;
+    WINE_ISVGSTYLABLE_DISPINTERFACE_DECL;
+}
+
+[
+    noncreatable,
+    uuid(305105e2-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass SVGTSpanElement
+{
+    [default]          dispinterface DispSVGTSpanElement;
+    [source, default]  dispinterface HTMLElementEvents;
+    [source]           dispinterface HTMLElementEvents2;
+                       interface ISVGTSpanElement;
+                       interface ISVGTextPositioningElement;
+                       interface ISVGTextContentElement;
+                       interface ISVGElement;
+                       interface ISVGTests;
+                       interface ISVGLangSpace;
+                       interface ISVGExternalResourcesRequired;
+                       interface ISVGStylable;
+}
+
+/*****************************************************************************
  *    IOmHistory interface
  */
 [
