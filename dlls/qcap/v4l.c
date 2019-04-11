@@ -122,15 +122,6 @@ static int xioctl(int fd, int request, void * arg)
     return r;
 }
 
-/* Prepare the capture buffers */
-static HRESULT V4l_Prepare(Capture *device)
-{
-    device->image_size = device->height * device->width * 3;
-    if (!(device->image_data = heap_alloc(device->image_size)))
-        return E_OUTOFMEMORY;
-    return S_OK;
-}
-
 HRESULT qcap_driver_destroy(Capture *capBox)
 {
     TRACE("%p\n", capBox);
@@ -392,10 +383,10 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     ULONG framecount = 0;
     unsigned char *pTarget, *pInput, *pOutput;
 
-    hr = V4l_Prepare(capBox);
-    if (FAILED(hr))
+    capBox->image_size = capBox->height * capBox->width * 3;
+    if (!(capBox->image_data = heap_alloc(capBox->image_size)))
     {
-        ERR("Stop IFilterGraph: %x\n", hr);
+        ERR("Failed to allocate memory.\n");
         capBox->thread = 0;
         capBox->stopped = TRUE;
         return 0;
