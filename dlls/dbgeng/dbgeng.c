@@ -31,8 +31,16 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbgeng);
+
+struct target_process
+{
+    struct list entry;
+    unsigned int pid;
+    unsigned int attach_flags;
+};
 
 struct debug_client
 {
@@ -42,6 +50,7 @@ struct debug_client
     IDebugControl2 IDebugControl2_iface;
     LONG refcount;
     ULONG engine_options;
+    struct list targets;
 };
 
 static struct debug_client *impl_from_IDebugClient(IDebugClient *iface)
@@ -113,11 +122,19 @@ static ULONG STDMETHODCALLTYPE debugclient_Release(IDebugClient *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugClient(iface);
     ULONG refcount = InterlockedDecrement(&debug_client->refcount);
+    struct target_process *cur, *cur2;
 
     TRACE("%p, %d.\n", debug_client, refcount);
 
     if (!refcount)
+    {
+        LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &debug_client->targets, struct target_process, entry)
+        {
+            list_remove(&cur->entry);
+            heap_free(cur);
+        }
         heap_free(debug_client);
+    }
 
     return refcount;
 }
@@ -195,9 +212,26 @@ static HRESULT STDMETHODCALLTYPE debugclient_GetRunningProcessDescription(IDebug
 
 static HRESULT STDMETHODCALLTYPE debugclient_AttachProcess(IDebugClient *iface, ULONG64 server, ULONG pid, ULONG flags)
 {
-    FIXME("%p, %s, %u, %#x stub.\n", iface, wine_dbgstr_longlong(server), pid, flags);
+    struct debug_client *debug_client = impl_from_IDebugClient(iface);
+    struct target_process *process;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %u, %#x.\n", iface, wine_dbgstr_longlong(server), pid, flags);
+
+    if (server)
+    {
+        FIXME("Remote debugging is not supported.\n");
+        return E_NOTIMPL;
+    }
+
+    if (!(process = heap_alloc(sizeof(*process))))
+        return E_OUTOFMEMORY;
+
+    process->pid = pid;
+    process->attach_flags = flags;
+
+    list_add_head(&debug_client->targets, &process->entry);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugclient_CreateProcess(IDebugClient *iface, ULONG64 server, char *cmdline,
@@ -2142,6 +2176,7 @@ HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
     debug_client->IDebugSymbols_iface.lpVtbl = &debugsymbolsvtbl;
     debug_client->IDebugControl2_iface.lpVtbl = &debugcontrolvtbl;
     debug_client->refcount = 1;
+    list_init(&debug_client->targets);
 
     unk = (IUnknown *)&debug_client->IDebugClient_iface;
 

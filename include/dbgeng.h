@@ -73,6 +73,95 @@ DEFINE_GUID(IID_IDebugSystemObjects3,     0xe9676e2f, 0xe286, 0x4ea3, 0xb0, 0xf9
 #define DEBUG_ATTACH_INVASIVE_RESUME_PROCESS        0x00000010
 #define DEBUG_ATTACH_NONINVASIVE_ALLOW_PARTIAL      0x00000020
 
+/* EndSession() flags */
+#define DEBUG_END_PASSIVE                           0x00000000
+#define DEBUG_END_ACTIVE_TERMINATE                  0x00000001
+#define DEBUG_END_ACTIVE_DETACH                     0x00000002
+#define DEBUG_END_REENTRANT                         0x00000003
+#define DEBUG_END_DISCONNECT                        0x00000004
+
+/* ChangeEngineState() flags */
+#define DEBUG_CES_CURRENT_THREAD                    0x00000001
+#define DEBUG_CES_EFFECTIVE_PROCESSOR               0x00000002
+#define DEBUG_CES_BREAKPOINTS                       0x00000004
+#define DEBUG_CES_CODE_LEVEL                        0x00000008
+#define DEBUG_CES_EXECUTION_STATUS                  0x00000010
+#define DEBUG_CES_ENGINE_OPTIONS                    0x00000020
+#define DEBUG_CES_LOG_FILE                          0x00000040
+#define DEBUG_CES_RADIX                             0x00000080
+#define DEBUG_CES_EVENT_FILTERS                     0x00000100
+#define DEBUG_CES_PROCESS_OPTIONS                   0x00000200
+#define DEBUG_CES_EXTENSIONS                        0x00000400
+#define DEBUG_CES_SYSTEMS                           0x00000800
+#define DEBUG_CES_ASSEMBLY_OPTIONS                  0x00001000
+#define DEBUG_CES_EXPRESSION_SYNTAX                 0x00002000
+#define DEBUG_CES_TEXT_REPLACEMENTS                 0x00004000
+#define DEBUG_CES_ALL                               0xffffffff
+
+#define DEBUG_STATUS_NO_CHANGE                               0
+#define DEBUG_STATUS_GO                                      1
+#define DEBUG_STATUS_GO_HANDLED                              2
+#define DEBUG_STATUS_GO_NOT_HANDLED                          3
+#define DEBUG_STATUS_STEP_OVER                               4
+#define DEBUG_STATUS_STEP_INTO                               5
+#define DEBUG_STATUS_BREAK                                   6
+#define DEBUG_STATUS_NO_DEBUGGEE                             7
+#define DEBUG_STATUS_STEP_BRANCH                             8
+#define DEBUG_STATUS_IGNORE_EVENT                            9
+#define DEBUG_STATUS_RESTART_REQUESTED                      10
+#define DEBUG_STATUS_REVERSE_GO                             11
+#define DEBUG_STATUS_REVERSE_STEP_BRANCH                    12
+#define DEBUG_STATUS_REVERSE_STEP_OVER                      13
+#define DEBUG_STATUS_REVERSE_STEP_INTO                      14
+#define DEBUG_STATUS_OUT_OF_SYNC                            15
+#define DEBUG_STATUS_WAIT_INPUT                             16
+#define DEBUG_STATUS_TIMEOUT                                17
+#define DEBUG_STATUS_MASK                                 0x1f
+
+/* ChangeSymbolState() flags */
+#define DEBUG_CSS_LOADS                             0x00000001
+#define DEBUG_CSS_UNLOADS                           0x00000002
+#define DEBUG_CSS_SCOPE                             0x00000004
+#define DEBUG_CSS_PATHS                             0x00000008
+#define DEBUG_CSS_SYMBOL_OPTIONS                    0x00000010
+#define DEBUG_CSS_TYPE_OPTIONS                      0x00000020
+#define DEBUG_CSS_COLLAPSE_CHILDREN                 0x00000040
+#define DEBUG_CSS_ALL                               0xffffffff
+
+/* SessionStatus() flags */
+#define DEBUG_SESSION_ACTIVE                        0x00000000
+#define DEBUG_SESSION_END_SESSION_ACTIVE_TERMINATE  0x00000001
+#define DEBUG_SESSION_END_SESSION_ACTIVE_DETACH     0x00000002
+#define DEBUG_SESSION_END_SESSION_PASSIVE           0x00000003
+#define DEBUG_SESSION_END                           0x00000004
+#define DEBUG_SESSION_REBOOT                        0x00000005
+#define DEBUG_SESSION_HIBERNATE                     0x00000006
+#define DEBUG_SESSION_FAILURE                       0x00000007
+
+/* ChangeDebuggeeState() flags */
+#define DEBUG_CDS_REGISTERS                         0x00000001
+#define DEBUG_CDS_DATA                              0x00000002
+#define DEBUG_CDS_REFRESH                           0x00000004
+#define DEBUG_CDS_ALL                               0xffffffff
+
+#define DEBUG_CDS_REFRESH_EVALUATE                           1
+#define DEBUG_CDS_REFRESH_EXECUTE                            2
+#define DEBUG_CDS_REFRESH_EXECUTECOMMANDFILE                 3
+#define DEBUG_CDS_REFRESH_ADDBREAKPOINT                      4
+#define DEBUG_CDS_REFRESH_REMOVEBREAKPOINT                   5
+#define DEBUG_CDS_REFRESH_WRITEVIRTUAL                       6
+#define DEBUG_CDS_REFRESH_WRITEVIRTUALUNCACHED               7
+#define DEBUG_CDS_REFRESH_WRITEPHYSICAL                      8
+#define DEBUG_CDS_REFRESH_WRITEPHYSICAL2                     9
+#define DEBUG_CDS_REFRESH_SETVALUE                          10
+#define DEBUG_CDS_REFRESH_SETVALUE2                         11
+#define DEBUG_CDS_REFRESH_SETSCOPE                          12
+#define DEBUG_CDS_REFRESH_SETSCOPEFRAMEBYINDEX              13
+#define DEBUG_CDS_REFRESH_SETSCOPEFROMJITDEBUGINFO          14
+#define DEBUG_CDS_REFRESH_SETSCOPEFROMSTOREDEVENT           15
+#define DEBUG_CDS_REFRESH_INLINESTEP                        16
+#define DEBUG_CDS_REFRESH_INLINESTEP_PSEUDO                 17
+
 typedef struct _DEBUG_MODULE_PARAMETERS
 {
     ULONG64 Base;
