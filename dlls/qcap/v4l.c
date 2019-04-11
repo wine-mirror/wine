@@ -361,27 +361,13 @@ static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
     }
 }
 
-static void V4l_GetFrame(Capture *device, unsigned char **buffer)
-{
-    while (video_read(device->fd, device->image_data, device->image_size) == -1)
-    {
-        if (errno != EAGAIN)
-        {
-            ERR("Failed to read frame: %s\n", strerror(errno));
-            break;
-        }
-    }
-    TRACE("Successfully read a frame.\n");
-    *buffer = device->image_data;
-}
-
 static DWORD WINAPI ReadThread(LPVOID lParam)
 {
     Capture * capBox = lParam;
     HRESULT hr;
     IMediaSample *pSample = NULL;
     ULONG framecount = 0;
-    unsigned char *pTarget, *pInput, *pOutput;
+    unsigned char *pTarget, *pOutput;
 
     capBox->image_size = capBox->height * capBox->width * 3;
     if (!(capBox->image_data = heap_alloc(capBox->image_size)))
@@ -414,9 +400,17 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             TRACE("Data length: %d KB\n", len / 1024);
 
             IMediaSample_GetPointer(pSample, &pTarget);
-            /* FIXME: Check return values.. */
-            V4l_GetFrame(capBox, &pInput);
-            memcpy(pOutput, pInput, len);
+
+            while (video_read(capBox->fd, capBox->image_data, capBox->image_size) == -1)
+            {
+                if (errno != EAGAIN)
+                {
+                    ERR("Failed to read frame: %s\n", strerror(errno));
+                    break;
+                }
+            }
+
+            memcpy(pOutput, capBox->image_data, len);
             Resize(capBox, pTarget, pOutput);
             hr = BaseOutputPinImpl_Deliver((BaseOutputPin *)capBox->pOut, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
