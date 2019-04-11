@@ -230,7 +230,7 @@ static DWORD wchar_get_type(const WCHAR *type_name)
 
     for (i = 0; i < ARRAY_SIZE(type_rels); i++)
     {
-        if (!_wcsicmp(type_rels[i].name, type_name))
+        if (!wcsicmp(type_rels[i].name, type_name))
             return type_rels[i].type;
     }
 
