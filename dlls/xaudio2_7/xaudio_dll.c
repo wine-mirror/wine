@@ -41,7 +41,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
 #if XAUDIO2_VER != 0 && defined(__i386__)
-/* EVE Online uses an OnVoiceProcessingPassStart callback which corrupts %esi. */
+/* EVE Online uses an OnVoiceProcessingPassStart callback which corrupts %esi;
+ * League of Legends uses a callback which corrupts %ebx. */
 #define IXAudio2VoiceCallback_OnVoiceProcessingPassStart(a, b) call_on_voice_processing_pass_start(a, b)
 extern void call_on_voice_processing_pass_start(IXAudio2VoiceCallback *This, UINT32 BytesRequired);
 __ASM_GLOBAL_FUNC( call_on_voice_processing_pass_start,
@@ -54,13 +55,17 @@ __ASM_GLOBAL_FUNC( call_on_voice_processing_pass_start,
                   __ASM_CFI(".cfi_rel_offset %esi,-4\n\t")
                    "pushl %edi\n\t"
                   __ASM_CFI(".cfi_rel_offset %edi,-8\n\t")
-                   "subl $8,%esp\n\t"
+                   "pushl %ebx\n\t"
+                  __ASM_CFI(".cfi_rel_offset %ebx,-12\n\t")
+                   "subl $4,%esp\n\t"
                    "pushl 12(%ebp)\n\t"     /* BytesRequired */
                    "pushl 8(%ebp)\n\t"      /* This */
                    "movl 8(%ebp),%eax\n\t"
                    "movl 0(%eax),%eax\n\t"
                    "call *0(%eax)\n\t"      /* This->lpVtbl->OnVoiceProcessingPassStart */
-                   "leal -8(%ebp),%esp\n\t"
+                   "leal -12(%ebp),%esp\n\t"
+                   "popl %ebx\n\t"
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
                    "popl %edi\n\t"
                    __ASM_CFI(".cfi_same_value %edi\n\t")
                    "popl %esi\n\t"
