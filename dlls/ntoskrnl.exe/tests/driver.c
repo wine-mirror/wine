@@ -59,9 +59,8 @@ static void kvprintf(const char *format, __ms_va_list ap)
 {
     static char buffer[512];
     IO_STATUS_BLOCK io;
-
-    _vsnprintf(buffer, sizeof(buffer), format, ap);
-    ZwWriteFile(okfile, NULL, NULL, NULL, &io, buffer, strlen(buffer), NULL, NULL);
+    int len = _vsnprintf(buffer, sizeof(buffer), format, ap);
+    ZwWriteFile(okfile, NULL, NULL, NULL, &io, buffer, len, NULL, NULL);
 }
 
 static void WINAPIV kprintf(const char *format, ...)
@@ -190,6 +189,13 @@ static void *kmemcpy(void *dest, const void *src, SIZE_T n)
     const char *s = src;
     char *d = dest;
     while (n--) *d++ = *s++;
+    return dest;
+}
+
+static void *kmemset(void *dest, int c, SIZE_T n)
+{
+    unsigned char *d = dest;
+    while (n--) *d++ = (unsigned char)c;
     return dest;
 }
 
@@ -943,7 +949,7 @@ static void test_resource(void)
     BOOLEAN ret;
     HANDLE thread, thread2;
 
-    memset(&resource, 0xcc, sizeof(resource));
+    kmemset(&resource, 0xcc, sizeof(resource));
 
     status = ExInitializeResourceLite(&resource);
     ok(status == STATUS_SUCCESS, "got status %#x\n", status);
@@ -1230,7 +1236,7 @@ static NTSTATUS test_basic_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *
     if (length < sizeof(teststr))
         return STATUS_BUFFER_TOO_SMALL;
 
-    strcpy(buffer, teststr);
+    kmemcpy(buffer, teststr, sizeof(teststr));
     *info = sizeof(teststr);
 
     return STATUS_SUCCESS;
