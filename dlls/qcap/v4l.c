@@ -367,7 +367,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     HRESULT hr;
     IMediaSample *pSample = NULL;
     ULONG framecount = 0;
-    unsigned char *pTarget, *pOutput;
+    unsigned char *pTarget;
 
     capBox->image_size = capBox->height * capBox->width * 3;
     if (!(capBox->image_data = heap_alloc(capBox->image_size)))
@@ -377,8 +377,6 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
         capBox->stopped = TRUE;
         return 0;
     }
-
-    pOutput = CoTaskMemAlloc(capBox->width * capBox->height * capBox->bitDepth / 8);
 
     while (1)
     {
@@ -410,8 +408,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
                 }
             }
 
-            memcpy(pOutput, capBox->image_data, len);
-            Resize(capBox, pTarget, pOutput);
+            Resize(capBox, pTarget, capBox->image_data);
             hr = BaseOutputPinImpl_Deliver((BaseOutputPin *)capBox->pOut, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
@@ -428,7 +425,6 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     }
 
     LeaveCriticalSection(&capBox->CritSect);
-    CoTaskMemFree(pOutput);
     return 0;
 }
 
