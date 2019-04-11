@@ -131,11 +131,6 @@ static HRESULT V4l_Prepare(Capture *device)
     return S_OK;
 }
 
-static void V4l_Unprepare(Capture *device)
-{
-    heap_free(device->image_data);
-}
-
 HRESULT qcap_driver_destroy(Capture *capBox)
 {
     TRACE("%p\n", capBox);
@@ -439,7 +434,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
         if (FAILED(hr) && hr != VFW_E_NOT_CONNECTED)
         {
             TRACE("Return %x, stop IFilterGraph\n", hr);
-            V4l_Unprepare(capBox);
+            heap_free(capBox->image_data);
             capBox->thread = 0;
             capBox->stopped = TRUE;
             break;
@@ -559,7 +554,7 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
             if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
                 WARN("Decommitting allocator: %x\n", hr);
         }
-        V4l_Unprepare(capBox);
+        heap_free(capBox->image_data);
     }
 
     *state = State_Stopped;
