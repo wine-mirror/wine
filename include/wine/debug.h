@@ -290,7 +290,7 @@ static inline const char *wine_dbgstr_wn( const WCHAR *str, int n )
                 *dst++ = hex[(c >> 4) & 0x0f];
                 *dst++ = hex[c & 0x0f];
             }
-            else *dst++ = c;
+            else *dst++ = (char)c;
         }
     }
     *dst++ = '"';
