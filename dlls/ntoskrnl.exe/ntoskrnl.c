@@ -1831,8 +1831,11 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
         {
             ULONG used_len, len = buffer_length + sizeof(OBJECT_NAME_INFORMATION);
             OBJECT_NAME_INFORMATION *name = HeapAlloc(GetProcessHeap(), 0, len);
+            HANDLE handle;
 
-            status = NtQueryObject(device->Reserved, ObjectNameInformation, name, len, &used_len);
+            handle = kernel_object_handle( device, 0 );
+            status = NtQueryObject( handle, ObjectNameInformation, name, len, &used_len );
+            NtClose( handle );
             if (status == STATUS_SUCCESS)
             {
                 /* Ensure room for NULL termination */
