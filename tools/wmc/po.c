@@ -405,7 +405,7 @@ static char *get_message_context( char **msgid )
 static char *convert_string_utf8( const lanmsg_t *msg )
 {
     char *buffer = xmalloc( msg->len * 4 + 1 );
-    int len = wine_utf8_wcstombs( 0, msg->msg, msg->len, buffer, msg->len * 4 );
+    int len = wmc_wcstombs( CP_UTF8, 0, msg->msg, msg->len, buffer, msg->len * 4 );
     buffer[len] = 0;
     return buffer;
 }
@@ -656,9 +656,9 @@ static lanmsg_t *translate_string( lanmsg_t *str, int lang, int *found )
     new->cp   = 0;  /* FIXME */
     new->file = str->file;
     new->line = str->line;
-    new->len  = wine_utf8_mbstowcs( 0, transl, strlen(transl) + 1, NULL, 0 );
+    new->len  = wmc_mbstowcs( CP_UTF8, 0, transl, strlen(transl) + 1, NULL, 0 );
     new->msg  = xmalloc( new->len * sizeof(WCHAR) );
-    res = wine_utf8_mbstowcs( MB_ERR_INVALID_CHARS, transl, strlen(transl) + 1, new->msg, new->len );
+    res = wmc_mbstowcs( CP_UTF8, MB_ERR_INVALID_CHARS, transl, strlen(transl) + 1, new->msg, new->len );
     if (res == -2)
         error( "Invalid utf-8 character in string '%s'\n", transl );
     free( buffer );
