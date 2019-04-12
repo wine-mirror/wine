@@ -3135,6 +3135,61 @@ static void test_vectored_continue_handler(void)
 }
 #endif /* defined(__i386__) || defined(__x86_64__) */
 
+static DWORD WINAPI suspend_thread_test( void *arg )
+{
+    HANDLE event = arg;
+    WaitForSingleObject(event, INFINITE);
+    return 0;
+}
+
+static void test_suspend_thread(void)
+{
+    HANDLE thread, event;
+    NTSTATUS status;
+    ULONG count;
+    DWORD ret;
+
+    status = NtSuspendThread(0, NULL);
+    ok(status == STATUS_INVALID_HANDLE, "Unexpected return value %#x.\n", status);
+
+    status = NtResumeThread(0, NULL);
+    ok(status == STATUS_INVALID_HANDLE, "Unexpected return value %#x.\n", status);
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    thread = CreateThread(NULL, 0, suspend_thread_test, event, 0, NULL);
+    ok(thread != NULL, "Failed to create a thread.\n");
+
+    ret = WaitForSingleObject(thread, 0);
+    ok(ret == WAIT_TIMEOUT, "Unexpected status %d.\n", ret);
+
+    status = NtResumeThread(thread, NULL);
+    ok(!status, "Unexpected status %#x.\n", status);
+
+    status = NtResumeThread(thread, &count);
+    ok(!status, "Unexpected status %#x.\n", status);
+    ok(count == 0, "Unexpected suspended count %u.\n", count);
+
+    status = NtSuspendThread(thread, NULL);
+    ok(!status, "Failed to suspend a thread, status %#x.\n", status);
+
+    status = NtSuspendThread(thread, &count);
+    ok(!status, "Failed to suspend a thread, status %#x.\n", status);
+    ok(count == 1, "Unexpected suspended count %u.\n", count);
+
+    status = NtResumeThread(thread, &count);
+    ok(!status, "Failed to resume a thread, status %#x.\n", status);
+    ok(count == 2, "Unexpected suspended count %u.\n", count);
+
+    status = NtResumeThread(thread, NULL);
+    ok(!status, "Failed to resume a thread, status %#x.\n", status);
+
+    SetEvent(event);
+    WaitForSingleObject(thread, INFINITE);
+
+    CloseHandle(thread);
+}
+
 START_TEST(exception)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -3253,6 +3308,7 @@ START_TEST(exception)
     test_dpe_exceptions();
     test_prot_fault();
     test_thread_context();
+    test_suspend_thread();
 
 #elif defined(__x86_64__)
     pRtlAddFunctionTable               = (void *)GetProcAddress( hntdll,
@@ -3294,6 +3350,7 @@ START_TEST(exception)
     test_prot_fault();
     test_dpe_exceptions();
     test_wow64_context();
+    test_suspend_thread();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
