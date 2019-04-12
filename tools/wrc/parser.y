@@ -2557,35 +2557,41 @@ static toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems)
 
 static string_t *make_filename(string_t *str)
 {
+    int i;
+
     if(str->type == str_char)
     {
-	char *cptr;
+	char *dst = str->str.cstr;
 
 	/* Remove escaped backslash and convert to forward */
-	for(cptr = str->str.cstr; (cptr = strchr(cptr, '\\')) != NULL; cptr++)
-	{
-		if(cptr[1] == '\\')
-		{
-			memmove(cptr, cptr+1, strlen(cptr));
-			str->size--;
-		}
-		*cptr = '/';
-	}
+        for (i = 0; i < str->size; i++)
+        {
+            if (str->str.cstr[i] == '\\')
+            {
+                if (i < str->size - 1 && str->str.cstr[i + 1] == '\\') i++;
+                *dst++ = '/';
+            }
+            else *dst++ = str->str.cstr[i];
+        }
+        *dst = 0;
+        str->size = dst - str->str.cstr;
     }
     else
     {
-	WCHAR *wptr;
+	WCHAR *dst = str->str.wstr;
 
 	/* Remove escaped backslash and convert to forward */
-	for(wptr = str->str.wstr; (wptr = strchrW(wptr, '\\')) != NULL; wptr++)
-	{
-		if(wptr[1] == '\\')
-		{
-			memmove(wptr, wptr+1, strlenW(wptr));
-			str->size--;
-		}
-		*wptr = '/';
-	}
+        for (i = 0; i < str->size; i++)
+        {
+            if (str->str.wstr[i] == '\\')
+            {
+                if (i < str->size - 1 && str->str.wstr[i + 1] == '\\') i++;
+                *dst++ = '/';
+            }
+            else *dst++ = str->str.wstr[i];
+        }
+        *dst = 0;
+        str->size = dst - str->str.wstr;
     }
     return str;
 }
