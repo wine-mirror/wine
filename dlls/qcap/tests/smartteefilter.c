@@ -22,6 +22,10 @@
 #include "dshow.h"
 #include "wine/test.h"
 
+static const WCHAR sink_id[] = {'I','n','p','u','t',0};
+static const WCHAR capture_id[] = {'C','a','p','t','u','r','e',0};
+static const WCHAR preview_id[] = {'P','r','e','v','i','e','w',0};
+
 static HANDLE event;
 
 static IBaseFilter *create_smart_tee(void)
@@ -218,6 +222,46 @@ static void test_enum_pins(void)
 
     IEnumPins_Release(enum2);
     IEnumPins_Release(enum1);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_find_pin(void)
+{
+    IBaseFilter *filter = create_smart_tee();
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin2 == pin, "Expected pin %p, got %p.\n", pin, pin2);
+    IPin_Release(pin2);
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, capture_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin2 == pin, "Expected pin %p, got %p.\n", pin, pin2);
+    IPin_Release(pin2);
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, preview_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin2 == pin, "Expected pin %p, got %p.\n", pin, pin2);
+    IPin_Release(pin2);
+    IPin_Release(pin);
+
+    IEnumPins_Release(enum_pins);
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
@@ -2216,6 +2260,7 @@ START_TEST(smartteefilter)
 
     test_interfaces();
     test_enum_pins();
+    test_find_pin();
 
     test_smart_tee_filter_aggregation();
     test_smart_tee_filter();
