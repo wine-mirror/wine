@@ -266,6 +266,109 @@ static void test_find_pin(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_pin_info(void)
+{
+    IBaseFilter *filter = create_smart_tee();
+    PIN_DIRECTION dir;
+    PIN_INFO info;
+    ULONG count;
+    HRESULT hr;
+    WCHAR *id;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ref = get_refcount(filter);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, &count);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, capture_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, capture_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ref = get_refcount(filter);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_OUTPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, capture_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, &count);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, preview_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, preview_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ref = get_refcount(filter);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_OUTPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, preview_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, &count);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 typedef struct {
     IBaseFilter IBaseFilter_iface;
     LONG ref;
@@ -1885,7 +1988,6 @@ static void test_smart_tee_filter(void)
     int pinNumber = 0;
     IMemInputPin *memInputPin = NULL;
     IEnumMediaTypes *enumMediaTypes = NULL;
-    ULONG nPin = 0;
 
     hr = CoCreateInstance(&CLSID_SmartTee, NULL, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void**)&smartTeeFilter);
@@ -1908,55 +2010,24 @@ static void test_smart_tee_filter(void)
 
     while (IEnumPins_Next(enumPins, 1, &pin, NULL) == S_OK)
     {
-        LPWSTR id = NULL;
-        PIN_INFO pinInfo;
-        memset(&pinInfo, 0, sizeof(pinInfo));
-        hr = IPin_QueryPinInfo(pin, &pinInfo);
-        ok(SUCCEEDED(hr), "QueryPinInfo failed, hr=0x%08x\n", hr);
-        if (FAILED(hr))
-            goto endwhile;
-
-        ok(pinInfo.pFilter == smartTeeFilter, "pin's filter isn't the filter owning the pin\n");
         if (pinNumber == 0)
         {
-            static const WCHAR wszInput[] = {'I','n','p','u','t',0};
-            ok(pinInfo.dir == PINDIR_INPUT, "pin 0 isn't an input pin\n");
-            ok(!lstrcmpW(pinInfo.achName, wszInput), "pin 0 is called %s, not 'Input'\n", wine_dbgstr_w(pinInfo.achName));
-            hr = IPin_QueryId(pin, &id);
-            ok(SUCCEEDED(hr), "IPin_QueryId() failed with 0x%08x\n", hr);
-            ok(!lstrcmpW(id, wszInput), "pin 0's id is %s, not 'Input'\n", wine_dbgstr_w(id));
             inputPin = pin;
             IPin_AddRef(inputPin);
         }
         else if (pinNumber == 1)
         {
-            static const WCHAR wszCapture[] = {'C','a','p','t','u','r','e',0};
-            ok(pinInfo.dir == PINDIR_OUTPUT, "pin 1 isn't an output pin\n");
-            ok(!lstrcmpW(pinInfo.achName, wszCapture), "pin 1 is called %s, not 'Capture'\n", wine_dbgstr_w(pinInfo.achName));
-            hr = IPin_QueryId(pin, &id);
-            ok(SUCCEEDED(hr), "IPin_QueryId() failed with 0x%08x\n", hr);
-            ok(!lstrcmpW(id, wszCapture), "pin 1's id is %s, not 'Capture'\n", wine_dbgstr_w(id));
             capturePin = pin;
             IPin_AddRef(capturePin);
         }
         else if (pinNumber == 2)
         {
-            static const WCHAR wszPreview[] = {'P','r','e','v','i','e','w',0};
-            ok(pinInfo.dir == PINDIR_OUTPUT, "pin 2 isn't an output pin\n");
-            ok(!lstrcmpW(pinInfo.achName, wszPreview), "pin 2 is called %s, not 'Preview'\n", wine_dbgstr_w(pinInfo.achName));
-            hr = IPin_QueryId(pin, &id);
-            ok(SUCCEEDED(hr), "IPin_QueryId() failed with 0x%08x\n", hr);
-            ok(!lstrcmpW(id, wszPreview), "pin 2's id is %s, not 'Preview'\n", wine_dbgstr_w(id));
             previewPin = pin;
             IPin_AddRef(previewPin);
         }
         else
             ok(0, "pin %d isn't supposed to exist\n", pinNumber);
 
-    endwhile:
-        if (pinInfo.pFilter)
-            IBaseFilter_Release(pinInfo.pFilter);
-        CoTaskMemFree(id);
         IPin_Release(pin);
         pinNumber++;
     }
@@ -2009,13 +2080,6 @@ static void test_smart_tee_filter(void)
     ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
     hr = IPin_EnumMediaTypes(previewPin, &enumMediaTypes);
     ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
-
-    hr = IPin_QueryInternalConnections(inputPin, NULL, &nPin);
-    ok(hr == E_NOTIMPL, "IPin_QueryInternalConnections() returned hr=0x%08x\n", hr);
-    hr = IPin_QueryInternalConnections(capturePin, NULL, &nPin);
-    ok(hr == E_NOTIMPL, "IPin_QueryInternalConnections() returned hr=0x%08x\n", hr);
-    hr = IPin_QueryInternalConnections(previewPin, NULL, &nPin);
-    ok(hr == E_NOTIMPL, "IPin_QueryInternalConnections() returned hr=0x%08x\n", hr);
 
     test_smart_tee_filter_in_graph(smartTeeFilter, inputPin, capturePin, previewPin);
 
@@ -2261,6 +2325,7 @@ START_TEST(smartteefilter)
     test_interfaces();
     test_enum_pins();
     test_find_pin();
+    test_pin_info();
 
     test_smart_tee_filter_aggregation();
     test_smart_tee_filter();
