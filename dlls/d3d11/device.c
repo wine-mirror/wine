@@ -6106,33 +6106,6 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     return S_OK;
 }
 
-static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
-        struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain)
-{
-    struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
-    IWineDXGIDevice *wine_device;
-    HRESULT hr;
-
-    TRACE("device_parent %p, desc %p, swapchain %p.\n", device_parent, desc, swapchain);
-
-    if (FAILED(hr = d3d11_device_QueryInterface(&device->ID3D11Device2_iface,
-            &IID_IWineDXGIDevice, (void **)&wine_device)))
-    {
-        ERR("Device should implement IWineDXGIDevice.\n");
-        return E_FAIL;
-    }
-
-    hr = IWineDXGIDevice_create_swapchain(wine_device, desc, TRUE, swapchain);
-    IWineDXGIDevice_Release(wine_device);
-    if (FAILED(hr))
-    {
-        ERR("Failed to create DXGI swapchain, returning %#x\n", hr);
-        return hr;
-    }
-
-    return S_OK;
-}
-
 static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
@@ -6140,7 +6113,6 @@ static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =
     device_parent_activate,
     device_parent_texture_sub_resource_created,
     device_parent_create_swapchain_texture,
-    device_parent_create_swapchain,
 };
 
 static int d3d_sampler_state_compare(const void *key, const struct wine_rb_entry *entry)
