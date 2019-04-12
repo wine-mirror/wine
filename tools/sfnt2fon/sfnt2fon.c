@@ -41,7 +41,8 @@
 #include FT_TRUETYPE_TABLES_H
 #include FT_TRUETYPE_TAGS_H
 
-#include "wine/unicode.h"
+#include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "basetsd.h"
 
@@ -340,14 +341,39 @@ static int lookup_charset(int enc)
     return OEM_CHARSET;
 }
 
-static int get_char(const union cptable *cptable, int enc, int index)
-{
-    /* Korean has the Won sign in place of '\\' */
-    if(enc == 949 && index == '\\')
-        return 0x20a9;
+#ifdef _WIN32
 
-    return cptable->sbcs.cp2uni[index];
+static void get_char_table(int enc, WCHAR tableW[0x100])
+{
+    int i;
+    char tableA[0x100];
+
+    if (!GetCPInfo( enc, &info )) error("Can't find codepage %d\n", enc);
+    if (info.MaxCharSize > 1) enc = 1252;
+
+    for (i = 0; i < 0x100; i++) tableA[i] = i;
+    MultiByteToWideChar( enc, 0, tableA, 0x100, tableW, 0x100 );
 }
+
+#else  /* _WIN32 */
+
+#include "wine/unicode.h"
+
+static void get_char_table(int enc, WCHAR tableW[0x100])
+{
+    int i;
+    char tableA[0x100];
+    const union cptable *cptable = wine_cp_get_table(enc);
+
+    if (!cptable) error("Can't find codepage %d\n", enc);
+    /* for double byte charsets we actually want to use cp1252 */
+    if (cptable->info.char_size != 1) cptable = wine_cp_get_table(1252);
+
+    for (i = 0; i < 0x100; i++) tableA[i] = i;
+    wine_cp_mbstowcs( cptable, 0, tableA, 0x100, tableW, 0x100 );
+}
+
+#endif  /* _WIN32 */
 
 static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc, int dpi,
                                        unsigned char def_char, int avg_width )
@@ -359,7 +385,6 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     int i, x, y, x_off, x_end, first_char;
     FT_UInt gi;
     int num_names;
-    const union cptable *cptable;
     FT_SfntName sfntname;
     TT_OS2 *os2;
     FT_ULong needed;
@@ -368,22 +393,17 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     int num_sizes;
     struct fontinfo *info;
     size_t data_pos;
+    WCHAR table[0x100];
 
     if (FT_New_Face(ft_library, face_name, 0, &face)) error( "Cannot open face %s\n", face_name );
     if (FT_Set_Pixel_Sizes(face, ppem, ppem)) error( "cannot set face size to %u\n", ppem );
 
-    cptable = wine_cp_get_table(enc);
-    if(!cptable)
-        error("Can't find codepage %d\n", enc);
-
-    if(cptable->info.char_size != 1) {
-        /* for double byte charsets we actually want to use cp1252 */
-        cptable = wine_cp_get_table(1252);
-        if(!cptable)
-            error("Can't find codepage 1252\n");
-    }
-
     assert( face->size->metrics.y_ppem == ppem );
+
+    get_char_table( enc, table );
+
+    /* Korean has the Won sign in place of '\\' */
+    if (enc == 949) table['\\'] = 0x20a9;
 
     needed = 0;
     if (FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, NULL, &needed))
@@ -462,12 +482,11 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
 
     os2 = FT_Get_Sfnt_Table(face, ft_sfnt_os2);
     for(i = first_char; i < 0x100; i++) {
-        int c = get_char(cptable, enc, i);
-        gi = FT_Get_Char_Index(face, c);
+        gi = FT_Get_Char_Index(face, table[i]);
         if(gi == 0 && !option_quiet)
             fprintf(stderr, "warning: %s %u: missing glyph for char %04x\n",
-                    face->family_name, ppem, cptable->sbcs.cp2uni[i]);
-        if(FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
+                    face->family_name, ppem, table[i]);
+        if(FT_Load_Char(face, table[i], FT_LOAD_DEFAULT)) {
             fprintf(stderr, "error loading char %d - bad news!\n", i);
             continue;
         }
@@ -546,8 +565,7 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     data_pos = 0;
 
     for(i = first_char; i < 0x100; i++) {
-        int c = get_char(cptable, enc, i);
-        if(FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
+        if(FT_Load_Char(face, table[i], FT_LOAD_DEFAULT)) {
             continue;
         }
         assert(info->dfCharTable[i].width == face->glyph->metrics.horiAdvance >> 6);
