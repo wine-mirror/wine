@@ -779,16 +779,14 @@ static const struct wined3d_parent_ops d3d11_swapchain_wined3d_parent_ops =
 };
 
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
-        struct wined3d_swapchain_desc *desc, BOOL implicit)
+        struct wined3d_swapchain_desc *desc)
 {
     HRESULT hr;
 
-    /*
-     * A reference to the implicit swapchain is held by the wined3d device.
-     * In order to avoid circular references we do not keep a reference
-     * to the device in the implicit swapchain.
-     */
-    if (!implicit)
+    /* A reference to the implicit swapchain is held by the wined3d device. In
+     * order to avoid circular references we do not keep a reference to the
+     * device in the implicit swapchain. */
+    if (!(desc->flags & WINED3D_SWAPCHAIN_IMPLICIT))
     {
         if (desc->backbuffer_format == WINED3DFMT_UNKNOWN)
             return E_INVALIDARG;

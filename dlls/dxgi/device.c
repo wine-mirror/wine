@@ -474,7 +474,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_factory_create_swapchain(IWineDX
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = d3d11_swapchain_init(object, device, &wined3d_desc, FALSE)))
+    if (FAILED(hr = d3d11_swapchain_init(object, device, &wined3d_desc)))
     {
         WARN("Failed to initialise swapchain, hr %#x.\n", hr);
         heap_free(object);
@@ -578,7 +578,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = d3d11_swapchain_init(swapchain, device, &swapchain_desc, TRUE)))
+    if (FAILED(hr = d3d11_swapchain_init(swapchain, device, &swapchain_desc)))
     {
         WARN("Failed to initialize swapchain, hr %#x.\n", hr);
         heap_free(swapchain);
