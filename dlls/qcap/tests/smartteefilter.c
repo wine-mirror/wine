@@ -1,5 +1,5 @@
 /*
- *    SmartTeeFilter tests
+ * Smart tee filter unit tests
  *
  * Copyright 2015 Damjan Jovanovic
  *
@@ -18,18 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
 #define COBJMACROS
-#include <dshow.h>
-#include <guiddef.h>
-#include <devguid.h>
-#include <stdio.h>
-
-#include "wine/strmbase.h"
+#include "dshow.h"
 #include "wine/test.h"
 
 static HANDLE event;
@@ -2022,25 +2012,19 @@ end:
 
 START_TEST(smartteefilter)
 {
-    if (SUCCEEDED(CoInitialize(NULL)))
-    {
-        event = CreateEventW(NULL, FALSE, FALSE, NULL);
-        if (event) {
-            test_smart_tee_filter_aggregation();
-            test_smart_tee_filter();
+    CoInitialize(NULL);
 
-            test_audio_smart_tee_filter_auto_insertion(test_audio_preview);
-            test_audio_smart_tee_filter_auto_insertion(test_audio_capture);
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-            test_video_smart_tee_filter_auto_insertion(test_video_preview);
-            test_video_smart_tee_filter_auto_insertion(test_video_capture);
+    test_smart_tee_filter_aggregation();
+    test_smart_tee_filter();
 
-            CloseHandle(event);
-        } else
-            skip("CreateEvent failed, error=%u\n", GetLastError());
+    test_audio_smart_tee_filter_auto_insertion(test_audio_preview);
+    test_audio_smart_tee_filter_auto_insertion(test_audio_capture);
 
-        CoUninitialize();
-    }
-    else
-        skip("CoInitialize failed\n");
+    test_video_smart_tee_filter_auto_insertion(test_video_preview);
+    test_video_smart_tee_filter_auto_insertion(test_video_capture);
+
+    CloseHandle(event);
+    CoUninitialize();
 }
