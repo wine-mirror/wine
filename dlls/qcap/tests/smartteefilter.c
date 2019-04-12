@@ -24,6 +24,57 @@
 
 static HANDLE event;
 
+static IBaseFilter *create_smart_tee(void)
+{
+    IBaseFilter *filter = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_SmartTee, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return filter;
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IBaseFilter *filter = create_smart_tee();
+    ULONG ref;
+
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+
+    check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IBasicAudio, FALSE);
+    check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IKsPropertySet, FALSE);
+    check_interface(filter, &IID_IMediaPosition, FALSE);
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+    check_interface(filter, &IID_IPersistPropertyBag, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IQualityControl, FALSE);
+    check_interface(filter, &IID_IQualProp, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+}
+
 typedef struct {
     IBaseFilter IBaseFilter_iface;
     LONG ref;
@@ -2015,6 +2066,8 @@ START_TEST(smartteefilter)
     CoInitialize(NULL);
 
     event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    test_interfaces();
 
     test_smart_tee_filter_aggregation();
     test_smart_tee_filter();
