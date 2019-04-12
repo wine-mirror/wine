@@ -5711,25 +5711,26 @@ else
        wine_cv_toolsdir="$with_wine64"
      fi
    fi
-   if test -z "$wine_cv_toolsdir"; then
-     wine_makedep=tools/makedep
-     wine_cv_toolsdir="\$(top_builddir)"
-   elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
-     wine_makedep=$wine_cv_toolsdir/tools/makedep
-     case "$wine_cv_toolsdir" in
-       /*) ;;
-       *)  wine_cv_toolsdir="\$(top_builddir)/$wine_cv_toolsdir" ;;
-     esac
-     enable_tools=${enable_tools:-no}
-     test -f "$wine_makedep" || as_fn_error $? "the Wine tools have not yet been built in $wine_cv_toolsdir" "$LINENO" 5
-   else
-     as_fn_error $? "could not find Wine tools in $wine_cv_toolsdir" "$LINENO" 5
-   fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_toolsdir" >&5
 $as_echo "$wine_cv_toolsdir" >&6; }
-TOOLSDIR=$wine_cv_toolsdir
+if test -z "$wine_cv_toolsdir"; then
+    wine_makedep=tools/makedep
+    TOOLSDIR="\$(top_builddir)"
 
+elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
+    wine_makedep=$wine_cv_toolsdir/tools/makedep
+    case "$wine_cv_toolsdir" in
+       /*) TOOLSDIR=$wine_cv_toolsdir
+ ;;
+       *)  TOOLSDIR="\$(top_builddir)/$wine_cv_toolsdir"
+ ;;
+    esac
+    enable_tools=${enable_tools:-no}
+    test -f "$wine_makedep" || as_fn_error $? "the Wine tools have not yet been built in $wine_cv_toolsdir" "$LINENO" 5
+else
+    as_fn_error $? "could not find Wine tools in $wine_cv_toolsdir" "$LINENO" 5
+fi
 if test -n "$host_alias" -a "$host_alias" != "$build_alias"
 then
     TARGETFLAGS="-b $host_alias $TARGETFLAGS"
