@@ -63,6 +63,7 @@ static void test_interfaces(void)
 {
     IBaseFilter *filter = create_smart_tee();
     ULONG ref;
+    IPin *pin;
 
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
@@ -81,6 +82,54 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IQualProp, FALSE);
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAMStreamConfig, FALSE);
+    check_interface(pin, &IID_IAMStreamControl, FALSE);
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IPropertyBag, FALSE);
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, capture_id, &pin);
+
+    todo_wine check_interface(pin, &IID_IAMStreamControl, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAMStreamConfig, FALSE);
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IPropertyBag, FALSE);
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, preview_id, &pin);
+
+    todo_wine check_interface(pin, &IID_IAMStreamControl, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAMStreamConfig, FALSE);
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IPropertyBag, FALSE);
+
+    IPin_Release(pin);
 
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got unexpected refcount %d.\n", ref);
@@ -1842,21 +1891,6 @@ static SourceFilter* create_audio_SourceFilter(void)
     return This;
 }
 
-static BOOL has_interface(IUnknown *unknown, REFIID uuid)
-{
-     HRESULT hr;
-     IUnknown *iface = NULL;
-
-     hr = IUnknown_QueryInterface(unknown, uuid, (void**)&iface);
-     if (SUCCEEDED(hr))
-     {
-         IUnknown_Release(iface);
-         return TRUE;
-     }
-     else
-         return FALSE;
-}
-
 static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *inputPin,
         IPin *capturePin, IPin *previewPin)
 {
@@ -2035,30 +2069,6 @@ static void test_smart_tee_filter(void)
     ok(inputPin && capturePin && previewPin, "couldn't find all pins\n");
     if (!(inputPin && capturePin && previewPin))
         goto end;
-
-    ok(has_interface((IUnknown*)inputPin, &IID_IUnknown), "IUnknown should exist on the input pin\n");
-    ok(has_interface((IUnknown*)inputPin, &IID_IMemInputPin), "IMemInputPin should exist the input pin\n");
-    ok(!has_interface((IUnknown*)inputPin, &IID_IKsPropertySet), "IKsPropertySet shouldn't exist on the input pin\n");
-    ok(!has_interface((IUnknown*)inputPin, &IID_IAMStreamConfig), "IAMStreamConfig shouldn't exist on the input pin\n");
-    ok(!has_interface((IUnknown*)inputPin, &IID_IAMStreamControl), "IAMStreamControl shouldn't exist on the input pin\n");
-    ok(!has_interface((IUnknown*)inputPin, &IID_IPropertyBag), "IPropertyBag shouldn't exist on the input pin\n");
-    todo_wine ok(has_interface((IUnknown*)inputPin, &IID_IQualityControl), "IQualityControl should exist on the input pin\n");
-
-    ok(has_interface((IUnknown*)capturePin, &IID_IUnknown), "IUnknown should exist on the capture pin\n");
-    ok(!has_interface((IUnknown*)capturePin, &IID_IAsyncReader), "IAsyncReader shouldn't exist on the capture pin\n");
-    ok(!has_interface((IUnknown*)capturePin, &IID_IKsPropertySet), "IKsPropertySet shouldn't exist on the capture pin\n");
-    ok(!has_interface((IUnknown*)capturePin, &IID_IAMStreamConfig), "IAMStreamConfig shouldn't exist on the capture pin\n");
-    todo_wine ok(has_interface((IUnknown*)capturePin, &IID_IAMStreamControl), "IAMStreamControl should exist on the capture pin\n");
-    ok(!has_interface((IUnknown*)capturePin, &IID_IPropertyBag), "IPropertyBag shouldn't exist on the capture pin\n");
-    todo_wine ok(has_interface((IUnknown*)capturePin, &IID_IQualityControl), "IQualityControl should exist on the capture pin\n");
-
-    ok(has_interface((IUnknown*)previewPin, &IID_IUnknown), "IUnknown should exist on the preview pin\n");
-    ok(!has_interface((IUnknown*)previewPin, &IID_IAsyncReader), "IAsyncReader shouldn't exist on the preview pin\n");
-    ok(!has_interface((IUnknown*)previewPin, &IID_IKsPropertySet), "IKsPropertySet shouldn't exist on the preview pin\n");
-    ok(!has_interface((IUnknown*)previewPin, &IID_IAMStreamConfig), "IAMStreamConfig shouldn't exist on the preview pin\n");
-    todo_wine ok(has_interface((IUnknown*)capturePin, &IID_IAMStreamControl), "IAMStreamControl should exist on the preview pin\n");
-    ok(!has_interface((IUnknown*)previewPin, &IID_IPropertyBag), "IPropertyBag shouldn't exist on the preview pin\n");
-    todo_wine ok(has_interface((IUnknown*)previewPin, &IID_IQualityControl), "IQualityControl should exist on the preview pin\n");
 
     hr = IPin_QueryInterface(inputPin, &IID_IMemInputPin, (void**)&memInputPin);
     ok(SUCCEEDED(hr), "couldn't get mem input pin, hr=0x%08x\n", hr);
