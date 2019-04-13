@@ -1933,7 +1933,7 @@ static NTSTATUS get_cached_dir_data( HANDLE handle, struct dir_data **data_ret, 
  *  NtQueryDirectoryFile	[NTDLL.@]
  *  ZwQueryDirectoryFile	[NTDLL.@]
  */
-NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
+NTSTATUS WINAPI DECLSPEC_HOTPATCH NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                                       PIO_APC_ROUTINE apc_routine, PVOID apc_context,
                                       PIO_STATUS_BLOCK io,
                                       PVOID buffer, ULONG length,
