@@ -108,7 +108,7 @@ extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config
     IStream *config_stream, DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy,
     ICLRRuntimeInfo **result) DECLSPEC_HIDDEN;
 
-extern BOOL get_mono_path(LPWSTR path) DECLSPEC_HIDDEN;
+extern BOOL get_mono_path(LPWSTR path, BOOL skip_local) DECLSPEC_HIDDEN;
 
 extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result) DECLSPEC_HIDDEN;
 

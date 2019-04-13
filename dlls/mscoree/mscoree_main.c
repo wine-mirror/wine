@@ -717,23 +717,65 @@ static BOOL invoke_appwiz(void)
     return ret;
 }
 
-static BOOL install_wine_mono(void)
+static BOOL get_support_msi(LPCWSTR mono_path, LPWSTR msi_path)
 {
     static const WCHAR support_msi_relative[] = {'\\','s','u','p','p','o','r','t','\\','w','i','n','e','m','o','n','o','-','s','u','p','p','o','r','t','.','m','s','i',0};
+    UINT (WINAPI *pMsiOpenPackageW)(LPCWSTR,ULONG*);
+    UINT (WINAPI *pMsiGetProductPropertyA)(ULONG,LPCSTR,LPSTR,LPDWORD);
+    UINT (WINAPI *pMsiCloseHandle)(ULONG);
+    HMODULE hmsi = NULL;
+    char versionstringbuf[15];
+    UINT res;
+    DWORD buffer_size;
+    ULONG msiproduct;
+    BOOL ret=FALSE;
+
+    hmsi = GetModuleHandleA("msi");
+
+    strcpyW(msi_path, mono_path);
+    strcatW(msi_path, support_msi_relative);
+
+    pMsiOpenPackageW = (void*)GetProcAddress(hmsi, "MsiOpenPackageW");
+
+    res = pMsiOpenPackageW(msi_path, &msiproduct);
+
+    if (res == ERROR_SUCCESS)
+    {
+        buffer_size = sizeof(versionstringbuf);
+
+        pMsiGetProductPropertyA = (void*)GetProcAddress(hmsi, "MsiGetProductPropertyA");
+
+        res = pMsiGetProductPropertyA(msiproduct, "ProductVersion", versionstringbuf, &buffer_size);
+
+        pMsiCloseHandle = (void*)GetProcAddress(hmsi, "MsiCloseHandle");
+
+        pMsiCloseHandle(msiproduct);
+    }
+
+    if (res == ERROR_SUCCESS) {
+        TRACE("found support msi version %s at %s\n", versionstringbuf, debugstr_w(msi_path));
+
+        if (compare_versions(WINE_MONO_VERSION, versionstringbuf) <= 0)
+        {
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static BOOL install_wine_mono(void)
+{
     BOOL is_wow64 = FALSE;
     HMODULE hmsi = NULL;
     HRESULT initresult = E_FAIL;
     UINT (WINAPI *pMsiEnumRelatedProductsA)(LPCSTR,DWORD,DWORD,LPSTR);
     UINT (WINAPI *pMsiGetProductInfoA)(LPCSTR,LPCSTR,LPSTR,DWORD*);
-    UINT (WINAPI *pMsiOpenPackageW)(LPCWSTR,ULONG*);
-    UINT (WINAPI *pMsiGetProductPropertyA)(ULONG,LPCSTR,LPSTR,LPDWORD);
-    UINT (WINAPI *pMsiCloseHandle)(ULONG);
     UINT (WINAPI *pMsiInstallProductW)(LPCWSTR,LPCWSTR);
     char versionstringbuf[15];
     char productcodebuf[39];
     UINT res;
     DWORD buffer_size;
-    ULONG msiproduct;
     BOOL ret;
     WCHAR mono_path[MAX_PATH];
     WCHAR support_msi_path[MAX_PATH];
@@ -750,7 +792,7 @@ static BOOL install_wine_mono(void)
 
     TRACE("searching for mono runtime\n");
 
-    if (!get_mono_path(mono_path))
+    if (!get_mono_path(mono_path, FALSE))
     {
         TRACE("mono runtime not found\n");
         return invoke_appwiz();
@@ -795,47 +837,31 @@ static BOOL install_wine_mono(void)
         }
     }
 
-    strcpyW(support_msi_path, mono_path);
-    strcatW(support_msi_path, support_msi_relative);
-
     initresult = CoInitialize(NULL);
 
-    pMsiOpenPackageW = (void*)GetProcAddress(hmsi, "MsiOpenPackageW");
-
-    res = pMsiOpenPackageW(support_msi_path, &msiproduct);
-
-    if (res == ERROR_SUCCESS)
+    ret = get_support_msi(mono_path, support_msi_path);
+    if (!ret)
     {
-        buffer_size = sizeof(versionstringbuf);
-
-        pMsiGetProductPropertyA = (void*)GetProcAddress(hmsi, "MsiGetProductPropertyA");
-
-        res = pMsiGetProductPropertyA(msiproduct, "ProductVersion", versionstringbuf, &buffer_size);
-
-        pMsiCloseHandle = (void*)GetProcAddress(hmsi, "MsiCloseHandle");
-
-        pMsiCloseHandle(msiproduct);
+        /* Try looking outside c:\windows\mono */
+        ret = (get_mono_path(mono_path, TRUE) &&
+            get_support_msi(mono_path, support_msi_path));
     }
 
-    if (res == ERROR_SUCCESS) {
-        TRACE("found support msi version %s at %s\n", versionstringbuf, debugstr_w(support_msi_path));
+    if (ret)
+    {
+        TRACE("installing support msi\n");
 
-        if (compare_versions(WINE_MONO_VERSION, versionstringbuf) <= 0)
+        pMsiInstallProductW = (void*)GetProcAddress(hmsi, "MsiInstallProductW");
+
+        res = pMsiInstallProductW(support_msi_path, NULL);
+
+        if (res == ERROR_SUCCESS)
         {
-            TRACE("installing support msi\n");
-
-            pMsiInstallProductW = (void*)GetProcAddress(hmsi, "MsiInstallProductW");
-
-            res = pMsiInstallProductW(support_msi_path, NULL);
-
-            if (res == ERROR_SUCCESS)
-            {
-                ret = TRUE;
-                goto end;
-            }
-            else
-                ERR("MsiInstallProduct failed, err=%i\n", res);
+            ret = TRUE;
+            goto end;
         }
+        else
+            ERR("MsiInstallProduct failed, err=%i\n", res);
     }
 
     ret = invoke_appwiz();

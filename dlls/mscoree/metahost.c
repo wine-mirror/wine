@@ -339,7 +339,7 @@ static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost *
         return hr;
     }
 
-    if (!get_mono_path(mono_path))
+    if (!get_mono_path(mono_path, FALSE))
     {
         ERR("Wine Mono is not installed\n");
         return CLR_E_SHIM_RUNTIME;
@@ -778,9 +778,9 @@ static BOOL get_mono_path_datadir(LPWSTR path)
     return ret;
 }
 
-BOOL get_mono_path(LPWSTR path)
+BOOL get_mono_path(LPWSTR path, BOOL skip_local)
 {
-    return get_mono_path_local(path) ||
+    return (!skip_local && get_mono_path_local(path)) ||
         get_mono_path_registry(path) ||
         get_mono_path_datadir(path) ||
         get_mono_path_unix(INSTALL_DATADIR "/wine/mono/wine-mono-" WINE_MONO_VERSION, path) ||
