@@ -612,18 +612,6 @@ static void test_samplegrabber(void)
     IMemInputPin_Release(inpin);
     IPin_Release(pin);
 
-    /* Interfaces that native does not support */
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IMediaPosition, (void**)&unk);
-    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IMediaPosition failed: %08x\n", hr);
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IMediaSeeking, (void**)&unk);
-    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IMediaSeeking failed: %08x\n", hr);
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IMemInputPin, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IMemInputPin failed: %08x\n", hr);
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IQualityControl, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IQualityControl failed: %08x\n", hr);
-    hr = ISampleGrabber_QueryInterface(sg, &IID_ISeekingPassThru, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_ISeekingPassThru failed: %08x\n", hr);
-
     while (ISampleGrabber_Release(sg));
 }
 
