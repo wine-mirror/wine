@@ -691,6 +691,16 @@ PSLIST_ENTRY WINAPI NTOSKRNL_ExInterlockedPushEntrySList( PSLIST_HEADER list, PS
 
 
 /***********************************************************************
+ *           ExInterlockedFlushSList   (NTOSKRNL.EXE.@)
+ */
+DEFINE_FASTCALL1_WRAPPER( NTOSKRNL_ExInterlockedFlushSList )
+PSLIST_ENTRY WINAPI NTOSKRNL_ExInterlockedFlushSList( PSLIST_HEADER list )
+{
+    return RtlInterlockedFlushSList( list );
+}
+
+
+/***********************************************************************
  *           ExAcquireFastMutexUnsafe  (NTOSKRNL.EXE.@)
  */
 DEFINE_FASTCALL1_WRAPPER(ExAcquireFastMutexUnsafe)
