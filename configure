@@ -5786,21 +5786,25 @@ then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether flex is recent enough" >&5
 $as_echo_n "checking whether flex is recent enough... " >&6; }
-cat >conftest.l <<EOF
+if ${wine_cv_recent_flex+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.l <<EOF
 %top{
 #include "prediluvian.h"
 }
 %%
 EOF
-if $FLEX -t conftest.l >/dev/null 2>&5
-then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-  as_fn_error $? "Your flex version is too old. Please install flex version 2.5.33 or newer." "$LINENO" 5
+    if $FLEX -t conftest.l >/dev/null 2>&5
+    then
+      wine_cv_recent_flex=yes
+    else
+      wine_cv_recent_flex=no
+    fi
 fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_recent_flex" >&5
+$as_echo "$wine_cv_recent_flex" >&6; }
+test $wine_cv_recent_flex != no || as_fn_error $? "Your flex version is too old. Please install flex version 2.5.33 or newer." "$LINENO" 5
 
 for ac_prog in bison
 do
