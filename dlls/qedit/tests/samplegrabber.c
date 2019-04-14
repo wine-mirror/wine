@@ -32,19 +32,35 @@ static IBaseFilter *create_sample_grabber(void)
     return filter;
 }
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
 static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
 {
     IUnknown *iface = iface_ptr;
     HRESULT hr, expected_hr;
+    ULONG ref, expect_ref;
     IUnknown *unk;
 
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
+    expect_ref = get_refcount(iface);
+
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
+    {
+        ref = get_refcount(iface);
+        ok_(__FILE__, line)(ref == expect_ref + 1, "Expected %u references, got %u.\n", expect_ref + 1, ref);
+        ref = get_refcount(unk);
+        ok_(__FILE__, line)(ref == expect_ref + 1, "Expected %u references, got %u.\n", expect_ref + 1, ref);
         IUnknown_Release(unk);
+    }
 }
 
 static void test_interfaces(void)

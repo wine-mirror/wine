@@ -526,9 +526,6 @@ static void test_samplegrabber(void)
     struct unk_impl unk_obj = {{&unk_vtbl}, 19, NULL};
     ISampleGrabber *sg;
     IBaseFilter *bf;
-    IMediaFilter *mf;
-    IPersist *persist;
-    IUnknown *unk;
     IPin *pin;
     IMemInputPin *inpin;
     IEnumPins *pins;
@@ -556,36 +553,12 @@ static void test_samplegrabber(void)
             (void**)&sg);
     ok(hr == E_NOINTERFACE, "SampleGrabber create failed: %08x, expected E_NOINTERFACE\n", hr);
 
-    /* Same refcount for all SampleGrabber interfaces */
     hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_ISampleGrabber,
             (void**)&sg);
     ok(hr == S_OK, "SampleGrabber create failed: %08x, expected S_OK\n", hr);
-    refcount = ISampleGrabber_AddRef(sg);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
 
     hr = ISampleGrabber_QueryInterface(sg, &IID_IBaseFilter, (void**)&bf);
     ok(hr == S_OK, "QueryInterface for IID_IBaseFilter failed: %08x\n", hr);
-    refcount = IBaseFilter_AddRef(bf);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
-    refcount = IBaseFilter_Release(bf);
-
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IMediaFilter, (void**)&mf);
-    ok(hr == S_OK, "QueryInterface for IID_IMediaFilter failed: %08x\n", hr);
-    refcount = IMediaFilter_AddRef(mf);
-    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
-    refcount = IMediaFilter_Release(mf);
-
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IPersist, (void**)&persist);
-    ok(hr == S_OK, "QueryInterface for IID_IPersist failed: %08x\n", hr);
-    refcount = IPersist_AddRef(persist);
-    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
-    refcount = IPersist_Release(persist);
-
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
-    refcount = IUnknown_AddRef(unk);
-    ok(refcount == 7, "refcount == %u, expected 7\n", refcount);
-    refcount = IUnknown_Release(unk);
 
     hr = ISampleGrabber_SetCallback(sg, &my_sg_cb, 0);
     ok(hr == S_OK, "SetCallback failed: %08x\n", hr);
