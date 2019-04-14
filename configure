@@ -5525,10 +5525,13 @@ case $host in
     then
       CC="$CC -m32"
       CXX="$CXX -m32"
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC works" >&5
-$as_echo_n "checking whether $CC works... " >&6; }
 
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC works" >&5
+$as_echo_n "checking whether $CC works... " >&6; }
+if ${wine_cv_cc_m32+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -5540,15 +5543,16 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+  wine_cv_cc_m32=yes
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                      as_fn_error $? "Cannot build a 32-bit program, you need to install 32-bit development libraries." "$LINENO" 5
+  wine_cv_cc_m32=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_cc_m32" >&5
+$as_echo "$wine_cv_cc_m32" >&6; }
+      test $wine_cv_cc_m32 != no || as_fn_error $? "Cannot build a 32-bit program, you need to install 32-bit development libraries." "$LINENO" 5
       host_cpu="i386"
       notice_platform="32-bit "
       TARGETFLAGS="-m32"
@@ -5561,7 +5565,10 @@ rm -f core conftest.err conftest.$ac_objext \
       then
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
 $as_echo_n "checking whether $CC supports __builtin_ms_va_list... " >&6; }
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+if ${wine_cv_builtin_ms_va_list+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdarg.h>
 int
@@ -5573,14 +5580,15 @@ void func(__builtin_ms_va_list *args);
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+  wine_cv_builtin_ms_va_list=yes
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                           as_fn_error $? "You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit." "$LINENO" 5
+  wine_cv_builtin_ms_va_list=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_builtin_ms_va_list" >&5
+$as_echo "$wine_cv_builtin_ms_va_list" >&6; }
+        test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit." "$LINENO" 5
       fi
       CC="$CC -m64"
       CXX="$CXX -m64"
@@ -5593,7 +5601,10 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   arm*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports Thumb" >&5
 $as_echo_n "checking whether $CC supports Thumb... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+if ${wine_cv_thumb+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 int ac_test(int i) { return i; }
 int
@@ -5605,15 +5616,16 @@ asm(".thumb\nblx ac_test\n.arm"); if (ac_test(1)) return 1
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+  wine_cv_thumb=yes
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                       as_fn_error $? "You need a target with Thumb support to build Wine for ARM." "$LINENO" 5
+  wine_cv_thumb=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_thumb" >&5
+$as_echo "$wine_cv_thumb" >&6; }
+    test $wine_cv_thumb != no || as_fn_error $? "You need a target with Thumb support to build Wine for ARM." "$LINENO" 5
     case $with_float_abi in
       soft|softfp|hard)
         float_abi=$with_float_abi ;;
@@ -5627,7 +5639,10 @@ rm -f core conftest.err conftest.$ac_objext \
             CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mfloat-abi=$float_abi" >&5
 $as_echo_n "checking whether $CC supports -mfloat-abi=$float_abi... " >&6; }
-            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+if ${wine_cv_float_abi+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -5639,16 +5654,20 @@ asm("vmrs r2,fpscr");
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+  wine_cv_float_abi=yes
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                               float_abi=soft
-                               as_fn_append wine_warnings "|Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries."
+  wine_cv_float_abi=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_float_abi" >&5
+$as_echo "$wine_cv_float_abi" >&6; }
+            if test $wine_cv_float_abi = no
+            then
+                float_abi=soft
+                as_fn_append wine_warnings "|Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries."
+            fi
             CFLAGS=$saved_CFLAGS
         esac
         ;;
@@ -5660,7 +5679,10 @@ rm -f core conftest.err conftest.$ac_objext \
   aarch64*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
 $as_echo_n "checking whether $CC supports __builtin_ms_va_list... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+if ${wine_cv_builtin_ms_va_list+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdarg.h>
 int
@@ -5672,14 +5694,15 @@ void func(__builtin_ms_va_list *args);
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+  wine_cv_builtin_ms_va_list=yes
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                       as_fn_error $? "You need clang >= 5.0 to build Wine for arm64." "$LINENO" 5
+  wine_cv_builtin_ms_va_list=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_builtin_ms_va_list" >&5
+$as_echo "$wine_cv_builtin_ms_va_list" >&6; }
+    test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need clang >= 5.0 to build Wine for arm64." "$LINENO" 5
     ;;
   i[3456789]86*)
     enable_win16=${enable_win16:-yes}

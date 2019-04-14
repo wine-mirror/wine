@@ -152,10 +152,9 @@ case $host in
     then
       CC="$CC -m32"
       CXX="$CXX -m32"
-      AC_MSG_CHECKING([whether $CC works])
-      AC_LINK_IFELSE([AC_LANG_PROGRAM()],AC_MSG_RESULT([yes]),
-                     [AC_MSG_RESULT([no])
-                      AC_MSG_ERROR([Cannot build a 32-bit program, you need to install 32-bit development libraries.])])
+      AC_CACHE_CHECK([whether $CC works], wine_cv_cc_m32,
+          [AC_LINK_IFELSE([AC_LANG_PROGRAM()],[wine_cv_cc_m32=yes],[wine_cv_cc_m32=no])])
+      test $wine_cv_cc_m32 != no || AC_MSG_ERROR([Cannot build a 32-bit program, you need to install 32-bit development libraries.])
       host_cpu="i386"
       notice_platform="32-bit "
       AC_SUBST(TARGETFLAGS,"-m32")
@@ -165,11 +164,10 @@ case $host in
     else
       if test "x${GCC}" = "xyes"
       then
-        AC_MSG_CHECKING([whether $CC supports __builtin_ms_va_list])
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
-                          [AC_MSG_RESULT([yes])],
-                          [AC_MSG_RESULT([no])
-                           AC_MSG_ERROR([You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit.])])
+        AC_CACHE_CHECK([whether $CC supports __builtin_ms_va_list],wine_cv_builtin_ms_va_list,
+            [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
+                          [wine_cv_builtin_ms_va_list=yes],[wine_cv_builtin_ms_va_list=no])])
+        test $wine_cv_builtin_ms_va_list != no || AC_MSG_ERROR([You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit.])
       fi
       CC="$CC -m64"
       CXX="$CXX -m64"
@@ -179,11 +177,10 @@ case $host in
     fi
     ;;
   arm*)
-    AC_MSG_CHECKING([whether $CC supports Thumb])
-    WINE_TRY_ASM_LINK([".thumb\nblx ac_test\n.arm"],[int ac_test(int i) { return i; }], [if (ac_test(1)) return 1],
-                      [AC_MSG_RESULT([yes])],
-                      [AC_MSG_RESULT([no])
-                       AC_MSG_ERROR([You need a target with Thumb support to build Wine for ARM.])])
+    AC_CACHE_CHECK([whether $CC supports Thumb],wine_cv_thumb,
+        [WINE_TRY_ASM_LINK([".thumb\nblx ac_test\n.arm"],[int ac_test(int i) { return i; }], [if (ac_test(1)) return 1],
+                           [wine_cv_thumb=yes],[wine_cv_thumb=no])])
+    test $wine_cv_thumb != no || AC_MSG_ERROR([You need a target with Thumb support to build Wine for ARM.])
     case $with_float_abi in
       soft|softfp|hard)
         float_abi=$with_float_abi ;;
@@ -195,12 +192,13 @@ case $host in
             float_abi=softfp
             saved_CFLAGS=$CFLAGS
             CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
-            AC_MSG_CHECKING([whether $CC supports -mfloat-abi=$float_abi])
-            WINE_TRY_ASM_LINK(["vmrs r2,fpscr"],,,
-                              [AC_MSG_RESULT([yes])],
-                              [AC_MSG_RESULT([no])
-                               float_abi=soft
-                               WINE_WARNING([Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries.])])
+            AC_CACHE_CHECK([whether $CC supports -mfloat-abi=$float_abi],wine_cv_float_abi,
+                [WINE_TRY_ASM_LINK(["vmrs r2,fpscr"],,,[wine_cv_float_abi=yes],[wine_cv_float_abi=no])])
+            if test $wine_cv_float_abi = no
+            then
+                float_abi=soft
+                WINE_WARNING([Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries.])
+            fi
             CFLAGS=$saved_CFLAGS
         esac
         ;;
@@ -209,11 +207,10 @@ case $host in
     AC_SUBST(TARGETFLAGS,"-marm -mfloat-abi=$float_abi")
     ;;
   aarch64*)
-    AC_MSG_CHECKING([whether $CC supports __builtin_ms_va_list])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
-                      [AC_MSG_RESULT([yes])],
-                      [AC_MSG_RESULT([no])
-                       AC_MSG_ERROR([You need clang >= 5.0 to build Wine for arm64.])])
+    AC_CACHE_CHECK([whether $CC supports __builtin_ms_va_list],wine_cv_builtin_ms_va_list,
+        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
+                      [wine_cv_builtin_ms_va_list=yes],[wine_cv_builtin_ms_va_list=no])])
+    test $wine_cv_builtin_ms_va_list != no || AC_MSG_ERROR([You need clang >= 5.0 to build Wine for arm64.])
     ;;
   i[[3456789]]86*)
     enable_win16=${enable_win16:-yes}
