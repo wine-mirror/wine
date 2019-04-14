@@ -9679,7 +9679,10 @@ test -n "$CROSSCC" || CROSSCC="false"
         CFLAGS=$CROSSCFLAGS
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CROSSCC works" >&5
 $as_echo_n "checking whether $CROSSCC works... " >&6; }
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+if ${wine_cv_crosscc+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -9691,23 +9694,27 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-                           set x $CROSSCC
-                           shift
-                           while test $# -ge 1
-                           do
-                               case "$1" in
-                                 *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
-                                 *-clang) CROSSTARGET=`expr "$1" : '\(.*\)-clang'` ;;
-                               esac
-                               shift
-                           done
+  wine_cv_crosscc=yes
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+  wine_cv_crosscc=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_crosscc" >&5
+$as_echo "$wine_cv_crosscc" >&6; }
+        if test $wine_cv_crosscc = yes
+        then
+            set x $CROSSCC
+            shift
+            while test $# -ge 1
+            do
+                case "$1" in
+                    *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
+                    *-clang) CROSSTARGET=`expr "$1" : '\(.*\)-clang'` ;;
+                esac
+                shift
+            done
+        fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-strict-aliasing" >&5
 $as_echo_n "checking whether the cross-compiler supports -fno-strict-aliasing... " >&6; }
 if ${ac_cv_crosscflags__fno_strict_aliasing+:} false; then :

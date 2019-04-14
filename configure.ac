@@ -1007,20 +1007,21 @@ then
 
         CC="$CROSSCC"
         CFLAGS=$CROSSCFLAGS
-        AC_MSG_CHECKING([whether $CROSSCC works])
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
-                          [AC_MSG_RESULT([yes])
-                           set x $CROSSCC
-                           shift
-                           while test $# -ge 1
-                           do
-                               case "$1" in
-                                 *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
-                                 *-clang) CROSSTARGET=`expr "$1" : '\(.*\)-clang'` ;;
-                               esac
-                               shift
-                           done],
-                          [AC_MSG_RESULT([no])])
+        AC_CACHE_CHECK([whether $CROSSCC works], wine_cv_crosscc,
+            [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],[wine_cv_crosscc=yes],[wine_cv_crosscc=no])])
+        if test $wine_cv_crosscc = yes
+        then
+            set x $CROSSCC
+            shift
+            while test $# -ge 1
+            do
+                case "$1" in
+                    *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
+                    *-clang) CROSSTARGET=`expr "$1" : '\(.*\)-clang'` ;;
+                esac
+                shift
+            done
+        fi
         WINE_TRY_CROSSCFLAGS([-fno-strict-aliasing])
         dnl clang needs to be told to fail on unknown options
         WINE_TRY_CROSSCFLAGS([-Werror=unknown-warning-option],[CFLAGS="$CFLAGS -Werror=unknown-warning-option"])
