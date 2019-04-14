@@ -296,8 +296,6 @@ static HRESULT WINAPI SampleGrabber_QueryInterface(IUnknown *iface, REFIID riid,
         *ppv = &This->filter.IBaseFilter_iface;
     else if (IsEqualIID(riid, &IID_ISampleGrabber))
         *ppv = &This->ISampleGrabber_iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
     else
         WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppv);
 
@@ -828,7 +826,7 @@ SampleGrabber_IPin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
     else if (IsEqualIID(riid, &IID_IMemInputPin))
         *ppv = &This->sg->IMemInputPin_iface;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(&This->sg->IUnknown_inner, riid, ppv);
+        return IUnknown_QueryInterface(This->sg->seekthru_unk, riid, ppv);
     else if (IsEqualIID(riid, &IID_IMediaPosition))
         return IUnknown_QueryInterface(This->sg->seekthru_unk, riid, ppv);
     else {
