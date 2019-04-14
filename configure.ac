@@ -366,14 +366,13 @@ else
   dnl Maintainer mode requires gettext
   with_gettext=yes
   with_gettextpo=yes
-  AS_UNSET(ac_cv_header_gettext_po_h)
 fi
 
 test "x$with_gettext" != xno || MSGFMT=false
 if test "$MSGFMT" != "false"
 then
-  AC_MSG_CHECKING([whether msgfmt supports contexts])
-  cat >conftest.po <<EOF
+  AC_CACHE_CHECK([whether msgfmt supports contexts],wine_cv_msgfmt_contexts,
+  [cat >conftest.po <<EOF
 # comment
 msgctxt "ctxt"
 msgid "id"
@@ -381,11 +380,11 @@ msgstr "str"
 EOF
   if $MSGFMT -o /dev/null conftest.po 2>&AS_MESSAGE_LOG_FD
   then
-    AC_MSG_RESULT([yes])
+    wine_cv_msgfmt_contexts=yes
   else
-    AC_MSG_RESULT([no])
-    MSGFMT=false
-  fi
+    wine_cv_msgfmt_contexts=no
+  fi])
+  test $wine_cv_msgfmt_contexts != no || MSGFMT=false
 fi
 WINE_WARNING_WITH(gettext,[test "$MSGFMT" = false],
                   [gettext tools not found (or too old), translations won't be built.],

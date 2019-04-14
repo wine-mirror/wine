@@ -6712,7 +6712,6 @@ $as_echo "yes ($icotool_version_major.$icotool_version_minor)" >&6; }
 
     with_gettext=yes
   with_gettextpo=yes
-  { ac_cv_header_gettext_po_h=; unset ac_cv_header_gettext_po_h;}
 fi
 
 test "x$with_gettext" != xno || MSGFMT=false
@@ -6720,6 +6719,9 @@ if test "$MSGFMT" != "false"
 then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether msgfmt supports contexts" >&5
 $as_echo_n "checking whether msgfmt supports contexts... " >&6; }
+if ${wine_cv_msgfmt_contexts+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
   cat >conftest.po <<EOF
 # comment
 msgctxt "ctxt"
@@ -6728,13 +6730,14 @@ msgstr "str"
 EOF
   if $MSGFMT -o /dev/null conftest.po 2>&5
   then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+    wine_cv_msgfmt_contexts=yes
   else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-    MSGFMT=false
+    wine_cv_msgfmt_contexts=no
   fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_msgfmt_contexts" >&5
+$as_echo "$wine_cv_msgfmt_contexts" >&6; }
+  test $wine_cv_msgfmt_contexts != no || MSGFMT=false
 fi
 if test "$MSGFMT" = false; then :
   case "x$with_gettext" in
