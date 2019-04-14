@@ -83,7 +83,8 @@ LIBS="-l$1 $5 $LIBS"
     *) AS_VAR_SET(ac_Lib,[`$READELF -d conftest$ac_exeext | grep "NEEDED.*ac_lib_pattern\\.$LIBEXT" | sed -e "s/^.*\\m4_dquote(\\(ac_lib_pattern\\.$LIBEXT[[^	 ]]*\\)\\).*$/\1/"';2,$d'`])
        AS_VAR_IF([ac_Lib],[],
              [AS_VAR_SET(ac_Lib,[`$LDD conftest$ac_exeext | grep "ac_lib_pattern\\.$LIBEXT" | sed -e "s/^.*\(ac_lib_pattern\.$LIBEXT[[^	 ]]*\).*$/\1/"';2,$d'`])]) ;;
-  esac])
+  esac],
+  [AS_VAR_SET(ac_Lib,[])])
   LIBS=$ac_check_soname_save_LIBS])dnl
 AS_VAR_IF([ac_Lib],[],
       [AC_MSG_RESULT([not found])

@@ -9124,6 +9124,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_EGL=`$LDD conftest$ac_exeext | grep "libEGL\\.$LIBEXT" | sed -e "s/^.*\(libEGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_EGL=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -9177,6 +9179,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_GLESv2=`$LDD conftest$ac_exeext | grep "libGLESv2\\.$LIBEXT" | sed -e "s/^.*\(libGLESv2\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_GLESv2=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -11147,6 +11151,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_X11=`$LDD conftest$ac_exeext | grep "libX11\\.$LIBEXT" | sed -e "s/^.*\(libX11\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_X11=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -11200,6 +11206,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xext=`$LDD conftest$ac_exeext | grep "libXext\\.$LIBEXT" | sed -e "s/^.*\(libXext\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xext=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -11337,6 +11345,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xcursor=`$LDD conftest$ac_exeext | grep "libXcursor\\.$LIBEXT" | sed -e "s/^.*\(libXcursor\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xcursor=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -11403,6 +11413,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xi=`$LDD conftest$ac_exeext | grep "libXi\\.$LIBEXT" | sed -e "s/^.*\(libXi\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xi=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -11592,6 +11604,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xxf86vm=`$LDD conftest$ac_exeext | grep "libXxf86vm\\.$LIBEXT" | sed -e "s/^.*\(libXxf86vm\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xxf86vm=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -11658,6 +11672,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xrender=`$LDD conftest$ac_exeext | grep "libXrender\\.$LIBEXT" | sed -e "s/^.*\(libXrender\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xrender=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -11821,6 +11837,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xrandr=`$LDD conftest$ac_exeext | grep "libXrandr\\.$LIBEXT" | sed -e "s/^.*\(libXrandr\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xrandr=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -11919,6 +11937,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xfixes=`$LDD conftest$ac_exeext | grep "libXfixes\\.$LIBEXT" | sed -e "s/^.*\(libXfixes\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xfixes=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -12000,6 +12020,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xinerama=`$LDD conftest$ac_exeext | grep "libXinerama\\.$LIBEXT" | sed -e "s/^.*\(libXinerama\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xinerama=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -12068,6 +12090,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_Xcomposite=`$LDD conftest$ac_exeext | grep "libXcomposite\\.$LIBEXT" | sed -e "s/^.*\(libXcomposite\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_Xcomposite=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -12162,6 +12186,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_GL=`$LDD conftest$ac_exeext | grep "libGL\\.$LIBEXT" | sed -e "s/^.*\(libGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_GL=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -12204,6 +12230,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_GL=`$LDD conftest$ac_exeext | grep "libGL\\.$LIBEXT" | sed -e "s/^.*\(libGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_GL=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -12275,6 +12303,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_GLU=`$LDD conftest$ac_exeext | grep "libGLU\\.$LIBEXT" | sed -e "s/^.*\(libGLU\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_GLU=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -12341,6 +12371,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_OSMesa=`$LDD conftest$ac_exeext | grep "libOSMesa\\.$LIBEXT" | sed -e "s/^.*\(libOSMesa\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_OSMesa=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -12908,6 +12940,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_xslt=`$LDD conftest$ac_exeext | grep "libxslt\\.$LIBEXT" | sed -e "s/^.*\(libxslt\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_xslt=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13000,6 +13034,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_dbus_1=`$LDD conftest$ac_exeext | grep "libdbus-1\\.$LIBEXT" | sed -e "s/^.*\(libdbus-1\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_dbus_1=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13095,6 +13131,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_hal=`$LDD conftest$ac_exeext | grep "libhal\\.$LIBEXT" | sed -e "s/^.*\(libhal\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_hal=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13203,6 +13241,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_gnutls=`$LDD conftest$ac_exeext | grep "libgnutls\\(-deb0\\)\\{0,1\\}\\.$LIBEXT" | sed -e "s/^.*\(libgnutls\\(-deb0\\)\\{0,1\\}\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_gnutls=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13297,6 +13337,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_ncurses=`$LDD conftest$ac_exeext | grep "libncursesw\\{0,1\\}\\.$LIBEXT" | sed -e "s/^.*\(libncursesw\\{0,1\\}\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_ncurses=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13352,6 +13394,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_curses=`$LDD conftest$ac_exeext | grep "libcurses\\.$LIBEXT" | sed -e "s/^.*\(libcurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_curses=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13451,6 +13495,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_sane=`$LDD conftest$ac_exeext | grep "libsane\\.$LIBEXT" | sed -e "s/^.*\(libsane\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_sane=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13526,6 +13572,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_v4l2=`$LDD conftest$ac_exeext | grep "libv4l2\\.$LIBEXT" | sed -e "s/^.*\(libv4l2\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_v4l2=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -13939,6 +13987,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_freetype=`$LDD conftest$ac_exeext | grep "libfreetype\\.$LIBEXT" | sed -e "s/^.*\(libfreetype\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_freetype=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -14620,6 +14670,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_SDL2=`$LDD conftest$ac_exeext | grep "libSDL2-2.0*\\.$LIBEXT" | sed -e "s/^.*\(libSDL2-2.0*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_SDL2=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -14718,6 +14770,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_FAudio=`$LDD conftest$ac_exeext | grep "libFAudio*\\.$LIBEXT" | sed -e "s/^.*\(libFAudio*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_FAudio=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -14825,6 +14879,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_capi20=`$LDD conftest$ac_exeext | grep "libcapi20\\.$LIBEXT" | sed -e "s/^.*\(libcapi20\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_capi20=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -14928,6 +14984,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_cups=`$LDD conftest$ac_exeext | grep "libcups\\.$LIBEXT" | sed -e "s/^.*\(libcups\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_cups=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15033,6 +15091,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_fontconfig=`$LDD conftest$ac_exeext | grep "libfontconfig\\.$LIBEXT" | sed -e "s/^.*\(libfontconfig\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_fontconfig=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15106,6 +15166,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_gsm=`$LDD conftest$ac_exeext | grep "libgsm\\.$LIBEXT" | sed -e "s/^.*\(libgsm\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_gsm=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15203,6 +15265,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_krb5=`$LDD conftest$ac_exeext | grep "libkrb5\\.$LIBEXT" | sed -e "s/^.*\(libkrb5\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_krb5=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15310,6 +15374,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_gssapi_krb5=`$LDD conftest$ac_exeext | grep "libgssapi_krb5\\.$LIBEXT" | sed -e "s/^.*\(libgssapi_krb5\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_gssapi_krb5=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15414,6 +15480,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_jpeg=`$LDD conftest$ac_exeext | grep "libjpeg\\.$LIBEXT" | sed -e "s/^.*\(libjpeg\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_jpeg=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15518,6 +15586,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_png=`$LDD conftest$ac_exeext | grep "libpng[0-9]*\\.$LIBEXT" | sed -e "s/^.*\(libpng[0-9]*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_png=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15622,6 +15692,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_tiff=`$LDD conftest$ac_exeext | grep "libtiff\\.$LIBEXT" | sed -e "s/^.*\(libtiff\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_tiff=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15788,6 +15860,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_openal=`$LDD conftest$ac_exeext | grep "libopenal\\.$LIBEXT" | sed -e "s/^.*\(libopenal\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_openal=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -15982,6 +16056,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_odbc=`$LDD conftest$ac_exeext | grep "libodbc\\.$LIBEXT" | sed -e "s/^.*\(libodbc\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_odbc=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -16058,6 +16134,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_netapi=`$LDD conftest$ac_exeext | grep "libnetapi\\.$LIBEXT" | sed -e "s/^.*\(libnetapi\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_netapi=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -16128,6 +16206,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_vulkan=`$LDD conftest$ac_exeext | grep "libvulkan\\.$LIBEXT" | sed -e "s/^.*\(libvulkan\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_vulkan=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -16183,6 +16263,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_MoltenVK=`$LDD conftest$ac_exeext | grep "libMoltenVK\\.$LIBEXT" | sed -e "s/^.*\(libMoltenVK\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_MoltenVK=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -16267,6 +16349,8 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_lib_soname_vkd3d=`$LDD conftest$ac_exeext | grep "libvkd3d\\.$LIBEXT" | sed -e "s/^.*\(libvkd3d\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
+else
+  ac_cv_lib_soname_vkd3d=
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
