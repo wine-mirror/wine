@@ -1002,7 +1002,7 @@ then
     then
         ac_save_CC="$CC"
         saved_CFLAGS=$CFLAGS
-        AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-$CFLAGS})
+        AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-"-g -O2"})
         AC_SUBST(EXTRACROSSCFLAGS,"-DWINE_CROSSTEST -Wall")
 
         CC="$CROSSCC"
