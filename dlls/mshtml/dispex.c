@@ -49,6 +49,7 @@ static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1
 static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
 
 typedef struct {
+    IID iid;
     VARIANT default_value;
 } func_arg_info_t;
 
@@ -317,7 +318,31 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
         }
 
         for(i=0; i < info->argc; i++) {
-            if(!is_arg_type_supported(info->arg_types[i])) {
+            TYPEDESC *tdesc = &desc->lprgelemdescParam[i].tdesc;
+            if(tdesc->vt == VT_PTR && tdesc->u.lptdesc->vt == VT_USERDEFINED) {
+                ITypeInfo *ref_type_info;
+                TYPEATTR *attr;
+
+                hres = ITypeInfo_GetRefTypeInfo(dti, tdesc->u.lptdesc->u.hreftype, &ref_type_info);
+                if(FAILED(hres)) {
+                    ERR("Coulg not get referenced type info: %08x\n", hres);
+                    return;
+                }
+
+                hres = ITypeInfo_GetTypeAttr(ref_type_info, &attr);
+                if(SUCCEEDED(hres)) {
+                    assert(attr->typekind == TKIND_DISPATCH);
+                    info->arg_info[i].iid = attr->guid;
+                    ITypeInfo_ReleaseTypeAttr(ref_type_info, attr);
+                }else {
+                    ERR("GetTypeAttr failed: %08x\n", hres);
+                }
+                ITypeInfo_Release(ref_type_info);
+                if(FAILED(hres))
+                    return;
+                info->arg_types[i] = VT_DISPATCH;
+            }else if(!is_arg_type_supported(info->arg_types[i])) {
+                TRACE("%s: unsupported arg type %s\n", debugstr_w(info->name), debugstr_vt(info->arg_types[i]));
                 return; /* Fallback to ITypeInfo for unsupported arg types */
             }
 
@@ -1124,6 +1149,7 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
         return hres;
 
     for(i=0; i < func->argc; i++) {
+        BOOL own_value = FALSE;
         if(i >= dp->cArgs) {
             /* use default value */
             arg_ptrs[i] = &func->arg_info[i].default_value;
@@ -1137,6 +1163,24 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
             if(FAILED(hres))
                 break;
             arg_ptrs[i] = arg_buf + nconv++;
+            own_value = TRUE;
+        }
+
+        if(func->arg_types[i] == VT_DISPATCH && !IsEqualGUID(&func->arg_info[i].iid, &IID_NULL)
+            && V_DISPATCH(arg_ptrs[i])) {
+            IDispatch *iface;
+            if(!own_value) {
+                arg_buf[nconv] = *arg_ptrs[i];
+                arg_ptrs[i] = arg_buf + nconv++;
+            }
+            hres = IDispatch_QueryInterface(V_DISPATCH(arg_ptrs[i]), &func->arg_info[i].iid, (void**)&iface);
+            if(FAILED(hres)) {
+                WARN("Could not get %s iface: %08x\n", debugstr_guid(&func->arg_info[i].iid), hres);
+                break;
+            }
+            if(own_value)
+                IDispatch_Release(V_DISPATCH(arg_ptrs[i]));
+            V_DISPATCH(arg_ptrs[i]) = iface;
         }
     }
 
