@@ -25,6 +25,17 @@ import "mftransform.idl";
 import "mediaobj.idl";
 import "strmif.idl";
 
+cpp_quote("#ifndef _MFVideoNormalizedRect_")
+cpp_quote("#define _MFVideoNormalizedRect_")
+typedef struct MFVideoNormalizedRect
+{
+    float left;
+    float top;
+    float right;
+    float bottom;
+} MFVideoNormalizedRect;
+cpp_quote("#endif")
+
 typedef enum _MFVP_MESSAGE_TYPE {
     MFVP_MESSAGE_FLUSH,
     MFVP_MESSAGE_INVALIDATEMEDIATYPE,

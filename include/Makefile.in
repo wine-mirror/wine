@@ -370,6 +370,7 @@ SOURCES = \
 	mferror.h \
 	mfidl.idl \
 	mfobjects.idl \
+	mfplay.idl \
 	mfreadwrite.idl \
 	mftransform.idl \
 	midles.h \
