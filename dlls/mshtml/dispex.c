@@ -302,12 +302,11 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
         if(!info->arg_types)
             return;
 
-
         for(i=0; i < info->argc; i++)
             info->arg_types[i] = desc->lprgelemdescParam[i].tdesc.vt;
 
         info->prop_vt = desc->elemdescFunc.tdesc.vt;
-        if(info->prop_vt != VT_VOID && !is_arg_type_supported(info->prop_vt)) {
+        if(info->prop_vt != VT_VOID && info->prop_vt != VT_PTR && !is_arg_type_supported(info->prop_vt)) {
             TRACE("%s: return type %d\n", debugstr_w(info->name), info->prop_vt);
             return; /* Fallback to ITypeInfo::Invoke */
         }
@@ -1197,8 +1196,13 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
             case vt:                                    \
                 V_BYREF(&ret_ref) = &access(&retv);     \
                 break
-            BUILTIN_TYPES_SWITCH;
+            BUILTIN_ARG_TYPES_SWITCH;
 #undef CASE_VT
+            case VT_PTR:
+                V_VT(&retv) = VT_DISPATCH;
+                V_VT(&ret_ref) = VT_BYREF | VT_DISPATCH;
+                V_BYREF(&ret_ref) = &V_DISPATCH(&retv);
+                break;
             default:
                 assert(0);
             }

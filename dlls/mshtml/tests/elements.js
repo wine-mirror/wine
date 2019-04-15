@@ -374,6 +374,8 @@ function test_style_properties() {
     elem.style.zIndex = 4;
     ok(computed_style.zIndex === 4, "computed_style.zIndex = " + computed_style.zIndex);
 
+    window.getComputedStyle(elem, null);
+
     next_test();
 }
 
