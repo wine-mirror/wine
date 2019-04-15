@@ -165,9 +165,9 @@
 #include "pidl.h"
 #include "debughlp.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(shell);
-
 #if !defined(__MINGW32__) && !defined(_MSC_VER)
+
+WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 #define LEN_SHITEMID_FIXED_PART ((USHORT) \
     ( sizeof(USHORT)      /* SHITEMID's cb field. */ \
