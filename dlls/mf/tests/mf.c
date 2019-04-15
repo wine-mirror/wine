@@ -298,24 +298,16 @@ static void test_topology(void)
     ok(size == 1, "Unexpected item count.\n");
     IMFCollection_Release(collection);
 
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
+    ok(hr == S_OK, "Failed to create a node, hr %#x.\n", hr);
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+    IMFTopologyNode_Release(node);
+
     hr = IMFTopology_GetOutputNodeCollection(topology, &collection);
     ok(hr == S_OK || broken(hr == E_FAIL) /* before Win8 */, "Failed to get output node collection, hr %#x.\n", hr);
     if (SUCCEEDED(hr))
     {
-        ok(!!collection, "Unexpected object pointer.\n");
-        hr = IMFCollection_GetElementCount(collection, &size);
-        ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
-        ok(!size, "Unexpected item count.\n");
-        IMFCollection_Release(collection);
-
-        hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
-        ok(hr == S_OK, "Failed to create a node, hr %#x.\n", hr);
-        hr = IMFTopology_AddNode(topology, node);
-        ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
-        IMFTopologyNode_Release(node);
-
-        hr = IMFTopology_GetOutputNodeCollection(topology, &collection);
-        ok(hr == S_OK, "Failed to get output node collection, hr %#x.\n", hr);
         ok(!!collection, "Unexpected object pointer.\n");
         hr = IMFCollection_GetElementCount(collection, &size);
         ok(hr == S_OK, "Failed to get item count, hr %#x.\n", hr);
