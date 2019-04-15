@@ -1853,6 +1853,9 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
 
         metrics.trailingWhitespaceLength += cluster->length;
         trailingspacewidth += cluster->width;
+
+        if (index == 0)
+            break;
     }
 
     /* Line metrics length includes trailing whitespace length too */
