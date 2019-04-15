@@ -49,6 +49,10 @@ static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1
 static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
 
 typedef struct {
+    VARIANT default_value;
+} func_arg_info_t;
+
+typedef struct {
     DISPID id;
     BSTR name;
     tid_t tid;
@@ -58,8 +62,10 @@ typedef struct {
     SHORT get_vtbl_off;
     SHORT func_disp_idx;
     USHORT argc;
+    USHORT default_value_cnt;
     VARTYPE prop_vt;
     VARTYPE *arg_types;
+    func_arg_info_t *arg_info;
 } func_info_t;
 
 struct dispex_data_t {
@@ -165,14 +171,21 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 void release_typelib(void)
 {
     dispex_data_t *iter;
-    unsigned i;
+    unsigned i, j;
 
     while(!list_empty(&dispex_data_list)) {
         iter = LIST_ENTRY(list_head(&dispex_data_list), dispex_data_t, entry);
         list_remove(&iter->entry);
 
-        for(i=0; i < iter->func_cnt; i++)
+        for(i = 0; i < iter->func_cnt; i++) {
+            if(iter->funcs[i].default_value_cnt && iter->funcs[i].arg_info) {
+                for(j = 0; j < iter->funcs[i].argc; j++)
+                    VariantClear(&iter->funcs[i].arg_info[j].default_value);
+            }
+            heap_free(iter->funcs[i].arg_types);
+            heap_free(iter->funcs[i].arg_info);
             SysFreeString(iter->funcs[i].name);
+        }
 
         heap_free(iter->funcs);
         heap_free(iter->name_table);
@@ -283,7 +296,11 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
 
         info->arg_types = heap_alloc(sizeof(*info->arg_types) * info->argc);
         if(!info->arg_types)
-            return; /* FIXME: real error instead of fallback */
+            return;
+        info->arg_info = heap_alloc_zero(sizeof(*info->arg_info) * info->argc);
+        if(!info->arg_types)
+            return;
+
 
         for(i=0; i < info->argc; i++)
             info->arg_types[i] = desc->lprgelemdescParam[i].tdesc.vt;
@@ -305,8 +322,15 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
             }
 
             if(desc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
-                TRACE("%s param %d: default value\n", debugstr_w(info->name), i);
-                return; /* Fallback to ITypeInfo::Invoke */
+                hres = VariantCopy(&info->arg_info[i].default_value,
+                                   &desc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+                if(FAILED(hres)) {
+                    ERR("Could not copy default value: %08x\n", hres);
+                    return;
+                }
+                TRACE("%s param %d: default value %s\n", debugstr_w(info->name),
+                      i, debugstr_variant(&info->arg_info[i].default_value));
+                info->default_value_cnt++;
             }
         }
 
@@ -1090,7 +1114,7 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
         return E_NOTIMPL;
     }
 
-    if(dp->cArgs != func->argc) {
+    if(dp->cArgs > func->argc || dp->cArgs + func->default_value_cnt < func->argc) {
         FIXME("Invalid argument count (expected %u, got %u)\n", func->argc, dp->cArgs);
         return E_INVALIDARG;
     }
@@ -1100,6 +1124,11 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
         return hres;
 
     for(i=0; i < func->argc; i++) {
+        if(i >= dp->cArgs) {
+            /* use default value */
+            arg_ptrs[i] = &func->arg_info[i].default_value;
+            continue;
+        }
         arg = dp->rgvarg+dp->cArgs-i-1;
         if(func->arg_types[i] == V_VT(arg)) {
             arg_ptrs[i] = arg;
