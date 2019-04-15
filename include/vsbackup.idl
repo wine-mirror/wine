@@ -25,13 +25,7 @@ interface IVssEnumObject;
 interface IVssExamineWriterMetadata;
 interface IVssWriterComponentsExt;
 
-cpp_quote("#ifdef _cplusplus")
-cpp_quote("extern \"C\" {")
-cpp_quote("#endif")
 cpp_quote("HRESULT WINAPI CreateVssBackupComponentsInternal(IVssBackupComponents **backup);")
-cpp_quote("#ifdef _cplusplus")
-cpp_quote("}")
-cpp_quote("#endif")
 
 cpp_quote("static inline HRESULT CreateVssBackupComponents(IVssBackupComponents **backup)")
 cpp_quote("     { return CreateVssBackupComponentsInternal(backup); }")
