@@ -853,15 +853,19 @@ static void test_ITextRange_ScrollIntoView(void)
 
   /* Scroll to the top. */
   check_range(w, txtDoc, 0, 1, tomStart, 0);
+  check_range(w, txtDoc, 0, 1, tomEnd, 0);
 
   /* Scroll to the bottom. */
   check_range(w, txtDoc, 19, 20, tomStart, 1);
+  check_range(w, txtDoc, 19, 20, tomEnd, 1);
 
   /* Back up to the top. */
   check_range(w, txtDoc, 0, 1, tomStart, 0);
+  check_range(w, txtDoc, 0, 1, tomEnd, 0);
 
   /* Large range */
   check_range(w, txtDoc, 0, 20, tomStart, 0);
+  check_range(w, txtDoc, 0, 20, tomEnd, 1);
 
   hres = ITextDocument_Range(txtDoc, 0, 0, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
