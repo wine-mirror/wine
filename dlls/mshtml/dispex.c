@@ -226,6 +226,7 @@ HRESULT get_class_typeinfo(const CLSID *clsid, ITypeInfo **typeinfo)
     CASE_VT(VT_UI4, UINT32, V_UI4);                     \
     CASE_VT(VT_R4, float, V_R4);                        \
     CASE_VT(VT_BSTR, BSTR, V_BSTR);                     \
+    CASE_VT(VT_DISPATCH, IDispatch*, V_DISPATCH);       \
     CASE_VT(VT_BOOL, VARIANT_BOOL, V_BOOL)
 
 /* List all types used by IDispatchEx-based properties */
@@ -234,7 +235,6 @@ HRESULT get_class_typeinfo(const CLSID *clsid, ITypeInfo **typeinfo)
     CASE_VT(VT_VARIANT, VARIANT, *);                    \
     CASE_VT(VT_PTR, void*, V_BYREF);                    \
     CASE_VT(VT_UNKNOWN, IUnknown*, V_UNKNOWN);          \
-    CASE_VT(VT_DISPATCH, IDispatch*, V_DISPATCH);       \
     CASE_VT(VT_UI8, ULONGLONG, V_UI8)
 
 static BOOL is_arg_type_supported(VARTYPE vt)
