@@ -7263,7 +7263,10 @@ NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
  */
 void WINAPI NdrCorrelationInitialize(PMIDL_STUB_MESSAGE pStubMsg, void *pMemory, ULONG CacheSize, ULONG Flags)
 {
-    FIXME("(%p, %p, %d, 0x%x): semi-stub\n", pStubMsg, pMemory, CacheSize, Flags);
+    static int once;
+
+    if (!once++)
+        FIXME("(%p, %p, %d, 0x%x): semi-stub\n", pStubMsg, pMemory, CacheSize, Flags);
 
     if (pStubMsg->CorrDespIncrement == 0)
         pStubMsg->CorrDespIncrement = 2; /* size of the normal (non-range) /robust payload */
@@ -7301,5 +7304,8 @@ void WINAPI NdrCorrelationPass(PMIDL_STUB_MESSAGE pStubMsg)
  */
 void WINAPI NdrCorrelationFree(PMIDL_STUB_MESSAGE pStubMsg)
 {
-    FIXME("(%p): stub\n", pStubMsg);
+    static int once;
+
+    if (!once++)
+        FIXME("(%p): stub\n", pStubMsg);
 }
