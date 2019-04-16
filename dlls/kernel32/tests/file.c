@@ -62,6 +62,7 @@ static BOOL (WINAPI *pGetQueuedCompletionStatusEx)(HANDLE, OVERLAPPED_ENTRY*, UL
 static void (WINAPI *pRtlInitAnsiString)(PANSI_STRING,PCSZ);
 static void (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 static BOOL (WINAPI *pSetFileCompletionNotificationModes)(HANDLE, UCHAR);
+static HANDLE (WINAPI *pFindFirstStreamW)(LPCWSTR filename, STREAM_INFO_LEVELS infolevel, void *data, DWORD flags);
 
 static char filename[MAX_PATH];
 static const char sillytext[] =
@@ -111,6 +112,7 @@ static void InitFunctionPointers(void)
     pSetFileInformationByHandle = (void *) GetProcAddress(hkernel32, "SetFileInformationByHandle");
     pGetQueuedCompletionStatusEx = (void *) GetProcAddress(hkernel32, "GetQueuedCompletionStatusEx");
     pSetFileCompletionNotificationModes = (void *)GetProcAddress(hkernel32, "SetFileCompletionNotificationModes");
+    pFindFirstStreamW = (void *)GetProcAddress(hkernel32, "FindFirstStreamW");
 }
 
 static void test__hread( void )
@@ -5314,6 +5316,26 @@ static void test_file_readonly_access(void)
     ok(ret, "DeleteFileA: error %d\n", GetLastError());
 }
 
+static void test_find_file_stream(void)
+{
+    WCHAR path[] = {'C',':','\\','w','i','n','d','o','w','s',0};
+    HANDLE handle;
+    int error;
+    WIN32_FIND_STREAM_DATA data;
+
+    if (!pFindFirstStreamW)
+    {
+        win_skip("FindFirstStreamW is missing\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    handle = pFindFirstStreamW(path, FindStreamInfoStandard, &data, 0);
+    error = GetLastError();
+    ok(handle == INVALID_HANDLE_VALUE, "Expected INVALID_HANDLE_VALUE, got %p\n", handle);
+    ok(error == ERROR_HANDLE_EOF, "Expected ERROR_HANDLE_EOF, got %d\n", error);
+}
+
 START_TEST(file)
 {
     char temp_path[MAX_PATH];
@@ -5385,4 +5407,5 @@ START_TEST(file)
     test_post_completion();
     test_overlapped_read();
     test_file_readonly_access();
+    test_find_file_stream();
 }

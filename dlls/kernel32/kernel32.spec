@@ -488,7 +488,7 @@
 # @ stub FindFirstFileTransactedW
 @ stdcall FindFirstFileW(wstr ptr)
 # @ stub FindFirstStreamTransactedW
-# @ stub FindFirstStreamW
+@ stdcall FindFirstStreamW(wstr long ptr long)
 @ stdcall FindFirstVolumeA(ptr long)
 @ stdcall FindFirstVolumeMountPointA(str ptr long)
 @ stdcall FindFirstVolumeMountPointW(wstr ptr long)
@@ -497,7 +497,7 @@
 @ stdcall FindNextFileA(long ptr)
 # @ stub FindNextFileNameW
 @ stdcall FindNextFileW(long ptr)
-# @ stub FindNextStreamW
+@ stdcall FindNextStreamW(long ptr)
 @ stdcall FindNextVolumeA(long ptr long)
 @ stub FindNextVolumeMountPointA
 @ stub FindNextVolumeMountPointW

@@ -2363,6 +2363,28 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
     return TRUE;
 }
 
+/**************************************************************************
+ *           FindFirstStreamW   (KERNEL32.@)
+ */
+HANDLE WINAPI FindFirstStreamW(LPCWSTR filename, STREAM_INFO_LEVELS infolevel, void *data, DWORD flags)
+{
+    FIXME("(%s, %d, %p, %x): stub!\n", debugstr_w(filename), infolevel, data, flags);
+
+    SetLastError(ERROR_HANDLE_EOF);
+    return INVALID_HANDLE_VALUE;
+}
+
+/**************************************************************************
+ *           FindNextStreamW   (KERNEL32.@)
+ */
+BOOL WINAPI FindNextStreamW(HANDLE handle, void *data)
+{
+    FIXME("(%p, %p): stub!\n", handle, data);
+
+    SetLastError(ERROR_HANDLE_EOF);
+    return FALSE;
+}
+
 
 /**************************************************************************
  *           GetFileAttributesW   (KERNEL32.@)

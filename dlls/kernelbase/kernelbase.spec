@@ -360,7 +360,7 @@
 # @ stub FindFirstFileNameW
 @ stdcall FindFirstFileW(wstr ptr) kernel32.FindFirstFileW
 @ stdcall FindFirstFreeAce(ptr ptr) advapi32.FindFirstFreeAce
-# @ stub FindFirstStreamW
+@ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
 @ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
 @ stub FindNLSString
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
@@ -368,7 +368,7 @@
 @ stdcall FindNextFileA(long ptr) kernel32.FindNextFileA
 # @ stub FindNextFileNameW
 @ stdcall FindNextFileW(long ptr) kernel32.FindNextFileW
-# @ stub FindNextStreamW
+@ stdcall FindNextStreamW(long ptr) kernel32.FindNextStreamW
 @ stdcall FindNextVolumeW(long ptr long) kernel32.FindNextVolumeW
 # @ stub FindPackagesByPackageFamily
 @ stdcall FindResourceExW(long wstr wstr long) kernel32.FindResourceExW
