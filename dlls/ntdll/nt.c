@@ -2312,6 +2312,37 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 spi.IdleTime.QuadPart = ++idle;
             }
 
+            if ((fp = fopen("/proc/meminfo", "r")))
+            {
+                ULONG64 totalram, freeram, totalswap, freeswap;
+                char line[64];
+                while (fgets(line, sizeof(line), fp))
+                {
+                   if(sscanf(line, "MemTotal: %llu kB", &totalram) == 1)
+                   {
+                       totalram *= 1024;
+                   }
+                   else if(sscanf(line, "MemFree: %llu kB", &freeram) == 1)
+                   {
+                       freeram *= 1024;
+                   }
+                   else if(sscanf(line, "SwapTotal: %llu kB", &totalswap) == 1)
+                   {
+                       totalswap *= 1024;
+                   }
+                   else if(sscanf(line, "SwapFree: %llu kB", &freeswap) == 1)
+                   {
+                       freeswap *= 1024;
+                       break;
+                   }
+                }
+                fclose(fp);
+
+                spi.AvailablePages      = freeram / page_size;
+                spi.TotalCommittedPages = (totalram + totalswap - freeram - freeswap) / page_size;
+                spi.TotalCommitLimit    = (totalram + totalswap) / page_size;
+            }
+
             if (Length >= len)
             {
                 if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
