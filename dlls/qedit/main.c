@@ -106,7 +106,7 @@ static HRESULT WINAPI DSCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter
 
     *ppobj = NULL;
     if (pOuter && !IsEqualGUID(&IID_IUnknown, riid))
-        return E_INVALIDARG;
+        return E_NOINTERFACE;
 
     hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
     if (SUCCEEDED(hres)) {

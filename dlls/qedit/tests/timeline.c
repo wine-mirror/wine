@@ -74,7 +74,7 @@ static void test_aggregation(void)
     timeline = (IAMTimeline *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_AMTimeline, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IAMTimeline, (void **)&timeline);
-    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!timeline, "Got interface %p.\n", timeline);
 
     hr = CoCreateInstance(&CLSID_AMTimeline, &test_outer, CLSCTX_INPROC_SERVER,

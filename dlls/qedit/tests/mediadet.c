@@ -82,7 +82,7 @@ static void test_aggregation(void)
     detector = (IMediaDet *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_MediaDet, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (void **)&detector);
-    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!detector, "Got interface %p.\n", detector);
 
     hr = CoCreateInstance(&CLSID_MediaDet, &test_outer, CLSCTX_INPROC_SERVER,
