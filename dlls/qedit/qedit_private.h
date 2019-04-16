@@ -34,6 +34,7 @@
 
 HRESULT AMTimeline_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT MediaDet_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT NullRenderer_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
 HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 
 #endif /* __QEDIT_PRIVATE_INCLUDED__ */

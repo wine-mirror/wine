@@ -120,13 +120,6 @@ coclass DSoundRender { interface IBaseFilter; }
 coclass AudioRender { interface IBaseFilter; }
 
 [
-    helpstring("Null Renderer"),
-    threading(both),
-    uuid(c1f400a4-3f08-11d3-9f0b-006008039e37)
-]
-coclass NullRenderer { interface IBaseFilter; }
-
-[
     helpstring("Video Renderer"),
     threading(both),
     uuid(70e102b0-5556-11ce-97c0-00aa0055595a)

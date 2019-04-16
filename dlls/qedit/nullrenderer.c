@@ -1,5 +1,5 @@
 /*
- * Null Renderer (Promiscuous, not rendering anything at all!)
+ * Null renderer filter
  *
  * Copyright 2004 Christian Costa
  * Copyright 2008 Maarten Lankhorst
@@ -19,25 +19,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
-#include "quartz_private.h"
-#include "pin.h"
-
-#include "uuids.h"
-#include "vfwmsgs.h"
-#include "amvideo.h"
-#include "windef.h"
-#include "winbase.h"
+#define COBJMACROS
 #include "dshow.h"
-#include "evcode.h"
-#include "strmif.h"
-#include "ddraw.h"
-
-#include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/strmbase.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
 typedef struct NullRendererImpl
 {
@@ -89,7 +76,7 @@ static HRESULT WINAPI NullRendererInner_QueryInterface(IUnknown *iface, REFIID r
 {
     NullRendererImpl *This = impl_from_IUnknown(iface);
 
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
+    TRACE("filter %p, iid %s, out %p.\n", This, debugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -112,7 +99,7 @@ static HRESULT WINAPI NullRendererInner_QueryInterface(IUnknown *iface, REFIID r
     }
 
     if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow))
-        FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
+        FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
 
     return E_NOINTERFACE;
 }
