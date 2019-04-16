@@ -71,7 +71,10 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 static void test_interfaces(void)
 {
     IBaseFilter *filter = create_sample_grabber();
+    IUnknown *unk;
+    HRESULT hr;
     ULONG ref;
+    IPin *pin;
 
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
@@ -93,6 +96,39 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_ISeekingPassThru, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, source_id, &pin);
+
+    /* Queries for IMediaPosition or IMediaSeeking do not seem to increase the
+     * reference count. */
+    hr = IPin_QueryInterface(pin, &IID_IMediaPosition, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IUnknown_Release(unk);
+    hr = IPin_QueryInterface(pin, &IID_IMediaSeeking, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IUnknown_Release(unk);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMemInputPin, FALSE);
+
+    IPin_Release(pin);
 
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got unexpected refcount %d.\n", ref);
