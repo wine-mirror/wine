@@ -1771,9 +1771,9 @@ static void test_COM_vfwcapture(void)
     /* COM aggregation */
     hr = CoCreateInstance(&CLSID_VfwCapture, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&unk_obj.inner_unk);
-    if (hr == REGDB_E_CLASSNOTREG)
+    if ((hr == REGDB_E_CLASSNOTREG) || (hr == CLASS_E_CLASSNOTAVAILABLE))
     {
-        win_skip("CLSID_VfwCapture not registered\n");
+        win_skip("CLSID_VfwCapture not supported (0x%x)\n", hr);
         return;
     }
     ok(hr == S_OK, "VfwCapture create failed: %08x\n", hr);
