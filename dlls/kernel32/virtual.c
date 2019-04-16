@@ -46,6 +46,7 @@
 
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(file);
+WINE_DECLARE_DEBUG_CHANNEL(virtual);
 
 
 /***********************************************************************
@@ -98,6 +99,17 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocEx( HANDLE hProcess, LPVOID addr, SI
         ret = NULL;
     }
     return ret;
+}
+
+
+/***********************************************************************
+ *             VirtualAllocExNuma   (KERNEL32.@)
+ */
+LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocExNuma(HANDLE process, void *addr, SIZE_T size,
+        DWORD type, DWORD protect, DWORD numa_node)
+{
+    FIXME_(virtual)("Ignoring preferred numa_node\n");
+    return VirtualAllocEx(process, addr, size, type, protect);
 }
 
 

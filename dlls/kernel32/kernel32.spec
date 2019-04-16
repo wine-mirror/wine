@@ -1559,7 +1559,7 @@
 @ stdcall VerifyVersionInfoW(long long int64)
 @ stdcall VirtualAlloc(ptr long long long)
 @ stdcall VirtualAllocEx(long ptr long long long)
-# @ stub VirtualAllocExNuma
+@ stdcall VirtualAllocExNuma(long ptr long long long long)
 @ stub VirtualBufferExceptionHandler
 @ stdcall VirtualFree(ptr long long)
 @ stdcall VirtualFreeEx(long ptr long long)

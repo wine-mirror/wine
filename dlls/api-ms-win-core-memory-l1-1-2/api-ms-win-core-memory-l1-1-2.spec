@@ -28,7 +28,7 @@
 @ stub UnregisterBadMemoryNotification
 @ stdcall VirtualAlloc(ptr long long long) kernel32.VirtualAlloc
 @ stdcall VirtualAllocEx(long ptr long long long) kernel32.VirtualAllocEx
-@ stub VirtualAllocExNuma
+@ stdcall VirtualAllocExNuma(long ptr long long long long) kernel32.VirtualAllocExNuma
 @ stdcall VirtualFree(ptr long long) kernel32.VirtualFree
 @ stdcall VirtualFreeEx(long ptr long long) kernel32.VirtualFreeEx
 @ stdcall VirtualLock(ptr long) kernel32.VirtualLock
