@@ -556,7 +556,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (dwFlags & MCI_DGV_PLAY_REVERSE) return MCIERR_UNSUPPORTED_FUNCTION;
     if (dwFlags & MCI_TEST)	return 0;
 
-    if (dwFlags & (MCI_MCIAVI_PLAY_WINDOW|MCI_MCIAVI_PLAY_FULLSCREEN|MCI_MCIAVI_PLAY_FULLBY2))
+    if (dwFlags & (MCI_MCIAVI_PLAY_WINDOW|MCI_MCIAVI_PLAY_FULLBY2))
 	FIXME("Unsupported flag %08x\n", dwFlags);
 
     EnterCriticalSection(&wma->cs);
@@ -591,7 +591,18 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     LeaveCriticalSection(&wma->cs);
 
-    if (!(GetWindowLongW(wma->hWndPaint, GWL_STYLE) & WS_VISIBLE))
+    if (dwFlags & MCI_MCIAVI_PLAY_FULLSCREEN)
+    {
+        HMONITOR mon = MonitorFromWindow(wma->hWndPaint, MONITOR_DEFAULTTONEAREST);
+        MONITORINFO mi;
+        mi.cbSize = sizeof(mi);
+        GetMonitorInfoA(mon, &mi);
+        wma->hWndPaint = CreateWindowA("STATIC", NULL, WS_POPUP | WS_VISIBLE, mi.rcMonitor.left,
+            mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top,
+            NULL, NULL, NULL, 0);
+    }
+    /* if not fullscreen ensure the window is visible */
+    else if (!(GetWindowLongW(wma->hWndPaint, GWL_STYLE) & WS_VISIBLE))
         ShowWindow(wma->hWndPaint, SW_SHOWNA);
 
     EnterCriticalSection(&wma->cs);
