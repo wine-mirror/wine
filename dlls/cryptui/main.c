@@ -7550,8 +7550,21 @@ PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateFromStore(HCERTSTORE hCertStore
                                                            LPCWSTR pwszDisplayString, DWORD dwDontUseColumn,
                                                            DWORD dwFlags, void *pvReserved)
 {
-    FIXME("%p %p %s %s %d %d %p: stub\n", hCertStore, hwnd, debugstr_w(pwszTitle), debugstr_w(pwszDisplayString), dwDontUseColumn, dwFlags, pvReserved);
-    return NULL;
+    CRYPTUI_SELECTCERTIFICATE_STRUCTW sc;
+
+    TRACE("%p %p %s %s %x %x %p\n", hCertStore, hwnd, debugstr_w(pwszTitle), debugstr_w(pwszDisplayString), dwDontUseColumn, dwFlags, pvReserved);
+
+    memset(&sc, 0, sizeof(sc));
+
+    sc.dwSize = sizeof(sc);
+    sc.hwndParent = hwnd;
+    sc.dwFlags = dwFlags;
+    sc.szTitle = pwszTitle;
+    sc.szDisplayString = pwszDisplayString;
+    sc.dwDontUseColumn = dwDontUseColumn;
+    sc.cDisplayStores = 1;
+    sc.rghDisplayStores = &hCertStore;
+    return CryptUIDlgSelectCertificateW(&sc);
 }
 
 BOOL WINAPI CryptUIWizDigitalSign(DWORD flags, HWND parent, LPCWSTR title, PCCRYPTUI_WIZ_DIGITAL_SIGN_INFO info,
