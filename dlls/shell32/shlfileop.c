@@ -763,7 +763,9 @@ int WINAPI SHCreateDirectoryExW(HWND hWnd, LPCWSTR path, LPSECURITY_ATTRIBUTES s
 	    }
 	  }
 
-	  if (ret && hWnd && (ERROR_CANCELLED != ret))
+	  if (ret && hWnd &&
+	      ret != ERROR_CANCELLED &&
+	      ret != ERROR_ALREADY_EXISTS)
 	  {
 	    /* We failed and should show a dialog box */
 	    FIXME("Show system error message, creating path %s, failed with error %d\n", debugstr_w(path), ret);
