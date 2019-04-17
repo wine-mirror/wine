@@ -1991,8 +1991,7 @@ BOOL WINAPI NeedCurrentDirectoryForExePathW( LPCWSTR name )
                                      'I','n','E','x','e','P','a','t','h',0};
     WCHAR env_val;
 
-    /* MSDN mentions some 'registry location'. We do not use registry. */
-    FIXME("(%s): partial stub\n", debugstr_w(name));
+    TRACE("(%s)\n", debugstr_w(name));
 
     if (strchrW(name, '\\'))
         return TRUE;
