@@ -969,9 +969,12 @@ static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
         lpddi->guidProduct.Data1 = make_vid_pid(device);
         /* we only support traditional joysticks for now */
         if (version >= 0x0800)
-            lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+            lpddi->dwDevType = DI8DEVTYPE_GAMEPAD | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
         else
-            lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+            lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_GAMEPAD << 8);
+        lpddi->dwDevType |= DIDEVTYPE_HID;
+        lpddi->wUsagePage = 0x01; /* Desktop */
+        lpddi->wUsage = 0x05; /* Game Pad */
         sprintf(lpddi->tszInstanceName, "Joystick %d", id);
 
         /* get the device name */
