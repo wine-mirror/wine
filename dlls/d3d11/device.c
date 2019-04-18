@@ -5114,6 +5114,8 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device1 *ifac
     if (!rect_count)
         return;
 
+    actual_count = *rect_count;
+
     wined3d_mutex_lock();
     wined3d_device_get_scissor_rects(device->wined3d_device, &actual_count, rects);
     wined3d_mutex_unlock();
