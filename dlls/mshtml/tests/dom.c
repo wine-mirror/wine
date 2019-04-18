@@ -154,7 +154,8 @@ typedef enum {
     ET_BUTTON,
     ET_AREA,
     ET_SVG,
-    ET_CIRCLE
+    ET_CIRCLE,
+    ET_TSPAN
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -456,6 +457,14 @@ static const IID * const circle_iids[] = {
     NULL
 };
 
+static const IID * const tspan_iids[] = {
+    ELEM_IFACES,
+    &IID_ISVGElement,
+    &IID_ISVGTextContentElement,
+    &IID_ISVGTSpanElement,
+    NULL
+};
+
 static const IID * const style_iids[] = {
     &IID_IUnknown,
     &IID_IDispatch,
@@ -546,7 +555,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"BUTTON",    button_iids,      &DIID_DispHTMLButtonElement,    &CLSID_HTMLButtonElement},
     {"AREA",      area_iids,        &DIID_DispHTMLAreaElement,      &CLSID_HTMLAreaElement},
     {"svg",       svg_iids,         NULL},
-    {"circle",    circle_iids,      NULL}
+    {"circle",    circle_iids,      NULL},
+    {"tspan",     tspan_iids,       NULL}
 };
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
@@ -9593,11 +9603,12 @@ static void test_form_element(IHTMLDocument2 *doc, IHTMLElement *parent)
 
 static void test_svg_element(IHTMLDocument2 *doc, IHTMLElement *parent)
 {
-    IHTMLDOMNode *svg_node, *circle_node;
+    IHTMLDOMNode *svg_node, *circle_node, *tspan_node;
 
     test_elem_set_innerhtml((IUnknown*)parent,
             "<svg width=\"100\" height=\"100\" id=\"svgid\">"
             "<circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"black\" />"
+            "<tspan></tspan>"
             "</svg>");
     svg_node = get_first_child((IUnknown*)parent);
     if(compat_mode < COMPAT_IE9) {
@@ -9616,6 +9627,10 @@ static void test_svg_element(IHTMLDocument2 *doc, IHTMLElement *parent)
         return;
     test_elem_type((IUnknown*)circle_node, ET_CIRCLE);
 
+    tspan_node = node_get_next((IUnknown*)circle_node);
+    test_elem_type((IUnknown*)tspan_node, ET_TSPAN);
+
+    IHTMLDOMNode_Release(tspan_node);
     IHTMLDOMNode_Release(circle_node);
     IHTMLDOMNode_Release(svg_node);
 };

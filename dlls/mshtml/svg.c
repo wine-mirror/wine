@@ -930,9 +930,252 @@ static HRESULT create_circle_element(HTMLDocumentNode *doc, nsIDOMSVGElement *ns
     return S_OK;
 }
 
+typedef struct {
+    ISVGTextContentElement ISVGTextContentElement_iface;
+    SVGElement *svg_element;
+} SVGTextContentElement;
+
+static inline SVGTextContentElement *impl_from_ISVGTextContentElement(ISVGTextContentElement *iface)
+{
+    return CONTAINING_RECORD(iface, SVGTextContentElement, ISVGTextContentElement_iface);
+}
+
+static HRESULT WINAPI SVGTextContentElement_QueryInterface(ISVGTextContentElement *iface,
+        REFIID riid, void **ppv)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    return IHTMLDOMNode_QueryInterface(&This->svg_element->element.node.IHTMLDOMNode_iface, riid, ppv);
+}
+
+static ULONG WINAPI SVGTextContentElement_AddRef(ISVGTextContentElement *iface)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+
+    return IHTMLDOMNode_AddRef(&This->svg_element->element.node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI SVGTextContentElement_Release(ISVGTextContentElement *iface)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+
+    return IHTMLDOMNode_Release(&This->svg_element->element.node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI SVGTextContentElement_GetTypeInfoCount(ISVGTextContentElement *iface, UINT *pctinfo)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->svg_element->element.node.event_target.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI SVGTextContentElement_GetTypeInfo(ISVGTextContentElement *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    return IDispatchEx_GetTypeInfo(&This->svg_element->element.node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid,
+            ppTInfo);
+}
+
+static HRESULT WINAPI SVGTextContentElement_GetIDsOfNames(ISVGTextContentElement *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    return IDispatchEx_GetIDsOfNames(&This->svg_element->element.node.event_target.dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI SVGTextContentElement_Invoke(ISVGTextContentElement *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    return IDispatchEx_Invoke(&This->svg_element->element.node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI SVGTextContentElement_putref_textLength(ISVGTextContentElement *iface, ISVGAnimatedLength *v)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%p)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_get_textLength(ISVGTextContentElement *iface, ISVGAnimatedLength **p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_putref_lengthAdjust(ISVGTextContentElement *iface, ISVGAnimatedEnumeration *v)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%p)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_get_lengthAdjust(ISVGTextContentElement *iface, ISVGAnimatedEnumeration **p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_getNumberOfChars(ISVGTextContentElement *iface, LONG *p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_getComputedTextLength(ISVGTextContentElement *iface, float *p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_getSubStringLength(ISVGTextContentElement *iface,
+                                                               LONG charnum, LONG nchars, float *p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%d %d %p)\n", This, charnum, nchars, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_getStartPositionOfChar(ISVGTextContentElement *iface,
+                                                                   LONG charnum, ISVGPoint **p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%d %p)\n", This, charnum, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_getEndPositionOfChar(ISVGTextContentElement *iface,
+                                                                 LONG charnum, ISVGPoint **p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%d %p)\n", This, charnum, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_getExtentOfChar(ISVGTextContentElement *iface,
+                                                            LONG charnum, ISVGRect **p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%d %p)\n", This, charnum, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_getRotationOfChar(ISVGTextContentElement *iface,
+                                                              LONG charnum, float *p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%d %p)\n", This, charnum, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_getCharNumAtPosition(ISVGTextContentElement *iface,
+                                                                 ISVGPoint *point, LONG *p)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%p %p)\n", This, point, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGTextContentElement_selectSubString(ISVGTextContentElement *iface,
+                                                            LONG charnum, LONG nchars)
+{
+    SVGTextContentElement *This = impl_from_ISVGTextContentElement(iface);
+    FIXME("(%p)->(%d %d)\n", This, charnum, nchars);
+    return E_NOTIMPL;
+}
+
+static const ISVGTextContentElementVtbl SVGTextContentElementVtbl = {
+    SVGTextContentElement_QueryInterface,
+    SVGTextContentElement_AddRef,
+    SVGTextContentElement_Release,
+    SVGTextContentElement_GetTypeInfoCount,
+    SVGTextContentElement_GetTypeInfo,
+    SVGTextContentElement_GetIDsOfNames,
+    SVGTextContentElement_Invoke,
+    SVGTextContentElement_putref_textLength,
+    SVGTextContentElement_get_textLength,
+    SVGTextContentElement_putref_lengthAdjust,
+    SVGTextContentElement_get_lengthAdjust,
+    SVGTextContentElement_getNumberOfChars,
+    SVGTextContentElement_getComputedTextLength,
+    SVGTextContentElement_getSubStringLength,
+    SVGTextContentElement_getStartPositionOfChar,
+    SVGTextContentElement_getEndPositionOfChar,
+    SVGTextContentElement_getExtentOfChar,
+    SVGTextContentElement_getRotationOfChar,
+    SVGTextContentElement_getCharNumAtPosition,
+    SVGTextContentElement_selectSubString
+};
+
+static void init_text_content_element(SVGTextContentElement *text_content, SVGElement *svg_element)
+{
+    text_content->ISVGTextContentElement_iface.lpVtbl = &SVGTextContentElementVtbl;
+    text_content->svg_element = svg_element;
+}
+
+struct SVGTSpanElement {
+    SVGElement svg_element;
+    SVGTextContentElement text_content;
+};
+
+static inline SVGTSpanElement *SVGTSpanElement_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, SVGTSpanElement, svg_element.element.node);
+}
+
+static HRESULT SVGTSpanElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    SVGTSpanElement *This = SVGTSpanElement_from_HTMLDOMNode(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_ISVGTSpanElement, riid))
+        *ppv = &This->svg_element.ISVGElement_iface; /* no additional methods */
+    else if(IsEqualGUID(&IID_ISVGTextContentElement, riid))
+        *ppv = &This->text_content.ISVGTextContentElement_iface;
+    else
+        return SVGElement_QI(&This->svg_element.element.node, riid, ppv);
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static const NodeImplVtbl SVGTSpanElementImplVtbl = {
+    &CLSID_SVGTSpanElement,
+    SVGTSpanElement_QI,
+    HTMLElement_destructor,
+    HTMLElement_cpc,
+    HTMLElement_clone,
+    NULL,
+    HTMLElement_get_attr_col,
+};
+
+static HRESULT create_tspan_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)
+{
+    SVGTSpanElement *ret;
+
+    ret = heap_alloc_zero(sizeof(SVGTSpanElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->svg_element.element.node.vtbl = &SVGTSpanElementImplVtbl;
+    init_text_content_element(&ret->text_content, &ret->svg_element);
+    init_svg_element(&ret->svg_element, doc, nselem);
+
+    *elem = &ret->svg_element.element;
+    return S_OK;
+}
 
 static const WCHAR circleW[] = {'c','i','r','c','l','e',0};
 static const WCHAR svgW[] = {'s','v','g',0};
+static const WCHAR tspanW[] = {'t','s','p','a','n',0};
 
 HRESULT create_svg_element(HTMLDocumentNode *doc, nsIDOMSVGElement *dom_element, const WCHAR *tag_name, HTMLElement **elem)
 {
@@ -944,6 +1187,8 @@ HRESULT create_svg_element(HTMLDocumentNode *doc, nsIDOMSVGElement *dom_element,
         return create_viewport_element(doc, dom_element, elem);
     if(!strcmpW(tag_name, circleW))
         return create_circle_element(doc, dom_element, elem);
+    if(!strcmpW(tag_name, tspanW))
+        return create_tspan_element(doc, dom_element, elem);
 
     svg_element = heap_alloc_zero(sizeof(*svg_element));
     if(!svg_element)
