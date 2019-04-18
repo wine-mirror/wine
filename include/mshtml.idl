@@ -16202,6 +16202,22 @@ methods:
 }
 
 /*****************************************************************************
+ *    SVGElement coclass
+ */
+[
+    noncreatable,
+    uuid(30510564-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass SVGElement
+{
+    [default]          dispinterface DispSVGElement;
+    [source, default]  dispinterface HTMLElementEvents;
+    [source]           dispinterface HTMLElementEvents2;
+                       interface ISVGElement;
+                       interface IHTMLElement;
+}
+
+/*****************************************************************************
  *    ISVGLength interface
  */
 [

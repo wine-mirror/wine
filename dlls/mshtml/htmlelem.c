@@ -5891,16 +5891,24 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
     tag = get_tag_desc(tag_name);
     if(tag) {
         hres = tag->constructor(doc, nselem, &elem);
-    }else if(use_generic) {
-        hres = HTMLGenericElement_Create(doc, nselem, &elem);
     }else {
-        elem = heap_alloc_zero(sizeof(HTMLElement));
-        if(elem) {
-            elem->node.vtbl = &HTMLElementImplVtbl;
-            HTMLElement_Init(elem, doc, nselem, &HTMLElement_dispex);
-            hres = S_OK;
+        nsIDOMSVGElement *svg_element;
+
+        nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMSVGElement, (void**)&svg_element);
+        if(NS_SUCCEEDED(nsres)) {
+            hres = create_svg_element(doc, svg_element, tag_name, &elem);
+            nsIDOMSVGElement_Release(svg_element);
+        }else if(use_generic) {
+            hres = HTMLGenericElement_Create(doc, nselem, &elem);
         }else {
-            hres = E_OUTOFMEMORY;
+            elem = heap_alloc_zero(sizeof(HTMLElement));
+            if(elem) {
+                elem->node.vtbl = &HTMLElementImplVtbl;
+                HTMLElement_Init(elem, doc, nselem, &HTMLElement_dispex);
+                hres = S_OK;
+            }else {
+                hres = E_OUTOFMEMORY;
+            }
         }
     }
 

@@ -442,6 +442,18 @@ static const IID * const generic_iids[] = {
     NULL
 };
 
+static const IID * const svg_iids[] = {
+    ELEM_IFACES,
+    &IID_ISVGElement,
+    NULL
+};
+
+static const IID * const circle_iids[] = {
+    ELEM_IFACES,
+    &IID_ISVGElement,
+    NULL
+};
+
 static const IID * const style_iids[] = {
     &IID_IUnknown,
     &IID_IDispatch,
@@ -531,8 +543,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"LABEL",     label_iids,       &DIID_DispHTMLLabelElement,     &CLSID_HTMLLabelElement},
     {"BUTTON",    button_iids,      &DIID_DispHTMLButtonElement,    &CLSID_HTMLButtonElement},
     {"AREA",      area_iids,        &DIID_DispHTMLAreaElement,      &CLSID_HTMLAreaElement},
-    {"svg",       elem_iids,        NULL},
-    {"circle",    elem_iids,        NULL}
+    {"svg",       svg_iids,         NULL},
+    {"circle",    circle_iids,      NULL}
 };
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
