@@ -727,7 +727,13 @@ static DWORD reader_get_first_stream_index(IMFPresentationDescriptor *descriptor
             {
                 hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
                 IMFMediaTypeHandler_Release(handler);
-                if (SUCCEEDED(hr) && IsEqualGUID(&guid, major))
+                if (FAILED(hr))
+                {
+                    WARN("Failed to get stream major type, hr %#x.\n", hr);
+                    continue;
+                }
+
+                if (IsEqualGUID(&guid, major))
                 {
                     return i;
                 }
