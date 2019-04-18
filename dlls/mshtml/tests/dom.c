@@ -5171,7 +5171,6 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
     hres = IHTMLElement2_getBoundingClientRect(elem2, &rect);
     ok(hres == S_OK, "getBoundingClientRect failed: %08x\n", hres);
     hres = IHTMLElement2_getBoundingClientRect(elem2, &rect2);
-    IHTMLElement2_Release(elem2);
     ok(hres == S_OK, "getBoundingClientRect failed: %08x\n", hres);
     ok(rect != NULL, "rect == NULL\n");
     ok(rect != rect2, "rect == rect2\n");
@@ -5207,6 +5206,7 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
     test_disp((IUnknown*)rects, &IID_IHTMLRectCollection, NULL, "[object]");
 
     IHTMLRectCollection_Release(rects);
+    IHTMLElement2_Release(elem2);
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, const char *n,
