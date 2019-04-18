@@ -570,7 +570,7 @@ void stop_thread_if_suspended( struct thread *thread )
 }
 
 /* suspend a thread */
-static int suspend_thread( struct thread *thread )
+int suspend_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
@@ -582,7 +582,7 @@ static int suspend_thread( struct thread *thread )
 }
 
 /* resume a thread */
-static int resume_thread( struct thread *thread )
+int resume_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend > 0)

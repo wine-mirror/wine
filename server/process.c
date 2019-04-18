@@ -1705,3 +1705,41 @@ DECL_HANDLER(set_job_completion_port)
 
     release_object( job );
 }
+
+/* Suspend a process */
+DECL_HANDLER(suspend_process)
+{
+    struct process *process;
+
+    if ((process = get_process_from_handle( req->handle, PROCESS_SUSPEND_RESUME )))
+    {
+        struct list *ptr, *next;
+
+        LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+        {
+            struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
+            suspend_thread( thread );
+        }
+
+        release_object( process );
+    }
+}
+
+/* Resume a process */
+DECL_HANDLER(resume_process)
+{
+    struct process *process;
+
+    if ((process = get_process_from_handle( req->handle, PROCESS_SUSPEND_RESUME )))
+    {
+        struct list *ptr, *next;
+
+        LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+        {
+            struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
+            resume_thread( thread );
+        }
+
+        release_object( process );
+    }
+}

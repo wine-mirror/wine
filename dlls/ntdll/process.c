@@ -763,8 +763,16 @@ NTSTATUS  WINAPI NtOpenProcess(PHANDLE handle, ACCESS_MASK access,
  */
 NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
 {
-    FIXME("stub: %p\n", handle);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS ret;
+
+    SERVER_START_REQ( resume_process )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /******************************************************************************
@@ -773,8 +781,16 @@ NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
  */
 NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
 {
-    FIXME("stub: %p\n", handle);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS ret;
+
+    SERVER_START_REQ( suspend_process )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 

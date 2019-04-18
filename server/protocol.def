@@ -3909,3 +3909,15 @@ struct handle_info
     obj_handle_t handle;          /* handle to the job */
     int          status;          /* process exit code */
 @END
+
+
+/* Suspend a process */
+@REQ(suspend_process)
+    obj_handle_t handle;       /* process handle */
+@END
+
+
+/* Resume a process */
+@REQ(resume_process)
+    obj_handle_t handle;       /* process handle */
+@END

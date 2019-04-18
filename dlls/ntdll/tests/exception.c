@@ -53,6 +53,8 @@ static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, 
 static NTSTATUS  (WINAPI *pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS  (WINAPI *pNtClose)(HANDLE);
+static NTSTATUS  (WINAPI *pNtSuspendProcess)(HANDLE process);
+static NTSTATUS  (WINAPI *pNtResumeProcess)(HANDLE process);
 
 #if defined(__x86_64__)
 typedef struct
@@ -158,6 +160,9 @@ static VOID      (CDECL *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, C
 static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #endif
 
+static int      my_argc;
+static char**   my_argv;
+
 #ifdef __i386__
 
 #ifndef __WINE_WINTRNL_H
@@ -167,8 +172,6 @@ static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #define MEM_EXECUTE_OPTION_PERMANENT 0x08
 #endif
 
-static int      my_argc;
-static char**   my_argv;
 static int      test_stage;
 
 static BOOL is_wow64;
@@ -3190,12 +3193,152 @@ static void test_suspend_thread(void)
     CloseHandle(thread);
 }
 
+static const char *suspend_process_event_name = "suspend_process_event";
+static const char *suspend_process_event2_name = "suspend_process_event2";
+
+static DWORD WINAPI dummy_thread_proc( void *arg )
+{
+    return 0;
+}
+
+static void suspend_process_proc(void)
+{
+    HANDLE event = OpenEventA(SYNCHRONIZE, FALSE, suspend_process_event_name);
+    HANDLE event2 = OpenEventA(SYNCHRONIZE | EVENT_MODIFY_STATE, FALSE, suspend_process_event2_name);
+    unsigned int count;
+    NTSTATUS status;
+    HANDLE thread;
+
+    ok(event != NULL, "Failed to open event handle.\n");
+    ok(event2 != NULL, "Failed to open event handle.\n");
+
+    thread = CreateThread(NULL, 0, dummy_thread_proc, 0, CREATE_SUSPENDED, NULL);
+    ok(thread != NULL, "Failed to create auxiliary thread.\n");
+
+    /* Suspend up to limit. */
+    while (!(status = NtSuspendThread(thread, NULL)))
+        ;
+    ok(status == STATUS_SUSPEND_COUNT_EXCEEDED, "Unexpected status %#x.\n", status);
+
+    for (;;)
+    {
+        SetEvent(event2);
+        if (WaitForSingleObject(event, 100) == WAIT_OBJECT_0)
+            break;
+    }
+
+    status = NtSuspendThread(thread, &count);
+    ok(!status, "Failed to suspend a thread, status %#x.\n", status);
+    ok(count == 125, "Unexpected suspend count %u.\n", count);
+
+    status = NtResumeThread(thread, NULL);
+    ok(!status, "Failed to resume a thread, status %#x.\n", status);
+
+    CloseHandle(event);
+    CloseHandle(event2);
+}
+
+static void test_suspend_process(void)
+{
+    PROCESS_INFORMATION info;
+    char path_name[MAX_PATH];
+    STARTUPINFOA startup;
+    HANDLE event, event2;
+    NTSTATUS status;
+    char **argv;
+    DWORD ret;
+
+    event = CreateEventA(NULL, FALSE, FALSE, suspend_process_event_name);
+    ok(event != NULL, "Failed to create event.\n");
+
+    event2 = CreateEventA(NULL, FALSE, FALSE, suspend_process_event2_name);
+    ok(event2 != NULL, "Failed to create event.\n");
+
+    winetest_get_mainargs(&argv);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    sprintf(path_name, "%s exception suspend_process", argv[0]);
+
+    ret = CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+    ok(ret, "Failed to create target process.\n");
+
+    /* New process signals this event. */
+    ResetEvent(event2);
+    ret = WaitForSingleObject(event2, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "Wait failed, %#x.\n", ret);
+
+    /* Suspend main thread */
+    status = NtSuspendThread(info.hThread, &ret);
+    ok(!status && !ret, "Failed to suspend main thread, status %#x.\n", status);
+
+    /* Process wasn't suspended yet. */
+    status = pNtResumeProcess(info.hProcess);
+    ok(!status, "Failed to resume a process, status %#x.\n", status);
+
+    status = pNtSuspendProcess(0);
+    ok(status == STATUS_INVALID_HANDLE, "Unexpected status %#x.\n", status);
+
+    status = pNtResumeProcess(info.hProcess);
+    ok(!status, "Failed to resume a process, status %#x.\n", status);
+
+    ResetEvent(event2);
+    ret = WaitForSingleObject(event2, 200);
+    ok(ret == WAIT_OBJECT_0, "Wait failed.\n");
+
+    status = pNtSuspendProcess(info.hProcess);
+    ok(!status, "Failed to suspend a process, status %#x.\n", status);
+
+    status = NtSuspendThread(info.hThread, &ret);
+    ok(!status && ret == 1, "Failed to suspend main thread, status %#x.\n", status);
+    status = NtResumeThread(info.hThread, &ret);
+    ok(!status && ret == 2, "Failed to resume main thread, status %#x.\n", status);
+
+    ResetEvent(event2);
+    ret = WaitForSingleObject(event2, 200);
+    ok(ret == WAIT_TIMEOUT, "Wait failed.\n");
+
+    status = pNtSuspendProcess(info.hProcess);
+    ok(!status, "Failed to suspend a process, status %#x.\n", status);
+
+    status = pNtResumeProcess(info.hProcess);
+    ok(!status, "Failed to resume a process, status %#x.\n", status);
+
+    ResetEvent(event2);
+    ret = WaitForSingleObject(event2, 200);
+    ok(ret == WAIT_TIMEOUT, "Wait failed.\n");
+
+    status = pNtResumeProcess(info.hProcess);
+    ok(!status, "Failed to resume a process, status %#x.\n", status);
+
+    ResetEvent(event2);
+    ret = WaitForSingleObject(event2, 200);
+    ok(ret == WAIT_OBJECT_0, "Wait failed.\n");
+
+    SetEvent(event);
+
+    winetest_wait_child_process(info.hProcess);
+
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+
+    CloseHandle(event);
+    CloseHandle(event2);
+}
+
 START_TEST(exception)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
 #if defined(__x86_64__)
     HMODULE hmsvcrt = LoadLibraryA("msvcrt.dll");
 #endif
+
+    my_argc = winetest_get_mainargs( &my_argv );
+
+    if (my_argc >= 3 && !strcmp(my_argv[2], "suspend_process"))
+    {
+        suspend_process_proc();
+        return;
+    }
 
     code_mem = VirtualAlloc(NULL, 65536, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if(!code_mem) {
@@ -3224,6 +3367,8 @@ START_TEST(exception)
     pNtSetInformationProcess           = (void*)GetProcAddress( hntdll,
                                                                  "NtSetInformationProcess" );
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
+    pNtSuspendProcess = (void *)GetProcAddress( hntdll, "NtSuspendProcess" );
+    pNtResumeProcess = (void *)GetProcAddress( hntdll, "NtResumeProcess" );
 
 #ifdef __i386__
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
@@ -3309,6 +3454,7 @@ START_TEST(exception)
     test_prot_fault();
     test_thread_context();
     test_suspend_thread();
+    test_suspend_process();
 
 #elif defined(__x86_64__)
     pRtlAddFunctionTable               = (void *)GetProcAddress( hntdll,
@@ -3351,6 +3497,7 @@ START_TEST(exception)
     test_dpe_exceptions();
     test_wow64_context();
     test_suspend_thread();
+    test_suspend_process();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
