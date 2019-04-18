@@ -216,9 +216,13 @@ static void test_source_resolver(void)
     IMFAttributes *attributes;
     IMFMediaSource *mediasource;
     IMFPresentationDescriptor *descriptor;
+    IMFMediaTypeHandler *handler;
     MF_OBJECT_TYPE obj_type;
+    IMFStreamDescriptor *sd;
     HRESULT hr;
     WCHAR *filename;
+    BOOL selected;
+    GUID guid;
 
     static const WCHAR file_type[] = {'v','i','d','e','o','/','m','p','4',0};
 
@@ -297,10 +301,22 @@ static void test_source_resolver(void)
     ok(mediasource != NULL, "got %p\n", mediasource);
     ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
 
-    hr = IMFMediaSource_CreatePresentationDescriptor(
-        mediasource, &descriptor);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, &descriptor);
+    ok(hr == S_OK, "Failed to get presentation descriptor, hr %#x.\n", hr);
     ok(descriptor != NULL, "got %p\n", descriptor);
+
+    hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(descriptor, 0, &selected, &sd);
+    ok(hr == S_OK, "Failed to get stream descriptor, hr %#x.\n", hr);
+
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
+    ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
+todo_wine
+    ok(hr == S_OK, "Failed to get stream major type, hr %#x.\n", hr);
+
+    IMFMediaTypeHandler_Release(handler);
+    IMFStreamDescriptor_Release(sd);
 
     IMFPresentationDescriptor_Release(descriptor);
     IMFMediaSource_Release(mediasource);
