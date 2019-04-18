@@ -58,6 +58,8 @@ testNoEnumerables("Function");
 testNoEnumerables("Function.prototype");
 testNoEnumerables("testNoEnumerates");
 testNoEnumerables("VBArray");
+testNoEnumerables("new Enumerator([])");
+testNoEnumerables("Enumerator([])");
 
 ok(Object.propertyIsEnumerable("prototype") === false, "Object.prototype is enumerable");
 ok(Math.propertyIsEnumerable("E") === false, "Math.E is enumerable");
@@ -341,6 +343,8 @@ ok(tmp === "[object Object]", "toString.call(this) = " + tmp);
 ok(tmp === "[object Object]", "toString.call(arguments) = " + tmp);
 tmp = Object.prototype.toString.call(new VBArray(createArray()));
 ok(tmp === "[object Object]", "toString.call(new VBArray()) = " + tmp);
+(tmp = new Enumerator([])).f = Object.prototype.toString;
+ok(tmp.f() === "[object Object]", "tmp.f() = " + tmp.f());
 
 function TSTestConstr() {}
 TSTestConstr.prototype = { toString: function() { return "test"; } };
