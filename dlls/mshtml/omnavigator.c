@@ -306,7 +306,7 @@ static const tid_t HTMLDOMImplementation_iface_tids[] = {
 };
 static dispex_static_data_t HTMLDOMImplementation_dispex = {
     NULL,
-    IHTMLDOMImplementation_tid,
+    DispHTMLDOMImplementation_tid,
     HTMLDOMImplementation_iface_tids
 };
 

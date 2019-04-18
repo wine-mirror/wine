@@ -7010,6 +7010,8 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
         IHTMLWindow2 *window;
         IDispatch *disp;
 
+        test_disp((IUnknown*)dom_implementation, &DIID_DispHTMLDOMImplementation, NULL, "[object]");
+
         str = a2bstr("test");
         hres = IHTMLDOMImplementation2_createHTMLDocument(dom_implementation2, str, &new_document);
         ok(hres == S_OK, "createHTMLDocument failed: %08x\n", hres);

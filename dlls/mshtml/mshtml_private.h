@@ -95,6 +95,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispHTMLCurrentStyle) \
     XDIID(DispHTMLDocument) \
     XDIID(DispHTMLDOMAttribute) \
+    XDIID(DispHTMLDOMImplementation) \
     XDIID(DispHTMLDOMTextNode) \
     XDIID(DispHTMLElementCollection) \
     XDIID(DispHTMLEmbed) \
@@ -171,6 +172,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLDOMAttribute2) \
     XIID(IHTMLDOMChildrenCollection) \
     XIID(IHTMLDOMImplementation) \
+    XIID(IHTMLDOMImplementation2) \
     XIID(IHTMLDOMNode) \
     XIID(IHTMLDOMNode2) \
     XIID(IHTMLDOMNode3) \
