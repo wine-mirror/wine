@@ -445,6 +445,7 @@ static const IID * const generic_iids[] = {
 static const IID * const svg_iids[] = {
     ELEM_IFACES,
     &IID_ISVGElement,
+    &IID_ISVGSVGElement,
     NULL
 };
 

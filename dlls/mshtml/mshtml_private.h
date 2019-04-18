@@ -131,6 +131,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispHTMLW3CComputedStyle) \
     XDIID(DispHTMLWindow2) \
     XDIID(DispHTMLXMLHttpRequest) \
+    XDIID(DispSVGSVGElement) \
     XDIID(HTMLDocumentEvents) \
     XDIID(HTMLElementEvents2) \
     XIID(IDOMCustomEvent) \
@@ -247,7 +248,8 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLXMLHttpRequestFactory) \
     XIID(IOmHistory) \
     XIID(IOmNavigator) \
-    XIID(ISVGElement)
+    XIID(ISVGElement) \
+    XIID(ISVGSVGElement)
 
 typedef enum {
 #define XIID(iface) iface ## _tid,
