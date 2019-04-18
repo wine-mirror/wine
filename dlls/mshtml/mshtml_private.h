@@ -131,6 +131,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispHTMLW3CComputedStyle) \
     XDIID(DispHTMLWindow2) \
     XDIID(DispHTMLXMLHttpRequest) \
+    XDIID(DispSVGCircleElement) \
     XDIID(DispSVGSVGElement) \
     XDIID(HTMLDocumentEvents) \
     XDIID(HTMLElementEvents2) \
@@ -248,6 +249,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLXMLHttpRequestFactory) \
     XIID(IOmHistory) \
     XIID(IOmNavigator) \
+    XIID(ISVGCircleElement) \
     XIID(ISVGElement) \
     XIID(ISVGSVGElement)
 

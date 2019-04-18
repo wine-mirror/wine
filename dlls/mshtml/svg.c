@@ -761,7 +761,177 @@ static HRESULT create_viewport_element(HTMLDocumentNode *doc, nsIDOMSVGElement *
     return S_OK;
 }
 
+struct SVGCircleElement {
+    SVGElement svg_element;
+    ISVGCircleElement ISVGCircleElement_iface;
+};
 
+static inline SVGCircleElement *impl_from_ISVGCircleElement(ISVGCircleElement *iface)
+{
+    return CONTAINING_RECORD(iface, SVGCircleElement, ISVGCircleElement_iface);
+}
+
+static HRESULT WINAPI SVGCircleElement_QueryInterface(ISVGCircleElement *iface,
+        REFIID riid, void **ppv)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+
+    return IHTMLDOMNode_QueryInterface(&This->svg_element.element.node.IHTMLDOMNode_iface, riid, ppv);
+}
+
+static ULONG WINAPI SVGCircleElement_AddRef(ISVGCircleElement *iface)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+
+    return IHTMLDOMNode_AddRef(&This->svg_element.element.node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI SVGCircleElement_Release(ISVGCircleElement *iface)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+
+    return IHTMLDOMNode_Release(&This->svg_element.element.node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI SVGCircleElement_GetTypeInfoCount(ISVGCircleElement *iface, UINT *pctinfo)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->svg_element.element.node.event_target.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI SVGCircleElement_GetTypeInfo(ISVGCircleElement *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    return IDispatchEx_GetTypeInfo(&This->svg_element.element.node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid,
+            ppTInfo);
+}
+
+static HRESULT WINAPI SVGCircleElement_GetIDsOfNames(ISVGCircleElement *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    return IDispatchEx_GetIDsOfNames(&This->svg_element.element.node.event_target.dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI SVGCircleElement_Invoke(ISVGCircleElement *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    return IDispatchEx_Invoke(&This->svg_element.element.node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI SVGCircleElement_putref_cx(ISVGCircleElement *iface, ISVGAnimatedLength *v)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    FIXME("(%p)->(%p)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGCircleElement_get_cx(ISVGCircleElement *iface, ISVGAnimatedLength **p)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGCircleElement_putref_cy(ISVGCircleElement *iface, ISVGAnimatedLength *v)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    FIXME("(%p)->(%p)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGCircleElement_get_cy(ISVGCircleElement *iface, ISVGAnimatedLength **p)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGCircleElement_putref_r(ISVGCircleElement *iface, ISVGAnimatedLength *v)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    FIXME("(%p)->(%p)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SVGCircleElement_get_r(ISVGCircleElement *iface, ISVGAnimatedLength **p)
+{
+    SVGCircleElement *This = impl_from_ISVGCircleElement(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const ISVGCircleElementVtbl SVGCircleElementVtbl = {
+    SVGCircleElement_QueryInterface,
+    SVGCircleElement_AddRef,
+    SVGCircleElement_Release,
+    SVGCircleElement_GetTypeInfoCount,
+    SVGCircleElement_GetTypeInfo,
+    SVGCircleElement_GetIDsOfNames,
+    SVGCircleElement_Invoke,
+    SVGCircleElement_putref_cx,
+    SVGCircleElement_get_cx,
+    SVGCircleElement_putref_cy,
+    SVGCircleElement_get_cy,
+    SVGCircleElement_putref_r,
+    SVGCircleElement_get_r
+};
+
+static inline SVGCircleElement *SVGCircleElement_from_HTMLDOMNode(HTMLDOMNode *iface)
+{
+    return CONTAINING_RECORD(iface, SVGCircleElement, svg_element.element.node);
+}
+
+static HRESULT SVGCircleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+{
+    SVGCircleElement *This = SVGCircleElement_from_HTMLDOMNode(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_ISVGCircleElement, riid))
+        *ppv = &This->ISVGCircleElement_iface;
+    else
+        return SVGElement_QI(&This->svg_element.element.node, riid, ppv);
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static const NodeImplVtbl SVGCircleElementImplVtbl = {
+    &CLSID_SVGCircleElement,
+    SVGCircleElement_QI,
+    HTMLElement_destructor,
+    HTMLElement_cpc,
+    HTMLElement_clone,
+    NULL,
+    HTMLElement_get_attr_col,
+};
+
+static HRESULT create_circle_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)
+{
+    SVGCircleElement *ret;
+
+    ret = heap_alloc_zero(sizeof(SVGCircleElement));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->ISVGCircleElement_iface.lpVtbl = &SVGCircleElementVtbl;
+    ret->svg_element.element.node.vtbl = &SVGCircleElementImplVtbl;
+
+    init_svg_element(&ret->svg_element, doc, nselem);
+
+    *elem = &ret->svg_element.element;
+    return S_OK;
+}
+
+
+static const WCHAR circleW[] = {'c','i','r','c','l','e',0};
 static const WCHAR svgW[] = {'s','v','g',0};
 
 HRESULT create_svg_element(HTMLDocumentNode *doc, nsIDOMSVGElement *dom_element, const WCHAR *tag_name, HTMLElement **elem)
@@ -772,6 +942,8 @@ HRESULT create_svg_element(HTMLDocumentNode *doc, nsIDOMSVGElement *dom_element,
 
     if(!strcmpW(tag_name, svgW))
         return create_viewport_element(doc, dom_element, elem);
+    if(!strcmpW(tag_name, circleW))
+        return create_circle_element(doc, dom_element, elem);
 
     svg_element = heap_alloc_zero(sizeof(*svg_element));
     if(!svg_element)

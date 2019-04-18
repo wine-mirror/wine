@@ -452,6 +452,7 @@ static const IID * const svg_iids[] = {
 static const IID * const circle_iids[] = {
     ELEM_IFACES,
     &IID_ISVGElement,
+    &IID_ISVGCircleElement,
     NULL
 };
 
