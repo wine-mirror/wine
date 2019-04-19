@@ -1890,6 +1890,12 @@ static void test_bcm_get_ideal_size(void)
 {
     static const char *button_text2 = "WWWW\nWWWW";
     static const char *button_text = "WWWW";
+    static const WCHAR button_note_short[] = { 'W',0 };
+    static const WCHAR button_note_long[]  = { 'W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W',0 };
+    static const WCHAR button_note_wordy[] = { 'T','h','i','s',' ','i','s',' ','a',' ','l','o','n','g',' ','n','o','t','e',' ','f','o','r',' ','t','h','e',' ','b','u','t','t','o','n',',',' ',
+                                               'w','i','t','h',' ','m','a','n','y',' ','w','o','r','d','s',',',' ','w','h','i','c','h',' ','s','h','o','u','l','d',' ','b','e',' ',
+                                               'o','v','e','r','a','l','l',' ','l','o','n','g','e','r',' ','t','h','a','n',' ','t','h','e',' ','t','e','x','t',' ','(','g','i','v','e','n',' ',
+                                               't','h','e',' ','s','m','a','l','l','e','r',' ','f','o','n','t',')',' ','a','n','d',' ','t','h','u','s',' ','w','r','a','p','.',0 };
     static const DWORD imagelist_aligns[] = {BUTTON_IMAGELIST_ALIGN_LEFT, BUTTON_IMAGELIST_ALIGN_RIGHT,
                                              BUTTON_IMAGELIST_ALIGN_TOP, BUTTON_IMAGELIST_ALIGN_BOTTOM,
                                              BUTTON_IMAGELIST_ALIGN_CENTER};
@@ -2212,6 +2218,57 @@ static void test_bcm_get_ideal_size(void)
             DestroyWindow(hwnd);
         }
     }
+
+    /* Command Link with note */
+    hwnd = CreateWindowA(WC_BUTTONA, "a", style, 0, 0, client_width, client_height, NULL, NULL, 0, NULL);
+    ok(hwnd != NULL, "Expected hwnd not NULL\n");
+    SendMessageA(hwnd, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hbmp);
+    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)button_note_short);
+    ok(ret == TRUE, "Expected BCM_SETNOTE to return true\n");
+    size.cx = 13;
+    size.cy = 0;
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret == TRUE, "Expected BCM_GETIDEALSIZE message to return true\n");
+    ok(size.cx == 13 && size.cy > 0, "Expected ideal cx %d == %d and ideal cy %d > %d\n", size.cx, 13, size.cy, 0);
+    height = size.cy;
+    size.cx = 32767;
+    size.cy = 7;
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret == TRUE, "Expected BCM_GETIDEALSIZE message to return true\n");
+    ok(size.cx < 32767, "Expected ideal cx to have been adjusted\n");
+    ok(size.cx > image_width && size.cy == height, "Expected ideal cx %d > %d and ideal cy %d == %d\n", size.cx, image_width, size.cy, height);
+
+    /* Try longer note without word breaks, shouldn't extend height because no word splitting */
+    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)button_note_long);
+    ok(ret == TRUE, "Expected BCM_SETNOTE to return true\n");
+    k = size.cx;
+    size.cy = 0;
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret == TRUE, "Expected BCM_GETIDEALSIZE message to return true\n");
+    ok(size.cx == k && size.cy == height, "Expected ideal cx %d == %d and ideal cy %d == %d\n", size.cx, k, size.cy, height);
+
+    /* Now let it extend the width */
+    size.cx = 32767;
+    size.cy = 0;
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret == TRUE, "Expected BCM_GETIDEALSIZE message to return true\n");
+    ok(size.cx > k && size.cy == height, "Expected ideal cx %d > %d and ideal cy %d == %d\n", size.cx, k, size.cy, height);
+
+    /* Use a very long note with words and the same width, should extend the height due to word wrap */
+    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)button_note_wordy);
+    ok(ret == TRUE, "Expected BCM_SETNOTE to return true\n");
+    k = size.cx;
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret == TRUE, "Expected BCM_GETIDEALSIZE message to return true\n");
+    ok(size.cx <= k && size.cy > height, "Expected ideal cx %d <= %d and ideal cy %d > %d\n", size.cx, k, size.cy, height);
+
+    /* Now try the wordy note with a width smaller than the image itself, which prevents wrapping */
+    size.cx = 13;
+    ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);
+    ok(ret == TRUE, "Expected BCM_GETIDEALSIZE message to return true\n");
+    ok(size.cx == 13 && size.cy == height, "Expected ideal cx %d == %d and ideal cy %d == %d\n", size.cx, 13, size.cy, height);
+    DestroyWindow(hwnd);
+
 
     pImageList_Destroy(himl);
     DeleteObject(hbmp);
