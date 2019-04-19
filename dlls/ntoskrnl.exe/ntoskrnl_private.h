@@ -28,6 +28,10 @@ struct _OBJECT_TYPE
     void (*release)(void*);       /* called when the last reference is released */
 };
 
+struct _EPROCESS {
+    DISPATCHER_HEADER header;
+};
+
 struct _KTHREAD
 {
     DISPATCHER_HEADER header;

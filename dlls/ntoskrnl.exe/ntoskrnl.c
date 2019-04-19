@@ -2451,11 +2451,23 @@ NTSTATUS WINAPI FsRtlRegisterUncProvider(PHANDLE MupHandle, PUNICODE_STRING Redi
 }
 
 
+static void *create_process_object( HANDLE handle )
+{
+    PEPROCESS process;
+
+    if (!(process = alloc_kernel_object( PsProcessType, handle, sizeof(*process), 0 ))) return NULL;
+
+    process->header.Type = 3;
+    process->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
+    return process;
+}
+
 static const WCHAR process_type_name[] = {'P','r','o','c','e','s','s',0};
 
 static struct _OBJECT_TYPE process_type =
 {
-    process_type_name
+    process_type_name,
+    create_process_object
 };
 
 POBJECT_TYPE PsProcessType = &process_type;
