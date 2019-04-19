@@ -914,7 +914,7 @@
 @ stub PsJobType
 @ stdcall PsLookupProcessByProcessId(ptr ptr)
 @ stub PsLookupProcessThreadByCid
-@ stub PsLookupThreadByThreadId
+@ stdcall PsLookupThreadByThreadId(ptr ptr)
 @ extern PsProcessType
 @ stub PsReferenceImpersonationToken
 @ stub PsReferencePrimaryToken

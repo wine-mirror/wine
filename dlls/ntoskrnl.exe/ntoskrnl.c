@@ -2522,6 +2522,26 @@ PRKTHREAD WINAPI KeGetCurrentThread(void)
     return thread;
 }
 
+/*****************************************************
+ *           PsLookupThreadByThreadId   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsLookupThreadByThreadId( HANDLE threadid, PETHREAD *thread )
+{
+    NTSTATUS status;
+    HANDLE handle;
+
+    TRACE( "(%p %p)\n", threadid, thread );
+
+    if (!(handle = OpenThread( THREAD_QUERY_INFORMATION, FALSE, HandleToUlong(threadid) )))
+        return STATUS_INVALID_PARAMETER;
+
+    status = ObReferenceObjectByHandle( handle, THREAD_ALL_ACCESS, PsThreadType, KernelMode, (void**)thread, NULL );
+
+    NtClose( handle );
+    return status;
+}
+
+
 /***********************************************************************
  *           KeInsertQueue   (NTOSKRNL.EXE.@)
  */

@@ -29,6 +29,7 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "ddk/ntddk.h"
+#include "ddk/ntifs.h"
 #include "ddk/wdm.h"
 
 #include "driver.h"
@@ -1167,6 +1168,20 @@ static void test_resource(void)
     ok(status == STATUS_SUCCESS, "got status %#x\n", status);
 }
 
+static void test_lookup_thread(void)
+{
+    NTSTATUS status;
+    PETHREAD thread = NULL;
+
+    status = PsLookupThreadByThreadId(PsGetCurrentThreadId(), &thread);
+    ok(!status, "PsLookupThreadByThreadId failed: %#x\n", status);
+    ok((PKTHREAD)thread == KeGetCurrentThread(), "thread != KeGetCurrentThread\n");
+    if (thread) ObDereferenceObject(thread);
+
+    status = PsLookupThreadByThreadId(NULL, &thread);
+    ok(status == STATUS_INVALID_PARAMETER, "PsLookupThreadByThreadId returned %#x\n", status);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -1210,6 +1225,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_lookaside_list();
     test_ob_reference(test_input->path);
     test_resource();
+    test_lookup_thread();
 
     /* print process report */
     if (winetest_debug)
