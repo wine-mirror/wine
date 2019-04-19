@@ -1908,7 +1908,7 @@ static void test_bcm_get_ideal_size(void)
         { BS_SPLITBUTTON, extra_width * 2 + GetSystemMetrics(SM_CXEDGE) },
         { BS_DEFSPLITBUTTON, extra_width * 2 + GetSystemMetrics(SM_CXEDGE) }
     };
-    LONG image_width, height, line_count, text_width;
+    LONG image_width = 48, height = 48, line_count, text_width;
     HFONT hfont, prev_font;
     DWORD style, type;
     BOOL ret;
@@ -1964,6 +1964,14 @@ static void test_bcm_get_ideal_size(void)
         return;
     }
 
+    /* Tests for image placements */
+    /* Prepare bitmap */
+    hdc = GetDC(0);
+    hmask = CreateCompatibleBitmap(hdc, image_width, height);
+    hbmp = CreateCompatibleBitmap(hdc, image_width, height);
+    himl = pImageList_Create(image_width, height, ILC_COLOR, 1, 1);
+    pImageList_Add(himl, hbmp, 0);
+
 #define set_split_info(hwnd) do { \
     BUTTON_SPLITINFO _info; \
     int _ret; \
@@ -1976,14 +1984,6 @@ static void test_bcm_get_ideal_size(void)
 
     for (k = 0; k < ARRAY_SIZE(pushtype); k++)
     {
-        /* Tests for image placements */
-        /* Prepare bitmap */
-        image_width = 48;
-        height = 48;
-        hdc = GetDC(0);
-        hmask = CreateCompatibleBitmap(hdc, image_width, height);
-        hbmp = CreateCompatibleBitmap(hdc, image_width, height);
-
         /* Only bitmap for push button, ideal size should be enough for image and text */
         hwnd = CreateWindowA(WC_BUTTONA, button_text, pushtype[k].style | BS_BITMAP | default_style, 0, 0, client_width,
                              client_height, NULL, NULL, 0, NULL);
@@ -2028,8 +2028,6 @@ static void test_bcm_get_ideal_size(void)
             }
 
         /* Image list alignments */
-        himl = pImageList_Create(image_width, height, ILC_COLOR, 1, 1);
-        pImageList_Add(himl, hbmp, 0);
         biml.himl = himl;
         for (i = 0; i < ARRAY_SIZE(imagelist_aligns); i++)
         {
@@ -2099,6 +2097,7 @@ static void test_bcm_get_ideal_size(void)
            image_width + text_width + pushtype[k].extra_width, size.cy, max(height, tm.tmHeight));
         ok(size.cy < large_height, "Expect ideal cy %d < %d\n", size.cy, large_height);
         DestroyWindow(hwnd);
+        DestroyIcon(hicon);
     }
 
 #undef set_split_info
@@ -2215,7 +2214,6 @@ static void test_bcm_get_ideal_size(void)
     }
 
     pImageList_Destroy(himl);
-    DestroyIcon(hicon);
     DeleteObject(hbmp);
     DeleteObject(hmask);
     ReleaseDC(0, hdc);
