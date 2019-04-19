@@ -64,6 +64,7 @@ static struct object_type *process_get_type( struct object *obj );
 static int process_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int process_map_access( struct object *obj, unsigned int access );
 static void process_poll_event( struct fd *fd, int event );
+static struct list *process_get_kernel_obj_list( struct object *obj );
 static void process_destroy( struct object *obj );
 static void terminate_process( struct process *process, struct thread *skip, int exit_code );
 
@@ -85,7 +86,7 @@ static const struct object_ops process_ops =
     no_link_name,                /* link_name */
     NULL,                        /* unlink_name */
     no_open_file,                /* open_file */
-    no_kernel_obj_list,          /* get_kernel_obj_list */
+    process_get_kernel_obj_list, /* get_kernel_obj_list */
     no_close_handle,             /* close_handle */
     process_destroy              /* destroy */
 };
@@ -526,6 +527,7 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     process->trace_data      = 0;
     process->rawinput_mouse  = NULL;
     process->rawinput_kbd    = NULL;
+    list_init( &process->kernel_object );
     list_init( &process->thread_list );
     list_init( &process->locks );
     list_init( &process->asyncs );
@@ -659,6 +661,12 @@ static unsigned int process_map_access( struct object *obj, unsigned int access 
     if (access & PROCESS_SET_INFORMATION) access |= PROCESS_SET_LIMITED_INFORMATION;
 
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static struct list *process_get_kernel_obj_list( struct object *obj )
+{
+    struct process *process = (struct process *)obj;
+    return &process->kernel_object;
 }
 
 static void process_poll_event( struct fd *fd, int event )
