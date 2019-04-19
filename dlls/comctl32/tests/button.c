@@ -2162,8 +2162,8 @@ static void test_bcm_get_ideal_size(void)
 
         if (type == BS_COMMANDLINK || type == BS_DEFCOMMANDLINK)
         {
-            todo_wine ok((size.cx == 0 && size.cy > 0), "Style 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n",
-                         style, size.cx, 0, size.cy, 0);
+            ok((size.cx == 0 && size.cy > 0), "Style 0x%08x expect ideal cx %d == %d and ideal cy %d > %d\n",
+               style, size.cx, 0, size.cy, 0);
         }
         else
         {
@@ -2199,9 +2199,9 @@ static void test_bcm_get_ideal_size(void)
             }
             else if (type == BS_COMMANDLINK || type == BS_DEFCOMMANDLINK)
             {
-                todo_wine ok((size.cx == 0 && size.cy > 0),
-                             "Style 0x%08x expect ideal cx %d >= %d and ideal cy %d >= %d\n", style, size.cx, 0,
-                             size.cy, 0);
+                ok((size.cx == 0 && size.cy > 0),
+                   "Style 0x%08x expect ideal cx %d == %d and ideal cy %d > %d\n", style, size.cx, 0,
+                   size.cy, 0);
             }
             else
             {
