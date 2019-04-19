@@ -931,41 +931,45 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     return map_nsresult(nsres);
 }
 
-static HRESULT var_to_styleval(CSSStyle *style, const VARIANT *v, const style_tbl_entry_t *entry, WCHAR *buf, const WCHAR **ret)
+static HRESULT var_to_styleval(CSSStyle *style, VARIANT *v, const style_tbl_entry_t *entry, nsAString *nsstr)
 {
+    unsigned flags = entry && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9
+        ? entry->flags : 0;
+
     switch(V_VT(v)) {
     case VT_NULL:
-        *ret = emptyW;
+        nsAString_InitDepend(nsstr, NULL);
         return S_OK;
 
     case VT_BSTR:
-        *ret = V_BSTR(v);
-        return S_OK;
+        nsAString_InitDepend(nsstr, V_BSTR(v));
+        break;
 
     case VT_BSTR|VT_BYREF:
-        *ret = *V_BSTRREF(v);
-        return S_OK;
+        nsAString_InitDepend(nsstr, *V_BSTRREF(v));
+        break;
 
     case VT_I4: {
-        unsigned flags = entry && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9 ? entry->flags : 0;
         static const WCHAR formatW[] = {'%','d',0};
         static const WCHAR hex_formatW[] = {'#','%','0','6','x',0};
+        WCHAR buf[14];
 
         if(flags & ATTR_HEX_INT)
             wsprintfW(buf, hex_formatW, V_I4(v));
-        else if(flags & ATTR_FIX_PX)
-            wsprintfW(buf, px_formatW, V_I4(v));
         else
             wsprintfW(buf, formatW, V_I4(v));
 
-        *ret = buf;
-        return S_OK;
+        nsAString_Init(nsstr, buf);
+        break;
     }
     default:
         FIXME("not implemented for %s\n", debugstr_variant(v));
         return E_NOTIMPL;
 
     }
+    if(flags & ATTR_FIX_PX)
+        fix_px_value(nsstr);
+    return S_OK;
 }
 
 static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const WCHAR *value)
@@ -1008,15 +1012,16 @@ static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const W
 
 static HRESULT set_style_property_var(CSSStyle *style, styleid_t sid, VARIANT *value)
 {
-    const WCHAR *val;
-    WCHAR buf[14];
+    nsAString val;
     HRESULT hres;
 
-    hres = var_to_styleval(style, value, &style_tbl[sid], buf, &val);
+    hres = var_to_styleval(style, value, &style_tbl[sid], &val);
     if(FAILED(hres))
         return hres;
 
-    return set_style_property(style, sid, val);
+    hres = set_nsstyle_property(style->nsstyle, sid, &val);
+    nsAString_Finish(&val);
+    return hres;
 }
 
 static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, nsAString *value)
@@ -5038,21 +5043,20 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclarati
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
     nsAString priority_str, name_str, value_str;
     const style_tbl_entry_t *style_entry;
-    const WCHAR *val;
-    WCHAR buf[14];
     nsresult nsres;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(name), debugstr_variant(value), debugstr_variant(priority));
 
     style_entry = lookup_style_tbl(name);
-    hres = var_to_styleval(This, value, style_entry, buf, &val);
+    hres = var_to_styleval(This, value, style_entry, &value_str);
     if(FAILED(hres))
         return hres;
 
     if(priority) {
         if(V_VT(priority) != VT_BSTR) {
             WARN("invalid priority type %s\n", debugstr_variant(priority));
+            nsAString_Finish(&value_str);
             return S_OK;
         }
         nsAString_InitDepend(&priority_str, V_BSTR(priority));
@@ -5061,7 +5065,6 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclarati
     }
 
     nsAString_InitDepend(&name_str, style_entry ? style_entry->name : name);
-    nsAString_InitDepend(&value_str, val);
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &name_str, &value_str, &priority_str);
     nsAString_Finish(&name_str);
     nsAString_Finish(&value_str);
@@ -5263,18 +5266,19 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundPosition(IHTMLCSSSty
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSStyleDeclaration *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    WCHAR buf[14], *pos_val;
-    nsAString pos_str;
+    nsAString pos_str, val_str;
     const WCHAR *val;
+    WCHAR *pos_val;
     DWORD val_len;
     HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    hres = var_to_styleval(This, &v, &style_tbl[STYLEID_BACKGROUND_POSITION_X], buf, &val);
+    hres = var_to_styleval(This, &v, &style_tbl[STYLEID_BACKGROUND_POSITION_X], &val_str);
     if(FAILED(hres))
         return hres;
 
+    nsAString_GetData(&val_str, &val);
     val_len = val ? strlenW(val) : 0;
 
     nsAString_Init(&pos_str, NULL);
@@ -5305,6 +5309,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSSt
         }
     }
     nsAString_Finish(&pos_str);
+    nsAString_Finish(&val_str);
     if(FAILED(hres))
         return hres;
 
@@ -5356,18 +5361,19 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundPositionX(IHTMLCSSSt
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionY(IHTMLCSSStyleDeclaration *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    WCHAR buf[14], *pos_val;
-    nsAString pos_str;
+    nsAString pos_str, val_str;
     const WCHAR *val;
+    WCHAR *pos_val;
     DWORD val_len;
     HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    hres = var_to_styleval(This, &v, &style_tbl[STYLEID_BACKGROUND_POSITION], buf, &val);
+    hres = var_to_styleval(This, &v, &style_tbl[STYLEID_BACKGROUND_POSITION], &val_str);
     if(FAILED(hres))
         return hres;
 
+    nsAString_GetData(&val_str, &val);
     val_len = val ? strlenW(val) : 0;
 
     nsAString_Init(&pos_str, NULL);
@@ -5401,6 +5407,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionY(IHTMLCSSSt
         }
     }
     nsAString_Finish(&pos_str);
+    nsAString_Finish(&val_str);
     if(FAILED(hres))
         return hres;
 
