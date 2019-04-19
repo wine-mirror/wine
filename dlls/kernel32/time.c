@@ -1068,6 +1068,13 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 	case CAL_SABBREVMONTHNAME12:
 	case CAL_SABBREVMONTHNAME13:
 	case CAL_SYEARMONTH:
+	case CAL_SSHORTESTDAYNAME1:
+	case CAL_SSHORTESTDAYNAME2:
+	case CAL_SSHORTESTDAYNAME3:
+	case CAL_SSHORTESTDAYNAME4:
+	case CAL_SSHORTESTDAYNAME5:
+	case CAL_SSHORTESTDAYNAME6:
+	case CAL_SSHORTESTDAYNAME7:
             return GetLocaleInfoW(Locale, caltype_lctype_map[calinfo] | localeflags, lpCalData, cchData);
 	case CAL_ITWODIGITYEARMAX:
             if (CalType & CAL_RETURN_NUMBER)
@@ -1090,6 +1097,12 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
                 return 0;
             }
 	    break;
+	case CAL_SMONTHDAY:
+            FIXME("Unimplemented caltype %d\n", calinfo);
+	    return 0;
+	case CAL_SABBREVERASTRING:
+            FIXME("Unimplemented caltype %d\n", calinfo);
+	    return 0;
 	default:
             FIXME("Unknown caltype %d\n", calinfo);
             SetLastError(ERROR_INVALID_FLAGS);
