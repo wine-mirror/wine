@@ -122,6 +122,36 @@ static inline struct sink_writer *impl_from_IMFSinkWriter(IMFSinkWriter *iface)
     return CONTAINING_RECORD(iface, struct sink_writer, IMFSinkWriter_iface);
 }
 
+static HRESULT media_event_get_object(IMFMediaEvent *event, REFIID riid, void **obj)
+{
+    PROPVARIANT value;
+    HRESULT hr;
+
+    PropVariantInit(&value);
+    if (FAILED(hr = IMFMediaEvent_GetValue(event, &value)))
+    {
+        WARN("Failed to get event value, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (value.vt != VT_UNKNOWN || !value.u.punkVal)
+    {
+        WARN("Unexpected value type %d.\n", value.vt);
+        PropVariantClear(&value);
+        return E_UNEXPECTED;
+    }
+
+    hr = IUnknown_QueryInterface(value.u.punkVal, riid, obj);
+    PropVariantClear(&value);
+    if (FAILED(hr))
+    {
+        WARN("Unexpected object type.\n");
+        return hr;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI source_reader_source_events_callback_QueryInterface(IMFAsyncCallback *iface,
         REFIID riid, void **obj)
 {
@@ -162,30 +192,13 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
 {
     IMFStreamDescriptor *sd;
     IMFMediaStream *stream;
-    PROPVARIANT value;
     unsigned int i;
     DWORD id = 0;
     HRESULT hr;
 
-    PropVariantInit(&value);
-    if (FAILED(hr = IMFMediaEvent_GetValue(event, &value)))
+    if (FAILED(hr = media_event_get_object(event, &IID_IMFMediaStream, (void **)&stream)))
     {
-        WARN("Failed to get event value, hr %#x.\n", hr);
-        return hr;
-    }
-
-    if (value.vt != VT_UNKNOWN || !value.u.punkVal)
-    {
-        WARN("Unexpected value type %d.\n", value.vt);
-        PropVariantClear(&value);
-        return E_UNEXPECTED;
-    }
-
-    hr = IUnknown_QueryInterface(value.u.punkVal, &IID_IMFMediaStream, (void **)&stream);
-    PropVariantClear(&value);
-    if (FAILED(hr))
-    {
-        WARN("Unexpected object type.\n");
+        WARN("Failed to get stream object, hr %#x.\n", hr);
         return hr;
     }
 
