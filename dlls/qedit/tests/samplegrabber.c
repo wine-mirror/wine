@@ -451,7 +451,19 @@ static void test_aggregation(void)
 
 START_TEST(samplegrabber)
 {
+    IBaseFilter *filter;
+    HRESULT hr;
+
     CoInitialize(NULL);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter)))
+    {
+        /* qedit.dll does not exist on 2003. */
+        win_skip("Failed to create sample grabber filter, hr %#x.\n", hr);
+        return;
+    }
+    IBaseFilter_Release(filter);
 
     test_interfaces();
     test_enum_pins();

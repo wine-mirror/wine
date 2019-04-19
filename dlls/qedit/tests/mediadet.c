@@ -647,6 +647,9 @@ static void test_COM_sg_enumpins(void)
 
 START_TEST(mediadet)
 {
+    IMediaDet *detector;
+    HRESULT hr;
+
     if (!init_tests())
     {
         skip("Couldn't initialize tests!\n");
@@ -654,6 +657,15 @@ START_TEST(mediadet)
     }
 
     CoInitialize(NULL);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaDet, (void **)&detector)))
+    {
+        /* qedit.dll does not exist on 2003. */
+        win_skip("Failed to create media detector object, hr %#x.\n", hr);
+        return;
+    }
+    IMediaDet_Release(detector);
 
     test_aggregation();
     test_mediadet();

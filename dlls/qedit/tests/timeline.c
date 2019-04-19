@@ -246,7 +246,19 @@ static void test_timelineobj_interfaces(void)
 
 START_TEST(timeline)
 {
+    IAMTimeline *timeline;
+    HRESULT hr;
+
     CoInitialize(NULL);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_AMTimeline, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IAMTimeline, (void **)&timeline)))
+    {
+        /* qedit.dll does not exist on 2003. */
+        win_skip("Failed to create timeline object, hr %#x.\n", hr);
+        return;
+    }
+    IAMTimeline_Release(timeline);
 
     test_aggregation();
     test_timeline();
