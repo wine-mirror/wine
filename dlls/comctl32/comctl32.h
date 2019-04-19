@@ -80,6 +80,9 @@ extern HBRUSH  COMCTL32_hPattern55AABrush DECLSPEC_HIDDEN;
 
 #define IDT_CHECK        401
 
+/* Command Link arrow */
+#define IDB_CMDLINK      402
+
 
 /* Cursors */
 #define IDC_MOVEBUTTON                  102
