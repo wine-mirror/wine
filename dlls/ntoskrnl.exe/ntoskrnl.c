@@ -2482,6 +2482,25 @@ PEPROCESS WINAPI IoGetCurrentProcess(void)
     return NULL;
 }
 
+/***********************************************************************
+ *           PsLookupProcessByProcessId  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsLookupProcessByProcessId( HANDLE processid, PEPROCESS *process )
+{
+    NTSTATUS status;
+    HANDLE handle;
+
+    TRACE( "(%p %p)\n", processid, process );
+
+    if (!(handle = OpenProcess( PROCESS_ALL_ACCESS, FALSE, HandleToUlong(processid) )))
+        return STATUS_INVALID_PARAMETER;
+
+    status = ObReferenceObjectByHandle( handle, PROCESS_ALL_ACCESS, PsProcessType, KernelMode, (void**)process, NULL );
+
+    NtClose( handle );
+    return status;
+}
+
 
 static void *create_thread_object( HANDLE handle )
 {
@@ -3253,17 +3272,6 @@ NTSTATUS WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE routine)
     FIXME("(%p) stub\n", routine);
     return STATUS_SUCCESS;
 }
-
-/*****************************************************
- *           PsLookupProcessByProcessId  (NTOSKRNL.EXE.@)
- */
-NTSTATUS WINAPI PsLookupProcessByProcessId(HANDLE processid, PEPROCESS *process)
-{
-    static int once;
-    if (!once++) FIXME("(%p %p) stub\n", processid, process);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 
 /*****************************************************
  *           IoSetThreadHardErrorMode  (NTOSKRNL.EXE.@)
