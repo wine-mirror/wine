@@ -148,7 +148,8 @@ static inline enum arm_trap_code get_trap_code( int signal, const ucontext_t *si
     enum arm_trap_code trap = TRAP_sig(sigcontext);
     if (trap)
         return trap;
-    /* trap is 0 on arm64 kernel */
+#endif
+
     switch (signal)
     {
     case SIGILL:
@@ -158,11 +159,8 @@ static inline enum arm_trap_code get_trap_code( int signal, const ucontext_t *si
     case SIGBUS:
         return TRAP_ARM_ALIGNFLT;
     default:
-        return trap;
+        return TRAP_ARM_UNKNOWN;
     }
-#else
-    return TRAP_ARM_UNKNOWN;  /* unknown trap code */
-#endif
 }
 
 /***********************************************************************
