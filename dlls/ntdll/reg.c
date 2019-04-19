@@ -530,7 +530,7 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
  * NOTES
  *  the name in the KeyValueInformation is never set
  */
-NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
+NTSTATUS WINAPI DECLSPEC_HOTPATCH NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
                                  KEY_VALUE_INFORMATION_CLASS info_class,
                                  void *info, DWORD length, DWORD *result_len )
 {
