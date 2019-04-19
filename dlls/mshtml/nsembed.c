@@ -932,6 +932,44 @@ HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, VARIANT *p)
     return S_OK;
 }
 
+/*
+ * Converts VARIANT to string and stores the result in nsAString. To avoid useless
+ * allocations, the function uses an existing string if available, so caller must
+ * ensure that passed VARIANT is unchanged as long as its string representation is used
+ */
+HRESULT variant_to_nsstr(VARIANT *v, BOOL hex_int, nsAString *nsstr)
+{
+    WCHAR buf[32];
+
+    static const WCHAR d_formatW[] = {'%','d',0};
+    static const WCHAR hex_formatW[] = {'#','%','0','6','x',0};
+
+    switch(V_VT(v)) {
+    case VT_NULL:
+        nsAString_InitDepend(nsstr, NULL);
+        return S_OK;
+
+    case VT_BSTR:
+        nsAString_InitDepend(nsstr, V_BSTR(v));
+        break;
+
+    case VT_BSTR|VT_BYREF:
+        nsAString_InitDepend(nsstr, *V_BSTRREF(v));
+        break;
+
+    case VT_I4:
+        wsprintfW(buf, hex_int ? hex_formatW : d_formatW, V_I4(v));
+        nsAString_Init(nsstr, buf);
+        break;
+
+    default:
+        FIXME("not implemented for %s\n", debugstr_variant(v));
+        return E_NOTIMPL;
+
+    }
+    return S_OK;
+}
+
 nsICommandParams *create_nscommand_params(void)
 {
     nsICommandParams *ret = NULL;

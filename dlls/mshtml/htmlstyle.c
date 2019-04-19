@@ -933,43 +933,14 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
 
 static HRESULT var_to_styleval(CSSStyle *style, VARIANT *v, const style_tbl_entry_t *entry, nsAString *nsstr)
 {
+    HRESULT hres;
     unsigned flags = entry && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9
         ? entry->flags : 0;
 
-    switch(V_VT(v)) {
-    case VT_NULL:
-        nsAString_InitDepend(nsstr, NULL);
-        return S_OK;
-
-    case VT_BSTR:
-        nsAString_InitDepend(nsstr, V_BSTR(v));
-        break;
-
-    case VT_BSTR|VT_BYREF:
-        nsAString_InitDepend(nsstr, *V_BSTRREF(v));
-        break;
-
-    case VT_I4: {
-        static const WCHAR formatW[] = {'%','d',0};
-        static const WCHAR hex_formatW[] = {'#','%','0','6','x',0};
-        WCHAR buf[14];
-
-        if(flags & ATTR_HEX_INT)
-            wsprintfW(buf, hex_formatW, V_I4(v));
-        else
-            wsprintfW(buf, formatW, V_I4(v));
-
-        nsAString_Init(nsstr, buf);
-        break;
-    }
-    default:
-        FIXME("not implemented for %s\n", debugstr_variant(v));
-        return E_NOTIMPL;
-
-    }
-    if(flags & ATTR_FIX_PX)
+    hres = variant_to_nsstr(v, !!(flags & ATTR_HEX_INT), nsstr);
+    if(SUCCEEDED(hres) && (flags & ATTR_FIX_PX))
         fix_px_value(nsstr);
-    return S_OK;
+    return hres;
 }
 
 static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const WCHAR *value)

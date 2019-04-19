@@ -975,6 +975,7 @@ void nsAString_Finish(nsAString*) DECLSPEC_HIDDEN;
 HRESULT map_nsresult(nsresult) DECLSPEC_HIDDEN;
 HRESULT return_nsstr(nsresult,nsAString*,BSTR*) DECLSPEC_HIDDEN;
 HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, VARIANT *p) DECLSPEC_HIDDEN;
+HRESULT variant_to_nsstr(VARIANT*,BOOL,nsAString*) DECLSPEC_HIDDEN;
 HRESULT return_nsform(nsresult,nsIDOMHTMLFormElement*,IHTMLFormElement**) DECLSPEC_HIDDEN;
 
 nsICommandParams *create_nscommand_params(void) DECLSPEC_HIDDEN;
