@@ -1245,12 +1245,7 @@ static HRESULT WINAPI HTMLDOMNode3_put_textContent(IHTMLDOMNode3 *iface, VARIANT
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    if(V_VT(&v) != VT_BSTR) {
-        FIXME("unsupported argument %s\n", debugstr_variant(&v));
-        return E_NOTIMPL;
-    }
-
-    nsAString_Init(&nsstr, V_BSTR(&v));
+    variant_to_nsstr(&v, FALSE, &nsstr);
     nsres = nsIDOMNode_SetTextContent(This->nsnode, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {

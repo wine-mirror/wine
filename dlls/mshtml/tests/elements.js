@@ -77,6 +77,11 @@ function test_textContent() {
     ok(div.textContent === "", "div.textContent = " + div.textContent);
     ok(div.childNodes.length === 0, "div.childNodes.length = " + div.childNodes.length);
 
+    div.textContent = null;
+    ok(div.textContent === "", "div.textContent = " + div.textContent);
+    div.textContent = 11;
+    ok(div.textContent === "11", "div.textContent = " + div.textContent);
+
     ok(document.textContent === null, "document.textContent = " + document.textContent);
 
     next_test();
