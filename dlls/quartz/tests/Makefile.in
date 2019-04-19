@@ -10,7 +10,6 @@ C_SRCS = \
 	filtergraph.c \
 	filtermapper.c \
 	memallocator.c \
-	misc.c \
 	mpegsplit.c \
 	systemclock.c \
 	videorenderer.c \
