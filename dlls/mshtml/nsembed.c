@@ -843,6 +843,11 @@ UINT32 nsAString_GetData(const nsAString *str, const PRUnichar **data)
     return NS_StringGetData(str, data, NULL);
 }
 
+void nsAString_SetData(nsAString *str, const PRUnichar *data)
+{
+    NS_StringSetData(str, data, PR_UINT32_MAX);
+}
+
 void nsAString_Finish(nsAString *str)
 {
     NS_StringContainerFinish(str);

@@ -858,9 +858,12 @@ static const style_tbl_entry_t *lookup_style_tbl(const WCHAR *name)
     return NULL;
 }
 
-static LPWSTR fix_px_value(LPCWSTR val)
+static void fix_px_value(nsAString *nsstr)
 {
-    LPCWSTR ptr = val;
+    const WCHAR *val, *ptr;
+
+    nsAString_GetData(nsstr, &val);
+    ptr = val;
 
     while(*ptr) {
         while(*ptr && isspaceW(*ptr))
@@ -884,14 +887,14 @@ static LPWSTR fix_px_value(LPCWSTR val)
 
             TRACE("fixed %s -> %s\n", debugstr_w(val), debugstr_w(ret));
 
-            return ret;
+            nsAString_SetData(nsstr, ret);
+            heap_free(ret);
+            break;
         }
 
         while(*ptr && !isspaceW(*ptr))
             ptr++;
     }
-
-    return NULL;
 }
 
 static LPWSTR fix_url_value(LPCWSTR val)
@@ -968,11 +971,12 @@ static HRESULT var_to_styleval(CSSStyle *style, const VARIANT *v, const style_tb
 static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const WCHAR *value)
 {
     nsAString value_str;
+    unsigned flags = 0;
     WCHAR *val = NULL;
     HRESULT hres;
 
     if(value && *value && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE9) {
-        unsigned flags = style_tbl[sid].flags;
+        flags = style_tbl[sid].flags;
 
         if(style_tbl[sid].allowed_values) {
             const WCHAR **iter;
@@ -989,13 +993,13 @@ static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const W
             }
         }
 
-        if(flags & ATTR_FIX_PX)
-            val = fix_px_value(value);
-        else if(flags & ATTR_FIX_URL)
+        if(flags & ATTR_FIX_URL)
             val = fix_url_value(value);
     }
 
     nsAString_InitDepend(&value_str, val ? val : value);
+    if(flags & ATTR_FIX_PX)
+        fix_px_value(&value_str);
     hres = set_nsstyle_property(style->nsstyle, sid, &value_str);
     nsAString_Finish(&value_str);
     heap_free(val);
