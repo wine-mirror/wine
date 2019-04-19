@@ -186,9 +186,9 @@ static struct async_callback *create_async_callback(void)
 
 static void test_source_reader(void)
 {
+    IMFMediaType *mediatype, *mediatype2;
     struct async_callback *callback;
     IMFAttributes *attributes;
-    IMFMediaType *mediatype;
     IMFSourceReader *reader;
     IMFMediaSource *source;
     IMFByteStream *stream;
@@ -267,6 +267,10 @@ todo_wine
 
     hr = IMFSourceReader_GetNativeMediaType(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &mediatype);
     ok(hr == S_OK, "Failed to get native mediatype, hr %#x.\n", hr);
+    hr = IMFSourceReader_GetNativeMediaType(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &mediatype2);
+    ok(hr == S_OK, "Failed to get native mediatype, hr %#x.\n", hr);
+    ok(mediatype != mediatype2, "Unexpected media type instance.\n");
+    IMFMediaType_Release(mediatype2);
     IMFMediaType_Release(mediatype);
 
     /* MF_SOURCE_READER_CURRENT_TYPE_INDEX is Win8+ */

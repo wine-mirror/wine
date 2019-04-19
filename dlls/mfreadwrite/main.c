@@ -463,6 +463,7 @@ static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWOR
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     IMFMediaTypeHandler *handler;
     IMFStreamDescriptor *sd;
+    IMFMediaType *src_type;
     BOOL selected;
     HRESULT hr;
 
@@ -489,10 +490,15 @@ static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWOR
         return hr;
 
     if (type_index == MF_SOURCE_READER_CURRENT_TYPE_INDEX)
-        hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, type);
+        hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &src_type);
     else
-        hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, type_index, type);
+        hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, type_index, &src_type);
     IMFMediaTypeHandler_Release(handler);
+
+    if (SUCCEEDED(hr = MFCreateMediaType(type)))
+        hr = IMFMediaType_CopyAllItems(src_type, (IMFAttributes *)*type);
+
+    IMFMediaType_Release(src_type);
 
     return hr;
 }
