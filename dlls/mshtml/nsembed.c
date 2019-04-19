@@ -962,6 +962,21 @@ HRESULT variant_to_nsstr(VARIANT *v, BOOL hex_int, nsAString *nsstr)
         nsAString_Init(nsstr, buf);
         break;
 
+    case VT_R8: {
+        VARIANT strv;
+        HRESULT hres;
+
+        V_VT(&strv) = VT_EMPTY;
+        hres = VariantChangeTypeEx(&strv, v, MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT),
+                                   0, VT_BSTR);
+        if(FAILED(hres))
+            return hres;
+
+        nsAString_Init(nsstr, V_BSTR(&strv));
+        SysFreeString(V_BSTR(&strv));
+        break;
+    }
+
     default:
         FIXME("not implemented for %s\n", debugstr_variant(v));
         return E_NOTIMPL;

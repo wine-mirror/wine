@@ -852,6 +852,16 @@ static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
     test_var_bstr(&v, "0");
     VariantClear(&v);
 
+    V_VT(&v) = VT_R8;
+    V_R8(&v) = 0.5;
+    hres = IHTMLCSSStyleDeclaration_put_opacity(css_style, v);
+    ok(hres == S_OK, "put_opacity failed: %08x\n", hres);
+
+    hres = IHTMLCSSStyleDeclaration_get_opacity(css_style, &v);
+    ok(hres == S_OK, "get_opacity failed: %08x\n", hres);
+    test_var_bstr(&v, "0.5");
+    VariantClear(&v);
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("1");
     hres = IHTMLCSSStyleDeclaration_put_opacity(css_style, v);

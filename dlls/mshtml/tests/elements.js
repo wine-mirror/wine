@@ -81,6 +81,8 @@ function test_textContent() {
     ok(div.textContent === "", "div.textContent = " + div.textContent);
     div.textContent = 11;
     ok(div.textContent === "11", "div.textContent = " + div.textContent);
+    div.textContent = 10.5;
+    ok(div.textContent === "10.5", "div.textContent = " + div.textContent);
 
     ok(document.textContent === null, "document.textContent = " + document.textContent);
 
