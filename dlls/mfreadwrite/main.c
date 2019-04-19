@@ -37,6 +37,7 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -72,11 +73,19 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources( mfinstance );
 }
 
+struct sample
+{
+    struct list entry;
+    IMFSample *sample;
+};
+
 struct media_stream
 {
     IMFMediaStream *stream;
     IMFMediaType *current;
     DWORD id;
+    CRITICAL_SECTION cs;
+    struct list samples;
 };
 
 typedef struct source_reader
@@ -308,8 +317,64 @@ static ULONG WINAPI source_reader_stream_events_callback_Release(IMFAsyncCallbac
     return IMFSourceReader_Release(&reader->IMFSourceReader_iface);
 }
 
+static HRESULT source_reader_media_sample_handler(struct source_reader *reader, IMFMediaStream *stream,
+        IMFMediaEvent *event)
+{
+    IMFSample *sample;
+    unsigned int i;
+    DWORD id = 0;
+    HRESULT hr;
+
+    TRACE("Got new sample for stream %p.\n", stream);
+
+    if (FAILED(hr = media_event_get_object(event, &IID_IMFSample, (void **)&sample)))
+    {
+        WARN("Failed to get sample object, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = media_stream_get_id(stream, &id)))
+    {
+        WARN("Unidentified stream %p, hr %#x.\n", stream, hr);
+        IMFSample_Release(sample);
+        return hr;
+    }
+
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        if (id == reader->streams[i].id)
+        {
+            struct sample *pending_sample;
+
+            if (!(pending_sample = heap_alloc(sizeof(*pending_sample))))
+            {
+                hr = E_OUTOFMEMORY;
+                goto failed;
+            }
+
+            pending_sample->sample = sample;
+            IMFSample_AddRef(pending_sample->sample);
+
+            EnterCriticalSection(&reader->streams[i].cs);
+            list_add_tail(&reader->streams[i].samples, &pending_sample->entry);
+            LeaveCriticalSection(&reader->streams[i].cs);
+
+            break;
+        }
+    }
+
+    if (i == reader->stream_count)
+        WARN("Stream with id %#x was not present in presentation descriptor.\n", id);
+
+failed:
+    IMFSample_Release(sample);
+
+    return hr;
+}
+
 static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
+    struct source_reader *reader = impl_from_stream_callback_IMFAsyncCallback(iface);
     MediaEventType event_type;
     IMFMediaStream *stream;
     IMFMediaEvent *event;
@@ -325,6 +390,18 @@ static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallba
     IMFMediaEvent_GetType(event, &event_type);
 
     TRACE("Got event %u.\n", event_type);
+
+    switch (event_type)
+    {
+        case MEMediaSample:
+            hr = source_reader_media_sample_handler(reader, stream, event);
+            break;
+        default:
+            ;
+    }
+
+    if (FAILED(hr))
+        WARN("Failed while handling %d event, hr %#x.\n", event_type, hr);
 
     IMFMediaEvent_Release(event);
 
@@ -394,10 +471,21 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 
         for (i = 0; i < reader->stream_count; ++i)
         {
-            if (reader->streams[i].stream)
-                IMFMediaStream_Release(reader->streams[i].stream);
-            if (reader->streams[i].current)
-                IMFMediaType_Release(reader->streams[i].current);
+            struct media_stream *stream = &reader->streams[i];
+            struct sample *ptr, *next;
+
+            if (stream->stream)
+                IMFMediaStream_Release(stream->stream);
+            if (stream->current)
+                IMFMediaType_Release(stream->current);
+            DeleteCriticalSection(&stream->cs);
+
+            LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &stream->samples, struct sample, entry)
+            {
+                IMFSample_Release(ptr->sample);
+                list_remove(&ptr->entry);
+                heap_free(ptr);
+            }
         }
         heap_free(reader->streams);
         DeleteCriticalSection(&reader->cs);
@@ -832,6 +920,9 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
         IMFMediaType_Release(src_type);
         if (FAILED(hr))
             break;
+
+        InitializeCriticalSection(&object->streams[i].cs);
+        list_init(&object->streams[i].samples);
     }
 
     if (FAILED(hr))
