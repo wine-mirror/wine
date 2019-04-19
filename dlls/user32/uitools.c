@@ -1693,26 +1693,22 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     }
 
     if (flags & DSS_DISABLED)
-       hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DHILIGHT));
+       hbrtmp = GetSysColorBrush(COLOR_3DHILIGHT);
     else if (flags & DSS_DEFAULT)
-       hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DSHADOW));
+       hbrtmp = GetSysColorBrush(COLOR_3DSHADOW);
 
     /* Draw light or dark shadow */
     if (flags & (DSS_DISABLED|DSS_DEFAULT))
     {
-       if(!hbrtmp) goto cleanup;
        hbsave = SelectObject(hdc, hbrtmp);
        if(!hbsave) goto cleanup;
        if(!BitBlt(hdc, x+1, y+1, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
        SelectObject(hdc, hbsave);
-       DeleteObject(hbrtmp);
-       hbrtmp = 0;
     }
 
     if (flags & DSS_DISABLED)
     {
-       hbr = hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DSHADOW));
-       if(!hbrtmp) goto cleanup;
+       hbr = GetSysColorBrush(COLOR_3DSHADOW);
     }
     else if (!hbr)
     {
@@ -1731,7 +1727,6 @@ cleanup:
 
     if(hbsave)  SelectObject(hdc, hbsave);
     if(hbmsave) SelectObject(memdc, hbmsave);
-    if(hbrtmp)  DeleteObject(hbrtmp);
     if(hbm)     DeleteObject(hbm);
     if(memdc)   DeleteDC(memdc);
 
