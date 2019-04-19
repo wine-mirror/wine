@@ -152,6 +152,20 @@ static HRESULT media_event_get_object(IMFMediaEvent *event, REFIID riid, void **
     return hr;
 }
 
+static HRESULT media_stream_get_id(IMFMediaStream *stream, DWORD *id)
+{
+    IMFStreamDescriptor *sd;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IMFMediaStream_GetStreamDescriptor(stream, &sd)))
+    {
+        hr = IMFStreamDescriptor_GetStreamIdentifier(sd, id);
+        IMFStreamDescriptor_Release(sd);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI source_reader_source_events_callback_QueryInterface(IMFAsyncCallback *iface,
         REFIID riid, void **obj)
 {
@@ -190,7 +204,6 @@ static HRESULT WINAPI source_reader_source_events_callback_GetParameters(IMFAsyn
 
 static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IMFMediaEvent *event)
 {
-    IMFStreamDescriptor *sd;
     IMFMediaStream *stream;
     unsigned int i;
     DWORD id = 0;
@@ -204,13 +217,7 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
 
     TRACE("Got new stream %p.\n", stream);
 
-    if (SUCCEEDED(hr = IMFMediaStream_GetStreamDescriptor(stream, &sd)))
-    {
-        hr = IMFStreamDescriptor_GetStreamIdentifier(sd, &id);
-        IMFStreamDescriptor_Release(sd);
-    }
-
-    if (FAILED(hr))
+    if (FAILED(hr = media_stream_get_id(stream, &id)))
     {
         WARN("Unidentified stream %p, hr %#x.\n", stream, hr);
         IMFMediaStream_Release(stream);
