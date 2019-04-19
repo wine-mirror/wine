@@ -913,17 +913,15 @@ static LPWSTR fix_url_value(LPCWSTR val)
     return ret;
 }
 
-static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, const WCHAR *value)
+static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, const nsAString *value)
 {
-    nsAString str_name, str_value, str_empty;
+    nsAString str_name, str_empty;
     nsresult nsres;
 
     nsAString_InitDepend(&str_name, style_tbl[sid].name);
-    nsAString_InitDepend(&str_value, value);
     nsAString_InitDepend(&str_empty, emptyW);
-    nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, &str_value, &str_empty);
+    nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, value, &str_empty);
     nsAString_Finish(&str_name);
-    nsAString_Finish(&str_value);
     nsAString_Finish(&str_empty);
     if(NS_FAILED(nsres))
         WARN("SetProperty failed: %08x\n", nsres);
@@ -969,6 +967,7 @@ static HRESULT var_to_styleval(CSSStyle *style, const VARIANT *v, const style_tb
 
 static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const WCHAR *value)
 {
+    nsAString value_str;
     WCHAR *val = NULL;
     HRESULT hres;
 
@@ -983,7 +982,9 @@ static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const W
             }
             if(!*iter) {
                 WARN("invalid value %s\n", debugstr_w(value));
-                set_nsstyle_property(style->nsstyle, sid, emptyW);
+                nsAString_InitDepend(&value_str, emptyW);
+                set_nsstyle_property(style->nsstyle, sid, &value_str);
+                nsAString_Finish(&value_str);
                 return E_INVALIDARG;
             }
         }
@@ -994,7 +995,9 @@ static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const W
             val = fix_url_value(value);
     }
 
-    hres = set_nsstyle_property(style->nsstyle, sid, val ? val : value);
+    nsAString_InitDepend(&value_str, val ? val : value);
+    hres = set_nsstyle_property(style->nsstyle, sid, &value_str);
+    nsAString_Finish(&value_str);
     heap_free(val);
     return hres;
 }
@@ -10291,13 +10294,16 @@ HRESULT get_elem_style(HTMLElement *elem, styleid_t styleid, BSTR *ret)
 HRESULT set_elem_style(HTMLElement *elem, styleid_t styleid, const WCHAR *val)
 {
     nsIDOMCSSStyleDeclaration *style;
+    nsAString value_str;
     HRESULT hres;
 
     hres = get_style_from_elem(elem, &style);
     if(FAILED(hres))
         return hres;
 
-    hres = set_nsstyle_property(style, styleid, val);
+    nsAString_InitDepend(&value_str, val);
+    hres = set_nsstyle_property(style, styleid, &value_str);
+    nsAString_Finish(&value_str);
     nsIDOMCSSStyleDeclaration_Release(style);
     return hres;
 }
