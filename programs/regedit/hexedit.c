@@ -340,34 +340,6 @@ HexEdit_Destroy (HEXEDIT_INFO *infoPtr)
     return 0;
 }
 
-
-static inline LRESULT
-HexEdit_EraseBackground (HEXEDIT_INFO *infoPtr, HDC hdc)
-{
-    HBRUSH hBrush, hSolidBrush = NULL;
-    RECT   rc;
-
-    if (GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED)
-        hBrush = hSolidBrush = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
-    else
-    {
-        hBrush = (HBRUSH)SendMessageW(GetParent(infoPtr->hwndSelf), WM_CTLCOLOREDIT,
-                                      (WPARAM)hdc, (LPARAM)infoPtr->hwndSelf);
-        if (!hBrush)
-            hBrush = hSolidBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
-    }
-
-    GetClientRect (infoPtr->hwndSelf, &rc);
-
-    FillRect (hdc, &rc, hBrush);
-
-    if (hSolidBrush)
-        DeleteObject(hSolidBrush);
-
-    return -1;
-}
-
-
 static inline LRESULT
 HexEdit_GetFont (HEXEDIT_INFO *infoPtr)
 {
@@ -625,9 +597,6 @@ HexEdit_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 	    return HexEdit_Destroy (infoPtr);
 
-	case WM_ERASEBKGND:
-	    return HexEdit_EraseBackground (infoPtr, (HDC)wParam);
-
 	case WM_GETDLGCODE:
 	    return DLGC_WANTCHARS | DLGC_WANTARROWS;
 
@@ -675,7 +644,7 @@ void HexEdit_Register(void)
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(HEXEDIT_INFO *);
     wndClass.hCursor       = NULL;
-    wndClass.hbrBackground = NULL;
+    wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = szHexEditClass;
 
     RegisterClassW(&wndClass);
