@@ -577,6 +577,9 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
         goto error;
     }
 
+    if (caps.capabilities & V4L2_CAP_DEVICE_CAPS)
+        caps.capabilities = caps.device_caps;
+
     if (!(caps.capabilities & V4L2_CAP_VIDEO_CAPTURE))
     {
         WARN("Device does not support single-planar video capture.\n");
