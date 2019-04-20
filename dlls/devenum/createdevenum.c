@@ -775,9 +775,9 @@ static void register_vfw_codecs(void)
 static void register_avicap_devices(void)
 {
     static const WCHAR vfwindexW[] = {'V','F','W','I','n','d','e','x',0};
-    WCHAR friendlyname[] = {'v','i','d','e','o','0',0};
+    WCHAR name[] = {'v','i','d','e','o','0',0};
+    WCHAR friendlyname[32], version[32];
     IPropertyBag *prop_bag = NULL;
-    WCHAR name[32], version[32];
     REGFILTERPINS2 rgpins = {0};
     REGPINTYPES rgtypes;
     REGFILTER2 rgf;
@@ -791,10 +791,11 @@ static void register_avicap_devices(void)
 
     for (i = 0; i < 10; ++i)
     {
-        if (!capGetDriverDescriptionW(i, name, ARRAY_SIZE(name), version, ARRAY_SIZE(version)))
+        if (!capGetDriverDescriptionW(i, friendlyname, ARRAY_SIZE(friendlyname),
+                version, ARRAY_SIZE(version)))
             break;
 
-        friendlyname[5] = '0' + i;
+        name[5] = '0' + i;
 
         hr = register_codec(&CLSID_VideoInputDeviceCategory, name,
                 &CLSID_VfwCapture, friendlyname, &prop_bag);
