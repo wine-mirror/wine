@@ -1549,6 +1549,14 @@ static void test_margins_usefontinfo(UINT charset)
     DeleteObject(hfont);
 }
 
+static BOOL is_cjk_font(HDC dc)
+{
+    const DWORD FS_DBCS_MASK = FS_JISJAPAN|FS_CHINESESIMP|FS_WANSUNG|FS_CHINESETRAD|FS_JOHAB;
+    FONTSIGNATURE fs;
+    return (GetTextCharsetInfo(dc, &fs, 0) != DEFAULT_CHARSET &&
+            (fs.fsCsb[0] & FS_DBCS_MASK));
+}
+
 static INT get_cjk_fontinfo_margin(INT width, INT side_bearing)
 {
     INT margin;
@@ -1587,7 +1595,7 @@ static void test_margins_default(const char* facename, UINT charset)
     HDC hdc;
     TEXTMETRICW tm;
     SIZE size;
-    BOOL cjk_charset;
+    BOOL cjk_charset, cjk_font;
     LOGFONTA lf;
     HFONT hfont;
     RECT rect;
@@ -1631,7 +1639,9 @@ static void test_margins_default(const char* facename, UINT charset)
         return;
     }
     cjk_charset = is_cjk_charset(hdc);
-    if (cjk_charset && pGetCharWidthInfo && pGetCharWidthInfo(hdc, &info)) {
+    cjk_font = is_cjk_font(hdc);
+    if ((cjk_charset || cjk_font) &&
+        pGetCharWidthInfo && pGetCharWidthInfo(hdc, &info)) {
         short left, right;
 
         left  = get_cjk_fontinfo_margin(size.cx, info.lsb);
@@ -1654,10 +1664,12 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    todo_wine_if(cjk_font && (charset == GREEK_CHARSET || charset == ANSI_CHARSET))
     ok(margins == font_expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(font_expect), LOWORD(font_expect), HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    todo_wine_if(cjk_font && (charset == GREEK_CHARSET || charset == ANSI_CHARSET))
     ok(margins == expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(expect), LOWORD(expect), HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
 
@@ -1677,16 +1689,21 @@ static void test_margins_default(const char* facename, UINT charset)
         hfont = SelectObject(hdc, hfont);
         ReleaseDC(hwnd, hdc);
     }
+    else
+        /* we expect EC_USEFONTINFO size */
+        font_expect = expect;
 
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     ok(margins == 0, "got %x\n", margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    todo_wine_if(cjk_font && (charset == GREEK_CHARSET || charset == ANSI_CHARSET))
     ok(margins == font_expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(font_expect), LOWORD(font_expect), HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    todo_wine_if(cjk_font && (charset == GREEK_CHARSET || charset == ANSI_CHARSET))
     ok(margins == expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(expect), LOWORD(expect), HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
 
@@ -1791,18 +1808,24 @@ static void test_margins(void)
     test_margins_default("Tahoma", HANGUL_CHARSET);
     test_margins_default("Tahoma", CHINESEBIG5_CHARSET);
 
-    if (is_font_installed("MS PGothic"))
+    if (is_font_installed("MS PGothic")) {
         test_margins_default("MS PGothic", SHIFTJIS_CHARSET);
+        test_margins_default("MS PGothic", GREEK_CHARSET);
+    }
     else
         skip("MS PGothic is not available, skipping some margin tests\n");
 
-    if (is_font_installed("Ume P Gothic"))
+    if (is_font_installed("Ume P Gothic")) {
         test_margins_default("Ume P Gothic", SHIFTJIS_CHARSET);
+        test_margins_default("Ume P Gothic", GREEK_CHARSET);
+    }
     else
         skip("Ume P Gothic is not available, skipping some margin tests\n");
 
-    if (is_font_installed("SimSun"))
+    if (is_font_installed("SimSun")) {
         test_margins_default("SimSun", GB2312_CHARSET);
+        test_margins_default("SimSun", ANSI_CHARSET);
+    }
     else
         skip("SimSun is not available, skipping some margin tests\n");
 }
