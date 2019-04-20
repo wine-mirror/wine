@@ -690,6 +690,8 @@ HAL_LIBS
 HAL_CFLAGS
 DBUS_LIBS
 DBUS_CFLAGS
+INOTIFY_LIBS
+INOTIFY_CFLAGS
 XSLT_LIBS
 XSLT_CFLAGS
 XML2_LIBS
@@ -851,6 +853,7 @@ with_gsm
 with_gssapi
 with_gstreamer
 with_hal
+with_inotify
 with_jpeg
 with_krb5
 with_ldap
@@ -1813,6 +1816,8 @@ XML2_CFLAGS
 XML2_LIBS
 XSLT_CFLAGS
 XSLT_LIBS
+INOTIFY_CFLAGS
+INOTIFY_LIBS
 DBUS_CFLAGS
 DBUS_LIBS
 HAL_CFLAGS
@@ -2522,6 +2527,7 @@ Optional Packages:
   --without-gssapi        do not use GSSAPI (Kerberos SSP support)
   --without-gstreamer     do not use GStreamer (codecs support)
   --without-hal           do not use HAL (dynamic device support)
+  --without-inotify       do not use inotify (filesystem change notifications)
   --without-jpeg          do not use JPEG
   --without-krb5          do not use krb5 (Kerberos)
   --without-ldap          do not use LDAP
@@ -2581,6 +2587,10 @@ Some influential environment variables:
   XML2_LIBS   Linker flags for libxml-2.0, overriding pkg-config
   XSLT_CFLAGS C compiler flags for libxslt, overriding pkg-config
   XSLT_LIBS   Linker flags for libxslt, overriding pkg-config
+  INOTIFY_CFLAGS
+              C compiler flags for libinotify, overriding pkg-config
+  INOTIFY_LIBS
+              Linker flags for libinotify, overriding pkg-config
   DBUS_CFLAGS C compiler flags for dbus-1, overriding pkg-config
   DBUS_LIBS   Linker flags for dbus-1, overriding pkg-config
   HAL_CFLAGS  C compiler flags for hal, overriding pkg-config
@@ -3928,6 +3938,12 @@ fi
 # Check whether --with-hal was given.
 if test "${with_hal+set}" = set; then :
   withval=$with_hal;
+fi
+
+
+# Check whether --with-inotify was given.
+if test "${with_inotify+set}" = set; then :
+  withval=$with_inotify;
 fi
 
 
@@ -7401,7 +7417,6 @@ for ac_header in \
 	sys/event.h \
 	sys/exec_elf.h \
 	sys/filio.h \
-	sys/inotify.h \
 	sys/ioctl.h \
 	sys/ipc.h \
 	sys/limits.h \
@@ -13005,6 +13020,94 @@ if test "x$ac_cv_lib_soname_xslt" = "x"; then :
   xno) ;;
   *)   as_fn_error $? "libxslt ${notice_platform}development files not found, xslt won't be supported.
 This is an error since --with-xslt was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
+if test "x$with_inotify" != "xno"
+then
+    if ${INOTIFY_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  INOTIFY_CFLAGS=`$PKG_CONFIG --cflags libinotify 2>/dev/null`
+fi
+fi
+
+if ${INOTIFY_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  INOTIFY_LIBS=`$PKG_CONFIG --libs libinotify 2>/dev/null`
+fi
+fi
+
+
+$as_echo "$as_me:${as_lineno-$LINENO}: libinotify cflags: $INOTIFY_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libinotify libs: $INOTIFY_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $INOTIFY_CFLAGS"
+for ac_header in sys/inotify.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/inotify.h" "ac_cv_header_sys_inotify_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_inotify_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_INOTIFY_H 1
+_ACEOF
+
+fi
+
+done
+
+         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inotify_add_watch in -linotify" >&5
+$as_echo_n "checking for inotify_add_watch in -linotify... " >&6; }
+if ${ac_cv_lib_inotify_inotify_add_watch+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-linotify $INOTIFY_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char inotify_add_watch ();
+int
+main ()
+{
+return inotify_add_watch ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_inotify_inotify_add_watch=yes
+else
+  ac_cv_lib_inotify_inotify_add_watch=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_inotify_inotify_add_watch" >&5
+$as_echo "$ac_cv_lib_inotify_inotify_add_watch" >&6; }
+if test "x$ac_cv_lib_inotify_inotify_add_watch" = xyes; then :
+  :
+else
+  INOTIFY_LIBS=""
+fi
+
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$INOTIFY_CFLAGS" || INOTIFY_CFLAGS=`echo " $INOTIFY_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$INOTIFY_LIBS" || INOTIFY_LIBS=`echo " $INOTIFY_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+if test "$ac_cv_header_sys_inotify_h" != "yes"; then :
+  case "x$with_inotify" in
+  x)   as_fn_append wine_notices "|libinotify ${notice_platform}development files not found (or too old), filesystem change notifications won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libinotify ${notice_platform}development files not found (or too old), filesystem change notifications won't be supported.
+This is an error since --with-inotify was requested." "$LINENO" 5 ;;
 esac
 
 fi
@@ -19683,6 +19786,8 @@ XML2_CFLAGS = $XML2_CFLAGS
 XML2_LIBS = $XML2_LIBS
 XSLT_CFLAGS = $XSLT_CFLAGS
 XSLT_LIBS = $XSLT_LIBS
+INOTIFY_CFLAGS = $INOTIFY_CFLAGS
+INOTIFY_LIBS = $INOTIFY_LIBS
 DBUS_CFLAGS = $DBUS_CFLAGS
 DBUS_LIBS = $DBUS_LIBS
 HAL_CFLAGS = $HAL_CFLAGS

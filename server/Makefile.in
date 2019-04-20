@@ -50,4 +50,4 @@ MANPAGES = \
 	wineserver.fr.UTF-8.man.in \
 	wineserver.man.in
 
-EXTRALIBS = $(LDEXECFLAGS) -lwine $(POLL_LIBS) $(RT_LIBS)
+EXTRALIBS = $(LDEXECFLAGS) -lwine $(POLL_LIBS) $(RT_LIBS) $(INOTIFY_LIBS)

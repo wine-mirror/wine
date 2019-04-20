@@ -57,6 +57,7 @@ AC_ARG_WITH(gsm,       AS_HELP_STRING([--without-gsm],[do not use libgsm (GSM 06
 AC_ARG_WITH(gssapi,    AS_HELP_STRING([--without-gssapi],[do not use GSSAPI (Kerberos SSP support)]))
 AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreamer (codecs support)]))
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
+AC_ARG_WITH(inotify,   AS_HELP_STRING([--without-inotify],[do not use inotify (filesystem change notifications)]))
 AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]))
 AC_ARG_WITH(krb5,      AS_HELP_STRING([--without-krb5],[do not use krb5 (Kerberos)]))
 AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
@@ -491,7 +492,6 @@ AC_CHECK_HEADERS(\
 	sys/event.h \
 	sys/exec_elf.h \
 	sys/filio.h \
-	sys/inotify.h \
 	sys/ioctl.h \
 	sys/ipc.h \
 	sys/limits.h \
@@ -1346,6 +1346,16 @@ then
 fi
 WINE_WARNING_WITH(xslt,[test "x$ac_cv_lib_soname_xslt" = "x"],
                  [libxslt ${notice_platform}development files not found, xslt won't be supported.])
+
+dnl **** Check for inotify ****
+if test "x$with_inotify" != "xno"
+then
+    WINE_PACKAGE_FLAGS(INOTIFY,[libinotify],,,,
+        [AC_CHECK_HEADERS([sys/inotify.h])
+         AC_CHECK_LIB(inotify,inotify_add_watch,[:],[INOTIFY_LIBS=""],[$INOTIFY_LIBS])])
+fi
+WINE_NOTICE_WITH(inotify,[test "$ac_cv_header_sys_inotify_h" != "yes"],
+                 [libinotify ${notice_platform}development files not found (or too old), filesystem change notifications won't be supported.])
 
 dnl **** Check for libdbus ****
 if test "x$with_dbus" != "xno"
