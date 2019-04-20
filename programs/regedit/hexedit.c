@@ -643,7 +643,7 @@ void HexEdit_Register(void)
     wndClass.lpfnWndProc   = HexEdit_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(HEXEDIT_INFO *);
-    wndClass.hCursor       = NULL;
+    wndClass.hCursor       = LoadCursorW(0, (const WCHAR *)IDC_IBEAM);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = szHexEditClass;
 
