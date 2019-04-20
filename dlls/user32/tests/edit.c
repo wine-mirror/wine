@@ -1664,12 +1664,10 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    todo_wine_if(cjk_font && (charset == GREEK_CHARSET || charset == ANSI_CHARSET))
     ok(margins == font_expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(font_expect), LOWORD(font_expect), HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    todo_wine_if(cjk_font && (charset == GREEK_CHARSET || charset == ANSI_CHARSET))
     ok(margins == expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(expect), LOWORD(expect), HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
 
@@ -1698,12 +1696,10 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    todo_wine_if(cjk_font && (charset == GREEK_CHARSET || charset == ANSI_CHARSET))
     ok(margins == font_expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(font_expect), LOWORD(font_expect), HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    todo_wine_if(cjk_font && (charset == GREEK_CHARSET || charset == ANSI_CHARSET))
     ok(margins == expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(expect), LOWORD(expect), HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
 
