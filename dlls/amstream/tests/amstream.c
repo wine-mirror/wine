@@ -29,6 +29,10 @@
 #include "ks.h"
 #include "ksmedia.h"
 
+static const WCHAR primary_video_sink_id[] = {'I','{','A','3','5','F','F','5','6','A',
+        '-','9','F','D','A','-','1','1','D','0','-','8','F','D','F',
+        '-','0','0','C','0','4','F','D','9','1','8','9','D','}',0};
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -758,6 +762,41 @@ static void test_enum_pins(void)
     todo_wine ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_find_pin(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter;
+    IMediaStream *stream;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    /* FIXME: This call should not be necessary. */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_FindPin(filter, primary_video_sink_id, &pin2);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_FindPin(filter, primary_video_sink_id, &pin2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin2 == pin, "Expected pin %p, got %p.\n", pin, pin2);
+
+    IPin_Release(pin2);
+    IPin_Release(pin);
+    IMediaStreamFilter_Release(filter);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_IDirectDrawStreamSample(void)
 {
     DDSURFACEDESC desc = { sizeof(desc) };
@@ -1131,6 +1170,7 @@ START_TEST(amstream)
     test_interfaces();
     test_media_streams();
     test_enum_pins();
+    test_find_pin();
     test_IDirectDrawStreamSample();
 
     file = CreateFileW(filenameW, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
