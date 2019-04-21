@@ -380,7 +380,9 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
         This->nbStreams++;
 
         if (ppNewStream)
-            *ppNewStream = (IMediaStream*)pStream;
+        {
+            IMediaStream_AddRef(*ppNewStream = (IMediaStream*)pStream);
+        }
     }
 
     if (SUCCEEDED(hr))
