@@ -46,8 +46,9 @@ static IDirectDrawSurface7* pdds7;
 static IAMMultiMediaStream *create_ammultimediastream(void)
 {
     IAMMultiMediaStream *stream = NULL;
-    CoCreateInstance(&CLSID_AMMultiMediaStream, NULL, CLSCTX_INPROC_SERVER, &IID_IAMMultiMediaStream,
-        (void**)&stream);
+    HRESULT hr = CoCreateInstance(&CLSID_AMMultiMediaStream, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IAMMultiMediaStream, (void **)&stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     return stream;
 }
 
@@ -93,6 +94,112 @@ static void release_directdraw(void)
 {
     IDirectDrawSurface7_Release(pdds7);
     IDirectDraw7_Release(pdd7);
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+
+    /* FIXME: This call should not be necessary. */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(mmstream, &IID_IAMMultiMediaStream, TRUE);
+    check_interface(mmstream, &IID_IMultiMediaStream, TRUE);
+    check_interface(mmstream, &IID_IUnknown, TRUE);
+
+    check_interface(mmstream, &IID_IAMMediaStream, FALSE);
+    check_interface(mmstream, &IID_IAMMediaTypeStream, FALSE);
+    check_interface(mmstream, &IID_IAudioMediaStream, FALSE);
+    check_interface(mmstream, &IID_IBaseFilter, FALSE);
+    check_interface(mmstream, &IID_IDirectDrawMediaStream, FALSE);
+    check_interface(mmstream, &IID_IMediaFilter, FALSE);
+    check_interface(mmstream, &IID_IMediaStream, FALSE);
+    check_interface(mmstream, &IID_IMediaStreamFilter, FALSE);
+    check_interface(mmstream, &IID_IPin, FALSE);
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IMediaStreamFilter, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+
+    check_interface(filter, &IID_IAMMediaStream, FALSE);
+    check_interface(filter, &IID_IAMMediaTypeStream, FALSE);
+    check_interface(filter, &IID_IAMMultiMediaStream, FALSE);
+    check_interface(filter, &IID_IAudioMediaStream, FALSE);
+    check_interface(filter, &IID_IDirectDrawMediaStream, FALSE);
+    check_interface(filter, &IID_IMediaStream, FALSE);
+    check_interface(filter, &IID_IMultiMediaStream, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+
+    IMediaStreamFilter_Release(filter);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(stream, &IID_IAMMediaStream, TRUE);
+    check_interface(stream, &IID_IAudioMediaStream, TRUE);
+    check_interface(stream, &IID_IMediaStream, TRUE);
+    check_interface(stream, &IID_IPin, TRUE);
+    check_interface(stream, &IID_IUnknown, TRUE);
+
+    check_interface(stream, &IID_IAMMediaTypeStream, FALSE);
+    check_interface(stream, &IID_IAMMultiMediaStream, FALSE);
+    check_interface(stream, &IID_IBaseFilter, FALSE);
+    check_interface(stream, &IID_IDirectDrawMediaStream, FALSE);
+    check_interface(stream, &IID_IMediaFilter, FALSE);
+    check_interface(stream, &IID_IMediaStreamFilter, FALSE);
+    check_interface(stream, &IID_IMultiMediaStream, FALSE);
+    check_interface(stream, &IID_IPersist, FALSE);
+
+    IMediaStream_Release(stream);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(stream, &IID_IAMMediaStream, TRUE);
+    check_interface(stream, &IID_IDirectDrawMediaStream, TRUE);
+    check_interface(stream, &IID_IMediaStream, TRUE);
+    check_interface(stream, &IID_IPin, TRUE);
+    check_interface(stream, &IID_IUnknown, TRUE);
+
+    check_interface(stream, &IID_IAMMediaTypeStream, FALSE);
+    check_interface(stream, &IID_IAMMultiMediaStream, FALSE);
+    check_interface(stream, &IID_IAudioMediaStream, FALSE);
+    check_interface(stream, &IID_IBaseFilter, FALSE);
+    check_interface(stream, &IID_IDirectDraw, FALSE);
+    check_interface(stream, &IID_IMediaFilter, FALSE);
+    check_interface(stream, &IID_IMediaStreamFilter, FALSE);
+    check_interface(stream, &IID_IMultiMediaStream, FALSE);
+    check_interface(stream, &IID_IPersist, FALSE);
+
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %u.\n", ref);
 }
 
 static void test_openfile(void)
@@ -878,6 +985,7 @@ START_TEST(amstream)
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
+    test_interfaces();
     test_media_streams();
     test_IDirectDrawStreamSample();
 
