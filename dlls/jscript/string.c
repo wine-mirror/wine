@@ -1236,7 +1236,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
                 ptr2 = ptr+1;
             }
 
-            if(!regexp || ptr2 > ptr) {
+            if(!regexp || ptr2 > ptr || ctx->version >= SCRIPTLANGUAGEVERSION_ES5) {
                 tmp_str = jsstr_alloc_len(ptr, ptr2-ptr);
                 if(!tmp_str) {
                     hres = E_OUTOFMEMORY;
@@ -1261,7 +1261,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     if(SUCCEEDED(hres) && (match_str || regexp) && i<limit) {
         DWORD len = (str+length) - ptr;
 
-        if(len || match_str || !length) {
+        if(len || match_str || !length || ctx->version >= SCRIPTLANGUAGEVERSION_ES5) {
             tmp_str = jsstr_alloc_len(ptr, len);
 
             if(tmp_str) {

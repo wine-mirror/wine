@@ -615,6 +615,41 @@ function test_string_split() {
         return;
     }
 
+    function test(string, separator, result) {
+        var r = string.split(separator);
+        ok(r == result, "\"" + string + "\".split(" + separator + ") returned " + r + " expected " + result);
+    }
+
+    test("test", /^|\s+/, "test");
+    test("test", /$|\s+/, "test");
+    test("test", /^|./, "t,,,");
+    test("test", /.*/, ",");
+    test("test", /x*/, "t,e,s,t");
+    test("test", /$|x*/, "t,e,s,t");
+    test("test", /^|x*/, "t,e,s,t");
+    test("test", /t*/, ",e,s,");
+    test("xaabaax", /a*|b*/, "x,b,x");
+    test("xaabaax", /a+|b+/, "x,,,x");
+    test("xaabaax", /a+|b*/, "x,,,x");
+    test("xaaxbaax", /b+|a+/, "x,x,,x");
+    test("test", /^|t/, "tes,");
+    test("test", /^|t/, "tes,");
+    test("a,,b", /,/, "a,,b");
+    test("ab", /a*/, ",b");
+    test("aab", "a", ",,b");
+    test("a", "a", ",");
+
+    function test_length(string, separator, len) {
+        var r = string.split(separator);
+        ok(r.length === len, "\"" + string + "\".split(" + separator + ").length = "
+           + r.length + " expected " + len);
+    }
+
+    test_length("", /a*/, 0);
+    test_length("", /a+/, 1);
+    test_length("", "", 0);
+    test_length("", "x", 1);
+
     r = "1,2,3".split(undefined);
     ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
     ok(r.length === 1, "r.length = " + r.length);
