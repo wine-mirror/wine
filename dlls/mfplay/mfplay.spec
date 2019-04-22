@@ -2,5 +2,5 @@
 @ stub DllGetClassObject
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
-@ stub MFPCreateMediaPlayer
+@ stdcall MFPCreateMediaPlayer(wstr long long ptr long ptr)
 @ stub MFPCreateMediaPlayerEx
