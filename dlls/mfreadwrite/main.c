@@ -253,6 +253,9 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
                 {
                     WARN("Failed to subscribe to stream events, hr %#x.\n", hr);
                 }
+
+                /* Wake so any waiting ReadSample() calls have a chance to make requests. */
+                WakeAllConditionVariable(&reader->streams[i].sample_event);
             }
             break;
         }
