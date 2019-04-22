@@ -295,6 +295,7 @@ static int running_elevated (void)
 /* check for native dll when running under wine */
 static BOOL is_native_dll( HMODULE module )
 {
+    static const char builtin_signature[] = "Wine builtin DLL";
     static const char fakedll_signature[] = "Wine placeholder DLL";
     const IMAGE_DOS_HEADER *dos;
 
@@ -303,8 +304,11 @@ static BOOL is_native_dll( HMODULE module )
     /* builtin dlls can't be loaded as datafile, so we must have native or fake dll */
     dos = (const IMAGE_DOS_HEADER *)((const char *)module - 1);
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) return FALSE;
-    if (dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
-        !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return FALSE;
+    if (dos->e_lfanew >= sizeof(*dos) + 32)
+    {
+        if (!memcmp( dos + 1, builtin_signature, sizeof(builtin_signature) )) return FALSE;
+        if (!memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return FALSE;
+    }
     return TRUE;
 }
 
