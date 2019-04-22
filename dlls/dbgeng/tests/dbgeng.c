@@ -322,8 +322,8 @@ todo_wine
 static void test_module_information(void)
 {
     static const char *event_name = "dbgeng_test_event";
+    unsigned int loaded, unloaded, index;
     DEBUG_MODULE_PARAMETERS params[2];
-    unsigned int loaded, unloaded;
     PROCESS_INFORMATION info;
     IDebugSymbols *symbols;
     IDebugControl *control;
@@ -372,7 +372,27 @@ static void test_module_information(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!base, "Unexpected module base.\n");
 
+    hr = symbols->lpVtbl->GetModuleByOffset(symbols, 0, 0, &index, &base);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = symbols->lpVtbl->GetModuleByOffset(symbols, base, 0, &index, &base);
+    ok(hr == S_OK, "Failed to get module, hr %#x.\n", hr);
+
+    hr = symbols->lpVtbl->GetModuleByOffset(symbols, base, 0, NULL, NULL);
+    ok(hr == S_OK, "Failed to get module, hr %#x.\n", hr);
+
+    hr = symbols->lpVtbl->GetModuleByOffset(symbols, base + 1, 0, NULL, NULL);
+    ok(hr == S_OK, "Failed to get module, hr %#x.\n", hr);
+
+    hr = symbols->lpVtbl->GetModuleByOffset(symbols, base, loaded, NULL, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
     /* Parameters. */
+    base = 0;
+    hr = symbols->lpVtbl->GetModuleByIndex(symbols, 0, &base);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!base, "Unexpected module base.\n");
+
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, NULL, 0, params);
     ok(hr == S_OK, "Failed to get module parameters, hr %#x.\n", hr);
     ok(params[0].Base == base, "Unexpected module base.\n");

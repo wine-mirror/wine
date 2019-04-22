@@ -1053,9 +1053,30 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleByModuleName(IDebugSymbol
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleByOffset(IDebugSymbols3 *iface, ULONG64 offset,
         ULONG start_index, ULONG *index, ULONG64 *base)
 {
-    FIXME("%p, %s, %u, %p, %p stub.\n", iface, wine_dbgstr_longlong(offset), start_index, index, base);
+    struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
+    static struct target_process *target;
+    const struct module_info *info;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %u, %p, %p.\n", iface, wine_dbgstr_longlong(offset), start_index, index, base);
+
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    while ((info = debug_target_get_module_info(target, start_index)))
+    {
+        if (offset >= info->params.Base && offset < info->params.Base + info->params.Size)
+        {
+            if (index)
+                *index = start_index;
+            if (base)
+                *base = info->params.Base;
+            return S_OK;
+        }
+
+        start_index++;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleNames(IDebugSymbols3 *iface, ULONG index, ULONG64 base,
