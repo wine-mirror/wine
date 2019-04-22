@@ -1991,7 +1991,7 @@ static BOOL is_valid_binary( HMODULE module, const pe_image_info_t *info )
  *
  * Open a file for a new dll. Helper for find_dll_file.
  */
-static NTSTATUS open_dll_file( const WCHAR *name, UNICODE_STRING *nt_name, WINE_MODREF **pwm,
+static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm,
                                void **module, pe_image_info_t *image_info, struct stat *st )
 {
     FILE_BASIC_INFORMATION info;
@@ -2002,9 +2002,6 @@ static NTSTATUS open_dll_file( const WCHAR *name, UNICODE_STRING *nt_name, WINE_
     NTSTATUS status;
     HANDLE handle, mapping;
     int fd, needs_close;
-
-    nt_name->Buffer = NULL;
-    if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, nt_name, NULL, NULL ))) return status;
 
     if ((*pwm = find_fullname_module( nt_name ))) return STATUS_SUCCESS;
 
@@ -2397,7 +2394,11 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
         memcpy( name, paths, len * sizeof(WCHAR) );
         if (len && name[len - 1] != '\\') name[len++] = '\\';
         strcpyW( name + len, search );
-        status = open_dll_file( name, nt_name, pwm, module, image_info, st );
+
+        nt_name->Buffer = NULL;
+        if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, nt_name, NULL, NULL ))) goto done;
+
+        status = open_dll_file( nt_name, pwm, module, image_info, st );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
         else if (status != STATUS_DLL_NOT_FOUND) goto done;
         RtlFreeUnicodeString( nt_name );
@@ -2466,8 +2467,8 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
 
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
         status = search_dll_file( load_path, libname, nt_name, pwm, module, image_info, st );
-    else
-        status = open_dll_file( libname, nt_name, pwm, module, image_info, st );
+    else if (!(status = RtlDosPathNameToNtPathName_U_WithStatus( libname, nt_name, NULL, NULL )))
+        status = open_dll_file( nt_name, pwm, module, image_info, st );
 
     if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) status = STATUS_INVALID_IMAGE_FORMAT;
 
