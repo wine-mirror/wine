@@ -63,6 +63,7 @@ static void process_dump( struct object *obj, int verbose );
 static struct object_type *process_get_type( struct object *obj );
 static int process_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int process_map_access( struct object *obj, unsigned int access );
+static struct security_descriptor *process_get_sd( struct object *obj );
 static void process_poll_event( struct fd *fd, int event );
 static struct list *process_get_kernel_obj_list( struct object *obj );
 static void process_destroy( struct object *obj );
@@ -80,7 +81,7 @@ static const struct object_ops process_ops =
     no_signal,                   /* signal */
     no_get_fd,                   /* get_fd */
     process_map_access,          /* map_access */
-    default_get_sd,              /* get_sd */
+    process_get_sd,              /* get_sd */
     default_set_sd,              /* set_sd */
     no_lookup_name,              /* lookup_name */
     no_link_name,                /* link_name */
@@ -667,6 +668,29 @@ static struct list *process_get_kernel_obj_list( struct object *obj )
 {
     struct process *process = (struct process *)obj;
     return &process->kernel_object;
+}
+
+static struct security_descriptor *process_get_sd( struct object *obj )
+{
+    static struct security_descriptor *process_default_sd;
+
+    if (obj->sd) return obj->sd;
+
+    if (!process_default_sd)
+    {
+        size_t users_sid_len = security_sid_len( security_domain_users_sid );
+        size_t admins_sid_len = security_sid_len( security_builtin_admins_sid );
+
+        process_default_sd = mem_alloc( sizeof(*process_default_sd) + admins_sid_len + users_sid_len  );
+        process_default_sd->control   = SE_DACL_PRESENT;
+        process_default_sd->owner_len = admins_sid_len;
+        process_default_sd->group_len = users_sid_len;
+        process_default_sd->sacl_len  = 0;
+        process_default_sd->dacl_len  = 0;
+        memcpy( process_default_sd + 1, security_builtin_admins_sid, admins_sid_len );
+        memcpy( (char *)(process_default_sd + 1) + admins_sid_len, security_domain_users_sid, users_sid_len );
+    }
+    return process_default_sd;
 }
 
 static void process_poll_event( struct fd *fd, int event )

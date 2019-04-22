@@ -4682,11 +4682,15 @@ static void test_acls(void)
 
 static void test_GetSecurityInfo(void)
 {
+    char domain_users_ptr[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD)*SID_MAX_SUB_AUTHORITIES];
     char b[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD)*SID_MAX_SUB_AUTHORITIES];
     char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], dacl[100];
+    PSID domain_users_sid = (PSID) domain_users_ptr, domain_sid;
+    SID_IDENTIFIER_AUTHORITY sia = { SECURITY_NT_AUTHORITY };
     DWORD sid_size = sizeof(admin_ptr), l = sizeof(b);
     PSID admin_sid = (PSID) admin_ptr, user_sid;
     char sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
+    BOOL owner_defaulted, group_defaulted;
     ACL_SIZE_INFORMATION acl_size;
     PSECURITY_DESCRIPTOR pSD;
     ACCESS_ALLOWED_ACE *ace;
@@ -4813,6 +4817,37 @@ static void test_GetSecurityInfo(void)
     }
     LocalFree(pSD);
     CloseHandle(obj);
+
+    /* Obtain the "domain users" SID from the user SID */
+    if (!AllocateAndInitializeSid(&sia, 4, *GetSidSubAuthority(user_sid, 0),
+                                  *GetSidSubAuthority(user_sid, 1),
+                                  *GetSidSubAuthority(user_sid, 2),
+                                  *GetSidSubAuthority(user_sid, 3), 0, 0, 0, 0, &domain_sid))
+    {
+        win_skip("Failed to get current domain SID\n");
+        return;
+    }
+    sid_size = sizeof(domain_users_ptr);
+    pCreateWellKnownSid(WinAccountDomainUsersSid, domain_sid, domain_users_sid, &sid_size);
+    FreeSid(domain_sid);
+
+    /* Test querying the ownership of a process */
+    ret = pGetSecurityInfo(GetCurrentProcess(), SE_KERNEL_OBJECT,
+                           OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,
+                           NULL, NULL, NULL, NULL, &pSD);
+    ok(!ret, "GetNamedSecurityInfo failed with error %d\n", ret);
+
+    bret = GetSecurityDescriptorOwner(pSD, &owner, &owner_defaulted);
+    ok(bret, "GetSecurityDescriptorOwner failed with error %d\n", GetLastError());
+    ok(owner != NULL, "owner should not be NULL\n");
+    ok(EqualSid(owner, admin_sid) || EqualSid(owner, user_sid),
+       "Process owner SID != Administrators SID.\n");
+
+    bret = GetSecurityDescriptorGroup(pSD, &group, &group_defaulted);
+    ok(bret, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
+    ok(group != NULL, "group should not be NULL\n");
+    ok(EqualSid(group, domain_users_sid), "Process group SID != Domain Users SID.\n");
+    LocalFree(pSD);
 }
 
 static void test_GetSidSubAuthority(void)
