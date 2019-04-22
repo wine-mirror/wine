@@ -35,11 +35,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbgeng);
 
+extern NTSTATUS WINAPI NtSuspendProcess(HANDLE handle);
+extern NTSTATUS WINAPI NtResumeProcess(HANDLE handle);
+
 struct target_process
 {
     struct list entry;
     unsigned int pid;
     unsigned int attach_flags;
+    HANDLE handle;
 };
 
 struct debug_client
@@ -53,6 +57,28 @@ struct debug_client
     struct list targets;
     IDebugEventCallbacks *event_callbacks;
 };
+
+static void debug_client_detach_target(struct target_process *target)
+{
+    NTSTATUS status;
+
+    if (!target->handle)
+        return;
+
+    if (target->attach_flags & DEBUG_ATTACH_NONINVASIVE)
+    {
+        BOOL resume = !(target->attach_flags & DEBUG_ATTACH_NONINVASIVE_NO_SUSPEND);
+
+        if (resume)
+        {
+            if ((status = NtResumeProcess(target->handle)))
+                WARN("Failed to resume process, status %#x.\n", status);
+        }
+    }
+
+    CloseHandle(target->handle);
+    target->handle = NULL;
+}
 
 static struct debug_client *impl_from_IDebugClient(IDebugClient *iface)
 {
@@ -133,6 +159,7 @@ static ULONG STDMETHODCALLTYPE debugclient_Release(IDebugClient *iface)
     {
         LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &debug_client->targets, struct target_process, entry)
         {
+            debug_client_detach_target(cur);
             list_remove(&cur->entry);
             heap_free(cur);
         }
@@ -329,9 +356,17 @@ static HRESULT STDMETHODCALLTYPE debugclient_TerminateProcesses(IDebugClient *if
 
 static HRESULT STDMETHODCALLTYPE debugclient_DetachProcesses(IDebugClient *iface)
 {
-    FIXME("%p stub.\n", iface);
+    struct debug_client *debug_client = impl_from_IDebugClient(iface);
+    struct target_process *target;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    LIST_FOR_EACH_ENTRY(target, &debug_client->targets, struct target_process, entry)
+    {
+        debug_client_detach_target(target);
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugclient_EndSession(IDebugClient *iface, ULONG flags)
@@ -2637,7 +2672,47 @@ static HRESULT STDMETHODCALLTYPE debugcontrol_SetExceptionFilterSecondCommand(ID
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_WaitForEvent(IDebugControl2 *iface, ULONG flags, ULONG timeout)
 {
-    FIXME("%p, %#x, %u stub.\n", iface, flags, timeout);
+    struct debug_client *debug_client = impl_from_IDebugControl2(iface);
+    struct target_process *target;
+
+    TRACE("%p, %#x, %u.\n", iface, flags, timeout);
+
+    /* FIXME: only one target is used currently */
+
+    if (list_empty(&debug_client->targets))
+        return E_UNEXPECTED;
+
+    target = LIST_ENTRY(list_head(&debug_client->targets), struct target_process, entry);
+
+    if (target->attach_flags & DEBUG_ATTACH_NONINVASIVE)
+    {
+        BOOL suspend = !(target->attach_flags & DEBUG_ATTACH_NONINVASIVE_NO_SUSPEND);
+        DWORD access = PROCESS_VM_READ | PROCESS_VM_WRITE;
+        NTSTATUS status;
+
+        if (suspend)
+            access |= PROCESS_SUSPEND_RESUME;
+
+        target->handle = OpenProcess(access, FALSE, target->pid);
+        if (!target->handle)
+        {
+            WARN("Failed to get process handle for pid %#x.\n", target->pid);
+            return E_UNEXPECTED;
+        }
+
+        if (suspend)
+        {
+            status = NtSuspendProcess(target->handle);
+            if (status)
+                WARN("Failed to suspend a process, status %#x.\n", status);
+        }
+
+        return S_OK;
+    }
+    else
+    {
+        FIXME("Unsupported attach flags %#x.\n", target->attach_flags);
+    }
 
     return E_NOTIMPL;
 }

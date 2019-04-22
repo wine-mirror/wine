@@ -273,7 +273,6 @@ static void test_attach(void)
     ok(!is_debugged, "Unexpected mode.\n");
 
     hr = control->lpVtbl->WaitForEvent(control, 0, INFINITE);
-todo_wine
     ok(hr == S_OK, "Waiting for event failed, hr %#x.\n", hr);
 
     is_debugged = TRUE;
@@ -282,7 +281,6 @@ todo_wine
     ok(!is_debugged, "Unexpected mode.\n");
 
     hr = client->lpVtbl->DetachProcesses(client);
-todo_wine
     ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);
 
     hr = client->lpVtbl->EndSession(client, DEBUG_END_ACTIVE_DETACH);
