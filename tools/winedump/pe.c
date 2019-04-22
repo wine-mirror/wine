@@ -98,16 +98,20 @@ static const IMAGE_NT_HEADERS32 *get_nt_header( void )
     return PRD(dos->e_lfanew, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
 }
 
-static BOOL is_fake_dll( void )
+static void print_fake_dll( void )
 {
+    static const char builtin_signature[] = "Wine builtin DLL";
     static const char fakedll_signature[] = "Wine placeholder DLL";
     const IMAGE_DOS_HEADER *dos;
 
-    dos = PRD(0, sizeof(*dos) + sizeof(fakedll_signature));
-
-    if (dos && dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
-        !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return TRUE;
-    return FALSE;
+    dos = PRD(0, sizeof(*dos) + 32);
+    if (dos && dos->e_lfanew >= sizeof(*dos) + 32)
+    {
+        if (!memcmp( dos + 1, builtin_signature, sizeof(builtin_signature) ))
+            printf( "*** This is a Wine builtin DLL ***\n\n" );
+        else if (!memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) ))
+            printf( "*** This is a Wine fake DLL ***\n\n" );
+    }
 }
 
 static const void *get_dir_and_size(unsigned int idx, unsigned int *size)
@@ -1948,7 +1952,7 @@ void pe_dump(void)
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
 
     PE_nt_headers = get_nt_header();
-    if (is_fake_dll()) printf( "*** This is a Wine fake DLL ***\n\n" );
+    print_fake_dll();
 
     if (globals.do_dumpheader)
     {
