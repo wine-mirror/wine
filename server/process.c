@@ -680,15 +680,39 @@ static struct security_descriptor *process_get_sd( struct object *obj )
     {
         size_t users_sid_len = security_sid_len( security_domain_users_sid );
         size_t admins_sid_len = security_sid_len( security_builtin_admins_sid );
+        size_t dacl_len = sizeof(ACL) + 2 * offsetof( ACCESS_ALLOWED_ACE, SidStart )
+                          + users_sid_len + admins_sid_len;
+        ACCESS_ALLOWED_ACE *aaa;
+        ACL *dacl;
 
-        process_default_sd = mem_alloc( sizeof(*process_default_sd) + admins_sid_len + users_sid_len  );
+        process_default_sd = mem_alloc( sizeof(*process_default_sd) + admins_sid_len + users_sid_len
+                                    + dacl_len );
         process_default_sd->control   = SE_DACL_PRESENT;
         process_default_sd->owner_len = admins_sid_len;
         process_default_sd->group_len = users_sid_len;
         process_default_sd->sacl_len  = 0;
-        process_default_sd->dacl_len  = 0;
+        process_default_sd->dacl_len  = dacl_len;
         memcpy( process_default_sd + 1, security_builtin_admins_sid, admins_sid_len );
         memcpy( (char *)(process_default_sd + 1) + admins_sid_len, security_domain_users_sid, users_sid_len );
+
+        dacl = (ACL *)((char *)(process_default_sd + 1) + admins_sid_len + users_sid_len);
+        dacl->AclRevision = ACL_REVISION;
+        dacl->Sbz1 = 0;
+        dacl->AclSize = dacl_len;
+        dacl->AceCount = 2;
+        dacl->Sbz2 = 0;
+        aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
+        aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+        aaa->Header.AceFlags = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE;
+        aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + users_sid_len;
+        aaa->Mask = GENERIC_READ;
+        memcpy( &aaa->SidStart, security_domain_users_sid, users_sid_len );
+        aaa = (ACCESS_ALLOWED_ACE *)((char *)aaa + aaa->Header.AceSize);
+        aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+        aaa->Header.AceFlags = 0;
+        aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + admins_sid_len;
+        aaa->Mask = PROCESS_ALL_ACCESS;
+        memcpy( &aaa->SidStart, security_builtin_admins_sid, admins_sid_len );
     }
     return process_default_sd;
 }

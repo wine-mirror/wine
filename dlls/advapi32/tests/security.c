@@ -4687,10 +4687,12 @@ static void test_GetSecurityInfo(void)
     char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], dacl[100];
     PSID domain_users_sid = (PSID) domain_users_ptr, domain_sid;
     SID_IDENTIFIER_AUTHORITY sia = { SECURITY_NT_AUTHORITY };
+    int domain_users_ace_id = -1, admins_ace_id = -1, i;
     DWORD sid_size = sizeof(admin_ptr), l = sizeof(b);
     PSID admin_sid = (PSID) admin_ptr, user_sid;
     char sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
     BOOL owner_defaulted, group_defaulted;
+    BOOL dacl_defaulted, dacl_present;
     ACL_SIZE_INFORMATION acl_size;
     PSECURITY_DESCRIPTOR pSD;
     ACCESS_ALLOWED_ACE *ace;
@@ -4698,6 +4700,7 @@ static void test_GetSecurityInfo(void)
     PSID owner, group;
     BOOL bret = TRUE;
     PACL pDacl;
+    BYTE flags;
     DWORD ret;
 
     if (!pGetSecurityInfo || !pSetSecurityInfo)
@@ -4847,6 +4850,53 @@ static void test_GetSecurityInfo(void)
     ok(bret, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
     ok(group != NULL, "group should not be NULL\n");
     ok(EqualSid(group, domain_users_sid), "Process group SID != Domain Users SID.\n");
+    LocalFree(pSD);
+
+    /* Test querying the DACL of a process */
+    ret = pGetSecurityInfo(GetCurrentProcess(), SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION,
+                                   NULL, NULL, NULL, NULL, &pSD);
+    ok(!ret, "GetSecurityInfo failed with error %d\n", ret);
+
+    bret = GetSecurityDescriptorDacl(pSD, &dacl_present, &pDacl, &dacl_defaulted);
+    ok(bret, "GetSecurityDescriptorDacl failed with error %d\n", GetLastError());
+    ok(dacl_present, "DACL should be present\n");
+    ok(pDacl && IsValidAcl(pDacl), "GetSecurityDescriptorDacl returned invalid DACL.\n");
+    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    ok(bret, "GetAclInformation failed\n");
+    ok(acl_size.AceCount != 0, "GetAclInformation returned no ACLs\n");
+    for (i=0; i<acl_size.AceCount; i++)
+    {
+        bret = pGetAce(pDacl, i, (VOID **)&ace);
+        ok(bret, "Failed to get ACE %d.\n", i);
+        bret = EqualSid(&ace->SidStart, domain_users_sid);
+        if (bret) domain_users_ace_id = i;
+        bret = EqualSid(&ace->SidStart, admin_sid);
+        if (bret) admins_ace_id = i;
+    }
+    ok(domain_users_ace_id != -1 || broken(domain_users_ace_id == -1) /* win2k */,
+       "Domain Users ACE not found.\n");
+    if (domain_users_ace_id != -1)
+    {
+        bret = pGetAce(pDacl, domain_users_ace_id, (VOID **)&ace);
+        ok(bret, "Failed to get Domain Users ACE.\n");
+        flags = ((ACE_HEADER *)ace)->AceFlags;
+        ok(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE),
+           "Domain Users ACE has unexpected flags (0x%x != 0x%x)\n", flags,
+           INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE);
+        ok(ace->Mask == GENERIC_READ, "Domain Users ACE has unexpected mask (0x%x != 0x%x)\n",
+                                      ace->Mask, GENERIC_READ);
+    }
+    ok(admins_ace_id != -1 || broken(admins_ace_id == -1) /* xp */,
+       "Builtin Admins ACE not found.\n");
+    if (admins_ace_id != -1)
+    {
+        bret = pGetAce(pDacl, admins_ace_id, (VOID **)&ace);
+        ok(bret, "Failed to get Builtin Admins ACE.\n");
+        flags = ((ACE_HEADER *)ace)->AceFlags;
+        ok(flags == 0x0, "Builtin Admins ACE has unexpected flags (0x%x != 0x0)\n", flags);
+        ok(ace->Mask == PROCESS_ALL_ACCESS || broken(ace->Mask == 0x1f0fff) /* win2k */,
+           "Builtin Admins ACE has unexpected mask (0x%x != 0x%x)\n", ace->Mask, PROCESS_ALL_ACCESS);
+    }
     LocalFree(pSD);
 }
 
