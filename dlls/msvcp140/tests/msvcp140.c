@@ -178,6 +178,7 @@ static MSVCP_bool (__cdecl *p_Current_get)(WCHAR *);
 static MSVCP_bool (__cdecl *p_Current_set)(WCHAR const *);
 static int (__cdecl *p_Equivalent)(WCHAR const*, WCHAR const*);
 static ULONGLONG (__cdecl *p_File_size)(WCHAR const *);
+static int (__cdecl *p_Resize)(const WCHAR *, UINT64);
 static __int64 (__cdecl *p_Last_write_time)(WCHAR const*);
 static void (__cdecl *p_Set_last_write_time)(WCHAR const*, __int64);
 static int (__cdecl *p_Link)(WCHAR const*, WCHAR const*);
@@ -270,6 +271,7 @@ static BOOL init(void)
     SET(p_Current_set, "_Current_set");
     SET(p_Equivalent, "_Equivalent");
     SET(p_File_size, "_File_size");
+    SET(p_Resize, "_Resize");
     SET(p_Last_write_time, "_Last_write_time");
     SET(p_Set_last_write_time, "_Set_last_write_time");
     SET(p_Link, "_Link");
@@ -657,6 +659,7 @@ static void test_File_size(void)
     WCHAR test_dir_W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r',0};
     WCHAR test_ne_W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','n','e',0};
     WCHAR temp_path[MAX_PATH], origin_path[MAX_PATH];
+    int r;
 
     GetCurrentDirectoryW(MAX_PATH, origin_path);
     GetTempPathW(MAX_PATH, temp_path);
@@ -692,7 +695,26 @@ static void test_File_size(void)
     ok(val == ~(ULONGLONG)0, "file_size is %s\n", wine_dbgstr_longlong(val));
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
+    r = p_Resize(test_f1_W, 1000);
+    ok(!r, "p_Resize returned %d\n", r);
+    val = p_File_size(test_f1_W);
+    ok(val == 1000, "file_size is %s\n", wine_dbgstr_longlong(val));
+
+    r = p_Resize(test_f1_W, 100);
+    ok(!r, "p_Resize returned %d\n", r);
+    val = p_File_size(test_f1_W);
+    ok(val == 100, "file_size is %s\n", wine_dbgstr_longlong(val));
+
+    r = p_Resize(test_f1_W, 0);
+    ok(!r, "p_Resize returned %d\n", r);
+    val = p_File_size(test_f1_W);
+    ok(val == 0, "file_size is %s\n", wine_dbgstr_longlong(val));
+
     ok(DeleteFileW(test_f1_W), "expect wine_test_dir/f1 to exist\n");
+
+    r = p_Resize(test_f1_W, 0);
+    ok(r == ERROR_FILE_NOT_FOUND, "p_Resize returned %d\n", r);
+
     ok(DeleteFileW(test_f2_W), "expect wine_test_dir/f2 to exist\n");
     ok(RemoveDirectoryW(test_dir_W), "expect wine_test_dir to exist\n");
     ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");

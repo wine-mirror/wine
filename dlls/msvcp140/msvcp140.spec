@@ -3695,7 +3695,7 @@
 @ cdecl _Read_dir(ptr ptr ptr) tr2_sys__Read_dir_wchar
 @ cdecl _Remove_dir(wstr) tr2_sys__Remove_dir_wchar
 @ cdecl _Rename(wstr wstr) tr2_sys__Rename_wchar
-@ stub _Resize
+@ cdecl _Resize(wstr int64)
 @ cdecl _Set_last_write_time(wstr int64)
 @ stub _Sinh
 @ extern _Snan _Snan

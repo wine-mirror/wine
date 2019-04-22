@@ -15593,6 +15593,26 @@ ULONGLONG __cdecl _File_size(WCHAR const* path)
     return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
 }
 
+int __cdecl _Resize(const WCHAR *path, UINT64 size)
+{
+    LARGE_INTEGER offset;
+    HANDLE file;
+    BOOL ret;
+
+    TRACE("(%s %s)\n", debugstr_w(path), wine_dbgstr_longlong(size));
+
+    file = CreateFileW(path, FILE_GENERIC_WRITE, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, 0, 0);
+    if(file == INVALID_HANDLE_VALUE)
+        return GetLastError();
+
+    offset.QuadPart = size;
+    if((ret = SetFilePointerEx(file, offset, NULL, FILE_BEGIN)))
+        ret = SetEndOfFile(file);
+    CloseHandle(file);
+    return ret ? 0 : GetLastError();
+}
+
 /* ?_Equivalent@sys@tr2@std@@YAHPB_W0@Z */
 /* ?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z */
 int __cdecl tr2_sys__Equivalent_wchar(WCHAR const* path1, WCHAR const* path2)
