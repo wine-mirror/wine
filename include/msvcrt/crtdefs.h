@@ -117,6 +117,16 @@
 # endif
 #endif
 
+#ifndef DECLSPEC_NORETURN
+# if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
+#  define DECLSPEC_NORETURN __declspec(noreturn)
+# elif defined(__GNUC__)
+#  define DECLSPEC_NORETURN __attribute__((noreturn))
+# else
+#  define DECLSPEC_NORETURN
+# endif
+#endif
+
 #ifndef DECLSPEC_ALIGN
 # if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
 #  define DECLSPEC_ALIGN(x) __declspec(align(x))

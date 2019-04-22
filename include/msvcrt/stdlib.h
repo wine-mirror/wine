@@ -184,9 +184,9 @@ errno_t       __cdecl _ui64toa_s(unsigned __int64,char*,size_t,int);
 char*         __cdecl _ultoa(__msvcrt_ulong,char*,int);
 errno_t       __cdecl _ultoa_s(__msvcrt_ulong,char*,size_t,int);
 
-void          __cdecl _Exit(int);
-void          __cdecl _exit(int);
-void          __cdecl abort(void);
+void          __cdecl _Exit(int) DECLSPEC_NORETURN;
+void          __cdecl _exit(int) DECLSPEC_NORETURN;
+void          __cdecl abort(void) DECLSPEC_NORETURN;
 int           __cdecl abs(int);
 int           __cdecl atexit(void (__cdecl *)(void));
 double        __cdecl atof(const char*);
@@ -200,7 +200,7 @@ div_t  __cdecl div(int,int);
 ldiv_t __cdecl ldiv(__msvcrt_long,__msvcrt_long);
 #endif
 lldiv_t       __cdecl lldiv(__int64,__int64);
-void          __cdecl exit(int);
+void          __cdecl exit(int) DECLSPEC_NORETURN;
 void          __cdecl free(void*);
 char*         __cdecl getenv(const char*);
 __msvcrt_long __cdecl labs(__msvcrt_long);
