@@ -221,7 +221,6 @@ static inline double jn( int n, double x ) { return _jn( n, x ); }
 static inline double y0( double x ) { return _y0( x ); }
 static inline double y1( double x ) { return _y1( x ); }
 static inline double yn( int n, double x ) { return _yn( n, x ); }
-static inline double cabs( struct _complex z ) { return _cabs( z ); }
 
 static inline float hypotf( float x, float y ) { return _hypotf( x, y ); }
 

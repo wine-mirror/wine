@@ -94,14 +94,14 @@ int      __cdecl _wsystem(const wchar_t*);
 
 static inline intptr_t cwait(int *status, intptr_t pid, int action) { return _cwait(status, pid, action); }
 static inline int getpid(void) { return _getpid(); }
-static inline intptr_t execv(const char* name, const char* const* argv) { return _execv(name, argv); }
-static inline intptr_t execve(const char* name, const char* const* argv, const char* const* envv) { return _execve(name, argv, envv); }
-static inline intptr_t execvp(const char* name, const char* const* argv) { return _execvp(name, argv); }
-static inline intptr_t execvpe(const char* name, const char* const* argv, const char* const* envv) { return _execvpe(name, argv, envv); }
 static inline intptr_t spawnv(int flags, const char* name, const char* const* argv) { return _spawnv(flags, name, argv); }
 static inline intptr_t spawnve(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnve(flags, name, argv, envv); }
 static inline intptr_t spawnvp(int flags, const char* name, const char* const* argv) { return _spawnvp(flags, name, argv); }
 static inline intptr_t spawnvpe(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnvpe(flags, name, argv, envv); }
+#define execv   _execv
+#define execve  _execve
+#define execvp  _execvp
+#define execvpe _execvpe
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
 extern intptr_t WINAPIV execl(const char*,const char*,...) __attribute__((alias("_execl")));
