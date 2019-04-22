@@ -226,17 +226,27 @@ static const IDebugEventCallbacksVtbl event_callbacks_vtbl =
 
 static const char *event_name = "dbgeng_test_event";
 
+static BOOL create_target_process(PROCESS_INFORMATION *info)
+{
+    char path_name[MAX_PATH];
+    STARTUPINFOA startup;
+    char **argv;
+
+    winetest_get_mainargs(&argv);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    sprintf(path_name, "%s dbgeng target", argv[0]);
+    return CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, info);
+}
+
 static void test_attach(void)
 {
     IDebugEventCallbacks event_callbacks = { &event_callbacks_vtbl };
     PROCESS_INFORMATION info;
-    char path_name[MAX_PATH];
     IDebugControl *control;
     IDebugClient *client;
-    STARTUPINFOA startup;
     BOOL is_debugged;
     HANDLE event;
-    char **argv;
     HRESULT hr;
     BOOL ret;
 
@@ -252,11 +262,7 @@ static void test_attach(void)
     event = CreateEventA(NULL, FALSE, FALSE, event_name);
     ok(event != NULL, "Failed to create event.\n");
 
-    winetest_get_mainargs(&argv);
-    memset(&startup, 0, sizeof(startup));
-    startup.cb = sizeof(startup);
-    sprintf(path_name, "%s dbgeng target", argv[0]);
-    ret = CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+    ret = create_target_process(&info);
     ok(ret, "Failed to create target process.\n");
 
     is_debugged = TRUE;
@@ -300,6 +306,56 @@ todo_wine
     control->lpVtbl->Release(control);
 }
 
+static void test_module_information(void)
+{
+    unsigned int loaded, unloaded;
+    PROCESS_INFORMATION info;
+    IDebugSymbols *symbols;
+    IDebugControl *control;
+    IDebugClient *client;
+    HANDLE event;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = DebugCreate(&IID_IDebugClient, (void **)&client);
+    ok(hr == S_OK, "Failed to create engine object, hr %#x.\n", hr);
+
+    hr = client->lpVtbl->QueryInterface(client, &IID_IDebugControl, (void **)&control);
+    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
+
+    hr = client->lpVtbl->QueryInterface(client, &IID_IDebugSymbols, (void **)&symbols);
+    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
+
+    event = CreateEventA(NULL, FALSE, FALSE, event_name);
+    ok(event != NULL, "Failed to create event.\n");
+
+    ret = create_target_process(&info);
+    ok(ret, "Failed to create target process.\n");
+
+    hr = client->lpVtbl->AttachProcess(client, 0, info.dwProcessId, DEBUG_ATTACH_NONINVASIVE);
+    ok(hr == S_OK, "Failed to attach to process, hr %#x.\n", hr);
+
+    hr = control->lpVtbl->WaitForEvent(control, 0, INFINITE);
+    ok(hr == S_OK, "Waiting for event failed, hr %#x.\n", hr);
+
+    /* Number of modules. */
+    hr = symbols->lpVtbl->GetNumberModules(symbols, &loaded, &unloaded);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = client->lpVtbl->DetachProcesses(client);
+    ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);
+
+    SetEvent(event);
+    winetest_wait_child_process(info.hProcess);
+
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+
+    client->lpVtbl->Release(client);
+    control->lpVtbl->Release(control);
+    symbols->lpVtbl->Release(symbols);
+}
+
 static void target_proc(void)
 {
     HANDLE event = OpenEventA(SYNCHRONIZE, FALSE, event_name);
@@ -330,4 +386,5 @@ START_TEST(dbgeng)
 
     test_engine_options();
     test_attach();
+    test_module_information();
 }

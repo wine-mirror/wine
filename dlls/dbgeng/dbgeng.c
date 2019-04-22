@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "psapi.h"
 
 #include "initguid.h"
 #include "dbgeng.h"
@@ -44,6 +45,12 @@ struct target_process
     unsigned int pid;
     unsigned int attach_flags;
     HANDLE handle;
+    struct
+    {
+        unsigned int loaded;
+        unsigned int unloaded;
+        BOOL initialized;
+    } modules;
 };
 
 struct debug_client
@@ -57,6 +64,37 @@ struct debug_client
     struct list targets;
     IDebugEventCallbacks *event_callbacks;
 };
+
+static struct target_process *debug_client_get_target(struct debug_client *debug_client)
+{
+    if (list_empty(&debug_client->targets))
+        return NULL;
+
+    return LIST_ENTRY(list_head(&debug_client->targets), struct target_process, entry);
+}
+
+static HRESULT debug_target_init_modules_info(struct target_process *target)
+{
+    DWORD needed;
+
+    if (target->modules.initialized)
+        return S_OK;
+
+    if (!target->handle)
+        return E_UNEXPECTED;
+
+    needed = 0;
+    EnumProcessModules(target->handle, NULL, 0, &needed);
+    if (!needed)
+        return E_FAIL;
+
+    target->modules.loaded = needed / sizeof(HMODULE);
+    target->modules.unloaded = 0; /* FIXME */
+
+    target->modules.initialized = TRUE;
+
+    return S_OK;
+}
 
 static void debug_client_detach_target(struct target_process *target)
 {
@@ -255,7 +293,7 @@ static HRESULT STDMETHODCALLTYPE debugclient_AttachProcess(IDebugClient *iface, 
         return E_NOTIMPL;
     }
 
-    if (!(process = heap_alloc(sizeof(*process))))
+    if (!(process = heap_alloc_zero(sizeof(*process))))
         return E_OUTOFMEMORY;
 
     process->pid = pid;
@@ -897,9 +935,22 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetOffsetByLine(IDebugSymbols3 *if
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetNumberModules(IDebugSymbols3 *iface, ULONG *loaded, ULONG *unloaded)
 {
-    FIXME("%p, %p, %p stub.\n", iface, loaded, unloaded);
+    struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
+    static struct target_process *target;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, loaded, unloaded);
+
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    if (FAILED(hr = debug_target_init_modules_info(target)))
+        return hr;
+
+    *loaded = target->modules.loaded;
+    *unloaded = target->modules.unloaded;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleByIndex(IDebugSymbols3 *iface, ULONG index, ULONG64 *base)
@@ -2679,15 +2730,13 @@ static HRESULT STDMETHODCALLTYPE debugcontrol_WaitForEvent(IDebugControl2 *iface
 
     /* FIXME: only one target is used currently */
 
-    if (list_empty(&debug_client->targets))
+    if (!(target = debug_client_get_target(debug_client)))
         return E_UNEXPECTED;
-
-    target = LIST_ENTRY(list_head(&debug_client->targets), struct target_process, entry);
 
     if (target->attach_flags & DEBUG_ATTACH_NONINVASIVE)
     {
         BOOL suspend = !(target->attach_flags & DEBUG_ATTACH_NONINVASIVE_NO_SUSPEND);
-        DWORD access = PROCESS_VM_READ | PROCESS_VM_WRITE;
+        DWORD access = PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_LIMITED_INFORMATION;
         NTSTATUS status;
 
         if (suspend)
