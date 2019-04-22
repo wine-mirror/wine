@@ -385,6 +385,46 @@ failed:
     return hr;
 }
 
+static HRESULT source_reader_media_stream_state_handler(struct source_reader *reader, IMFMediaStream *stream,
+        MediaEventType event)
+{
+    unsigned int i;
+    HRESULT hr;
+    DWORD id;
+
+    if (FAILED(hr = media_stream_get_id(stream, &id)))
+    {
+        WARN("Unidentified stream %p, hr %#x.\n", stream, hr);
+        return hr;
+    }
+
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        if (id == reader->streams[i].id)
+        {
+            EnterCriticalSection(&reader->streams[i].cs);
+
+            switch (event)
+            {
+                case MEEndOfStream:
+                    reader->streams[i].state = STREAM_STATE_EOS;
+                    break;
+                case MEStreamSeeked:
+                case MEStreamStarted:
+                    reader->streams[i].state = STREAM_STATE_READY;
+                    break;
+                default:
+                    ;
+            }
+
+            LeaveCriticalSection(&reader->streams[i].cs);
+            break;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct source_reader *reader = impl_from_stream_callback_IMFAsyncCallback(iface);
@@ -408,6 +448,11 @@ static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallba
     {
         case MEMediaSample:
             hr = source_reader_media_sample_handler(reader, stream, event);
+            break;
+        case MEStreamSeeked:
+        case MEStreamStarted:
+        case MEEndOfStream:
+            hr = source_reader_media_stream_state_handler(reader, stream, event_type);
             break;
         default:
             ;
@@ -735,6 +780,7 @@ static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index,
         DWORD *stream_flags, LONGLONG *timestamp, IMFSample **sample)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    DWORD stream_index;
     HRESULT hr;
 
     TRACE("%p, %#x, %#x, %p, %p, %p, %p\n", iface, index, flags, actual_index, stream_flags, timestamp, sample);
@@ -742,16 +788,16 @@ static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index,
     switch (index)
     {
         case MF_SOURCE_READER_FIRST_VIDEO_STREAM:
-            index = reader->first_video_stream_index;
+            stream_index = reader->first_video_stream_index;
             break;
         case MF_SOURCE_READER_FIRST_AUDIO_STREAM:
-            index = reader->first_audio_stream_index;
+            stream_index = reader->first_audio_stream_index;
             break;
         case MF_SOURCE_READER_ANY_STREAM:
             FIXME("Non-specific requests are not supported.\n");
             return E_NOTIMPL;
         default:
-            ;
+            stream_index = index;
     }
 
     /* FIXME: probably should happen once */
@@ -769,18 +815,20 @@ static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index,
         if (!stream_flags || !sample)
             return E_POINTER;
 
-        if (actual_index)
-            *actual_index = index;
-
         *sample = NULL;
 
-        if (index >= reader->stream_count)
+        if (stream_index >= reader->stream_count)
         {
             *stream_flags = MF_SOURCE_READERF_ERROR;
+            if (actual_index)
+                *actual_index = index;
             return MF_E_INVALIDSTREAMNUMBER;
         }
 
-        stream = &reader->streams[index];
+        if (actual_index)
+            *actual_index = stream_index;
+
+        stream = &reader->streams[stream_index];
 
         EnterCriticalSection(&stream->cs);
 
