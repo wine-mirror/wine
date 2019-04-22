@@ -322,11 +322,13 @@ todo_wine
 static void test_module_information(void)
 {
     static const char *event_name = "dbgeng_test_event";
+    DEBUG_MODULE_PARAMETERS params[2];
     unsigned int loaded, unloaded;
     PROCESS_INFORMATION info;
     IDebugSymbols *symbols;
     IDebugControl *control;
     IDebugClient *client;
+    ULONG64 bases[2];
     ULONG64 base;
     HANDLE event;
     HRESULT hr;
@@ -369,6 +371,33 @@ static void test_module_information(void)
     hr = symbols->lpVtbl->GetModuleByIndex(symbols, 0, &base);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!base, "Unexpected module base.\n");
+
+    /* Parameters. */
+    hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, NULL, 0, params);
+    ok(hr == S_OK, "Failed to get module parameters, hr %#x.\n", hr);
+    ok(params[0].Base == base, "Unexpected module base.\n");
+
+    hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, &base, 100, params);
+    ok(hr == S_OK, "Failed to get module parameters, hr %#x.\n", hr);
+    ok(params[0].Base == base, "Unexpected module base.\n");
+
+    bases[0] = base + 1;
+    bases[1] = base;
+    hr = symbols->lpVtbl->GetModuleParameters(symbols, 2, bases, 0, params);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#x.\n", hr);
+    ok(params[0].Base == DEBUG_INVALID_OFFSET, "Unexpected module base.\n");
+    ok(params[0].Size == 0, "Unexpected module size.\n");
+    ok(params[1].Base == base, "Unexpected module base.\n");
+    ok(params[1].Size != 0, "Unexpected module size.\n");
+
+    hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, bases, 0, params);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#x.\n", hr);
+
+    hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, bases, loaded, params);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* XP */, "Failed to get module parameters, hr %#x.\n", hr);
+
+    hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, NULL, loaded, params);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
 
     hr = client->lpVtbl->DetachProcesses(client);
     ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);

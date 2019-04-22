@@ -162,6 +162,8 @@ DEFINE_GUID(IID_IDebugSystemObjects3,     0xe9676e2f, 0xe286, 0x4ea3, 0xb0, 0xf9
 #define DEBUG_CDS_REFRESH_INLINESTEP                        16
 #define DEBUG_CDS_REFRESH_INLINESTEP_PSEUDO                 17
 
+#define DEBUG_INVALID_OFFSET                      ((ULONG64)-1)
+
 typedef struct _DEBUG_MODULE_PARAMETERS
 {
     ULONG64 Base;

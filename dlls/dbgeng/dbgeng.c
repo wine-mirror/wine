@@ -144,6 +144,22 @@ static const struct module_info *debug_target_get_module_info(struct target_proc
     return &target->modules.info[i];
 }
 
+static const struct module_info *debug_target_get_module_info_by_base(struct target_process *target, ULONG64 base)
+{
+    unsigned int i;
+
+    if (FAILED(debug_target_init_modules_info(target)))
+        return NULL;
+
+    for (i = 0; i < target->modules.loaded; ++i)
+    {
+        if (target->modules.info[i].params.Base == base)
+            return &target->modules.info[i];
+    }
+
+    return NULL;
+}
+
 static void debug_client_detach_target(struct target_process *target)
 {
     NTSTATUS status;
@@ -1055,11 +1071,44 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleNames(IDebugSymbols3 *ifa
 }
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleParameters(IDebugSymbols3 *iface, ULONG count, ULONG64 *bases,
-        ULONG start, DEBUG_MODULE_PARAMETERS *parameters)
+        ULONG start, DEBUG_MODULE_PARAMETERS *params)
 {
-    FIXME("%p, %u, %p, %u, %p stub.\n", iface, count, bases, start, parameters);
+    struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
+    const struct module_info *info;
+    struct target_process *target;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %u, %p.\n", iface, count, bases, start, params);
+
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    if (bases)
+    {
+        for (i = 0; i < count; ++i)
+        {
+            if ((info = debug_target_get_module_info_by_base(target, bases[i])))
+            {
+                params[i] = info->params;
+            }
+            else
+            {
+                memset(&params[i], 0, sizeof(*params));
+                params[i].Base = DEBUG_INVALID_OFFSET;
+            }
+        }
+    }
+    else
+    {
+        for (i = start; i < start + count; ++i)
+        {
+            if (!(info = debug_target_get_module_info(target, i)))
+                return E_INVALIDARG;
+            params[i] = info->params;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetSymbolModule(IDebugSymbols3 *iface, const char *symbol, ULONG64 *base)
