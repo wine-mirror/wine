@@ -613,10 +613,12 @@ static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWOR
         hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, type_index, &src_type);
     IMFMediaTypeHandler_Release(handler);
 
-    if (SUCCEEDED(hr = MFCreateMediaType(type)))
-        hr = IMFMediaType_CopyAllItems(src_type, (IMFAttributes *)*type);
-
-    IMFMediaType_Release(src_type);
+    if (SUCCEEDED(hr))
+    {
+        if (SUCCEEDED(hr = MFCreateMediaType(type)))
+            hr = IMFMediaType_CopyAllItems(src_type, (IMFAttributes *)*type);
+        IMFMediaType_Release(src_type);
+    }
 
     return hr;
 }
