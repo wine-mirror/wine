@@ -39,6 +39,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbgeng);
 extern NTSTATUS WINAPI NtSuspendProcess(HANDLE handle);
 extern NTSTATUS WINAPI NtResumeProcess(HANDLE handle);
 
+struct module_info
+{
+    DEBUG_MODULE_PARAMETERS params;
+};
+
 struct target_process
 {
     struct list entry;
@@ -47,6 +52,7 @@ struct target_process
     HANDLE handle;
     struct
     {
+        struct module_info *info;
         unsigned int loaded;
         unsigned int unloaded;
         BOOL initialized;
@@ -75,6 +81,9 @@ static struct target_process *debug_client_get_target(struct debug_client *debug
 
 static HRESULT debug_target_init_modules_info(struct target_process *target)
 {
+    unsigned int i, count;
+    HMODULE *modules;
+    MODULEINFO info;
     DWORD needed;
 
     if (target->modules.initialized)
@@ -88,12 +97,51 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
     if (!needed)
         return E_FAIL;
 
-    target->modules.loaded = needed / sizeof(HMODULE);
+    count = needed / sizeof(HMODULE);
+
+    if (!(modules = heap_alloc(count * sizeof(*modules))))
+        return E_OUTOFMEMORY;
+
+    if (!(target->modules.info = heap_alloc_zero(count * sizeof(*target->modules.info))))
+    {
+        heap_free(modules);
+        return E_OUTOFMEMORY;
+    }
+
+    if (EnumProcessModules(target->handle, modules, count * sizeof(*modules), &needed))
+    {
+        for (i = 0; i < count; ++i)
+        {
+            if (!GetModuleInformation(target->handle, modules[i], &info, sizeof(info)))
+            {
+                WARN("Failed to get module information, error %d.\n", GetLastError());
+                continue;
+            }
+
+            target->modules.info[i].params.Base = (ULONG_PTR)info.lpBaseOfDll;
+            target->modules.info[i].params.Size = info.SizeOfImage;
+        }
+    }
+
+    heap_free(modules);
+
+    target->modules.loaded = count;
     target->modules.unloaded = 0; /* FIXME */
 
     target->modules.initialized = TRUE;
 
     return S_OK;
+}
+
+static const struct module_info *debug_target_get_module_info(struct target_process *target, unsigned int i)
+{
+    if (FAILED(debug_target_init_modules_info(target)))
+        return NULL;
+
+    if (i >= target->modules.loaded)
+        return NULL;
+
+    return &target->modules.info[i];
 }
 
 static void debug_client_detach_target(struct target_process *target)
@@ -185,6 +233,12 @@ static ULONG STDMETHODCALLTYPE debugclient_AddRef(IDebugClient *iface)
     return refcount;
 }
 
+static void debug_target_free(struct target_process *target)
+{
+    heap_free(target->modules.info);
+    heap_free(target);
+}
+
 static ULONG STDMETHODCALLTYPE debugclient_Release(IDebugClient *iface)
 {
     struct debug_client *debug_client = impl_from_IDebugClient(iface);
@@ -199,7 +253,7 @@ static ULONG STDMETHODCALLTYPE debugclient_Release(IDebugClient *iface)
         {
             debug_client_detach_target(cur);
             list_remove(&cur->entry);
-            heap_free(cur);
+            debug_target_free(cur);
         }
         if (debug_client->event_callbacks)
             debug_client->event_callbacks->lpVtbl->Release(debug_client->event_callbacks);
@@ -955,9 +1009,21 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetNumberModules(IDebugSymbols3 *i
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleByIndex(IDebugSymbols3 *iface, ULONG index, ULONG64 *base)
 {
-    FIXME("%p, %u, %p stub.\n", iface, index, base);
+    struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
+    const struct module_info *info;
+    struct target_process *target;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, base);
+
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    if (!(info = debug_target_get_module_info(target, index)))
+        return E_INVALIDARG;
+
+    *base = info->params.Base;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleByModuleName(IDebugSymbols3 *iface, const char *name,

@@ -224,23 +224,36 @@ static const IDebugEventCallbacksVtbl event_callbacks_vtbl =
     event_callbacks_ChangeSymbolState,
 };
 
-static const char *event_name = "dbgeng_test_event";
-
-static BOOL create_target_process(PROCESS_INFORMATION *info)
+static BOOL create_target_process(const char *event_name, PROCESS_INFORMATION *info)
 {
+    static const char *event_target_ready_name = "dbgeng_test_target_ready_event";
     char path_name[MAX_PATH];
     STARTUPINFOA startup;
+    HANDLE ready_event;
     char **argv;
+    BOOL ret;
+
+    ready_event = CreateEventA(NULL, FALSE, FALSE, event_target_ready_name);
+    ok(ready_event != NULL, "Failed to create event.\n");
 
     winetest_get_mainargs(&argv);
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
-    sprintf(path_name, "%s dbgeng target", argv[0]);
-    return CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, info);
+    sprintf(path_name, "%s dbgeng target %s %s", argv[0], event_name, event_target_ready_name);
+    ret = CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, info);
+    if (ret)
+    {
+        WaitForSingleObject(ready_event, INFINITE);
+    }
+
+    CloseHandle(ready_event);
+
+    return ret;
 }
 
 static void test_attach(void)
 {
+    static const char *event_name = "dbgeng_test_event";
     IDebugEventCallbacks event_callbacks = { &event_callbacks_vtbl };
     PROCESS_INFORMATION info;
     IDebugControl *control;
@@ -262,7 +275,7 @@ static void test_attach(void)
     event = CreateEventA(NULL, FALSE, FALSE, event_name);
     ok(event != NULL, "Failed to create event.\n");
 
-    ret = create_target_process(&info);
+    ret = create_target_process(event_name, &info);
     ok(ret, "Failed to create target process.\n");
 
     is_debugged = TRUE;
@@ -308,11 +321,13 @@ todo_wine
 
 static void test_module_information(void)
 {
+    static const char *event_name = "dbgeng_test_event";
     unsigned int loaded, unloaded;
     PROCESS_INFORMATION info;
     IDebugSymbols *symbols;
     IDebugControl *control;
     IDebugClient *client;
+    ULONG64 base;
     HANDLE event;
     HRESULT hr;
     BOOL ret;
@@ -329,8 +344,11 @@ static void test_module_information(void)
     event = CreateEventA(NULL, FALSE, FALSE, event_name);
     ok(event != NULL, "Failed to create event.\n");
 
-    ret = create_target_process(&info);
+    ret = create_target_process(event_name, &info);
     ok(ret, "Failed to create target process.\n");
+
+    hr = control->lpVtbl->SetEngineOptions(control, DEBUG_ENGOPT_INITIAL_BREAK);
+    ok(hr == S_OK, "Failed to set engine options, hr %#x.\n", hr);
 
     hr = client->lpVtbl->AttachProcess(client, 0, info.dwProcessId, DEBUG_ATTACH_NONINVASIVE);
     ok(hr == S_OK, "Failed to attach to process, hr %#x.\n", hr);
@@ -341,6 +359,16 @@ static void test_module_information(void)
     /* Number of modules. */
     hr = symbols->lpVtbl->GetNumberModules(symbols, &loaded, &unloaded);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(loaded > 0, "Unexpected module count %u.\n", loaded);
+
+    /* Module base. */
+    hr = symbols->lpVtbl->GetModuleByIndex(symbols, loaded, &base);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    base = 0;
+    hr = symbols->lpVtbl->GetModuleByIndex(symbols, 0, &base);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!base, "Unexpected module base.\n");
 
     hr = client->lpVtbl->DetachProcesses(client);
     ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);
@@ -356,19 +384,26 @@ static void test_module_information(void)
     symbols->lpVtbl->Release(symbols);
 }
 
-static void target_proc(void)
+static void target_proc(const char *event_name, const char *event_ready_name)
 {
-    HANDLE event = OpenEventA(SYNCHRONIZE, FALSE, event_name);
+    HANDLE terminate_event, ready_event;
 
-    ok(event != NULL, "Failed to open event handle.\n");
+    terminate_event = OpenEventA(SYNCHRONIZE, FALSE, event_name);
+    ok(terminate_event != NULL, "Failed to open event handle.\n");
+
+    ready_event = OpenEventA(EVENT_MODIFY_STATE, FALSE, event_ready_name);
+    ok(ready_event != NULL, "Failed to open event handle.\n");
+
+    SetEvent(ready_event);
 
     for (;;)
     {
-        if (WaitForSingleObject(event, 100) == WAIT_OBJECT_0)
+        if (WaitForSingleObject(terminate_event, 100) == WAIT_OBJECT_0)
             break;
     }
 
-    CloseHandle(event);
+    CloseHandle(terminate_event);
+    CloseHandle(ready_event);
 }
 
 START_TEST(dbgeng)
@@ -378,9 +413,9 @@ START_TEST(dbgeng)
 
     argc = winetest_get_mainargs(&argv);
 
-    if (argc >= 3 && !strcmp(argv[2], "target"))
+    if (argc > 4 && !strcmp(argv[2], "target"))
     {
-        target_proc();
+        target_proc(argv[3], argv[4]);
         return;
     }
 
