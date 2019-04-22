@@ -184,10 +184,10 @@ static const union {
 #define FP_ZERO       0
 
 short __cdecl _dclass(double);
-#define isfinite(x) (_dclass((double)(x)) <= FP_ZERO)
-#define isinf(x)    (_dclass((double)(x)) == FP_INFINITE)
-#define isnan(x)    (_dclass((double)(x)) == FP_NAN)
-#define isnormal(x) (_dclass((double)(x)) == FP_NORMAL)
+#define isfinite(x) (_finite(x))
+#define isinf(x)    (!(_finite(x) || _isnan(x)))
+#define isnan(x)    (_isnan(x))
+#define isnormal(x) (!!(_fpclass((double)(x)) & (_FPCLASS_NN|_FPCLASS_PN)))
 
 #ifdef __cplusplus
 }
