@@ -152,6 +152,7 @@ START_TEST(audiorecord)
     IMoniker *mon;
     WCHAR *name;
     HRESULT hr;
+    ULONG ref;
 
     CoInitialize(NULL);
 
@@ -182,6 +183,8 @@ START_TEST(audiorecord)
 
         test_interfaces(filter);
 
+        ref = IBaseFilter_Release(filter);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
         IMoniker_Release(mon);
     }
 
