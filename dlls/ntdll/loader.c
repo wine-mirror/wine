@@ -1986,6 +1986,85 @@ static BOOL is_valid_binary( HMODULE module, const pe_image_info_t *info )
 }
 
 
+/***********************************************************************
+ *	open_dll_file
+ *
+ * Open a file for a new dll. Helper for find_dll_file.
+ */
+static NTSTATUS open_dll_file( const WCHAR *name, UNICODE_STRING *nt_name, WINE_MODREF **pwm,
+                               void **module, pe_image_info_t *image_info, struct stat *st )
+{
+    FILE_BASIC_INFORMATION info;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    LARGE_INTEGER size;
+    SIZE_T len = 0;
+    NTSTATUS status;
+    HANDLE handle, mapping;
+    int fd, needs_close;
+
+    nt_name->Buffer = NULL;
+    if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, nt_name, NULL, NULL ))) return status;
+
+    if ((*pwm = find_fullname_module( nt_name ))) return STATUS_SUCCESS;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if ((status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                              FILE_SHARE_READ | FILE_SHARE_DELETE,
+                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
+    {
+        if (status != STATUS_OBJECT_PATH_NOT_FOUND &&
+            status != STATUS_OBJECT_NAME_NOT_FOUND &&
+            !NtQueryAttributesFile( &attr, &info ))
+        {
+            /* if the file exists but failed to open, report the error */
+            return status;
+        }
+        /* otherwise continue searching */
+        return STATUS_DLL_NOT_FOUND;
+    }
+
+    if (!server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL ))
+    {
+        fstat( fd, st );
+        if (needs_close) close( fd );
+        if ((*pwm = find_fileid_module( st )))
+        {
+            TRACE( "%s is the same file as existing module %p %s\n", debugstr_w( nt_name->Buffer ),
+                   (*pwm)->ldr.BaseAddress, debugstr_w( (*pwm)->ldr.FullDllName.Buffer ));
+            NtClose( handle );
+            return STATUS_SUCCESS;
+        }
+    }
+
+    size.QuadPart = 0;
+    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
+                              SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                              NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle );
+    NtClose( handle );
+
+    if (!status)
+    {
+        status = virtual_map_section( mapping, module, 0, 0, NULL, &len,
+                                      PAGE_EXECUTE_READ, image_info );
+        if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
+        NtClose( mapping );
+    }
+    if (!status && !is_valid_binary( *module, image_info ))
+    {
+        TRACE( "%s is for arch %x, continuing search\n", debugstr_us(nt_name), image_info->machine );
+        NtUnmapViewOfSection( NtCurrentProcess(), *module );
+        status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+    }
+    return status;
+}
+
+
 /******************************************************************************
  *	load_native_dll  (internal)
  */
@@ -2284,85 +2363,6 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
 done:
     RtlFreeHeap( GetProcessHeap(), 0, info );
     RtlReleaseActivationContext( data.hActCtx );
-    return status;
-}
-
-
-/***********************************************************************
- *	open_dll_file
- *
- * Open a file for a new dll. Helper for find_dll_file.
- */
-static NTSTATUS open_dll_file( const WCHAR *name, UNICODE_STRING *nt_name, WINE_MODREF **pwm,
-                               void **module, pe_image_info_t *image_info, struct stat *st )
-{
-    FILE_BASIC_INFORMATION info;
-    OBJECT_ATTRIBUTES attr;
-    IO_STATUS_BLOCK io;
-    LARGE_INTEGER size;
-    SIZE_T len = 0;
-    NTSTATUS status;
-    HANDLE handle, mapping;
-    int fd, needs_close;
-
-    nt_name->Buffer = NULL;
-    if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, nt_name, NULL, NULL ))) return status;
-
-    if ((*pwm = find_fullname_module( nt_name ))) return STATUS_SUCCESS;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    if ((status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
-                              FILE_SHARE_READ | FILE_SHARE_DELETE,
-                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
-    {
-        if (status != STATUS_OBJECT_PATH_NOT_FOUND &&
-            status != STATUS_OBJECT_NAME_NOT_FOUND &&
-            !NtQueryAttributesFile( &attr, &info ))
-        {
-            /* if the file exists but failed to open, report the error */
-            return status;
-        }
-        /* otherwise continue searching */
-        return STATUS_DLL_NOT_FOUND;
-    }
-
-    if (!server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL ))
-    {
-        fstat( fd, st );
-        if (needs_close) close( fd );
-        if ((*pwm = find_fileid_module( st )))
-        {
-            TRACE( "%s is the same file as existing module %p %s\n", debugstr_w( nt_name->Buffer ),
-                   (*pwm)->ldr.BaseAddress, debugstr_w( (*pwm)->ldr.FullDllName.Buffer ));
-            NtClose( handle );
-            return STATUS_SUCCESS;
-        }
-    }
-
-    size.QuadPart = 0;
-    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
-                              SECTION_MAP_READ | SECTION_MAP_EXECUTE,
-                              NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle );
-    NtClose( handle );
-
-    if (!status)
-    {
-        status = virtual_map_section( mapping, module, 0, 0, NULL, &len,
-                                      PAGE_EXECUTE_READ, image_info );
-        if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
-        NtClose( mapping );
-    }
-    if (!status && !is_valid_binary( *module, image_info ))
-    {
-        TRACE( "%s is for arch %x, continuing search\n", debugstr_us(nt_name), image_info->machine );
-        NtUnmapViewOfSection( NtCurrentProcess(), *module );
-        status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
-    }
     return status;
 }
 
