@@ -1131,20 +1131,19 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
         jsval_t *r)
 {
     match_state_t match_result, *match_ptr = &match_result;
-    DWORD length, i, match_len = 0;
+    size_t length, i = 0, match_len = 0;
     const WCHAR *ptr, *ptr2, *str, *match_str = NULL;
     unsigned limit = ~0u;
     jsdisp_t *array, *regexp = NULL;
     jsstr_t *jsstr, *match_jsstr, *tmp_str;
     HRESULT hres;
 
-    TRACE("\n");
-
     hres = get_string_flat_val(ctx, jsthis, &jsstr, &str);
     if(FAILED(hres))
         return hres;
-
     length = jsstr_length(jsstr);
+
+    TRACE("%s\n", debugstr_wn(str, length));
 
     if(!argc || (is_undefined(argv[0]) && ctx->version >= SCRIPTLANGUAGEVERSION_ES5)) {
         if(!r)
@@ -1203,11 +1202,29 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     if(SUCCEEDED(hres)) {
         ptr = str;
         match_result.cp = str;
-        for(i=0; i<limit; i++) {
+        while(i < limit) {
             if(regexp) {
                 hres = regexp_match_next(ctx, regexp, REM_NO_PARENS, jsstr, &match_ptr);
                 if(hres != S_OK)
                     break;
+                TRACE("got match %d %d\n", (int)(match_result.cp - match_result.match_len - str), match_result.match_len);
+                if(!match_result.match_len) {
+                    /* If an empty string is matched, prevent including any match in the result */
+                    if(!length) {
+                        limit = 0;
+                        break;
+                    }
+                    if(match_result.cp == ptr) {
+                        match_result.cp++;
+                        hres = regexp_match_next(ctx, regexp, REM_NO_PARENS, jsstr, &match_ptr);
+                        if(hres != S_OK)
+                            break;
+                        TRACE("retried, got match %d %d\n", (int)(match_result.cp - match_result.match_len - str),
+                              match_result.match_len);
+                    }
+                    if(!match_result.match_len && match_result.cp == str + length)
+                        break;
+                }
                 ptr2 = match_result.cp - match_result.match_len;
             }else if(match_str) {
                 ptr2 = strstrW(ptr, match_str);
@@ -1219,16 +1236,18 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
                 ptr2 = ptr+1;
             }
 
-            tmp_str = jsstr_alloc_len(ptr, ptr2-ptr);
-            if(!tmp_str) {
-                hres = E_OUTOFMEMORY;
-                break;
-            }
+            if(!regexp || ptr2 > ptr) {
+                tmp_str = jsstr_alloc_len(ptr, ptr2-ptr);
+                if(!tmp_str) {
+                    hres = E_OUTOFMEMORY;
+                    break;
+                }
 
-            hres = jsdisp_propput_idx(array, i, jsval_string(tmp_str));
-            jsstr_release(tmp_str);
-            if(FAILED(hres))
-                break;
+                hres = jsdisp_propput_idx(array, i++, jsval_string(tmp_str));
+                jsstr_release(tmp_str);
+                if(FAILED(hres))
+                    break;
+            }
 
             if(regexp)
                 ptr = match_result.cp;
@@ -1242,7 +1261,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     if(SUCCEEDED(hres) && (match_str || regexp) && i<limit) {
         DWORD len = (str+length) - ptr;
 
-        if(len || match_str) {
+        if(len || match_str || !length) {
             tmp_str = jsstr_alloc_len(ptr, len);
 
             if(tmp_str) {
