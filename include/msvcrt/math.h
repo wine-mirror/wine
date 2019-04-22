@@ -195,7 +195,7 @@ short __cdecl _dclass(double);
 
 #include <poppack.h>
 
-#ifdef _USE_MATH_DEFINES
+#if !defined(__STRICT_ANSI__) || defined(_POSIX_C_SOURCE) || defined(_POSIX_SOURCE) || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE) || defined(_USE_MATH_DEFINES)
 #ifndef _MATH_DEFINES_DEFINED
 #define _MATH_DEFINES_DEFINED
 #define M_E         2.71828182845904523536
