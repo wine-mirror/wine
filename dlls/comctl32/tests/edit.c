@@ -1699,7 +1699,7 @@ static void test_margins_font_change(void)
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Arial");
     lf.lfHeight = 16;
-    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfCharSet = GREEK_CHARSET; /* to avoid associated charset feature */
     hfont = CreateFontIndirectA(&lf);
     lf.lfHeight = 30;
     hfont2 = CreateFontIndirectA(&lf);
