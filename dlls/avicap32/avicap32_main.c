@@ -128,11 +128,18 @@ static BOOL query_video_device(int devnum, char *name, int namesize, char *versi
 
    memset(&caps, 0, sizeof(caps));
    if (xioctl(fd, VIDIOC_QUERYCAP, &caps) != -1) {
-      lstrcpynA(name, (char *)caps.card, namesize);
-      snprintf(version, versionsize, "%s v%u.%u.%u", (char *)caps.driver, (caps.version >> 16) & 0xFF,
+      BOOL isCaptureDevice;
+      if (caps.capabilities & V4L2_CAP_DEVICE_CAPS)
+         isCaptureDevice = caps.device_caps & V4L2_CAP_VIDEO_CAPTURE;
+      else
+         isCaptureDevice = caps.capabilities & V4L2_CAP_VIDEO_CAPTURE;
+      if (isCaptureDevice) {
+         lstrcpynA(name, (char *)caps.card, namesize);
+         snprintf(version, versionsize, "%s v%u.%u.%u", (char *)caps.driver, (caps.version >> 16) & 0xFF,
                              (caps.version >> 8) & 0xFF, caps.version & 0xFF);
+      }
       close(fd);
-      return TRUE;
+      return isCaptureDevice;
    }
 
    if (errno != EINVAL && errno != 515)
