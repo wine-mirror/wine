@@ -1490,6 +1490,7 @@ static void test_margins_usefontinfo(UINT charset)
     INT margins, threshold, expect, empty_expect, small_expect;
     HWND hwnd;
     HDC hdc;
+    TEXTMETRICW tm;
     SIZE size;
     BOOL cjk;
     LOGFONTA lf;
@@ -1513,7 +1514,16 @@ static void test_margins_usefontinfo(UINT charset)
 
     hdc = GetDC(hwnd);
     hfont = SelectObject(hdc, hfont);
-    size.cx = GdiGetCharDimensions( hdc, NULL, &size.cy );
+    size.cx = GdiGetCharDimensions( hdc, &tm, &size.cy );
+    if ((charset != tm.tmCharSet && charset != DEFAULT_CHARSET) ||
+        !(tm.tmPitchAndFamily & (TMPF_TRUETYPE | TMPF_VECTOR))) {
+        skip("%s for charset %d isn't available\n", lf.lfFaceName, charset);
+        hfont = SelectObject(hdc, hfont);
+        ReleaseDC(hwnd, hdc);
+        DestroyWindow(hwnd);
+        DeleteObject(hfont);
+        return;
+    }
     expect = MAKELONG(size.cx / 2, size.cx / 2);
     small_expect = 0;
     empty_expect = size.cx >= 28 ? small_expect : expect;
