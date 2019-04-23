@@ -3063,7 +3063,10 @@ double CDECL MSVCR120_asinh(double x)
 #ifdef HAVE_ASINH
     return asinh(x);
 #else
-    if (!isfinite(x*x+1)) return log(2) + log(x);
+    if (!isfinite(x*x+1)) {
+      if (x > 0) return log(2) + log(x);
+      else return -log(2) - log(-x);
+    }
     return log(x + sqrt(x*x+1));
 #endif
 }
