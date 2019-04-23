@@ -326,11 +326,11 @@ static void test_module_information(void)
     DEBUG_MODULE_PARAMETERS params[2];
     IDebugDataSpaces *dataspaces;
     PROCESS_INFORMATION info;
-    IDebugSymbols *symbols;
+    IDebugSymbols2 *symbols;
     IDebugControl *control;
     ULONG64 bases[2], base;
+    char buffer[MAX_PATH];
     IDebugClient *client;
-    char buffer[64];
     HANDLE event;
     HRESULT hr;
     BOOL ret;
@@ -341,7 +341,7 @@ static void test_module_information(void)
     hr = client->lpVtbl->QueryInterface(client, &IID_IDebugControl, (void **)&control);
     ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
 
-    hr = client->lpVtbl->QueryInterface(client, &IID_IDebugSymbols, (void **)&symbols);
+    hr = client->lpVtbl->QueryInterface(client, &IID_IDebugSymbols2, (void **)&symbols);
     ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
 
     hr = client->lpVtbl->QueryInterface(client, &IID_IDebugDataSpaces, (void **)&dataspaces);
@@ -431,6 +431,27 @@ static void test_module_information(void)
 
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, NULL, loaded, params);
     ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    /* Image name. */
+    hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, buffer, sizeof(buffer), &length);
+    ok(hr == S_OK, "Failed to get image name, hr %#x.\n", hr);
+    ok(strlen(buffer) + 1 == length, "Unexpected length.\n");
+
+    hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, NULL, sizeof(buffer), &length);
+    ok(hr == S_OK, "Failed to get image name, hr %#x.\n", hr);
+    ok(length > 0, "Unexpected length.\n");
+
+    hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, DEBUG_ANY_ID, base, buffer, sizeof(buffer),
+            &length);
+    ok(hr == S_OK, "Failed to get image name, hr %#x.\n", hr);
+    ok(strlen(buffer) + 1 == length, "Unexpected length.\n");
+
+    hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, buffer, length - 1, &length);
+    ok(hr == S_FALSE, "Failed to get image name, hr %#x.\n", hr);
+    ok(strlen(buffer) + 2 == length, "Unexpected length %u, %u.\n", length, strlen(buffer));
+
+    hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, NULL, length - 1, NULL);
+    ok(hr == S_FALSE, "Failed to get image name, hr %#x.\n", hr);
 
     /* Read memory. */
     base = 0;

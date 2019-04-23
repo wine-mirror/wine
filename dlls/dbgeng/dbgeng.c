@@ -42,6 +42,7 @@ extern NTSTATUS WINAPI NtResumeProcess(HANDLE handle);
 struct module_info
 {
     DEBUG_MODULE_PARAMETERS params;
+    char image_name[MAX_PATH];
 };
 
 struct target_process
@@ -136,6 +137,9 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
 
             target->modules.info[i].params.Base = (ULONG_PTR)info.lpBaseOfDll;
             target->modules.info[i].params.Size = info.SizeOfImage;
+
+            GetModuleFileNameExA(target->handle, modules[i], target->modules.info[i].image_name,
+                    ARRAY_SIZE(target->modules.info[i].image_name));
         }
     }
 
@@ -1448,13 +1452,67 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleVersionInformation(IDebug
     return E_NOTIMPL;
 }
 
+static HRESULT debug_target_return_string(const char *str, char *buffer, unsigned int buffer_size,
+        unsigned int *size)
+{
+    unsigned int len = strlen(str), dst_len;
+
+    if (size)
+        *size = len + 1;
+
+    if (buffer && buffer_size)
+    {
+        dst_len = min(len, buffer_size - 1);
+        if (dst_len)
+            memcpy(buffer, str, dst_len);
+        buffer[dst_len] = 0;
+    }
+
+    return len < buffer_size ? S_OK : S_FALSE;
+}
+
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleNameString(IDebugSymbols3 *iface, ULONG which, ULONG index,
         ULONG64 base, char *buffer, ULONG buffer_size, ULONG *name_size)
 {
-    FIXME("%p, %u, %u, %s, %p, %u, %p stub.\n", iface, which, index, wine_dbgstr_longlong(base), buffer, buffer_size,
+    struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
+    const struct module_info *info;
+    struct target_process *target;
+    HRESULT hr;
+
+    TRACE("%p, %u, %u, %s, %p, %u, %p.\n", iface, which, index, wine_dbgstr_longlong(base), buffer, buffer_size,
             name_size);
 
-    return E_NOTIMPL;
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    if (index == DEBUG_ANY_ID)
+        info = debug_target_get_module_info_by_base(target, base);
+    else
+        info = debug_target_get_module_info(target, index);
+
+    if (!info)
+    {
+        WARN("Was unable to locate module.\n");
+        return E_INVALIDARG;
+    }
+
+    switch (which)
+    {
+        case DEBUG_MODNAME_IMAGE:
+            hr = debug_target_return_string(info->image_name, buffer, buffer_size, name_size);
+            break;
+        case DEBUG_MODNAME_MODULE:
+        case DEBUG_MODNAME_LOADED_IMAGE:
+        case DEBUG_MODNAME_SYMBOL_FILE:
+        case DEBUG_MODNAME_MAPPED_IMAGE:
+            FIXME("Unsupported name info %d.\n", which);
+            return E_NOTIMPL;
+        default:
+            WARN("Unknown name info %d.\n", which);
+            return E_INVALIDARG;
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetConstantName(IDebugSymbols3 *iface, ULONG64 module, ULONG type_id,

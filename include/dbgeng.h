@@ -162,7 +162,15 @@ DEFINE_GUID(IID_IDebugSystemObjects3,     0xe9676e2f, 0xe286, 0x4ea3, 0xb0, 0xf9
 #define DEBUG_CDS_REFRESH_INLINESTEP                        16
 #define DEBUG_CDS_REFRESH_INLINESTEP_PSEUDO                 17
 
+/* GetModuleNameString() indices */
+#define DEBUG_MODNAME_IMAGE                                  0
+#define DEBUG_MODNAME_MODULE                                 1
+#define DEBUG_MODNAME_LOADED_IMAGE                           2
+#define DEBUG_MODNAME_SYMBOL_FILE                            3
+#define DEBUG_MODNAME_MAPPED_IMAGE                           4
+
 #define DEBUG_INVALID_OFFSET                      ((ULONG64)-1)
+#define DEBUG_ANY_ID                                0xffffffff
 
 typedef struct _DEBUG_MODULE_PARAMETERS
 {
