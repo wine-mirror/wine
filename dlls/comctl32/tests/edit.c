@@ -1485,17 +1485,28 @@ static void test_edit_control_scroll(void)
     DestroyWindow (hwEdit);
 }
 
+static BOOL is_cjk_charset(HDC dc)
+{
+    switch (GdiGetCodePage(dc)) {
+    case 932: case 936: case 949: case 950: case 1361:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 static void test_margins_usefontinfo(UINT charset)
 {
-    INT margins, threshold, expect, empty_expect, small_expect;
     HWND hwnd;
     HDC hdc;
     TEXTMETRICW tm;
     SIZE size;
-    BOOL cjk;
+    BOOL cjk, cjk_charset;
     LOGFONTA lf;
     HFONT hfont;
     RECT rect;
+    INT margins, threshold, expect, empty_expect;
+    const UINT small_margins = MAKELONG(1, 5);
 
     memset(&lf, 0, sizeof(lf));
     lf.lfHeight = -11;
@@ -1525,8 +1536,6 @@ static void test_margins_usefontinfo(UINT charset)
         return;
     }
     expect = MAKELONG(size.cx / 2, size.cx / 2);
-    small_expect = 0;
-    empty_expect = size.cx >= 28 ? small_expect : expect;
 
     charset = GetTextCharset(hdc);
     switch (charset)
@@ -1540,26 +1549,35 @@ static void test_margins_usefontinfo(UINT charset)
     default:
         cjk = FALSE;
     }
+    cjk_charset = is_cjk_charset(hdc);
 
     hfont = SelectObject(hdc, hfont);
     ReleaseDC(hwnd, hdc);
 
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     ok(margins == 0, "got %x\n", margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    if (!cjk)
+    if (!cjk_charset)
+        ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
+    margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
+    if (!cjk_charset)
         ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
     else
     {
-        ok(HIWORD(margins) > 0 && LOWORD(margins) > 0, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
-        expect = empty_expect = small_expect = margins;
+        ok(HIWORD(margins) <= HIWORD(expect), "%d: got %d\n", charset, HIWORD(margins));
+        ok(LOWORD(margins) <= LOWORD(expect), "%d: got %d\n", charset, LOWORD(margins));
+        expect = margins;
     }
     DestroyWindow(hwnd);
 
-    threshold = (size.cx / 2 + size.cx) * 2;
+    threshold = HIWORD(expect) + LOWORD(expect) + size.cx * 2;
+    empty_expect = threshold > 80 ? small_margins : expect;
 
-    /* Size below which non-cjk margins are zero */
+    /* Size below the threshold, margins remain unchanged */
     hwnd = CreateWindowExA(0, "Edit", "A", WS_POPUP, 0, 0, threshold - 1, 100, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "got %p\n", hwnd);
     GetClientRect(hwnd, &rect);
@@ -1569,11 +1587,14 @@ static void test_margins_usefontinfo(UINT charset)
     ok(margins == 0, "got %x\n", margins);
 
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    ok(margins == small_expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
+    todo_wine_if(cjk)
+    ok(margins == small_margins, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
 
-    /* Size at which non-cjk margins become non-zero */
+    /* Size at the threshold, margins become non-zero */
     hwnd = CreateWindowExA(0, "Edit", "A", WS_POPUP, 0, 0, threshold, 100, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "got %p\n", hwnd);
     GetClientRect(hwnd, &rect);
@@ -1583,6 +1604,8 @@ static void test_margins_usefontinfo(UINT charset)
     ok(margins == 0, "got %x\n", margins);
 
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     ok(margins == expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
@@ -1597,6 +1620,8 @@ static void test_margins_usefontinfo(UINT charset)
     ok(margins == 0, "got %x\n", margins);
 
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
+    SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
     ok(margins == empty_expect, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
