@@ -725,9 +725,28 @@ static ULONG STDMETHODCALLTYPE debugdataspaces_Release(IDebugDataSpaces *iface)
 static HRESULT STDMETHODCALLTYPE debugdataspaces_ReadVirtual(IDebugDataSpaces *iface, ULONG64 offset, void *buffer,
         ULONG buffer_size, ULONG *read_len)
 {
-    FIXME("%p, %s, %p, %u, %p stub.\n", iface, wine_dbgstr_longlong(offset), buffer, buffer_size, read_len);
+    struct debug_client *debug_client = impl_from_IDebugDataSpaces(iface);
+    static struct target_process *target;
+    HRESULT hr = S_OK;
+    SIZE_T length;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p, %u, %p.\n", iface, wine_dbgstr_longlong(offset), buffer, buffer_size, read_len);
+
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    if (ReadProcessMemory(target->handle, (const void *)(ULONG_PTR)offset, buffer, buffer_size, &length))
+    {
+        if (read_len)
+            *read_len = length;
+    }
+    else
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        WARN("Failed to read process memory %#x.\n", hr);
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE debugdataspaces_WriteVirtual(IDebugDataSpaces *iface, ULONG64 offset, void *buffer,

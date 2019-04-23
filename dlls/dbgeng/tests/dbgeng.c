@@ -322,14 +322,15 @@ todo_wine
 static void test_module_information(void)
 {
     static const char *event_name = "dbgeng_test_event";
-    unsigned int loaded, unloaded, index;
+    unsigned int loaded, unloaded, index, length;
     DEBUG_MODULE_PARAMETERS params[2];
+    IDebugDataSpaces *dataspaces;
     PROCESS_INFORMATION info;
     IDebugSymbols *symbols;
     IDebugControl *control;
+    ULONG64 bases[2], base;
     IDebugClient *client;
-    ULONG64 bases[2];
-    ULONG64 base;
+    char buffer[64];
     HANDLE event;
     HRESULT hr;
     BOOL ret;
@@ -341,6 +342,9 @@ static void test_module_information(void)
     ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
 
     hr = client->lpVtbl->QueryInterface(client, &IID_IDebugSymbols, (void **)&symbols);
+    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
+
+    hr = client->lpVtbl->QueryInterface(client, &IID_IDebugDataSpaces, (void **)&dataspaces);
     ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
 
     event = CreateEventA(NULL, FALSE, FALSE, event_name);
@@ -419,6 +423,22 @@ static void test_module_information(void)
     hr = symbols->lpVtbl->GetModuleParameters(symbols, 1, NULL, loaded, params);
     ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
 
+    /* Read memory. */
+    base = 0;
+    hr = symbols->lpVtbl->GetModuleByIndex(symbols, 0, &base);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!base, "Unexpected module base.\n");
+
+    hr = dataspaces->lpVtbl->ReadVirtual(dataspaces, base, buffer, sizeof(buffer), &length);
+    ok(hr == S_OK, "Failed to read process memory, hr %#x.\n", hr);
+    ok(length == sizeof(buffer), "Unexpected length %u.\n", length);
+    ok(buffer[0] == 'M' && buffer[1] == 'Z', "Unexpected contents.\n");
+
+    memset(buffer, 0, sizeof(buffer));
+    hr = dataspaces->lpVtbl->ReadVirtual(dataspaces, base, buffer, sizeof(buffer), NULL);
+    ok(hr == S_OK, "Failed to read process memory, hr %#x.\n", hr);
+    ok(buffer[0] == 'M' && buffer[1] == 'Z', "Unexpected contents.\n");
+
     hr = client->lpVtbl->DetachProcesses(client);
     ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);
 
@@ -431,6 +451,7 @@ static void test_module_information(void)
     client->lpVtbl->Release(client);
     control->lpVtbl->Release(control);
     symbols->lpVtbl->Release(symbols);
+    dataspaces->lpVtbl->Release(dataspaces);
 }
 
 static void target_proc(const char *event_name, const char *event_ready_name)
