@@ -317,7 +317,7 @@ static HRESULT d3d11_swapchain_present(struct d3d11_swapchain *swapchain,
     return wined3d_swapchain_present(swapchain->wined3d_swapchain, NULL, NULL, NULL, sync_interval, 0);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d11_swapchain_Present(IDXGISwapChain1 *iface, UINT sync_interval, UINT flags)
+static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_Present(IDXGISwapChain1 *iface, UINT sync_interval, UINT flags)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
 
