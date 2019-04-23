@@ -1707,7 +1707,7 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceData(HDEVINFO devinfo, SP_DEVICE_INTERFA
 /***********************************************************************
  *		SetupDiEnumDeviceInfo (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiEnumDeviceInfo(HDEVINFO devinfo, DWORD index, SP_DEVINFO_DATA *device_data)
+BOOL WINAPI DECLSPEC_HOTPATCH SetupDiEnumDeviceInfo(HDEVINFO devinfo, DWORD index, SP_DEVINFO_DATA *device_data)
 {
     struct DeviceInfoSet *set;
     struct device *device;
