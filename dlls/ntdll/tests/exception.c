@@ -56,6 +56,21 @@ static NTSTATUS  (WINAPI *pNtClose)(HANDLE);
 static NTSTATUS  (WINAPI *pNtSuspendProcess)(HANDLE process);
 static NTSTATUS  (WINAPI *pNtResumeProcess)(HANDLE process);
 
+#define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
+
+typedef struct _RTL_UNLOAD_EVENT_TRACE
+{
+    void *BaseAddress;
+    SIZE_T SizeOfImage;
+    ULONG Sequence;
+    ULONG TimeDateStamp;
+    ULONG CheckSum;
+    WCHAR ImageName[32];
+} RTL_UNLOAD_EVENT_TRACE, *PRTL_UNLOAD_EVENT_TRACE;
+
+static RTL_UNLOAD_EVENT_TRACE *(WINAPI *pRtlGetUnloadEventTrace)(void);
+static void (WINAPI *pRtlGetUnloadEventTraceEx)(ULONG **element_size, ULONG **element_count, void **event_trace);
+
 #if defined(__x86_64__)
 typedef struct
 {
@@ -3325,6 +3340,53 @@ static void test_suspend_process(void)
     CloseHandle(event2);
 }
 
+static void test_unload_trace(void)
+{
+    static const WCHAR imageW[] = {'m','s','x','m','l','3','.','d','l','l',0};
+    RTL_UNLOAD_EVENT_TRACE *unload_trace, *ptr;
+    ULONG *element_size, *element_count, size;
+    BOOL found = FALSE;
+    HMODULE hmod;
+
+    unload_trace = pRtlGetUnloadEventTrace();
+todo_wine
+    ok(unload_trace != NULL, "Failed to get unload events pointer.\n");
+
+    if (pRtlGetUnloadEventTraceEx)
+    {
+        ptr = NULL;
+        pRtlGetUnloadEventTraceEx(&element_size, &element_count, (void **)&ptr);
+    todo_wine {
+        ok(*element_size >= sizeof(*ptr), "Unexpected element size.\n");
+        ok(*element_count == RTL_UNLOAD_EVENT_TRACE_NUMBER, "Unexpected trace element count %u.\n", *element_count);
+        ok(ptr != NULL, "Unexpected pointer %p.\n", ptr);
+    }
+        size = *element_size;
+    }
+    else
+        size = sizeof(*unload_trace);
+
+    hmod = LoadLibraryA("msxml3.dll");
+    ok(hmod != NULL, "Failed to load library.\n");
+    FreeLibrary(hmod);
+
+if (unload_trace)
+{
+    ptr = unload_trace;
+    while (ptr->BaseAddress != NULL)
+    {
+        if (!lstrcmpW(imageW, ptr->ImageName))
+        {
+            found = TRUE;
+            break;
+        }
+        ptr = (RTL_UNLOAD_EVENT_TRACE *)((char *)ptr + size);
+    }
+}
+todo_wine
+    ok(found, "Unloaded module wasn't found.\n");
+}
+
 START_TEST(exception)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -3346,29 +3408,28 @@ START_TEST(exception)
         return;
     }
 
-    pNtGetContextThread  = (void *)GetProcAddress( hntdll, "NtGetContextThread" );
-    pNtSetContextThread  = (void *)GetProcAddress( hntdll, "NtSetContextThread" );
-    pNtReadVirtualMemory = (void *)GetProcAddress( hntdll, "NtReadVirtualMemory" );
-    pNtClose             = (void *)GetProcAddress( hntdll, "NtClose" );
-    pRtlUnwind           = (void *)GetProcAddress( hntdll, "RtlUnwind" );
-    pRtlRaiseException   = (void *)GetProcAddress( hntdll, "RtlRaiseException" );
-    pRtlCaptureContext   = (void *)GetProcAddress( hntdll, "RtlCaptureContext" );
-    pNtTerminateProcess  = (void *)GetProcAddress( hntdll, "NtTerminateProcess" );
-    pRtlAddVectoredExceptionHandler    = (void *)GetProcAddress( hntdll,
-                                                                 "RtlAddVectoredExceptionHandler" );
-    pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll,
-                                                                 "RtlRemoveVectoredExceptionHandler" );
-    pRtlAddVectoredContinueHandler     = (void *)GetProcAddress( hntdll,
-                                                                 "RtlAddVectoredContinueHandler" );
-    pRtlRemoveVectoredContinueHandler  = (void *)GetProcAddress( hntdll,
-                                                                 "RtlRemoveVectoredContinueHandler" );
-    pNtQueryInformationProcess         = (void*)GetProcAddress( hntdll,
-                                                                 "NtQueryInformationProcess" );
-    pNtSetInformationProcess           = (void*)GetProcAddress( hntdll,
-                                                                 "NtSetInformationProcess" );
+#define X(f) p##f = (void*)GetProcAddress(hntdll, #f)
+    X(NtGetContextThread);
+    X(NtSetContextThread);
+    X(NtReadVirtualMemory);
+    X(NtClose);
+    X(RtlUnwind);
+    X(RtlRaiseException);
+    X(RtlCaptureContext);
+    X(NtTerminateProcess);
+    X(RtlAddVectoredExceptionHandler);
+    X(RtlRemoveVectoredExceptionHandler);
+    X(RtlAddVectoredContinueHandler);
+    X(RtlRemoveVectoredContinueHandler);
+    X(NtQueryInformationProcess);
+    X(NtSetInformationProcess);
+    X(NtSuspendProcess);
+    X(NtResumeProcess);
+    X(RtlGetUnloadEventTrace);
+    X(RtlGetUnloadEventTraceEx);
+#undef X
+
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
-    pNtSuspendProcess = (void *)GetProcAddress( hntdll, "NtSuspendProcess" );
-    pNtResumeProcess = (void *)GetProcAddress( hntdll, "NtResumeProcess" );
 
 #ifdef __i386__
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
@@ -3455,31 +3516,26 @@ START_TEST(exception)
     test_thread_context();
     test_suspend_thread();
     test_suspend_process();
+    test_unload_trace();
 
 #elif defined(__x86_64__)
-    pRtlAddFunctionTable               = (void *)GetProcAddress( hntdll,
-                                                                 "RtlAddFunctionTable" );
-    pRtlDeleteFunctionTable            = (void *)GetProcAddress( hntdll,
-                                                                 "RtlDeleteFunctionTable" );
-    pRtlInstallFunctionTableCallback   = (void *)GetProcAddress( hntdll,
-                                                                 "RtlInstallFunctionTableCallback" );
-    pRtlLookupFunctionEntry            = (void *)GetProcAddress( hntdll,
-                                                                 "RtlLookupFunctionEntry" );
-    pRtlAddGrowableFunctionTable       = (void *)GetProcAddress( hntdll, "RtlAddGrowableFunctionTable" );
-    pRtlGrowFunctionTable              = (void *)GetProcAddress( hntdll, "RtlGrowFunctionTable" );
-    pRtlDeleteGrowableFunctionTable    = (void *)GetProcAddress( hntdll, "RtlDeleteGrowableFunctionTable" );
-    p__C_specific_handler              = (void *)GetProcAddress( hntdll,
-                                                                 "__C_specific_handler" );
-    pRtlCaptureContext                 = (void *)GetProcAddress( hntdll,
-                                                                 "RtlCaptureContext" );
-    pRtlRestoreContext                 = (void *)GetProcAddress( hntdll,
-                                                                 "RtlRestoreContext" );
-    pRtlUnwindEx                       = (void *)GetProcAddress( hntdll,
-                                                                 "RtlUnwindEx" );
-    pRtlWow64GetThreadContext          = (void *)GetProcAddress( hntdll,
-                                                                 "RtlWow64GetThreadContext" );
-    pRtlWow64SetThreadContext          = (void *)GetProcAddress( hntdll,
-                                                                 "RtlWow64SetThreadContext" );
+
+#define X(f) p##f = (void*)GetProcAddress(hntdll, #f)
+    X(RtlAddFunctionTable);
+    X(RtlDeleteFunctionTable);
+    X(RtlInstallFunctionTableCallback);
+    X(RtlLookupFunctionEntry);
+    X(RtlAddGrowableFunctionTable);
+    X(RtlGrowFunctionTable);
+    X(RtlDeleteGrowableFunctionTable);
+    X(__C_specific_handler);
+    X(RtlCaptureContext);
+    X(RtlRestoreContext);
+    X(RtlUnwindEx);
+    X(RtlWow64GetThreadContext);
+    X(RtlWow64SetThreadContext);
+#undef X
+
     p_setjmp                           = (void *)GetProcAddress( hmsvcrt,
                                                                  "_setjmp" );
 
@@ -3498,6 +3554,7 @@ START_TEST(exception)
     test_wow64_context();
     test_suspend_thread();
     test_suspend_process();
+    test_unload_trace();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
