@@ -2281,7 +2281,7 @@ static IHTMLImgElement *_create_img_elem(unsigned line, IHTMLDocument2 *doc,
     test_disp((IUnknown*)factory, &IID_IHTMLImageElementFactory, NULL, "[object]");
 
     if(wdth >= 0){
-        snprintf(buf, 16, "%d", wdth);
+        sprintf(buf, "%d", wdth);
         V_VT(&width) = VT_BSTR;
         V_BSTR(&width) = a2bstr(buf);
     }else{
@@ -2290,7 +2290,7 @@ static IHTMLImgElement *_create_img_elem(unsigned line, IHTMLDocument2 *doc,
     }
 
     if(hght >= 0){
-        snprintf(buf, 16, "%d", hght);
+        sprintf(buf, "%d", hght);
         V_VT(&height) = VT_BSTR;
         V_BSTR(&height) = a2bstr(buf);
     }else{
