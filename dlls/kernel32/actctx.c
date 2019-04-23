@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
  *
  * Create an activation context.
  */
-HANDLE WINAPI CreateActCtxA(PCACTCTXA pActCtx)
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateActCtxA(PCACTCTXA pActCtx)
 {
     ACTCTXW     actw;
     SIZE_T      len;
@@ -114,7 +114,7 @@ done:
  *
  * Create an activation context.
  */
-HANDLE WINAPI CreateActCtxW(PCACTCTXW pActCtx)
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateActCtxW(PCACTCTXW pActCtx)
 {
     NTSTATUS    status;
     HANDLE      hActCtx;
