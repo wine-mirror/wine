@@ -3349,18 +3349,15 @@ static void test_unload_trace(void)
     HMODULE hmod;
 
     unload_trace = pRtlGetUnloadEventTrace();
-todo_wine
     ok(unload_trace != NULL, "Failed to get unload events pointer.\n");
 
     if (pRtlGetUnloadEventTraceEx)
     {
         ptr = NULL;
         pRtlGetUnloadEventTraceEx(&element_size, &element_count, (void **)&ptr);
-    todo_wine {
         ok(*element_size >= sizeof(*ptr), "Unexpected element size.\n");
         ok(*element_count == RTL_UNLOAD_EVENT_TRACE_NUMBER, "Unexpected trace element count %u.\n", *element_count);
         ok(ptr != NULL, "Unexpected pointer %p.\n", ptr);
-    }
         size = *element_size;
     }
     else
@@ -3370,8 +3367,6 @@ todo_wine
     ok(hmod != NULL, "Failed to load library.\n");
     FreeLibrary(hmod);
 
-if (unload_trace)
-{
     ptr = unload_trace;
     while (ptr->BaseAddress != NULL)
     {
@@ -3382,8 +3377,6 @@ if (unload_trace)
         }
         ptr = (RTL_UNLOAD_EVENT_TRACE *)((char *)ptr + size);
     }
-}
-todo_wine
     ok(found, "Unloaded module wasn't found.\n");
 }
 

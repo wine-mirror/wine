@@ -1657,39 +1657,6 @@ void WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE table, void *buffer, 
     FIXME("%p %p %u %p: stub\n", table, buffer, size, element);
 }
 
-typedef struct _RTL_UNLOAD_EVENT_TRACE
-{
-    PVOID BaseAddress;
-    SIZE_T SizeOfImage;
-    ULONG Sequence;
-    ULONG TimeDateStamp;
-    ULONG CheckSum;
-    WCHAR ImageName[32];
-} RTL_UNLOAD_EVENT_TRACE, *PRTL_UNLOAD_EVENT_TRACE;
-
-/*********************************************************************
- *           RtlGetUnloadEventTrace [NTDLL.@]
- */
-RTL_UNLOAD_EVENT_TRACE * WINAPI RtlGetUnloadEventTrace(void)
-{
-    FIXME("stub!\n");
-    return NULL;
-}
-
-/*********************************************************************
- *           RtlGetUnloadEventTraceEx [NTDLL.@]
- */
-void WINAPI RtlGetUnloadEventTraceEx(ULONG **size, ULONG **count, void **trace)
-{
-    static ULONG dummy_size, dummy_count;
-
-    FIXME("(%p, %p, %p): stub!\n", size, count, trace);
-
-    if (size)  *size  = &dummy_size;
-    if (count) *count = &dummy_count;
-    if (trace) *trace = NULL;
-}
-
 /*********************************************************************
  *           RtlQueryPackageIdentity [NTDLL.@]
  */

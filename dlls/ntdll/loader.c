@@ -159,6 +159,57 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
     while (len--) *dst++ = (unsigned char)*src++;
 }
 
+#define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
+
+typedef struct _RTL_UNLOAD_EVENT_TRACE
+{
+    void *BaseAddress;
+    SIZE_T SizeOfImage;
+    ULONG Sequence;
+    ULONG TimeDateStamp;
+    ULONG CheckSum;
+    WCHAR ImageName[32];
+} RTL_UNLOAD_EVENT_TRACE, *PRTL_UNLOAD_EVENT_TRACE;
+
+static RTL_UNLOAD_EVENT_TRACE unload_traces[RTL_UNLOAD_EVENT_TRACE_NUMBER];
+static unsigned int unload_trace_seq;
+
+static void module_push_unload_trace( const LDR_MODULE *ldr )
+{
+    RTL_UNLOAD_EVENT_TRACE *ptr = &unload_traces[unload_trace_seq];
+    unsigned int len = min(sizeof(ptr->ImageName), ldr->BaseDllName.Length);
+
+    ptr->BaseAddress = ldr->BaseAddress;
+    ptr->SizeOfImage = ldr->SizeOfImage;
+    ptr->Sequence = unload_trace_seq;
+    ptr->TimeDateStamp = ldr->TimeDateStamp;
+    ptr->CheckSum = ldr->CheckSum;
+    memcpy(ptr->ImageName, ldr->BaseDllName.Buffer, len);
+    ptr->ImageName[len / sizeof(*ptr->ImageName)] = 0;
+
+    unload_trace_seq = (unload_trace_seq + 1) % ARRAY_SIZE(unload_traces);
+}
+
+/*********************************************************************
+ *           RtlGetUnloadEventTrace [NTDLL.@]
+ */
+RTL_UNLOAD_EVENT_TRACE * WINAPI RtlGetUnloadEventTrace(void)
+{
+    return unload_traces;
+}
+
+/*********************************************************************
+ *           RtlGetUnloadEventTraceEx [NTDLL.@]
+ */
+void WINAPI RtlGetUnloadEventTraceEx(ULONG **size, ULONG **count, void **trace)
+{
+    static unsigned int element_size = sizeof(*unload_traces);
+    static unsigned int element_count = ARRAY_SIZE(unload_traces);
+
+    *size = &element_size;
+    *count = &element_count;
+    *trace = unload_traces;
+}
 
 /*************************************************************************
  *		call_dll_entry_point
@@ -3358,6 +3409,8 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
                 MODULE_DecRefCount( wm->deps[i] );
 
         wm->ldr.Flags &= ~LDR_UNLOAD_IN_PROGRESS;
+
+        module_push_unload_trace( &wm->ldr );
     }
 }
 
