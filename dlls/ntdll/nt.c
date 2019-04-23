@@ -2321,7 +2321,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
             if ((fp = fopen("/proc/meminfo", "r")))
             {
-                ULONG64 totalram, freeram, totalswap, freeswap;
+                unsigned long long totalram, freeram, totalswap, freeswap;
                 char line[64];
                 while (fgets(line, sizeof(line), fp))
                 {
