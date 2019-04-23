@@ -276,9 +276,9 @@
 @ cdecl log2(double) ucrtbase.log2
 @ cdecl log2f(float) ucrtbase.log2f
 @ cdecl log2l(double) ucrtbase.log2l
-@ stub logb
-@ stub logbf
-@ stub logbl
+@ cdecl logb(double) ucrtbase.logb
+@ cdecl logbf(float) ucrtbase.logbf
+@ cdecl logbl(double) ucrtbase.logbl
 @ cdecl -arch=arm,x86_64,arm64 logf(float) ucrtbase.logf
 @ cdecl lrint(double) ucrtbase.lrint
 @ cdecl lrintf(float) ucrtbase.lrintf

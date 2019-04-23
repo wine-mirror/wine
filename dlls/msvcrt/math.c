@@ -157,6 +157,17 @@ float CDECL MSVCRT__nextafterf( float num, float next )
     return nextafterf( num, next );
 }
 
+/*********************************************************************
+ *      _logbf (MSVCRT.@)
+ */
+float CDECL MSVCRT__logbf( float num )
+{
+    float ret = logbf(num);
+    if (isnan(num)) math_error(_DOMAIN, "_logbf", num, 0, ret);
+    else if (!num) math_error(_SING, "_logbf", num, 0, ret);
+    return ret;
+}
+
 #endif
 #if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 
@@ -177,17 +188,6 @@ INT CDECL MSVCRT__isnanf( float num )
      * Do the same, as the result may be used in calculations
      */
     return isnan(num) != 0;
-}
-
-/*********************************************************************
- *      _logbf (MSVCRT.@)
- */
-float CDECL MSVCRT__logbf( float num )
-{
-    float ret = logbf(num);
-    if (isnan(num)) math_error(_DOMAIN, "_logbf", num, 0, ret);
-    else if (!num) math_error(_SING, "_logbf", num, 0, ret);
-    return ret;
 }
 
 /*********************************************************************

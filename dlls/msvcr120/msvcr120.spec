@@ -2265,9 +2265,9 @@
 @ cdecl log2(double) MSVCR120_log2
 @ cdecl log2f(float) MSVCR120_log2f
 @ cdecl log2l(double) MSVCR120_log2l
-@ stub logb
-@ stub logbf
-@ stub logbl
+@ cdecl logb(double) MSVCRT__logb
+@ cdecl logbf(float) MSVCRT__logbf
+@ cdecl logbl(double) MSVCRT__logb
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl lrint(double) MSVCR120_lrint
 @ cdecl lrintf(float) MSVCR120_lrintf
