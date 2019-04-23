@@ -782,12 +782,11 @@ static void test_button_messages(void)
         set_test_cd_ret(CDRF_DODEFAULT);
         set_test_cd_state(CDIS_FOCUS);
 
-        todo = button[i].style != BS_OWNERDRAW;
         ok(GetFocus() == 0, "expected focus 0, got %p\n", GetFocus());
         SetFocus(hwnd);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setfocus, "SetFocus(hwnd) on a button", todo);
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setfocus, "SetFocus(hwnd) on a button", FALSE);
         check_cd_seq(cd_setfocus_type, "SetFocus(hwnd)");
 
         set_test_cd_state(0);

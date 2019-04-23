@@ -815,7 +815,12 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     case WM_SETFOCUS:
         TRACE("WM_SETFOCUS %p\n",hWnd);
         infoPtr->state |= BST_FOCUS;
-        paint_button( infoPtr, btn_type, ODA_FOCUS );
+
+        if (btn_type == BS_OWNERDRAW)
+            paint_button( infoPtr, btn_type, ODA_FOCUS );
+        else
+            InvalidateRect(hWnd, NULL, FALSE);
+
         if (style & BS_NOTIFY)
             BUTTON_NOTIFY_PARENT(hWnd, BN_SETFOCUS);
         break;
