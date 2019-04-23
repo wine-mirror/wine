@@ -45,22 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
  * DllUnregisterServer, which make all this worthwhile.
  */
 
-/***********************************************************************
- *		interface for self-registering
- */
-struct regsvr_interface
-{
-    IID const *iid;		/* NULL for end of list */
-    LPCSTR name;		/* can be NULL to omit */
-    IID const *base_iid;	/* can be NULL to omit */
-    int num_methods;		/* can be <0 to omit */
-    CLSID const *ps_clsid;	/* can be NULL to omit */
-    CLSID const *ps_clsid32;	/* can be NULL to omit */
-};
-
-static HRESULT register_interfaces(struct regsvr_interface const *list);
-static HRESULT unregister_interfaces(struct regsvr_interface const *list);
-
 struct regsvr_mediatype_parsing
 {
     CLSID const *majortype;	/* NULL for end of list */
@@ -109,19 +93,6 @@ static HRESULT unregister_filters(struct regsvr_filter const *list);
 /***********************************************************************
  *		static string constants
  */
-static const WCHAR interface_keyname[] = {
-    'I', 'n', 't', 'e', 'r', 'f', 'a', 'c', 'e', 0 };
-static const WCHAR base_ifa_keyname[] = {
-    'B', 'a', 's', 'e', 'I', 'n', 't', 'e', 'r', 'f', 'a', 'c',
-    'e', 0 };
-static const WCHAR num_methods_keyname[] = {
-    'N', 'u', 'm', 'M', 'e', 't', 'h', 'o', 'd', 's', 0 };
-static const WCHAR ps_clsid_keyname[] = {
-    'P', 'r', 'o', 'x', 'y', 'S', 't', 'u', 'b', 'C', 'l', 's',
-    'i', 'd', 0 };
-static const WCHAR ps_clsid32_keyname[] = {
-    'P', 'r', 'o', 'x', 'y', 'S', 't', 'u', 'b', 'C', 'l', 's',
-    'i', 'd', '3', '2', 0 };
 static const WCHAR mediatype_name[] = {
     'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
 static const WCHAR subtype_valuename[] = {
@@ -130,107 +101,6 @@ static const WCHAR sourcefilter_valuename[] = {
     'S', 'o', 'u', 'r', 'c', 'e', ' ', 'F', 'i', 'l', 't', 'e', 'r', 0 };
 static const WCHAR extensions_keyname[] = {
     'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', 's', 0 };
-
-/***********************************************************************
- *		static helper functions
- */
-static LONG register_key_guid(HKEY base, WCHAR const *name, GUID const *guid);
-static LONG register_key_defvalueW(HKEY base, WCHAR const *name,
-				   WCHAR const *value);
-
-/***********************************************************************
- *		register_interfaces
- */
-static HRESULT register_interfaces(struct regsvr_interface const *list)
-{
-    LONG res = ERROR_SUCCESS;
-    HKEY interface_key;
-
-    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, interface_keyname, 0, NULL, 0,
-			  KEY_READ | KEY_WRITE, NULL, &interface_key, NULL);
-    if (res != ERROR_SUCCESS) goto error_return;
-
-    for (; res == ERROR_SUCCESS && list->iid; ++list) {
-	WCHAR buf[39];
-	HKEY iid_key;
-
-	StringFromGUID2(list->iid, buf, 39);
-	res = RegCreateKeyExW(interface_key, buf, 0, NULL, 0,
-			      KEY_READ | KEY_WRITE, NULL, &iid_key, NULL);
-	if (res != ERROR_SUCCESS) goto error_close_interface_key;
-
-	if (list->name) {
-            res = RegSetValueExA(iid_key, NULL, 0, REG_SZ, (const BYTE*)list->name,
-				 strlen(list->name) + 1);
-	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
-	}
-
-	if (list->base_iid) {
-	    res = register_key_guid(iid_key, base_ifa_keyname, list->base_iid);
-	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
-	}
-
-	if (0 <= list->num_methods) {
-	    static const WCHAR fmt[] = { '%', 'd', 0 };
-	    HKEY key;
-
-	    res = RegCreateKeyExW(iid_key, num_methods_keyname, 0, NULL, 0,
-				  KEY_READ | KEY_WRITE, NULL, &key, NULL);
-	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
-
-	    sprintfW(buf, fmt, list->num_methods);
-            res = RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE*)buf,
-				 (lstrlenW(buf) + 1) * sizeof(WCHAR));
-	    RegCloseKey(key);
-
-	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
-	}
-
-	if (list->ps_clsid) {
-	    res = register_key_guid(iid_key, ps_clsid_keyname, list->ps_clsid);
-	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
-	}
-
-	if (list->ps_clsid32) {
-	    res = register_key_guid(iid_key, ps_clsid32_keyname, list->ps_clsid32);
-	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
-	}
-
-    error_close_iid_key:
-	RegCloseKey(iid_key);
-    }
-
-error_close_interface_key:
-    RegCloseKey(interface_key);
-error_return:
-    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
-}
-
-/***********************************************************************
- *		unregister_interfaces
- */
-static HRESULT unregister_interfaces(struct regsvr_interface const *list)
-{
-    LONG res = ERROR_SUCCESS;
-    HKEY interface_key;
-
-    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, interface_keyname, 0,
-			KEY_READ | KEY_WRITE, &interface_key);
-    if (res == ERROR_FILE_NOT_FOUND) return S_OK;
-    if (res != ERROR_SUCCESS) goto error_return;
-
-    for (; res == ERROR_SUCCESS && list->iid; ++list) {
-	WCHAR buf[39];
-
-	StringFromGUID2(list->iid, buf, 39);
-	res = RegDeleteTreeW(interface_key, buf);
-	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
-    }
-
-    RegCloseKey(interface_key);
-error_return:
-    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
-}
 
 /***********************************************************************
  *		register_mediatypes_parsing
@@ -515,45 +385,6 @@ static HRESULT unregister_filters(struct regsvr_filter const *list)
     
     return hr;
 }
-
-/***********************************************************************
- *		regsvr_key_guid
- */
-static LONG register_key_guid(HKEY base, WCHAR const *name, GUID const *guid)
-{
-    WCHAR buf[39];
-
-    StringFromGUID2(guid, buf, 39);
-    return register_key_defvalueW(base, name, buf);
-}
-
-/***********************************************************************
- *		regsvr_key_defvalueW
- */
-static LONG register_key_defvalueW(
-    HKEY base,
-    WCHAR const *name,
-    WCHAR const *value)
-{
-    LONG res;
-    HKEY key;
-
-    res = RegCreateKeyExW(base, name, 0, NULL, 0,
-			  KEY_READ | KEY_WRITE, NULL, &key, NULL);
-    if (res != ERROR_SUCCESS) return res;
-    res = RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE*)value,
-			 (lstrlenW(value) + 1) * sizeof(WCHAR));
-    RegCloseKey(key);
-    return res;
-}
-
-/***********************************************************************
- *		interface list
- */
-
-static struct regsvr_interface const interface_list[] = {
-    { NULL }			/* list terminator */
-};
 
 /***********************************************************************
  *		mediatype list
@@ -857,8 +688,6 @@ HRESULT WINAPI DllRegisterServer(void)
 
     hr = QUARTZ_DllRegisterServer();
     if (SUCCEEDED(hr))
-	hr = register_interfaces(interface_list);
-    if (SUCCEEDED(hr))
         hr = register_mediatypes_parsing(mediatype_parsing_list);
     if (SUCCEEDED(hr))
         hr = register_mediatypes_extension(mediatype_extension_list);
@@ -877,8 +706,6 @@ HRESULT WINAPI DllUnregisterServer(void)
     TRACE("\n");
 
     hr = unregister_filters(filter_list);
-    if (SUCCEEDED(hr))
-	hr = unregister_interfaces(interface_list);
     if (SUCCEEDED(hr))
 	hr = unregister_mediatypes_parsing(mediatype_parsing_list);
     if (SUCCEEDED(hr))
