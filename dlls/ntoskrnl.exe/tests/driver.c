@@ -170,6 +170,11 @@ static void winetest_end_todo(void)
     todo_level >>= 1;
 }
 
+static int broken(int condition)
+{
+    return !running_under_wine && condition;
+}
+
 #define ok(condition, ...)  ok_(__FILE__, __LINE__, condition, __VA_ARGS__)
 #define todo_if(is_todo) for (winetest_start_todo(is_todo); \
                               winetest_loop_todo(); \
@@ -1179,7 +1184,8 @@ static void test_lookup_thread(void)
     if (thread) ObDereferenceObject(thread);
 
     status = PsLookupThreadByThreadId(NULL, &thread);
-    ok(status == STATUS_INVALID_PARAMETER, "PsLookupThreadByThreadId returned %#x\n", status);
+    ok(status == STATUS_INVALID_CID || broken(status == STATUS_INVALID_PARAMETER) /* winxp */,
+       "PsLookupThreadByThreadId returned %#x\n", status);
 }
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)

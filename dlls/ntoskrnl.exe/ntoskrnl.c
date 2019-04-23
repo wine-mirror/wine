@@ -2558,13 +2558,18 @@ PRKTHREAD WINAPI KeGetCurrentThread(void)
  */
 NTSTATUS WINAPI PsLookupThreadByThreadId( HANDLE threadid, PETHREAD *thread )
 {
+    OBJECT_ATTRIBUTES attr;
+    CLIENT_ID cid;
     NTSTATUS status;
     HANDLE handle;
 
     TRACE( "(%p %p)\n", threadid, thread );
 
-    if (!(handle = OpenThread( THREAD_QUERY_INFORMATION, FALSE, HandleToUlong(threadid) )))
-        return STATUS_INVALID_PARAMETER;
+    cid.UniqueProcess = 0;
+    cid.UniqueThread = threadid;
+    InitializeObjectAttributes( &attr, NULL, 0, NULL, NULL );
+    status = NtOpenThread( &handle, THREAD_QUERY_INFORMATION, &attr, &cid );
+    if (status) return status;
 
     status = ObReferenceObjectByHandle( handle, THREAD_ALL_ACCESS, PsThreadType, KernelMode, (void**)thread, NULL );
 
