@@ -251,6 +251,53 @@ void put_surround512stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD c
     }
 }
 
+void put_surround712stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    /* based on analyzing a recording of a dsound downmix */
+    switch(channel){
+
+    case 6: /* back left */
+        value *= 0.24f;
+        dsb->put_aux(dsb, pos, 0, value);
+        break;
+
+    case 4: /* surround left */
+        value *= 0.24f;
+        dsb->put_aux(dsb, pos, 0, value);
+        break;
+
+    case 0: /* front left */
+        value *= 1.0f;
+        dsb->put_aux(dsb, pos, 0, value);
+        break;
+
+    case 7: /* back right */
+        value *= 0.24f;
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 5: /* surround right */
+        value *= 0.24f;
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 1: /* front right */
+        value *= 1.0f;
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 2: /* centre */
+        value *= 0.7;
+        dsb->put_aux(dsb, pos, 0, value);
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 3:
+        /* LFE is totally ignored in dsound when downmixing to 2 channels */
+        break;
+    }
+}
+
 void put_quad2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     /* based on pulseaudio's downmix algorithm */
