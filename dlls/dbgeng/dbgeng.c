@@ -2436,9 +2436,21 @@ static HRESULT STDMETHODCALLTYPE debugcontrol_GetActualProcessorType(IDebugContr
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_GetExecutingProcessorType(IDebugControl2 *iface, ULONG *type)
 {
-    FIXME("%p, %p stub.\n", iface, type);
+    struct debug_client *debug_client = impl_from_IDebugControl2(iface);
+    static struct target_process *target;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    if (FAILED(hr = debug_target_init_modules_info(target)))
+        return hr;
+
+    *type = target->cpu_type;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_GetNumberPossibleExecutingProcessorTypes(IDebugControl2 *iface,
