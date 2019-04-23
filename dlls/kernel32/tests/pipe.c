@@ -3572,10 +3572,12 @@ static void test_namedpipe_session_id(void)
 
     create_overlapped_pipe(PIPE_TYPE_BYTE, &client, &server);
 
-    SetLastError(0xdeadbeef);
-    ret = pGetNamedPipeClientSessionId(server, NULL);
-    ok(!ret, "success\n");
-    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    if (0)  /* crashes on recent Windows */
+    {
+        SetLastError(0xdeadbeef);
+        ret = pGetNamedPipeClientSessionId(server, NULL);
+        ok(!ret, "success\n");
+    }
 
     id = 0;
     ret = pGetNamedPipeClientSessionId(server, &id);
