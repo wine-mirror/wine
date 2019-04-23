@@ -347,6 +347,9 @@ static void test_module_information(void)
     hr = client->lpVtbl->QueryInterface(client, &IID_IDebugDataSpaces, (void **)&dataspaces);
     ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
 
+    hr = control->lpVtbl->IsPointer64Bit(control);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+
     event = CreateEventA(NULL, FALSE, FALSE, event_name);
     ok(event != NULL, "Failed to create event.\n");
 
@@ -359,8 +362,14 @@ static void test_module_information(void)
     hr = client->lpVtbl->AttachProcess(client, 0, info.dwProcessId, DEBUG_ATTACH_NONINVASIVE);
     ok(hr == S_OK, "Failed to attach to process, hr %#x.\n", hr);
 
+    hr = control->lpVtbl->IsPointer64Bit(control);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+
     hr = control->lpVtbl->WaitForEvent(control, 0, INFINITE);
     ok(hr == S_OK, "Waiting for event failed, hr %#x.\n", hr);
+
+    hr = control->lpVtbl->IsPointer64Bit(control);
+    ok(SUCCEEDED(hr), "Failed to get pointer length, hr %#x.\n", hr);
 
     /* Number of modules. */
     hr = symbols->lpVtbl->GetNumberModules(symbols, &loaded, &unloaded);

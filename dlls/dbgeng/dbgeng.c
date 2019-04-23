@@ -57,6 +57,7 @@ struct target_process
         unsigned int unloaded;
         BOOL initialized;
     } modules;
+    ULONG cpu_type;
 };
 
 struct debug_client
@@ -77,6 +78,21 @@ static struct target_process *debug_client_get_target(struct debug_client *debug
         return NULL;
 
     return LIST_ENTRY(list_head(&debug_client->targets), struct target_process, entry);
+}
+
+static WORD debug_target_get_module_machine(struct target_process *target, HMODULE module)
+{
+    IMAGE_DOS_HEADER dos = { 0 };
+    WORD machine = 0;
+
+    ReadProcessMemory(target->handle, module, &dos, sizeof(dos), NULL);
+    if (dos.e_magic == IMAGE_DOS_SIGNATURE)
+    {
+        ReadProcessMemory(target->handle, (const char *)module + dos.e_lfanew + 4 /* signature */, &machine,
+                sizeof(machine), NULL);
+    }
+
+    return machine;
 }
 
 static HRESULT debug_target_init_modules_info(struct target_process *target)
@@ -122,6 +138,8 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
             target->modules.info[i].params.Size = info.SizeOfImage;
         }
     }
+
+    target->cpu_type = debug_target_get_module_machine(target, modules[0]);
 
     heap_free(modules);
 
@@ -2465,9 +2483,35 @@ static HRESULT STDMETHODCALLTYPE debugcontrol_GetPageSize(IDebugControl2 *iface,
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_IsPointer64Bit(IDebugControl2 *iface)
 {
-    FIXME("%p stub.\n", iface);
+    struct debug_client *debug_client = impl_from_IDebugControl2(iface);
+    static struct target_process *target;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    if (FAILED(hr = debug_target_init_modules_info(target)))
+        return hr;
+
+    switch (target->cpu_type)
+    {
+        case IMAGE_FILE_MACHINE_I386:
+        case IMAGE_FILE_MACHINE_ARM:
+            hr = S_FALSE;
+            break;
+        case IMAGE_FILE_MACHINE_IA64:
+        case IMAGE_FILE_MACHINE_AMD64:
+        case IMAGE_FILE_MACHINE_ARM64:
+            hr = S_OK;
+            break;
+        default:
+            FIXME("Unexpected cpu type %#x.\n", target->cpu_type);
+            hr = E_UNEXPECTED;
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_ReadBugCheckData(IDebugControl2 *iface, ULONG *code, ULONG64 *arg1,
