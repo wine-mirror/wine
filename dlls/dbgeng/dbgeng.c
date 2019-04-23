@@ -81,6 +81,25 @@ static struct target_process *debug_client_get_target(struct debug_client *debug
     return LIST_ENTRY(list_head(&debug_client->targets), struct target_process, entry);
 }
 
+static HRESULT debug_target_return_string(const char *str, char *buffer, unsigned int buffer_size,
+        unsigned int *size)
+{
+    unsigned int len = strlen(str), dst_len;
+
+    if (size)
+        *size = len + 1;
+
+    if (buffer && buffer_size)
+    {
+        dst_len = min(len, buffer_size - 1);
+        if (dst_len)
+            memcpy(buffer, str, dst_len);
+        buffer[dst_len] = 0;
+    }
+
+    return len < buffer_size ? S_OK : S_FALSE;
+}
+
 static WORD debug_target_get_module_machine(struct target_process *target, HMODULE module)
 {
     IMAGE_DOS_HEADER dos = { 0 };
@@ -1446,29 +1465,57 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetSourceFileLineOffsets(IDebugSym
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleVersionInformation(IDebugSymbols3 *iface, ULONG index,
         ULONG64 base, const char *item, void *buffer, ULONG buffer_size, ULONG *info_size)
 {
-    FIXME("%p, %u, %s, %s, %p, %u, %p stub.\n", iface, index, wine_dbgstr_longlong(base), debugstr_a(item), buffer,
+    struct debug_client *debug_client = impl_from_IDebugSymbols3(iface);
+    const struct module_info *info;
+    struct target_process *target;
+    void *version_info, *ptr;
+    HRESULT hr = E_FAIL;
+    DWORD handle, size;
+
+    TRACE("%p, %u, %s, %s, %p, %u, %p.\n", iface, index, wine_dbgstr_longlong(base), debugstr_a(item), buffer,
             buffer_size, info_size);
 
-    return E_NOTIMPL;
-}
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
 
-static HRESULT debug_target_return_string(const char *str, char *buffer, unsigned int buffer_size,
-        unsigned int *size)
-{
-    unsigned int len = strlen(str), dst_len;
+    if (index == DEBUG_ANY_ID)
+        info = debug_target_get_module_info_by_base(target, base);
+    else
+        info = debug_target_get_module_info(target, index);
 
-    if (size)
-        *size = len + 1;
-
-    if (buffer && buffer_size)
+    if (!info)
     {
-        dst_len = min(len, buffer_size - 1);
-        if (dst_len)
-            memcpy(buffer, str, dst_len);
-        buffer[dst_len] = 0;
+        WARN("Was unable to locate module.\n");
+        return E_INVALIDARG;
     }
 
-    return len < buffer_size ? S_OK : S_FALSE;
+    if (!(size = GetFileVersionInfoSizeA(info->image_name, &handle)))
+        return E_FAIL;
+
+    if (!(version_info = heap_alloc(size)))
+        return E_OUTOFMEMORY;
+
+    if (GetFileVersionInfoA(info->image_name, handle, size, version_info))
+    {
+        if (VerQueryValueA(version_info, item, &ptr, &size))
+        {
+            if (info_size)
+                *info_size = size;
+
+            if (buffer && buffer_size)
+            {
+                unsigned int dst_len = min(size, buffer_size);
+                if (dst_len)
+                    memcpy(buffer, ptr, dst_len);
+            }
+
+            hr = buffer && buffer_size < size ? S_FALSE : S_OK;
+        }
+    }
+
+    heap_free(version_info);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleNameString(IDebugSymbols3 *iface, ULONG which, ULONG index,

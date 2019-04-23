@@ -1,4 +1,5 @@
 MODULE    = dbgeng.dll
 IMPORTLIB = dbgeng
+DELAYIMPORTS = version
 
 C_SRCS = dbgeng.c
