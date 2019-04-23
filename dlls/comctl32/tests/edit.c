@@ -1501,7 +1501,7 @@ static void test_margins_usefontinfo(UINT charset)
     HDC hdc;
     TEXTMETRICW tm;
     SIZE size;
-    BOOL cjk, cjk_charset;
+    BOOL cjk_charset;
     LOGFONTA lf;
     HFONT hfont;
     RECT rect;
@@ -1536,19 +1536,6 @@ static void test_margins_usefontinfo(UINT charset)
         return;
     }
     expect = MAKELONG(size.cx / 2, size.cx / 2);
-
-    charset = GetTextCharset(hdc);
-    switch (charset)
-    {
-    case SHIFTJIS_CHARSET:
-    case HANGUL_CHARSET:
-    case GB2312_CHARSET:
-    case CHINESEBIG5_CHARSET:
-        cjk = TRUE;
-        break;
-    default:
-        cjk = FALSE;
-    }
     cjk_charset = is_cjk_charset(hdc);
 
     hfont = SelectObject(hdc, hfont);
@@ -1590,7 +1577,6 @@ static void test_margins_usefontinfo(UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    todo_wine_if(cjk)
     ok(margins == small_margins, "%d: got %d, %d\n", charset, HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
 
