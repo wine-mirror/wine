@@ -24,16 +24,11 @@
 
 #include <gst/gst.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winreg.h"
-#include "winerror.h"
-#include "advpub.h"
-#include "wine/debug.h"
-
-#include "wine/unicode.h"
 #include "gst_private.h"
+#include "rpcproxy.h"
+#include "wine/debug.h"
+#include "wine/unicode.h"
+
 #include "initguid.h"
 #include "gst_guids.h"
 
@@ -308,65 +303,6 @@ BOOL init_gstreamer(void)
     return status;
 }
 
-#define INF_SET_ID(id)            \
-    do                            \
-    {                             \
-        static CHAR name[] = #id; \
-                                  \
-        pse[i].pszName = name;    \
-        clsids[i++] = &id;        \
-    } while (0)
-
-#define INF_SET_CLSID(clsid) INF_SET_ID(CLSID_ ## clsid)
-
-static HRESULT register_server(BOOL do_register)
-{
-    HRESULT hres;
-    HMODULE hAdvpack;
-    HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
-    STRTABLEA strtable;
-    STRENTRYA pse[3];
-    static CLSID const *clsids[3];
-    unsigned int i = 0;
-
-    static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
-
-    TRACE("(%x)\n", do_register);
-
-    INF_SET_CLSID(AsyncReader);
-    INF_SET_ID(MEDIATYPE_Stream);
-    INF_SET_ID(WINESUBTYPE_Gstreamer);
-
-    for(i = 0; i < ARRAY_SIZE(pse); i++) {
-        pse[i].pszValue = HeapAlloc(GetProcessHeap(),0,39);
-        sprintf(pse[i].pszValue, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
-                clsids[i]->Data4[1], clsids[i]->Data4[2], clsids[i]->Data4[3], clsids[i]->Data4[4],
-                clsids[i]->Data4[5], clsids[i]->Data4[6], clsids[i]->Data4[7]);
-    }
-
-    strtable.cEntries = ARRAY_SIZE(pse);
-    strtable.pse = pse;
-
-    hAdvpack = LoadLibraryW(wszAdvpack);
-    pRegInstall = (void *)GetProcAddress(hAdvpack, "RegInstall");
-
-    hres = pRegInstall(hInst, do_register ? "RegisterDll" : "UnregisterDll", &strtable);
-
-    for(i = 0; i < ARRAY_SIZE(pse); i++)
-        HeapFree(GetProcessHeap(),0,pse[i].pszValue);
-
-    if(FAILED(hres)) {
-        ERR("RegInstall failed: %08x\n", hres);
-        return hres;
-    }
-
-    return hres;
-}
-
-#undef INF_SET_CLSID
-#undef INF_SET_ID
-
 /***********************************************************************
  *      DllRegisterServer
  */
@@ -378,7 +314,7 @@ HRESULT WINAPI DllRegisterServer(void)
 
     hr = AMovieDllRegisterServer2(TRUE);
     if (SUCCEEDED(hr))
-        hr = register_server(TRUE);
+        hr = __wine_register_resources(hInst);
     return hr;
 }
 
@@ -393,6 +329,6 @@ HRESULT WINAPI DllUnregisterServer(void)
 
     hr = AMovieDllRegisterServer2(FALSE);
     if (SUCCEEDED(hr))
-        hr = register_server(FALSE);
+        hr = __wine_unregister_resources(hInst);
     return hr;
 }
