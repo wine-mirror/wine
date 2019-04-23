@@ -1615,6 +1615,7 @@ void *    WINAPI MmGetSystemRoutineAddress(UNICODE_STRING*);
 PVOID     WINAPI MmMapLockedPagesSpecifyCache(PMDL,KPROCESSOR_MODE,MEMORY_CACHING_TYPE,PVOID,ULONG,ULONG);
 MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void);
 void      WINAPI MmProbeAndLockPages(PMDLX, KPROCESSOR_MODE, LOCK_OPERATION);
+void      WINAPI MmUnmapLockedPages(void*, PMDL);
 
 static inline void *MmGetSystemAddressForMdlSafe(MDL *mdl, ULONG priority)
 {

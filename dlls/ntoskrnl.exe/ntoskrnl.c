@@ -2833,6 +2833,14 @@ PVOID WINAPI  MmMapLockedPagesSpecifyCache(PMDLX MemoryDescriptorList, KPROCESSO
 }
 
 /***********************************************************************
+ *           MmUnmapLockedPages  (NTOSKRNL.EXE.@)
+ */
+void WINAPI MmUnmapLockedPages( void *base, MDL *mdl )
+{
+    FIXME( "(%p %p_\n", base, mdl );
+}
+
+/***********************************************************************
  *           MmUnlockPagableImageSection  (NTOSKRNL.EXE.@)
  */
 VOID WINAPI MmUnlockPagableImageSection(PVOID ImageSectionHandle)

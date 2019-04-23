@@ -733,7 +733,7 @@
 @ stdcall MmUnlockPagableImageSection(ptr)
 @ stdcall MmUnlockPages(ptr)
 @ stdcall MmUnmapIoSpace(ptr long)
-@ stub MmUnmapLockedPages
+@ stdcall MmUnmapLockedPages(ptr ptr)
 @ stub MmUnmapReservedMapping
 @ stub MmUnmapVideoDisplay
 @ stub MmUnmapViewInSessionSpace

@@ -249,7 +249,7 @@ static void test_mdl_map(void)
 todo_wine
     ok(addr != NULL, "MmMapLockedPagesSpecifyCache failed\n");
 
-    /* MmUnmapLockedPages(addr, mdl); */
+    MmUnmapLockedPages(addr, mdl);
 
     IoFreeMdl(mdl);
 }
