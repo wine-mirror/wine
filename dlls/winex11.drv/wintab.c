@@ -717,6 +717,11 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
                                     gSysDevice.ORIENTATION[1].axUnits = TU_CIRCLE;
                                     gSysDevice.ORIENTATION[1].axResolution
                                                                 = CASTFIX32(3600);
+                                    gSysDevice.ORIENTATION[2].axMin = 0;
+                                    gSysDevice.ORIENTATION[2].axMax = 3600;
+                                    gSysDevice.ORIENTATION[2].axUnits = TU_CIRCLE;
+                                    gSysDevice.ORIENTATION[2].axResolution
+                                                                = CASTFIX32(3600);
                                     Axis++;
                                 }
                             }
