@@ -67,6 +67,7 @@ struct debug_client
     IDebugDataSpaces IDebugDataSpaces_iface;
     IDebugSymbols3 IDebugSymbols3_iface;
     IDebugControl2 IDebugControl2_iface;
+    IDebugAdvanced IDebugAdvanced_iface;
     LONG refcount;
     ULONG engine_options;
     struct list targets;
@@ -259,6 +260,11 @@ static struct debug_client *impl_from_IDebugControl2(IDebugControl2 *iface)
     return CONTAINING_RECORD(iface, struct debug_client, IDebugControl2_iface);
 }
 
+static struct debug_client *impl_from_IDebugAdvanced(IDebugAdvanced *iface)
+{
+    return CONTAINING_RECORD(iface, struct debug_client, IDebugAdvanced_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE debugclient_QueryInterface(IDebugClient *iface, REFIID riid, void **obj)
 {
     struct debug_client *debug_client = impl_from_IDebugClient(iface);
@@ -284,6 +290,10 @@ static HRESULT STDMETHODCALLTYPE debugclient_QueryInterface(IDebugClient *iface,
             || IsEqualIID(riid, &IID_IDebugControl))
     {
         *obj = &debug_client->IDebugControl2_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IDebugAdvanced))
+    {
+        *obj = &debug_client->IDebugAdvanced_iface;
     }
     else
     {
@@ -3289,6 +3299,53 @@ static const IDebugControl2Vtbl debugcontrolvtbl =
     debugcontrol_OutputTextReplacements,
 };
 
+static HRESULT STDMETHODCALLTYPE debugadvanced_QueryInterface(IDebugAdvanced *iface, REFIID riid, void **obj)
+{
+    struct debug_client *debug_client = impl_from_IDebugAdvanced(iface);
+    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
+    return IUnknown_QueryInterface(unk, riid, obj);
+}
+
+static ULONG STDMETHODCALLTYPE debugadvanced_AddRef(IDebugAdvanced *iface)
+{
+    struct debug_client *debug_client = impl_from_IDebugAdvanced(iface);
+    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
+    return IUnknown_AddRef(unk);
+}
+
+static ULONG STDMETHODCALLTYPE debugadvanced_Release(IDebugAdvanced *iface)
+{
+    struct debug_client *debug_client = impl_from_IDebugAdvanced(iface);
+    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
+    return IUnknown_Release(unk);
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_GetThreadContext(IDebugAdvanced *iface, void *context,
+        ULONG context_size)
+{
+    FIXME("%p, %p, %u stub.\n", iface, context, context_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_SetThreadContext(IDebugAdvanced *iface, void *context,
+        ULONG context_size)
+{
+    FIXME("%p, %p, %u stub.\n", iface, context, context_size);
+
+    return E_NOTIMPL;
+}
+
+static const IDebugAdvancedVtbl debugadvancedvtbl =
+{
+    debugadvanced_QueryInterface,
+    debugadvanced_AddRef,
+    debugadvanced_Release,
+    /* IDebugAdvanced */
+    debugadvanced_GetThreadContext,
+    debugadvanced_SetThreadContext,
+};
+
 /************************************************************
 *                    DebugExtensionInitialize   (DBGENG.@)
 *
@@ -3333,6 +3390,7 @@ HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
     debug_client->IDebugDataSpaces_iface.lpVtbl = &debugdataspacesvtbl;
     debug_client->IDebugSymbols3_iface.lpVtbl = &debugsymbolsvtbl;
     debug_client->IDebugControl2_iface.lpVtbl = &debugcontrolvtbl;
+    debug_client->IDebugAdvanced_iface.lpVtbl = &debugadvancedvtbl;
     debug_client->refcount = 1;
     list_init(&debug_client->targets);
 
