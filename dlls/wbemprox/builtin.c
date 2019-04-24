@@ -396,6 +396,8 @@ static const WCHAR prop_suitemaskW[] =
     {'S','u','i','t','e','M','a','s','k',0};
 static const WCHAR prop_systemdirectoryW[] =
     {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
+static const WCHAR prop_systemdriveW[] =
+    {'S','y','s','t','e','m','D','r','i','v','e',0};
 static const WCHAR prop_systemnameW[] =
     {'S','y','s','t','e','m','N','a','m','e',0};
 static const WCHAR prop_tagW[] =
@@ -601,6 +603,7 @@ static const struct column col_os[] =
     { prop_servicepackminorW,       CIM_UINT16, VT_I4 },
     { prop_suitemaskW,              CIM_UINT32, VT_I4 },
     { prop_systemdirectoryW,        CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_systemdriveW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_totalvirtualmemorysizeW, CIM_UINT64 },
     { prop_totalvisiblememorysizeW, CIM_UINT64 },
     { prop_versionW,                CIM_STRING|COL_FLAG_DYNAMIC }
@@ -1029,6 +1032,7 @@ struct record_operatingsystem
     UINT16       servicepackminor;
     UINT32       suitemask;
     const WCHAR *systemdirectory;
+    const WCHAR *systemdrive;
     UINT64       totalvirtualmemorysize;
     UINT64       totalvisiblememorysize;
     const WCHAR *version;
@@ -3102,6 +3106,13 @@ static WCHAR *get_systemdirectory(void)
     Wow64RevertWow64FsRedirection( redir );
     return ret;
 }
+static WCHAR *get_systemdrive(void)
+{
+    WCHAR *ret = heap_alloc( 3 * sizeof(WCHAR) ); /* "c:" */
+    if (ret && GetEnvironmentVariableW( prop_systemdriveW, ret, 3 )) return ret;
+    heap_free( ret );
+    return NULL;
+}
 static WCHAR *get_codeset(void)
 {
     static const WCHAR fmtW[] = {'%','u',0};
@@ -3243,6 +3254,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->servicepackminor       = ver.wServicePackMinor;
     rec->suitemask              = 272;     /* Single User + Terminal */
     rec->systemdirectory        = get_systemdirectory();
+    rec->systemdrive            = get_systemdrive();
     rec->totalvirtualmemorysize = get_total_physical_memory() / 1024;
     rec->totalvisiblememorysize = rec->totalvirtualmemorysize;
     rec->version                = get_osversion( &ver );
