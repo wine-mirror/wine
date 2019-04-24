@@ -1937,7 +1937,6 @@ then
   fi
 
   dnl Check for some compiler flags
-  WINE_TRY_CFLAGS([-fno-builtin],[AC_SUBST(BUILTINFLAG,"-fno-builtin")])
   WINE_TRY_CFLAGS([-fno-strict-aliasing])
   WINE_TRY_CFLAGS([-fexcess-precision=standard],[AC_SUBST(EXCESS_PRECISION_CFLAGS,"-fexcess-precision=standard")])
   dnl clang needs to be told to fail on unknown options
@@ -1983,6 +1982,12 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
           WINE_TRY_CFLAGS([-gstrict-dwarf]) ;;
     esac
   done
+
+  dnl Disable gcc builtins except for Mingw
+  case $host_os in
+    cygwin*|mingw32*) ;;
+    *) WINE_TRY_CFLAGS([-fno-builtin],[AC_SUBST(BUILTINFLAG,"-fno-builtin")]) ;;
+  esac
 
   dnl gcc-4.6+ omits frame pointers by default, breaking some copy protections
   case $host_cpu in

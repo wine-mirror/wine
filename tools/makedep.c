@@ -2990,7 +2990,6 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output_filenames( make->include_args );
         output_filenames( make->define_args );
         output_filenames( extradefs );
-        if (make->use_msvcrt) output_filenames( msvcrt_flags );
         output_filenames( extra_cross_cflags );
         output_filenames( cpp_flags );
         output_filename( "$(CROSSCFLAGS)" );
