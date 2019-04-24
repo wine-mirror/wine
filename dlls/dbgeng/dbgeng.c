@@ -108,11 +108,26 @@ static WORD debug_target_get_module_machine(struct target_process *target, HMODU
     ReadProcessMemory(target->handle, module, &dos, sizeof(dos), NULL);
     if (dos.e_magic == IMAGE_DOS_SIGNATURE)
     {
-        ReadProcessMemory(target->handle, (const char *)module + dos.e_lfanew + 4 /* signature */, &machine,
+        ReadProcessMemory(target->handle, (const char *)module + dos.e_lfanew + 4 /* PE signature */, &machine,
                 sizeof(machine), NULL);
     }
 
     return machine;
+}
+
+static DWORD debug_target_get_module_timestamp(struct target_process *target, HMODULE module)
+{
+    IMAGE_DOS_HEADER dos = { 0 };
+    DWORD timestamp = 0;
+
+    ReadProcessMemory(target->handle, module, &dos, sizeof(dos), NULL);
+    if (dos.e_magic == IMAGE_DOS_SIGNATURE)
+    {
+        ReadProcessMemory(target->handle, (const char *)module + dos.e_lfanew + 4 /* PE signature */ +
+                FIELD_OFFSET(IMAGE_FILE_HEADER, TimeDateStamp), &timestamp, sizeof(timestamp), NULL);
+    }
+
+    return timestamp;
 }
 
 static HRESULT debug_target_init_modules_info(struct target_process *target)
@@ -156,6 +171,7 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
 
             target->modules.info[i].params.Base = (ULONG_PTR)info.lpBaseOfDll;
             target->modules.info[i].params.Size = info.SizeOfImage;
+            target->modules.info[i].params.TimeDateStamp = debug_target_get_module_timestamp(target, modules[i]);
 
             GetModuleFileNameExA(target->handle, modules[i], target->modules.info[i].image_name,
                     ARRAY_SIZE(target->modules.info[i].image_name));
