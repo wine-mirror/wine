@@ -2077,7 +2077,8 @@ static int is_cross_compiled( struct makefile *make )
             !make->is_win16 &&
             !strarray_exists( &make->imports, "kernel" ) &&
             (make->testdll ||
-             !make->object_files.count));
+             !make->object_files.count ||
+             strarray_exists( &make->extradllflags, "-mno-cygwin" )));
 }
 
 
@@ -2951,6 +2952,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
                       find_src_file( make, replace_extension( source->name, ".c", ".spec" )));
     int need_cross = (crosstarget &&
                       (make->testdll ||
+                       strarray_exists( &make->extradllflags, "-mno-cygwin" ) ||
                        (source->file->flags & FLAG_C_IMPLIB) ||
                        (make->module && make->staticlib)));
     int need_obj = (!need_cross ||
