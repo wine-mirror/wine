@@ -553,6 +553,8 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define CAL_GREGORIAN_ARABIC       10
 #define CAL_GREGORIAN_XLIT_ENGLISH 11
 #define CAL_GREGORIAN_XLIT_FRENCH  12
+#define CAL_PERSIAN                22
+#define CAL_UMALQURA               23
 
 /* EnumCalendarInfo Flags */
 #define ENUM_ALL_CALENDARS 0xffffffff /* Enumerate all calendars within a locale */
