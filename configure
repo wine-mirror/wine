@@ -5892,6 +5892,26 @@ if test "$BISON" = "none"
 then
   as_fn_error $? "no suitable bison found. Please install the 'bison' package." "$LINENO" 5
 fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether bison is recent enough" >&5
+$as_echo_n "checking whether bison is recent enough... " >&6; }
+if ${wine_cv_recent_bison+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.y <<EOF
+%define parse.error verbose
+%%
+empty: ;
+EOF
+    if $BISON conftest.y >/dev/null 2>&5
+    then
+      wine_cv_recent_bison=yes
+    else
+      wine_cv_recent_bison=no
+    fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_recent_bison" >&5
+$as_echo "$wine_cv_recent_bison" >&6; }
+test $wine_cv_recent_bison != no || as_fn_error $? "Your bison version is too old. Please install bison version 3.0 or newer." "$LINENO" 5
 
 if test -n "$ac_tool_prefix"; then
   for ac_prog in ar gar

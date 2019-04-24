@@ -288,6 +288,19 @@ if test "$BISON" = "none"
 then
   AC_MSG_ERROR([no suitable bison found. Please install the 'bison' package.])
 fi
+AC_CACHE_CHECK([whether bison is recent enough],wine_cv_recent_bison,
+    [cat >conftest.y <<EOF
+%define parse.error verbose
+%%
+empty: ;
+EOF
+    if $BISON conftest.y >/dev/null 2>&AS_MESSAGE_LOG_FD
+    then
+      wine_cv_recent_bison=yes
+    else
+      wine_cv_recent_bison=no
+    fi])
+test $wine_cv_recent_bison != no || AC_MSG_ERROR([Your bison version is too old. Please install bison version 3.0 or newer.])
 
 AC_CHECK_TOOLS(AR,[ar gar],ar)
 AC_CHECK_TOOL(STRIP,strip,strip)
