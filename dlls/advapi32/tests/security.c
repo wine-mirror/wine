@@ -1343,11 +1343,13 @@ static void test_AccessCheck(void)
 
     if(pNtAccessCheck)
     {
+       DWORD ntPrivSetLen = sizeof(PRIVILEGE_SET);
+
        /* Generic access mask - no privilegeset buffer */
        SetLastError(0xdeadbeef);
        Access = ntAccessStatus = 0x1abe11ed;
        ntret = pNtAccessCheck(SecurityDescriptor, Token, GENERIC_READ, &Mapping,
-                              NULL, &PrivSetLen, &Access, &ntAccessStatus);
+                              NULL, &ntPrivSetLen, &Access, &ntAccessStatus);
        err = GetLastError();
        ok(ntret == STATUS_ACCESS_VIOLATION,
           "NtAccessCheck should have failed with STATUS_ACCESS_VIOLATION, got %x\n", ntret);
@@ -1355,6 +1357,7 @@ static void test_AccessCheck(void)
           "NtAccessCheck shouldn't set last error, got %d\n", err);
        ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
           "Access and/or AccessStatus were changed!\n");
+       ok(ntPrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", ntPrivSetLen);
 
       /* Generic access mask - no returnlength */
       SetLastError(0xdeadbeef);
@@ -1381,6 +1384,66 @@ static void test_AccessCheck(void)
          "NtAccessCheck shouldn't set last error, got %d\n", err);
       ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
          "Access and/or AccessStatus were changed!\n");
+
+      /* Generic access mask - zero returnlength */
+      SetLastError(0xdeadbeef);
+      Access = ntAccessStatus = 0x1abe11ed;
+      ntPrivSetLen = 0;
+      ntret = pNtAccessCheck(SecurityDescriptor, Token, GENERIC_READ, &Mapping,
+                             PrivSet, &ntPrivSetLen, &Access, &ntAccessStatus);
+      err = GetLastError();
+      ok(ntret == STATUS_GENERIC_NOT_MAPPED,
+         "NtAccessCheck should have failed with STATUS_GENERIC_NOT_MAPPED, got %x\n", ntret);
+      ok(err == 0xdeadbeef,
+         "NtAccessCheck shouldn't set last error, got %d\n", err);
+      ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
+         "Access and/or AccessStatus were changed!\n");
+      todo_wine ok(ntPrivSetLen == 0, "PrivSetLen returns %d\n", ntPrivSetLen);
+
+      /* Generic access mask - insufficient returnlength */
+      SetLastError(0xdeadbeef);
+      Access = ntAccessStatus = 0x1abe11ed;
+      ntPrivSetLen = sizeof(PRIVILEGE_SET)-1;
+      ntret = pNtAccessCheck(SecurityDescriptor, Token, GENERIC_READ, &Mapping,
+                             PrivSet, &ntPrivSetLen, &Access, &ntAccessStatus);
+      err = GetLastError();
+      ok(ntret == STATUS_GENERIC_NOT_MAPPED,
+         "NtAccessCheck should have failed with STATUS_GENERIC_NOT_MAPPED, got %x\n", ntret);
+      ok(err == 0xdeadbeef,
+         "NtAccessCheck shouldn't set last error, got %d\n", err);
+      ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
+         "Access and/or AccessStatus were changed!\n");
+      todo_wine ok(ntPrivSetLen == sizeof(PRIVILEGE_SET)-1, "PrivSetLen returns %d\n", ntPrivSetLen);
+
+      /* Key access mask - zero returnlength */
+      SetLastError(0xdeadbeef);
+      Access = ntAccessStatus = 0x1abe11ed;
+      ntPrivSetLen = 0;
+      ntret = pNtAccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                             PrivSet, &ntPrivSetLen, &Access, &ntAccessStatus);
+      err = GetLastError();
+      todo_wine ok(ntret == STATUS_BUFFER_TOO_SMALL,
+         "NtAccessCheck should have failed with STATUS_BUFFER_TOO_SMALL, got %x\n", ntret);
+      ok(err == 0xdeadbeef,
+         "NtAccessCheck shouldn't set last error, got %d\n", err);
+      todo_wine ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
+         "Access and/or AccessStatus were changed!\n");
+      todo_wine ok(ntPrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", ntPrivSetLen);
+
+      /* Key access mask - insufficient returnlength */
+      SetLastError(0xdeadbeef);
+      Access = ntAccessStatus = 0x1abe11ed;
+      ntPrivSetLen = sizeof(PRIVILEGE_SET)-1;
+      ntret = pNtAccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                             PrivSet, &ntPrivSetLen, &Access, &ntAccessStatus);
+      err = GetLastError();
+      todo_wine ok(ntret == STATUS_BUFFER_TOO_SMALL,
+         "NtAccessCheck should have failed with STATUS_BUFFER_TOO_SMALL, got %x\n", ntret);
+      ok(err == 0xdeadbeef,
+         "NtAccessCheck shouldn't set last error, got %d\n", err);
+      todo_wine ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
+         "Access and/or AccessStatus were changed!\n");
+      todo_wine ok(ntPrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", ntPrivSetLen);
     }
     else
        win_skip("NtAccessCheck unavailable. Skipping.\n");
