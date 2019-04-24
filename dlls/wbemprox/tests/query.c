@@ -1192,6 +1192,8 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
         {'S','e','r','v','i','c','e','P','a','c','k','M','a','j','o','r','V','e','r','s','i','o','n',0};
     static const WCHAR servicepackminorW[] =
         {'S','e','r','v','i','c','e','P','a','c','k','M','i','n','o','r','V','e','r','s','i','o','n',0};
+    static const WCHAR systemdriveW[] =
+        {'S','y','s','t','e','m','D','r','i','v','e',0};
     static const WCHAR totalvisiblememorysizeW[] =
         {'T','o','t','a','l','V','i','s','i','b','l','e','M','e','m','o','r','y','S','i','z','e',0};
     static const WCHAR totalvirtualmemorysizeW[] =
@@ -1345,6 +1347,15 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
     ok( type == CIM_UINT64, "unexpected type 0x%x\n", type );
     trace( "totalvirtualmemorysize %s\n", wine_dbgstr_w(V_BSTR(&val)) );
+    VariantClear( &val );
+
+    type = 0xdeadbeef;
+    VariantInit( &val );
+    hr = IWbemClassObject_Get( obj, systemdriveW, 0, &val, &type, NULL );
+    ok( hr == S_OK, "failed to get version %08x\n", hr );
+    ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    trace( "systemdrive: %s\n", wine_dbgstr_w(V_BSTR( &val )) );
     VariantClear( &val );
 
     IWbemClassObject_Release( obj );
