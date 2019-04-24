@@ -42,13 +42,13 @@ static BOOL (WINAPI *pIsDebuggerPresent)(void);
 
 static LONG child_failures;
 
-static void WINETEST_PRINTF_ATTR(2, 3) test_child_ok(int condition, const char *msg, ...)
+static void WINAPIV WINETEST_PRINTF_ATTR(2, 3) test_child_ok(int condition, const char *msg, ...)
 {
-    va_list valist;
+    __ms_va_list valist;
 
-    va_start(valist, msg);
+    __ms_va_start(valist, msg);
     winetest_vok(condition, msg, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     if (!condition) ++child_failures;
 }
 

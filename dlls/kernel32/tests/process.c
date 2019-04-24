@@ -281,15 +281,15 @@ static void     get_file_name(char* buf)
  *		static void     childPrintf
  *
  */
-static void WINETEST_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
+static void WINAPIV WINETEST_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
 {
-    va_list     valist;
+    __ms_va_list valist;
     char        buffer[1024+4*MAX_LISTED_ENV_VAR];
     DWORD       w;
 
-    va_start(valist, fmt);
+    __ms_va_start(valist, fmt);
     vsprintf(buffer, fmt, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     WriteFile(h, buffer, strlen(buffer), &w, NULL);
 }
 

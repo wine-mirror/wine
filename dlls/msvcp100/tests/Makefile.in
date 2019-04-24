@@ -1,5 +1,4 @@
 TESTDLL   = msvcp100.dll
-APPMODE   = -mno-cygwin
 
 C_SRCS = \
 	misc.c \

@@ -1,5 +1,4 @@
 TESTDLL   = msvcp140.dll
-APPMODE   = -mno-cygwin
 
 C_SRCS = \
 	msvcp140.c

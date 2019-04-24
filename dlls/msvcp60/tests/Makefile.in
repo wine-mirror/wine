@@ -1,5 +1,4 @@
 TESTDLL   = msvcp60.dll
-APPMODE   = -mno-cygwin
 
 C_SRCS = \
 	ios.c \

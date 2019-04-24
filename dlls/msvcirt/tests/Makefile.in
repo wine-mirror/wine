@@ -1,4 +1,3 @@
 TESTDLL   = msvcirt.dll
-APPMODE   = -mno-cygwin
 
 C_SRCS    = msvcirt.c
