@@ -388,23 +388,29 @@ void HID_update_state(xinput_controller* device)
         }
     }
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbLX = scale_short(value, &private->lx);
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.sThumbLX = scale_short(value, &private->lx);
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbLY = -scale_short(value, &private->ly) - 1;
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.sThumbLY = -scale_short(value, &private->ly) - 1;
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbRX = scale_short(value, &private->rx);
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.sThumbRX = scale_short(value, &private->rx);
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbRY = -scale_short(value, &private->ry) - 1;
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.sThumbRY = -scale_short(value, &private->ry) - 1;
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.bRightTrigger = scale_byte(value, &private->rtrigger);
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.bRightTrigger = scale_byte(value, &private->rtrigger);
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.bLeftTrigger = scale_byte(value, &private->ltrigger);
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.bLeftTrigger = scale_byte(value, &private->ltrigger);
     LeaveCriticalSection(&private->crit);
 }
 
