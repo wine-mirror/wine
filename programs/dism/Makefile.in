@@ -1,4 +1,5 @@
 MODULE    = dism.exe
-APPMODE   = -mconsole -municode
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = dism.c

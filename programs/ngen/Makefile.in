@@ -1,5 +1,6 @@
 MODULE    = ngen.exe
-APPMODE   = -mconsole -municode
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	ngen_main.c

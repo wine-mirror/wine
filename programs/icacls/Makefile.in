@@ -1,5 +1,6 @@
 MODULE    = icacls.exe
-APPMODE   = -mconsole
+
+EXTRADLLFLAGS = -mconsole -mno-cygwin
 
 C_SRCS = \
 	icacls_main.c

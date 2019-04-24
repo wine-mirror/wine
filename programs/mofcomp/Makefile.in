@@ -1,5 +1,5 @@
 MODULE    = mofcomp.exe
-APPMODE   = -mconsole -municode
-IMPORTS   = kernel32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = mofcomp.c

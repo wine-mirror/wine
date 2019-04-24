@@ -1,5 +1,6 @@
 MODULE    = conhost.exe
-APPMODE   = -mconsole -municode
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = conhost.c
 

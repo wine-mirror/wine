@@ -1,5 +1,6 @@
 MODULE    = mshta.exe
-APPMODE   = -mwindows -municode
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
 C_SRCS = \
 	main.c

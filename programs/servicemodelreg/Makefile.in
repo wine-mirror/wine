@@ -1,5 +1,6 @@
 MODULE    = servicemodelreg.exe
-APPMODE   = -mconsole -municode
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	main.c

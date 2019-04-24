@@ -1,5 +1,6 @@
 MODULE    = secedit.exe
-APPMODE   = -mconsole
+
+EXTRADLLFLAGS = -mconsole -mno-cygwin
 
 C_SRCS = \
 	main.c
