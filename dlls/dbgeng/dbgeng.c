@@ -2525,11 +2525,24 @@ static HRESULT STDMETHODCALLTYPE debugcontrol_OutputStackTrace(IDebugControl2 *i
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE debugcontrol_GetDebuggeeType(IDebugControl2 *iface, ULONG *_class, ULONG *qualifier)
+static HRESULT STDMETHODCALLTYPE debugcontrol_GetDebuggeeType(IDebugControl2 *iface, ULONG *debug_class,
+        ULONG *qualifier)
 {
-    FIXME("%p, %p, %p stub.\n", iface, _class, qualifier);
+    struct debug_client *debug_client = impl_from_IDebugControl2(iface);
+    static struct target_process *target;
 
-    return E_NOTIMPL;
+    FIXME("%p, %p, %p stub.\n", iface, debug_class, qualifier);
+
+    *debug_class = DEBUG_CLASS_UNINITIALIZED;
+    *qualifier = 0;
+
+    if (!(target = debug_client_get_target(debug_client)))
+        return E_UNEXPECTED;
+
+    *debug_class = DEBUG_CLASS_USER_WINDOWS;
+    *qualifier = DEBUG_USER_WINDOWS_PROCESS;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_GetActualProcessorType(IDebugControl2 *iface, ULONG *type)
