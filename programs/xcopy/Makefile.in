@@ -1,6 +1,7 @@
 MODULE    = xcopy.exe
-APPMODE   = -mconsole -municode -mno-cygwin
 IMPORTS   = shell32 user32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	xcopy.c
