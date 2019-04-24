@@ -1603,6 +1603,16 @@ static void test_margins_usefontinfo(UINT charset)
     DeleteObject(hfont);
 }
 
+static INT get_cjk_fontinfo_margin(INT width, INT side_bearing)
+{
+    INT margin;
+    if (side_bearing < 0)
+        margin = min(-side_bearing, width/2);
+    else
+        margin = 0;
+    return margin;
+}
+
 static void test_margins_default(const char* facename, UINT charset)
 {
     HWND hwnd;
@@ -1616,6 +1626,14 @@ static void test_margins_default(const char* facename, UINT charset)
     INT margins, expect;
     const UINT small_margins = MAKELONG(1, 5);
     const WCHAR EditW[] = {'E','d','i','t',0}, strW[] = {'W',0};
+    struct char_width_info {
+        INT lsb, rsb, unknown;
+    } info;
+    HMODULE hgdi32;
+    BOOL (WINAPI *pGetCharWidthInfo)(HDC, struct char_width_info *);
+
+    hgdi32 = GetModuleHandleA("gdi32.dll");
+    pGetCharWidthInfo = (void *)GetProcAddress(hgdi32, "GetCharWidthInfo");
 
     memset(&lf, 0, sizeof(lf));
     lf.lfHeight = -11;
@@ -1644,8 +1662,16 @@ static void test_margins_default(const char* facename, UINT charset)
         DeleteObject(hfont);
         return;
     }
-    expect = MAKELONG(size.cx / 2, size.cx / 2);
     cjk = is_cjk(hdc);
+    if (cjk && pGetCharWidthInfo && pGetCharWidthInfo(hdc, &info)) {
+        short left, right;
+
+        left  = get_cjk_fontinfo_margin(size.cx, info.lsb);
+        right = get_cjk_fontinfo_margin(size.cx, info.rsb);
+        expect = MAKELONG(left, right);
+    }
+    else
+        expect = MAKELONG(size.cx / 2, size.cx / 2);
 
     hfont = SelectObject(hdc, hfont);
     ReleaseDC(hwnd, hdc);
@@ -1660,13 +1686,8 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    if (!cjk)
-        ok(margins == expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
-    else
-    {
-        ok(HIWORD(margins) <= HIWORD(expect), "%s:%d: got %d\n", facename, charset, HIWORD(margins));
-        ok(LOWORD(margins) <= LOWORD(expect), "%s:%d: got %d\n", facename, charset, LOWORD(margins));
-    }
+    todo_wine_if(cjk && expect != MAKELONG(size.cx / 2, size.cx / 2))
+    ok(margins == expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(expect), LOWORD(expect), HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
 
     /* ANSI version */
@@ -1685,13 +1706,8 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    if (!cjk)
-        ok(margins == expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
-    else
-    {
-        ok(HIWORD(margins) <= HIWORD(expect), "%s:%d: got %d\n", facename, charset, HIWORD(margins));
-        ok(LOWORD(margins) <= LOWORD(expect), "%s:%d: got %d\n", facename, charset, LOWORD(margins));
-    }
+    todo_wine_if(cjk && expect != MAKELONG(size.cx / 2, size.cx / 2))
+    ok(margins == expect, "%s:%d: expected %d, %d, got %d, %d\n", facename, charset, HIWORD(expect), LOWORD(expect), HIWORD(margins), LOWORD(margins));
     DestroyWindow(hwnd);
 
     DeleteObject(hfont);
