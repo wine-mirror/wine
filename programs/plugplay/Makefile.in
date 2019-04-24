@@ -1,6 +1,7 @@
 MODULE    = plugplay.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = advapi32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	main.c
