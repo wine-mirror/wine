@@ -948,7 +948,7 @@
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr) advapi32.MakeSelfRelativeSD
 @ stdcall MapGenericMask(ptr ptr) advapi32.MapGenericMask
 # @ stub MapPredefinedHandleInternal
-# @ stub MapUserPhysicalPages
+@ stdcall MapUserPhysicalPages(ptr long ptr) kernel32.MapUserPhysicalPages
 @ stdcall MapViewOfFile(long long long long long) kernel32.MapViewOfFile
 @ stdcall MapViewOfFileEx(long long long long long ptr) kernel32.MapViewOfFileEx
 @ stub MapViewOfFileExNuma

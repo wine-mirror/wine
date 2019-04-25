@@ -1076,7 +1076,7 @@
 @ stdcall -i386 -private MapLS(ptr) krnl386.exe16.MapLS
 @ stdcall -i386 -private MapSL(long) krnl386.exe16.MapSL
 @ stdcall -i386 -private MapSLFix(long) krnl386.exe16.MapSLFix
-# @ stub MapUserPhysicalPages
+@ stdcall MapUserPhysicalPages(ptr long ptr)
 # @ stub MapUserPhysicalPagesScatter
 @ stdcall MapViewOfFile(long long long long long)
 @ stdcall MapViewOfFileEx(long long long long long ptr)

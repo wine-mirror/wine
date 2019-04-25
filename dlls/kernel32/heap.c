@@ -1491,3 +1491,11 @@ BOOL WINAPI FreeUserPhysicalPages(HANDLE process, ULONG_PTR *pages, ULONG_PTR *u
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+BOOL WINAPI MapUserPhysicalPages(PVOID addr, ULONG_PTR page_count, PULONG_PTR pages)
+{
+    FIXME("(%p, %lu, %p): stub\n", addr, page_count, pages);
+    *pages = 0;
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
