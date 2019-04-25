@@ -171,6 +171,7 @@ struct device_file
     struct device         *device;        /* device for this file */
     struct fd             *fd;            /* file descriptor for irp */
     client_ptr_t           user_ptr;      /* opaque ptr for client side */
+    int                    closed;        /* closed file flag */
     struct list            entry;         /* entry in device list */
     struct list            requests;      /* list of pending irp requests */
 };
@@ -430,6 +431,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
     if (!(file = alloc_object( &device_file_ops ))) return NULL;
 
     file->device = (struct device *)grab_object( device );
+    file->closed = 0;
     file->user_ptr = 0;
     list_init( &file->requests );
     list_add_tail( &device->files, &file->entry );
@@ -496,11 +498,12 @@ static int device_file_close_handle( struct object *obj, struct process *process
 {
     struct device_file *file = (struct device_file *)obj;
 
-    if (file->device->manager && obj->handle_count == 1)  /* last handle */
+    if (!file->closed && file->device->manager && obj->handle_count == 1)  /* last handle */
     {
         struct irp_call *irp;
         irp_params_t params;
 
+        file->closed = 1;
         memset( &params, 0, sizeof(params) );
         params.close.major = IRP_MJ_CLOSE;
 
