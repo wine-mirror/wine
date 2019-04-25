@@ -1613,6 +1613,23 @@ static INT get_cjk_fontinfo_margin(INT width, INT side_bearing)
     return margin;
 }
 
+static DWORD get_cjk_font_margins(HDC hdc)
+{
+    ABC abc[256];
+    SHORT left, right;
+    UINT i;
+
+    if (!GetCharABCWidthsW(hdc, 0, 255, abc))
+        return 0;
+
+    left = right = 0;
+    for (i = 0; i < ARRAY_SIZE(abc); i++) {
+        if (-abc[i].abcA > right) right = -abc[i].abcA;
+        if (-abc[i].abcC > left)  left  = -abc[i].abcC;
+    }
+    return MAKELONG(left, right);
+}
+
 static void test_margins_default(const char* facename, UINT charset)
 {
     HWND hwnd;
@@ -1623,7 +1640,7 @@ static void test_margins_default(const char* facename, UINT charset)
     LOGFONTA lf;
     HFONT hfont;
     RECT rect;
-    INT margins, expect;
+    INT margins, expect, font_expect;
     const UINT small_margins = MAKELONG(1, 5);
     const WCHAR EditW[] = {'E','d','i','t',0}, strW[] = {'W',0};
     struct char_width_info {
@@ -1669,9 +1686,14 @@ static void test_margins_default(const char* facename, UINT charset)
         left  = get_cjk_fontinfo_margin(size.cx, info.lsb);
         right = get_cjk_fontinfo_margin(size.cx, info.rsb);
         expect = MAKELONG(left, right);
+
+        font_expect = get_cjk_font_margins(hdc);
+        if (!font_expect)
+            /* In this case, margins aren't updated */
+            font_expect = small_margins;
     }
     else
-        expect = MAKELONG(size.cx / 2, size.cx / 2);
+        font_expect = expect = MAKELONG(size.cx / 2, size.cx / 2);
 
     hfont = SelectObject(hdc, hfont);
     ReleaseDC(hwnd, hdc);
@@ -1681,8 +1703,8 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    if (!cjk)
-        ok(margins == expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
+    todo_wine_if(cjk)
+    ok(margins == font_expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
@@ -1700,8 +1722,8 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    if (!cjk)
-        ok(margins == expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
+    todo_wine_if(cjk)
+    ok(margins == font_expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
