@@ -1703,7 +1703,6 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    todo_wine_if(cjk)
     ok(margins == font_expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));
@@ -1722,7 +1721,6 @@ static void test_margins_default(const char* facename, UINT charset)
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
     margins = SendMessageA(hwnd, EM_GETMARGINS, 0, 0);
-    todo_wine_if(cjk)
     ok(margins == font_expect, "%s:%d: got %d, %d\n", facename, charset, HIWORD(margins), LOWORD(margins));
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, small_margins);
     SendMessageA(hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO));

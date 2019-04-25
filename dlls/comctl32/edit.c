@@ -3708,6 +3708,29 @@ static void EDIT_WM_SetFocus(HTHEME theme, EDITSTATE *es)
 }
 
 
+static DWORD get_font_margins(HDC hdc, const TEXTMETRICW *tm)
+{
+	ABC abc[256];
+	SHORT left, right;
+	UINT i;
+
+	if (!(tm->tmPitchAndFamily & (TMPF_VECTOR | TMPF_TRUETYPE)))
+		return MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO);
+
+	if (!is_cjk(hdc))
+		return MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO);
+
+	if (!GetCharABCWidthsW(hdc, 0, 255, abc))
+		return 0;
+
+	left = right = 0;
+	for (i = 0; i < ARRAY_SIZE(abc); i++) {
+		if (-abc[i].abcA > right) right = -abc[i].abcA;
+		if (-abc[i].abcC > left ) left  = -abc[i].abcC;
+	}
+	return MAKELONG(left, right);
+}
+
 /*********************************************************************
  *
  *	WM_SETFONT
@@ -3723,6 +3746,7 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 	HDC dc;
 	HFONT old_font = 0;
 	RECT clientRect;
+	DWORD margins;
 
 	es->font = font;
 	EDIT_InvalidateUniscribeData(es);
@@ -3732,6 +3756,7 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 	GetTextMetricsW(dc, &tm);
 	es->line_height = tm.tmHeight;
 	es->char_width = tm.tmAveCharWidth;
+	margins = get_font_margins(dc, &tm);
 	if (font)
 		SelectObject(dc, old_font);
 	ReleaseDC(es->hwndSelf, dc);
@@ -3739,8 +3764,9 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 	/* Reset the format rect and the margins */
 	GetClientRect(es->hwndSelf, &clientRect);
 	EDIT_SetRectNP(es, &clientRect);
-	EDIT_EM_SetMargins(es, EC_LEFTMARGIN | EC_RIGHTMARGIN,
-			   EC_USEFONTINFO, EC_USEFONTINFO, FALSE);
+	if (margins)
+		EDIT_EM_SetMargins(es, EC_LEFTMARGIN | EC_RIGHTMARGIN,
+				   LOWORD(margins), HIWORD(margins), FALSE);
 
 	if (es->style & ES_MULTILINE)
 		EDIT_BuildLineDefs_ML(es, 0, get_text_length(es), 0, NULL);
