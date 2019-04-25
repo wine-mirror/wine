@@ -170,7 +170,7 @@ struct device_file
     struct object          obj;           /* object header */
     struct device         *device;        /* device for this file */
     struct fd             *fd;            /* file descriptor for irp */
-    client_ptr_t           user_ptr;      /* opaque ptr for client side */
+    struct list            kernel_object; /* list of kernel object pointers */
     int                    closed;        /* closed file flag */
     struct list            entry;         /* entry in device list */
     struct list            requests;      /* list of pending irp requests */
@@ -178,6 +178,7 @@ struct device_file
 
 static void device_file_dump( struct object *obj, int verbose );
 static struct fd *device_file_get_fd( struct object *obj );
+static struct list *device_file_get_kernel_obj_list( struct object *obj );
 static int device_file_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void device_file_destroy( struct object *obj );
 static enum server_fd_type device_file_get_fd_type( struct fd *fd );
@@ -204,7 +205,7 @@ static const struct object_ops device_file_ops =
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
     no_open_file,                     /* open_file */
-    no_kernel_obj_list,               /* get_kernel_obj_list */
+    device_file_get_kernel_obj_list,  /* get_kernel_obj_list */
     device_file_close_handle,         /* close_handle */
     device_file_destroy               /* destroy */
 };
@@ -432,7 +433,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
 
     file->device = (struct device *)grab_object( device );
     file->closed = 0;
-    file->user_ptr = 0;
+    list_init( &file->kernel_object );
     list_init( &file->requests );
     list_add_tail( &device->files, &file->entry );
     if (device->unix_path)
@@ -494,6 +495,12 @@ static struct fd *device_file_get_fd( struct object *obj )
     return (struct fd *)grab_object( file->fd );
 }
 
+static struct list *device_file_get_kernel_obj_list( struct object *obj )
+{
+    struct device_file *file = (struct device_file *)obj;
+    return &file->kernel_object;
+}
+
 static int device_file_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     struct device_file *file = (struct device_file *)obj;
@@ -531,26 +538,26 @@ static void device_file_destroy( struct object *obj )
     release_object( file->device );
 }
 
-static void fill_irp_params( struct irp_call *irp, irp_params_t *params )
+static void fill_irp_params( struct device_manager *manager, struct irp_call *irp, irp_params_t *params )
 {
     *params = irp->params;
 
     switch (params->major)
     {
     case IRP_MJ_CLOSE:
-        params->close.file = irp->file->user_ptr;
+        params->close.file = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_MJ_READ:
-        params->read.file  = irp->file->user_ptr;
+        params->read.file  = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_MJ_WRITE:
-        params->write.file = irp->file->user_ptr;
+        params->write.file = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_MJ_FLUSH_BUFFERS:
-        params->flush.file = irp->file->user_ptr;
+        params->flush.file = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_MJ_DEVICE_CONTROL:
-        params->ioctl.file = irp->file->user_ptr;
+        params->ioctl.file = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     }
 }
@@ -873,7 +880,7 @@ DECL_HANDLER(get_next_device_request)
         if (iosb->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
         else if (!irp->file || (reply->next = alloc_handle( current->process, irp, 0, 0 )))
         {
-            fill_irp_params( irp, &reply->params );
+            fill_irp_params( manager, irp, &reply->params );
             set_reply_data_ptr( iosb->in_data, iosb->in_size );
             iosb->in_data = NULL;
             iosb->in_size = 0;
@@ -895,7 +902,8 @@ DECL_HANDLER(set_irp_result)
 
     if ((irp = (struct irp_call *)get_handle_obj( current->process, req->handle, 0, &irp_call_ops )))
     {
-        if (irp->file) irp->file->user_ptr = req->file_ptr;
+        if (irp->file && irp->file->device->manager)
+            set_kernel_object( irp->file->device->manager, &irp->file->obj, req->file_ptr );
         set_irp_result( irp, req->status, get_req_data(), get_req_data_size(), req->size );
         close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
         release_object( irp );

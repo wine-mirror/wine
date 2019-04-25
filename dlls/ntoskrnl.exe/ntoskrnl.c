@@ -518,8 +518,7 @@ static const WCHAR file_type_name[] = {'F','i','l','e',0};
 
 static struct _OBJECT_TYPE file_type = {
     file_type_name,
-    create_file_object,
-    free_kernel_object
+    create_file_object
 };
 
 POBJECT_TYPE IoFileObjectType = &file_type;
