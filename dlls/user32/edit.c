@@ -3812,7 +3812,7 @@ static void EDIT_WM_SetFocus(EDITSTATE *es)
 	EDIT_NOTIFY_PARENT(es, EN_SETFOCUS);
 }
 
-static DWORD get_font_margins(HDC hdc, TEXTMETRICW *tm, BOOL unicode)
+static DWORD get_font_margins(HDC hdc, const TEXTMETRICW *tm, BOOL unicode)
 {
 	ABC abc[256];
 	SHORT left, right;
