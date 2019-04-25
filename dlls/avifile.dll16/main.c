@@ -23,6 +23,27 @@
 #include "wingdi.h"
 #include "vfw.h"
 
+typedef struct _AVISTREAMINFO16 {
+    DWORD   fccType;
+    DWORD   fccHandler;
+    DWORD   dwFlags;
+    DWORD   dwCaps;
+    WORD    wPriority;
+    WORD    wLanguage;
+    DWORD   dwScale;
+    DWORD   dwRate;
+    DWORD   dwStart;
+    DWORD   dwLength;
+    DWORD   dwInitialFrames;
+    DWORD   dwSuggestedBufferSize;
+    DWORD   dwQuality;
+    DWORD   dwSampleSize;
+    RECT16  rcFrame;
+    DWORD   dwEditCount;
+    DWORD   dwFormatChangeCount;
+    CHAR    szName[64];
+} AVISTREAMINFO16, *LPAVISTREAMINFO16, *PAVISTREAMINFO16;
+
 struct frame_wrapper16
 {
     PGETFRAME pg;
@@ -129,5 +150,84 @@ HRESULT WINAPI AVIStreamGetFrameClose16(PGETFRAME pg)
     hr = AVIStreamGetFrameClose(wrapper->pg);
     free_segptr_frame(wrapper);
     HeapFree(GetProcessHeap(), 0, wrapper);
+    return hr;
+}
+
+/***********************************************************************
+ *      AVIFileCreateStream (AVIFILE.144)
+ */
+HRESULT WINAPI AVIFileCreateStream16(PAVIFILE pfile, PAVISTREAM *ppavi, LPAVISTREAMINFO16 asi16)
+{
+    AVISTREAMINFOA asi;
+
+    if (!asi16)
+        return AVIFileCreateStreamA(pfile, ppavi, NULL);
+
+    asi.fccType               = asi16->fccType;
+    asi.fccHandler            = asi16->fccHandler;
+    asi.dwFlags               = asi16->dwFlags;
+    asi.dwCaps                = asi16->dwCaps;
+    asi.wPriority             = asi16->wPriority;
+    asi.wLanguage             = asi16->wLanguage;
+    asi.dwScale               = asi16->dwScale;
+    asi.dwRate                = asi16->dwRate;
+    asi.dwStart               = asi16->dwStart;
+    asi.dwLength              = asi16->dwLength;
+    asi.dwInitialFrames       = asi16->dwInitialFrames;
+    asi.dwSuggestedBufferSize = asi16->dwSuggestedBufferSize;
+    asi.dwQuality             = asi16->dwQuality;
+    asi.dwSampleSize          = asi16->dwSampleSize;
+    asi.rcFrame.left          = asi16->rcFrame.left;
+    asi.rcFrame.top           = asi16->rcFrame.top;
+    asi.rcFrame.right         = asi16->rcFrame.right;
+    asi.rcFrame.bottom        = asi16->rcFrame.bottom;
+    asi.dwEditCount           = asi16->dwEditCount;
+    asi.dwFormatChangeCount   = asi16->dwFormatChangeCount;
+    strcpy( asi.szName, asi16->szName );
+
+    return AVIFileCreateStreamA(pfile, ppavi, &asi);
+}
+
+
+/***********************************************************************
+ *      AVIStreamInfo       (AVIFILE.162)
+ */
+HRESULT WINAPI AVIStreamInfo16(PAVISTREAM pstream, LPAVISTREAMINFO16 asi16, LONG size)
+{
+    AVISTREAMINFOA asi;
+    HRESULT hr;
+
+    if (!asi16)
+        return AVIStreamInfoA(pstream, NULL, size);
+
+    if (size < sizeof(AVISTREAMINFO16))
+        return AVIERR_BADSIZE;
+
+    hr = AVIStreamInfoA(pstream, &asi, sizeof(asi));
+    if (SUCCEEDED(hr))
+    {
+        asi16->fccType                = asi.fccType;
+        asi16->fccHandler             = asi.fccHandler;
+        asi16->dwFlags                = asi.dwFlags;
+        asi16->dwCaps                 = asi.dwCaps;
+        asi16->wPriority              = asi.wPriority;
+        asi16->wLanguage              = asi.wLanguage;
+        asi16->dwScale                = asi.dwScale;
+        asi16->dwRate                 = asi.dwRate;
+        asi16->dwStart                = asi.dwStart;
+        asi16->dwLength               = asi.dwLength;
+        asi16->dwInitialFrames        = asi.dwInitialFrames;
+        asi16->dwSuggestedBufferSize  = asi.dwSuggestedBufferSize;
+        asi16->dwQuality              = asi.dwQuality;
+        asi16->dwSampleSize           = asi.dwSampleSize;
+        asi16->rcFrame.left           = asi.rcFrame.left;
+        asi16->rcFrame.top            = asi.rcFrame.top;
+        asi16->rcFrame.right          = asi.rcFrame.right;
+        asi16->rcFrame.bottom         = asi.rcFrame.bottom;
+        asi16->dwEditCount            = asi.dwEditCount;
+        asi16->dwFormatChangeCount    = asi.dwFormatChangeCount;
+        strcpy( asi16->szName, asi.szName );
+    }
+
     return hr;
 }
