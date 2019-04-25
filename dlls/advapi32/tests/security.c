@@ -2876,19 +2876,21 @@ static void test_granted_access(HANDLE handle, ACCESS_MASK access,
 static void test_process_security(void)
 {
     BOOL res;
+    PTOKEN_USER user;
     PTOKEN_OWNER owner;
     PTOKEN_PRIMARY_GROUP group;
-    PSID AdminSid = NULL, UsersSid = NULL;
+    PSID AdminSid = NULL, UsersSid = NULL, UserSid = NULL;
     PACL Acl = NULL, ThreadAcl = NULL;
     SECURITY_DESCRIPTOR *SecurityDescriptor = NULL, *ThreadSecurityDescriptor = NULL;
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH], account[MAX_PATH], domain[MAX_PATH];
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
     SECURITY_ATTRIBUTES psa, tsa;
     HANDLE token, event;
-    DWORD size;
+    DWORD size, acc_size, dom_size, ret;
     SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
     PSID EveryoneSid = NULL;
+    SID_NAME_USE use;
 
     Acl = HeapAlloc(GetProcessHeap(), 0, 256);
     res = InitializeAcl(Acl, 256, ACL_REVISION);
@@ -2920,7 +2922,8 @@ static void test_process_security(void)
     owner = HeapAlloc(GetProcessHeap(), 0, size);
     res = GetTokenInformation( token, TokenOwner, owner, size, &size );
     ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
-    AdminSid = ((TOKEN_OWNER*)owner)->Owner;
+    AdminSid = owner->Owner;
+    test_sid_str(AdminSid);
 
     res = GetTokenInformation( token, TokenPrimaryGroup, NULL, 0, &size );
     ok(!res, "Expected failure, got %d\n", res);
@@ -2930,13 +2933,34 @@ static void test_process_security(void)
     group = HeapAlloc(GetProcessHeap(), 0, size);
     res = GetTokenInformation( token, TokenPrimaryGroup, group, size, &size );
     ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
-    UsersSid = ((TOKEN_PRIMARY_GROUP*)group)->PrimaryGroup;
+    UsersSid = group->PrimaryGroup;
+    test_sid_str(UsersSid);
+
+    acc_size = sizeof(account);
+    dom_size = sizeof(domain);
+    ret = LookupAccountSidA( NULL, UsersSid, account, &acc_size, domain, &dom_size, &use );
+    ok(ret, "LookupAccountSid failed with %d\n", ret);
+    todo_wine ok(use == SidTypeGroup, "expect SidTypeGroup, got %d\n", use);
+    todo_wine ok(!strcmp(account, "None"), "expect None, got %s\n", account);
+
+    res = GetTokenInformation( token, TokenUser, NULL, 0, &size );
+    ok(!res, "Expected failure, got %d\n", res);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    user = HeapAlloc(GetProcessHeap(), 0, size);
+    res = GetTokenInformation( token, TokenUser, user, size, &size );
+    ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
+    UserSid = user->User.Sid;
+    test_sid_str(UserSid);
+    todo_wine ok(EqualPrefixSid(UsersSid, UserSid), "TokenPrimaryGroup Sid and TokenUser Sid don't match.\n");
 
     CloseHandle( token );
     if (!res)
     {
         HeapFree(GetProcessHeap(), 0, group);
         HeapFree(GetProcessHeap(), 0, owner);
+        HeapFree(GetProcessHeap(), 0, user);
         HeapFree(GetProcessHeap(), 0, Acl);
         return;
     }
@@ -3043,6 +3067,7 @@ static void test_process_security(void)
     CloseHandle( event );
     HeapFree(GetProcessHeap(), 0, group);
     HeapFree(GetProcessHeap(), 0, owner);
+    HeapFree(GetProcessHeap(), 0, user);
     HeapFree(GetProcessHeap(), 0, Acl);
     HeapFree(GetProcessHeap(), 0, SecurityDescriptor);
     HeapFree(GetProcessHeap(), 0, ThreadAcl);
