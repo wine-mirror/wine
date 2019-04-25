@@ -245,35 +245,35 @@
 @ cdecl -arch=i386 -norelay __libm_sse2_tan() MSVCRT___libm_sse2_tan
 @ cdecl -arch=i386 -norelay __libm_sse2_tanf() MSVCRT___libm_sse2_tanf
 @ extern __mb_cur_max MSVCRT___mb_cur_max
-@ cdecl __p___argc() MSVCRT___p___argc
-@ cdecl __p___argv() MSVCRT___p___argv
-@ cdecl __p___initenv()
-@ cdecl __p___mb_cur_max()
-@ cdecl __p___wargv() MSVCRT___p___wargv
-@ cdecl __p___winitenv()
-@ cdecl __p__acmdln() MSVCRT___p__acmdln
-@ cdecl __p__amblksiz()
-@ cdecl __p__commode()
-@ cdecl __p__daylight() MSVCRT___p__daylight
-@ cdecl __p__dstbias() MSVCRT___p__dstbias
-@ cdecl __p__environ() MSVCRT___p__environ
-@ stub __p__fileinfo()
-@ cdecl __p__fmode() MSVCRT___p__fmode
+@ cdecl -arch=win32 __p___argc() MSVCRT___p___argc
+@ cdecl -arch=win32 __p___argv() MSVCRT___p___argv
+@ cdecl -arch=win32 __p___initenv()
+@ cdecl -arch=win32 __p___mb_cur_max()
+@ cdecl -arch=win32 __p___wargv() MSVCRT___p___wargv
+@ cdecl -arch=win32 __p___winitenv()
+@ cdecl -arch=win32 __p__acmdln() MSVCRT___p__acmdln
+@ cdecl -arch=win32 __p__amblksiz()
+@ cdecl -arch=win32 __p__commode()
+@ cdecl -arch=win32 __p__daylight() MSVCRT___p__daylight
+@ cdecl -arch=win32 __p__dstbias() MSVCRT___p__dstbias
+@ cdecl -arch=win32 __p__environ() MSVCRT___p__environ
+@ stub -arch=win32 __p__fileinfo()
+@ cdecl -arch=win32 __p__fmode() MSVCRT___p__fmode
 @ cdecl __p__iob()
-@ stub __p__mbcasemap()
-@ cdecl __p__mbctype()
-@ cdecl __p__osver()
-@ cdecl __p__pctype() MSVCRT___p__pctype
-@ cdecl __p__pgmptr() MSVCRT___p__pgmptr
-@ stub __p__pwctype()
-@ cdecl __p__timezone() MSVCRT___p__timezone
-@ cdecl __p__tzname()
-@ cdecl __p__wcmdln() MSVCRT___p__wcmdln
-@ cdecl __p__wenviron() MSVCRT___p__wenviron
-@ cdecl __p__winmajor()
-@ cdecl __p__winminor()
-@ cdecl __p__winver()
-@ cdecl __p__wpgmptr() MSVCRT___p__wpgmptr
+@ stub -arch=win32 __p__mbcasemap()
+@ cdecl -arch=win32 __p__mbctype()
+@ cdecl -arch=win32 __p__osver()
+@ cdecl -arch=win32 __p__pctype() MSVCRT___p__pctype
+@ cdecl -arch=win32 __p__pgmptr() MSVCRT___p__pgmptr
+@ stub -arch=win32 __p__pwctype()
+@ cdecl -arch=win32 __p__timezone() MSVCRT___p__timezone
+@ cdecl -arch=win32 __p__tzname()
+@ cdecl -arch=win32 __p__wcmdln() MSVCRT___p__wcmdln
+@ cdecl -arch=win32 __p__wenviron() MSVCRT___p__wenviron
+@ cdecl -arch=win32 __p__winmajor()
+@ cdecl -arch=win32 __p__winminor()
+@ cdecl -arch=win32 __p__winver()
+@ cdecl -arch=win32 __p__wpgmptr() MSVCRT___p__wpgmptr
 @ cdecl __pctype_func() MSVCRT___pctype_func
 @ extern __pioinfo MSVCRT___pioinfo
 # stub __pwctype_func()
