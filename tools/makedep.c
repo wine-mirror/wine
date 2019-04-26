@@ -1526,6 +1526,15 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
                 return file;
         }
     }
+
+    if (pFile->type == INCL_SYSTEM && make->use_msvcrt)
+    {
+        if (!strcmp( pFile->name, "stdarg.h" )) return NULL;
+        fprintf( stderr, "%s:%d: error: system header %s cannot be used with msvcrt\n",
+                 pFile->included_by->file->name, pFile->included_line, pFile->name );
+        exit(1);
+    }
+
     if (pFile->type == INCL_SYSTEM) return NULL;  /* ignore system files we cannot find */
 
     /* try in src file directory */
