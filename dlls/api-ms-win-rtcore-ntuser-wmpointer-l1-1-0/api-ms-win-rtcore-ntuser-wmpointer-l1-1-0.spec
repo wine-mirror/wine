@@ -17,7 +17,7 @@
 @ stub GetPointerPenInfoHistory
 @ stub GetPointerTouchInfo
 @ stub GetPointerTouchInfoHistory
-@ stub GetPointerType
+@ stdcall GetPointerType(long ptr) user32.GetPointerType
 @ stub GetRawPointerDeviceData
 @ stub InitializeTouchInjection
 @ stub InjectTouchInput

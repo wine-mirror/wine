@@ -78,6 +78,7 @@ static struct {
 
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 static BOOL (WINAPI *pGetCurrentInputMessageSource)( INPUT_MESSAGE_SOURCE *source );
+static BOOL (WINAPI *pGetPointerType)(UINT32, POINTER_INPUT_TYPE*);
 static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEPOINT, int, DWORD);
 static UINT (WINAPI *pGetRawInputDeviceList) (PRAWINPUTDEVICELIST, PUINT, UINT);
 static UINT (WINAPI *pGetRawInputDeviceInfoW) (HANDLE, UINT, void *, UINT *);
@@ -165,6 +166,7 @@ static void init_function_pointers(void)
     GET_PROC(SendInput);
     GET_PROC(GetCurrentInputMessageSource);
     GET_PROC(GetMouseMovePointsEx);
+    GET_PROC(GetPointerType);
     GET_PROC(GetRawInputDeviceList);
     GET_PROC(GetRawInputDeviceInfoW);
     GET_PROC(GetRawInputDeviceInfoA);
@@ -2800,6 +2802,31 @@ static void test_input_message_source(void)
     UnregisterClassA( cls.lpszClassName, GetModuleHandleA(0) );
 }
 
+static void test_GetPointerType(void)
+{
+    BOOL ret;
+    POINTER_INPUT_TYPE type = -1;
+    UINT id = 0;
+
+    SetLastError(0xdeadbeef);
+    ret = pGetPointerType(id, NULL);
+    ok(!ret, "GetPointerType should have failed.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected error ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetPointerType(id, &type);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected error ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
+    ok(!ret, "GetPointerType failed, got type %d for %u.\n", type, id );
+    ok(type == -1, " type %d\n", type );
+
+    id = 1;
+    ret = pGetPointerType(id, &type);
+    ok(ret, "GetPointerType failed, got type %d for %u.\n", type, id );
+    ok(type == PT_MOUSE, " type %d\n", type );
+}
+
 START_TEST(input)
 {
     POINT pos;
@@ -2845,4 +2872,9 @@ START_TEST(input)
         win_skip("GetCurrentInputMessageSource is not available\n");
 
     SetCursorPos( pos.x, pos.y );
+
+    if(pGetPointerType)
+        test_GetPointerType();
+    else
+        win_skip("GetPointerType is not available\n");
 }
