@@ -4345,6 +4345,19 @@ typedef struct _SID_AND_ATTRIBUTES {
   DWORD Attributes;
 } SID_AND_ATTRIBUTES, *PSID_AND_ATTRIBUTES;
 
+typedef SID_AND_ATTRIBUTES SID_AND_ATTRIBUTES_ARRAY[ANYSIZE_ARRAY];
+typedef SID_AND_ATTRIBUTES_ARRAY *PSID_AND_ATTRIBUTES_ARRAY;
+
+#define SID_HASH_SIZE 32
+
+typedef ULONG_PTR SID_HASH_ENTRY, *PSID_HASH_ENTRY;
+
+typedef struct _SID_AND_ATTRIBUTES_HASH {
+  DWORD SidCount;
+  PSID_AND_ATTRIBUTES SidAttr;
+  SID_HASH_ENTRY Hash[SID_HASH_SIZE];
+} SID_AND_ATTRIBUTES_HASH, *PSID_AND_ATTRIBUTES_HASH;
+
 /* security entities */
 #define SECURITY_NULL_RID                       __MSABI_LONG(0x00000000)
 #define SECURITY_WORLD_RID                      __MSABI_LONG(0x00000000)
@@ -4848,9 +4861,42 @@ typedef struct _TOKEN_MANDATORY_LABEL {
   SID_AND_ATTRIBUTES Label;
 } TOKEN_MANDATORY_LABEL, * PTOKEN_MANDATORY_LABEL;
 
+#define TOKEN_MANDATORY_POLICY_OFF             0x0
+#define TOKEN_MANDATORY_POLICY_NO_WRITEUP      0x1
+#define TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN 0x2
+#define TOKEN_MANDATORY_POLICY_VALID_MASK      0x3
+
+typedef struct _TOKEN_MANDATORY_POLICY {
+  DWORD Policy;
+} TOKEN_MANDATORY_POLICY, *PTOKEN_MANDATORY_POLICY;
+
 typedef struct _TOKEN_APPCONTAINER_INFORMATION {
   PSID TokenAppContainer;
 } TOKEN_APPCONTAINER_INFORMATION, * PTOKEN_APPCONTAINER_INFORMATION;
+
+#define POLICY_AUDIT_SUBCATEGORY_COUNT 53
+
+typedef struct _TOKEN_AUDIT_POLICY {
+  BYTE PerUserPolicy[((POLICY_AUDIT_SUBCATEGORY_COUNT) >> 1) + 1];
+} TOKEN_AUDIT_POLICY, *PTOKEN_AUDIT_POLICY;
+
+typedef struct _TOKEN_ACCESS_INFORMATION {
+  PSID_AND_ATTRIBUTES_HASH SidHash;
+  PSID_AND_ATTRIBUTES_HASH RestrictedSidHash;
+  PTOKEN_PRIVILEGES Privileges;
+  LUID AuthenticationId;
+  TOKEN_TYPE TokenType;
+  SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+  TOKEN_MANDATORY_POLICY MandatoryPolicy;
+  DWORD Flags;
+} TOKEN_ACCESS_INFORMATION, *PTOKEN_ACCESS_INFORMATION;
+
+typedef struct _TOKEN_CONTROL {
+  LUID TokenId;
+  LUID AuthenticationId;
+  LUID ModifiedId;
+  TOKEN_SOURCE TokenSource;
+} TOKEN_CONTROL, *PTOKEN_CONTROL;
 
 /*
  *	ACLs of NT
@@ -4938,9 +4984,106 @@ typedef struct _SYSTEM_MANDATORY_LABEL_ACE {
     DWORD       SidStart;
 } SYSTEM_MANDATORY_LABEL_ACE,*PSYSTEM_MANDATORY_LABEL_ACE;
 
+typedef struct _ACCESS_ALLOWED_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} ACCESS_ALLOWED_OBJECT_ACE, *PACCESS_ALLOWED_OBJECT_ACE;
+
+typedef struct _ACCESS_DENIED_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} ACCESS_DENIED_OBJECT_ACE, *PACCESS_DENIED_OBJECT_ACE;
+
+typedef struct _SYSTEM_AUDIT_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} SYSTEM_AUDIT_OBJECT_ACE, *PSYSTEM_AUDIT_OBJECT_ACE;
+
+typedef struct _SYSTEM_ALARM_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} SYSTEM_ALARM_OBJECT_ACE, *PSYSTEM_ALARM_OBJECT_aCE;
+
+typedef struct _ACCESS_ALLOWED_CALLBACK_ACE {
+    ACE_HEADER  Header;
+    DWORD       Mask;
+    DWORD       SidStart;
+} ACCESS_ALLOWED_CALLBACK_ACE,*PACCESS_ALLOWED_CALLBACK_ACE;
+
+typedef struct _ACCESS_DENIED_CALLBACK_ACE {
+    ACE_HEADER  Header;
+    DWORD       Mask;
+    DWORD       SidStart;
+} ACCESS_DENIED_CALLBACK_ACE,*PACCESS_DENIED_CALLBACK_ACE;
+
+typedef struct _SYSTEM_AUDIT_CALLBACK_ACE {
+    ACE_HEADER  Header;
+    DWORD       Mask;
+    DWORD       SidStart;
+} SYSTEM_AUDIT_CALLBACK_ACE,*PSYSTEM_AUDIT_CALLBACK_ACE;
+
+typedef struct _SYSTEM_ALARM_CALLBACK_ACE {
+    ACE_HEADER  Header;
+    DWORD       Mask;
+    DWORD       SidStart;
+} SYSTEM_ALARM_CALLBACK_ACE,*PSYSTEM_ALARM_CALLBACK_ACE;
+
+typedef struct _ACCESS_ALLOWED_CALLBACK_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} ACCESS_ALLOWED_CALLBACK_OBJECT_ACE, *PACCESS_ALLOWED_CALLBACK_OBJECT_ACE;
+
+typedef struct _ACCESS_DENIED_CALLBACK_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} ACCESS_DENIED_CALLBACK_OBJECT_ACE, *PACCESS_DENIED_CALLBACK_OBJECT_ACE;
+
+typedef struct _SYSTEM_AUDIT_CALLBACK_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} SYSTEM_AUDIT_CALLBACK_OBJECT_ACE, *PSYSTEM_AUDIT_CALLBACK_OBJECT_ACE;
+
+typedef struct _SYSTEM_ALARM_CALLBACK_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} SYSTEM_ALARM_CALLBACK_OBJECT_ACE, *PSYSTEM_ALARM_CALLBACK_OBJECT_ACE;
+
 #define SYSTEM_MANDATORY_LABEL_NO_WRITE_UP      0x1
 #define SYSTEM_MANDATORY_LABEL_NO_READ_UP       0x2
 #define SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP    0x4
+#define SYSTEM_MANDATORY_LABEL_VALID_MASK       0x7
 
 typedef enum tagSID_NAME_USE {
 	SidTypeUser = 1,
