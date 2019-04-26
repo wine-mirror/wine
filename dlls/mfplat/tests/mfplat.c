@@ -1475,6 +1475,53 @@ static void test_sample(void)
 
     IMFAttributes_Release(attributes);
     IMFSample_Release(sample);
+
+    /* ConvertToContiguousBuffer() */
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMemoryBuffer(16, &buffer);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer2);
+    ok(hr == S_OK, "Failed to convert, hr %#x.\n", hr);
+    ok(buffer2 == buffer, "Unexpected buffer instance.\n");
+    IMFMediaBuffer_Release(buffer2);
+
+    hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer2);
+    ok(hr == S_OK, "Failed to convert, hr %#x.\n", hr);
+    ok(buffer2 == buffer, "Unexpected buffer instance.\n");
+    IMFMediaBuffer_Release(buffer2);
+
+    hr = MFCreateMemoryBuffer(16, &buffer2);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample, buffer2);
+    ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
+    IMFMediaBuffer_Release(buffer2);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+    ok(count == 2, "Unexpected buffer count %u.\n", count);
+
+    hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer2);
+todo_wine
+    ok(hr == S_OK, "Failed to convert, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IMFMediaBuffer_Release(buffer2);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+todo_wine
+    ok(count == 1, "Unexpected buffer count %u.\n", count);
+
+    IMFSample_Release(sample);
 }
 
 struct test_callback

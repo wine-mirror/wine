@@ -686,9 +686,29 @@ static HRESULT WINAPI sample_GetBufferByIndex(IMFSample *iface, DWORD index, IMF
 
 static HRESULT WINAPI sample_ConvertToContiguousBuffer(IMFSample *iface, IMFMediaBuffer **buffer)
 {
-    FIXME("%p, %p.\n", iface, buffer);
+    struct sample *sample = impl_from_IMFSample(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, buffer);
+
+    EnterCriticalSection(&sample->cs);
+
+    if (sample->buffer_count == 0)
+        hr = E_UNEXPECTED;
+    else if (sample->buffer_count == 1)
+    {
+        *buffer = sample->buffers[0];
+        IMFMediaBuffer_AddRef(*buffer);
+    }
+    else
+    {
+        FIXME("Samples with multiple buffers are not supported.\n");
+        hr = E_NOTIMPL;
+    }
+
+    LeaveCriticalSection(&sample->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_AddBuffer(IMFSample *iface, IMFMediaBuffer *buffer)
