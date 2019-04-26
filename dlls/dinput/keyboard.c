@@ -215,6 +215,9 @@ static HRESULT keyboarddev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVI
   if (id != 0)
     return E_FAIL;
 
+  if (dwFlags & DIEDFL_FORCEFEEDBACK)
+    return S_FALSE;
+
   if ((dwDevType == 0) ||
       ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 0x0800)) ||
       (((dwDevType == DI8DEVCLASS_KEYBOARD) || (dwDevType == DI8DEVTYPE_KEYBOARD)) && (version >= 0x0800))) {
@@ -232,6 +235,9 @@ static HRESULT keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVI
 {
   if (id != 0)
     return E_FAIL;
+
+  if (dwFlags & DIEDFL_FORCEFEEDBACK)
+    return S_FALSE;
 
   if ((dwDevType == 0) ||
       ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 0x0800)) ||

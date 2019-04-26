@@ -158,6 +158,9 @@ static HRESULT mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
     if (id != 0)
         return E_FAIL;
 
+    if (dwFlags & DIEDFL_FORCEFEEDBACK)
+        return S_FALSE;
+
     if ((dwDevType == 0) ||
 	((dwDevType == DIDEVTYPE_MOUSE) && (version < 0x0800)) ||
 	(((dwDevType == DI8DEVCLASS_POINTER) || (dwDevType == DI8DEVTYPE_MOUSE)) && (version >= 0x0800))) {
@@ -175,6 +178,9 @@ static HRESULT mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
 {
     if (id != 0)
         return E_FAIL;
+
+    if (dwFlags & DIEDFL_FORCEFEEDBACK)
+        return S_FALSE;
 
     if ((dwDevType == 0) ||
 	((dwDevType == DIDEVTYPE_MOUSE) && (version < 0x0800)) ||
