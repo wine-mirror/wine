@@ -15,7 +15,7 @@
 @ stub GetVirtualDiskPhysicalPath
 @ stub MergeVirtualDisk
 @ stub MirrorVirtualDisk
-@ stub OpenVirtualDisk
+@ stdcall OpenVirtualDisk(ptr wstr long long ptr ptr)
 @ stub ResizeVirtualDisk
 @ stub SetVirtualDiskInformation
 @ stub SetVirtualDiskMetadata
