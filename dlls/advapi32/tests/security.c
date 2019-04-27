@@ -3016,7 +3016,7 @@ static void test_process_security(void)
     ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
     UserSid = user->User.Sid;
     test_sid_str(UserSid);
-    todo_wine ok(EqualPrefixSid(UsersSid, UserSid), "TokenPrimaryGroup Sid and TokenUser Sid don't match.\n");
+    ok(EqualPrefixSid(UsersSid, UserSid), "TokenPrimaryGroup Sid and TokenUser Sid don't match.\n");
 
     CloseHandle( token );
     if (!res)
