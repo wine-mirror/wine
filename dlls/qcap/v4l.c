@@ -577,8 +577,10 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
         goto error;
     }
 
+#ifdef V4L2_CAP_DEVICE_CAPS
     if (caps.capabilities & V4L2_CAP_DEVICE_CAPS)
         caps.capabilities = caps.device_caps;
+#endif
 
     if (!(caps.capabilities & V4L2_CAP_VIDEO_CAPTURE))
     {
