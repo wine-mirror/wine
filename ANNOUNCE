@@ -1,19 +1,13 @@
-The Wine team is proud to announce that the stable release Wine 4.0
-is now available.
+The Wine maintenance release 4.0.1 is now available.
 
-This release represents a year of development effort and over 6,000
-individual changes. It contains a large number of improvements that
-are listed in the release notes below. The main highlights are:
-
-  - Vulkan support.
-  - Direct3D 12 support.
-  - Game controllers support.
-  - High-DPI support on Android.
+What's new in this release (see below for details):
+  - Various bug fixes
+  - Sinhala and Tamil translation updates
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/4.0/wine-4.0.tar.xz
-  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0.tar.xz
+  https://dl.winehq.org/wine/source/4.0/wine-4.0.1.tar.xz
+  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0.1.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -29,462 +23,200 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-What's new in Wine 4.0
-======================
-
-
-*** Direct3D
-
-- Initial support for Direct3D 12 is implemented. Direct3D 12 support
-  requires the vkd3d library, and a Vulkan-capable graphics card.
-
-- The Multi-Threaded Command Stream feature is enabled by default.
-
-- OpenGL core contexts are always used by default when available. In
-  the previous release, these were already used by default for
-  Direct3D 10 and 11 applications on AMD and Intel graphics
-  cards. That has been extended to all graphics cards, and all
-  versions of Direct3D before 12.
-
-- Among others, the following notable Direct3D 10 and 11 features are
-  implemented:
-  - Multi-sample textures and views, as well as multi-sample resolves.
-  - Per-sample fragment shading.
-  - Support for 1D textures.
-  - Draws without render target views or depth/stencil views.
-  - Multiple viewports and scissor rectangles per draw.
-  - Depth clipping control.
-  - Depth bias clamping.
-  - Stream output without geometry shaders.
-  - Several more capability queries.
-  - Several more resource formats.
-
-- The "depth bias clamping" feature mentioned above requires the
-  ARB_polygon_offset_clamp/EXT_polygon_offset_clamp OpenGL
-  extension. All Direct3D 10+ capable hardware should be able to
-  support that extension, but it has come to our attention that some
-  NVIDIA "Legacy Drivers" do not. We encourage affected users to
-  explore whether the Free Software Nouveau drivers meet their needs.
-
-- Several Direct3D 11 interfaces have been updated to version 11.2,
-  and several DXGI interfaces have been update to version 1.6. This
-  allows applications requiring those newer interfaces to start
-  working.
-
-- The first steps towards more fine-grained locking in the Direct3D
-  implementation have been taken. This will be an ongoing effort to
-  take better advantage of modern high core count CPUs.
-
-- Support for using the correct swap interval is implemented, for both
-  DXGI and DirectDraw applications.
-
-- Application-configurable frame latency is implemented for Direct3D
-  9Ex and DXGI applications.
-
-- S3TC-compressed 3D textures are supported. S3TC-compressed 2D
-  textures were already supported, provided the OpenGL drivers
-  supported them.
-
-- When the ARB_query_buffer_object OpenGL extension is available,
-  query results can be polled with lower latency, resulting in a
-  modest performance improvement in specific cases.
-
-- Validation of Direct3D 8 and 9 resource pool and usage restrictions,
-  as well as blit restrictions, has been improved.
-
-- The Direct3D graphics card database recognizes more graphics cards.
-
-- New HKEY_CURRENT_USER\Software\Wine\Direct3D registry keys:
-  - "MultisampleTextures" (REG_DWORD)
-    Enable (0x1, default) or disable (0x0) support for multi-sample
-    textures.
-  - "Renderer" (REG_SZ)
-    The backend API to target. Possible values are "gl" (default) for
-    OpenGL and "gdi" for GDI.
-
-- Deprecated HKEY_CURRENT_USER\Software\Wine\Direct3D registry key:
-  - "DirectDrawRenderer"
-    This has been superseded by the "Renderer" setting above.
-
-- Removed HKEY_CURRENT_USER\Software\Wine\Direct3D registry key:
-  - "StrictDrawOrdering"
-    This feature was previously deprecated in favor of the
-    multi-threaded command stream feature, and has been completely
-    removed.
-
-
-*** Graphics
-
-- A complete Vulkan driver is implemented, using the host Vulkan
-  libraries under X11, or MoltenVK on macOS.
-
-- A builtin vulkan-1 loader is provided as an alternative to the SDK
-  loader.
-
-- Icons in PNG format are supported, enabling loading high-resolution
-  256x256 icons.
-
-- The standard icons include a 256x256 version to take advantage of
-  the PNG support.
-
-- Many Direct2D interfaces have been updated to version 1.2.
-
-- New HKEY_CURRENT_USER\Software\Wine\Direct2D registry key:
-  - "max_version_factory" (REG_DWORD)
-    Limit the interface version of the ID2D1Factory interface to the
-    specified version. 0x0 for ID2D1Factory, 0x1 for ID2D1Factory1,
-    etc. By default there is no limit.
-
-- Using an ARGB visual as default X11 visual is supported.
-
-- The old 16-bit DIB.DRV driver is implemented using the DIB engine.
-
-- Polygon drawing in the DIB engine is much faster for large polygons.
-
-- A0, A1 and A2 paper sizes are supported for generic printers.
-
-- Arrows are supported in GdiPlus.
-
-
-*** Kernel
-
-- Support for running DOS binaries under Wine is removed. When
-  execution of a DOS binary is requested, an external DOSBox instance
-  is launched. This doesn't apply to Win16 binaries, which are still
-  supported internally.
-
-- All the CPU control and debug registers can be accessed by kernel
-  drivers, including on 64-bit.
-
-- Events, semaphores, mutexes and timers are implemented in kernel
-  mode for device drivers.
-
-- The WaitOnAddress synchronization primitives are supported.
-
-- Reported processor information correctly distinguishes logical and
-  physical CPU cores to support hyper-threading.
-
-- Detailed BIOS information can be queried on Linux platforms.
-
-- The various debugger APIs support manipulating a 32-bit Wow64
-  process from a 64-bit process context.
-
-- Application settings, compatibility information and execution levels
-  are recognized in application manifests.
-
-- The various file I/O completion modes are implemented.
-
-- Debug registers are supported on NetBSD.
-
-
-*** User interface
-
-- The infrastructure for setting DPI awareness and scaling of non
-  DPI-aware applications is implemented. However, actual scaling of
-  window contents is only supported on Android at this point.
-  Scaling is disabled by default and can be enabled by setting the
-  "DpiScalingVer" value under HKEY_CURRENT_USER\Control Panel\Desktop.
-
-- Window class redirection is supported, enabling support of Common
-  Controls version 6 features for standard USER controls like buttons.
-
-- The standard USER controls Button, Listbox, Combobox, Edit and
-  Static support version 6 features, including theming.
-
-- The standard Task Dialog is implemented, including support for
-  icons, hyperlinks, progress bars, and various other UI elements.
-
-- Cue banners are supported in version 6 of the Edit control.
-
-
-*** Desktop integration
-
-- Exporting MIME-type file associations to the native desktop can be
-  disabled with a checkbox under the Desktop Integration tab in
-  winecfg.  It can be configured programmatically by setting the
-  "Enable" value under
-  HKEY_CURRENT_USER\Software\Wine\FileOpenAssociations.
-
-- The File Dialog can display file properties like size, times and
-  attributes.
-
-- The File Dialog optionally shows the Places toolbar on the left-hand
-  side.
-
-- The shell folder Public is used instead of AllUsersProfile to follow
-  the behavior of recent Windows versions.
-
-- The shell File Browser supports keyboard shortcuts to rename (F2
-  key) and delete (Delete key) shell folders.
-
-- Many standard icons are added to the Shell library.
-
-- Shell Autocompletion is supported.
-
-- In desktop mode the taskbar won't be displayed on top of fullscreen
-  windows.
-
-- Additional names are provided for standard cursors to better match
-  existing X11 cursor themes.
-
-
-*** Input devices
-
-- HID game controllers are supported in the XInput and Raw Input APIs.
-
-- An SDL driver is implemented to make SDL game controllers
-  available through the HID interface.
-
-
-*** Internet and networking
-
-- JScript has an EcmaScript compliant mode, which supports a number of
-  features not available in legacy mode.
-
-- JavaScript property accessors are supported.
-
-- HTML style object is rewritten to support standard-compliant mode.
-
-- HTML documents respect X-UA-Compatible HTTP header, allowing web
-  pages to request specific compatibility mode. The
-  HKEY_CURRENT_USER\Software\Wine\MSHTML\CompatMode key may be used to
-  override the requested mode.
-
-- MSHTML supports non-HTML elements, allowing limited SVG support.
-
-- A number of new HTML APIs are supported.
-
-- The proxy server can be configured through the Internet Control
-  Panel applet.
-
-- Stream I/O is implemented in WebServices.
-
-- The Web Services on Devices API (WSDAPI) is implemented, including
-  sending and receiving the various message types.
-
-- More system information is reported through WBEM, including CPU,
-  BIOS, video controller, and network adapter properties.
-
-
-*** Cryptography
-
-- Asymmetric encryption keys, as well as RSA and ECDSA signature
-  verification are supported.
-
-- The GCM and ECB encryption chaining modes are supported.
-
-- Optimal Asymmetric Encryption Padding (OAEP) is supported in RSA
-  encryption.
-
-- A Kerberos security provider is implemented, supporting Kerberos
-  authentication.
-
-- A selection dialog for public key certificates is implemented.
-
-- If available, GnuTLS is used on macOS in preference to the
-  CommonCrypto framework.
-
-
-*** Text and fonts
-
-- Character tables are based on version 11.0.0 of the Unicode Standard.
-
-- The new subpixel font rendering of FreeType >= 2.8.1 is supported.
-
-- When a font face is missing, FontConfig is queried to provide
-  possible substitutions.
-
-- The font selected in the console emulator properly scales with the
-  display DPI.
-
-- Memory font resources are supported in DirectWrite.
-
-- The builtin Wingdings font contains clock images.
-
-
-*** Audio
-
-- The Windows Media Player interfaces are implemented and support
-  media playback.
-
-- An MP3 decoder is provided as DirectX Media Object.
-
-
-*** macOS
-
-- The preloader is implemented on macOS, for better address space
-  layout compatibility.
-
-- The Command key can be mapped to Ctrl, by setting the
-  "LeftCommandIsCtrl" or "RightCommandIsCtrl" values under
-  HKEY_CURRENT_USER\Software\Wine\Mac Driver.
-
-- The App Nap energy-saving feature is disabled by default in GUI
-  processes. It can be re-enabled by setting the "EnableAppNap" value
-  under HKEY_CURRENT_USER\Software\Wine\Mac Driver.
-
-
-*** Android
-
-- Setting the mouse cursor is supported using the APIs available in
-  Android >= 7.
-
-- The new version of the Android graphics buffer allocator API is
-  supported, to enable graphics support on Android >= 8.
-
-- Android x86-64 platforms are supported also in 64-bit mode, however
-  WoW64 mode is not supported yet in the WineHQ packages.
-
-
-*** ARM platforms
-
-- Stubless COM proxies are implemented on ARM.
-
-- The Windows calling convention for variadic functions is supported
-  on ARM64.
-
-- Exception handling and debugging is better supported on ARM64
-  platforms.
-
-- The MinGW toolchain is supported for cross-compilation to ARM64.
-
-
-*** Built-in applications
-
-- The Ping program provides actual pinging functionality using
-  IcmpSendEcho.
-
-- The SchTasks task scheduler program can create and delete tasks.
-
-- The RegEdit registry editor has an improved hex editor for binary
-  values.
-
-- FOR loops are properly handled in the Command Interpreter.
-
-- The XCopy program supports the /k (keep attributes) option.
-
-
-*** Internationalization
-
-- The Japanese 106 keyboard is properly supported.
-
-- Translation of timezone names is supported.
-
-- There is a partial translation to the Sinhala language.
-
-- More locales are supported in the Resource Compiler (wrc) and
-  Message Compiler (wmc).
-
-
-*** Development tools
-
-- winedbg supports debugging WoW64 processes.
-
-- In gdb proxy mode, winedbg supports a --port option to specify the
-  port used to connect to gdb.
-
-- winegcc uses better heuristics for finding the appropriate lib
-  directory for 32/64-bit cross-compiles.
-
-- winegcc supports building native subsystem libraries.
-
-- winegcc also looks for includes in the top-level include directory
-  of the installation prefix.
-
-- winebuild supports a -mfpu option for specifying the FPU
-  architecture on ARM platforms.
-
-- winedump supports dumping SLTG-format typelibs.
-
-
-*** IDL compiler
-
-- Application Configuration Files (ACF) are supported.
-
-- Asynchronous interfaces are supported.
-
-- Type and method serialization using encode/decode attributes is
-  supported.
-
-- The defaultvalue() attribute is supported for pointer types.
-
-- Generated files are always specific to the target platform. The
-  target can be specified the same way as with the other tools,
-  using the cpu-manufacturer-os platform specification.
-
-- Nesting of pointers and arrays works correctly.
-
-- Correct size and alignment are generated for encapsulated unions.
-
-- The __int32 type is supported.
-
-- The -robust command line option is recognized (but ignored) for
-  compatibility with the Microsoft IDL compiler.
-
-- Multiple typelibs can be generated into a single resource file.
-
-
-*** .NET
-
-- 32-bit CIL-only .NET binaries are supported on 64-bit.
-
-- The Mono engine is updated to version 4.7.5 with some upstream Mono
-  fixes.
-
-
-*** RPC/COM
-
-- The typelib marshaller is reimplemented. It generates format strings
-  and then uses the standard NDR marshalling routines; this way it
-  also works on 64-bit and ARM platforms.
-
-
-*** Installers
-
-- MSI custom actions run in a separate process, enabling proper
-  support for mixed 32/64-bit installers.
-
-- Deferred installation actions are supported in MSI.
-
-
-*** Build infrastructure
-
-- The test framework supports building helper dlls inside a test, to
-  allow testing features that require loading an external library.
-
-- The test framework supports testing Windows kernel drivers.
-
-- It is possible to build and run a WoW64 tree from inside the Wine
-  source directory. Previously an out-of-tree build was required.
-
-- A .editorconfig file is provided with the recommended indentation
-  parameters.
-
-
-*** Miscellaneous
-
-- The Task Scheduler service and APIs are implemented.
-
-- The Windows Management Instrumentation service is implemented.
-
-- The OPC Services (Open Packaging Conventions, used for Microsoft
-  Office XML files) library is implemented.
-
-- The HKEY_PERFORMANCE_DATA magic registry key is partially
-  implemented.
-
-
-*** New external dependencies
-
-- The Vulkan library is used to implement the Vulkan graphics driver.
-
-- The Vkd3d library is used to implement Direct3D 12 on top of Vulkan.
-
-- The SDL library is used to support game controllers.
-
-- The GSSAPI library is used to implement Kerberos authentication.
-
+Bugs fixed in 4.0.1 (total 44):
+
+   8226  DlgDirListComboBox does not fail properly on bad path spec argument
+  23863  The Bard's Tale (2005): unplayable due to almost completely black screen
+  26653  Multiple VB6 applications need oleaut32 VarRound to support VT_DECIMAL
+  28140  Theatre of War 3: Korea demo 1.2.0 crashes on startup (hook engine can't cope with GOT/PIC register load code at API entry, needs DECLSPEC_HOTPATCH for kernel32.SizeofResource and kernel32.FindClose)
+  31954  Second Sight hangs with a black screen after the intro videos
+  33456  D3DXMatrixTransformation: Broken calculation when scalingrotation and scaling is used
+  35516  Microworlds EX hangs when clicking toolbar button
+  37705  Heroes of Might and Magic VI Shades of Darkness Textures Fail to Display in Most Campaign Maps
+  38138  Avencast: Rise of the Mage: invisible doors
+  38558  cmd.exe bundled with Windows XP messed up when using FOR /F
+  39663  GOG Galaxy client 1.x hangs or reports 'Something went wrong during DeelevateStrategy'  error in Win7 mode (GOG Galaxy service needs wtsapi32.WTSQueryUserToken implementation)
+  39890  Orcish Inn fails to start with exception System.NotImplementedException
+  40441  Chicken tournament crashes when loading texture
+  44300  Windows Media Player 7.1 fails to play media due to unimplemented function wmvcore.dll.WMCheckURLExtension
+  44469  Multiple apps using Windows 10 v1507+ UCRT crash due to multiple missing api-ms-win-crt-private-l1-1-0.dll._o__xxx stubs/forwards (Win10 DISM pkgmgr.exe, MS DirectX Shader Compiler)
+  45326  Multiple 64-bit kernel drivers crash on unimplemented function ntoskrnl.exe.__C_specific_handler (NoxPlayer 6.x, MTA:SA 1.5.x)
+  45473  Rogue Squadron 3D crashes on startup
+  45631  League of Legends client crashes when joining a lobby with other players
+  45632  Garena client v2.0.x crashes on startup ('ntdll.NtQueryVirtualMemory' needs to validate 'MemoryInformationLength' before writing to buffer)
+  46127  aria2 1.34 fails to connect, reports 'WinTLS: Channel setup failed. Schannel provider did not fulfill requested flags. Excepted: 33180 Actual: 33052'
+  46298  Middle-earth: Shadow of War (steam appid 356190) crashes on launch
+  46300  Yousician: unimplemented function mfplat.dll.MFGetSystemTime
+  46303  Warcraft 3: Reign of Chaos (Czech language) can't be installed from CD
+  46318  vbscript doesn't parse if identifier is also keyword token
+  46319  32-bit IL-only executable launched as 32-bit subprocess on Wine and 64-bit subprocess on Windows
+  46387  ReactOS/Windows XP TASKMGR: Column headers don't scroll when scrolling horizontally (multiple listview or header control)
+  46442  FormatCurrency(9) returns .9.00 (period in front)
+  46465  Visual Studio 2015 crashes on unimplemented function msvcp140.dll._Equivalent
+  46481  strftime has a buffer overflow
+  46482  Gas Guzzlers Combat Carnage crashes when changing screen resolution
+  46485  PBM_STEPIT crashes with division by zero when MinVal == MaxVal == 0
+  46493  Functions ilogb* are not implemented
+  46494  64bit WinMerge crash after clicking "About WinMerge"
+  46499  Multiple games crash in GetRawInputData when exiting(House Party, Murderous Pursuits, ICEY)
+  46520  Kindred Spirits on the Roof crashes
+  46536  Empire Earth (GOG version) main menu rendering is broken
+  46569  ToDoList 7.1 : fails to launch after WINE upgrade to 4.0 version
+  46581  HeidiSQL generates OLE error when executing custom queries against MSSQL server.
+  46583  LINE latest version doesn't work
+  46678  Width of latin characters is wrong with some fonts.
+  46691  comctl32/tests/propsheet.c shows uninitalized memory use
+  46708  Photoline crashed right after start, no problem with wine 3.0.4
+  46729  Wine directx not detecting Intel HD Graphics 620 (Rev 02) chipset
+  46907  msi crashes in RemoveFiles action for a broken msi
+
+----------------------------------------------------------------
+
+Changes since 4.0:
+
+Alexandre Julliard (2):
+      server: Report a 64-bit CPU for IL-only binaries.
+      dinput: Add error check to silence a compiler warning.
+
+Alistair Leslie-Hughes (4):
+      dsound: IDirectSoundNotify is only available when DSBCAPS_CTRLPOSITIONNOTIFY is specified.
+      mfplat: Implement MFGetSystemTime.
+      oleaut32: Correctly get the Currency separator in VarFormatCurrency.
+      oleaut32: Support VT_DECIMAL in VarRound.
+
+Andrew Eikum (1):
+      winhttp: Don't crash setting up secure proxy.
+
+Brendan McGrath (2):
+      vbscript: Allow more keywords to be used as identifiers.
+      vbscript: Allow most keywords to be used as 'dot' identifiers.
+
+David Adam (2):
+      ddraw/tests: Add tests for the "dwMipMapCount" field of texture sub-levels.
+      ddraw: Fix the "dwMipMapCount" field of texture sub-levels.
+
+Dmitry Timoshkov (2):
+      windowscodecs: Implement IWICPalette::InitializeFromBitmap.
+      wpcap: Fix compilation with recent pcap/pcap.h versions.
+
+Fabian Maurer (2):
+      api-ms-win-crt-private-l1-1-0: Update to 10.0.17134.12 (WinBuild.160101.0800).
+      ucrtbase: Forward a few functions for dxil.dll and pkgmgr.exe.
+
+Gabriel Ivăncescu (1):
+      libport: Handle partially overlapping buffers.
+
+Gijs Vermeulen (3):
+      msvcp140: Export _Equivalent and port tests.
+      ntdll: Validate len in NtQueryVirtualMemory.
+      kernel32: Add DECLSPEC_HOTPATCH to SizeofResource().
+
+Hans Leidekker (3):
+      secur32: Return ISC_RET_USED_SUPPLIED_CREDS for schannel contexts if the feature was requested.
+      mscms: Add a partial implementation of WcsOpenColorProfileA/W.
+      msi: Avoid a crash in RemoveFiles if the component directory is invalid.
+
+Isira Seneviratne (10):
+      po: Update Sinhala translation.
+      po: Update Sinhala translation.
+      po: Update Sinhala translation.
+      po: Add Tamil translation.
+      po: Update Tamil translation.
+      po: Update Tamil translation.
+      kernel32: Add the Sinhala NLS file.
+      kernel32: Fix LOCALE_SSCRIPTS value for Sinhala.
+      kernel32/nls: Fix some values in Sinhala NLS file.
+      kernel32/nls: Change Sinhala sublang identifier to SUBLANG_SINHALESE_SRI_LANKA.
+
+Jacek Caban (1):
+      ntoskrnl.exe: Add __C_specific_handler entry.
+
+Józef Kucia (3):
+      ddraw: Pass correct box when mapping system memory vertex buffers.
+      d3d9: Validate surface parameter in d3d9_device_ColorFill().
+      wined3d: Add GPU information for Intel HD Graphics 620.
+
+Ken Thomases (1):
+      loader: On Mac, move the top-down allocations area down to avoid regions reserved by the system.
+
+Mark Jansen (1):
+      msi: Do not leak rootkey.
+
+Matteo Bruni (3):
+      d3dx9: Improve D3DXMatrixTransformation() implementation.
+      d3dx9: Improve D3DXMatrixTransformation2D().
+      d3dx9/tests: Avoid some 64-bit test failures.
+
+Michael Stefaniuc (1):
+      tools: Get the ANNOUNCE bug list from the stable-notes git notes.
+
+Nikolay Sivov (9):
+      api-ms-win-core-libraryloader-l1-2-1: Add missing FindResourceW() forward.
+      comctl32/progress: Handle min == max case in PBM_STEPIT.
+      user32/dialog: Fix setting negative dialog item ids.
+      d3d11: Implement d3d11_device_GetImmediateContext1().
+      comctl32/listview: Take care of scrolling offset when repositioning header.
+      comctl32/propsheet: Avoid posting uninitialized data (Valgrind).
+      comctl32/toolbar: Send BN_CLICKED for button that was pressed, not released.
+      usp10: Use single path for all fonts in ScriptGetCMap().
+      ucrtbase: Add ilogb* functions.
+
+Paul Gofman (8):
+      wined3d: Use lower 8 bits only from _ALPHAREF state.
+      wined3d: Return 1e10f for MaxVertexW from wined3d_get_device_caps().
+      wined3d: Only use the LSB of the _SAMP_SRGB_TEXTURE state value.
+      kernel32/tests: Add test for overlapped file read.
+      ntdll/tests: Add more tests for overlapped file read.
+      ntdll: Return STATUS_PENDING from NtReadFile() for async read in case of no buffering.
+      kernel32: Add DECLSPEC_HOTPATCH to FindClose().
+      user32: Select more appropriate stretch mode for colored images interpolation.
+
+Piotr Caban (4):
+      msvcrt: Optimize tolower function when locale was never changed.
+      msvcrt: Optimize toupper function when locale was never changed.
+      msvcp140: Don't forward __ExceptionPtrCreate to msvcr120.
+      msvcrt: Fix buffer overflow in _get_tzname.
+
+Sebastian Lackner (1):
+      wtsapi32: Improve WTSQueryUserToken stub.
+
+Sveinar Søpler (1):
+      wined3d: Add GPU information for the NVIDIA RTX series.
+
+Sven Baars (14):
+      windowscodecs: Fix a memory leak (Valgrind).
+      gdiplus: Fix a memory leak on error path (Valgrind).
+      wsdapi: Fix some memory leaks (Valgrind).
+      strmbase: Fix some memory leaks (Valgrind).
+      ole32: Fix some memory leaks (Valgrind).
+      mstask: Fix some memory leaks on error path (Valgrind).
+      mstask: Move memory allocation to avoid a memory leak (Valgrind).
+      taskschd: Fix some memory leaks (Valgrind).
+      dinput: Free the device after a callback (Valgrind).
+      riched20: Fix IRichEditOle COM aggregation (Valgrind).
+      ws2_32: Use heap_realloc instead of HeapReAlloc to avoid an invalid realloc (Valgrind).
+      windowscodecs: Add missing source_bpp initialization (Valgrind).
+      setupapi: Add a missing return statement (Coverity).
+      dsound: Add missing SetEventHandle error handling (Coverity).
+
+Vijay Kiran Kamuju (2):
+      user32: Add DlgDirList wildcard checks.
+      wmvcore: Add stub for WMCheckURlExtension.
+
+Zebediah Figura (5):
+      comsvcs/tests: Add tests for implicit MTA creation in RegisterDispenser().
+      comsvcs: Create an implicit MTA thread in RegisterDispenser().
+      msvcr120: Add nexttoward implementation.
+      hid: Handle overlapped file handles.
+      ntdll: Avoid crashing while tracing parameters to NtCreateNamedPipeFile().
+
+Zhiyi Zhang (5):
+      msacm32: Reference count local drivers.
+      user32: Check for null handle in GetRawInputData().
+      kernel32: Add DECLSPEC_HOTPATCH to VirtualAllocEx().
+      d3d8: Fix building on Mac.
+      user32: Fix a memory leak.
 
 --
-Alexandre Julliard
-julliard@winehq.org
+Michael Stefaniuc
+mstefani@winehq.org
