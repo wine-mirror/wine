@@ -129,9 +129,11 @@ static BOOL query_video_device(int devnum, char *name, int namesize, char *versi
    memset(&caps, 0, sizeof(caps));
    if (xioctl(fd, VIDIOC_QUERYCAP, &caps) != -1) {
       BOOL isCaptureDevice;
+#ifdef V4L2_CAP_DEVICE_CAPS
       if (caps.capabilities & V4L2_CAP_DEVICE_CAPS)
          isCaptureDevice = caps.device_caps & V4L2_CAP_VIDEO_CAPTURE;
       else
+#endif
          isCaptureDevice = caps.capabilities & V4L2_CAP_VIDEO_CAPTURE;
       if (isCaptureDevice) {
          lstrcpynA(name, (char *)caps.card, namesize);
