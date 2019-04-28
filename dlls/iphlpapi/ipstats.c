@@ -2320,6 +2320,42 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack( PMIB_TCPTABLE *ppTcpTable, BOOL bO
     return build_tcp_table( TCP_TABLE_BASIC_ALL, (void **)ppTcpTable, bOrder, heap, flags, NULL );
 }
 
+/******************************************************************
+ *    AllocateAndGetTcpExTableFromStack (IPHLPAPI.@)
+ *
+ * Get the TCP connection table.
+ * Like GetTcpTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  ppTcpTable [Out] pointer into which the MIB_TCPTABLE_EX is
+ *                   allocated and returned.
+ *  bOrder     [In]  whether to sort the table
+ *  heap       [In]  heap from which the table is allocated
+ *  flags      [In]  flags to HeapAlloc
+ *  family     [In]  address family [AF_INET|AF_INET6]
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppTcpTable is NULL, whatever GetTcpTable()
+ *  returns otherwise.
+ */
+DWORD WINAPI AllocateAndGetTcpExTableFromStack( VOID **ppTcpTable, BOOL bOrder,
+                                                HANDLE heap, DWORD flags, DWORD family )
+{
+    TRACE("table %p, bOrder %d, heap %p, flags 0x%08x, family %u\n",
+          ppTcpTable, bOrder, heap, flags, family);
+
+    if (!ppTcpTable || !family)
+        return ERROR_INVALID_PARAMETER;
+
+    if (family != WS_AF_INET)
+    {
+        FIXME( "family = %u not supported\n", family );
+        return ERROR_NOT_SUPPORTED;
+    }
+
+    return build_tcp_table( TCP_TABLE_OWNER_PID_ALL, ppTcpTable, bOrder, heap, flags, NULL );
+}
+
 static DWORD get_udp_table_sizes( UDP_TABLE_CLASS class, DWORD row_count, DWORD *row_size )
 {
     DWORD table_size;
