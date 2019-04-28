@@ -3313,3 +3313,23 @@ DWORD WINAPI GetIpInterfaceTable(ADDRESS_FAMILY family, PMIB_IPINTERFACE_TABLE *
     FIXME("(%u %p): stub\n", family, table);
     return ERROR_NOT_SUPPORTED;
 }
+
+/******************************************************************
+ *    GetBestRoute2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetBestRoute2(NET_LUID *luid, NET_IFINDEX index,
+                           const SOCKADDR_INET *source, const SOCKADDR_INET *destination,
+                           ULONG options, PMIB_IPFORWARD_ROW2 bestroute,
+                           SOCKADDR_INET *bestaddress)
+{
+    static int once;
+
+    if (!once++)
+        FIXME("(%p, %d, %p, %p, 0x%08x, %p, %p): stub\n", luid, index, source,
+                destination, options, bestroute, bestaddress);
+
+    if (!destination || !bestroute || !bestaddress)
+        return ERROR_INVALID_PARAMETER;
+
+    return ERROR_NOT_SUPPORTED;
+}
