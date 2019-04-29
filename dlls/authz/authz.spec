@@ -6,7 +6,7 @@
 @ stub AuthzFreeAuditEvent
 @ stdcall AuthzFreeContext(long)
 @ stub AuthzFreeHandle
-@ stub AuthzFreeResourceManager
+@ stdcall AuthzFreeResourceManager(ptr)
 @ stub AuthzGetInformationFromContext
 @ stub AuthzInitializeContextFromAuthzContext
 @ stdcall AuthzInitializeContextFromSid(long ptr long ptr int64 ptr ptr)
