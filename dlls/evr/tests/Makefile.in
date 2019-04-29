@@ -2,4 +2,4 @@ TESTDLL   = evr.dll
 IMPORTS   = mfuuid strmiids uuid ole32 oleaut32
 
 C_SRCS = \
-	filter.c
+	evr.c
