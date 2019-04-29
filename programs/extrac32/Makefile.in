@@ -1,6 +1,7 @@
 MODULE    = extrac32.exe
-APPMODE   = -mwindows -municode
 IMPORTS   = shell32 setupapi shlwapi user32
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
 C_SRCS = \
 	extrac32.c
