@@ -160,6 +160,9 @@ static void test_WTInfoA(void)
     ret = pWTInfoA( WTI_DEVICES, DVC_NAME, name );
     trace("DVC_NAME %s\n", name);
 
+    ret = pWTInfoA( WTI_DEVICES, DVC_HARDWARE, name );
+    trace("DVC_HARDWARE %s\n", name);
+
     ret = pWTInfoA( WTI_DEVICES, DVC_X, &value );
     ok(ret == sizeof( AXIS ), "Wrong DVC_X size %d\n", ret);
     trace("DVC_X %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
@@ -169,16 +172,20 @@ static void test_WTInfoA(void)
     trace("DVC_Y %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
 
     ret = pWTInfoA( WTI_DEVICES, DVC_Z, &value );
-    todo_wine ok(ret == sizeof( AXIS ), "Wrong DVC_Z size %d\n", ret);
-    trace("DVC_Z %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    if(ret)
+        trace("DVC_Z %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    else
+        trace("DVC_Z not supported\n");
 
     ret = pWTInfoA( WTI_DEVICES, DVC_NPRESSURE, &value );
     ok(ret == sizeof( AXIS ), "Wrong DVC_NPRESSURE, size %d\n", ret);
     trace("DVC_NPRESSURE %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
 
     ret = pWTInfoA( WTI_DEVICES, DVC_TPRESSURE, &value );
-    todo_wine ok(ret == sizeof( AXIS ), "Wrong DVC_TPRESSURE, size %d\n", ret);
-    trace("DVC_TPRESSURE %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    if(ret)
+        trace("DVC_TPRESSURE %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    else
+        trace("DVC_TPRESSURE not supported\n");
 
     ret = pWTInfoA( WTI_DEVICES, DVC_ORIENTATION, &orientation );
     ok(ret == sizeof( AXIS )*3, "Wrong DVC_ORIENTATION, size %d\n", ret);
