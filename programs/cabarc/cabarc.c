@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -29,7 +26,6 @@
 #include "fci.h"
 #include "fdi.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cabarc);
@@ -329,17 +325,17 @@ static void create_directories( const WCHAR *name )
     WCHAR *path, *p;
 
     /* create the directory/directories */
-    path = cab_alloc( (strlenW(name) + 1) * sizeof(WCHAR) );
-    strcpyW(path, name);
+    path = cab_alloc( (lstrlenW(name) + 1) * sizeof(WCHAR) );
+    lstrcpyW(path, name);
 
-    p = strchrW(path, '\\');
+    p = wcschr(path, '\\');
     while (p != NULL)
     {
         *p = 0;
         if (!CreateDirectoryW( path, NULL ))
             WINE_TRACE("Couldn't create directory %s - error: %d\n", wine_dbgstr_w(path), GetLastError());
         *p = '\\';
-        p = strchrW(p+1, '\\');
+        p = wcschr(p+1, '\\');
     }
     cab_free( path );
 }
@@ -352,10 +348,10 @@ static BOOL match_files( const WCHAR *name )
     if (!*opt_files) return TRUE;
     for (i = 0; opt_files[i]; i++)
     {
-        unsigned int len = strlenW( opt_files[i] );
+        unsigned int len = lstrlenW( opt_files[i] );
         /* FIXME: do smarter matching, and wildcards */
         if (!len) continue;
-        if (strncmpiW( name, opt_files[i], len )) continue;
+        if (wcsnicmp( name, opt_files[i], len )) continue;
         if (opt_files[i][len - 1] == '\\' || !name[len] || name[len] == '\\') return TRUE;
     }
     return FALSE;
@@ -428,15 +424,15 @@ static INT_PTR CDECL extract_notify( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION
         }
         else
         {
-            if ((file = strrchrW( nameW, '\\' ))) file++;
+            if ((file = wcsrchr( nameW, '\\' ))) file++;
             else file = nameW;
         }
 
         if (opt_dest_dir)
         {
-            path = cab_alloc( (strlenW(opt_dest_dir) + strlenW(file) + 1) * sizeof(WCHAR) );
-            strcpyW( path, opt_dest_dir );
-            strcatW( path, file );
+            path = cab_alloc( (lstrlenW(opt_dest_dir) + lstrlenW(file) + 1) * sizeof(WCHAR) );
+            lstrcpyW( path, opt_dest_dir );
+            lstrcatW( path, file );
         }
         else path = file;
 
@@ -521,11 +517,11 @@ static BOOL add_directory( HFCI fci, WCHAR *dir )
     WIN32_FIND_DATAW data;
     BOOL ret = TRUE;
 
-    if (!(buffer = cab_alloc( (strlenW(dir) + MAX_PATH + 2) * sizeof(WCHAR) ))) return FALSE;
-    strcpyW( buffer, dir );
-    p = buffer + strlenW( buffer );
+    if (!(buffer = cab_alloc( (lstrlenW(dir) + MAX_PATH + 2) * sizeof(WCHAR) ))) return FALSE;
+    lstrcpyW( buffer, dir );
+    p = buffer + lstrlenW( buffer );
     if (p > buffer && p[-1] != '\\') *p++ = '\\';
-    strcpyW( p, wildcardW );
+    lstrcpyW( p, wildcardW );
 
     if ((handle = FindFirstFileW( buffer, &data )) != INVALID_HANDLE_VALUE)
     {
@@ -535,7 +531,7 @@ static BOOL add_directory( HFCI fci, WCHAR *dir )
             if (data.cFileName[0] == '.' && data.cFileName[1] == '.' && !data.cFileName[2]) continue;
             if (data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) continue;
 
-            strcpyW( p, data.cFileName );
+            lstrcpyW( p, data.cFileName );
             if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 ret = add_directory( fci, buffer );
             else
@@ -595,7 +591,7 @@ static int new_cabinet( char *cab_dir )
 
     for (file = opt_files; *file; file++)
     {
-        if (!strcmpW( *file, plusW ))
+        if (!lstrcmpW( *file, plusW ))
             FCIFlushFolder( fci, fci_get_next_cab, fci_status );
         else
             if (!(ret = add_file_or_directory( fci, *file ))) break;
@@ -646,7 +642,7 @@ int wmain( int argc, WCHAR *argv[] )
         {
         case 'd':
             argv++; argc--;
-            opt_cabinet_size = atoiW( argv[1] );
+            opt_cabinet_size = wcstol( argv[1], NULL, 10 );
             if (opt_cabinet_size < 50000)
             {
                 WINE_MESSAGE( "cabarc: Cabinet size must be at least 50000\n" );
@@ -658,12 +654,12 @@ int wmain( int argc, WCHAR *argv[] )
             return 0;
         case 'i':
             argv++; argc--;
-            opt_cabinet_id = atoiW( argv[1] );
+            opt_cabinet_id = wcstol( argv[1], NULL, 10 );
             break;
         case 'm':
             argv++; argc--;
-            if (!strcmpiW( argv[1], noneW )) opt_compression = tcompTYPE_NONE;
-            else if (!strcmpiW( argv[1], mszipW )) opt_compression = tcompTYPE_MSZIP;
+            if (!wcscmp( argv[1], noneW )) opt_compression = tcompTYPE_NONE;
+            else if (!wcscmp( argv[1], mszipW )) opt_compression = tcompTYPE_MSZIP;
             else
             {
                 char *arg = strdupWtoA( CP_ACP, argv[1] );
@@ -679,7 +675,7 @@ int wmain( int argc, WCHAR *argv[] )
             break;
         case 's':
             argv++; argc--;
-            opt_reserve_space = atoiW( argv[1] );
+            opt_reserve_space = wcstol( argv[1], NULL, 10 );
             break;
         case 'v':
             opt_verbose++;
@@ -729,7 +725,7 @@ int wmain( int argc, WCHAR *argv[] )
         if (argc > 1)  /* check for destination dir as last argument */
         {
             WCHAR *last = argv[argc - 1];
-            if (last[0] && last[strlenW(last) - 1] == '\\')
+            if (last[0] && last[lstrlenW(last) - 1] == '\\')
             {
                 opt_dest_dir = last;
                 argv[--argc] = NULL;
