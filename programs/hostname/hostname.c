@@ -20,23 +20,22 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <windef.h>
 #include <winbase.h>
 #include <wincon.h>
 #include <winnls.h>
 #include <winuser.h>
 
-#include <wine/unicode.h>
-
 #include "hostname.h"
 
-static int hostname_vprintfW(const WCHAR *msg, va_list va_args)
+static int hostname_vprintfW(const WCHAR *msg, __ms_va_list va_args)
 {
     int wlen;
     DWORD count, ret;
     WCHAR msg_buffer[8192];
 
-    wlen = vsprintfW(msg_buffer, msg, va_args);
+    wlen = vswprintf(msg_buffer, ARRAY_SIZE(msg_buffer), msg, va_args);
 
     ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), msg_buffer, wlen, &count, NULL);
     if (!ret)
@@ -63,29 +62,29 @@ static int hostname_vprintfW(const WCHAR *msg, va_list va_args)
     return count;
 }
 
-static int hostname_printfW(const WCHAR *msg, ...)
+static int WINAPIV hostname_printfW(const WCHAR *msg, ...)
 {
-    va_list va_args;
+    __ms_va_list va_args;
     int len;
 
-    va_start(va_args, msg);
+    __ms_va_start(va_args, msg);
     len = hostname_vprintfW(msg, va_args);
-    va_end(va_args);
+    __ms_va_end(va_args);
 
     return len;
 }
 
-static int hostname_message_printfW(int msg, ...)
+static int WINAPIV hostname_message_printfW(int msg, ...)
 {
-    va_list va_args;
+    __ms_va_list va_args;
     WCHAR msg_buffer[8192];
     int len;
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer, ARRAY_SIZE(msg_buffer));
 
-    va_start(va_args, msg);
+    __ms_va_start(va_args, msg);
     len = hostname_vprintfW(msg_buffer, va_args);
-    va_end(va_args);
+    __ms_va_end(va_args);
 
     return len;
 }
@@ -127,7 +126,7 @@ int wmain(int argc, WCHAR *argv[])
 
         unsigned int i;
 
-        if (!strncmpW(argv[1], slashHelpW, ARRAY_SIZE(slashHelpW) - 1))
+        if (!wcsncmp(argv[1], slashHelpW, ARRAY_SIZE(slashHelpW) - 1))
         {
             hostname_message(STRING_USAGE);
             return 1;
