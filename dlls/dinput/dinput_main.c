@@ -566,53 +566,39 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(LPDIRECTINPUT7A iface, RE
     if (!riid || !ppobj)
         return E_POINTER;
 
+    *ppobj = NULL;
+
+#if DIRECTINPUT_VERSION == 0x0700
     if (IsEqualGUID( &IID_IUnknown, riid ) ||
-        IsEqualGUID( &IID_IDirectInputA,  riid ) ||
-        IsEqualGUID( &IID_IDirectInput2A, riid ) ||
-        IsEqualGUID( &IID_IDirectInput7A, riid ))
-    {
+         IsEqualGUID( &IID_IDirectInputA,  riid ) ||
+         IsEqualGUID( &IID_IDirectInput2A, riid ) ||
+         IsEqualGUID( &IID_IDirectInput7A, riid ))
         *ppobj = &This->IDirectInput7A_iface;
-        IUnknown_AddRef( (IUnknown*)*ppobj );
-
-        return DI_OK;
-    }
-
-    if (IsEqualGUID( &IID_IDirectInputW,  riid ) ||
-        IsEqualGUID( &IID_IDirectInput2W, riid ) ||
-        IsEqualGUID( &IID_IDirectInput7W, riid ))
-    {
+    else if (IsEqualGUID( &IID_IDirectInputW,  riid ) ||
+             IsEqualGUID( &IID_IDirectInput2W, riid ) ||
+             IsEqualGUID( &IID_IDirectInput7W, riid ))
         *ppobj = &This->IDirectInput7W_iface;
-        IUnknown_AddRef( (IUnknown*)*ppobj );
 
-        return DI_OK;
-    }
-
-    if (IsEqualGUID( &IID_IDirectInput8A, riid ))
-    {
+#else
+    if (IsEqualGUID( &IID_IUnknown, riid ) ||
+        IsEqualGUID( &IID_IDirectInput8A, riid ))
         *ppobj = &This->IDirectInput8A_iface;
-        IUnknown_AddRef( (IUnknown*)*ppobj );
 
-        return DI_OK;
-    }
-
-    if (IsEqualGUID( &IID_IDirectInput8W, riid ))
-    {
+    else if (IsEqualGUID( &IID_IDirectInput8W, riid ))
         *ppobj = &This->IDirectInput8W_iface;
-        IUnknown_AddRef( (IUnknown*)*ppobj );
 
-        return DI_OK;
-    }
+#endif
 
     if (IsEqualGUID( &IID_IDirectInputJoyConfig8, riid ))
-    {
         *ppobj = &This->IDirectInputJoyConfig8_iface;
-        IUnknown_AddRef( (IUnknown*)*ppobj );
 
+    if(*ppobj)
+    {
+        IUnknown_AddRef( (IUnknown*)*ppobj );
         return DI_OK;
     }
 
-    FIXME( "Unsupported interface: %s\n", debugstr_guid(riid));
-    *ppobj = NULL;
+    WARN( "Unsupported interface: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 

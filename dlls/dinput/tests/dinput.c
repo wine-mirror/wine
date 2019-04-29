@@ -269,23 +269,19 @@ static void test_QueryInterface(void)
                                 &IID_IDirectInput2A, &IID_IDirectInput2W,
                                 &IID_IDirectInput7A, &IID_IDirectInput7W};
 
-    static const struct
+    static const REFIID no_interface_list[] =
     {
-        REFIID riid;
-        int test_todo;
-    } no_interface_list[] =
-    {
-        {&IID_IDirectInput8A, 1},
-        {&IID_IDirectInput8W, 1},
-        {&IID_IDirectInputDeviceA},
-        {&IID_IDirectInputDeviceW},
-        {&IID_IDirectInputDevice2A},
-        {&IID_IDirectInputDevice2W},
-        {&IID_IDirectInputDevice7A},
-        {&IID_IDirectInputDevice7W},
-        {&IID_IDirectInputDevice8A},
-        {&IID_IDirectInputDevice8W},
-        {&IID_IDirectInputEffect},
+        &IID_IDirectInput8A,
+        &IID_IDirectInput8W,
+        &IID_IDirectInputDeviceA,
+        &IID_IDirectInputDeviceW,
+        &IID_IDirectInputDevice2A,
+        &IID_IDirectInputDevice2W,
+        &IID_IDirectInputDevice7A,
+        &IID_IDirectInputDevice7W,
+        &IID_IDirectInputDevice8A,
+        &IID_IDirectInputDevice8W,
+        &IID_IDirectInputEffect,
     };
 
     IDirectInputA *pDI;
@@ -323,21 +319,9 @@ static void test_QueryInterface(void)
     for (i = 0; i < ARRAY_SIZE(no_interface_list); i++)
     {
         pUnk = (void *)0xdeadbeef;
-        hr = IDirectInput_QueryInterface(pDI, no_interface_list[i].riid, (void **)&pUnk);
-        if (no_interface_list[i].test_todo)
-        {
-            todo_wine
-            ok(hr == E_NOINTERFACE, "[%d] IDirectInput_QueryInterface returned 0x%08x\n", i, hr);
-            todo_wine
-            ok(pUnk == NULL, "[%d] Output interface pointer is %p\n", i, pUnk);
-
-            if (pUnk) IUnknown_Release(pUnk);
-        }
-        else
-        {
-            ok(hr == E_NOINTERFACE, "[%d] IDirectInput_QueryInterface returned 0x%08x\n", i, hr);
-            ok(pUnk == NULL, "[%d] Output interface pointer is %p\n", i, pUnk);
-        }
+        hr = IDirectInput_QueryInterface(pDI, no_interface_list[i], (void **)&pUnk);
+        ok(hr == E_NOINTERFACE, "[%d] IDirectInput_QueryInterface returned 0x%08x\n", i, hr);
+        ok(pUnk == NULL, "[%d] Output interface pointer is %p\n", i, pUnk);
     }
 
     IDirectInput_Release(pDI);
