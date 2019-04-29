@@ -21,10 +21,10 @@
 
 #define NONAMELESSUNION
 
+#include <stdio.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <iphlpapi.h>
-#include <wine/unicode.h>
 
 #include "ipconfig.h"
 
@@ -130,7 +130,7 @@ static void print_field(int msg, const WCHAR *value)
     WCHAR name_buffer[ARRAY_SIZE(field)];
 
     LoadStringW(GetModuleHandleW(NULL), msg, name_buffer, ARRAY_SIZE(name_buffer));
-    memcpy(field, name_buffer, sizeof(WCHAR) * min(strlenW(name_buffer), ARRAY_SIZE(field) - 1));
+    memcpy(field, name_buffer, sizeof(WCHAR) * min(lstrlenW(name_buffer), ARRAY_SIZE(field) - 1));
 
     ipconfig_printfW(formatW, field, value);
 }
@@ -259,10 +259,10 @@ static WCHAR *physaddr_to_string(WCHAR *buf, BYTE *addr, DWORD len)
 
         for (i = 0; i < len - 1; i++)
         {
-            sprintfW(p, fmtW, addr[i]);
+            swprintf(p, 4, fmtW, addr[i]);
             p += 3;
         }
-        sprintfW(p, fmt2W, addr[i]);
+        swprintf(p, 3, fmt2W, addr[i]);
     }
 
     return buf;
@@ -386,13 +386,13 @@ int wmain(int argc, WCHAR *argv[])
 
     if (argc > 1)
     {
-        if (!strcmpW(slashHelp, argv[1]))
+        if (!lstrcmpW(slashHelp, argv[1]))
         {
             ipconfig_message(STRING_USAGE);
             WSACleanup();
             return 1;
         }
-        else if (!strcmpiW(slashAll, argv[1]))
+        else if (!wcsicmp(slashAll, argv[1]))
         {
             if (argv[2])
             {
