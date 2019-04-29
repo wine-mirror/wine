@@ -3057,6 +3057,15 @@ HANDLE WINAPI PsGetCurrentThreadId(void)
 
 
 /***********************************************************************
+ *           PsIsSystemThread   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI PsIsSystemThread(PETHREAD thread)
+{
+    return thread->kthread.process == PsInitialSystemProcess;
+}
+
+
+/***********************************************************************
  *           PsGetVersion   (NTOSKRNL.EXE.@)
  */
 BOOLEAN WINAPI PsGetVersion(ULONG *major, ULONG *minor, ULONG *build, UNICODE_STRING *version )

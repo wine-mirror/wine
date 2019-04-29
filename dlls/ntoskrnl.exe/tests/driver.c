@@ -337,6 +337,8 @@ static void test_currentprocess(void)
     thread = PsGetCurrentThread();
     ret = wait_single( thread, 0 );
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ok(!PsIsSystemThread((PETHREAD)KeGetCurrentThread()), "unexpected system thread\n");
 }
 
 static void sleep(void)

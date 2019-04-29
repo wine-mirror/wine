@@ -39,6 +39,11 @@ struct _KTHREAD
     CLIENT_ID id;
 };
 
+struct _ETHREAD
+{
+    struct _KTHREAD kthread;
+};
+
 void *alloc_kernel_object( POBJECT_TYPE type, HANDLE handle, SIZE_T size, LONG ref ) DECLSPEC_HIDDEN;
 HANDLE kernel_object_handle( void *obj, unsigned int access ) DECLSPEC_HIDDEN;
 NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret ) DECLSPEC_HIDDEN;

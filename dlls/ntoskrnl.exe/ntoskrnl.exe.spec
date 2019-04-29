@@ -908,7 +908,7 @@
 @ stdcall PsImpersonateClient(ptr ptr long long long)
 @ extern PsInitialSystemProcess
 @ stub PsIsProcessBeingDebugged
-@ stub PsIsSystemThread
+@ stdcall PsIsSystemThread(ptr)
 @ stub PsIsThreadImpersonating
 @ stub PsIsThreadTerminating
 @ stub PsJobType
