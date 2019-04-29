@@ -1707,8 +1707,7 @@ static BOOL try_create_registration_free_com(REFIID clsid, WCHAR *classname, UIN
     ret = TRUE;
 
 end:
-    if (assembly_info)
-        heap_free(assembly_info);
+    heap_free(assembly_info);
 
     if (guid_info.hActCtx)
         ReleaseActCtx(guid_info.hActCtx);
