@@ -1211,7 +1211,7 @@ static void test_wintrust_digest(void)
     BOOL ret;
     int i, j;
 
-    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         file = create_temp_file(pathW);
         ok(file != INVALID_HANDLE_VALUE, "failed to create temporary file\n");
