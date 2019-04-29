@@ -2,10 +2,10 @@
 @ stub ConvertPropVariant
 @ stub CopyPropertyStore
 @ stub CreateNamedPropertyStore
-@ stub DllCanUnloadNow
-@ stub DllGetClassObject
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub ExtractPropVariant
 @ stub MFCreate3GPMediaSink
 @ stub MFCreateASFByteStreamPlugin

@@ -6,3 +6,5 @@ C_SRCS = \
 	main.c \
 	session.c \
 	topology.c
+
+IDL_SRCS = mf.idl
