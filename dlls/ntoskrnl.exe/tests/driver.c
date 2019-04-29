@@ -321,13 +321,18 @@ static NTSTATUS wait_single_handle(HANDLE handle, ULONGLONG timeout)
 
 static void test_currentprocess(void)
 {
+    DISPATCHER_HEADER *header;
     PEPROCESS current;
     PETHREAD thread;
     NTSTATUS ret;
 
     current = IoGetCurrentProcess();
-todo_wine
     ok(current != NULL, "Expected current process to be non-NULL\n");
+
+    header = (DISPATCHER_HEADER*)current;
+    ok(header->Type == 3, "header->Type != 3, = %u\n", header->Type);
+    ret = wait_single(current, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
 
     thread = PsGetCurrentThread();
     ret = wait_single( thread, 0 );

@@ -2477,8 +2477,7 @@ POBJECT_TYPE PsProcessType = &process_type;
  */
 PEPROCESS WINAPI IoGetCurrentProcess(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    return KeGetCurrentThread()->process;
 }
 
 /***********************************************************************
@@ -2505,6 +2504,7 @@ static void *create_thread_object( HANDLE handle )
 {
     THREAD_BASIC_INFORMATION info;
     struct _KTHREAD *thread;
+    HANDLE process;
 
     if (!(thread = alloc_kernel_object( PsThreadType, handle, sizeof(*thread), 0 ))) return NULL;
 
@@ -2512,7 +2512,15 @@ static void *create_thread_object( HANDLE handle )
     thread->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
 
     if (!NtQueryInformationThread( handle, ThreadBasicInformation, &info, sizeof(info), NULL ))
+    {
         thread->id = info.ClientId;
+        if ((process = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, HandleToUlong(thread->id.UniqueProcess) )))
+        {
+            kernel_object_from_handle( process, PsProcessType, (void**)&thread->process );
+            NtClose( process );
+        }
+    }
+
 
     return thread;
 }

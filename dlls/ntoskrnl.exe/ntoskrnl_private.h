@@ -35,6 +35,7 @@ struct _EPROCESS {
 struct _KTHREAD
 {
     DISPATCHER_HEADER header;
+    PEPROCESS process;
     CLIENT_ID id;
 };
 
