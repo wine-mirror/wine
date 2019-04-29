@@ -17,10 +17,10 @@
  */
 
 #define NONAMELESSUNION
+#include <stdio.h>
 #include "netstat.h"
 #include <winsock2.h>
 #include <iphlpapi.h>
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netstat);
@@ -146,7 +146,7 @@ static WCHAR *NETSTAT_load_message(UINT id) {
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
-        strcpyW(msg, failedW);
+        lstrcpyW(msg, failedW);
     }
     return msg;
 }
@@ -154,7 +154,7 @@ static WCHAR *NETSTAT_load_message(UINT id) {
 static WCHAR *NETSTAT_port_name(UINT port, WCHAR name[])
 {
     /* FIXME: can we get the name? */
-    sprintfW(name, fmtport, htons((WORD)port));
+    swprintf(name, 32, fmtport, htons((WORD)port));
     return name;
 }
 
@@ -164,7 +164,8 @@ static WCHAR *NETSTAT_host_name(UINT ip, WCHAR name[])
 
     /* FIXME: can we get the name? */
     nip = htonl(ip);
-    sprintfW(name, fmtip, (nip >> 24) & 0xFF, (nip >> 16) & 0xFF, (nip >> 8) & 0xFF, (nip) & 0xFF);
+    swprintf(name, MAX_HOSTNAME_LEN, fmtip,
+             (nip >> 24) & 0xFF, (nip >> 16) & 0xFF, (nip >> 8) & 0xFF, (nip) & 0xFF);
     return name;
 }
 
@@ -173,9 +174,9 @@ static void NETSTAT_conn_header(void)
     WCHAR local[22], remote[22], state[22];
     NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_TCP_ACTIVE_CONN));
     NETSTAT_wprintf(fmtn);
-    strcpyW(local, NETSTAT_load_message(IDS_TCP_LOCAL_ADDR));
-    strcpyW(remote, NETSTAT_load_message(IDS_TCP_REMOTE_ADDR));
-    strcpyW(state, NETSTAT_load_message(IDS_TCP_STATE));
+    lstrcpyW(local, NETSTAT_load_message(IDS_TCP_LOCAL_ADDR));
+    lstrcpyW(remote, NETSTAT_load_message(IDS_TCP_REMOTE_ADDR));
+    lstrcpyW(state, NETSTAT_load_message(IDS_TCP_STATE));
     NETSTAT_wprintf(fmttcpout, NETSTAT_load_message(IDS_TCP_PROTO), local, remote, state);
 }
 
@@ -199,7 +200,7 @@ static void NETSTAT_eth_stats(void)
     NETSTAT_wprintf(NETSTAT_load_message(IDS_ETH_STAT));
     NETSTAT_wprintf(fmtn);
     NETSTAT_wprintf(fmtn);
-    strcpyW(recv, NETSTAT_load_message(IDS_ETH_RECV));
+    lstrcpyW(recv, NETSTAT_load_message(IDS_ETH_RECV));
     NETSTAT_wprintf(fmtethheader, recv, NETSTAT_load_message(IDS_ETH_SENT));
 
     octets[0] = octets[1] = 0;
@@ -264,8 +265,8 @@ static void NETSTAT_tcp_table(void)
             NETSTAT_host_name(table->table[i].dwRemoteAddr, RemoteIp);
             NETSTAT_port_name(table->table[i].dwRemotePort, RemotePort);
 
-            sprintfW(Host, fmtcolon, HostIp, HostPort);
-            sprintfW(Remote, fmtcolon, RemoteIp, RemotePort);
+            swprintf(Host, ARRAY_SIZE(Host), fmtcolon, HostIp, HostPort);
+            swprintf(Remote, ARRAY_SIZE(Remote), fmtcolon, RemoteIp, RemotePort);
             NETSTAT_wprintf(fmttcpout, tcpW, Host, Remote, tcpstatesW[table->table[i].u.dwState]);
         }
     }
@@ -313,7 +314,7 @@ static void NETSTAT_udp_table(void)
         NETSTAT_host_name(table->table[i].dwLocalAddr, HostIp);
         NETSTAT_port_name(table->table[i].dwLocalPort, HostPort);
 
-        sprintfW(Host, fmtcolon, HostIp, HostPort);
+        swprintf(Host, ARRAY_SIZE(Host), fmtcolon, HostIp, HostPort);
         NETSTAT_wprintf(fmtudpout, udpW, Host);
     }
     HeapFree(GetProcessHeap(), 0, table);
@@ -336,14 +337,14 @@ static void NETSTAT_udp_stats(void)
 
 static NETSTATPROTOCOLS NETSTAT_get_protocol(WCHAR name[])
 {
-    if (!strcmpiW(name, ipW)) return PROT_IP;
-    if (!strcmpiW(name, ipv6W)) return PROT_IPV6;
-    if (!strcmpiW(name, icmpW)) return PROT_ICMP;
-    if (!strcmpiW(name, icmpv6W)) return PROT_ICMPV6;
-    if (!strcmpiW(name, tcpW)) return PROT_TCP;
-    if (!strcmpiW(name, tcpv6W)) return PROT_TCPV6;
-    if (!strcmpiW(name, udpW)) return PROT_UDP;
-    if (!strcmpiW(name, udpv6W)) return PROT_UDPV6;
+    if (!wcsicmp(name, ipW)) return PROT_IP;
+    if (!wcsicmp(name, ipv6W)) return PROT_IPV6;
+    if (!wcsicmp(name, icmpW)) return PROT_ICMP;
+    if (!wcsicmp(name, icmpv6W)) return PROT_ICMPV6;
+    if (!wcsicmp(name, tcpW)) return PROT_TCP;
+    if (!wcsicmp(name, tcpv6W)) return PROT_TCPV6;
+    if (!wcsicmp(name, udpW)) return PROT_UDP;
+    if (!wcsicmp(name, udpv6W)) return PROT_UDPV6;
     return PROT_UNKNOWN;
 }
 
