@@ -100,8 +100,7 @@ static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GU
         return E_POINTER;
 
     /* Get the part of the name that matters */
-    extension = PathFindExtensionW(pszFileName);
-    if (*extension != '.')
+    if (!(extension = strrchrW(pszFileName, '.')))
         return E_FAIL;
 
     l = RegOpenKeyExW(hkeyExtensions, extension, 0, KEY_READ, &hsub);
