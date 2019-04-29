@@ -2462,6 +2462,7 @@ static void *create_process_object( HANDLE handle )
 
     process->header.Type = 3;
     process->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
+    NtQueryInformationProcess( handle, ProcessBasicInformation, &process->info, sizeof(process->info), NULL );
     return process;
 }
 
@@ -2501,6 +2502,15 @@ NTSTATUS WINAPI PsLookupProcessByProcessId( HANDLE processid, PEPROCESS *process
 
     NtClose( handle );
     return status;
+}
+
+/*********************************************************************
+ *           PsGetProcessId    (NTOSKRNL.@)
+ */
+HANDLE WINAPI PsGetProcessId(PEPROCESS process)
+{
+    TRACE( "%p -> %lx\n", process, process->info.UniqueProcessId );
+    return (HANDLE)process->info.UniqueProcessId;
 }
 
 
@@ -4237,16 +4247,6 @@ DEFINE_FASTCALL_WRAPPER( ExfUnblockPushLock, 8 )
 void WINAPI ExfUnblockPushLock( EX_PUSH_LOCK *lock, PEX_PUSH_LOCK_WAIT_BLOCK block )
 {
     FIXME( "stub: %p, %p\n", lock, block );
-}
-
-/*********************************************************************
- *           PsGetProcessId    (NTOSKRNL.@)
- */
-HANDLE WINAPI PsGetProcessId(PEPROCESS process)
-{
-    FIXME("stub: %p\n", process);
-
-    return 0;
 }
 
 /*********************************************************************

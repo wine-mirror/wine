@@ -334,6 +334,8 @@ static void test_currentprocess(void)
     ret = wait_single(current, 0);
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
 
+    ok(PsGetProcessId(current) == PsGetCurrentProcessId(), "process IDs don't match\n");
+
     thread = PsGetCurrentThread();
     ret = wait_single( thread, 0 );
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
