@@ -2598,6 +2598,14 @@ NTSTATUS WINAPI PsLookupThreadByThreadId( HANDLE threadid, PETHREAD *thread )
     return status;
 }
 
+/*********************************************************************
+ *           PsGetThreadId    (NTOSKRNL.@)
+ */
+HANDLE WINAPI PsGetThreadId(PETHREAD thread)
+{
+    TRACE( "%p -> %p\n", thread, thread->kthread.id.UniqueThread );
+    return thread->kthread.id.UniqueThread;
+}
 
 /***********************************************************************
  *           KeInsertQueue   (NTOSKRNL.EXE.@)

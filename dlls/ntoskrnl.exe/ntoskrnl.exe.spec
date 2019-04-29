@@ -898,7 +898,7 @@
 @ stdcall -arch=x86_64 PsGetProcessWow64Process(ptr)
 @ stub PsGetThreadFreezeCount
 @ stub PsGetThreadHardErrorsAreDisabled
-@ stub PsGetThreadId
+@ stdcall PsGetThreadId(ptr)
 @ stub PsGetThreadProcess
 @ stub PsGetThreadProcessId
 @ stub PsGetThreadSessionId

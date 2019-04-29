@@ -340,6 +340,7 @@ static void test_currentprocess(void)
     ret = wait_single( thread, 0 );
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
 
+    ok(PsGetThreadId((PETHREAD)KeGetCurrentThread()) == PsGetCurrentThreadId(), "thread IDs don't match\n");
     ok(!PsIsSystemThread((PETHREAD)KeGetCurrentThread()), "unexpected system thread\n");
 }
 
