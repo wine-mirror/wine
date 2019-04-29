@@ -906,7 +906,7 @@
 @ stub PsGetThreadWin32Thread
 @ stdcall PsGetVersion(ptr ptr ptr ptr)
 @ stdcall PsImpersonateClient(ptr ptr long long long)
-@ stub PsInitialSystemProcess
+@ extern PsInitialSystemProcess
 @ stub PsIsProcessBeingDebugged
 @ stub PsIsSystemThread
 @ stub PsIsThreadImpersonating

@@ -939,6 +939,8 @@ static void unload_driver( struct wine_rb_entry *entry, void *context )
     CloseServiceHandle( (void *)service_handle );
 }
 
+PEPROCESS PsInitialSystemProcess = NULL;
+
 /***********************************************************************
  *           wine_ntoskrnl_main_loop   (Not a Windows API)
  */
@@ -952,6 +954,8 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     void *in_buff = NULL;
     HANDLE handles[2];
 
+    /* Set the system process global before setting up the request thread trickery  */
+    PsInitialSystemProcess = IoGetCurrentProcess();
     request_thread = GetCurrentThreadId();
 
     handles[0] = stop_event;
