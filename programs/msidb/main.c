@@ -21,13 +21,13 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <windows.h>
 #include <msi.h>
 #include <msiquery.h>
 #include <shlwapi.h>
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msidb);
@@ -132,7 +132,7 @@ static int valid_state( struct msidb_state *state )
 static int process_argument( struct msidb_state *state, int i, int argc, WCHAR *argv[] )
 {
     /* msidb accepts either "-" or "/" style flags */
-    if (strlenW(argv[i]) != 2 || (argv[i][0] != '-' && argv[i][0] != '/'))
+    if (lstrlenW(argv[i]) != 2 || (argv[i][0] != '-' && argv[i][0] != '/'))
         return 0;
     switch( argv[i][1] )
     {
@@ -220,9 +220,9 @@ static const WCHAR *basenameW( const WCHAR *filename )
 {
     const WCHAR *dir_end;
 
-    dir_end = strrchrW( filename, '/' );
+    dir_end = wcsrchr( filename, '/' );
     if (dir_end) return dir_end + 1;
-    dir_end = strrchrW( filename, '\\' );
+    dir_end = wcsrchr( filename, '\\' );
     if (dir_end) return dir_end + 1;
     return filename;
 }
@@ -460,14 +460,14 @@ static int import_tables( struct msidb_state *state )
         WCHAR *ext;
 
         /* permit specifying tables with wildcards ('Feature*') */
-        if (strstrW( table_name, wildcard ) != NULL)
+        if (wcsstr( table_name, wildcard ) != NULL)
         {
             WIN32_FIND_DATAW f;
             HANDLE handle;
             WCHAR *path;
             DWORD len;
 
-            len = strlenW( state->table_folder ) + 1 + strlenW( table_name ) + 1; /* %s/%s\0 */
+            len = lstrlenW( state->table_folder ) + 1 + lstrlenW( table_name ) + 1; /* %s/%s\0 */
             path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
             if (path == NULL)
                 return 0;
@@ -498,7 +498,7 @@ static int import_tables( struct msidb_state *state )
         if ((ext = PathFindExtensionW( table_name )) == NULL || lstrcmpW( ext, idt_ext ) != 0)
         {
             const WCHAR format[] = { '%','.','8','s','.','i','d','t',0 }; /* truncate to 8 characters */
-            snprintfW( table_path, ARRAY_SIZE(table_path), format, table_name );
+            swprintf( table_path, ARRAY_SIZE(table_path), format, table_name );
             table_name = table_path;
         }
         if (!import_table( state, table_name ))
@@ -515,7 +515,7 @@ static int export_table( struct msidb_state *state, const WCHAR *table_name )
     WCHAR table_path[MAX_PATH];
     UINT ret;
 
-    snprintfW( table_path, ARRAY_SIZE(table_path), format, table_name );
+    swprintf( table_path, ARRAY_SIZE(table_path), format, table_name );
     ret = MsiDatabaseExportW( state->database_handle, table_name, state->table_folder, table_path );
     if (ret != ERROR_SUCCESS)
     {
@@ -603,7 +603,7 @@ static int export_tables( struct msidb_state *state )
 
     LIST_FOR_EACH_ENTRY( data, &state->table_list, struct msidb_listentry, entry )
     {
-        if (strcmpW( data->name, wildcard ) == 0)
+        if (lstrcmpW( data->name, wildcard ) == 0)
         {
             if (!export_all_tables( state ))
                 return 0; /* failed, do not commit changes */
