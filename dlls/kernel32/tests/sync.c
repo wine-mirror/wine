@@ -38,6 +38,7 @@ static BOOL   (WINAPI *pInitOnceExecuteOnce)(PINIT_ONCE,PINIT_ONCE_FN,PVOID,LPVO
 static BOOL   (WINAPI *pInitOnceBeginInitialize)(PINIT_ONCE,DWORD,BOOL*,LPVOID*);
 static BOOL   (WINAPI *pInitOnceComplete)(PINIT_ONCE,DWORD,LPVOID);
 
+static BOOL   (WINAPI *pInitializeCriticalSectionEx)(CRITICAL_SECTION*,DWORD,DWORD);
 static VOID   (WINAPI *pInitializeConditionVariable)(PCONDITION_VARIABLE);
 static BOOL   (WINAPI *pSleepConditionVariableCS)(PCONDITION_VARIABLE,PCRITICAL_SECTION,DWORD);
 static BOOL   (WINAPI *pSleepConditionVariableSRW)(PCONDITION_VARIABLE,PSRWLOCK,DWORD,ULONG);
@@ -2648,8 +2649,14 @@ static void test_crit_section(void)
     ok(cs.DebugInfo != NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
     DeleteCriticalSection(&cs);
 
+    if (!pInitializeCriticalSectionEx)
+    {
+        win_skip("InitializeCriticalSectionEx isn't available, skipping tests.\n");
+        return;
+    }
+
     memset(&cs, 0, sizeof(cs));
-    ret = InitializeCriticalSectionEx(&cs, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
+    ret = pInitializeCriticalSectionEx(&cs, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
     ok(ret, "Failed to initialize critical section.\n");
 todo_wine
     ok(cs.DebugInfo == (void *)(ULONG_PTR)-1, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
@@ -2672,6 +2679,7 @@ START_TEST(sync)
     pSleepConditionVariableSRW = (void *)GetProcAddress(hdll, "SleepConditionVariableSRW");
     pWakeAllConditionVariable = (void *)GetProcAddress(hdll, "WakeAllConditionVariable");
     pWakeConditionVariable = (void *)GetProcAddress(hdll, "WakeConditionVariable");
+    pInitializeCriticalSectionEx = (void *)GetProcAddress(hdll, "InitializeCriticalSectionEx");
     pInitializeSRWLock = (void *)GetProcAddress(hdll, "InitializeSRWLock");
     pAcquireSRWLockExclusive = (void *)GetProcAddress(hdll, "AcquireSRWLockExclusive");
     pAcquireSRWLockShared = (void *)GetProcAddress(hdll, "AcquireSRWLockShared");
