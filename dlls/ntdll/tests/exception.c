@@ -3274,7 +3274,7 @@ static void test_suspend_process(void)
     startup.cb = sizeof(startup);
     sprintf(path_name, "%s exception suspend_process", argv[0]);
 
-    ret = CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+    ret = CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
     ok(ret, "Failed to create target process.\n");
 
     /* New process signals this event. */
