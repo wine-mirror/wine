@@ -208,6 +208,7 @@ struct options
     int wine_builtin;
     int unwind_tables;
     int strip;
+    int pic;
     const char* wine_objdir;
     const char* output_name;
     const char* image_base;
@@ -684,7 +685,10 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(comp_args, "-DWINE_UNICODE_NATIVE");
 	}
         strarray_add(comp_args, "-D_REENTRANT");
-        strarray_add(comp_args, "-fPIC");
+        if (opts->pic)
+            strarray_add(comp_args, "-fPIC");
+        else
+            strarray_add(comp_args, "-fno-PIC");
     }
 
     if (opts->target_cpu == CPU_x86_64 || opts->target_cpu == CPU_ARM64)
@@ -1026,7 +1030,7 @@ static void build(struct options* opts)
     if (opts->force_pointer_size)
         strarray_add(spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
     strarray_add(spec_args, "-D_REENTRANT");
-    strarray_add(spec_args, "-fPIC");
+    if (opts->pic && !is_pe) strarray_add(spec_args, "-fPIC");
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
     if (fake_module)
     {
@@ -1345,6 +1349,7 @@ int main(int argc, char **argv)
     opts.linker_args = strarray_alloc();
     opts.compiler_args = strarray_alloc();
     opts.winebuild_args = strarray_alloc();
+    opts.pic = 1;
 
     /* determine the processor type */
     if (strendswith(argv[0], "winecpp")) opts.processor = proc_cpp;
@@ -1466,6 +1471,10 @@ int main(int argc, char **argv)
                         opts.unwind_tables = 1;
 		    else if (!strcmp("-fno-asynchronous-unwind-tables", argv[i]))
                         opts.unwind_tables = 0;
+                    else if (!strcmp("-fPIC", argv[i]) || !strcmp("-fpic", argv[i]))
+                        opts.pic = 1;
+                    else if (!strcmp("-fno-PIC", argv[i]) || !strcmp("-fno-pic", argv[i]))
+                        opts.pic = 0;
 		    break;
 		case 'l':
 		    strarray_add(opts.files, strmake("-l%s", option_arg));
