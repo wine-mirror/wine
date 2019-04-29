@@ -21,7 +21,6 @@
 #include "main.h"
 #include "commdlg.h"
 #include "shellapi.h"
-#include "wine/unicode.h"
 
 GLOBALS globals;
 static const WCHAR wszRegEdit[] = { '\\','r','e','g','e','d','i','t','.','e','x','e','\0' };
