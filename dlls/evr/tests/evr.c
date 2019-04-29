@@ -21,6 +21,18 @@
 #define COBJMACROS
 #include "dshow.h"
 #include "wine/test.h"
+#include "d3d9.h"
+#include "initguid.h"
+#include "dxva2api.h"
+
+static IBaseFilter *create_evr(void)
+{
+    IBaseFilter *filter = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_EnhancedVideoRenderer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return filter;
+}
 
 static ULONG get_refcount(void *iface)
 {
@@ -124,11 +136,53 @@ static void test_aggregation(void)
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IBaseFilter *filter = create_evr();
+    ULONG ref;
+
+    todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    todo_wine check_interface(filter, &IID_IMediaPosition, TRUE);
+    todo_wine check_interface(filter, &IID_IMediaSeeking, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+
+    check_interface(filter, &IID_IBasicAudio, FALSE);
+    check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IDirectXVideoMemoryConfiguration, FALSE);
+    check_interface(filter, &IID_IMemInputPin, FALSE);
+    check_interface(filter, &IID_IPersistPropertyBag, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
 
     test_aggregation();
+    test_interfaces();
 
     CoUninitialize();
 }
