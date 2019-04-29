@@ -19,6 +19,7 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "wine/debug.h"
 #include "wine/list.h"

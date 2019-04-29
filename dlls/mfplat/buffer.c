@@ -311,7 +311,7 @@ static HRESULT WINAPI sample_CompareItem(IMFSample *iface, REFGUID key, REFPROPV
 {
     struct sample *sample = impl_from_IMFSample(iface);
 
-    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_propvar(value), result);
 
     return attributes_CompareItem(&sample->attributes, key, value, result);
 }
@@ -429,7 +429,7 @@ static HRESULT WINAPI sample_SetItem(IMFSample *iface, REFGUID key, REFPROPVARIA
 {
     struct sample *sample = impl_from_IMFSample(iface);
 
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_propvar(value));
 
     return attributes_SetItem(&sample->attributes, key, value);
 }

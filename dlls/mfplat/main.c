@@ -1621,7 +1621,7 @@ static HRESULT WINAPI mfattributes_CompareItem(IMFAttributes *iface, REFGUID key
 {
     struct attributes *attributes = impl_from_IMFAttributes(iface);
 
-    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_propvar(value), result);
 
     return attributes_CompareItem(attributes, key, value, result);
 }
@@ -1741,7 +1741,7 @@ static HRESULT WINAPI mfattributes_SetItem(IMFAttributes *iface, REFGUID key, RE
 {
     struct attributes *attributes = impl_from_IMFAttributes(iface);
 
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_propvar(value));
 
     return attributes_SetItem(attributes, key, value);
 }
@@ -3779,11 +3779,12 @@ static HRESULT WINAPI bytestream_wrapper_events_EndGetEvent(IMFMediaEventGenerat
     return IMFMediaEventGenerator_EndGetEvent(wrapper->event_generator, result, event);
 }
 
-static HRESULT WINAPI bytestream_wrapper_events_QueueEvent(IMFMediaEventGenerator *iface, MediaEventType type, REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
+static HRESULT WINAPI bytestream_wrapper_events_QueueEvent(IMFMediaEventGenerator *iface, MediaEventType type,
+        REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
 {
     struct bytestream_wrapper *wrapper = impl_wrapper_from_IMFMediaEventGenerator(iface);
 
-    TRACE("%p, %d, %s, %#x, %p.\n", iface, type, debugstr_guid(ext_type), hr, value);
+    TRACE("%p, %d, %s, %#x, %s.\n", iface, type, debugstr_guid(ext_type), hr, debugstr_propvar(value));
 
     return IMFMediaEventGenerator_QueueEvent(wrapper->event_generator, type, ext_type, hr, value);
 }
@@ -3900,11 +3901,12 @@ static HRESULT WINAPI bytestream_wrapper_propstore_GetValue(IPropertyStore *ifac
     return IPropertyStore_GetValue(wrapper->propstore, key, value);
 }
 
-static HRESULT WINAPI bytestream_wrapper_propstore_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, const PROPVARIANT *value)
+static HRESULT WINAPI bytestream_wrapper_propstore_SetValue(IPropertyStore *iface, REFPROPERTYKEY key,
+        const PROPVARIANT *value)
 {
     struct bytestream_wrapper *wrapper = impl_wrapper_from_IPropertyStore(iface);
 
-    TRACE("%p, %p, %p.\n", iface, key, value);
+    TRACE("%p, %p, %s.\n", iface, key, debugstr_propvar(value));
 
     return IPropertyStore_SetValue(wrapper->propstore, key, value);
 }
@@ -3966,11 +3968,12 @@ static HRESULT WINAPI bytestream_wrapper_attributes_GetItemType(IMFAttributes *i
     return IMFAttributes_GetItemType(wrapper->attributes, key, type);
 }
 
-static HRESULT WINAPI bytestream_wrapper_attributes_CompareItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+static HRESULT WINAPI bytestream_wrapper_attributes_CompareItem(IMFAttributes *iface, REFGUID key,
+        REFPROPVARIANT value, BOOL *result)
 {
     struct bytestream_wrapper *wrapper = impl_wrapper_from_IMFAttributes(iface);
 
-    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_propvar(value), result);
 
     return IMFAttributes_CompareItem(wrapper->attributes, key, value, result);
 }
@@ -4090,7 +4093,7 @@ static HRESULT WINAPI bytestream_wrapper_attributes_SetItem(IMFAttributes *iface
 {
     struct bytestream_wrapper *wrapper = impl_wrapper_from_IMFAttributes(iface);
 
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_propvar(value));
 
     return IMFAttributes_SetItem(wrapper->attributes, key, value);
 }
@@ -5451,7 +5454,7 @@ static HRESULT WINAPI mfmediaevent_CompareItem(IMFMediaEvent *iface, REFGUID key
 {
     struct media_event *event = impl_from_IMFMediaEvent(iface);
 
-    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, result);
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_propvar(value), result);
 
     return attributes_CompareItem(&event->attributes, key, value, result);
 }
@@ -5572,7 +5575,7 @@ static HRESULT WINAPI mfmediaevent_SetItem(IMFMediaEvent *iface, REFGUID key, RE
 {
     struct media_event *event = impl_from_IMFMediaEvent(iface);
 
-    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_propvar(value));
 
     return attributes_SetItem(&event->attributes, key, value);
 }
@@ -5789,13 +5792,14 @@ static const IMFMediaEventVtbl mfmediaevent_vtbl =
 /***********************************************************************
  *      MFCreateMediaEvent (mfplat.@)
  */
-HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HRESULT status,
-                                  const PROPVARIANT *value, IMFMediaEvent **event)
+HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HRESULT status, const PROPVARIANT *value,
+        IMFMediaEvent **event)
 {
     mfmediaevent *object;
     HRESULT hr;
 
-    TRACE("%s, %s, %08x, %p, %p\n", debugstr_eventid(type), debugstr_guid(extended_type), status, value, event);
+    TRACE("%s, %s, %08x, %p, %p\n", debugstr_eventid(type), debugstr_guid(extended_type), status,
+            debugstr_propvar(value), event);
 
     object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
     if(!object)
@@ -6069,7 +6073,8 @@ static HRESULT WINAPI eventqueue_QueueEventParamVar(IMFMediaEventQueue *iface, M
     IMFMediaEvent *event;
     HRESULT hr;
 
-    TRACE("%p, %s, %s, %#x, %p\n", iface, debugstr_eventid(event_type), debugstr_guid(extended_type), status, value);
+    TRACE("%p, %s, %s, %#x, %s\n", iface, debugstr_eventid(event_type), debugstr_guid(extended_type), status,
+            debugstr_propvar(value));
 
     if (FAILED(hr = MFCreateMediaEvent(event_type, extended_type, status, value, &event)))
         return hr;

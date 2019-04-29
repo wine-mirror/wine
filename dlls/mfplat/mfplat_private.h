@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
+
 #undef INITGUID
 #include <guiddef.h>
 #include "mfapi.h"
@@ -23,6 +25,7 @@
 #include "mferror.h"
 
 #include "wine/heap.h"
+#include "wine/debug.h"
 
 struct attribute
 {
@@ -113,4 +116,34 @@ static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t co
     *capacity = new_capacity;
 
     return TRUE;
+}
+
+static inline const char *debugstr_propvar(const PROPVARIANT *v)
+{
+    if (!v)
+        return "(null)";
+
+    switch (v->vt)
+    {
+        case VT_EMPTY:
+            return wine_dbg_sprintf("%p {VT_EMPTY}", v);
+        case VT_NULL:
+            return wine_dbg_sprintf("%p {VT_NULL}", v);
+        case VT_UI4:
+            return wine_dbg_sprintf("%p {VT_UI4: %d}", v, v->u.ulVal);
+        case VT_UI8:
+            return wine_dbg_sprintf("%p {VT_UI8: %s}", v, wine_dbgstr_longlong(v->u.uhVal.QuadPart));
+        case VT_R8:
+            return wine_dbg_sprintf("%p {VT_R8: %lf}", v, v->u.dblVal);
+        case VT_CLSID:
+            return wine_dbg_sprintf("%p {VT_CLSID: %s}", v, debugstr_guid(v->u.puuid));
+        case VT_LPWSTR:
+            return wine_dbg_sprintf("%p {VT_LPWSTR: %s}", v, wine_dbgstr_w(v->u.pwszVal));
+        case VT_VECTOR | VT_UI1:
+            return wine_dbg_sprintf("%p {VT_VECTOR|VT_UI1: %p}", v, v->u.caub.pElems);
+        case VT_UNKNOWN:
+            return wine_dbg_sprintf("%p {VT_UNKNOWN: %p}", v, v->u.punkVal);
+        default:
+            return wine_dbg_sprintf("%p {vt %#x}", v, v->vt);
+    }
 }
