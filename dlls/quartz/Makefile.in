@@ -24,7 +24,7 @@ C_SRCS = \
 	vmr9.c \
 	waveparser.c
 
-RC_SRCS = version.rc
+RC_SRCS = quartz.rc
 
 IDL_SRCS = \
 	control_tlb.idl \

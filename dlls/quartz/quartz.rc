@@ -25,3 +25,6 @@
 #define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
 
 #include "wine/wine_common_ver.rc"
+
+/* @makedep: quartz.rgs */
+1 WINE_REGISTRY quartz.rgs
