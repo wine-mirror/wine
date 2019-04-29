@@ -2730,11 +2730,18 @@ static HRESULT WINAPI bytestream_stream_SetLength(IMFByteStream *iface, QWORD le
 {
     struct bytestream *stream = impl_from_IMFByteStream(iface);
     ULARGE_INTEGER size;
+    HRESULT hr;
 
     TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(length));
 
+    EnterCriticalSection(&stream->cs);
+
     size.QuadPart = length;
-    return IStream_SetSize(stream->stream, size);
+    hr = IStream_SetSize(stream->stream, size);
+
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI bytestream_stream_GetCurrentPosition(IMFByteStream *iface, QWORD *position)
@@ -2754,7 +2761,9 @@ static HRESULT WINAPI bytestream_stream_SetCurrentPosition(IMFByteStream *iface,
 
     TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(position));
 
+    EnterCriticalSection(&stream->cs);
     stream->position = position;
+    LeaveCriticalSection(&stream->cs);
 
     return S_OK;
 }
@@ -2767,12 +2776,14 @@ static HRESULT WINAPI bytestream_stream_IsEndOfStream(IMFByteStream *iface, BOOL
 
     TRACE("%p, %p.\n", iface, ret);
 
-    if (FAILED(hr = IStream_Stat(stream->stream, &statstg, STATFLAG_NONAME)))
-        return hr;
+    EnterCriticalSection(&stream->cs);
 
-    *ret = stream->position >= statstg.cbSize.QuadPart;
+    if (SUCCEEDED(hr = IStream_Stat(stream->stream, &statstg, STATFLAG_NONAME)))
+        *ret = stream->position >= statstg.cbSize.QuadPart;
 
-    return S_OK;
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI bytestream_stream_Read(IMFByteStream *iface, BYTE *buffer, ULONG size, ULONG *read_len)
@@ -2783,12 +2794,16 @@ static HRESULT WINAPI bytestream_stream_Read(IMFByteStream *iface, BYTE *buffer,
 
     TRACE("%p, %p, %u, %p.\n", iface, buffer, size, read_len);
 
-    position.QuadPart = stream->position;
-    if (FAILED(hr = IStream_Seek(stream->stream, position, STREAM_SEEK_SET, NULL)))
-        return hr;
+    EnterCriticalSection(&stream->cs);
 
-    if (SUCCEEDED(hr = IStream_Read(stream->stream, buffer, size, read_len)))
-        stream->position += *read_len;
+    position.QuadPart = stream->position;
+    if (SUCCEEDED(hr = IStream_Seek(stream->stream, position, STREAM_SEEK_SET, NULL)))
+    {
+        if (SUCCEEDED(hr = IStream_Read(stream->stream, buffer, size, read_len)))
+            stream->position += *read_len;
+    }
+
+    LeaveCriticalSection(&stream->cs);
 
     return hr;
 }
@@ -2801,12 +2816,16 @@ static HRESULT WINAPI bytestream_stream_Write(IMFByteStream *iface, const BYTE *
 
     TRACE("%p, %p, %u, %p.\n", iface, buffer, size, written);
 
-    position.QuadPart = stream->position;
-    if (FAILED(hr = IStream_Seek(stream->stream, position, STREAM_SEEK_SET, NULL)))
-        return hr;
+    EnterCriticalSection(&stream->cs);
 
-    if (SUCCEEDED(hr = IStream_Write(stream->stream, buffer, size, written)))
-        stream->position += *written;
+    position.QuadPart = stream->position;
+    if (SUCCEEDED(hr = IStream_Seek(stream->stream, position, STREAM_SEEK_SET, NULL)))
+    {
+        if (SUCCEEDED(hr = IStream_Write(stream->stream, buffer, size, written)))
+            stream->position += *written;
+    }
+
+    LeaveCriticalSection(&stream->cs);
 
     return hr;
 }
@@ -2815,8 +2834,11 @@ static HRESULT WINAPI bytestream_stream_Seek(IMFByteStream *iface, MFBYTESTREAM_
         DWORD flags, QWORD *current)
 {
     struct bytestream *stream = impl_from_IMFByteStream(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %u, %s, %#x, %p.\n", iface, origin, wine_dbgstr_longlong(offset), flags, current);
+
+    EnterCriticalSection(&stream->cs);
 
     switch (origin)
     {
@@ -2828,12 +2850,14 @@ static HRESULT WINAPI bytestream_stream_Seek(IMFByteStream *iface, MFBYTESTREAM_
             break;
         default:
             WARN("Unknown origin mode %d.\n", origin);
-            return E_INVALIDARG;
+            hr = E_INVALIDARG;
     }
 
     *current = stream->position;
 
-    return S_OK;
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI bytestream_stream_Flush(IMFByteStream *iface)
@@ -2948,6 +2972,8 @@ static HRESULT WINAPI bytestream_stream_read_callback_Invoke(IMFAsyncCallback *i
 
     op = impl_async_stream_op_from_IUnknown(object);
 
+    EnterCriticalSection(&stream->cs);
+
     position.QuadPart = op->position;
     if (SUCCEEDED(hr = IStream_Seek(stream->stream, position, STREAM_SEEK_SET, NULL)))
     {
@@ -2956,9 +2982,8 @@ static HRESULT WINAPI bytestream_stream_read_callback_Invoke(IMFAsyncCallback *i
     }
 
     IMFAsyncResult_SetStatus(op->caller, hr);
-
-    EnterCriticalSection(&stream->cs);
     list_add_tail(&stream->pending, &op->entry);
+
     LeaveCriticalSection(&stream->cs);
 
     MFInvokeCallback(op->caller);
@@ -2979,6 +3004,8 @@ static HRESULT WINAPI bytestream_stream_write_callback_Invoke(IMFAsyncCallback *
 
     op = impl_async_stream_op_from_IUnknown(object);
 
+    EnterCriticalSection(&stream->cs);
+
     position.QuadPart = op->position;
     if (SUCCEEDED(hr = IStream_Seek(stream->stream, position, STREAM_SEEK_SET, NULL)))
     {
@@ -2987,9 +3014,8 @@ static HRESULT WINAPI bytestream_stream_write_callback_Invoke(IMFAsyncCallback *
     }
 
     IMFAsyncResult_SetStatus(op->caller, hr);
-
-    EnterCriticalSection(&stream->cs);
     list_add_tail(&stream->pending, &op->entry);
+
     LeaveCriticalSection(&stream->cs);
 
     MFInvokeCallback(op->caller);
