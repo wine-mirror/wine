@@ -18,28 +18,27 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <wine/unicode.h>
 #include "windows.h"
 #include "mmsystem.h"
 #include "vfw.h"
 
-static int mywprintf(const WCHAR *format, ...)
+static int WINAPIV mywprintf(const WCHAR *format, ...)
 {
     static char output_bufA[65536];
     static WCHAR output_bufW[sizeof(output_bufA)];
-    va_list             parms;
+    __ms_va_list parms;
     DWORD               nOut;
     BOOL                res = FALSE;
     HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    va_start(parms, format);
-    vsnprintfW(output_bufW, ARRAY_SIZE(output_bufW), format, parms);
-    va_end(parms);
+    __ms_va_start(parms, format);
+    vswprintf(output_bufW, ARRAY_SIZE(output_bufW), format, parms);
+    __ms_va_end(parms);
 
     /* Try to write as unicode whenever we think it's a console */
     if (((DWORD_PTR)hout & 3) == 3)
     {
-        res = WriteConsoleW(hout, output_bufW, strlenW(output_bufW), &nOut, NULL);
+        res = WriteConsoleW(hout, output_bufW, lstrlenW(output_bufW), &nOut, NULL);
     }
     else
     {
@@ -82,9 +81,9 @@ int wmain(int argc, WCHAR* argv[])
     static const WCHAR unk_opt_fmt[] = {'U','n','k','n','o','w','n',' ','o','p','t','i','o','n',':',' ','%','s','\n',0};
 
     for (i = 1; i < argc; i++) {
-        if (!strcmpW(argv[i], about))
+        if (!lstrcmpW(argv[i], about))
             doabout = 1;
-        else if (!strcmpW(argv[i], configure))
+        else if (!lstrcmpW(argv[i], configure))
             doconfigure = 1;
         else {
             mywprintf(unk_opt_fmt, argv[i]);
