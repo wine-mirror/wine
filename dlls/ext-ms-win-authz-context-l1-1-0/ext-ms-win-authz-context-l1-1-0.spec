@@ -1,6 +1,6 @@
 @ stub AuthzFreeAuditEvent
 @ stdcall AuthzFreeContext(long) authz.AuthzFreeContext
-@ stub AuthzFreeResourceManager
+@ stdcall AuthzFreeResourceManager(ptr) authz.AuthzFreeResourceManager
 @ stub AuthziFreeAuditEventType
 @ stub AuthziInitializeAuditEvent
 @ stub AuthziInitializeAuditEventType
