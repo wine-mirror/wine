@@ -293,7 +293,7 @@ static CRITICAL_SECTION obref_cs;
 static CRITICAL_SECTION_DEBUG obref_critsect_debug =
 {
     0, 0, &obref_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+    { &obref_critsect_debug.ProcessLocksList, &obref_critsect_debug.ProcessLocksList },
       0, 0, { (DWORD_PTR)(__FILE__ ": obref_cs") }
 };
 static CRITICAL_SECTION obref_cs = { &obref_critsect_debug, -1, 0, 0, 0, 0 };
@@ -396,7 +396,7 @@ static CRITICAL_SECTION handle_map_cs;
 static CRITICAL_SECTION_DEBUG handle_map_critsect_debug =
 {
     0, 0, &handle_map_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+    { &handle_map_critsect_debug.ProcessLocksList, &handle_map_critsect_debug.ProcessLocksList },
       0, 0, { (DWORD_PTR)(__FILE__ ": handle_map_cs") }
 };
 static CRITICAL_SECTION handle_map_cs = { &handle_map_critsect_debug, -1, 0, 0, 0, 0 };
