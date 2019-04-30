@@ -2289,6 +2289,7 @@ static void test_presentation_descriptor(void)
     IMFMediaType *media_type;
     unsigned int i;
     BOOL selected;
+    UINT64 value;
     DWORD count;
     HRESULT hr;
 
@@ -2330,14 +2331,24 @@ static void test_presentation_descriptor(void)
     ok(!!selected, "Unexpected selected state.\n");
     IMFStreamDescriptor_Release(stream_desc2);
 
+    hr = IMFPresentationDescriptor_SetUINT64(pd, &MF_PD_TOTAL_FILE_SIZE, 1);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
     hr = IMFPresentationDescriptor_Clone(pd, &pd2);
     ok(hr == S_OK, "Failed to clone, hr %#x.\n", hr);
 
     hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd2, 0, &selected, &stream_desc2);
     ok(hr == S_OK, "Failed to get stream descriptor, hr %#x.\n", hr);
     ok(!!selected, "Unexpected selected state.\n");
+    ok(stream_desc2 == stream_desc[0], "Unexpected stream descriptor.\n");
     IMFStreamDescriptor_Release(stream_desc2);
 
+    value = 0;
+    hr = IMFPresentationDescriptor_GetUINT64(pd2, &MF_PD_TOTAL_FILE_SIZE, &value);
+    ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+    ok(value == 1, "Unexpected attribute value.\n");
+
+    IMFPresentationDescriptor_Release(pd2);
     IMFPresentationDescriptor_Release(pd);
 
     for (i = 0; i < ARRAY_SIZE(stream_desc); ++i)

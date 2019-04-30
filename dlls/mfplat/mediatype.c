@@ -1616,7 +1616,8 @@ static HRESULT WINAPI presentation_descriptor_Clone(IMFPresentationDescriptor *i
         object->descriptors[i] = presentation_desc->descriptors[i];
         IMFStreamDescriptor_AddRef(object->descriptors[i].descriptor);
     }
-    /* FIXME: copy attributes */
+
+    attributes_CopyAllItems(&presentation_desc->attributes, (IMFAttributes *)&object->IMFPresentationDescriptor_iface);
 
     LeaveCriticalSection(&presentation_desc->cs);
 
