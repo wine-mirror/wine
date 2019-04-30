@@ -2218,12 +2218,13 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
         irpsp = irp->Tail.Overlay.s.u2.CurrentStackLocation;
         routine = irpsp->CompletionRoutine;
         call_flag = 0;
-        /* FIXME: add SL_INVOKE_ON_CANCEL support */
         if (routine)
         {
             if ((irpsp->Control & SL_INVOKE_ON_SUCCESS) && STATUS_SUCCESS == status)
                 call_flag = 1;
             if ((irpsp->Control & SL_INVOKE_ON_ERROR) && STATUS_SUCCESS != status)
+                call_flag = 1;
+            if ((irpsp->Control & SL_INVOKE_ON_CANCEL) && irp->Cancel)
                 call_flag = 1;
         }
         ++irp->CurrentLocation;
