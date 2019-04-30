@@ -457,6 +457,7 @@ static const struct lang2cp lang2cps[] =
     { LANG_ARABIC,         SUBLANG_NEUTRAL,              1256 },
     { LANG_ARMENIAN,       SUBLANG_NEUTRAL,              0    },
     { LANG_ASSAMESE,       SUBLANG_NEUTRAL,              0    },
+    { LANG_ASTURIAN,       SUBLANG_NEUTRAL,              1252 },
     { LANG_AZERI,          SUBLANG_NEUTRAL,              1254 },
     { LANG_AZERI,          SUBLANG_AZERI_CYRILLIC,       1251 },
     { LANG_BASHKIR,        SUBLANG_NEUTRAL,              1251 },
