@@ -29,6 +29,7 @@
 #include "winternl.h"
 #include "ddk/ntddk.h"
 #include "ddk/wdm.h"
+#include "ddk/ntifs.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -80,7 +81,7 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
     {
         if (objs[i]->WaitListHead.Blink == INVALID_HANDLE_VALUE)
         {
-            handles[i] = kernel_object_handle( objs[i], SYNCHRONIZE );
+            ObOpenObjectByPointer( objs[i], OBJ_KERNEL_HANDLE, NULL, SYNCHRONIZE, NULL, KernelMode, &handles[i] );
             continue;
         }
 
@@ -266,7 +267,7 @@ LONG WINAPI KeSetEvent( PRKEVENT event, KPRIORITY increment, BOOLEAN wait )
     }
     else
     {
-        if ((handle = kernel_object_handle( event, EVENT_MODIFY_STATE )))
+        if (!ObOpenObjectByPointer( event, OBJ_KERNEL_HANDLE, NULL, EVENT_MODIFY_STATE, NULL, KernelMode, &handle ))
         {
             NtSetEvent( handle, &ret );
             NtClose( handle );
@@ -297,7 +298,7 @@ LONG WINAPI KeResetEvent( PRKEVENT event )
     }
     else
     {
-        if ((handle = kernel_object_handle( event, EVENT_MODIFY_STATE )))
+        if (!ObOpenObjectByPointer( event, OBJ_KERNEL_HANDLE, NULL, EVENT_MODIFY_STATE, NULL, KernelMode, &handle ))
         {
             NtResetEvent( handle, &ret );
             NtClose( handle );

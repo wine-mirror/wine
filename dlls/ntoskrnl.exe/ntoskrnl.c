@@ -366,20 +366,6 @@ static void ObReferenceObject( void *obj )
     LeaveCriticalSection( &obref_cs );
 }
 
-HANDLE kernel_object_handle( void *obj, unsigned int access )
-{
-    HANDLE handle = NULL;
-    SERVER_START_REQ( get_kernel_object_handle )
-    {
-        req->manager  = wine_server_obj_handle( get_device_manager() );
-        req->user_ptr = wine_server_client_ptr( obj );
-        req->access   = access;
-        if (!wine_server_call( req )) handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return handle;
-}
-
 static const POBJECT_TYPE *known_types[] =
 {
     &ExEventObjectType,
@@ -1870,9 +1856,12 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
             OBJECT_NAME_INFORMATION *name = HeapAlloc(GetProcessHeap(), 0, len);
             HANDLE handle;
 
-            handle = kernel_object_handle( device, 0 );
-            status = NtQueryObject( handle, ObjectNameInformation, name, len, &used_len );
-            NtClose( handle );
+            status = ObOpenObjectByPointer( device, OBJ_KERNEL_HANDLE, NULL, 0, NULL, KernelMode, &handle );
+            if (!status)
+            {
+                status = NtQueryObject( handle, ObjectNameInformation, name, len, &used_len );
+                NtClose( handle );
+            }
             if (status == STATUS_SUCCESS)
             {
                 /* Ensure room for NULL termination */
