@@ -149,8 +149,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *ifac
 
 static HRESULT dxgi_adapter_get_desc(struct dxgi_adapter *adapter, DXGI_ADAPTER_DESC3 *desc)
 {
+    char description[ARRAY_SIZE(desc->Description)];
     struct wined3d_adapter_identifier adapter_id;
-    char description[128];
     HRESULT hr;
 
     adapter_id.driver_size = 0;
@@ -161,7 +161,7 @@ static HRESULT dxgi_adapter_get_desc(struct dxgi_adapter *adapter, DXGI_ADAPTER_
     if (FAILED(hr = wined3d_get_adapter_identifier(adapter->factory->wined3d, adapter->ordinal, 0, &adapter_id)))
         return hr;
 
-    if (!MultiByteToWideChar(CP_ACP, 0, description, -1, desc->Description, 128))
+    if (!MultiByteToWideChar(CP_ACP, 0, description, -1, desc->Description, ARRAY_SIZE(description)))
     {
         DWORD err = GetLastError();
         ERR("Failed to translate description %s (%#x).\n", debugstr_a(description), err);
