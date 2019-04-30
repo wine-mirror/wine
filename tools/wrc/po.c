@@ -239,6 +239,8 @@ static const struct
     { LANG_ARMENIAN,       SUBLANG_ARMENIAN_ARMENIA,            "hy_AM" },
     { LANG_ASSAMESE,       SUBLANG_NEUTRAL,                     "as" },
     { LANG_ASSAMESE,       SUBLANG_ASSAMESE_INDIA,              "as_IN" },
+    { LANG_ASTURIAN,       SUBLANG_NEUTRAL,                     "ast" },
+    { LANG_ASTURIAN,       SUBLANG_DEFAULT,                     "ast_ES" },
     { LANG_AZERBAIJANI,    SUBLANG_NEUTRAL,                     "az" },
     { LANG_AZERBAIJANI,    SUBLANG_AZERBAIJANI_AZERBAIJAN_LATIN,"az_AZ@latin" },
     { LANG_AZERBAIJANI,    SUBLANG_AZERBAIJANI_AZERBAIJAN_CYRILLIC, "az_AZ@cyrillic" },
