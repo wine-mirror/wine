@@ -418,6 +418,9 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
             }
 
             LeaveCriticalSection(&reader->streams[i].cs);
+
+            WakeAllConditionVariable(&reader->streams[i].sample_event);
+
             break;
         }
     }
