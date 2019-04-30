@@ -1361,11 +1361,11 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
     {
     case IRP_MJ_READ:
         irpsp->Parameters.Read.Length = length;
-        irpsp->Parameters.Read.ByteOffset = *startoffset;
+        irpsp->Parameters.Read.ByteOffset.QuadPart = startoffset ? startoffset->QuadPart : 0;
         break;
     case IRP_MJ_WRITE:
         irpsp->Parameters.Write.Length = length;
-        irpsp->Parameters.Write.ByteOffset = *startoffset;
+        irpsp->Parameters.Write.ByteOffset.QuadPart = startoffset ? startoffset->QuadPart : 0;
         break;
     }
     irp->RequestorMode = KernelMode;
