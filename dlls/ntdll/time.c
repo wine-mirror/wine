@@ -1006,9 +1006,8 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
     if (!OldTime) OldTime = &tm;
 
     NtQuerySystemTime( OldTime );
-    RtlTimeToSecondsSince1970( OldTime, &oldsec );
-
-    RtlTimeToSecondsSince1970( NewTime, &sec );
+    if (!RtlTimeToSecondsSince1970( OldTime, &oldsec )) return STATUS_INVALID_PARAMETER;
+    if (!RtlTimeToSecondsSince1970( NewTime, &sec )) return STATUS_INVALID_PARAMETER;
 
     /* fake success if time didn't change */
     if (oldsec == sec)
