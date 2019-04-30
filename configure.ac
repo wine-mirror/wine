@@ -707,6 +707,7 @@ dnl **** Check for working dll ****
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")
+AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LDEXECFLAGS,"")
 AC_SUBST(TOP_INSTALL_LIB,"")
 AC_SUBST(TOP_INSTALL_DEV,"")
@@ -746,6 +747,7 @@ case $host_os in
     AC_LANG_POP([Objective C])
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
+    LDDLLFLAGS="-fPIC"
     LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
     LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
     dnl declare needed frameworks
@@ -891,6 +893,7 @@ case $host_os in
 
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
+    LDDLLFLAGS="-fPIC"
     LDEXECFLAGS="-Wl,-pie"
     enable_wineandroid_drv=${enable_wineandroid_drv:-yes}
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
@@ -926,9 +929,11 @@ case $host_os in
   *)
     case $host_cpu in
       *i[[3456789]]86*)
-        DLLFLAGS="$DLLFLAGS -fno-PIC" ;;
+        DLLFLAGS="$DLLFLAGS -fno-PIC"
+        LDDLLFLAGS="-fno-PIC" ;;
       *)
-        DLLFLAGS="$DLLFLAGS -fPIC" ;;
+        DLLFLAGS="$DLLFLAGS -fPIC"
+        LDDLLFLAGS="-fPIC" ;;
     esac
     AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
         [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-Bsymbolic],
@@ -2137,7 +2142,7 @@ then
    asm_func_header="$asm_func_header.cfi_startproc\\n\\t"
    asm_func_trailer="\\n\\t.cfi_endproc$asm_func_trailer"
    AC_DEFINE([__ASM_CFI(str)],[str],[Define to a macro to output a .cfi assembly pseudo-op])
-   AC_SUBST([UNWINDFLAGS],[-fasynchronous-unwind-tables])
+   LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
 else
    AC_DEFINE([__ASM_CFI(str)],[""])
    if test "x$enable_win64" = "xyes"

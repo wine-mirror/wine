@@ -134,7 +134,7 @@ static struct strarray msvcrt_flags;
 static struct strarray extra_cflags;
 static struct strarray extra_cross_cflags;
 static struct strarray cpp_flags;
-static struct strarray unwind_flags;
+static struct strarray lddll_flags;
 static struct strarray libs;
 static struct strarray enable_tests;
 static struct strarray cmdline_vars;
@@ -2282,7 +2282,7 @@ static void output_winegcc_command( struct makefile *make, int cross )
     else
     {
         output_filenames( target_flags );
-        output_filenames( unwind_flags );
+        output_filenames( lddll_flags );
     }
 }
 
@@ -4201,7 +4201,7 @@ int main( int argc, char *argv[] )
     extra_cflags = get_expanded_make_var_array( top_makefile, "EXTRACFLAGS" );
     extra_cross_cflags = get_expanded_make_var_array( top_makefile, "EXTRACROSSCFLAGS" );
     cpp_flags    = get_expanded_make_var_array( top_makefile, "CPPFLAGS" );
-    unwind_flags = get_expanded_make_var_array( top_makefile, "UNWINDFLAGS" );
+    lddll_flags  = get_expanded_make_var_array( top_makefile, "LDDLLFLAGS" );
     libs         = get_expanded_make_var_array( top_makefile, "LIBS" );
     enable_tests = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
     top_install_lib = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_LIB" );

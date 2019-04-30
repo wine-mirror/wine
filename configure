@@ -631,7 +631,6 @@ RT_LIBS
 POLL_LIBS
 DL_LIBS
 TOOLSEXT
-UNWINDFLAGS
 BUILTINFLAG
 EXCESS_PRECISION_CFLAGS
 EXTRACFLAGS
@@ -743,6 +742,7 @@ WINELOADER_LDFLAGS
 TOP_INSTALL_DEV
 TOP_INSTALL_LIB
 LDEXECFLAGS
+LDDLLFLAGS
 LDRPATH_LOCAL
 LDRPATH_INSTALL
 DLLFLAGS
@@ -7849,6 +7849,8 @@ LDRPATH_INSTALL=""
 
 LDRPATH_LOCAL=""
 
+LDDLLFLAGS=""
+
 LDEXECFLAGS=""
 
 TOP_INSTALL_LIB=""
@@ -8660,6 +8662,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
+    LDDLLFLAGS="-fPIC"
     LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
     LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
         COREFOUNDATION_LIBS="-framework CoreFoundation"
@@ -9038,6 +9041,7 @@ fi
 
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
+    LDDLLFLAGS="-fPIC"
     LDEXECFLAGS="-Wl,-pie"
     enable_wineandroid_drv=${enable_wineandroid_drv:-yes}
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--export-dynamic" >&5
@@ -9280,9 +9284,11 @@ fi
   *)
     case $host_cpu in
       *i[3456789]86*)
-        DLLFLAGS="$DLLFLAGS -fno-PIC" ;;
+        DLLFLAGS="$DLLFLAGS -fno-PIC"
+        LDDLLFLAGS="-fno-PIC" ;;
       *)
-        DLLFLAGS="$DLLFLAGS -fPIC" ;;
+        DLLFLAGS="$DLLFLAGS -fPIC"
+        LDDLLFLAGS="-fPIC" ;;
     esac
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can build a GNU style ELF dll" >&5
 $as_echo_n "checking whether we can build a GNU style ELF dll... " >&6; }
@@ -17548,8 +17554,7 @@ then
 
 $as_echo "#define __ASM_CFI(str) str" >>confdefs.h
 
-   UNWINDFLAGS=-fasynchronous-unwind-tables
-
+   LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
 else
    $as_echo "#define __ASM_CFI(str) \"\"" >>confdefs.h
 
