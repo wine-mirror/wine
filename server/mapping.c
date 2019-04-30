@@ -703,6 +703,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     mapping->image.gp            = 0; /* FIXME */
     mapping->image.file_size     = file_size;
     mapping->image.loader_flags  = clr_va && clr_size;
+    mapping->image.__pad         = 0;
     if (mz_size == sizeof(mz) && !memcmp( mz.buffer, builtin_signature, sizeof(builtin_signature) ))
         mapping->image.image_flags |= IMAGE_FLAGS_WineBuiltin;
     else if (mz_size == sizeof(mz) && !memcmp( mz.buffer, fakedll_signature, sizeof(fakedll_signature) ))

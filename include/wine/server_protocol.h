@@ -714,6 +714,7 @@ typedef struct
     unsigned int   file_size;
     unsigned int   checksum;
     cpu_type_t     cpu;
+    int            __pad;
 } pe_image_info_t;
 #define IMAGE_FLAGS_ComPlusNativeReady        0x01
 #define IMAGE_FLAGS_ComPlusILOnly             0x02
