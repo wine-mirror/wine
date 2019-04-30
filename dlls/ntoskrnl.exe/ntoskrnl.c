@@ -511,6 +511,40 @@ POBJECT_TYPE WINAPI ObGetObjectType( void *object )
     return header->type;
 }
 
+/***********************************************************************
+ *           ObOpenObjectByPointer    (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ObOpenObjectByPointer( void *obj, ULONG attr, ACCESS_STATE *access_state,
+                                       ACCESS_MASK access, POBJECT_TYPE type,
+                                       KPROCESSOR_MODE mode, HANDLE *handle )
+{
+    NTSTATUS status;
+
+    TRACE( "%p %x %p %x %p %d %p\n", obj, attr, access_state, access, type, mode, handle );
+
+    if (mode != KernelMode)
+    {
+        FIXME( "UserMode access not implemented\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (attr & ~OBJ_KERNEL_HANDLE) FIXME( "access %x not supported\n", access );
+    if (access_state) FIXME( "access_state not implemented\n" );
+
+    if (type && ObGetObjectType( obj ) != type) return STATUS_OBJECT_TYPE_MISMATCH;
+
+    SERVER_START_REQ( get_kernel_object_handle )
+    {
+        req->manager  = wine_server_obj_handle( get_device_manager() );
+        req->user_ptr = wine_server_client_ptr( obj );
+        req->access   = access;
+        if (!(status = wine_server_call( req )))
+            *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
 
 static void *create_file_object( HANDLE handle );
 

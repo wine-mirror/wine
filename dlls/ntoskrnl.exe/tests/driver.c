@@ -773,7 +773,7 @@ static void test_ob_reference(const WCHAR *test_path)
 {
     POBJECT_TYPE (WINAPI *pObGetObjectType)(void*);
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
-    HANDLE event_handle, file_handle, file_handle2, thread_handle;
+    HANDLE event_handle, file_handle, file_handle2, thread_handle, handle;
     DISPATCHER_HEADER *header;
     FILE_OBJECT *file;
     void *obj1, *obj2;
@@ -878,8 +878,23 @@ static void test_ob_reference(const WCHAR *test_path)
     status = wait_single(header, 0);
     ok(status == 0 || status == STATUS_TIMEOUT, "got %#x\n", status);
 
-    ObDereferenceObject(obj1);
     ObDereferenceObject(obj2);
+
+    status = ObOpenObjectByPointer(obj1, OBJ_KERNEL_HANDLE, NULL, 0, NULL, KernelMode, &handle);
+    ok(status == STATUS_SUCCESS, "ObOpenObjectByPointer failed: %#x\n", status);
+
+    status = ZwClose(handle);
+    ok(!status, "ZwClose failed: %#x\n", status);
+
+    status = ObReferenceObjectByHandle(thread_handle, SYNCHRONIZE, *pPsThreadType, KernelMode, &obj2, NULL);
+    ok(!status, "ObReferenceObjectByHandle failed: %#x\n", status);
+    ok(obj1 == obj2, "obj1 != obj2\n");
+    ObDereferenceObject(obj2);
+
+    status = ObOpenObjectByPointer(obj1, OBJ_KERNEL_HANDLE, NULL, 0, *pIoFileObjectType, KernelMode, &handle);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "ObOpenObjectByPointer returned: %#x\n", status);
+
+    ObDereferenceObject(obj1);
 
     status = ZwClose(thread_handle);
     ok(!status, "ZwClose failed: %#x\n", status);

@@ -822,7 +822,7 @@
 @ stub ObLogSecurityDescriptor
 @ stub ObMakeTemporaryObject
 @ stub ObOpenObjectByName
-@ stub ObOpenObjectByPointer
+@ stdcall ObOpenObjectByPointer(ptr long ptr long ptr long ptr)
 @ stdcall ObQueryNameString(ptr ptr long ptr)
 @ stub ObQueryObjectAuditingByHandle
 @ stdcall ObReferenceObjectByHandle(long long ptr long ptr ptr)
