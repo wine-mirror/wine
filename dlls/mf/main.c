@@ -328,3 +328,18 @@ HRESULT WINAPI MFShutdownObject(IUnknown *object)
 
     return S_OK;
 }
+
+/***********************************************************************
+ *      MFEnumDeviceSources (mf.@)
+ */
+HRESULT WINAPI MFEnumDeviceSources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *count)
+{
+    FIXME("%p, %p, %p.\n", attributes, sources, count);
+
+    if (!attributes || !sources || !count)
+        return E_INVALIDARG;
+
+    *count = 0;
+
+    return S_OK;
+}

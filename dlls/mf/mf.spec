@@ -70,7 +70,7 @@
 @ stub MFCreateVideoRendererActivate
 @ stub MFCreateWMAEncoderActivate
 @ stub MFCreateWMVEncoderActivate
-@ stub MFEnumDeviceSources
+@ stdcall MFEnumDeviceSources(ptr ptr ptr)
 @ stub MFGetMultipleServiceProviders
 @ stdcall MFGetService(ptr ptr ptr ptr)
 @ stdcall MFGetSupportedMimeTypes(ptr)
