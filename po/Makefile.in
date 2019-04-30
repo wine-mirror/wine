@@ -1,5 +1,6 @@
 PO_SRCS = \
 	ar.po \
+	ast.po \
 	bg.po \
 	ca.po \
 	cs.po \
