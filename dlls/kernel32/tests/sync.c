@@ -2647,13 +2647,25 @@ static void test_crit_section(void)
     InitializeCriticalSection(&cs);
     ok(cs.DebugInfo != NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
     DeleteCriticalSection(&cs);
+    ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
 
     memset(&cs, 0, sizeof(cs));
     ret = InitializeCriticalSectionEx(&cs, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
     ok(ret, "Failed to initialize critical section.\n");
-todo_wine
     ok(cs.DebugInfo == (void *)(ULONG_PTR)-1, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
+
+    ret = TryEnterCriticalSection(&cs);
+    ok(ret, "Failed to enter critical section.\n");
+    LeaveCriticalSection(&cs);
+
+    cs.DebugInfo = NULL;
+
+    ret = TryEnterCriticalSection(&cs);
+    ok(ret, "Failed to enter critical section.\n");
+    LeaveCriticalSection(&cs);
+
     DeleteCriticalSection(&cs);
+    ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
 }
 
 START_TEST(sync)
