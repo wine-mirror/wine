@@ -177,7 +177,7 @@ static unsigned int unload_trace_seq;
 static void module_push_unload_trace( const LDR_MODULE *ldr )
 {
     RTL_UNLOAD_EVENT_TRACE *ptr = &unload_traces[unload_trace_seq];
-    unsigned int len = min(sizeof(ptr->ImageName), ldr->BaseDllName.Length);
+    unsigned int len = min(sizeof(ptr->ImageName) - sizeof(WCHAR), ldr->BaseDllName.Length);
 
     ptr->BaseAddress = ldr->BaseAddress;
     ptr->SizeOfImage = ldr->SizeOfImage;
