@@ -3152,7 +3152,6 @@ static void test_RtlInitializeCriticalSectionEx(void)
 
     memset(&cs, 0x11, sizeof(cs));
     pRtlInitializeCriticalSectionEx(&cs, 0, RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO);
-    todo_wine
     ok(cs.DebugInfo == no_debug, "expected DebugInfo == ~0, got %p\n", cs.DebugInfo);
     ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
     ok(cs.RecursionCount == 0, "expected RecursionCount == 0, got %d\n", cs.RecursionCount);
