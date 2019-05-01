@@ -8227,6 +8227,9 @@ fi
 
     LIBEXT="dll"
     DLLEXT=""
+        case $host_cpu in
+      *i[3456]86*) LDDLLFLAGS="-Wl,--disable-stdcall-fixup" ;;
+    esac
         enable_iphlpapi=${enable_iphlpapi:-no}
     enable_kernel32=${enable_kernel32:-no}
     enable_ntdll=${enable_ntdll:-no}

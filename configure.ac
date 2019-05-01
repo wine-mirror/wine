@@ -728,6 +728,10 @@ case $host_os in
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     LIBEXT="dll"
     DLLEXT=""
+    dnl Disable stdcall fixups to catch prototype mismatches
+    case $host_cpu in
+      *i[[3456]]86*) LDDLLFLAGS="-Wl,--disable-stdcall-fixup" ;;
+    esac
     dnl Disable modules that can't be used on Windows
     enable_iphlpapi=${enable_iphlpapi:-no}
     enable_kernel32=${enable_kernel32:-no}
