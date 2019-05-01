@@ -353,8 +353,52 @@ static WCHAR *get_destination_dir( HINF hinf, const WCHAR *section )
     return strdupW( systemdir );
 }
 
+struct extract_cab_ctx
+{
+    const WCHAR *src;
+    const WCHAR *dst;
+};
 
-static void (WINAPI *pExtractFiles)( LPSTR, LPSTR, DWORD, DWORD, DWORD, DWORD );
+static UINT WINAPI extract_cab_cb( void *arg, UINT message, UINT_PTR param1, UINT_PTR param2 )
+{
+    struct extract_cab_ctx *ctx = arg;
+
+    switch (message)
+    {
+    case SPFILENOTIFY_FILEINCABINET:
+    {
+        FILE_IN_CABINET_INFO_W *info = (FILE_IN_CABINET_INFO_W *)param1;
+        const WCHAR *filename;
+
+        if ((filename = strrchrW( info->NameInCabinet, '\\' )))
+            filename++;
+        else
+            filename = info->NameInCabinet;
+
+        if (lstrcmpiW( filename, ctx->src ))
+            return FILEOP_SKIP;
+
+        strcpyW( info->FullTargetName, ctx->dst );
+        return FILEOP_DOIT;
+    }
+    case SPFILENOTIFY_FILEEXTRACTED:
+    {
+        const FILEPATHS_W *paths = (const FILEPATHS_W *)param1;
+        return paths->Win32Error;
+    }
+    case SPFILENOTIFY_NEEDNEWCABINET:
+    {
+        const CABINET_INFO_W *info = (const CABINET_INFO_W *)param1;
+        strcpyW( (WCHAR *)param2, info->CabinetPath );
+        return ERROR_SUCCESS;
+    }
+    case SPFILENOTIFY_CABINETINFO:
+        return 0;
+    default:
+        FIXME("Unexpected message %#x.\n", message);
+        return 0;
+    }
+}
 
 /***********************************************************************
  *            extract_cabinet_file
@@ -365,44 +409,20 @@ static BOOL extract_cabinet_file( const WCHAR *cabinet, const WCHAR *root,
                                   const WCHAR *src, const WCHAR *dst )
 {
     static const WCHAR extW[] = {'.','c','a','b',0};
-    static HMODULE advpack;
-
-    char *cab_path, *cab_file;
+    static const WCHAR backslashW[] = {'\\',0};
+    struct extract_cab_ctx ctx = {src, dst};
     int len = strlenW( cabinet );
+    WCHAR path[MAX_PATH];
 
     /* make sure the cabinet file has a .cab extension */
     if (len <= 4 || strcmpiW( cabinet + len - 4, extW )) return FALSE;
-    if (!pExtractFiles)
-    {
-        if (!advpack && !(advpack = LoadLibraryA( "advpack.dll" )))
-        {
-            ERR( "could not load advpack.dll\n" );
-            return FALSE;
-        }
-        if (!(pExtractFiles = (void *)GetProcAddress( advpack, "ExtractFiles" )))
-        {
-            ERR( "could not find ExtractFiles in advpack.dll\n" );
-            return FALSE;
-        }
-    }
 
-    if (!(cab_path = strdupWtoA( root ))) return FALSE;
-    len = WideCharToMultiByte( CP_ACP, 0, cabinet, -1, NULL, 0, NULL, NULL );
-    if (!(cab_file = HeapAlloc( GetProcessHeap(), 0, strlen(cab_path) + len + 1 )))
-    {
-        HeapFree( GetProcessHeap(), 0, cab_path );
-        return FALSE;
-    }
-    strcpy( cab_file, cab_path );
-    if (cab_file[0] && cab_file[strlen(cab_file)-1] != '\\') strcat( cab_file, "\\" );
-    WideCharToMultiByte( CP_ACP, 0, cabinet, -1, cab_file + strlen(cab_file), len, NULL, NULL );
-    FIXME( "awful hack: extracting cabinet %s\n", debugstr_a(cab_file) );
-    pExtractFiles( cab_file, cab_path, 0, 0, 0, 0 );
-    HeapFree( GetProcessHeap(), 0, cab_file );
-    HeapFree( GetProcessHeap(), 0, cab_path );
-    return CopyFileW( src, dst, FALSE /*FIXME*/ );
+    strcpyW(path, root);
+    strcatW(path, backslashW);
+    strcatW(path, cabinet);
+
+    return SetupIterateCabinetW( path, 0, extract_cab_cb, &ctx );
 }
-
 
 /***********************************************************************
  *            SetupOpenFileQueue   (SETUPAPI.@)
@@ -1309,7 +1329,7 @@ BOOL WINAPI SetupCommitFileQueueW( HWND owner, HSPFILEQ handle, PSP_FILE_CALLBAC
                 if (op->src_tag)
                 {
                     if (extract_cabinet_file( op->src_tag, op->src_root,
-                                              paths.Source, paths.Target )) break;
+                                              op->src_file, paths.Target )) break;
                 }
                 paths.Win32Error = GetLastError();
                 op_result = handler( context, SPFILENOTIFY_COPYERROR,
