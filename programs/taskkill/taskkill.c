@@ -23,7 +23,6 @@
 #include <windows.h>
 #include <psapi.h>
 #include <wine/debug.h>
-#include <wine/unicode.h>
 
 #include "taskkill.h"
 
@@ -230,7 +229,7 @@ static int send_close_messages(void)
         /* Determine whether the string is not numeric. */
         while (*p)
         {
-            if (!isdigitW(*p++))
+            if (!iswdigit(*p++))
             {
                 is_numeric = FALSE;
                 break;
@@ -239,7 +238,7 @@ static int send_close_messages(void)
 
         if (is_numeric)
         {
-            DWORD pid = atoiW(task_list[i]);
+            DWORD pid = wcstol(task_list[i], NULL, 10);
             struct pid_close_info info = { pid };
 
             if (pid == self_pid)
@@ -268,7 +267,7 @@ static int send_close_messages(void)
                 WCHAR process_name[MAX_PATH];
 
                 if (get_process_name_from_pid(pid_list[index], process_name, MAX_PATH) &&
-                    !strcmpiW(process_name, task_list[i]))
+                    !wcsicmp(process_name, task_list[i]))
                 {
                     struct pid_close_info info = { pid_list[index] };
 
@@ -319,7 +318,7 @@ static int terminate_processes(void)
         /* Determine whether the string is not numeric. */
         while (*p)
         {
-            if (!isdigitW(*p++))
+            if (!iswdigit(*p++))
             {
                 is_numeric = FALSE;
                 break;
@@ -328,7 +327,7 @@ static int terminate_processes(void)
 
         if (is_numeric)
         {
-            DWORD pid = atoiW(task_list[i]);
+            DWORD pid = wcstol(task_list[i], NULL, 10);
             HANDLE process;
 
             if (pid == self_pid)
@@ -367,7 +366,7 @@ static int terminate_processes(void)
                 WCHAR process_name[MAX_PATH];
 
                 if (get_process_name_from_pid(pid_list[index], process_name, MAX_PATH) &&
-                    !strcmpiW(process_name, task_list[i]))
+                    !wcsicmp(process_name, task_list[i]))
                 {
                     HANDLE process;
 
@@ -461,7 +460,7 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
         if (argc == 2)
         {
             argdata = argv[1];
-            if ((*argdata == '/' || *argdata == '-') && !strcmpW(opHelp, argdata + 1))
+            if ((*argdata == '/' || *argdata == '-') && !lstrcmpW(opHelp, argdata + 1))
             {
                 taskkill_message(STRING_USAGE);
                 exit(0);
@@ -477,14 +476,14 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
                 goto invalid;
             argdata++;
 
-            if (!strcmpiW(opTerminateChildren, argdata))
+            if (!wcsicmp(opTerminateChildren, argdata))
                 WINE_FIXME("argument T not supported\n");
-            if (!strcmpiW(opForceTerminate, argdata))
+            if (!wcsicmp(opForceTerminate, argdata))
                 force_termination = TRUE;
             /* Options /IM and /PID appear to behave identically, except for
              * the fact that they cannot be specified at the same time. */
-            else if ((got_im = !strcmpiW(opImage, argdata)) ||
-                     (got_pid = !strcmpiW(opPID, argdata)))
+            else if ((got_im = !wcsicmp(opImage, argdata)) ||
+                     (got_pid = !wcsicmp(opPID, argdata)))
             {
                 if (!argv[i + 1])
                 {
