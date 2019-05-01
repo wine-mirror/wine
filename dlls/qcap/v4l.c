@@ -131,20 +131,48 @@ HRESULT qcap_driver_destroy(Capture *capBox)
     return S_OK;
 }
 
+HRESULT qcap_driver_check_format(Capture *device, const AM_MEDIA_TYPE *mt)
+{
+    HRESULT hr;
+    TRACE("device %p, mt %p.\n", device, mt);
+    dump_AM_MEDIA_TYPE(mt);
+
+    if (!mt)
+        return E_POINTER;
+
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
+        return S_FALSE;
+
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo) && mt->pbFormat
+            && mt->cbFormat >= sizeof(VIDEOINFOHEADER))
+    {
+        VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)mt->pbFormat;
+        if (vih->bmiHeader.biBitCount == 24 && vih->bmiHeader.biCompression == BI_RGB)
+            hr = S_OK;
+        else
+        {
+            FIXME("Unsupported compression %#x, bpp %u.\n", vih->bmiHeader.biCompression,
+                    vih->bmiHeader.biBitCount);
+            hr = S_FALSE;
+        }
+    }
+    else
+        hr = VFW_E_INVALIDMEDIATYPE;
+
+    return hr;
+}
+
 HRESULT qcap_driver_set_format(Capture *device, AM_MEDIA_TYPE *mt)
 {
     struct v4l2_format format = {0};
     int newheight, newwidth;
     VIDEOINFOHEADER *vih;
     int fd = device->fd;
+    HRESULT hr;
 
+    if (FAILED(hr = qcap_driver_check_format(device, mt)))
+        return hr;
     vih = (VIDEOINFOHEADER *)mt->pbFormat;
-    if (vih->bmiHeader.biBitCount != 24 || vih->bmiHeader.biCompression != BI_RGB)
-    {
-        FIXME("Unsupported compression %#x, bpp %u.\n", vih->bmiHeader.biCompression,
-                vih->bmiHeader.biBitCount);
-        return VFW_E_INVALIDMEDIATYPE;
-    }
 
     newwidth = vih->bmiHeader.biWidth;
     newheight = vih->bmiHeader.biHeight;
@@ -651,6 +679,11 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
     return E_NOTIMPL
 
 HRESULT qcap_driver_destroy(Capture *capBox)
+{
+    FAIL_WITH_ERR;
+}
+
+HRESULT qcap_driver_check_format(Capture *device, const AM_MEDIA_TYPE *mt)
 {
     FAIL_WITH_ERR;
 }

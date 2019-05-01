@@ -658,10 +658,10 @@ static inline VfwPinImpl *impl_from_BasePin(BasePin *pin)
     return CONTAINING_RECORD(pin, VfwPinImpl, pin.pin);
 }
 
-static HRESULT WINAPI VfwPin_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI VfwPin_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE *mt)
 {
-    FIXME("(%p) stub\n", pin);
-    return E_NOTIMPL;
+    VfwPinImpl *filter = impl_from_BasePin(pin);
+    return qcap_driver_check_format(filter->parent->driver_info, mt);
 }
 
 static HRESULT WINAPI VfwPin_GetMediaType(BasePin *pin, int iPosition, AM_MEDIA_TYPE *pmt)
