@@ -30,6 +30,12 @@ extern "C" {
 #define WINGDIAPI DECLSPEC_IMPORT
 #endif
 
+#ifdef _OPENGL32_
+#define WGLAPI
+#else
+#define WGLAPI DECLSPEC_IMPORT
+#endif
+
 typedef struct _ABCFLOAT {
     FLOAT   abcfA;
     FLOAT   abcfB;
@@ -3994,26 +4000,26 @@ WINGDIAPI BOOL        WINAPI PolyTextOutW(HDC,const POLYTEXTW*,INT);
 #define WGL_FONT_POLYGONS   1
 
 /* WGL prototypes */
-WINGDIAPI HGLRC   WINAPI wglCreateContext(HDC);
-WINGDIAPI HGLRC   WINAPI wglCreateLayerContext(HDC,INT);
-WINGDIAPI BOOL    WINAPI wglCopyContext(HGLRC,HGLRC,UINT);
-WINGDIAPI BOOL    WINAPI wglDeleteContext(HGLRC);
-WINGDIAPI BOOL    WINAPI wglDescribeLayerPlane(HDC,INT,INT,UINT,LPLAYERPLANEDESCRIPTOR);
-WINGDIAPI HGLRC   WINAPI wglGetCurrentContext(void);
-WINGDIAPI HDC     WINAPI wglGetCurrentDC(void);
-WINGDIAPI INT     WINAPI wglGetLayerPaletteEntries(HDC,INT,INT,INT,const COLORREF *);
-WINGDIAPI PROC    WINAPI wglGetProcAddress(LPCSTR);
-WINGDIAPI BOOL    WINAPI wglMakeCurrent(HDC,HGLRC);
-WINGDIAPI BOOL    WINAPI wglRealizeLayerPalette(HDC,INT,BOOL);
-WINGDIAPI INT     WINAPI wglSetLayerPaletteEntries(HDC,INT,INT,INT,const COLORREF *);
-WINGDIAPI BOOL    WINAPI wglShareLists(HGLRC,HGLRC);
-WINGDIAPI BOOL    WINAPI wglSwapLayerBuffers(HDC,UINT);
-WINGDIAPI BOOL    WINAPI wglUseFontBitmapsA(HDC,DWORD,DWORD,DWORD);
-WINGDIAPI BOOL    WINAPI wglUseFontBitmapsW(HDC,DWORD,DWORD,DWORD);
-#define                  wglUseFontBitmaps WINELIB_NAME_AW(wglUseFontBitmaps)
-WINGDIAPI BOOL    WINAPI wglUseFontOutlinesA(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,LPGLYPHMETRICSFLOAT);
-WINGDIAPI BOOL    WINAPI wglUseFontOutlinesW(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,LPGLYPHMETRICSFLOAT);
-#define                  wglUseFontOutlines WINELIB_NAME_AW(wglUseFontOutlines)
+WGLAPI HGLRC   WINAPI wglCreateContext(HDC);
+WGLAPI HGLRC   WINAPI wglCreateLayerContext(HDC,INT);
+WGLAPI BOOL    WINAPI wglCopyContext(HGLRC,HGLRC,UINT);
+WGLAPI BOOL    WINAPI wglDeleteContext(HGLRC);
+WGLAPI BOOL    WINAPI wglDescribeLayerPlane(HDC,INT,INT,UINT,LPLAYERPLANEDESCRIPTOR);
+WGLAPI HGLRC   WINAPI wglGetCurrentContext(void);
+WGLAPI HDC     WINAPI wglGetCurrentDC(void);
+WGLAPI INT     WINAPI wglGetLayerPaletteEntries(HDC,INT,INT,INT,const COLORREF *);
+WGLAPI PROC    WINAPI wglGetProcAddress(LPCSTR);
+WGLAPI BOOL    WINAPI wglMakeCurrent(HDC,HGLRC);
+WGLAPI BOOL    WINAPI wglRealizeLayerPalette(HDC,INT,BOOL);
+WGLAPI INT     WINAPI wglSetLayerPaletteEntries(HDC,INT,INT,INT,const COLORREF *);
+WGLAPI BOOL    WINAPI wglShareLists(HGLRC,HGLRC);
+WGLAPI BOOL    WINAPI wglSwapLayerBuffers(HDC,UINT);
+WGLAPI BOOL    WINAPI wglUseFontBitmapsA(HDC,DWORD,DWORD,DWORD);
+WGLAPI BOOL    WINAPI wglUseFontBitmapsW(HDC,DWORD,DWORD,DWORD);
+#define               wglUseFontBitmaps WINELIB_NAME_AW(wglUseFontBitmaps)
+WGLAPI BOOL    WINAPI wglUseFontOutlinesA(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,LPGLYPHMETRICSFLOAT);
+WGLAPI BOOL    WINAPI wglUseFontOutlinesW(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,LPGLYPHMETRICSFLOAT);
+#define               wglUseFontOutlines WINELIB_NAME_AW(wglUseFontOutlines)
 
 #ifdef __cplusplus
 }

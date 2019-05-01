@@ -1,4 +1,5 @@
 MODULE    = opengl32.dll
+EXTRADEFS = -D_OPENGL32_
 IMPORTLIB = opengl32
 IMPORTS   = user32 gdi32 advapi32
 DELAYIMPORTS = glu32
