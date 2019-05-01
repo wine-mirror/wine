@@ -448,7 +448,7 @@ static void test_module_information(void)
 
     hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, buffer, length - 1, &length);
     ok(hr == S_FALSE, "Failed to get image name, hr %#x.\n", hr);
-    ok(strlen(buffer) + 2 == length, "Unexpected length %u, %u.\n", length, strlen(buffer));
+    ok(strlen(buffer) + 2 == length, "Unexpected length %u.\n", length);
 
     hr = symbols->lpVtbl->GetModuleNameString(symbols, DEBUG_MODNAME_IMAGE, 0, 0, NULL, length - 1, NULL);
     ok(hr == S_FALSE, "Failed to get image name, hr %#x.\n", hr);
@@ -477,6 +477,7 @@ static void test_module_information(void)
 
     CloseHandle(info.hProcess);
     CloseHandle(info.hThread);
+    CloseHandle(event);
 
     client->lpVtbl->Release(client);
     control->lpVtbl->Release(control);
