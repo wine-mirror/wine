@@ -51,6 +51,7 @@ static int winetest_debug;
 static int winetest_report_success;
 
 static POBJECT_TYPE *pExEventObjectType, *pIoFileObjectType, *pPsThreadType;
+static PEPROCESS *pPsInitialSystemProcess;
 
 void WINAPI ObfReferenceObject( void *obj );
 
@@ -319,7 +320,7 @@ static NTSTATUS wait_single_handle(HANDLE handle, ULONGLONG timeout)
     return ZwWaitForSingleObject(handle, FALSE, &integer);
 }
 
-static void test_currentprocess(void)
+static void test_current_thread(BOOL is_system)
 {
     DISPATCHER_HEADER *header;
     PEPROCESS current;
@@ -334,6 +335,11 @@ static void test_currentprocess(void)
     ret = wait_single(current, 0);
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
 
+    if (is_system)
+        ok(current == *pPsInitialSystemProcess, "current != PsInitialSystemProcess\n");
+    else
+        ok(current != *pPsInitialSystemProcess, "current == PsInitialSystemProcess\n");
+
     ok(PsGetProcessId(current) == PsGetCurrentProcessId(), "process IDs don't match\n");
 
     thread = PsGetCurrentThread();
@@ -341,7 +347,7 @@ static void test_currentprocess(void)
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
 
     ok(PsGetThreadId((PETHREAD)KeGetCurrentThread()) == PsGetCurrentThreadId(), "thread IDs don't match\n");
-    ok(!PsIsSystemThread((PETHREAD)KeGetCurrentThread()), "unexpected system thread\n");
+    ok(PsIsSystemThread((PETHREAD)KeGetCurrentThread()) == is_system, "unexpected system thread\n");
 }
 
 static void sleep(void)
@@ -1212,7 +1218,35 @@ static void test_lookup_thread(void)
        "PsLookupThreadByThreadId returned %#x\n", status);
 }
 
-static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+static PIO_WORKITEM main_test_work_item;
+
+static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
+{
+    IRP *irp = context;
+    void *buffer = irp->AssociatedIrp.SystemBuffer;
+
+    IoFreeWorkItem(main_test_work_item);
+    main_test_work_item = NULL;
+
+    test_current_thread(TRUE);
+
+    /* print process report */
+    if (winetest_debug)
+    {
+        kprintf("%04x:ntoskrnl: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
+            PsGetCurrentProcessId(), successes + failures + todo_successes + todo_failures,
+            todo_successes, failures + todo_failures,
+            (failures + todo_failures != 1) ? "failures" : "failure", skipped );
+    }
+    ZwClose(okfile);
+
+    *((LONG *)buffer) = failures;
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    irp->IoStatus.Information = sizeof(failures);
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
+static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     void *buffer = irp->AssociatedIrp.SystemBuffer;
@@ -1244,8 +1278,11 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     pPsThreadType = get_proc_address("PsThreadType");
     ok(!!pPsThreadType, "IofileObjectType not found\n");
 
+    pPsInitialSystemProcess = get_proc_address("PsInitialSystemProcess");
+    ok(!!pPsInitialSystemProcess, "PsInitialSystemProcess not found\n");
+
     test_irp_struct(irp, device);
-    test_currentprocess();
+    test_current_thread(FALSE);
     test_mdl_map();
     test_init_funcs();
     test_load_driver();
@@ -1257,18 +1294,13 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_resource();
     test_lookup_thread();
 
-    /* print process report */
-    if (winetest_debug)
-    {
-        kprintf("%04x:ntoskrnl: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
-            PsGetCurrentProcessId(), successes + failures + todo_successes + todo_failures,
-            todo_successes, failures + todo_failures,
-            (failures + todo_failures != 1) ? "failures" : "failure", skipped );
-    }
-    ZwClose(okfile);
-    *((LONG *)buffer) = failures;
-    *info = sizeof(failures);
-    return STATUS_SUCCESS;
+    if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
+
+    main_test_work_item = IoAllocateWorkItem(device);
+    ok(main_test_work_item != NULL, "main_test_work_item = NULL\n");
+
+    IoQueueWorkItem(main_test_work_item, main_test_task, DelayedWorkQueue, irp);
+    return STATUS_PENDING;
 }
 
 static NTSTATUS test_basic_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
@@ -1327,7 +1359,7 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             status = test_basic_ioctl(irp, stack, &irp->IoStatus.Information);
             break;
         case IOCTL_WINETEST_MAIN_TEST:
-            status = main_test(device, irp, stack, &irp->IoStatus.Information);
+            status = main_test(device, irp, stack);
             break;
         case IOCTL_WINETEST_LOAD_DRIVER:
             status = test_load_driver_ioctl(irp, stack, &irp->IoStatus.Information);
@@ -1336,8 +1368,12 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             break;
     }
 
-    irp->IoStatus.Status = status;
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    if (status != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = status;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+    else IoMarkIrpPending(irp);
     return status;
 }
 

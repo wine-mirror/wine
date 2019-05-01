@@ -1505,6 +1505,11 @@ static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routi
     if (on_cancel)  irpsp->Control |= SL_INVOKE_ON_CANCEL;
 }
 
+static inline void IoMarkIrpPending(IRP *irp)
+{
+    IoGetCurrentIrpStackLocation(irp)->Control |= SL_PENDING_RETURNED;
+}
+
 #define KernelMode 0
 #define UserMode   1
 
