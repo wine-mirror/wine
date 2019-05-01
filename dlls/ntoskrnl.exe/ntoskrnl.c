@@ -1235,6 +1235,8 @@ void WINAPI IoFreeMdl(PMDL mdl)
 struct _IO_WORKITEM
 {
     DEVICE_OBJECT *device;
+    PIO_WORKITEM_ROUTINE worker;
+    void *context;
 };
 
 /***********************************************************************
@@ -1259,6 +1261,33 @@ void WINAPI IoFreeWorkItem( PIO_WORKITEM work_item )
 {
     TRACE( "%p\n", work_item );
     ExFreePool( work_item );
+}
+
+
+void WINAPI run_work_item_worker(TP_CALLBACK_INSTANCE *instance, void *context)
+{
+    PIO_WORKITEM work_item = context;
+    DEVICE_OBJECT *device = work_item->device;
+
+    TRACE( "%p: calling %p(%p %p)\n", work_item, work_item->worker, device, work_item->context );
+    work_item->worker( device, work_item->context );
+    TRACE( "done\n" );
+
+    ObDereferenceObject( device );
+}
+
+/***********************************************************************
+ *           IoQueueWorkItem  (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoQueueWorkItem( PIO_WORKITEM work_item, PIO_WORKITEM_ROUTINE worker,
+                             WORK_QUEUE_TYPE type, void *context )
+{
+    TRACE( "%p %p %u %p\n", work_item, worker, type, context );
+
+    ObReferenceObject( work_item->device );
+    work_item->worker = worker;
+    work_item->context = context;
+    TrySubmitThreadpoolCallback( run_work_item_worker, work_item, NULL );
 }
 
 

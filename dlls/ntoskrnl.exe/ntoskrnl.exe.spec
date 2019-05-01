@@ -428,7 +428,7 @@
 @ stub IoQueryFileInformation
 @ stub IoQueryVolumeInformation
 @ stub IoQueueThreadIrp
-@ stub IoQueueWorkItem
+@ stdcall IoQueueWorkItem(ptr ptr long ptr)
 @ stub IoRaiseHardError
 @ stub IoRaiseInformationalHardError
 @ stub IoReadDiskSignature

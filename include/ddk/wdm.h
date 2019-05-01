@@ -1460,6 +1460,15 @@ typedef enum _DIRECTORY_NOTIFY_INFORMATION_CLASS {
     DirectoryNotifyExtendedInformation
 } DIRECTORY_NOTIFY_INFORMATION_CLASS, *PDIRECTORY_NOTIFY_INFORMATION_CLASS;
 
+typedef enum _WORK_QUEUE_TYPE {
+    CriticalWorkQueue,
+    DelayedWorkQueue,
+    HyperCriticalWorkQueue,
+    MaximumWorkQueue
+} WORK_QUEUE_TYPE;
+
+typedef void (WINAPI *PIO_WORKITEM_ROUTINE)(PDEVICE_OBJECT,void*);
+
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 
 #ifdef NONAMELESSUNION
@@ -1568,6 +1577,7 @@ PDEVICE_OBJECT WINAPI IoGetRelatedDeviceObject(PFILE_OBJECT);
 void      WINAPI IoInitializeIrp(IRP*,USHORT,CCHAR);
 VOID      WINAPI IoInitializeRemoveLockEx(PIO_REMOVE_LOCK,ULONG,ULONG,ULONG,ULONG);
 void      WINAPI IoInvalidateDeviceRelations(PDEVICE_OBJECT,DEVICE_RELATION_TYPE);
+void      WINAPI IoQueueWorkItem(PIO_WORKITEM,PIO_WORKITEM_ROUTINE,WORK_QUEUE_TYPE,void*);
 NTSTATUS  WINAPI IoRegisterDeviceInterface(PDEVICE_OBJECT,const GUID*,PUNICODE_STRING,PUNICODE_STRING);
 void      WINAPI IoReleaseCancelSpinLock(KIRQL);
 NTSTATUS  WINAPI IoSetDeviceInterfaceState(UNICODE_STRING*,BOOLEAN);
