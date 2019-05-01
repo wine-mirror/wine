@@ -1232,13 +1232,33 @@ void WINAPI IoFreeMdl(PMDL mdl)
 }
 
 
+struct _IO_WORKITEM
+{
+    DEVICE_OBJECT *device;
+};
+
 /***********************************************************************
  *           IoAllocateWorkItem  (NTOSKRNL.EXE.@)
  */
-PIO_WORKITEM WINAPI IoAllocateWorkItem( PDEVICE_OBJECT DeviceObject )
+PIO_WORKITEM WINAPI IoAllocateWorkItem( PDEVICE_OBJECT device )
 {
-    FIXME( "stub: %p\n", DeviceObject );
-    return NULL;
+    PIO_WORKITEM work_item;
+
+    TRACE( "%p\n", device );
+
+    if (!(work_item = ExAllocatePool( PagedPool, sizeof(*work_item) ))) return NULL;
+    work_item->device = device;
+    return work_item;
+}
+
+
+/***********************************************************************
+ *           IoFreeWorkItem  (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoFreeWorkItem( PIO_WORKITEM work_item )
+{
+    TRACE( "%p\n", work_item );
+    ExFreePool( work_item );
 }
 
 

@@ -383,7 +383,7 @@
 @ stub IoFreeErrorLogEntry
 @ stdcall IoFreeIrp(ptr)
 @ stdcall IoFreeMdl(ptr)
-@ stub IoFreeWorkItem
+@ stdcall IoFreeWorkItem(ptr)
 @ stdcall IoGetAttachedDevice(ptr)
 @ stdcall IoGetAttachedDeviceReference(ptr)
 @ stub IoGetBaseFileSystemDeviceObject
