@@ -366,6 +366,15 @@ static void ObReferenceObject( void *obj )
     LeaveCriticalSection( &obref_cs );
 }
 
+/***********************************************************************
+ *           ObGetObjectType (NTOSKRNL.EXE.@)
+ */
+POBJECT_TYPE WINAPI ObGetObjectType( void *object )
+{
+    struct object_header *header = (struct object_header *)object - 1;
+    return header->type;
+}
+
 static const POBJECT_TYPE *known_types[] =
 {
     &ExEventObjectType,
@@ -389,7 +398,6 @@ static CRITICAL_SECTION handle_map_cs = { &handle_map_critsect_debug, -1, 0, 0, 
 
 NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret )
 {
-    struct object_header *header;
     void *obj;
     NTSTATUS status;
 
@@ -409,12 +417,7 @@ NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret
         return status;
     }
 
-    if (obj)
-    {
-        header = (struct object_header *)obj - 1;
-        if (type && header->type != type) status = STATUS_OBJECT_TYPE_MISMATCH;
-    }
-    else
+    if (!obj)
     {
         char buf[256];
         OBJECT_TYPE_INFORMATION *type_info = (OBJECT_TYPE_INFORMATION *)buf;
@@ -459,6 +462,7 @@ NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret
         }
         if (!obj) status = STATUS_NO_MEMORY;
     }
+    else if (type && ObGetObjectType( obj ) != type) status = STATUS_OBJECT_TYPE_MISMATCH;
 
     LeaveCriticalSection( &handle_map_cs );
     if (!status) *ret = obj;
@@ -486,15 +490,6 @@ NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE handle, ACCESS_MASK access,
     status = kernel_object_from_handle( handle, type, ptr );
     if (!status) ObReferenceObject( *ptr );
     return status;
-}
-
-/***********************************************************************
- *           ObGetObjectType (NTOSKRNL.EXE.@)
- */
-POBJECT_TYPE WINAPI ObGetObjectType( void *object )
-{
-    struct object_header *header = (struct object_header *)object - 1;
-    return header->type;
 }
 
 /***********************************************************************
