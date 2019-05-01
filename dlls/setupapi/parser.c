@@ -1055,26 +1055,6 @@ const WCHAR *PARSER_get_inf_filename( HINF hinf )
     return file->filename;
 }
 
-
-/***********************************************************************
- *            PARSER_get_src_root
- *
- * Retrieve the source directory of an inf file.
- */
-WCHAR *PARSER_get_src_root( HINF hinf )
-{
-    unsigned int len;
-    const WCHAR *dir = get_inf_dir( hinf, &len );
-    WCHAR *ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
-    if (ret)
-    {
-        memcpy( ret, dir, len * sizeof(WCHAR) );
-        ret[len] = 0;
-    }
-    return ret;
-}
-
-
 /***********************************************************************
  *            PARSER_get_dest_dir
  *

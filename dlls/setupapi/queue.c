@@ -256,82 +256,6 @@ UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification,
     return ret;
 }
 
-
-/***********************************************************************
- *            get_src_file_info
- *
- * Retrieve the source file information for a given file.
- */
-static void get_src_file_info( HINF hinf, struct file_op *op )
-{
-    static const WCHAR SourceDisksNames[] =
-        {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s',0};
-    static const WCHAR SourceDisksFiles[] =
-        {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s',0};
-
-    INFCONTEXT file_ctx, disk_ctx;
-    INT id, diskid;
-    DWORD len, len2;
-
-    /* find the SourceDisksFiles entry */
-    if (!SetupFindFirstLineW( hinf, SourceDisksFiles, op->src_file, &file_ctx ))
-    {
-        if ((op->style & (SP_COPY_SOURCE_ABSOLUTE|SP_COPY_SOURCEPATH_ABSOLUTE))) return;
-        /* no specific info, use .inf file source directory */
-        if (!op->src_root) op->src_root = PARSER_get_src_root( hinf );
-        return;
-    }
-    if (!SetupGetIntField( &file_ctx, 1, &diskid )) return;
-
-    /* now find the diskid in the SourceDisksNames section */
-    if (!SetupFindFirstLineW( hinf, SourceDisksNames, NULL, &disk_ctx )) return;
-    for (;;)
-    {
-        if (SetupGetIntField( &disk_ctx, 0, &id ) && (id == diskid)) break;
-        if (!SetupFindNextLine( &disk_ctx, &disk_ctx )) return;
-    }
-
-    /* and fill in the missing info */
-
-    if (!op->src_descr)
-    {
-        if (SetupGetStringFieldW( &disk_ctx, 1, NULL, 0, &len ) &&
-            (op->src_descr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) )))
-            SetupGetStringFieldW( &disk_ctx, 1, op->src_descr, len, NULL );
-    }
-    if (!op->src_tag)
-    {
-        if (SetupGetStringFieldW( &disk_ctx, 2, NULL, 0, &len ) &&
-            (op->src_tag = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) )))
-            SetupGetStringFieldW( &disk_ctx, 2, op->src_tag, len, NULL );
-    }
-    if (!op->src_path && !(op->style & SP_COPY_SOURCE_ABSOLUTE))
-    {
-        len = len2 = 0;
-        if (!(op->style & SP_COPY_SOURCEPATH_ABSOLUTE))
-        {
-            /* retrieve relative path for this disk */
-            if (!SetupGetStringFieldW( &disk_ctx, 4, NULL, 0, &len )) len = 0;
-        }
-        /* retrieve relative path for this file */
-        if (!SetupGetStringFieldW( &file_ctx, 2, NULL, 0, &len2 )) len2 = 0;
-
-        if ((len || len2) &&
-            (op->src_path = HeapAlloc( GetProcessHeap(), 0, (len+len2)*sizeof(WCHAR) )))
-        {
-            WCHAR *ptr = op->src_path;
-            if (len)
-            {
-                SetupGetStringFieldW( &disk_ctx, 4, op->src_path, len, NULL );
-                ptr = op->src_path + strlenW(op->src_path);
-                if (len2 && ptr > op->src_path && ptr[-1] != '\\') *ptr++ = '\\';
-            }
-            if (!SetupGetStringFieldW( &file_ctx, 2, ptr, len2, NULL )) *ptr = 0;
-        }
-    }
-    if (!op->src_root) op->src_root = PARSER_get_src_root(hinf);
-}
-
 static void get_source_info( HINF hinf, const WCHAR *src_file, SP_FILE_COPY_PARAMS_W *params,
                              WCHAR *src_root, WCHAR *src_path)
 {
@@ -557,10 +481,7 @@ BOOL WINAPI SetupQueueCopyIndirectW( PSP_FILE_COPY_PARAMS_W params )
     /* some defaults */
     if (!op->src_file) op->src_file = op->dst_file;
     if (params->LayoutInf)
-    {
-        get_src_file_info( params->LayoutInf, op );
-        if (!op->dst_path) op->dst_path = get_destination_dir( params->LayoutInf, op->dst_file );
-    }
+        FIXME("Unhandled LayoutInf %p.\n", params->LayoutInf);
 
     TRACE( "root=%s path=%s file=%s -> dir=%s file=%s  descr=%s tag=%s\n",
            debugstr_w(op->src_root), debugstr_w(op->src_path), debugstr_w(op->src_file),
