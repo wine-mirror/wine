@@ -122,6 +122,7 @@ static void concat_W( WCHAR *buffer, const WCHAR *src1, const WCHAR *src2, const
         strcpyW( buffer, src1 );
         buffer += strlenW(buffer );
         if (buffer[-1] != '\\') *buffer++ = '\\';
+        *buffer = 0;
         if (src2) while (*src2 == '\\') src2++;
     }
 
@@ -130,6 +131,7 @@ static void concat_W( WCHAR *buffer, const WCHAR *src1, const WCHAR *src2, const
         strcpyW( buffer, src2 );
         buffer += strlenW(buffer );
         if (buffer[-1] != '\\') *buffer++ = '\\';
+        *buffer = 0;
         if (src3) while (*src3 == '\\') src3++;
     }
 
