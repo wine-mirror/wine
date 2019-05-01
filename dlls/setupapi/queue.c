@@ -51,17 +51,21 @@ struct default_callback_context
     DWORD_PTR unk3[5];
 };
 
+struct source_media
+{
+    WCHAR root[MAX_PATH];
+    WCHAR *desc, *tag;
+};
+
 struct file_op
 {
     struct file_op *next;
     UINT            style;
-    WCHAR          *src_root;
     WCHAR          *src_path;
     WCHAR          *src_file;
-    WCHAR          *src_descr;
-    WCHAR          *src_tag;
     WCHAR          *dst_path;
     WCHAR          *dst_file;
+    struct source_media *media;
 };
 
 struct file_op_queue
@@ -76,7 +80,9 @@ struct file_queue
     struct file_op_queue copy_queue;
     struct file_op_queue delete_queue;
     struct file_op_queue rename_queue;
-    DWORD                flags;
+    DWORD flags;
+    struct source_media **sources;
+    unsigned int source_count;
 };
 
 
@@ -97,11 +103,8 @@ static void free_file_op_queue( struct file_op_queue *queue )
 
     while( op )
     {
-        HeapFree( GetProcessHeap(), 0, op->src_root );
         HeapFree( GetProcessHeap(), 0, op->src_path );
         HeapFree( GetProcessHeap(), 0, op->src_file );
-        HeapFree( GetProcessHeap(), 0, op->src_descr );
-        HeapFree( GetProcessHeap(), 0, op->src_tag );
         HeapFree( GetProcessHeap(), 0, op->dst_path );
         if (op->dst_file != op->src_file) HeapFree( GetProcessHeap(), 0, op->dst_file );
         t = op;
@@ -145,7 +148,7 @@ static BOOL build_filepathsW( const struct file_op *op, FILEPATHS_W *paths )
     unsigned int src_len = 1, dst_len = 1;
     WCHAR *source = (PWSTR)paths->Source, *target = (PWSTR)paths->Target;
 
-    if (op->src_root) src_len += strlenW(op->src_root) + 1;
+    if (op->media) src_len += strlenW(op->media->root) + 1;
     if (op->src_path) src_len += strlenW(op->src_path) + 1;
     if (op->src_file) src_len += strlenW(op->src_file) + 1;
     if (op->dst_path) dst_len += strlenW(op->dst_path) + 1;
@@ -164,7 +167,7 @@ static BOOL build_filepathsW( const struct file_op *op, FILEPATHS_W *paths )
         paths->Target = target = HeapAlloc( GetProcessHeap(), 0, dst_len );
     }
     if (!source || !target) return FALSE;
-    concat_W( source, op->src_root, op->src_path, op->src_file );
+    concat_W( source, op->media ? op->media->root : NULL, op->src_path, op->src_file );
     concat_W( target, NULL, op->dst_path, op->dst_file );
     paths->Win32Error = 0;
     paths->Flags      = 0;
@@ -416,10 +419,18 @@ HSPFILEQ WINAPI SetupOpenFileQueue(void)
 BOOL WINAPI SetupCloseFileQueue( HSPFILEQ handle )
 {
     struct file_queue *queue = handle;
+    unsigned int i;
 
     free_file_op_queue( &queue->copy_queue );
     free_file_op_queue( &queue->rename_queue );
     free_file_op_queue( &queue->delete_queue );
+    for (i = 0; i < queue->source_count; ++i)
+    {
+        heap_free( queue->sources[i]->desc );
+        heap_free( queue->sources[i]->tag );
+        heap_free( queue->sources[i] );
+    }
+    heap_free( queue->sources );
     HeapFree( GetProcessHeap(), 0, queue );
     return TRUE;
 }
@@ -459,22 +470,48 @@ BOOL WINAPI SetupQueueCopyIndirectA( SP_FILE_COPY_PARAMS_A *paramsA )
     return ret;
 }
 
+static BOOL equal_str(const WCHAR *a, const WCHAR *b)
+{
+    return (!a && !b) || (a && b && !strcmpW(a, b));
+}
+
+static struct source_media *get_source_media(struct file_queue *queue,
+        const WCHAR *root, const WCHAR *desc, const WCHAR *tag)
+{
+    unsigned int i;
+
+    for (i = 0; i < queue->source_count; ++i)
+    {
+        if (!strcmpW(root, queue->sources[i]->root)
+                && equal_str(desc, queue->sources[i]->desc)
+                && equal_str(tag, queue->sources[i]->tag))
+        {
+            return queue->sources[i];
+        }
+    }
+
+    queue->sources = heap_realloc( queue->sources, ++queue->source_count * sizeof(*queue->sources) );
+    queue->sources[i] = heap_alloc( sizeof(*queue->sources[i]) );
+    strcpyW(queue->sources[i]->root, root);
+    queue->sources[i]->desc = strdupW(desc);
+    queue->sources[i]->tag = strdupW(tag);
+
+    return queue->sources[i];
+}
 
 /***********************************************************************
  *            SetupQueueCopyIndirectW   (SETUPAPI.@)
  */
 BOOL WINAPI SetupQueueCopyIndirectW( PSP_FILE_COPY_PARAMS_W params )
 {
+    static const WCHAR emptyW[] = {0};
     struct file_queue *queue = params->QueueHandle;
     struct file_op *op;
 
     if (!(op = HeapAlloc( GetProcessHeap(), 0, sizeof(*op) ))) return FALSE;
     op->style      = params->CopyStyle;
-    op->src_root   = strdupW( params->SourceRootPath );
     op->src_path   = strdupW( params->SourcePath );
     op->src_file   = strdupW( params->SourceFilename );
-    op->src_descr  = strdupW( params->SourceDescription );
-    op->src_tag    = strdupW( params->SourceTagfile );
     op->dst_path   = strdupW( params->TargetDirectory );
     op->dst_file   = strdupW( params->TargetFilename );
 
@@ -483,10 +520,13 @@ BOOL WINAPI SetupQueueCopyIndirectW( PSP_FILE_COPY_PARAMS_W params )
     if (params->LayoutInf)
         FIXME("Unhandled LayoutInf %p.\n", params->LayoutInf);
 
+    op->media = get_source_media( queue, params->SourceRootPath ? params->SourceRootPath : emptyW,
+                                  params->SourceDescription, params->SourceTagfile );
+
     TRACE( "root=%s path=%s file=%s -> dir=%s file=%s  descr=%s tag=%s\n",
-           debugstr_w(op->src_root), debugstr_w(op->src_path), debugstr_w(op->src_file),
+           debugstr_w(op->media->root), debugstr_w(op->src_path), debugstr_w(op->src_file),
            debugstr_w(op->dst_path), debugstr_w(op->dst_file),
-           debugstr_w(op->src_descr), debugstr_w(op->src_tag) );
+           debugstr_w(op->media->desc), debugstr_w(op->media->tag) );
 
     queue_file_op( &queue->copy_queue, op );
     return TRUE;
@@ -614,15 +654,9 @@ BOOL WINAPI SetupQueueDeleteA( HSPFILEQ handle, PCSTR part1, PCSTR part2 )
     struct file_queue *queue = handle;
     struct file_op *op;
 
-    if (!(op = HeapAlloc( GetProcessHeap(), 0, sizeof(*op) ))) return FALSE;
-    op->style      = 0;
-    op->src_root   = NULL;
-    op->src_path   = NULL;
-    op->src_file   = NULL;
-    op->src_descr  = NULL;
-    op->src_tag    = NULL;
-    op->dst_path   = strdupAtoW( part1 );
-    op->dst_file   = strdupAtoW( part2 );
+    if (!(op = heap_alloc_zero( sizeof(*op) ))) return FALSE;
+    op->dst_path = strdupAtoW( part1 );
+    op->dst_file = strdupAtoW( part2 );
     queue_file_op( &queue->delete_queue, op );
     return TRUE;
 }
@@ -636,15 +670,9 @@ BOOL WINAPI SetupQueueDeleteW( HSPFILEQ handle, PCWSTR part1, PCWSTR part2 )
     struct file_queue *queue = handle;
     struct file_op *op;
 
-    if (!(op = HeapAlloc( GetProcessHeap(), 0, sizeof(*op) ))) return FALSE;
-    op->style      = 0;
-    op->src_root   = NULL;
-    op->src_path   = NULL;
-    op->src_file   = NULL;
-    op->src_descr  = NULL;
-    op->src_tag    = NULL;
-    op->dst_path   = strdupW( part1 );
-    op->dst_file   = strdupW( part2 );
+    if (!(op = heap_alloc_zero( sizeof(*op) ))) return FALSE;
+    op->dst_path = strdupW( part1 );
+    op->dst_file = strdupW( part2 );
     queue_file_op( &queue->delete_queue, op );
     return TRUE;
 }
@@ -659,15 +687,11 @@ BOOL WINAPI SetupQueueRenameA( HSPFILEQ handle, PCSTR SourcePath, PCSTR SourceFi
     struct file_queue *queue = handle;
     struct file_op *op;
 
-    if (!(op = HeapAlloc( GetProcessHeap(), 0, sizeof(*op) ))) return FALSE;
-    op->style      = 0;
-    op->src_root   = NULL;
-    op->src_path   = strdupAtoW( SourcePath );
-    op->src_file   = strdupAtoW( SourceFilename );
-    op->src_descr  = NULL;
-    op->src_tag    = NULL;
-    op->dst_path   = strdupAtoW( TargetPath );
-    op->dst_file   = strdupAtoW( TargetFilename );
+    if (!(op = heap_alloc_zero( sizeof(*op) ))) return FALSE;
+    op->src_path = strdupAtoW( SourcePath );
+    op->src_file = strdupAtoW( SourceFilename );
+    op->dst_path = strdupAtoW( TargetPath );
+    op->dst_file = strdupAtoW( TargetFilename );
     queue_file_op( &queue->rename_queue, op );
     return TRUE;
 }
@@ -682,15 +706,11 @@ BOOL WINAPI SetupQueueRenameW( HSPFILEQ handle, PCWSTR SourcePath, PCWSTR Source
     struct file_queue *queue = handle;
     struct file_op *op;
 
-    if (!(op = HeapAlloc( GetProcessHeap(), 0, sizeof(*op) ))) return FALSE;
-    op->style      = 0;
-    op->src_root   = NULL;
-    op->src_path   = strdupW( SourcePath );
-    op->src_file   = strdupW( SourceFilename );
-    op->src_descr  = NULL;
-    op->src_tag    = NULL;
-    op->dst_path   = strdupW( TargetPath );
-    op->dst_file   = strdupW( TargetFilename );
+    if (!(op = heap_alloc_zero( sizeof(*op) ))) return FALSE;
+    op->src_path = strdupW( SourcePath );
+    op->src_file = strdupW( SourceFilename );
+    op->dst_path = strdupW( TargetPath );
+    op->dst_file = strdupW( TargetFilename );
     queue_file_op( &queue->rename_queue, op );
     return TRUE;
 }
@@ -1240,7 +1260,7 @@ static BOOL queue_copy_file( const WCHAR *source, const WCHAR *dest,
         return TRUE;
 
     /* try to extract it from the cabinet file */
-    if (op->src_tag && extract_cabinet_file(op->src_tag, op->src_root, op->src_file, dest))
+    if (op->media->tag && extract_cabinet_file(op->media->tag, op->media->root, op->src_file, dest))
         return TRUE;
 
     return FALSE;
