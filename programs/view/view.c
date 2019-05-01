@@ -21,7 +21,6 @@
 #include <stdio.h>
 
 #include "resource.h"
-#include "wine/unicode.h"
 
 static HINSTANCE hInst;
 static HWND hMainWnd;
@@ -60,7 +59,7 @@ static BOOL FileOpen(HWND hWnd, WCHAR *fn, int fnsz)
                         OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
 
   LoadStringW( hInst, IDS_OPEN_META_STRING, metafileFilter, ARRAY_SIZE(metafileFilter) );
-  snprintfW( filter, ARRAY_SIZE(filter), filterW, metafileFilter, 0, 0 );
+  swprintf( filter, ARRAY_SIZE(filter), filterW, metafileFilter, 0, 0 );
 
   ofn.lpstrFilter = filter;
   ofn.hwndOwner = hWnd;

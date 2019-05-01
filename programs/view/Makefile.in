@@ -1,6 +1,7 @@
 MODULE    = view.exe
-APPMODE   = -mwindows -municode
 IMPORTS   = comdlg32 user32 gdi32
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
 C_SRCS = \
 	view.c
