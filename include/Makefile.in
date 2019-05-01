@@ -251,6 +251,7 @@ SOURCES = \
 	dxgicommon.idl \
 	dxgiformat.idl \
 	dxgitype.idl \
+	dxva.h \
 	dxva2api.idl \
 	dyngraph.idl \
 	endpointvolume.idl \
