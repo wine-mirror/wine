@@ -1,6 +1,7 @@
 MODULE    = services.exe
-APPMODE   = -mconsole
 IMPORTS   = rpcrt4 advapi32 userenv
+
+EXTRADLLFLAGS = -mconsole -mno-cygwin
 
 C_SRCS = \
 	rpc.c \

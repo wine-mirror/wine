@@ -29,7 +29,6 @@
 #include <rpc.h>
 
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "services.h"
@@ -277,9 +276,9 @@ DWORD __cdecl svcctl_OpenSCManagerW(
 
     if (DatabaseName != NULL && DatabaseName[0])
     {
-        if (strcmpW(DatabaseName, SERVICES_FAILED_DATABASEW) == 0)
+        if (lstrcmpW(DatabaseName, SERVICES_FAILED_DATABASEW) == 0)
             return ERROR_DATABASE_DOES_NOT_EXIST;
-        if (strcmpW(DatabaseName, SERVICES_ACTIVE_DATABASEW) != 0)
+        if (lstrcmpW(DatabaseName, SERVICES_ACTIVE_DATABASEW) != 0)
             return ERROR_INVALID_NAME;
     }
 
@@ -353,7 +352,7 @@ DWORD __cdecl svcctl_GetServiceDisplayNameW(
         LPCWSTR name;
         int len;
         name = get_display_name(entry);
-        len = strlenW(name);
+        len = lstrlenW(name);
         if (len <= *cchBufSize)
         {
             err = ERROR_SUCCESS;
@@ -395,7 +394,7 @@ DWORD __cdecl svcctl_GetServiceKeyNameW(
     if (entry != NULL)
     {
         int len;
-        len = strlenW(entry->name);
+        len = lstrlenW(entry->name);
         if (len <= *cchBufSize)
         {
             err = ERROR_SUCCESS;
@@ -486,7 +485,7 @@ static DWORD parse_dependencies(const WCHAR *dependencies, struct service_entry 
 
     while (*ptr)
     {
-        len = strlenW(ptr) + 1;
+        len = lstrlenW(ptr) + 1;
         if (ptr[0] == '+' && ptr[1])
             len_groups += len - 1;
         else
@@ -504,10 +503,10 @@ static DWORD parse_dependencies(const WCHAR *dependencies, struct service_entry 
         ptr = dependencies;
         while (*ptr)
         {
-            len = strlenW(ptr) + 1;
+            len = lstrlenW(ptr) + 1;
             if (*ptr != '+')
             {
-                strcpyW(s, ptr);
+                lstrcpyW(s, ptr);
                 s += len;
             }
             ptr += len;
@@ -528,10 +527,10 @@ static DWORD parse_dependencies(const WCHAR *dependencies, struct service_entry 
         ptr = dependencies;
         while (*ptr)
         {
-            len = strlenW(ptr) + 1;
+            len = lstrlenW(ptr) + 1;
             if (ptr[0] == '+' && ptr[1])
             {
-                strcpyW(s, ptr + 1);
+                lstrcpyW(s, ptr + 1);
                 s += len - 1;
             }
             ptr += len;
@@ -988,14 +987,14 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
 
         service_lock(service->service_entry);
         if (service->service_entry->description)
-            total_size += strlenW(service->service_entry->description) * sizeof(WCHAR);
+            total_size += lstrlenW(service->service_entry->description) * sizeof(WCHAR);
 
         *needed = total_size;
         if (size >= total_size)
         {
             if (service->service_entry->description)
             {
-                strcpyW( desc->description, service->service_entry->description );
+                lstrcpyW( desc->description, service->service_entry->description );
                 desc->size = total_size - FIELD_OFFSET(struct service_description, description);
             }
             else
@@ -1185,19 +1184,19 @@ BOOL process_send_control(struct process_entry *process, BOOL shared_process, co
     {
         control |= SERVICE_CONTROL_FORWARD_FLAG;
         data = (BYTE *)name;
-        data_size = (strlenW(name) + 1) * sizeof(WCHAR);
+        data_size = (lstrlenW(name) + 1) * sizeof(WCHAR);
         name = emptyW;
     }
 
     /* calculate how much space we need to send the startup info */
-    len = (strlenW(name) + 1) * sizeof(WCHAR) + data_size;
+    len = (lstrlenW(name) + 1) * sizeof(WCHAR) + data_size;
 
     ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, data[len]));
     ssi->magic = SERVICE_PROTOCOL_MAGIC;
     ssi->control = control;
     ssi->total_size = FIELD_OFFSET(service_start_info, data[len]);
-    ssi->name_size = strlenW(name) + 1;
-    strcpyW((WCHAR *)ssi->data, name);
+    ssi->name_size = lstrlenW(name) + 1;
+    lstrcpyW((WCHAR *)ssi->data, name);
     if (data_size) memcpy(&ssi->data[ssi->name_size * sizeof(WCHAR)], data, data_size);
 
     r = process_send_command(process, ssi, ssi->total_size, result);
@@ -1466,10 +1465,10 @@ DWORD __cdecl svcctl_EnumServicesStatusW(
         if ((service->status.dwServiceType & type) && map_state(service->status.dwCurrentState, state))
         {
             total_size += sizeof(*s);
-            total_size += (strlenW(service->name) + 1) * sizeof(WCHAR);
+            total_size += (lstrlenW(service->name) + 1) * sizeof(WCHAR);
             if (service->config.lpDisplayName)
             {
-                total_size += (strlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
+                total_size += (lstrlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
             }
             num_services++;
         }
@@ -1487,7 +1486,7 @@ DWORD __cdecl svcctl_EnumServicesStatusW(
     {
         if ((service->status.dwServiceType & type) && map_state(service->status.dwCurrentState, state))
         {
-            sz = (strlenW(service->name) + 1) * sizeof(WCHAR);
+            sz = (lstrlenW(service->name) + 1) * sizeof(WCHAR);
             memcpy(buffer + offset, service->name, sz);
             s->service_name = offset;
             offset += sz;
@@ -1495,7 +1494,7 @@ DWORD __cdecl svcctl_EnumServicesStatusW(
             if (!service->config.lpDisplayName) s->display_name = 0;
             else
             {
-                sz = (strlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
+                sz = (lstrlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
                 memcpy(buffer + offset, service->config.lpDisplayName, sz);
                 s->display_name = offset;
                 offset += sz;
@@ -1515,7 +1514,7 @@ static struct service_entry *find_service_by_group(struct scmdatabase *db, const
     struct service_entry *service;
     LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
     {
-        if (service->config.lpLoadOrderGroup && !strcmpiW(group, service->config.lpLoadOrderGroup))
+        if (service->config.lpLoadOrderGroup && !wcsicmp(group, service->config.lpLoadOrderGroup))
             return service;
     }
     return NULL;
@@ -1525,7 +1524,7 @@ static BOOL match_group(const WCHAR *g1, const WCHAR *g2)
 {
     if (!g2) return TRUE;
     if (!g2[0] && (!g1 || !g1[0])) return TRUE;
-    if (g1 && !strcmpW(g1, g2)) return TRUE;
+    if (g1 && !lstrcmpW(g1, g2)) return TRUE;
     return FALSE;
 }
 
@@ -1590,10 +1589,10 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
             && match_group(service->config.lpLoadOrderGroup, group))
         {
             total_size += sizeof(*s);
-            total_size += (strlenW(service->name) + 1) * sizeof(WCHAR);
+            total_size += (lstrlenW(service->name) + 1) * sizeof(WCHAR);
             if (service->config.lpDisplayName)
             {
-                total_size += (strlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
+                total_size += (lstrlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
             }
             num_services++;
         }
@@ -1612,7 +1611,7 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
         if ((service->status.dwServiceType & type) && map_state(service->status.dwCurrentState, state)
             && match_group(service->config.lpLoadOrderGroup, group))
         {
-            sz = (strlenW(service->name) + 1) * sizeof(WCHAR);
+            sz = (lstrlenW(service->name) + 1) * sizeof(WCHAR);
             memcpy(buffer + offset, service->name, sz);
             s->service_name = offset;
             offset += sz;
@@ -1620,7 +1619,7 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
             if (!service->config.lpDisplayName) s->display_name = 0;
             else
             {
-                sz = (strlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
+                sz = (lstrlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
                 memcpy(buffer + offset, service->config.lpDisplayName, sz);
                 s->display_name = offset;
                 offset += sz;
