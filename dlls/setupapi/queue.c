@@ -539,7 +539,7 @@ BOOL WINAPI SetupQueueCopyIndirectW( PSP_FILE_COPY_PARAMS_W params )
     op->dst_file   = strdupW( params->TargetFilename );
 
     /* some defaults */
-    if (!op->src_file) op->src_file = op->dst_file;
+    if (!op->dst_file) op->dst_file = op->src_file;
     if (params->LayoutInf)
         FIXME("Unhandled LayoutInf %p.\n", params->LayoutInf);
 
