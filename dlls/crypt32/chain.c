@@ -3214,12 +3214,11 @@ static BOOL match_dns_to_subject_alt_name(const CERT_EXTENSION *ext,
 }
 
 static BOOL find_matching_domain_component(const CERT_NAME_INFO *name,
- LPCWSTR component)
+                                           const WCHAR *component, size_t len)
 {
-    BOOL matches = FALSE;
     DWORD i, j;
 
-    for (i = 0; !matches && i < name->cRDN; i++)
+    for (i = 0; i < name->cRDN; i++)
         for (j = 0; j < name->rgRDN[i].cRDNAttr; j++)
             if (!strcmp(szOID_DOMAIN_COMPONENT,
              name->rgRDN[i].rgRDNAttr[j].pszObjId))
@@ -3227,15 +3226,16 @@ static BOOL find_matching_domain_component(const CERT_NAME_INFO *name,
                 const CERT_RDN_ATTR *attr;
 
                 attr = &name->rgRDN[i].rgRDNAttr[j];
-                /* Compare with memicmpW rather than strcmpiW in order to avoid
+                /* Compare with strncmpiW rather than strcmpiW in order to avoid
                  * a match with a string with an embedded NULL.  The component
                  * must match one domain component attribute's entire string
                  * value with a case-insensitive match.
                  */
-                matches = !memicmpW(component, (LPCWSTR)attr->Value.pbData,
-                 attr->Value.cbData / sizeof(WCHAR));
+                if ((len == attr->Value.cbData / sizeof(WCHAR)) &&
+                    !strncmpiW(component, (LPCWSTR)attr->Value.pbData, len))
+                    return TRUE;
             }
-    return matches;
+    return FALSE;
 }
 
 static BOOL match_domain_component(LPCWSTR allowed_component, DWORD allowed_len,
@@ -3397,23 +3397,18 @@ static BOOL match_dns_to_subject_dn(PCCERT_CONTEXT cert, LPCWSTR server_name)
             do {
                 LPCWSTR dot = strchrW(ptr, '.'), end;
                 /* 254 is the maximum DNS label length, see RFC 1035 */
-                WCHAR component[255];
-                DWORD len;
+                size_t len;
 
                 end = dot ? dot : ptr + strlenW(ptr);
                 len = end - ptr;
-                if (len >= ARRAY_SIZE(component))
+                if (len >= 255)
                 {
                     WARN_(chain)("domain component %s too long\n",
                      debugstr_wn(ptr, len));
                     matches = FALSE;
                 }
-                else
-                {
-                    memcpy(component, ptr, len * sizeof(WCHAR));
-                    component[len] = 0;
-                    matches = find_matching_domain_component(name, component);
-                }
+                else matches = find_matching_domain_component(name, ptr, len);
+
                 ptr = dot ? dot + 1 : end;
             } while (matches && ptr && *ptr);
         }
