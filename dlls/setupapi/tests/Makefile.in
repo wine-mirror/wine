@@ -1,5 +1,5 @@
 TESTDLL   = setupapi.dll
-IMPORTS   = advapi32 setupapi shell32 uuid user32
+IMPORTS   = advapi32 cabinet setupapi shell32 uuid user32
 
 C_SRCS = \
 	devinst.c \
