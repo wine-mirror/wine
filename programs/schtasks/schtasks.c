@@ -22,7 +22,6 @@
 #include "taskschd.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(schtasks);
 
@@ -141,7 +140,7 @@ static int change_command(int argc, WCHAR *argv[])
     HRESULT hres;
 
     while (argc) {
-        if(!strcmpiW(argv[0], tn_optW)) {
+        if(!wcsicmp(argv[0], tn_optW)) {
             if (argc < 2) {
                 FIXME("Missing /tn value\n");
                 return 1;
@@ -155,12 +154,12 @@ static int change_command(int argc, WCHAR *argv[])
             task_name = argv[1];
             argc -= 2;
             argv += 2;
-        }else if (!strcmpiW(argv[0], enable_optW)) {
+        }else if (!wcsicmp(argv[0], enable_optW)) {
             enable = TRUE;
             have_option = TRUE;
             argc--;
             argv++;
-        }else if (!strcmpiW(argv[0], tr_optW)) {
+        }else if (!wcsicmp(argv[0], tr_optW)) {
             if (argc < 2) {
                 FIXME("Missing /tr value\n");
                 return 1;
@@ -214,7 +213,7 @@ static int create_command(int argc, WCHAR *argv[])
     HRESULT hres;
 
     while (argc) {
-        if (!strcmpiW(argv[0], xml_optW)) {
+        if (!wcsicmp(argv[0], xml_optW)) {
             if (argc < 2) {
                 FIXME("Missing /xml value\n");
                 return 1;
@@ -228,7 +227,7 @@ static int create_command(int argc, WCHAR *argv[])
             xml_file = argv[1];
             argc -= 2;
             argv += 2;
-        }else if(!strcmpiW(argv[0], tn_optW)) {
+        }else if(!wcsicmp(argv[0], tn_optW)) {
             if (argc < 2) {
                 FIXME("Missing /tn value\n");
                 return 1;
@@ -242,11 +241,11 @@ static int create_command(int argc, WCHAR *argv[])
             task_name = argv[1];
             argc -= 2;
             argv += 2;
-        }else if(!strcmpiW(argv[0], f_optW)) {
+        }else if(!wcsicmp(argv[0], f_optW)) {
             flags = TASK_CREATE_OR_UPDATE;
             argc--;
             argv++;
-        }else if (!strcmpiW(argv[0], ru_optW)) {
+        }else if (!wcsicmp(argv[0], ru_optW)) {
             if (argc < 2) {
                 FIXME("Missing /ru value\n");
                 return 1;
@@ -303,11 +302,11 @@ static int delete_command(int argc, WCHAR *argv[])
     HRESULT hres;
 
     while (argc) {
-        if (!strcmpiW(argv[0], f_optW)) {
+        if (!wcsicmp(argv[0], f_optW)) {
             TRACE("force opt\n");
             argc--;
             argv++;
-        }else if(!strcmpiW(argv[0], tn_optW)) {
+        }else if(!wcsicmp(argv[0], tn_optW)) {
             if (argc < 2) {
                 FIXME("Missing /tn value\n");
                 return 1;
@@ -358,11 +357,11 @@ int wmain(int argc, WCHAR *argv[])
 
     if (argc < 2)
         FIXME("Print current tasks state\n");
-    else if (!strcmpiW(argv[1], change_optW))
+    else if (!wcsicmp(argv[1], change_optW))
         ret = change_command(argc - 2, argv + 2);
-    else if (!strcmpiW(argv[1], create_optW))
+    else if (!wcsicmp(argv[1], create_optW))
         ret = create_command(argc - 2, argv + 2);
-    else if (!strcmpiW(argv[1], delete_optW))
+    else if (!wcsicmp(argv[1], delete_optW))
         ret = delete_command(argc - 2, argv + 2);
     else
         FIXME("Unsupported command %s\n", debugstr_w(argv[1]));
