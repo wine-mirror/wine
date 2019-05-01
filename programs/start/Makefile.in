@@ -1,6 +1,7 @@
 MODULE    = start.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = shell32 user32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = start.c
 

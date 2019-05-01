@@ -26,7 +26,6 @@
 #include <shlobj.h>
 #include <shellapi.h>
 
-#include <wine/unicode.h>
 #include <wine/debug.h>
 
 #include "resources.h"
@@ -40,7 +39,7 @@ static void output(const WCHAR *message)
 {
 	DWORD count;
 	DWORD   res;
-	int    wlen = strlenW(message);
+	int    wlen = lstrlenW(message);
 
 	if (!wlen) return;
 
@@ -131,8 +130,8 @@ static WCHAR *build_args( int argc, WCHAR **argvW )
 
 	for (i = 0; i < argc; i++ )
 	{
-		wlen += strlenW(argvW[i]) + 1;
-		if (strchrW(argvW[i], ' '))
+		wlen += lstrlenW(argvW[i]) + 1;
+		if (wcschr(argvW[i], ' '))
 			wlen += 2;
 	}
 	ret = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(WCHAR) );
@@ -140,10 +139,10 @@ static WCHAR *build_args( int argc, WCHAR **argvW )
 
 	for (i = 0, p = ret; i < argc; i++ )
 	{
-		if (strchrW(argvW[i], ' '))
-			p += sprintfW(p, FormatQuotesW, argvW[i]);
+		if (wcschr(argvW[i], ' '))
+                    p += swprintf(p, wlen - (p - ret), FormatQuotesW, argvW[i]);
 		else
-			p += sprintfW(p, FormatW, argvW[i]);
+                    p += swprintf(p, wlen - (p - ret), FormatW, argvW[i]);
 	}
 	return ret;
 }
@@ -154,7 +153,7 @@ static WCHAR *get_parent_dir(WCHAR* path)
 	WCHAR *result;
 	int len;
 
-	last_slash = strrchrW( path, '\\' );
+	last_slash = wcsrchr( path, '\\' );
 	if (last_slash == NULL)
 		len = 1;
 	else
@@ -376,8 +375,9 @@ int wmain (int argc, WCHAR *argv[])
 
                     /* explorer on windows always quotes the filename when running a binary on windows (see bug 5224) so we have to use CreateProcessW in this case */
 
-                    commandline = HeapAlloc(GetProcessHeap(), 0, (strlenW(sei.lpFile)+3+strlenW(sei.lpParameters))*sizeof(WCHAR));
-                    sprintfW(commandline, commandlineformat, sei.lpFile, sei.lpParameters);
+                    commandline = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sei.lpFile)+3+lstrlenW(sei.lpParameters))*sizeof(WCHAR));
+                    swprintf(commandline, lstrlenW(sei.lpFile) + 3 + lstrlenW(sei.lpParameters),
+                             commandlineformat, sei.lpFile, sei.lpParameters);
 
                     ZeroMemory(&startup_info, sizeof(startup_info));
                     startup_info.cb = sizeof(startup_info);
@@ -419,14 +419,14 @@ int wmain (int argc, WCHAR *argv[])
                     fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, sei.lpFile);
                 GetEnvironmentVariableW(pathextW, env, size);
 
-                filename_len = strlenW(filename);
+                filename_len = lstrlenW(filename);
                 name = HeapAlloc(GetProcessHeap(), 0, (filename_len + size) * sizeof(WCHAR));
                 if (!name)
                     fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, sei.lpFile);
 
                 sei.lpFile = name;
                 start = env;
-                while ((ptr = strchrW(start, ';')))
+                while ((ptr = wcschr(start, ';')))
                 {
                     if (start == ptr)
                     {
@@ -434,7 +434,7 @@ int wmain (int argc, WCHAR *argv[])
                         continue;
                     }
 
-                    strcpyW(name, filename);
+                    lstrcpyW(name, filename);
                     memcpy(&name[filename_len], start, (ptr - start) * sizeof(WCHAR));
                     name[filename_len + (ptr - start)] = 0;
 
