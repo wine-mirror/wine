@@ -758,6 +758,125 @@ static void test_call_driver(DEVICE_OBJECT *device)
     ok(status == STATUS_SUCCESS, "got %#x\n", status);
 }
 
+static int cancel_cnt;
+
+static void WINAPI cancel_irp(DEVICE_OBJECT *device, IRP *irp)
+{
+    IoReleaseCancelSpinLock(irp->CancelIrql);
+    ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
+    ok(!irp->CancelRoutine, "CancelRoutine = %p\n", irp->CancelRoutine);
+    irp->IoStatus.Status = STATUS_CANCELLED;
+    irp->IoStatus.Information = 0;
+    cancel_cnt++;
+}
+
+static NTSTATUS WINAPI cancel_test_completion(DEVICE_OBJECT *device, IRP *irp, void *context)
+{
+    ok(cancel_cnt == 1, "cancel_cnt = %d\n", cancel_cnt);
+    *(BOOL*)context = TRUE;
+    return STATUS_SUCCESS;
+}
+
+static void test_cancel_irp(DEVICE_OBJECT *device)
+{
+    IO_STACK_LOCATION *irpsp;
+    IO_STATUS_BLOCK iosb;
+    IRP *irp = NULL;
+    BOOL completion_called;
+    BOOLEAN r;
+    NTSTATUS status;
+
+    /* cancel IRP with no cancel routine */
+    irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
+
+    r = IoCancelIrp(irp);
+    ok(!r, "IoCancelIrp returned %x\n", r);
+    ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
+
+    r = IoCancelIrp(irp);
+    ok(!r, "IoCancelIrp returned %x\n", r);
+    IoFreeIrp(irp);
+
+    irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
+
+    /* cancel IRP with cancel routine */
+    status = IoCallDriver(device, irp);
+    ok(status == STATUS_PENDING, "IoCallDriver returned %#x\n", status);
+
+    ok(irp->CurrentLocation == 1, "CurrentLocation = %u\n", irp->CurrentLocation);
+    irpsp = IoGetCurrentIrpStackLocation(irp);
+    ok(irpsp->DeviceObject == device, "DeviceObject = %u\n", irpsp->DeviceObject);
+
+    IoSetCancelRoutine(irp, cancel_irp);
+    cancel_cnt = 0;
+    r = IoCancelIrp(irp);
+    ok(r == TRUE, "IoCancelIrp returned %x\n", r);
+    ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
+    ok(cancel_cnt == 1, "cancel_cnt = %d\n", cancel_cnt);
+
+    cancel_cnt = 0;
+    r = IoCancelIrp(irp);
+    ok(!r, "IoCancelIrp returned %x\n", r);
+    ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
+    ok(!cancel_cnt, "cancel_cnt = %d\n", cancel_cnt);
+
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+    /* cancel IRP with cancel and completion routines with no SL_INVOKE_ON_ERROR */
+    irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
+    IoSetCompletionRoutine(irp, cancel_test_completion, &completion_called, TRUE, FALSE, TRUE);
+
+    status = IoCallDriver(device, irp);
+    ok(status == STATUS_PENDING, "IoCallDriver returned %#x\n", status);
+
+    IoSetCancelRoutine(irp, cancel_irp);
+    cancel_cnt = 0;
+    r = IoCancelIrp(irp);
+    ok(r == TRUE, "IoCancelIrp returned %x\n", r);
+    ok(cancel_cnt == 1, "cancel_cnt = %d\n", cancel_cnt);
+    ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
+
+    completion_called = FALSE;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    ok(completion_called, "completion not called\n");
+
+    /* cancel IRP with cancel and completion routines with no SL_INVOKE_ON_CANCEL flag */
+    irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
+    IoSetCompletionRoutine(irp, cancel_test_completion, &completion_called, TRUE, TRUE, FALSE);
+
+    status = IoCallDriver(device, irp);
+    ok(status == STATUS_PENDING, "IoCallDriver returned %#x\n", status);
+
+    IoSetCancelRoutine(irp, cancel_irp);
+    cancel_cnt = 0;
+    r = IoCancelIrp(irp);
+    ok(r == TRUE, "IoCancelIrp returned %x\n", r);
+    ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
+    ok(cancel_cnt == 1, "cancel_cnt = %d\n", cancel_cnt);
+
+    completion_called = FALSE;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    ok(completion_called, "completion not called\n");
+
+    /* cancel IRP with cancel and completion routines, but no SL_INVOKE_ON_ERROR nor SL_INVOKE_ON_CANCEL flag */
+    irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
+    IoSetCompletionRoutine(irp, cancel_test_completion, &completion_called, TRUE, FALSE, FALSE);
+
+    status = IoCallDriver(device, irp);
+    ok(status == STATUS_PENDING, "IoCallDriver returned %#x\n", status);
+
+    IoSetCancelRoutine(irp, cancel_irp);
+    cancel_cnt = 0;
+    r = IoCancelIrp(irp);
+    ok(r == TRUE, "IoCancelIrp returned %x\n", r);
+    ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
+    ok(cancel_cnt == 1, "cancel_cnt = %d\n", cancel_cnt);
+
+    completion_called = FALSE;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    ok(!completion_called, "completion not called\n");
+}
+
 static int callout_cnt;
 
 static void WINAPI callout(void *parameter)
@@ -1294,6 +1413,7 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
 
     test_current_thread(TRUE);
     test_call_driver(device);
+    test_cancel_irp(device);
 
     /* print process report */
     if (winetest_debug)

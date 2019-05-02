@@ -336,7 +336,7 @@
 @ stdcall IoBuildSynchronousFsdRequest(long ptr ptr long ptr ptr ptr)
 @ stdcall IoCallDriver(ptr ptr)
 @ stub IoCancelFileOpen
-@ stub IoCancelIrp
+@ stdcall IoCancelIrp(ptr)
 @ stub IoCheckDesiredAccess
 @ stub IoCheckEaBufferValidity
 @ stub IoCheckFunctionAccess

@@ -1493,6 +1493,9 @@ NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 # endif
 #endif
 
+#define IoSetCancelRoutine(irp, routine) \
+    ((PDRIVER_CANCEL)InterlockedExchangePointer((void **)&(irp)->CancelRoutine, routine))
+
 static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routine, void *context,
                                           BOOLEAN on_success, BOOLEAN on_error, BOOLEAN on_cancel)
 {
@@ -1563,6 +1566,7 @@ PIRP      WINAPI IoBuildAsynchronousFsdRequest(ULONG,DEVICE_OBJECT*,void*,ULONG,
 PIRP      WINAPI IoBuildDeviceIoControlRequest(ULONG,DEVICE_OBJECT*,PVOID,ULONG,PVOID,ULONG,BOOLEAN,PKEVENT,IO_STATUS_BLOCK*);
 PIRP      WINAPI IoBuildSynchronousFsdRequest(ULONG,DEVICE_OBJECT*,PVOID,ULONG,PLARGE_INTEGER,PKEVENT,IO_STATUS_BLOCK*);
 NTSTATUS  WINAPI IoCallDriver(DEVICE_OBJECT*,IRP*);
+BOOLEAN   WINAPI IoCancelIrp(IRP*);
 VOID      WINAPI IoCompleteRequest(IRP*,UCHAR);
 NTSTATUS  WINAPI IoCreateDevice(DRIVER_OBJECT*,ULONG,UNICODE_STRING*,DEVICE_TYPE,ULONG,BOOLEAN,DEVICE_OBJECT**);
 NTSTATUS  WINAPI IoCreateDriver(UNICODE_STRING*,PDRIVER_INITIALIZE);

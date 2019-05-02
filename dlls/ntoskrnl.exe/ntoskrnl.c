@@ -2322,6 +2322,31 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
 
 
 /***********************************************************************
+ *           IoCancelIrp   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI IoCancelIrp( IRP *irp )
+{
+    PDRIVER_CANCEL cancel_routine;
+    KIRQL irql;
+
+    TRACE( "(%p)\n", irp );
+
+    IoAcquireCancelSpinLock( &irql );
+    irp->Cancel = TRUE;
+    if (!(cancel_routine = IoSetCancelRoutine( irp, NULL )))
+    {
+        IoReleaseCancelSpinLock( irp->CancelIrql );
+        return FALSE;
+    }
+
+    /* CancelRoutine is responsible for calling IoReleaseCancelSpinLock */
+    irp->CancelIrql = irql;
+    cancel_routine( IoGetCurrentIrpStackLocation(irp)->DeviceObject, irp );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           InterlockedCompareExchange   (NTOSKRNL.EXE.@)
  */
 DEFINE_FASTCALL_WRAPPER( NTOSKRNL_InterlockedCompareExchange, 12 )
