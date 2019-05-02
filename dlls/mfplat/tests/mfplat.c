@@ -2886,6 +2886,72 @@ static void test_MFCreateWaveFormatExFromMFMediaType(void)
     IMFMediaType_Release(mediatype);
 }
 
+static HRESULT WINAPI test_create_file_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    IMFByteStream *stream;
+    IUnknown *object;
+    HRESULT hr;
+
+    ok(!!result, "Unexpected result object.\n");
+
+    ok((IUnknown *)iface == IMFAsyncResult_GetStateNoAddRef(result), "Unexpected result state.\n");
+
+    hr = IMFAsyncResult_GetObject(result, &object);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFEndCreateFile(result, &stream);
+    ok(hr == S_OK, "Failed to get file stream, hr %#x.\n", hr);
+    IMFByteStream_Release(stream);
+
+    SetEvent(callback->event);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl test_create_file_callback_vtbl =
+{
+    testcallback_QueryInterface,
+    testcallback_AddRef,
+    testcallback_Release,
+    testcallback_GetParameters,
+    test_create_file_callback_Invoke,
+};
+
+static void test_async_create_file(void)
+{
+    struct test_callback callback = { { &test_create_file_callback_vtbl } };
+    WCHAR pathW[MAX_PATH], fileW[MAX_PATH];
+    IUnknown *cancel_cookie;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Fail to start up, hr %#x.\n", hr);
+
+    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
+    GetTempFileNameW(pathW, NULL, 0, fileW);
+
+    hr = MFBeginCreateFile(MF_ACCESSMODE_READWRITE, MF_OPENMODE_DELETE_IF_EXIST, MF_FILEFLAGS_NONE, fileW,
+            &callback.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface, &cancel_cookie);
+    ok(hr == S_OK, "Async create request failed, hr %#x.\n", hr);
+    ok(cancel_cookie != NULL, "Unexpected cancellation object.\n");
+
+    WaitForSingleObject(callback.event, INFINITE);
+
+    IUnknown_Release(cancel_cookie);
+
+    CloseHandle(callback.event);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    ret = DeleteFileW(fileW);
+    ok(ret, "Failed to delete test file.\n");
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -2920,6 +2986,7 @@ START_TEST(mfplat)
     test_attributes_serialization();
     test_wrapped_media_type();
     test_MFCreateWaveFormatExFromMFMediaType();
+    test_async_create_file();
 
     CoUninitialize();
 }

@@ -6713,3 +6713,260 @@ HRESULT WINAPI MFCreateSystemTimeSource(IMFPresentationTimeSource **time_source)
 
     return S_OK;
 }
+
+struct async_create_file
+{
+    IMFAsyncCallback IMFAsyncCallback_iface;
+    LONG refcount;
+    MF_FILE_ACCESSMODE access_mode;
+    MF_FILE_OPENMODE open_mode;
+    MF_FILE_FLAGS flags;
+    WCHAR *path;
+};
+
+struct async_create_file_result
+{
+    struct list entry;
+    IMFAsyncResult *result;
+    IMFByteStream *stream;
+};
+
+static struct list async_create_file_results = LIST_INIT(async_create_file_results);
+static CRITICAL_SECTION async_create_file_cs = { NULL, -1, 0, 0, 0, 0 };
+
+static struct async_create_file *impl_from_create_file_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct async_create_file, IMFAsyncCallback_iface);
+}
+
+static HRESULT WINAPI async_create_file_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI async_create_file_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct async_create_file *async = impl_from_create_file_IMFAsyncCallback(iface);
+    ULONG refcount = InterlockedIncrement(&async->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI async_create_file_callback_Release(IMFAsyncCallback *iface)
+{
+    struct async_create_file *async = impl_from_create_file_IMFAsyncCallback(iface);
+    ULONG refcount = InterlockedDecrement(&async->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(async->path);
+        heap_free(async);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI async_create_file_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_create_file_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct async_create_file *async = impl_from_create_file_IMFAsyncCallback(iface);
+    IMFAsyncResult *caller;
+    IMFByteStream *stream;
+    HRESULT hr;
+
+    caller = (IMFAsyncResult *)IMFAsyncResult_GetStateNoAddRef(result);
+
+    hr = MFCreateFile(async->access_mode, async->open_mode, async->flags, async->path, &stream);
+    if (SUCCEEDED(hr))
+    {
+        struct async_create_file_result *result_item;
+
+        result_item = heap_alloc(sizeof(*result_item));
+        if (result_item)
+        {
+            result_item->result = caller;
+            IMFAsyncResult_AddRef(caller);
+            result_item->stream = stream;
+            IMFByteStream_AddRef(stream);
+
+            EnterCriticalSection(&async_create_file_cs);
+            list_add_tail(&async_create_file_results, &result_item->entry);
+            LeaveCriticalSection(&async_create_file_cs);
+        }
+
+        IMFByteStream_Release(stream);
+    }
+    else
+        IMFAsyncResult_SetStatus(caller, hr);
+
+    MFInvokeCallback(caller);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl async_create_file_callback_vtbl =
+{
+    async_create_file_callback_QueryInterface,
+    async_create_file_callback_AddRef,
+    async_create_file_callback_Release,
+    async_create_file_callback_GetParameters,
+    async_create_file_callback_Invoke,
+};
+
+static WCHAR *heap_strdupW(const WCHAR *str)
+{
+    WCHAR *ret = NULL;
+
+    if (str)
+    {
+        unsigned int size;
+
+        size = (strlenW(str) + 1) * sizeof(WCHAR);
+        ret = heap_alloc(size);
+        if (ret)
+            memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
+/***********************************************************************
+ *      MFBeginCreateFile (mfplat.@)
+ */
+HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMODE open_mode, MF_FILE_FLAGS flags,
+        const WCHAR *path, IMFAsyncCallback *callback, IUnknown *state, IUnknown **cancel_cookie)
+{
+    struct async_create_file *async = NULL;
+    IMFAsyncResult *caller, *item = NULL;
+    HRESULT hr;
+
+    TRACE("%#x, %#x, %#x, %s, %p, %p, %p.\n", access_mode, open_mode, flags, debugstr_w(path), callback, state,
+            cancel_cookie);
+
+    if (cancel_cookie)
+        *cancel_cookie = NULL;
+
+    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &caller)))
+        return hr;
+
+    async = heap_alloc(sizeof(*async));
+    if (!async)
+    {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
+
+    async->IMFAsyncCallback_iface.lpVtbl = &async_create_file_callback_vtbl;
+    async->refcount = 1;
+    async->access_mode = access_mode;
+    async->open_mode = open_mode;
+    async->flags = flags;
+    async->path = heap_strdupW(path);
+    if (!async->path)
+    {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
+
+    hr = MFCreateAsyncResult(NULL, &async->IMFAsyncCallback_iface, (IUnknown *)caller, &item);
+    if (FAILED(hr))
+        goto failed;
+
+    if (cancel_cookie)
+    {
+        *cancel_cookie = (IUnknown *)caller;
+        IUnknown_AddRef(*cancel_cookie);
+    }
+
+    hr = MFInvokeCallback(item);
+
+failed:
+    if (async)
+        IMFAsyncCallback_Release(&async->IMFAsyncCallback_iface);
+    if (item)
+        IMFAsyncResult_Release(item);
+    if (caller)
+        IMFAsyncResult_Release(caller);
+
+    return hr;
+}
+
+static HRESULT async_create_file_pull_result(IUnknown *unk, IMFByteStream **stream)
+{
+    struct async_create_file_result *item;
+    HRESULT hr = MF_E_UNEXPECTED;
+    IMFAsyncResult *result;
+
+    *stream = NULL;
+
+    if (FAILED(IUnknown_QueryInterface(unk, &IID_IMFAsyncResult, (void **)&result)))
+        return hr;
+
+    EnterCriticalSection(&async_create_file_cs);
+
+    LIST_FOR_EACH_ENTRY(item, &async_create_file_results, struct async_create_file_result, entry)
+    {
+        if (result == item->result)
+        {
+            *stream = item->stream;
+            IMFAsyncResult_Release(item->result);
+            list_remove(&item->entry);
+            heap_free(item);
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&async_create_file_cs);
+
+    if (*stream)
+        hr = IMFAsyncResult_GetStatus(result);
+
+    IMFAsyncResult_Release(result);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      MFEndCreateFile (mfplat.@)
+ */
+HRESULT WINAPI MFEndCreateFile(IMFAsyncResult *result, IMFByteStream **stream)
+{
+    TRACE("%p, %p.\n", result, stream);
+
+    return async_create_file_pull_result((IUnknown *)result, stream);
+}
+
+/***********************************************************************
+ *      MFCancelCreateFile (mfplat.@)
+ */
+HRESULT WINAPI MFCancelCreateFile(IUnknown *cancel_cookie)
+{
+    IMFByteStream *stream = NULL;
+    HRESULT hr;
+
+    TRACE("%p.\n", cancel_cookie);
+
+    hr = async_create_file_pull_result(cancel_cookie, &stream);
+
+    if (stream)
+        IMFByteStream_Release(stream);
+
+    return hr;
+}

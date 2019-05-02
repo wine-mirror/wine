@@ -20,14 +20,14 @@
 @ stdcall MFAllocateWorkQueueEx(long ptr)
 @ stub MFAppendCollection
 @ stub MFAverageTimePerFrameToFrameRate
-@ stub MFBeginCreateFile
+@ stdcall MFBeginCreateFile(long long long wstr ptr ptr ptr)
 @ stub MFBeginGetHostByName
 @ stub MFBeginRegisterWorkQueueWithMMCSS
 @ stub MFBeginUnregisterWorkQueueWithMMCSS
 @ stub MFBlockThread
 @ stub MFCalculateBitmapImageSize
 @ stdcall MFCalculateImageSize(ptr long long ptr)
-@ stub MFCancelCreateFile
+@ stdcall MFCancelCreateFile(ptr)
 @ stdcall MFCancelWorkItem(int64)
 @ stdcall MFCompareFullToPartialMediaType(ptr ptr)
 @ stub MFCompareSockaddrAddresses
@@ -79,7 +79,7 @@
 @ stub MFDeserializeEvent
 @ stub MFDeserializeMediaTypeFromStream
 @ stub MFDeserializePresentationDescriptor
-@ stub MFEndCreateFile
+@ stdcall MFEndCreateFile(ptr ptr)
 @ stub MFEndGetHostByName
 @ stub MFEndRegisterWorkQueueWithMMCSS
 @ stub MFEndUnregisterWorkQueueWithMMCSS

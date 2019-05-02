@@ -353,7 +353,10 @@ typedef enum _MFWaveFormatExConvertFlags
 HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
+HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMODE open_mode, MF_FILE_FLAGS flags,
+        const WCHAR *path, IMFAsyncCallback *callback, IUnknown *state, IUnknown **cancel_cookie);
 HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height, UINT32 *size);
+HRESULT WINAPI MFCancelCreateFile(IUnknown *cancel_cookie);
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
 BOOL    WINAPI MFCompareFullToPartialMediaType(IMFMediaType *full_type, IMFMediaType *partial_type);
 HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines);
@@ -370,6 +373,7 @@ HRESULT WINAPI MFCreateMediaType(IMFMediaType **type);
 HRESULT WINAPI MFCreateSample(IMFSample **sample);
 HRESULT WINAPI MFCreateMemoryBuffer(DWORD max_length, IMFMediaBuffer **buffer);
 HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *type, WAVEFORMATEX **format, UINT32 *size, UINT32 flags);
+HRESULT WINAPI MFEndCreateFile(IMFAsyncResult *result, IMFByteStream **stream);
 void *  WINAPI MFHeapAlloc(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
 void    WINAPI MFHeapFree(void *ptr);
 HRESULT WINAPI MFGetAttributesAsBlob(IMFAttributes *attributes, UINT8 *buffer, UINT size);
