@@ -162,6 +162,12 @@ extern "C" {
 # define DECLSPEC_HIDDEN
 #endif
 
+#if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6))) && (defined(__i386__) || defined(__x86_64__))
+#define DECLSPEC_HOTPATCH __attribute__((__ms_hook_prologue__))
+#else
+#define DECLSPEC_HOTPATCH
+#endif
+
 #if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
 #define __WINE_ALLOC_SIZE(x) __attribute__((__alloc_size__(x)))
 #else

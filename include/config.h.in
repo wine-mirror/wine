@@ -4,9 +4,6 @@
 #define __WINE_CONFIG_H
 #ifndef WINE_CROSSTEST
 
-/* Define to a function attribute for Microsoft hotpatch assembly prefix. */
-#undef DECLSPEC_HOTPATCH
-
 /* Define to the file extension for executables. */
 #undef EXEEXT
 
