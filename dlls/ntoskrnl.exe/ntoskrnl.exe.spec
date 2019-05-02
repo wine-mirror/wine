@@ -330,7 +330,7 @@
 @ stub IoAttachDeviceByPointer
 @ stdcall IoAttachDeviceToDeviceStack(ptr ptr)
 @ stub IoAttachDeviceToDeviceStackSafe
-@ stub IoBuildAsynchronousFsdRequest
+@ stdcall IoBuildAsynchronousFsdRequest(long ptr ptr long ptr ptr)
 @ stdcall IoBuildDeviceIoControlRequest(long ptr ptr long ptr long long ptr ptr)
 @ stub IoBuildPartialMdl
 @ stdcall IoBuildSynchronousFsdRequest(long ptr ptr long ptr ptr ptr)

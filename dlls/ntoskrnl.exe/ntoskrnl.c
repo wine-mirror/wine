@@ -1366,18 +1366,17 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG code, PDEVICE_OBJECT device,
     return irp;
 }
 
-
-/**********************************************************
- *           IoBuildSynchronousFsdRequest  (NTOSKRNL.EXE.@)
+/***********************************************************************
+ *           IoBuildAsynchronousFsdRequest  (NTOSKRNL.EXE.@)
  */
-PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
-                                         PVOID buffer, ULONG length, PLARGE_INTEGER startoffset,
-                                         PKEVENT event, PIO_STATUS_BLOCK iosb)
+PIRP WINAPI IoBuildAsynchronousFsdRequest(ULONG majorfunc, DEVICE_OBJECT *device,
+                                          void *buffer, ULONG length, LARGE_INTEGER *startoffset,
+                                          IO_STATUS_BLOCK *iosb)
 {
     PIRP irp;
     PIO_STACK_LOCATION irpsp;
 
-    TRACE("(%d %p %p %d %p %p %p)\n", majorfunc, device, buffer, length, startoffset, event, iosb);
+    TRACE( "(%d %p %p %d %p %p)\n", majorfunc, device, buffer, length, startoffset, iosb );
 
     if (!(irp = IoAllocateIrp( device->StackSize, FALSE ))) return NULL;
 
@@ -1414,8 +1413,28 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
     }
     irp->RequestorMode = KernelMode;
     irp->UserIosb = iosb;
-    irp->UserEvent = event;
+    irp->UserEvent = NULL;
     irp->UserBuffer = buffer;
+    return irp;
+}
+
+
+
+/***********************************************************************
+ *           IoBuildSynchronousFsdRequest  (NTOSKRNL.EXE.@)
+ */
+PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
+                                         PVOID buffer, ULONG length, PLARGE_INTEGER startoffset,
+                                         PKEVENT event, PIO_STATUS_BLOCK iosb)
+{
+    IRP *irp;
+
+    TRACE("(%d %p %p %d %p %p)\n", majorfunc, device, buffer, length, startoffset, iosb);
+
+    irp = IoBuildAsynchronousFsdRequest( majorfunc, device, buffer, length, startoffset, iosb );
+    if (!irp) return NULL;
+
+    irp->UserEvent = event;
     return irp;
 }
 
