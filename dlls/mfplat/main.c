@@ -4956,12 +4956,46 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
     return hr;
 }
 
-static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSchemeHandler **handler)
+static HRESULT resolver_create_scheme_handler(const WCHAR *scheme, DWORD flags, IMFSchemeHandler **handler)
 {
     static const char schemehandlerspath[] = "Software\\Microsoft\\Windows Media Foundation\\SchemeHandlers";
     static const HKEY hkey_roots[2] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
+    unsigned int i;
+    HRESULT hr;
+
+    TRACE("%s, %#x, %p.\n", debugstr_w(scheme), flags, handler);
+
+    /* FIXME: check local handlers first */
+
+    for (i = 0; i < ARRAY_SIZE(hkey_roots); ++i)
+    {
+        HKEY hkey, hkey_handler;
+
+        hr = MF_E_UNSUPPORTED_SCHEME;
+
+        if (RegOpenKeyA(hkey_roots[i], schemehandlerspath, &hkey))
+            continue;
+
+        if (!RegOpenKeyW(hkey, scheme, &hkey_handler))
+        {
+            hr = resolver_create_registered_handler(hkey_handler, &IID_IMFSchemeHandler, (void **)handler);
+            RegCloseKey(hkey_handler);
+        }
+
+        RegCloseKey(hkey);
+
+        if (SUCCEEDED(hr))
+            break;
+    }
+
+    return hr;
+}
+
+static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSchemeHandler **handler)
+{
+    static const WCHAR fileschemeW[] = {'f','i','l','e',':',0};
     const WCHAR *ptr = url;
-    unsigned int len, i;
+    unsigned int len;
     WCHAR *scheme;
     HRESULT hr;
 
@@ -4985,9 +5019,12 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
         ptr++;
     }
 
-    /* Schemes must end with a ':' */
+    /* Schemes must end with a ':', if not found try "file:" */
     if (ptr == url || *ptr != ':')
-        return MF_E_UNSUPPORTED_SCHEME;
+    {
+        url = fileschemeW;
+        ptr = fileschemeW + ARRAY_SIZE(fileschemeW) - 1;
+    }
 
     len = ptr - url;
     scheme = heap_alloc((len + 1) * sizeof(WCHAR));
@@ -4997,26 +5034,9 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
     memcpy(scheme, url, len * sizeof(WCHAR));
     scheme[len] = 0;
 
-    /* FIXME: check local handlers first */
-
-    for (i = 0, hr = E_FAIL; i < ARRAY_SIZE(hkey_roots); ++i)
-    {
-        HKEY hkey, hkey_handler;
-
-        if (RegOpenKeyA(hkey_roots[i], schemehandlerspath, &hkey))
-            continue;
-
-        if (!RegOpenKeyW(hkey, scheme, &hkey_handler))
-        {
-            hr = resolver_create_registered_handler(hkey_handler, &IID_IMFSchemeHandler, (void **)handler);
-            RegCloseKey(hkey_handler);
-        }
-
-        RegCloseKey(hkey);
-
-        if (SUCCEEDED(hr))
-            break;
-    }
+    hr = resolver_create_scheme_handler(scheme, flags, handler);
+    if (FAILED(hr) && url != fileschemeW)
+        hr = resolver_create_scheme_handler(fileschemeW, flags, handler);
 
     heap_free(scheme);
 
