@@ -197,6 +197,85 @@ static void test_basic_ioctl(void)
     ok(!strcmp(buf, teststr), "got '%s'\n", buf);
 }
 
+static void test_cancel_io(void)
+{
+    OVERLAPPED overlapped, overlapped2;
+    DWORD cancel_cnt;
+    HANDLE file;
+    BOOL res;
+
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    overlapped2.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    file = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+
+    /* test cancelling all device requests */
+    res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
+    todo_wine
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
+
+    res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
+
+    res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped2);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
+    todo_wine
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
+    ok(cancel_cnt == 0, "cancel_cnt = %u\n", cancel_cnt);
+
+    CancelIo(file);
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
+    todo_wine
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
+    todo_wine
+    ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
+
+    /* test cancelling selected overlapped event */
+    res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
+    todo_wine
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
+
+    res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
+
+    res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped2);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
+
+    CancelIoEx(file, &overlapped);
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
+    todo_wine
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
+    todo_wine
+    ok(cancel_cnt == 1, "cancel_cnt = %u\n", cancel_cnt);
+
+    CancelIoEx(file, &overlapped2);
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
+    todo_wine
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
+    todo_wine
+    ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
+
+    CloseHandle(overlapped.hEvent);
+    CloseHandle(overlapped2.hEvent);
+    CloseHandle(file);
+}
+
 static void test_load_driver(SC_HANDLE service)
 {
     SERVICE_STATUS status;
@@ -268,6 +347,7 @@ START_TEST(ntoskrnl)
 
     test_basic_ioctl();
     main_test();
+    test_cancel_io();
     test_load_driver(service2);
 
     unload_driver(service2);

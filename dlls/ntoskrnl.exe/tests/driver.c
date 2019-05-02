@@ -770,6 +770,15 @@ static void WINAPI cancel_irp(DEVICE_OBJECT *device, IRP *irp)
     cancel_cnt++;
 }
 
+static void WINAPI cancel_ioctl_irp(DEVICE_OBJECT *device, IRP *irp)
+{
+    IoReleaseCancelSpinLock(irp->CancelIrql);
+    irp->IoStatus.Status = STATUS_CANCELLED;
+    irp->IoStatus.Information = 0;
+    cancel_cnt++;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
 static NTSTATUS WINAPI cancel_test_completion(DEVICE_OBJECT *device, IRP *irp, void *context)
 {
     ok(cancel_cnt == 1, "cancel_cnt = %d\n", cancel_cnt);
@@ -1505,6 +1514,22 @@ static NTSTATUS test_basic_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_cancel_count(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+{
+    ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    char *buffer = irp->AssociatedIrp.SystemBuffer;
+
+    if (!buffer)
+        return STATUS_ACCESS_VIOLATION;
+
+    if (length < sizeof(DWORD))
+        return STATUS_BUFFER_TOO_SMALL;
+
+    *(DWORD*)buffer = cancel_cnt;
+    *info = sizeof(DWORD);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS test_load_driver_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     BOOL *load = irp->AssociatedIrp.SystemBuffer;
@@ -1548,6 +1573,17 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             break;
         case IOCTL_WINETEST_LOAD_DRIVER:
             status = test_load_driver_ioctl(irp, stack, &irp->IoStatus.Information);
+            break;
+        case IOCTL_WINETEST_RESET_CANCEL:
+            cancel_cnt = 0;
+            status = STATUS_SUCCESS;
+            break;
+        case IOCTL_WINETEST_TEST_CANCEL:
+            IoSetCancelRoutine(irp, cancel_ioctl_irp);
+            IoMarkIrpPending(irp);
+            return STATUS_PENDING;
+        case IOCTL_WINETEST_GET_CANCEL_COUNT:
+            status = get_cancel_count(irp, stack, &irp->IoStatus.Information);
             break;
         default:
             break;
