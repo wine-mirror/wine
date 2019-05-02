@@ -16,25 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WIN32_LEAN_AND_MEAN
-#define WIN32_EXTRA_LEAN
-#define NOSERVICE
-#define NOMCX
-#define NOIME
-#define NOCOMM
-#define NOKANJI
-#define NORPC
-#define NOPROXYSTUB
-#define NOIMAGE
-#define NOTAPE
-
 #include <windows.h>
 #include <commdlg.h>
-
-#ifdef UNICODE
-#define _UNICODE
-#endif
-
 #include <locale.h>
 #include <time.h>
 
@@ -42,22 +25,7 @@
 #include <shellapi.h>   /* for ShellExecuteW() */
 #include <shlobj.h>
 
-#ifndef FILE_ATTRIBUTE_NOT_CONTENT_INDEXED
-#define FILE_ATTRIBUTE_ENCRYPTED            0x00000040
-#define FILE_ATTRIBUTE_SPARSE_FILE          0x00000200
-#define FILE_ATTRIBUTE_REPARSE_POINT        0x00000400
-#define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED  0x00002000
-#endif
-
-
-#ifdef  _DEBUG
-#define ASSERT(x)   {if (!(x)) DebugBreak();}
-#else
-#define ASSERT(x)   /* nothing */
-#endif
-
 #define BUFFER_LEN  1024
-
 
 enum IMAGE {
     IMG_NONE=-1,    IMG_FILE=0,         IMG_DOCUMENT,   IMG_EXECUTABLE,
@@ -129,5 +97,3 @@ typedef struct
 } WINEFILE_GLOBALS;
 
 extern WINEFILE_GLOBALS Globals;
-
-extern void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);

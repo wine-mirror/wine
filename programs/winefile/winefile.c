@@ -21,17 +21,10 @@
 
 #define COBJMACROS
 
+#include <assert.h>
+#include <stdio.h>
 #include "winefile.h"
 #include "resource.h"
-#include "wine/unicode.h"
-
-#ifndef _MAX_PATH
-#define _MAX_DRIVE          3
-#define _MAX_FNAME          256
-#define _MAX_DIR            _MAX_FNAME
-#define _MAX_EXT            _MAX_FNAME
-#define _MAX_PATH           260
-#endif
 
 #ifdef NONAMELESSUNION
 #define	UNION_MEMBER(x) DUMMYUNIONNAME.x
@@ -887,8 +880,8 @@ static int compareExt(const void* arg1, const void* arg2)
 	name1 = fd1->cFileName;
 	name2 = fd2->cFileName;
 
-	ext1 = strrchrW(name1, '.');
-	ext2 = strrchrW(name2, '.');
+	ext1 = wcsrchr(name1, '.');
+	ext2 = wcsrchr(name2, '.');
 
 	if (ext1)
 		ext1++;
@@ -1108,7 +1101,7 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 
 	if (path)
 	{
-		int pathlen = strlenW(path);
+		int pathlen = lstrlenW(path);
 		const WCHAR *npath = path;
 
 		if (path[0] == '"' && path[pathlen - 1] == '"')
@@ -1560,7 +1553,7 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR st
 					VS_FIXEDFILEINFO* pFixedFileInfo = (VS_FIXEDFILEINFO*)pVal;
                                         WCHAR buffer[BUFFER_LEN];
 
-                                        sprintfW(buffer, sFmt,
+                                        swprintf(buffer, ARRAY_SIZE(buffer), sFmt,
                                                  HIWORD(pFixedFileInfo->dwFileVersionMS), LOWORD(pFixedFileInfo->dwFileVersionMS),
                                                  HIWORD(pFixedFileInfo->dwFileVersionLS), LOWORD(pFixedFileInfo->dwFileVersionLS));
 
@@ -2614,7 +2607,7 @@ static BOOL is_registered_type(LPCWSTR ext)
 
 static enum FILE_TYPE get_file_type(LPCWSTR filename)
 {
-	LPCWSTR ext = strrchrW(filename, '.');
+	LPCWSTR ext = wcsrchr(filename, '.');
 	if (!ext)
 		ext = sEmpty;
 
@@ -3519,7 +3512,7 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
 	ChildWnd* child = (ChildWnd*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
-	ASSERT(child);
+	assert(child);
 
 	switch(nmsg) {
 		case WM_DRAWITEM: {
@@ -3849,7 +3842,7 @@ static LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM 
 {
 	ChildWnd* child = (ChildWnd*)GetWindowLongPtrW(GetParent(hwnd), GWLP_USERDATA);
 	Pane* pane = (Pane*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
-	ASSERT(child);
+	assert(child);
 
 	switch(nmsg) {
 		case WM_HSCROLL:
