@@ -233,6 +233,7 @@ static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
     ok(irpsp->FileObject == last_created_file, "FileObject != last_created_file\n");
     ok(irpsp->DeviceObject == device, "unexpected DeviceObject\n");
     ok(irpsp->FileObject->DeviceObject == device, "unexpected FileObject->DeviceObject\n");
+    ok(!irp->UserEvent, "UserEvent = %p\n", irp->UserEvent);
 }
 
 static void test_mdl_map(void)
@@ -692,6 +693,69 @@ static void test_sync(void)
     ok(ret == 0, "got %#x\n", ret);
 
     KeCancelTimer(&timer);
+}
+
+static void test_call_driver(DEVICE_OBJECT *device)
+{
+    IO_STACK_LOCATION *irpsp;
+    IO_STATUS_BLOCK iosb;
+    IRP *irp = NULL;
+    KEVENT event;
+    NTSTATUS status;
+
+    irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
+    ok(irp->UserIosb == &iosb, "unexpected UserIosb\n");
+    ok(!irp->Cancel, "Cancel = %x\n", irp->Cancel);
+    ok(!irp->CancelRoutine, "CancelRoutine = %x\n", irp->CancelRoutine);
+    ok(!irp->UserEvent, "UserEvent = %p\n", irp->UserEvent);
+    ok(irp->CurrentLocation == 2, "CurrentLocation = %u\n", irp->CurrentLocation);
+
+    irpsp = IoGetNextIrpStackLocation(irp);
+    ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
+    todo_wine
+    ok(!irpsp->DeviceObject, "DeviceObject = %u\n", irpsp->DeviceObject);
+    ok(!irpsp->FileObject, "FileObject = %u\n", irpsp->FileObject);
+    ok(!irpsp->CompletionRoutine, "CompletionRouptine = %p\n", irpsp->CompletionRoutine);
+
+    status = IoCallDriver(device, irp);
+    ok(status == STATUS_PENDING, "IoCallDriver returned %#x\n", status);
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+
+    irp = IoBuildSynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &event, &iosb);
+    ok(irp->UserIosb == &iosb, "unexpected UserIosb\n");
+    ok(!irp->Cancel, "Cancel = %x\n", irp->Cancel);
+    ok(!irp->CancelRoutine, "CancelRoutine = %x\n", irp->CancelRoutine);
+    ok(irp->UserEvent == &event, "UserEvent = %p\n", irp->UserEvent);
+    ok(irp->CurrentLocation == 2, "CurrentLocation = %u\n", irp->CurrentLocation);
+
+    irpsp = IoGetNextIrpStackLocation(irp);
+    ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
+    todo_wine
+    ok(!irpsp->DeviceObject, "DeviceObject = %u\n", irpsp->DeviceObject);
+    ok(!irpsp->FileObject, "FileObject = %u\n", irpsp->FileObject);
+    ok(!irpsp->CompletionRoutine, "CompletionRouptine = %p\n", irpsp->CompletionRoutine);
+
+    status = wait_single(&event, 0);
+    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+
+    status = IoCallDriver(device, irp);
+    ok(status == STATUS_PENDING, "IoCallDriver returned %#x\n", status);
+
+    status = wait_single(&event, 0);
+    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+    status = wait_single(&event, 0);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "got %#x\n", status);
 }
 
 static int callout_cnt;
@@ -1229,6 +1293,7 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
     main_test_work_item = NULL;
 
     test_current_thread(TRUE);
+    test_call_driver(device);
 
     /* print process report */
     if (winetest_debug)
@@ -1377,6 +1442,14 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
     return status;
 }
 
+static NTSTATUS WINAPI driver_FlushBuffers(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    ok(irpsp->DeviceObject == device, "device != DeviceObject\n");
+    IoMarkIrpPending(irp);
+    return STATUS_PENDING;
+}
+
 static NTSTATUS WINAPI driver_Close(DEVICE_OBJECT *device, IRP *irp)
 {
     irp->IoStatus.Status = STATUS_SUCCESS;
@@ -1410,6 +1483,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     /* Set driver functions */
     driver->MajorFunction[IRP_MJ_CREATE]            = driver_Create;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL]    = driver_IoControl;
+    driver->MajorFunction[IRP_MJ_FLUSH_BUFFERS]     = driver_FlushBuffers;
     driver->MajorFunction[IRP_MJ_CLOSE]             = driver_Close;
 
     RtlInitUnicodeString(&nameW, driver_device);
