@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 #include "winsock2.h"
 #include "ws2tcpip.h"
 #include "iphlpapi.h"
@@ -30,9 +28,6 @@
 #include <string.h>
 #include <icmpapi.h>
 #include <limits.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 #include <windows.h>
 
