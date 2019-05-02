@@ -1386,7 +1386,8 @@ static void build_windows_import_lib( DLLSPEC *spec )
             m_flag = NULL;
             break;
     }
-    strarray_add( &args, "-k", "-l", output_file_name, "-d", def_file, NULL );
+    strarray_add( &args, "-k", strendswith( output_file_name, ".delay.a" ) ? "-y" : "-l",
+                  output_file_name, "-d", def_file, NULL );
     if (m_flag)
         strarray_add( &args, "-m", m_flag, as_flags, NULL );
     spawn( args );

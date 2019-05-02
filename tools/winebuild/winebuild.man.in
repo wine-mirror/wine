@@ -48,7 +48,8 @@ Build a .def file from a spec file. The .spec file is specified via the
 .TP
 .BI \--implib
 Build a .a import library from a spec file. The .spec file is
-specified via the \fB-E\fR option.
+specified via the \fB-E\fR option. If the output library name ends
+in .delay.a, a delayed import library is built.
 .TP
 .B \--resources
 Generate a .o file containing all the input resources. This is useful

@@ -139,6 +139,7 @@ static struct strarray libs;
 static struct strarray enable_tests;
 static struct strarray cmdline_vars;
 static struct strarray disabled_dirs;
+static struct strarray delay_imports;
 static struct strarray top_install_lib;
 static struct strarray top_install_dev;
 static const char *root_src_dir;
@@ -2092,6 +2093,17 @@ static int is_cross_compiled( struct makefile *make )
 
 
 /*******************************************************************
+ *         needs_delay_lib
+ */
+static int needs_delay_lib( const struct makefile *make )
+{
+    if (*dll_ext && !crosstarget) return 0;
+    if (!make->importlib) return 0;
+    return strarray_exists( &delay_imports, make->importlib );
+}
+
+
+/*******************************************************************
  *         add_default_libraries
  */
 static struct strarray add_default_libraries( const struct makefile *make, struct strarray *deps )
@@ -2136,7 +2148,7 @@ static struct strarray add_default_libraries( const struct makefile *make, struc
  *         add_import_libs
  */
 static struct strarray add_import_libs( const struct makefile *make, struct strarray *deps,
-                                        struct strarray imports, int cross )
+                                        struct strarray imports, int cross, int delay )
 {
     struct strarray ret = empty_strarray;
     unsigned int i, j;
@@ -2165,7 +2177,8 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
         if (lib)
         {
-            if (cross) lib = replace_extension( lib, ".a", ".cross.a" );
+            if (delay) lib = replace_extension( lib, ".a", ".delay.a" );
+            else if (cross) lib = replace_extension( lib, ".a", ".cross.a" );
             lib = top_obj_dir_path( make, lib );
             strarray_add( deps, lib );
             strarray_add( &ret, lib );
@@ -2472,7 +2485,8 @@ static struct strarray output_importlib_symlinks( const struct makefile *parent,
                                                   const struct makefile *make )
 {
     struct strarray ret = empty_strarray;
-    const char *lib, *dst;
+    const char *lib, *dst, *ext[4];
+    int i, count = 0;
 
     if (!make->module) return ret;
     if (!make->importlib) return ret;
@@ -2484,15 +2498,13 @@ static struct strarray output_importlib_symlinks( const struct makefile *parent,
         !strcmp( make->module + strlen( make->importlib ), ".dll" ))
         return ret;
 
-    lib = strmake( "lib%s.%s", make->importlib, *dll_ext ? "def" : "a" );
-    dst = concat_paths( obj_dir_path( parent, "dlls" ), lib );
-    output( "%s: %s\n", dst, base_dir_path( make, lib ));
-    output_symlink_rule( concat_paths( make->base_dir + strlen("dlls/"), lib ), dst );
-    strarray_add( &ret, dst );
+    ext[count++] = *dll_ext ? "def" : "a";
+    if (needs_delay_lib( make )) ext[count++] = "delay.a";
+    if (crosstarget && !make->is_win16) ext[count++] = "cross.a";
 
-    if (crosstarget && !make->is_win16)
+    for (i = 0; i < count; i++)
     {
-        lib = strmake( "lib%s.cross.a", make->importlib );
+        lib = strmake( "lib%s.%s", make->importlib, ext[i] );
         dst = concat_paths( obj_dir_path( parent, "dlls" ), lib );
         output( "%s: %s\n", dst, base_dir_path( make, lib ));
         output_symlink_rule( concat_paths( make->base_dir + strlen("dlls/"), lib ), dst );
@@ -2919,8 +2931,8 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
 
     if (!imports.count) imports = make->imports;
     if (!dll_flags.count) dll_flags = make->extradllflags;
-    all_libs = add_import_libs( make, &dep_libs, imports, !!crosstarget );
-    add_import_libs( make, &dep_libs, get_default_imports( make ), !!crosstarget ); /* dependencies only */
+    all_libs = add_import_libs( make, &dep_libs, imports, !!crosstarget, 0 );
+    add_import_libs( make, &dep_libs, get_default_imports( make ), !!crosstarget, 0 ); /* dependencies only */
     strarray_addall( &all_libs, libs );
     dll_name = strmake( "%s.dll%s", obj, crosstarget ? "" : dll_ext );
     obj_name = strmake( "%s%s", obj_dir_path( make, obj ), crosstarget ? ".cross.o" : ".o" );
@@ -3116,9 +3128,9 @@ static void output_module( struct makefile *make )
     int need_cross = is_cross_compiled( make );
 
     if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
-    strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, need_cross ));
-    strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->imports, need_cross ));
-    add_import_libs( make, &dep_libs, get_default_imports( make ), need_cross );  /* dependencies only */
+    strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, need_cross, 1 ));
+    strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->imports, need_cross, 0 ));
+    add_import_libs( make, &dep_libs, get_default_imports( make ), need_cross, 0 );  /* dependencies only */
 
     if (need_cross)
     {
@@ -3190,6 +3202,11 @@ static void output_module( struct makefile *make )
         else
         {
             strarray_add( &make->clean_files, strmake( "lib%s.a", make->importlib ));
+            if (!*dll_ext && needs_delay_lib( make ))
+            {
+                strarray_add( &make->clean_files, strmake( "lib%s.delay.a", make->importlib ));
+                output( "%s.delay.a ", importlib_path );
+            }
             output( "%s.a: %s %s", importlib_path, tools_path( make, "winebuild" ), spec_file );
             output_filenames_obj_dir( make, make->implib_objs );
             output( "\n" );
@@ -3205,6 +3222,11 @@ static void output_module( struct makefile *make )
         {
             struct strarray cross_files = strarray_replace_extension( &make->implib_objs, ".o", ".cross.o" );
             strarray_add( &make->clean_files, strmake( "lib%s.cross.a", make->importlib ));
+            if (needs_delay_lib( make ))
+            {
+                strarray_add( &make->clean_files, strmake( "lib%s.delay.a", make->importlib ));
+                output( "%s.delay.a ", importlib_path );
+            }
             output( "%s.cross.a: %s %s", importlib_path, tools_path( make, "winebuild" ), spec_file );
             output_filenames_obj_dir( make, cross_files );
             output( "\n" );
@@ -3303,12 +3325,12 @@ static void output_test_module( struct makefile *make )
     char *stripped = replace_extension( make->testdll, ".dll", "_test-stripped.exe" );
     char *testres = replace_extension( make->testdll, ".dll", "_test.res" );
     struct strarray dep_libs = empty_strarray;
-    struct strarray all_libs = add_import_libs( make, &dep_libs, make->imports, !!crosstarget );
+    struct strarray all_libs = add_import_libs( make, &dep_libs, make->imports, !!crosstarget, 0 );
     struct makefile *parent = get_parent_makefile( make );
     const char *ext = crosstarget ? "" : dll_ext;
     const char *parent_ext = parent && is_cross_compiled( parent ) ? "" : dll_ext;
 
-    add_import_libs( make, &dep_libs, get_default_imports( make ), !!crosstarget ); /* dependencies only */
+    add_import_libs( make, &dep_libs, get_default_imports( make ), !!crosstarget, 0 ); /* dependencies only */
     strarray_addall( &all_libs, libs );
     strarray_add( &make->all_targets, strmake( "%s%s", testmodule, ext ));
     strarray_add( &make->clean_files, strmake( "%s%s", stripped, ext ));
@@ -3480,10 +3502,19 @@ static void output_subdirs( struct makefile *make )
             }
             else
             {
-                const char *libext = *dll_ext ? ".def" : ".a";
                 char *spec_file = top_src_dir_path( make, base_dir_path( submake,
                                                    replace_extension( submake->module, ".dll", ".spec" )));
-                output( "%s%s: %s", importlib_path, libext, spec_file );
+                if (*dll_ext)
+                {
+                    output( "%s.def: %s", importlib_path, spec_file );
+                    strarray_add( &build_deps, strmake( "%s.def", importlib_path ));
+                }
+                else
+                {
+                    strarray_add( &build_deps, strmake( "%s.a", importlib_path ));
+                    if (needs_delay_lib( submake )) output( "%s.delay.a ", importlib_path );
+                    output( "%s.a: %s", importlib_path, spec_file );
+                }
                 output_filename( tools_path( make, "winebuild" ));
                 output( "\n" );
                 output( "\t%s -w -o $@", tools_path( make, "winebuild" ));
@@ -3493,9 +3524,9 @@ static void output_subdirs( struct makefile *make )
                 output_filename( "--export" );
                 output_filename( spec_file );
                 output( "\n" );
-                strarray_add( &build_deps, strmake( "%s%s", importlib_path, libext ));
                 if (crosstarget && !submake->is_win16)
                 {
+                    if (needs_delay_lib( submake )) output( "%s.delay.a ", importlib_path );
                     output( "%s.cross.a: %s", importlib_path, spec_file );
                     output_filename( tools_path( make, "winebuild" ));
                     output( "\n" );
@@ -3506,6 +3537,8 @@ static void output_subdirs( struct makefile *make )
                     output( "\n" );
                     strarray_add( &build_deps, strmake( "%s.cross.a", importlib_path ));
                 }
+                if (needs_delay_lib( submake ))
+                    strarray_add( &build_deps, strmake( "%s.delay.a", importlib_path ));
             }
             strarray_addall( &symlinks, output_importlib_symlinks( make, submake ));
         }
@@ -4093,6 +4126,10 @@ static void load_sources( struct makefile *make )
 
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
     LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );
+
+    if (!*dll_ext || (crosstarget && make->use_msvcrt))
+        for (i = 0; i < make->delayimports.count; i++)
+            strarray_add_uniq( &delay_imports, make->delayimports.str[i] );
 }
 
 
