@@ -66,7 +66,7 @@ msgstr "技術支援資訊"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -80,7 +80,7 @@ msgstr "%s 技術支援資訊："
 msgid "Publisher:"
 msgstr "生產商："
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "版本："
 
@@ -147,8 +147,8 @@ msgstr "安裝(&I)"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "取消"
@@ -197,7 +197,7 @@ msgstr "無法執行移除程式 %s。 您想將這個移除程式從註冊表�
 msgid "Not specified"
 msgstr "未指定"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "名稱"
 
@@ -318,7 +318,7 @@ msgstr ""
 msgid "hours"
 msgstr ""
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "屬性 %s"
 
@@ -461,7 +461,7 @@ msgid "Dri&ves:"
 msgstr "磁碟機(&V)："
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "唯讀(&R)"
 
@@ -713,7 +713,7 @@ msgstr "屬性(&P)"
 msgid "Print to fi&le"
 msgstr "列印至檔案(&L)"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "名稱(&N)："
 
@@ -2969,7 +2969,7 @@ msgstr "位置"
 msgid "Select a certificate"
 msgstr "選取憑證儲存處"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "尚未實作"
 
@@ -3441,7 +3441,7 @@ msgstr ""
 msgid "Delete"
 msgstr "刪除"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "安全性"
 
@@ -9169,7 +9169,7 @@ msgid "&Open:"
 msgstr "開啟(&O):"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "瀏覽(&B)..."
 
@@ -9183,7 +9183,7 @@ msgstr "檔案類型"
 msgid "Location:"
 msgstr "位址："
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "大小："
 
@@ -9199,11 +9199,11 @@ msgstr "建立日期"
 msgid "Attributes:"
 msgstr "屬性(&A):"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "隱藏(&I)"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "保存(&A)"
 
@@ -9231,7 +9231,7 @@ msgstr "已修改"
 msgid "Last accessed:"
 msgstr "最後修改："
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "大小"
 
@@ -9243,7 +9243,7 @@ msgstr "類型"
 msgid "Modified"
 msgstr "已修改"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "屬性"
 
@@ -9271,7 +9271,7 @@ msgstr "原來的位置"
 msgid "Date deleted"
 msgstr "日期已刪除"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "桌面"
@@ -9393,7 +9393,7 @@ msgstr "程式檔案 (x86)"
 msgid "Contacts"
 msgstr "聯絡人"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "連結"
 
@@ -16600,67 +16600,67 @@ msgstr "垂直排列(&V)\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "關於 Wine 檔案管理員(&A)"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "選擇目的地"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "依類型"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "檔案類型"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "目錄(&D)"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "程式(&P)"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "我的文件(&M)"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "其他檔案(&O)"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "顯示隱藏或系統檔(&S)"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "檔案名稱(&F)："
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "完整路徑(&P)："
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "最後修改："
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "著作權(&Y)："
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "系統(&S)"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "壓縮(&C)"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "版本資訊"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr "S"
@@ -16681,31 +16681,27 @@ msgstr "Wine 檔案管理員"
 msgid "root fs"
 msgstr "根檔案系統"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "unixfs"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "命令殼"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr "建立日期"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr "存取日期"
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr "變更日期"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "索引/Inode"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%2 中剩下 %1"
 

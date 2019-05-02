@@ -73,7 +73,7 @@ msgstr "Podporni podatki"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -88,7 +88,7 @@ msgstr ""
 msgid "Publisher:"
 msgstr "Založnik:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "Različica:"
 
@@ -157,8 +157,8 @@ msgstr "&Namesti"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "Prekliči"
@@ -224,7 +224,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ni navedeno"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "Ime"
 
@@ -347,7 +347,7 @@ msgstr ""
 msgid "hours"
 msgstr ""
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "Lastnosti %s"
 
@@ -490,7 +490,7 @@ msgid "Dri&ves:"
 msgstr "Pog&oni:"
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "Samo za &branje"
 
@@ -742,7 +742,7 @@ msgstr "&Lastnosti"
 msgid "Print to fi&le"
 msgstr "Na&tisni v datoteko"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Ime:"
 
@@ -3043,7 +3043,7 @@ msgstr "Mesto"
 msgid "Select a certificate"
 msgstr "Izberite shrambo potrdila"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "Ni še podprto"
 
@@ -3516,7 +3516,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Izbriši"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "Varnost"
 
@@ -9303,7 +9303,7 @@ msgid "&Open:"
 msgstr "&Odpri:"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Brskaj ..."
 
@@ -9317,7 +9317,7 @@ msgstr "Vrsta datoteke"
 msgid "Location:"
 msgstr "Mesto:"
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "Velikost:"
 
@@ -9333,11 +9333,11 @@ msgstr "Ustvarjanje je spodletelo.\n"
 msgid "Attributes:"
 msgstr "&Atributi:"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "S&krito"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "&Arhiv"
 
@@ -9365,7 +9365,7 @@ msgstr "Spremenjeno"
 msgid "Last accessed:"
 msgstr "Nazadnje spremenjeno:"
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "Velikost"
 
@@ -9377,7 +9377,7 @@ msgstr "Vrsta"
 msgid "Modified"
 msgstr "Spremenjeno"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "Atributi"
 
@@ -9405,7 +9405,7 @@ msgstr "Izvirno mesto"
 msgid "Date deleted"
 msgstr "Datum je bil izbrisan"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Namizje"
@@ -9527,7 +9527,7 @@ msgstr "Programi (x86)"
 msgid "Contacts"
 msgstr "Stiki"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "Povezave"
 
@@ -16711,67 +16711,67 @@ msgstr "Razpostavi &navpično\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "&O upravljalniku datotek Wine"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "Izbira ciljne poti"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "Glede na vrsto datoteke"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "Vrsta datoteke"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "&Mape"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "&Programi"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "&Dokumenti"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "&Ostalo"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "Pokaži skrite/&sistemske datoteke"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "&Ime datoteke:"
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "Polna &pot:"
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "Nazadnje spremenjeno:"
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "&Avtorske pravice:"
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "&Sistemsko"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "S&tisnjeno"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "Podrobnosti o različici"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr "S"
@@ -16792,37 +16792,33 @@ msgstr "Upravljalnik datotek Wine"
 msgid "root fs"
 msgstr "korenski datotečni sistem"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "unixfs"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "Lupina"
 
-#: winefile.rc:109
+#: winefile.rc:108
 #, fuzzy
 #| msgid "Creation failed.\n"
 msgid "Creation date"
 msgstr "Ustvarjanje je spodletelo.\n"
 
-#: winefile.rc:110
+#: winefile.rc:109
 #, fuzzy
 #| msgid "Access denied.\n"
 msgid "Access date"
 msgstr "Dostop je zavrnjen.\n"
 
-#: winefile.rc:111
+#: winefile.rc:110
 #, fuzzy
 #| msgid "Certification Path"
 msgid "Modification date"
 msgstr "Pot potrdila"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "Kazalo/Inode"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%1 od %2 je prosto"
 

@@ -113,7 +113,6 @@
 #define IDS_WINEFILE                    1200
 #define IDS_ERROR                       1201
 #define IDS_ROOT_FS                     1202
-#define IDS_UNIXFS                      1203
 #define IDS_DESKTOP                     1204
 #define IDS_SHELL                       1205
 #define IDS_NO_IMPL                     1207
@@ -131,9 +130,6 @@
 
 /* range for drive bar command ids: 0x9000..0x90FF */
 
-#ifdef __WINE__
-#define ID_DRIVE_UNIX_FS                0x9000
-#endif
 #define ID_DRIVE_SHELL_NS               0x9001
 
 #define ID_DRIVE_FIRST                  0x9002
