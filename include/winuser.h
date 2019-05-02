@@ -20,7 +20,7 @@
 #define _WINUSER_
 
 #if !defined(_USER32_)
-#define WINUSERAPI DECLSPEC_IMPORT
+#define WINUSERAPI DECLSPEC_HIDDEN
 #else
 #define WINUSERAPI
 #endif

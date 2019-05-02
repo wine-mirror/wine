@@ -26,7 +26,7 @@ extern "C" {
 #ifdef _SLC_
 #define SLCAPI
 #else
-#define SLCAPI DECLSPEC_IMPORT
+#define SLCAPI DECLSPEC_HIDDEN
 #endif
 
 typedef GUID SLID;

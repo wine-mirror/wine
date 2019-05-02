@@ -26,7 +26,7 @@ extern "C" {
 #ifdef _ADVAPI32_
 #define WINADVAPI
 #else
-#define WINADVAPI DECLSPEC_IMPORT
+#define WINADVAPI DECLSPEC_HIDDEN
 #endif
 
 /* Service database names */

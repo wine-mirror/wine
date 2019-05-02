@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #ifndef _NORMALIZE_
-# define WINNORMALIZEAPI DECLSPEC_IMPORT
+# define WINNORMALIZEAPI DECLSPEC_HIDDEN
 #else
 # define WINNORMALIZEAPI
 #endif

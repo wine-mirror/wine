@@ -28,13 +28,13 @@ extern "C" {
 #ifdef _KERNEL32_
 #define WINBASEAPI
 #else
-#define WINBASEAPI DECLSPEC_IMPORT
+#define WINBASEAPI DECLSPEC_HIDDEN
 #endif
 
 #ifdef _ADVAPI32_
 #define WINADVAPI
 #else
-#define WINADVAPI DECLSPEC_IMPORT
+#define WINADVAPI DECLSPEC_HIDDEN
 #endif
 
 #include <libloaderapi.h>

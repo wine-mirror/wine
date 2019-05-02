@@ -29,7 +29,7 @@ extern "C" {
 #ifdef _USER32_
 #define WINUSERAPI
 #else
-#define WINUSERAPI DECLSPEC_IMPORT
+#define WINUSERAPI DECLSPEC_HIDDEN
 #endif
 
 /* Codepage Constants

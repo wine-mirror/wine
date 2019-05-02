@@ -27,13 +27,13 @@ extern "C" {
 #ifdef _GDI32_
 #define WINGDIAPI
 #else
-#define WINGDIAPI DECLSPEC_IMPORT
+#define WINGDIAPI DECLSPEC_HIDDEN
 #endif
 
 #ifdef _OPENGL32_
 #define WGLAPI
 #else
-#define WGLAPI DECLSPEC_IMPORT
+#define WGLAPI DECLSPEC_HIDDEN
 #endif
 
 typedef struct _ABCFLOAT {
