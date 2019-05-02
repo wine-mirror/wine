@@ -752,7 +752,6 @@ static void test_call_driver(DEVICE_OBJECT *device)
     IoCompleteRequest(irp, IO_NO_INCREMENT);
 
     status = wait_single(&event, 0);
-    todo_wine
     ok(status == STATUS_SUCCESS, "got %#x\n", status);
 }
 
