@@ -28,7 +28,6 @@
 #include <objbase.h>
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winemsibuilder);
 
@@ -131,7 +130,7 @@ static WCHAR *encode_stream( const WCHAR *in )
     DWORD c, next, count;
     WCHAR *out, *p;
 
-    count = strlenW( in );
+    count = lstrlenW( in );
     if (count > MAX_STREAM_NAME)
         return NULL;
 
