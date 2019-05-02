@@ -28,9 +28,9 @@
 
 void fatal (const char* msg);
 void warning (const char* msg);
-void xprintf (const char *fmt, ...);
-char *vstrmake (size_t *lenp, va_list ap);
-char *strmake (size_t *lenp, ...);
+void WINAPIV xprintf (const char *fmt, ...);
+char *vstrmake (size_t *lenp, __ms_va_list ap);
+char * WINAPIV strmake (size_t *lenp, ...);
 int goodtagchar (char c);
 const char *findbadtagchar (const char *tag);
 
@@ -72,6 +72,6 @@ extern char *email;
 extern BOOL aborting;
 int guiAskTag (void);
 int guiAskEmail (void);
-int report (enum report_type t, ...);
+int WINAPIV report (enum report_type t, ...);
 
 #endif /* __WINETESTS_H */

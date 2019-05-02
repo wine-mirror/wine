@@ -25,9 +25,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define COBJMACROS
 #include <stdio.h>
 #include <assert.h>
