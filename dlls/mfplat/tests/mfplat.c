@@ -36,6 +36,7 @@ DEFINE_GUID(DUMMY_CLSID, 0x12345678,0x1234,0x1234,0x12,0x13,0x14,0x15,0x16,0x17,
 DEFINE_GUID(DUMMY_GUID1, 0x12345678,0x1234,0x1234,0x21,0x21,0x21,0x21,0x21,0x21,0x21,0x21);
 DEFINE_GUID(DUMMY_GUID2, 0x12345678,0x1234,0x1234,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22);
 DEFINE_GUID(DUMMY_GUID3, 0x12345678,0x1234,0x1234,0x23,0x23,0x23,0x23,0x23,0x23,0x23,0x23);
+DEFINE_GUID(CLSID_FileSchemeHandler, 0x477ec299, 0x1421, 0x4bdd, 0x97, 0x1f, 0x7c, 0xcb, 0x93, 0x3f, 0x21, 0xad);
 
 #undef INITGUID
 #include <guiddef.h>
@@ -288,15 +289,52 @@ static const IMFAsyncCallbackVtbl test_create_from_url_callback_vtbl =
     test_create_from_url_callback_Invoke,
 };
 
+static HRESULT WINAPI test_create_from_file_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    IMFSchemeHandler *handler;
+    IUnknown *object, *object2;
+    MF_OBJECT_TYPE obj_type;
+    HRESULT hr;
+
+    ok(!!result, "Unexpected result object.\n");
+
+    handler = (IMFSchemeHandler *)IMFAsyncResult_GetStateNoAddRef(result);
+
+    hr = IMFSchemeHandler_EndCreateObject(handler, result, &obj_type, &object);
+    ok(hr == S_OK, "Failed to create an object, hr %#x.\n", hr);
+
+    hr = IMFAsyncResult_GetObject(result, &object2);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    IUnknown_Release(object);
+
+    SetEvent(callback->event);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl test_create_from_file_handler_callback_vtbl =
+{
+    testcallback_QueryInterface,
+    testcallback_AddRef,
+    testcallback_Release,
+    testcallback_GetParameters,
+    test_create_from_file_handler_callback_Invoke,
+};
+
 static void test_source_resolver(void)
 {
     static const WCHAR file_type[] = {'v','i','d','e','o','/','m','p','4',0};
     struct test_callback callback = { { &test_create_from_url_callback_vtbl } };
+    struct test_callback callback2 = { { &test_create_from_file_handler_callback_vtbl } };
     IMFSourceResolver *resolver, *resolver2;
+    IMFSchemeHandler *scheme_handler;
     IMFAttributes *attributes;
     IMFMediaSource *mediasource;
     IMFPresentationDescriptor *descriptor;
     IMFMediaTypeHandler *handler;
+    BOOL selected, do_uninit;
     MF_OBJECT_TYPE obj_type;
     IMFStreamDescriptor *sd;
     IUnknown *cancel_cookie;
@@ -304,7 +342,6 @@ static void test_source_resolver(void)
     WCHAR pathW[MAX_PATH];
     HRESULT hr;
     WCHAR *filename;
-    BOOL selected;
     GUID guid;
 
     if (!pMFCreateSourceResolver)
@@ -417,8 +454,6 @@ todo_wine {
     if (SUCCEEDED(hr))
         WaitForSingleObject(callback.event, INFINITE);
 
-    CloseHandle(callback.event);
-
     /* With explicit scheme. */
     lstrcpyW(pathW, fileschemeW);
     lstrcatW(pathW, filename);
@@ -432,10 +467,40 @@ todo_wine
 
     IMFSourceResolver_Release(resolver);
 
+    /* Create directly through scheme handler. */
+    hr = CoInitialize(NULL);
+    ok(SUCCEEDED(hr), "Failed to initialize, hr %#x.\n", hr);
+    do_uninit = hr == S_OK;
+
+    hr = CoCreateInstance(&CLSID_FileSchemeHandler, NULL, CLSCTX_INPROC_SERVER, &IID_IMFSchemeHandler,
+            (void **)&scheme_handler);
+    ok(hr == S_OK, "Failed to create handler object, hr %#x.\n", hr);
+
+    callback2.event = callback.event;
+    cancel_cookie = NULL;
+    hr = IMFSchemeHandler_BeginCreateObject(scheme_handler, pathW, MF_RESOLUTION_MEDIASOURCE, NULL, &cancel_cookie,
+            &callback2.IMFAsyncCallback_iface, (IUnknown *)scheme_handler);
+todo_wine {
+    ok(hr == S_OK, "Create request failed, hr %#x.\n", hr);
+    ok(!!cancel_cookie, "Unexpected cancel object.\n");
+}
+    if (cancel_cookie)
+        IUnknown_Release(cancel_cookie);
+
+    if (SUCCEEDED(hr))
+        WaitForSingleObject(callback2.event, INFINITE);
+
+    IMFSchemeHandler_Release(scheme_handler);
+
+    if (do_uninit)
+        CoUninitialize();
+
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     DeleteFileW(filename);
+
+    CloseHandle(callback.event);
 }
 
 static void init_functions(void)
