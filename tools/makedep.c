@@ -2957,6 +2957,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     output_filename( source->filename );
     output_filename( obj_name );
     output_filenames( all_libs );
+    output_filename( crosstarget ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
 }
 
@@ -3182,6 +3183,7 @@ static void output_module( struct makefile *make )
     output_filenames_obj_dir( make, need_cross ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
+    output_filename( need_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
 
     if (spec_file && make->importlib)
@@ -3340,6 +3342,7 @@ static void output_test_module( struct makefile *make )
     output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
+    output_filename( crosstarget ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
     output( "%s%s:\n", obj_dir_path( make, stripped ), ext );
     output_winegcc_command( make, !!crosstarget );
@@ -3349,6 +3352,7 @@ static void output_test_module( struct makefile *make )
     output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
     output_filenames( all_libs );
+    output_filename( crosstarget ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
     output( "%s%s %s%s:", obj_dir_path( make, testmodule ), ext, obj_dir_path( make, stripped ), ext );
     output_filenames_obj_dir( make, crosstarget ? make->crossobj_files : make->object_files );
