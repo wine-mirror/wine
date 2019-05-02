@@ -8,3 +8,5 @@ C_SRCS = \
 	topology.c
 
 IDL_SRCS = mf.idl
+
+RC_SRCS = mf.rc
