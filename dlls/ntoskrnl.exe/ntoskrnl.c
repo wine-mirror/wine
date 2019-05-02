@@ -622,7 +622,6 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = IRP_MJ_CREATE;
-    irpsp->DeviceObject = device;
     irpsp->FileObject = file;
     irpsp->Parameters.Create.SecurityContext = NULL;  /* FIXME */
     irpsp->Parameters.Create.Options = params->create.options;
@@ -667,7 +666,6 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = IRP_MJ_CLOSE;
-    irpsp->DeviceObject = device;
     irpsp->FileObject = file;
 
     irp->Tail.Overlay.OriginalFileObject = file;
@@ -1332,7 +1330,7 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG code, PDEVICE_OBJECT device,
     irpsp->Parameters.DeviceIoControl.IoControlCode = code;
     irpsp->Parameters.DeviceIoControl.InputBufferLength = in_len;
     irpsp->Parameters.DeviceIoControl.OutputBufferLength = out_len;
-    irpsp->DeviceObject = device;
+    irpsp->DeviceObject = NULL;
     irpsp->CompletionRoutine = NULL;
 
     switch (code & 3)
@@ -1382,7 +1380,7 @@ PIRP WINAPI IoBuildAsynchronousFsdRequest(ULONG majorfunc, DEVICE_OBJECT *device
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = majorfunc;
-    irpsp->DeviceObject = device;
+    irpsp->DeviceObject = NULL;
     irpsp->CompletionRoutine = NULL;
 
     irp->AssociatedIrp.SystemBuffer = buffer;
@@ -1966,6 +1964,7 @@ NTSTATUS WINAPI IoCallDriver( DEVICE_OBJECT *device, IRP *irp )
 
     --irp->CurrentLocation;
     irpsp = --irp->Tail.Overlay.s.u2.CurrentStackLocation;
+    irpsp->DeviceObject = device;
     dispatch = device->DriverObject->MajorFunction[irpsp->MajorFunction];
 
     TRACE_(relay)( "\1Call driver dispatch %p (device=%p,irp=%p)\n", dispatch, device, irp );

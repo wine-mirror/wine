@@ -712,7 +712,6 @@ static void test_call_driver(DEVICE_OBJECT *device)
 
     irpsp = IoGetNextIrpStackLocation(irp);
     ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
-    todo_wine
     ok(!irpsp->DeviceObject, "DeviceObject = %u\n", irpsp->DeviceObject);
     ok(!irpsp->FileObject, "FileObject = %u\n", irpsp->FileObject);
     ok(!irpsp->CompletionRoutine, "CompletionRouptine = %p\n", irpsp->CompletionRoutine);
@@ -735,7 +734,6 @@ static void test_call_driver(DEVICE_OBJECT *device)
 
     irpsp = IoGetNextIrpStackLocation(irp);
     ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
-    todo_wine
     ok(!irpsp->DeviceObject, "DeviceObject = %u\n", irpsp->DeviceObject);
     ok(!irpsp->FileObject, "FileObject = %u\n", irpsp->FileObject);
     ok(!irpsp->CompletionRoutine, "CompletionRouptine = %p\n", irpsp->CompletionRoutine);
