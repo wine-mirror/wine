@@ -765,7 +765,7 @@ static DWORD CALLBACK device_report_thread(void *args)
             break;
         size = read(plfds[0].fd, report_buffer, sizeof(report_buffer));
         if (size == -1)
-            TRACE_(hid_report)("Read failed. Likely an unplugged device\n");
+            TRACE_(hid_report)("Read failed. Likely an unplugged device %d %s\n", errno, strerror(errno));
         else if (size == 0)
             TRACE_(hid_report)("Failed to read report\n");
         else
@@ -827,6 +827,7 @@ static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
     }
     else
     {
+        TRACE("write failed: %d %d %s\n", rc, errno, strerror(errno));
         *written = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -847,6 +848,7 @@ static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
     }
     else
     {
+        TRACE_(hid_report)("ioctl(HIDIOCGFEATURE(%d)) failed: %d %s\n", length, errno, strerror(errno));
         *read = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -887,6 +889,7 @@ static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
     }
     else
     {
+        TRACE_(hid_report)("ioctl(HIDIOCSFEATURE(%d)) failed: %d %s\n", length, errno, strerror(errno));
         *written = 0;
         return STATUS_UNSUCCESSFUL;
     }
