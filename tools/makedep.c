@@ -2086,8 +2086,14 @@ static struct makefile *get_parent_makefile( struct makefile *make )
 static int needs_cross_lib( const struct makefile *make )
 {
     if (!crosstarget) return 0;
-    if (!make->importlib) return 0;
-    return strarray_exists( &cross_import_libs, make->importlib );
+    if (make->importlib) return strarray_exists( &cross_import_libs, make->importlib );
+    if (make->staticlib)
+    {
+        const char *name = replace_extension( make->staticlib, ".a", "" );
+        if (!strncmp( name, "lib", 3 )) name += 3;
+        return strarray_exists( &cross_import_libs, name );
+    }
+    return 0;
 }
 
 
@@ -2974,7 +2980,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
                       (make->is_cross ||
                        ((source->file->flags & FLAG_C_IMPLIB) &&
                         (needs_cross_lib( make ) || needs_delay_lib( make ))) ||
-                       (make->module && make->staticlib)));
+                       (make->staticlib && needs_cross_lib( make ))));
     int need_obj = (!need_cross ||
                     (source->file->flags & FLAG_C_IMPLIB) ||
                     (make->module && make->staticlib));
@@ -3289,7 +3295,7 @@ static void output_static_lib( struct makefile *make )
     output( "\n\t%s $@\n", ranlib );
     add_install_rule( make, make->staticlib, make->staticlib,
                       strmake( "d$(dlldir)/%s", make->staticlib ));
-    if (crosstarget && make->module)
+    if (needs_cross_lib( make ))
     {
         char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
 
