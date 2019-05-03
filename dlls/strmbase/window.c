@@ -22,7 +22,6 @@
 
 #include "dshow.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/strmbase.h"
 #include "uuids.h"
 #include "vfwmsgs.h"

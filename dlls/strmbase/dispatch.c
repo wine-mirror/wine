@@ -21,7 +21,6 @@
 #define COBJMACROS
 
 #include "dshow.h"
-#include "wine/unicode.h"
 #include "wine/strmbase.h"
 #include "uuids.h"
 #include "vfwmsgs.h"

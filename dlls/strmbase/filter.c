@@ -22,7 +22,6 @@
 
 #include "dshow.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/strmbase.h"
 #include "uuids.h"
 #include <assert.h>
@@ -162,7 +161,7 @@ HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin 
         }
         if (info.pFilter) IBaseFilter_Release(info.pFilter);
 
-        if (!strcmpW(id, info.achName))
+        if (!lstrcmpW(id, info.achName))
         {
             *ret = pin;
             return S_OK;
@@ -179,7 +178,7 @@ HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *
     BaseFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%p)\n", This, pInfo);
 
-    strcpyW(pInfo->achName, This->filterInfo.achName);
+    lstrcpyW(pInfo->achName, This->filterInfo.achName);
     pInfo->pGraph = This->filterInfo.pGraph;
 
     if (pInfo->pGraph)
@@ -197,7 +196,7 @@ HRESULT WINAPI BaseFilterImpl_JoinFilterGraph(IBaseFilter * iface, IFilterGraph 
     EnterCriticalSection(&This->csFilter);
     {
         if (pName)
-            strcpyW(This->filterInfo.achName, pName);
+            lstrcpyW(This->filterInfo.achName, pName);
         else
             *This->filterInfo.achName = '\0';
         This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */

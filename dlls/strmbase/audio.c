@@ -24,7 +24,6 @@
 #include "dshow.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
-#include "wine/unicode.h"
 #include "wine/strmbase.h"
 
 

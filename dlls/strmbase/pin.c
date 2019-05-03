@@ -23,7 +23,6 @@
 
 #include "dshow.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/strmbase.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
@@ -146,7 +145,7 @@ out:
 static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
 {
     /* avoid copying uninitialized data */
-    strcpyW(pDest->achName, pSrc->achName);
+    lstrcpyW(pDest->achName, pSrc->achName);
     pDest->dir = pSrc->dir;
     pDest->pFilter = pSrc->pFilter;
 }
@@ -296,11 +295,11 @@ HRESULT WINAPI BasePinImpl_QueryId(IPin * iface, LPWSTR * Id)
 
     TRACE("(%p)->(%p)\n", This, Id);
 
-    *Id = CoTaskMemAlloc((strlenW(This->pinInfo.achName) + 1) * sizeof(WCHAR));
+    *Id = CoTaskMemAlloc((lstrlenW(This->pinInfo.achName) + 1) * sizeof(WCHAR));
     if (!*Id)
         return E_OUTOFMEMORY;
 
-    strcpyW(*Id, This->pinInfo.achName);
+    lstrcpyW(*Id, This->pinInfo.achName);
 
     return S_OK;
 }
