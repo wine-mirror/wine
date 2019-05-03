@@ -3429,7 +3429,6 @@ struct set_irp_result_request
     obj_handle_t handle;
     unsigned int status;
     data_size_t  size;
-    client_ptr_t file_ptr;
     /* VARARG(data,bytes); */
 };
 struct set_irp_result_reply
@@ -6695,6 +6694,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 582
+#define SERVER_PROTOCOL_VERSION 583
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

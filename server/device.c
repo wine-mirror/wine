@@ -943,8 +943,6 @@ DECL_HANDLER(set_irp_result)
 
     if ((irp = (struct irp_call *)get_handle_obj( current->process, req->handle, 0, &irp_call_ops )))
     {
-        if (irp->file && irp->file->device->manager)
-            set_kernel_object( irp->file->device->manager, &irp->file->obj, req->file_ptr );
         set_irp_result( irp, req->status, get_req_data(), get_req_data_size(), req->size );
         close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
         release_object( irp );

@@ -562,7 +562,6 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
     {
         req->handle   = wine_server_obj_handle( irp_handle );
         req->status   = irp->IoStatus.u.Status;
-        req->file_ptr = wine_server_client_ptr( file );
         if (irp->IoStatus.u.Status >= 0)
         {
             req->size = irp->IoStatus.Information;
@@ -606,8 +605,10 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     IO_STACK_LOCATION *irpsp;
     FILE_OBJECT *file;
     DEVICE_OBJECT *device = wine_server_get_ptr( params->create.device );
+    HANDLE handle = wine_server_ptr_handle( params->create.file );
 
-    if (!(file = alloc_kernel_object( IoFileObjectType, NULL, sizeof(*file), 1 ))) return STATUS_NO_MEMORY;
+    if (!(file = alloc_kernel_object( IoFileObjectType, handle, sizeof(*file), 0 )))
+        return STATUS_NO_MEMORY;
 
     TRACE( "device %p -> file %p\n", device, file );
 
@@ -615,12 +616,9 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     file->Size = sizeof(*file);
     file->DeviceObject = device;
 
-    if (!(irp = IoAllocateIrp( device->StackSize, FALSE )))
-    {
-        ObDereferenceObject( file );
-        return STATUS_NO_MEMORY;
-    }
+    if (!(irp = IoAllocateIrp( device->StackSize, FALSE ))) return STATUS_NO_MEMORY;
 
+    ObReferenceObject( file );
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = IRP_MJ_CREATE;
     irpsp->FileObject = file;

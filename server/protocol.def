@@ -2476,7 +2476,6 @@ enum message_type
     obj_handle_t handle;          /* handle to the irp */
     unsigned int status;          /* status of the irp */
     data_size_t  size;            /* result size (input or output depending on the operation) */
-    client_ptr_t file_ptr;        /* opaque pointer to the file object */
     VARARG(data,bytes);           /* output data of the irp */
 @END
 

@@ -3014,7 +3014,6 @@ static void dump_set_irp_result_request( const struct set_irp_result_request *re
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", status=%08x", req->status );
     fprintf( stderr, ", size=%u", req->size );
-    dump_uint64( ", file_ptr=", &req->file_ptr );
     dump_varargs_bytes( ", data=", cur_size );
 }
 
