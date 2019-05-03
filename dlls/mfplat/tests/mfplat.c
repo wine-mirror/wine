@@ -192,12 +192,11 @@ if(0)
     count = 0;
     ret = MFTEnum(MFT_CATEGORY_OTHER, 0, NULL, NULL, NULL, NULL, &count);
     ok(ret == E_POINTER, "Failed to enumerate filters: %x\n", ret);
-    ok(count == 0, "Expected count > 0\n");
+    ok(count == 0, "Expected count == 0\n");
 
     clsids = NULL;
     ret = MFTEnum(MFT_CATEGORY_OTHER, 0, NULL, NULL, NULL, &clsids, NULL);
     ok(ret == E_POINTER, "Failed to enumerate filters: %x\n", ret);
-    ok(count == 0, "Expected count > 0\n");
 }
 
     count = 0;
