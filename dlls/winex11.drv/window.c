@@ -21,6 +21,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -2764,6 +2765,25 @@ static BOOL is_netwm_supported( Display *display, Atom atom )
 
 
 /***********************************************************************
+ *              start_screensaver
+ */
+static LRESULT start_screensaver(void)
+{
+    if (root_window == DefaultRootWindow(gdi_display))
+    {
+        const char *argv[3] = { "xdg-screensaver", "activate", NULL };
+        int pid = _spawnvp( _P_DETACH, argv[0], argv );
+        if (pid > 0)
+        {
+            TRACE( "started process %d\n", pid );
+            return 0;
+        }
+    }
+    return -1;
+}
+
+
+/***********************************************************************
  *           SysCommand   (X11DRV.@)
  *
  * Perform WM_SYSCOMMAND handling.
@@ -2774,7 +2794,11 @@ LRESULT CDECL X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
     int dir;
     struct x11drv_win_data *data;
 
-    if (!(data = get_win_data( hwnd ))) return -1;
+    if (!(data = get_win_data( hwnd )))
+    {
+        if (wparam == SC_SCREENSAVE && hwnd == GetDesktopWindow()) return start_screensaver();
+        return -1;
+    }
     if (!data->whole_window || !data->managed || !data->mapped) goto failed;
 
     switch (wparam & 0xfff0)

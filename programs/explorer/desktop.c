@@ -583,22 +583,6 @@ static void initialize_launchers( HWND hwnd )
     }
 }
 
-/* screen saver handler */
-static BOOL start_screensaver( void )
-{
-    if (using_root)
-    {
-        const char *argv[3] = { "xdg-screensaver", "activate", NULL };
-        int pid = _spawnvp( _P_DETACH, argv[0], argv );
-        if (pid > 0)
-        {
-            WINE_TRACE( "started process %d\n", pid );
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
 static WNDPROC desktop_orig_wndproc;
 
 /* window procedure for the desktop window */
@@ -613,11 +597,9 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         {
         case SC_CLOSE:
             ExitWindows( 0, 0 );
-            break;
-        case SC_SCREENSAVE:
-            return start_screensaver();
+            return 0;
         }
-        return 0;
+        break;
 
     case WM_CLOSE:
         PostQuitMessage(0);
