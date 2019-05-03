@@ -18,10 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 
 #include <stdarg.h>
-#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -122,11 +120,11 @@ HRESULT WINAPI DXTraceA(const char* strFile, DWORD dwLine, HRESULT hr, const cha
     char msg[1024];
 
     if (bPopMsgBox) {
-        snprintf(msg, sizeof(msg), "File: %s\nLine: %d\nError Code: %s (0x%08x)\nCalling: %s",
+        wsprintfA(msg, "File: %s\nLine: %d\nError Code: %s (0x%08x)\nCalling: %s",
             strFile, dwLine, DXGetErrorString8A(hr), hr, strMsg);
         MessageBoxA(0, msg, "Unexpected error encountered", MB_OK|MB_ICONERROR);
     } else {
-        snprintf(msg, sizeof(msg), "%s(%d): %s (hr=%s (0x%08x))", strFile,
+        wsprintfA(msg, "%s(%d): %s (hr=%s (0x%08x))", strFile,
             dwLine, strMsg, DXGetErrorString8A(hr), hr);
         OutputDebugStringA(msg);
     }
