@@ -263,6 +263,7 @@ static NTSTATUS find_value(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT 
         else if (report->Elements[i].caps.value.u.NotRange.Usage == Usage)
         {
             *element = report->Elements[i];
+            element->bitCount = value->BitSize;
             return HIDP_STATUS_SUCCESS;
         }
     }
