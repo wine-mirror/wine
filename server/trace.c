@@ -331,7 +331,8 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
         fputc( '}', stderr );
         break;
     case IRP_MJ_READ:
-        fprintf( stderr, "%s{major=READ,key=%08x", prefix, data->read.key );
+        fprintf( stderr, "%s{major=READ,key=%08x,out_size=%u", prefix, data->read.key,
+                 data->read.out_size );
         dump_uint64( ",pos=", &data->read.pos );
         dump_uint64( ",file=", &data->read.file );
         fputc( '}', stderr );
@@ -350,6 +351,7 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
     case IRP_MJ_DEVICE_CONTROL:
         fprintf( stderr, "%s{major=DEVICE_CONTROL", prefix );
         dump_ioctl_code( ",code=", &data->ioctl.code );
+        fprintf( stderr, ",out_size=%u", data->ioctl.out_size );
         dump_uint64( ",file=", &data->ioctl.file );
         fputc( '}', stderr );
         break;
@@ -4288,7 +4290,6 @@ static void dump_get_next_device_request_reply( const struct get_next_device_req
     fprintf( stderr, ", client_tid=%04x", req->client_tid );
     dump_uint64( ", client_thread=", &req->client_thread );
     fprintf( stderr, ", in_size=%u", req->in_size );
-    fprintf( stderr, ", out_size=%u", req->out_size );
     dump_varargs_bytes( ", next_data=", cur_size );
 }
 

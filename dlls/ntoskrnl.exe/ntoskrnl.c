@@ -599,7 +599,7 @@ static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp, HANDLE irp_handle )
 
 /* process a create request for a given file */
 static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                 ULONG out_size, HANDLE irp_handle )
+                                 HANDLE irp_handle )
 {
     IRP *irp;
     IO_STACK_LOCATION *irpsp;
@@ -645,7 +645,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
 
 /* process a close request for a given file */
 static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                 ULONG out_size, HANDLE irp_handle )
+                                HANDLE irp_handle )
 {
     IRP *irp;
     IO_STACK_LOCATION *irpsp;
@@ -684,7 +684,7 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
 
 /* process a read request for a given device */
 static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG in_size,
-                               ULONG out_size, HANDLE irp_handle )
+                               HANDLE irp_handle )
 {
     IRP *irp;
     void *out_buff;
@@ -692,6 +692,7 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
     IO_STACK_LOCATION *irpsp;
     DEVICE_OBJECT *device;
     FILE_OBJECT *file = wine_server_get_ptr( params->read.file );
+    ULONG out_size = params->read.out_size;
 
     if (!file) return STATUS_INVALID_HANDLE;
 
@@ -727,7 +728,7 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
 
 /* process a write request for a given device */
 static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                ULONG out_size, HANDLE irp_handle )
+                                HANDLE irp_handle )
 {
     IRP *irp;
     LARGE_INTEGER offset;
@@ -763,7 +764,7 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
 
 /* process a flush request for a given device */
 static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                ULONG out_size, HANDLE irp_handle )
+                                HANDLE irp_handle )
 {
     IRP *irp;
     IO_STACK_LOCATION *irpsp;
@@ -794,7 +795,7 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
 
 /* process an ioctl request for a given device */
 static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                ULONG out_size, HANDLE irp_handle )
+                                HANDLE irp_handle )
 {
     IO_STACK_LOCATION *irpsp;
     IRP *irp;
@@ -802,6 +803,7 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
     void *to_free = NULL;
     DEVICE_OBJECT *device;
     FILE_OBJECT *file = wine_server_get_ptr( params->ioctl.file );
+    ULONG out_size = params->ioctl.out_size;
 
     if (!file) return STATUS_INVALID_HANDLE;
 
@@ -862,7 +864,7 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
  * object associated with kernel object is freed so that we may free it on client side
  * as well. */
 static NTSTATUS dispatch_cleanup( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                  ULONG out_size, HANDLE irp_handle )
+                                  HANDLE irp_handle )
 {
     void *obj = wine_server_get_ptr( params->cleanup.obj );
     TRACE( "freeing %p object\n", obj );
@@ -871,7 +873,7 @@ static NTSTATUS dispatch_cleanup( const irp_params_t *params, void *in_buff, ULO
 }
 
 typedef NTSTATUS (*dispatch_func)( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                   ULONG out_size, HANDLE irp_handle );
+                                   HANDLE irp_handle );
 
 static const dispatch_func dispatch_funcs[IRP_MJ_MAXIMUM_FUNCTION + 1] =
 {
@@ -963,7 +965,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     HANDLE irp = 0;
     NTSTATUS status = STATUS_SUCCESS;
     irp_params_t irp_params;
-    ULONG in_size = 4096, out_size = 0;
+    ULONG in_size = 4096;
     void *in_buff = NULL;
     HANDLE handles[2];
 
@@ -996,7 +998,6 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 irp_params = reply->params;
                 client_tid = reply->client_tid;
                 in_size    = reply->in_size;
-                out_size   = reply->out_size;
                 NtCurrentTeb()->Reserved5[1] = wine_server_get_ptr( reply->client_thread );
             }
             else
@@ -1017,7 +1018,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 status = STATUS_NOT_SUPPORTED;
                 break;
             }
-            status = dispatch_funcs[irp_params.major]( &irp_params, in_buff, in_size, out_size, irp );
+            status = dispatch_funcs[irp_params.major]( &irp_params, in_buff, in_size, irp );
             if (status == STATUS_SUCCESS)
             {
                 irp = 0;  /* status reported by IoCompleteRequest */

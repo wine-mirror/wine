@@ -548,7 +548,8 @@ static void fill_irp_params( struct device_manager *manager, struct irp_call *ir
         params->close.file = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_MJ_READ:
-        params->read.file  = get_kernel_object_ptr( manager, &irp->file->obj );
+        params->read.file     = get_kernel_object_ptr( manager, &irp->file->obj );
+        params->read.out_size = irp->iosb->out_size;
         break;
     case IRP_MJ_WRITE:
         params->write.file = get_kernel_object_ptr( manager, &irp->file->obj );
@@ -557,7 +558,8 @@ static void fill_irp_params( struct device_manager *manager, struct irp_call *ir
         params->flush.file = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_MJ_DEVICE_CONTROL:
-        params->ioctl.file = get_kernel_object_ptr( manager, &irp->file->obj );
+        params->ioctl.file     = get_kernel_object_ptr( manager, &irp->file->obj );
+        params->ioctl.out_size = irp->iosb->out_size;
         break;
     }
 }
@@ -876,7 +878,6 @@ DECL_HANDLER(get_next_device_request)
         }
         iosb = irp->iosb;
         reply->in_size = iosb->in_size;
-        reply->out_size = iosb->out_size;
         if (iosb->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
         else if (!irp->file || (reply->next = alloc_handle( current->process, irp, 0, 0 )))
         {
