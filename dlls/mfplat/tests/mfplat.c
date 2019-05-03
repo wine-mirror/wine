@@ -265,14 +265,18 @@ static HRESULT WINAPI test_create_from_url_callback_Invoke(IMFAsyncCallback *ifa
 
     resolver = (IMFSourceResolver *)IMFAsyncResult_GetStateNoAddRef(result);
 
+    object = NULL;
     hr = IMFSourceResolver_EndCreateObjectFromURL(resolver, result, &obj_type, &object);
+todo_wine
     ok(hr == S_OK, "Failed to create an object, hr %#x.\n", hr);
 
     hr = IMFAsyncResult_GetObject(result, &object2);
     ok(hr == S_OK, "Failed to get result object, hr %#x.\n", hr);
+todo_wine
     ok(object2 == object, "Unexpected object.\n");
 
-    IUnknown_Release(object);
+    if (object)
+        IUnknown_Release(object);
     IUnknown_Release(object2);
 
     SetEvent(callback->event);
@@ -437,19 +441,14 @@ todo_wine
 
     hr = IMFSourceResolver_CreateObjectFromURL(resolver, filename, MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
             (IUnknown **)&stream);
-todo_wine
     ok(hr == S_OK, "Failed to resolve url, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IMFByteStream_Release(stream);
+    IMFByteStream_Release(stream);
 
     hr = IMFSourceResolver_BeginCreateObjectFromURL(resolver, filename, MF_RESOLUTION_BYTESTREAM, NULL,
             &cancel_cookie, &callback.IMFAsyncCallback_iface, (IUnknown *)resolver);
-todo_wine {
     ok(hr == S_OK, "Create request failed, hr %#x.\n", hr);
     ok(cancel_cookie != NULL, "Unexpected cancel object.\n");
-}
-    if (cancel_cookie)
-       IUnknown_Release(cancel_cookie);
+    IUnknown_Release(cancel_cookie);
 
     if (SUCCEEDED(hr))
         WaitForSingleObject(callback.event, INFINITE);
@@ -460,10 +459,8 @@ todo_wine {
 
     hr = IMFSourceResolver_CreateObjectFromURL(resolver, pathW, MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
             (IUnknown **)&stream);
-todo_wine
     ok(hr == S_OK, "Failed to resolve url, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IMFByteStream_Release(stream);
+    IMFByteStream_Release(stream);
 
     IMFSourceResolver_Release(resolver);
 
@@ -480,15 +477,11 @@ todo_wine
     cancel_cookie = NULL;
     hr = IMFSchemeHandler_BeginCreateObject(scheme_handler, pathW, MF_RESOLUTION_MEDIASOURCE, NULL, &cancel_cookie,
             &callback2.IMFAsyncCallback_iface, (IUnknown *)scheme_handler);
-todo_wine {
     ok(hr == S_OK, "Create request failed, hr %#x.\n", hr);
     ok(!!cancel_cookie, "Unexpected cancel object.\n");
-}
-    if (cancel_cookie)
-        IUnknown_Release(cancel_cookie);
+    IUnknown_Release(cancel_cookie);
 
-    if (SUCCEEDED(hr))
-        WaitForSingleObject(callback2.event, INFINITE);
+    WaitForSingleObject(callback2.event, INFINITE);
 
     IMFSchemeHandler_Release(scheme_handler);
 
