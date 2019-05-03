@@ -648,13 +648,13 @@ static void test_sync(void)
     /* test timers */
     KeInitializeTimerEx(&timer, NotificationTimer);
 
-    timeout.QuadPart = -100;
+    timeout.QuadPart = -20 * 10000;
     KeSetTimerEx(&timer, timeout, 0, NULL);
 
     ret = wait_single(&timer, 0);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
 
-    ret = wait_single(&timer, -200);
+    ret = wait_single(&timer, -40 * 10000);
     ok(ret == 0, "got %#x\n", ret);
 
     ret = wait_single(&timer, 0);
@@ -668,28 +668,28 @@ static void test_sync(void)
     ret = wait_single(&timer, 0);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
 
-    ret = wait_single(&timer, -200);
+    ret = wait_single(&timer, -40 * 10000);
     ok(ret == 0, "got %#x\n", ret);
 
-    ret = wait_single(&timer, 0);
+    ret = wait_single(&timer, -40 * 10000);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
 
     KeCancelTimer(&timer);
-    KeSetTimerEx(&timer, timeout, 10, NULL);
+    KeSetTimerEx(&timer, timeout, 20, NULL);
 
     ret = wait_single(&timer, 0);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
 
-    ret = wait_single(&timer, -200);
+    ret = wait_single(&timer, -40 * 10000);
     ok(ret == 0, "got %#x\n", ret);
 
     ret = wait_single(&timer, 0);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
 
-    ret = wait_single(&timer, -20 * 10000);
+    ret = wait_single(&timer, -40 * 10000);
     ok(ret == 0, "got %#x\n", ret);
 
-    ret = wait_single(&timer, -20 * 10000);
+    ret = wait_single(&timer, -40 * 10000);
     ok(ret == 0, "got %#x\n", ret);
 
     KeCancelTimer(&timer);
