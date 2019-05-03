@@ -1,6 +1,7 @@
 MODULE    = cmd.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = shell32 user32 advapi32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	batch.c \
