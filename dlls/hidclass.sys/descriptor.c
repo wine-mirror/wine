@@ -714,6 +714,7 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
             wine_element->caps.button.ReportID = feature->caps.ReportID;
             wine_element->caps.button.BitField = feature->BitField;
             wine_element->caps.button.LinkCollection = feature->collection->index;
+            wine_element->caps.button.LinkUsagePage = feature->collection->caps.UsagePage;
             wine_element->caps.button.IsRange = feature->caps.IsRange;
             wine_element->caps.button.IsStringRange = feature->caps.IsStringRange;
             wine_element->caps.button.IsDesignatorRange = feature->caps.IsDesignatorRange;
@@ -750,6 +751,7 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
             wine_element->caps.value.ReportID = feature->caps.ReportID;
             wine_element->caps.value.BitField = feature->BitField;
             wine_element->caps.value.LinkCollection = feature->collection->index;
+            wine_element->caps.value.LinkUsagePage = feature->collection->caps.UsagePage;
             wine_element->caps.value.IsRange = feature->caps.IsRange;
             wine_element->caps.value.IsStringRange = feature->caps.IsStringRange;
             wine_element->caps.value.IsDesignatorRange = feature->caps.IsDesignatorRange;
