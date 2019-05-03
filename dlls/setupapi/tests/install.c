@@ -761,6 +761,21 @@ static void test_dirid(void)
     check_dirid(40, expected);
 }
 
+static void test_close_queue(void)
+{
+    void *context;
+    BOOL ret;
+
+    context = SetupInitDefaultQueueCallback(NULL);
+    ok(!!context, "Failed to create callback context, error %#x.\n", GetLastError());
+
+    ret = SetupCloseFileQueue(context);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected error %u.\n", GetLastError());
+
+    SetupTermDefaultQueueCallback(context);
+}
+
 START_TEST(install)
 {
     char temp_path[MAX_PATH], prev_path[MAX_PATH];
@@ -785,6 +800,7 @@ START_TEST(install)
     test_install_svc_from();
     test_driver_install();
     test_dirid();
+    test_close_queue();
 
     UnhookWindowsHookEx(hhook);
 
