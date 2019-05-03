@@ -326,7 +326,7 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
         fprintf( stderr, "%s{CREATE,access=%08x,sharing=%08x,options=%08x",
                  prefix, data->create.access, data->create.sharing, data->create.options );
         dump_uint64( ",device=", &data->create.device );
-        fputc( '}', stderr );
+        fprintf( stderr, ",file=%08x}", data->create.file );
         break;
     case IRP_CALL_CLOSE:
         fprintf( stderr, "%s{CLOSE", prefix );

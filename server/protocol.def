@@ -678,6 +678,7 @@ typedef union
         unsigned int     sharing;   /* sharing flags */
         unsigned int     options;   /* file options */
         client_ptr_t     device;    /* opaque ptr for the device */
+        obj_handle_t     file;      /* file handle */
     } create;
     struct
     {

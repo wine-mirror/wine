@@ -539,32 +539,49 @@ static void device_file_destroy( struct object *obj )
     release_object( file->device );
 }
 
-static void fill_irp_params( struct device_manager *manager, struct irp_call *irp, irp_params_t *params )
+static int fill_irp_params( struct device_manager *manager, struct irp_call *irp, irp_params_t *params )
 {
-    *params = irp->params;
-
-    switch (params->type)
+    switch (irp->params.type)
     {
     case IRP_CALL_NONE:
-    case IRP_CALL_CREATE:
     case IRP_CALL_FREE:
         break;
+    case IRP_CALL_CREATE:
+        irp->params.create.file    = alloc_handle( current->process, irp->file,
+                                                   irp->params.create.access, 0 );
+        if (!irp->params.create.file) return 0;
+        break;
     case IRP_CALL_CLOSE:
-        params->close.file = get_kernel_object_ptr( manager, &irp->file->obj );
+        irp->params.close.file     = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_CALL_READ:
-        params->read.file     = get_kernel_object_ptr( manager, &irp->file->obj );
-        params->read.out_size = irp->iosb->out_size;
+        irp->params.read.file      = get_kernel_object_ptr( manager, &irp->file->obj );
+        irp->params.read.out_size  = irp->iosb->out_size;
         break;
     case IRP_CALL_WRITE:
-        params->write.file = get_kernel_object_ptr( manager, &irp->file->obj );
+        irp->params.write.file     = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_CALL_FLUSH:
-        params->flush.file = get_kernel_object_ptr( manager, &irp->file->obj );
+        irp->params.flush.file     = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
     case IRP_CALL_IOCTL:
-        params->ioctl.file     = get_kernel_object_ptr( manager, &irp->file->obj );
-        params->ioctl.out_size = irp->iosb->out_size;
+        irp->params.ioctl.file     = get_kernel_object_ptr( manager, &irp->file->obj );
+        irp->params.ioctl.out_size = irp->iosb->out_size;
+        break;
+    }
+
+    *params = irp->params;
+    return 1;
+}
+
+static void free_irp_params( struct irp_call *irp )
+{
+    switch (irp->params.type)
+    {
+    case IRP_CALL_CREATE:
+        close_handle( current->process, irp->params.create.file );
+        break;
+    default:
         break;
     }
 }
@@ -875,14 +892,16 @@ DECL_HANDLER(get_next_device_request)
             close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
             release_object( irp );
         }
-        clear_error();
     }
 
     if (manager->current_call)
     {
+        free_irp_params( manager->current_call );
         release_object( manager->current_call );
         manager->current_call = NULL;
     }
+
+    clear_error();
 
     if ((ptr = list_head( &manager->requests )))
     {
@@ -897,14 +916,18 @@ DECL_HANDLER(get_next_device_request)
         if (iosb->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
         else if (!irp->file || (reply->next = alloc_handle( current->process, irp, 0, 0 )))
         {
-            fill_irp_params( manager, irp, &reply->params );
-            set_reply_data_ptr( iosb->in_data, iosb->in_size );
-            iosb->in_data = NULL;
-            iosb->in_size = 0;
-            list_remove( &irp->mgr_entry );
-            list_init( &irp->mgr_entry );
-            if (irp->file) grab_object( irp ); /* we already own the object if it's only on manager queue */
-            manager->current_call = irp;
+            if (fill_irp_params( manager, irp, &reply->params ))
+            {
+                set_reply_data_ptr( iosb->in_data, iosb->in_size );
+                iosb->in_data = NULL;
+                iosb->in_size = 0;
+                list_remove( &irp->mgr_entry );
+                list_init( &irp->mgr_entry );
+                /* we already own the object if it's only on manager queue */
+                if (irp->file) grab_object( irp );
+                manager->current_call = irp;
+            }
+            else close_handle( current->process, reply->next );
         }
     }
     else set_error( STATUS_PENDING );

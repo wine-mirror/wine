@@ -662,6 +662,7 @@ typedef union
         unsigned int     sharing;
         unsigned int     options;
         client_ptr_t     device;
+        obj_handle_t     file;
     } create;
     struct
     {
@@ -6694,6 +6695,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 581
+#define SERVER_PROTOCOL_VERSION 582
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
