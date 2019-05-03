@@ -616,6 +616,38 @@ NTSTATUS WINAPI HidP_SetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage,
 }
 
 
+NTSTATUS WINAPI HidP_SetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
+                               PUSAGE UsageList, PULONG UsageLength, PHIDP_PREPARSED_DATA PreparsedData,
+                               PCHAR Report, ULONG ReportLength)
+{
+    WINE_HID_ELEMENT *element;
+    NTSTATUS rc;
+    ULONG i;
+
+    TRACE("(%i, %x, %i, %p, %p, %p, %p, %i)\n", ReportType, UsagePage, LinkCollection, UsageList,
+            UsageLength, PreparsedData, Report, ReportLength);
+
+    for (i = 0; i < *UsageLength; i++)
+    {
+        rc = find_value(ReportType, UsagePage, LinkCollection,
+                UsageList[i], PreparsedData, Report, &element);
+        if (rc == HIDP_STATUS_SUCCESS)
+        {
+            rc = set_report_data((BYTE*)Report, ReportLength,
+                    element->valueStartBit, element->bitCount, -1);
+
+            if (rc != HIDP_STATUS_SUCCESS)
+            {
+                *UsageLength = i;
+                return rc;
+            }
+        }
+    }
+
+    return HIDP_STATUS_SUCCESS;
+}
+
+
 NTSTATUS WINAPI HidP_TranslateUsagesToI8042ScanCodes(USAGE *ChangedUsageList,
     ULONG UsageListLength, HIDP_KEYBOARD_DIRECTION KeyAction,
     HIDP_KEYBOARD_MODIFIER_STATE *ModifierState,
