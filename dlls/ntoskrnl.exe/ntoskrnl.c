@@ -25,6 +25,7 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -860,13 +861,10 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
     return STATUS_SUCCESS;
 }
 
-/* This is not a real IRP_MJ_CLEANUP dispatcher. We use it to notify client that server
- * object associated with kernel object is freed so that we may free it on client side
- * as well. */
-static NTSTATUS dispatch_cleanup( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                  HANDLE irp_handle )
+static NTSTATUS dispatch_free( const irp_params_t *params, void *in_buff, ULONG in_size,
+                               HANDLE irp_handle )
 {
-    void *obj = wine_server_get_ptr( params->cleanup.obj );
+    void *obj = wine_server_get_ptr( params->free.obj );
     TRACE( "freeing %p object\n", obj );
     free_kernel_object( obj );
     return STATUS_SUCCESS;
@@ -875,36 +873,16 @@ static NTSTATUS dispatch_cleanup( const irp_params_t *params, void *in_buff, ULO
 typedef NTSTATUS (*dispatch_func)( const irp_params_t *params, void *in_buff, ULONG in_size,
                                    HANDLE irp_handle );
 
-static const dispatch_func dispatch_funcs[IRP_MJ_MAXIMUM_FUNCTION + 1] =
+static const dispatch_func dispatch_funcs[] =
 {
-    dispatch_create,   /* IRP_MJ_CREATE */
-    NULL,              /* IRP_MJ_CREATE_NAMED_PIPE */
-    dispatch_close,    /* IRP_MJ_CLOSE */
-    dispatch_read,     /* IRP_MJ_READ */
-    dispatch_write,    /* IRP_MJ_WRITE */
-    NULL,              /* IRP_MJ_QUERY_INFORMATION */
-    NULL,              /* IRP_MJ_SET_INFORMATION */
-    NULL,              /* IRP_MJ_QUERY_EA */
-    NULL,              /* IRP_MJ_SET_EA */
-    dispatch_flush,    /* IRP_MJ_FLUSH_BUFFERS */
-    NULL,              /* IRP_MJ_QUERY_VOLUME_INFORMATION */
-    NULL,              /* IRP_MJ_SET_VOLUME_INFORMATION */
-    NULL,              /* IRP_MJ_DIRECTORY_CONTROL */
-    NULL,              /* IRP_MJ_FILE_SYSTEM_CONTROL */
-    dispatch_ioctl,    /* IRP_MJ_DEVICE_CONTROL */
-    NULL,              /* IRP_MJ_INTERNAL_DEVICE_CONTROL */
-    NULL,              /* IRP_MJ_SHUTDOWN */
-    NULL,              /* IRP_MJ_LOCK_CONTROL */
-    dispatch_cleanup,  /* IRP_MJ_CLEANUP */
-    NULL,              /* IRP_MJ_CREATE_MAILSLOT */
-    NULL,              /* IRP_MJ_QUERY_SECURITY */
-    NULL,              /* IRP_MJ_SET_SECURITY */
-    NULL,              /* IRP_MJ_POWER */
-    NULL,              /* IRP_MJ_SYSTEM_CONTROL */
-    NULL,              /* IRP_MJ_DEVICE_CHANGE */
-    NULL,              /* IRP_MJ_QUERY_QUOTA */
-    NULL,              /* IRP_MJ_SET_QUOTA */
-    NULL,              /* IRP_MJ_PNP */
+    NULL,              /* IRP_CALL_NONE */
+    dispatch_create,   /* IRP_CALL_CREATE */
+    dispatch_close,    /* IRP_CALL_CLOSE */
+    dispatch_read,     /* IRP_CALL_READ */
+    dispatch_write,    /* IRP_CALL_WRITE */
+    dispatch_flush,    /* IRP_CALL_FLUSH */
+    dispatch_ioctl,    /* IRP_CALL_IOCTL */
+    dispatch_free      /* IRP_CALL_FREE */
 };
 
 /* helper function to update service status */
@@ -1012,13 +990,8 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         switch (status)
         {
         case STATUS_SUCCESS:
-            if (irp_params.major > IRP_MJ_MAXIMUM_FUNCTION || !dispatch_funcs[irp_params.major])
-            {
-                WARN( "unsupported request %u\n", irp_params.major );
-                status = STATUS_NOT_SUPPORTED;
-                break;
-            }
-            status = dispatch_funcs[irp_params.major]( &irp_params, in_buff, in_size, irp );
+            assert( irp_params.type != IRP_CALL_NONE && irp_params.type < ARRAY_SIZE(dispatch_funcs) );
+            status = dispatch_funcs[irp_params.type]( &irp_params, in_buff, in_size, irp );
             if (status == STATUS_SUCCESS)
             {
                 irp = 0;  /* status reported by IoCompleteRequest */

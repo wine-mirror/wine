@@ -656,12 +656,24 @@ typedef union
     } create_thread;
 } apc_result_t;
 
+enum irp_type
+{
+    IRP_CALL_NONE,
+    IRP_CALL_CREATE,
+    IRP_CALL_CLOSE,
+    IRP_CALL_READ,
+    IRP_CALL_WRITE,
+    IRP_CALL_FLUSH,
+    IRP_CALL_IOCTL,
+    IRP_CALL_FREE
+};
+
 typedef union
 {
-    unsigned int         major;     /* irp major function */
+    enum irp_type        type;      /* irp call type */
     struct
     {
-        unsigned int     major;     /* IRP_MJ_CREATE */
+        enum irp_type    type;      /* IRP_CALL_CREATE */
         unsigned int     access;    /* access rights */
         unsigned int     sharing;   /* sharing flags */
         unsigned int     options;   /* file options */
@@ -669,13 +681,13 @@ typedef union
     } create;
     struct
     {
-        unsigned int     major;     /* IRP_MJ_CLOSE */
+        enum irp_type    type;      /* IRP_CALL_CLOSE */
         int              __pad;
         client_ptr_t     file;      /* opaque ptr for the file object */
     } close;
     struct
     {
-        unsigned int     major;     /* IRP_MJ_READ */
+        enum irp_type    type;      /* IRP_CALL_READ */
         unsigned int     key;       /* driver key */
         data_size_t      out_size;  /* needed output size */
         int              __pad;
@@ -684,20 +696,20 @@ typedef union
     } read;
     struct
     {
-        unsigned int     major;     /* IRP_MJ_WRITE */
+        enum irp_type    type;      /* IRP_CALL_WRITE */
         unsigned int     key;       /* driver key */
         client_ptr_t     file;      /* opaque ptr for the file object */
         file_pos_t       pos;       /* file position */
     } write;
     struct
     {
-        unsigned int     major;     /* IRP_MJ_FLUSH_BUFFERS */
+        enum irp_type    type;      /* IRP_CALL_FLUSH */
         int              __pad;
         client_ptr_t     file;      /* opaque ptr for the file object */
     } flush;
     struct
     {
-        unsigned int     major;     /* IRP_MJ_DEVICE_CONTROL */
+        enum irp_type    type;      /* IRP_CALL_IOCTL */
         ioctl_code_t     code;      /* ioctl code */
         data_size_t      out_size;  /* needed output size */
         int              __pad;
@@ -705,10 +717,10 @@ typedef union
     } ioctl;
     struct
     {
-        unsigned int     major;     /* IRP_MJ_DEVICE_CLEANUP */
+        enum irp_type    type;      /* IRP_CALL_FREE */
         int              __pad;
         client_ptr_t     obj;       /* opaque ptr for the freed object */
-    } cleanup;
+    } free;
 } irp_params_t;
 
 /* information about a PE image mapping, roughly equivalent to SECTION_IMAGE_INFORMATION */

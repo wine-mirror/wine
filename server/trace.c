@@ -317,49 +317,51 @@ static void dump_async_data( const char *prefix, const async_data_t *data )
 
 static void dump_irp_params( const char *prefix, const irp_params_t *data )
 {
-    switch (data->major)
+    switch (data->type)
     {
-    case IRP_MJ_CREATE:
-        fprintf( stderr, "%s{major=CREATE,access=%08x,sharing=%08x,options=%08x",
+    case IRP_CALL_NONE:
+        fprintf( stderr, "%s{NONE}", prefix );
+        break;
+    case IRP_CALL_CREATE:
+        fprintf( stderr, "%s{CREATE,access=%08x,sharing=%08x,options=%08x",
                  prefix, data->create.access, data->create.sharing, data->create.options );
         dump_uint64( ",device=", &data->create.device );
         fputc( '}', stderr );
         break;
-    case IRP_MJ_CLOSE:
-        fprintf( stderr, "%s{major=CLOSE", prefix );
+    case IRP_CALL_CLOSE:
+        fprintf( stderr, "%s{CLOSE", prefix );
         dump_uint64( ",file=", &data->close.file );
         fputc( '}', stderr );
         break;
-    case IRP_MJ_READ:
-        fprintf( stderr, "%s{major=READ,key=%08x,out_size=%u", prefix, data->read.key,
+    case IRP_CALL_READ:
+        fprintf( stderr, "%s{READ,key=%08x,out_size=%u", prefix, data->read.key,
                  data->read.out_size );
         dump_uint64( ",pos=", &data->read.pos );
         dump_uint64( ",file=", &data->read.file );
         fputc( '}', stderr );
         break;
-    case IRP_MJ_WRITE:
-        fprintf( stderr, "%s{major=WRITE,key=%08x", prefix, data->write.key );
+    case IRP_CALL_WRITE:
+        fprintf( stderr, "%s{WRITE,key=%08x", prefix, data->write.key );
         dump_uint64( ",pos=", &data->write.pos );
         dump_uint64( ",file=", &data->write.file );
         fputc( '}', stderr );
         break;
-    case IRP_MJ_FLUSH_BUFFERS:
-        fprintf( stderr, "%s{major=FLUSH_BUFFERS", prefix );
+    case IRP_CALL_FLUSH:
+        fprintf( stderr, "%s{FLUSH", prefix );
         dump_uint64( ",file=", &data->flush.file );
         fputc( '}', stderr );
         break;
-    case IRP_MJ_DEVICE_CONTROL:
-        fprintf( stderr, "%s{major=DEVICE_CONTROL", prefix );
+    case IRP_CALL_IOCTL:
+        fprintf( stderr, "%s{IOCTL", prefix );
         dump_ioctl_code( ",code=", &data->ioctl.code );
         fprintf( stderr, ",out_size=%u", data->ioctl.out_size );
         dump_uint64( ",file=", &data->ioctl.file );
         fputc( '}', stderr );
         break;
-    case IRP_MJ_MAXIMUM_FUNCTION + 1: /* invalid */
-        fprintf( stderr, "%s{}", prefix );
-        break;
-    default:
-        fprintf( stderr, "%s{major=%u}", prefix, data->major );
+    case IRP_CALL_FREE:
+        fprintf( stderr, "%s{FREE", prefix );
+        dump_uint64( ",obj=", &data->free.obj );
+        fputc( '}', stderr );
         break;
     }
 }

@@ -640,12 +640,24 @@ typedef union
     } create_thread;
 } apc_result_t;
 
+enum irp_type
+{
+    IRP_CALL_NONE,
+    IRP_CALL_CREATE,
+    IRP_CALL_CLOSE,
+    IRP_CALL_READ,
+    IRP_CALL_WRITE,
+    IRP_CALL_FLUSH,
+    IRP_CALL_IOCTL,
+    IRP_CALL_FREE
+};
+
 typedef union
 {
-    unsigned int         major;
+    enum irp_type        type;
     struct
     {
-        unsigned int     major;
+        enum irp_type    type;
         unsigned int     access;
         unsigned int     sharing;
         unsigned int     options;
@@ -653,13 +665,13 @@ typedef union
     } create;
     struct
     {
-        unsigned int     major;
+        enum irp_type    type;
         int              __pad;
         client_ptr_t     file;
     } close;
     struct
     {
-        unsigned int     major;
+        enum irp_type    type;
         unsigned int     key;
         data_size_t      out_size;
         int              __pad;
@@ -668,20 +680,20 @@ typedef union
     } read;
     struct
     {
-        unsigned int     major;
+        enum irp_type    type;
         unsigned int     key;
         client_ptr_t     file;
         file_pos_t       pos;
     } write;
     struct
     {
-        unsigned int     major;
+        enum irp_type    type;
         int              __pad;
         client_ptr_t     file;
     } flush;
     struct
     {
-        unsigned int     major;
+        enum irp_type    type;
         ioctl_code_t     code;
         data_size_t      out_size;
         int              __pad;
@@ -689,10 +701,10 @@ typedef union
     } ioctl;
     struct
     {
-        unsigned int     major;
+        enum irp_type    type;
         int              __pad;
         client_ptr_t     obj;
-    } cleanup;
+    } free;
 } irp_params_t;
 
 
@@ -6682,6 +6694,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 580
+#define SERVER_PROTOCOL_VERSION 581
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
