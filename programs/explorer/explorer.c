@@ -22,7 +22,6 @@
 
 #define COBJMACROS
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "explorer_private.h"
@@ -671,7 +670,7 @@ static WCHAR *copy_path_string(WCHAR *target, WCHAR *source)
 {
     INT i = 0;
 
-    while (isspaceW(*source)) source++;
+    while (iswspace(*source)) source++;
 
     if (*source == '\"')
     {
@@ -735,23 +734,23 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
 
     while (*p)
     {
-        while (isspaceW(*p)) p++;
-        if (strncmpW(p, arg_n, ARRAY_SIZE( arg_n ))==0)
+        while (iswspace(*p)) p++;
+        if (wcsncmp(p, arg_n, ARRAY_SIZE( arg_n ))==0)
         {
             parameters->explorer_mode = FALSE;
             p += ARRAY_SIZE( arg_n );
         }
-        else if (strncmpW(p, arg_e, ARRAY_SIZE( arg_e ))==0)
+        else if (wcsncmp(p, arg_e, ARRAY_SIZE( arg_e ))==0)
         {
             parameters->explorer_mode = TRUE;
             p += ARRAY_SIZE( arg_e );
         }
-        else if (strncmpW(p, arg_root, ARRAY_SIZE( arg_root ))==0)
+        else if (wcsncmp(p, arg_root, ARRAY_SIZE( arg_root ))==0)
         {
             p += ARRAY_SIZE( arg_root );
             p = copy_path_string(parameters->root,p);
         }
-        else if (strncmpW(p, arg_select, ARRAY_SIZE( arg_select ))==0)
+        else if (wcsncmp(p, arg_select, ARRAY_SIZE( arg_select ))==0)
         {
             p += ARRAY_SIZE( arg_select );
             p = copy_path_string(parameters->selection,p);
@@ -759,13 +758,13 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
                 copy_path_root(parameters->root,
                                parameters->selection);
         }
-        else if (strncmpW(p, arg_desktop, ARRAY_SIZE( arg_desktop ))==0)
+        else if (wcsncmp(p, arg_desktop, ARRAY_SIZE( arg_desktop ))==0)
         {
             p += ARRAY_SIZE( arg_desktop );
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
         /* workaround for Worms Armageddon that hardcodes a /desktop option with quotes */
-        else if (strncmpW(p, arg_desktop_quotes, ARRAY_SIZE( arg_desktop_quotes ))==0)
+        else if (wcsncmp(p, arg_desktop_quotes, ARRAY_SIZE( arg_desktop_quotes ))==0)
         {
             p += ARRAY_SIZE( arg_desktop_quotes );
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
