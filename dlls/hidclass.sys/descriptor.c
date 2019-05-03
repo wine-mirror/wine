@@ -707,7 +707,7 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
         WINE_HID_ELEMENT *wine_element = &wine_report->Elements[wine_report->elementCount];
 
         wine_element->valueStartBit = *bitOffset;
-        if (feature->caps.UsagePage == HID_USAGE_PAGE_BUTTON)
+        if (feature->caps.BitSize == 1)
         {
             wine_element->ElementType = ButtonElement;
             wine_element->caps.button.UsagePage = feature->caps.UsagePage;
@@ -809,7 +809,7 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
 
 static void count_elements(struct feature* feature, USHORT *buttons, USHORT *values)
 {
-    if (feature->caps.UsagePage == HID_USAGE_PAGE_BUTTON)
+    if (feature->caps.BitSize == 1)
     {
         if (feature->caps.IsRange)
             *buttons = *buttons + 1;
