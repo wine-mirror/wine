@@ -2222,7 +2222,7 @@ static HRESULT WINAPI WMSyncReader_OpenStream(IWMSyncReader *iface, IStream *str
 {
     WMSyncReader *This = impl_from_IWMSyncReader(iface);
     FIXME("(%p)->(%p): stub!\n", This, stream);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMSyncReader_SetOutputProps(IWMSyncReader *iface, DWORD output_num, IWMOutputMediaProps *output)
