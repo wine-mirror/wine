@@ -89,6 +89,7 @@ struct device_manager
     struct object          obj;            /* object header */
     struct list            devices;        /* list of devices */
     struct list            requests;       /* list of pending irps across all devices */
+    struct irp_call       *current_call;   /* call currently executed on client side */
     struct wine_rb_tree    kernel_objects; /* map of objects that have client side pointer associated */
 };
 
@@ -710,6 +711,12 @@ static void device_manager_destroy( struct object *obj )
     struct kernel_object *kernel_object;
     struct list *ptr;
 
+    if (manager->current_call)
+    {
+        release_object( manager->current_call );
+        manager->current_call = NULL;
+    }
+
     while (manager->kernel_objects.root)
     {
         kernel_object = WINE_RB_ENTRY_VALUE( manager->kernel_objects.root, struct kernel_object, rb_entry );
@@ -740,6 +747,7 @@ static struct device_manager *create_device_manager(void)
 
     if ((manager = alloc_object( &device_manager_ops )))
     {
+        manager->current_call = NULL;
         list_init( &manager->devices );
         list_init( &manager->requests );
         wine_rb_init( &manager->kernel_objects, compare_kernel_object );
@@ -870,6 +878,12 @@ DECL_HANDLER(get_next_device_request)
         clear_error();
     }
 
+    if (manager->current_call)
+    {
+        release_object( manager->current_call );
+        manager->current_call = NULL;
+    }
+
     if ((ptr = list_head( &manager->requests )))
     {
         irp = LIST_ENTRY( ptr, struct irp_call, mgr_entry );
@@ -889,7 +903,8 @@ DECL_HANDLER(get_next_device_request)
             iosb->in_size = 0;
             list_remove( &irp->mgr_entry );
             list_init( &irp->mgr_entry );
-            if (!irp->file) release_object( irp ); /* no longer on manager queue */
+            if (irp->file) grab_object( irp ); /* we already own the object if it's only on manager queue */
+            manager->current_call = irp;
         }
     }
     else set_error( STATUS_PENDING );
