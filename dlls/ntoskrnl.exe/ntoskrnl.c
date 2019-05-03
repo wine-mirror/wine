@@ -551,7 +551,6 @@ static void *create_file_object( HANDLE handle )
 /* transfer result of IRP back to wineserver */
 static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
 {
-    FILE_OBJECT *file = irp->Tail.Overlay.OriginalFileObject;
     HANDLE irp_handle = context;
     void *out_buff = irp->UserBuffer;
 
@@ -570,12 +569,6 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
         wine_server_call( req );
     }
     SERVER_END_REQ;
-
-    if (irp->Flags & IRP_CLOSE_OPERATION)
-    {
-        ObDereferenceObject( file );
-        irp->Tail.Overlay.OriginalFileObject = NULL;
-    }
 
     if (irp->UserBuffer != irp->AssociatedIrp.SystemBuffer)
     {
@@ -618,7 +611,6 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
 
     if (!(irp = IoAllocateIrp( device->StackSize, FALSE ))) return STATUS_NO_MEMORY;
 
-    ObReferenceObject( file );
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = IRP_MJ_CREATE;
     irpsp->FileObject = file;
