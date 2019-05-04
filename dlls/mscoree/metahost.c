@@ -1723,11 +1723,35 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
 
     if (exefile && !version)
     {
+        DWORD major, minor, build;
+
         hr = CLRMetaHost_GetVersionFromFile(0, exefile, local_version, &local_version_size);
 
         version = local_version;
 
         if (FAILED(hr)) return hr;
+
+        /* When running an executable, specifically when getting the version number from
+         * the exe, native accepts a matching major.minor with build <= expected build. */
+        if (!parse_runtime_version(version, &major, &minor, &build))
+        {
+            ERR("Cannot parse %s\n", debugstr_w(version));
+            return CLR_E_SHIM_RUNTIME;
+        }
+
+        if (legacy)
+            i = 3;
+        else
+            i = NUM_RUNTIMES;
+
+        while (i--)
+        {
+            if (runtimes[i].major == major && runtimes[i].minor == minor && runtimes[i].build >= build)
+            {
+                return ICLRRuntimeInfo_QueryInterface(&runtimes[i].ICLRRuntimeInfo_iface,
+                        &IID_ICLRRuntimeInfo, (void **)result);
+            }
+        }
     }
 
     if (version)
