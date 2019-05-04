@@ -3344,6 +3344,20 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     }
     wined3d_mutex_unlock();
 
+    if (*format_support & (D3D11_FORMAT_SUPPORT_TEXTURE1D
+            | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D))
+    {
+        *format_support |= D3D11_FORMAT_SUPPORT_SHADER_LOAD;
+        *format_support |= D3D11_FORMAT_SUPPORT_SHADER_SAMPLE;
+        *format_support |= D3D11_FORMAT_SUPPORT_SHADER_GATHER;
+
+        if (*format_support & D3D11_FORMAT_SUPPORT_DEPTH_STENCIL)
+        {
+            *format_support |= D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON;
+            *format_support |= D3D11_FORMAT_SUPPORT_SHADER_GATHER_COMPARISON;
+        }
+    }
+
     return S_OK;
 }
 
