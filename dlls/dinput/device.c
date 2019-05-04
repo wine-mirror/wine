@@ -1203,7 +1203,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(LPDIRECTINPUTDEVICE8W ifa
     }
 
     WARN("Unsupported interface!\n");
-    return E_FAIL;
+    return E_NOINTERFACE;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(LPDIRECTINPUTDEVICE8A iface, REFIID riid, LPVOID *ppobj)
