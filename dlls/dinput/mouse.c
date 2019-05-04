@@ -765,11 +765,6 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceInfo(
     SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     TRACE("(this=%p,%p)\n", This, pdidi);
 
-    if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)) {
-        WARN(" dinput3 not supported yet...\n");
-	return DI_OK;
-    }
-
     fill_mouse_dideviceinstanceA(pdidi, This->base.dinput->dwVersion);
     
     return DI_OK;
