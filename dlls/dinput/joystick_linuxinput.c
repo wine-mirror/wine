@@ -211,10 +211,7 @@ static void find_joydevs(void)
         }
 
         if (fd == -1)
-        {
-            WARN("Failed to open \"%s\": %d %s\n", buf, errno, strerror(errno));
             continue;
-        }
 
         if (ioctl(fd, EVIOCGBIT(0, sizeof(joydev.evbits)), joydev.evbits) == -1)
         {
