@@ -467,9 +467,10 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 
     for (i = 0; i < ARRAY_SIZE(dinput_devices); i++) {
         if (!dinput_devices[i]->enum_deviceA) continue;
+
+        TRACE(" Checking device %u ('%s')\n", i, dinput_devices[i]->name);
         for (j = 0, r = S_OK; SUCCEEDED(r); j++) {
             devInstance.dwSize = sizeof(devInstance);
-            TRACE("  - checking device %u ('%s')\n", i, dinput_devices[i]->name);
             r = dinput_devices[i]->enum_deviceA(dwDevType, dwFlags, &devInstance, This->dwVersion, j);
             if (r == S_OK)
                 if (enum_callback_wrapper(lpCallback, &devInstance, pvRef) == DIENUM_STOP)
