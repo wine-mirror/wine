@@ -603,7 +603,7 @@ BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOf
     FIXME("(%p,0x%08x,0x%08x,%p,0x%08x,%p,%p) stub\n", hEventLog, dwReadFlags,
           dwRecordOffset, lpBuffer, nNumberOfBytesToRead, pnBytesRead, pnMinNumberOfBytesNeeded);
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SetLastError(ERROR_HANDLE_EOF);
     return FALSE;
 }
 
@@ -618,7 +618,7 @@ BOOL WINAPI ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOf
     FIXME("(%p,0x%08x,0x%08x,%p,0x%08x,%p,%p) stub\n", hEventLog, dwReadFlags,
           dwRecordOffset, lpBuffer, nNumberOfBytesToRead, pnBytesRead, pnMinNumberOfBytesNeeded);
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SetLastError(ERROR_HANDLE_EOF);
     return FALSE;
 }
 
