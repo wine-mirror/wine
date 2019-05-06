@@ -2152,7 +2152,10 @@ static void test_get_immediate_context(void)
 {
     ID3D11DeviceContext *immediate_context, *previous_immediate_context;
     ULONG expected_refcount, refcount;
+    ID3D11Multithread *multithread;
     ID3D11Device *device;
+    BOOL enabled;
+    HRESULT hr;
 
     if (!(device = create_device(NULL)))
     {
@@ -2181,6 +2184,31 @@ static void test_get_immediate_context(void)
     refcount = ID3D11DeviceContext_Release(immediate_context);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+    expected_refcount = get_refcount(immediate_context) + 1;
+    hr = ID3D11DeviceContext_QueryInterface(immediate_context, &IID_ID3D11Multithread, (void **)&multithread);
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("ID3D11Multithread is not supported.\n");
+        goto done;
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = get_refcount(immediate_context);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    expected_refcount = refcount;
+    refcount = get_refcount(multithread);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    enabled = ID3D11Multithread_GetMultithreadProtected(multithread);
+    todo_wine ok(!enabled, "Multithread protection is %#x.\n", enabled);
+
+    ID3D11Multithread_Release(multithread);
+
+done:
+    refcount = ID3D11DeviceContext_Release(immediate_context);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
