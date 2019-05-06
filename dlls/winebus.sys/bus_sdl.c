@@ -275,8 +275,8 @@ static void set_ball_value(struct platform_private *ext, int index, int value1, 
     if (value1 < -127) value1 = -127;
     if (value2 > 127) value2 = 127;
     if (value2 < -127) value2 = -127;
-    ext->report_buffer[offset] = value1;
-    ext->report_buffer[offset + 1] = value2;
+    *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value1);
+    *((WORD*)&ext->report_buffer[offset + sizeof(WORD)]) = LE_WORD(value2);
 }
 
 static void set_hat_value(struct platform_private *ext, int index, int value)
@@ -400,7 +400,7 @@ static BOOL build_report_descriptor(struct platform_private *ext)
         descript_size += sizeof(REPORT_AXIS_HEADER);
         descript_size += (sizeof(REPORT_AXIS_USAGE) * ball_count * 2);
         descript_size += sizeof(REPORT_REL_AXIS_TAIL);
-        report_size += (sizeof(WORD) * ball_count);
+        report_size += (sizeof(WORD) * 2 * ball_count);
     }
 
     hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
