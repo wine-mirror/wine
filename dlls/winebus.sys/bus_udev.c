@@ -422,11 +422,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             abs_pages[ABS_TO_HID_MAP[i][0]][abs_pages[ABS_TO_HID_MAP[i][0]][0]] = i;
 
             ioctl(ext->base.device_fd, EVIOCGABS(i), &(ext->abs_map[i]));
-            if (abs_pages[ABS_TO_HID_MAP[i][0]][0] == 1)
-            {
-                descript_size += sizeof(REPORT_AXIS_HEADER);
-                descript_size += sizeof(REPORT_ABS_AXIS_TAIL);
-            }
         }
     /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
     for (i = 1; i < TOP_ABS_PAGE; i++)
@@ -441,6 +436,8 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             }
             abs_count++;
         }
+    descript_size += sizeof(REPORT_AXIS_HEADER) * abs_count;
+    descript_size += sizeof(REPORT_ABS_AXIS_TAIL) * abs_count;
 
     rel_count = 0;
     memset(rel_pages, 0, sizeof(rel_pages));
@@ -449,11 +446,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
         {
             rel_pages[REL_TO_HID_MAP[i][0]][0]++;
             rel_pages[REL_TO_HID_MAP[i][0]][rel_pages[REL_TO_HID_MAP[i][0]][0]] = i;
-            if (rel_pages[REL_TO_HID_MAP[i][0]][0] == 1)
-            {
-                descript_size += sizeof(REPORT_AXIS_HEADER);
-                descript_size += sizeof(REPORT_REL_AXIS_TAIL);
-            }
         }
     /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
     for (i = 1; i < TOP_REL_PAGE; i++)
@@ -468,6 +460,8 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             }
             rel_count++;
         }
+    descript_size += sizeof(REPORT_AXIS_HEADER) * rel_count;
+    descript_size += sizeof(REPORT_REL_AXIS_TAIL) * rel_count;
 
     hat_count = 0;
     for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
@@ -479,6 +473,8 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             report_size++;
             hat_count++;
         }
+    if (hat_count > 0)
+        descript_size += sizeof(REPORT_HATSWITCH);
 
     TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", report_size);
