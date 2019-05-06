@@ -1231,6 +1231,7 @@ static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapc
 
     for (i = 0; i < swapchain->desc.BufferCount; ++i)
     {
+        assert(swapchain->vk_images[i] == VK_NULL_HANDLE);
         if ((vr = vk_funcs->p_vkCreateImage(vk_device, &image_info, NULL, &swapchain->vk_images[i])) < 0)
         {
             WARN("Failed to create Vulkan image, vr %d.\n", vr);
@@ -1265,6 +1266,7 @@ static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapc
             memory_type_mask, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &allocate_info.memoryTypeIndex)))
         return hr;
 
+    assert(swapchain->vk_memory == VK_NULL_HANDLE);
     if ((vr = vk_funcs->p_vkAllocateMemory(vk_device, &allocate_info, NULL, &swapchain->vk_memory)) < 0)
     {
         WARN("Failed to allocate device memory, vr %d.\n", vr);
@@ -1392,6 +1394,7 @@ static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *s
     pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     pool_info.queueFamilyIndex = queue_family_index;
 
+    assert(swapchain->vk_cmd_pool == VK_NULL_HANDLE);
     if ((vr = vk_funcs->p_vkCreateCommandPool(vk_device, &pool_info,
             NULL, &swapchain->vk_cmd_pool)) < 0)
     {
@@ -1419,6 +1422,7 @@ static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *s
         semaphore_info.pNext = NULL;
         semaphore_info.flags = 0;
 
+        assert(swapchain->vk_semaphores[i] == VK_NULL_HANDLE);
         if ((vr = vk_funcs->p_vkCreateSemaphore(vk_device, &semaphore_info,
                 NULL, &swapchain->vk_semaphores[i])) < 0)
         {
@@ -2075,6 +2079,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetBuffer(IDXGISwapChain3 *ifac
         return DXGI_ERROR_INVALID_CALL;
     }
 
+    assert(swapchain->buffers[buffer_idx]);
     return ID3D12Resource_QueryInterface(swapchain->buffers[buffer_idx], iid, surface);
 }
 
@@ -2423,6 +2428,7 @@ static UINT STDMETHODCALLTYPE d3d12_swapchain_GetCurrentBackBufferIndex(IDXGISwa
     TRACE("iface %p.\n", iface);
 
     TRACE("Current back buffer index %u.\n", swapchain->current_buffer_index);
+    assert(swapchain->current_buffer_index < swapchain->desc.BufferCount);
     return swapchain->current_buffer_index;
 }
 
