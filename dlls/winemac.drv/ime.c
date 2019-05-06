@@ -76,7 +76,6 @@ static UINT WM_MSIME_RECONVERT;
 static UINT WM_MSIME_QUERYPOSITION;
 static UINT WM_MSIME_DOCUMENTFEED;
 
-
 static HIMC RealIMC(HIMC hIMC)
 {
     if (hIMC == FROM_MACDRV)
@@ -840,6 +839,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 
                     TRACE("NI_COMPOSITIONSTR: CPS_CANCEL\n");
 
+                    macdrv_clear_ime_text();
                     if (lpIMC->hCompStr)
                         ImmDestroyIMCC(lpIMC->hCompStr);
 

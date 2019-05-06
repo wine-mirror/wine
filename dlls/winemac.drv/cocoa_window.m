@@ -702,6 +702,13 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self invalidateHasGLDescendant];
     }
 
+    - (void) clearMarkedText
+    {
+        [markedText deleteCharactersInRange:NSMakeRange(0, [markedText length])];
+        markedTextSelection = NSMakeRange(0, 0);
+        [[self inputContext] discardMarkedText];
+    }
+
     - (void) completeText:(NSString*)text
     {
         macdrv_event* event;
@@ -716,9 +723,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         macdrv_release_event(event);
 
-        [markedText deleteCharactersInRange:NSMakeRange(0, [markedText length])];
-        markedTextSelection = NSMakeRange(0, 0);
-        [[self inputContext] discardMarkedText];
+        [self clearMarkedText];
     }
 
     - (void) didAddSubview:(NSView*)subview
@@ -3905,5 +3910,20 @@ void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, i
         event->sent_text_input.done = done;
         [[window queue] postEvent:event];
         macdrv_release_event(event);
+    });
+}
+
+void macdrv_clear_ime_text(void)
+{
+    OnMainThreadAsync(^{
+        WineWindow* window = (WineWindow*)[NSApp keyWindow];
+        if (![window isKindOfClass:[WineWindow class]])
+        {
+            window = (WineWindow*)[NSApp mainWindow];
+            if (![window isKindOfClass:[WineWindow class]])
+                window = [[WineApplicationController sharedController] frontWineWindow];
+        }
+        if (window)
+            [[window contentView] clearMarkedText];
     });
 }
