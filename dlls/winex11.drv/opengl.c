@@ -182,6 +182,7 @@ static char *glExtensions;
 static const char *glxExtensions;
 static char wglExtensions[4096];
 static int glxVersion[2];
+static int glx_opcode;
 
 struct wgl_pixel_format
 {
@@ -336,7 +337,6 @@ static void (*pglXDestroyContext)( Display *dpy, GLXContext ctx );
 static Bool (*pglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
 static void (*pglXCopyContext)( Display *dpy, GLXContext src, GLXContext dst, unsigned long mask );
 static void (*pglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
-static Bool (*pglXQueryExtension)( Display *dpy, int *errorb, int *event );
 static Bool (*pglXQueryVersion)( Display *dpy, int *maj, int *min );
 static Bool (*pglXIsDirect)( Display *dpy, GLXContext ctx );
 static GLXContext (*pglXGetCurrentContext)( void );
@@ -412,6 +412,8 @@ static BOOL has_extension( const char *list, const char *ext )
 static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 {
     /* In the future we might want to find the exact X or GLX error to report back to the app */
+    if (event->request_code != glx_opcode)
+        return 0;
     return 1;
 }
 
@@ -594,7 +596,6 @@ static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
     LOAD_FUNCPTR(glXIsDirect);
     LOAD_FUNCPTR(glXMakeCurrent);
     LOAD_FUNCPTR(glXSwapBuffers);
-    LOAD_FUNCPTR(glXQueryExtension);
     LOAD_FUNCPTR(glXQueryVersion);
 
     /* GLX 1.1 */
@@ -633,7 +634,8 @@ static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
 
     if(!X11DRV_WineGL_InitOpenglInfo()) goto failed;
 
-    if (pglXQueryExtension(gdi_display, &error_base, &event_base)) {
+    if (XQueryExtension( gdi_display, "GLX", &glx_opcode, &event_base, &error_base ))
+    {
         TRACE("GLX is up and running error_base = %d\n", error_base);
     } else {
         ERR( "GLX extension is missing, disabling OpenGL.\n" );
