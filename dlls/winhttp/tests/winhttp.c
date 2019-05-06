@@ -4637,7 +4637,7 @@ static void test_WinHttpGetProxyForUrl(void)
 
 static void test_chunked_read(void)
 {
-    static const WCHAR verb[] = {'/','t','e','s','t','c','h','u','n','k','e','d',0};
+    static const WCHAR verb[] = {'/','t','e','s','t','s','/','c','h','u','n','k','e','d',0};
     static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
     WCHAR header[32];
     DWORD len, err;
