@@ -324,7 +324,7 @@ static HRESULT WINAPI mediatype_SetGUID(IMFMediaType *iface, REFGUID key, REFGUI
 {
     struct media_type *media_type = impl_from_IMFMediaType(iface);
 
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
 
     return attributes_SetGUID(&media_type->attributes, key, value);
 }
@@ -871,7 +871,7 @@ static HRESULT WINAPI stream_descriptor_SetGUID(IMFStreamDescriptor *iface, REFG
 {
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
 
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
 
     return attributes_SetGUID(&stream_desc->attributes, key, value);
 }
@@ -1450,7 +1450,7 @@ static HRESULT WINAPI presentation_descriptor_SetGUID(IMFPresentationDescriptor 
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
 
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
 
     return attributes_SetGUID(&presentation_desc->attributes, key, value);
 }

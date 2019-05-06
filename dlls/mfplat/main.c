@@ -5705,7 +5705,7 @@ static HRESULT WINAPI mfmediaevent_SetGUID(IMFMediaEvent *iface, REFGUID key, RE
 {
     struct media_event *event = impl_from_IMFMediaEvent(iface);
 
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
 
     return attributes_SetGUID(&event->attributes, key, value);
 }

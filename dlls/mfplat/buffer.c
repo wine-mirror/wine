@@ -483,7 +483,7 @@ static HRESULT WINAPI sample_SetGUID(IMFSample *iface, REFGUID key, REFGUID valu
 {
     struct sample *sample = impl_from_IMFSample(iface);
 
-    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_guid(value));
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
 
     return attributes_SetGUID(&sample->attributes, key, value);
 }
