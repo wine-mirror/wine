@@ -1557,6 +1557,14 @@ void WINAPI NdrServerCall( PRPC_MESSAGE msg )
     NdrStubCall( NULL, NULL, msg, &phase );
 }
 
+/***********************************************************************
+ *            NdrServerCallAll [RPCRT4.@]
+ */
+void WINAPI NdrServerCallAll( PRPC_MESSAGE msg )
+{
+    FIXME("%p stub\n", msg);
+}
+
 struct async_call_data
 {
     MIDL_STUB_MESSAGE *pStubMsg;
