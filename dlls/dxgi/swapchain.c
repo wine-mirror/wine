@@ -989,6 +989,8 @@ static HRESULT hresult_from_vk_result(VkResult vr)
     }
 }
 
+#define INVALID_VK_IMAGE_INDEX (~(uint32_t)0)
+
 struct d3d12_swapchain
 {
     IDXGISwapChain3 IDXGISwapChain3_iface;
@@ -1538,12 +1540,14 @@ static HRESULT d3d12_swapchain_create_buffers(struct d3d12_swapchain *swapchain,
     return S_OK;
 }
 
-static VkResult d3d12_swapchain_acquire_next_image(struct d3d12_swapchain *swapchain)
+static VkResult d3d12_swapchain_acquire_next_vulkan_image(struct d3d12_swapchain *swapchain)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
     VkDevice vk_device = swapchain->vk_device;
     VkFence vk_fence = swapchain->vk_fence;
     VkResult vr;
+
+    swapchain->vk_image_index = INVALID_VK_IMAGE_INDEX;
 
     if ((vr = vk_funcs->p_vkAcquireNextImageKHR(vk_device, swapchain->vk_swapchain, UINT64_MAX,
             VK_NULL_HANDLE, vk_fence, &swapchain->vk_image_index)) < 0)
@@ -1552,9 +1556,6 @@ static VkResult d3d12_swapchain_acquire_next_image(struct d3d12_swapchain *swapc
         return vr;
     }
 
-    if (!d3d12_swapchain_has_user_images(swapchain))
-        swapchain->current_buffer_index = swapchain->vk_image_index;
-
     if ((vr = vk_funcs->p_vkWaitForFences(vk_device, 1, &vk_fence, VK_TRUE, UINT64_MAX)) != VK_SUCCESS)
     {
         ERR("Failed to wait for fence, vr %d.\n", vr);
@@ -1562,6 +1563,23 @@ static VkResult d3d12_swapchain_acquire_next_image(struct d3d12_swapchain *swapc
     }
     if ((vr = vk_funcs->p_vkResetFences(vk_device, 1, &vk_fence)) < 0)
         ERR("Failed to reset fence, vr %d.\n", vr);
+
+    return vr;
+}
+
+static VkResult d3d12_swapchain_acquire_next_back_buffer(struct d3d12_swapchain *swapchain)
+{
+    VkResult vr;
+
+    /* If we don't have user images, we need to acquire a Vulkan image in order
+     * to get the correct value for the current back buffer index. */
+    if (d3d12_swapchain_has_user_images(swapchain))
+        return VK_SUCCESS;
+
+    if ((vr = d3d12_swapchain_acquire_next_vulkan_image(swapchain)) >= 0)
+        swapchain->current_buffer_index = swapchain->vk_image_index;
+    else
+        ERR("Failed to acquire Vulkan image, vr %d.\n", vr);
 
     return vr;
 }
@@ -1717,6 +1735,8 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     swapchain->vk_swapchain_width = width;
     swapchain->vk_swapchain_height = height;
 
+    swapchain->vk_image_index = INVALID_VK_IMAGE_INDEX;
+
     return d3d12_swapchain_create_buffers(swapchain, vk_swapchain_format, vk_format);
 }
 
@@ -1725,16 +1745,17 @@ static HRESULT d3d12_swapchain_recreate_vulkan_swapchain(struct d3d12_swapchain 
     VkResult vr;
     HRESULT hr;
 
-    if (FAILED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
+    if (SUCCEEDED(hr = d3d12_swapchain_create_vulkan_swapchain(swapchain)))
+    {
+        vr = d3d12_swapchain_acquire_next_back_buffer(swapchain);
+        hr = hresult_from_vk_result(vr);
+    }
+    else
     {
         ERR("Failed to recreate Vulkan swapchain, hr %#x.\n", hr);
-        return hr;
     }
 
-    if ((vr = d3d12_swapchain_acquire_next_image(swapchain)) < 0)
-        ERR("Failed to acquire Vulkan image after recreating swapchain, vr %d.\n", vr);
-
-    return hresult_from_vk_result(vr);
+    return hr;
 }
 
 static inline struct d3d12_swapchain *d3d12_swapchain_from_IDXGISwapChain3(IDXGISwapChain3 *iface)
@@ -1921,6 +1942,14 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
     VkSubmitInfo submit_info;
     VkResult vr;
 
+    if (swapchain->vk_image_index == INVALID_VK_IMAGE_INDEX)
+    {
+        if ((vr = d3d12_swapchain_acquire_next_vulkan_image(swapchain)) < 0)
+            return vr;
+    }
+
+    assert(swapchain->vk_image_index < swapchain->buffer_count);
+
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.pNext = NULL;
     present_info.waitSemaphoreCount = 0;
@@ -1967,7 +1996,10 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
         present_info.pWaitSemaphores = &swapchain->vk_semaphores[swapchain->vk_image_index];
     }
 
-    return vk_funcs->p_vkQueuePresentKHR(vk_queue, &present_info);
+    if ((vr = vk_funcs->p_vkQueuePresentKHR(vk_queue, &present_info)) >= 0)
+        swapchain->vk_image_index = INVALID_VK_IMAGE_INDEX;
+
+    return vr;
 }
 
 static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
@@ -2036,8 +2068,7 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     }
 
     swapchain->current_buffer_index = (swapchain->current_buffer_index + 1) % swapchain->desc.BufferCount;
-
-    vr = d3d12_swapchain_acquire_next_image(swapchain);
+    vr = d3d12_swapchain_acquire_next_back_buffer(swapchain);
     if (vr == VK_ERROR_OUT_OF_DATE_KHR)
     {
         if (!d3d12_swapchain_has_user_images(swapchain))
@@ -2745,9 +2776,8 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     swapchain->vk_fence = vk_fence;
 
     swapchain->current_buffer_index = 0;
-    if ((vr = d3d12_swapchain_acquire_next_image(swapchain)) < 0)
+    if ((vr = d3d12_swapchain_acquire_next_back_buffer(swapchain)) < 0)
     {
-        ERR("Failed to acquire Vulkan image, vr %d.\n", vr);
         d3d12_swapchain_destroy(swapchain);
         return hresult_from_vk_result(vr);
     }
