@@ -46,7 +46,6 @@ static WCHAR *sFilter;
 
 static int FetchUninstallInformation(void);
 static void UninstallProgram(void);
-static int cmp_by_name(const void *a, const void *b);
 
 static const WCHAR DisplayNameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR PathUninstallW[] = {
@@ -233,7 +232,7 @@ int wmain(int argc, WCHAR *argv[])
 /**
  * Used to sort entries by name.
  */
-static int cmp_by_name(const void *a, const void *b)
+static int __cdecl cmp_by_name(const void *a, const void *b)
 {
     return lstrcmpiW(((const uninst_entry *)a)->descr, ((const uninst_entry *)b)->descr);
 }
