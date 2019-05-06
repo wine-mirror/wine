@@ -91,6 +91,9 @@ typedef LONG LSTATUS;
 WINADVAPI BOOL      WINAPI AbortSystemShutdownA(LPSTR);
 WINADVAPI BOOL      WINAPI AbortSystemShutdownW(LPWSTR);
 #define                    AbortSystemShutdown WINELIB_NAME_AW(AbortSystemShutdown)
+WINADVAPI DWORD     WINAPI InitiateShutdownA(char*,char*,DWORD,DWORD,DWORD);
+WINADVAPI DWORD     WINAPI InitiateShutdownW(WCHAR*,WCHAR*,DWORD,DWORD,DWORD);
+#define                    InitiateShutdown WINELIB_NAME_AW(InitiateShutdown)
 WINADVAPI BOOL      WINAPI InitiateSystemShutdownA(LPSTR,LPSTR,DWORD,BOOL,BOOL);
 WINADVAPI BOOL      WINAPI InitiateSystemShutdownW(LPWSTR,LPWSTR,DWORD,BOOL,BOOL);
 #define                    InitiateSystemShutdown WINELIB_NAME_AW(InitiateSystemShutdown)
