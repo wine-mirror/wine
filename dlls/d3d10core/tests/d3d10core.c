@@ -1594,11 +1594,16 @@ static void test_feature_level(void)
 
 static void test_device_interfaces(void)
 {
+    ID3D11DeviceContext *immediate_context;
+    ID3D11Multithread *d3d11_multithread;
+    ULONG refcount, expected_refcount;
+    ID3D10Multithread *multithread;
+    ID3D11Device *d3d11_device;
     IDXGIAdapter *dxgi_adapter;
     IDXGIDevice *dxgi_device;
     ID3D10Device *device;
     IUnknown *iface;
-    ULONG refcount;
+    BOOL enabled;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -1615,20 +1620,56 @@ static void test_device_interfaces(void)
     check_interface(device, &IID_ID3D11Device, TRUE, TRUE); /* Not available on all Windows versions. */
 
     hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Device should implement IDXGIDevice.\n");
+    ok(hr == S_OK, "Device should implement IDXGIDevice.\n");
     hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter, (void **)&dxgi_adapter);
-    ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter.\n");
+    ok(hr == S_OK, "Device parent should implement IDXGIAdapter.\n");
     hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory, (void **)&iface);
-    ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory.\n");
+    ok(hr == S_OK, "Adapter parent should implement IDXGIFactory.\n");
     IUnknown_Release(iface);
     IUnknown_Release(dxgi_adapter);
     hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter1, (void **)&dxgi_adapter);
-    ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter1.\n");
+    ok(hr == S_OK, "Device parent should implement IDXGIAdapter1.\n");
     hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory1, (void **)&iface);
     ok(hr == E_NOINTERFACE, "Adapter parent should not implement IDXGIFactory1.\n");
     IUnknown_Release(dxgi_adapter);
     IUnknown_Release(dxgi_device);
 
+    hr = ID3D10Device_QueryInterface(device, &IID_ID3D11Device, (void **)&d3d11_device);
+    if (hr != S_OK)
+        goto done;
+
+    expected_refcount = get_refcount(device) + 1;
+
+    hr = ID3D10Device_QueryInterface(device, &IID_ID3D10Multithread, (void **)&multithread);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = get_refcount(device);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    expected_refcount = refcount;
+    refcount = get_refcount(multithread);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    ID3D11Device_GetImmediateContext(d3d11_device, &immediate_context);
+    hr = ID3D11DeviceContext_QueryInterface(immediate_context,
+            &IID_ID3D11Multithread, (void **)&d3d11_multithread);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    expected_refcount = get_refcount(immediate_context);
+    refcount = get_refcount(d3d11_multithread);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    enabled = ID3D10Multithread_GetMultithreadProtected(multithread);
+    ok(enabled, "Multithread protection is %#x.\n", enabled);
+    enabled = ID3D11Multithread_GetMultithreadProtected(d3d11_multithread);
+    ok(enabled, "Multithread protection is %#x.\n", enabled);
+
+    ID3D11Device_Release(d3d11_device);
+    ID3D11DeviceContext_Release(immediate_context);
+    ID3D10Multithread_Release(multithread);
+    ID3D11Multithread_Release(d3d11_multithread);
+
+done:
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
