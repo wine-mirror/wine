@@ -147,7 +147,7 @@ static const BYTE REPORT_AXIS_TAIL[] = {
     0x95, 0x00,         /* REPORT_COUNT (?) */
     0x81, 0x02,         /* INPUT (Data,Var,Abs) */
 };
-#define IDX_ABS_AXIS_COUNT 15
+#define IDX_ABS_AXIS_COUNT 23
 
 static const BYTE CONTROLLER_BUTTONS[] = {
     0x05, 0x09, /* USAGE_PAGE (Button) */

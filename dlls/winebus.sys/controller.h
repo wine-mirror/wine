@@ -36,15 +36,15 @@ static const BYTE REPORT_BUTTONS[] = {
     0x29, 0x03, /* USAGE_MAXIMUM (Button 3) */
     0x15, 0x00, /* LOGICAL_MINIMUM (0) */
     0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x35, 0x00, /* LOGICAL_MINIMUM (0) */
-    0x45, 0x01, /* LOGICAL_MAXIMUM (1) */
+    0x35, 0x00, /* PHYSICAL_MINIMUM (0) */
+    0x45, 0x01, /* PHYSICAL_MAXIMUM (1) */
     0x95, 0x03, /* REPORT_COUNT (3) */
     0x75, 0x01, /* REPORT_SIZE (1) */
     0x81, 0x02, /* INPUT (Data,Var,Abs) */
 };
 #define IDX_BUTTON_MIN_USAGE 3
 #define IDX_BUTTON_MAX_USAGE 5
-#define IDX_BUTTON_COUNT 11
+#define IDX_BUTTON_COUNT 15
 
 static const BYTE REPORT_PADDING[] = {
     0x95, 0x03, /* REPORT_COUNT (3) */
