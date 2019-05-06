@@ -149,15 +149,17 @@ static const BYTE REPORT_AXIS_TAIL[] = {
 };
 #define IDX_ABS_AXIS_COUNT 23
 
+#define CONTROLLER_NUM_BUTTONS 15
+
 static const BYTE CONTROLLER_BUTTONS[] = {
     0x05, 0x09, /* USAGE_PAGE (Button) */
     0x19, 0x01, /* USAGE_MINIMUM (Button 1) */
-    0x29, 0x0f, /* USAGE_MAXIMUM (Button 15) */
+    0x29, CONTROLLER_NUM_BUTTONS, /* USAGE_MAXIMUM (Button 15) */
     0x15, 0x00, /* LOGICAL_MINIMUM (0) */
     0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
     0x35, 0x00, /* LOGICAL_MINIMUM (0) */
     0x45, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x95, 0x0f, /* REPORT_COUNT (15) */
+    0x95, CONTROLLER_NUM_BUTTONS, /* REPORT_COUNT (15) */
     0x75, 0x01, /* REPORT_SIZE (1) */
     0x81, 0x02, /* INPUT (Data,Var,Abs) */
     /* padding */
@@ -193,6 +195,8 @@ static const BYTE CONTROLLER_TRIGGERS [] = {
     0x95, 0x02,         /* REPORT_COUNT (2) */
     0x81, 0x02,         /* INPUT (Data,Var,Abs) */
 };
+
+#define CONTROLLER_NUM_AXES 6
 
 static const BYTE HAPTIC_RUMBLE[] = {
     0x06, 0x00, 0xff,   /* USAGE PAGE (vendor-defined) */
@@ -246,7 +250,7 @@ static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, const BYTE 
 static void set_axis_value(struct platform_private *ext, int index, short value)
 {
     int offset;
-    offset = ext->axis_start + index * 2;
+    offset = ext->axis_start + index * sizeof(WORD);
 
     switch (index)
     {
@@ -266,7 +270,7 @@ static void set_axis_value(struct platform_private *ext, int index, short value)
 static void set_ball_value(struct platform_private *ext, int index, int value1, int value2)
 {
     int offset;
-    offset = ext->ball_start + (index * 2);
+    offset = ext->ball_start + (index * sizeof(WORD));
     if (value1 > 127) value1 = 127;
     if (value1 < -127) value1 = -127;
     if (value2 > 127) value2 = 127;
@@ -381,7 +385,7 @@ static BOOL build_report_descriptor(struct platform_private *ext)
         descript_size += sizeof(REPORT_AXIS_HEADER);
         descript_size += (sizeof(REPORT_AXIS_USAGE) * axis_count);
         descript_size += sizeof(REPORT_AXIS_TAIL);
-        report_size += (2 * axis_count);
+        report_size += (sizeof(WORD) * axis_count);
     }
 
     ball_count = pSDL_JoystickNumBalls(ext->sdl_joystick);
@@ -396,7 +400,7 @@ static BOOL build_report_descriptor(struct platform_private *ext)
         descript_size += sizeof(REPORT_AXIS_HEADER);
         descript_size += (sizeof(REPORT_AXIS_USAGE) * ball_count * 2);
         descript_size += sizeof(REPORT_REL_AXIS_TAIL);
-        report_size += (2*ball_count);
+        report_size += (sizeof(WORD) * ball_count);
     }
 
     hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
@@ -404,8 +408,7 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     if (hat_count)
     {
         descript_size += sizeof(REPORT_HATSWITCH);
-        for (i = 0; i < hat_count; i++)
-            report_size++;
+        report_size += hat_count;
     }
 
     descript_size += test_haptic(ext);
@@ -482,8 +485,8 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     descript_size += sizeof(CONTROLLER_TRIGGERS);
     descript_size += test_haptic(ext);
 
-    ext->axis_start = 2;
-    ext->buffer_length = 14;
+    ext->axis_start = (CONTROLLER_NUM_BUTTONS + 7) / 8;
+    ext->buffer_length = (CONTROLLER_NUM_BUTTONS + 7) / 8 + CONTROLLER_NUM_AXES * sizeof(WORD);
 
     TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", ext->buffer_length);
