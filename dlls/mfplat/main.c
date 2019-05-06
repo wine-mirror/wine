@@ -2660,13 +2660,30 @@ static HRESULT WINAPI mfbytestream_IsEndOfStream(IMFByteStream *iface, BOOL *end
     return S_OK;
 }
 
-static HRESULT WINAPI mfbytestream_Read(IMFByteStream *iface, BYTE *data, ULONG count, ULONG *byte_read)
+static HRESULT WINAPI bytestream_file_Read(IMFByteStream *iface, BYTE *buffer, ULONG size, ULONG *read_len)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
+    struct bytestream *stream = impl_from_IMFByteStream(iface);
+    LARGE_INTEGER position;
+    HRESULT hr = S_OK;
+    BOOL ret;
 
-    FIXME("%p, %p, %u, %p\n", This, data, count, byte_read);
+    TRACE("%p, %p, %u, %p.\n", iface, buffer, size, read_len);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&stream->cs);
+
+    position.QuadPart = stream->position;
+    if ((ret = SetFilePointerEx(stream->hfile, position, NULL, FILE_BEGIN)))
+    {
+        if ((ret = ReadFile(stream->hfile, buffer, size, read_len, NULL)))
+            stream->position += *read_len;
+    }
+
+    if (!ret)
+        hr = HRESULT_FROM_WIN32(GetLastError());
+
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI bytestream_BeginRead(IMFByteStream *iface, BYTE *data, ULONG size, IMFAsyncCallback *callback,
@@ -2744,7 +2761,7 @@ static HRESULT WINAPI mfbytestream_Close(IMFByteStream *iface)
     return E_NOTIMPL;
 }
 
-static const IMFByteStreamVtbl mfbytestream_vtbl =
+static const IMFByteStreamVtbl bytestream_file_vtbl =
 {
     bytestream_QueryInterface,
     bytestream_AddRef,
@@ -2755,7 +2772,7 @@ static const IMFByteStreamVtbl mfbytestream_vtbl =
     mfbytestream_GetCurrentPosition,
     mfbytestream_SetCurrentPosition,
     mfbytestream_IsEndOfStream,
-    mfbytestream_Read,
+    bytestream_file_Read,
     bytestream_BeginRead,
     bytestream_EndRead,
     mfbytestream_Write,
@@ -3209,16 +3226,14 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
                             LPCWSTR url, IMFByteStream **bytestream)
 {
     DWORD capabilities = MFBYTESTREAM_IS_SEEKABLE | MFBYTESTREAM_DOES_NOT_USE_NETWORK;
-    struct bytestream *object;
-    DWORD fileaccessmode = 0;
+    DWORD filecreation_disposition = 0, fileaccessmode = 0, fileattributes = 0;
     DWORD filesharemode = FILE_SHARE_READ;
-    DWORD filecreation_disposition = 0;
-    DWORD fileattributes = 0;
+    struct bytestream *object;
     FILETIME writetime;
     HANDLE file;
     HRESULT hr;
 
-    FIXME("(%d, %d, %d, %s, %p): stub\n", accessmode, openmode, flags, debugstr_w(url), bytestream);
+    TRACE("%d, %d, %#x, %s, %p.\n", accessmode, openmode, flags, debugstr_w(url), bytestream);
 
     switch (accessmode)
     {
@@ -3279,7 +3294,7 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
         heap_free(object);
         return hr;
     }
-    object->IMFByteStream_iface.lpVtbl = &mfbytestream_vtbl;
+    object->IMFByteStream_iface.lpVtbl = &bytestream_file_vtbl;
     object->attributes.IMFAttributes_iface.lpVtbl = &mfbytestream_attributes_vtbl;
     object->IMFGetService_iface.lpVtbl = &bytestream_file_getservice_vtbl;
     object->read_callback.lpVtbl = &bytestream_file_read_callback_vtbl;
