@@ -1147,7 +1147,10 @@ void macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *ke
         if (thread_data->keyc2vkey[keyc] == vkey) break;
 
     if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
+    {
+        *done = -1;
         return;
+    }
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
 
