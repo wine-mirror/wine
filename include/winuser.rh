@@ -93,6 +93,7 @@
 #define VK_KANA                0x15
 #define VK_HANGEUL             VK_KANA
 #define VK_HANGUL              VK_KANA
+/*                             0x16  Undefined */
 #define VK_JUNJA               0x17
 #define VK_FINAL               0x18
 #define VK_HANJA               0x19
@@ -170,7 +171,14 @@
 #define VK_F22                 0x85
 #define VK_F23                 0x86
 #define VK_F24                 0x87
-/*                             0x88-0x8F  Unassigned */
+#define VK_NAVIGATION_VIEW     0x88
+#define VK_NAVIGATION_MENU     0x89
+#define VK_NAVIGATION_UP       0x8A
+#define VK_NAVIGATION_DOWN     0x8B
+#define VK_NAVIGATION_LEFT     0x8C
+#define VK_NAVIGATION_RIGHT    0x8D
+#define VK_NAVIGATION_ACCEPT   0x8E
+#define VK_NAVIGATION_CANCEL   0x8F
 #define VK_NUMLOCK             0x90
 #define VK_SCROLL              0x91
 #define VK_OEM_NEC_EQUAL       0x92
@@ -218,7 +226,31 @@
 #define VK_OEM_PERIOD          0xBE
 #define VK_OEM_2               0xBF
 #define VK_OEM_3               0xC0
-/*                             0xC1-0xDA  Unassigned */
+/*                             0xC1-0xC2  Unassigned */
+#define VK_GAMEPAD_A           0xC3
+#define VK_GAMEPAD_B           0xC4
+#define VK_GAMEPAD_X           0xC5
+#define VK_GAMEPAD_Y           0xC6
+#define VK_GAMEPAD_RIGHT_SHOULDER 0xC7
+#define VK_GAMEPAD_LEFT_SHOULDER 0xC8
+#define VK_GAMEPAD_LEFT_TRIGGER 0xC9
+#define VK_GAMEPAD_RIGHT_TRIGGER 0xCA
+#define VK_GAMEPAD_DPAD_UP     0xCB
+#define VK_GAMEPAD_DPAD_DOWN   0xCC
+#define VK_GAMEPAD_DPAD_LEFT   0xCD
+#define VK_GAMEPAD_DPAD_RIGHT  0xCE
+#define VK_GAMEPAD_MENU        0xCF
+#define VK_GAMEPAD_VIEW        0xD0
+#define VK_GAMEPAD_LEFT_THUMBSTICK_BUTTON 0xD1
+#define VK_GAMEPAD_RIGHT_THUMBSTICK_BUTTON 0xD2
+#define VK_GAMEPAD_LEFT_THUMBSTICK_UP 0xD3
+#define VK_GAMEPAD_LEFT_THUMBSTICK_DOWN 0xD4
+#define VK_GAMEPAD_LEFT_THUMBSTICK_RIGHT 0xD5
+#define VK_GAMEPAD_LEFT_THUMBSTICK_LEFT 0xD6
+#define VK_GAMEPAD_RIGHT_THUMBSTICK_UP 0xD7
+#define VK_GAMEPAD_RIGHT_THUMBSTICK_DOWN 0xD8
+#define VK_GAMEPAD_RIGHT_THUMBSTICK_RIGHT 0xD9
+#define VK_GAMEPAD_RIGHT_THUMBSTICK_LEFT 0xDA
 #define VK_OEM_4               0xDB
 #define VK_OEM_5               0xDC
 #define VK_OEM_6               0xDD
@@ -563,7 +595,7 @@
 #define WM_TOUCHHITTESTING     0x024d
 #define WM_POINTERWHEEL        0x024e
 #define WM_POINTERHWHEEL       0x024f
-
+#define DM_POINTERHITTEST      0x0250
 #define WM_POINTERROUTEDTO     0x0251
 #define WM_POINTERROUTEDAWAY   0x0252
 #define WM_POINTERROUTEDRELEASED 0x0253
@@ -812,6 +844,7 @@
 #define WS_EX_APPWINDOW        __MSABI_LONG(0x00040000)
 #define WS_EX_LAYERED          __MSABI_LONG(0x00080000)
 #define WS_EX_NOINHERITLAYOUT  __MSABI_LONG(0x00100000)
+#define WS_EX_NOREDIRECTIONBITMAP __MSABI_LONG(0x00200000)
 #define WS_EX_LAYOUTRTL        __MSABI_LONG(0x00400000)
 #define WS_EX_COMPOSITED       __MSABI_LONG(0x02000000)
 #define WS_EX_NOACTIVATE       __MSABI_LONG(0x08000000)
