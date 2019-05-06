@@ -322,11 +322,7 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     lpddi->guidInstance = DInput_Wine_Joystick_GUID;
     lpddi->guidInstance.Data3 = id;
     lpddi->guidProduct = joystick_devices[id].guid_product;
-    /* we only support traditional joysticks for now */
-    if (version >= 0x0800)
-        lpddi->dwDevType = DI8DEVTYPE_GAMEPAD | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-    else
-        lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_GAMEPAD << 8);
+    lpddi->dwDevType = get_device_type(version);
 
     /* Assume the joystick as HID if it is attached to USB bus and has a valid VID/PID */
     if (joystick_devices[id].bus_type == BUS_USB &&

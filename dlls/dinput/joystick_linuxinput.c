@@ -350,11 +350,7 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     lpddi->guidInstance = joydevs[id].guid;
     lpddi->guidProduct  = joydevs[id].guid_product;
     lpddi->guidFFDriver = GUID_NULL;
-
-    if (version >= 0x0800)
-        lpddi->dwDevType = DI8DEVTYPE_GAMEPAD | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-    else
-        lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_GAMEPAD << 8);
+    lpddi->dwDevType = get_device_type(version);
 
     /* Assume the joystick as HID if it is attached to USB bus and has a valid VID/PID */
     if (joydevs[id].bus_type == BUS_USB &&

@@ -967,11 +967,7 @@ static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
         lpddi->guidInstance.Data3 = id;
         lpddi->guidProduct = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidProduct.Data1 = make_vid_pid(device);
-        /* we only support traditional joysticks for now */
-        if (version >= 0x0800)
-            lpddi->dwDevType = DI8DEVTYPE_GAMEPAD | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-        else
-            lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_GAMEPAD << 8);
+        lpddi->dwDevType = get_device_type(version);
         lpddi->dwDevType |= DIDEVTYPE_HID;
         lpddi->wUsagePage = 0x01; /* Desktop */
         lpddi->wUsage = 0x05; /* Game Pad */
@@ -1014,11 +1010,7 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
         lpddi->guidInstance.Data3 = id;
         lpddi->guidProduct = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidProduct.Data1 = make_vid_pid(device);
-        /* we only support traditional joysticks for now */
-        if (version >= 0x0800)
-            lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-        else
-            lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+        lpddi->dwDevType = get_device_type(version);
         sprintf(friendly, "Joystick %d", id);
         MultiByteToWideChar(CP_ACP, 0, friendly, -1, lpddi->tszInstanceName, MAX_PATH);
         /* get the device name */

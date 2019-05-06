@@ -76,6 +76,12 @@ DWORD typeFromGUID(REFGUID guid)
     }
 }
 
+DWORD get_device_type(DWORD version)
+{
+    return version >= 0x0800 ? DI8DEVTYPE_GAMEPAD | (DI8DEVTYPEJOYSTICK_STANDARD << 8) :
+                DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_GAMEPAD << 8);
+}
+
 static void _dump_DIEFFECT_flags(DWORD dwFlags)
 {
     if (TRACE_ON(dinput)) {
