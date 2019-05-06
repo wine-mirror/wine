@@ -725,6 +725,17 @@ BOOL WINAPI K32GetWsChanges(HANDLE process, PPSAPI_WS_WATCH_INFORMATION watchinf
 }
 
 /***********************************************************************
+ *           K32GetWsChangesEx (KERNEL32.@)
+ */
+BOOL WINAPI K32GetWsChangesEx(HANDLE process, PSAPI_WS_WATCH_INFORMATION_EX *watchinfoex, DWORD *size)
+{
+    FIXME_(seh)("(%p, %p, %p)\n", process, watchinfoex, size);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           K32InitializeProcessForWsWatch (KERNEL32.@)
  */
 BOOL WINAPI K32InitializeProcessForWsWatch(HANDLE process)
