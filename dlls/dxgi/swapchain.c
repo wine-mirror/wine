@@ -1308,6 +1308,71 @@ static void vk_cmd_image_barrier(const struct dxgi_vk_funcs *vk_funcs, VkCommand
             src_stage_mask, dst_stage_mask, 0, 0, NULL, 0, NULL, 1, &barrier);
 }
 
+static VkResult d3d12_swapchain_record_swapchain_blit(struct d3d12_swapchain *swapchain,
+        VkCommandBuffer vk_cmd_buffer, VkImage vk_dst_image, VkImage vk_src_image)
+{
+    const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    VkCommandBufferBeginInfo begin_info;
+    VkImageBlit blit;
+    VkFilter filter;
+    VkResult vr;
+
+    if (swapchain->desc.Width != swapchain->vk_swapchain_width
+            || swapchain->desc.Height != swapchain->vk_swapchain_height)
+        filter = VK_FILTER_LINEAR;
+    else
+        filter = VK_FILTER_NEAREST;
+
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.pNext = NULL;
+    begin_info.flags = 0;
+    begin_info.pInheritanceInfo = NULL;
+
+    if ((vr = vk_funcs->p_vkBeginCommandBuffer(vk_cmd_buffer, &begin_info)) < 0)
+    {
+        WARN("Failed to begin command buffer, vr %d.\n", vr);
+        return vr;
+    }
+
+    vk_cmd_image_barrier(vk_funcs, vk_cmd_buffer,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            0, VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vk_dst_image);
+
+    blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit.srcSubresource.mipLevel = 0;
+    blit.srcSubresource.baseArrayLayer = 0;
+    blit.srcSubresource.layerCount = 1;
+    blit.srcOffsets[0].x = 0;
+    blit.srcOffsets[0].y = 0;
+    blit.srcOffsets[0].z = 0;
+    blit.srcOffsets[1].x = swapchain->desc.Width;
+    blit.srcOffsets[1].y = swapchain->desc.Height;
+    blit.srcOffsets[1].z = 1;
+    blit.dstSubresource = blit.srcSubresource;
+    blit.dstOffsets[0].x = 0;
+    blit.dstOffsets[0].y = 0;
+    blit.dstOffsets[0].z = 0;
+    blit.dstOffsets[1].x = swapchain->vk_swapchain_width;
+    blit.dstOffsets[1].y = swapchain->vk_swapchain_height;
+    blit.dstOffsets[1].z = 1;
+
+    vk_funcs->p_vkCmdBlitImage(vk_cmd_buffer,
+            vk_src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            vk_dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1, &blit, filter);
+
+    vk_cmd_image_barrier(vk_funcs, vk_cmd_buffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT, 0,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, vk_dst_image);
+
+    if ((vr = vk_funcs->p_vkEndCommandBuffer(vk_cmd_buffer)) < 0)
+        WARN("Failed to end command buffer, vr %d.\n", vr);
+
+    return vr;
+}
+
 static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *swapchain,
         uint32_t queue_family_index, VkImage vk_swapchain_images[DXGI_MAX_SWAP_CHAIN_BUFFERS])
 {
@@ -1315,10 +1380,7 @@ static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *s
     VkDevice vk_device = swapchain->vk_device;
     VkCommandBufferAllocateInfo allocate_info;
     VkSemaphoreCreateInfo semaphore_info;
-    VkCommandBufferBeginInfo begin_info;
     VkCommandPoolCreateInfo pool_info;
-    VkImageBlit blit;
-    VkFilter filter;
     unsigned int i;
     VkResult vr;
 
@@ -1348,67 +1410,13 @@ static HRESULT d3d12_swapchain_prepare_command_buffers(struct d3d12_swapchain *s
         return hresult_from_vk_result(vr);
     }
 
-    if (swapchain->desc.Width != swapchain->vk_swapchain_width
-            || swapchain->desc.Height != swapchain->vk_swapchain_height)
-        filter = VK_FILTER_LINEAR;
-    else
-        filter = VK_FILTER_NEAREST;
-
     for (i = 0; i < swapchain->buffer_count; ++i)
     {
         VkCommandBuffer vk_cmd_buffer = swapchain->vk_cmd_buffers[i];
 
-        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        begin_info.pNext = NULL;
-        begin_info.flags = 0;
-        begin_info.pInheritanceInfo = NULL;
-
-        if ((vr = vk_funcs->p_vkBeginCommandBuffer(vk_cmd_buffer, &begin_info)) < 0)
-        {
-            WARN("Failed to begin command buffer, vr %d.\n", vr);
+        if ((vr = d3d12_swapchain_record_swapchain_blit(swapchain, vk_cmd_buffer,
+                vk_swapchain_images[i], swapchain->vk_images[i])) < 0)
             return hresult_from_vk_result(vr);
-        }
-
-        vk_cmd_image_barrier(vk_funcs, vk_cmd_buffer,
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                0, VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                vk_swapchain_images[i]);
-
-        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        blit.srcSubresource.mipLevel = 0;
-        blit.srcSubresource.baseArrayLayer = 0;
-        blit.srcSubresource.layerCount = 1;
-        blit.srcOffsets[0].x = 0;
-        blit.srcOffsets[0].y = 0;
-        blit.srcOffsets[0].z = 0;
-        blit.srcOffsets[1].x = swapchain->desc.Width;
-        blit.srcOffsets[1].y = swapchain->desc.Height;
-        blit.srcOffsets[1].z = 1;
-        blit.dstSubresource = blit.srcSubresource;
-        blit.dstOffsets[0].x = 0;
-        blit.dstOffsets[0].y = 0;
-        blit.dstOffsets[0].z = 0;
-        blit.dstOffsets[1].x = swapchain->vk_swapchain_width;
-        blit.dstOffsets[1].y = swapchain->vk_swapchain_height;
-        blit.dstOffsets[1].z = 1;
-
-        vk_funcs->p_vkCmdBlitImage(vk_cmd_buffer,
-                swapchain->vk_images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                vk_swapchain_images[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                1, &blit, filter);
-
-        vk_cmd_image_barrier(vk_funcs, vk_cmd_buffer,
-                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                VK_ACCESS_TRANSFER_WRITE_BIT, 0,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                vk_swapchain_images[i]);
-
-        if ((vr = vk_funcs->p_vkEndCommandBuffer(vk_cmd_buffer)) < 0)
-        {
-            WARN("Failed to end command buffer, vr %d.\n", vr);
-            return hresult_from_vk_result(vr);
-        }
     }
 
     for (i = 0; i < swapchain->buffer_count; ++i)
