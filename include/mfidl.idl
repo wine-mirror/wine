@@ -463,8 +463,30 @@ interface IMFSequencerSource : IUnknown
     HRESULT UpdateTopologyFlags(
         [in] MFSequencerElementId id,
         [in] DWORD flags );
+}
 
-};
+interface IMFPresentationClock;
+
+[
+    object,
+    uuid(8c7b80bf-ee42-4b59-b1df-55668e1bdca8),
+    local
+]
+interface IMFSampleGrabberSinkCallback : IMFClockStateSink
+{
+    HRESULT OnSetPresentationClock(
+        [in] IMFPresentationClock *clock);
+
+    HRESULT OnProcessSample(
+        [in] REFGUID major_type,
+        [in] DWORD sample_flags,
+        [in] LONGLONG sample_time,
+        [in] LONGLONG sample_duration,
+        [in] const BYTE *buffer,
+        [in] DWORD sample_size);
+
+    HRESULT OnShutdown();
+}
 
 cpp_quote("HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session);")
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **bytestream);" )
@@ -472,6 +494,8 @@ cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStreamEx(IUnknown *stream, IMFBy
 cpp_quote("HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock);")
 cpp_quote("HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor **descriptors,")
 cpp_quote("     IMFPresentationDescriptor **presentation_desc);")
+cpp_quote("HRESULT WINAPI MFCreateSampleGrabberSinkActivate(IMFMediaType *media_type,")
+cpp_quote("        IMFSampleGrabberSinkCallback *callback, IMFActivate **activate);")
 cpp_quote("HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequencerSource **seq_source);" )
 cpp_quote("HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver);")
 cpp_quote("HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD cMediaTypes,")

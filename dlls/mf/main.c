@@ -35,6 +35,8 @@
 #include "mfapi.h"
 #include "mferror.h"
 
+#include "mf_private.h"
+
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/unicode.h"
@@ -43,6 +45,440 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 static HINSTANCE mf_instance;
+
+struct activate_object
+{
+    IMFActivate IMFActivate_iface;
+    LONG refcount;
+    IMFAttributes *attributes;
+    IUnknown *object;
+    const struct activate_funcs *funcs;
+    void *context;
+};
+
+static struct activate_object *impl_from_IMFActivate(IMFActivate *iface)
+{
+    return CONTAINING_RECORD(iface, struct activate_object, IMFActivate_iface);
+}
+
+static HRESULT WINAPI activate_object_QueryInterface(IMFActivate *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFActivate) ||
+            IsEqualIID(riid, &IID_IMFAttributes) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFActivate_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI activate_object_AddRef(IMFActivate *iface)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+    ULONG refcount = InterlockedIncrement(&activate->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI activate_object_Release(IMFActivate *iface)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+    ULONG refcount = InterlockedDecrement(&activate->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        activate->funcs->free_private(activate->context);
+        if (activate->object)
+            IUnknown_Release(activate->object);
+        IMFAttributes_Release(activate->attributes);
+        heap_free(activate);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI activate_object_GetItem(IMFActivate *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetItem(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_GetItemType(IMFActivate *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), type);
+
+    return IMFAttributes_GetItemType(activate->attributes, key, type);
+}
+
+static HRESULT WINAPI activate_object_CompareItem(IMFActivate *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), value, result);
+
+    return IMFAttributes_CompareItem(activate->attributes, key, value, result);
+}
+
+static HRESULT WINAPI activate_object_Compare(IMFActivate *iface, IMFAttributes *theirs, MF_ATTRIBUTES_MATCH_TYPE type,
+        BOOL *result)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, type, result);
+
+    return IMFAttributes_Compare(activate->attributes, theirs, type, result);
+}
+
+static HRESULT WINAPI activate_object_GetUINT32(IMFActivate *iface, REFGUID key, UINT32 *value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT32(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_GetUINT64(IMFActivate *iface, REFGUID key, UINT64 *value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT64(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_GetDouble(IMFActivate *iface, REFGUID key, double *value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetDouble(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_GetGUID(IMFActivate *iface, REFGUID key, GUID *value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetGUID(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_GetStringLength(IMFActivate *iface, REFGUID key, UINT32 *length)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), length);
+
+    return IMFAttributes_GetStringLength(activate->attributes, key, length);
+}
+
+static HRESULT WINAPI activate_object_GetString(IMFActivate *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_guid(key), value, size, length);
+
+    return IMFAttributes_GetString(activate->attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI activate_object_GetAllocatedString(IMFActivate *iface, REFGUID key,
+        WCHAR **value, UINT32 *length)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), value, length);
+
+    return IMFAttributes_GetAllocatedString(activate->attributes, key, value, length);
+}
+
+static HRESULT WINAPI activate_object_GetBlobSize(IMFActivate *iface, REFGUID key, UINT32 *size)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), size);
+
+    return IMFAttributes_GetBlobSize(activate->attributes, key, size);
+}
+
+static HRESULT WINAPI activate_object_GetBlob(IMFActivate *iface, REFGUID key, UINT8 *buf,
+        UINT32 bufsize, UINT32 *blobsize)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_guid(key), buf, bufsize, blobsize);
+
+    return IMFAttributes_GetBlob(activate->attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI activate_object_GetAllocatedBlob(IMFActivate *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_GetAllocatedBlob(activate->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI activate_object_GetUnknown(IMFActivate *iface, REFGUID key, REFIID riid, void **ppv)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(key), debugstr_guid(riid), ppv);
+
+    return IMFAttributes_GetUnknown(activate->attributes, key, riid, ppv);
+}
+
+static HRESULT WINAPI activate_object_SetItem(IMFActivate *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetItem(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_DeleteItem(IMFActivate *iface, REFGUID key)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_guid(key));
+
+    return IMFAttributes_DeleteItem(activate->attributes, key);
+}
+
+static HRESULT WINAPI activate_object_DeleteAllItems(IMFActivate *iface)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_DeleteAllItems(activate->attributes);
+}
+
+static HRESULT WINAPI activate_object_SetUINT32(IMFActivate *iface, REFGUID key, UINT32 value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %d.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetUINT32(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_SetUINT64(IMFActivate *iface, REFGUID key, UINT64 value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), wine_dbgstr_longlong(value));
+
+    return IMFAttributes_SetUINT64(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_SetDouble(IMFActivate *iface, REFGUID key, double value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetDouble(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_SetGUID(IMFActivate *iface, REFGUID key, REFGUID value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_guid(value));
+
+    return IMFAttributes_SetGUID(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_SetString(IMFActivate *iface, REFGUID key, const WCHAR *value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_w(value));
+
+    return IMFAttributes_SetString(activate->attributes, key, value);
+}
+
+static HRESULT WINAPI activate_object_SetBlob(IMFActivate *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %d.\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_SetBlob(activate->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI activate_object_SetUnknown(IMFActivate *iface, REFGUID key, IUnknown *unknown)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(key), unknown);
+
+    return IMFAttributes_SetUnknown(activate->attributes, key, unknown);
+}
+
+static HRESULT WINAPI activate_object_LockStore(IMFActivate *iface)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_LockStore(activate->attributes);
+}
+
+static HRESULT WINAPI activate_object_UnlockStore(IMFActivate *iface)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_UnlockStore(activate->attributes);
+}
+
+static HRESULT WINAPI activate_object_GetCount(IMFActivate *iface, UINT32 *count)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return IMFAttributes_GetCount(activate->attributes, count);
+}
+
+static HRESULT WINAPI activate_object_GetItemByIndex(IMFActivate *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return IMFAttributes_GetItemByIndex(activate->attributes, index, key, value);
+}
+
+static HRESULT WINAPI activate_object_CopyAllItems(IMFActivate *iface, IMFAttributes *dest)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return IMFAttributes_CopyAllItems(activate->attributes, dest);
+}
+
+static HRESULT WINAPI activate_object_ActivateObject(IMFActivate *iface, REFIID riid, void **obj)
+{
+    struct activate_object *activate = impl_from_IMFActivate(iface);
+    IUnknown *object;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (!activate->object)
+    {
+        if (FAILED(hr = activate->funcs->create_object(activate->context, &object)))
+            return hr;
+
+        if (!InterlockedCompareExchangePointer((void **)&activate->object, object, NULL))
+            IUnknown_Release(object);
+    }
+
+    return IUnknown_QueryInterface(activate->object, riid, obj);
+}
+
+static HRESULT WINAPI activate_object_ShutdownObject(IMFActivate *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_DetachObject(IMFActivate *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IMFActivateVtbl activate_object_vtbl =
+{
+    activate_object_QueryInterface,
+    activate_object_AddRef,
+    activate_object_Release,
+    activate_object_GetItem,
+    activate_object_GetItemType,
+    activate_object_CompareItem,
+    activate_object_Compare,
+    activate_object_GetUINT32,
+    activate_object_GetUINT64,
+    activate_object_GetDouble,
+    activate_object_GetGUID,
+    activate_object_GetStringLength,
+    activate_object_GetString,
+    activate_object_GetAllocatedString,
+    activate_object_GetBlobSize,
+    activate_object_GetBlob,
+    activate_object_GetAllocatedBlob,
+    activate_object_GetUnknown,
+    activate_object_SetItem,
+    activate_object_DeleteItem,
+    activate_object_DeleteAllItems,
+    activate_object_SetUINT32,
+    activate_object_SetUINT64,
+    activate_object_SetDouble,
+    activate_object_SetGUID,
+    activate_object_SetString,
+    activate_object_SetBlob,
+    activate_object_SetUnknown,
+    activate_object_LockStore,
+    activate_object_UnlockStore,
+    activate_object_GetCount,
+    activate_object_GetItemByIndex,
+    activate_object_CopyAllItems,
+    activate_object_ActivateObject,
+    activate_object_ShutdownObject,
+    activate_object_DetachObject,
+};
+
+HRESULT create_activation_object(void *context, const struct activate_funcs *funcs, IMFActivate **ret)
+{
+    struct activate_object *object;
+    HRESULT hr;
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFActivate_iface.lpVtbl = &activate_object_vtbl;
+    object->refcount = 1;
+    if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
+    object->funcs = funcs;
+    object->context = context;
+
+    *ret = &object->IMFActivate_iface;
+
+    return S_OK;
+}
 
 struct class_factory
 {

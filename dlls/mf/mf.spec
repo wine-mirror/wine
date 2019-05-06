@@ -51,7 +51,7 @@
 @ stub MFCreateRemoteDesktopPlugin
 @ stub MFCreateSAMIByteStreamPlugin
 @ stub MFCreateSampleCopierMFT
-@ stub MFCreateSampleGrabberSinkActivate
+@ stdcall MFCreateSampleGrabberSinkActivate(ptr ptr ptr)
 @ stub MFCreateSecureHttpSchemePlugin
 @ stub MFCreateSequencerSegmentOffset
 @ stdcall MFCreateSequencerSource(ptr ptr)

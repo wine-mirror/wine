@@ -940,6 +940,115 @@ todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static HRESULT WINAPI grabber_callback_QueryInterface(IMFSampleGrabberSinkCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFSampleGrabberSinkCallback) ||
+            IsEqualIID(riid, &IID_IMFClockStateSink) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFSampleGrabberSinkCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI grabber_callback_AddRef(IMFSampleGrabberSinkCallback *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI grabber_callback_Release(IMFSampleGrabberSinkCallback *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI grabber_callback_OnClockStart(IMFSampleGrabberSinkCallback *iface, MFTIME time, LONGLONG offset)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI grabber_callback_OnClockStop(IMFSampleGrabberSinkCallback *iface, MFTIME time)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI grabber_callback_OnClockPause(IMFSampleGrabberSinkCallback *iface, MFTIME time)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI grabber_callback_OnClockRestart(IMFSampleGrabberSinkCallback *iface, MFTIME time)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI grabber_callback_OnClockSetRate(IMFSampleGrabberSinkCallback *iface, MFTIME time, float rate)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI grabber_callback_OnSetPresentationClock(IMFSampleGrabberSinkCallback *iface,
+        IMFPresentationClock *clock)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI grabber_callback_OnProcessSample(IMFSampleGrabberSinkCallback *iface, REFGUID major_type,
+        DWORD sample_flags, LONGLONG sample_time, LONGLONG sample_duration, const BYTE *buffer, DWORD sample_size)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI grabber_callback_OnShutdown(IMFSampleGrabberSinkCallback *iface)
+{
+    return E_NOTIMPL;
+}
+
+static const IMFSampleGrabberSinkCallbackVtbl grabber_callback_vtbl =
+{
+    grabber_callback_QueryInterface,
+    grabber_callback_AddRef,
+    grabber_callback_Release,
+    grabber_callback_OnClockStart,
+    grabber_callback_OnClockStop,
+    grabber_callback_OnClockPause,
+    grabber_callback_OnClockRestart,
+    grabber_callback_OnClockSetRate,
+    grabber_callback_OnSetPresentationClock,
+    grabber_callback_OnProcessSample,
+    grabber_callback_OnShutdown,
+};
+
+static IMFSampleGrabberSinkCallback grabber_callback = { &grabber_callback_vtbl };
+
+static void test_sample_grabber(void)
+{
+    IMFMediaType *media_type;
+    IMFActivate *activate;
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = MFCreateSampleGrabberSinkActivate(NULL, NULL, &activate);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSampleGrabberSinkActivate(NULL, &grabber_callback, &activate);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSampleGrabberSinkActivate(media_type, &grabber_callback, &activate);
+    ok(hr == S_OK, "Failed to create grabber activate, hr %#x.\n", hr);
+
+    refcount = IMFMediaType_Release(media_type);
+    ok(refcount == 1, "Unexpected refcount %u.\n", refcount);
+
+    IMFActivate_Release(activate);
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -949,4 +1058,5 @@ START_TEST(mf)
     test_media_session();
     test_MFShutdownObject();
     test_presentation_clock();
+    test_sample_grabber();
 }
