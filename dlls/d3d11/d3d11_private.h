@@ -499,6 +499,7 @@ struct d3d_query *unsafe_impl_from_ID3D11Asynchronous(ID3D11Asynchronous *iface)
 struct d3d11_immediate_context
 {
     ID3D11DeviceContext1 ID3D11DeviceContext1_iface;
+    ID3D11Multithread ID3D11Multithread_iface;
     LONG refcount;
 
     struct wined3d_private_store private_store;
