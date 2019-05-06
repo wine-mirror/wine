@@ -855,7 +855,7 @@ static int compareType(const WIN32_FIND_DATAW* fd1, const WIN32_FIND_DATAW* fd2)
 }
 
 
-static int compareName(const void* arg1, const void* arg2)
+static int __cdecl compareName(const void* arg1, const void* arg2)
 {
 	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
 	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
@@ -867,7 +867,7 @@ static int compareName(const void* arg1, const void* arg2)
 	return lstrcmpiW(fd1->cFileName, fd2->cFileName);
 }
 
-static int compareExt(const void* arg1, const void* arg2)
+static int __cdecl compareExt(const void* arg1, const void* arg2)
 {
 	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
 	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
@@ -900,7 +900,7 @@ static int compareExt(const void* arg1, const void* arg2)
 	return lstrcmpiW(name1, name2);
 }
 
-static int compareSize(const void* arg1, const void* arg2)
+static int __cdecl compareSize(const void* arg1, const void* arg2)
 {
 	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
 	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
@@ -921,7 +921,7 @@ static int compareSize(const void* arg1, const void* arg2)
 	return cmp<0? -1: cmp>0? 1: 0;
 }
 
-static int compareDate(const void* arg1, const void* arg2)
+static int __cdecl compareDate(const void* arg1, const void* arg2)
 {
 	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
 	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
@@ -934,7 +934,7 @@ static int compareDate(const void* arg1, const void* arg2)
 }
 
 
-static int (*sortFunctions[])(const void* arg1, const void* arg2) = {
+static int (CDECL *sortFunctions[])(const void* arg1, const void* arg2) = {
 	compareName,	/* SORT_NAME */
 	compareExt,		/* SORT_EXT */
 	compareSize,	/* SORT_SIZE */
