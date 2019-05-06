@@ -2185,6 +2185,57 @@ static void test_get_immediate_context(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_deferred_context(void)
+{
+    ULONG refcount, expected_refcount;
+    struct device_desc device_desc;
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    device_desc.feature_level = NULL;
+    device_desc.flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create single-threaded device.\n");
+        return;
+    }
+
+    hr = ID3D11Device_CreateDeferredContext(device, 0, &context);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Failed to create deferred context, hr %#x.\n", hr);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    expected_refcount = get_refcount(device) + 1;
+    hr = ID3D11Device_CreateDeferredContext(device, 0, &context);
+    todo_wine ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    if (FAILED(hr))
+        goto done;
+    refcount = get_refcount(device);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+    refcount = get_refcount(context);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    check_interface(context, &IID_IUnknown, TRUE, FALSE);
+    check_interface(context, &IID_ID3D11DeviceChild, TRUE, FALSE);
+    check_interface(context, &IID_ID3D11DeviceContext, TRUE, FALSE);
+    check_interface(context, &IID_ID3D11Multithread, FALSE, FALSE);
+
+    refcount = ID3D11DeviceContext_Release(context);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+done:
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_create_texture1d(void)
 {
     ULONG refcount, expected_refcount;
@@ -29205,6 +29256,7 @@ START_TEST(d3d11)
     queue_test(test_create_device);
     queue_for_each_feature_level(test_device_interfaces);
     queue_test(test_get_immediate_context);
+    queue_test(test_create_deferred_context);
     queue_test(test_create_texture1d);
     queue_test(test_texture1d_interfaces);
     queue_test(test_create_texture2d);
