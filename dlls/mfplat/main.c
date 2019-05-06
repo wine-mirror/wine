@@ -2648,16 +2648,25 @@ static HRESULT WINAPI mfbytestream_SetCurrentPosition(IMFByteStream *iface, QWOR
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mfbytestream_IsEndOfStream(IMFByteStream *iface, BOOL *endstream)
+static HRESULT WINAPI bytestream_file_IsEndOfStream(IMFByteStream *iface, BOOL *ret)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
+    struct bytestream *stream = impl_from_IMFByteStream(iface);
+    LARGE_INTEGER position, length;
+    HRESULT hr = S_OK;
 
-    FIXME("%p, %p\n", This, endstream);
+    TRACE("%p, %p.\n", iface, ret);
 
-    if(endstream)
-        *endstream = TRUE;
+    EnterCriticalSection(&stream->cs);
 
-    return S_OK;
+    position.QuadPart = 0;
+    if (SetFilePointerEx(stream->hfile, position, &length, FILE_END))
+        *ret = stream->position >= length.QuadPart;
+    else
+        hr = HRESULT_FROM_WIN32(GetLastError());
+
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI bytestream_file_Read(IMFByteStream *iface, BYTE *buffer, ULONG size, ULONG *read_len)
@@ -2771,7 +2780,7 @@ static const IMFByteStreamVtbl bytestream_file_vtbl =
     mfbytestream_SetLength,
     mfbytestream_GetCurrentPosition,
     mfbytestream_SetCurrentPosition,
-    mfbytestream_IsEndOfStream,
+    bytestream_file_IsEndOfStream,
     bytestream_file_Read,
     bytestream_BeginRead,
     bytestream_EndRead,
