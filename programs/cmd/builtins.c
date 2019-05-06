@@ -3562,7 +3562,7 @@ void WCMD_setshow_date (void) {
  * Note: Native displays 'fred' before 'fred ', so need to only compare up to
  *       the equals sign.
  */
-static int WCMD_compare( const void *a, const void *b )
+static int __cdecl WCMD_compare( const void *a, const void *b )
 {
     int r;
     const WCHAR * const *str_a = a, * const *str_b = b;

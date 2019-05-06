@@ -101,7 +101,7 @@ static WCHAR * WCMD_filesize64 (ULONGLONG n) {
  *
  * Sort based on the /O options supplied on the command line
  */
-static int WCMD_dir_sort (const void *a, const void *b)
+static int __cdecl WCMD_dir_sort (const void *a, const void *b)
 {
   const WIN32_FIND_DATAW *filea = (const WIN32_FIND_DATAW *)a;
   const WIN32_FIND_DATAW *fileb = (const WIN32_FIND_DATAW *)b;
