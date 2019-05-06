@@ -27,6 +27,12 @@
 #include "winbase.h"
 
 #include "initguid.h"
+#include "ole2.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
+#undef INITGUID
+#include <guiddef.h>
 #include "mfapi.h"
 #include "mferror.h"
 #include "mfidl.h"
@@ -35,11 +41,45 @@
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
+static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_unk_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_unk_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl test_unk_vtbl =
+{
+    test_unk_QueryInterface,
+    test_unk_AddRef,
+    test_unk_Release,
+};
+
 static void test_topology(void)
 {
     IMFCollection *collection, *collection2;
+    IUnknown test_unk2 = { &test_unk_vtbl };
+    IUnknown test_unk = { &test_unk_vtbl };
     IMFTopologyNode *node, *node2, *node3;
     IMFTopology *topology, *topology2;
+    UINT32 attr_count;
+    IUnknown *object;
     DWORD size;
     WORD count;
     HRESULT hr;
@@ -302,6 +342,49 @@ static void test_topology(void)
     ok(hr == S_OK, "Failed to create a node, hr %#x.\n", hr);
     hr = IMFTopology_AddNode(topology, node);
     ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    /* Associated object. */
+    hr = IMFTopologyNode_SetObject(node, NULL);
+    ok(hr == S_OK, "Failed to set object, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetObject(node, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    object = (void *)0xdeadbeef;
+    hr = IMFTopologyNode_GetObject(node, &object);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(!object, "Unexpected object %p.\n", object);
+
+    hr = IMFTopologyNode_SetObject(node, &test_unk);
+    ok(hr == S_OK, "Failed to set object, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetObject(node, &object);
+    ok(hr == S_OK, "Failed to get object, hr %#x.\n", hr);
+    ok(object == &test_unk, "Unexpected object %p.\n", object);
+    IUnknown_Release(object);
+
+    hr = IMFTopologyNode_SetObject(node, &test_unk2);
+    ok(hr == S_OK, "Failed to set object, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetCount(node, &attr_count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+    ok(attr_count == 0, "Unexpected attribute count %u.\n", attr_count);
+
+    hr = IMFTopologyNode_SetGUID(node, &MF_TOPONODE_TRANSFORM_OBJECTID, &MF_TOPONODE_TRANSFORM_OBJECTID);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetObject(node, NULL);
+    ok(hr == S_OK, "Failed to set object, hr %#x.\n", hr);
+
+    object = (void *)0xdeadbeef;
+    hr = IMFTopologyNode_GetObject(node, &object);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(!object, "Unexpected object %p.\n", object);
+
+    hr = IMFTopologyNode_GetCount(node, &attr_count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+    ok(attr_count == 1, "Unexpected attribute count %u.\n", attr_count);
+
     IMFTopologyNode_Release(node);
 
     hr = IMFTopology_GetOutputNodeCollection(topology, &collection);

@@ -25,7 +25,13 @@
 
 #include "windef.h"
 #include "winbase.h"
+
 #include "initguid.h"
+#include "ole2.h"
+#include "ocidl.h"
+
+#undef INITGUID
+#include <guiddef.h>
 #include "mfapi.h"
 #include "mferror.h"
 #include "mfidl.h"
@@ -54,6 +60,8 @@ struct topology_node
     IMFAttributes *attributes;
     MF_TOPOLOGY_TYPE node_type;
     TOPOID id;
+    IUnknown *object;
+    CRITICAL_SECTION cs;
 };
 
 struct topology_loader
@@ -755,7 +763,10 @@ static ULONG WINAPI topology_node_Release(IMFTopologyNode *iface)
 
     if (!refcount)
     {
+        if (node->object)
+            IUnknown_Release(node->object);
         IMFAttributes_Release(node->attributes);
+        DeleteCriticalSection(&node->cs);
         heap_free(node);
     }
 
@@ -1038,16 +1049,74 @@ static HRESULT WINAPI topology_node_CopyAllItems(IMFTopologyNode *iface, IMFAttr
 
 static HRESULT WINAPI topology_node_SetObject(IMFTopologyNode *iface, IUnknown *object)
 {
-    FIXME("(%p)->(%p)\n", iface, object);
+    static const GUID *iids[3] = { &IID_IPersist, &IID_IPersistStorage, &IID_IPersistPropertyBag };
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+    IPersist *persist = NULL;
+    BOOL has_object_id;
+    GUID object_id;
+    unsigned int i;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, object);
+
+    has_object_id = IMFAttributes_GetGUID(node->attributes, &MF_TOPONODE_TRANSFORM_OBJECTID, &object_id) == S_OK;
+
+    if (object && !has_object_id)
+    {
+        for (i = 0; i < ARRAY_SIZE(iids); ++i)
+        {
+            persist = NULL;
+            if (SUCCEEDED(hr = IUnknown_QueryInterface(object, iids[i], (void **)&persist)))
+                break;
+        }
+
+        if (persist)
+        {
+            if (FAILED(hr = IPersist_GetClassID(persist, &object_id)))
+            {
+                IPersist_Release(persist);
+                persist = NULL;
+            }
+        }
+    }
+
+    EnterCriticalSection(&node->cs);
+
+    if (node->object)
+        IUnknown_Release(node->object);
+    node->object = object;
+    if (node->object)
+        IUnknown_AddRef(node->object);
+
+    if (persist)
+        IMFAttributes_SetGUID(node->attributes, &MF_TOPONODE_TRANSFORM_OBJECTID, &object_id);
+
+    LeaveCriticalSection(&node->cs);
+
+    if (persist)
+        IPersist_Release(persist);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_node_GetObject(IMFTopologyNode *iface, IUnknown **object)
 {
-    FIXME("(%p)->(%p)\n", iface, object);
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, object);
+
+    if (!object)
+        return E_POINTER;
+
+    EnterCriticalSection(&node->cs);
+
+    *object = node->object;
+    if (*object)
+        IUnknown_AddRef(*object);
+
+    LeaveCriticalSection(&node->cs);
+
+    return *object ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI topology_node_GetNodeType(IMFTopologyNode *iface, MF_TOPOLOGY_TYPE *node_type)
@@ -1243,6 +1312,7 @@ HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode 
         return hr;
     }
     object->id = ((TOPOID)GetCurrentProcessId() << 32) | InterlockedIncrement(&next_node_id);
+    InitializeCriticalSection(&object->cs);
 
     *node = &object->IMFTopologyNode_iface;
 
