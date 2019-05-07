@@ -763,7 +763,7 @@ HRESULT WINAPI PathCchSkipRoot(const WCHAR *path, const WCHAR **root_end)
     TRACE("%s %p\n", debugstr_w(path), root_end);
 
     if (!path || !path[0] || !root_end
-        || (!memicmpW(unc_prefix, path, ARRAY_SIZE(unc_prefix)) && !is_prefixed_volume(path) && !is_prefixed_unc(path)
+        || (!strncmpiW(unc_prefix, path, ARRAY_SIZE(unc_prefix)) && !is_prefixed_volume(path) && !is_prefixed_unc(path)
             && !is_prefixed_disk(path)))
         return E_INVALIDARG;
 
