@@ -1078,17 +1078,14 @@ static HRESULT WINAPI topology_node_CopyAllItems(IMFTopologyNode *iface, IMFAttr
     return IMFAttributes_CopyAllItems(node->attributes, dest);
 }
 
-static HRESULT WINAPI topology_node_SetObject(IMFTopologyNode *iface, IUnknown *object)
+static HRESULT topology_node_set_object(struct topology_node *node, IUnknown *object)
 {
     static const GUID *iids[3] = { &IID_IPersist, &IID_IPersistStorage, &IID_IPersistPropertyBag };
-    struct topology_node *node = impl_from_IMFTopologyNode(iface);
     IPersist *persist = NULL;
     BOOL has_object_id;
     GUID object_id;
     unsigned int i;
     HRESULT hr;
-
-    TRACE("%p, %p.\n", iface, object);
 
     has_object_id = IMFAttributes_GetGUID(node->attributes, &MF_TOPONODE_TRANSFORM_OBJECTID, &object_id) == S_OK;
 
@@ -1128,6 +1125,15 @@ static HRESULT WINAPI topology_node_SetObject(IMFTopologyNode *iface, IUnknown *
         IPersist_Release(persist);
 
     return S_OK;
+}
+
+static HRESULT WINAPI topology_node_SetObject(IMFTopologyNode *iface, IUnknown *object)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+
+    TRACE("%p, %p.\n", iface, object);
+
+    return topology_node_set_object(node, object);
 }
 
 static HRESULT WINAPI topology_node_GetObject(IMFTopologyNode *iface, IUnknown **object)
@@ -1367,11 +1373,44 @@ static HRESULT WINAPI topology_node_GetInputPrefType(IMFTopologyNode *iface, DWO
     return hr;
 }
 
-static HRESULT WINAPI topology_node_CloneFrom(IMFTopologyNode *iface, IMFTopologyNode *node)
+static HRESULT WINAPI topology_node_CloneFrom(IMFTopologyNode *iface, IMFTopologyNode *src_node)
 {
-    FIXME("(%p)->(%p)\n", iface, node);
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+    MF_TOPOLOGY_TYPE node_type;
+    IUnknown *object;
+    TOPOID topoid;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, src_node);
+
+    if (FAILED(hr = IMFTopologyNode_GetNodeType(src_node, &node_type)))
+        return hr;
+
+    if (node->node_type != node_type)
+        return MF_E_INVALIDREQUEST;
+
+    if (FAILED(hr = IMFTopologyNode_GetTopoNodeID(src_node, &topoid)))
+        return hr;
+
+    object = NULL;
+    IMFTopologyNode_GetObject(src_node, &object);
+
+    EnterCriticalSection(&node->cs);
+
+    hr = IMFTopologyNode_CopyAllItems(src_node, node->attributes);
+
+    if (SUCCEEDED(hr))
+        hr = topology_node_set_object(node, object);
+
+    if (SUCCEEDED(hr))
+        node->id = topoid;
+
+    LeaveCriticalSection(&node->cs);
+
+    if (object)
+        IUnknown_Release(object);
+
+    return hr;
 }
 
 static const IMFTopologyNodeVtbl topologynodevtbl =
