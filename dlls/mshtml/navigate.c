@@ -728,7 +728,7 @@ static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
         ptr++;
 
     len = strlenW(value);
-    if(ptr + ARRAY_SIZE(charsetW) < value+len && !memicmpW(ptr, charsetW, ARRAY_SIZE(charsetW))) {
+    if(ptr + ARRAY_SIZE(charsetW) < value+len && !strncmpiW(ptr, charsetW, ARRAY_SIZE(charsetW))) {
         size_t charset_len, lena;
         nsACString charset_str;
         const WCHAR *charset;
