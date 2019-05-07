@@ -3378,6 +3378,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
     struct wined3d_device_creation_parameters params;
     enum wined3d_format_id wined3d_format;
+    D3D_FEATURE_LEVEL feature_level;
     struct wined3d *wined3d;
     unsigned int i;
 
@@ -3410,6 +3411,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     *format_support = 0;
 
     wined3d_mutex_lock();
+    feature_level = device->feature_level;
     wined3d = wined3d_device_get_wined3d(device->wined3d_device);
     wined3d_device_get_creation_parameters(device->wined3d_device, &params);
     for (i = 0; i < ARRAY_SIZE(flag_mapping); ++i)
@@ -3434,12 +3436,17 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     {
         *format_support |= D3D11_FORMAT_SUPPORT_SHADER_LOAD;
         *format_support |= D3D11_FORMAT_SUPPORT_SHADER_SAMPLE;
-        *format_support |= D3D11_FORMAT_SUPPORT_SHADER_GATHER;
+
+        if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+            *format_support |= D3D11_FORMAT_SUPPORT_SHADER_GATHER;
 
         if (*format_support & D3D11_FORMAT_SUPPORT_DEPTH_STENCIL)
         {
-            *format_support |= D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON;
-            *format_support |= D3D11_FORMAT_SUPPORT_SHADER_GATHER_COMPARISON;
+            if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+                *format_support |= D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON;
+
+            if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+                *format_support |= D3D11_FORMAT_SUPPORT_SHADER_GATHER_COMPARISON;
         }
     }
 
