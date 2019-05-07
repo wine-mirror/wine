@@ -124,8 +124,8 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
             button_count = max(button_count, button_caps[i].NotRange.Usage);
     }
     HeapFree(GetProcessHeap(), 0, button_caps);
-    if (button_count < 14)
-        WARN("Too few buttons, Continue\n");
+    if (button_count < 11)
+        WARN("Too few buttons, continuing anyway\n");
     xinput_caps->Gamepad.wButtons = 0xffff;
 
     value_caps_count = caps->NumberInputValueCaps;
@@ -335,8 +335,8 @@ void HID_update_state(xinput_controller* device)
     CHAR *report = private->reports[(private->current_report)%2];
     CHAR *target_report = private->reports[(private->current_report+1)%2];
 
-    USAGE buttons[15];
-    ULONG button_length;
+    USAGE buttons[11];
+    ULONG button_length, hat_value;
     LONG value;
 
     if (!private->enabled)
@@ -361,7 +361,7 @@ void HID_update_state(xinput_controller* device)
     private->current_report = (private->current_report+1)%2;
 
     device->state.dwPacketNumber++;
-    button_length = 15;
+    button_length = ARRAY_SIZE(buttons);
     HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, private->ppd, target_report, private->report_length);
 
     device->state.Gamepad.wButtons = 0;
@@ -381,10 +381,42 @@ void HID_update_state(xinput_controller* device)
             case 9: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
             case 10: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
             case 11: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
-            case 12: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP; break;
-            case 13: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN; break;
-            case 14: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT; break;
-            case 15: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT; break;
+        }
+    }
+
+    if(HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &hat_value,
+                              private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+    {
+        switch(hat_value){
+            /* 8 1 2
+             * 7 0 3
+             * 6 5 4 */
+            case 0:
+                break;
+            case 1:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP;
+                break;
+            case 2:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT;
+                break;
+            case 3:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT;
+                break;
+            case 4:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN;
+                break;
+            case 5:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN;
+                break;
+            case 6:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT;
+                break;
+            case 7:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT;
+                break;
+            case 8:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP;
+                break;
         }
     }
 

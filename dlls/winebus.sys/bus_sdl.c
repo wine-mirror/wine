@@ -92,6 +92,7 @@ MAKE_FUNCPTR(SDL_JoystickGetAxis);
 MAKE_FUNCPTR(SDL_JoystickGetHat);
 MAKE_FUNCPTR(SDL_IsGameController);
 MAKE_FUNCPTR(SDL_GameControllerGetAxis);
+MAKE_FUNCPTR(SDL_GameControllerGetButton);
 MAKE_FUNCPTR(SDL_GameControllerName);
 MAKE_FUNCPTR(SDL_GameControllerOpen);
 MAKE_FUNCPTR(SDL_GameControllerEventState);
@@ -150,21 +151,21 @@ static const BYTE REPORT_AXIS_TAIL[] = {
 };
 #define IDX_ABS_AXIS_COUNT 23
 
-#define CONTROLLER_NUM_BUTTONS 15
+#define CONTROLLER_NUM_BUTTONS 11
 
 static const BYTE CONTROLLER_BUTTONS[] = {
     0x05, 0x09, /* USAGE_PAGE (Button) */
     0x19, 0x01, /* USAGE_MINIMUM (Button 1) */
-    0x29, CONTROLLER_NUM_BUTTONS, /* USAGE_MAXIMUM (Button 15) */
+    0x29, CONTROLLER_NUM_BUTTONS, /* USAGE_MAXIMUM (Button 11) */
     0x15, 0x00, /* LOGICAL_MINIMUM (0) */
     0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
     0x35, 0x00, /* LOGICAL_MINIMUM (0) */
     0x45, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x95, CONTROLLER_NUM_BUTTONS, /* REPORT_COUNT (15) */
+    0x95, CONTROLLER_NUM_BUTTONS, /* REPORT_COUNT (11) */
     0x75, 0x01, /* REPORT_SIZE (1) */
     0x81, 0x02, /* INPUT (Data,Var,Abs) */
     /* padding */
-    0x95, 0x01, /* REPORT_COUNT (1) */
+    0x95, 0x05, /* REPORT_COUNT (5) */
     0x75, 0x01, /* REPORT_SIZE (1) */
     0x81, 0x03, /* INPUT (Cnst,Var,Abs) */
 };
@@ -198,6 +199,8 @@ static const BYTE CONTROLLER_TRIGGERS [] = {
 };
 
 #define CONTROLLER_NUM_AXES 6
+
+#define CONTROLLER_NUM_HATSWITCHES 1
 
 static const BYTE HAPTIC_RUMBLE[] = {
     0x06, 0x00, 0xff,   /* USAGE PAGE (vendor-defined) */
@@ -496,6 +499,33 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     return TRUE;
 }
 
+static SHORT compose_dpad_value(SDL_GameController *joystick)
+{
+    if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_UP))
+    {
+        if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+            return SDL_HAT_RIGHTUP;
+        if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
+            return SDL_HAT_LEFTUP;
+        return SDL_HAT_UP;
+    }
+
+    if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
+    {
+        if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+            return SDL_HAT_RIGHTDOWN;
+        if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
+            return SDL_HAT_LEFTDOWN;
+        return SDL_HAT_DOWN;
+    }
+
+    if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+        return SDL_HAT_RIGHT;
+    if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
+        return SDL_HAT_LEFT;
+    return SDL_HAT_CENTERED;
+}
+
 static BOOL build_mapped_report_descriptor(struct platform_private *ext)
 {
     BYTE *report_ptr;
@@ -505,12 +535,14 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     descript_size += sizeof(CONTROLLER_AXIS);
     descript_size += sizeof(CONTROLLER_TRIGGERS);
     descript_size += sizeof(CONTROLLER_BUTTONS);
+    descript_size += sizeof(REPORT_HATSWITCH);
     descript_size += test_haptic(ext);
 
     ext->axis_start = 0;
     ext->button_start = CONTROLLER_NUM_AXES * sizeof(WORD);
+    ext->hat_start = ext->button_start + (CONTROLLER_NUM_BUTTONS + 7) / 8;
 
-    ext->buffer_length = (CONTROLLER_NUM_BUTTONS + 7) / 8 + CONTROLLER_NUM_AXES * sizeof(WORD);
+    ext->buffer_length = (CONTROLLER_NUM_BUTTONS + 7) / 8 + CONTROLLER_NUM_AXES * sizeof(WORD) + CONTROLLER_NUM_HATSWITCHES;
 
     TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", ext->buffer_length);
@@ -533,6 +565,7 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     report_ptr += sizeof(CONTROLLER_TRIGGERS);
     memcpy(report_ptr, CONTROLLER_BUTTONS, sizeof(CONTROLLER_BUTTONS));
     report_ptr += sizeof(CONTROLLER_BUTTONS);
+    report_ptr = add_hatswitch(report_ptr, 1);
     report_ptr += build_haptic(ext, report_ptr);
     memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
 
@@ -548,6 +581,8 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     /* Initialize axis in the report */
     for (i = SDL_CONTROLLER_AXIS_LEFTX; i < SDL_CONTROLLER_AXIS_MAX; i++)
         set_axis_value(ext, i, pSDL_GameControllerGetAxis(ext->sdl_controller, i));
+
+    set_hat_value(ext, 0, compose_dpad_value(ext->sdl_controller));
 
     return TRUE;
 }
@@ -778,10 +813,15 @@ static BOOL set_mapped_report_from_event(SDL_Event *event)
                 case SDL_CONTROLLER_BUTTON_START: usage = 8; break;
                 case SDL_CONTROLLER_BUTTON_BACK: usage = 9; break;
                 case SDL_CONTROLLER_BUTTON_GUIDE: usage = 10; break;
-                case SDL_CONTROLLER_BUTTON_DPAD_UP: usage = 11; break;
-                case SDL_CONTROLLER_BUTTON_DPAD_DOWN: usage = 12; break;
-                case SDL_CONTROLLER_BUTTON_DPAD_LEFT: usage = 13; break;
-                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: usage = 14; break;
+
+                case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    set_hat_value(private, 0, compose_dpad_value(private->sdl_controller));
+                    process_hid_report(device, private->report_buffer, private->buffer_length);
+                    break;
+
                 default:
                     ERR("Unknown Button %i\n",ie->button);
             }
@@ -1040,6 +1080,7 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         LOAD_FUNCPTR(SDL_JoystickGetHat);
         LOAD_FUNCPTR(SDL_IsGameController);
         LOAD_FUNCPTR(SDL_GameControllerGetAxis);
+        LOAD_FUNCPTR(SDL_GameControllerGetButton);
         LOAD_FUNCPTR(SDL_GameControllerName);
         LOAD_FUNCPTR(SDL_GameControllerOpen);
         LOAD_FUNCPTR(SDL_GameControllerEventState);
