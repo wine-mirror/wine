@@ -550,7 +550,7 @@ static void set_registry_variables( HANDLE hkey, ULONG type )
         }
         /* PATH is magic */
         if (env_name.Length == sizeof(pathW) &&
-            !memicmpW( env_name.Buffer, pathW, ARRAY_SIZE( pathW )) &&
+            !strncmpiW( env_name.Buffer, pathW, ARRAY_SIZE( pathW )) &&
             !RtlQueryEnvironmentVariable_U( NULL, &env_name, &tmp ))
         {
             RtlAppendUnicodeToString( &tmp, sep );
