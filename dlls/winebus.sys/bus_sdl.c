@@ -119,6 +119,7 @@ struct platform_private
     SDL_GameController *sdl_controller;
     SDL_JoystickID id;
 
+    int button_start;
     int axis_start;
     int ball_start;
     int hat_start;
@@ -247,6 +248,23 @@ static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, const BYTE 
     return report_ptr;
 }
 
+static void set_button_value(struct platform_private *ext, int index, int value)
+{
+    int byte_index = ext->button_start + index / 8;
+    int bit_index = index % 8;
+    BYTE mask = 1 << bit_index;
+
+    if (value)
+    {
+        ext->report_buffer[byte_index] = ext->report_buffer[byte_index] | mask;
+    }
+    else
+    {
+        mask = ~mask;
+        ext->report_buffer[byte_index] = ext->report_buffer[byte_index] & mask;
+    }
+}
+
 static void set_axis_value(struct platform_private *ext, int index, short value)
 {
     int offset;
@@ -362,16 +380,6 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
     report_size = 0;
 
-    /* For now lump all buttons just into incremental usages, Ignore Keys */
-    button_count = pSDL_JoystickNumButtons(ext->sdl_joystick);
-    if (button_count)
-    {
-        descript_size += sizeof(REPORT_BUTTONS);
-        if (button_count % 8)
-            descript_size += sizeof(REPORT_PADDING);
-        report_size = (button_count + 7) / 8;
-    }
-
     axis_count = pSDL_JoystickNumAxes(ext->sdl_joystick);
     if (axis_count > 6)
     {
@@ -403,6 +411,17 @@ static BOOL build_report_descriptor(struct platform_private *ext)
         report_size += (sizeof(WORD) * 2 * ball_count);
     }
 
+    /* For now lump all buttons just into incremental usages, Ignore Keys */
+    button_count = pSDL_JoystickNumButtons(ext->sdl_joystick);
+    ext->button_start = report_size;
+    if (button_count)
+    {
+        descript_size += sizeof(REPORT_BUTTONS);
+        if (button_count % 8)
+            descript_size += sizeof(REPORT_PADDING);
+        report_size += (button_count + 7) / 8;
+    }
+
     hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
     ext->hat_start = report_size;
     if (hat_count)
@@ -428,15 +447,6 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     report_ptr[IDX_HEADER_PAGE] = device_usage[0];
     report_ptr[IDX_HEADER_USAGE] = device_usage[1];
     report_ptr += sizeof(REPORT_HEADER);
-    if (button_count)
-    {
-        report_ptr = add_button_block(report_ptr, 1, button_count);
-        if (button_count % 8)
-        {
-            BYTE padding = 8 - (button_count % 8);
-            report_ptr = add_padding_block(report_ptr, padding);
-        }
-    }
     if (axis_count)
     {
         if (axis_count == 6 && button_count >= 14)
@@ -448,6 +458,15 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     if (ball_count)
     {
         report_ptr = add_axis_block(report_ptr, ball_count * 2, HID_USAGE_PAGE_GENERIC, &joystick_usages[axis_count], FALSE);
+    }
+    if (button_count)
+    {
+        report_ptr = add_button_block(report_ptr, 1, button_count);
+        if (button_count % 8)
+        {
+            BYTE padding = 8 - (button_count % 8);
+            report_ptr = add_padding_block(report_ptr, padding);
+        }
     }
     if (hat_count)
         report_ptr = add_hatswitch(report_ptr, hat_count);
@@ -480,12 +499,14 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     INT i, descript_size;
 
     descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
-    descript_size += sizeof(CONTROLLER_BUTTONS);
     descript_size += sizeof(CONTROLLER_AXIS);
     descript_size += sizeof(CONTROLLER_TRIGGERS);
+    descript_size += sizeof(CONTROLLER_BUTTONS);
     descript_size += test_haptic(ext);
 
-    ext->axis_start = (CONTROLLER_NUM_BUTTONS + 7) / 8;
+    ext->axis_start = 0;
+    ext->button_start = CONTROLLER_NUM_AXES * sizeof(WORD);
+
     ext->buffer_length = (CONTROLLER_NUM_BUTTONS + 7) / 8 + CONTROLLER_NUM_AXES * sizeof(WORD);
 
     TRACE("Report Descriptor will be %i bytes\n", descript_size);
@@ -503,12 +524,12 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     report_ptr[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
     report_ptr[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_GAMEPAD;
     report_ptr += sizeof(REPORT_HEADER);
-    memcpy(report_ptr, CONTROLLER_BUTTONS, sizeof(CONTROLLER_BUTTONS));
-    report_ptr += sizeof(CONTROLLER_BUTTONS);
     memcpy(report_ptr, CONTROLLER_AXIS, sizeof(CONTROLLER_AXIS));
     report_ptr += sizeof(CONTROLLER_AXIS);
     memcpy(report_ptr, CONTROLLER_TRIGGERS, sizeof(CONTROLLER_TRIGGERS));
     report_ptr += sizeof(CONTROLLER_TRIGGERS);
+    memcpy(report_ptr, CONTROLLER_BUTTONS, sizeof(CONTROLLER_BUTTONS));
+    report_ptr += sizeof(CONTROLLER_BUTTONS);
     report_ptr += build_haptic(ext, report_ptr);
     memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
 
@@ -681,7 +702,7 @@ static BOOL set_report_from_event(SDL_Event *event)
         {
             SDL_JoyButtonEvent *ie = &event->jbutton;
 
-            set_button_value(ie->button, ie->state, private->report_buffer);
+            set_button_value(private, ie->button, ie->state);
 
             process_hid_report(device, private->report_buffer, private->buffer_length);
             break;
@@ -764,7 +785,7 @@ static BOOL set_mapped_report_from_event(SDL_Event *event)
 
             if (usage >= 0)
             {
-                set_button_value(usage, ie->state, private->report_buffer);
+                set_button_value(private, usage, ie->state);
                 process_hid_report(device, private->report_buffer, private->buffer_length);
             }
             break;

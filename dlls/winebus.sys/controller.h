@@ -113,19 +113,3 @@ static inline BYTE *add_hatswitch(BYTE *report_ptr, INT count)
     report_ptr[IDX_HATSWITCH_COUNT] = count;
     return report_ptr + sizeof(REPORT_HATSWITCH);
 }
-
-static inline void set_button_value(int index, int value, BYTE* buffer)
-{
-    int bindex = index / 8;
-    int b = index % 8;
-    BYTE mask;
-
-    mask = 1<<b;
-    if (value)
-        buffer[bindex] = buffer[bindex] | mask;
-    else
-    {
-        mask = ~mask;
-        buffer[bindex] = buffer[bindex] & mask;
-    }
-}

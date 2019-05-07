@@ -197,6 +197,7 @@ struct wine_input_private {
     int report_descriptor_size;
     BYTE *report_descriptor;
 
+    int button_start;
     BYTE button_map[KEY_MAX];
     BYTE rel_map[HID_REL_MAX];
     BYTE hat_map[8];
@@ -274,6 +275,22 @@ static const BYTE* what_am_I(struct udev_device *dev)
         parent = udev_device_get_parent_with_subsystem_devtype(parent, "input", NULL);
     }
     return Unknown;
+}
+
+static void set_button_value(int index, int value, BYTE* buffer)
+{
+    int bindex = index / 8;
+    int b = index % 8;
+    BYTE mask;
+
+    mask = 1<<b;
+    if (value)
+        buffer[bindex] = buffer[bindex] | mask;
+    else
+    {
+        mask = ~mask;
+        buffer[bindex] = buffer[bindex] & mask;
+    }
 }
 
 static void set_abs_axis_value(struct wine_input_private *ext, int code, int value)
@@ -403,16 +420,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
     report_size = 0;
 
-    /* For now lump all buttons just into incremental usages, Ignore Keys */
-    button_count = count_buttons(ext->base.device_fd, ext->button_map);
-    if (button_count)
-    {
-        descript_size += sizeof(REPORT_BUTTONS);
-        if (button_count % 8)
-            descript_size += sizeof(REPORT_PADDING);
-        report_size = (button_count + 7) / 8;
-    }
-
     abs_count = 0;
     memset(abs_pages, 0, sizeof(abs_pages));
     for (i = 0; i < HID_ABS_MAX; i++)
@@ -463,6 +470,17 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     descript_size += sizeof(REPORT_AXIS_HEADER) * rel_count;
     descript_size += sizeof(REPORT_REL_AXIS_TAIL) * rel_count;
 
+    /* For now lump all buttons just into incremental usages, Ignore Keys */
+    ext->button_start = report_size;
+    button_count = count_buttons(ext->base.device_fd, ext->button_map);
+    if (button_count)
+    {
+        descript_size += sizeof(REPORT_BUTTONS);
+        if (button_count % 8)
+            descript_size += sizeof(REPORT_PADDING);
+        report_size += (button_count + 7) / 8;
+    }
+
     hat_count = 0;
     for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
         if (test_bit(absbits, i))
@@ -491,15 +509,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     report_ptr[IDX_HEADER_PAGE] = device_usage[0];
     report_ptr[IDX_HEADER_USAGE] = device_usage[1];
     report_ptr += sizeof(REPORT_HEADER);
-    if (button_count)
-    {
-        report_ptr = add_button_block(report_ptr, 1, button_count);
-        if (button_count % 8)
-        {
-            BYTE padding = 8 - (button_count % 8);
-            report_ptr = add_padding_block(report_ptr, padding);
-        }
-    }
     if (abs_count)
     {
         for (i = 1; i < TOP_ABS_PAGE; i++)
@@ -526,6 +535,15 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
                     usages[j] = REL_TO_HID_MAP[rel_pages[i][j+1]][1];
                 report_ptr = add_axis_block(report_ptr, rel_pages[i][0], i, usages, FALSE, NULL);
             }
+        }
+    }
+    if (button_count)
+    {
+        report_ptr = add_button_block(report_ptr, 1, button_count);
+        if (button_count % 8)
+        {
+            BYTE padding = 8 - (button_count % 8);
+            report_ptr = add_padding_block(report_ptr, padding);
         }
     }
     if (hat_count)
@@ -592,7 +610,7 @@ static BOOL set_report_from_event(struct wine_input_private *ext, struct input_e
             return FALSE;
 #endif
         case EV_KEY:
-            set_button_value(ext->button_map[ie->code], ie->value, ext->current_report_buffer);
+            set_button_value(ext->button_start + ext->button_map[ie->code], ie->value, ext->current_report_buffer);
             return FALSE;
         case EV_ABS:
             set_abs_axis_value(ext, ie->code, ie->value);
