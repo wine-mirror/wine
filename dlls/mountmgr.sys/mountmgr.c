@@ -132,14 +132,14 @@ static BOOL matching_mount_point( const struct mount_point *mount, const MOUNTMG
     {
         const WCHAR *name = (const WCHAR *)((const char *)spec + spec->SymbolicLinkNameOffset);
         if (spec->SymbolicLinkNameLength != mount->link.Length) return FALSE;
-        if (memicmpW( name, mount->link.Buffer, mount->link.Length/sizeof(WCHAR)))
+        if (strncmpiW( name, mount->link.Buffer, mount->link.Length/sizeof(WCHAR)))
             return FALSE;
     }
     if (spec->DeviceNameOffset)
     {
         const WCHAR *name = (const WCHAR *)((const char *)spec + spec->DeviceNameOffset);
         if (spec->DeviceNameLength != mount->name.Length) return FALSE;
-        if (memicmpW( name, mount->name.Buffer, mount->name.Length/sizeof(WCHAR)))
+        if (strncmpiW( name, mount->name.Buffer, mount->name.Length/sizeof(WCHAR)))
             return FALSE;
     }
     if (spec->UniqueIdOffset)
