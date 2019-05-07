@@ -350,7 +350,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
             {
                 unsigned int prefix_len = strlenW(prefix);
                 if (strlenW(ffd.cFileName) >= prefix_len &&
-                    !memicmpW(ffd.cFileName, prefix, prefix_len))
+                    !strncmpiW(ffd.cFileName, prefix, prefix_len))
                     version += prefix_len;
             }
             sprintfW(disp, name_fmt, parent, version, token);
