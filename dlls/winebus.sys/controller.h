@@ -79,7 +79,7 @@ static const BYTE REPORT_HATSWITCH[] = {
     0x25, 0x08,  /* LOGICAL_MAXIMUM (0x08) */
     0x35, 0x00,  /* PHYSICAL_MINIMUM (0) */
     0x45, 0x08,  /* PHYSICAL_MAXIMUM (8) */
-    0x75, 0x08,  /* REPORT_SIZE (8) */
+    0x75, 0x04,  /* REPORT_SIZE (4) */
     0x95, 0x01,  /* REPORT_COUNT (1) */
     0x81, 0x02,  /* INPUT (Data,Var,Abs) */
 };

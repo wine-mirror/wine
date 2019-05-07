@@ -123,7 +123,7 @@ struct platform_private
     int button_start;
     int axis_start;
     int ball_start;
-    int hat_start;
+    int hat_bit_offs; /* hatswitches are reported in the same bytes as buttons */
 
     int report_descriptor_size;
     BYTE *report_descriptor;
@@ -164,10 +164,6 @@ static const BYTE CONTROLLER_BUTTONS[] = {
     0x95, CONTROLLER_NUM_BUTTONS, /* REPORT_COUNT (11) */
     0x75, 0x01, /* REPORT_SIZE (1) */
     0x81, 0x02, /* INPUT (Data,Var,Abs) */
-    /* padding */
-    0x95, 0x05, /* REPORT_COUNT (5) */
-    0x75, 0x01, /* REPORT_SIZE (1) */
-    0x81, 0x03, /* INPUT (Cnst,Var,Abs) */
 };
 
 static const BYTE CONTROLLER_AXIS [] = {
@@ -302,22 +298,50 @@ static void set_ball_value(struct platform_private *ext, int index, int value1, 
 
 static void set_hat_value(struct platform_private *ext, int index, int value)
 {
-    int offset;
-    offset = ext->hat_start + index;
+    int byte = ext->button_start + (ext->hat_bit_offs + 4 * index) / 8;
+    int bit_offs = (ext->hat_bit_offs + 4 * index) % 8;
+    int num_low_bits, num_high_bits;
+    unsigned char val, low_mask, high_mask;
+
+    /* 4-bit hatswitch value is packed into button bytes */
+    if (bit_offs <= 4)
+    {
+        num_low_bits = 4;
+        num_high_bits = 0;
+        low_mask = 0xf;
+        high_mask = 0;
+    }
+    else
+    {
+        num_low_bits = 8 - bit_offs;
+        num_high_bits = 4 - num_low_bits;
+        low_mask = (1 << num_low_bits) - 1;
+        high_mask = (1 << num_high_bits) - 1;
+    }
+
     switch (value)
     {
         /* 8 1 2
          * 7 0 3
          * 6 5 4 */
-        case SDL_HAT_CENTERED: ext->report_buffer[offset] = 0; break;
-        case SDL_HAT_UP: ext->report_buffer[offset] = 1; break;
-        case SDL_HAT_RIGHTUP: ext->report_buffer[offset] = 2; break;
-        case SDL_HAT_RIGHT: ext->report_buffer[offset] = 3; break;
-        case SDL_HAT_RIGHTDOWN: ext->report_buffer[offset] = 4; break;
-        case SDL_HAT_DOWN: ext->report_buffer[offset] = 5; break;
-        case SDL_HAT_LEFTDOWN: ext->report_buffer[offset] = 6; break;
-        case SDL_HAT_LEFT: ext->report_buffer[offset] = 7; break;
-        case SDL_HAT_LEFTUP: ext->report_buffer[offset] = 8; break;
+        case SDL_HAT_CENTERED: val = 0; break;
+        case SDL_HAT_UP: val = 1; break;
+        case SDL_HAT_RIGHTUP: val = 2; break;
+        case SDL_HAT_RIGHT: val = 3; break;
+        case SDL_HAT_RIGHTDOWN: val = 4; break;
+        case SDL_HAT_DOWN: val = 5; break;
+        case SDL_HAT_LEFTDOWN: val = 6; break;
+        case SDL_HAT_LEFT: val = 7; break;
+        case SDL_HAT_LEFTUP: val = 8; break;
+        default: return;
+    }
+
+    ext->report_buffer[byte] &= ~(low_mask << bit_offs);
+    ext->report_buffer[byte] |= (val & low_mask) << bit_offs;
+    if (high_mask)
+    {
+        ext->report_buffer[byte + 1] &= ~high_mask;
+        ext->report_buffer[byte + 1] |= val & high_mask;
     }
 }
 
@@ -423,18 +447,16 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     if (button_count)
     {
         descript_size += sizeof(REPORT_BUTTONS);
-        if (button_count % 8)
-            descript_size += sizeof(REPORT_PADDING);
-        report_size += (button_count + 7) / 8;
     }
 
     hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
-    ext->hat_start = report_size;
+    ext->hat_bit_offs = button_count;
     if (hat_count)
     {
         descript_size += sizeof(REPORT_HATSWITCH);
-        report_size += hat_count;
     }
+
+    report_size += (button_count + hat_count * 4 + 7) / 8;
 
     descript_size += test_haptic(ext);
 
@@ -468,11 +490,6 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     if (button_count)
     {
         report_ptr = add_button_block(report_ptr, 1, button_count);
-        if (button_count % 8)
-        {
-            BYTE padding = 8 - (button_count % 8);
-            report_ptr = add_padding_block(report_ptr, padding);
-        }
     }
     if (hat_count)
         report_ptr = add_hatswitch(report_ptr, hat_count);
@@ -540,9 +557,11 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
 
     ext->axis_start = 0;
     ext->button_start = CONTROLLER_NUM_AXES * sizeof(WORD);
-    ext->hat_start = ext->button_start + (CONTROLLER_NUM_BUTTONS + 7) / 8;
+    ext->hat_bit_offs = CONTROLLER_NUM_BUTTONS;
 
-    ext->buffer_length = (CONTROLLER_NUM_BUTTONS + 7) / 8 + CONTROLLER_NUM_AXES * sizeof(WORD) + CONTROLLER_NUM_HATSWITCHES;
+    ext->buffer_length = (CONTROLLER_NUM_BUTTONS + CONTROLLER_NUM_HATSWITCHES * 4 + 7) / 8
+        + CONTROLLER_NUM_AXES * sizeof(WORD)
+        + 2/* unknown constant*/;
 
     TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", ext->buffer_length);
@@ -566,6 +585,7 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     memcpy(report_ptr, CONTROLLER_BUTTONS, sizeof(CONTROLLER_BUTTONS));
     report_ptr += sizeof(CONTROLLER_BUTTONS);
     report_ptr = add_hatswitch(report_ptr, 1);
+    report_ptr = add_padding_block(report_ptr, 16);/* unknown constant */
     report_ptr += build_haptic(ext, report_ptr);
     memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
 
@@ -583,6 +603,10 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
         set_axis_value(ext, i, pSDL_GameControllerGetAxis(ext->sdl_controller, i));
 
     set_hat_value(ext, 0, compose_dpad_value(ext->sdl_controller));
+
+    /* unknown constant */
+    ext->report_buffer[12] = 0x89;
+    ext->report_buffer[13] = 0xc5;
 
     return TRUE;
 }
