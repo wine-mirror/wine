@@ -161,7 +161,7 @@ static HRESULT do_preprocess(const Registrar *This, LPCOLESTR data, strbuf *buf)
         }else {
             for(rep_iter = This->rep; rep_iter; rep_iter = rep_iter->next) {
                 if(rep_iter->key_len == iter-iter2
-                        && !memicmpW(iter2, rep_iter->key, rep_iter->key_len))
+                        && !strncmpiW(iter2, rep_iter->key, rep_iter->key_len))
                     break;
             }
             if(!rep_iter) {
