@@ -15523,12 +15523,16 @@ static void test_sysmem_draw(void)
     }
     quad[] =
     {
+        {{ 0.0f,  0.0f, 0.0f}, 0x00000000},
+        {{ 0.0f,  0.0f, 0.0f}, 0x00000000},
+        {{ 0.0f,  0.0f, 0.0f}, 0x00000000},
+        {{ 0.0f,  0.0f, 0.0f}, 0x00000000},
         {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
         {{-1.0f,  1.0f, 0.0f}, 0xff00ff00},
         {{ 1.0f, -1.0f, 0.0f}, 0xff0000ff},
         {{ 1.0f,  1.0f, 0.0f}, 0xffffffff},
     };
-    static WORD indices[] = {0, 1, 2, 3};
+    static WORD indices[] = {4, 5, 6, 7};
 
     window = create_window();
     ok(!!window, "Failed to create a window.\n");
@@ -15557,7 +15561,7 @@ static void test_sysmem_draw(void)
     vb_desc.dwSize = sizeof(vb_desc);
     vb_desc.dwCaps = D3DVBCAPS_SYSTEMMEMORY;
     vb_desc.dwFVF = D3DFVF_XYZ | D3DFVF_DIFFUSE;
-    vb_desc.dwNumVertices = 4;
+    vb_desc.dwNumVertices = ARRAY_SIZE(quad);
     hr = IDirect3D3_CreateVertexBuffer(d3d, &vb_desc, &vb, 0, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
@@ -15572,7 +15576,7 @@ static void test_sysmem_draw(void)
 
     hr = IDirect3DDevice3_BeginScene(device);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice3_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, 0);
+    hr = IDirect3DDevice3_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 4, 4, 0);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_EndScene(device);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
