@@ -808,10 +808,10 @@ static BOOL set_mapped_report_from_event(SDL_Event *event)
                 case SDL_CONTROLLER_BUTTON_Y: usage = 3; break;
                 case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: usage = 4; break;
                 case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: usage = 5; break;
-                case SDL_CONTROLLER_BUTTON_LEFTSTICK: usage = 6; break;
-                case SDL_CONTROLLER_BUTTON_RIGHTSTICK: usage = 7; break;
-                case SDL_CONTROLLER_BUTTON_START: usage = 8; break;
-                case SDL_CONTROLLER_BUTTON_BACK: usage = 9; break;
+                case SDL_CONTROLLER_BUTTON_BACK: usage = 6; break;
+                case SDL_CONTROLLER_BUTTON_START: usage = 7; break;
+                case SDL_CONTROLLER_BUTTON_LEFTSTICK: usage = 8; break;
+                case SDL_CONTROLLER_BUTTON_RIGHTSTICK: usage = 9; break;
                 case SDL_CONTROLLER_BUTTON_GUIDE: usage = 10; break;
 
                 case SDL_CONTROLLER_BUTTON_DPAD_UP:

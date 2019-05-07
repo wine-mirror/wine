@@ -375,11 +375,10 @@ void HID_update_state(xinput_controller* device)
             case 4: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_Y; break;
             case 5: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER; break;
             case 6: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; break;
-            case 7: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
-            case 8: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
-
-            case 9: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
-            case 10: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
+            case 7: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
+            case 8: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
+            case 9: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
+            case 10: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
             case 11: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
         }
     }
