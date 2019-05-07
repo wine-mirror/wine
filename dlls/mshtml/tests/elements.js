@@ -386,6 +386,24 @@ function test_style_properties() {
     next_test();
 }
 
+function test_stylesheets() {
+    document.body.innerHTML = '<style>.div { margin-right: 1px; }</style>';
+
+    ok(document.styleSheets.length === 1, "document.styleSheets.length = " + document.styleSheets.length);
+
+    var stylesheet = document.styleSheets.item(0);
+    ok(stylesheet.rules.length === 1, "stylesheet.rules.length = " + stylesheet.rules.length);
+    ok(typeof(stylesheet.rules.item(0)) === "object",
+       "typeof(stylesheet.rules.item(0)) = " + typeof(stylesheet.rules.item(0)));
+
+    try {
+        stylesheet.rules.item(1);
+        ok(false, "expected exception");
+    }catch(e) {}
+
+    next_test();
+}
+
 function test_storage() {
     ok(typeof(window.sessionStorage) === "object",
        "typeof(window.sessionStorage) = " + typeof(window.sessionStorage));
@@ -408,5 +426,6 @@ var tests = [
     test_rects,
     test_document_owner,
     test_style_properties,
+    test_stylesheets,
     test_storage
 ];

@@ -8230,6 +8230,7 @@ static void test_stylesheet(IDispatch *disp)
 {
     IHTMLStyleSheetRulesCollection *col = NULL;
     IHTMLStyleSheet *stylesheet;
+    IHTMLStyleSheetRule *rule;
     HRESULT hres;
     BSTR href;
 
@@ -8258,6 +8259,21 @@ static void test_stylesheet(IDispatch *disp)
     test_stylesheet_csstext(stylesheet, NULL, FALSE);
     set_stylesheet_csstext(stylesheet, ".div { margin-right: 1px; }", FALSE);
     test_stylesheet_csstext(stylesheet, ".div {", FALSE);
+
+    hres = IHTMLStyleSheet_get_rules(stylesheet, &col);
+    ok(hres == S_OK, "get_rules failed: %08x\n", hres);
+    ok(col != NULL, "col == NULL\n");
+
+    hres = IHTMLStyleSheetRulesCollection_item(col, 0, &rule);
+    ok(hres == S_OK, "IHTMLStyleSheetRulesCollection_item failed: %08x\n", hres);
+    ok(rule != NULL, "rule = NULL\n");
+    test_disp((IUnknown*)rule, &DIID_DispHTMLStyleSheetRule, NULL, "[object]");
+    IHTMLStyleSheetRule_Release(rule);
+
+    hres = IHTMLStyleSheetRulesCollection_item(col, 1, &rule);
+    ok(hres == E_INVALIDARG, "IHTMLStyleSheetRulesCollection_item failed: %08x\n", hres);
+
+    IHTMLStyleSheetRulesCollection_Release(col);
 
     IHTMLStyleSheet_Release(stylesheet);
 }

@@ -121,6 +121,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispHTMLStyle) \
     XDIID(DispHTMLStyleElement) \
     XDIID(DispHTMLStyleSheet) \
+    XDIID(DispHTMLStyleSheetRule) \
     XDIID(DispHTMLStyleSheetRulesCollection) \
     XDIID(DispHTMLStyleSheetsCollection) \
     XDIID(DispHTMLTable) \
@@ -230,6 +231,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLStyle6) \
     XIID(IHTMLStyleElement) \
     XIID(IHTMLStyleSheet) \
+    XIID(IHTMLStyleSheetRule) \
     XIID(IHTMLStyleSheetRulesCollection) \
     XIID(IHTMLStyleSheetsCollection) \
     XIID(IHTMLTable) \
