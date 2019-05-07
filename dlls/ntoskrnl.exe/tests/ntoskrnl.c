@@ -35,6 +35,7 @@ static HANDLE device;
 static BOOL (WINAPI *pRtlDosPathNameToNtPathName_U)(const WCHAR *, UNICODE_STRING *, WCHAR **, CURDIR *);
 static BOOL (WINAPI *pRtlFreeUnicodeString)(UNICODE_STRING *);
 static BOOL (WINAPI *pCancelIoEx)(HANDLE, OVERLAPPED *);
+static BOOL (WINAPI *pSetFileCompletionNotificationModes)(HANDLE, UCHAR);
 
 static void load_resource(const char *name, char *filename)
 {
@@ -198,17 +199,19 @@ static void test_basic_ioctl(void)
     ok(!strcmp(buf, teststr), "got '%s'\n", buf);
 }
 
-static void test_cancel_io(void)
+static void test_overlapped(void)
 {
-    OVERLAPPED overlapped, overlapped2;
-    DWORD cancel_cnt;
-    HANDLE file;
+    OVERLAPPED overlapped, overlapped2, *o;
+    DWORD cancel_cnt, size;
+    HANDLE file, port;
+    ULONG_PTR key;
     BOOL res;
 
     overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     overlapped2.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-    file = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    file = CreateFileA("\\\\.\\WineTestDriver", FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
+                       0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
     ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
 
     /* test cancelling all device requests */
@@ -275,6 +278,34 @@ static void test_cancel_io(void)
         ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
     }
 
+    port = CreateIoCompletionPort(file, NULL, 0xdeadbeef, 0);
+    ok(port != NULL, "CreateIoCompletionPort failed, error %u\n", GetLastError());
+    res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
+    ok(!res && GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus returned %x(%u)\n", res, GetLastError());
+
+    res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
+    todo_wine
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
+    res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
+    ok(res, "GetQueuedCompletionStatus failed: %u\n", GetLastError());
+    ok(o == &overlapped, "o != overlapped\n");
+
+    if (pSetFileCompletionNotificationModes)
+    {
+        res = pSetFileCompletionNotificationModes(file, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+        ok(res, "SetFileCompletionNotificationModes failed: %u\n", GetLastError());
+
+        res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
+        todo_wine
+        ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+        if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
+        res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
+        todo_wine
+        ok(!res && GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus returned %x(%u)\n", res, GetLastError());
+    }
+
+    CloseHandle(port);
     CloseHandle(overlapped.hEvent);
     CloseHandle(overlapped2.hEvent);
     CloseHandle(file);
@@ -337,6 +368,8 @@ START_TEST(ntoskrnl)
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pCancelIoEx = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "CancelIoEx");
+    pSetFileCompletionNotificationModes = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),
+                                                                 "SetFileCompletionNotificationModes");
 
     if (!(service = load_driver(filename, "driver.dll", "WineTestDriver")))
         return;
@@ -352,7 +385,7 @@ START_TEST(ntoskrnl)
 
     test_basic_ioctl();
     main_test();
-    test_cancel_io();
+    test_overlapped();
     test_load_driver(service2);
 
     unload_driver(service2);
