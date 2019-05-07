@@ -75,7 +75,7 @@ static const BYTE REPORT_REL_AXIS_TAIL[] = {
 static const BYTE REPORT_HATSWITCH[] = {
     0x05, 0x01,  /* USAGE_PAGE (Generic Desktop) */
     0x09, 0x39,  /* USAGE (Hatswitch) */
-    0x15, 0x00,  /* LOGICAL_MINIMUM (0) */
+    0x15, 0x01,  /* LOGICAL_MINIMUM (1) */
     0x25, 0x08,  /* LOGICAL_MAXIMUM (0x08) */
     0x35, 0x00,  /* PHYSICAL_MINIMUM (0) */
     0x45, 0x08,  /* PHYSICAL_MAXIMUM (8) */

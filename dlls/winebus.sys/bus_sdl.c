@@ -303,15 +303,18 @@ static void set_hat_value(struct platform_private *ext, int index, int value)
     offset = ext->hat_start + index;
     switch (value)
     {
-        case SDL_HAT_CENTERED: ext->report_buffer[offset] = 8; break;
-        case SDL_HAT_UP: ext->report_buffer[offset] = 0; break;
-        case SDL_HAT_RIGHTUP: ext->report_buffer[offset] = 1; break;
-        case SDL_HAT_RIGHT: ext->report_buffer[offset] = 2; break;
-        case SDL_HAT_RIGHTDOWN: ext->report_buffer[offset] = 3; break;
-        case SDL_HAT_DOWN: ext->report_buffer[offset] = 4; break;
-        case SDL_HAT_LEFTDOWN: ext->report_buffer[offset] = 5; break;
-        case SDL_HAT_LEFT: ext->report_buffer[offset] = 6; break;
-        case SDL_HAT_LEFTUP: ext->report_buffer[offset] = 7; break;
+        /* 8 1 2
+         * 7 0 3
+         * 6 5 4 */
+        case SDL_HAT_CENTERED: ext->report_buffer[offset] = 0; break;
+        case SDL_HAT_UP: ext->report_buffer[offset] = 1; break;
+        case SDL_HAT_RIGHTUP: ext->report_buffer[offset] = 2; break;
+        case SDL_HAT_RIGHT: ext->report_buffer[offset] = 3; break;
+        case SDL_HAT_RIGHTDOWN: ext->report_buffer[offset] = 4; break;
+        case SDL_HAT_DOWN: ext->report_buffer[offset] = 5; break;
+        case SDL_HAT_LEFTDOWN: ext->report_buffer[offset] = 6; break;
+        case SDL_HAT_LEFT: ext->report_buffer[offset] = 7; break;
+        case SDL_HAT_LEFTUP: ext->report_buffer[offset] = 8; break;
     }
 }
 

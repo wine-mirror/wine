@@ -303,32 +303,35 @@ static void set_abs_axis_value(struct wine_input_private *ext, int code, int val
         ext->hat_values[index] = value;
         if ((code - ABS_HAT0X) % 2)
             index--;
+        /* 8 1 2
+         * 7 0 3
+         * 6 5 4 */
         if (ext->hat_values[index] == 0)
         {
             if (ext->hat_values[index+1] == 0)
-                value = 8;
-            else if (ext->hat_values[index+1] < 0)
                 value = 0;
+            else if (ext->hat_values[index+1] < 0)
+                value = 1;
             else
-                value = 4;
+                value = 5;
         }
         else if (ext->hat_values[index] > 0)
         {
             if (ext->hat_values[index+1] == 0)
-                value = 2;
-            else if (ext->hat_values[index+1] < 0)
-                value = 1;
-            else
                 value = 3;
+            else if (ext->hat_values[index+1] < 0)
+                value = 2;
+            else
+                value = 4;
         }
         else
         {
             if (ext->hat_values[index+1] == 0)
-                value = 6;
-            else if (ext->hat_values[index+1] < 0)
                 value = 7;
+            else if (ext->hat_values[index+1] < 0)
+                value = 8;
             else
-                value = 5;
+                value = 6;
         }
         ext->current_report_buffer[ext->hat_map[index]] = value;
     }
