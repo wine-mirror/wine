@@ -84,6 +84,8 @@ struct JoyDev
     int  *dev_axes_map;
 
     WORD vendor_id, product_id, bus_type;
+
+    BOOL is_joystick;
 };
 
 typedef struct JoystickImpl JoystickImpl;
@@ -177,6 +179,7 @@ static INT find_joystick_devices(void)
         int fd;
         struct JoyDev joydev, *new_joydevs;
         BYTE axes_map[ABS_MAX + 1];
+        SHORT btn_map[KEY_MAX - BTN_MISC + 1];
 
         snprintf(joydev.device, sizeof(joydev.device), "%s%d", JOYDEV_NEW, i);
         if ((fd = open(joydev.device, O_RDONLY)) == -1)
@@ -219,6 +222,42 @@ static INT find_joystick_devices(void)
         WARN("reading number of joystick buttons unsupported in this platform, defaulting to 2\n");
         joydev.button_count = 2;
 #endif
+
+        joydev.is_joystick = FALSE;
+        if (ioctl(fd, JSIOCGBTNMAP, btn_map) < 0)
+        {
+            WARN("ioctl(%s,JSIOCGBTNMAP) failed: %s\n", joydev.device, strerror(errno));
+        }
+        else
+        {
+            INT j;
+            /* in lieu of properly reporting HID usage, detect presence of
+             * "joystick buttons" and report those devices as joysticks instead of
+             * gamepads */
+            for (j = 0; !joydev.is_joystick && j < joydev.button_count; j++)
+            {
+                switch (btn_map[j])
+                {
+                case BTN_TRIGGER:
+                case BTN_THUMB:
+                case BTN_THUMB2:
+                case BTN_TOP:
+                case BTN_TOP2:
+                case BTN_PINKIE:
+                case BTN_BASE:
+                case BTN_BASE2:
+                case BTN_BASE3:
+                case BTN_BASE4:
+                case BTN_BASE5:
+                case BTN_BASE6:
+                case BTN_DEAD:
+                    joydev.is_joystick = TRUE;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
 
         if (ioctl(fd, JSIOCGAXMAP, axes_map) < 0)
         {
@@ -322,7 +361,7 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     lpddi->guidInstance = DInput_Wine_Joystick_GUID;
     lpddi->guidInstance.Data3 = id;
     lpddi->guidProduct = joystick_devices[id].guid_product;
-    lpddi->dwDevType = get_device_type(version);
+    lpddi->dwDevType = get_device_type(version, joystick_devices[id].is_joystick);
 
     /* Assume the joystick as HID if it is attached to USB bus and has a valid VID/PID */
     if (joystick_devices[id].bus_type == BUS_USB &&
@@ -330,7 +369,10 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     {
         lpddi->dwDevType |= DIDEVTYPE_HID;
         lpddi->wUsagePage = 0x01; /* Desktop */
-        lpddi->wUsage = 0x05; /* Game Pad */
+        if (joystick_devices[id].is_joystick)
+            lpddi->wUsage = 0x04; /* Joystick */
+        else
+            lpddi->wUsage = 0x05; /* Game Pad */
     }
 
     MultiByteToWideChar(CP_ACP, 0, joystick_devices[id].name, -1, lpddi->tszInstanceName, MAX_PATH);

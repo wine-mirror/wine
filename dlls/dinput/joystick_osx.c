@@ -945,6 +945,7 @@ static DWORD make_vid_pid(IOHIDDeviceRef device)
 static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
     IOHIDDeviceRef device;
+    BOOL is_joystick;
 
     TRACE("dwDevType %u dwFlags 0x%08x version 0x%04x id %d\n", dwDevType, dwFlags, version, id);
 
@@ -962,15 +963,19 @@ static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
             if(get_ff(device, NULL) != S_OK)
                 return S_FALSE;
         }
+        is_joystick = get_device_property_long(device, CFSTR(kIOHIDDeviceUsageKey)) == kHIDUsage_GD_Joystick;
         /* Return joystick */
         lpddi->guidInstance = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidInstance.Data3 = id;
         lpddi->guidProduct = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidProduct.Data1 = make_vid_pid(device);
-        lpddi->dwDevType = get_device_type(version);
+        lpddi->dwDevType = get_device_type(version, is_joystick);
         lpddi->dwDevType |= DIDEVTYPE_HID;
         lpddi->wUsagePage = 0x01; /* Desktop */
-        lpddi->wUsage = 0x05; /* Game Pad */
+        if (is_joystick)
+            lpddi->wUsage = 0x04; /* Joystick */
+        else
+            lpddi->wUsage = 0x05; /* Game Pad */
         sprintf(lpddi->tszInstanceName, "Joystick %d", id);
 
         /* get the device name */
@@ -988,6 +993,7 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
     char name[MAX_PATH];
     char friendly[32];
     IOHIDDeviceRef device;
+    BOOL is_joystick;
 
     TRACE("dwDevType %u dwFlags 0x%08x version 0x%04x id %d\n", dwDevType, dwFlags, version, id);
 
@@ -1005,14 +1011,22 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
             if(get_ff(device, NULL) != S_OK)
                 return S_FALSE;
         }
+        is_joystick = get_device_property_long(device, CFSTR(kIOHIDDeviceUsageKey)) == kHIDUsage_GD_Joystick;
         /* Return joystick */
         lpddi->guidInstance = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidInstance.Data3 = id;
         lpddi->guidProduct = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidProduct.Data1 = make_vid_pid(device);
-        lpddi->dwDevType = get_device_type(version);
+        lpddi->dwDevType = get_device_type(version, is_joystick);
+        lpddi->dwDevType |= DIDEVTYPE_HID;
+        lpddi->wUsagePage = 0x01; /* Desktop */
+        if (is_joystick)
+            lpddi->wUsage = 0x04; /* Joystick */
+        else
+            lpddi->wUsage = 0x05; /* Game Pad */
         sprintf(friendly, "Joystick %d", id);
         MultiByteToWideChar(CP_ACP, 0, friendly, -1, lpddi->tszInstanceName, MAX_PATH);
+
         /* get the device name */
         get_osx_device_name(id, name, MAX_PATH);
 

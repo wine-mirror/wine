@@ -76,8 +76,12 @@ DWORD typeFromGUID(REFGUID guid)
     }
 }
 
-DWORD get_device_type(DWORD version)
+DWORD get_device_type(DWORD version, BOOL is_joystick)
 {
+    if (is_joystick)
+        return version >= 0x0800 ? DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8) :
+                    DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+
     return version >= 0x0800 ? DI8DEVTYPE_GAMEPAD | (DI8DEVTYPEJOYSTICK_STANDARD << 8) :
                 DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_GAMEPAD << 8);
 }

@@ -100,7 +100,7 @@ struct JoyDev {
 	GUID guid;
 	GUID guid_product;
 
-        BOOL has_ff;
+        BOOL has_ff, is_joystick;
         int num_effects;
 
 	/* data returned by EVIOCGBIT for caps, EV_ABS, EV_KEY, and EV_FF */
@@ -243,6 +243,24 @@ static void find_joydevs(void)
             continue;
         }
 
+        /* in lieu of properly reporting HID usage, detect presence of
+         * "joystick buttons" and report those devices as joysticks instead of
+         * gamepads */
+        joydev.is_joystick =
+            test_bit(joydev.keybits, BTN_TRIGGER) ||
+            test_bit(joydev.keybits, BTN_THUMB) ||
+            test_bit(joydev.keybits, BTN_THUMB2) ||
+            test_bit(joydev.keybits, BTN_TOP) ||
+            test_bit(joydev.keybits, BTN_TOP2) ||
+            test_bit(joydev.keybits, BTN_PINKIE) ||
+            test_bit(joydev.keybits, BTN_BASE) ||
+            test_bit(joydev.keybits, BTN_BASE2) ||
+            test_bit(joydev.keybits, BTN_BASE3) ||
+            test_bit(joydev.keybits, BTN_BASE4) ||
+            test_bit(joydev.keybits, BTN_BASE5) ||
+            test_bit(joydev.keybits, BTN_BASE6) ||
+            test_bit(joydev.keybits, BTN_DEAD);
+
         if (!(joydev.device = HeapAlloc(GetProcessHeap(), 0, strlen(buf) + 1)))
         {
             close(fd);
@@ -350,7 +368,7 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     lpddi->guidInstance = joydevs[id].guid;
     lpddi->guidProduct  = joydevs[id].guid_product;
     lpddi->guidFFDriver = GUID_NULL;
-    lpddi->dwDevType = get_device_type(version);
+    lpddi->dwDevType = get_device_type(version, joydevs[id].is_joystick);
 
     /* Assume the joystick as HID if it is attached to USB bus and has a valid VID/PID */
     if (joydevs[id].bus_type == BUS_USB &&
@@ -358,7 +376,10 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     {
         lpddi->dwDevType |= DIDEVTYPE_HID;
         lpddi->wUsagePage = 0x01; /* Desktop */
-        lpddi->wUsage = 0x05; /* Game Pad */
+        if (joydevs[id].is_joystick)
+            lpddi->wUsage = 0x04; /* Joystick */
+        else
+            lpddi->wUsage = 0x05; /* Game Pad */
     }
 
     MultiByteToWideChar(CP_ACP, 0, joydevs[id].name, -1, lpddi->tszInstanceName, MAX_PATH);
