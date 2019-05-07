@@ -350,6 +350,22 @@ typedef enum _MFWaveFormatExConvertFlags
     MFWaveFormatExConvertFlag_ForceExtensible = 1,
 } MFWaveFormatExConvertFlags;
 
+enum _MFT_ENUM_FLAG
+{
+    MFT_ENUM_FLAG_SYNCMFT                         = 0x00000001,
+    MFT_ENUM_FLAG_ASYNCMFT                        = 0x00000002,
+    MFT_ENUM_FLAG_HARDWARE                        = 0x00000004,
+    MFT_ENUM_FLAG_FIELDOFUSE                      = 0x00000008,
+    MFT_ENUM_FLAG_LOCALMFT                        = 0x00000010,
+    MFT_ENUM_FLAG_TRANSCODE_ONLY                  = 0x00000020,
+    MFT_ENUM_FLAG_ALL                             = 0x0000003f,
+    MFT_ENUM_FLAG_SORTANDFILTER                   = 0x00000040,
+    MFT_ENUM_FLAG_SORTANDFILTER_APPROVED_ONLY     = 0x000000c0,
+    MFT_ENUM_FLAG_SORTANDFILTER_WEB_ONLY          = 0x00000140,
+    MFT_ENUM_FLAG_SORTANDFILTER_WEB_ONLY_EDGEMODE = 0x00000240,
+    MFT_ENUM_FLAG_UNTRUSTED_STOREMFT              = 0x00000400,
+};
+
 HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);

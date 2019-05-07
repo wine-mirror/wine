@@ -71,6 +71,7 @@ static const WCHAR categories_keyW[] = {'M','e','d','i','a','F','o','u','n','d',
 static const WCHAR inputtypesW[]  = {'I','n','p','u','t','T','y','p','e','s',0};
 static const WCHAR outputtypesW[] = {'O','u','t','p','u','t','T','y','p','e','s',0};
 static const WCHAR attributesW[] = {'A','t','t','r','i','b','u','t','e','s',0};
+static const WCHAR mftflagsW[] = {'M','F','T','F','l','a','g','s',0};
 static const WCHAR szGUIDFmt[] =
 {
     '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0',
@@ -167,7 +168,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
-static HRESULT register_transform(const CLSID *clsid, const WCHAR *name,
+static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 flags,
         UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 coutput,
         const MFT_REGISTER_TYPE_INFO *output_types, IMFAttributes *attributes)
 {
@@ -224,6 +225,12 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name,
         }
     }
 
+    if (SUCCEEDED(hr) && flags)
+    {
+        if ((ret = RegSetValueExW(hclsid, mftflagsW, 0, REG_DWORD, (BYTE *)&flags, sizeof(flags))))
+            hr = HRESULT_FROM_WIN32(ret);
+    }
+
     RegCloseKey(hclsid);
     return hr;
 }
@@ -259,10 +266,7 @@ HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags
     TRACE("%s, %s, %s, %#x, %u, %p, %u, %p, %p.\n", debugstr_guid(&clsid), debugstr_guid(&category),
             debugstr_w(name), flags, cinput, input_types, coutput, output_types, attributes);
 
-    if (flags)
-        FIXME("flags not yet supported.\n");
-
-    hr = register_transform(&clsid, name, cinput, input_types, coutput, output_types, attributes);
+    hr = register_transform(&clsid, name, flags, cinput, input_types, coutput, output_types, attributes);
     if(FAILED(hr))
         ERR("Failed to write register transform\n");
 
