@@ -1034,6 +1034,26 @@ static const char *get_alternate_loader( char **ret_env )
 
 
 /***********************************************************************
+ *           set_stdio_fd
+ */
+static void set_stdio_fd( int stdin_fd, int stdout_fd )
+{
+    int fd = -1;
+
+    if (stdin_fd == -1 || stdout_fd == -1)
+    {
+        fd = open( "/dev/null", O_RDWR );
+        if (stdin_fd == -1) stdin_fd = fd;
+        if (stdout_fd == -1) stdout_fd = fd;
+    }
+
+    dup2( stdin_fd, 0 );
+    dup2( stdout_fd, 1 );
+    if (fd != -1) close( fd );
+}
+
+
+/***********************************************************************
  *           spawn_loader
  */
 static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
@@ -1066,21 +1086,10 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
                 params->ConsoleHandle == (HANDLE)1 /* KERNEL32_CONSOLE_ALLOC */ ||
                 (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
             {
-                int fd = open( "/dev/null", O_RDWR );
                 setsid();
-                /* close stdin and stdout */
-                if (fd != -1)
-                {
-                    dup2( fd, 0 );
-                    dup2( fd, 1 );
-                    close( fd );
-                }
+                set_stdio_fd( -1, -1 );  /* close stdin and stdout */
             }
-            else
-            {
-                if (stdin_fd != -1) dup2( stdin_fd, 0 );
-                if (stdout_fd != -1) dup2( stdout_fd, 1 );
-            }
+            else set_stdio_fd( stdin_fd, stdout_fd );
 
             if (stdin_fd != -1) close( stdin_fd );
             if (stdout_fd != -1) close( stdout_fd );
