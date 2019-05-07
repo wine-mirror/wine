@@ -108,7 +108,7 @@ static BOOL is_wow6432node( const UNICODE_STRING *name )
     static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e'};
 
     return (name->Length == sizeof(wow6432nodeW) &&
-            !memicmpW( name->Buffer, wow6432nodeW, ARRAY_SIZE( wow6432nodeW )));
+            !strncmpiW( name->Buffer, wow6432nodeW, ARRAY_SIZE( wow6432nodeW )));
 }
 
 /* open the Wow6432Node subkey of the specified key */
@@ -149,7 +149,7 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
 
         /* don't try to create registry root */
         if (!attr->RootDirectory && len > ARRAY_SIZE( registry_root ) &&
-            !memicmpW( buffer, registry_root, ARRAY_SIZE( registry_root )))
+            !strncmpiW( buffer, registry_root, ARRAY_SIZE( registry_root )))
             i += ARRAY_SIZE( registry_root );
 
         while (i < len && buffer[i] != '\\') i++;
