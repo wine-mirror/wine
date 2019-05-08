@@ -3394,7 +3394,7 @@ DWORD WINAPI DavGetHTTPFromUNCPath(const WCHAR *unc_path, WCHAR *buf, DWORD *buf
     {
         p = ++q;
         while (*p && (*p != '\\' && *p != '/' && *p != '@')) p++;
-        if (p - q == 3 && !memicmpW( q, sslW, 3 ))
+        if (p - q == 3 && !strncmpiW( q, sslW, 3 ))
         {
             scheme = httpsW;
             q = p;
@@ -3477,8 +3477,8 @@ DWORD WINAPI DavGetUNCFromHTTPPath(const WCHAR *http_path, WCHAR *buf, DWORD *bu
     TRACE("(%s %p %p)\n", debugstr_w(http_path), buf, buflen);
 
     while (*p && *p != ':') { p++; len++; };
-    if (len == ARRAY_SIZE(httpW) && !memicmpW( http_path, httpW, len )) ssl = FALSE;
-    else if (len == ARRAY_SIZE(httpsW) && !memicmpW( http_path, httpsW, len )) ssl = TRUE;
+    if (len == ARRAY_SIZE(httpW) && !strncmpiW( http_path, httpW, len )) ssl = FALSE;
+    else if (len == ARRAY_SIZE(httpsW) && !strncmpiW( http_path, httpsW, len )) ssl = TRUE;
     else return ERROR_INVALID_PARAMETER;
 
     if (p[0] != ':' || p[1] != '/' || p[2] != '/') return ERROR_INVALID_PARAMETER;
