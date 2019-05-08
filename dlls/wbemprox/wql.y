@@ -579,7 +579,7 @@ static int cmp_keyword( const void *arg1, const void *arg2 )
     int len = min( key1->len, key2->len );
     int ret;
 
-    if ((ret = memicmpW( key1->name, key2->name, len ))) return ret;
+    if ((ret = strncmpiW( key1->name, key2->name, len ))) return ret;
     if (key1->len < key2->len) return -1;
     else if (key1->len > key2->len) return 1;
     return 0;

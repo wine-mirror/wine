@@ -101,8 +101,8 @@ static BOOL is_local_machine( const WCHAR *server )
 static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **namespace )
 {
     static const WCHAR rootW[] = {'R','O','O','T'};
-    static const WCHAR cimv2W[] = {'C','I','M','V','2'};
-    static const WCHAR defaultW[] = {'D','E','F','A','U','L','T'};
+    static const WCHAR cimv2W[] = {'C','I','M','V','2',0};
+    static const WCHAR defaultW[] = {'D','E','F','A','U','L','T',0};
     HRESULT hr = WBEM_E_INVALID_NAMESPACE;
     const WCHAR *p, *q;
     unsigned int len;
@@ -133,7 +133,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
     p = q;
     while (*q && *q != '\\' && *q != '/') q++;
     len = q - p;
-    if (len >= ARRAY_SIZE( rootW ) && memicmpW( rootW, p, len )) goto done;
+    if (len >= ARRAY_SIZE( rootW ) && strncmpiW( rootW, p, len )) goto done;
     if (!*q)
     {
         hr = S_OK;
@@ -141,8 +141,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
     }
     q++;
     len = strlenW( q );
-    if ((len != ARRAY_SIZE( cimv2W ) || memicmpW( q, cimv2W, len )) &&
-        (len != ARRAY_SIZE( defaultW ) || memicmpW( q, defaultW, len )))
+    if (strcmpiW( q, cimv2W ) && strcmpiW( q, defaultW ))
         goto done;
     if (!(*namespace = heap_alloc( (len + 1) * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
     else
