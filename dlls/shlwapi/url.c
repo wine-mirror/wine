@@ -138,7 +138,7 @@ static DWORD get_scheme_code(LPCWSTR scheme, DWORD scheme_len)
 
     for(i = 0; i < ARRAY_SIZE(shlwapi_schemes); i++) {
         if(scheme_len == strlenW(shlwapi_schemes[i].scheme_name)
-           && !memicmpW(scheme, shlwapi_schemes[i].scheme_name, scheme_len))
+           && !strncmpiW(scheme, shlwapi_schemes[i].scheme_name, scheme_len))
             return shlwapi_schemes[i].scheme_number;
     }
 
