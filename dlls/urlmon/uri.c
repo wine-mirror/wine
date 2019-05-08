@@ -3889,7 +3889,7 @@ static HRESULT compare_file_paths(const Uri *a, const Uri *b, BOOL *ret)
     }
 
     /* Fast path */
-    if(a->path_len == b->path_len && !memicmpW(a->canon_uri+a->path_start, b->canon_uri+b->path_start, a->path_len)) {
+    if(a->path_len == b->path_len && !strncmpiW(a->canon_uri+a->path_start, b->canon_uri+b->path_start, a->path_len)) {
         *ret = TRUE;
         return S_OK;
     }
@@ -3909,7 +3909,7 @@ static HRESULT compare_file_paths(const Uri *a, const Uri *b, BOOL *ret)
     len_a = canonicalize_path_hierarchical(a->canon_uri+a->path_start, a->path_len, a->scheme_type, FALSE, 0, FALSE, canon_path_a);
     len_b = canonicalize_path_hierarchical(b->canon_uri+b->path_start, b->path_len, b->scheme_type, FALSE, 0, FALSE, canon_path_b);
 
-    *ret = len_a == len_b && !memicmpW(canon_path_a, canon_path_b, len_a);
+    *ret = len_a == len_b && !strncmpiW(canon_path_a, canon_path_b, len_a);
 
     heap_free(canon_path_a);
     heap_free(canon_path_b);
