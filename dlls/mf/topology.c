@@ -45,15 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 static LONG next_node_id;
 static TOPOID next_topology_id;
 
-struct topology
-{
-    IMFTopology IMFTopology_iface;
-    LONG refcount;
-    IMFAttributes *attributes;
-    IMFCollection *nodes;
-    TOPOID id;
-};
-
 struct node_stream
 {
     IMFMediaType *preferred_type;
@@ -79,6 +70,20 @@ struct topology_node
     struct node_streams inputs;
     struct node_streams outputs;
     CRITICAL_SECTION cs;
+};
+
+struct topology
+{
+    IMFTopology IMFTopology_iface;
+    LONG refcount;
+    IMFAttributes *attributes;
+    struct
+    {
+        struct topology_node **nodes;
+        size_t size;
+        size_t count;
+    } nodes;
+    TOPOID id;
 };
 
 struct topology_loader
@@ -169,19 +174,32 @@ static ULONG WINAPI topology_AddRef(IMFTopology *iface)
     return refcount;
 }
 
+static void topology_clear(struct topology *topology)
+{
+    size_t i;
+
+    for (i = 0; i < topology->nodes.count; ++i)
+    {
+        IMFTopologyNode_Release(&topology->nodes.nodes[i]->IMFTopologyNode_iface);
+    }
+    heap_free(topology->nodes.nodes);
+    topology->nodes.nodes = NULL;
+    topology->nodes.count = 0;
+    topology->nodes.size = 0;
+}
+
 static ULONG WINAPI topology_Release(IMFTopology *iface)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
     ULONG refcount = InterlockedDecrement(&topology->refcount);
 
-    TRACE("(%p) refcount=%u\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
     {
         if (topology->attributes)
             IMFAttributes_Release(topology->attributes);
-        if (topology->nodes)
-            IMFCollection_Release(topology->nodes);
+        topology_clear(topology);
         heap_free(topology);
     }
 
@@ -476,80 +494,72 @@ static HRESULT WINAPI topology_GetTopologyID(IMFTopology *iface, TOPOID *id)
     return S_OK;
 }
 
-static HRESULT topology_get_node_by_id(const struct topology *topology, TOPOID id, IMFTopologyNode **node)
+static HRESULT topology_get_node_by_id(const struct topology *topology, TOPOID id, struct topology_node **node)
 {
-    IMFTopologyNode *iter;
-    unsigned int i = 0;
+    size_t i = 0;
 
-    while (IMFCollection_GetElement(topology->nodes, i++, (IUnknown **)&iter) == S_OK)
+    for (i = 0; i < topology->nodes.count; ++i)
     {
-        TOPOID node_id;
-        HRESULT hr;
-
-        hr = IMFTopologyNode_GetTopoNodeID(iter, &node_id);
-        if (FAILED(hr))
+        if (topology->nodes.nodes[i]->id == id)
         {
-            IMFTopologyNode_Release(iter);
-            return hr;
-        }
-
-        if (node_id == id)
-        {
-            *node = iter;
+            *node = topology->nodes.nodes[i];
+            IMFTopologyNode_AddRef(&(*node)->IMFTopologyNode_iface);
             return S_OK;
         }
-
-        IMFTopologyNode_Release(iter);
     }
 
     return MF_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI topology_AddNode(IMFTopology *iface, IMFTopologyNode *node)
+static HRESULT WINAPI topology_AddNode(IMFTopology *iface, IMFTopologyNode *node_iface)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
-    IMFTopologyNode *match;
-    HRESULT hr;
-    TOPOID id;
+    struct topology_node *node = unsafe_impl_from_IMFTopologyNode(node_iface);
+    struct topology_node *match;
 
-    TRACE("(%p)->(%p)\n", iface, node);
+    TRACE("%p, %p.\n", iface, node_iface);
 
     if (!node)
         return E_POINTER;
 
-    if (FAILED(hr = IMFTopologyNode_GetTopoNodeID(node, &id)))
-        return hr;
+    if (SUCCEEDED(topology_get_node_by_id(topology, node->id, &match)))
+    {
+        IMFTopologyNode_Release(&match->IMFTopologyNode_iface);
+        return E_INVALIDARG;
+    }
 
-    if (FAILED(topology_get_node_by_id(topology, id, &match)))
-        return IMFCollection_AddElement(topology->nodes, (IUnknown *)node);
+    if (!mf_array_reserve((void **)&topology->nodes.nodes, &topology->nodes.size, topology->nodes.count + 1,
+            sizeof(*topology->nodes.nodes)))
+    {
+        return E_OUTOFMEMORY;
+    }
 
-    IMFTopologyNode_Release(match);
+    topology->nodes.nodes[topology->nodes.count++] = node;
+    IMFTopologyNode_AddRef(&node->IMFTopologyNode_iface);
 
-    return E_INVALIDARG;
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_RemoveNode(IMFTopology *iface, IMFTopologyNode *node)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
-    unsigned int i = 0;
-    IUnknown *element;
+    size_t i, count;
 
-    TRACE("(%p)->(%p)\n", iface, node);
+    TRACE("%p, %p.\n", iface, node);
 
-    while (IMFCollection_GetElement(topology->nodes, i, &element) == S_OK)
+    for (i = 0; i < topology->nodes.count; ++i)
     {
-        BOOL match = element == (IUnknown *)node;
-
-        IUnknown_Release(element);
-
-        if (match)
+        if (&topology->nodes.nodes[i]->IMFTopologyNode_iface == node)
         {
-            IMFCollection_RemoveElement(topology->nodes, i, &element);
-            IUnknown_Release(element);
+            count = topology->nodes.count - i - 1;
+            if (count)
+            {
+                memmove(&topology->nodes.nodes[i], &topology->nodes.nodes[i + 1],
+                        count * sizeof(*topology->nodes.nodes));
+            }
+            topology->nodes.count--;
             return S_OK;
         }
-
-        ++i;
     }
 
     return E_INVALIDARG;
@@ -558,38 +568,43 @@ static HRESULT WINAPI topology_RemoveNode(IMFTopology *iface, IMFTopologyNode *n
 static HRESULT WINAPI topology_GetNodeCount(IMFTopology *iface, WORD *count)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
-    DWORD nodecount;
-    HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", iface, count);
+    TRACE("%p, %p.\n", iface, count);
 
-    hr = IMFCollection_GetElementCount(topology->nodes, count ? &nodecount : NULL);
-    if (count)
-        *count = nodecount;
+    if (!count)
+        return E_POINTER;
 
-    return hr;
+    *count = topology->nodes.count;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_GetNode(IMFTopology *iface, WORD index, IMFTopologyNode **node)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
 
-    TRACE("(%p)->(%u, %p)\n", iface, index, node);
+    TRACE("%p, %u, %p.\n", iface, index, node);
 
     if (!node)
         return E_POINTER;
 
-    return SUCCEEDED(IMFCollection_GetElement(topology->nodes, index, (IUnknown **)node)) ?
-            S_OK : MF_E_INVALIDINDEX;
+    if (index >= topology->nodes.count)
+        return MF_E_INVALIDINDEX;
+
+    *node = &topology->nodes.nodes[index]->IMFTopologyNode_iface;
+    IMFTopologyNode_AddRef(*node);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_Clear(IMFTopology *iface)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
 
-    TRACE("(%p)\n", iface);
+    TRACE("%p.\n", iface);
 
-    return IMFCollection_RemoveAllElements(topology->nodes);
+    topology_clear(topology);
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_CloneFrom(IMFTopology *iface, IMFTopology *src_topology)
@@ -599,36 +614,27 @@ static HRESULT WINAPI topology_CloneFrom(IMFTopology *iface, IMFTopology *src_to
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI topology_GetNodeByID(IMFTopology *iface, TOPOID id, IMFTopologyNode **node)
+static HRESULT WINAPI topology_GetNodeByID(IMFTopology *iface, TOPOID id, IMFTopologyNode **ret)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
-
-    TRACE("(%p)->(%p)\n", iface, node);
-
-    return topology_get_node_by_id(topology, id, node);
-}
-
-static HRESULT topology_add_node_of_type(const struct topology *topology, IMFTopologyNode *node,
-        MF_TOPOLOGY_TYPE filter, IMFCollection *collection)
-{
-    MF_TOPOLOGY_TYPE node_type;
+    struct topology_node *node;
     HRESULT hr;
 
-    if (FAILED(hr = IMFTopologyNode_GetNodeType(node, &node_type)))
-        return hr;
+    TRACE("%p, %p.\n", iface, ret);
 
-    if (node_type != filter)
-        return S_OK;
+    if (SUCCEEDED(hr = topology_get_node_by_id(topology, id, &node)))
+        *ret = &node->IMFTopologyNode_iface;
+    else
+        *ret = NULL;
 
-    return IMFCollection_AddElement(collection, (IUnknown *)node);
+    return hr;
 }
 
 static HRESULT topology_get_node_collection(const struct topology *topology, MF_TOPOLOGY_TYPE node_type,
         IMFCollection **collection)
 {
-    IMFTopologyNode *node;
-    unsigned int i = 0;
     HRESULT hr;
+    size_t i;
 
     if (!collection)
         return E_POINTER;
@@ -636,15 +642,17 @@ static HRESULT topology_get_node_collection(const struct topology *topology, MF_
     if (FAILED(hr = MFCreateCollection(collection)))
         return hr;
 
-    while (IMFCollection_GetElement(topology->nodes, i++, (IUnknown **)&node) == S_OK)
+    for (i = 0; i < topology->nodes.count; ++i)
     {
-        hr = topology_add_node_of_type(topology, node, node_type, *collection);
-        IMFTopologyNode_Release(node);
-        if (FAILED(hr))
+        if (topology->nodes.nodes[i]->node_type == node_type)
         {
-            IMFCollection_Release(*collection);
-            *collection = NULL;
-            break;
+            if (FAILED(hr = IMFCollection_AddElement(*collection,
+                    (IUnknown *)&topology->nodes.nodes[i]->IMFTopologyNode_iface)))
+            {
+                IMFCollection_Release(*collection);
+                *collection = NULL;
+                break;
+            }
         }
     }
 
@@ -750,9 +758,6 @@ HRESULT WINAPI MFCreateTopology(IMFTopology **topology)
     object->refcount = 1;
 
     hr = MFCreateAttributes(&object->attributes, 0);
-    if (SUCCEEDED(hr))
-        hr = MFCreateCollection(&object->nodes);
-
     if (FAILED(hr))
     {
         IMFTopology_Release(&object->IMFTopology_iface);
