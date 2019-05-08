@@ -1,6 +1,6 @@
 MODULE    = hidclass.sys
 IMPORTLIB = hidclass
-IMPORTS   = ntoskrnl
+IMPORTS   = hal ntoskrnl
 DELAYIMPORTS = setupapi hid
 
 C_SRCS = \

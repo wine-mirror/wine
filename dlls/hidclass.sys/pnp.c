@@ -114,6 +114,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 
     ext = device->DeviceExtension;
     InitializeListHead(&ext->irp_queue);
+    KeInitializeSpinLock(&ext->irp_queue_lock);
 
     TRACE("Created device %p\n",device);
     status = minidriver->AddDevice(minidriver->minidriver.DriverObject, device);

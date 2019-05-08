@@ -126,10 +126,25 @@ error:
     return STATUS_UNSUCCESSFUL;
 }
 
+static IRP *pop_irp_from_queue(BASE_DEVICE_EXTENSION *ext)
+{
+    LIST_ENTRY *entry;
+    KIRQL old_irql;
+    IRP *irp = NULL;
+
+    KeAcquireSpinLock(&ext->irp_queue_lock, &old_irql);
+
+    entry = RemoveHeadList(&ext->irp_queue);
+    if (entry != &ext->irp_queue)
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
+
+    KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
+    return irp;
+}
+
 void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device)
 {
     BASE_DEVICE_EXTENSION *ext;
-    LIST_ENTRY *entry;
     IRP *irp;
 
     ext = device->DeviceExtension;
@@ -145,13 +160,10 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
     if (ext->ring_buffer)
         RingBuffer_Destroy(ext->ring_buffer);
 
-    entry = RemoveHeadList(&ext->irp_queue);
-    while(entry != &ext->irp_queue)
+    while((irp = pop_irp_from_queue(ext)))
     {
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
         irp->IoStatus.u.Status = STATUS_DEVICE_REMOVED;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-        entry = RemoveHeadList(&ext->irp_queue);
     }
 
     TRACE("Delete device(%p) %s\n", device, debugstr_w(ext->device_name));
@@ -189,7 +201,6 @@ static NTSTATUS copy_packet_into_buffer(HID_XFER_PACKET *packet, BYTE* buffer, U
 
 static void HID_Device_processQueue(DEVICE_OBJECT *device)
 {
-    LIST_ENTRY *entry;
     IRP *irp;
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     UINT buffer_size = RingBuffer_GetBufferSize(ext->ring_buffer);
@@ -197,11 +208,9 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
 
     packet = HeapAlloc(GetProcessHeap(), 0, buffer_size);
 
-    entry = RemoveHeadList(&ext->irp_queue);
-    while(entry != &ext->irp_queue)
+    while((irp = pop_irp_from_queue(ext)))
     {
         int ptr;
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
         ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
 
         RingBuffer_Read(ext->ring_buffer, ptr, packet, &buffer_size);
@@ -222,7 +231,6 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
             irp->IoStatus.u.Status = STATUS_UNSUCCESSFUL;
         }
         IoCompleteRequest( irp, IO_NO_INCREMENT );
-        entry = RemoveHeadList(&ext->irp_queue);
     }
     HeapFree(GetProcessHeap(), 0, packet);
 }
@@ -656,9 +664,15 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
         BASE_DEVICE_EXTENSION *extension = device->DeviceExtension;
         if (extension->poll_interval)
         {
+            KIRQL old_irql;
             TRACE_(hid_report)("Queue irp\n");
+
+            KeAcquireSpinLock(&ext->irp_queue_lock, &old_irql);
+
             InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
             rc = STATUS_PENDING;
+
+            KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
         }
         else
         {

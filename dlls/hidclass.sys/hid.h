@@ -54,6 +54,7 @@ typedef struct _BASE_DEVICE_EXTENSION {
     HANDLE halt_event;
     HANDLE thread;
 
+    KSPIN_LOCK irp_queue_lock;
     LIST_ENTRY irp_queue;
 
     /* Minidriver Specific stuff will end up here */
