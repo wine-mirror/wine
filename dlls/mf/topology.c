@@ -174,12 +174,81 @@ static ULONG WINAPI topology_AddRef(IMFTopology *iface)
     return refcount;
 }
 
+static HRESULT topology_node_disconnect_output(struct topology_node *node, DWORD output_index)
+{
+    struct topology_node *connection = NULL;
+    struct node_stream *stream;
+    DWORD connection_stream;
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&node->cs);
+
+    if (output_index < node->outputs.count)
+    {
+        stream = &node->outputs.streams[output_index];
+
+        if (stream->connection)
+        {
+            connection = stream->connection;
+            connection_stream = stream->connection_stream;
+            stream->connection = NULL;
+            stream->connection_stream = 0;
+        }
+        else
+            hr = MF_E_NOT_FOUND;
+    }
+    else
+        hr = E_INVALIDARG;
+
+    LeaveCriticalSection(&node->cs);
+
+    if (connection)
+    {
+        EnterCriticalSection(&connection->cs);
+
+        if (connection_stream < connection->inputs.count)
+        {
+            stream = &connection->inputs.streams[connection_stream];
+
+            if (stream->connection)
+            {
+                stream->connection = NULL;
+                stream->connection_stream = 0;
+            }
+        }
+
+        LeaveCriticalSection(&connection->cs);
+
+        IMFTopologyNode_Release(&connection->IMFTopologyNode_iface);
+        IMFTopologyNode_Release(&node->IMFTopologyNode_iface);
+    }
+
+    return hr;
+}
+
+static void topology_node_disconnect(struct topology_node *node)
+{
+    struct node_stream *stream;
+    size_t i;
+
+    for (i = 0; i < node->outputs.count; ++i)
+        topology_node_disconnect_output(node, i);
+
+    for (i = 0; i < node->inputs.count; ++i)
+    {
+        stream = &node->inputs.streams[i];
+        if (stream->connection)
+            topology_node_disconnect_output(stream->connection, stream->connection_stream);
+    }
+}
+
 static void topology_clear(struct topology *topology)
 {
     size_t i;
 
     for (i = 0; i < topology->nodes.count; ++i)
     {
+        topology_node_disconnect(topology->nodes.nodes[i]);
         IMFTopologyNode_Release(&topology->nodes.nodes[i]->IMFTopologyNode_iface);
     }
     heap_free(topology->nodes.nodes);
@@ -551,6 +620,8 @@ static HRESULT WINAPI topology_RemoveNode(IMFTopology *iface, IMFTopologyNode *n
     {
         if (&topology->nodes.nodes[i]->IMFTopologyNode_iface == node)
         {
+            topology_node_disconnect(topology->nodes.nodes[i]);
+            IMFTopologyNode_Release(&topology->nodes.nodes[i]->IMFTopologyNode_iface);
             count = topology->nodes.count - i - 1;
             if (count)
             {
@@ -1246,58 +1317,6 @@ static HRESULT WINAPI topology_node_GetOutputCount(IMFTopologyNode *iface, DWORD
     *count = node->outputs.count;
 
     return S_OK;
-}
-
-static HRESULT topology_node_disconnect_output(struct topology_node *node, DWORD output_index)
-{
-    struct topology_node *connection = NULL;
-    struct node_stream *stream;
-    DWORD connection_stream;
-    HRESULT hr = S_OK;
-
-    EnterCriticalSection(&node->cs);
-
-    if (output_index < node->outputs.count)
-    {
-        stream = &node->outputs.streams[output_index];
-
-        if (stream->connection)
-        {
-            connection = stream->connection;
-            connection_stream = stream->connection_stream;
-            stream->connection = NULL;
-            stream->connection_stream = 0;
-        }
-        else
-            hr = MF_E_NOT_FOUND;
-    }
-    else
-        hr = E_INVALIDARG;
-
-    LeaveCriticalSection(&node->cs);
-
-    if (connection)
-    {
-        EnterCriticalSection(&connection->cs);
-
-        if (connection_stream < connection->inputs.count)
-        {
-            stream = &connection->inputs.streams[connection_stream];
-
-            if (stream->connection)
-            {
-                stream->connection = NULL;
-                stream->connection_stream = 0;
-            }
-        }
-
-        LeaveCriticalSection(&connection->cs);
-
-        IMFTopologyNode_Release(&connection->IMFTopologyNode_iface);
-        IMFTopologyNode_Release(&node->IMFTopologyNode_iface);
-    }
-
-    return hr;
 }
 
 static HRESULT WINAPI topology_node_ConnectOutput(IMFTopologyNode *iface, DWORD output_index,

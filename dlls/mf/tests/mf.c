@@ -589,10 +589,9 @@ static void test_topology(void)
     hr = IMFTopology_Clear(topology);
     ok(hr == S_OK, "Failed to clear topology, hr %#x.\n", hr);
 
-todo_wine {
     EXPECT_REF(node, 1);
     EXPECT_REF(node2, 1);
-}
+
     /* Removing connected node breaks connection. */
     hr = IMFTopology_AddNode(topology, node);
     ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
@@ -606,12 +605,10 @@ todo_wine {
     hr = IMFTopology_RemoveNode(topology, node);
     ok(hr == S_OK, "Failed to remove a node, hr %#x.\n", hr);
 
-todo_wine {
     EXPECT_REF(node, 1);
     EXPECT_REF(node2, 2);
-}
+
     hr = IMFTopologyNode_GetOutput(node, 0, &node3, &index);
-todo_wine
     ok(hr == MF_E_NOT_FOUND, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTopology_AddNode(topology, node);
@@ -623,10 +620,9 @@ todo_wine
     hr = IMFTopology_RemoveNode(topology, node2);
     ok(hr == S_OK, "Failed to remove a node, hr %#x.\n", hr);
 
-todo_wine {
     EXPECT_REF(node, 2);
     EXPECT_REF(node2, 1);
-}
+
     IMFTopologyNode_Release(node);
     IMFTopologyNode_Release(node2);
 
