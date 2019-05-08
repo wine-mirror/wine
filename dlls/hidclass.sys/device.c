@@ -134,13 +134,43 @@ static IRP *pop_irp_from_queue(BASE_DEVICE_EXTENSION *ext)
 
     KeAcquireSpinLock(&ext->irp_queue_lock, &old_irql);
 
-    entry = RemoveHeadList(&ext->irp_queue);
-    if (entry != &ext->irp_queue)
+    while (!irp && (entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
+    {
         irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
+        if (!IoSetCancelRoutine(irp, NULL))
+        {
+            /* cancel routine is already cleared, meaning that it was called. let it handle completion. */
+            InitializeListHead(&irp->Tail.Overlay.s.ListEntry);
+            irp = NULL;
+        }
+    }
 
     KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
     return irp;
 }
+
+static void WINAPI read_cancel_routine(DEVICE_OBJECT *device, IRP *irp)
+{
+    BASE_DEVICE_EXTENSION *ext;
+    KIRQL old_irql;
+
+    TRACE("cancel %p IRP on device %p\n", irp, device);
+
+    ext = device->DeviceExtension;
+
+    IoReleaseCancelSpinLock(irp->CancelIrql);
+
+    KeAcquireSpinLock(&ext->irp_queue_lock, &old_irql);
+
+    RemoveEntryList(&irp->Tail.Overlay.s.ListEntry);
+
+    KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
+
+    irp->IoStatus.u.Status = STATUS_CANCELLED;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
 
 void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device)
 {
@@ -669,10 +699,20 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
 
             KeAcquireSpinLock(&ext->irp_queue_lock, &old_irql);
 
+            IoSetCancelRoutine(irp, read_cancel_routine);
+            if (irp->Cancel && !IoSetCancelRoutine(irp, NULL))
+            {
+                /* IRP was canceled before we set cancel routine */
+                InitializeListHead(&irp->Tail.Overlay.s.ListEntry);
+                KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
+                return STATUS_CANCELLED;
+            }
+
             InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
-            rc = STATUS_PENDING;
+            IoMarkIrpPending(irp);
 
             KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
+            rc = STATUS_PENDING;
         }
         else
         {
