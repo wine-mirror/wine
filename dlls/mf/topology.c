@@ -57,6 +57,15 @@ struct topology
 struct node_stream
 {
     IMFMediaType *preferred_type;
+    struct topology_node *connection;
+    DWORD connection_stream;
+};
+
+struct node_streams
+{
+    struct node_stream *streams;
+    size_t size;
+    size_t count;
 };
 
 struct topology_node
@@ -67,18 +76,8 @@ struct topology_node
     MF_TOPOLOGY_TYPE node_type;
     TOPOID id;
     IUnknown *object;
-    struct
-    {
-        struct node_stream *streams;
-        size_t size;
-        size_t count;
-    } inputs;
-    struct
-    {
-        struct node_stream *streams;
-        size_t size;
-        size_t count;
-    } outputs;
+    struct node_streams inputs;
+    struct node_streams outputs;
     CRITICAL_SECTION cs;
 };
 
@@ -104,6 +103,15 @@ static struct topology_node *impl_from_IMFTopologyNode(IMFTopologyNode *iface)
     return CONTAINING_RECORD(iface, struct topology_node, IMFTopologyNode_iface);
 }
 
+static const IMFTopologyNodeVtbl topologynodevtbl;
+
+static struct topology_node *unsafe_impl_from_IMFTopologyNode(IMFTopologyNode *iface)
+{
+    if (!iface || iface->lpVtbl != &topologynodevtbl)
+        return NULL;
+    return impl_from_IMFTopologyNode(iface);
+}
+
 static struct topology_loader *impl_from_IMFTopoLoader(IMFTopoLoader *iface)
 {
     return CONTAINING_RECORD(iface, struct topology_loader, IMFTopoLoader_iface);
@@ -112,6 +120,20 @@ static struct topology_loader *impl_from_IMFTopoLoader(IMFTopoLoader *iface)
 static struct seq_source *impl_from_IMFSequencerSource(IMFSequencerSource *iface)
 {
     return CONTAINING_RECORD(iface, struct seq_source, IMFSequencerSource_iface);
+}
+
+static HRESULT topology_node_reserve_streams(struct node_streams *streams, DWORD index)
+{
+    if (!mf_array_reserve((void **)&streams->streams, &streams->size, index + 1, sizeof(*streams->streams)))
+        return E_OUTOFMEMORY;
+
+    if (index >= streams->count)
+    {
+        memset(&streams->streams[streams->count], 0, (index - streams->count + 1) * sizeof(*streams->streams));
+        streams->count = index + 1;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_QueryInterface(IMFTopology *iface, REFIID riid, void **out)
@@ -459,14 +481,17 @@ static HRESULT topology_get_node_by_id(const struct topology *topology, TOPOID i
     IMFTopologyNode *iter;
     unsigned int i = 0;
 
-    while (IMFCollection_GetElement(topology->nodes, i, (IUnknown **)&iter) == S_OK)
+    while (IMFCollection_GetElement(topology->nodes, i++, (IUnknown **)&iter) == S_OK)
     {
         TOPOID node_id;
         HRESULT hr;
 
         hr = IMFTopologyNode_GetTopoNodeID(iter, &node_id);
         if (FAILED(hr))
+        {
+            IMFTopologyNode_Release(iter);
             return hr;
+        }
 
         if (node_id == id)
         {
@@ -474,7 +499,7 @@ static HRESULT topology_get_node_by_id(const struct topology *topology, TOPOID i
             return S_OK;
         }
 
-        ++i;
+        IMFTopologyNode_Release(iter);
     }
 
     return MF_E_NOT_FOUND;
@@ -1218,35 +1243,177 @@ static HRESULT WINAPI topology_node_GetOutputCount(IMFTopologyNode *iface, DWORD
     return S_OK;
 }
 
+static HRESULT topology_node_disconnect_output(struct topology_node *node, DWORD output_index)
+{
+    struct topology_node *connection = NULL;
+    struct node_stream *stream;
+    DWORD connection_stream;
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&node->cs);
+
+    if (output_index < node->outputs.count)
+    {
+        stream = &node->outputs.streams[output_index];
+
+        if (stream->connection)
+        {
+            connection = stream->connection;
+            connection_stream = stream->connection_stream;
+            stream->connection = NULL;
+            stream->connection_stream = 0;
+        }
+        else
+            hr = MF_E_NOT_FOUND;
+    }
+    else
+        hr = E_INVALIDARG;
+
+    LeaveCriticalSection(&node->cs);
+
+    if (connection)
+    {
+        EnterCriticalSection(&connection->cs);
+
+        if (connection_stream < connection->inputs.count)
+        {
+            stream = &connection->inputs.streams[connection_stream];
+
+            if (stream->connection)
+            {
+                stream->connection = NULL;
+                stream->connection_stream = 0;
+            }
+        }
+
+        LeaveCriticalSection(&connection->cs);
+
+        IMFTopologyNode_Release(&connection->IMFTopologyNode_iface);
+        IMFTopologyNode_Release(&node->IMFTopologyNode_iface);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI topology_node_ConnectOutput(IMFTopologyNode *iface, DWORD output_index,
-        IMFTopologyNode *node, DWORD input_index)
+        IMFTopologyNode *peer, DWORD input_index)
 {
-    FIXME("(%p)->(%u, %p, %u)\n", iface, output_index, node, input_index);
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+    struct topology_node *connection = unsafe_impl_from_IMFTopologyNode(peer);
+    struct node_stream *stream;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %u.\n", iface, output_index, peer, input_index);
+
+    if (!connection)
+    {
+        WARN("External node implementations are not supported.\n");
+        return E_UNEXPECTED;
+    }
+
+    if (node->node_type == MF_TOPOLOGY_OUTPUT_NODE || connection->node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
+         return E_FAIL;
+
+    EnterCriticalSection(&node->cs);
+    EnterCriticalSection(&connection->cs);
+
+    topology_node_disconnect_output(node, output_index);
+    if (input_index < connection->inputs.count)
+    {
+        stream = &connection->inputs.streams[input_index];
+        if (stream->connection)
+            topology_node_disconnect_output(stream->connection, stream->connection_stream);
+    }
+
+    hr = topology_node_reserve_streams(&node->outputs, output_index);
+    if (SUCCEEDED(hr))
+        hr = topology_node_reserve_streams(&connection->inputs, input_index);
+
+    if (SUCCEEDED(hr))
+    {
+        node->outputs.streams[output_index].connection = connection;
+        IMFTopologyNode_AddRef(&node->outputs.streams[output_index].connection->IMFTopologyNode_iface);
+        node->outputs.streams[output_index].connection_stream = input_index;
+        connection->inputs.streams[input_index].connection = node;
+        IMFTopologyNode_AddRef(&connection->inputs.streams[input_index].connection->IMFTopologyNode_iface);
+        connection->inputs.streams[input_index].connection_stream = output_index;
+    }
+
+    LeaveCriticalSection(&connection->cs);
+    LeaveCriticalSection(&node->cs);
+
+    return hr;
 }
 
-static HRESULT WINAPI topology_node_DisconnectOutput(IMFTopologyNode *iface, DWORD index)
+static HRESULT WINAPI topology_node_DisconnectOutput(IMFTopologyNode *iface, DWORD output_index)
 {
-    FIXME("(%p)->(%u)\n", iface, index);
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u.\n", iface, output_index);
+
+    return topology_node_disconnect_output(node, output_index);
 }
 
-static HRESULT WINAPI topology_node_GetInput(IMFTopologyNode *iface, DWORD input_index, IMFTopologyNode **node,
+static HRESULT WINAPI topology_node_GetInput(IMFTopologyNode *iface, DWORD input_index, IMFTopologyNode **ret,
         DWORD *output_index)
 {
-    FIXME("(%p)->(%u, %p, %p)\n", iface, input_index, node, output_index);
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %p.\n", iface, input_index, ret, output_index);
+
+    EnterCriticalSection(&node->cs);
+
+    if (input_index < node->inputs.count)
+    {
+        const struct node_stream *stream = &node->inputs.streams[input_index];
+
+        if (stream->connection)
+        {
+            *ret = &stream->connection->IMFTopologyNode_iface;
+            IMFTopologyNode_AddRef(*ret);
+            *output_index = stream->connection_stream;
+        }
+        else
+            hr = MF_E_NOT_FOUND;
+    }
+    else
+        hr = E_INVALIDARG;
+
+    LeaveCriticalSection(&node->cs);
+
+    return hr;
 }
 
-static HRESULT WINAPI topology_node_GetOutput(IMFTopologyNode *iface, DWORD output_index, IMFTopologyNode **node,
+static HRESULT WINAPI topology_node_GetOutput(IMFTopologyNode *iface, DWORD output_index, IMFTopologyNode **ret,
         DWORD *input_index)
 {
-    FIXME("(%p)->(%u, %p, %p)\n", iface, output_index, node, input_index);
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %p.\n", iface, output_index, ret, input_index);
+
+    EnterCriticalSection(&node->cs);
+
+    if (output_index < node->outputs.count)
+    {
+        const struct node_stream *stream = &node->outputs.streams[output_index];
+
+        if (stream->connection)
+        {
+            *ret = &stream->connection->IMFTopologyNode_iface;
+            IMFTopologyNode_AddRef(*ret);
+            *input_index = stream->connection_stream;
+        }
+        else
+            hr = MF_E_NOT_FOUND;
+    }
+    else
+        hr = E_INVALIDARG;
+
+    LeaveCriticalSection(&node->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI topology_node_SetOutputPrefType(IMFTopologyNode *iface, DWORD index, IMFMediaType *mediatype)
@@ -1260,23 +1427,14 @@ static HRESULT WINAPI topology_node_SetOutputPrefType(IMFTopologyNode *iface, DW
 
     if (node->node_type != MF_TOPOLOGY_OUTPUT_NODE)
     {
-        if (mf_array_reserve((void **)&node->outputs.streams, &node->outputs.size, index + 1,
-                sizeof(*node->outputs.streams)))
+        if (SUCCEEDED(hr = topology_node_reserve_streams(&node->outputs, index)))
         {
-            if (index >= node->outputs.count)
-            {
-                memset(&node->outputs.streams[node->outputs.count], 0,
-                        (index - node->outputs.count + 1) * sizeof(*node->outputs.streams));
-                node->outputs.count = index + 1;
-            }
             if (node->outputs.streams[index].preferred_type)
                 IMFMediaType_Release(node->outputs.streams[index].preferred_type);
             node->outputs.streams[index].preferred_type = mediatype;
             if (node->outputs.streams[index].preferred_type)
                 IMFMediaType_AddRef(node->outputs.streams[index].preferred_type);
         }
-        else
-            hr = E_OUTOFMEMORY;
     }
     else
         hr = E_NOTIMPL;
@@ -1322,8 +1480,7 @@ static HRESULT WINAPI topology_node_SetInputPrefType(IMFTopologyNode *iface, DWO
 
     if (node->node_type != MF_TOPOLOGY_SOURCESTREAM_NODE && !(index > 0 && node->node_type == MF_TOPOLOGY_TEE_NODE))
     {
-        if (mf_array_reserve((void **)&node->inputs.streams, &node->inputs.size, index + 1,
-                sizeof(*node->inputs.streams)))
+        if (SUCCEEDED(hr = topology_node_reserve_streams(&node->inputs, index)))
         {
             if (index >= node->inputs.count)
             {
@@ -1337,8 +1494,6 @@ static HRESULT WINAPI topology_node_SetInputPrefType(IMFTopologyNode *iface, DWO
             if (node->inputs.streams[index].preferred_type)
                 IMFMediaType_AddRef(node->inputs.streams[index].preferred_type);
         }
-        else
-            hr = E_OUTOFMEMORY;
     }
     else
         hr = node->node_type == MF_TOPOLOGY_TEE_NODE ? MF_E_INVALIDTYPE : E_NOTIMPL;

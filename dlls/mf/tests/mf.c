@@ -39,7 +39,15 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #include "wine/test.h"
 
-DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
+{
+    ULONG refcount;
+    IUnknown_AddRef(obj);
+    refcount = IUnknown_Release(obj);
+    ok_(__FILE__, line)(refcount == expected_refcount, "Unexpected refcount %d, expected %d.\n", refcount,
+            expected_refcount);
+}
 
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
@@ -79,9 +87,10 @@ static void test_topology(void)
     IMFTopologyNode *node, *node2, *node3;
     IMFMediaType *mediatype, *mediatype2;
     IMFTopology *topology, *topology2;
+    MF_TOPOLOGY_TYPE node_type;
+    UINT32 count, index;
     IUnknown *object;
     WORD node_count;
-    UINT32 count;
     DWORD size;
     HRESULT hr;
     TOPOID id;
@@ -518,6 +527,108 @@ static void test_topology(void)
         ok(size == 1, "Unexpected item count.\n");
         IMFCollection_Release(collection);
     }
+
+    IMFTopology_Release(topology);
+
+    /* Connect nodes. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node2);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    EXPECT_REF(node, 1);
+    EXPECT_REF(node2, 1);
+
+    hr = IMFTopologyNode_ConnectOutput(node, 0, node2, 1);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    EXPECT_REF(node, 2);
+    EXPECT_REF(node2, 2);
+
+    IMFTopologyNode_Release(node);
+
+    EXPECT_REF(node, 1);
+    EXPECT_REF(node2, 2);
+
+    IMFTopologyNode_Release(node2);
+
+    EXPECT_REF(node, 1);
+    EXPECT_REF(node2, 1);
+
+    hr = IMFTopologyNode_GetNodeType(node2, &node_type);
+    ok(hr == S_OK, "Failed to get node type, hr %#x.\n", hr);
+
+    IMFTopologyNode_Release(node);
+
+    /* Connect within topology. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node2);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "Failed to create topology, hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node2);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    EXPECT_REF(node, 2);
+    EXPECT_REF(node2, 2);
+
+    hr = IMFTopologyNode_ConnectOutput(node, 0, node2, 1);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    EXPECT_REF(node, 3);
+    EXPECT_REF(node2, 3);
+
+    hr = IMFTopology_Clear(topology);
+    ok(hr == S_OK, "Failed to clear topology, hr %#x.\n", hr);
+
+todo_wine {
+    EXPECT_REF(node, 1);
+    EXPECT_REF(node2, 1);
+}
+    /* Removing connected node breaks connection. */
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node2);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_ConnectOutput(node, 0, node2, 1);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    hr = IMFTopology_RemoveNode(topology, node);
+    ok(hr == S_OK, "Failed to remove a node, hr %#x.\n", hr);
+
+todo_wine {
+    EXPECT_REF(node, 1);
+    EXPECT_REF(node2, 2);
+}
+    hr = IMFTopologyNode_GetOutput(node, 0, &node3, &index);
+todo_wine
+    ok(hr == MF_E_NOT_FOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_ConnectOutput(node, 0, node2, 1);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    hr = IMFTopology_RemoveNode(topology, node2);
+    ok(hr == S_OK, "Failed to remove a node, hr %#x.\n", hr);
+
+todo_wine {
+    EXPECT_REF(node, 2);
+    EXPECT_REF(node2, 1);
+}
+    IMFTopologyNode_Release(node);
+    IMFTopologyNode_Release(node2);
 
     IMFTopology_Release(topology);
 }
