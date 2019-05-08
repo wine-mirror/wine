@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 struct media_session
 {
     IMFMediaSession IMFMediaSession_iface;
+    IMFGetService IMFGetService_iface;
     LONG refcount;
     IMFMediaEventQueue *event_queue;
 };
@@ -92,6 +93,11 @@ static inline struct media_session *impl_from_IMFMediaSession(IMFMediaSession *i
     return CONTAINING_RECORD(iface, struct media_session, IMFMediaSession_iface);
 }
 
+static struct media_session *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_session, IMFGetService_iface);
+}
+
 static struct presentation_clock *impl_from_IMFPresentationClock(IMFPresentationClock *iface)
 {
     return CONTAINING_RECORD(iface, struct presentation_clock, IMFPresentationClock_iface);
@@ -133,6 +139,12 @@ static HRESULT WINAPI mfsession_QueryInterface(IMFMediaSession *iface, REFIID ri
             IsEqualIID(riid, &IID_IUnknown))
     {
         *out = &session->IMFMediaSession_iface;
+        IMFMediaSession_AddRef(iface);
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *out = &session->IMFGetService_iface;
         IMFMediaSession_AddRef(iface);
         return S_OK;
     }
@@ -301,6 +313,39 @@ static const IMFMediaSessionVtbl mfmediasessionvtbl =
     mfsession_GetFullTopology,
 };
 
+static HRESULT WINAPI session_get_service_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct media_session *session = impl_from_IMFGetService(iface);
+    return IMFMediaSession_QueryInterface(&session->IMFMediaSession_iface, riid, obj);
+}
+
+static ULONG WINAPI session_get_service_AddRef(IMFGetService *iface)
+{
+    struct media_session *session = impl_from_IMFGetService(iface);
+    return IMFMediaSession_AddRef(&session->IMFMediaSession_iface);
+}
+
+static ULONG WINAPI session_get_service_Release(IMFGetService *iface)
+{
+    struct media_session *session = impl_from_IMFGetService(iface);
+    return IMFMediaSession_Release(&session->IMFMediaSession_iface);
+}
+
+static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl session_get_service_vtbl =
+{
+    session_get_service_QueryInterface,
+    session_get_service_AddRef,
+    session_get_service_Release,
+    session_get_service_GetService,
+};
+
 /***********************************************************************
  *      MFCreateMediaSession (mf.@)
  */
@@ -319,6 +364,7 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
         return E_OUTOFMEMORY;
 
     object->IMFMediaSession_iface.lpVtbl = &mfmediasessionvtbl;
+    object->IMFGetService_iface.lpVtbl = &session_get_service_vtbl;
     object->refcount = 1;
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
     {

@@ -944,6 +944,7 @@ todo_wine
 static void test_media_session(void)
 {
     IMFMediaSession *session;
+    IMFGetService *gs;
     IUnknown *unk;
     HRESULT hr;
 
@@ -955,6 +956,10 @@ static void test_media_session(void)
 
     hr = IMFMediaSession_QueryInterface(session, &IID_IMFAttributes, (void **)&unk);
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSession_QueryInterface(session, &IID_IMFGetService, (void **)&gs);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    IMFGetService_Release(gs);
 
     test_session_events(session);
 
