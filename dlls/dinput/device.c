@@ -1181,7 +1181,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(LPDIRECTINPUTDEVICE8W ifa
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
 
-    TRACE("(%p this=%p,%s,%p)\n", iface, This, debugstr_guid(riid), ppobj);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
     if (IsEqualGUID(&IID_IUnknown, riid) ||
         IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
         IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
@@ -1231,7 +1231,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(LPDIRECTINPUTDEVICE8A iface,
     DIDEVICEOBJECTINSTANCEA ddoi;
     int i;
 
-    TRACE("(%p) %p,%p flags:%08x)\n", iface, lpCallback, lpvRef, dwFlags);
+    TRACE("(%p)->(%p,%p flags:%08x)\n", This, lpCallback, lpvRef, dwFlags);
     TRACE("  - flags = ");
     _dump_EnumObjects_flags(dwFlags);
     TRACE("\n");
@@ -1261,7 +1261,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
     DIDEVICEOBJECTINSTANCEW ddoi;
     int i;
 
-    TRACE("(%p) %p,%p flags:%08x)\n", iface, lpCallback, lpvRef, dwFlags);
+    TRACE("(%p)->(%p,%p flags:%08x)\n", This, lpCallback, lpvRef, dwFlags);
     TRACE("  - flags = ");
     _dump_EnumObjects_flags(dwFlags);
     TRACE("\n");
@@ -1292,7 +1292,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
 
-    TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
 
     if (!IS_DIPROP(rguid)) return DI_OK;
@@ -1357,7 +1357,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty(
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
 
-    TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
 
     if (!IS_DIPROP(rguid)) return DI_OK;
@@ -1596,7 +1596,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A ifac
 
 HRESULT WINAPI IDirectInputDevice2WImpl_RunControlPanel(LPDIRECTINPUTDEVICE8W iface, HWND hwndOwner, DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,0x%08x): stub!\n", iface, hwndOwner, dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("%p)->(%p,0x%08x): stub!\n", This, hwndOwner, dwFlags);
 
     return DI_OK;
 }
@@ -1610,7 +1611,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(LPDIRECTINPUTDEVICE8A if
 HRESULT WINAPI IDirectInputDevice2WImpl_Initialize(LPDIRECTINPUTDEVICE8W iface, HINSTANCE hinst, DWORD dwVersion,
                                                    REFGUID rguid)
 {
-    FIXME("(this=%p,%p,%d,%s): stub!\n", iface, hinst, dwVersion, debugstr_guid(rguid));
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%p,%d,%s): stub!\n", This, hinst, dwVersion, debugstr_guid(rguid));
     return DI_OK;
 }
 
@@ -1628,7 +1630,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Initialize(LPDIRECTINPUTDEVICE8A iface, 
 HRESULT WINAPI IDirectInputDevice2WImpl_CreateEffect(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPCDIEFFECT lpeff,
                                                      LPDIRECTINPUTEFFECT *ppdef, LPUNKNOWN pUnkOuter)
 {
-    FIXME("(this=%p,%s,%p,%p,%p): stub!\n", iface, debugstr_guid(rguid), lpeff, ppdef, pUnkOuter);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%s,%p,%p,%p): stub!\n", This, debugstr_guid(rguid), lpeff, ppdef, pUnkOuter);
 
     FIXME("not available in the generic implementation\n");
     *ppdef = NULL;
@@ -1648,9 +1651,9 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumEffects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,%p,0x%08x): stub!\n",
-	  iface, lpCallback, lpvRef, dwFlags);
-    
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
+    FIXME("%p)->(%p,%p,0x%08x): stub!\n", This, lpCallback, lpvRef, dwFlags);
+
     return DI_OK;
 }
 
@@ -1660,9 +1663,9 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumEffects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,%p,0x%08x): stub!\n",
-	  iface, lpCallback, lpvRef, dwFlags);
-    
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%p,%p,0x%08x): stub!\n", This, lpCallback, lpvRef, dwFlags);
+
     return DI_OK;
 }
 
@@ -1671,8 +1674,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetEffectInfo(
 	LPDIEFFECTINFOA lpdei,
 	REFGUID rguid)
 {
-    FIXME("(this=%p,%p,%s): stub!\n",
-	  iface, lpdei, debugstr_guid(rguid));
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
+    FIXME("(%p)->(%p,%s): stub!\n", This, lpdei, debugstr_guid(rguid));
     return DI_OK;
 }
 
@@ -1681,14 +1684,15 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetEffectInfo(
 	LPDIEFFECTINFOW lpdei,
 	REFGUID rguid)
 {
-    FIXME("(this=%p,%p,%s): stub!\n",
-	  iface, lpdei, debugstr_guid(rguid));
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%p,%s): stub!\n", This, lpdei, debugstr_guid(rguid));
     return DI_OK;
 }
 
 HRESULT WINAPI IDirectInputDevice2WImpl_GetForceFeedbackState(LPDIRECTINPUTDEVICE8W iface, LPDWORD pdwOut)
 {
-    FIXME("(this=%p,%p): stub!\n", iface, pdwOut);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%p): stub!\n", This, pdwOut);
     return DI_OK;
 }
 
@@ -1700,7 +1704,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetForceFeedbackState(LPDIRECTINPUTDEVIC
 
 HRESULT WINAPI IDirectInputDevice2WImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE8W iface, DWORD dwFlags)
 {
-    TRACE("(%p) 0x%08x:\n", iface, dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    TRACE("(%p)->(0x%08x)\n", This, dwFlags);
     return DI_NOEFFECT;
 }
 
@@ -1713,7 +1718,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SendForceFeedbackCommand(LPDIRECTINPUTDE
 HRESULT WINAPI IDirectInputDevice2WImpl_EnumCreatedEffectObjects(LPDIRECTINPUTDEVICE8W iface,
         LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID lpvRef, DWORD dwFlags)
 {
-    FIXME("(this=%p,%p,%p,0x%08x): stub!\n", iface, lpCallback, lpvRef, dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)0>(%p,%p,0x%08x): stub!\n", This, lpCallback, lpvRef, dwFlags);
     return DI_OK;
 }
 
@@ -1726,7 +1732,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumCreatedEffectObjects(LPDIRECTINPUTDE
 
 HRESULT WINAPI IDirectInputDevice2WImpl_Escape(LPDIRECTINPUTDEVICE8W iface, LPDIEFFESCAPE lpDIEEsc)
 {
-    FIXME("(this=%p,%p): stub!\n", iface, lpDIEEsc);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%p): stub!\n", This, lpDIEEsc);
     return DI_OK;
 }
 
@@ -1756,7 +1763,8 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SendDeviceData(LPDIRECTINPUTDEVICE8W ifa
                                                        LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut,
                                                        DWORD dwFlags)
 {
-    FIXME("(this=%p,0x%08x,%p,%p,0x%08x): stub!\n", iface, cbObjectData, rgdod, pdwInOut, dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(0x%08x,%p,%p,0x%08x): stub!\n", This, cbObjectData, rgdod, pdwInOut, dwFlags);
 
     return DI_OK;
 }
@@ -1776,7 +1784,8 @@ HRESULT WINAPI IDirectInputDevice7AImpl_EnumEffectsInFile(LPDIRECTINPUTDEVICE8A 
 							  LPVOID pvRef,
 							  DWORD dwFlags)
 {
-    FIXME("(%p)->(%s,%p,%p,%08x): stub !\n", iface, lpszFileName, pec, pvRef, dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
+    FIXME("(%p)->(%s,%p,%p,%08x): stub !\n", This, lpszFileName, pec, pvRef, dwFlags);
     
     return DI_OK;
 }
@@ -1787,7 +1796,8 @@ HRESULT WINAPI IDirectInputDevice7WImpl_EnumEffectsInFile(LPDIRECTINPUTDEVICE8W 
 							  LPVOID pvRef,
 							  DWORD dwFlags)
 {
-    FIXME("(%p)->(%s,%p,%p,%08x): stub !\n", iface, debugstr_w(lpszFileName), pec, pvRef, dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%s,%p,%p,%08x): stub !\n", This, debugstr_w(lpszFileName), pec, pvRef, dwFlags);
     
     return DI_OK;
 }
@@ -1798,7 +1808,8 @@ HRESULT WINAPI IDirectInputDevice7AImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8A 
 							  LPDIFILEEFFECT rgDiFileEft,
 							  DWORD dwFlags)
 {
-    FIXME("(%p)->(%s,%08x,%p,%08x): stub !\n", iface, lpszFileName, dwEntries, rgDiFileEft, dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
+    FIXME("(%p)->(%s,%08x,%p,%08x): stub !\n", This, lpszFileName, dwEntries, rgDiFileEft, dwFlags);
     
     return DI_OK;
 }
@@ -1809,7 +1820,8 @@ HRESULT WINAPI IDirectInputDevice7WImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8W 
 							  LPDIFILEEFFECT rgDiFileEft,
 							  DWORD dwFlags)
 {
-    FIXME("(%p)->(%s,%08x,%p,%08x): stub !\n", iface, debugstr_w(lpszFileName), dwEntries, rgDiFileEft, dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%s,%08x,%p,%08x): stub !\n", This, debugstr_w(lpszFileName), dwEntries, rgDiFileEft, dwFlags);
     
     return DI_OK;
 }
@@ -1819,7 +1831,8 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 						       LPCWSTR lpszUserName,
 						       DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", This, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 #define X(x) if (dwFlags & x) FIXME("\tdwFlags =|"#x"\n");
 	X(DIDBAM_DEFAULT)
 	X(DIDBAM_PRESERVE)
@@ -1833,7 +1846,8 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 HRESULT WINAPI IDirectInputDevice8AImpl_GetImageInfo(LPDIRECTINPUTDEVICE8A iface,
 						     LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader)
 {
-    FIXME("(%p)->(%p): stub !\n", iface, lpdiDevImageInfoHeader);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
+    FIXME("(%p)->(%p): stub !\n", This, lpdiDevImageInfoHeader);
     
     return DI_OK;
 }
@@ -1841,7 +1855,8 @@ HRESULT WINAPI IDirectInputDevice8AImpl_GetImageInfo(LPDIRECTINPUTDEVICE8A iface
 HRESULT WINAPI IDirectInputDevice8WImpl_GetImageInfo(LPDIRECTINPUTDEVICE8W iface,
 						     LPDIDEVICEIMAGEINFOHEADERW lpdiDevImageInfoHeader)
 {
-    FIXME("(%p)->(%p): stub !\n", iface, lpdiDevImageInfoHeader);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%p): stub !\n", This, lpdiDevImageInfoHeader);
     
     return DI_OK;
 }

@@ -677,7 +677,7 @@ static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTA
 {
     IDirectInputImpl *This = impl_from_IDirectInput7A( iface );
 
-    TRACE("(%p)->(%p, 0x%04x)\n", iface, hinst, version);
+    TRACE("(%p)->(%p, 0x%04x)\n", This, hinst, version);
 
     if (!hinst)
         return DIERR_INVALIDPARAM;
@@ -934,7 +934,7 @@ static HRESULT WINAPI IDirectInput8AImpl_Initialize(LPDIRECTINPUT8A iface, HINST
 {
     IDirectInputImpl *This = impl_from_IDirectInput8A( iface );
 
-    TRACE("(%p)->(%p, 0x%04x)\n", iface, hinst, version);
+    TRACE("(%p)->(%p, 0x%04x)\n", This, hinst, version);
 
     if (!hinst)
         return DIERR_INVALIDPARAM;

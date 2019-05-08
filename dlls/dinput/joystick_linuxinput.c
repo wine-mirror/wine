@@ -984,7 +984,7 @@ static HRESULT WINAPI JoystickWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 {
     JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
 
-    TRACE("(this=%p,%s,%p)\n", iface, debugstr_guid(rguid), pdiph);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
 
     if (!IS_DIPROP(rguid)) return DI_OK;

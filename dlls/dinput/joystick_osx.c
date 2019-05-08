@@ -1427,7 +1427,7 @@ static HRESULT WINAPI JoystickWImpl_CreateEffect(IDirectInputDevice8W *iface,
     EffectImpl *effect;
     HRESULT hr;
 
-    TRACE("%p %s %p %p %p\n", iface, debugstr_guid(type), params, out, outer);
+    TRACE("(%p)->(%s %p %p %p)\n", This, debugstr_guid(type), params, out, outer);
     dump_DIEFFECT(params, type, 0);
 
     if(!This->ff){
@@ -1468,7 +1468,7 @@ static HRESULT WINAPI JoystickAImpl_CreateEffect(IDirectInputDevice8A *iface,
 {
     JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
 
-    TRACE("%p %s %p %p %p\n", iface, debugstr_guid(type), params, out, outer);
+    TRACE("(%p)->(%s %p %p %p)\n", This, debugstr_guid(type), params, out, outer);
 
     return JoystickWImpl_CreateEffect(&This->generic.base.IDirectInputDevice8W_iface,
             type, params, out, outer);

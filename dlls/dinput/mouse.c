@@ -830,7 +830,8 @@ static HRESULT WINAPI SysMouseWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                  LPCWSTR lpszUserName,
                                                  DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", This, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 
     return _set_action_map(iface, lpdiaf, lpszUserName, dwFlags, &c_dfDIMouse2);
 }
