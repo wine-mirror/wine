@@ -375,8 +375,14 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
             SendDlgItemMessageW(dialog, IDC_CONTROLLERCOMBO, CB_SETCURSEL, 0, 0);
             fill_device_object_list(dialog);
 
+            ShowCursor(TRUE);
+
             break;
         }
+
+        case WM_DESTROY:
+            ShowCursor(FALSE);
+            break;
 
         case WM_NOTIFY:
 
