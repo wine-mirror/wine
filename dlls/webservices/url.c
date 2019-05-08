@@ -39,19 +39,19 @@ static const WCHAR netpipe[] = {'n','e','t','.','p','i','p','e'};
 
 static WS_URL_SCHEME_TYPE scheme_type( const WCHAR *str, ULONG len )
 {
-    if (len == ARRAY_SIZE( http ) && !memicmpW( str, http, ARRAY_SIZE( http )))
+    if (len == ARRAY_SIZE( http ) && !strncmpiW( str, http, ARRAY_SIZE( http )))
         return WS_URL_HTTP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( https ) && !memicmpW( str, https, ARRAY_SIZE( https )))
+    if (len == ARRAY_SIZE( https ) && !strncmpiW( str, https, ARRAY_SIZE( https )))
         return WS_URL_HTTPS_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( nettcp ) && !memicmpW( str, nettcp, ARRAY_SIZE( nettcp )))
+    if (len == ARRAY_SIZE( nettcp ) && !strncmpiW( str, nettcp, ARRAY_SIZE( nettcp )))
         return WS_URL_NETTCP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( soapudp ) && !memicmpW( str, soapudp, ARRAY_SIZE( soapudp )))
+    if (len == ARRAY_SIZE( soapudp ) && !strncmpiW( str, soapudp, ARRAY_SIZE( soapudp )))
         return WS_URL_SOAPUDP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( netpipe ) && !memicmpW( str, netpipe, ARRAY_SIZE( netpipe )))
+    if (len == ARRAY_SIZE( netpipe ) && !strncmpiW( str, netpipe, ARRAY_SIZE( netpipe )))
         return WS_URL_NETPIPE_SCHEME_TYPE;
 
     return ~0u;
