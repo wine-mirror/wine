@@ -2101,7 +2101,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                     {
                         ret = ntdll_umbstowcs( 0, kde[1].d_name, strlen(kde[1].d_name),
                                                buffer, MAX_DIR_ENTRY_LEN );
-                        if (ret == length && !memicmpW( buffer, name, length))
+                        if (ret == length && !strncmpiW( buffer, name, length))
                         {
                             strcpy( unix_name + pos, kde[1].d_name );
                             RtlLeaveCriticalSection( &dir_section );
@@ -2111,7 +2111,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                     }
                     ret = ntdll_umbstowcs( 0, kde[0].d_name, strlen(kde[0].d_name),
                                            buffer, MAX_DIR_ENTRY_LEN );
-                    if (ret == length && !memicmpW( buffer, name, length))
+                    if (ret == length && !strncmpiW( buffer, name, length))
                     {
                         strcpy( unix_name + pos,
                                 kde[1].d_name[0] ? kde[1].d_name : kde[0].d_name );
@@ -2145,7 +2145,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     while ((de = readdir( dir )))
     {
         ret = ntdll_umbstowcs( 0, de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
-        if (ret == length && !memicmpW( buffer, name, length ))
+        if (ret == length && !strncmpiW( buffer, name, length ))
         {
             strcpy( unix_name + pos, de->d_name );
             closedir( dir );
@@ -2159,7 +2159,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
         {
             WCHAR short_nameW[12];
             ret = hash_short_file_name( &str, short_nameW );
-            if (ret == length && !memicmpW( short_nameW, name, length ))
+            if (ret == length && !strncmpiW( short_nameW, name, length ))
             {
                 strcpy( unix_name + pos, de->d_name );
                 closedir( dir );
@@ -2468,7 +2468,7 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
         return ARRAY_SIZE( nt_prefixW );
 
     if (name->Length >= sizeof(dosdev_prefixW) &&
-        !memicmpW( name->Buffer, dosdev_prefixW, ARRAY_SIZE( dosdev_prefixW )))
+        !strncmpiW( name->Buffer, dosdev_prefixW, ARRAY_SIZE( dosdev_prefixW )))
         return ARRAY_SIZE( dosdev_prefixW );
 
     return 0;
