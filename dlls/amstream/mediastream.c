@@ -591,7 +591,6 @@ static const BaseInputPinFuncTable DirectDrawMediaStreamInputPin_FuncTable =
 {
     {
         DirectDrawMediaStreamInputPin_CheckMediaType,
-        NULL,
         DirectDrawMediaStreamInputPin_GetMediaTypeVersion,
         DirectDrawMediaStreamInputPin_GetMediaType,
     },
@@ -1135,7 +1134,6 @@ static const BaseInputPinFuncTable AudioMediaStreamInputPin_FuncTable =
 {
     {
         AudioMediaStreamInputPin_CheckMediaType,
-        NULL,
         AudioMediaStreamInputPin_GetMediaTypeVersion,
         AudioMediaStreamInputPin_GetMediaType,
     },

@@ -44,15 +44,12 @@ typedef struct BasePin
 } BasePin;
 
 typedef HRESULT (WINAPI *BasePin_CheckMediaType)(BasePin *This, const AM_MEDIA_TYPE *pmt);
-typedef HRESULT (WINAPI *BasePin_AttemptConnection)(BasePin *This, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt);
 typedef LONG (WINAPI *BasePin_GetMediaTypeVersion)(BasePin *This);
 typedef HRESULT (WINAPI *BasePin_GetMediaType)(BasePin *This, int iPosition, AM_MEDIA_TYPE *amt);
 
 typedef struct BasePinFuncTable {
-	/* Required for Input Pins*/
+	/* Required for QueryAccept(), Connect(), ReceiveConnection(). */
 	BasePin_CheckMediaType pfnCheckMediaType;
-	/* Required for Output Pins*/
-	BasePin_AttemptConnection pfnAttemptConnection;
 	/* Required for BasePinImpl_EnumMediaTypes */
 	BasePin_GetMediaTypeVersion pfnGetMediaTypeVersion;
 	BasePin_GetMediaType pfnGetMediaType;
@@ -68,6 +65,7 @@ typedef struct BaseOutputPin
 	const struct BaseOutputPinFuncTable* pFuncsTable;
 } BaseOutputPin;
 
+typedef HRESULT (WINAPI *BaseOutputPin_AttemptConnection)(BaseOutputPin *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
 typedef HRESULT (WINAPI *BaseOutputPin_DecideBufferSize)(BaseOutputPin *This, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
 typedef HRESULT (WINAPI *BaseOutputPin_DecideAllocator)(BaseOutputPin *This, IMemInputPin *pPin, IMemAllocator **pAlloc);
 typedef HRESULT (WINAPI *BaseOutputPin_BreakConnect)(BaseOutputPin * This);
@@ -75,6 +73,8 @@ typedef HRESULT (WINAPI *BaseOutputPin_BreakConnect)(BaseOutputPin * This);
 typedef struct BaseOutputPinFuncTable {
 	BasePinFuncTable base;
 
+        /* Required for Connect(). */
+        BaseOutputPin_AttemptConnection pfnAttemptConnection;
 	/* Required for BaseOutputPinImpl_DecideAllocator */
 	BaseOutputPin_DecideBufferSize pfnDecideBufferSize;
 	/* Required for BaseOutputPinImpl_AttemptConnection */
@@ -135,7 +135,7 @@ HRESULT WINAPI BaseOutputPinImpl_Active(BaseOutputPin * This);
 HRESULT WINAPI BaseOutputPinImpl_Inactive(BaseOutputPin * This);
 HRESULT WINAPI BaseOutputPinImpl_InitAllocator(BaseOutputPin *This, IMemAllocator **pMemAlloc);
 HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(BaseOutputPin *This, IMemInputPin *pPin, IMemAllocator **pAlloc);
-HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BasePin *This, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
+HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BaseOutputPin *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
 
 HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, const BaseOutputPinFuncTable* pBaseOutputFuncsTable, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 HRESULT WINAPI BaseOutputPin_Destroy(BaseOutputPin *This);

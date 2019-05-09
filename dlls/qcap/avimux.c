@@ -1229,7 +1229,7 @@ static HRESULT WINAPI AviMuxOut_CheckMediaType(BasePin *base, const AM_MEDIA_TYP
     return S_OK;
 }
 
-static HRESULT WINAPI AviMuxOut_AttemptConnection(BasePin *base,
+static HRESULT WINAPI AviMuxOut_AttemptConnection(BaseOutputPin *base,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
     PIN_DIRECTION dir;
@@ -1306,10 +1306,10 @@ static HRESULT WINAPI AviMuxOut_BreakConnect(BaseOutputPin *base)
 static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
     {
         AviMuxOut_CheckMediaType,
-        AviMuxOut_AttemptConnection,
         AviMuxOut_GetMediaTypeVersion,
         AviMuxOut_GetMediaType
     },
+    AviMuxOut_AttemptConnection,
     NULL,
     AviMuxOut_DecideAllocator,
     AviMuxOut_BreakConnect
@@ -1701,7 +1701,6 @@ static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample
 static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable = {
     {
         AviMuxIn_CheckMediaType,
-        NULL,
         AviMuxIn_GetMediaTypeVersion,
         AviMuxIn_GetMediaType
     },

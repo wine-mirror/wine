@@ -574,7 +574,6 @@ static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *
 static const BaseInputPinFuncTable AVICompressorBaseInputPinVtbl = {
     {
         AVICompressorIn_CheckMediaType,
-        NULL,
         AVICompressorIn_GetMediaTypeVersion,
         AVICompressorIn_GetMediaType
     },
@@ -679,10 +678,10 @@ static HRESULT WINAPI AVICompressorOut_BreakConnect(BaseOutputPin *base)
 static const BaseOutputPinFuncTable AVICompressorBaseOutputPinVtbl = {
     {
         NULL,
-        BaseOutputPinImpl_AttemptConnection,
         AVICompressorOut_GetMediaTypeVersion,
         AVICompressorOut_GetMediaType
     },
+    BaseOutputPinImpl_AttemptConnection,
     AVICompressorOut_DecideBufferSize,
     AVICompressorOut_DecideAllocator,
     AVICompressorOut_BreakConnect

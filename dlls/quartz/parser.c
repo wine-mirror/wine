@@ -424,10 +424,10 @@ HRESULT WINAPI Parser_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
         Parser_OutputPin_CheckMediaType,
-        BaseOutputPinImpl_AttemptConnection,
         BasePinImpl_GetMediaTypeVersion,
         Parser_OutputPin_GetMediaType
     },
+    BaseOutputPinImpl_AttemptConnection,
     Parser_OutputPin_DecideBufferSize,
     Parser_OutputPin_DecideAllocator,
     Parser_OutputPin_BreakConnect

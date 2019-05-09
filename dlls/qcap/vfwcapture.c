@@ -707,10 +707,10 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocato
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
         VfwPin_CheckMediaType,
-        BaseOutputPinImpl_AttemptConnection,
         VfwPin_GetMediaTypeVersion,
         VfwPin_GetMediaType
     },
+    BaseOutputPinImpl_AttemptConnection,
     VfwPin_DecideBufferSize,
     BaseOutputPinImpl_DecideAllocator,
     BaseOutputPinImpl_BreakConnect

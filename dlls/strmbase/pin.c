@@ -414,7 +414,7 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
         /* if we have been a specific type to connect with, then we can either connect
          * with that or fail. We cannot choose different AM_MEDIA_TYPE */
         if (pmt && !IsEqualGUID(&pmt->majortype, &GUID_NULL) && !IsEqualGUID(&pmt->subtype, &GUID_NULL))
-            hr = This->pin.pFuncsTable->pfnAttemptConnection(&This->pin, pReceivePin, pmt);
+            hr = This->pFuncsTable->pfnAttemptConnection(This, pReceivePin, pmt);
         else
         {
             /* negotiate media type */
@@ -434,8 +434,8 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
                     if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype)
                         && !IsEqualGUID(&GUID_NULL, &pmtCandidate->formattype))
                         assert(pmtCandidate->pbFormat);
-                    if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) &&
-                        (This->pin.pFuncsTable->pfnAttemptConnection(&This->pin, pReceivePin, pmtCandidate) == S_OK))
+                    if ((!pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE))
+                            && This->pFuncsTable->pfnAttemptConnection(This, pReceivePin, pmtCandidate) == S_OK)
                     {
                         hr = S_OK;
                         DeleteMediaType(pmtCandidate);
@@ -458,8 +458,8 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
                 {
                     assert(pmtCandidate);
                     dump_AM_MEDIA_TYPE(pmtCandidate);
-                    if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) &&
-                        (This->pin.pFuncsTable->pfnAttemptConnection(&This->pin, pReceivePin, pmtCandidate) == S_OK))
+                    if ((!pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE))
+                            && This->pFuncsTable->pfnAttemptConnection(This, pReceivePin, pmtCandidate) == S_OK)
                     {
                         hr = S_OK;
                         DeleteMediaType(pmtCandidate);
@@ -699,9 +699,8 @@ HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(BaseOutputPin *This, IMemInputP
 
 /* Function called as a helper to IPin_Connect */
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
-HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BasePin* iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BaseOutputPin *This, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
-    BaseOutputPin *This = impl_BaseOutputPin_from_BasePin(iface);
     HRESULT hr;
     IMemAllocator * pMemAlloc = NULL;
 
@@ -715,7 +714,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BasePin* iface, IPin * pRecei
     IPin_AddRef(pReceivePin);
     CopyMediaType(&This->pin.mtCurrent, pmt);
 
-    hr = IPin_ReceiveConnection(pReceivePin, &iface->IPin_iface, pmt);
+    hr = IPin_ReceiveConnection(pReceivePin, &This->pin.IPin_iface, pmt);
 
     /* get the IMemInputPin interface we will use to deliver samples to the
      * connected pin */
@@ -792,7 +791,7 @@ HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outp
     }
 
     assert(outputpin_size >= sizeof(BaseOutputPin));
-    assert(vtbl->base.pfnAttemptConnection);
+    assert(vtbl->pfnAttemptConnection);
 
     pPinImpl = CoTaskMemAlloc(outputpin_size);
 

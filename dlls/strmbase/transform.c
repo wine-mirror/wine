@@ -152,7 +152,6 @@ static const BaseFilterFuncTable tfBaseFuncTable = {
 static const BaseInputPinFuncTable tf_input_BaseInputFuncTable = {
     {
         TransformFilter_Input_CheckMediaType,
-        NULL,
         BasePinImpl_GetMediaTypeVersion,
         BasePinImpl_GetMediaType
     },
@@ -162,10 +161,10 @@ static const BaseInputPinFuncTable tf_input_BaseInputFuncTable = {
 static const BaseOutputPinFuncTable tf_output_BaseOutputFuncTable = {
     {
         TransformFilter_Output_CheckMediaType,
-        BaseOutputPinImpl_AttemptConnection,
         BasePinImpl_GetMediaTypeVersion,
         TransformFilter_Output_GetMediaType
     },
+    BaseOutputPinImpl_AttemptConnection,
     TransformFilter_Output_DecideBufferSize,
     BaseOutputPinImpl_DecideAllocator,
     BaseOutputPinImpl_BreakConnect

@@ -1872,10 +1872,10 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
         GSTOutPin_CheckMediaType,
-        BaseOutputPinImpl_AttemptConnection,
         BasePinImpl_GetMediaTypeVersion,
         GSTOutPin_GetMediaType
     },
+    BaseOutputPinImpl_AttemptConnection,
     GSTOutPin_DecideBufferSize,
     GSTOutPin_DecideAllocator,
     GSTOutPin_BreakConnect
