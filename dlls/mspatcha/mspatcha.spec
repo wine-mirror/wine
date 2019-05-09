@@ -5,11 +5,11 @@
 @ stdcall ApplyPatchToFileExA(str str str long ptr ptr)
 @ stdcall ApplyPatchToFileExW(wstr wstr wstr long ptr ptr)
 @ stdcall ApplyPatchToFileW(wstr wstr wstr long)
-@ stub GetFilePatchSignatureA
-@ stub GetFilePatchSignatureByBuffer
-@ stub GetFilePatchSignatureByHandle
-@ stub GetFilePatchSignatureW
-@ stub NormalizeFileForPatchSignature
+@ stdcall GetFilePatchSignatureA(str long ptr long ptr long ptr long ptr)
+@ stdcall GetFilePatchSignatureByBuffer(ptr long long ptr long ptr long ptr long ptr)
+@ stdcall GetFilePatchSignatureByHandle(ptr long ptr long ptr long ptr long ptr)
+@ stdcall GetFilePatchSignatureW(wstr long ptr long ptr long ptr long ptr)
+@ stdcall NormalizeFileForPatchSignature(ptr long long ptr long long long ptr long ptr)
 @ stdcall TestApplyPatchToFileA(str str long)
 @ stdcall TestApplyPatchToFileByBuffers(ptr long ptr long ptr long)
 @ stdcall TestApplyPatchToFileByHandles(ptr ptr long)
