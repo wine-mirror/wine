@@ -3161,7 +3161,7 @@ static int load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMa
  *  cbBuffer   [I] Size of the destination buffer in bytes.
  *  pcbData    [O] Number of bytes written to pszBuffer (optional, may be NULL).
  *  dwFlags    [I] None supported yet.
- *  pszBaseDir [I] Not supported yet.
+ *  pszBaseDir [I] Base directory of loading path. If NULL, use the current directory.
  *
  * RETURNS
  *  Success: ERROR_SUCCESS,
@@ -3177,7 +3177,7 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     DWORD dwValueType, cbData;
     LPWSTR pwszTempBuffer = NULL, pwszExpandedBuffer = NULL;
     LONG result;
-        
+
     TRACE("(hKey = %p, pwszValue = %s, pwszBuffer = %p, cbBuffer = %d, pcbData = %p, "
           "dwFlags = %d, pwszBaseDir = %s)\n", hKey, debugstr_w(pwszValue), pwszBuffer,
           cbBuffer, pcbData, dwFlags, debugstr_w(pwszBaseDir));
@@ -3185,11 +3185,6 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     /* Parameter sanity checks. */
     if (!hKey || !pwszBuffer)
         return ERROR_INVALID_PARAMETER;
-
-    if (pwszBaseDir && *pwszBaseDir) {
-        FIXME("BaseDir parameter not yet supported!\n");
-        return ERROR_INVALID_PARAMETER;
-    }
 
     /* Check for value existence and correctness of its type, allocate a buffer and load it. */
     result = RegQueryValueExW(hKey, pwszValue, NULL, &dwValueType, NULL, &cbData);
@@ -3215,7 +3210,7 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
             result = ERROR_NOT_ENOUGH_MEMORY;
             goto cleanup;
         }
-        ExpandEnvironmentStringsW(pwszTempBuffer, pwszExpandedBuffer, cbData);
+        ExpandEnvironmentStringsW(pwszTempBuffer, pwszExpandedBuffer, cbData / sizeof(WCHAR));
     } else {
         pwszExpandedBuffer = heap_alloc(cbData);
         memcpy(pwszExpandedBuffer, pwszTempBuffer, cbData);
@@ -3227,8 +3222,10 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     if (*pwszExpandedBuffer != '@') { /* '@' is the prefix for resource based string entries. */
         lstrcpynW(pwszBuffer, pwszExpandedBuffer, cbBuffer / sizeof(WCHAR));
     } else {
-        WCHAR *pComma = strrchrW(pwszExpandedBuffer, ',');
+        WCHAR *pComma = strrchrW(pwszExpandedBuffer, ','), *pNewBuffer;
+        const WCHAR backslashW[] = {'\\',0};
         UINT uiStringId;
+        DWORD baseDirLen;
         HMODULE hModule;
 
         /* Format of the expanded value is 'path_to_dll,-resId' */
@@ -3236,17 +3233,41 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
             result = ERROR_BADKEY;
             goto cleanup;
         }
- 
+
         uiStringId = atoiW(pComma+2);
         *pComma = '\0';
 
-        hModule = LoadLibraryExW(pwszExpandedBuffer + 1, NULL,
+        /* Build a resource dll path. */
+        baseDirLen = pwszBaseDir ? strlenW(pwszBaseDir) : 0;
+        cbData = (baseDirLen + 1 + strlenW(pwszExpandedBuffer + 1) + 1) * sizeof(WCHAR);
+        pNewBuffer = heap_realloc(pwszTempBuffer, cbData);
+        if (!pNewBuffer) {
+            result = ERROR_NOT_ENOUGH_MEMORY;
+            goto cleanup;
+        }
+        pwszTempBuffer = pNewBuffer;
+        pwszTempBuffer[0] = '\0';
+        if (baseDirLen) {
+            strcpyW(pwszTempBuffer, pwszBaseDir);
+            if (pwszBaseDir[baseDirLen - 1] != '\\')
+                strcatW(pwszTempBuffer, backslashW);
+        }
+        strcatW(pwszTempBuffer, pwszExpandedBuffer + 1);
+
+        /* Verify the file existence. i.e. We don't rely on PATH variable */
+        if (GetFileAttributesW(pwszTempBuffer) == INVALID_FILE_ATTRIBUTES) {
+            result = ERROR_FILE_NOT_FOUND;
+            goto cleanup;
+        }
+
+        /* Load the file */
+        hModule = LoadLibraryExW(pwszTempBuffer, NULL,
                                  LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
         if (!hModule || !load_string(hModule, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR)))
             result = ERROR_BADKEY;
         FreeLibrary(hModule);
     }
- 
+
 cleanup:
     heap_free(pwszTempBuffer);
     heap_free(pwszExpandedBuffer);

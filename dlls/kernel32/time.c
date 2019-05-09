@@ -380,7 +380,7 @@ static BOOL reg_load_mui_string(HKEY hkey, LPCWSTR value, LPWSTR buffer, DWORD s
     if (hDll) {
         pRegLoadMUIStringW = (void *)GetProcAddress(hDll, "RegLoadMUIStringW");
         if (pRegLoadMUIStringW &&
-            !pRegLoadMUIStringW(hkey, value, buffer, size, NULL, 0, NULL))
+            !pRegLoadMUIStringW(hkey, value, buffer, size, NULL, 0, DIR_System))
             ret = TRUE;
         FreeLibrary(hDll);
     }

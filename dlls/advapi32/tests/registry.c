@@ -3925,7 +3925,7 @@ static void test_RegLoadMUIString(void)
     size = 0xdeadbeef;
     memset(bufW, 0xff, sizeof(bufW));
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, sysdirW);
-    todo_wine ok(ret == ERROR_SUCCESS, "got %d, expected ERROR_SUCCESS\n", ret);
+    ok(ret == ERROR_SUCCESS, "got %d, expected ERROR_SUCCESS\n", ret);
     todo_wine ok(size == text_size, "got %u, expected %u\n", size, text_size);
     size = min(size, sizeof(bufW));
     todo_wine ok(!memcmp(textW, bufW, size), "got %s, expected %s\n",
@@ -3935,7 +3935,7 @@ static void test_RegLoadMUIString(void)
     todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
 
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, NULL);
-    todo_wine ok(ret == ERROR_FILE_NOT_FOUND, "got %d, expected ERROR_FILE_NOT_FOUND\n", ret);
+    ok(ret == ERROR_FILE_NOT_FOUND, "got %d, expected ERROR_FILE_NOT_FOUND\n", ret);
 
     ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, NULL);
     todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
