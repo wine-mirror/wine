@@ -3891,7 +3891,7 @@ static void test_RegLoadMUIString(void)
 
     size = 0xdeadbeef;
     ret = pRegLoadMUIStringW(hkey, tz_valueW, NULL, 0, &size, 0, NULL);
-    todo_wine ok(ret == ERROR_MORE_DATA, "got %d, expected ERROR_MORE_DATA\n", ret);
+    ok(ret == ERROR_MORE_DATA, "got %d, expected ERROR_MORE_DATA\n", ret);
     todo_wine ok(size == text_size, "got %u, expected %u\n", size, text_size);
 
     memset(bufW, 0xff, sizeof(bufW));

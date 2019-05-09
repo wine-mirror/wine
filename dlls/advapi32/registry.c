@@ -3112,7 +3112,7 @@ LSTATUS WINAPI RegOpenUserClassesRoot(
  * avoid importing user32, which is higher level than advapi32. Helper for
  * RegLoadMUIString.
  */
-static int load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMaxChars)
+static LONG load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMaxChars)
 {
     HGLOBAL hMemory;
     HRSRC hResource;
@@ -3125,17 +3125,17 @@ static int load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMa
 
     /* Load the resource into memory and get a pointer to it. */
     hResource = FindResourceW(hModule, MAKEINTRESOURCEW(LOWORD(resId >> 4) + 1), (LPWSTR)RT_STRING);
-    if (!hResource) return 0;
+    if (!hResource) return ERROR_FILE_NOT_FOUND;
     hMemory = LoadResource(hModule, hResource);
-    if (!hMemory) return 0;
+    if (!hMemory) return ERROR_FILE_NOT_FOUND;
     pString = LockResource(hMemory);
 
     /* Strings are length-prefixed. Lowest nibble of resId is an index. */
     idxString = resId & 0xf;
     while (idxString--) pString += *pString + 1;
 
-    /* If no buffer is given, return length of the string. */
-    if (!pwszBuffer) return *pString;
+    /* If no buffer is given, return here. */
+    if (!pwszBuffer) return ERROR_MORE_DATA;
 
     /* Else copy over the string, respecting the buffer size. */
     cMaxChars = (*pString < cMaxChars) ? *pString : (cMaxChars - 1);
@@ -3144,7 +3144,7 @@ static int load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMa
         pwszBuffer[cMaxChars] = '\0';
     }
 
-    return cMaxChars;
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
@@ -3263,9 +3263,12 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
         /* Load the file */
         hModule = LoadLibraryExW(pwszTempBuffer, NULL,
                                  LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-        if (!hModule || !load_string(hModule, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR)))
+        if (hModule) {
+            result = load_string(hModule, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR));
+            FreeLibrary(hModule);
+        }
+        else
             result = ERROR_BADKEY;
-        FreeLibrary(hModule);
     }
 
 cleanup:
