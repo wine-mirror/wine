@@ -909,7 +909,6 @@ static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(BaseOutputPin *iface, 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
         FileAsyncReaderPin_CheckMediaType,
-        BasePinImpl_GetMediaTypeVersion,
         FileAsyncReaderPin_GetMediaType
     },
     FileAsyncReaderPin_AttemptConnection,

@@ -1515,7 +1515,6 @@ static const IQualityControlVtbl QTOutPin_QualityControl_Vtbl = {
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
         QTOutPin_CheckMediaType,
-        BasePinImpl_GetMediaTypeVersion,
         QTOutPin_GetMediaType
     },
     BaseOutputPinImpl_AttemptConnection,

@@ -1245,11 +1245,6 @@ static HRESULT WINAPI AviMuxOut_AttemptConnection(BaseOutputPin *base,
     return BaseOutputPinImpl_AttemptConnection(base, pReceivePin, pmt);
 }
 
-static LONG WINAPI AviMuxOut_GetMediaTypeVersion(BasePin *base)
-{
-    return 0;
-}
-
 static HRESULT WINAPI AviMuxOut_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
@@ -1306,7 +1301,6 @@ static HRESULT WINAPI AviMuxOut_BreakConnect(BaseOutputPin *base)
 static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
     {
         AviMuxOut_CheckMediaType,
-        AviMuxOut_GetMediaTypeVersion,
         AviMuxOut_GetMediaType
     },
     AviMuxOut_AttemptConnection,
@@ -1585,11 +1579,6 @@ static HRESULT WINAPI AviMuxIn_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE
     return S_FALSE;
 }
 
-static LONG WINAPI AviMuxIn_GetMediaTypeVersion(BasePin *base)
-{
-    return 0;
-}
-
 static HRESULT WINAPI AviMuxIn_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     return S_FALSE;
@@ -1701,7 +1690,6 @@ static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample
 static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable = {
     {
         AviMuxIn_CheckMediaType,
-        AviMuxIn_GetMediaTypeVersion,
         AviMuxIn_GetMediaType
     },
     AviMuxIn_Receive

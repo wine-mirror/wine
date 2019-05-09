@@ -473,11 +473,6 @@ static HRESULT WINAPI AVICompressorIn_CheckMediaType(BasePin *base, const AM_MED
     return res == ICERR_OK ? S_OK : S_FALSE;
 }
 
-static LONG WINAPI AVICompressorIn_GetMediaTypeVersion(BasePin *base)
-{
-    return 0;
-}
-
 static HRESULT WINAPI AVICompressorIn_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
@@ -574,7 +569,6 @@ static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *
 static const BaseInputPinFuncTable AVICompressorBaseInputPinVtbl = {
     {
         AVICompressorIn_CheckMediaType,
-        AVICompressorIn_GetMediaTypeVersion,
         AVICompressorIn_GetMediaType
     },
     AVICompressorIn_Receive
@@ -617,12 +611,6 @@ static const IPinVtbl AVICompressorOutputPinVtbl = {
     BaseOutputPinImpl_EndFlush,
     BasePinImpl_NewSegment
 };
-
-static LONG WINAPI AVICompressorOut_GetMediaTypeVersion(BasePin *base)
-{
-    FIXME("(%p)\n", base);
-    return 0;
-}
 
 static HRESULT WINAPI AVICompressorOut_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
@@ -678,7 +666,6 @@ static HRESULT WINAPI AVICompressorOut_BreakConnect(BaseOutputPin *base)
 static const BaseOutputPinFuncTable AVICompressorBaseOutputPinVtbl = {
     {
         NULL,
-        AVICompressorOut_GetMediaTypeVersion,
         AVICompressorOut_GetMediaType
     },
     BaseOutputPinImpl_AttemptConnection,

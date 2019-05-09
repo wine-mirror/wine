@@ -219,7 +219,6 @@ static const BaseFilterFuncTable RendererBaseFilterFuncTable = {
 static const BaseInputPinFuncTable input_BaseInputFuncTable = {
     {
         BaseRenderer_Input_CheckMediaType,
-        BasePinImpl_GetMediaTypeVersion,
         BasePinImpl_GetMediaType
     },
     BaseRenderer_Receive

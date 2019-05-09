@@ -683,11 +683,6 @@ static HRESULT WINAPI VfwPin_GetMediaType(BasePin *pin, int iPosition, AM_MEDIA_
     return hr;
 }
 
-static LONG WINAPI VfwPin_GetMediaTypeVersion(BasePin *iface)
-{
-    return 1;
-}
-
 static HRESULT WINAPI VfwPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     ALLOCATOR_PROPERTIES actual;
@@ -707,7 +702,6 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocato
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
         VfwPin_CheckMediaType,
-        VfwPin_GetMediaTypeVersion,
         VfwPin_GetMediaType
     },
     BaseOutputPinImpl_AttemptConnection,

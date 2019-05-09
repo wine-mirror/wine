@@ -306,15 +306,14 @@ HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
     return (This->pFuncsTable->pfnCheckMediaType(This, pmt) == S_OK ? S_OK : S_FALSE);
 }
 
-HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
+HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)
 {
-    BasePin *This = impl_from_IPin(iface);
+    BasePin *pin = impl_from_IPin(iface);
 
-    TRACE("(%p)->(%p)\n", This, ppEnum);
+    TRACE("iface %p, enum_media_types %p.\n", iface, enum_media_types);
 
-    /* override this method to allow enumeration of your types */
-
-    return EnumMediaTypes_Construct(This, This->pFuncsTable->pfnGetMediaType, This->pFuncsTable->pfnGetMediaTypeVersion , ppEnum);
+    return EnumMediaTypes_Construct(pin, pin->pFuncsTable->pfnGetMediaType,
+            BasePinImpl_GetMediaTypeVersion, enum_media_types);
 }
 
 HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)

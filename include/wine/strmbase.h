@@ -51,7 +51,6 @@ typedef struct BasePinFuncTable {
 	/* Required for QueryAccept(), Connect(), ReceiveConnection(). */
 	BasePin_CheckMediaType pfnCheckMediaType;
 	/* Required for BasePinImpl_EnumMediaTypes */
-	BasePin_GetMediaTypeVersion pfnGetMediaTypeVersion;
 	BasePin_GetMediaType pfnGetMediaType;
 } BasePinFuncTable;
 
