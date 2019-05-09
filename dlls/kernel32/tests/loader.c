@@ -627,13 +627,13 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
         {
             if (!has_code && is_win64)
             {
-                ok( mod != NULL || want_32bit || broken(il_only), /* <= win7 */
-                    "%u: loading failed err %u\n", line, GetLastError() );
+                ok_(__FILE__,line)( mod != NULL || want_32bit || broken(il_only), /* <= win7 */
+                    "loading failed err %u\n", GetLastError() );
             }
             else
             {
-                ok( !mod, "%u: loading succeeded\n", line );
-                ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "%u: wrong error %u\n", line, GetLastError() );
+                ok_(__FILE__, line)( !mod, "loading succeeded\n" );
+                ok_(__FILE__, line)( GetLastError() == ERROR_BAD_EXE_FORMAT, "wrong error %u\n", GetLastError() );
             }
         }
         else
