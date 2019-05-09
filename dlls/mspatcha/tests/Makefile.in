@@ -1,0 +1,8 @@
+TESTDLL   = mspatcha.dll
+IMPORTS   = mspatcha
+
+C_SRCS = \
+	apply_patch.c
+
+RC_SRCS = \
+	mspatcha.rc

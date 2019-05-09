@@ -20532,6 +20532,7 @@ wine_fn_config_makefile dlls/msisys.ocx enable_msisys_ocx
 wine_fn_config_makefile dlls/msls31 enable_msls31
 wine_fn_config_makefile dlls/msnet32 enable_msnet32
 wine_fn_config_makefile dlls/mspatcha enable_mspatcha
+wine_fn_config_makefile dlls/mspatcha/tests enable_tests
 wine_fn_config_makefile dlls/msports enable_msports
 wine_fn_config_makefile dlls/msrle32 enable_msrle32
 wine_fn_config_makefile dlls/msrle32/tests enable_tests
