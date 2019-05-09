@@ -3892,7 +3892,7 @@ static void test_RegLoadMUIString(void)
     size = 0xdeadbeef;
     ret = pRegLoadMUIStringW(hkey, tz_valueW, NULL, 0, &size, 0, NULL);
     ok(ret == ERROR_MORE_DATA, "got %d, expected ERROR_MORE_DATA\n", ret);
-    todo_wine ok(size == text_size, "got %u, expected %u\n", size, text_size);
+    ok(size == text_size, "got %u, expected %u\n", size, text_size);
 
     memset(bufW, 0xff, sizeof(bufW));
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, sizeof(WCHAR)+1, &size, 0, NULL);
@@ -3903,7 +3903,7 @@ static void test_RegLoadMUIString(void)
     memset(bufW, 0xff, sizeof(bufW));
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, sizeof(WCHAR)*2, &size, 0, NULL);
     todo_wine ok(ret == ERROR_MORE_DATA, "got %d, expected ERROR_MORE_DATA\n", ret);
-    todo_wine ok(size == text_size || broken(size == text_size + sizeof(WCHAR) /* vista */),
+    ok(size == text_size || broken(size == text_size + sizeof(WCHAR) /* vista */),
        "got %u, expected %u\n", size, text_size);
     todo_wine ok(bufW[0] == 0xffff, "got 0x%04x, expected 0xffff\n", bufW[0]);
 
@@ -3911,9 +3911,8 @@ static void test_RegLoadMUIString(void)
     memset(bufW, 0xff, sizeof(bufW));
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, NULL);
     ok(ret == ERROR_SUCCESS, "got %d, expected ERROR_SUCCESS\n", ret);
-    todo_wine ok(size == text_size, "got %u, expected %u\n", size, text_size);
-    size = min(size, sizeof(bufW));
-    todo_wine ok(!memcmp(textW, bufW, size), "got %s, expected %s\n",
+    ok(size == text_size, "got %u, expected %u\n", size, text_size);
+    ok(!memcmp(textW, bufW, size), "got %s, expected %s\n",
        wine_dbgstr_wn(bufW, size / sizeof(WCHAR)), wine_dbgstr_wn(textW, text_size / sizeof(WCHAR)));
 
     ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, NULL);
@@ -3926,9 +3925,8 @@ static void test_RegLoadMUIString(void)
     memset(bufW, 0xff, sizeof(bufW));
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, sysdirW);
     ok(ret == ERROR_SUCCESS, "got %d, expected ERROR_SUCCESS\n", ret);
-    todo_wine ok(size == text_size, "got %u, expected %u\n", size, text_size);
-    size = min(size, sizeof(bufW));
-    todo_wine ok(!memcmp(textW, bufW, size), "got %s, expected %s\n",
+    ok(size == text_size, "got %u, expected %u\n", size, text_size);
+    ok(!memcmp(textW, bufW, size), "got %s, expected %s\n",
        wine_dbgstr_wn(bufW, size / sizeof(WCHAR)), wine_dbgstr_wn(textW, text_size / sizeof(WCHAR)));
 
     ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, sysdir);

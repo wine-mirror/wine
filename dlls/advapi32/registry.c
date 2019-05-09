@@ -3112,7 +3112,7 @@ LSTATUS WINAPI RegOpenUserClassesRoot(
  * avoid importing user32, which is higher level than advapi32. Helper for
  * RegLoadMUIString.
  */
-static LONG load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMaxChars)
+static LONG load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMaxChars, UINT *reqChars)
 {
     HGLOBAL hMemory;
     HRSRC hResource;
@@ -3133,6 +3133,7 @@ static LONG load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cM
     /* Strings are length-prefixed. Lowest nibble of resId is an index. */
     idxString = resId & 0xf;
     while (idxString--) pString += *pString + 1;
+    *reqChars = *pString + 1;
 
     /* If no buffer is given, return here. */
     if (!pwszBuffer) return ERROR_MORE_DATA;
@@ -3221,6 +3222,8 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     result = ERROR_SUCCESS;
     if (*pwszExpandedBuffer != '@') { /* '@' is the prefix for resource based string entries. */
         lstrcpynW(pwszBuffer, pwszExpandedBuffer, cbBuffer / sizeof(WCHAR));
+        if (pcbData)
+            *pcbData = (strlenW(pwszExpandedBuffer) + 1) * sizeof(WCHAR);
     } else {
         WCHAR *pComma = strrchrW(pwszExpandedBuffer, ','), *pNewBuffer;
         const WCHAR backslashW[] = {'\\',0};
@@ -3264,7 +3267,10 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
         hModule = LoadLibraryExW(pwszTempBuffer, NULL,
                                  LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
         if (hModule) {
-            result = load_string(hModule, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR));
+            DWORD reqChars;
+            result = load_string(hModule, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR), &reqChars);
+            if (pcbData && (result == ERROR_SUCCESS || result == ERROR_MORE_DATA))
+                *pcbData = reqChars * sizeof(WCHAR);
             FreeLibrary(hModule);
         }
         else
