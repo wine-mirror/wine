@@ -336,15 +336,17 @@ BOOL create_temp_file(const BYTE *buf, size_t size, const char *temppath, char *
 
 void delete_test_files(void)
 {
-    for (size_t i = 0; test_files[i].buf != NULL; ++i)
+    size_t i;
+    for (i = 0; test_files[i].buf != NULL; ++i)
         DeleteFileA(test_files[i].name);
 }
 
 BOOL setup_test_files(void)
 {
     char temppath[MAX_PATH];
+    size_t i;
     GetTempPathA(MAX_PATH, temppath);
-    for (size_t i = 0; test_files[i].buf != NULL; ++i) {
+    for (i = 0; test_files[i].buf != NULL; ++i) {
         if (!create_temp_file(test_files[i].buf, test_files[i].size, temppath, test_files[i].name))
         {
             skip("Failed to create/write temporary test files\n");
