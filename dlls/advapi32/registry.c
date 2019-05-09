@@ -3183,7 +3183,7 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
           cbBuffer, pcbData, dwFlags, debugstr_w(pwszBaseDir));
 
     /* Parameter sanity checks. */
-    if (!hKey || !pwszBuffer)
+    if (!hKey || (!pwszBuffer && cbBuffer) || (cbBuffer % sizeof(WCHAR)))
         return ERROR_INVALID_PARAMETER;
 
     /* Check for value existence and correctness of its type, allocate a buffer and load it. */

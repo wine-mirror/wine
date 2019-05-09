@@ -3896,8 +3896,8 @@ static void test_RegLoadMUIString(void)
 
     memset(bufW, 0xff, sizeof(bufW));
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, sizeof(WCHAR)+1, &size, 0, NULL);
-    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "got %d, expected ERROR_INVALID_PARAMETER\n", ret);
-    todo_wine ok(bufW[0] == 0xffff, "got 0x%04x, expected 0xffff\n", bufW[0]);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d, expected ERROR_INVALID_PARAMETER\n", ret);
+    ok(bufW[0] == 0xffff, "got 0x%04x, expected 0xffff\n", bufW[0]);
 
     size = 0xdeadbeef;
     memset(bufW, 0xff, sizeof(bufW));
