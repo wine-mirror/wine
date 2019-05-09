@@ -319,7 +319,7 @@ static BOOL CALLBACK progress_cancel(void *context, ULONG current, ULONG max)
     return FALSE;
 }
 
-BOOL create_temp_file(const BYTE *buf, size_t size, const char *temppath, char *tempname)
+static BOOL create_temp_file(const BYTE *buf, size_t size, const char *temppath, char *tempname)
 {
     HANDLE hndl;
     DWORD written;
@@ -334,14 +334,14 @@ BOOL create_temp_file(const BYTE *buf, size_t size, const char *temppath, char *
     return b && written == size;
 }
 
-void delete_test_files(void)
+static void delete_test_files(void)
 {
     size_t i;
     for (i = 0; test_files[i].buf != NULL; ++i)
         DeleteFileA(test_files[i].name);
 }
 
-BOOL setup_test_files(void)
+static BOOL setup_test_files(void)
 {
     char temppath[MAX_PATH];
     size_t i;
