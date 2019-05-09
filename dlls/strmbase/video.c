@@ -18,14 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-
-#include <assert.h>
-#include "dshow.h"
-#include "uuids.h"
-#include "vfwmsgs.h"
-#include "wine/debug.h"
-#include "wine/strmbase.h"
+#include "strmbase_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 

@@ -204,8 +204,6 @@ HRESULT WINAPI BaseFilter_Destroy(BaseFilter * This);
 /* Enums */
 HRESULT WINAPI EnumMediaTypes_Construct(BasePin *iface, BasePin_GetMediaType enumFunc, BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes ** ppEnum);
 
-HRESULT WINAPI EnumPins_Construct(BaseFilter *base,  BaseFilter_GetPin receive_pin, BaseFilter_GetPinCount receive_pincount, BaseFilter_GetPinVersion receive_version, IEnumPins ** ppEnum);
-
 /* Transform Filter */
 typedef struct TransformFilter
 {
@@ -302,11 +300,6 @@ HRESULT WINAPI SourceSeekingImpl_GetAvailable(IMediaSeeking * iface, LONGLONG * 
 HRESULT WINAPI SourceSeekingImpl_SetRate(IMediaSeeking * iface, double dRate);
 HRESULT WINAPI SourceSeekingImpl_GetRate(IMediaSeeking * iface, double * dRate);
 HRESULT WINAPI SourceSeekingImpl_GetPreroll(IMediaSeeking * iface, LONGLONG * pPreroll);
-
-/* PosPassThru */
-HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start);
-HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface);
-HRESULT WINAPI RendererPosPassThru_EOS(IUnknown *iface);
 
 HRESULT WINAPI CreatePosPassThru(IUnknown* pUnkOuter, BOOL bRenderer, IPin *pPin, IUnknown **ppPassThru);
 HRESULT WINAPI PosPassThru_Construct(IUnknown* pUnkOuter, LPVOID *ppPassThru);
@@ -418,12 +411,6 @@ BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Height, LONG Width);
 typedef struct{
     ITypeInfo *pTypeInfo;
 } BaseDispatch;
-
-HRESULT WINAPI BaseDispatch_Init(BaseDispatch *This, REFIID riid);
-HRESULT WINAPI BaseDispatch_Destroy(BaseDispatch *This);
-HRESULT WINAPI BaseDispatchImpl_GetIDsOfNames(BaseDispatch *This, REFIID riid, OLECHAR **rgszNames, UINT cNames, LCID lcid, DISPID *rgdispid);
-HRESULT WINAPI BaseDispatchImpl_GetTypeInfo(BaseDispatch *This, REFIID riid, UINT itinfo, LCID lcid, ITypeInfo **pptinfo);
-HRESULT WINAPI BaseDispatchImpl_GetTypeInfoCount(BaseDispatch *This, UINT *pctinfo);
 
 #ifdef __IVideoWindow_FWD_DEFINED__
 typedef struct tagBaseControlWindow

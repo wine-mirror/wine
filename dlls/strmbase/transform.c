@@ -19,21 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
-#include "dshow.h"
-#include "amvideo.h"
-#include "strmif.h"
-#include "vfw.h"
-
-#include <assert.h>
-
-#include "wine/debug.h"
-#include "wine/strmbase.h"
 #include "strmbase_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);

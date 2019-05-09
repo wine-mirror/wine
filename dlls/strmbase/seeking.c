@@ -20,15 +20,7 @@
  */
 /* FIXME: critical sections */
 
-#define COBJMACROS
-
-#include "dshow.h"
-#include "wine/strmbase.h"
-
-#include "uuids.h"
-#include "wine/debug.h"
-
-#include <assert.h>
+#include "strmbase_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
