@@ -1226,7 +1226,7 @@ void WINAPI IoFreeWorkItem( PIO_WORKITEM work_item )
 }
 
 
-void WINAPI run_work_item_worker(TP_CALLBACK_INSTANCE *instance, void *context)
+static void WINAPI run_work_item_worker(TP_CALLBACK_INSTANCE *instance, void *context)
 {
     PIO_WORKITEM work_item = context;
     DEVICE_OBJECT *device = work_item->device;
