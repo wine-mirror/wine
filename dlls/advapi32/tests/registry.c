@@ -51,6 +51,8 @@ static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(UNICODE_STRING*);
 static NTSTATUS (WINAPI * pRtlFreeUnicodeString)(PUNICODE_STRING);
 static LONG (WINAPI *pRegDeleteKeyValueA)(HKEY,LPCSTR,LPCSTR);
 static LONG (WINAPI *pRegSetKeyValueW)(HKEY,LPCWSTR,LPCWSTR,DWORD,const void*,DWORD);
+static LONG (WINAPI *pRegLoadMUIStringA)(HKEY,LPCSTR,LPSTR,DWORD,LPDWORD,DWORD,LPCSTR);
+static LONG (WINAPI *pRegLoadMUIStringW)(HKEY,LPCWSTR,LPWSTR,DWORD,LPDWORD,DWORD,LPCWSTR);
 
 static BOOL limited_user;
 
@@ -142,6 +144,8 @@ static void InitFunctionPtrs(void)
     ADVAPI32_GET_PROC(RegDeleteKeyExA);
     ADVAPI32_GET_PROC(RegDeleteKeyValueA);
     ADVAPI32_GET_PROC(RegSetKeyValueW);
+    ADVAPI32_GET_PROC(RegLoadMUIStringA);
+    ADVAPI32_GET_PROC(RegLoadMUIStringW);
 
     pIsWow64Process = (void *)GetProcAddress( hkernel32, "IsWow64Process" );
     pRtlFormatCurrentUserKeyPath = (void *)GetProcAddress( hntdll, "RtlFormatCurrentUserKeyPath" );
@@ -3830,6 +3834,116 @@ todo_wine
     ok(dwret == ERROR_SUCCESS, "got %u\n", dwret);
 }
 
+static void test_RegLoadMUIString(void)
+{
+    HMODULE hUser32, hResDll;
+    int (WINAPI *pLoadStringW)(HMODULE, UINT, WCHAR *, int);
+    LONG ret;
+    HKEY hkey;
+    DWORD type, size, text_size;
+    UINT i;
+    char buf[64], *p, sysdir[MAX_PATH];
+    WCHAR textW[64], bufW[64];
+    WCHAR curdirW[MAX_PATH], sysdirW[MAX_PATH];
+    const static char tz_value[] = "MUI_Std";
+    const static WCHAR tz_valueW[] = {'M','U','I','_','S','t','d', 0};
+
+    if (!pRegLoadMUIStringA || !pRegLoadMUIStringW)
+    {
+        win_skip("RegLoadMUIString is not available\n");
+        return;
+    }
+
+    hUser32 = LoadLibraryA("user32.dll");
+    ok(hUser32 != NULL, "cannot load user32.dll\n");
+    pLoadStringW = (void *)GetProcAddress(hUser32, "LoadStringW");
+    ok(pLoadStringW != NULL, "failed to get LoadStringW address\n");
+
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+                        "Software\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones\\UTC", 0,
+                        KEY_READ, &hkey);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+    size = ARRAY_SIZE(buf);
+    ret = RegQueryValueExA(hkey, tz_value, NULL, &type, (BYTE *)buf, &size);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    ok(buf[0] == '@', "got %s\n", buf);
+
+    p = strrchr(buf, ',');
+    *p = '\0';
+    i = atoi(p + 2); /* skip ',-' */
+    hResDll = LoadLibraryExA(&buf[1], NULL, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+    memset(textW, 0xaa, sizeof(textW));
+    ret = pLoadStringW(hResDll, i, textW, ARRAY_SIZE(textW));
+    ok(ret > 0, "failed to load string resource\n");
+    text_size = (ret + 1) * sizeof(WCHAR);
+    FreeLibrary(hResDll);
+    FreeLibrary(hUser32);
+
+    ret = GetSystemDirectoryW(sysdirW, ARRAY_SIZE(sysdirW));
+    ok(ret > 0, "GetSystemDirectoryW failed\n");
+    ret = GetSystemDirectoryA(sysdir, ARRAY_SIZE(sysdir));
+    ok(ret > 0, "GetSystemDirectoryA failed\n");
+
+    /* change the current direcoty to system32 */
+    GetCurrentDirectoryW(ARRAY_SIZE(curdirW), curdirW);
+    SetCurrentDirectoryW(sysdirW);
+
+    size = 0xdeadbeef;
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, NULL, 0, &size, 0, NULL);
+    todo_wine ok(ret == ERROR_MORE_DATA, "got %d, expected ERROR_MORE_DATA\n", ret);
+    todo_wine ok(size == text_size, "got %u, expected %u\n", size, text_size);
+
+    memset(bufW, 0xff, sizeof(bufW));
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, sizeof(WCHAR)+1, &size, 0, NULL);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "got %d, expected ERROR_INVALID_PARAMETER\n", ret);
+    todo_wine ok(bufW[0] == 0xffff, "got 0x%04x, expected 0xffff\n", bufW[0]);
+
+    size = 0xdeadbeef;
+    memset(bufW, 0xff, sizeof(bufW));
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, sizeof(WCHAR)*2, &size, 0, NULL);
+    todo_wine ok(ret == ERROR_MORE_DATA, "got %d, expected ERROR_MORE_DATA\n", ret);
+    todo_wine ok(size == text_size || broken(size == text_size + sizeof(WCHAR) /* vista */),
+       "got %u, expected %u\n", size, text_size);
+    todo_wine ok(bufW[0] == 0xffff, "got 0x%04x, expected 0xffff\n", bufW[0]);
+
+    size = 0xdeadbeef;
+    memset(bufW, 0xff, sizeof(bufW));
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, NULL);
+    ok(ret == ERROR_SUCCESS, "got %d, expected ERROR_SUCCESS\n", ret);
+    todo_wine ok(size == text_size, "got %u, expected %u\n", size, text_size);
+    size = min(size, sizeof(bufW));
+    todo_wine ok(!memcmp(textW, bufW, size), "got %s, expected %s\n",
+       wine_dbgstr_wn(bufW, size / sizeof(WCHAR)), wine_dbgstr_wn(textW, text_size / sizeof(WCHAR)));
+
+    ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, NULL);
+    todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
+
+    /* change the current direcoty to other than system32 directory */
+    SetCurrentDirectoryA("\\");
+
+    size = 0xdeadbeef;
+    memset(bufW, 0xff, sizeof(bufW));
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, sysdirW);
+    todo_wine ok(ret == ERROR_SUCCESS, "got %d, expected ERROR_SUCCESS\n", ret);
+    todo_wine ok(size == text_size, "got %u, expected %u\n", size, text_size);
+    size = min(size, sizeof(bufW));
+    todo_wine ok(!memcmp(textW, bufW, size), "got %s, expected %s\n",
+       wine_dbgstr_wn(bufW, size / sizeof(WCHAR)), wine_dbgstr_wn(textW, text_size / sizeof(WCHAR)));
+
+    ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, sysdir);
+    todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
+
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, NULL);
+    todo_wine ok(ret == ERROR_FILE_NOT_FOUND, "got %d, expected ERROR_FILE_NOT_FOUND\n", ret);
+
+    ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, NULL);
+    todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
+
+    RegCloseKey(hkey);
+    SetCurrentDirectoryW(curdirW);
+}
+
 START_TEST(registry)
 {
     /* Load pointers for functions that are not available in all Windows versions */
@@ -3866,6 +3980,7 @@ START_TEST(registry)
     test_RegOpenCurrentUser();
     test_RegNotifyChangeKeyValue();
     test_RegQueryValueExPerformanceData();
+    test_RegLoadMUIString();
 
     /* cleanup */
     delete_key( hkey_main );
