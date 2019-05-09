@@ -3917,7 +3917,7 @@ static void test_RegLoadMUIString(void)
        wine_dbgstr_wn(bufW, size / sizeof(WCHAR)), wine_dbgstr_wn(textW, text_size / sizeof(WCHAR)));
 
     ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, NULL);
-    todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
+    ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
 
     /* change the current direcoty to other than system32 directory */
     SetCurrentDirectoryA("\\");
@@ -3932,13 +3932,13 @@ static void test_RegLoadMUIString(void)
        wine_dbgstr_wn(bufW, size / sizeof(WCHAR)), wine_dbgstr_wn(textW, text_size / sizeof(WCHAR)));
 
     ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, sysdir);
-    todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
+    ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
 
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, NULL);
     ok(ret == ERROR_FILE_NOT_FOUND, "got %d, expected ERROR_FILE_NOT_FOUND\n", ret);
 
     ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, NULL);
-    todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
+    ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
 
     RegCloseKey(hkey);
     SetCurrentDirectoryW(curdirW);

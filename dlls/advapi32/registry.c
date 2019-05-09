@@ -3280,40 +3280,12 @@ cleanup:
 /******************************************************************************
  * RegLoadMUIStringA [ADVAPI32.@]
  *
- * See RegLoadMUIStringW
+ * Not implemented on native.
  */
 LSTATUS WINAPI RegLoadMUIStringA(HKEY hKey, LPCSTR pszValue, LPSTR pszBuffer, DWORD cbBuffer,
     LPDWORD pcbData, DWORD dwFlags, LPCSTR pszBaseDir)
 {
-    UNICODE_STRING valueW, baseDirW;
-    WCHAR *pwszBuffer;
-    DWORD cbData = cbBuffer * sizeof(WCHAR);
-    LONG result;
-
-    valueW.Buffer = baseDirW.Buffer = pwszBuffer = NULL;
-    if (!RtlCreateUnicodeStringFromAsciiz(&valueW, pszValue) ||
-        !RtlCreateUnicodeStringFromAsciiz(&baseDirW, pszBaseDir) ||
-        !(pwszBuffer = heap_alloc(cbData)))
-    {
-        result = ERROR_NOT_ENOUGH_MEMORY;
-        goto cleanup;
-    }
-
-    result = RegLoadMUIStringW(hKey, valueW.Buffer, pwszBuffer, cbData, NULL, dwFlags, 
-                               baseDirW.Buffer);
- 
-    if (result == ERROR_SUCCESS) {
-        cbData = WideCharToMultiByte(CP_ACP, 0, pwszBuffer, -1, pszBuffer, cbBuffer, NULL, NULL);
-        if (pcbData)
-            *pcbData = cbData;
-    }
-
-cleanup:
-    heap_free(pwszBuffer);
-    RtlFreeUnicodeString(&baseDirW);
-    RtlFreeUnicodeString(&valueW);
- 
-    return result;
+    return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
