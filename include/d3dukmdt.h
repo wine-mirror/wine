@@ -138,4 +138,6 @@ typedef enum _D3DDDIFORMAT
     D3DDDIFMT_FORCE_UINT              = 0x7fffffff,
 } D3DDDIFORMAT;
 
+typedef UINT D3DDDI_VIDEO_PRESENT_SOURCE_ID;
+
 #endif /* __WINE_D3DUKMDT_H */
