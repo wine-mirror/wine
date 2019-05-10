@@ -739,9 +739,13 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
                 *bitOffset = *bitOffset + 1;
                 wine_element->bitCount = 1;
                 wine_element->caps.button.u.NotRange.Usage = feature->caps.u.NotRange.Usage[i];
+                wine_element->caps.button.u.NotRange.Reserved1 = feature->caps.u.NotRange.Usage[i];
                 wine_element->caps.button.u.NotRange.StringIndex = feature->caps.u.NotRange.StringIndex;
+                wine_element->caps.button.u.NotRange.Reserved2 = feature->caps.u.NotRange.StringIndex;
                 wine_element->caps.button.u.NotRange.DesignatorIndex = feature->caps.u.NotRange.DesignatorIndex;
+                wine_element->caps.button.u.NotRange.Reserved3 = feature->caps.u.NotRange.DesignatorIndex;
                 wine_element->caps.button.u.NotRange.DataIndex = *data_index;
+                wine_element->caps.button.u.NotRange.Reserved4 = *data_index;
                 *data_index = *data_index + 1;
             }
         }
@@ -796,9 +800,13 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
             else
             {
                 wine_element->caps.value.u.NotRange.Usage = feature->caps.u.NotRange.Usage[i];
+                wine_element->caps.value.u.NotRange.Reserved1 = feature->caps.u.NotRange.Usage[i];
                 wine_element->caps.value.u.NotRange.StringIndex = feature->caps.u.NotRange.StringIndex;
+                wine_element->caps.value.u.NotRange.Reserved2 = feature->caps.u.NotRange.StringIndex;
                 wine_element->caps.value.u.NotRange.DesignatorIndex = feature->caps.u.NotRange.DesignatorIndex;
+                wine_element->caps.value.u.NotRange.Reserved3 = feature->caps.u.NotRange.DesignatorIndex;
                 wine_element->caps.value.u.NotRange.DataIndex = *data_index;
+                wine_element->caps.value.u.NotRange.Reserved4 = *data_index;
                 *data_index = *data_index + 1;
             }
         }
