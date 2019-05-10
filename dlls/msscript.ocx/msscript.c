@@ -973,8 +973,27 @@ static HRESULT WINAPI ScriptControl_AddCode(IScriptControl *iface, BSTR code)
 static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression, VARIANT *res)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
+    EXCEPINFO excepinfo;
+    HRESULT hr;
+
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(expression), res);
-    return E_NOTIMPL;
+
+    if (!res)
+        return E_POINTER;
+    V_VT(res) = VT_EMPTY;
+
+    if (!This->host || This->state != Initialized)
+        return E_FAIL;
+
+    hr = IActiveScript_SetScriptState(This->host->script, SCRIPTSTATE_STARTED);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IActiveScriptParse_ParseScriptText(This->host->parse, expression, NULL, NULL, NULL,
+                                            0, 1, SCRIPTTEXT_ISEXPRESSION, res, &excepinfo);
+    /* FIXME: more error hanlding */
+
+    return hr;
 }
 
 static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR statement)
