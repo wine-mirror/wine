@@ -26,10 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 
-#include "initguid.h"
-#include "ole2.h"
-#include "ocidl.h"
-
 #undef INITGUID
 #include <guiddef.h>
 #include "mfapi.h"
