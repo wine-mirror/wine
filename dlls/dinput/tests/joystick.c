@@ -321,7 +321,7 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     DIPROPDWORD dip_gain_set, dip_gain_get;
     struct effect_enum effect_data;
 
-    ok(data->version > 0x0300, "Joysticks not supported in version 0x%04x\n", data->version);
+    ok(data->version >= 0x0300, "Joysticks not supported in version 0x%04x\n", data->version);
  
     hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, NULL, NULL);
     ok(hr==E_POINTER,"IDirectInput_CreateDevice() should have returned "
