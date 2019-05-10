@@ -392,7 +392,7 @@ static HRESULT WINAPI activate_object_ActivateObject(IMFActivate *iface, REFIID 
 
     if (!activate->object)
     {
-        if (FAILED(hr = activate->funcs->create_object(activate->context, &object)))
+        if (FAILED(hr = activate->funcs->create_object((IMFAttributes *)iface, activate->context, &object)))
             return hr;
 
         if (!InterlockedCompareExchangePointer((void **)&activate->object, object, NULL))

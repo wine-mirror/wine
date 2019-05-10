@@ -40,9 +40,9 @@ static void sample_grabber_free_private(void *user_context)
     heap_free(context);
 }
 
-static HRESULT sample_grabber_create_object(void *user_context, IUnknown **obj)
+static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
-    FIXME("%p, %p.\n", user_context, obj);
+    FIXME("%p, %p, %p.\n", attributes, user_context, obj);
 
     return E_NOTIMPL;
 }

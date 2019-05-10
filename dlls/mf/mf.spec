@@ -23,8 +23,8 @@
 @ stub MFCreateASFStreamingMediaSinkActivate
 @ stub MFCreateAggregateSource
 @ stub MFCreateAppSourceProxy
-@ stub MFCreateAudioRenderer
-@ stub MFCreateAudioRendererActivate
+@ stdcall MFCreateAudioRenderer(ptr ptr)
+@ stdcall MFCreateAudioRendererActivate(ptr)
 @ stub MFCreateByteCacheFile
 @ stub MFCreateCacheManager
 @ stub MFCreateCredentialCache

@@ -5,6 +5,7 @@ IMPORTS   = mfplat mfuuid
 C_SRCS = \
 	main.c \
 	samplegrabber.c \
+	sar.c \
 	session.c \
 	topology.c
 

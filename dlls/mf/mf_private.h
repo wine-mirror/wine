@@ -49,7 +49,7 @@ static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t co
 
 struct activate_funcs
 {
-    HRESULT (*create_object)(void *context, IUnknown **object);
+    HRESULT (*create_object)(IMFAttributes *attributes, void *context, IUnknown **object);
     void (*free_private)(void *context);
 };
 
