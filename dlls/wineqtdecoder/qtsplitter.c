@@ -810,6 +810,25 @@ static const IBaseFilterVtbl QT_Vtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
+static HRESULT break_source_connection(BaseOutputPin *pin)
+{
+    HRESULT hr;
+
+    EnterCriticalSection(pin->pin.pCritSec);
+    if (!pin->pin.pConnectedTo || !pin->pMemInputPin)
+        hr = VFW_E_NOT_CONNECTED;
+    else
+    {
+        hr = IMemAllocator_Decommit(pin->pAllocator);
+        if (SUCCEEDED(hr))
+            hr = IPin_Disconnect(pin->pin.pConnectedTo);
+        IPin_Disconnect(&pin->pin.IPin_iface);
+    }
+    LeaveCriticalSection(pin->pin.pCritSec);
+
+    return hr;
+}
+
 /*
  * Input Pin
  */
@@ -821,7 +840,7 @@ static HRESULT QT_RemoveOutputPins(QTSplitter *This)
     if (This->pVideo_Pin)
     {
         OutputQueue_Destroy(This->pVideo_Pin->queue);
-        hr = BaseOutputPinImpl_BreakConnect(&This->pVideo_Pin->pin);
+        hr = break_source_connection(&This->pVideo_Pin->pin);
         TRACE("Disconnect: %08x\n", hr);
         IPin_Release(&This->pVideo_Pin->pin.pin.IPin_iface);
         This->pVideo_Pin = NULL;
@@ -829,7 +848,7 @@ static HRESULT QT_RemoveOutputPins(QTSplitter *This)
     if (This->pAudio_Pin)
     {
         OutputQueue_Destroy(This->pAudio_Pin->queue);
-        hr = BaseOutputPinImpl_BreakConnect(&This->pAudio_Pin->pin);
+        hr = break_source_connection(&This->pAudio_Pin->pin);
         TRACE("Disconnect: %08x\n", hr);
         IPin_Release(&This->pAudio_Pin->pin.pin.IPin_iface);
         This->pAudio_Pin = NULL;
@@ -1426,25 +1445,6 @@ static HRESULT WINAPI QTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputPi
     return hr;
 }
 
-static HRESULT WINAPI QTOutPin_BreakConnect(BaseOutputPin *This)
-{
-    HRESULT hr;
-
-    TRACE("(%p)->()\n", This);
-
-    EnterCriticalSection(This->pin.pCritSec);
-    if (!This->pin.pConnectedTo || !This->pMemInputPin)
-        hr = VFW_E_NOT_CONNECTED;
-    else
-    {
-        hr = IPin_Disconnect(This->pin.pConnectedTo);
-        IPin_Disconnect(&This->pin.IPin_iface);
-    }
-    LeaveCriticalSection(This->pin.pCritSec);
-
-    return hr;
-}
-
 static const IPinVtbl QT_OutputPin_Vtbl = {
     QTOutPin_QueryInterface,
     BasePinImpl_AddRef,
@@ -1520,7 +1520,7 @@ static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     BaseOutputPinImpl_AttemptConnection,
     QTOutPin_DecideBufferSize,
     QTOutPin_DecideAllocator,
-    QTOutPin_BreakConnect
+    NULL,
 };
 
 static const OutputQueueFuncTable output_OutputQueueFuncTable = {
