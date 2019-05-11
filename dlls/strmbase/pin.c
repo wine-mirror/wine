@@ -639,31 +639,6 @@ HRESULT WINAPI BaseOutputPinImpl_Inactive(BaseOutputPin *This)
     return hr;
 }
 
-/* replaces OutputPin_DeliverDisconnect */
-HRESULT WINAPI BaseOutputPinImpl_BreakConnect(BaseOutputPin *This)
-{
-    HRESULT hr;
-
-    TRACE("(%p)->()\n", This);
-
-    EnterCriticalSection(This->pin.pCritSec);
-    {
-        if (!This->pin.pConnectedTo || !This->pMemInputPin)
-            hr = VFW_E_NOT_CONNECTED;
-        else
-        {
-            hr = IMemAllocator_Decommit(This->pAllocator);
-
-            if (SUCCEEDED(hr))
-                hr = IPin_Disconnect(This->pin.pConnectedTo);
-        }
-        IPin_Disconnect(&This->pin.IPin_iface);
-    }
-    LeaveCriticalSection(This->pin.pCritSec);
-
-    return hr;
-}
-
 HRESULT WINAPI BaseOutputPinImpl_InitAllocator(BaseOutputPin *This, IMemAllocator **pMemAlloc)
 {
     return CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)pMemAlloc);

@@ -428,7 +428,6 @@ static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     BaseOutputPinImpl_AttemptConnection,
     Parser_OutputPin_DecideBufferSize,
     Parser_OutputPin_DecideAllocator,
-    NULL,
 };
 
 HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt)

@@ -657,12 +657,6 @@ static HRESULT WINAPI AVICompressorOut_DecideAllocator(BaseOutputPin *base,
     return BaseOutputPinImpl_DecideAllocator(base, pPin, pAlloc);
 }
 
-static HRESULT WINAPI AVICompressorOut_BreakConnect(BaseOutputPin *base)
-{
-    FIXME("(%p)\n", base);
-    return E_NOTIMPL;
-}
-
 static const BaseOutputPinFuncTable AVICompressorBaseOutputPinVtbl = {
     {
         NULL,
@@ -671,7 +665,6 @@ static const BaseOutputPinFuncTable AVICompressorBaseOutputPinVtbl = {
     BaseOutputPinImpl_AttemptConnection,
     AVICompressorOut_DecideBufferSize,
     AVICompressorOut_DecideAllocator,
-    AVICompressorOut_BreakConnect
 };
 
 IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)

@@ -1520,7 +1520,6 @@ static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     BaseOutputPinImpl_AttemptConnection,
     QTOutPin_DecideBufferSize,
     QTOutPin_DecideAllocator,
-    NULL,
 };
 
 static const OutputQueueFuncTable output_OutputQueueFuncTable = {

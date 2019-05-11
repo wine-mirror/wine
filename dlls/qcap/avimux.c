@@ -1292,12 +1292,6 @@ static HRESULT WINAPI AviMuxOut_DecideAllocator(BaseOutputPin *base,
     return IMemInputPin_NotifyAllocator(pPin, *pAlloc, TRUE);
 }
 
-static HRESULT WINAPI AviMuxOut_BreakConnect(BaseOutputPin *base)
-{
-    FIXME("(%p)\n", base);
-    return E_NOTIMPL;
-}
-
 static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
     {
         AviMuxOut_CheckMediaType,
@@ -1306,7 +1300,6 @@ static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
     AviMuxOut_AttemptConnection,
     NULL,
     AviMuxOut_DecideAllocator,
-    AviMuxOut_BreakConnect
 };
 
 static inline AviMux* impl_from_out_IPin(IPin *iface)

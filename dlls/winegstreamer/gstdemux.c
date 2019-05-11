@@ -1879,7 +1879,6 @@ static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     BaseOutputPinImpl_AttemptConnection,
     GSTOutPin_DecideBufferSize,
     GSTOutPin_DecideAllocator,
-    NULL,
 };
 
 static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt)
