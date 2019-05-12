@@ -1853,13 +1853,8 @@ BOOL WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer,
         }
         buffer[i - index] = value;
     }
-    if (TRACE_ON(setupapi))
-    {
-        TRACE( "%p/%p/%d/%d index %d returning",
-               context->Inf, context->CurrentInf, context->Section, context->Line, index );
-        for (i = index; i < line->nb_fields; i++) TRACE( " %02x", buffer[i - index] );
-        TRACE( "\n" );
-    }
+    TRACE( "%p/%p/%d/%d index %d\n",
+           context->Inf, context->CurrentInf, context->Section, context->Line, index );
     return TRUE;
 }
 
