@@ -150,7 +150,7 @@ DWORD load_reg_dword(HKEY hKey, LPCWSTR szValue, DWORD *output)
             return ERROR_SUCCESS;
         goto failed;
     }
-    if (type != REG_DWORD || size != sizeof(DWORD))
+    if ((type != REG_DWORD && type != REG_BINARY) || size != sizeof(DWORD))
     {
         err = ERROR_INVALID_DATATYPE;
         goto failed;
