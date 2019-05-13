@@ -5918,7 +5918,7 @@ HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HR
     mfmediaevent *object;
     HRESULT hr;
 
-    TRACE("%s, %s, %08x, %p, %p\n", debugstr_eventid(type), debugstr_guid(extended_type), status,
+    TRACE("%s, %s, %08x, %s, %p\n", debugstr_eventid(type), debugstr_guid(extended_type), status,
             debugstr_propvar(value), event);
 
     object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );

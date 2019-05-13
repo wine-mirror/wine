@@ -438,7 +438,7 @@ static HRESULT WINAPI sample_DeleteItem(IMFSample *iface, REFGUID key)
 {
     struct sample *sample = impl_from_IMFSample(iface);
 
-    TRACE("%p, %p.\n", iface, debugstr_attr(key));
+    TRACE("%p, %s.\n", iface, debugstr_attr(key));
 
     return attributes_DeleteItem(&sample->attributes, key);
 }
