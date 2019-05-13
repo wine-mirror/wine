@@ -304,11 +304,11 @@ struct dwrite_trimmingsign {
 
 struct dwrite_typography {
     IDWriteTypography IDWriteTypography_iface;
-    LONG ref;
+    LONG refcount;
 
     DWRITE_FONT_FEATURE *features;
-    UINT32 allocated;
-    UINT32 count;
+    size_t capacity;
+    size_t count;
 };
 
 static const IDWriteTextFormat2Vtbl dwritetextformatvtbl;
@@ -5689,9 +5689,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
 
 static HRESULT WINAPI dwritetypography_QueryInterface(IDWriteTypography *iface, REFIID riid, void **obj)
 {
-    struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
-
-    TRACE("(%p)->(%s %p)\n", typography, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IDWriteTypography) || IsEqualIID(riid, &IID_IUnknown)) {
         *obj = iface;
@@ -5709,57 +5707,61 @@ static HRESULT WINAPI dwritetypography_QueryInterface(IDWriteTypography *iface, 
 static ULONG WINAPI dwritetypography_AddRef(IDWriteTypography *iface)
 {
     struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
-    ULONG ref = InterlockedIncrement(&typography->ref);
-    TRACE("(%p)->(%d)\n", typography, ref);
-    return ref;
+    ULONG refcount = InterlockedIncrement(&typography->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI dwritetypography_Release(IDWriteTypography *iface)
 {
     struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
-    ULONG ref = InterlockedDecrement(&typography->ref);
+    ULONG refcount = InterlockedDecrement(&typography->refcount);
 
-    TRACE("(%p)->(%d)\n", typography, ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    if (!ref) {
+    if (!refcount)
+    {
         heap_free(typography->features);
         heap_free(typography);
     }
 
-    return ref;
+    return refcount;
 }
 
 static HRESULT WINAPI dwritetypography_AddFontFeature(IDWriteTypography *iface, DWRITE_FONT_FEATURE feature)
 {
     struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
 
-    TRACE("(%p)->(%x %u)\n", typography, feature.nameTag, feature.parameter);
+    TRACE("%p, %s, %u.\n", iface, debugstr_tag(feature.nameTag), feature.parameter);
 
-    if (typography->count == typography->allocated) {
-        DWRITE_FONT_FEATURE *ptr = heap_realloc(typography->features, 2*typography->allocated*sizeof(DWRITE_FONT_FEATURE));
-        if (!ptr)
-            return E_OUTOFMEMORY;
-
-        typography->features = ptr;
-        typography->allocated *= 2;
+    if (!dwrite_array_reserve((void **)&typography->features, &typography->capacity, typography->count + 1,
+            sizeof(*typography->features)))
+    {
+        return E_OUTOFMEMORY;
     }
 
     typography->features[typography->count++] = feature;
+
     return S_OK;
 }
 
 static UINT32 WINAPI dwritetypography_GetFontFeatureCount(IDWriteTypography *iface)
 {
     struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
-    TRACE("(%p)\n", typography);
+
+    TRACE("%p.\n", iface);
+
     return typography->count;
 }
 
-static HRESULT WINAPI dwritetypography_GetFontFeature(IDWriteTypography *iface, UINT32 index, DWRITE_FONT_FEATURE *feature)
+static HRESULT WINAPI dwritetypography_GetFontFeature(IDWriteTypography *iface, UINT32 index,
+        DWRITE_FONT_FEATURE *feature)
 {
     struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
 
-    TRACE("(%p)->(%u %p)\n", typography, index, feature);
+    TRACE("%p, %u, %p.\n", iface, index, feature);
 
     if (index >= typography->count)
         return E_INVALIDARG;
@@ -5783,21 +5785,14 @@ HRESULT create_typography(IDWriteTypography **ret)
 
     *ret = NULL;
 
-    typography = heap_alloc(sizeof(*typography));
+    typography = heap_alloc_zero(sizeof(*typography));
     if (!typography)
         return E_OUTOFMEMORY;
 
     typography->IDWriteTypography_iface.lpVtbl = &dwritetypographyvtbl;
-    typography->ref = 1;
-    typography->allocated = 2;
-    typography->count = 0;
-
-    typography->features = heap_calloc(typography->allocated, sizeof(*typography->features));
-    if (!typography->features) {
-        heap_free(typography);
-        return E_OUTOFMEMORY;
-    }
+    typography->refcount = 1;
 
     *ret = &typography->IDWriteTypography_iface;
+
     return S_OK;
 }
