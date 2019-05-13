@@ -3592,17 +3592,21 @@ static HRESULT WINAPI dwritetextlayout_GetLineMetrics(IDWriteTextLayout3 *iface,
     return max_count >= This->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
+static HRESULT layout_update_metrics(struct dwrite_textlayout *layout)
+{
+    return layout_compute_effective_runs(layout);
+}
+
 static HRESULT WINAPI dwritetextlayout_GetMetrics(IDWriteTextLayout3 *iface, DWRITE_TEXT_METRICS *metrics)
 {
-    struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    DWRITE_TEXT_METRICS1 metrics1;
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout3(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", This, metrics);
+    TRACE("%p, %p.\n", iface, metrics);
 
-    hr = IDWriteTextLayout3_GetMetrics(iface, &metrics1);
+    hr = layout_update_metrics(layout);
     if (hr == S_OK)
-        memcpy(metrics, &metrics1, sizeof(*metrics));
+        memcpy(metrics, &layout->metrics, sizeof(*metrics));
 
     return hr;
 }
@@ -3932,17 +3936,15 @@ static HRESULT WINAPI dwritetextlayout1_GetCharacterSpacing(IDWriteTextLayout3 *
 
 static HRESULT WINAPI dwritetextlayout2_GetMetrics(IDWriteTextLayout3 *iface, DWRITE_TEXT_METRICS1 *metrics)
 {
-    struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout3(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", This, metrics);
+    TRACE("%p, %p.\n", iface, metrics);
 
-    hr = layout_compute_effective_runs(This);
-    if (FAILED(hr))
-        return hr;
+    if (SUCCEEDED(hr = layout_update_metrics(layout)))
+        *metrics = layout->metrics;
 
-    *metrics = This->metrics;
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI dwritetextlayout2_SetVerticalGlyphOrientation(IDWriteTextLayout3 *iface, DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
