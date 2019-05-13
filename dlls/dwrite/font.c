@@ -207,44 +207,6 @@ enum fontface_flags {
     FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 3
 };
 
-struct dwrite_fontface {
-    IDWriteFontFace4 IDWriteFontFace4_iface;
-    LONG ref;
-
-    IDWriteFontFileStream *stream;
-    IDWriteFontFile **files;
-    UINT32 file_count;
-    UINT32 index;
-
-    IDWriteFactory5 *factory;
-    struct fontfacecached *cached;
-
-    USHORT simulations;
-    DWRITE_FONT_FACE_TYPE type;
-    DWRITE_FONT_METRICS1 metrics;
-    DWRITE_CARET_METRICS caret;
-    INT charmap;
-    UINT16 flags;
-
-    struct dwrite_fonttable cmap;
-    struct dwrite_fonttable vdmx;
-    struct dwrite_fonttable gasp;
-    struct dwrite_fonttable cpal;
-    struct dwrite_fonttable colr;
-    DWRITE_GLYPH_METRICS *glyphs[GLYPH_MAX/GLYPH_BLOCK_SIZE];
-
-    DWRITE_FONT_STYLE style;
-    DWRITE_FONT_STRETCH stretch;
-    DWRITE_FONT_WEIGHT weight;
-    DWRITE_PANOSE panose;
-    FONTSIGNATURE fontsig;
-    UINT32 glyph_image_formats;
-
-    struct scriptshaping_cache *shaping_cache;
-
-    LOGFONTW lf;
-};
-
 struct dwrite_fontfile {
     IDWriteFontFile IDWriteFontFile_iface;
     LONG ref;
@@ -636,11 +598,11 @@ static UINT16 WINAPI dwritefontface_GetGlyphCount(IDWriteFontFace4 *iface)
 static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace4 *iface,
     UINT16 const *glyphs, UINT32 glyph_count, DWRITE_GLYPH_METRICS *ret, BOOL is_sideways)
 {
-    struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace4(iface);
+    unsigned int i;
     HRESULT hr;
-    UINT32 i;
 
-    TRACE("(%p)->(%p %u %p %d)\n", This, glyphs, glyph_count, ret, is_sideways);
+    TRACE("%p, %p, %u, %p, %d.\n", iface, glyphs, glyph_count, ret, is_sideways);
 
     if (!glyphs)
         return E_INVALIDARG;
@@ -651,10 +613,10 @@ static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace4 *ifa
     for (i = 0; i < glyph_count; i++) {
         DWRITE_GLYPH_METRICS metrics;
 
-        hr = get_cached_glyph_metrics(This, glyphs[i], &metrics);
+        hr = get_cached_glyph_metrics(fontface, glyphs[i], &metrics);
         if (hr != S_OK) {
-            freetype_get_design_glyph_metrics(iface, This->metrics.designUnitsPerEm, glyphs[i], &metrics);
-            hr = set_cached_glyph_metrics(This, glyphs[i], &metrics);
+            freetype_get_design_glyph_metrics(fontface, glyphs[i], &metrics);
+            hr = set_cached_glyph_metrics(fontface, glyphs[i], &metrics);
             if (FAILED(hr))
                 return hr;
         }
@@ -4505,6 +4467,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     stream_desc.face_type = desc->face_type;
     stream_desc.face_index = desc->index;
     opentype_get_font_metrics(&stream_desc, &fontface->metrics, &fontface->caret);
+    opentype_get_font_typo_metrics(&stream_desc, &fontface->typo_metrics.ascent, &fontface->typo_metrics.descent);
     if (desc->simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
         /* TODO: test what happens if caret is already slanted */
         if (fontface->caret.slopeRise == 1) {

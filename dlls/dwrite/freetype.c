@@ -263,14 +263,14 @@ void freetype_notify_cacheremove(IDWriteFontFace4 *fontface)
     LeaveCriticalSection(&freetype_cs);
 }
 
-HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace4 *fontface, UINT16 unitsperEm, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
+HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
 {
     FTC_ScalerRec scaler;
     FT_Size size;
 
-    scaler.face_id = fontface;
-    scaler.width  = unitsperEm;
-    scaler.height = unitsperEm;
+    scaler.face_id = &fontface->IDWriteFontFace4_iface;
+    scaler.width = fontface->metrics.designUnitsPerEm;
+    scaler.height = fontface->metrics.designUnitsPerEm;
     scaler.pixel = 1;
     scaler.x_res = 0;
     scaler.y_res = 0;
@@ -278,22 +278,23 @@ HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace4 *fontface, UINT16 uni
     EnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
          if (pFT_Load_Glyph(size->face, glyph, FT_LOAD_NO_SCALE) == 0) {
-             USHORT simulations = IDWriteFontFace4_GetSimulations(fontface);
              FT_Glyph_Metrics *metrics = &size->face->glyph->metrics;
 
              ret->leftSideBearing = metrics->horiBearingX;
              ret->advanceWidth = metrics->horiAdvance;
              ret->rightSideBearing = metrics->horiAdvance - metrics->horiBearingX - metrics->width;
-             ret->topSideBearing = metrics->vertBearingY;
+
              ret->advanceHeight = metrics->vertAdvance;
-             ret->bottomSideBearing = metrics->vertAdvance - metrics->vertBearingY - metrics->height;
-             ret->verticalOriginY = metrics->height + metrics->vertBearingY;
+             ret->verticalOriginY = fontface->typo_metrics.ascent;
+             ret->topSideBearing = fontface->typo_metrics.ascent - metrics->horiBearingY;
+             ret->bottomSideBearing = metrics->vertAdvance - metrics->height - ret->topSideBearing;
 
              /* Adjust in case of bold simulation, glyphs without contours are ignored. */
-             if (simulations & DWRITE_FONT_SIMULATIONS_BOLD && size->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE &&
-                     size->face->glyph->outline.n_contours != 0) {
+             if (fontface->simulations & DWRITE_FONT_SIMULATIONS_BOLD &&
+                     size->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE && size->face->glyph->outline.n_contours)
+             {
                  if (ret->advanceWidth)
-                     ret->advanceWidth += (unitsperEm + 49) / 50;
+                     ret->advanceWidth += (fontface->metrics.designUnitsPerEm + 49) / 50;
              }
          }
     }
@@ -929,7 +930,7 @@ void freetype_notify_cacheremove(IDWriteFontFace4 *fontface)
 {
 }
 
-HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace4 *fontface, UINT16 unitsperEm, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
+HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
 {
     return E_NOTIMPL;
 }
