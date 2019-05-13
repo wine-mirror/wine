@@ -272,7 +272,7 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
     {
         HINSTANCE handle;
 
-        TRACE("Inititialized, version %s. Built with %d.%d.%d.\n", gst_version_string(),
+        TRACE("Initialized, version %s. Built with %d.%d.%d.\n", gst_version_string(),
                 GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 
         /* Unloading glib is a bad idea.. it installs atexit handlers,
