@@ -1831,7 +1831,7 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     FLOAT descent, trailingspacewidth;
     BOOL append_trimming_run = FALSE;
     const struct layout_run *run;
-    FLOAT width, origin_x;
+    float width = 0.0f, origin_x;
     HRESULT hr;
 
     /* Take a look at clusters we got for this line in reverse order to set trailing properties for current line */
@@ -1871,7 +1871,8 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     }
 
     /* Does not include trailing space width */
-    width = get_cluster_range_width(layout, first_cluster, last_cluster + 1);
+    if (!layout->clustermetrics[last_cluster].isWhitespace)
+        width = get_cluster_range_width(layout, first_cluster, last_cluster + 1);
 
     /* Append trimming run if necessary */
     if (width > layout->metrics.layoutWidth && layout->format.trimmingsign != NULL &&

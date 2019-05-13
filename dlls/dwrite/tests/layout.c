@@ -3205,6 +3205,7 @@ static void test_GetMetrics(void)
     static const WCHAR str2W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     static const WCHAR str3W[] = {'a',0};
+    static const WCHAR str4W[] = {' ',0};
     DWRITE_CLUSTER_METRICS clusters[4];
     DWRITE_TEXT_METRICS metrics;
     IDWriteTextFormat *format;
@@ -3288,6 +3289,25 @@ todo_wine
     ok(metrics.layoutHeight == 1000.0, "got %.2f\n", metrics.layoutHeight);
     ok(metrics.maxBidiReorderingDepth == 1, "got %u\n", metrics.maxBidiReorderingDepth);
     ok(metrics.lineCount == 1, "got %u\n", metrics.lineCount);
+    IDWriteTextLayout_Release(layout);
+
+    /* Whitespace only. */
+    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 1, format, 500.0, 1000.0, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
+
+    memset(&metrics, 0xcc, sizeof(metrics));
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "Failed to get layout metrics, hr %#x.\n", hr);
+    ok(metrics.left == 0.0f, "Unexpected value for left %f.\n", metrics.left);
+    ok(metrics.top == 0.0f, "Unexpected value for top %f.\n", metrics.top);
+    ok(metrics.width == 0.0f, "Unexpected width %f.\n", metrics.width);
+    ok(metrics.widthIncludingTrailingWhitespace > 0.0f, "Unexpected full width %f.\n",
+            metrics.widthIncludingTrailingWhitespace);
+    ok(metrics.height > 0.0, "Unexpected height %f.\n", metrics.height);
+    ok(metrics.layoutWidth == 500.0, "Unexpected box width %f.\n", metrics.layoutWidth);
+    ok(metrics.layoutHeight == 1000.0, "Unexpected box height %f.\n", metrics.layoutHeight);
+    ok(metrics.maxBidiReorderingDepth == 1, "Unexpected reordering depth %u.\n", metrics.maxBidiReorderingDepth);
+    ok(metrics.lineCount == 1, "Unexpected line coun %u.\n", metrics.lineCount);
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
