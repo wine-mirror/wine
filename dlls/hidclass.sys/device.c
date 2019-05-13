@@ -353,7 +353,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
             if (!exit_now && irp->IoStatus.u.Status == STATUS_SUCCESS)
             {
                 packet->reportBufferLen = irp->IoStatus.Information;
-                if (ext->preparseData->InputReports[0].reportID)
+                if (ext->preparseData->reports[0].reportID)
                     packet->reportId = packet->reportBuffer[0];
                 else
                     packet->reportId = 0;
@@ -590,7 +590,7 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
             packet = HeapAlloc(GetProcessHeap(), 0, packet_size);
 
-            if (extension->preparseData->InputReports[0].reportID)
+            if (extension->preparseData->reports[0].reportID)
                 packet->reportId = buffer[0];
             else
                 packet->reportId = 0;

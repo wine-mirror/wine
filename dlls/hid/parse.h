@@ -1,5 +1,5 @@
 /*
- * Internal HID structures
+ * Wine internal HID structures
  *
  * Copyright 2015 Aric Stewart
  *
@@ -18,18 +18,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __HID_PARSE_H
-#define __HID_PARSE_H
+#ifndef __WINE_PARSE_H
+#define __WINE_PARSE_H
 
 #define HID_MAGIC 0x8491759
 
-typedef enum {
+typedef enum __WINE_ELEMENT_TYPE {
     UnknownElement = 0,
     ButtonElement,
     ValueElement,
 } WINE_ELEMENT_TYPE;
 
-typedef struct
+typedef struct __WINE_ELEMENT
 {
     WINE_ELEMENT_TYPE ElementType;
     UINT  valueStartBit;
@@ -40,33 +40,30 @@ typedef struct
     } caps;
 } WINE_HID_ELEMENT;
 
-typedef struct
+typedef struct __WINE_HID_REPORT
 {
     UCHAR reportID;
-    DWORD dwSize;
+    DWORD bitSize;
     DWORD elementCount;
-    WINE_HID_ELEMENT Elements[1];
+    DWORD elementIdx;
 } WINE_HID_REPORT;
 
-typedef struct
+typedef struct __WINE_HIDP_PREPARSED_DATA
 {
     DWORD magic;
     DWORD dwSize;
     HIDP_CAPS caps;
 
-    DWORD dwInputReportCount;
-    DWORD dwOutputReportCount;
-    DWORD dwFeatureReportCount;
+    DWORD elementOffset;
+    DWORD reportCount[3];
+    BYTE reportIdx[3][256];
 
-    DWORD dwOutputReportOffset;
-    DWORD dwFeatureReportOffset;
-
-    WINE_HID_REPORT InputReports[1];
+    WINE_HID_REPORT reports[1];
 } WINE_HIDP_PREPARSED_DATA, *PWINE_HIDP_PREPARSED_DATA;
 
-#define HID_NEXT_REPORT(d,r) ((r)?(WINE_HID_REPORT*)(((BYTE*)(r))+(r)->dwSize):(d)->InputReports)
-#define HID_INPUT_REPORTS(d) ((d)->InputReports)
-#define HID_OUTPUT_REPORTS(d) ((WINE_HID_REPORT*)(((BYTE*)(d)->InputReports)+(d)->dwOutputReportOffset))
-#define HID_FEATURE_REPORTS(d) ((WINE_HID_REPORT*)(((BYTE*)(d)->InputReports)+(d)->dwFeatureReportOffset))
+#define HID_INPUT_REPORTS(d) ((d)->reports)
+#define HID_OUTPUT_REPORTS(d) ((d)->reports + (d)->reportCount[0])
+#define HID_FEATURE_REPORTS(d) ((d)->reports + (d)->reportCount[0] + (d)->reportCount[1])
+#define HID_ELEMS(d) ((WINE_HID_ELEMENT*)((BYTE*)(d) + (d)->elementOffset))
 
-#endif /* __HID_PARSE_H */
+#endif /* __WINE_PARSE_H */

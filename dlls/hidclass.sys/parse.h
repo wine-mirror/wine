@@ -43,9 +43,9 @@ typedef struct __WINE_ELEMENT
 typedef struct __WINE_HID_REPORT
 {
     UCHAR reportID;
-    DWORD dwSize;
+    DWORD bitSize;
     DWORD elementCount;
-    WINE_HID_ELEMENT Elements[1];
+    DWORD elementIdx;
 } WINE_HID_REPORT;
 
 typedef struct __WINE_HIDP_PREPARSED_DATA
@@ -54,19 +54,16 @@ typedef struct __WINE_HIDP_PREPARSED_DATA
     DWORD dwSize;
     HIDP_CAPS caps;
 
-    DWORD dwInputReportCount;
-    DWORD dwOutputReportCount;
-    DWORD dwFeatureReportCount;
+    DWORD elementOffset;
+    DWORD reportCount[3];
+    BYTE reportIdx[3][256];
 
-    DWORD dwOutputReportOffset;
-    DWORD dwFeatureReportOffset;
+    WINE_HID_REPORT reports[1];
+} WINE_HIDP_PREPARSED_DATA, *PWINE_HIDP_PREPARSED_DATA;
 
-    WINE_HID_REPORT InputReports[1];
-} WINE_HIDP_PREPARSED_DATA;
-
-#define HID_NEXT_REPORT(d,r) ((r)?(WINE_HID_REPORT*)(((BYTE*)(r))+(r)->dwSize):(d)->InputReports)
-#define HID_INPUT_REPORTS(d) ((d)->InputReports)
-#define HID_OUTPUT_REPORTS(d) (WINE_HID_REPORT*)(((BYTE*)(d)->InputReports)+(d)->dwOutputReportOffset)
-#define HID_FEATURE_REPORTS(d) (WINE_HID_REPORT*)(((BYTE*)(d)->InputReports)+(d)->dwFeatureReportOffset)
+#define HID_INPUT_REPORTS(d) ((d)->reports)
+#define HID_OUTPUT_REPORTS(d) ((d)->reports + (d)->reportCount[0])
+#define HID_FEATURE_REPORTS(d) ((d)->reports + (d)->reportCount[0] + (d)->reportCount[1])
+#define HID_ELEMS(d) ((WINE_HID_ELEMENT*)((BYTE*)(d) + (d)->elementOffset))
 
 #endif /* __WINE_PARSE_H */
