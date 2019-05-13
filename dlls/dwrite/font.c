@@ -1670,7 +1670,7 @@ static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont3 *iface, IDWriteFont
 {
     struct dwrite_font *This = impl_from_IDWriteFont3(iface);
     TRACE("(%p)->(%p)\n", This, fontface);
-    return IDWriteFont3_CreateFontFace(iface, (IDWriteFontFace3**)fontface);
+    return get_fontface_from_font(This, (IDWriteFontFace4 **)fontface);
 }
 
 static void WINAPI dwritefont1_GetMetrics(IDWriteFont3 *iface, DWRITE_FONT_METRICS1 *metrics)
