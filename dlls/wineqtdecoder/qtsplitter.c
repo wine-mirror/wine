@@ -202,29 +202,35 @@ static inline QTSplitter *impl_from_IBaseFilter( IBaseFilter *iface )
  * Base Filter
  */
 
-static IPin* WINAPI QT_GetPin(BaseFilter *iface, int pos)
+static IPin * WINAPI QT_GetPin(BaseFilter *base, int index)
 {
-    QTSplitter *This = impl_from_BaseFilter(iface);
-    TRACE("Asking for pos %x\n", pos);
+    QTSplitter *filter = impl_from_BaseFilter(base);
 
-    if (pos > 2 || pos < 0)
-        return NULL;
-    switch (pos)
+    if (index == 0)
     {
-        case 0:
-            IPin_AddRef(&This->pInputPin.pin.IPin_iface);
-            return &This->pInputPin.pin.IPin_iface;
-        case 1:
-            if (This->pVideo_Pin)
-                IPin_AddRef(&This->pVideo_Pin->pin.pin.IPin_iface);
-            return &This->pVideo_Pin->pin.pin.IPin_iface;
-        case 2:
-            if (This->pAudio_Pin)
-                IPin_AddRef(&This->pAudio_Pin->pin.pin.IPin_iface);
-            return &This->pAudio_Pin->pin.pin.IPin_iface;
-        default:
-            return NULL;
+        IPin_AddRef(&filter->pInputPin.pin.IPin_iface);
+        return &filter->pInputPin.pin.IPin_iface;
     }
+    else if (index == 1)
+    {
+        if (filter->pVideo_Pin)
+        {
+            IPin_AddRef(&filter->pVideo_Pin->pin.pin.IPin_iface);
+            return &filter->pVideo_Pin->pin.pin.IPin_iface;
+        }
+        else if (filter->pAudio_Pin)
+        {
+            IPin_AddRef(&filter->pAudio_Pin->pin.pin.IPin_iface);
+            return &filter->pAudio_Pin->pin.pin.IPin_iface;
+        }
+    }
+    else if (index == 2 && filter->pVideo_Pin && filter->pAudio_Pin)
+    {
+        IPin_AddRef(&filter->pAudio_Pin->pin.pin.IPin_iface);
+        return &filter->pAudio_Pin->pin.pin.IPin_iface;
+    }
+
+    return NULL;
 }
 
 static LONG WINAPI QT_GetPinCount(BaseFilter *iface)
