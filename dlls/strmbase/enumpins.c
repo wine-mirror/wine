@@ -27,7 +27,7 @@ typedef struct IEnumPinsImpl
 {
     IEnumPins IEnumPins_iface;
     LONG refCount;
-    ULONG uIndex;
+    unsigned int uIndex, count;
     BaseFilter *base;
     DWORD Version;
 } IEnumPinsImpl;
@@ -42,6 +42,7 @@ static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
 HRESULT enum_pins_create(BaseFilter *base, IEnumPins **ppEnum)
 {
     IEnumPinsImpl * pEnumPins;
+    IPin *pin;
 
     if (!ppEnum)
         return E_POINTER;
@@ -59,6 +60,13 @@ HRESULT enum_pins_create(BaseFilter *base, IEnumPins **ppEnum)
     IBaseFilter_AddRef(&base->IBaseFilter_iface);
     *ppEnum = &pEnumPins->IEnumPins_iface;
     pEnumPins->Version = base->pin_version;
+    pEnumPins->count = 0;
+
+    while ((pin = base->pFuncsTable->pfnGetPin(base, pEnumPins->count)))
+    {
+        IPin_Release(pin);
+        ++pEnumPins->count;
+    }
 
     TRACE("Created new enumerator (%p)\n", *ppEnum);
     return S_OK;
@@ -161,7 +169,7 @@ static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins *iface, ULONG count)
     if (enum_pins->Version != enum_pins->base->pin_version)
         return VFW_E_ENUM_OUT_OF_SYNC;
 
-    if (enum_pins->uIndex + count > enum_pins->base->pFuncsTable->pfnGetPinCount(enum_pins->base))
+    if (enum_pins->uIndex + count > enum_pins->count)
         return S_FALSE;
 
     enum_pins->uIndex += count;
@@ -171,8 +179,19 @@ static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins *iface, ULONG count)
 static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins *iface)
 {
     IEnumPinsImpl *enum_pins = impl_from_IEnumPins(iface);
+    IPin *pin;
 
     TRACE("iface %p.\n", iface);
+
+    if (enum_pins->Version != enum_pins->base->pin_version)
+    {
+        enum_pins->count = 0;
+        while ((pin = enum_pins->base->pFuncsTable->pfnGetPin(enum_pins->base, enum_pins->count)))
+        {
+            IPin_Release(pin);
+            ++enum_pins->count;
+        }
+    }
 
     enum_pins->Version = enum_pins->base->pin_version;
     enum_pins->uIndex = 0;
