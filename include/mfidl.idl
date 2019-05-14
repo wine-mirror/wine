@@ -89,6 +89,34 @@ interface IMFClock : IUnknown
     HRESULT GetProperties([out] MFCLOCK_PROPERTIES *props);
 }
 
+typedef enum _MFRATE_DIRECTION
+{
+    MFRATE_FORWARD,
+    MFRATE_REVERSE
+} MFRATE_DIRECTION;
+
+[
+    object,
+    uuid(0a9ccdbc-d797-4563-9667-94ec5d79292d),
+]
+interface IMFRateSupport : IUnknown
+{
+    HRESULT GetSlowestRate(
+            [in] MFRATE_DIRECTION direction,
+            [in] BOOL thin,
+            [out] float *rate);
+
+    HRESULT GetFastestRate(
+            [in] MFRATE_DIRECTION direction,
+            [in] BOOL thin,
+            [out] float *rate);
+
+    HRESULT IsRateSupported(
+            [in] BOOL thin,
+            [in] float rate,
+            [in, out, unique] float *nearest_supported_rate);
+}
+
 [
     object,
     uuid(88ddcd21-03c3-4275-91ed-55ee3929328f)
@@ -745,3 +773,5 @@ cpp_quote("EXTERN_GUID(MF_TOPOLOGY_PROJECTSTOP, 0x7ed3f803, 0x86bb, 0x4b3f, 0xb7
 cpp_quote("EXTERN_GUID(MF_TOPOLOGY_RESOLUTION_STATUS, 0x494bbcde, 0xb031, 0x4e38,  0x97, 0xc4, 0xd5, 0x42, 0x2d, 0xd6, 0x18, 0xdc);")
 cpp_quote("EXTERN_GUID(MF_TOPOLOGY_START_TIME_ON_PRESENTATION_SWITCH, 0xc8cc113f, 0x7951, 0x4548, 0xaa, 0xd6, 0x9e, 0xd6, 0x20, 0x2e, 0x62, 0xb3);")
 cpp_quote("EXTERN_GUID(MF_TOPOLOGY_STATIC_PLAYBACK_OPTIMIZATIONS, 0xb86cac42, 0x41a6, 0x4b79, 0x89, 0x7a, 0x1a, 0xb0, 0xe5, 0x2b, 0x4a, 0x1b);")
+
+cpp_quote("EXTERN_GUID(MF_RATE_CONTROL_SERVICE, 0x866fa297, 0xb802, 0x4bf8, 0x9d, 0xc9, 0x5e, 0x3b, 0x6a, 0x9f, 0x53, 0xc9);")

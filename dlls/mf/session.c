@@ -55,6 +55,8 @@ struct media_session
 {
     IMFMediaSession IMFMediaSession_iface;
     IMFGetService IMFGetService_iface;
+    IMFRateSupport IMFRateSupport_iface;
+    IMFRateControl IMFRateControl_iface;
     IMFAsyncCallback commands_callback;
     LONG refcount;
     IMFMediaEventQueue *event_queue;
@@ -122,6 +124,16 @@ static struct media_session *impl_from_commands_callback_IMFAsyncCallback(IMFAsy
 static struct media_session *impl_from_IMFGetService(IMFGetService *iface)
 {
     return CONTAINING_RECORD(iface, struct media_session, IMFGetService_iface);
+}
+
+static struct media_session *impl_session_from_IMFRateSupport(IMFRateSupport *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_session, IMFRateSupport_iface);
+}
+
+static struct media_session *impl_session_from_IMFRateControl(IMFRateControl *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_session, IMFRateControl_iface);
 }
 
 static struct session_op *impl_op_from_IUnknown(IUnknown *iface)
@@ -467,7 +479,30 @@ static ULONG WINAPI session_get_service_Release(IMFGetService *iface)
 
 static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
 {
-    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+    struct media_session *session = impl_from_IMFGetService(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualGUID(service, &MF_RATE_CONTROL_SERVICE))
+    {
+        if (IsEqualIID(riid, &IID_IMFRateSupport))
+        {
+            *obj = &session->IMFRateSupport_iface;
+        }
+        else if (IsEqualIID(riid, &IID_IMFRateControl))
+        {
+            *obj = &session->IMFRateControl_iface;
+        }
+
+        if (*obj)
+            IUnknown_AddRef((IUnknown *)*obj);
+
+        return *obj ? S_OK : E_NOINTERFACE;
+    }
+    else
+        FIXME("Unsupported service %s.\n", debugstr_guid(service));
 
     return E_NOTIMPL;
 }
@@ -543,6 +578,99 @@ static const IMFAsyncCallbackVtbl session_commands_callback_vtbl =
     session_commands_callback_Invoke,
 };
 
+static HRESULT WINAPI session_rate_support_QueryInterface(IMFRateSupport *iface, REFIID riid, void **obj)
+{
+    struct media_session *session = impl_session_from_IMFRateSupport(iface);
+    return IMFMediaSession_QueryInterface(&session->IMFMediaSession_iface, riid, obj);
+}
+
+static ULONG WINAPI session_rate_support_AddRef(IMFRateSupport *iface)
+{
+    struct media_session *session = impl_session_from_IMFRateSupport(iface);
+    return IMFMediaSession_AddRef(&session->IMFMediaSession_iface);
+}
+
+static ULONG WINAPI session_rate_support_Release(IMFRateSupport *iface)
+{
+    struct media_session *session = impl_session_from_IMFRateSupport(iface);
+    return IMFMediaSession_Release(&session->IMFMediaSession_iface);
+}
+
+static HRESULT WINAPI session_rate_support_GetSlowestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
+        BOOL thin, float *rate)
+{
+    FIXME("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_rate_support_GetFastestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
+        BOOL thin, float *rate)
+{
+    FIXME("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_rate_support_IsSupported(IMFRateSupport *iface, BOOL thin, float rate,
+        float *nearest_supported_rate)
+{
+    FIXME("%p, %d, %f, %p.\n", iface, thin, rate, nearest_supported_rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFRateSupportVtbl session_rate_support_vtbl =
+{
+    session_rate_support_QueryInterface,
+    session_rate_support_AddRef,
+    session_rate_support_Release,
+    session_rate_support_GetSlowestRate,
+    session_rate_support_GetFastestRate,
+    session_rate_support_IsSupported,
+};
+
+static HRESULT WINAPI session_rate_control_QueryInterface(IMFRateControl *iface, REFIID riid, void **obj)
+{
+    struct media_session *session = impl_session_from_IMFRateControl(iface);
+    return IMFMediaSession_QueryInterface(&session->IMFMediaSession_iface, riid, obj);
+}
+
+static ULONG WINAPI session_rate_control_AddRef(IMFRateControl *iface)
+{
+    struct media_session *session = impl_session_from_IMFRateControl(iface);
+    return IMFMediaSession_AddRef(&session->IMFMediaSession_iface);
+}
+
+static ULONG WINAPI session_rate_control_Release(IMFRateControl *iface)
+{
+    struct media_session *session = impl_session_from_IMFRateControl(iface);
+    return IMFMediaSession_Release(&session->IMFMediaSession_iface);
+}
+
+static HRESULT WINAPI session_rate_control_SetRate(IMFRateControl *iface, BOOL thin, float rate)
+{
+    FIXME("%p, %d, %f.\n", iface, thin, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_rate_control_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
+{
+    FIXME("%p, %p, %p.\n", iface, thin, rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFRateControlVtbl session_rate_control_vtbl =
+{
+    session_rate_control_QueryInterface,
+    session_rate_control_AddRef,
+    session_rate_control_Release,
+    session_rate_control_SetRate,
+    session_rate_control_GetRate,
+};
+
 /***********************************************************************
  *      MFCreateMediaSession (mf.@)
  */
@@ -562,6 +690,8 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
 
     object->IMFMediaSession_iface.lpVtbl = &mfmediasessionvtbl;
     object->IMFGetService_iface.lpVtbl = &session_get_service_vtbl;
+    object->IMFRateSupport_iface.lpVtbl = &session_rate_support_vtbl;
+    object->IMFRateControl_iface.lpVtbl = &session_rate_control_vtbl;
     object->commands_callback.lpVtbl = &session_commands_callback_vtbl;
     object->refcount = 1;
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))

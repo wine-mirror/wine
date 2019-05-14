@@ -943,8 +943,12 @@ todo_wine
 
 static void test_media_session(void)
 {
+    MFCLOCK_PROPERTIES clock_props;
     IMFMediaSession *session;
+    IMFRateControl *rc, *rc2;
+    IMFRateSupport *rs;
     IMFGetService *gs;
+    IMFClock *clock;
     IUnknown *unk;
     HRESULT hr;
 
@@ -959,6 +963,35 @@ static void test_media_session(void)
 
     hr = IMFMediaSession_QueryInterface(session, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rs);
+    ok(hr == S_OK, "Failed to get rate support interface, hr %#x.\n", hr);
+
+    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rc);
+    ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
+
+    hr = IMFRateSupport_QueryInterface(rs, &IID_IMFMediaSession, (void **)&unk);
+    ok(hr == S_OK, "Failed to get session interface, hr %#x.\n", hr);
+    ok(unk == (IUnknown *)session, "Unexpected pointer.\n");
+    IUnknown_Release(unk);
+
+    hr = IMFMediaSession_GetClock(session, &clock);
+todo_wine
+    ok(hr == S_OK, "Failed to get clock, hr %#x.\n", hr);
+
+if (SUCCEEDED(hr))
+{
+    hr = IMFClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rc2);
+    ok(hr == S_OK, "Failed to get rate control, hr %#x.\n", hr);
+    IMFRateControl_Release(rc2);
+
+    hr = IMFClock_GetProperties(clock, &clock_props);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+}
+    IMFRateControl_Release(rc);
+    IMFRateSupport_Release(rs);
+
     IMFGetService_Release(gs);
 
     test_session_events(session);
