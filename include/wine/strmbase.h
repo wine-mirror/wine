@@ -163,14 +163,13 @@ typedef struct BaseFilter
 	IReferenceClock * pClock;
 	FILTER_INFO filterInfo;
 	CLSID clsid;
-	LONG pinVersion;
+        LONG pin_version;
 
 	const struct BaseFilterFuncTable* pFuncsTable;
 } BaseFilter;
 
 typedef IPin* (WINAPI *BaseFilter_GetPin)(BaseFilter* iface, int iPosition);
 typedef LONG (WINAPI *BaseFilter_GetPinCount)(BaseFilter* iface);
-typedef LONG (WINAPI *BaseFilter_GetPinVersion)(BaseFilter* iface);
 
 typedef struct BaseFilterFuncTable {
 	/* Required */
@@ -191,7 +190,6 @@ HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *
 HRESULT WINAPI BaseFilterImpl_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName );
 HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);
 
-LONG WINAPI BaseFilterImpl_GetPinVersion(BaseFilter* This);
 VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter* This);
 
 HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseFilterFuncTable* pBaseFuncsTable);
