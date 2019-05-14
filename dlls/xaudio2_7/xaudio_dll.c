@@ -35,6 +35,7 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
