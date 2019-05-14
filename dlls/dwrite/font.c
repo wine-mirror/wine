@@ -114,14 +114,15 @@ struct dwrite_fontfamily_data
     BOOL has_italic_face : 1;
 };
 
-struct dwrite_fontcollection {
+struct dwrite_fontcollection
+{
     IDWriteFontCollection1 IDWriteFontCollection1_iface;
-    LONG ref;
+    LONG refcount;
 
     IDWriteFactory5 *factory;
     struct dwrite_fontfamily_data **family_data;
-    UINT32 family_count;
-    UINT32 family_alloc;
+    size_t size;
+    size_t count;
 };
 
 struct dwrite_fontfamily {
@@ -2441,58 +2442,65 @@ static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection1
 
 static ULONG WINAPI dwritefontcollection_AddRef(IDWriteFontCollection1 *iface)
 {
-    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection1(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
-    return ref;
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection1(iface);
+    ULONG refcount = InterlockedIncrement(&collection->refcount);
+
+    TRACE("%p, refcount %d.\n", collection, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI dwritefontcollection_Release(IDWriteFontCollection1 *iface)
 {
-    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection1(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection1(iface);
+    ULONG refcount = InterlockedDecrement(&collection->refcount);
+    size_t i;
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    if (!ref) {
-        int i;
-
-        factory_detach_fontcollection(This->factory, iface);
-        for (i = 0; i < This->family_count; i++)
-            release_fontfamily_data(This->family_data[i]);
-        heap_free(This->family_data);
-        heap_free(This);
+    if (!refcount)
+    {
+        factory_detach_fontcollection(collection->factory, iface);
+        for (i = 0; i < collection->count; ++i)
+            release_fontfamily_data(collection->family_data[i]);
+        heap_free(collection->family_data);
+        heap_free(collection);
     }
 
-    return ref;
+    return refcount;
 }
 
 static UINT32 WINAPI dwritefontcollection_GetFontFamilyCount(IDWriteFontCollection1 *iface)
 {
-    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection1(iface);
-    TRACE("(%p)\n", This);
-    return This->family_count;
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection1(iface);
+
+    TRACE("%p.\n", iface);
+
+    return collection->count;
 }
 
-static HRESULT WINAPI dwritefontcollection_GetFontFamily(IDWriteFontCollection1 *iface, UINT32 index, IDWriteFontFamily **family)
+static HRESULT WINAPI dwritefontcollection_GetFontFamily(IDWriteFontCollection1 *iface, UINT32 index,
+        IDWriteFontFamily **family)
 {
-    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection1(iface);
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection1(iface);
 
-    TRACE("(%p)->(%u %p)\n", This, index, family);
+    TRACE("%p, %u, %p.\n", iface, index, family);
 
-    if (index >= This->family_count) {
+    if (index >= collection->count)
+    {
         *family = NULL;
         return E_FAIL;
     }
 
-    return create_fontfamily(This, index, (IDWriteFontFamily1 **)family);
+    return create_fontfamily(collection, index, (IDWriteFontFamily1 **)family);
 }
 
 static UINT32 collection_find_family(struct dwrite_fontcollection *collection, const WCHAR *name)
 {
-    UINT32 i;
+    size_t i;
 
-    for (i = 0; i < collection->family_count; i++) {
+    for (i = 0; i < collection->count; ++i)
+    {
         IDWriteLocalizedStrings *family_name = collection->family_data[i]->familyname;
         UINT32 j, count = IDWriteLocalizedStrings_GetCount(family_name);
         HRESULT hr;
@@ -2540,32 +2548,34 @@ static BOOL is_same_fontfile(IDWriteFontFile *left, IDWriteFontFile *right)
     return !memcmp(left_key, right_key, left_key_size);
 }
 
-static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollection1 *iface, IDWriteFontFace *face, IDWriteFont **font)
+static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollection1 *iface, IDWriteFontFace *face,
+        IDWriteFont **font)
 {
-    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection1(iface);
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection1(iface);
     IDWriteFontFamily1 *family;
     BOOL found_font = FALSE;
     IDWriteFontFile *file;
-    UINT32 i, face_index;
+    UINT32 face_index, count;
+    size_t i, j;
     HRESULT hr;
-    size_t j;
 
-    TRACE("(%p)->(%p %p)\n", This, face, font);
+    TRACE("%p, %p, %p.\n", iface, face, font);
 
     *font = NULL;
 
     if (!face)
         return E_INVALIDARG;
 
-    i = 1;
-    hr = IDWriteFontFace_GetFiles(face, &i, &file);
+    count = 1;
+    hr = IDWriteFontFace_GetFiles(face, &count, &file);
     if (FAILED(hr))
         return hr;
     face_index = IDWriteFontFace_GetIndex(face);
 
     found_font = FALSE;
-    for (i = 0; i < This->family_count; i++) {
-        struct dwrite_fontfamily_data *family_data = This->family_data[i];
+    for (i = 0; i < collection->count; ++i)
+    {
+        struct dwrite_fontfamily_data *family_data = collection->family_data[i];
 
         for (j = 0; j < family_data->count; ++j)
         {
@@ -2585,7 +2595,7 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     if (!found_font)
         return DWRITE_E_NOFONT;
 
-    hr = create_fontfamily(This, i, &family);
+    hr = create_fontfamily(collection, i, &family);
     if (FAILED(hr))
         return hr;
 
@@ -2603,18 +2613,20 @@ static HRESULT WINAPI dwritefontcollection1_GetFontSet(IDWriteFontCollection1 *i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontcollection1_GetFontFamily(IDWriteFontCollection1 *iface, UINT32 index, IDWriteFontFamily1 **family)
+static HRESULT WINAPI dwritefontcollection1_GetFontFamily(IDWriteFontCollection1 *iface, UINT32 index,
+        IDWriteFontFamily1 **family)
 {
-    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection1(iface);
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection1(iface);
 
-    TRACE("(%p)->(%u %p)\n", This, index, family);
+    TRACE("%p, %u, %p.\n", iface, index, family);
 
-    if (index >= This->family_count) {
+    if (index >= collection->count)
+    {
         *family = NULL;
         return E_FAIL;
     }
 
-    return create_fontfamily(This, index, family);
+    return create_fontfamily(collection, index, family);
 }
 
 static const IDWriteFontCollection1Vtbl fontcollectionvtbl = {
@@ -2659,34 +2671,26 @@ static HRESULT fontfamily_add_font(struct dwrite_fontfamily_data *family_data, s
     return S_OK;
 }
 
-static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collection, struct dwrite_fontfamily_data *family)
+static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collection,
+        struct dwrite_fontfamily_data *family)
 {
-    if (collection->family_alloc < collection->family_count + 1) {
-        struct dwrite_fontfamily_data **new_list;
-        UINT32 new_alloc;
-
-        new_alloc = collection->family_alloc * 2;
-        new_list = heap_realloc(collection->family_data, sizeof(*new_list) * new_alloc);
-        if (!new_list)
-            return E_OUTOFMEMORY;
-
-        collection->family_alloc = new_alloc;
-        collection->family_data = new_list;
+    if (!dwrite_array_reserve((void **)&collection->family_data, &collection->size, collection->count + 1,
+            sizeof(*collection->family_data)))
+    {
+        return E_OUTOFMEMORY;
     }
 
-    collection->family_data[collection->family_count++] = family;
+    collection->family_data[collection->count++] = family;
     return S_OK;
 }
 
 static HRESULT init_font_collection(struct dwrite_fontcollection *collection, BOOL is_system)
 {
     collection->IDWriteFontCollection1_iface.lpVtbl = is_system ? &systemfontcollectionvtbl : &fontcollectionvtbl;
-    collection->ref = 1;
-    collection->family_count = 0;
-    collection->family_alloc = is_system ? 30 : 5;
-    collection->family_data = heap_calloc(collection->family_alloc, sizeof(*collection->family_data));
-    if (!collection->family_data)
-        return E_OUTOFMEMORY;
+    collection->refcount = 1;
+    collection->count = 0;
+    collection->size = 0;
+    collection->family_data = NULL;
 
     return S_OK;
 }
@@ -3772,7 +3776,7 @@ HRESULT create_font_collection(IDWriteFactory5 *factory, IDWriteFontFileEnumerat
     struct list scannedfiles;
     BOOL current = FALSE;
     HRESULT hr = S_OK;
-    UINT32 i;
+    size_t i;
 
     *ret = NULL;
 
@@ -3906,7 +3910,8 @@ HRESULT create_font_collection(IDWriteFactory5 *factory, IDWriteFontFileEnumerat
         heap_free(fileenum);
     }
 
-    for (i = 0; i < collection->family_count; i++) {
+    for (i = 0; i < collection->count; ++i)
+    {
         fontfamily_add_bold_simulated_face(collection->family_data[i]);
         fontfamily_add_oblique_simulated_face(collection->family_data[i]);
     }
@@ -4229,7 +4234,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection1
     BOOL exists;
     LONG retval;
     HRESULT hr;
-    UINT32 i;
+    size_t i;
 
     TRACE("building EUDC font collection for factory %p, ACP %u\n", factory, GetACP());
 
@@ -4283,7 +4288,8 @@ HRESULT get_eudc_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection1
     }
 
     /* EUDC collection offers simulated faces too */
-    for (i = 0; i < collection->family_count; i++) {
+    for (i = 0; i < collection->count; ++i)
+    {
         fontfamily_add_bold_simulated_face(collection->family_data[i]);
         fontfamily_add_oblique_simulated_face(collection->family_data[i]);
     }
