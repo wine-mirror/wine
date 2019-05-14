@@ -474,6 +474,39 @@ NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER Time )
     return STATUS_SUCCESS;
 }
 
+/***********************************************************************
+ *       RtlGetSystemTimePrecise [NTDLL.@]
+ *
+ * Get a more accurate current system time.
+ *
+ * RETURNS
+ *   The current system time.
+ */
+LONGLONG WINAPI RtlGetSystemTimePrecise( void )
+{
+    LONGLONG time;
+
+#ifdef HAVE_CLOCK_GETTIME
+    struct timespec ts;
+
+    if (!clock_gettime( CLOCK_REALTIME, &ts ))
+    {
+        time = ts.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+        time += (ts.tv_nsec + 50) / 100;
+    }
+    else
+#endif
+    {
+        struct timeval now;
+
+        gettimeofday( &now, 0 );
+        time = now.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+        time += now.tv_usec * 10;
+    }
+
+    return time;
+}
+
 /******************************************************************************
  *  NtQueryPerformanceCounter	[NTDLL.@]
  */

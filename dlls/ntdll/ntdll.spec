@@ -680,6 +680,7 @@
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)
 # @ stub RtlGetSecurityDescriptorRMControl
 # @ stub RtlGetSetBootStatusData
+@ stdcall -ret64 RtlGetSystemTimePrecise()
 @ stdcall RtlGetThreadErrorMode()
 @ stdcall RtlGetUnloadEventTrace()
 @ stdcall RtlGetUnloadEventTraceEx(ptr ptr ptr)
