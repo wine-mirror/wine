@@ -133,16 +133,8 @@ static IPin* WINAPI AviMux_GetPin(BaseFilter *iface, int pos)
     return NULL;
 }
 
-static LONG WINAPI AviMux_GetPinCount(BaseFilter *iface)
-{
-    AviMux *This = impl_from_BaseFilter(iface);
-    TRACE("(%p)\n", This);
-    return This->input_pin_no+1;
-}
-
 static const BaseFilterFuncTable filter_func_table = {
     AviMux_GetPin,
-    AviMux_GetPinCount
 };
 
 static inline AviMux* impl_from_IBaseFilter(IBaseFilter *iface)

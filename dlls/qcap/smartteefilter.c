@@ -224,13 +224,8 @@ static IPin* WINAPI SmartTeeFilter_GetPin(BaseFilter *iface, int pos)
     return ret;
 }
 
-static LONG WINAPI SmartTeeFilter_GetPinCount(BaseFilter *iface)
-{
-    return 3;
-}
 static const BaseFilterFuncTable SmartTeeFilterFuncs = {
     SmartTeeFilter_GetPin,
-    SmartTeeFilter_GetPinCount
 };
 
 static ULONG WINAPI SmartTeeFilterInput_AddRef(IPin *iface)

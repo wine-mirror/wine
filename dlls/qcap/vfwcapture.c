@@ -203,14 +203,8 @@ static IPin* WINAPI VfwCapture_GetPin(BaseFilter *iface, int pos)
     return This->pOutputPin;
 }
 
-static LONG WINAPI VfwCapture_GetPinCount(BaseFilter *iface)
-{
-    return 1;
-}
-
 static const BaseFilterFuncTable BaseFuncTable = {
     VfwCapture_GetPin,
-    VfwCapture_GetPinCount
 };
 
 IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)

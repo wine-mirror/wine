@@ -139,14 +139,8 @@ static IPin *WINAPI TransformFilter_GetPin(BaseFilter *iface, int index)
     return filter->ppPins[index];
 }
 
-static LONG WINAPI TransformFilter_GetPinCount(BaseFilter *iface)
-{
-    return 2;
-}
-
 static const BaseFilterFuncTable tfBaseFuncTable = {
     TransformFilter_GetPin,
-    TransformFilter_GetPinCount
 };
 
 static const BaseInputPinFuncTable tf_input_BaseInputFuncTable = {

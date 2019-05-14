@@ -77,18 +77,8 @@ static IPin* WINAPI Parser_GetPin(BaseFilter *iface, int pos)
     return This->ppPins[pos];
 }
 
-static LONG WINAPI Parser_GetPinCount(BaseFilter *iface)
-{
-    ParserImpl *This = impl_from_BaseFilter(iface);
-
-    TRACE("%p->()\n", This);
-
-    return This->cStreams + 1;
-}
-
 static const BaseFilterFuncTable BaseFuncTable = {
     Parser_GetPin,
-    Parser_GetPinCount
 };
 
 HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *Parser_Vtbl,

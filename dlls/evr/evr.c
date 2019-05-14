@@ -194,16 +194,9 @@ static IPin* WINAPI filter_GetPin(BaseFilter *iface, int position)
     return NULL;
 }
 
-static LONG WINAPI filter_GetPinCount(BaseFilter *iface)
-{
-    FIXME("(%p): stub!\n", iface);
-    return 0;
-}
-
 static const BaseFilterFuncTable basefilter_functable =
 {
     filter_GetPin,
-    filter_GetPinCount,
 };
 
 HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv)

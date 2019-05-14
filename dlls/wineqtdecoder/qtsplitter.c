@@ -233,18 +233,8 @@ static IPin * WINAPI QT_GetPin(BaseFilter *base, int index)
     return NULL;
 }
 
-static LONG WINAPI QT_GetPinCount(BaseFilter *iface)
-{
-    QTSplitter *This = impl_from_BaseFilter(iface);
-    int c = 1;
-    if (This->pAudio_Pin) c++;
-    if (This->pVideo_Pin) c++;
-    return c;
-}
-
 static const BaseFilterFuncTable BaseFuncTable = {
     QT_GetPin,
-    QT_GetPinCount
 };
 
 IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)

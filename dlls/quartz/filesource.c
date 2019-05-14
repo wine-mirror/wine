@@ -405,21 +405,8 @@ static IPin* WINAPI AsyncReader_GetPin(BaseFilter *iface, int pos)
     return This->pOutputPin;
 }
 
-static LONG WINAPI AsyncReader_GetPinCount(BaseFilter *iface)
-{
-    AsyncReader *This = impl_from_BaseFilter(iface);
-
-    TRACE("%p->()\n", This);
-
-    if (!This->pOutputPin)
-        return 0;
-    else
-        return 1;
-}
-
 static const BaseFilterFuncTable BaseFuncTable = {
     AsyncReader_GetPin,
-    AsyncReader_GetPinCount
 };
 
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)

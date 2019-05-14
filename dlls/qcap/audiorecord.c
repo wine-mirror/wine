@@ -177,16 +177,8 @@ static IPin* WINAPI AudioRecord_GetPin(BaseFilter *iface, int pos)
     return NULL;
 }
 
-static LONG WINAPI AudioRecord_GetPinCount(BaseFilter *iface)
-{
-    AudioRecord *This = impl_from_BaseFilter(iface);
-    FIXME("(%p): stub\n", This);
-    return 0;
-}
-
 static const BaseFilterFuncTable AudioRecordFuncs = {
     AudioRecord_GetPin,
-    AudioRecord_GetPinCount
 };
 
 static HRESULT WINAPI PPB_QueryInterface(IPersistPropertyBag *iface, REFIID riid, LPVOID *ppv)

@@ -321,16 +321,8 @@ static IPin* WINAPI MediaStreamFilterImpl_GetPin(BaseFilter *iface, int pos)
     return NULL;
 }
 
-static LONG WINAPI MediaStreamFilterImpl_GetPinCount(BaseFilter *iface)
-{
-    IMediaStreamFilterImpl* This = (IMediaStreamFilterImpl*)iface;
-
-    return This->nb_streams;
-}
-
 static const BaseFilterFuncTable BaseFuncTable = {
     MediaStreamFilterImpl_GetPin,
-    MediaStreamFilterImpl_GetPinCount
 };
 
 HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, void **ppObj)

@@ -194,11 +194,6 @@ static IPin* WINAPI BaseRenderer_GetPin(BaseFilter *iface, int pos)
     return &This->pInputPin->pin.IPin_iface;
 }
 
-static LONG WINAPI BaseRenderer_GetPinCount(BaseFilter *iface)
-{
-    return 1;
-}
-
 static HRESULT WINAPI BaseRenderer_Input_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE * pmt)
 {
     BaseRenderer *This = impl_from_IBaseFilter(pin->pinInfo.pFilter);
@@ -213,7 +208,6 @@ static HRESULT WINAPI BaseRenderer_Receive(BaseInputPin *pin, IMediaSample * pSa
 
 static const BaseFilterFuncTable RendererBaseFilterFuncTable = {
     BaseRenderer_GetPin,
-    BaseRenderer_GetPinCount
 };
 
 static const BaseInputPinFuncTable input_BaseInputFuncTable = {

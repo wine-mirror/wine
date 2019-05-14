@@ -1210,16 +1210,8 @@ static IPin* WINAPI GST_GetPin(BaseFilter *iface, int pos)
     return pin;
 }
 
-static LONG WINAPI GST_GetPinCount(BaseFilter *iface)
-{
-    GSTImpl *This = (GSTImpl *)iface;
-    TRACE("%p -> %u\n", This, This->cStreams + 1);
-    return (This->cStreams + 1);
-}
-
 static const BaseFilterFuncTable BaseFuncTable = {
     GST_GetPin,
-    GST_GetPinCount
 };
 
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)

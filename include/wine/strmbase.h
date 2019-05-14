@@ -169,12 +169,10 @@ typedef struct BaseFilter
 } BaseFilter;
 
 typedef IPin* (WINAPI *BaseFilter_GetPin)(BaseFilter* iface, int iPosition);
-typedef LONG (WINAPI *BaseFilter_GetPinCount)(BaseFilter* iface);
 
 typedef struct BaseFilterFuncTable {
 	/* Required */
 	BaseFilter_GetPin pfnGetPin;
-	BaseFilter_GetPinCount pfnGetPinCount;
 } BaseFilterFuncTable;
 
 HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);

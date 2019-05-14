@@ -266,14 +266,8 @@ static IPin* WINAPI AVICompressor_GetPin(BaseFilter *iface, int pos)
     return ret;
 }
 
-static LONG WINAPI AVICompressor_GetPinCount(BaseFilter *iface)
-{
-    return 2;
-}
-
 static const BaseFilterFuncTable filter_func_table = {
     AVICompressor_GetPin,
-    AVICompressor_GetPinCount
 };
 
 static AVICompressor *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)

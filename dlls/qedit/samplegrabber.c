@@ -354,14 +354,8 @@ static IPin *WINAPI SampleGrabber_GetPin(BaseFilter *iface, int pos)
     return pin;
 }
 
-static LONG WINAPI SampleGrabber_GetPinCount(BaseFilter *iface)
-{
-    return 2;
-}
-
 static const BaseFilterFuncTable basefunc_vtbl = {
     SampleGrabber_GetPin,
-    SampleGrabber_GetPinCount
 };
 
 /* Helper that buffers data and/or calls installed sample callbacks */
