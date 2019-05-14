@@ -482,7 +482,9 @@ static NTSTATUS HID_get_feature(DEVICE_OBJECT *device, IRP *irp)
 static NTSTATUS HID_set_to_device(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HID_XFER_PACKET packet;
+    ULONG max_len;
     NTSTATUS rc;
 
     TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", device, irpsp->Parameters.DeviceIoControl.InputBufferLength, irp->AssociatedIrp.SystemBuffer);
@@ -491,12 +493,23 @@ static NTSTATUS HID_set_to_device(DEVICE_OBJECT *device, IRP *irp)
     {
         packet.reportBuffer = &((BYTE*)irp->AssociatedIrp.SystemBuffer)[1];
         packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.InputBufferLength - 1;
+        if (irpsp->Parameters.DeviceIoControl.IoControlCode == IOCTL_HID_SET_FEATURE)
+            max_len = ext->preparseData->caps.FeatureReportByteLength;
+        else
+            max_len = ext->preparseData->caps.OutputReportByteLength;
     }
     else
     {
         packet.reportBuffer = irp->AssociatedIrp.SystemBuffer;
         packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+        if (irpsp->Parameters.DeviceIoControl.IoControlCode == IOCTL_HID_SET_FEATURE)
+            max_len = (ext->preparseData->reports[ext->preparseData->reportIdx[HidP_Feature][packet.reportId]].bitSize + 7) / 8;
+        else
+            max_len = (ext->preparseData->reports[ext->preparseData->reportIdx[HidP_Output][packet.reportId]].bitSize + 7) / 8;
     }
+    if (packet.reportBufferLen > max_len)
+        packet.reportBufferLen = max_len;
+
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
 
     rc = call_minidriver(irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -740,7 +753,9 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
 NTSTATUS WINAPI HID_Device_write(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HID_XFER_PACKET packet;
+    ULONG max_len;
     NTSTATUS rc;
 
     irp->IoStatus.Information = 0;
@@ -751,12 +766,17 @@ NTSTATUS WINAPI HID_Device_write(DEVICE_OBJECT *device, IRP *irp)
     {
         packet.reportBuffer = &((BYTE*)irp->AssociatedIrp.SystemBuffer)[1];
         packet.reportBufferLen = irpsp->Parameters.Write.Length - 1;
+        max_len = ext->preparseData->caps.OutputReportByteLength;
     }
     else
     {
         packet.reportBuffer = irp->AssociatedIrp.SystemBuffer;
         packet.reportBufferLen = irpsp->Parameters.Write.Length;
+        max_len = (ext->preparseData->reports[ext->preparseData->reportIdx[HidP_Output][packet.reportId]].bitSize + 7) / 8;
     }
+    if (packet.reportBufferLen > max_len)
+        packet.reportBufferLen = max_len;
+
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
 
     rc = call_minidriver(IOCTL_HID_WRITE_REPORT, device, NULL, 0, &packet, sizeof(packet));
