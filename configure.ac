@@ -1026,7 +1026,7 @@ then
         ac_save_CC="$CC"
         saved_CFLAGS=$CFLAGS
         AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-"-g -O2"})
-        AC_SUBST(EXTRACROSSCFLAGS,"-DWINE_CROSSTEST -Wall")
+        AC_SUBST(EXTRACROSSCFLAGS,"-DWINE_CROSS_PE -Wall")
 
         CC="$CROSSCC"
         CFLAGS=$CROSSCFLAGS
@@ -2715,8 +2715,8 @@ dnl **** Generate output files ****
 
 AH_TOP([#ifndef __WINE_CONFIG_H
 #define __WINE_CONFIG_H
-#ifndef WINE_CROSSTEST])
-AH_BOTTOM([#endif /* WINE_CROSSTEST */
+#ifndef WINE_CROSS_PE])
+AH_BOTTOM([#endif /* WINE_CROSS_PE */
 #endif /* __WINE_CONFIG_H */])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])

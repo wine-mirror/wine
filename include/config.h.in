@@ -2,7 +2,7 @@
 
 #ifndef __WINE_CONFIG_H
 #define __WINE_CONFIG_H
-#ifndef WINE_CROSSTEST
+#ifndef WINE_CROSS_PE
 
 /* Define to the file extension for executables. */
 #undef EXEEXT
@@ -1475,5 +1475,5 @@
 #undef inline
 #endif
 
-#endif /* WINE_CROSSTEST */
+#endif /* WINE_CROSS_PE */
 #endif /* __WINE_CONFIG_H */

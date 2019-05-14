@@ -9755,7 +9755,7 @@ test -n "$CROSSCC" || CROSSCC="false"
         saved_CFLAGS=$CFLAGS
         CROSSCFLAGS=${CROSSCFLAGS:-"-g -O2"}
 
-        EXTRACROSSCFLAGS="-DWINE_CROSSTEST -Wall"
+        EXTRACROSSCFLAGS="-DWINE_CROSS_PE -Wall"
 
 
         CC="$CROSSCC"
