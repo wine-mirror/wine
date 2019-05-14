@@ -645,6 +645,26 @@ static IDirect3DMaterial *create_diffuse_material(IDirect3DDevice *device, float
     return create_material(device, &mat);
 }
 
+static IDirect3DMaterial *create_diffuse_and_ambient_material(IDirect3DDevice *device,
+        float r, float g, float b, float a)
+{
+    D3DMATERIAL mat;
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U(mat).diffuse).r = r;
+    U2(U(mat).diffuse).g = g;
+    U3(U(mat).diffuse).b = b;
+    U4(U(mat).diffuse).a = a;
+
+    U1(U(mat).ambient).r = r;
+    U2(U(mat).ambient).g = g;
+    U3(U(mat).ambient).b = b;
+    U4(U(mat).ambient).a = a;
+
+    return create_material(device, &mat);
+}
+
 static IDirect3DMaterial *create_emissive_material(IDirect3DDevice *device, float r, float g, float b, float a)
 {
     D3DMATERIAL mat;
@@ -6023,10 +6043,10 @@ static void test_lighting(void)
     }
     tests[] =
     {
-        {&mat, nquad, 0x000000ff, "Lit quad with light"},
-        {&mat_singular, nquad, 0x000000b4, "Lit quad with singular world matrix"},
-        {&mat_transf, rotatedquad, 0x000000ff, "Lit quad with transformation matrix"},
-        {&mat_nonaffine, translatedquad, 0x000000ff, "Lit quad with non-affine matrix"},
+        {&mat, nquad, 0x000060ff, "Lit quad with light"},
+        {&mat_singular, nquad, 0x00004db4, "Lit quad with singular world matrix"},
+        {&mat_transf, rotatedquad, 0x000060ff, "Lit quad with transformation matrix"},
+        {&mat_nonaffine, translatedquad, 0x000060ff, "Lit quad with non-affine matrix"},
     };
 
     D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
@@ -6061,30 +6081,30 @@ static void test_lighting(void)
     }
 
     hr = IDirect3DDevice_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 640, 480);
-    material = create_diffuse_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
+    material = create_diffuse_and_ambient_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
     viewport_set_background(device, viewport, material);
 
     hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_CreateMatrix(device, &world_handle);
-    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_SetMatrix(device, world_handle, &mat);
-    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_CreateMatrix(device, &view_handle);
-    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_SetMatrix(device, view_handle, &mat);
-    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_CreateMatrix(device, &proj_handle);
-    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_SetMatrix(device, proj_handle, &mat);
-    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&exec_desc, 0, sizeof(exec_desc));
     exec_desc.dwSize = sizeof(exec_desc);
@@ -6093,10 +6113,10 @@ static void test_lighting(void)
     exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
 
     hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
-    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memcpy(exec_desc.lpData, unlitquad, sizeof(unlitquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(unlitquad);
@@ -6113,17 +6133,17 @@ static void test_lighting(void)
     inst_length -= sizeof(unlitquad);
 
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     set_execute_data(execute_buffer, 4, sizeof(unlitquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memcpy(exec_desc.lpData, litquad, sizeof(litquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(litquad);
@@ -6134,14 +6154,14 @@ static void test_lighting(void)
     inst_length -= sizeof(litquad);
 
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     set_execute_data(execute_buffer, 4, sizeof(litquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memcpy(exec_desc.lpData, unlitnquad, sizeof(unlitnquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(unlitnquad);
@@ -6152,14 +6172,14 @@ static void test_lighting(void)
     inst_length -= sizeof(unlitnquad);
 
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     set_execute_data(execute_buffer, 4, sizeof(unlitnquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memcpy(exec_desc.lpData, litnquad, sizeof(litnquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(litnquad);
@@ -6170,14 +6190,14 @@ static void test_lighting(void)
     inst_length -= sizeof(litnquad);
 
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     set_execute_data(execute_buffer, 4, sizeof(litnquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     color = get_surface_color(rt, 160, 360);
     ok(color == 0x00ff0000, "Unlit quad without normals has color 0x%08x.\n", color);
@@ -6189,7 +6209,7 @@ static void test_lighting(void)
     ok(color == 0x00ffffff, "Lit quad with normals has color 0x%08x.\n", color);
 
     hr = IDirect3DMaterial_GetHandle(material, device, &mat_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3D_CreateLight(d3d, &light, NULL);
     ok(SUCCEEDED(hr), "Failed to create a light object, hr %#x.\n", hr);
@@ -6197,7 +6217,7 @@ static void test_lighting(void)
     light_desc.dwSize = sizeof(light_desc);
     light_desc.dltType = D3DLIGHT_DIRECTIONAL;
     U1(light_desc.dcvColor).r = 0.0f;
-    U2(light_desc.dcvColor).g = 0.0f;
+    U2(light_desc.dcvColor).g = 0.25f;
     U3(light_desc.dcvColor).b = 1.0f;
     U4(light_desc.dcvColor).a = 1.0f;
     U3(light_desc.dvDirection).z = 1.0f;
@@ -6221,20 +6241,21 @@ static void test_lighting(void)
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3DDevice_SetMatrix(device, world_handle, tests[i].world_matrix);
-        ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice_BeginScene(device);
-        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-        ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         memcpy(exec_desc.lpData, tests[i].quad, sizeof(nquad));
         ptr = ((BYTE *)exec_desc.lpData) + sizeof(nquad);
         emit_set_ls(&ptr, D3DLIGHTSTATE_MATERIAL, mat_handle);
+        emit_set_ls(&ptr, D3DLIGHTSTATE_AMBIENT, 0xff002000);
         emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORMLIGHT, 0, 4);
         emit_tquad_tlist(&ptr, 0);
         emit_end(&ptr);
@@ -6242,14 +6263,14 @@ static void test_lighting(void)
         inst_length -= sizeof(nquad);
 
         hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-        ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         set_execute_data(execute_buffer, 4, sizeof(nquad), inst_length);
         hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-        ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice_EndScene(device);
-        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         color = get_surface_color(rt, 320, 240);
         todo_wine ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
@@ -6260,7 +6281,7 @@ static void test_lighting(void)
     IDirect3DDevice_DeleteMatrix(device, view_handle);
     IDirect3DDevice_DeleteMatrix(device, proj_handle);
     hr = IDirect3DViewport_DeleteLight(viewport, light);
-    ok(SUCCEEDED(hr), "Failed to remove a light from the viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     IDirect3DLight_Release(light);
     destroy_material(material);
     destroy_viewport(device, viewport);
