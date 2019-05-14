@@ -2715,9 +2715,10 @@ dnl **** Generate output files ****
 
 AH_TOP([#ifndef __WINE_CONFIG_H
 #define __WINE_CONFIG_H
-#ifndef WINE_CROSS_PE])
-AH_BOTTOM([#endif /* WINE_CROSS_PE */
-#endif /* __WINE_CONFIG_H */])
+#ifdef WINE_CROSS_PE
+#error config.h should not be used when cross-compiling
+#endif])
+AH_BOTTOM([#endif /* __WINE_CONFIG_H */])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 AS_ECHO_N("creating Makefile rules...") >&AS_MESSAGE_FD
