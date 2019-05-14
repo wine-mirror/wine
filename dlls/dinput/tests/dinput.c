@@ -269,7 +269,7 @@ static void test_QueryInterface(void)
                                 &IID_IDirectInput2A, &IID_IDirectInput2W,
                                 &IID_IDirectInput7A, &IID_IDirectInput7W};
 
-    static const REFIID no_interface_list[] =
+    static REFIID no_interface_list[] =
     {
         &IID_IDirectInput8A,
         &IID_IDirectInput8W,
