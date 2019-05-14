@@ -29,6 +29,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(path);
 
+char *char_next(const char *ptr)
+{
+    if (!*ptr) return (LPSTR)ptr;
+    if (IsDBCSLeadByte( ptr[0] ) && ptr[1]) return (LPSTR)(ptr + 2);
+    return (LPSTR)(ptr + 1);
+}
+
 static SIZE_T strnlenW(const WCHAR *string, SIZE_T maxlen)
 {
     SIZE_T i;
@@ -864,4 +871,750 @@ BOOL WINAPI PathIsUNCEx(const WCHAR *path, const WCHAR **server)
 
     if (server) *server = result;
     return !!result;
+}
+
+BOOL WINAPI PathIsUNCA(const char *path)
+{
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    return path && (path[0] == '\\') && (path[1] == '\\');
+}
+
+BOOL WINAPI PathIsUNCW(const WCHAR *path)
+{
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    return path && (path[0] == '\\') && (path[1] == '\\');
+}
+
+BOOL WINAPI PathIsRelativeA(const char *path)
+{
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path || !*path || IsDBCSLeadByte(*path))
+        return TRUE;
+
+    return !(*path == '\\' || (*path && path[1] == ':'));
+}
+
+BOOL WINAPI PathIsRelativeW(const WCHAR *path)
+{
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path || !*path)
+        return TRUE;
+
+    return !(*path == '\\' || (*path && path[1] == ':'));
+}
+
+BOOL WINAPI PathIsUNCServerShareA(const char *path)
+{
+    BOOL seen_slash = FALSE;
+
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (path && *path++ == '\\' && *path++ == '\\')
+    {
+        while (*path)
+        {
+            if (*path == '\\')
+            {
+                if (seen_slash)
+                    return FALSE;
+                seen_slash = TRUE;
+            }
+
+            path = char_next(path);
+        }
+    }
+
+    return seen_slash;
+}
+
+BOOL WINAPI PathIsUNCServerShareW(const WCHAR *path)
+{
+    BOOL seen_slash = FALSE;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (path && *path++ == '\\' && *path++ == '\\')
+    {
+        while (*path)
+        {
+            if (*path == '\\')
+            {
+                if (seen_slash)
+                    return FALSE;
+                seen_slash = TRUE;
+            }
+
+            path++;
+        }
+    }
+
+    return seen_slash;
+}
+
+BOOL WINAPI PathIsRootA(const char *path)
+{
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path || !*path)
+        return FALSE;
+
+    if (*path == '\\')
+    {
+        if (!path[1])
+            return TRUE; /* \ */
+        else if (path[1] == '\\')
+        {
+            BOOL seen_slash = FALSE;
+            path += 2;
+
+            /* Check for UNC root path */
+            while (*path)
+            {
+                if (*path == '\\')
+                {
+                    if (seen_slash)
+                        return FALSE;
+                    seen_slash = TRUE;
+                }
+
+                path = char_next(path);
+            }
+
+            return TRUE;
+        }
+    }
+    else if (path[1] == ':' && path[2] == '\\' && path[3] == '\0')
+        return TRUE; /* X:\ */
+
+    return FALSE;
+}
+
+BOOL WINAPI PathIsRootW(const WCHAR *path)
+{
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path || !*path)
+        return FALSE;
+
+    if (*path == '\\')
+    {
+        if (!path[1])
+            return TRUE; /* \ */
+        else if (path[1] == '\\')
+        {
+            BOOL seen_slash = FALSE;
+
+            path += 2;
+            /* Check for UNC root path */
+            while (*path)
+            {
+                if (*path == '\\')
+                {
+                    if (seen_slash)
+                        return FALSE;
+                    seen_slash = TRUE;
+                }
+                path++;
+            }
+
+            return TRUE;
+        }
+    }
+    else if (path[1] == ':' && path[2] == '\\' && path[3] == '\0')
+        return TRUE; /* X:\ */
+
+    return FALSE;
+}
+
+BOOL WINAPI PathRemoveFileSpecA(char *path)
+{
+    char *filespec = path;
+    BOOL modified = FALSE;
+
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path)
+        return FALSE;
+
+    /* Skip directory or UNC path */
+    if (*path == '\\')
+        filespec = ++path;
+    if (*path == '\\')
+        filespec = ++path;
+
+    while (*path)
+    {
+        if (*path == '\\')
+            filespec = path; /* Skip dir */
+        else if (*path == ':')
+        {
+            filespec = ++path; /* Skip drive */
+            if (*path == '\\')
+                filespec++;
+        }
+        if (!(path = char_next(path)))
+            break;
+    }
+
+    if (*filespec)
+    {
+        *filespec = '\0';
+        modified = TRUE;
+    }
+
+    return modified;
+}
+
+BOOL WINAPI PathRemoveFileSpecW(WCHAR *path)
+{
+    WCHAR *filespec = path;
+    BOOL modified = FALSE;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path)
+        return FALSE;
+
+    /* Skip directory or UNC path */
+    if (*path == '\\')
+        filespec = ++path;
+    if (*path == '\\')
+        filespec = ++path;
+
+    while (*path)
+    {
+        if (*path == '\\')
+            filespec = path; /* Skip dir */
+        else if (*path == ':')
+        {
+            filespec = ++path; /* Skip drive */
+            if (*path == '\\')
+                filespec++;
+        }
+
+        path++;
+    }
+
+    if (*filespec)
+    {
+        *filespec = '\0';
+        modified = TRUE;
+    }
+
+    return modified;
+}
+
+BOOL WINAPI PathStripToRootA(char *path)
+{
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path)
+        return FALSE;
+
+    while (!PathIsRootA(path))
+        if (!PathRemoveFileSpecA(path))
+            return FALSE;
+
+    return TRUE;
+}
+
+BOOL WINAPI PathStripToRootW(WCHAR *path)
+{
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path)
+        return FALSE;
+
+    while (!PathIsRootW(path))
+        if (!PathRemoveFileSpecW(path))
+            return FALSE;
+
+    return TRUE;
+}
+
+LPSTR WINAPI PathAddBackslashA(char *path)
+{
+    unsigned int len;
+    char *prev = path;
+
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path || (len = strlen(path)) >= MAX_PATH)
+        return NULL;
+
+    if (len)
+    {
+        do
+        {
+            path = char_next(prev);
+            if (*path)
+            prev = path;
+        } while (*path);
+
+        if (*prev != '\\')
+        {
+            *path++ = '\\';
+            *path = '\0';
+        }
+    }
+
+    return path;
+}
+
+LPWSTR WINAPI PathAddBackslashW(WCHAR *path)
+{
+    unsigned int len;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path || (len = strlenW(path)) >= MAX_PATH)
+        return NULL;
+
+    if (len)
+    {
+        path += len;
+        if (path[-1] != '\\')
+        {
+            *path++ = '\\';
+            *path = '\0';
+        }
+    }
+
+    return path;
+}
+
+LPSTR WINAPI PathFindExtensionA(const char *path)
+{
+    const char *lastpoint = NULL;
+
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (path)
+    {
+        while (*path)
+        {
+            if (*path == '\\' || *path == ' ')
+                lastpoint = NULL;
+            else if (*path == '.')
+                lastpoint = path;
+            path = char_next(path);
+        }
+    }
+
+    return (LPSTR)(lastpoint ? lastpoint : path);
+}
+
+LPWSTR WINAPI PathFindExtensionW(const WCHAR *path)
+{
+    const WCHAR *lastpoint = NULL;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (path)
+    {
+        while (*path)
+        {
+            if (*path == '\\' || *path == ' ')
+                lastpoint = NULL;
+            else if (*path == '.')
+                lastpoint = path;
+            path++;
+        }
+    }
+
+    return (LPWSTR)(lastpoint ? lastpoint : path);
+}
+
+BOOL WINAPI PathAddExtensionA(char *path, const char *ext)
+{
+    unsigned int len;
+
+    TRACE("%s, %s\n", wine_dbgstr_a(path), wine_dbgstr_a(ext));
+
+    if (!path || !ext || *(PathFindExtensionA(path)))
+        return FALSE;
+
+    len = strlen(path);
+    if (len + strlen(ext) >= MAX_PATH)
+        return FALSE;
+
+    strcpy(path + len, ext);
+    return TRUE;
+}
+
+BOOL WINAPI PathAddExtensionW(WCHAR *path, const WCHAR *ext)
+{
+    unsigned int len;
+
+    TRACE("%s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(ext));
+
+    if (!path || !ext || *(PathFindExtensionW(path)))
+        return FALSE;
+
+    len = strlenW(path);
+    if (len + strlenW(ext) >= MAX_PATH)
+        return FALSE;
+
+    strcpyW(path + len, ext);
+    return TRUE;
+}
+
+BOOL WINAPI PathCanonicalizeW(WCHAR *buffer, const WCHAR *path)
+{
+    const WCHAR *src = path;
+    WCHAR *dst = buffer;
+
+    TRACE("%p, %s\n", buffer, wine_dbgstr_w(path));
+
+    if (dst)
+        *dst = '\0';
+
+    if (!dst || !path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!*path)
+    {
+        *buffer++ = '\\';
+        *buffer = '\0';
+        return TRUE;
+    }
+
+    /* Copy path root */
+    if (*src == '\\')
+    {
+        *dst++ = *src++;
+    }
+    else if (*src && src[1] == ':')
+    {
+        /* X:\ */
+        *dst++ = *src++;
+        *dst++ = *src++;
+        if (*src == '\\')
+            *dst++ = *src++;
+    }
+
+    /* Canonicalize the rest of the path */
+    while (*src)
+    {
+        if (*src == '.')
+        {
+            if (src[1] == '\\' && (src == path || src[-1] == '\\' || src[-1] == ':'))
+            {
+                src += 2; /* Skip .\ */
+            }
+            else if (src[1] == '.' && (dst == buffer || dst[-1] == '\\'))
+            {
+                /* \.. backs up a directory, over the root if it has no \ following X:.
+                 * .. is ignored if it would remove a UNC server name or initial \\
+                 */
+                if (dst != buffer)
+                {
+                    *dst = '\0'; /* Allow PathIsUNCServerShareA test on lpszBuf */
+                    if (dst > buffer + 1 && dst[-1] == '\\' && (dst[-2] != '\\' || dst > buffer + 2))
+                    {
+                        if (dst[-2] == ':' && (dst > buffer + 3 || dst[-3] == ':'))
+                        {
+                            dst -= 2;
+                            while (dst > buffer && *dst != '\\')
+                                dst--;
+                            if (*dst == '\\')
+                                dst++; /* Reset to last '\' */
+                            else
+                                dst = buffer; /* Start path again from new root */
+                        }
+                        else if (dst[-2] != ':' && !PathIsUNCServerShareW(buffer))
+                            dst -= 2;
+                    }
+                    while (dst > buffer && *dst != '\\')
+                        dst--;
+                    if (dst == buffer)
+                    {
+                        *dst++ = '\\';
+                        src++;
+                    }
+                }
+                src += 2; /* Skip .. in src path */
+            }
+            else
+                *dst++ = *src++;
+        }
+        else
+            *dst++ = *src++;
+    }
+
+    /* Append \ to naked drive specs */
+    if (dst - buffer == 2 && dst[-1] == ':')
+        *dst++ = '\\';
+    *dst++ = '\0';
+    return TRUE;
+}
+
+BOOL WINAPI PathCanonicalizeA(char *buffer, const char *path)
+{
+    WCHAR pathW[MAX_PATH], bufferW[MAX_PATH];
+    BOOL ret;
+    int len;
+
+    TRACE("%p, %s\n", buffer, wine_dbgstr_a(path));
+
+    if (buffer)
+        *buffer = '\0';
+
+    if (!buffer || !path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    len = MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, ARRAY_SIZE(pathW));
+    if (!len)
+        return FALSE;
+
+    ret = PathCanonicalizeW(bufferW, pathW);
+    WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, MAX_PATH, 0, 0);
+
+    return ret;
+}
+
+WCHAR * WINAPI PathCombineW(WCHAR *dst, const WCHAR *dir, const WCHAR *file)
+{
+    BOOL use_both = FALSE, strip = FALSE;
+    WCHAR tmp[MAX_PATH];
+
+    TRACE("%p, %s, %s\n", dst, wine_dbgstr_w(dir), wine_dbgstr_w(file));
+
+    /* Invalid parameters */
+    if (!dst)
+        return NULL;
+
+    if (!dir && !file)
+    {
+        dst[0] = 0;
+        return NULL;
+    }
+
+    if ((!file || !*file) && dir)
+    {
+        /* Use dir only */
+        lstrcpynW(tmp, dir, ARRAY_SIZE(tmp));
+    }
+    else if (!dir || !*dir || !PathIsRelativeW(file))
+    {
+        if (!dir || !*dir || *file != '\\' || PathIsUNCW(file))
+        {
+            /* Use file only */
+            lstrcpynW(tmp, file, ARRAY_SIZE(tmp));
+        }
+        else
+        {
+            use_both = TRUE;
+            strip = TRUE;
+        }
+    }
+    else
+        use_both = TRUE;
+
+    if (use_both)
+    {
+        lstrcpynW(tmp, dir, ARRAY_SIZE(tmp));
+        if (strip)
+        {
+            PathStripToRootW(tmp);
+            file++; /* Skip '\' */
+        }
+
+        if (!PathAddBackslashW(tmp) || strlenW(tmp) + strlenW(file) >= MAX_PATH)
+        {
+            dst[0] = 0;
+            return NULL;
+        }
+
+        strcatW(tmp, file);
+    }
+
+    PathCanonicalizeW(dst, tmp);
+    return dst;
+}
+
+LPSTR WINAPI PathCombineA(char *dst, const char *dir, const char *file)
+{
+    WCHAR dstW[MAX_PATH], dirW[MAX_PATH], fileW[MAX_PATH];
+
+    TRACE("%p, %s, %s\n", dst, wine_dbgstr_a(dir), wine_dbgstr_a(file));
+
+    /* Invalid parameters */
+    if (!dst)
+        return NULL;
+
+    dst[0] = 0;
+
+    if (!dir && !file)
+        return NULL;
+
+    if (dir && !MultiByteToWideChar(CP_ACP, 0, dir, -1, dirW, ARRAY_SIZE(dirW)))
+        return NULL;
+
+    if (file && !MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, ARRAY_SIZE(fileW)))
+        return NULL;
+
+    if (PathCombineW(dstW, dir ? dirW : NULL, file ? fileW : NULL))
+        if (WideCharToMultiByte(CP_ACP, 0, dstW, -1, dst, MAX_PATH, 0, 0))
+            return dst;
+
+    return NULL;
+}
+
+BOOL WINAPI PathAppendA(char *path, const char *append)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(path), wine_dbgstr_a(append));
+
+    if (path && append)
+    {
+        if (!PathIsUNCA(append))
+            while (*append == '\\')
+                append++;
+
+        if (PathCombineA(path, path, append))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL WINAPI PathAppendW(WCHAR *path, const WCHAR *append)
+{
+    TRACE("%s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(append));
+
+    if (path && append)
+    {
+        if (!PathIsUNCW(append))
+            while (*append == '\\')
+                append++;
+
+        if (PathCombineW(path, path, append))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+int WINAPI PathCommonPrefixA(const char *file1, const char *file2, char *path)
+{
+    const char *iter1 = file1;
+    const char *iter2 = file2;
+    unsigned int len = 0;
+
+    TRACE("%s, %s, %p.\n", wine_dbgstr_a(file1), wine_dbgstr_a(file2), path);
+
+    if (path)
+        *path = '\0';
+
+    if (!file1 || !file2)
+        return 0;
+
+    /* Handle roots first */
+    if (PathIsUNCA(file1))
+    {
+        if (!PathIsUNCA(file2))
+            return 0;
+        iter1 += 2;
+        iter2 += 2;
+    }
+    else if (PathIsUNCA(file2))
+        return 0;
+
+    for (;;)
+    {
+        /* Update len */
+        if ((!*iter1 || *iter1 == '\\') && (!*iter2 || *iter2 == '\\'))
+            len = iter1 - file1; /* Common to this point */
+
+        if (!*iter1 || (tolower(*iter1) != tolower(*iter2)))
+            break; /* Strings differ at this point */
+
+        iter1++;
+        iter2++;
+    }
+
+    if (len == 2)
+        len++; /* Feature/Bug compatible with Win32 */
+
+    if (len && path)
+    {
+        memcpy(path, file1, len);
+        path[len] = '\0';
+    }
+
+    return len;
+}
+
+int WINAPI PathCommonPrefixW(const WCHAR *file1, const WCHAR *file2, WCHAR *path)
+{
+    const WCHAR *iter1 = file1;
+    const WCHAR *iter2 = file2;
+    unsigned int len = 0;
+
+    TRACE("%s, %s, %p\n", wine_dbgstr_w(file1), wine_dbgstr_w(file2), path);
+
+    if (path)
+        *path = '\0';
+
+    if (!file1 || !file2)
+        return 0;
+
+    /* Handle roots first */
+    if (PathIsUNCW(file1))
+    {
+        if (!PathIsUNCW(file2))
+            return 0;
+        iter1 += 2;
+        iter2 += 2;
+    }
+    else if (PathIsUNCW(file2))
+      return 0;
+
+    for (;;)
+    {
+        /* Update len */
+        if ((!*iter1 || *iter1 == '\\') && (!*iter2 || *iter2 == '\\'))
+            len = iter1 - file1; /* Common to this point */
+
+        if (!*iter1 || (tolowerW(*iter1) != tolowerW(*iter2)))
+            break; /* Strings differ at this point */
+
+        iter1++;
+        iter2++;
+    }
+
+    if (len == 2)
+        len++; /* Feature/Bug compatible with Win32 */
+
+    if (len && path)
+    {
+        memcpy(path, file1, len * sizeof(WCHAR));
+        path[len] = '\0';
+    }
+
+    return len;
+}
+
+BOOL WINAPI PathIsPrefixA(const char *prefix, const char *path)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(prefix), wine_dbgstr_a(path));
+
+    return prefix && path && PathCommonPrefixA(path, prefix, NULL) == (int)strlen(prefix);
+}
+
+BOOL WINAPI PathIsPrefixW(const WCHAR *prefix, const WCHAR *path)
+{
+    TRACE("%s, %s\n", wine_dbgstr_w(prefix), wine_dbgstr_w(path));
+
+    return prefix && path && PathCommonPrefixW(path, prefix, NULL) == (int)strlenW(prefix);
 }
