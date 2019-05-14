@@ -98,8 +98,8 @@ static inline int sigsetjmp( sigjmp_buf buf, int sigs ) { return setjmp( buf ); 
 static inline void siglongjmp( sigjmp_buf buf, int val ) { longjmp( buf, val ); }
 #endif
 
-extern void __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
-                               void (*target)(void) ) DECLSPEC_HIDDEN DECLSPEC_NORETURN;
+extern void __cdecl __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
+                                       void (*target)(void) ) DECLSPEC_HIDDEN DECLSPEC_NORETURN;
 extern DWORD __wine_exception_handler( EXCEPTION_RECORD *record,
                                        EXCEPTION_REGISTRATION_RECORD *frame,
                                        CONTEXT *context,
