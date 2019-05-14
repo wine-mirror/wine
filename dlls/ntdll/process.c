@@ -88,7 +88,7 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
         self = !ret && reply->self;
     }
     SERVER_END_REQ;
-    if (self && handle) _exit( exit_code );
+    if (self && handle) _exit( get_unix_exit_code( exit_code ));
     return ret;
 }
 

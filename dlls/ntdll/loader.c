@@ -3264,7 +3264,7 @@ void WINAPI RtlExitUserProcess( DWORD status )
     NtTerminateProcess( 0, status );
     LdrShutdownProcess();
     NtTerminateProcess( GetCurrentProcess(), status );
-    exit( status );
+    exit( get_unix_exit_code( status ));
 }
 
 /******************************************************************

@@ -291,7 +291,7 @@ static void free_thread_data( TEB *teb )
 void abort_thread( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( status );
+    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( get_unix_exit_code( status ));
     signal_exit_thread( status );
 }
 
@@ -332,7 +332,7 @@ void WINAPI RtlExitUserThread( ULONG status )
     {
         LdrShutdownProcess();
         pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-        signal_exit_process( status );
+        signal_exit_process( get_unix_exit_code( status ));
     }
 
     LdrShutdownThread();
