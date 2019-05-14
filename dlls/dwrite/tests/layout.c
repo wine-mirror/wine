@@ -3307,7 +3307,7 @@ todo_wine
     ok(metrics.layoutWidth == 500.0, "Unexpected box width %f.\n", metrics.layoutWidth);
     ok(metrics.layoutHeight == 1000.0, "Unexpected box height %f.\n", metrics.layoutHeight);
     ok(metrics.maxBidiReorderingDepth == 1, "Unexpected reordering depth %u.\n", metrics.maxBidiReorderingDepth);
-    ok(metrics.lineCount == 1, "Unexpected line coun %u.\n", metrics.lineCount);
+    ok(metrics.lineCount == 1, "Unexpected line count %u.\n", metrics.lineCount);
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
