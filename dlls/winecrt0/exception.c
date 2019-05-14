@@ -59,7 +59,7 @@ static void DECLSPEC_NORETURN unwind_target(void)
 {
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)__wine_get_frame();
     __wine_pop_frame( &wine_frame->frame );
-    siglongjmp( wine_frame->jmp, 1 );
+    for (;;) wine_frame->longjmp( wine_frame->jmp, 1 );
 }
 
 static void DECLSPEC_NORETURN unwind_frame( EXCEPTION_RECORD *record,

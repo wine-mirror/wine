@@ -94,8 +94,8 @@ extern "C" {
 
 #if defined(__MINGW32__) || defined(__CYGWIN__) || defined(__WINE_SETJMP_H)
 #define sigjmp_buf jmp_buf
-#define sigsetjmp(buf,sigs) setjmp(buf)
-#define siglongjmp(buf,val) longjmp(buf,val)
+static inline int sigsetjmp( sigjmp_buf buf, int sigs ) { return setjmp( buf ); }
+static inline void siglongjmp( sigjmp_buf buf, int val ) { longjmp( buf, val ); }
 #endif
 
 extern void __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
@@ -139,6 +139,7 @@ extern DWORD __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
          } else { \
              __f.frame.Handler = __wine_exception_handler; \
              __f.u.filter = (func); \
+             __f.longjmp = siglongjmp; \
              if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
@@ -151,6 +152,7 @@ extern DWORD __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
              __f.frame.Handler = __wine_exception_ctx_handler; \
              __f.u.filter_ctx = (func); \
              __f.ctx = context; \
+             __f.longjmp = siglongjmp; \
              if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
@@ -162,6 +164,7 @@ extern DWORD __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
              break; \
          } else { \
              __f.frame.Handler = __wine_exception_handler_page_fault; \
+             __f.longjmp = siglongjmp; \
              if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
@@ -173,6 +176,7 @@ extern DWORD __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
              break; \
          } else { \
              __f.frame.Handler = __wine_exception_handler_all; \
+             __f.longjmp = siglongjmp; \
              if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
@@ -237,6 +241,7 @@ typedef struct __tagWINE_FRAME
     } u;
     void *ctx;
     sigjmp_buf jmp;
+    void (*longjmp)(sigjmp_buf,int);
     /* hack to make GetExceptionCode() work in handler */
     DWORD ExceptionCode;
     const struct __tagWINE_FRAME *ExceptionRecord;
