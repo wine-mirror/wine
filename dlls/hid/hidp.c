@@ -599,12 +599,12 @@ NTSTATUS WINAPI HidP_SetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USH
         {
             rc = set_report_data((BYTE*)Report, ReportLength,
                     element.valueStartBit, element.bitCount, -1);
+        }
 
-            if (rc != HIDP_STATUS_SUCCESS)
-            {
-                *UsageLength = i;
-                return rc;
-            }
+        if (rc != HIDP_STATUS_SUCCESS)
+        {
+            *UsageLength = i;
+            return rc;
         }
     }
 
