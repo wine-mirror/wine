@@ -60,6 +60,7 @@ struct media_session
     IMFAsyncCallback commands_callback;
     LONG refcount;
     IMFMediaEventQueue *event_queue;
+    IMFPresentationClock *clock;
     struct list topologies;
     CRITICAL_SECTION cs;
 };
@@ -292,6 +293,8 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
         session_clear_topologies(session);
         if (session->event_queue)
             IMFMediaEventQueue_Release(session->event_queue);
+        if (session->clock)
+            IMFPresentationClock_Release(session->clock);
         DeleteCriticalSection(&session->cs);
         heap_free(session);
     }
@@ -419,9 +422,14 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
 
 static HRESULT WINAPI mfsession_GetClock(IMFMediaSession *iface, IMFClock **clock)
 {
-    FIXME("(%p)->(%p)\n", iface, clock);
+    struct media_session *session = impl_from_IMFMediaSession(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    *clock = (IMFClock *)session->clock;
+    IMFClock_AddRef(*clock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mfsession_GetSessionCapabilities(IMFMediaSession *iface, DWORD *caps)
@@ -694,17 +702,22 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     object->IMFRateControl_iface.lpVtbl = &session_rate_control_vtbl;
     object->commands_callback.lpVtbl = &session_commands_callback_vtbl;
     object->refcount = 1;
-    if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
-    {
-        IMFMediaSession_Release(&object->IMFMediaSession_iface);
-        return hr;
-    }
     list_init(&object->topologies);
     InitializeCriticalSection(&object->cs);
+
+    if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
+        goto failed;
+
+    if (FAILED(hr = MFCreatePresentationClock(&object->clock)))
+        goto failed;
 
     *session = &object->IMFMediaSession_iface;
 
     return S_OK;
+
+failed:
+    IMFMediaSession_Release(&object->IMFMediaSession_iface);
+    return hr;
 }
 
 static HRESULT WINAPI present_clock_QueryInterface(IMFPresentationClock *iface, REFIID riid, void **out)
@@ -818,9 +831,24 @@ static HRESULT WINAPI present_clock_GetState(IMFPresentationClock *iface, DWORD 
 
 static HRESULT WINAPI present_clock_GetProperties(IMFPresentationClock *iface, MFCLOCK_PROPERTIES *props)
 {
-    FIXME("%p, %p.\n", iface, props);
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, props);
+
+    EnterCriticalSection(&clock->cs);
+
+    if (clock->time_source)
+    {
+        FIXME("%p, %p.\n", iface, props);
+        hr = E_NOTIMPL;
+    }
+    else
+        hr = MF_E_CLOCK_NO_TIME_SOURCE;
+
+    LeaveCriticalSection(&clock->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI present_clock_SetTimeSource(IMFPresentationClock *iface,

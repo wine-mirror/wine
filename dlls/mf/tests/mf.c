@@ -976,11 +976,8 @@ static void test_media_session(void)
     IUnknown_Release(unk);
 
     hr = IMFMediaSession_GetClock(session, &clock);
-todo_wine
     ok(hr == S_OK, "Failed to get clock, hr %#x.\n", hr);
 
-if (SUCCEEDED(hr))
-{
     hr = IMFClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rc2);
     ok(hr == S_OK, "Failed to get rate control, hr %#x.\n", hr);
     IMFRateControl_Release(rc2);
@@ -988,7 +985,6 @@ if (SUCCEEDED(hr))
     hr = IMFClock_GetProperties(clock, &clock_props);
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
-}
     IMFRateControl_Release(rc);
     IMFRateSupport_Release(rs);
 
@@ -1204,7 +1200,6 @@ todo_wine
     ok(value == 0, "Unexpected value %u.\n", value);
 
     hr = IMFPresentationClock_GetProperties(clock, &props);
-todo_wine
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPresentationClock_GetState(clock, 0, &state);
