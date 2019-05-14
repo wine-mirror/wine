@@ -18,13 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if defined(__i386__) && !defined(_WIN32)
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wownt32.h"
 #include "wine/winbase16.h"
-
-#ifdef __i386__
 
 extern WORD WINAPI WinMain16( HINSTANCE16 inst, HINSTANCE16 prev, LPSTR cmdline, WORD show );
 

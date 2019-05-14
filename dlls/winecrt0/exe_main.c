@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef _WIN32
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -48,3 +50,5 @@ int main( int argc, char *argv[] )
     if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = SW_SHOWNORMAL;
     return WinMain( GetModuleHandleA(0), 0, cmdline, info.wShowWindow );
 }
+
+#endif  /* _WIN32 */

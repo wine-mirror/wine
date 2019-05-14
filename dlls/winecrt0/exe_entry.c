@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef _WIN32
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -37,3 +39,5 @@ DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_entry( PEB *peb )
     if (needs_init) _fini();
     ExitProcess( ret );
 }
+
+#endif  /* _WIN32 */
