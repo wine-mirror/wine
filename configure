@@ -17688,8 +17688,10 @@ fi
 done
 
 
-ac_save_LIBS=$LIBS
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
+case $host_os in
+    darwin*|macosx*) ;;
+    *) ac_save_LIBS=$LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
 $as_echo_n "checking for library containing clock_gettime... " >&6; }
 if ${ac_cv_search_clock_gettime+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -17749,7 +17751,9 @@ $as_echo "#define HAVE_CLOCK_GETTIME 1" >>confdefs.h
 
 fi
 
-LIBS=$ac_save_LIBS
+    LIBS=$ac_save_LIBS
+    ;;
+esac
 
 if test "x$with_ldap" != "xno"
 then
