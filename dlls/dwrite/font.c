@@ -4588,8 +4588,8 @@ struct dwrite_inmemory_fileloader
     LONG ref;
 
     struct dwrite_inmemory_stream_data **streams;
-    UINT32 filecount;
-    UINT32 capacity;
+    size_t size;
+    size_t count;
 };
 
 static inline struct dwrite_localfontfileloader *impl_from_IDWriteLocalFontFileLoader(IDWriteLocalFontFileLoader *iface)
@@ -6208,13 +6208,12 @@ static ULONG WINAPI inmemoryfontfileloader_Release(IDWriteInMemoryFontFileLoader
 {
     struct dwrite_inmemory_fileloader *loader = impl_from_IDWriteInMemoryFontFileLoader(iface);
     ULONG ref = InterlockedDecrement(&loader->ref);
+    size_t i;
 
     TRACE("(%p)->(%u)\n", loader, ref);
 
     if (!ref) {
-        UINT32 i;
-
-        for (i = 0; i < loader->filecount; i++)
+        for (i = 0; i < loader->count; ++i)
             release_inmemory_stream(loader->streams[i]);
         heap_free(loader->streams);
         heap_free(loader);
@@ -6239,7 +6238,7 @@ static HRESULT WINAPI inmemoryfontfileloader_CreateStreamFromKey(IDWriteInMemory
 
     index = *(DWORD *)key;
 
-    if (index >= loader->filecount)
+    if (index >= loader->count)
         return E_INVALIDARG;
 
     if (!(stream = heap_alloc(sizeof(*stream))))
@@ -6266,21 +6265,8 @@ static HRESULT WINAPI inmemoryfontfileloader_CreateInMemoryFontFileReference(IDW
 
     *fontfile = NULL;
 
-    if (loader->filecount == loader->capacity) {
-        if (loader->streams) {
-            struct dwrite_inmemory_stream_data **ptr;
-
-            if (!(ptr = heap_realloc(loader->streams, 2 * loader->capacity * sizeof(*loader->streams))))
-                return E_OUTOFMEMORY;
-
-            loader->streams = ptr;
-            loader->capacity *= 2;
-        }
-        else {
-            loader->capacity = 16;
-            loader->streams = heap_calloc(loader->capacity, sizeof(*loader->streams));
-        }
-    }
+    if (!dwrite_array_reserve((void **)&loader->streams, &loader->size, loader->count + 1, sizeof(*loader->streams)))
+        return E_OUTOFMEMORY;
 
     if (!(stream = heap_alloc(sizeof(*stream))))
         return E_OUTOFMEMORY;
@@ -6300,8 +6286,8 @@ static HRESULT WINAPI inmemoryfontfileloader_CreateInMemoryFontFileReference(IDW
         memcpy(stream->data, data, data_size);
     }
 
-    key = loader->filecount;
-    loader->streams[loader->filecount++] = stream;
+    key = loader->count;
+    loader->streams[loader->count++] = stream;
 
     return IDWriteFactory_CreateCustomFontFileReference(factory, &key, sizeof(key),
             (IDWriteFontFileLoader *)&loader->IDWriteInMemoryFontFileLoader_iface, fontfile);
@@ -6311,9 +6297,9 @@ static UINT32 WINAPI inmemoryfontfileloader_GetFileCount(IDWriteInMemoryFontFile
 {
     struct dwrite_inmemory_fileloader *loader = impl_from_IDWriteInMemoryFontFileLoader(iface);
 
-    TRACE("(%p)\n", loader);
+    TRACE("%p.\n", iface);
 
-    return loader->filecount;
+    return loader->count;
 }
 
 static const IDWriteInMemoryFontFileLoaderVtbl inmemoryfontfileloadervtbl =
