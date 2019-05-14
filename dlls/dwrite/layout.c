@@ -227,9 +227,11 @@ struct layout_cluster {
     UINT32 position;        /* relative to run, first cluster has 0 position */
 };
 
-struct layout_line {
-    FLOAT height;   /* height based on content */
-    FLOAT baseline; /* baseline based on content */
+struct layout_line
+{
+    float height;   /* height based on content */
+    float baseline; /* baseline based on content */
+    DWRITE_LINE_METRICS1 metrics;
 };
 
 enum layout_recompute_mask {
@@ -276,8 +278,7 @@ struct dwrite_textlayout {
     FLOAT  minwidth;
 
     struct layout_line *lines;
-    DWRITE_LINE_METRICS1 *linemetrics;
-    UINT32 line_alloc;
+    size_t lines_size;
 
     DWRITE_TEXT_METRICS1 metrics;
     DWRITE_OVERHANG_METRICS overhangs;
@@ -1364,16 +1365,16 @@ static void layout_apply_line_spacing(struct dwrite_textlayout *layout, UINT32 l
     switch (layout->format.spacing.method)
     {
     case DWRITE_LINE_SPACING_METHOD_DEFAULT:
-        layout->linemetrics[line].height = layout->lines[line].height;
-        layout->linemetrics[line].baseline = layout->lines[line].baseline;
+        layout->lines[line].metrics.height = layout->lines[line].height;
+        layout->lines[line].metrics.baseline = layout->lines[line].baseline;
         break;
     case DWRITE_LINE_SPACING_METHOD_UNIFORM:
-        layout->linemetrics[line].height = layout->format.spacing.height;
-        layout->linemetrics[line].baseline = layout->format.spacing.baseline;
+        layout->lines[line].metrics.height = layout->format.spacing.height;
+        layout->lines[line].metrics.baseline = layout->format.spacing.baseline;
         break;
     case DWRITE_LINE_SPACING_METHOD_PROPORTIONAL:
-        layout->linemetrics[line].height = layout->lines[line].height * layout->format.spacing.height;
-        layout->linemetrics[line].baseline = layout->lines[line].baseline * layout->format.spacing.baseline;
+        layout->lines[line].metrics.height = layout->lines[line].height * layout->format.spacing.height;
+        layout->lines[line].metrics.baseline = layout->lines[line].baseline * layout->format.spacing.baseline;
         break;
     default:
         ERR("Unknown spacing method %u\n", layout->format.spacing.method);
@@ -1382,37 +1383,15 @@ static void layout_apply_line_spacing(struct dwrite_textlayout *layout, UINT32 l
 
 static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_LINE_METRICS1 *metrics)
 {
-    UINT32 i = layout->metrics.lineCount;
+    size_t i = layout->metrics.lineCount;
 
-    if (!layout->line_alloc) {
-        layout->line_alloc = 5;
-        layout->linemetrics = heap_calloc(layout->line_alloc, sizeof(*layout->linemetrics));
-        layout->lines = heap_calloc(layout->line_alloc, sizeof(*layout->lines));
-        if (!layout->linemetrics || !layout->lines) {
-            heap_free(layout->linemetrics);
-            heap_free(layout->lines);
-            layout->linemetrics = NULL;
-            layout->lines = NULL;
-            return E_OUTOFMEMORY;
-        }
+    if (!dwrite_array_reserve((void **)&layout->lines, &layout->lines_size, layout->metrics.lineCount + 1,
+            sizeof(*layout->lines)))
+    {
+        return E_OUTOFMEMORY;
     }
 
-    if (layout->metrics.lineCount == layout->line_alloc) {
-        DWRITE_LINE_METRICS1 *metrics;
-        struct layout_line *lines;
-
-        if ((metrics = heap_realloc(layout->linemetrics, layout->line_alloc * 2 * sizeof(*layout->linemetrics))))
-            layout->linemetrics = metrics;
-        if ((lines = heap_realloc(layout->lines, layout->line_alloc * 2 * sizeof(*layout->lines))))
-            layout->lines = lines;
-
-        if (!metrics || !lines)
-            return E_OUTOFMEMORY;
-
-        layout->line_alloc *= 2;
-    }
-
-    layout->linemetrics[i] = *metrics;
+    layout->lines[i].metrics = *metrics;
     layout->lines[i].height = metrics->height;
     layout->lines[i].baseline = metrics->baseline;
 
@@ -1674,8 +1653,9 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
 
     erun = layout_get_next_erun(layout, NULL);
     inrun = layout_get_next_inline_run(layout, NULL);
-    for (line = 0; line < layout->metrics.lineCount; line++) {
-        FLOAT pos_y = origin_y + layout->linemetrics[line].baseline;
+    for (line = 0; line < layout->metrics.lineCount; line++)
+    {
+        float pos_y = origin_y + layout->lines[line].metrics.baseline;
 
         while (erun && erun->line == line) {
             erun->origin.y = pos_y;
@@ -1687,7 +1667,7 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
             inrun = layout_get_next_inline_run(layout, inrun);
         }
 
-        origin_y += layout->linemetrics[line].height;
+        origin_y += layout->lines[line].metrics.height;
     }
 }
 
@@ -1992,8 +1972,9 @@ static void layout_set_line_positions(struct dwrite_textlayout *layout)
     erun = layout_get_next_erun(layout, NULL);
     inrun = layout_get_next_inline_run(layout, NULL);
 
-    for (line = 0, origin_y = 0.0f; line < layout->metrics.lineCount; line++) {
-        FLOAT pos_y = origin_y + layout->linemetrics[line].baseline;
+    for (line = 0, origin_y = 0.0f; line < layout->metrics.lineCount; line++)
+    {
+        float pos_y = origin_y + layout->lines[line].metrics.baseline;
 
         /* For all runs on this line */
         while (erun && erun->line == line) {
@@ -2007,7 +1988,7 @@ static void layout_set_line_positions(struct dwrite_textlayout *layout)
             inrun = layout_get_next_inline_run(layout, inrun);
         }
 
-        origin_y += layout->linemetrics[line].height;
+        origin_y += layout->lines[line].metrics.height;
     }
 
     layout->metrics.height = origin_y;
@@ -2862,7 +2843,6 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout3 *iface)
         heap_free(This->actual_breakpoints);
         heap_free(This->clustermetrics);
         heap_free(This->clusters);
-        heap_free(This->linemetrics);
         heap_free(This->lines);
         heap_free(This->str);
         heap_free(This);
@@ -3574,23 +3554,25 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout3 *iface,
 static HRESULT WINAPI dwritetextlayout_GetLineMetrics(IDWriteTextLayout3 *iface,
     DWRITE_LINE_METRICS *metrics, UINT32 max_count, UINT32 *count)
 {
-    struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout3(iface);
+    unsigned int line_count;
     HRESULT hr;
+    size_t i;
 
-    TRACE("(%p)->(%p %u %p)\n", This, metrics, max_count, count);
+    TRACE("%p, %p, %u, %p.\n", iface, metrics, max_count, count);
 
-    hr = layout_compute_effective_runs(This);
-    if (FAILED(hr))
+    if (FAILED(hr = layout_compute_effective_runs(layout)))
         return hr;
 
-    if (metrics) {
-        UINT32 i, c = min(max_count, This->metrics.lineCount);
-        for (i = 0; i < c; i++)
-            memcpy(metrics + i, This->linemetrics + i, sizeof(*metrics));
+    if (metrics)
+    {
+        line_count = min(max_count, layout->metrics.lineCount);
+        for (i = 0; i < line_count; ++i)
+            memcpy(&metrics[i], &layout->lines[i].metrics, sizeof(*metrics));
     }
 
-    *count = This->metrics.lineCount;
-    return max_count >= This->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
+    *count = layout->metrics.lineCount;
+    return max_count >= layout->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
 static HRESULT layout_update_metrics(struct dwrite_textlayout *layout)
@@ -4061,20 +4043,25 @@ static HRESULT WINAPI dwritetextlayout3_GetLineSpacing(IDWriteTextLayout3 *iface
 static HRESULT WINAPI dwritetextlayout3_GetLineMetrics(IDWriteTextLayout3 *iface, DWRITE_LINE_METRICS1 *metrics,
     UINT32 max_count, UINT32 *count)
 {
-    struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout3(iface);
+    unsigned int line_count;
     HRESULT hr;
+    size_t i;
 
-    TRACE("(%p)->(%p %u %p)\n", This, metrics, max_count, count);
+    TRACE("%p, %p, %u, %p.\n", iface, metrics, max_count, count);
 
-    hr = layout_compute_effective_runs(This);
-    if (FAILED(hr))
+    if (FAILED(hr = layout_compute_effective_runs(layout)))
         return hr;
 
     if (metrics)
-        memcpy(metrics, This->linemetrics, sizeof(*metrics) * min(max_count, This->metrics.lineCount));
+    {
+        line_count = min(max_count, layout->metrics.lineCount);
+        for (i = 0; i < line_count; ++i)
+            metrics[i] = layout->lines[i].metrics;
+    }
 
-    *count = This->metrics.lineCount;
-    return max_count >= This->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
+    *count = layout->metrics.lineCount;
+    return max_count >= layout->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
 static const IDWriteTextLayout3Vtbl dwritetextlayoutvtbl = {
@@ -4978,9 +4965,8 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     layout->cluster_count = 0;
     layout->clustermetrics = NULL;
     layout->clusters = NULL;
-    layout->linemetrics = NULL;
     layout->lines = NULL;
-    layout->line_alloc = 0;
+    layout->lines_size = 0;
     layout->minwidth = 0.0f;
     list_init(&layout->eruns);
     list_init(&layout->inlineobjects);
