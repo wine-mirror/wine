@@ -2046,113 +2046,20 @@ then
     CFLAGS="$CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
 fi
 
-dnl **** Check for underscore on external symbols ****
-
-AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_extern_prefix,
-    WINE_TRY_ASM_LINK([".globl _ac_test\n_ac_test:\t.long 0"],
-                      [extern int ac_test;],
-                      [if (ac_test) return 1],
-                      ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no"))
-
-case $host_cpu in
-  *i[[3456789]]86*)
-    AC_CACHE_CHECK([whether external symbols need stdcall decoration], ac_cv_c_stdcall_suffix,
-        WINE_TRY_ASM_LINK(["jmp _ac_test@4"],
-[#ifndef _MSC_VER
-#define __stdcall __attribute__((__stdcall__))
-#endif
-int __stdcall ac_test(int i) { return i; }],
-                          [if (ac_test(1)) return 1],
-                          ac_cv_c_stdcall_suffix="yes",ac_cv_c_stdcall_suffix="no")) ;;
-  *) ac_cv_c_stdcall_suffix="no" ;;
-esac
-
-AH_TEMPLATE(__ASM_NAME,[Define to a macro to generate an assembly name from a C symbol])
-if test "$ac_cv_c_extern_prefix" = "yes"
-then
-    AC_DEFINE([__ASM_NAME(name)], ["_" name])
-    asm_name_prefix="_"
-else
-    AC_DEFINE([__ASM_NAME(name)], [name])
-    asm_name_prefix=""
-fi
-
-AH_TEMPLATE(__ASM_STDCALL,[Define to a macro to generate an stdcall suffix])
-if test "$ac_cv_c_stdcall_suffix" = "yes"
-then
-    AC_DEFINE([__ASM_STDCALL(args)],["@" #args])
-else
-    AC_DEFINE([__ASM_STDCALL(args)],[""])
-fi
-
-dnl **** Check how to define a function in assembly code ****
-
-AC_CACHE_CHECK([how to define a function in assembly code], ac_cv_asm_func_def,
-  WINE_TRY_ASM_LINK(
-      ["\t.globl _ac_test\n\t.def _ac_test; .scl 2; .type 32; .endef\n_ac_test:\t.long 0"],,,
-      ac_cv_asm_func_def=".def",
-    [WINE_TRY_ASM_LINK(["\t.globl _ac_test\n\t.type _ac_test,@function\n_ac_test:\t.long 0"],,,
-      ac_cv_asm_func_def=".type @function",
-    [WINE_TRY_ASM_LINK(["\t.globl _ac_test\n\t.type _ac_test,2\n_ac_test:\t.long 0"],,,
-      ac_cv_asm_func_def=".type 2",
-      ac_cv_asm_func_def="unknown")])]))
-
-case "$ac_cv_asm_func_def" in
-  ".def")
-     asm_func_header=".def $asm_name_prefix\" #name suffix \"; .scl 2; .type 32; .endef" ;;
-  ".type @function")
-     asm_func_header=".type $asm_name_prefix\" #name suffix \",@function" ;;
-  ".type 2")
-     asm_func_header=".type $asm_name_prefix\" #name suffix \",2" ;;
-  *)
-     asm_func_header="" ;;
-esac
-
-AC_CACHE_CHECK([whether asm() works outside of functions], ac_cv_c_asm_outside_funcs,
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\n\t.long 0");]],)],
-                      ac_cv_c_asm_outside_funcs="yes",ac_cv_c_asm_outside_funcs="no"))
-
-AC_CACHE_CHECK([whether .previous is supported in assembly code], ac_cv_c_dot_previous,
-    WINE_TRY_ASM_LINK([".text\nac_test:\t.long 0\n\t.previous"],,,
-                      ac_cv_c_dot_previous="yes",ac_cv_c_dot_previous="no"))
+dnl **** Check for CFI directives support ****
 
 AC_CACHE_CHECK([whether CFI directives are supported in assembly code], ac_cv_c_cfi_support,
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.cfi_startproc\n\t.long 0\n\t.cfi_endproc");]])],
                       ac_cv_c_cfi_support="yes",ac_cv_c_cfi_support="no"))
-
-asm_func_header=".globl $asm_name_prefix\" #name suffix \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name suffix \":\\n\\t"
-asm_func_trailer=""
-if test "$ac_cv_c_dot_previous" = "yes"
-then
-   asm_func_trailer="\\n\\t.previous"
-fi
 if test "$ac_cv_c_cfi_support" = "yes"
 then
-   asm_func_header="$asm_func_header.cfi_startproc\\n\\t"
-   asm_func_trailer="\\n\\t.cfi_endproc$asm_func_trailer"
-   AC_DEFINE([__ASM_CFI(str)],[str],[Define to a macro to output a .cfi assembly pseudo-op])
    LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
 else
-   AC_DEFINE([__ASM_CFI(str)],[""])
    if test "x$enable_win64" = "xyes"
    then
       WINE_WARNING([building 64-bit Wine without support for CFI directives; exception handling will not work properly.])
    fi
 fi
-
-asm_func_code="$asm_func_header\" code \"$asm_func_trailer"
-
-AH_TEMPLATE(__ASM_DEFINE_FUNC,[Define to a macro to define an assembly function])
-if test "$ac_cv_c_asm_outside_funcs" = "yes"
-then
-    AC_DEFINE_UNQUOTED([__ASM_DEFINE_FUNC(name,suffix,code)],[asm(".text\n\t.align 4\n\t$asm_func_code");])
-else
-    AC_DEFINE_UNQUOTED([__ASM_DEFINE_FUNC(name,suffix,code)],[void __asm_dummy_##name(void) { asm(".text\n\t.align 4\n\t$asm_func_code"); }])
-fi
-AC_DEFINE([__ASM_GLOBAL_FUNC(name,code)],[__ASM_DEFINE_FUNC(name,"",code)],
-          [Define to a macro to generate an assembly function with C calling convention])
-AC_DEFINE([__ASM_STDCALL_FUNC(name,args,code)],[__ASM_DEFINE_FUNC(name,__ASM_STDCALL(args),code)],
-          [Define to a macro to generate an assembly function with stdcall calling convention])
 
 dnl **** Platform-specific checks ****
 

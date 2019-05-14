@@ -31,6 +31,7 @@
 #include "shlobj.h"
 #include "shlwapi.h"
 
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 #include "mshtml_private.h"

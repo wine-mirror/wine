@@ -35,6 +35,7 @@
 
 #include "msipriv.h"
 #include "winemsi.h"
+#include "wine/asm.h"
 #include "wine/heap.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"

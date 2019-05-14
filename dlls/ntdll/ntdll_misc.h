@@ -28,6 +28,7 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wine/server.h"
+#include "wine/asm.h"
 
 #define MAX_NT_PATH_LENGTH 277
 

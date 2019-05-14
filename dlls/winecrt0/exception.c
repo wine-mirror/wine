@@ -18,12 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 #include "winternl.h"
 #include "wine/exception.h"
+#include "wine/asm.h"
 
-#if defined(__x86_64__) && defined(__ASM_GLOBAL_FUNC)
+#ifdef __x86_64__
 extern void __wine_unwind_trampoline(void);
 /* we need an extra call to make sure the stack is correctly aligned */
 __ASM_GLOBAL_FUNC( __wine_unwind_trampoline, "callq *%rax" );
@@ -47,7 +47,7 @@ void __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *
                          : "=a" (dummy1), "=S" (dummy2), "=D" (dummy3), "=c" (dummy4)
                          : "0" (RtlUnwind), "1" (frame), "2" (target), "3" (record)
                          : "edx", "memory" );
-#elif defined(__x86_64__) && defined(__ASM_GLOBAL_FUNC)
+#elif defined(__x86_64__)
     RtlUnwind( frame, __wine_unwind_trampoline, record, target );
 #else
     RtlUnwind( frame, target, record, 0 );

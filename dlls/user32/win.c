@@ -31,6 +31,7 @@
 #include "winver.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
+#include "wine/asm.h"
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"

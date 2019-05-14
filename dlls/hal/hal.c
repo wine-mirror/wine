@@ -30,6 +30,7 @@
 #include "winternl.h"
 #include "excpt.h"
 #include "ddk/ntddk.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);

@@ -31,6 +31,7 @@
 #include "ddk/wdm.h"
 #include "ddk/ntifs.h"
 
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 

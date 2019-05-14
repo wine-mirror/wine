@@ -27,6 +27,7 @@
 #include "winerror.h"
 #include "wine/server.h"
 #include "kernel_private.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 

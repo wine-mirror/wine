@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/asm.h"
+
 /* Copied from dlls/msvcrt/cxx.h */
 #undef __thiscall
 #ifdef __i386__  /* thiscall functions are i386-specific */

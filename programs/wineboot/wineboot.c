@@ -75,6 +75,7 @@
 #include <wine/svcctl.h>
 #include <wine/unicode.h>
 #include <wine/library.h>
+#include <wine/asm.h>
 #include <wine/debug.h>
 
 #include <shlobj.h>

@@ -24,6 +24,7 @@
 #include "wine/winbase16.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "wine/asm.h"
 
 #include "pshpack1.h"
 

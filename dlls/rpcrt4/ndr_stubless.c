@@ -39,6 +39,7 @@
 #include "rpcproxy.h"
 
 #include "wine/exception.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 #include "cpsf.h"

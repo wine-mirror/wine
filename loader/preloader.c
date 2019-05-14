@@ -93,6 +93,7 @@
 # include <sys/link.h>
 #endif
 
+#include "wine/asm.h"
 #include "main.h"
 
 /* ELF definitions */

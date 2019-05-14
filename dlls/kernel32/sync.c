@@ -40,6 +40,7 @@
 #include "winioctl.h"
 #include "ddk/wdm.h"
 
+#include "wine/asm.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "kernel_private.h"

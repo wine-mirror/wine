@@ -73,6 +73,7 @@
 #include "typelib.h"
 #include "wine/debug.h"
 #include "variant.h"
+#include "wine/asm.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 

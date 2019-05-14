@@ -21,6 +21,8 @@
 #ifndef __WINE_NTOSKRNL_PRIVATE_H
 #define __WINE_NTOSKRNL_PRIVATE_H
 
+#include "wine/asm.h"
+
 struct _OBJECT_TYPE
 {
     const WCHAR *name;            /* object type name used for type validation */

@@ -32,6 +32,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/library.h"
+#include "wine/asm.h"
 
 #ifdef __i386__
 

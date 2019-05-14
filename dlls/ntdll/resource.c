@@ -40,6 +40,7 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "wine/asm.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

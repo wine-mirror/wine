@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "ole2.h"
 
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 #include "mshtml_private.h"

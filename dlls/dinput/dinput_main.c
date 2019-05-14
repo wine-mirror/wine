@@ -40,6 +40,7 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/asm.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"

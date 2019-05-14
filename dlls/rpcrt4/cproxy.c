@@ -36,6 +36,7 @@
 #include "cpsf.h"
 #include "ndr_misc.h"
 #include "ndr_stubless.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);

@@ -30,6 +30,7 @@
 
 #include "msvcrt.h"
 
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);

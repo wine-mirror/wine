@@ -27,6 +27,7 @@
 #include "wine/debug.h"
 #include "ntsecapi.h"
 #include "windows.h"
+#include "wine/asm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 

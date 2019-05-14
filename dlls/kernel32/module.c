@@ -41,6 +41,7 @@
 
 #include "wine/exception.h"
 #include "wine/list.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 

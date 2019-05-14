@@ -62,6 +62,7 @@
 #include "winspool.h"
 #include "setupapi.h"
 
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wbemprox_private.h"
 

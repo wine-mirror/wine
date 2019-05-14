@@ -53,6 +53,7 @@
 #include "winnls.h"
 #include "winuser.h"
 #include "wine/unicode.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "dictionary.h"
 #include "storage32.h"
