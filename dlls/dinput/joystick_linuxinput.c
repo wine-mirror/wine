@@ -934,11 +934,6 @@ static HRESULT WINAPI JoystickWImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 
   if (IS_DIPROP(rguid)) {
     switch (LOWORD(rguid)) {
-    case (DWORD_PTR)DIPROP_CALIBRATIONMODE: {
-      LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
-      FIXME("DIPROP_CALIBRATIONMODE(%d)\n", pd->dwData);
-      break;
-    }
     case (DWORD_PTR)DIPROP_AUTOCENTER: {
       LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
 
