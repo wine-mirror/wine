@@ -819,7 +819,7 @@ static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
 static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
-    ssize_t rc;
+    int rc;
 
     if (id != 0)
         rc = write(ext->device_fd, report, length);
