@@ -694,7 +694,7 @@ static ULONG WINAPI VideoRendererInner_AddRef(IUnknown *iface)
 static ULONG WINAPI VideoRendererInner_Release(IUnknown *iface)
 {
     VideoRendererImpl *This = impl_from_IUnknown(iface);
-    ULONG refCount = BaseRendererImpl_Release(&This->renderer.filter.IBaseFilter_iface);
+    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
 
     TRACE("(%p)->(): new ref = %d\n", This, refCount);
 
@@ -708,6 +708,7 @@ static ULONG WINAPI VideoRendererInner_Release(IUnknown *iface)
         CloseHandle(This->hEvent);
 
         TRACE("Destroying Video Renderer\n");
+        strmbase_renderer_cleanup(&This->renderer);
         CoTaskMemFree(This);
 
         return 0;
@@ -1068,7 +1069,7 @@ HRESULT VideoRenderer_create(IUnknown *pUnkOuter, void **ppv)
     return S_OK;
 
 fail:
-    BaseRendererImpl_Release(&pVideoRenderer->renderer.filter.IBaseFilter_iface);
+    strmbase_renderer_cleanup(&pVideoRenderer->renderer);
     CoTaskMemFree(pVideoRenderer);
     return hr;
 }
