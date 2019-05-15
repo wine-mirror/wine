@@ -1191,7 +1191,7 @@
 # @ stub PublishStateChangeNotification
 @ stdcall PulseEvent(long) kernel32.PulseEvent
 @ stdcall PurgeComm(long long) kernel32.PurgeComm
-@ stdcall QISearch(long long long long) shlwapi.QISearch
+@ stdcall QISearch(ptr ptr ptr ptr)
 @ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr) kernel32.QueryActCtxSettingsW
 @ stdcall QueryActCtxW(long ptr ptr long ptr long ptr) kernel32.QueryActCtxW
 @ stdcall QueryDepthSList(ptr) kernel32.QueryDepthSList

@@ -17,10 +17,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windows.h"
 #include "appmodel.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 #include "winternl.h"
@@ -124,4 +127,41 @@ BOOL WINAPI WaitOnAddress(volatile void *addr, void *cmp, SIZE_T size, DWORD tim
     }
 
     return TRUE;
+}
+
+HRESULT WINAPI QISearch(void *base, const QITAB *table, REFIID riid, void **obj)
+{
+    const QITAB *ptr;
+    IUnknown *unk;
+
+    TRACE("%p, %p, %s, %p\n", base, table, debugstr_guid(riid), obj);
+
+    if (!obj)
+        return E_POINTER;
+
+    for (ptr = table; ptr->piid; ++ptr)
+    {
+        TRACE("trying (offset %d) %s\n", ptr->dwOffset, debugstr_guid(ptr->piid));
+        if (IsEqualIID(riid, ptr->piid))
+        {
+            unk = (IUnknown *)((BYTE *)base + ptr->dwOffset);
+            TRACE("matched, returning (%p)\n", unk);
+            *obj = unk;
+            IUnknown_AddRef(unk);
+            return S_OK;
+        }
+    }
+
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        unk = (IUnknown *)((BYTE *)base + table->dwOffset);
+        TRACE("returning first for IUnknown (%p)\n", unk);
+        *obj = unk;
+        IUnknown_AddRef(unk);
+        return S_OK;
+    }
+
+    WARN("Not found %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
 }
