@@ -553,6 +553,7 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     descript_size += sizeof(CONTROLLER_TRIGGERS);
     descript_size += sizeof(CONTROLLER_BUTTONS);
     descript_size += sizeof(REPORT_HATSWITCH);
+    descript_size += sizeof(REPORT_PADDING);
     descript_size += test_haptic(ext);
 
     ext->axis_start = 0;
