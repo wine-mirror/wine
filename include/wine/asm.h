@@ -36,7 +36,7 @@
 #ifdef __GCC_HAVE_DWARF2_CFI_ASM
 # define __ASM_CFI(str) str
 #else
-# define __ASM_CFI(str) str
+# define __ASM_CFI(str)
 #endif
 
 #ifdef _WIN32
