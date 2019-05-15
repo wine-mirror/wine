@@ -146,7 +146,7 @@ static int TIME_DayLightCompareDate( const SYSTEMTIME *date,
  *
  *  PARAMS
  *      pTZinfo     [in] The time zone data.
- *      lpFileTime  [in] The system or local time.
+ *      time        [in] The system or local time.
  *      islocal     [in] it is local time.
  *
  *  RETURNS
@@ -156,14 +156,13 @@ static int TIME_DayLightCompareDate( const SYSTEMTIME *date,
  *      TIME_ZONE_ID_DAYLIGHT   Current time is daylight savings time
  */
 static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
-    FILETIME *lpFileTime, BOOL islocal )
+                                   LONGLONG time, BOOL islocal )
 {
     int ret, year;
     BOOL beforeStandardDate, afterDaylightDate;
     DWORD retval = TIME_ZONE_ID_INVALID;
-    LONGLONG llTime = 0; /* initialized to prevent gcc complaining */
     SYSTEMTIME SysTime;
-    FILETIME ftTemp;
+    FILETIME ft;
 
     if (pTZinfo->DaylightDate.wMonth != 0)
     {
@@ -181,20 +180,17 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
             return TIME_ZONE_ID_INVALID;
         }
 
-        if (!islocal) {
-            llTime = filetime_to_longlong( lpFileTime );
-            llTime -= pTZinfo->Bias * (LONGLONG)600000000;
-            longlong_to_filetime( llTime, &ftTemp );
-            lpFileTime = &ftTemp;
-        }
+        if (!islocal)
+            time -= pTZinfo->Bias * (LONGLONG)600000000;
 
-        FileTimeToSystemTime(lpFileTime, &SysTime);
+        longlong_to_filetime( time, &ft );
+        FileTimeToSystemTime( &ft, &SysTime );
         year = SysTime.wYear;
 
         if (!islocal) {
-            llTime -= pTZinfo->DaylightBias * (LONGLONG)600000000;
-            longlong_to_filetime( llTime, &ftTemp );
-            FileTimeToSystemTime(lpFileTime, &SysTime);
+            time -= pTZinfo->DaylightBias * (LONGLONG)600000000;
+            longlong_to_filetime( time, &ft );
+            FileTimeToSystemTime( &ft, &SysTime );
         }
 
         /* check for daylight savings */
@@ -208,14 +204,13 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
             beforeStandardDate = SysTime.wYear < year;
 
         if (!islocal) {
-            llTime -= ( pTZinfo->StandardBias - pTZinfo->DaylightBias )
-                * (LONGLONG)600000000;
-            longlong_to_filetime( llTime, &ftTemp );
-            FileTimeToSystemTime(lpFileTime, &SysTime);
+            time -= ( pTZinfo->StandardBias - pTZinfo->DaylightBias ) * (LONGLONG)600000000;
+            longlong_to_filetime( time, &ft );
+            FileTimeToSystemTime( &ft, &SysTime );
         }
 
         if(year == SysTime.wYear) {
-            ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->DaylightDate);
+            ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->DaylightDate );
             if (ret == -2)
                 return TIME_ZONE_ID_INVALID;
 
@@ -224,7 +219,7 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
             afterDaylightDate = SysTime.wYear > year;
 
         retval = TIME_ZONE_ID_STANDARD;
-        if( pTZinfo->DaylightDate.wMonth <  pTZinfo->StandardDate.wMonth ) {
+        if( pTZinfo->DaylightDate.wMonth < pTZinfo->StandardDate.wMonth ) {
             /* Northern hemisphere */
             if( beforeStandardDate && afterDaylightDate )
                 retval = TIME_ZONE_ID_DAYLIGHT;
@@ -254,9 +249,10 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
  */
 static DWORD TIME_ZoneID( const TIME_ZONE_INFORMATION *pTzi )
 {
-    FILETIME ftTime;
-    GetSystemTimeAsFileTime( &ftTime);
-    return TIME_CompTimeZoneID( pTzi, &ftTime, FALSE);
+    LARGE_INTEGER now;
+
+    NtQuerySystemTime( &now );
+    return TIME_CompTimeZoneID( pTzi, now.QuadPart, FALSE );
 }
 
 /***********************************************************************
@@ -266,7 +262,7 @@ static DWORD TIME_ZoneID( const TIME_ZONE_INFORMATION *pTzi )
  *
  * PARAMS
  *  pTZinfo    [in]  The time zone data.
- *  lpFileTime [in]  The system or local time.
+ *  time       [in]  The system or local time.
  *  islocal    [in]  It is local time.
  *  pBias      [out] The calculated bias in minutes.
  *
@@ -274,10 +270,10 @@ static DWORD TIME_ZoneID( const TIME_ZONE_INFORMATION *pTzi )
  *  TRUE when the time zone bias was calculated.
  */
 static BOOL TIME_GetTimezoneBias( const TIME_ZONE_INFORMATION *pTZinfo,
-    FILETIME *lpFileTime, BOOL islocal, LONG *pBias )
+                                  LONGLONG time, BOOL islocal, LONG *pBias )
 {
     LONG bias = pTZinfo->Bias;
-    DWORD tzid = TIME_CompTimeZoneID( pTZinfo, lpFileTime, islocal);
+    DWORD tzid = TIME_CompTimeZoneID( pTZinfo, time, islocal );
 
     if( tzid == TIME_ZONE_ID_INVALID)
         return FALSE;
@@ -700,7 +696,7 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
     if (!SystemTimeToFileTime(lpUniversalTime, &ft))
         return FALSE;
     llTime = filetime_to_longlong( &ft );
-    if (!TIME_GetTimezoneBias(&tzinfo, &ft, FALSE, &lBias))
+    if (!TIME_GetTimezoneBias(&tzinfo, llTime, FALSE, &lBias))
         return FALSE;
     /* convert minutes to 100-nanoseconds-ticks */
     llTime -= (LONGLONG)lBias * 600000000;
@@ -745,7 +741,7 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
     if (!SystemTimeToFileTime(lpLocalTime, &ft))
         return FALSE;
     t = filetime_to_longlong( &ft );
-    if (!TIME_GetTimezoneBias(&tzinfo, &ft, TRUE, &lBias))
+    if (!TIME_GetTimezoneBias(&tzinfo, t, TRUE, &lBias))
         return FALSE;
     /* convert minutes to 100-nanoseconds-ticks */
     t += (LONGLONG)lBias * 600000000;
