@@ -254,15 +254,14 @@ static const IPersistPropertyBagVtbl PersistPropertyBagVtbl =
 
 IUnknown* WINAPI QCAP_createAudioCaptureFilter(IUnknown *outer, HRESULT *phr)
 {
-    HRESULT hr;
     AudioRecord *This = NULL;
 
     FIXME("(%p, %p): the entire CLSID_AudioRecord implementation is just stubs\n", outer, phr);
 
     This = CoTaskMemAlloc(sizeof(*This));
     if (This == NULL) {
-        hr = E_OUTOFMEMORY;
-        goto end;
+        *phr = E_OUTOFMEMORY;
+        return NULL;
     }
     memset(This, 0, sizeof(*This));
     This->IUnknown_iface.lpVtbl = &UnknownVtbl;
@@ -272,16 +271,9 @@ IUnknown* WINAPI QCAP_createAudioCaptureFilter(IUnknown *outer, HRESULT *phr)
     else
         This->outerUnknown = &This->IUnknown_iface;
 
-    hr = BaseFilter_Init(&This->filter, &AudioRecordVtbl, &CLSID_AudioRecord,
+    BaseFilter_Init(&This->filter, &AudioRecordVtbl, &CLSID_AudioRecord,
             (DWORD_PTR)(__FILE__ ": AudioRecord.csFilter"), &AudioRecordFuncs);
 
-end:
-    *phr = hr;
-    if (SUCCEEDED(hr)) {
-        return (IUnknown*)&This->filter.IBaseFilter_iface;
-    } else {
-        if (This)
-            IBaseFilter_Release(&This->filter.IBaseFilter_iface);
-        return NULL;
-    }
+    *phr = S_OK;
+    return (IUnknown*)&This->filter.IBaseFilter_iface;
 }

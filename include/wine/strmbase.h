@@ -190,7 +190,8 @@ HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVend
 
 VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter* This);
 
-HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseFilterFuncTable* pBaseFuncsTable);
+void BaseFilter_Init(BaseFilter *filter, const IBaseFilterVtbl *vtbl,
+        const CLSID *clsid, DWORD_PTR debug_info, const BaseFilterFuncTable *func_table);
 HRESULT WINAPI BaseFilter_Destroy(BaseFilter * This);
 
 /* Enums */

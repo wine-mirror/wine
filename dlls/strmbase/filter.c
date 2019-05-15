@@ -210,7 +210,8 @@ VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter *filter)
     InterlockedIncrement(&filter->pin_version);
 }
 
-HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseFilterFuncTable* pBaseFuncsTable)
+void BaseFilter_Init(BaseFilter *This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid,
+        DWORD_PTR DebugInfo, const BaseFilterFuncTable *pBaseFuncsTable)
 {
     This->IBaseFilter_iface.lpVtbl = Vtbl;
     This->refCount = 1;
@@ -224,8 +225,6 @@ HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, c
     This->pin_version = 1;
 
     This->pFuncsTable = pBaseFuncsTable;
-
-    return S_OK;
 }
 
 HRESULT WINAPI BaseFilter_Destroy(BaseFilter * This)
