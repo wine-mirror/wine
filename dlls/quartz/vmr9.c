@@ -826,7 +826,7 @@ static ULONG WINAPI VMR9Inner_AddRef(IUnknown * iface)
 static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
 {
     struct quartz_vmr *This = impl_from_inner_IUnknown(iface);
-    ULONG refCount = BaseRendererImpl_Release(&This->renderer.filter.IBaseFilter_iface);
+    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
 
     TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
 
@@ -848,6 +848,7 @@ static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
         }
 
         FreeLibrary(This->hD3d9);
+        strmbase_renderer_cleanup(&This->renderer);
         CoTaskMemFree(This);
     }
     return refCount;
@@ -2442,7 +2443,7 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
     return hr;
 
 fail:
-    BaseRendererImpl_Release(&pVMR->renderer.filter.IBaseFilter_iface);
+    strmbase_renderer_cleanup(&pVMR->renderer);
     FreeLibrary(pVMR->hD3d9);
     CoTaskMemFree(pVMR);
     return hr;
