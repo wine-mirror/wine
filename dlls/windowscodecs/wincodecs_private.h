@@ -79,6 +79,25 @@ DECLARE_INTERFACE_(IMILBitmap,IMILBitmapSource)
 };
 #undef INTERFACE
 
+#define INTERFACE IMILBitmapScaler
+DECLARE_INTERFACE_(IMILBitmapScaler,IMILBitmapSource)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID,void **) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWICBitmapSource methods ***/
+    STDMETHOD_(HRESULT,GetSize)(THIS_ UINT *,UINT *) PURE;
+    STDMETHOD_(HRESULT,GetPixelFormat)(THIS_ int *) PURE;
+    STDMETHOD_(HRESULT,GetResolution)(THIS_ double *,double *) PURE;
+    STDMETHOD_(HRESULT,CopyPalette)(THIS_ IWICPalette *) PURE;
+    STDMETHOD_(HRESULT,CopyPixels)(THIS_ const WICRect *,UINT,UINT,BYTE *) PURE;
+    /*** IMILBitmapScaler methods ***/
+    STDMETHOD_(HRESULT,unknown1)(THIS_ void **) PURE;
+    STDMETHOD_(HRESULT,Initialize)(THIS_ IMILBitmapSource *,UINT,UINT,WICBitmapInterpolationMode) PURE;
+};
+#undef INTERFACE
+
 #define INTERFACE IMILUnknown1
 DECLARE_INTERFACE_(IMILUnknown1,IUnknown)
 {
