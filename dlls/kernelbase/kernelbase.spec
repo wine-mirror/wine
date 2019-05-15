@@ -1060,20 +1060,20 @@
 @ stdcall PathFileExistsW(wstr) shlwapi.PathFileExistsW
 @ stdcall PathFindExtensionA(str)
 @ stdcall PathFindExtensionW(wstr)
-@ stdcall PathFindFileNameA(str) shlwapi.PathFindFileNameA
-@ stdcall PathFindFileNameW(wstr) shlwapi.PathFindFileNameW
+@ stdcall PathFindFileNameA(str)
+@ stdcall PathFindFileNameW(wstr)
 @ stdcall PathFindNextComponentA(str) shlwapi.PathFindNextComponentA
 @ stdcall PathFindNextComponentW(wstr) shlwapi.PathFindNextComponentW
-@ stdcall PathGetArgsA(str) shlwapi.PathGetArgsA
-@ stdcall PathGetArgsW(wstr) shlwapi.PathGetArgsW
-@ stdcall PathGetCharTypeA(long) shlwapi.PathGetCharTypeA
-@ stdcall PathGetCharTypeW(long) shlwapi.PathGetCharTypeW
-@ stdcall PathGetDriveNumberA(str) shlwapi.PathGetDriveNumberA
-@ stdcall PathGetDriveNumberW(wstr) shlwapi.PathGetDriveNumberW
-@ stdcall PathIsFileSpecA(str) shlwapi.PathIsFileSpecA
-@ stdcall PathIsFileSpecW(wstr) shlwapi.PathIsFileSpecW
-@ stdcall PathIsLFNFileSpecA(str) shlwapi.PathIsLFNFileSpecA
-@ stdcall PathIsLFNFileSpecW(wstr) shlwapi.PathIsLFNFileSpecW
+@ stdcall PathGetArgsA(str)
+@ stdcall PathGetArgsW(wstr)
+@ stdcall PathGetCharTypeA(long)
+@ stdcall PathGetCharTypeW(long)
+@ stdcall PathGetDriveNumberA(str)
+@ stdcall PathGetDriveNumberW(wstr)
+@ stdcall PathIsFileSpecA(str)
+@ stdcall PathIsFileSpecW(wstr)
+@ stdcall PathIsLFNFileSpecA(str)
+@ stdcall PathIsLFNFileSpecW(wstr)
 @ stdcall PathIsPrefixA(str str)
 @ stdcall PathIsPrefixW(wstr wstr)
 @ stdcall PathIsRelativeA(str)
@@ -1084,15 +1084,15 @@
 @ stdcall PathIsSameRootW(wstr wstr) shlwapi.PathIsSameRootW
 @ stdcall PathIsUNCA(str)
 @ stdcall PathIsUNCEx(wstr ptr)
-@ stdcall PathIsUNCServerA(str) shlwapi.PathIsUNCServerA
+@ stdcall PathIsUNCServerA(str)
 @ stdcall PathIsUNCServerShareA(str)
 @ stdcall PathIsUNCServerShareW(wstr)
-@ stdcall PathIsUNCServerW(wstr) shlwapi.PathIsUNCServerW
+@ stdcall PathIsUNCServerW(wstr)
 @ stdcall PathIsUNCW(wstr)
 @ stdcall PathIsURLA(str) shlwapi.PathIsURLA
 @ stdcall PathIsURLW(wstr) shlwapi.PathIsURLW
-@ stdcall PathIsValidCharA(long long) shlwapi.PathIsValidCharA
-@ stdcall PathIsValidCharW(long long) shlwapi.PathIsValidCharW
+@ stdcall PathIsValidCharA(long long)
+@ stdcall PathIsValidCharW(long long)
 @ stdcall PathMatchSpecA(str str) shlwapi.PathMatchSpecA
 # @ stub PathMatchSpecExA
 # @ stub PathMatchSpecExW
@@ -1103,16 +1103,16 @@
 @ stdcall PathQuoteSpacesW(wstr) shlwapi.PathQuoteSpacesW
 @ stdcall PathRelativePathToA(ptr str long str long) shlwapi.PathRelativePathToA
 @ stdcall PathRelativePathToW(ptr wstr long wstr long) shlwapi.PathRelativePathToW
-@ stdcall PathRemoveBackslashA(str) shlwapi.PathRemoveBackslashA
-@ stdcall PathRemoveBackslashW(wstr) shlwapi.PathRemoveBackslashW
-@ stdcall PathRemoveBlanksA(str) shlwapi.PathRemoveBlanksA
-@ stdcall PathRemoveBlanksW(wstr) shlwapi.PathRemoveBlanksW
-@ stdcall PathRemoveExtensionA(str) shlwapi.PathRemoveExtensionA
-@ stdcall PathRemoveExtensionW(wstr) shlwapi.PathRemoveExtensionW
+@ stdcall PathRemoveBackslashA(str)
+@ stdcall PathRemoveBackslashW(wstr)
+@ stdcall PathRemoveBlanksA(str)
+@ stdcall PathRemoveBlanksW(wstr)
+@ stdcall PathRemoveExtensionA(str)
+@ stdcall PathRemoveExtensionW(wstr)
 @ stdcall PathRemoveFileSpecA(str)
 @ stdcall PathRemoveFileSpecW(wstr)
-@ stdcall PathRenameExtensionA(str str) shlwapi.PathRenameExtensionA
-@ stdcall PathRenameExtensionW(wstr wstr) shlwapi.PathRenameExtensionW
+@ stdcall PathRenameExtensionA(str str)
+@ stdcall PathRenameExtensionW(wstr wstr)
 @ stdcall PathSearchAndQualifyA(str ptr long) shlwapi.PathSearchAndQualifyA
 @ stdcall PathSearchAndQualifyW(wstr ptr long) shlwapi.PathSearchAndQualifyW
 @ stdcall PathSkipRootA(str) shlwapi.PathSkipRootA
@@ -1123,8 +1123,8 @@
 @ stdcall PathStripToRootW(wstr)
 @ stdcall PathUnExpandEnvStringsA(str ptr long) shlwapi.PathUnExpandEnvStringsA
 @ stdcall PathUnExpandEnvStringsW(wstr ptr long) shlwapi.PathUnExpandEnvStringsW
-@ stdcall PathUnquoteSpacesA(str) shlwapi.PathUnquoteSpacesA
-@ stdcall PathUnquoteSpacesW(wstr) shlwapi.PathUnquoteSpacesW
+@ stdcall PathUnquoteSpacesA(str)
+@ stdcall PathUnquoteSpacesW(wstr)
 # @ stub PcwAddQueryItem
 # @ stub PcwClearCounterSetSecurity
 # @ stub PcwCollectData
