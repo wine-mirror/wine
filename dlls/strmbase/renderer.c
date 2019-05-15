@@ -275,36 +275,40 @@ HRESULT WINAPI BaseRendererImpl_QueryInterface(IBaseFilter* iface, REFIID riid, 
         return BaseFilterImpl_QueryInterface(iface, riid, ppv);
 }
 
+void strmbase_renderer_cleanup(BaseRenderer *filter)
+{
+    IPin *peer;
+
+    if (SUCCEEDED(IPin_ConnectedTo(&filter->pInputPin->pin.IPin_iface, &peer)))
+    {
+        IPin_Disconnect(peer);
+        IPin_Release(peer);
+    }
+    IPin_Disconnect(&filter->pInputPin->pin.IPin_iface);
+    IPin_Release(&filter->pInputPin->pin.IPin_iface);
+
+    if (filter->pPosition)
+        IUnknown_Release(filter->pPosition);
+
+    filter->csRenderLock.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->csRenderLock);
+
+    BaseRendererImpl_ClearPendingSample(filter);
+    CloseHandle(filter->evComplete);
+    CloseHandle(filter->ThreadSignal);
+    CloseHandle(filter->RenderEvent);
+    QualityControlImpl_Destroy(filter->qcimpl);
+    BaseFilter_Destroy(&filter->filter);
+}
+
 ULONG WINAPI BaseRendererImpl_Release(IBaseFilter* iface)
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
     ULONG refCount = InterlockedDecrement(&This->filter.refCount);
 
     if (!refCount)
-    {
-        IPin *pConnectedTo;
+        strmbase_renderer_cleanup(This);
 
-        if (SUCCEEDED(IPin_ConnectedTo(&This->pInputPin->pin.IPin_iface, &pConnectedTo)))
-        {
-            IPin_Disconnect(pConnectedTo);
-            IPin_Release(pConnectedTo);
-        }
-        IPin_Disconnect(&This->pInputPin->pin.IPin_iface);
-        IPin_Release(&This->pInputPin->pin.IPin_iface);
-
-        if (This->pPosition)
-            IUnknown_Release(This->pPosition);
-
-        This->csRenderLock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&This->csRenderLock);
-
-        BaseRendererImpl_ClearPendingSample(This);
-        CloseHandle(This->evComplete);
-        CloseHandle(This->ThreadSignal);
-        CloseHandle(This->RenderEvent);
-        QualityControlImpl_Destroy(This->qcimpl);
-        BaseFilter_Destroy(&This->filter);
-    }
     return refCount;
 }
 

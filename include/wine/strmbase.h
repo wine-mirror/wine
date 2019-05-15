@@ -623,6 +623,7 @@ HRESULT WINAPI BaseRendererImpl_ClearPendingSample(BaseRenderer *iface);
 HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtbl *vtbl,
         IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name, DWORD_PTR debug_info,
         const BaseRendererFuncTable *func_table);
+void strmbase_renderer_cleanup(BaseRenderer *filter);
 
 #ifdef __IBasicAudio_FWD_DEFINED__
 typedef struct tagBasicAudio
