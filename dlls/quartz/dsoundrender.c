@@ -680,7 +680,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     }
     else
     {
-        BaseRendererImpl_Release(&pDSoundRender->renderer.filter.IBaseFilter_iface);
+        strmbase_renderer_cleanup(&pDSoundRender->renderer);
         CoTaskMemFree(pDSoundRender);
     }
 
@@ -725,7 +725,7 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
 static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
 {
     DSoundRenderImpl *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = BaseRendererImpl_Release(iface);
+    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
 
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
@@ -748,6 +748,7 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
         CloseHandle(This->blocked);
 
         TRACE("Destroying Audio Renderer\n");
+        strmbase_renderer_cleanup(&This->renderer);
         CoTaskMemFree(This);
 
         return 0;
