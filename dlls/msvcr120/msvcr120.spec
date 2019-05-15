@@ -794,9 +794,9 @@
 @ cdecl -arch=arm ?wait@_Condition_variable@details@Concurrency@@QAAXAAVcritical_section@3@@Z(ptr ptr) _Condition_variable_wait
 @ thiscall -arch=i386 ?wait@_Condition_variable@details@Concurrency@@QAEXAAVcritical_section@3@@Z(ptr ptr) _Condition_variable_wait
 @ cdecl -arch=win64 ?wait@_Condition_variable@details@Concurrency@@QEAAXAEAVcritical_section@3@@Z(ptr ptr) _Condition_variable_wait
-@ cdecl -arch=arm ?wait@event@Concurrency@@QAAII@Z(ptr) event_wait
-@ thiscall -arch=win32 ?wait@event@Concurrency@@QAEII@Z(ptr) event_wait
-@ cdecl -arch=win64 ?wait@event@Concurrency@@QEAA_KI@Z(ptr) event_wait
+@ cdecl -arch=arm ?wait@event@Concurrency@@QAAII@Z(ptr long) event_wait
+@ thiscall -arch=win32 ?wait@event@Concurrency@@QAEII@Z(ptr long) event_wait
+@ cdecl -arch=win64 ?wait@event@Concurrency@@QEAA_KI@Z(ptr long) event_wait
 @ cdecl -arch=arm ?wait_for@_Condition_variable@details@Concurrency@@QAA_NAAVcritical_section@3@I@Z(ptr ptr long) _Condition_variable_wait_for
 @ thiscall -arch=i386 ?wait_for@_Condition_variable@details@Concurrency@@QAE_NAAVcritical_section@3@I@Z(ptr ptr long) _Condition_variable_wait_for
 @ cdecl -arch=win64 ?wait_for@_Condition_variable@details@Concurrency@@QEAA_NAEAVcritical_section@3@I@Z(ptr ptr long) _Condition_variable_wait_for
