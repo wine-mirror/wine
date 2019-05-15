@@ -638,7 +638,15 @@ static void test_debug_loop(int argc, char **argv)
         if (!ret) break;
 
         if (ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
-
+#if defined(__i386__) || defined(__x86_64__)
+        if (ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT &&
+            ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
+        {
+            BYTE byte = 0;
+            NtReadVirtualMemory(pi.hProcess, ev.u.Exception.ExceptionRecord.ExceptionAddress, &byte, 1, NULL);
+            ok(byte == 0xcc, "got %02x\n", byte);
+        }
+#endif
         ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
         ok(ret, "ContinueDebugEvent failed, last error %#x.\n", GetLastError());
         if (!ret) break;
