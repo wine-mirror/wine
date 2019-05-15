@@ -2001,6 +2001,9 @@ static void test_CompareStringW(void)
 {
     static const WCHAR ABC_EE[] = {'A','B','C',0,0xEE};
     static const WCHAR ABC_FF[] = {'A','B','C',0,0xFF};
+    static const WCHAR A_ACUTE_BC[] = {0xc1,'B','C',0};
+    static const WCHAR A_ACUTE_BC_DECOMP[] = {'A',0x301,'B','C',0};
+    static const WCHAR A_NULL_BC[] = {'A',0,'B','C',0};
     WCHAR *str1, *str2;
     SYSTEM_INFO si;
     DWORD old_prot;
@@ -2038,6 +2041,35 @@ static void test_CompareStringW(void)
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
     ret = CompareStringW(CP_ACP, 0, ABC_FF, 5, ABC_EE, 5);
     ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_ACUTE_BC, 4);
+    todo_wine ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
+    todo_wine ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, 0, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 3, A_ACUTE_BC, 4);
+    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_NULL_BC, 4);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 4, A_NULL_BC, 4);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, 0, A_NULL_BC, 4, A_ACUTE_BC, 4);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_NULL_BC, 4, A_ACUTE_BC, 4);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, 0, A_NULL_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_NULL_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 }
 
 struct comparestringex_test {
