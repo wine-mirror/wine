@@ -713,15 +713,15 @@ static void PROFILE_ReleaseFile(void)
  * two seconds, so files that are not at least two seconds old might
  * keep their time even on modification, so don't cache them.
  */
-static BOOL is_not_current(FILETIME * ft)
+static BOOL is_not_current(FILETIME *ft)
 {
-    FILETIME Now;
-    LONGLONG ftll, nowll;
-    GetSystemTimeAsFileTime(&Now);
+    LARGE_INTEGER now;
+    LONGLONG ftll;
+
+    NtQuerySystemTime( &now );
     ftll = ((LONGLONG)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
-    nowll = ((LONGLONG)Now.dwHighDateTime << 32) + Now.dwLowDateTime;
-    TRACE("%08x;%08x\n",(unsigned)ftll+21000000,(unsigned)nowll);
-    return ftll + 21000000 < nowll;
+    TRACE("%s; %s\n", wine_dbgstr_longlong(ftll), wine_dbgstr_longlong(now.QuadPart));
+    return ftll + 21000000 < now.QuadPart;
 }
 
 /***********************************************************************
