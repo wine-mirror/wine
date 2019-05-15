@@ -71,7 +71,7 @@ struct device_extension
 {
     struct pnp_device *pnp_device;
 
-    WORD vid, pid;
+    WORD vid, pid, input;
     DWORD uid, version, index;
     BOOL is_gamepad;
     WCHAR *serial;
@@ -119,15 +119,15 @@ void *get_platform_private(DEVICE_OBJECT *device)
     return ext->platform_private;
 }
 
-static DWORD get_vidpid_index(WORD vid, WORD pid)
+static DWORD get_device_index(WORD vid, WORD pid, WORD input)
 {
     struct pnp_device *ptr;
-    DWORD index = 1;
+    DWORD index = 0;
 
     LIST_FOR_EACH_ENTRY(ptr, &pnp_devset, struct pnp_device, entry)
     {
         struct device_extension *ext = (struct device_extension *)ptr->device->DeviceExtension;
-        if (ext->vid == vid && ext->pid == pid)
+        if (ext->vid == vid && ext->pid == pid && ext->input == input)
             index = max(ext->index + 1, index);
     }
 
@@ -136,16 +136,28 @@ static DWORD get_vidpid_index(WORD vid, WORD pid)
 
 static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 {
-    static const WCHAR formatW[] =  {'%','s','\\','V','i','d','_','%','0','4','x','&', 'P','i','d','_','%','0','4','x','&',
-                                     '%','s','_','%','i','\\','%','i','&','%','s','&','%','x',0};
+    static const WCHAR formatW[] =  {'%','s','\\','v','i','d','_','%','0','4','x','&','p','i','d','_','%','0','4','x',
+                                     '\\','%','i','&','%','s','&','%','x','&','%','i',0};
+    static const WCHAR format_inputW[] = {'%','s','\\','v','i','d','_','%','0','4','x','&','p','i','d','_','%','0','4','x','&',
+                                     '%','s','_','%','i','\\','%','i','&','%','s','&','%','x','&','%','i',0};
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     const WCHAR *serial = ext->serial ? ext->serial : zero_serialW;
     DWORD len = strlenW(ext->busid) + strlenW(serial) + 64;
     WCHAR *dst;
 
     if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
-        sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid, ext->is_gamepad ? igW : miW,
-                 ext->index, ext->version, serial, ext->uid);
+    {
+        if (ext->input == (WORD)-1)
+        {
+            sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid,
+                    ext->version, serial, ext->uid, ext->index);
+        }
+        else
+        {
+            sprintfW(dst, format_inputW, ext->busid, ext->vid, ext->pid, ext->is_gamepad ? igW : miW,
+                    ext->input, ext->version, serial, ext->uid, ext->index);
+        }
+    }
 
     return dst;
 }
@@ -197,7 +209,7 @@ static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
 }
 
 DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW, WORD vid, WORD pid,
-                                     DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
+                                     WORD input, DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
                                      const GUID *class, const platform_vtbl *vtbl, DWORD platform_data_size)
 {
     static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e','\\','%','s','#','%','p',0};
@@ -212,8 +224,9 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
     NTSTATUS status;
     DWORD length;
 
-    TRACE("(%p, %s, %04x, %04x, %u, %u, %s, %u, %s, %p, %u)\n", driver, debugstr_w(busidW), vid, pid,
-          version, uid, debugstr_w(serialW), is_gamepad, debugstr_guid(class), vtbl, platform_data_size);
+    TRACE("(%p, %s, %04x, %04x, %04x, %u, %u, %s, %u, %s, %p, %u)\n", driver,
+            debugstr_w(busidW), vid, pid, input, version, uid, debugstr_w(serialW),
+            is_gamepad, debugstr_guid(class), vtbl, platform_data_size);
 
     if (!(pnp_dev = HeapAlloc(GetProcessHeap(), 0, sizeof(*pnp_dev))))
         return NULL;
@@ -236,9 +249,10 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
     ext->pnp_device         = pnp_dev;
     ext->vid                = vid;
     ext->pid                = pid;
+    ext->input              = input;
     ext->uid                = uid;
     ext->version            = version;
-    ext->index              = get_vidpid_index(vid, pid);
+    ext->index              = get_device_index(vid, pid, input);
     ext->is_gamepad         = is_gamepad;
     ext->serial             = strdupW(serialW);
     ext->busid              = busidW;

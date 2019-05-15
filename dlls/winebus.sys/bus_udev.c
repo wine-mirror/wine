@@ -1064,7 +1064,7 @@ static int check_same_device(DEVICE_OBJECT *device, void* context)
 }
 
 static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
-                             DWORD *product_id, WCHAR **serial_number)
+                             DWORD *product_id, WORD *input, WCHAR **serial_number)
 {
     DWORD bus_type;
     char *tmp;
@@ -1110,6 +1110,12 @@ static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
                 found_serial = 1;
             }
         }
+        else if (strcmp(key, "HID_PHYS") == 0)
+        {
+            const char *input_no = strstr(value, "input");
+            if (input_no)
+                *input = atoi(input_no+5 );
+        }
 
 next_line:
         line = strtok_r(NULL, "\n", &saveptr);
@@ -1128,6 +1134,7 @@ static void try_add_device(struct udev_device *dev)
     const char *devnode;
     WCHAR *serial = NULL;
     BOOL is_gamepad = FALSE;
+    WORD input = -1;
     int fd;
     static const CHAR *base_serial = "0000";
 
@@ -1162,7 +1169,7 @@ static void try_add_device(struct udev_device *dev)
         }
 #endif
         parse_uevent_info(udev_device_get_sysattr_value(hiddev, "uevent"),
-                          &vid, &pid, &serial);
+                          &vid, &pid, &input, &serial);
         if (serial == NULL)
             serial = strdupAtoW(base_serial);
     }
@@ -1205,13 +1212,13 @@ static void try_add_device(struct udev_device *dev)
 
     if (strcmp(subsystem, "hidraw") == 0)
     {
-        device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, vid, pid, version, 0, serial, is_gamepad,
+        device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, vid, pid, input, version, 0, serial, is_gamepad,
                                        &GUID_DEVCLASS_HIDRAW, &hidraw_vtbl, sizeof(struct platform_private));
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
     {
-        device = bus_create_hid_device(udev_driver_obj, lnxev_busidW, vid, pid, version, 0, serial, is_gamepad,
+        device = bus_create_hid_device(udev_driver_obj, lnxev_busidW, vid, pid, input, version, 0, serial, is_gamepad,
                                        &GUID_DEVCLASS_LINUXEVENT, &lnxev_vtbl, sizeof(struct wine_input_private));
     }
 #endif

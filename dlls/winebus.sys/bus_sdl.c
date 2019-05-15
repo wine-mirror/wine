@@ -941,7 +941,8 @@ static void try_add_device(SDL_JoystickID index)
         is_xbox_gamepad = (axis_count == 6  && button_count >= 14);
     }
 
-    device = bus_create_hid_device(sdl_driver_obj, sdl_busidW, vid, pid, version, id, serial, is_xbox_gamepad, &GUID_DEVCLASS_SDL, &sdl_vtbl, sizeof(struct platform_private));
+    device = bus_create_hid_device(sdl_driver_obj, sdl_busidW, vid, pid, -1, version, id, serial,
+            is_xbox_gamepad, &GUID_DEVCLASS_SDL, &sdl_vtbl, sizeof(struct platform_private));
 
     if (device)
     {
