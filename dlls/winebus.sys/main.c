@@ -101,7 +101,7 @@ static CRITICAL_SECTION device_list_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 static struct list pnp_devset = LIST_INIT(pnp_devset);
 
 static const WCHAR zero_serialW[]= {'0','0','0','0',0};
-static const WCHAR imW[] = {'I','M',0};
+static const WCHAR miW[] = {'M','I',0};
 static const WCHAR igW[] = {'I','G',0};
 
 static inline WCHAR *strdupW(const WCHAR *src)
@@ -144,7 +144,7 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
     WCHAR *dst;
 
     if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
-        sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid, ext->is_gamepad ? igW : imW,
+        sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid, ext->is_gamepad ? igW : miW,
                  ext->index, ext->version, serial, ext->uid);
 
     return dst;
