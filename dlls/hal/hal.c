@@ -36,25 +36,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
 #ifdef __i386__
-#define DEFINE_FASTCALL1_WRAPPER(func) \
-    __ASM_STDCALL_FUNC( __fastcall_ ## func, 4, \
-                       "popl %eax\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(4) )
-#define DEFINE_FASTCALL_WRAPPER(func,args) \
-    __ASM_STDCALL_FUNC( __fastcall_ ## func, args, \
-                       "popl %eax\n\t" \
-                       "pushl %edx\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-#else
-#define DEFINE_FASTCALL1_WRAPPER(func) /* nothing */
-#define DEFINE_FASTCALL_WRAPPER(func,args) /* nothing */
-#endif
-
-#ifdef __i386__
 
 extern void * WINAPI call_fastcall_func1( void *func, const void *a );
 __ASM_STDCALL_FUNC( call_fastcall_func1, 8,

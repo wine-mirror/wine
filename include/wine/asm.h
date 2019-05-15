@@ -63,4 +63,29 @@
 
 #define __ASM_STDCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name) __ASM_STDCALL(args),code)
 
+/* fastcall support */
+
+#ifdef __i386__
+
+# define DEFINE_FASTCALL1_WRAPPER(func) \
+    __ASM_STDCALL_FUNC( __fastcall_ ## func, 4, \
+                        "popl %eax\n\t"  \
+                        "pushl %ecx\n\t" \
+                        "pushl %eax\n\t" \
+                        "jmp " __ASM_NAME(#func) __ASM_STDCALL(4) )
+# define DEFINE_FASTCALL_WRAPPER(func,args) \
+    __ASM_STDCALL_FUNC( __fastcall_ ## func, args, \
+                        "popl %eax\n\t"  \
+                        "pushl %edx\n\t" \
+                        "pushl %ecx\n\t" \
+                        "pushl %eax\n\t" \
+                        "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+
+#else  /* __i386__ */
+
+# define DEFINE_FASTCALL1_WRAPPER(func) /* nothing */
+# define DEFINE_FASTCALL_WRAPPER(func,args) /* nothing */
+
+#endif  /* __i386__ */
+
 #endif  /* __WINE_WINE_ASM_H */
