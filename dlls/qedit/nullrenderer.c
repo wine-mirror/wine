@@ -113,11 +113,12 @@ static ULONG WINAPI NullRendererInner_AddRef(IUnknown *iface)
 static ULONG WINAPI NullRendererInner_Release(IUnknown *iface)
 {
     NullRendererImpl *This = impl_from_IUnknown(iface);
-    ULONG refCount = BaseRendererImpl_Release(&This->renderer.filter.IBaseFilter_iface);
+    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
 
     if (!refCount)
     {
         TRACE("Destroying Null Renderer\n");
+        strmbase_renderer_cleanup(&This->renderer);
         CoTaskMemFree(This);
     }
 
@@ -234,10 +235,7 @@ HRESULT NullRenderer_create(IUnknown *pUnkOuter, void **ppv)
             (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), &RendererFuncTable);
 
     if (FAILED(hr))
-    {
-        BaseRendererImpl_Release(&pNullRenderer->renderer.filter.IBaseFilter_iface);
         CoTaskMemFree(pNullRenderer);
-    }
     else
         *ppv = &pNullRenderer->IUnknown_inner;
 
