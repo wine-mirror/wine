@@ -131,7 +131,7 @@
 @ stdcall CheckTokenMembership(long ptr ptr) advapi32.CheckTokenMembership
 # @ stub CheckTokenMembershipEx
 @ stdcall ChrCmpIA(long long) shlwapi.ChrCmpIA
-@ stdcall ChrCmpIW(long long) shlwapi.ChrCmpIW
+@ stdcall ChrCmpIW(long long)
 @ stdcall ClearCommBreak(long) kernel32.ClearCommBreak
 @ stdcall ClearCommError(long ptr ptr) kernel32.ClearCommError
 # @ stub CloseGlobalizationUserSettingsKey
@@ -843,17 +843,17 @@
 @ stdcall IsCharAlphaNumericA(long) user32.IsCharAlphaNumericA
 @ stdcall IsCharAlphaNumericW(long) user32.IsCharAlphaNumericW
 @ stdcall IsCharAlphaW(long) user32.IsCharAlphaW
-@ stdcall IsCharBlankW(long) shlwapi.IsCharBlankW
-@ stdcall IsCharCntrlW(ptr) shlwapi.IsCharCntrlW
-@ stdcall IsCharDigitW(long) shlwapi.IsCharDigitW
+@ stdcall IsCharBlankW(long)
+@ stdcall IsCharCntrlW(long)
+@ stdcall IsCharDigitW(long)
 @ stdcall IsCharLowerA(long) user32.IsCharLowerA
 @ stdcall IsCharLowerW(long) user32.IsCharLowerW
-@ stdcall IsCharPunctW(long) shlwapi.IsCharPunctW
-@ stdcall IsCharSpaceA(long) shlwapi.IsCharSpaceA
-@ stdcall IsCharSpaceW(long) shlwapi.IsCharSpaceW
+@ stdcall IsCharPunctW(long)
+@ stdcall IsCharSpaceA(long)
+@ stdcall IsCharSpaceW(long)
 @ stdcall IsCharUpperA(long) user32.IsCharUpperA
 @ stdcall IsCharUpperW(long) user32.IsCharUpperW
-@ stdcall IsCharXDigitW(long) shlwapi.IsCharXDigitW
+@ stdcall IsCharXDigitW(long)
 @ stdcall IsDBCSLeadByte(long) kernel32.IsDBCSLeadByte
 @ stdcall IsDBCSLeadByteEx(long long) kernel32.IsDBCSLeadByteEx
 @ stdcall IsDebuggerPresent() kernel32.IsDebuggerPresent
@@ -1535,56 +1535,56 @@
 @ stdcall StrChrA(str long) shlwapi.StrChrA
 # @ stub StrChrA_MB
 @ stdcall StrChrIA(str long) shlwapi.StrChrIA
-@ stdcall StrChrIW(wstr long) shlwapi.StrChrIW
+@ stdcall StrChrIW(wstr long)
 # @ stub StrChrNIW
-@ stdcall StrChrNW(wstr long long) shlwapi.StrChrNW
-@ stdcall StrChrW(wstr long) shlwapi.StrChrW
-@ stdcall StrCmpCA(str str) shlwapi.StrCmpCA
-@ stdcall StrCmpCW(wstr wstr) shlwapi.StrCmpCW
-@ stdcall StrCmpICA(str str) shlwapi.StrCmpICA
-@ stdcall StrCmpICW(wstr wstr) shlwapi.StrCmpICW
-@ stdcall StrCmpIW(wstr wstr) shlwapi.StrCmpIW
+@ stdcall StrChrNW(wstr long long)
+@ stdcall StrChrW(wstr long)
+@ stdcall StrCmpCA(str str)
+@ stdcall StrCmpCW(wstr wstr)
+@ stdcall StrCmpICA(str str)
+@ stdcall StrCmpICW(wstr wstr)
+@ stdcall StrCmpIW(wstr wstr)
 @ stdcall StrCmpLogicalW(wstr wstr) shlwapi.StrCmpLogicalW
 @ stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
 @ stdcall StrCmpNCA(str ptr long) shlwapi.StrCmpNCA
 @ stdcall StrCmpNCW(wstr wstr long) shlwapi.StrCmpNCW
-@ stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
-@ stdcall StrCmpNICA(long long long) shlwapi.StrCmpNICA
-@ stdcall StrCmpNICW(wstr wstr long) shlwapi.StrCmpNICW
-@ stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
-@ stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
-@ stdcall StrCmpW(wstr wstr) shlwapi.StrCmpW
-@ stdcall StrCpyNW(ptr wstr long) shlwapi.StrCpyNW
-@ stdcall StrCpyNXA(ptr str long) shlwapi.StrCpyNXA
-@ stdcall StrCpyNXW(ptr wstr long) shlwapi.StrCpyNXW
-@ stdcall StrDupA(str) shlwapi.StrDupA
-@ stdcall StrDupW(wstr) shlwapi.StrDupW
+@ stdcall StrCmpNIA(str str long)
+@ stdcall StrCmpNICA(long long long)
+@ stdcall StrCmpNICW(wstr wstr long)
+@ stdcall StrCmpNIW(wstr wstr long)
+@ stdcall StrCmpNW(wstr wstr long)
+@ stdcall StrCmpW(wstr wstr)
+@ stdcall StrCpyNW(ptr wstr long)
+@ stdcall StrCpyNXA(ptr str long)
+@ stdcall StrCpyNXW(ptr wstr long)
+@ stdcall StrDupA(str)
+@ stdcall StrDupW(wstr)
 @ stdcall StrIsIntlEqualA(long str str long) shlwapi.StrIsIntlEqualA
 @ stdcall StrIsIntlEqualW(long wstr wstr long) shlwapi.StrIsIntlEqualW
 @ stdcall StrPBrkA(str str) shlwapi.StrPBrkA
-@ stdcall StrPBrkW(wstr wstr) shlwapi.StrPBrkW
+@ stdcall StrPBrkW(wstr wstr)
 @ stdcall StrRChrA(str str long) shlwapi.StrRChrA
 @ stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
-@ stdcall StrRChrIW(wstr wstr long) shlwapi.StrRChrIW
-@ stdcall StrRChrW(wstr wstr long) shlwapi.StrRChrW
+@ stdcall StrRChrIW(wstr wstr long)
+@ stdcall StrRChrW(wstr wstr long)
 @ stdcall StrRStrIA(str str str) shlwapi.StrRStrIA
 @ stdcall StrRStrIW(wstr wstr wstr) shlwapi.StrRStrIW
 @ stdcall StrSpnA(str str) shlwapi.StrSpnA
-@ stdcall StrSpnW(wstr wstr) shlwapi.StrSpnW
+@ stdcall StrSpnW(wstr wstr)
 @ stdcall StrStrA(str str) shlwapi.StrStrA
 @ stdcall StrStrIA(str str) shlwapi.StrStrIA
-@ stdcall StrStrIW(wstr wstr) shlwapi.StrStrIW
-@ stdcall StrStrNIW(wstr wstr long) shlwapi.StrStrNIW
-@ stdcall StrStrNW(wstr wstr long) shlwapi.StrStrNW
-@ stdcall StrStrW(wstr wstr) shlwapi.StrStrW
+@ stdcall StrStrIW(wstr wstr)
+@ stdcall StrStrNIW(wstr wstr long)
+@ stdcall StrStrNW(wstr wstr long)
+@ stdcall StrStrW(wstr wstr)
 @ stdcall StrToInt64ExA(str long ptr) shlwapi.StrToInt64ExA
-@ stdcall StrToInt64ExW(wstr long ptr) shlwapi.StrToInt64ExW
+@ stdcall StrToInt64ExW(wstr long ptr)
 @ stdcall StrToIntA(str) shlwapi.StrToIntA
 @ stdcall StrToIntExA(str long ptr) shlwapi.StrToIntExA
-@ stdcall StrToIntExW(wstr long ptr) shlwapi.StrToIntExW
-@ stdcall StrToIntW(wstr) shlwapi.StrToIntW
+@ stdcall StrToIntExW(wstr long ptr)
+@ stdcall StrToIntW(wstr)
 @ stdcall StrTrimA(str str) shlwapi.StrTrimA
-@ stdcall StrTrimW(wstr wstr) shlwapi.StrTrimW
+@ stdcall StrTrimW(wstr wstr)
 @ stdcall SubmitThreadpoolWork(ptr) kernel32.SubmitThreadpoolWork
 # @ stub SubscribeEdpEnabledStateChange
 # @ stub SubscribeStateChangeNotification

@@ -3,4 +3,5 @@ IMPORTS = uuid
 
 C_SRCS = \
 	main.c \
-	path.c
+	path.c \
+	string.c
