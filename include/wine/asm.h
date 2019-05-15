@@ -88,4 +88,41 @@
 
 #endif  /* __i386__ */
 
+/* thiscall support */
+
+#undef __thiscall
+#define __thiscall __stdcall
+
+#ifdef __i386__
+
+# ifdef _MSC_VER
+#  define DEFINE_THISCALL_WRAPPER(func,args) \
+    __declspec(naked) HRESULT __thiscall_##func(void) \
+    { __asm { \
+        pop eax \
+        push ecx \
+        push eax \
+        jmp func \
+    } }
+# else  /* _MSC_VER */
+#  define DEFINE_THISCALL_WRAPPER(func,args) \
+    extern void __thiscall_ ## func(void);  \
+    __ASM_GLOBAL_FUNC( __thiscall_ ## func, \
+                       "popl %eax\n\t"  \
+                       "pushl %ecx\n\t" \
+                       "pushl %eax\n\t" \
+                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+# endif  /* _MSC_VER */
+
+# define THISCALL(func) (void *)__thiscall_ ## func
+# define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
+
+#else  /* __i386__ */
+
+# define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
+# define THISCALL(func) func
+# define THISCALL_NAME(func) __ASM_NAME(#func)
+
+#endif  /* __i386__ */
+
 #endif  /* __WINE_WINE_ASM_H */
