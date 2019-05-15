@@ -39,36 +39,35 @@ static inline IEnumPinsImpl *impl_from_IEnumPins(IEnumPins *iface)
 
 static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
 
-HRESULT enum_pins_create(BaseFilter *base, IEnumPins **ppEnum)
+HRESULT enum_pins_create(BaseFilter *base, IEnumPins **out)
 {
-    IEnumPinsImpl * pEnumPins;
+    IEnumPinsImpl *object;
     IPin *pin;
 
-    if (!ppEnum)
+    if (!out)
         return E_POINTER;
 
-    pEnumPins = CoTaskMemAlloc(sizeof(IEnumPinsImpl));
-    if (!pEnumPins)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
-        *ppEnum = NULL;
+        *out = NULL;
         return E_OUTOFMEMORY;
     }
-    pEnumPins->IEnumPins_iface.lpVtbl = &IEnumPinsImpl_Vtbl;
-    pEnumPins->refCount = 1;
-    pEnumPins->uIndex = 0;
-    pEnumPins->base = base;
-    IBaseFilter_AddRef(&base->IBaseFilter_iface);
-    *ppEnum = &pEnumPins->IEnumPins_iface;
-    pEnumPins->Version = base->pin_version;
-    pEnumPins->count = 0;
 
-    while ((pin = base->pFuncsTable->pfnGetPin(base, pEnumPins->count)))
+    object->IEnumPins_iface.lpVtbl = &IEnumPinsImpl_Vtbl;
+    object->refCount = 1;
+    object->base = base;
+    IBaseFilter_AddRef(&base->IBaseFilter_iface);
+    object->Version = base->pin_version;
+
+    while ((pin = base->pFuncsTable->pfnGetPin(base, object->count)))
     {
         IPin_Release(pin);
-        ++pEnumPins->count;
+        ++object->count;
     }
 
-    TRACE("Created new enumerator (%p)\n", *ppEnum);
+    TRACE("Created enumerator %p.\n", object);
+    *out = &object->IEnumPins_iface;
+
     return S_OK;
 }
 
@@ -114,7 +113,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
     if (!ref)
     {
         IBaseFilter_Release(&This->base->IBaseFilter_iface);
-        CoTaskMemFree(This);
+        heap_free(This);
     }
 
     return ref;

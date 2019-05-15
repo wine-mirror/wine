@@ -28,6 +28,7 @@
 #include "dshow.h"
 #include "uuids.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/strmbase.h"
 #include "wine/unicode.h"
