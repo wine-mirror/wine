@@ -22,8 +22,8 @@
 @ stub -arch=win64 ??0_ReentrantLock@details@Concurrency@@QEAA@XZ
 @ thiscall -arch=win32 ??0_ReentrantPPLLock@details@Concurrency@@QAE@XZ(ptr) _ReentrantPPLLock_ctor
 @ cdecl -arch=win64 ??0_ReentrantPPLLock@details@Concurrency@@QEAA@XZ(ptr) _ReentrantPPLLock_ctor
-@ thiscall -arch=win32 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z(ptr) _NonReentrantPPLLock__Scoped_lock_ctor
-@ cdecl -arch=win64 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z(ptr) _NonReentrantPPLLock__Scoped_lock_ctor
+@ thiscall -arch=win32 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z(ptr ptr) _NonReentrantPPLLock__Scoped_lock_ctor
+@ cdecl -arch=win64 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z(ptr ptr) _NonReentrantPPLLock__Scoped_lock_ctor
 @ thiscall -arch=win32 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z(ptr ptr) _ReentrantPPLLock__Scoped_lock_ctor
 @ cdecl -arch=win64 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z(ptr ptr) _ReentrantPPLLock__Scoped_lock_ctor
 @ stub -arch=win32 ??0_SpinLock@details@Concurrency@@QAE@ACJ@Z
