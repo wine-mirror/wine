@@ -245,14 +245,10 @@ typedef struct TransformFilterFuncTable {
 	TransformFilter_Notify pfnNotify;
 } TransformFilterFuncTable;
 
-HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
-ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface);
-HRESULT WINAPI TransformFilterImpl_Stop(IBaseFilter * iface);
-HRESULT WINAPI TransformFilterImpl_Pause(IBaseFilter * iface);
-HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
 HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *iface, IBaseFilter *sender, Quality qm);
 
-HRESULT TransformFilter_Construct( const IBaseFilterVtbl *filterVtbl, LONG filter_size, const CLSID* pClsid, const TransformFilterFuncTable* pFuncsTable, IBaseFilter ** ppTransformFilter);
+HRESULT strmbase_transform_create(LONG filter_size, const CLSID *clsid,
+        const TransformFilterFuncTable *func_table, IBaseFilter **filter);
 
 /* Source Seeking */
 typedef HRESULT (WINAPI *SourceSeeking_ChangeRate)(IMediaSeeking *iface);

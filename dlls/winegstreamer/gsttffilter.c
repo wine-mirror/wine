@@ -57,8 +57,6 @@ struct typeinfo {
     const char *type;
 };
 
-static const IBaseFilterVtbl GSTTf_Vtbl;
-
 static gboolean match_element(GstPluginFeature *feature, gpointer gdata)
 {
     struct typeinfo *data = (struct typeinfo*)gdata;
@@ -497,7 +495,7 @@ static HRESULT Gstreamer_transform_create(IUnknown *punkouter, const CLSID *clsi
 
     TRACE("%p, %p, %p, %p, %p\n", punkouter, clsid, name, vtbl, obj);
 
-    if (FAILED(TransformFilter_Construct(&GSTTf_Vtbl, sizeof(GstTfImpl), clsid, vtbl, (IBaseFilter**)&This)))
+    if (FAILED(strmbase_transform_create(sizeof(GstTfImpl), clsid, vtbl, (IBaseFilter **)&This)))
         return E_OUTOFMEMORY;
 
     This->gstreamer_name = name;
@@ -1016,22 +1014,3 @@ IUnknown * CALLBACK Gstreamer_AudioConvert_create(IUnknown *punkouter, HRESULT *
 
     return obj;
 }
-
-static const IBaseFilterVtbl GSTTf_Vtbl =
-{
-    TransformFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    TransformFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    TransformFilterImpl_Stop,
-    TransformFilterImpl_Pause,
-    TransformFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};

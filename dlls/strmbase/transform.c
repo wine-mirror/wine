@@ -161,95 +161,7 @@ static const BaseOutputPinFuncTable tf_output_BaseOutputFuncTable = {
     BaseOutputPinImpl_DecideAllocator,
 };
 
-static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* pClsid, const TransformFilterFuncTable* pFuncsTable, TransformFilter* pTransformFilter)
-{
-    HRESULT hr;
-    PIN_INFO piInput;
-    PIN_INFO piOutput;
-
-    BaseFilter_Init(&pTransformFilter->filter, pVtbl, pClsid, (DWORD_PTR)(__FILE__ ": TransformFilter.csFilter"), &tfBaseFuncTable);
-
-    InitializeCriticalSection(&pTransformFilter->csReceive);
-    pTransformFilter->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": TransformFilter.csReceive");
-
-    /* pTransformFilter is already allocated */
-    pTransformFilter->pFuncsTable = pFuncsTable;
-    ZeroMemory(&pTransformFilter->pmt, sizeof(pTransformFilter->pmt));
-
-    pTransformFilter->ppPins = CoTaskMemAlloc(2 * sizeof(IPin *));
-
-    /* construct input pin */
-    piInput.dir = PINDIR_INPUT;
-    piInput.pFilter = &pTransformFilter->filter.IBaseFilter_iface;
-    lstrcpynW(piInput.achName, wcsInputPinName, ARRAY_SIZE(piInput.achName));
-    piOutput.dir = PINDIR_OUTPUT;
-    piOutput.pFilter = &pTransformFilter->filter.IBaseFilter_iface;
-    lstrcpynW(piOutput.achName, wcsOutputPinName, ARRAY_SIZE(piOutput.achName));
-
-    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, sizeof(BaseInputPin), &piInput,
-            &tf_input_BaseInputFuncTable, &pTransformFilter->filter.csFilter, NULL, &pTransformFilter->ppPins[0]);
-
-    if (SUCCEEDED(hr))
-    {
-        hr = BaseOutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(BaseOutputPin), &piOutput, &tf_output_BaseOutputFuncTable, &pTransformFilter->filter.csFilter, &pTransformFilter->ppPins[1]);
-
-        if (FAILED(hr))
-            ERR("Cannot create output pin (%x)\n", hr);
-        else {
-            QualityControlImpl_Create( pTransformFilter->ppPins[0], &pTransformFilter->filter.IBaseFilter_iface, &pTransformFilter->qcimpl);
-            pTransformFilter->qcimpl->IQualityControl_iface.lpVtbl = &TransformFilter_QualityControl_Vtbl;
-        }
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        ISeekingPassThru *passthru;
-        pTransformFilter->seekthru_unk = NULL;
-        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown *)&pTransformFilter->filter.IBaseFilter_iface, CLSCTX_INPROC_SERVER,
-                &IID_IUnknown, (void **)&pTransformFilter->seekthru_unk);
-        if (SUCCEEDED(hr))
-        {
-            IUnknown_QueryInterface(pTransformFilter->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-            ISeekingPassThru_Init(passthru, FALSE, pTransformFilter->ppPins[0]);
-            ISeekingPassThru_Release(passthru);
-        }
-    }
-
-    if (FAILED(hr))
-    {
-        CoTaskMemFree(pTransformFilter->ppPins);
-        BaseFilterImpl_Release(&pTransformFilter->filter.IBaseFilter_iface);
-    }
-
-    return hr;
-}
-
-HRESULT TransformFilter_Construct(const IBaseFilterVtbl *pVtbl, LONG filter_size, const CLSID* pClsid, const TransformFilterFuncTable* pFuncsTable, IBaseFilter ** ppTransformFilter)
-{
-    TransformFilter* pTf;
-
-    *ppTransformFilter = NULL;
-
-    assert(filter_size >= sizeof(TransformFilter));
-
-    pTf = CoTaskMemAlloc(filter_size);
-
-    if (!pTf)
-        return E_OUTOFMEMORY;
-
-    ZeroMemory(pTf, filter_size);
-
-    if (SUCCEEDED(TransformFilter_Init(pVtbl, pClsid, pFuncsTable, pTf)))
-    {
-        *ppTransformFilter = &pTf->filter.IBaseFilter_iface;
-        return S_OK;
-    }
-
-    CoTaskMemFree(pTf);
-    return E_FAIL;
-}
-
-HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
     HRESULT hr;
     TransformFilter *This = impl_from_IBaseFilter(iface);
@@ -274,7 +186,7 @@ HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID ri
     return hr;
 }
 
-ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
+static ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
 {
     TransformFilter *This = impl_from_IBaseFilter(iface);
     ULONG refCount = InterlockedDecrement(&This->filter.refCount);
@@ -313,9 +225,7 @@ ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
     return refCount;
 }
 
-/** IMediaFilter methods **/
-
-HRESULT WINAPI TransformFilterImpl_Stop(IBaseFilter * iface)
+static HRESULT WINAPI TransformFilterImpl_Stop(IBaseFilter *iface)
 {
     TransformFilter *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
@@ -335,7 +245,7 @@ HRESULT WINAPI TransformFilterImpl_Stop(IBaseFilter * iface)
     return hr;
 }
 
-HRESULT WINAPI TransformFilterImpl_Pause(IBaseFilter * iface)
+static HRESULT WINAPI TransformFilterImpl_Pause(IBaseFilter *iface)
 {
     TransformFilter *This = impl_from_IBaseFilter(iface);
     HRESULT hr;
@@ -357,7 +267,7 @@ HRESULT WINAPI TransformFilterImpl_Pause(IBaseFilter * iface)
     return hr;
 }
 
-HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
+static HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
     HRESULT hr = S_OK;
     TransformFilter *This = impl_from_IBaseFilter(iface);
@@ -384,6 +294,119 @@ HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStar
     LeaveCriticalSection(&This->csReceive);
 
     return hr;
+}
+
+static const IBaseFilterVtbl transform_vtbl =
+{
+    TransformFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
+    TransformFilterImpl_Release,
+    BaseFilterImpl_GetClassID,
+    TransformFilterImpl_Stop,
+    TransformFilterImpl_Pause,
+    TransformFilterImpl_Run,
+    BaseFilterImpl_GetState,
+    BaseFilterImpl_SetSyncSource,
+    BaseFilterImpl_GetSyncSource,
+    BaseFilterImpl_EnumPins,
+    BaseFilterImpl_FindPin,
+    BaseFilterImpl_QueryFilterInfo,
+    BaseFilterImpl_JoinFilterGraph,
+    BaseFilterImpl_QueryVendorInfo
+};
+
+static HRESULT strmbase_transform_init(const CLSID *clsid,
+        const TransformFilterFuncTable *func_table, TransformFilter *filter)
+{
+    HRESULT hr;
+    PIN_INFO piInput;
+    PIN_INFO piOutput;
+
+    BaseFilter_Init(&filter->filter, &transform_vtbl, clsid,
+            (DWORD_PTR)(__FILE__ ": TransformFilter.csFilter"), &tfBaseFuncTable);
+
+    InitializeCriticalSection(&filter->csReceive);
+    filter->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": TransformFilter.csReceive");
+
+    /* pTransformFilter is already allocated */
+    filter->pFuncsTable = func_table;
+    ZeroMemory(&filter->pmt, sizeof(filter->pmt));
+
+    filter->ppPins = CoTaskMemAlloc(2 * sizeof(IPin *));
+
+    /* construct input pin */
+    piInput.dir = PINDIR_INPUT;
+    piInput.pFilter = &filter->filter.IBaseFilter_iface;
+    lstrcpynW(piInput.achName, wcsInputPinName, ARRAY_SIZE(piInput.achName));
+    piOutput.dir = PINDIR_OUTPUT;
+    piOutput.pFilter = &filter->filter.IBaseFilter_iface;
+    lstrcpynW(piOutput.achName, wcsOutputPinName, ARRAY_SIZE(piOutput.achName));
+
+    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, sizeof(BaseInputPin), &piInput,
+            &tf_input_BaseInputFuncTable, &filter->filter.csFilter, NULL, &filter->ppPins[0]);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = BaseOutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(BaseOutputPin),
+                &piOutput, &tf_output_BaseOutputFuncTable, &filter->filter.csFilter,
+                &filter->ppPins[1]);
+
+        if (FAILED(hr))
+            ERR("Cannot create output pin (%x)\n", hr);
+        else {
+            QualityControlImpl_Create(filter->ppPins[0],
+                    &filter->filter.IBaseFilter_iface, &filter->qcimpl);
+            filter->qcimpl->IQualityControl_iface.lpVtbl = &TransformFilter_QualityControl_Vtbl;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        ISeekingPassThru *passthru;
+        filter->seekthru_unk = NULL;
+        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown *)&filter->filter.IBaseFilter_iface,
+                CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&filter->seekthru_unk);
+        if (SUCCEEDED(hr))
+        {
+            IUnknown_QueryInterface(filter->seekthru_unk, &IID_ISeekingPassThru, (void **)&passthru);
+            ISeekingPassThru_Init(passthru, FALSE, filter->ppPins[0]);
+            ISeekingPassThru_Release(passthru);
+        }
+    }
+
+    if (FAILED(hr))
+    {
+        CoTaskMemFree(filter->ppPins);
+        BaseFilterImpl_Release(&filter->filter.IBaseFilter_iface);
+    }
+
+    return hr;
+}
+
+HRESULT strmbase_transform_create(LONG filter_size, const CLSID *pClsid,
+        const TransformFilterFuncTable *pFuncsTable, IBaseFilter **ppTransformFilter)
+{
+    TransformFilter* pTf;
+
+    *ppTransformFilter = NULL;
+
+    assert(filter_size >= sizeof(TransformFilter));
+
+    pTf = CoTaskMemAlloc(filter_size);
+
+    if (!pTf)
+        return E_OUTOFMEMORY;
+
+    ZeroMemory(pTf, filter_size);
+
+    if (SUCCEEDED(strmbase_transform_init(pClsid, pFuncsTable, pTf)))
+    {
+        *ppTransformFilter = &pTf->filter.IBaseFilter_iface;
+        return S_OK;
+    }
+
+    CoTaskMemFree(pTf);
+    return E_FAIL;
 }
 
 HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *iface, IBaseFilter *sender, Quality qm)
