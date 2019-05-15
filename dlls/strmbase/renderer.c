@@ -301,17 +301,6 @@ void strmbase_renderer_cleanup(BaseRenderer *filter)
     BaseFilter_Destroy(&filter->filter);
 }
 
-ULONG WINAPI BaseRendererImpl_Release(IBaseFilter* iface)
-{
-    BaseRenderer *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = InterlockedDecrement(&This->filter.refCount);
-
-    if (!refCount)
-        strmbase_renderer_cleanup(This);
-
-    return refCount;
-}
-
 HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSample)
 {
     HRESULT hr = S_OK;
