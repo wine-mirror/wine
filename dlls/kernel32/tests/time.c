@@ -773,6 +773,20 @@ static ULONGLONG get_longlong_time(FILETIME *time)
     return uli.QuadPart;
 }
 
+static void test_GetSystemTimeAsFileTime(void)
+{
+    LARGE_INTEGER t1, t2, t3;
+    FILETIME ft;
+
+    NtQuerySystemTime( &t1 );
+    GetSystemTimeAsFileTime( &ft );
+    NtQuerySystemTime( &t3 );
+    t2.QuadPart = get_longlong_time( &ft );
+
+    ok(t1.QuadPart <= t2.QuadPart, "out of order %s %s\n", wine_dbgstr_longlong(t1.QuadPart), wine_dbgstr_longlong(t2.QuadPart));
+    ok(t2.QuadPart <= t3.QuadPart, "out of order %s %s\n", wine_dbgstr_longlong(t2.QuadPart), wine_dbgstr_longlong(t3.QuadPart));
+}
+
 static void test_GetSystemTimePreciseAsFileTime(void)
 {
     FILETIME ft;
@@ -1012,6 +1026,7 @@ START_TEST(time)
     test_FileTimeToDosDateTime();
     test_GetCalendarInfo();
     test_GetDynamicTimeZoneInformation();
+    test_GetSystemTimeAsFileTime();
     test_GetSystemTimePreciseAsFileTime();
     test_GetTimeZoneInformationForYear();
 }

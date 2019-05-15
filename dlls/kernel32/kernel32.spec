@@ -832,7 +832,7 @@
 @ stdcall GetSystemRegistryQuota(ptr ptr)
 @ stdcall GetSystemTime(ptr)
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr)
-@ stdcall GetSystemTimeAsFileTime(ptr)
+@ stdcall GetSystemTimeAsFileTime(ptr) ntdll.NtQuerySystemTime
 @ stdcall GetSystemTimePreciseAsFileTime(ptr)
 @ stdcall GetSystemTimes(ptr ptr ptr)
 @ stdcall GetSystemWindowsDirectoryA(ptr long)

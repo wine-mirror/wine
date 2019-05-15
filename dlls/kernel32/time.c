@@ -751,27 +751,6 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
 
 
 /***********************************************************************
- *              GetSystemTimeAsFileTime  (KERNEL32.@)
- *
- *  Get the current time in utc format.
- *
- *  PARAMS
- *   time [out] Destination for the current utc time
- *
- *  RETURNS
- *   Nothing.
- */
-void WINAPI GetSystemTimeAsFileTime( FILETIME *time )
-{
-    LARGE_INTEGER t;
-
-    NtQuerySystemTime( &t );
-    time->dwLowDateTime = t.u.LowPart;
-    time->dwHighDateTime = t.u.HighPart;
-}
-
-
-/***********************************************************************
  *              GetSystemTimePreciseAsFileTime  (KERNEL32.@)
  *
  *  Get the current time in utc format with greater accuracy.
