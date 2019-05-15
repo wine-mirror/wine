@@ -53,11 +53,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(time);
 
 #define CALINFO_MAX_YEAR 2029
 
-#define LL2FILETIME( ll, pft )\
-    (pft)->dwLowDateTime = (UINT)(ll); \
-    (pft)->dwHighDateTime = (UINT)((ll) >> 32);
-#define FILETIME2LL( pft, ll) \
-    ll = (((LONGLONG)((pft)->dwHighDateTime))<<32) + (pft)-> dwLowDateTime ;
+static inline void longlong_to_filetime( LONGLONG t, FILETIME *ft )
+{
+    ft->dwLowDateTime = (DWORD)t;
+    ft->dwHighDateTime = (DWORD)(t >> 32);
+}
+
+static inline LONGLONG filetime_to_longlong( const FILETIME *ft )
+{
+    return (((LONGLONG)ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+}
 
 static const WCHAR mui_stdW[] = { 'M','U','I','_','S','t','d',0 };
 static const WCHAR mui_dltW[] = { 'M','U','I','_','D','l','t',0 };
@@ -177,9 +182,9 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
         }
 
         if (!islocal) {
-            FILETIME2LL( lpFileTime, llTime );
+            llTime = filetime_to_longlong( lpFileTime );
             llTime -= pTZinfo->Bias * (LONGLONG)600000000;
-            LL2FILETIME( llTime, &ftTemp)
+            longlong_to_filetime( llTime, &ftTemp );
             lpFileTime = &ftTemp;
         }
 
@@ -188,7 +193,7 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
 
         if (!islocal) {
             llTime -= pTZinfo->DaylightBias * (LONGLONG)600000000;
-            LL2FILETIME( llTime, &ftTemp)
+            longlong_to_filetime( llTime, &ftTemp );
             FileTimeToSystemTime(lpFileTime, &SysTime);
         }
 
@@ -205,7 +210,7 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
         if (!islocal) {
             llTime -= ( pTZinfo->StandardBias - pTZinfo->DaylightBias )
                 * (LONGLONG)600000000;
-            LL2FILETIME( llTime, &ftTemp)
+            longlong_to_filetime( llTime, &ftTemp );
             FileTimeToSystemTime(lpFileTime, &SysTime);
         }
 
@@ -694,12 +699,12 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
 
     if (!SystemTimeToFileTime(lpUniversalTime, &ft))
         return FALSE;
-    FILETIME2LL( &ft, llTime)
+    llTime = filetime_to_longlong( &ft );
     if (!TIME_GetTimezoneBias(&tzinfo, &ft, FALSE, &lBias))
         return FALSE;
     /* convert minutes to 100-nanoseconds-ticks */
     llTime -= (LONGLONG)lBias * 600000000;
-    LL2FILETIME( llTime, &ft)
+    longlong_to_filetime( llTime, &ft );
 
     return FileTimeToSystemTime(&ft, lpLocalTime);
 }
@@ -739,12 +744,12 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
 
     if (!SystemTimeToFileTime(lpLocalTime, &ft))
         return FALSE;
-    FILETIME2LL( &ft, t)
+    t = filetime_to_longlong( &ft );
     if (!TIME_GetTimezoneBias(&tzinfo, &ft, TRUE, &lBias))
         return FALSE;
     /* convert minutes to 100-nanoseconds-ticks */
     t += (LONGLONG)lBias * 600000000;
-    LL2FILETIME( t, &ft)
+    longlong_to_filetime( t, &ft );
     return FileTimeToSystemTime(&ft, lpUniversalTime);
 }
 
@@ -884,8 +889,8 @@ BOOL WINAPI GetProcessTimes( HANDLE hprocess, LPFILETIME lpCreationTime,
     TIME_ClockTimeToFileTime(tms.tms_stime,lpKernelTime);
     if (NtQueryInformationProcess( hprocess, ProcessTimes, &pti, sizeof(pti), NULL))
         return FALSE;
-    LL2FILETIME( pti.CreateTime.QuadPart, lpCreationTime);
-    LL2FILETIME( pti.ExitTime.QuadPart, lpExitTime);
+    longlong_to_filetime( pti.CreateTime.QuadPart, lpCreationTime );
+    longlong_to_filetime( pti.ExitTime.QuadPart, lpExitTime );
     return TRUE;
 }
 
