@@ -77,11 +77,6 @@ void WINAPI DeleteMediaType(AM_MEDIA_TYPE * pMediaType)
     CoTaskMemFree(pMediaType);
 }
 
-typedef struct tagENUMEDIADETAILS
-{
-    ULONG cMediaTypes;
-} ENUMMEDIADETAILS;
-
 typedef struct IEnumMediaTypesImpl
 {
     IEnumMediaTypes IEnumMediaTypes_iface;
@@ -90,7 +85,7 @@ typedef struct IEnumMediaTypesImpl
     BasePin_GetMediaType enumMediaFunction;
     BasePin_GetMediaTypeVersion mediaVersionFunction;
     LONG currentVersion;
-    ENUMMEDIADETAILS enumMediaDetails;
+    ULONG count;
     ULONG uIndex;
 } IEnumMediaTypesImpl;
 
@@ -127,7 +122,7 @@ HRESULT WINAPI EnumMediaTypes_Construct(BasePin *basePin, BasePin_GetMediaType e
         i++;
     }
 
-    pEnumMediaTypes->enumMediaDetails.cMediaTypes = i;
+    pEnumMediaTypes->count = i;
     *ppEnum = &pEnumMediaTypes->IEnumMediaTypes_iface;
     pEnumMediaTypes->currentVersion = versionFunc(basePin);
     return S_OK;
@@ -184,7 +179,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cM
 
     TRACE("(%p)->(%u, %p, %p)\n", iface, cMediaTypes, ppMediaTypes, pcFetched);
 
-    cFetched = min(This->enumMediaDetails.cMediaTypes, This->uIndex + cMediaTypes) - This->uIndex;
+    cFetched = min(This->count, This->uIndex + cMediaTypes) - This->uIndex;
 
     if (This->currentVersion != This->mediaVersionFunction(This->basePin))
         return VFW_E_ENUM_OUT_OF_SYNC;
@@ -226,7 +221,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cM
     if (This->currentVersion != This->mediaVersionFunction(This->basePin))
         return VFW_E_ENUM_OUT_OF_SYNC;
 
-    if (This->uIndex + cMediaTypes < This->enumMediaDetails.cMediaTypes)
+    if (This->uIndex + cMediaTypes < This->count)
     {
         This->uIndex += cMediaTypes;
         return S_OK;
@@ -248,7 +243,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
         FreeMediaType(&amt);
         i++;
     }
-    This->enumMediaDetails.cMediaTypes = i;
+    This->count = i;
     This->currentVersion = This->mediaVersionFunction(This->basePin);
     This->uIndex = 0;
 
