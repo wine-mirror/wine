@@ -737,7 +737,7 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR 
     {
         /* get a "random" unique number and try to create the file */
         HANDLE handle;
-        UINT num = GetTickCount() & 0xffff;
+        UINT num = NtGetTickCount() & 0xffff;
         static UINT last;
 
         /* avoid using the same name twice in a short interval */
