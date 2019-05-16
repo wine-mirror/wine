@@ -1247,8 +1247,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
  * RtlInterlockedPushListSList   [NTDLL.@]
  */
 DEFINE_FASTCALL_WRAPPER(RtlInterlockedPushListSList, 16)
-PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
-                                                PSLIST_ENTRY last, ULONG count)
+PSLIST_ENTRY FASTCALL RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
+                                                  PSLIST_ENTRY last, ULONG count)
 {
     return RtlInterlockedPushListSListEx(list, first, last, count);
 }

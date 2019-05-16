@@ -65,7 +65,7 @@
 
 /* fastcall support */
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(_WIN32)
 
 # define DEFINE_FASTCALL1_WRAPPER(func) \
     __ASM_STDCALL_FUNC( __fastcall_ ## func, 4, \

@@ -1528,7 +1528,7 @@ static inline void IoMarkIrpPending(IRP *irp)
 #define SYMBOLIC_LINK_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | 0x1)
 
 NTSTATUS  WINAPI DbgQueryDebugFilterState(ULONG, ULONG);
-void      WINAPI ExAcquireFastMutexUnsafe(PFAST_MUTEX);
+void    FASTCALL ExAcquireFastMutexUnsafe(PFAST_MUTEX);
 BOOLEAN   WINAPI ExAcquireResourceExclusiveLite(ERESOURCE*,BOOLEAN);
 BOOLEAN   WINAPI ExAcquireResourceSharedLite(ERESOURCE*,BOOLEAN);
 BOOLEAN   WINAPI ExAcquireSharedStarveExclusive(ERESOURCE*,BOOLEAN);
@@ -1551,7 +1551,7 @@ PSLIST_ENTRY WINAPI ExInterlockedPushEntrySList(PSLIST_HEADER,PSLIST_ENTRY,PKSPI
 LIST_ENTRY * WINAPI ExInterlockedRemoveHeadList(LIST_ENTRY*,KSPIN_LOCK*);
 BOOLEAN   WINAPI ExIsResourceAcquiredExclusiveLite(ERESOURCE*);
 ULONG     WINAPI ExIsResourceAcquiredSharedLite(ERESOURCE*);
-void      WINAPI ExReleaseFastMutexUnsafe(PFAST_MUTEX);
+void    FASTCALL ExReleaseFastMutexUnsafe(PFAST_MUTEX);
 void      WINAPI ExReleaseResourceForThreadLite(ERESOURCE*,ERESOURCE_THREAD);
 ULONG     WINAPI ExSetTimerResolution(ULONG,BOOLEAN);
 
@@ -1593,6 +1593,7 @@ void      WINAPI IoReleaseCancelSpinLock(KIRQL);
 NTSTATUS  WINAPI IoSetDeviceInterfaceState(UNICODE_STRING*,BOOLEAN);
 NTSTATUS  WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT,ULONG);
 
+void    FASTCALL KeAcquireInStackQueuedSpinLockAtDpcLevel(KSPIN_LOCK*,KLOCK_QUEUE_HANDLE*);
 #ifdef __i386__
 void      WINAPI KeAcquireSpinLock(KSPIN_LOCK*,KIRQL*);
 #else
@@ -1615,6 +1616,7 @@ void      WINAPI KeLeaveCriticalRegion(void);
 void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
 void      WINAPI KeQueryTickCount(LARGE_INTEGER*);
 ULONG     WINAPI KeQueryTimeIncrement(void);
+void    FASTCALL KeReleaseInStackQueuedSpinLockFromDpcLevel(KLOCK_QUEUE_HANDLE*);
 LONG      WINAPI KeReleaseMutex(PRKMUTEX,BOOLEAN);
 LONG      WINAPI KeReleaseSemaphore(PRKSEMAPHORE,KPRIORITY,LONG,BOOLEAN);
 void      WINAPI KeReleaseSpinLock(KSPIN_LOCK*,KIRQL);

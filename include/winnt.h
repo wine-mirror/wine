@@ -42,6 +42,7 @@ extern "C" {
 #endif
 
 #define NTAPI __stdcall
+#define FASTCALL __fastcall
 
 #ifndef MIDL_PASS
 # if defined(_MSC_VER)
