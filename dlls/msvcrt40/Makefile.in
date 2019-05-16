@@ -1,6 +1,7 @@
 EXTRADEFS = -DUSE_MSVCRT_PREFIX
 MODULE    = msvcrt40.dll
-IMPORTS   = msvcrt
+
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	msvcrt40.c
