@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 static int context_id = -1;
 static int scheduler_id = -1;
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__)
 
 #define DEFINE_VTBL_WRAPPER(off)            \
     __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \

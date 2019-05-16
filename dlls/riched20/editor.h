@@ -277,7 +277,7 @@ void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef) DECLSPEC_
 
 /* txthost.c */
 ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10) DECLSPEC_HIDDEN;
-#ifdef __i386__ /* Use wrappers to perform thiscall on i386 */
+#if defined(__i386__) && !defined(__MINGW32__)  /* Use wrappers to perform thiscall on i386 */
 #define TXTHOST_VTABLE(This) (&itextHostStdcallVtbl)
 #else /* __i386__ */
 #define TXTHOST_VTABLE(This) (This)->lpVtbl

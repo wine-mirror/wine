@@ -4464,7 +4464,7 @@ void __cdecl ios_sync_with_stdio(void)
 }
 
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__)
 
 #define DEFINE_VTBL_WRAPPER(off)            \
     __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \

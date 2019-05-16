@@ -51,7 +51,7 @@
 #include "wine/heap.h"
 #include "wine/list.h"
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__)
 extern const struct ITextHostVtbl itextHostStdcallVtbl DECLSPEC_HIDDEN;
 #endif /* __i386__ */
 

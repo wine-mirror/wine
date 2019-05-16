@@ -98,6 +98,8 @@ DECLARE_INTERFACE_(IMILBitmapScaler,IMILBitmapSource)
 };
 #undef INTERFACE
 
+#define THISCALLMETHOD_(type,method)  type (__thiscall *method)
+
 #define INTERFACE IMILUnknown1
 DECLARE_INTERFACE_(IMILUnknown1,IUnknown)
 {
@@ -105,19 +107,14 @@ DECLARE_INTERFACE_(IMILUnknown1,IUnknown)
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID,void **) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
-    /*** thiscall method ***/
-    STDMETHOD_(void,unknown1)(THIS_ void*) PURE;
-    /*** stdcall ***/
+    THISCALLMETHOD_(void,unknown1)(THIS_ void*) PURE;
     STDMETHOD_(HRESULT,unknown2)(THIS_ void*, void*) PURE;
-    /*** thiscall method ***/
-    STDMETHOD_(HRESULT,unknown3)(THIS_ void*) PURE;
-     /*** stdcall ***/
+    THISCALLMETHOD_(HRESULT,unknown3)(THIS_ void*) PURE;
     STDMETHOD_(HRESULT,unknown4)(THIS_ void*) PURE;
     STDMETHOD_(HRESULT,unknown5)(THIS_ void*) PURE;
     STDMETHOD_(HRESULT,unknown6)(THIS_ DWORD64) PURE;
     STDMETHOD_(HRESULT,unknown7)(THIS_ void*) PURE;
-    /*** thiscall method ***/
-    STDMETHOD_(HRESULT,unknown8)(THIS) PURE;
+    THISCALLMETHOD_(HRESULT,unknown8)(THIS) PURE;
 };
 #undef INTERFACE
 

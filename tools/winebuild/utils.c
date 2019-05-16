@@ -900,8 +900,8 @@ const char *get_link_name( const ORDDEF *odp )
 
     if (target_platform == PLATFORM_WINDOWS)
     {
-        if (odp->flags & FLAG_THISCALL) ret = strmake( "__thiscall_%s", odp->link_name );
-        else if (odp->flags & FLAG_FASTCALL) ret = strmake( "@%s@%u", odp->link_name, get_args_size( odp ));
+        if (odp->flags & FLAG_THISCALL) return odp->link_name;
+        if (odp->flags & FLAG_FASTCALL) ret = strmake( "@%s@%u", odp->link_name, get_args_size( odp ));
         else if (!kill_at) ret = strmake( "%s@%u", odp->link_name, get_args_size( odp ));
         else return odp->link_name;
     }

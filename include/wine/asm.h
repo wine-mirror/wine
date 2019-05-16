@@ -90,14 +90,11 @@
 
 /* thiscall support */
 
-#undef __thiscall
-#define __thiscall __stdcall
-
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__)
 
 # ifdef _MSC_VER
 #  define DEFINE_THISCALL_WRAPPER(func,args) \
-    __declspec(naked) HRESULT __thiscall_##func(void) \
+    __declspec(naked) void __thiscall_##func(void) \
     { __asm { \
         pop eax \
         push ecx \
@@ -107,7 +104,7 @@
 # else  /* _MSC_VER */
 #  define DEFINE_THISCALL_WRAPPER(func,args) \
     extern void __thiscall_ ## func(void);  \
-    __ASM_GLOBAL_FUNC( __thiscall_ ## func, \
+    __ASM_STDCALL_FUNC( __thiscall_ ## func, args, \
                        "popl %eax\n\t"  \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
