@@ -78,10 +78,6 @@ typedef struct _KSERVICE_TABLE_DESCRIPTOR
 
 KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4] = { { 0 } };
 
-typedef void (WINAPI *PCREATE_PROCESS_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
-typedef void (WINAPI *PCREATE_PROCESS_NOTIFY_ROUTINE_EX)(PEPROCESS,HANDLE,PPS_CREATE_NOTIFY_INFO);
-typedef void (WINAPI *PCREATE_THREAD_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
-
 static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
                                   '\\','M','a','c','h','i','n','e',
                                   '\\','S','y','s','t','e','m',
