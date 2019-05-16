@@ -118,6 +118,7 @@ struct device
     DEVINST               devnode;
     struct list           entry;
     BOOL                  removed;
+    SP_DEVINSTALL_PARAMS_W params;
 };
 
 struct device_iface
@@ -730,7 +731,7 @@ static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     TRACE("%p, %s, %s, %d\n", set, debugstr_guid(class),
         debugstr_w(instanceid), phantom);
 
-    if (!(device = heap_alloc(sizeof(*device))))
+    if (!(device = heap_alloc_zero(sizeof(*device))))
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return NULL;
@@ -752,6 +753,7 @@ static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     device->devnode = alloc_devnode(device);
     device->removed = FALSE;
     list_add_tail(&set->devices, &device->entry);
+    device->params.cbSize = sizeof(SP_DEVINSTALL_PARAMS_W);
 
     if (phantom)
         RegSetValueExW(device->key, Phantom, 0, REG_DWORD, (const BYTE *)&one, sizeof(one));
@@ -3501,27 +3503,57 @@ BOOL WINAPI SetupDiCallClassInstaller(
 }
 
 /***********************************************************************
- *		SetupDiGetDeviceInstallParamsW (SETUPAPI.@)
+ *              SetupDiGetDeviceInstallParamsW (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetDeviceInstallParamsW(
-       HDEVINFO DeviceInfoSet,
-       PSP_DEVINFO_DATA DeviceInfoData,
-       PSP_DEVINSTALL_PARAMS_W DeviceInstallParams)
+BOOL WINAPI SetupDiGetDeviceInstallParamsW(HDEVINFO devinfo,
+        SP_DEVINFO_DATA *device_data, SP_DEVINSTALL_PARAMS_W *params)
 {
-    FIXME("%p %p %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstallParams);
-    return FALSE;
+    struct device *device;
+
+    TRACE("devinfo %p, device_data %p, params %p.\n", devinfo, device_data, params);
+
+    if (params->cbSize != sizeof(SP_DEVINSTALL_PARAMS_W))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    *params = device->params;
+
+    return TRUE;
 }
 
 /***********************************************************************
- *		SetupDiGetDeviceInstallParamsA (SETUPAPI.@)
+ *              SetupDiGetDeviceInstallParamsA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetDeviceInstallParamsA(
-       HDEVINFO DeviceInfoSet,
-       PSP_DEVINFO_DATA DeviceInfoData,
-       PSP_DEVINSTALL_PARAMS_A DeviceInstallParams)
+BOOL WINAPI SetupDiGetDeviceInstallParamsA(HDEVINFO devinfo,
+        SP_DEVINFO_DATA *device_data, SP_DEVINSTALL_PARAMS_A *params)
 {
-    FIXME("%p %p %p\n", DeviceInfoSet, DeviceInfoData, DeviceInstallParams);
-    return FALSE;
+    SP_DEVINSTALL_PARAMS_W paramsW;
+    BOOL ret;
+
+    if (params->cbSize != sizeof(SP_DEVINSTALL_PARAMS_A))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    paramsW.cbSize = sizeof(paramsW);
+    ret = SetupDiGetDeviceInstallParamsW(devinfo, device_data, &paramsW);
+    params->Flags = paramsW.Flags;
+    params->FlagsEx = paramsW.FlagsEx;
+    params->hwndParent = paramsW.hwndParent;
+    params->InstallMsgHandler = paramsW.InstallMsgHandler;
+    params->InstallMsgHandlerContext = paramsW.InstallMsgHandlerContext;
+    params->FileQueue = paramsW.FileQueue;
+    params->ClassInstallReserved = paramsW.ClassInstallReserved;
+    params->Reserved = paramsW.Reserved;
+    WideCharToMultiByte(CP_ACP, 0, paramsW.DriverPath, -1, params->DriverPath, sizeof(params->DriverPath), NULL, NULL);
+
+    return ret;
 }
 
 /***********************************************************************
