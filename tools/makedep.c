@@ -2202,7 +2202,7 @@ static struct strarray get_default_imports( const struct makefile *make )
     struct strarray ret = empty_strarray;
 
     if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) return ret;
-    if (strarray_exists( &make->extradllflags, "-mno-cygwin" )) strarray_add( &ret, "msvcrt" );
+    if (make->use_msvcrt) strarray_add( &ret, "msvcrt" );
     strarray_add( &ret, "winecrt0" );
     if (make->is_win16) strarray_add( &ret, "kernel" );
     strarray_add( &ret, "kernel32" );
@@ -4119,10 +4119,6 @@ static void load_sources( struct makefile *make )
     make->is_exe     = strarray_exists( &make->extradllflags, "-mconsole" ) ||
                        strarray_exists( &make->extradllflags, "-mwindows" );
 
-    for (i = 0; i < make->imports.count && !make->use_msvcrt; i++)
-        make->use_msvcrt = !strncmp( make->imports.str[i], "msvcr", 5 ) ||
-                           !strcmp( make->imports.str[i], "ucrtbase" );
-
     if (make->module && !make->install_lib.count && !make->install_dev.count)
     {
         if (make->importlib) strarray_add( &make->install_dev, make->importlib );
@@ -4171,18 +4167,13 @@ static void load_sources( struct makefile *make )
     LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );
 
     if (crosstarget && !make->is_win16 && !strarray_exists( &make->imports, "kernel" ))
-    {
-        make->is_cross = (make->testdll ||
-                          strarray_exists( &make->extradllflags, "-mno-cygwin" ) ||
-                          !has_object_file( make ));
-    }
+        make->is_cross = (make->testdll || make->use_msvcrt || !has_object_file( make ));
 
     if (make->is_cross)
     {
         for (i = 0; i < make->imports.count; i++)
             strarray_add_uniq( &cross_import_libs, make->imports.str[i] );
-        if (strarray_exists( &make->extradllflags, "-mno-cygwin" ))
-            strarray_add_uniq( &cross_import_libs, "msvcrt" );
+        if (make->use_msvcrt) strarray_add_uniq( &cross_import_libs, "msvcrt" );
         strarray_add_uniq( &cross_import_libs, "winecrt0" );
         strarray_add_uniq( &cross_import_libs, "kernel32" );
         strarray_add_uniq( &cross_import_libs, "ntdll" );
