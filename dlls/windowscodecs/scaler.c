@@ -416,12 +416,7 @@ static HRESULT WINAPI IMILBitmapScaler_GetSize(IMILBitmapScaler *iface,
     UINT *width, UINT *height)
 {
     BitmapScaler *This = impl_from_IMILBitmapScaler(iface);
-
     TRACE("(%p,%p,%p)\n", iface, width, height);
-
-    if (!This->source)
-        return WINCODEC_ERR_NOTINITIALIZED;
-
     return IWICBitmapScaler_GetSize(&This->IWICBitmapScaler_iface, width, height);
 }
 
@@ -452,12 +447,7 @@ static HRESULT WINAPI IMILBitmapScaler_GetResolution(IMILBitmapScaler *iface,
     double *dpix, double *dpiy)
 {
     BitmapScaler *This = impl_from_IMILBitmapScaler(iface);
-
     TRACE("(%p,%p,%p)\n", iface, dpix, dpiy);
-
-    if (!This->source)
-        return WINCODEC_ERR_NOTINITIALIZED;
-
     return IWICBitmapScaler_GetResolution(&This->IWICBitmapScaler_iface, dpix, dpiy);
 }
 
@@ -478,12 +468,7 @@ static HRESULT WINAPI IMILBitmapScaler_CopyPixels(IMILBitmapScaler *iface,
     const WICRect *rc, UINT stride, UINT size, BYTE *buffer)
 {
     BitmapScaler *This = impl_from_IMILBitmapScaler(iface);
-
     TRACE("(%p,%p,%u,%u,%p)\n", iface, rc, stride, size, buffer);
-
-    if (!This->source)
-        return WINCODEC_ERR_NOTINITIALIZED;
-
     return IWICBitmapScaler_CopyPixels(&This->IWICBitmapScaler_iface, rc, stride, size, buffer);
 }
 
