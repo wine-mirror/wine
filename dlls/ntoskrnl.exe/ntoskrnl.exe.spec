@@ -888,7 +888,7 @@
 @ stub PsGetProcessExitTime
 @ stdcall PsGetProcessId(ptr)
 @ stub PsGetProcessImageFileName
-@ stub PsGetProcessInheritedFromUniqueProcessId
+@ stdcall PsGetProcessInheritedFromUniqueProcessId(ptr)
 @ stub PsGetProcessJob
 @ stub PsGetProcessPeb
 @ stub PsGetProcessPriorityClass
@@ -1374,7 +1374,7 @@
 @ stdcall -private ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
 @ stdcall -private ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
 @ stdcall -private ZwQueryInformationJobObject(long long ptr long ptr) NtQueryInformationJobObject
-@ stdcall -private ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
+@ stdcall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
 @ stdcall -private ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
 @ stdcall -private ZwQueryInformationToken(long long ptr long ptr) NtQueryInformationToken
 @ stdcall -private ZwQueryInstallUILanguage(ptr) NtQueryInstallUILanguage

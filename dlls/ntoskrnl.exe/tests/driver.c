@@ -55,6 +55,8 @@ static PEPROCESS *pPsInitialSystemProcess;
 
 void WINAPI ObfReferenceObject( void *obj );
 
+NTSTATUS WINAPI ZwQueryInformationProcess(HANDLE,PROCESSINFOCLASS,void*,ULONG,ULONG*);
+
 extern int CDECL _vsnprintf(char *str, size_t len, const char *format, __ms_va_list argptr);
 
 static void kvprintf(const char *format, __ms_va_list ap)
@@ -323,7 +325,9 @@ static NTSTATUS wait_single_handle(HANDLE handle, ULONGLONG timeout)
 
 static void test_current_thread(BOOL is_system)
 {
+    PROCESS_BASIC_INFORMATION info;
     DISPATCHER_HEADER *header;
+    HANDLE process_handle, id;
     PEPROCESS current;
     PETHREAD thread;
     NTSTATUS ret;
@@ -349,6 +353,18 @@ static void test_current_thread(BOOL is_system)
 
     ok(PsGetThreadId((PETHREAD)KeGetCurrentThread()) == PsGetCurrentThreadId(), "thread IDs don't match\n");
     ok(PsIsSystemThread((PETHREAD)KeGetCurrentThread()) == is_system, "unexpected system thread\n");
+
+    ret = ObOpenObjectByPointer(current, OBJ_KERNEL_HANDLE, NULL, PROCESS_QUERY_INFORMATION, NULL, KernelMode, &process_handle);
+    ok(!ret, "ObOpenObjectByPointer failed: %#x\n", ret);
+
+    ret = ZwQueryInformationProcess(process_handle, ProcessBasicInformation, &info, sizeof(info), NULL);
+    ok(!ret, "ZwQueryInformationProcess failed: %#x\n", ret);
+
+    id = PsGetProcessInheritedFromUniqueProcessId(current);
+    ok(id == (HANDLE)info.InheritedFromUniqueProcessId, "unexpected process id %p\n", id);
+
+    ret = ZwClose(process_handle);
+    ok(!ret, "ZwClose failed: %#x\n", ret);
 }
 
 static void sleep(void)

@@ -2589,6 +2589,15 @@ HANDLE WINAPI PsGetProcessId(PEPROCESS process)
     return (HANDLE)process->info.UniqueProcessId;
 }
 
+/*********************************************************************
+ *           PsGetProcessInheritedFromUniqueProcessId  (NTOSKRNL.@)
+ */
+HANDLE WINAPI PsGetProcessInheritedFromUniqueProcessId( PEPROCESS process )
+{
+    HANDLE id = (HANDLE)process->info.InheritedFromUniqueProcessId;
+    TRACE( "%p -> %p\n", process, id );
+    return id;
+}
 
 static void *create_thread_object( HANDLE handle )
 {
