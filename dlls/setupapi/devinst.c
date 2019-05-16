@@ -3559,25 +3559,51 @@ BOOL WINAPI SetupDiGetDeviceInstallParamsA(HDEVINFO devinfo,
 /***********************************************************************
  *              SetupDiSetDeviceInstallParamsA  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiSetDeviceInstallParamsA(
-       HDEVINFO DeviceInfoSet,
-       PSP_DEVINFO_DATA DeviceInfoData,
-       PSP_DEVINSTALL_PARAMS_A DeviceInstallParams)
+BOOL WINAPI SetupDiSetDeviceInstallParamsA(HDEVINFO devinfo,
+        SP_DEVINFO_DATA *device_data, SP_DEVINSTALL_PARAMS_A *params)
 {
-    FIXME("(%p, %p, %p) stub\n", DeviceInfoSet, DeviceInfoData, DeviceInstallParams);
+    SP_DEVINSTALL_PARAMS_W paramsW;
 
-    return TRUE;
+    if (params->cbSize != sizeof(SP_DEVINSTALL_PARAMS_A))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    paramsW.cbSize = sizeof(paramsW);
+    paramsW.Flags = params->Flags;
+    paramsW.FlagsEx = params->FlagsEx;
+    paramsW.hwndParent = params->hwndParent;
+    paramsW.InstallMsgHandler = params->InstallMsgHandler;
+    paramsW.InstallMsgHandlerContext = params->InstallMsgHandlerContext;
+    paramsW.FileQueue = params->FileQueue;
+    paramsW.ClassInstallReserved = params->ClassInstallReserved;
+    paramsW.Reserved = params->Reserved;
+    MultiByteToWideChar(CP_ACP, 0, params->DriverPath, -1, paramsW.DriverPath, sizeof(paramsW.DriverPath));
+
+    return SetupDiSetDeviceInstallParamsW(devinfo, device_data, &paramsW);
 }
 
 /***********************************************************************
  *              SetupDiSetDeviceInstallParamsW  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiSetDeviceInstallParamsW(
-       HDEVINFO DeviceInfoSet,
-       PSP_DEVINFO_DATA DeviceInfoData,
-       PSP_DEVINSTALL_PARAMS_W DeviceInstallParams)
+BOOL WINAPI SetupDiSetDeviceInstallParamsW(HDEVINFO devinfo,
+        SP_DEVINFO_DATA *device_data, SP_DEVINSTALL_PARAMS_W *params)
 {
-    FIXME("(%p, %p, %p) stub\n", DeviceInfoSet, DeviceInfoData, DeviceInstallParams);
+    struct device *device;
+
+    TRACE("devinfo %p, device_data %p, params %p.\n", devinfo, device_data, params);
+
+    if (params->cbSize != sizeof(SP_DEVINSTALL_PARAMS_W))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    device->params = *params;
 
     return TRUE;
 }
