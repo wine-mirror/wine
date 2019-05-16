@@ -379,6 +379,7 @@ static void output_relay_debug( DLLSPEC *spec )
 void output_exports( DLLSPEC *spec )
 {
     int i, fwd_size = 0;
+    int needs_relay = has_relays( spec );
     int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
     const char *func_ptr = (target_platform == PLATFORM_WINDOWS) ? ".rva" : get_asm_ptr_keyword();
 
@@ -472,6 +473,13 @@ void output_exports( DLLSPEC *spec )
         }
     }
 
+    if (needs_relay)
+    {
+        output( "\t.long 0xdeb90002\n" );  /* magic */
+        if (target_platform == PLATFORM_WINDOWS) output_rva( ".L__wine_spec_relay_descr" );
+        else output( "\t.long 0\n" );
+    }
+
     /* output the export name strings */
 
     output( "\n.L__wine_spec_exp_names:\n" );
@@ -493,17 +501,23 @@ void output_exports( DLLSPEC *spec )
         }
     }
 
-    if (target_platform == PLATFORM_WINDOWS) return;
-
-    output( "\t.align %d\n", get_alignment(get_ptr_size()) );
-    output( ".L__wine_spec_exports_end:\n" );
-
     /* output relays */
 
-    if (!has_relays( spec ))
+    if (target_platform == PLATFORM_WINDOWS)
     {
-        output( "\t%s 0\n", get_asm_ptr_keyword() );
-        return;
+        if (!needs_relay) return;
+        output( "\t.data\n" );
+        output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+    }
+    else
+    {
+        output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+        output( ".L__wine_spec_exports_end:\n" );
+        if (!needs_relay)
+        {
+            output( "\t%s 0\n", get_asm_ptr_keyword() );
+            return;
+        }
     }
 
     output( ".L__wine_spec_relay_descr:\n" );
