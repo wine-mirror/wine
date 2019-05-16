@@ -3553,9 +3553,13 @@ static void output_subdirs( struct makefile *make )
                 }
                 else
                 {
-                    strarray_add( &build_deps, strmake( "%s.a", importlib_path ));
-                    if (needs_delay_lib( submake )) output( "%s.delay.a ", importlib_path );
+                    if (needs_delay_lib( submake ))
+                    {
+                        output( "%s.delay.a ", importlib_path );
+                        strarray_add( &build_deps, strmake( "%s.delay.a", importlib_path ));
+                    }
                     output( "%s.a: %s", importlib_path, spec_file );
+                    strarray_add( &build_deps, strmake( "%s.a", importlib_path ));
                 }
                 output_filename( tools_path( make, "winebuild" ));
                 output( "\n" );
@@ -3568,8 +3572,16 @@ static void output_subdirs( struct makefile *make )
                 output( "\n" );
                 if (crosstarget && (needs_cross_lib( submake ) || needs_delay_lib( submake )))
                 {
-                    if (needs_cross_lib( submake )) output_filename( strmake( "%s.cross.a", importlib_path ));
-                    if (needs_delay_lib( submake )) output_filename( strmake( "%s.delay.a", importlib_path ));
+                    if (needs_cross_lib( submake ))
+                    {
+                        output_filename( strmake( "%s.cross.a", importlib_path ));
+                        strarray_add( &build_deps, strmake( "%s.cross.a", importlib_path ));
+                    }
+                    if (needs_delay_lib( submake ))
+                    {
+                        output_filename( strmake( "%s.delay.a", importlib_path ));
+                        strarray_add( &build_deps, strmake( "%s.delay.a", importlib_path ));
+                    }
                     output( ": %s", spec_file );
                     output_filename( tools_path( make, "winebuild" ));
                     output( "\n" );
@@ -3578,10 +3590,7 @@ static void output_subdirs( struct makefile *make )
                     output_filename( "--export" );
                     output_filename( spec_file );
                     output( "\n" );
-                    strarray_add( &build_deps, strmake( "%s.cross.a", importlib_path ));
                 }
-                if (needs_delay_lib( submake ))
-                    strarray_add( &build_deps, strmake( "%s.delay.a", importlib_path ));
             }
             strarray_addall( &symlinks, output_importlib_symlinks( make, submake ));
         }
