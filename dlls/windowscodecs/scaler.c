@@ -225,7 +225,7 @@ static HRESULT WINAPI BitmapScaler_CopyPixels(IWICBitmapScaler *iface,
 
     if (!This->source)
     {
-        hr = WINCODEC_ERR_WRONGSTATE;
+        hr = WINCODEC_ERR_NOTINITIALIZED;
         goto end;
     }
 

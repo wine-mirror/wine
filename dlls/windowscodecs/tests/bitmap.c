@@ -1163,6 +1163,7 @@ static void test_bitmap_scaler(void)
     double res_x, res_y;
     IWICBitmap *bitmap;
     UINT width, height;
+    BYTE buf[16];
     HRESULT hr;
 
     hr = IWICImagingFactory_CreateBitmap(factory, 4, 2, &GUID_WICPixelFormat24bppBGR, WICBitmapCacheOnLoad, &bitmap);
@@ -1238,6 +1239,9 @@ static void test_bitmap_scaler(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_GetSize(scaler, &width, &height);
+    ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IWICBitmapScaler_CopyPixels(scaler, NULL, 1, sizeof(buf), buf);
     ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 0, 2,
