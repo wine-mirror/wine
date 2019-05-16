@@ -811,6 +811,16 @@ int WINAPI MapBrowserEmulationModeToUserAgent(DWORD unk1, DWORD unk2)
 }
 
 /***********************************************************************
+ *           CoInternetGetBrowserProfile (URLMON.446)
+ *    Undocumented, added in IE8
+ */
+HRESULT WINAPI CoInternetGetBrowserProfile(DWORD unk)
+{
+    FIXME("%x: stub\n", unk);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *           FlushUrlmonZonesCache (URLMON.455)
  *    Undocumented, added in IE8
  */
