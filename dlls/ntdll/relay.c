@@ -1320,7 +1320,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
                         "leal 12(%esp),%eax\n\t"                        \
                         "pushl %eax\n\t"                                \
                         __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")       \
-                        "call " __ASM_NAME("__regs_" #name) __ASM_STDCALL(4) "\n\t" \
+                        "call " __ASM_STDCALL("__regs_" #name,4) "\n\t" \
                         __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")      \
                         "popl %edx\n\t"                                 \
                         __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")      \

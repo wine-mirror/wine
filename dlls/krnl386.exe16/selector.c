@@ -551,7 +551,7 @@ __ASM_STDCALL_FUNC( SMapLS, 0,
                    "testl $0xffff0000,%eax\n\t"
                    "jz 1f\n\t"
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapLS") __ASM_STDCALL(4) "\n\t"
+                   "call " __ASM_STDCALL("MapLS",4) "\n\t"
                    "movl %eax,%edx\n"
                    "1:\tret" )
 
@@ -561,7 +561,7 @@ __ASM_STDCALL_FUNC( SMapLS, 0,
 __ASM_STDCALL_FUNC( SUnMapLS, 0,
                    "pushl %eax\n\t"  /* preserve eax */
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                   "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                    "popl %eax\n\t"
                    "ret" )
 
@@ -575,7 +575,7 @@ __ASM_STDCALL_FUNC( SUnMapLS, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_8, 0,
                     "movl 8(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,8(%ebp)\n\t"
                     "ret" )
 
@@ -584,7 +584,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_8, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_12, 0,
                     "movl 12(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,12(%ebp)\n\t"
                     "ret" )
 
@@ -593,7 +593,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_12, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_16, 0,
                     "movl 16(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,16(%ebp)\n\t"
                     "ret" )
 
@@ -602,7 +602,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_16, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_20, 0,
                     "movl 20(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,20(%ebp)\n\t"
                     "ret" )
 
@@ -611,7 +611,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_20, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_24, 0,
                     "movl 24(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,24(%ebp)\n\t"
                     "ret" )
 
@@ -620,7 +620,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_24, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_28, 0,
                     "movl 28(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,28(%ebp)\n\t"
                     "ret" )
 
@@ -629,7 +629,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_28, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_32, 0,
                     "movl 32(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,32(%ebp)\n\t"
                     "ret" )
 
@@ -638,7 +638,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_32, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_36, 0,
                     "movl 36(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,36(%ebp)\n\t"
                     "ret" )
 
@@ -647,7 +647,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_36, 0,
  */
 __ASM_STDCALL_FUNC( SMapLS_IP_EBP_40, 0,
                     "movl 40(%ebp),%eax\n\t"
-                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("SMapLS",4) "\n\t"
                     "movl %edx,40(%ebp)\n\t"
                     "ret" )
 
@@ -657,7 +657,7 @@ __ASM_STDCALL_FUNC( SMapLS_IP_EBP_40, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_8, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 8(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,8(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )
@@ -668,7 +668,7 @@ __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_8, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_12, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 12(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,12(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )
@@ -679,7 +679,7 @@ __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_12, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_16, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 16(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,16(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )
@@ -690,7 +690,7 @@ __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_16, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_20, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 20(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,20(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )
@@ -701,7 +701,7 @@ __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_20, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_24, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 24(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,24(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )
@@ -712,7 +712,7 @@ __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_24, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_28, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 28(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,28(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )
@@ -723,7 +723,7 @@ __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_28, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_32, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 32(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,32(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )
@@ -734,7 +734,7 @@ __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_32, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_36, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 36(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,36(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )
@@ -745,7 +745,7 @@ __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_36, 0,
 __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_40, 0,
                     "pushl %eax\n\t"  /* preserve eax */
                     "pushl 40(%ebp)\n\t"
-                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("UnMapLS",4) "\n\t"
                     "movl $0,40(%ebp)\n\t"
                     "popl %eax\n\t"
                     "ret" )

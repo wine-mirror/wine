@@ -28,9 +28,9 @@
 #endif
 
 #if defined(_WIN32) && defined(__i386__)
-# define __ASM_STDCALL(args) "@" #args
+# define __ASM_STDCALL(name,args) __ASM_NAME(name) "@" #args
 #else
-# define __ASM_STDCALL(args) ""
+# define __ASM_STDCALL(name,args) __ASM_NAME(name)
 #endif
 
 #ifdef __GCC_HAVE_DWARF2_CFI_ASM
@@ -61,7 +61,7 @@
 
 #define __ASM_GLOBAL_FUNC(name,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name),code)
 
-#define __ASM_STDCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name) __ASM_STDCALL(args),code)
+#define __ASM_STDCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_STDCALL(#name,args),code)
 
 /* fastcall support */
 
@@ -72,14 +72,14 @@
                         "popl %eax\n\t"  \
                         "pushl %ecx\n\t" \
                         "pushl %eax\n\t" \
-                        "jmp " __ASM_NAME(#func) __ASM_STDCALL(4) )
+                        "jmp " __ASM_STDCALL(#func,4) )
 # define DEFINE_FASTCALL_WRAPPER(func,args) \
     __ASM_STDCALL_FUNC( __fastcall_ ## func, args, \
                         "popl %eax\n\t"  \
                         "pushl %edx\n\t" \
                         "pushl %ecx\n\t" \
                         "pushl %eax\n\t" \
-                        "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+                        "jmp " __ASM_STDCALL(#func,args) )
 
 #else  /* __i386__ */
 
@@ -108,7 +108,7 @@
                        "popl %eax\n\t"  \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+                        "jmp " __ASM_STDCALL(#func,args) )
 # endif  /* _MSC_VER */
 
 # define THISCALL(func) (void *)__thiscall_ ## func

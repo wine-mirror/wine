@@ -2051,7 +2051,7 @@ void WINAPI MapHInstSL16( CONTEXT *context )
  */
 __ASM_STDCALL_FUNC( MapHInstLS, 0,
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapHModuleLS") __ASM_STDCALL(4) "\n\t"
+                   "call " __ASM_STDCALL("MapHModuleLS",4) "\n\t"
                    "ret" )
 
 /***************************************************************************
@@ -2059,7 +2059,7 @@ __ASM_STDCALL_FUNC( MapHInstLS, 0,
  */
 __ASM_STDCALL_FUNC( MapHInstSL, 0,
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapHModuleSL") __ASM_STDCALL(4) "\n\t"
+                   "call " __ASM_STDCALL("MapHModuleSL",4) "\n\t"
                    "ret" )
 
 /***************************************************************************
@@ -2069,7 +2069,7 @@ __ASM_STDCALL_FUNC( MapHInstLS_PN, 0,
                    "testl %eax,%eax\n\t"
                    "jz 1f\n\t"
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapHModuleLS") __ASM_STDCALL(4) "\n"
+                   "call " __ASM_STDCALL("MapHModuleLS",4) "\n"
                    "1:\tret" )
 
 /***************************************************************************
@@ -2079,5 +2079,5 @@ __ASM_STDCALL_FUNC( MapHInstSL_PN, 0,
                    "andl $0xffff,%eax\n\t"
                    "jz 1f\n\t"
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapHModuleSL") __ASM_STDCALL(4) "\n"
+                   "call " __ASM_STDCALL("MapHModuleSL",4) "\n"
                    "1:\tret" )

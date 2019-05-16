@@ -2518,7 +2518,7 @@ __ASM_STDCALL_FUNC( RtlUnwind, 16,
                     "pushl %eax\n\t"
                     "leal 4(%esp),%eax\n\t"          /* context */
                     "xchgl %eax,(%esp)\n\t"
-                    "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("RtlCaptureContext",4) "\n\t"
                     "leal 24(%ebp),%eax\n\t"
                     "movl %eax,0xc4(%esp)\n\t"       /* context->Esp */
                     "pushl %esp\n\t"
@@ -2526,7 +2526,7 @@ __ASM_STDCALL_FUNC( RtlUnwind, 16,
                     "pushl 16(%ebp)\n\t"
                     "pushl 12(%ebp)\n\t"
                     "pushl 8(%ebp)\n\t"
-                    "call " __ASM_NAME("__regs_RtlUnwind") __ASM_STDCALL(20) "\n\t"
+                    "call " __ASM_STDCALL("__regs_RtlUnwind",20) "\n\t"
                     "leave\n\t"
                     __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                     __ASM_CFI(".cfi_same_value %ebp\n\t")
@@ -2577,7 +2577,7 @@ __ASM_STDCALL_FUNC( RtlRaiseException, 4,
                     __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
                     "leal -0x2cc(%esp),%esp\n\t"  /* sizeof(CONTEXT) */
                     "pushl %esp\n\t"              /* context */
-                    "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("RtlCaptureContext",4) "\n\t"
                     "movl 4(%ebp),%eax\n\t"       /* return address */
                     "movl 8(%ebp),%ecx\n\t"       /* rec */
                     "movl %eax,12(%ecx)\n\t"      /* rec->ExceptionAddress */

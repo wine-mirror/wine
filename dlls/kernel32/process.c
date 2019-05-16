@@ -3121,7 +3121,7 @@ __ASM_STDCALL_FUNC( ExitProcess, 4, /* Shrinker depend on this particular ExitPr
                    ".byte 0x6A, 0x00\n\t" /* pushl $0 */
                    ".byte 0x68, 0x00, 0x00, 0x00, 0x00\n\t" /* pushl $0 - 4 bytes immediate */
                    "pushl 8(%ebp)\n\t"
-                   "call " __ASM_NAME("RtlExitUserProcess") __ASM_STDCALL(4) "\n\t"
+                   "call " __ASM_STDCALL("RtlExitUserProcess",4) "\n\t"
                    "leave\n\t"
                    "ret $4" )
 #else

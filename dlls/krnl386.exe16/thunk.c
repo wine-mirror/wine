@@ -2126,7 +2126,7 @@ __ASM_STDCALL_FUNC( CommonUnimpStub, 0,
                     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                     "pushl %eax\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                    "call " __ASM_NAME("__regs_CommonUnimpStub") __ASM_STDCALL(8) "\n\t"
+                    "call " __ASM_STDCALL("__regs_CommonUnimpStub",8) "\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                     "popl %ecx\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")

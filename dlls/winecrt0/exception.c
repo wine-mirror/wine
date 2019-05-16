@@ -36,7 +36,7 @@ __ASM_GLOBAL_FUNC( __wine_rtl_unwind,
                    "pushl 12(%ebp)\n\t" /* record */
                    "pushl 16(%ebp)\n\t" /* target */
                    "pushl 8(%ebp)\n\t"  /* frame */
-                   "call " __ASM_NAME("RtlUnwind") __ASM_STDCALL(16) "\n\t"
+                   "call " __ASM_STDCALL("RtlUnwind",16) "\n\t"
                    "call *16(%ebp)" )
 
 #elif defined(__GNUC__) && defined(__x86_64__)
