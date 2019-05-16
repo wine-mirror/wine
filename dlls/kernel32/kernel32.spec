@@ -1591,7 +1591,7 @@
 @ stdcall WerSetFlags(long)
 # @ stub WerUnregisterFile
 @ stdcall WerUnregisterMemoryBlock(ptr)
-# @ stub WerUnregisterRuntimeExceptionModule
+@ stdcall WerUnregisterRuntimeExceptionModule(wstr ptr)
 # @ stub WerpCleanupMessageMapping
 # @ stub WerpInitiateRemoteRecovery
 # @ stub WerpNotifyLoadStringResource
