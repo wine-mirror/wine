@@ -462,6 +462,10 @@ struct strarray get_ld_command(void)
             break;
         }
     }
+
+    if (target_cpu == CPU_ARM && target_platform != PLATFORM_WINDOWS)
+        strarray_add( &args, "--no-wchar-size-warning", NULL );
+
     return args;
 }
 

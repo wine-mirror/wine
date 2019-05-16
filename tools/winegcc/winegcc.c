@@ -477,6 +477,8 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
 
     strarray_add( flags, "-shared" );
     strarray_add( flags, "-Wl,-Bsymbolic" );
+    if (!opts->noshortwchar && opts->target_cpu == CPU_ARM)
+        strarray_add( flags, "-Wl,--no-wchar-size-warning" );
 
     /* Try all options first - this is likely to succeed on modern compilers */
     if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic "
