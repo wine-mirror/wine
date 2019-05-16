@@ -20,6 +20,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <io.h>
+#include <share.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
@@ -29,43 +32,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cabarc);
-
-/* from msvcrt */
-#ifndef _O_RDONLY
-#define _O_RDONLY      0
-#define _O_WRONLY      1
-#define _O_RDWR        2
-#define _O_APPEND      0x0008
-#define _O_RANDOM      0x0010
-#define _O_SEQUENTIAL  0x0020
-#define _O_TEMPORARY   0x0040
-#define _O_NOINHERIT   0x0080
-#define _O_CREAT       0x0100
-#define _O_TRUNC       0x0200
-#define _O_EXCL        0x0400
-#define _O_SHORT_LIVED 0x1000
-#define _O_TEXT        0x4000
-#define _O_BINARY      0x8000
-#endif
-
-#ifndef _O_ACCMODE
-#define _O_ACCMODE     (_O_RDONLY|_O_WRONLY|_O_RDWR)
-#endif
-
-#ifndef _SH_COMPAT
-#define _SH_COMPAT     0x00
-#define _SH_DENYRW     0x10
-#define _SH_DENYWR     0x20
-#define _SH_DENYRD     0x30
-#define _SH_DENYNO     0x40
-#endif
-
-#ifndef _A_RDONLY
-#define _A_RDONLY      0x01
-#define _A_HIDDEN      0x02
-#define _A_SYSTEM      0x04
-#define _A_ARCH        0x20
-#endif
 
 /* command-line options */
 static int opt_cabinet_size = CB_MAX_DISK;
