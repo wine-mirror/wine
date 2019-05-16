@@ -732,6 +732,28 @@ void FASTCALL ExReleaseFastMutexUnsafe( FAST_MUTEX *mutex )
         KeSetEvent( &mutex->Event, IO_NO_INCREMENT, FALSE );
 }
 
+#ifndef __i386__
+
+/***********************************************************************
+ *           ExAcquireFastMutex    (NTOSKRNL.@)
+ */
+void WINAPI ExAcquireFastMutex( FAST_MUTEX *mutex )
+{
+    /* FIXME: lower IRQL */
+    ExAcquireFastMutexUnsafe( mutex );
+}
+
+/***********************************************************************
+ *           ExReleaseFastMutex    (NTOSKRNL.@)
+ */
+void WINAPI ExReleaseFastMutex( FAST_MUTEX *mutex )
+{
+    ExReleaseFastMutexUnsafe( mutex );
+    /* FIXME: restore IRQL */
+}
+
+#endif /* __i386__ */
+
 /* Use of the fields of an ERESOURCE structure seems to vary wildly between
  * Windows versions. The below implementation uses them as follows:
  *
