@@ -103,7 +103,7 @@ static inline BOOL IsLeapYear(int Year)
 }
 
 /* return a monotonic time counter, in Win32 ticks */
-static ULONGLONG monotonic_counter(void)
+static inline ULONGLONG monotonic_counter(void)
 {
     struct timeval now;
 
