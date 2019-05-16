@@ -455,6 +455,9 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         if (opts->large_address_aware && opts->target_cpu == CPU_x86)
             strarray_add( flags, "-Wl,--large-address-aware" );
 
+        /* make sure we don't need a libgcc_s dll on Windows */
+        strarray_add( flags, "-static-libgcc" );
+
         return flags;
 
     default:
