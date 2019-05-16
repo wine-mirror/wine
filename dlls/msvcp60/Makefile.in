@@ -1,7 +1,8 @@
 MODULE    = msvcp60.dll
-IMPORTS   = msvcrt
 EXTRADEFS = -D_MSVCP_VER=60
 PARENTSRC = ../msvcp90
+
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	exception.c \
