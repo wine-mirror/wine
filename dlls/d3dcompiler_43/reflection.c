@@ -1127,7 +1127,12 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
     read_dword(&ptr, &r->gs_max_output_vertex_count);
     TRACE("GSMaxOutputVertexCount: %u\n", r->gs_max_output_vertex_count);
 
-    skip_dword_unknown(&ptr, 3);
+    skip_dword_unknown(&ptr, 2);
+
+    /* old dx10 stat size */
+    if (size == 28) return S_OK;
+
+    skip_dword_unknown(&ptr, 1);
 
     /* dx10 stat size */
     if (size == 29) return S_OK;
