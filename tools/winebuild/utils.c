@@ -893,15 +893,28 @@ const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec )
 const char *get_link_name( const ORDDEF *odp )
 {
     static char *buffer;
+    char *ret;
 
-    if (!kill_at && target_platform == PLATFORM_WINDOWS && target_cpu == CPU_x86 &&
-        odp->type == TYPE_STDCALL && !(odp->flags & FLAG_THISCALL))
+    if (target_cpu != CPU_x86) return odp->link_name;
+    if (odp->type != TYPE_STDCALL) return odp->link_name;
+
+    if (target_platform == PLATFORM_WINDOWS)
     {
-        free( buffer );
-        buffer = strmake( "%s@%u", odp->link_name, get_args_size( odp ));
-        return buffer;
+        if (odp->flags & FLAG_THISCALL) ret = strmake( "__thiscall_%s", odp->link_name );
+        else if (odp->flags & FLAG_FASTCALL) ret = strmake( "@%s@%u", odp->link_name, get_args_size( odp ));
+        else if (!kill_at) ret = strmake( "%s@%u", odp->link_name, get_args_size( odp ));
+        else return odp->link_name;
     }
-    return odp->link_name;
+    else
+    {
+        if (odp->flags & FLAG_THISCALL) ret = strmake( "__thiscall_%s", odp->link_name );
+        else if (odp->flags & FLAG_FASTCALL) ret = strmake( "__fastcall_%s", odp->link_name );
+        else return odp->link_name;
+    }
+
+    free( buffer );
+    buffer = ret;
+    return ret;
 }
 
 /* parse a cpu name and return the corresponding value */
@@ -1036,6 +1049,7 @@ const char *asm_name( const char *sym )
     {
     case PLATFORM_WINDOWS:
         if (target_cpu != CPU_x86) return sym;
+        if (sym[0] == '@') return sym;  /* fastcall */
         /* fall through */
     case PLATFORM_APPLE:
         if (sym[0] == '.' && sym[1] == 'L') return sym;

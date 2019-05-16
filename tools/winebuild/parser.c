@@ -374,13 +374,6 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
             odp->flags |= FLAG_FORWARD;
         }
     }
-    if ((odp->flags & (FLAG_THISCALL | FLAG_FASTCALL)) && !(odp->flags & FLAG_FORWARD))
-    {
-        char *link_name = strmake( "__%s_%s", (odp->flags & FLAG_THISCALL) ? "thiscall" : "fastcall",
-                                   odp->link_name );
-        free( odp->link_name );
-        odp->link_name = link_name;
-    }
     return 1;
 }
 

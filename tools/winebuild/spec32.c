@@ -970,6 +970,9 @@ void output_def_file( DLLSPEC *spec, int include_stubs )
         if (!is_private) total++;
         if (!include_stubs && odp->type == TYPE_STUB) continue;
 
+        if ((odp->flags & FLAG_FASTCALL) && target_platform == PLATFORM_WINDOWS)
+            name = strmake( "@%s", name );
+
         output( "  %s", name );
 
         switch(odp->type)
