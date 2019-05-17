@@ -929,10 +929,10 @@
 @ stdcall LoadLibraryW(wstr) kernel32.LoadLibraryW
 # @ stub LoadPackagedLibrary
 @ stdcall LoadResource(long long) kernel32.LoadResource
-@ stdcall LoadStringA(long long ptr long) user32.LoadStringA
+@ stdcall LoadStringA(long long ptr long)
 @ stub LoadStringBaseExW
 @ stub LoadStringByReference
-@ stdcall LoadStringW(long long ptr long) user32.LoadStringW
+@ stdcall LoadStringW(long long ptr long)
 @ stdcall LocalAlloc(long long) kernel32.LocalAlloc
 @ stdcall LocalFileTimeToFileTime(ptr ptr) kernel32.LocalFileTimeToFileTime
 @ stdcall LocalFree(long) kernel32.LocalFree
