@@ -34,6 +34,142 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
+struct enum_pins
+{
+    IEnumPins IEnumPins_iface;
+    LONG refcount;
+
+    IPin **pins;
+    unsigned int count, index;
+};
+
+static const IEnumPinsVtbl enum_pins_vtbl;
+
+static struct enum_pins *impl_from_IEnumPins(IEnumPins *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_pins, IEnumPins_iface);
+}
+
+static HRESULT WINAPI enum_pins_QueryInterface(IEnumPins *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IEnumPins))
+    {
+        IEnumPins_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_pins_AddRef(IEnumPins *iface)
+{
+    struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
+    ULONG refcount = InterlockedIncrement(&enum_pins->refcount);
+    TRACE("%p increasing refcount to %u.\n", enum_pins, refcount);
+    return refcount;
+}
+
+static ULONG WINAPI enum_pins_Release(IEnumPins *iface)
+{
+    struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
+    ULONG refcount = InterlockedDecrement(&enum_pins->refcount);
+    unsigned int i;
+
+    TRACE("%p decreasing refcount to %u.\n", enum_pins, refcount);
+    if (!refcount)
+    {
+        for (i = 0; i < enum_pins->count; ++i)
+            IPin_Release(enum_pins->pins[i]);
+        heap_free(enum_pins->pins);
+        heap_free(enum_pins);
+    }
+    return refcount;
+}
+
+static HRESULT WINAPI enum_pins_Next(IEnumPins *iface, ULONG count, IPin **pins, ULONG *ret_count)
+{
+    struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
+    unsigned int i;
+
+    TRACE("iface %p, count %u, pins %p, ret_count %p.\n", iface, count, pins, ret_count);
+
+    if (!pins || (count > 1 && !ret_count))
+        return E_POINTER;
+
+    for (i = 0; i < count && enum_pins->index < enum_pins->count; ++i)
+    {
+        IPin_AddRef(pins[i] = enum_pins->pins[i]);
+        enum_pins->index++;
+    }
+
+    if (ret_count) *ret_count = i;
+    return i == count ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI enum_pins_Skip(IEnumPins *iface, ULONG count)
+{
+    struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
+
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    enum_pins->index += count;
+
+    return enum_pins->index >= enum_pins->count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI enum_pins_Reset(IEnumPins *iface)
+{
+    struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    enum_pins->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_pins_Clone(IEnumPins *iface, IEnumPins **out)
+{
+    struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
+    struct enum_pins *object;
+    unsigned int i;
+
+    TRACE("iface %p, out %p.\n", iface, out);
+
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IEnumPins_iface.lpVtbl = &enum_pins_vtbl;
+    object->refcount = 1;
+    object->count = enum_pins->count;
+    object->index = enum_pins->index;
+    if (!(object->pins = heap_alloc(enum_pins->count * sizeof(*object->pins))))
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
+    for (i = 0; i < enum_pins->count; ++i)
+        IPin_AddRef(object->pins[i] = enum_pins->pins[i]);
+
+    *out = &object->IEnumPins_iface;
+    return S_OK;
+}
+
+static const IEnumPinsVtbl enum_pins_vtbl =
+{
+    enum_pins_QueryInterface,
+    enum_pins_AddRef,
+    enum_pins_Release,
+    enum_pins_Next,
+    enum_pins_Skip,
+    enum_pins_Reset,
+    enum_pins_Clone,
+};
+
 typedef struct {
     BaseFilter filter;
     ULONG nb_streams;
@@ -153,8 +289,35 @@ static HRESULT WINAPI MediaStreamFilterImpl_GetSyncSource(IMediaStreamFilter *if
 
 static HRESULT WINAPI MediaStreamFilterImpl_EnumPins(IMediaStreamFilter *iface, IEnumPins **enum_pins)
 {
-    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
-    return BaseFilterImpl_EnumPins(&This->filter.IBaseFilter_iface, enum_pins);
+    IMediaStreamFilterImpl *filter = impl_from_IMediaStreamFilter(iface);
+    struct enum_pins *object;
+    unsigned int i;
+
+    TRACE("iface %p, enum_pins %p.\n", iface, enum_pins);
+
+    if (!enum_pins)
+        return E_POINTER;
+
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IEnumPins_iface.lpVtbl = &enum_pins_vtbl;
+    object->refcount = 1;
+    object->count = filter->nb_streams;
+    object->index = 0;
+    if (!(object->pins = heap_alloc(filter->nb_streams * sizeof(*object->pins))))
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
+    for (i = 0; i < filter->nb_streams; ++i)
+    {
+        if (FAILED(IAMMediaStream_QueryInterface(filter->streams[i], &IID_IPin, (void **)&object->pins[i])))
+            WARN("Stream %p does not support IPin.\n", filter->streams[i]);
+    }
+
+    *enum_pins = &object->IEnumPins_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaStreamFilterImpl_FindPin(IMediaStreamFilter *iface, LPCWSTR id, IPin **pin)

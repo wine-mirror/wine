@@ -32,6 +32,7 @@
 #include "mmstream.h"
 #include "austream.h"
 #include "amstream.h"
+#include "wine/heap.h"
 
 HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
