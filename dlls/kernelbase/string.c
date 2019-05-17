@@ -24,6 +24,7 @@
 #include "shlwapi.h"
 
 #include "wine/debug.h"
+#include "wine/exception.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(string);
@@ -99,6 +100,54 @@ BOOL WINAPI IsCharSpaceW(WCHAR wc)
 BOOL WINAPI IsCharXDigitW(WCHAR wc)
 {
     return !!(get_char_type(wc) & C1_XDIGIT);
+}
+
+BOOL WINAPI IsCharAlphaA(CHAR x)
+{
+    WCHAR wch;
+    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
+    return IsCharAlphaW(wch);
+}
+
+BOOL WINAPI IsCharAlphaW(WCHAR ch)
+{
+    return !!(get_char_type(ch) & C1_ALPHA);
+}
+
+BOOL WINAPI IsCharLowerA(CHAR x)
+{
+    WCHAR wch;
+    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
+    return IsCharLowerW(wch);
+}
+
+BOOL WINAPI IsCharLowerW(WCHAR ch)
+{
+    return !!(get_char_type(ch) & C1_LOWER);
+}
+
+BOOL WINAPI IsCharAlphaNumericA(CHAR x)
+{
+    WCHAR wch;
+    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
+    return IsCharAlphaNumericW(wch);
+}
+
+BOOL WINAPI IsCharAlphaNumericW(WCHAR ch)
+{
+    return !!(get_char_type(ch) & (C1_ALPHA | C1_DIGIT));
+}
+
+BOOL WINAPI IsCharUpperA(CHAR x)
+{
+    WCHAR wch;
+    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
+    return IsCharUpperW(wch);
+}
+
+BOOL WINAPI IsCharUpperW(WCHAR ch)
+{
+    return !!(get_char_type(ch) & C1_UPPER);
 }
 
 WCHAR * WINAPI StrChrW(const WCHAR *str, WCHAR ch)
@@ -511,4 +560,181 @@ WCHAR * WINAPI StrCpyNXW(WCHAR *dst, const WCHAR *src, int len)
     }
 
     return dst;
+}
+
+LPSTR WINAPI CharLowerA(char *str)
+{
+    if (IS_INTRESOURCE(str))
+    {
+        char ch = LOWORD(str);
+        CharLowerBuffA( &ch, 1 );
+        return (LPSTR)(UINT_PTR)(BYTE)ch;
+    }
+
+    __TRY
+    {
+        CharLowerBuffA( str, strlen(str) );
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
+    return str;
+}
+
+DWORD WINAPI CharLowerBuffA(char *str, DWORD len)
+{
+    DWORD lenW;
+    WCHAR buffer[32];
+    WCHAR *strW = buffer;
+
+    if (!str) return 0; /* YES */
+
+    lenW = MultiByteToWideChar(CP_ACP, 0, str, len, NULL, 0);
+    if (lenW > ARRAY_SIZE(buffer))
+    {
+        strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+        if (!strW) return 0;
+    }
+    MultiByteToWideChar(CP_ACP, 0, str, len, strW, lenW);
+    CharLowerBuffW(strW, lenW);
+    len = WideCharToMultiByte(CP_ACP, 0, strW, lenW, str, len, NULL, NULL);
+    if (strW != buffer) HeapFree(GetProcessHeap(), 0, strW);
+    return len;
+}
+
+DWORD WINAPI CharLowerBuffW(WCHAR *str, DWORD len)
+{
+    if (!str) return 0; /* YES */
+    return LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, str, len, str, len);
+}
+
+LPWSTR WINAPI CharLowerW(WCHAR *str)
+{
+    if (!IS_INTRESOURCE(str))
+    {
+        CharLowerBuffW(str, lstrlenW(str));
+        return str;
+    }
+    else
+    {
+        WCHAR ch = LOWORD(str);
+        CharLowerBuffW(&ch, 1);
+        return (LPWSTR)(UINT_PTR)ch;
+    }
+}
+
+LPSTR WINAPI CharNextA(const char *ptr)
+{
+    if (!*ptr) return (LPSTR)ptr;
+    if (IsDBCSLeadByte( ptr[0] ) && ptr[1]) return (LPSTR)(ptr + 2);
+    return (LPSTR)(ptr + 1);
+}
+
+LPSTR WINAPI CharNextExA(WORD codepage, const char *ptr, DWORD flags)
+{
+    if (!*ptr) return (LPSTR)ptr;
+    if (IsDBCSLeadByteEx( codepage, ptr[0] ) && ptr[1]) return (LPSTR)(ptr + 2);
+    return (LPSTR)(ptr + 1);
+}
+
+LPWSTR WINAPI CharNextW(const WCHAR *x)
+{
+    if (*x) x++;
+
+    return (WCHAR *)x;
+}
+
+LPSTR WINAPI CharPrevA(const char *start, const char *ptr)
+{
+    while (*start && (start < ptr))
+    {
+        LPCSTR next = CharNextA(start);
+        if (next >= ptr) break;
+        start = next;
+    }
+    return (LPSTR)start;
+}
+
+LPSTR WINAPI CharPrevExA(WORD codepage, const char *start, const char *ptr, DWORD flags)
+{
+    while (*start && (start < ptr))
+    {
+        LPCSTR next = CharNextExA(codepage, start, flags);
+        if (next >= ptr) break;
+        start = next;
+    }
+    return (LPSTR)start;
+}
+
+LPWSTR WINAPI CharPrevW(const WCHAR *start, const WCHAR *x)
+{
+    if (x > start) return (LPWSTR)(x - 1);
+    else return (LPWSTR)x;
+}
+
+LPSTR WINAPI CharUpperA(LPSTR str)
+{
+    if (IS_INTRESOURCE(str))
+    {
+        char ch = LOWORD(str);
+        CharUpperBuffA(&ch, 1);
+        return (LPSTR)(UINT_PTR)(BYTE)ch;
+    }
+
+    __TRY
+    {
+        CharUpperBuffA(str, strlen(str));
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    __ENDTRY
+    return str;
+}
+
+DWORD WINAPI CharUpperBuffA(LPSTR str, DWORD len)
+{
+    DWORD lenW;
+    WCHAR buffer[32];
+    WCHAR *strW = buffer;
+
+    if (!str) return 0; /* YES */
+
+    lenW = MultiByteToWideChar(CP_ACP, 0, str, len, NULL, 0);
+    if (lenW > ARRAY_SIZE(buffer))
+    {
+        strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+        if (!strW) return 0;
+    }
+    MultiByteToWideChar(CP_ACP, 0, str, len, strW, lenW);
+    CharUpperBuffW(strW, lenW);
+    len = WideCharToMultiByte(CP_ACP, 0, strW, lenW, str, len, NULL, NULL);
+    if (strW != buffer) HeapFree(GetProcessHeap(), 0, strW);
+    return len;
+}
+
+DWORD WINAPI CharUpperBuffW(WCHAR *str, DWORD len)
+{
+    if (!str) return 0; /* YES */
+    return LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, str, len, str, len);
+}
+
+LPWSTR WINAPI CharUpperW(WCHAR *str)
+{
+    if (!IS_INTRESOURCE(str))
+    {
+        CharUpperBuffW(str, lstrlenW(str));
+        return str;
+    }
+    else
+    {
+        WCHAR ch = LOWORD(str);
+        CharUpperBuffW(&ch, 1);
+        return (LPWSTR)(UINT_PTR)ch;
+    }
 }
