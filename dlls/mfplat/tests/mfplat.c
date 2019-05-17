@@ -763,6 +763,12 @@ static void test_attributes(void)
     PropVariantClear(&ret_propvar);
     CHECK_ATTR_COUNT(attributes, 1);
 
+    hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID1, NULL);
+    ok(hr == S_OK, "Item check failed, hr %#x.\n", hr);
+
+    hr = IMFAttributes_GetItem(attributes, &DUMMY_GUID2, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
     PropVariantInit(&ret_propvar);
     ret_propvar.vt = MF_ATTRIBUTE_STRING;
     U(ret_propvar).pwszVal = NULL;

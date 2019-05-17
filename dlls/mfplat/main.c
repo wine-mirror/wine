@@ -1112,7 +1112,7 @@ HRESULT attributes_GetItem(struct attributes *attributes, REFGUID key, PROPVARIA
     EnterCriticalSection(&attributes->cs);
 
     if ((attribute = attributes_find_item(attributes, key, NULL)))
-        hr = PropVariantCopy(value, &attribute->value);
+        hr = value ? PropVariantCopy(value, &attribute->value) : S_OK;
     else
         hr = MF_E_ATTRIBUTENOTFOUND;
 
