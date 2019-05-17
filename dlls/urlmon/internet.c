@@ -218,7 +218,7 @@ static HRESULT parse_security_url(LPCWSTR url, DWORD flags, LPWSTR result, DWORD
     return E_FAIL;
 }
 
-static HRESULT parse_encode(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size, DWORD *rsize)
+static HRESULT parse_encode(LPCWSTR url, PARSEACTION action, DWORD flags, LPWSTR result, DWORD size, DWORD *rsize)
 {
     IInternetProtocolInfo *protocol_info;
     DWORD prsize;
@@ -229,7 +229,7 @@ static HRESULT parse_encode(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size,
     protocol_info = get_protocol_info(url);
 
     if(protocol_info) {
-        hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, PARSE_ENCODE,
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, url, action,
                 flags, result, size, rsize, 0);
         IInternetProtocolInfo_Release(protocol_info);
         if(SUCCEEDED(hres))
@@ -401,7 +401,8 @@ HRESULT WINAPI CoInternetParseUrl(LPCWSTR pwzUrl, PARSEACTION ParseAction, DWORD
     case PARSE_SECURITY_URL:
         return parse_security_url(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
     case PARSE_ENCODE:
-        return parse_encode(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
+    case PARSE_UNESCAPE:
+        return parse_encode(pwzUrl, ParseAction, dwFlags, pszResult, cchResult, pcchResult);
     case PARSE_PATH_FROM_URL:
         return parse_path_from_url(pwzUrl, dwFlags, pszResult, cchResult, pcchResult);
     case PARSE_SCHEMA:

@@ -62,6 +62,7 @@ DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xA
 
 DEFINE_EXPECT(ParseUrl);
 DEFINE_EXPECT(ParseUrl_ENCODE);
+DEFINE_EXPECT(ParseUrl_UNESCAPE);
 DEFINE_EXPECT(QI_IInternetProtocolInfo);
 DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(unk_Release);
@@ -377,6 +378,13 @@ static void test_CoInternetParseUrl(void)
 
         memset(buf, 0xf0, sizeof(buf));
         hres = pCoInternetParseUrl(parse_tests[i].url, PARSE_ENCODE, 0, buf,
+                ARRAY_SIZE(buf), &size, 0);
+        ok(hres == S_OK, "[%d] encoding failed: %08x\n", i, hres);
+        ok(size == lstrlenW(parse_tests[i].encoded_url), "[%d] wrong size\n", i);
+        ok(!lstrcmpW(parse_tests[i].encoded_url, buf), "[%d] wrong encoded url\n", i);
+
+        memset(buf, 0xf0, sizeof(buf));
+        hres = pCoInternetParseUrl(parse_tests[i].url, PARSE_UNESCAPE, 0, buf,
                 ARRAY_SIZE(buf), &size, 0);
         ok(hres == S_OK, "[%d] encoding failed: %08x\n", i, hres);
         ok(size == lstrlenW(parse_tests[i].encoded_url), "[%d] wrong size\n", i);
@@ -890,6 +898,11 @@ static HRESULT WINAPI InternetProtocolInfo_ParseUrl(IInternetProtocolInfo *iface
     case PARSE_ENCODE:
         CHECK_EXPECT2(ParseUrl_ENCODE);
         break;
+
+    case PARSE_UNESCAPE:
+        CHECK_EXPECT2(ParseUrl_UNESCAPE);
+        break;
+
     default:
         CHECK_EXPECT2(ParseUrl);
         break;
@@ -1055,6 +1068,16 @@ static void test_NameSpace(void)
 
     CHECK_CALLED(QI_IInternetProtocolInfo);
     CHECK_CALLED(ParseUrl_ENCODE);
+
+    qiret = S_OK;
+    SET_EXPECT(QI_IInternetProtocolInfo);
+    SET_EXPECT(ParseUrl_UNESCAPE);
+
+    hres = pCoInternetParseUrl(url8, PARSE_UNESCAPE, 0, buf, ARRAY_SIZE(buf), &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
+
+    CHECK_CALLED(QI_IInternetProtocolInfo);
+    CHECK_CALLED(ParseUrl_UNESCAPE);
 
     SET_EXPECT(QI_IInternetProtocolInfo);
     SET_EXPECT(ParseUrl);
