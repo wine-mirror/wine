@@ -156,12 +156,10 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     output( "\tandl $0xfff8, %%edx\n" );
     output( "\tshrl $1, %%edx\n" );
     if (UsePIC)
-    {
-        output( "\taddl wine_ldt_copy_ptr-1b(%%ecx),%%edx\n" );
-        output( "\tmovl (%%edx), %%edx\n" );
-    }
+        output( "\taddl .Lwine_ldt_copy_ptr-1b(%%ecx),%%edx\n" );
     else
-        output( "\tmovl %s(%%edx), %%edx\n", asm_name("wine_ldt_copy") );
+        output( "\taddl .Lwine_ldt_copy_ptr,%%edx\n" );
+    output( "\tmovl (%%edx), %%edx\n" );
     output( "\tmovzwl %%sp, %%ebp\n" );
     output( "\tleal %d(%%ebp,%%edx), %%edx\n", reg_func ? 0 : -4 );
 

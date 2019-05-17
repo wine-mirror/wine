@@ -355,11 +355,11 @@ static void output_call16_function( ORDDEF *odp )
         if (UsePIC)
         {
             output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-            output( "1:\tmovl wine_ldt_copy_ptr-1b(%%eax),%%esi\n" );
+            output( "1:\tmovl .Lwine_ldt_copy_ptr-1b(%%eax),%%esi\n" );
             needs_get_pc_thunk = 1;
         }
         else
-            output( "\tmovl $%s,%%esi\n", asm_name("wine_ldt_copy") );
+            output( "\tmovl .Lwine_ldt_copy_ptr,%%esi\n" );
     }
 
     /* preserve 16-byte stack alignment */
@@ -584,7 +584,7 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.short 0,0,0,0\n" );                                        /* e_res */
     output( "\t.short 0\n" );                                              /* e_oemid */
     output( "\t.short 0\n" );                                              /* e_oeminfo */
-    output( "\t.short 0,0,0,0,0,0,0,0,0,0\n" );                            /* e_res2 */
+    output( ".Lwine_ldt_copy_ptr:\t.long 0,0,0,0,0\n" );                   /* e_res2, used for ldt_copy */
     output( "\t.long .L__wine_spec_ne_header-.L__wine_spec_dos_header\n" );/* e_lfanew */
 
     output( ".L__wine_spec_ne_header:\n" );
@@ -794,9 +794,6 @@ static void output_module16( DLLSPEC *spec )
         output( "\n/* relay functions */\n\n" );
         output( "\t.text\n" );
         for ( i = 0; i < nb_funcs; i++ ) output_call16_function( typelist[i] );
-        output( "\t.data\n" );
-        output( "wine_ldt_copy_ptr:\n" );
-        output( "\t.long %s\n", asm_name("wine_ldt_copy") );
     }
 
     free( typelist );
