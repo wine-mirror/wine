@@ -485,7 +485,7 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
 static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
     PullPin *pPin = impl_PullPin_from_IPin(iface);
-    MPEGSplitterImpl *This = (MPEGSplitterImpl*)pPin->pin.pinInfo.pFilter;
+    MPEGSplitterImpl *This = impl_from_IBaseFilter(pPin->pin.pinInfo.pFilter);
     HRESULT hr;
     LONGLONG pos = 0; /* in bytes */
     BYTE header[10];

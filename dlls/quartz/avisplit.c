@@ -105,6 +105,11 @@ static inline AVISplitterImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, AVISplitterImpl, Parser.sourceSeeking.IMediaSeeking_iface);
 }
 
+static inline AVISplitterImpl *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, AVISplitterImpl, Parser.filter.IBaseFilter_iface);
+}
+
 /* The threading stuff cries for an explanation
  *
  * PullPin starts processing and calls AVISplitter_first_request
@@ -1025,6 +1030,7 @@ static HRESULT AVISplitter_Disconnect(LPVOID iface);
 static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
     PullPin *This = impl_PullPin_from_IPin(iface);
+    AVISplitterImpl *pAviSplit = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
     HRESULT hr;
     RIFFLIST list;
     LONGLONG pos = 0; /* in bytes */
@@ -1033,8 +1039,6 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin,
     LONGLONG total, avail;
     ULONG x;
     DWORD indexes;
-
-    AVISplitterImpl * pAviSplit = (AVISplitterImpl *)This->pin.pinInfo.pFilter;
 
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     pos += sizeof(list);
@@ -1264,7 +1268,7 @@ static HRESULT AVISplitter_Disconnect(LPVOID iface)
 
 static ULONG WINAPI AVISplitter_Release(IBaseFilter *iface)
 {
-    AVISplitterImpl *This = (AVISplitterImpl *)iface;
+    AVISplitterImpl *This = impl_from_IBaseFilter(iface);
     ULONG ref;
 
     ref = InterlockedDecrement(&This->Parser.filter.refCount);

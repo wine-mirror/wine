@@ -759,8 +759,8 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
 
 static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
 {
+    DSoundRenderImpl *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
-    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->()\n", This, iface);
 

@@ -206,6 +206,11 @@ static inline VMR9DefaultAllocatorPresenterImpl *impl_from_IVMRSurfaceAllocatorE
 
 static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *parent, LPVOID * ppv);
 
+static inline struct quartz_vmr *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, renderer.filter.IBaseFilter_iface);
+}
+
 static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *info, LPBYTE data,
                                  DWORD size)
 {
@@ -286,7 +291,7 @@ static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *
 
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -351,7 +356,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pS
 
 static HRESULT WINAPI VMR9_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TYPE * pmt)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) || !pmt->pbFormat)
         return S_FALSE;
@@ -445,7 +450,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *This, BOOL force)
 
 static VOID WINAPI VMR9_OnStartStreaming(BaseRenderer* iface)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     TRACE("(%p)\n", This);
 
@@ -463,7 +468,7 @@ static VOID WINAPI VMR9_OnStartStreaming(BaseRenderer* iface)
 
 static VOID WINAPI VMR9_OnStopStreaming(BaseRenderer* iface)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     TRACE("(%p)\n", This);
 
@@ -481,7 +486,7 @@ static HRESULT WINAPI VMR9_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample 
 
 static HRESULT WINAPI VMR9_CompleteConnect(BaseRenderer *This, IPin *pReceivePin)
 {
-    struct quartz_vmr *pVMR9 = (struct quartz_vmr*)This;
+    struct quartz_vmr *pVMR9 = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
     HRESULT hr;
 
     TRACE("(%p)\n", This);
@@ -495,7 +500,7 @@ static HRESULT WINAPI VMR9_CompleteConnect(BaseRenderer *This, IPin *pReceivePin
 
 static HRESULT WINAPI VMR9_BreakConnect(BaseRenderer *This)
 {
-    struct quartz_vmr *pVMR9 = (struct quartz_vmr*)This;
+    struct quartz_vmr *pVMR9 = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
     HRESULT hr = S_OK;
 
     if (!pVMR9->mode)
@@ -863,7 +868,7 @@ static const IUnknownVtbl IInner_VTable =
 
 static HRESULT WINAPI VMR9_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(iface);
 
     if (This->bAggregatable)
         This->bUnkOuterValid = TRUE;
@@ -893,7 +898,7 @@ static HRESULT WINAPI VMR9_QueryInterface(IBaseFilter * iface, REFIID riid, LPVO
 
 static ULONG WINAPI VMR9_AddRef(IBaseFilter * iface)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(iface);
     LONG ret;
 
     if (This->outer_unk && This->bUnkOuterValid)
@@ -908,7 +913,7 @@ static ULONG WINAPI VMR9_AddRef(IBaseFilter * iface)
 
 static ULONG WINAPI VMR9_Release(IBaseFilter * iface)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(iface);
     LONG ret;
 
     if (This->outer_unk && This->bUnkOuterValid)
