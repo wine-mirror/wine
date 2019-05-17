@@ -30,6 +30,7 @@
 #include "winerror.h"
 #include "dde.h"
 #include "user_private.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);

@@ -25,6 +25,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/asm.h"
+#include "wine/library.h"
 
 #include "pshpack1.h"
 

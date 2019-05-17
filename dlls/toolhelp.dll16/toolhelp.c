@@ -36,6 +36,7 @@
 
 #include "wine/winbase16.h"
 #include "toolhelp.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(toolhelp);
