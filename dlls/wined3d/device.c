@@ -3821,7 +3821,6 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     unsigned int src_size, dst_size, src_skip_levels = 0;
     unsigned int src_level_count, dst_level_count;
     unsigned int layer_count, level_count, i, j;
-    unsigned int width, height, depth;
     enum wined3d_resource_type type;
     struct wined3d_box box;
 
@@ -3892,11 +3891,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     /* Update every surface level of the texture. */
     for (i = 0; i < level_count; ++i)
     {
-        width = wined3d_texture_get_level_width(dst_texture, i);
-        height = wined3d_texture_get_level_height(dst_texture, i);
-        depth = wined3d_texture_get_level_depth(dst_texture, i);
-        wined3d_box_set(&box, 0, 0, width, height, 0, depth);
-
+        wined3d_texture_get_level_box(dst_texture, i, &box);
         for (j = 0; j < layer_count; ++j)
         {
             wined3d_cs_emit_blt_sub_resource(device->cs,
