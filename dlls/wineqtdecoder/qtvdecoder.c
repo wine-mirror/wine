@@ -533,7 +533,7 @@ IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr)
         return NULL;
     }
 
-    hr = TransformFilter_Construct(sizeof(QTVDecoderImpl), &CLSID_QTVDecoder,
+    hr = strmbase_transform_create(sizeof(QTVDecoderImpl), &CLSID_QTVDecoder,
             &QTVDecoder_FuncsTable, (IBaseFilter **)&This);
 
     if (FAILED(hr))
