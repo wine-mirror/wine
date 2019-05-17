@@ -1798,18 +1798,37 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdW(HDEVINFO devinfo, SP_DEVINFO_DATA *devic
 }
 
 /***********************************************************************
- *		SetupDiGetActualSectionToInstallA (SETUPAPI.@)
+ *              SetupDiGetActualSectionToInstallA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetActualSectionToInstallA(
-        HINF InfHandle,
-        PCSTR InfSectionName,
-        PSTR InfSectionWithExt,
-        DWORD InfSectionWithExtSize,
-        PDWORD RequiredSize,
-        PSTR *Extension)
+BOOL WINAPI SetupDiGetActualSectionToInstallA(HINF hinf, const char *section,
+        char *section_ext, DWORD size, DWORD *needed, char **extptr)
 {
-    FIXME("\n");
-    return FALSE;
+    WCHAR sectionW[LINE_LEN], section_extW[LINE_LEN], *extptrW;
+    BOOL ret;
+
+    MultiByteToWideChar(CP_ACP, 0, section, -1, sectionW, ARRAY_SIZE(sectionW));
+
+    ret = SetupDiGetActualSectionToInstallW(hinf, sectionW, section_extW,
+            ARRAY_SIZE(section_extW), NULL, &extptrW);
+    if (ret)
+    {
+        if (needed)
+            *needed = WideCharToMultiByte(CP_ACP, 0, section_extW, -1, NULL, 0, NULL, NULL);
+
+        if (section_ext)
+            ret = !!WideCharToMultiByte(CP_ACP, 0, section_extW, -1, section_ext, size, NULL, NULL);
+
+        if (extptr)
+        {
+            if (extptrW)
+                *extptr = section_ext + WideCharToMultiByte(CP_ACP, 0, section_extW,
+                        extptrW - section_extW, NULL, 0, NULL, NULL);
+            else
+                *extptr = NULL;
+        }
+    }
+
+    return ret;
 }
 
 /***********************************************************************
