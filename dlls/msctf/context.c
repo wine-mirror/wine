@@ -852,7 +852,7 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
         /*TODO: implement ITfEditRecord */
         SINK_FOR_EACH(cursor, &This->pTextEditSink, ITfTextEditSink, sink)
         {
-            ITfTextEditSink_OnEndEdit(sink, (ITfContext*) &This->ITfContext_iface, sc, NULL);
+            ITfTextEditSink_OnEndEdit(sink, &This->ITfContext_iface, sc, NULL);
         }
         sinkcookie = remove_Cookie(sc);
     }
