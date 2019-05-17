@@ -3596,7 +3596,7 @@ BOOL WINAPI SetupDiSetDeviceInstallParamsA(HDEVINFO devinfo,
     paramsW.FileQueue = params->FileQueue;
     paramsW.ClassInstallReserved = params->ClassInstallReserved;
     paramsW.Reserved = params->Reserved;
-    MultiByteToWideChar(CP_ACP, 0, params->DriverPath, -1, paramsW.DriverPath, sizeof(paramsW.DriverPath));
+    MultiByteToWideChar(CP_ACP, 0, params->DriverPath, -1, paramsW.DriverPath, ARRAY_SIZE(paramsW.DriverPath));
 
     return SetupDiSetDeviceInstallParamsW(devinfo, device_data, &paramsW);
 }
