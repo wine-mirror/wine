@@ -1879,17 +1879,7 @@ BOOL WINAPI SetupDiGetActualSectionToInstallW(
     }
 
     if (lLineCount == -1)
-    {
-	/* Test section name without extension */
-	szBuffer[dwLength] = 0;
-	lLineCount = SetupGetLineCountW(InfHandle, szBuffer);
-    }
-
-    if (lLineCount == -1)
-    {
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
+        szBuffer[dwLength] = 0;
 
     dwFullLength = lstrlenW(szBuffer);
 
