@@ -37,6 +37,31 @@ static WORD get_char_type(WCHAR ch)
     return type;
 }
 
+static BOOL char_compare(WORD ch1, WORD ch2, DWORD flags)
+{
+    char str1[3], str2[3];
+
+    str1[0] = LOBYTE(ch1);
+    if (IsDBCSLeadByte(str1[0]))
+    {
+        str1[1] = HIBYTE(ch1);
+        str1[2] = '\0';
+    }
+    else
+        str1[1] = '\0';
+
+    str2[0] = LOBYTE(ch2);
+    if (IsDBCSLeadByte(str2[0]))
+    {
+        str2[1] = HIBYTE(ch2);
+        str2[2] = '\0';
+    }
+    else
+        str2[1] = '\0';
+
+    return CompareStringA(GetThreadLocale(), flags, str1, -1, str2, -1) - CSTR_EQUAL;
+}
+
 DWORD WINAPI StrCmpCA(const char *str, const char *cmp)
 {
     return lstrcmpA(str, cmp);
@@ -151,6 +176,23 @@ BOOL WINAPI IsCharUpperW(WCHAR ch)
     return !!(get_char_type(ch) & C1_UPPER);
 }
 
+char * WINAPI StrChrA(const char *str, WORD ch)
+{
+    TRACE("%s, %#x\n", wine_dbgstr_a(str), ch);
+
+    if (!str)
+        return NULL;
+
+    while (*str)
+    {
+        if (!char_compare(*str, ch, 0))
+            return (char *)str;
+        str = CharNextA(str);
+    }
+
+    return NULL;
+}
+
 WCHAR * WINAPI StrChrW(const WCHAR *str, WCHAR ch)
 {
     TRACE("%s, %#x\n", wine_dbgstr_w(str), ch);
@@ -159,6 +201,23 @@ WCHAR * WINAPI StrChrW(const WCHAR *str, WCHAR ch)
         return NULL;
 
     return strchrW(str, ch);
+}
+
+char * WINAPI StrChrIA(const char *str, WORD ch)
+{
+    TRACE("%s, %i\n", wine_dbgstr_a(str), ch);
+
+    if (!str)
+        return NULL;
+
+    while (*str)
+    {
+        if (!ChrCmpIA(*str, ch))
+            return (char *)str;
+        str = CharNextA(str);
+    }
+
+    return NULL;
 }
 
 WCHAR * WINAPI StrChrIW(const WCHAR *str, WCHAR ch)
@@ -239,6 +298,13 @@ WCHAR * WINAPI StrDupW(const WCHAR *str)
     return ret;
 }
 
+BOOL WINAPI ChrCmpIA(WORD ch1, WORD ch2)
+{
+    TRACE("%#x, %#x\n", ch1, ch2);
+
+    return char_compare(ch1, ch2, NORM_IGNORECASE);
+}
+
 BOOL WINAPI ChrCmpIW(WCHAR ch1, WCHAR ch2)
 {
     return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, &ch1, 1, &ch2, 1) - CSTR_EQUAL;
@@ -298,6 +364,12 @@ WCHAR * WINAPI StrStrNIW(const WCHAR *str, const WCHAR *search, UINT max_len)
     }
 
     return NULL;
+}
+
+int WINAPI StrCmpNA(const char *str, const char *comp, int len)
+{
+    TRACE("%s, %s, %i\n", wine_dbgstr_a(str), wine_dbgstr_a(comp), len);
+    return CompareStringA(GetThreadLocale(), 0, str, len, comp, len) - CSTR_EQUAL;
 }
 
 int WINAPI StrCmpNW(const WCHAR *str, const WCHAR *comp, int len)
@@ -401,10 +473,65 @@ WCHAR * WINAPI StrRChrIW(const WCHAR *str, const WCHAR *end, WORD ch)
     return ret;
 }
 
+char * WINAPI StrPBrkA(const char *str, const char *match)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
+
+    if (!str || !match || !*match)
+        return NULL;
+
+    while (*str)
+    {
+        if (StrChrA(match, *str))
+            return (char *)str;
+        str = CharNextA(str);
+    }
+
+    return NULL;
+}
+
 WCHAR * WINAPI StrPBrkW(const WCHAR *str, const WCHAR *match)
 {
     if (!str || !match) return NULL;
     return strpbrkW(str, match);
+}
+
+BOOL WINAPI StrTrimA(char *str, const char *trim)
+{
+    unsigned int len;
+    BOOL ret = FALSE;
+    char *ptr = str;
+
+    TRACE("%s, %s\n", debugstr_a(str), debugstr_a(trim));
+
+    if (!str || !*str)
+        return FALSE;
+
+    while (*ptr && StrChrA(trim, *ptr))
+        ptr = CharNextA(ptr); /* Skip leading matches */
+
+    len = strlen(ptr);
+
+    if (ptr != str)
+    {
+        memmove(str, ptr, len + 1);
+        ret = TRUE;
+    }
+
+    if (len > 0)
+    {
+        ptr = str + len;
+        while (StrChrA(trim, ptr[-1]))
+            ptr = CharPrevA(str, ptr); /* Skip trailing matches */
+
+        if (ptr != str + len)
+        {
+            *ptr = '\0';
+            ret = TRUE;
+        }
+    }
+
+    return ret;
 }
 
 BOOL WINAPI StrTrimW(WCHAR *str, const WCHAR *trim)
@@ -443,6 +570,68 @@ BOOL WINAPI StrTrimW(WCHAR *str, const WCHAR *trim)
     }
 
     return ret;
+}
+
+BOOL WINAPI StrToInt64ExA(const char *str, DWORD flags, LONGLONG *ret)
+{
+    BOOL negative = FALSE;
+    LONGLONG value = 0;
+
+    TRACE("%s, %#x, %p\n", wine_dbgstr_a(str), flags, ret);
+
+    if (!str || !ret)
+        return FALSE;
+
+    if (flags > STIF_SUPPORT_HEX)
+        WARN("Unknown flags %#x\n", flags);
+
+    /* Skip leading space, '+', '-' */
+    while (isspace(*str))
+        str = CharNextA(str);
+
+    if (*str == '-')
+    {
+        negative = TRUE;
+        str++;
+    }
+    else if (*str == '+')
+        str++;
+
+    if (flags & STIF_SUPPORT_HEX && *str == '0' && tolower(str[1]) == 'x')
+    {
+        /* Read hex number */
+        str += 2;
+
+        if (!isxdigit(*str))
+            return FALSE;
+
+        while (isxdigit(*str))
+        {
+            value *= 16;
+            if (isdigit(*str))
+                value += (*str - '0');
+            else
+                value += 10 + (tolower(*str) - 'a');
+            str++;
+        }
+
+        *ret = value;
+        return TRUE;
+    }
+
+    /* Read decimal number */
+    if (!isdigit(*str))
+        return FALSE;
+
+    while (isdigit(*str))
+    {
+        value *= 10;
+        value += (*str - '0');
+        str++;
+    }
+
+    *ret = negative ? -value : value;
+    return TRUE;
 }
 
 BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
@@ -507,6 +696,18 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
     return TRUE;
 }
 
+BOOL WINAPI StrToIntExA(const char *str, DWORD flags, INT *ret)
+{
+    LONGLONG value;
+    BOOL res;
+
+    TRACE("%s, %#x, %p\n", wine_dbgstr_a(str), flags, ret);
+
+    res = StrToInt64ExA(str, flags, &value);
+    if (res) *ret = value;
+    return res;
+}
+
 BOOL WINAPI StrToIntExW(const WCHAR *str, DWORD flags, INT *ret)
 {
     LONGLONG value;
@@ -517,6 +718,21 @@ BOOL WINAPI StrToIntExW(const WCHAR *str, DWORD flags, INT *ret)
     res = StrToInt64ExW(str, flags, &value);
     if (res) *ret = value;
     return res;
+}
+
+int WINAPI StrToIntA(const char *str)
+{
+    int value = 0;
+
+    TRACE("%s\n", wine_dbgstr_a(str));
+
+    if (!str)
+        return 0;
+
+    if (*str == '-' || isdigit(*str))
+        StrToIntExA(str, 0, &value);
+
+    return value;
 }
 
 int WINAPI StrToIntW(const WCHAR *str)
@@ -817,4 +1033,90 @@ INT WINAPI DECLSPEC_HOTPATCH LoadStringA(HINSTANCE instance, UINT resource_id, L
     buffer[retval] = 0;
     TRACE("returning %s\n", debugstr_a(buffer));
     return retval;
+}
+
+int WINAPI StrCmpLogicalW(const WCHAR *str, const WCHAR *comp)
+{
+    TRACE("%s, %s\n", wine_dbgstr_w(str), wine_dbgstr_w(comp));
+
+    if (!str || !comp)
+        return 0;
+
+    while (*str)
+    {
+        if (!*comp)
+            return 1;
+        else if (isdigitW(*str))
+        {
+            int str_value, comp_value;
+
+            if (!isdigitW(*comp))
+                return -1;
+
+            /* Compare the numbers */
+            StrToIntExW(str, 0, &str_value);
+            StrToIntExW(comp, 0, &comp_value);
+
+            if (str_value < comp_value)
+                return -1;
+            else if (str_value > comp_value)
+                return 1;
+
+            /* Skip */
+            while (isdigitW(*str))
+                str++;
+            while (isdigitW(*comp))
+                comp++;
+        }
+        else if (isdigitW(*comp))
+            return 1;
+        else
+        {
+            int diff = ChrCmpIW(*str, *comp);
+            if (diff > 0)
+                return 1;
+            else if (diff < 0)
+                return -1;
+
+            str++;
+            comp++;
+        }
+    }
+
+    if (*comp)
+      return -1;
+
+    return 0;
+}
+
+BOOL WINAPI StrIsIntlEqualA(BOOL case_sensitive, const char *str, const char *cmp, int len)
+{
+    DWORD flags;
+
+    TRACE("%d, %s, %s, %d\n", case_sensitive, wine_dbgstr_a(str), wine_dbgstr_a(cmp), len);
+
+    /* FIXME: This flag is undocumented and unknown by our CompareString.
+     *        We need a define for it.
+     */
+    flags = 0x10000000;
+    if (!case_sensitive)
+        flags |= NORM_IGNORECASE;
+
+    return (CompareStringA(GetThreadLocale(), flags, str, len, cmp, len) == CSTR_EQUAL);
+}
+
+BOOL WINAPI StrIsIntlEqualW(BOOL case_sensitive, const WCHAR *str, const WCHAR *cmp, int len)
+{
+    DWORD flags;
+
+    TRACE("%d, %s, %s, %d\n", case_sensitive, debugstr_w(str), debugstr_w(cmp), len);
+
+    /* FIXME: This flag is undocumented and unknown by our CompareString.
+     *        We need a define for it.
+     */
+    flags = 0x10000000;
+    if (!case_sensitive)
+        flags |= NORM_IGNORECASE;
+
+    return (CompareStringW(GetThreadLocale(), flags, str, len, cmp, len) == CSTR_EQUAL);
 }

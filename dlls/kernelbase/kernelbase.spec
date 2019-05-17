@@ -130,7 +130,7 @@
 # @ stub CheckTokenCapability
 @ stdcall CheckTokenMembership(long ptr ptr) advapi32.CheckTokenMembership
 # @ stub CheckTokenMembershipEx
-@ stdcall ChrCmpIA(long long) shlwapi.ChrCmpIA
+@ stdcall ChrCmpIA(long long)
 @ stdcall ChrCmpIW(long long)
 @ stdcall ClearCommBreak(long) kernel32.ClearCommBreak
 @ stdcall ClearCommError(long ptr ptr) kernel32.ClearCommError
@@ -1532,9 +1532,9 @@
 @ stdcall StrCatBuffA(str str long) shlwapi.StrCatBuffA
 @ stdcall StrCatBuffW(wstr wstr long) shlwapi.StrCatBuffW
 @ stdcall StrCatChainW(ptr long long wstr) shlwapi.StrCatChainW
-@ stdcall StrChrA(str long) shlwapi.StrChrA
+@ stdcall StrChrA(str long)
 # @ stub StrChrA_MB
-@ stdcall StrChrIA(str long) shlwapi.StrChrIA
+@ stdcall StrChrIA(str long)
 @ stdcall StrChrIW(wstr long)
 # @ stub StrChrNIW
 @ stdcall StrChrNW(wstr long long)
@@ -1544,8 +1544,8 @@
 @ stdcall StrCmpICA(str str)
 @ stdcall StrCmpICW(wstr wstr)
 @ stdcall StrCmpIW(wstr wstr)
-@ stdcall StrCmpLogicalW(wstr wstr) shlwapi.StrCmpLogicalW
-@ stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
+@ stdcall StrCmpLogicalW(wstr wstr)
+@ stdcall StrCmpNA(str str long)
 @ stdcall StrCmpNCA(str ptr long) shlwapi.StrCmpNCA
 @ stdcall StrCmpNCW(wstr wstr long) shlwapi.StrCmpNCW
 @ stdcall StrCmpNIA(str str long)
@@ -1559,9 +1559,9 @@
 @ stdcall StrCpyNXW(ptr wstr long)
 @ stdcall StrDupA(str)
 @ stdcall StrDupW(wstr)
-@ stdcall StrIsIntlEqualA(long str str long) shlwapi.StrIsIntlEqualA
-@ stdcall StrIsIntlEqualW(long wstr wstr long) shlwapi.StrIsIntlEqualW
-@ stdcall StrPBrkA(str str) shlwapi.StrPBrkA
+@ stdcall StrIsIntlEqualA(long str str long)
+@ stdcall StrIsIntlEqualW(long wstr wstr long)
+@ stdcall StrPBrkA(str str)
 @ stdcall StrPBrkW(wstr wstr)
 @ stdcall StrRChrA(str str long) shlwapi.StrRChrA
 @ stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
@@ -1577,13 +1577,13 @@
 @ stdcall StrStrNIW(wstr wstr long)
 @ stdcall StrStrNW(wstr wstr long)
 @ stdcall StrStrW(wstr wstr)
-@ stdcall StrToInt64ExA(str long ptr) shlwapi.StrToInt64ExA
+@ stdcall StrToInt64ExA(str long ptr)
 @ stdcall StrToInt64ExW(wstr long ptr)
-@ stdcall StrToIntA(str) shlwapi.StrToIntA
-@ stdcall StrToIntExA(str long ptr) shlwapi.StrToIntExA
+@ stdcall StrToIntA(str)
+@ stdcall StrToIntExA(str long ptr)
 @ stdcall StrToIntExW(wstr long ptr)
 @ stdcall StrToIntW(wstr)
-@ stdcall StrTrimA(str str) shlwapi.StrTrimA
+@ stdcall StrTrimA(str str)
 @ stdcall StrTrimW(wstr wstr)
 @ stdcall SubmitThreadpoolWork(ptr) kernel32.SubmitThreadpoolWork
 # @ stub SubscribeEdpEnabledStateChange
