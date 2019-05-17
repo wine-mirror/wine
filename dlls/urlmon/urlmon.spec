@@ -77,6 +77,7 @@
 @ stdcall RevokeBindStatusCallback(ptr ptr)
 @ stdcall RevokeFormatEnumerator(ptr ptr)
 @ stub SetSoftwareUpdateAdvertisementState
+@ stdcall ShouldShowIntranetWarningSecband(long)
 @ stub URLDownloadA
 @ stdcall URLDownloadToCacheFileA(ptr str str long long ptr)
 @ stdcall URLDownloadToCacheFileW(ptr wstr wstr long long ptr)

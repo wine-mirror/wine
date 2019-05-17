@@ -828,3 +828,13 @@ HRESULT WINAPI RegisterMediaTypes(UINT types, LPCSTR *szTypes, CLIPFORMAT *cfTyp
    FIXME("stub: %u %p %p\n", types, szTypes, cfTypes);
    return E_INVALIDARG;
 }
+
+/***********************************************************************
+ *            ShouldShowIntranetWarningSecband
+ *    Undocumented, added in IE7
+ */
+BOOL WINAPI ShouldShowIntranetWarningSecband(DWORD unk)
+{
+    FIXME("%x: stub\n", unk);
+    return FALSE;
+}
