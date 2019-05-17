@@ -28,6 +28,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(string);
 
+static WORD get_char_type(WCHAR ch)
+{
+    WORD type = 0;
+    GetStringTypeW(CT_CTYPE1, &ch, 1, &type);
+    return type;
+}
+
 DWORD WINAPI StrCmpCA(const char *str, const char *cmp)
 {
     return lstrcmpA(str, cmp);
@@ -60,30 +67,22 @@ DWORD WINAPI StrCmpNICW(const WCHAR *str, const WCHAR *cmp, DWORD len)
 
 BOOL WINAPI IsCharBlankW(WCHAR wc)
 {
-    WORD type;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &type) && (type & C1_BLANK);
+    return !!(get_char_type(wc) & C1_BLANK);
 }
 
 BOOL WINAPI IsCharCntrlW(WCHAR wc)
 {
-    WORD type;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &type) && (type & C1_CNTRL);
+    return !!(get_char_type(wc) & C1_CNTRL);
 }
 
 BOOL WINAPI IsCharDigitW(WCHAR wc)
 {
-    WORD type;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &type) && (type & C1_DIGIT);
+    return !!(get_char_type(wc) & C1_DIGIT);
 }
 
 BOOL WINAPI IsCharPunctW(WCHAR wc)
 {
-    WORD type;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &type) && (type & C1_PUNCT);
+    return !!(get_char_type(wc) & C1_PUNCT);
 }
 
 BOOL WINAPI IsCharSpaceA(CHAR c)
@@ -94,16 +93,12 @@ BOOL WINAPI IsCharSpaceA(CHAR c)
 
 BOOL WINAPI IsCharSpaceW(WCHAR wc)
 {
-    WORD type;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &type) && (type & C1_SPACE);
+    return !!(get_char_type(wc) & C1_SPACE);
 }
 
 BOOL WINAPI IsCharXDigitW(WCHAR wc)
 {
-    WORD type;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &type) && (type & C1_XDIGIT);
+    return !!(get_char_type(wc) & C1_XDIGIT);
 }
 
 WCHAR * WINAPI StrChrW(const WCHAR *str, WCHAR ch)
