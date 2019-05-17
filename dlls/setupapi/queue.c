@@ -1145,6 +1145,8 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style,
         rc = CopyFileW(source,target,FALSE);
         TRACE("Did copy... rc was %i\n",rc);
     }
+    else
+        SetLastError(ERROR_SUCCESS);
 
     /* after copy processing */
     if (style & SP_COPY_DELETESOURCE)
