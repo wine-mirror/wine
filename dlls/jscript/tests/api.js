@@ -2452,6 +2452,7 @@ var exception_array = {
     E_OBJECT_EXPECTED:     { type: "TypeError", number: -2146823281 },
     E_OBJECT_REQUIRED:     { type: "TypeError", number: -2146827864 },
     E_UNSUPPORTED_ACTION:  { type: "TypeError", number: -2146827843 },
+    E_NOT_ENUMERATOR:      { type: "TypeError", number: -2146823273 },
     E_NOT_VBARRAY:         { type: "TypeError", number: -2146823275 },
     E_INVALID_DELETE:      { type: "TypeError", number: -2146823276 },
     E_UNDEFINED:           { type: "TypeError", number: -2146823279 },
@@ -2716,6 +2717,15 @@ testArrayHostThis("reverse");
 testArrayHostThis("join");
 testArrayHostThis("pop");
 testArrayHostThis("sort");
+
+function testEnumeratorThis(func) {
+    testThisExcept(Enumerator.prototype[func], "E_NOT_ENUMERATOR");
+}
+
+testEnumeratorThis("atEnd");
+testEnumeratorThis("item");
+testEnumeratorThis("moveFirst");
+testEnumeratorThis("moveNext");
 
 function testObjectInherit(obj, constr, ts, tls, vo) {
     ok(obj instanceof Object, "obj is not instance of Object");
@@ -3008,5 +3018,10 @@ ok(tmp.getItem(3, 2) == 13, "tmp.getItem(3, 2) = " + tmp.getItem(3, 2));
 ok(tmp.toArray() == "2,3,12,13,22,23,32,33,42,43", "tmp.toArray() = " + tmp.toArray());
 ok(createArray().toArray() == "2,3,12,13,22,23,32,33,42,43",
         "createArray.toArray()=" + createArray().toArray());
+
+obj = new Enumerator();
+ok(obj.atEnd(), "atEnd() = " + obj.atEnd());
+obj.moveFirst();
+ok(obj.atEnd(), "atEnd() = " + obj.atEnd());
 
 reportSuccess();

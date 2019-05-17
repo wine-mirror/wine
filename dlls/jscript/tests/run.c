@@ -106,6 +106,10 @@ DEFINE_EXPECT(testobj_noprop_d);
 DEFINE_EXPECT(testobj_onlydispid_d);
 DEFINE_EXPECT(testobj_onlydispid_i);
 DEFINE_EXPECT(testobj_notexists_d);
+DEFINE_EXPECT(testobj_newenum);
+DEFINE_EXPECT(enumvariant_next_0);
+DEFINE_EXPECT(enumvariant_next_1);
+DEFINE_EXPECT(enumvariant_reset);
 DEFINE_EXPECT(GetItemInfo_testVal);
 DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
 DEFINE_EXPECT(invoke_func);
@@ -144,6 +148,7 @@ DEFINE_EXPECT(BindHandler);
 #define DISPID_GLOBAL_TESTPROPPUTREF 0x101b
 #define DISPID_GLOBAL_GETSCRIPTSTATE 0x101c
 #define DISPID_GLOBAL_BINDEVENTHANDLER 0x101d
+#define DISPID_GLOBAL_TESTENUMOBJ   0x101e
 
 #define DISPID_GLOBAL_TESTPROPDELETE      0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE    0x2001
@@ -218,6 +223,101 @@ static void _test_grfdex(unsigned line, DWORD grfdex, DWORD expect)
     expect |= invoke_version << 28;
     ok_(__FILE__,line)(grfdex == expect, "grfdex = %x, expected %x\n", grfdex, expect);
 }
+
+static HRESULT WINAPI EnumVARIANT_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if (IsEqualGUID(riid, &IID_IEnumVARIANT))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI EnumVARIANT_AddRef(IEnumVARIANT *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI EnumVARIANT_Release(IEnumVARIANT *iface)
+{
+    return 1;
+}
+
+static int EnumVARIANT_index = 0;
+static int EnumVARIANT_next_0_count = 0;
+static HRESULT WINAPI EnumVARIANT_Next(
+    IEnumVARIANT *This,
+    ULONG celt,
+    VARIANT *rgVar,
+    ULONG *pCeltFetched)
+{
+    ok(rgVar != NULL, "rgVar is NULL\n");
+    ok(celt == 1, "celt = %d\n", celt);
+    ok(pCeltFetched == NULL, "pCeltFetched is not NULL\n");
+
+    if (!rgVar)
+        return S_FALSE;
+
+    if (EnumVARIANT_index == 0)
+    {
+        EnumVARIANT_next_0_count--;
+        if (EnumVARIANT_next_0_count <= 0)
+            CHECK_EXPECT(enumvariant_next_0);
+
+        V_VT(rgVar) = VT_I4;
+        V_I4(rgVar) = 123;
+
+        if (pCeltFetched)
+            *pCeltFetched = 1;
+        EnumVARIANT_index++;
+        return S_OK;
+    }
+
+    CHECK_EXPECT(enumvariant_next_1);
+
+    if (pCeltFetched)
+        *pCeltFetched = 0;
+    return S_FALSE;
+
+}
+
+static HRESULT WINAPI EnumVARIANT_Skip(
+    IEnumVARIANT *This,
+    ULONG celt)
+{
+    ok(0, "EnumVariant_Skip: unexpected call\n");
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI EnumVARIANT_Reset(
+    IEnumVARIANT *This)
+{
+    CHECK_EXPECT(enumvariant_reset);
+    EnumVARIANT_index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumVARIANT_Clone(
+    IEnumVARIANT *This,
+    IEnumVARIANT **ppEnum)
+{
+    ok(0, "EnumVariant_Clone: unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IEnumVARIANTVtbl testEnumVARIANTVtbl = {
+    EnumVARIANT_QueryInterface,
+    EnumVARIANT_AddRef,
+    EnumVARIANT_Release,
+    EnumVARIANT_Next,
+    EnumVARIANT_Skip,
+    EnumVARIANT_Reset,
+    EnumVARIANT_Clone
+};
+
+static IEnumVARIANT testEnumVARIANT = { &testEnumVARIANTVtbl };
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
@@ -318,6 +418,28 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testObj_Invoke(IDispatchEx *iface, DISPID id,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+                            VARIANT *pvarRes, EXCEPINFO *pei, UINT *puArgErr)
+{
+    switch(id) {
+    case DISPID_NEWENUM:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(pei == NULL, "pei != NULL\n");
+
+        CHECK_EXPECT(testobj_newenum);
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&testEnumVARIANT;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %x\n", id);
+    return DISP_E_MEMBERNOTFOUND;
 }
 
 static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
@@ -453,7 +575,7 @@ static IDispatchExVtbl testObjVtbl = {
     DispatchEx_GetTypeInfoCount,
     DispatchEx_GetTypeInfo,
     DispatchEx_GetIDsOfNames,
-    DispatchEx_Invoke,
+    testObj_Invoke,
     testObj_GetDispID,
     testObj_InvokeEx,
     testObj_DeleteMemberByName,
@@ -858,6 +980,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
 
     if(!strcmp_wa(bstrName, "bindEventHandler")) {
         *pid = DISPID_GLOBAL_BINDEVENTHANDLER;
+        return S_OK;
+    }
+
+    if(!strcmp_wa(bstrName, "testEnumObj")) {
+        *pid = DISPID_GLOBAL_TESTENUMOBJ;
         return S_OK;
     }
 
@@ -2681,6 +2808,46 @@ static BOOL run_tests(void)
     parse_script_a("@if(true)\nif(@_jscript) reportSuccess();\n@end");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
+
+    EnumVARIANT_index = 0;
+    EnumVARIANT_next_0_count = 1;
+    SET_EXPECT(testobj_newenum);
+    SET_EXPECT(enumvariant_next_0);
+    parse_script_a("new Enumerator(testObj);");
+    CHECK_CALLED(testobj_newenum);
+    CHECK_CALLED(enumvariant_next_0);
+
+    EnumVARIANT_index = 0;
+    EnumVARIANT_next_0_count = 2;
+    SET_EXPECT(testobj_newenum);
+    SET_EXPECT(enumvariant_next_0);
+    SET_EXPECT(enumvariant_reset);
+    parse_script_a("(function () {"
+                   "    var testEnumObj = new Enumerator(testObj);"
+                   "    var tmp = testEnumObj.moveFirst();"
+                   "    ok(tmp == undefined, \"testEnumObj.moveFirst() = \" + tmp);"
+                   "})()");
+    CHECK_CALLED(testobj_newenum);
+    CHECK_CALLED(enumvariant_next_0);
+    CHECK_CALLED(enumvariant_reset);
+
+    EnumVARIANT_index = 0;
+    EnumVARIANT_next_0_count = 1;
+    SET_EXPECT(testobj_newenum);
+    SET_EXPECT(enumvariant_next_0);
+    SET_EXPECT(enumvariant_next_1);
+    parse_script_a("(function () {"
+                   "    var testEnumObj = new Enumerator(testObj);"
+                   "    while (!testEnumObj.atEnd())"
+                   "    {"
+                   "        ok(testEnumObj.item() == 123, "
+                   "         \"testEnumObj.item() = \"+testEnumObj.item());"
+                   "        testEnumObj.moveNext();"
+                   "    }"
+                   "})()");
+    CHECK_CALLED(testobj_newenum);
+    CHECK_CALLED(enumvariant_next_0);
+    CHECK_CALLED(enumvariant_next_1);
 
     run_from_res("lang.js");
     run_from_res("api.js");
