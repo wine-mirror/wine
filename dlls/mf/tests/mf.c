@@ -49,6 +49,34 @@ static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
             expected_refcount);
 }
 
+static WCHAR *load_resource(const WCHAR *name)
+{
+    static WCHAR pathW[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
+    lstrcatW(pathW, name);
+
+    file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0,
+                       NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n",
+       wine_dbgstr_w(pathW), GetLastError());
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok(res != 0, "couldn't find resource\n");
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    WriteFile(file, ptr, SizeofResource(GetModuleHandleA(NULL), res),
+               &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleA(NULL), res),
+       "couldn't write resource\n" );
+    CloseHandle(file);
+
+    return pathW;
+}
+
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -998,10 +1026,116 @@ static void test_media_session(void)
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
 
+static HRESULT WINAPI test_grabber_callback_QueryInterface(IMFSampleGrabberSinkCallback *iface, REFIID riid,
+        void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFSampleGrabberSinkCallback) ||
+            IsEqualIID(riid, &IID_IMFClockStateSink) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFSampleGrabberSinkCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_grabber_callback_AddRef(IMFSampleGrabberSinkCallback *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_grabber_callback_Release(IMFSampleGrabberSinkCallback *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_grabber_callback_OnClockStart(IMFSampleGrabberSinkCallback *iface, MFTIME systime,
+        LONGLONG offset)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_grabber_callback_OnClockStop(IMFSampleGrabberSinkCallback *iface, MFTIME systime)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_grabber_callback_OnClockPause(IMFSampleGrabberSinkCallback *iface, MFTIME systime)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_grabber_callback_OnClockRestart(IMFSampleGrabberSinkCallback *iface, MFTIME systime)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_grabber_callback_OnClockSetRate(IMFSampleGrabberSinkCallback *iface, MFTIME systime, float rate)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_grabber_callback_OnSetPresentationClock(IMFSampleGrabberSinkCallback *iface,
+        IMFPresentationClock *clock)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_grabber_callback_OnProcessSample(IMFSampleGrabberSinkCallback *iface, REFGUID major_type,
+        DWORD sample_flags, LONGLONG sample_time, LONGLONG sample_duration, const BYTE *buffer, DWORD sample_size)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_grabber_callback_OnShutdown(IMFSampleGrabberSinkCallback *iface)
+{
+    return E_NOTIMPL;
+}
+
+static const IMFSampleGrabberSinkCallbackVtbl test_grabber_callback_vtbl =
+{
+    test_grabber_callback_QueryInterface,
+    test_grabber_callback_AddRef,
+    test_grabber_callback_Release,
+    test_grabber_callback_OnClockStart,
+    test_grabber_callback_OnClockStop,
+    test_grabber_callback_OnClockPause,
+    test_grabber_callback_OnClockRestart,
+    test_grabber_callback_OnClockSetRate,
+    test_grabber_callback_OnSetPresentationClock,
+    test_grabber_callback_OnProcessSample,
+    test_grabber_callback_OnShutdown,
+};
+
 static void test_topology_loader(void)
 {
+    IMFSampleGrabberSinkCallback test_grabber_callback = { &test_grabber_callback_vtbl };
+    static const WCHAR wavW[] = {'a','u','d','i','o','/','w','a','v',0};
+    static const WCHAR nameW[] = {'t','e','s','t','.','w','a','v',0};
+    IMFTopology *topology, *topology2, *full_topology;
+    IMFTopologyNode *src_node, *sink_node;
+    IMFPresentationDescriptor *pd;
+    IMFSourceResolver *resolver;
+    IMFActivate *sink_activate;
+    unsigned int count, value;
+    IMFMediaType *media_type;
+    IMFStreamDescriptor *sd;
+    MF_OBJECT_TYPE obj_type;
+    IMFMediaSource *source;
     IMFTopoLoader *loader;
+    IMFByteStream *stream;
+    IMFAttributes *attr;
+    IMFMediaSink *sink;
+    WCHAR *filename;
+    BOOL selected;
     HRESULT hr;
+    GUID guid;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
 
     hr = MFCreateTopoLoader(NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
@@ -1009,7 +1143,142 @@ static void test_topology_loader(void)
     hr = MFCreateTopoLoader(&loader);
     ok(hr == S_OK, "Failed to create topology loader, hr %#x.\n", hr);
 
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "Failed to create topology, hr %#x.\n", hr);
+
+    /* Empty topology */
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+todo_wine
+    ok(hr == MF_E_TOPO_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSourceResolver(&resolver);
+    ok(hr == S_OK, "Failed to create source resolver, hr %#x.\n", hr);
+
+    filename = load_resource(nameW);
+
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
+    ok(hr == S_OK, "Failed to create file stream, hr %#x.\n", hr);
+
+    IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attr);
+    IMFAttributes_SetString(attr, &MF_BYTESTREAM_CONTENT_TYPE, wavW);
+    IMFAttributes_Release(attr);
+
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
+            &obj_type, (IUnknown **)&source);
+    ok(hr == S_OK || broken(FAILED(hr)) /* Vista */, "Failed to create source, hr %#x.\n", hr);
+    if (FAILED(hr))
+        return;
+
+    hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd);
+    ok(hr == S_OK, "Failed to create descriptor, hr %#x.\n", hr);
+
+    hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, 0, &selected, &sd);
+    ok(hr == S_OK, "Failed to get stream descriptor, hr %#x.\n", hr);
+
+    /* Add source node. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &src_node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_SOURCE, (IUnknown *)source);
+    ok(hr == S_OK, "Failed to set node source, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)pd);
+    ok(hr == S_OK, "Failed to set node pd, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
+    ok(hr == S_OK, "Failed to set node sd, hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, src_node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    /* Source node only. */
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+todo_wine
+    ok(hr == MF_E_TOPO_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
+
+    /* Add grabber sink. */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = MFCreateSampleGrabberSinkActivate(media_type, &test_grabber_callback, &sink_activate);
+    ok(hr == S_OK, "Failed to create grabber sink, hr %#x.\n", hr);
+
+    IMFMediaType_Release(media_type);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sink_node);
+    ok(hr == S_OK, "Failed to create output node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetObject(sink_node, (IUnknown *)sink_activate);
+    ok(hr == S_OK, "Failed to set object, hr %#x.\n", hr);
+    hr = IMFTopology_AddNode(topology, sink_node);
+    ok(hr == S_OK, "Failed to add sink node, hr %#x.\n", hr);
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+todo_wine
+    ok(hr == MF_E_TOPO_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_ConnectOutput(src_node, 0, sink_node, 0);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    /* Sink was not resolved. */
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFActivate_ActivateObject(sink_activate, &IID_IMFMediaSink, (void **)&sink);
+todo_wine
+    ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetObject(sink_node, (IUnknown *)sink);
+    ok(hr == S_OK, "Failed to set object, hr %#x.\n", hr);
+
+    hr = IMFTopology_GetCount(topology, &count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+    ok(count == 0, "Unexpected count %u.\n", count);
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+todo_wine
+    ok(hr == S_OK, "Failed to resolve topology, hr %#x.\n", hr);
+    ok(full_topology != topology, "Unexpected instance.\n");
+
+    hr = IMFTopology_GetCount(topology, &count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+    ok(count == 0, "Unexpected count %u.\n", count);
+
+    hr = IMFTopology_GetCount(full_topology, &count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+todo_wine
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = IMFTopology_GetItemByIndex(full_topology, 0, &guid, NULL);
+todo_wine {
+    ok(hr == S_OK, "Failed to get attribute key, hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MF_TOPOLOGY_RESOLUTION_STATUS), "Unexpected key %s.\n", wine_dbgstr_guid(&guid));
+}
+    hr = IMFTopology_GetUINT32(full_topology, &MF_TOPOLOGY_RESOLUTION_STATUS, &value);
+todo_wine {
+    ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+    ok(value == MF_TOPOLOGY_RESOLUTION_SUCCEEDED, "Unexpected value %#x.\n", value);
+}
+    hr = IMFTopoLoader_Load(loader, full_topology, &topology2, NULL);
+todo_wine
+    ok(hr == S_OK, "Failed to resolve topology, hr %#x.\n", hr);
+    ok(full_topology != topology2, "Unexpected instance.\n");
+
+    IMFTopology_Release(topology2);
+    IMFTopology_Release(full_topology);
+
+    IMFMediaSource_Release(source);
+    IMFSourceResolver_Release(resolver);
+    IMFByteStream_Release(stream);
     IMFTopoLoader_Release(loader);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
 
 static HRESULT WINAPI testshutdown_QueryInterface(IMFShutdown *iface, REFIID riid, void **obj)

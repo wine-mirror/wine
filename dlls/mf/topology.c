@@ -791,6 +791,13 @@ static const IMFTopologyVtbl topologyvtbl =
     topology_GetOutputNodeCollection,
 };
 
+static struct topology *unsafe_impl_from_IMFTopology(IMFTopology *iface)
+{
+    if (!iface || iface->lpVtbl != &topologyvtbl)
+        return NULL;
+    return impl_from_IMFTopology(iface);
+}
+
 static TOPOID topology_generate_id(void)
 {
     TOPOID old;
@@ -1720,9 +1727,44 @@ static ULONG WINAPI topology_loader_Release(IMFTopoLoader *iface)
 static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *input_topology,
         IMFTopology **output_topology, IMFTopology *current_topology)
 {
+    struct topology *topology = unsafe_impl_from_IMFTopology(input_topology);
+    IMFMediaSink *sink;
+    HRESULT hr;
+    size_t i;
+
     FIXME("%p, %p, %p, %p.\n", iface, input_topology, output_topology, current_topology);
 
-    return E_NOTIMPL;
+    if (current_topology)
+        FIXME("Current topology instance is ignored.\n");
+
+    for (i = 0; i < topology->nodes.count; ++i)
+    {
+        struct topology_node *node = topology->nodes.nodes[i];
+
+        switch (node->node_type)
+        {
+            case MF_TOPOLOGY_OUTPUT_NODE:
+                if (node->object)
+                {
+                    /* Sinks must be bound beforehand. */
+                    if (FAILED(IUnknown_QueryInterface(node->object, &IID_IMFMediaSink, (void **)&sink)))
+                        return MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED;
+                    IMFMediaSink_Release(sink);
+                }
+                break;
+            case MF_TOPOLOGY_SOURCESTREAM_NODE:
+                if (FAILED(hr = IMFAttributes_GetItem(node->attributes, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL)))
+                    return hr;
+                break;
+            default:
+                ;
+        }
+    }
+
+    if (FAILED(hr = MFCreateTopology(output_topology)))
+        return hr;
+
+    return IMFTopology_CloneFrom(*output_topology, input_topology);
 }
 
 static const IMFTopoLoaderVtbl topologyloadervtbl =
