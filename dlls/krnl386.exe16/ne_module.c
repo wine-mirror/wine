@@ -1234,8 +1234,6 @@ DWORD NE_StartTask(void)
         context.SegCs  = GlobalHandleToSel16(pSegTable[SELECTOROF(pModule->ne_csip) - 1].hSeg);
         context.SegDs  = GlobalHandleToSel16(pTask->hInstance);
         context.SegEs  = pTask->hPDB;
-        context.SegFs  = wine_get_fs();
-        context.SegGs  = wine_get_gs();
         context.Eip    = OFFSETOF(pModule->ne_csip);
         context.Ebx    = pModule->ne_stack;
         context.Ecx    = pModule->ne_heap;

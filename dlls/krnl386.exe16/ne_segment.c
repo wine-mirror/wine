@@ -689,8 +689,6 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
     context.Edi = hInst;
     context.SegDs = ds;
     context.SegEs = ds;   /* who knows ... */
-    context.SegFs = wine_get_fs();
-    context.SegGs = wine_get_gs();
     context.SegCs = SEL(pSegTable[SELECTOROF(pModule->ne_csip)-1].hSeg);
     context.Eip   = OFFSETOF(pModule->ne_csip);
     context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
@@ -794,8 +792,6 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
         memset( &context, 0, sizeof(context) );
         context.SegDs = ds;
         context.SegEs = ds;   /* who knows ... */
-        context.SegFs = wine_get_fs();
-        context.SegGs = wine_get_gs();
         context.SegCs = HIWORD(entryPoint);
         context.Eip   = LOWORD(entryPoint);
         context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);

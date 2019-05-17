@@ -492,10 +492,6 @@ static void BuildCallTo16Core( int reg_func )
         output( "\tpushw 0x98(%%edx)\n");  /* SegDs */
         output( "\tpushl 0x94(%%edx)\n");  /* SegEs */
         output( "\tpopl %%es\n" );
-        output( "\tpushl 0x90(%%edx)\n");  /* SegFs */
-        output( "\tpopl %%fs\n" );
-        output( "\tpushl 0x8c(%%edx)\n");  /* SegGs */
-        output( "\tpopl %%gs\n" );
         output( "\tmovl 0xb4(%%edx),%%ebp\n");  /* Ebp */
         output( "\tmovl 0xa0(%%edx),%%esi\n");  /* Esi */
         output( "\tmovl 0x9c(%%edx),%%edi\n");  /* Edi */

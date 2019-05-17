@@ -431,8 +431,6 @@ void WINAPI __regs_QT_Thunk( CONTEXT *context )
 
     context16 = *context;
 
-    context16.SegFs = wine_get_fs();
-    context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(context->Edx);
     context16.Eip   = LOWORD(context->Edx);
     /* point EBP to the STACK16FRAME on the stack
@@ -561,8 +559,6 @@ void WINAPI __regs_FT_Thunk( CONTEXT *context )
 
     context16 = *context;
 
-    context16.SegFs = wine_get_fs();
-    context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(callTarget);
     context16.Eip   = LOWORD(callTarget);
     context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
@@ -720,8 +716,6 @@ void WINAPI __regs_Common32ThkLS( CONTEXT *context )
 
     context16 = *context;
 
-    context16.SegFs = wine_get_fs();
-    context16.SegGs = wine_get_gs();
     context16.Edi   = LOWORD(context->Ecx);
     context16.SegCs = HIWORD(context->Eax);
     context16.Eip   = LOWORD(context->Eax);
@@ -779,8 +773,6 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT *context )
 
     context16 = *context;
 
-    context16.SegFs = wine_get_fs();
-    context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(context->Edx);
     context16.Eip   = LOWORD(context->Edx);
     context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);

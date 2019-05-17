@@ -222,8 +222,6 @@ static LRESULT call_hook16( WNDPROC16 hook, HWND hwnd, UINT msg, WPARAM wp, LPAR
 
     memset( &context, 0, sizeof(context) );
     context.SegDs = context.SegEs = SELECTOROF( NtCurrentTeb()->WOW32Reserved );
-    context.SegFs = wine_get_fs();
-    context.SegGs = wine_get_gs();
     context.SegCs = SELECTOROF( hook );
     context.Eip   = OFFSETOF( hook );
     context.Ebp   = OFFSETOF( NtCurrentTeb()->WOW32Reserved ) + FIELD_OFFSET( STACK16FRAME, bp );
