@@ -227,6 +227,36 @@ static void test_GetDeviceInfo(IDirectInputA *pDI)
     if (pMouse) IUnknown_Release(pMouse);
 }
 
+static BOOL CALLBACK EnumAxes(const DIDEVICEOBJECTINSTANCEA *pdidoi, void *pContext)
+{
+    if (IsEqualIID(&pdidoi->guidType, &GUID_XAxis) ||
+        IsEqualIID(&pdidoi->guidType, &GUID_YAxis) ||
+        IsEqualIID(&pdidoi->guidType, &GUID_ZAxis))
+    {
+        ok(pdidoi->dwFlags & DIDOI_ASPECTPOSITION, "Missing DIDOI_ASPECTPOSITION, flags are 0x%x\n",
+            pdidoi->dwFlags);
+    }
+    else
+        ok(pdidoi->dwFlags == 0, "Flags are 0x%x\n", pdidoi->dwFlags);
+
+    return DIENUM_CONTINUE;
+}
+
+static void test_mouse_EnumObjects(IDirectInputA *pDI)
+{
+    HRESULT hr;
+    IDirectInputDeviceA *pMouse = NULL;
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pMouse, NULL);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IDirectInputDevice_EnumObjects(pMouse, EnumAxes, NULL, DIDFT_ALL);
+    ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %08x\n", hr);
+
+    if (pMouse) IUnknown_Release(pMouse);
+}
+
 static void mouse_tests(void)
 {
     HRESULT hr;
@@ -254,6 +284,7 @@ static void mouse_tests(void)
         test_set_coop(pDI, hwnd);
         test_acquire(pDI, hwnd);
         test_GetDeviceInfo(pDI);
+        test_mouse_EnumObjects(pDI);
 
         DestroyWindow(hwnd);
     }

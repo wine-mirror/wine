@@ -730,6 +730,9 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
     else if (pdidoi->dwType & DIDFT_BUTTON)
         wsprintfW(pdidoi->tszName, buttonW, DIDFT_GETINSTANCE(pdidoi->dwType) - 3);
 
+    if(pdidoi->dwType & DIDFT_AXIS)
+        pdidoi->dwFlags |= DIDOI_ASPECTPOSITION;
+
     _dump_OBJECTINSTANCEW(pdidoi);
     return res;
 }
