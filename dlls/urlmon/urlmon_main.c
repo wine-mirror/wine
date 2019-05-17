@@ -838,3 +838,15 @@ BOOL WINAPI ShouldShowIntranetWarningSecband(DWORD unk)
     FIXME("%x: stub\n", unk);
     return FALSE;
 }
+
+/***********************************************************************
+ *           GetIUriPriv (urlmon.@)
+ *
+ * Not documented.
+ */
+HRESULT WINAPI GetIUriPriv(IUri *uri, void **p)
+{
+    FIXME("(%p,%p): stub\n", uri, p);
+    *p = NULL;
+    return E_NOTIMPL;
+}

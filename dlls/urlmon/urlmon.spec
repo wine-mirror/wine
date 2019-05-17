@@ -53,6 +53,7 @@
 @ stdcall GetClassFileOrMime(ptr wstr ptr long wstr long ptr)
 @ stub GetClassURL
 @ stub GetComponentIDFromCLSSPEC
+@ stdcall GetIUriPriv(ptr ptr)
 @ stub GetMarkOfTheWeb
 @ stdcall GetSoftwareUpdateInfo(wstr ptr)
 @ stub HlinkGoBack
