@@ -55,7 +55,15 @@ static const WCHAR NoDisplayClass[]  = {'N','o','D','i','s','p','l','a','y','C',
 static const WCHAR NoInstallClass[]  = {'N','o','I','n','s','t','a','l','l','C','l','a','s','s',0};
 static const WCHAR NoUseClass[]  = {'N','o','U','s','e','C','l','a','s','s',0};
 static const WCHAR NtExtension[]  = {'.','N','T',0};
+#ifdef __i386__
 static const WCHAR NtPlatformExtension[]  = {'.','N','T','x','8','6',0};
+#elif defined(__x86_64__)
+static const WCHAR NtPlatformExtension[]  = {'.','N','T','a','m','d','6','4',0};
+#elif defined(__arm__)
+static const WCHAR NtPlatformExtension[]  = {'.','N','T','a','r','m',0};
+#elif defined(__aarch64__)
+static const WCHAR NtPlatformExtension[]  = {'.','N','T','a','r','m','6','4',0};
+#endif
 static const WCHAR Signature[]  = {'S','i','g','n','a','t','u','r','e',0};
 static const WCHAR Version[]  = {'V','e','r','s','i','o','n',0};
 static const WCHAR WinExtension[]  = {'.','W','i','n',0};
