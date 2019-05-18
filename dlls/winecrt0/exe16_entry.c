@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if defined(__i386__) && !defined(_WIN32)
+#ifdef __i386__
 
 #include <stdarg.h>
 #include "windef.h"

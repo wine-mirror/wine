@@ -429,7 +429,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
 
     case PLATFORM_WINDOWS:
     case PLATFORM_CYGWIN:
-        if (opts->shared)
+        if (opts->shared || opts->win16_app)
         {
             strarray_add( flags, "-shared" );
             strarray_add( flags, "-Wl,--kill-at" );
@@ -998,9 +998,6 @@ static void build(struct options* opts)
 	else if (file[1] == 'x')
 	    lang = file;
     }
-
-    if (opts->win16_app && is_pe)
-        error( "Building 16-bit code is not supported for Windows\n" );
 
     /* add the default libraries, if needed */
 

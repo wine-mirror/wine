@@ -3221,9 +3221,11 @@ static void output_module( struct makefile *make )
         {
             strarray_add( &make->clean_files, strmake( "lib%s.def", make->importlib ));
             output( "%s.def: %s %s\n", importlib_path, tools_path( make, "winebuild" ), spec_file );
-            output( "\t%s -w --def -o $@ --export %s", tools_path( make, "winebuild" ), spec_file );
+            output( "\t%s -w --def -o $@", tools_path( make, "winebuild" ) );
             output_filenames( target_flags );
             if (make->is_win16) output_filename( "-m16" );
+            output_filename( "--export" );
+            output_filename( spec_file );
             output( "\n" );
             add_install_rule( make, make->importlib,
                               strmake( "lib%s.def", make->importlib ),
@@ -3240,8 +3242,11 @@ static void output_module( struct makefile *make )
             output( "%s.a: %s %s", importlib_path, tools_path( make, "winebuild" ), spec_file );
             output_filenames_obj_dir( make, make->implib_objs );
             output( "\n" );
-            output( "\t%s -w --implib -o $@ --export %s", tools_path( make, "winebuild" ), spec_file );
+            output( "\t%s -w --implib -o $@", tools_path( make, "winebuild" ) );
             output_filenames( target_flags );
+            if (make->is_win16) output_filename( "-m16" );
+            output_filename( "--export" );
+            output_filename( spec_file );
             output_filenames_obj_dir( make, make->implib_objs );
             output( "\n" );
             add_install_rule( make, make->importlib,
@@ -3264,8 +3269,10 @@ static void output_module( struct makefile *make )
             output( ": %s %s", tools_path( make, "winebuild" ), spec_file );
             output_filenames_obj_dir( make, cross_files );
             output( "\n" );
-            output( "\t%s -b %s -w --implib -o $@ --export %s",
-                    tools_path( make, "winebuild" ), crosstarget, spec_file );
+            output( "\t%s -b %s -w --implib -o $@", tools_path( make, "winebuild" ), crosstarget );
+            if (make->is_win16) output_filename( "-m16" );
+            output_filename( "--export" );
+            output_filename( spec_file );
             output_filenames_obj_dir( make, cross_files );
             output( "\n" );
         }
@@ -3586,6 +3593,7 @@ static void output_subdirs( struct makefile *make )
                     output_filename( tools_path( make, "winebuild" ));
                     output( "\n" );
                     output( "\t%s -b %s -w -o $@", tools_path( make, "winebuild" ), crosstarget );
+                    if (submake->is_win16) output_filename( "-m16" );
                     output_filename( "--implib" );
                     output_filename( "--export" );
                     output_filename( spec_file );
@@ -4175,14 +4183,14 @@ static void load_sources( struct makefile *make )
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
     LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );
 
-    if (crosstarget && !make->is_win16 && !strarray_exists( &make->imports, "kernel" ))
-        make->is_cross = (make->testdll || make->use_msvcrt || !has_object_file( make ));
+    if (crosstarget) make->is_cross = (make->testdll || make->use_msvcrt || !has_object_file( make ));
 
     if (make->is_cross)
     {
         for (i = 0; i < make->imports.count; i++)
             strarray_add_uniq( &cross_import_libs, make->imports.str[i] );
         if (make->use_msvcrt) strarray_add_uniq( &cross_import_libs, "msvcrt" );
+        if (make->is_win16) strarray_add_uniq( &cross_import_libs, "kernel" );
         strarray_add_uniq( &cross_import_libs, "winecrt0" );
         strarray_add_uniq( &cross_import_libs, "kernel32" );
         strarray_add_uniq( &cross_import_libs, "ntdll" );
