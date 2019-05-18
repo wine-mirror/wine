@@ -137,7 +137,8 @@ static void destroy_joysticks(struct JoystickData *data)
         if (data->joysticks[i].forcefeedback && data->joysticks[i].num_effects > 0)
         {
             for (j = 0; j < data->joysticks[i].num_effects; j++)
-                IDirectInputEffect_Release(data->joysticks[i].effects[j].effect);
+                if (data->joysticks[i].effects[j].effect)
+                    IDirectInputEffect_Release(data->joysticks[i].effects[j].effect);
 
             HeapFree(GetProcessHeap(), 0, data->joysticks[i].effects);
         }
