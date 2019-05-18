@@ -1250,13 +1250,13 @@ void output_stubs( DLLSPEC *spec )
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_x86_64:
-            output( "\tsubq $8,%%rsp\n" );
+            output( "\tsubq $0x28,%%rsp\n" );
             output_cfi( ".cfi_adjust_cfa_offset 8" );
-            output( "\tleaq .L__wine_spec_file_name(%%rip),%%rdi\n" );
+            output( "\tleaq .L__wine_spec_file_name(%%rip),%%rcx\n" );
             if (exp_name)
-                output( "leaq .L%s_string(%%rip),%%rsi\n", name );
+                output( "leaq .L%s_string(%%rip),%%rdx\n", name );
             else
-                output( "\tmovq $%d,%%rsi\n", odp->ordinal );
+                output( "\tmovq $%d,%%rdx\n", odp->ordinal );
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_ARM:
