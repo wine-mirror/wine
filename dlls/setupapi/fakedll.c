@@ -190,6 +190,50 @@ failed:
     return FALSE;
 }
 
+static int is_valid_ptr( const void *data, SIZE_T size, const void *ptr, SIZE_T ptr_size )
+{
+    if (ptr < data) return 0;
+    if ((char *)ptr - (char *)data >= size) return 0;
+    return (size - ((char *)ptr - (char *)data) >= ptr_size);
+}
+
+/* extract the 16-bit NE dll from a PE builtin */
+static void extract_16bit_image( IMAGE_NT_HEADERS *nt, void **data, SIZE_T *size )
+{
+    DWORD exp_size, *size_ptr;
+    IMAGE_DOS_HEADER *dos;
+    IMAGE_EXPORT_DIRECTORY *exports;
+    IMAGE_SECTION_HEADER *section = NULL;
+    WORD *ordinals;
+    DWORD *names, *functions;
+    int i;
+
+    exports = RtlImageDirectoryEntryToData( *data, FALSE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
+    if (!is_valid_ptr( *data, *size, exports, exp_size )) return;
+    ordinals = RtlImageRvaToVa( nt, *data, exports->AddressOfNameOrdinals, &section );
+    names = RtlImageRvaToVa( nt, *data, exports->AddressOfNames, &section );
+    functions = RtlImageRvaToVa( nt, *data, exports->AddressOfFunctions, &section );
+    if (!is_valid_ptr( *data, *size, ordinals, exports->NumberOfNames * sizeof(*ordinals) )) return;
+    if (!is_valid_ptr( *data, *size, names, exports->NumberOfNames * sizeof(*names) )) return;
+
+    for (i = 0; i < exports->NumberOfNames; i++)
+    {
+        char *ename = RtlImageRvaToVa( nt, *data, names[i], &section );
+        if (strcmp( ename, "__wine_spec_dos_header" )) continue;
+        if (ordinals[i] >= exports->NumberOfFunctions) return;
+        if (!is_valid_ptr( *data, *size, functions, sizeof(*functions) )) return;
+        if (!functions[ordinals[i]]) return;
+        dos = RtlImageRvaToVa( nt, *data, functions[ordinals[i]], NULL );
+        if (!is_valid_ptr( *data, *size, dos, sizeof(*dos) )) return;
+        if (dos->e_magic != IMAGE_DOS_SIGNATURE) return;
+        size_ptr = (DWORD *)dos->e_res2;
+        *size = min( *size_ptr, *size - ((const char *)dos - (const char *)*data) );
+        *size_ptr = 0;
+        *data = dos;
+        break;
+    }
+}
+
 /* read in the contents of a file into the global file buffer */
 /* return 1 on success, 0 on nonexistent file, -1 on other error */
 static int read_file( const char *name, void **data, SIZE_T *size, BOOL expect_builtin )
@@ -238,6 +282,8 @@ static int read_file( const char *name, void **data, SIZE_T *size, BOOL expect_b
                st.st_size - header_size, header_size ) == st.st_size - header_size)
     {
         *data = file_buffer;
+        if (strlen(name) > 2 && !strcmp( name + strlen(name) - 2, "16" ))
+            extract_16bit_image( nt, data, size );
         ret = 1;
     }
 done:
