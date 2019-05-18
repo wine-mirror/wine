@@ -678,6 +678,8 @@ static DWORD WINAPI ff_input_thread(void *param)
         DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
         RECT r;
 
+        Sleep(TEST_POLL_TIME);
+
         /* Skip this if we have no effects */
         if (joy->num_effects == 0 || chosen_effect < 0) continue;
 
@@ -702,8 +704,6 @@ static DWORD WINAPI ff_input_thread(void *param)
                 IDirectInputEffect_Start(joy->effects[chosen_effect].effect, 1, 0);
                 break;
             }
-
-        Sleep(TEST_POLL_TIME);
     }
 
     return 0;
