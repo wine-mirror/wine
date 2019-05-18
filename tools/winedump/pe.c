@@ -98,7 +98,7 @@ static const IMAGE_NT_HEADERS32 *get_nt_header( void )
     return PRD(dos->e_lfanew, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
 }
 
-static void print_fake_dll( void )
+void print_fake_dll( void )
 {
     static const char builtin_signature[] = "Wine builtin DLL";
     static const char fakedll_signature[] = "Wine placeholder DLL";

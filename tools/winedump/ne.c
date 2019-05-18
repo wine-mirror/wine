@@ -427,6 +427,7 @@ void ne_dump( void )
     dos = PRD(0, sizeof(*dos));
     if (!dos) return;
     ne = PRD(dos->e_lfanew, sizeof(*ne));
+    print_fake_dll();
 
     if (globals.do_dumpheader || !globals.dumpsect)
         dump_ne_header( ne );
