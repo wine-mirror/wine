@@ -1660,6 +1660,13 @@ TOOLTIPS_SetToolInfoT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     toolPtr->rect   = ti->rect;
     toolPtr->hinst  = ti->hinst;
 
+    if ( (toolPtr->lpszText) &&
+         !IS_INTRESOURCE(toolPtr->lpszText) ) {
+        if( toolPtr->lpszText != LPSTR_TEXTCALLBACKW)
+            Free (toolPtr->lpszText);
+        toolPtr->lpszText = NULL;
+    }
+
     if (IS_INTRESOURCE(ti->lpszText)) {
 	TRACE("set string id %x\n", LOWORD(ti->lpszText));
 	toolPtr->lpszText = ti->lpszText;
@@ -1668,12 +1675,6 @@ TOOLTIPS_SetToolInfoT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 	if (ti->lpszText == LPSTR_TEXTCALLBACKW)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
-	    if ( (toolPtr->lpszText) &&
-		 !IS_INTRESOURCE(toolPtr->lpszText) ) {
-		if( toolPtr->lpszText != LPSTR_TEXTCALLBACKW)
-                    Free (toolPtr->lpszText);
-		toolPtr->lpszText = NULL;
-	    }
 	    if (ti->lpszText) {
 		if (isW) {
 		    INT len = lstrlenW (ti->lpszText);
