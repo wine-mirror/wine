@@ -2319,15 +2319,6 @@ static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek,
     LIST_FOR_EACH_ENTRY(filter, &This->filters, struct filter, entry)
     {
         IMediaSeeking *seek = NULL;
-        IAMFilterMiscFlags *flags = NULL;
-        ULONG filterflags;
-        IBaseFilter_QueryInterface(filter->filter, &IID_IAMFilterMiscFlags, (void **)&flags);
-        if (!flags)
-            continue;
-        filterflags = IAMFilterMiscFlags_GetMiscFlags(flags);
-        IAMFilterMiscFlags_Release(flags);
-        if (filterflags != AM_FILTER_MISC_FLAGS_IS_RENDERER)
-            continue;
 
         IBaseFilter_QueryInterface(filter->filter, &IID_IMediaSeeking, (void **)&seek);
         if (!seek)

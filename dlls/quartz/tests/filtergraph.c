@@ -3448,23 +3448,23 @@ static void test_graph_seeking(void)
     filter1.seek_caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetCurrentPos;
     filter2.seek_caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetDuration;
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
 
     caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetCurrentPos;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-    todo_wine ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
 
     caps = AM_SEEKING_CanDoSegments;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
 
     caps = AM_SEEKING_CanGetCurrentPos;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
-    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
-    todo_wine ok(!caps, "Got caps %#x.\n", caps);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(!caps, "Got caps %#x.\n", caps);
 
     hr = IMediaSeeking_IsFormatSupported(seeking, &testguid);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -3526,25 +3526,25 @@ static void test_graph_seeking(void)
     filter1.seek_duration = 0x12345;
     filter2.seek_duration = 0x23456;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter2.seek_duration = 0x12345;
     filter1.seek_duration = 0x23456;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_stop = 0x54321;
     filter2.seek_stop = 0x65432;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter2.seek_stop = 0x54321;
     filter1.seek_stop = 0x65432;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
@@ -3553,7 +3553,7 @@ static void test_graph_seeking(void)
 
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
     todo_wine ok(stop == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
@@ -3561,13 +3561,13 @@ static void test_graph_seeking(void)
     stop = 0x321;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(current));
+    todo_wine ok(stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(stop));
     todo_wine ok(filter1.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_current));
     todo_wine ok(filter1.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_stop));
-    todo_wine ok(filter2.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_current));
-    todo_wine ok(filter2.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_stop));
+    ok(filter2.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_current));
+    ok(filter2.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_stop));
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -3583,25 +3583,25 @@ static void test_graph_seeking(void)
     stop = 0x321;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime,
             &stop, AM_SEEKING_AbsolutePositioning);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(current == 0x1234, "Got time %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(stop));
-    todo_wine ok(filter1.seek_current == 0x1234, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_current));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(current == 0x1234, "Got time %s.\n", wine_dbgstr_longlong(current));
+    todo_wine ok(stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(filter1.seek_current == 0x1234, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_current));
     todo_wine ok(filter1.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_stop));
-    todo_wine ok(filter2.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_current));
-    todo_wine ok(filter2.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_stop));
+    ok(filter2.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_current));
+    ok(filter2.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_stop));
 
     current = 0x123;
     stop = 0x321;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(current));
-    todo_wine ok(stop == 0x4321, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(current));
+    ok(stop == 0x4321, "Got time %s.\n", wine_dbgstr_longlong(stop));
     todo_wine ok(filter1.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_current));
-    todo_wine ok(filter1.seek_stop == 0x4321, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_stop));
-    todo_wine ok(filter2.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_current));
-    todo_wine ok(filter2.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_stop));
+    ok(filter1.seek_stop == 0x4321, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_stop));
+    ok(filter2.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_current));
+    ok(filter2.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_stop));
 
     hr = IMediaSeeking_SetRate(seeking, 2.0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
