@@ -97,7 +97,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IKsPropertySet, FALSE);
-    todo_wine check_interface(filter, &IID_IMediaPosition, FALSE);
+    check_interface(filter, &IID_IMediaPosition, FALSE);
     check_interface(filter, &IID_IMediaSeeking, FALSE);
     check_interface(filter, &IID_IPersistPropertyBag, FALSE);
     check_interface(filter, &IID_IPin, FALSE);

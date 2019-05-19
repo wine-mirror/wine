@@ -172,10 +172,6 @@ static HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, RE
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
-    else if (IsEqualIID(riid, &IID_IMediaPosition))
-    {
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
-    }
     hr = BaseFilterImpl_QueryInterface(iface, riid, ppv);
 
     if (FAILED(hr) && !IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow) &&
