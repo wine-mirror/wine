@@ -101,7 +101,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IMediaSeeking, FALSE);
     check_interface(filter, &IID_IPersistPropertyBag, FALSE);
     check_interface(filter, &IID_IPin, FALSE);
-    todo_wine check_interface(filter, &IID_IQualityControl, FALSE);
+    check_interface(filter, &IID_IQualityControl, FALSE);
     check_interface(filter, &IID_IQualProp, FALSE);
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);

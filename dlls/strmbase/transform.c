@@ -161,26 +161,6 @@ static const BaseOutputPinFuncTable tf_output_BaseOutputFuncTable = {
     BaseOutputPinImpl_DecideAllocator,
 };
 
-static HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    HRESULT hr;
-    TransformFilter *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
-
-    if (IsEqualIID(riid, &IID_IQualityControl))  {
-        *ppv = (IQualityControl*)This->qcimpl;
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-    hr = BaseFilterImpl_QueryInterface(iface, riid, ppv);
-
-    if (FAILED(hr) && !IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow) &&
-        !IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return hr;
-}
-
 static ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
 {
     TransformFilter *This = impl_from_IBaseFilter(iface);
@@ -293,7 +273,7 @@ static HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME
 
 static const IBaseFilterVtbl transform_vtbl =
 {
-    TransformFilterImpl_QueryInterface,
+    BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     TransformFilterImpl_Release,
     BaseFilterImpl_GetClassID,
