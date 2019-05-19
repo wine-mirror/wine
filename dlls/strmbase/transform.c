@@ -172,8 +172,7 @@ static HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, RE
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
-    else if (IsEqualIID(riid, &IID_IMediaSeeking) ||
-             IsEqualIID(riid, &IID_IMediaPosition))
+    else if (IsEqualIID(riid, &IID_IMediaPosition))
     {
         return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
     }
@@ -558,9 +557,29 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     TransformFilter_InputPin_NewSegment
 };
 
+static HRESULT WINAPI transform_source_QueryInterface(IPin *iface, REFIID iid, void **out)
+{
+    TransformFilter *filter = impl_from_IBaseFilter(impl_BaseOutputPin_from_IPin(iface)->pin.pinInfo.pFilter);
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IPin))
+        *out = iface;
+    else if (IsEqualGUID(iid, &IID_IQualityControl))
+        *out = &filter->qcimpl->IQualityControl_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        return IUnknown_QueryInterface(filter->seekthru_unk, iid, out);
+    else
+    {
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static const IPinVtbl TransformFilter_OutputPin_Vtbl =
 {
-    BaseOutputPinImpl_QueryInterface,
+    transform_source_QueryInterface,
     BasePinImpl_AddRef,
     BaseOutputPinImpl_Release,
     BaseOutputPinImpl_Connect,

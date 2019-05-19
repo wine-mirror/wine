@@ -74,7 +74,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IKsPropertySet, FALSE);
     todo_wine check_interface(filter, &IID_IMediaPosition, FALSE);
-    todo_wine check_interface(filter, &IID_IMediaSeeking, FALSE);
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
     check_interface(filter, &IID_IPin, FALSE);
     todo_wine check_interface(filter, &IID_IQualityControl, FALSE);
     check_interface(filter, &IID_IQualProp, FALSE);
@@ -89,7 +89,7 @@ static void test_interfaces(void)
     check_interface(pin, &IID_IUnknown, TRUE);
 
     check_interface(pin, &IID_IMediaPosition, FALSE);
-    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
 
     IPin_Release(pin);
 
