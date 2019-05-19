@@ -23,6 +23,8 @@
 #include "vfw.h"
 #include "wine/test.h"
 
+static const GUID testguid = {0xfacade};
+
 static IBaseFilter *create_avi_mux(void)
 {
     IBaseFilter *filter = NULL;
@@ -76,11 +78,146 @@ static void test_interfaces(void)
     IBaseFilter_Release(filter);
 }
 
+static void test_seeking(void)
+{
+    IBaseFilter *filter = create_avi_mux();
+    LONGLONG time, current, stop;
+    IMediaSeeking *seeking;
+    unsigned int i;
+    GUID format;
+    HRESULT hr;
+    DWORD caps;
+    ULONG ref;
+
+    static const struct
+    {
+        const GUID *guid;
+        HRESULT hr;
+    }
+    format_tests[] =
+    {
+        {&TIME_FORMAT_MEDIA_TIME, S_OK},
+        {&TIME_FORMAT_BYTE, S_OK},
+
+        {&TIME_FORMAT_NONE, S_FALSE},
+        {&TIME_FORMAT_FRAME, S_FALSE},
+        {&TIME_FORMAT_SAMPLE, S_FALSE},
+        {&TIME_FORMAT_FIELD, S_FALSE},
+        {&testguid, S_FALSE},
+    };
+
+    IBaseFilter_QueryInterface(filter, &IID_IMediaSeeking, (void **)&seeking);
+
+    hr = IMediaSeeking_GetCapabilities(seeking, &caps);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(caps == (AM_SEEKING_CanGetCurrentPos | AM_SEEKING_CanGetDuration), "Got caps %#x.\n", caps);
+
+    caps = AM_SEEKING_CanGetCurrentPos;
+    hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanGetCurrentPos, "Got caps %#x.\n", caps);
+
+    caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetCurrentPos;
+    hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(caps == AM_SEEKING_CanGetCurrentPos, "Got caps %#x.\n", caps);
+
+    caps = AM_SEEKING_CanDoSegments;
+    hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!caps, "Got caps %#x.\n", caps);
+
+    for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
+    {
+        hr = IMediaSeeking_IsFormatSupported(seeking, format_tests[i].guid);
+        todo_wine ok(hr == format_tests[i].hr, "Got hr %#x for format %s.\n", hr, wine_dbgstr_guid(format_tests[i].guid));
+    }
+
+    hr = IMediaSeeking_QueryPreferredFormat(seeking, &format);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
+
+    hr = IMediaSeeking_GetTimeFormat(seeking, &format);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
+
+    hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_BYTE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_SAMPLE);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_BYTE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_QueryPreferredFormat(seeking, &format);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
+
+    hr = IMediaSeeking_GetTimeFormat(seeking, &format);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(IsEqualGUID(&format, &TIME_FORMAT_BYTE), "Got format %s.\n", wine_dbgstr_guid(&format));
+
+    hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_BYTE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_BYTE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, NULL, 0x123456789a, NULL);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, &TIME_FORMAT_BYTE);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    current = 0x123;
+    stop = 0x321;
+    hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
+            &stop, AM_SEEKING_AbsolutePositioning);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_NoPositioning,
+            &stop, AM_SEEKING_NoPositioning);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_GetPositions(seeking, NULL, NULL);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    hr = IMediaSeeking_GetPositions(seeking, NULL, &stop);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    hr = IMediaSeeking_GetPositions(seeking, &current, NULL);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_GetDuration(seeking, &time);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!time, "Got duration %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!time, "Got duration %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaSeeking_GetStopPosition(seeking, &time);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IMediaSeeking_Release(seeking);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+}
+
 START_TEST(avimux)
 {
     CoInitialize(NULL);
 
     test_interfaces();
+    test_seeking();
 
     CoUninitialize();
 }
