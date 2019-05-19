@@ -1131,46 +1131,6 @@ static void init_test_filter(test_filter *This, PIN_DIRECTION dir, filter_type t
     This->filter_type = type;
 }
 
-static void test_AviMux_QueryInterface(void)
-{
-    IUnknown *avimux, *unk;
-    HRESULT hr;
-
-    hr = CoCreateInstance(&CLSID_AviDest, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&avimux);
-    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG),
-            "couldn't create AVI Mux filter, hr = %08x\n", hr);
-    if(hr != S_OK) {
-        win_skip("AVI Mux filter is not registered\n");
-        return;
-    }
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IBaseFilter, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IBaseFilter) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IConfigAviMux, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IConfigAviMux) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IConfigInterleaving, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IConfigInterleaving) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IMediaSeeking, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IMediaSeeking) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IPersistMediaPropertyBag, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IPersistMediaPropertyBag) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_ISpecifyPropertyPages, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_ISpecifyPropertyPages) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    IUnknown_Release(avimux);
-}
-
 static HRESULT WINAPI MemAllocator_QueryInterface(IMemAllocator *iface, REFIID riid, void **ppvObject)
 {
     if(IsEqualIID(riid, &IID_IUnknown)) {
@@ -1867,7 +1827,6 @@ START_TEST(qcap)
 
         arg_c = winetest_get_mainargs(&arg_v);
 
-        test_AviMux_QueryInterface();
         test_AviMux(arg_c>2 ? arg_v[2] : NULL);
         test_COM_vfwcapture();
 
