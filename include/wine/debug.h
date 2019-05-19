@@ -220,7 +220,7 @@ static inline int __wine_dbg_cdecl wine_dbg_log( enum __wine_debug_class cls,
 
 static inline const char *wine_dbgstr_an( const char *str, int n )
 {
-    static const char hex[16] = "0123456789abcdef";
+    static const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
     char buffer[300], *dst = buffer;
 
     if (!str) return "(null)";
@@ -262,7 +262,7 @@ static inline const char *wine_dbgstr_an( const char *str, int n )
 
 static inline const char *wine_dbgstr_wn( const WCHAR *str, int n )
 {
-    static const char hex[16] = "0123456789abcdef";
+    static const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
     char buffer[300], *dst = buffer;
 
     if (!str) return "(null)";
