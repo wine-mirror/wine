@@ -2147,6 +2147,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
     wm->ino = st->st_ino;
     if (image_info->loader_flags) wm->ldr.Flags |= LDR_COR_IMAGE;
     if (image_info->image_flags & IMAGE_FLAGS_ComPlusILOnly) wm->ldr.Flags |= LDR_COR_ILONLY;
+    if (image_info->image_flags & IMAGE_FLAGS_WineBuiltin) wm->ldr.Flags |= LDR_WINE_INTERNAL;
 
     set_security_cookie( module, image_info->map_size );
 
@@ -3347,7 +3348,8 @@ static void free_modref( WINE_MODREF *wm )
 
     free_tls_slot( &wm->ldr );
     RtlReleaseActivationContext( wm->ldr.ActivationContext );
-    if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
+    if ((wm->ldr.Flags & LDR_WINE_INTERNAL) && wm->ldr.SectionHandle)
+        wine_dll_unload( wm->ldr.SectionHandle );
     NtUnmapViewOfSection( NtCurrentProcess(), wm->ldr.BaseAddress );
     if (cached_modref == wm) cached_modref = NULL;
     RtlFreeUnicodeString( &wm->ldr.FullDllName );
