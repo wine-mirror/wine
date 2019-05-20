@@ -1171,6 +1171,8 @@ struct testfilter
     BOOL support_testguid;
     LONGLONG seek_duration, seek_current, seek_stop;
     double seek_rate;
+
+    IReferenceClock IReferenceClock_iface;
 };
 
 static inline struct testfilter *impl_from_IEnumPins(IEnumPins *iface)
@@ -1275,6 +1277,12 @@ static HRESULT WINAPI testfilter_QueryInterface(IBaseFilter *iface, REFIID iid, 
     else if (IsEqualGUID(iid, &IID_IMediaSeeking) && filter->IMediaSeeking_iface.lpVtbl)
     {
         *out = &filter->IMediaSeeking_iface;
+        IMediaSeeking_AddRef(*out);
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IReferenceClock) && filter->IReferenceClock_iface.lpVtbl)
+    {
+        *out = &filter->IReferenceClock_iface;
         IMediaSeeking_AddRef(*out);
         return S_OK;
     }
@@ -1670,6 +1678,66 @@ static const IMediaSeekingVtbl testseek_vtbl =
     testseek_SetRate,
     testseek_GetRate,
     testseek_GetPreroll,
+};
+
+static struct testfilter *impl_from_IReferenceClock(IReferenceClock *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IReferenceClock_iface);
+}
+
+static HRESULT WINAPI testclock_QueryInterface(IReferenceClock *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_IReferenceClock(iface);
+    return IBaseFilter_QueryInterface(&filter->IBaseFilter_iface, iid, out);
+}
+
+static ULONG WINAPI testclock_AddRef(IReferenceClock *iface)
+{
+    struct testfilter *filter = impl_from_IReferenceClock(iface);
+    return InterlockedIncrement(&filter->ref);
+}
+
+static ULONG WINAPI testclock_Release(IReferenceClock *iface)
+{
+    struct testfilter *filter = impl_from_IReferenceClock(iface);
+    return InterlockedDecrement(&filter->ref);
+}
+
+static HRESULT WINAPI testclock_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testclock_AdviseTime(IReferenceClock *iface,
+        REFERENCE_TIME base, REFERENCE_TIME offset, HEVENT event, DWORD_PTR *cookie)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testclock_AdvisePeriodic(IReferenceClock *iface,
+        REFERENCE_TIME start, REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testclock_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IReferenceClockVtbl testclock_vtbl =
+{
+    testclock_QueryInterface,
+    testclock_AddRef,
+    testclock_Release,
+    testclock_GetTime,
+    testclock_AdviseTime,
+    testclock_AdvisePeriodic,
+    testclock_Unadvise,
 };
 
 struct testfilter_cf
@@ -3629,6 +3697,80 @@ static void test_graph_seeking(void)
     ok(filter2.ref == 1, "Got outstanding refcount %d.\n", filter2.ref);
 }
 
+static void test_default_sync_source(void)
+{
+    struct testpin source_pin, sink1_pin, sink2_pin;
+    struct testfilter source, sink1, sink2;
+
+    IFilterGraph2 *graph = create_graph();
+    IReferenceClock *clock;
+    IMediaFilter *filter;
+    HRESULT hr;
+    ULONG ref;
+
+    testsink_init(&sink1_pin);
+    testsink_init(&sink2_pin);
+    testsource_init(&source_pin, NULL, 0);
+    testfilter_init(&source, &source_pin, 1);
+    testfilter_init(&sink1, &sink1_pin, 1);
+    testfilter_init(&sink2, &sink2_pin, 1);
+
+    IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &sink2.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink1_pin.IPin_iface, NULL);
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
+
+    hr = IFilterGraph2_SetDefaultSyncSource(graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!clock, "Reference clock not set.\n");
+    IReferenceClock_Release(clock);
+
+    source.IReferenceClock_iface.lpVtbl = &testclock_vtbl;
+
+    hr = IFilterGraph2_SetDefaultSyncSource(graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(clock == &source.IReferenceClock_iface, "Got unexpected clock.\n");
+    IReferenceClock_Release(clock);
+
+    /* The documentation says that connected filters are preferred, but this
+     * does not in fact seem to be the case. */
+
+    sink2.IReferenceClock_iface.lpVtbl = &testclock_vtbl;
+
+    hr = IFilterGraph2_SetDefaultSyncSource(graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(clock == &sink2.IReferenceClock_iface, "Got unexpected clock.\n");
+    IReferenceClock_Release(clock);
+
+    sink1.IReferenceClock_iface.lpVtbl = &testclock_vtbl;
+
+    hr = IFilterGraph2_SetDefaultSyncSource(graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(clock == &sink1.IReferenceClock_iface, "Got unexpected clock.\n");
+    IReferenceClock_Release(clock);
+
+    IMediaFilter_Release(filter);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(sink1.ref == 1, "Got outstanding refcount %d.\n", sink1.ref);
+    ok(sink2.ref == 1, "Got outstanding refcount %d.\n", sink2.ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -3649,6 +3791,7 @@ START_TEST(filtergraph)
     test_filter_state();
     test_ec_complete();
     test_graph_seeking();
+    test_default_sync_source();
 
     CoUninitialize();
     test_render_with_multithread();
