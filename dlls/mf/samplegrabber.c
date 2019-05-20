@@ -38,6 +38,7 @@ struct sample_grabber_stream
 struct sample_grabber
 {
     IMFMediaSink IMFMediaSink_iface;
+    IMFClockStateSink IMFClockStateSink_iface;
     LONG refcount;
     IMFSampleGrabberSinkCallback *callback;
     IMFMediaType *media_type;
@@ -63,6 +64,11 @@ static void sample_grabber_free_private(void *user_context)
 static struct sample_grabber *impl_from_IMFMediaSink(IMFMediaSink *iface)
 {
     return CONTAINING_RECORD(iface, struct sample_grabber, IMFMediaSink_iface);
+}
+
+static struct sample_grabber *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_grabber, IMFClockStateSink_iface);
 }
 
 static struct sample_grabber_stream *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -320,6 +326,10 @@ static HRESULT WINAPI sample_grabber_sink_QueryInterface(IMFMediaSink *iface, RE
     {
         *obj = &grabber->IMFMediaSink_iface;
     }
+    else if (IsEqualIID(riid, &IID_IMFClockStateSink))
+    {
+        *obj = &grabber->IMFClockStateSink_iface;
+    }
     else
     {
         WARN("Unsupported %s.\n", debugstr_guid(riid));
@@ -508,6 +518,71 @@ static const IMFMediaSinkVtbl sample_grabber_sink_vtbl =
     sample_grabber_sink_Shutdown,
 };
 
+static HRESULT WINAPI sample_grabber_clock_sink_QueryInterface(IMFClockStateSink *iface, REFIID riid, void **obj)
+{
+    struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
+    return IMFMediaSink_QueryInterface(&grabber->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI sample_grabber_clock_sink_AddRef(IMFClockStateSink *iface)
+{
+    struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
+    return IMFMediaSink_AddRef(&grabber->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI sample_grabber_clock_sink_Release(IMFClockStateSink *iface)
+{
+    struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
+    return IMFMediaSink_Release(&grabber->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI sample_grabber_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME systime, LONGLONG offset)
+{
+    FIXME("%p, %s, %s.\n", iface, wine_dbgstr_longlong(systime), wine_dbgstr_longlong(offset));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
+{
+    FIXME("%p, %s, %f.\n", iface, wine_dbgstr_longlong(systime), rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFClockStateSinkVtbl sample_grabber_clock_sink_vtbl =
+{
+    sample_grabber_clock_sink_QueryInterface,
+    sample_grabber_clock_sink_AddRef,
+    sample_grabber_clock_sink_Release,
+    sample_grabber_clock_sink_OnClockStart,
+    sample_grabber_clock_sink_OnClockStop,
+    sample_grabber_clock_sink_OnClockPause,
+    sample_grabber_clock_sink_OnClockRestart,
+    sample_grabber_clock_sink_OnClockSetRate,
+};
+
 static HRESULT sample_grabber_create_stream(IMFMediaSink *sink, IMFStreamSink **stream)
 {
     struct sample_grabber_stream *object;
@@ -540,6 +615,7 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
         return E_OUTOFMEMORY;
 
     object->IMFMediaSink_iface.lpVtbl = &sample_grabber_sink_vtbl;
+    object->IMFClockStateSink_iface.lpVtbl = &sample_grabber_clock_sink_vtbl;
     object->refcount = 1;
     object->callback = context->callback;
     IMFSampleGrabberSinkCallback_AddRef(object->callback);

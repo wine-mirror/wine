@@ -1709,10 +1709,8 @@ static void test_sample_grabber(void)
     ok(hr == MF_E_STREAMSINKS_FIXED, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&clocksink);
-todo_wine
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IMFClockStateSink_Release(clocksink);
+    IMFClockStateSink_Release(clocksink);
 
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&eg);
 todo_wine
