@@ -5894,7 +5894,7 @@ static void test_material(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
         color = get_surface_color(rt, 320, 240);
         if (test_data[i].material)
-            todo_wine ok(compare_color(color, test_data[i].expected_color, 1)
+            ok(compare_color(color, test_data[i].expected_color, 1)
                     /* The Windows 8 testbot appears to return undefined results. */
                     || broken(TRUE),
                     "Got unexpected color 0x%08x, test %u.\n", color, i);
@@ -6273,7 +6273,7 @@ static void test_lighting(void)
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         color = get_surface_color(rt, 320, 240);
-        todo_wine ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+        ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
     }
 
     IDirect3DExecuteBuffer_Release(execute_buffer);
