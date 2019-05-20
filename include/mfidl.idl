@@ -89,6 +89,14 @@ typedef enum _MF_TOPOLOGY_RESOLUTION_STATUS_FLAGS
     MF_OPTIONAL_NODE_REJECTED_PROTECTED_PROCESS = 0x00000002,
 } MF_TOPOLOGY_RESOLUTION_STATUS_FLAGS;
 
+typedef enum _MFSTREAMSINK_MARKER_TYPE
+{
+    MFSTREAMSINK_MARKER_DEFAULT,
+    MFSTREAMSINK_MARKER_ENDOFSEGMENT,
+    MFSTREAMSINK_MARKER_TICK,
+    MFSTREAMSINK_MARKER_EVENT,
+} MFSTREAMSINK_MARKER_TYPE;
+
 [
     object,
     uuid(2eb1e945-18b8-4139-9b1a-d5d584818530),
@@ -652,6 +660,13 @@ interface IMFPresentationClock : IMFClock
     HRESULT Pause();
 }
 
+cpp_quote("#define MEDIASINK_FIXED_STREAMS                0x00000001")
+cpp_quote("#define MEDIASINK_CANNOT_MATCH_CLOCK           0x00000002")
+cpp_quote("#define MEDIASINK_RATELESS                     0x00000004")
+cpp_quote("#define MEDIASINK_CLOCK_REQUIRED               0x00000008")
+cpp_quote("#define MEDIASINK_CAN_PREROLL                  0x00000010")
+cpp_quote("#define MEDIASINK_REQUIRE_REFERENCE_MEDIATYPE  0x00000020")
+
 [
     object,
     uuid(6ef2a660-47c0-4666-b13d-cbb717f2fa2c)
@@ -670,6 +685,23 @@ interface IMFMediaSink : IUnknown
     HRESULT SetPresentationClock([in] IMFPresentationClock *clock);
     HRESULT GetPresentationClock([out] IMFPresentationClock **clock);
     HRESULT Shutdown();
+}
+
+[
+    object,
+    uuid(0a97b3cf-8e7c-4a3d-8f8c-0c843dc247fb),
+]
+interface IMFStreamSink : IMFMediaEventGenerator
+{
+    HRESULT GetMediaSink([out] IMFMediaSink **sink);
+    HRESULT GetIdentifier([out] DWORD *identifier);
+    HRESULT GetMediaTypeHandler([out] IMFMediaTypeHandler **handler);
+    HRESULT ProcessSample([in] IMFSample *sample);
+    HRESULT PlaceMarker(
+        [in] MFSTREAMSINK_MARKER_TYPE marker_type,
+        [in] const PROPVARIANT *marker_value,
+        [in] const PROPVARIANT *context_value);
+   HRESULT Flush();
 }
 
 typedef enum _MFSHUTDOWN_STATUS
