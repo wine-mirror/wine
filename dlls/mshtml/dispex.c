@@ -295,21 +295,27 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
         assert(info->argc < MAX_ARGS);
         assert(desc->funckind == FUNC_DISPATCH);
 
-        info->arg_types = heap_alloc(sizeof(*info->arg_types) * info->argc);
-        if(!info->arg_types)
-            return;
         info->arg_info = heap_alloc_zero(sizeof(*info->arg_info) * info->argc);
         if(!info->arg_info)
             return;
-
-        for(i=0; i < info->argc; i++)
-            info->arg_types[i] = desc->lprgelemdescParam[i].tdesc.vt;
 
         info->prop_vt = desc->elemdescFunc.tdesc.vt;
         if(info->prop_vt != VT_VOID && info->prop_vt != VT_PTR && !is_arg_type_supported(info->prop_vt)) {
             TRACE("%s: return type %d\n", debugstr_w(info->name), info->prop_vt);
             return; /* Fallback to ITypeInfo::Invoke */
         }
+
+        info->arg_types = heap_alloc(sizeof(*info->arg_types) * (info->argc + (info->prop_vt == VT_VOID ? 0 : 1)));
+        if(!info->arg_types)
+            return;
+
+        for(i=0; i < info->argc; i++)
+            info->arg_types[i] = desc->lprgelemdescParam[i].tdesc.vt;
+
+        if(info->prop_vt == VT_PTR)
+            info->arg_types[info->argc] = VT_BYREF | VT_DISPATCH;
+        else if(info->prop_vt != VT_VOID)
+            info->arg_types[info->argc] = VT_BYREF | info->prop_vt;
 
         if(desc->cParamsOpt) {
             TRACE("%s: optional params\n", debugstr_w(info->name));
