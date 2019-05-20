@@ -6380,6 +6380,14 @@ static void test_specular_lighting(void)
         0.0f, 0.0f, 1.0f,
         M_PI / 12.0f, M_PI / 3.0f
     },
+    parallelpoint =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_PARALLELPOINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.5f}, {0.0f}, {-1.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+    },
     point_side =
     {
         sizeof(D3DLIGHT2),
@@ -6443,6 +6451,18 @@ static void test_specular_lighting(void)
         {320, 360, 0x00020202},
         {480, 360, 0x00000000},
     },
+    expected_parallelpoint[] =
+    {
+        {160, 120, 0x00050505},
+        {320, 120, 0x002c2c2c},
+        {480, 120, 0x006e6e6e},
+        {160, 240, 0x00090909},
+        {320, 240, 0x00717171},
+        {480, 240, 0x00ffffff},
+        {160, 360, 0x00050505},
+        {320, 360, 0x002c2c2c},
+        {480, 360, 0x006e6e6e},
+    },
     expected_point_far[] =
     {
         {160, 120, 0x00000000},
@@ -6479,11 +6499,13 @@ static void test_specular_lighting(void)
         {&directional, 30.0f, expected_directional_local, ARRAY_SIZE(expected_directional_local)},
         {&point, 30.0f, expected_point_local, ARRAY_SIZE(expected_point_local)},
         {&spot, 30.0f, expected_spot_local, ARRAY_SIZE(expected_spot_local)},
+        {&parallelpoint, 30.0f, expected_parallelpoint, ARRAY_SIZE(expected_parallelpoint)},
         {&point_side, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
         {&point_far, 1.0f, expected_point_far, ARRAY_SIZE(expected_point_far)},
         {&directional, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
         {&point, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
         {&spot, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&parallelpoint, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
         {&point_far, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
     };
 
