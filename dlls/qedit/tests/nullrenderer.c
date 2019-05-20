@@ -68,7 +68,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IPersist, TRUE);
     check_interface(filter, &IID_IUnknown, TRUE);
 
-    todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IKsPropertySet, FALSE);
