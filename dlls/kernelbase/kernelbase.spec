@@ -1381,7 +1381,7 @@
 @ stdcall SHRegSetUSValueW( wstr wstr long ptr long long) shlwapi.SHRegSetUSValueW
 @ stdcall SHRegWriteUSValueA(long str long ptr long long) shlwapi.SHRegWriteUSValueA
 @ stdcall SHRegWriteUSValueW(long wstr long ptr long long) shlwapi.SHRegWriteUSValueW
-@ stdcall SHTruncateString(str long) shlwapi.SHTruncateString
+@ stdcall SHTruncateString(str long)
 # @ stub SaveAlternatePackageRootPath
 # @ stub SaveStateRootFolderPath
 @ stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr) kernel32.ScrollConsoleScreenBufferA
@@ -1525,13 +1525,13 @@
 # @ stub StmReduceSize
 # @ stub StmReserve
 # @ stub StmWrite
-@ stdcall StrCSpnA(str str) shlwapi.StrCSpnA
-@ stdcall StrCSpnIA(str str) shlwapi.StrCSpnIA
-@ stdcall StrCSpnIW(wstr wstr) shlwapi.StrCSpnIW
-@ stdcall StrCSpnW(wstr wstr) shlwapi.StrCSpnW
-@ stdcall StrCatBuffA(str str long) shlwapi.StrCatBuffA
-@ stdcall StrCatBuffW(wstr wstr long) shlwapi.StrCatBuffW
-@ stdcall StrCatChainW(ptr long long wstr) shlwapi.StrCatChainW
+@ stdcall StrCSpnA(str str)
+@ stdcall StrCSpnIA(str str)
+@ stdcall StrCSpnIW(wstr wstr)
+@ stdcall StrCSpnW(wstr wstr)
+@ stdcall StrCatBuffA(str str long)
+@ stdcall StrCatBuffW(wstr wstr long)
+@ stdcall StrCatChainW(ptr long long wstr)
 @ stdcall StrChrA(str long)
 # @ stub StrChrA_MB
 @ stdcall StrChrIA(str long)
@@ -1546,8 +1546,8 @@
 @ stdcall StrCmpIW(wstr wstr)
 @ stdcall StrCmpLogicalW(wstr wstr)
 @ stdcall StrCmpNA(str str long)
-@ stdcall StrCmpNCA(str ptr long) shlwapi.StrCmpNCA
-@ stdcall StrCmpNCW(wstr wstr long) shlwapi.StrCmpNCW
+@ stdcall StrCmpNCA(str str long)
+@ stdcall StrCmpNCW(wstr wstr long)
 @ stdcall StrCmpNIA(str str long)
 @ stdcall StrCmpNICA(long long long)
 @ stdcall StrCmpNICW(wstr wstr long)
@@ -1563,16 +1563,16 @@
 @ stdcall StrIsIntlEqualW(long wstr wstr long)
 @ stdcall StrPBrkA(str str)
 @ stdcall StrPBrkW(wstr wstr)
-@ stdcall StrRChrA(str str long) shlwapi.StrRChrA
-@ stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
+@ stdcall StrRChrA(str str long)
+@ stdcall StrRChrIA(str str long)
 @ stdcall StrRChrIW(wstr wstr long)
 @ stdcall StrRChrW(wstr wstr long)
-@ stdcall StrRStrIA(str str str) shlwapi.StrRStrIA
-@ stdcall StrRStrIW(wstr wstr wstr) shlwapi.StrRStrIW
-@ stdcall StrSpnA(str str) shlwapi.StrSpnA
+@ stdcall StrRStrIA(str str str)
+@ stdcall StrRStrIW(wstr wstr wstr)
+@ stdcall StrSpnA(str str)
 @ stdcall StrSpnW(wstr wstr)
-@ stdcall StrStrA(str str) shlwapi.StrStrA
-@ stdcall StrStrIA(str str) shlwapi.StrStrIA
+@ stdcall StrStrA(str str)
+@ stdcall StrStrIA(str str)
 @ stdcall StrStrIW(wstr wstr)
 @ stdcall StrStrNIW(wstr wstr long)
 @ stdcall StrStrNW(wstr wstr long)

@@ -305,9 +305,43 @@ BOOL WINAPI ChrCmpIA(WORD ch1, WORD ch2)
     return char_compare(ch1, ch2, NORM_IGNORECASE);
 }
 
+static BOOL WINAPI ChrCmpA(WORD ch1, WORD ch2)
+{
+    return char_compare(ch1, ch2, 0);
+}
+
 BOOL WINAPI ChrCmpIW(WCHAR ch1, WCHAR ch2)
 {
     return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, &ch1, 1, &ch2, 1) - CSTR_EQUAL;
+}
+
+static char * strstr_helper(const char *str, const char *search,
+        INT (WINAPI *cmp_func)(const char *, const char *, int))
+{
+    const char *end;
+    size_t len;
+
+    if (!str || !search || !*search)
+        return NULL;
+
+    len = strlen(search);
+    end = str + strlen(str);
+
+    while (str + len <= end)
+    {
+        if (!cmp_func(str, search, len))
+            return (char *)str;
+        str = CharNextA(str);
+    }
+
+    return NULL;
+}
+
+char * WINAPI StrStrA(const char *str, const char *search)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(search));
+
+    return strstr_helper(str, search, StrCmpNA);
 }
 
 WCHAR * WINAPI StrStrW(const WCHAR *str, const WCHAR *search)
@@ -378,6 +412,16 @@ int WINAPI StrCmpNW(const WCHAR *str, const WCHAR *comp, int len)
     return CompareStringW(GetThreadLocale(), 0, str, len, comp, len) - CSTR_EQUAL;
 }
 
+DWORD WINAPI StrCmpNCA(const char *str, const char *comp, int len)
+{
+    return StrCmpNA(str, comp, len);
+}
+
+DWORD WINAPI StrCmpNCW(const WCHAR *str, const WCHAR *comp, int len)
+{
+    return StrCmpNW(str, comp, len);
+}
+
 int WINAPI StrCmpNIW(const WCHAR *str, const WCHAR *comp, int len)
 {
     TRACE("%s, %s, %i\n", wine_dbgstr_w(str), wine_dbgstr_w(comp), len);
@@ -416,6 +460,13 @@ WCHAR * WINAPI StrCpyNW(WCHAR *dst, const WCHAR *src, int count)
     return dst;
 }
 
+char * WINAPI StrStrIA(const char *str, const char *search)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(str), debugstr_a(search));
+
+    return strstr_helper(str, search, StrCmpNIA);
+}
+
 WCHAR * WINAPI StrStrIW(const WCHAR *str, const WCHAR *search)
 {
     unsigned int len;
@@ -439,10 +490,109 @@ WCHAR * WINAPI StrStrIW(const WCHAR *str, const WCHAR *search)
     return NULL;
 }
 
+static int strspn_helper(const char *str, const char *match, char * (WINAPI *func)(const char *, WORD), BOOL invert)
+{
+    const char *ptr = str;
+
+    if (!str || !*str || !match)
+        return 0;
+
+    while (*ptr)
+    {
+        const char *test = func(match, *ptr);
+
+        if (!invert && !test)
+            break;
+        if (invert && test)
+            break;
+
+        ptr = CharNextA(ptr);
+    };
+
+    return ptr - str;
+}
+
+int WINAPI StrSpnA(const char *str, const char *match)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
+
+    return strspn_helper(str, match, StrChrA, FALSE);
+}
+
 int WINAPI StrSpnW(const WCHAR *str, const WCHAR *match)
 {
     if (!str || !match) return 0;
     return strspnW(str, match);
+}
+
+int WINAPI StrCSpnA(const char *str, const char *match)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
+
+    return strspn_helper(str, match, StrChrA, TRUE);
+}
+
+int WINAPI StrCSpnW(const WCHAR *str, const WCHAR *match)
+{
+    if (!str || !match)
+        return 0;
+
+    return strcspnW(str, match);
+}
+
+int WINAPI StrCSpnIA(const char *str, const char *match)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
+
+    return strspn_helper(str, match, StrChrIA, TRUE);
+}
+
+int WINAPI StrCSpnIW(const WCHAR *str, const WCHAR *match)
+{
+    const WCHAR *ptr = str;
+
+    TRACE("%s, %s\n", wine_dbgstr_w(str), wine_dbgstr_w(match));
+
+    if (!str || !*str || !match)
+        return 0;
+
+    while (*ptr)
+    {
+        if (StrChrIW(match, *ptr)) break;
+        ptr++;
+    }
+
+    return ptr - str;
+}
+
+static LPSTR strrchra_helper(const char *str, const char *end, WORD ch, BOOL (WINAPI *cmp_func)(WORD, WORD))
+{
+    const char *ret = NULL;
+    WORD ch2;
+
+    if (!str)
+        return NULL;
+
+    if (!end)
+        end = str + lstrlenA(str);
+
+    while (*str && str <= end)
+    {
+        ch2 = IsDBCSLeadByte(*str) ? *str << 8 | str[1] : *str;
+
+        if (!cmp_func(ch, ch2))
+            ret = str;
+        str = CharNextA(str);
+    }
+
+    return (char *)ret;
+}
+
+char * WINAPI StrRChrA(const char *str, const char *end, WORD ch)
+{
+    TRACE("%s, %s, %#x\n", wine_dbgstr_a(str), wine_dbgstr_a(end), ch);
+
+    return strrchra_helper(str, end, ch, ChrCmpA);
 }
 
 WCHAR * WINAPI StrRChrW(const WCHAR *str, const WCHAR *end, WORD ch)
@@ -459,6 +609,13 @@ WCHAR * WINAPI StrRChrW(const WCHAR *str, const WCHAR *end, WORD ch)
     return ret;
 }
 
+char * WINAPI StrRChrIA(const char *str, const char *end, WORD ch)
+{
+    TRACE("%s, %s, %#x\n", wine_dbgstr_a(str), wine_dbgstr_a(end), ch);
+
+    return strrchra_helper(str, end, ch, ChrCmpIA);
+}
+
 WCHAR * WINAPI StrRChrIW(const WCHAR *str, const WCHAR *end, WORD ch)
 {
     WCHAR *ret = NULL;
@@ -470,6 +627,73 @@ WCHAR * WINAPI StrRChrIW(const WCHAR *str, const WCHAR *end, WORD ch)
         if (!ChrCmpIW(*str, ch)) ret = (WCHAR *)str;
         str++;
     }
+    return ret;
+}
+
+char * WINAPI StrRStrIA(const char *str, const char *end, const char *search)
+{
+    char *ret = NULL;
+    WORD ch1, ch2;
+    int len;
+
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(search));
+
+    if (!str || !search || !*search)
+        return NULL;
+
+    if (IsDBCSLeadByte(*search))
+        ch1 = *search << 8 | (UCHAR)search[1];
+    else
+        ch1 = *search;
+    len = lstrlenA(search);
+
+    if (!end)
+        end = str + lstrlenA(str);
+    else /* reproduce the broken behaviour on Windows */
+        end += min(len - 1, lstrlenA(end));
+
+    while (str + len <= end && *str)
+    {
+        ch2 = IsDBCSLeadByte(*str) ? *str << 8 | (UCHAR)str[1] : *str;
+        if (!ChrCmpIA(ch1, ch2))
+        {
+            if (!StrCmpNIA(str, search, len))
+                ret = (char *)str;
+        }
+
+        str = CharNextA(str);
+    }
+
+    return ret;
+}
+
+WCHAR * WINAPI StrRStrIW(const WCHAR *str, const WCHAR *end, const WCHAR *search)
+{
+    WCHAR *ret = NULL;
+    int len;
+
+    TRACE("%s, %s\n", wine_dbgstr_w(str), wine_dbgstr_w(search));
+
+    if (!str || !search || !*search)
+        return NULL;
+
+    len = strlenW(search);
+
+    if (!end)
+        end = str + strlenW(str);
+    else
+        end += min(len - 1, lstrlenW(end));
+
+    while (str + len <= end && *str)
+    {
+        if (!ChrCmpIW(*search, *str))
+        {
+            if (!StrCmpNIW(str, search, len))
+                ret = (WCHAR *)str;
+        }
+        str++;
+    }
+
     return ret;
 }
 
@@ -1119,4 +1343,86 @@ BOOL WINAPI StrIsIntlEqualW(BOOL case_sensitive, const WCHAR *str, const WCHAR *
         flags |= NORM_IGNORECASE;
 
     return (CompareStringW(GetThreadLocale(), flags, str, len, cmp, len) == CSTR_EQUAL);
+}
+
+char * WINAPI StrCatBuffA(char *str, const char *cat, INT max_len)
+{
+    INT len;
+
+    TRACE("%p, %s, %d\n", str, wine_dbgstr_a(cat), max_len);
+
+    if (!str)
+        return NULL;
+
+    len = strlen(str);
+    max_len -= len;
+    if (max_len > 0)
+        StrCpyNA(str + len, cat, max_len);
+
+    return str;
+}
+
+WCHAR * WINAPI StrCatBuffW(WCHAR *str, const WCHAR *cat, INT max_len)
+{
+    INT len;
+
+    TRACE("%p, %s, %d\n", str, wine_dbgstr_w(cat), max_len);
+
+    if (!str)
+        return NULL;
+
+    len = strlenW(str);
+    max_len -= len;
+    if (max_len > 0)
+        StrCpyNW(str + len, cat, max_len);
+
+    return str;
+}
+
+DWORD WINAPI StrCatChainW(WCHAR *str, DWORD max_len, DWORD at, const WCHAR *cat)
+{
+    TRACE("%s, %u, %d, %s\n", wine_dbgstr_w(str), max_len, at, wine_dbgstr_w(cat));
+
+    if (at == -1)
+        at = strlenW(str);
+
+    if (!max_len)
+        return at;
+
+    if (at == max_len)
+        at--;
+
+    if (cat && at < max_len)
+    {
+        str += at;
+        while (at < max_len - 1 && *cat)
+        {
+            *str++ = *cat++;
+            at++;
+        }
+        *str = 0;
+    }
+
+    return at;
+}
+
+DWORD WINAPI SHTruncateString(char *str, DWORD size)
+{
+    char *last_byte;
+
+    if (!str || !size)
+        return 0;
+
+    last_byte = str + size - 1;
+
+    while (str < last_byte)
+        str += IsDBCSLeadByte(*str) ? 2 : 1;
+
+    if (str == last_byte && IsDBCSLeadByte(*str))
+    {
+        *str = '\0';
+        size--;
+    }
+
+    return size;
 }
