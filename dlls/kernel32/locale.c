@@ -1286,6 +1286,15 @@ static BOOL get_dummy_preferred_ui_language( DWORD flags, ULONG *count, WCHAR *b
 }
 
 /***********************************************************************
+ *             GetProcessPreferredUILanguages (KERNEL32.@)
+ */
+BOOL WINAPI GetProcessPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buf, ULONG *size )
+{
+    FIXME( "%08x, %p, %p %p\n", flags, count, buf, size );
+    return get_dummy_preferred_ui_language( flags, count, buf, size );
+}
+
+/***********************************************************************
  *             GetSystemPreferredUILanguages (KERNEL32.@)
  */
 BOOL WINAPI GetSystemPreferredUILanguages(DWORD flags, ULONG* count, WCHAR* buffer, ULONG* size)
@@ -1307,6 +1316,15 @@ BOOL WINAPI GetSystemPreferredUILanguages(DWORD flags, ULONG* count, WCHAR* buff
     }
 
     return get_dummy_preferred_ui_language( flags, count, buffer, size );
+}
+
+/***********************************************************************
+ *              SetProcessPreferredUILanguages (KERNEL32.@)
+ */
+BOOL WINAPI SetProcessPreferredUILanguages( DWORD flags, PCZZWSTR buffer, PULONG count )
+{
+    FIXME("%u, %p, %p\n", flags, buffer, count );
+    return TRUE;
 }
 
 /***********************************************************************
