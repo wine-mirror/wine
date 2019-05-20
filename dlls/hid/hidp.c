@@ -64,7 +64,7 @@ static NTSTATUS get_report_data(BYTE *report, INT reportLength, INT startBit, IN
             if (remaining_bits < copy_bits)
                 copy_bits = remaining_bits;
 
-            data |= ((report[byte_index] >> bit_index) & ((2 << copy_bits) - 1)) << shift;
+            data |= ((report[byte_index] >> bit_index) & ((1 << copy_bits) - 1)) << shift;
 
             shift += copy_bits;
             bit_index = 0;
