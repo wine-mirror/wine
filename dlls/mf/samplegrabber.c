@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 struct sample_grabber_stream
 {
     IMFStreamSink IMFStreamSink_iface;
+    IMFMediaTypeHandler IMFMediaTypeHandler_iface;
     LONG refcount;
     IMFMediaSink *sink;
 };
@@ -69,6 +70,11 @@ static struct sample_grabber_stream *impl_from_IMFStreamSink(IMFStreamSink *ifac
     return CONTAINING_RECORD(iface, struct sample_grabber_stream, IMFStreamSink_iface);
 }
 
+static struct sample_grabber_stream *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_grabber_stream, IMFMediaTypeHandler_iface);
+}
+
 static HRESULT WINAPI sample_grabber_stream_QueryInterface(IMFStreamSink *iface, REFIID riid, void **obj)
 {
     struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
@@ -79,6 +85,10 @@ static HRESULT WINAPI sample_grabber_stream_QueryInterface(IMFStreamSink *iface,
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = &stream->IMFStreamSink_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFMediaTypeHandler))
+    {
+        *obj = &stream->IMFMediaTypeHandler_iface;
     }
     else
     {
@@ -172,9 +182,14 @@ static HRESULT WINAPI sample_grabber_stream_GetIdentifier(IMFStreamSink *iface, 
 
 static HRESULT WINAPI sample_grabber_stream_GetMediaTypeHandler(IMFStreamSink *iface, IMFMediaTypeHandler **handler)
 {
-    FIXME("%p, %p.\n", iface, handler);
+    struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, handler);
+
+    *handler = &stream->IMFMediaTypeHandler_iface;
+    IMFMediaTypeHandler_AddRef(*handler);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_grabber_stream_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
@@ -214,6 +229,84 @@ static const IMFStreamSinkVtbl sample_grabber_stream_vtbl =
     sample_grabber_stream_ProcessSample,
     sample_grabber_stream_PlaceMarker,
     sample_grabber_stream_Flush,
+};
+
+static HRESULT WINAPI sample_grabber_stream_type_handler_QueryInterface(IMFMediaTypeHandler *iface, REFIID riid,
+        void **obj)
+{
+    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_QueryInterface(&stream->IMFStreamSink_iface, riid, obj);
+}
+
+static ULONG WINAPI sample_grabber_stream_type_handler_AddRef(IMFMediaTypeHandler *iface)
+{
+    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_AddRef(&stream->IMFStreamSink_iface);
+}
+
+static ULONG WINAPI sample_grabber_stream_type_handler_Release(IMFMediaTypeHandler *iface)
+{
+    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_Release(&stream->IMFStreamSink_iface);
+}
+
+static HRESULT WINAPI sample_grabber_stream_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface,
+        IMFMediaType *in_type, IMFMediaType **out_type)
+{
+    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_stream_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
+{
+    FIXME("%p, %p.\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_stream_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
+        IMFMediaType **type)
+{
+    FIXME("%p, %u, %p.\n", iface, index, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_stream_type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface,
+        IMFMediaType *type)
+{
+    FIXME("%p, %p.\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_stream_type_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface,
+        IMFMediaType **type)
+{
+    FIXME("%p, %p.\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_grabber_stream_type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
+{
+    FIXME("%p, %p.\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaTypeHandlerVtbl sample_grabber_stream_type_handler_vtbl =
+{
+    sample_grabber_stream_type_handler_QueryInterface,
+    sample_grabber_stream_type_handler_AddRef,
+    sample_grabber_stream_type_handler_Release,
+    sample_grabber_stream_type_handler_IsMediaTypeSupported,
+    sample_grabber_stream_type_handler_GetMediaTypeCount,
+    sample_grabber_stream_type_handler_GetMediaTypeByIndex,
+    sample_grabber_stream_type_handler_SetCurrentMediaType,
+    sample_grabber_stream_type_handler_GetCurrentMediaType,
+    sample_grabber_stream_type_handler_GetMajorType,
 };
 
 static HRESULT WINAPI sample_grabber_sink_QueryInterface(IMFMediaSink *iface, REFIID riid, void **obj)
@@ -424,6 +517,7 @@ static HRESULT sample_grabber_create_stream(IMFMediaSink *sink, IMFStreamSink **
         return E_OUTOFMEMORY;
 
     object->IMFStreamSink_iface.lpVtbl = &sample_grabber_stream_vtbl;
+    object->IMFMediaTypeHandler_iface.lpVtbl = &sample_grabber_stream_type_handler_vtbl;
     object->refcount = 1;
     object->sink = sink;
     IMFMediaSink_AddRef(object->sink);

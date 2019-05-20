@@ -1724,22 +1724,19 @@ todo_wine
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFStreamSink_QueryInterface(stream, &IID_IMFMediaTypeHandler, (void **)&handler2);
-todo_wine
     ok(hr == S_OK, "Failed to get handler interface, hr %#x.\n", hr);
 
-    if (SUCCEEDED(hr))
-    {
-        hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
-        ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
-        hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
-        ok(hr == S_OK, "Failed to get media type count, hr %#x.\n", hr);
-        ok(count == 0, "Unexpected count %u.\n", count);
+    hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
+    ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
+todo_wine {
+    ok(hr == S_OK, "Failed to get media type count, hr %#x.\n", hr);
+    ok(count == 0, "Unexpected count %u.\n", count);
+}
+    ok(handler == handler2, "Unexpected handler.\n");
 
-        ok(handler == handler2, "Unexpected handler.\n");
-
-        IMFMediaTypeHandler_Release(handler);
-        IMFMediaTypeHandler_Release(handler2);
-    }
+    IMFMediaTypeHandler_Release(handler);
+    IMFMediaTypeHandler_Release(handler2);
 
     hr = IMFActivate_ShutdownObject(activate);
 todo_wine
@@ -1773,16 +1770,14 @@ todo_wine
     ok(id == 0, "Unexpected id %#x.\n", id);
 
     hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
-todo_wine
     ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
-        ok(hr == S_OK, "Failed to get media type count, hr %#x.\n", hr);
-        ok(count == 0, "Unexpected count %u.\n", count);
 
-        IMFMediaTypeHandler_Release(handler);
-    }
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
+todo_wine {
+    ok(hr == S_OK, "Failed to get media type count, hr %#x.\n", hr);
+    ok(count == 0, "Unexpected count %u.\n", count);
+}
+    IMFMediaTypeHandler_Release(handler);
 
     IMFMediaSink_Release(sink);
     IMFStreamSink_Release(stream);
