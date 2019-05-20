@@ -18,6 +18,7 @@
 
 #define COBJMACROS
 
+#include "mfapi.h"
 #include "mfidl.h"
 #include "mferror.h"
 #include "mf_private.h"
@@ -33,6 +34,7 @@ struct sample_grabber_stream
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
     LONG refcount;
     IMFMediaSink *sink;
+    IMFMediaEventQueue *event_queue;
 };
 
 struct sample_grabber
@@ -128,6 +130,8 @@ static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
     if (!refcount)
     {
         IMFMediaSink_Release(stream->sink);
+        IMFMediaEventQueue_Shutdown(stream->event_queue);
+        IMFMediaEventQueue_Release(stream->event_queue);
         heap_free(stream);
     }
 
@@ -136,33 +140,41 @@ static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
 
 static HRESULT WINAPI sample_grabber_stream_GetEvent(IMFStreamSink *iface, DWORD flags, IMFMediaEvent **event)
 {
-    FIXME("%p, %#x, %p.\n", iface, flags, event);
+    struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x, %p.\n", iface, flags, event);
+
+    return IMFMediaEventQueue_GetEvent(stream->event_queue, flags, event);
 }
 
 static HRESULT WINAPI sample_grabber_stream_BeginGetEvent(IMFStreamSink *iface, IMFAsyncCallback *callback,
         IUnknown *state)
 {
-    FIXME("%p, %p, %p.\n", iface, callback, state);
+    struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, callback, state);
+
+    return IMFMediaEventQueue_BeginGetEvent(stream->event_queue, callback, state);
 }
 
 static HRESULT WINAPI sample_grabber_stream_EndGetEvent(IMFStreamSink *iface, IMFAsyncResult *result,
         IMFMediaEvent **event)
 {
-    FIXME("%p, %p, %p.\n", iface, result, event);
+    struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, result, event);
+
+    return IMFMediaEventQueue_EndGetEvent(stream->event_queue, result, event);
 }
 
 static HRESULT WINAPI sample_grabber_stream_QueueEvent(IMFStreamSink *iface, MediaEventType event_type,
         REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
 {
-    FIXME("%p, %u, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+    struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+
+    return IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, event_type, ext_type, hr, value);
 }
 
 static HRESULT WINAPI sample_grabber_stream_GetMediaSink(IMFStreamSink *iface, IMFMediaSink **sink)
@@ -586,6 +598,7 @@ static const IMFClockStateSinkVtbl sample_grabber_clock_sink_vtbl =
 static HRESULT sample_grabber_create_stream(IMFMediaSink *sink, IMFStreamSink **stream)
 {
     struct sample_grabber_stream *object;
+    HRESULT hr;
 
     object = heap_alloc_zero(sizeof(*object));
     if (!object)
@@ -597,9 +610,17 @@ static HRESULT sample_grabber_create_stream(IMFMediaSink *sink, IMFStreamSink **
     object->sink = sink;
     IMFMediaSink_AddRef(object->sink);
 
+    if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
+        goto failed;
+
     *stream = &object->IMFStreamSink_iface;
 
     return S_OK;
+
+failed:
+    IMFStreamSink_Release(&object->IMFStreamSink_iface);
+
+    return hr;
 }
 
 static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
