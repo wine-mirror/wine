@@ -52,6 +52,15 @@ DEFINE_GUID(CLSID_FileSchemeHandler, 0x477ec299, 0x1421, 0x4bdd, 0x97, 0x1f, 0x7
 
 static BOOL is_win8_plus;
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown *obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d.\n", rc, ref);
+}
+
 static HRESULT (WINAPI *pMFCopyImage)(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride,
         DWORD width, DWORD lines);
 static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
@@ -2540,11 +2549,14 @@ static void test_system_time_source(void)
         { CLOCK_STOP, MFCLOCK_STATE_STOPPED },
         { CLOCK_PAUSE, MFCLOCK_STATE_STOPPED, TRUE },
     };
-    IMFPresentationTimeSource *time_source;
+    IMFPresentationTimeSource *time_source, *time_source2;
     IMFClockStateSink *statesink;
+    IMFClock *clock, *clock2;
     MFCLOCK_PROPERTIES props;
     MFCLOCK_STATE state;
     unsigned int i;
+    MFTIME systime;
+    LONGLONG time;
     DWORD value;
     HRESULT hr;
 
@@ -2611,6 +2623,57 @@ static void test_system_time_source(void)
             wine_dbgstr_longlong(props.qwClockFrequency));
     ok(props.dwClockTolerance == MFCLOCK_TOLERANCE_UNKNOWN, "Unexpected tolerance %u.\n", props.dwClockTolerance);
     ok(props.dwClockJitter == 1, "Unexpected jitter %u.\n", props.dwClockJitter);
+
+    /* Underlying clock. */
+    hr = MFCreateSystemTimeSource(&time_source2);
+    ok(hr == S_OK, "Failed to create time source, hr %#x.\n", hr);
+    EXPECT_REF(time_source2, 1);
+    hr = IMFPresentationTimeSource_GetUnderlyingClock(time_source2, &clock2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(time_source2, 1);
+    EXPECT_REF(clock2, 2);
+
+    EXPECT_REF(time_source, 1);
+    hr = IMFPresentationTimeSource_GetUnderlyingClock(time_source, &clock);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(time_source, 1);
+    EXPECT_REF(clock, 2);
+
+    ok(clock != clock2, "Unexpected clock instance.\n");
+
+    IMFPresentationTimeSource_Release(time_source2);
+    IMFClock_Release(clock2);
+
+    hr = IMFClock_GetClockCharacteristics(clock, &value);
+    ok(hr == S_OK, "Failed to get clock flags, hr %#x.\n", hr);
+    ok(value == (MFCLOCK_CHARACTERISTICS_FLAG_FREQUENCY_10MHZ | MFCLOCK_CHARACTERISTICS_FLAG_ALWAYS_RUNNING |
+            MFCLOCK_CHARACTERISTICS_FLAG_IS_SYSTEM_CLOCK), "Unexpected flags %#x.\n", value);
+
+    hr = IMFClock_GetContinuityKey(clock, &value);
+    ok(hr == S_OK, "Failed to get clock key, hr %#x.\n", hr);
+    ok(value == 0, "Unexpected key value %u.\n", value);
+
+    hr = IMFClock_GetState(clock, 0, &state);
+    ok(hr == S_OK, "Failed to get clock state, hr %#x.\n", hr);
+    ok(state == MFCLOCK_STATE_RUNNING, "Unexpected state %d.\n", state);
+
+    hr = IMFClock_GetProperties(clock, &props);
+    ok(hr == S_OK, "Failed to get clock properties, hr %#x.\n", hr);
+
+    ok(props.qwCorrelationRate == 0, "Unexpected correlation rate %s.\n",
+            wine_dbgstr_longlong(props.qwCorrelationRate));
+    ok(IsEqualGUID(&props.guidClockId, &GUID_NULL), "Unexpected clock id %s.\n", wine_dbgstr_guid(&props.guidClockId));
+    ok(props.dwClockFlags == 0, "Unexpected flags %#x.\n", props.dwClockFlags);
+    ok(props.qwClockFrequency == MFCLOCK_FREQUENCY_HNS, "Unexpected frequency %s.\n",
+            wine_dbgstr_longlong(props.qwClockFrequency));
+    ok(props.dwClockTolerance == MFCLOCK_TOLERANCE_UNKNOWN, "Unexpected tolerance %u.\n", props.dwClockTolerance);
+    ok(props.dwClockJitter == 1, "Unexpected jitter %u.\n", props.dwClockJitter);
+
+    hr = IMFClock_GetCorrelatedTime(clock, 0, &time, &systime);
+    ok(hr == S_OK, "Failed to get clock time, hr %#x.\n", hr);
+    ok(time == systime, "Unexpected time %s, %s.\n", wine_dbgstr_longlong(time), wine_dbgstr_longlong(systime));
+
+    IMFClock_Release(clock);
 
     IMFPresentationTimeSource_Release(time_source);
 }

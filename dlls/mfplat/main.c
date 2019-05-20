@@ -44,12 +44,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 static LONG platform_lock;
 
+struct system_clock
+{
+    IMFClock IMFClock_iface;
+    LONG refcount;
+};
+
 struct system_time_source
 {
     IMFPresentationTimeSource IMFPresentationTimeSource_iface;
     IMFClockStateSink IMFClockStateSink_iface;
     LONG refcount;
     MFCLOCK_STATE state;
+    IMFClock *clock;
     CRITICAL_SECTION cs;
 };
 
@@ -61,6 +68,11 @@ static struct system_time_source *impl_from_IMFPresentationTimeSource(IMFPresent
 static struct system_time_source *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
 {
     return CONTAINING_RECORD(iface, struct system_time_source, IMFClockStateSink_iface);
+}
+
+static struct system_clock *impl_from_IMFClock(IMFClock *iface)
+{
+    return CONTAINING_RECORD(iface, struct system_clock, IMFClock_iface);
 }
 
 static const WCHAR transform_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',
@@ -6538,6 +6550,126 @@ HRESULT WINAPI MFCreateMFByteStreamOnStreamEx(IUnknown *stream, IMFByteStream **
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI system_clock_QueryInterface(IMFClock *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFClock) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFClock_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI system_clock_AddRef(IMFClock *iface)
+{
+    struct system_clock *clock = impl_from_IMFClock(iface);
+    ULONG refcount = InterlockedIncrement(&clock->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI system_clock_Release(IMFClock *iface)
+{
+    struct system_clock *clock = impl_from_IMFClock(iface);
+    ULONG refcount = InterlockedDecrement(&clock->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(clock);
+
+    return refcount;
+}
+
+static HRESULT WINAPI system_clock_GetClockCharacteristics(IMFClock *iface, DWORD *flags)
+{
+    TRACE("%p, %p.\n", iface, flags);
+
+    *flags = MFCLOCK_CHARACTERISTICS_FLAG_FREQUENCY_10MHZ | MFCLOCK_CHARACTERISTICS_FLAG_ALWAYS_RUNNING |
+            MFCLOCK_CHARACTERISTICS_FLAG_IS_SYSTEM_CLOCK;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI system_clock_GetCorrelatedTime(IMFClock *iface, DWORD reserved, LONGLONG *clock_time,
+        MFTIME *system_time)
+{
+    TRACE("%p, %#x, %p, %p.\n", iface, reserved, clock_time, system_time);
+
+    *clock_time = *system_time = MFGetSystemTime();
+
+    return S_OK;
+}
+
+static HRESULT WINAPI system_clock_GetContinuityKey(IMFClock *iface, DWORD *key)
+{
+    TRACE("%p, %p.\n", iface, key);
+
+    *key = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI system_clock_GetState(IMFClock *iface, DWORD reserved, MFCLOCK_STATE *state)
+{
+    TRACE("%p, %#x, %p.\n", iface, reserved, state);
+
+    *state = MFCLOCK_STATE_RUNNING;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI system_clock_GetProperties(IMFClock *iface, MFCLOCK_PROPERTIES *props)
+{
+    TRACE("%p, %p.\n", iface, props);
+
+    if (!props)
+        return E_POINTER;
+
+    memset(props, 0, sizeof(*props));
+    props->qwClockFrequency = MFCLOCK_FREQUENCY_HNS;
+    props->dwClockTolerance = MFCLOCK_TOLERANCE_UNKNOWN;
+    props->dwClockJitter = 1;
+
+    return S_OK;
+}
+
+static const IMFClockVtbl system_clock_vtbl =
+{
+    system_clock_QueryInterface,
+    system_clock_AddRef,
+    system_clock_Release,
+    system_clock_GetClockCharacteristics,
+    system_clock_GetCorrelatedTime,
+    system_clock_GetContinuityKey,
+    system_clock_GetState,
+    system_clock_GetProperties,
+};
+
+static HRESULT create_system_clock(IMFClock **clock)
+{
+    struct system_clock *object;
+
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IMFClock_iface.lpVtbl = &system_clock_vtbl;
+    object->refcount = 1;
+
+    *clock = &object->IMFClock_iface;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI system_time_source_QueryInterface(IMFPresentationTimeSource *iface, REFIID riid, void **obj)
 {
     struct system_time_source *source = impl_from_IMFPresentationTimeSource(iface);
@@ -6583,6 +6715,8 @@ static ULONG WINAPI system_time_source_Release(IMFPresentationTimeSource *iface)
 
     if (!refcount)
     {
+        if (source->clock)
+            IMFClock_Release(source->clock);
         DeleteCriticalSection(&source->cs);
         heap_free(source);
     }
@@ -6648,9 +6782,14 @@ static HRESULT WINAPI system_time_source_GetProperties(IMFPresentationTimeSource
 
 static HRESULT WINAPI system_time_source_GetUnderlyingClock(IMFPresentationTimeSource *iface, IMFClock **clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct system_time_source *source = impl_from_IMFPresentationTimeSource(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    *clock = source->clock;
+    IMFClock_AddRef(*clock);
+
+    return S_OK;
 }
 
 static const IMFPresentationTimeSourceVtbl systemtimesourcevtbl =
@@ -6812,6 +6951,7 @@ static const IMFClockStateSinkVtbl systemtimesourcesinkvtbl =
 HRESULT WINAPI MFCreateSystemTimeSource(IMFPresentationTimeSource **time_source)
 {
     struct system_time_source *object;
+    HRESULT hr;
 
     TRACE("%p.\n", time_source);
 
@@ -6823,6 +6963,12 @@ HRESULT WINAPI MFCreateSystemTimeSource(IMFPresentationTimeSource **time_source)
     object->IMFClockStateSink_iface.lpVtbl = &systemtimesourcesinkvtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
+
+    if (FAILED(hr = create_system_clock(&object->clock)))
+    {
+        IMFPresentationTimeSource_Release(&object->IMFPresentationTimeSource_iface);
+        return hr;
+    }
 
     *time_source = &object->IMFPresentationTimeSource_iface;
 
