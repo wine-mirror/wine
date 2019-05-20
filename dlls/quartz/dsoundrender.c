@@ -47,7 +47,6 @@ static const IBaseFilterVtbl DSoundRender_Vtbl;
 static const IBasicAudioVtbl IBasicAudio_Vtbl;
 static const IReferenceClockVtbl IReferenceClock_Vtbl;
 static const IAMDirectSoundVtbl IAMDirectSound_Vtbl;
-static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
 
 typedef struct DSoundRenderImpl
 {
@@ -56,7 +55,6 @@ typedef struct DSoundRenderImpl
 
     IReferenceClock IReferenceClock_iface;
     IAMDirectSound IAMDirectSound_iface;
-    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
 
     IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
@@ -98,11 +96,6 @@ static inline DSoundRenderImpl *impl_from_IReferenceClock(IReferenceClock *iface
 static inline DSoundRenderImpl *impl_from_IAMDirectSound(IAMDirectSound *iface)
 {
     return CONTAINING_RECORD(iface, DSoundRenderImpl, IAMDirectSound_iface);
-}
-
-static inline DSoundRenderImpl *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
-{
-    return CONTAINING_RECORD(iface, DSoundRenderImpl, IAMFilterMiscFlags_iface);
 }
 
 static REFERENCE_TIME time_from_pos(DSoundRenderImpl *This, DWORD pos) {
@@ -642,7 +635,6 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     BasicAudio_Init(&pDSoundRender->basicAudio,&IBasicAudio_Vtbl);
     pDSoundRender->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;
     pDSoundRender->IAMDirectSound_iface.lpVtbl = &IAMDirectSound_Vtbl;
-    pDSoundRender->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
     if (SUCCEEDED(hr))
     {
@@ -700,8 +692,6 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
         *ppv = &This->IReferenceClock_iface;
     else if (IsEqualIID(riid, &IID_IAMDirectSound))
         *ppv = &This->IAMDirectSound_iface;
-    else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        *ppv = &This->IAMFilterMiscFlags_iface;
     else
     {
         HRESULT hr;
@@ -1283,30 +1273,4 @@ static const IAMDirectSoundVtbl IAMDirectSound_Vtbl =
     AMDirectSound_ReleaseSecondaryBufferInterface,
     AMDirectSound_SetFocusWindow,
     AMDirectSound_GetFocusWindow
-};
-
-static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
-    DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IBaseFilter_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
-}
-
-static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
-    DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IBaseFilter_AddRef(&This->renderer.filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
-    DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IBaseFilter_Release(&This->renderer.filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface) {
-    return AM_FILTER_MISC_FLAGS_IS_RENDERER;
-}
-
-static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
-    AMFilterMiscFlags_QueryInterface,
-    AMFilterMiscFlags_AddRef,
-    AMFilterMiscFlags_Release,
-    AMFilterMiscFlags_GetMiscFlags
 };

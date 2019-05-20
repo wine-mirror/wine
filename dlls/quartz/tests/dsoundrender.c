@@ -144,7 +144,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, TRUE);
     check_interface(filter, &IID_IUnknown, TRUE);
 
-    todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
     check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IDispatch, FALSE);
     check_interface(filter, &IID_IKsPropertySet, FALSE);
