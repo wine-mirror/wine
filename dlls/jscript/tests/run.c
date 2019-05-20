@@ -91,6 +91,7 @@ DEFINE_EXPECT(global_notexists_d);
 DEFINE_EXPECT(global_propargput_d);
 DEFINE_EXPECT(global_propargput_i);
 DEFINE_EXPECT(global_testargtypes_i);
+DEFINE_EXPECT(global_calleval_i);
 DEFINE_EXPECT(puredisp_prop_d);
 DEFINE_EXPECT(puredisp_noprop_d);
 DEFINE_EXPECT(puredisp_value);
@@ -149,6 +150,7 @@ DEFINE_EXPECT(BindHandler);
 #define DISPID_GLOBAL_GETSCRIPTSTATE 0x101c
 #define DISPID_GLOBAL_BINDEVENTHANDLER 0x101d
 #define DISPID_GLOBAL_TESTENUMOBJ   0x101e
+#define DISPID_GLOBAL_CALLEVAL      0x101f
 
 #define DISPID_GLOBAL_TESTPROPDELETE      0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE    0x2001
@@ -988,6 +990,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
+    if(!strcmp_wa(bstrName, "callEval")) {
+        *pid = DISPID_GLOBAL_CALLEVAL;
+        return S_OK;
+    }
+
     if(strict_dispid_check && strcmp_wa(bstrName, "t"))
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -1490,6 +1497,43 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         hres = IDispatch_Invoke(V_DISPATCH(pdp->rgvarg), DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
         ok(hres == S_OK, "Invoke failed: %08x\n", hres);
 
+        return S_OK;
+    }
+
+    case DISPID_GLOBAL_CALLEVAL: {
+        IDispatchEx *eval_func;
+        DISPPARAMS params;
+        VARIANT arg, res;
+        HRESULT hres;
+
+        CHECK_EXPECT(global_calleval_i);
+
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes == NULL, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(arg) = %d\n", V_VT(pdp->rgvarg));
+        hres = IDispatch_QueryInterface(V_DISPATCH(pdp->rgvarg), &IID_IDispatchEx, (void**)&eval_func);
+        ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+        params.rgvarg = &arg;
+        params.rgdispidNamedArgs = NULL;
+        params.cArgs = 1;
+        params.cNamedArgs = 0;
+        V_VT(&arg) = VT_BSTR;
+
+        V_BSTR(&arg) = a2bstr("var x = 5; v");
+        V_VT(&res) = VT_ERROR;
+        hres = IDispatchEx_InvokeEx(eval_func, DISPID_VALUE, 0, DISPATCH_METHOD, &params, &res, NULL, NULL);
+        ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+        ok(V_VT(&res) == VT_I4, "eval returned type %u\n", V_VT(&res));
+        ok(V_I4(&res) == 2, "eval returned %d\n", V_I4(&res));
+        SysFreeString(V_BSTR(&arg));
+        IDispatchEx_Release(eval_func);
         return S_OK;
     }
     }
@@ -2492,6 +2536,107 @@ static void test_invokeex(void)
     IActiveScript_Release(script);
 }
 
+static void test_eval(void)
+{
+    IActiveScriptParse *parser;
+    IDispatchEx *script_dispex;
+    IDispatch *script_disp;
+    IActiveScript *engine;
+    VARIANT arg, res;
+    DISPPARAMS params;
+    DISPID id, v_id;
+    BSTR str;
+    HRESULT hres;
+
+    engine = create_script();
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    SET_EXPECT(GetItemInfo_testVal);
+    hres = IActiveScript_AddNamedItem(engine, test_valW,
+            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    CHECK_CALLED(GetItemInfo_testVal);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    hres = IActiveScript_GetScriptDispatch(engine, NULL, &script_disp);
+    ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
+    ok(script_disp != NULL, "script_disp == NULL\n");
+
+    hres = IDispatch_QueryInterface(script_disp, &IID_IDispatchEx, (void**)&script_dispex);
+    ok(hres == S_OK, "Coult not get IDispatchEx iface: %08x\n", hres);
+    IDispatch_Release(script_disp);
+
+    str = a2bstr("eval");
+    hres = IDispatchEx_GetDispID(script_dispex, str, 0, &id);
+    ok(hres == S_OK, "Could not get eval dispid: %08x\n", hres);
+    SysFreeString(str);
+
+    params.rgvarg = &arg;
+    params.rgdispidNamedArgs = NULL;
+    params.cArgs = 1;
+    params.cNamedArgs = 0;
+    V_VT(&arg) = VT_BSTR;
+
+    V_BSTR(&arg) = a2bstr("var v = 1;");
+    V_VT(&res) = VT_ERROR;
+    hres = IDispatchEx_InvokeEx(script_dispex, id, 0, DISPATCH_METHOD, &params, &res, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_EMPTY, "eval returned type %u\n", V_VT(&res));
+    SysFreeString(V_BSTR(&arg));
+
+    V_BSTR(&arg) = a2bstr("v");
+    V_VT(&res) = VT_ERROR;
+    hres = IDispatchEx_InvokeEx(script_dispex, id, 0, DISPATCH_METHOD, &params, &res, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_I4, "eval returned type %u\n", V_VT(&res));
+    ok(V_I4(&res) == 1, "eval returned %d\n", V_I4(&res));
+    SysFreeString(V_BSTR(&arg));
+
+    str = a2bstr("v");
+    hres = IDispatchEx_GetDispID(script_dispex, str, 0, &v_id);
+    ok(hres == S_OK, "Could not get v dispid: %08x\n", hres);
+    SysFreeString(str);
+
+    params.rgvarg = NULL;
+    params.cArgs = 0;
+    V_VT(&res) = VT_ERROR;
+    hres = IDispatchEx_InvokeEx(script_dispex, v_id, 0, DISPATCH_PROPERTYGET, &params, &res, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_I4, "eval returned type %u\n", V_VT(&res));
+    ok(V_I4(&res) == 1, "eval returned %d\n", V_I4(&res));
+
+    SET_EXPECT(global_calleval_i);
+    str = a2bstr("(function(){"
+                 "    var v = 2;"
+                 "    callEval(eval);"
+                 "    ok(x === 5, 'x = ' + x);"
+                 "})();");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    SysFreeString(str);
+    CHECK_CALLED(global_calleval_i);
+
+    str = a2bstr("x");
+    hres = IDispatchEx_GetDispID(script_dispex, str, 0, &id);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(x) returned %08x\n", hres);
+    SysFreeString(str);
+
+    IDispatchEx_Release(script_dispex);
+    IActiveScriptParse_Release(parser);
+    IActiveScript_Close(engine);
+    IActiveScript_Release(engine);
+}
+
 struct bom_test
 {
     WCHAR str[1024];
@@ -2877,6 +3022,7 @@ static BOOL run_tests(void)
 
     test_script_exprs();
     test_invokeex();
+    test_eval();
 
     parse_script_with_error_a(
         "?",

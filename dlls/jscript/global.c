@@ -181,7 +181,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    call_frame_t *frame;
+    call_frame_t *frame = ctx->call_ctx;
     DWORD exec_flags = EXEC_EVAL;
     bytecode_t *code;
     const WCHAR *src;
@@ -201,11 +201,6 @@ HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned a
         return S_OK;
     }
 
-    if(!(frame = ctx->call_ctx)) {
-        FIXME("No active exec_ctx\n");
-        return E_UNEXPECTED;
-    }
-
     src = jsstr_flatten(get_string(argv[0]));
     if(!src)
         return E_OUTOFMEMORY;
@@ -217,12 +212,12 @@ HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned a
         return throw_syntax_error(ctx, hres, NULL);
     }
 
-    if(frame->flags & EXEC_GLOBAL)
+    if(!frame || (frame->flags & EXEC_GLOBAL))
         exec_flags |= EXEC_GLOBAL;
     if(flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE)
         exec_flags |= EXEC_RETURN_TO_INTERP;
-    hres = exec_source(ctx, exec_flags, code, &code->global_code, frame->scope,
-            frame->this_obj, NULL, frame->variable_obj, 0, NULL, r);
+    hres = exec_source(ctx, exec_flags, code, &code->global_code, frame ? frame->scope : NULL,
+            frame ? frame->this_obj : NULL, NULL, frame ? frame->variable_obj : ctx->global, 0, NULL, r);
     release_bytecode(code);
     return hres;
 }
