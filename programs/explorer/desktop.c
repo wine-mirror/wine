@@ -37,11 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 #define DESKTOP_CLASS_ATOM ((LPCWSTR)MAKEINTATOM(32769))
 #define DESKTOP_ALL_ACCESS 0x01ff
 
-#ifdef __APPLE__
 static const WCHAR default_driver[] = {'m','a','c',',','x','1','1',0};
-#else
-static const WCHAR default_driver[] = {'x','1','1',0};
-#endif
 
 static BOOL using_root;
 
