@@ -2542,6 +2542,7 @@ static void test_system_time_source(void)
     };
     IMFPresentationTimeSource *time_source;
     IMFClockStateSink *statesink;
+    MFCLOCK_PROPERTIES props;
     MFCLOCK_STATE state;
     unsigned int i;
     DWORD value;
@@ -2594,6 +2595,22 @@ static void test_system_time_source(void)
     }
 
     IMFClockStateSink_Release(statesink);
+
+    /* Properties. */
+    hr = IMFPresentationTimeSource_GetProperties(time_source, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationTimeSource_GetProperties(time_source, &props);
+    ok(hr == S_OK, "Failed to get clock properties, hr %#x.\n", hr);
+
+    ok(props.qwCorrelationRate == 0, "Unexpected correlation rate %s.\n",
+            wine_dbgstr_longlong(props.qwCorrelationRate));
+    ok(IsEqualGUID(&props.guidClockId, &GUID_NULL), "Unexpected clock id %s.\n", wine_dbgstr_guid(&props.guidClockId));
+    ok(props.dwClockFlags == 0, "Unexpected flags %#x.\n", props.dwClockFlags);
+    ok(props.qwClockFrequency == MFCLOCK_FREQUENCY_HNS, "Unexpected frequency %s.\n",
+            wine_dbgstr_longlong(props.qwClockFrequency));
+    ok(props.dwClockTolerance == MFCLOCK_TOLERANCE_UNKNOWN, "Unexpected tolerance %u.\n", props.dwClockTolerance);
+    ok(props.dwClockJitter == 1, "Unexpected jitter %u.\n", props.dwClockJitter);
 
     IMFPresentationTimeSource_Release(time_source);
 }

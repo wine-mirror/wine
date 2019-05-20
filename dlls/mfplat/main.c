@@ -6633,9 +6633,17 @@ static HRESULT WINAPI system_time_source_GetState(IMFPresentationTimeSource *ifa
 
 static HRESULT WINAPI system_time_source_GetProperties(IMFPresentationTimeSource *iface, MFCLOCK_PROPERTIES *props)
 {
-    FIXME("%p, %p.\n", iface, props);
+    TRACE("%p, %p.\n", iface, props);
 
-    return E_NOTIMPL;
+    if (!props)
+        return E_POINTER;
+
+    memset(props, 0, sizeof(*props));
+    props->qwClockFrequency = MFCLOCK_FREQUENCY_HNS;
+    props->dwClockTolerance = MFCLOCK_TOLERANCE_UNKNOWN;
+    props->dwClockJitter = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI system_time_source_GetUnderlyingClock(IMFPresentationTimeSource *iface, IMFClock **clock)

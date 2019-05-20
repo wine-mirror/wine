@@ -47,6 +47,12 @@ typedef enum MF_OBJECT_TYPE
     MF_OBJECT_INVALID
 } MF_OBJECT_TYPE;
 
+cpp_quote("#define MFCLOCK_FREQUENCY_HNS       10000000")
+cpp_quote("#define MFCLOCK_TOLERANCE_UNKNOWN      50000")
+cpp_quote("#define MFCLOCK_JITTER_ISR              1000")
+cpp_quote("#define MFCLOCK_JITTER_DPC              4000")
+cpp_quote("#define MFCLOCK_JITTER_PASSIVE         10000")
+
 typedef struct _MFCLOCK_PROPERTIES
 {
     unsigned __int64 qwCorrelationRate;
