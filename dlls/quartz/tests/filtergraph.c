@@ -3737,7 +3737,7 @@ static void test_default_sync_source(void)
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(clock == &source.IReferenceClock_iface, "Got unexpected clock.\n");
+    ok(clock == &source.IReferenceClock_iface, "Got unexpected clock.\n");
     IReferenceClock_Release(clock);
 
     /* The documentation says that connected filters are preferred, but this

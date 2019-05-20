@@ -918,16 +918,7 @@ static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface)
 
     LIST_FOR_EACH_ENTRY(filter, &This->filters, struct filter, entry)
     {
-        DWORD miscflags;
-        IAMFilterMiscFlags *flags = NULL;
-        IBaseFilter_QueryInterface(filter->filter, &IID_IAMFilterMiscFlags, (void **)&flags);
-        if (!flags)
-            continue;
-        miscflags = IAMFilterMiscFlags_GetMiscFlags(flags);
-        IAMFilterMiscFlags_Release(flags);
-        if (miscflags == AM_FILTER_MISC_FLAGS_IS_RENDERER)
-            IBaseFilter_QueryInterface(filter->filter, &IID_IReferenceClock, (void **)&pClock);
-        if (pClock)
+        if (IBaseFilter_QueryInterface(filter->filter, &IID_IReferenceClock, (void **)&pClock) == S_OK)
             break;
     }
 
