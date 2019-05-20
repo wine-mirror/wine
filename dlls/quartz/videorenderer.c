@@ -47,7 +47,6 @@ typedef struct VideoRendererImpl
     BaseControlVideo baseControlVideo;
 
     IUnknown IUnknown_inner;
-    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IUnknown *outer_unk;
 
     BOOL init;
@@ -659,8 +658,6 @@ static HRESULT WINAPI VideoRendererInner_QueryInterface(IUnknown *iface, REFIID 
         *ppv = &This->baseControlVideo.IBasicVideo_iface;
     else if (IsEqualIID(riid, &IID_IVideoWindow))
         *ppv = &This->baseControlWindow.IVideoWindow_iface;
-    else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        *ppv = &This->IAMFilterMiscFlags_iface;
     else
     {
         HRESULT hr;
@@ -980,42 +977,6 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     BaseControlWindowImpl_IsCursorHidden
 };
 
-static VideoRendererImpl *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
-{
-    return CONTAINING_RECORD(iface, VideoRendererImpl, IAMFilterMiscFlags_iface);
-}
-
-static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid,
-        void **ppv)
-{
-    VideoRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
-}
-
-static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface)
-{
-    VideoRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IUnknown_AddRef(This->outer_unk);
-}
-
-static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface)
-{
-    VideoRendererImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IUnknown_Release(This->outer_unk);
-}
-
-static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface)
-{
-    return AM_FILTER_MISC_FLAGS_IS_RENDERER;
-}
-
-static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl = {
-    AMFilterMiscFlags_QueryInterface,
-    AMFilterMiscFlags_AddRef,
-    AMFilterMiscFlags_Release,
-    AMFilterMiscFlags_GetMiscFlags
-};
-
 HRESULT VideoRenderer_create(IUnknown *pUnkOuter, void **ppv)
 {
     static const WCHAR sink_name[] = {'I','n',0};
@@ -1028,7 +989,6 @@ HRESULT VideoRenderer_create(IUnknown *pUnkOuter, void **ppv)
 
     pVideoRenderer = CoTaskMemAlloc(sizeof(VideoRendererImpl));
     pVideoRenderer->IUnknown_inner.lpVtbl = &IInner_VTable;
-    pVideoRenderer->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
     pVideoRenderer->init = FALSE;
     ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
