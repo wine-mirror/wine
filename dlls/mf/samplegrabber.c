@@ -41,11 +41,13 @@ struct sample_grabber
 {
     IMFMediaSink IMFMediaSink_iface;
     IMFClockStateSink IMFClockStateSink_iface;
+    IMFMediaEventGenerator IMFMediaEventGenerator_iface;
     LONG refcount;
     IMFSampleGrabberSinkCallback *callback;
     IMFMediaType *media_type;
     BOOL is_shut_down;
     IMFStreamSink *stream;
+    IMFMediaEventQueue *event_queue;
     CRITICAL_SECTION cs;
 };
 
@@ -71,6 +73,11 @@ static struct sample_grabber *impl_from_IMFMediaSink(IMFMediaSink *iface)
 static struct sample_grabber *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
 {
     return CONTAINING_RECORD(iface, struct sample_grabber, IMFClockStateSink_iface);
+}
+
+static struct sample_grabber *impl_from_IMFMediaEventGenerator(IMFMediaEventGenerator *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_grabber, IMFMediaEventGenerator_iface);
 }
 
 static struct sample_grabber_stream *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -130,8 +137,11 @@ static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
     if (!refcount)
     {
         IMFMediaSink_Release(stream->sink);
-        IMFMediaEventQueue_Shutdown(stream->event_queue);
-        IMFMediaEventQueue_Release(stream->event_queue);
+        if (stream->event_queue)
+        {
+            IMFMediaEventQueue_Shutdown(stream->event_queue);
+            IMFMediaEventQueue_Release(stream->event_queue);
+        }
         heap_free(stream);
     }
 
@@ -342,6 +352,10 @@ static HRESULT WINAPI sample_grabber_sink_QueryInterface(IMFMediaSink *iface, RE
     {
         *obj = &grabber->IMFClockStateSink_iface;
     }
+    else if (IsEqualIID(riid, &IID_IMFMediaEventGenerator))
+    {
+        *obj = &grabber->IMFMediaEventGenerator_iface;
+    }
     else
     {
         WARN("Unsupported %s.\n", debugstr_guid(riid));
@@ -375,6 +389,11 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
     {
         IMFSampleGrabberSinkCallback_Release(grabber->callback);
         IMFMediaType_Release(grabber->media_type);
+        if (grabber->event_queue)
+        {
+            IMFMediaEventQueue_Shutdown(grabber->event_queue);
+            IMFMediaEventQueue_Release(grabber->event_queue);
+        }
         DeleteCriticalSection(&grabber->cs);
         heap_free(grabber);
     }
@@ -583,6 +602,74 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockSetRate(IMFClockStateSink
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI sample_grabber_events_QueryInterface(IMFMediaEventGenerator *iface, REFIID riid, void **obj)
+{
+    struct sample_grabber *grabber = impl_from_IMFMediaEventGenerator(iface);
+    return IMFMediaSink_QueryInterface(&grabber->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI sample_grabber_events_AddRef(IMFMediaEventGenerator *iface)
+{
+    struct sample_grabber *grabber = impl_from_IMFMediaEventGenerator(iface);
+    return IMFMediaSink_AddRef(&grabber->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI sample_grabber_events_Release(IMFMediaEventGenerator *iface)
+{
+    struct sample_grabber *grabber = impl_from_IMFMediaEventGenerator(iface);
+    return IMFMediaSink_Release(&grabber->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI sample_grabber_events_GetEvent(IMFMediaEventGenerator *iface, DWORD flags, IMFMediaEvent **event)
+{
+    struct sample_grabber *grabber = impl_from_IMFMediaEventGenerator(iface);
+
+    TRACE("%p, %#x, %p.\n", iface, flags, event);
+
+    return IMFMediaEventQueue_GetEvent(grabber->event_queue, flags, event);
+}
+
+static HRESULT WINAPI sample_grabber_events_BeginGetEvent(IMFMediaEventGenerator *iface, IMFAsyncCallback *callback,
+        IUnknown *state)
+{
+    struct sample_grabber *grabber = impl_from_IMFMediaEventGenerator(iface);
+
+    TRACE("%p, %p, %p.\n", iface, callback, state);
+
+    return IMFMediaEventQueue_BeginGetEvent(grabber->event_queue, callback, state);
+}
+
+static HRESULT WINAPI sample_grabber_events_EndGetEvent(IMFMediaEventGenerator *iface, IMFAsyncResult *result,
+        IMFMediaEvent **event)
+{
+    struct sample_grabber *grabber = impl_from_IMFMediaEventGenerator(iface);
+
+    TRACE("%p, %p, %p.\n", iface, result, event);
+
+    return IMFMediaEventQueue_EndGetEvent(grabber->event_queue, result, event);
+}
+
+static HRESULT WINAPI sample_grabber_events_QueueEvent(IMFMediaEventGenerator *iface, MediaEventType event_type,
+        REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
+{
+    struct sample_grabber *grabber = impl_from_IMFMediaEventGenerator(iface);
+
+    TRACE("%p, %u, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+
+    return IMFMediaEventQueue_QueueEventParamVar(grabber->event_queue, event_type, ext_type, hr, value);
+}
+
+static const IMFMediaEventGeneratorVtbl sample_grabber_sink_events_vtbl =
+{
+    sample_grabber_events_QueryInterface,
+    sample_grabber_events_AddRef,
+    sample_grabber_events_Release,
+    sample_grabber_events_GetEvent,
+    sample_grabber_events_BeginGetEvent,
+    sample_grabber_events_EndGetEvent,
+    sample_grabber_events_QueueEvent,
+};
+
 static const IMFClockStateSinkVtbl sample_grabber_clock_sink_vtbl =
 {
     sample_grabber_clock_sink_QueryInterface,
@@ -637,23 +724,31 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
 
     object->IMFMediaSink_iface.lpVtbl = &sample_grabber_sink_vtbl;
     object->IMFClockStateSink_iface.lpVtbl = &sample_grabber_clock_sink_vtbl;
+    object->IMFMediaEventGenerator_iface.lpVtbl = &sample_grabber_sink_events_vtbl;
     object->refcount = 1;
     object->callback = context->callback;
     IMFSampleGrabberSinkCallback_AddRef(object->callback);
     object->media_type = context->media_type;
     IMFMediaType_AddRef(object->media_type);
     InitializeCriticalSection(&object->cs);
+
     if (FAILED(hr = sample_grabber_create_stream(&object->IMFMediaSink_iface, &object->stream)))
-    {
-        IMFMediaSink_Release(&object->IMFMediaSink_iface);
-        return hr;
-    }
+        goto failed;
+
+    if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
+        goto failed;
 
     *obj = (IUnknown *)&object->IMFMediaSink_iface;
 
     TRACE("Created %p.\n", *obj);
 
     return S_OK;
+
+failed:
+
+    IMFMediaSink_Release(&object->IMFMediaSink_iface);
+
+    return hr;
 }
 
 static const struct activate_funcs sample_grabber_activate_funcs =

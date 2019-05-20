@@ -1713,10 +1713,8 @@ static void test_sample_grabber(void)
     IMFClockStateSink_Release(clocksink);
 
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&eg);
-todo_wine
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IMFMediaEventGenerator_Release(eg);
+    IMFMediaEventGenerator_Release(eg);
 
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFPresentationTimeSource, (void **)&unk);
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
