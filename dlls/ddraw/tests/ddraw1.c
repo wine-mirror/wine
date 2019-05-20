@@ -6356,6 +6356,39 @@ static void test_specular_lighting(void)
         {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
         {{0.0f}, {0.0f}, {0.0f}},
         {{0.0f}, {0.0f}, {1.0f}},
+    },
+    point =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        100.0f,
+        0.0f,
+        0.0f, 0.0f, 1.0f,
+    },
+    point_side =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{-1.1f}, {0.0f}, {1.1f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        100.0f,
+        0.0f,
+        1.0f, 0.0f, 0.0f,
+    },
+    point_far =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.1f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        1.0f,
+        0.0f,
+        1.0f, 0.0f, 0.0f,
     };
     static const struct expected_color
     {
@@ -6373,6 +6406,30 @@ static void test_specular_lighting(void)
         {160, 360, 0x003c3c3c},
         {320, 360, 0x00717171},
         {480, 360, 0x003c3c3c},
+    },
+    expected_point_local[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00090909},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00090909},
+        {320, 240, 0x00fafafa},
+        {480, 240, 0x00090909},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00090909},
+        {480, 360, 0x00000000},
+    },
+    expected_point_far[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
     },
     expected_zero[] =
     {
@@ -6396,7 +6453,12 @@ static void test_specular_lighting(void)
     tests[] =
     {
         {&directional, 30.0f, expected_directional_local, ARRAY_SIZE(expected_directional_local)},
+        {&point, 30.0f, expected_point_local, ARRAY_SIZE(expected_point_local)},
+        {&point_side, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point_far, 1.0f, expected_point_far, ARRAY_SIZE(expected_point_far)},
         {&directional, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point_far, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
     };
 
     D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
