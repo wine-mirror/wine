@@ -299,7 +299,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
         if(!info->arg_types)
             return;
         info->arg_info = heap_alloc_zero(sizeof(*info->arg_info) * info->argc);
-        if(!info->arg_types)
+        if(!info->arg_info)
             return;
 
         for(i=0; i < info->argc; i++)
