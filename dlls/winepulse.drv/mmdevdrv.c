@@ -621,6 +621,135 @@ static void silence_buffer(pa_sample_format_t format, BYTE *buffer, UINT32 bytes
     memset(buffer, format == PA_SAMPLE_U8 ? 0x80 : 0, bytes);
 }
 
+static void pulse_free_noop(void *buf)
+{
+}
+
+enum write_buffer_flags
+{
+    WINEPULSE_WRITE_NOFREE = 0x01,
+    WINEPULSE_WRITE_SILENT = 0x02
+};
+
+static int write_buffer(const ACImpl *This, BYTE *buffer, UINT32 bytes,
+                        enum write_buffer_flags flags)
+{
+    float vol[PA_CHANNELS_MAX];
+    BOOL adjust = FALSE;
+    UINT32 i, channels;
+    BYTE *end;
+
+    if (!bytes) return 0;
+    if (This->session->mute || (flags & WINEPULSE_WRITE_SILENT))
+    {
+        silence_buffer(This->ss.format, buffer, bytes);
+        goto write;
+    }
+
+    /* Adjust the buffer based on the volume for each channel */
+    channels = This->ss.channels;
+    for (i = 0; i < channels; i++)
+    {
+        vol[i] = This->vol[i] * This->session->master_vol * This->session->channel_vols[i];
+        adjust |= vol[i] != 1.0f;
+    }
+    if (!adjust) goto write;
+
+    end = buffer + bytes;
+    switch (This->ss.format)
+    {
+#ifndef WORDS_BIGENDIAN
+#define PROCESS_BUFFER(type) do         \
+{                                       \
+    type *p = (type*)buffer;            \
+    do                                  \
+    {                                   \
+        for (i = 0; i < channels; i++)  \
+            p[i] = p[i] * vol[i];       \
+        p += i;                         \
+    } while ((BYTE*)p != end);          \
+} while (0)
+    case PA_SAMPLE_S16LE:
+        PROCESS_BUFFER(INT16);
+        break;
+    case PA_SAMPLE_S32LE:
+        PROCESS_BUFFER(INT32);
+        break;
+    case PA_SAMPLE_FLOAT32LE:
+        PROCESS_BUFFER(float);
+        break;
+#undef PROCESS_BUFFER
+    case PA_SAMPLE_S24_32LE:
+    {
+        UINT32 *p = (UINT32*)buffer;
+        do
+        {
+            for (i = 0; i < channels; i++)
+            {
+                p[i] = (INT32)((INT32)(p[i] << 8) * vol[i]);
+                p[i] >>= 8;
+            }
+            p += i;
+        } while ((BYTE*)p != end);
+        break;
+    }
+    case PA_SAMPLE_S24LE:
+    {
+        /* do it 12 bytes at a time until it is no longer possible */
+        UINT32 *q = (UINT32*)buffer;
+        BYTE *p;
+
+        i = 0;
+        while (end - (BYTE*)q >= 12)
+        {
+            UINT32 v[4], k;
+            v[0] = q[0] << 8;
+            v[1] = q[1] << 16 | (q[0] >> 16 & ~0xff);
+            v[2] = q[2] << 24 | (q[1] >> 8  & ~0xff);
+            v[3] = q[2] & ~0xff;
+            for (k = 0; k < 4; k++)
+            {
+                v[k] = (INT32)((INT32)v[k] * vol[i]);
+                if (++i == channels) i = 0;
+            }
+            *q++ = v[0] >> 8  | (v[1] & ~0xff) << 16;
+            *q++ = v[1] >> 16 | (v[2] & ~0xff) << 8;
+            *q++ = v[2] >> 24 | (v[3] & ~0xff);
+        }
+        p = (BYTE*)q;
+        while (p != end)
+        {
+            UINT32 v = (INT32)((INT32)(p[0] << 8 | p[1] << 16 | p[2] << 24) * vol[i]);
+            *p++ = v >> 8  & 0xff;
+            *p++ = v >> 16 & 0xff;
+            *p++ = v >> 24;
+            if (++i == channels) i = 0;
+        }
+        break;
+    }
+#endif
+    case PA_SAMPLE_U8:
+    {
+        UINT8 *p = (UINT8*)buffer;
+        do
+        {
+            for (i = 0; i < channels; i++)
+                p[i] = (int)((p[i] - 128) * vol[i]) + 128;
+            p += i;
+        } while ((BYTE*)p != end);
+        break;
+    }
+    default:
+        TRACE("Unhandled format %i, not adjusting volume.\n", This->ss.format);
+        break;
+    }
+
+write:
+    return pa_stream_write(This->stream, buffer, bytes,
+                           (flags & WINEPULSE_WRITE_NOFREE) ? pulse_free_noop : NULL,
+                           0, PA_SEEK_RELATIVE);
+}
+
 static void dump_attr(const pa_buffer_attr *attr) {
     TRACE("maxlength: %u\n", attr->maxlength);
     TRACE("minreq: %u\n", attr->minreq);
@@ -681,7 +810,7 @@ static void pulse_wr_callback(pa_stream *s, size_t bytes, void *userdata)
         if(This->lcl_offs_bytes + bytes > This->bufsize_bytes){
             to_write = This->bufsize_bytes - This->lcl_offs_bytes;
             TRACE("writing small chunk of %u bytes\n", to_write);
-            pa_stream_write(This->stream, buf, to_write, NULL, 0, PA_SEEK_RELATIVE);
+            write_buffer(This, buf, to_write, 0);
             This->held_bytes -= to_write;
             to_write = bytes - to_write;
             This->lcl_offs_bytes = 0;
@@ -690,7 +819,7 @@ static void pulse_wr_callback(pa_stream *s, size_t bytes, void *userdata)
             to_write = bytes;
 
         TRACE("writing main chunk of %u bytes\n", to_write);
-        pa_stream_write(This->stream, buf, to_write, NULL, 0, PA_SEEK_RELATIVE);
+        write_buffer(This, buf, to_write, 0);
         This->lcl_offs_bytes += to_write;
         This->lcl_offs_bytes %= This->bufsize_bytes;
         This->held_bytes -= to_write;
@@ -2126,10 +2255,6 @@ static void pulse_wrap_buffer(ACImpl *This, BYTE *buffer, UINT32 written_bytes)
     }
 }
 
-static void pulse_free_noop(void *buf)
-{
-}
-
 static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         IAudioRenderClient *iface, UINT32 written_frames, DWORD flags)
 {
@@ -2181,7 +2306,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
             TRACE("pre-writing %u bytes\n", to_write);
 
-            e = pa_stream_write(This->stream, buffer, to_write, NULL, 0, PA_SEEK_RELATIVE);
+            e = write_buffer(This, buffer, to_write, 0);
             if(e)
                 ERR("pa_stream_write failed: 0x%x\n", e);
 
@@ -2191,15 +2316,12 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         }
 
     }else{
-        if (This->locked_ptr) {
-            if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-                silence_buffer(This->ss.format, This->locked_ptr, written_bytes);
-            pa_stream_write(This->stream, This->locked_ptr, written_bytes, NULL, 0, PA_SEEK_RELATIVE);
-        } else {
-            if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-                silence_buffer(This->ss.format, This->tmp_buffer, written_bytes);
-            pa_stream_write(This->stream, This->tmp_buffer, written_bytes, pulse_free_noop, 0, PA_SEEK_RELATIVE);
-        }
+        enum write_buffer_flags wr_flags = 0;
+
+        if (flags & AUDCLNT_BUFFERFLAGS_SILENT) wr_flags |= WINEPULSE_WRITE_SILENT;
+        if (!This->locked_ptr) wr_flags |= WINEPULSE_WRITE_NOFREE;
+
+        write_buffer(This, This->locked_ptr ? This->locked_ptr : This->tmp_buffer, written_bytes, wr_flags);
         This->pad += written_bytes;
     }
 
