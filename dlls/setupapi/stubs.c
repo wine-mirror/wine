@@ -576,18 +576,6 @@ BOOL WINAPI SetupLogFileA(
 }
 
 /***********************************************************************
- *              SetupDiBuildDriverInfoList  (SETUPAPI.@)
- */
-
-BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA DeviceInfoData, DWORD DriverType)
- {
-    FIXME(": stub %p, %p, %d\n", DeviceInfoSet, DeviceInfoData, DriverType);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
- }
-
-/***********************************************************************
  *              SetupDiDestroyDriverInfoList  (SETUPAPI.@)
  */
 

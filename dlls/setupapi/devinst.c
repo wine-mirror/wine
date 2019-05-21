@@ -103,6 +103,13 @@ static const WCHAR Control[] = {'C','o','n','t','r','o','l',0};
 static const WCHAR Linked[] = {'L','i','n','k','e','d',0};
 static const WCHAR emptyW[] = {0};
 
+struct driver
+{
+    WCHAR inf_path[MAX_PATH];
+    WCHAR manufacturer[LINE_LEN];
+    WCHAR description[LINE_LEN];
+};
+
 /* is used to identify if a DeviceInfoSet pointer is
 valid or not */
 #define SETUP_DEVICE_INFO_SET_MAGIC 0xd00ff056
@@ -127,6 +134,9 @@ struct device
     struct list           entry;
     BOOL                  removed;
     SP_DEVINSTALL_PARAMS_W params;
+    struct driver        *drivers;
+    unsigned int          driver_count;
+    struct driver        *selected_driver;
 };
 
 struct device_iface
@@ -4071,4 +4081,114 @@ BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO dev, PSP_DEVINFO_DATA inf
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+/* Check whether the given hardware or compatible ID matches any of the device's
+ * own hardware or compatible IDs. */
+static BOOL device_matches_id(const struct device *device, const WCHAR *id_type, const WCHAR *id)
+{
+    WCHAR *device_ids;
+    const WCHAR *p;
+    DWORD size;
+
+    if (!RegGetValueW(device->key, NULL, id_type, RRF_RT_REG_MULTI_SZ, NULL, NULL, &size))
+    {
+        device_ids = heap_alloc(size);
+        if (!RegGetValueW(device->key, NULL, id_type, RRF_RT_REG_MULTI_SZ, NULL, device_ids, &size))
+        {
+            for (p = device_ids; *p; p += strlenW(p) + 1)
+            {
+                if (!strcmpiW(p, id))
+                {
+                    heap_free(device_ids);
+                    return TRUE;
+                }
+            }
+        }
+        heap_free(device_ids);
+    }
+
+    return FALSE;
+}
+
+static void enum_compat_drivers_from_file(struct device *device, const WCHAR *path)
+{
+    static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+    WCHAR mfg_name[LINE_LEN], mfg_key[LINE_LEN], mfg_key_ext[LINE_LEN], id[MAX_DEVICE_ID_LEN];
+    INFCONTEXT ctx;
+    DWORD i, j, k;
+    HINF hinf;
+
+    TRACE("Enumerating drivers from %s.\n", debugstr_w(path));
+
+    if ((hinf = SetupOpenInfFileW(path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return;
+
+    for (i = 0; SetupGetLineByIndexW(hinf, manufacturerW, i, &ctx); ++i)
+    {
+        SetupGetStringFieldW(&ctx, 0, mfg_name, ARRAY_SIZE(mfg_name), NULL);
+        if (!SetupGetStringFieldW(&ctx, 1, mfg_key, ARRAY_SIZE(mfg_key), NULL))
+            strcpyW(mfg_key, mfg_name);
+
+        if (!SetupDiGetActualSectionToInstallW(hinf, mfg_key, mfg_key_ext, ARRAY_SIZE(mfg_key_ext), NULL, NULL))
+        {
+            WARN("Failed to find section for %s, skipping.\n", debugstr_w(mfg_key));
+            continue;
+        }
+
+        for (j = 0; SetupGetLineByIndexW(hinf, mfg_key_ext, j, &ctx); ++j)
+        {
+            for (k = 2; SetupGetStringFieldW(&ctx, k, id, ARRAY_SIZE(id), NULL); ++k)
+            {
+                if (device_matches_id(device, HardwareId, id) || device_matches_id(device, CompatibleIDs, id))
+                {
+                    unsigned int count = ++device->driver_count;
+
+                    device->drivers = heap_realloc(device->drivers, count * sizeof(*device->drivers));
+                    strcpyW(device->drivers[count - 1].inf_path, path);
+                    strcpyW(device->drivers[count - 1].manufacturer, mfg_name);
+                    SetupGetStringFieldW(&ctx, 0, device->drivers[count - 1].description,
+                            ARRAY_SIZE(device->drivers[count - 1].description), NULL);
+
+                    TRACE("Found compatible driver: manufacturer %s, desc %s.\n",
+                            debugstr_w(mfg_name), debugstr_w(device->drivers[count - 1].description));
+                }
+            }
+        }
+    }
+
+    SetupCloseInfFile(hinf);
+}
+
+/***********************************************************************
+ *              SetupDiBuildDriverInfoList (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data, DWORD type)
+{
+    struct device *device;
+
+    TRACE("devinfo %p, device_data %p, type %#x.\n", devinfo, device_data, type);
+
+    if (type != SPDIT_COMPATDRIVER)
+    {
+        FIXME("Unhandled type %#x.\n", type);
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (device->params.Flags & DI_ENUMSINGLEINF)
+    {
+        enum_compat_drivers_from_file(device, device->params.DriverPath);
+    }
+    else
+    {
+        FIXME("Searching in a directory is not yet implemented.\n");
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    return TRUE;
 }
