@@ -1150,6 +1150,35 @@ static void TOOLTIPS_FreeToolText(TTTOOL_INFO *toolPtr)
     }
 }
 
+static void TOOLTIPS_SetToolText(TTTOOL_INFO *toolPtr, WCHAR *text, BOOL is_unicode)
+{
+    int len;
+
+    TOOLTIPS_FreeToolText (toolPtr);
+
+    if (IS_INTRESOURCE(text))
+        toolPtr->lpszText = text;
+    else if (text == LPSTR_TEXTCALLBACKW)
+        toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
+    else if (text)
+    {
+        if (is_unicode)
+        {
+            len = lstrlenW(text);
+            toolPtr->lpszText = Alloc ((len + 1) * sizeof(WCHAR));
+            if (toolPtr->lpszText)
+                strcpyW (toolPtr->lpszText, text);
+        }
+        else
+        {
+            len = MultiByteToWideChar(CP_ACP, 0, (char *)text, -1, NULL, 0);
+            toolPtr->lpszText = Alloc (len * sizeof(WCHAR));
+            if (toolPtr->lpszText)
+                MultiByteToWideChar(CP_ACP, 0, (char *)text, -1, toolPtr->lpszText, len);
+        }
+    }
+}
+
 static LRESULT
 TOOLTIPS_DelToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 {
@@ -1663,32 +1692,7 @@ TOOLTIPS_SetToolInfoT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     toolPtr->rect   = ti->rect;
     toolPtr->hinst  = ti->hinst;
 
-    TOOLTIPS_FreeToolText (toolPtr);
-
-    if (IS_INTRESOURCE(ti->lpszText)) {
-	TRACE("set string id %x\n", LOWORD(ti->lpszText));
-	toolPtr->lpszText = ti->lpszText;
-    }
-    else {
-	if (ti->lpszText == LPSTR_TEXTCALLBACKW)
-	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
-	else {
-	    if (ti->lpszText) {
-		if (isW) {
-		    INT len = lstrlenW (ti->lpszText);
-		    toolPtr->lpszText = Alloc ((len+1)*sizeof(WCHAR));
-		    strcpyW (toolPtr->lpszText, ti->lpszText);
-		}
-		else {
-		    INT len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText,
-					      -1, NULL, 0);
-		    toolPtr->lpszText = Alloc (len * sizeof(WCHAR));
-		    MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1,
-					toolPtr->lpszText, len);
-		}
-	    }
-	}
-    }
+    TOOLTIPS_SetToolText (toolPtr, ti->lpszText, isW);
 
     if (ti->cbSize >= TTTOOLINFOW_V2_SIZE)
 	toolPtr->lParam = ti->lParam;
@@ -1783,34 +1787,9 @@ TOOLTIPS_UpdateTipTextT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW
 
     toolPtr = &infoPtr->tools[nTool];
 
-    /* copy tool text */
     toolPtr->hinst  = ti->hinst;
 
-    TOOLTIPS_FreeToolText(toolPtr);
-
-    if (IS_INTRESOURCE(ti->lpszText)){
-	toolPtr->lpszText = ti->lpszText;
-    }
-    else if (ti->lpszText) {
-	if (ti->lpszText == LPSTR_TEXTCALLBACKW)
-	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
-	else {
-	    if (ti->lpszText) {
-		if (isW) {
-		    INT len = lstrlenW (ti->lpszText);
-		    toolPtr->lpszText = Alloc ((len+1)*sizeof(WCHAR));
-		    strcpyW (toolPtr->lpszText, ti->lpszText);
-		}
-		else {
-		    INT len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText,
-						-1, NULL, 0);
-		    toolPtr->lpszText = Alloc (len * sizeof(WCHAR));
-		    MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1,
-					toolPtr->lpszText, len);
-	        }
-	    }
-	}
-    }
+    TOOLTIPS_SetToolText(toolPtr, ti->lpszText, isW);
 
     if(infoPtr->nCurrentTool == -1) return 0;
     /* force repaint */
