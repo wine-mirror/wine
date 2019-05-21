@@ -7088,6 +7088,61 @@ static void test_OnFrameWindowActivate(IUnknown *unk)
     IOleInPlaceActiveObject_Release(inplaceact);
 }
 
+static void test_object_rects(IHTMLDocument2 *doc)
+{
+    IOleInPlaceObjectWindowless *windowlessobj;
+    IOleDocumentView *view;
+    RECT r, doc_rect;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleInPlaceObjectWindowless,
+            (void**)&windowlessobj);
+    ok(hres == S_OK, "QueryInterface(IID_IOleInPlaceObjectWindowless) failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleDocumentView,
+            (void**)&view);
+    ok(hres == S_OK, "QueryInterface(IID_IOleDocumentView) failed: %08x\n", hres);
+
+    r.top = 1;
+    r.left = 2;
+    r.bottom = 200;
+    r.right = 201;
+    hres = IOleInPlaceObjectWindowless_SetObjectRects(windowlessobj, &r, NULL);
+    ok(hres == S_OK, "SetObjectRects failed: %08x\n", hres);
+
+    GetWindowRect(doc_hwnd, &doc_rect);
+    MapWindowPoints(HWND_DESKTOP, container_hwnd, (POINT*)&doc_rect, 2);
+    ok(EqualRect(&r, &doc_rect), "unexpected doc rect %s expected %s\n",
+       wine_dbgstr_rect(&doc_rect), wine_dbgstr_rect(&r));
+
+    memset(&doc_rect, 0xc0, sizeof(doc_rect));
+    hres = IOleDocumentView_GetRect(view, &doc_rect);
+    ok(hres == S_OK, "GetRect failed: %08x\n", hres);
+    ok(EqualRect(&r, &doc_rect), "unexpected doc rect %s expected %s\n",
+       wine_dbgstr_rect(&doc_rect), wine_dbgstr_rect(&r));
+
+    r.top = 3;
+    r.left = 4;
+    r.bottom = 205;
+    r.right = 206;
+    hres = IOleDocumentView_SetRect(view, &r);
+    ok(hres == S_OK, "SetObjectRects failed: %08x\n", hres);
+
+    GetWindowRect(doc_hwnd, &doc_rect);
+    MapWindowPoints(HWND_DESKTOP, container_hwnd, (POINT*)&doc_rect, 2);
+    ok(EqualRect(&r, &doc_rect), "unexpected doc rect %s expected %s\n",
+       wine_dbgstr_rect(&doc_rect), wine_dbgstr_rect(&r));
+
+    memset(&doc_rect, 0xc0, sizeof(doc_rect));
+    hres = IOleDocumentView_GetRect(view, &doc_rect);
+    ok(hres == S_OK, "GetRect failed: %08x\n", hres);
+    ok(EqualRect(&r, &doc_rect), "unexpected doc rect %s expected %s\n",
+       wine_dbgstr_rect(&doc_rect), wine_dbgstr_rect(&r));
+
+    IOleInPlaceObjectWindowless_Release(windowlessobj);
+    IOleDocumentView_Release(view);
+}
+
 static void test_InPlaceDeactivate(IHTMLDocument2 *doc, BOOL expect_call)
 {
     IOleInPlaceObjectWindowless *windowlessobj = NULL;
@@ -7609,6 +7664,7 @@ static void test_HTMLDocument(BOOL do_load, BOOL mime)
     test_Window(doc, TRUE);
     test_external(doc, TRUE);
     test_target_container(doc);
+    test_object_rects(doc);
 
     test_UIDeactivate();
     test_OleCommandTarget(doc);

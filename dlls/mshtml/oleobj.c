@@ -1171,11 +1171,18 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_UIDeactivate(IOleInPlaceObjectW
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_SetObjectRects(IOleInPlaceObjectWindowless *iface,
-        LPCRECT lprcPosRect, LPCRECT lprcClipRect)
+        const RECT *pos, const RECT *clip)
 {
     HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
-    FIXME("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
-    return E_NOTIMPL;
+    RECT r;
+
+    TRACE("(%p)->(%p %p)\n", This, wine_dbgstr_rect(pos), wine_dbgstr_rect(clip));
+
+    if(clip && !EqualRect(clip, pos))
+        FIXME("Ignoring clip rect %s\n", wine_dbgstr_rect(clip));
+
+    r = *pos;
+    return IOleDocumentView_SetRect(&This->doc_obj->IOleDocumentView_iface, &r);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_ReactivateAndUndo(IOleInPlaceObjectWindowless *iface)
