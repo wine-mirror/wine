@@ -180,9 +180,22 @@ static unsigned int get_weight(WCHAR ch, enum weight type)
     }
 }
 
+static void inc_str_pos(const WCHAR **str, int *len, int *dpos, int *dlen)
+{
+    (*dpos)++;
+    if (*dpos == *dlen)
+    {
+        *dpos = *dlen = 0;
+        (*str)++;
+        (*len)--;
+    }
+}
+
 static inline int compare_weights(int flags, const WCHAR *str1, int len1,
                                   const WCHAR *str2, int len2, enum weight type)
 {
+    int dpos1 = 0, dpos2 = 0, dlen1 = 0, dlen2 = 0;
+    WCHAR dstr1[4], dstr2[4];
     unsigned int ce1, ce2;
 
     /* 32-bit collation element table format:
@@ -191,20 +204,21 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
      */
     while (len1 > 0 && len2 > 0)
     {
+        if (!dlen1) dlen1 = wine_decompose(0, *str1, dstr1, 4);
+        if (!dlen2) dlen2 = wine_decompose(0, *str2, dstr2, 4);
+
         if (flags & NORM_IGNORESYMBOLS)
         {
             int skip = 0;
             /* FIXME: not tested */
-            if (get_char_typeW(*str1) & (C1_PUNCT | C1_SPACE))
+            if (get_char_typeW(dstr1[dpos1]) & (C1_PUNCT | C1_SPACE))
             {
-                str1++;
-                len1--;
+                inc_str_pos(&str1, &len1, &dpos1, &dlen1);
                 skip = 1;
             }
-            if (get_char_typeW(*str2) & (C1_PUNCT | C1_SPACE))
+            if (!dlen2 && get_char_typeW(dstr2[dpos2]) & (C1_PUNCT | C1_SPACE))
             {
-                str2++;
-                len2--;
+                inc_str_pos(&str2, &len2, &dpos2, &dlen2);
                 skip = 1;
             }
             if (skip) continue;
@@ -215,32 +229,28 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         */
         if (type == UNICODE_WEIGHT && !(flags & SORT_STRINGSORT))
         {
-            if (*str1 == '-' || *str1 == '\'')
+            if (dstr1[dpos1] == '-' || dstr1[dpos1] == '\'')
             {
-                if (*str2 != '-' && *str2 != '\'')
+                if (dstr2[dpos2] != '-' && dstr2[dpos2] != '\'')
                 {
-                    str1++;
-                    len1--;
+                    inc_str_pos(&str1, &len1, &dpos1, &dlen1);
                     continue;
                 }
             }
-            else if (*str2 == '-' || *str2 == '\'')
+            else if (dstr2[dpos2] == '-' || dstr2[dpos2] == '\'')
             {
-                str2++;
-                len2--;
+                inc_str_pos(&str2, &len2, &dpos2, &dlen2);
                 continue;
             }
         }
 
-        ce1 = get_weight(*str1, type);
-        ce2 = get_weight(*str2, type);
+        ce1 = get_weight(dstr1[dpos1], type);
+        ce2 = get_weight(dstr2[dpos2], type);
 
         if (ce1 - ce2) return ce1 - ce2;
 
-        str1++;
-        str2++;
-        len1--;
-        len2--;
+        inc_str_pos(&str1, &len1, &dpos1, &dlen1);
+        inc_str_pos(&str2, &len2, &dpos2, &dlen2);
     }
     while (len1 && !*str1)
     {

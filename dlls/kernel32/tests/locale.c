@@ -1975,7 +1975,7 @@ static void test_CompareStringA(void)
 
     /* \xB9 character lies between a and b */
     ret = CompareStringA(lcid, 0, "a", 1, "\xB9", 1);
-    todo_wine ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be greater than \'a\'\n");
+    ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be greater than \'a\'\n");
     ret = CompareStringA(lcid, 0, "\xB9", 1, "b", 1);
     ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be smaller than \'b\'\n");
 
@@ -2047,14 +2047,14 @@ static void test_CompareStringW(void)
     ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
     todo_wine ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
     ret = CompareStringW(CP_ACP, 0, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
-    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 
     ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 3, A_ACUTE_BC, 4);
-    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
     ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
     todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
     ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
-    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 
     ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_NULL_BC, 4);
     todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_LESS_THAN, got %d\n", ret);
@@ -2098,7 +2098,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 3 */
       "tr-TR", 0,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 4 */
       "tr-TR", 0,
@@ -2115,7 +2115,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 7 */
       "tr-TR", NORM_IGNORECASE,
-      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 8 */
       "tr-TR", NORM_IGNORECASE,
@@ -2123,7 +2123,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 9 */
       "tr-TR", NORM_IGNORECASE,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 10 */
       "tr-TR", NORM_IGNORECASE,
@@ -2148,7 +2148,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 15 */
       "tr-TR", NORM_LINGUISTIC_CASING,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 16 */
       "tr-TR", NORM_LINGUISTIC_CASING,
@@ -2173,7 +2173,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 21 */
       "tr-TR", LINGUISTIC_IGNORECASE,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 22 */
       "tr-TR", LINGUISTIC_IGNORECASE,
@@ -2190,7 +2190,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 25 */
       "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
-      {'i',0},   {0x130,0}, CSTR_EQUAL,        CSTR_LESS_THAN,    FALSE
+      {'i',0},   {0x130,0}, CSTR_EQUAL,        CSTR_LESS_THAN,    TRUE
     },
     { /* 26 */
       "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
@@ -2198,7 +2198,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 27 */
       "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
      },
     { /* 28 */
       "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
@@ -2223,7 +2223,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 33 */
       "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 34 */
       "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
