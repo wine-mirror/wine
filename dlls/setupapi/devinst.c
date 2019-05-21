@@ -4111,10 +4111,37 @@ static BOOL device_matches_id(const struct device *device, const WCHAR *id_type,
     return FALSE;
 }
 
+static BOOL version_is_compatible(const WCHAR *version)
+{
+    const WCHAR *machine_ext = NtPlatformExtension + 1, *p;
+    size_t len = strlenW(version);
+    BOOL wow64;
+
+    /* We are only concerned with architecture. */
+    if ((p = strchrW(version, '.')))
+        len = p - version;
+
+    if (!strncmpiW(version, NtExtension + 1, len))
+        return TRUE;
+
+    if (IsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    {
+#ifdef __i386__
+        static const WCHAR wow_ext[] = {'N','T','a','m','d','6','4',0};
+        machine_ext = wow_ext;
+#elif defined(__arm__)
+        static const WCHAR wow_ext[] = {'N','T','a','r','m','6','4',0};
+        machine_ext = wow_ext;
+#endif
+    }
+
+    return !strncmpiW(version, machine_ext, len);
+}
+
 static void enum_compat_drivers_from_file(struct device *device, const WCHAR *path)
 {
     static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
-    WCHAR mfg_name[LINE_LEN], mfg_key[LINE_LEN], mfg_key_ext[LINE_LEN], id[MAX_DEVICE_ID_LEN];
+    WCHAR mfg_name[LINE_LEN], mfg_key[LINE_LEN], mfg_key_ext[LINE_LEN], id[MAX_DEVICE_ID_LEN], version[MAX_DEVICE_ID_LEN];
     INFCONTEXT ctx;
     DWORD i, j, k;
     HINF hinf;
@@ -4129,6 +4156,21 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
         SetupGetStringFieldW(&ctx, 0, mfg_name, ARRAY_SIZE(mfg_name), NULL);
         if (!SetupGetStringFieldW(&ctx, 1, mfg_key, ARRAY_SIZE(mfg_key), NULL))
             strcpyW(mfg_key, mfg_name);
+
+        if (SetupGetFieldCount(&ctx) >= 2)
+        {
+            BOOL compatible = FALSE;
+            for (j = 2; SetupGetStringFieldW(&ctx, j, version, ARRAY_SIZE(version), NULL); ++j)
+            {
+                if (version_is_compatible(version))
+                {
+                    compatible = TRUE;
+                    break;
+                }
+            }
+            if (!compatible)
+                continue;
+        }
 
         if (!SetupDiGetActualSectionToInstallW(hinf, mfg_key, mfg_key_ext, ARRAY_SIZE(mfg_key_ext), NULL, NULL))
         {
