@@ -709,6 +709,8 @@
 @ stdcall -arch=win32 GetExeVersion16()
 @ stdcall -arch=win32 GetExpWinVer16(long)
 @ stdcall -arch=win32 GetModuleHandle16(str)
+@ stdcall -arch=win32 GetSelectorBase(long)
+@ stdcall -arch=win32 GetSelectorLimit16(long)
 @ stdcall -arch=win32 GlobalReAlloc16(long long long)
 @ stdcall -arch=win32 InitTask16(ptr)
 @ stdcall -arch=win32 IsBadReadPtr16(long long)
