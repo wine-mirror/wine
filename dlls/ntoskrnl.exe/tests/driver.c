@@ -346,6 +346,7 @@ static void test_current_thread(BOOL is_system)
         ok(current != *pPsInitialSystemProcess, "current == PsInitialSystemProcess\n");
 
     ok(PsGetProcessId(current) == PsGetCurrentProcessId(), "process IDs don't match\n");
+    ok(PsGetThreadProcessId((PETHREAD)KeGetCurrentThread()) == PsGetCurrentProcessId(), "process IDs don't match\n");
 
     thread = PsGetCurrentThread();
     ret = wait_single( thread, 0 );

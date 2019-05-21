@@ -902,7 +902,7 @@
 @ stub PsGetThreadHardErrorsAreDisabled
 @ stdcall PsGetThreadId(ptr)
 @ stub PsGetThreadProcess
-@ stub PsGetThreadProcessId
+@ stdcall PsGetThreadProcessId(ptr)
 @ stub PsGetThreadSessionId
 @ stub PsGetThreadTeb
 @ stub PsGetThreadWin32Thread

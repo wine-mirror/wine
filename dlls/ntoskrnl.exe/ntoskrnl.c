@@ -2688,6 +2688,15 @@ HANDLE WINAPI PsGetThreadId(PETHREAD thread)
     return thread->kthread.id.UniqueThread;
 }
 
+/*********************************************************************
+ *           PsGetThreadProcessId    (NTOSKRNL.@)
+ */
+HANDLE WINAPI PsGetThreadProcessId( PETHREAD thread )
+{
+    TRACE( "%p -> %p\n", thread, thread->kthread.id.UniqueProcess );
+    return thread->kthread.id.UniqueProcess;
+}
+
 /***********************************************************************
  *           KeInsertQueue   (NTOSKRNL.EXE.@)
  */
