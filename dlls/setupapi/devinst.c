@@ -4325,3 +4325,29 @@ BOOL WINAPI SetupDiEnumDriverInfoA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
             sizeof(driver_data->ProviderName), NULL, NULL);
     return ret;
 }
+
+/***********************************************************************
+ *              SetupDiSelectBestCompatDrv (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiSelectBestCompatDrv(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
+{
+    struct device *device;
+
+    TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (!device->driver_count)
+    {
+        ERR("No compatible drivers were enumerated for device %s.\n", debugstr_w(device->instanceId));
+        SetLastError(ERROR_NO_COMPAT_DRIVERS);
+        return FALSE;
+    }
+
+    WARN("Semi-stub, selecting the first available driver.\n");
+
+    device->selected_driver = &device->drivers[0];
+
+    return TRUE;
+}
