@@ -1056,14 +1056,14 @@
 @ stdcall PathCreateFromUrlA(str ptr ptr long) shlwapi.PathCreateFromUrlA
 @ stdcall PathCreateFromUrlAlloc(wstr ptr long) shlwapi.PathCreateFromUrlAlloc
 @ stdcall PathCreateFromUrlW(wstr ptr ptr long) shlwapi.PathCreateFromUrlW
-@ stdcall PathFileExistsA(str) shlwapi.PathFileExistsA
-@ stdcall PathFileExistsW(wstr) shlwapi.PathFileExistsW
+@ stdcall PathFileExistsA(str)
+@ stdcall PathFileExistsW(wstr)
 @ stdcall PathFindExtensionA(str)
 @ stdcall PathFindExtensionW(wstr)
 @ stdcall PathFindFileNameA(str)
 @ stdcall PathFindFileNameW(wstr)
-@ stdcall PathFindNextComponentA(str) shlwapi.PathFindNextComponentA
-@ stdcall PathFindNextComponentW(wstr) shlwapi.PathFindNextComponentW
+@ stdcall PathFindNextComponentA(str)
+@ stdcall PathFindNextComponentW(wstr)
 @ stdcall PathGetArgsA(str)
 @ stdcall PathGetArgsW(wstr)
 @ stdcall PathGetCharTypeA(long)
@@ -1080,8 +1080,8 @@
 @ stdcall PathIsRelativeW(wstr)
 @ stdcall PathIsRootA(str)
 @ stdcall PathIsRootW(wstr)
-@ stdcall PathIsSameRootA(str str) shlwapi.PathIsSameRootA
-@ stdcall PathIsSameRootW(wstr wstr) shlwapi.PathIsSameRootW
+@ stdcall PathIsSameRootA(str str)
+@ stdcall PathIsSameRootW(wstr wstr)
 @ stdcall PathIsUNCA(str)
 @ stdcall PathIsUNCEx(wstr ptr)
 @ stdcall PathIsUNCServerA(str)
@@ -1093,16 +1093,16 @@
 @ stdcall PathIsURLW(wstr) shlwapi.PathIsURLW
 @ stdcall PathIsValidCharA(long long)
 @ stdcall PathIsValidCharW(long long)
-@ stdcall PathMatchSpecA(str str) shlwapi.PathMatchSpecA
+@ stdcall PathMatchSpecA(str str)
 # @ stub PathMatchSpecExA
 # @ stub PathMatchSpecExW
-@ stdcall PathMatchSpecW(wstr wstr) shlwapi.PathMatchSpecW
+@ stdcall PathMatchSpecW(wstr wstr)
 @ stdcall PathParseIconLocationA(str) shlwapi.PathParseIconLocationA
 @ stdcall PathParseIconLocationW(wstr) shlwapi.PathParseIconLocationW
-@ stdcall PathQuoteSpacesA(str) shlwapi.PathQuoteSpacesA
-@ stdcall PathQuoteSpacesW(wstr) shlwapi.PathQuoteSpacesW
-@ stdcall PathRelativePathToA(ptr str long str long) shlwapi.PathRelativePathToA
-@ stdcall PathRelativePathToW(ptr wstr long wstr long) shlwapi.PathRelativePathToW
+@ stdcall PathQuoteSpacesA(str)
+@ stdcall PathQuoteSpacesW(wstr)
+@ stdcall PathRelativePathToA(ptr str long str long)
+@ stdcall PathRelativePathToW(ptr wstr long wstr long)
 @ stdcall PathRemoveBackslashA(str)
 @ stdcall PathRemoveBackslashW(wstr)
 @ stdcall PathRemoveBlanksA(str)
@@ -1113,13 +1113,13 @@
 @ stdcall PathRemoveFileSpecW(wstr)
 @ stdcall PathRenameExtensionA(str str)
 @ stdcall PathRenameExtensionW(wstr wstr)
-@ stdcall PathSearchAndQualifyA(str ptr long) shlwapi.PathSearchAndQualifyA
-@ stdcall PathSearchAndQualifyW(wstr ptr long) shlwapi.PathSearchAndQualifyW
-@ stdcall PathSkipRootA(str) shlwapi.PathSkipRootA
-@ stdcall PathSkipRootW(wstr) shlwapi.PathSkipRootW
-@ stdcall PathStripPathA(str) shlwapi.PathStripPathA
-@ stdcall PathStripPathW(wstr) shlwapi.PathStripPathW
-@ stdcall PathStripToRootA(str) shlwapi.PathStripToRootA
+@ stdcall PathSearchAndQualifyA(str ptr long)
+@ stdcall PathSearchAndQualifyW(wstr ptr long)
+@ stdcall PathSkipRootA(str)
+@ stdcall PathSkipRootW(wstr)
+@ stdcall PathStripPathA(str)
+@ stdcall PathStripPathW(wstr)
+@ stdcall PathStripToRootA(str)
 @ stdcall PathStripToRootW(wstr)
 @ stdcall PathUnExpandEnvStringsA(str ptr long) shlwapi.PathUnExpandEnvStringsA
 @ stdcall PathUnExpandEnvStringsW(wstr ptr long) shlwapi.PathUnExpandEnvStringsW

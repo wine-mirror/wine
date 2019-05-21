@@ -2176,3 +2176,425 @@ BOOL WINAPI PathIsValidCharW(WCHAR c, DWORD class)
 
     return class & path_charclass[c];
 }
+
+char * WINAPI PathFindNextComponentA(const char *path)
+{
+    char *slash;
+
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path || !*path)
+        return NULL;
+
+    if ((slash = StrChrA(path, '\\')))
+    {
+        if (slash[1] == '\\')
+            slash++;
+        return slash + 1;
+    }
+
+    return (char *)path + strlen(path);
+}
+
+WCHAR * WINAPI PathFindNextComponentW(const WCHAR *path)
+{
+    WCHAR *slash;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path || !*path)
+        return NULL;
+
+    if ((slash = StrChrW(path, '\\')))
+    {
+        if (slash[1] == '\\')
+            slash++;
+        return slash + 1;
+    }
+
+    return (WCHAR *)path + strlenW(path);
+}
+
+char * WINAPI PathSkipRootA(const char *path)
+{
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path || !*path)
+        return NULL;
+
+    if (*path == '\\' && path[1] == '\\')
+    {
+        /* Network share: skip share server and mount point */
+        path += 2;
+        if ((path = StrChrA(path, '\\')) && (path = StrChrA(path + 1, '\\')))
+            path++;
+        return (char *)path;
+    }
+
+    if (IsDBCSLeadByte(*path))
+        return NULL;
+
+    /* Check x:\ */
+    if (path[0] && path[1] == ':' && path[2] == '\\')
+        return (char *)path + 3;
+
+    return NULL;
+}
+
+WCHAR * WINAPI PathSkipRootW(const WCHAR *path)
+{
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path || !*path)
+        return NULL;
+
+    if (*path == '\\' && path[1] == '\\')
+    {
+        /* Network share: skip share server and mount point */
+        path += 2;
+        if ((path = StrChrW(path, '\\')) && (path = StrChrW(path + 1, '\\')))
+            path++;
+        return (WCHAR *)path;
+    }
+
+    /* Check x:\ */
+    if (path[0] && path[1] == ':' && path[2] == '\\')
+        return (WCHAR *)path + 3;
+
+    return NULL;
+}
+
+void WINAPI PathStripPathA(char *path)
+{
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (path)
+    {
+        char *filename = PathFindFileNameA(path);
+        if (filename != path)
+            RtlMoveMemory(path, filename, strlen(filename) + 1);
+    }
+}
+
+void WINAPI PathStripPathW(WCHAR *path)
+{
+    WCHAR *filename;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+    filename = PathFindFileNameW(path);
+    if (filename != path)
+        RtlMoveMemory(path, filename, (strlenW(filename) + 1) * sizeof(WCHAR));
+}
+
+BOOL WINAPI PathSearchAndQualifyA(const char *path, char *buffer, UINT length)
+{
+    TRACE("%s, %p, %u\n", wine_dbgstr_a(path), buffer, length);
+
+    if (SearchPathA(NULL, path, NULL, length, buffer, NULL))
+        return TRUE;
+
+    return !!GetFullPathNameA(path, length, buffer, NULL);
+}
+
+BOOL WINAPI PathSearchAndQualifyW(const WCHAR *path, WCHAR *buffer, UINT length)
+{
+    TRACE("%s, %p, %u\n", wine_dbgstr_w(path), buffer, length);
+
+    if (SearchPathW(NULL, path, NULL, length, buffer, NULL))
+        return TRUE;
+    return !!GetFullPathNameW(path, length, buffer, NULL);
+}
+
+BOOL WINAPI PathRelativePathToA(char *path, const char *from, DWORD attributes_from, const char *to,
+        DWORD attributes_to)
+{
+    WCHAR pathW[MAX_PATH], fromW[MAX_PATH], toW[MAX_PATH];
+    BOOL ret;
+
+    TRACE("%p, %s, %#x, %s, %#x\n", path, wine_dbgstr_a(from), attributes_from, wine_dbgstr_a(to), attributes_to);
+
+    if (!path || !from || !to)
+        return FALSE;
+
+    MultiByteToWideChar(CP_ACP, 0, from, -1, fromW, ARRAY_SIZE(fromW));
+    MultiByteToWideChar(CP_ACP, 0, to, -1, toW, ARRAY_SIZE(toW));
+    ret = PathRelativePathToW(pathW, fromW, attributes_from, toW, attributes_to);
+    WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, MAX_PATH, 0, 0);
+
+    return ret;
+}
+
+BOOL WINAPI PathRelativePathToW(WCHAR *path, const WCHAR *from, DWORD attributes_from, const WCHAR *to,
+        DWORD attributes_to)
+{
+    static const WCHAR szPrevDirSlash[] = { '.', '.', '\\', '\0' };
+    static const WCHAR szPrevDir[] = { '.', '.', '\0' };
+    WCHAR fromW[MAX_PATH], toW[MAX_PATH];
+    DWORD len;
+
+    TRACE("%p, %s, %#x, %s, %#x\n", path, wine_dbgstr_w(from), attributes_from, wine_dbgstr_w(to), attributes_to);
+
+    if (!path || !from || !to)
+        return FALSE;
+
+    *path = '\0';
+    lstrcpynW(fromW, from, ARRAY_SIZE(fromW));
+    lstrcpynW(toW, to, ARRAY_SIZE(toW));
+
+    if (!(attributes_from & FILE_ATTRIBUTE_DIRECTORY))
+        PathRemoveFileSpecW(fromW);
+    if (!(attributes_to & FILE_ATTRIBUTE_DIRECTORY))
+        PathRemoveFileSpecW(toW);
+
+    /* Paths can only be relative if they have a common root */
+    if (!(len = PathCommonPrefixW(fromW, toW, 0)))
+        return FALSE;
+
+    /* Strip off 'from' components to the root, by adding "..\" */
+    from = fromW + len;
+    if (!*from)
+    {
+        path[0] = '.';
+        path[1] = '\0';
+    }
+    if (*from == '\\')
+        from++;
+
+    while (*from)
+    {
+        from = PathFindNextComponentW(from);
+        strcatW(path, *from ? szPrevDirSlash : szPrevDir);
+    }
+
+    /* From the root add the components of 'to' */
+    to += len;
+    /* We check to[-1] to avoid skipping end of string. See the notes for this function. */
+    if (*to && to[-1])
+    {
+        if (*to != '\\')
+            to--;
+        len = strlenW(path);
+        if (len + strlenW(to) >= MAX_PATH)
+        {
+            *path = '\0';
+            return FALSE;
+        }
+        strcpyW(path + len, to);
+    }
+
+    return TRUE;
+}
+
+static BOOL path_match_maskA(const char *name, const char *mask)
+{
+    while (*name && *mask && *mask != ';')
+    {
+        if (*mask == '*')
+        {
+            do
+            {
+                if (path_match_maskA(name, mask + 1))
+                    return TRUE;  /* try substrings */
+            } while (*name++);
+            return FALSE;
+        }
+
+        if (toupper(*mask) != toupper(*name) && *mask != '?')
+            return FALSE;
+
+        name = CharNextA(name);
+        mask = CharNextA(mask);
+    }
+
+    if (!*name)
+    {
+        while (*mask == '*')
+            mask++;
+        if (!*mask || *mask == ';')
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+
+BOOL WINAPI PathMatchSpecA(const char *path, const char *mask)
+{
+    TRACE("%s, %s\n", wine_dbgstr_a(path), wine_dbgstr_a(mask));
+
+    if (!lstrcmpA(mask, "*.*"))
+        return TRUE; /* Matches every path */
+
+    while (*mask)
+    {
+        while (*mask == ' ')
+            mask++; /* Eat leading spaces */
+
+        if (path_match_maskA(path, mask))
+            return TRUE; /* Matches the current mask */
+
+        while (*mask && *mask != ';')
+            mask = CharNextA(mask); /* masks separated by ';' */
+
+        if (*mask == ';')
+            mask++;
+    }
+
+    return FALSE;
+}
+
+static BOOL path_match_maskW(const WCHAR *name, const WCHAR *mask)
+{
+    while (*name && *mask && *mask != ';')
+    {
+        if (*mask == '*')
+        {
+            do
+            {
+                if (path_match_maskW(name, mask + 1))
+                    return TRUE;  /* try substrings */
+            } while (*name++);
+            return FALSE;
+        }
+
+        if (toupperW(*mask) != toupperW(*name) && *mask != '?')
+            return FALSE;
+
+        name++;
+        mask++;
+    }
+
+    if (!*name)
+    {
+        while (*mask == '*')
+            mask++;
+        if (!*mask || *mask == ';')
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL WINAPI PathMatchSpecW(const WCHAR *path, const WCHAR *mask)
+{
+    static const WCHAR maskallW[] = {'*','.','*',0};
+
+    TRACE("%s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(mask));
+
+    if (!lstrcmpW(mask, maskallW))
+        return TRUE; /* Matches every path */
+
+    while (*mask)
+    {
+        while (*mask == ' ')
+            mask++; /* Eat leading spaces */
+
+        if (path_match_maskW(path, mask))
+            return TRUE; /* Matches the current path */
+
+        while (*mask && *mask != ';')
+            mask++; /* masks separated by ';' */
+
+        if (*mask == ';')
+            mask++;
+    }
+
+    return FALSE;
+}
+
+void WINAPI PathQuoteSpacesA(char *path)
+{
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (path && StrChrA(path, ' '))
+    {
+        size_t len = strlen(path) + 1;
+
+        if (len + 2 < MAX_PATH)
+        {
+            memmove(path + 1, path, len);
+            path[0] = '"';
+            path[len] = '"';
+            path[len + 1] = '\0';
+        }
+    }
+}
+
+void WINAPI PathQuoteSpacesW(WCHAR *path)
+{
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (path && StrChrW(path, ' '))
+    {
+        int len = strlenW(path) + 1;
+
+        if (len + 2 < MAX_PATH)
+        {
+            memmove(path + 1, path, len * sizeof(WCHAR));
+            path[0] = '"';
+            path[len] = '"';
+            path[len + 1] = '\0';
+        }
+    }
+}
+
+BOOL WINAPI PathIsSameRootA(const char *path1, const char *path2)
+{
+    const char *start;
+    int len;
+
+    TRACE("%s, %s\n", wine_dbgstr_a(path1), wine_dbgstr_a(path2));
+
+    if (!path1 || !path2 || !(start = PathSkipRootA(path1)))
+        return FALSE;
+
+    len = PathCommonPrefixA(path1, path2, NULL) + 1;
+    return start - path1 <= len;
+}
+
+BOOL WINAPI PathIsSameRootW(const WCHAR *path1, const WCHAR *path2)
+{
+    const WCHAR *start;
+    int len;
+
+    TRACE("%s, %s\n", wine_dbgstr_w(path1), wine_dbgstr_w(path2));
+
+    if (!path1 || !path2 || !(start = PathSkipRootW(path1)))
+        return FALSE;
+
+    len = PathCommonPrefixW(path1, path2, NULL) + 1;
+    return start - path1 <= len;
+}
+
+BOOL WINAPI PathFileExistsA(const char *path)
+{
+    UINT prev_mode;
+    DWORD attrs;
+
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path)
+        return FALSE;
+
+    /* Prevent a dialog box if path is on a disk that has been ejected. */
+    prev_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
+    attrs = GetFileAttributesA(path);
+    SetErrorMode(prev_mode);
+    return attrs != INVALID_FILE_ATTRIBUTES;
+}
+
+BOOL WINAPI PathFileExistsW(const WCHAR *path)
+{
+    UINT prev_mode;
+    DWORD attrs;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path)
+        return FALSE;
+
+    prev_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
+    attrs = GetFileAttributesW(path);
+    SetErrorMode(prev_mode);
+    return attrs != INVALID_FILE_ATTRIBUTES;
+}
