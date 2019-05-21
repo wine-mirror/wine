@@ -245,22 +245,38 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         }
 
         ce1 = get_weight(dstr1[dpos1], type);
+        if (!ce1)
+        {
+            inc_str_pos(&str1, &len1, &dpos1, &dlen1);
+            continue;
+        }
         ce2 = get_weight(dstr2[dpos2], type);
+        if (!ce2)
+        {
+            inc_str_pos(&str2, &len2, &dpos2, &dlen2);
+            continue;
+        }
 
         if (ce1 - ce2) return ce1 - ce2;
 
         inc_str_pos(&str1, &len1, &dpos1, &dlen1);
         inc_str_pos(&str2, &len2, &dpos2, &dlen2);
     }
-    while (len1 && !*str1)
+    while (len1)
     {
-        str1++;
-        len1--;
+        if (!dlen1) dlen1 = wine_decompose(0, *str1, dstr1, 4);
+
+        ce1 = get_weight(dstr1[dpos1], type);
+        if (ce1) break;
+        inc_str_pos(&str1, &len1, &dpos1, &dlen1);
     }
-    while (len2 && !*str2)
+    while (len2)
     {
-        str2++;
-        len2--;
+        if (!dlen2) dlen2 = wine_decompose(0, *str2, dstr2, 4);
+
+        ce2 = get_weight(dstr2[dpos2], type);
+        if (ce2) break;
+        inc_str_pos(&str2, &len2, &dpos2, &dlen2);
     }
     return len1 - len2;
 }
