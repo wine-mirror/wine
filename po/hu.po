@@ -6904,6 +6904,12 @@ msgstr "Levélküldés"
 msgid "Begin request has already been made.\n"
 msgstr ""
 
+#: mferror.mc:599
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Sink has not been finalized.\n"
+msgstr "UUID objektum nem található.\n"
+
 #: mferror.mc:32
 #, fuzzy
 #| msgid "Installation platform not supported.\n"
@@ -7293,78 +7299,140 @@ msgid "Unsupported media source characteristics.\n"
 msgstr "Nem támogatott típus.\n"
 
 #: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Regisztrációs adatbázis helyreállítódott.\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "Domain already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "Domain már létezik.\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "Műveletet a felhasználó megszakította.\n"
+
+#: mferror.mc:571
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "Mappa nem üres.\n"
+
+#: mferror.mc:578
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Sink was already stopped.\n"
+msgstr "Osztály már létezik.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No streams were selected for the sink.\n"
+msgstr "Nincs adat detektálva.\n"
+
+#: mferror.mc:606
+#, fuzzy
+#| msgid "File name is too long.\n"
+msgid "Metadata was too long.\n"
+msgstr "Fájlnév túl hosszú.\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
 #, fuzzy
 #| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
 msgstr "LAN kapcsolat érvénytelen.\n"
 
-#: mferror.mc:543
+#: mferror.mc:634
 #, fuzzy
 #| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
 msgstr "Nem találom a nyomtatót."
 
-#: mferror.mc:550
+#: mferror.mc:641
 #, fuzzy
 #| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
 msgstr "Modul nem található.\n"
 
-#: mferror.mc:557
+#: mferror.mc:648
 #, fuzzy
 #| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
 msgstr "Nem lehet elérni a hívás kezelőt.\n"
 
-#: mferror.mc:564
+#: mferror.mc:655
 #, fuzzy
 #| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
 msgstr "Kérés nem támogatott.\n"
 
-#: mferror.mc:571
+#: mferror.mc:662
 #, fuzzy
 #| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
 msgstr "Érvénytelen csoport beállítások.\n"
 
-#: mferror.mc:578
+#: mferror.mc:669
 msgid "Found loops in topology.\n"
 msgstr ""
 
-#: mferror.mc:585
+#: mferror.mc:676
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
 msgstr "Hiányzó tulajdonság a telepítési forráshoz.\n"
 
-#: mferror.mc:592
+#: mferror.mc:683
 #, fuzzy
 #| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
 msgstr "Hiányzó index.\n"
 
-#: mferror.mc:599
+#: mferror.mc:690
 #, fuzzy
 #| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
 msgstr "Az eszköz nincs csatlakoztatva.\n"
 
-#: mferror.mc:606
+#: mferror.mc:697
 #, fuzzy
 #| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
 msgstr "Hiányzó index.\n"
 
-#: mferror.mc:613
+#: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
 msgstr ""
 
-#: mferror.mc:620
+#: mferror.mc:711
 msgid "Clock has no time source set.\n"
 msgstr ""
 
-#: mferror.mc:627
+#: mferror.mc:718
 #, fuzzy
 #| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"

@@ -6814,6 +6814,10 @@ msgstr "Send Mail"
 msgid "Begin request has already been made.\n"
 msgstr "Begin request has already been made.\n"
 
+#: mferror.mc:599
+msgid "Sink has not been finalized.\n"
+msgstr "Sink has not been finalized.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "Media Foundation platform is not initialized.\n"
@@ -7087,58 +7091,106 @@ msgid "Unsupported media source characteristics.\n"
 msgstr "Unsupported media source characteristics.\n"
 
 #: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr "Stream sink was removed.\n"
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr "Stream sinks are out of sync.\n"
+
+#: mferror.mc:550
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Media sink stream sinks set is fixed.\n"
+
+#: mferror.mc:557
+msgid "Stream sink already exists.\n"
+msgstr "Stream sink already exists.\n"
+
+#: mferror.mc:564
+msgid "Sample allocation was canceled.\n"
+msgstr "Sample allocation was canceled.\n"
+
+#: mferror.mc:571
+msgid "Sample allocator is empty.\n"
+msgstr "Sample allocator is empty.\n"
+
+#: mferror.mc:578
+msgid "Sink was already stopped.\n"
+msgstr "Sink was already stopped.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr "Bitrate was unknown for ASF file sink.\n"
+
+#: mferror.mc:592
+msgid "No streams were selected for the sink.\n"
+msgstr "No streams were selected for the sink.\n"
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr "Metadata was too long.\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr "No samples were processed by the sink.\n"
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr "Sink was not provided with required headers.\n"
+
+#: mferror.mc:627
 msgid "Optional node is invalid.\n"
 msgstr "Optional node is invalid.\n"
 
-#: mferror.mc:543
+#: mferror.mc:634
 msgid "Cannot find decryptor.\n"
 msgstr "Cannot find decryptor.\n"
 
-#: mferror.mc:550
+#: mferror.mc:641
 msgid "Codec was not found.\n"
 msgstr "Codec was not found.\n"
 
-#: mferror.mc:557
+#: mferror.mc:648
 msgid "Cannot connect topology nodes.\n"
 msgstr "Cannot connect topology nodes.\n"
 
-#: mferror.mc:564
+#: mferror.mc:655
 msgid "Topology request is not supported.\n"
 msgstr "Topology request is not supported.\n"
 
-#: mferror.mc:571
+#: mferror.mc:662
 msgid "Invalid topology time attributes.\n"
 msgstr "Invalid topology time attributes.\n"
 
-#: mferror.mc:578
+#: mferror.mc:669
 msgid "Found loops in topology.\n"
 msgstr "Found loops in topology.\n"
 
-#: mferror.mc:585
+#: mferror.mc:676
 msgid "Presentation descriptor is missing.\n"
 msgstr "Presentation descriptor is missing.\n"
 
-#: mferror.mc:592
+#: mferror.mc:683
 msgid "Stream descriptor is missing.\n"
 msgstr "Stream descriptor is missing.\n"
 
-#: mferror.mc:599
+#: mferror.mc:690
 msgid "Stream descriptor is not selected.\n"
 msgstr "Stream descriptor is not selected.\n"
 
-#: mferror.mc:606
+#: mferror.mc:697
 msgid "Source is missing.\n"
 msgstr "Source is missing.\n"
 
-#: mferror.mc:613
+#: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
 msgstr "Topology loader does not support sink activates.\n"
 
-#: mferror.mc:620
+#: mferror.mc:711
 msgid "Clock has no time source set.\n"
 msgstr "Clock has no time source set.\n"
 
-#: mferror.mc:627
+#: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "Clock state was already set.\n"
 

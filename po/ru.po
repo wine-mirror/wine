@@ -6821,6 +6821,12 @@ msgstr "Отправка почты"
 msgid "Begin request has already been made.\n"
 msgstr "Запрос уже был инициирован.\n"
 
+#: mferror.mc:599
+#, fuzzy
+#| msgid "Object is not initialized.\n"
+msgid "Sink has not been finalized.\n"
+msgstr "Объект не инициализирован.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "Платформа Media Foundation не инициализирована.\n"
@@ -7116,58 +7122,120 @@ msgid "Unsupported media source characteristics.\n"
 msgstr "Данный формат времени не поддерживается.\n"
 
 #: mferror.mc:536
-msgid "Optional node is invalid.\n"
-msgstr "Некорректный опциональный элемент.\n"
-
-#: mferror.mc:543
-msgid "Cannot find decryptor.\n"
-msgstr "Не удалось найти модуль расшифровки.\n"
-
-#: mferror.mc:550
-msgid "Codec was not found.\n"
-msgstr "Кодек не найден.\n"
-
-#: mferror.mc:557
-msgid "Cannot connect topology nodes.\n"
-msgstr "Не удалось подключить элементы графа.\n"
-
-#: mferror.mc:564
-msgid "Topology request is not supported.\n"
+msgid "Stream sink was removed.\n"
 msgstr ""
 
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Реестр был восстановлен.\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "Domain already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "Домен уже существует.\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation was cancelled.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "Операция была отменена.\n"
+
 #: mferror.mc:571
-msgid "Invalid topology time attributes.\n"
-msgstr "Заданы неверные временные атрибуты для графа.\n"
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "Каталог не пуст.\n"
 
 #: mferror.mc:578
-msgid "Found loops in topology.\n"
-msgstr "Граф содержит петли.\n"
+#, fuzzy
+#| msgid "Clock state was already set.\n"
+msgid "Sink was already stopped.\n"
+msgstr "Состояние часов уже установлено.\n"
 
 #: mferror.mc:585
-msgid "Presentation descriptor is missing.\n"
-msgstr "Не задан дескриптор воспроизведения.\n"
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
 
 #: mferror.mc:592
-msgid "Stream descriptor is missing.\n"
-msgstr "Отсутствует дескриптор потока.\n"
-
-#: mferror.mc:599
-msgid "Stream descriptor is not selected.\n"
-msgstr "Дескриптор потока не выбран.\n"
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No streams were selected for the sink.\n"
+msgstr "Данные не обнаружены.\n"
 
 #: mferror.mc:606
-msgid "Source is missing.\n"
-msgstr "Отсутствует источник.\n"
+#, fuzzy
+#| msgid "File name is too long.\n"
+msgid "Metadata was too long.\n"
+msgstr "Слишком длинное имя файла.\n"
 
 #: mferror.mc:613
-msgid "Topology loader does not support sink activates.\n"
+msgid "No samples were processed by the sink.\n"
 msgstr ""
 
 #: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
+msgid "Optional node is invalid.\n"
+msgstr "Некорректный опциональный элемент.\n"
+
+#: mferror.mc:634
+msgid "Cannot find decryptor.\n"
+msgstr "Не удалось найти модуль расшифровки.\n"
+
+#: mferror.mc:641
+msgid "Codec was not found.\n"
+msgstr "Кодек не найден.\n"
+
+#: mferror.mc:648
+msgid "Cannot connect topology nodes.\n"
+msgstr "Не удалось подключить элементы графа.\n"
+
+#: mferror.mc:655
+msgid "Topology request is not supported.\n"
+msgstr ""
+
+#: mferror.mc:662
+msgid "Invalid topology time attributes.\n"
+msgstr "Заданы неверные временные атрибуты для графа.\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr "Граф содержит петли.\n"
+
+#: mferror.mc:676
+msgid "Presentation descriptor is missing.\n"
+msgstr "Не задан дескриптор воспроизведения.\n"
+
+#: mferror.mc:683
+msgid "Stream descriptor is missing.\n"
+msgstr "Отсутствует дескриптор потока.\n"
+
+#: mferror.mc:690
+msgid "Stream descriptor is not selected.\n"
+msgstr "Дескриптор потока не выбран.\n"
+
+#: mferror.mc:697
+msgid "Source is missing.\n"
+msgstr "Отсутствует источник.\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:711
 msgid "Clock has no time source set.\n"
 msgstr "Не задан источник времени для часов.\n"
 
-#: mferror.mc:627
+#: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "Состояние часов уже установлено.\n"
 

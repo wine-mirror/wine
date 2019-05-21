@@ -6762,6 +6762,12 @@ msgstr ""
 msgid "Begin request has already been made.\n"
 msgstr ""
 
+# FIXME: Invalid formatting directive
+#: mferror.mc:599
+#, fuzzy
+msgid "Sink has not been finalized.\n"
+msgstr "Mi ne trovis la objektan UUID-on %s.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr ""
@@ -7109,72 +7115,130 @@ msgid "Unsupported media source characteristics.\n"
 msgstr "Informoj pri Helpo"
 
 #: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "La aparato ne estas konektita.\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "Dosiero jam ekzistas.\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "Operacio nuligita de uzanto.\n"
+
+#: mferror.mc:571
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:578
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "Sink was already stopped.\n"
+msgstr "Dosiero jam ekzistas.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+msgid "No streams were selected for the sink.\n"
+msgstr ""
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr ""
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
 #, fuzzy
 #| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
 msgstr "Konekto nevalida.\n"
 
-#: mferror.mc:543
+#: mferror.mc:634
 #, fuzzy
 #| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
 msgstr "Mi ne povas trovi la printilon."
 
-#: mferror.mc:550
+#: mferror.mc:641
 #, fuzzy
 #| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
 msgstr "Modulo ne estis trovita.\n"
 
-#: mferror.mc:557
+#: mferror.mc:648
 msgid "Cannot connect topology nodes.\n"
 msgstr ""
 
-#: mferror.mc:564
+#: mferror.mc:655
 msgid "Topology request is not supported.\n"
 msgstr ""
 
-#: mferror.mc:571
+#: mferror.mc:662
 msgid "Invalid topology time attributes.\n"
 msgstr ""
 
-#: mferror.mc:578
+#: mferror.mc:669
 msgid "Found loops in topology.\n"
 msgstr ""
 
-#: mferror.mc:585
+#: mferror.mc:676
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
 msgstr "instala fonto mankas.\n"
 
-#: mferror.mc:592
+#: mferror.mc:683
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Stream descriptor is missing.\n"
 msgstr "instala fonto mankas.\n"
 
-#: mferror.mc:599
+#: mferror.mc:690
 #, fuzzy
 #| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
 msgstr "La aparato ne estas konektita.\n"
 
-#: mferror.mc:606
+#: mferror.mc:697
 #, fuzzy
 #| msgid "Installation source is missing.\n"
 msgid "Source is missing.\n"
 msgstr "instala fonto mankas.\n"
 
-#: mferror.mc:613
+#: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
 msgstr ""
 
-#: mferror.mc:620
+#: mferror.mc:711
 msgid "Clock has no time source set.\n"
 msgstr ""
 
-#: mferror.mc:627
+#: mferror.mc:718
 #, fuzzy
 #| msgid "File already exists.\n"
 msgid "Clock state was already set.\n"

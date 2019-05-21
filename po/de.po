@@ -6827,6 +6827,12 @@ msgstr "E-Mail senden"
 msgid "Begin request has already been made.\n"
 msgstr "Startanfrage wurde bereits gestellt.\n"
 
+#: mferror.mc:599
+#, fuzzy
+#| msgid "Object is not initialized.\n"
+msgid "Sink has not been finalized.\n"
+msgstr "Objekt nicht initialisiert.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "Media-Foundation-Plattform wurde nicht initialisiert.\n"
@@ -7101,58 +7107,122 @@ msgid "Unsupported media source characteristics.\n"
 msgstr "Nicht unterstützte Medienquellen-Charakteristik.\n"
 
 #: mferror.mc:536
+#, fuzzy
+#| msgid "Rate change was preempted.\n"
+msgid "Stream sink was removed.\n"
+msgstr "Ratenänderung wurde blockiert.\n"
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "Media stream has no duration set.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Für den Medienstrom wurde keine Dauer gesetzt.\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "Domain already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "Domäne existiert bereits.\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation was cancelled.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "Vorgang wurde abgebrochen.\n"
+
+#: mferror.mc:571
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "Verzeichnis ist nicht leer.\n"
+
+#: mferror.mc:578
+#, fuzzy
+#| msgid "Clock state was already set.\n"
+msgid "Sink was already stopped.\n"
+msgstr "Zeitgeberstatus wurde bereits gesetzt.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+#, fuzzy
+#| msgid "No media streams were selected.\n"
+msgid "No streams were selected for the sink.\n"
+msgstr "Keine Medienströme ausgewählt.\n"
+
+#: mferror.mc:606
+#, fuzzy
+#| msgid "File name is too long.\n"
+msgid "Metadata was too long.\n"
+msgstr "Dateiname zu lang.\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
 msgid "Optional node is invalid.\n"
 msgstr "Optionaler Knoten ist ungültig.\n"
 
-#: mferror.mc:543
+#: mferror.mc:634
 msgid "Cannot find decryptor.\n"
 msgstr "Entschlüsselungsmodul nicht gefunden.\n"
 
-#: mferror.mc:550
+#: mferror.mc:641
 msgid "Codec was not found.\n"
 msgstr "Codec nicht gefunden.\n"
 
-#: mferror.mc:557
+#: mferror.mc:648
 msgid "Cannot connect topology nodes.\n"
 msgstr "Topologieknoten konnten nicht verbunden werden.\n"
 
-#: mferror.mc:564
+#: mferror.mc:655
 msgid "Topology request is not supported.\n"
 msgstr "Topologieanfrage nicht unterstützt.\n"
 
-#: mferror.mc:571
+#: mferror.mc:662
 msgid "Invalid topology time attributes.\n"
 msgstr "Ungültige Topologie-Zeitattribute.\n"
 
-#: mferror.mc:578
+#: mferror.mc:669
 msgid "Found loops in topology.\n"
 msgstr "Zirkuläre Abhängigkeiten in Topologie gefunden.\n"
 
-#: mferror.mc:585
+#: mferror.mc:676
 msgid "Presentation descriptor is missing.\n"
 msgstr "Präsentationsdeskriptor fehlt.\n"
 
-#: mferror.mc:592
+#: mferror.mc:683
 msgid "Stream descriptor is missing.\n"
 msgstr "Datenstromdeskriptor fehlt.\n"
 
-#: mferror.mc:599
+#: mferror.mc:690
 msgid "Stream descriptor is not selected.\n"
 msgstr "Datenstromdeskriptor nicht ausgewählt.\n"
 
-#: mferror.mc:606
+#: mferror.mc:697
 msgid "Source is missing.\n"
 msgstr "Quelle fehlt.\n"
 
-#: mferror.mc:613
+#: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
 msgstr "Der Topologie-Lader unterstützt keine Ausgangsaktivierung.\n"
 
-#: mferror.mc:620
+#: mferror.mc:711
 msgid "Clock has no time source set.\n"
 msgstr "Zeitgeber hat keine zugewiesene Zeitquelle.\n"
 
-#: mferror.mc:627
+#: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "Zeitgeberstatus wurde bereits gesetzt.\n"
 

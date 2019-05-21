@@ -526,6 +526,97 @@ SymbolicName=MF_E_UNSUPPORTED_CHARACTERISTICS
 Language=ENU
 Unsupported media source characteristics.
 .
+MessageId=19000
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_STREAMSINK_REMOVED
+Language=ENU
+Stream sink was removed.
+.
+MessageId=19002
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_STREAMSINKS_OUT_OF_SYNC
+Language=ENU
+Stream sinks are out of sync.
+.
+MessageId=19003
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_STREAMSINKS_FIXED
+Language=ENU
+Media sink stream sinks set is fixed.
+.
+MessageId=19004
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_STREAMSINK_EXISTS
+Language=ENU
+Stream sink already exists.
+.
+MessageId=19005
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_SAMPLEALLOCATOR_CANCELED
+Language=ENU
+Sample allocation was canceled.
+.
+MessageId=19006
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_SAMPLEALLOCATOR_EMPTY
+Language=ENU
+Sample allocator is empty.
+.
+MessageId=19007
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_SINK_ALREADYSTOPPED
+Language=ENU
+Sink was already stopped.
+.
+MessageId=19008
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_ASF_FILESINK_BITRATE_UNKNOWN
+Language=ENU
+Bitrate was unknown for ASF file sink.
+.
+MessageId=19009
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_SINK_NO_STREAMS
+Language=ENU
+No streams were selected for the sink.
+.
+MessageId=19010
+Severity=Success
+Facility=MF
+SymbolicName=MF_S_SINK_NOT_FINALIZED
+Language=ENU
+Sink has not been finalized.
+.
+MessageId=19011
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_METADATA_TOO_LONG
+Language=ENU
+Metadata was too long.
+.
+MessageId=19012
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_SINK_NO_SAMPLES_PROCESSED
+Language=ENU
+No samples were processed by the sink.
+.
+MessageId=19013
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_SINK_HEADERS_NOT_FOUND
+Language=ENU
+Sink was not provided with required headers.
+.
 MessageId=21006
 Severity=Error
 Facility=MF

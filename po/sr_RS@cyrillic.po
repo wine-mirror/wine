@@ -7116,6 +7116,11 @@ msgstr "Пошаљи поруку"
 msgid "Begin request has already been made.\n"
 msgstr ""
 
+#: mferror.mc:599
+#, fuzzy
+msgid "Sink has not been finalized.\n"
+msgstr "%s путања није пронађена.\n"
+
 #: mferror.mc:32
 #, fuzzy
 msgid "Media Foundation platform is not initialized.\n"
@@ -7440,68 +7445,122 @@ msgid "Unsupported media source characteristics.\n"
 msgstr "Подршка"
 
 #: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Неуспеси ресурса.\n"
+
+#: mferror.mc:557
+#, fuzzy
+msgid "Stream sink already exists.\n"
+msgstr "Порт %s већ постоји.\n"
+
+#: mferror.mc:564
+#, fuzzy
+msgid "Sample allocation was canceled.\n"
+msgstr "Инсталациони програми.\n"
+
+#: mferror.mc:571
+#, fuzzy
+msgid "Sample allocator is empty.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:578
+#, fuzzy
+msgid "Sink was already stopped.\n"
+msgstr "Порт %s већ постоји.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+#, fuzzy
+msgid "No streams were selected for the sink.\n"
+msgstr "Пронађена је петља.\n"
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr ""
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
 #, fuzzy
 msgid "Optional node is invalid.\n"
 msgstr "LAN веза.\n"
 
-#: mferror.mc:543
+#: mferror.mc:634
 #, fuzzy
 #| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
 msgstr "Штампач није пронађен."
 
-#: mferror.mc:550
+#: mferror.mc:641
 #, fuzzy
 msgid "Codec was not found.\n"
 msgstr "Датотека није пронађена.\n"
 
-#: mferror.mc:557
+#: mferror.mc:648
 msgid "Cannot connect topology nodes.\n"
 msgstr ""
 
-#: mferror.mc:564
+#: mferror.mc:655
 #, fuzzy
 msgid "Topology request is not supported.\n"
 msgstr "Начин потврде идентитета није подржан.\n"
 
-#: mferror.mc:571
+#: mferror.mc:662
 #, fuzzy
 msgid "Invalid topology time attributes.\n"
 msgstr "Неисправна синтакса.\n"
 
-#: mferror.mc:578
+#: mferror.mc:669
 msgid "Found loops in topology.\n"
 msgstr ""
 
-#: mferror.mc:585
+#: mferror.mc:676
 #, fuzzy
 msgid "Presentation descriptor is missing.\n"
 msgstr "недостаје инсталација.\n"
 
-#: mferror.mc:592
+#: mferror.mc:683
 #, fuzzy
 msgid "Stream descriptor is missing.\n"
 msgstr "недостаје инсталација.\n"
 
-#: mferror.mc:599
+#: mferror.mc:690
 #, fuzzy
 msgid "Stream descriptor is not selected.\n"
 msgstr "Датотека није пронађена.\n"
 
-#: mferror.mc:606
+#: mferror.mc:697
 #, fuzzy
 msgid "Source is missing.\n"
 msgstr "недостаје инсталација.\n"
 
-#: mferror.mc:613
+#: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
 msgstr ""
 
-#: mferror.mc:620
+#: mferror.mc:711
 msgid "Clock has no time source set.\n"
 msgstr ""
 
-#: mferror.mc:627
+#: mferror.mc:718
 #, fuzzy
 msgid "Clock state was already set.\n"
 msgstr "Порт %s већ постоји.\n"
