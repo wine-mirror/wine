@@ -101,6 +101,7 @@ static const WCHAR Phantom[] = {'P','h','a','n','t','o','m',0};
 static const WCHAR SymbolicLink[] = {'S','y','m','b','o','l','i','c','L','i','n','k',0};
 static const WCHAR Control[] = {'C','o','n','t','r','o','l',0};
 static const WCHAR Linked[] = {'L','i','n','k','e','d',0};
+static const WCHAR backslashW[] = {'\\',0};
 static const WCHAR emptyW[] = {0};
 
 struct driver
@@ -4227,9 +4228,32 @@ BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO devinfo, SP_DEVINFO_DATA *device
     }
     else
     {
-        FIXME("Searching in a directory is not yet implemented.\n");
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        return FALSE;
+        static const WCHAR default_path[] = {'C',':','/','w','i','n','d','o','w','s','/','i','n','f',0};
+        static const WCHAR wildcardW[] = {'*',0};
+        WCHAR dir[MAX_PATH], file[MAX_PATH];
+        WIN32_FIND_DATAW find_data;
+        HANDLE find_handle;
+
+        if (device->params.DriverPath[0])
+            strcpyW(dir, device->params.DriverPath);
+        else
+            strcpyW(dir, default_path);
+        strcatW(dir, backslashW);
+        strcatW(dir, wildcardW);
+
+        TRACE("Searching for drivers in %s.\n", debugstr_w(dir));
+
+        if ((find_handle = FindFirstFileW(dir, &find_data)) != INVALID_HANDLE_VALUE)
+        {
+            do
+            {
+                strcpyW(file, dir);
+                strcpyW(file + strlenW(file) - 1, find_data.cFileName);
+                enum_compat_drivers_from_file(device, file);
+            } while (FindNextFileW(find_handle, &find_data));
+
+            FindClose(find_handle);
+        }
     }
 
     return TRUE;
