@@ -1140,6 +1140,16 @@ static void TOOLTIPS_ResetSubclass (const TTTOOL_INFO *toolPtr)
             TOOLTIPS_SubclassProc, 1, 0);
 }
 
+static void TOOLTIPS_FreeToolText(TTTOOL_INFO *toolPtr)
+{
+    if (toolPtr->lpszText)
+    {
+        if (!IS_INTRESOURCE(toolPtr->lpszText) && toolPtr->lpszText != LPSTR_TEXTCALLBACKW)
+            Free(toolPtr->lpszText);
+        toolPtr->lpszText = NULL;
+    }
+}
+
 static LRESULT
 TOOLTIPS_DelToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 {
@@ -1163,14 +1173,8 @@ TOOLTIPS_DelToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     /* make sure the tooltip has disappeared before deleting it */
     TOOLTIPS_Hide(infoPtr);
 
-    /* delete text string */
     toolPtr = &infoPtr->tools[nTool];
-    if (toolPtr->lpszText) {
-	if ( (toolPtr->lpszText != LPSTR_TEXTCALLBACKW) &&
-	     !IS_INTRESOURCE(toolPtr->lpszText) )
-	    Free (toolPtr->lpszText);
-    }
-
+    TOOLTIPS_FreeToolText (toolPtr);
     TOOLTIPS_ResetSubclass (toolPtr);
 
     /* delete tool from tool list */
@@ -1635,7 +1639,6 @@ TOOLTIPS_SetTitleT (TOOLTIPS_INFO *infoPtr, UINT_PTR uTitleIcon, LPCWSTR pszTitl
     return TRUE;
 }
 
-
 static LRESULT
 TOOLTIPS_SetToolInfoT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 {
@@ -1660,12 +1663,7 @@ TOOLTIPS_SetToolInfoT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     toolPtr->rect   = ti->rect;
     toolPtr->hinst  = ti->hinst;
 
-    if ( (toolPtr->lpszText) &&
-         !IS_INTRESOURCE(toolPtr->lpszText) ) {
-        if( toolPtr->lpszText != LPSTR_TEXTCALLBACKW)
-            Free (toolPtr->lpszText);
-        toolPtr->lpszText = NULL;
-    }
+    TOOLTIPS_FreeToolText (toolPtr);
 
     if (IS_INTRESOURCE(ti->lpszText)) {
 	TRACE("set string id %x\n", LOWORD(ti->lpszText));
@@ -1788,6 +1786,8 @@ TOOLTIPS_UpdateTipTextT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW
     /* copy tool text */
     toolPtr->hinst  = ti->hinst;
 
+    TOOLTIPS_FreeToolText(toolPtr);
+
     if (IS_INTRESOURCE(ti->lpszText)){
 	toolPtr->lpszText = ti->lpszText;
     }
@@ -1795,12 +1795,6 @@ TOOLTIPS_UpdateTipTextT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW
 	if (ti->lpszText == LPSTR_TEXTCALLBACKW)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
-	    if ( (toolPtr->lpszText)  &&
-		 !IS_INTRESOURCE(toolPtr->lpszText) ) {
-		if( toolPtr->lpszText != LPSTR_TEXTCALLBACKW)
-                    Free (toolPtr->lpszText);
-		toolPtr->lpszText = NULL;
-	    }
 	    if (ti->lpszText) {
 		if (isW) {
 		    INT len = lstrlenW (ti->lpszText);
@@ -1867,17 +1861,11 @@ TOOLTIPS_Destroy (TOOLTIPS_INFO *infoPtr)
 
     /* free tools */
     if (infoPtr->tools) {
-	for (i = 0; i < infoPtr->uNumTools; i++) {
-	    toolPtr = &infoPtr->tools[i];
-	    if (toolPtr->lpszText) {
-		if ( (toolPtr->lpszText != LPSTR_TEXTCALLBACKW) &&
-		     !IS_INTRESOURCE(toolPtr->lpszText) )
-		{
-		    Free (toolPtr->lpszText);
-		    toolPtr->lpszText = NULL;
-		}
-	    }
+        for (i = 0; i < infoPtr->uNumTools; i++)
+        {
+            toolPtr = &infoPtr->tools[i];
 
+            TOOLTIPS_FreeToolText (toolPtr);
             TOOLTIPS_ResetSubclass (toolPtr);
         }
 
