@@ -1288,6 +1288,8 @@
 @ cdecl fgetws(ptr long ptr) MSVCRT_fgetws
 @ cdecl floor(double) MSVCRT_floor
 @ cdecl -arch=arm,x86_64,arm64 floorf(float) MSVCRT_floorf
+@ cdecl fma(double double double) MSVCRT_fma
+@ cdecl -arch=arm,x86_64,arm64 fmaf(float float float) MSVCRT_fmaf
 @ cdecl fmod(double double) MSVCRT_fmod
 @ cdecl -arch=arm,x86_64,arm64 fmodf(float float) MSVCRT_fmodf
 @ cdecl fopen(str str) MSVCRT_fopen

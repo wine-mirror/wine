@@ -1830,8 +1830,8 @@
 @ cdecl fgetws(ptr long ptr) msvcr120.fgetws
 @ cdecl floor(double) msvcr120.floor
 @ cdecl -arch=arm,x86_64,arm64 floorf(float) msvcr120.floorf
-@ stub fma
-@ stub fmaf
+@ cdecl fma(double double double) msvcr120.fma
+@ cdecl -arch=arm,x86_64,arm64 fmaf(float float float) msvcr120.fmaf
 @ stub fmal
 @ cdecl fmax(double double) msvcr120.fmax
 @ cdecl fmaxf(float float) msvcr120.fmaxf

@@ -388,6 +388,22 @@ float CDECL MSVCRT_floorf( float x )
 }
 
 /*********************************************************************
+ *      fmaf (MSVCRT.@)
+ */
+float CDECL MSVCRT_fmaf( float x, float y, float z )
+{
+#ifdef HAVE_FMAF
+  float w = fmaf(x, y, z);
+#else
+  float w = x * y + z;
+#endif
+  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (isinf(x) && isinf(z) && x != z) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (isinf(y) && isinf(z) && y != z) *MSVCRT__errno() = MSVCRT_EDOM;
+  return w;
+}
+
+/*********************************************************************
  *      frexpf (MSVCRT.@)
  */
 float CDECL MSVCRT_frexpf( float x, int *exp )
@@ -861,6 +877,22 @@ double CDECL MSVCRT_ceil( double x )
 double CDECL MSVCRT_floor( double x )
 {
   return floor(x);
+}
+
+/*********************************************************************
+ *      fma (MSVCRT.@)
+ */
+double CDECL MSVCRT_fma( double x, double y, double z )
+{
+#ifdef HAVE_FMA
+  double w = fma(x, y, z);
+#else
+  double w = x * y + z;
+#endif
+  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (isinf(x) && isinf(z) && x != z) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (isinf(y) && isinf(z) && y != z) *MSVCRT__errno() = MSVCRT_EDOM;
+  return w;
 }
 
 /*********************************************************************
