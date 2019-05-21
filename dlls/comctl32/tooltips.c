@@ -1838,18 +1838,15 @@ TOOLTIPS_Destroy (TOOLTIPS_INFO *infoPtr)
     TTTOOL_INFO *toolPtr;
     UINT i;
 
-    /* free tools */
-    if (infoPtr->tools) {
-        for (i = 0; i < infoPtr->uNumTools; i++)
-        {
-            toolPtr = &infoPtr->tools[i];
+    for (i = 0; i < infoPtr->uNumTools; i++)
+    {
+        toolPtr = &infoPtr->tools[i];
 
-            TOOLTIPS_FreeToolText (toolPtr);
-            TOOLTIPS_ResetSubclass (toolPtr);
-        }
-
-	Free (infoPtr->tools);
+        TOOLTIPS_FreeToolText (toolPtr);
+        TOOLTIPS_ResetSubclass (toolPtr);
     }
+
+    Free (infoPtr->tools);
 
     /* free title string */
     Free (infoPtr->pszTitle);
