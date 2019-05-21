@@ -526,6 +526,7 @@ static int write_proxy_methods(type_t *iface, int skip)
       if (skip || (is_local(func->attrs) && !get_callas_source(iface, func)))
           print_proxy( "0,  /* %s::%s */\n", iface->name, get_name(func));
       else if (is_interpreted_func( iface, func ) &&
+               get_stub_mode() == MODE_Oif &&
                !is_local( func->attrs ) &&
                type_iface_get_inherit(iface))
           print_proxy( "(void *)-1,  /* %s::%s */\n", iface->name, get_name(func));
