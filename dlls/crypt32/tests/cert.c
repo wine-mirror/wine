@@ -1736,6 +1736,7 @@ static void testGetIssuerCert(void)
     CertFreeCertificateContext(child);
     CertFreeCertificateContext(cert1);
     CertFreeCertificateContext(cert2);
+    CertFreeCertificateContext(cert3);
     CertCloseStore(store, 0);
     HeapFree(GetProcessHeap(), 0, certencoded);
 
@@ -1750,6 +1751,7 @@ static void testGetIssuerCert(void)
     ok(!parent, "Expected NULL\n");
     ok(GetLastError() == CRYPT_E_SELF_SIGNED,
        "Expected CRYPT_E_SELF_SIGNED, got %08X\n", GetLastError());
+    CertFreeCertificateContext(cert1);
     CertCloseStore(store, 0);
 }
 
