@@ -273,9 +273,22 @@ static const char *debugstr_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags
 
 #define ARG_FROM_OFFSET(args, offset) ((args) + (offset))
 
-static PFORMAT_STRING client_get_handle(
-    PMIDL_STUB_MESSAGE pStubMsg, const NDR_PROC_HEADER *pProcHeader,
-    PFORMAT_STRING pFormat, handle_t *phBinding)
+static size_t get_handle_desc_size(const NDR_PROC_HEADER *proc_header, PFORMAT_STRING format)
+{
+    if (!proc_header->handle_type)
+    {
+        if (*format == FC_BIND_PRIMITIVE)
+            return sizeof(NDR_EHD_PRIMITIVE);
+        else if (*format == FC_BIND_GENERIC)
+            return sizeof(NDR_EHD_GENERIC);
+        else if (*format == FC_BIND_CONTEXT)
+            return sizeof(NDR_EHD_CONTEXT);
+    }
+    return 0;
+}
+
+static handle_t client_get_handle(const MIDL_STUB_MESSAGE *pStubMsg,
+        const NDR_PROC_HEADER *pProcHeader, const PFORMAT_STRING pFormat)
 {
     /* binding */
     switch (pProcHeader->handle_type)
@@ -291,10 +304,9 @@ static PFORMAT_STRING client_get_handle(
                 TRACE("Explicit primitive handle @ %d\n", pDesc->offset);
 
                 if (pDesc->flag) /* pointer to binding */
-                    *phBinding = **(handle_t **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
+                    return **(handle_t **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 else
-                    *phBinding = *(handle_t *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
-                return pFormat + sizeof(NDR_EHD_PRIMITIVE);
+                    return *(handle_t *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
             }
         case FC_BIND_GENERIC: /* explicit generic */
             {
@@ -311,8 +323,7 @@ static PFORMAT_STRING client_get_handle(
                     pArg = ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 memcpy(&pObject, pArg, pDesc->flag_and_size & 0xf);
                 pGenPair = &pStubMsg->StubDesc->aGenericBindingRoutinePairs[pDesc->binding_routine_pair_index];
-                *phBinding = pGenPair->pfnBind(pObject);
-                return pFormat + sizeof(NDR_EHD_GENERIC);
+                return pGenPair->pfnBind(pObject);
             }
         case FC_BIND_CONTEXT: /* explicit context */
             {
@@ -327,7 +338,7 @@ static PFORMAT_STRING client_get_handle(
                 else
                     context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
 
-                if (context_handle) *phBinding = NDRCContextBinding(context_handle);
+                if (context_handle) return NDRCContextBinding(context_handle);
                 else if (pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL)
                 {
                     ERR("null context handle isn't allowed\n");
@@ -335,7 +346,6 @@ static PFORMAT_STRING client_get_handle(
                     return NULL;
                 }
                 /* FIXME: should we store this structure in stubMsg.pContext? */
-                return pFormat + sizeof(NDR_EHD_CONTEXT);
             }
         default:
             ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
@@ -348,28 +358,25 @@ static PFORMAT_STRING client_get_handle(
         break;
     case FC_BIND_PRIMITIVE: /* implicit primitive */
         TRACE("Implicit primitive handle\n");
-        *phBinding = *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pPrimitiveHandle;
-        break;
+        return *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pPrimitiveHandle;
     case FC_CALLBACK_HANDLE: /* implicit callback */
         TRACE("FC_CALLBACK_HANDLE\n");
         /* server calls callback procedures only in response to remote call, and most recent
            binding handle is used. Calling back to a client can potentially result in another
            callback with different current handle. */
-        *phBinding = I_RpcGetCurrentCallHandle();
-        break;
+        return I_RpcGetCurrentCallHandle();
     case FC_AUTO_HANDLE: /* implicit auto handle */
         /* strictly speaking, it isn't necessary to set hBinding here
          * since it isn't actually used (hence the automatic in its name),
          * but then why does MIDL generate a valid entry in the
          * MIDL_STUB_DESC for it? */
         TRACE("Implicit auto handle\n");
-        *phBinding = *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle;
-        break;
+        return *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle;
     default:
         ERR("bad implicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
     }
-    return pFormat;
+    return NULL;
 }
 
 static void client_free_handle(
@@ -719,8 +726,9 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORM
     /* we only need a handle if this isn't an object method */
     if (!(pProcHeader->Oi_flags & Oi_OBJECT_PROC))
     {
-        pFormat = client_get_handle(&stubMsg, pProcHeader, pHandleFormat, &hBinding);
-        if (!pFormat) goto done;
+        pFormat += get_handle_desc_size(pProcHeader, pFormat);
+        hBinding = client_get_handle(&stubMsg, pProcHeader, pHandleFormat);
+        if (!hBinding) goto done;
     }
 
     if (is_oicf_stubdesc(pStubDesc))  /* -Oicf format */
@@ -1655,8 +1663,9 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc,
     pAsync->StubInfo = async_call_data;
     async_call_data->pHandleFormat = pFormat;
 
-    pFormat = client_get_handle(pStubMsg, pProcHeader, async_call_data->pHandleFormat, &async_call_data->hBinding);
-    if (!pFormat) goto done;
+    pFormat += get_handle_desc_size(pProcHeader, pFormat);
+    async_call_data->hBinding = client_get_handle(pStubMsg, pProcHeader, async_call_data->pHandleFormat);
+    if (!async_call_data->hBinding) goto done;
 
     if (is_oicf_stubdesc(pStubDesc))
     {
