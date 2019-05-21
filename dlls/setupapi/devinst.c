@@ -4258,3 +4258,70 @@ BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO devinfo, SP_DEVINFO_DATA *device
 
     return TRUE;
 }
+
+/***********************************************************************
+ *              SetupDiEnumDriverInfoW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiEnumDriverInfoW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
+        DWORD type, DWORD index, SP_DRVINFO_DATA_W *driver_data)
+{
+    static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r',0};
+    struct device *device;
+    INFCONTEXT ctx;
+    HINF hinf;
+
+    TRACE("devinfo %p, device_data %p, type %#x, index %u, driver_data %p.\n",
+            devinfo, device_data, type, index, driver_data);
+
+    if (type != SPDIT_COMPATDRIVER)
+    {
+        FIXME("Unhandled type %#x.\n", type);
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (index >= device->driver_count)
+    {
+        SetLastError(ERROR_NO_MORE_ITEMS);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(device->drivers[index].inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    driver_data->ProviderName[0] = 0;
+    if (SetupFindFirstLineW(hinf, Version, providerW, &ctx))
+        SetupGetStringFieldW(&ctx, 1, driver_data->ProviderName, ARRAY_SIZE(driver_data->ProviderName), NULL);
+    strcpyW(driver_data->Description, device->drivers[index].description);
+    strcpyW(driver_data->MfgName, device->drivers[index].manufacturer);
+    driver_data->DriverType = SPDIT_COMPATDRIVER;
+
+    SetupCloseInfFile(hinf);
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiEnumDriverInfoA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiEnumDriverInfoA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
+        DWORD type, DWORD index, SP_DRVINFO_DATA_A *driver_data)
+{
+    SP_DRVINFO_DATA_W driver_dataW;
+    BOOL ret;
+
+    driver_dataW.cbSize = sizeof(driver_dataW);
+    ret = SetupDiEnumDriverInfoW(devinfo, device_data, type, index, &driver_dataW);
+    driver_data->DriverType = driver_dataW.DriverType;
+    driver_data->Reserved = driver_dataW.Reserved;
+    WideCharToMultiByte(CP_ACP, 0, driver_dataW.Description, -1, driver_data->Description,
+            sizeof(driver_data->Description), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, driver_dataW.MfgName, -1, driver_data->MfgName,
+            sizeof(driver_data->MfgName), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, driver_dataW.ProviderName, -1, driver_data->ProviderName,
+            sizeof(driver_data->ProviderName), NULL, NULL);
+    return ret;
+}
