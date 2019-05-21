@@ -153,11 +153,37 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
     return key_ptr[3] - dst;
 }
 
-static inline int compare_unicode_weights(int flags, const WCHAR *str1, int len1,
-                                          const WCHAR *str2, int len2)
+enum weight
+{
+    UNICODE_WEIGHT,
+    DIACRITIC_WEIGHT,
+    CASE_WEIGHT
+};
+
+static unsigned int get_weight(WCHAR ch, enum weight type)
+{
+    unsigned int ret;
+
+    ret = collation_table[collation_table[ch >> 8] + (ch & 0xff)];
+    if (ret == (unsigned int)-1)
+        return ch;
+
+    switch(type)
+    {
+    case UNICODE_WEIGHT:
+        return ret >> 16;
+    case DIACRITIC_WEIGHT:
+        return (ret >> 8) & 0xff;
+    case CASE_WEIGHT:
+    default:
+        return (ret >> 4) & 0x0f;
+    }
+}
+
+static inline int compare_weights(int flags, const WCHAR *str1, int len1,
+                                  const WCHAR *str2, int len2, enum weight type)
 {
     unsigned int ce1, ce2;
-    int ret;
 
     /* 32-bit collation element table format:
      * unicode weight - high 16 bit, diacritic weight - high 8 bit of low 16 bit,
@@ -187,7 +213,7 @@ static inline int compare_unicode_weights(int flags, const WCHAR *str1, int len1
        /* hyphen and apostrophe are treated differently depending on
         * whether SORT_STRINGSORT specified or not
         */
-        if (!(flags & SORT_STRINGSORT))
+        if (type == UNICODE_WEIGHT && !(flags & SORT_STRINGSORT))
         {
             if (*str1 == '-' || *str1 == '\'')
             {
@@ -206,133 +232,10 @@ static inline int compare_unicode_weights(int flags, const WCHAR *str1, int len1
             }
         }
 
-        ce1 = collation_table[collation_table[*str1 >> 8] + (*str1 & 0xff)];
-        ce2 = collation_table[collation_table[*str2 >> 8] + (*str2 & 0xff)];
+        ce1 = get_weight(*str1, type);
+        ce2 = get_weight(*str2, type);
 
-        if (ce1 != (unsigned int)-1 && ce2 != (unsigned int)-1)
-            ret = (ce1 >> 16) - (ce2 >> 16);
-        else
-            ret = *str1 - *str2;
-
-        if (ret) return ret;
-
-        str1++;
-        str2++;
-        len1--;
-        len2--;
-    }
-    while (len1 && !*str1)
-    {
-        str1++;
-        len1--;
-    }
-    while (len2 && !*str2)
-    {
-        str2++;
-        len2--;
-    }
-    return len1 - len2;
-}
-
-static inline int compare_diacritic_weights(int flags, const WCHAR *str1, int len1,
-                                            const WCHAR *str2, int len2)
-{
-    unsigned int ce1, ce2;
-    int ret;
-
-    /* 32-bit collation element table format:
-     * unicode weight - high 16 bit, diacritic weight - high 8 bit of low 16 bit,
-     * case weight - high 4 bit of low 8 bit.
-     */
-    while (len1 > 0 && len2 > 0)
-    {
-        if (flags & NORM_IGNORESYMBOLS)
-        {
-            int skip = 0;
-            /* FIXME: not tested */
-            if (get_char_typeW(*str1) & (C1_PUNCT | C1_SPACE))
-            {
-                str1++;
-                len1--;
-                skip = 1;
-            }
-            if (get_char_typeW(*str2) & (C1_PUNCT | C1_SPACE))
-            {
-                str2++;
-                len2--;
-                skip = 1;
-            }
-            if (skip) continue;
-        }
-
-        ce1 = collation_table[collation_table[*str1 >> 8] + (*str1 & 0xff)];
-        ce2 = collation_table[collation_table[*str2 >> 8] + (*str2 & 0xff)];
-
-        if (ce1 != (unsigned int)-1 && ce2 != (unsigned int)-1)
-            ret = ((ce1 >> 8) & 0xff) - ((ce2 >> 8) & 0xff);
-        else
-            ret = *str1 - *str2;
-
-        if (ret) return ret;
-
-        str1++;
-        str2++;
-        len1--;
-        len2--;
-    }
-    while (len1 && !*str1)
-    {
-        str1++;
-        len1--;
-    }
-    while (len2 && !*str2)
-    {
-        str2++;
-        len2--;
-    }
-    return len1 - len2;
-}
-
-static inline int compare_case_weights(int flags, const WCHAR *str1, int len1,
-                                       const WCHAR *str2, int len2)
-{
-    unsigned int ce1, ce2;
-    int ret;
-
-    /* 32-bit collation element table format:
-     * unicode weight - high 16 bit, diacritic weight - high 8 bit of low 16 bit,
-     * case weight - high 4 bit of low 8 bit.
-     */
-    while (len1 > 0 && len2 > 0)
-    {
-        if (flags & NORM_IGNORESYMBOLS)
-        {
-            int skip = 0;
-            /* FIXME: not tested */
-            if (get_char_typeW(*str1) & (C1_PUNCT | C1_SPACE))
-            {
-                str1++;
-                len1--;
-                skip = 1;
-            }
-            if (get_char_typeW(*str2) & (C1_PUNCT | C1_SPACE))
-            {
-                str2++;
-                len2--;
-                skip = 1;
-            }
-            if (skip) continue;
-        }
-
-        ce1 = collation_table[collation_table[*str1 >> 8] + (*str1 & 0xff)];
-        ce2 = collation_table[collation_table[*str2 >> 8] + (*str2 & 0xff)];
-
-        if (ce1 != (unsigned int)-1 && ce2 != (unsigned int)-1)
-            ret = ((ce1 >> 4) & 0x0f) - ((ce2 >> 4) & 0x0f);
-        else
-            ret = *str1 - *str2;
-
-        if (ret) return ret;
+        if (ce1 - ce2) return ce1 - ce2;
 
         str1++;
         str2++;
@@ -357,13 +260,13 @@ int wine_compare_string(int flags, const WCHAR *str1, int len1,
 {
     int ret;
 
-    ret = compare_unicode_weights(flags, str1, len1, str2, len2);
+    ret = compare_weights(flags, str1, len1, str2, len2, UNICODE_WEIGHT);
     if (!ret)
     {
         if (!(flags & NORM_IGNORENONSPACE))
-            ret = compare_diacritic_weights(flags, str1, len1, str2, len2);
+            ret = compare_weights(flags, str1, len1, str2, len2, DIACRITIC_WEIGHT);
         if (!ret && !(flags & NORM_IGNORECASE))
-            ret = compare_case_weights(flags, str1, len1, str2, len2);
+            ret = compare_weights(flags, str1, len1, str2, len2, CASE_WEIGHT);
     }
     return ret;
 }
