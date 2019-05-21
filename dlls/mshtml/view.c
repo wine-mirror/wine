@@ -520,6 +520,7 @@ static HRESULT WINAPI OleDocumentView_GetRect(IOleDocumentView *iface, LPRECT pr
         return E_INVALIDARG;
 
     GetClientRect(This->hwnd, prcView);
+    MapWindowPoints(This->hwnd, GetParent(This->hwnd), (POINT*)prcView, 2);
     return S_OK;
 }
 
