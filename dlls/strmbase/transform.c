@@ -352,7 +352,7 @@ static HRESULT strmbase_transform_init(const CLSID *clsid,
     if (FAILED(hr))
     {
         CoTaskMemFree(filter->ppPins);
-        BaseFilterImpl_Release(&filter->filter.IBaseFilter_iface);
+        strmbase_filter_cleanup(&filter->filter);
     }
 
     return hr;
