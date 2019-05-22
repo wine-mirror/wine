@@ -363,6 +363,33 @@ my %c2_types =
     "PDI" => 11    # C2_OTHERNEUTRAL
 );
 
+my %bidi_types =
+(
+    "ON"  => 0,    # Other Neutrals
+    "L"   => 1,    # Left-to-Right
+    "R"   => 2,    # Right-to-Left
+    "AN"  => 3,    # Arabic Number
+    "EN"  => 4,    # European Number
+    "AL"  => 5,    # Right-to-Left Arabic
+    "NSM" => 6,    # Non-Spacing Mark
+    "CS"  => 7,    # Common Number Separator
+    "ES"  => 8,    # European Number Separator
+    "ET"  => 9,    # European Number Terminator
+    "BN"  => 10,   # Boundary Neutral
+    "S"   => 11,   # Segment Separator
+    "WS"  => 12,   # Whitespace
+    "B"   => 13,   # Paragraph Separator
+    "RLO" => 14,   # Right-to-Left Override
+    "RLE" => 15,   # Right-to-Left Embedding
+    "LRO" => 16,   # Left-to-Right Override
+    "LRE" => 17,   # Left-to-Right Embedding
+    "PDF" => 18,   # Pop Directional Format
+    "LRI" => 19,   # Left-to-Right Isolate
+    "RLI" => 20,   # Right-to-Left Isolate
+    "FSI" => 21,   # First Strong Isolate
+    "PDI" => 22    # Pop Directional Isolate
+);
+
 my %joining_types =
 (
    "U" => 0,    # Non_Joining
@@ -2246,10 +2273,11 @@ sub dump_bidi_dir_table($)
 
     for (my $i = 0; $i < 65536; $i++)
     {
-        $table[$i] = $directions{$direction_table[$i]} if defined $direction_table[$i];
+        $table[$i] = $bidi_types{$direction_table[$i]} if defined $direction_table[$i];
     }
 
-    dump_two_level_mapping( "DECLSPEC_HIDDEN bidi_direction_table", 0, @table );
+    dump_two_level_mapping( "DECLSPEC_HIDDEN bidi_direction_table",
+                            $bidi_types{"L"}, @table );
 
     close OUTPUT;
     save_file($filename);

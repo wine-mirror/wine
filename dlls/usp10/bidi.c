@@ -162,56 +162,14 @@ static inline void dump_types(const char* header, WORD *types, int start, int en
 /* Convert the libwine information to the direction enum */
 static void classify(const WCHAR *string, WORD *chartype, DWORD count, const SCRIPT_CONTROL *c)
 {
-    static const enum directions dir_map[16] =
-    {
-        L,  /* unassigned defaults to L */
-        L,
-        R,
-        EN,
-        ES,
-        ET,
-        AN,
-        CS,
-        B,
-        S,
-        WS,
-        ON,
-        AL,
-        NSM,
-        BN,
-        PDF  /* also LRE, LRO, RLE, RLO */
-    };
-
     unsigned i;
 
     for (i = 0; i < count; ++i)
     {
-        chartype[i] = dir_map[get_table_entry( bidi_direction_table, string[i] )];
-        switch (chartype[i])
+        chartype[i] = get_table_entry( bidi_direction_table, string[i] );
+        if (c->fLegacyBidiClass && chartype[i] == ES)
         {
-        case ES:
-            if (!c->fLegacyBidiClass) break;
-            switch (string[i])
-            {
-            case '-':
-            case '+': chartype[i] = NI; break;
-            case '/': chartype[i] = CS; break;
-            }
-            break;
-        case PDF:
-            switch (string[i])
-            {
-            case 0x202A: chartype[i] = LRE; break;
-            case 0x202B: chartype[i] = RLE; break;
-            case 0x202C: chartype[i] = PDF; break;
-            case 0x202D: chartype[i] = LRO; break;
-            case 0x202E: chartype[i] = RLO; break;
-            case 0x2066: chartype[i] = LRI; break;
-            case 0x2067: chartype[i] = RLI; break;
-            case 0x2068: chartype[i] = FSI; break;
-            case 0x2069: chartype[i] = PDI; break;
-            }
-            break;
+            if (string[i] == '+' || string[i] == '-') chartype[i] = NI;
         }
     }
 }
