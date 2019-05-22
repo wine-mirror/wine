@@ -20,6 +20,7 @@
 #define COBJMACROS
 
 #include "wine/test.h"
+#include "wine/heap.h"
 #include <limits.h>
 #include <math.h>
 #include "ddrawi.h"
@@ -3995,7 +3996,7 @@ static void test_lighting(void)
         0.0f,  0.0f,  1.0f, -1.0f,
         10.f, 10.0f, 10.0f,  0.0f,
     };
-    static struct
+    static struct vertex
     {
         struct vec3 position;
         DWORD diffuse;
@@ -4014,7 +4015,7 @@ static void test_lighting(void)
         {{ 0.0f,  1.0f, 0.1f}, 0xff00ff00},
         {{ 0.0f,  0.0f, 0.1f}, 0xff00ff00},
     };
-    static struct
+    static struct vertex_normal
     {
         struct vec3 position;
         struct vec3 normal;
@@ -4070,13 +4071,16 @@ static void test_lighting(void)
         {&mat_transf, rotatedquad, 0x000080ff, "Lit quad with transformation matrix"},
         {&mat_nonaffine, translatedquad, 0x000080ff, "Lit quad with non-affine matrix"},
     };
-
     DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
+    IDirect3DVertexBuffer *src_vb1, *src_vb2, *dst_vb;
     IDirect3DViewport3 *viewport, *viewport2;
     DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+    struct vertex_normal *src_data2;
     IDirect3DMaterial3 *material;
     D3DMATERIALHANDLE mat_handle;
+    D3DVERTEXBUFFERDESC vb_desc;
     IDirect3DDevice3 *device;
+    struct vertex *src_data1;
     IDirectDrawSurface4 *rt;
     IDirect3DLight *light;
     D3DLIGHT2 light_desc;
@@ -4086,6 +4090,13 @@ static void test_lighting(void)
     unsigned int i;
     HWND window;
     HRESULT hr;
+    struct
+    {
+        struct vec4 position;
+        DWORD diffuse;
+        DWORD specular;
+    }
+    *dst_data;
 
     window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
@@ -4096,74 +4107,144 @@ static void test_lighting(void)
     }
 
     hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &mat);
-    ok(SUCCEEDED(hr), "Failed to set world transformation, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_VIEW, &mat);
-    ok(SUCCEEDED(hr), "Failed to set view transformation, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
-    ok(SUCCEEDED(hr), "Failed to set projection transformation, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable zbuffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_STENCILENABLE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable stencil buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
-    ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&vb_desc, 0, sizeof(vb_desc));
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = fvf;
+    vb_desc.dwNumVertices = 2;
+    hr = IDirect3D3_CreateVertexBuffer(d3d, &vb_desc, &src_vb1, 0, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = nfvf;
+    vb_desc.dwNumVertices = 2;
+    hr = IDirect3D3_CreateVertexBuffer(d3d, &vb_desc, &src_vb2, 0, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&vb_desc, 0, sizeof(vb_desc));
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR;
+    vb_desc.dwNumVertices = 4;
+    hr = IDirect3D3_CreateVertexBuffer(d3d, &vb_desc, &dst_vb, 0, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer_Lock(src_vb1, 0, (void **)&src_data1, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    memcpy(src_data1, unlitquad, sizeof(*src_data1));
+    memcpy(&src_data1[1], litquad, sizeof(*src_data1));
+    hr = IDirect3DVertexBuffer_Unlock(src_vb1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer_Lock(src_vb2, 0, (void **)&src_data2, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    memcpy(src_data2, unlitnquad, sizeof(*src_data2));
+    memcpy(&src_data2[1], litnquad, sizeof(*src_data2));
+    hr = IDirect3DVertexBuffer_Unlock(src_vb2);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* There is no D3DRENDERSTATE_LIGHTING on ddraw < 7. */
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer_ProcessVertices(dst_vb, D3DVOP_TRANSFORM, 0,
+            1, src_vb1, 0, device, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, fvf, unlitquad, 4,
             indices, 6, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, TRUE);
-    ok(SUCCEEDED(hr), "Failed to enable lighting, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer_ProcessVertices(dst_vb, D3DVOP_TRANSFORM | D3DVOP_LIGHT, 1,
+            1, src_vb1, 1, device, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, fvf, litquad, 4,
             indices, 6, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer_ProcessVertices(dst_vb, D3DVOP_TRANSFORM, 2,
+            1, src_vb2, 0, device, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, unlitnquad, 4,
             indices, 6, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, TRUE);
-    ok(SUCCEEDED(hr), "Failed to enable lighting, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer_ProcessVertices(dst_vb, D3DVOP_TRANSFORM | D3DVOP_LIGHT, 3,
+            1, src_vb2, 1, device, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, litnquad, 4,
             indices, 6, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer_Lock(dst_vb, 0, (void **)&dst_data, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     color = get_surface_color(rt, 160, 360);
     ok(color == 0x00ff0000, "Unlit quad without normals has color 0x%08x.\n", color);
+    ok(dst_data[0].diffuse == 0xffff0000,
+            "Unlit quad without normals has color 0x%08x, expected 0xffff0000.\n", dst_data[0].diffuse);
+    ok(!dst_data[0].specular,
+            "Unexpected specular color 0x%08x.\n", dst_data[0].specular);
+
     color = get_surface_color(rt, 160, 120);
     ok(color == 0x0000ff00, "Lit quad without normals has color 0x%08x.\n", color);
+    ok(dst_data[1].diffuse == 0xff00ff00,
+            "Lit quad without normals has color 0x%08x, expected 0xff000000.\n", dst_data[1].diffuse);
+    ok(!dst_data[1].specular,
+            "Unexpected specular color 0x%08x.\n", dst_data[1].specular);
+
     color = get_surface_color(rt, 480, 360);
     ok(color == 0x000000ff, "Unlit quad with normals has color 0x%08x.\n", color);
+    ok(dst_data[2].diffuse == 0xff0000ff,
+            "Unlit quad with normals has color 0x%08x, expected 0xff0000ff.\n", dst_data[2].diffuse);
+    ok(!dst_data[2].specular,
+            "Unexpected specular color 0x%08x.\n", dst_data[2].specular);
+
     color = get_surface_color(rt, 480, 120);
     ok(color == 0x00ffff00, "Lit quad with normals has color 0x%08x.\n", color);
+    ok(dst_data[3].diffuse == 0xffffff00,
+            "Lit quad with normals has color 0x%08x, expected 0xff000000.\n", dst_data[3].diffuse);
+    ok(!dst_data[3].specular,
+            "Unexpected specular color 0x%08x.\n", dst_data[3].specular);
 
-    material = create_diffuse_and_ambient_material(device, 0.0f, 1.0f, 1.0f, 0.0f);
+    hr = IDirect3DVertexBuffer_Unlock(dst_vb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    material = create_diffuse_and_ambient_material(device, 0.0f, 1.0f, 1.0f, 0.5f);
     hr = IDirect3DMaterial3_GetHandle(material, device, &mat_handle);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
@@ -4179,7 +4260,7 @@ static void test_lighting(void)
     U1(light_desc.dcvColor).r = 1.0f;
     U2(light_desc.dcvColor).g = 1.0f;
     U3(light_desc.dcvColor).b = 1.0f;
-    U4(light_desc.dcvColor).a = 1.0f;
+    U4(light_desc.dcvColor).a = 0.5f;
     U3(light_desc.dvDirection).z = 1.0f;
     hr = IDirect3DLight_SetLight(light, (D3DLIGHT *)&light_desc);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -4224,28 +4305,51 @@ static void test_lighting(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        hr = IDirect3DVertexBuffer_Lock(src_vb2, 0, (void **)&src_data2, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        memcpy(src_data2, tests[i].quad, sizeof(*src_data2));
+        hr = IDirect3DVertexBuffer_Unlock(src_vb2);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
         hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_WORLD, tests[i].world_matrix);
-        ok(SUCCEEDED(hr), "Failed to set world transformation, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice3_BeginScene(device);
-        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
+        hr = IDirect3DVertexBuffer_ProcessVertices(dst_vb, D3DVOP_TRANSFORM | D3DVOP_LIGHT, 0,
+                1, src_vb2, 0, device, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
         hr = IDirect3DDevice3_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, tests[i].quad,
                 4, indices, 6, 0);
-        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice3_EndScene(device);
-        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DVertexBuffer_Lock(dst_vb, 0, (void **)&dst_data, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         color = get_surface_color(rt, 320, 240);
         ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+        ok(dst_data[0].diffuse == (tests[i].expected | 0xff000000),
+                "%s has color 0x%08x.\n", tests[i].message, dst_data[0].diffuse);
+        ok(!dst_data[0].specular,
+                "%s has specular color 0x%08x.\n", tests[i].message, dst_data[0].specular);
+
+        hr = IDirect3DVertexBuffer_Unlock(dst_vb);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     }
 
+    IDirect3DVertexBuffer_Release(src_vb1);
+    IDirect3DVertexBuffer_Release(src_vb2);
+    IDirect3DVertexBuffer_Release(dst_vb);
+
     hr = IDirect3DViewport3_DeleteLight(viewport, light);
-    ok(SUCCEEDED(hr), "Failed to remove a light from the viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     IDirect3DLight_Release(light);
     destroy_material(material);
     IDirect3DViewport3_Release(viewport);
@@ -4260,8 +4364,8 @@ static void test_specular_lighting(void)
 {
     static const unsigned int vertices_side = 5;
     const unsigned int indices_count = (vertices_side - 1) * (vertices_side - 1) * 2 * 3;
-    static const DWORD fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
     static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static const DWORD fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
     static D3DMATRIX mat =
     {
         1.0f, 0.0f, 0.0f, 0.0f,
@@ -4269,6 +4373,24 @@ static void test_specular_lighting(void)
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f,
     };
+    static const struct vertex
+    {
+        struct vec3 position;
+        struct vec3 normal;
+    }
+    vertices[] =
+    {
+        {{-0.5f, -0.5f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+        {{ 0.0f, -0.5f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+        {{ 0.5f, -0.5f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+        {{-0.5f,  0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+        {{ 0.0f,  0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+        {{ 0.5f,  0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+        {{-0.5f,  0.5f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+        {{ 0.0f,  0.5f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+        {{ 0.5f,  0.5f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+    };
+
     static D3DLIGHT2 directional =
     {
         sizeof(D3DLIGHT2),
@@ -4433,13 +4555,17 @@ static void test_specular_lighting(void)
         {&parallelpoint, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
         {&point_far, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
     };
-    IDirect3D3 *d3d;
-    IDirect3DDevice3 *device;
-    IDirectDrawSurface4 *rt;
+
+    IDirect3DVertexBuffer *src_vb, *dst_vb;
+    struct vertex *quad, *src_data;
+    D3DVERTEXBUFFERDESC vb_desc;
+    D3DMATERIALHANDLE mat_handle;
     IDirect3DViewport3 *viewport;
     IDirect3DMaterial3 *material;
+    IDirect3DDevice3 *device;
+    IDirectDrawSurface4 *rt;
     IDirect3DLight *light;
-    D3DMATERIALHANDLE mat_handle;
+    IDirect3D3 *d3d;
     D3DCOLOR color;
     ULONG refcount;
     HWND window;
@@ -4447,9 +4573,10 @@ static void test_specular_lighting(void)
     unsigned int i, j, x, y;
     struct
     {
-        struct vec3 position;
-        struct vec3 normal;
-    } *quad;
+        struct vec4 position;
+        DWORD diffuse;
+        DWORD specular;
+    } *dst_data;
     WORD *indices;
 
     window = create_window();
@@ -4460,8 +4587,8 @@ static void test_specular_lighting(void)
         return;
     }
 
-    quad = HeapAlloc(GetProcessHeap(), 0, vertices_side * vertices_side * sizeof(*quad));
-    indices = HeapAlloc(GetProcessHeap(), 0, indices_count * sizeof(*indices));
+    quad = heap_alloc(vertices_side * vertices_side * sizeof(*quad));
+    indices = heap_alloc(indices_count * sizeof(*indices));
     for (i = 0, y = 0; y < vertices_side; ++y)
     {
         for (x = 0; x < vertices_side; ++x)
@@ -4488,61 +4615,92 @@ static void test_specular_lighting(void)
     }
 
     hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &mat);
-    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_VIEW, &mat);
-    ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
-    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3D3_CreateLight(d3d, &light, NULL);
-    ok(SUCCEEDED(hr), "Failed to create a light object, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DViewport3_AddLight(viewport, light);
-    ok(SUCCEEDED(hr), "Failed to add a light to the viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_SPECULARENABLE, TRUE);
-    ok(SUCCEEDED(hr), "Failed to enable specular lighting, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&vb_desc, 0, sizeof(vb_desc));
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = fvf;
+    vb_desc.dwNumVertices = ARRAY_SIZE(vertices);
+    hr = IDirect3D3_CreateVertexBuffer(d3d, &vb_desc, &src_vb, 0, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer_Lock(src_vb, 0, (void **)&src_data, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    memcpy(src_data, vertices, sizeof(vertices));
+    hr = IDirect3DVertexBuffer_Unlock(src_vb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&vb_desc, 0, sizeof(vb_desc));
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR;
+    vb_desc.dwNumVertices = ARRAY_SIZE(vertices);
+    hr = IDirect3D3_CreateVertexBuffer(d3d, &vb_desc, &dst_vb, 0, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         tests[i].light->dwFlags = D3DLIGHT_ACTIVE;
         hr = IDirect3DLight_SetLight(light, (D3DLIGHT *)tests[i].light);
-        ok(SUCCEEDED(hr), "Failed to set light, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LOCALVIEWER, tests[i].local_viewer);
-        ok(SUCCEEDED(hr), "Failed to set local viewer state, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-        material = create_specular_material(device, 1.0f, 1.0f, 1.0f, 1.0f, tests[i].specular_power);
+        material = create_specular_material(device, 1.0f, 1.0f, 1.0f, 0.5f, tests[i].specular_power);
         hr = IDirect3DMaterial3_GetHandle(material, device, &mat_handle);
-        ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
         hr = IDirect3DDevice3_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
-        ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice3_BeginScene(device);
-        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
+        hr = IDirect3DVertexBuffer_Lock(dst_vb, 0, (void **)&dst_data, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        memset(dst_data, 0, sizeof(*dst_data) * ARRAY_SIZE(vertices));
+        hr = IDirect3DVertexBuffer_Unlock(dst_vb);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DVertexBuffer_ProcessVertices(dst_vb, D3DVOP_TRANSFORM | D3DVOP_LIGHT, 0,
+                ARRAY_SIZE(vertices), src_vb, 0, device, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
         hr = IDirect3DDevice3_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, fvf, quad,
                 vertices_side * vertices_side, indices, indices_count, 0);
-        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice3_EndScene(device);
-        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DVertexBuffer_Lock(dst_vb, 0, (void **)&dst_data, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         for (j = 0; j < tests[i].expected_count; ++j)
         {
@@ -4551,13 +4709,23 @@ static void test_specular_lighting(void)
                     "Expected color 0x%08x at location (%u, %u), got 0x%08x, case %u.\n",
                     tests[i].expected[j].color, tests[i].expected[j].x,
                     tests[i].expected[j].y, color, i);
+            ok(!dst_data[j].diffuse, "Expected color 0x00000000 for vertex %u, got 0x%08x, case %u.\n",
+                    j, dst_data[j].diffuse, i);
+            ok(compare_color(dst_data[j].specular, tests[i].expected[j].color, 1),
+                    "Expected color 0x%08x for vertex %u, got 0x%08x, case %u.\n",
+                    tests[i].expected[j].color, j, dst_data[j].specular, i);
         }
+        hr = IDirect3DVertexBuffer_Unlock(dst_vb);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         destroy_material(material);
     }
 
+    IDirect3DVertexBuffer_Release(dst_vb);
+    IDirect3DVertexBuffer_Release(src_vb);
+
     hr = IDirect3DViewport3_DeleteLight(viewport, light);
-    ok(SUCCEEDED(hr), "Failed to remove a light from the viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     IDirect3DLight_Release(light);
     IDirect3DViewport3_Release(viewport);
     IDirectDrawSurface4_Release(rt);
@@ -4565,8 +4733,8 @@ static void test_specular_lighting(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D3_Release(d3d);
     DestroyWindow(window);
-    HeapFree(GetProcessHeap(), 0, indices);
-    HeapFree(GetProcessHeap(), 0, quad);
+    heap_free(indices);
+    heap_free(quad);
 }
 
 static void test_clear_rect_count(void)
