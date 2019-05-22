@@ -3524,24 +3524,94 @@ BOOL WINAPI SetupDiSetClassInstallParamsW(
     return FALSE;
 }
 
+static BOOL call_coinstallers(WCHAR *list, DI_FUNCTION function, HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
+{
+    DWORD (CALLBACK *coinst_proc)(DI_FUNCTION, HDEVINFO, SP_DEVINFO_DATA *, COINSTALLER_CONTEXT_DATA *);
+    COINSTALLER_CONTEXT_DATA coinst_ctx;
+    WCHAR *p, *procnameW;
+    HMODULE module;
+    char *procname;
+    DWORD ret;
+
+    for (p = list; *p; p += strlenW(p) + 1)
+    {
+        TRACE("Found co-installer %s.\n", debugstr_w(p));
+        if ((procnameW = strchrW(p, ',')))
+            *procnameW = 0;
+
+        if ((module = LoadLibraryExW(p, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32)))
+        {
+            if (procnameW)
+            {
+                procname = strdupWtoA(procnameW + 1);
+                coinst_proc = (void *)GetProcAddress(module, procname);
+                heap_free(procname);
+            }
+            else
+                coinst_proc = (void *)GetProcAddress(module, "CoDeviceInstall");
+            if (coinst_proc)
+            {
+                memset(&coinst_ctx, 0, sizeof(coinst_ctx));
+                TRACE("Calling co-installer %p.\n", coinst_proc);
+                ret = coinst_proc(function, devinfo, device_data, &coinst_ctx);
+                TRACE("Co-installer %p returned %#x.\n", coinst_proc, ret);
+                if (ret == ERROR_DI_POSTPROCESSING_REQUIRED)
+                    FIXME("Co-installer postprocessing not implemented.\n");
+                else if (ret)
+                {
+                    ERR("Co-installer returned error %#x.\n", ret);
+                    FreeLibrary(module);
+                    SetLastError(ret);
+                    return FALSE;
+                }
+            }
+            FreeLibrary(module);
+        }
+    }
+
+    return TRUE;
+}
+
 /***********************************************************************
  *              SetupDiCallClassInstaller (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
+    static const WCHAR class_coinst_pathW[] = {'S','y','s','t','e','m',
+            '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+            '\\','C','o','n','t','r','o','l',
+            '\\','C','o','D','e','v','i','c','e','I','n','s','t','a','l','l','e','r','s',0};
     static const WCHAR installer32W[] = {'I','n','s','t','a','l','l','e','r','3','2',0};
     DWORD (CALLBACK *classinst_proc)(DI_FUNCTION, HDEVINFO, SP_DEVINFO_DATA *);
     DWORD ret = ERROR_DI_DO_DEFAULT;
+    HKEY class_key, coinst_key;
     WCHAR *path, *procnameW;
     struct device *device;
+    WCHAR guidstr[39];
+    BOOL coret = TRUE;
     HMODULE module;
     char *procname;
-    HKEY class_key;
     DWORD size;
 
     TRACE("function %#x, devinfo %p, device_data %p.\n", function, devinfo, device_data);
 
     if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, class_coinst_pathW, 0, KEY_READ, &coinst_key))
+    {
+        SETUPDI_GuidToString(&device->class, guidstr);
+        if (!RegGetValueW(coinst_key, NULL, guidstr, RRF_RT_REG_MULTI_SZ, NULL, NULL, &size))
+        {
+            path = heap_alloc(size);
+            if (!RegGetValueW(coinst_key, NULL, guidstr, RRF_RT_REG_MULTI_SZ, NULL, path, &size))
+                coret = call_coinstallers(path, function, devinfo, device_data);
+            heap_free(path);
+        }
+        RegCloseKey(coinst_key);
+    }
+
+    if (!coret)
         return FALSE;
 
     if ((class_key = SetupDiOpenClassRegKey(&device->class, KEY_READ)) != INVALID_HANDLE_VALUE)
