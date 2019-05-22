@@ -440,7 +440,7 @@ sub READ_DEFAULTS($)
         die "unknown directionality $bidi" unless defined $directions{$bidi};
 
         $category_table[$src] = $categories{$cat};
-        $direction_table[$src] = $directions{$bidi};
+        $direction_table[$src] = $bidi;
         $joining_table[$src] = $joining_types{"T"} if $cat eq "Mn" || $cat eq "Me" || $cat eq "Cf";
 
         if ($lower ne "")
@@ -2177,6 +2177,33 @@ sub dump_nameprep($)
     save_file($filename);
 }
 
+
+################################################################
+# dump the GetStringTypeW table
+sub dump_string_type_table($)
+{
+    my $filename = shift;
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
+    printf OUTPUT "/* Unicode wctype table */\n";
+    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    printf OUTPUT "#include \"windef.h\"\n\n";
+
+    my @table = @category_table;
+
+    # add the direction in the high 4 bits of the category
+    for (my $i = 0; $i < 65536; $i++)
+    {
+        $table[$i] |= $directions{$direction_table[$i]} << 12 if defined $direction_table[$i];
+    }
+
+    dump_simple_mapping( "DECLSPEC_HIDDEN wctype_table", 0, @table );
+
+    close OUTPUT;
+    save_file($filename);
+}
+
+
 ################################################################
 # dump the ctype tables
 sub dump_ctype_tables($)
@@ -2188,13 +2215,15 @@ sub dump_ctype_tables($)
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
 
+    my @table = @category_table;
+
     # add the direction in the high 4 bits of the category
     for (my $i = 0; $i < 65536; $i++)
     {
-        $category_table[$i] |= $direction_table[$i] << 12 if defined $direction_table[$i];
+        $table[$i] |= $directions{$direction_table[$i]} << 12 if defined $direction_table[$i];
     }
 
-    dump_simple_mapping( "wine_wctype_table", 0, @category_table );
+    dump_simple_mapping( "wine_wctype_table", 0, @table );
 
     close OUTPUT;
     save_file($filename);
@@ -2772,6 +2801,7 @@ dump_sortkeys( "libs/port/collation.c", READ_SORTKEYS_FILE() );
 dump_compose_table( "libs/port/compose.c" );
 dump_decompose_table( "libs/port/decompose.c" );
 dump_ctype_tables( "libs/port/wctype.c" );
+dump_string_type_table( "dlls/kernel32/wctype.c" );
 dump_digit_folding( "libs/port/digitmap.c" );
 dump_combining_class( "libs/port/combclass.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
