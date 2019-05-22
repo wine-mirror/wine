@@ -108,6 +108,7 @@ struct driver
 {
     WCHAR inf_path[MAX_PATH];
     WCHAR manufacturer[LINE_LEN];
+    WCHAR mfg_key[LINE_LEN];
     WCHAR description[LINE_LEN];
 };
 
@@ -4076,12 +4077,53 @@ BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO dev, PSP_DEVINFO_DATA info_d
 /***********************************************************************
  *              SetupDiRegisterCoDeviceInstallers (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO dev, PSP_DEVINFO_DATA info_data)
+BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    FIXME("%p, %p stub\n", dev, info_data);
+    static const WCHAR coinstallersW[] = {'.','C','o','I','n','s','t','a','l','l','e','r','s',0};
+    WCHAR coinst_key[LINE_LEN], coinst_key_ext[LINE_LEN];
+    struct device *device;
+    struct driver *driver;
+    void *callback_ctx;
+    HKEY driver_key;
+    INFCONTEXT ctx;
+    HINF hinf;
+    LONG l;
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (!(driver = device->selected_driver))
+    {
+        ERR("No driver selected for device %p.\n", devinfo);
+        SetLastError(ERROR_NO_DRIVER_SELECTED);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    SetupGetStringFieldW(&ctx, 1, coinst_key, ARRAY_SIZE(coinst_key), NULL);
+    SetupDiGetActualSectionToInstallW(hinf, coinst_key, coinst_key_ext, ARRAY_SIZE(coinst_key_ext), NULL, NULL);
+    strcatW(coinst_key_ext, coinstallersW);
+
+    if ((l = create_driver_key(device, &driver_key)))
+    {
+        SetLastError(l);
+        SetupCloseInfFile(hinf);
+        return FALSE;
+    }
+
+    callback_ctx = SetupInitDefaultQueueCallback(NULL);
+    SetupInstallFromInfSectionW(NULL, hinf, coinst_key_ext, SPINST_ALL, driver_key, NULL,
+            SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
+    SetupTermDefaultQueueCallback(callback_ctx);
+
+    RegCloseKey(driver_key);
+    SetupCloseInfFile(hinf);
+    return TRUE;
 }
 
 /* Check whether the given hardware or compatible ID matches any of the device's
@@ -4190,6 +4232,7 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
                     device->drivers = heap_realloc(device->drivers, count * sizeof(*device->drivers));
                     strcpyW(device->drivers[count - 1].inf_path, path);
                     strcpyW(device->drivers[count - 1].manufacturer, mfg_name);
+                    strcpyW(device->drivers[count - 1].mfg_key, mfg_key_ext);
                     SetupGetStringFieldW(&ctx, 0, device->drivers[count - 1].description,
                             ARRAY_SIZE(device->drivers[count - 1].description), NULL);
 
