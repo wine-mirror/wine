@@ -336,6 +336,33 @@ my %directions =
     "PDI" => 15    # Pop Directional Isolate
 );
 
+my %c2_types =
+(
+    "L"   => 1,    # C2_LEFTTORIGHT
+    "R"   => 2,    # C2_RIGHTTOLEFT
+    "AL"  => 2,    # C2_RIGHTTOLEFT
+    "EN"  => 3,    # C2_EUROPENUMBER
+    "ES"  => 4,    # C2_EUROPESEPARATOR
+    "ET"  => 5,    # C2_EUROPETERMINATOR
+    "AN"  => 6,    # C2_ARABICNUMBER
+    "CS"  => 7,    # C2_COMMONSEPARATOR
+    "NSM" => 0,    # C2_NOTAPPLICABLE
+    "BN"  => 0,    # C2_NOTAPPLICABLE
+    "B"   => 8,    # C2_BLOCKSEPARATOR
+    "S"   => 9,    # C2_SEGMENTSEPARATOR
+    "WS"  => 10,   # C2_WHITESPACE
+    "ON"  => 11,   # C2_OTHERNEUTRAL
+    "LRE" => 11,   # C2_OTHERNEUTRAL
+    "LRO" => 11,   # C2_OTHERNEUTRAL
+    "RLE" => 11,   # C2_OTHERNEUTRAL
+    "RLO" => 11,   # C2_OTHERNEUTRAL
+    "PDF" => 11,   # C2_OTHERNEUTRAL
+    "LRI" => 11,   # C2_OTHERNEUTRAL
+    "RLI" => 11,   # C2_OTHERNEUTRAL
+    "FSI" => 11,   # C2_OTHERNEUTRAL
+    "PDI" => 11    # C2_OTHERNEUTRAL
+);
+
 my %joining_types =
 (
    "U" => 0,    # Non_Joining
@@ -2194,7 +2221,7 @@ sub dump_string_type_table($)
     # add the direction in the high 4 bits of the category
     for (my $i = 0; $i < 65536; $i++)
     {
-        $table[$i] |= $directions{$direction_table[$i]} << 12 if defined $direction_table[$i];
+        $table[$i] |= $c2_types{$direction_table[$i]} << 12 if defined $direction_table[$i];
     }
 
     dump_simple_mapping( "DECLSPEC_HIDDEN wctype_table", 0, @table );
