@@ -6,14 +6,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-05-04 04:54+0530\n"
+"PO-Revision-Date: 2019-05-29 04:04+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 19.04.0\n"
+"X-Generator: Lokalize 19.04.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: appwiz.rc:58
@@ -1302,7 +1302,7 @@ msgstr "CRL හේතුව කේතය"
 
 #: crypt32.rc:40
 msgid "CRL Distribution Points"
-msgstr ""
+msgstr "CRL බෙදාහැරීම තැන්"
 
 #: crypt32.rc:41
 msgid "Enhanced Key Usage"
@@ -1343,7 +1343,7 @@ msgstr "පණිවිඩයේ සාරසංග්‍රහය"
 
 #: crypt32.rc:50
 msgid "Signing Time"
-msgstr ""
+msgstr "අත්සන් කරන වෙලාව"
 
 #: crypt32.rc:51
 msgid "Counter Sign"
@@ -1452,7 +1452,7 @@ msgstr "ප්රාන්තය හෝ පළාත"
 
 #: crypt32.rc:77
 msgid "Title"
-msgstr ""
+msgstr "ශීර්ෂය"
 
 #: crypt32.rc:78
 msgid "Given Name"
@@ -1944,11 +1944,11 @@ msgstr ""
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr ""
+msgstr "CRL බෙදාහැරීම තැන"
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
-msgstr ""
+msgstr "බෙදාහැරීම තැනේ නම"
 
 #: crypt32.rc:208
 msgid "Full Name"
@@ -1992,7 +1992,7 @@ msgstr ""
 
 #: crypt32.rc:218
 msgid "Financial Information="
-msgstr ""
+msgstr "මූල්‍ය තොරතුරු="
 
 #: crypt32.rc:219 taskmgr.rc:397
 msgid "Available"
@@ -2939,7 +2939,7 @@ msgstr "සහතිකයක් තෝරන්න"
 
 #: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
-msgstr ""
+msgstr "තවම හදල නැහැ"
 
 #: dinput.rc:34
 msgid "Configure Devices"
@@ -2951,7 +2951,7 @@ msgstr "නැවත සකසන්න"
 
 #: dinput.rc:42
 msgid "Player"
-msgstr ""
+msgstr "ක්‍රීඩකයා"
 
 #: dinput.rc:43 winecfg.rc:89
 msgid "Device"
@@ -4134,16 +4134,17 @@ msgid "Negative seek.\n"
 msgstr ""
 
 #: winerror.mc:533
+#, fuzzy
 msgid "Drive is a JOIN target.\n"
-msgstr ""
+msgstr "ධාවකය"
 
 #: winerror.mc:538
 msgid "Drive is already JOINed.\n"
-msgstr ""
+msgstr "ධාවකය දැනටමත් JOIN කරලා.\n"
 
 #: winerror.mc:543
 msgid "Drive is already SUBSTed.\n"
-msgstr ""
+msgstr "ධාවකය දැනටමත් SUBST කරලා.\n"
 
 #: winerror.mc:548
 msgid "Drive is not JOINed.\n"
@@ -4155,15 +4156,15 @@ msgstr "ධාවකය SUBST කරලා නැහැ.\n"
 
 #: winerror.mc:558
 msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr ""
+msgstr "JOIN කරපු ධාවකයකකට JOIN කරන්නට උත්සාහයක්.\n"
 
 #: winerror.mc:563
 msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr ""
+msgstr "SUBST කරපු ධාවකයකකට SUBST කරන්නට උත්සාහයක්.\n"
 
 #: winerror.mc:568
 msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr ""
+msgstr "SUBST කරපු ධාවකයකකට JOIN කරන්නට උත්සාහයක්.\n"
 
 #: winerror.mc:573
 msgid "Attempt to SUBST to a JOINed drive.\n"
@@ -4223,7 +4224,7 @@ msgstr "වෙළුමේ ලේබලය දිග වැඩි.\n"
 
 #: winerror.mc:643
 msgid "Too many TCBs.\n"
-msgstr ""
+msgstr "TCBs වැඩි.\n"
 
 #: winerror.mc:648
 msgid "Signal refused.\n"
@@ -4588,7 +4589,7 @@ msgstr "රෙජිස්තරය සදොස් වෙලා.\n"
 
 #: winerror.mc:1098
 msgid "I/O to registry failed.\n"
-msgstr ""
+msgstr "රෙජිස්තරයට I/O අසාර්ථක උනා.\n"
 
 #: winerror.mc:1103
 msgid "Not registry file.\n"
@@ -4830,11 +4831,12 @@ msgstr ""
 
 #: winerror.mc:1398
 msgid "Serial I/O completed.\n"
-msgstr ""
+msgstr "අනුක්‍රමික I/O ඉවරයි.\n"
 
 #: winerror.mc:1403
+#, fuzzy
 msgid "Serial I/O counter timeout.\n"
-msgstr ""
+msgstr "අනුක්‍රමික I/O"
 
 #: winerror.mc:1408
 msgid "Floppy ID address mark not found.\n"
@@ -5366,11 +5368,11 @@ msgstr ""
 
 #: winerror.mc:2073
 msgid "Too many LUIDs requested.\n"
-msgstr ""
+msgstr "LUIDs වැඩියෙන් ඉල්ලලා.\n"
 
 #: winerror.mc:2078
 msgid "LUIDs exhausted.\n"
-msgstr ""
+msgstr "LUIDs ඉවරයි.\n"
 
 #: winerror.mc:2083
 msgid "Invalid sub authority.\n"
@@ -6094,11 +6096,11 @@ msgstr ""
 
 #: winerror.mc:2988
 msgid "UUID already registered.\n"
-msgstr ""
+msgstr "UUID එක දැනටමත් ලියාපදිංච කරලා තියෙන්නේ.\n"
 
 #: winerror.mc:2993
 msgid "UUID type already registered.\n"
-msgstr ""
+msgstr "UUID වර්ගය දැනටමත් ලියාපදිංච කරලා තියෙන්නේ.\n"
 
 #: winerror.mc:2998
 msgid "Server already listening.\n"
@@ -7042,11 +7044,12 @@ msgstr "මාධ්‍ය මූලයේ ගුණාංග සහාය න�
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "දහර නැවතුම ඉවත් කරා.\n"
 
 #: mferror.mc:543
+#, fuzzy
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "දහර නැවතුම්"
 
 #: mferror.mc:550
 #, fuzzy
@@ -7055,10 +7058,8 @@ msgid "Media sink stream sinks set is fixed.\n"
 msgstr "මාධ්‍ය මූලය වැරදි තත්වයක ඉන්නේ\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "වසම දැනටමත් පවතිනවා.\n"
+msgstr "දහර නැවතුම දැනටමත් පවතිනවා.\n"
 
 #: mferror.mc:564
 #, fuzzy
@@ -7087,10 +7088,8 @@ msgid "No streams were selected for the sink.\n"
 msgstr ""
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "ගොනුවේ නම දිග වැඩි.\n"
+msgstr "මෙටාදත්ත දිග වැඩියට තිබුනේ.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
@@ -7297,9 +7296,9 @@ msgstr ""
 "Log and user interface modifiers for the above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] log_file\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register the MSI Service:\n"
+"MSI සේවාව ලියාපදිංචි කරන්න:\n"
 "\t/y\n"
-"Unregister the MSI Service:\n"
+"MSI සේවාව ලියාපදිංචිය ඉවත් කරන්න:\n"
 "\t/z\n"
 "මේ උදව්ව පෙන්නන්න:\n"
 "\t/help\n"
@@ -7435,39 +7434,43 @@ msgstr ""
 
 #: msi.rc:119
 msgid "Registering Class servers"
-msgstr ""
+msgstr "පන්ති සේවාදායකයන් ලියාපදිංචි කරනවා"
 
 #: msi.rc:120
+#, fuzzy
 msgid "Registering COM+ Applications and Components"
-msgstr ""
+msgstr "ලියාපදිංචි කරනවා"
 
 #: msi.rc:121
 msgid "Registering extension servers"
-msgstr ""
+msgstr "දිගු සේවාදායකයන් ලියාපදිංචි කරනවා"
 
 #: msi.rc:122
 msgid "Registering fonts"
-msgstr ""
+msgstr "ෆොන්ට ලියාපදිංචි කරනවා"
 
 #: msi.rc:123
 msgid "Registering MIME info"
-msgstr ""
+msgstr "MIME තතු ලියාපදිංචි කරනවා"
 
 #: msi.rc:124
+#, fuzzy
 msgid "Registering product"
-msgstr ""
+msgstr "ලියාපදිංචි කරනවා"
 
 #: msi.rc:125
+#, fuzzy
 msgid "Registering program identifiers"
-msgstr ""
+msgstr "ලියාපදිංචි කරනවා"
 
 #: msi.rc:126
+#, fuzzy
 msgid "Registering type libraries"
-msgstr ""
+msgstr "ලියාපදිංචි කරනවා"
 
 #: msi.rc:127
 msgid "Registering user"
-msgstr ""
+msgstr "පරිශීලකයව ලියාපදිංචි කරනවා"
 
 #: msi.rc:128
 msgid "Removing duplicated files"
@@ -7507,11 +7510,11 @@ msgstr "කෙටිමඟන් ඉවත් කරනවා"
 
 #: msi.rc:138
 msgid "Registering modules"
-msgstr ""
+msgstr "මොඩියුල ලියාපදිංචි කරනවා"
 
 #: msi.rc:139
 msgid "Unregistering modules"
-msgstr "මොඩියුල unregister කරනවා"
+msgstr "මොඩියුල ලියාපදිංචිය ඉවත් කරනවා"
 
 #: msi.rc:140
 msgid "Initializing ODBC directories"
@@ -7539,32 +7542,32 @@ msgstr ""
 
 #: msi.rc:146
 msgid "Unregister Class servers"
-msgstr "පන්ති සේවාදාවකයන් unregister කරන්න"
+msgstr "පන්ති සේවාදාවකයන් ලියාපදිංචිය ඉවත් කරන්න"
 
 #: msi.rc:147
 msgid "Unregistering COM+ Applications and Components"
-msgstr "COM+ යෙදුම් හා සංරචක unregister කරනවා"
+msgstr "COM+ යෙදුම් හා සංරචක ලියාපදිංචිය ඉවත් කරනවා"
 
 #: msi.rc:148
 msgid "Unregistering extension servers"
-msgstr "දිගු සේවාදාවකයන් unregister කරනවා"
+msgstr "දිගු සේවාදාවකයන් ලියාපදිංචිය ඉවත් කරනවා"
 
 #: msi.rc:149
 msgid "Unregistering fonts"
-msgstr "ෆොන්ට unregister කරනවා"
+msgstr "ෆොන්ට ලියාපදිංචිය ඉවත් කරනවා"
 
 #: msi.rc:150
 msgid "Unregistering MIME info"
-msgstr "MIME තතු unregister කරනවා"
+msgstr "MIME තතු ලියාපදිංචිය ඉවත් කරනවා"
 
 #: msi.rc:151
 #, fuzzy
 msgid "Unregistering program identifiers"
-msgstr "unregister කරනවා"
+msgstr "ලියාපදිංචිය ඉවත් කරනවා"
 
 #: msi.rc:152
 msgid "Unregistering type libraries"
-msgstr "වර්ග පුස්තකාල unregister කරනවා"
+msgstr "වර්ග පුස්තකාල ලියාපදිංචිය ඉවත් කරනවා"
 
 #: msi.rc:154
 msgid "Writing INI files values"
@@ -7825,7 +7828,7 @@ msgstr "අනුචලන තීරුව"
 
 #: oleacc.rc:35
 msgid "grip"
-msgstr ""
+msgstr "ග්‍රහනය"
 
 #: oleacc.rc:36
 msgid "sound"
@@ -7873,7 +7876,7 @@ msgstr "ලේඛය"
 
 #: oleacc.rc:47
 msgid "pane"
-msgstr ""
+msgstr "කවුළුව"
 
 #: oleacc.rc:48
 msgid "chart"
@@ -8165,7 +8168,7 @@ msgstr ""
 #: oleacc.rc:116
 msgctxt "object state"
 msgid "moveable"
-msgstr ""
+msgstr "චලන"
 
 #: oleacc.rc:117
 msgctxt "object state"
@@ -13534,12 +13537,14 @@ msgid "Type \"regedit /?\" for help.\n"
 msgstr "\"regedit /?\" ගහන්න උදව්වට.\n"
 
 #: regedit.rc:411
+#, fuzzy
 msgid "regedit: No filename was specified.\n"
-msgstr ""
+msgstr "regedit:"
 
 #: regedit.rc:412
+#, fuzzy
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit:"
 
 #: regedit.rc:413
 msgid "regedit: The file '%1' was not found.\n"
@@ -13550,8 +13555,9 @@ msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "regedit: '%1' ගොනුව විවෘත කරන්න කරන්න බැරි උනා.\n"
 
 #: regedit.rc:415
+#, fuzzy
 msgid "regedit: Unhandled action.\n"
-msgstr ""
+msgstr "regedit:"
 
 #: regedit.rc:416
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
@@ -13577,16 +13583,18 @@ msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
 msgstr "regedit: රෙජිස්තරය දත්ත වර්ගය [0x%1!x!] සහාය නොදක්වයි\n"
 
 #: regedit.rc:421
+#, fuzzy
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr ""
+msgstr "regedit:"
 
 #: regedit.rc:422
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr ""
+msgstr "regedit: '%1' පේලිය අඳුරගන්න බැරි උනා.\n"
 
 #: regedit.rc:423
+#, fuzzy
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr ""
+msgstr "regedit:"
 
 #: regedit.rc:424
 msgid "regedit: Unable to open the registry key '%1'.\n"
@@ -13708,7 +13716,7 @@ msgstr ""
 
 #: regedit.rc:207
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr ""
+msgstr "මේ වර්ගයේ රෙජිස්තරයේ යතුරු සකසන්න බැහැ (%1!u!)."
 
 #: regedit.rc:208
 msgid "The value is too big (%1!u!)."
@@ -13724,7 +13732,7 @@ msgstr ""
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
-msgstr ""
+msgstr "සෙවීම ඉවරයි. අනුලකුණු වැල '%1' හම්බු උනේ නැහැ."
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -13934,11 +13942,11 @@ msgstr "කාර්ය කළමනාකරුවෙන් පිටත් ව
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
-msgstr ""
+msgstr "පාවිච්චි කරන කොට හකුලන්න (&M)"
 
 #: taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr ""
+msgstr "හකුලලා තියෙන කොට හංගන්න (&H)"
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
@@ -14430,15 +14438,15 @@ msgstr ""
 
 #: taskmgr.rc:196
 msgid "Updates the display twice per second"
-msgstr ""
+msgstr "සංදර්ශකය යාවත් කරනවා දෙසැරයක් හැම තප්පරක"
 
 #: taskmgr.rc:197
 msgid "Updates the display every two seconds"
-msgstr ""
+msgstr "සංදර්ශකය යාවත් කරනවා හැම තප්පර දෙකක"
 
 #: taskmgr.rc:198
 msgid "Updates the display every four seconds"
-msgstr ""
+msgstr "සංදර්ශකය යාවත් කරනවා හැම තප්පර හතරක"
 
 #: taskmgr.rc:203
 msgid "Does not automatically update"
@@ -15588,6 +15596,8 @@ msgid ""
 "                           try to setup the current terminal as a Wine "
 "console.\n"
 msgstr ""
+"  --backend={user|curses}  user තෝරන කොට අලුත් කවුළුවක් හදනවා, curses \n"
+"                           වත්මන් terminal එක Wine කොන්සෝලයක් විදිහට හදන්න හදනවා.\n"
 
 #: wineconsole.rc:53
 msgid "  <command>                The Wine program to launch in the console.\n"
@@ -16081,7 +16091,7 @@ msgstr "වෙනස් කරා (&M)"
 
 #: wordpad.rc:60
 msgid "E&xtras"
-msgstr ""
+msgstr "අතිරේක (&X)"
 
 #: wordpad.rc:62
 msgid "Selection &info"
