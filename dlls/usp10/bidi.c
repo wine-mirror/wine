@@ -50,7 +50,6 @@
 #include "wingdi.h"
 #include "winnls.h"
 #include "usp10.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
@@ -58,6 +57,7 @@
 #include "usp10_internal.h"
 
 extern const unsigned short bidi_bracket_table[] DECLSPEC_HIDDEN;
+extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
@@ -186,7 +186,7 @@ static void classify(const WCHAR *string, WORD *chartype, DWORD count, const SCR
 
     for (i = 0; i < count; ++i)
     {
-        chartype[i] = dir_map[get_char_typeW(string[i]) >> 12];
+        chartype[i] = dir_map[get_table_entry( bidi_direction_table, string[i] )];
         switch (chartype[i])
         {
         case ES:

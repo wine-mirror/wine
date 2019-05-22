@@ -2232,6 +2232,31 @@ sub dump_string_type_table($)
 
 
 ################################################################
+# dump the bidi direction table
+sub dump_bidi_dir_table($)
+{
+    my $filename = shift;
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
+    printf OUTPUT "/* Unicode BiDi direction table */\n";
+    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    printf OUTPUT "#include \"windef.h\"\n\n";
+
+    my @table;
+
+    for (my $i = 0; $i < 65536; $i++)
+    {
+        $table[$i] = $directions{$direction_table[$i]} if defined $direction_table[$i];
+    }
+
+    dump_two_level_mapping( "DECLSPEC_HIDDEN bidi_direction_table", 0, @table );
+
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
 # dump the ctype tables
 sub dump_ctype_tables($)
 {
@@ -2828,6 +2853,7 @@ dump_sortkeys( "libs/port/collation.c", READ_SORTKEYS_FILE() );
 dump_compose_table( "libs/port/compose.c" );
 dump_decompose_table( "libs/port/decompose.c" );
 dump_ctype_tables( "libs/port/wctype.c" );
+dump_bidi_dir_table( "dlls/usp10/direction.c" );
 dump_string_type_table( "dlls/kernel32/wctype.c" );
 dump_digit_folding( "libs/port/digitmap.c" );
 dump_combining_class( "libs/port/combclass.c" );
