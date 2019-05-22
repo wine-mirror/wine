@@ -298,7 +298,7 @@ void strmbase_renderer_cleanup(BaseRenderer *filter)
     CloseHandle(filter->ThreadSignal);
     CloseHandle(filter->RenderEvent);
     QualityControlImpl_Destroy(filter->qcimpl);
-    BaseFilter_Destroy(&filter->filter);
+    strmbase_filter_cleanup(&filter->filter);
 }
 
 HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSample)

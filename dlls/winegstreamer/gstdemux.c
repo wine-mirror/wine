@@ -1302,7 +1302,7 @@ static void GST_Destroy(GSTImpl *This)
         gst_bus_set_sync_handler(This->bus, NULL, NULL, NULL);
         gst_object_unref(This->bus);
     }
-    BaseFilter_Destroy(&This->filter);
+    strmbase_filter_cleanup(&This->filter);
     CoTaskMemFree(This);
 }
 

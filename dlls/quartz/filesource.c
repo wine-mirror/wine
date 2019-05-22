@@ -493,7 +493,7 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
         CoTaskMemFree(This->pszFileName);
         if (This->pmt)
             DeleteMediaType(This->pmt);
-        BaseFilter_Destroy(&This->filter);
+        strmbase_filter_cleanup(&This->filter);
         CoTaskMemFree(This);
         return 0;
     }

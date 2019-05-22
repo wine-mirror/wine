@@ -193,7 +193,7 @@ void Parser_Destroy(ParserImpl *This)
     }
 
     CoTaskMemFree(This->ppPins);
-    BaseFilter_Destroy(&This->filter);
+    strmbase_filter_cleanup(&This->filter);
 
     TRACE("Destroying parser\n");
     CoTaskMemFree(This);

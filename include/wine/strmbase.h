@@ -192,7 +192,7 @@ VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter* This);
 
 void BaseFilter_Init(BaseFilter *filter, const IBaseFilterVtbl *vtbl,
         const CLSID *clsid, DWORD_PTR debug_info, const BaseFilterFuncTable *func_table);
-HRESULT WINAPI BaseFilter_Destroy(BaseFilter * This);
+HRESULT WINAPI strmbase_filter_cleanup(BaseFilter *filter);
 
 /* Enums */
 HRESULT WINAPI EnumMediaTypes_Construct(BasePin *iface, BasePin_GetMediaType enumFunc, BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes ** ppEnum);

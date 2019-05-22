@@ -194,7 +194,7 @@ static ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
         FreeMediaType(&This->pmt);
         QualityControlImpl_Destroy(This->qcimpl);
         IUnknown_Release(This->seekthru_unk);
-        BaseFilter_Destroy(&This->filter);
+        strmbase_filter_cleanup(&This->filter);
         CoTaskMemFree(This);
     }
     return refCount;

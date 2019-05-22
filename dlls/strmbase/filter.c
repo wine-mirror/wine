@@ -62,7 +62,7 @@ ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface)
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
     if (!refCount)
-        BaseFilter_Destroy(This);
+        strmbase_filter_cleanup(This);
 
     return refCount;
 }
@@ -227,7 +227,7 @@ void BaseFilter_Init(BaseFilter *This, const IBaseFilterVtbl *Vtbl, const CLSID 
     This->pFuncsTable = pBaseFuncsTable;
 }
 
-HRESULT WINAPI BaseFilter_Destroy(BaseFilter * This)
+HRESULT WINAPI strmbase_filter_cleanup(BaseFilter * This)
 {
     if (This->pClock)
         IReferenceClock_Release(This->pClock);

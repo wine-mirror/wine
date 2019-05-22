@@ -177,7 +177,7 @@ static ULONG WINAPI unknown_inner_Release(IUnknown *iface)
             IPin_Release(conn);
         }
         IPin_Release(This->pOutputPin);
-        BaseFilter_Destroy(&This->filter);
+        strmbase_filter_cleanup(&This->filter);
         CoTaskMemFree(This);
         ObjectRefCount(FALSE);
     }

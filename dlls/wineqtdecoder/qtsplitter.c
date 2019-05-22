@@ -337,7 +337,7 @@ static void QT_Destroy(QTSplitter *This)
 
     This->csReceive.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->csReceive);
-    BaseFilter_Destroy(&This->filter);
+    strmbase_filter_cleanup(&This->filter);
 
     CoTaskMemFree(This);
 }
