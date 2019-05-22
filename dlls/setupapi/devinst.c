@@ -724,6 +724,11 @@ static void remove_device(struct device *device)
 static void delete_device(struct device *device)
 {
     struct device_iface *iface, *next;
+    SP_DEVINFO_DATA device_data;
+
+    device_data.cbSize = sizeof(device_data);
+    copy_device_data(&device_data, device);
+    SetupDiCallClassInstaller(DIF_DESTROYPRIVATEDATA, device->set, &device_data);
 
     if (device->phantom)
         remove_device(device);
