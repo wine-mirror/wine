@@ -3875,9 +3875,7 @@ static void test_CreateBinding(void)
     trace("Start >\n");
     expect_hrResult = S_OK;
     hres = IInternetProtocol_Start(protocol, test_url, &protocol_sink, &bind_info, 0, 0);
-todo_wine_if (no_aggregation)
     ok(hres == S_OK, "Start failed: %08x\n", hres);
-    if (hres != S_OK) goto fail;
     trace("Start <\n");
 
     CHECK_CALLED(QueryService_InternetProtocol);
@@ -4025,7 +4023,6 @@ todo_wine_if (no_aggregation)
     ok(hres == MK_E_SYNTAX, "Start failed: %08x, expected MK_E_SYNTAX\n", hres);
     CHECK_CALLED(QueryService_InternetProtocol);
 
-fail:
     IInternetProtocol_Release(protocol);
 
     IInternetSession_Release(session);
