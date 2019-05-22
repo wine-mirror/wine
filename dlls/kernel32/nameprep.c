@@ -2,7 +2,7 @@
 /* generated from http://www.rfc-editor.org/rfc/rfc3454.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
+#include "windef.h"
 
 const unsigned short DECLSPEC_HIDDEN nameprep_char_type[4432] =
 {

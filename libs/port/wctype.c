@@ -1,7 +1,7 @@
 /* Unicode ctype tables */
 /* Automatically generated; DO NOT EDIT!! */
 
-#include "wine/unicode.h"
+#include "windef.h"
 
 const unsigned short wine_wctype_table[17152] =
 {

@@ -3,7 +3,7 @@
 /*       and from http://www.unicode.org/Public/12.0.0/ucd/IndicPositionalCategory.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
+#include "windef.h"
 
 const unsigned short DECLSPEC_HIDDEN indic_syllabic_table[3344] =
 {

@@ -2,7 +2,7 @@
 /* generated from http://www.unicode.org/Public/12.0.0/ucd/UnicodeData.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
+#include "windef.h"
 
 const WCHAR DECLSPEC_HIDDEN wine_digitmap[5933] =
 {

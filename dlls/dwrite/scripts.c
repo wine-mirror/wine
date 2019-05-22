@@ -2,7 +2,7 @@
 /* generated from http://www.unicode.org/Public/12.0.0/ucd/Scripts.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
+#include "windef.h"
 
 const unsigned short DECLSPEC_HIDDEN wine_scripts_table[6736] =
 {
