@@ -227,7 +227,7 @@ void BaseFilter_Init(BaseFilter *This, const IBaseFilterVtbl *Vtbl, const CLSID 
     This->pFuncsTable = pBaseFuncsTable;
 }
 
-HRESULT WINAPI strmbase_filter_cleanup(BaseFilter * This)
+void strmbase_filter_cleanup(BaseFilter *This)
 {
     if (This->pClock)
         IReferenceClock_Release(This->pClock);
@@ -235,6 +235,4 @@ HRESULT WINAPI strmbase_filter_cleanup(BaseFilter * This)
     This->IBaseFilter_iface.lpVtbl = NULL;
     This->csFilter.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->csFilter);
-
-    return S_OK;
 }
