@@ -1106,6 +1106,7 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_INF_SIGNER_INFO)
 #define DIF_POWERMESSAGEWAKE                0x27
 #define DIF_ADDREMOTEPROPERTYPAGE_ADVANCED  0x28
 #define DIF_UPDATEDRIVER_UI                 0x29
+#define DIF_FINISHINSTALL_ACTION            0x2a
 #define DIF_RESERVED2                       0x30
 
 /* Directory ids */

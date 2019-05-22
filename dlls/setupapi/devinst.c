@@ -3520,15 +3520,34 @@ BOOL WINAPI SetupDiSetClassInstallParamsW(
 }
 
 /***********************************************************************
- *		SetupDiCallClassInstaller (SETUPAPI.@)
+ *              SetupDiCallClassInstaller (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiCallClassInstaller(
-       DI_FUNCTION InstallFunction,
-       HDEVINFO DeviceInfoSet,
-       PSP_DEVINFO_DATA DeviceInfoData)
+BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    FIXME("%d %p %p\n", InstallFunction, DeviceInfoSet, DeviceInfoData);
-    return FALSE;
+    TRACE("function %#x, devinfo %p, device_data %p.\n", function, devinfo, device_data);
+
+    switch (function)
+    {
+    case DIF_REGISTERDEVICE:
+        return SetupDiRegisterDeviceInfo(devinfo, device_data, 0, NULL, NULL, NULL);
+    case DIF_REMOVE:
+        return SetupDiRemoveDevice(devinfo, device_data);
+    case DIF_SELECTBESTCOMPATDRV:
+        return SetupDiSelectBestCompatDrv(devinfo, device_data);
+    case DIF_REGISTER_COINSTALLERS:
+        return SetupDiRegisterCoDeviceInstallers(devinfo, device_data);
+    case DIF_FINISHINSTALL_ACTION:
+    case DIF_INSTALLDEVICE:
+    case DIF_INSTALLDEVICEFILES:
+    case DIF_INSTALLINTERFACES:
+    case DIF_PROPERTYCHANGE:
+    case DIF_SELECTDEVICE:
+    case DIF_UNREMOVE:
+        FIXME("Unhandled function %#x.\n", function);
+    default:
+        SetLastError(ERROR_DI_DO_DEFAULT);
+        return FALSE;
+    }
 }
 
 /***********************************************************************
