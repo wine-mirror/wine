@@ -3524,30 +3524,81 @@ BOOL WINAPI SetupDiSetClassInstallParamsW(
  */
 BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
+    static const WCHAR installer32W[] = {'I','n','s','t','a','l','l','e','r','3','2',0};
+    DWORD (CALLBACK *classinst_proc)(DI_FUNCTION, HDEVINFO, SP_DEVINFO_DATA *);
+    DWORD ret = ERROR_DI_DO_DEFAULT;
+    WCHAR *path, *procnameW;
+    struct device *device;
+    HMODULE module;
+    char *procname;
+    HKEY class_key;
+    DWORD size;
+
     TRACE("function %#x, devinfo %p, device_data %p.\n", function, devinfo, device_data);
 
-    switch (function)
-    {
-    case DIF_REGISTERDEVICE:
-        return SetupDiRegisterDeviceInfo(devinfo, device_data, 0, NULL, NULL, NULL);
-    case DIF_REMOVE:
-        return SetupDiRemoveDevice(devinfo, device_data);
-    case DIF_SELECTBESTCOMPATDRV:
-        return SetupDiSelectBestCompatDrv(devinfo, device_data);
-    case DIF_REGISTER_COINSTALLERS:
-        return SetupDiRegisterCoDeviceInstallers(devinfo, device_data);
-    case DIF_FINISHINSTALL_ACTION:
-    case DIF_INSTALLDEVICE:
-    case DIF_INSTALLDEVICEFILES:
-    case DIF_INSTALLINTERFACES:
-    case DIF_PROPERTYCHANGE:
-    case DIF_SELECTDEVICE:
-    case DIF_UNREMOVE:
-        FIXME("Unhandled function %#x.\n", function);
-    default:
-        SetLastError(ERROR_DI_DO_DEFAULT);
+    if (!(device = get_device(devinfo, device_data)))
         return FALSE;
+
+    if ((class_key = SetupDiOpenClassRegKey(&device->class, KEY_READ)) != INVALID_HANDLE_VALUE)
+    {
+        if (!RegGetValueW(class_key, NULL, installer32W, RRF_RT_REG_SZ, NULL, NULL, &size))
+        {
+            path = heap_alloc(size);
+            if (!RegGetValueW(class_key, NULL, installer32W, RRF_RT_REG_SZ, NULL, path, &size))
+            {
+                TRACE("Found class installer %s.\n", debugstr_w(path));
+                if ((procnameW = strchrW(path, ',')))
+                    *procnameW = 0;
+
+                if ((module = LoadLibraryExW(path, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32)))
+                {
+                    if (procnameW)
+                    {
+                        procname = strdupWtoA(procnameW + 1);
+                        classinst_proc = (void *)GetProcAddress(module, procname);
+                        heap_free(procname);
+                    }
+                    else
+                        classinst_proc = (void *)GetProcAddress(module, "ClassInstall");
+                    if (classinst_proc)
+                    {
+                        TRACE("Calling class installer %p.\n", classinst_proc);
+                        ret = classinst_proc(function, devinfo, device_data);
+                        TRACE("Class installer %p returned %#x.\n", classinst_proc, ret);
+                    }
+                    FreeLibrary(module);
+                }
+            }
+            heap_free(path);
+        }
+        RegCloseKey(class_key);
     }
+
+    if (ret == ERROR_DI_DO_DEFAULT)
+    {
+        switch (function)
+        {
+        case DIF_REGISTERDEVICE:
+            return SetupDiRegisterDeviceInfo(devinfo, device_data, 0, NULL, NULL, NULL);
+        case DIF_REMOVE:
+            return SetupDiRemoveDevice(devinfo, device_data);
+        case DIF_SELECTBESTCOMPATDRV:
+            return SetupDiSelectBestCompatDrv(devinfo, device_data);
+        case DIF_REGISTER_COINSTALLERS:
+            return SetupDiRegisterCoDeviceInstallers(devinfo, device_data);
+        case DIF_FINISHINSTALL_ACTION:
+        case DIF_INSTALLDEVICE:
+        case DIF_INSTALLDEVICEFILES:
+        case DIF_INSTALLINTERFACES:
+        case DIF_PROPERTYCHANGE:
+        case DIF_SELECTDEVICE:
+        case DIF_UNREMOVE:
+            FIXME("Unhandled function %#x.\n", function);
+        }
+    }
+
+    if (ret) SetLastError(ret);
+    return !ret;
 }
 
 /***********************************************************************
