@@ -2224,7 +2224,7 @@ sub dump_string_type_table($)
         $table[$i] |= $c2_types{$direction_table[$i]} << 12 if defined $direction_table[$i];
     }
 
-    dump_simple_mapping( "DECLSPEC_HIDDEN wctype_table", 0, @table );
+    dump_two_level_mapping( "DECLSPEC_HIDDEN wctype_table", 0, @table );
 
     close OUTPUT;
     save_file($filename);

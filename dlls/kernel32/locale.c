@@ -276,17 +276,13 @@ static inline void strcpynAtoW( WCHAR *dst, const char *src, size_t n )
     if (n) *dst = 0;
 }
 
+extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
+extern const unsigned short nameprep_char_type[] DECLSPEC_HIDDEN;
+extern const WCHAR nameprep_mapping[] DECLSPEC_HIDDEN;
+
 static inline unsigned short get_table_entry( const unsigned short *table, WCHAR ch )
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
-}
-
-/* the character type contains the C1_* flags in the low 12 bits */
-/* and the C2_* type in the high 4 bits */
-static inline unsigned short get_wctype( WCHAR ch )
-{
-    extern const unsigned short wctype_table[];
-    return wctype_table[wctype_table[ch >> 8] + (ch & 0xff)];
 }
 
 /***********************************************************************
@@ -3077,10 +3073,10 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
     switch(type)
     {
     case CT_CTYPE1:
-        while (count--) *chartype++ = get_wctype( *src++ ) & 0xfff;
+        while (count--) *chartype++ = get_table_entry( wctype_table, *src++ ) & 0xfff;
         break;
     case CT_CTYPE2:
-        while (count--) *chartype++ = get_wctype( *src++ ) >> 12;
+        while (count--) *chartype++ = get_table_entry( wctype_table, *src++ ) >> 12;
         break;
     case CT_CTYPE3:
     {
@@ -3090,7 +3086,7 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
             int c = *src;
             WORD type1, type3 = 0; /* C3_NOTAPPLICABLE */
 
-            type1 = get_wctype( *src++ ) & 0xfff;
+            type1 = get_table_entry( wctype_table, *src++ ) & 0xfff;
             /* try to construct type3 from type1 */
             if(type1 & C1_SPACE) type3 |= C3_SYMBOL;
             if(type1 & C1_ALPHA) type3 |= C3_ALPHA;
@@ -3527,7 +3523,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
                  * and skips white space and punctuation characters for
                  * NORM_IGNORESYMBOLS.
                  */
-                if (get_wctype(wch) & (C1_PUNCT | C1_SPACE))
+                if (get_table_entry( wctype_table, wch ) & (C1_PUNCT | C1_SPACE))
                     continue;
                 len++;
             }
@@ -3573,7 +3569,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
         for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--)
         {
             WCHAR wch = *src;
-            if ((flags & NORM_IGNORESYMBOLS) && (get_wctype(wch) & (C1_PUNCT | C1_SPACE)))
+            if ((flags & NORM_IGNORESYMBOLS) && (get_table_entry( wctype_table, wch ) & (C1_PUNCT | C1_SPACE)))
                 continue;
             *dst_ptr++ = wch;
             len--;
@@ -5588,8 +5584,6 @@ INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cch
         BIDI_L     = 0x8
     };
 
-    extern const unsigned short nameprep_char_type[] DECLSPEC_HIDDEN;
-    extern const WCHAR nameprep_mapping[] DECLSPEC_HIDDEN;
     const WCHAR *ptr;
     WORD flags;
     WCHAR buf[64], *map_str, norm_str[64], ch;
@@ -5795,8 +5789,6 @@ INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cch
 INT WINAPI IdnToUnicode(DWORD dwFlags, LPCWSTR lpASCIICharStr, INT cchASCIIChar,
                         LPWSTR lpUnicodeCharStr, INT cchUnicodeChar)
 {
-    extern const unsigned short nameprep_char_type[];
-
     INT i, label_start, label_end, out_label, out = 0;
     WCHAR ch;
 
