@@ -1018,8 +1018,8 @@
 # @ stub PackageSidFromFamilyName
 # @ stub PackageSidFromProductId
 # @ stub ParseApplicationUserModelId
-@ stdcall ParseURLA(str ptr) shlwapi.ParseURLA
-@ stdcall ParseURLW(wstr ptr) shlwapi.ParseURLW
+@ stdcall ParseURLA(str ptr)
+@ stdcall ParseURLW(wstr ptr)
 @ stdcall PathAddBackslashA(str)
 @ stdcall PathAddBackslashW(wstr)
 @ stdcall PathAddExtensionA(str str)
@@ -1053,9 +1053,9 @@
 @ stdcall PathCombineW(ptr wstr wstr)
 @ stdcall PathCommonPrefixA(str str ptr)
 @ stdcall PathCommonPrefixW(wstr wstr ptr)
-@ stdcall PathCreateFromUrlA(str ptr ptr long) shlwapi.PathCreateFromUrlA
-@ stdcall PathCreateFromUrlAlloc(wstr ptr long) shlwapi.PathCreateFromUrlAlloc
-@ stdcall PathCreateFromUrlW(wstr ptr ptr long) shlwapi.PathCreateFromUrlW
+@ stdcall PathCreateFromUrlA(str ptr ptr long)
+@ stdcall PathCreateFromUrlAlloc(wstr ptr long)
+@ stdcall PathCreateFromUrlW(wstr ptr ptr long)
 @ stdcall PathFileExistsA(str)
 @ stdcall PathFileExistsW(wstr)
 @ stdcall PathFindExtensionA(str)
@@ -1089,8 +1089,8 @@
 @ stdcall PathIsUNCServerShareW(wstr)
 @ stdcall PathIsUNCServerW(wstr)
 @ stdcall PathIsUNCW(wstr)
-@ stdcall PathIsURLA(str) shlwapi.PathIsURLA
-@ stdcall PathIsURLW(wstr) shlwapi.PathIsURLW
+@ stdcall PathIsURLA(str)
+@ stdcall PathIsURLW(wstr)
 @ stdcall PathIsValidCharA(long long)
 @ stdcall PathIsValidCharW(long long)
 @ stdcall PathMatchSpecA(str str)
@@ -1630,16 +1630,16 @@
 @ stdcall UpdateProcThreadAttribute(ptr long long ptr long ptr ptr) kernel32.UpdateProcThreadAttribute
 @ stdcall UrlApplySchemeA(str ptr ptr long) shlwapi.UrlApplySchemeA
 @ stdcall UrlApplySchemeW(wstr ptr ptr long) shlwapi.UrlApplySchemeW
-@ stdcall UrlCanonicalizeA(str ptr ptr long) shlwapi.UrlCanonicalizeA
-@ stdcall UrlCanonicalizeW(wstr ptr ptr long) shlwapi.UrlCanonicalizeW
+@ stdcall UrlCanonicalizeA(str ptr ptr long)
+@ stdcall UrlCanonicalizeW(wstr ptr ptr long)
 @ stdcall UrlCombineA(str str ptr ptr long) shlwapi.UrlCombineA
 @ stdcall UrlCombineW(wstr wstr ptr ptr long) shlwapi.UrlCombineW
 @ stdcall UrlCompareA(str str long) shlwapi.UrlCompareA
 @ stdcall UrlCompareW(wstr wstr long) shlwapi.UrlCompareW
 @ stdcall UrlCreateFromPathA(str ptr ptr long) shlwapi.UrlCreateFromPathA
 @ stdcall UrlCreateFromPathW(wstr ptr ptr long) shlwapi.UrlCreateFromPathW
-@ stdcall UrlEscapeA(str ptr ptr long) shlwapi.UrlEscapeA
-@ stdcall UrlEscapeW(wstr ptr ptr long) shlwapi.UrlEscapeW
+@ stdcall UrlEscapeA(str ptr ptr long)
+@ stdcall UrlEscapeW(wstr ptr ptr long)
 @ stdcall UrlFixupW(wstr wstr long) shlwapi.UrlFixupW
 @ stdcall UrlGetLocationA(str) shlwapi.UrlGetLocationA
 @ stdcall UrlGetLocationW(wstr) shlwapi.UrlGetLocationW
@@ -1653,8 +1653,8 @@
 @ stdcall UrlIsOpaqueA(str) shlwapi.UrlIsOpaqueA
 @ stdcall UrlIsOpaqueW(wstr) shlwapi.UrlIsOpaqueW
 @ stdcall UrlIsW(wstr long) shlwapi.UrlIsW
-@ stdcall UrlUnescapeA(str ptr ptr long) shlwapi.UrlUnescapeA
-@ stdcall UrlUnescapeW(wstr ptr ptr long) shlwapi.UrlUnescapeW
+@ stdcall UrlUnescapeA(str ptr ptr long)
+@ stdcall UrlUnescapeW(wstr ptr ptr long)
 @ stdcall VerFindFileA(long str str str ptr ptr ptr ptr) version.VerFindFileA
 @ stdcall VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr) version.VerFindFileW
 @ stdcall VerLanguageNameA(long str long) kernel32.VerLanguageNameA

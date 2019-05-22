@@ -24,11 +24,33 @@
 #include "pathcch.h"
 #include "strsafe.h"
 #include "shlwapi.h"
+#include "wininet.h"
+#include "intshcut.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(path);
+
+static const char hexDigits[] = "0123456789ABCDEF";
+
+static WCHAR *heap_strdupAtoW(const char *str)
+{
+    WCHAR *ret = NULL;
+
+    if (str)
+    {
+        DWORD len;
+
+        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        ret = heap_alloc(len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}
 
 static char *char_next(const char *ptr)
 {
@@ -2597,4 +2619,1126 @@ BOOL WINAPI PathFileExistsW(const WCHAR *path)
     attrs = GetFileAttributesW(path);
     SetErrorMode(prev_mode);
     return attrs != INVALID_FILE_ATTRIBUTES;
+}
+
+static const struct
+{
+    URL_SCHEME scheme_number;
+    WCHAR scheme_name[12];
+}
+url_schemes[] =
+{
+    { URL_SCHEME_FTP,        {'f','t','p',0}},
+    { URL_SCHEME_HTTP,       {'h','t','t','p',0}},
+    { URL_SCHEME_GOPHER,     {'g','o','p','h','e','r',0}},
+    { URL_SCHEME_MAILTO,     {'m','a','i','l','t','o',0}},
+    { URL_SCHEME_NEWS,       {'n','e','w','s',0}},
+    { URL_SCHEME_NNTP,       {'n','n','t','p',0}},
+    { URL_SCHEME_TELNET,     {'t','e','l','n','e','t',0}},
+    { URL_SCHEME_WAIS,       {'w','a','i','s',0}},
+    { URL_SCHEME_FILE,       {'f','i','l','e',0}},
+    { URL_SCHEME_MK,         {'m','k',0}},
+    { URL_SCHEME_HTTPS,      {'h','t','t','p','s',0}},
+    { URL_SCHEME_SHELL,      {'s','h','e','l','l',0}},
+    { URL_SCHEME_SNEWS,      {'s','n','e','w','s',0}},
+    { URL_SCHEME_LOCAL,      {'l','o','c','a','l',0}},
+    { URL_SCHEME_JAVASCRIPT, {'j','a','v','a','s','c','r','i','p','t',0}},
+    { URL_SCHEME_VBSCRIPT,   {'v','b','s','c','r','i','p','t',0}},
+    { URL_SCHEME_ABOUT,      {'a','b','o','u','t',0}},
+    { URL_SCHEME_RES,        {'r','e','s',0}},
+};
+
+static DWORD get_scheme_code(const WCHAR *scheme, DWORD scheme_len)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(url_schemes); ++i)
+    {
+        if (scheme_len == strlenW(url_schemes[i].scheme_name)
+                && !strncmpiW(scheme, url_schemes[i].scheme_name, scheme_len))
+            return url_schemes[i].scheme_number;
+    }
+
+    return URL_SCHEME_UNKNOWN;
+}
+
+HRESULT WINAPI ParseURLA(const char *url, PARSEDURLA *result)
+{
+    WCHAR scheme[INTERNET_MAX_SCHEME_LENGTH];
+    const char *ptr = url;
+    int len;
+
+    TRACE("%s, %p\n", wine_dbgstr_a(url), result);
+
+    if (result->cbSize != sizeof(*result))
+        return E_INVALIDARG;
+
+    while (*ptr && (isalnum(*ptr) || *ptr == '-' || *ptr == '+' || *ptr == '.'))
+        ptr++;
+
+    if (*ptr != ':' || ptr <= url + 1)
+    {
+        result->pszProtocol = NULL;
+        return URL_E_INVALID_SYNTAX;
+    }
+
+    result->pszProtocol = url;
+    result->cchProtocol = ptr - url;
+    result->pszSuffix = ptr + 1;
+    result->cchSuffix = strlen(result->pszSuffix);
+
+    len = MultiByteToWideChar(CP_ACP, 0, url, ptr - url, scheme, ARRAY_SIZE(scheme));
+    result->nScheme = get_scheme_code(scheme, len);
+
+    return S_OK;
+}
+
+HRESULT WINAPI ParseURLW(const WCHAR *url, PARSEDURLW *result)
+{
+    const WCHAR *ptr = url;
+
+    TRACE("%s, %p\n", wine_dbgstr_w(url), result);
+
+    if (result->cbSize != sizeof(*result))
+        return E_INVALIDARG;
+
+    while (*ptr && (isalnumW(*ptr) || *ptr == '-' || *ptr == '+' || *ptr == '.'))
+        ptr++;
+
+    if (*ptr != ':' || ptr <= url + 1)
+    {
+        result->pszProtocol = NULL;
+        return URL_E_INVALID_SYNTAX;
+    }
+
+    result->pszProtocol = url;
+    result->cchProtocol = ptr - url;
+    result->pszSuffix = ptr + 1;
+    result->cchSuffix = strlenW(result->pszSuffix);
+    result->nScheme = get_scheme_code(url, ptr - url);
+
+    return S_OK;
+}
+
+HRESULT WINAPI UrlUnescapeA(char *url, char *unescaped, DWORD *unescaped_len, DWORD flags)
+{
+    BOOL stop_unescaping = FALSE;
+    const char *src;
+    char *dst, next;
+    DWORD needed;
+    HRESULT hr;
+
+    TRACE("%s, %p, %p, %#x\n", wine_dbgstr_a(url), unescaped, unescaped_len, flags);
+
+    if (!url)
+        return E_INVALIDARG;
+
+    if (flags & URL_UNESCAPE_INPLACE)
+        dst = url;
+    else
+    {
+        if (!unescaped || !unescaped_len) return E_INVALIDARG;
+        dst = unescaped;
+    }
+
+    for (src = url, needed = 0; *src; src++, needed++)
+    {
+        if (flags & URL_DONT_UNESCAPE_EXTRA_INFO && (*src == '#' || *src == '?'))
+        {
+            stop_unescaping = TRUE;
+            next = *src;
+        }
+        else if (*src == '%' && isxdigit(*(src + 1)) && isxdigit(*(src + 2)) && !stop_unescaping)
+        {
+            INT ih;
+            char buf[3];
+            memcpy(buf, src + 1, 2);
+            buf[2] = '\0';
+            ih = strtol(buf, NULL, 16);
+            next = (CHAR) ih;
+            src += 2; /* Advance to end of escape */
+        }
+        else
+            next = *src;
+
+        if (flags & URL_UNESCAPE_INPLACE || needed < *unescaped_len)
+            *dst++ = next;
+    }
+
+    if (flags & URL_UNESCAPE_INPLACE || needed < *unescaped_len)
+    {
+        *dst = '\0';
+        hr = S_OK;
+    }
+    else
+    {
+        needed++; /* add one for the '\0' */
+        hr = E_POINTER;
+    }
+
+    if (!(flags & URL_UNESCAPE_INPLACE))
+        *unescaped_len = needed;
+
+    if (hr == S_OK)
+        TRACE("result %s\n", flags & URL_UNESCAPE_INPLACE ? wine_dbgstr_a(url) : wine_dbgstr_a(unescaped));
+
+    return hr;
+}
+
+HRESULT WINAPI UrlUnescapeW(WCHAR *url, WCHAR *unescaped, DWORD *unescaped_len, DWORD flags)
+{
+    BOOL stop_unescaping = FALSE;
+    const WCHAR *src;
+    WCHAR *dst, next;
+    DWORD needed;
+    HRESULT hr;
+
+    TRACE("%s, %p, %p, %#x\n", wine_dbgstr_w(url), unescaped, unescaped_len, flags);
+
+    if (!url)
+        return E_INVALIDARG;
+
+    if (flags & URL_UNESCAPE_INPLACE)
+        dst = url;
+    else
+    {
+        if (!unescaped || !unescaped_len) return E_INVALIDARG;
+        dst = unescaped;
+    }
+
+    for (src = url, needed = 0; *src; src++, needed++)
+    {
+        if (flags & URL_DONT_UNESCAPE_EXTRA_INFO && (*src == '#' || *src == '?'))
+        {
+            stop_unescaping = TRUE;
+            next = *src;
+        }
+        else if (*src == '%' && isxdigitW(*(src + 1)) && isxdigitW(*(src + 2)) && !stop_unescaping)
+        {
+            INT ih;
+            WCHAR buf[5] = {'0','x',0};
+            memcpy(buf + 2, src + 1, 2*sizeof(WCHAR));
+            buf[4] = 0;
+            StrToIntExW(buf, STIF_SUPPORT_HEX, &ih);
+            next = (WCHAR) ih;
+            src += 2; /* Advance to end of escape */
+        }
+        else
+            next = *src;
+
+        if (flags & URL_UNESCAPE_INPLACE || needed < *unescaped_len)
+            *dst++ = next;
+    }
+
+    if (flags & URL_UNESCAPE_INPLACE || needed < *unescaped_len)
+    {
+        *dst = '\0';
+        hr = S_OK;
+    }
+    else
+    {
+        needed++; /* add one for the '\0' */
+        hr = E_POINTER;
+    }
+
+    if (!(flags & URL_UNESCAPE_INPLACE))
+        *unescaped_len = needed;
+
+    if (hr == S_OK)
+        TRACE("result %s\n", flags & URL_UNESCAPE_INPLACE ? wine_dbgstr_w(url) : wine_dbgstr_w(unescaped));
+
+    return hr;
+}
+
+HRESULT WINAPI PathCreateFromUrlA(const char *pszUrl, char *pszPath, DWORD *pcchPath, DWORD dwReserved)
+{
+    WCHAR bufW[MAX_PATH];
+    WCHAR *pathW = bufW;
+    UNICODE_STRING urlW;
+    HRESULT ret;
+    DWORD lenW = ARRAY_SIZE(bufW), lenA;
+
+    if (!pszUrl || !pszPath || !pcchPath || !*pcchPath)
+        return E_INVALIDARG;
+
+    if(!RtlCreateUnicodeStringFromAsciiz(&urlW, pszUrl))
+        return E_INVALIDARG;
+    if((ret = PathCreateFromUrlW(urlW.Buffer, pathW, &lenW, dwReserved)) == E_POINTER) {
+        pathW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+        ret = PathCreateFromUrlW(urlW.Buffer, pathW, &lenW, dwReserved);
+    }
+    if(ret == S_OK) {
+        RtlUnicodeToMultiByteSize(&lenA, pathW, lenW * sizeof(WCHAR));
+        if(*pcchPath > lenA) {
+            RtlUnicodeToMultiByteN(pszPath, *pcchPath - 1, &lenA, pathW, lenW * sizeof(WCHAR));
+            pszPath[lenA] = 0;
+            *pcchPath = lenA;
+        } else {
+            *pcchPath = lenA + 1;
+            ret = E_POINTER;
+        }
+    }
+    if(pathW != bufW) HeapFree(GetProcessHeap(), 0, pathW);
+    RtlFreeUnicodeString(&urlW);
+    return ret;
+}
+
+HRESULT WINAPI PathCreateFromUrlW(const WCHAR *url, WCHAR *path, DWORD *pcchPath, DWORD dwReserved)
+{
+    static const WCHAR file_colon[] = { 'f','i','l','e',':',0 };
+    static const WCHAR localhost[] = { 'l','o','c','a','l','h','o','s','t',0 };
+    DWORD nslashes, unescape, len;
+    const WCHAR *src;
+    WCHAR *tpath, *dst;
+    HRESULT hr = S_OK;
+
+    TRACE("%s, %p, %p, %#x\n", wine_dbgstr_w(url), path, pcchPath, dwReserved);
+
+    if (!url || !path || !pcchPath || !*pcchPath)
+        return E_INVALIDARG;
+
+    if (lstrlenW(url) < 5)
+        return E_INVALIDARG;
+
+    if (CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, url, 5, file_colon, 5) != CSTR_EQUAL)
+        return E_INVALIDARG;
+
+    url += 5;
+
+    src = url;
+    nslashes = 0;
+    while (*src == '/' || *src == '\\')
+    {
+        nslashes++;
+        src++;
+    }
+
+    /* We need a temporary buffer so we can compute what size to ask for.
+     * We know that the final string won't be longer than the current pszUrl
+     * plus at most two backslashes. All the other transformations make it
+     * shorter.
+     */
+    len = 2 + lstrlenW(url) + 1;
+    if (*pcchPath < len)
+        tpath = heap_alloc(len * sizeof(WCHAR));
+    else
+        tpath = path;
+
+    len = 0;
+    dst = tpath;
+    unescape = 1;
+    switch (nslashes)
+    {
+    case 0:
+        /* 'file:' + escaped DOS path */
+        break;
+    case 1:
+        /* 'file:/' + escaped DOS path */
+        /* fall through */
+    case 3:
+        /* 'file:///' (implied localhost) + escaped DOS path */
+        if (!isalphaW(*src) || (src[1] != ':' && src[1] != '|'))
+            src -= 1;
+        break;
+    case 2:
+        if (lstrlenW(src) >= 10 && CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE,
+            src, 9, localhost, 9) == CSTR_EQUAL && (src[9] == '/' || src[9] == '\\'))
+        {
+            /* 'file://localhost/' + escaped DOS path */
+            src += 10;
+        }
+        else if (isalphaW(*src) && (src[1] == ':' || src[1] == '|'))
+        {
+            /* 'file://' + unescaped DOS path */
+            unescape = 0;
+        }
+        else
+        {
+            /*    'file://hostname:port/path' (where path is escaped)
+             * or 'file:' + escaped UNC path (\\server\share\path)
+             * The second form is clearly specific to Windows and it might
+             * even be doing a network lookup to try to figure it out.
+             */
+            while (*src && *src != '/' && *src != '\\')
+                src++;
+            len = src - url;
+            StrCpyNW(dst, url, len + 1);
+            dst += len;
+            if (*src && isalphaW(src[1]) && (src[2] == ':' || src[2] == '|'))
+            {
+                /* 'Forget' to add a trailing '/', just like Windows */
+                src++;
+            }
+        }
+        break;
+    case 4:
+        /* 'file://' + unescaped UNC path (\\server\share\path) */
+        unescape = 0;
+        if (isalphaW(*src) && (src[1] == ':' || src[1] == '|'))
+            break;
+        /* fall through */
+    default:
+        /* 'file:/...' + escaped UNC path (\\server\share\path) */
+        src -= 2;
+    }
+
+    /* Copy the remainder of the path */
+    len += lstrlenW(src);
+    strcpyW(dst, src);
+
+     /* First do the Windows-specific path conversions */
+    for (dst = tpath; *dst; dst++)
+        if (*dst == '/') *dst = '\\';
+    if (isalphaW(*tpath) && tpath[1] == '|')
+        tpath[1] = ':'; /* c| -> c: */
+
+    /* And only then unescape the path (i.e. escaped slashes are left as is) */
+    if (unescape)
+    {
+        hr = UrlUnescapeW(tpath, NULL, &len, URL_UNESCAPE_INPLACE);
+        if (hr == S_OK)
+        {
+            /* When working in-place UrlUnescapeW() does not set len */
+            len = lstrlenW(tpath);
+        }
+    }
+
+    if (*pcchPath < len + 1)
+    {
+        hr = E_POINTER;
+        *pcchPath = len + 1;
+    }
+    else
+    {
+        *pcchPath = len;
+        if (tpath != path)
+            strcpyW(path, tpath);
+    }
+    if (tpath != path)
+        heap_free(tpath);
+
+    TRACE("Returning (%u) %s\n", *pcchPath, wine_dbgstr_w(path));
+    return hr;
+}
+
+HRESULT WINAPI PathCreateFromUrlAlloc(const WCHAR *url, WCHAR **path, DWORD reserved)
+{
+    WCHAR pathW[MAX_PATH];
+    DWORD size;
+    HRESULT hr;
+
+    size = MAX_PATH;
+    hr = PathCreateFromUrlW(url, pathW, &size, reserved);
+    if (SUCCEEDED(hr))
+    {
+        /* Yes, this is supposed to crash if 'path' is NULL */
+        *path = StrDupW(pathW);
+    }
+
+    return hr;
+}
+
+BOOL WINAPI PathIsURLA(const char *path)
+{
+    PARSEDURLA base;
+    HRESULT hr;
+
+    TRACE("%s\n", wine_dbgstr_a(path));
+
+    if (!path || !*path)
+        return FALSE;
+
+    /* get protocol */
+    base.cbSize = sizeof(base);
+    hr = ParseURLA(path, &base);
+    return hr == S_OK && (base.nScheme != URL_SCHEME_INVALID);
+}
+
+BOOL WINAPI PathIsURLW(const WCHAR *path)
+{
+    PARSEDURLW base;
+    HRESULT hr;
+
+    TRACE("%s\n", wine_dbgstr_w(path));
+
+    if (!path || !*path)
+        return FALSE;
+
+    /* get protocol */
+    base.cbSize = sizeof(base);
+    hr = ParseURLW(path, &base);
+    return hr == S_OK && (base.nScheme != URL_SCHEME_INVALID);
+}
+
+#define WINE_URL_BASH_AS_SLASH    0x01
+#define WINE_URL_COLLAPSE_SLASHES 0x02
+#define WINE_URL_ESCAPE_SLASH     0x04
+#define WINE_URL_ESCAPE_HASH      0x08
+#define WINE_URL_ESCAPE_QUESTION  0x10
+#define WINE_URL_STOP_ON_HASH     0x20
+#define WINE_URL_STOP_ON_QUESTION 0x40
+
+static BOOL url_needs_escape(WCHAR ch, DWORD flags, DWORD int_flags)
+{
+    if (flags & URL_ESCAPE_SPACES_ONLY)
+        return ch == ' ';
+
+    if ((flags & URL_ESCAPE_PERCENT) && (ch == '%'))
+        return TRUE;
+
+    if ((flags & URL_ESCAPE_AS_UTF8) && (ch >= 0x80))
+        return TRUE;
+
+    if (ch <= 31 || (ch >= 127 && ch <= 255) )
+        return TRUE;
+
+    if (isalnumW(ch))
+        return FALSE;
+
+    switch (ch) {
+    case ' ':
+    case '<':
+    case '>':
+    case '\"':
+    case '{':
+    case '}':
+    case '|':
+    case '\\':
+    case '^':
+    case ']':
+    case '[':
+    case '`':
+    case '&':
+        return TRUE;
+    case '/':
+        return !!(int_flags & WINE_URL_ESCAPE_SLASH);
+    case '?':
+        return !!(int_flags & WINE_URL_ESCAPE_QUESTION);
+    case '#':
+        return !!(int_flags & WINE_URL_ESCAPE_HASH);
+    default:
+        return FALSE;
+    }
+}
+
+HRESULT WINAPI UrlEscapeA(const char *url, char *escaped, DWORD *escaped_len, DWORD flags)
+{
+    WCHAR bufW[INTERNET_MAX_URL_LENGTH];
+    WCHAR *escapedW = bufW;
+    UNICODE_STRING urlW;
+    HRESULT hr;
+    DWORD lenW = ARRAY_SIZE(bufW), lenA;
+
+    if (!escaped || !escaped_len || !*escaped_len)
+        return E_INVALIDARG;
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&urlW, url))
+        return E_INVALIDARG;
+
+    if (flags & URL_ESCAPE_AS_UTF8)
+    {
+        RtlFreeUnicodeString(&urlW);
+        return E_NOTIMPL;
+    }
+
+    if ((hr = UrlEscapeW(urlW.Buffer, escapedW, &lenW, flags)) == E_POINTER)
+    {
+        escapedW = heap_alloc(lenW * sizeof(WCHAR));
+        hr = UrlEscapeW(urlW.Buffer, escapedW, &lenW, flags);
+    }
+
+    if (hr == S_OK)
+    {
+        RtlUnicodeToMultiByteSize(&lenA, escapedW, lenW * sizeof(WCHAR));
+        if (*escaped_len > lenA)
+        {
+            RtlUnicodeToMultiByteN(escaped, *escaped_len - 1, &lenA, escapedW, lenW * sizeof(WCHAR));
+            escaped[lenA] = 0;
+            *escaped_len = lenA;
+        }
+        else
+        {
+            *escaped_len = lenA + 1;
+            hr = E_POINTER;
+        }
+    }
+    if (escapedW != bufW)
+        heap_free(escapedW);
+    RtlFreeUnicodeString(&urlW);
+    return hr;
+}
+
+HRESULT WINAPI UrlEscapeW(const WCHAR *url, WCHAR *escaped, DWORD *escaped_len, DWORD flags)
+{
+    static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+    DWORD needed = 0, slashes = 0, int_flags;
+    WCHAR next[12], *dst, *dst_ptr;
+    BOOL stop_escaping = FALSE;
+    PARSEDURLW parsed_url;
+    const WCHAR *src;
+    INT i, len;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p, %p, %#x\n", url, wine_dbgstr_w(url), escaped, escaped_len, flags);
+
+    if (!url || !escaped_len || !escaped || *escaped_len == 0)
+        return E_INVALIDARG;
+
+    if (flags & ~(URL_ESCAPE_SPACES_ONLY | URL_ESCAPE_SEGMENT_ONLY | URL_DONT_ESCAPE_EXTRA_INFO |
+            URL_ESCAPE_PERCENT | URL_ESCAPE_AS_UTF8))
+    {
+        FIXME("Unimplemented flags: %08x\n", flags);
+    }
+
+    dst_ptr = dst = heap_alloc(*escaped_len * sizeof(WCHAR));
+    if (!dst_ptr)
+        return E_OUTOFMEMORY;
+
+    /* fix up flags */
+    if (flags & URL_ESCAPE_SPACES_ONLY)
+        /* if SPACES_ONLY specified, reset the other controls */
+        flags &= ~(URL_DONT_ESCAPE_EXTRA_INFO | URL_ESCAPE_PERCENT | URL_ESCAPE_SEGMENT_ONLY);
+    else
+        /* if SPACES_ONLY *not* specified the assume DONT_ESCAPE_EXTRA_INFO */
+        flags |= URL_DONT_ESCAPE_EXTRA_INFO;
+
+    int_flags = 0;
+    if (flags & URL_ESCAPE_SEGMENT_ONLY)
+        int_flags = WINE_URL_ESCAPE_QUESTION | WINE_URL_ESCAPE_HASH | WINE_URL_ESCAPE_SLASH;
+    else
+    {
+        parsed_url.cbSize = sizeof(parsed_url);
+        if (ParseURLW(url, &parsed_url) != S_OK)
+            parsed_url.nScheme = URL_SCHEME_INVALID;
+
+        TRACE("scheme = %d (%s)\n", parsed_url.nScheme, debugstr_wn(parsed_url.pszProtocol, parsed_url.cchProtocol));
+
+        if (flags & URL_DONT_ESCAPE_EXTRA_INFO)
+            int_flags = WINE_URL_STOP_ON_HASH | WINE_URL_STOP_ON_QUESTION;
+
+        switch(parsed_url.nScheme) {
+        case URL_SCHEME_FILE:
+            int_flags |= WINE_URL_BASH_AS_SLASH | WINE_URL_COLLAPSE_SLASHES | WINE_URL_ESCAPE_HASH;
+            int_flags &= ~WINE_URL_STOP_ON_HASH;
+            break;
+
+        case URL_SCHEME_HTTP:
+        case URL_SCHEME_HTTPS:
+            int_flags |= WINE_URL_BASH_AS_SLASH;
+            if(parsed_url.pszSuffix[0] != '/' && parsed_url.pszSuffix[0] != '\\')
+                int_flags |= WINE_URL_ESCAPE_SLASH;
+            break;
+
+        case URL_SCHEME_MAILTO:
+            int_flags |= WINE_URL_ESCAPE_SLASH | WINE_URL_ESCAPE_QUESTION | WINE_URL_ESCAPE_HASH;
+            int_flags &= ~(WINE_URL_STOP_ON_QUESTION | WINE_URL_STOP_ON_HASH);
+            break;
+
+        case URL_SCHEME_INVALID:
+            break;
+
+        case URL_SCHEME_FTP:
+        default:
+            if(parsed_url.pszSuffix[0] != '/')
+                int_flags |= WINE_URL_ESCAPE_SLASH;
+            break;
+        }
+    }
+
+    for (src = url; *src; )
+    {
+        WCHAR cur = *src;
+        len = 0;
+
+        if ((int_flags & WINE_URL_COLLAPSE_SLASHES) && src == url + parsed_url.cchProtocol + 1)
+        {
+            int localhost_len = ARRAY_SIZE(localhost) - 1;
+            while (cur == '/' || cur == '\\')
+            {
+                slashes++;
+                cur = *++src;
+            }
+            if (slashes == 2 && !strncmpiW(src, localhost, localhost_len)) { /* file://localhost/ -> file:/// */
+                if(*(src + localhost_len) == '/' || *(src + localhost_len) == '\\')
+                src += localhost_len + 1;
+                slashes = 3;
+            }
+
+            switch (slashes)
+            {
+            case 1:
+            case 3:
+                next[0] = next[1] = next[2] = '/';
+                len = 3;
+                break;
+            case 0:
+                len = 0;
+                break;
+            default:
+                next[0] = next[1] = '/';
+                len = 2;
+                break;
+            }
+        }
+        if (len == 0)
+        {
+            if (cur == '#' && (int_flags & WINE_URL_STOP_ON_HASH))
+                stop_escaping = TRUE;
+
+            if (cur == '?' && (int_flags & WINE_URL_STOP_ON_QUESTION))
+                stop_escaping = TRUE;
+
+            if (cur == '\\' && (int_flags & WINE_URL_BASH_AS_SLASH) && !stop_escaping) cur = '/';
+
+            if (url_needs_escape(cur, flags, int_flags) && !stop_escaping)
+            {
+                if (flags & URL_ESCAPE_AS_UTF8)
+                {
+                    char utf[16];
+
+                    if ((cur >= 0xd800 && cur <= 0xdfff) && (src[1] >= 0xdc00 && src[1] <= 0xdfff))
+                    {
+                        len = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, src, 2, utf, sizeof(utf), NULL, NULL);
+                        src++;
+                    }
+                    else
+                        len = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, &cur, 1, utf, sizeof(utf), NULL, NULL);
+
+                    if (!len)
+                    {
+                        utf[0] = 0xef;
+                        utf[1] = 0xbf;
+                        utf[2] = 0xbd;
+                        len = 3;
+                    }
+
+                    for (i = 0; i < len; ++i)
+                    {
+                        next[i*3+0] = '%';
+                        next[i*3+1] = hexDigits[(utf[i] >> 4) & 0xf];
+                        next[i*3+2] = hexDigits[utf[i] & 0xf];
+                    }
+                    len *= 3;
+                }
+                else
+                {
+                    next[0] = '%';
+                    next[1] = hexDigits[(cur >> 4) & 0xf];
+                    next[2] = hexDigits[cur & 0xf];
+                    len = 3;
+                }
+            }
+            else
+            {
+                next[0] = cur;
+                len = 1;
+            }
+            src++;
+        }
+
+        if (needed + len <= *escaped_len)
+        {
+            memcpy(dst, next, len*sizeof(WCHAR));
+            dst += len;
+        }
+        needed += len;
+    }
+
+    if (needed < *escaped_len)
+    {
+        *dst = '\0';
+        memcpy(escaped, dst_ptr, (needed+1)*sizeof(WCHAR));
+        hr = S_OK;
+    }
+    else
+    {
+        needed++; /* add one for the '\0' */
+        hr = E_POINTER;
+    }
+    *escaped_len = needed;
+
+    heap_free(dst_ptr);
+    return hr;
+}
+
+HRESULT WINAPI UrlCanonicalizeA(const char *src_url, char *canonicalized, DWORD *canonicalized_len, DWORD flags)
+{
+    LPWSTR url, canonical;
+    HRESULT hr;
+
+    TRACE("%s, %p, %p, %#x\n", wine_dbgstr_a(src_url), canonicalized, canonicalized_len, flags);
+
+    if (!src_url || !canonicalized || !canonicalized_len || !*canonicalized_len)
+        return E_INVALIDARG;
+
+    url = heap_strdupAtoW(src_url);
+    canonical = heap_alloc(*canonicalized_len * sizeof(WCHAR));
+    if (!url || !canonical)
+    {
+        heap_free(url);
+        heap_free(canonical);
+        return E_OUTOFMEMORY;
+    }
+
+    hr = UrlCanonicalizeW(url, canonical, canonicalized_len, flags);
+    if (hr == S_OK)
+        WideCharToMultiByte(CP_ACP, 0, canonical, -1, canonicalized, *canonicalized_len + 1, NULL, NULL);
+
+    heap_free(url);
+    heap_free(canonical);
+    return hr;
+}
+
+HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWORD *canonicalized_len, DWORD flags)
+{
+    static const WCHAR wszFile[] = {'f','i','l','e',':'};
+    static const WCHAR wszRes[] = {'r','e','s',':'};
+    static const WCHAR wszHttp[] = {'h','t','t','p',':'};
+    static const WCHAR wszLocalhost[] = {'l','o','c','a','l','h','o','s','t'};
+    static const WCHAR wszFilePrefix[] = {'f','i','l','e',':','/','/','/'};
+    WCHAR *url_copy, *url, *wk2, *mp, *mp2;
+    DWORD nByteLen, nLen, nWkLen;
+    const WCHAR *wk1, *root;
+    DWORD escape_flags;
+    WCHAR slash = '\0';
+    HRESULT hr = S_OK;
+    BOOL is_file_url;
+    INT state;
+
+    TRACE("%s, %p, %p, %#x\n", wine_dbgstr_w(src_url), canonicalized, canonicalized_len, flags);
+
+    if (!src_url || !canonicalized || !canonicalized || !*canonicalized_len)
+        return E_INVALIDARG;
+
+    if (!*src_url)
+    {
+        *canonicalized = 0;
+        return S_OK;
+    }
+
+    /* Remove '\t' characters from URL */
+    nByteLen = (strlenW(src_url) + 1) * sizeof(WCHAR); /* length in bytes */
+    url = HeapAlloc(GetProcessHeap(), 0, nByteLen);
+    if(!url)
+        return E_OUTOFMEMORY;
+
+    wk1 = src_url;
+    wk2 = url;
+    do
+    {
+        while(*wk1 == '\t')
+            wk1++;
+        *wk2++ = *wk1;
+    } while (*wk1++);
+
+    /* Allocate memory for simplified URL (before escaping) */
+    nByteLen = (wk2-url)*sizeof(WCHAR);
+    url_copy = heap_alloc(nByteLen + sizeof(wszFilePrefix) + sizeof(WCHAR));
+    if (!url_copy)
+    {
+        heap_free(url);
+        return E_OUTOFMEMORY;
+    }
+
+    is_file_url = !strncmpW(wszFile, url, ARRAY_SIZE(wszFile));
+
+    if ((nByteLen >= sizeof(wszHttp) && !memcmp(wszHttp, url, sizeof(wszHttp))) || is_file_url)
+        slash = '/';
+
+    if ((flags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY)) && is_file_url)
+        slash = '\\';
+
+    if (nByteLen >= sizeof(wszRes) && !memcmp(wszRes, url, sizeof(wszRes)))
+    {
+        flags &= ~URL_FILE_USE_PATHURL;
+        slash = '\0';
+    }
+
+    /*
+     * state =
+     *         0   initial  1,3
+     *         1   have 2[+] alnum  2,3
+     *         2   have scheme (found :)  4,6,3
+     *         3   failed (no location)
+     *         4   have //  5,3
+     *         5   have 1[+] alnum  6,3
+     *         6   have location (found /) save root location
+     */
+
+    wk1 = url;
+    wk2 = url_copy;
+    state = 0;
+
+    /* Assume path */
+    if (url[1] == ':')
+    {
+        memcpy(wk2, wszFilePrefix, sizeof(wszFilePrefix));
+        wk2 += ARRAY_SIZE(wszFilePrefix);
+        if (flags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY))
+        {
+            slash = '\\';
+            --wk2;
+        }
+        else
+            flags |= URL_ESCAPE_UNSAFE;
+        state = 5;
+        is_file_url = TRUE;
+    }
+    else if (url[0] == '/')
+    {
+        state = 5;
+        is_file_url = TRUE;
+    }
+
+    while (*wk1)
+    {
+        switch (state)
+        {
+        case 0:
+            if (!isalnumW(*wk1)) {state = 3; break;}
+            *wk2++ = *wk1++;
+            if (!isalnumW(*wk1)) {state = 3; break;}
+            *wk2++ = *wk1++;
+            state = 1;
+            break;
+        case 1:
+            *wk2++ = *wk1;
+            if (*wk1++ == ':') state = 2;
+            break;
+        case 2:
+            *wk2++ = *wk1++;
+            if (*wk1 != '/') {state = 6; break;}
+            *wk2++ = *wk1++;
+            if ((flags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszLocalhost) && is_file_url
+                    && !memcmp(wszLocalhost, wk1, sizeof(wszLocalhost)))
+            {
+                wk1 += ARRAY_SIZE(wszLocalhost);
+                while (*wk1 == '\\' && (flags & URL_FILE_USE_PATHURL))
+                    wk1++;
+            }
+
+            if (*wk1 == '/' && (flags & URL_FILE_USE_PATHURL))
+                wk1++;
+            else if (is_file_url)
+            {
+                const WCHAR *body = wk1;
+
+                while (*body == '/')
+                    ++body;
+
+                if (isalnumW(*body) && *(body+1) == ':')
+                {
+                    if (!(flags & (URL_WININET_COMPATIBILITY | URL_FILE_USE_PATHURL)))
+                    {
+                        if (slash)
+                            *wk2++ = slash;
+                        else
+                            *wk2++ = '/';
+                    }
+                }
+                else
+                {
+                    if (flags & URL_WININET_COMPATIBILITY)
+                    {
+                        if (*wk1 == '/' && *(wk1 + 1) != '/')
+                        {
+                            *wk2++ = '\\';
+                        }
+                        else
+                        {
+                            *wk2++ = '\\';
+                            *wk2++ = '\\';
+                        }
+                    }
+                    else
+                    {
+                        if (*wk1 == '/' && *(wk1+1) != '/')
+                        {
+                            if (slash)
+                                *wk2++ = slash;
+                            else
+                                *wk2++ = '/';
+                        }
+                    }
+                }
+                wk1 = body;
+            }
+            state = 4;
+            break;
+        case 3:
+            nWkLen = strlenW(wk1);
+            memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
+            mp = wk2;
+            wk1 += nWkLen;
+            wk2 += nWkLen;
+
+            if (slash)
+            {
+                while (mp < wk2)
+                {
+                    if (*mp == '/' || *mp == '\\')
+                        *mp = slash;
+                    mp++;
+                }
+            }
+            break;
+        case 4:
+            if (!isalnumW(*wk1) && (*wk1 != '-') && (*wk1 != '.') && (*wk1 != ':'))
+            {
+                state = 3;
+                break;
+            }
+            while (isalnumW(*wk1) || (*wk1 == '-') || (*wk1 == '.') || (*wk1 == ':'))
+                *wk2++ = *wk1++;
+            state = 5;
+            if (!*wk1)
+            {
+                if (slash)
+                    *wk2++ = slash;
+                else
+                    *wk2++ = '/';
+            }
+            break;
+        case 5:
+            if (*wk1 != '/' && *wk1 != '\\')
+            {
+                state = 3;
+                break;
+            }
+            while (*wk1 == '/' || *wk1 == '\\')
+            {
+                if (slash)
+                    *wk2++ = slash;
+                else
+                    *wk2++ = *wk1;
+                wk1++;
+            }
+            state = 6;
+            break;
+        case 6:
+            if (flags & URL_DONT_SIMPLIFY)
+            {
+                state = 3;
+                break;
+            }
+
+            /* Now at root location, cannot back up any more. */
+            /* "root" will point at the '/' */
+
+            root = wk2-1;
+            while (*wk1)
+            {
+                mp = strchrW(wk1, '/');
+                mp2 = strchrW(wk1, '\\');
+                if (mp2 && (!mp || mp2 < mp))
+                    mp = mp2;
+                if (!mp)
+                {
+                    nWkLen = strlenW(wk1);
+                    memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
+                    wk1 += nWkLen;
+                    wk2 += nWkLen;
+                    continue;
+                }
+                nLen = mp - wk1;
+                if (nLen)
+                {
+                    memcpy(wk2, wk1, nLen * sizeof(WCHAR));
+                    wk2 += nLen;
+                    wk1 += nLen;
+                }
+                if (slash)
+                    *wk2++ = slash;
+                else
+                    *wk2++ = *wk1;
+                wk1++;
+
+                while (*wk1 == '.')
+                {
+                    TRACE("found '/.'\n");
+                    if (wk1[1] == '/' || wk1[1] == '\\')
+                    {
+                        /* case of /./ -> skip the ./ */
+                        wk1 += 2;
+                    }
+                    else if (wk1[1] == '.' && (wk1[2] == '/' || wk1[2] == '\\' || wk1[2] == '?'
+                            || wk1[2] == '#' || !wk1[2]))
+                    {
+                        /* case /../ -> need to backup wk2 */
+                        TRACE("found '/../'\n");
+                        *(wk2-1) = '\0';  /* set end of string */
+                        mp = strrchrW(root, '/');
+                        mp2 = strrchrW(root, '\\');
+                        if (mp2 && (!mp || mp2 < mp))
+                            mp = mp2;
+                        if (mp && (mp >= root))
+                        {
+                            /* found valid backup point */
+                            wk2 = mp + 1;
+                            if(wk1[2] != '/' && wk1[2] != '\\')
+                                wk1 += 2;
+                            else
+                                wk1 += 3;
+                        }
+                        else
+                        {
+                            /* did not find point, restore '/' */
+                            *(wk2-1) = slash;
+                            break;
+                        }
+                    }
+                    else
+                        break;
+                }
+            }
+            *wk2 = '\0';
+            break;
+        default:
+            FIXME("how did we get here - state=%d\n", state);
+            heap_free(url_copy);
+            heap_free(url);
+            return E_INVALIDARG;
+        }
+        *wk2 = '\0';
+        TRACE("Simplified, orig <%s>, simple <%s>\n", wine_dbgstr_w(src_url), wine_dbgstr_w(url_copy));
+    }
+    nLen = lstrlenW(url_copy);
+    while ((nLen > 0) && ((url_copy[nLen-1] <= ' ')))
+        url_copy[--nLen]=0;
+
+    if ((flags & URL_UNESCAPE) || ((flags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszFile)
+                && !memcmp(wszFile, url, sizeof(wszFile))))
+    {
+        UrlUnescapeW(url_copy, NULL, &nLen, URL_UNESCAPE_INPLACE);
+    }
+
+    escape_flags = flags & (URL_ESCAPE_UNSAFE | URL_ESCAPE_SPACES_ONLY | URL_ESCAPE_PERCENT |
+            URL_DONT_ESCAPE_EXTRA_INFO | URL_ESCAPE_SEGMENT_ONLY);
+
+    if (escape_flags)
+    {
+        escape_flags &= ~URL_ESCAPE_UNSAFE;
+        hr = UrlEscapeW(url_copy, canonicalized, canonicalized_len, escape_flags);
+    }
+    else
+    {
+        /* No escaping needed, just copy the string */
+        nLen = lstrlenW(url_copy);
+        if (nLen < *canonicalized_len)
+            memcpy(canonicalized, url_copy, (nLen + 1)*sizeof(WCHAR));
+        else
+        {
+            hr = E_POINTER;
+            nLen++;
+        }
+        *canonicalized_len = nLen;
+    }
+
+    heap_free(url_copy);
+    heap_free(url);
+
+    if (hr == S_OK)
+        TRACE("result %s\n", wine_dbgstr_w(canonicalized));
+
+    return hr;
 }
