@@ -117,12 +117,15 @@ static ULONG WINAPI inner_AddRef(IUnknown *iface)
 static ULONG WINAPI inner_Release(IUnknown *iface)
 {
     evr_filter *This = impl_from_inner_IUnknown(iface);
-    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
+    ULONG ref = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("(%p, %p)->(): new ref %d\n", iface, This, ref);
 
     if (!ref)
+    {
+        strmbase_filter_cleanup(&This->filter);
         CoTaskMemFree(This);
+    }
 
     return ref;
 }
