@@ -533,6 +533,44 @@ static void test_window_dc_clipping(void)
     DestroyWindow(hwnd);
 }
 
+static void test_CreatePolyPolygonRgn(void)
+{
+    HRGN region;
+    POINT points_zero[] = { {0, 0}, {0, 0}, {0, 0} };
+    POINT points_mixed[] = { {0, 0}, {0, 0}, {0, 0}, {6, 6}, {6, 6}, {6, 6} };
+    POINT points_six[] = { {6, 6}, {6, 6}, {6, 6} };
+    POINT points_line[] = { {1, 0}, {11, 0}, {21, 0}};
+    INT counts_single_poly[] = { 3 };
+    INT counts_two_poly[] = { 3, 3 };
+    int ret;
+    RECT rect;
+
+    /* When all polygons are just one point or line, return must not be NULL */
+
+    region = CreatePolyPolygonRgn(points_zero, counts_single_poly, ARRAY_SIZE(counts_single_poly), ALTERNATE);
+    ok (region != NULL, "region must not be NULL\n");
+    ret = GetRgnBox(region, &rect);
+    ok (ret == NULLREGION, "Expected NULLREGION, got %d\n", ret);
+    DeleteObject(region);
+
+    region = CreatePolyPolygonRgn(points_six, counts_single_poly, ARRAY_SIZE(counts_single_poly), ALTERNATE);
+    ok (region != NULL, "region must not be NULL\n");
+    ret = GetRgnBox(region, &rect);
+    ok (ret == NULLREGION, "Expected NULLREGION, got %d\n", ret);
+    DeleteObject(region);
+
+    region = CreatePolyPolygonRgn(points_line, counts_single_poly, ARRAY_SIZE(counts_single_poly), ALTERNATE);
+    ok (region != NULL, "region must not be NULL\n");
+    ret = GetRgnBox(region, &rect);
+    ok (ret == NULLREGION, "Expected NULLREGION, got %d\n", ret);
+    DeleteObject(region);
+
+    region = CreatePolyPolygonRgn(points_mixed, counts_two_poly, ARRAY_SIZE(counts_two_poly), ALTERNATE);
+    ok (region != NULL, "region must not be NULL\n");
+    ret = GetRgnBox(region, &rect);
+    ok (ret == NULLREGION, "Expected NULLREGION, got %d\n", ret);
+    DeleteObject(region);
+}
 
 START_TEST(clipping)
 {
@@ -541,4 +579,5 @@ START_TEST(clipping)
     test_GetClipRgn();
     test_memory_dc_clipping();
     test_window_dc_clipping();
+    test_CreatePolyPolygonRgn();
 }

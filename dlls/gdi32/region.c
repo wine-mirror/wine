@@ -2627,8 +2627,7 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
     if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
 	return 0;
 
-    if (!(nb_points = REGION_CreateEdgeTable( Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock, clip_rect )))
-        goto done;
+    nb_points = REGION_CreateEdgeTable( Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock, clip_rect );
     if (!(obj = alloc_region( nb_points / 2 )))
         goto done;
 
