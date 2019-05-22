@@ -52,24 +52,6 @@ static WCHAR *heap_strdupAtoW(const char *str)
     return ret;
 }
 
-static char *char_next(const char *ptr)
-{
-    if (!*ptr) return (LPSTR)ptr;
-    if (IsDBCSLeadByte( ptr[0] ) && ptr[1]) return (LPSTR)(ptr + 2);
-    return (LPSTR)(ptr + 1);
-}
-
-static char * char_prev(const char *start, const char *ptr)
-{
-    while (*start && (start < ptr))
-    {
-        const char *next = char_next(start);
-        if (next >= ptr) break;
-        start = next;
-    }
-    return (char *)start;
-}
-
 static SIZE_T strnlenW(const WCHAR *string, SIZE_T maxlen)
 {
     SIZE_T i;
@@ -958,7 +940,7 @@ BOOL WINAPI PathIsUNCServerShareA(const char *path)
                 seen_slash = TRUE;
             }
 
-            path = char_next(path);
+            path = CharNextA(path);
         }
     }
 
@@ -1015,7 +997,7 @@ BOOL WINAPI PathIsRootA(const char *path)
                     seen_slash = TRUE;
                 }
 
-                path = char_next(path);
+                path = CharNextA(path);
             }
 
             return TRUE;
@@ -1090,7 +1072,7 @@ BOOL WINAPI PathRemoveFileSpecA(char *path)
             if (*path == '\\')
                 filespec++;
         }
-        if (!(path = char_next(path)))
+        if (!(path = CharNextA(path)))
             break;
     }
 
@@ -1184,7 +1166,7 @@ LPSTR WINAPI PathAddBackslashA(char *path)
     {
         do
         {
-            path = char_next(prev);
+            path = CharNextA(prev);
             if (*path)
             prev = path;
         } while (*path);
@@ -1235,7 +1217,7 @@ LPSTR WINAPI PathFindExtensionA(const char *path)
                 lastpoint = NULL;
             else if (*path == '.')
                 lastpoint = path;
-            path = char_next(path);
+            path = CharNextA(path);
         }
     }
 
@@ -1664,7 +1646,7 @@ char * WINAPI PathFindFileNameA(const char *path)
         if ((*path == '\\' || *path == '/' || *path == ':') &&
                 path[1] && path[1] != '\\' && path[1] != '/')
             last_slash = path + 1;
-        path = char_next(path);
+        path = CharNextA(path);
     }
 
     return (char *)last_slash;
@@ -1703,7 +1685,7 @@ char * WINAPI PathGetArgsA(const char *path)
 
         if (*path == '"')
             seen_quote = !seen_quote;
-        path = char_next(path);
+        path = CharNextA(path);
     }
 
     return (char *)path;
@@ -1808,7 +1790,7 @@ BOOL WINAPI PathIsFileSpecA(const char *path)
     {
         if (*path == '\\' || *path == ':')
             return FALSE;
-        path = char_next(path);
+        path = CharNextA(path);
     }
 
     return TRUE;
@@ -1842,7 +1824,7 @@ BOOL WINAPI PathIsUNCServerA(const char *path)
     {
         if (*path == '\\')
             return FALSE;
-        path = char_next(path);
+        path = CharNextA(path);
     }
 
     return TRUE;
@@ -1870,7 +1852,7 @@ void WINAPI PathRemoveBlanksA(char *path)
     start = path;
 
     while (*path == ' ')
-        path = char_next(path);
+        path = CharNextA(path);
 
     while (*path)
         *start++ = *path++;
@@ -2003,7 +1985,7 @@ char * WINAPI PathRemoveBackslashA(char *path)
     if (!path)
         return NULL;
 
-    ptr = char_prev(path, path + strlen(path));
+    ptr = CharPrevA(path, path + strlen(path));
     if (!PathIsRootA(path) && *ptr == '\\')
         *ptr = '\0';
 
@@ -2058,7 +2040,7 @@ BOOL WINAPI PathIsLFNFileSpecA(const char *path)
             if (name_len > 8)
                 return TRUE; /* DOS names are <= 8 chars */
         }
-        path = char_next(path);
+        path = CharNextA(path);
     }
 
     return FALSE; /* Valid DOS path */
