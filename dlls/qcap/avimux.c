@@ -175,7 +175,7 @@ static HRESULT WINAPI AviMux_QueryInterface(IBaseFilter *iface, REFIID riid, voi
 static ULONG WINAPI AviMux_Release(IBaseFilter *iface)
 {
     AviMux *This = impl_from_IBaseFilter(iface);
-    ULONG ref = BaseFilterImpl_Release(iface);
+    ULONG ref = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("(%p) new refcount: %u\n", This, ref);
 
@@ -192,6 +192,7 @@ static ULONG WINAPI AviMux_Release(IBaseFilter *iface)
         }
 
         HeapFree(GetProcessHeap(), 0, This->idx1);
+        strmbase_filter_cleanup(&This->filter);
         HeapFree(GetProcessHeap(), 0, This);
         ObjectRefCount(FALSE);
     }
@@ -2364,7 +2365,7 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
     hr = BaseOutputPin_Construct(&AviMuxOut_PinVtbl, sizeof(AviMuxOut), &info,
             &AviMuxOut_BaseOutputFuncTable, &avimux->filter.csFilter, (IPin**)&avimux->out);
     if(FAILED(hr)) {
-        BaseFilterImpl_Release(&avimux->filter.IBaseFilter_iface);
+        strmbase_filter_cleanup(&avimux->filter);
         HeapFree(GetProcessHeap(), 0, avimux);
         *phr = hr;
         return NULL;
@@ -2377,7 +2378,7 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
     hr = create_input_pin(avimux);
     if(FAILED(hr)) {
         BaseOutputPinImpl_Release(&avimux->out->pin.pin.IPin_iface);
-        BaseFilterImpl_Release(&avimux->filter.IBaseFilter_iface);
+        strmbase_filter_cleanup(&avimux->filter);
         HeapFree(GetProcessHeap(), 0, avimux);
         *phr = hr;
         return NULL;
