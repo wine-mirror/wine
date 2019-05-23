@@ -1097,8 +1097,8 @@
 # @ stub PathMatchSpecExA
 # @ stub PathMatchSpecExW
 @ stdcall PathMatchSpecW(wstr wstr)
-@ stdcall PathParseIconLocationA(str) shlwapi.PathParseIconLocationA
-@ stdcall PathParseIconLocationW(wstr) shlwapi.PathParseIconLocationW
+@ stdcall PathParseIconLocationA(str)
+@ stdcall PathParseIconLocationW(wstr)
 @ stdcall PathQuoteSpacesA(str)
 @ stdcall PathQuoteSpacesW(wstr)
 @ stdcall PathRelativePathToA(ptr str long str long)
@@ -1121,8 +1121,8 @@
 @ stdcall PathStripPathW(wstr)
 @ stdcall PathStripToRootA(str)
 @ stdcall PathStripToRootW(wstr)
-@ stdcall PathUnExpandEnvStringsA(str ptr long) shlwapi.PathUnExpandEnvStringsA
-@ stdcall PathUnExpandEnvStringsW(wstr ptr long) shlwapi.PathUnExpandEnvStringsW
+@ stdcall PathUnExpandEnvStringsA(str ptr long)
+@ stdcall PathUnExpandEnvStringsW(wstr ptr long)
 @ stdcall PathUnquoteSpacesA(str)
 @ stdcall PathUnquoteSpacesW(wstr)
 # @ stub PcwAddQueryItem

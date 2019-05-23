@@ -2627,6 +2627,143 @@ BOOL WINAPI PathFileExistsW(const WCHAR *path)
     return attrs != INVALID_FILE_ATTRIBUTES;
 }
 
+int WINAPI PathParseIconLocationA(char *path)
+{
+    int ret = 0;
+    char *comma;
+
+    TRACE("%s\n", debugstr_a(path));
+
+    if (!path)
+        return 0;
+
+    if ((comma = strchr(path, ',')))
+    {
+        *comma++ = '\0';
+        ret = StrToIntA(comma);
+    }
+    PathUnquoteSpacesA(path);
+    PathRemoveBlanksA(path);
+
+    return ret;
+}
+
+int WINAPI PathParseIconLocationW(WCHAR *path)
+{
+    WCHAR *comma;
+    int ret = 0;
+
+    TRACE("%s\n", debugstr_w(path));
+
+    if (!path)
+        return 0;
+
+    if ((comma = StrChrW(path, ',')))
+    {
+        *comma++ = '\0';
+        ret = StrToIntW(comma);
+    }
+    PathUnquoteSpacesW(path);
+    PathRemoveBlanksW(path);
+
+    return ret;
+}
+
+BOOL WINAPI PathUnExpandEnvStringsA(const char *path, char *buffer, UINT buf_len)
+{
+    WCHAR bufferW[MAX_PATH], *pathW;
+    DWORD len;
+    BOOL ret;
+
+    TRACE("%s, %p, %d\n", debugstr_a(path), buffer, buf_len);
+
+    pathW = heap_strdupAtoW(path);
+    if (!pathW) return FALSE;
+
+    ret = PathUnExpandEnvStringsW(pathW, bufferW, MAX_PATH);
+    HeapFree(GetProcessHeap(), 0, pathW);
+    if (!ret) return FALSE;
+
+    len = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+    if (buf_len < len + 1) return FALSE;
+
+    WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, buf_len, NULL, NULL);
+    return TRUE;
+}
+
+static const WCHAR allusersprofileW[] = {'%','A','L','L','U','S','E','R','S','P','R','O','F','I','L','E','%',0};
+static const WCHAR appdataW[] = {'%','A','P','P','D','A','T','A','%',0};
+static const WCHAR programfilesW[] = {'%','P','r','o','g','r','a','m','F','i','l','e','s','%',0};
+static const WCHAR systemrootW[] = {'%','S','y','s','t','e','m','R','o','o','t','%',0};
+static const WCHAR systemdriveW[] = {'%','S','y','s','t','e','m','D','r','i','v','e','%',0};
+static const WCHAR userprofileW[] = {'%','U','S','E','R','P','R','O','F','I','L','E','%',0};
+
+struct envvars_map
+{
+    const WCHAR *var;
+    UINT  varlen;
+    WCHAR path[MAX_PATH];
+    DWORD len;
+};
+
+static void init_envvars_map(struct envvars_map *map)
+{
+    while (map->var)
+    {
+        map->len = ExpandEnvironmentStringsW(map->var, map->path, ARRAY_SIZE(map->path));
+        /* exclude null from length */
+        if (map->len) map->len--;
+        map++;
+    }
+}
+
+BOOL WINAPI PathUnExpandEnvStringsW(const WCHAR *path, WCHAR *buffer, UINT buf_len)
+{
+    static struct envvars_map null_var = {NULL, 0, {0}, 0};
+    struct envvars_map *match = &null_var, *cur;
+    struct envvars_map envvars[] =
+    {
+        { allusersprofileW, ARRAY_SIZE(allusersprofileW) },
+        { appdataW,         ARRAY_SIZE(appdataW)         },
+        { programfilesW,    ARRAY_SIZE(programfilesW)    },
+        { systemrootW,      ARRAY_SIZE(systemrootW)      },
+        { systemdriveW,     ARRAY_SIZE(systemdriveW)     },
+        { userprofileW,     ARRAY_SIZE(userprofileW)     },
+        { NULL }
+    };
+    DWORD pathlen;
+    UINT needed;
+
+    TRACE("%s, %p, %d\n", debugstr_w(path), buffer, buf_len);
+
+    pathlen = strlenW(path);
+    init_envvars_map(envvars);
+    cur = envvars;
+    while (cur->var)
+    {
+        /* path can't contain expanded value or value wasn't retrieved */
+        if (cur->len == 0 || cur->len > pathlen || strncmpiW(cur->path, path, cur->len))
+        {
+            cur++;
+            continue;
+        }
+
+        if (cur->len > match->len)
+            match = cur;
+        cur++;
+    }
+
+    /* 'varlen' includes NULL termination char */
+    needed = match->varlen + pathlen - match->len;
+    if (match->len == 0 || needed > buf_len) return FALSE;
+
+    strcpyW(buffer, match->var);
+    strcatW(buffer, &path[match->len]);
+    TRACE("ret %s\n", debugstr_w(buffer));
+
+    return TRUE;
+}
+
 static const struct
 {
     URL_SCHEME scheme_number;
