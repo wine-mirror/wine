@@ -125,7 +125,7 @@ HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *Parser_Vtbl,
     else
     {
         CoTaskMemFree(pParser->ppPins);
-        BaseFilterImpl_Release(&pParser->filter.IBaseFilter_iface);
+        strmbase_filter_cleanup(&pParser->filter);
         CoTaskMemFree(pParser);
     }
 
