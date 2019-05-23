@@ -99,9 +99,10 @@ static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
 static ULONG WINAPI Unknown_Release(IUnknown *iface)
 {
     AudioRecord *This = impl_from_IUnknown(iface);
-    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
+    ULONG ref = InterlockedDecrement(&This->filter.refCount);
     TRACE("(%p/%p)->() ref=%d\n", iface, This, ref);
     if (!ref) {
+        strmbase_filter_cleanup(&This->filter);
         CoTaskMemFree(This);
     }
     return ref;
