@@ -192,7 +192,7 @@ static const IUnknownVtbl unknown_inner_vtbl =
     unknown_inner_Release,
 };
 
-static IPin * WINAPI vfw_capture_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *vfw_capture_get_pin(BaseFilter *iface, unsigned int index)
 {
     VfwCapture *This = impl_from_BaseFilter(iface);
 

@@ -183,7 +183,7 @@ static const IPinVtbl BaseRenderer_InputPin_Vtbl =
     BaseInputPinImpl_NewSegment
 };
 
-static IPin * WINAPI renderer_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *renderer_get_pin(BaseFilter *iface, unsigned int index)
 {
     BaseRenderer *This = impl_from_BaseFilter(iface);
 

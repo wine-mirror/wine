@@ -1196,7 +1196,7 @@ static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, GSTOutPin, seek.IMediaSeeking_iface);
 }
 
-static IPin * WINAPI gstdemux_get_pin(BaseFilter *base, unsigned int index)
+static IPin *gstdemux_get_pin(BaseFilter *base, unsigned int index)
 {
     GSTImpl *This = impl_from_IBaseFilter(&base->IBaseFilter_iface);
     IPin *pin;

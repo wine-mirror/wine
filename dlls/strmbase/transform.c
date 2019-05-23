@@ -128,7 +128,7 @@ static HRESULT WINAPI TransformFilter_Output_GetMediaType(BasePin *This, int iPo
     return S_OK;
 }
 
-static IPin * WINAPI transform_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *transform_get_pin(BaseFilter *iface, unsigned int index)
 {
     TransformFilter *filter = impl_from_BaseFilter(iface);
 

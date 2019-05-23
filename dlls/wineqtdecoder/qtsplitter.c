@@ -202,7 +202,7 @@ static inline QTSplitter *impl_from_IBaseFilter( IBaseFilter *iface )
  * Base Filter
  */
 
-static IPin * WINAPI qt_splitter_get_pin(BaseFilter *base, unsigned int index)
+static IPin *qt_splitter_get_pin(BaseFilter *base, unsigned int index)
 {
     QTSplitter *filter = impl_from_BaseFilter(base);
 

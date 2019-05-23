@@ -392,7 +392,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
     return hr;
 }
 
-static IPin * WINAPI async_reader_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *async_reader_get_pin(BaseFilter *iface, unsigned int index)
 {
     AsyncReader *This = impl_from_BaseFilter(iface);
 
