@@ -2619,6 +2619,11 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyA(
     return key;
 }
 
+static LONG create_iface_key(const struct device_iface *iface, REGSAM access, HKEY *key)
+{
+    return RegCreateKeyExW(iface->refstr_key, DeviceParameters, 0, NULL, 0, access, NULL, key, NULL);
+}
+
 /***********************************************************************
  *		SetupDiCreateDeviceInterfaceRegKeyW (SETUPAPI.@)
  */
@@ -2642,8 +2647,7 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO devinfo,
         return INVALID_HANDLE_VALUE;
     }
 
-    ret = RegCreateKeyExW(iface->refstr_key, DeviceParameters, 0, NULL, 0, access,
-        NULL, &params_key, NULL);
+    ret = create_iface_key(iface, access, &params_key);
     if (ret)
     {
         SetLastError(ret);
@@ -3678,9 +3682,10 @@ BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP
             return SetupDiRegisterCoDeviceInstallers(devinfo, device_data);
         case DIF_INSTALLDEVICEFILES:
             return SetupDiInstallDriverFiles(devinfo, device_data);
+        case DIF_INSTALLINTERFACES:
+            return SetupDiInstallDeviceInterfaces(devinfo, device_data);
         case DIF_FINISHINSTALL_ACTION:
         case DIF_INSTALLDEVICE:
-        case DIF_INSTALLINTERFACES:
         case DIF_PROPERTYCHANGE:
         case DIF_SELECTDEVICE:
         case DIF_UNREMOVE:
@@ -4227,12 +4232,77 @@ BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
 /***********************************************************************
  *              SetupDiInstallDeviceInterfaces (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO dev, PSP_DEVINFO_DATA info_data)
+BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    FIXME("%p, %p stub\n", dev, info_data);
+    WCHAR section[LINE_LEN], section_ext[LINE_LEN], iface_section[LINE_LEN], refstr[LINE_LEN], guidstr[39];
+    UINT install_flags = SPINST_ALL;
+    struct device_iface *iface;
+    struct device *device;
+    struct driver *driver;
+    void *callback_ctx;
+    GUID iface_guid;
+    INFCONTEXT ctx;
+    HKEY iface_key;
+    HINF hinf;
+    LONG l;
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (!(driver = device->selected_driver))
+    {
+        ERR("No driver selected for device %p.\n", devinfo);
+        SetLastError(ERROR_NO_DRIVER_SELECTED);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    SetupGetStringFieldW(&ctx, 1, section, ARRAY_SIZE(section), NULL);
+    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, NULL);
+
+    if (device->params.Flags & DI_NOFILECOPY)
+        install_flags &= ~SPINST_FILES;
+
+    callback_ctx = SetupInitDefaultQueueCallback(NULL);
+
+    lstrcatW(section_ext, dotInterfaces);
+    if (SetupFindFirstLineW(hinf, section_ext, AddInterface, &ctx))
+    {
+        do {
+            SetupGetStringFieldW(&ctx, 1, guidstr, ARRAY_SIZE(guidstr), NULL);
+            SetupGetStringFieldW(&ctx, 2, refstr, ARRAY_SIZE(refstr), NULL);
+            guidstr[37] = 0;
+            UuidFromStringW(&guidstr[1], &iface_guid);
+
+            if (!(iface = SETUPDI_CreateDeviceInterface(device, &iface_guid, refstr)))
+            {
+                ERR("Failed to create device interface, error %#x.\n", GetLastError());
+                continue;
+            }
+
+            if ((l = create_iface_key(iface, KEY_ALL_ACCESS, &iface_key)))
+            {
+                ERR("Failed to create interface key, error %u.\n", l);
+                continue;
+            }
+
+            SetupGetStringFieldW(&ctx, 3, iface_section, ARRAY_SIZE(iface_section), NULL);
+            SetupInstallFromInfSectionW(NULL, hinf, iface_section, install_flags, iface_key,
+                    NULL, SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
+
+            RegCloseKey(iface_key);
+        } while (SetupFindNextMatchLineW(&ctx, AddInterface, &ctx));
+    }
+
+    SetupTermDefaultQueueCallback(callback_ctx);
+
+    SetupCloseInfFile(hinf);
+    return TRUE;
 }
 
 /***********************************************************************
