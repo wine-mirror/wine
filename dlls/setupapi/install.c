@@ -1458,36 +1458,38 @@ BOOL WINAPI SetupInstallServicesFromInfSectionW( HINF hinf, PCWSTR section, DWOR
     SC_HANDLE scm;
     INFCONTEXT context;
     INT section_flags;
-    BOOL ok, ret = TRUE;
+    BOOL ret = TRUE;
 
-    if (!(ok = SetupFindFirstLineW( hinf, section, NULL, &context )))
+    if (!SetupFindFirstLineW( hinf, section, NULL, &context ))
     {
         SetLastError( ERROR_SECTION_NOT_FOUND );
         return FALSE;
     }
     if (!(scm = OpenSCManagerW( NULL, NULL, SC_MANAGER_ALL_ACCESS ))) return FALSE;
 
-    ok = SetupFindFirstLineW( hinf, section, AddService, &context );
-    while (ok)
+    if (SetupFindFirstLineW( hinf, section, AddService, &context ))
     {
-        if (!SetupGetStringFieldW( &context, 1, service_name, MAX_INF_STRING_LENGTH, NULL ))
-            continue;
-        if (!SetupGetIntField( &context, 2, &section_flags )) section_flags = 0;
-        if (!SetupGetStringFieldW( &context, 3, service_section, MAX_INF_STRING_LENGTH, NULL ))
-            continue;
-        if (!(ret = add_service( scm, hinf, service_name, service_section, section_flags | flags )))
-            goto done;
-        ok = SetupFindNextMatchLineW( &context, AddService, &context );
+        do
+        {
+            if (!SetupGetStringFieldW( &context, 1, service_name, MAX_INF_STRING_LENGTH, NULL ))
+                continue;
+            if (!SetupGetIntField( &context, 2, &section_flags )) section_flags = 0;
+            if (!SetupGetStringFieldW( &context, 3, service_section, MAX_INF_STRING_LENGTH, NULL ))
+                continue;
+            if (!(ret = add_service( scm, hinf, service_name, service_section, section_flags | flags )))
+                goto done;
+        } while (SetupFindNextMatchLineW( &context, AddService, &context ));
     }
 
-    ok = SetupFindFirstLineW( hinf, section, DelService, &context );
-    while (ok)
+    if (SetupFindFirstLineW( hinf, section, DelService, &context ))
     {
-        if (!SetupGetStringFieldW( &context, 1, service_name, MAX_INF_STRING_LENGTH, NULL ))
-            continue;
-        if (!SetupGetIntField( &context, 2, &section_flags )) section_flags = 0;
-        if (!(ret = del_service( scm, hinf, service_name, section_flags | flags ))) goto done;
-        ok = SetupFindNextMatchLineW( &context, AddService, &context );
+        do
+        {
+            if (!SetupGetStringFieldW( &context, 1, service_name, MAX_INF_STRING_LENGTH, NULL ))
+                continue;
+            if (!SetupGetIntField( &context, 2, &section_flags )) section_flags = 0;
+            if (!(ret = del_service( scm, hinf, service_name, section_flags | flags ))) goto done;
+        } while (SetupFindNextMatchLineW( &context, AddService, &context ));
     }
     if (ret) SetLastError( ERROR_SUCCESS );
  done:
