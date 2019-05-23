@@ -116,7 +116,7 @@ static inline AviMux* impl_from_BaseFilter(BaseFilter *filter)
     return CONTAINING_RECORD(filter, AviMux, filter);
 }
 
-static IPin * WINAPI AviMux_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI avi_mux_get_pin(BaseFilter *iface, unsigned int index)
 {
     AviMux *This = impl_from_BaseFilter(iface);
 
@@ -135,7 +135,7 @@ static IPin * WINAPI AviMux_GetPin(BaseFilter *iface, unsigned int index)
 }
 
 static const BaseFilterFuncTable filter_func_table = {
-    AviMux_GetPin,
+    .filter_get_pin = avi_mux_get_pin,
 };
 
 static inline AviMux* impl_from_IBaseFilter(IBaseFilter *iface)

@@ -1196,7 +1196,7 @@ static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, GSTOutPin, seek.IMediaSeeking_iface);
 }
 
-static IPin* WINAPI GST_GetPin(BaseFilter *base, unsigned int index)
+static IPin * WINAPI gstdemux_get_pin(BaseFilter *base, unsigned int index)
 {
     GSTImpl *This = impl_from_IBaseFilter(&base->IBaseFilter_iface);
     IPin *pin;
@@ -1214,7 +1214,7 @@ static IPin* WINAPI GST_GetPin(BaseFilter *base, unsigned int index)
 }
 
 static const BaseFilterFuncTable BaseFuncTable = {
-    GST_GetPin,
+    .filter_get_pin = gstdemux_get_pin,
 };
 
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)

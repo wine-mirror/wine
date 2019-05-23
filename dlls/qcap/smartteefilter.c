@@ -199,7 +199,7 @@ static const IBaseFilterVtbl SmartTeeFilterVtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin * WINAPI SmartTeeFilter_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI smart_tee_get_pin(BaseFilter *iface, unsigned int index)
 {
     SmartTeeFilter *This = impl_from_BaseFilter(iface);
     IPin *ret;
@@ -218,7 +218,7 @@ static IPin * WINAPI SmartTeeFilter_GetPin(BaseFilter *iface, unsigned int index
 }
 
 static const BaseFilterFuncTable SmartTeeFilterFuncs = {
-    SmartTeeFilter_GetPin,
+    .filter_get_pin = smart_tee_get_pin,
 };
 
 static ULONG WINAPI SmartTeeFilterInput_AddRef(IPin *iface)

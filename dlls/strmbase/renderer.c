@@ -183,7 +183,7 @@ static const IPinVtbl BaseRenderer_InputPin_Vtbl =
     BaseInputPinImpl_NewSegment
 };
 
-static IPin * WINAPI BaseRenderer_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI renderer_get_pin(BaseFilter *iface, unsigned int index)
 {
     BaseRenderer *This = impl_from_BaseFilter(iface);
 
@@ -207,7 +207,7 @@ static HRESULT WINAPI BaseRenderer_Receive(BaseInputPin *pin, IMediaSample * pSa
 }
 
 static const BaseFilterFuncTable RendererBaseFilterFuncTable = {
-    BaseRenderer_GetPin,
+    .filter_get_pin = renderer_get_pin,
 };
 
 static const BaseInputPinFuncTable input_BaseInputFuncTable = {

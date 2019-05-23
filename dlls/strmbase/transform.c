@@ -128,7 +128,7 @@ static HRESULT WINAPI TransformFilter_Output_GetMediaType(BasePin *This, int iPo
     return S_OK;
 }
 
-static IPin *WINAPI TransformFilter_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI transform_get_pin(BaseFilter *iface, unsigned int index)
 {
     TransformFilter *filter = impl_from_BaseFilter(iface);
 
@@ -140,7 +140,7 @@ static IPin *WINAPI TransformFilter_GetPin(BaseFilter *iface, unsigned int index
 }
 
 static const BaseFilterFuncTable tfBaseFuncTable = {
-    TransformFilter_GetPin,
+    .filter_get_pin = transform_get_pin,
 };
 
 static const BaseInputPinFuncTable tf_input_BaseInputFuncTable = {

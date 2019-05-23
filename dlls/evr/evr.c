@@ -191,7 +191,7 @@ static const IBaseFilterVtbl basefilter_vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin * WINAPI filter_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI evr_get_pin(BaseFilter *iface, unsigned int index)
 {
     FIXME("iface %p, index %u, stub!\n", iface, index);
     return NULL;
@@ -199,7 +199,7 @@ static IPin * WINAPI filter_GetPin(BaseFilter *iface, unsigned int index)
 
 static const BaseFilterFuncTable basefilter_functable =
 {
-    filter_GetPin,
+    .filter_get_pin = evr_get_pin,
 };
 
 HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv)

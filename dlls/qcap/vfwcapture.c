@@ -192,7 +192,7 @@ static const IUnknownVtbl unknown_inner_vtbl =
     unknown_inner_Release,
 };
 
-static IPin * WINAPI VfwCapture_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI vfw_capture_get_pin(BaseFilter *iface, unsigned int index)
 {
     VfwCapture *This = impl_from_BaseFilter(iface);
 
@@ -204,7 +204,7 @@ static IPin * WINAPI VfwCapture_GetPin(BaseFilter *iface, unsigned int index)
 }
 
 static const BaseFilterFuncTable BaseFuncTable = {
-    VfwCapture_GetPin,
+    .filter_get_pin = vfw_capture_get_pin,
 };
 
 IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)

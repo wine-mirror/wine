@@ -62,7 +62,7 @@ static inline ParserImpl *impl_from_BaseFilter( BaseFilter *iface )
     return CONTAINING_RECORD(iface, ParserImpl, filter);
 }
 
-static IPin * WINAPI Parser_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI parser_get_pin(BaseFilter *iface, unsigned int index)
 {
     ParserImpl *filter = impl_from_BaseFilter(iface);
 
@@ -74,7 +74,7 @@ static IPin * WINAPI Parser_GetPin(BaseFilter *iface, unsigned int index)
 }
 
 static const BaseFilterFuncTable BaseFuncTable = {
-    Parser_GetPin,
+    .filter_get_pin = parser_get_pin,
 };
 
 HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *Parser_Vtbl,

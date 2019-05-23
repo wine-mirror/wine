@@ -171,14 +171,14 @@ static const IBaseFilterVtbl AudioRecordVtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin * WINAPI AudioRecord_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI audio_record_get_pin(BaseFilter *iface, unsigned int index)
 {
     FIXME("iface %p, index %u, stub!\n", iface, index);
     return NULL;
 }
 
 static const BaseFilterFuncTable AudioRecordFuncs = {
-    AudioRecord_GetPin,
+    .filter_get_pin = audio_record_get_pin,
 };
 
 static HRESULT WINAPI PPB_QueryInterface(IPersistPropertyBag *iface, REFIID riid, LPVOID *ppv)

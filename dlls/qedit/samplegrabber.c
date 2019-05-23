@@ -339,7 +339,7 @@ static const IUnknownVtbl samplegrabber_vtbl =
     SampleGrabber_Release,
 };
 
-static IPin * WINAPI SampleGrabber_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI sample_grabber_get_pin(BaseFilter *iface, unsigned int index)
 {
     SG_Impl *This = impl_from_BaseFilter(iface);
     IPin *pin;
@@ -356,7 +356,7 @@ static IPin * WINAPI SampleGrabber_GetPin(BaseFilter *iface, unsigned int index)
 }
 
 static const BaseFilterFuncTable basefunc_vtbl = {
-    SampleGrabber_GetPin,
+    .filter_get_pin = sample_grabber_get_pin,
 };
 
 /* Helper that buffers data and/or calls installed sample callbacks */

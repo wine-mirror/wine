@@ -144,7 +144,7 @@ HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin 
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_w(id), ret);
 
-    for (i = 0; (pin = This->pFuncsTable->pfnGetPin(This, i)); ++i)
+    for (i = 0; (pin = This->pFuncsTable->filter_get_pin(This, i)); ++i)
     {
         hr = IPin_QueryPinInfo(pin, &info);
         if (FAILED(hr))

@@ -244,7 +244,7 @@ static const IBaseFilterVtbl AVICompressorVtbl = {
     AVICompressor_QueryVendorInfo
 };
 
-static IPin * WINAPI AVICompressor_GetPin(BaseFilter *iface, unsigned int index)
+static IPin * WINAPI avi_compressor_get_pin(BaseFilter *iface, unsigned int index)
 {
     AVICompressor *This = impl_from_BaseFilter(iface);
     IPin *ret;
@@ -261,7 +261,7 @@ static IPin * WINAPI AVICompressor_GetPin(BaseFilter *iface, unsigned int index)
 }
 
 static const BaseFilterFuncTable filter_func_table = {
-    AVICompressor_GetPin,
+    .filter_get_pin = avi_compressor_get_pin,
 };
 
 static AVICompressor *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
