@@ -525,7 +525,7 @@ CONFIGRET WINAPI CM_Reenumerate_DevNode_Ex(DEVINST dnDevInst, ULONG ulFlags, HMA
 /***********************************************************************
  *      CM_Set_Class_Registry_PropertyA (SETUPAPI.@)
  */
-CONFIGRET WINAPI CM_Set_Class_Registry_PropertyA(LPGUID class, ULONG prop, PVOID buf, ULONG len,
+CONFIGRET WINAPI CM_Set_Class_Registry_PropertyA(LPGUID class, ULONG prop, LPCVOID buf, ULONG len,
                                                  ULONG flags, HMACHINE machine)
 {
     FIXME("%p %u %p %u 0x%08x %p: stub\n", class, prop, buf, len, flags, machine);
@@ -535,7 +535,7 @@ CONFIGRET WINAPI CM_Set_Class_Registry_PropertyA(LPGUID class, ULONG prop, PVOID
 /***********************************************************************
  *      CM_Set_Class_Registry_PropertyW (SETUPAPI.@)
  */
-CONFIGRET WINAPI CM_Set_Class_Registry_PropertyW(LPGUID class, ULONG prop, PVOID buf, ULONG len,
+CONFIGRET WINAPI CM_Set_Class_Registry_PropertyW(LPGUID class, ULONG prop, LPCVOID buf, ULONG len,
                                                  ULONG flags, HMACHINE machine)
 {
     FIXME("%p %u %p %u 0x%08x %p: stub\n", class, prop, buf, len, flags, machine);
