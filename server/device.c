@@ -597,7 +597,7 @@ static int queue_irp( struct device_file *file, const irp_params_t *params, stru
     add_irp_to_queue( file->device->manager, irp, current );
     release_object( irp );
     set_error( STATUS_PENDING );
-    return 1;
+    return 0;
 }
 
 static enum server_fd_type device_file_get_fd_type( struct fd *fd )
@@ -896,8 +896,11 @@ DECL_HANDLER(get_next_device_request)
 
     if (manager->current_call)
     {
-        free_irp_params( manager->current_call );
-        release_object( manager->current_call );
+        irp = manager->current_call;
+        if (irp->async)
+            set_async_pending( irp->async, irp->file && is_fd_overlapped( irp->file->fd ) );
+        free_irp_params( irp );
+        release_object( irp );
         manager->current_call = NULL;
     }
 

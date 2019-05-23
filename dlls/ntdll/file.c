@@ -427,7 +427,7 @@ static async_data_t server_async( HANDLE handle, struct async_fileio *user, HAND
 
 static NTSTATUS wait_async( HANDLE handle, BOOL alertable, IO_STATUS_BLOCK *io )
 {
-    NtWaitForSingleObject( handle, alertable, NULL );
+    if (NtWaitForSingleObject( handle, alertable, NULL )) return STATUS_PENDING;
     return io->u.Status;
 }
 

@@ -216,9 +216,7 @@ static void test_overlapped(void)
 
     /* test cancelling all device requests */
     res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-    todo_wine
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
 
     res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
     ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
@@ -228,9 +226,7 @@ static void test_overlapped(void)
 
     cancel_cnt = 0xdeadbeef;
     res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
-    todo_wine
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
     ok(cancel_cnt == 0, "cancel_cnt = %u\n", cancel_cnt);
 
     CancelIo(file);
@@ -238,18 +234,13 @@ static void test_overlapped(void)
     cancel_cnt = 0xdeadbeef;
     res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
     todo_wine
-    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
-    todo_wine
     ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
 
     /* test cancelling selected overlapped event */
     if (pCancelIoEx)
     {
         res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-        todo_wine
         ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-        if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
 
         res = DeviceIoControl(file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
         ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %u\n", GetLastError());
@@ -261,9 +252,7 @@ static void test_overlapped(void)
 
         cancel_cnt = 0xdeadbeef;
         res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
-        todo_wine
         ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-        if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
         todo_wine
         ok(cancel_cnt == 1, "cancel_cnt = %u\n", cancel_cnt);
 
@@ -271,9 +260,7 @@ static void test_overlapped(void)
 
         cancel_cnt = 0xdeadbeef;
         res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
-        todo_wine
         ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-        if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
         todo_wine
         ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
     }
@@ -284,9 +271,7 @@ static void test_overlapped(void)
     ok(!res && GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus returned %x(%u)\n", res, GetLastError());
 
     res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-    todo_wine
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
     res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
     ok(res, "GetQueuedCompletionStatus failed: %u\n", GetLastError());
     ok(o == &overlapped, "o != overlapped\n");
@@ -297,11 +282,8 @@ static void test_overlapped(void)
         ok(res, "SetFileCompletionNotificationModes failed: %u\n", GetLastError());
 
         res = DeviceIoControl(file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &overlapped);
-        todo_wine
         ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-        if (!res && GetLastError() == ERROR_IO_PENDING) WaitForSingleObject(overlapped.hEvent, INFINITE);
         res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
-        todo_wine
         ok(!res && GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus returned %x(%u)\n", res, GetLastError());
     }
 

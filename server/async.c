@@ -121,6 +121,8 @@ static void async_satisfied( struct object *obj, struct wait_queue_entry *entry 
         close_handle( async->thread->process, async->wait_handle );
         async->wait_handle = 0;
     }
+
+    if (async->status == STATUS_PENDING) make_wait_abandoned( entry );
 }
 
 static void async_destroy( struct object *obj )
@@ -261,6 +263,19 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     return async;
 }
 
+void set_async_pending( struct async *async, int signal )
+{
+    if (async->status == STATUS_PENDING)
+    {
+        async->pending = 1;
+        if (signal && !async->signaled)
+        {
+            async->signaled = 1;
+            wake_up( &async->obj, 0 );
+        }
+    }
+}
+
 /* create an async associated with iosb for async-based requests
  * returned async must be passed to async_handoff */
 struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data )
@@ -292,6 +307,12 @@ obj_handle_t async_handoff( struct async *async, int success, data_size_t *resul
 {
     if (!success)
     {
+        if (get_error() == STATUS_PENDING)
+        {
+            /* we don't know the result yet, so client needs to wait */
+            async->direct_result = 0;
+            return async->wait_handle;
+        }
         close_handle( async->thread->process, async->wait_handle );
         async->wait_handle = 0;
         return 0;
