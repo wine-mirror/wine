@@ -104,7 +104,7 @@ static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
 static ULONG WINAPI Unknown_Release(IUnknown *iface)
 {
     SmartTeeFilter *This = impl_from_IUnknown(iface);
-    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
+    ULONG ref = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("(%p)->() ref=%d\n", This, ref);
 
@@ -115,6 +115,7 @@ static ULONG WINAPI Unknown_Release(IUnknown *iface)
             BaseOutputPinImpl_Release(&This->capture->pin.IPin_iface);
         if(This->preview)
             BaseOutputPinImpl_Release(&This->preview->pin.IPin_iface);
+        strmbase_filter_cleanup(&This->filter);
         CoTaskMemFree(This);
     }
     return ref;
@@ -597,8 +598,8 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
 
     This = CoTaskMemAlloc(sizeof(*This));
     if (This == NULL) {
-        hr = E_OUTOFMEMORY;
-        goto end;
+        *phr = E_OUTOFMEMORY;
+        return NULL;
     }
     memset(This, 0, sizeof(*This));
     This->IUnknown_iface.lpVtbl = &UnknownVtbl;
@@ -638,8 +639,7 @@ end:
         else
             return (IUnknown*)&This->filter.IBaseFilter_iface;
     } else {
-        if (This)
-            IBaseFilter_Release(&This->filter.IBaseFilter_iface);
+        strmbase_filter_cleanup(&This->filter);
         return NULL;
     }
 }
