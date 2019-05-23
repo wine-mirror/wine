@@ -54,7 +54,7 @@ ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter * iface)
     return refCount;
 }
 
-ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface)
+ULONG WINAPI BaseFilterImpl_Release(IBaseFilter *iface)
 {
     BaseFilter *This = impl_from_IBaseFilter(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
@@ -62,7 +62,7 @@ ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface)
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
     if (!refCount)
-        strmbase_filter_cleanup(This);
+        This->pFuncsTable->filter_destroy(This);
 
     return refCount;
 }

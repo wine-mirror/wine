@@ -171,6 +171,7 @@ typedef struct BaseFilter
 typedef struct BaseFilterFuncTable
 {
     IPin *(*filter_get_pin)(BaseFilter *iface, unsigned int index);
+    void (*filter_destroy)(BaseFilter *iface);
 } BaseFilterFuncTable;
 
 HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
