@@ -45,12 +45,13 @@ struct async
     unsigned int         status;          /* current status */
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
-    int                  signaled;
     struct event        *event;
     async_data_t         data;            /* data for async I/O call */
     struct iosb         *iosb;            /* I/O status block */
     obj_handle_t         wait_handle;     /* pre-allocated wait handle */
-    int                  direct_result;   /* a flag if we're passing result directly from request instead of APC  */
+    unsigned int         signaled :1;
+    unsigned int         pending :1;      /* request is succesfully queued, but pending */
+    unsigned int         direct_result :1;/* a flag if we're passing result directly from request instead of APC  */
     struct completion   *completion;      /* completion associated with fd */
     apc_param_t          comp_key;        /* completion key associated with fd */
     unsigned int         comp_flags;      /* completion flags */
@@ -238,6 +239,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->queue         = NULL;
     async->fd            = (struct fd *)grab_object( fd );
     async->signaled      = 0;
+    async->pending       = 1;
     async->wait_handle   = 0;
     async->direct_result = 0;
     async->completion    = fd_get_completion( fd, &async->comp_key );
@@ -278,8 +280,9 @@ struct async *create_request_async( struct fd *fd, unsigned int comp_flags, cons
             release_object( async );
             return NULL;
         }
+        async->pending       = 0;
         async->direct_result = 1;
-        async->comp_flags = comp_flags;
+        async->comp_flags    = comp_flags;
     }
     return async;
 }
@@ -317,6 +320,7 @@ obj_handle_t async_handoff( struct async *async, int success, data_size_t *resul
     else
     {
         async->direct_result = 0;
+        async->pending = 1;
         if (!force_blocking && async->fd && is_fd_overlapped( async->fd ))
         {
             close_handle( async->thread->process, async->wait_handle);
@@ -381,7 +385,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             data.user.args[2] = 0;
             thread_queue_apc( NULL, async->thread, NULL, &data );
         }
-        else if (async->data.apc_context && (!async->direct_result ||
+        else if (async->data.apc_context && (async->pending ||
                  !(async->comp_flags & FILE_SKIP_COMPLETION_PORT_ON_SUCCESS)))
         {
             add_async_completion( async, async->data.apc_context, status, total );
