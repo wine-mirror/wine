@@ -403,8 +403,8 @@
 @ stdcall GenerateConsoleCtrlEvent(long long) kernel32.GenerateConsoleCtrlEvent
 # @ stub GenerateGPNotificationInternal
 @ stdcall GetACP() kernel32.GetACP
-@ stdcall GetAcceptLanguagesA(ptr ptr) shlwapi.GetAcceptLanguagesA
-@ stdcall GetAcceptLanguagesW(ptr ptr) shlwapi.GetAcceptLanguagesW
+@ stdcall GetAcceptLanguagesA(ptr ptr)
+@ stdcall GetAcceptLanguagesW(ptr ptr)
 @ stdcall GetAce(ptr long ptr) advapi32.GetAce
 @ stdcall GetAclInformation(ptr ptr long long) advapi32.GetAclInformation
 # @ stub GetAdjustObjectAttributesForPrivateNamespaceRoutine
