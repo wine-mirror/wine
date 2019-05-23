@@ -851,12 +851,9 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
     if (source && !(sourceW = strdupAtoW( source ))) goto done;
     if (location && !(locationW = strdupAtoW( location ))) goto done;
 
-    if (!(ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW,
-                                  buffer_size, &size, NULL )))
-    {
-        if (required_size) *required_size = size;
-        goto done;
-    }
+    ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW, buffer_size, &size, NULL );
+
+    if (required_size) *required_size = size;
 
     if (dest)
     {
@@ -866,10 +863,7 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
             if (component) *component = strrchr( dest, '\\' ) + 1;
         }
         else
-        {
             SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            goto done;
-        }
     }
 
 done:
