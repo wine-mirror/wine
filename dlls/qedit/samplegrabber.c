@@ -319,13 +319,14 @@ static ULONG WINAPI SampleGrabber_AddRef(IUnknown *iface)
 static ULONG WINAPI SampleGrabber_Release(IUnknown *iface)
 {
     SG_Impl *This = impl_from_IUnknown(iface);
-    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
+    ULONG ref = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (ref == 0)
     {
         SampleGrabber_cleanup(This);
+        strmbase_filter_cleanup(&This->filter);
         CoTaskMemFree(This);
     }
     return ref;
