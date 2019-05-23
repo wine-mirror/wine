@@ -128,11 +128,11 @@ static HRESULT WINAPI TransformFilter_Output_GetMediaType(BasePin *This, int iPo
     return S_OK;
 }
 
-static IPin *WINAPI TransformFilter_GetPin(BaseFilter *iface, int index)
+static IPin *WINAPI TransformFilter_GetPin(BaseFilter *iface, unsigned int index)
 {
     TransformFilter *filter = impl_from_BaseFilter(iface);
 
-    if (index >= 2 || index < 0)
+    if (index >= 2)
         return NULL;
 
     IPin_AddRef(filter->ppPins[index]);

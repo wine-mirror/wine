@@ -1196,20 +1196,18 @@ static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, GSTOutPin, seek.IMediaSeeking_iface);
 }
 
-static IPin* WINAPI GST_GetPin(BaseFilter *base, int pos)
+static IPin* WINAPI GST_GetPin(BaseFilter *base, unsigned int index)
 {
     GSTImpl *This = impl_from_IBaseFilter(&base->IBaseFilter_iface);
     IPin *pin;
 
-    TRACE("%p: Asking for pos %x\n", This, pos);
-
-    if (pos > This->cStreams || pos < 0)
+    if (index > This->cStreams)
         return NULL;
 
-    if (!pos)
+    if (!index)
         pin = &This->pInputPin.pin.IPin_iface;
     else
-        pin = &This->ppPins[pos - 1]->pin.pin.IPin_iface;
+        pin = &This->ppPins[index - 1]->pin.pin.IPin_iface;
 
     IPin_AddRef(pin);
     return pin;

@@ -137,10 +137,10 @@ HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter *iface, IEnumPins **enum_pins
 HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin **ret)
 {
     BaseFilter *This = impl_from_IBaseFilter(iface);
+    unsigned int i;
     PIN_INFO info;
     HRESULT hr;
     IPin *pin;
-    int i;
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_w(id), ret);
 

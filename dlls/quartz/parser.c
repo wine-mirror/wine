@@ -62,19 +62,15 @@ static inline ParserImpl *impl_from_BaseFilter( BaseFilter *iface )
     return CONTAINING_RECORD(iface, ParserImpl, filter);
 }
 
-/* FIXME: WRONG */
-static IPin* WINAPI Parser_GetPin(BaseFilter *iface, int pos)
+static IPin * WINAPI Parser_GetPin(BaseFilter *iface, unsigned int index)
 {
-    ParserImpl *This = impl_from_BaseFilter(iface);
+    ParserImpl *filter = impl_from_BaseFilter(iface);
 
-    TRACE("%p->(%x)\n", This, pos);
-
-    /* Input pin also has a pin, hence the > and not >= */
-    if (pos > This->cStreams || pos < 0)
+    if (index > filter->cStreams)
         return NULL;
 
-    IPin_AddRef(This->ppPins[pos]);
-    return This->ppPins[pos];
+    IPin_AddRef(filter->ppPins[index]);
+    return filter->ppPins[index];
 }
 
 static const BaseFilterFuncTable BaseFuncTable = {

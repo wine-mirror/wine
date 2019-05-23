@@ -168,7 +168,7 @@ typedef struct BaseFilter
 	const struct BaseFilterFuncTable* pFuncsTable;
 } BaseFilter;
 
-typedef IPin* (WINAPI *BaseFilter_GetPin)(BaseFilter* iface, int iPosition);
+typedef IPin * (WINAPI *BaseFilter_GetPin)(BaseFilter *iface, unsigned int index);
 
 typedef struct BaseFilterFuncTable {
 	/* Required */

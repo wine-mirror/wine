@@ -244,24 +244,17 @@ static const IBaseFilterVtbl AVICompressorVtbl = {
     AVICompressor_QueryVendorInfo
 };
 
-static IPin* WINAPI AVICompressor_GetPin(BaseFilter *iface, int pos)
+static IPin * WINAPI AVICompressor_GetPin(BaseFilter *iface, unsigned int index)
 {
     AVICompressor *This = impl_from_BaseFilter(iface);
     IPin *ret;
 
-    TRACE("(%p)->(%d)\n", This, pos);
-
-    switch(pos) {
-    case 0:
+    if (index == 0)
         ret = &This->in->pin.IPin_iface;
-        break;
-    case 1:
+    else if (index == 1)
         ret = &This->out->pin.IPin_iface;
-        break;
-    default:
-        TRACE("No pin %d\n", pos);
+    else
         return NULL;
-    };
 
     IPin_AddRef(ret);
     return ret;

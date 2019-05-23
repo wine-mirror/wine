@@ -116,18 +116,19 @@ static inline AviMux* impl_from_BaseFilter(BaseFilter *filter)
     return CONTAINING_RECORD(filter, AviMux, filter);
 }
 
-static IPin* WINAPI AviMux_GetPin(BaseFilter *iface, int pos)
+static IPin * WINAPI AviMux_GetPin(BaseFilter *iface, unsigned int index)
 {
     AviMux *This = impl_from_BaseFilter(iface);
 
-    TRACE("(%p)->(%d)\n", This, pos);
-
-    if(pos == 0) {
+    if (!index)
+    {
         IPin_AddRef(&This->out->pin.pin.IPin_iface);
         return &This->out->pin.pin.IPin_iface;
-    }else if(pos>0 && pos<=This->input_pin_no) {
-        IPin_AddRef(&This->in[pos-1]->pin.pin.IPin_iface);
-        return &This->in[pos-1]->pin.pin.IPin_iface;
+    }
+    else if (index <= This->input_pin_no)
+    {
+        IPin_AddRef(&This->in[index - 1]->pin.pin.IPin_iface);
+        return &This->in[index - 1]->pin.pin.IPin_iface;
     }
 
     return NULL;

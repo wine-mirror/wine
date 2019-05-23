@@ -339,14 +339,14 @@ static const IUnknownVtbl samplegrabber_vtbl =
     SampleGrabber_Release,
 };
 
-static IPin *WINAPI SampleGrabber_GetPin(BaseFilter *iface, int pos)
+static IPin * WINAPI SampleGrabber_GetPin(BaseFilter *iface, unsigned int index)
 {
     SG_Impl *This = impl_from_BaseFilter(iface);
     IPin *pin;
 
-    if (pos == 0)
+    if (index == 0)
         pin = &This->pin_in.IPin_iface;
-    else if (pos == 1)
+    else if (index == 1)
         pin = &This->pin_out.IPin_iface;
     else
         return NULL;

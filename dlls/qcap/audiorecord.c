@@ -171,10 +171,9 @@ static const IBaseFilterVtbl AudioRecordVtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin* WINAPI AudioRecord_GetPin(BaseFilter *iface, int pos)
+static IPin * WINAPI AudioRecord_GetPin(BaseFilter *iface, unsigned int index)
 {
-    AudioRecord *This = impl_from_BaseFilter(iface);
-    FIXME("(%p, %d): stub\n", This, pos);
+    FIXME("iface %p, index %u, stub!\n", iface, index);
     return NULL;
 }
 

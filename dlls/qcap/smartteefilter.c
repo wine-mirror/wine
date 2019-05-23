@@ -199,27 +199,19 @@ static const IBaseFilterVtbl SmartTeeFilterVtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin* WINAPI SmartTeeFilter_GetPin(BaseFilter *iface, int pos)
+static IPin * WINAPI SmartTeeFilter_GetPin(BaseFilter *iface, unsigned int index)
 {
     SmartTeeFilter *This = impl_from_BaseFilter(iface);
     IPin *ret;
 
-    TRACE("(%p)->(%d)\n", This, pos);
-
-    switch(pos) {
-    case 0:
+    if (index == 0)
         ret = &This->input->pin.IPin_iface;
-        break;
-    case 1:
+    else if (index == 1)
         ret = &This->capture->pin.IPin_iface;
-        break;
-    case 2:
+    else if (index == 2)
         ret = &This->preview->pin.IPin_iface;
-        break;
-    default:
-        TRACE("No pin %d\n", pos);
+    else
         return NULL;
-    }
 
     IPin_AddRef(ret);
     return ret;
