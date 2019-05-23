@@ -146,8 +146,14 @@
 /* Define to 1 if you have the `expm1f' function. */
 #undef HAVE_EXPM1F
 
+/* Define to 1 if you have the `F3DAudioInitialize8' function. */
+#undef HAVE_F3DAUDIOINITIALIZE8
+
 /* Define to 1 if you have the `fallocate' function. */
 #undef HAVE_FALLOCATE
+
+/* Define to 1 if you have the `FAudio_CommitOperationSet' function. */
+#undef HAVE_FAUDIO_COMMITOPERATIONSET
 
 /* Define to 1 if you have the <FAudio.h> header file. */
 #undef HAVE_FAUDIO_H

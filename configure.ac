@@ -1690,6 +1690,10 @@ then
     WINE_PACKAGE_FLAGS(FAUDIO,[faudio],[-lFAudio],,,
         [AC_CHECK_HEADERS([FAudio.h],
             [WINE_CHECK_SONAME(FAudio,FAudioCreate,,,[$FAUDIO_LIBS],[[libFAudio*]])])])
+    WINE_CHECK_LIB_FUNCS(\
+        FAudio_CommitOperationSet \
+        F3DAudioInitialize8,
+        [$FAUDIO_LIBS])
 fi
 WINE_NOTICE_WITH(faudio,[test "x$ac_cv_lib_soname_FAudio" = "x"],
                  [libFAudio ${notice_platform}development files not found, XAudio2 won't be supported.])

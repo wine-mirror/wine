@@ -1797,9 +1797,13 @@ static HRESULT WINAPI IXAudio2Impl_CommitChanges(IXAudio2 *iface,
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
 
-    TRACE("(%p)->(0x%x): stub!\n", This, operationSet);
+    TRACE("(%p)->(0x%x)\n", This, operationSet);
 
+#ifdef HAVE_FAUDIO_COMMITOPERATIONSET
+    return FAudio_CommitOperationSet(This->faudio, operationSet);
+#else
     return FAudio_CommitChanges(This->faudio);
+#endif
 }
 
 static void WINAPI IXAudio2Impl_GetPerformanceData(IXAudio2 *iface,
