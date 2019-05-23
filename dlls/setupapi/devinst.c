@@ -3674,9 +3674,10 @@ BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP
             return SetupDiSelectBestCompatDrv(devinfo, device_data);
         case DIF_REGISTER_COINSTALLERS:
             return SetupDiRegisterCoDeviceInstallers(devinfo, device_data);
+        case DIF_INSTALLDEVICEFILES:
+            return SetupDiInstallDriverFiles(devinfo, device_data);
         case DIF_FINISHINSTALL_ACTION:
         case DIF_INSTALLDEVICE:
-        case DIF_INSTALLDEVICEFILES:
         case DIF_INSTALLINTERFACES:
         case DIF_PROPERTYCHANGE:
         case DIF_SELECTDEVICE:
@@ -4550,5 +4551,45 @@ BOOL WINAPI SetupDiSelectBestCompatDrv(HDEVINFO devinfo, SP_DEVINFO_DATA *device
 
     device->selected_driver = &device->drivers[0];
 
+    return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiInstallDriverFiles (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiInstallDriverFiles(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
+{
+    WCHAR section[LINE_LEN], section_ext[LINE_LEN];
+    struct device *device;
+    struct driver *driver;
+    void *callback_ctx;
+    INFCONTEXT ctx;
+    HINF hinf;
+
+    TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (!(driver = device->selected_driver))
+    {
+        ERR("No driver selected for device %p.\n", devinfo);
+        SetLastError(ERROR_NO_DRIVER_SELECTED);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    SetupGetStringFieldW(&ctx, 1, section, ARRAY_SIZE(section), NULL);
+    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, NULL);
+
+    callback_ctx = SetupInitDefaultQueueCallback(NULL);
+    SetupInstallFromInfSectionW(NULL, hinf, section_ext, SPINST_FILES, NULL, NULL,
+            SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
+    SetupTermDefaultQueueCallback(callback_ctx);
+
+    SetupCloseInfFile(hinf);
     return TRUE;
 }
