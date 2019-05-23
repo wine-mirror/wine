@@ -1,5 +1,5 @@
 MODULE = kernelbase.dll
-IMPORTS = uuid
+IMPORTS = uuid advapi32
 
 C_SRCS = \
 	main.c \

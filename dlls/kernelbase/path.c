@@ -36,6 +36,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(path);
 
 static const char hexDigits[] = "0123456789ABCDEF";
 
+struct parsed_url
+{
+    const WCHAR *scheme;   /* [out] start of scheme                     */
+    DWORD scheme_len;      /* [out] size of scheme (until colon)        */
+    const WCHAR *username; /* [out] start of Username                   */
+    DWORD username_len;    /* [out] size of Username (until ":" or "@") */
+    const WCHAR *password; /* [out] start of Password                   */
+    DWORD password_len;    /* [out] size of Password (until "@")        */
+    const WCHAR *hostname; /* [out] start of Hostname                   */
+    DWORD hostname_len;    /* [out] size of Hostname (until ":" or "/") */
+    const WCHAR *port;     /* [out] start of Port                       */
+    DWORD port_len;        /* [out] size of Port (until "/" or eos)     */
+    const WCHAR *query;    /* [out] start of Query                      */
+    DWORD query_len;       /* [out] size of Query (until eos)           */
+};
+
+enum url_scan_type
+{
+    SCHEME,
+    HOST,
+    PORT,
+    USERPASS,
+};
+
 static WCHAR *heap_strdupAtoW(const char *str)
 {
     WCHAR *ret = NULL;
@@ -3721,6 +3745,820 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
 
     if (hr == S_OK)
         TRACE("result %s\n", wine_dbgstr_w(canonicalized));
+
+    return hr;
+}
+
+HRESULT WINAPI UrlApplySchemeA(const char *url, char *out, DWORD *out_len, DWORD flags)
+{
+    LPWSTR inW, outW;
+    HRESULT hr;
+    DWORD len;
+
+    TRACE("%s, %p, %p:out size %d, %#x\n", wine_dbgstr_a(url), out, out_len, out_len ? *out_len : 0, flags);
+
+    if (!url || !out || !out_len)
+        return E_INVALIDARG;
+
+    inW = heap_alloc(2 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
+    outW = inW + INTERNET_MAX_URL_LENGTH;
+
+    MultiByteToWideChar(CP_ACP, 0, url, -1, inW, INTERNET_MAX_URL_LENGTH);
+    len = INTERNET_MAX_URL_LENGTH;
+
+    hr = UrlApplySchemeW(inW, outW, &len, flags);
+    if (hr != S_OK)
+    {
+        heap_free(inW);
+        return hr;
+    }
+
+    len = WideCharToMultiByte(CP_ACP, 0, outW, -1, NULL, 0, NULL, NULL);
+    if (len > *out_len)
+    {
+        hr = E_POINTER;
+        goto cleanup;
+    }
+
+    WideCharToMultiByte(CP_ACP, 0, outW, -1, out, *out_len, NULL, NULL);
+    len--;
+
+cleanup:
+    *out_len = len;
+    heap_free(inW);
+    return hr;
+}
+
+static HRESULT url_guess_scheme(const WCHAR *url, WCHAR *out, DWORD *out_len)
+{
+    WCHAR reg_path[MAX_PATH], value[MAX_PATH], data[MAX_PATH];
+    DWORD value_len, data_len, dwType, i;
+    WCHAR Wxx, Wyy;
+    HKEY newkey;
+    INT index;
+    BOOL j;
+
+    MultiByteToWideChar(CP_ACP, 0,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\URL\\Prefixes", 1, reg_path, MAX_PATH);
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, reg_path, 0, 1, &newkey);
+    index = 0;
+    while (value_len = data_len = MAX_PATH,
+            RegEnumValueW(newkey, index, value, &value_len, 0, &dwType, (LPVOID)data, &data_len) == 0)
+    {
+        TRACE("guess %d %s is %s\n", index, wine_dbgstr_w(value), wine_dbgstr_w(data));
+
+        j = FALSE;
+        for (i = 0; i < value_len; ++i)
+        {
+            Wxx = url[i];
+            Wyy = value[i];
+            /* remember that TRUE is not-equal */
+            j = ChrCmpIW(Wxx, Wyy);
+            if (j) break;
+        }
+        if ((i == value_len) && !j)
+        {
+            if (strlenW(data) + strlenW(url) + 1 > *out_len)
+            {
+                *out_len = strlenW(data) + strlenW(url) + 1;
+                RegCloseKey(newkey);
+                return E_POINTER;
+            }
+            strcpyW(out, data);
+            strcatW(out, url);
+            *out_len = strlenW(out);
+            TRACE("matched and set to %s\n", wine_dbgstr_w(out));
+            RegCloseKey(newkey);
+            return S_OK;
+        }
+        index++;
+    }
+    RegCloseKey(newkey);
+    return E_FAIL;
+}
+
+static HRESULT url_create_from_path(const WCHAR *path, WCHAR *url, DWORD *url_len)
+{
+    static const WCHAR file_colonW[] = {'f','i','l','e',':',0};
+    static const WCHAR three_slashesW[] = {'/','/','/',0};
+    PARSEDURLW parsed_url;
+    WCHAR *new_url;
+    DWORD needed;
+    HRESULT hr;
+
+    parsed_url.cbSize = sizeof(parsed_url);
+    if (ParseURLW(path, &parsed_url) == S_OK)
+    {
+        if (parsed_url.nScheme != URL_SCHEME_INVALID && parsed_url.cchProtocol > 1)
+        {
+            needed = strlenW(path);
+            if (needed >= *url_len)
+            {
+                *url_len = needed + 1;
+                return E_POINTER;
+            }
+            else
+            {
+                *url_len = needed;
+                return S_FALSE;
+            }
+        }
+    }
+
+    new_url = heap_alloc((strlenW(path) + 9) * sizeof(WCHAR)); /* "file:///" + path length + 1 */
+    strcpyW(new_url, file_colonW);
+    if (isalphaW(path[0]) && path[1] == ':')
+        strcatW(new_url, three_slashesW);
+    strcatW(new_url, path);
+    hr = UrlEscapeW(new_url, url, url_len, URL_ESCAPE_PERCENT);
+    heap_free(new_url);
+    return hr;
+}
+
+static HRESULT url_apply_default_scheme(const WCHAR *url, WCHAR *out, DWORD *length)
+{
+    static const WCHAR prefix_keyW[] =
+        {'S','o','f','t','w','a','r','e',
+         '\\','M','i','c','r','o','s','o','f','t',
+         '\\','W','i','n','d','o','w','s',
+         '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+         '\\','U','R','L',
+         '\\','D','e','f','a','u','l','t','P','r','e','f','i','x',0};
+    DWORD data_len, dwType;
+    WCHAR data[MAX_PATH];
+    HKEY newkey;
+
+    /* get and prepend default */
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, prefix_keyW, 0, 1, &newkey);
+    data_len = sizeof(data);
+    RegQueryValueExW(newkey, NULL, 0, &dwType, (BYTE *)data, &data_len);
+    RegCloseKey(newkey);
+    if (strlenW(data) + strlenW(url) + 1 > *length)
+    {
+        *length = strlenW(data) + strlenW(url) + 1;
+        return E_POINTER;
+    }
+    strcpyW(out, data);
+    strcatW(out, url);
+    *length = strlenW(out);
+    TRACE("used default %s\n", wine_dbgstr_w(out));
+    return S_OK;
+}
+
+HRESULT WINAPI UrlApplySchemeW(const WCHAR *url, WCHAR *out, DWORD *length, DWORD flags)
+{
+    PARSEDURLW in_scheme;
+    DWORD res1;
+    HRESULT hr;
+
+    TRACE("%s, %p, %p:out size %d, %#x\n", wine_dbgstr_w(url), out, length, length ? *length : 0, flags);
+
+    if (!url || !out || !length)
+        return E_INVALIDARG;
+
+    if (flags & URL_APPLY_GUESSFILE)
+    {
+        if (*length > 1 && ':' == url[1])
+        {
+            res1 = *length;
+            hr = url_create_from_path(url, out, &res1);
+            if (hr == S_OK || hr == E_POINTER)
+            {
+                *length = res1;
+                return hr;
+            }
+            else if (hr == S_FALSE)
+            {
+                return hr;
+            }
+        }
+    }
+
+    in_scheme.cbSize = sizeof(in_scheme);
+    /* See if the base has a scheme */
+    res1 = ParseURLW(url, &in_scheme);
+    if (res1)
+    {
+        /* no scheme in input, need to see if we need to guess */
+        if (flags & URL_APPLY_GUESSSCHEME)
+        {
+            if ((hr = url_guess_scheme(url, out, length)) != E_FAIL)
+                return hr;
+        }
+    }
+
+    /* If we are here, then either invalid scheme,
+     * or no scheme and can't/failed guess.
+     */
+    if ((((res1 == 0) && (flags & URL_APPLY_FORCEAPPLY)) || ((res1 != 0)) ) && (flags & URL_APPLY_DEFAULT))
+        return url_apply_default_scheme(url, out, length);
+
+    return S_FALSE;
+}
+
+INT WINAPI UrlCompareA(const char *url1, const char *url2, BOOL ignore_slash)
+{
+    INT ret, len, len1, len2;
+
+    if (!ignore_slash)
+        return strcmp(url1, url2);
+    len1 = strlen(url1);
+    if (url1[len1-1] == '/') len1--;
+    len2 = strlen(url2);
+    if (url2[len2-1] == '/') len2--;
+    if (len1 == len2)
+        return strncmp(url1, url2, len1);
+    len = min(len1, len2);
+    ret = strncmp(url1, url2, len);
+    if (ret) return ret;
+    if (len1 > len2) return 1;
+    return -1;
+}
+
+INT WINAPI UrlCompareW(const WCHAR *url1, const WCHAR *url2, BOOL ignore_slash)
+{
+    size_t len, len1, len2;
+    INT ret;
+
+    if (!ignore_slash)
+        return strcmpW(url1, url2);
+    len1 = strlenW(url1);
+    if (url1[len1-1] == '/') len1--;
+    len2 = strlenW(url2);
+    if (url2[len2-1] == '/') len2--;
+    if (len1 == len2)
+        return strncmpW(url1, url2, len1);
+    len = min(len1, len2);
+    ret = strncmpW(url1, url2, len);
+    if (ret) return ret;
+    if (len1 > len2) return 1;
+    return -1;
+}
+
+HRESULT WINAPI UrlFixupW(const WCHAR *url, WCHAR *translatedUrl, DWORD maxChars)
+{
+    DWORD srcLen;
+
+    FIXME("%s, %p, %d stub\n", wine_dbgstr_w(url), translatedUrl, maxChars);
+
+    if (!url)
+        return E_FAIL;
+
+    srcLen = lstrlenW(url) + 1;
+
+    /* For now just copy the URL directly */
+    lstrcpynW(translatedUrl, url, (maxChars < srcLen) ? maxChars : srcLen);
+
+    return S_OK;
+}
+
+const char * WINAPI UrlGetLocationA(const char *url)
+{
+    PARSEDURLA base;
+
+    base.cbSize = sizeof(base);
+    if (ParseURLA(url, &base) != S_OK) return NULL;  /* invalid scheme */
+
+    /* if scheme is file: then never return pointer */
+    if (!strncmp(base.pszProtocol, "file", min(4, base.cchProtocol)))
+        return NULL;
+
+    /* Look for '#' and return its addr */
+    return strchr(base.pszSuffix, '#');
+}
+
+const WCHAR * WINAPI UrlGetLocationW(const WCHAR *url)
+{
+    static const WCHAR fileW[] = {'f','i','l','e','\0'};
+    PARSEDURLW base;
+
+    base.cbSize = sizeof(base);
+    if (ParseURLW(url, &base) != S_OK) return NULL;  /* invalid scheme */
+
+    /* if scheme is file: then never return pointer */
+    if (!strncmpW(base.pszProtocol, fileW, min(4, base.cchProtocol)))
+        return NULL;
+
+    /* Look for '#' and return its addr */
+    return strchrW(base.pszSuffix, '#');
+}
+
+HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD part, DWORD flags)
+{
+    LPWSTR inW, outW;
+    DWORD len, len2;
+    HRESULT hr;
+
+    if (!url || !out || !out_len || !*out_len)
+        return E_INVALIDARG;
+
+    inW = heap_alloc(2 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
+    outW = inW + INTERNET_MAX_URL_LENGTH;
+
+    MultiByteToWideChar(CP_ACP, 0, url, -1, inW, INTERNET_MAX_URL_LENGTH);
+
+    len = INTERNET_MAX_URL_LENGTH;
+    hr = UrlGetPartW(inW, outW, &len, part, flags);
+    if (FAILED(hr))
+    {
+        heap_free(inW);
+        return hr;
+    }
+
+    len2 = WideCharToMultiByte(CP_ACP, 0, outW, len, NULL, 0, NULL, NULL);
+    if (len2 > *out_len)
+    {
+        *out_len = len2 + 1;
+        heap_free(inW);
+        return E_POINTER;
+    }
+    len2 = WideCharToMultiByte(CP_ACP, 0, outW, len + 1, out, *out_len, NULL, NULL);
+    *out_len = len2 - 1;
+    heap_free(inW);
+    return hr;
+}
+
+static const WCHAR * scan_url(const WCHAR *start, DWORD *size, enum url_scan_type type)
+{
+    static DWORD alwayszero = 0;
+    BOOL cont = TRUE;
+
+    *size = 0;
+
+    switch (type)
+    {
+    case SCHEME:
+        while (cont)
+        {
+            if ((islowerW(*start) && isalphaW(*start)) ||
+                    isdigitW(*start) || *start == '+' || *start == '-' || *start == '.')
+            {
+                start++;
+                (*size)++;
+            }
+            else
+                cont = FALSE;
+        }
+        if (*start != ':')
+            *size = 0;
+        break;
+
+    case USERPASS:
+        while (cont)
+        {
+            if (isalphaW(*start) ||
+                    isdigitW(*start) ||
+                    /* user/password only characters */
+                    (*start == ';') ||
+                    (*start == '?') ||
+                    (*start == '&') ||
+                    (*start == '=') ||
+                    /* *extra* characters */
+                    (*start == '!') ||
+                    (*start == '*') ||
+                    (*start == '\'') ||
+                    (*start == '(') ||
+                    (*start == ')') ||
+                    (*start == ',') ||
+                    /* *safe* characters */
+                    (*start == '$') ||
+                    (*start == '_') ||
+                    (*start == '+') ||
+                    (*start == '-') ||
+                    (*start == '.') ||
+                    (*start == ' '))
+            {
+                start++;
+                (*size)++;
+            }
+            else if (*start == '%')
+            {
+                if (isxdigitW(*(start + 1)) && isxdigitW(*(start + 2)))
+                {
+                    start += 3;
+                    *size += 3;
+                }
+                else
+                    cont = FALSE;
+            } else
+                cont = FALSE;
+        }
+        break;
+
+    case PORT:
+        while (cont)
+        {
+            if (isdigitW(*start))
+            {
+                start++;
+                (*size)++;
+            }
+            else
+                cont = FALSE;
+        }
+        break;
+
+    case HOST:
+        while (cont)
+        {
+            if (isalnumW(*start) || *start == '-' || *start == '.' || *start == ' ' || *start == '*')
+            {
+                start++;
+                (*size)++;
+            }
+            else
+                cont = FALSE;
+        }
+        break;
+
+    default:
+        FIXME("unknown type %d\n", type);
+        return (LPWSTR)&alwayszero;
+    }
+
+    return start;
+}
+
+static LONG parse_url(const WCHAR *url, struct parsed_url *pl)
+{
+    const WCHAR *work;
+
+    memset(pl, 0, sizeof(*pl));
+    pl->scheme = url;
+    work = scan_url(pl->scheme, &pl->scheme_len, SCHEME);
+    if (!*work || (*work != ':')) goto ErrorExit;
+    work++;
+    if ((*work != '/') || (*(work+1) != '/')) goto SuccessExit;
+
+    pl->username = work + 2;
+    work = scan_url(pl->username, &pl->username_len, USERPASS);
+    if (*work == ':' )
+    {
+        /* parse password */
+        work++;
+        pl->password = work;
+        work = scan_url(pl->password, &pl->password_len, USERPASS);
+        if (*work != '@')
+        {
+            /* what we just parsed must be the hostname and port
+             * so reset pointers and clear then let it parse */
+            pl->username_len = pl->password_len = 0;
+            work = pl->username - 1;
+            pl->username = pl->password = 0;
+        }
+    }
+    else if (*work == '@')
+    {
+        /* no password */
+        pl->password_len = 0;
+        pl->password = 0;
+    }
+    else if (!*work || *work == '/' || *work == '.')
+    {
+        /* what was parsed was hostname, so reset pointers and let it parse */
+        pl->username_len = pl->password_len = 0;
+        work = pl->username - 1;
+        pl->username = pl->password = 0;
+    }
+    else goto ErrorExit;
+
+    /* now start parsing hostname or hostnumber */
+    work++;
+    pl->hostname = work;
+    work = scan_url(pl->hostname, &pl->hostname_len, HOST);
+    if (*work == ':')
+    {
+        /* parse port */
+        work++;
+        pl->port = work;
+        work = scan_url(pl->port, &pl->port_len, PORT);
+    }
+    if (*work == '/')
+    {
+        /* see if query string */
+        pl->query = strchrW(work, '?');
+        if (pl->query) pl->query_len = strlenW(pl->query);
+    }
+  SuccessExit:
+    TRACE("parse successful: scheme=%p(%d), user=%p(%d), pass=%p(%d), host=%p(%d), port=%p(%d), query=%p(%d)\n",
+            pl->scheme, pl->scheme_len, pl->username, pl->username_len, pl->password, pl->password_len, pl->hostname,
+            pl->hostname_len, pl->port, pl->port_len, pl->query, pl->query_len);
+
+    return S_OK;
+
+  ErrorExit:
+    FIXME("failed to parse %s\n", debugstr_w(url));
+    return E_INVALIDARG;
+}
+
+HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD part, DWORD flags)
+{
+    DWORD scheme, size, schsize;
+    LPCWSTR addr, schaddr;
+    struct parsed_url pl;
+    HRESULT hr;
+
+    TRACE("%s, %p, %p(%d), %#x, %#x\n", wine_dbgstr_w(url), out, out_len, *out_len, part, flags);
+
+    if (!url || !out || !out_len || !*out_len)
+        return E_INVALIDARG;
+
+    *out = '\0';
+
+    addr = strchrW(url, ':');
+    if (!addr)
+        scheme = URL_SCHEME_UNKNOWN;
+    else
+        scheme = get_scheme_code(url, addr - url);
+
+    hr = parse_url(url, &pl);
+
+    switch (part)
+    {
+    case URL_PART_SCHEME:
+        if (!pl.scheme_len)
+        {
+            *out_len = 0;
+            return S_FALSE;
+        }
+        addr = pl.scheme;
+        size = pl.scheme_len;
+        break;
+
+    case URL_PART_HOSTNAME:
+        switch (scheme)
+        {
+            case URL_SCHEME_FTP:
+            case URL_SCHEME_HTTP:
+            case URL_SCHEME_GOPHER:
+            case URL_SCHEME_TELNET:
+            case URL_SCHEME_FILE:
+            case URL_SCHEME_HTTPS:
+                break;
+            default:
+                *out_len = 0;
+                return E_FAIL;
+        }
+
+        if (scheme == URL_SCHEME_FILE && (!pl.hostname_len || (pl.hostname_len == 1 && *(pl.hostname + 1) == ':')))
+        {
+            *out_len = 0;
+            return S_FALSE;
+        }
+
+        if (!pl.hostname_len)
+        {
+            *out_len = 0;
+            return S_FALSE;
+        }
+        addr = pl.hostname;
+        size = pl.hostname_len;
+        break;
+
+    case URL_PART_USERNAME:
+        if (!pl.username_len)
+        {
+            *out_len = 0;
+            return S_FALSE;
+        }
+        addr = pl.username;
+        size = pl.username_len;
+        break;
+
+    case URL_PART_PASSWORD:
+        if (!pl.password_len)
+        {
+            *out_len = 0;
+            return S_FALSE;
+        }
+        addr = pl.password;
+        size = pl.password_len;
+        break;
+
+    case URL_PART_PORT:
+        if (!pl.port_len)
+        {
+            *out_len = 0;
+            return S_FALSE;
+        }
+        addr = pl.port;
+        size = pl.port_len;
+        break;
+
+    case URL_PART_QUERY:
+        if (!pl.query_len)
+        {
+            *out_len = 0;
+            return S_FALSE;
+        }
+        addr = pl.query;
+        size = pl.query_len;
+        break;
+
+    default:
+        *out_len = 0;
+        return E_INVALIDARG;
+    }
+
+    if (flags == URL_PARTFLAG_KEEPSCHEME)
+    {
+        if (!pl.scheme || !pl.scheme_len)
+        {
+            *out_len = 0;
+            return E_FAIL;
+        }
+        schaddr = pl.scheme;
+        schsize = pl.scheme_len;
+        if (*out_len < schsize + size + 2)
+        {
+            *out_len = schsize + size + 2;
+            return E_POINTER;
+        }
+        memcpy(out, schaddr, schsize*sizeof(WCHAR));
+        out[schsize] = ':';
+        memcpy(out + schsize+1, addr, size*sizeof(WCHAR));
+        out[schsize+1+size] = 0;
+        *out_len = schsize + 1 + size;
+    }
+    else
+    {
+        if (*out_len < size + 1)
+        {
+            *out_len = size + 1;
+            return E_POINTER;
+        }
+        memcpy(out, addr, size*sizeof(WCHAR));
+        out[size] = 0;
+        *out_len = size;
+    }
+    TRACE("len=%d %s\n", *out_len, wine_dbgstr_w(out));
+
+    return hr;
+}
+
+BOOL WINAPI UrlIsA(const char *url, URLIS Urlis)
+{
+    const char *last;
+    PARSEDURLA base;
+
+    TRACE("%s, %d\n", debugstr_a(url), Urlis);
+
+    if (!url)
+        return FALSE;
+
+    switch (Urlis) {
+
+    case URLIS_OPAQUE:
+        base.cbSize = sizeof(base);
+        if (ParseURLA(url, &base) != S_OK) return FALSE;  /* invalid scheme */
+        switch (base.nScheme)
+        {
+        case URL_SCHEME_MAILTO:
+        case URL_SCHEME_SHELL:
+        case URL_SCHEME_JAVASCRIPT:
+        case URL_SCHEME_VBSCRIPT:
+        case URL_SCHEME_ABOUT:
+            return TRUE;
+        }
+        return FALSE;
+
+    case URLIS_FILEURL:
+        return (CompareStringA(LOCALE_INVARIANT, NORM_IGNORECASE, url, 5, "file:", 5) == CSTR_EQUAL);
+
+    case URLIS_DIRECTORY:
+        last = url + strlen(url) - 1;
+        return (last >= url && (*last == '/' || *last == '\\' ));
+
+    case URLIS_URL:
+        return PathIsURLA(url);
+
+    case URLIS_NOHISTORY:
+    case URLIS_APPLIABLE:
+    case URLIS_HASQUERY:
+    default:
+        FIXME("(%s %d): stub\n", debugstr_a(url), Urlis);
+    }
+
+    return FALSE;
+}
+
+BOOL WINAPI UrlIsW(const WCHAR *url, URLIS Urlis)
+{
+    static const WCHAR file_colon[] = {'f','i','l','e',':',0};
+    const WCHAR *last;
+    PARSEDURLW base;
+
+    TRACE("%s, %d\n", debugstr_w(url), Urlis);
+
+    if (!url)
+        return FALSE;
+
+    switch (Urlis)
+    {
+    case URLIS_OPAQUE:
+        base.cbSize = sizeof(base);
+        if (ParseURLW(url, &base) != S_OK) return FALSE;  /* invalid scheme */
+        switch (base.nScheme)
+        {
+        case URL_SCHEME_MAILTO:
+        case URL_SCHEME_SHELL:
+        case URL_SCHEME_JAVASCRIPT:
+        case URL_SCHEME_VBSCRIPT:
+        case URL_SCHEME_ABOUT:
+            return TRUE;
+        }
+        return FALSE;
+
+    case URLIS_FILEURL:
+        return (CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, url, 5, file_colon, 5) == CSTR_EQUAL);
+
+    case URLIS_DIRECTORY:
+        last = url + strlenW(url) - 1;
+        return (last >= url && (*last == '/' || *last == '\\'));
+
+    case URLIS_URL:
+        return PathIsURLW(url);
+
+    case URLIS_NOHISTORY:
+    case URLIS_APPLIABLE:
+    case URLIS_HASQUERY:
+    default:
+        FIXME("(%s %d): stub\n", debugstr_w(url), Urlis);
+    }
+
+    return FALSE;
+}
+
+BOOL WINAPI UrlIsOpaqueA(const char *url)
+{
+    return UrlIsA(url, URLIS_OPAQUE);
+}
+
+BOOL WINAPI UrlIsOpaqueW(const WCHAR *url)
+{
+    return UrlIsW(url, URLIS_OPAQUE);
+}
+
+BOOL WINAPI UrlIsNoHistoryA(const char *url)
+{
+    return UrlIsA(url, URLIS_NOHISTORY);
+}
+
+BOOL WINAPI UrlIsNoHistoryW(const WCHAR *url)
+{
+    return UrlIsW(url, URLIS_NOHISTORY);
+}
+
+HRESULT WINAPI UrlCreateFromPathA(const char *path, char *url, DWORD *url_len, DWORD reserved)
+{
+    WCHAR bufW[INTERNET_MAX_URL_LENGTH];
+    DWORD lenW = ARRAY_SIZE(bufW), lenA;
+    UNICODE_STRING pathW;
+    WCHAR *urlW = bufW;
+    HRESULT hr;
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&pathW, path))
+        return E_INVALIDARG;
+
+    if ((hr = UrlCreateFromPathW(pathW.Buffer, urlW, &lenW, reserved)) == E_POINTER)
+    {
+        urlW = heap_alloc(lenW * sizeof(WCHAR));
+        hr = UrlCreateFromPathW(pathW.Buffer, urlW, &lenW, reserved);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        RtlUnicodeToMultiByteSize(&lenA, urlW, lenW * sizeof(WCHAR));
+        if (*url_len > lenA)
+        {
+            RtlUnicodeToMultiByteN(url, *url_len - 1, &lenA, urlW, lenW * sizeof(WCHAR));
+            url[lenA] = 0;
+            *url_len = lenA;
+        }
+        else
+        {
+            *url_len = lenA + 1;
+            hr = E_POINTER;
+        }
+    }
+    if (urlW != bufW)
+        heap_free(urlW);
+    RtlFreeUnicodeString(&pathW);
+    return hr;
+}
+
+HRESULT WINAPI UrlCreateFromPathW(const WCHAR *path, WCHAR *url, DWORD *url_len, DWORD reserved)
+{
+    HRESULT hr;
+
+    TRACE("%s, %p, %p, %#x\n", debugstr_w(path), url, url_len, reserved);
+
+    if (reserved || !url || !url_len)
+        return E_INVALIDARG;
+
+    hr = url_create_from_path(path, url, url_len);
+    if (hr == S_FALSE)
+        strcpyW(url, path);
 
     return hr;
 }

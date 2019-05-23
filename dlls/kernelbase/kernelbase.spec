@@ -1628,31 +1628,31 @@
 # @ stub UpdatePackageStatus
 # @ stub UpdatePackageStatusForUser
 @ stdcall UpdateProcThreadAttribute(ptr long long ptr long ptr ptr) kernel32.UpdateProcThreadAttribute
-@ stdcall UrlApplySchemeA(str ptr ptr long) shlwapi.UrlApplySchemeA
-@ stdcall UrlApplySchemeW(wstr ptr ptr long) shlwapi.UrlApplySchemeW
+@ stdcall UrlApplySchemeA(str ptr ptr long)
+@ stdcall UrlApplySchemeW(wstr ptr ptr long)
 @ stdcall UrlCanonicalizeA(str ptr ptr long)
 @ stdcall UrlCanonicalizeW(wstr ptr ptr long)
 @ stdcall UrlCombineA(str str ptr ptr long) shlwapi.UrlCombineA
 @ stdcall UrlCombineW(wstr wstr ptr ptr long) shlwapi.UrlCombineW
-@ stdcall UrlCompareA(str str long) shlwapi.UrlCompareA
-@ stdcall UrlCompareW(wstr wstr long) shlwapi.UrlCompareW
-@ stdcall UrlCreateFromPathA(str ptr ptr long) shlwapi.UrlCreateFromPathA
-@ stdcall UrlCreateFromPathW(wstr ptr ptr long) shlwapi.UrlCreateFromPathW
+@ stdcall UrlCompareA(str str long)
+@ stdcall UrlCompareW(wstr wstr long)
+@ stdcall UrlCreateFromPathA(str ptr ptr long)
+@ stdcall UrlCreateFromPathW(wstr ptr ptr long)
 @ stdcall UrlEscapeA(str ptr ptr long)
 @ stdcall UrlEscapeW(wstr ptr ptr long)
-@ stdcall UrlFixupW(wstr wstr long) shlwapi.UrlFixupW
-@ stdcall UrlGetLocationA(str) shlwapi.UrlGetLocationA
-@ stdcall UrlGetLocationW(wstr) shlwapi.UrlGetLocationW
-@ stdcall UrlGetPartA(str ptr ptr long long) shlwapi.UrlGetPartA
-@ stdcall UrlGetPartW(wstr ptr ptr long long) shlwapi.UrlGetPartW
+@ stdcall UrlFixupW(wstr wstr long)
+@ stdcall UrlGetLocationA(str)
+@ stdcall UrlGetLocationW(wstr)
+@ stdcall UrlGetPartA(str ptr ptr long long)
+@ stdcall UrlGetPartW(wstr ptr ptr long long)
 @ stdcall UrlHashA(str ptr long) shlwapi.UrlHashA
 @ stdcall UrlHashW(wstr ptr long) shlwapi.UrlHashW
-@ stdcall UrlIsA(str long) shlwapi.UrlIsA
-@ stdcall UrlIsNoHistoryA(str) shlwapi.UrlIsNoHistoryA
-@ stdcall UrlIsNoHistoryW(wstr) shlwapi.UrlIsNoHistoryW
-@ stdcall UrlIsOpaqueA(str) shlwapi.UrlIsOpaqueA
-@ stdcall UrlIsOpaqueW(wstr) shlwapi.UrlIsOpaqueW
-@ stdcall UrlIsW(wstr long) shlwapi.UrlIsW
+@ stdcall UrlIsA(str long)
+@ stdcall UrlIsNoHistoryA(str)
+@ stdcall UrlIsNoHistoryW(wstr)
+@ stdcall UrlIsOpaqueA(str)
+@ stdcall UrlIsOpaqueW(wstr)
+@ stdcall UrlIsW(wstr long)
 @ stdcall UrlUnescapeA(str ptr ptr long)
 @ stdcall UrlUnescapeW(wstr ptr ptr long)
 @ stdcall VerFindFileA(long str str str ptr ptr ptr ptr) version.VerFindFileA
