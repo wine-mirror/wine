@@ -33,11 +33,13 @@
 
 static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
+static NTSTATUS (WINAPI *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
 static NTSTATUS (WINAPI *pD3DKMTCreateDevice)(D3DKMT_CREATEDEVICE *);
 static NTSTATUS (WINAPI *pD3DKMTDestroyDevice)(const D3DKMT_DESTROYDEVICE *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromHdc)(D3DKMT_OPENADAPTERFROMHDC *);
+static NTSTATUS (WINAPI *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
 
 static void test_D3DKMTOpenAdapterFromGdiDisplayName(void)
 {
@@ -248,19 +250,362 @@ static void test_D3DKMTDestroyDevice(void)
     todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
 }
 
+static void test_D3DKMTCheckVidPnExclusiveOwnership(void)
+{
+    static const DWORD timeout = 1000;
+    static const DWORD wait_step = 100;
+    D3DKMT_CREATEDEVICE create_device_desc, create_device_desc2;
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_gdi_desc;
+    D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP check_owner_desc;
+    D3DKMT_DESTROYDEVICE destroy_device_desc;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    D3DKMT_VIDPNSOURCEOWNER_TYPE owner_type;
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc;
+    DWORD total_time;
+    NTSTATUS status;
+    INT i;
+
+    /* Test cases using single device */
+    static const struct test_data1
+    {
+        D3DKMT_VIDPNSOURCEOWNER_TYPE owner_type;
+        NTSTATUS expected_set_status;
+        NTSTATUS expected_check_status;
+    } tests1[] = {
+        /* 0 */
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVEGDI, STATUS_INVALID_PARAMETER, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS},
+        /* 10 */
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        /* 20 */
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        /* 30 */
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_INVALID_PARAMETER, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        /* 40 */
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_INVALID_PARAMETER, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        /* 50 */
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_INVALID_PARAMETER, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS},
+        {-1, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED + 1, STATUS_INVALID_PARAMETER, STATUS_SUCCESS},
+    };
+
+    /* Test cases using two devices consecutively */
+    static const struct test_data2
+    {
+        D3DKMT_VIDPNSOURCEOWNER_TYPE set_owner_type1;
+        D3DKMT_VIDPNSOURCEOWNER_TYPE set_owner_type2;
+        NTSTATUS expected_set_status1;
+        NTSTATUS expected_set_status2;
+        NTSTATUS expected_check_status;
+    } tests2[] = {
+        /* 0 */
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_SUCCESS, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_UNOWNED, D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_SHARED, D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_SUCCESS, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        /* 10 */
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, D3DKMT_VIDPNSOURCEOWNER_UNOWNED, STATUS_SUCCESS, STATUS_SUCCESS, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, D3DKMT_VIDPNSOURCEOWNER_SHARED, STATUS_SUCCESS, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, STATUS_SUCCESS, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {D3DKMT_VIDPNSOURCEOWNER_EMULATED, D3DKMT_VIDPNSOURCEOWNER_EMULATED, STATUS_SUCCESS, STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE, STATUS_SUCCESS},
+        {-1, D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, -1, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+        {D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE, -1, STATUS_SUCCESS, STATUS_SUCCESS, STATUS_GRAPHICS_PRESENT_OCCLUDED},
+    };
+
+    if (!pD3DKMTCheckVidPnExclusiveOwnership || pD3DKMTCheckVidPnExclusiveOwnership(NULL) == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
+        return;
+    }
+
+    /* Invalid parameters */
+    status = pD3DKMTCheckVidPnExclusiveOwnership(NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+
+    memset(&check_owner_desc, 0, sizeof(check_owner_desc));
+    status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+
+    /* Test cases */
+    lstrcpyW(open_adapter_gdi_desc.DeviceName, display1W);
+    status = pD3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_gdi_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    memset(&create_device_desc, 0, sizeof(create_device_desc));
+    create_device_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCreateDevice(&create_device_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    check_owner_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    check_owner_desc.VidPnSourceId = open_adapter_gdi_desc.VidPnSourceId;
+    for (i = 0; i < ARRAY_SIZE(tests1); ++i)
+    {
+        set_owner_desc.hDevice = create_device_desc.hDevice;
+        if (tests1[i].owner_type != -1)
+        {
+            owner_type = tests1[i].owner_type;
+            set_owner_desc.pType = &owner_type;
+            set_owner_desc.pVidPnSourceId = &open_adapter_gdi_desc.VidPnSourceId;
+            set_owner_desc.VidPnSourceCount = 1;
+        }
+        else
+        {
+            set_owner_desc.pType = NULL;
+            set_owner_desc.pVidPnSourceId = NULL;
+            set_owner_desc.VidPnSourceCount = 0;
+        }
+        status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+        ok(status == tests1[i].expected_set_status ||
+               /* win8 doesn't support D3DKMT_VIDPNSOURCEOWNER_EMULATED */
+               (status == STATUS_INVALID_PARAMETER && tests1[i].owner_type == D3DKMT_VIDPNSOURCEOWNER_EMULATED)
+               || (status == STATUS_SUCCESS && tests1[i].owner_type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE
+                   && tests1[i - 1].owner_type == D3DKMT_VIDPNSOURCEOWNER_EMULATED),
+           "Got unexpected return code %#x at test %d.\n", status, i);
+
+        status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+        /* If don't sleep, D3DKMTCheckVidPnExclusiveOwnership may get STATUS_GRAPHICS_PRESENT_UNOCCLUDED instead
+         * of STATUS_SUCCESS */
+        if ((tests1[i].expected_check_status == STATUS_SUCCESS && status == STATUS_GRAPHICS_PRESENT_UNOCCLUDED))
+        {
+            total_time = 0;
+            do
+            {
+                Sleep(wait_step);
+                total_time += wait_step;
+                status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+            } while (status == STATUS_GRAPHICS_PRESENT_UNOCCLUDED && total_time < timeout);
+        }
+        ok(status == tests1[i].expected_check_status
+               || (status == STATUS_GRAPHICS_PRESENT_OCCLUDED                               /* win8 */
+                   && tests1[i].owner_type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE
+                   && tests1[i - 1].owner_type == D3DKMT_VIDPNSOURCEOWNER_EMULATED),
+           "Got unexpected return code %#x at test %d.\n", status, i);
+    }
+
+    /* Set owner and unset owner using different devices */
+    memset(&create_device_desc2, 0, sizeof(create_device_desc2));
+    create_device_desc2.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCreateDevice(&create_device_desc2);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    /* Set owner with the first device */
+    set_owner_desc.hDevice = create_device_desc.hDevice;
+    owner_type = D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE;
+    set_owner_desc.pType = &owner_type;
+    set_owner_desc.pVidPnSourceId = &open_adapter_gdi_desc.VidPnSourceId;
+    set_owner_desc.VidPnSourceCount = 1;
+    status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+    status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+    ok(status == STATUS_GRAPHICS_PRESENT_OCCLUDED, "Got unexpected return code %#x.\n", status);
+
+    /* Unset owner with the second device */
+    set_owner_desc.hDevice = create_device_desc2.hDevice;
+    set_owner_desc.pType = NULL;
+    set_owner_desc.pVidPnSourceId = NULL;
+    set_owner_desc.VidPnSourceCount = 0;
+    status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+    status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+    /* No effect */
+    ok(status == STATUS_GRAPHICS_PRESENT_OCCLUDED, "Got unexpected return code %#x.\n", status);
+
+    /* Unset owner with the first device */
+    set_owner_desc.hDevice = create_device_desc.hDevice;
+    set_owner_desc.pType = NULL;
+    set_owner_desc.pVidPnSourceId = NULL;
+    set_owner_desc.VidPnSourceCount = 0;
+    status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+    status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+    /* Proves that the correct device is needed to unset owner */
+    ok(status == STATUS_SUCCESS || status == STATUS_GRAPHICS_PRESENT_UNOCCLUDED, "Got unexpected return code %#x.\n",
+       status);
+
+    /* Set owner with the first device, set owner again with the second device */
+    for (i = 0; i < ARRAY_SIZE(tests2); ++i)
+    {
+        if (tests2[i].set_owner_type1 != -1)
+        {
+            set_owner_desc.hDevice = create_device_desc.hDevice;
+            owner_type = tests2[i].set_owner_type1;
+            set_owner_desc.pType = &owner_type;
+            set_owner_desc.pVidPnSourceId = &open_adapter_gdi_desc.VidPnSourceId;
+            set_owner_desc.VidPnSourceCount = 1;
+            /* If don't sleep, D3DKMTSetVidPnSourceOwner may return STATUS_OK for D3DKMT_VIDPNSOURCEOWNER_SHARED.
+             * Other owner type doesn't seems to be affected. */
+            if (tests2[i].set_owner_type1 == D3DKMT_VIDPNSOURCEOWNER_SHARED)
+                Sleep(timeout);
+            status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+            ok(status == tests2[i].expected_set_status1
+                   || (status == STATUS_INVALID_PARAMETER                                    /* win8 */
+                       && tests2[i].set_owner_type1 == D3DKMT_VIDPNSOURCEOWNER_EMULATED),
+               "Got unexpected return code %#x at test %d.\n", status, i);
+        }
+
+        if (tests2[i].set_owner_type2 != -1)
+        {
+            set_owner_desc.hDevice = create_device_desc2.hDevice;
+            owner_type = tests2[i].set_owner_type2;
+            set_owner_desc.pType = &owner_type;
+            set_owner_desc.pVidPnSourceId = &open_adapter_gdi_desc.VidPnSourceId;
+            set_owner_desc.VidPnSourceCount = 1;
+            status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+            ok(status == tests2[i].expected_set_status2
+                   || (status == STATUS_INVALID_PARAMETER                                   /* win8 */
+                       && tests2[i].set_owner_type2 == D3DKMT_VIDPNSOURCEOWNER_EMULATED)
+                   || (status == STATUS_SUCCESS && tests2[i].set_owner_type1 == D3DKMT_VIDPNSOURCEOWNER_EMULATED
+                       && tests2[i].set_owner_type2 == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE),
+               "Got unexpected return code %#x at test %d.\n", status, i);
+        }
+
+        status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+        if ((tests2[i].expected_check_status == STATUS_SUCCESS && status == STATUS_GRAPHICS_PRESENT_UNOCCLUDED))
+        {
+            total_time = 0;
+            do
+            {
+                Sleep(wait_step);
+                total_time += wait_step;
+                status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+            } while (status == STATUS_GRAPHICS_PRESENT_UNOCCLUDED && total_time < timeout);
+        }
+        ok(status == tests2[i].expected_check_status
+               || (status == STATUS_GRAPHICS_PRESENT_OCCLUDED                               /* win8 */
+                   && tests2[i].set_owner_type2 == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE
+                   && tests2[i].set_owner_type1 == D3DKMT_VIDPNSOURCEOWNER_EMULATED),
+           "Got unexpected return code %#x at test %d.\n", status, i);
+
+        /* Unset owner with first device */
+        if (tests2[i].set_owner_type1 != -1)
+        {
+            set_owner_desc.hDevice = create_device_desc.hDevice;
+            set_owner_desc.pType = NULL;
+            set_owner_desc.pVidPnSourceId = NULL;
+            set_owner_desc.VidPnSourceCount = 0;
+            status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+            ok(status == STATUS_SUCCESS, "Got unexpected return code %#x at test %d.\n", status, i);
+        }
+
+        /* Unset owner with second device */
+        if (tests2[i].set_owner_type2 != -1)
+        {
+            set_owner_desc.hDevice = create_device_desc2.hDevice;
+            set_owner_desc.pType = NULL;
+            set_owner_desc.pVidPnSourceId = NULL;
+            set_owner_desc.VidPnSourceCount = 0;
+            status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+            ok(status == STATUS_SUCCESS, "Got unexpected return code %#x at test %d.\n", status, i);
+        }
+    }
+
+    /* Destroy devices holding ownership */
+    set_owner_desc.hDevice = create_device_desc.hDevice;
+    owner_type = D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE;
+    set_owner_desc.pType = &owner_type;
+    set_owner_desc.pVidPnSourceId = &open_adapter_gdi_desc.VidPnSourceId;
+    set_owner_desc.VidPnSourceCount = 1;
+    status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    destroy_device_desc.hDevice = create_device_desc.hDevice;
+    status = pD3DKMTDestroyDevice(&destroy_device_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    set_owner_desc.hDevice = create_device_desc2.hDevice;
+    owner_type = D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE;
+    set_owner_desc.pType = &owner_type;
+    set_owner_desc.pVidPnSourceId = &open_adapter_gdi_desc.VidPnSourceId;
+    set_owner_desc.VidPnSourceCount = 1;
+    status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+    /* So ownership is released when device is destroyed. otherwise the return code should be
+     * STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE */
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    destroy_device_desc.hDevice = create_device_desc2.hDevice;
+    status = pD3DKMTDestroyDevice(&destroy_device_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    close_adapter_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCloseAdapter(&close_adapter_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
 
+    pD3DKMTCheckVidPnExclusiveOwnership = (void *)GetProcAddress(gdi32, "D3DKMTCheckVidPnExclusiveOwnership");
     pD3DKMTCloseAdapter = (void *)GetProcAddress(gdi32, "D3DKMTCloseAdapter");
     pD3DKMTCreateDevice = (void *)GetProcAddress(gdi32, "D3DKMTCreateDevice");
     pD3DKMTDestroyDevice = (void *)GetProcAddress(gdi32, "D3DKMTDestroyDevice");
     pD3DKMTOpenAdapterFromGdiDisplayName = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromGdiDisplayName");
     pD3DKMTOpenAdapterFromHdc = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromHdc");
+    pD3DKMTSetVidPnSourceOwner = (void *)GetProcAddress(gdi32, "D3DKMTSetVidPnSourceOwner");
 
     test_D3DKMTOpenAdapterFromGdiDisplayName();
     test_D3DKMTOpenAdapterFromHdc();
     test_D3DKMTCloseAdapter();
     test_D3DKMTCreateDevice();
     test_D3DKMTDestroyDevice();
+    test_D3DKMTCheckVidPnExclusiveOwnership();
 }
