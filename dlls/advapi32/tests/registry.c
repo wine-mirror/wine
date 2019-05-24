@@ -3907,6 +3907,22 @@ static void test_RegLoadMUIString(void)
        "got %u, expected %u\n", size, text_size);
     todo_wine ok(bufW[0] == 0xffff, "got 0x%04x, expected 0xffff\n", bufW[0]);
 
+    memset(bufW, 0xff, sizeof(bufW));
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, sizeof(WCHAR)*2, &size, REG_MUI_STRING_TRUNCATE, NULL);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "got %d, expected ERROR_INVALID_PARAMETER\n", ret);
+    todo_wine ok(bufW[0] == 0xffff, "got 0x%04x, expected 0xffff\n", bufW[0]);
+
+    memset(bufW, 0xff, sizeof(bufW));
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, sizeof(WCHAR)*2, NULL, 0xdeadbeef, NULL);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "got %d, expected ERROR_INVALID_PARAMETER\n", ret);
+    todo_wine ok(bufW[0] == 0xffff, "got 0x%04x, expected 0xffff\n", bufW[0]);
+
+    memset(bufW, 0xff, sizeof(bufW));
+    ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, sizeof(WCHAR)*2, NULL, REG_MUI_STRING_TRUNCATE, NULL);
+    ok(ret == ERROR_SUCCESS, "got %d, expected ERROR_SUCCESS\n", ret);
+    ok(bufW[0] == textW[0], "got 0x%04x, expected 0x%04x\n", bufW[0], textW[0]);
+    ok(bufW[1] == 0, "got 0x%04x, expected nul\n", bufW[1]);
+
     size = 0xdeadbeef;
     memset(bufW, 0xff, sizeof(bufW));
     ret = pRegLoadMUIStringW(hkey, tz_valueW, bufW, ARRAY_SIZE(bufW), &size, 0, NULL);
