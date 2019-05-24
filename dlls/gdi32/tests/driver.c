@@ -590,6 +590,22 @@ static void test_D3DKMTCheckVidPnExclusiveOwnership(void)
     ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
 }
 
+static void test_D3DKMTSetVidPnSourceOwner(void)
+{
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc = {0};
+    NTSTATUS status;
+
+    if (!pD3DKMTSetVidPnSourceOwner || pD3DKMTSetVidPnSourceOwner(&set_owner_desc) == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        skip("D3DKMTSetVidPnSourceOwner() is unavailable.\n");
+        return;
+    }
+
+    /* Invalid parameters */
+    status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
@@ -608,4 +624,5 @@ START_TEST(driver)
     test_D3DKMTCreateDevice();
     test_D3DKMTDestroyDevice();
     test_D3DKMTCheckVidPnExclusiveOwnership();
+    test_D3DKMTSetVidPnSourceOwner();
 }
