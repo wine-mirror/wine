@@ -3138,7 +3138,7 @@ static INT load_string(HINSTANCE hModule, UINT resId, LPWSTR *pResString)
     return *pString;
 }
 
-static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, INT max_chars, INT *req_chars)
+static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, INT max_chars, INT *req_chars, DWORD flags)
 {
     HMODULE hModule = NULL;
     WCHAR *string;
@@ -3169,7 +3169,16 @@ static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, 
     }
 
     /* Else copy over the string, respecting the buffer size. */
-    max_chars = (size < max_chars) ? size : (max_chars - 1);
+    if (size < max_chars)
+        max_chars = size;
+    else {
+        if (flags & REG_MUI_STRING_TRUNCATE)
+            max_chars--;
+        else {
+            result = ERROR_MORE_DATA;
+            goto cleanup;
+        }
+    }
     if (max_chars >= 0) {
         memcpy(buffer, string, max_chars * sizeof(WCHAR));
         buffer[max_chars] = '\0';
@@ -3195,7 +3204,7 @@ cleanup:
  *  pszBuffer  [O] Buffer to store the localized string in. 
  *  cbBuffer   [I] Size of the destination buffer in bytes.
  *  pcbData    [O] Number of bytes written to pszBuffer (optional, may be NULL).
- *  dwFlags    [I] None supported yet.
+ *  dwFlags    [I] Truncate output to fit the buffer if REG_MUI_STRING_TRUNCATE.
  *  pszBaseDir [I] Base directory of loading path. If NULL, use the current directory.
  *
  * RETURNS
@@ -3218,7 +3227,9 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
           cbBuffer, pcbData, dwFlags, debugstr_w(pwszBaseDir));
 
     /* Parameter sanity checks. */
-    if (!hKey || (!pwszBuffer && cbBuffer) || (cbBuffer % sizeof(WCHAR)))
+    if (!hKey || (!pwszBuffer && cbBuffer) || (cbBuffer % sizeof(WCHAR))
+        || ((dwFlags & REG_MUI_STRING_TRUNCATE) && pcbData)
+        || (dwFlags & ~REG_MUI_STRING_TRUNCATE))
         return ERROR_INVALID_PARAMETER;
 
     /* Check for value existence and correctness of its type, allocate a buffer and load it. */
@@ -3293,7 +3304,7 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
 
         /* Load specified string from the file */
         reqChars = 0;
-        result = load_mui_string(pwszTempBuffer, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR), &reqChars);
+        result = load_mui_string(pwszTempBuffer, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR), &reqChars, dwFlags);
         if (pcbData && (result == ERROR_SUCCESS || result == ERROR_MORE_DATA))
             *pcbData = reqChars * sizeof(WCHAR);
     }
