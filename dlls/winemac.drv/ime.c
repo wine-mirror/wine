@@ -901,6 +901,7 @@ static BOOL IME_SetCompositionString(void* hIMC, DWORD dwIndex, LPCVOID lpComp, 
     DWORD flags = 0;
     WCHAR wParam  = 0;
     LPIMEPRIVATE myPrivate;
+    BOOL sendMessage = TRUE;
 
     TRACE("(%p, %d, %p, %d):\n", hIMC, dwIndex, lpComp, dwCompLen);
 
@@ -943,28 +944,29 @@ static BOOL IME_SetCompositionString(void* hIMC, DWORD dwIndex, LPCVOID lpComp, 
 
             wParam = ((const WCHAR*)lpComp)[0];
             flags |= GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART;
+
+            if (cursor_valid)
+            {
+                LPCOMPOSITIONSTRING compstr;
+                compstr = ImmLockIMCC(lpIMC->hCompStr);
+                compstr->dwCursorPos = cursor_pos;
+                ImmUnlockIMCC(lpIMC->hCompStr);
+                flags |= GCS_CURSORPOS;
+            }
         }
         else
         {
-            newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0, &flags);
-            ImmDestroyIMCC(lpIMC->hCompStr);
-            lpIMC->hCompStr = newCompStr;
-        }
-
-        if (cursor_valid)
-        {
-            LPCOMPOSITIONSTRING compstr;
-            compstr = ImmLockIMCC(lpIMC->hCompStr);
-            compstr->dwCursorPos = cursor_pos;
-            ImmUnlockIMCC(lpIMC->hCompStr);
-            flags |= GCS_CURSORPOS;
+            NotifyIME(hIMC, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
+            sendMessage = FALSE;
         }
 
     }
 
-    GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, wParam, flags);
-    ImmUnlockIMCC(lpIMC->hPrivate);
-    UnlockRealIMC(hIMC);
+    if (sendMessage) {
+        GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, wParam, flags);
+        ImmUnlockIMCC(lpIMC->hPrivate);
+        UnlockRealIMC(hIMC);
+    }
 
     return TRUE;
 }
