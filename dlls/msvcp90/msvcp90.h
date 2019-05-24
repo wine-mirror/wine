@@ -662,9 +662,3 @@ static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, cons
 #endif
 
 void free_misc(void);
-
-#if _MSVCP_VER >= 140
-#define UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR      (0x0002)
-int __cdecl __stdio_common_vsprintf(unsigned __int64 options, char *str, size_t len, const char *format,
-                                    _locale_t locale, __ms_va_list valist);
-#endif

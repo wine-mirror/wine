@@ -120,7 +120,7 @@ int WINAPIV _scprintf(const char* fmt, ...)
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, fmt);
-    ret = __stdio_common_vsprintf(UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, fmt, NULL, valist);
+    ret = _vsnprintf(NULL, 0, fmt, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -130,15 +130,9 @@ int WINAPIV sprintf(char *buf, const char *fmt, ...)
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, fmt);
-    ret = __stdio_common_vsprintf(UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buf, -1, fmt, NULL, valist);
+    ret = _vsnprintf(buf, -1, fmt, valist);
     __ms_va_end(valist);
     return ret;
-}
-
-int __cdecl _vsnprintf( char *buf, size_t size, const char *fmt, __ms_va_list args )
-{
-    return __stdio_common_vsprintf( UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR,
-                                    buf, size, fmt, NULL, args );
 }
 #endif
 
