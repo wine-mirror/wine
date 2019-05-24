@@ -4,4 +4,5 @@ IMPORTS = uuid advapi32
 C_SRCS = \
 	main.c \
 	path.c \
+	registry.c \
 	string.c
