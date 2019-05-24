@@ -610,6 +610,7 @@ DWORD WINAPI GetTimeZoneInformation( LPTIME_ZONE_INFORMATION ret )
     DYNAMIC_TIME_ZONE_INFORMATION tzinfo;
     DWORD time_zone_id;
 
+    TRACE("(%p)\n", ret);
     time_zone_id = GetDynamicTimeZoneInformation( &tzinfo );
     memcpy( ret, &tzinfo, sizeof(*ret) );
     return time_zone_id;
@@ -623,6 +624,7 @@ BOOL WINAPI GetTimeZoneInformationForYear( USHORT wYear,
 {
     DYNAMIC_TIME_ZONE_INFORMATION local_dtzi, result;
 
+    TRACE("(%u,%p)\n", wYear, ptzi);
     if (!pdtzi)
     {
         if (GetDynamicTimeZoneInformation(&local_dtzi) == TIME_ZONE_ID_INVALID)
@@ -654,6 +656,8 @@ BOOL WINAPI GetTimeZoneInformationForYear( USHORT wYear,
 BOOL WINAPI SetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
 {
     NTSTATUS status;
+
+    TRACE("(%p)\n", tzinfo);
     status = RtlSetTimeZoneInformation( (const RTL_TIME_ZONE_INFORMATION *)tzinfo );
     if ( status != STATUS_SUCCESS )
         SetLastError( RtlNtStatusToDosError(status) );
@@ -1312,6 +1316,8 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
 BOOL WINAPI GetDaylightFlag(void)
 {
     TIME_ZONE_INFORMATION tzinfo;
+
+    TRACE("()\n");
     RtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     return (TIME_ZoneID(&tzinfo) == TIME_ZONE_ID_DAYLIGHT);
 }
@@ -1462,6 +1468,7 @@ DWORD WINAPI GetDynamicTimeZoneInformation(DYNAMIC_TIME_ZONE_INFORMATION *tzinfo
     NTSTATUS status;
     HANDLE time_zone_key;
 
+    TRACE("(%p)\n", tzinfo);
     status = RtlQueryDynamicTimeZoneInformation( (RTL_DYNAMIC_TIME_ZONE_INFORMATION*)tzinfo );
     if ( status != STATUS_SUCCESS )
     {
