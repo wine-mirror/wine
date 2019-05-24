@@ -2193,6 +2193,29 @@ extern const DIDATAFORMAT c_dfDIJoystick2;
 #define DIPOV_ANY_4                0xFF004604
 #define DIBUTTON_ANY(instance)     (0xFF004400 | (instance))
 
+#define DIVIRTUAL_FLYING_HELICOPTER        0x06000000
+#define DIBUTTON_FLYINGH_MENU              0x060004fd
+#define DIBUTTON_FLYINGH_FIRE              0x06001401
+#define DIBUTTON_FLYINGH_WEAPONS           0x06001402
+#define DIBUTTON_FLYINGH_TARGET            0x06001403
+#define DIBUTTON_FLYINGH_DEVICE            0x060044fe
+#define DIBUTTON_FLYINGH_PAUSE             0x060044fc
+#define DIHATSWITCH_FLYINGH_GLANCE         0x06004601
+#define DIBUTTON_FLYINGH_FIRESECONDARY     0x06004c07
+#define DIBUTTON_FLYINGH_COUNTER           0x06005404
+#define DIBUTTON_FLYINGH_VIEW              0x06006405
+#define DIBUTTON_FLYINGH_GEAR              0x06006406
+#define DIAXIS_FLYINGH_BANK                0x06008a01
+#define DIAXIS_FLYINGH_PITCH               0x06010a02
+#define DIAXIS_FLYINGH_COLLECTIVE          0x06018a03
+#define DIAXIS_FLYINGH_TORQUE              0x06025a04
+#define DIAXIS_FLYINGH_THROTTLE            0x0603da05
+#define DIBUTTON_FLYINGH_FASTER_LINK       0x0603dce0
+#define DIBUTTON_FLYINGH_SLOWER_LINK       0x0603dce8
+#define DIBUTTON_FLYINGH_GLANCE_LEFT_LINK  0x0607c4e4
+#define DIBUTTON_FLYINGH_GLANCE_RIGHT_LINK 0x0607c4ec
+#define DIBUTTON_FLYINGH_GLANCE_UP_LINK    0x0607c4e0
+#define DIBUTTON_FLYINGH_GLANCE_DOWN_LINK  0x0607c4e8
 
 /*****************************************************************************
  * IDirectInputA interface
