@@ -2406,6 +2406,7 @@ static void output_install_rules( struct makefile *make, enum install_rules rule
         const char *file = files.str[i];
         switch (*files.str[i + 1])
         {
+        case 'c':  /* cross-compiled program */
         case 'd':  /* data file */
         case 'p':  /* program file */
         case 's':  /* script */
