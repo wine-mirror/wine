@@ -3,7 +3,7 @@
 
 #include "windef.h"
 
-const unsigned short DECLSPEC_HIDDEN DECLSPEC_HIDDEN bidi_direction_table[4512] =
+const unsigned short DECLSPEC_HIDDEN bidi_direction_table[4512] =
 {
     /* level 1 offsets */
     0x0100, 0x0110, 0x0120, 0x0130, 0x0140, 0x0150, 0x0160, 0x0170,

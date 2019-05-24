@@ -2251,7 +2251,7 @@ sub dump_string_type_table($)
         $table[$i] |= $c2_types{$direction_table[$i]} << 12 if defined $direction_table[$i];
     }
 
-    dump_two_level_mapping( "DECLSPEC_HIDDEN wctype_table", 0, @table );
+    dump_two_level_mapping( "wctype_table", 0, @table );
 
     close OUTPUT;
     save_file($filename);
@@ -2276,8 +2276,7 @@ sub dump_bidi_dir_table($)
         $table[$i] = $bidi_types{$direction_table[$i]} if defined $direction_table[$i];
     }
 
-    dump_two_level_mapping( "DECLSPEC_HIDDEN bidi_direction_table",
-                            $bidi_types{"L"}, @table );
+    dump_two_level_mapping( "bidi_direction_table", $bidi_types{"L"}, @table );
 
     close OUTPUT;
     save_file($filename);
