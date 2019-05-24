@@ -771,7 +771,7 @@
 @ stdcall GlobalMemoryStatusEx(ptr) kernel32.GlobalMemoryStatusEx
 # @ stub GuardCheckLongJumpTarget
 # @ stub HasPolicyForegroundProcessingCompletedInternal
-@ stdcall HashData(ptr long ptr long) shlwapi.HashData
+@ stdcall HashData(ptr long ptr long)
 @ stdcall HeapAlloc(long long long) kernel32.HeapAlloc
 @ stdcall HeapCompact(long long) kernel32.HeapCompact
 @ stdcall HeapCreate(long long long) kernel32.HeapCreate
@@ -861,7 +861,7 @@
 # @ stub IsDeveloperModePolicyApplied
 # @ stub IsEnclaveTypeSupported
 # @ stub IsGlobalizationUserSettingsKeyRedirected
-@ stdcall IsInternetESCEnabled() shlwapi.IsInternetESCEnabled
+@ stdcall IsInternetESCEnabled()
 @ stub IsNLSDefinedString
 @ stdcall IsNormalizedString(long wstr long) kernel32.IsNormalizedString
 # @ stub IsProcessCritical
@@ -1632,8 +1632,8 @@
 @ stdcall UrlApplySchemeW(wstr ptr ptr long)
 @ stdcall UrlCanonicalizeA(str ptr ptr long)
 @ stdcall UrlCanonicalizeW(wstr ptr ptr long)
-@ stdcall UrlCombineA(str str ptr ptr long) shlwapi.UrlCombineA
-@ stdcall UrlCombineW(wstr wstr ptr ptr long) shlwapi.UrlCombineW
+@ stdcall UrlCombineA(str str ptr ptr long)
+@ stdcall UrlCombineW(wstr wstr ptr ptr long)
 @ stdcall UrlCompareA(str str long)
 @ stdcall UrlCompareW(wstr wstr long)
 @ stdcall UrlCreateFromPathA(str ptr ptr long)
@@ -1645,8 +1645,8 @@
 @ stdcall UrlGetLocationW(wstr)
 @ stdcall UrlGetPartA(str ptr ptr long long)
 @ stdcall UrlGetPartW(wstr ptr ptr long long)
-@ stdcall UrlHashA(str ptr long) shlwapi.UrlHashA
-@ stdcall UrlHashW(wstr ptr long) shlwapi.UrlHashW
+@ stdcall UrlHashA(str ptr long)
+@ stdcall UrlHashW(wstr ptr long)
 @ stdcall UrlIsA(str long)
 @ stdcall UrlIsNoHistoryA(str)
 @ stdcall UrlIsNoHistoryW(wstr)
