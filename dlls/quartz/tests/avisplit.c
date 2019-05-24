@@ -449,7 +449,7 @@ static void test_media_types(void)
 
     const WCHAR *filename = load_resource(avifile);
     IBaseFilter *filter = create_avi_splitter();
-    AM_MEDIA_TYPE mt = {0}, *pmt;
+    AM_MEDIA_TYPE mt = {{0}}, *pmt;
     IEnumMediaTypes *enummt;
     IFilterGraph2 *graph;
     HRESULT hr;
