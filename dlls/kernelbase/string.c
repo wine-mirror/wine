@@ -1426,3 +1426,51 @@ DWORD WINAPI SHTruncateString(char *str, DWORD size)
 
     return size;
 }
+
+HRESULT WINAPI SHLoadIndirectString(const WCHAR *src, WCHAR *dst, UINT dst_len, void **reserved)
+{
+    WCHAR *dllname = NULL;
+    HMODULE hmod = NULL;
+    HRESULT hr = E_FAIL;
+
+    TRACE("%s, %p, %#x, %p\n", debugstr_w(src), dst, dst_len, reserved);
+
+    if (src[0] == '@')
+    {
+        WCHAR *index_str;
+        int index;
+
+        dst[0] = 0;
+        dllname = StrDupW(src + 1);
+        index_str = strchrW(dllname, ',');
+
+        if(!index_str) goto end;
+
+        *index_str = 0;
+        index_str++;
+        index = atoiW(index_str);
+
+        hmod = LoadLibraryW(dllname);
+        if (!hmod) goto end;
+
+        if (index < 0)
+        {
+            if (LoadStringW(hmod, -index, dst, dst_len))
+                hr = S_OK;
+        }
+        else
+            FIXME("can't handle non-negative indices (%d)\n", index);
+    }
+    else
+    {
+        if (dst != src)
+            lstrcpynW(dst, src, dst_len);
+        hr = S_OK;
+    }
+
+    TRACE("returning %s\n", debugstr_w(dst));
+end:
+    if (hmod) FreeLibrary(hmod);
+    LocalFree(dllname);
+    return hr;
+}

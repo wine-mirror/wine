@@ -1354,7 +1354,7 @@
 # @ stub SHCoCreateInstance
 @ stdcall SHExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
 @ stdcall SHExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
-@ stdcall SHLoadIndirectString(wstr ptr long ptr) shlwapi.SHLoadIndirectString
+@ stdcall SHLoadIndirectString(wstr ptr long ptr)
 # @ stub SHLoadIndirectStringInternal
 @ stdcall SHRegCloseUSKey(ptr) shlwapi.SHRegCloseUSKey
 @ stdcall SHRegCreateUSKeyA(str long long ptr long) shlwapi.SHRegCreateUSKeyA
