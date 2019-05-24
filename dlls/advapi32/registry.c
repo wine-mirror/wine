@@ -3112,7 +3112,7 @@ LSTATUS WINAPI RegOpenUserClassesRoot(
  * avoid importing user32, which is higher level than advapi32. Helper for
  * RegLoadMUIString.
  */
-static LONG load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMaxChars, UINT *reqChars)
+static INT load_string(HINSTANCE hModule, UINT resId, LPWSTR *pResString)
 {
     HGLOBAL hMemory;
     HRSRC hResource;
@@ -3125,27 +3125,61 @@ static LONG load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cM
 
     /* Load the resource into memory and get a pointer to it. */
     hResource = FindResourceW(hModule, MAKEINTRESOURCEW(LOWORD(resId >> 4) + 1), (LPWSTR)RT_STRING);
-    if (!hResource) return ERROR_FILE_NOT_FOUND;
+    if (!hResource) return 0;
     hMemory = LoadResource(hModule, hResource);
-    if (!hMemory) return ERROR_FILE_NOT_FOUND;
+    if (!hMemory) return 0;
     pString = LockResource(hMemory);
 
     /* Strings are length-prefixed. Lowest nibble of resId is an index. */
     idxString = resId & 0xf;
     while (idxString--) pString += *pString + 1;
-    *reqChars = *pString + 1;
 
-    /* If no buffer is given, return here. */
-    if (!pwszBuffer) return ERROR_MORE_DATA;
+    *pResString = pString + 1;
+    return *pString;
+}
 
-    /* Else copy over the string, respecting the buffer size. */
-    cMaxChars = (*pString < cMaxChars) ? *pString : (cMaxChars - 1);
-    if (cMaxChars >= 0) {
-        memcpy(pwszBuffer, pString+1, cMaxChars * sizeof(WCHAR));
-        pwszBuffer[cMaxChars] = '\0';
+static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, INT max_chars, INT *req_chars)
+{
+    HMODULE hModule = NULL;
+    WCHAR *string;
+    int size;
+    LONG result;
+
+    /* Verify the file existence. i.e. We don't rely on PATH variable */
+    if (GetFileAttributesW(file_name) == INVALID_FILE_ATTRIBUTES)
+        return ERROR_FILE_NOT_FOUND;
+
+    /* Load the file */
+    hModule = LoadLibraryExW(file_name, NULL,
+                             LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+    if (!hModule)
+        return ERROR_BADKEY;
+
+    size = load_string(hModule, res_id, &string);
+    if (!size) {
+        result = ERROR_FILE_NOT_FOUND;
+        goto cleanup;
+    }
+    *req_chars = size + 1;
+
+    /* If no buffer is given, skip copying. */
+    if (!buffer) {
+        result = ERROR_MORE_DATA;
+        goto cleanup;
     }
 
-    return ERROR_SUCCESS;
+    /* Else copy over the string, respecting the buffer size. */
+    max_chars = (size < max_chars) ? size : (max_chars - 1);
+    if (max_chars >= 0) {
+        memcpy(buffer, string, max_chars * sizeof(WCHAR));
+        buffer[max_chars] = '\0';
+    }
+
+    result = ERROR_SUCCESS;
+
+cleanup:
+    if (hModule) FreeLibrary(hModule);
+    return result;
 }
 
 /******************************************************************************
@@ -3229,7 +3263,7 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
         const WCHAR backslashW[] = {'\\',0};
         UINT uiStringId;
         DWORD baseDirLen;
-        HMODULE hModule;
+        int reqChars;
 
         /* Format of the expanded value is 'path_to_dll,-resId' */
         if (!pComma || pComma[1] != '-') {
@@ -3257,24 +3291,11 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
         }
         strcatW(pwszTempBuffer, pwszExpandedBuffer + 1);
 
-        /* Verify the file existence. i.e. We don't rely on PATH variable */
-        if (GetFileAttributesW(pwszTempBuffer) == INVALID_FILE_ATTRIBUTES) {
-            result = ERROR_FILE_NOT_FOUND;
-            goto cleanup;
-        }
-
-        /* Load the file */
-        hModule = LoadLibraryExW(pwszTempBuffer, NULL,
-                                 LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-        if (hModule) {
-            DWORD reqChars;
-            result = load_string(hModule, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR), &reqChars);
-            if (pcbData && (result == ERROR_SUCCESS || result == ERROR_MORE_DATA))
-                *pcbData = reqChars * sizeof(WCHAR);
-            FreeLibrary(hModule);
-        }
-        else
-            result = ERROR_BADKEY;
+        /* Load specified string from the file */
+        reqChars = 0;
+        result = load_mui_string(pwszTempBuffer, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR), &reqChars);
+        if (pcbData && (result == ERROR_SUCCESS || result == ERROR_MORE_DATA))
+            *pcbData = reqChars * sizeof(WCHAR);
     }
 
 cleanup:
