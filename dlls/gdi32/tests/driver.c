@@ -34,6 +34,8 @@
 static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
+static NTSTATUS (WINAPI *pD3DKMTCreateDevice)(D3DKMT_CREATEDEVICE *);
+static NTSTATUS (WINAPI *pD3DKMTDestroyDevice)(const D3DKMT_DESTROYDEVICE *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromHdc)(D3DKMT_OPENADAPTERFROMHDC *);
 
@@ -179,15 +181,65 @@ static void test_D3DKMTCloseAdapter(void)
     todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
 }
 
+static void test_D3DKMTCreateDevice(void)
+{
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_gdi_desc;
+    D3DKMT_CREATEDEVICE create_device_desc;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    D3DKMT_DESTROYDEVICE destroy_device_desc;
+    NTSTATUS status;
+
+    if (!pD3DKMTCreateDevice || pD3DKMTCreateDevice(NULL) == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        skip("D3DKMTCreateDevice() or D3DKMTDestroyDevice() is unavailable.\n");
+        return;
+    }
+
+    /* Invalid parameters */
+    status = pD3DKMTCreateDevice(NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+
+    memset(&create_device_desc, 0, sizeof(create_device_desc));
+    status = pD3DKMTCreateDevice(&create_device_desc);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+
+    lstrcpyW(open_adapter_gdi_desc.DeviceName, display1W);
+    status = pD3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_gdi_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    /* Create device */
+    create_device_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCreateDevice(&create_device_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+    ok(create_device_desc.hDevice, "Expect not null.\n");
+    ok(create_device_desc.pCommandBuffer == NULL, "Expect null.\n");
+    ok(create_device_desc.CommandBufferSize == 0, "Got wrong value %#x.\n", create_device_desc.CommandBufferSize);
+    ok(create_device_desc.pAllocationList == NULL, "Expect null.\n");
+    ok(create_device_desc.AllocationListSize == 0, "Got wrong value %#x.\n", create_device_desc.AllocationListSize);
+    ok(create_device_desc.pPatchLocationList == NULL, "Expect null.\n");
+    ok(create_device_desc.PatchLocationListSize == 0, "Got wrong value %#x.\n", create_device_desc.PatchLocationListSize);
+
+    destroy_device_desc.hDevice = create_device_desc.hDevice;
+    status = pD3DKMTDestroyDevice(&destroy_device_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    close_adapter_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCloseAdapter(&close_adapter_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
 
     pD3DKMTCloseAdapter = (void *)GetProcAddress(gdi32, "D3DKMTCloseAdapter");
+    pD3DKMTCreateDevice = (void *)GetProcAddress(gdi32, "D3DKMTCreateDevice");
+    pD3DKMTDestroyDevice = (void *)GetProcAddress(gdi32, "D3DKMTDestroyDevice");
     pD3DKMTOpenAdapterFromGdiDisplayName = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromGdiDisplayName");
     pD3DKMTOpenAdapterFromHdc = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromHdc");
 
     test_D3DKMTOpenAdapterFromGdiDisplayName();
     test_D3DKMTOpenAdapterFromHdc();
     test_D3DKMTCloseAdapter();
+    test_D3DKMTCreateDevice();
 }
