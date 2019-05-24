@@ -1922,7 +1922,7 @@ static void test_SearchPathA(void)
     ret = GetCurrentDirectoryA(MAX_PATH, curdirA);
     ok(ret, "failed to obtain working directory.\n");
     sprintf(pathA, "%s\\%s", tmpdirA, kernel32A);
-    ret = SearchPathA(NULL, kernel32A, NULL, sizeof(path2A)/sizeof(CHAR), path2A, NULL);
+    ret = SearchPathA(NULL, kernel32A, NULL, ARRAY_SIZE(path2A), path2A, NULL);
     ok(ret && ret == strlen(path2A), "got %d\n", ret);
     bret = CopyFileA(path2A, pathA, FALSE);
     ok(bret != 0, "failed to copy test executable to temp directory, %u\n", GetLastError());
