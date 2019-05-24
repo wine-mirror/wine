@@ -1217,6 +1217,8 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
     const PIMAGE_TLS_CALLBACK *callback;
     ULONG dirsize;
 
+    if (reason == DLL_WINE_PREATTACH) return;
+
     dir = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &dirsize );
     if (!dir || !dir->AddressOfCallBacks) return;
 
