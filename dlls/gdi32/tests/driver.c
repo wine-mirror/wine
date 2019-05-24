@@ -159,6 +159,26 @@ static void test_D3DKMTOpenAdapterFromHdc(void)
     }
 }
 
+static void test_D3DKMTCloseAdapter(void)
+{
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    NTSTATUS status;
+
+    if (!pD3DKMTCloseAdapter || pD3DKMTCloseAdapter(NULL) == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        win_skip("D3DKMTCloseAdapter() is unavailable.\n");
+        return;
+    }
+
+    /* Invalid parameters */
+    status = pD3DKMTCloseAdapter(NULL);
+    todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+
+    memset(&close_adapter_desc, 0, sizeof(close_adapter_desc));
+    status = pD3DKMTCloseAdapter(&close_adapter_desc);
+    todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
@@ -169,4 +189,5 @@ START_TEST(driver)
 
     test_D3DKMTOpenAdapterFromGdiDisplayName();
     test_D3DKMTOpenAdapterFromHdc();
+    test_D3DKMTCloseAdapter();
 }
