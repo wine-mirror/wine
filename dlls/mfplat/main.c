@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <math.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -57,8 +58,19 @@ struct system_time_source
     LONG refcount;
     MFCLOCK_STATE state;
     IMFClock *clock;
+    LONGLONG start_offset;
+    float rate;
+    int i_rate;
     CRITICAL_SECTION cs;
 };
+
+static void system_time_source_apply_rate(const struct system_time_source *source, LONGLONG *value)
+{
+    if (source->i_rate)
+        *value *= source->i_rate;
+    else
+        *value *= source->rate;
+}
 
 static struct system_time_source *impl_from_IMFPresentationTimeSource(IMFPresentationTimeSource *iface)
 {
@@ -6736,11 +6748,26 @@ static HRESULT WINAPI system_time_source_GetClockCharacteristics(IMFPresentation
 static HRESULT WINAPI system_time_source_GetCorrelatedTime(IMFPresentationTimeSource *iface, DWORD reserved,
         LONGLONG *clock_time, MFTIME *system_time)
 {
-    FIXME("%p, %#x, %p, %p.\n", iface, reserved, clock_time, system_time);
+    struct system_time_source *source = impl_from_IMFPresentationTimeSource(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x, %p, %p.\n", iface, reserved, clock_time, system_time);
+
+    EnterCriticalSection(&source->cs);
+    if (SUCCEEDED(hr = IMFClock_GetCorrelatedTime(source->clock, 0, clock_time, system_time)))
+    {
+        if (source->state == MFCLOCK_STATE_RUNNING)
+        {
+            system_time_source_apply_rate(source, clock_time);
+            *clock_time += source->start_offset;
+        }
+        else
+            *clock_time = source->start_offset;
+    }
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
 }
-
 
 static HRESULT WINAPI system_time_source_GetContinuityKey(IMFPresentationTimeSource *iface, DWORD *key)
 {
@@ -6870,10 +6897,12 @@ static HRESULT WINAPI system_time_source_sink_OnClockStart(IMFClockStateSink *if
     TRACE("%p, %s, %s.\n", iface, wine_dbgstr_longlong(system_time), wine_dbgstr_longlong(start_offset));
 
     EnterCriticalSection(&source->cs);
-    hr = system_time_source_change_state(source, CLOCK_CMD_START);
+    if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_START)))
+    {
+        system_time_source_apply_rate(source, &system_time);
+        source->start_offset = -system_time + start_offset;
+    }
     LeaveCriticalSection(&source->cs);
-
-    /* FIXME: update timestamps */
 
     return hr;
 }
@@ -6886,10 +6915,9 @@ static HRESULT WINAPI system_time_source_sink_OnClockStop(IMFClockStateSink *ifa
     TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
 
     EnterCriticalSection(&source->cs);
-    hr = system_time_source_change_state(source, CLOCK_CMD_STOP);
+    if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_STOP)))
+        source->start_offset = 0;
     LeaveCriticalSection(&source->cs);
-
-    /* FIXME: update timestamps */
 
     return hr;
 }
@@ -6902,10 +6930,12 @@ static HRESULT WINAPI system_time_source_sink_OnClockPause(IMFClockStateSink *if
     TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
 
     EnterCriticalSection(&source->cs);
-    hr = system_time_source_change_state(source, CLOCK_CMD_PAUSE);
+    if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_PAUSE)))
+    {
+        system_time_source_apply_rate(source, &system_time);
+        source->start_offset += system_time;
+    }
     LeaveCriticalSection(&source->cs);
-
-    /* FIXME: update timestamps */
 
     return hr;
 }
@@ -6918,19 +6948,34 @@ static HRESULT WINAPI system_time_source_sink_OnClockRestart(IMFClockStateSink *
     TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
 
     EnterCriticalSection(&source->cs);
-    hr = system_time_source_change_state(source, CLOCK_CMD_RESTART);
+    if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_RESTART)))
+    {
+        system_time_source_apply_rate(source, &system_time);
+        source->start_offset -= system_time;
+    }
     LeaveCriticalSection(&source->cs);
-
-    /* FIXME: update timestamps */
 
     return hr;
 }
 
 static HRESULT WINAPI system_time_source_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME system_time, float rate)
 {
-    FIXME("%p, %s, %f.\n", iface, wine_dbgstr_longlong(system_time), rate);
+    struct system_time_source *source = impl_from_IMFClockStateSink(iface);
+    double intpart;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %f.\n", iface, wine_dbgstr_longlong(system_time), rate);
+
+    if (rate == 0.0f)
+        return MF_E_UNSUPPORTED_RATE;
+
+    modf(rate, &intpart);
+
+    EnterCriticalSection(&source->cs);
+    source->rate = rate;
+    source->i_rate = rate == intpart ? rate : 0;
+    LeaveCriticalSection(&source->cs);
+
+    return S_OK;
 }
 
 static const IMFClockStateSinkVtbl systemtimesourcesinkvtbl =
@@ -6962,6 +7007,8 @@ HRESULT WINAPI MFCreateSystemTimeSource(IMFPresentationTimeSource **time_source)
     object->IMFPresentationTimeSource_iface.lpVtbl = &systemtimesourcevtbl;
     object->IMFClockStateSink_iface.lpVtbl = &systemtimesourcesinkvtbl;
     object->refcount = 1;
+    object->rate = 1.0f;
+    object->i_rate = 1;
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = create_system_clock(&object->clock)))
