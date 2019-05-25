@@ -4688,6 +4688,8 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     static const WCHAR infsectionW[] = {'I','n','f','S','e','c','t','i','o','n',0};
     static const WCHAR infsectionextW[] = {'I','n','f','S','e','c','t','i','o','n','E','x','t',0};
     static const WCHAR dothwW[] = {'.','H','W',0};
+    static const WCHAR dotservicesW[] = {'.','S','e','r','v','i','c','e','s',0};
+    static const WCHAR addserviceW[] = {'A','d','d','S','e','r','v','i','c','e',0};
     WCHAR section[LINE_LEN], section_ext[LINE_LEN], subsection[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
     UINT install_flags = SPINST_ALL;
     HKEY driver_key, device_key;
@@ -4746,6 +4748,26 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 
     SetupInstallFromInfSectionW(NULL, hinf, subsection, install_flags, device_key, NULL,
             SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
+
+    strcpyW(subsection, section_ext);
+    strcatW(subsection, dotservicesW);
+    SetupInstallServicesFromInfSectionW(hinf, subsection, 0);
+
+    if (SetupFindFirstLineW(hinf, subsection, addserviceW, &ctx))
+    {
+        do
+        {
+            INT flags;
+
+            if (SetupGetIntField(&ctx, 2, &flags) && (flags & SPSVCINST_ASSOCSERVICE))
+            {
+                WCHAR svc_name[LINE_LEN];
+                if (SetupGetStringFieldW(&ctx, 1, svc_name, ARRAY_SIZE(svc_name), NULL) && svc_name[0])
+                    RegSetValueExW(device->key, Service, 0, REG_SZ, (BYTE *)svc_name, strlenW(svc_name) * sizeof(WCHAR));
+                break;
+            }
+        } while (SetupFindNextMatchLineW(&ctx, addserviceW, &ctx));
+    }
 
     SetupTermDefaultQueueCallback(callback_ctx);
     SetupCloseInfFile(hinf);
