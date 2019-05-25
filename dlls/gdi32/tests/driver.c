@@ -27,12 +27,14 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winternl.h"
+#include "dwmapi.h"
 #include "ddk/d3dkmthk.h"
 
 #include "wine/test.h"
 
 static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
+static NTSTATUS (WINAPI *pD3DKMTCheckOcclusion)(const D3DKMT_CHECKOCCLUSION *);
 static NTSTATUS (WINAPI *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
 static NTSTATUS (WINAPI *pD3DKMTCreateDevice)(D3DKMT_CREATEDEVICE *);
@@ -40,6 +42,7 @@ static NTSTATUS (WINAPI *pD3DKMTDestroyDevice)(const D3DKMT_DESTROYDEVICE *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromHdc)(D3DKMT_OPENADAPTERFROMHDC *);
 static NTSTATUS (WINAPI *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
+static HRESULT  (WINAPI *pDwmEnableComposition)(UINT);
 
 static void test_D3DKMTOpenAdapterFromGdiDisplayName(void)
 {
@@ -606,10 +609,196 @@ static void test_D3DKMTSetVidPnSourceOwner(void)
     ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
 }
 
+static void test_D3DKMTCheckOcclusion(void)
+{
+    DISPLAY_DEVICEW display_device = {sizeof(display_device)};
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_gdi_desc;
+    D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP check_owner_desc;
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc;
+    D3DKMT_DESTROYDEVICE destroy_device_desc;
+    D3DKMT_VIDPNSOURCEOWNER_TYPE owner_type;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    D3DKMT_CREATEDEVICE create_device_desc;
+    D3DKMT_CHECKOCCLUSION occlusion_desc;
+    NTSTATUS expected_occlusion, status;
+    INT i, adapter_count = 0;
+    HWND hwnd, hwnd2;
+    HRESULT hr;
+
+    if (!pD3DKMTCheckOcclusion || pD3DKMTCheckOcclusion(NULL) == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        skip("D3DKMTCheckOcclusion() is unavailable.\n");
+        return;
+    }
+
+    /* NULL parameter check */
+    status = pD3DKMTCheckOcclusion(NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+
+    occlusion_desc.hWnd = NULL;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+
+    hwnd = CreateWindowA("static", "static1", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 200, 200, 0, 0, 0, 0);
+    ok(hwnd != NULL, "Failed to create window.\n");
+
+    occlusion_desc.hWnd = hwnd;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    /* Minimized state doesn't affect D3DKMTCheckOcclusion */
+    ShowWindow(hwnd, SW_MINIMIZE);
+    occlusion_desc.hWnd = hwnd;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+    ShowWindow(hwnd, SW_SHOWNORMAL);
+
+    /* Invisible state doesn't affect D3DKMTCheckOcclusion */
+    ShowWindow(hwnd, SW_HIDE);
+    occlusion_desc.hWnd = hwnd;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+    ShowWindow(hwnd, SW_SHOW);
+
+    /* hwnd2 covers hwnd */
+    hwnd2 = CreateWindowA("static", "static2", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200, 0, 0, 0, 0);
+    ok(hwnd2 != NULL, "Failed to create window.\n");
+
+    occlusion_desc.hWnd = hwnd;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    occlusion_desc.hWnd = hwnd2;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    /* Composition doesn't affect D3DKMTCheckOcclusion */
+    if (pDwmEnableComposition)
+    {
+        hr = pDwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
+        ok(hr == S_OK, "Failed to disable composition.\n");
+
+        occlusion_desc.hWnd = hwnd;
+        status = pD3DKMTCheckOcclusion(&occlusion_desc);
+        /* This result means that D3DKMTCheckOcclusion doesn't check composition status despite MSDN says it will */
+        ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+        occlusion_desc.hWnd = hwnd2;
+        status = pD3DKMTCheckOcclusion(&occlusion_desc);
+        ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+        ShowWindow(hwnd, SW_MINIMIZE);
+        occlusion_desc.hWnd = hwnd;
+        status = pD3DKMTCheckOcclusion(&occlusion_desc);
+        ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+        ShowWindow(hwnd, SW_SHOWNORMAL);
+
+        ShowWindow(hwnd, SW_HIDE);
+        occlusion_desc.hWnd = hwnd;
+        status = pD3DKMTCheckOcclusion(&occlusion_desc);
+        ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+        ShowWindow(hwnd, SW_SHOW);
+
+        hr = pDwmEnableComposition(DWM_EC_ENABLECOMPOSITION);
+        ok(hr == S_OK, "Failed to enable composition.\n");
+    }
+    else
+        skip("Skip testing composition.\n");
+
+    lstrcpyW(open_adapter_gdi_desc.DeviceName, display1W);
+    status = pD3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_gdi_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    memset(&create_device_desc, 0, sizeof(create_device_desc));
+    create_device_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCreateDevice(&create_device_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    check_owner_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    check_owner_desc.VidPnSourceId = open_adapter_gdi_desc.VidPnSourceId;
+    status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+    /* D3DKMTCheckVidPnExclusiveOwnership gets STATUS_GRAPHICS_PRESENT_UNOCCLUDED sometimes and with some delay,
+     * it will always return STATUS_SUCCESS. So there are some timing issues here. */
+    ok(status == STATUS_SUCCESS || status == STATUS_GRAPHICS_PRESENT_UNOCCLUDED, "Got unexpected return code %#x.\n", status);
+
+    /* Test D3DKMTCheckOcclusion relationship with video present source owner */
+    set_owner_desc.hDevice = create_device_desc.hDevice;
+    owner_type = D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE;
+    set_owner_desc.pType = &owner_type;
+    set_owner_desc.pVidPnSourceId = &open_adapter_gdi_desc.VidPnSourceId;
+    set_owner_desc.VidPnSourceCount = 1;
+    status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    for (i = 0; EnumDisplayDevicesW(NULL, i, &display_device, 0); ++i)
+    {
+        if ((display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+            adapter_count++;
+    }
+    /* STATUS_GRAPHICS_PRESENT_OCCLUDED on single monitor system. STATUS_SUCCESS on multiple monitor system. */
+    expected_occlusion = adapter_count > 1 ? STATUS_SUCCESS : STATUS_GRAPHICS_PRESENT_OCCLUDED;
+
+    occlusion_desc.hWnd = hwnd;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == expected_occlusion, "Got unexpected return code %#x.\n", status);
+
+    /* Note hwnd2 is not actually occluded but D3DKMTCheckOcclusion reports STATUS_GRAPHICS_PRESENT_OCCLUDED as well */
+    SetWindowPos(hwnd2, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    ShowWindow(hwnd2, SW_SHOW);
+    occlusion_desc.hWnd = hwnd2;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == expected_occlusion, "Got unexpected return code %#x.\n", status);
+
+    /* Now hwnd is HWND_TOPMOST. Still reports STATUS_GRAPHICS_PRESENT_OCCLUDED */
+    ok(SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE), "Failed to SetWindowPos.\n");
+    ok(GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST, "No WS_EX_TOPMOST style.\n");
+    occlusion_desc.hWnd = hwnd;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == expected_occlusion, "Got unexpected return code %#x.\n", status);
+
+    DestroyWindow(hwnd2);
+    occlusion_desc.hWnd = hwnd;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == expected_occlusion, "Got unexpected return code %#x.\n", status);
+
+    check_owner_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    check_owner_desc.VidPnSourceId = open_adapter_gdi_desc.VidPnSourceId;
+    status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+    ok(status == STATUS_GRAPHICS_PRESENT_OCCLUDED, "Got unexpected return code %#x.\n", status);
+
+    /* Unset video present source owner */
+    set_owner_desc.hDevice = create_device_desc.hDevice;
+    set_owner_desc.pType = NULL;
+    set_owner_desc.pVidPnSourceId = NULL;
+    set_owner_desc.VidPnSourceCount = 0;
+    status = pD3DKMTSetVidPnSourceOwner(&set_owner_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    occlusion_desc.hWnd = hwnd;
+    status = pD3DKMTCheckOcclusion(&occlusion_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    check_owner_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    check_owner_desc.VidPnSourceId = open_adapter_gdi_desc.VidPnSourceId;
+    status = pD3DKMTCheckVidPnExclusiveOwnership(&check_owner_desc);
+    ok(status == STATUS_SUCCESS || status == STATUS_GRAPHICS_PRESENT_UNOCCLUDED, "Got unexpected return code %#x.\n", status);
+
+    destroy_device_desc.hDevice = create_device_desc.hDevice;
+    status = pD3DKMTDestroyDevice(&destroy_device_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+
+    close_adapter_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCloseAdapter(&close_adapter_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
+    HMODULE dwmapi = LoadLibraryA("dwmapi.dll");
 
+    pD3DKMTCheckOcclusion = (void *)GetProcAddress(gdi32, "D3DKMTCheckOcclusion");
     pD3DKMTCheckVidPnExclusiveOwnership = (void *)GetProcAddress(gdi32, "D3DKMTCheckVidPnExclusiveOwnership");
     pD3DKMTCloseAdapter = (void *)GetProcAddress(gdi32, "D3DKMTCloseAdapter");
     pD3DKMTCreateDevice = (void *)GetProcAddress(gdi32, "D3DKMTCreateDevice");
@@ -618,6 +807,9 @@ START_TEST(driver)
     pD3DKMTOpenAdapterFromHdc = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromHdc");
     pD3DKMTSetVidPnSourceOwner = (void *)GetProcAddress(gdi32, "D3DKMTSetVidPnSourceOwner");
 
+    if (dwmapi)
+        pDwmEnableComposition = (void *)GetProcAddress(dwmapi, "DwmEnableComposition");
+
     test_D3DKMTOpenAdapterFromGdiDisplayName();
     test_D3DKMTOpenAdapterFromHdc();
     test_D3DKMTCloseAdapter();
@@ -625,4 +817,7 @@ START_TEST(driver)
     test_D3DKMTDestroyDevice();
     test_D3DKMTCheckVidPnExclusiveOwnership();
     test_D3DKMTSetVidPnSourceOwner();
+    test_D3DKMTCheckOcclusion();
+
+    FreeLibrary(dwmapi);
 }
