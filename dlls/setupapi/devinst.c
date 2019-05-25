@@ -4687,12 +4687,13 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
     static const WCHAR infsectionW[] = {'I','n','f','S','e','c','t','i','o','n',0};
     static const WCHAR infsectionextW[] = {'I','n','f','S','e','c','t','i','o','n','E','x','t',0};
-    WCHAR section[LINE_LEN], section_ext[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
+    static const WCHAR dothwW[] = {'.','H','W',0};
+    WCHAR section[LINE_LEN], section_ext[LINE_LEN], subsection[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
     UINT install_flags = SPINST_ALL;
+    HKEY driver_key, device_key;
     struct device *device;
     struct driver *driver;
     void *callback_ctx;
-    HKEY driver_key;
     INFCONTEXT ctx;
     HINF hinf;
     LONG l;
@@ -4723,12 +4724,27 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
         return FALSE;
     }
 
+    if ((l = RegCreateKeyExW(device->key, DeviceParameters, 0, NULL, 0,
+            KEY_READ | KEY_WRITE, NULL, &device_key, NULL)))
+    {
+        SetLastError(l);
+        RegCloseKey(driver_key);
+        SetupCloseInfFile(hinf);
+        return FALSE;
+    }
+
     if (device->params.Flags & DI_NOFILECOPY)
         install_flags &= ~SPINST_FILES;
 
     callback_ctx = SetupInitDefaultQueueCallback(NULL);
 
     SetupInstallFromInfSectionW(NULL, hinf, section_ext, install_flags, driver_key, NULL,
+            SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
+
+    strcpyW(subsection, section_ext);
+    strcatW(subsection, dothwW);
+
+    SetupInstallFromInfSectionW(NULL, hinf, subsection, install_flags, device_key, NULL,
             SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
 
     SetupTermDefaultQueueCallback(callback_ctx);
@@ -4742,6 +4758,7 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     if (extptr)
         RegSetValueExW(driver_key, infsectionextW, 0, REG_SZ, (BYTE *)extptr, strlenW(extptr) * sizeof(WCHAR));
 
+    RegCloseKey(device_key);
     RegCloseKey(driver_key);
     return TRUE;
 }
