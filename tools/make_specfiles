@@ -352,6 +352,7 @@ my @dll_groups =
   "api-ms-win-downlevel-shell32-l1-1-0",
   "api-ms-win-shell-shellcom-l1-1-0",
   "api-ms-win-shell-shellfolders-l1-1-0",
+  "ext-ms-win-shell-shell32-l1-2-0",
  ],
  [
   "shlwapi",

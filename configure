@@ -1317,6 +1317,7 @@ enable_ext_ms_win_security_credui_l1_1_0
 enable_ext_ms_win_security_cryptui_l1_1_0
 enable_ext_ms_win_shell_comctl32_init_l1_1_0
 enable_ext_ms_win_shell_comdlg32_l1_1_0
+enable_ext_ms_win_shell_shell32_l1_2_0
 enable_ext_ms_win_uxtheme_themes_l1_1_0
 enable_faultrep
 enable_feclient
@@ -20182,6 +20183,7 @@ wine_fn_config_makefile dlls/ext-ms-win-security-credui-l1-1-0 enable_ext_ms_win
 wine_fn_config_makefile dlls/ext-ms-win-security-cryptui-l1-1-0 enable_ext_ms_win_security_cryptui_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-shell-comctl32-init-l1-1-0 enable_ext_ms_win_shell_comctl32_init_l1_1_0
 wine_fn_config_makefile dlls/ext-ms-win-shell-comdlg32-l1-1-0 enable_ext_ms_win_shell_comdlg32_l1_1_0
+wine_fn_config_makefile dlls/ext-ms-win-shell-shell32-l1-2-0 enable_ext_ms_win_shell_shell32_l1_2_0
 wine_fn_config_makefile dlls/ext-ms-win-uxtheme-themes-l1-1-0 enable_ext_ms_win_uxtheme_themes_l1_1_0
 wine_fn_config_makefile dlls/faultrep enable_faultrep
 wine_fn_config_makefile dlls/faultrep/tests enable_tests
