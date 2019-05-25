@@ -157,6 +157,10 @@ my @dll_groups =
   "ext-ms-win-shell-comctl32-init-l1-1-0",
  ],
  [
+  "comdlg32",
+  "ext-ms-win-shell-comdlg32-l1-1-0",
+ ],
+ [
   "credui",
   "ext-ms-win-security-credui-l1-1-0",
  ],
