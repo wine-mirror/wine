@@ -147,28 +147,6 @@ static HRESULT WINAPI AVICompressor_QueryInterface(IBaseFilter *iface, REFIID ri
 
 }
 
-static ULONG WINAPI AVICompressor_Release(IBaseFilter *iface)
-{
-    AVICompressor *This = impl_from_IBaseFilter(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refCount);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if(!ref) {
-        if(This->hic)
-            ICClose(This->hic);
-        heap_free(This->videoinfo);
-        if(This->in)
-            BaseInputPinImpl_Release(&This->in->pin.IPin_iface);
-        if(This->out)
-            BaseOutputPinImpl_Release(&This->out->pin.IPin_iface);
-        strmbase_filter_cleanup(&This->filter);
-        heap_free(This);
-    }
-
-    return ref;
-}
-
 static HRESULT WINAPI AVICompressor_Stop(IBaseFilter *iface)
 {
     AVICompressor *This = impl_from_IBaseFilter(iface);
@@ -229,7 +207,7 @@ static HRESULT WINAPI AVICompressor_QueryVendorInfo(IBaseFilter *iface, LPWSTR *
 static const IBaseFilterVtbl AVICompressorVtbl = {
     AVICompressor_QueryInterface,
     BaseFilterImpl_AddRef,
-    AVICompressor_Release,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     AVICompressor_Stop,
     AVICompressor_Pause,
@@ -260,8 +238,24 @@ static IPin *avi_compressor_get_pin(BaseFilter *iface, unsigned int index)
     return ret;
 }
 
+static void avi_compressor_destroy(BaseFilter *iface)
+{
+    AVICompressor *filter = impl_from_BaseFilter(iface);
+
+    if (filter->hic)
+        ICClose(filter->hic);
+    heap_free(filter->videoinfo);
+    if (filter->in)
+        BaseInputPinImpl_Release(&filter->in->pin.IPin_iface);
+    if (filter->out)
+        BaseOutputPinImpl_Release(&filter->out->pin.IPin_iface);
+    strmbase_filter_cleanup(&filter->filter);
+    heap_free(filter);
+}
+
 static const BaseFilterFuncTable filter_func_table = {
     .filter_get_pin = avi_compressor_get_pin,
+    .filter_destroy = avi_compressor_destroy,
 };
 
 static AVICompressor *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
