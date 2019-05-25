@@ -4684,7 +4684,10 @@ BOOL WINAPI SetupDiInstallDriverFiles(HDEVINFO devinfo, SP_DEVINFO_DATA *device_
  */
 BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    WCHAR section[LINE_LEN], section_ext[LINE_LEN];
+    static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
+    static const WCHAR infsectionW[] = {'I','n','f','S','e','c','t','i','o','n',0};
+    static const WCHAR infsectionextW[] = {'I','n','f','S','e','c','t','i','o','n','E','x','t',0};
+    WCHAR section[LINE_LEN], section_ext[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
     UINT install_flags = SPINST_ALL;
     struct device *device;
     struct driver *driver;
@@ -4711,7 +4714,7 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 
     SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
     SetupGetStringFieldW(&ctx, 1, section, ARRAY_SIZE(section), NULL);
-    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, NULL);
+    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, &extptr);
 
     if ((l = create_driver_key(device, &driver_key)))
     {
@@ -4730,6 +4733,15 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 
     SetupTermDefaultQueueCallback(callback_ctx);
     SetupCloseInfFile(hinf);
+
+    SetupCopyOEMInfW(driver->inf_path, NULL, SPOST_NONE, 0, inf_path, ARRAY_SIZE(inf_path), NULL, &filepart);
+    TRACE("Copied INF file %s to %s.\n", debugstr_w(driver->inf_path), debugstr_w(inf_path));
+
+    RegSetValueExW(driver_key, infpathW, 0, REG_SZ, (BYTE *)filepart, strlenW(filepart) * sizeof(WCHAR));
+    RegSetValueExW(driver_key, infsectionW, 0, REG_SZ, (BYTE *)section, strlenW(section) * sizeof(WCHAR));
+    if (extptr)
+        RegSetValueExW(driver_key, infsectionextW, 0, REG_SZ, (BYTE *)extptr, strlenW(extptr) * sizeof(WCHAR));
+
     RegCloseKey(driver_key);
     return TRUE;
 }
