@@ -1831,13 +1831,13 @@ static HRESULT WINAPI VMR7WindowlessControl_SetAspectRatioMode(IVMRWindowlessCon
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VMR7WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl *iface,
-                                                                   HWND hwnd)
+static HRESULT WINAPI VMR7WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl *iface, HWND window)
 {
-    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+    struct quartz_vmr *filter = impl_from_IVMRWindowlessControl(iface);
 
-    FIXME("(%p/%p)->(...) stub\n", iface, This);
-    return E_NOTIMPL;
+    TRACE("iface %p, window %p.\n", iface, window);
+
+    return IVMRWindowlessControl9_SetVideoClippingWindow(&filter->IVMRWindowlessControl9_iface, window);
 }
 
 static HRESULT WINAPI VMR7WindowlessControl_RepaintVideo(IVMRWindowlessControl *iface,
