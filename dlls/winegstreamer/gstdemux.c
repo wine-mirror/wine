@@ -1213,8 +1213,48 @@ static IPin *gstdemux_get_pin(BaseFilter *base, unsigned int index)
     return pin;
 }
 
+static void gstdemux_destroy(BaseFilter *iface)
+{
+    GSTImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
+    IPin *connected = NULL;
+    ULONG pinref;
+    HRESULT hr;
+
+    CloseHandle(filter->no_more_pads_event);
+    CloseHandle(filter->push_event);
+
+    /* Don't need to clean up output pins, disconnecting input pin will do that */
+    IPin_ConnectedTo((IPin *)&filter->pInputPin, &connected);
+    if (connected)
+    {
+        hr = IPin_Disconnect(connected);
+        assert(hr == S_OK);
+        IPin_Release(connected);
+        hr = IPin_Disconnect(&filter->pInputPin.pin.IPin_iface);
+        assert(hr == S_OK);
+    }
+    pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
+    if (pinref)
+    {
+        /* Valgrind could find this, if I kill it here */
+        ERR("pinref should be null, is %u, destroying anyway\n", pinref);
+        assert((LONG)pinref > 0);
+
+        while (pinref)
+            pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
+    }
+    if (filter->bus)
+    {
+        gst_bus_set_sync_handler(filter->bus, NULL, NULL, NULL);
+        gst_object_unref(filter->bus);
+    }
+    strmbase_filter_cleanup(&filter->filter);
+    CoTaskMemFree(filter);
+}
+
 static const BaseFilterFuncTable BaseFuncTable = {
     .filter_get_pin = gstdemux_get_pin,
+    .filter_destroy = gstdemux_destroy,
 };
 
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
@@ -1267,43 +1307,6 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
     return obj;
 }
 
-static void GST_Destroy(GSTImpl *This)
-{
-    IPin *connected = NULL;
-    ULONG pinref;
-    HRESULT hr;
-
-    TRACE("Destroying %p\n", This);
-
-    CloseHandle(This->no_more_pads_event);
-    CloseHandle(This->push_event);
-
-    /* Don't need to clean up output pins, disconnecting input pin will do that */
-    IPin_ConnectedTo((IPin *)&This->pInputPin, &connected);
-    if (connected) {
-        hr = IPin_Disconnect(connected);
-        assert(hr == S_OK);
-        IPin_Release(connected);
-        hr = IPin_Disconnect(&This->pInputPin.pin.IPin_iface);
-        assert(hr == S_OK);
-    }
-    pinref = IPin_Release(&This->pInputPin.pin.IPin_iface);
-    if (pinref) {
-        /* Valgrind could find this, if I kill it here */
-        ERR("pinref should be null, is %u, destroying anyway\n", pinref);
-        assert((LONG)pinref > 0);
-
-        while (pinref)
-            pinref = IPin_Release(&This->pInputPin.pin.IPin_iface);
-    }
-    if (This->bus) {
-        gst_bus_set_sync_handler(This->bus, NULL, NULL, NULL);
-        gst_object_unref(This->bus);
-    }
-    strmbase_filter_cleanup(&This->filter);
-    CoTaskMemFree(This);
-}
-
 static HRESULT WINAPI GST_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID *ppv)
 {
     GSTImpl *This = impl_from_IBaseFilter(iface);
@@ -1330,19 +1333,6 @@ static HRESULT WINAPI GST_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID
         FIXME("No interface for %s!\n", debugstr_guid(riid));
 
     return E_NOINTERFACE;
-}
-
-static ULONG WINAPI GST_Release(IBaseFilter *iface)
-{
-    GSTImpl *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = InterlockedDecrement(&This->filter.refCount);
-
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
-
-    if (!refCount)
-        GST_Destroy(This);
-
-    return refCount;
 }
 
 static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
@@ -1468,7 +1458,7 @@ static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout,
 static const IBaseFilterVtbl GST_Vtbl = {
     GST_QueryInterface,
     BaseFilterImpl_AddRef,
-    GST_Release,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     GST_Stop,
     GST_Pause,
