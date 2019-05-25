@@ -3684,8 +3684,9 @@ BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP
             return SetupDiInstallDriverFiles(devinfo, device_data);
         case DIF_INSTALLINTERFACES:
             return SetupDiInstallDeviceInterfaces(devinfo, device_data);
-        case DIF_FINISHINSTALL_ACTION:
         case DIF_INSTALLDEVICE:
+            return SetupDiInstallDevice(devinfo, device_data);
+        case DIF_FINISHINSTALL_ACTION:
         case DIF_PROPERTYCHANGE:
         case DIF_SELECTDEVICE:
         case DIF_UNREMOVE:
@@ -4675,5 +4676,60 @@ BOOL WINAPI SetupDiInstallDriverFiles(HDEVINFO devinfo, SP_DEVINFO_DATA *device_
     SetupTermDefaultQueueCallback(callback_ctx);
 
     SetupCloseInfFile(hinf);
+    return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiInstallDevice (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
+{
+    WCHAR section[LINE_LEN], section_ext[LINE_LEN];
+    UINT install_flags = SPINST_ALL;
+    struct device *device;
+    struct driver *driver;
+    void *callback_ctx;
+    HKEY driver_key;
+    INFCONTEXT ctx;
+    HINF hinf;
+    LONG l;
+
+    TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (!(driver = device->selected_driver))
+    {
+        ERR("No driver selected for device %p.\n", devinfo);
+        SetLastError(ERROR_NO_DRIVER_SELECTED);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    SetupGetStringFieldW(&ctx, 1, section, ARRAY_SIZE(section), NULL);
+    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, NULL);
+
+    if ((l = create_driver_key(device, &driver_key)))
+    {
+        SetLastError(l);
+        SetupCloseInfFile(hinf);
+        return FALSE;
+    }
+
+    if (device->params.Flags & DI_NOFILECOPY)
+        install_flags &= ~SPINST_FILES;
+
+    callback_ctx = SetupInitDefaultQueueCallback(NULL);
+
+    SetupInstallFromInfSectionW(NULL, hinf, section_ext, install_flags, driver_key, NULL,
+            SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
+
+    SetupTermDefaultQueueCallback(callback_ctx);
+    SetupCloseInfFile(hinf);
+    RegCloseKey(driver_key);
     return TRUE;
 }
