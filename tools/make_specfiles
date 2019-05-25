@@ -153,6 +153,10 @@ my @dll_groups =
   "ext-ms-win-authz-context-l1-1-0",
  ],
  [
+  "comctl32",
+  "ext-ms-win-shell-comctl32-init-l1-1-0",
+ ],
+ [
   "credui",
   "ext-ms-win-security-credui-l1-1-0",
  ],
