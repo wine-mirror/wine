@@ -44,6 +44,7 @@
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
@@ -88,6 +89,26 @@ static const WCHAR * const root_key_names[] =
 
 static HKEY special_root_keys[ARRAY_SIZE(root_key_names)];
 static BOOL hkcu_cache_disabled;
+
+static CRITICAL_SECTION reg_mui_cs;
+static CRITICAL_SECTION_DEBUG reg_mui_cs_debug =
+{
+    0, 0, &reg_mui_cs,
+    { &reg_mui_cs_debug.ProcessLocksList,
+      &reg_mui_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": reg_mui_cs") }
+};
+static CRITICAL_SECTION reg_mui_cs = { &reg_mui_cs_debug, -1, 0, 0, 0, 0 };
+struct mui_cache_entry {
+    struct list entry;
+    WCHAR *file_name; /* full path name */
+    DWORD index;
+    LCID  locale;
+    WCHAR *text;
+};
+static struct list reg_mui_cache = LIST_INIT(reg_mui_cache); /* MRU */
+static unsigned int reg_mui_cache_count;
+#define REG_MUI_CACHE_SIZE 8
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -3142,10 +3163,95 @@ static INT load_string(HINSTANCE hModule, UINT resId, LPWSTR *pResString)
     return *pString;
 }
 
+static void dump_mui_cache(void)
+{
+    struct mui_cache_entry *ent;
+
+    TRACE("---------- MUI Cache ----------\n");
+    LIST_FOR_EACH_ENTRY( ent, &reg_mui_cache, struct mui_cache_entry, entry )
+        TRACE("entry=%p, %s,-%u [%#x] => %s\n",
+              ent, wine_dbgstr_w(ent->file_name), ent->index, ent->locale, wine_dbgstr_w(ent->text));
+}
+
+static inline void free_mui_cache_entry(struct mui_cache_entry *ent)
+{
+    heap_free(ent->file_name);
+    heap_free(ent->text);
+    heap_free(ent);
+}
+
+/* critical section must be held */
+static int reg_mui_cache_get(const WCHAR *file_name, UINT index, WCHAR **buffer)
+{
+    struct mui_cache_entry *ent;
+
+    TRACE("(%s %u %p)\n", wine_dbgstr_w(file_name), index, buffer);
+
+    LIST_FOR_EACH_ENTRY(ent, &reg_mui_cache, struct mui_cache_entry, entry)
+    {
+        if (ent->index == index && ent->locale == GetThreadLocale() &&
+            !strcmpiW(ent->file_name, file_name))
+            goto found;
+    }
+    return 0;
+
+found:
+    /* move to the list head */
+    if (list_prev(&reg_mui_cache, &ent->entry)) {
+        list_remove(&ent->entry);
+        list_add_head(&reg_mui_cache, &ent->entry);
+    }
+
+    TRACE("=> %s\n", wine_dbgstr_w(ent->text));
+    *buffer = ent->text;
+    return strlenW(ent->text);
+}
+
+/* critical section must be held */
+static void reg_mui_cache_put(const WCHAR *file_name, UINT index, const WCHAR *buffer, INT size)
+{
+    struct mui_cache_entry *ent;
+    TRACE("(%s %u %s %d)\n", wine_dbgstr_w(file_name), index, wine_dbgstr_wn(buffer, size), size);
+
+    ent = heap_calloc(sizeof(*ent), 1);
+    if (!ent)
+        return;
+    ent->file_name = heap_alloc((strlenW(file_name) + 1) * sizeof(WCHAR));
+    if (!ent->file_name) {
+        free_mui_cache_entry(ent);
+        return;
+    }
+    strcpyW(ent->file_name, file_name);
+    ent->index = index;
+    ent->locale = GetThreadLocale();
+    ent->text = heap_alloc((size + 1) * sizeof(WCHAR));
+    if (!ent->text) {
+        free_mui_cache_entry(ent);
+        return;
+    }
+    memcpy(ent->text, buffer, size * sizeof(WCHAR));
+    ent->text[size] = '\0';
+
+    TRACE("add %p\n", ent);
+    list_add_head(&reg_mui_cache, &ent->entry);
+    if (reg_mui_cache_count > REG_MUI_CACHE_SIZE) {
+        ent = LIST_ENTRY( list_tail( &reg_mui_cache ), struct mui_cache_entry, entry );
+        TRACE("freeing %p\n", ent);
+        list_remove(&ent->entry);
+        free_mui_cache_entry(ent);
+    }
+    else
+        reg_mui_cache_count++;
+
+    if (TRACE_ON(reg))
+        dump_mui_cache();
+    return;
+}
+
 static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, INT max_chars, INT *req_chars, DWORD flags)
 {
     HMODULE hModule = NULL;
-    WCHAR *string;
+    WCHAR *string, *full_name;
     int size;
     LONG result;
 
@@ -3153,16 +3259,32 @@ static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, 
     if (GetFileAttributesW(file_name) == INVALID_FILE_ATTRIBUTES)
         return ERROR_FILE_NOT_FOUND;
 
-    /* Load the file */
-    hModule = LoadLibraryExW(file_name, NULL,
-                             LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-    if (!hModule)
+    size = GetFullPathNameW(file_name, 0, NULL, NULL);
+    full_name = heap_alloc(size * sizeof(WCHAR));
+    if (!size)
         return GetLastError();
+    GetFullPathNameW(file_name, size, full_name, NULL);
 
-    size = load_string(hModule, res_id, &string);
+    EnterCriticalSection(&reg_mui_cs);
+    size = reg_mui_cache_get(full_name, res_id, &string);
     if (!size) {
-        result = GetLastError();
-        goto cleanup;
+        LeaveCriticalSection(&reg_mui_cs);
+
+        /* Load the file */
+        hModule = LoadLibraryExW(full_name, NULL,
+                                 LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+        if (!hModule)
+            return GetLastError();
+
+        size = load_string(hModule, res_id, &string);
+        if (!size) {
+            result = GetLastError();
+            goto cleanup;
+        }
+
+        EnterCriticalSection(&reg_mui_cs);
+        reg_mui_cache_put(full_name, res_id, string, size);
+        LeaveCriticalSection(&reg_mui_cs);
     }
     *req_chars = size + 1;
 
@@ -3191,7 +3313,11 @@ static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, 
     result = ERROR_SUCCESS;
 
 cleanup:
-    if (hModule) FreeLibrary(hModule);
+    if (hModule)
+        FreeLibrary(hModule);
+    else
+        LeaveCriticalSection(&reg_mui_cs);
+    heap_free(full_name);
     return result;
 }
 
