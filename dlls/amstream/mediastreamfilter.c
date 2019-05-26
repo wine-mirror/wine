@@ -367,6 +367,7 @@ static HRESULT WINAPI MediaStreamFilterImpl_FindPin(IMediaStreamFilter *iface, c
             {
                 CoTaskMemFree(ret_id);
                 *out = pin;
+                LeaveCriticalSection(&filter->cs);
                 return S_OK;
             }
             CoTaskMemFree(ret_id);
