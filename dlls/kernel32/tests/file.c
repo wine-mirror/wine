@@ -3735,13 +3735,13 @@ static void test_ReplaceFileA(void)
     /* replace file while replacement is opened */
     ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameA error (replacement) %d\n", GetLastError());
-    CreateFileA(replacement, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
+    hReplacementFile = CreateFileA(replacement, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
     ok(hReplacementFile != INVALID_HANDLE_VALUE, "unexpected error, replacement file should be able to be opened %d\n",
        GetLastError());
     ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     ok(!ret, "expect failure\n");
     ok(GetLastError() == ERROR_SHARING_VIOLATION, "expect ERROR_SHARING_VIOLATION, got %#x.\n", GetLastError());
-    CloseHandle(hReplacedFile);
+    CloseHandle(hReplacementFile);
 
     /* replacement file still exists, make pass w/o "replaced" */
     ret = DeleteFileA(replaced);
