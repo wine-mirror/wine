@@ -3836,17 +3836,42 @@ todo_wine
 
 static void test_RegLoadMUIString(void)
 {
-    HMODULE hUser32, hResDll;
+    HMODULE hUser32, hResDll, hFile;
     int (WINAPI *pLoadStringW)(HMODULE, UINT, WCHAR *, int);
     LONG ret;
     HKEY hkey;
     DWORD type, size, text_size;
     UINT i;
     char buf[64], *p, sysdir[MAX_PATH];
+    char with_env_var[128], filename[MAX_PATH], tmp_path[MAX_PATH];
     WCHAR textW[64], bufW[64];
     WCHAR curdirW[MAX_PATH], sysdirW[MAX_PATH];
     const static char tz_value[] = "MUI_Std";
     const static WCHAR tz_valueW[] = {'M','U','I','_','S','t','d', 0};
+    struct {
+        const char* value;
+        DWORD type;
+        BOOL use_sysdir;
+        DWORD expected;
+        DWORD broken_ret;
+        BOOL todo;
+    } test_case[] = {
+        /* 0 */
+        { "",                  REG_SZ,        FALSE, ERROR_INVALID_DATA, 0, TRUE },
+        { "not a MUI string",  REG_SZ,        FALSE, ERROR_INVALID_DATA, 0, TRUE },
+        { "@unknown.dll",      REG_SZ,        TRUE,  ERROR_INVALID_DATA, 0, TRUE },
+        { "@unknown.dll,-10",  REG_SZ,        TRUE,  ERROR_FILE_NOT_FOUND },
+        /*  4 */
+        { with_env_var,        REG_SZ,        FALSE, ERROR_SUCCESS, 0, TRUE },
+        { with_env_var,        REG_EXPAND_SZ, FALSE, ERROR_SUCCESS },
+        { "%WineMuiTest1%",    REG_EXPAND_SZ, TRUE,  ERROR_INVALID_DATA, 0, TRUE },
+        { "@%WineMuiTest2%",   REG_EXPAND_SZ, TRUE,  ERROR_SUCCESS },
+        /*  8 */
+        { "@%WineMuiExe%,a",   REG_SZ,        FALSE, ERROR_INVALID_DATA, 0, TRUE },
+        { "@%WineMuiExe%,-4",  REG_SZ,        FALSE, ERROR_NOT_FOUND, ERROR_FILE_NOT_FOUND, TRUE },
+        { "@%WineMuiExe%,-39", REG_SZ,        FALSE, ERROR_RESOURCE_NAME_NOT_FOUND, 0, TRUE },
+        { "@%WineMuiDat%,-16", REG_EXPAND_SZ, FALSE, ERROR_BAD_EXE_FORMAT, ERROR_FILE_NOT_FOUND, TRUE },
+    };
 
     if (!pRegLoadMUIStringA || !pRegLoadMUIStringW)
     {
@@ -3869,6 +3894,13 @@ static void test_RegLoadMUIString(void)
     ok(ret == ERROR_SUCCESS, "got %d\n", ret);
     ok(buf[0] == '@', "got %s\n", buf);
 
+    /* setup MUI string for tests */
+    strcpy(with_env_var, "@%windir%\\system32\\");
+    strcat(with_env_var, &buf[1]);
+    SetEnvironmentVariableA("WineMuiTest1", buf);
+    SetEnvironmentVariableA("WineMuiTest2", &buf[1]);
+
+    /* load expecting text */
     p = strrchr(buf, ',');
     *p = '\0';
     i = atoi(p + 2); /* skip ',-' */
@@ -3955,7 +3987,52 @@ static void test_RegLoadMUIString(void)
     ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
 
     RegCloseKey(hkey);
+
+    GetModuleFileNameA(NULL, filename, ARRAY_SIZE(filename));
+    SetEnvironmentVariableA("WineMuiExe", filename);
+
+    GetTempPathA(ARRAY_SIZE(tmp_path), tmp_path);
+    GetTempFileNameA(tmp_path, "mui", 0, filename);
+    SetEnvironmentVariableA("WineMuiDat", filename);
+
+    /* write dummy data to the file, i.e. it's not a PE file. */
+    hFile = CreateFileA(filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(hFile != INVALID_HANDLE_VALUE, "can't open %s\n", filename);
+    WriteFile(hFile, filename, strlen(filename), &size, NULL);
+    CloseHandle(hFile);
+
+    for (i = 0; i < ARRAY_SIZE(test_case); i++)
+    {
+        size = test_case[i].value ? strlen(test_case[i].value) + 1 : 0;
+        ret = RegSetValueExA(hkey_main, tz_value, 0, test_case[i].type,
+                             (const BYTE *)test_case[i].value, size);
+        ok(ret == ERROR_SUCCESS, "[%2u] got %d\n", i, ret);
+
+        size = 0xdeadbeef;
+        memset(bufW, 0xff, sizeof(bufW));
+        ret = pRegLoadMUIStringW(hkey_main, tz_valueW, bufW, ARRAY_SIZE(bufW),
+                                 &size, 0,
+                                 test_case[i].use_sysdir ? sysdirW : NULL);
+        todo_wine_if(test_case[i].todo)
+        ok(ret == test_case[i].expected ||
+           broken(test_case[i].value[0] == '%' && ret == ERROR_SUCCESS /* vista */) ||
+           broken(test_case[i].broken_ret && ret == test_case[i].broken_ret /* vista */),
+           "[%2u] expected %d, got %d\n", i, test_case[i].expected, ret);
+        if (ret == ERROR_SUCCESS && test_case[i].expected == ERROR_SUCCESS)
+        {
+            ok(size == text_size, "[%2u] got %u, expected %u\n", i, size, text_size);
+            ok(!memcmp(bufW, textW, size), "[%2u] got %s, expected %s\n", i,
+               wine_dbgstr_wn(bufW, size/sizeof(WCHAR)),
+               wine_dbgstr_wn(textW, text_size/sizeof(WCHAR)));
+        }
+    }
+
     SetCurrentDirectoryW(curdirW);
+    DeleteFileA(filename);
+    SetEnvironmentVariableA("WineMuiTest1", NULL);
+    SetEnvironmentVariableA("WineMuiTest2", NULL);
+    SetEnvironmentVariableA("WineMuiExe", NULL);
+    SetEnvironmentVariableA("WineMuiDat", NULL);
 }
 
 START_TEST(registry)
