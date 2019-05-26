@@ -3133,6 +3133,10 @@ static INT load_string(HINSTANCE hModule, UINT resId, LPWSTR *pResString)
     /* Strings are length-prefixed. Lowest nibble of resId is an index. */
     idxString = resId & 0xf;
     while (idxString--) pString += *pString + 1;
+    if (!*pString) {
+        SetLastError(ERROR_NOT_FOUND);
+        return 0;
+    }
 
     *pResString = pString + 1;
     return *pString;
@@ -3153,11 +3157,11 @@ static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, 
     hModule = LoadLibraryExW(file_name, NULL,
                              LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
     if (!hModule)
-        return ERROR_BADKEY;
+        return GetLastError();
 
     size = load_string(hModule, res_id, &string);
     if (!size) {
-        result = ERROR_FILE_NOT_FOUND;
+        result = GetLastError();
         goto cleanup;
     }
     *req_chars = size + 1;
@@ -3210,10 +3214,6 @@ cleanup:
  * RETURNS
  *  Success: ERROR_SUCCESS,
  *  Failure: nonzero error code from winerror.h
- *
- * NOTES
- *  This is an API of Windows Vista, which wasn't available at the time this code
- *  was written. We have to check for the correct behaviour once it's available. 
  */
 LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer, DWORD cbBuffer,
     LPDWORD pcbData, DWORD dwFlags, LPCWSTR pwszBaseDir)

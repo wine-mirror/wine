@@ -3854,7 +3854,6 @@ static void test_RegLoadMUIString(void)
         BOOL use_sysdir;
         DWORD expected;
         DWORD broken_ret;
-        BOOL todo;
     } test_case[] = {
         /* 0 */
         { "",                  REG_SZ,        FALSE, ERROR_INVALID_DATA },
@@ -3868,9 +3867,9 @@ static void test_RegLoadMUIString(void)
         { "@%WineMuiTest2%",   REG_EXPAND_SZ, TRUE,  ERROR_SUCCESS },
         /*  8 */
         { "@%WineMuiExe%,a",   REG_SZ,        FALSE, ERROR_INVALID_DATA },
-        { "@%WineMuiExe%,-4",  REG_SZ,        FALSE, ERROR_NOT_FOUND, ERROR_FILE_NOT_FOUND, TRUE },
-        { "@%WineMuiExe%,-39", REG_SZ,        FALSE, ERROR_RESOURCE_NAME_NOT_FOUND, 0, TRUE },
-        { "@%WineMuiDat%,-16", REG_EXPAND_SZ, FALSE, ERROR_BAD_EXE_FORMAT, ERROR_FILE_NOT_FOUND, TRUE },
+        { "@%WineMuiExe%,-4",  REG_SZ,        FALSE, ERROR_NOT_FOUND, ERROR_FILE_NOT_FOUND },
+        { "@%WineMuiExe%,-39", REG_SZ,        FALSE, ERROR_RESOURCE_NAME_NOT_FOUND },
+        { "@%WineMuiDat%,-16", REG_EXPAND_SZ, FALSE, ERROR_BAD_EXE_FORMAT, ERROR_FILE_NOT_FOUND },
     };
 
     if (!pRegLoadMUIStringA || !pRegLoadMUIStringW)
@@ -4013,7 +4012,6 @@ static void test_RegLoadMUIString(void)
         ret = pRegLoadMUIStringW(hkey_main, tz_valueW, bufW, ARRAY_SIZE(bufW),
                                  &size, 0,
                                  test_case[i].use_sysdir ? sysdirW : NULL);
-        todo_wine_if(test_case[i].todo)
         ok(ret == test_case[i].expected ||
            broken(test_case[i].value[0] == '%' && ret == ERROR_SUCCESS /* vista */) ||
            broken(test_case[i].broken_ret && ret == test_case[i].broken_ret /* vista */),
