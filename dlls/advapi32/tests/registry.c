@@ -3859,7 +3859,7 @@ static void test_RegLoadMUIString(void)
         /* 0 */
         { "",                  REG_SZ,        FALSE, ERROR_INVALID_DATA },
         { "not a MUI string",  REG_SZ,        FALSE, ERROR_INVALID_DATA },
-        { "@unknown.dll",      REG_SZ,        TRUE,  ERROR_INVALID_DATA, 0, TRUE },
+        { "@unknown.dll",      REG_SZ,        TRUE,  ERROR_INVALID_DATA },
         { "@unknown.dll,-10",  REG_SZ,        TRUE,  ERROR_FILE_NOT_FOUND },
         /*  4 */
         { with_env_var,        REG_SZ,        FALSE, ERROR_SUCCESS },
@@ -3867,7 +3867,7 @@ static void test_RegLoadMUIString(void)
         { "%WineMuiTest1%",    REG_EXPAND_SZ, TRUE,  ERROR_INVALID_DATA },
         { "@%WineMuiTest2%",   REG_EXPAND_SZ, TRUE,  ERROR_SUCCESS },
         /*  8 */
-        { "@%WineMuiExe%,a",   REG_SZ,        FALSE, ERROR_INVALID_DATA, 0, TRUE },
+        { "@%WineMuiExe%,a",   REG_SZ,        FALSE, ERROR_INVALID_DATA },
         { "@%WineMuiExe%,-4",  REG_SZ,        FALSE, ERROR_NOT_FOUND, ERROR_FILE_NOT_FOUND, TRUE },
         { "@%WineMuiExe%,-39", REG_SZ,        FALSE, ERROR_RESOURCE_NAME_NOT_FOUND, 0, TRUE },
         { "@%WineMuiDat%,-16", REG_EXPAND_SZ, FALSE, ERROR_BAD_EXE_FORMAT, ERROR_FILE_NOT_FOUND, TRUE },

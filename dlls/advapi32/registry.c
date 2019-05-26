@@ -3273,7 +3273,7 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
 
         /* Format of the expanded value is 'path_to_dll,-resId' */
         if (!pComma || pComma[1] != '-') {
-            result = ERROR_BADKEY;
+            result = ERROR_INVALID_DATA;
             goto cleanup;
         }
 
