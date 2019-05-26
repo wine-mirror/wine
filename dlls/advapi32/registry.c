@@ -3247,6 +3247,12 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     result = RegQueryValueExW(hKey, pwszValue, NULL, &dwValueType, (LPBYTE)pwszTempBuffer, &cbData);
     if (result != ERROR_SUCCESS) goto cleanup;
 
+    /* '@' is the prefix for resource based string entries. */
+    if (*pwszTempBuffer != '@') {
+        result = ERROR_INVALID_DATA;
+        goto cleanup;
+    }
+
     /* Expand environment variables, if appropriate, or copy the original string over. */
     if (dwValueType == REG_EXPAND_SZ) {
         cbData = ExpandEnvironmentStringsW(pwszTempBuffer, NULL, 0) * sizeof(WCHAR);
@@ -3262,14 +3268,8 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
         memcpy(pwszExpandedBuffer, pwszTempBuffer, cbData);
     }
 
-    /* If the value references a resource based string, parse the value and load the string.
-     * Else just copy over the original value. */
-    result = ERROR_SUCCESS;
-    if (*pwszExpandedBuffer != '@') { /* '@' is the prefix for resource based string entries. */
-        lstrcpynW(pwszBuffer, pwszExpandedBuffer, cbBuffer / sizeof(WCHAR));
-        if (pcbData)
-            *pcbData = (strlenW(pwszExpandedBuffer) + 1) * sizeof(WCHAR);
-    } else {
+    /* Parse the value and load the string. */
+    {
         WCHAR *pComma = strrchrW(pwszExpandedBuffer, ','), *pNewBuffer;
         const WCHAR backslashW[] = {'\\',0};
         UINT uiStringId;
