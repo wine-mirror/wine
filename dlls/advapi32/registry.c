@@ -3253,20 +3253,15 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
         goto cleanup;
     }
 
-    /* Expand environment variables, if appropriate, or copy the original string over. */
-    if (dwValueType == REG_EXPAND_SZ) {
-        cbData = ExpandEnvironmentStringsW(pwszTempBuffer, NULL, 0) * sizeof(WCHAR);
-        if (!cbData) goto cleanup;
-        pwszExpandedBuffer = heap_alloc(cbData);
-        if (!pwszExpandedBuffer) {
-            result = ERROR_NOT_ENOUGH_MEMORY;
-            goto cleanup;
-        }
-        ExpandEnvironmentStringsW(pwszTempBuffer, pwszExpandedBuffer, cbData / sizeof(WCHAR));
-    } else {
-        pwszExpandedBuffer = heap_alloc(cbData);
-        memcpy(pwszExpandedBuffer, pwszTempBuffer, cbData);
+    /* Expand environment variables regardless of the type. */
+    cbData = ExpandEnvironmentStringsW(pwszTempBuffer, NULL, 0) * sizeof(WCHAR);
+    if (!cbData) goto cleanup;
+    pwszExpandedBuffer = heap_alloc(cbData);
+    if (!pwszExpandedBuffer) {
+        result = ERROR_NOT_ENOUGH_MEMORY;
+        goto cleanup;
     }
+    ExpandEnvironmentStringsW(pwszTempBuffer, pwszExpandedBuffer, cbData / sizeof(WCHAR));
 
     /* Parse the value and load the string. */
     {

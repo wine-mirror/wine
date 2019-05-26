@@ -3862,7 +3862,7 @@ static void test_RegLoadMUIString(void)
         { "@unknown.dll",      REG_SZ,        TRUE,  ERROR_INVALID_DATA, 0, TRUE },
         { "@unknown.dll,-10",  REG_SZ,        TRUE,  ERROR_FILE_NOT_FOUND },
         /*  4 */
-        { with_env_var,        REG_SZ,        FALSE, ERROR_SUCCESS, 0, TRUE },
+        { with_env_var,        REG_SZ,        FALSE, ERROR_SUCCESS },
         { with_env_var,        REG_EXPAND_SZ, FALSE, ERROR_SUCCESS },
         { "%WineMuiTest1%",    REG_EXPAND_SZ, TRUE,  ERROR_INVALID_DATA },
         { "@%WineMuiTest2%",   REG_EXPAND_SZ, TRUE,  ERROR_SUCCESS },
