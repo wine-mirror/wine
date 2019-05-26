@@ -224,7 +224,7 @@ static void test_GetDeviceInfo(IDirectInputA *pDI)
             wine_dbgstr_guid(&instA.guidProduct), wine_dbgstr_guid(&inst3A.guidProduct) );
     ok(instA.dwDevType == inst3A.dwDevType, "got %d, %d\n", instA.dwDevType, inst3A.dwDevType);
 
-    if (pMouse) IUnknown_Release(pMouse);
+    IUnknown_Release(pMouse);
 }
 
 static BOOL CALLBACK EnumAxes(const DIDEVICEOBJECTINSTANCEA *pdidoi, void *pContext)

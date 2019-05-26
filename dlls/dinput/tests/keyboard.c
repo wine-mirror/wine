@@ -479,7 +479,7 @@ static void test_GetDeviceInfo(IDirectInputA *pDI)
             wine_dbgstr_guid(&instA.guidProduct), wine_dbgstr_guid(&inst3A.guidProduct) );
     ok(instA.dwDevType == inst3A.dwDevType, "got %d, %d\n", instA.dwDevType, inst3A.dwDevType);
 
-    if (pKey) IUnknown_Release(pKey);
+    IUnknown_Release(pKey);
 }
 
 static void keyboard_tests(DWORD version)
