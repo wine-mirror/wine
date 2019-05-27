@@ -633,7 +633,6 @@ static NTSTATUS dispatch_create( struct dispatch_context *context )
     irp->Flags |= IRP_CREATE_OPERATION;
     dispatch_irp( device, irp, context );
 
-    HeapFree( GetProcessHeap(), 0, context->in_buff );
     return STATUS_SUCCESS;
 }
 
@@ -671,7 +670,6 @@ static NTSTATUS dispatch_close( struct dispatch_context *context )
     irp->Flags |= IRP_CLOSE_OPERATION;
     dispatch_irp( device, irp, context );
 
-    HeapFree( GetProcessHeap(), 0, context->in_buff );
     return STATUS_SUCCESS;
 }
 
@@ -714,7 +712,6 @@ static NTSTATUS dispatch_read( struct dispatch_context *context )
     irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate out_buff */
     dispatch_irp( device, irp, context );
 
-    HeapFree( GetProcessHeap(), 0, context->in_buff );
     return STATUS_SUCCESS;
 }
 
@@ -738,6 +735,7 @@ static NTSTATUS dispatch_write( struct dispatch_context *context )
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE, device, context->in_buff, context->in_size,
                                               &offset, NULL, NULL )))
         return STATUS_NO_MEMORY;
+    context->in_buff = NULL;
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
@@ -779,7 +777,6 @@ static NTSTATUS dispatch_flush( struct dispatch_context *context )
 
     dispatch_irp( device, irp, context );
 
-    HeapFree( GetProcessHeap(), 0, context->in_buff );
     return STATUS_SUCCESS;
 }
 
@@ -841,6 +838,7 @@ static NTSTATUS dispatch_ioctl( struct dispatch_context *context )
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
     irp->AssociatedIrp.SystemBuffer = context->in_buff;
+    context->in_buff = NULL;
 
     irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
     dispatch_irp( device, irp, context );
@@ -981,8 +979,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             if (status == STATUS_SUCCESS)
             {
                 context.handle = 0;  /* status reported by IoCompleteRequest */
-                context.in_size = 4096;
-                context.in_buff = NULL;
+                if (!context.in_buff) context.in_size = 4096;
             }
             break;
         case STATUS_BUFFER_OVERFLOW:
