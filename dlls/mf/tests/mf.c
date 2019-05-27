@@ -1638,17 +1638,23 @@ static IMFSampleGrabberSinkCallback grabber_callback = { &grabber_callback_vtbl 
 
 static void test_sample_grabber(void)
 {
+    IMFMediaType *media_type, *media_type2, *media_type3;
     IMFMediaTypeHandler *handler, *handler2;
+    IMFPresentationTimeSource *time_source;
     IMFStreamSink *stream, *stream2;
     IMFClockStateSink *clocksink;
+    IMFPresentationClock *clock;
     IMFMediaEventGenerator *eg;
     IMFMediaSink *sink, *sink2;
-    IMFMediaType *media_type;
     DWORD flags, count, id;
     IMFActivate *activate;
     ULONG refcount;
     IUnknown *unk;
     HRESULT hr;
+    GUID guid;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
@@ -1725,14 +1731,31 @@ static void test_sample_grabber(void)
     hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
     ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
     hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
-todo_wine {
     ok(hr == S_OK, "Failed to get media type count, hr %#x.\n", hr);
     ok(count == 0, "Unexpected count %u.\n", count);
-}
     ok(handler == handler2, "Unexpected handler.\n");
 
     IMFMediaTypeHandler_Release(handler);
     IMFMediaTypeHandler_Release(handler2);
+
+    /* Set clock. */
+    hr = MFCreatePresentationClock(&clock);
+    ok(hr == S_OK, "Failed to create clock object, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, clock);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSystemTimeSource(&time_source);
+    ok(hr == S_OK, "Failed to create time source, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_SetTimeSource(clock, time_source);
+    ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
+    IMFPresentationTimeSource_Release(time_source);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, clock);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    IMFPresentationClock_Release(clock);
 
     hr = IMFActivate_ShutdownObject(activate);
 todo_wine
@@ -1768,12 +1791,93 @@ todo_wine
     hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
     ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
 
+    /* On Win8+ this initialization happens automatically. */
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type);
+    ok(hr == S_OK, "Failed to set media type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
-todo_wine {
     ok(hr == S_OK, "Failed to get media type count, hr %#x.\n", hr);
     ok(count == 0, "Unexpected count %u.\n", count);
-}
+
+    hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
+    ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type %s.\n", wine_dbgstr_guid(&guid));
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type2);
+    ok(hr == S_OK, "Failed to get current type, hr %#x.\n", hr);
+    ok(media_type2 == media_type, "Unexpected media type.\n");
+    IMFMediaType_Release(media_type2);
+
+    hr = MFCreateMediaType(&media_type2);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type2, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type2, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type2);
+    ok(hr == S_OK, "Failed to get current type, hr %#x.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
+    ok(hr == S_OK, "Failed to get current type, hr %#x.\n", hr);
+    ok(media_type2 == media_type, "Unexpected media type.\n");
+    IMFMediaType_Release(media_type);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, &media_type);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type, NULL);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type, &media_type3);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    media_type3 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type, &media_type3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(media_type3 == (void *)0xdeadbeef, "Unexpected media type %p.\n", media_type3);
+
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, 1024);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    media_type3 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type, &media_type3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(media_type3 == (void *)0xdeadbeef, "Unexpected media type %p.\n", media_type3);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     IMFMediaTypeHandler_Release(handler);
+
+    IMFMediaType_Release(media_type2);
+    IMFMediaType_Release(media_type);
 
     IMFMediaSink_Release(sink);
     IMFStreamSink_Release(stream);
@@ -1781,7 +1885,8 @@ todo_wine {
     refcount = IMFActivate_Release(activate);
     ok(!refcount, "Unexpected refcount %u.\n", refcount);
 
-    IMFMediaType_Release(media_type);
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
 START_TEST(mf)

@@ -28,12 +28,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+struct sample_grabber;
+
 struct sample_grabber_stream
 {
     IMFStreamSink IMFStreamSink_iface;
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
     LONG refcount;
-    IMFMediaSink *sink;
+    struct sample_grabber *sink;
     IMFMediaEventQueue *event_queue;
 };
 
@@ -136,7 +138,7 @@ static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
 
     if (!refcount)
     {
-        IMFMediaSink_Release(stream->sink);
+        IMFMediaSink_Release(&stream->sink->IMFMediaSink_iface);
         if (stream->event_queue)
         {
             IMFMediaEventQueue_Shutdown(stream->event_queue);
@@ -193,7 +195,7 @@ static HRESULT WINAPI sample_grabber_stream_GetMediaSink(IMFStreamSink *iface, I
 
     TRACE("%p, %p.\n", iface, sink);
 
-    *sink = stream->sink;
+    *sink = &stream->sink->IMFMediaSink_iface;
     IMFMediaSink_AddRef(*sink);
 
     return S_OK;
@@ -281,47 +283,81 @@ static ULONG WINAPI sample_grabber_stream_type_handler_Release(IMFMediaTypeHandl
 static HRESULT WINAPI sample_grabber_stream_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface,
         IMFMediaType *in_type, IMFMediaType **out_type)
 {
-    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
+    const DWORD supported_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
+    DWORD flags;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, in_type, out_type);
+
+    if (!in_type)
+        return E_POINTER;
+
+    if (IMFMediaType_IsEqual(stream->sink->media_type, in_type, &flags) == S_OK)
+        return S_OK;
+
+    return (flags & supported_flags) == supported_flags ? S_OK : MF_E_INVALIDMEDIATYPE;
 }
 
 static HRESULT WINAPI sample_grabber_stream_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
 {
-    FIXME("%p, %p.\n", iface, count);
+    TRACE("%p, %p.\n", iface, count);
 
-    return E_NOTIMPL;
+    if (!count)
+        return E_POINTER;
+
+    *count = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_grabber_stream_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
-        IMFMediaType **type)
+        IMFMediaType **media_type)
 {
-    FIXME("%p, %u, %p.\n", iface, index, type);
+    TRACE("%p, %u, %p.\n", iface, index, media_type);
 
-    return E_NOTIMPL;
+    if (!media_type)
+        return E_POINTER;
+
+    return MF_E_NO_MORE_TYPES;
 }
 
 static HRESULT WINAPI sample_grabber_stream_type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface,
-        IMFMediaType *type)
+        IMFMediaType *media_type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, media_type);
+
+    if (!media_type)
+        return E_POINTER;
+
+    IMFMediaType_Release(stream->sink->media_type);
+    stream->sink->media_type = media_type;
+    IMFMediaType_AddRef(stream->sink->media_type);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_grabber_stream_type_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface,
         IMFMediaType **type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    *type = stream->sink->media_type;
+    IMFMediaType_AddRef(*type);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_grabber_stream_type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    return IMFMediaType_GetMajorType(stream->sink->media_type, type);
 }
 
 static const IMFMediaTypeHandlerVtbl sample_grabber_stream_type_handler_vtbl =
@@ -682,7 +718,7 @@ static const IMFClockStateSinkVtbl sample_grabber_clock_sink_vtbl =
     sample_grabber_clock_sink_OnClockSetRate,
 };
 
-static HRESULT sample_grabber_create_stream(IMFMediaSink *sink, IMFStreamSink **stream)
+static HRESULT sample_grabber_create_stream(struct sample_grabber *sink, IMFStreamSink **stream)
 {
     struct sample_grabber_stream *object;
     HRESULT hr;
@@ -695,7 +731,7 @@ static HRESULT sample_grabber_create_stream(IMFMediaSink *sink, IMFStreamSink **
     object->IMFMediaTypeHandler_iface.lpVtbl = &sample_grabber_stream_type_handler_vtbl;
     object->refcount = 1;
     object->sink = sink;
-    IMFMediaSink_AddRef(object->sink);
+    IMFMediaSink_AddRef(&object->sink->IMFMediaSink_iface);
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
         goto failed;
@@ -715,8 +751,13 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
     struct sample_grabber_activate_context *context = user_context;
     struct sample_grabber *object;
     HRESULT hr;
+    GUID guid;
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
+
+    /* At least major type is required. */
+    if (FAILED(IMFMediaType_GetMajorType(context->media_type, &guid)))
+        return MF_E_INVALIDMEDIATYPE;
 
     object = heap_alloc_zero(sizeof(*object));
     if (!object)
@@ -732,7 +773,7 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
     IMFMediaType_AddRef(object->media_type);
     InitializeCriticalSection(&object->cs);
 
-    if (FAILED(hr = sample_grabber_create_stream(&object->IMFMediaSink_iface, &object->stream)))
+    if (FAILED(hr = sample_grabber_create_stream(object, &object->stream)))
         goto failed;
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
