@@ -2826,7 +2826,7 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
             strarray_add( &make->all_targets, xstrdup( font ));
             output( "%s: %s %s\n", obj_dir_path( make, font ),
                     tools_path( make, "sfnt2fon" ), ttf_file );
-            output( "\t%s -o $@ %s %s\n", tools_path( make, "sfnt2fon" ), ttf_file, args );
+            output( "\t%s -q -o $@ %s %s\n", tools_path( make, "sfnt2fon" ), ttf_file, args );
             add_install_rule( make, source->name, xstrdup(font), strmake( "d$(fontdir)/%s", font ));
         }
     }
