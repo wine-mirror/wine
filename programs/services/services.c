@@ -1069,10 +1069,13 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         if (err != ERROR_SUCCESS)
         {
             service_lock(service);
-            service->status.dwCurrentState = SERVICE_STOPPED;
-            service->process = NULL;
-            if (!--process->use_count) process_terminate(process);
-            release_process(process);
+            if (service->process)
+            {
+                service->status.dwCurrentState = SERVICE_STOPPED;
+                service->process = NULL;
+                if (!--process->use_count) process_terminate(process);
+                release_process(process);
+            }
             service_unlock(service);
         }
 
