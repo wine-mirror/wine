@@ -1222,6 +1222,10 @@ void WINAPI IoQueueWorkItem( PIO_WORKITEM work_item, PIO_WORKITEM_ROUTINE worker
     TrySubmitThreadpoolCallback( run_work_item_worker, work_item, NULL );
 }
 
+void WINAPI IoDetachDevice( DEVICE_OBJECT *device )
+{
+    device->AttachedDevice = NULL;
+}
 
 /***********************************************************************
  *           IoAttachDeviceToDeviceStack  (NTOSKRNL.EXE.@)
