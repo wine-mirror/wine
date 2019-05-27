@@ -430,8 +430,8 @@ LONG WINAPI SHRegSetUSValueW(const WCHAR *subkey, const WCHAR *value, DWORD type
     return ret;
 }
 
-LONG WINAPI SHRegQueryInfoUSKeyA(HUSKEY hUSKey, DWORD *subkeys, DWORD *max_subkey_len, DWORD *values, DWORD *max_value_name_len,
-        SHREGENUM_FLAGS flags)
+LONG WINAPI SHRegQueryInfoUSKeyA(HUSKEY hUSKey, DWORD *subkeys, DWORD *max_subkey_len, DWORD *values,
+        DWORD *max_value_name_len, SHREGENUM_FLAGS flags)
 {
     HKEY dokey;
     LONG ret;
@@ -453,8 +453,8 @@ LONG WINAPI SHRegQueryInfoUSKeyA(HUSKEY hUSKey, DWORD *subkeys, DWORD *max_subke
     return ERROR_INVALID_FUNCTION;
 }
 
-LONG WINAPI SHRegQueryInfoUSKeyW(HUSKEY hUSKey, DWORD *subkeys, DWORD *max_subkey_len, DWORD *values, DWORD *max_value_name_len,
-        SHREGENUM_FLAGS flags)
+LONG WINAPI SHRegQueryInfoUSKeyW(HUSKEY hUSKey, DWORD *subkeys, DWORD *max_subkey_len, DWORD *values,
+        DWORD *max_value_name_len, SHREGENUM_FLAGS flags)
 {
     HKEY dokey;
     LONG ret;
@@ -474,4 +474,206 @@ LONG WINAPI SHRegQueryInfoUSKeyW(HUSKEY hUSKey, DWORD *subkeys, DWORD *max_subke
     }
 
     return ERROR_INVALID_FUNCTION;
+}
+
+LONG WINAPI SHRegQueryUSValueA(HUSKEY hUSKey, const char *value, DWORD *type, void *data, DWORD *data_len,
+        BOOL ignore_hkcu, void *default_data, DWORD default_data_len)
+{
+    LONG ret = ~ERROR_SUCCESS;
+    DWORD move_len;
+    HKEY dokey;
+
+    /* If user wants HKCU, and it exists, then try it */
+    if (!ignore_hkcu && (dokey = reg_get_hkey_from_huskey(hUSKey, TRUE)))
+    {
+        ret = RegQueryValueExA(dokey, value, 0, type, data, data_len);
+        TRACE("HKCU RegQueryValue returned %d\n", ret);
+    }
+
+    /* If HKCU did not work and HKLM exists, then try it */
+    if ((ret != ERROR_SUCCESS) && (dokey = reg_get_hkey_from_huskey(hUSKey, FALSE)))
+    {
+        ret = RegQueryValueExA(dokey, value, 0, type, data, data_len);
+        TRACE("HKLM RegQueryValue returned %d\n", ret);
+    }
+
+    /* If neither worked, and default data exists, then use it */
+    if (ret != ERROR_SUCCESS)
+    {
+        if (default_data && default_data_len)
+        {
+            move_len = default_data_len >= *data_len ? *data_len : default_data_len;
+            memmove(data, default_data, move_len);
+            *data_len = move_len;
+            TRACE("setting default data\n");
+            ret = ERROR_SUCCESS;
+        }
+    }
+
+    return ret;
+}
+
+LONG WINAPI SHRegQueryUSValueW(HUSKEY hUSKey, const WCHAR *value, DWORD *type, void *data, DWORD *data_len,
+        BOOL ignore_hkcu, void *default_data, DWORD default_data_len)
+{
+    LONG ret = ~ERROR_SUCCESS;
+    DWORD move_len;
+    HKEY dokey;
+
+    /* If user wants HKCU, and it exists, then try it */
+    if (!ignore_hkcu && (dokey = reg_get_hkey_from_huskey(hUSKey, TRUE)))
+    {
+        ret = RegQueryValueExW(dokey, value, 0, type, data, data_len);
+        TRACE("HKCU RegQueryValue returned %d\n", ret);
+    }
+
+    /* If HKCU did not work and HKLM exists, then try it */
+    if ((ret != ERROR_SUCCESS) && (dokey = reg_get_hkey_from_huskey(hUSKey, FALSE)))
+    {
+        ret = RegQueryValueExW(dokey, value, 0, type, data, data_len);
+        TRACE("HKLM RegQueryValue returned %d\n", ret);
+    }
+
+    /* If neither worked, and default data exists, then use it */
+    if (ret != ERROR_SUCCESS)
+    {
+        if (default_data && default_data_len)
+        {
+            move_len = default_data_len >= *data_len ? *data_len : default_data_len;
+            memmove(data, default_data, move_len);
+            *data_len = move_len;
+            TRACE("setting default data\n");
+            ret = ERROR_SUCCESS;
+        }
+    }
+
+    return ret;
+}
+
+LONG WINAPI SHRegGetUSValueA(const char *subkey, const char *value, DWORD *type, void *data, DWORD *data_len,
+        BOOL ignore_hkcu, void *default_data, DWORD default_data_len)
+{
+    HUSKEY myhuskey;
+    LONG ret;
+
+    if (!data || !data_len)
+        return ERROR_INVALID_FUNCTION; /* FIXME:wrong*/
+
+    TRACE("%s, %s, %d\n", debugstr_a(subkey), debugstr_a(value), *data_len);
+
+    ret = SHRegOpenUSKeyA(subkey, KEY_QUERY_VALUE, 0, &myhuskey, ignore_hkcu);
+    if (!ret)
+    {
+        ret = SHRegQueryUSValueA(myhuskey, value, type, data, data_len, ignore_hkcu, default_data, default_data_len);
+        SHRegCloseUSKey(myhuskey);
+    }
+
+    return ret;
+}
+
+LONG WINAPI SHRegGetUSValueW(const WCHAR *subkey, const WCHAR *value, DWORD *type, void *data, DWORD *data_len,
+        BOOL ignore_hkcu, void *default_data, DWORD default_data_len)
+{
+    HUSKEY myhuskey;
+    LONG ret;
+
+    if (!data || !data_len)
+        return ERROR_INVALID_FUNCTION; /* FIXME:wrong*/
+
+    TRACE("%s, %s, %d\n", debugstr_w(subkey), debugstr_w(value), *data_len);
+
+    ret = SHRegOpenUSKeyW(subkey, KEY_QUERY_VALUE, 0, &myhuskey, ignore_hkcu);
+    if (!ret)
+    {
+        ret = SHRegQueryUSValueW(myhuskey, value, type, data, data_len, ignore_hkcu, default_data, default_data_len);
+        SHRegCloseUSKey(myhuskey);
+    }
+
+    return ret;
+}
+
+BOOL WINAPI SHRegGetBoolUSValueA(const char *subkey, const char *value, BOOL ignore_hkcu, BOOL default_value)
+{
+    BOOL ret = default_value;
+    DWORD type, datalen;
+    char data[10];
+
+    TRACE("%s, %s, %d\n", debugstr_a(subkey), debugstr_a(value), ignore_hkcu);
+
+    datalen = ARRAY_SIZE(data) - 1;
+    if (!SHRegGetUSValueA(subkey, value, &type, data, &datalen, ignore_hkcu, 0, 0))
+    {
+        switch (type)
+        {
+            case REG_SZ:
+                data[9] = '\0';
+                if (!lstrcmpiA(data, "YES") || !lstrcmpiA(data, "TRUE"))
+                    ret = TRUE;
+                else if (!lstrcmpiA(data, "NO") || !lstrcmpiA(data, "FALSE"))
+                    ret = FALSE;
+                break;
+            case REG_DWORD:
+                ret = *(DWORD *)data != 0;
+                break;
+            case REG_BINARY:
+                if (datalen == 1)
+                {
+                    ret = !!data[0];
+                    break;
+                }
+            default:
+                FIXME("Unsupported registry data type %d\n", type);
+                ret = FALSE;
+        }
+        TRACE("got value (type=%d), returning %d\n", type, ret);
+    }
+    else
+        TRACE("returning default value %d\n", ret);
+
+    return ret;
+}
+
+BOOL WINAPI SHRegGetBoolUSValueW(const WCHAR *subkey, const WCHAR *value, BOOL ignore_hkcu, BOOL default_value)
+{
+    static const WCHAR yesW[]= {'Y','E','S',0};
+    static const WCHAR trueW[] = {'T','R','U','E',0};
+    static const WCHAR noW[] = {'N','O',0};
+    static const WCHAR falseW[] = {'F','A','L','S','E',0};
+    BOOL ret = default_value;
+    DWORD type, datalen;
+    WCHAR data[10];
+
+    TRACE("%s, %s, %d\n", debugstr_w(subkey), debugstr_w(value), ignore_hkcu);
+
+    datalen = (ARRAY_SIZE(data) - 1) * sizeof(WCHAR);
+    if (!SHRegGetUSValueW(subkey, value, &type, data, &datalen, ignore_hkcu, 0, 0))
+    {
+        switch (type)
+        {
+            case REG_SZ:
+                data[9] = '\0';
+                if (!lstrcmpiW(data, yesW) || !lstrcmpiW(data, trueW))
+                    ret = TRUE;
+                else if (!lstrcmpiW(data, noW) || !lstrcmpiW(data, falseW))
+                    ret = FALSE;
+                break;
+            case REG_DWORD:
+                ret = *(DWORD *)data != 0;
+                break;
+            case REG_BINARY:
+                if (datalen == 1)
+                {
+                    ret = !!data[0];
+                    break;
+                }
+            default:
+                FIXME("Unsupported registry data type %d\n", type);
+                ret = FALSE;
+        }
+        TRACE("got value (type=%d), returning %d\n", type, ret);
+    }
+    else
+        TRACE("returning default value %d\n", ret);
+
+    return ret;
 }

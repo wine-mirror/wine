@@ -1367,16 +1367,16 @@
 @ stdcall SHRegEnumUSKeyW(long long wstr ptr long)
 @ stdcall SHRegEnumUSValueA(long long ptr ptr ptr ptr ptr long)
 @ stdcall SHRegEnumUSValueW(long long ptr ptr ptr ptr ptr long)
-@ stdcall SHRegGetBoolUSValueA(str str long long) shlwapi.SHRegGetBoolUSValueA
-@ stdcall SHRegGetBoolUSValueW(wstr wstr long long) shlwapi.SHRegGetBoolUSValueW
-@ stdcall SHRegGetUSValueA( str str ptr ptr ptr long ptr long ) shlwapi.SHRegGetUSValueA
-@ stdcall SHRegGetUSValueW( wstr wstr ptr ptr ptr long ptr long ) shlwapi.SHRegGetUSValueW
+@ stdcall SHRegGetBoolUSValueA(str str long long)
+@ stdcall SHRegGetBoolUSValueW(wstr wstr long long)
+@ stdcall SHRegGetUSValueA(str str ptr ptr ptr long ptr long)
+@ stdcall SHRegGetUSValueW(wstr wstr ptr ptr ptr long ptr long)
 @ stdcall SHRegOpenUSKeyA(str long long long long)
 @ stdcall SHRegOpenUSKeyW(wstr long long long long)
 @ stdcall SHRegQueryInfoUSKeyA(long ptr ptr ptr ptr long)
 @ stdcall SHRegQueryInfoUSKeyW(long ptr ptr ptr ptr long)
-@ stdcall SHRegQueryUSValueA( long str ptr ptr ptr long ptr long ) shlwapi.SHRegQueryUSValueA
-@ stdcall SHRegQueryUSValueW( long wstr ptr ptr ptr long ptr long ) shlwapi.SHRegQueryUSValueW
+@ stdcall SHRegQueryUSValueA(long str ptr ptr ptr long ptr long)
+@ stdcall SHRegQueryUSValueW(long wstr ptr ptr ptr long ptr long)
 @ stdcall SHRegSetUSValueA(str str long ptr long long)
 @ stdcall SHRegSetUSValueW(wstr wstr long ptr long long)
 @ stdcall SHRegWriteUSValueA(long str long ptr long long)
