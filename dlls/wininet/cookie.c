@@ -238,7 +238,7 @@ static cookie_t *alloc_cookie(substr_t name, substr_t data, FILETIME expiry, FIL
 {
     cookie_t *new_cookie;
 
-    new_cookie = heap_alloc(sizeof(*new_cookie));
+    new_cookie = heap_alloc_zero(sizeof(*new_cookie));
     if(!new_cookie)
         return NULL;
 
@@ -247,9 +247,12 @@ static cookie_t *alloc_cookie(substr_t name, substr_t data, FILETIME expiry, FIL
     new_cookie->flags = flags;
     list_init(&new_cookie->entry);
 
-    new_cookie->name = heap_strndupW(name.str, name.len);
-    new_cookie->data = heap_strndupW(data.str, data.len);
-    if(!new_cookie->name || !new_cookie->data) {
+    if(name.str && !(new_cookie->name = heap_strndupW(name.str, name.len))) {
+        delete_cookie(new_cookie);
+        return NULL;
+    }
+
+    if(data.str && !(new_cookie->data = heap_strndupW(data.str, data.len))) {
         delete_cookie(new_cookie);
         return NULL;
     }
