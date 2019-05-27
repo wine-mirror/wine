@@ -24,7 +24,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
@@ -347,7 +346,7 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
 
     TRACE("(%p %s %p %p)\n", inst, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
 
-    index_len = lpszIndex ? strlenW(lpszIndex) : 0;
+    index_len = lpszIndex ? lstrlenW(lpszIndex) : 0;
     path = heap_alloc((MAX_PATH+index_len)*sizeof(WCHAR) + sizeof(tlb_extW));
     if(!path)
         return E_OUTOFMEMORY;
