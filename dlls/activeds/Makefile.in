@@ -1,4 +1,6 @@
 MODULE    = activeds.dll
 IMPORTLIB = activeds
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = activeds_main.c
