@@ -574,11 +574,19 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
     return STATUS_SUCCESS;
 }
 
-static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp, HANDLE irp_handle )
+struct dispatch_context
+{
+    irp_params_t params;
+    HANDLE handle;
+    ULONG  in_size;
+    void  *in_buff;
+};
+
+static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp, struct dispatch_context *context )
 {
     LARGE_INTEGER count;
 
-    IoSetCompletionRoutine( irp, dispatch_irp_completion, irp_handle, TRUE, TRUE, TRUE );
+    IoSetCompletionRoutine( irp, dispatch_irp_completion, context->handle, TRUE, TRUE, TRUE );
     KeQueryTickCount( &count );  /* update the global KeTickCount */
 
     device->CurrentIrp = irp;
@@ -587,14 +595,13 @@ static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp, HANDLE irp_handle )
 }
 
 /* process a create request for a given file */
-static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                 HANDLE irp_handle )
+static NTSTATUS dispatch_create( struct dispatch_context *context )
 {
     IRP *irp;
     IO_STACK_LOCATION *irpsp;
     FILE_OBJECT *file;
-    DEVICE_OBJECT *device = wine_server_get_ptr( params->create.device );
-    HANDLE handle = wine_server_ptr_handle( params->create.file );
+    DEVICE_OBJECT *device = wine_server_get_ptr( context->params.create.device );
+    HANDLE handle = wine_server_ptr_handle( context->params.create.file );
 
     if (!(file = alloc_kernel_object( IoFileObjectType, handle, sizeof(*file), 0 )))
         return STATUS_NO_MEMORY;
@@ -611,8 +618,8 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irpsp->MajorFunction = IRP_MJ_CREATE;
     irpsp->FileObject = file;
     irpsp->Parameters.Create.SecurityContext = NULL;  /* FIXME */
-    irpsp->Parameters.Create.Options = params->create.options;
-    irpsp->Parameters.Create.ShareAccess = params->create.sharing;
+    irpsp->Parameters.Create.Options = context->params.create.options;
+    irpsp->Parameters.Create.ShareAccess = context->params.create.sharing;
     irpsp->Parameters.Create.FileAttributes = 0;
     irpsp->Parameters.Create.EaLength = 0;
 
@@ -624,20 +631,19 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irp->UserEvent = NULL;
 
     irp->Flags |= IRP_CREATE_OPERATION;
-    dispatch_irp( device, irp, irp_handle );
+    dispatch_irp( device, irp, context );
 
-    HeapFree( GetProcessHeap(), 0, in_buff );
+    HeapFree( GetProcessHeap(), 0, context->in_buff );
     return STATUS_SUCCESS;
 }
 
 /* process a close request for a given file */
-static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                HANDLE irp_handle )
+static NTSTATUS dispatch_close( struct dispatch_context *context )
 {
     IRP *irp;
     IO_STACK_LOCATION *irpsp;
     DEVICE_OBJECT *device;
-    FILE_OBJECT *file = wine_server_get_ptr( params->close.file );
+    FILE_OBJECT *file = wine_server_get_ptr( context->params.close.file );
 
     if (!file) return STATUS_INVALID_HANDLE;
 
@@ -663,23 +669,22 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irp->UserEvent = NULL;
 
     irp->Flags |= IRP_CLOSE_OPERATION;
-    dispatch_irp( device, irp, irp_handle );
+    dispatch_irp( device, irp, context );
 
-    HeapFree( GetProcessHeap(), 0, in_buff );
+    HeapFree( GetProcessHeap(), 0, context->in_buff );
     return STATUS_SUCCESS;
 }
 
 /* process a read request for a given device */
-static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG in_size,
-                               HANDLE irp_handle )
+static NTSTATUS dispatch_read( struct dispatch_context *context )
 {
     IRP *irp;
     void *out_buff;
     LARGE_INTEGER offset;
     IO_STACK_LOCATION *irpsp;
     DEVICE_OBJECT *device;
-    FILE_OBJECT *file = wine_server_get_ptr( params->read.file );
-    ULONG out_size = params->read.out_size;
+    FILE_OBJECT *file = wine_server_get_ptr( context->params.read.file );
+    ULONG out_size = context->params.read.out_size;
 
     if (!file) return STATUS_INVALID_HANDLE;
 
@@ -689,7 +694,7 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
 
     if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
 
-    offset.QuadPart = params->read.pos;
+    offset.QuadPart = context->params.read.pos;
 
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ, device, out_buff, out_size,
                                               &offset, NULL, NULL )))
@@ -703,35 +708,34 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->FileObject = file;
-    irpsp->Parameters.Read.Key = params->read.key;
+    irpsp->Parameters.Read.Key = context->params.read.key;
 
     irp->Flags |= IRP_READ_OPERATION;
     irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate out_buff */
-    dispatch_irp( device, irp, irp_handle );
+    dispatch_irp( device, irp, context );
 
-    HeapFree( GetProcessHeap(), 0, in_buff );
+    HeapFree( GetProcessHeap(), 0, context->in_buff );
     return STATUS_SUCCESS;
 }
 
 /* process a write request for a given device */
-static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                HANDLE irp_handle )
+static NTSTATUS dispatch_write( struct dispatch_context *context )
 {
     IRP *irp;
     LARGE_INTEGER offset;
     IO_STACK_LOCATION *irpsp;
     DEVICE_OBJECT *device;
-    FILE_OBJECT *file = wine_server_get_ptr( params->write.file );
+    FILE_OBJECT *file = wine_server_get_ptr( context->params.write.file );
 
     if (!file) return STATUS_INVALID_HANDLE;
 
     device = file->DeviceObject;
 
-    TRACE( "device %p file %p size %u\n", device, file, in_size );
+    TRACE( "device %p file %p size %u\n", device, file, context->in_size );
 
-    offset.QuadPart = params->write.pos;
+    offset.QuadPart = context->params.write.pos;
 
-    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE, device, in_buff, in_size,
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE, device, context->in_buff, context->in_size,
                                               &offset, NULL, NULL )))
         return STATUS_NO_MEMORY;
 
@@ -740,23 +744,22 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->FileObject = file;
-    irpsp->Parameters.Write.Key = params->write.key;
+    irpsp->Parameters.Write.Key = context->params.write.key;
 
     irp->Flags |= IRP_WRITE_OPERATION;
     irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
-    dispatch_irp( device, irp, irp_handle );
+    dispatch_irp( device, irp, context );
 
     return STATUS_SUCCESS;
 }
 
 /* process a flush request for a given device */
-static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                HANDLE irp_handle )
+static NTSTATUS dispatch_flush( struct dispatch_context *context )
 {
     IRP *irp;
     IO_STACK_LOCATION *irpsp;
     DEVICE_OBJECT *device;
-    FILE_OBJECT *file = wine_server_get_ptr( params->flush.file );
+    FILE_OBJECT *file = wine_server_get_ptr( context->params.flush.file );
 
     if (!file) return STATUS_INVALID_HANDLE;
 
@@ -774,90 +777,87 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->FileObject = file;
 
-    dispatch_irp( device, irp, irp_handle );
+    dispatch_irp( device, irp, context );
 
-    HeapFree( GetProcessHeap(), 0, in_buff );
+    HeapFree( GetProcessHeap(), 0, context->in_buff );
     return STATUS_SUCCESS;
 }
 
 /* process an ioctl request for a given device */
-static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                HANDLE irp_handle )
+static NTSTATUS dispatch_ioctl( struct dispatch_context *context )
 {
     IO_STACK_LOCATION *irpsp;
     IRP *irp;
     void *out_buff = NULL;
     void *to_free = NULL;
     DEVICE_OBJECT *device;
-    FILE_OBJECT *file = wine_server_get_ptr( params->ioctl.file );
-    ULONG out_size = params->ioctl.out_size;
+    FILE_OBJECT *file = wine_server_get_ptr( context->params.ioctl.file );
+    ULONG out_size = context->params.ioctl.out_size;
 
     if (!file) return STATUS_INVALID_HANDLE;
 
     device = file->DeviceObject;
 
     TRACE( "ioctl %x device %p file %p in_size %u out_size %u\n",
-           params->ioctl.code, device, file, in_size, out_size );
+           context->params.ioctl.code, device, file, context->in_size, out_size );
 
     if (out_size)
     {
-        if ((params->ioctl.code & 3) != METHOD_BUFFERED)
+        if ((context->params.ioctl.code & 3) != METHOD_BUFFERED)
         {
-            if (in_size < out_size) return STATUS_INVALID_DEVICE_REQUEST;
-            in_size -= out_size;
+            if (context->in_size < out_size) return STATUS_INVALID_DEVICE_REQUEST;
+            context->in_size -= out_size;
             if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
-            memcpy( out_buff, (char *)in_buff + in_size, out_size );
+            memcpy( out_buff, (char *)context->in_buff + context->in_size, out_size );
         }
-        else if (out_size > in_size)
+        else if (out_size > context->in_size)
         {
             if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
-            memcpy( out_buff, in_buff, in_size );
-            to_free = in_buff;
-            in_buff = out_buff;
+            memcpy( out_buff, context->in_buff, context->in_size );
+            to_free = context->in_buff;
+            context->in_buff = out_buff;
         }
         else
         {
-            out_buff = in_buff;
-            out_size = in_size;
+            out_buff = context->in_buff;
+            out_size = context->in_size;
         }
     }
 
-    irp = IoBuildDeviceIoControlRequest( params->ioctl.code, device, in_buff, in_size, out_buff, out_size,
-                                         FALSE, NULL, NULL );
+    irp = IoBuildDeviceIoControlRequest( context->params.ioctl.code, device, context->in_buff,
+                                         context->in_size, out_buff, out_size, FALSE, NULL, NULL );
     if (!irp)
     {
         HeapFree( GetProcessHeap(), 0, out_buff );
         return STATUS_NO_MEMORY;
     }
 
-    if (out_size && (params->ioctl.code & 3) != METHOD_BUFFERED)
-        HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, in_buff, in_size );
+    if (out_size && (context->params.ioctl.code & 3) != METHOD_BUFFERED)
+        HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, context->in_buff, context->in_size );
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->FileObject = file;
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
-    irp->AssociatedIrp.SystemBuffer = in_buff;
+    irp->AssociatedIrp.SystemBuffer = context->in_buff;
 
     irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
-    dispatch_irp( device, irp, irp_handle );
+    dispatch_irp( device, irp, context );
 
     HeapFree( GetProcessHeap(), 0, to_free );
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS dispatch_free( const irp_params_t *params, void *in_buff, ULONG in_size,
-                               HANDLE irp_handle )
+static NTSTATUS dispatch_free( struct dispatch_context *context )
 {
-    void *obj = wine_server_get_ptr( params->free.obj );
+    void *obj = wine_server_get_ptr( context->params.free.obj );
     TRACE( "freeing %p object\n", obj );
     free_kernel_object( obj );
     return STATUS_SUCCESS;
 }
 
-typedef NTSTATUS (*dispatch_func)( const irp_params_t *params, void *in_buff, ULONG in_size,
-                                   HANDLE irp_handle );
+typedef NTSTATUS (*dispatch_func)( struct dispatch_context *context );
 
 static const dispatch_func dispatch_funcs[] =
 {
@@ -926,12 +926,12 @@ PEPROCESS PsInitialSystemProcess = NULL;
 NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
 {
     HANDLE manager = get_device_manager();
-    HANDLE irp = 0;
+    struct dispatch_context context;
     NTSTATUS status = STATUS_SUCCESS;
-    irp_params_t irp_params;
-    ULONG in_size = 4096;
-    void *in_buff = NULL;
     HANDLE handles[2];
+
+    context.in_size = 4096;
+    context.in_buff = NULL;
 
     /* Set the system process global before setting up the request thread trickery  */
     PsInitialSystemProcess = IoGetCurrentProcess();
@@ -943,7 +943,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     for (;;)
     {
         NtCurrentTeb()->Reserved5[1] = NULL;
-        if (!in_buff && !(in_buff = HeapAlloc( GetProcessHeap(), 0, in_size )))
+        if (!context.in_buff && !(context.in_buff = HeapAlloc( GetProcessHeap(), 0, context.in_size )))
         {
             ERR( "failed to allocate buffer\n" );
             status = STATUS_NO_MEMORY;
@@ -953,22 +953,22 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         SERVER_START_REQ( get_next_device_request )
         {
             req->manager = wine_server_obj_handle( manager );
-            req->prev = wine_server_obj_handle( irp );
+            req->prev = wine_server_obj_handle( context.handle );
             req->status = status;
-            wine_server_set_reply( req, in_buff, in_size );
+            wine_server_set_reply( req, context.in_buff, context.in_size );
             if (!(status = wine_server_call( req )))
             {
-                irp        = wine_server_ptr_handle( reply->next );
-                irp_params = reply->params;
+                context.handle  = wine_server_ptr_handle( reply->next );
+                context.params  = reply->params;
+                context.in_size = reply->in_size;
                 client_tid = reply->client_tid;
-                in_size    = reply->in_size;
                 NtCurrentTeb()->Reserved5[1] = wine_server_get_ptr( reply->client_thread );
             }
             else
             {
-                irp = 0; /* no previous irp */
+                context.handle = 0; /* no previous irp */
                 if (status == STATUS_BUFFER_OVERFLOW)
-                    in_size = reply->in_size;
+                    context.in_size = reply->in_size;
             }
         }
         SERVER_END_REQ;
@@ -976,18 +976,18 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         switch (status)
         {
         case STATUS_SUCCESS:
-            assert( irp_params.type != IRP_CALL_NONE && irp_params.type < ARRAY_SIZE(dispatch_funcs) );
-            status = dispatch_funcs[irp_params.type]( &irp_params, in_buff, in_size, irp );
+            assert( context.params.type != IRP_CALL_NONE && context.params.type < ARRAY_SIZE(dispatch_funcs) );
+            status = dispatch_funcs[context.params.type]( &context );
             if (status == STATUS_SUCCESS)
             {
-                irp = 0;  /* status reported by IoCompleteRequest */
-                in_size = 4096;
-                in_buff = NULL;
+                context.handle = 0;  /* status reported by IoCompleteRequest */
+                context.in_size = 4096;
+                context.in_buff = NULL;
             }
             break;
         case STATUS_BUFFER_OVERFLOW:
-            HeapFree( GetProcessHeap(), 0, in_buff );
-            in_buff = NULL;
+            HeapFree( GetProcessHeap(), 0, context.in_buff );
+            context.in_buff = NULL;
             /* restart with larger buffer */
             break;
         case STATUS_PENDING:
@@ -996,7 +996,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 DWORD ret = WaitForMultipleObjectsEx( 2, handles, FALSE, INFINITE, TRUE );
                 if (ret == WAIT_OBJECT_0)
                 {
-                    HeapFree( GetProcessHeap(), 0, in_buff );
+                    HeapFree( GetProcessHeap(), 0, context.in_buff );
                     status = STATUS_SUCCESS;
                     goto done;
                 }
