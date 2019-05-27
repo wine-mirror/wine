@@ -1222,6 +1222,21 @@ void WINAPI IoQueueWorkItem( PIO_WORKITEM work_item, PIO_WORKITEM_ROUTINE worker
     TrySubmitThreadpoolCallback( run_work_item_worker, work_item, NULL );
 }
 
+/***********************************************************************
+ *           IoGetAttachedDevice   (NTOSKRNL.EXE.@)
+ */
+DEVICE_OBJECT* WINAPI IoGetAttachedDevice( DEVICE_OBJECT *device )
+{
+    DEVICE_OBJECT *result = device;
+
+    TRACE( "(%p)\n", device );
+
+    while (result->AttachedDevice)
+        result = result->AttachedDevice;
+
+    return result;
+}
+
 void WINAPI IoDetachDevice( DEVICE_OBJECT *device )
 {
     device->AttachedDevice = NULL;
@@ -1234,6 +1249,7 @@ PDEVICE_OBJECT WINAPI IoAttachDeviceToDeviceStack( DEVICE_OBJECT *source,
                                                    DEVICE_OBJECT *target )
 {
     TRACE( "%p, %p\n", source, target );
+    target = IoGetAttachedDevice( target );
     target->AttachedDevice = source;
     source->StackSize = target->StackSize + 1;
     return target;
@@ -1797,22 +1813,6 @@ NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK acc
 
     return STATUS_SUCCESS;
 }
-
-/***********************************************************************
- *           IoGetAttachedDevice   (NTOSKRNL.EXE.@)
- */
-DEVICE_OBJECT* WINAPI IoGetAttachedDevice( DEVICE_OBJECT *device )
-{
-    DEVICE_OBJECT *result = device;
-
-    TRACE( "(%p)\n", device );
-
-    while (result->AttachedDevice)
-        result = result->AttachedDevice;
-
-    return result;
-}
-
 
 /***********************************************************************
  *           IoGetDeviceProperty   (NTOSKRNL.EXE.@)

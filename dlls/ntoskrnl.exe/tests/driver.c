@@ -39,6 +39,8 @@ static const WCHAR driver_device[] = {'\\','D','e','v','i','c','e',
 static const WCHAR driver_link[] = {'\\','D','o','s','D','e','v','i','c','e','s',
                                     '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
 
+static DRIVER_OBJECT *driver_obj;
+
 static HANDLE okfile;
 static LONG successes;
 static LONG failures;
@@ -1424,6 +1426,59 @@ static void test_lookup_thread(void)
        "PsLookupThreadByThreadId returned %#x\n", status);
 }
 
+static void test_IoAttachDeviceToDeviceStack(void)
+{
+    DEVICE_OBJECT *dev1, *dev2, *dev3, *ret;
+    NTSTATUS status;
+
+    status = IoCreateDevice(driver_obj, 0, NULL, FILE_DEVICE_UNKNOWN,
+            FILE_DEVICE_SECURE_OPEN, FALSE, &dev1);
+    ok(status == STATUS_SUCCESS, "IoCreateDevice failed\n");
+    status = IoCreateDevice(driver_obj, 0, NULL, FILE_DEVICE_UNKNOWN,
+            FILE_DEVICE_SECURE_OPEN, FALSE, &dev2);
+    ok(status == STATUS_SUCCESS, "IoCreateDevice failed\n");
+    status = IoCreateDevice(driver_obj, 0, NULL, FILE_DEVICE_UNKNOWN,
+            FILE_DEVICE_SECURE_OPEN, FALSE, &dev3);
+    ok(status == STATUS_SUCCESS, "IoCreateDevice failed\n");
+
+    /* TODO: initialize devices properly */
+    dev1->Flags &= ~DO_DEVICE_INITIALIZING;
+    dev2->Flags &= ~DO_DEVICE_INITIALIZING;
+
+    ret = IoAttachDeviceToDeviceStack(dev2, dev1);
+    ok(ret == dev1, "IoAttachDeviceToDeviceStack returned %p, expected %p\n", ret, dev1);
+    ok(dev1->AttachedDevice == dev2, "dev1->AttachedDevice = %p, expected %p\n",
+            dev1->AttachedDevice, dev2);
+    ok(!dev2->AttachedDevice, "dev2->AttachedDevice = %p\n", dev2->AttachedDevice);
+    ok(dev1->StackSize == 1, "dev1->StackSize = %d\n", dev1->StackSize);
+    ok(dev2->StackSize == 2, "dev2->StackSize = %d\n", dev2->StackSize);
+
+    ret = IoAttachDeviceToDeviceStack(dev3, dev1);
+    ok(ret == dev2, "IoAttachDeviceToDeviceStack returned %p, expected %p\n", ret, dev2);
+    ok(dev1->AttachedDevice == dev2, "dev1->AttachedDevice = %p, expected %p\n",
+            dev1->AttachedDevice, dev2);
+    ok(dev2->AttachedDevice == dev3, "dev2->AttachedDevice = %p, expected %p\n",
+            dev2->AttachedDevice, dev3);
+    ok(!dev3->AttachedDevice, "dev3->AttachedDevice = %p\n", dev3->AttachedDevice);
+    ok(dev1->StackSize == 1, "dev1->StackSize = %d\n", dev1->StackSize);
+    ok(dev2->StackSize == 2, "dev2->StackSize = %d\n", dev2->StackSize);
+    ok(dev3->StackSize == 3, "dev3->StackSize = %d\n", dev3->StackSize);
+
+    IoDetachDevice(dev1);
+    ok(!dev1->AttachedDevice, "dev1->AttachedDevice = %p\n", dev1->AttachedDevice);
+    ok(dev2->AttachedDevice == dev3, "dev2->AttachedDevice = %p\n", dev2->AttachedDevice);
+
+    IoDetachDevice(dev2);
+    ok(!dev2->AttachedDevice, "dev2->AttachedDevice = %p\n", dev2->AttachedDevice);
+    ok(dev1->StackSize == 1, "dev1->StackSize = %d\n", dev1->StackSize);
+    ok(dev2->StackSize == 2, "dev2->StackSize = %d\n", dev2->StackSize);
+    ok(dev3->StackSize == 3, "dev3->StackSize = %d\n", dev3->StackSize);
+
+    IoDeleteDevice(dev1);
+    IoDeleteDevice(dev2);
+    IoDeleteDevice(dev3);
+}
+
 static PIO_WORKITEM main_test_work_item;
 
 static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
@@ -1501,6 +1556,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_ob_reference(test_input->path);
     test_resource();
     test_lookup_thread();
+    test_IoAttachDeviceToDeviceStack();
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 
@@ -1646,6 +1702,8 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     NTSTATUS status;
 
     DbgPrint("loading driver\n");
+
+    driver_obj = driver;
 
     /* Allow unloading of the driver */
     driver->DriverUnload = driver_Unload;
