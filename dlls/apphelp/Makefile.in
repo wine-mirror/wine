@@ -1,3 +1,5 @@
 MODULE = apphelp.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = apphelp.c
