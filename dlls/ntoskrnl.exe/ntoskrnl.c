@@ -133,14 +133,7 @@ static int interface_rb_compare( const void *key, const struct wine_rb_entry *en
 
 static struct wine_rb_tree device_interfaces = { interface_rb_compare };
 
-static CRITICAL_SECTION drivers_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &drivers_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": drivers_cs") }
-};
-static CRITICAL_SECTION drivers_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+DECLARE_CRITICAL_SECTION(drivers_cs);
 
 static inline LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
@@ -286,14 +279,7 @@ void *alloc_kernel_object( POBJECT_TYPE type, HANDLE handle, SIZE_T size, LONG r
     return header + 1;
 }
 
-static CRITICAL_SECTION obref_cs;
-static CRITICAL_SECTION_DEBUG obref_critsect_debug =
-{
-    0, 0, &obref_cs,
-    { &obref_critsect_debug.ProcessLocksList, &obref_critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": obref_cs") }
-};
-static CRITICAL_SECTION obref_cs = { &obref_critsect_debug, -1, 0, 0, 0, 0 };
+DECLARE_CRITICAL_SECTION(obref_cs);
 
 /***********************************************************************
  *           ObDereferenceObject   (NTOSKRNL.EXE.@)
@@ -384,14 +370,7 @@ static const POBJECT_TYPE *known_types[] =
     &SeTokenObjectType
 };
 
-static CRITICAL_SECTION handle_map_cs;
-static CRITICAL_SECTION_DEBUG handle_map_critsect_debug =
-{
-    0, 0, &handle_map_cs,
-    { &handle_map_critsect_debug.ProcessLocksList, &handle_map_critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": handle_map_cs") }
-};
-static CRITICAL_SECTION handle_map_cs = { &handle_map_critsect_debug, -1, 0, 0, 0, 0 };
+DECLARE_CRITICAL_SECTION(handle_map_cs);
 
 NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret )
 {

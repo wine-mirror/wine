@@ -60,4 +60,11 @@ extern POBJECT_TYPE PsProcessType;
 extern POBJECT_TYPE PsThreadType;
 extern POBJECT_TYPE SeTokenObjectType;
 
+#define DECLARE_CRITICAL_SECTION(cs) \
+    static CRITICAL_SECTION cs; \
+    static CRITICAL_SECTION_DEBUG cs##_debug = \
+    { 0, 0, &cs, { &cs##_debug.ProcessLocksList, &cs##_debug.ProcessLocksList }, \
+      0, 0, { (DWORD_PTR)(__FILE__ ": " # cs) }}; \
+    static CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 };
+
 #endif

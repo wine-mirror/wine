@@ -49,14 +49,7 @@ enum object_type
     TYPE_AUTO_TIMER = 9,
 };
 
-static CRITICAL_SECTION sync_cs;
-static CRITICAL_SECTION_DEBUG sync_cs_debug =
-{
-    0, 0, &sync_cs,
-    { &sync_cs_debug.ProcessLocksList, &sync_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": sync_cs") }
-};
-static CRITICAL_SECTION sync_cs = { &sync_cs_debug, -1, 0, 0, 0, 0 };
+DECLARE_CRITICAL_SECTION(sync_cs);
 
 /***********************************************************************
  *           KeWaitForMultipleObjects   (NTOSKRNL.EXE.@)
