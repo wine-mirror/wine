@@ -587,6 +587,8 @@ static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp, struct dispatch_conte
     LARGE_INTEGER count;
 
     IoSetCompletionRoutine( irp, dispatch_irp_completion, context->handle, TRUE, TRUE, TRUE );
+    context->handle = 0;
+
     KeQueryTickCount( &count );  /* update the global KeTickCount */
 
     device->CurrentIrp = irp;
@@ -976,11 +978,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         case STATUS_SUCCESS:
             assert( context.params.type != IRP_CALL_NONE && context.params.type < ARRAY_SIZE(dispatch_funcs) );
             status = dispatch_funcs[context.params.type]( &context );
-            if (status == STATUS_SUCCESS)
-            {
-                context.handle = 0;  /* status reported by IoCompleteRequest */
-                if (!context.in_buff) context.in_size = 4096;
-            }
+            if (!context.in_buff) context.in_size = 4096;
             break;
         case STATUS_BUFFER_OVERFLOW:
             HeapFree( GetProcessHeap(), 0, context.in_buff );
