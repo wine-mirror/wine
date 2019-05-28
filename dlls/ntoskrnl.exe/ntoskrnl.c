@@ -523,14 +523,30 @@ static void *create_file_object( HANDLE handle )
     return file;
 }
 
+DECLARE_CRITICAL_SECTION(irp_completion_cs);
+
+static void WINAPI cancel_completed_irp( DEVICE_OBJECT *device, IRP *irp )
+{
+    TRACE( "(%p %p)\n", device, irp );
+
+    IoReleaseCancelSpinLock(irp->CancelIrql);
+
+    irp->IoStatus.u.Status = STATUS_CANCELLED;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
 /* transfer result of IRP back to wineserver */
 static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
 {
     HANDLE irp_handle = context;
     void *out_buff = irp->UserBuffer;
+    NTSTATUS status;
 
     if (irp->Flags & IRP_WRITE_OPERATION)
         out_buff = NULL;  /* do not transfer back input buffer */
+
+    EnterCriticalSection( &irp_completion_cs );
 
     SERVER_START_REQ( set_irp_result )
     {
@@ -541,16 +557,29 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
             req->size = irp->IoStatus.Information;
             if (out_buff) wine_server_add_data( req, out_buff, irp->IoStatus.Information );
         }
-        wine_server_call( req );
+        status = wine_server_call( req );
     }
     SERVER_END_REQ;
+
+    if (status == STATUS_MORE_PROCESSING_REQUIRED)
+    {
+        /* IRP is complete, but server may have already ordered cancel call. In such case,
+         * it will return STATUS_MORE_PROCESSING_REQUIRED, leaving the IRP alive until
+         * cancel frees it. */
+        if (irp->Cancel)
+            status = STATUS_SUCCESS;
+        else
+            IoSetCancelRoutine( irp, cancel_completed_irp );
+    }
 
     if (irp->UserBuffer != irp->AssociatedIrp.SystemBuffer)
     {
         HeapFree( GetProcessHeap(), 0, irp->UserBuffer );
         irp->UserBuffer = NULL;
     }
-    return STATUS_SUCCESS;
+
+    LeaveCriticalSection( &irp_completion_cs );
+    return status;
 }
 
 struct dispatch_context
@@ -842,8 +871,11 @@ static NTSTATUS dispatch_cancel( struct dispatch_context *context )
 {
     IRP *irp = wine_server_get_ptr( context->params.cancel.irp );
 
-    FIXME( "%p\n", irp );
+    TRACE( "%p\n", irp );
 
+    EnterCriticalSection( &irp_completion_cs );
+    IoCancelIrp( irp );
+    LeaveCriticalSection( &irp_completion_cs );
     return STATUS_SUCCESS;
 }
 

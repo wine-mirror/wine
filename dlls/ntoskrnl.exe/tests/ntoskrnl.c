@@ -234,7 +234,6 @@ static void test_overlapped(void)
     cancel_cnt = 0xdeadbeef;
     res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    todo_wine
     ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
 
     /* test cancelling selected overlapped event */
@@ -254,7 +253,6 @@ static void test_overlapped(void)
         cancel_cnt = 0xdeadbeef;
         res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
         ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-        todo_wine
         ok(cancel_cnt == 1, "cancel_cnt = %u\n", cancel_cnt);
 
         pCancelIoEx(file, &overlapped2);
@@ -262,7 +260,6 @@ static void test_overlapped(void)
         cancel_cnt = 0xdeadbeef;
         res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped);
         ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-        todo_wine
         ok(cancel_cnt == 2, "cancel_cnt = %u\n", cancel_cnt);
     }
 
