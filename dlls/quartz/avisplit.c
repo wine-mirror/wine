@@ -1266,24 +1266,6 @@ static HRESULT AVISplitter_Disconnect(LPVOID iface)
     return S_OK;
 }
 
-static ULONG WINAPI AVISplitter_Release(IBaseFilter *iface)
-{
-    AVISplitterImpl *This = impl_from_IBaseFilter(iface);
-    ULONG ref;
-
-    ref = InterlockedDecrement(&This->Parser.filter.refCount);
-
-    TRACE("(%p)->() Release from %d\n", This, ref + 1);
-
-    if (!ref)
-    {
-        AVISplitter_Flush(This);
-        Parser_Destroy(&This->Parser);
-    }
-
-    return ref;
-}
-
 static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
 {
     AVISplitterImpl *This = impl_from_IMediaSeeking(iface);
@@ -1414,7 +1396,7 @@ static const IBaseFilterVtbl AVISplitterImpl_Vtbl =
 {
     Parser_QueryInterface,
     Parser_AddRef,
-    AVISplitter_Release,
+    BaseFilterImpl_Release,
     Parser_GetClassID,
     Parser_Stop,
     Parser_Pause,
@@ -1429,9 +1411,17 @@ static const IBaseFilterVtbl AVISplitterImpl_Vtbl =
     Parser_QueryVendorInfo
 };
 
+static void avi_splitter_destroy(BaseFilter *iface)
+{
+    AVISplitterImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
+    AVISplitter_Flush(filter);
+    Parser_Destroy(&filter->Parser);
+}
+
 static const BaseFilterFuncTable avi_splitter_func_table =
 {
     .filter_get_pin = parser_get_pin,
+    .filter_destroy = avi_splitter_destroy,
 };
 
 HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
