@@ -469,8 +469,8 @@ DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state)
             report.report = 0;
             report.pad1[0] = 0x8;
             report.pad1[1] = 0x0;
-            report.left = (BYTE)(state->wLeftMotorSpeed / 255);
-            report.right = (BYTE)(state->wRightMotorSpeed / 255);
+            report.left = (BYTE)(state->wLeftMotorSpeed / 256);
+            report.right = (BYTE)(state->wRightMotorSpeed / 256);
             memset(&report.pad2, 0, sizeof(report.pad2));
 
             EnterCriticalSection(&private->crit);
