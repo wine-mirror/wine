@@ -1596,6 +1596,13 @@ NTSTATUS WINAPI BCryptDestroySecret(BCRYPT_SECRET_HANDLE secret)
     return STATUS_SUCCESS;
 }
 
+NTSTATUS WINAPI BCryptDeriveKey(BCRYPT_SECRET_HANDLE secret, LPCWSTR kdf, BCryptBufferDesc *parameter,
+        PUCHAR derived, ULONG derived_size, ULONG *result, ULONG flags)
+{
+    FIXME( "%p, %s, %p, %p, %d, %p, %08x\n", secret, debugstr_w(kdf), parameter, derived, derived_size, result, flags );
+    return STATUS_INTERNAL_ERROR;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     switch (reason)
