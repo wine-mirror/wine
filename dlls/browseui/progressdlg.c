@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -37,7 +35,6 @@
 #include "shlobj.h"
 
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 #include "browseui.h"
 #include "resids.h"
@@ -100,7 +97,7 @@ static void set_buffer(LPWSTR *buffer, LPCWSTR string)
         string = empty_string;
     CoGetMalloc(MEMCTX_TASK, &malloc);
 
-    cb = (strlenW(string) + 1)*sizeof(WCHAR);
+    cb = (lstrlenW(string) + 1)*sizeof(WCHAR);
     if (*buffer == NULL || cb > IMalloc_GetSize(malloc, *buffer))
         *buffer = IMalloc_Realloc(malloc, *buffer, cb);
     memcpy(*buffer, string, cb);
@@ -119,8 +116,8 @@ static LPWSTR load_string(HINSTANCE hInstance, UINT uiResourceId)
     LPWSTR ret;
 
     LoadStringW(hInstance, uiResourceId, string, ARRAY_SIZE(string));
-    ret = HeapAlloc(GetProcessHeap(), 0, (strlenW(string) + 1) * sizeof(WCHAR));
-    strcpyW(ret, string);
+    ret = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(string) + 1) * sizeof(WCHAR));
+    lstrcpyW(ret, string);
     return ret;
 }
 
