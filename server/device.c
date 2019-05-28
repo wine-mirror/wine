@@ -378,6 +378,9 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
     iosb->out_size = min( iosb->out_size, out_size );
     if (iosb->out_size && !(iosb->out_data = memdup( out_data, iosb->out_size )))
         iosb->out_size = 0;
+
+    /* remove it from the device queue */
+    list_remove( &irp->dev_entry );
     irp->file = NULL;
     if (irp->async)
     {
@@ -388,8 +391,6 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
     }
     wake_up( &irp->obj, 0 );
 
-    /* remove it from the device queue */
-    list_remove( &irp->dev_entry );
     release_object( irp );  /* no longer on the device queue */
     release_object( file );
 }
