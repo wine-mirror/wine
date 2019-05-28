@@ -17,11 +17,11 @@
  */
 
 #include <string.h>
+#include <wchar.h>
 
 #include "windows.h"
 #include "winerror.h"
 #include "hstring.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winstring);
@@ -427,7 +427,7 @@ HRESULT WINAPI WindowsTrimStringStart(HSTRING str1, HSTRING str2, HSTRING *out)
     }
     for (start = 0; start < priv1->length; start++)
     {
-        if (!memchrW(priv2->buffer, priv1->buffer[start], priv2->length))
+        if (!wmemchr(priv2->buffer, priv1->buffer[start], priv2->length))
             break;
     }
     return start ? WindowsCreateString(&priv1->buffer[start], priv1->length - start, out) :
@@ -454,7 +454,7 @@ HRESULT WINAPI WindowsTrimStringEnd(HSTRING str1, HSTRING str2, HSTRING *out)
     }
     for (len = priv1->length; len > 0; len--)
     {
-        if (!memchrW(priv2->buffer, priv1->buffer[len - 1], priv2->length))
+        if (!wmemchr(priv2->buffer, priv1->buffer[len - 1], priv2->length))
             break;
     }
     return (len < priv1->length) ? WindowsCreateString(priv1->buffer, len, out) :
