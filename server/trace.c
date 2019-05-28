@@ -363,6 +363,11 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
         dump_uint64( ",obj=", &data->free.obj );
         fputc( '}', stderr );
         break;
+    case IRP_CALL_CANCEL:
+        fprintf( stderr, "%s{CANCEL", prefix );
+        dump_uint64( ",irp=", &data->cancel.irp );
+        fputc( '}', stderr );
+        break;
     }
 }
 

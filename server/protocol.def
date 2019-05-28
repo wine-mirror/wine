@@ -665,7 +665,8 @@ enum irp_type
     IRP_CALL_WRITE,
     IRP_CALL_FLUSH,
     IRP_CALL_IOCTL,
-    IRP_CALL_FREE
+    IRP_CALL_FREE,
+    IRP_CALL_CANCEL
 };
 
 typedef union
@@ -722,6 +723,12 @@ typedef union
         int              __pad;
         client_ptr_t     obj;       /* opaque ptr for the freed object */
     } free;
+    struct
+    {
+        enum irp_type    type;      /* IRP_CALL_CANCEL */
+        int              __pad;
+        client_ptr_t     irp;       /* opaque ptr for canceled irp */
+    } cancel;
 } irp_params_t;
 
 /* information about a PE image mapping, roughly equivalent to SECTION_IMAGE_INFORMATION */

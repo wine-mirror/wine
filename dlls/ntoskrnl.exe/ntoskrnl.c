@@ -838,6 +838,15 @@ static NTSTATUS dispatch_free( struct dispatch_context *context )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS dispatch_cancel( struct dispatch_context *context )
+{
+    IRP *irp = wine_server_get_ptr( context->params.cancel.irp );
+
+    FIXME( "%p\n", irp );
+
+    return STATUS_SUCCESS;
+}
+
 typedef NTSTATUS (*dispatch_func)( struct dispatch_context *context );
 
 static const dispatch_func dispatch_funcs[] =
@@ -849,7 +858,8 @@ static const dispatch_func dispatch_funcs[] =
     dispatch_write,    /* IRP_CALL_WRITE */
     dispatch_flush,    /* IRP_CALL_FLUSH */
     dispatch_ioctl,    /* IRP_CALL_IOCTL */
-    dispatch_free      /* IRP_CALL_FREE */
+    dispatch_free,     /* IRP_CALL_FREE */
+    dispatch_cancel    /* IRP_CALL_CANCEL */
 };
 
 /* helper function to update service status */

@@ -649,7 +649,8 @@ enum irp_type
     IRP_CALL_WRITE,
     IRP_CALL_FLUSH,
     IRP_CALL_IOCTL,
-    IRP_CALL_FREE
+    IRP_CALL_FREE,
+    IRP_CALL_CANCEL
 };
 
 typedef union
@@ -706,6 +707,12 @@ typedef union
         int              __pad;
         client_ptr_t     obj;
     } free;
+    struct
+    {
+        enum irp_type    type;
+        int              __pad;
+        client_ptr_t     irp;
+    } cancel;
 } irp_params_t;
 
 
@@ -6695,6 +6702,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 584
+#define SERVER_PROTOCOL_VERSION 585
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
