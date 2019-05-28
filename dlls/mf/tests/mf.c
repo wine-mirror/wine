@@ -946,27 +946,6 @@ static void test_session_events(IMFMediaSession *session)
     hr = IMFMediaSession_Shutdown(session);
 todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
-
-    hr = IMFMediaSession_GetEvent(session, MF_EVENT_FLAG_NO_WAIT, &event);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSession_QueueEvent(session, MEError, &GUID_NULL, E_FAIL, NULL);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSession_BeginGetEvent(session, &callback.IMFAsyncCallback_iface, NULL);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSession_BeginGetEvent(session, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSession_EndGetEvent(session, result, &event);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-    IMFAsyncResult_Release(result);
-
-    /* Already shut down. */
-    hr = IMFMediaSession_Shutdown(session);
-todo_wine
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 }
 
 static void test_media_session(void)
@@ -1616,7 +1595,7 @@ static HRESULT WINAPI grabber_callback_OnProcessSample(IMFSampleGrabberSinkCallb
 
 static HRESULT WINAPI grabber_callback_OnShutdown(IMFSampleGrabberSinkCallback *iface)
 {
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IMFSampleGrabberSinkCallbackVtbl grabber_callback_vtbl =
@@ -1767,33 +1746,6 @@ static void test_sample_grabber(void)
 todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
-    hr = IMFMediaSink_Shutdown(sink);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSink_Shutdown(sink);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSink_AddStreamSink(sink, 1, NULL, &stream2);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSink_GetStreamSinkCount(sink, &count);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream2);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFStreamSink_GetMediaSink(stream, &sink2);
-    ok(hr == S_OK, "Failed to get media sink, hr %x.\n", hr);
-    ok(sink2 == sink, "Unexpected sink.\n");
-    IMFMediaSink_Release(sink2);
-
-    hr = IMFStreamSink_GetIdentifier(stream, &id);
-    ok(hr == S_OK, "Failed to get stream id, hr %#x.\n", hr);
-    ok(id == 0, "Unexpected id %#x.\n", id);
-
     hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
     ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
 
@@ -1880,10 +1832,70 @@ todo_wine
     hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, NULL, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
-    IMFMediaTypeHandler_Release(handler);
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_AddStreamSink(sink, 1, NULL, &stream2);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink, &count);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream2);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamSink_GetMediaSink(stream, &sink2);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
+
+    id = 1;
+    hr = IMFStreamSink_GetIdentifier(stream, &id);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
+    ok(id == 1, "Unexpected id %u.\n", id);
+
+    media_type3 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type, &media_type3);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
+    ok(media_type3 == (void *)0xdeadbeef, "Unexpected media type %p.\n", media_type3);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, NULL, NULL);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
+    ok(hr == S_OK, "Failed to get type count, hr %#x.\n", hr);
 
     IMFMediaType_Release(media_type2);
     IMFMediaType_Release(media_type);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, &media_type);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaTypeHandler_Release(handler);
+
+    handler = (void *)0xdeadbeef;
+    hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
+    ok(handler == (void *)0xdeadbeef, "Unexpected pointer.\n");
+
+    hr = IMFStreamSink_GetMediaTypeHandler(stream, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     IMFMediaSink_Release(sink);
     IMFStreamSink_Release(stream);
