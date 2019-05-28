@@ -1289,9 +1289,11 @@ HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
     if(SUCCEEDED(ret))
     {
         ret = create_shellitemarray(array, cidl, ppsiItemArray);
-        heap_free(array);
         if(SUCCEEDED(ret))
+        {
+            heap_free(array);
             return ret;
+        }
     }
 
     /* Something failed, clean up. */
