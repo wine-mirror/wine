@@ -1605,7 +1605,7 @@ static HRESULT WINAPI grabber_callback_OnClockSetRate(IMFSampleGrabberSinkCallba
 static HRESULT WINAPI grabber_callback_OnSetPresentationClock(IMFSampleGrabberSinkCallback *iface,
         IMFPresentationClock *clock)
 {
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI grabber_callback_OnProcessSample(IMFSampleGrabberSinkCallback *iface, REFGUID major_type,
@@ -1641,9 +1641,9 @@ static void test_sample_grabber(void)
     IMFMediaType *media_type, *media_type2, *media_type3;
     IMFMediaTypeHandler *handler, *handler2;
     IMFPresentationTimeSource *time_source;
+    IMFPresentationClock *clock, *clock2;
     IMFStreamSink *stream, *stream2;
     IMFClockStateSink *clocksink;
-    IMFPresentationClock *clock;
     IMFMediaEventGenerator *eg;
     IMFMediaSink *sink, *sink2;
     DWORD flags, count, id;
@@ -1742,8 +1742,17 @@ static void test_sample_grabber(void)
     hr = MFCreatePresentationClock(&clock);
     ok(hr == S_OK, "Failed to create clock object, hr %#x.\n", hr);
 
+    hr = IMFMediaSink_GetPresentationClock(sink, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetPresentationClock(sink, &clock2);
+    ok(hr == MF_E_NO_CLOCK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, NULL);
+    ok(hr == S_OK, "Failed to set presentation clock, hr %#x.\n", hr);
+
     hr = IMFMediaSink_SetPresentationClock(sink, clock);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to set presentation clock, hr %#x.\n", hr);
 
     hr = MFCreateSystemTimeSource(&time_source);
     ok(hr == S_OK, "Failed to create time source, hr %#x.\n", hr);
@@ -1751,9 +1760,6 @@ static void test_sample_grabber(void)
     hr = IMFPresentationClock_SetTimeSource(clock, time_source);
     ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
     IMFPresentationTimeSource_Release(time_source);
-
-    hr = IMFMediaSink_SetPresentationClock(sink, clock);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     IMFPresentationClock_Release(clock);
 

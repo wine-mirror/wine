@@ -50,6 +50,7 @@ struct sample_grabber
     BOOL is_shut_down;
     IMFStreamSink *stream;
     IMFMediaEventQueue *event_queue;
+    IMFPresentationClock *clock;
     CRITICAL_SECTION cs;
 };
 
@@ -430,6 +431,8 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
             IMFMediaEventQueue_Shutdown(grabber->event_queue);
             IMFMediaEventQueue_Release(grabber->event_queue);
         }
+        if (grabber->clock)
+            IMFPresentationClock_Release(grabber->clock);
         DeleteCriticalSection(&grabber->cs);
         heap_free(grabber);
     }
@@ -539,16 +542,56 @@ static HRESULT WINAPI sample_grabber_sink_GetStreamSinkById(IMFMediaSink *iface,
 
 static HRESULT WINAPI sample_grabber_sink_SetPresentationClock(IMFMediaSink *iface, IMFPresentationClock *clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct sample_grabber *grabber = impl_from_IMFMediaSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    EnterCriticalSection(&grabber->cs);
+
+    if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnSetPresentationClock(grabber->callback, clock)))
+    {
+        if (grabber->clock)
+        {
+            IMFPresentationClock_RemoveClockStateSink(grabber->clock, &grabber->IMFClockStateSink_iface);
+            IMFPresentationClock_Release(grabber->clock);
+        }
+        grabber->clock = clock;
+        if (grabber->clock)
+        {
+            IMFPresentationClock_AddRef(grabber->clock);
+            IMFPresentationClock_AddClockStateSink(grabber->clock, &grabber->IMFClockStateSink_iface);
+        }
+    }
+
+    LeaveCriticalSection(&grabber->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_grabber_sink_GetPresentationClock(IMFMediaSink *iface, IMFPresentationClock **clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct sample_grabber *grabber = impl_from_IMFMediaSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    EnterCriticalSection(&grabber->cs);
+
+    if (grabber->clock)
+    {
+        *clock = grabber->clock;
+        IMFPresentationClock_AddRef(*clock);
+    }
+    else
+        hr = MF_E_NO_CLOCK;
+
+    LeaveCriticalSection(&grabber->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
