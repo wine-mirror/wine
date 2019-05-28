@@ -868,6 +868,11 @@ static const IAMStreamSelectVtbl AMStreamSelectVtbl =
     AMStreamSelect_Enable
 };
 
+static const BaseFilterFuncTable mpeg_splitter_func_table =
+{
+    .filter_get_pin = parser_get_pin,
+};
+
 HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     static const WCHAR sink_name[] = {'I','n','p','u','t',0};
@@ -887,7 +892,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     ZeroMemory(This, sizeof(MPEGSplitterImpl));
     hr = Parser_Create(&This->Parser, &MPEGSplitter_Vtbl, &CLSID_MPEG1Splitter,
-            sink_name, MPEGSplitter_process_sample, MPEGSplitter_query_accept,
+            &mpeg_splitter_func_table, sink_name, MPEGSplitter_process_sample, MPEGSplitter_query_accept,
             MPEGSplitter_pre_connect, MPEGSplitter_cleanup, MPEGSplitter_disconnect,
             MPEGSplitter_first_request, NULL, NULL, MPEGSplitter_seek, NULL);
     if (FAILED(hr))

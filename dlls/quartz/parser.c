@@ -62,7 +62,7 @@ static inline ParserImpl *impl_from_BaseFilter( BaseFilter *iface )
     return CONTAINING_RECORD(iface, ParserImpl, filter);
 }
 
-static IPin *parser_get_pin(BaseFilter *iface, unsigned int index)
+IPin *parser_get_pin(BaseFilter *iface, unsigned int index)
 {
     ParserImpl *filter = impl_from_BaseFilter(iface);
 
@@ -73,13 +73,9 @@ static IPin *parser_get_pin(BaseFilter *iface, unsigned int index)
     return filter->ppPins[index];
 }
 
-static const BaseFilterFuncTable BaseFuncTable = {
-    .filter_get_pin = parser_get_pin,
-};
-
 HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *Parser_Vtbl,
-        const CLSID* pClsid, const WCHAR *sink_name, PFN_PROCESS_SAMPLE fnProcessSample,
-        PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect,
+        const CLSID *pClsid, const BaseFilterFuncTable *func_table, const WCHAR *sink_name,
+        PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect,
         PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, REQUESTPROC fnRequest,
         STOPPROCESSPROC fnDone, SourceSeeking_ChangeStop stop,
         SourceSeeking_ChangeStart start, SourceSeeking_ChangeRate rate)
@@ -88,7 +84,7 @@ HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *Parser_Vtbl,
     PIN_INFO piInput;
 
     /* pTransformFilter is already allocated */
-    BaseFilter_Init(&pParser->filter, Parser_Vtbl, pClsid, (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter"), &BaseFuncTable);
+    BaseFilter_Init(&pParser->filter, Parser_Vtbl, pClsid, (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter"), func_table);
 
     pParser->fnDisconnect = fnDisconnect;
 

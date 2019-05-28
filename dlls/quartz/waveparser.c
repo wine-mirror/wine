@@ -413,6 +413,11 @@ static const IBaseFilterVtbl WAVEParser_Vtbl =
     Parser_QueryVendorInfo
 };
 
+static const BaseFilterFuncTable wave_parser_func_table =
+{
+    .filter_get_pin = parser_get_pin,
+};
+
 HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
@@ -430,7 +435,7 @@ HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This = CoTaskMemAlloc(sizeof(WAVEParserImpl));
 
     hr = Parser_Create(&This->Parser, &WAVEParser_Vtbl, &CLSID_WAVEParser,
-            sink_name, WAVEParser_Sample, WAVEParser_QueryAccept,
+            &wave_parser_func_table, sink_name, WAVEParser_Sample, WAVEParser_QueryAccept,
             WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, WAVEParser_disconnect,
             WAVEParser_first_request, NULL, NULL, WAVEParserImpl_seek, NULL);
 

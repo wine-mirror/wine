@@ -1429,6 +1429,11 @@ static const IBaseFilterVtbl AVISplitterImpl_Vtbl =
     Parser_QueryVendorInfo
 };
 
+static const BaseFilterFuncTable avi_splitter_func_table =
+{
+    .filter_get_pin = parser_get_pin,
+};
+
 HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
@@ -1449,7 +1454,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->oldindex = NULL;
 
     hr = Parser_Create(&This->Parser, &AVISplitterImpl_Vtbl, &CLSID_AviSplitter,
-            sink_name, AVISplitter_Sample, AVISplitter_QueryAccept,
+            &avi_splitter_func_table, sink_name, AVISplitter_Sample, AVISplitter_QueryAccept,
             AVISplitter_InputPin_PreConnect, AVISplitter_Flush,
             AVISplitter_Disconnect, AVISplitter_first_request,
             AVISplitter_done_process, NULL, AVISplitter_seek, NULL);
