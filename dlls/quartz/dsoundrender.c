@@ -586,6 +586,31 @@ static HRESULT WINAPI DSoundRender_EndFlush(BaseRenderer* iface)
     return S_OK;
 }
 
+static void dsound_render_destroy(BaseRenderer *iface)
+{
+    DSoundRenderImpl *filter = impl_from_BaseRenderer(iface);
+
+    if (filter->threadid)
+    {
+        PostThreadMessageW(filter->threadid, WM_APP, 0, 0);
+        WaitForSingleObject(filter->advisethread, INFINITE);
+        CloseHandle(filter->advisethread);
+    }
+
+    if (filter->dsbuffer)
+        IDirectSoundBuffer_Release(filter->dsbuffer);
+    filter->dsbuffer = NULL;
+    if (filter->dsound)
+        IDirectSound8_Release(filter->dsound);
+    filter->dsound = NULL;
+
+    BasicAudio_Destroy(&filter->basicAudio);
+    CloseHandle(filter->blocked);
+
+    strmbase_renderer_cleanup(&filter->renderer);
+    CoTaskMemFree(filter);
+}
+
 static const BaseRendererFuncTable BaseFuncTable = {
     DSoundRender_CheckMediaType,
     DSoundRender_DoRenderSample,
@@ -606,6 +631,7 @@ static const BaseRendererFuncTable BaseFuncTable = {
     DSoundRender_EndOfStream,
     DSoundRender_BeginFlush,
     DSoundRender_EndFlush,
+    dsound_render_destroy,
 };
 
 HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
@@ -712,41 +738,6 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
-{
-    DSoundRenderImpl *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
-
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
-
-    if (!refCount)
-    {
-        if (This->threadid) {
-            PostThreadMessageW(This->threadid, WM_APP, 0, 0);
-            WaitForSingleObject(This->advisethread, INFINITE);
-            CloseHandle(This->advisethread);
-        }
-
-        if (This->dsbuffer)
-            IDirectSoundBuffer_Release(This->dsbuffer);
-        This->dsbuffer = NULL;
-        if (This->dsound)
-            IDirectSound8_Release(This->dsound);
-        This->dsound = NULL;
-
-        BasicAudio_Destroy(&This->basicAudio);
-        CloseHandle(This->blocked);
-
-        TRACE("Destroying Audio Renderer\n");
-        strmbase_renderer_cleanup(&This->renderer);
-        CoTaskMemFree(This);
-
-        return 0;
-    }
-    else
-        return refCount;
-}
-
 static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
 {
     DSoundRenderImpl *This = impl_from_IBaseFilter(iface);
@@ -781,7 +772,7 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
 {
     DSoundRender_QueryInterface,
     BaseFilterImpl_AddRef,
-    DSoundRender_Release,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     BaseRendererImpl_Stop,
     DSoundRender_Pause,
@@ -820,7 +811,7 @@ static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    return DSoundRender_Release(&This->renderer.filter.IBaseFilter_iface);
+    return BaseFilterImpl_Release(&This->renderer.filter.IBaseFilter_iface);
 }
 
 /*** IBasicAudio methods ***/
@@ -1016,7 +1007,7 @@ static ULONG WINAPI ReferenceClock_Release(IReferenceClock *iface)
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    return DSoundRender_Release(&This->renderer.filter.IBaseFilter_iface);
+    return BaseFilterImpl_Release(&This->renderer.filter.IBaseFilter_iface);
 }
 
 /*** IReferenceClock methods ***/
@@ -1184,7 +1175,7 @@ static ULONG WINAPI AMDirectSound_Release(IAMDirectSound *iface)
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    return DSoundRender_Release(&This->renderer.filter.IBaseFilter_iface);
+    return BaseFilterImpl_Release(&This->renderer.filter.IBaseFilter_iface);
 }
 
 /*** IAMDirectSound methods ***/
