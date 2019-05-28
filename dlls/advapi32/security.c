@@ -6172,7 +6172,7 @@ BOOL WINAPI SaferComputeTokenFromLevel(SAFER_LEVEL_HANDLE handle, HANDLE token, 
 {
     FIXME("(%p, %p, %p, %x, %p) stub\n", handle, token, access_token, flags, reserved);
 
-    *access_token = (HANDLE)0xdeadbeef;
+    *access_token = (flags & SAFER_TOKEN_NULL_IF_EQUAL) ? NULL : (HANDLE)0xdeadbeef;
     return TRUE;
 }
 
