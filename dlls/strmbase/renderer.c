@@ -194,6 +194,18 @@ static IPin *renderer_get_pin(BaseFilter *iface, unsigned int index)
     return &This->pInputPin->pin.IPin_iface;
 }
 
+static void renderer_destroy(BaseFilter *iface)
+{
+    BaseRenderer *filter = impl_from_BaseFilter(iface);
+    filter->pFuncsTable->renderer_destroy(filter);
+}
+
+static const BaseFilterFuncTable RendererBaseFilterFuncTable =
+{
+    .filter_get_pin = renderer_get_pin,
+    .filter_destroy = renderer_destroy,
+};
+
 static HRESULT WINAPI BaseRenderer_Input_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE * pmt)
 {
     BaseRenderer *This = impl_from_IBaseFilter(pin->pinInfo.pFilter);
@@ -205,10 +217,6 @@ static HRESULT WINAPI BaseRenderer_Receive(BaseInputPin *pin, IMediaSample * pSa
     BaseRenderer *This = impl_from_IBaseFilter(pin->pin.pinInfo.pFilter);
     return BaseRendererImpl_Receive(This, pSample);
 }
-
-static const BaseFilterFuncTable RendererBaseFilterFuncTable = {
-    .filter_get_pin = renderer_get_pin,
-};
 
 static const BaseInputPinFuncTable input_BaseInputFuncTable = {
     {
