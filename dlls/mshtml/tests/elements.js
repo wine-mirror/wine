@@ -126,6 +126,22 @@ function test_iframe() {
     });
 }
 
+function test_iframe_location() {
+    document.body.innerHTML = '<iframe src="emptyfile"></iframe>'
+    var iframe = document.body.firstChild;
+
+    iframe.onload = function() {
+        ok(iframe.contentWindow.location.pathname === "/emptyfile",
+           "path = " + iframe.contentWindow.location.pathname);
+        iframe.onload = function () {
+            ok(iframe.contentWindow.location.pathname === "/empty/file",
+               "path = " + iframe.contentWindow.location.pathname);
+            next_test();
+        }
+        iframe.src = "empty/file";
+    }
+}
+
 function test_anchor() {
     var iframe = document.body.firstChild;
     var anchor = document.createElement("a");
@@ -420,6 +436,7 @@ var tests = [
     test_createElementNS,
     test_head,
     test_iframe,
+    test_iframe_location,
     test_anchor,
     test_query_selector,
     test_compare_position,

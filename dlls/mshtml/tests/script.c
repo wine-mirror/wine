@@ -3087,6 +3087,8 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
     HRSRC src;
     HRESULT hres;
 
+    static const WCHAR empty_prefixW[] = {'/','e','m','p','t','y'};
+
     hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bindf, &This->bind_info);
     ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
 
@@ -3121,6 +3123,10 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
         register_stream(This, query+1);
         SysFreeString(query);
         block = TRUE;
+    }else if(SysStringLen(path) >= ARRAY_SIZE(empty_prefixW) && !memcmp(path, empty_prefixW, sizeof(empty_prefixW))) {
+        static char empty_data[] = " ";
+        This->data = empty_data;
+        This->size = strlen(This->data);
     }else {
         src = FindResourceW(NULL, *path == '/' ? path+1 : path, (const WCHAR*)RT_HTML);
         ok(src != NULL, "Could not find resource for path %s\n", wine_dbgstr_w(path));

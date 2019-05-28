@@ -459,7 +459,8 @@ static HRESULT WINAPI HTMLLocation_put_pathname(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    BSTR path;
+    IUri *uri;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -467,19 +468,21 @@ static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
     if(!p)
         return E_POINTER;
 
-    url.dwUrlPathLength = 1;
-    url.dwExtraInfoLength = 1;
-    hres = get_url_components(This, &url);
+    if(!(uri = get_uri(This))) {
+        FIXME("No current URI\n");
+        return E_NOTIMPL;
+    }
+
+    hres = IUri_GetPath(uri, &path);
     if(FAILED(hres))
         return hres;
 
-    if(url.dwUrlPathLength && url.lpszUrlPath[0] == '/')
-        *p = SysAllocStringLen(url.lpszUrlPath + 1, url.dwUrlPathLength - 1);
-    else
-        *p = SysAllocStringLen(url.lpszUrlPath, url.dwUrlPathLength);
+    if(hres == S_FALSE) {
+        SysFreeString(path);
+        path = NULL;
+    }
 
-    if(!*p)
-        return E_OUTOFMEMORY;
+    *p = path;
     return S_OK;
 }
 
