@@ -2731,6 +2731,16 @@ static void check_all_devices_enumerated_(int line, HDEVINFO set, BOOL expect_de
 }
 #define check_all_devices_enumerated(a,b) check_all_devices_enumerated_(__LINE__,a,b)
 
+static void check_device_list_(int line, HDEVINFO set, const GUID *expect)
+{
+    SP_DEVINFO_LIST_DETAIL_DATA_A detail = {sizeof(detail)};
+    BOOL ret = SetupDiGetDeviceInfoListDetailA(set, &detail);
+    ok_(__FILE__, line)(ret, "Failed to get list detail, error %#x.\n", GetLastError());
+    ok_(__FILE__, line)(IsEqualGUID(&detail.ClassGuid, expect), "Expected class %s, got %s\n",
+            wine_dbgstr_guid(expect), wine_dbgstr_guid(&detail.ClassGuid));
+}
+#define check_device_list(a,b) check_device_list_(__LINE__,a,b)
+
 static void test_get_class_devs(void)
 {
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
@@ -2772,6 +2782,7 @@ static void test_get_class_devs(void)
 
     set = SetupDiGetClassDevsA(NULL, NULL, NULL, DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_all_devices_enumerated(set, TRUE);
     check_device_iface(set, NULL, &iface_guid, 0, 0, NULL);
     ret = SetupDiDestroyDeviceInfoList(set);
@@ -2779,6 +2790,7 @@ static void test_get_class_devs(void)
 
     set = SetupDiGetClassDevsA(&guid, NULL, NULL, 0);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &guid);
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
     check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\QUX");
     check_device_info(set, 2, NULL, NULL);
@@ -2788,6 +2800,7 @@ static void test_get_class_devs(void)
 
     set = SetupDiGetClassDevsA(&guid, NULL, NULL, DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_all_devices_enumerated(set, TRUE);
     check_device_iface(set, NULL, &iface_guid, 0, 0, NULL);
     ret = SetupDiDestroyDeviceInfoList(set);
@@ -2800,6 +2813,7 @@ static void test_get_class_devs(void)
 
     set = SetupDiGetClassDevsA(NULL, "ROOT", NULL, DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_all_devices_enumerated(set, TRUE);
     check_device_iface(set, NULL, &iface_guid, 0, 0, NULL);
     ret = SetupDiDestroyDeviceInfoList(set);
@@ -2807,6 +2821,7 @@ static void test_get_class_devs(void)
 
     set = SetupDiGetClassDevsA(NULL, "ROOT\\LEGACY_BOGUS", NULL, DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
 todo_wine {
     check_device_info(set, 0, &guid2, "ROOT\\LEGACY_BOGUS\\BAR");
     check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
@@ -2819,6 +2834,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(&guid, "ROOT\\LEGACY_BOGUS", NULL, 0);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &guid);
 todo_wine {
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
     check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\QUX");
@@ -2830,6 +2846,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(&guid, "ROOT\\LEGACY_BOGUS", NULL, DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
 todo_wine {
     check_device_info(set, 0, &guid2, "ROOT\\LEGACY_BOGUS\\BAR");
     check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
@@ -2849,6 +2866,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(NULL, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_all_devices_enumerated(set, FALSE);
     check_device_iface(set, NULL, &iface_guid, 0, 0, "\\\\?\\root#legacy_bogus#foo#{deadbeef-3f65-11db-b704-0011955c2bdb}");
     check_device_iface(set, NULL, &iface_guid, 1, 0, "\\\\?\\root#legacy_bogus#qux#{deadbeef-3f65-11db-b704-0011955c2bdb}");
@@ -2860,6 +2878,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(&guid, NULL, NULL, DIGCF_DEVICEINTERFACE);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_device_info(set, 0, NULL, NULL);
     check_device_iface(set, NULL, &iface_guid, 0, 0, NULL);
     check_device_iface(set, NULL, &iface_guid2, 0, 0, NULL);
@@ -2868,6 +2887,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(&iface_guid, NULL, NULL, DIGCF_DEVICEINTERFACE);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
     check_device_info(set, 1, &guid, "ROOT\\LEGACY_BOGUS\\QUX");
     check_device_info(set, 2, &guid, NULL);
@@ -2880,6 +2900,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(&iface_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_all_devices_enumerated(set, FALSE);
     check_device_iface(set, NULL, &iface_guid, 0, 0, "\\\\?\\root#legacy_bogus#foo#{deadbeef-3f65-11db-b704-0011955c2bdb}");
     check_device_iface(set, NULL, &iface_guid, 1, 0, "\\\\?\\root#legacy_bogus#qux#{deadbeef-3f65-11db-b704-0011955c2bdb}");
@@ -2910,6 +2931,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(NULL, "ROOT\\LEGACY_BOGUS\\foo", NULL, DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
 todo_wine
     check_device_info(set, 1, NULL, NULL);
@@ -2922,6 +2944,7 @@ todo_wine
 
     set = SetupDiGetClassDevsA(NULL, "ROOT\\LEGACY_BOGUS\\bar", NULL, DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_device_info(set, 0, NULL, NULL);
     check_device_iface(set, NULL, &iface_guid, 0, 0, NULL);
     check_device_iface(set, NULL, &iface_guid2, 0, 0, NULL);
@@ -2944,6 +2967,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(&iface_guid, "ROOT\\LEGACY_BOGUS\\foo", NULL, DIGCF_DEVICEINTERFACE);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
     check_device_info(set, 1, NULL, NULL);
     check_device_iface(set, NULL, &iface_guid, 0, 0, "\\\\?\\root#legacy_bogus#foo#{deadbeef-3f65-11db-b704-0011955c2bdb}");
@@ -2954,6 +2978,7 @@ todo_wine {
 
     set = SetupDiGetClassDevsA(&iface_guid, "ROOT\\LEGACY_BOGUS\\foo", NULL, DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
+    check_device_list(set, &GUID_NULL);
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
 todo_wine
     check_device_info(set, 1, NULL, NULL);
