@@ -1,6 +1,8 @@
 MODULE    = comcat.dll
 IMPORTS   = ole32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	comcat_main.c
 
