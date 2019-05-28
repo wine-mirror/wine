@@ -135,6 +135,7 @@ DEFINE_EXPECT(QS_VariantConversion);
 DEFINE_EXPECT(QS_IActiveScriptSite);
 DEFINE_EXPECT(QS_GetCaller);
 DEFINE_EXPECT(ChangeType);
+DEFINE_EXPECT(GetTypeInfo);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
 #define TESTACTIVEX_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80646}"
@@ -399,7 +400,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pcti
 static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT2(GetTypeInfo);
     return E_NOTIMPL;
 }
 
@@ -3453,8 +3454,11 @@ static void run_js_tests(void)
 {
     run_js_script("jstest.html");
     run_js_script("exectest.html");
-    run_js_script("vbtest.html");
     run_js_script("events.html");
+
+    SET_EXPECT(GetTypeInfo);
+    run_js_script("vbtest.html");
+    CLEAR_CALLED(GetTypeInfo);
 
     if(!is_ie9plus) {
         win_skip("Skipping some script tests on IE older than 9.\n");
