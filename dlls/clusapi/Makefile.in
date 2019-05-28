@@ -1,5 +1,7 @@
 MODULE    = clusapi.dll
 IMPORTLIB = clusapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	clusapi.c
