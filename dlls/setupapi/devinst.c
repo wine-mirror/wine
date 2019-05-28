@@ -2456,7 +2456,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *class, PCWSTR enumstr, HWND p
     if (deviceset)
         set = deviceset;
     else
-        set = SetupDiCreateDeviceInfoListExW(class, parent, machine, reserved);
+        set = SetupDiCreateDeviceInfoListExW((flags & DIGCF_DEVICEINTERFACE) ? NULL : class, parent, machine, reserved);
     if (set != INVALID_HANDLE_VALUE)
     {
         if (machine && *machine)
