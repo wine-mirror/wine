@@ -1580,6 +1580,22 @@ NTSTATUS WINAPI BCryptDeriveKeyPBKDF2( BCRYPT_ALG_HANDLE handle, UCHAR *pwd, ULO
     return STATUS_SUCCESS;
 }
 
+NTSTATUS WINAPI BCryptSecretAgreement(BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE key, BCRYPT_SECRET_HANDLE *secret, ULONG flags)
+{
+    FIXME( "%p, %p, %p, %08x\n", handle, key, secret, flags );
+
+    if(secret)
+        *secret = (BCRYPT_SECRET_HANDLE *)0xDEADFEED;
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI BCryptDestroySecret(BCRYPT_SECRET_HANDLE secret)
+{
+    FIXME( "%p\n", secret );
+    return STATUS_SUCCESS;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     switch (reason)
