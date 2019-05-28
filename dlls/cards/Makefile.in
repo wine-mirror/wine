@@ -2,6 +2,8 @@ MODULE    = cards.dll
 IMPORTLIB = cards
 IMPORTS   = user32 gdi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	cards.c
 
