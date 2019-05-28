@@ -219,13 +219,13 @@ static HRESULT WINAPI errorrec_QueryInterface(IErrorRecords *iface, REFIID riid,
     return IErrorInfo_QueryInterface(&This->IErrorInfo_iface, riid, ppvObject);
 }
 
-static ULONG WINAPI WINAPI errorrec_AddRef(IErrorRecords *iface)
+static ULONG WINAPI errorrec_AddRef(IErrorRecords *iface)
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
     return IErrorInfo_AddRef(&This->IErrorInfo_iface);
 }
 
-static ULONG WINAPI WINAPI errorrec_Release(IErrorRecords *iface)
+static ULONG WINAPI errorrec_Release(IErrorRecords *iface)
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
     return IErrorInfo_Release(&This->IErrorInfo_iface);
