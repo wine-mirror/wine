@@ -884,20 +884,14 @@ DECL_HANDLER(get_next_device_request)
                                                              0, &device_manager_ops )))
         return;
 
-    if (req->prev)
-    {
-        if ((irp = (struct irp_call *)get_handle_obj( current->process, req->prev, 0, &irp_call_ops )))
-        {
-            set_irp_result( irp, req->status, NULL, 0, 0 );
-            close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
-            release_object( irp );
-        }
-    }
+    if (req->prev) close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
 
     if (manager->current_call)
     {
         irp = manager->current_call;
-        if (irp->async)
+        if (req->status)
+            set_irp_result( irp, req->status, NULL, 0, 0 );
+        else if (irp->async)
             set_async_pending( irp->async, irp->file && is_fd_overlapped( irp->file->fd ) );
         free_irp_params( irp );
         release_object( irp );
