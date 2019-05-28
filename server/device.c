@@ -52,6 +52,7 @@ struct irp_call
     struct async          *async;         /* pending async op */
     irp_params_t           params;        /* irp parameters */
     struct iosb           *iosb;          /* I/O status block */
+    client_ptr_t           user_ptr;      /* client side pointer */
 };
 
 static void irp_call_dump( struct object *obj, int verbose );
@@ -351,6 +352,7 @@ static struct irp_call *create_irp( struct device_file *file, const irp_params_t
         irp->async    = NULL;
         irp->params   = *params;
         irp->iosb     = NULL;
+        irp->user_ptr = 0;
 
         if (async) irp->iosb = async_get_iosb( async );
         if (!irp->iosb && !(irp->iosb = create_iosb( NULL, 0, 0 )))
@@ -886,13 +888,17 @@ DECL_HANDLER(get_next_device_request)
 
     if (req->prev) close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
 
+    /* process result of previous call */
     if (manager->current_call)
     {
         irp = manager->current_call;
+        irp->user_ptr = req->user_ptr;
+
         if (req->status)
             set_irp_result( irp, req->status, NULL, 0, 0 );
         else if (irp->async)
             set_async_pending( irp->async, irp->file && is_fd_overlapped( irp->file->fd ) );
+
         free_irp_params( irp );
         release_object( irp );
         manager->current_call = NULL;

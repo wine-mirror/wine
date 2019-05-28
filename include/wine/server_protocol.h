@@ -5252,6 +5252,7 @@ struct get_next_device_request_request
     obj_handle_t manager;
     obj_handle_t prev;
     unsigned int status;
+    client_ptr_t user_ptr;
 };
 struct get_next_device_request_reply
 {
@@ -6694,6 +6695,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 583
+#define SERVER_PROTOCOL_VERSION 584
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

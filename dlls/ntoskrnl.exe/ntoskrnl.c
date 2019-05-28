@@ -557,6 +557,7 @@ struct dispatch_context
 {
     irp_params_t params;
     HANDLE handle;
+    IRP   *irp;
     ULONG  in_size;
     void  *in_buff;
 };
@@ -570,6 +571,7 @@ static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp, struct dispatch_conte
 
     KeQueryTickCount( &count );  /* update the global KeTickCount */
 
+    context->irp = irp;
     device->CurrentIrp = irp;
     IoCallDriver( device, irp );
     device->CurrentIrp = NULL;
@@ -931,9 +933,10 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
 
         SERVER_START_REQ( get_next_device_request )
         {
-            req->manager = wine_server_obj_handle( manager );
-            req->prev = wine_server_obj_handle( context.handle );
-            req->status = status;
+            req->manager  = wine_server_obj_handle( manager );
+            req->prev     = wine_server_obj_handle( context.handle );
+            req->user_ptr = wine_server_client_ptr( context.irp );
+            req->status   = status;
             wine_server_set_reply( req, context.in_buff, context.in_size );
             if (!(status = wine_server_call( req )))
             {
@@ -949,6 +952,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 if (status == STATUS_BUFFER_OVERFLOW)
                     context.in_size = reply->in_size;
             }
+            context.irp = NULL;
         }
         SERVER_END_REQ;
 

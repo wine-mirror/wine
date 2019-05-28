@@ -4282,6 +4282,7 @@ static void dump_get_next_device_request_request( const struct get_next_device_r
     fprintf( stderr, " manager=%04x", req->manager );
     fprintf( stderr, ", prev=%04x", req->prev );
     fprintf( stderr, ", status=%08x", req->status );
+    dump_uint64( ", user_ptr=", &req->user_ptr );
 }
 
 static void dump_get_next_device_request_reply( const struct get_next_device_request_reply *req )

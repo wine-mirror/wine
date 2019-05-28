@@ -3633,6 +3633,7 @@ struct handle_info
     obj_handle_t manager;         /* handle to the device manager */
     obj_handle_t prev;            /* handle to the previous irp */
     unsigned int status;          /* status of the previous irp */
+    client_ptr_t user_ptr;        /* user pointer of the previous irp */
 @REPLY
     irp_params_t params;          /* irp parameters */
     obj_handle_t next;            /* handle to the next irp */
