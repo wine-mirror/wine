@@ -2022,14 +2022,16 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
        WINE_TRY_CFLAGS([-fshort-wchar],[MSVCRTFLAGS="$MSVCRTFLAGS -fshort-wchar"]) ;;
   esac
 
-  dnl gcc-4.6+ omits frame pointers by default, breaking some copy protections
   case $host_cpu in
+    dnl gcc-4.6+ omits frame pointers by default, breaking some copy protections
     *i[[3456789]]86*) WINE_TRY_CFLAGS([-fno-omit-frame-pointer]) ;;
-  esac
-
-  dnl mingw uses Windows 64-bit types, not Unix ones
-  case $host in
-    x86_64-*mingw32*|x86_64-*cygwin*) WINE_TRY_CFLAGS([-Wno-format]) ;;
+    *x86_64*)
+      case $host_os in
+        dnl Mingw uses Windows 64-bit types, not Unix ones
+        cygwin*|mingw32*) WINE_TRY_CFLAGS([-Wno-format]) ;;
+        dnl Default to ms_abi on 64-bit
+        *) WINE_TRY_CFLAGS([-mabi=ms],[MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms"]) ;;
+      esac ;;
   esac
 
   dnl Enable -Werror for maintainer mode
