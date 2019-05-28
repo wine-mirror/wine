@@ -1,4 +1,6 @@
 MODULE    = authz.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	authz.c
