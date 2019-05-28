@@ -30,7 +30,6 @@ struct ParserImpl
 {
     BaseFilter filter;
 
-    PFN_CLEANUP fnCleanup;
     PFN_DISCONNECT fnDisconnect;
 
     PullPin * pInputPin;
