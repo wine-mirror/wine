@@ -748,7 +748,8 @@ static void delete_device(struct device *device)
     heap_free(device);
 }
 
-static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
+/* Create a new device, or return a device already in the set. */
+static struct device *create_device(struct DeviceInfoSet *set,
     const GUID *class, const WCHAR *instanceid, BOOL phantom)
 {
     const DWORD one = 1;
@@ -757,6 +758,15 @@ static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
 
     TRACE("%p, %s, %s, %d\n", set, debugstr_guid(class),
         debugstr_w(instanceid), phantom);
+
+    LIST_FOR_EACH_ENTRY(device, &set->devices, struct device, entry)
+    {
+        if (!strcmpiW(instanceid, device->instanceId))
+        {
+            TRACE("Found device %p already in set.\n", device);
+            return device;
+        }
+    }
 
     if (!(device = heap_alloc_zero(sizeof(*device))))
     {
@@ -788,6 +798,8 @@ static struct device *SETUPDI_CreateDeviceInfo(struct DeviceInfoSet *set,
     SETUPDI_GuidToString(class, guidstr);
     SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CLASSGUID,
         (const BYTE *)guidstr, sizeof(guidstr));
+
+    TRACE("Created new device %p.\n", device);
     return device;
 }
 
@@ -1620,7 +1632,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
         }
     }
 
-    if (!(device = SETUPDI_CreateDeviceInfo(set, class, id, TRUE)))
+    if (!(device = create_device(set, class, id, TRUE)))
         return FALSE;
 
     if (description)
@@ -2196,8 +2208,7 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
                                 deviceClassStr[37] = 0;
                                 UuidFromStringW(&deviceClassStr[1],
                                         &deviceClass);
-                                if ((device = SETUPDI_CreateDeviceInfo(set,
-                                        &deviceClass, deviceInst, FALSE)))
+                                if ((device = create_device(set, &deviceClass, deviceInst, FALSE)))
                                     SETUPDI_AddDeviceInterfaces(device, subKey, guid, flags);
                             }
                             RegCloseKey(deviceKey);
@@ -2318,7 +2329,7 @@ static void SETUPDI_EnumerateMatchingDeviceInstances(struct DeviceInfoSet *set,
                             if (snprintfW(id, ARRAY_SIZE(id), fmt, enumerator,
                                     deviceName, deviceInstance) != -1)
                             {
-                                SETUPDI_CreateDeviceInfo(set, &deviceClass, id, FALSE);
+                                create_device(set, &deviceClass, id, FALSE);
                             }
                         }
                     }
@@ -3398,7 +3409,7 @@ BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO devinfo, PCWSTR instance_id, HWND hw
                                    PSP_DEVINFO_DATA device_data)
 {
     struct DeviceInfoSet *set;
-    struct device *device = NULL, *enum_device;
+    struct device *device;
     WCHAR classW[40];
     GUID guid;
     HKEY enumKey = NULL;
@@ -3448,17 +3459,7 @@ BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO devinfo, PCWSTR instance_id, HWND hw
         goto done;
     }
 
-    /* If current set already contains a same instance, don't create new ones */
-    LIST_FOR_EACH_ENTRY(enum_device, &set->devices, struct device, entry)
-    {
-        if (!strcmpiW(instance_id, enum_device->instanceId))
-        {
-            device = enum_device;
-            break;
-        }
-    }
-
-    if (!device && !(device = SETUPDI_CreateDeviceInfo(set, &guid, instance_id, FALSE)))
+    if (!(device = create_device(set, &guid, instance_id, FALSE)))
         goto done;
 
     if (!device_data || device_data->cbSize == sizeof(SP_DEVINFO_DATA))

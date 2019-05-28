@@ -2933,7 +2933,6 @@ todo_wine {
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
     check_device_list(set, &GUID_NULL);
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
-todo_wine
     check_device_info(set, 1, NULL, NULL);
     check_device_iface(set, NULL, &iface_guid, 0, 0, "\\\\?\\root#legacy_bogus#foo#{deadbeef-3f65-11db-b704-0011955c2bdb}");
     check_device_iface(set, NULL, &iface_guid, 1, 0, NULL);
@@ -2980,7 +2979,6 @@ todo_wine {
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#x.\n", GetLastError());
     check_device_list(set, &GUID_NULL);
     check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\FOO");
-todo_wine
     check_device_info(set, 1, NULL, NULL);
     check_device_iface(set, NULL, &iface_guid, 0, 0, "\\\\?\\root#legacy_bogus#foo#{deadbeef-3f65-11db-b704-0011955c2bdb}");
     check_device_iface(set, NULL, &iface_guid, 1, 0, NULL);
