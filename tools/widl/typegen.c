@@ -3607,8 +3607,7 @@ static unsigned int write_type_tfs(FILE *file, int indent,
             context != TYPE_CONTEXT_CONTAINER_NO_POINTERS)
         {
             int ptr_type;
-            ptr_type = get_pointer_fc(type, attrs,
-                                      context == TYPE_CONTEXT_TOPLEVELPARAM);
+            ptr_type = get_pointer_fc_context(type, attrs, context);
             if (ptr_type != FC_RP || type_array_is_decl_as_ptr(type))
             {
                 unsigned int absoff = type->typestring_offset;
