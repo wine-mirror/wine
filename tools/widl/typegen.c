@@ -2951,14 +2951,10 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
     unsigned int size;
     unsigned int start_offset;
     unsigned char fc;
-    int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
     unsigned int baseoff
         = !type_array_is_decl_as_ptr(type) && current_structure
         ? type_memsize(current_structure)
         : 0;
-
-    if (!pointer_type)
-        pointer_type = FC_RP;
 
     if (!is_string_type(attrs, type_array_get_element(type)))
         write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset);
