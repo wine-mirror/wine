@@ -1,4 +1,6 @@
 MODULE = cryptext.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	cryptext_main.c
