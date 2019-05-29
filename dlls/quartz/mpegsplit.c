@@ -795,7 +795,7 @@ static const IBaseFilterVtbl MPEGSplitter_Vtbl =
 {
     MPEGSplitter_QueryInterface,
     Parser_AddRef,
-    Parser_Release,
+    BaseFilterImpl_Release,
     Parser_GetClassID,
     Parser_Stop,
     Parser_Pause,
@@ -868,9 +868,16 @@ static const IAMStreamSelectVtbl AMStreamSelectVtbl =
     AMStreamSelect_Enable
 };
 
+static void mpeg_splitter_destroy(BaseFilter *iface)
+{
+    MPEGSplitterImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
+    Parser_Destroy(&filter->Parser);
+}
+
 static const BaseFilterFuncTable mpeg_splitter_func_table =
 {
     .filter_get_pin = parser_get_pin,
+    .filter_destroy = mpeg_splitter_destroy,
 };
 
 HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
