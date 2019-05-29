@@ -471,6 +471,7 @@ SOURCES = \
 	netfw.idl \
 	netioapi.h \
 	netlistmgr.idl \
+	newdev.h \
 	nldef.h \
 	npapi.h \
 	nserror.h \
