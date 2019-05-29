@@ -136,7 +136,6 @@ static void notif_complete(DocHost *This, DISPID dispid)
     TRACE("%d <<<\n", dispid);
 
     SysFreeString(V_BSTR(&url));
-    This->busy = VARIANT_FALSE;
 }
 
 static void object_available(DocHost *This)
@@ -681,6 +680,8 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
                 return E_NOTIMPL;
             return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         case OLECMDID_SETDOWNLOADSTATE:
+            if(pvaIn && V_VT(pvaIn) == VT_I4)
+                This->busy = V_I4(pvaIn) ? VARIANT_TRUE : VARIANT_FALSE;
             if(This->olecmd)
                 return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
