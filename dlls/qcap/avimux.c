@@ -134,8 +134,30 @@ static IPin *avi_mux_get_pin(BaseFilter *iface, unsigned int index)
     return NULL;
 }
 
+static void avi_mux_destroy(BaseFilter *iface)
+{
+    AviMux *filter = impl_from_BaseFilter(iface);
+    int i;
+
+    BaseOutputPinImpl_Release(&filter->out->pin.pin.IPin_iface);
+
+    for (i = 0; i < filter->input_pin_no; ++i)
+    {
+        IPin_Disconnect(&filter->in[i]->pin.pin.IPin_iface);
+        IMemAllocator_Release(filter->in[i]->samples_allocator);
+        filter->in[i]->samples_allocator = NULL;
+        BaseInputPinImpl_Release(&filter->in[i]->pin.pin.IPin_iface);
+    }
+
+    heap_free(filter->idx1);
+    strmbase_filter_cleanup(&filter->filter);
+    heap_free(filter);
+    ObjectRefCount(FALSE);
+}
+
 static const BaseFilterFuncTable filter_func_table = {
     .filter_get_pin = avi_mux_get_pin,
+    .filter_destroy = avi_mux_destroy,
 };
 
 static inline AviMux* impl_from_IBaseFilter(IBaseFilter *iface)
@@ -171,33 +193,6 @@ static HRESULT WINAPI AviMux_QueryInterface(IBaseFilter *iface, REFIID riid, voi
 
     IUnknown_AddRef((IUnknown*)*ppv);
     return S_OK;
-}
-
-static ULONG WINAPI AviMux_Release(IBaseFilter *iface)
-{
-    AviMux *This = impl_from_IBaseFilter(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refCount);
-
-    TRACE("(%p) new refcount: %u\n", This, ref);
-
-    if(!ref) {
-        int i;
-
-        BaseOutputPinImpl_Release(&This->out->pin.pin.IPin_iface);
-
-        for(i=0; i<This->input_pin_no; i++) {
-            IPin_Disconnect(&This->in[i]->pin.pin.IPin_iface);
-            IMemAllocator_Release(This->in[i]->samples_allocator);
-            This->in[i]->samples_allocator = NULL;
-            BaseInputPinImpl_Release(&This->in[i]->pin.pin.IPin_iface);
-        }
-
-        HeapFree(GetProcessHeap(), 0, This->idx1);
-        strmbase_filter_cleanup(&This->filter);
-        HeapFree(GetProcessHeap(), 0, This);
-        ObjectRefCount(FALSE);
-    }
-    return ref;
 }
 
 static HRESULT out_flush(AviMux *This)
@@ -766,7 +761,7 @@ static HRESULT WINAPI AviMux_QueryVendorInfo(IBaseFilter *iface, LPWSTR *pVendor
 static const IBaseFilterVtbl AviMuxVtbl = {
     AviMux_QueryInterface,
     BaseFilterImpl_AddRef,
-    AviMux_Release,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     AviMux_Stop,
     AviMux_Pause,
