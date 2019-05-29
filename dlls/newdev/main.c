@@ -25,7 +25,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
-#include "setupapi.h"
+#include "newdev.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -75,19 +75,17 @@ BOOL WINAPI UpdateDriverForPlugAndPlayDevicesW(HWND hwndParent, LPCWSTR Hardware
 /***********************************************************************
  *           DiInstallDriverA (NEWDEV.@)
  */
-BOOL WINAPI DiInstallDriverA(HWND parent, HDEVINFO deviceinfo, PSP_DEVINFO_DATA devicedata,
-    PSP_DRVINFO_DATA_A driverdata, DWORD flags, BOOL *reboot)
+BOOL WINAPI DiInstallDriverA(HWND parent, const char *inf_path, DWORD flags, BOOL *reboot)
 {
-    FIXME("Stub! %p %p %p %p 0x%08x %p\n", parent, deviceinfo, devicedata, driverdata, flags, reboot);
+    FIXME("parent %p, inf_path %s, flags %#x, reboot %p, stub!\n", parent, debugstr_a(inf_path), flags, reboot);
     return TRUE;
 }
 
 /***********************************************************************
  *           DiInstallDriverW (NEWDEV.@)
  */
-BOOL WINAPI DiInstallDriverW(HWND parent, HDEVINFO deviceinfo, PSP_DEVINFO_DATA devicedata,
-    PSP_DRVINFO_DATA_W driverdata, DWORD flags, BOOL *reboot)
+BOOL WINAPI DiInstallDriverW(HWND parent, const WCHAR *inf_path, DWORD flags, BOOL *reboot)
 {
-    FIXME("Stub! %p %p %p %p 0x%08x %p\n", parent, deviceinfo, devicedata, driverdata, flags, reboot);
+    FIXME("parent %p, inf_path %s, flags %#x, reboot %p, stub!\n", parent, debugstr_w(inf_path), flags, reboot);
     return TRUE;
 }
