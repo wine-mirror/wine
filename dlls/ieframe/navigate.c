@@ -150,6 +150,7 @@ void notify_download_state(DocHost *dochost, BOOL is_downloading)
 {
     DISPPARAMS dwl_dp = {NULL};
     TRACE("(%x)\n", is_downloading);
+    dochost->busy = is_downloading ? VARIANT_TRUE : VARIANT_FALSE;
     call_sink(dochost->cps.wbe2, is_downloading ? DISPID_DOWNLOADBEGIN : DISPID_DOWNLOADCOMPLETE, &dwl_dp);
 }
 
@@ -583,8 +584,6 @@ static void on_before_navigate2(DocHost *This, LPCWSTR url, SAFEARRAY *post_data
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = params;
 
-    This->busy = VARIANT_TRUE;
-
     V_VT(params) = VT_BOOL|VT_BYREF;
     V_BOOLREF(params) = cancel;
 
@@ -888,6 +887,8 @@ static HRESULT navigate_bsc(DocHost *This, BindStatusCallback *bsc, IMoniker *mo
     }
 
     notify_download_state(This, TRUE);
+    This->busy = VARIANT_FALSE;
+
     on_commandstate_change(This, CSC_NAVIGATEBACK, FALSE);
     on_commandstate_change(This, CSC_NAVIGATEFORWARD, FALSE);
 
