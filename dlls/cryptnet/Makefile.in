@@ -3,5 +3,7 @@ IMPORTLIB = cryptnet
 IMPORTS   = crypt32
 DELAYIMPORTS = wininet
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	cryptnet_main.c
