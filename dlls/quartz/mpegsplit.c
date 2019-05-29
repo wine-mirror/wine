@@ -794,20 +794,20 @@ static HRESULT WINAPI MPEGSplitter_QueryInterface(IBaseFilter *iface, REFIID rii
 static const IBaseFilterVtbl MPEGSplitter_Vtbl =
 {
     MPEGSplitter_QueryInterface,
-    Parser_AddRef,
+    BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
-    Parser_GetClassID,
+    BaseFilterImpl_GetClassID,
     Parser_Stop,
     Parser_Pause,
     Parser_Run,
     Parser_GetState,
     Parser_SetSyncSource,
-    Parser_GetSyncSource,
-    Parser_EnumPins,
+    BaseFilterImpl_GetSyncSource,
+    BaseFilterImpl_EnumPins,
     BaseFilterImpl_FindPin,
-    Parser_QueryFilterInfo,
-    Parser_JoinFilterGraph,
-    Parser_QueryVendorInfo
+    BaseFilterImpl_QueryFilterInfo,
+    BaseFilterImpl_JoinFilterGraph,
+    BaseFilterImpl_QueryVendorInfo,
 };
 
 static HRESULT WINAPI AMStreamSelect_QueryInterface(IAMStreamSelect *iface, REFIID riid, void **ppv)

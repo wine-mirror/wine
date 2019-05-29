@@ -396,21 +396,21 @@ static HRESULT WAVEParser_disconnect(LPVOID iface)
 
 static const IBaseFilterVtbl WAVEParser_Vtbl =
 {
-    Parser_QueryInterface,
-    Parser_AddRef,
+    BaseFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
-    Parser_GetClassID,
+    BaseFilterImpl_GetClassID,
     Parser_Stop,
     Parser_Pause,
     Parser_Run,
     Parser_GetState,
     Parser_SetSyncSource,
-    Parser_GetSyncSource,
-    Parser_EnumPins,
+    BaseFilterImpl_GetSyncSource,
+    BaseFilterImpl_EnumPins,
     BaseFilterImpl_FindPin,
-    Parser_QueryFilterInfo,
-    Parser_JoinFilterGraph,
-    Parser_QueryVendorInfo
+    BaseFilterImpl_QueryFilterInfo,
+    BaseFilterImpl_JoinFilterGraph,
+    BaseFilterImpl_QueryVendorInfo,
 };
 
 static void wave_parser_destroy(BaseFilter *iface)

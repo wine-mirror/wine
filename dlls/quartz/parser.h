@@ -61,19 +61,11 @@ HRESULT Parser_Create(ParserImpl *parser, const IBaseFilterVtbl *vtbl,
 /* Override the _Release function and call this when releasing */
 extern void Parser_Destroy(ParserImpl *This);
 
-extern HRESULT WINAPI Parser_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
-extern ULONG WINAPI Parser_AddRef(IBaseFilter * iface);
-extern HRESULT WINAPI Parser_GetClassID(IBaseFilter * iface, CLSID * pClsid);
 extern HRESULT WINAPI Parser_Stop(IBaseFilter * iface);
 extern HRESULT WINAPI Parser_Pause(IBaseFilter * iface);
 extern HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
 extern HRESULT WINAPI Parser_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState);
 extern HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock);
-extern HRESULT WINAPI Parser_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock);
-extern HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum);
-extern HRESULT WINAPI Parser_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo);
-extern HRESULT WINAPI Parser_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName);
-extern HRESULT WINAPI Parser_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);
 
 IPin *parser_get_pin(BaseFilter *iface, unsigned int index) DECLSPEC_HIDDEN;
 
