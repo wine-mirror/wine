@@ -1064,9 +1064,16 @@ static unsigned char get_parameter_fc( const var_t *var, int is_return, unsigned
             case TGT_UNION:
             case TGT_USER_TYPE:
             case TGT_RANGE:
+                *flags |= MustFree;
+                if (!is_in && is_out) server_size = type_memsize( ref );
+                break;
             case TGT_ARRAY:
-                *flags |= IsSimpleRef | MustFree;
-                *typestring_offset = ref->typestring_offset;
+                *flags |= MustFree;
+                if (!type_array_is_decl_as_ptr(ref))
+                {
+                    *flags |= IsSimpleRef;
+                    *typestring_offset = ref->typestring_offset;
+                }
                 if (!is_in && is_out) server_size = type_memsize( ref );
                 break;
             case TGT_STRING:
