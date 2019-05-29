@@ -18,8 +18,6 @@
 
 #define NONAMELESSUNION
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -33,7 +31,6 @@
 #include "cryptdlg.h"
 #include "cryptuiapi.h"
 #include "cryptres.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptdlg);
@@ -501,9 +498,9 @@ static BOOL CRYPT_FormatHexString(const BYTE *pbEncoded, DWORD cbEncoded,
             for (i = 0; i < cbEncoded; i++)
             {
                 if (i < cbEncoded - 1)
-                    ptr += sprintfW(ptr, fmt, pbEncoded[i]);
+                    ptr += swprintf(ptr, 4, fmt, pbEncoded[i]);
                 else
-                    ptr += sprintfW(ptr, endFmt, pbEncoded[i]);
+                    ptr += swprintf(ptr, 3, endFmt, pbEncoded[i]);
             }
         }
         else
@@ -538,31 +535,31 @@ static BOOL CRYPT_FormatCPS(DWORD dwCertEncodingType,
         else
             sep = commaSep;
 
-        sepLen = strlenW(sep);
+        sepLen = lstrlenW(sep);
 
         if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
         {
-            charsNeeded += 3 * strlenW(indent);
+            charsNeeded += 3 * lstrlenW(indent);
             if (str && *pcchStr >= charsNeeded)
             {
-                strcpyW(str, indent);
-                str += strlenW(indent);
-                strcpyW(str, indent);
-                str += strlenW(indent);
-                strcpyW(str, indent);
-                str += strlenW(indent);
+                lstrcpyW(str, indent);
+                str += lstrlenW(indent);
+                lstrcpyW(str, indent);
+                str += lstrlenW(indent);
+                lstrcpyW(str, indent);
+                str += lstrlenW(indent);
             }
         }
         charsNeeded += cpsValue->Value.cbData / sizeof(WCHAR);
         if (str && *pcchStr >= charsNeeded)
         {
-            strcpyW(str, (LPWSTR)cpsValue->Value.pbData);
+            lstrcpyW(str, (LPWSTR)cpsValue->Value.pbData);
             str += cpsValue->Value.cbData / sizeof(WCHAR);
         }
         charsNeeded += sepLen;
         if (str && *pcchStr >= charsNeeded)
         {
-            strcpyW(str, sep);
+            lstrcpyW(str, sep);
             str += sepLen;
         }
         LocalFree(cpsValue);
@@ -619,8 +616,8 @@ static BOOL CRYPT_FormatUserNotice(DWORD dwCertEncodingType,
             headingSep = colonSpace;
             sep = commaSep;
         }
-        sepLen = strlenW(sep);
-        headingSepLen = strlenW(headingSep);
+        sepLen = lstrlenW(sep);
+        headingSepLen = lstrlenW(headingSep);
 
         if (pNoticeRef)
         {
@@ -629,15 +626,15 @@ static BOOL CRYPT_FormatUserNotice(DWORD dwCertEncodingType,
 
             if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
             {
-                charsNeeded += 3 * strlenW(indent);
+                charsNeeded += 3 * lstrlenW(indent);
                 if (str && *pcchStr >= charsNeeded)
                 {
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
                 }
             }
             charsNeeded += noticeRefLen;
@@ -649,22 +646,22 @@ static BOOL CRYPT_FormatUserNotice(DWORD dwCertEncodingType,
             charsNeeded += headingSepLen;
             if (str && *pcchStr >= charsNeeded)
             {
-                strcpyW(str, headingSep);
+                lstrcpyW(str, headingSep);
                 str += headingSepLen;
             }
             if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
             {
-                charsNeeded += 4 * strlenW(indent);
+                charsNeeded += 4 * lstrlenW(indent);
                 if (str && *pcchStr >= charsNeeded)
                 {
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
                 }
             }
             charsNeeded += organizationLen;
@@ -681,24 +678,24 @@ static BOOL CRYPT_FormatUserNotice(DWORD dwCertEncodingType,
             charsNeeded += sepLen;
             if (str && *pcchStr >= charsNeeded)
             {
-                strcpyW(str, sep);
+                lstrcpyW(str, sep);
                 str += sepLen;
             }
             for (k = 0; k < pNoticeRef->cNoticeNumbers; k++)
             {
                 if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
                 {
-                    charsNeeded += 4 * strlenW(indent);
+                    charsNeeded += 4 * lstrlenW(indent);
                     if (str && *pcchStr >= charsNeeded)
                     {
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
                     }
                 }
                 charsNeeded += noticeNumLen;
@@ -707,17 +704,17 @@ static BOOL CRYPT_FormatUserNotice(DWORD dwCertEncodingType,
                     memcpy(str, noticeNum, noticeNumLen * sizeof(WCHAR));
                     str += noticeNumLen;
                 }
-                sprintfW(noticeNumStr, numFmt, k + 1);
-                charsNeeded += strlenW(noticeNumStr);
+                swprintf(noticeNumStr, ARRAY_SIZE(noticeNumStr), numFmt, k + 1);
+                charsNeeded += lstrlenW(noticeNumStr);
                 if (str && *pcchStr >= charsNeeded)
                 {
-                    strcpyW(str, noticeNumStr);
-                    str += strlenW(noticeNumStr);
+                    lstrcpyW(str, noticeNumStr);
+                    str += lstrlenW(noticeNumStr);
                 }
                 charsNeeded += sepLen;
                 if (str && *pcchStr >= charsNeeded)
                 {
-                    strcpyW(str, sep);
+                    lstrcpyW(str, sep);
                     str += sepLen;
                 }
             }
@@ -726,15 +723,15 @@ static BOOL CRYPT_FormatUserNotice(DWORD dwCertEncodingType,
         {
             if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
             {
-                charsNeeded += 3 * strlenW(indent);
+                charsNeeded += 3 * lstrlenW(indent);
                 if (str && *pcchStr >= charsNeeded)
                 {
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
                 }
             }
             charsNeeded += noticeTextLen;
@@ -743,16 +740,16 @@ static BOOL CRYPT_FormatUserNotice(DWORD dwCertEncodingType,
                 memcpy(str, noticeText, noticeTextLen * sizeof(WCHAR));
                 str += noticeTextLen;
             }
-            charsNeeded += strlenW(notice->pszDisplayText);
+            charsNeeded += lstrlenW(notice->pszDisplayText);
             if (str && *pcchStr >= charsNeeded)
             {
-                strcpyW(str, notice->pszDisplayText);
-                str += strlenW(notice->pszDisplayText);
+                lstrcpyW(str, notice->pszDisplayText);
+                str += lstrlenW(notice->pszDisplayText);
             }
             charsNeeded += sepLen;
             if (str && *pcchStr >= charsNeeded)
             {
-                strcpyW(str, sep);
+                lstrcpyW(str, sep);
                 str += sepLen;
             }
         }
@@ -826,8 +823,8 @@ BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
             headingSep = colonSpace;
             sep = commaSep;
         }
-        sepLen = strlenW(sep);
-        headingSepLen = strlenW(headingSep);
+        sepLen = lstrlenW(sep);
+        headingSepLen = lstrlenW(headingSep);
 
         for (i = 0; ret && i < policies->cPolicyInfo; i++)
         {
@@ -838,12 +835,12 @@ BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
             charsNeeded += 1; /* '['*/
             if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                 *str++ = '[';
-            sprintfW(policyNum, numFmt, i + 1);
-            charsNeeded += strlenW(policyNum);
+            swprintf(policyNum, ARRAY_SIZE(policyNum), numFmt, i + 1);
+            charsNeeded += lstrlenW(policyNum);
             if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
             {
-                strcpyW(str, policyNum);
-                str += strlenW(policyNum);
+                lstrcpyW(str, policyNum);
+                str += lstrlenW(policyNum);
             }
             charsNeeded += 1; /* ']'*/
             if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
@@ -857,16 +854,16 @@ BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
             charsNeeded += headingSepLen;
             if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
             {
-                strcpyW(str, headingSep);
+                lstrcpyW(str, headingSep);
                 str += headingSepLen;
             }
             if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
             {
-                charsNeeded += strlenW(indent);
+                charsNeeded += lstrlenW(indent);
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                 {
-                    strcpyW(str, indent);
-                    str += strlenW(indent);
+                    lstrcpyW(str, indent);
+                    str += lstrlenW(indent);
                 }
             }
             charsNeeded += policyIdLen;
@@ -885,7 +882,7 @@ BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
             charsNeeded += sepLen;
             if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
             {
-                strcpyW(str, sep);
+                lstrcpyW(str, sep);
                 str += sepLen;
             }
             for (j = 0; j < policy->cPolicyQualifier; j++)
@@ -896,31 +893,31 @@ BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
 
                 if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
                 {
-                    charsNeeded += strlenW(indent);
+                    charsNeeded += lstrlenW(indent);
                     if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                     {
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
                     }
                 }
                 charsNeeded += 1; /* '['*/
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                     *str++ = '[';
-                charsNeeded += strlenW(policyNum);
+                charsNeeded += lstrlenW(policyNum);
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                 {
-                    strcpyW(str, policyNum);
-                    str += strlenW(policyNum);
+                    lstrcpyW(str, policyNum);
+                    str += lstrlenW(policyNum);
                 }
                 charsNeeded += 1; /* ','*/
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                     *str++ = ',';
-                sprintfW(policyQualifierNum, numFmt, j + 1);
-                charsNeeded += strlenW(policyQualifierNum);
+                swprintf(policyQualifierNum, ARRAY_SIZE(policyQualifierNum), numFmt, j + 1);
+                charsNeeded += lstrlenW(policyQualifierNum);
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                 {
-                    strcpyW(str, policyQualifierNum);
-                    str += strlenW(policyQualifierNum);
+                    lstrcpyW(str, policyQualifierNum);
+                    str += lstrlenW(policyQualifierNum);
                 }
                 charsNeeded += 1; /* ']'*/
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
@@ -935,18 +932,18 @@ BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
                 charsNeeded += headingSepLen;
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                 {
-                    strcpyW(str, headingSep);
+                    lstrcpyW(str, headingSep);
                     str += headingSepLen;
                 }
                 if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
                 {
-                    charsNeeded += 2 * strlenW(indent);
+                    charsNeeded += 2 * lstrlenW(indent);
                     if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                     {
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
                     }
                 }
                 charsNeeded += policyQualifierIdLen;
@@ -989,18 +986,18 @@ BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
                 charsNeeded += sepLen;
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                 {
-                    strcpyW(str, sep);
+                    lstrcpyW(str, sep);
                     str += sepLen;
                 }
                 if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
                 {
-                    charsNeeded += 2 * strlenW(indent);
+                    charsNeeded += 2 * lstrlenW(indent);
                     if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                     {
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
-                        strcpyW(str, indent);
-                        str += strlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
+                        lstrcpyW(str, indent);
+                        str += lstrlenW(indent);
                     }
                 }
                 charsNeeded += qualifierLen;
@@ -1012,7 +1009,7 @@ BOOL WINAPI FormatVerisignExtension(DWORD dwCertEncodingType,
                 charsNeeded += headingSepLen;
                 if (str && *pcbFormat >= charsNeeded * sizeof(WCHAR))
                 {
-                    strcpyW(str, headingSep);
+                    lstrcpyW(str, headingSep);
                     str += headingSepLen;
                 }
                 /* This if block is deliberately redundant with the same if
