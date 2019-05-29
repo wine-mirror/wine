@@ -69,7 +69,6 @@
 #include "shlwapi.h"
 #include "comctl32.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
 
@@ -136,7 +135,7 @@ BOOL WINAPI RegisterClassNameW(const WCHAR *class)
     while (min <= max)
     {
         int res, pos = (min + max) / 2;
-        if (!(res = strcmpiW(class, classes[pos].nameW)))
+        if (!(res = wcsicmp(class, classes[pos].nameW)))
         {
             classes[pos].fn_register();
             return TRUE;

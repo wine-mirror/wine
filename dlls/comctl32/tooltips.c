@@ -96,7 +96,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/unicode.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
@@ -502,7 +501,7 @@ TOOLTIPS_GetTipText (const TOOLTIPS_INFO *infoPtr, INT nTool, WCHAR *buffer)
 
     if (!(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & TTS_NOPREFIX)) {
         WCHAR *ptrW;
-        if ((ptrW = strchrW(buffer, '\t')))
+        if ((ptrW = wcschr(buffer, '\t')))
             *ptrW = 0;
     }
 
@@ -963,7 +962,7 @@ TOOLTIPS_CopyInfoT (const TOOLTIPS_INFO *infoPtr, INT index, TTTOOLINFOW *ti, BO
             toolPtr->lpszText == LPSTR_TEXTCALLBACKW)
             ti->lpszText = toolPtr->lpszText;
         else if (isW)
-            strcpyW (ti->lpszText, toolPtr->lpszText);
+            lstrcpyW (ti->lpszText, toolPtr->lpszText);
         else
             /* ANSI version, the buffer is maximum 80 bytes without null. */
             WideCharToMultiByte(CP_ACP, 0, toolPtr->lpszText, -1,
@@ -1090,7 +1089,7 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
                 INT len = lstrlenW (ti->lpszText);
                 TRACE("add text %s\n", debugstr_w(ti->lpszText));
                 toolPtr->lpszText =	Alloc ((len + 1)*sizeof(WCHAR));
-                strcpyW (toolPtr->lpszText, ti->lpszText);
+                lstrcpyW (toolPtr->lpszText, ti->lpszText);
             }
             else {
                 INT len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1, NULL, 0);
@@ -1167,7 +1166,7 @@ static void TOOLTIPS_SetToolText(TTTOOL_INFO *toolPtr, WCHAR *text, BOOL is_unic
             len = lstrlenW(text);
             toolPtr->lpszText = Alloc ((len + 1) * sizeof(WCHAR));
             if (toolPtr->lpszText)
-                strcpyW (toolPtr->lpszText, text);
+                lstrcpyW (toolPtr->lpszText, text);
         }
         else
         {
@@ -1640,7 +1639,7 @@ TOOLTIPS_SetTitleT (TOOLTIPS_INFO *infoPtr, UINT_PTR uTitleIcon, LPCWSTR pszTitl
     {
         if (isW)
         {
-            size = (strlenW(pszTitle)+1)*sizeof(WCHAR);
+            size = (lstrlenW(pszTitle)+1)*sizeof(WCHAR);
             infoPtr->pszTitle = Alloc(size);
             if (!infoPtr->pszTitle)
                 return FALSE;
@@ -1977,7 +1976,7 @@ TOOLTIPS_SetFont (TOOLTIPS_INFO *infoPtr, HFONT hFont, BOOL redraw)
 static inline LRESULT
 TOOLTIPS_GetTextLength(const TOOLTIPS_INFO *infoPtr)
 {
-    return strlenW(infoPtr->szTipText);
+    return lstrlenW(infoPtr->szTipText);
 }
 
 /******************************************************************
@@ -1999,7 +1998,7 @@ TOOLTIPS_OnWMGetText (const TOOLTIPS_INFO *infoPtr, WPARAM size, LPWSTR pszText)
     if(!size)
         return 0;
 
-    res = min(strlenW(infoPtr->szTipText)+1, size);
+    res = min(lstrlenW(infoPtr->szTipText)+1, size);
     memcpy(pszText, infoPtr->szTipText, res*sizeof(WCHAR));
     pszText[res-1] = '\0';
     return res-1;

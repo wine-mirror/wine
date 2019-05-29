@@ -32,7 +32,6 @@
 #include "uxtheme.h"
 #include "vssym32.h"
 #include "commctrl.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 

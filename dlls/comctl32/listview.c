@@ -124,9 +124,6 @@
  *   -- LVGroupComparE
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
@@ -145,7 +142,6 @@
 #include "uxtheme.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(listview);
 
@@ -997,7 +993,7 @@ static BOOL notify_dispinfoT(const LISTVIEW_INFO *infoPtr, UINT code, LPNMLVDISP
         }
         else if (return_unicode && (pdi->hdr.code == LVN_GETDISPINFOW))
         {
-            strcpyW(ret_text, pdi->item.pszText);
+            lstrcpyW(ret_text, pdi->item.pszText);
         }
         else if (return_ansi) /* note : pointer can be changed by app ! */
         {
@@ -1870,7 +1866,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     if (!charCode || !keyData || infoPtr->nItemCount == 0) return 0;
 
     /* only allow the valid WM_CHARs through */
-    if (!isalnumW(charCode) &&
+    if (!iswalnum(charCode) &&
         charCode != '.' && charCode != '`' && charCode != '!' &&
         charCode != '@' && charCode != '#' && charCode != '$' &&
         charCode != '%' && charCode != '^' && charCode != '&' &&
@@ -6405,7 +6401,7 @@ again:
 	{
             if (lpFindInfo->flags & (LVFI_PARTIAL | LVFI_SUBSTRING))
             {
-		WCHAR *p = strstrW(lvItem.pszText, lpFindInfo->psz);
+		WCHAR *p = wcsstr(lvItem.pszText, lpFindInfo->psz);
 		if (!p || p != lvItem.pszText) continue;
             }
             else

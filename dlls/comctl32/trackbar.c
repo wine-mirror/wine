@@ -1121,7 +1121,7 @@ TRACKBAR_GetNumTics (const TRACKBAR_INFO *infoPtr)
 }
 
 
-static int comp_tics (const void *ap, const void *bp)
+static int __cdecl comp_tics (const void *ap, const void *bp)
 {
     const DWORD a = *(const DWORD *)ap;
     const DWORD b = *(const DWORD *)bp;

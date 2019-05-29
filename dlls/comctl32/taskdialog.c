@@ -35,7 +35,6 @@
 #include "comctl32.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskdialog);
 
@@ -134,8 +133,8 @@ static WCHAR *taskdialog_get_exe_name(WCHAR *name, DWORD length)
     if (len && len < length)
     {
         WCHAR *p;
-        if ((p = strrchrW(name, '/'))) name = p + 1;
-        if ((p = strrchrW(name, '\\'))) name = p + 1;
+        if ((p = wcsrchr(name, '/'))) name = p + 1;
+        if ((p = wcsrchr(name, '\\'))) name = p + 1;
         return name;
     }
     else
@@ -164,7 +163,7 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
         titleW = taskconfig->pszWindowTitle;
     if (!titleW)
         titleW = emptyW;
-    title_size = (strlenW(titleW) + 1) * sizeof(WCHAR);
+    title_size = (lstrlenW(titleW) + 1) * sizeof(WCHAR);
 
     size = sizeof(DLGTEMPLATE) + 2 * sizeof(WORD);
     size += title_size;
@@ -359,7 +358,7 @@ static WCHAR *taskdialog_gettext(struct taskdialog_info *dialog_info, BOOL user_
     else
     {
         textW = text;
-        length = strlenW(textW);
+        length = lstrlenW(textW);
     }
 
     ret = Alloc((length + 1) * sizeof(WCHAR));

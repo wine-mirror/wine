@@ -44,7 +44,6 @@
 #include "commctrl.h"
 #include "comctl32.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(datetime);
 
@@ -251,7 +250,7 @@ DATETIME_UseFormat (DATETIME_INFO *infoPtr, LPCWSTR formattxt)
 
     *nrFields = 0;
     infoPtr->fieldspec[*nrFields] = 0;
-    len = strlenW(allowedformatchars);
+    len = lstrlenW(allowedformatchars);
     k = 0;
 
     for (i = 0; formattxt[i]; i++)  {
@@ -715,7 +714,7 @@ static int DATETIME_GetFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int co
 	        break;
         }
     }
-    GetTextExtentPoint32W (hdc, bufptr, strlenW(bufptr), &size);
+    GetTextExtentPoint32W (hdc, bufptr, lstrlenW(bufptr), &size);
     return size.cx;
 }
 
@@ -735,14 +734,14 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
         WCHAR txt[80];
 
         DATETIME_ReturnTxt (infoPtr, 0, txt, ARRAY_SIZE(txt));
-        GetTextExtentPoint32W (hdc, txt, strlenW(txt), &size);
+        GetTextExtentPoint32W (hdc, txt, lstrlenW(txt), &size);
         rcDraw->bottom = size.cy + 2;
 
         prevright = infoPtr->checkbox.right = ((infoPtr->dwStyle & DTS_SHOWNONE) ? 18 : 2);
 
         for (i = 0; i < infoPtr->nrFields; i++) {
             DATETIME_ReturnTxt (infoPtr, i, txt, ARRAY_SIZE(txt));
-            GetTextExtentPoint32W (hdc, txt, strlenW(txt), &size);
+            GetTextExtentPoint32W (hdc, txt, lstrlenW(txt), &size);
             field = &infoPtr->fieldRect[i];
             field->left   = prevright;
             field->right  = prevright + DATETIME_GetFieldWidth (infoPtr, hdc, i);
@@ -762,7 +761,7 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
                 {
                     memcpy(txt, infoPtr->charsEntered, infoPtr->nCharsEntered * sizeof(WCHAR));
                     txt[infoPtr->nCharsEntered] = 0;
-                    GetTextExtentPoint32W (hdc, txt, strlenW(txt), &size);
+                    GetTextExtentPoint32W (hdc, txt, lstrlenW(txt), &size);
                 }
 
                 SetRect(&selection, 0, 0, size.cx, size.cy);
@@ -778,7 +777,7 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
                 oldTextColor = SetTextColor (hdc, comctl32_color.clrWindowText);
 
             /* draw the date text using the colour set above */
-            DrawTextW (hdc, txt, strlenW(txt), field, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+            DrawTextW (hdc, txt, lstrlenW(txt), field, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
             SetTextColor (hdc, oldTextColor);
         }
         SetBkMode (hdc, oldBkMode);
@@ -1460,7 +1459,7 @@ static BOOL DATETIME_GetIdealSize(DATETIME_INFO *infoPtr, SIZE *size)
 
     /* Get text font height */
     DATETIME_ReturnTxt(infoPtr, 0, txt, ARRAY_SIZE(txt));
-    GetTextExtentPoint32W(hdc, txt, strlenW(txt), &field_size);
+    GetTextExtentPoint32W(hdc, txt, lstrlenW(txt), &field_size);
     size->cy = field_size.cy;
 
     /* Get text font width */
@@ -1572,11 +1571,11 @@ DATETIME_GetText (const DATETIME_INFO *infoPtr, INT count, LPWSTR dst)
     for (i = 0; i < infoPtr->nrFields; i++)
     {
         DATETIME_ReturnTxt(infoPtr, i, buf, ARRAY_SIZE(buf));
-        if ((strlenW(dst) + strlenW(buf)) < count)
-            strcatW(dst, buf);
+        if ((lstrlenW(dst) + lstrlenW(buf)) < count)
+            lstrcatW(dst, buf);
         else break;
     }
-    return strlenW(dst);
+    return lstrlenW(dst);
 }
 
 
