@@ -709,55 +709,6 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     return S_OK;
 }
 
-static HRESULT WINAPI AviMux_EnumPins(IBaseFilter *iface, IEnumPins **ppEnum)
-{
-    AviMux *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%p)\n", This, ppEnum);
-    return BaseFilterImpl_EnumPins(iface, ppEnum);
-}
-
-static HRESULT WINAPI AviMux_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
-{
-    AviMux *This = impl_from_IBaseFilter(iface);
-    int i;
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(Id), ppPin);
-
-    if(!Id || !ppPin)
-        return E_POINTER;
-
-    if(!lstrcmpiW(Id, This->out->pin.pin.pinInfo.achName)) {
-        IPin_AddRef(&This->out->pin.pin.IPin_iface);
-        *ppPin = &This->out->pin.pin.IPin_iface;
-        return S_OK;
-    }
-
-    for(i=0; i<This->input_pin_no; i++) {
-        if(lstrcmpiW(Id, This->in[i]->pin.pin.pinInfo.achName))
-            continue;
-
-        IPin_AddRef(&This->in[i]->pin.pin.IPin_iface);
-        *ppPin = &This->in[i]->pin.pin.IPin_iface;
-        return S_OK;
-    }
-
-    return VFW_E_NOT_FOUND;
-}
-
-static HRESULT WINAPI AviMux_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO *pInfo)
-{
-    AviMux *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)->(%p)\n", This, pInfo);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AviMux_QueryVendorInfo(IBaseFilter *iface, LPWSTR *pVendorInfo)
-{
-    AviMux *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)->(%p)\n", This, pVendorInfo);
-    return E_NOTIMPL;
-}
-
 static const IBaseFilterVtbl AviMuxVtbl = {
     AviMux_QueryInterface,
     BaseFilterImpl_AddRef,
@@ -769,11 +720,11 @@ static const IBaseFilterVtbl AviMuxVtbl = {
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
-    AviMux_EnumPins,
-    AviMux_FindPin,
-    AviMux_QueryFilterInfo,
+    BaseFilterImpl_EnumPins,
+    BaseFilterImpl_FindPin,
+    BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
-    AviMux_QueryVendorInfo
+    BaseFilterImpl_QueryVendorInfo
 };
 
 static inline AviMux* impl_from_IConfigAviMux(IConfigAviMux *iface)
