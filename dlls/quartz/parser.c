@@ -191,19 +191,6 @@ void Parser_Destroy(ParserImpl *This)
     CoTaskMemFree(This);
 }
 
-ULONG WINAPI Parser_Release(IBaseFilter * iface)
-{
-    ParserImpl *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = InterlockedDecrement(&This->filter.refCount);
-
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
-
-    if (!refCount)
-        Parser_Destroy(This);
-
-    return refCount;
-}
-
 /** IPersist methods **/
 
 HRESULT WINAPI Parser_GetClassID(IBaseFilter * iface, CLSID * pClsid)

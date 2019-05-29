@@ -63,7 +63,6 @@ extern void Parser_Destroy(ParserImpl *This);
 
 extern HRESULT WINAPI Parser_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
 extern ULONG WINAPI Parser_AddRef(IBaseFilter * iface);
-extern ULONG WINAPI Parser_Release(IBaseFilter * iface);
 extern HRESULT WINAPI Parser_GetClassID(IBaseFilter * iface, CLSID * pClsid);
 extern HRESULT WINAPI Parser_Stop(IBaseFilter * iface);
 extern HRESULT WINAPI Parser_Pause(IBaseFilter * iface);

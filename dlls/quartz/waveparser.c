@@ -398,7 +398,7 @@ static const IBaseFilterVtbl WAVEParser_Vtbl =
 {
     Parser_QueryInterface,
     Parser_AddRef,
-    Parser_Release,
+    BaseFilterImpl_Release,
     Parser_GetClassID,
     Parser_Stop,
     Parser_Pause,
@@ -413,9 +413,16 @@ static const IBaseFilterVtbl WAVEParser_Vtbl =
     Parser_QueryVendorInfo
 };
 
+static void wave_parser_destroy(BaseFilter *iface)
+{
+    WAVEParserImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
+    Parser_Destroy(&filter->Parser);
+}
+
 static const BaseFilterFuncTable wave_parser_func_table =
 {
     .filter_get_pin = parser_get_pin,
+    .filter_destroy = wave_parser_destroy,
 };
 
 HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
