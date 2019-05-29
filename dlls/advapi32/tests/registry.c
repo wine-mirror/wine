@@ -42,6 +42,7 @@ static const char * sTestpath2 = "%FOO%\\subdir1";
 static const DWORD ptr_size = 8 * sizeof(void*);
 
 static DWORD (WINAPI *pRegGetValueA)(HKEY,LPCSTR,LPCSTR,DWORD,LPDWORD,PVOID,LPDWORD);
+static DWORD (WINAPI *pRegGetValueW)(HKEY,LPCWSTR,LPCWSTR,DWORD,LPDWORD,PVOID,LPDWORD);
 static LONG (WINAPI *pRegCopyTreeA)(HKEY,const char *,HKEY);
 static LONG (WINAPI *pRegDeleteTreeA)(HKEY,const char *);
 static DWORD (WINAPI *pRegDeleteKeyExA)(HKEY,LPCSTR,REGSAM,DWORD);
@@ -53,6 +54,8 @@ static LONG (WINAPI *pRegDeleteKeyValueA)(HKEY,LPCSTR,LPCSTR);
 static LONG (WINAPI *pRegSetKeyValueW)(HKEY,LPCWSTR,LPCWSTR,DWORD,const void*,DWORD);
 static LONG (WINAPI *pRegLoadMUIStringA)(HKEY,LPCSTR,LPSTR,DWORD,LPDWORD,DWORD,LPCSTR);
 static LONG (WINAPI *pRegLoadMUIStringW)(HKEY,LPCWSTR,LPWSTR,DWORD,LPDWORD,DWORD,LPCWSTR);
+static DWORD (WINAPI *pEnumDynamicTimeZoneInformation)(const DWORD,
+                                                       DYNAMIC_TIME_ZONE_INFORMATION*);
 
 static BOOL limited_user;
 
@@ -128,6 +131,18 @@ static const char *wine_debugstr_an( const char *str, int n )
     return res;
 }
 
+static const char *dbgstr_SYSTEMTIME(const SYSTEMTIME *st)
+{
+    static int index;
+    static char buf[2][64];
+
+    index %= ARRAY_SIZE(buf);
+    sprintf(buf[index], "%02d-%02d-%04d %02d:%02d:%02d.%03d",
+            st->wMonth, st->wDay, st->wYear,
+            st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
+    return buf[index++];
+}
+
 #define ADVAPI32_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(hadvapi32, #func)
 
@@ -139,6 +154,7 @@ static void InitFunctionPtrs(void)
 
     /* This function was introduced with Windows 2003 SP1 */
     ADVAPI32_GET_PROC(RegGetValueA);
+    ADVAPI32_GET_PROC(RegGetValueW);
     ADVAPI32_GET_PROC(RegCopyTreeA);
     ADVAPI32_GET_PROC(RegDeleteTreeA);
     ADVAPI32_GET_PROC(RegDeleteKeyExA);
@@ -146,6 +162,7 @@ static void InitFunctionPtrs(void)
     ADVAPI32_GET_PROC(RegSetKeyValueW);
     ADVAPI32_GET_PROC(RegLoadMUIStringA);
     ADVAPI32_GET_PROC(RegLoadMUIStringW);
+    ADVAPI32_GET_PROC(EnumDynamicTimeZoneInformation);
 
     pIsWow64Process = (void *)GetProcAddress( hkernel32, "IsWow64Process" );
     pRtlFormatCurrentUserKeyPath = (void *)GetProcAddress( hntdll, "RtlFormatCurrentUserKeyPath" );
@@ -4033,6 +4050,142 @@ static void test_RegLoadMUIString(void)
     SetEnvironmentVariableA("WineMuiDat", NULL);
 }
 
+static void test_EnumDynamicTimeZoneInformation(void)
+{
+    LSTATUS status;
+    HKEY key, subkey;
+    WCHAR name[32];
+    WCHAR keyname[128];
+    WCHAR sysdir[MAX_PATH];
+    DWORD index, ret, gle, size;
+    DYNAMIC_TIME_ZONE_INFORMATION bogus_dtzi, dtzi;
+    static const WCHAR stdW[] = {'S','t','d',0};
+    static const WCHAR dltW[] = {'D','l','t',0};
+    static const WCHAR tziW[] = {'T','Z','I',0};
+    static const WCHAR mui_stdW[] = {'M','U','I','_','S','t','d',0};
+    static const WCHAR mui_dltW[] = {'M','U','I','_','D','l','t',0};
+    struct tz_reg_data
+    {
+        LONG bias;
+        LONG std_bias;
+        LONG dlt_bias;
+        SYSTEMTIME std_date;
+        SYSTEMTIME dlt_date;
+    } tz_data;
+
+    if (!pEnumDynamicTimeZoneInformation)
+    {
+        win_skip("EnumDynamicTimeZoneInformation is not supported.\n");
+        return;
+    }
+
+    if (pRegLoadMUIStringW)
+        GetSystemDirectoryW(sysdir, ARRAY_SIZE(sysdir));
+
+    SetLastError(0xdeadbeef);
+    ret = pEnumDynamicTimeZoneInformation(0, NULL);
+    gle = GetLastError();
+    ok(gle == 0xdeadbeef, "got 0x%x\n", gle);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    memset(&bogus_dtzi, 0xcc, sizeof(bogus_dtzi));
+    memset(&dtzi, 0xcc, sizeof(dtzi));
+    SetLastError(0xdeadbeef);
+    ret = pEnumDynamicTimeZoneInformation(-1, &dtzi);
+    gle = GetLastError();
+    ok(gle == 0xdeadbeef, "got 0x%x\n", gle);
+    ok(ret == ERROR_NO_MORE_ITEMS, "got %d\n", ret);
+    ok(!memcmp(&dtzi, &bogus_dtzi, sizeof(dtzi)), "mismatch\n");
+
+    status = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+            "Software\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", 0,
+            KEY_ENUMERATE_SUB_KEYS|KEY_QUERY_VALUE, &key);
+    ok(status == ERROR_SUCCESS, "got %d\n", status);
+    index = 0;
+    while (!(status = RegEnumKeyW(key, index, keyname, ARRAY_SIZE(keyname))))
+    {
+        subkey = NULL;
+        status = RegOpenKeyExW(key, keyname, 0, KEY_QUERY_VALUE, &subkey);
+        ok(status == ERROR_SUCCESS, "got %d\n", status);
+
+        memset(&dtzi, 0xcc, sizeof(dtzi));
+        SetLastError(0xdeadbeef);
+        ret = pEnumDynamicTimeZoneInformation(index, &dtzi);
+        gle = GetLastError();
+        /* recently added time zones may not have MUI strings */
+        ok(gle == ERROR_SUCCESS ||
+           gle == ERROR_RESOURCE_TYPE_NOT_FOUND /* Win10 1809 32-bit */ ||
+           gle == ERROR_MUI_FILE_NOT_FOUND /* Win10 1809 64-bit */,
+            "got 0x%x\n", gle);
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+        ok(!lstrcmpW(dtzi.TimeZoneKeyName, keyname), "expected %s, got %s\n",
+            wine_dbgstr_w(keyname), wine_dbgstr_w(dtzi.TimeZoneKeyName));
+
+        if (gle == ERROR_SUCCESS)
+        {
+            size = sizeof(name);
+            memset(name, 0, sizeof(name));
+            if (pRegLoadMUIStringW)
+                status = pRegLoadMUIStringW(subkey, mui_stdW, name, size, &size, 0, sysdir);
+            else
+                status = pRegGetValueW(subkey, NULL, stdW, RRF_RT_REG_SZ, NULL, name, &size);
+            ok(status == ERROR_SUCCESS, "status %d name %s\n", status, wine_dbgstr_w(name));
+            ok(!memcmp(&dtzi.StandardName, name, size),
+                "expected %s, got %s\n", wine_dbgstr_w(name), wine_dbgstr_w(dtzi.StandardName));
+
+            size = sizeof(name);
+            memset(name, 0, sizeof(name));
+            if (pRegLoadMUIStringW)
+                status = pRegLoadMUIStringW(subkey, mui_dltW, name, size, &size, 0, sysdir);
+            else
+                status = pRegGetValueW(subkey, NULL, dltW, RRF_RT_REG_SZ, NULL, name, &size);
+            ok(status == ERROR_SUCCESS, "status %d name %s\n", status, wine_dbgstr_w(name));
+            ok(!memcmp(&dtzi.DaylightName, name, size),
+                "expected %s, got %s\n", wine_dbgstr_w(name), wine_dbgstr_w(dtzi.DaylightName));
+        }
+        else
+        {
+            ok(!dtzi.StandardName[0], "expected empty StandardName\n");
+            ok(!dtzi.DaylightName[0], "expected empty DaylightName\n");
+        }
+
+        ok(!dtzi.DynamicDaylightTimeDisabled, "got %d\n", dtzi.DynamicDaylightTimeDisabled);
+
+        size = sizeof(tz_data);
+        status = pRegGetValueW(key, keyname, tziW, RRF_RT_REG_BINARY, NULL, &tz_data, &size);
+        ok(status == ERROR_SUCCESS, "got %d\n", status);
+
+        ok(dtzi.Bias == tz_data.bias, "expected %d, got %d\n",
+            tz_data.bias, dtzi.Bias);
+        ok(dtzi.StandardBias == tz_data.std_bias, "expected %d, got %d\n",
+            tz_data.std_bias, dtzi.StandardBias);
+        ok(dtzi.DaylightBias == tz_data.dlt_bias, "expected %d, got %d\n",
+            tz_data.dlt_bias, dtzi.DaylightBias);
+
+        ok(!memcmp(&dtzi.StandardDate, &tz_data.std_date, sizeof(dtzi.StandardDate)),
+            "expected %s, got %s\n",
+            dbgstr_SYSTEMTIME(&tz_data.std_date), dbgstr_SYSTEMTIME(&dtzi.StandardDate));
+
+        ok(!memcmp(&dtzi.DaylightDate, &tz_data.dlt_date, sizeof(dtzi.DaylightDate)),
+            "expected %s, got %s\n",
+            dbgstr_SYSTEMTIME(&tz_data.dlt_date), dbgstr_SYSTEMTIME(&dtzi.DaylightDate));
+
+        RegCloseKey(subkey);
+        index++;
+    }
+    ok(status == ERROR_NO_MORE_ITEMS, "got %d\n", status);
+
+    memset(&dtzi, 0xcc, sizeof(dtzi));
+    SetLastError(0xdeadbeef);
+    ret = pEnumDynamicTimeZoneInformation(index, &dtzi);
+    gle = GetLastError();
+    ok(gle == 0xdeadbeef, "got 0x%x\n", gle);
+    ok(ret == ERROR_NO_MORE_ITEMS, "got %d\n", ret);
+    ok(!memcmp(&dtzi, &bogus_dtzi, sizeof(dtzi)), "mismatch\n");
+
+    RegCloseKey(key);
+}
+
 START_TEST(registry)
 {
     /* Load pointers for functions that are not available in all Windows versions */
@@ -4070,6 +4223,7 @@ START_TEST(registry)
     test_RegNotifyChangeKeyValue();
     test_RegQueryValueExPerformanceData();
     test_RegLoadMUIString();
+    test_EnumDynamicTimeZoneInformation();
 
     /* cleanup */
     delete_key( hkey_main );
