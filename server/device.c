@@ -475,7 +475,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
 
         if ((irp = create_irp( file, &params, NULL )))
         {
-            add_irp_to_queue( device->manager, irp, NULL );
+            add_irp_to_queue( device->manager, irp, current );
             release_object( irp );
         }
     }
@@ -523,7 +523,7 @@ static int device_file_close_handle( struct object *obj, struct process *process
 
         if ((irp = create_irp( file, &params, NULL )))
         {
-            add_irp_to_queue( file->device->manager, irp, NULL );
+            add_irp_to_queue( file->device->manager, irp, current );
             release_object( irp );
         }
     }

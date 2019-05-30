@@ -54,6 +54,7 @@ static int winetest_report_success;
 
 static POBJECT_TYPE *pExEventObjectType, *pIoFileObjectType, *pPsThreadType;
 static PEPROCESS *pPsInitialSystemProcess;
+static void *create_caller_thread;
 
 void WINAPI ObfReferenceObject( void *obj );
 
@@ -356,6 +357,8 @@ static void test_current_thread(BOOL is_system)
 
     ok(PsGetThreadId((PETHREAD)KeGetCurrentThread()) == PsGetCurrentThreadId(), "thread IDs don't match\n");
     ok(PsIsSystemThread((PETHREAD)KeGetCurrentThread()) == is_system, "unexpected system thread\n");
+    if (!is_system)
+        ok(create_caller_thread == KeGetCurrentThread(), "thread is not create caller thread\n");
 
     ret = ObOpenObjectByPointer(current, OBJ_KERNEL_HANDLE, NULL, PROCESS_QUERY_INFORMATION, NULL, KernelMode, &process_handle);
     ok(!ret, "ObOpenObjectByPointer failed: %#x\n", ret);
@@ -1644,6 +1647,7 @@ static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
 
     last_created_file = irpsp->FileObject;
+    create_caller_thread = KeGetCurrentThread();
 
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
