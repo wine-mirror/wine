@@ -5064,10 +5064,10 @@ void write_exceptions( FILE *file )
     fprintf( file, "    siglongjmp( exc_frame->jmp, 1 );\n");
     fprintf( file, "}\n");
     fprintf( file, "\n");
-    fprintf( file, "static DWORD __widl_exception_handler( EXCEPTION_RECORD *record,\n");
-    fprintf( file, "                                       EXCEPTION_REGISTRATION_RECORD *frame,\n");
-    fprintf( file, "                                       CONTEXT *context,\n");
-    fprintf( file, "                                       EXCEPTION_REGISTRATION_RECORD **pdispatcher )\n");
+    fprintf( file, "static DWORD __cdecl __widl_exception_handler( EXCEPTION_RECORD *record,\n");
+    fprintf( file, "                                               EXCEPTION_REGISTRATION_RECORD *frame,\n");
+    fprintf( file, "                                               CONTEXT *context,\n");
+    fprintf( file, "                                               EXCEPTION_REGISTRATION_RECORD **pdispatcher )\n");
     fprintf( file, "{\n");
     fprintf( file, "    struct __exception_frame *exc_frame = (struct __exception_frame *)frame;\n");
     fprintf( file, "\n");

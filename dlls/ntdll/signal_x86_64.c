@@ -2580,8 +2580,8 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
     return func;
 }
 
-static DWORD nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+static DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)) return ExceptionContinueSearch;
 
@@ -3936,8 +3936,8 @@ struct unwind_exception_frame
  *
  * Handler for exceptions happening while calling an unwind handler.
  */
-static DWORD unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+static DWORD __cdecl unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     struct unwind_exception_frame *unwind_frame = (struct unwind_exception_frame *)frame;
     DISPATCHER_CONTEXT *dispatch = (DISPATCHER_CONTEXT *)dispatcher;
