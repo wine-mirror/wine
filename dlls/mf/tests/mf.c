@@ -1237,6 +1237,7 @@ todo_wine {
     ok(hr == S_OK, "Failed to get attribute key, hr %#x.\n", hr);
     ok(IsEqualGUID(&guid, &MF_TOPOLOGY_RESOLUTION_STATUS), "Unexpected key %s.\n", wine_dbgstr_guid(&guid));
 }
+    value = 0xdeadbeef;
     hr = IMFTopology_GetUINT32(full_topology, &MF_TOPOLOGY_RESOLUTION_STATUS, &value);
 todo_wine {
     ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
