@@ -68,7 +68,7 @@ static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID riid, LPVOI
     AudioRecord *This = impl_from_IUnknown(iface);
     if (IsEqualIID(riid, &IID_IUnknown)) {
         TRACE("(%p)->(IID_IUnknown, %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
+        *ppv = &This->IUnknown_iface;
     } else if (IsEqualIID(riid, &IID_IPersist)) {
         TRACE("(%p)->(IID_IPersist, %p)\n", This, ppv);
         *ppv = &This->filter.IBaseFilter_iface;
@@ -275,5 +275,5 @@ IUnknown* WINAPI QCAP_createAudioCaptureFilter(IUnknown *outer, HRESULT *phr)
             (DWORD_PTR)(__FILE__ ": AudioRecord.csFilter"), &AudioRecordFuncs);
 
     *phr = S_OK;
-    return (IUnknown*)&This->filter.IBaseFilter_iface;
+    return &This->IUnknown_iface;
 }
