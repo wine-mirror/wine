@@ -58,6 +58,7 @@ struct sample_grabber
     IMFMediaEventQueue *event_queue;
     IMFPresentationClock *clock;
     enum sink_state state;
+    UINT32 ignore_clock;
     CRITICAL_SECTION cs;
 };
 
@@ -245,11 +246,76 @@ static HRESULT WINAPI sample_grabber_stream_GetMediaTypeHandler(IMFStreamSink *i
     return S_OK;
 }
 
+static HRESULT sample_grabber_report_sample(struct sample_grabber *grabber, IMFSample *sample)
+{
+    LONGLONG sample_time, sample_duration = 0;
+    IMFMediaBuffer *buffer;
+    DWORD flags, size;
+    GUID major_type;
+    BYTE *data;
+    HRESULT hr;
+
+    hr = IMFMediaType_GetMajorType(grabber->media_type, &major_type);
+
+    if (SUCCEEDED(hr))
+        hr = IMFSample_GetSampleTime(sample, &sample_time);
+
+    if (FAILED(IMFSample_GetSampleDuration(sample, &sample_duration)))
+        sample_duration = 0;
+
+    if (SUCCEEDED(hr))
+        hr = IMFSample_GetSampleFlags(sample, &flags);
+
+    if (SUCCEEDED(hr))
+    {
+        if (FAILED(IMFSample_ConvertToContiguousBuffer(sample, &buffer)))
+            return E_UNEXPECTED;
+
+        if (SUCCEEDED(hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &size)))
+        {
+            hr = IMFSampleGrabberSinkCallback_OnProcessSample(grabber->callback, &major_type, flags, sample_time,
+                        sample_duration, data, size);
+            IMFMediaBuffer_Unlock(buffer);
+        }
+
+        IMFMediaBuffer_Release(buffer);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI sample_grabber_stream_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
 {
-    FIXME("%p, %p.\n", iface, sample);
+    struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
+    LONGLONG sampletime;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, sample);
+
+    if (!sample)
+        return S_OK;
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
+    EnterCriticalSection(&stream->sink->cs);
+
+    if (stream->sink->state == SINK_STATE_RUNNING)
+    {
+        hr = IMFSample_GetSampleTime(sample, &sampletime);
+
+        if (SUCCEEDED(hr))
+        {
+            if (stream->sink->ignore_clock)
+                hr = sample_grabber_report_sample(stream->sink, sample);
+            else
+                FIXME("Sample scheduling is not implemented.\n");
+        }
+    }
+
+    LeaveCriticalSection(&stream->sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_grabber_stream_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
@@ -905,6 +971,7 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
     IMFSampleGrabberSinkCallback_AddRef(object->callback);
     object->media_type = context->media_type;
     IMFMediaType_AddRef(object->media_type);
+    IMFAttributes_GetUINT32(attributes, &MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, &object->ignore_clock);
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = sample_grabber_create_stream(object, &object->stream)))
