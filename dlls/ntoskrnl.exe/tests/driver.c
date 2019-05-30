@@ -239,6 +239,8 @@ static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
     ok(irpsp->DeviceObject == device, "unexpected DeviceObject\n");
     ok(irpsp->FileObject->DeviceObject == device, "unexpected FileObject->DeviceObject\n");
     ok(!irp->UserEvent, "UserEvent = %p\n", irp->UserEvent);
+    ok(irp->Tail.Overlay.Thread == (PETHREAD)KeGetCurrentThread(),
+       "IRP thread is not the current thread\n");
 }
 
 static void test_mdl_map(void)
@@ -751,6 +753,8 @@ static void test_call_driver(DEVICE_OBJECT *device)
     ok(!irp->CancelRoutine, "CancelRoutine = %x\n", irp->CancelRoutine);
     ok(!irp->UserEvent, "UserEvent = %p\n", irp->UserEvent);
     ok(irp->CurrentLocation == 2, "CurrentLocation = %u\n", irp->CurrentLocation);
+    ok(irp->Tail.Overlay.Thread == (PETHREAD)KeGetCurrentThread(),
+       "IRP thread is not the current thread\n");
 
     irpsp = IoGetNextIrpStackLocation(irp);
     ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
@@ -773,6 +777,8 @@ static void test_call_driver(DEVICE_OBJECT *device)
     ok(!irp->CancelRoutine, "CancelRoutine = %x\n", irp->CancelRoutine);
     ok(irp->UserEvent == &event, "UserEvent = %p\n", irp->UserEvent);
     ok(irp->CurrentLocation == 2, "CurrentLocation = %u\n", irp->CurrentLocation);
+    ok(irp->Tail.Overlay.Thread == (PETHREAD)KeGetCurrentThread(),
+       "IRP thread is not the current thread\n");
 
     irpsp = IoGetNextIrpStackLocation(irp);
     ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
@@ -1698,6 +1704,8 @@ static NTSTATUS WINAPI driver_FlushBuffers(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     ok(irpsp->DeviceObject == device, "device != DeviceObject\n");
+    ok(irp->Tail.Overlay.Thread == (PETHREAD)KeGetCurrentThread(),
+       "IRP thread is not the current thread\n");
     IoMarkIrpPending(irp);
     return STATUS_PENDING;
 }

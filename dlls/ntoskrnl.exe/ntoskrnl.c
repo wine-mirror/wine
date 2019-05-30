@@ -1363,6 +1363,7 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG code, PDEVICE_OBJECT device,
     irp->UserBuffer = out_buff;
     irp->UserIosb = iosb;
     irp->UserEvent = event;
+    irp->Tail.Overlay.Thread = (PETHREAD)KeGetCurrentThread();
     return irp;
 }
 
@@ -1415,6 +1416,7 @@ PIRP WINAPI IoBuildAsynchronousFsdRequest(ULONG majorfunc, DEVICE_OBJECT *device
     irp->UserIosb = iosb;
     irp->UserEvent = NULL;
     irp->UserBuffer = buffer;
+    irp->Tail.Overlay.Thread = (PETHREAD)KeGetCurrentThread();
     return irp;
 }
 
