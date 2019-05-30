@@ -5642,7 +5642,7 @@ static void test_register_typelib(void)
     }
 
     /* UnregisterTypeLibraries action fails in 64-bit Windows <= 7 */
-    if (sizeof(void *) == 8)
+    if (sizeof(void *) == 8 && strcmp( winetest_platform, "wine" ))
     {
         win_skip("broken on 64-bit Windows\n");
         return;
