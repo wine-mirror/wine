@@ -19,6 +19,8 @@
 #ifndef __WINE_D3D10_PRIVATE_H
 #define __WINE_D3D10_PRIVATE_H
 
+#include <math.h>
+
 #include "wine/debug.h"
 #include "wine/rbtree.h"
 #include "wine/heap.h"
