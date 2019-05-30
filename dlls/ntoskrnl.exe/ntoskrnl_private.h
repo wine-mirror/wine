@@ -41,6 +41,7 @@ struct _KTHREAD
     DISPATCHER_HEADER header;
     PEPROCESS process;
     CLIENT_ID id;
+    unsigned int critical_region;
 };
 
 struct _ETHREAD

@@ -3569,7 +3569,8 @@ NTSTATUS WINAPI IoCsqInitialize(PIO_CSQ csq, PIO_CSQ_INSERT_IRP insert_irp, PIO_
  */
 void WINAPI KeEnterCriticalRegion(void)
 {
-    FIXME(": stub\n");
+    TRACE( "semi-stub\n" );
+    KeGetCurrentThread()->critical_region++;
 }
 
 /***********************************************************************
@@ -3577,7 +3578,18 @@ void WINAPI KeEnterCriticalRegion(void)
  */
 void WINAPI KeLeaveCriticalRegion(void)
 {
-    FIXME(": stub\n");
+    TRACE( "semi-stub\n" );
+    KeGetCurrentThread()->critical_region--;
+}
+
+/***********************************************************************
+ *           KeAreApcsDisabled    (NTOSKRNL.@)
+ */
+BOOLEAN WINAPI KeAreApcsDisabled(void)
+{
+    unsigned int critical_region = KeGetCurrentThread()->critical_region;
+    TRACE( "%u\n", critical_region );
+    return !!critical_region;
 }
 
 /***********************************************************************

@@ -523,7 +523,7 @@
 @ stdcall KeAcquireSpinLockAtDpcLevel(ptr)
 @ stdcall -arch=arm,arm64,x86_64 KeAcquireSpinLockRaiseToDpc(ptr)
 @ stub KeAddSystemServiceTable
-@ stub KeAreApcsDisabled
+@ stdcall KeAreApcsDisabled()
 @ stub KeAttachProcess
 @ stub KeBugCheck
 @ stub KeBugCheckEx

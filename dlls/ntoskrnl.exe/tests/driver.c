@@ -370,6 +370,27 @@ static void test_current_thread(BOOL is_system)
     ok(!ret, "ZwClose failed: %#x\n", ret);
 }
 
+static void test_critical_region(BOOL is_dispatcher)
+{
+    BOOLEAN result;
+
+    KeEnterCriticalRegion();
+    KeEnterCriticalRegion();
+
+    result = KeAreApcsDisabled();
+    ok(result == TRUE, "KeAreApcsDisabled returned %x\n", result);
+    KeLeaveCriticalRegion();
+
+    result = KeAreApcsDisabled();
+    ok(result == TRUE, "KeAreApcsDisabled returned %x\n", result);
+    KeLeaveCriticalRegion();
+
+    result = KeAreApcsDisabled();
+    todo_wine_if(is_dispatcher)
+    ok(result == is_dispatcher || broken(is_dispatcher && !result),
+       "KeAreApcsDisabled returned %x\n", result);
+}
+
 static void sleep(void)
 {
     LARGE_INTEGER timeout;
@@ -1490,6 +1511,7 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
     main_test_work_item = NULL;
 
     test_current_thread(TRUE);
+    test_critical_region(FALSE);
     test_call_driver(device);
     test_cancel_irp(device);
 
@@ -1546,6 +1568,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 
     test_irp_struct(irp, device);
     test_current_thread(FALSE);
+    test_critical_region(TRUE);
     test_mdl_map();
     test_init_funcs();
     test_load_driver();

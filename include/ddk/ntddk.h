@@ -216,6 +216,7 @@ NTSTATUS  WINAPI IoQueryDeviceDescription(PINTERFACE_TYPE,PULONG,PCONFIGURATION_
                                   PCONFIGURATION_TYPE,PULONG,PIO_QUERY_DEVICE_ROUTINE,PVOID);
 void      WINAPI IoRegisterDriverReinitialization(PDRIVER_OBJECT,PDRIVER_REINITIALIZE,PVOID);
 NTSTATUS  WINAPI IoRegisterShutdownNotification(PDEVICE_OBJECT);
+BOOLEAN   WINAPI KeAreApcsDisabled(void);
 NTSTATUS  WINAPI KeExpandKernelStackAndCallout(PEXPAND_STACK_CALLOUT,void*,SIZE_T);
 void      WINAPI KeSetTargetProcessorDpc(PRKDPC,CCHAR);
 BOOLEAN   WINAPI MmIsAddressValid(void *);
