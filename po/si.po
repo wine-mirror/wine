@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-05-29 04:04+0530\n"
+"PO-Revision-Date: 2019-06-07 08:42+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Sinhala\n"
 "Language: si\n"
@@ -1329,9 +1329,8 @@ msgid "Email Address"
 msgstr "ඊමේල් ලිපිනය"
 
 #: crypt32.rc:47
-#, fuzzy
 msgid "Unstructured Name"
-msgstr "නම"
+msgstr "Unstructured Name"
 
 #: crypt32.rc:48
 msgid "Content Type"
@@ -1583,24 +1582,20 @@ msgid "PKCS 7 Data"
 msgstr "PKCS 7 දත්ත"
 
 #: crypt32.rc:110
-#, fuzzy
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7"
+msgstr "PKCS 7 අත්සන් කල"
 
 #: crypt32.rc:111
-#, fuzzy
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7"
+msgstr "PKCS 7 Enveloped"
 
 #: crypt32.rc:112
-#, fuzzy
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7"
+msgstr "PKCS 7 Signed Enveloped"
 
 #: crypt32.rc:113
-#, fuzzy
 msgid "PKCS 7 Digested"
-msgstr "PKCS 7"
+msgstr "PKCS 7 Digested"
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
@@ -1652,7 +1647,7 @@ msgstr ""
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr ""
+msgstr "ගනුදෙනුව හැඳුනුම්පත"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
@@ -3817,7 +3812,7 @@ msgstr "ලිවීම ඇවුරූයි.\n"
 
 #: winerror.mc:128
 msgid "Bad unit.\n"
-msgstr ""
+msgstr "හොඳ නැති ඒකකය.\n"
 
 #: winerror.mc:133
 msgid "Not ready.\n"
@@ -3909,7 +3904,7 @@ msgstr "ජාලය කාර්යබහුලයි.\n"
 
 #: winerror.mc:243
 msgid "Device does not exist.\n"
-msgstr ""
+msgstr "ධාවකය තියෙන්නේ නැහැ.\n"
 
 #: winerror.mc:248
 msgid "Too many commands.\n"
@@ -3961,7 +3956,7 @@ msgstr "හොඳ නැති ජාලය නම.\n"
 
 #: winerror.mc:308
 msgid "Too many network names.\n"
-msgstr ""
+msgstr "ජාල නම් වැඩි.\n"
 
 #: winerror.mc:313
 msgid "Too many network sessions.\n"
@@ -4168,7 +4163,7 @@ msgstr "SUBST කරපු ධාවකයකකට JOIN කරන්නට උ�
 
 #: winerror.mc:573
 msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr ""
+msgstr "JOIN කරපු ධාවකයකකට SUBST කරන්නට උත්සාහයක්.\n"
 
 #: winerror.mc:578
 msgid "Drive is busy.\n"
@@ -4811,11 +4806,11 @@ msgstr ""
 
 #: winerror.mc:1373
 msgid "Shutdown in progress.\n"
-msgstr ""
+msgstr "වැහීමක් වෙනවා.\n"
 
 #: winerror.mc:1378
 msgid "No shutdown in progress.\n"
-msgstr ""
+msgstr "වැහීමක් වෙන්නේ නැහැ.\n"
 
 #: winerror.mc:1383
 msgid "I/O device error.\n"
@@ -4834,9 +4829,8 @@ msgid "Serial I/O completed.\n"
 msgstr "අනුක්‍රමික I/O ඉවරයි.\n"
 
 #: winerror.mc:1403
-#, fuzzy
 msgid "Serial I/O counter timeout.\n"
-msgstr "අනුක්‍රමික I/O"
+msgstr "අනුක්‍රමික I/O counter timeout.\n"
 
 #: winerror.mc:1408
 msgid "Floppy ID address mark not found.\n"
@@ -4916,7 +4910,7 @@ msgstr "අවලංගු DLL එකක්.\n"
 
 #: winerror.mc:1503
 msgid "No associated application.\n"
-msgstr ""
+msgstr "සබැඳි යෙදුමක් නැහැ.\n"
 
 #: winerror.mc:1508
 msgid "DDE failure.\n"
@@ -5836,11 +5830,11 @@ msgstr "පිටුගත කළ පද්ධති සම්පත් නැ�
 
 #: winerror.mc:2663
 msgid "No working set quota.\n"
-msgstr ""
+msgstr "Working set කෝටාවක් නැහැ.\n"
 
 #: winerror.mc:2668
 msgid "No page file quota.\n"
-msgstr ""
+msgstr "ප්‍රතිහරණ ගොනුව කෝටාවක් නැහැ.\n"
 
 #: winerror.mc:2673
 msgid "Exceeded commitment limit.\n"
@@ -8228,7 +8222,7 @@ msgstr "ආරක්ෂා කරලා"
 #: oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "උත්පතනයක් තියෙනවා"
 
 #: oleaut32.rc:30 oleview.rc:146
 msgid "True"
@@ -14345,7 +14339,7 @@ msgstr ""
 
 #: taskmgr.rc:543
 msgid "&Session ID"
-msgstr "සැසියෙ ID (&S)"
+msgstr "සැසියෙ හැඳුනුම්පත (&S)"
 
 #: taskmgr.rc:545
 msgid "User &Name"
@@ -14622,7 +14616,7 @@ msgstr ""
 
 #: taskmgr.rc:283
 msgid "Session ID"
-msgstr "සැසියෙ ID"
+msgstr "සැසියෙ හැඳුනුම්පත"
 
 #: taskmgr.rc:284
 msgid "Username"
@@ -14638,11 +14632,11 @@ msgstr "VM ප්රමාණය"
 
 #: taskmgr.rc:287
 msgid "Paged Pool"
-msgstr ""
+msgstr "පිටුගත කළ සංචිතය"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr ""
+msgstr "NP සංචිතය"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
@@ -14937,19 +14931,19 @@ msgstr ""
 
 #: winecfg.rc:209
 msgid "&Builtin (Wine)"
-msgstr "&ගොඩනඟයි (Wine)"
+msgstr "&Builtin (Wine)"
 
 #: winecfg.rc:210
 msgid "&Native (Windows)"
-msgstr ""
+msgstr "&Native (Windows)"
 
 #: winecfg.rc:211
 msgid "Buil&tin then Native"
-msgstr ""
+msgstr "Buil&tin then Native"
 
 #: winecfg.rc:212
 msgid "Nati&ve then Builtin"
-msgstr ""
+msgstr "Nati&ve then Builtin"
 
 #: winecfg.rc:220
 msgid "Select Drive Letter"
@@ -15177,19 +15171,19 @@ msgstr "අවවාදය: පද්ධතියෙ පුස්තකාලය
 
 #: winecfg.rc:56
 msgid "native"
-msgstr ""
+msgstr "native"
 
 #: winecfg.rc:57
 msgid "builtin"
-msgstr ""
+msgstr "builtin"
 
 #: winecfg.rc:58
 msgid "native, builtin"
-msgstr ""
+msgstr "native, builtin"
 
 #: winecfg.rc:59
 msgid "builtin, native"
-msgstr ""
+msgstr "builtin, native"
 
 #: winecfg.rc:60
 msgid "disabled"
@@ -15923,7 +15917,7 @@ msgstr "කරුණාකරලා ඔබගේ නම ඇතුල්කරන
 
 #: winemine.rc:90
 msgid "Custom Game"
-msgstr ""
+msgstr "රේගු ක්රීඩවක්"
 
 #: winemine.rc:92
 msgid "Rows"
@@ -15947,7 +15941,7 @@ msgstr "WineMine"
 
 #: winemine.rc:31
 msgid "Nobody"
-msgstr ""
+msgstr "කිසිවෙක් නැත"
 
 #: winemine.rc:32
 msgid "Copyright 2000 Joshua Thielen"
