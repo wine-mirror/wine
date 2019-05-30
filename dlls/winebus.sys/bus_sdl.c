@@ -62,8 +62,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
-static DRIVER_OBJECT *sdl_driver_obj = NULL;
-
 static const WCHAR sdl_busidW[] = {'S','D','L','J','O','Y',0};
 
 static DWORD map_controllers = 0;
@@ -951,7 +949,7 @@ static void try_add_device(SDL_JoystickID index)
     if (is_xbox_gamepad)
         input = 0;
 
-    device = bus_create_hid_device(sdl_driver_obj, sdl_busidW, vid, pid,
+    device = bus_create_hid_device(sdl_busidW, vid, pid,
             input, version, id, serial, is_xbox_gamepad, &GUID_DEVCLASS_SDL,
             &sdl_vtbl, sizeof(struct platform_private));
 
@@ -1095,7 +1093,6 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         sdl_handle = wine_dlopen(SONAME_LIBSDL2, RTLD_NOW, NULL, 0);
         if (!sdl_handle) {
             WARN("could not load %s\n", SONAME_LIBSDL2);
-            sdl_driver_obj = NULL;
             return STATUS_UNSUCCESSFUL;
         }
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(sdl_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
@@ -1139,20 +1136,16 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         pSDL_JoystickGetVendor = wine_dlsym(sdl_handle, "SDL_JoystickGetVendor", NULL, 0);
     }
 
-    sdl_driver_obj = driver;
-    driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
-    driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
-
     map_controllers = check_bus_option(registry_path, &controller_mode, 1);
 
     if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
-        goto error;
+        return STATUS_UNSUCCESSFUL;
     args.event = events[0];
     args.registry_path = registry_path;
     if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, &args, 0, NULL)))
     {
         CloseHandle(events[0]);
-        goto error;
+        return STATUS_UNSUCCESSFUL;
     }
 
     result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
@@ -1164,9 +1157,6 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         return STATUS_SUCCESS;
     }
 
-error:
-    sdl_driver_obj = NULL;
-    return STATUS_UNSUCCESSFUL;
 sym_not_found:
     wine_dlclose(sdl_handle, NULL, 0);
     sdl_handle = NULL;

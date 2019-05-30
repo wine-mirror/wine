@@ -61,6 +61,8 @@ static const WORD PID_XBOX_CONTROLLERS[] =  {
     0x0719, /* Xbox 360 Wireless Adapter */
 };
 
+static DRIVER_OBJECT *driver_obj;
+
 struct pnp_device
 {
     struct list entry;
@@ -208,7 +210,7 @@ static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
     return dst;
 }
 
-DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW, WORD vid, WORD pid,
+DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
                                      WORD input, DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
                                      const GUID *class, const platform_vtbl *vtbl, DWORD platform_data_size)
 {
@@ -224,7 +226,7 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
     NTSTATUS status;
     DWORD length;
 
-    TRACE("(%p, %s, %04x, %04x, %04x, %u, %u, %s, %u, %s, %p, %u)\n", driver,
+    TRACE("(%s, %04x, %04x, %04x, %u, %u, %s, %u, %s, %p, %u)\n",
             debugstr_w(busidW), vid, pid, input, version, uid, debugstr_w(serialW),
             is_gamepad, debugstr_guid(class), vtbl, platform_data_size);
 
@@ -234,7 +236,7 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
     sprintfW(dev_name, device_name_fmtW, busidW, pnp_dev);
     RtlInitUnicodeString(&nameW, dev_name);
     length = FIELD_OFFSET(struct device_extension, platform_private[platform_data_size]);
-    status = IoCreateDevice(driver, length, &nameW, 0, 0, FALSE, &device);
+    status = IoCreateDevice(driver_obj, length, &nameW, 0, 0, FALSE, &device);
     if (status)
     {
         FIXME("failed to create device error %x\n", status);
@@ -469,7 +471,7 @@ static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
     return status;
 }
 
-NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
+static NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     NTSTATUS status = irp->IoStatus.u.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
@@ -514,7 +516,7 @@ static NTSTATUS deliver_last_report(struct device_extension *ext, DWORD buffer_l
     }
 }
 
-NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
+static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     NTSTATUS status = irp->IoStatus.u.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
@@ -795,6 +797,12 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     TRACE( "(%p, %s)\n", driver, debugstr_w(path->Buffer) );
 
+    driver_obj = driver;
+
+    driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
+    driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
+    driver->DriverUnload = driver_unload;
+
     if (check_bus_option(path, &SDL_enabled, 1))
     {
         if (IoCreateDriver(&sdl, sdl_driver_init) == STATUS_SUCCESS)
@@ -802,8 +810,6 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     }
     IoCreateDriver(&udev, udev_driver_init);
     IoCreateDriver(&iohid, iohid_driver_init);
-
-    driver->DriverUnload = driver_unload;
 
     return STATUS_SUCCESS;
 }

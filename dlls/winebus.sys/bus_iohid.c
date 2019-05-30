@@ -96,7 +96,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 #ifdef HAVE_IOHIDMANAGERCREATE
 
-static DRIVER_OBJECT *iohid_driver_obj = NULL;
 static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
 static HANDLE run_loop_handle;
@@ -348,7 +347,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     if (is_gamepad)
         input = 0;
 
-    device = bus_create_hid_device(iohid_driver_obj, busidW, vid, pid, input,
+    device = bus_create_hid_device(busidW, vid, pid, input,
             version, uid, str?serial_string:NULL, is_gamepad, &GUID_DEVCLASS_IOHID,
             &iohid_vtbl, sizeof(struct platform_private));
     if (!device)
@@ -404,14 +403,10 @@ NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registr
 {
     TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
 
-    iohid_driver_obj = driver;
-    driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
-    driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
     hid_manager = IOHIDManagerCreate(kCFAllocatorDefault, 0L);
     if (!(run_loop_handle = CreateThread(NULL, 0, runloop_thread, NULL, 0, NULL)))
     {
         ERR("Failed to initialize IOHID Manager thread\n");
-        iohid_driver_obj = NULL;
         CFRelease(hid_manager);
         return STATUS_UNSUCCESSFUL;
     }
@@ -422,16 +417,13 @@ NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registr
 void iohid_driver_unload( void )
 {
     TRACE("Unloading Driver\n");
-    if (iohid_driver_obj != NULL)
-    {
-        IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
-        CFRunLoopStop(run_loop);
-        WaitForSingleObject(run_loop_handle, INFINITE);
-        CloseHandle(run_loop_handle);
-        IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, NULL, NULL);
-        IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, NULL, NULL);
-        CFRelease(hid_manager);
-    }
+    IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
+    CFRunLoopStop(run_loop);
+    WaitForSingleObject(run_loop_handle, INFINITE);
+    CloseHandle(run_loop_handle);
+    IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, NULL, NULL);
+    IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, NULL, NULL);
+    CFRelease(hid_manager);
     TRACE("Driver Unloaded\n");
 }
 
