@@ -557,7 +557,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER
  * NtGetTickCount   (NTDLL.@)
  * ZwGetTickCount   (NTDLL.@)
  */
-ULONGLONG WINAPI DECLSPEC_HOTPATCH get_tick_count64(void)
+ULONG WINAPI NtGetTickCount(void)
 {
     return monotonic_counter() / TICKSPERMSEC;
 }

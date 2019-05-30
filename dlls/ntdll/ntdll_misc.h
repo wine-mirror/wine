@@ -268,8 +268,4 @@ void     WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 /* string functions */
 int __cdecl NTDLL_tolower( int c );
 int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 );
-
-/* time functions */
-ULONGLONG WINAPI get_tick_count64( void );
-#define NtGetTickCount get_tick_count64
 #endif

@@ -38,6 +38,9 @@
 #elif defined(HAVE_MACHINE_LIMITS_H)
 #include <machine/limits.h>
 #endif
+#ifdef __APPLE__
+# include <mach/mach_time.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -62,6 +65,33 @@ static inline void longlong_to_filetime( LONGLONG t, FILETIME *ft )
 static inline LONGLONG filetime_to_longlong( const FILETIME *ft )
 {
     return (((LONGLONG)ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+}
+
+#define TICKSPERSEC        10000000
+#define TICKSPERMSEC       10000
+
+/* return a monotonic time counter, in Win32 ticks */
+static inline ULONGLONG monotonic_counter(void)
+{
+    LARGE_INTEGER counter;
+
+#ifdef __APPLE__
+    static mach_timebase_info_data_t timebase;
+
+    if (!timebase.denom) mach_timebase_info( &timebase );
+    return mach_absolute_time() * timebase.numer / timebase.denom / 100;
+#elif defined(HAVE_CLOCK_GETTIME)
+    struct timespec ts;
+#ifdef CLOCK_MONOTONIC_RAW
+    if (!clock_gettime( CLOCK_MONOTONIC_RAW, &ts ))
+        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
+#endif
+    if (!clock_gettime( CLOCK_MONOTONIC, &ts ))
+        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
+#endif
+
+    NtQueryPerformanceCounter( &counter, NULL );
+    return counter.QuadPart;
 }
 
 static const WCHAR mui_stdW[] = { 'M','U','I','_','S','t','d',0 };
@@ -1527,4 +1557,31 @@ BOOL WINAPI QueryUnbiasedInterruptTime(ULONGLONG *time)
     if (!time) return FALSE;
     RtlQueryUnbiasedInterruptTime(time);
     return TRUE;
+}
+
+/******************************************************************************
+ *           GetTickCount64       (KERNEL32.@)
+ */
+ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
+{
+    return monotonic_counter() / TICKSPERMSEC;
+}
+
+/***********************************************************************
+ *           GetTickCount       (KERNEL32.@)
+ *
+ * Get the number of milliseconds the system has been running.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current tick count.
+ *
+ * NOTES
+ *  The value returned will wrap around every 2^32 milliseconds.
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
+{
+    return monotonic_counter() / TICKSPERMSEC;
 }
