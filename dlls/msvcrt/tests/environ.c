@@ -97,7 +97,7 @@ static void test__environ(void)
             "Expected _environ pointers to be identical\n" );
     }
     else
-        win_skip( "__p__environ() is not available\n" );
+        skip( "__p__environ() is not available\n" );
 
     if (p_get_environ)
     {
@@ -163,7 +163,7 @@ static void test__wenviron(void)
             "Expected _wenviron pointers to be NULL\n" );
     }
     else
-        win_skip( "__p__wenviron() is not available\n" );
+        skip( "__p__wenviron() is not available\n" );
 
     if (p_get_wenviron)
     {

@@ -577,7 +577,7 @@ static void test_daylight(void)
 
     if (!p___p__daylight)
     {
-        win_skip("__p__daylight not available\n");
+        skip("__p__daylight not available\n");
         return;
     }
 
@@ -829,7 +829,7 @@ static void test__tzset(void)
     int ret;
 
     if(!p___p__daylight || !p___p__timezone || !p___p__dstbias) {
-        win_skip("__p__daylight, __p__timezone or __p__dstbias is not available\n");
+        skip("__p__daylight, __p__timezone or __p__dstbias is not available\n");
         return;
     }
 
