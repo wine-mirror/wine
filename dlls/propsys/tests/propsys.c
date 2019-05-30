@@ -1485,13 +1485,13 @@ static void test_PropVariantToBuffer(void)
     UINT8 buffer[256];
 
     hr = InitPropVariantFromBuffer(data, 10, &propvar);
-    ok(hr == S_OK, "InitVariantFromBuffer failed 0x%08x.\n", hr);
+    ok(hr == S_OK, "InitPropVariantFromBuffer failed 0x%08x.\n", hr);
     hr = PropVariantToBuffer(&propvar, NULL, 0); /* crash when cb isn't zero */
     ok(hr == S_OK, "PropVariantToBuffer failed: 0x%08x.\n", hr);
     PropVariantClear(&propvar);
 
     hr = InitPropVariantFromBuffer(data, 10, &propvar);
-    ok(hr == S_OK, "InitVariantFromBuffer failed 0x%08x.\n", hr);
+    ok(hr == S_OK, "InitPropVariantFromBuffer failed 0x%08x.\n", hr);
     hr = PropVariantToBuffer(&propvar, buffer, 10);
     ok(hr == S_OK, "PropVariantToBuffer failed: 0x%08x.\n", hr);
     ok(!memcmp(buffer, data, 10) && !buffer[10], "got wrong buffer.\n");
@@ -1499,7 +1499,7 @@ static void test_PropVariantToBuffer(void)
     PropVariantClear(&propvar);
 
     hr = InitPropVariantFromBuffer(data, 10, &propvar);
-    ok(hr == S_OK, "InitVariantFromBuffer failed 0x%08x.\n", hr);
+    ok(hr == S_OK, "InitPropVariantFromBuffer failed 0x%08x.\n", hr);
     buffer[0] = 99;
     hr = PropVariantToBuffer(&propvar, buffer, 11);
     ok(hr == E_FAIL, "PropVariantToBuffer returned: 0x%08x.\n", hr);
@@ -1508,7 +1508,7 @@ static void test_PropVariantToBuffer(void)
     PropVariantClear(&propvar);
 
     hr = InitPropVariantFromBuffer(data, 10, &propvar);
-    ok(hr == S_OK, "InitVariantFromBuffer failed 0x%08x.\n", hr);
+    ok(hr == S_OK, "InitPropVariantFromBuffer failed 0x%08x.\n", hr);
     hr = PropVariantToBuffer(&propvar, buffer, 9);
     ok(hr == S_OK, "PropVariantToBuffer failed: 0x%08x.\n", hr);
     ok(!memcmp(buffer, data, 9) && !buffer[9], "got wrong buffer.\n");
