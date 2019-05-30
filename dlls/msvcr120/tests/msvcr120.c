@@ -22,6 +22,7 @@
 #include <wchar.h>
 #include <stdio.h>
 #include <float.h>
+#include <math.h>
 #include <limits.h>
 #include <wctype.h>
 
@@ -113,30 +114,6 @@ typedef struct {
     void *chain;
     critical_section lock;
 } _Condition_variable;
-
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
-
-static inline int isnormal(double d)
-{
-    return _fpclass(d) & (_FPCLASS_PN | _FPCLASS_NN);
-}
-
-static inline int isinf(double d)
-{
-    return _fpclass(d) & (_FPCLASS_PINF | _FPCLASS_NINF);
-}
 
 struct MSVCRT_lconv
 {

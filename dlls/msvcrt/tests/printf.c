@@ -24,9 +24,10 @@
  * the following macro is defined.
  */
 #define _CRT_NON_CONFORMING_SWPRINTFS
- 
+
 #include <stdio.h>
 #include <errno.h>
+#include <math.h>
 #include <locale.h>
 
 #include "windef.h"
@@ -34,20 +35,6 @@
 #include "winnls.h"
 
 #include "wine/test.h"
-
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
 
 static inline float __port_ind(void)
 {

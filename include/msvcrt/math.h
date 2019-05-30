@@ -205,6 +205,18 @@ static const union {
 #  endif
 #endif
 
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+# define INFINITY __builtin_inff()
+# define NAN      __builtin_nanf("")
+#else
+static const union {
+    unsigned int __i;
+    float __f;
+} __inff = { 0x7f800000 }, __nanf = { 0x7fc00000 };
+# define INFINITY (__inff.__f)
+# define NAN      (__nanf.__f)
+#endif
+
 #define FP_INFINITE   1
 #define FP_NAN        2
 #define FP_NORMAL    -1

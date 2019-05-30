@@ -17,29 +17,11 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 #include "windows.h"
 #include "rpc.h"
 #include "webservices.h"
 #include "wine/test.h"
-
-#include <math.h>
-#ifndef INFINITY
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-#endif
-
-#ifndef NAN
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
-#endif
 
 static HRESULT set_output( WS_XML_WRITER *writer )
 {

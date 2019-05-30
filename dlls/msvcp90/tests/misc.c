@@ -27,20 +27,6 @@
 #include <winbase.h>
 #include "wine/test.h"
 
-static inline float __port_infinity(void)
-{
-        static const unsigned __inf_bytes = 0x7f800000;
-            return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-
-static inline float __port_nan(void)
-{
-        static const unsigned __nan_bytes = 0x7fc00000;
-            return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
-
 static inline float __port_ind(void)
 {
         static const unsigned __ind_bytes = 0xffc00000;
