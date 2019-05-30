@@ -386,7 +386,6 @@ static void test_critical_region(BOOL is_dispatcher)
     KeLeaveCriticalRegion();
 
     result = KeAreApcsDisabled();
-    todo_wine_if(is_dispatcher)
     ok(result == is_dispatcher || broken(is_dispatcher && !result),
        "KeAreApcsDisabled returned %x\n", result);
 }

@@ -602,7 +602,9 @@ static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp, struct dispatch_conte
 
     context->irp = irp;
     device->CurrentIrp = irp;
+    KeEnterCriticalRegion();
     IoCallDriver( device, irp );
+    KeLeaveCriticalRegion();
     device->CurrentIrp = NULL;
 }
 
