@@ -27,20 +27,32 @@ static inline BaseFilter *impl_from_IBaseFilter(IBaseFilter *iface)
     return CONTAINING_RECORD(iface, BaseFilter, IBaseFilter_iface);
 }
 
-HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter *iface, REFIID iid, void **out)
 {
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+    BaseFilter *filter = impl_from_IBaseFilter(iface);
+    HRESULT hr;
 
-    *ppv = NULL;
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPersist) ||
-        IsEqualIID(riid, &IID_IMediaFilter) || IsEqualIID(riid, &IID_IBaseFilter))
+    *out = NULL;
+
+    if (filter->pFuncsTable->filter_query_interface
+            && SUCCEEDED(hr = filter->pFuncsTable->filter_query_interface(filter, iid, out)))
     {
-        *ppv = iface;
+        return hr;
+    }
+
+    if (IsEqualIID(iid, &IID_IUnknown)
+            || IsEqualIID(iid, &IID_IPersist)
+            || IsEqualIID(iid, &IID_IMediaFilter)
+            || IsEqualIID(iid, &IID_IBaseFilter))
+    {
+        *out = iface;
         IBaseFilter_AddRef(iface);
         return S_OK;
     }
 
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
     return E_NOINTERFACE;
 }
 
