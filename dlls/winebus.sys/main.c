@@ -63,6 +63,8 @@ static const WORD PID_XBOX_CONTROLLERS[] =  {
 
 static DRIVER_OBJECT *driver_obj;
 
+HANDLE driver_key;
+
 struct pnp_device
 {
     struct list entry;
@@ -738,30 +740,19 @@ void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
     LeaveCriticalSection(&ext->report_cs);
 }
 
-DWORD check_bus_option(UNICODE_STRING *registry_path, const UNICODE_STRING *option, DWORD default_value)
+DWORD check_bus_option(const UNICODE_STRING *option, DWORD default_value)
 {
-    OBJECT_ATTRIBUTES attr;
-    HANDLE key;
-    DWORD output = default_value;
+    char buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION*)buffer;
+    DWORD size;
 
-    InitializeObjectAttributes(&attr, registry_path, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
-    if (NtOpenKey(&key, KEY_ALL_ACCESS, &attr) == STATUS_SUCCESS)
+    if (NtQueryValueKey(driver_key, option, KeyValuePartialInformation, info, sizeof(buffer), &size) == STATUS_SUCCESS)
     {
-        DWORD size;
-        char buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
-
-        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION*)buffer;
-
-        if (NtQueryValueKey(key, option, KeyValuePartialInformation, info, sizeof(buffer), &size) == STATUS_SUCCESS)
-        {
-            if (info->Type == REG_DWORD)
-                output = *(DWORD*)info->Data;
-        }
-
-        NtClose(key);
+        if (info->Type == REG_DWORD)
+            return *(DWORD*)info->Data;
     }
 
-    return output;
+    return default_value;
 }
 
 BOOL is_xbox_gamepad(WORD vid, WORD pid)
@@ -782,6 +773,7 @@ static void WINAPI driver_unload(DRIVER_OBJECT *driver)
     udev_driver_unload();
     iohid_driver_unload();
     sdl_driver_unload();
+    NtClose(driver_key);
 }
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
@@ -794,8 +786,16 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     static UNICODE_STRING sdl = {sizeof(sdlW) - sizeof(WCHAR), sizeof(sdlW), (WCHAR *)sdlW};
     static const WCHAR SDL_enabledW[] = {'E','n','a','b','l','e',' ','S','D','L',0};
     static const UNICODE_STRING SDL_enabled = {sizeof(SDL_enabledW) - sizeof(WCHAR), sizeof(SDL_enabledW), (WCHAR*)SDL_enabledW};
+    OBJECT_ATTRIBUTES attr = {0};
+    NTSTATUS ret;
 
     TRACE( "(%p, %s)\n", driver, debugstr_w(path->Buffer) );
+
+    attr.Length = sizeof(attr);
+    attr.ObjectName = path;
+    attr.Attributes = OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE;
+    if ((ret = NtOpenKey(&driver_key, KEY_ALL_ACCESS, &attr)) != STATUS_SUCCESS)
+        ERR("Failed to open driver key, status %#x.\n", ret);
 
     driver_obj = driver;
 
@@ -803,7 +803,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
     driver->DriverUnload = driver_unload;
 
-    if (check_bus_option(path, &SDL_enabled, 1))
+    if (check_bus_option(&SDL_enabled, 1))
     {
         if (IoCreateDriver(&sdl, sdl_driver_init) == STATUS_SUCCESS)
             return STATUS_SUCCESS;

@@ -993,14 +993,9 @@ static void process_device_event(SDL_Event *event)
         set_mapped_report_from_event(event);
 }
 
-typedef struct _thread_args {
-    HANDLE event;
-    UNICODE_STRING *registry_path;
-} thread_arguments;
-
 static DWORD CALLBACK deviceloop_thread(void *args)
 {
-    thread_arguments *thread_args = args;
+    HANDLE init_done = args;
     SDL_Event event;
 
     if (pSDL_Init(SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC) < 0)
@@ -1015,16 +1010,10 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     /* Process mappings */
     if (pSDL_GameControllerAddMapping != NULL)
     {
-        HANDLE key;
-        OBJECT_ATTRIBUTES attr;
-        WCHAR buffer[MAX_PATH];
-        UNICODE_STRING regpath = {0, sizeof(buffer), buffer};
-        static const WCHAR szPath[] = {'\\','m','a','p',0};
+        HKEY key;
+        static const WCHAR szPath[] = {'m','a','p',0};
 
-        RtlCopyUnicodeString(&regpath, thread_args->registry_path);
-        RtlAppendUnicodeToString(&regpath, szPath);
-        InitializeObjectAttributes(&attr, &regpath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
-        if (NtOpenKey(&key, KEY_ALL_ACCESS, &attr) == STATUS_SUCCESS)
+        if (!RegOpenKeyExW(driver_key, szPath, 0, KEY_ENUMERATE_SUB_KEYS, &key))
         {
             DWORD index = 0;
             CHAR *buffer = NULL;
@@ -1063,7 +1052,7 @@ static DWORD CALLBACK deviceloop_thread(void *args)
         }
     }
 
-    SetEvent(thread_args->event);
+    SetEvent(init_done);
 
     while (1)
         while (pSDL_WaitEvent(&event) != 0)
@@ -1085,7 +1074,6 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
 
     HANDLE events[2];
     DWORD result;
-    thread_arguments args;
 
     TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
     if (sdl_handle == NULL)
@@ -1136,13 +1124,11 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
         pSDL_JoystickGetVendor = wine_dlsym(sdl_handle, "SDL_JoystickGetVendor", NULL, 0);
     }
 
-    map_controllers = check_bus_option(registry_path, &controller_mode, 1);
+    map_controllers = check_bus_option(&controller_mode, 1);
 
     if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
         return STATUS_UNSUCCESSFUL;
-    args.event = events[0];
-    args.registry_path = registry_path;
-    if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, &args, 0, NULL)))
+    if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, events[0], 0, NULL)))
     {
         CloseHandle(events[0]);
         return STATUS_UNSUCCESSFUL;

@@ -50,5 +50,7 @@ void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length) DECLS
 DEVICE_OBJECT* bus_enumerate_hid_devices(const platform_vtbl *vtbl, enum_func function, void* context) DECLSPEC_HIDDEN;
 
 /* General Bus Functions */
-DWORD check_bus_option(UNICODE_STRING *registry_path, const UNICODE_STRING *option, DWORD default_value) DECLSPEC_HIDDEN;
+DWORD check_bus_option(const UNICODE_STRING *option, DWORD default_value) DECLSPEC_HIDDEN;
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
+
+HANDLE driver_key DECLSPEC_HIDDEN;

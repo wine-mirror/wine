@@ -1468,12 +1468,12 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
         return STATUS_UNSUCCESSFUL;
     }
 
-    disable_hidraw = check_bus_option(registry_path, &hidraw_disabled, 0);
+    disable_hidraw = check_bus_option(&hidraw_disabled, 0);
     if (disable_hidraw)
         TRACE("UDEV hidraw devices disabled in registry\n");
 
 #ifdef HAS_PROPER_INPUT_HEADER
-    disable_input = check_bus_option(registry_path, &input_disabled, 0);
+    disable_input = check_bus_option(&input_disabled, 0);
     if (disable_input)
         TRACE("UDEV input devices disabled in registry\n");
 #endif
