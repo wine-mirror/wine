@@ -1525,13 +1525,14 @@ static void test_PropVariantToBuffer(void)
     hr = SafeArrayAccessData(sa, &pdata);
     ok(hr == S_OK, "SafeArrayAccessData failed: 0x%08x.\n", hr);
     memcpy(pdata, data, sizeof(data));
+    hr = SafeArrayUnaccessData(sa);
+    ok(hr == S_OK, "SafeArrayUnaccessData failed: 0x%08x.\n", hr);
     U(propvar).parray = sa;
     buffer[0] = 99;
     hr = PropVariantToBuffer(&propvar, buffer, 11);
     todo_wine ok(hr == E_FAIL, "PropVariantToBuffer returned: 0x%08x.\n", hr);
     ok(buffer[0] == 99, "got wrong buffer.\n");
     memset(buffer, 0, sizeof(buffer));
-    SafeArrayDestroy(sa);
     PropVariantClear(&propvar);
 
     PropVariantInit(&propvar);
@@ -1544,12 +1545,13 @@ static void test_PropVariantToBuffer(void)
     hr = SafeArrayAccessData(sa, &pdata);
     ok(hr == S_OK, "SafeArrayAccessData failed: 0x%08x.\n", hr);
     memcpy(pdata, data, sizeof(data));
+    hr = SafeArrayUnaccessData(sa);
+    ok(hr == S_OK, "SafeArrayUnaccessData failed: 0x%08x.\n", hr);
     U(propvar).parray = sa;
     hr = PropVariantToBuffer(&propvar, buffer, sizeof(data));
     todo_wine ok(hr == S_OK, "PropVariantToBuffer failed: 0x%08x.\n", hr);
     todo_wine ok(!memcmp(buffer, data, 10) && !buffer[10], "got wrong buffer.\n");
     memset(buffer, 0, sizeof(buffer));
-    SafeArrayDestroy(sa);
     PropVariantClear(&propvar);
 
     PropVariantInit(&propvar);
@@ -1571,10 +1573,11 @@ static void test_PropVariantToBuffer(void)
     hr = SafeArrayAccessData(sa, &pdata);
     ok(hr == S_OK, "SafeArrayAccessData failed: 0x%08x.\n", hr);
     memcpy(pdata, data_int8, sizeof(data_int8));
+    hr = SafeArrayUnaccessData(sa);
+    ok(hr == S_OK, "SafeArrayUnaccessData failed: 0x%08x.\n", hr);
     U(propvar).parray = sa;
     hr = PropVariantToBuffer(&propvar, buffer, sizeof(data_int8));
     ok(hr == E_INVALIDARG, "PropVariantToBuffer failed: 0x%08x.\n", hr);
-    SafeArrayDestroy(sa);
     PropVariantClear(&propvar);
 }
 
