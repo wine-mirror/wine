@@ -4,6 +4,8 @@ IMPORTS   = d3d9 d3dcompiler dxguid d3dxof ole32 gdi32 user32
 PARENTSRC = ../d3dx9_36
 DELAYIMPORTS = windowscodecs
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	animation.c \
 	core.c \
