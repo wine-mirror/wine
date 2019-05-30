@@ -16,14 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 #include "d3d10_1.h"
 #include "d3dx10.h"
 #include "d3dcompiler.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -318,13 +315,13 @@ HRESULT WINAPI D3DX10CreateAsyncFileLoaderW(const WCHAR *filename, ID3DX10DataLo
         return E_OUTOFMEMORY;
 
     object->ID3DX10DataLoader_iface.lpVtbl = &filedataloadervtbl;
-    object->u.file.path = HeapAlloc(GetProcessHeap(), 0, (strlenW(filename) + 1) * sizeof(WCHAR));
+    object->u.file.path = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(filename) + 1) * sizeof(WCHAR));
     if (!object->u.file.path)
     {
         HeapFree(GetProcessHeap(), 0, object);
         return E_OUTOFMEMORY;
     }
-    strcpyW(object->u.file.path, filename);
+    lstrcpyW(object->u.file.path, filename);
     object->data = NULL;
     object->size = 0;
 
