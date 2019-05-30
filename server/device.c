@@ -951,12 +951,14 @@ DECL_HANDLER(get_next_device_request)
 
     if ((ptr = list_head( &manager->requests )))
     {
+        struct thread *thread;
+
         irp = LIST_ENTRY( ptr, struct irp_call, mgr_entry );
-        if (irp->thread)
-        {
-            reply->client_thread = get_kernel_object_ptr( manager, &irp->thread->obj );
-            reply->client_tid    = get_thread_id( irp->thread );
-        }
+
+        thread = irp->thread ? irp->thread : current;
+        reply->client_thread = get_kernel_object_ptr( manager, &thread->obj );
+        reply->client_tid    = get_thread_id( thread );
+
         iosb = irp->iosb;
         reply->in_size = iosb->in_size;
         if (iosb->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
