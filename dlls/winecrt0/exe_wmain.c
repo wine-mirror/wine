@@ -27,7 +27,7 @@
 
 int WINAPI wWinMain(HINSTANCE,HINSTANCE,LPWSTR,int);
 
-int wmain( int argc, WCHAR *argv[] )
+int __cdecl wmain( int argc, WCHAR *argv[] )
 {
     STARTUPINFOW info;
     WCHAR *cmdline = GetCommandLineW();

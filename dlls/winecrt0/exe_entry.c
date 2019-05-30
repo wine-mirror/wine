@@ -27,7 +27,7 @@
 #include "wine/library.h"
 #include "crt0_private.h"
 
-extern int main( int argc, char *argv[] );
+extern int __cdecl main( int argc, char *argv[] );
 
 DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_entry( PEB *peb )
 {

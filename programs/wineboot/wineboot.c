@@ -1255,7 +1255,7 @@ static const struct option long_options[] =
     { NULL,          0, 0, 0 }
 };
 
-int main( int argc, char *argv[] )
+int __cdecl main( int argc, char *argv[] )
 {
     static const WCHAR RunW[] = {'R','u','n',0};
     static const WCHAR RunOnceW[] = {'R','u','n','O','n','c','e',0};

@@ -25,7 +25,7 @@
 #include "winbase.h"
 #include "winuser.h"
 
-int main( int argc, char *argv[] )
+int __cdecl main( int argc, char *argv[] )
 {
     STARTUPINFOA info;
     char *cmdline = GetCommandLineA();

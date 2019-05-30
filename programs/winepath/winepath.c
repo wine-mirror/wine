@@ -144,7 +144,7 @@ static int parse_options(WCHAR *argv[])
 /*
  * Main function
  */
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     LPSTR (*CDECL wine_get_unix_file_name_ptr)(LPCWSTR) = NULL;
     LPWSTR (*CDECL wine_get_dos_file_name_ptr)(LPCSTR) = NULL;
