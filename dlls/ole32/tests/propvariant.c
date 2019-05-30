@@ -46,28 +46,28 @@ static const struct valid_mapping
 {
     { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_EMPTY */
     { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_NULL */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_I2 */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_I4 */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_R4 */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_R8 */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_CY */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_DATE */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_BSTR */
-    { PROP_V1 , PROP_V1 | PROP_TODO , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_DISPATCH */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_ERROR */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_BOOL */
-    { PROP_V1 | PROP_TODO , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_VARIANT */
-    { PROP_V1 , PROP_V1 | PROP_TODO , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_UNKNOWN */
-    { PROP_V1 , PROP_V1 | PROP_TODO , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_DECIMAL */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_I2 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_I4 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_R4 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_R8 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_CY */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_DATE */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_BSTR */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_DISPATCH */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_ERROR */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_BOOL */
+    { PROP_V1 | PROP_TODO , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_VARIANT */
+    { PROP_V1 , PROP_V1, PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_UNKNOWN */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_DECIMAL */
     { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 15 */
-    { PROP_V1 , PROP_V1 | PROP_TODO , PROP_V1 , PROP_V1 | PROP_TODO  }, /* VT_I1 */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_UI1 */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_UI2 */
-    { PROP_V0 , PROP_V1 | PROP_TODO , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_UI4 */
+    { PROP_V1 , PROP_V1 , PROP_V1 , PROP_V1 | PROP_TODO  }, /* VT_I1 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_UI1 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_UI2 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1 | PROP_TODO  }, /* VT_UI4 */
     { PROP_V0 , PROP_V1A | PROP_TODO, PROP_V0 , PROP_V1A | PROP_TODO }, /* VT_I8 */
     { PROP_V0 , PROP_V1A | PROP_TODO, PROP_V0 , PROP_V1A | PROP_TODO }, /* VT_UI8 */
-    { PROP_V1 , PROP_V1 | PROP_TODO , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_INT */
-    { PROP_V1 , PROP_V1 | PROP_TODO , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_UINT */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_INT */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1 | PROP_TODO  }, /* VT_UINT */
     { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_VOID */
     { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_HRESULT */
     { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_PTR */
@@ -351,6 +351,9 @@ static void test_copy(void)
     struct unk_impl unk_obj = {{&unk_vtbl}, 1};
     PROPVARIANT propvarSrc;
     PROPVARIANT propvarDst;
+    SAFEARRAY *sa;
+    SAFEARRAYBOUND sabound;
+    LONG saindex;
     HRESULT hr;
 
     propvarSrc.vt = VT_BSTR;
@@ -390,6 +393,28 @@ static void test_copy(void)
     ok(unk_obj.ref == 2, "got wrong refcount: %d.\n", unk_obj.ref);
     hr = PropVariantClear(&propvarDst);
     ok(hr == S_OK, "PropVariantClear(...VT_UNKNOWN...) failed: 0x%08x.\n", hr);
+    ok(unk_obj.ref == 1, "got wrong refcount: %d.\n", unk_obj.ref);
+    memset(&propvarSrc, 0, sizeof(propvarSrc));
+
+    sabound.lLbound = 0;
+    sabound.cElements = 2;
+    sa = SafeArrayCreate(VT_UNKNOWN, 1, &sabound);
+    saindex = 0;
+    SafeArrayPutElement(sa, &saindex, &unk_obj.IUnknown_iface);
+    saindex = 1;
+    SafeArrayPutElement(sa, &saindex, &unk_obj.IUnknown_iface);
+    ok(unk_obj.ref == 3, "got wrong refcount: %d.\n", unk_obj.ref);
+
+    propvarSrc.vt = VT_ARRAY | VT_UNKNOWN;
+    U(propvarSrc).parray = sa;
+    hr = PropVariantCopy(&propvarDst, &propvarSrc);
+    ok(hr == S_OK, "PropVariantCopy(...VT_ARRAY|VT_UNKNOWN...) failed: 0x%08x.\n", hr);
+    ok(unk_obj.ref == 5, "got wrong refcount: %d.\n", unk_obj.ref);
+    hr = PropVariantClear(&propvarDst);
+    ok(hr == S_OK, "PropVariantClear(...VT_ARRAY|VT_UNKNOWN...) failed: 0x%08x.\n", hr);
+    ok(unk_obj.ref == 3, "got wrong refcount: %d.\n", unk_obj.ref);
+    hr = PropVariantClear(&propvarSrc);
+    ok(hr == S_OK, "PropVariantClear(...VT_ARRAY|VT_UNKNOWN...) failed: 0x%08x.\n", hr);
     ok(unk_obj.ref == 1, "got wrong refcount: %d.\n", unk_obj.ref);
     memset(&propvarSrc, 0, sizeof(propvarSrc));
 }
