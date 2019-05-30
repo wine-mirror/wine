@@ -1067,7 +1067,7 @@ void sdl_driver_unload( void )
     TRACE("Unload Driver\n");
 }
 
-NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS sdl_driver_init(void)
 {
     static const WCHAR controller_modeW[] = {'M','a','p',' ','C','o','n','t','r','o','l','l','e','r','s',0};
     static const UNICODE_STRING controller_mode = {sizeof(controller_modeW) - sizeof(WCHAR), sizeof(controller_modeW), (WCHAR*)controller_modeW};
@@ -1075,7 +1075,6 @@ NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_
     HANDLE events[2];
     DWORD result;
 
-    TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
     if (sdl_handle == NULL)
     {
         sdl_handle = wine_dlopen(SONAME_LIBSDL2, RTLD_NOW, NULL, 0);
@@ -1151,7 +1150,7 @@ sym_not_found:
 
 #else
 
-NTSTATUS WINAPI sdl_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS sdl_driver_init(void)
 {
     WARN("compiled without SDL support\n");
     return STATUS_NOT_IMPLEMENTED;

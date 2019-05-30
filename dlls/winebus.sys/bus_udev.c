@@ -1451,7 +1451,7 @@ void udev_driver_unload( void )
     TRACE("Unload Driver\n");
 }
 
-NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS udev_driver_init(void)
 {
     HANDLE events[2];
     DWORD result;
@@ -1459,8 +1459,6 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
     static const UNICODE_STRING hidraw_disabled = {sizeof(hidraw_disabledW) - sizeof(WCHAR), sizeof(hidraw_disabledW), (WCHAR*)hidraw_disabledW};
     static const WCHAR input_disabledW[] = {'D','i','s','a','b','l','e','I','n','p','u','t',0};
     static const UNICODE_STRING input_disabled = {sizeof(input_disabledW) - sizeof(WCHAR), sizeof(input_disabledW), (WCHAR*)input_disabledW};
-
-    TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
 
     if (!(udev_context = udev_new()))
     {
@@ -1504,7 +1502,7 @@ error:
 
 #else
 
-NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS udev_driver_init(void)
 {
     WARN("Wine was compiled without UDEV support\n");
     return STATUS_NOT_IMPLEMENTED;

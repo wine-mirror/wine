@@ -399,10 +399,8 @@ static DWORD CALLBACK runloop_thread(void *args)
 
 }
 
-NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS iohid_driver_init(void)
 {
-    TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
-
     hid_manager = IOHIDManagerCreate(kCFAllocatorDefault, 0L);
     if (!(run_loop_handle = CreateThread(NULL, 0, runloop_thread, NULL, 0, NULL)))
     {
@@ -429,7 +427,7 @@ void iohid_driver_unload( void )
 
 #else
 
-NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS iohid_driver_init(void)
 {
     WARN("IOHID Support not compiled into Wine.\n");
     return STATUS_NOT_IMPLEMENTED;
