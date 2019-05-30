@@ -425,10 +425,25 @@ static void async_reader_destroy(BaseFilter *iface)
     CoTaskMemFree(filter);
 }
 
+static HRESULT async_reader_query_interface(BaseFilter *iface, REFIID iid, void **out)
+{
+    AsyncReader *filter = impl_from_BaseFilter(iface);
+
+    if (IsEqualGUID(iid, &IID_IFileSourceFilter))
+    {
+        *out = &filter->IFileSourceFilter_iface;
+        IUnknown_AddRef((IUnknown *)*out);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
 static const BaseFilterFuncTable BaseFuncTable =
 {
     .filter_get_pin = async_reader_get_pin,
     .filter_destroy = async_reader_destroy,
+    .filter_query_interface = async_reader_query_interface,
 };
 
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
@@ -456,40 +471,6 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     TRACE("-- created at %p\n", pAsyncRead);
 
     return S_OK;
-}
-
-/** IUnknown methods **/
-
-static HRESULT WINAPI AsyncReader_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    AsyncReader *This = impl_from_IBaseFilter(iface);
-
-    TRACE("%p->(%s, %p)\n", This, qzdebugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = &This->filter.IBaseFilter_iface;
-    else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = &This->filter.IBaseFilter_iface;
-    else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = &This->filter.IBaseFilter_iface;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = &This->filter.IBaseFilter_iface;
-    else if (IsEqualIID(riid, &IID_IFileSourceFilter))
-        *ppv = &This->IFileSourceFilter_iface;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IMediaSeeking) &&
-        !IsEqualIID(riid, &IID_IVideoWindow) && !IsEqualIID(riid, &IID_IBasicAudio))
-        FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
-
-    return E_NOINTERFACE;
 }
 
 /** IMediaFilter methods **/
@@ -529,7 +510,7 @@ static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart
 
 static const IBaseFilterVtbl AsyncReader_Vtbl =
 {
-    AsyncReader_QueryInterface,
+    BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
