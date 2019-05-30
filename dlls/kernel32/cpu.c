@@ -209,14 +209,10 @@ BOOL WINAPI IsProcessorFeaturePresent ( DWORD feature )
  */
 BOOL WINAPI K32GetPerformanceInfo(PPERFORMANCE_INFORMATION info, DWORD size)
 {
-    union
-    {
-        SYSTEM_PERFORMANCE_INFORMATION performance;
-        SYSTEM_PROCESS_INFORMATION process;
-        SYSTEM_BASIC_INFORMATION basic;
-    } *sysinfo;
-    SYSTEM_PROCESS_INFORMATION *spi;
-    DWORD process_info_size;
+    SYSTEM_PERFORMANCE_INFORMATION perf;
+    SYSTEM_BASIC_INFORMATION basic;
+    SYSTEM_PROCESS_INFORMATION *process, *spi;
+    DWORD info_size;
     NTSTATUS status;
 
     TRACE( "(%p, %d)\n", info, size );
@@ -227,62 +223,56 @@ BOOL WINAPI K32GetPerformanceInfo(PPERFORMANCE_INFORMATION info, DWORD size)
         return FALSE;
     }
 
-    memset( info, 0, sizeof(*info) );
-    info->cb = sizeof(*info);
+    status = NtQuerySystemInformation( SystemPerformanceInformation, &perf, sizeof(perf), NULL );
+    if (status) goto err;
+    status = NtQuerySystemInformation( SystemBasicInformation, &basic, sizeof(basic), NULL );
+    if (status) goto err;
+
+    info->cb                 = sizeof(*info);
+    info->CommitTotal        = perf.TotalCommittedPages;
+    info->CommitLimit        = perf.TotalCommitLimit;
+    info->CommitPeak         = perf.PeakCommitment;
+    info->PhysicalTotal      = basic.MmNumberOfPhysicalPages;
+    info->PhysicalAvailable  = perf.AvailablePages;
+    info->SystemCache        = 0;
+    info->KernelTotal        = perf.PagedPoolUsage + perf.NonPagedPoolUsage;
+    info->KernelPaged        = perf.PagedPoolUsage;
+    info->KernelNonpaged     = perf.NonPagedPoolUsage;
+    info->PageSize           = basic.PageSize;
 
     /* fields from SYSTEM_PROCESS_INFORMATION */
-    NtQuerySystemInformation( SystemProcessInformation, NULL, 0, &process_info_size );
+    NtQuerySystemInformation( SystemProcessInformation, NULL, 0, &info_size );
     for (;;)
     {
-        sysinfo = HeapAlloc( GetProcessHeap(), 0, max(process_info_size, sizeof(*sysinfo)) );
-        if (!sysinfo)
+        process = HeapAlloc( GetProcessHeap(), 0, info_size );
+        if (!process)
         {
             SetLastError( ERROR_OUTOFMEMORY );
             return FALSE;
         }
-        status = NtQuerySystemInformation( SystemProcessInformation, &sysinfo->process,
-                                           process_info_size, &process_info_size );
+        status = NtQuerySystemInformation( SystemProcessInformation, process, info_size, &info_size );
         if (!status) break;
+        HeapFree( GetProcessHeap(), 0, process );
         if (status != STATUS_INFO_LENGTH_MISMATCH)
             goto err;
-        HeapFree( GetProcessHeap(), 0, sysinfo );
     }
-    for (spi = &sysinfo->process;; spi = (SYSTEM_PROCESS_INFORMATION *)(((PCHAR)spi) + spi->NextEntryOffset))
+
+    info->HandleCount = info->ProcessCount = info->ThreadCount = 0;
+    spi = process;
+    for (;;)
     {
         info->ProcessCount++;
         info->HandleCount += spi->HandleCount;
         info->ThreadCount += spi->dwThreadCount;
         if (spi->NextEntryOffset == 0) break;
+        spi = (SYSTEM_PROCESS_INFORMATION *)((char *)spi + spi->NextEntryOffset);
     }
-
-    /* fields from SYSTEM_PERFORMANCE_INFORMATION */
-    status = NtQuerySystemInformation( SystemPerformanceInformation, &sysinfo->performance,
-                                       sizeof(sysinfo->performance), NULL );
-    if (status) goto err;
-    info->CommitTotal        = sysinfo->performance.TotalCommittedPages;
-    info->CommitLimit        = sysinfo->performance.TotalCommitLimit;
-    info->CommitPeak         = sysinfo->performance.PeakCommitment;
-    info->PhysicalAvailable  = sysinfo->performance.AvailablePages;
-    info->KernelTotal        = sysinfo->performance.PagedPoolUsage +
-                               sysinfo->performance.NonPagedPoolUsage;
-    info->KernelPaged        = sysinfo->performance.PagedPoolUsage;
-    info->KernelNonpaged     = sysinfo->performance.NonPagedPoolUsage;
-
-    /* fields from SYSTEM_BASIC_INFORMATION */
-    status = NtQuerySystemInformation( SystemBasicInformation, &sysinfo->basic,
-                                       sizeof(sysinfo->basic), NULL );
-    if (status) goto err;
-    info->PhysicalTotal = sysinfo->basic.MmNumberOfPhysicalPages;
-    info->PageSize      = sysinfo->basic.PageSize;
+    HeapFree( GetProcessHeap(), 0, process );
+    return TRUE;
 
 err:
-    HeapFree( GetProcessHeap(), 0, sysinfo );
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return FALSE;
-    }
-    return TRUE;
+    SetLastError( RtlNtStatusToDosError( status ) );
+    return FALSE;
 }
 
 /***********************************************************************
