@@ -784,6 +784,8 @@ static BOOL BrsFolder_OnCreate( HWND hWnd, browse_info *info )
 
     browsefolder_callback( info->lpBrowseInfo, hWnd, BFFM_INITIALIZED, 0 );
 
+    ILFree(computer_pidl);
+
     return TRUE;
 }
 
