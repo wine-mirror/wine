@@ -1431,10 +1431,10 @@ static void test_presentation_clock(void)
     IMFRateControl *rate_control;
     IMFPresentationClock *clock;
     IMFShutdown *shutdown;
+    MFTIME systime, time;
     LONGLONG clock_time;
     MFCLOCK_STATE state;
     IMFTimer *timer;
-    MFTIME systime;
     unsigned int i;
     DWORD value;
     HRESULT hr;
@@ -1448,8 +1448,20 @@ static void test_presentation_clock(void)
     hr = IMFPresentationClock_GetTimeSource(clock, &time_source);
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFPresentationClock_GetTimeSource(clock, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = IMFPresentationClock_GetClockCharacteristics(clock, &value);
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetClockCharacteristics(clock, NULL);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetTime(clock, &time);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetTime(clock, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     value = 1;
     hr = IMFPresentationClock_GetContinuityKey(clock, &value);
@@ -1537,6 +1549,20 @@ todo_wine
         ok(hr == S_OK, "%u: failed to get state, hr %#x.\n", i, hr);
         ok(state == clock_state_change[i].clock_state, "%u: unexpected state %d.\n", i, state);
     }
+
+    /* Clock time stamps. */
+    hr = IMFPresentationClock_Start(clock, 10);
+    ok(hr == S_OK, "Failed to start presentation clock, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_Pause(clock);
+    ok(hr == S_OK, "Failed to pause presentation clock, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetTime(clock, &time);
+    ok(hr == S_OK, "Failed to get clock time, hr %#x.\n", hr);
+
+    hr = IMFPresentationTimeSource_GetCorrelatedTime(time_source, 0, &clock_time, &systime);
+    ok(hr == S_OK, "Failed to get time source time, hr %#x.\n", hr);
+    ok(time == clock_time, "Unexpected clock time.\n");
 
     IMFPresentationTimeSource_Release(time_source);
 
