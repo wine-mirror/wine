@@ -45,6 +45,15 @@ cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
 cpp_quote("#undef FindText")
 cpp_quote("#endif")
 
+[
+    version(4.0),
+    uuid(3050F1C5-98B5-11CF-BB82-00AA00BDCE0B)
+]
+library MSHTML
+{
+
+importlib("stdole2.tlb");
+
 typedef enum {
     POINTER_GRAVITY_Left,
     POINTER_GRAVITY_Right,
@@ -100,14 +109,155 @@ typedef enum _SELECTION_TYPE {
     SELECTION_TYPE_Max = 2147483647
 } SELECTION_TYPE;
 
-[
-    version(4.0),
-    uuid(3050F1C5-98B5-11CF-BB82-00AA00BDCE0B)
-]
-library MSHTML
-{
+typedef enum _ELEMENT_TAG_ID {
+    TAGID_NULL,
+    TAGID_UNKNOWN,
+    TAGID_A,
+    TAGID_ACRONYM,
+    TAGID_ADDRESS,
+    TAGID_APPLET,
+    TAGID_AREA,
+    TAGID_B,
+    TAGID_BASE,
+    TAGID_BASEFONT,
+    TAGID_BDO,
+    TAGID_BGSOUND,
+    TAGID_BIG,
+    TAGID_BLINK,
+    TAGID_BLOCKQUOTE,
+    TAGID_BODY,
+    TAGID_BR,
+    TAGID_BUTTON,
+    TAGID_CAPTION,
+    TAGID_CENTER,
+    TAGID_CITE,
+    TAGID_CODE,
+    TAGID_COL,
+    TAGID_COLGROUP,
+    TAGID_COMMENT,
+    TAGID_COMMENT_RAW,
+    TAGID_DD,
+    TAGID_DEL,
+    TAGID_DFN,
+    TAGID_DIR,
+    TAGID_DIV,
+    TAGID_DL,
+    TAGID_DT,
+    TAGID_EM,
+    TAGID_EMBED,
+    TAGID_FIELDSET,
+    TAGID_FONT,
+    TAGID_FORM,
+    TAGID_FRAME,
+    TAGID_FRAMESET,
+    TAGID_GENERIC,
+    TAGID_H1,
+    TAGID_H2,
+    TAGID_H3,
+    TAGID_H4,
+    TAGID_H5,
+    TAGID_H6,
+    TAGID_HEAD,
+    TAGID_HR,
+    TAGID_HTML,
+    TAGID_I,
+    TAGID_IFRAME,
+    TAGID_IMG,
+    TAGID_INPUT,
+    TAGID_INS,
+    TAGID_KBD,
+    TAGID_LABEL,
+    TAGID_LEGEND,
+    TAGID_LI,
+    TAGID_LINK,
+    TAGID_LISTING,
+    TAGID_MAP,
+    TAGID_MARQUEE,
+    TAGID_MENU,
+    TAGID_META,
+    TAGID_NEXTID,
+    TAGID_NOBR,
+    TAGID_NOEMBED,
+    TAGID_NOFRAMES,
+    TAGID_NOSCRIPT,
+    TAGID_OBJECT,
+    TAGID_OL,
+    TAGID_OPTION,
+    TAGID_P,
+    TAGID_PARAM,
+    TAGID_PLAINTEXT,
+    TAGID_PRE,
+    TAGID_Q,
+    TAGID_RP,
+    TAGID_RT,
+    TAGID_RUBY,
+    TAGID_S,
+    TAGID_SAMP,
+    TAGID_SCRIPT,
+    TAGID_SELECT,
+    TAGID_SMALL,
+    TAGID_SPAN,
+    TAGID_STRIKE,
+    TAGID_STRONG,
+    TAGID_STYLE,
+    TAGID_SUB,
+    TAGID_SUP,
+    TAGID_TABLE,
+    TAGID_TBODY,
+    TAGID_TC,
+    TAGID_TD,
+    TAGID_TEXTAREA,
+    TAGID_TFOOT,
+    TAGID_TH,
+    TAGID_THEAD,
+    TAGID_TITLE,
+    TAGID_TR,
+    TAGID_TT,
+    TAGID_U,
+    TAGID_UL,
+    TAGID_VAR,
+    TAGID_WBR,
+    TAGID_XMP,
+    TAGID_ROOT,
+    TAGID_OPTGROUP,
+    TAGID_ABBR,
+    TAGID_COUNT,
+    TAGID_LAST_PREDEFINED = 10000,
+    ELEMENT_TAG_ID_Max = 2147483647
+} ELEMENT_TAG_ID;
 
-importlib("stdole2.tlb");
+typedef enum _COORD_SYSTEM {
+    COORD_SYSTEM_GLOBAL,
+    COORD_SYSTEM_PARENT,
+    COORD_SYSTEM_CONTAINER,
+    COORD_SYSTEM_CONTENT,
+    COORD_SYSTEM_FRAME,
+    COORD_SYSTEM_Max = 2147483647
+} COORD_SYSTEM;
+
+typedef enum _DISPLAY_MOVEUNIT {
+    DISPLAY_MOVEUNIT_PreviousLine = 1,
+    DISPLAY_MOVEUNIT_NextLine,
+    DISPLAY_MOVEUNIT_CurrentLineStart,
+    DISPLAY_MOVEUNIT_CurrentLineEnd,
+    DISPLAY_MOVEUNIT_TopOfWindow,
+    DISPLAY_MOVEUNIT_BottomOfWindow,
+    DISPLAY_MOVEUNIT_Max = 2147483647
+} DISPLAY_MOVEUNIT;
+
+typedef enum _DISPLAY_GRAVITY {
+    DISPLAY_GRAVITY_PreviousLine = 1,
+    DISPLAY_GRAVITY_NextLine,
+    DISPLAY_GRAVITY_Max = 2147483647
+} DISPLAY_GRAVITY;
+
+typedef enum _CARET_DIRECTION {
+    CARET_DIRECTION_INDETERMINATE,
+    CARET_DIRECTION_SAME,
+    CARET_DIRECTION_BACKWARD,
+    CARET_DIRECTION_FORWARD,
+    CARET_DIRECTION_Max = 2147483647
+} CARET_DIRECTION;
 
 typedef enum _DomConstructor {
     DomConstructorObject                      = 0,
@@ -245,13 +395,25 @@ interface IHTMLDOMConstructor : IDispatch
     [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]       \
     IDispatch *constructor()
 
+interface IHTMLCaret;
+interface IHTMLComputedStyle;
 interface IHTMLDocument2;
 interface IHTMLDocument7;
+interface IHTMLElement;
 interface IHTMLElement2;
-interface IHTMLStyleSheetsCollection;
+interface IHTMLElementCollection;
+interface IHTMLEventObj;
 interface IHTMLFrameBase;
 interface IHTMLStorage;
+interface IHTMLStyleSheetsCollection;
+interface IHTMLTableSection;
 interface IDOMEvent;
+interface IDisplayPointer;
+interface IDisplayServices;
+interface ILineInfo;
+interface IMarkupPointer;
+interface IMarkupContainer;
+interface ISVGSVGElement;
 
 /*****************************************************************************
  *    IHTMLCSSStyleDeclaration interface
@@ -8706,8 +8868,6 @@ methods:
     IDispatch *item([in] LONG index);
 }
 
-interface IHTMLElementCollection;
-
 /*****************************************************************************
  *    IHTMLElement interface
  */
@@ -12518,8 +12678,6 @@ methods:
     VARIANT_BOOL onreset();
 }
 
-interface IHTMLEventObj;
-
 [
     hidden,
     uuid(3050F614-98B5-11CF-BB82-00AA00BDCE0B)
@@ -16121,8 +16279,6 @@ interface ISVGAnimatedEnumeration : IDispatch
     [propget, id(DISPID_ISVGANIMATEDENUMERATION_ANIMVAL)]
     HRESULT animVal([out, retval] USHORT *p);
 }
-
-interface ISVGSVGElement;
 
 /*****************************************************************************
  *    ISVGElement interface
@@ -25111,8 +25267,6 @@ interface IHTMLTableCaption : IDispatch
     HRESULT vAlign([retval, out] BSTR *p);
 }
 
-interface IHTMLTableSection;
-
 /*****************************************************************************
  *    IHTMLTable interface
  */
@@ -27870,6 +28024,160 @@ interface IDOMMessageEvent : IDispatch
             [in] BSTR lastEventId,
             [in] IHTMLWindow2 *source);
 }
+
+/*****************************************************************************
+ *    ILineInfo interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f7e2-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ILineInfo : IUnknown
+{
+    [propget, id(DISPID_ILINEINFO_X)] HRESULT x([retval, out] long *p);
+    [propget, id(DISPID_ILINEINFO_BASELINE)] HRESULT baseLine([retval, out] long *p);
+    [propget, id(DISPID_ILINEINFO_TEXTDESCENT)] HRESULT textDescent([retval, out] long *p);
+    [propget, id(DISPID_ILINEINFO_TEXTHEIGHT)] HRESULT textHeight([retval, out] long *p);
+    [propget, id(DISPID_ILINEINFO_LINEDIRECTION)] HRESULT lineDirection([retval, out] long *p);
+};
+
+/*****************************************************************************
+ *    IHTMLComputedStyle interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f6c3-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLComputedStyle : IUnknown
+{
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BOLD)] HRESULT bold([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_ITALIC)] HRESULT italic([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_UNDERLINE)] HRESULT underline([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_OVERLINE)] HRESULT overline([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_STRIKEOUT)] HRESULT strikeOut([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_SUBSCRIPT)] HRESULT subScript([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_SUPERSCRIPT)] HRESULT superScript([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_EXPLICITFACE)] HRESULT explicitFace([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTWEIGHT)] HRESULT fontWeight([retval, out] long **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTSIZE)] HRESULT fontSize([retval, out] long **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTNAME)] HRESULT fontName([retval, out] WCHAR **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_HASBGCOLOR)] HRESULT hasBgColor([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_TEXTCOLOR)] HRESULT textColor([retval, out] DWORD **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BACKGROUNDCOLOR)] HRESULT backgroundColor([retval, out] DWORD **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_PREFORMATTED)] HRESULT *preFormatted([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_DIRECTION)] HRESULT direction([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BLOCKDIRECTION)] HRESULT blockDirection([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_OL)] HRESULT OL([retval, out] VARIANT_BOOL *p);
+    HRESULT IsEqual([in] IHTMLComputedStyle *pComputedStyle,[out] VARIANT_BOOL *pfEqual);
+};
+
+/*****************************************************************************
+ *    IDisplayPointer interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f69e-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDisplayPointer : IUnknown
+{
+    HRESULT MoveToPoint([in] POINT ptPoint,[in] COORD_SYSTEM eCoordSystem,[in] IHTMLElement *pElementContext,[in] DWORD dwHitTestOptions,[out] DWORD *pdwHitTestResults);
+    HRESULT MoveUnit([in] DISPLAY_MOVEUNIT eMoveUnit,[in] LONG lXPos);
+    HRESULT PositionMarkupPointer([in] IMarkupPointer *pMarkupPointer);
+    HRESULT MoveToPointer([in] IDisplayPointer *pDispPointer);
+    HRESULT SetPointerGravity([in] POINTER_GRAVITY eGravity);
+    HRESULT GetPointerGravity([out] POINTER_GRAVITY *peGravity);
+    HRESULT SetDisplayGravity([in] DISPLAY_GRAVITY eGravity);
+    HRESULT GetDisplayGravity([out] DISPLAY_GRAVITY *peGravity);
+    HRESULT IsPositioned([out] BOOL *pfPositioned);
+    HRESULT Unposition();
+    HRESULT IsEqualTo([in] IDisplayPointer *pDispPointer,[out] BOOL *pfIsEqual);
+    HRESULT IsLeftOf([in] IDisplayPointer *pDispPointer,[out] BOOL *pfIsLeftOf);
+    HRESULT IsRightOf([in] IDisplayPointer *pDispPointer,[out] BOOL *pfIsRightOf);
+    HRESULT IsAtBOL([out] BOOL *pfBOL);
+    HRESULT MoveToMarkupPointer([in] IMarkupPointer *pPointer,[in] IDisplayPointer *pDispLineContext);
+    HRESULT ScrollIntoView();
+    HRESULT GetLineInfo([out] ILineInfo **ppLineInfo);
+    HRESULT GetFlowElement([out] IHTMLElement **ppLayoutElement);
+    HRESULT QueryBreaks([out] DWORD *pdwBreaks);
+};
+
+/*****************************************************************************
+ *    IHTMLCaret interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f604-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLCaret : IUnknown
+{
+    HRESULT MoveCaretToPointer([in] IDisplayPointer *pDispPointer,[in] BOOL fScrollIntoView,[in] CARET_DIRECTION eDir);
+    HRESULT MoveCaretToPointerEx([in] IDisplayPointer *pDispPointer,[in] BOOL fVisible,[in] BOOL fScrollIntoView,[in] CARET_DIRECTION eDir);
+    HRESULT MoveMarkupPointerToCaret([in] IMarkupPointer *pIMarkupPointer);
+    HRESULT MoveDisplayPointerToCaret([in] IDisplayPointer *pDispPointer);
+    HRESULT IsVisible([out] BOOL *pIsVisible);
+    HRESULT Show([in] BOOL fScrollIntoView);
+    HRESULT Hide();
+    HRESULT InsertText([in] OLECHAR *pText,[in] LONG lLen);
+    HRESULT ScrollIntoView();
+    HRESULT GetLocation([out] POINT *pPoint,[in] BOOL fTranslate);
+    HRESULT GetCaretDirection([out] CARET_DIRECTION *peDir);
+    HRESULT SetCaretDirection([in] CARET_DIRECTION eDir);
+};
+
+/*****************************************************************************
+ *    IDisplayServices interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f69d-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDisplayServices : IUnknown
+{
+    HRESULT CreateDisplayPointer([out] IDisplayPointer **ppDispPointer);
+    HRESULT TransformRect([in, out] RECT *pRect,[in] COORD_SYSTEM eSource,[in] COORD_SYSTEM eDestination,[in] IHTMLElement *pIElement);
+    HRESULT TransformPoint([in, out] POINT *pPoint,[in] COORD_SYSTEM eSource,[in] COORD_SYSTEM eDestination,[in] IHTMLElement *pIElement);
+    HRESULT GetCaret([out] IHTMLCaret **ppCaret);
+    HRESULT GetComputedStyle([in] IMarkupPointer *pPointer,[out] IHTMLComputedStyle **ppComputedStyle);
+    HRESULT ScrollRectIntoView([in] IHTMLElement *pIElement,[in] RECT rect);
+    HRESULT HasFlowLayout([in] IHTMLElement *pIElement,[out] BOOL *pfHasFlowLayout);
+};
+
+/*****************************************************************************
+ *    IMarkupServices interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f4a0-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IMarkupServices : IUnknown
+{
+    HRESULT CreateMarkupPointer([out] IMarkupPointer **ppPointer);
+    HRESULT CreateMarkupContainer([out] IMarkupContainer **ppMarkupContainer);
+    HRESULT CreateElement([in] ELEMENT_TAG_ID tagID,[in] OLECHAR *pchAttributes,[out] IHTMLElement **ppElement);
+    HRESULT CloneElement([in] IHTMLElement *pElemCloneThis,[out] IHTMLElement **ppElementTheClone);
+    HRESULT InsertElement([in] IHTMLElement *pElementInsert,[in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish);
+    HRESULT RemoveElement([in] IHTMLElement *pElementRemove);
+    HRESULT Remove([in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish);
+    HRESULT Copy([in] IMarkupPointer *pPointerSourceStart,[in] IMarkupPointer *pPointerSourceFinish,[in] IMarkupPointer *pPointerTarget);
+    HRESULT Move([in] IMarkupPointer *pPointerSourceStart,[in] IMarkupPointer *pPointerSourceFinish,[in] IMarkupPointer *pPointerTarget);
+    HRESULT InsertText([in] OLECHAR *pchText,[in] long cch,[in] IMarkupPointer *pPointerTarget);
+    HRESULT ParseString([in] OLECHAR *pchHTML,[in] DWORD dwFlags,[out] IMarkupContainer **ppContainerResult,[in] IMarkupPointer *ppPointerStart,[in] IMarkupPointer *ppPointerFinish);
+    HRESULT ParseGlobal([in] HGLOBAL hglobalHTML,[in] DWORD dwFlags,[out] IMarkupContainer **ppContainerResult,[in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish);
+    HRESULT IsScopedElement([in] IHTMLElement *pElement,[out] BOOL *pfScoped);
+    HRESULT GetElementTagId([in] IHTMLElement *pElement,[out] ELEMENT_TAG_ID *ptagId);
+    HRESULT GetTagIDForName([in] BSTR bstrName,[out] ELEMENT_TAG_ID *ptagId);
+    HRESULT GetNameForTagID([in] ELEMENT_TAG_ID tagId,[out] BSTR *pbstrName);
+    HRESULT MovePointersToRange([in] IHTMLTxtRange *pIRange,[in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish);
+    HRESULT MoveRangeToPointers([in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish,[in] IHTMLTxtRange *pIRange);
+    HRESULT BeginUndoUnit([in] OLECHAR *pchTitle);
+    HRESULT EndUndoUnit();
+};
 
 /*****************************************************************************
  *    IMarkupContainer interface
