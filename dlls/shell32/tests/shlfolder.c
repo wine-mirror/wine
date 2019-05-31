@@ -3856,6 +3856,8 @@ static void test_ShellItemArrayEnumItems(void)
         for(i = 0; i < done; i++)
             ILFree(apidl[i]);
     }
+
+    IShellFolder_Release(psf);
 }
 
 
