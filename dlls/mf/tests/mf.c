@@ -944,7 +944,6 @@ static void test_session_events(IMFMediaSession *session)
 
     /* Shutdown behavior. */
     hr = IMFMediaSession_Shutdown(session);
-todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 

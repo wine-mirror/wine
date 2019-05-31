@@ -62,6 +62,7 @@ struct media_session
     IMFMediaEventQueue *event_queue;
     IMFPresentationClock *clock;
     struct list topologies;
+    BOOL is_shut_down;
     CRITICAL_SECTION cs;
 };
 
@@ -412,12 +413,21 @@ static HRESULT WINAPI mfsession_Close(IMFMediaSession *iface)
 static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
+    HRESULT hr = S_OK;
 
     FIXME("(%p)\n", iface);
 
-    IMFMediaEventQueue_Shutdown(session->event_queue);
+    EnterCriticalSection(&session->cs);
+    if (session->is_shut_down)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        session->is_shut_down = TRUE;
+        IMFMediaEventQueue_Shutdown(session->event_queue);
+    }
+    LeaveCriticalSection(&session->cs);
 
-    return E_NOTIMPL;
+    return hr;
 }
 
 static HRESULT WINAPI mfsession_GetClock(IMFMediaSession *iface, IMFClock **clock)
