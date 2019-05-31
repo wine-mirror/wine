@@ -1476,7 +1476,12 @@ static void test_presentation_clock(void)
     ok(state == MFCLOCK_STATE_INVALID, "Unexpected state %d.\n", state);
 
     hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, &clock_time, &systime);
-todo_wine
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, NULL, &systime);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, &time, NULL);
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
     /* Sinks. */
@@ -1562,6 +1567,10 @@ todo_wine
 
     hr = IMFPresentationTimeSource_GetCorrelatedTime(time_source, 0, &clock_time, &systime);
     ok(hr == S_OK, "Failed to get time source time, hr %#x.\n", hr);
+    ok(time == clock_time, "Unexpected clock time.\n");
+
+    hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, &time, &systime);
+    ok(hr == S_OK, "Failed to get clock time, hr %#x.\n", hr);
     ok(time == clock_time, "Unexpected clock time.\n");
 
     IMFPresentationTimeSource_Release(time_source);

@@ -857,9 +857,17 @@ static HRESULT WINAPI present_clock_GetClockCharacteristics(IMFPresentationClock
 static HRESULT WINAPI present_clock_GetCorrelatedTime(IMFPresentationClock *iface, DWORD reserved,
         LONGLONG *clock_time, MFTIME *system_time)
 {
-    FIXME("%p, %#x, %p, %p.\n", iface, reserved, clock_time, system_time);
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+    HRESULT hr = MF_E_CLOCK_NO_TIME_SOURCE;
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x, %p, %p.\n", iface, reserved, clock_time, system_time);
+
+    EnterCriticalSection(&clock->cs);
+    if (clock->time_source)
+        hr = IMFPresentationTimeSource_GetCorrelatedTime(clock->time_source, reserved, clock_time, system_time);
+    LeaveCriticalSection(&clock->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI present_clock_GetContinuityKey(IMFPresentationClock *iface, DWORD *key)
