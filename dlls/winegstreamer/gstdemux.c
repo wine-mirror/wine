@@ -1307,34 +1307,6 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
     return obj;
 }
 
-static HRESULT WINAPI GST_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID *ppv)
-{
-    GSTImpl *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IPersist) ||
-        IsEqualIID(riid, &IID_IMediaFilter) ||
-        IsEqualIID(riid, &IID_IBaseFilter))
-    {
-        *ppv = &This->filter.IBaseFilter_iface;
-    }
-
-    if (*ppv) {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow) &&
-        !IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
 static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
 {
     GSTImpl *This = impl_from_IBaseFilter(iface);
@@ -1456,7 +1428,7 @@ static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout,
 }
 
 static const IBaseFilterVtbl GST_Vtbl = {
-    GST_QueryInterface,
+    BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
