@@ -764,36 +764,9 @@ static HRESULT MPEGSplitter_first_request(LPVOID iface)
     return hr;
 }
 
-static HRESULT WINAPI MPEGSplitter_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
-{
-    MPEGSplitterImpl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if ( IsEqualIID(riid, &IID_IUnknown)
-      || IsEqualIID(riid, &IID_IPersist)
-      || IsEqualIID(riid, &IID_IMediaFilter)
-      || IsEqualIID(riid, &IID_IBaseFilter) )
-        *ppv = iface;
-    else if ( IsEqualIID(riid, &IID_IAMStreamSelect) )
-        *ppv = &This->IAMStreamSelect_iface;
-
-    if (*ppv)
-    {
-        IBaseFilter_AddRef(iface);
-        return S_OK;
-    }
-
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow))
-        FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
 static const IBaseFilterVtbl MPEGSplitter_Vtbl =
 {
-    MPEGSplitter_QueryInterface,
+    BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
@@ -874,10 +847,25 @@ static void mpeg_splitter_destroy(BaseFilter *iface)
     Parser_Destroy(&filter->Parser);
 }
 
+static HRESULT mpeg_splitter_query_interface(BaseFilter *iface, REFIID iid, void **out)
+{
+    MPEGSplitterImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
+
+    if (IsEqualGUID(iid, &IID_IAMStreamSelect))
+    {
+        *out = &filter->IAMStreamSelect_iface;
+        IUnknown_AddRef((IUnknown *)*out);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
 static const BaseFilterFuncTable mpeg_splitter_func_table =
 {
     .filter_get_pin = parser_get_pin,
     .filter_destroy = mpeg_splitter_destroy,
+    .filter_query_interface = mpeg_splitter_query_interface,
 };
 
 HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
