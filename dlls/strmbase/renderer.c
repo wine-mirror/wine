@@ -200,10 +200,32 @@ static void renderer_destroy(BaseFilter *iface)
     filter->pFuncsTable->renderer_destroy(filter);
 }
 
-static const BaseFilterFuncTable RendererBaseFilterFuncTable =
+static HRESULT renderer_query_interface(BaseFilter *iface, REFIID iid, void **out)
 {
+    BaseRenderer *filter = impl_from_BaseFilter(iface);
+    HRESULT hr;
+
+    if (filter->pFuncsTable->renderer_query_interface
+            && SUCCEEDED(hr = filter->pFuncsTable->renderer_query_interface(filter, iid, out)))
+    {
+        return hr;
+    }
+
+    if (IsEqualIID(iid, &IID_IMediaSeeking) || IsEqualIID(iid, &IID_IMediaPosition))
+        return IUnknown_QueryInterface(filter->pPosition, iid, out);
+    else if (IsEqualIID(iid, &IID_IQualityControl))
+    {
+        *out = &filter->qcimpl->IQualityControl_iface;
+        IUnknown_AddRef((IUnknown *)*out);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static const BaseFilterFuncTable RendererBaseFilterFuncTable = {
     .filter_get_pin = renderer_get_pin,
     .filter_destroy = renderer_destroy,
+    .filter_query_interface = renderer_query_interface,
 };
 
 static HRESULT WINAPI BaseRenderer_Input_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE * pmt)

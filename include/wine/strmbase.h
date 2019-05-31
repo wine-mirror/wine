@@ -606,6 +606,7 @@ typedef struct BaseRendererFuncTable {
 	BaseRenderer_BeginFlush pfnBeginFlush;
 	BaseRenderer_EndFlush pfnEndFlush;
         void (*renderer_destroy)(BaseRenderer *iface);
+        HRESULT (*renderer_query_interface)(BaseRenderer *iface, REFIID iid, void **out);
 } BaseRendererFuncTable;
 
 HRESULT WINAPI BaseRendererImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
