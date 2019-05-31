@@ -187,7 +187,7 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
     }
 
     TRACE("(%p)->(%u,%p)\n",ef, cfmt, afmt);
-    return (LPENUMFORMATETC)ef;
+    return &ef->IEnumFORMATETC_iface;
 }
 
 

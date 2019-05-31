@@ -401,7 +401,7 @@ static IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pc
 	lpclf->riidInst = riidInst;
 
 	TRACE("(%p)%s\n",lpclf, shdebugstr_guid(riidInst));
-	return (LPCLASSFACTORY)lpclf;
+	return &lpclf->IClassFactory_iface;
 }
 /**************************************************************************
  *  IDefClF_fnQueryInterface
