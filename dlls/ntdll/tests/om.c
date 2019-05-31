@@ -1335,6 +1335,8 @@ static void _test_object_type(unsigned line, HANDLE handle, const char *expected
     ok_(__FILE__,line)( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
     ok_(__FILE__,line)( str->Length == expect.Length && !memcmp( str->Buffer, expect.Buffer, expect.Length ),
                         "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+
+    pRtlFreeUnicodeString( &expect );
 }
 
 static void test_query_object(void)
