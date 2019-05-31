@@ -1427,9 +1427,9 @@ static void test_presentation_clock(void)
     };
     IMFClockStateSink test_sink = { &test_clock_sink_vtbl };
     IMFPresentationTimeSource *time_source;
+    MFCLOCK_PROPERTIES props, props2;
     IMFRateControl *rate_control;
     IMFPresentationClock *clock;
-    MFCLOCK_PROPERTIES props;
     IMFShutdown *shutdown;
     LONGLONG clock_time;
     MFCLOCK_STATE state;
@@ -1498,10 +1498,17 @@ todo_wine
     hr = IMFPresentationClock_SetTimeSource(clock, time_source);
     ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
 
+    hr = IMFPresentationTimeSource_GetProperties(time_source, &props2);
+    ok(hr == S_OK, "Failed to get time source properties, hr %#x.\n", hr);
+
     hr = IMFPresentationClock_GetClockCharacteristics(clock, &value);
     ok(hr == S_OK, "Failed to get clock flags, hr %#x.\n", hr);
     ok(value == (MFCLOCK_CHARACTERISTICS_FLAG_FREQUENCY_10MHZ | MFCLOCK_CHARACTERISTICS_FLAG_IS_SYSTEM_CLOCK),
             "Unexpected clock flags %#x.\n", value);
+
+    hr = IMFPresentationClock_GetProperties(clock, &props);
+    ok(hr == S_OK, "Failed to get clock properties, hr %#x.\n", hr);
+    ok(!memcmp(&props, &props2, sizeof(props)), "Unexpected clock properties.\n");
 
     /* State changes. */
     for (i = 0; i < ARRAY_SIZE(clock_state_change); ++i)

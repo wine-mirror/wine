@@ -894,15 +894,10 @@ static HRESULT WINAPI present_clock_GetProperties(IMFPresentationClock *iface, M
     TRACE("%p, %p.\n", iface, props);
 
     EnterCriticalSection(&clock->cs);
-
     if (clock->time_source)
-    {
-        FIXME("%p, %p.\n", iface, props);
-        hr = E_NOTIMPL;
-    }
+        hr = IMFPresentationTimeSource_GetProperties(clock->time_source, props);
     else
         hr = MF_E_CLOCK_NO_TIME_SOURCE;
-
     LeaveCriticalSection(&clock->cs);
 
     return hr;
