@@ -155,44 +155,37 @@ static void avi_mux_destroy(BaseFilter *iface)
     ObjectRefCount(FALSE);
 }
 
+static HRESULT avi_mux_query_interface(BaseFilter *iface, REFIID iid, void **out)
+{
+    AviMux *filter = impl_from_BaseFilter(iface);
+
+    if (IsEqualGUID(iid, &IID_IConfigAviMux))
+        *out = &filter->IConfigAviMux_iface;
+    else if (IsEqualGUID(iid, &IID_IConfigInterleaving))
+        *out = &filter->IConfigInterleaving_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &filter->IMediaSeeking_iface;
+    else if (IsEqualGUID(iid, &IID_IPersistMediaPropertyBag))
+        *out = &filter->IPersistMediaPropertyBag_iface;
+    else if (IsEqualGUID(iid, &IID_ISpecifyPropertyPages))
+        *out = &filter->ISpecifyPropertyPages_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static const BaseFilterFuncTable filter_func_table = {
     .filter_get_pin = avi_mux_get_pin,
     .filter_destroy = avi_mux_destroy,
+    .filter_query_interface = avi_mux_query_interface,
 };
 
 static inline AviMux* impl_from_IBaseFilter(IBaseFilter *iface)
 {
     BaseFilter *filter = CONTAINING_RECORD(iface, BaseFilter, IBaseFilter_iface);
     return impl_from_BaseFilter(filter);
-}
-
-static HRESULT WINAPI AviMux_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
-{
-    AviMux *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-
-    if(IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPersist) ||
-            IsEqualIID(riid, &IID_IMediaFilter) || IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = &This->filter.IBaseFilter_iface;
-    else if(IsEqualIID(riid, &IID_IConfigAviMux))
-        *ppv = &This->IConfigAviMux_iface;
-    else if(IsEqualIID(riid, &IID_IConfigInterleaving))
-        *ppv = &This->IConfigInterleaving_iface;
-    else if(IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->IMediaSeeking_iface;
-    else if(IsEqualIID(riid, &IID_IPersistMediaPropertyBag))
-        *ppv = &This->IPersistMediaPropertyBag_iface;
-    else if(IsEqualIID(riid, &IID_ISpecifyPropertyPages))
-        *ppv = &This->ISpecifyPropertyPages_iface;
-    else {
-        FIXME("no interface for %s\n", debugstr_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
 }
 
 static HRESULT out_flush(AviMux *This)
@@ -710,7 +703,7 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 }
 
 static const IBaseFilterVtbl AviMuxVtbl = {
-    AviMux_QueryInterface,
+    BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
