@@ -20,8 +20,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -34,7 +32,6 @@
 #include "winuser.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "objbase.h"
 
 #include "initguid.h"
