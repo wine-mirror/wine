@@ -141,6 +141,8 @@ static void find_hid_devices(void)
             if (!hid_devices)
             {
                 ERR("Failed to allocate memory.\n");
+                CloseHandle(file);
+                heap_free(path);
                 goto done;
             }
         }
