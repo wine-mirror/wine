@@ -623,6 +623,7 @@ struct HTMLDocument {
     IOleContainer               IOleContainer_iface;
     IObjectSafety               IObjectSafety_iface;
     IProvideMultipleClassInfo   IProvideMultipleClassInfo_iface;
+    IMarkupServices             IMarkupServices_iface;
 
     IUnknown *outer_unk;
     IDispatchEx *dispex;
