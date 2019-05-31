@@ -792,8 +792,10 @@ static HRESULT WINAPI ScriptControl_put_State(IScriptControl *iface, ScriptContr
 static HRESULT WINAPI ScriptControl_put_SitehWnd(IScriptControl *iface, LONG hwnd)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
+
     FIXME("(%p)->(%x)\n", This, hwnd);
-    return E_NOTIMPL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_get_SitehWnd(IScriptControl *iface, LONG *p)
