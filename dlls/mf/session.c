@@ -841,9 +841,19 @@ static ULONG WINAPI present_clock_Release(IMFPresentationClock *iface)
 
 static HRESULT WINAPI present_clock_GetClockCharacteristics(IMFPresentationClock *iface, DWORD *flags)
 {
-    FIXME("%p, %p.\n", iface, flags);
+    struct presentation_clock *clock = impl_from_IMFPresentationClock(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, flags);
+
+    EnterCriticalSection(&clock->cs);
+    if (clock->time_source)
+        hr = IMFPresentationTimeSource_GetClockCharacteristics(clock->time_source, flags);
+    else
+        hr = MF_E_CLOCK_NO_TIME_SOURCE;
+    LeaveCriticalSection(&clock->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI present_clock_GetCorrelatedTime(IMFPresentationClock *iface, DWORD reserved,

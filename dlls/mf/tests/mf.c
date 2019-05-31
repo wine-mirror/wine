@@ -1449,7 +1449,6 @@ static void test_presentation_clock(void)
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPresentationClock_GetClockCharacteristics(clock, &value);
-todo_wine
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
     value = 1;
@@ -1491,8 +1490,18 @@ todo_wine
     hr = MFCreateSystemTimeSource(&time_source);
     ok(hr == S_OK, "Failed to create time source, hr %#x.\n", hr);
 
+    hr = IMFPresentationTimeSource_GetClockCharacteristics(time_source, &value);
+    ok(hr == S_OK, "Failed to get time source flags, hr %#x.\n", hr);
+    ok(value == (MFCLOCK_CHARACTERISTICS_FLAG_FREQUENCY_10MHZ | MFCLOCK_CHARACTERISTICS_FLAG_IS_SYSTEM_CLOCK),
+            "Unexpected clock flags %#x.\n", value);
+
     hr = IMFPresentationClock_SetTimeSource(clock, time_source);
     ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_GetClockCharacteristics(clock, &value);
+    ok(hr == S_OK, "Failed to get clock flags, hr %#x.\n", hr);
+    ok(value == (MFCLOCK_CHARACTERISTICS_FLAG_FREQUENCY_10MHZ | MFCLOCK_CHARACTERISTICS_FLAG_IS_SYSTEM_CLOCK),
+            "Unexpected clock flags %#x.\n", value);
 
     /* State changes. */
     for (i = 0; i < ARRAY_SIZE(clock_state_change); ++i)
