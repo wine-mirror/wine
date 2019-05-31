@@ -1601,6 +1601,9 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
 
     TRACE("(%p)->(%08x %p %p)\n", This, aContextFlags, aEvent, aNode);
 
+    if (!aNode)
+        return NS_ERROR_FAILURE;
+
     hres = get_node(aNode, TRUE, &node);
     if(FAILED(hres))
         return NS_ERROR_FAILURE;
