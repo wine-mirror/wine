@@ -35,7 +35,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 enum session_command
 {
-    SESSION_CLEAR_TOPOLOGIES,
+    SESSION_CMD_CLEAR_TOPOLOGIES,
+    SESSION_CMD_CLOSE,
 };
 
 struct session_op
@@ -51,6 +52,13 @@ struct queued_topology
     IMFTopology *topology;
 };
 
+enum session_state
+{
+    SESSION_STATE_STOPPED = 0,
+    SESSION_STATE_CLOSED,
+    SESSION_STATE_SHUT_DOWN,
+};
+
 struct media_session
 {
     IMFMediaSession IMFMediaSession_iface;
@@ -62,7 +70,7 @@ struct media_session
     IMFMediaEventQueue *event_queue;
     IMFPresentationClock *clock;
     struct list topologies;
-    BOOL is_shut_down;
+    enum session_state state;
     CRITICAL_SECTION cs;
 };
 
@@ -362,7 +370,16 @@ static HRESULT WINAPI mfsession_SetTopology(IMFMediaSession *iface, DWORD flags,
 
 static HRESULT session_submit_command(struct media_session *session, IUnknown *op)
 {
-    return MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, op);
+    HRESULT hr;
+
+    EnterCriticalSection(&session->cs);
+    if (session->state == SESSION_STATE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, op);
+    LeaveCriticalSection(&session->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI mfsession_ClearTopologies(IMFMediaSession *iface)
@@ -373,7 +390,7 @@ static HRESULT WINAPI mfsession_ClearTopologies(IMFMediaSession *iface)
 
     TRACE("%p.\n", iface);
 
-    if (FAILED(hr = create_session_op(SESSION_CLEAR_TOPOLOGIES, &op)))
+    if (FAILED(hr = create_session_op(SESSION_CMD_CLEAR_TOPOLOGIES, &op)))
         return hr;
 
     hr = session_submit_command(session, op);
@@ -405,9 +422,19 @@ static HRESULT WINAPI mfsession_Stop(IMFMediaSession *iface)
 
 static HRESULT WINAPI mfsession_Close(IMFMediaSession *iface)
 {
-    FIXME("(%p)\n", iface);
+    struct media_session *session = impl_from_IMFMediaSession(iface);
+    IUnknown *op;
+    HRESULT hr;
 
-    return S_OK;
+    TRACE("(%p)\n", iface);
+
+    if (FAILED(hr = create_session_op(SESSION_CMD_CLOSE, &op)))
+        return hr;
+
+    hr = session_submit_command(session, op);
+    IUnknown_Release(op);
+
+    return hr;
 }
 
 static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
@@ -418,11 +445,11 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
     FIXME("(%p)\n", iface);
 
     EnterCriticalSection(&session->cs);
-    if (session->is_shut_down)
+    if (session->state == SESSION_STATE_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
     else
     {
-        session->is_shut_down = TRUE;
+        session->state = SESSION_STATE_SHUT_DOWN;
         IMFMediaEventQueue_Shutdown(session->event_queue);
     }
     LeaveCriticalSection(&session->cs);
@@ -572,13 +599,23 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
 
     switch (op->command)
     {
-        case SESSION_CLEAR_TOPOLOGIES:
+        case SESSION_CMD_CLEAR_TOPOLOGIES:
             EnterCriticalSection(&session->cs);
             session_clear_topologies(session);
             LeaveCriticalSection(&session->cs);
 
             IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionTopologiesCleared, &GUID_NULL,
                     S_OK, NULL);
+            break;
+        case SESSION_CMD_CLOSE:
+            EnterCriticalSection(&session->cs);
+            if (session->state != SESSION_STATE_CLOSED)
+            {
+                /* FIXME: actually do something to presentation objects */
+                session->state = SESSION_STATE_CLOSED;
+                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, S_OK, NULL);
+            }
+            LeaveCriticalSection(&session->cs);
             break;
         default:
             ;

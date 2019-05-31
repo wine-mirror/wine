@@ -1000,6 +1000,17 @@ static void test_media_session(void)
 
     IMFMediaSession_Release(session);
 
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
+
+    hr = IMFMediaSession_Shutdown(session);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaSession_Close(session);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaSession_Release(session);
+
     hr = MFShutdown();
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
