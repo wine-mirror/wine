@@ -624,6 +624,7 @@ struct HTMLDocument {
     IObjectSafety               IObjectSafety_iface;
     IProvideMultipleClassInfo   IProvideMultipleClassInfo_iface;
     IMarkupServices             IMarkupServices_iface;
+    IMarkupContainer            IMarkupContainer_iface;
 
     IUnknown *outer_unk;
     IDispatchEx *dispex;

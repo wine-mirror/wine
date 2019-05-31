@@ -4974,6 +4974,46 @@ static const IMarkupServicesVtbl MarkupServicesVtbl = {
     MarkupServices_EndUndoUnit
 };
 
+/**********************************************************
+ * IMarkupContainer implementation
+ */
+static inline HTMLDocument *impl_from_IMarkupContainer(IMarkupContainer *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IMarkupContainer_iface);
+}
+
+static HRESULT WINAPI MarkupContainer_QueryInterface(IMarkupContainer *iface, REFIID riid, void **ppvObject)
+{
+    HTMLDocument *This = impl_from_IMarkupContainer(iface);
+    return htmldoc_query_interface(This, riid, ppvObject);
+}
+
+static ULONG WINAPI MarkupContainer_AddRef(IMarkupContainer *iface)
+{
+    HTMLDocument *This = impl_from_IMarkupContainer(iface);
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI MarkupContainer_Release(IMarkupContainer *iface)
+{
+    HTMLDocument *This = impl_from_IMarkupContainer(iface);
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI MarkupContainer_OwningDoc(IMarkupContainer *iface, IHTMLDocument2 **ppDoc)
+{
+    HTMLDocument *This = impl_from_IMarkupContainer(iface);
+    FIXME("(%p)->(%p)\n", This, ppDoc);
+    return E_NOTIMPL;
+}
+
+static const IMarkupContainerVtbl MarkupContainerVtbl = {
+    MarkupContainer_QueryInterface,
+    MarkupContainer_AddRef,
+    MarkupContainer_Release,
+    MarkupContainer_OwningDoc
+};
+
 static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -5054,6 +5094,8 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IProvideMultipleClassInfo_iface;
     else if(IsEqualGUID(&IID_IMarkupServices, riid))
         *ppv = &This->IMarkupServices_iface;
+    else if(IsEqualGUID(&IID_IMarkupContainer, riid))
+        *ppv = &This->IMarkupContainer_iface;
     else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
         *ppv = NULL;
@@ -5102,6 +5144,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     doc->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
     doc->IMarkupServices_iface.lpVtbl = &MarkupServicesVtbl;
+    doc->IMarkupContainer_iface.lpVtbl = &MarkupContainerVtbl;
 
     doc->outer_unk = outer;
     doc->dispex = dispex;
