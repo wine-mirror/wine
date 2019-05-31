@@ -32,7 +32,6 @@
 #include "dsound.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/heap.h"
 #include "mmddk.h"
 
@@ -120,17 +119,17 @@ static HRESULT register_codec(const GUID *class, const WCHAR *name,
     if (FAILED(hr))
         return hr;
 
-    buffer = heap_alloc((strlenW(deviceW) + CHARS_IN_GUID + strlenW(name) + 1) * sizeof(WCHAR));
+    buffer = heap_alloc((lstrlenW(deviceW) + CHARS_IN_GUID + lstrlenW(name) + 1) * sizeof(WCHAR));
     if (!buffer)
     {
         IParseDisplayName_Release(parser);
         return E_OUTOFMEMORY;
     }
 
-    strcpyW(buffer, deviceW);
-    StringFromGUID2(class, buffer + strlenW(buffer), CHARS_IN_GUID);
-    strcatW(buffer, backslashW);
-    strcatW(buffer, name);
+    lstrcpyW(buffer, deviceW);
+    StringFromGUID2(class, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+    lstrcatW(buffer, backslashW);
+    lstrcatW(buffer, name);
 
     IParseDisplayName_ParseDisplayName(parser, NULL, buffer, &eaten, &mon);
     IParseDisplayName_Release(parser);
@@ -454,9 +453,9 @@ static void register_legacy_filters(void)
             if (FAILED(hr))
                 continue;
 
-            strcpyW(wszRegKey, clsidW);
-            strcatW(wszRegKey, backslashW);
-            strcatW(wszRegKey, wszFilterSubkeyName);
+            lstrcpyW(wszRegKey, clsidW);
+            lstrcatW(wszRegKey, backslashW);
+            lstrcatW(wszRegKey, wszFilterSubkeyName);
 
             if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, KEY_READ, &classkey) != ERROR_SUCCESS)
                 continue;
@@ -524,11 +523,11 @@ static BOOL CALLBACK register_dsound_devices(GUID *guid, const WCHAR *desc, cons
 
     if (guid)
     {
-        WCHAR *name = heap_alloc(sizeof(defaultW) + strlenW(desc) * sizeof(WCHAR));
+        WCHAR *name = heap_alloc(sizeof(defaultW) + lstrlenW(desc) * sizeof(WCHAR));
         if (!name)
             return FALSE;
-        strcpyW(name, directsoundW);
-        strcatW(name, desc);
+        lstrcpyW(name, directsoundW);
+        lstrcatW(name, desc);
 
         hr = register_codec(&CLSID_AudioRendererCategory, name,
                 &CLSID_DSoundRender, name, &prop_bag);
@@ -910,9 +909,9 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
     HRESULT res = S_OK;
     HKEY hkeyDummy = NULL;
 
-    strcpyW(wszRegKey, wszActiveMovieKey);
+    lstrcpyW(wszRegKey, wszActiveMovieKey);
 
-    if (!StringFromGUID2(clsidCategory, wszRegKey + strlenW(wszRegKey), ARRAY_SIZE(wszRegKey) - strlenW(wszRegKey)))
+    if (!StringFromGUID2(clsidCategory, wszRegKey + lstrlenW(wszRegKey), ARRAY_SIZE(wszRegKey) - lstrlenW(wszRegKey)))
         res = E_INVALIDARG;
 
     if (SUCCEEDED(res))
