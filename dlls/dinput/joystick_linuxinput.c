@@ -234,10 +234,16 @@ static void find_joydevs(void)
 
         /* A true joystick has at least axis X and Y, and at least 1
          * button. copied from linux/drivers/input/joydev.c */
-        if (!test_bit(joydev.absbits, ABS_X) || !test_bit(joydev.absbits, ABS_Y) ||
+        if (((!test_bit(joydev.absbits, ABS_X) || !test_bit(joydev.absbits, ABS_Y)) &&
+             !test_bit(joydev.absbits, ABS_WHEEL) &&
+             !test_bit(joydev.absbits, ABS_GAS) &&
+             !test_bit(joydev.absbits, ABS_BRAKE)) ||
             !(test_bit(joydev.keybits, BTN_TRIGGER) ||
               test_bit(joydev.keybits, BTN_A) ||
-              test_bit(joydev.keybits, BTN_1)))
+              test_bit(joydev.keybits, BTN_1) ||
+              test_bit(joydev.keybits, BTN_BASE) ||
+              test_bit(joydev.keybits, BTN_GEAR_UP) ||
+              test_bit(joydev.keybits, BTN_GEAR_DOWN)))
         {
             close(fd);
             continue;
@@ -259,6 +265,8 @@ static void find_joydevs(void)
             test_bit(joydev.keybits, BTN_BASE4) ||
             test_bit(joydev.keybits, BTN_BASE5) ||
             test_bit(joydev.keybits, BTN_BASE6) ||
+            test_bit(joydev.keybits, BTN_GEAR_UP) ||
+            test_bit(joydev.keybits, BTN_GEAR_DOWN) ||
             test_bit(joydev.keybits, BTN_DEAD);
 
         if (!(joydev.device = HeapAlloc(GetProcessHeap(), 0, strlen(buf) + 1)))
