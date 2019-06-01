@@ -502,14 +502,18 @@ static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsig
     /* Count number of available axes - supported Axis & POVs */
     for (i = 0; i < ABS_MAX; i++)
     {
-        if (i < WINE_JOYSTICK_MAX_AXES &&
+        if (idx < WINE_JOYSTICK_MAX_AXES &&
+            i < ABS_HAT0X &&
             test_bit(newDevice->joydev->absbits, i))
         {
             newDevice->generic.device_axis_count++;
             newDevice->dev_axes_to_di[i] = idx;
             newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
             newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
-            default_axis_map[idx] = i;
+            if (i >= 8 && i <= 10) /* If it's a wheel axis... */
+                default_axis_map[idx] = i - 8; /* ... remap to X/Y/Z */
+            else
+                default_axis_map[idx] = i;
             idx++;
         }
         else
