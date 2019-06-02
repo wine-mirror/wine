@@ -1506,6 +1506,28 @@ void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
     clear_compvars(pc);
 }
 
+static BITMAPINFO *copy_bitmapinfo(const BITMAPINFO *src)
+{
+    int num_colors;
+    unsigned int size;
+    BITMAPINFO *dst;
+
+    if (src->bmiHeader.biClrUsed)
+        num_colors = min(src->bmiHeader.biClrUsed, 256);
+    else
+        num_colors = src->bmiHeader.biBitCount > 8 ? 0 : 1 << src->bmiHeader.biBitCount;
+
+    size = FIELD_OFFSET(BITMAPINFO, bmiColors[num_colors]);
+    if (src->bmiHeader.biCompression == BI_BITFIELDS)
+        size += 3 * sizeof(DWORD);
+
+    if (!(dst = heap_alloc(size)))
+        return NULL;
+
+    memcpy(dst, src, size);
+    return dst;
+}
+
 /***********************************************************************
  *      ICSeqCompressFrameStart [MSVFW32.@]
  */
@@ -1517,10 +1539,8 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
     DWORD ret;
     ICCOMPRESS* icComp;
 
-    if (!(pc->lpbiIn = heap_alloc(sizeof(BITMAPINFO))))
+    if (!(pc->lpbiIn = copy_bitmapinfo(lpbiIn)))
         return FALSE;
-
-    *pc->lpbiIn = *lpbiIn;
 
     if (!(pc->lpState = heap_alloc(sizeof(ICCOMPRESS) + sizeof(*icComp->lpckid) + sizeof(*icComp->lpdwFlags))))
         goto error;
