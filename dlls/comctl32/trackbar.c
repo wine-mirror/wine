@@ -1481,15 +1481,18 @@ TRACKBAR_InitializeThumb (TRACKBAR_INFO *infoPtr)
 
     infoPtr->uThumbLen = get_scaled_metric(infoPtr, infoPtr->dwStyle & TBS_ENABLESELRANGE ? 23 : 21);
 
-    GetClientRect(infoPtr->hwndSelf,&rect);
-    if (infoPtr->dwStyle & TBS_VERT)
-        client_size = rect.right - rect.left;
-    else
-        client_size = rect.bottom - rect.top;
+    if (!(infoPtr->dwStyle & TBS_FIXEDLENGTH))
+    {
+        GetClientRect(infoPtr->hwndSelf, &rect);
+        if (infoPtr->dwStyle & TBS_VERT)
+            client_size = rect.right - rect.left;
+        else
+            client_size = rect.bottom - rect.top;
 
-    if (client_size < infoPtr->uThumbLen)
-        infoPtr->uThumbLen = client_size > get_scaled_metric(infoPtr, 9) ?
-            client_size - get_scaled_metric(infoPtr, 5) : get_scaled_metric(infoPtr, 4);
+        if (client_size < infoPtr->uThumbLen)
+            infoPtr->uThumbLen = client_size > get_scaled_metric(infoPtr, 9) ?
+                client_size - get_scaled_metric(infoPtr, 5) : get_scaled_metric(infoPtr, 4);
+    }
 
     TRACKBAR_CalcChannel (infoPtr);
     TRACKBAR_UpdateThumb (infoPtr);
