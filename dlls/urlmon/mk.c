@@ -25,7 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct {
-    IUnknown            IUnknown_outer;
+    IUnknown            IUnknown_inner;
     IInternetProtocolEx IInternetProtocolEx_iface;
 
     LONG ref;
@@ -36,7 +36,7 @@ typedef struct {
 
 static inline MkProtocol *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, MkProtocol, IUnknown_outer);
+    return CONTAINING_RECORD(iface, MkProtocol, IUnknown_inner);
 }
 
 static inline MkProtocol *impl_from_IInternetProtocolEx(IInternetProtocolEx *iface)
@@ -50,7 +50,7 @@ static HRESULT WINAPI MkProtocolUnk_QueryInterface(IUnknown *iface, REFIID riid,
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IUnknown_outer;
+        *ppv = &This->IUnknown_inner;
     }else if(IsEqualGUID(&IID_IInternetProtocolRoot, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolRoot %p)\n", This, ppv);
         *ppv = &This->IInternetProtocolEx_iface;
@@ -372,15 +372,15 @@ HRESULT MkProtocol_Construct(IUnknown *outer, void **ppv)
 
     ret = heap_alloc(sizeof(MkProtocol));
 
-    ret->IUnknown_outer.lpVtbl = &MkProtocolUnkVtbl;
+    ret->IUnknown_inner.lpVtbl = &MkProtocolUnkVtbl;
     ret->IInternetProtocolEx_iface.lpVtbl = &MkProtocolVtbl;
     ret->ref = 1;
-    ret->outer = outer ? outer : &ret->IUnknown_outer;
+    ret->outer = outer ? outer : &ret->IUnknown_inner;
     ret->stream = NULL;
 
     /* NOTE:
      * Native returns NULL ppobj and S_OK in CreateInstance if called with IID_IUnknown riid and no outer.
      */
-    *ppv = &ret->IUnknown_outer;
+    *ppv = &ret->IUnknown_inner;
     return S_OK;
 }
