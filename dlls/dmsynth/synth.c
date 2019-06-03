@@ -600,7 +600,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
     obj->pCaps.dwMaxVoices = 1000;
     obj->pCaps.dwMaxAudioChannels = 2;
     obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB;
-    strcpyW(obj->pCaps.wszDescription, descrW);
+    lstrcpyW(obj->pCaps.wszDescription, descrW);
 
     DMSYNTH_LockModule();
     hr = IDirectMusicSynth8_QueryInterface(&obj->IDirectMusicSynth8_iface, riid, ppobj);
