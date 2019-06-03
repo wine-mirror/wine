@@ -1,6 +1,8 @@
 MODULE    = dpvoice.dll
 IMPORTS   = dxguid uuid
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	client.c \
 	main.c \
