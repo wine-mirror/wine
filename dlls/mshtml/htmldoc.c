@@ -5656,7 +5656,7 @@ HRESULT get_document_node(nsIDOMDocument *dom_document, HTMLDocumentNode **ret)
 
 static inline HTMLDocumentObj *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLDocumentObj, IUnknown_outer);
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IUnknown_inner);
 }
 
 static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -5666,7 +5666,7 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
     TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IUnknown_outer;
+        *ppv = &This->IUnknown_inner;
     }else if(htmldoc_qi(&This->basedoc, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
@@ -5858,11 +5858,11 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
         return E_OUTOFMEMORY;
 
     doc->ref = 1;
-    doc->IUnknown_outer.lpVtbl = &HTMLDocumentObjVtbl;
+    doc->IUnknown_inner.lpVtbl = &HTMLDocumentObjVtbl;
     doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
 
     init_dispex(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex);
-    init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_outer, &doc->dispex.IDispatchEx_iface);
+    init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_inner, &doc->dispex.IDispatchEx_iface);
     TargetContainer_Init(doc);
     doc->basedoc.doc_obj = doc;
     doc->is_mhtml = is_mhtml;
@@ -5879,7 +5879,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     }
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &doc->IUnknown_outer;
+        *ppv = &doc->IUnknown_inner;
     }else {
         hres = htmldoc_query_interface(&doc->basedoc, riid, ppv);
         htmldoc_release(&doc->basedoc);
