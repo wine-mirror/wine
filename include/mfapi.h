@@ -44,8 +44,10 @@ extern "C" {
     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
 #endif
 
+#ifndef DEFINE_MEDIATYPE_GUID
 #define DEFINE_MEDIATYPE_GUID(name, format) \
     DEFINE_GUID(name, format, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+#endif
 
 #ifndef DIRECT3D_VERSION
 #define LOCAL_D3DFMT_DEFINES   1

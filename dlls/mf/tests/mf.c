@@ -30,6 +30,8 @@
 #include "ole2.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+DEFINE_GUID(MFVideoFormat_P208, 0x38303250, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+DEFINE_GUID(MFVideoFormat_ABGR32, 0x00000020, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 
 #undef INITGUID
 #include <guiddef.h>
@@ -2021,6 +2023,158 @@ todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static BOOL is_supported_video_type(const GUID *guid)
+{
+    return IsEqualGUID(guid, &MFVideoFormat_L8)
+            || IsEqualGUID(guid, &MFVideoFormat_L16)
+            || IsEqualGUID(guid, &MFVideoFormat_D16)
+            || IsEqualGUID(guid, &MFVideoFormat_IYUV)
+            || IsEqualGUID(guid, &MFVideoFormat_YV12)
+            || IsEqualGUID(guid, &MFVideoFormat_NV12)
+            || IsEqualGUID(guid, &MFVideoFormat_420O)
+            || IsEqualGUID(guid, &MFVideoFormat_P010)
+            || IsEqualGUID(guid, &MFVideoFormat_P016)
+            || IsEqualGUID(guid, &MFVideoFormat_UYVY)
+            || IsEqualGUID(guid, &MFVideoFormat_YUY2)
+            || IsEqualGUID(guid, &MFVideoFormat_P208)
+            || IsEqualGUID(guid, &MFVideoFormat_NV11)
+            || IsEqualGUID(guid, &MFVideoFormat_AYUV)
+            || IsEqualGUID(guid, &MFVideoFormat_ARGB32)
+            || IsEqualGUID(guid, &MFVideoFormat_RGB32)
+            || IsEqualGUID(guid, &MFVideoFormat_A2R10G10B10)
+            || IsEqualGUID(guid, &MFVideoFormat_A16B16G16R16F)
+            || IsEqualGUID(guid, &MFVideoFormat_RGB24)
+            || IsEqualGUID(guid, &MFVideoFormat_I420)
+            || IsEqualGUID(guid, &MFVideoFormat_YVYU)
+            || IsEqualGUID(guid, &MFVideoFormat_RGB555)
+            || IsEqualGUID(guid, &MFVideoFormat_RGB565)
+            || IsEqualGUID(guid, &MFVideoFormat_RGB8)
+            || IsEqualGUID(guid, &MFVideoFormat_Y216)
+            || IsEqualGUID(guid, &MFVideoFormat_v410)
+            || IsEqualGUID(guid, &MFVideoFormat_Y41P)
+            || IsEqualGUID(guid, &MFVideoFormat_Y41T)
+            || IsEqualGUID(guid, &MFVideoFormat_Y42T)
+            || IsEqualGUID(guid, &MFVideoFormat_ABGR32);
+}
+
+static void test_video_processor(void)
+{
+    DWORD input_count, output_count, input_id, output_id, flags;
+    DWORD input_min, input_max, output_min, output_max, i, count;
+    IMFAttributes *attributes, *attributes2;
+    IMFMediaType *media_type;
+    IMFTransform *transform;
+    HRESULT hr;
+    GUID guid;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_VideoProcessorMFT, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform,
+            (void **)&transform);
+todo_wine
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "Failed to create video processor transform, hr %#x.\n", hr);
+
+    if (FAILED(hr))
+        goto failed;
+
+    /* Transform global attributes. */
+    hr = IMFTransform_GetAttributes(transform, &attributes);
+    ok(hr == S_OK, "Failed to get attributes, hr %#x.\n", hr);
+    hr = IMFTransform_GetAttributes(transform, &attributes2);
+    ok(hr == S_OK, "Failed to get attributes, hr %#x.\n", hr);
+    ok(attributes == attributes2, "Unexpected instance.\n");
+    IMFAttributes_Release(attributes);
+    IMFAttributes_Release(attributes2);
+
+    hr = IMFTransform_GetStreamLimits(transform, &input_min, &input_max, &output_min, &output_max);
+    ok(hr == S_OK, "Failed to get stream limits, hr %#x.\n", hr);
+    ok(input_min == input_max && input_min == 1 && output_min == output_max && output_min == 1,
+            "Unexpected stream limits.\n");
+
+    hr = IMFTransform_GetStreamCount(transform, &input_count, &output_count);
+    ok(hr == S_OK, "Failed to get stream count, hr %#x.\n", hr);
+    ok(input_count == 1 && output_count == 1, "Unexpected stream count %u, %u.\n", input_count, output_count);
+
+    hr = IMFTransform_GetStreamIDs(transform, 1, &input_id, 1, &output_id);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    input_id = 100;
+    hr = IMFTransform_AddInputStreams(transform, 1, &input_id);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_DeleteInputStream(transform, 0);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputStatus(transform, 0, &flags);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStatus(transform, &flags);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes);
+    ok(hr == S_OK, "Failed to get output attributes, hr %#x.\n", hr);
+    hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes2);
+    ok(hr == S_OK, "Failed to get output attributes, hr %#x.\n", hr);
+    ok(attributes == attributes2, "Unexpected instance.\n");
+    IMFAttributes_Release(attributes);
+    IMFAttributes_Release(attributes2);
+
+    for (i = 0;;++i)
+    {
+        hr = IMFTransform_GetInputAvailableType(transform, 0, i, &media_type);
+        if (hr == MF_E_NO_MORE_TYPES)
+            break;
+        ok(hr == S_OK, "Failed to get supported input type, hr %#x.\n", hr);
+
+        hr = IMFMediaType_GetMajorType(media_type, &guid);
+        ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
+        ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected major type.\n");
+
+        IMFMediaType_Release(media_type);
+    }
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputCurrentType(transform, 1, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputCurrentType(transform, 1, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    /* Configure stream types. */
+    for (i = 0;;++i)
+    {
+        if (FAILED(hr = IMFTransform_GetInputAvailableType(transform, 0, i, &media_type)))
+            break;
+
+        hr = IMFMediaType_GetCount(media_type, &count);
+        ok(hr == S_OK, "Failed to get attributes count, hr %#x.\n", hr);
+        ok(count == 2, "Unexpected count %u.\n", count);
+
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+        ok(hr == S_OK, "Failed to get subtype, hr %#x.\n", hr);
+        ok(is_supported_video_type(&guid), "Unexpected media type %s.\n", wine_dbgstr_guid(&guid));
+
+        IMFMediaType_Release(media_type);
+    }
+
+    IMFTransform_Release(transform);
+
+failed:
+    CoUninitialize();
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -2031,4 +2185,5 @@ START_TEST(mf)
     test_MFShutdownObject();
     test_presentation_clock();
     test_sample_grabber();
+    test_video_processor();
 }
