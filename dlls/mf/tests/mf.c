@@ -1430,6 +1430,7 @@ static void test_presentation_clock(void)
     MFCLOCK_PROPERTIES props, props2;
     IMFRateControl *rate_control;
     IMFPresentationClock *clock;
+    MFSHUTDOWN_STATUS status;
     IMFShutdown *shutdown;
     MFTIME systime, time;
     LONGLONG clock_time;
@@ -1437,7 +1438,9 @@ static void test_presentation_clock(void)
     IMFTimer *timer;
     unsigned int i;
     DWORD value;
+    float rate;
     HRESULT hr;
+    BOOL thin;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
@@ -1577,6 +1580,40 @@ static void test_presentation_clock(void)
 
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control);
     ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
+
+    hr = IMFRateControl_GetRate(rate_control, NULL, &rate);
+    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
+
+    hr = IMFRateControl_GetRate(rate_control, &thin, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
+    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
+    ok(rate == 1.0f, "Unexpected rate.\n");
+    ok(!thin, "Unexpected thinning.\n");
+
+    hr = IMFPresentationClock_Start(clock, 0);
+    ok(hr == S_OK, "Failed to stop, hr %#x.\n", hr);
+
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 0.0f);
+    ok(hr == S_OK, "Failed to set clock rate, hr %#x.\n", hr);
+    hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
+    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate.\n");
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 1.0f);
+    ok(hr == S_OK, "Failed to set clock rate, hr %#x.\n", hr);
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 0.0f);
+    ok(hr == S_OK, "Failed to set clock rate, hr %#x.\n", hr);
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 0.5f);
+    ok(hr == S_OK, "Failed to set clock rate, hr %#x.\n", hr);
+    hr = IMFRateControl_SetRate(rate_control, TRUE, -1.0f);
+    ok(hr == MF_E_THINNING_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
+    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
+    ok(rate == 0.5f, "Unexpected rate.\n");
+    ok(!thin, "Unexpected thinning.\n");
+
     IMFRateControl_Release(rate_control);
 
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFTimer, (void **)&timer);
@@ -1585,6 +1622,21 @@ static void test_presentation_clock(void)
 
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFShutdown, (void **)&shutdown);
     ok(hr == S_OK, "Failed to get shutdown interface, hr %#x.\n", hr);
+
+    /* Shutdown behavior. */
+    hr = IMFShutdown_GetShutdownStatus(shutdown, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFShutdown_Shutdown(shutdown);
+todo_wine
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFShutdown_GetShutdownStatus(shutdown, &status);
+todo_wine {
+    ok(hr == S_OK, "Failed to get status, hr %#x.\n", hr);
+    ok(status == MFSHUTDOWN_COMPLETED, "Unexpected status.\n");
+}
     IMFShutdown_Release(shutdown);
 
     IMFPresentationClock_Release(clock);
