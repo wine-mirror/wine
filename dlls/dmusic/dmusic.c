@@ -224,7 +224,7 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock(LPDIRECTMUSIC8 iface, DW
 
         clock_info->ctType = 0;
         clock_info->guidClock = guid_system_clock;
-        strcpyW(clock_info->wszDescription, name_system_clock);
+        lstrcpyW(clock_info->wszDescription, name_system_clock);
     }
     else
     {
@@ -233,7 +233,7 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock(LPDIRECTMUSIC8 iface, DW
 
         clock_info->ctType = 0;
         clock_info->guidClock = guid_dsound_clock;
-        strcpyW(clock_info->wszDescription, name_dsound_clock);
+        lstrcpyW(clock_info->wszDescription, name_dsound_clock);
     }
 
     return S_OK;
@@ -418,8 +418,8 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     port->device = MIDI_MAPPER;
     port->create = midi_out_port_create;
     midiOutGetDevCapsW(MIDI_MAPPER, &caps_out, sizeof(caps_out));
-    strcpyW(port->caps.wszDescription, caps_out.szPname);
-    strcatW(port->caps.wszDescription, emulated);
+    lstrcpyW(port->caps.wszDescription, caps_out.szPname);
+    lstrcatW(port->caps.wszDescription, emulated);
     port->caps.dwFlags = DMUS_PC_SHAREABLE;
     port->caps.dwClass = DMUS_PC_OUTPUTCLASS;
     port++;
@@ -430,8 +430,8 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
         port->device = i;
         port->create = midi_out_port_create;
         midiOutGetDevCapsW(i, &caps_out, sizeof(caps_out));
-        strcpyW(port->caps.wszDescription, caps_out.szPname);
-        strcatW(port->caps.wszDescription, emulated);
+        lstrcpyW(port->caps.wszDescription, caps_out.szPname);
+        lstrcatW(port->caps.wszDescription, emulated);
         port->caps.dwFlags = DMUS_PC_SHAREABLE | DMUS_PC_EXTERNAL;
         port->caps.dwClass = DMUS_PC_OUTPUTCLASS;
         port++;
@@ -443,8 +443,8 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
         port->device = i;
         port->create = midi_in_port_create;
         midiInGetDevCapsW(i, &caps_in, sizeof(caps_in));
-        strcpyW(port->caps.wszDescription, caps_in.szPname);
-        strcatW(port->caps.wszDescription, emulated);
+        lstrcpyW(port->caps.wszDescription, caps_in.szPname);
+        lstrcatW(port->caps.wszDescription, emulated);
         port->caps.dwFlags = DMUS_PC_EXTERNAL;
         port->caps.dwClass = DMUS_PC_INPUTCLASS;
         port++;

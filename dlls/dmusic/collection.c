@@ -155,7 +155,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_EnumInstrument(IDirectMusicColl
             IDirectMusicInstrumentImpl *instrument = impl_from_IDirectMusicInstrument(inst_entry->pInstrument);
             IDirectMusicInstrument_GetPatch(inst_entry->pInstrument, patch);
             if (name) {
-                length = min(strlenW(instrument->wszName), name_length - 1);
+                length = min(lstrlenW(instrument->wszName), name_length - 1);
                 memcpy(name, instrument->wszName, length * sizeof(WCHAR));
                 name[length] = '\0';
             }
