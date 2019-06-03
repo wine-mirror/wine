@@ -21,14 +21,9 @@
 #ifndef __WINE_DPNET_PRIVATE_H
 #define __WINE_DPNET_PRIVATE_H
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
-
 #include "wine/heap.h"
 #include <wine/list.h>
 #include "winsock2.h"
-#include "wine/unicode.h"
 
 #include "dplay8.h"
 #include "dplobby8.h"
@@ -159,7 +154,7 @@ static inline WCHAR *heap_strdupW( const WCHAR *src )
 {
     WCHAR *dst;
     if (!src) return NULL;
-    if ((dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) ))) strcpyW( dst, src );
+    if ((dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
     return dst;
 }
 
