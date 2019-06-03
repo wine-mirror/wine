@@ -31,7 +31,6 @@
 #include "uuids.h"
 
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 #define DS_MAX_CHANNELS 6
 
@@ -272,7 +271,7 @@ static inline WCHAR *strdupW( const WCHAR *str )
     WCHAR *ret;
 
     if (!str) return NULL;
-    size = (strlenW( str ) + 1) * sizeof(WCHAR);
+    size = (lstrlenW( str ) + 1) * sizeof(WCHAR);
     ret = HeapAlloc( GetProcessHeap(), 0, size );
     if (ret) memcpy( ret, str, size );
     return ret;

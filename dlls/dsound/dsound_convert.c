@@ -34,8 +34,6 @@
  * Sound is LITTLE endian
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <math.h>
