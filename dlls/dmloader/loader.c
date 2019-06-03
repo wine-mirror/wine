@@ -98,9 +98,9 @@ static HRESULT DMUSIC_CopyDescriptor(DMUS_OBJECTDESC *pDst, DMUS_OBJECTDESC *pSr
 	if (pSrc->dwValidData & DMUS_OBJ_OBJECT) pDst->guidObject = pSrc->guidObject;
 	if (pSrc->dwValidData & DMUS_OBJ_DATE) pDst->ftDate = pSrc->ftDate;
 	if (pSrc->dwValidData & DMUS_OBJ_VERSION) pDst->vVersion = pSrc->vVersion;
-	if (pSrc->dwValidData & DMUS_OBJ_NAME) strcpyW (pDst->wszName, pSrc->wszName);
-	if (pSrc->dwValidData & DMUS_OBJ_CATEGORY) strcpyW (pDst->wszCategory, pSrc->wszCategory);
-	if (pSrc->dwValidData & DMUS_OBJ_FILENAME) strcpyW (pDst->wszFileName, pSrc->wszFileName);
+	if (pSrc->dwValidData & DMUS_OBJ_NAME) lstrcpyW (pDst->wszName, pSrc->wszName);
+	if (pSrc->dwValidData & DMUS_OBJ_CATEGORY) lstrcpyW (pDst->wszCategory, pSrc->wszCategory);
+	if (pSrc->dwValidData & DMUS_OBJ_FILENAME) lstrcpyW (pDst->wszFileName, pSrc->wszFileName);
 	if (pSrc->dwValidData & DMUS_OBJ_STREAM) IStream_Clone (pSrc->pStream, &pDst->pStream);
 	if (pSrc->dwValidData & DMUS_OBJ_MEMORY) {
 		pDst->pbMemData = pSrc->pbMemData;
@@ -211,7 +211,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		}
 		else if ((pDesc->dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
 				(pExistingEntry->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
-				!strncmpW (pDesc->wszFileName, pExistingEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
+				!wcsncmp (pDesc->wszFileName, pExistingEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
 			TRACE(": found it by fullpath filename\n");
 			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
 				TRACE(": already loaded\n");
@@ -223,8 +223,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		}
 		else if ((pDesc->dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
 				(pExistingEntry->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
-				!strncmpW (pDesc->wszName, pExistingEntry->Desc.wszName, DMUS_MAX_NAME) &&
-				!strncmpW (pDesc->wszCategory, pExistingEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
+				!wcsncmp (pDesc->wszName, pExistingEntry->Desc.wszName, DMUS_MAX_NAME) &&
+				!wcsncmp (pDesc->wszCategory, pExistingEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
 			TRACE(": found it by name and category\n");
 			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
 				TRACE(": already loaded\n");
@@ -236,7 +236,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		}
 		else if ((pDesc->dwValidData & DMUS_OBJ_NAME) &&
 				(pExistingEntry->Desc.dwValidData & DMUS_OBJ_NAME) &&
-				!strncmpW (pDesc->wszName, pExistingEntry->Desc.wszName, DMUS_MAX_NAME)) {
+				!wcsncmp (pDesc->wszName, pExistingEntry->Desc.wszName, DMUS_MAX_NAME)) {
 			TRACE(": found it by name\n");
 			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
 				TRACE(": already loaded\n");
@@ -248,7 +248,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		}
 		else if ((pDesc->dwValidData & DMUS_OBJ_FILENAME) &&
 				(pExistingEntry->Desc.dwValidData & DMUS_OBJ_FILENAME) &&
-				!strncmpW (pDesc->wszFileName, pExistingEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
+				!wcsncmp (pDesc->wszFileName, pExistingEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
 			TRACE(": found it by filename\n");				
 			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
 				TRACE(": already loaded\n");
@@ -291,7 +291,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
                         get_search_path(This, &pDesc->guidClass, wszFileName);
 			p = wszFileName + lstrlenW(wszFileName);
 			if (p > wszFileName && p[-1] != '\\') *p++ = '\\';
-			strcpyW(p, pDesc->wszFileName);
+			lstrcpyW(p, pDesc->wszFileName);
 		}
 		TRACE(": loading from file (%s)\n", debugstr_w(wszFileName));
 		/* create stream and associate it with file */			
@@ -368,7 +368,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 	/* set filename (if we loaded via filename) */
 	if (pDesc->dwValidData & DMUS_OBJ_FILENAME) {
 		GotDesc.dwValidData |= (pDesc->dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH));
-		strcpyW (GotDesc.wszFileName, pDesc->wszFileName);
+		lstrcpyW (GotDesc.wszFileName, pDesc->wszFileName);
 	}
 	if (FAILED(result)) {
 		ERR(": failed to get descriptor\n");
@@ -433,7 +433,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
                         get_search_path(This, &pDesc->guidClass, wszFileName);
 			p = wszFileName + lstrlenW(wszFileName);
 			if (p > wszFileName && p[-1] != '\\') *p++ = '\\';
-			strcpyW(p, pDesc->wszFileName);
+			lstrcpyW(p, pDesc->wszFileName);
 		}
 		/* create stream */
 		hr = DMUSIC_CreateDirectMusicLoaderFileStream ((LPVOID*)&pStream);
@@ -561,7 +561,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoad
 
     if (!This->search_paths[index])
         This->search_paths[index] = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
-    else if (!strncmpW(This->search_paths[index], path, MAX_PATH))
+    else if (!wcsncmp(This->search_paths[index], path, MAX_PATH))
         return S_FALSE;
 
     lstrcpynW(This->search_paths[index], path, MAX_PATH);
@@ -594,8 +594,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 	p = wszSearchString + lstrlenW(wszSearchString);
 	if (p > wszSearchString && p[-1] != '\\') *p++ = '\\';
 	*p++ = '*'; /* any file */
-	if (strcmpW (pwzFileExtension, wszAny)) *p++ = '.'; /* if we have actual extension, put a dot */
-	strcpyW (p, pwzFileExtension);
+	if (lstrcmpW (pwzFileExtension, wszAny)) *p++ = '.'; /* if we have actual extension, put a dot */
+	lstrcpyW (p, pwzFileExtension);
 	
 	TRACE(": search string: %s\n", debugstr_w(wszSearchString));
 	
@@ -610,7 +610,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 		DM_STRUCT_INIT(&Desc);
 		Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_DATE;
 		Desc.guidClass = *rguidClass;
-		strcpyW (Desc.wszFileName, FileData.cFileName);
+		lstrcpyW (Desc.wszFileName, FileData.cFileName);
 		FileTimeToLocalFileTime (&FileData.ftCreationTime, &Desc.ftDate);
 		IDirectMusicLoader8_SetObject (iface, &Desc);
 		
@@ -656,7 +656,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *if
 		}
 		else if ((Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
 				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
-				!strncmpW (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
+				!wcsncmp (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
 			TRACE(": found it by fullpath filename\n");
 			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
 				result = S_FALSE;
@@ -666,8 +666,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *if
 		}
 		else if ((Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
 				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
-				!strncmpW (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME) &&
-				!strncmpW (Desc.wszCategory, pObjectEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
+				!wcsncmp (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME) &&
+				!wcsncmp (Desc.wszCategory, pObjectEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
 			TRACE(": found it by name and category\n");
 			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
 				result = S_FALSE;
@@ -677,7 +677,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *if
 		}
 		else if ((Desc.dwValidData & DMUS_OBJ_NAME) &&
 				(pObjectEntry->Desc.dwValidData & DMUS_OBJ_NAME) &&
-				!strncmpW (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME)) {
+				!wcsncmp (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME)) {
 			TRACE(": found it by name\n");
 			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
 				result = S_FALSE;
@@ -687,7 +687,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *if
 		}
 		else if ((Desc.dwValidData & DMUS_OBJ_FILENAME) &&
 				(pObjectEntry->Desc.dwValidData & DMUS_OBJ_FILENAME) &&
-				!strncmpW (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
+				!wcsncmp (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
 			TRACE(": found it by filename\n");				
 			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
 				result = S_FALSE;
@@ -736,29 +736,29 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ReleaseObject(IDirectMusicLoader8 *
 		}
 		else if ((Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
 				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_LOADED)) &&
-				!strncmpW (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
+				!wcsncmp (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
 			TRACE(": found it by fullpath filename\n");
 			result = S_OK;			
 			break;
 		}
 		else if ((Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
 				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY | DMUS_OBJ_LOADED)) &&
-				!strncmpW (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME) &&
-				!strncmpW (Desc.wszCategory, pObjectEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
+				!wcsncmp (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME) &&
+				!wcsncmp (Desc.wszCategory, pObjectEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
 			TRACE(": found it by name and category\n");
 			result = S_OK;			
 			break;
 		}
 		else if ((Desc.dwValidData & DMUS_OBJ_NAME) &&
 				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_LOADED)) &&
-				!strncmpW (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME)) {
+				!wcsncmp (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME)) {
 			TRACE(": found it by name\n");
 			result = S_OK;
 			break;
 		}
 		else if ((Desc.dwValidData & DMUS_OBJ_FILENAME) &&
 				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_LOADED)) &&
-				!strncmpW (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
+				!wcsncmp (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
 			TRACE(": found it by filename\n");
 			result = S_OK;			
 			break;
