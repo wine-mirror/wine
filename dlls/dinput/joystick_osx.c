@@ -801,7 +801,11 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                     TRACE("kIOHIDElementTypeInput_Button\n");
                     if(button_idx < 128)
                     {
-                        IOHIDDeviceGetValue(hid_device, element, &valueRef);
+                        valueRef = NULL;
+                        if (IOHIDDeviceGetValue(hid_device, element, &valueRef) != kIOReturnSuccess)
+                            return;
+                        if (valueRef == NULL)
+                            return;
                         val = IOHIDValueGetIntegerValue(valueRef);
                         newVal = val ? 0x80 : 0x0;
                         oldVal = device->generic.js.rgbButtons[button_idx];
@@ -823,7 +827,11 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                         case kHIDUsage_GD_Hatswitch:
                         {
                             TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Hatswitch\n");
-                            IOHIDDeviceGetValue(hid_device, element, &valueRef);
+                            valueRef = NULL;
+                            if (IOHIDDeviceGetValue(hid_device, element, &valueRef) != kIOReturnSuccess)
+                                return;
+                            if (valueRef == NULL)
+                                return;
                             val = IOHIDValueGetIntegerValue(valueRef);
                             oldVal = device->generic.js.rgdwPOV[pov_idx];
                             if (val >= 8)
@@ -850,7 +858,11 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                         {
                             int wine_obj = -1;
 
-                            IOHIDDeviceGetValue(hid_device, element, &valueRef);
+                            valueRef = NULL;
+                            if (IOHIDDeviceGetValue(hid_device, element, &valueRef) != kIOReturnSuccess)
+                                return;
+                            if (valueRef == NULL)
+                                return;
                             val = IOHIDValueGetIntegerValue(valueRef);
                             newVal = joystick_map_axis(&device->generic.props[idx], val);
                             switch (usage)
