@@ -118,6 +118,10 @@ static HRESULT WINAPI classfactory_CreateInstance(IClassFactory *iface, IUnknown
     TRACE("(%p)->(%p,%s,%p)\n", This, outer_unk, debugstr_guid(riid), ppobj);
 
     *ppobj = NULL;
+
+    if (outer_unk && !IsEqualGUID(riid, &IID_IUnknown))
+        return E_NOINTERFACE;
+
     hres = This->pfnCreateInstance(outer_unk, (void **) &unk);
     if (SUCCEEDED(hres))
     {
