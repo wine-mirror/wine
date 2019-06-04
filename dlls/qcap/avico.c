@@ -117,36 +117,6 @@ static HRESULT fill_format_info(AVICompressor *This, VIDEOINFOHEADER *src_videoi
     return S_OK;
 }
 
-static HRESULT WINAPI AVICompressor_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
-{
-    AVICompressor *This = impl_from_IBaseFilter(iface);
-
-    if(IsEqualIID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    }else if(IsEqualIID(riid, &IID_IPersist)) {
-        TRACE("(%p)->(IID_IPersist %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    }else if(IsEqualIID(riid, &IID_IMediaFilter)) {
-        TRACE("(%p)->(IID_IMediaFilter %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    }else if(IsEqualIID(riid, &IID_IBaseFilter)) {
-        TRACE("(%p)->(IID_IBaseFilter %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    }else if(IsEqualIID(riid, &IID_IPersistPropertyBag)) {
-        TRACE("(%p)->(IID_IPersistPropertyBag %p)\n", This, ppv);
-        *ppv = &This->IPersistPropertyBag_iface;
-    }else {
-        FIXME("no interface for %s\n", debugstr_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
-
-}
-
 static HRESULT WINAPI AVICompressor_Stop(IBaseFilter *iface)
 {
     AVICompressor *This = impl_from_IBaseFilter(iface);
@@ -205,7 +175,7 @@ static HRESULT WINAPI AVICompressor_QueryVendorInfo(IBaseFilter *iface, LPWSTR *
 }
 
 static const IBaseFilterVtbl AVICompressorVtbl = {
-    AVICompressor_QueryInterface,
+    BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
@@ -253,9 +223,23 @@ static void avi_compressor_destroy(BaseFilter *iface)
     heap_free(filter);
 }
 
+static HRESULT avi_compressor_query_interface(BaseFilter *iface, REFIID iid, void **out)
+{
+    AVICompressor *filter = impl_from_BaseFilter(iface);
+
+    if (IsEqualGUID(iid, &IID_IPersistPropertyBag))
+        *out = &filter->IPersistPropertyBag_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static const BaseFilterFuncTable filter_func_table = {
     .filter_get_pin = avi_compressor_get_pin,
     .filter_destroy = avi_compressor_destroy,
+    .filter_query_interface = avi_compressor_query_interface,
 };
 
 static AVICompressor *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
