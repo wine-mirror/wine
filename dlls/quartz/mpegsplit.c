@@ -868,25 +868,20 @@ static const BaseFilterFuncTable mpeg_splitter_func_table =
     .filter_query_interface = mpeg_splitter_query_interface,
 };
 
-HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT MPEGSplitter_create(IUnknown *outer, void **out)
 {
     static const WCHAR sink_name[] = {'I','n','p','u','t',0};
     MPEGSplitterImpl *This;
     HRESULT hr = E_FAIL;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
-
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
+    *out = NULL;
 
     This = CoTaskMemAlloc(sizeof(MPEGSplitterImpl));
     if (!This)
         return E_OUTOFMEMORY;
 
     ZeroMemory(This, sizeof(MPEGSplitterImpl));
-    hr = Parser_Create(&This->Parser, &MPEGSplitter_Vtbl, &CLSID_MPEG1Splitter,
+    hr = Parser_Create(&This->Parser, &MPEGSplitter_Vtbl, outer, &CLSID_MPEG1Splitter,
             &mpeg_splitter_func_table, sink_name, MPEGSplitter_process_sample, MPEGSplitter_query_accept,
             MPEGSplitter_pre_connect, MPEGSplitter_cleanup, MPEGSplitter_disconnect,
             MPEGSplitter_first_request, NULL, NULL, MPEGSplitter_seek, NULL);
@@ -898,8 +893,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->IAMStreamSelect_iface.lpVtbl = &AMStreamSelectVtbl;
     This->seek = TRUE;
 
-    /* Note: This memory is managed by the parser filter once created */
-    *ppv = &This->Parser.filter.IBaseFilter_iface;
+    *out = &This->Parser.filter.IUnknown_inner;
 
     return hr;
 }

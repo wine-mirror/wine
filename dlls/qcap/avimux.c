@@ -2270,7 +2270,7 @@ static HRESULT create_input_pin(AviMux *avimux)
     return S_OK;
 }
 
-IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
+IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
 {
     static const WCHAR output_name[] = {'A','V','I',' ','O','u','t',0};
 
@@ -2278,20 +2278,13 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
     PIN_INFO info;
     HRESULT hr;
 
-    TRACE("(%p)\n", pUnkOuter);
-
-    if(pUnkOuter) {
-        *phr = CLASS_E_NOAGGREGATION;
-        return NULL;
-    }
-
     avimux = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AviMux));
     if(!avimux) {
         *phr = E_OUTOFMEMORY;
         return NULL;
     }
 
-    BaseFilter_Init(&avimux->filter, &AviMuxVtbl, &CLSID_AviDest,
+    strmbase_filter_init(&avimux->filter, &AviMuxVtbl, outer, &CLSID_AviDest,
             (DWORD_PTR)(__FILE__ ": AviMux.csFilter"), &filter_func_table);
     avimux->IConfigAviMux_iface.lpVtbl = &ConfigAviMuxVtbl;
     avimux->IConfigInterleaving_iface.lpVtbl = &ConfigInterleavingVtbl;
@@ -2328,5 +2321,5 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
 
     ObjectRefCount(TRUE);
     *phr = S_OK;
-    return (IUnknown*)&avimux->filter.IBaseFilter_iface;
+    return &avimux->filter.IUnknown_inner;
 }

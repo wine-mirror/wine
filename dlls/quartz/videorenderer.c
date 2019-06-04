@@ -691,7 +691,7 @@ static ULONG WINAPI VideoRendererInner_AddRef(IUnknown *iface)
 static ULONG WINAPI VideoRendererInner_Release(IUnknown *iface)
 {
     VideoRendererImpl *This = impl_from_IUnknown(iface);
-    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
+    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refcount);
 
     TRACE("(%p)->(): new ref = %d\n", This, refCount);
 
@@ -1002,7 +1002,7 @@ HRESULT VideoRenderer_create(IUnknown *pUnkOuter, void **ppv)
         pVideoRenderer->outer_unk = &pVideoRenderer->IUnknown_inner;
 
     hr = strmbase_renderer_init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl,
-            pUnkOuter, &CLSID_VideoRenderer, sink_name,
+            NULL, &CLSID_VideoRenderer, sink_name,
             (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"), &BaseFuncTable);
 
     if (FAILED(hr))

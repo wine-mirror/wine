@@ -1257,13 +1257,10 @@ static const BaseFilterFuncTable BaseFuncTable = {
     .filter_destroy = gstdemux_destroy,
 };
 
-IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
+IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 {
-    IUnknown *obj = NULL;
     PIN_INFO *piInput;
     GSTImpl *This;
-
-    TRACE("%p %p\n", pUnkOuter, phr);
 
     if (!init_gstreamer())
     {
@@ -1281,8 +1278,8 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
     }
     memset(This, 0, sizeof(*This));
 
-    obj = (IUnknown*)&This->filter.IBaseFilter_iface;
-    BaseFilter_Init(&This->filter, &GST_Vtbl, &CLSID_Gstreamer_Splitter, (DWORD_PTR)(__FILE__ ": GSTImpl.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&This->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter,
+            (DWORD_PTR)(__FILE__ ": GSTImpl.csFilter"), &BaseFuncTable);
 
     This->cStreams = 0;
     This->ppPins = NULL;
@@ -1302,9 +1299,8 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
     ZeroMemory(&This->pInputPin.pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
     *phr = S_OK;
 
-    TRACE("returning %p\n", obj);
-
-    return obj;
+    TRACE("Created GStreamer demuxer %p.\n", This);
+    return &This->filter.IUnknown_inner;
 }
 
 static HRESULT WINAPI GST_Stop(IBaseFilter *iface)

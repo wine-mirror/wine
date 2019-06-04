@@ -117,7 +117,7 @@ static ULONG WINAPI inner_AddRef(IUnknown *iface)
 static ULONG WINAPI inner_Release(IUnknown *iface)
 {
     evr_filter *This = impl_from_inner_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refCount);
+    ULONG ref = InterlockedDecrement(&This->filter.refcount);
 
     TRACE("(%p, %p)->(): new ref %d\n", iface, This, ref);
 
@@ -220,7 +220,7 @@ HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv)
     if (!object)
         return E_OUTOFMEMORY;
 
-    BaseFilter_Init(&object->filter, &basefilter_vtbl, &CLSID_EnhancedVideoRenderer,
+    strmbase_filter_init(&object->filter, &basefilter_vtbl, NULL, &CLSID_EnhancedVideoRenderer,
                     (DWORD_PTR)(__FILE__ ": EVR.csFilter"), &basefilter_functable);
 
     object->IUnknown_inner.lpVtbl = &evr_inner_vtbl;

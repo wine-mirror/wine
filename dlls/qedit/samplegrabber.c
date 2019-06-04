@@ -319,7 +319,7 @@ static ULONG WINAPI SampleGrabber_AddRef(IUnknown *iface)
 static ULONG WINAPI SampleGrabber_Release(IUnknown *iface)
 {
     SG_Impl *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refCount);
+    ULONG ref = InterlockedDecrement(&This->filter.refcount);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
@@ -1267,7 +1267,7 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
     }
     ZeroMemory(obj, sizeof(SG_Impl));
 
-    BaseFilter_Init(&obj->filter, &IBaseFilter_VTable, &CLSID_SampleGrabber,
+    strmbase_filter_init(&obj->filter, &IBaseFilter_VTable, NULL, &CLSID_SampleGrabber,
             (DWORD_PTR)(__FILE__ ": SG_Impl.csFilter"), &basefunc_vtbl);
     obj->IUnknown_inner.lpVtbl = &samplegrabber_vtbl;
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;

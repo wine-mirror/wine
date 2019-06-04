@@ -288,7 +288,7 @@ static HRESULT strmbase_transform_init(const CLSID *clsid,
     PIN_INFO piInput;
     PIN_INFO piOutput;
 
-    BaseFilter_Init(&filter->filter, &transform_vtbl, clsid,
+    strmbase_filter_init(&filter->filter, &transform_vtbl, NULL, clsid,
             (DWORD_PTR)(__FILE__ ": TransformFilter.csFilter"), &tfBaseFuncTable);
 
     InitializeCriticalSection(&filter->csReceive);

@@ -1424,18 +1424,13 @@ static const BaseFilterFuncTable avi_splitter_func_table =
     .filter_destroy = avi_splitter_destroy,
 };
 
-HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT AVISplitter_create(IUnknown *outer, void **out)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     HRESULT hr;
     AVISplitterImpl * This;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
-
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
+    *out = NULL;
 
     /* Note: This memory is managed by the transform filter once created */
     This = CoTaskMemAlloc(sizeof(AVISplitterImpl));
@@ -1443,7 +1438,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->streams = NULL;
     This->oldindex = NULL;
 
-    hr = Parser_Create(&This->Parser, &AVISplitterImpl_Vtbl, &CLSID_AviSplitter,
+    hr = Parser_Create(&This->Parser, &AVISplitterImpl_Vtbl, outer, &CLSID_AviSplitter,
             &avi_splitter_func_table, sink_name, AVISplitter_Sample, AVISplitter_QueryAccept,
             AVISplitter_InputPin_PreConnect, AVISplitter_Flush,
             AVISplitter_Disconnect, AVISplitter_first_request,
@@ -1452,7 +1447,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (FAILED(hr))
         return hr;
 
-    *ppv = &This->Parser.filter.IBaseFilter_iface;
+    *out = &This->Parser.filter.IUnknown_inner;
 
     return hr;
 }

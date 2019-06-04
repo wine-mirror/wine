@@ -831,7 +831,7 @@ static ULONG WINAPI VMR9Inner_AddRef(IUnknown * iface)
 static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
 {
     struct quartz_vmr *This = impl_from_inner_IUnknown(iface);
-    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
+    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refcount);
 
     TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
 
@@ -2418,11 +2418,11 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
 
     if (IsEqualGUID(clsid, &CLSID_VideoMixingRenderer))
-        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer_unk,
+        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, NULL,
                 &CLSID_VideoMixingRenderer, sink_name,
                 (DWORD_PTR)(__FILE__ ": VMR7Impl.csFilter"), &BaseFuncTable);
     else
-        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer_unk,
+        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, NULL,
                 &CLSID_VideoMixingRenderer9, sink_name,
                 (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
 

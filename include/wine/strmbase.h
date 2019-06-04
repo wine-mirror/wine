@@ -154,18 +154,20 @@ HRESULT WINAPI BaseInputPin_Destroy(BaseInputPin *This);
 
 typedef struct BaseFilter
 {
-	IBaseFilter IBaseFilter_iface;
-	LONG refCount;
-	CRITICAL_SECTION csFilter;
+    IBaseFilter IBaseFilter_iface;
+    IUnknown IUnknown_inner;
+    IUnknown *outer_unk;
+    LONG refcount;
+    CRITICAL_SECTION csFilter;
 
-	FILTER_STATE state;
-	REFERENCE_TIME rtStreamStart;
-	IReferenceClock * pClock;
-	FILTER_INFO filterInfo;
-	CLSID clsid;
-        LONG pin_version;
+    FILTER_STATE state;
+    REFERENCE_TIME rtStreamStart;
+    IReferenceClock * pClock;
+    FILTER_INFO filterInfo;
+    CLSID clsid;
+    LONG pin_version;
 
-	const struct BaseFilterFuncTable* pFuncsTable;
+    const struct BaseFilterFuncTable* pFuncsTable;
 } BaseFilter;
 
 typedef struct BaseFilterFuncTable
@@ -190,7 +192,7 @@ HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVend
 
 VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter* This);
 
-void BaseFilter_Init(BaseFilter *filter, const IBaseFilterVtbl *vtbl,
+void strmbase_filter_init(BaseFilter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
         const CLSID *clsid, DWORD_PTR debug_info, const BaseFilterFuncTable *func_table);
 void strmbase_filter_cleanup(BaseFilter *filter);
 

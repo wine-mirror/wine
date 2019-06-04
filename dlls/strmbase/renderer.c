@@ -249,14 +249,14 @@ static const BaseInputPinFuncTable input_BaseInputFuncTable = {
 };
 
 
-HRESULT WINAPI strmbase_renderer_init(BaseRenderer *This, const IBaseFilterVtbl *Vtbl,
-        IUnknown *pUnkOuter, const CLSID *pClsid, const WCHAR *sink_name, DWORD_PTR DebugInfo,
+HRESULT WINAPI strmbase_renderer_init(BaseRenderer *This, const IBaseFilterVtbl *vtbl,
+        IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name, DWORD_PTR debug_info,
         const BaseRendererFuncTable *pBaseFuncsTable)
 {
     PIN_INFO piInput;
     HRESULT hr;
 
-    BaseFilter_Init(&This->filter, Vtbl, pClsid, DebugInfo, &RendererBaseFilterFuncTable);
+    strmbase_filter_init(&This->filter, vtbl, outer, clsid, debug_info, &RendererBaseFilterFuncTable);
 
     This->pFuncsTable = pBaseFuncsTable;
 
@@ -270,7 +270,7 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *This, const IBaseFilterVtbl 
 
     if (SUCCEEDED(hr))
     {
-        hr = CreatePosPassThru(pUnkOuter ? pUnkOuter: (IUnknown *)&This->filter.IBaseFilter_iface, TRUE,
+        hr = CreatePosPassThru(outer ? outer : (IUnknown *)&This->filter.IBaseFilter_iface, TRUE,
                 &This->pInputPin->pin.IPin_iface, &This->pPosition);
         if (FAILED(hr))
             return hr;

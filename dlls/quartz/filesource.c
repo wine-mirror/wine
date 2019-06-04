@@ -446,19 +446,17 @@ static const BaseFilterFuncTable BaseFuncTable =
     .filter_query_interface = async_reader_query_interface,
 };
 
-HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT AsyncReader_create(IUnknown *outer, void **out)
 {
     AsyncReader *pAsyncRead;
-    
-    if( pUnkOuter )
-        return CLASS_E_NOAGGREGATION;
     
     pAsyncRead = CoTaskMemAlloc(sizeof(AsyncReader));
 
     if (!pAsyncRead)
         return E_OUTOFMEMORY;
 
-    BaseFilter_Init(&pAsyncRead->filter, &AsyncReader_Vtbl, &CLSID_AsyncReader, (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&pAsyncRead->filter, &AsyncReader_Vtbl, outer, &CLSID_AsyncReader,
+            (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"), &BaseFuncTable);
 
     pAsyncRead->IFileSourceFilter_iface.lpVtbl = &FileSource_Vtbl;
     pAsyncRead->pOutputPin = NULL;
@@ -466,7 +464,7 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pAsyncRead->pszFileName = NULL;
     pAsyncRead->pmt = NULL;
 
-    *ppv = pAsyncRead;
+    *out = &pAsyncRead->filter.IUnknown_inner;
 
     TRACE("-- created at %p\n", pAsyncRead);
 

@@ -104,7 +104,7 @@ static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
 static ULONG WINAPI Unknown_Release(IUnknown *iface)
 {
     SmartTeeFilter *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refCount);
+    ULONG ref = InterlockedDecrement(&This->filter.refcount);
 
     TRACE("(%p)->() ref=%d\n", This, ref);
 
@@ -600,7 +600,7 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     else
         This->outerUnknown = &This->IUnknown_iface;
 
-    BaseFilter_Init(&This->filter, &SmartTeeFilterVtbl, &CLSID_SmartTee,
+    strmbase_filter_init(&This->filter, &SmartTeeFilterVtbl, NULL, &CLSID_SmartTee,
             (DWORD_PTR)(__FILE__ ": SmartTeeFilter.csFilter"), &SmartTeeFilterFuncs);
 
     inputPinInfo.pFilter = &This->filter.IBaseFilter_iface;

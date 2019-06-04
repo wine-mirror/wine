@@ -296,9 +296,8 @@ static const BaseFilterFuncTable BaseFuncTable = {
     .filter_destroy = qt_splitter_destroy,
 };
 
-IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
+IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
 {
-    IUnknown *obj = NULL;
     PIN_INFO *piInput;
     QTSplitter *This;
     static const WCHAR wcsInputPinName[] = {'I','n','p','u','t',' ','P','i','n',0};
@@ -308,7 +307,6 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
     RegisterWineDataHandler();
 
     This = CoTaskMemAlloc(sizeof(*This));
-    obj = (IUnknown*)This;
     if (!This)
     {
         *phr = E_OUTOFMEMORY;
@@ -316,7 +314,8 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
     }
     ZeroMemory(This,sizeof(*This));
 
-    BaseFilter_Init(&This->filter, &QT_Vtbl, &CLSID_QTSplitter, (DWORD_PTR)(__FILE__ ": QTSplitter.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&This->filter, &QT_Vtbl, outer, &CLSID_QTSplitter,
+            (DWORD_PTR)(__FILE__ ": QTSplitter.csFilter"), &BaseFuncTable);
 
     InitializeCriticalSection(&This->csReceive);
     This->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": QTSplitter.csReceive");
@@ -339,7 +338,7 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
     SourceSeeking_Init(&This->sourceSeeking, &QT_Seeking_Vtbl, QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate,  &This->filter.csFilter);
 
     *phr = S_OK;
-    return obj;
+    return &This->filter.IUnknown_inner;
 }
 
 static HRESULT WINAPI QT_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID *ppv)

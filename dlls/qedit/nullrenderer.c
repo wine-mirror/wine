@@ -110,7 +110,7 @@ static ULONG WINAPI NullRendererInner_AddRef(IUnknown *iface)
 static ULONG WINAPI NullRendererInner_Release(IUnknown *iface)
 {
     NullRendererImpl *This = impl_from_IUnknown(iface);
-    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
+    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refcount);
 
     if (!refCount)
     {
@@ -190,7 +190,7 @@ HRESULT NullRenderer_create(IUnknown *pUnkOuter, void **ppv)
     else
         pNullRenderer->outer_unk = &pNullRenderer->IUnknown_inner;
 
-    hr = strmbase_renderer_init(&pNullRenderer->renderer, &NullRenderer_Vtbl, pUnkOuter,
+    hr = strmbase_renderer_init(&pNullRenderer->renderer, &NullRenderer_Vtbl, NULL,
             &CLSID_NullRenderer, sink_name,
             (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), &RendererFuncTable);
 

@@ -425,23 +425,18 @@ static const BaseFilterFuncTable wave_parser_func_table =
     .filter_destroy = wave_parser_destroy,
 };
 
-HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT WAVEParser_create(IUnknown *outer, void **out)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     HRESULT hr;
     WAVEParserImpl * This;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
-
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
+    *out = NULL;
 
     /* Note: This memory is managed by the transform filter once created */
     This = CoTaskMemAlloc(sizeof(WAVEParserImpl));
 
-    hr = Parser_Create(&This->Parser, &WAVEParser_Vtbl, &CLSID_WAVEParser,
+    hr = Parser_Create(&This->Parser, &WAVEParser_Vtbl, outer, &CLSID_WAVEParser,
             &wave_parser_func_table, sink_name, WAVEParser_Sample, WAVEParser_QueryAccept,
             WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, WAVEParser_disconnect,
             WAVEParser_first_request, NULL, NULL, WAVEParserImpl_seek, NULL);
@@ -449,7 +444,7 @@ HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (FAILED(hr))
         return hr;
 
-    *ppv = &This->Parser.filter.IBaseFilter_iface;
+    *out = &This->Parser.filter.IUnknown_inner;
 
     return hr;
 }

@@ -652,19 +652,14 @@ static const BaseRendererFuncTable BaseFuncTable = {
     dsound_render_query_interface,
 };
 
-HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT DSoundRender_create(IUnknown *outer, void **out)
 {
     static const WCHAR sink_name[] = {'A','u','d','i','o',' ','I','n','p','u','t',' ','p','i','n',' ','(','r','e','n','d','e','r','e','d',')',0};
 
     HRESULT hr;
     DSoundRenderImpl * pDSoundRender;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
-
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
+    *out = NULL;
 
     pDSoundRender = CoTaskMemAlloc(sizeof(DSoundRenderImpl));
     if (!pDSoundRender)
@@ -672,8 +667,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
 
     hr = strmbase_renderer_init(&pDSoundRender->renderer, &DSoundRender_Vtbl,
-            (IUnknown *)&pDSoundRender->renderer. filter.IBaseFilter_iface,
-            &CLSID_DSoundRender, sink_name,
+            outer, &CLSID_DSoundRender, sink_name,
             (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), &BaseFuncTable);
 
     BasicAudio_Init(&pDSoundRender->basicAudio,&IBasicAudio_Vtbl);
@@ -712,7 +706,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        *ppv = pDSoundRender;
+        *out = &pDSoundRender->renderer.filter.IUnknown_inner;
     }
     else
     {

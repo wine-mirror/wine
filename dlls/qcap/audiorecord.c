@@ -99,7 +99,7 @@ static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
 static ULONG WINAPI Unknown_Release(IUnknown *iface)
 {
     AudioRecord *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refCount);
+    ULONG ref = InterlockedDecrement(&This->filter.refcount);
     TRACE("(%p/%p)->() ref=%d\n", iface, This, ref);
     if (!ref) {
         strmbase_filter_cleanup(&This->filter);
@@ -271,7 +271,7 @@ IUnknown* WINAPI QCAP_createAudioCaptureFilter(IUnknown *outer, HRESULT *phr)
     else
         This->outerUnknown = &This->IUnknown_iface;
 
-    BaseFilter_Init(&This->filter, &AudioRecordVtbl, &CLSID_AudioRecord,
+    strmbase_filter_init(&This->filter, &AudioRecordVtbl, NULL, &CLSID_AudioRecord,
             (DWORD_PTR)(__FILE__ ": AudioRecord.csFilter"), &AudioRecordFuncs);
 
     *phr = S_OK;

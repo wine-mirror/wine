@@ -154,7 +154,7 @@ static ULONG WINAPI unknown_inner_AddRef(IUnknown *iface)
 static ULONG WINAPI unknown_inner_Release(IUnknown *iface)
 {
     VfwCapture *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refCount);
+    ULONG ref = InterlockedDecrement(&This->filter.refcount);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
@@ -219,7 +219,8 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
     if (!pVfwCapture)
         return NULL;
 
-    BaseFilter_Init(&pVfwCapture->filter, &VfwCapture_Vtbl, &CLSID_VfwCapture, (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&pVfwCapture->filter, &VfwCapture_Vtbl, NULL, &CLSID_VfwCapture,
+            (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter"), &BaseFuncTable);
 
     pVfwCapture->IUnknown_inner.lpVtbl = &unknown_inner_vtbl;
     pVfwCapture->IAMStreamConfig_iface.lpVtbl = &IAMStreamConfig_VTable;
