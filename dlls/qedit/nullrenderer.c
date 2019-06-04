@@ -29,9 +29,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 typedef struct NullRendererImpl
 {
     BaseRenderer renderer;
-    IUnknown IUnknown_inner;
-    IUnknown *outer_unk;
 } NullRendererImpl;
+
+static inline NullRendererImpl *impl_from_BaseRenderer(BaseRenderer *iface)
+{
+    return CONTAINING_RECORD(iface, NullRendererImpl, renderer);
+}
 
 static HRESULT WINAPI NullRenderer_DoRenderSample(BaseRenderer *iface, IMediaSample *pMediaSample)
 {
@@ -42,6 +45,14 @@ static HRESULT WINAPI NullRenderer_CheckMediaType(BaseRenderer *iface, const AM_
 {
     TRACE("Not a stub!\n");
     return S_OK;
+}
+
+static void null_renderer_destroy(BaseRenderer *iface)
+{
+    NullRendererImpl *filter = impl_from_BaseRenderer(iface);
+
+    strmbase_renderer_cleanup(&filter->renderer);
+    CoTaskMemFree(filter);
 }
 
 static const BaseRendererFuncTable RendererFuncTable = {
@@ -64,99 +75,14 @@ static const BaseRendererFuncTable RendererFuncTable = {
     NULL,
     NULL,
     NULL,
+    null_renderer_destroy,
 };
-
-static inline NullRendererImpl *impl_from_IUnknown(IUnknown *iface)
-{
-    return CONTAINING_RECORD(iface, NullRendererImpl, IUnknown_inner);
-}
-
-static HRESULT WINAPI NullRendererInner_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
-{
-    NullRendererImpl *This = impl_from_IUnknown(iface);
-
-    TRACE("filter %p, iid %s, out %p.\n", This, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = &This->IUnknown_inner;
-    else
-    {
-        HRESULT hr;
-        hr = BaseRendererImpl_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
-        if (SUCCEEDED(hr))
-            return hr;
-    }
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)*ppv);
-        return S_OK;
-    }
-
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow))
-        FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI NullRendererInner_AddRef(IUnknown *iface)
-{
-    NullRendererImpl *This = impl_from_IUnknown(iface);
-    return BaseFilterImpl_AddRef(&This->renderer.filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI NullRendererInner_Release(IUnknown *iface)
-{
-    NullRendererImpl *This = impl_from_IUnknown(iface);
-    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refcount);
-
-    if (!refCount)
-    {
-        TRACE("Destroying Null Renderer\n");
-        strmbase_renderer_cleanup(&This->renderer);
-        CoTaskMemFree(This);
-    }
-
-    return refCount;
-}
-
-static const IUnknownVtbl IInner_VTable =
-{
-    NullRendererInner_QueryInterface,
-    NullRendererInner_AddRef,
-    NullRendererInner_Release
-};
-
-static inline NullRendererImpl *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, NullRendererImpl, renderer.filter.IBaseFilter_iface);
-}
-
-static HRESULT WINAPI NullRenderer_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    NullRendererImpl *This = impl_from_IBaseFilter(iface);
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
-}
-
-static ULONG WINAPI NullRenderer_AddRef(IBaseFilter * iface)
-{
-    NullRendererImpl *This = impl_from_IBaseFilter(iface);
-    return IUnknown_AddRef(This->outer_unk);
-}
-
-static ULONG WINAPI NullRenderer_Release(IBaseFilter * iface)
-{
-    NullRendererImpl *This = impl_from_IBaseFilter(iface);
-    return IUnknown_Release(This->outer_unk);
-}
 
 static const IBaseFilterVtbl NullRenderer_Vtbl =
 {
-    NullRenderer_QueryInterface,
-    NullRenderer_AddRef,
-    NullRenderer_Release,
+    BaseFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     BaseRendererImpl_Stop,
     BaseRendererImpl_Pause,
@@ -171,33 +97,25 @@ static const IBaseFilterVtbl NullRenderer_Vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
-HRESULT NullRenderer_create(IUnknown *pUnkOuter, void **ppv)
+HRESULT NullRenderer_create(IUnknown *outer, void **out)
 {
     static const WCHAR sink_name[] = {'I','n',0};
 
     HRESULT hr;
     NullRendererImpl *pNullRenderer;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
-
-    *ppv = NULL;
+    *out = NULL;
 
     pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
-    pNullRenderer->IUnknown_inner.lpVtbl = &IInner_VTable;
 
-    if (pUnkOuter)
-        pNullRenderer->outer_unk = pUnkOuter;
-    else
-        pNullRenderer->outer_unk = &pNullRenderer->IUnknown_inner;
-
-    hr = strmbase_renderer_init(&pNullRenderer->renderer, &NullRenderer_Vtbl, NULL,
+    hr = strmbase_renderer_init(&pNullRenderer->renderer, &NullRenderer_Vtbl, outer,
             &CLSID_NullRenderer, sink_name,
             (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), &RendererFuncTable);
 
     if (FAILED(hr))
         CoTaskMemFree(pNullRenderer);
     else
-        *ppv = &pNullRenderer->IUnknown_inner;
+        *out = &pNullRenderer->renderer.filter.IUnknown_inner;
 
     return S_OK;
 }
