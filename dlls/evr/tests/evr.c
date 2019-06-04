@@ -91,8 +91,7 @@ static void test_aggregation(void)
 
     hr = CoCreateInstance(&CLSID_EnhancedVideoRenderer, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
