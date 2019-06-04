@@ -168,13 +168,26 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 
 static WCHAR *get_device_id(DEVICE_OBJECT *device)
 {
-    static const WCHAR formatW[] =  {'%','s','\\','V','i','d','_','%','0','4','x','&','P','i','d','_','%','0','4','x',0};
+    static const WCHAR formatW[] = {'%','s','\\','v','i','d','_','%','0','4','x',
+            '&','p','i','d','_','%','0','4','x',0};
+    static const WCHAR format_inputW[] = {'%','s','\\','v','i','d','_','%','0','4','x',
+            '&','p','i','d','_','%','0','4','x','&','%','s','_','%','i',0};
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD len = strlenW(ext->busid) + 19;
+    DWORD len = strlenW(ext->busid) + 34;
     WCHAR *dst;
 
     if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
-        sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid);
+    {
+        if (ext->input == (WORD)-1)
+        {
+            sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid);
+        }
+        else
+        {
+            sprintfW(dst, format_inputW, ext->busid, ext->vid, ext->pid,
+                    ext->is_gamepad ? igW : miW, ext->input);
+        }
+    }
 
     return dst;
 }
