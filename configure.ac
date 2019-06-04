@@ -109,8 +109,7 @@ AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared 
 AC_ARG_WITH(xslt,      AS_HELP_STRING([--without-xslt],[do not use XSLT]))
 AC_ARG_WITH(xxf86vm,   AS_HELP_STRING([--without-xxf86vm],[do not use XFree video mode extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; ac_cv_header_X11_extensions_xf86vmproto_h=no; fi])
-AC_ARG_WITH(zlib,      AS_HELP_STRING([--without-zlib],[do not use Zlib (data compression)]),
-            [if test "x$withval" = "xno"; then ac_cv_header_zlib_h=no; fi])
+AC_ARG_WITH(zlib,      AS_HELP_STRING([--without-zlib],[do not use Zlib (data compression)]))
 
 AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools from directory DIR]))
 AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine in DIR for a Wow64 build]))
@@ -544,8 +543,7 @@ AC_CHECK_HEADERS(\
 	unistd.h \
 	utime.h \
 	valgrind/memcheck.h \
-	valgrind/valgrind.h \
-	zlib.h
+	valgrind/valgrind.h
 )
 WINE_HEADER_MAJOR()
 AC_HEADER_STAT()
@@ -1570,10 +1568,14 @@ WINE_CHECK_LIB_FUNCS(\
         [$PTHREAD_LIBS])
 
 dnl **** Check for zlib ****
-if test "$ac_cv_header_zlib_h" = "yes"
+if test "x$with_zlib" != "xno"
 then
-    AC_CHECK_LIB(z,inflate,[AC_DEFINE(HAVE_ZLIB,1,[Define to 1 if you have the `z' library (-lz).])
-                            AC_SUBST(Z_LIBS,"-lz")])
+    WINE_PACKAGE_FLAGS(Z,[libz],[-lz],,,
+        [AC_CHECK_HEADERS(zlib.h,
+            [AC_CHECK_LIB(z,inflate,
+                          [AC_DEFINE(HAVE_ZLIB,1,[Define to 1 if you have the `z' library (-lz).])],
+                          [Z_LIBS=""],[$Z_LIBS])],
+            [Z_LIBS=""])])
 fi
 WINE_NOTICE_WITH(zlib,[test "x$Z_LIBS" = "x"],[libz ${notice_platform}development files not found, data compression won't be supported.])
 
