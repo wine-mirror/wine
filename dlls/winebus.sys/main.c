@@ -195,33 +195,14 @@ static WCHAR *get_device_id(DEVICE_OBJECT *device)
 static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    WCHAR *iid, *did, *dst, *ptr;
-    DWORD len;
+    WCHAR *dst;
 
-    if (!(iid = get_instance_id(device)))
-        return NULL;
-
-    if (!(did = get_device_id(device)))
+    if ((dst = HeapAlloc(GetProcessHeap(), 0, (strlenW(ext->busid) + 2) * sizeof(WCHAR))))
     {
-        HeapFree(GetProcessHeap(), 0, iid);
-        return NULL;
+        strcpyW(dst, ext->busid);
+        dst[strlenW(dst) + 1] = 0;
     }
 
-    len = strlenW(iid) + strlenW(did) + strlenW(ext->busid) + 4;
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
-    {
-        ptr = dst;
-        strcpyW(ptr, iid);
-        ptr += strlenW(iid) + 1;
-        strcpyW(ptr, did);
-        ptr += strlenW(did) + 1;
-        strcpyW(ptr, ext->busid);
-        ptr += strlenW(ext->busid) + 1;
-        *ptr = 0;
-    }
-
-    HeapFree(GetProcessHeap(), 0, iid);
-    HeapFree(GetProcessHeap(), 0, did);
     return dst;
 }
 
