@@ -35,7 +35,6 @@
 
 #include "fusionpriv.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #define TableFromToken(tk) (TypeFromToken(tk) >> 24)
 #define TokenFromTable(idx) (idx << 24)
@@ -750,10 +749,10 @@ HRESULT assembly_get_name(ASSEMBLY *assembly, LPWSTR *name)
 
 HRESULT assembly_get_path(const ASSEMBLY *assembly, LPWSTR *path)
 {
-    WCHAR *cpy = heap_alloc((strlenW(assembly->path) + 1) * sizeof(WCHAR));
+    WCHAR *cpy = heap_alloc((lstrlenW(assembly->path) + 1) * sizeof(WCHAR));
     *path = cpy;
     if (cpy)
-        strcpyW(cpy, assembly->path);
+        lstrcpyW(cpy, assembly->path);
     else
         return E_OUTOFMEMORY;
 
@@ -777,10 +776,10 @@ HRESULT assembly_get_version(ASSEMBLY *assembly, LPWSTR *version)
     if (!asmtbl)
         return E_FAIL;
 
-    if (!(*version = heap_alloc(sizeof(format) + 4 * strlen("65535") * sizeof(WCHAR))))
+    if (!(*version = heap_alloc(24 * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
-    sprintfW(*version, format, asmtbl->MajorVersion, asmtbl->MinorVersion,
+    swprintf(*version, 24, format, asmtbl->MajorVersion, asmtbl->MinorVersion,
              asmtbl->BuildNumber, asmtbl->RevisionNumber);
 
     return S_OK;

@@ -28,7 +28,6 @@
 #include "ole2.h"
 #include "fusion.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(fusion);
 
@@ -128,7 +127,7 @@ HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
         return E_INVALIDARG;
 
     len = GetWindowsDirectoryW(windir, MAX_PATH);
-    strcpyW(path, windir);
+    lstrcpyW(path, windir);
 
     switch (dwCacheFlags)
     {
@@ -138,14 +137,14 @@ HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
             if (FAILED(hr))
                 return hr;
 
-            len = sprintfW(path, zapfmt, windir, assembly + 1, nativeimg, version);
+            len = swprintf(path, ARRAY_SIZE(path), zapfmt, windir, assembly + 1, nativeimg, version);
             break;
         }
         case ASM_CACHE_GAC:
         {
-            strcpyW(path + len, assembly);
+            lstrcpyW(path + len, assembly);
             len += ARRAY_SIZE(assembly) - 1;
-            strcpyW(path + len, gac);
+            lstrcpyW(path + len, gac);
             len += ARRAY_SIZE(gac) - 1;
             break;
         }
@@ -155,13 +154,13 @@ HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
             return E_FAIL;
         }
         case ASM_CACHE_ROOT:
-            strcpyW(path + len, assembly);
+            lstrcpyW(path + len, assembly);
             len += ARRAY_SIZE(assembly) - 1;
             break;
         case ASM_CACHE_ROOT_EX:
-            strcpyW(path + len, dotnet);
+            lstrcpyW(path + len, dotnet);
             len += ARRAY_SIZE(dotnet) - 1;
-            strcpyW(path + len, assembly);
+            lstrcpyW(path + len, assembly);
             len += ARRAY_SIZE(assembly) - 1;
             break;
         default:
@@ -172,7 +171,7 @@ HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
     if (*pcchPath <= len || !pwzCachePath)
         hr = E_NOT_SUFFICIENT_BUFFER;
     else if (pwzCachePath)
-        strcpyW(pwzCachePath, path);
+        lstrcpyW(pwzCachePath, path);
 
     *pcchPath = len;
     return hr;
