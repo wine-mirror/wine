@@ -1,6 +1,8 @@
 MODULE    = explorerframe.dll
 IMPORTS   = uuid ole32 comctl32 shell32 user32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	explorerframe_main.c \
 	nstc.c \
