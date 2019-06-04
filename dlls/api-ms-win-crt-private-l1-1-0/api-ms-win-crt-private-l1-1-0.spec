@@ -696,7 +696,7 @@
 @ stub _o__strerror
 @ stub _o__strerror_s
 @ stub _o__strftime_l
-@ stub _o__stricmp
+@ cdecl _o__stricmp(str str) ucrtbase._o__stricmp
 @ stub _o__stricmp_l
 @ stub _o__stricoll
 @ stub _o__stricoll_l
