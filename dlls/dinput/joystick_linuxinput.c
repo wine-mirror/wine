@@ -57,6 +57,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "devguid.h"
 #include "dinput.h"
 
 #include "dinput_private.h"
@@ -1031,6 +1032,29 @@ static HRESULT WINAPI JoystickWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 
         pd->dwData = get_joystick_index(&This->generic.base.guid);
         TRACE("DIPROP_JOYSTICKID(%d)\n", pd->dwData);
+        break;
+    }
+
+    case (DWORD_PTR) DIPROP_GUIDANDPATH:
+    {
+        static const WCHAR formatW[] = {'\\','\\','?','\\','h','i','d','#','v','i','d','_','%','0','4','x','&',
+                                        'p','i','d','_','%','0','4','x','&','%','s','_','%','h','u',0};
+        static const WCHAR miW[] = {'m','i',0};
+        static const WCHAR igW[] = {'i','g',0};
+
+        BOOL is_gamepad;
+        LPDIPROPGUIDANDPATH pd = (LPDIPROPGUIDANDPATH)pdiph;
+        WORD vid = This->joydev->vendor_id;
+        WORD pid = This->joydev->product_id;
+
+        if (!pid || !vid)
+            return DIERR_UNSUPPORTED;
+
+        is_gamepad = is_xinput_device(&This->generic.devcaps, vid, pid);
+        pd->guidClass = GUID_DEVCLASS_HIDCLASS;
+        sprintfW(pd->wszPath, formatW, vid, pid, is_gamepad ? igW : miW, get_joystick_index(&This->generic.base.guid));
+
+        TRACE("DIPROP_GUIDANDPATH(%s, %s): returning fake path\n", debugstr_guid(&pd->guidClass), debugstr_w(pd->wszPath));
         break;
     }
 
