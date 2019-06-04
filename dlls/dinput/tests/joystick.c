@@ -404,6 +404,22 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_GUIDANDPATH, &dpg.diph);
     ok(SUCCEEDED(hr), "IDirectInput_GetProperty() for DIPROP_GUIDANDPATH failed: %08x\n", hr);
 
+    {
+        static const WCHAR formatW[] = {'\\','\\','?','\\','%','*','[','^','#',']','#','v','i','d','_',
+                                        '%','0','4','x','&','p','i','d','_','%','0','4','x',0};
+        static const WCHAR miW[] = {'m','i','_',0};
+        static const WCHAR igW[] = {'i','g','_',0};
+        int vid, pid;
+
+        _wcslwr(dpg.wszPath);
+        count = swscanf(dpg.wszPath, formatW, &vid, &pid);
+        ok(count == 2, "DIPROP_GUIDANDPATH path has wrong format. Expected count: 2 Got: %i Path: %s\n",
+           count, wine_dbgstr_w(dpg.wszPath));
+        ok(wcsstr(dpg.wszPath, miW) != 0 || wcsstr(dpg.wszPath, igW) != 0,
+           "DIPROP_GUIDANDPATH path should contain either 'ig_' or 'mi_' substring. Path: %s\n",
+           wine_dbgstr_w(dpg.wszPath));
+    }
+
     hr = IDirectInputDevice_SetDataFormat(pJoystick, NULL);
     ok(hr==E_POINTER,"IDirectInputDevice_SetDataFormat() should have returned "
        "E_POINTER, returned: %08x\n", hr);
