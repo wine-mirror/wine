@@ -825,7 +825,7 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
             int count = *(const unsigned short*)((const char*)type + 4);
             int shift = 0;
             const char* ptr = (const char*)type + 6;
-            const char* desc[] = {"Near", "Far", "Thin", "Disp to outtermost",
+            const char* desc[] = {"Near", "Far", "Thin", "Disp to outermost",
                                   "Pointer to metaclass", "Near32", "Far32"};
             printf("\t%x => VT Shape #%d: ", curr_type, count);
             while (count--)
