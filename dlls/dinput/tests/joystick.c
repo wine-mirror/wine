@@ -402,7 +402,7 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     dpg.diph.dwHow = DIPH_DEVICE;
 
     hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_GUIDANDPATH, &dpg.diph);
-    todo_wine ok(SUCCEEDED(hr), "IDirectInput_GetProperty() for DIPROP_GUIDANDPATH failed: %08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectInput_GetProperty() for DIPROP_GUIDANDPATH failed: %08x\n", hr);
 
     hr = IDirectInputDevice_SetDataFormat(pJoystick, NULL);
     ok(hr==E_POINTER,"IDirectInputDevice_SetDataFormat() should have returned "
