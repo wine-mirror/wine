@@ -35,17 +35,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 typedef struct {
-    IUnknown IUnknown_iface;
-    IUnknown *outerUnknown;
     BaseFilter filter;
     IPersistPropertyBag IPersistPropertyBag_iface;
     BaseOutputPin *output;
 } AudioRecord;
-
-static inline AudioRecord *impl_from_IUnknown(IUnknown *iface)
-{
-    return CONTAINING_RECORD(iface, AudioRecord, IUnknown_iface);
-}
 
 static inline AudioRecord *impl_from_BaseFilter(BaseFilter *filter)
 {
@@ -61,75 +54,6 @@ static inline AudioRecord *impl_from_IBaseFilter(IBaseFilter *iface)
 static inline AudioRecord *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
 {
     return CONTAINING_RECORD(iface, AudioRecord, IPersistPropertyBag_iface);
-}
-
-static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID riid, LPVOID *ppv)
-{
-    AudioRecord *This = impl_from_IUnknown(iface);
-    if (IsEqualIID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown, %p)\n", This, ppv);
-        *ppv = &This->IUnknown_iface;
-    } else if (IsEqualIID(riid, &IID_IPersist)) {
-        TRACE("(%p)->(IID_IPersist, %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    } else if (IsEqualIID(riid, &IID_IMediaFilter)) {
-        TRACE("(%p)->(IID_IMediaFilter, %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    } else if (IsEqualIID(riid, &IID_IBaseFilter)) {
-        TRACE("(%p)->(IID_IBaseFilter, %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    } else if (IsEqualIID(riid, &IID_IPersistPropertyBag)) {
-        TRACE("(%p)->(IID_IPersistPropertyBag, %p)\n", This, ppv);
-        *ppv = &This->IPersistPropertyBag_iface;
-    } else {
-        FIXME("(%p): no interface for %s\n", This, debugstr_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
-}
-
-static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
-{
-    AudioRecord *This = impl_from_IUnknown(iface);
-    return BaseFilterImpl_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI Unknown_Release(IUnknown *iface)
-{
-    AudioRecord *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refcount);
-    TRACE("(%p/%p)->() ref=%d\n", iface, This, ref);
-    if (!ref) {
-        strmbase_filter_cleanup(&This->filter);
-        CoTaskMemFree(This);
-    }
-    return ref;
-}
-
-static const IUnknownVtbl UnknownVtbl = {
-    Unknown_QueryInterface,
-    Unknown_AddRef,
-    Unknown_Release
-};
-
-static HRESULT WINAPI AudioRecord_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
-{
-    AudioRecord *This = impl_from_IBaseFilter(iface);
-    return IUnknown_QueryInterface(This->outerUnknown, riid, ppv);
-}
-
-static ULONG WINAPI AudioRecord_AddRef(IBaseFilter *iface)
-{
-    AudioRecord *This = impl_from_IBaseFilter(iface);
-    return IUnknown_AddRef(This->outerUnknown);
-}
-
-static ULONG WINAPI AudioRecord_Release(IBaseFilter *iface)
-{
-    AudioRecord *This = impl_from_IBaseFilter(iface);
-    return IUnknown_Release(This->outerUnknown);
 }
 
 static HRESULT WINAPI AudioRecord_Stop(IBaseFilter *iface)
@@ -154,9 +78,9 @@ static HRESULT WINAPI AudioRecord_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 }
 
 static const IBaseFilterVtbl AudioRecordVtbl = {
-    AudioRecord_QueryInterface,
-    AudioRecord_AddRef,
-    AudioRecord_Release,
+    BaseFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     AudioRecord_Stop,
     AudioRecord_Pause,
@@ -177,26 +101,49 @@ static IPin *audio_record_get_pin(BaseFilter *iface, unsigned int index)
     return NULL;
 }
 
+static void audio_record_destroy(BaseFilter *iface)
+{
+    AudioRecord *filter = impl_from_BaseFilter(iface);
+
+    strmbase_filter_cleanup(&filter->filter);
+    CoTaskMemFree(filter);
+}
+
+static HRESULT audio_record_query_interface(BaseFilter *iface, REFIID iid, void **out)
+{
+    AudioRecord *filter = impl_from_BaseFilter(iface);
+
+    if (IsEqualGUID(iid, &IID_IPersistPropertyBag))
+        *out = &filter->IPersistPropertyBag_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static const BaseFilterFuncTable AudioRecordFuncs = {
     .filter_get_pin = audio_record_get_pin,
+    .filter_destroy = audio_record_destroy,
+    .filter_query_interface = audio_record_query_interface,
 };
 
 static HRESULT WINAPI PPB_QueryInterface(IPersistPropertyBag *iface, REFIID riid, LPVOID *ppv)
 {
     AudioRecord *This = impl_from_IPersistPropertyBag(iface);
-    return IUnknown_QueryInterface(This->outerUnknown, riid, ppv);
+    return IUnknown_QueryInterface(This->filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI PPB_AddRef(IPersistPropertyBag *iface)
 {
     AudioRecord *This = impl_from_IPersistPropertyBag(iface);
-    return IUnknown_AddRef(This->outerUnknown);
+    return IUnknown_AddRef(This->filter.outer_unk);
 }
 
 static ULONG WINAPI PPB_Release(IPersistPropertyBag *iface)
 {
     AudioRecord *This = impl_from_IPersistPropertyBag(iface);
-    return IUnknown_Release(This->outerUnknown);
+    return IUnknown_Release(This->filter.outer_unk);
 }
 
 static HRESULT WINAPI PPB_GetClassID(IPersistPropertyBag *iface, CLSID *pClassID)
@@ -264,16 +211,11 @@ IUnknown* WINAPI QCAP_createAudioCaptureFilter(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
     memset(This, 0, sizeof(*This));
-    This->IUnknown_iface.lpVtbl = &UnknownVtbl;
     This->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
-    if (outer)
-        This->outerUnknown = outer;
-    else
-        This->outerUnknown = &This->IUnknown_iface;
 
-    strmbase_filter_init(&This->filter, &AudioRecordVtbl, NULL, &CLSID_AudioRecord,
+    strmbase_filter_init(&This->filter, &AudioRecordVtbl, outer, &CLSID_AudioRecord,
             (DWORD_PTR)(__FILE__ ": AudioRecord.csFilter"), &AudioRecordFuncs);
 
     *phr = S_OK;
-    return &This->IUnknown_iface;
+    return &This->filter.IUnknown_inner;
 }
