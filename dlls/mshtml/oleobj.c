@@ -1176,7 +1176,7 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_SetObjectRects(IOleInPlaceObjec
     HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
     RECT r;
 
-    TRACE("(%p)->(%p %p)\n", This, wine_dbgstr_rect(pos), wine_dbgstr_rect(clip));
+    TRACE("(%p)->(%s %s)\n", This, wine_dbgstr_rect(pos), wine_dbgstr_rect(clip));
 
     if(clip && !EqualRect(clip, pos))
         FIXME("Ignoring clip rect %s\n", wine_dbgstr_rect(clip));
