@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-21 11:21-0600\n"
+"PO-Revision-Date: 2019-05-27 14:50+0800\n"
 "Last-Translator: Mingcong Bai <jeffbai@aosc.io>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.1.1\n"
+"X-Generator: Poedit 2.2.1\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: appwiz.rc:58
@@ -6757,139 +6757,99 @@ msgstr "发送邮件"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "已创建起始请求。\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "未找到对象 UUID。\n"
+msgstr "池尚未完成。\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "安装平台不支持。\n"
+msgstr "Media Foundation 平台尚未初始化。\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "字节数太小。\n"
+msgstr "缓冲区太小。\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "请求语法无效。\n"
+msgstr "请求无效。\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "段编号无效。\n"
+msgstr "流数量无效。\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "日期格式无效。\n"
+msgstr "媒体类型无效。\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "无更多条目。\n"
+msgstr "不接受更多输入。\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "未找到对象 UUID。\n"
+msgstr "对象未初始化。\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "不支持此操作。\n"
+msgstr "不支持重展示。\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "建议媒体类型列表中没有其他类型。\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "不支持的类型。\n"
+msgstr "不支持的服务。\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "未预期的网络错误。\n"
+msgstr "未知错误。\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "时间无效。\n"
+msgstr "类型无效。\n"
 
 #: mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "像素格式无效。\n"
+msgstr "文件格式无效。\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "时间无效。\n"
+msgstr "时间戳无效。\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "不支持的类型。\n"
+msgstr "不支持的方案。\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "不支持的类型。\n"
+msgstr "不支持的字节流类型。\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "不支持的类型。\n"
+msgstr "不支持的时间格式。\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "未设置样本时间戳。\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "未设置样本长度。\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "无效的数据。\n"
+msgstr "流数据无效。\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "没有可用的帮助信息。"
+msgstr "实时支持不可用。\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "不支持的类型。\n"
+msgstr "不支持的频率。\n"
 
 #: mferror.mc:200
 #, fuzzy
@@ -6898,386 +6858,276 @@ msgid "Unsupported thinning.\n"
 msgstr "不支持的类型。\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "请求不被支持。\n"
+msgstr "不支持反相。\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "不支持的认证级别。\n"
+msgstr "不支持的频率过渡。\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "预先判断到频率变化。\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "未找到对象 UUID。\n"
+msgstr "未找到对象或值。\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "没有可用的帮助信息。"
+msgstr "值不可用。\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "没有可用的帮助信息。"
+msgstr "时钟不可用。\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "不支持扩展属性。\n"
+msgstr "不支持多订阅者。\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "驱动程序没有启用。"
+msgstr "计时器被弃用。\n"
 
 #: mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "无法打开字符翻译表。\n"
+msgstr "正在等待状态过渡。\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "不支持的认证级别。\n"
+msgstr "不支持的状态过渡。\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "发生内部错误。\n"
+msgstr "发生致命错误。\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "样本包含过多缓冲区。\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "临时文件目录不可写。\n"
+msgstr "样本不可写。\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "路径无效。\n"
+msgstr "键值无效。\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "stub 版本错误。\n"
+msgstr "启动版本无效。\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "不支持的类型。\n"
+msgstr "不支持的标注。\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "无效工作站。\n"
+msgstr "位置无效。\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "找不到文件。\n"
+msgstr "未找到属性。\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "不允许的钩子类型。\n"
+msgstr "不允许填入属性类型。\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "不支持此操作。\n"
+msgstr "不支持属性类型。\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "目录非空。\n"
+msgstr "属性为空。\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "目录非空。\n"
+msgstr "属性非空。\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "不允许的钩子类型。\n"
+msgstr "不允许填入矢量属性。\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "要求矢量属性。\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "操作被用户取消。\n"
+msgstr "操作被取消。\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "服务器未停用。\n"
+msgstr "字节流不可寻道。\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "安全模式下平台被禁用。\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "无法创建服务线程。\n"
+msgstr "无法解析字节流。\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "互斥参数被传递至来源解析器。\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "未知接口。\n"
+msgstr "未知字节流长度。\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "无效索引。\n"
+msgstr "工作队列索引无效。\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "无可用的登录服务器。\n"
+msgstr "无可用事件。\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "不支持的认证级别。\n"
+msgstr "媒体源状态过渡无效。\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "注册表已恢复。\n"
+msgstr "到达媒体流结尾。\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Shutdown() 函数被调用。\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "注册表已恢复。\n"
+msgstr "未设置媒体流长度。\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "媒体格式已知但无效。\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "找不到属性集。\n"
+msgstr "未找到属性。\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "目录非空。\n"
+msgstr "属性为只读。\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "不允许的钩子类型。\n"
+msgstr "不允许填入属性。\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "资源已被占用。\n"
+msgstr "媒体源未启动。\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "不支持的类型。\n"
+msgstr "不支持的媒体格式。\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "资源已被占用。\n"
+msgstr "媒体流状态不正确。\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "未检测到数据。\n"
+msgstr "未选中媒体流。\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "不支持的类型。\n"
+msgstr "不支持的媒体流特性。\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "媒体池被移除。\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "媒体池不同步。\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "注册表已恢复。\n"
+msgstr "媒体池的串流池组不可变。\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "域名已存在。\n"
+msgstr "串流池已存在。\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "操作被用户取消。\n"
+msgstr "样本分配已取消。\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "目录非空。\n"
+msgstr "样本分配器为空。\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "该类已存在。\n"
+msgstr "池已被停止。\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "ASF 文件池的比特率未知。\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "未检测到数据。\n"
+msgstr "未为此池选中任何流。\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "文件名过长。\n"
+msgstr "元数据过长。\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "池未处理任何样本。\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "池未包含必要的报头。\n"
 
 #: mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "连接无效。\n"
+msgstr "可选节点无效。\n"
 
 #: mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "找不到打印机。"
+msgstr "找不到解密器。\n"
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "找不到模块。\n"
+msgstr "未找到编解码器。\n"
 
 #: mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "无法获取调用句柄。\n"
+msgstr "无法连接拓扑节点。\n"
 
 #: mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "请求不被支持。\n"
+msgstr "不支持拓扑请求。\n"
 
 #: mferror.mc:662
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "无效的组属性。\n"
+msgstr "拓扑的时间属性无效。\n"
 
 #: mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "拓扑结构中发现循环。\n"
 
 #: mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "安装源不存在。\n"
+msgstr "展示描述符缺失。\n"
 
 #: mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "缺少索引。\n"
+msgstr "串流描述符缺失。\n"
 
 #: mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "设备未连接。\n"
+msgstr "未选中串流描述符。\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "缺少索引。\n"
+msgstr "缺少源。\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
@@ -7285,13 +7135,11 @@ msgstr ""
 
 #: mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "时钟未设置时间源。\n"
 
 #: mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "该类已存在。\n"
+msgstr "已设置时钟状态。\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -10985,10 +10833,6 @@ msgid ""
 msgstr "“song pointer”和 SMPTE 时间格式互斥。您不能同时使用这两种格式。"
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
@@ -11005,14 +10849,10 @@ msgid "An error occurred with the specified port."
 msgstr "指定的端口出错。"
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
-msgstr "所有多媒体计时器均正被其他应用程序占用。退出其中一个应用程序后重试。"
+msgstr "所有多媒体计时器均被其他应用程序占用。退出其中一个应用程序后重试。"
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -15077,7 +14917,7 @@ msgstr "普通 Metafile 阅读器"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "元文件 (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15244,14 +15084,10 @@ msgid "Drive configuration"
 msgstr "驱动器设置"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
-msgstr "无法连接到挂载管理器。不能修改驱动器配置。"
+msgstr "无法连接到挂载管理器；不能修改驱动器配置。"
 
 #: winecfg.rc:236
 msgid "A&dd..."
@@ -15536,12 +15372,6 @@ msgid "System drive"
 msgstr "系统驱动器"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15550,8 +15380,8 @@ msgid ""
 msgstr ""
 "你确定要删除 C 盘吗？\n"
 "\n"
-"大部分 Windows 程序都假定 C 盘存在，在没有它时会死得很难看。如果要继续，请记"
-"得重新建立一个！"
+"大部分 Windows 程序都假定 C 盘存在，如找不到 C 盘可能会导致严重错误。如果要继"
+"续，请重新建立此盘！"
 
 #: winecfg.rc:77
 msgctxt "Drive letter"
@@ -16613,8 +16443,6 @@ msgid "Text documents (*.txt)"
 msgstr "文本文件 (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
 msgstr "Unicode 文本文件 (*.txt)"
 
@@ -16816,42 +16644,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -16889,11 +16681,11 @@ msgid ""
 msgstr ""
 "XCOPY - 将源文件或目录拷贝到目标位置。\n"
 "\n"
-"语法:\n"
+"语法：\n"
 "XCOPY 源 [目标] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U] [/R] [/H]\n"
 "\t     [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
 "\n"
-"说明:\n"
+"说明：\n"
 "[/I] 如果目标位置不存在，并且操作会拷贝两个或更多的文件，就假设目标\n"
 "\t是目录。\n"
 "[/S] 拷贝目录和子目录。\n"
