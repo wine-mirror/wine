@@ -1,5 +1,7 @@
 MODULE    = fntcache.dll
 IMPORTS   = advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c
