@@ -613,26 +613,22 @@ static NTSTATUS get_instance_id(DEVICE_OBJECT *device, WCHAR **instance_id)
  *           IoRegisterDeviceInterface (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *class_guid,
-        UNICODE_STRING *reference_string, UNICODE_STRING *symbolic_link)
+        UNICODE_STRING *refstr, UNICODE_STRING *symbolic_link)
 {
     SP_DEVICE_INTERFACE_DATA sp_iface = {sizeof(sp_iface)};
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *data;
     NTSTATUS status = STATUS_SUCCESS;
     struct device_interface *iface;
-    WCHAR *referenceW = NULL;
     WCHAR *instance_id;
     DWORD required;
     HDEVINFO set;
     BOOL rc;
 
-    TRACE("device %p, class_guid %s, reference_string %s, symbolic_link %p.\n",
-            device, debugstr_guid(class_guid), debugstr_us(reference_string), symbolic_link);
+    TRACE("device %p, class_guid %s, refstr %s, symbolic_link %p.\n",
+            device, debugstr_guid(class_guid), debugstr_us(refstr), symbolic_link);
 
-    if (reference_string != NULL)
-        referenceW = reference_string->Buffer;
-
-    set = SetupDiGetClassDevsW( class_guid, referenceW, NULL, DIGCF_DEVICEINTERFACE );
+    set = SetupDiGetClassDevsW( class_guid, NULL, NULL, DIGCF_DEVICEINTERFACE );
     if (set == INVALID_HANDLE_VALUE) return STATUS_UNSUCCESSFUL;
 
     status = get_instance_id( device, &instance_id );
@@ -674,7 +670,7 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
     }
     HeapFree( GetProcessHeap(), 0, instance_id );
 
-    if (!SetupDiCreateDeviceInterfaceW( set, &sp_device, class_guid, NULL, 0, &sp_iface ))
+    if (!SetupDiCreateDeviceInterfaceW( set, &sp_device, class_guid, refstr ? refstr->Buffer : NULL, 0, &sp_iface ))
         return STATUS_UNSUCCESSFUL;
 
     required = 0;
