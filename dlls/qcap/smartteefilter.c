@@ -36,18 +36,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 typedef struct {
-    IUnknown IUnknown_iface;
-    IUnknown *outerUnknown;
     BaseFilter filter;
     BaseInputPin *input;
     BaseOutputPin *capture;
     BaseOutputPin *preview;
 } SmartTeeFilter;
-
-static inline SmartTeeFilter *impl_from_IUnknown(IUnknown *iface)
-{
-    return CONTAINING_RECORD(iface, SmartTeeFilter, IUnknown_iface);
-}
 
 static inline SmartTeeFilter *impl_from_BaseFilter(BaseFilter *filter)
 {
@@ -69,80 +62,6 @@ static inline SmartTeeFilter *impl_from_IPin(IPin *iface)
 {
     BasePin *bp = CONTAINING_RECORD(iface, BasePin, IPin_iface);
     return impl_from_IBaseFilter(bp->pinInfo.pFilter);
-}
-
-static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
-{
-    SmartTeeFilter *This = impl_from_IUnknown(iface);
-    if (IsEqualIID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown, %p)\n", This, ppv);
-        *ppv = &This->IUnknown_iface;
-    } else if (IsEqualIID(riid, &IID_IPersist)) {
-        TRACE("(%p)->(IID_IPersist, %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    } else if (IsEqualIID(riid, &IID_IMediaFilter)) {
-        TRACE("(%p)->(IID_IMediaFilter, %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    } else if (IsEqualIID(riid, &IID_IBaseFilter)) {
-        TRACE("(%p)->(IID_IBaseFilter, %p)\n", This, ppv);
-        *ppv = &This->filter.IBaseFilter_iface;
-    } else {
-        FIXME("(%p): no interface for %s\n", This, debugstr_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
-}
-
-static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
-{
-    SmartTeeFilter *This = impl_from_IUnknown(iface);
-    return BaseFilterImpl_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI Unknown_Release(IUnknown *iface)
-{
-    SmartTeeFilter *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->filter.refcount);
-
-    TRACE("(%p)->() ref=%d\n", This, ref);
-
-    if (!ref) {
-        if(This->input)
-            BaseInputPinImpl_Release(&This->input->pin.IPin_iface);
-        if(This->capture)
-            BaseOutputPinImpl_Release(&This->capture->pin.IPin_iface);
-        if(This->preview)
-            BaseOutputPinImpl_Release(&This->preview->pin.IPin_iface);
-        strmbase_filter_cleanup(&This->filter);
-        CoTaskMemFree(This);
-    }
-    return ref;
-}
-
-static const IUnknownVtbl UnknownVtbl = {
-    Unknown_QueryInterface,
-    Unknown_AddRef,
-    Unknown_Release
-};
-
-static HRESULT WINAPI SmartTeeFilter_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
-{
-    SmartTeeFilter *This = impl_from_IBaseFilter(iface);
-    return IUnknown_QueryInterface(This->outerUnknown, riid, ppv);
-}
-
-static ULONG WINAPI SmartTeeFilter_AddRef(IBaseFilter *iface)
-{
-    SmartTeeFilter *This = impl_from_IBaseFilter(iface);
-    return IUnknown_AddRef(This->outerUnknown);
-}
-
-static ULONG WINAPI SmartTeeFilter_Release(IBaseFilter *iface)
-{
-    SmartTeeFilter *This = impl_from_IBaseFilter(iface);
-    return IUnknown_Release(This->outerUnknown);
 }
 
 static HRESULT WINAPI SmartTeeFilter_Stop(IBaseFilter *iface)
@@ -182,9 +101,9 @@ static HRESULT WINAPI SmartTeeFilter_Run(IBaseFilter *iface, REFERENCE_TIME tSta
 }
 
 static const IBaseFilterVtbl SmartTeeFilterVtbl = {
-    SmartTeeFilter_QueryInterface,
-    SmartTeeFilter_AddRef,
-    SmartTeeFilter_Release,
+    BaseFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     SmartTeeFilter_Stop,
     SmartTeeFilter_Pause,
@@ -217,8 +136,23 @@ static IPin *smart_tee_get_pin(BaseFilter *iface, unsigned int index)
     return ret;
 }
 
+static void smart_tee_destroy(BaseFilter *iface)
+{
+    SmartTeeFilter *filter = impl_from_BaseFilter(iface);
+
+    if (filter->input)
+        BaseInputPinImpl_Release(&filter->input->pin.IPin_iface);
+    if (filter->capture)
+        BaseOutputPinImpl_Release(&filter->capture->pin.IPin_iface);
+    if (filter->preview)
+        BaseOutputPinImpl_Release(&filter->preview->pin.IPin_iface);
+    strmbase_filter_cleanup(&filter->filter);
+    CoTaskMemFree(filter);
+}
+
 static const BaseFilterFuncTable SmartTeeFilterFuncs = {
     .filter_get_pin = smart_tee_get_pin,
+    .filter_destroy = smart_tee_destroy,
 };
 
 static ULONG WINAPI SmartTeeFilterInput_AddRef(IPin *iface)
@@ -586,21 +520,14 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     HRESULT hr;
     SmartTeeFilter *This = NULL;
 
-    TRACE("(%p, %p)\n", outer, phr);
-
     This = CoTaskMemAlloc(sizeof(*This));
     if (This == NULL) {
         *phr = E_OUTOFMEMORY;
         return NULL;
     }
     memset(This, 0, sizeof(*This));
-    This->IUnknown_iface.lpVtbl = &UnknownVtbl;
-    if (outer)
-        This->outerUnknown = outer;
-    else
-        This->outerUnknown = &This->IUnknown_iface;
 
-    strmbase_filter_init(&This->filter, &SmartTeeFilterVtbl, NULL, &CLSID_SmartTee,
+    strmbase_filter_init(&This->filter, &SmartTeeFilterVtbl, outer, &CLSID_SmartTee,
             (DWORD_PTR)(__FILE__ ": SmartTeeFilter.csFilter"), &SmartTeeFilterFuncs);
 
     inputPinInfo.pFilter = &This->filter.IBaseFilter_iface;
@@ -626,10 +553,7 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
 end:
     *phr = hr;
     if (SUCCEEDED(hr)) {
-        if (outer)
-            return &This->IUnknown_iface;
-        else
-            return (IUnknown*)&This->filter.IBaseFilter_iface;
+        return &This->filter.IUnknown_inner;
     } else {
         strmbase_filter_cleanup(&This->filter);
         return NULL;
