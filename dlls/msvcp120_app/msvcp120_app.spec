@@ -3801,7 +3801,7 @@
 @ cdecl _Stoulx(ptr ptr long ptr) msvcp120._Stoulx
 @ stub _Stoxflt
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr) msvcp120._Strcoll
-@ stub _Strxfrm
+@ cdecl _Strxfrm(ptr ptr ptr ptr ptr) msvcp120._Strxfrm
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr) msvcp120._Thrd_create
 @ cdecl -norelay _Thrd_current() msvcp120._Thrd_current

@@ -5146,7 +5146,7 @@
 @ cdecl _Stof(ptr ptr long)
 @ cdecl _Stold(ptr ptr long) _Stod
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr)
-@ stub _Strxfrm
+@ cdecl _Strxfrm(ptr ptr ptr ptr ptr)
 @ cdecl _Tolower(long ptr)
 @ cdecl _Toupper(long ptr)
 @ cdecl _Towlower(long ptr)
