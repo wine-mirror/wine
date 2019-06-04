@@ -3801,7 +3801,7 @@
 @ cdecl _Stoulx(ptr ptr long ptr)
 @ stub _Stoxflt
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr)
-@ stub _Strxfrm
+@ cdecl _Strxfrm(ptr ptr ptr ptr ptr)
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr)
 @ cdecl -norelay _Thrd_current()

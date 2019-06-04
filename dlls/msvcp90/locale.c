@@ -35,6 +35,7 @@
 #include "winnls.h"
 #include "msvcp90.h"
 #include "wine/unicode.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -12665,6 +12666,44 @@ int __cdecl _To_wide(const char *src, wchar_t *dst)
 {
     TRACE("(%s %p)\n", debugstr_a(src), dst);
     return MultiByteToWideChar(CP_ACP, 0, src, -1, dst, MAX_PATH);
+}
+
+MSVCP_size_t __cdecl _Strxfrm(char *dest, char *dest_end, const char *src, const char *src_end, _Collvec *coll)
+{
+    MSVCP_size_t dest_len = dest_end - dest;
+    MSVCP_size_t src_len = src_end - src;
+    _Collvec cv;
+    WCHAR *buf;
+    LCID lcid;
+    int len;
+
+    TRACE("(%p %p %p %p %p)\n", dest, dest_end, src, src_end, coll);
+
+    if (coll) cv = *coll;
+    else getcoll(&cv);
+
+#if _MSVCP_VER < 110
+    lcid = cv.handle;
+#else
+    lcid = LocaleNameToLCID(cv.lc_name, 0);
+#endif
+
+    if (!lcid && !cv.page)
+    {
+        if (src_len > dest_len) return src_len;
+        memcpy(dest, src, src_len);
+        return src_len;
+    }
+
+    len = MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, NULL, 0);
+    if (!len) return 0;
+    buf = heap_alloc(len * sizeof(WCHAR));
+    if (!buf) return 0;
+    MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, buf, len);
+
+    len = LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, (WCHAR*)dest, dest_len);
+    heap_free(buf);
+    return len;
 }
 
 DEFINE_RTTI_DATA0(_Facet_base, 0, ".?AV_Facet_base@std@@")

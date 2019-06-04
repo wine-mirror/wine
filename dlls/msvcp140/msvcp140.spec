@@ -3715,7 +3715,7 @@
 @ cdecl -ret64 _Stoullx(ptr ptr long ptr) _Stoullx
 @ cdecl _Stoulx(ptr ptr long ptr) _Stoulx
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr) _Strcoll
-@ stub _Strxfrm
+@ cdecl _Strxfrm(ptr ptr ptr ptr ptr)
 @ cdecl _Symlink(wstr wstr) tr2_sys__Symlink_wchar
 @ stub _Symlink_get
 @ cdecl _Temp_get(ptr)
