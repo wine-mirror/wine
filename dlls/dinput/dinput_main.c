@@ -48,6 +48,7 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "initguid.h"
+#include "devguid.h"
 #include "dinput_private.h"
 #include "device_private.h"
 #include "dinputd.h"

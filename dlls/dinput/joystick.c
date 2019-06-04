@@ -34,6 +34,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
+#define VID_MICROSOFT 0x045e
+
+static const WORD PID_XBOX_CONTROLLERS[] =  {
+    0x0202, /* Xbox Controller */
+    0x0285, /* Xbox Controller S */
+    0x0289, /* Xbox Controller S */
+    0x028e, /* Xbox360 Controller */
+    0x028f, /* Xbox360 Wireless Controller */
+    0x02d1, /* Xbox One Controller */
+    0x02dd, /* Xbox One Controller (Covert Forces/Firmware 2015) */
+    0x02e0, /* Xbox One X Controller */
+    0x02e3, /* Xbox One Elite Controller */
+    0x02e6, /* Wireless XBox Controller Dongle */
+    0x02ea, /* Xbox One S Controller */
+    0x02fd, /* Xbox One S Controller (Firmware 2017) */
+    0x0719, /* Xbox 360 Wireless Adapter */
+};
+
 static inline JoystickGenericImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface), JoystickGenericImpl, base);
@@ -279,6 +297,19 @@ BOOL device_disabled_registry(const char* name)
     if (hkey)   RegCloseKey(hkey);
 
     return do_disable;
+}
+
+BOOL is_xinput_device(const DIDEVCAPS *devcaps, WORD vid, WORD pid)
+{
+    int i;
+
+    if (vid == VID_MICROSOFT)
+    {
+        for (i = 0; i < ARRAY_SIZE(PID_XBOX_CONTROLLERS); i++)
+            if (pid == PID_XBOX_CONTROLLERS[i]) return TRUE;
+    }
+
+    return (devcaps->dwAxes == 6 && devcaps->dwButtons >= 14);
 }
 
 /******************************************************************************
