@@ -584,6 +584,8 @@ void output_module( DLLSPEC *spec )
 
     switch (target_platform)
     {
+    case PLATFORM_WINDOWS:
+        return;  /* nothing to do */
     case PLATFORM_APPLE:
         output( "\t.text\n" );
         output( "\t.align %d\n", get_alignment(page_size) );
@@ -710,7 +712,6 @@ void output_module( DLLSPEC *spec )
 void output_spec32_file( DLLSPEC *spec )
 {
     needs_get_pc_thunk = 0;
-    resolve_imports( spec );
     open_output_file();
     output_standard_file_header();
     output_module( spec );
@@ -720,24 +721,6 @@ void output_spec32_file( DLLSPEC *spec )
     if (needs_get_pc_thunk) output_get_pc_thunk();
     output_resources( spec );
     output_gnu_stack_note();
-    close_output_file();
-}
-
-
-/*******************************************************************
- *         output_pe_module
- *
- * Build a PE from a spec file.
- */
-void output_pe_module( DLLSPEC *spec )
-{
-    UsePIC = 0;
-    resolve_imports( spec );
-    open_output_file();
-    output_standard_file_header();
-    output_stubs( spec );
-    output_exports( spec );
-    output_resources( spec );
     close_output_file();
 }
 

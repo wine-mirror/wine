@@ -630,26 +630,22 @@ int main(int argc, char **argv)
         /* fall through */
     case MODE_EXE:
         load_resources( argv, spec );
-        load_import_libs( argv );
         if (spec_file_name && !parse_input_file( spec )) break;
+
         if (fake_module)
         {
             if (spec->type == SPEC_WIN16) output_fake_module16( spec );
             else output_fake_module( spec );
             break;
         }
-        read_undef_symbols( spec, argv );
-        switch (spec->type)
+        if (target_platform != PLATFORM_WINDOWS)
         {
-            case SPEC_WIN16:
-                output_spec16_file( spec );
-                break;
-            case SPEC_WIN32:
-                if (target_platform == PLATFORM_WINDOWS) output_pe_module( spec );
-                else output_spec32_file( spec );
-                break;
-            default: assert(0);
+            load_import_libs( argv );
+            read_undef_symbols( spec, argv );
+            resolve_imports( spec );
         }
+        if (spec->type == SPEC_WIN16) output_spec16_file( spec );
+        else output_spec32_file( spec );
         break;
     case MODE_DEF:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );

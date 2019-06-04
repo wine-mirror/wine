@@ -815,17 +815,16 @@ void output_spec16_file( DLLSPEC *spec16 )
 {
     DLLSPEC *spec32 = alloc_dll_spec();
 
-    resolve_imports( spec16 );
     add_16bit_exports( spec32, spec16 );
 
     needs_get_pc_thunk = 0;
     open_output_file();
     output_standard_file_header();
-    if (target_platform != PLATFORM_WINDOWS) output_module( spec32 );
+    output_module( spec32 );
     output_module16( spec16 );
     output_stubs( spec16 );
     output_exports( spec32 );
-    if (target_platform != PLATFORM_WINDOWS) output_imports( spec16 );
+    output_imports( spec16 );
     if (is_undefined( "__wine_call_from_16" )) output_asm_relays16();
     if (needs_get_pc_thunk) output_get_pc_thunk();
     if (spec16->main_module)

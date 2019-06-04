@@ -1311,6 +1311,7 @@ void output_stubs( DLLSPEC *spec )
 /* output the import and delayed import tables of a Win32 module */
 void output_imports( DLLSPEC *spec )
 {
+    if (target_platform == PLATFORM_WINDOWS) return;
     output_immediate_imports();
     output_delayed_imports( spec );
     output_immediate_import_thunks();
