@@ -85,6 +85,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "devguid.h"
 #include "dinput.h"
 
 #include "dinput_private.h"
@@ -122,6 +123,11 @@ static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W 
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface),
            JoystickGenericImpl, base), JoystickImpl, generic);
+}
+
+static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickImpl *This)
+{
+    return &This->generic.base.IDirectInputDevice8W_iface;
 }
 
 typedef struct _EffectImpl {
@@ -1348,6 +1354,53 @@ static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REF
     return DIERR_DEVICENOTREG;
 }
 
+static HRESULT WINAPI JoystickWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPDIPROPHEADER pdiph)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
+
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(rguid), pdiph);
+    _dump_DIPROPHEADER(pdiph);
+
+    if (!IS_DIPROP(rguid)) return DI_OK;
+
+    switch (LOWORD(rguid)) {
+    case (DWORD_PTR) DIPROP_GUIDANDPATH:
+    {
+        static const WCHAR formatW[] = {'\\','\\','?','\\','h','i','d','#','v','i','d','_','%','0','4','x','&',
+                                        'p','i','d','_','%','0','4','x','&','%','s','_','%','i',0};
+        static const WCHAR miW[] = {'m','i',0};
+        static const WCHAR igW[] = {'i','g',0};
+
+        BOOL is_gamepad;
+        IOHIDDeviceRef device = get_device_ref(This->id);
+        LPDIPROPGUIDANDPATH pd = (LPDIPROPGUIDANDPATH)pdiph;
+        WORD vid = get_device_property_long(device, CFSTR(kIOHIDVendorIDKey));
+        WORD pid = get_device_property_long(device, CFSTR(kIOHIDProductIDKey));
+
+        if (!pid || !vid)
+            return DIERR_UNSUPPORTED;
+
+        is_gamepad = is_xinput_device(&This->generic.devcaps, vid, pid);
+        pd->guidClass = GUID_DEVCLASS_HIDCLASS;
+        sprintfW(pd->wszPath, formatW, vid, pid, is_gamepad ? igW : miW, This->id);
+
+        TRACE("DIPROP_GUIDANDPATH(%s, %s): returning fake path\n", debugstr_guid(&pd->guidClass), debugstr_w(pd->wszPath));
+        break;
+    }
+
+    default:
+        return JoystickWGenericImpl_GetProperty(iface, rguid, pdiph);
+    }
+
+    return DI_OK;
+}
+
+static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
+{
+    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
+    return JoystickWImpl_GetProperty(IDirectInputDevice8W_from_impl(This), rguid, pdiph);
+}
+
 static HRESULT osx_set_autocenter(JoystickImpl *This,
         const DIPROPDWORD *header)
 {
@@ -1530,7 +1583,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     IDirectInputDevice2AImpl_Release,
     JoystickAGenericImpl_GetCapabilities,
     IDirectInputDevice2AImpl_EnumObjects,
-    JoystickAGenericImpl_GetProperty,
+    JoystickAImpl_GetProperty,
     JoystickAImpl_SetProperty,
     IDirectInputDevice2AImpl_Acquire,
     IDirectInputDevice2AImpl_Unacquire,
@@ -1566,7 +1619,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice2WImpl_Release,
     JoystickWGenericImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-    JoystickWGenericImpl_GetProperty,
+    JoystickWImpl_GetProperty,
     JoystickWImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
