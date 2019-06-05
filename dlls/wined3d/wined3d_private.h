@@ -1946,7 +1946,6 @@ struct wined3d_context
     GLenum                  untracked_materials[2];
     UINT                    blit_w, blit_h;
     enum fogsource          fog_source;
-    DWORD active_texture;
 
     UINT instance_count;
 
@@ -1982,6 +1981,8 @@ struct wined3d_context_gl
     uint32_t padding : 27;
 
     uint32_t default_attrib_value_set;
+
+    unsigned int active_texture;
 
     GLenum *texture_type;
 
