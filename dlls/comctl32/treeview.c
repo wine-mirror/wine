@@ -5027,7 +5027,7 @@ static LRESULT
 TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     short wheelDelta;
-    UINT pulScrollLines = 3;
+    INT pulScrollLines = 3;
 
     if (wParam & (MK_SHIFT | MK_CONTROL))
         return DefWindowProcW(infoPtr->hwnd, WM_MOUSEWHEEL, wParam, lParam);
@@ -5051,8 +5051,8 @@ TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	int maxDy;
 	int lineScroll;
 
-	lineScroll = pulScrollLines * (float)infoPtr->wheelRemainder / WHEEL_DELTA;
-	infoPtr->wheelRemainder -= WHEEL_DELTA * lineScroll / (int)pulScrollLines;
+	lineScroll = pulScrollLines * infoPtr->wheelRemainder / WHEEL_DELTA;
+	infoPtr->wheelRemainder -= WHEEL_DELTA * lineScroll / pulScrollLines;
 
 	newDy = infoPtr->firstVisible->visibleOrder - lineScroll;
 	maxDy = infoPtr->maxVisibleOrder;
