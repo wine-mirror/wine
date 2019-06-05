@@ -301,7 +301,7 @@ static void handle_bus_relations( DEVICE_OBJECT *device )
         if (get_driver_for_id( ptr, driver ))
             break;
     }
-    RtlFreeHeap( GetProcessHeap(), 0, ids );
+    ExFreePool( ids );
 
     if (!driver[0])
     {
@@ -409,7 +409,7 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
             else
                 status = STATUS_BUFFER_TOO_SMALL;
 
-            HeapFree( GetProcessHeap(), 0, id );
+            ExFreePool( id );
             break;
         }
         case DevicePropertyPhysicalDeviceObjectName:
@@ -658,17 +658,17 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
             HeapFree( GetProcessHeap(), 0, id );
             if (!rc)
             {
-                HeapFree( GetProcessHeap(), 0, instance_id );
+                ExFreePool( instance_id );
                 return STATUS_UNSUCCESSFUL;
             }
         }
         else
         {
-            HeapFree( GetProcessHeap(), 0, instance_id );
+            ExFreePool( instance_id );
             return STATUS_UNSUCCESSFUL;
         }
     }
-    HeapFree( GetProcessHeap(), 0, instance_id );
+    ExFreePool( instance_id );
 
     if (!SetupDiCreateDeviceInterfaceW( set, &sp_device, class_guid, refstr ? refstr->Buffer : NULL, 0, &sp_iface ))
         return STATUS_UNSUCCESSFUL;
