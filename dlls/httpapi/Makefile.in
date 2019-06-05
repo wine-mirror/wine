@@ -1,5 +1,7 @@
 MODULE    = httpapi.dll
 IMPORTLIB = httpapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	httpapi_main.c
