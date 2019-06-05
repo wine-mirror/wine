@@ -5158,7 +5158,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
         case WM_MOUSEWHEEL:
                 {
                     int wheelDelta;
-                    UINT pulScrollLines = 3;
+                    INT pulScrollLines = 3;
                     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
 
                     if (wParam & (MK_SHIFT | MK_CONTROL)) {
@@ -5175,9 +5175,9 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
                     if (es->wheelDeltaRemainder && pulScrollLines)
                     {
                         int cLineScroll;
-                        pulScrollLines = (int) min((UINT) es->line_count, pulScrollLines);
-                        cLineScroll = pulScrollLines * (float)es->wheelDeltaRemainder / WHEEL_DELTA;
-                        es->wheelDeltaRemainder -= WHEEL_DELTA * cLineScroll / (int)pulScrollLines;
+                        pulScrollLines = min(es->line_count, pulScrollLines);
+                        cLineScroll = pulScrollLines * es->wheelDeltaRemainder / WHEEL_DELTA;
+                        es->wheelDeltaRemainder -= WHEEL_DELTA * cLineScroll / pulScrollLines;
                         result = EDIT_EM_LineScroll(es, 0, -cLineScroll);
                     }
                 }
