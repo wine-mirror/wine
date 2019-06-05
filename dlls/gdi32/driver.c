@@ -1279,8 +1279,28 @@ NTSTATUS WINAPI D3DKMTEscape( const void *pData )
  */
 NTSTATUS WINAPI D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
 {
-    FIXME("(%p): stub\n", desc);
-    return STATUS_SUCCESS;
+    NTSTATUS status = STATUS_INVALID_PARAMETER;
+    struct d3dkmt_adapter *adapter;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc || !desc->hAdapter)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &driver_section );
+    LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
+    {
+        if (adapter->handle == desc->hAdapter)
+        {
+            list_remove( &adapter->entry );
+            heap_free( adapter );
+            status = STATUS_SUCCESS;
+            break;
+        }
+    }
+    LeaveCriticalSection( &driver_section );
+
+    return status;
 }
 
 /******************************************************************************

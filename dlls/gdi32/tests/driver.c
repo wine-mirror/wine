@@ -179,11 +179,11 @@ static void test_D3DKMTCloseAdapter(void)
 
     /* Invalid parameters */
     status = pD3DKMTCloseAdapter(NULL);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
 
     memset(&close_adapter_desc, 0, sizeof(close_adapter_desc));
     status = pD3DKMTCloseAdapter(&close_adapter_desc);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
 }
 
 static void test_D3DKMTCreateDevice(void)
