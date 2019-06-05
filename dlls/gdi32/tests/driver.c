@@ -194,7 +194,7 @@ static void test_D3DKMTCreateDevice(void)
     D3DKMT_DESTROYDEVICE destroy_device_desc;
     NTSTATUS status;
 
-    if (!pD3DKMTCreateDevice || pD3DKMTCreateDevice(NULL) == STATUS_PROCEDURE_NOT_FOUND)
+    if (!pD3DKMTCreateDevice || pD3DKMTCreateDevice(NULL) == STATUS_PROCEDURE_NOT_FOUND || !pD3DKMTDestroyDevice)
     {
         skip("D3DKMTCreateDevice() or D3DKMTDestroyDevice() is unavailable.\n");
         return;

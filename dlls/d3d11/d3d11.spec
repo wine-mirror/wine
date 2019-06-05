@@ -8,7 +8,7 @@
 @ stdcall D3DKMTCloseAdapter(ptr) gdi32.D3DKMTCloseAdapter
 @ stub D3DKMTCreateAllocation
 @ stub D3DKMTCreateContext
-@ stub D3DKMTCreateDevice
+@ stdcall D3DKMTCreateDevice(ptr) gdi32.D3DKMTCreateDevice
 @ stub D3DKMTCreateSynchronizationObject
 @ stub D3DKMTDestroyAllocation
 @ stub D3DKMTDestroyContext

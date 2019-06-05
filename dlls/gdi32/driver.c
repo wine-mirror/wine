@@ -59,10 +59,17 @@ struct d3dkmt_adapter
     struct list entry;                  /* List entry */
 };
 
+struct d3dkmt_device
+{
+    D3DKMT_HANDLE handle;               /* Kernel mode graphics device handle*/
+    struct list entry;                  /* List entry */
+};
+
 static struct list drivers = LIST_INIT( drivers );
 static struct graphics_driver *display_driver;
 
 static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
+static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
 
 const struct gdi_dc_funcs *font_driver = NULL;
 
@@ -1340,5 +1347,50 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
     desc->AdapterLuid.LowPart = 0;
     desc->AdapterLuid.HighPart = 0;
     desc->VidPnSourceId = 0;
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *		D3DKMTCreateDevice [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTCreateDevice( D3DKMT_CREATEDEVICE *desc )
+{
+    static D3DKMT_HANDLE handle_start = 0;
+    struct d3dkmt_adapter *adapter;
+    struct d3dkmt_device *device;
+    BOOL found = FALSE;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &driver_section );
+    LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
+    {
+        if (adapter->handle == desc->hAdapter)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+    LeaveCriticalSection( &driver_section );
+
+    if (!found)
+        return STATUS_INVALID_PARAMETER;
+
+    if (desc->Flags.LegacyMode || desc->Flags.RequestVSync || desc->Flags.DisableGpuTimeout)
+        FIXME("Flags unsupported.\n");
+
+    device = heap_alloc_zero( sizeof( *device ) );
+    if (!device)
+        return STATUS_NO_MEMORY;
+
+    EnterCriticalSection( &driver_section );
+    device->handle = ++handle_start;
+    list_add_tail( &d3dkmt_devices, &device->entry );
+    LeaveCriticalSection( &driver_section );
+
+    desc->hDevice = device->handle;
     return STATUS_SUCCESS;
 }

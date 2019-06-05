@@ -82,6 +82,7 @@
 @ stdcall CreateSolidBrush(long)
 @ stdcall D3DKMTCloseAdapter(ptr)
 @ stdcall D3DKMTCreateDCFromMemory(ptr)
+@ stdcall D3DKMTCreateDevice(ptr)
 @ stdcall D3DKMTDestroyDCFromMemory(ptr)
 @ stdcall D3DKMTEscape(ptr)
 @ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)

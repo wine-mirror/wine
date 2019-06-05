@@ -12,7 +12,7 @@
 @ stub D3DKMTCreateAllocation2
 @ stub D3DKMTCreateContext
 @ stdcall D3DKMTCreateDCFromMemory(ptr) gdi32.D3DKMTCreateDCFromMemory
-@ stub D3DKMTCreateDevice
+@ stdcall D3DKMTCreateDevice(ptr) gdi32.D3DKMTCreateDevice
 @ stub D3DKMTCreateKeyedMutex
 @ stub D3DKMTCreateKeyedMutex2
 @ stub D3DKMTCreateOutputDupl
