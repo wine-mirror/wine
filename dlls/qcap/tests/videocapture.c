@@ -118,12 +118,12 @@ START_TEST(videocapture)
         {
             test_capture(filter);
             IBaseFilter_Release(filter);
+            ref = IBaseFilter_Release(filter);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
         }
         else
             skip("Failed to open capture device, hr=%#x.\n", hr);
 
-        ref = IBaseFilter_Release(filter);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
         IMoniker_Release(moniker);
     }
 
