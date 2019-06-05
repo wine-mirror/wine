@@ -19,7 +19,6 @@
  */
 #define COBJMACROS
 
-#include "config.h"
 
 #include "ole2.h"
 #include "sddl.h"
