@@ -2452,6 +2452,7 @@ void macdrv_window_did_unminimize(HWND hwnd)
     {
         TRACE("restoring win %p/%p\n", hwnd, data->cocoa_window);
         release_win_data(data);
+        SetActiveWindow(hwnd);
         SendMessageW(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
         return;
     }
