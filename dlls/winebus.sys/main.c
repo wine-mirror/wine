@@ -31,6 +31,7 @@
 #include "winternl.h"
 #include "winreg.h"
 #include "setupapi.h"
+#include "cfgmgr32.h"
 #include "winioctl.h"
 #include "ddk/wdm.h"
 #include "ddk/hidport.h"
@@ -42,6 +43,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
+
+static const WCHAR backslashW[] = {'\\',0};
 
 #define VID_MICROSOFT 0x045e
 
@@ -140,28 +143,14 @@ static DWORD get_device_index(WORD vid, WORD pid, WORD input)
 
 static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 {
-    static const WCHAR formatW[] =  {'%','s','\\','v','i','d','_','%','0','4','x','&','p','i','d','_','%','0','4','x',
-                                     '\\','%','i','&','%','s','&','%','x','&','%','i',0};
-    static const WCHAR format_inputW[] = {'%','s','\\','v','i','d','_','%','0','4','x','&','p','i','d','_','%','0','4','x','&',
-                                     '%','s','_','%','i','\\','%','i','&','%','s','&','%','x','&','%','i',0};
+    static const WCHAR formatW[] =  {'%','i','&','%','s','&','%','x','&','%','i',0};
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     const WCHAR *serial = ext->serial ? ext->serial : zero_serialW;
-    DWORD len = strlenW(ext->busid) + strlenW(serial) + 64;
+    DWORD len = strlenW(serial) + 33;
     WCHAR *dst;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
-    {
-        if (ext->input == (WORD)-1)
-        {
-            sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid,
-                    ext->version, serial, ext->uid, ext->index);
-        }
-        else
-        {
-            sprintfW(dst, format_inputW, ext->busid, ext->vid, ext->pid, ext->is_gamepad ? igW : miW,
-                    ext->input, ext->version, serial, ext->uid, ext->index);
-        }
-    }
+        sprintfW(dst, formatW, ext->version, serial, ext->uid, ext->index);
 
     return dst;
 }
@@ -211,6 +200,7 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
                                      const GUID *class, const platform_vtbl *vtbl, DWORD platform_data_size)
 {
     static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e','\\','%','s','#','%','p',0};
+    WCHAR *id, instance[MAX_DEVICE_ID_LEN];
     struct device_extension *ext;
     struct pnp_device *pnp_dev;
     DEVICE_OBJECT *device;
@@ -218,7 +208,6 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
     WCHAR dev_name[256];
     HDEVINFO devinfo;
     SP_DEVINFO_DATA data = {sizeof(data)};
-    WCHAR *instance = NULL;
     NTSTATUS status;
     DWORD length;
 
@@ -279,12 +268,22 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
         goto error;
     }
 
-    instance = get_instance_id(device);
-    if (!instance)
+    if (!(id = get_device_id(device)))
     {
         ERR("failed to generate instance id\n");
         goto error;
     }
+    strcpyW(instance, id);
+    ExFreePool(id);
+
+    if (!(id = get_instance_id(device)))
+    {
+        ERR("failed to generate instance id\n");
+        goto error;
+    }
+    strcatW(instance, backslashW);
+    strcatW(instance, id);
+    ExFreePool(id);
 
     if (SetupDiCreateDeviceInfoW(devinfo, instance, class, NULL, NULL, DICD_INHERIT_CLASSDRVS, &data))
     {
@@ -295,7 +294,6 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
         ERR("failed to create device info, error %#x\n", GetLastError());
 
 error:
-    HeapFree(GetProcessHeap(), 0, instance);
     SetupDiDestroyDeviceInfoList(devinfo);
     return device;
 }

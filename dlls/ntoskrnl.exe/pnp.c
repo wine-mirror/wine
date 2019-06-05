@@ -204,6 +204,36 @@ static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
     return send_device_irp( device, irp, NULL );
 }
 
+static NTSTATUS get_device_instance_id( DEVICE_OBJECT *device, WCHAR *buffer )
+{
+    static const WCHAR backslashW[] = {'\\',0};
+    NTSTATUS status;
+    WCHAR *id;
+
+    if ((status = get_device_id( device, BusQueryDeviceID, &id )))
+    {
+        ERR("Failed to get device ID, status %#x.\n", status);
+        return status;
+    }
+
+    strcpyW( buffer, id );
+    ExFreePool( id );
+
+    if ((status = get_device_id( device, BusQueryInstanceID, &id )))
+    {
+        ERR("Failed to get instance ID, status %#x.\n", status);
+        return status;
+    }
+
+    strcatW( buffer, backslashW );
+    strcatW( buffer, id );
+    ExFreePool( id );
+
+    TRACE("Returning ID %s.\n", debugstr_w(buffer));
+
+    return STATUS_SUCCESS;
+}
+
 static BOOL get_driver_for_id( const WCHAR *id, WCHAR *driver )
 {
     static const WCHAR serviceW[] = {'S','e','r','v','i','c','e',0};
@@ -593,22 +623,6 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
     return ret;
 }
 
-static NTSTATUS get_instance_id(DEVICE_OBJECT *device, WCHAR **instance_id)
-{
-    WCHAR *id, *ptr;
-    NTSTATUS status;
-
-    status = get_device_id( device, BusQueryInstanceID, &id );
-    if (status != STATUS_SUCCESS) return status;
-
-    struprW( id );
-    for (ptr = id; *ptr; ptr++)
-        if (*ptr == '\\') *ptr = '#';
-
-    *instance_id = id;
-    return STATUS_SUCCESS;
-}
-
 /***********************************************************************
  *           IoRegisterDeviceInterface (NTOSKRNL.EXE.@)
  */
@@ -617,29 +631,28 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
 {
     SP_DEVICE_INTERFACE_DATA sp_iface = {sizeof(sp_iface)};
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *data;
     NTSTATUS status = STATUS_SUCCESS;
     struct device_interface *iface;
-    WCHAR *instance_id;
     DWORD required;
     HDEVINFO set;
 
     TRACE("device %p, class_guid %s, refstr %s, symbolic_link %p.\n",
             device, debugstr_guid(class_guid), debugstr_us(refstr), symbolic_link);
 
+    if ((status = get_device_instance_id( device, device_instance_id )))
+        return status;
+
     set = SetupDiGetClassDevsW( class_guid, NULL, NULL, DIGCF_DEVICEINTERFACE );
     if (set == INVALID_HANDLE_VALUE) return STATUS_UNSUCCESSFUL;
 
-    status = get_instance_id( device, &instance_id );
-    if (status != STATUS_SUCCESS) return status;
-
-    if (!SetupDiCreateDeviceInfoW( set, instance_id, class_guid, NULL, NULL, 0, &sp_device )
-            && !SetupDiOpenDeviceInfoW( set, instance_id, NULL, 0, &sp_device ))
+    if (!SetupDiCreateDeviceInfoW( set, device_instance_id, class_guid, NULL, NULL, 0, &sp_device )
+            && !SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device ))
     {
-        ERR("Failed to create device %s, error %#x.\n", debugstr_w(instance_id), GetLastError());
+        ERR("Failed to create device %s, error %#x.\n", debugstr_w(device_instance_id), GetLastError());
         return GetLastError();
     }
-    ExFreePool( instance_id );
 
     if (!SetupDiCreateDeviceInterfaceW( set, &sp_device, class_guid, refstr ? refstr->Buffer : NULL, 0, &sp_iface ))
         return STATUS_UNSUCCESSFUL;

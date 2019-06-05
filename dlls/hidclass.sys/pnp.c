@@ -32,8 +32,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 static const WCHAR device_enumeratorW[] = {'H','I','D',0};
 static const WCHAR separator_W[] = {'\\',0};
-static const WCHAR device_deviceid_fmtW[] = {'%','s','\\',
-    'v','i','d','_','%','0','4','x','&','p','i','d','_','%', '0','4','x',0};
 
 static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
     void *context)
@@ -43,7 +41,7 @@ static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCHAR **id)
+static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCHAR *id)
 {
     NTSTATUS status;
     IO_STACK_LOCATION *irpsp;
@@ -65,7 +63,8 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
     if (status == STATUS_PENDING)
         WaitForSingleObject(event, INFINITE);
 
-    *id = (WCHAR*)irp->IoStatus.Information;
+    lstrcpyW(id, (WCHAR *)irp->IoStatus.Information);
+    ExFreePool( (WCHAR *)irp->IoStatus.Information );
     status = irp->IoStatus.u.Status;
     IoCompleteRequest(irp, IO_NO_INCREMENT );
     CloseHandle(event);
@@ -75,6 +74,7 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
 
 NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 {
+    WCHAR device_id[MAX_DEVICE_ID_LEN], instance_id[MAX_DEVICE_ID_LEN];
     hid_device *hiddev;
     DEVICE_OBJECT *device = NULL;
     NTSTATUS status;
@@ -84,17 +84,20 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     HID_DESCRIPTOR descriptor;
     BYTE *reportDescriptor;
     INT i;
-    WCHAR *PDO_id;
-    WCHAR *id_ptr;
 
-    status = get_device_id(PDO, BusQueryInstanceID, &PDO_id);
-    if (status != STATUS_SUCCESS)
+    if ((status = get_device_id(PDO, BusQueryDeviceID, device_id)))
     {
-        ERR("Failed to get PDO id(%x)\n",status);
+        ERR("Failed to get PDO device id, status %#x.\n", status);
         return status;
     }
 
-    TRACE("PDO add device(%p:%s)\n", PDO, debugstr_w(PDO_id));
+    if ((status = get_device_id(PDO, BusQueryInstanceID, instance_id)))
+    {
+        ERR("Failed to get PDO instance id, status %#x.\n", status);
+        return status;
+    }
+
+    TRACE("Adding device to PDO %p, id %s\\%s.\n", PDO, debugstr_w(device_id), debugstr_w(instance_id));
     minidriver = find_minidriver(driver);
 
     hiddev = HeapAlloc(GetProcessHeap(), 0, sizeof(*hiddev));
@@ -105,7 +108,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (status != STATUS_SUCCESS)
     {
         ERR("Failed to create HID object (%x)\n",status);
-        HeapFree(GetProcessHeap(), 0, PDO_id);
         HeapFree(GetProcessHeap(), 0, hiddev);
         return status;
     }
@@ -120,7 +122,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (status != STATUS_SUCCESS)
     {
         ERR("Minidriver AddDevice failed (%x)\n",status);
-        HeapFree(GetProcessHeap(), 0, PDO_id);
         HID_DeleteDevice(&minidriver->minidriver, device);
         return status;
     }
@@ -132,7 +133,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("Minidriver failed to get Attributes(%x)\n",status);
         HID_DeleteDevice(&minidriver->minidriver, device);
-        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
 
@@ -147,7 +147,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("Cannot get Device Descriptor(%x)\n",status);
         HID_DeleteDevice(&minidriver->minidriver, device);
-        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
     for (i = 0; i < descriptor.bNumDescriptors; i++)
@@ -158,7 +157,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("No Report Descriptor found in reply\n");
         HID_DeleteDevice(&minidriver->minidriver, device);
-        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
 
@@ -170,7 +168,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         ERR("Cannot get Report Descriptor(%x)\n",status);
         HID_DeleteDevice(&minidriver->minidriver, device);
         HeapFree(GetProcessHeap(), 0, reportDescriptor);
-        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
 
@@ -181,7 +178,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("Cannot parse Report Descriptor\n");
         HID_DeleteDevice(&minidriver->minidriver, device);
-        HeapFree(GetProcessHeap(), 0, PDO_id);
         return STATUS_NOT_SUPPORTED;
     }
 
@@ -189,16 +185,11 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 
     ext->information.DescriptorSize = ext->preparseData->dwSize;
 
-    lstrcpyW(ext->instance_id, device_enumeratorW);
-    lstrcatW(ext->instance_id, separator_W);
-    /* Skip the original enumerator */
-    id_ptr = wcschr(PDO_id, '\\');
-    id_ptr++;
-    lstrcatW(ext->instance_id, id_ptr);
-    HeapFree(GetProcessHeap(), 0, PDO_id);
+    lstrcpyW(ext->instance_id, instance_id);
 
-    swprintf(ext->device_id, ARRAY_SIZE(ext->device_id), device_deviceid_fmtW,
-             device_enumeratorW, ext->information.VendorID, ext->information.ProductID);
+    lstrcpyW(ext->device_id, device_enumeratorW);
+    lstrcatW(ext->device_id, separator_W);
+    lstrcatW(ext->device_id, wcschr(device_id, '\\') + 1);
 
     HID_LinkDevice(device);
 
@@ -261,7 +252,11 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
                 {
                     WCHAR *ptr;
                     ptr = id;
-                    /* Instance ID */
+                    /* Device instance ID */
+                    lstrcpyW(ptr, ext->device_id);
+                    ptr += lstrlenW(ext->device_id);
+                    lstrcpyW(ptr, separator_W);
+                    ptr += 1;
                     lstrcpyW(ptr, ext->instance_id);
                     ptr += lstrlenW(ext->instance_id) + 1;
                     /* Device ID */
