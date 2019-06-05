@@ -1,6 +1,8 @@
 MODULE    = hid.dll
 IMPORTLIB = hid
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	hidd.c \
 	hidp.c \
