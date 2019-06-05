@@ -84,6 +84,7 @@
 @ stdcall D3DKMTCreateDCFromMemory(ptr)
 @ stdcall D3DKMTCreateDevice(ptr)
 @ stdcall D3DKMTDestroyDCFromMemory(ptr)
+@ stdcall D3DKMTDestroyDevice(ptr)
 @ stdcall D3DKMTEscape(ptr)
 @ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr)

@@ -22,7 +22,7 @@
 @ stub D3DKMTDestroyAllocation
 @ stub D3DKMTDestroyContext
 @ stdcall D3DKMTDestroyDCFromMemory(ptr) gdi32.D3DKMTDestroyDCFromMemory
-@ stub D3DKMTDestroyDevice
+@ stdcall D3DKMTDestroyDevice(ptr) gdi32.D3DKMTDestroyDevice
 @ stub D3DKMTDestroyKeyedMutex
 @ stub D3DKMTDestroyOutputDupl
 @ stub D3DKMTDestroyOverlay

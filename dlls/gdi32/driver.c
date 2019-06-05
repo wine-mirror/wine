@@ -1394,3 +1394,32 @@ NTSTATUS WINAPI D3DKMTCreateDevice( D3DKMT_CREATEDEVICE *desc )
     desc->hDevice = device->handle;
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ *		D3DKMTDestroyDevice [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
+{
+    NTSTATUS status = STATUS_INVALID_PARAMETER;
+    struct d3dkmt_device *device;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc || !desc->hDevice)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &driver_section );
+    LIST_FOR_EACH_ENTRY( device, &d3dkmt_devices, struct d3dkmt_device, entry )
+    {
+        if (device->handle == desc->hDevice)
+        {
+            list_remove( &device->entry );
+            heap_free( device );
+            status = STATUS_SUCCESS;
+            break;
+        }
+    }
+    LeaveCriticalSection( &driver_section );
+
+    return status;
+}

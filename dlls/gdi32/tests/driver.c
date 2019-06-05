@@ -194,9 +194,9 @@ static void test_D3DKMTCreateDevice(void)
     D3DKMT_DESTROYDEVICE destroy_device_desc;
     NTSTATUS status;
 
-    if (!pD3DKMTCreateDevice || pD3DKMTCreateDevice(NULL) == STATUS_PROCEDURE_NOT_FOUND || !pD3DKMTDestroyDevice)
+    if (!pD3DKMTCreateDevice || pD3DKMTCreateDevice(NULL) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTCreateDevice() or D3DKMTDestroyDevice() is unavailable.\n");
+        win_skip("D3DKMTCreateDevice() is unavailable.\n");
         return;
     }
 
@@ -240,17 +240,17 @@ static void test_D3DKMTDestroyDevice(void)
 
     if (!pD3DKMTDestroyDevice || pD3DKMTDestroyDevice(NULL) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTDestroyDevice() is unavailable.\n");
+        win_skip("D3DKMTDestroyDevice() is unavailable.\n");
         return;
     }
 
     /* Invalid parameters */
     status = pD3DKMTDestroyDevice(NULL);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
 
     memset(&destroy_device_desc, 0, sizeof(destroy_device_desc));
     status = pD3DKMTDestroyDevice(&destroy_device_desc);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
 }
 
 static void test_D3DKMTCheckVidPnExclusiveOwnership(void)

@@ -12,7 +12,7 @@
 @ stub D3DKMTCreateSynchronizationObject
 @ stub D3DKMTDestroyAllocation
 @ stub D3DKMTDestroyContext
-@ stub D3DKMTDestroyDevice
+@ stdcall D3DKMTDestroyDevice(ptr) gdi32.D3DKMTDestroyDevice
 @ stub D3DKMTDestroySynchronizationObject
 @ stub D3DKMTEscape
 @ stub D3DKMTGetContextSchedulingPriority
