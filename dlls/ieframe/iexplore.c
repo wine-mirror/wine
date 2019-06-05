@@ -957,7 +957,7 @@ static BOOL create_ie_window(BOOL nohome, const WCHAR *cmdline)
         VARIANT var_url;
         int cmdlen;
 
-        cmdlen = strlenW(cmdline);
+        cmdlen = lstrlenW(cmdline);
         if(cmdlen > 2 && cmdline[0] == '"' && cmdline[cmdlen-1] == '"') {
             cmdline++;
             cmdlen -= 2;
@@ -988,18 +988,18 @@ static HDDEDATA open_dde_url(WCHAR *dde_url)
     url = dde_url;
     if(*url == '"') {
         url++;
-        url_end = strchrW(url, '"');
+        url_end = wcschr(url, '"');
         if(!url_end) {
             FIXME("missing string terminator\n");
             return 0;
         }
         *url_end = 0;
     }else {
-        url_end = strchrW(url, ',');
+        url_end = wcschr(url, ',');
         if(url_end)
             *url_end = 0;
         else
-            url_end = url + strlenW(url);
+            url_end = url + lstrlenW(url);
     }
 
     LIST_FOR_EACH_ENTRY(iter, &ie_list, InternetExplorer, entry) {
@@ -1149,11 +1149,11 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
 
         while (cmdline[length] && cmdline[length] != ' ' && cmdline[length] != '\t') length++;
 
-        if (!strncmpiW(cmdline, embeddingW, length))
+        if (!wcsnicmp(cmdline, embeddingW, length))
             embedding = TRUE;
-        else if (!strncmpiW(cmdline, nohomeW, length))
+        else if (!wcsnicmp(cmdline, nohomeW, length))
             nohome = TRUE;
-        else if (!strncmpiW(cmdline, startmanagerW, length))
+        else if (!wcsnicmp(cmdline, startmanagerW, length))
             manager = TRUE;
         else
             break;

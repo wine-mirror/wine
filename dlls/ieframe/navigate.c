@@ -111,7 +111,7 @@ static void set_status_text(BindStatusCallback *This, ULONG statuscode, LPCWSTR 
         fmt[0] = 0;
         /* the format string must have one "%s" for the str */
         LoadStringW(ieframe_instance, IDS_STATUSFMT_FIRST + statuscode, fmt, IDS_STATUSFMT_MAXLEN);
-        snprintfW(buffer, ARRAY_SIZE(buffer), fmt, str);
+        swprintf(buffer, ARRAY_SIZE(buffer), fmt, str);
     }
 
     V_VT(&arg) = VT_BSTR;
@@ -466,7 +466,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate *iface,
           dwReserved, pszAdditionalHeaders);
 
     if(This->headers) {
-        int size = (strlenW(This->headers)+1)*sizeof(WCHAR);
+        int size = (lstrlenW(This->headers)+1)*sizeof(WCHAR);
         *pszAdditionalHeaders = CoTaskMemAlloc(size);
         memcpy(*pszAdditionalHeaders, This->headers, size);
     }
