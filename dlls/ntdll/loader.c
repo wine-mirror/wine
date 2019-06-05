@@ -538,6 +538,28 @@ static WINE_MODREF *find_fileid_module( struct stat *st )
 }
 
 
+/**********************************************************************
+ *	    find_so_module
+ *
+ * Find a module from its so file handle.
+ * The loader_section must be locked while calling this function
+ */
+static WINE_MODREF *find_so_module( void *handle )
+{
+    LIST_ENTRY *mark, *entry;
+
+    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+    {
+        LDR_MODULE *mod = CONTAINING_RECORD( entry, LDR_MODULE, InLoadOrderModuleList );
+        WINE_MODREF *wm = CONTAINING_RECORD( mod, WINE_MODREF, ldr );
+
+        if (mod->Flags & LDR_WINE_INTERNAL && mod->SectionHandle == handle) return wm;
+    }
+    return NULL;
+}
+
+
 /*************************************************************************
  *		find_forwarded_export
  *
@@ -2465,27 +2487,19 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
 
     if (!info.wm)
     {
-        PLIST_ENTRY mark, entry;
-
         /* The constructor wasn't called, this means the .so is already
          * loaded under a different name. Try to find the wm for it. */
 
-        mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-        for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+        if ((info.wm = find_so_module( handle )))
         {
-            LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
-            if (mod->Flags & LDR_WINE_INTERNAL && mod->SectionHandle == handle)
-            {
-                info.wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
-                TRACE( "Found %s at %p for builtin %s\n",
-                       debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress,
-                       debugstr_us(nt_name) );
-                break;
-            }
+            TRACE( "Found %s at %p for builtin %s\n",
+                   debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress,
+                   debugstr_us(nt_name) );
+            if (info.wm->ldr.LoadCount != -1) info.wm->ldr.LoadCount++;
         }
-        wine_dll_unload( handle );  /* release the libdl refcount */
-        if (!info.wm) return STATUS_INVALID_IMAGE_FORMAT;
-        if (info.wm->ldr.LoadCount != -1) info.wm->ldr.LoadCount++;
+        else info.status = STATUS_INVALID_IMAGE_FORMAT;
+
+        wine_dlclose( handle, NULL, 0 ); /* release the libdl refcount */
     }
     else
     {
