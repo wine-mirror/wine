@@ -2083,7 +2083,7 @@ static LRESULT LISTBOX_HandleHScroll( LB_DESCR *descr, WORD scrollReq, WORD pos 
 
 static LRESULT LISTBOX_HandleMouseWheel(LB_DESCR *descr, SHORT delta )
 {
-    UINT pulScrollLines = 3;
+    INT pulScrollLines = 3;
 
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
 
@@ -2097,9 +2097,20 @@ static LRESULT LISTBOX_HandleMouseWheel(LB_DESCR *descr, SHORT delta )
     if (descr->wheel_remain && pulScrollLines)
     {
         int cLineScroll;
-        pulScrollLines = min((UINT) descr->page_size, pulScrollLines);
-        cLineScroll = pulScrollLines * (float)descr->wheel_remain / WHEEL_DELTA;
-        descr->wheel_remain -= WHEEL_DELTA * cLineScroll / (int)pulScrollLines;
+        if (descr->style & LBS_MULTICOLUMN)
+        {
+            pulScrollLines = min(descr->width / descr->column_width, pulScrollLines);
+            pulScrollLines = max(1, pulScrollLines);
+            cLineScroll = pulScrollLines * descr->wheel_remain / WHEEL_DELTA;
+            descr->wheel_remain -= WHEEL_DELTA * cLineScroll / pulScrollLines;
+            cLineScroll *= descr->page_size;
+        }
+        else
+        {
+            pulScrollLines = min(descr->page_size, pulScrollLines);
+            cLineScroll = pulScrollLines * descr->wheel_remain / WHEEL_DELTA;
+            descr->wheel_remain -= WHEEL_DELTA * cLineScroll / pulScrollLines;
+        }
         LISTBOX_SetTopItem( descr, descr->top_item - cLineScroll, TRUE );
     }
     return 0;
