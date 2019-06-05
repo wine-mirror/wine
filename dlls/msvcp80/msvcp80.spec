@@ -2586,10 +2586,10 @@
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_ctor
 @ cdecl -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
-@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit_init
+@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_ctor_lock
 @ cdecl -arch=win32 ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z(ptr) _Lockit__Lockit_dtor
 @ cdecl -arch=win64 ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_dtor
-@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit_free
+@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_dtor_unlock
 @ cdecl -arch=win32 ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) locale__Locimp__Makeloc
 @ cdecl -arch=win64 ?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z(ptr long ptr ptr) locale__Locimp__Makeloc
 @ cdecl -arch=win32 ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) locale__Locimp__Makeushloc

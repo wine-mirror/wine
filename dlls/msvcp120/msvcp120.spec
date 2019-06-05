@@ -1562,10 +1562,10 @@
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_ctor
 @ cdecl -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
-@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit_init
+@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_ctor_lock
 @ cdecl -arch=win32 ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z(ptr) _Lockit__Lockit_dtor
 @ cdecl -arch=win64 ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_dtor
-@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit_free
+@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_dtor_unlock
 @ cdecl -arch=win32 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z(str ptr) tr2_sys__Lstat
 @ cdecl -arch=win64 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z(str ptr) tr2_sys__Lstat
 @ cdecl -arch=win32 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z(wstr ptr) tr2_sys__Lstat_wchar

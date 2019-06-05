@@ -1471,10 +1471,10 @@
 @ cdecl -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_ctor
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
-@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit_init
+@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_ctor_lock
 @ cdecl -arch=win32 ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z(ptr) _Lockit__Lockit_dtor
 @ cdecl -arch=win64 ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_dtor
-@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit_free
+@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_dtor_unlock
 @ cdecl -arch=arm ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAAXXZ(ptr) _TaskEventLogger__LogCancelTask
 @ thiscall -arch=i386 ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAEXXZ(ptr) _TaskEventLogger__LogCancelTask
 @ cdecl -arch=win64 ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QEAAXXZ(ptr) _TaskEventLogger__LogCancelTask

@@ -2913,10 +2913,10 @@
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_ctor
 @ cdecl -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
-@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit_init
+@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_ctor_lock
 @ cdecl -arch=win32 ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z(ptr) _Lockit__Lockit_dtor
 @ cdecl -arch=win64 ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_dtor
-@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit_free
+@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_dtor_unlock
 @ stub -arch=win32 ?_MP_Add@tr1@std@@YAXQA_K_K@Z
 @ stub -arch=win64 ?_MP_Add@tr1@std@@YAXQEA_K_K@Z
 @ stub -arch=win32 ?_MP_Get@tr1@std@@YA_KQA_K@Z
