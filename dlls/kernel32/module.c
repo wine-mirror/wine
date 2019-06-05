@@ -941,10 +941,19 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     const DWORD unsupported_flags = (LOAD_IGNORE_CODE_AUTHZ_LEVEL |
                                      LOAD_LIBRARY_REQUIRE_SIGNED_TARGET);
 
-    if (!(flags & load_library_search_flags)) flags |= default_search_flags;
-
     if( flags & unsupported_flags)
         FIXME("unsupported flag(s) used (flags: 0x%08x)\n", flags);
+
+    if (flags & LOAD_WITH_ALTERED_SEARCH_PATH)
+    {
+        if (flags & load_library_search_flags)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        if (default_search_flags) flags |= default_search_flags | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR;
+    }
+    else if (!(flags & load_library_search_flags)) flags |= default_search_flags;
 
     if (flags & load_library_search_flags)
         load_path = get_dll_load_path_search_flags( libname->Buffer, flags );
