@@ -22,6 +22,7 @@
 @ stub D3DKMTGetRuntimeData
 @ stub D3DKMTGetSharedPrimaryHandle
 @ stub D3DKMTLock
+@ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr) gdi32.D3DKMTOpenAdapterFromGdiDisplayName
 @ stub D3DKMTOpenAdapterFromHdc
 @ stub D3DKMTOpenResource
 @ stub D3DKMTPresent

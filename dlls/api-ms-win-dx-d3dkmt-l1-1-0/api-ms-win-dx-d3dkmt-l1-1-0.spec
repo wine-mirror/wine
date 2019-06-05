@@ -46,7 +46,7 @@
 @ stub D3DKMTLock
 @ stub D3DKMTOfferAllocations
 @ stub D3DKMTOpenAdapterFromDeviceName
-@ stub D3DKMTOpenAdapterFromGdiDisplayName
+@ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr) gdi32.D3DKMTOpenAdapterFromGdiDisplayName
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr) gdi32.D3DKMTOpenAdapterFromHdc
 @ stub D3DKMTOpenKeyedMutex
 @ stub D3DKMTOpenKeyedMutex2

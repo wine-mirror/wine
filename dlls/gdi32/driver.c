@@ -41,6 +41,7 @@
 #include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
@@ -51,8 +52,17 @@ struct graphics_driver
     const struct gdi_dc_funcs *funcs;
 };
 
+struct d3dkmt_adapter
+{
+    D3DKMT_HANDLE handle;               /* Kernel mode graphics adapter handle */
+    INT ordinal;                        /* Graphics adapter ordinal */
+    struct list entry;                  /* List entry */
+};
+
 static struct list drivers = LIST_INIT( drivers );
 static struct graphics_driver *display_driver;
+
+static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
 
 const struct gdi_dc_funcs *font_driver = NULL;
 
@@ -1270,5 +1280,45 @@ NTSTATUS WINAPI D3DKMTEscape( const void *pData )
 NTSTATUS WINAPI D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
 {
     FIXME("(%p): stub\n", desc);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *		D3DKMTOpenAdapterFromGdiDisplayName [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc )
+{
+    static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
+    static D3DKMT_HANDLE handle_start = 0;
+    struct d3dkmt_adapter *adapter;
+
+    TRACE("(%p) semi-stub\n", desc);
+
+    if (!desc)
+        return STATUS_UNSUCCESSFUL;
+
+    /* FIXME: Support multiple monitors */
+    if (lstrcmpiW( desc->DeviceName, display1W ))
+    {
+        FIXME("%s is unsupported\n", wine_dbgstr_w( desc->DeviceName ));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    adapter = heap_alloc( sizeof( *adapter ) );
+    if (!adapter)
+        return STATUS_NO_MEMORY;
+
+    EnterCriticalSection( &driver_section );
+    /* D3DKMT_HANDLE is UINT, so we can't use pointer as handle */
+    adapter->handle = ++handle_start;
+    adapter->ordinal = 0;
+    list_add_tail( &d3dkmt_adapters, &adapter->entry );
+    LeaveCriticalSection( &driver_section );
+
+    desc->hAdapter = handle_start;
+    /* FIXME: Support AdapterLuid */
+    desc->AdapterLuid.LowPart = 0;
+    desc->AdapterLuid.HighPart = 0;
+    desc->VidPnSourceId = 0;
     return STATUS_SUCCESS;
 }

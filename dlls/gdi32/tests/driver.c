@@ -56,7 +56,7 @@ static void test_D3DKMTOpenAdapterFromGdiDisplayName(void)
     if (!pD3DKMTOpenAdapterFromGdiDisplayName
         || pD3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_gdi_desc) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTOpenAdapterFromGdiDisplayName() is unavailable.\n");
+        win_skip("D3DKMTOpenAdapterFromGdiDisplayName() is unavailable.\n");
         return;
     }
 
