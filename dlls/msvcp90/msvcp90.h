@@ -297,6 +297,14 @@ ctype_char* ctype_char_use_facet(const locale*);
 ctype_wchar* ctype_wchar_use_facet(const locale*);
 ctype_wchar* ctype_short_use_facet(const locale*);
 
+/* class _Init_locks */
+typedef struct {
+    char empty_struct;
+} _Init_locks;
+
+void __cdecl _Init_locks__Init_locks_ctor(_Init_locks*);
+void __cdecl _Init_locks__Init_locks_dtor(_Init_locks*);
+
 /* class _Lockit */
 typedef struct {
 #if _MSVCP_VER >= 70
@@ -312,8 +320,6 @@ typedef struct {
 #define _LOCK_DEBUG 3
 #define _MAX_LOCK 4
 
-void init_lockit(void);
-void free_lockit(void);
 _Lockit* __thiscall _Lockit_ctor_locktype(_Lockit*, int);
 void __thiscall _Lockit_dtor(_Lockit*);
 

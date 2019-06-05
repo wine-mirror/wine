@@ -208,7 +208,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
         case DLL_PROCESS_ATTACH:
             init_cxx_funcs();
-            init_lockit();
+            _Init_locks__Init_locks_ctor(NULL);
             init_exception(hinstDLL);
             init_locale(hinstDLL);
             init_io(hinstDLL);
@@ -220,7 +220,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             if (lpvReserved) break;
             free_io();
             free_locale();
-            free_lockit();
+            _Init_locks__Init_locks_dtor(NULL);
 #if _MSVCP_VER >= 100
             free_misc();
 #endif

@@ -188,6 +188,14 @@ typedef struct {
 extern locale_id codecvt_char_id;
 extern locale_id codecvt_short_id;
 
+/* class _Init_locks */
+typedef struct {
+    char empty_struct;
+} _Init_locks;
+
+void __cdecl _Init_locks__Init_locks_ctor(_Init_locks*);
+void __cdecl _Init_locks__Init_locks_dtor(_Init_locks*);
+
 /* class _Lockit */
 typedef struct {
     char empty_struct;

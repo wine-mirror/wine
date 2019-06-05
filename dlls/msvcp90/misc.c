@@ -330,24 +330,69 @@ void CDECL mutex_mutex_dtor(mutex *m)
 
 static CRITICAL_SECTION lockit_cs[_MAX_LOCK];
 
-void init_lockit(void) {
+static LONG init_locks;
+static CRITICAL_SECTION init_locks_cs;
+static CRITICAL_SECTION_DEBUG init_locks_cs_debug =
+{
+    0, 0, &init_locks_cs,
+    { &init_locks_cs_debug.ProcessLocksList, &init_locks_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": init_locks_cs") }
+};
+static CRITICAL_SECTION init_locks_cs = { &init_locks_cs_debug, -1, 0, 0, 0, 0 };
+
+/* ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z */
+/* ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z */
+void __cdecl _Init_locks__Init_locks_ctor(_Init_locks *this)
+{
     int i;
 
-    for(i=0; i<_MAX_LOCK; i++)
+    EnterCriticalSection(&init_locks_cs);
+    if (!init_locks)
     {
-        InitializeCriticalSection(&lockit_cs[i]);
-        lockit_cs[i].DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Lockit critical section");
+        for(i=0; i<_MAX_LOCK; i++)
+        {
+            InitializeCriticalSection(&lockit_cs[i]);
+            lockit_cs[i].DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Lockit critical section");
+        }
     }
+    init_locks++;
+    LeaveCriticalSection(&init_locks_cs);
 }
 
-void free_lockit(void) {
+/* ??0_Init_locks@std@@QAE@XZ */
+/* ??0_Init_locks@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Init_locks_ctor, 4)
+_Init_locks* __thiscall _Init_locks_ctor(_Init_locks *this)
+{
+    _Init_locks__Init_locks_ctor(this);
+    return this;
+}
+
+/* ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z */
+/* ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z */
+void __cdecl _Init_locks__Init_locks_dtor(_Init_locks *this)
+{
     int i;
 
-    for(i=0; i<_MAX_LOCK; i++)
+    EnterCriticalSection(&init_locks_cs);
+    init_locks--;
+    if (!init_locks)
     {
-        lockit_cs[i].DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&lockit_cs[i]);
+        for(i=0; i<_MAX_LOCK; i++)
+        {
+            lockit_cs[i].DebugInfo->Spare[0] = 0;
+            DeleteCriticalSection(&lockit_cs[i]);
+        }
     }
+    LeaveCriticalSection(&init_locks_cs);
+}
+
+/* ??1_Init_locks@std@@QAE@XZ */
+/* ??1_Init_locks@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Init_locks_dtor, 4)
+void __thiscall _Init_locks_dtor(_Init_locks *this)
+{
+    _Init_locks__Init_locks_dtor(this);
 }
 
 #if _MSVCP_VER >= 70

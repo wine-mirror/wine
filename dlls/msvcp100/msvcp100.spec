@@ -185,8 +185,8 @@
 @ cdecl -arch=arm ??0_Container_base12@std@@QAA@XZ(ptr) _Container_base12_ctor
 @ thiscall -arch=i386 ??0_Container_base12@std@@QAE@XZ(ptr) _Container_base12_ctor
 @ cdecl -arch=win64 ??0_Container_base12@std@@QEAA@XZ(ptr) _Container_base12_ctor
-@ stub -arch=win32 ??0_Init_locks@std@@QAE@XZ
-@ stub -arch=win64 ??0_Init_locks@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0_Init_locks@std@@QAE@XZ(ptr) _Init_locks_ctor
+@ cdecl -arch=win64 ??0_Init_locks@std@@QEAA@XZ(ptr) _Init_locks_ctor
 @ thiscall -arch=win32 ??0_Locimp@locale@std@@AAE@ABV012@@Z(ptr ptr) locale__Locimp_copy_ctor
 @ cdecl -arch=win64 ??0_Locimp@locale@std@@AEAA@AEBV012@@Z(ptr ptr) locale__Locimp_copy_ctor
 @ thiscall -arch=win32 ??0_Locimp@locale@std@@AAE@_N@Z(ptr long) locale__Locimp_ctor_transparent
@@ -317,8 +317,8 @@
 @ cdecl -arch=arm ??1_Container_base12@std@@QAA@XZ(ptr) _Container_base12_dtor
 @ thiscall -arch=i386 ??1_Container_base12@std@@QAE@XZ(ptr) _Container_base12_dtor
 @ cdecl -arch=win64 ??1_Container_base12@std@@QEAA@XZ(ptr) _Container_base12_dtor
-@ stub -arch=win32 ??1_Init_locks@std@@QAE@XZ
-@ stub -arch=win64 ??1_Init_locks@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1_Init_locks@std@@QAE@XZ(ptr) _Init_locks_dtor
+@ cdecl -arch=win64 ??1_Init_locks@std@@QEAA@XZ(ptr) _Init_locks_dtor
 @ thiscall -arch=win32 ??1_Locimp@locale@std@@MAE@XZ(ptr) locale__Locimp_dtor
 @ cdecl -arch=win64 ??1_Locimp@locale@std@@MEAA@XZ(ptr) locale__Locimp_dtor
 @ thiscall -arch=win32 ??1_Locinfo@std@@QAE@XZ(ptr) _Locinfo_dtor
@@ -1025,10 +1025,10 @@
 @ cdecl -arch=win64 ?_Init_ctor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) ios_base_Init__Init_ctor
 @ cdecl -arch=win32 ?_Init_dtor@Init@ios_base@std@@CAXPAV123@@Z(ptr) ios_base_Init__Init_dtor
 @ cdecl -arch=win64 ?_Init_dtor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) ios_base_Init__Init_dtor
-@ stub -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z(ptr) _Init_locks__Init_locks_ctor
+@ cdecl -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z(ptr) _Init_locks__Init_locks_ctor
+@ cdecl -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z(ptr) _Init_locks__Init_locks_dtor
+@ cdecl -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z(ptr) _Init_locks__Init_locks_dtor
 @ thiscall -arch=win32 ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z(ptr ptr long ptr ptr ptr) _Concurrent_vector_base_v4__Internal_assign
 @ cdecl -arch=win64 ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAX1@ZP6AX2PEBX1@Z5@Z(ptr ptr long ptr ptr ptr) _Concurrent_vector_base_v4__Internal_assign
 @ thiscall -arch=win32 ?_Internal_capacity@_Concurrent_vector_base_v4@details@Concurrency@@IBEIXZ(ptr) _Concurrent_vector_base_v4__Internal_capacity
