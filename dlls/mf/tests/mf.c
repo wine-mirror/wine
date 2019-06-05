@@ -2062,7 +2062,8 @@ static void test_video_processor(void)
     DWORD input_count, output_count, input_id, output_id, flags;
     DWORD input_min, input_max, output_min, output_max, i, count;
     IMFAttributes *attributes, *attributes2;
-    IMFMediaType *media_type;
+    IMFMediaType *media_type, *media_type2;
+    MFT_INPUT_STREAM_INFO input_info;
     IMFTransform *transform;
     HRESULT hr;
     GUID guid;
@@ -2123,20 +2124,6 @@ todo_wine
     IMFAttributes_Release(attributes);
     IMFAttributes_Release(attributes2);
 
-    for (i = 0;;++i)
-    {
-        hr = IMFTransform_GetInputAvailableType(transform, 0, i, &media_type);
-        if (hr == MF_E_NO_MORE_TYPES)
-            break;
-        ok(hr == S_OK, "Failed to get supported input type, hr %#x.\n", hr);
-
-        hr = IMFMediaType_GetMajorType(media_type, &guid);
-        ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
-        ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected major type.\n");
-
-        IMFMediaType_Release(media_type);
-    }
-
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
 
@@ -2152,11 +2139,33 @@ todo_wine
     hr = IMFTransform_GetOutputCurrentType(transform, 1, &media_type);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFTransform_GetInputStreamInfo(transform, 1, &input_info);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
+    ok(input_info.dwFlags == 0, "Unexpected flag %#x.\n", input_info.dwFlags);
+    ok(input_info.cbSize == 0, "Unexpected size %u.\n", input_info.cbSize);
+    ok(input_info.cbMaxLookahead == 0, "Unexpected lookahead length %u.\n", input_info.cbMaxLookahead);
+    ok(input_info.cbAlignment == 0, "Unexpected alignment %u.\n", input_info.cbAlignment);
+
     /* Configure stream types. */
     for (i = 0;;++i)
     {
         if (FAILED(hr = IMFTransform_GetInputAvailableType(transform, 0, i, &media_type)))
+        {
+            ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
             break;
+        }
+
+        hr = IMFTransform_GetInputAvailableType(transform, 0, i, &media_type2);
+        ok(hr == S_OK, "Failed to get available type, hr %#x.\n", hr);
+        ok(media_type != media_type2, "Unexpected instance.\n");
+        IMFMediaType_Release(media_type2);
+
+        hr = IMFMediaType_GetMajorType(media_type, &guid);
+        ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
+        ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected major type.\n");
 
         hr = IMFMediaType_GetCount(media_type, &count);
         ok(hr == S_OK, "Failed to get attributes count, hr %#x.\n", hr);
@@ -2165,6 +2174,48 @@ todo_wine
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
         ok(hr == S_OK, "Failed to get subtype, hr %#x.\n", hr);
         ok(is_supported_video_type(&guid), "Unexpected media type %s.\n", wine_dbgstr_guid(&guid));
+
+        hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+        ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+        hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type2);
+        ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+        /* FIXME: figure out if those require additional attributes or simply advertised but not supported */
+        if (IsEqualGUID(&guid, &MFVideoFormat_L8) || IsEqualGUID(&guid, &MFVideoFormat_L16)
+                || IsEqualGUID(&guid, &MFVideoFormat_D16) || IsEqualGUID(&guid, &MFVideoFormat_420O)
+                || IsEqualGUID(&guid, &MFVideoFormat_A16B16G16R16F))
+        {
+            IMFMediaType_Release(media_type);
+            continue;
+        }
+
+        hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, ((UINT64)16 << 32) | 16);
+        ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+        hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        ok(hr == S_OK, "Failed to test input type %s, hr %#x.\n", wine_dbgstr_guid(&guid), hr);
+
+        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+        ok(hr == S_OK, "Failed to test input type, hr %#x.\n", hr);
+
+        hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type2);
+        ok(hr == S_OK, "Failed to get current type, hr %#x.\n", hr);
+        ok(media_type != media_type2, "Unexpected instance.\n");
+        IMFMediaType_Release(media_type2);
+
+        hr = IMFTransform_GetInputStatus(transform, 0, &flags);
+        ok(hr == S_OK, "Failed to get input status, hr %#x.\n", hr);
+        ok(flags == MFT_INPUT_STATUS_ACCEPT_DATA, "Unexpected input status %#x.\n", flags);
+
+        hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+        ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
+        ok(input_info.dwFlags == 0, "Unexpected flag %#x.\n", input_info.dwFlags);
+        ok(input_info.cbMaxLookahead == 0, "Unexpected lookahead length %u.\n", input_info.cbMaxLookahead);
+        ok(input_info.cbAlignment == 0, "Unexpected alignment %u.\n", input_info.cbAlignment);
 
         IMFMediaType_Release(media_type);
     }
