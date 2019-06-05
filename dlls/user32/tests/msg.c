@@ -15345,6 +15345,46 @@ static const struct message NCXBUTTONUPSeq2[] =
     { 0 }
 };
 
+/* DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0) to minimized visible window */
+static const struct message WmRestoreMinimizedOverlappedSeq[] =
+{
+    { HCBT_SYSCOMMAND, hook|wparam|lparam, SC_RESTORE, 0 },
+    { HCBT_MINMAX, hook },
+    { WM_QUERYOPEN, sent },
+    { WM_GETTEXT, sent|optional },
+    { WM_NCACTIVATE, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGED, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|optional },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|optional },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_ACTIVATEAPP, sent|wparam, TRUE },
+    { WM_NCACTIVATE, sent|wparam, TRUE },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent|wparam, TRUE },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_NCPAINT, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_FRAMECHANGED|SWP_STATECHANGED },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|optional },
+    { WM_NCPAINT, sent|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_ACTIVATE, sent|wparam, TRUE },
+    { WM_SYNCPAINT, sent|optional },
+    { WM_PAINT, sent },
+    { 0 }
+};
+
 struct rbuttonup_thread_data
 {
     HWND hwnd;
@@ -15398,6 +15438,15 @@ static void test_defwinproc(void)
 
     GetWindowTextA(hwnd, buffA, ARRAY_SIZE(buffA));
     ok(!strcmp(buffA, "test_defwndproc"), "unexpected window text, %s\n", buffA);
+
+    ShowWindow(hwnd, SW_MINIMIZE);
+    flush_events();
+    flush_sequence();
+
+    DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+    flush_events();
+    ok_sequence(WmRestoreMinimizedOverlappedSeq, "DefWindowProcA(SC_RESTORE):overlapped", TRUE);
+    flush_sequence();
 
     GetCursorPos(&pos);
     GetWindowRect(hwnd, &rect);
@@ -17522,6 +17571,96 @@ static void test_DoubleSetCapture(void)
     DestroyWindow(hwnd);
 }
 
+static const struct message WmRestoreMinimizedSeq[] =
+{
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 0x200001 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent|wparam, 0x200001 }, /* Note that activate messages are after WM_WINDOWPOSCHANGED and before WM_SYSCOMMAND */
+    { HCBT_KEYSKIPPED, hook|optional },
+    { WM_SYSKEYUP, sent|optional },
+    { WM_SYSCOMMAND, sent|wparam, SC_RESTORE },
+    { HCBT_SYSCOMMAND, hook|wparam, SC_RESTORE },
+    { HCBT_SYSCOMMAND, hook|wparam|optional, SC_RESTORE },
+    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|optional },
+    { WM_QUERYOPEN, sent|defwinproc },
+    { WM_QUERYOPEN, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 },
+    { WM_NCPAINT, sent|wparam|defwinproc|optional, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|defwinproc },
+    { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc|optional, 1 },
+    { WM_NCPAINT, sent|wparam|defwinproc|optional, 1 },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_ACTIVATE, sent|wparam|defwinproc, 1 },
+    { WM_PAINT, sent| optional },
+    { WM_SETFOCUS, sent|defwinproc|optional },
+    { HCBT_KEYSKIPPED, hook|optional },
+    { WM_KEYUP, sent|optional },
+    { HCBT_KEYSKIPPED, hook|optional },
+    { WM_SYSKEYUP, sent|optional },
+    { HCBT_KEYSKIPPED, hook|optional },
+    { WM_KEYUP, sent|optional },
+    { WM_PAINT, sent| optional },
+    { 0 }
+};
+
+static void test_restore_messages(void)
+{
+    INPUT ip = {0};
+    HWND hwnd;
+    INT i;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100,
+                           100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+    SetForegroundWindow(hwnd);
+    ShowWindow(hwnd, SW_MINIMIZE);
+    flush_events();
+    flush_sequence();
+
+    for (i = 0; i < 5; i++)
+    {
+        /* Send Alt+Tab to restore test window from minimized state */
+        ip.type = INPUT_KEYBOARD;
+        ip.ki.wVk = VK_MENU;
+        SendInput(1, &ip, sizeof(INPUT));
+        ip.ki.wVk = VK_TAB;
+        SendInput(1, &ip, sizeof(INPUT));
+        ip.ki.wVk = VK_MENU;
+        ip.ki.dwFlags = KEYEVENTF_KEYUP;
+        SendInput(1, &ip, sizeof(INPUT));
+        ip.ki.wVk = VK_TAB;
+        ip.ki.dwFlags = KEYEVENTF_KEYUP;
+        SendInput(1, &ip, sizeof(INPUT));
+        flush_events();
+        if (!IsIconic(hwnd))
+            break;
+    }
+
+    if (IsIconic(hwnd))
+    {
+        skip("Alt+Tab failed to bring up test window.\n");
+        goto done;
+    }
+    ok_sequence(WmRestoreMinimizedSeq, "Restore minimized window", TRUE);
+
+done:
+    DestroyWindow(hwnd);
+}
+
 static void init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
@@ -17646,6 +17785,7 @@ START_TEST(msg)
     test_quit_message();
     test_notify_message();
     test_SetActiveWindow();
+    test_restore_messages();
 
     if (!pTrackMouseEvent)
         win_skip("TrackMouseEvent is not available\n");
