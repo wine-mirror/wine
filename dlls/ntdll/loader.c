@@ -2394,111 +2394,66 @@ done:
 
 
 /***********************************************************************
- *           load_builtin_dll
+ *           load_so_dll
  */
-static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name, BOOL has_file,
-                                  DWORD flags, WINE_MODREF** pwm )
+static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
+                             const char *so_name, WINE_MODREF** pwm )
 {
     char error[256];
-    const WCHAR *name, *p;
     void *handle;
     struct builtin_load_info info, *prev_info;
+    ANSI_STRING unix_name;
 
-    /* Fix the name in case we have a full path and extension */
-    name = nt_name->Buffer;
-    if ((p = strrchrW( name, '\\' ))) name = p + 1;
-    if ((p = strrchrW( name, '/' ))) name = p + 1;
-
-    /* load_library will modify info.status. Note also that load_library can be
-     * called several times, if the .so file we're loading has dependencies.
-     * info.status will gather all the errors we may get while loading all these
-     * libraries
-     */
-    info.load_path = load_path;
-    info.filename  = NULL;
-    info.status    = STATUS_SUCCESS;
-    info.wm        = NULL;
-
-    if (has_file)  /* we have a real file, try to load it */
+    if (so_name)
     {
-        ANSI_STRING unix_name;
-
-        TRACE("Trying built-in %s\n", debugstr_us(nt_name));
-
-        if (wine_nt_to_unix_file_name( nt_name, &unix_name, FILE_OPEN, FALSE ))
-            return STATUS_DLL_NOT_FOUND;
-        prev_info = builtin_load_info;
-        info.filename = nt_name;
-        builtin_load_info = &info;
-        handle = wine_dlopen( unix_name.Buffer, RTLD_NOW, error, sizeof(error) );
-        builtin_load_info = prev_info;
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name.Buffer );
-        if (!handle)
-        {
-            WARN( "failed to load .so lib for builtin %s: %s\n", debugstr_us(nt_name), error );
-            return STATUS_INVALID_IMAGE_FORMAT;
-        }
+        TRACE( "loading %s from so lib %s\n", debugstr_us(nt_name), debugstr_a(so_name) );
+        unix_name.Buffer = NULL;
     }
     else
     {
-        NTSTATUS status;
-        void *module = NULL;
-        pe_image_info_t image_info;
-        struct stat st;
-        char *so_name;
+        TRACE( "loading %s as so lib\n", debugstr_us(nt_name) );
+        if (wine_nt_to_unix_file_name( nt_name, &unix_name, FILE_OPEN, FALSE ))
+            return STATUS_DLL_NOT_FOUND;
+    }
 
-        TRACE("Trying built-in %s\n", debugstr_w(name));
+    info.load_path = load_path;
+    info.filename  = so_name ? NULL : nt_name;
+    info.status    = STATUS_SUCCESS;
+    info.wm        = NULL;
 
-        status = find_builtin_dll( name, pwm, &module, &image_info, &st, &so_name );
-        if (status) return status;
+    prev_info = builtin_load_info;
+    builtin_load_info = &info;
+    handle = wine_dlopen( so_name ? so_name : unix_name.Buffer, RTLD_NOW, error, sizeof(error) );
+    builtin_load_info = prev_info;
+    RtlFreeHeap( GetProcessHeap(), 0, unix_name.Buffer );
 
-        if (*pwm)
+    if (!handle)
+    {
+        if (so_name)
         {
-            if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
-            TRACE( "Found %s for %s at %p, count=%d\n",
-                   debugstr_w((*pwm)->ldr.FullDllName.Buffer), debugstr_w(name),
-                   (*pwm)->ldr.BaseAddress, (*pwm)->ldr.LoadCount);
-            return STATUS_SUCCESS;
-        }
-        if (module)
-        {
-            TRACE( "loading %s from PE builtin %s\n", debugstr_w(name), debugstr_us(nt_name) );
-            return load_native_dll( load_path, nt_name, module, &image_info, flags, pwm, &st );
-        }
-
-        TRACE( "loading %s from so lib %s\n", debugstr_w(name), debugstr_a(so_name) );
-        prev_info = builtin_load_info;
-        builtin_load_info = &info;
-        handle = wine_dlopen( so_name, RTLD_NOW, error, sizeof(error) );
-        builtin_load_info = prev_info;
-        RtlFreeHeap( GetProcessHeap(), 0, so_name );
-        if (!handle)
-        {
-            ERR("failed to load .so lib for builtin %s: %s\n", debugstr_w(name), error );
+            ERR("failed to load .so lib %s: %s\n", debugstr_a(so_name), error );
             return STATUS_PROCEDURE_NOT_FOUND;
         }
+        WARN( "failed to load .so lib %s: %s\n", debugstr_us(nt_name), error );
+        return STATUS_INVALID_IMAGE_FORMAT;
     }
 
-    if (info.status != STATUS_SUCCESS)
-    {
-        wine_dll_unload( handle );
-        return info.status;
-    }
+    if (info.status != STATUS_SUCCESS) goto failed;
 
     if (!info.wm)
     {
         /* The constructor wasn't called, this means the .so is already
          * loaded under a different name. Try to find the wm for it. */
 
-        if ((info.wm = find_so_module( handle )))
+        if (!(info.wm = find_so_module( handle )))
         {
-            TRACE( "Found %s at %p for builtin %s\n",
-                   debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress,
-                   debugstr_us(nt_name) );
-            if (info.wm->ldr.LoadCount != -1) info.wm->ldr.LoadCount++;
+            info.status = STATUS_INVALID_IMAGE_FORMAT;
+            goto failed;
         }
-        else info.status = STATUS_INVALID_IMAGE_FORMAT;
-
+        TRACE( "Found %s at %p for builtin %s\n",
+               debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress,
+               debugstr_us(nt_name) );
+        if (info.wm->ldr.LoadCount != -1) info.wm->ldr.LoadCount++;
         wine_dlclose( handle, NULL, 0 ); /* release the libdl refcount */
     }
     else
@@ -2510,6 +2465,52 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
 
     *pwm = info.wm;
     return STATUS_SUCCESS;
+
+failed:
+    wine_dlclose( handle, NULL, 0 );
+    return info.status;
+}
+
+
+/***********************************************************************
+ *           load_builtin_dll
+ */
+static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
+                                  DWORD flags, WINE_MODREF** pwm )
+{
+    const WCHAR *name, *p;
+    NTSTATUS status;
+    void *module = NULL;
+    pe_image_info_t image_info;
+    struct stat st;
+    char *so_name;
+
+    /* Fix the name in case we have a full path and extension */
+    name = nt_name->Buffer;
+    if ((p = strrchrW( name, '\\' ))) name = p + 1;
+    if ((p = strrchrW( name, '/' ))) name = p + 1;
+
+    TRACE("Trying built-in %s\n", debugstr_w(name));
+
+    status = find_builtin_dll( name, pwm, &module, &image_info, &st, &so_name );
+    if (status) return status;
+
+    if (*pwm)
+    {
+        if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
+        TRACE( "Found %s for %s at %p, count=%d\n",
+               debugstr_w((*pwm)->ldr.FullDllName.Buffer), debugstr_w(name),
+               (*pwm)->ldr.BaseAddress, (*pwm)->ldr.LoadCount);
+        return STATUS_SUCCESS;
+    }
+
+    if (module)
+    {
+        TRACE( "loading %s from PE builtin %s\n", debugstr_w(name), debugstr_us(nt_name) );
+        return load_native_dll( load_path, nt_name, module, &image_info, flags, pwm, &st );
+    }
+
+    return load_so_dll( load_path, nt_name, so_name, pwm );
 }
 
 
@@ -2766,7 +2767,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         case LO_BUILTIN:
         case LO_BUILTIN_NATIVE:
         case LO_DEFAULT:
-            if (!load_builtin_dll( load_path, &nt_name, TRUE, flags, pwm )) nts = STATUS_SUCCESS;
+            if (!load_so_dll( load_path, &nt_name, NULL, pwm )) nts = STATUS_SUCCESS;
             break;
         default:
             nts = STATUS_DLL_NOT_FOUND;
@@ -2784,7 +2785,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
             case LO_BUILTIN:
             case LO_BUILTIN_NATIVE:
             case LO_DEFAULT:
-                nts = load_builtin_dll( load_path, &nt_name, FALSE, flags, pwm );
+                nts = load_builtin_dll( load_path, &nt_name, flags, pwm );
                 break;
             default:
                 nts = STATUS_DLL_NOT_FOUND;
@@ -2802,11 +2803,11 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
                 module = NULL;
                 break;
             case LO_BUILTIN:
-                nts = load_builtin_dll( load_path, &nt_name, FALSE, flags, pwm );
+                nts = load_builtin_dll( load_path, &nt_name, flags, pwm );
                 break;
             case LO_BUILTIN_NATIVE:
             case LO_DEFAULT:
-                nts = load_builtin_dll( load_path, &nt_name, FALSE, flags, pwm );
+                nts = load_builtin_dll( load_path, &nt_name, flags, pwm );
                 if (nts == STATUS_SUCCESS && loadorder == LO_DEFAULT &&
                     (MODULE_InitDLL( *pwm, DLL_WINE_PREATTACH, NULL ) != STATUS_SUCCESS))
                 {
@@ -2839,7 +2840,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         case LO_BUILTIN:
         case LO_BUILTIN_NATIVE:
         case LO_DEFAULT:
-            nts = load_builtin_dll( load_path, &nt_name, FALSE, flags, pwm );
+            nts = load_builtin_dll( load_path, &nt_name, flags, pwm );
             break;
         default:
             nts = STATUS_DLL_NOT_FOUND;
@@ -3765,7 +3766,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
  */
 void __wine_process_init(void)
 {
-    static const WCHAR kernel32W[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
+    static const WCHAR kernel32W[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                                       's','y','s','t','e','m','3','2','\\',
                                       'k','e','r','n','e','l','3','2','.','d','l','l',0};
     static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
@@ -3788,7 +3789,7 @@ void __wine_process_init(void)
     wine_dll_set_callback( load_builtin_callback );
 
     RtlInitUnicodeString( &nt_name, kernel32W );
-    if ((status = load_builtin_dll( NULL, &nt_name, FALSE, 0, &wm )) != STATUS_SUCCESS)
+    if ((status = load_builtin_dll( NULL, &nt_name, 0, &wm )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
         exit(1);
