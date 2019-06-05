@@ -9909,7 +9909,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 
 static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
 {
-    UINT pulScrollLines = 3;
+    INT pulScrollLines = 3;
 
     TRACE("(wheelDelta=%d)\n", wheelDelta);
 
@@ -9938,8 +9938,8 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
         {
             int cLineScroll;
             pulScrollLines = min((UINT)LISTVIEW_GetCountPerColumn(infoPtr), pulScrollLines);
-            cLineScroll = pulScrollLines * (float)infoPtr->cWheelRemainder / WHEEL_DELTA;
-            infoPtr->cWheelRemainder -= WHEEL_DELTA * cLineScroll / (int)pulScrollLines;
+            cLineScroll = pulScrollLines * infoPtr->cWheelRemainder / WHEEL_DELTA;
+            infoPtr->cWheelRemainder -= WHEEL_DELTA * cLineScroll / pulScrollLines;
             LISTVIEW_VScroll(infoPtr, SB_INTERNAL, -cLineScroll);
         }
         break;
