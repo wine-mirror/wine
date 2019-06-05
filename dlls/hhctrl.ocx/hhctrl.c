@@ -112,7 +112,7 @@ static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD bufle
     if (index) *index = NULL;
     if (window) *window = NULL;
 
-    extra = strstrW(filename, delim2W);
+    extra = wcsstr(filename, delim2W);
     if (extra)
     {
         memcpy(chm_file, filename, (extra-filename)*sizeof(WCHAR));
@@ -122,7 +122,7 @@ static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD bufle
             *window = strdupW(extra+1);
     }
 
-    extra = strstrW(filename, delimW);
+    extra = wcsstr(filename, delimW);
     if (extra)
     {
         if (filename != chm_file)
@@ -137,8 +137,8 @@ static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD bufle
     if (GetFileAttributesW(fullname) == INVALID_FILE_ATTRIBUTES)
     {
         GetWindowsDirectoryW(fullname, buflen);
-        strcatW(fullname, helpW);
-        strcatW(fullname, filename);
+        lstrcatW(fullname, helpW);
+        lstrcatW(fullname, filename);
     }
     return (GetFileAttributesW(fullname) != INVALID_FILE_ATTRIBUTES);
 }
@@ -206,12 +206,12 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
                 static const WCHAR delimW[] = {':',':',0};
                 const WCHAR *i = (const WCHAR *)data;
 
-                index = strstrW(i, delimW);
+                index = wcsstr(i, delimW);
                 if(index)
                 {
                     if(memcmp(info->pCHMInfo->szFile, i, index-i))
                         FIXME("Opening a CHM file in the context of another is not supported.\n");
-                    index += strlenW(delimW);
+                    index += lstrlenW(delimW);
                 }
                 else
                     index = i;

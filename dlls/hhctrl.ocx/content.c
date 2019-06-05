@@ -268,7 +268,7 @@ static void insert_content_item(HWND hwnd, ContentItem *parent, ContentItem *ite
 
     memset(&tvis, 0, sizeof(tvis));
     tvis.u.item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_IMAGE|TVIF_SELECTEDIMAGE;
-    tvis.u.item.cchTextMax = strlenW(item->name)+1;
+    tvis.u.item.cchTextMax = lstrlenW(item->name)+1;
     tvis.u.item.pszText = item->name;
     tvis.u.item.lParam = (LPARAM)item;
     tvis.u.item.iImage = item->child ? HHTV_FOLDER : HHTV_DOCUMENT;

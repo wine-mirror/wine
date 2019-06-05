@@ -43,7 +43,7 @@ static void fill_index_tree(HWND hwnd, IndexItem *item)
         lvi.iItem = index++;
         lvi.mask = LVIF_TEXT|LVIF_PARAM|LVIF_INDENT;
         lvi.iIndent = item->indentLevel;
-        lvi.cchTextMax = strlenW(item->keyword)+1;
+        lvi.cchTextMax = lstrlenW(item->keyword)+1;
         lvi.pszText = item->keyword;
         lvi.lParam = (LPARAM)item;
         item->id = (HTREEITEM)SendMessageW(hwnd, LVM_INSERTITEMW, 0, (LPARAM)&lvi);
@@ -232,7 +232,7 @@ static void parse_hhindex(HHInfo *info, IStream *str, IndexItem *item)
             IndexItem *new_item;
 
             new_item = parse_li(info, &stream);
-            if(new_item && item->keyword && strcmpW(new_item->keyword, item->keyword) == 0) {
+            if(new_item && item->keyword && lstrcmpW(new_item->keyword, item->keyword) == 0) {
                 int num_items = item->nItems;
 
                 item_realloc(item, num_items+1);
