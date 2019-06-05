@@ -1266,6 +1266,8 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
             {
                 TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
                 release_win_data( data );
+                if ((style & (WS_MINIMIZE | WS_VISIBLE)) == (WS_MINIMIZE | WS_VISIBLE))
+                    SetActiveWindow( hwnd );
                 SendMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
                 return;
             }
