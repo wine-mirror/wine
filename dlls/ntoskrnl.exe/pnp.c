@@ -623,7 +623,6 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
     WCHAR *instance_id;
     DWORD required;
     HDEVINFO set;
-    BOOL rc;
 
     TRACE("device %p, class_guid %s, refstr %s, symbolic_link %p.\n",
             device, debugstr_guid(class_guid), debugstr_us(refstr), symbolic_link);
@@ -634,39 +633,11 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
     status = get_instance_id( device, &instance_id );
     if (status != STATUS_SUCCESS) return status;
 
-    rc = SetupDiCreateDeviceInfoW( set, instance_id, class_guid, NULL, NULL, 0, &sp_device );
-    if (rc == 0)
+    if (!SetupDiCreateDeviceInfoW( set, instance_id, class_guid, NULL, NULL, 0, &sp_device )
+            && !SetupDiOpenDeviceInfoW( set, instance_id, NULL, 0, &sp_device ))
     {
-        if (GetLastError() == ERROR_DEVINST_ALREADY_EXISTS)
-        {
-            DWORD index = 0;
-            DWORD size = strlenW(instance_id) + 2;
-            WCHAR *id = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
-            do
-            {
-                rc = SetupDiEnumDeviceInfo( set, index, &sp_device );
-                if (rc && IsEqualGUID( &sp_device.ClassGuid, class_guid ))
-                {
-                    BOOL check;
-                    check = SetupDiGetDeviceInstanceIdW( set, &sp_device, id, size, &required );
-                    if (check && strcmpW( id, instance_id ) == 0)
-                        break;
-                }
-                index++;
-            } while (rc);
-
-            HeapFree( GetProcessHeap(), 0, id );
-            if (!rc)
-            {
-                ExFreePool( instance_id );
-                return STATUS_UNSUCCESSFUL;
-            }
-        }
-        else
-        {
-            ExFreePool( instance_id );
-            return STATUS_UNSUCCESSFUL;
-        }
+        ERR("Failed to create device %s, error %#x.\n", debugstr_w(instance_id), GetLastError());
+        return GetLastError();
     }
     ExFreePool( instance_id );
 
