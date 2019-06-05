@@ -3,6 +3,8 @@ IMPORTLIB = hidclass
 IMPORTS   = hal ntoskrnl
 DELAYIMPORTS = setupapi hid
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	buffer.c \
 	descriptor.c \

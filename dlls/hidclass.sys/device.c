@@ -18,13 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "hid.h"
-#include "wine/unicode.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "setupapi.h"
@@ -50,7 +47,7 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
     NTSTATUS status;
     BASE_DEVICE_EXTENSION *ext;
 
-    sprintfW(dev_name, device_name_fmtW, driver->DriverObject, native_device);
+    swprintf(dev_name, ARRAY_SIZE(dev_name), device_name_fmtW, driver->DriverObject, native_device);
     RtlInitUnicodeString( &nameW, dev_name );
 
     TRACE("Create base hid device %s\n", debugstr_w(dev_name));

@@ -26,7 +26,6 @@
 #include "ddk/wdm.h"
 #include "regstr.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
@@ -191,14 +190,15 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     ext->information.DescriptorSize = ext->preparseData->dwSize;
 
     lstrcpyW(ext->instance_id, device_enumeratorW);
-    strcatW(ext->instance_id, separator_W);
+    lstrcatW(ext->instance_id, separator_W);
     /* Skip the original enumerator */
-    id_ptr = strchrW(PDO_id, '\\');
+    id_ptr = wcschr(PDO_id, '\\');
     id_ptr++;
-    strcatW(ext->instance_id, id_ptr);
+    lstrcatW(ext->instance_id, id_ptr);
     HeapFree(GetProcessHeap(), 0, PDO_id);
 
-    sprintfW(ext->device_id, device_deviceid_fmtW, device_enumeratorW, ext->information.VendorID, ext->information.ProductID);
+    swprintf(ext->device_id, ARRAY_SIZE(ext->device_id), device_deviceid_fmtW,
+             device_enumeratorW, ext->information.VendorID, ext->information.ProductID);
 
     HID_LinkDevice(device);
 
@@ -262,13 +262,13 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
                     WCHAR *ptr;
                     ptr = id;
                     /* Instance ID */
-                    strcpyW(ptr, ext->instance_id);
+                    lstrcpyW(ptr, ext->instance_id);
                     ptr += lstrlenW(ext->instance_id) + 1;
                     /* Device ID */
-                    strcpyW(ptr, ext->device_id);
+                    lstrcpyW(ptr, ext->device_id);
                     ptr += lstrlenW(ext->device_id) + 1;
                     /* Bus ID */
-                    strcpyW(ptr, device_enumeratorW);
+                    lstrcpyW(ptr, device_enumeratorW);
                     ptr += lstrlenW(device_enumeratorW) + 1;
                     *ptr = 0;
                     irp->IoStatus.Information = (ULONG_PTR)id;
@@ -276,12 +276,12 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
                     break;
                 }
                 case BusQueryDeviceID:
-                    strcpyW(id, ext->device_id);
+                    lstrcpyW(id, ext->device_id);
                     irp->IoStatus.Information = (ULONG_PTR)id;
                     rc = STATUS_SUCCESS;
                     break;
                 case BusQueryInstanceID:
-                    strcpyW(id, ext->instance_id);
+                    lstrcpyW(id, ext->instance_id);
                     irp->IoStatus.Information = (ULONG_PTR)id;
                     rc = STATUS_SUCCESS;
                     break;
