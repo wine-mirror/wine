@@ -149,7 +149,7 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
     DWORD len = strlenW(ext->busid) + strlenW(serial) + 64;
     WCHAR *dst;
 
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+    if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
     {
         if (ext->input == (WORD)-1)
         {
@@ -176,7 +176,7 @@ static WCHAR *get_device_id(DEVICE_OBJECT *device)
     DWORD len = strlenW(ext->busid) + 34;
     WCHAR *dst;
 
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+    if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
     {
         if (ext->input == (WORD)-1)
         {
@@ -197,7 +197,7 @@ static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     WCHAR *dst;
 
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, (strlenW(ext->busid) + 2) * sizeof(WCHAR))))
+    if ((dst = ExAllocatePool(PagedPool, (strlenW(ext->busid) + 2) * sizeof(WCHAR))))
     {
         strcpyW(dst, ext->busid);
         dst[strlenW(dst) + 1] = 0;
@@ -387,8 +387,7 @@ static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
     struct pnp_device *ptr;
 
     EnterCriticalSection(&device_list_cs);
-    *devices = HeapAlloc(GetProcessHeap(), 0, sizeof(DEVICE_RELATIONS) +
-        list_count(&pnp_devset) * sizeof (void *));
+    *devices = ExAllocatePool(PagedPool, offsetof(DEVICE_RELATIONS, Objects[list_count(&pnp_devset)]));
 
     if (!*devices)
     {
