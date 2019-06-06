@@ -34,8 +34,6 @@
 #define DEFAULT_POLL_INTERVAL 200
 #define MAX_POLL_INTERVAL_MSEC 10000
 
-typedef NTSTATUS (WINAPI *pAddDevice)(DRIVER_OBJECT *DriverObject, DEVICE_OBJECT *PhysicalDeviceObject);
-
 /* Ring buffer functions */
 struct ReportRingBuffer;
 
@@ -85,7 +83,7 @@ typedef struct _minidriver
 
     PDRIVER_UNLOAD DriverUnload;
 
-    pAddDevice AddDevice;
+    PDRIVER_ADD_DEVICE AddDevice;
     PDRIVER_DISPATCH PNPDispatch;
     struct list device_list;
 } minidriver;
