@@ -1208,7 +1208,7 @@ void init_types(void)
   decl_builtin_basic("double", TYPE_BASIC_DOUBLE);
   decl_builtin_basic("error_status_t", TYPE_BASIC_ERROR_STATUS_T);
   decl_builtin_basic("handle_t", TYPE_BASIC_HANDLE);
-  decl_builtin_alias("boolean", type_new_basic(TYPE_BASIC_BYTE));
+  decl_builtin_alias("boolean", type_new_basic(TYPE_BASIC_CHAR));
 }
 
 static str_list_t *append_str(str_list_t *list, char *str)
