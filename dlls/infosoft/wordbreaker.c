@@ -20,7 +20,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 
 #include <stdarg.h>
 
@@ -29,7 +28,6 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "indexsrv.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(infosoft);
@@ -128,7 +126,7 @@ static HRESULT WINAPI wb_BreakText( IWordBreaker *iface,
             {
             case 0: /* skip spaces and punctuation */
 
-                if (!ch || ispunctW(ch) || isspaceW(ch))
+                if (!ch || iswpunct(ch) || iswspace(ch))
                     ts->iCur ++;
                 else
                     state = 1;
@@ -136,7 +134,7 @@ static HRESULT WINAPI wb_BreakText( IWordBreaker *iface,
 
             case 1: /* find the end of the word */
 
-                if (ch && !ispunctW(ch) && !isspaceW(ch))
+                if (ch && !iswpunct(ch) && !iswspace(ch))
                     len++;
                 else
                 {
