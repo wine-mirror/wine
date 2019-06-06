@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <math.h>
 #include <limits.h>
@@ -312,7 +310,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     if(FAILED(hres))
         return hres;
 
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
 
     switch(*ptr) {
@@ -380,7 +378,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     if(FAILED(hres))
         return hres;
 
-    while(isspaceW(*str)) str++;
+    while(iswspace(*str)) str++;
 
     if(*str == '+')
         str++;
@@ -389,10 +387,10 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         str++;
     }
 
-    if(isdigitW(*str))
+    if(iswdigit(*str))
         ret_nan = FALSE;
 
-    while(isdigitW(*str)) {
+    while(iswdigit(*str)) {
         hlp = d*10 + *(str++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0) {
             exp++;
@@ -401,17 +399,17 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         else
             d = hlp;
     }
-    while(isdigitW(*str)) {
+    while(iswdigit(*str)) {
         exp++;
         str++;
     }
 
     if(*str == '.') str++;
 
-    if(isdigitW(*str))
+    if(iswdigit(*str))
         ret_nan = FALSE;
 
-    while(isdigitW(*str)) {
+    while(iswdigit(*str)) {
         hlp = d*10 + *(str++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0)
             break;
@@ -419,7 +417,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         d = hlp;
         exp--;
     }
-    while(isdigitW(*str))
+    while(iswdigit(*str))
         str++;
 
     if(*str && !ret_nan && (*str=='e' || *str=='E')) {
@@ -433,7 +431,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
             str++;
         }
 
-        while(isdigitW(*str)) {
+        while(iswdigit(*str)) {
             if(e>INT_MAX/10 || (e = e*10 + *str++ - '0')<0)
                 e = INT_MAX;
         }
@@ -460,8 +458,8 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 }
 
 static inline int hex_to_int(const WCHAR wch) {
-    if(toupperW(wch)>='A' && toupperW(wch)<='F') return toupperW(wch)-'A'+10;
-    if(isdigitW(wch)) return wch-'0';
+    if(towupper(wch)>='A' && towupper(wch)<='F') return towupper(wch)-'A'+10;
+    if(iswdigit(wch)) return wch-'0';
     return -1;
 }
 

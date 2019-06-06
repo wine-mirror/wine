@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #define COBJMACROS
 
@@ -30,7 +31,6 @@
 
 #include "resource.h"
 
-#include "wine/unicode.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 
@@ -75,7 +75,7 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
         if(ret)
             memcpy(ret, str, size);
@@ -504,14 +504,6 @@ static inline BOOL is_vclass(vdisp_t *vdisp, jsclass_t class)
 {
     return is_jsdisp(vdisp) && is_class(vdisp->u.jsdisp, class);
 }
-
-#ifndef INT32_MIN
-#define INT32_MIN (-2147483647-1)
-#endif
-
-#ifndef INT32_MAX
-#define INT32_MAX (2147483647)
-#endif
 
 static inline BOOL is_int32(double d)
 {

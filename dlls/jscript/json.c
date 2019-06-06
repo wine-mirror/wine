@@ -23,7 +23,6 @@
 #include "parser.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
@@ -261,7 +260,7 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
             skip_spaces(ctx);
         }
 
-        if(*ctx->ptr == '0' && ctx->ptr + 1 < ctx->end && isdigitW(ctx->ptr[1]))
+        if(*ctx->ptr == '0' && ctx->ptr + 1 < ctx->end && iswdigit(ctx->ptr[1]))
             break;
 
         hres = parse_decimal(&ctx->ptr, ctx->end, &n);
@@ -395,7 +394,7 @@ static BOOL append_string_len(stringify_ctx_t *ctx, const WCHAR *str, size_t len
 
 static inline BOOL append_string(stringify_ctx_t *ctx, const WCHAR *str)
 {
-    return append_string_len(ctx, str, strlenW(str));
+    return append_string_len(ctx, str, lstrlenW(str));
 }
 
 static inline BOOL append_char(stringify_ctx_t *ctx, WCHAR c)
@@ -482,7 +481,7 @@ static HRESULT json_quote(stringify_ctx_t *ctx, const WCHAR *ptr, size_t len)
             if(*ptr < ' ') {
                 static const WCHAR formatW[] = {'\\','u','%','0','4','x',0};
                 WCHAR buf[7];
-                sprintfW(buf, formatW, *ptr);
+                swprintf(buf, ARRAY_SIZE(buf), formatW, *ptr);
                 if(!append_string(ctx, buf))
                     return E_OUTOFMEMORY;
             }else {

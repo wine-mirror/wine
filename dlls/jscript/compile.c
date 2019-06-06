@@ -160,7 +160,7 @@ jsstr_t *compiler_alloc_string_len(compiler_ctx_t *ctx, const WCHAR *str, unsign
 
 static jsstr_t *compiler_alloc_string(compiler_ctx_t *ctx, const WCHAR *str)
 {
-    return compiler_alloc_string_len(ctx, str, strlenW(str));
+    return compiler_alloc_string_len(ctx, str, lstrlenW(str));
 }
 
 static BOOL ensure_bstr_slot(compiler_ctx_t *ctx)
@@ -1419,7 +1419,7 @@ static HRESULT compile_continue_statement(compiler_ctx_t *ctx, branch_statement_
         for(iter = ctx->stat_ctx; iter; iter = iter->next) {
             if(iter->continue_label)
                 pop_ctx = iter;
-            if(iter->labelled_stat && !strcmpW(iter->labelled_stat->identifier, stat->identifier))
+            if(iter->labelled_stat && !lstrcmpW(iter->labelled_stat->identifier, stat->identifier))
                 break;
         }
 
@@ -1465,7 +1465,7 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
 
     if(stat->identifier) {
         for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
-            if(pop_ctx->labelled_stat && !strcmpW(pop_ctx->labelled_stat->identifier, stat->identifier)) {
+            if(pop_ctx->labelled_stat && !lstrcmpW(pop_ctx->labelled_stat->identifier, stat->identifier)) {
                 assert(pop_ctx->break_label);
                 break;
             }
@@ -1549,7 +1549,7 @@ static HRESULT compile_labelled_statement(compiler_ctx_t *ctx, labelled_statemen
     HRESULT hres;
 
     for(iter = ctx->stat_ctx; iter; iter = iter->next) {
-        if(iter->labelled_stat && !strcmpW(iter->labelled_stat->identifier, stat->identifier)) {
+        if(iter->labelled_stat && !lstrcmpW(iter->labelled_stat->identifier, stat->identifier)) {
             WARN("Label %s redefined\n", debugstr_w(stat->identifier));
             return JS_E_LABEL_REDEFINED;
         }
@@ -1825,7 +1825,7 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
 static int function_local_cmp(const void *key, const struct wine_rb_entry *entry)
 {
     function_local_t *local = WINE_RB_ENTRY_VALUE(entry, function_local_t, entry);
-    return strcmpW(key, local->name);
+    return CompareStringOrdinal(key, -1, local->name, -1, FALSE) - 2;
 }
 
 static inline function_local_t *find_local(compiler_ctx_t *ctx, const WCHAR *name)
@@ -2382,7 +2382,7 @@ static HRESULT parse_arguments(compiler_ctx_t *ctx, const WCHAR *args, BSTR *arg
     const WCHAR *ptr = args, *ptr2;
     unsigned arg_cnt = 0;
 
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
     if(!*ptr) {
         if(args_size)
@@ -2391,16 +2391,16 @@ static HRESULT parse_arguments(compiler_ctx_t *ctx, const WCHAR *args, BSTR *arg
     }
 
     while(1) {
-        if(!isalphaW(*ptr) && *ptr != '_') {
+        if(!iswalpha(*ptr) && *ptr != '_') {
             FIXME("expected alpha or '_': %s\n", debugstr_w(ptr));
             return E_FAIL;
         }
 
         ptr2 = ptr;
-        while(isalnumW(*ptr) || *ptr == '_')
+        while(iswalnum(*ptr) || *ptr == '_')
             ptr++;
 
-        if(*ptr && *ptr != ',' && !isspaceW(*ptr)) {
+        if(*ptr && *ptr != ',' && !iswspace(*ptr)) {
             FIXME("unexpected har %s\n", debugstr_w(ptr));
             return E_FAIL;
         }
@@ -2412,7 +2412,7 @@ static HRESULT parse_arguments(compiler_ctx_t *ctx, const WCHAR *args, BSTR *arg
         }
         arg_cnt++;
 
-        while(isspaceW(*ptr))
+        while(iswspace(*ptr))
             ptr++;
         if(!*ptr)
             break;
@@ -2422,7 +2422,7 @@ static HRESULT parse_arguments(compiler_ctx_t *ctx, const WCHAR *args, BSTR *arg
         }
 
         ptr++;
-        while(isspaceW(*ptr))
+        while(iswspace(*ptr))
             ptr++;
     }
 

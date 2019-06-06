@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <math.h>
 #include <assert.h>
@@ -356,7 +354,7 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
 
         jsstr_release(sep_str);
     }else {
-        hres = array_join(ctx, jsthis, length, default_separatorW, strlenW(default_separatorW), r);
+        hres = array_join(ctx, jsthis, length, default_separatorW, lstrlenW(default_separatorW), r);
     }
 
     return hres;
@@ -939,7 +937,7 @@ static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         return throw_type_error(ctx, JS_E_ARRAY_EXPECTED, NULL);
 
     return array_join(ctx, &array->dispex, array->length, default_separatorW,
-                      strlenW(default_separatorW), r);
+                      lstrlenW(default_separatorW), r);
 }
 
 static HRESULT Array_toLocaleString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -1179,7 +1177,7 @@ static HRESULT Array_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
     TRACE("\n");
 
     return array_join(ctx, &array->dispex, array->length, default_separatorW,
-                      strlenW(default_separatorW), r);
+                      lstrlenW(default_separatorW), r);
 }
 
 static void Array_destructor(jsdisp_t *dispex)
@@ -1193,10 +1191,10 @@ static void Array_on_put(jsdisp_t *dispex, const WCHAR *name)
     const WCHAR *ptr = name;
     DWORD id = 0;
 
-    if(!isdigitW(*ptr))
+    if(!iswdigit(*ptr))
         return;
 
-    while(*ptr && isdigitW(*ptr)) {
+    while(*ptr && iswdigit(*ptr)) {
         id = id*10 + (*ptr-'0');
         ptr++;
     }

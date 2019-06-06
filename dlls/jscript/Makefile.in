@@ -1,6 +1,8 @@
 MODULE    = jscript.dll
 IMPORTS   = oleaut32 ole32 user32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	activex.c \
 	array.c \

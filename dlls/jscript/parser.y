@@ -813,7 +813,7 @@ GetterSetterMethod
 
 /* Ecma-262 3rd Edition    11.1.5 */
 PropertyName
-        : IdentifierName        { $$ = new_string_literal(ctx, compiler_alloc_string_len(ctx->compiler, $1, strlenW($1))); }
+        : IdentifierName        { $$ = new_string_literal(ctx, compiler_alloc_string_len(ctx->compiler, $1, lstrlenW($1))); }
         | tStringLiteral        { $$ = new_string_literal(ctx, $1); }
         | tNumericLiteral       { $$ = $1; }
 
@@ -1580,10 +1580,10 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, const 
         return E_OUTOFMEMORY;
 
     parser_ctx->hres = JS_E_SYNTAX;
-    parser_ctx->is_html = delimiter && !strcmpiW(delimiter, html_tagW);
+    parser_ctx->is_html = delimiter && !wcsicmp(delimiter, html_tagW);
 
     parser_ctx->begin = parser_ctx->ptr = code;
-    parser_ctx->end = parser_ctx->begin + strlenW(parser_ctx->begin);
+    parser_ctx->end = parser_ctx->begin + lstrlenW(parser_ctx->begin);
 
     script_addref(ctx);
     parser_ctx->script = ctx;

@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <math.h>
 #include <assert.h>
@@ -616,7 +614,7 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
 
 static int local_ref_cmp(const void *key, const void *ref)
 {
-    return strcmpW((const WCHAR*)key, ((const local_ref_t*)ref)->name);
+    return CompareStringOrdinal((const WCHAR*)key, -1, ((const local_ref_t*)ref)->name, -1, FALSE) - 2;
 }
 
 local_ref_t *lookup_local(const function_code_t *function, const WCHAR *identifier)
@@ -648,7 +646,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                     return S_OK;
                 }
 
-                if(!strcmpW(identifier, argumentsW)) {
+                if(!lstrcmpW(identifier, argumentsW)) {
                     hres = detach_variable_object(ctx, scope->frame, FALSE);
                     if(FAILED(hres))
                         return hres;
@@ -672,7 +670,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
     }
 
     for(item = ctx->named_items; item; item = item->next) {
-        if((item->flags & SCRIPTITEM_ISVISIBLE) && !strcmpW(item->name, identifier)) {
+        if((item->flags & SCRIPTITEM_ISVISIBLE) && !lstrcmpW(item->name, identifier)) {
             if(!item->disp) {
                 IUnknown *unk;
 

@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
+
+#include <math.h>
 
 #include "jscript.h"
 #include "regexp.h"
@@ -168,7 +168,7 @@ static HRESULT do_attributeless_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, j
         return S_OK;
     }
 
-    tagname_len = strlenW(tagname);
+    tagname_len = lstrlenW(tagname);
 
     ret = jsstr_alloc_buf(jsstr_length(str) + 2*tagname_len + 5, &ptr);
     if(!ret) {
@@ -215,8 +215,8 @@ static HRESULT do_attribute_tag_format(script_ctx_t *ctx, vdisp_t *jsthis, unsig
     }
 
     if(r) {
-        unsigned attrname_len = strlenW(attrname);
-        unsigned tagname_len = strlenW(tagname);
+        unsigned attrname_len = lstrlenW(attrname);
+        unsigned tagname_len = lstrlenW(tagname);
         jsstr_t *ret;
         WCHAR *ptr;
 
@@ -853,7 +853,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
                     match->cp = str;
                 }
 
-                match->cp = strstrW(match->cp, match_str);
+                match->cp = wcsstr(match->cp, match_str);
                 if(!match->cp)
                     break;
                 match->match_len = jsstr_length(match_jsstr);
@@ -879,7 +879,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
             }else if(rep_str && regexp) {
                 const WCHAR *ptr = rep_str, *ptr2;
 
-                while((ptr2 = strchrW(ptr, '$'))) {
+                while((ptr2 = wcschr(ptr, '$'))) {
                     hres = strbuf_append(&ret, ptr, ptr2-ptr);
                     if(FAILED(hres))
                         break;
@@ -904,14 +904,14 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
                     default: {
                         DWORD idx;
 
-                        if(!isdigitW(ptr2[1])) {
+                        if(!iswdigit(ptr2[1])) {
                             hres = strbuf_append(&ret, ptr2, 1);
                             ptr = ptr2+1;
                             break;
                         }
 
                         idx = ptr2[1] - '0';
-                        if(isdigitW(ptr2[2]) && idx*10 + (ptr2[2]-'0') <= match->paren_count) {
+                        if(iswdigit(ptr2[2]) && idx*10 + (ptr2[2]-'0') <= match->paren_count) {
                             idx = idx*10 + (ptr[2]-'0');
                             ptr = ptr2+3;
                         }else if(idx && idx <= match->paren_count) {
@@ -1227,7 +1227,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
                 }
                 ptr2 = match_result.cp - match_result.match_len;
             }else if(match_str) {
-                ptr2 = strstrW(ptr, match_str);
+                ptr2 = wcsstr(ptr, match_str);
                 if(!ptr2)
                     break;
             }else {
@@ -1446,7 +1446,7 @@ static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         }
 
         jsstr_flush(str, buf);
-        for (; len--; buf++) *buf = tolowerW(*buf);
+        for (; len--; buf++) *buf = towlower(*buf);
 
         *r = jsval_string(ret);
     }
@@ -1478,7 +1478,7 @@ static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         }
 
         jsstr_flush(str, buf);
-        for (; len--; buf++) *buf = toupperW(*buf);
+        for (; len--; buf++) *buf = towupper(*buf);
 
         *r = jsval_string(ret);
     }
@@ -1516,8 +1516,8 @@ static HRESULT String_trim(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
     len = jsstr_length(jsstr);
     TRACE("%s\n", debugstr_wn(str, len));
 
-    for(begin = str, end = str + len; begin < end && isspaceW(*begin); begin++);
-    while(end > begin + 1 && isspaceW(*(end-1))) end--;
+    for(begin = str, end = str + len; begin < end && iswspace(*begin); begin++);
+    while(end > begin + 1 && iswspace(*(end-1))) end--;
 
     if(r) {
         jsstr_t *ret;

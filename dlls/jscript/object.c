@@ -89,11 +89,11 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
         jsstr_t *ret;
         WCHAR *ptr;
 
-        ret = jsstr_alloc_buf(9+strlenW(str), &ptr);
+        ret = jsstr_alloc_buf(9+lstrlenW(str), &ptr);
         if(!ret)
             return E_OUTOFMEMORY;
 
-        sprintfW(ptr, formatW, str);
+        swprintf(ptr, 9 + lstrlenW(str), formatW, str);
         *r = jsval_string(ret);
     }
 
