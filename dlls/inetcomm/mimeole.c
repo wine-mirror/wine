@@ -37,7 +37,6 @@
 #include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "inetcomm_private.h"
 
@@ -3713,13 +3712,13 @@ HRESULT WINAPI MimeOleObjectFromMoniker(BINDF bindf, IMoniker *moniker, IBindCtx
 
     TRACE("display name %s\n", debugstr_w(display_name));
 
-    len = strlenW(display_name);
+    len = lstrlenW(display_name);
     mhtml_url = heap_alloc((len+1)*sizeof(WCHAR) + sizeof(mhtml_prefixW));
     if(!mhtml_url)
         return E_OUTOFMEMORY;
 
     memcpy(mhtml_url, mhtml_prefixW, sizeof(mhtml_prefixW));
-    strcpyW(mhtml_url + ARRAY_SIZE(mhtml_prefixW), display_name);
+    lstrcpyW(mhtml_url + ARRAY_SIZE(mhtml_prefixW), display_name);
     HeapFree(GetProcessHeap(), 0, display_name);
 
     hres = CreateURLMoniker(NULL, mhtml_url, moniker_new);
