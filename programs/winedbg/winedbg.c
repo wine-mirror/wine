@@ -436,7 +436,7 @@ static BOOL CALLBACK mod_loader_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 BOOL dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE64* imh_mod)
 {
     struct mod_loader_info  mli;
-    DWORD                   opt;
+    BOOL                    opt;
 
     /* this will resynchronize builtin dbghelp's internal ELF module list */
     SymLoadModule(hProcess, 0, 0, 0, 0, 0);
@@ -447,9 +447,9 @@ BOOL dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE64* imh_mod)
     /* this is a wine specific options to return also ELF modules in the
      * enumeration
      */
-    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
+    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     SymEnumerateModules64(hProcess, mod_loader_cb, &mli);
-    SymSetOptions(opt);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
 
     return imh_mod->BaseOfImage != 0;
 }

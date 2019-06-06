@@ -214,7 +214,7 @@ void info_win32_module(DWORD64 base)
 {
     struct info_modules im;
     UINT                i, j, num_printed = 0;
-    DWORD               opt;
+    BOOL                opt;
 
     if (!dbg_curr_process)
     {
@@ -228,9 +228,9 @@ void info_win32_module(DWORD64 base)
     /* this is a wine specific options to return also ELF modules in the
      * enumeration
      */
-    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
+    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     SymEnumerateModules64(dbg_curr_process->handle, info_mod_cb, &im);
-    SymSetOptions(opt);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
 
     qsort(im.modules, im.num_used, sizeof(im.modules[0]), module_compare);
 
