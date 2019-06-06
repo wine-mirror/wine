@@ -1,7 +1,6 @@
 MODULE    = libstrmbase.a
 
 C_SRCS = \
-	audio.c \
 	dispatch.c \
 	dllfunc.c \
 	enumpins.c \
