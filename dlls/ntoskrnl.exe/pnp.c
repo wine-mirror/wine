@@ -176,6 +176,8 @@ static NTSTATUS get_device_id( DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WC
     IO_STATUS_BLOCK irp_status;
     IRP *irp;
 
+    device = IoGetAttachedDevice( device );
+
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status )))
         return STATUS_NO_MEMORY;
 
@@ -191,6 +193,8 @@ static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
     IO_STACK_LOCATION *irpsp;
     IO_STATUS_BLOCK irp_status;
     IRP *irp;
+
+    device = IoGetAttachedDevice( device );
 
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status )))
         return STATUS_NO_MEMORY;
@@ -290,6 +294,8 @@ static NTSTATUS send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power 
     IO_STATUS_BLOCK irp_status;
     IO_STACK_LOCATION *irpsp;
     IRP *irp;
+
+    device = IoGetAttachedDevice( device );
 
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_POWER, device, NULL, 0, NULL, NULL, &irp_status )))
         return STATUS_NO_MEMORY;
