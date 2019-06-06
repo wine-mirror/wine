@@ -1,4 +1,6 @@
 MODULE    = inkobj.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	inkobj.c
