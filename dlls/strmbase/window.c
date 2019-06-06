@@ -200,7 +200,6 @@ HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow, const I
     hr = BaseWindow_Init(&pControlWindow->baseWindow, pFuncsTable);
     if (SUCCEEDED(hr))
     {
-        BaseDispatch_Init(&pControlWindow->baseDispatch, &IID_IVideoWindow);
         pControlWindow->IVideoWindow_iface.lpVtbl = lpVtbl;
         pControlWindow->AutoShow = TRUE;
         pControlWindow->hwndDrain = NULL;
@@ -215,43 +214,54 @@ HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow, const I
 HRESULT WINAPI BaseControlWindow_Destroy(BaseControlWindow *pControlWindow)
 {
     BaseWindowImpl_DoneWithWindow(&pControlWindow->baseWindow);
-    return BaseDispatch_Destroy(&pControlWindow->baseDispatch);
+    return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_GetTypeInfoCount(IVideoWindow *iface, UINT *pctinfo)
+HRESULT WINAPI BaseControlWindowImpl_GetTypeInfoCount(IVideoWindow *iface, UINT *count)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
-
-    return BaseDispatchImpl_GetTypeInfoCount(&This->baseDispatch, pctinfo);
+    TRACE("iface %p, count %p.\n", iface, count);
+    *count = 1;
+    return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_GetTypeInfo(IVideoWindow *iface, UINT iTInfo, LCID lcid, ITypeInfo**ppTInfo)
+HRESULT WINAPI BaseControlWindowImpl_GetTypeInfo(IVideoWindow *iface, UINT index,
+        LCID lcid, ITypeInfo **typeinfo)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
-
-    return BaseDispatchImpl_GetTypeInfo(&This->baseDispatch, &IID_NULL, iTInfo, lcid, ppTInfo);
+    TRACE("iface %p, index %u, lcid %#x, typeinfo %p.\n", iface, index, lcid, typeinfo);
+    return strmbase_get_typeinfo(IVideoWindow_tid, typeinfo);
 }
 
-HRESULT WINAPI BaseControlWindowImpl_GetIDsOfNames(IVideoWindow *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
- {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
-
-    return BaseDispatchImpl_GetIDsOfNames(&This->baseDispatch, riid, rgszNames, cNames, lcid, rgDispId);
-}
-
-HRESULT WINAPI BaseControlWindowImpl_Invoke(IVideoWindow *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo, UINT *puArgErr)
+HRESULT WINAPI BaseControlWindowImpl_GetIDsOfNames(IVideoWindow *iface, REFIID iid,
+        LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
-    ITypeInfo *pTypeInfo;
+    ITypeInfo *typeinfo;
     HRESULT hr;
 
-    hr = BaseDispatchImpl_GetTypeInfo(&This->baseDispatch, riid, 1, lcid, &pTypeInfo);
-    if (SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_Invoke(pTypeInfo, &This->IVideoWindow_iface, dispIdMember, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
-        ITypeInfo_Release(pTypeInfo);
-    }
+    TRACE("iface %p, iid %s, names %p, count %u, lcid %#x, ids %p.\n",
+            iface, debugstr_guid(iid), names, count, lcid, ids);
 
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IVideoWindow_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, ids);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+HRESULT WINAPI BaseControlWindowImpl_Invoke(IVideoWindow *iface, DISPID id, REFIID iid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *error_arg)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("iface %p, id %d, iid %s, lcid %#x, flags %#x, params %p, result %p, excepinfo %p, error_arg %p.\n",
+            iface, id, debugstr_guid(iid), lcid, flags, params, result, excepinfo, error_arg);
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IVideoWindow_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, id, flags, params, result, excepinfo, error_arg);
+        ITypeInfo_Release(typeinfo);
+    }
     return hr;
 }
 

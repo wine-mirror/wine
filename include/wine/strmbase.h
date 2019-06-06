@@ -421,7 +421,6 @@ typedef struct tagBaseControlWindow
 {
 	BaseWindow baseWindow;
 	IVideoWindow IVideoWindow_iface;
-	BaseDispatch baseDispatch;
 
 	BOOL AutoShow;
 	HWND hwndDrain;
