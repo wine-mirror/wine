@@ -2326,16 +2326,14 @@ HRESULT VMR9Impl_create(IUnknown *outer_unk, LPVOID *ppv)
 }
 
 
-static HRESULT WINAPI VMR9_ImagePresenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI VMR9_ImagePresenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID riid, void **ppv)
 {
     VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)&(This->IVMRImagePresenter9_iface);
-    else if (IsEqualIID(riid, &IID_IVMRImagePresenter9))
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IVMRImagePresenter9))
         *ppv = &This->IVMRImagePresenter9_iface;
     else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorEx9))
         *ppv = &This->IVMRSurfaceAllocatorEx9_iface;
