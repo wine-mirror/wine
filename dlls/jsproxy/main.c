@@ -21,29 +21,12 @@
 
 #include <stdarg.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_NETDB_H
-# include <netdb.h>
-#endif
-#if defined(__MINGW32__) || defined (_MSC_VER)
-# include <ws2tcpip.h>
-#else
-# define closesocket close
-# define ioctlsocket ioctl
-#endif
 
 #include "windef.h"
 #include "winbase.h"
-#ifndef __MINGW32__
-#define USE_WS_PREFIX
-#endif
 #include "winsock2.h"
 #include "ws2ipdef.h"
+#include "ws2tcpip.h"
 #include "winnls.h"
 #include "wininet.h"
 #define COBJMACROS
@@ -327,7 +310,6 @@ static void printf_addr( const WCHAR *fmt, WCHAR *buf, struct sockaddr_in *addr 
 
 static HRESULT dns_resolve( const WCHAR *hostname, VARIANT *result )
 {
-#ifdef HAVE_GETADDRINFO
         static const WCHAR fmtW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
         WCHAR addr[16];
         struct addrinfo *ai, *elem;
@@ -356,10 +338,6 @@ static HRESULT dns_resolve( const WCHAR *hostname, VARIANT *result )
         V_VT( result ) = VT_BSTR;
         V_BSTR( result ) = SysAllocString( addr );
         return S_OK;
-#else
-        FIXME("getaddrinfo not found at build time\n");
-        return S_FALSE;
-#endif
 }
 
 static HRESULT WINAPI dispex_InvokeEx(

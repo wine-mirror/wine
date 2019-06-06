@@ -1,5 +1,5 @@
 MODULE    = jsproxy.dll
-IMPORTS   = uuid oleaut32 ole32
+IMPORTS   = uuid oleaut32 ole32 ws2_32
 IMPORTLIB = jsproxy
 
 C_SRCS = \
