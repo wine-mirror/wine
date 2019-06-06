@@ -70,12 +70,4 @@ HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_
 HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface);
 HRESULT WINAPI RendererPosPassThru_EOS(IUnknown *iface);
 
-HRESULT WINAPI BaseDispatch_Init(BaseDispatch *disp, REFIID iid);
-HRESULT WINAPI BaseDispatch_Destroy(BaseDispatch *disp);
-HRESULT WINAPI BaseDispatchImpl_GetIDsOfNames(BaseDispatch *disp, REFIID iid,
-        WCHAR **names, UINT count, LCID lcid, DISPID *ids);
-HRESULT WINAPI BaseDispatchImpl_GetTypeInfo(BaseDispatch *disp, REFIID iid,
-        UINT index, LCID lcid, ITypeInfo **typeinfo);
-HRESULT WINAPI BaseDispatchImpl_GetTypeInfoCount(BaseDispatch *disp, UINT *count);
-
 #endif /* __WINE_STRMBASE_PRIVATE_H */

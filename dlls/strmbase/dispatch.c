@@ -1,7 +1,7 @@
 /*
- * Generic Implementation of IDispatch for strmbase classes
+ * ITypeInfo cache for IDispatch
  *
- * Copyright 2012 Aric Stewart, CodeWeavers
+ * Copyright 2019 Zebediah Figura
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -66,54 +66,5 @@ HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **ret)
             ITypeInfo_Release(typeinfo);
     }
     ITypeInfo_AddRef(*ret = control_typeinfo[tid]);
-    return S_OK;
-}
-
-HRESULT WINAPI BaseDispatch_Init(BaseDispatch *This, REFIID riid)
-{
-    ITypeLib *pTypeLib;
-    HRESULT hr;
-
-    This->pTypeInfo = NULL;
-    hr = LoadRegTypeLib(&LIBID_QuartzTypeLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &pTypeLib);
-    if (SUCCEEDED(hr))
-    {
-        hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, riid, &This->pTypeInfo);
-        ITypeLib_Release(pTypeLib);
-    }
-    return hr;
-}
-
-HRESULT WINAPI BaseDispatch_Destroy(BaseDispatch *This)
-{
-    if (This->pTypeInfo)
-        ITypeInfo_Release(This->pTypeInfo);
-    return S_OK;
-}
-
-HRESULT WINAPI BaseDispatchImpl_GetIDsOfNames(BaseDispatch *This, REFIID riid, OLECHAR **rgszNames, UINT cNames, LCID lcid, DISPID *rgdispid)
-{
-    if (This->pTypeInfo)
-        return ITypeInfo_GetIDsOfNames(This->pTypeInfo, rgszNames, cNames, rgdispid);
-    return E_NOTIMPL;
-}
-
-HRESULT WINAPI BaseDispatchImpl_GetTypeInfo(BaseDispatch *This, REFIID riid, UINT itinfo, LCID lcid, ITypeInfo **pptinfo)
-{
-    if (This->pTypeInfo)
-    {
-        ITypeInfo_AddRef(This->pTypeInfo);
-        *pptinfo = This->pTypeInfo;
-        return S_OK;
-    }
-    return E_NOTIMPL;
-}
-
-HRESULT WINAPI BaseDispatchImpl_GetTypeInfoCount(BaseDispatch *This, UINT *pctinfo)
-{
-    if (This->pTypeInfo)
-        *pctinfo = 1;
-    else
-        *pctinfo = 0;
     return S_OK;
 }

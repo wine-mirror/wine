@@ -412,10 +412,6 @@ enum strmbase_type_id
 
 HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **typeinfo);
 
-typedef struct{
-    ITypeInfo *pTypeInfo;
-} BaseDispatch;
-
 #ifdef __IVideoWindow_FWD_DEFINED__
 typedef struct tagBaseControlWindow
 {
