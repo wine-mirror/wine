@@ -20,6 +20,55 @@
 
 #include "strmbase_private.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+
+static ITypeLib *control_typelib;
+static ITypeInfo *control_typeinfo[last_tid];
+
+static REFIID control_tid_id[] =
+{
+    &IID_IBasicAudio,
+    &IID_IBasicVideo,
+    &IID_IMediaControl,
+    &IID_IMediaEvent,
+    &IID_IMediaPosition,
+    &IID_IVideoWindow,
+};
+
+HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **ret)
+{
+    HRESULT hr;
+
+    if (!control_typelib)
+    {
+        ITypeLib *typelib;
+
+        hr = LoadRegTypeLib(&LIBID_QuartzTypeLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &typelib);
+        if (FAILED(hr))
+        {
+            ERR("Failed to load typelib, hr %#x.\n", hr);
+            return hr;
+        }
+        if (InterlockedCompareExchangePointer((void **)&control_typelib, typelib, NULL))
+            ITypeLib_Release(typelib);
+    }
+    if (!control_typeinfo[tid])
+    {
+        ITypeInfo *typeinfo;
+
+        hr = ITypeLib_GetTypeInfoOfGuid(control_typelib, control_tid_id[tid], &typeinfo);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get type info for %s, hr %#x.\n", debugstr_guid(control_tid_id[tid]), hr);
+            return hr;
+        }
+        if (InterlockedCompareExchangePointer((void **)(control_typeinfo + tid), typeinfo, NULL))
+            ITypeInfo_Release(typeinfo);
+    }
+    ITypeInfo_AddRef(*ret = control_typeinfo[tid]);
+    return S_OK;
+}
+
 HRESULT WINAPI BaseDispatch_Init(BaseDispatch *This, REFIID riid)
 {
     ITypeLib *pTypeLib;

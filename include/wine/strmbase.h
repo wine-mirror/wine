@@ -399,6 +399,19 @@ RECT WINAPI BaseWindowImpl_GetDefaultRect(BaseWindow *This);
 LRESULT WINAPI BaseWindowImpl_OnReceiveMessage(BaseWindow *This, HWND hwnd, INT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Height, LONG Width);
 
+enum strmbase_type_id
+{
+    IBasicAudio_tid,
+    IBasicVideo_tid,
+    IMediaControl_tid,
+    IMediaEvent_tid,
+    IMediaPosition_tid,
+    IVideoWindow_tid,
+    last_tid
+};
+
+HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **typeinfo);
+
 typedef struct{
     ITypeInfo *pTypeInfo;
 } BaseDispatch;
@@ -473,7 +486,6 @@ HRESULT WINAPI BaseControlWindowImpl_IsCursorHidden(IVideoWindow *iface, LONG *C
 typedef struct tagBaseControlVideo
 {
 	IBasicVideo IBasicVideo_iface;
-	BaseDispatch baseDispatch;
 
 	BaseFilter* pFilter;
 	CRITICAL_SECTION* pInterfaceLock;
