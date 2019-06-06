@@ -1,4 +1,6 @@
 MODULE    = itircl.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	itircl_main.c
