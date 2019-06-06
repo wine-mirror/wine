@@ -1297,19 +1297,18 @@ void state_fogdensity(struct wined3d_context *context, const struct wined3d_stat
 
 static void state_colormat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    const struct wined3d_gl_info *gl_info = context_gl->c.gl_info;
     GLenum Parm = 0;
 
-    /* Depends on the decoded vertex declaration to read the existence of diffuse data.
-     * The vertex declaration will call this function if the fixed function pipeline is used.
-     */
-
-    if(isStateDirty(context, STATE_VDECL)) {
+    /* Depends on the decoded vertex declaration to read the existence of
+     * diffuse data. The vertex declaration will call this function if the
+     * fixed function pipeline is used. */
+    if (isStateDirty(&context_gl->c, STATE_VDECL))
         return;
-    }
 
-    context->num_untracked_materials = 0;
-    if ((context->stream_info.use_map & (1u << WINED3D_FFP_DIFFUSE))
+    context_gl->untracked_material_count = 0;
+    if ((context_gl->c.stream_info.use_map & (1u << WINED3D_FFP_DIFFUSE))
             && state->render_states[WINED3D_RS_COLORVERTEX])
     {
         TRACE("diff %d, amb %d, emis %d, spec %d\n",
@@ -1325,38 +1324,23 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
             else
                 Parm = GL_DIFFUSE;
             if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3D_MCS_COLOR1)
-            {
-                context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
-                context->num_untracked_materials++;
-            }
+                context_gl->untracked_materials[context_gl->untracked_material_count++] = GL_EMISSION;
             if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3D_MCS_COLOR1)
-            {
-                context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
-                context->num_untracked_materials++;
-            }
+                context_gl->untracked_materials[context_gl->untracked_material_count++] = GL_SPECULAR;
         }
         else if (state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] == WINED3D_MCS_COLOR1)
         {
             Parm = GL_AMBIENT;
             if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3D_MCS_COLOR1)
-            {
-                context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
-                context->num_untracked_materials++;
-            }
+                context_gl->untracked_materials[context_gl->untracked_material_count++] = GL_EMISSION;
             if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3D_MCS_COLOR1)
-            {
-                context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
-                context->num_untracked_materials++;
-            }
+                context_gl->untracked_materials[context_gl->untracked_material_count++] = GL_SPECULAR;
         }
         else if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3D_MCS_COLOR1)
         {
             Parm = GL_EMISSION;
             if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3D_MCS_COLOR1)
-            {
-                context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
-                context->num_untracked_materials++;
-            }
+                context_gl->untracked_materials[context_gl->untracked_material_count++] = GL_SPECULAR;
         }
         else if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3D_MCS_COLOR1)
         {
@@ -1365,7 +1349,8 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
     }
 
     /* Nothing changed, return. */
-    if (Parm == context->tracking_parm) return;
+    if (Parm == context_gl->tracking_parm)
+        return;
 
     if (!Parm)
     {
@@ -1382,7 +1367,7 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
 
     /* Apparently calls to glMaterialfv are ignored for properties we're
      * tracking with glColorMaterial, so apply those here. */
-    switch (context->tracking_parm)
+    switch (context_gl->tracking_parm)
     {
         case GL_AMBIENT_AND_DIFFUSE:
             gl_info->gl_ops.gl.p_glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.ambient);
@@ -1421,7 +1406,7 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
             break;
     }
 
-    context->tracking_parm = Parm;
+    context_gl->tracking_parm = Parm;
 }
 
 static void state_linepattern(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)

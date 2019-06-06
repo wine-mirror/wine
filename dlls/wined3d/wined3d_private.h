@@ -1927,23 +1927,20 @@ struct wined3d_context
     DWORD lowest_disabled_stage : 4;    /* Max WINED3D_MAX_TEXTURES, 8 */
     DWORD use_immediate_mode_draw : 1;
     DWORD needs_set : 1;
-    DWORD num_untracked_materials : 2;  /* Max value 2 */
+    DWORD transform_feedback_active : 1;
+    DWORD transform_feedback_paused : 1;
 
     DWORD update_shader_resource_bindings : 1;
     DWORD update_compute_shader_resource_bindings : 1;
     DWORD update_unordered_access_view_bindings : 1;
     DWORD update_compute_unordered_access_view_bindings : 1;
     DWORD uses_uavs : 1;
-    DWORD transform_feedback_active : 1;
-    DWORD transform_feedback_paused : 1;
     DWORD shader_update_mask : 6; /* WINED3D_SHADER_TYPE_COUNT, 6 */
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
-    DWORD padding : 11;
+    DWORD padding : 13;
 
     DWORD constant_update_mask;
     DWORD numbered_array_mask;
-    GLenum                  tracking_parm;     /* Which source is tracking current colour         */
-    GLenum                  untracked_materials[2];
     enum fogsource fog_source;
 
     UINT instance_count;
@@ -1977,10 +1974,13 @@ struct wined3d_context_gl
     uint32_t fog_enabled : 1;
     uint32_t diffuse_attrib_to_1 : 1;
     uint32_t rebind_fbo : 1;
-    uint32_t padding : 27;
+    uint32_t untracked_material_count : 2; /* Max value 2 */
+    uint32_t padding : 25;
 
     uint32_t default_attrib_value_set;
 
+    GLenum tracking_parm; /* Which source is tracking current colour. */
+    GLenum untracked_materials[2];
     SIZE blit_size;
     unsigned int active_texture;
 
