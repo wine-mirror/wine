@@ -516,6 +516,8 @@ static NTSTATUS dispatch_create( struct dispatch_context *context )
     file->Size = sizeof(*file);
     file->DeviceObject = device;
 
+    device = IoGetAttachedDevice( device );
+
     if (!(irp = IoAllocateIrp( device->StackSize, FALSE ))) return STATUS_NO_MEMORY;
 
     irpsp = IoGetNextIrpStackLocation( irp );
@@ -550,7 +552,7 @@ static NTSTATUS dispatch_close( struct dispatch_context *context )
 
     if (!file) return STATUS_INVALID_HANDLE;
 
-    device = file->DeviceObject;
+    device = IoGetAttachedDevice( file->DeviceObject );
 
     TRACE( "device %p file %p\n", device, file );
 
@@ -590,7 +592,7 @@ static NTSTATUS dispatch_read( struct dispatch_context *context )
 
     if (!file) return STATUS_INVALID_HANDLE;
 
-    device = file->DeviceObject;
+    device = IoGetAttachedDevice( file->DeviceObject );
 
     TRACE( "device %p file %p size %u\n", device, file, out_size );
 
@@ -630,7 +632,7 @@ static NTSTATUS dispatch_write( struct dispatch_context *context )
 
     if (!file) return STATUS_INVALID_HANDLE;
 
-    device = file->DeviceObject;
+    device = IoGetAttachedDevice( file->DeviceObject );
 
     TRACE( "device %p file %p size %u\n", device, file, context->in_size );
 
@@ -665,7 +667,7 @@ static NTSTATUS dispatch_flush( struct dispatch_context *context )
 
     if (!file) return STATUS_INVALID_HANDLE;
 
-    device = file->DeviceObject;
+    device = IoGetAttachedDevice( file->DeviceObject );
 
     TRACE( "device %p file %p\n", device, file );
 
@@ -697,7 +699,7 @@ static NTSTATUS dispatch_ioctl( struct dispatch_context *context )
 
     if (!file) return STATUS_INVALID_HANDLE;
 
-    device = file->DeviceObject;
+    device = IoGetAttachedDevice( file->DeviceObject );
 
     TRACE( "ioctl %x device %p file %p in_size %u out_size %u\n",
            context->params.ioctl.code, device, file, context->in_size, out_size );

@@ -63,8 +63,6 @@ static void unload_driver(SC_HANDLE service)
 {
     SERVICE_STATUS status;
 
-    CloseHandle(device);
-
     ControlService(service, SERVICE_CONTROL_STOP, &status);
     while (status.dwCurrentState == SERVICE_STOP_PENDING)
     {
@@ -343,6 +341,8 @@ START_TEST(ntoskrnl)
 {
     char filename[MAX_PATH], filename2[MAX_PATH];
     SC_HANDLE service, service2;
+    DWORD written;
+    BOOL ret;
 
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
@@ -367,6 +367,13 @@ START_TEST(ntoskrnl)
     main_test();
     test_overlapped();
     test_load_driver(service2);
+
+    /* We need a separate ioctl to call IoDetachDevice(); calling it in the
+     * driver unload routine causes a live-lock. */
+    ret = DeviceIoControl(device, IOCTL_WINETEST_DETACH, NULL, 0, NULL, 0, &written, NULL);
+    ok(ret, "DeviceIoControl failed: %u\n", GetLastError());
+
+    CloseHandle(device);
 
     unload_driver(service2);
     unload_driver(service);

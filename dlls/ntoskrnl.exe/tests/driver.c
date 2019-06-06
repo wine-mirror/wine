@@ -34,12 +34,15 @@
 
 #include "driver.h"
 
-static const WCHAR driver_device[] = {'\\','D','e','v','i','c','e',
-                                      '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
+static const WCHAR device_name[] = {'\\','D','e','v','i','c','e',
+                                    '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
+static const WCHAR upper_name[] = {'\\','D','e','v','i','c','e',
+                                   '\\','W','i','n','e','T','e','s','t','U','p','p','e','r',0};
 static const WCHAR driver_link[] = {'\\','D','o','s','D','e','v','i','c','e','s',
                                     '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
 
 static DRIVER_OBJECT *driver_obj;
+static DEVICE_OBJECT *lower_device, *upper_device;
 
 static HANDLE okfile;
 static LONG successes;
@@ -234,10 +237,11 @@ static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
 
+    ok(device == upper_device, "Expected device %p, got %p.\n", upper_device, device);
     ok(last_created_file != NULL, "last_created_file = NULL\n");
     ok(irpsp->FileObject == last_created_file, "FileObject != last_created_file\n");
-    ok(irpsp->DeviceObject == device, "unexpected DeviceObject\n");
-    ok(irpsp->FileObject->DeviceObject == device, "unexpected FileObject->DeviceObject\n");
+    ok(irpsp->DeviceObject == upper_device, "unexpected DeviceObject\n");
+    ok(irpsp->FileObject->DeviceObject == lower_device, "unexpected FileObject->DeviceObject\n");
     ok(!irp->UserEvent, "UserEvent = %p\n", irp->UserEvent);
     ok(irp->Tail.Overlay.Thread == (PETHREAD)KeGetCurrentThread(),
        "IRP thread is not the current thread\n");
@@ -1591,7 +1595,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 
-    main_test_work_item = IoAllocateWorkItem(device);
+    main_test_work_item = IoAllocateWorkItem(lower_device);
     ok(main_test_work_item != NULL, "main_test_work_item = NULL\n");
 
     IoQueueWorkItem(main_test_work_item, main_test_task, DelayedWorkQueue, irp);
@@ -1687,6 +1691,10 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_WINETEST_GET_CANCEL_COUNT:
             status = get_cancel_count(irp, stack, &irp->IoStatus.Information);
             break;
+        case IOCTL_WINETEST_DETACH:
+            IoDetachDevice(lower_device);
+            status = STATUS_SUCCESS;
+            break;
         default:
             break;
     }
@@ -1703,6 +1711,7 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
 static NTSTATUS WINAPI driver_FlushBuffers(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    ok(device == lower_device, "Expected device %p, got %p.\n", lower_device, device);
     ok(irpsp->DeviceObject == device, "device != DeviceObject\n");
     ok(irp->Tail.Overlay.Thread == (PETHREAD)KeGetCurrentThread(),
        "IRP thread is not the current thread\n");
@@ -1726,13 +1735,13 @@ static VOID WINAPI driver_Unload(DRIVER_OBJECT *driver)
     RtlInitUnicodeString(&linkW, driver_link);
     IoDeleteSymbolicLink(&linkW);
 
-    IoDeleteDevice(driver->DeviceObject);
+    IoDeleteDevice(upper_device);
+    IoDeleteDevice(lower_device);
 }
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 {
     UNICODE_STRING nameW, linkW;
-    DEVICE_OBJECT *device;
     NTSTATUS status;
 
     DbgPrint("loading driver\n");
@@ -1748,12 +1757,29 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     driver->MajorFunction[IRP_MJ_FLUSH_BUFFERS]     = driver_FlushBuffers;
     driver->MajorFunction[IRP_MJ_CLOSE]             = driver_Close;
 
-    RtlInitUnicodeString(&nameW, driver_device);
+    RtlInitUnicodeString(&nameW, device_name);
     RtlInitUnicodeString(&linkW, driver_link);
 
     if (!(status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
-                                  FILE_DEVICE_SECURE_OPEN, FALSE, &device)))
+                                  FILE_DEVICE_SECURE_OPEN, FALSE, &lower_device)))
+    {
         status = IoCreateSymbolicLink(&linkW, &nameW);
+        lower_device->Flags &= ~DO_DEVICE_INITIALIZING;
+    }
+
+    if (!status)
+    {
+        RtlInitUnicodeString(&nameW, upper_name);
+
+        status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
+                                FILE_DEVICE_SECURE_OPEN, FALSE, &upper_device);
+    }
+
+    if (!status)
+    {
+        IoAttachDeviceToDeviceStack(upper_device, lower_device);
+        upper_device->Flags &= ~DO_DEVICE_INITIALIZING;
+    }
 
     return status;
 }
