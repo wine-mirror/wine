@@ -174,8 +174,7 @@ static void WINAPI read_cancel_routine(DEVICE_OBJECT *device, IRP *irp)
     IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
 
-
-void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device)
+void HID_DeleteDevice(DEVICE_OBJECT *device)
 {
     BASE_DEVICE_EXTENSION *ext;
     IRP *irp;

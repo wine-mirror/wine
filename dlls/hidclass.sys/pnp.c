@@ -122,7 +122,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (status != STATUS_SUCCESS)
     {
         ERR("Minidriver AddDevice failed (%x)\n",status);
-        HID_DeleteDevice(&minidriver->minidriver, device);
+        HID_DeleteDevice(device);
         return status;
     }
 
@@ -132,7 +132,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (status != STATUS_SUCCESS)
     {
         ERR("Minidriver failed to get Attributes(%x)\n",status);
-        HID_DeleteDevice(&minidriver->minidriver, device);
+        HID_DeleteDevice(device);
         return status;
     }
 
@@ -146,7 +146,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (status != STATUS_SUCCESS)
     {
         ERR("Cannot get Device Descriptor(%x)\n",status);
-        HID_DeleteDevice(&minidriver->minidriver, device);
+        HID_DeleteDevice(device);
         return status;
     }
     for (i = 0; i < descriptor.bNumDescriptors; i++)
@@ -156,7 +156,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (i >= descriptor.bNumDescriptors)
     {
         ERR("No Report Descriptor found in reply\n");
-        HID_DeleteDevice(&minidriver->minidriver, device);
+        HID_DeleteDevice(device);
         return status;
     }
 
@@ -166,7 +166,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (status != STATUS_SUCCESS)
     {
         ERR("Cannot get Report Descriptor(%x)\n",status);
-        HID_DeleteDevice(&minidriver->minidriver, device);
+        HID_DeleteDevice(device);
         HeapFree(GetProcessHeap(), 0, reportDescriptor);
         return status;
     }
@@ -177,7 +177,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (!ext->preparseData)
     {
         ERR("Cannot parse Report Descriptor\n");
-        HID_DeleteDevice(&minidriver->minidriver, device);
+        HID_DeleteDevice(device);
         return STATUS_NOT_SUPPORTED;
     }
 
@@ -217,7 +217,7 @@ NTSTATUS PNP_RemoveDevice(minidriver *minidriver, DEVICE_OBJECT *device, IRP *ir
 
     if (irp)
         rc = minidriver->PNPDispatch(device, irp);
-    HID_DeleteDevice(&minidriver->minidriver, device);
+    HID_DeleteDevice(device);
     LIST_FOR_EACH_ENTRY(hiddev,  &minidriver->device_list, hid_device, entry)
     {
         if (hiddev->device == device)
