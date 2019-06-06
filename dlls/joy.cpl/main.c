@@ -32,7 +32,6 @@
 #include "ole2.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "joy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
