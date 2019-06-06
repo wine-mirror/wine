@@ -51,8 +51,8 @@ static const IAMDirectSoundVtbl IAMDirectSound_Vtbl;
 typedef struct DSoundRenderImpl
 {
     BaseRenderer renderer;
-    BasicAudio basicAudio;
 
+    IBasicAudio IBasicAudio_iface;
     IReferenceClock IReferenceClock_iface;
     IAMDirectSound IAMDirectSound_iface;
 
@@ -85,7 +85,7 @@ static inline DSoundRenderImpl *impl_from_IBaseFilter(IBaseFilter *iface)
 
 static inline DSoundRenderImpl *impl_from_IBasicAudio(IBasicAudio *iface)
 {
-    return CONTAINING_RECORD(iface, DSoundRenderImpl, basicAudio.IBasicAudio_iface);
+    return CONTAINING_RECORD(iface, DSoundRenderImpl, IBasicAudio_iface);
 }
 
 static inline DSoundRenderImpl *impl_from_IReferenceClock(IReferenceClock *iface)
@@ -604,7 +604,6 @@ static void dsound_render_destroy(BaseRenderer *iface)
         IDirectSound8_Release(filter->dsound);
     filter->dsound = NULL;
 
-    BasicAudio_Destroy(&filter->basicAudio);
     CloseHandle(filter->blocked);
 
     strmbase_renderer_cleanup(&filter->renderer);
@@ -616,7 +615,7 @@ static HRESULT dsound_render_query_interface(BaseRenderer *iface, REFIID iid, vo
     DSoundRenderImpl *filter = impl_from_BaseRenderer(iface);
 
     if (IsEqualGUID(iid, &IID_IBasicAudio))
-        *out = &filter->basicAudio.IBasicAudio_iface;
+        *out = &filter->IBasicAudio_iface;
     else if (IsEqualGUID(iid, &IID_IReferenceClock))
         *out = &filter->IReferenceClock_iface;
     else if (IsEqualGUID(iid, &IID_IAMDirectSound))
@@ -670,7 +669,7 @@ HRESULT DSoundRender_create(IUnknown *outer, void **out)
             outer, &CLSID_DSoundRender, sink_name,
             (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), &BaseFuncTable);
 
-    BasicAudio_Init(&pDSoundRender->basicAudio,&IBasicAudio_Vtbl);
+    pDSoundRender->IBasicAudio_iface.lpVtbl = &IBasicAudio_Vtbl;
     pDSoundRender->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;
     pDSoundRender->IAMDirectSound_iface.lpVtbl = &IAMDirectSound_Vtbl;
 
@@ -793,7 +792,54 @@ static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
     return BaseFilterImpl_Release(&This->renderer.filter.IBaseFilter_iface);
 }
 
-/*** IBasicAudio methods ***/
+HRESULT WINAPI basic_audio_GetTypeInfoCount(IBasicAudio *iface, UINT *count)
+{
+    TRACE("iface %p, count %p.\n", iface, count);
+    *count = 1;
+    return S_OK;
+}
+
+HRESULT WINAPI basic_audio_GetTypeInfo(IBasicAudio *iface, UINT index,
+        LCID lcid, ITypeInfo **typeinfo)
+{
+    TRACE("iface %p, index %u, lcid %#x, typeinfo %p.\n", iface, index, lcid, typeinfo);
+    return strmbase_get_typeinfo(IBasicAudio_tid, typeinfo);
+}
+
+HRESULT WINAPI basic_audio_GetIDsOfNames(IBasicAudio *iface, REFIID iid,
+        LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("iface %p, iid %s, names %p, count %u, lcid %#x, ids %p.\n",
+            iface, debugstr_guid(iid), names, count, lcid, ids);
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicAudio_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, ids);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI basic_audio_Invoke(IBasicAudio *iface, DISPID id, REFIID iid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *error_arg)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("iface %p, id %d, iid %s, lcid %#x, flags %#x, params %p, result %p, excepinfo %p, error_arg %p.\n",
+            iface, id, debugstr_guid(iid), lcid, flags, params, result, excepinfo, error_arg);
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicAudio_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, id, flags, params, result, excepinfo, error_arg);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
 static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
                                             LONG lVolume) {
     DSoundRenderImpl *This = impl_from_IBasicAudio(iface);
@@ -861,10 +907,10 @@ static const IBasicAudioVtbl IBasicAudio_Vtbl =
     Basicaudio_QueryInterface,
     Basicaudio_AddRef,
     Basicaudio_Release,
-    BasicAudioImpl_GetTypeInfoCount,
-    BasicAudioImpl_GetTypeInfo,
-    BasicAudioImpl_GetIDsOfNames,
-    BasicAudioImpl_Invoke,
+    basic_audio_GetTypeInfoCount,
+    basic_audio_GetTypeInfo,
+    basic_audio_GetIDsOfNames,
+    basic_audio_Invoke,
     Basicaudio_put_Volume,
     Basicaudio_get_Volume,
     Basicaudio_put_Balance,
