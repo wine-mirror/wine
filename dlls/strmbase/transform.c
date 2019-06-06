@@ -281,14 +281,14 @@ static const IBaseFilterVtbl transform_vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
-static HRESULT strmbase_transform_init(const CLSID *clsid,
+static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
         const TransformFilterFuncTable *func_table, TransformFilter *filter)
 {
     HRESULT hr;
     PIN_INFO piInput;
     PIN_INFO piOutput;
 
-    strmbase_filter_init(&filter->filter, &transform_vtbl, NULL, clsid,
+    strmbase_filter_init(&filter->filter, &transform_vtbl, outer, clsid,
             (DWORD_PTR)(__FILE__ ": TransformFilter.csFilter"), &tfBaseFuncTable);
 
     InitializeCriticalSection(&filter->csReceive);
@@ -349,7 +349,7 @@ static HRESULT strmbase_transform_init(const CLSID *clsid,
     return hr;
 }
 
-HRESULT strmbase_transform_create(LONG filter_size, const CLSID *pClsid,
+HRESULT strmbase_transform_create(LONG filter_size, IUnknown *outer, const CLSID *pClsid,
         const TransformFilterFuncTable *pFuncsTable, IBaseFilter **ppTransformFilter)
 {
     TransformFilter* pTf;
@@ -365,7 +365,7 @@ HRESULT strmbase_transform_create(LONG filter_size, const CLSID *pClsid,
 
     ZeroMemory(pTf, filter_size);
 
-    if (SUCCEEDED(strmbase_transform_init(pClsid, pFuncsTable, pTf)))
+    if (SUCCEEDED(strmbase_transform_init(outer, pClsid, pFuncsTable, pTf)))
     {
         *ppTransformFilter = &pTf->filter.IBaseFilter_iface;
         return S_OK;

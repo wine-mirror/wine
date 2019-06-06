@@ -375,25 +375,20 @@ static const TransformFilterFuncTable ACMWrapper_FuncsTable = {
     NULL
 };
 
-HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT ACMWrapper_create(IUnknown *outer, void **out)
 {
     HRESULT hr;
     ACMWrapperImpl* This;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
+    *out = NULL;
 
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
-    hr = strmbase_transform_create(sizeof(ACMWrapperImpl), &CLSID_ACMWrapper,
+    hr = strmbase_transform_create(sizeof(ACMWrapperImpl), outer, &CLSID_ACMWrapper,
             &ACMWrapper_FuncsTable, (IBaseFilter **)&This);
 
     if (FAILED(hr))
         return hr;
 
-    *ppv = &This->tf.filter.IBaseFilter_iface;
+    *out = &This->tf.filter.IUnknown_inner;
     This->lasttime_real = This->lasttime_sent = -1;
 
     return hr;

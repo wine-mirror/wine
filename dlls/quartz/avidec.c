@@ -390,19 +390,14 @@ static const TransformFilterFuncTable AVIDec_FuncsTable = {
     AVIDec_NotifyDrop
 };
 
-HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT AVIDec_create(IUnknown *outer, void **out)
 {
     HRESULT hr;
     AVIDecImpl * This;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
+    *out = NULL;
 
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
-    hr = strmbase_transform_create(sizeof(AVIDecImpl), &CLSID_AVIDec,
+    hr = strmbase_transform_create(sizeof(AVIDecImpl), outer, &CLSID_AVIDec,
             &AVIDec_FuncsTable, (IBaseFilter **)&This);
 
     if (FAILED(hr))
@@ -412,7 +407,7 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->pBihIn = NULL;
     This->pBihOut = NULL;
 
-    *ppv = &This->tf.filter.IBaseFilter_iface;
+    *out = &This->tf.filter.IUnknown_inner;
 
     return hr;
 }

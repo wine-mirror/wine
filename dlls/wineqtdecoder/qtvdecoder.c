@@ -518,22 +518,14 @@ static const TransformFilterFuncTable QTVDecoder_FuncsTable = {
     NULL
 };
 
-IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr)
+IUnknown * CALLBACK QTVDecoder_create(IUnknown *outer, HRESULT* phr)
 {
     HRESULT hr;
     QTVDecoderImpl * This;
 
-    TRACE("(%p, %p)\n", pUnkOuter, phr);
-
     *phr = S_OK;
 
-    if (pUnkOuter)
-    {
-        *phr = CLASS_E_NOAGGREGATION;
-        return NULL;
-    }
-
-    hr = strmbase_transform_create(sizeof(QTVDecoderImpl), &CLSID_QTVDecoder,
+    hr = strmbase_transform_create(sizeof(QTVDecoderImpl), outer, &CLSID_QTVDecoder,
             &QTVDecoder_FuncsTable, (IBaseFilter **)&This);
 
     if (FAILED(hr))
@@ -543,5 +535,5 @@ IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr)
     }
 
     *phr = hr;
-    return (IUnknown*)This;
+    return &This->tf.filter.IUnknown_inner;
 }

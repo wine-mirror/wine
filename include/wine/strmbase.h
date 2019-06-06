@@ -249,7 +249,7 @@ typedef struct TransformFilterFuncTable {
 
 HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *iface, IBaseFilter *sender, Quality qm);
 
-HRESULT strmbase_transform_create(LONG filter_size, const CLSID *clsid,
+HRESULT strmbase_transform_create(LONG filter_size, IUnknown *outer, const CLSID *clsid,
         const TransformFilterFuncTable *func_table, IBaseFilter **filter);
 
 /* Source Seeking */
