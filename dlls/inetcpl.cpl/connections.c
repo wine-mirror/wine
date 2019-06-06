@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
+#include <winnls.h>
 #include <wininet.h>
 #include <winuser.h>
 #include <winreg.h>
@@ -27,7 +28,6 @@
 #include "inetcpl.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
 
@@ -193,7 +193,7 @@ static void connections_on_initdialog(HWND hwnd)
         EnableWindow(GetDlgItem(hwnd, IDC_EDIT_PROXY_PORT), TRUE);
     }
 
-    port = strchrW(address, ':');
+    port = wcschr(address, ':');
     if(port)
     {
         *port = 0;
