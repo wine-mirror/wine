@@ -289,22 +289,6 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *This, const IBaseFilterVtbl 
     return hr;
 }
 
-HRESULT WINAPI BaseRendererImpl_QueryInterface(IBaseFilter* iface, REFIID riid, LPVOID * ppv)
-{
-    BaseRenderer *This = impl_from_IBaseFilter(iface);
-
-    if (IsEqualIID(riid, &IID_IMediaSeeking) || IsEqualIID(riid, &IID_IMediaPosition))
-        return IUnknown_QueryInterface(This->pPosition, riid, ppv);
-    else if (IsEqualIID(riid, &IID_IQualityControl))
-    {
-        *ppv = &This->qcimpl->IQualityControl_iface;
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-    else
-        return BaseFilterImpl_QueryInterface(iface, riid, ppv);
-}
-
 void strmbase_renderer_cleanup(BaseRenderer *filter)
 {
     IPin *peer;
