@@ -408,30 +408,6 @@ SampleGrabber_IBaseFilter_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 
 /* IBaseFilter */
 static HRESULT WINAPI
-SampleGrabber_IBaseFilter_FindPin(IBaseFilter *iface, LPCWSTR id, IPin **pin)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(id), pin);
-    if (!id || !pin)
-        return E_POINTER;
-    if (!lstrcmpiW(id,pin_in_name))
-    {
-        *pin = &This->pin_in.IPin_iface;
-        IPin_AddRef(*pin);
-        return S_OK;
-    }
-    else if (!lstrcmpiW(id,pin_out_name))
-    {
-        *pin = &This->pin_out.IPin_iface;
-        IPin_AddRef(*pin);
-        return S_OK;
-    }
-    *pin = NULL;
-    return VFW_E_NOT_FOUND;
-}
-
-/* IBaseFilter */
-static HRESULT WINAPI
 SampleGrabber_IBaseFilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *graph, LPCWSTR name)
 {
     SG_Impl *This = impl_from_IBaseFilter(iface);
@@ -1082,7 +1058,7 @@ static const IBaseFilterVtbl IBaseFilter_VTable =
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    SampleGrabber_IBaseFilter_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     SampleGrabber_IBaseFilter_JoinFilterGraph,
     SampleGrabber_IBaseFilter_QueryVendorInfo,
