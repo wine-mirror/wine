@@ -171,7 +171,7 @@ static ULONG WINAPI sample_grabber_stream_AddRef(IMFStreamSink *iface)
     return refcount;
 }
 
-static void stream_release_pending_item(struct sample_grabber_stream *stream, struct scheduled_item *item)
+static void stream_release_pending_item(struct scheduled_item *item)
 {
     list_remove(&item->entry);
     switch (item->type)
@@ -211,7 +211,7 @@ static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
         }
         LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &stream->items, struct scheduled_item, entry)
         {
-            stream_release_pending_item(stream, item);
+            stream_release_pending_item(item);
         }
         DeleteCriticalSection(&stream->cs);
         heap_free(stream);
@@ -392,7 +392,7 @@ static HRESULT stream_queue_sample(struct sample_grabber_stream *stream, IMFSamp
     if (SUCCEEDED(hr))
         list_add_tail(&stream->items, &item->entry);
     else
-        stream_release_pending_item(stream, item);
+        stream_release_pending_item(item);
 
     return hr;
 }
@@ -459,7 +459,7 @@ static HRESULT stream_place_marker(struct sample_grabber_stream *stream, MFSTREA
     if (SUCCEEDED(hr))
         list_add_tail(&stream->items, &item->entry);
     else
-        stream_release_pending_item(stream, item);
+        stream_release_pending_item(item);
 
     return hr;
 }
@@ -487,9 +487,34 @@ static HRESULT WINAPI sample_grabber_stream_PlaceMarker(IMFStreamSink *iface, MF
 
 static HRESULT WINAPI sample_grabber_stream_Flush(IMFStreamSink *iface)
 {
-    FIXME("%p.\n", iface);
+    struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
+    struct scheduled_item *item, *next_item;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
+    EnterCriticalSection(&stream->cs);
+
+    LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &stream->items, struct scheduled_item, entry)
+    {
+        /* Samples are discarded, markers are processed immediately. */
+        switch (item->type)
+        {
+            case ITEM_TYPE_SAMPLE:
+                break;
+            case ITEM_TYPE_MARKER:
+                sample_grabber_stream_report_marker(stream, &item->u.marker.context, E_ABORT);
+                break;
+        }
+
+        stream_release_pending_item(item);
+    }
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static const IMFStreamSinkVtbl sample_grabber_stream_vtbl =
@@ -706,7 +731,7 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallba
                 case ITEM_TYPE_SAMPLE:
                     if (FAILED(hr = sample_grabber_report_sample(stream->sink, item->u.sample)))
                         WARN("Failed to report a sample, hr %#x.\n", hr);
-                    stream_release_pending_item(stream, item);
+                    stream_release_pending_item(item);
                     item = stream_get_next_item(stream);
                     if (item && item->type == ITEM_TYPE_SAMPLE)
                     {
@@ -718,7 +743,7 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallba
                     break;
                 case ITEM_TYPE_MARKER:
                     sample_grabber_stream_report_marker(stream, &item->u.marker.context, S_OK);
-                    stream_release_pending_item(stream, item);
+                    stream_release_pending_item(item);
                     item = stream_get_next_item(stream);
                     break;
             }
