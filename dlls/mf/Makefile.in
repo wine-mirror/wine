@@ -1,6 +1,6 @@
 MODULE    = mf.dll
 IMPORTLIB = mf
-IMPORTS   = mfplat uuid mfuuid
+IMPORTS   = mfplat ole32 uuid mfuuid
 
 C_SRCS = \
 	main.c \

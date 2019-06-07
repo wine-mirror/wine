@@ -37,10 +37,25 @@ enum sink_state
 
 struct sample_grabber;
 
-struct scheduled_sample
+enum scheduled_item_type
+{
+    ITEM_TYPE_SAMPLE,
+    ITEM_TYPE_MARKER,
+};
+
+struct scheduled_item
 {
     struct list entry;
-    IMFSample *sample;
+    enum scheduled_item_type type;
+    union
+    {
+        IMFSample *sample;
+        struct
+        {
+            MFSTREAMSINK_MARKER_TYPE type;
+            PROPVARIANT context;
+        } marker;
+    } u;
 };
 
 struct sample_grabber_stream
@@ -52,7 +67,7 @@ struct sample_grabber_stream
     struct sample_grabber *sink;
     IMFMediaEventQueue *event_queue;
     enum sink_state state;
-    struct list samples;
+    struct list items;
     IUnknown *cancel_key;
     CRITICAL_SECTION cs;
 };
@@ -156,18 +171,26 @@ static ULONG WINAPI sample_grabber_stream_AddRef(IMFStreamSink *iface)
     return refcount;
 }
 
-static void stream_release_pending_entry(struct sample_grabber_stream *stream, struct scheduled_sample *sample)
+static void stream_release_pending_item(struct sample_grabber_stream *stream, struct scheduled_item *item)
 {
-    list_remove(&sample->entry);
-    IMFSample_Release(sample->sample);
-    heap_free(sample);
+    list_remove(&item->entry);
+    switch (item->type)
+    {
+        case ITEM_TYPE_SAMPLE:
+            IMFSample_Release(item->u.sample);
+            break;
+        case ITEM_TYPE_MARKER:
+            PropVariantClear(&item->u.marker.context);
+            break;
+    }
+    heap_free(item);
 }
 
 static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
 {
     struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
     ULONG refcount = InterlockedDecrement(&stream->refcount);
-    struct scheduled_sample *sample, *next_sample;
+    struct scheduled_item *item, *next_item;
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
@@ -186,9 +209,9 @@ static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
             IMFMediaEventQueue_Shutdown(stream->event_queue);
             IMFMediaEventQueue_Release(stream->event_queue);
         }
-        LIST_FOR_EACH_ENTRY_SAFE(sample, next_sample, &stream->samples, struct scheduled_sample, entry)
+        LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &stream->items, struct scheduled_item, entry)
         {
-            stream_release_pending_entry(stream, sample);
+            stream_release_pending_item(stream, item);
         }
         DeleteCriticalSection(&stream->cs);
         heap_free(stream);
@@ -321,7 +344,7 @@ static HRESULT sample_grabber_report_sample(struct sample_grabber *grabber, IMFS
     return hr;
 }
 
-static HRESULT stream_schedule_sample(struct sample_grabber_stream *stream, struct scheduled_sample *pending)
+static HRESULT stream_schedule_sample(struct sample_grabber_stream *stream, struct scheduled_item *item)
 {
     LONGLONG sampletime;
     HRESULT hr;
@@ -329,7 +352,7 @@ static HRESULT stream_schedule_sample(struct sample_grabber_stream *stream, stru
     if (!stream->sink)
         return MF_E_STREAMSINK_REMOVED;
 
-    if (FAILED(hr = IMFSample_GetSampleTime(pending->sample, &sampletime)))
+    if (FAILED(hr = IMFSample_GetSampleTime(item->u.sample, &sampletime)))
         return hr;
 
     if (stream->cancel_key)
@@ -349,26 +372,27 @@ static HRESULT stream_schedule_sample(struct sample_grabber_stream *stream, stru
 
 static HRESULT stream_queue_sample(struct sample_grabber_stream *stream, IMFSample *sample)
 {
-    struct scheduled_sample *pending;
+    struct scheduled_item *item;
     LONGLONG sampletime;
     HRESULT hr;
 
     if (FAILED(hr = IMFSample_GetSampleTime(sample, &sampletime)))
         return hr;
 
-    if (!(pending = heap_alloc_zero(sizeof(*pending))))
+    if (!(item = heap_alloc_zero(sizeof(*item))))
         return E_OUTOFMEMORY;
 
-    pending->sample = sample;
-    IMFSample_AddRef(pending->sample);
-    list_init(&pending->entry);
-    if (list_empty(&stream->samples))
-        hr = stream_schedule_sample(stream, pending);
+    item->type = ITEM_TYPE_SAMPLE;
+    item->u.sample = sample;
+    IMFSample_AddRef(item->u.sample);
+    list_init(&item->entry);
+    if (list_empty(&stream->items))
+        hr = stream_schedule_sample(stream, item);
 
     if (SUCCEEDED(hr))
-        list_add_tail(&stream->samples, &pending->entry);
+        list_add_tail(&stream->items, &item->entry);
     else
-        stream_release_pending_entry(stream, pending);
+        stream_release_pending_item(stream, item);
 
     return hr;
 }
@@ -407,12 +431,58 @@ static HRESULT WINAPI sample_grabber_stream_ProcessSample(IMFStreamSink *iface, 
     return hr;
 }
 
+static void sample_grabber_stream_report_marker(struct sample_grabber_stream *stream, const PROPVARIANT *context,
+        HRESULT hr)
+{
+    IMFStreamSink_QueueEvent(&stream->IMFStreamSink_iface, MEStreamSinkMarker, &GUID_NULL, hr, context);
+}
+
+static HRESULT stream_place_marker(struct sample_grabber_stream *stream, MFSTREAMSINK_MARKER_TYPE marker_type,
+        const PROPVARIANT *context_value)
+{
+    struct scheduled_item *item;
+    HRESULT hr;
+
+    if (list_empty(&stream->items))
+    {
+        sample_grabber_stream_report_marker(stream, context_value, S_OK);
+        return S_OK;
+    }
+
+    if (!(item = heap_alloc_zero(sizeof(*item))))
+        return E_OUTOFMEMORY;
+
+    item->type = ITEM_TYPE_MARKER;
+    item->u.marker.type = marker_type;
+    list_init(&item->entry);
+    hr = PropVariantCopy(&item->u.marker.context, context_value);
+    if (SUCCEEDED(hr))
+        list_add_tail(&stream->items, &item->entry);
+    else
+        stream_release_pending_item(stream, item);
+
+    return hr;
+}
+
 static HRESULT WINAPI sample_grabber_stream_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
         const PROPVARIANT *marker_value, const PROPVARIANT *context_value)
 {
-    FIXME("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context_value);
+    struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context_value);
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->state == SINK_STATE_RUNNING)
+        hr = stream_place_marker(stream, marker_type, context_value);
+
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_grabber_stream_Flush(IMFStreamSink *iface)
@@ -602,15 +672,15 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_GetParameters(IMFAsyn
     return E_NOTIMPL;
 }
 
-static struct scheduled_sample *stream_get_next_sample(struct sample_grabber_stream *stream)
+static struct scheduled_item *stream_get_next_item(struct sample_grabber_stream *stream)
 {
-    struct scheduled_sample *sample = NULL;
+    struct scheduled_item *item = NULL;
     struct list *e;
 
-    if ((e = list_head(&stream->samples)))
-        sample = LIST_ENTRY(e, struct scheduled_sample, entry);
+    if ((e = list_head(&stream->items)))
+        item = LIST_ENTRY(e, struct scheduled_item, entry);
 
-    return sample;
+    return item;
 }
 
 static void sample_grabber_stream_request_sample(struct sample_grabber_stream *stream)
@@ -621,25 +691,38 @@ static void sample_grabber_stream_request_sample(struct sample_grabber_stream *s
 static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct sample_grabber_stream *stream = impl_from_IMFAsyncCallback(iface);
-    struct scheduled_sample *sample;
+    struct scheduled_item *item;
     HRESULT hr;
 
     EnterCriticalSection(&stream->cs);
 
     /* Report and schedule next. */
-    if (stream->sink && (sample = stream_get_next_sample(stream)))
+    if (stream->sink && (item = stream_get_next_item(stream)))
     {
-        if (FAILED(hr = sample_grabber_report_sample(stream->sink, sample->sample)))
-            WARN("Failed to report a sample, hr %#x.\n", hr);
-
-        stream_release_pending_entry(stream, sample);
-
-        if ((sample = stream_get_next_sample(stream)))
+        while (item)
         {
-            if (FAILED(hr = stream_schedule_sample(stream, sample)))
-                WARN("Failed to schedule a sample, hr %#x.\n", hr);
+            switch (item->type)
+            {
+                case ITEM_TYPE_SAMPLE:
+                    if (FAILED(hr = sample_grabber_report_sample(stream->sink, item->u.sample)))
+                        WARN("Failed to report a sample, hr %#x.\n", hr);
+                    stream_release_pending_item(stream, item);
+                    item = stream_get_next_item(stream);
+                    if (item && item->type == ITEM_TYPE_SAMPLE)
+                    {
+                        if (FAILED(hr = stream_schedule_sample(stream, item)))
+                            WARN("Failed to schedule a sample, hr %#x.\n", hr);
+                        sample_grabber_stream_request_sample(stream);
+                        item = NULL;
+                    }
+                    break;
+                case ITEM_TYPE_MARKER:
+                    sample_grabber_stream_report_marker(stream, &item->u.marker.context, S_OK);
+                    stream_release_pending_item(stream, item);
+                    item = stream_get_next_item(stream);
+                    break;
+            }
         }
-        sample_grabber_stream_request_sample(stream);
     }
 
     LeaveCriticalSection(&stream->cs);
@@ -1132,7 +1215,7 @@ static HRESULT sample_grabber_create_stream(struct sample_grabber *sink, struct 
     object->refcount = 1;
     object->sink = sink;
     IMFMediaSink_AddRef(&object->sink->IMFMediaSink_iface);
-    list_init(&object->samples);
+    list_init(&object->items);
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
