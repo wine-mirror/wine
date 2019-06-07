@@ -44,6 +44,9 @@
 
 #include "ntoskrnl_private.h"
 
+#include "initguid.h"
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 #define MAX_SERVICE_NAME 260
@@ -238,57 +241,6 @@ static NTSTATUS get_device_instance_id( DEVICE_OBJECT *device, WCHAR *buffer )
     return STATUS_SUCCESS;
 }
 
-static BOOL get_driver_for_id( const WCHAR *id, WCHAR *driver )
-{
-    static const WCHAR serviceW[] = {'S','e','r','v','i','c','e',0};
-    static const UNICODE_STRING service_str = { sizeof(serviceW) - sizeof(WCHAR), sizeof(serviceW), (WCHAR *)serviceW };
-    static const WCHAR critical_fmtW[] =
-        {'\\','R','e','g','i','s','t','r','y',
-         '\\','M','a','c','h','i','n','e',
-         '\\','S','y','s','t','e','m',
-         '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-         '\\','C','o','n','t','r','o','l',
-         '\\','C','r','i','t','i','c','a','l','D','e','v','i','c','e','D','a','t','a','b','a','s','e',
-         '\\','%','s',0};
-    WCHAR buffer[FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data[MAX_SERVICE_NAME * sizeof(WCHAR)] )];
-    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING key;
-    NTSTATUS status;
-    HANDLE hkey;
-    WCHAR *keyW;
-    DWORD len;
-
-    if (!(keyW = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(critical_fmtW) + strlenW(id) * sizeof(WCHAR) )))
-        return STATUS_NO_MEMORY;
-
-    sprintfW( keyW, critical_fmtW, id );
-    RtlInitUnicodeString( &key, keyW );
-    InitializeObjectAttributes( &attr, &key, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL );
-
-    status = NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr );
-    RtlFreeUnicodeString( &key );
-    if (status != STATUS_SUCCESS)
-    {
-        TRACE("No driver found for ID %s.\n", debugstr_w(id));
-        return FALSE;
-    }
-
-    status = NtQueryValueKey( hkey, &service_str, KeyValuePartialInformation,
-                              info, sizeof(buffer) - sizeof(WCHAR), &len );
-    NtClose( hkey );
-    if (status != STATUS_SUCCESS || info->Type != REG_SZ)
-    {
-        TRACE("No driver found for device ID %s.\n", debugstr_w(id));
-        return FALSE;
-    }
-
-    memcpy( driver, info->Data, info->DataLength );
-    driver[ info->DataLength / sizeof(WCHAR) ] = 0;
-    TRACE("Found driver %s for ID %s.\n", debugstr_w(driver), debugstr_w(id));
-    return TRUE;
-}
-
 static NTSTATUS send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power )
 {
     IO_STATUS_BLOCK irp_status;
@@ -309,39 +261,19 @@ static NTSTATUS send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power 
     return send_device_irp( device, irp, NULL );
 }
 
-static void handle_bus_relations( DEVICE_OBJECT *device )
+static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
 {
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
     WCHAR buffer[MAX_SERVICE_NAME + ARRAY_SIZE(servicesW)];
     WCHAR driver[MAX_SERVICE_NAME] = {0};
     DRIVER_OBJECT *driver_obj;
     UNICODE_STRING string;
-    WCHAR *ids, *ptr;
     NTSTATUS status;
 
-    TRACE( "(%p)\n", device );
-
-    /* We could (should?) do a full IRP_MN_QUERY_DEVICE_RELATIONS query,
-     * but we don't have to, we have the DEVICE_OBJECT of the new device
-     * so we can simply handle the process here */
-
-    status = get_device_id( device, BusQueryCompatibleIDs, &ids );
-    if (status != STATUS_SUCCESS || !ids)
+    if (!SetupDiGetDeviceRegistryPropertyW( set, sp_device, SPDRP_SERVICE,
+            NULL, (BYTE *)driver, sizeof(driver), NULL ))
     {
-        ERR("Failed to get compatible IDs, status %#x.\n", status);
-        return;
-    }
-
-    for (ptr = ids; *ptr; ptr += strlenW(ptr) + 1)
-    {
-        if (get_driver_for_id( ptr, driver ))
-            break;
-    }
-    ExFreePool( ids );
-
-    if (!driver[0])
-    {
-        ERR("No matching driver found for device.\n");
+        WARN("No driver registered for device %p.\n", device);
         return;
     }
 
@@ -373,13 +305,129 @@ static void handle_bus_relations( DEVICE_OBJECT *device )
     ObDereferenceObject( driver_obj );
 
     if (status != STATUS_SUCCESS)
-    {
         ERR("AddDevice failed for driver %s, status %#x.\n", debugstr_w(driver), status);
+}
+
+/* Return the total number of characters in a REG_MULTI_SZ string, including
+ * the final terminating null. */
+static size_t sizeof_multiszW( const WCHAR *str )
+{
+    const WCHAR *p;
+    for (p = str; *p; p += strlenW(p) + 1);
+    return p + 1 - str;
+}
+
+/* This does almost the same thing as UpdateDriverForPlugAndPlayDevices(),
+ * except that we don't know the INF path beforehand. */
+static BOOL install_device_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
+{
+    static const DWORD dif_list[] =
+    {
+        DIF_REGISTERDEVICE,
+        DIF_SELECTBESTCOMPATDRV,
+        DIF_ALLOW_INSTALL,
+        DIF_INSTALLDEVICEFILES,
+        DIF_REGISTER_COINSTALLERS,
+        DIF_INSTALLINTERFACES,
+        DIF_INSTALLDEVICE,
+        DIF_NEWDEVICEWIZARD_FINISHINSTALL,
+    };
+
+    NTSTATUS status;
+    unsigned int i;
+    WCHAR *ids;
+
+    if ((status = get_device_id( device, BusQueryHardwareIDs, &ids )) || !ids)
+    {
+        ERR("Failed to get hardware IDs, status %#x.\n", status);
+        return FALSE;
+    }
+
+    SetupDiSetDeviceRegistryPropertyW( set, sp_device, SPDRP_HARDWAREID, (BYTE *)ids,
+            sizeof_multiszW( ids ) * sizeof(WCHAR) );
+    ExFreePool( ids );
+
+    if ((status = get_device_id( device, BusQueryCompatibleIDs, &ids )) || !ids)
+    {
+        ERR("Failed to get compatible IDs, status %#x.\n", status);
+        return FALSE;
+    }
+
+    SetupDiSetDeviceRegistryPropertyW( set, sp_device, SPDRP_COMPATIBLEIDS, (BYTE *)ids,
+            sizeof_multiszW( ids ) * sizeof(WCHAR) );
+    ExFreePool( ids );
+
+    if (!SetupDiBuildDriverInfoList( set, sp_device, SPDIT_COMPATDRIVER ))
+    {
+        ERR("Failed to build compatible driver list, error %#x.\n", GetLastError());
+        return FALSE;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(dif_list); ++i)
+    {
+        if (!SetupDiCallClassInstaller(dif_list[i], set, sp_device) && GetLastError() != ERROR_DI_DO_DEFAULT)
+        {
+            ERR("Install function %#x failed, error %#x.\n", dif_list[i], GetLastError());
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static void handle_bus_relations( DEVICE_OBJECT *device )
+{
+    static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
+
+    SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    BOOL need_driver = TRUE;
+    HDEVINFO set;
+    HKEY key;
+
+    /* We could (should?) do a full IRP_MN_QUERY_DEVICE_RELATIONS query,
+     * but we don't have to, we have the DEVICE_OBJECT of the new device
+     * so we can simply handle the process here */
+
+    if (get_device_instance_id( device, device_instance_id ))
+        return;
+
+    set = SetupDiCreateDeviceInfoList( NULL, NULL );
+
+    if (!SetupDiCreateDeviceInfoW( set, device_instance_id, &GUID_NULL, NULL, NULL, 0, &sp_device )
+            && !SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device ))
+    {
+        ERR("Failed to create or open device %s, error %#x.\n", debugstr_w(device_instance_id), GetLastError());
+        SetupDiDestroyDeviceInfoList( set );
         return;
     }
 
-    send_pnp_irp( device, IRP_MN_START_DEVICE );
-    send_power_irp( device, PowerDeviceD0 );
+    TRACE("Creating new device %s.\n", debugstr_w(device_instance_id));
+
+    /* Check if the device already has a driver registered; if not, find one
+     * and install it. */
+    key = SetupDiOpenDevRegKey( set, &sp_device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, KEY_READ );
+    if (key != INVALID_HANDLE_VALUE)
+    {
+        if (!RegQueryValueExW( key, infpathW, NULL, NULL, NULL, NULL ))
+            need_driver = FALSE;
+        RegCloseKey( key );
+    }
+
+    if (need_driver && !install_device_driver( device, set, &sp_device ))
+    {
+        SetupDiDestroyDeviceInfoList( set );
+        return;
+    }
+
+    load_function_driver( device, set, &sp_device );
+    if (device->DriverObject)
+    {
+        send_pnp_irp( device, IRP_MN_START_DEVICE );
+        send_power_irp( device, PowerDeviceD0 );
+    }
+
+    SetupDiDestroyDeviceInfoList( set );
 }
 
 static void handle_removal_relations( DEVICE_OBJECT *device )
