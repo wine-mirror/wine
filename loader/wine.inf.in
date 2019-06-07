@@ -131,7 +131,6 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
-AddService=WineHID,0,WineHIDService
 AddService=Winmgmt,0,WinmgmtService
 
 [DefaultInstall.NT.Services]
@@ -148,7 +147,6 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
-AddService=WineHID,0,WineHIDService
 AddService=Winmgmt,0,WinmgmtService
 
 [DefaultInstall.ntamd64.Services]
@@ -165,7 +163,6 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
-AddService=WineHID,0,WineHIDService
 AddService=Winmgmt,0,WinmgmtService
 
 [Strings]
@@ -3471,15 +3468,6 @@ ServiceBinary="%12%\winebus.sys"
 LoadOrderGroup="WinePlugPlay"
 ServiceType=1
 StartType=2
-ErrorControl=1
-
-[WineHIDService]
-Description="Wine HID Minidriver"
-DisplayName="Wine HID"
-ServiceBinary="%12%\winehid.sys"
-LoadOrderGroup="WinePlugPlay"
-ServiceType=1
-StartType=3
 ErrorControl=1
 
 [SpoolerService]
