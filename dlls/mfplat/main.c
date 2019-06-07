@@ -45,6 +45,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 static LONG platform_lock;
 
+struct local_handler
+{
+    struct list entry;
+    WCHAR *scheme;
+    IMFActivate *activate;
+};
+
+static CRITICAL_SECTION local_handlers_section = { NULL, -1, 0, 0, 0, 0 };
+
+static struct list local_scheme_handlers = LIST_INIT(local_scheme_handlers);
+
 struct system_clock
 {
     IMFClock IMFClock_iface;
@@ -7282,4 +7293,34 @@ HRESULT WINAPI MFCancelCreateFile(IUnknown *cancel_cookie)
         IMFByteStream_Release(stream);
 
     return hr;
+}
+
+/***********************************************************************
+ *      MFRegisterLocalSchemeHandler (mfplat.@)
+ */
+HRESULT WINAPI MFRegisterLocalSchemeHandler(const WCHAR *scheme, IMFActivate *activate)
+{
+    struct local_handler *handler;
+
+    TRACE("%s, %p.\n", debugstr_w(scheme), activate);
+
+    if (!scheme || !activate)
+        return E_INVALIDARG;
+
+    if (!(handler = heap_alloc(sizeof(*handler))))
+        return E_OUTOFMEMORY;
+
+    if (!(handler->scheme = heap_strdupW(scheme)))
+    {
+        heap_free(handler);
+        return E_OUTOFMEMORY;
+    }
+    handler->activate = activate;
+    IMFActivate_AddRef(handler->activate);
+
+    EnterCriticalSection(&local_handlers_section);
+    list_add_head(&local_scheme_handlers, &handler->entry);
+    LeaveCriticalSection(&local_handlers_section);
+
+    return S_OK;
 }

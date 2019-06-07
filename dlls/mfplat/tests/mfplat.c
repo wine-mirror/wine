@@ -71,6 +71,9 @@ static HRESULT (WINAPI *pMFPutWaitingWorkItem)(HANDLE event, LONG priority, IMFA
 static HRESULT (WINAPI *pMFAllocateSerialWorkQueue)(DWORD queue, DWORD *serial_queue);
 static HRESULT (WINAPI *pMFAddPeriodicCallback)(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 static HRESULT (WINAPI *pMFRemovePeriodicCallback)(DWORD key);
+static HRESULT (WINAPI *pMFRegisterLocalByteStreamHandler)(const WCHAR *extension, const WCHAR *mime,
+        IMFActivate *activate);
+static HRESULT (WINAPI *pMFRegisterLocalSchemeHandler)(const WCHAR *scheme, IMFActivate *activate);
 
 static const WCHAR mp4file[] = {'t','e','s','t','.','m','p','4',0};
 static const WCHAR fileschemeW[] = {'f','i','l','e',':','/','/',0};
@@ -517,6 +520,8 @@ static void init_functions(void)
     X(MFHeapAlloc);
     X(MFHeapFree);
     X(MFPutWaitingWorkItem);
+    X(MFRegisterLocalByteStreamHandler);
+    X(MFRegisterLocalSchemeHandler);
     X(MFRemovePeriodicCallback);
 #undef X
 
@@ -3320,6 +3325,274 @@ static void test_async_create_file(void)
     ok(ret, "Failed to delete test file.\n");
 }
 
+struct activate_object
+{
+    IMFActivate IMFActivate_iface;
+    LONG refcount;
+};
+
+static HRESULT WINAPI activate_object_QueryInterface(IMFActivate *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFActivate) ||
+            IsEqualIID(riid, &IID_IMFAttributes) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFActivate_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI activate_object_AddRef(IMFActivate *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI activate_object_Release(IMFActivate *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI activate_object_GetItem(IMFActivate *iface, REFGUID key, PROPVARIANT *value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetItemType(IMFActivate *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_CompareItem(IMFActivate *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_Compare(IMFActivate *iface, IMFAttributes *theirs, MF_ATTRIBUTES_MATCH_TYPE type,
+        BOOL *result)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetUINT32(IMFActivate *iface, REFGUID key, UINT32 *value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetUINT64(IMFActivate *iface, REFGUID key, UINT64 *value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetDouble(IMFActivate *iface, REFGUID key, double *value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetGUID(IMFActivate *iface, REFGUID key, GUID *value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetStringLength(IMFActivate *iface, REFGUID key, UINT32 *length)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetString(IMFActivate *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetAllocatedString(IMFActivate *iface, REFGUID key,
+        WCHAR **value, UINT32 *length)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetBlobSize(IMFActivate *iface, REFGUID key, UINT32 *size)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetBlob(IMFActivate *iface, REFGUID key, UINT8 *buf,
+        UINT32 bufsize, UINT32 *blobsize)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetAllocatedBlob(IMFActivate *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetUnknown(IMFActivate *iface, REFGUID key, REFIID riid, void **ppv)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_SetItem(IMFActivate *iface, REFGUID key, REFPROPVARIANT value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_DeleteItem(IMFActivate *iface, REFGUID key)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_DeleteAllItems(IMFActivate *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_SetUINT32(IMFActivate *iface, REFGUID key, UINT32 value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_SetUINT64(IMFActivate *iface, REFGUID key, UINT64 value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_SetDouble(IMFActivate *iface, REFGUID key, double value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_SetGUID(IMFActivate *iface, REFGUID key, REFGUID value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_SetString(IMFActivate *iface, REFGUID key, const WCHAR *value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_SetBlob(IMFActivate *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_SetUnknown(IMFActivate *iface, REFGUID key, IUnknown *unknown)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_LockStore(IMFActivate *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_UnlockStore(IMFActivate *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetCount(IMFActivate *iface, UINT32 *count)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_GetItemByIndex(IMFActivate *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_CopyAllItems(IMFActivate *iface, IMFAttributes *dest)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_ActivateObject(IMFActivate *iface, REFIID riid, void **obj)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_ShutdownObject(IMFActivate *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI activate_object_DetachObject(IMFActivate *iface)
+{
+    return E_NOTIMPL;
+}
+
+static const IMFActivateVtbl activate_object_vtbl =
+{
+    activate_object_QueryInterface,
+    activate_object_AddRef,
+    activate_object_Release,
+    activate_object_GetItem,
+    activate_object_GetItemType,
+    activate_object_CompareItem,
+    activate_object_Compare,
+    activate_object_GetUINT32,
+    activate_object_GetUINT64,
+    activate_object_GetDouble,
+    activate_object_GetGUID,
+    activate_object_GetStringLength,
+    activate_object_GetString,
+    activate_object_GetAllocatedString,
+    activate_object_GetBlobSize,
+    activate_object_GetBlob,
+    activate_object_GetAllocatedBlob,
+    activate_object_GetUnknown,
+    activate_object_SetItem,
+    activate_object_DeleteItem,
+    activate_object_DeleteAllItems,
+    activate_object_SetUINT32,
+    activate_object_SetUINT64,
+    activate_object_SetDouble,
+    activate_object_SetGUID,
+    activate_object_SetString,
+    activate_object_SetBlob,
+    activate_object_SetUnknown,
+    activate_object_LockStore,
+    activate_object_UnlockStore,
+    activate_object_GetCount,
+    activate_object_GetItemByIndex,
+    activate_object_CopyAllItems,
+    activate_object_ActivateObject,
+    activate_object_ShutdownObject,
+    activate_object_DetachObject,
+};
+
+static void test_local_handlers(void)
+{
+    IMFActivate local_activate = { &activate_object_vtbl };
+    static const WCHAR localW[] = {'l','o','c','a','l',0};
+    HRESULT hr;
+
+    if (!pMFRegisterLocalSchemeHandler)
+    {
+        win_skip("Local handlers are not supported.\n");
+        return;
+    }
+
+    hr = pMFRegisterLocalSchemeHandler(NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalSchemeHandler(localW, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalSchemeHandler(NULL, &local_activate);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalSchemeHandler(localW, &local_activate);
+    ok(hr == S_OK, "Failed to register scheme handler, hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalSchemeHandler(localW, &local_activate);
+    ok(hr == S_OK, "Failed to register scheme handler, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -3355,6 +3628,7 @@ START_TEST(mfplat)
     test_wrapped_media_type();
     test_MFCreateWaveFormatExFromMFMediaType();
     test_async_create_file();
+    test_local_handlers();
 
     CoUninitialize();
 }
