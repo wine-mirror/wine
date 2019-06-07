@@ -613,6 +613,11 @@ static struct scheduled_sample *stream_get_next_sample(struct sample_grabber_str
     return sample;
 }
 
+static void sample_grabber_stream_request_sample(struct sample_grabber_stream *stream)
+{
+    IMFStreamSink_QueueEvent(&stream->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+}
+
 static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct sample_grabber_stream *stream = impl_from_IMFAsyncCallback(iface);
@@ -634,6 +639,7 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallba
             if (FAILED(hr = stream_schedule_sample(stream, sample)))
                 WARN("Failed to schedule a sample, hr %#x.\n", hr);
         }
+        sample_grabber_stream_request_sample(stream);
     }
 
     LeaveCriticalSection(&stream->cs);
@@ -950,6 +956,7 @@ static void sample_grabber_set_state(struct sample_grabber *grabber, enum sink_s
         MEStreamSinkStarted, /* SINK_STATE_RUNNING */
     };
     BOOL set_state = FALSE;
+    unsigned int i;
 
     EnterCriticalSection(&grabber->cs);
 
@@ -970,6 +977,12 @@ static void sample_grabber_set_state(struct sample_grabber *grabber, enum sink_s
         if (set_state)
         {
             grabber->stream->state = state;
+            if (state == SINK_STATE_RUNNING)
+            {
+                /* Every transition to running state sends a bunch requests to build up initial queue. */
+                for (i = 0; i < 4; ++i)
+                    sample_grabber_stream_request_sample(grabber->stream);
+            }
             IMFStreamSink_QueueEvent(&grabber->stream->IMFStreamSink_iface, events[state], &GUID_NULL, S_OK, NULL);
         }
     }
