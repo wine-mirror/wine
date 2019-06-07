@@ -5982,6 +5982,7 @@ struct event_queue
     CONDITION_VARIABLE update_event;
     struct list events;
     BOOL is_shut_down;
+    BOOL notified;
     IMFAsyncResult *subscriber;
 };
 
@@ -6105,9 +6106,10 @@ static HRESULT WINAPI eventqueue_GetEvent(IMFMediaEventQueue *iface, DWORD flags
 
 static void queue_notify_subscriber(struct event_queue *queue)
 {
-    if (list_empty(&queue->events) || !queue->subscriber)
+    if (list_empty(&queue->events) || !queue->subscriber || queue->notified)
         return;
 
+    queue->notified = TRUE;
     MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_STANDARD, queue->subscriber);
 }
 
@@ -6163,6 +6165,7 @@ static HRESULT WINAPI eventqueue_EndGetEvent(IMFMediaEventQueue *iface, IMFAsync
         if (queue->subscriber)
             IMFAsyncResult_Release(queue->subscriber);
         queue->subscriber = NULL;
+        queue->notified = FALSE;
         hr = *event ? S_OK : E_FAIL;
     }
 
