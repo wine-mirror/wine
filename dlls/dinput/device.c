@@ -1168,7 +1168,7 @@ ULONG WINAPI IDirectInputDevice2WImpl_Release(LPDIRECTINPUTDEVICE8W iface)
 
     HeapFree(GetProcessHeap(), 0, This);
 
-    return DI_OK;
+    return ref;
 }
 
 ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
