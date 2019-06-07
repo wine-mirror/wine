@@ -4034,6 +4034,7 @@ else
 fonts \
 loader/l_intl.nls \
 loader/wine.inf \
+loader/winehid.inf \
 programs/msidb/msidb \
 programs/msiexec/msiexec \
 programs/notepad/notepad \

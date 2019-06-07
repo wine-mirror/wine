@@ -30,7 +30,7 @@ signature="$CHICAGO$"
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=@l_intl.nls
+CopyFiles=l_intl_section, inf_section
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -55,7 +55,7 @@ AddReg=\
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=@l_intl.nls
+CopyFiles=l_intl_section, inf_section
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -82,7 +82,7 @@ RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
-CopyFiles=@l_intl.nls
+CopyFiles=l_intl_section, inf_section
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -108,7 +108,7 @@ AddReg=\
 [Wow64Install]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDllsWow64
-CopyFiles=@l_intl.nls
+CopyFiles=l_intl_section
 AddReg=\
     CurrentVersion,\
     CurrentVersionWow64,\
@@ -3701,3 +3701,13 @@ HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Shanghai-EnableGame",0x1
 HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Solitaire-EnableGame",0x10001,0x00000001
 HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-SpiderSolitaire-EnableGame",0x10001,0x00000001
 HKLM,Software\Wine\LicenseInformation,"Shell-PremiumInBoxGames-Chess-EnableGame",0x10001,0x00000001
+
+[DestinationDirs]
+l_intl_section = 11
+inf_section = 17
+
+[l_intl_section]
+l_intl.nls
+
+[inf_section]
+winehid.inf
