@@ -20,10 +20,10 @@
 @ stdcall StrCmpIW(wstr wstr) shlwapi.StrCmpIW
 @ stdcall StrCmpLogicalW(wstr wstr) shlwapi.StrCmpLogicalW
 @ stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
-@ stdcall StrCmpNCA(str ptr long) shlwapi.StrCmpNCA
+@ stdcall StrCmpNCA(str str long) shlwapi.StrCmpNCA
 @ stdcall StrCmpNCW(wstr wstr long) shlwapi.StrCmpNCW
 @ stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
-@ stdcall StrCmpNICA(long long long) shlwapi.StrCmpNICA
+@ stdcall StrCmpNICA(str str long) shlwapi.StrCmpNICA
 @ stdcall StrCmpNICW(wstr wstr long) shlwapi.StrCmpNICW
 @ stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
 @ stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW

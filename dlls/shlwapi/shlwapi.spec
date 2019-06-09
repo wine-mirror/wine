@@ -148,9 +148,9 @@
 148 stdcall -noname VkKeyScanWrapW(long) user32.VkKeyScanW
 149 stdcall -noname WinHelpWrapW(long wstr long long) user32.WinHelpW
 150 stdcall -noname wvsprintfWrapW(ptr wstr ptr) user32.wvsprintfW
-151 stdcall -ordinal StrCmpNCA(str ptr long)
+151 stdcall -ordinal StrCmpNCA(str str long)
 152 stdcall -ordinal StrCmpNCW(wstr wstr long)
-153 stdcall -ordinal StrCmpNICA(long long long)
+153 stdcall -ordinal StrCmpNICA(str str long)
 154 stdcall -ordinal StrCmpNICW(wstr wstr long)
 155 stdcall -ordinal StrCmpCA(str str)
 156 stdcall -ordinal StrCmpCW(wstr wstr)
@@ -733,8 +733,8 @@
 @ stdcall SHRegGetUSValueW ( wstr wstr ptr ptr ptr long ptr long )
 @ stdcall SHRegGetValueA ( long str str long ptr ptr ptr ) advapi32.RegGetValueA
 @ stdcall SHRegGetValueW ( long wstr wstr long ptr ptr ptr ) advapi32.RegGetValueW
-@ stdcall SHRegOpenUSKeyA ( str long long long long )
-@ stdcall SHRegOpenUSKeyW ( wstr long long long long )
+@ stdcall SHRegOpenUSKeyA ( str long long ptr long )
+@ stdcall SHRegOpenUSKeyW ( wstr long long ptr long )
 @ stdcall SHRegQueryInfoUSKeyA ( long ptr ptr ptr ptr long )
 @ stdcall SHRegQueryInfoUSKeyW ( long ptr ptr ptr ptr long )
 @ stdcall SHRegQueryUSValueA ( long str ptr ptr ptr long ptr long )
