@@ -377,8 +377,10 @@ START_TEST(ntoskrnl)
 
     unload_driver(service2);
     unload_driver(service);
-    ok(DeleteFileA(filename), "DeleteFile failed: %u\n", GetLastError());
-    ok(DeleteFileA(filename2), "DeleteFile failed: %u\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+    ret = DeleteFileA(filename2);
+    ok(ret, "DeleteFile failed: %u\n", GetLastError());
 
     test_driver3();
 }
