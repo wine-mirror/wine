@@ -106,10 +106,7 @@ extern "C" {
 #define ACM_FILTERENUMF_DWFILTERTAG __MSABI_LONG(0x00010000)
 
 #define ACMHELPMSGSTRINGA       "acmchoose_help"
-#if defined(__GNUC__)
-# define ACMHELPMSGSTRINGW (const WCHAR []){ 'a','c','m', \
-  'c','h','o','o','s','e','_','h','e','l','p',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define ACMHELPMSGSTRINGW      L"acmchoose_help"
 #else
 static const WCHAR ACMHELPMSGSTRINGW[] = { 'a','c','m',
@@ -118,10 +115,7 @@ static const WCHAR ACMHELPMSGSTRINGW[] = { 'a','c','m',
 #define ACMHELPMSGSTRING WINELIB_NAME_AW(ACMHELPMSGSTRING)
 
 #define ACMHELPMSGCONTEXTMENUA  "acmchoose_contextmenu"
-#if defined(__GNUC__)
-# define ACMHELPMSGCONTEXTMENUW (const WCHAR []){ 'a','c','m', \
-  'c','h','o','o','s','e','_','c','o','n','t','e','x','t','m','e','n','u',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define ACMHELPMSGCONTEXTMENUW L"acmchoose_contextmenu"
 #else
 static const WCHAR ACMHELPMSGCONTEXTMENUW[] = { 'a','c','m',
@@ -130,10 +124,7 @@ static const WCHAR ACMHELPMSGCONTEXTMENUW[] = { 'a','c','m',
 #define ACMHELPMSGCONTEXTMENU WINELIB_NAME_AW(ACMHELPMSGCONTEXTMENU)
 
 #define ACMHELPMSGCONTEXTHELPA  "acmchoose_contexthelp"
-#if defined(__GNUC__)
-# define ACMHELPMSGCONTEXTHELPW (const WCHAR []){ 'a','c','m', \
-  'c','h','o','o','s','e','_','c','o','n','t','e','x','t','h','e','l','p',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define ACMHELPMSGCONTEXTHELPW L"acmchoose_contexthelp"
 #else
 static const WCHAR ACMHELPMSGCONTEXTHELPW[] = { 'a','c','m',

@@ -30,10 +30,7 @@ extern "C" {
 
 
 #define WC_PROPSHEETA      "SysPropertySheet"
-#if defined(__GNUC__)
-# define WC_PROPSHEETW (const WCHAR []){ 'S','y','s', \
-  'P','r','o','p','e','r','t','y','S','h','e','e','t',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define WC_PROPSHEETW     L"SysPropertySheet"
 #else
 static const WCHAR WC_PROPSHEETW[] = { 'S','y','s',

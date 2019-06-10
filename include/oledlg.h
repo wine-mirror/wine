@@ -94,17 +94,7 @@ typedef UINT (CALLBACK *LPFNOLEUIHOOK)(HWND, UINT, WPARAM, LPARAM);
 #define SZOLEUI_MSG_CHANGESOURCEA      "OLEUI_MSG_CHANGESOURCE"
 #define SZOLEUI_MSG_ADDCONTROLA        "OLEUI_MSG_ADDCONTROL"
 #define SZOLEUI_MSG_BROWSE_OFNA        "OLEUI_MSG_BROWSE_OFN"
-#if defined(__GNUC__)
-# define SZOLEUI_MSG_HELPW             (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','H','E','L','P',0 }
-# define SZOLEUI_MSG_ENDDIALOGW        (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','E','N','D','D','I','A','L','O','G',0 }
-# define SZOLEUI_MSG_BROWSEW           (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','B','R','O','W','S','E',0 }
-# define SZOLEUI_MSG_CHANGEICONW       (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','C','H','A','N','G','E','I','C','O','N',0 }
-# define SZOLEUI_MSG_CLOSEBUSYDIALOGW  (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','C','L','O','S','E','B','U','S','Y','D','I','A','L','O','G',0 }
-# define SZOLEUI_MSG_CONVERTW          (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','C','O','N','V','E','R','T',0 }
-# define SZOLEUI_MSG_CHANGESOURCEW     (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','C','H','A','N','G','E','S','O','U','R','C','E',0 }
-# define SZOLEUI_MSG_ADDCONTROLW       (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','A','D','D','C','O','N','T','R','O','L',0 }
-# define SZOLEUI_MSG_BROWSE_OFNW       (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','B','R','O','W','S','E','_','O','F','N',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define SZOLEUI_MSG_HELPW              L"OLEUI_MSG_HELP"
 # define SZOLEUI_MSG_ENDDIALOGW         L"OLEUI_MSG_ENDDIALOG"
 # define SZOLEUI_MSG_BROWSEW            L"OLEUI_MSG_BROWSE"
