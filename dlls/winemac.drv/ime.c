@@ -630,6 +630,10 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
     {
         LPIMEPRIVATE myPrivate;
         myPrivate = ImmLockIMCC(lpIMC->hPrivate);
+        if (myPrivate->bInComposition)
+            GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
+        if (myPrivate->bInternalState)
+            ImmSetOpenStatus(RealIMC(FROM_MACDRV), FALSE);
         myPrivate->bInComposition = FALSE;
         myPrivate->bInternalState = FALSE;
         myPrivate->textfont = NULL;
