@@ -20,7 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,7 +35,6 @@
 #include "ntddcdrm.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "dsound.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mcicda);
@@ -683,7 +681,7 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 	}
 
 	res = CDROM_Audio_GetSerial(&toc);
-	sprintfW(buffer, wszLu, res);
+	swprintf(buffer, ARRAY_SIZE(buffer), wszLu, res);
 	str = buffer;
     } else {
 	WARN("Don't know this info command (%u)\n", dwFlags);
