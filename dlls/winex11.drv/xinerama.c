@@ -291,6 +291,55 @@ static void xinerama_free_adapters( struct x11drv_adapter *adapters )
     heap_free( adapters );
 }
 
+static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor **new_monitors, int *count )
+{
+    static const WCHAR generic_nonpnp_monitorW[] = {
+        'G','e','n','e','r','i','c',' ',
+        'N','o','n','-','P','n','P',' ','M','o','n','i','t','o','r',0};
+    struct x11drv_monitor *monitor;
+    INT first = (INT)adapter_id;
+    INT monitor_count = 0;
+    INT index = 0;
+    INT i;
+
+    for (i = first; i < nb_monitors; i++)
+    {
+        if (i == first
+            || (EqualRect( &monitors[i].rcMonitor, &monitors[first].rcMonitor )
+                && !IsRectEmpty( &monitors[first].rcMonitor )))
+            monitor_count++;
+    }
+
+    monitor = heap_calloc( monitor_count, sizeof(*monitor) );
+    if (!monitor)
+        return FALSE;
+
+    for (i = first; i < nb_monitors; i++)
+    {
+        if (i == first
+            || (EqualRect( &monitors[i].rcMonitor, &monitors[first].rcMonitor )
+                && !IsRectEmpty( &monitors[first].rcMonitor )))
+        {
+            lstrcpyW( monitor[index].name, generic_nonpnp_monitorW );
+            /* Xinerama only reports monitors already attached */
+            monitor[index].state_flags = DISPLAY_DEVICE_ATTACHED;
+            if (!IsRectEmpty( &monitors[i].rcMonitor ))
+                monitor[index].state_flags |= DISPLAY_DEVICE_ACTIVE;
+
+            index++;
+        }
+    }
+
+    *new_monitors = monitor;
+    *count = monitor_count;
+    return TRUE;
+}
+
+static void xinerama_free_monitors( struct x11drv_monitor *monitors )
+{
+    heap_free( monitors );
+}
+
 void xinerama_init( unsigned int width, unsigned int height )
 {
     struct x11drv_display_device_handler handler;
@@ -331,8 +380,10 @@ void xinerama_init( unsigned int width, unsigned int height )
     handler.priority = 100;
     handler.pGetGpus = xinerama_get_gpus;
     handler.pGetAdapters = xinerama_get_adapters;
+    handler.pGetMonitors = xinerama_get_monitors;
     handler.pFreeGpus = xinerama_free_gpus;
     handler.pFreeAdapters = xinerama_free_adapters;
+    handler.pFreeMonitors = xinerama_free_monitors;
     X11DRV_DisplayDevices_SetHandler( &handler );
 
     TRACE( "virtual size: %s primary: %s\n",

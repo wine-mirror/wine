@@ -690,6 +690,15 @@ struct x11drv_adapter
     DWORD state_flags;
 };
 
+/* Represent a monitor in EnumDisplayDevices context */
+struct x11drv_monitor
+{
+    /* Name */
+    WCHAR name[128];
+    /* StateFlags in DISPLAY_DEVICE struct */
+    DWORD state_flags;
+};
+
 /* Required functions for display device registry initialization */
 struct x11drv_display_device_handler
 {
@@ -710,11 +719,20 @@ struct x11drv_display_device_handler
      * Return FALSE on failure with parameters unchanged */
     BOOL (*pGetAdapters)(ULONG_PTR gpu_id, struct x11drv_adapter **adapters, int *count);
 
+    /* pGetMonitors will be called to get a list of monitors in EnumDisplayDevices context under an adapter.
+     * The first monitor has to be primary if adapter is primary.
+     *
+     * Return FALSE on failure with parameters unchanged */
+    BOOL (*pGetMonitors)(ULONG_PTR adapter_id, struct x11drv_monitor **monitors, int *count);
+
     /* pFreeGpus will be called to free a GPU list from pGetGpus */
     void (*pFreeGpus)(struct x11drv_gpu *gpus);
 
     /* pFreeAdapters will be called to free an adapter list from pGetAdapters */
     void (*pFreeAdapters)(struct x11drv_adapter *adapters);
+
+    /* pFreeMonitors will be called to free a monitor list from pGetMonitors */
+    void (*pFreeMonitors)(struct x11drv_monitor *monitors);
 };
 
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
