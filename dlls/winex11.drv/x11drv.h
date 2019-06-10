@@ -736,7 +736,7 @@ struct x11drv_display_device_handler
 };
 
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
-extern void X11DRV_DisplayDevices_Init(void) DECLSPEC_HIDDEN;
+extern void X11DRV_DisplayDevices_Init(BOOL force) DECLSPEC_HIDDEN;
 
 /* XIM support */
 extern BOOL X11DRV_InitXIM( const char *input_style ) DECLSPEC_HIDDEN;

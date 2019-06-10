@@ -339,7 +339,7 @@ static void cleanup_devices(void)
     SetupDiDestroyDeviceInfoList(devinfo);
 }
 
-void X11DRV_DisplayDevices_Init(void)
+void X11DRV_DisplayDevices_Init(BOOL force)
 {
     static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
     HANDLE mutex;
@@ -366,7 +366,7 @@ void X11DRV_DisplayDevices_Init(void)
     }
 
     /* Avoid unnecessary reinit */
-    if (disposition != REG_CREATED_NEW_KEY)
+    if (!force && disposition != REG_CREATED_NEW_KEY)
         goto done;
 
     TRACE("via %s\n", wine_dbgstr_a(handler.name));
