@@ -665,6 +665,21 @@ struct x11drv_mode_info *X11DRV_Settings_SetHandlers(const char *name,
 void X11DRV_XF86VM_Init(void) DECLSPEC_HIDDEN;
 void X11DRV_XRandR_Init(void) DECLSPEC_HIDDEN;
 
+/* X11 display device handler. Used to initialize display device registry data */
+
+/* Required functions for display device registry initialization */
+struct x11drv_display_device_handler
+{
+    /* A name to tell what host driver is used */
+    const char *name;
+
+    /* Higher priority can override handlers with lower proprity */
+    INT priority;
+};
+
+extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
+extern void X11DRV_DisplayDevices_Init(void) DECLSPEC_HIDDEN;
+
 /* XIM support */
 extern BOOL X11DRV_InitXIM( const char *input_style ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data) DECLSPEC_HIDDEN;

@@ -9,6 +9,7 @@ C_SRCS = \
 	brush.c \
 	clipboard.c \
 	desktop.c \
+	display.c \
 	event.c \
 	graphics.c \
 	ime.c \

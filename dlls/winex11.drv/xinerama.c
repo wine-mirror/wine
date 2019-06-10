@@ -30,6 +30,8 @@
 #include "wine/library.h"
 #include "x11drv.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -201,6 +203,7 @@ RECT get_primary_monitor_rect(void)
 
 void xinerama_init( unsigned int width, unsigned int height )
 {
+    struct x11drv_display_device_handler handler;
     MONITORINFOEXW *primary;
     int i;
     RECT rect;
@@ -233,6 +236,10 @@ void xinerama_init( unsigned int width, unsigned int height )
                wine_dbgstr_rect(&monitors[i].rcWork),
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
+
+    handler.name = "Xinerama";
+    handler.priority = 100;
+    X11DRV_DisplayDevices_SetHandler( &handler );
 
     TRACE( "virtual size: %s primary: %s\n",
            wine_dbgstr_rect(&virtual_screen_rect), wine_dbgstr_rect(&primary->rcMonitor) );

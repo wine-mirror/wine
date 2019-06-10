@@ -81,7 +81,7 @@ static int monitor_count = 0;
 
 static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *device, DWORD flags)
 {
-    char video_name[16];
+    char video_name[32];
     char video_value[128];
     char buffer[128];
     int number;
@@ -107,13 +107,13 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
     {
         sprintf(video_name, "\\Device\\Video%d", index);
         ls = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\VIDEO", 0, KEY_READ, &hkey);
-        todo_wine ok(!ls, "#%d: failed to open registry, error: %#x\n", index, ls);
+        ok(!ls, "#%d: failed to open registry, error: %#x\n", index, ls);
         if (!ls)
         {
             memset(video_value, 0, sizeof(video_value));
             size = sizeof(video_value);
             ls = RegQueryValueExA(hkey, video_name, NULL, NULL, (unsigned char *)video_value, &size);
-            ok(!ls, "#%d: failed to get registry value, error: %#x\n", index, ls);
+            todo_wine ok(!ls, "#%d: failed to get registry value, error: %#x\n", index, ls);
             RegCloseKey(hkey);
             ok(!strcmp(video_value, device->DeviceKey), "#%d: wrong DeviceKey: %s\n", index, device->DeviceKey);
         }
