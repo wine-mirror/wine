@@ -201,6 +201,29 @@ RECT get_primary_monitor_rect(void)
     return get_primary()->rcMonitor;
 }
 
+static BOOL xinerama_get_gpus( struct x11drv_gpu **new_gpus, int *count )
+{
+    static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
+    struct x11drv_gpu *gpus;
+
+    /* Xinerama has no support for GPU, faking one */
+    gpus = heap_calloc( 1, sizeof(*gpus) );
+    if (!gpus)
+        return FALSE;
+
+    lstrcpyW( gpus[0].name, wine_adapterW );
+
+    *new_gpus = gpus;
+    *count = 1;
+
+    return TRUE;
+}
+
+static void xinerama_free_gpus( struct x11drv_gpu *gpus )
+{
+    heap_free( gpus );
+}
+
 void xinerama_init( unsigned int width, unsigned int height )
 {
     struct x11drv_display_device_handler handler;
@@ -239,6 +262,8 @@ void xinerama_init( unsigned int width, unsigned int height )
 
     handler.name = "Xinerama";
     handler.priority = 100;
+    handler.pGetGpus = xinerama_get_gpus;
+    handler.pFreeGpus = xinerama_free_gpus;
     X11DRV_DisplayDevices_SetHandler( &handler );
 
     TRACE( "virtual size: %s primary: %s\n",

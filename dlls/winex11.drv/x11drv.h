@@ -667,6 +667,20 @@ void X11DRV_XRandR_Init(void) DECLSPEC_HIDDEN;
 
 /* X11 display device handler. Used to initialize display device registry data */
 
+/* Represent a physical GPU in the PCI slots */
+struct x11drv_gpu
+{
+    /* ID to uniquely identify a GPU in handler */
+    ULONG_PTR id;
+    /* Name */
+    WCHAR name[128];
+    /* PCI ID */
+    UINT vendor_id;
+    UINT device_id;
+    UINT subsys_id;
+    UINT revision_id;
+};
+
 /* Required functions for display device registry initialization */
 struct x11drv_display_device_handler
 {
@@ -675,6 +689,14 @@ struct x11drv_display_device_handler
 
     /* Higher priority can override handlers with lower proprity */
     INT priority;
+
+    /* pGetGpus will be called to get a list of GPUs. First GPU has to be where the primary adapter is.
+     *
+     * Return FALSE on failure with parameters unchanged */
+    BOOL (*pGetGpus)(struct x11drv_gpu **gpus, int *count);
+
+    /* pFreeGpus will be called to free a GPU list from pGetGpus */
+    void (*pFreeGpus)(struct x11drv_gpu *gpus);
 };
 
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
