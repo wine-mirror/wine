@@ -1510,6 +1510,8 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     caps.dwCaps |= DDCAPS_ALIGNSTRIDE;
     caps.dwAlignStrideAlign = DDRAW_STRIDE_ALIGNMENT;
 
+    caps.ddsOldCaps.dwCaps = caps.ddsCaps.dwCaps;
+
     if(DriverCaps)
     {
         DD_STRUCT_COPY_BYSIZE(DriverCaps, &caps);
