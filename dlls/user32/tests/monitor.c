@@ -115,7 +115,7 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
             ls = RegQueryValueExA(hkey, video_name, NULL, NULL, (unsigned char *)video_value, &size);
             ok(!ls, "#%d: failed to get registry value, error: %#x\n", index, ls);
             RegCloseKey(hkey);
-            todo_wine ok(!strcmp(video_value, device->DeviceKey), "#%d: wrong DeviceKey: %s\n", index, device->DeviceKey);
+            ok(!strcmp(video_value, device->DeviceKey), "#%d: wrong DeviceKey: %s\n", index, device->DeviceKey);
         }
     }
     else
@@ -208,9 +208,9 @@ static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index
 
     /* DeviceKey */
     lstrcpynA(buffer, device->DeviceKey, sizeof(device_key_prefix));
-    todo_wine ok(!lstrcmpiA(buffer, device_key_prefix), "#%d: wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
-    todo_wine ok(sscanf(device->DeviceKey + sizeof(device_key_prefix) - 1, "%04d", &number) == 1,
-                 "#%d wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
+    ok(!lstrcmpiA(buffer, device_key_prefix), "#%d: wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
+    ok(sscanf(device->DeviceKey + sizeof(device_key_prefix) - 1, "%04d", &number) == 1,
+       "#%d wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
 }
 
 static void test_enumdisplaydevices(void)
