@@ -9513,6 +9513,189 @@ static void test_fog_interpolation(void)
     DestroyWindow(window);
 }
 
+static void test_fog_process_vertices(void)
+{
+    static D3DMATRIX view_matrix =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    static D3DMATRIX model_matrix =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.75f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    static D3DMATRIX identity_matrix =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+
+    static D3DLIGHT7 directional_light =
+    {
+        D3DLIGHT_DIRECTIONAL,
+        {{0.0f}, {0.0f}, {0.0f}, {0.0f}},
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {1.0f}},
+    };
+
+    struct vertex
+    {
+        struct vec3 position;
+        struct vec3 normal;
+    };
+    static const struct
+    {
+        struct vertex vertex;
+        D3DFOGMODE fog_vertex_mode, fog_table_mode;
+        BOOL range_fog;
+        D3DCOLOR expected_color, expected_broken;
+    }
+    tests[] =
+    {
+        /* Some drivers ignore ranged fog state without an obvious reason, even with D3DPRASTERCAPS_FOGRANGE
+         * set, while some others (including WARP driver on Windows 10) favour it.
+         * Vertex fog result does not depend on table fog settings. */
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_NONE, D3DFOG_NONE, FALSE, 0x8000ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_NONE, D3DFOG_LINEAR, FALSE, 0x8000ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_EXP, D3DFOG_NONE, FALSE, 0xaf00ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_EXP2, D3DFOG_NONE, FALSE, 0xde00ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_LINEAR, D3DFOG_NONE, FALSE, 0x9f00ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_LINEAR, D3DFOG_LINEAR, FALSE, 0x9f00ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_NONE, D3DFOG_NONE, TRUE, 0x8000ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_EXP, D3DFOG_NONE, TRUE, 0x8800ff00, 0xaf00ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_EXP2, D3DFOG_NONE, TRUE, 0xad00ff00, 0xde00ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_LINEAR, D3DFOG_NONE, TRUE, 0x6000ff00, 0x9f00ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_LINEAR, D3DFOG_EXP, TRUE, 0x6000ff00, 0x9f00ff00},
+        {{{0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, D3DFOG_EXP, D3DFOG_LINEAR, TRUE, 0x8800ff00, 0xaf00ff00},
+    };
+
+    struct
+    {
+        struct vec4 position;
+        D3DCOLOR diffuse, specular;
+    }
+    *dst_data;
+
+    IDirect3DVertexBuffer7 *src_vb, *dst_vb;
+    D3DVERTEXBUFFERDESC vb_desc;
+    IDirect3DDevice7 *device;
+    struct vertex *src_data;
+    D3DMATERIAL7 material;
+    IDirect3D7 *d3d;
+    ULONG refcount;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &model_matrix);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_VIEW, &view_matrix);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &identity_matrix);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&vb_desc, 0, sizeof(vb_desc));
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = D3DFVF_XYZ | D3DFVF_NORMAL;
+    vb_desc.dwNumVertices = 1;
+    hr = IDirect3D7_CreateVertexBuffer(d3d, &vb_desc, &src_vb, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&vb_desc, 0, sizeof(vb_desc));
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR;
+    vb_desc.dwNumVertices = 1;
+    hr = IDirect3D7_CreateVertexBuffer(d3d, &vb_desc, &dst_vb, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_LightEnable(device, 0, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_SPECULARENABLE, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetLight(device, 0, &directional_light);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&material, 0, sizeof(material));
+    U1(U2(material).specular).r = 0.0f;
+    U2(U2(material).specular).g = 1.0f;
+    U3(U2(material).specular).b = 0.0f;
+    U4(U2(material).specular).a = 0.5f;
+    U4(material).power = 5.0f;
+    hr = IDirect3DDevice7_SetMaterial(device, &material);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGVERTEXMODE,
+                tests[i].fog_vertex_mode);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGTABLEMODE,
+                tests[i].fog_table_mode);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_RANGEFOGENABLE, tests[i].range_fog);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DVertexBuffer7_Lock(src_vb, 0, (void **)&src_data, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        *src_data = tests[i].vertex;
+        hr = IDirect3DVertexBuffer7_Unlock(src_vb);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DVertexBuffer7_Lock(dst_vb, 0, (void **)&dst_data, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        memset(dst_data, 0, sizeof(*dst_data));
+        hr = IDirect3DVertexBuffer7_Unlock(dst_vb);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb, D3DVOP_TRANSFORM | D3DVOP_LIGHT, 0,
+                1, src_vb, 0, device, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DVertexBuffer7_Lock(dst_vb, 0, (void **)&dst_data, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        ok(compare_color(dst_data->specular, tests[i].expected_color, 1)
+                || broken(tests[i].expected_broken
+                && compare_color(dst_data->specular, tests[i].expected_broken, 1)),
+                "Expected color 0x%08x, got 0x%08x, test %u.\n",
+                tests[i].expected_color, dst_data->specular, i);
+
+        hr = IDirect3DVertexBuffer7_Unlock(dst_vb);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    IDirect3DVertexBuffer7_Release(dst_vb);
+    IDirect3DVertexBuffer7_Release(src_vb);
+    IDirect3D7_Release(d3d);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_negative_fixedfunction_fog(void)
 {
     HRESULT hr;
@@ -16182,6 +16365,7 @@ START_TEST(ddraw7)
     test_resource_priority();
     test_surface_desc_lock();
     test_fog_interpolation();
+    test_fog_process_vertices();
     test_negative_fixedfunction_fog();
     test_table_fog_zw();
     test_signed_formats();
