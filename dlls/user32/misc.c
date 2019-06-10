@@ -39,6 +39,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
+static const WCHAR default_adapter_name[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
+static const WCHAR default_monitor_name[] =
+    {'\\','\\','.','\\',
+     'D','I','S','P','L','A','Y','1','\\',
+     'M','o','n','i','t','o','r','0',0};
+static const WCHAR default_adapter_string[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
+static const WCHAR default_monitor_string[] =
+    {'G','e','n','e','r','i','c',' ','N','o','n','-','P','n','P',' ','M','o','n','i','t','o','r',0};
+static const WCHAR default_adapter_id[] =
+    {'P','C','I','\\',
+     'V','E','N','_','0','0','0','0','&',
+     'D','E','V','_','0','0','0','0','&',
+     'S','U','B','S','Y','S','_','0','0','0','0','0','0','0','0','&',
+     'R','E','V','_','0','0',0};
+static const WCHAR default_monitor_id[] =
+    {'M','O','N','I','T','O','R','\\',
+     'D','e','f','a','u','l','t','_','M','o','n','i','t','o','r','\\',
+     '{','4','d','3','6','e','9','6','e','-','e','3','2','5','-','1','1','c','e','-',
+     'b','f','c','1','-','0','8','0','0','2','b','e','1','0','3','1','8','}',
+     '\\','0','0','0','0',0};
+static const WCHAR default_monitor_interface_id[] =
+    {'\\','\\','\?','\\',
+     'D','I','S','P','L','A','Y','#','D','e','f','a','u','l','t','_','M','o','n','i','t','o','r','#',
+     '4','&','1','7','f','0','f','f','5','4','&','0','&','U','I','D','0','#',
+     '{','e','6','f','0','7','b','5','f','-','e','e','9','7','-','4','a','9','0','-',
+     'b','0','7','6','-','3','3','f','5','7','b','f','4','e','a','a','7','}',0};
+
 #define IMM_INIT_MAGIC 0x19650412
 static HWND (WINAPI *imm_get_ui_window)(HKL);
 BOOL (WINAPI *imm_register_window)(HWND) = NULL;
@@ -243,12 +270,6 @@ DWORD WINAPI SetLogonNotifyWindow(HWINSTA hwinsta,HWND hwnd)
     return 1;
 }
 
-static const WCHAR primary_device_name[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
-static const WCHAR primary_device_string[] = {'X','1','1',' ','W','i','n','d','o','w','i','n','g',' ',
-                                              'S','y','s','t','e','m',0};
-static const WCHAR primary_device_deviceid[] = {'P','C','I','\\','V','E','N','_','0','0','0','0','&',
-                                                'D','E','V','_','0','0','0','0',0};
-
 /***********************************************************************
  *		EnumDisplayDevicesA (USER32.@)
  */
@@ -293,16 +314,39 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR lpDevice, DWORD i, LPDISPLAY_DEVICEW lp
     if (i)
         return FALSE;
 
-    memcpy(lpDisplayDevice->DeviceName, primary_device_name, sizeof(primary_device_name));
-    memcpy(lpDisplayDevice->DeviceString, primary_device_string, sizeof(primary_device_string));
-  
-    lpDisplayDevice->StateFlags =
-        DISPLAY_DEVICE_ATTACHED_TO_DESKTOP |
-        DISPLAY_DEVICE_PRIMARY_DEVICE |
-        DISPLAY_DEVICE_VGA_COMPATIBLE;
+    /* Adapter */
+    if (!lpDevice)
+    {
+        memcpy(lpDisplayDevice->DeviceName, default_adapter_name, sizeof(default_adapter_name));
+        memcpy(lpDisplayDevice->DeviceString, default_adapter_string, sizeof(default_adapter_string));
+        lpDisplayDevice->StateFlags =
+            DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
+        if(lpDisplayDevice->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(lpDisplayDevice->DeviceID))
+        {
+            if (dwFlags & EDD_GET_DEVICE_INTERFACE_NAME)
+                lpDisplayDevice->DeviceID[0] = 0;
+            else
+                memcpy(lpDisplayDevice->DeviceID, default_adapter_id, sizeof(default_adapter_id));
+        }
+    }
+    /* Monitor */
+    else
+    {
+        if (lstrcmpiW(default_adapter_name, lpDevice))
+            return FALSE;
 
-    if(lpDisplayDevice->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(lpDisplayDevice->DeviceID))
-        memcpy(lpDisplayDevice->DeviceID, primary_device_deviceid, sizeof(primary_device_deviceid));
+        memcpy(lpDisplayDevice->DeviceName, default_monitor_name, sizeof(default_monitor_name));
+        memcpy(lpDisplayDevice->DeviceString, default_monitor_string, sizeof(default_monitor_string));
+        lpDisplayDevice->StateFlags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED;
+        if (lpDisplayDevice->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(lpDisplayDevice->DeviceID))
+        {
+            if (dwFlags & EDD_GET_DEVICE_INTERFACE_NAME)
+                memcpy(lpDisplayDevice->DeviceID, default_monitor_interface_id, sizeof(default_monitor_interface_id));
+            else
+                memcpy(lpDisplayDevice->DeviceID, default_monitor_id, sizeof(default_monitor_id));
+        }
+    }
+
     if(lpDisplayDevice->cb >= offsetof(DISPLAY_DEVICEW, DeviceKey) + sizeof(lpDisplayDevice->DeviceKey))
         lpDisplayDevice->DeviceKey[0] = 0;
 
