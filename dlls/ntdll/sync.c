@@ -69,18 +69,6 @@ static const LARGE_INTEGER zero_timeout;
 
 #define TICKSPERSEC 10000000
 
-static inline int interlocked_dec_if_nonzero( int *dest )
-{
-    int val, tmp;
-    for (val = *dest;; val = tmp)
-    {
-        if (!val || (tmp = interlocked_cmpxchg( dest, val - 1, val )) == val)
-            break;
-    }
-    return val;
-}
-
-
 #ifdef __linux__
 
 static int wait_op = 128; /*FUTEX_WAIT|FUTEX_PRIVATE_FLAG*/
