@@ -1667,7 +1667,10 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
  * 30-16 - Number of exclusive waiters. Unlike the fallback implementation,
  *         this does not include the thread owning the lock, or shared threads
  *         waiting on the lock.
- *  15-0 - Number of shared owners. Unlike the fallback implementation, this
+ *    15 - Does this lock have any shared waiters? We use this as an
+ *         optimization to avoid unnecessary FUTEX_WAKE_BITSET calls when
+ *         releasing an exclusive lock.
+ *  14-0 - Number of shared owners. Unlike the fallback implementation, this
  *         does not include the number of shared threads waiting on the lock.
  *         Thus the state [1, x, >=1] will never occur.
  */
@@ -1675,7 +1678,8 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
 #define SRWLOCK_FUTEX_EXCLUSIVE_LOCK_BIT        0x80000000
 #define SRWLOCK_FUTEX_EXCLUSIVE_WAITERS_MASK    0x7fff0000
 #define SRWLOCK_FUTEX_EXCLUSIVE_WAITERS_INC     0x00010000
-#define SRWLOCK_FUTEX_SHARED_OWNERS_MASK        0x0000ffff
+#define SRWLOCK_FUTEX_SHARED_WAITERS_BIT        0x00008000
+#define SRWLOCK_FUTEX_SHARED_OWNERS_MASK        0x00007fff
 #define SRWLOCK_FUTEX_SHARED_OWNERS_INC         0x00000001
 
 /* Futex bitmasks; these are independent from the bits in the lock itself. */
@@ -1810,7 +1814,7 @@ static NTSTATUS fast_acquire_srw_shared( RTL_SRWLOCK *lock )
             }
             else
             {
-                new = old;
+                new = old | SRWLOCK_FUTEX_SHARED_WAITERS_BIT;
                 wait = TRUE;
             }
         } while (interlocked_cmpxchg( (int *)lock, new, old ) != old);
@@ -1841,11 +1845,14 @@ static NTSTATUS fast_release_srw_exclusive( RTL_SRWLOCK *lock )
         }
 
         new = old & ~SRWLOCK_FUTEX_EXCLUSIVE_LOCK_BIT;
+
+        if (!(new & SRWLOCK_FUTEX_EXCLUSIVE_WAITERS_MASK))
+            new &= ~SRWLOCK_FUTEX_SHARED_WAITERS_BIT;
     } while (interlocked_cmpxchg( (int *)lock, new, old ) != old);
 
     if (new & SRWLOCK_FUTEX_EXCLUSIVE_WAITERS_MASK)
         futex_wake_bitset( (int *)lock, 1, SRWLOCK_FUTEX_BITSET_EXCLUSIVE );
-    else
+    else if (old & SRWLOCK_FUTEX_SHARED_WAITERS_BIT)
         futex_wake_bitset( (int *)lock, INT_MAX, SRWLOCK_FUTEX_BITSET_SHARED );
 
     return STATUS_SUCCESS;
