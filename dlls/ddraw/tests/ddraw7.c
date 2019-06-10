@@ -3842,6 +3842,7 @@ static void test_lighting(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb, D3DVOP_TRANSFORM, 2,
             1, src_vb2, 0, device, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, unlitnquad, 4,
             indices, 6, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -3850,6 +3851,7 @@ static void test_lighting(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb, D3DVOP_TRANSFORM | D3DVOP_LIGHT, 3,
             1, src_vb2, 1, device, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, litnquad, 4,
             indices, 6, 0);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -3868,7 +3870,7 @@ static void test_lighting(void)
             "Unexpected specular color 0x%08x.\n", dst_data[0].specular);
     color = get_surface_color(rt, 160, 120);
     /* Broken on some of WARP drivers. */
-    ok(color == 0x00000000 || broken(is_warp && color == 0x000000ff),
+    ok(color == 0x00000000 || broken(is_warp && (color == 0x000000ff || color == 0x00ff00ff)),
             "Lit quad without normals has color 0x%08x, expected 0x00000000.\n", color);
     ok(dst_data[1].diffuse == 0xff000000,
             "Lit quad without normals has color 0x%08x, expected 0xff000000.\n", dst_data[1].diffuse);
@@ -3881,7 +3883,7 @@ static void test_lighting(void)
     ok(!dst_data[2].specular,
             "Unexpected specular color 0x%08x.\n", dst_data[2].specular);
     color = get_surface_color(rt, 480, 120);
-    ok(color == 0x00000000 || broken(is_warp && color == 0x000000ff),
+    ok(color == 0x00000000 || broken(is_warp && (color == 0x000000ff || color == 0x00ff00ff)),
             "Lit quad with normals has color 0x%08x, expected 0x00000000.\n", color);
     ok(dst_data[3].diffuse == 0xff000000,
             "Lit quad with normals has color 0x%08x, expected 0xff000000.\n", dst_data[3].diffuse);
@@ -3926,7 +3928,7 @@ static void test_lighting(void)
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         color = get_surface_color(rt, 320, 240);
-        ok(color == tests[i].expected || broken(is_warp && color == 0x000000ff),
+        ok(color == tests[i].expected || broken(is_warp && (color == 0x000000ff || color == 0x00ff00ff)),
                 "%s has color 0x%08x.\n", tests[i].message, color);
         todo_wine_if(tests[i].process_vertices_todo)
         ok(dst_data[0].diffuse == tests[i].expected_process_vertices,
