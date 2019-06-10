@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #define COBJMACROS
 
@@ -35,7 +36,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
@@ -279,13 +279,13 @@ static DWORD get_type_from_name(LPCWSTR name)
 {
     HANDLE  hfile;
 
-    if (!strncmpW(name, portname_LPT, ARRAY_SIZE(portname_LPT) - 1))
+    if (!wcsncmp(name, portname_LPT, ARRAY_SIZE(portname_LPT) - 1))
         return PORT_IS_LPT;
 
-    if (!strncmpW(name, portname_COM, ARRAY_SIZE(portname_COM) - 1))
+    if (!wcsncmp(name, portname_COM, ARRAY_SIZE(portname_COM) - 1))
         return PORT_IS_COM;
 
-    if (!strcmpW(name, portname_FILE))
+    if (!lstrcmpW(name, portname_FILE))
         return PORT_IS_FILE;
 
     if (name[0] == '/')
@@ -294,10 +294,10 @@ static DWORD get_type_from_name(LPCWSTR name)
     if (name[0] == '|')
         return PORT_IS_PIPE;
 
-    if (!strncmpW(name, portname_CUPS, ARRAY_SIZE(portname_CUPS) - 1))
+    if (!wcsncmp(name, portname_CUPS, ARRAY_SIZE(portname_CUPS) - 1))
         return PORT_IS_CUPS;
 
-    if (!strncmpW(name, portname_LPR, ARRAY_SIZE(portname_LPR) - 1))
+    if (!wcsncmp(name, portname_LPR, ARRAY_SIZE(portname_LPR) - 1))
         return PORT_IS_LPR;
 
     /* Must be a file or a directory. Does the file exist ? */
@@ -663,7 +663,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
                 needed = sizeof(buffer) - sizeof(WCHAR);
                 res = RegQueryValueExW(hroot, TransmissionRetryTimeoutW, NULL, NULL, (LPBYTE) buffer, &needed);
                 if ((res == ERROR_SUCCESS) && (buffer[0])) {
-                    *((LPDWORD) pOutputData) = strtoulW(buffer, NULL, 0);
+                    *((LPDWORD) pOutputData) = wcstoul(buffer, NULL, 0);
                 }
                 RegCloseKey(hroot);
             }
@@ -696,7 +696,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
 
     if (!lstrcmpW(pszDataName, cmd_SetDefaultCommConfigW)) {
         /* get the portname from the Handle */
-        ptr =  strchrW(((xcv_t *)hXcv)->nameW, ' ');
+        ptr =  wcschr(((xcv_t *)hXcv)->nameW, ' ');
         if (ptr) {
             ptr++;  /* skip the space */
         }
