@@ -358,10 +358,7 @@ DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
 #define WM_CHOOSEFONT_SETFLAGS		(WM_USER + 102)
 
 #define LBSELCHSTRINGA  "commdlg_LBSelChangedNotify"
-#if defined(__GNUC__)
-# define LBSELCHSTRINGW (const WCHAR []){ 'c','o','m','m','d','l','g','_', \
-  'L','B','S','e','l','C','h','a','n','g','e','d','N','o','t','i','f','y',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define LBSELCHSTRINGW L"commdlg_LBSelChangedNotify"
 #else
 static const WCHAR LBSELCHSTRINGW[] = { 'c','o','m','m','d','l','g','_',
@@ -370,10 +367,7 @@ static const WCHAR LBSELCHSTRINGW[] = { 'c','o','m','m','d','l','g','_',
 #define LBSELCHSTRING   WINELIB_NAME_AW(LBSELCHSTRING)
 
 #define SHAREVISTRINGA  "commdlg_ShareViolation"
-#if defined(__GNUC__)
-# define SHAREVISTRINGW (const WCHAR []){ 'c','o','m','m','d','l','g','_', \
-  'S','h','a','r','e','V','i','o','l','a','t','i','o','n',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define SHAREVISTRINGW L"commdlg_ShareViolation"
 #else
 static const WCHAR SHAREVISTRINGW[] = { 'c','o','m','m','d','l','g','_',
@@ -382,10 +376,7 @@ static const WCHAR SHAREVISTRINGW[] = { 'c','o','m','m','d','l','g','_',
 #define SHAREVISTRING   WINELIB_NAME_AW(SHAREVISTRING)
 
 #define FILEOKSTRINGA   "commdlg_FileNameOK"
-#if defined(__GNUC__)
-# define FILEOKSTRINGW (const WCHAR []){ 'c','o','m','m','d','l','g','_', \
-  'F','i','l','e','N','a','m','e','O','K',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define FILEOKSTRINGW  L"commdlg_FileNameOK"
 #else
 static const WCHAR FILEOKSTRINGW[] = { 'c','o','m','m','d','l','g','_',
@@ -394,10 +385,7 @@ static const WCHAR FILEOKSTRINGW[] = { 'c','o','m','m','d','l','g','_',
 #define FILEOKSTRING    WINELIB_NAME_AW(FILEOKSTRING)
 
 #define COLOROKSTRINGA  "commdlg_ColorOK"
-#if defined(__GNUC__)
-# define COLOROKSTRINGW (const WCHAR []){ 'c','o','m','m','d','l','g','_', \
-  'C','o','l','o','r','O','K',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define COLOROKSTRINGW L"commdlg_ColorOK"
 #else
 static const WCHAR COLOROKSTRINGW[] = { 'c','o','m','m','d','l','g','_',
@@ -406,10 +394,7 @@ static const WCHAR COLOROKSTRINGW[] = { 'c','o','m','m','d','l','g','_',
 #define COLOROKSTRING   WINELIB_NAME_AW(COLOROKSTRING)
 
 #define SETRGBSTRINGA   "commdlg_SetRGBColor"
-#if defined(__GNUC__)
-# define SETRGBSTRINGW (const WCHAR []){ 'c','o','m','m','d','l','g','_', \
-  'S','e','t','R','G','B','C','o','l','o','r',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define SETRGBSTRINGW  L"commdlg_SetRGBColor"
 #else
 static const WCHAR SETRGBSTRINGW[] = { 'c','o','m','m','d','l','g','_',
@@ -418,10 +403,7 @@ static const WCHAR SETRGBSTRINGW[] = { 'c','o','m','m','d','l','g','_',
 #define SETRGBSTRING    WINELIB_NAME_AW(SETRGBSTRING)
 
 #define FINDMSGSTRINGA  "commdlg_FindReplace"
-#if defined(__GNUC__)
-# define FINDMSGSTRINGW (const WCHAR []){ 'c','o','m','m','d','l','g','_', \
-  'F','i','n','d','R','e','p','l','a','c','e',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define FINDMSGSTRINGW L"commdlg_FindReplace"
 #else
 static const WCHAR FINDMSGSTRINGW[] = { 'c','o','m','m','d','l','g','_',
@@ -430,10 +412,7 @@ static const WCHAR FINDMSGSTRINGW[] = { 'c','o','m','m','d','l','g','_',
 #define FINDMSGSTRING   WINELIB_NAME_AW(FINDMSGSTRING)
 
 #define HELPMSGSTRINGA  "commdlg_help"
-#if defined(__GNUC__)
-# define HELPMSGSTRINGW (const WCHAR []){ 'c','o','m','m','d','l','g','_', \
-  'H','e','l','p',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define HELPMSGSTRINGW L"commdlg_help"
 #else
 static const WCHAR HELPMSGSTRINGW[] = { 'c','o','m','m','d','l','g','_',

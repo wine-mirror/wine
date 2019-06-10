@@ -357,11 +357,9 @@ typedef struct _AUDIT_POLICY_INFORMATION
 } AUDIT_POLICY_INFORMATION, *PAUDIT_POLICY_INFORMATION;
 
 #define MICROSOFT_KERBEROS_NAME_A "Kerberos"
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define MICROSOFT_KERBEROS_NAME_W L"Kerberos"
-#elif defined(__GNUC__)
-#define MICROSOFT_KERBEROS_NAME_W (const WCHAR []){ 'K','e','r','b','e','r','o','s',0 }
-#else /* _MSC_VER/__GNUC__ */
+#else /* _MSC_VER/__MINGW32__ */
 static const WCHAR MICROSOFT_KERBEROS_NAME_W[] = { 'K','e','r','b','e','r','o','s',0 };
 #endif
 

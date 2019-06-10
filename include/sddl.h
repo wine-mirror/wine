@@ -34,12 +34,7 @@ extern "C" {
 # define SDDL_DACL  "D"
 # define SDDL_SACL  "S"
 #else
-# if defined(__GNUC__)
-#  define SDDL_OWNER (const WCHAR[]){ 'O',0 }
-#  define SDDL_GROUP (const WCHAR[]){ 'G',0 }
-#  define SDDL_DACL  (const WCHAR[]){ 'D',0 }
-#  define SDDL_SACL  (const WCHAR[]){ 'S',0 }
-# elif defined(_MSC_VER)
+# if defined(_MSC_VER) || defined(__MINGW32__)
 #  define SDDL_OWNER L"O"
 #  define SDDL_GROUP L"G"
 #  define SDDL_DACL  L"D"
@@ -74,12 +69,7 @@ extern "C" {
 # define SDDL_ACE_BEGIN   "("
 # define SDDL_ACE_END     ")"
 #else
-# if defined(__GNUC__)
-#  define SDDL_SEPERATOR   (const WCHAR[]){ ';',0 }
-#  define SDDL_DELIMINATOR (const WCHAR[]){ ':',0 }
-#  define SDDL_ACE_BEGIN   (const WCHAR[]){ '(',0 }
-#  define SDDL_ACE_END     (const WCHAR[]){ ')',0 }
-# elif defined(_MSC_VER)
+# if defined(_MSC_VER) || defined(__MINGW32__)
 #  define SDDL_SEPERATOR   L";"
 #  define SDDL_DELIMINATOR L":"
 #  define SDDL_ACE_BEGIN   L"("

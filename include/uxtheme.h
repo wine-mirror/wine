@@ -114,12 +114,7 @@ HRESULT WINAPI GetThemeBackgroundRegion(HTHEME,HDC,int,int,const RECT*,HRGN*);
 HRESULT WINAPI GetThemeBool(HTHEME,int,int,int,BOOL*);
 HRESULT WINAPI GetThemeColor(HTHEME,int,int,int,COLORREF*);
 
-#if defined(__GNUC__)
-# define SZ_THDOCPROP_DISPLAYNAME   (const WCHAR []){ 'D','i','s','p','l','a','y','N','a','m','e',0 }
-# define SZ_THDOCPROP_CANONICALNAME (const WCHAR []){ 'T','h','e','m','e','N','a','m','e',0 }
-# define SZ_THDOCPROP_TOOLTIP       (const WCHAR []){ 'T','o','o','l','T','i','p',0 }
-# define SZ_THDOCPROP_AUTHOR        (const WCHAR []){ 'a','u','t','h','o','r',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define SZ_THDOCPROP_DISPLAYNAME   L"DisplayName"
 # define SZ_THDOCPROP_CANONICALNAME L"ThemeName"
 # define SZ_THDOCPROP_TOOLTIP       L"ToolTip"

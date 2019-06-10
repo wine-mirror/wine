@@ -324,17 +324,13 @@ extern "C" {
 #define LOCALE_IDIGITSUBSTITUTION     0x1014
 
 /* Locale name special values */
-#if defined(__GNUC__)
-# define LOCALE_NAME_INVARIANT      (const WCHAR []){ 0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define LOCALE_NAME_INVARIANT      L""
 #else
 static const WCHAR LOCALE_NAME_INVARIANT[] = { 0 };
 #endif
 
-#if defined(__GNUC__)
-# define LOCALE_NAME_SYSTEM_DEFAULT      (const WCHAR []){'!','s','y','s','-','d','e','f','a','u','l','t','-','l','o','c','a','l','e',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define LOCALE_NAME_SYSTEM_DEFAULT      L"!sys-default-locale"
 #else
 static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','f','a','u','l','t','-','l','o','c','a','l','e',0};

@@ -32,18 +32,14 @@ extern "C" {
 
 #define cchTextLimitDefault 0x7fff
 
-#if defined(__GNUC__)
-# define MSFTEDIT_CLASS (const WCHAR []){ 'R','i','c','h','E','d','i','t','5','0','W',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define MSFTEDIT_CLASS L"RichEdit50W"
 #else
 static const WCHAR MSFTEDIT_CLASS[] = { 'R','i','c','h','E','d','i','t','5','0','W',0 };
 #endif
 
 #define RICHEDIT_CLASS20A	"RichEdit20A"
-#if defined(__GNUC__)
-# define RICHEDIT_CLASS20W (const WCHAR []){ 'R','i','c','h','E','d','i','t','2','0','W',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define RICHEDIT_CLASS20W      L"RichEdit20W"
 #else
 static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','0','W',0 };
