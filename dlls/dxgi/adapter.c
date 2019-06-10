@@ -291,14 +291,18 @@ static void STDMETHODCALLTYPE dxgi_adapter_UnregisterHardwareContentProtectionTe
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryVideoMemoryInfo(IWineDXGIAdapter *iface,
-        UINT node_index, DXGI_MEMORY_SEGMENT_GROUP segment_group, DXGI_QUERY_VIDEO_MEMORY_INFO *memory_info)
+        UINT node_index, DXGI_MEMORY_SEGMENT_GROUP segment_group, DXGI_QUERY_VIDEO_MEMORY_INFO *info)
 {
     struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
     struct wined3d_adapter_identifier adapter_id;
+    static unsigned int once;
     HRESULT hr;
 
-    FIXME("iface %p, node_index %u, segment_group %#x, memory_info %p partial stub!\n",
-            iface, node_index, segment_group, memory_info);
+    TRACE("iface %p, node_index %u, segment_group %#x, info %p.\n",
+            iface, node_index, segment_group, info);
+
+    if (!once++)
+        FIXME("Returning fake video memory info.\n");
 
     if (node_index)
         FIXME("Ignoring node index %u.\n", node_index);
@@ -313,18 +317,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryVideoMemoryInfo(IWineDXGIAdap
     switch (segment_group)
     {
         case DXGI_MEMORY_SEGMENT_GROUP_LOCAL:
-            memory_info->Budget = adapter_id.video_memory;
-            memory_info->CurrentUsage = 0;
-            memory_info->AvailableForReservation = adapter_id.video_memory / 2;
-            memory_info->CurrentReservation = 0;
+            info->Budget = adapter_id.video_memory;
+            info->CurrentUsage = 0;
+            info->AvailableForReservation = adapter_id.video_memory / 2;
+            info->CurrentReservation = 0;
             break;
         case DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL:
-            memset(memory_info, 0, sizeof(*memory_info));
+            memset(info, 0, sizeof(*info));
             break;
         default:
             WARN("Invalid memory segment group %#x.\n", segment_group);
             return E_INVALIDARG;
     }
+
+    TRACE("Budget 0x%s, usage 0x%s, available for reservation 0x%s, reservation 0x%s.\n",
+            wine_dbgstr_longlong(info->Budget), wine_dbgstr_longlong(info->CurrentUsage),
+            wine_dbgstr_longlong(info->AvailableForReservation), wine_dbgstr_longlong(info->CurrentReservation));
 
     return hr;
 }
@@ -332,7 +340,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryVideoMemoryInfo(IWineDXGIAdap
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetVideoMemoryReservation(IWineDXGIAdapter *iface,
         UINT node_index, DXGI_MEMORY_SEGMENT_GROUP segment_group, UINT64 reservation)
 {
-    FIXME("iface %p, node_index %u, segment_group %#x, reservation %s stub!\n",
+    FIXME("iface %p, node_index %u, segment_group %#x, reservation 0x%s stub!\n",
             iface, node_index, segment_group, wine_dbgstr_longlong(reservation));
 
     return S_OK;
