@@ -224,6 +224,73 @@ static void xinerama_free_gpus( struct x11drv_gpu *gpus )
     heap_free( gpus );
 }
 
+static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new_adapters, int *count )
+{
+    struct x11drv_adapter *adapters = NULL;
+    INT index = 0;
+    INT i, j;
+    INT primary_index;
+    BOOL mirrored;
+
+    if (gpu_id)
+        return FALSE;
+
+    /* Being lazy, actual adapter count may be less */
+    adapters = heap_calloc( nb_monitors, sizeof(*adapters) );
+    if (!adapters)
+        return FALSE;
+
+    primary_index = primary_monitor;
+    if (primary_index >= nb_monitors)
+        primary_index = 0;
+
+    for (i = 0; i < nb_monitors; i++)
+    {
+        mirrored = FALSE;
+        for (j = 0; j < i; j++)
+        {
+            if (EqualRect( &monitors[i].rcMonitor, &monitors[j].rcMonitor) && !IsRectEmpty( &monitors[j].rcMonitor ))
+            {
+                mirrored = TRUE;
+                break;
+            }
+        }
+
+        /* Mirrored monitors share the same adapter */
+        if (mirrored)
+            continue;
+
+        /* Use monitor index as id */
+        adapters[index].id = (ULONG_PTR)i;
+
+        if (i == primary_index)
+            adapters[index].state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
+
+        if (!IsRectEmpty( &monitors[i].rcMonitor ))
+            adapters[index].state_flags |= DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
+
+        index++;
+    }
+
+    /* Primary adapter has to be first */
+    if (primary_index)
+    {
+        struct x11drv_adapter tmp;
+        tmp = adapters[primary_index];
+        adapters[primary_index] = adapters[0];
+        adapters[0] = tmp;
+    }
+
+    *new_adapters = adapters;
+    *count = index;
+    return TRUE;
+}
+
+static void xinerama_free_adapters( struct x11drv_adapter *adapters )
+{
+    heap_free( adapters );
+}
+
 void xinerama_init( unsigned int width, unsigned int height )
 {
     struct x11drv_display_device_handler handler;
@@ -263,7 +330,9 @@ void xinerama_init( unsigned int width, unsigned int height )
     handler.name = "Xinerama";
     handler.priority = 100;
     handler.pGetGpus = xinerama_get_gpus;
+    handler.pGetAdapters = xinerama_get_adapters;
     handler.pFreeGpus = xinerama_free_gpus;
+    handler.pFreeAdapters = xinerama_free_adapters;
     X11DRV_DisplayDevices_SetHandler( &handler );
 
     TRACE( "virtual size: %s primary: %s\n",

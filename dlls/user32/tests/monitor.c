@@ -113,9 +113,9 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
             memset(video_value, 0, sizeof(video_value));
             size = sizeof(video_value);
             ls = RegQueryValueExA(hkey, video_name, NULL, NULL, (unsigned char *)video_value, &size);
-            todo_wine ok(!ls, "#%d: failed to get registry value, error: %#x\n", index, ls);
+            ok(!ls, "#%d: failed to get registry value, error: %#x\n", index, ls);
             RegCloseKey(hkey);
-            ok(!strcmp(video_value, device->DeviceKey), "#%d: wrong DeviceKey: %s\n", index, device->DeviceKey);
+            todo_wine ok(!strcmp(video_value, device->DeviceKey), "#%d: wrong DeviceKey: %s\n", index, device->DeviceKey);
         }
     }
     else

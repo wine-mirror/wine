@@ -681,6 +681,15 @@ struct x11drv_gpu
     UINT revision_id;
 };
 
+/* Represent an adapter in EnumDisplayDevices context */
+struct x11drv_adapter
+{
+    /* ID to uniquely identify an adapter in handler */
+    ULONG_PTR id;
+    /* as StateFlags in DISPLAY_DEVICE struct */
+    DWORD state_flags;
+};
+
 /* Required functions for display device registry initialization */
 struct x11drv_display_device_handler
 {
@@ -695,8 +704,17 @@ struct x11drv_display_device_handler
      * Return FALSE on failure with parameters unchanged */
     BOOL (*pGetGpus)(struct x11drv_gpu **gpus, int *count);
 
+    /* pGetAdapters will be called to get a list of adapters in EnumDisplayDevices context under a GPU.
+     * The first adapter has to be primary if GPU is primary.
+     *
+     * Return FALSE on failure with parameters unchanged */
+    BOOL (*pGetAdapters)(ULONG_PTR gpu_id, struct x11drv_adapter **adapters, int *count);
+
     /* pFreeGpus will be called to free a GPU list from pGetGpus */
     void (*pFreeGpus)(struct x11drv_gpu *gpus);
+
+    /* pFreeAdapters will be called to free an adapter list from pGetAdapters */
+    void (*pFreeAdapters)(struct x11drv_adapter *adapters);
 };
 
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;

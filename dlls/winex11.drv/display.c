@@ -41,6 +41,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 static const WCHAR driver_descW[] = {'D','r','i','v','e','r','D','e','s','c',0};
 static const WCHAR video_idW[] = {'V','i','d','e','o','I','D',0};
+static const WCHAR symbolic_link_valueW[]= {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
+static const WCHAR gpu_idW[] = {'G','P','U','I','D',0};
+static const WCHAR state_flagsW[] = {'S','t','a','t','e','F','l','a','g','s',0};
 static const WCHAR guid_fmtW[] = {
     '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0','2','x','%','0','2','x','-',
     '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','}',0};
@@ -61,6 +64,26 @@ static const WCHAR video_keyW[] = {
     'H','A','R','D','W','A','R','E','\\',
     'D','E','V','I','C','E','M','A','P','\\',
     'V','I','D','E','O',0};
+static const WCHAR adapter_key_fmtW[] = {
+    'S','y','s','t','e','m','\\',
+    'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+    'C','o','n','t','r','o','l','\\',
+    'V','i','d','e','o','\\',
+    '%','s','\\',
+    '%','0','4','x',0};
+static const WCHAR device_video_fmtW[] = {
+    '\\','D','e','v','i','c','e','\\',
+    'V','i','d','e','o','%','d',0};
+static const WCHAR machine_prefixW[] = {
+    '\\','R','e','g','i','s','t','r','y','\\',
+    'M','a','c','h','i','n','e','\\',0};
+static const WCHAR nt_classW[] = {
+    '\\','R','e','g','i','s','t','r','y','\\',
+    'M','a','c','h','i','n','e','\\',
+    'S','y','s','t','e','m','\\',
+    'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+    'C','o','n','t','r','o','l','\\',
+    'C','l','a','s','s','\\',0};
 
 static struct x11drv_display_device_handler handler;
 
@@ -73,8 +96,9 @@ void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler
     }
 }
 
-/* Initialize a GPU instance */
-static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT gpu_index)
+/* Initialize a GPU instance and return its GUID string in guid_string and driver value in driver parameter */
+static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT gpu_index, WCHAR *guid_string,
+                           WCHAR *driver)
 {
     static const BOOL present = TRUE;
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
@@ -116,6 +140,13 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
         goto done;
     RegCloseKey(hkey);
 
+    /* Retrieve driver value for adapters */
+    if (!SetupDiGetDeviceRegistryPropertyW(devinfo, &device_data, SPDRP_DRIVER, NULL, (BYTE *)bufferW, sizeof(bufferW),
+                                           NULL))
+        goto done;
+    lstrcpyW(driver, nt_classW);
+    lstrcatW(driver, bufferW);
+
     /* Write GUID in VideoID in .../instance/Device Parameters, reuse the GUID if it's existent */
     hkey = SetupDiCreateDevRegKeyW(devinfo, &device_data, DICS_FLAG_GLOBAL, 0, DIREG_DEV, NULL, NULL);
 
@@ -128,6 +159,7 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
         if (RegSetValueExW(hkey, video_idW, 0, REG_SZ, (const BYTE *)bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR)))
             goto done;
     }
+    lstrcpyW(guid_string, bufferW);
 
     ret = TRUE;
 done:
@@ -137,12 +169,72 @@ done:
     return ret;
 }
 
-static void prepare_devices(void)
+static BOOL X11DRV_InitAdapter(HKEY video_hkey, INT video_index, INT gpu_index, INT adapter_index,
+                               const struct x11drv_gpu *gpu, const WCHAR *guid_string,
+                               const WCHAR *gpu_driver, const struct x11drv_adapter *adapter)
+{
+    WCHAR adapter_keyW[MAX_PATH];
+    WCHAR key_nameW[MAX_PATH];
+    WCHAR bufferW[1024];
+    HKEY hkey = NULL;
+    BOOL ret = FALSE;
+    LSTATUS ls;
+
+    sprintfW(key_nameW, device_video_fmtW, video_index);
+    lstrcpyW(bufferW, machine_prefixW);
+    sprintfW(adapter_keyW, adapter_key_fmtW, guid_string, adapter_index);
+    lstrcatW(bufferW, adapter_keyW);
+
+    /* Write value of \Device\Video? (adapter key) in HKLM\HARDWARE\DEVICEMAP\VIDEO\ */
+    if (RegSetValueExW(video_hkey, key_nameW, 0, REG_SZ, (const BYTE *)bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR)))
+        goto done;
+
+    /* Create HKLM\System\CurrentControlSet\Control\Video\{GPU GUID}\{Adapter Index} link to GPU driver */
+    ls = RegCreateKeyExW(HKEY_LOCAL_MACHINE, adapter_keyW, 0, NULL, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK,
+                         KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    if (ls == ERROR_ALREADY_EXISTS)
+        RegCreateKeyExW(HKEY_LOCAL_MACHINE, adapter_keyW, 0, NULL, REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK,
+                        KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    if (RegSetValueExW(hkey, symbolic_link_valueW, 0, REG_LINK, (const BYTE *)gpu_driver,
+                       strlenW(gpu_driver) * sizeof(WCHAR)))
+        goto done;
+    RegCloseKey(hkey);
+    hkey = NULL;
+
+    /* FIXME:
+     * Following information is Wine specific, it doesn't really exist on Windows. It is used so that we can
+     * implement EnumDisplayDevices etc by querying registry only. This information is most likely reported by the
+     * device driver on Windows */
+    RegCreateKeyExW(HKEY_CURRENT_CONFIG, adapter_keyW, 0, NULL, REG_OPTION_VOLATILE, KEY_WRITE, NULL, &hkey, NULL);
+
+    /* Write GPU instance path so that we can find the GPU instance via adapters quickly. Another way is trying to match
+     * them via the GUID in Device Paramters/VideoID, but it would required enumrating all GPU instances */
+    sprintfW(bufferW, gpu_instance_fmtW, gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, gpu_index);
+    if (RegSetValueExW(hkey, gpu_idW, 0, REG_SZ, (const BYTE *)bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR)))
+        goto done;
+
+    /* Write StateFlags */
+    if (RegSetValueExW(hkey, state_flagsW, 0, REG_DWORD, (const BYTE *)&adapter->state_flags,
+                       sizeof(adapter->state_flags)))
+        goto done;
+
+    ret = TRUE;
+done:
+    RegCloseKey(hkey);
+    if (!ret)
+        ERR("Failed to initialize adapter\n");
+    return ret;
+}
+
+static void prepare_devices(HKEY video_hkey)
 {
     static const BOOL not_present = FALSE;
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     HDEVINFO devinfo;
     DWORD i = 0;
+
+    /* Clean up old adapter keys for reinitialization */
+    RegDeleteTreeW(video_hkey, NULL);
 
     /* FIXME:
      * Currently SetupDiGetClassDevsW with DIGCF_PRESENT is unsupported, So we need to clean up not present devices in
@@ -184,11 +276,15 @@ void X11DRV_DisplayDevices_Init(void)
     static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
     HANDLE mutex;
     struct x11drv_gpu *gpus = NULL;
-    INT gpu_count;
-    INT gpu;
+    struct x11drv_adapter *adapters = NULL;
+    INT gpu_count, adapter_count;
+    INT gpu, adapter;
     HDEVINFO gpu_devinfo = NULL;
     HKEY video_hkey = NULL;
+    INT video_index = 0;
     DWORD disposition = 0;
+    WCHAR guidW[40];
+    WCHAR driverW[1024];
 
     mutex = CreateMutexW(NULL, FALSE, init_mutexW);
     WaitForSingleObject(mutex, INFINITE);
@@ -206,7 +302,7 @@ void X11DRV_DisplayDevices_Init(void)
 
     TRACE("via %s\n", wine_dbgstr_a(handler.name));
 
-    prepare_devices();
+    prepare_devices(video_hkey);
 
     gpu_devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_DISPLAY, NULL);
 
@@ -216,8 +312,24 @@ void X11DRV_DisplayDevices_Init(void)
 
     for (gpu = 0; gpu < gpu_count; gpu++)
     {
-        if (!X11DRV_InitGpu(gpu_devinfo, &gpus[gpu], gpu))
+        if (!X11DRV_InitGpu(gpu_devinfo, &gpus[gpu], gpu, guidW, driverW))
             goto done;
+
+        /* Initialize adapters */
+        if (!handler.pGetAdapters(gpus[gpu].id, &adapters, &adapter_count))
+            goto done;
+
+        for (adapter = 0; adapter < adapter_count; adapter++)
+        {
+            if (!X11DRV_InitAdapter(video_hkey, video_index, gpu, adapter,
+                                    &gpus[gpu], guidW, driverW, &adapters[adapter]))
+                goto done;
+
+            video_index++;
+        }
+
+        handler.pFreeAdapters(adapters);
+        adapters = NULL;
     }
 
 done:
@@ -228,4 +340,6 @@ done:
     CloseHandle(mutex);
     if (gpus)
         handler.pFreeGpus(gpus);
+    if (adapters)
+        handler.pFreeAdapters(adapters);
 }
