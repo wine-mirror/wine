@@ -3591,6 +3591,21 @@ static void test_local_handlers(void)
 
     hr = pMFRegisterLocalSchemeHandler(localW, &local_activate);
     ok(hr == S_OK, "Failed to register scheme handler, hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalByteStreamHandler(NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalByteStreamHandler(NULL, NULL, &local_activate);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalByteStreamHandler(NULL, localW, &local_activate);
+    ok(hr == S_OK, "Failed to register stream handler, hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalByteStreamHandler(localW, NULL, &local_activate);
+    ok(hr == S_OK, "Failed to register stream handler, hr %#x.\n", hr);
+
+    hr = pMFRegisterLocalByteStreamHandler(localW, localW, &local_activate);
+    ok(hr == S_OK, "Failed to register stream handler, hr %#x.\n", hr);
 }
 
 START_TEST(mfplat)

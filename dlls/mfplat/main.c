@@ -47,13 +47,22 @@ static LONG platform_lock;
 struct local_handler
 {
     struct list entry;
-    WCHAR *scheme;
+    union
+    {
+        WCHAR *scheme;
+        struct
+        {
+            WCHAR *extension;
+            WCHAR *mime;
+        } bytestream;
+    } u;
     IMFActivate *activate;
 };
 
 static CRITICAL_SECTION local_handlers_section = { NULL, -1, 0, 0, 0, 0 };
 
 static struct list local_scheme_handlers = LIST_INIT(local_scheme_handlers);
+static struct list local_bytestream_handlers = LIST_INIT(local_bytestream_handlers);
 
 struct system_clock
 {
@@ -7153,21 +7162,25 @@ static const IMFAsyncCallbackVtbl async_create_file_callback_vtbl =
     async_create_file_callback_Invoke,
 };
 
-static WCHAR *heap_strdupW(const WCHAR *str)
+static HRESULT heap_strdupW(const WCHAR *str, WCHAR **dest)
 {
-    WCHAR *ret = NULL;
+    HRESULT hr = S_OK;
 
     if (str)
     {
         unsigned int size;
 
         size = (lstrlenW(str) + 1) * sizeof(WCHAR);
-        ret = heap_alloc(size);
-        if (ret)
-            memcpy(ret, str, size);
+        *dest = heap_alloc(size);
+        if (*dest)
+            memcpy(*dest, str, size);
+        else
+            hr = E_OUTOFMEMORY;
     }
+    else
+        *dest = NULL;
 
-    return ret;
+    return hr;
 }
 
 /***********************************************************************
@@ -7201,12 +7214,8 @@ HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMOD
     async->access_mode = access_mode;
     async->open_mode = open_mode;
     async->flags = flags;
-    async->path = heap_strdupW(path);
-    if (!async->path)
-    {
-        hr = E_OUTOFMEMORY;
+    if (FAILED(hr = heap_strdupW(path, &async->path)))
         goto failed;
-    }
 
     hr = MFCreateAsyncResult(NULL, &async->IMFAsyncCallback_iface, (IUnknown *)caller, &item);
     if (FAILED(hr))
@@ -7300,6 +7309,7 @@ HRESULT WINAPI MFCancelCreateFile(IUnknown *cancel_cookie)
 HRESULT WINAPI MFRegisterLocalSchemeHandler(const WCHAR *scheme, IMFActivate *activate)
 {
     struct local_handler *handler;
+    HRESULT hr;
 
     TRACE("%s, %p.\n", debugstr_w(scheme), activate);
 
@@ -7309,10 +7319,10 @@ HRESULT WINAPI MFRegisterLocalSchemeHandler(const WCHAR *scheme, IMFActivate *ac
     if (!(handler = heap_alloc(sizeof(*handler))))
         return E_OUTOFMEMORY;
 
-    if (!(handler->scheme = heap_strdupW(scheme)))
+    if (FAILED(hr = heap_strdupW(scheme, &handler->u.scheme)))
     {
         heap_free(handler);
-        return E_OUTOFMEMORY;
+        return hr;
     }
     handler->activate = activate;
     IMFActivate_AddRef(handler->activate);
@@ -7322,4 +7332,41 @@ HRESULT WINAPI MFRegisterLocalSchemeHandler(const WCHAR *scheme, IMFActivate *ac
     LeaveCriticalSection(&local_handlers_section);
 
     return S_OK;
+}
+
+/***********************************************************************
+ *      MFRegisterLocalByteStreamHandler (mfplat.@)
+ */
+HRESULT WINAPI MFRegisterLocalByteStreamHandler(const WCHAR *extension, const WCHAR *mime, IMFActivate *activate)
+{
+    struct local_handler *handler;
+    HRESULT hr;
+
+    TRACE("%s, %s, %p.\n", debugstr_w(extension), debugstr_w(mime), activate);
+
+    if ((!extension && !mime) || !activate)
+        return E_INVALIDARG;
+
+    if (!(handler = heap_alloc_zero(sizeof(*handler))))
+        return E_OUTOFMEMORY;
+
+    hr = heap_strdupW(extension, &handler->u.bytestream.extension);
+    if (SUCCEEDED(hr))
+        hr = heap_strdupW(mime, &handler->u.bytestream.mime);
+
+    if (FAILED(hr))
+        goto failed;
+
+    EnterCriticalSection(&local_handlers_section);
+    list_add_head(&local_bytestream_handlers, &handler->entry);
+    LeaveCriticalSection(&local_handlers_section);
+
+    return hr;
+
+failed:
+    heap_free(handler->u.bytestream.extension);
+    heap_free(handler->u.bytestream.mime);
+    heap_free(handler);
+
+    return hr;
 }

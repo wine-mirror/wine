@@ -128,6 +128,7 @@
 @ stdcall MFPutWorkItemEx(long ptr)
 @ stdcall MFPutWorkItemEx2(long long ptr)
 @ stub MFRecordError
+@ stdcall MFRegisterLocalByteStreamHandler(wstr wstr ptr)
 @ stdcall MFRegisterLocalSchemeHandler(wstr ptr)
 @ stdcall MFRemovePeriodicCallback(long)
 @ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
