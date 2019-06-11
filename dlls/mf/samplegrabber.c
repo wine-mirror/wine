@@ -1127,7 +1127,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockStart(IMFClockStateSink *
 
     sample_grabber_set_state(grabber, SINK_STATE_RUNNING);
 
-    return S_OK;
+    return IMFSampleGrabberSinkCallback_OnClockStart(sample_grabber_get_callback(grabber), systime, offset);
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME systime)
@@ -1138,14 +1138,16 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockStop(IMFClockStateSink *i
 
     sample_grabber_set_state(grabber, SINK_STATE_STOPPED);
 
-    return S_OK;
+    return IMFSampleGrabberSinkCallback_OnClockStop(sample_grabber_get_callback(grabber), systime);
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME systime)
 {
+    struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
+
     TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(systime));
 
-    return S_OK;
+    return IMFSampleGrabberSinkCallback_OnClockPause(sample_grabber_get_callback(grabber), systime);
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
@@ -1156,14 +1158,16 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockRestart(IMFClockStateSink
 
     sample_grabber_set_state(grabber, SINK_STATE_RUNNING);
 
-    return S_OK;
+    return IMFSampleGrabberSinkCallback_OnClockRestart(sample_grabber_get_callback(grabber), systime);
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
 {
-    FIXME("%p, %s, %f.\n", iface, wine_dbgstr_longlong(systime), rate);
+    struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %f.\n", iface, wine_dbgstr_longlong(systime), rate);
+
+    return IMFSampleGrabberSinkCallback_OnClockSetRate(sample_grabber_get_callback(grabber), systime, rate);
 }
 
 static HRESULT WINAPI sample_grabber_events_QueryInterface(IMFMediaEventGenerator *iface, REFIID riid, void **obj)
