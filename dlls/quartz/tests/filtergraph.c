@@ -2494,7 +2494,9 @@ static void test_control_delegation(void)
     IBasicAudio *audio, *filter_audio;
     IBaseFilter *renderer;
     IVideoWindow *window;
-    IBasicVideo *video;
+    IBasicVideo2 *video;
+    ITypeInfo *typeinfo;
+    TYPEATTR *typeattr;
     ULONG count;
     HRESULT hr;
     LONG val;
@@ -2564,14 +2566,27 @@ static void test_control_delegation(void)
 
     /* IBasicVideo and IVideoWindow */
 
-    hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicVideo, (void **)&video);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicVideo2, (void **)&video);
     ok(hr == S_OK, "got %#x\n", hr);
     hr = IFilterGraph2_QueryInterface(graph, &IID_IVideoWindow, (void **)&window);
     ok(hr == S_OK, "got %#x\n", hr);
 
     /* Unlike IBasicAudio, these return E_NOINTERFACE. */
-    hr = IBasicVideo_get_BitRate(video, &val);
+    hr = IBasicVideo2_get_BitRate(video, &val);
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+
+    hr = IBasicVideo2_GetTypeInfoCount(video, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+
+    hr = IBasicVideo2_GetTypeInfo(video, 0, 0, &typeinfo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
+    ok(IsEqualGUID(&typeattr->guid, &IID_IBasicVideo), "Got IID %s.\n", wine_dbgstr_guid(&typeattr->guid));
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+    ITypeInfo_Release(typeinfo);
 
     hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
@@ -2586,7 +2601,7 @@ static void test_control_delegation(void)
     hr = IFilterGraph2_AddFilter(graph, renderer, NULL);
     ok(hr == S_OK, "got %#x\n", hr);
 
-    hr = IBasicVideo_get_BitRate(video, &val);
+    hr = IBasicVideo2_get_BitRate(video, &val);
     ok(hr == VFW_E_NOT_CONNECTED, "got %#x\n", hr);
     hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
     ok(hr == VFW_E_NOT_CONNECTED, "got %#x\n", hr);
@@ -2594,13 +2609,13 @@ static void test_control_delegation(void)
     hr = IFilterGraph2_RemoveFilter(graph, renderer);
     ok(hr == S_OK, "got %#x\n", hr);
 
-    hr = IBasicVideo_get_BitRate(video, &val);
+    hr = IBasicVideo2_get_BitRate(video, &val);
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
     hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 
     IBaseFilter_Release(renderer);
-    IBasicVideo_Release(video);
+    IBasicVideo2_Release(video);
     IVideoWindow_Release(window);
     IFilterGraph2_Release(graph);
 }
