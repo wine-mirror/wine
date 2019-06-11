@@ -86,11 +86,6 @@ static inline VideoRendererImpl *impl_from_BaseControlVideo(BaseControlVideo *if
     return CONTAINING_RECORD(iface, VideoRendererImpl, baseControlVideo);
 }
 
-static inline VideoRendererImpl *impl_from_IBasicVideo(IBasicVideo *iface)
-{
-    return CONTAINING_RECORD(iface, VideoRendererImpl, baseControlVideo.IBasicVideo_iface);
-}
-
 static DWORD WINAPI MessageLoop(LPVOID lpParameter)
 {
     VideoRendererImpl* This = lpParameter;
@@ -713,39 +708,11 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI BasicVideo_QueryInterface(IBasicVideo *iface, REFIID riid, LPVOID *ppvObj)
-{
-    VideoRendererImpl *This = impl_from_IBasicVideo(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppvObj);
-}
-
-static ULONG WINAPI BasicVideo_AddRef(IBasicVideo *iface)
-{
-    VideoRendererImpl *This = impl_from_IBasicVideo(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return IUnknown_AddRef(This->renderer.filter.outer_unk);
-}
-
-static ULONG WINAPI BasicVideo_Release(IBasicVideo *iface)
-{
-    VideoRendererImpl *This = impl_from_IBasicVideo(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return IUnknown_Release(This->renderer.filter.outer_unk);
-}
-
 static const IBasicVideoVtbl IBasicVideo_VTable =
 {
-    BasicVideo_QueryInterface,
-    BasicVideo_AddRef,
-    BasicVideo_Release,
+    BaseControlVideoImpl_QueryInterface,
+    BaseControlVideoImpl_AddRef,
+    BaseControlVideoImpl_Release,
     BaseControlVideoImpl_GetTypeInfoCount,
     BaseControlVideoImpl_GetTypeInfo,
     BaseControlVideoImpl_GetIDsOfNames,
