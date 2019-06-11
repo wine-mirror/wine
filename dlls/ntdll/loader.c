@@ -898,7 +898,7 @@ static NTSTATUS create_module_activation_context( LDR_MODULE *module )
  * Some dlls (corpol.dll from IE6 for instance) are incorrectly marked as native
  * while being perfectly normal DLLs.  This heuristic should catch such breakages.
  */
-static BOOL is_dll_native_subsystem( HMODULE module, const IMAGE_NT_HEADERS *nt, LPCWSTR filename )
+static BOOL is_dll_native_subsystem( LDR_MODULE *mod, const IMAGE_NT_HEADERS *nt, LPCWSTR filename )
 {
     static const WCHAR ntdllW[]    = {'n','t','d','l','l','.','d','l','l',0};
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
@@ -908,13 +908,14 @@ static BOOL is_dll_native_subsystem( HMODULE module, const IMAGE_NT_HEADERS *nt,
 
     if (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_NATIVE) return FALSE;
     if (nt->OptionalHeader.SectionAlignment < page_size) return TRUE;
+    if (mod->Flags & LDR_WINE_INTERNAL) return TRUE;
 
-    if ((imports = RtlImageDirectoryEntryToData( module, TRUE,
+    if ((imports = RtlImageDirectoryEntryToData( mod->BaseAddress, TRUE,
                                                  IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
     {
         for (i = 0; imports[i].Name; i++)
         {
-            const char *name = get_rva( module, imports[i].Name );
+            const char *name = get_rva( mod->BaseAddress, imports[i].Name );
             DWORD len = strlen(name);
             if (len * sizeof(WCHAR) >= sizeof(buffer)) continue;
             ascii_to_unicode( buffer, name, len + 1 );
@@ -1141,7 +1142,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
  * Allocate a WINE_MODREF structure and add it to the process list
  * The loader_section must be locked while calling this function.
  */
-static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name )
+static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name, BOOL builtin )
 {
     WINE_MODREF *wm;
     const WCHAR *p;
@@ -1151,7 +1152,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
 
     wm->ldr.BaseAddress   = hModule;
     wm->ldr.SizeOfImage   = nt->OptionalHeader.SizeOfImage;
-    wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS;
+    wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS | (builtin ? LDR_WINE_INTERNAL : 0);
     wm->ldr.TlsIndex      = -1;
     wm->ldr.LoadCount     = 1;
 
@@ -1160,7 +1161,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     else p = wm->ldr.FullDllName.Buffer;
     RtlInitUnicodeString( &wm->ldr.BaseDllName, p );
 
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) || !is_dll_native_subsystem( hModule, nt, p ))
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) || !is_dll_native_subsystem( &wm->ldr, nt, p ))
     {
         if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
             wm->ldr.Flags |= LDR_IMAGE_IS_DLL;
@@ -1804,7 +1805,7 @@ static void load_builtin_callback( void *module, const char *filename )
         return;
     }
 
-    wm = alloc_module( module, &nt_name );
+    wm = alloc_module( module, &nt_name, TRUE );
     RtlFreeUnicodeString( &nt_name );
     if (!wm)
     {
@@ -1812,7 +1813,6 @@ static void load_builtin_callback( void *module, const char *filename )
         builtin_load_info->status = STATUS_NO_MEMORY;
         return;
     }
-    wm->ldr.Flags |= LDR_WINE_INTERNAL;
 
     if ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
         nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE ||
@@ -2170,13 +2170,13 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
 
     /* create the MODREF */
 
-    if (!(wm = alloc_module( *module, nt_name ))) return STATUS_NO_MEMORY;
+    if (!(wm = alloc_module( *module, nt_name, (image_info->image_flags & IMAGE_FLAGS_WineBuiltin) )))
+        return STATUS_NO_MEMORY;
 
     wm->dev = st->st_dev;
     wm->ino = st->st_ino;
     if (image_info->loader_flags) wm->ldr.Flags |= LDR_COR_IMAGE;
     if (image_info->image_flags & IMAGE_FLAGS_ComPlusILOnly) wm->ldr.Flags |= LDR_COR_ILONLY;
-    if (image_info->image_flags & IMAGE_FLAGS_WineBuiltin) wm->ldr.Flags |= LDR_WINE_INTERNAL;
 
     set_security_cookie( *module, image_info->map_size );
 
