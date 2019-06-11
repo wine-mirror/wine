@@ -2495,6 +2495,7 @@ static void test_control_delegation(void)
     IBaseFilter *renderer;
     IVideoWindow *window;
     IBasicVideo *video;
+    ULONG count;
     HRESULT hr;
     LONG val;
 
@@ -2502,6 +2503,10 @@ static void test_control_delegation(void)
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicAudio, (void **)&audio);
     ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IBasicAudio_GetTypeInfoCount(audio, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
 
     hr = IBasicAudio_put_Volume(audio, -10);
     ok(hr == E_NOTIMPL, "got %#x\n", hr);
