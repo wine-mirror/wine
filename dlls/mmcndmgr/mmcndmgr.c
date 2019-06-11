@@ -26,9 +26,7 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 #include "initguid.h"
 #include "mmc.h"
