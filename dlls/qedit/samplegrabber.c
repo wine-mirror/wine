@@ -33,7 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
-static const WCHAR vendor_name[] = { 'W', 'i', 'n', 'e', 0 };
 static const WCHAR pin_in_name[] = { 'I', 'n', 0 };
 static const WCHAR pin_out_name[] = { 'O', 'u', 't', 0 };
 
@@ -419,19 +418,6 @@ SampleGrabber_IBaseFilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *grap
 
     return S_OK;
 }
-
-/* IBaseFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_QueryVendorInfo(IBaseFilter *iface, LPWSTR *vendor)
-{
-    TRACE("(%p)\n", vendor);
-    if (!vendor)
-        return E_POINTER;
-    *vendor = CoTaskMemAlloc(sizeof(vendor_name));
-    CopyMemory(*vendor, vendor_name, sizeof(vendor_name));
-    return S_OK;
-}
-
 
 /* SampleGrabber implementation of ISampleGrabber interface */
 
@@ -1061,7 +1047,7 @@ static const IBaseFilterVtbl IBaseFilter_VTable =
     BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     SampleGrabber_IBaseFilter_JoinFilterGraph,
-    SampleGrabber_IBaseFilter_QueryVendorInfo,
+    BaseFilterImpl_QueryVendorInfo,
 };
 
 static const ISampleGrabberVtbl ISampleGrabber_VTable =
