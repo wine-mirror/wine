@@ -394,13 +394,11 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
 
 static IPin *async_reader_get_pin(BaseFilter *iface, unsigned int index)
 {
-    AsyncReader *This = impl_from_BaseFilter(iface);
+    AsyncReader *filter = impl_from_BaseFilter(iface);
 
-    if (index >= 1 || !This->pOutputPin)
-        return NULL;
-
-    IPin_AddRef(This->pOutputPin);
-    return This->pOutputPin;
+    if (!index && filter->pOutputPin)
+        return filter->pOutputPin;
+    return NULL;
 }
 
 static void async_reader_destroy(BaseFilter *iface)

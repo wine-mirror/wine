@@ -118,19 +118,12 @@ static inline AviMux* impl_from_BaseFilter(BaseFilter *filter)
 
 static IPin *avi_mux_get_pin(BaseFilter *iface, unsigned int index)
 {
-    AviMux *This = impl_from_BaseFilter(iface);
+    AviMux *filter = impl_from_BaseFilter(iface);
 
     if (!index)
-    {
-        IPin_AddRef(&This->out->pin.pin.IPin_iface);
-        return &This->out->pin.pin.IPin_iface;
-    }
-    else if (index <= This->input_pin_no)
-    {
-        IPin_AddRef(&This->in[index - 1]->pin.pin.IPin_iface);
-        return &This->in[index - 1]->pin.pin.IPin_iface;
-    }
-
+        return &filter->out->pin.pin.IPin_iface;
+    else if (index <= filter->input_pin_no)
+        return &filter->in[index - 1]->pin.pin.IPin_iface;
     return NULL;
 }
 

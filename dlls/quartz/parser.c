@@ -66,11 +66,9 @@ IPin *parser_get_pin(BaseFilter *iface, unsigned int index)
 {
     ParserImpl *filter = impl_from_BaseFilter(iface);
 
-    if (index > filter->cStreams)
-        return NULL;
-
-    IPin_AddRef(filter->ppPins[index]);
-    return filter->ppPins[index];
+    if (index <= filter->cStreams)
+        return filter->ppPins[index];
+    return NULL;
 }
 
 HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *vtbl, IUnknown *outer,

@@ -1198,19 +1198,13 @@ static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
 
 static IPin *gstdemux_get_pin(BaseFilter *base, unsigned int index)
 {
-    GSTImpl *This = impl_from_IBaseFilter(&base->IBaseFilter_iface);
-    IPin *pin;
-
-    if (index > This->cStreams)
-        return NULL;
+    GSTImpl *filter = impl_from_IBaseFilter(&base->IBaseFilter_iface);
 
     if (!index)
-        pin = &This->pInputPin.pin.IPin_iface;
-    else
-        pin = &This->ppPins[index - 1]->pin.pin.IPin_iface;
-
-    IPin_AddRef(pin);
-    return pin;
+        return &filter->pInputPin.pin.IPin_iface;
+    else if (index <= filter->cStreams)
+        return &filter->ppPins[index - 1]->pin.pin.IPin_iface;
+    return NULL;
 }
 
 static void gstdemux_destroy(BaseFilter *iface)

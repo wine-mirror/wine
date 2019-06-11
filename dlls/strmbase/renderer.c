@@ -190,7 +190,6 @@ static IPin *renderer_get_pin(BaseFilter *iface, unsigned int index)
     if (index >= 1)
         return NULL;
 
-    IPin_AddRef(&This->pInputPin->pin.IPin_iface);
     return &This->pInputPin->pin.IPin_iface;
 }
 

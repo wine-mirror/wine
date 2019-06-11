@@ -180,18 +180,13 @@ static const IBaseFilterVtbl AVICompressorVtbl = {
 
 static IPin *avi_compressor_get_pin(BaseFilter *iface, unsigned int index)
 {
-    AVICompressor *This = impl_from_BaseFilter(iface);
-    IPin *ret;
+    AVICompressor *filter = impl_from_BaseFilter(iface);
 
     if (index == 0)
-        ret = &This->in->pin.IPin_iface;
+        return &filter->in->pin.IPin_iface;
     else if (index == 1)
-        ret = &This->out->pin.IPin_iface;
-    else
-        return NULL;
-
-    IPin_AddRef(ret);
-    return ret;
+        return &filter->out->pin.IPin_iface;
+    return NULL;
 }
 
 static void avi_compressor_destroy(BaseFilter *iface)

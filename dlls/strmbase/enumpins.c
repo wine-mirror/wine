@@ -60,10 +60,7 @@ HRESULT enum_pins_create(BaseFilter *base, IEnumPins **out)
     object->Version = base->pin_version;
 
     while ((pin = base->pFuncsTable->filter_get_pin(base, object->count)))
-    {
-        IPin_Release(pin);
         ++object->count;
-    }
 
     TRACE("Created enumerator %p.\n", object);
     *out = &object->IEnumPins_iface;
@@ -122,7 +119,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin ** ppPins, ULONG * pcFetched)
 {
     IEnumPinsImpl *This = impl_from_IEnumPins(iface);
-    ULONG i = 0;
+    ULONG i;
 
     TRACE("(%p)->(%u, %p, %p)\n", iface, cPins, ppPins, pcFetched);
 
@@ -138,16 +135,14 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
     if (This->Version != This->base->pin_version)
         return VFW_E_ENUM_OUT_OF_SYNC;
 
-    while (i < cPins)
+    for (i = 0; i < cPins; ++i)
     {
-       IPin *pin;
-       pin = This->base->pFuncsTable->filter_get_pin(This->base, This->uIndex + i);
+        IPin *pin = This->base->pFuncsTable->filter_get_pin(This->base, This->uIndex + i);
 
-       if (!pin)
-         break;
-       else
-         ppPins[i] = pin;
-       ++i;
+        if (!pin)
+            break;
+
+        IPin_AddRef(ppPins[i] = pin);
     }
 
     if (pcFetched)
@@ -186,10 +181,7 @@ static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins *iface)
     {
         enum_pins->count = 0;
         while ((pin = enum_pins->base->pFuncsTable->filter_get_pin(enum_pins->base, enum_pins->count)))
-        {
-            IPin_Release(pin);
             ++enum_pins->count;
-        }
     }
 
     enum_pins->Version = enum_pins->base->pin_version;

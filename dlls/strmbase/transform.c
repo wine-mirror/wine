@@ -135,7 +135,6 @@ static IPin *transform_get_pin(BaseFilter *iface, unsigned int index)
     if (index >= 2)
         return NULL;
 
-    IPin_AddRef(filter->ppPins[index]);
     return filter->ppPins[index];
 }
 

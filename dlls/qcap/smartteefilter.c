@@ -120,20 +120,15 @@ static const IBaseFilterVtbl SmartTeeFilterVtbl = {
 
 static IPin *smart_tee_get_pin(BaseFilter *iface, unsigned int index)
 {
-    SmartTeeFilter *This = impl_from_BaseFilter(iface);
-    IPin *ret;
+    SmartTeeFilter *filter = impl_from_BaseFilter(iface);
 
     if (index == 0)
-        ret = &This->input->pin.IPin_iface;
+        return &filter->input->pin.IPin_iface;
     else if (index == 1)
-        ret = &This->capture->pin.IPin_iface;
+        return &filter->capture->pin.IPin_iface;
     else if (index == 2)
-        ret = &This->preview->pin.IPin_iface;
-    else
-        return NULL;
-
-    IPin_AddRef(ret);
-    return ret;
+        return &filter->preview->pin.IPin_iface;
+    return NULL;
 }
 
 static void smart_tee_destroy(BaseFilter *iface)

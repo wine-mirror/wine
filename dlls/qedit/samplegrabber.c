@@ -275,18 +275,13 @@ static void SampleGrabber_cleanup(SG_Impl *This)
 
 static IPin *sample_grabber_get_pin(BaseFilter *iface, unsigned int index)
 {
-    SG_Impl *This = impl_from_BaseFilter(iface);
-    IPin *pin;
+    SG_Impl *filter = impl_from_BaseFilter(iface);
 
     if (index == 0)
-        pin = &This->pin_in.IPin_iface;
+        return &filter->pin_in.IPin_iface;
     else if (index == 1)
-        pin = &This->pin_out.IPin_iface;
-    else
-        return NULL;
-
-    IPin_AddRef(pin);
-    return pin;
+        return &filter->pin_out.IPin_iface;
+    return NULL;
 }
 
 static void sample_grabber_destroy(BaseFilter *iface)

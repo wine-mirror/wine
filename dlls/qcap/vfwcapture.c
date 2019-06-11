@@ -104,7 +104,6 @@ static IPin *vfw_capture_get_pin(BaseFilter *iface, unsigned int index)
     if (index >= 1)
         return NULL;
 
-    IPin_AddRef(This->pOutputPin);
     return This->pOutputPin;
 }
 

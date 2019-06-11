@@ -194,19 +194,15 @@ HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin 
     {
         hr = IPin_QueryPinInfo(pin, &info);
         if (FAILED(hr))
-        {
-            IPin_Release(pin);
             return hr;
-        }
+
         if (info.pFilter) IBaseFilter_Release(info.pFilter);
 
         if (!lstrcmpW(id, info.achName))
         {
-            *ret = pin;
+            IPin_AddRef(*ret = pin);
             return S_OK;
         }
-
-        IPin_Release(pin);
     }
 
     return VFW_E_NOT_FOUND;

@@ -207,28 +207,16 @@ static IPin *qt_splitter_get_pin(BaseFilter *base, unsigned int index)
     QTSplitter *filter = impl_from_BaseFilter(base);
 
     if (index == 0)
-    {
-        IPin_AddRef(&filter->pInputPin.pin.IPin_iface);
         return &filter->pInputPin.pin.IPin_iface;
-    }
     else if (index == 1)
     {
         if (filter->pVideo_Pin)
-        {
-            IPin_AddRef(&filter->pVideo_Pin->pin.pin.IPin_iface);
             return &filter->pVideo_Pin->pin.pin.IPin_iface;
-        }
         else if (filter->pAudio_Pin)
-        {
-            IPin_AddRef(&filter->pAudio_Pin->pin.pin.IPin_iface);
             return &filter->pAudio_Pin->pin.pin.IPin_iface;
-        }
     }
     else if (index == 2 && filter->pVideo_Pin && filter->pAudio_Pin)
-    {
-        IPin_AddRef(&filter->pAudio_Pin->pin.pin.IPin_iface);
         return &filter->pAudio_Pin->pin.pin.IPin_iface;
-    }
 
     return NULL;
 }
