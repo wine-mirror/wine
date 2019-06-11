@@ -5031,9 +5031,9 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
     IMFAttributes *attributes;
     const WCHAR *url_ext;
     WCHAR *mimeW = NULL;
+    HRESULT hr = E_FAIL;
     unsigned int i, j;
     UINT32 length;
-    HRESULT hr;
 
     *handler = NULL;
 
@@ -5053,7 +5053,28 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
         return MF_E_UNSUPPORTED_BYTESTREAM_TYPE;
     }
 
-    /* FIXME: check local handlers first */
+    if (!(flags & MF_RESOLUTION_DISABLE_LOCAL_PLUGINS))
+    {
+        struct local_handler *local_handler;
+
+        EnterCriticalSection(&local_handlers_section);
+
+        LIST_FOR_EACH_ENTRY(local_handler, &local_bytestream_handlers, struct local_handler, entry)
+        {
+            if ((mimeW && !lstrcmpiW(mimeW, local_handler->u.bytestream.mime))
+                    || (url_ext && !lstrcmpiW(url_ext, local_handler->u.bytestream.extension)))
+            {
+                if (SUCCEEDED(hr = IMFActivate_ActivateObject(local_handler->activate, &IID_IMFByteStreamHandler,
+                        (void **)handler)))
+                    break;
+            }
+        }
+
+        LeaveCriticalSection(&local_handlers_section);
+
+        if (*handler)
+            return hr;
+    }
 
     for (i = 0, hr = E_FAIL; i < ARRAY_SIZE(hkey_roots); ++i)
     {
