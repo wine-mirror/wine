@@ -708,34 +708,6 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI VideoWindow_QueryInterface(IVideoWindow *iface, REFIID riid, LPVOID *ppvObj)
-{
-    VideoRendererImpl *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppvObj);
-}
-
-static ULONG WINAPI VideoWindow_AddRef(IVideoWindow *iface)
-{
-    VideoRendererImpl *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return IUnknown_AddRef(This->renderer.filter.outer_unk);
-}
-
-static ULONG WINAPI VideoWindow_Release(IVideoWindow *iface)
-{
-    VideoRendererImpl *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return IUnknown_Release(This->renderer.filter.outer_unk);
-}
-
 static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,
                                                      LONG *FullScreenMode)
 {
@@ -781,9 +753,9 @@ static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface,
 
 static const IVideoWindowVtbl IVideoWindow_VTable =
 {
-    VideoWindow_QueryInterface,
-    VideoWindow_AddRef,
-    VideoWindow_Release,
+    BaseControlWindowImpl_QueryInterface,
+    BaseControlWindowImpl_AddRef,
+    BaseControlWindowImpl_Release,
     BaseControlWindowImpl_GetTypeInfoCount,
     BaseControlWindowImpl_GetTypeInfo,
     BaseControlWindowImpl_GetIDsOfNames,

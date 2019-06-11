@@ -95,11 +95,6 @@ static inline struct quartz_vmr *impl_from_BaseWindow(BaseWindow *wnd)
     return CONTAINING_RECORD(wnd, struct quartz_vmr, baseControlWindow.baseWindow);
 }
 
-static inline struct quartz_vmr *impl_from_IVideoWindow(IVideoWindow *iface)
-{
-    return CONTAINING_RECORD(iface, struct quartz_vmr, baseControlWindow.IVideoWindow_iface);
-}
-
 static inline struct quartz_vmr *impl_from_BaseControlVideo(BaseControlVideo *cvid)
 {
     return CONTAINING_RECORD(cvid, struct quartz_vmr, baseControlVideo);
@@ -809,39 +804,11 @@ static const IBaseFilterVtbl VMR_Vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface, REFIID riid, LPVOID*ppvObj)
-{
-    struct quartz_vmr *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppvObj);
-}
-
-static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface)
-{
-    struct quartz_vmr *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return IUnknown_AddRef(This->renderer.filter.outer_unk);
-}
-
-static ULONG WINAPI Videowindow_Release(IVideoWindow *iface)
-{
-    struct quartz_vmr *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return IUnknown_Release(This->renderer.filter.outer_unk);
-}
-
 static const IVideoWindowVtbl IVideoWindow_VTable =
 {
-    Videowindow_QueryInterface,
-    Videowindow_AddRef,
-    Videowindow_Release,
+    BaseControlWindowImpl_QueryInterface,
+    BaseControlWindowImpl_AddRef,
+    BaseControlWindowImpl_Release,
     BaseControlWindowImpl_GetTypeInfoCount,
     BaseControlWindowImpl_GetTypeInfo,
     BaseControlWindowImpl_GetIDsOfNames,
