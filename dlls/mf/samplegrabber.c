@@ -66,6 +66,7 @@ struct sample_grabber_stream
     LONG refcount;
     struct sample_grabber *sink;
     IMFMediaEventQueue *event_queue;
+    IMFAttributes *sample_attributes;
     enum sink_state state;
     struct list items;
     IUnknown *cancel_key;
@@ -79,6 +80,7 @@ struct sample_grabber
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
     LONG refcount;
     IMFSampleGrabberSinkCallback *callback;
+    IMFSampleGrabberSinkCallback2 *callback2;
     IMFMediaType *media_type;
     BOOL is_shut_down;
     struct sample_grabber_stream *stream;
@@ -89,6 +91,11 @@ struct sample_grabber
     UINT64 sample_time_offset;
     CRITICAL_SECTION cs;
 };
+
+static IMFSampleGrabberSinkCallback *sample_grabber_get_callback(const struct sample_grabber *sink)
+{
+    return sink->callback2 ? (IMFSampleGrabberSinkCallback *)sink->callback2 : sink->callback;
+}
 
 struct sample_grabber_activate_context
 {
@@ -209,6 +216,8 @@ static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
             IMFMediaEventQueue_Shutdown(stream->event_queue);
             IMFMediaEventQueue_Release(stream->event_queue);
         }
+        if (stream->sample_attributes)
+            IMFAttributes_Release(stream->sample_attributes);
         LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &stream->items, struct scheduled_item, entry)
         {
             stream_release_pending_item(item);
@@ -333,8 +342,16 @@ static HRESULT sample_grabber_report_sample(struct sample_grabber *grabber, IMFS
 
         if (SUCCEEDED(hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &size)))
         {
-            hr = IMFSampleGrabberSinkCallback_OnProcessSample(grabber->callback, &major_type, flags, sample_time,
-                        sample_duration, data, size);
+            if (grabber->callback2)
+            {
+                hr = IMFSample_CopyAllItems(sample, grabber->stream->sample_attributes);
+                if (SUCCEEDED(hr))
+                    hr = IMFSampleGrabberSinkCallback2_OnProcessSampleEx(grabber->callback2, &major_type, flags,
+                            sample_time, sample_duration, data, size, grabber->stream->sample_attributes);
+            }
+            else
+                hr = IMFSampleGrabberSinkCallback_OnProcessSample(grabber->callback, &major_type, flags, sample_time,
+                            sample_duration, data, size);
             IMFMediaBuffer_Unlock(buffer);
         }
 
@@ -814,7 +831,10 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
 
     if (!refcount)
     {
-        IMFSampleGrabberSinkCallback_Release(grabber->callback);
+        if (grabber->callback)
+            IMFSampleGrabberSinkCallback_Release(grabber->callback);
+        if (grabber->callback2)
+            IMFSampleGrabberSinkCallback2_Release(grabber->callback2);
         IMFMediaType_Release(grabber->media_type);
         if (grabber->event_queue)
         {
@@ -941,7 +961,8 @@ static HRESULT WINAPI sample_grabber_sink_SetPresentationClock(IMFMediaSink *ifa
 
     EnterCriticalSection(&grabber->cs);
 
-    if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnSetPresentationClock(grabber->callback, clock)))
+    if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnSetPresentationClock(sample_grabber_get_callback(grabber),
+            clock)))
     {
         if (grabber->clock)
         {
@@ -1008,7 +1029,7 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
 
     EnterCriticalSection(&grabber->cs);
     grabber->is_shut_down = TRUE;
-    if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(grabber->callback)))
+    if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
     {
         IMFMediaSink_Release(&grabber->stream->sink->IMFMediaSink_iface);
         EnterCriticalSection(&grabber->stream->cs);
@@ -1246,6 +1267,9 @@ static HRESULT sample_grabber_create_stream(struct sample_grabber *sink, struct 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
         goto failed;
 
+    if (FAILED(hr = MFCreateAttributes(&object->sample_attributes, 0)))
+        goto failed;
+
     *stream = object;
 
     return S_OK;
@@ -1277,8 +1301,12 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
     object->IMFClockStateSink_iface.lpVtbl = &sample_grabber_clock_sink_vtbl;
     object->IMFMediaEventGenerator_iface.lpVtbl = &sample_grabber_sink_events_vtbl;
     object->refcount = 1;
-    object->callback = context->callback;
-    IMFSampleGrabberSinkCallback_AddRef(object->callback);
+    if (FAILED(IMFSampleGrabberSinkCallback_QueryInterface(context->callback, &IID_IMFSampleGrabberSinkCallback2,
+            (void **)&object->callback2)))
+    {
+        object->callback = context->callback;
+        IMFSampleGrabberSinkCallback_AddRef(object->callback);
+    }
     object->media_type = context->media_type;
     IMFMediaType_AddRef(object->media_type);
     IMFAttributes_GetUINT32(attributes, &MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, &object->ignore_clock);

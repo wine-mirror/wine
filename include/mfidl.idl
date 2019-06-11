@@ -549,6 +549,23 @@ interface IMFSampleGrabberSinkCallback : IMFClockStateSink
     HRESULT OnShutdown();
 }
 
+[
+    object,
+    uuid(ca86aa50-c46e-429e-ab27-16d6ac6844cb),
+    local
+]
+interface IMFSampleGrabberSinkCallback2 : IMFSampleGrabberSinkCallback
+{
+    HRESULT OnProcessSampleEx(
+        [in] REFGUID major_type,
+        [in] DWORD sample_flags,
+        [in] LONGLONG sample_time,
+        [in] LONGLONG sample_duration,
+        [in] const BYTE *buffer,
+        [in] DWORD sample_size,
+        [in] IMFAttributes *attributes);
+}
+
 cpp_quote("HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session);")
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **bytestream);" )
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStreamEx(IUnknown *stream, IMFByteStream **bytestream);")
