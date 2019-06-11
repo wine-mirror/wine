@@ -2572,8 +2572,13 @@ static void test_control_delegation(void)
     /* Unlike IBasicAudio, these return E_NOINTERFACE. */
     hr = IBasicVideo_get_BitRate(video, &val);
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+
     hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+
+    hr = IVideoWindow_GetTypeInfoCount(window, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
 
     hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&renderer);
     ok(hr == S_OK, "got %#x\n", hr);
