@@ -2,6 +2,8 @@ MODULE    = mfplat.dll
 IMPORTLIB = mfplat
 IMPORTS   = advapi32 ole32 mfuuid propsys
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	buffer.c \
 	main.c \

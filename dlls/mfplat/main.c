@@ -33,7 +33,6 @@
 #include "propsys.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 #include "mfplat_private.h"
@@ -127,7 +126,7 @@ static const BYTE guid_conv_table[256] =
 
 static WCHAR* GUIDToString(WCHAR *str, REFGUID guid)
 {
-    sprintfW(str, szGUIDFmt, guid->Data1, guid->Data2,
+    swprintf(str, 39, szGUIDFmt, guid->Data1, guid->Data2,
         guid->Data3, guid->Data4[0], guid->Data4[1],
         guid->Data4[2], guid->Data4[3], guid->Data4[4],
         guid->Data4[5], guid->Data4[6], guid->Data4[7]);
@@ -216,14 +215,14 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
     UINT8 *blob;
 
     GUIDToString(buffer, clsid);
-    sprintfW(str, reg_format, transform_keyW, buffer);
+    swprintf(str, ARRAY_SIZE(str), reg_format, transform_keyW, buffer);
 
     if ((ret = RegCreateKeyW(HKEY_CLASSES_ROOT, str, &hclsid)))
         hr = HRESULT_FROM_WIN32(ret);
 
     if (SUCCEEDED(hr))
     {
-        size = (strlenW(name) + 1) * sizeof(WCHAR);
+        size = (lstrlenW(name) + 1) * sizeof(WCHAR);
         if ((ret = RegSetValueExW(hclsid, NULL, 0, REG_SZ, (BYTE *)name, size)))
             hr = HRESULT_FROM_WIN32(ret);
     }
@@ -280,7 +279,7 @@ static HRESULT register_category(CLSID *clsid, GUID *category)
     GUIDToString(guid1, category);
     GUIDToString(guid2, clsid);
 
-    sprintfW(str, reg_format, categories_keyW, guid1, guid2);
+    swprintf(str, ARRAY_SIZE(str), reg_format, categories_keyW, guid1, guid2);
 
     if (RegCreateKeyW(HKEY_CLASSES_ROOT, str, &htmp1))
         return E_FAIL;
@@ -1342,7 +1341,7 @@ HRESULT attributes_GetStringLength(struct attributes *attributes, REFGUID key, U
     if (attribute)
     {
         if (attribute->value.vt == MF_ATTRIBUTE_STRING)
-            *length = strlenW(attribute->value.u.pwszVal);
+            *length = lstrlenW(attribute->value.u.pwszVal);
         else
             hr = MF_E_INVALIDTYPE;
     }
@@ -1367,7 +1366,7 @@ HRESULT attributes_GetString(struct attributes *attributes, REFGUID key, WCHAR *
     {
         if (attribute->value.vt == MF_ATTRIBUTE_STRING)
         {
-            int len = strlenW(attribute->value.u.pwszVal);
+            int len = lstrlenW(attribute->value.u.pwszVal);
 
             if (length)
                 *length = len;
@@ -2252,7 +2251,7 @@ HRESULT WINAPI MFGetAttributesAsBlob(IMFAttributes *attributes, UINT8 *buffer, U
                 data = value.u.puuid;
                 break;
             case MF_ATTRIBUTE_STRING:
-                item.u.subheader.size = (strlenW(value.u.pwszVal) + 1) * sizeof(WCHAR);
+                item.u.subheader.size = (lstrlenW(value.u.pwszVal) + 1) * sizeof(WCHAR);
                 data = value.u.pwszVal;
                 break;
             case MF_ATTRIBUTE_BLOB:
@@ -5037,7 +5036,7 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
     }
 
     /* Extension */
-    url_ext = url ? strrchrW(url, '.') : NULL;
+    url_ext = url ? wcsrchr(url, '.') : NULL;
 
     if (!url_ext && !mimeW)
     {
@@ -5126,7 +5125,7 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
     /* RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
     while (*ptr)
     {
-        WCHAR ch = tolowerW(*ptr);
+        WCHAR ch = towlower(*ptr);
 
         if (*ptr == '*' && ptr == url)
         {
@@ -7162,7 +7161,7 @@ static WCHAR *heap_strdupW(const WCHAR *str)
     {
         unsigned int size;
 
-        size = (strlenW(str) + 1) * sizeof(WCHAR);
+        size = (lstrlenW(str) + 1) * sizeof(WCHAR);
         ret = heap_alloc(size);
         if (ret)
             memcpy(ret, str, size);
