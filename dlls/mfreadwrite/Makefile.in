@@ -2,6 +2,8 @@ MODULE    = mfreadwrite.dll
 IMPORTLIB = mfreadwrite
 IMPORTS   = mfuuid uuid mfplat ole32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c
 
