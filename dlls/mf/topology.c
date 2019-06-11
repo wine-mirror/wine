@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 
@@ -806,7 +804,7 @@ static TOPOID topology_generate_id(void)
     {
         old = next_topology_id;
     }
-    while (interlocked_cmpxchg64((LONG64 *)&next_topology_id, old + 1, old) != old);
+    while (InterlockedCompareExchange64((LONG64 *)&next_topology_id, old + 1, old) != old);
 
     return next_topology_id;
 }

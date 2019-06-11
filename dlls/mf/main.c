@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 
 #include <stdarg.h>
 
@@ -39,7 +38,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
@@ -705,7 +703,7 @@ static WCHAR *heap_strdupW(const WCHAR *str)
     {
         unsigned int size;
 
-        size = (strlenW(str) + 1) * sizeof(WCHAR);
+        size = (lstrlenW(str) + 1) * sizeof(WCHAR);
         ret = heap_alloc(size);
         if (ret)
             memcpy(ret, str, size);
@@ -930,7 +928,7 @@ static HRESULT WINAPI file_scheme_handler_callback_Invoke(IMFAsyncCallback *ifac
 
     /* Strip from scheme, MFCreateFile() won't be expecting it. */
     url = context->url;
-    if (!strncmpiW(context->url, schemeW, ARRAY_SIZE(schemeW)))
+    if (!wcsnicmp(context->url, schemeW, ARRAY_SIZE(schemeW)))
         url += ARRAY_SIZE(schemeW);
 
     hr = MFCreateFile(context->flags & MF_RESOLUTION_WRITE ? MF_ACCESSMODE_READWRITE : MF_ACCESSMODE_READ,

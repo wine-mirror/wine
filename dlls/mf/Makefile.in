@@ -2,6 +2,8 @@ MODULE    = mf.dll
 IMPORTLIB = mf
 IMPORTS   = mfplat ole32 uuid mfuuid
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c \
 	samplegrabber.c \
