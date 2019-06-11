@@ -4556,6 +4556,7 @@ static void test_specular_lighting(void)
         {&point_far, TRUE, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
     };
 
+    IDirect3DLight *light, *dummy_lights[64];
     IDirect3DVertexBuffer *src_vb, *dst_vb;
     struct vertex *quad, *src_data;
     D3DVERTEXBUFFERDESC vb_desc;
@@ -4564,7 +4565,7 @@ static void test_specular_lighting(void)
     IDirect3DMaterial3 *material;
     IDirect3DDevice3 *device;
     IDirectDrawSurface4 *rt;
-    IDirect3DLight *light;
+    D3DLIGHT2 light_desc;
     IDirect3D3 *d3d;
     D3DCOLOR color;
     ULONG refcount;
@@ -4634,6 +4635,22 @@ static void test_specular_lighting(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&light_desc, 0, sizeof(light_desc));
+    light_desc.dwSize = sizeof(light_desc);
+    light_desc.dltType = D3DLIGHT_DIRECTIONAL;
+    light_desc.dwFlags = D3DLIGHT_ACTIVE;
+    U3(light_desc.dvDirection).z = 1.0f;
+
+    for (i = 0; i < ARRAY_SIZE(dummy_lights); ++i)
+    {
+        hr = IDirect3D3_CreateLight(d3d, &dummy_lights[i], NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DViewport3_AddLight(viewport, dummy_lights[i]);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DLight_SetLight(dummy_lights[i], (D3DLIGHT *)&light_desc);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirect3D3_CreateLight(d3d, &light, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -4720,6 +4737,9 @@ static void test_specular_lighting(void)
 
         destroy_material(material);
     }
+
+    for (i = 0; i < ARRAY_SIZE(dummy_lights); ++i)
+        IDirect3DLight_Release(dummy_lights[i]);
 
     IDirect3DVertexBuffer_Release(dst_vb);
     IDirect3DVertexBuffer_Release(src_vb);
