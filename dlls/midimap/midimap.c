@@ -31,7 +31,6 @@
 #include "winuser.h"
 #include "mmddk.h"
 #include "winreg.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 /*
@@ -113,7 +112,7 @@ static BOOL	MIDIMAP_FindPort(const WCHAR* name, unsigned* dev)
     for (*dev = 0; *dev < numMidiOutPorts; (*dev)++)
     {
 	TRACE("%s\n", wine_dbgstr_w(midiOutPorts[*dev].name));
-	if (strcmpW(midiOutPorts[*dev].name, name) == 0)
+	if (lstrcmpW(midiOutPorts[*dev].name, name) == 0)
 	    return TRUE;
     }
     /* try the form #nnn */
@@ -568,14 +567,14 @@ static LRESULT MIDIMAP_drvOpen(void)
     {
 	if (midiOutGetDevCapsW(dev, &moc, sizeof(moc)) == 0L)
 	{
-	    strcpyW(midiOutPorts[dev].name, moc.szPname);
+	    lstrcpyW(midiOutPorts[dev].name, moc.szPname);
 	    midiOutPorts[dev].loaded = 0;
 	    midiOutPorts[dev].hMidi = 0;
 	    midiOutPorts[dev].uDevID = dev;
 	    midiOutPorts[dev].lpbPatch = NULL;
 	    for (i = 0; i < 16; i++)
 		midiOutPorts[dev].aChn[i] = i;
-	    if (strncmpW(midiOutPorts[dev].name, throughportW, strlenW(throughportW)) != 0)
+	    if (wcsncmp(midiOutPorts[dev].name, throughportW, lstrlenW(throughportW)) != 0)
 	        found_valid_port = TRUE;
 	}
 	else
