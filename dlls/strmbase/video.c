@@ -70,6 +70,24 @@ static HRESULT BaseControlVideoImpl_CheckTargetRect(BaseControlVideo *This, RECT
     return S_OK;
 }
 
+HRESULT WINAPI BaseControlVideoImpl_QueryInterface(IBasicVideo *iface, REFIID iid, void **out)
+{
+    BaseControlVideo *video = impl_from_IBasicVideo(iface);
+    return IUnknown_QueryInterface(video->pFilter->outer_unk, iid, out);
+}
+
+ULONG WINAPI BaseControlVideoImpl_AddRef(IBasicVideo *iface)
+{
+    BaseControlVideo *video = impl_from_IBasicVideo(iface);
+    return IUnknown_AddRef(video->pFilter->outer_unk);
+}
+
+ULONG WINAPI BaseControlVideoImpl_Release(IBasicVideo *iface)
+{
+    BaseControlVideo *video = impl_from_IBasicVideo(iface);
+    return IUnknown_Release(video->pFilter->outer_unk);
+}
+
 HRESULT WINAPI BaseControlVideoImpl_GetTypeInfoCount(IBasicVideo *iface, UINT *count)
 {
     TRACE("iface %p, count %p.\n", iface, count);

@@ -517,6 +517,9 @@ typedef struct BaseControlVideoFuncTable {
 HRESULT WINAPI BaseControlVideo_Init(BaseControlVideo *pControlVideo, const IBasicVideoVtbl *lpVtbl, BaseFilter *owner, CRITICAL_SECTION *lock, BasePin* pPin, const BaseControlVideoFuncTable* pFuncsTable);
 HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo);
 
+HRESULT WINAPI BaseControlVideoImpl_QueryInterface(IBasicVideo *iface, REFIID iid, void **out);
+ULONG WINAPI BaseControlVideoImpl_AddRef(IBasicVideo *iface);
+ULONG WINAPI BaseControlVideoImpl_Release(IBasicVideo *iface);
 HRESULT WINAPI BaseControlVideoImpl_GetTypeInfoCount(IBasicVideo *iface, UINT*pctinfo);
 HRESULT WINAPI BaseControlVideoImpl_GetTypeInfo(IBasicVideo *iface, UINT iTInfo, LCID lcid, ITypeInfo**ppTInfo);
 HRESULT WINAPI BaseControlVideoImpl_GetIDsOfNames(IBasicVideo *iface, REFIID riid, LPOLESTR*rgszNames, UINT cNames, LCID lcid, DISPID*rgDispId);
