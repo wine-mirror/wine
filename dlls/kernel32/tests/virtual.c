@@ -52,8 +52,6 @@ static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS (WINAPI *pNtProtectVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG *);
-static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG, SIZE_T *, ULONG, ULONG);
-static NTSTATUS (WINAPI *pNtFreeVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG);
 
 /* ############################### */
 
@@ -230,8 +228,6 @@ static void test_VirtualAlloc(void)
     void *addr1, *addr2;
     DWORD old_prot;
     MEMORY_BASIC_INFORMATION info;
-    NTSTATUS status;
-    SIZE_T size;
 
     SetLastError(0xdeadbeef);
     addr1 = VirtualAlloc(0, 0, MEM_RESERVE, PAGE_NOACCESS);
@@ -440,54 +436,11 @@ static void test_VirtualAlloc(void)
     addr2 = VirtualAlloc(addr1, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     ok(addr2 == addr1, "VirtualAlloc returned %p, expected %p\n", addr2, addr1);
 
-    /* allocation conflicts because of 64k align */
-    size = 0x1000;
-    addr2 = (char *)addr1 + 0x1000;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 0, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    ok(status == STATUS_CONFLICTING_ADDRESSES, "NtAllocateVirtualMemory returned %08x\n", status);
-
-    /* it should conflict, even when zero_bits is explicitly set */
-    size = 0x1000;
-    addr2 = (char *)addr1 + 0x1000;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 12, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    todo_wine
-    ok(status == STATUS_CONFLICTING_ADDRESSES, "NtAllocateVirtualMemory returned %08x\n", status);
-    if (status == STATUS_SUCCESS) ok(VirtualFree(addr2, 0, MEM_RELEASE), "VirtualFree failed\n");
-
-    /* 21 zero bits never succeeds */
-    size = 0x1000;
-    addr2 = NULL;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 21, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    todo_wine
-    ok(status == STATUS_NO_MEMORY || status == STATUS_INVALID_PARAMETER,
-       "NtAllocateVirtualMemory returned %08x\n", status);
-    if (status == STATUS_SUCCESS) ok(VirtualFree(addr2, 0, MEM_RELEASE), "VirtualFree failed\n");
-
-    /* 22 zero bits is invalid */
-    size = 0x1000;
-    addr2 = NULL;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 22, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    ok(status == STATUS_INVALID_PARAMETER_3 || status == STATUS_INVALID_PARAMETER,
-       "NtAllocateVirtualMemory returned %08x\n", status);
-    if (status == STATUS_SUCCESS) ok(VirtualFree(addr2, 0, MEM_RELEASE), "VirtualFree failed\n");
-
     /* AT_ROUND_TO_PAGE flag is not supported for VirtualAlloc */
     SetLastError(0xdeadbeef);
     addr2 = VirtualAlloc(addr1, 0x1000, MEM_RESERVE | MEM_COMMIT | AT_ROUND_TO_PAGE, PAGE_EXECUTE_READWRITE);
     ok(!addr2, "VirtualAlloc unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %d, expected ERROR_INVALID_PARAMETER\n", GetLastError());
-
-    /* AT_ROUND_TO_PAGE flag is not supported for NtAllocateVirtualMemory */
-    size = 0x1000;
-    addr2 = (char *)addr1 + 0x1000;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 0, &size, MEM_RESERVE |
-                                      MEM_COMMIT | AT_ROUND_TO_PAGE, PAGE_EXECUTE_READWRITE);
-    ok(status == STATUS_INVALID_PARAMETER_5 || status == STATUS_INVALID_PARAMETER,
-       "NtAllocateVirtualMemory returned %08x\n", status);
 
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
 }
@@ -4438,8 +4391,6 @@ START_TEST(virtual)
     pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
     pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );
-    pNtAllocateVirtualMemory = (void *)GetProcAddress( hntdll, "NtAllocateVirtualMemory" );
-    pNtFreeVirtualMemory = (void *)GetProcAddress( hntdll, "NtFreeVirtualMemory" );
 
     GetSystemInfo(&si);
     trace("system page size %#x\n", si.dwPageSize);
