@@ -309,6 +309,9 @@ _FUNCTION_ {
 			if (I64_prefix) _SET_NUMBER_(LONGLONG);
 			else if (l_prefix) _SET_NUMBER_(LONG);
 			else if (h_prefix == 1) _SET_NUMBER_(short int);
+#if _MSVCR_VER >= 140
+                        else if (h_prefix == 2) _SET_NUMBER_(char);
+#endif
 			else _SET_NUMBER_(int);
 		    }
                 }

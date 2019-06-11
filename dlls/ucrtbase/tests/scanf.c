@@ -188,7 +188,7 @@ static void test_sscanf(void)
         result = 0xdeadbeef;
         ret = vsscanf_wrapper(tests[i], "12345678", "%hhd", &result);
         ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
-        todo_wine ok(result == 0xdeadbe4e, "got wrong number %#x for flags %#x\n", result, tests[i]);
+        ok(result == 0xdeadbe4e, "got wrong number %#x for flags %#x\n", result, tests[i]);
 
         ret = vsscanf_wrapper(tests[i], "12345678901234", "%lld", &result64);
         ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
