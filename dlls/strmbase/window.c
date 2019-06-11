@@ -217,6 +217,24 @@ HRESULT WINAPI BaseControlWindow_Destroy(BaseControlWindow *pControlWindow)
     return S_OK;
 }
 
+HRESULT WINAPI BaseControlWindowImpl_QueryInterface(IVideoWindow *iface, REFIID iid, void **out)
+{
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    return IUnknown_QueryInterface(window->pFilter->outer_unk, iid, out);
+}
+
+ULONG WINAPI BaseControlWindowImpl_AddRef(IVideoWindow *iface)
+{
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    return IUnknown_AddRef(window->pFilter->outer_unk);
+}
+
+ULONG WINAPI BaseControlWindowImpl_Release(IVideoWindow *iface)
+{
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    return IUnknown_Release(window->pFilter->outer_unk);
+}
+
 HRESULT WINAPI BaseControlWindowImpl_GetTypeInfoCount(IVideoWindow *iface, UINT *count)
 {
     TRACE("iface %p, count %p.\n", iface, count);
