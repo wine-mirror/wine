@@ -5092,12 +5092,34 @@ static HRESULT resolver_create_scheme_handler(const WCHAR *scheme, DWORD flags, 
 {
     static const char schemehandlerspath[] = "Software\\Microsoft\\Windows Media Foundation\\SchemeHandlers";
     static const HKEY hkey_roots[2] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
+    HRESULT hr = MF_E_UNSUPPORTED_SCHEME;
     unsigned int i;
-    HRESULT hr;
 
     TRACE("%s, %#x, %p.\n", debugstr_w(scheme), flags, handler);
 
-    /* FIXME: check local handlers first */
+    *handler = NULL;
+
+    if (!(flags & MF_RESOLUTION_DISABLE_LOCAL_PLUGINS))
+    {
+        struct local_handler *local_handler;
+
+        EnterCriticalSection(&local_handlers_section);
+
+        LIST_FOR_EACH_ENTRY(local_handler, &local_scheme_handlers, struct local_handler, entry)
+        {
+            if (!lstrcmpiW(scheme, local_handler->u.scheme))
+            {
+                if (SUCCEEDED(hr = IMFActivate_ActivateObject(local_handler->activate, &IID_IMFSchemeHandler,
+                        (void **)handler)))
+                    break;
+            }
+        }
+
+        LeaveCriticalSection(&local_handlers_section);
+
+        if (*handler)
+            return hr;
+    }
 
     for (i = 0; i < ARRAY_SIZE(hkey_roots); ++i)
     {
