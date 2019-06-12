@@ -1109,9 +1109,9 @@ static const IMemInputPinVtbl MemInputPin_Vtbl =
     MemInputPin_ReceiveCanBlock
 };
 
-static HRESULT InputPin_Init(const IPinVtbl *vtbl, const PIN_INFO *info,
-        const BaseInputPinFuncTable *func_table, CRITICAL_SECTION *cs,
-        IMemAllocator *allocator, BaseInputPin *pin)
+static void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl,
+        const PIN_INFO *info, const BaseInputPinFuncTable *func_table, CRITICAL_SECTION *cs,
+        IMemAllocator *allocator)
 {
     memset(pin, 0, sizeof(*pin));
     strmbase_pin_init(&pin->pin, vtbl, &func_table->base, info, cs);
@@ -1120,8 +1120,6 @@ static HRESULT InputPin_Init(const IPinVtbl *vtbl, const PIN_INFO *info,
     if (pin->preferred_allocator)
         IMemAllocator_AddRef(pin->preferred_allocator);
     pin->IMemInputPin_iface.lpVtbl = &MemInputPin_Vtbl;
-
-    return S_OK;
 }
 
 HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, LONG inputpin_size, const PIN_INFO * pPinInfo,
@@ -1146,14 +1144,10 @@ HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, LONG inputpin_size
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(InputPin_Init(InputPin_Vtbl, pPinInfo, vtbl, pCritSec, allocator, pPinImpl)))
-    {
-        *ppPin = &pPinImpl->pin.IPin_iface;
-        return S_OK;
-    }
+    strmbase_sink_init(pPinImpl, InputPin_Vtbl, pPinInfo, vtbl, pCritSec, allocator);
 
-    CoTaskMemFree(pPinImpl);
-    return E_FAIL;
+    *ppPin = &pPinImpl->pin.IPin_iface;
+    return S_OK;
 }
 
 HRESULT WINAPI BaseInputPin_Destroy(BaseInputPin *This)
