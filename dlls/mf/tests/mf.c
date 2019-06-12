@@ -2063,8 +2063,14 @@ static void test_video_processor(void)
     DWORD input_min, input_max, output_min, output_max, i, count;
     IMFAttributes *attributes, *attributes2;
     IMFMediaType *media_type, *media_type2;
+    MFT_OUTPUT_DATA_BUFFER output_buffer;
+    MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
+    IMFSample *sample, *sample2;
     IMFTransform *transform;
+    IMFMediaBuffer *buffer;
+    IMFMediaEvent *event;
+    IUnknown *unk;
     HRESULT hr;
     GUID guid;
 
@@ -2078,6 +2084,12 @@ todo_wine
 
     if (FAILED(hr))
         goto failed;
+
+    hr = IMFTransform_QueryInterface(transform, &IID_IMFMediaEventGenerator, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_QueryInterface(transform, &IID_IMFShutdown, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
     /* Transform global attributes. */
     hr = IMFTransform_GetAttributes(transform, &attributes);
@@ -2149,6 +2161,14 @@ todo_wine
     ok(input_info.cbMaxLookahead == 0, "Unexpected lookahead length %u.\n", input_info.cbMaxLookahead);
     ok(input_info.cbAlignment == 0, "Unexpected alignment %u.\n", input_info.cbAlignment);
 
+    hr = MFCreateMediaEvent(MEUnknown, &GUID_NULL, S_OK, NULL, &event);
+    ok(hr == S_OK, "Failed to create event object, hr %#x.\n", hr);
+    hr = IMFTransform_ProcessEvent(transform, 0, event);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    hr = IMFTransform_ProcessEvent(transform, 1, event);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    IMFMediaEvent_Release(event);
+
     /* Configure stream types. */
     for (i = 0;;++i)
     {
@@ -2213,12 +2233,112 @@ todo_wine
 
         hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
         ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
-        ok(input_info.dwFlags == 0, "Unexpected flag %#x.\n", input_info.dwFlags);
+        ok(input_info.dwFlags == 0, "Unexpected flags %#x.\n", input_info.dwFlags);
         ok(input_info.cbMaxLookahead == 0, "Unexpected lookahead length %u.\n", input_info.cbMaxLookahead);
         ok(input_info.cbAlignment == 0, "Unexpected alignment %u.\n", input_info.cbAlignment);
 
         IMFMediaType_Release(media_type);
     }
+
+    /* IYUV -> RGB32 */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_IYUV);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, ((UINT64)16 << 32) | 16);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "Failed to set input type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "Failed to set output type, hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
+    ok(output_info.dwFlags == 0, "Unexpected flags %#x.\n", output_info.dwFlags);
+    ok(output_info.cbSize > 0, "Unexpected size %u.\n", output_info.cbSize);
+    ok(output_info.cbAlignment == 0, "Unexpected alignment %u.\n", output_info.cbAlignment);
+
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    hr = MFCreateSample(&sample2);
+    ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    memset(&output_buffer, 0, sizeof(output_buffer));
+    output_buffer.pSample = sample;
+    flags = 0;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#x.\n", hr);
+    ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
+    ok(flags == 0, "Unexpected status %#x.\n", flags);
+
+    hr = IMFTransform_ProcessInput(transform, 0, sample2, 0);
+    ok(hr == S_OK, "Failed to push a sample, hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessInput(transform, 0, sample2, 0);
+    ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#x.\n", hr);
+
+    memset(&output_buffer, 0, sizeof(output_buffer));
+    output_buffer.pSample = sample;
+    flags = 0;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+    ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
+    ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
+    ok(flags == 0, "Unexpected status %#x.\n", flags);
+
+    hr = IMFSample_SetSampleTime(sample2, 0);
+    ok(hr == S_OK, "Failed to set sample time, hr %#x.\n", hr);
+    memset(&output_buffer, 0, sizeof(output_buffer));
+    output_buffer.pSample = sample;
+    flags = 0;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
+    ok(flags == 0, "Unexpected status %#x.\n", flags);
+
+    hr = MFCreateMemoryBuffer(1024 * 1024, &buffer);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample2, buffer);
+    ok(hr == S_OK, "Failed to add a buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Failed to add a buffer, hr %#x.\n", hr);
+
+    memset(&output_buffer, 0, sizeof(output_buffer));
+    output_buffer.pSample = sample;
+    flags = 0;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+    ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Failed to get output buffer, hr %#x.\n", hr);
+    ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
+    ok(flags == 0, "Unexpected status %#x.\n", flags);
+
+    if (SUCCEEDED(hr))
+    {
+        memset(&output_buffer, 0, sizeof(output_buffer));
+        output_buffer.pSample = sample;
+        flags = 0;
+        hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+        ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#x.\n", hr);
+        ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
+        ok(flags == 0, "Unexpected status %#x.\n", flags);
+    }
+
+    IMFSample_Release(sample2);
+    IMFSample_Release(sample);
+    IMFMediaBuffer_Release(buffer);
+
+    IMFMediaType_Release(media_type);
 
     IMFTransform_Release(transform);
 
