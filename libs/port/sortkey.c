@@ -216,7 +216,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
                 inc_str_pos(&str1, &len1, &dpos1, &dlen1);
                 skip = 1;
             }
-            if (!dlen2 && get_char_typeW(dstr2[dpos2]) & (C1_PUNCT | C1_SPACE))
+            if (get_char_typeW(dstr2[dpos2]) & (C1_PUNCT | C1_SPACE))
             {
                 inc_str_pos(&str2, &len2, &dpos2, &dlen2);
                 skip = 1;
