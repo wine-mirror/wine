@@ -1109,7 +1109,7 @@ static const IMemInputPinVtbl MemInputPin_Vtbl =
     MemInputPin_ReceiveCanBlock
 };
 
-static void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl,
+void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl,
         const PIN_INFO *info, const BaseInputPinFuncTable *func_table, CRITICAL_SECTION *cs,
         IMemAllocator *allocator)
 {
@@ -1150,7 +1150,7 @@ HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, LONG inputpin_size
     return S_OK;
 }
 
-static void strmbase_sink_cleanup(BaseInputPin *pin)
+void strmbase_sink_cleanup(BaseInputPin *pin)
 {
     FreeMediaType(&pin->pin.mtCurrent);
     if (pin->pAllocator)
