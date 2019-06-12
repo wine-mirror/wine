@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 typedef struct {
     BaseFilter filter;
-    BaseInputPin *input;
+    BaseInputPin sink;
     BaseOutputPin *capture;
     BaseOutputPin *preview;
 } SmartTeeFilter;
@@ -91,7 +91,7 @@ static HRESULT WINAPI SmartTeeFilter_Run(IBaseFilter *iface, REFERENCE_TIME tSta
         /* We share an allocator among all pins, an allocator can only get committed
          * once, state transitions occur in upstream order, and only output pins
          * commit allocators, so let the filter attached to the input pin worry about it. */
-        if (This->input->pin.pConnectedTo)
+        if (This->sink.pin.pConnectedTo)
             This->filter.state = State_Running;
         else
             hr = VFW_E_NOT_CONNECTED;
@@ -123,7 +123,7 @@ static IPin *smart_tee_get_pin(BaseFilter *iface, unsigned int index)
     SmartTeeFilter *filter = impl_from_BaseFilter(iface);
 
     if (index == 0)
-        return &filter->input->pin.IPin_iface;
+        return &filter->sink.pin.IPin_iface;
     else if (index == 1)
         return &filter->capture->pin.IPin_iface;
     else if (index == 2)
@@ -135,8 +135,7 @@ static void smart_tee_destroy(BaseFilter *iface)
 {
     SmartTeeFilter *filter = impl_from_BaseFilter(iface);
 
-    if (filter->input)
-        BaseInputPinImpl_Release(&filter->input->pin.IPin_iface);
+    strmbase_sink_cleanup(&filter->sink);
     if (filter->capture)
         BaseOutputPinImpl_Release(&filter->capture->pin.IPin_iface);
     if (filter->preview)
@@ -204,10 +203,12 @@ static HRESULT WINAPI SmartTeeFilterInput_GetMediaType(BasePin *base, int iPosit
     if (iPosition)
         return S_FALSE;
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->input->pin.pConnectedTo) {
-        CopyMediaType(amt, &This->input->pin.mtCurrent);
+    if (This->sink.pin.pConnectedTo)
+    {
+        CopyMediaType(amt, &This->sink.pin.mtCurrent);
         hr = S_OK;
-    } else
+    }
+    else
         hr = S_FALSE;
     LeaveCriticalSection(&This->filter.csFilter);
     return hr;
@@ -360,9 +361,9 @@ static HRESULT WINAPI SmartTeeFilterCapture_EnumMediaTypes(IPin *iface, IEnumMed
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, ppEnum);
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->input->pin.pConnectedTo) {
+    if (This->sink.pin.pConnectedTo)
         hr = BasePinImpl_EnumMediaTypes(iface, ppEnum);
-    } else
+    else
         hr = VFW_E_NOT_CONNECTED;
     LeaveCriticalSection(&This->filter.csFilter);
     return hr;
@@ -400,7 +401,7 @@ static HRESULT WINAPI SmartTeeFilterCapture_GetMediaType(BasePin *base, int iPos
     SmartTeeFilter *This = impl_from_BasePin(base);
     TRACE("(%p, %d, %p)\n", This, iPosition, amt);
     if (iPosition == 0) {
-        CopyMediaType(amt, &This->input->pin.mtCurrent);
+        CopyMediaType(amt, &This->sink.pin.mtCurrent);
         return S_OK;
     } else
         return S_FALSE;
@@ -410,9 +411,9 @@ static HRESULT WINAPI SmartTeeFilterCapture_DecideAllocator(BaseOutputPin *base,
 {
     SmartTeeFilter *This = impl_from_BasePin(&base->pin);
     TRACE("(%p, %p, %p)\n", This, pPin, pAlloc);
-    *pAlloc = This->input->pAllocator;
-    IMemAllocator_AddRef(This->input->pAllocator);
-    return IMemInputPin_NotifyAllocator(pPin, This->input->pAllocator, TRUE);
+    *pAlloc = This->sink.pAllocator;
+    IMemAllocator_AddRef(This->sink.pAllocator);
+    return IMemInputPin_NotifyAllocator(pPin, This->sink.pAllocator, TRUE);
 }
 
 static const BaseOutputPinFuncTable SmartTeeFilterCaptureFuncs = {
@@ -443,9 +444,9 @@ static HRESULT WINAPI SmartTeeFilterPreview_EnumMediaTypes(IPin *iface, IEnumMed
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, ppEnum);
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->input->pin.pConnectedTo) {
+    if (This->sink.pin.pConnectedTo)
         hr = BasePinImpl_EnumMediaTypes(iface, ppEnum);
-    } else
+    else
         hr = VFW_E_NOT_CONNECTED;
     LeaveCriticalSection(&This->filter.csFilter);
     return hr;
@@ -483,7 +484,7 @@ static HRESULT WINAPI SmartTeeFilterPreview_GetMediaType(BasePin *base, int iPos
     SmartTeeFilter *This = impl_from_BasePin(base);
     TRACE("(%p, %d, %p)\n", This, iPosition, amt);
     if (iPosition == 0) {
-        CopyMediaType(amt, &This->input->pin.mtCurrent);
+        CopyMediaType(amt, &This->sink.pin.mtCurrent);
         return S_OK;
     } else
         return S_FALSE;
@@ -493,9 +494,9 @@ static HRESULT WINAPI SmartTeeFilterPreview_DecideAllocator(BaseOutputPin *base,
 {
     SmartTeeFilter *This = impl_from_BasePin(&base->pin);
     TRACE("(%p, %p, %p)\n", This, pPin, pAlloc);
-    *pAlloc = This->input->pAllocator;
-    IMemAllocator_AddRef(This->input->pAllocator);
-    return IMemInputPin_NotifyAllocator(pPin, This->input->pAllocator, TRUE);
+    *pAlloc = This->sink.pAllocator;
+    IMemAllocator_AddRef(This->sink.pAllocator);
+    return IMemInputPin_NotifyAllocator(pPin, This->sink.pAllocator, TRUE);
 }
 
 static const BaseOutputPinFuncTable SmartTeeFilterPreviewFuncs = {
@@ -526,12 +527,10 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
             (DWORD_PTR)(__FILE__ ": SmartTeeFilter.csFilter"), &SmartTeeFilterFuncs);
 
     inputPinInfo.pFilter = &This->filter.IBaseFilter_iface;
-    hr = BaseInputPin_Construct(&SmartTeeFilterInputVtbl, sizeof(BaseInputPin), &inputPinInfo,
-            &SmartTeeFilterInputFuncs, &This->filter.csFilter, NULL, (IPin**)&This->input);
-    if (FAILED(hr))
-        goto end;
+    strmbase_sink_init(&This->sink, &SmartTeeFilterInputVtbl, &inputPinInfo,
+            &SmartTeeFilterInputFuncs, &This->filter.csFilter, NULL);
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IMemAllocator, (void**)&This->input->pAllocator);
+            &IID_IMemAllocator, (void**)&This->sink.pAllocator);
     if (FAILED(hr))
         goto end;
 
