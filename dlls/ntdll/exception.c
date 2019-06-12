@@ -333,7 +333,7 @@ LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr )
  * ntdll-specific implementation to avoid depending on kernel functions.
  * Can be removed once ntdll.spec no longer contains stubs.
  */
-void __wine_spec_unimplemented_stub( const char *module, const char *function )
+void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
 {
     EXCEPTION_RECORD record;
 
