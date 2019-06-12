@@ -2,6 +2,8 @@ MODULE    = msdmo.dll
 IMPORTLIB = msdmo
 IMPORTS   = dmoguids uuid ole32 user32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	dmoreg.c \
 	dmort.c
