@@ -1158,6 +1158,8 @@ static void build(struct options* opts)
 	strarray_add(link_args, "-lc");
     }
 
+    if (opts->nodefaultlibs && is_pe) strarray_add( link_args, "-lgcc" );
+
     spawn(opts->prefix, link_args, 0);
     strarray_free (link_args);
 

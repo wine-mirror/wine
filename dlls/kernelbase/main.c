@@ -31,6 +31,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
 
+
+/*************************************************************
+ *            DllMainCRTStartup
+ */
+BOOL WINAPI DllMainCRTStartup( HANDLE inst, DWORD reason, LPVOID reserved )
+{
+    return TRUE;
+}
+
+
 /***********************************************************************
  *          AppPolicyGetProcessTerminationMethod (KERNELBASE.@)
  */
