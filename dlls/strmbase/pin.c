@@ -728,26 +728,24 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BaseOutputPin *This, IPin *pR
     return hr;
 }
 
-static HRESULT OutputPin_Init(const IPinVtbl *OutputPin_Vtbl, const PIN_INFO * pPinInfo, const BaseOutputPinFuncTable* vtbl,  LPCRITICAL_SECTION pCritSec, BaseOutputPin * pPinImpl)
+static void strmbase_pin_init(BasePin *pin, const IPinVtbl *vtbl,
+        const BasePinFuncTable *func_table, const PIN_INFO *info, CRITICAL_SECTION *cs)
 {
-    TRACE("(%p)\n", pPinImpl);
+    memset(pin, 0, sizeof(*pin));
+    pin->IPin_iface.lpVtbl = vtbl;
+    pin->refCount = 1;
+    pin->pCritSec = cs;
+    pin->dRate = 1.0;
+    Copy_PinInfo(&pin->pinInfo, info);
+    pin->pFuncsTable = func_table;
+}
 
-    /* Common attributes */
-    pPinImpl->pin.IPin_iface.lpVtbl = OutputPin_Vtbl;
-    pPinImpl->pin.refCount = 1;
-    pPinImpl->pin.pConnectedTo = NULL;
-    pPinImpl->pin.pCritSec = pCritSec;
-    pPinImpl->pin.tStart = 0;
-    pPinImpl->pin.tStop = 0;
-    pPinImpl->pin.dRate = 1.0;
-    Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
-    pPinImpl->pin.pFuncsTable = &vtbl->base;
-    ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
-
-    /* Output pin attributes */
-    pPinImpl->pMemInputPin = NULL;
-    pPinImpl->pAllocator = NULL;
-    pPinImpl->pFuncsTable = vtbl;
+static HRESULT OutputPin_Init(const IPinVtbl *vtbl, const PIN_INFO *info,
+        const BaseOutputPinFuncTable *func_table, CRITICAL_SECTION *cs, BaseOutputPin *pin)
+{
+    memset(pin, 0, sizeof(*pin));
+    strmbase_pin_init(&pin->pin, vtbl, &func_table->base, info, cs);
+    pin->pFuncsTable = func_table;
 
     return S_OK;
 }
@@ -1111,31 +1109,17 @@ static const IMemInputPinVtbl MemInputPin_Vtbl =
     MemInputPin_ReceiveCanBlock
 };
 
-static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo,
-                             const BaseInputPinFuncTable* vtbl,
-                             LPCRITICAL_SECTION pCritSec, IMemAllocator *allocator, BaseInputPin * pPinImpl)
+static HRESULT InputPin_Init(const IPinVtbl *vtbl, const PIN_INFO *info,
+        const BaseInputPinFuncTable *func_table, CRITICAL_SECTION *cs,
+        IMemAllocator *allocator, BaseInputPin *pin)
 {
-    TRACE("(%p)\n", pPinImpl);
-
-    /* Common attributes */
-    pPinImpl->pin.refCount = 1;
-    pPinImpl->pin.pConnectedTo = NULL;
-    pPinImpl->pin.pCritSec = pCritSec;
-    pPinImpl->pin.tStart = 0;
-    pPinImpl->pin.tStop = 0;
-    pPinImpl->pin.dRate = 1.0;
-    Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
-    ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
-    pPinImpl->pin.pFuncsTable = &vtbl->base;
-
-    /* Input pin attributes */
-    pPinImpl->pFuncsTable = vtbl;
-    pPinImpl->pAllocator = pPinImpl->preferred_allocator = allocator;
-    if (pPinImpl->preferred_allocator)
-        IMemAllocator_AddRef(pPinImpl->preferred_allocator);
-    pPinImpl->pin.IPin_iface.lpVtbl = InputPin_Vtbl;
-    pPinImpl->IMemInputPin_iface.lpVtbl = &MemInputPin_Vtbl;
-    pPinImpl->flushing = pPinImpl->end_of_stream = FALSE;
+    memset(pin, 0, sizeof(*pin));
+    strmbase_pin_init(&pin->pin, vtbl, &func_table->base, info, cs);
+    pin->pFuncsTable = func_table;
+    pin->pAllocator = pin->preferred_allocator = allocator;
+    if (pin->preferred_allocator)
+        IMemAllocator_AddRef(pin->preferred_allocator);
+    pin->IMemInputPin_iface.lpVtbl = &MemInputPin_Vtbl;
 
     return S_OK;
 }
