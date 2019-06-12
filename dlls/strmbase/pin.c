@@ -1150,13 +1150,18 @@ HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, LONG inputpin_size
     return S_OK;
 }
 
+static void strmbase_sink_cleanup(BaseInputPin *pin)
+{
+    FreeMediaType(&pin->pin.mtCurrent);
+    if (pin->pAllocator)
+        IMemAllocator_Release(pin->pAllocator);
+    pin->pAllocator = NULL;
+    pin->pin.IPin_iface.lpVtbl = NULL;
+}
+
 HRESULT WINAPI BaseInputPin_Destroy(BaseInputPin *This)
 {
-    FreeMediaType(&This->pin.mtCurrent);
-    if (This->pAllocator)
-        IMemAllocator_Release(This->pAllocator);
-    This->pAllocator = NULL;
-    This->pin.IPin_iface.lpVtbl = NULL;
+    strmbase_sink_cleanup(This);
     CoTaskMemFree(This);
     return S_OK;
 }
