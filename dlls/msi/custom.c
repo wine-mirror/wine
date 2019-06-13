@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define COBJMACROS
 
 #include <stdarg.h>
@@ -38,7 +35,6 @@
 #include "wine/asm.h"
 #include "wine/heap.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -129,7 +125,7 @@ BOOL msi_action_is_unique( const MSIPACKAGE *package, const WCHAR *action )
 
     for (i = 0; i < package->unique_actions_count; i++)
     {
-        if (!strcmpW( package->unique_actions[i], action )) return TRUE;
+        if (!wcscmp( package->unique_actions[i], action )) return TRUE;
     }
     return FALSE;
 }
@@ -191,7 +187,7 @@ static LPWSTR msi_get_deferred_action(LPCWSTR action, LPCWSTR actiondata,
           lstrlenW(format) - 7;
     deferred = msi_alloc(len * sizeof(WCHAR));
 
-    sprintfW(deferred, format, actiondata, usersid, prodcode, action);
+    swprintf(deferred, len, format, actiondata, usersid, prodcode, action);
     return deferred;
 }
 
@@ -200,15 +196,15 @@ static void set_deferred_action_props( MSIPACKAGE *package, const WCHAR *deferre
     static const WCHAR sep[] = {'<','=','>',0};
     const WCHAR *end, *beg = deferred_data + 1;
 
-    end = strstrW(beg, sep);
+    end = wcsstr(beg, sep);
     msi_set_property( package->db, szCustomActionData, beg, end - beg );
     beg = end + 3;
 
-    end = strstrW(beg, sep);
+    end = wcsstr(beg, sep);
     msi_set_property( package->db, szUserSID, beg, end - beg );
     beg = end + 3;
 
-    end = strchrW(beg, ']');
+    end = wcschr(beg, ']');
     msi_set_property( package->db, szProductCode, beg, end - beg );
 }
 
@@ -229,7 +225,7 @@ WCHAR *msi_create_temp_file( MSIDATABASE *db )
         if (!(db->tempfolder = strdupW( tmp ))) return NULL;
     }
 
-    if ((ret = msi_alloc( (strlenW( db->tempfolder ) + 20) * sizeof(WCHAR) )))
+    if ((ret = msi_alloc( (lstrlenW( db->tempfolder ) + 20) * sizeof(WCHAR) )))
     {
         if (!GetTempFileNameW( db->tempfolder, szMsi, 0, ret ))
         {
@@ -299,7 +295,7 @@ static MSIBINARY *get_temp_binary(MSIPACKAGE *package, LPCWSTR source)
 
     LIST_FOR_EACH_ENTRY( binary, &package->binaries, MSIBINARY, entry )
     {
-        if (!strcmpW( binary->source, source ))
+        if (!wcscmp( binary->source, source ))
             return binary;
     }
 
@@ -522,7 +518,7 @@ UINT CDECL __wine_msi_call_dll_function(DWORD client_pid, const GUID *guid)
     {
         WCHAR endpoint[12];
 
-        sprintfW(endpoint, endpoint_fmtW, client_pid);
+        swprintf(endpoint, ARRAY_SIZE(endpoint), endpoint_fmtW, client_pid);
         status = RpcStringBindingComposeW(NULL, ncalrpcW, NULL, endpoint, NULL, &binding_str);
         if (status != RPC_S_OK)
         {
@@ -607,7 +603,8 @@ static DWORD custom_start_server(MSIPACKAGE *package, DWORD arch)
         (arch == SCS_64BIT_BINARY && package->custom_server_64_process))
         return ERROR_SUCCESS;
 
-    sprintfW(buffer, pipe_name, GetCurrentProcessId(), arch == SCS_32BIT_BINARY ? 32 : 64);
+    swprintf(buffer, ARRAY_SIZE(buffer), pipe_name,
+             GetCurrentProcessId(), arch == SCS_32BIT_BINARY ? 32 : 64);
     pipe = CreateNamedPipeW(buffer, PIPE_ACCESS_DUPLEX, 0, 1, sizeof(DWORD64),
         sizeof(GUID), 0, NULL);
     if (pipe == INVALID_HANDLE_VALUE)
@@ -620,8 +617,8 @@ static DWORD custom_start_server(MSIPACKAGE *package, DWORD arch)
         GetSystemWow64DirectoryW(path, MAX_PATH - ARRAY_SIZE(msiexecW));
     else
         GetSystemDirectoryW(path, MAX_PATH - ARRAY_SIZE(msiexecW));
-    strcatW(path, msiexecW);
-    sprintfW(cmdline, argsW, path, GetCurrentProcessId());
+    lstrcatW(path, msiexecW);
+    swprintf(cmdline, ARRAY_SIZE(cmdline), argsW, path, GetCurrentProcessId());
 
     if (wow64 && arch == SCS_64BIT_BINARY)
     {
@@ -746,7 +743,7 @@ static msi_custom_action_info *do_msidbCustomActionTypeDll(
     {
         WCHAR endpoint[12];
 
-        sprintfW(endpoint, endpoint_fmtW, GetCurrentProcessId());
+        swprintf(endpoint, ARRAY_SIZE(endpoint), endpoint_fmtW, GetCurrentProcessId());
         status = RpcServerUseProtseqEpW(ncalrpcW, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
             endpoint, NULL);
         if (status != RPC_S_OK)
@@ -825,14 +822,14 @@ static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
             return INVALID_HANDLE_VALUE;
         }
 
-        if (arg) len_arg = strlenW( arg );
+        if (arg) len_arg = lstrlenW( arg );
         if (!(cmd = msi_alloc( (len_exe + len_arg + 4) * sizeof(WCHAR) )))
         {
             msi_free( exe );
             return INVALID_HANDLE_VALUE;
         }
         p = cmd;
-        if (strchrW( exe, ' ' ))
+        if (wcschr( exe, ' ' ))
         {
             *p++ = '\"';
             memcpy( p, exe, len_exe * sizeof(WCHAR) );
@@ -842,7 +839,7 @@ static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
         }
         else
         {
-            strcpyW( p, exe );
+            lstrcpyW( p, exe );
             p += len_exe;
         }
         if (arg)
@@ -962,15 +959,15 @@ static UINT HANDLE_CustomType23( MSIPACKAGE *package, const WCHAR *source, const
     HANDLE handle;
 
     if (!(dir = msi_dup_property( package->db, szOriginalDatabase ))) return ERROR_OUTOFMEMORY;
-    if (!(p = strrchrW( dir, '\\' )) && !(p = strrchrW( dir, '/' )))
+    if (!(p = wcsrchr( dir, '\\' )) && !(p = wcsrchr( dir, '/' )))
     {
         msi_free( dir );
         return ERROR_FUNCTION_FAILED;
     }
     *p = 0;
     len_dir = p - dir;
-    len_src = strlenW( source );
-    len_tgt = strlenW( target );
+    len_src = lstrlenW( source );
+    len_tgt = lstrlenW( target );
     if (!(arg = msi_alloc( (len + len_dir + len_src + len_tgt + 5) * sizeof(WCHAR) )))
     {
         msi_free( dir );
@@ -985,7 +982,7 @@ static UINT HANDLE_CustomType23( MSIPACKAGE *package, const WCHAR *source, const
     len += len_src;
     arg[len++] = '"';
     arg[len++] = ' ';
-    strcpyW( arg + len, target );
+    lstrcpyW( arg + len, target );
 
     TRACE("installing %s concurrently\n", debugstr_w(source));
 
@@ -1318,7 +1315,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, const WCHAR *action)
     int len;
 
     /* deferred action: [properties]Action */
-    if ((ptr = strrchrW(action, ']')))
+    if ((ptr = wcsrchr(action, ']')))
     {
         deferred_data = action;
         action = ptr + 1;
@@ -1417,7 +1414,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, const WCHAR *action)
 
             len = deformat_string( package, target, &deformated );
             rc = msi_set_property( package->db, source, deformated, len );
-            if (rc == ERROR_SUCCESS && !strcmpW( source, szSourceDir ))
+            if (rc == ERROR_SUCCESS && !wcscmp( source, szSourceDir ))
                 msi_reset_source_folders( package );
             msi_free(deformated);
             break;
