@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 typedef struct {
     BaseFilter filter;
     BaseInputPin sink;
-    BaseOutputPin *capture;
+    BaseOutputPin capture;
     BaseOutputPin *preview;
 } SmartTeeFilter;
 
@@ -125,7 +125,7 @@ static IPin *smart_tee_get_pin(BaseFilter *iface, unsigned int index)
     if (index == 0)
         return &filter->sink.pin.IPin_iface;
     else if (index == 1)
-        return &filter->capture->pin.IPin_iface;
+        return &filter->capture.pin.IPin_iface;
     else if (index == 2)
         return &filter->preview->pin.IPin_iface;
     return NULL;
@@ -136,8 +136,7 @@ static void smart_tee_destroy(BaseFilter *iface)
     SmartTeeFilter *filter = impl_from_BaseFilter(iface);
 
     strmbase_sink_cleanup(&filter->sink);
-    if (filter->capture)
-        BaseOutputPinImpl_Release(&filter->capture->pin.IPin_iface);
+    strmbase_source_cleanup(&filter->capture);
     if (filter->preview)
         BaseOutputPinImpl_Release(&filter->preview->pin.IPin_iface);
     strmbase_filter_cleanup(&filter->filter);
@@ -308,11 +307,11 @@ static HRESULT WINAPI SmartTeeFilterInput_Receive(BaseInputPin *base, IMediaSamp
 
     /* FIXME: we should ideally do each of these in a separate thread */
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->capture->pin.pConnectedTo)
-        hrCapture = copy_sample(inputSample, This->capture->pAllocator, &captureSample);
+    if (This->capture.pin.pConnectedTo)
+        hrCapture = copy_sample(inputSample, This->capture.pAllocator, &captureSample);
     LeaveCriticalSection(&This->filter.csFilter);
     if (SUCCEEDED(hrCapture))
-        hrCapture = BaseOutputPinImpl_Deliver(This->capture, captureSample);
+        hrCapture = BaseOutputPinImpl_Deliver(&This->capture, captureSample);
     if (captureSample)
         IMediaSample_Release(captureSample);
 
@@ -535,10 +534,8 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
         goto end;
 
     capturePinInfo.pFilter = &This->filter.IBaseFilter_iface;
-    hr = BaseOutputPin_Construct(&SmartTeeFilterCaptureVtbl, sizeof(BaseOutputPin), &capturePinInfo,
-            &SmartTeeFilterCaptureFuncs, &This->filter.csFilter, (IPin**)&This->capture);
-    if (FAILED(hr))
-        goto end;
+    strmbase_source_init(&This->capture, &SmartTeeFilterCaptureVtbl, &capturePinInfo,
+            &SmartTeeFilterCaptureFuncs, &This->filter.csFilter);
 
     previewPinInfo.pFilter = &This->filter.IBaseFilter_iface;
     hr = BaseOutputPin_Construct(&SmartTeeFilterPreviewVtbl, sizeof(BaseOutputPin), &previewPinInfo,
