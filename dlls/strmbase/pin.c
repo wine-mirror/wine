@@ -773,12 +773,17 @@ HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outp
     return S_OK;
 }
 
+static void strmbase_source_cleanup(BaseOutputPin *pin)
+{
+    FreeMediaType(&pin->pin.mtCurrent);
+    if (pin->pAllocator)
+        IMemAllocator_Release(pin->pAllocator);
+    pin->pAllocator = NULL;
+}
+
 HRESULT WINAPI BaseOutputPin_Destroy(BaseOutputPin *This)
 {
-    FreeMediaType(&This->pin.mtCurrent);
-    if (This->pAllocator)
-        IMemAllocator_Release(This->pAllocator);
-    This->pAllocator = NULL;
+    strmbase_source_cleanup(This);
     CoTaskMemFree(This);
     return S_OK;
 }
