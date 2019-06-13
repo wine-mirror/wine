@@ -2199,11 +2199,11 @@ static void test_ScriptPlace(HDC hdc)
             {
                 ok(offset[i].du == 0, "[%d] expected 0, got %d\n", i, offset[i].du);
                 ok(offset[i].dv == 0, "[%d] expected 0, got %d\n", i, offset[i].dv);
-                todo_wine ok(widths[i] > tm.tmAveCharWidth, "[%d] expected greater than %d, got %d\n",
+                ok(widths[i] > tm.tmAveCharWidth, "[%d] expected greater than %d, got %d\n",
                    i, tm.tmAveCharWidth, widths[i]);
                 total += widths[i];
             }
-            todo_wine ok(total == sz.cx, "expected %d, got %d\n", sz.cx, total);
+            ok(total == sz.cx, "expected %d, got %d\n", sz.cx, total);
         }
         else
             skip("Associated font is unavailable\n");
