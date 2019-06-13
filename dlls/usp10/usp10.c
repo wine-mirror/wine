@@ -3875,6 +3875,7 @@ const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
             for (j = 0; j < analysis->glyphs[i].numGlyphs; j++)
                 analysis->sz.cx += analysis->glyphs[i].piAdvance[j];
         }
+        analysis->flags |= SCRIPT_STRING_ANALYSIS_FLAGS_SIZE;
     }
     return &analysis->sz;
 }
