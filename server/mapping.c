@@ -593,7 +593,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     pos = mz.dos.e_lfanew;
 
     size = pread( unix_fd, &nt, sizeof(nt), pos );
-    if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) return STATUS_INVALID_IMAGE_FORMAT;
+    if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) return STATUS_INVALID_IMAGE_PROTECT;
     /* zero out Optional header in the case it's not present or partial */
     size = min( size, sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader );
     if (size < sizeof(nt)) memset( (char *)&nt + size, 0, sizeof(nt) - size );

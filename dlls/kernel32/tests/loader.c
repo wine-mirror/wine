@@ -1153,6 +1153,11 @@ static void test_Loader(void)
     }
     ((IMAGE_OS2_HEADER *)&nt_header)->ne_exetyp = ((IMAGE_OS2_HEADER *)&nt_header_template)->ne_exetyp;
 
+    dos_header.e_lfanew = 0x98760000;
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
+    ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection error %08x\n", status );
+
+    dos_header.e_lfanew = sizeof(dos_header);
     nt_header.Signature = 0xdeadbeef;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection error %08x\n", status );
