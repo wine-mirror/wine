@@ -3434,9 +3434,27 @@ HRESULT WINAPI ScriptPlaceOpenType( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS 
             if (FAILED(hr = ScriptGetCMap(hdc, psc, &pwGlyphs[i], 1, 0, &glyph))) return hr;
         }
         else
+        {
+            hr = S_OK;
             glyph = pwGlyphs[i];
+        }
 
-        if (!get_cache_glyph_widths(psc, glyph, &abc))
+        if (hr == S_FALSE)
+        {
+            if (!hdc) return E_PENDING;
+            if (get_cache_pitch_family(psc) & TMPF_TRUETYPE)
+            {
+                if (!GetCharABCWidthsW(hdc, pwGlyphs[i], pwGlyphs[i], &abc)) return S_FALSE;
+            }
+            else
+            {
+                INT width;
+                if (!GetCharWidthW(hdc, pwGlyphs[i], pwGlyphs[i], &width)) return S_FALSE;
+                abc.abcB = width;
+                abc.abcA = abc.abcC = 0;
+            }
+        }
+        else if (!get_cache_glyph_widths(psc, glyph, &abc))
         {
             if (!hdc) return E_PENDING;
             if (get_cache_pitch_family(psc) & TMPF_TRUETYPE)
