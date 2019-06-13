@@ -21,8 +21,6 @@
  * - Implememnt interleaved decoding
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
 

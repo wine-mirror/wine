@@ -29,8 +29,6 @@
  *    solution to the above 32-bit exe problem.
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "windef.h"

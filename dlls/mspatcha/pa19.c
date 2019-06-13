@@ -32,8 +32,6 @@
  *   but not all, of the positions listed in the PE .reloc table.
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 
@@ -297,7 +295,7 @@ static INT64 read_svli(struct patch_file_header *ph)
     return n;
 }
 
-static int compare_ignored_range(const void *a, const void *b)
+static int __cdecl compare_ignored_range(const void *a, const void *b)
 {
     LONG delta = ((PATCH_IGNORE_RANGE*)a)->OffsetInOldFile - ((PATCH_IGNORE_RANGE*)b)->OffsetInOldFile;
     if (delta > 0)
@@ -307,7 +305,7 @@ static int compare_ignored_range(const void *a, const void *b)
     return 0;
 }
 
-static int compare_retained_range_old(const void *a, const void *b)
+static int __cdecl compare_retained_range_old(const void *a, const void *b)
 {
     LONG delta = ((PATCH_RETAIN_RANGE*)a)->OffsetInOldFile - ((PATCH_RETAIN_RANGE*)b)->OffsetInOldFile;
     if (delta > 0)
@@ -317,7 +315,7 @@ static int compare_retained_range_old(const void *a, const void *b)
     return 0;
 }
 
-static int compare_retained_range_new(const void *a, const void *b)
+static int __cdecl compare_retained_range_new(const void *a, const void *b)
 {
     LONG delta = ((PATCH_RETAIN_RANGE*)a)->OffsetInNewFile - ((PATCH_RETAIN_RANGE*)b)->OffsetInNewFile;
     if (delta > 0)

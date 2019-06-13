@@ -1,6 +1,8 @@
 MODULE    = mspatcha.dll
 IMPORTLIB = mspatcha
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	lzxd_dec.c \
 	mspatcha_main.c \
