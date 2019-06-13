@@ -55,7 +55,6 @@ static void test_AllocateVirtualMemory(void)
     addr2 = (char *)addr1 + 0x1000;
     status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr2, 12, &size,
                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    todo_wine
     ok(status == STATUS_CONFLICTING_ADDRESSES, "NtAllocateVirtualMemory returned %08x\n", status);
     if (status == STATUS_SUCCESS)
     {
@@ -141,12 +140,11 @@ static void test_AllocateVirtualMemory(void)
     }
     else
     {
-        todo_wine
         ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
            "NtAllocateVirtualMemory returned %08x\n", status);
         if (status == STATUS_SUCCESS)
         {
-            todo_wine
+            todo_wine_if((UINT_PTR)addr2 & ~zero_bits)
             ok(((UINT_PTR)addr2 & ~zero_bits) == 0,
                "NtAllocateVirtualMemory returned address %p\n", addr2);
 

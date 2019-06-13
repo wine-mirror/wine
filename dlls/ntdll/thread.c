@@ -184,8 +184,7 @@ void thread_init(void)
 
     addr = NULL;
     size = sizeof(*peb);
-    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 1, &size,
-                             MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE );
+    virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE, 1 );
     peb = addr;
 
     peb->FastPebLock        = &peb_lock;

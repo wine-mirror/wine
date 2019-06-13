@@ -1603,14 +1603,14 @@ static KERNEL_DIRENT *start_vfat_ioctl( int fd )
         SIZE_T size = 2 * sizeof(*de) + page_size;
         void *addr = NULL;
 
-        if (NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 1, &size, MEM_RESERVE, PAGE_READWRITE ))
+        if (virtual_alloc_aligned( &addr, 0, &size, MEM_RESERVE, PAGE_READWRITE, 1 ))
             return NULL;
         /* commit only the size needed for the dir entries */
         /* this leaves an extra unaccessible page, which should make the kernel */
         /* fail with -EFAULT before it stomps all over our memory */
         de = addr;
         size = 2 * sizeof(*de);
-        NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 1, &size, MEM_COMMIT, PAGE_READWRITE );
+        virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE, 1 );
     }
 
     /* set d_reclen to 65535 to work around an AFS kernel bug */

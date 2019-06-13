@@ -726,8 +726,7 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     LPVOID address = NULL;
 
     if (block_size < size) return NULL;  /* overflow */
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 5,
-                                 &block_size, MEM_COMMIT, get_protection_type( flags ) ))
+    if (virtual_alloc_aligned( &address, 0, &block_size, MEM_COMMIT, get_protection_type( flags ), 5 ))
     {
         WARN("Could not allocate block for %08lx bytes\n", size );
         return NULL;
@@ -1521,7 +1520,7 @@ void heap_set_debug_flags( HANDLE handle )
         void *ptr = NULL;
         SIZE_T size = MAX_FREE_PENDING * sizeof(*heap->pending_free);
 
-        if (!NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 4, &size, MEM_COMMIT, PAGE_READWRITE ))
+        if (!virtual_alloc_aligned( &ptr, 0, &size, MEM_COMMIT, PAGE_READWRITE, 4 ))
         {
             heap->pending_free = ptr;
             heap->pending_pos = 0;
