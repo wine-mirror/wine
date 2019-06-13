@@ -1,4 +1,6 @@
 MODULE    = mssip32.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c
