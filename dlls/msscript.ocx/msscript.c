@@ -192,7 +192,7 @@ static struct named_item *host_get_named_item(ScriptHost *host, const WCHAR *nam
     struct named_item *item;
 
     LIST_FOR_EACH_ENTRY(item, &host->named_items, struct named_item, entry) {
-        if (!lstrcmpW(item->name, nameW))
+        if (!wcscmp(item->name, nameW))
             return item;
     }
 
