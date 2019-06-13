@@ -1,5 +1,7 @@
 MODULE    = msident.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	msident.c
 
