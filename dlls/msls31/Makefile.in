@@ -1,4 +1,6 @@
 MODULE    = msls31.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	msls31_main.c
