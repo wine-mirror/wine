@@ -139,7 +139,8 @@ static void avi_mux_destroy(BaseFilter *iface)
         IPin_Disconnect(&filter->in[i]->pin.pin.IPin_iface);
         IMemAllocator_Release(filter->in[i]->samples_allocator);
         filter->in[i]->samples_allocator = NULL;
-        BaseInputPinImpl_Release(&filter->in[i]->pin.pin.IPin_iface);
+        strmbase_sink_cleanup(&filter->in[i]->pin);
+        heap_free(filter->in[i]);
     }
 
     heap_free(filter->idx1);
@@ -2214,6 +2215,7 @@ static const IQualityControlVtbl AviMuxIn_QualityControlVtbl = {
 static HRESULT create_input_pin(AviMux *avimux)
 {
     static const WCHAR name[] = {'I','n','p','u','t',' ','0','0',0};
+    AviMuxIn *object;
     PIN_INFO info;
     HRESULT hr;
 
@@ -2226,40 +2228,39 @@ static HRESULT create_input_pin(AviMux *avimux)
     info.achName[7] = '0' + (avimux->input_pin_no+1) % 10;
     info.achName[6] = '0' + (avimux->input_pin_no+1) / 10;
 
-    hr = BaseInputPin_Construct(&AviMuxIn_PinVtbl, sizeof(AviMuxIn), &info,
-            &AviMuxIn_BaseInputFuncTable, &avimux->filter.csFilter, NULL, (IPin**)&avimux->in[avimux->input_pin_no]);
-    if(FAILED(hr))
-        return hr;
-    avimux->in[avimux->input_pin_no]->pin.IMemInputPin_iface.lpVtbl = &AviMuxIn_MemInputPinVtbl;
-    avimux->in[avimux->input_pin_no]->IAMStreamControl_iface.lpVtbl = &AviMuxIn_AMStreamControlVtbl;
-    avimux->in[avimux->input_pin_no]->IPropertyBag_iface.lpVtbl = &AviMuxIn_PropertyBagVtbl;
-    avimux->in[avimux->input_pin_no]->IQualityControl_iface.lpVtbl = &AviMuxIn_QualityControlVtbl;
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    avimux->in[avimux->input_pin_no]->samples_head = NULL;
+    strmbase_sink_init(&object->pin, &AviMuxIn_PinVtbl, &info,
+            &AviMuxIn_BaseInputFuncTable, &avimux->filter.csFilter, NULL);
+    object->pin.IMemInputPin_iface.lpVtbl = &AviMuxIn_MemInputPinVtbl;
+    object->IAMStreamControl_iface.lpVtbl = &AviMuxIn_AMStreamControlVtbl;
+    object->IPropertyBag_iface.lpVtbl = &AviMuxIn_PropertyBagVtbl;
+    object->IQualityControl_iface.lpVtbl = &AviMuxIn_QualityControlVtbl;
+
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IMemAllocator, (void**)&avimux->in[avimux->input_pin_no]->samples_allocator);
-    if(FAILED(hr)) {
-        BaseInputPinImpl_Release(&avimux->in[avimux->input_pin_no]->pin.pin.IPin_iface);
+            &IID_IMemAllocator, (void **)&object->samples_allocator);
+    if (FAILED(hr))
+    {
+        strmbase_sink_cleanup(&object->pin);
+        heap_free(object);
         return hr;
     }
 
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IMemAllocator, (void**)&avimux->in[avimux->input_pin_no]->pin.pAllocator);
-    if(FAILED(hr)) {
-        IMemAllocator_Release(avimux->in[avimux->input_pin_no]->samples_allocator);
-        BaseInputPinImpl_Release(&avimux->in[avimux->input_pin_no]->pin.pin.IPin_iface);
+            &IID_IMemAllocator, (void **)&object->pin.pAllocator);
+    if (FAILED(hr))
+    {
+        IMemAllocator_Release(object->samples_allocator);
+        strmbase_sink_cleanup(&object->pin);
+        heap_free(object);
         return hr;
     }
 
-    avimux->in[avimux->input_pin_no]->stream_time = 0;
-    memset(&avimux->in[avimux->input_pin_no]->strh, 0, sizeof(avimux->in[avimux->input_pin_no]->strh));
-    avimux->in[avimux->input_pin_no]->strf = NULL;
-    memset(&avimux->in[avimux->input_pin_no]->indx_data, 0, sizeof(avimux->in[avimux->input_pin_no]->indx_data));
-    memset(&avimux->in[avimux->input_pin_no]->ix_data, 0, sizeof(avimux->in[avimux->input_pin_no]->ix_data));
-    avimux->in[avimux->input_pin_no]->indx = (AVISUPERINDEX*)&avimux->in[avimux->input_pin_no]->indx_data;
-    avimux->in[avimux->input_pin_no]->ix = (AVISTDINDEX*)avimux->in[avimux->input_pin_no]->ix_data;
+    object->indx = (AVISUPERINDEX *)&object->indx_data;
+    object->ix = (AVISTDINDEX *)object->ix_data;
 
-    avimux->input_pin_no++;
+    avimux->in[avimux->input_pin_no++] = object;
     return S_OK;
 }
 
