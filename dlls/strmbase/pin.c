@@ -740,14 +740,12 @@ static void strmbase_pin_init(BasePin *pin, const IPinVtbl *vtbl,
     pin->pFuncsTable = func_table;
 }
 
-static HRESULT OutputPin_Init(const IPinVtbl *vtbl, const PIN_INFO *info,
-        const BaseOutputPinFuncTable *func_table, CRITICAL_SECTION *cs, BaseOutputPin *pin)
+static void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl,
+        const PIN_INFO *info, const BaseOutputPinFuncTable *func_table, CRITICAL_SECTION *cs)
 {
     memset(pin, 0, sizeof(*pin));
     strmbase_pin_init(&pin->pin, vtbl, &func_table->base, info, cs);
     pin->pFuncsTable = func_table;
-
-    return S_OK;
 }
 
 HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, const BaseOutputPinFuncTable* vtbl, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
@@ -770,14 +768,9 @@ HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outp
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(OutputPin_Init(OutputPin_Vtbl, pPinInfo, vtbl, pCritSec, pPinImpl)))
-    {
-        *ppPin = &pPinImpl->pin.IPin_iface;
-        return S_OK;
-    }
-
-    CoTaskMemFree(pPinImpl);
-    return E_FAIL;
+    strmbase_source_init(pPinImpl, OutputPin_Vtbl, pPinInfo, vtbl, pCritSec);
+    *ppPin = &pPinImpl->pin.IPin_iface;
+    return S_OK;
 }
 
 HRESULT WINAPI BaseOutputPin_Destroy(BaseOutputPin *This)
