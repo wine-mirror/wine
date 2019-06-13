@@ -740,7 +740,7 @@ static void strmbase_pin_init(BasePin *pin, const IPinVtbl *vtbl,
     pin->pFuncsTable = func_table;
 }
 
-static void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl,
+void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl,
         const PIN_INFO *info, const BaseOutputPinFuncTable *func_table, CRITICAL_SECTION *cs)
 {
     memset(pin, 0, sizeof(*pin));
@@ -773,7 +773,7 @@ HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outp
     return S_OK;
 }
 
-static void strmbase_source_cleanup(BaseOutputPin *pin)
+void strmbase_source_cleanup(BaseOutputPin *pin)
 {
     FreeMediaType(&pin->pin.mtCurrent);
     if (pin->pAllocator)

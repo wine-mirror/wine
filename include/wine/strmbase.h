@@ -135,6 +135,9 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BaseOutputPin *pin, IPin *pee
 
 HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, const BaseOutputPinFuncTable* pBaseOutputFuncsTable, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 HRESULT WINAPI BaseOutputPin_Destroy(BaseOutputPin *This);
+void strmbase_source_cleanup(BaseOutputPin *pin);
+void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl, const PIN_INFO *info,
+        const BaseOutputPinFuncTable *func_table, CRITICAL_SECTION *cs);
 
 /* Base Input Pin */
 HRESULT WINAPI BaseInputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);

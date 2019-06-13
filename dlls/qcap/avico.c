@@ -38,7 +38,7 @@ typedef struct {
     IPersistPropertyBag IPersistPropertyBag_iface;
 
     BaseInputPin sink;
-    BaseOutputPin *out;
+    BaseOutputPin source;
 
     DWORD fcc_handler;
     HIC hic;
@@ -148,7 +148,7 @@ static HRESULT WINAPI AVICompressor_Run(IBaseFilter *iface, REFERENCE_TIME tStar
     if(This->filter.state == State_Running)
         return S_OK;
 
-    hres = IMemAllocator_Commit(This->out->pAllocator);
+    hres = IMemAllocator_Commit(This->source.pAllocator);
     if(FAILED(hres)) {
         FIXME("Commit failed: %08x\n", hres);
         return hres;
@@ -185,7 +185,7 @@ static IPin *avi_compressor_get_pin(BaseFilter *iface, unsigned int index)
     if (index == 0)
         return &filter->sink.pin.IPin_iface;
     else if (index == 1)
-        return &filter->out->pin.IPin_iface;
+        return &filter->source.pin.IPin_iface;
     return NULL;
 }
 
@@ -197,8 +197,7 @@ static void avi_compressor_destroy(BaseFilter *iface)
         ICClose(filter->hic);
     heap_free(filter->videoinfo);
     strmbase_sink_cleanup(&filter->sink);
-    if (filter->out)
-        BaseOutputPinImpl_Release(&filter->out->pin.IPin_iface);
+    strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
     heap_free(filter);
 }
@@ -472,7 +471,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *
         return hres;
     }
 
-    hres = BaseOutputPinImpl_GetDeliveryBuffer(This->out, &out_sample, &start, &stop, 0);
+    hres = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &out_sample, &start, &stop, 0);
     if(FAILED(hres))
         return hres;
 
@@ -503,7 +502,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *
     else
         IMediaSample_SetMediaTime(out_sample, NULL, NULL);
 
-    hres = BaseOutputPinImpl_Deliver(This->out, out_sample);
+    hres = BaseOutputPinImpl_Deliver(&This->source, out_sample);
     if(FAILED(hres))
         WARN("Deliver failed: %08x\n", hres);
 
@@ -618,7 +617,6 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
     PIN_INFO in_pin_info  = {NULL, PINDIR_INPUT,  {'I','n',0}};
     PIN_INFO out_pin_info = {NULL, PINDIR_OUTPUT, {'O','u','t',0}};
     AVICompressor *compressor;
-    HRESULT hres;
 
     compressor = heap_alloc_zero(sizeof(*compressor));
     if(!compressor) {
@@ -636,13 +634,8 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
             &AVICompressorBaseInputPinVtbl, &compressor->filter.csFilter, NULL);
 
     out_pin_info.pFilter = &compressor->filter.IBaseFilter_iface;
-    hres = BaseOutputPin_Construct(&AVICompressorOutputPinVtbl, sizeof(BaseOutputPin), &out_pin_info,
-            &AVICompressorBaseOutputPinVtbl, &compressor->filter.csFilter, (IPin**)&compressor->out);
-    if(FAILED(hres)) {
-        strmbase_filter_cleanup(&compressor->filter);
-        *phr = hres;
-        return NULL;
-    }
+    strmbase_source_init(&compressor->source, &AVICompressorOutputPinVtbl, &out_pin_info,
+            &AVICompressorBaseOutputPinVtbl, &compressor->filter.csFilter);
 
     *phr = S_OK;
     return &compressor->filter.IUnknown_inner;
