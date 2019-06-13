@@ -1419,7 +1419,7 @@ static HRESULT compile_continue_statement(compiler_ctx_t *ctx, branch_statement_
         for(iter = ctx->stat_ctx; iter; iter = iter->next) {
             if(iter->continue_label)
                 pop_ctx = iter;
-            if(iter->labelled_stat && !lstrcmpW(iter->labelled_stat->identifier, stat->identifier))
+            if(iter->labelled_stat && !wcscmp(iter->labelled_stat->identifier, stat->identifier))
                 break;
         }
 
@@ -1465,7 +1465,7 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
 
     if(stat->identifier) {
         for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
-            if(pop_ctx->labelled_stat && !lstrcmpW(pop_ctx->labelled_stat->identifier, stat->identifier)) {
+            if(pop_ctx->labelled_stat && !wcscmp(pop_ctx->labelled_stat->identifier, stat->identifier)) {
                 assert(pop_ctx->break_label);
                 break;
             }
@@ -1549,7 +1549,7 @@ static HRESULT compile_labelled_statement(compiler_ctx_t *ctx, labelled_statemen
     HRESULT hres;
 
     for(iter = ctx->stat_ctx; iter; iter = iter->next) {
-        if(iter->labelled_stat && !lstrcmpW(iter->labelled_stat->identifier, stat->identifier)) {
+        if(iter->labelled_stat && !wcscmp(iter->labelled_stat->identifier, stat->identifier)) {
             WARN("Label %s redefined\n", debugstr_w(stat->identifier));
             return JS_E_LABEL_REDEFINED;
         }
@@ -1825,7 +1825,7 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
 static int function_local_cmp(const void *key, const struct wine_rb_entry *entry)
 {
     function_local_t *local = WINE_RB_ENTRY_VALUE(entry, function_local_t, entry);
-    return CompareStringOrdinal(key, -1, local->name, -1, FALSE) - 2;
+    return wcscmp(key, local->name);
 }
 
 static inline function_local_t *find_local(compiler_ctx_t *ctx, const WCHAR *name)

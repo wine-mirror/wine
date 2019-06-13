@@ -612,9 +612,9 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
     return FALSE;
 }
 
-static int local_ref_cmp(const void *key, const void *ref)
+static int __cdecl local_ref_cmp(const void *key, const void *ref)
 {
-    return CompareStringOrdinal((const WCHAR*)key, -1, ((const local_ref_t*)ref)->name, -1, FALSE) - 2;
+    return wcscmp((const WCHAR*)key, ((const local_ref_t*)ref)->name);
 }
 
 local_ref_t *lookup_local(const function_code_t *function, const WCHAR *identifier)
@@ -646,7 +646,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                     return S_OK;
                 }
 
-                if(!lstrcmpW(identifier, argumentsW)) {
+                if(!wcscmp(identifier, argumentsW)) {
                     hres = detach_variable_object(ctx, scope->frame, FALSE);
                     if(FAILED(hres))
                         return hres;
@@ -670,7 +670,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
     }
 
     for(item = ctx->named_items; item; item = item->next) {
-        if((item->flags & SCRIPTITEM_ISVISIBLE) && !lstrcmpW(item->name, identifier)) {
+        if((item->flags & SCRIPTITEM_ISVISIBLE) && !wcscmp(item->name, identifier)) {
             if(!item->disp) {
                 IUnknown *unk;
 

@@ -93,7 +93,7 @@ static const builtin_prop_t *find_builtin_prop(jsdisp_t *This, const WCHAR *name
     while(min <= max) {
         i = (min+max)/2;
 
-        r = CompareStringOrdinal(name, -1, This->builtin_info->props[i].name, -1, FALSE) - 2;
+        r = wcscmp(name, This->builtin_info->props[i].name);
         if(!r) {
             /* Skip prop if it's available only in higher compatibility mode. */
             unsigned version = (This->builtin_info->props[i].flags & PROPF_VERSION_MASK)
@@ -203,7 +203,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
     bucket = get_props_idx(This, hash);
     pos = This->props[bucket].bucket_head;
     while(pos != 0) {
-        if(!lstrcmpW(name, This->props[pos].name)) {
+        if(!wcscmp(name, This->props[pos].name)) {
             if(prev != 0) {
                 This->props[prev].bucket_next = This->props[pos].bucket_next;
                 This->props[pos].bucket_next = This->props[bucket].bucket_head;
