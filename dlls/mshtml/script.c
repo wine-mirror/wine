@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -359,7 +357,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
 
     *ppiunkItem = NULL;
 
-    if(strcmpW(pstrName, windowW))
+    if(wcscmp(pstrName, windowW))
         return DISP_E_MEMBERNOTFOUND;
 
     if(!This->window)
@@ -1054,7 +1052,7 @@ HRESULT load_script(HTMLScriptElement *script_elem, const WCHAR *src, BOOL async
 
     static const WCHAR wine_schemaW[] = {'w','i','n','e',':'};
 
-    if(strlenW(src) > ARRAY_SIZE(wine_schemaW) && !memcmp(src, wine_schemaW, sizeof(wine_schemaW)))
+    if(lstrlenW(src) > ARRAY_SIZE(wine_schemaW) && !memcmp(src, wine_schemaW, sizeof(wine_schemaW)))
         src += ARRAY_SIZE(wine_schemaW);
 
     TRACE("(%p %s %x)\n", script_elem, debugstr_w(src), async);
@@ -1179,9 +1177,9 @@ static BOOL get_guid_from_type(LPCWSTR type, GUID *guid)
         {'t','e','x','t','/','v','b','s','c','r','i','p','t',0};
 
     /* FIXME: Handle more types */
-    if(!strcmpiW(type, text_javascriptW) || !strcmpiW(type, text_jscriptW)) {
+    if(!wcsicmp(type, text_javascriptW) || !wcsicmp(type, text_jscriptW)) {
         *guid = CLSID_JScript;
-    }else if(!strcmpiW(type, text_vbscriptW)) {
+    }else if(!wcsicmp(type, text_vbscriptW)) {
         *guid = CLSID_VBScript;
     }else {
         FIXME("Unknown type %s\n", debugstr_w(type));
@@ -1314,7 +1312,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
 
     TRACE("%s\n", debugstr_w(text));
 
-    for(ptr = text; isalnumW(*ptr); ptr++);
+    for(ptr = text; iswalnum(*ptr); ptr++);
     if(*ptr == ':') {
         LPWSTR language;
         BOOL b;
@@ -1433,10 +1431,10 @@ static EventTarget *find_event_target(HTMLDocumentNode *doc, HTMLScriptElement *
     nsAString_GetData(&target_id_str, &target_id);
     if(!*target_id) {
         FIXME("Empty for attribute\n");
-    }else if(!strcmpW(target_id, documentW)) {
+    }else if(!wcscmp(target_id, documentW)) {
         event_target = &doc->node.event_target;
         htmldoc_addref(&doc->basedoc);
-    }else if(!strcmpW(target_id, windowW)) {
+    }else if(!wcscmp(target_id, windowW)) {
         if(doc->window) {
             event_target = &doc->window->event_target;
             IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
@@ -1460,7 +1458,7 @@ static BOOL parse_event_str(WCHAR *event, const WCHAR **args)
 
     TRACE("%s\n", debugstr_w(event));
 
-    for(ptr = event; isalnumW(*ptr); ptr++);
+    for(ptr = event; iswalnum(*ptr); ptr++);
     if(!*ptr) {
         *args = NULL;
         return TRUE;
@@ -1471,7 +1469,7 @@ static BOOL parse_event_str(WCHAR *event, const WCHAR **args)
 
     *ptr++ = 0;
     *args = ptr;
-    while(isalnumW(*ptr) || isspaceW(*ptr) || *ptr == ',')
+    while(iswalnum(*ptr) || iswspace(*ptr) || *ptr == ',')
         ptr++;
 
     if(*ptr != ')')

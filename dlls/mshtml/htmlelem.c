@@ -108,7 +108,7 @@ static const tag_desc_t *get_tag_desc(const WCHAR *tag_name)
 
     while(min <= max) {
         i = (min+max)/2;
-        r = strcmpW(tag_name, tag_descs[i].name);
+        r = wcscmp(tag_name, tag_descs[i].name);
         if(!r)
             return tag_descs+i;
 
@@ -700,7 +700,7 @@ static HRESULT HTMLRectCollection_get_dispid(DispatchEx *dispex, BSTR name, DWOR
     DWORD idx = 0;
     WCHAR *ptr;
 
-    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
     if(*ptr)
         return DISP_E_UNKNOWNNAME;
@@ -1856,7 +1856,7 @@ static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDO
     static const WCHAR beforeendW[] = {'b','e','f','o','r','e','e','n','d',0};
     static const WCHAR afterendW[] = {'a','f','t','e','r','e','n','d',0};
 
-    if (!strcmpiW(where, beforebeginW)) {
+    if (!wcsicmp(where, beforebeginW)) {
         nsIDOMNode *parent;
 
         nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
@@ -1868,7 +1868,7 @@ static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDO
 
         nsres = nsIDOMNode_InsertBefore(parent, nsnode, This->node.nsnode, &ret_nsnode);
         nsIDOMNode_Release(parent);
-    }else if(!strcmpiW(where, afterbeginW)) {
+    }else if(!wcsicmp(where, afterbeginW)) {
         nsIDOMNode *first_child;
 
         nsres = nsIDOMNode_GetFirstChild(This->node.nsnode, &first_child);
@@ -1881,9 +1881,9 @@ static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDO
 
         if (first_child)
             nsIDOMNode_Release(first_child);
-    }else if (!strcmpiW(where, beforeendW)) {
+    }else if (!wcsicmp(where, beforeendW)) {
         nsres = nsIDOMNode_AppendChild(This->node.nsnode, nsnode, &ret_nsnode);
-    }else if (!strcmpiW(where, afterendW)) {
+    }else if (!wcsicmp(where, afterendW)) {
         nsIDOMNode *next_sibling, *parent;
 
         nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
@@ -5103,7 +5103,7 @@ HRESULT elem_unique_id(unsigned id, BSTR *p)
 
     static const WCHAR formatW[] = {'m','s','_','_','i','d','%','u',0};
 
-    sprintfW(buf, formatW, id);
+    swprintf(buf, ARRAY_SIZE(buf), formatW, id);
     *p = SysAllocString(buf);
     return *p ? S_OK : E_OUTOFMEMORY;
 }
@@ -6061,7 +6061,7 @@ static HRESULT HTMLFiltersCollection_get_dispid(DispatchEx *dispex, BSTR name, D
     WCHAR *ptr;
     int idx = 0;
 
-    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
     if(*ptr)
         return DISP_E_UNKNOWNNAME;
@@ -6246,7 +6246,7 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BST
         WCHAR *end_ptr;
         LONG idx;
 
-        idx = strtoulW(name, &end_ptr, 10);
+        idx = wcstoul(name, &end_ptr, 10);
         if(!*end_ptr) {
             hres = get_attr_dispid_by_idx(This, &idx, id);
             if(SUCCEEDED(hres))

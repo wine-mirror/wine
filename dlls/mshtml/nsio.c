@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -195,7 +193,7 @@ HRESULT nsuri_to_url(LPCWSTR nsuri, BOOL ret_empty, BSTR *ret)
 
     static const WCHAR wine_prefixW[] = {'w','i','n','e',':'};
 
-    if(!strncmpW(nsuri, wine_prefixW, ARRAY_SIZE(wine_prefixW)))
+    if(!wcsncmp(nsuri, wine_prefixW, ARRAY_SIZE(wine_prefixW)))
         ptr += ARRAY_SIZE(wine_prefixW);
 
     if(*ptr || ret_empty) {
@@ -255,7 +253,7 @@ static nsresult before_async_open(nsChannel *channel, GeckoBrowser *container, B
         OLECHAR *new_url;
         hres = IDocHostUIHandler_TranslateUrl(doc->hostui, 0, display_uri, &new_url);
         if(hres == S_OK && new_url) {
-            if(strcmpW(display_uri, new_url)) {
+            if(wcscmp(display_uri, new_url)) {
                 FIXME("TranslateUrl returned new URL %s -> %s\n", debugstr_w(display_uri), debugstr_w(new_url));
                 CoTaskMemFree(new_url);
                 *cancel = TRUE;
@@ -351,7 +349,7 @@ static http_header_t *find_http_header(struct list *headers, const WCHAR *name, 
     http_header_t *iter;
 
     LIST_FOR_EACH_ENTRY(iter, headers, http_header_t, entry) {
-        if(!strncmpiW(iter->header, name, len) && !iter->header[len])
+        if(!wcsnicmp(iter->header, name, len) && !iter->header[len])
             return iter;
     }
 
@@ -371,7 +369,7 @@ static nsresult get_channel_http_header(struct list *headers, const nsACString *
     if(!header_name)
         return NS_ERROR_UNEXPECTED;
 
-    header = find_http_header(headers, header_name, strlenW(header_name));
+    header = find_http_header(headers, header_name, lstrlenW(header_name));
     heap_free(header_name);
     if(!header)
         return NS_ERROR_NOT_AVAILABLE;
@@ -442,7 +440,7 @@ static nsresult set_channel_http_header(struct list *headers, const nsACString *
         return NS_ERROR_UNEXPECTED;
     }
 
-    hres = set_http_header(headers, name, strlenW(name), value, strlenW(value));
+    hres = set_http_header(headers, name, lstrlenW(name), value, lstrlenW(value));
 
     heap_free(name);
     heap_free(value);
@@ -1495,7 +1493,7 @@ static nsresult NSAPI nsChannel_IsNoStoreResponse(nsIHttpChannel *iface, cpp_boo
     TRACE("(%p)->(%p)\n", This, _retval);
 
     header = find_http_header(&This->response_headers, cache_controlW, ARRAY_SIZE(cache_controlW));
-    *_retval = header && !strcmpiW(header->data, no_storeW);
+    *_retval = header && !wcsicmp(header->data, no_storeW);
     return NS_OK;
 }
 
@@ -1666,7 +1664,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
             if(!ct)
                 return NS_ERROR_UNEXPECTED;
 
-            set_http_header(&This->request_headers, content_typeW, ARRAY_SIZE(content_typeW), ct, strlenW(ct));
+            set_http_header(&This->request_headers, content_typeW, ARRAY_SIZE(content_typeW), ct, lstrlenW(ct));
             heap_free(ct);
             This->post_data_contains_headers = FALSE;
         }
@@ -2458,7 +2456,7 @@ static nsresult NSAPI nsURI_SetUserPass(nsIFileURL *iface, const nsACString *aUs
         if(!buf)
             return NS_ERROR_OUT_OF_MEMORY;
 
-        ptr = strchrW(buf, ':');
+        ptr = wcschr(buf, ':');
         if(!ptr) {
             user = buf;
         }else if(ptr != buf) {
@@ -2566,7 +2564,7 @@ static nsresult NSAPI nsURI_GetHostPort(nsIFileURL *iface, nsACString *aHostPort
         return NS_ERROR_UNEXPECTED;
     }
 
-    ptr = strchrW(val, '@');
+    ptr = wcschr(val, '@');
     if(!ptr)
         ptr = val;
 
@@ -2745,7 +2743,7 @@ static nsresult NSAPI nsURI_SchemeIs(nsIFileURL *iface, const char *scheme, cpp_
         return NS_ERROR_UNEXPECTED;
 
     MultiByteToWideChar(CP_UTF8, 0, scheme, -1, buf, ARRAY_SIZE(buf));
-    *_retval = !strcmpW(scheme_name, buf);
+    *_retval = !wcscmp(scheme_name, buf);
     SysFreeString(scheme_name);
     return NS_OK;
 }
@@ -3072,7 +3070,7 @@ static nsresult get_uri_path(nsWineURI *This, BSTR *path, const WCHAR **file, co
     *file = ptr;
 
     if(ext) {
-        ptr = strrchrW(ptr, '.');
+        ptr = wcsrchr(ptr, '.');
         if(!ptr)
             ptr = *path + SysStringLen(*path);
         *ext = ptr;

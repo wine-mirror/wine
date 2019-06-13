@@ -260,7 +260,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
         return;
 
     for(info = data->funcs; info < data->funcs+data->func_cnt; info++) {
-        if(info->id == desc->memid || !strcmpW(info->name, name)) {
+        if(info->id == desc->memid || !wcscmp(info->name, name)) {
             if(info->tid != tid) {
                 SysFreeString(name);
                 return; /* Duplicated in other interface */
@@ -434,14 +434,14 @@ void dispex_info_add_interface(dispex_data_t *info, tid_t tid, const dispex_hook
         ERR("process_interface failed: %08x\n", hres);
 }
 
-static int dispid_cmp(const void *p1, const void *p2)
+static int __cdecl dispid_cmp(const void *p1, const void *p2)
 {
     return ((const func_info_t*)p1)->id - ((const func_info_t*)p2)->id;
 }
 
-static int func_name_cmp(const void *p1, const void *p2)
+static int __cdecl func_name_cmp(const void *p1, const void *p2)
 {
-    return strcmpiW((*(func_info_t* const*)p1)->name, (*(func_info_t* const*)p2)->name);
+    return wcsicmp((*(func_info_t* const*)p1)->name, (*(func_info_t* const*)p2)->name);
 }
 
 static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_mode_t compat_mode)
@@ -506,7 +506,7 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     return data;
 }
 
-static int id_cmp(const void *p1, const void *p2)
+static int __cdecl id_cmp(const void *p1, const void *p2)
 {
     return *(const DISPID*)p1 - *(const DISPID*)p2;
 }
@@ -617,7 +617,7 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
         return E_OUTOFMEMORY;
 
     for(prop = data->props; prop < data->props+data->prop_cnt; prop++) {
-        if(flags & fdexNameCaseInsensitive ? !strcmpiW(prop->name, name) : !strcmpW(prop->name, name)) {
+        if(flags & fdexNameCaseInsensitive ? !wcsicmp(prop->name, name) : !wcscmp(prop->name, name)) {
             if(prop->flags & DYNPROP_DELETED) {
                 if(!alloc)
                     return DISP_E_UNKNOWNNAME;
@@ -990,9 +990,9 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
     while(min <= max) {
         n = (min+max)/2;
 
-        c = strcmpiW(This->info->name_table[n]->name, name);
+        c = wcsicmp(This->info->name_table[n]->name, name);
         if(!c) {
-            if((grfdex & fdexNameCaseSensitive) && strcmpW(This->info->name_table[n]->name, name))
+            if((grfdex & fdexNameCaseSensitive) && wcscmp(This->info->name_table[n]->name, name))
                 break;
 
             *ret = This->info->name_table[n]->id;

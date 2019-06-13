@@ -74,18 +74,18 @@ HTMLOuterWindow *get_target_window(HTMLOuterWindow *window, nsAString *target_st
     nsAString_GetData(target_str, &target);
     TRACE("%s\n", debugstr_w(target));
 
-    if(!*target || !strcmpiW(target, _selfW)) {
+    if(!*target || !wcsicmp(target, _selfW)) {
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
         return window;
     }
 
-    if(!strcmpiW(target, _topW)) {
+    if(!wcsicmp(target, _topW)) {
         get_top_window(window, &top_window);
         IHTMLWindow2_AddRef(&top_window->base.IHTMLWindow2_iface);
         return top_window;
     }
 
-    if(!strcmpiW(target, _parentW)) {
+    if(!wcsicmp(target, _parentW)) {
         if(!window->parent) {
             WARN("Window has no parent, treat as self\n");
             IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);

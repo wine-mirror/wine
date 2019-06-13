@@ -1183,11 +1183,11 @@ HRESULT create_svg_element(HTMLDocumentNode *doc, nsIDOMSVGElement *dom_element,
 
     TRACE("%s\n", debugstr_w(tag_name));
 
-    if(!strcmpW(tag_name, svgW))
+    if(!wcscmp(tag_name, svgW))
         return create_viewport_element(doc, dom_element, elem);
-    if(!strcmpW(tag_name, circleW))
+    if(!wcscmp(tag_name, circleW))
         return create_circle_element(doc, dom_element, elem);
-    if(!strcmpW(tag_name, tspanW))
+    if(!wcscmp(tag_name, tspanW))
         return create_tspan_element(doc, dom_element, elem);
 
     svg_element = heap_alloc_zero(sizeof(*svg_element));

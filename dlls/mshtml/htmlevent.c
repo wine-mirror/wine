@@ -231,7 +231,7 @@ static eventid_t str_to_eid(const WCHAR *str)
     int i;
 
     for(i=0; i < ARRAY_SIZE(event_info); i++) {
-        if(!strcmpW(event_info[i].name, str))
+        if(!wcscmp(event_info[i].name, str))
             return i;
     }
 
@@ -246,7 +246,7 @@ static eventid_t attr_to_eid(const WCHAR *str)
         return EVENTID_LAST;
 
     for(i=0; i < ARRAY_SIZE(event_info); i++) {
-        if(!strcmpW(event_info[i].name, str+2) && event_info[i].dispid)
+        if(!wcscmp(event_info[i].name, str+2) && event_info[i].dispid)
             return i;
     }
 
@@ -271,7 +271,7 @@ static listener_container_t *get_listener_container(EventTarget *event_target, c
     if(eid != EVENTID_LAST && (event_info[eid].flags & EVENT_FIXME))
         FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
 
-    type_len = strlenW(type);
+    type_len = lstrlenW(type);
     container = heap_alloc(FIELD_OFFSET(listener_container_t, type[type_len+1]));
     if(!container)
         return NULL;
@@ -2915,7 +2915,7 @@ static HRESULT get_event_dispex_ref(EventTarget *event_target, eventid_t eid, BO
     WCHAR buf[64];
     buf[0] = 'o';
     buf[1] = 'n';
-    strcpyW(buf+2, event_info[eid].name);
+    lstrcpyW(buf+2, event_info[eid].name);
     return dispex_get_dprop_ref(&event_target->dispex, buf, alloc, ret);
 }
 
@@ -3454,7 +3454,7 @@ void EventTarget_init_dispex_info(dispex_data_t *dispex_info, compat_mode_t comp
 
 static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)
 {
-    return strcmpW(key, WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry)->type);
+    return wcscmp(key, WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry)->type);
 }
 
 void EventTarget_Init(EventTarget *event_target, IUnknown *outer, dispex_static_data_t *dispex_data,

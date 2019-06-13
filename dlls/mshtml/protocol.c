@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -370,14 +368,14 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
 
     TRACE("bindf %x\n", grfBINDF);
 
-    if(strlenW(szUrl) >= ARRAY_SIZE(wszAbout) && !memcmp(wszAbout, szUrl, sizeof(wszAbout))) {
+    if(lstrlenW(szUrl) >= ARRAY_SIZE(wszAbout) && !memcmp(wszAbout, szUrl, sizeof(wszAbout))) {
         text = szUrl + ARRAY_SIZE(wszAbout);
-        if(!strcmpW(wszBlank, text))
+        if(!wcscmp(wszBlank, text))
             text = NULL;
     }
 
     data_len = sizeof(html_begin)+sizeof(html_end)-sizeof(WCHAR)
-        + (text ? strlenW(text)*sizeof(WCHAR) : 0);
+        + (text ? lstrlenW(text)*sizeof(WCHAR) : 0);
     data = heap_alloc(data_len);
     if(!data)
         return E_OUTOFMEMORY;
@@ -388,8 +386,8 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
 
     memcpy(This->data, html_begin, sizeof(html_begin));
     if(text)
-        strcatW((LPWSTR)This->data, text);
-    strcatW((LPWSTR)This->data, html_end);
+        lstrcatW((LPWSTR)This->data, text);
+    lstrcatW((LPWSTR)This->data, html_end);
 
     This->cur = 0;
 
@@ -436,7 +434,7 @@ static HRESULT WINAPI AboutProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, L
             dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
 
     if(ParseAction == PARSE_SECURITY_URL) {
-        unsigned int len = strlenW(pwzUrl)+1;
+        unsigned int len = lstrlenW(pwzUrl)+1;
 
         *pcchResult = len;
         if(len > cchResult)
@@ -451,7 +449,7 @@ static HRESULT WINAPI AboutProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, L
             return E_POINTER;
 
         if(pwzUrl)
-            *pcchResult = strlenW(pwzUrl)+1;
+            *pcchResult = lstrlenW(pwzUrl)+1;
         else
             *pcchResult = 1;
         return E_FAIL;
@@ -560,7 +558,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         return hres;
     ReleaseBindInfo(&bindinfo);
 
-    len = strlenW(szUrl)+16;
+    len = lstrlenW(szUrl)+16;
     url = heap_alloc(len*sizeof(WCHAR));
     hres = CoInternetParseUrl(szUrl, PARSE_ENCODE, 0, url, len, &len, 0);
     if(FAILED(hres)) {
@@ -578,7 +576,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     url_dll = url + ARRAY_SIZE(wszRes);
-    if(!(res_type = strchrW(url_dll, '/'))) {
+    if(!(res_type = wcschr(url_dll, '/'))) {
         WARN("wrong url: %s\n", debugstr_w(url));
         IInternetProtocolSink_ReportResult(pOIProtSink, MK_E_SYNTAX, 0, NULL);
         heap_free(url);
@@ -586,7 +584,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     *res_type++ = 0;
-    if ((url_file = strchrW(res_type, '/'))) {
+    if ((url_file = wcschr(res_type, '/'))) {
         *url_file++ = 0;
     }else {
         url_file = res_type;
@@ -594,9 +592,9 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     /* Ignore query and hash parts. */
-    if((ptr = strchrW(url_file, '?')))
+    if((ptr = wcschr(url_file, '?')))
         *ptr = 0;
-    if(*url_file && (ptr = strchrW(url_file+1, '#')))
+    if(*url_file && (ptr = wcschr(url_file+1, '#')))
         *ptr = 0;
 
     hdll = LoadLibraryExW(url_dll, NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -612,8 +610,8 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     src = FindResourceW(hdll, url_file, res_type);
     if(!src) {
         LPWSTR endpoint = NULL;
-        DWORD file_id = strtolW(url_file, &endpoint, 10);
-        if(endpoint == url_file+strlenW(url_file))
+        DWORD file_id = wcstol(url_file, &endpoint, 10);
+        if(endpoint == url_file+lstrlenW(url_file))
             src = FindResourceW(hdll, MAKEINTRESOURCEW(file_id), res_type);
 
         if(!src) {
@@ -692,10 +690,10 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
         static const WCHAR wszFile[] = {'f','i','l','e',':','/','/'};
         static const WCHAR wszRes[] = {'r','e','s',':','/','/'};
 
-        if(strlenW(pwzUrl) <= ARRAY_SIZE(wszRes) || memcmp(pwzUrl, wszRes, sizeof(wszRes)))
+        if(lstrlenW(pwzUrl) <= ARRAY_SIZE(wszRes) || memcmp(pwzUrl, wszRes, sizeof(wszRes)))
             return E_INVALIDARG;
 
-        ptr = strchrW(pwzUrl + ARRAY_SIZE(wszRes), '/');
+        ptr = wcschr(pwzUrl + ARRAY_SIZE(wszRes), '/');
         if(!ptr)
             return E_INVALIDARG;
 
@@ -742,7 +740,7 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
             return E_POINTER;
 
         if(pwzUrl)
-            *pcchResult = strlenW(pwzUrl)+1;
+            *pcchResult = lstrlenW(pwzUrl)+1;
         else
             *pcchResult = 1;
         return E_FAIL;

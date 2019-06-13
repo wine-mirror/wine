@@ -759,7 +759,7 @@ static HRESULT HTMLXMLHttpRequest_get_dispid(DispatchEx *dispex, BSTR name, DWOR
     static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 
     /* onload event handler property is supported, but not exposed by any interface. We implement as a custom property. */
-    if(!strcmpW(onloadW, name)) {
+    if(!wcscmp(onloadW, name)) {
         *dispid = MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD;
         return S_OK;
     }

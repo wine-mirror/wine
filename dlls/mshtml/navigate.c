@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -478,7 +476,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
     if(This->request_data.headers) {
         DWORD size;
 
-        size = (strlenW(This->request_data.headers)+1)*sizeof(WCHAR);
+        size = (lstrlenW(This->request_data.headers)+1)*sizeof(WCHAR);
         *pszAdditionalHeaders = CoTaskMemAlloc(size);
         if(!*pszAdditionalHeaders)
             return E_OUTOFMEMORY;
@@ -719,16 +717,16 @@ static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
 
     static const WCHAR charsetW[] = {'c','h','a','r','s','e','t','='};
 
-    ptr = strchrW(value, ';');
+    ptr = wcschr(value, ';');
     if(!ptr)
         return;
 
     ptr++;
-    while(*ptr && isspaceW(*ptr))
+    while(*ptr && iswspace(*ptr))
         ptr++;
 
-    len = strlenW(value);
-    if(ptr + ARRAY_SIZE(charsetW) < value+len && !strncmpiW(ptr, charsetW, ARRAY_SIZE(charsetW))) {
+    len = lstrlenW(value);
+    if(ptr + ARRAY_SIZE(charsetW) < value+len && !wcsnicmp(ptr, charsetW, ARRAY_SIZE(charsetW))) {
         size_t charset_len, lena;
         nsACString charset_str;
         const WCHAR *charset;
@@ -808,7 +806,7 @@ static HRESULT process_response_headers(nsChannelBSC *This, const WCHAR *headers
         return hres;
 
     LIST_FOR_EACH_ENTRY(iter, &This->nschannel->response_headers, http_header_t, entry) {
-        if(!strcmpiW(iter->header, content_typeW))
+        if(!wcsicmp(iter->header, content_typeW))
             parse_content_type(This, iter->data);
     }
 
@@ -835,7 +833,7 @@ static void query_http_info(nsChannelBSC *This, IWinInetHttpInfo *wininet_info)
         return;
     }
 
-    ptr = strchrW(buf, '\r');
+    ptr = wcschr(buf, '\r');
     if(ptr && ptr[1] == '\n') {
         ptr += 2;
         process_response_headers(This, ptr);
@@ -1693,10 +1691,10 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
 
 static HRESULT process_response_status_text(const WCHAR *header, const WCHAR *header_end, char **status_text)
 {
-    header = strchrW(header + 1, ' ');
+    header = wcschr(header + 1, ' ');
     if(!header || header >= header_end)
         return E_FAIL;
-    header = strchrW(header + 1, ' ');
+    header = wcschr(header + 1, ' ');
     if(!header || header >= header_end)
         return E_FAIL;
     ++header;
@@ -1722,7 +1720,7 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
     if(response_headers) {
         const WCHAR *headers;
 
-        headers = strchrW(response_headers, '\r');
+        headers = wcschr(response_headers, '\r');
         hres = process_response_status_text(response_headers, headers, &str);
         if(FAILED(hres)) {
             WARN("parsing headers failed: %08x\n", hres);
@@ -1759,8 +1757,8 @@ static HRESULT nsChannelBSC_beginning_transaction(BSCallback *bsc, WCHAR **addit
         return S_FALSE;
 
     LIST_FOR_EACH_ENTRY(iter, &This->nschannel->request_headers, http_header_t, entry) {
-        if(strcmpW(iter->header, content_lengthW))
-            len += strlenW(iter->header) + 2 /* ": " */ + strlenW(iter->data) + 2 /* "\r\n" */;
+        if(wcscmp(iter->header, content_lengthW))
+            len += lstrlenW(iter->header) + 2 /* ": " */ + lstrlenW(iter->data) + 2 /* "\r\n" */;
     }
 
     if(!len)
@@ -1771,17 +1769,17 @@ static HRESULT nsChannelBSC_beginning_transaction(BSCallback *bsc, WCHAR **addit
         return E_OUTOFMEMORY;
 
     LIST_FOR_EACH_ENTRY(iter, &This->nschannel->request_headers, http_header_t, entry) {
-        if(!strcmpW(iter->header, content_lengthW))
+        if(!wcscmp(iter->header, content_lengthW))
             continue;
 
-        len = strlenW(iter->header);
+        len = lstrlenW(iter->header);
         memcpy(ptr, iter->header, len*sizeof(WCHAR));
         ptr += len;
 
         *ptr++ = ':';
         *ptr++ = ' ';
 
-        len = strlenW(iter->data);
+        len = lstrlenW(iter->data);
         memcpy(ptr, iter->data, len*sizeof(WCHAR));
         ptr += len;
 
@@ -2098,7 +2096,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
         nsIDOMElement *nselem = NULL;
         nsAString selector_str;
 
-        sprintfW(selector, selector_formatW, frag);
+        swprintf(selector, ARRAY_SIZE(selector_formatW)+SysStringLen(frag), selector_formatW, frag);
         nsAString_InitDepend(&selector_str, selector);
         /* NOTE: Gecko doesn't set result to NULL if there is no match, so nselem must be initialized */
         nsres = nsIDOMHTMLDocument_QuerySelector(window->base.inner_window->doc->nsdoc, &selector_str, &nselem);

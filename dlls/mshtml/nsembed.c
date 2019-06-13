@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -254,7 +252,7 @@ static nsresult create_profile_directory(void)
         return NS_ERROR_FAILURE;
     }
 
-    strcatW(path, wine_geckoW);
+    lstrcatW(path, wine_geckoW);
     nsres = create_nsfile(path, &profile_directory);
     if(NS_FAILED(nsres))
         return nsres;
@@ -314,7 +312,7 @@ static nsresult NSAPI nsDirectoryServiceProvider2_GetFiles(nsIDirectoryServicePr
             if(!len)
                 return NS_ERROR_UNEXPECTED;
 
-            strcpyW(plugin_path+len, gecko_pluginW);
+            lstrcpyW(plugin_path+len, gecko_pluginW);
             nsres = create_nsfile(plugin_path, &plugin_directory);
             if(NS_FAILED(nsres)) {
                 *_retval = NULL;
@@ -463,23 +461,23 @@ static void set_environment(LPCWSTR gre_path)
     else if(ERR_ON(gecko))
         debug_level = 1;
 
-    sprintfW(buf, debug_formatW, debug_level);
+    swprintf(buf, ARRAY_SIZE(buf), debug_formatW, debug_level);
     SetEnvironmentVariableW(nspr_log_modulesW, buf);
 
     len = GetEnvironmentVariableW(pathW, NULL, 0);
-    gre_path_len = strlenW(gre_path);
+    gre_path_len = lstrlenW(gre_path);
     path = heap_alloc((len+gre_path_len+1)*sizeof(WCHAR));
     if(!path)
         return;
     GetEnvironmentVariableW(pathW, path, len);
 
     /* We have to modify PATH as xul.dll loads other DLLs from this directory. */
-    if(!(ptr = strstrW(path, gre_path))
+    if(!(ptr = wcsstr(path, gre_path))
        || (ptr > path && *(ptr-1) != ';')
        || (ptr[gre_path_len] && ptr[gre_path_len] != ';')) {
         if(len)
             path[len-1] = ';';
-        strcpyW(path+len, gre_path);
+        lstrcpyW(path+len, gre_path);
         SetEnvironmentVariableW(pathW, path);
     }
     heap_free(path);
@@ -490,8 +488,8 @@ static BOOL load_xul(const PRUnichar *gre_path)
     static const WCHAR xul_dllW[] = {'\\','x','u','l','.','d','l','l',0};
     WCHAR file_name[MAX_PATH];
 
-    strcpyW(file_name, gre_path);
-    strcatW(file_name, xul_dllW);
+    lstrcpyW(file_name, gre_path);
+    lstrcatW(file_name, xul_dllW);
 
     TRACE("(%s)\n", debugstr_w(file_name));
 
@@ -544,8 +542,8 @@ static BOOL check_version(LPCWSTR gre_path, const char *version_string)
 
     static const WCHAR wszVersion[] = {'\\','V','E','R','S','I','O','N',0};
 
-    strcpyW(file_name, gre_path);
-    strcatW(file_name, wszVersion);
+    lstrcpyW(file_name, gre_path);
+    lstrcatW(file_name, wszVersion);
 
     hfile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -712,7 +710,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         return FALSE;
     }
 
-    strcpyW(gecko_path, gre_path);
+    lstrcpyW(gecko_path, gre_path);
     for(ptr = gecko_path; *ptr; ptr++) {
         if(*ptr == '\\')
             *ptr = '/';
@@ -1235,7 +1233,7 @@ BOOL is_gecko_path(const char *path)
     BOOL ret;
 
     buf = heap_strdupUtoW(path);
-    if(!buf || strlenW(buf) < gecko_path_len)
+    if(!buf || lstrlenW(buf) < gecko_path_len)
         return FALSE;
 
     for(ptr = buf; *ptr; ptr++) {
@@ -1246,7 +1244,7 @@ BOOL is_gecko_path(const char *path)
     UrlUnescapeW(buf, NULL, NULL, URL_UNESCAPE_INPLACE);
     buf[gecko_path_len] = 0;
 
-    ret = !strcmpiW(buf, gecko_path);
+    ret = !wcsicmp(buf, gecko_path);
     heap_free(buf);
     return ret;
 }

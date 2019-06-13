@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
@@ -583,7 +581,7 @@ static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(strcmpiW(v, onW)) {
+    if(wcsicmp(v, onW)) {
         FIXME("Unsupported arg %s\n", debugstr_w(v));
         return E_NOTIMPL;
     }
@@ -1094,7 +1092,7 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
         return E_NOTIMPL;
     }
 
-    if(!url || strcmpW(url, text_htmlW) || V_VT(&name) != VT_ERROR
+    if(!url || wcscmp(url, text_htmlW) || V_VT(&name) != VT_ERROR
        || V_VT(&features) != VT_ERROR || V_VT(&replace) != VT_ERROR)
         FIXME("unsupported args\n");
 
@@ -1192,7 +1190,7 @@ static BOOL cmdid_from_string(const WCHAR *str, OLECMDID *cmdid)
     int i;
 
     for(i = 0; i < ARRAY_SIZE(command_names); i++) {
-        if(!strcmpiW(command_names[i].name, str)) {
+        if(!wcsicmp(command_names[i].name, str)) {
             *cmdid = command_names[i].id;
             return TRUE;
         }
@@ -2362,7 +2360,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByName(IHTMLDocument3 *iface, BST
     selector = heap_alloc(2*SysStringLen(v)*sizeof(WCHAR) + sizeof(formatW));
     if(!selector)
         return E_OUTOFMEMORY;
-    sprintfW(selector, formatW, v, v);
+    swprintf(selector, 2*SysStringLen(v) + ARRAY_SIZE(formatW), formatW, v, v);
 
     /*
      * NOTE: IE getElementsByName implementation differs from Gecko. It searches both name and id attributes.
@@ -2429,7 +2427,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
         if(v) {
             const WCHAR *ptr;
             for(ptr=v; *ptr; ptr++) {
-                if(!isalnumW(*ptr)) {
+                if(!iswalnum(*ptr)) {
                     FIXME("Unsupported invalid tag %s\n", debugstr_w(v));
                     return E_NOTIMPL;
                 }
@@ -4511,7 +4509,7 @@ static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, BSTR name, DISPID *
         return DISP_E_UNKNOWNNAME;
 
     for(i=0; i < This->elem_vars_cnt; i++) {
-        if(!strcmpW(name, This->elem_vars[i])) {
+        if(!wcscmp(name, This->elem_vars[i])) {
             *dispid = MSHTML_DISPID_CUSTOM_MIN+i;
             return S_OK;
         }

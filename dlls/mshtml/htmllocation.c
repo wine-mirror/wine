@@ -355,7 +355,7 @@ static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
         WCHAR portW[6];
         WCHAR *buf;
 
-        port_len = snprintfW(portW, ARRAY_SIZE(portW), format, url.nPort);
+        port_len = swprintf(portW, ARRAY_SIZE(portW), format, url.nPort);
         len = url.dwHostNameLength + 1 /* ':' */ + port_len;
         buf = *p = SysAllocStringLen(NULL, len);
         memcpy(buf, url.lpszHostName, url.dwHostNameLength * sizeof(WCHAR));
@@ -438,7 +438,7 @@ static HRESULT WINAPI HTMLLocation_get_port(IHTMLLocation *iface, BSTR *p)
         static const WCHAR formatW[] = {'%','u',0};
         WCHAR buf[12];
 
-        sprintfW(buf, formatW, port);
+        swprintf(buf, ARRAY_SIZE(buf), formatW, port);
         *p = SysAllocString(buf);
     }else {
         *p = SysAllocStringLen(NULL, 0);

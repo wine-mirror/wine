@@ -359,7 +359,7 @@ static BOOL is_elem_id(HTMLElement *elem, LPCWSTR name)
         return FALSE;
     }
 
-    if(elem_id && !strcmpW(elem_id, name)) {
+    if(elem_id && !wcscmp(elem_id, name)) {
         SysFreeString(elem_id);
         return TRUE;
     }
@@ -383,14 +383,14 @@ static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
     nsAString_Init(&nsstr, NULL);
     nsIDOMElement_GetId(elem->dom_element, &nsstr);
     nsAString_GetData(&nsstr, &str);
-    if(!strcmpiW(str, name)) {
+    if(!wcsicmp(str, name)) {
         nsAString_Finish(&nsstr);
         return TRUE;
     }
 
     nsres = get_elem_attr_value(elem->dom_element, nameW, &nsstr, &str);
     if(NS_SUCCEEDED(nsres)) {
-        ret = !strcmpiW(str, name);
+        ret = !wcsicmp(str, name);
         nsAString_Finish(&nsstr);
     }
 
@@ -562,7 +562,7 @@ static HRESULT HTMLElementCollection_get_dispid(DispatchEx *dispex, BSTR name, D
     if(!*name)
         return DISP_E_UNKNOWNNAME;
 
-    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
 
     if(*ptr) {

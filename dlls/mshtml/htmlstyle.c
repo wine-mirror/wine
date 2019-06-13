@@ -845,7 +845,7 @@ static const style_tbl_entry_t *lookup_style_tbl(const WCHAR *name)
     while(min <= max) {
         i = (min+max)/2;
 
-        c = strcmpW(style_tbl[i].name, name);
+        c = wcscmp(style_tbl[i].name, name);
         if(!c)
             return style_tbl+i;
 
@@ -866,24 +866,24 @@ static void fix_px_value(nsAString *nsstr)
     ptr = val;
 
     while(*ptr) {
-        while(*ptr && isspaceW(*ptr))
+        while(*ptr && iswspace(*ptr))
             ptr++;
         if(!*ptr)
             break;
 
-        while(*ptr && isdigitW(*ptr))
+        while(*ptr && iswdigit(*ptr))
             ptr++;
 
-        if(!*ptr || isspaceW(*ptr)) {
+        if(!*ptr || iswspace(*ptr)) {
             LPWSTR ret, p;
-            int len = strlenW(val)+1;
+            int len = lstrlenW(val)+1;
 
             ret = heap_alloc((len+2)*sizeof(WCHAR));
             memcpy(ret, val, (ptr-val)*sizeof(WCHAR));
             p = ret + (ptr-val);
             *p++ = 'p';
             *p++ = 'x';
-            strcpyW(p, ptr);
+            lstrcpyW(p, ptr);
 
             TRACE("fixed %s -> %s\n", debugstr_w(val), debugstr_w(ret));
 
@@ -892,7 +892,7 @@ static void fix_px_value(nsAString *nsstr)
             break;
         }
 
-        while(*ptr && !isspaceW(*ptr))
+        while(*ptr && !iswspace(*ptr))
             ptr++;
     }
 }
@@ -903,7 +903,7 @@ static LPWSTR fix_url_value(LPCWSTR val)
 
     static const WCHAR urlW[] = {'u','r','l','('};
 
-    if(strncmpW(val, urlW, ARRAY_SIZE(urlW)) || !strchrW(val, '\\'))
+    if(wcsncmp(val, urlW, ARRAY_SIZE(urlW)) || !wcschr(val, '\\'))
         return NULL;
 
     ret = heap_strdupW(val);
@@ -956,7 +956,7 @@ static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const W
         if(style_tbl[sid].allowed_values) {
             const WCHAR **iter;
             for(iter = style_tbl[sid].allowed_values; *iter; iter++) {
-                if(!strcmpiW(*iter, value))
+                if(!wcsicmp(*iter, value))
                     break;
             }
             if(!*iter) {
@@ -1028,7 +1028,7 @@ static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
         DWORD new_len = len;
         WCHAR *ptr, *ptr2;
 
-        for(ptr = ret; (ptr = strchrW(ptr, ',')); ptr++)
+        for(ptr = ret; (ptr = wcschr(ptr, ',')); ptr++)
             new_len--;
 
         if(new_len != len) {
@@ -1096,7 +1096,7 @@ static HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styl
             ptr++;
         }
 
-        while(isdigitW(*ptr))
+        while(iswdigit(*ptr))
             i = i*10 + (*ptr++ - '0');
 
         if(!*ptr) {
@@ -1142,7 +1142,7 @@ static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR ex
     get_nsstyle_attr_nsval(This->css_style.nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
-    *p = variant_bool(!strcmpW(value, exval));
+    *p = variant_bool(!wcscmp(value, exval));
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %x\n", debugstr_w(style_tbl[sid].name), *p);
@@ -1156,7 +1156,7 @@ static inline HRESULT set_style_pos(HTMLStyle *This, styleid_t sid, float value)
 
     value = floor(value);
 
-    sprintfW(szValue, szFormat, value);
+    swprintf(szValue, ARRAY_SIZE(szValue), szFormat, value);
 
     return set_style_property(&This->css_style, sid, szValue);
 }
@@ -1165,7 +1165,7 @@ static HRESULT set_style_pxattr(HTMLStyle *style, styleid_t sid, LONG value)
 {
     WCHAR value_str[16];
 
-    sprintfW(value_str, px_formatW, value);
+    swprintf(value_str, ARRAY_SIZE(value_str), px_formatW, value);
 
     return set_style_property(&style->css_style, sid, value_str);
 }
@@ -1190,9 +1190,9 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
         nsAString_GetData(&str_value, &value);
         if(value)
         {
-            *p = strtolW(value, &ptr, 10);
+            *p = wcstol(value, &ptr, 10);
 
-            if(*ptr && strcmpW(ptr, pxW))
+            if(*ptr && wcscmp(ptr, pxW))
             {
                 nsAString_Finish(&str_value);
                 FIXME("only px values are currently supported\n");
@@ -1224,15 +1224,15 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
 
         nsAString_GetData(&str_value, &value);
         if(value) {
-            *p = strtolW(value, &ptr, 10);
+            *p = wcstol(value, &ptr, 10);
 
             if(*ptr == '.') {
                 /* Skip all digits. We have tests showing that we should not round the value. */
-                while(isdigitW(*++ptr));
+                while(iswdigit(*++ptr));
             }
         }
 
-        if(!ptr || (*ptr && strcmpW(ptr, pxW)))
+        if(!ptr || (*ptr && wcscmp(ptr, pxW)))
             *p = 0;
     }
 
@@ -1242,11 +1242,11 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
 
 static BOOL is_valid_border_style(BSTR v)
 {
-    return !v || strcmpiW(v, noneW)   == 0 || strcmpiW(v, dottedW) == 0 ||
-        strcmpiW(v, dashedW) == 0 || strcmpiW(v, solidW)  == 0 ||
-        strcmpiW(v, doubleW) == 0 || strcmpiW(v, grooveW) == 0 ||
-        strcmpiW(v, ridgeW)  == 0 || strcmpiW(v, insetW)  == 0 ||
-        strcmpiW(v, outsetW) == 0;
+    return !v || wcsicmp(v, noneW)   == 0 || wcsicmp(v, dottedW) == 0 ||
+        wcsicmp(v, dashedW) == 0 || wcsicmp(v, solidW)  == 0 ||
+        wcsicmp(v, doubleW) == 0 || wcsicmp(v, grooveW) == 0 ||
+        wcsicmp(v, ridgeW)  == 0 || wcsicmp(v, insetW)  == 0 ||
+        wcsicmp(v, outsetW) == 0;
 }
 
 static void *HTMLStyle_QI(CSSStyle *css_style, REFIID riid)
@@ -2254,7 +2254,7 @@ static HRESULT WINAPI HTMLStyle_put_borderStyle(IHTMLStyle *iface, BSTR v)
         if(v[i] == (WCHAR)' ')
         {
             pstyle = SysAllocStringLen(&v[last], (i-last));
-            if( !(is_valid_border_style(pstyle) || strcmpiW(styleWindowInset, pstyle) == 0))
+            if( !(is_valid_border_style(pstyle) || wcsicmp(styleWindowInset, pstyle) == 0))
             {
                 TRACE("1. Invalid style (%s)\n", debugstr_w(pstyle));
                 hres = E_INVALIDARG;
@@ -2268,7 +2268,7 @@ static HRESULT WINAPI HTMLStyle_put_borderStyle(IHTMLStyle *iface, BSTR v)
     if(hres == S_OK)
     {
         pstyle = SysAllocStringLen(&v[last], i-last);
-        if( !(is_valid_border_style(pstyle) || strcmpiW(styleWindowInset, pstyle) == 0))
+        if( !(is_valid_border_style(pstyle) || wcsicmp(styleWindowInset, pstyle) == 0))
         {
             TRACE("2. Invalid style (%s)\n", debugstr_w(pstyle));
             hres = E_INVALIDARG;
@@ -2913,13 +2913,13 @@ static void update_filter(HTMLStyle *This)
     }
 
     while(1) {
-        while(isspaceW(*ptr))
+        while(iswspace(*ptr))
             ptr++;
         if(!*ptr)
             break;
 
         ptr2 = ptr;
-        while(isalnumW(*ptr))
+        while(iswalnum(*ptr))
             ptr++;
         if(ptr == ptr2) {
             WARN("unexpected char '%c'\n", *ptr);
@@ -2936,7 +2936,7 @@ static void update_filter(HTMLStyle *This)
 
             ptr++;
             do {
-                while(isspaceW(*ptr))
+                while(iswspace(*ptr))
                     ptr++;
 
                 ptr2 = ptr;
@@ -2953,17 +2953,17 @@ static void update_filter(HTMLStyle *This)
 
                     ptr2 += ARRAY_SIZE(opacityW);
 
-                    while(isdigitW(*ptr2))
+                    while(iswdigit(*ptr2))
                         fval = fval*10.0f + (float)(*ptr2++ - '0');
 
                     if(*ptr2 == '.') {
-                        while(isdigitW(*++ptr2)) {
+                        while(iswdigit(*++ptr2)) {
                             fval += e * (float)(*ptr2++ - '0');
                             e *= 0.1f;
                         }
                     }
 
-                    sprintfW(buf, formatW, fval * 0.01f);
+                    swprintf(buf, ARRAY_SIZE(buf), formatW, fval * 0.01f);
                     set_opacity(This, buf);
                 }else {
                     FIXME("unknown param %s\n", debugstr_wn(ptr2, ptr-ptr2));
@@ -2974,7 +2974,7 @@ static void update_filter(HTMLStyle *This)
             }while(*ptr != ')');
         }else {
             FIXME("unknown filter %s\n", debugstr_wn(ptr2, ptr-ptr2));
-            ptr = strchrW(ptr, ')');
+            ptr = wcschr(ptr, ')');
             if(!ptr)
                 break;
             ptr++;
@@ -5250,7 +5250,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSSt
         return hres;
 
     nsAString_GetData(&val_str, &val);
-    val_len = val ? strlenW(val) : 0;
+    val_len = val ? lstrlenW(val) : 0;
 
     nsAString_Init(&pos_str, NULL);
     hres = get_nsstyle_attr_nsval(This->nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
@@ -5259,7 +5259,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSSt
         DWORD posy_len;
 
         nsAString_GetData(&pos_str, &pos);
-        posy = strchrW(pos, ' ');
+        posy = wcschr(pos, ' ');
         if(!posy) {
             static const WCHAR zero_pxW[] = {' ','0','p','x',0};
 
@@ -5267,7 +5267,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSSt
             posy = zero_pxW;
         }
 
-        posy_len = strlenW(posy);
+        posy_len = lstrlenW(posy);
         pos_val = heap_alloc((val_len+posy_len+1)*sizeof(WCHAR));
         if(pos_val) {
             if(val_len)
@@ -5305,10 +5305,10 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundPositionX(IHTMLCSSSt
         const PRUnichar *pos, *space;
 
         nsAString_GetData(&pos_str, &pos);
-        space = strchrW(pos, ' ');
+        space = wcschr(pos, ' ');
         if(!space) {
             WARN("no space in %s\n", debugstr_w(pos));
-            space = pos + strlenW(pos);
+            space = pos + lstrlenW(pos);
         }
 
         if(space != pos) {
@@ -5345,7 +5345,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionY(IHTMLCSSSt
         return hres;
 
     nsAString_GetData(&val_str, &val);
-    val_len = val ? strlenW(val) : 0;
+    val_len = val ? lstrlenW(val) : 0;
 
     nsAString_Init(&pos_str, NULL);
     hres = get_nsstyle_attr_nsval(This->nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
@@ -5354,7 +5354,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionY(IHTMLCSSSt
         DWORD posx_len;
 
         nsAString_GetData(&pos_str, &pos);
-        space = strchrW(pos, ' ');
+        space = wcschr(pos, ' ');
         if(space) {
             space++;
         }else {
@@ -5403,7 +5403,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundPositionY(IHTMLCSSSt
         const PRUnichar *pos, *posy;
 
         nsAString_GetData(&pos_str, &pos);
-        posy = strchrW(pos, ' ');
+        posy = wcschr(pos, ' ');
         if(posy) {
             ret = SysAllocString(posy+1);
             if(!ret)

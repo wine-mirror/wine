@@ -180,7 +180,7 @@ static void set_print_template(nsIPrintSettings *settings, LPCWSTR template, BOO
             GetLocalTime(&systime);
             GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &systime, NULL, p,
                     sizeof(nstemplate)-(p-nstemplate)*sizeof(WCHAR));
-            p += strlenW(p);
+            p += lstrlenW(p);
             ptr++;
             break;
         }

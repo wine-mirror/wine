@@ -1398,8 +1398,8 @@ static BOOL HTMLInputElement_is_text_edit(HTMLDOMNode *iface)
     nsres = nsIDOMHTMLInputElement_GetType(This->nsinput, &nsstr);
     if(NS_SUCCEEDED(nsres)) {
         nsAString_GetData(&nsstr, &type);
-        ret = !strcmpW(type, buttonW) || !strcmpW(type, hiddenW) || !strcmpW(type, passwordW)
-            || !strcmpW(type, resetW) || !strcmpW(type, submitW) || !strcmpW(type, textW);
+        ret = !wcscmp(type, buttonW) || !wcscmp(type, hiddenW) || !wcscmp(type, passwordW)
+            || !wcscmp(type, resetW) || !wcscmp(type, submitW) || !wcscmp(type, textW);
     }
     nsAString_Finish(&nsstr);
     return ret;

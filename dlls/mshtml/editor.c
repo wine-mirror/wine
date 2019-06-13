@@ -239,7 +239,7 @@ static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_
             nsIDOMElement_GetTagName(child_elem, &tag_str);
             nsAString_GetData(&tag_str, &ctag);
 
-            if(!strcmpiW(ctag, tag))
+            if(!wcsicmp(ctag, tag))
                 /* FIXME: remove node if there are no more attributes */
                 nsIDOMElement_RemoveAttribute(child_elem, attr_str);
 
@@ -286,7 +286,7 @@ static void get_font_size(HTMLDocumentNode *doc, WCHAR *ret)
             nsIDOMElement_GetTagName(elem, &tag_str);
             nsAString_GetData(&tag_str, &tag);
 
-            if(!strcmpiW(tag, fontW)) {
+            if(!wcsicmp(tag, fontW)) {
                 nsAString val_str;
                 const PRUnichar *val;
 
@@ -295,7 +295,7 @@ static void get_font_size(HTMLDocumentNode *doc, WCHAR *ret)
                 get_elem_attr_value(elem, sizeW, &val_str, &val);
                 if(*val) {
                     TRACE("found size %s\n", debugstr_w(val));
-                    strcpyW(ret, val);
+                    lstrcpyW(ret, val);
                 }
 
                 nsAString_Finish(&val_str);
@@ -599,7 +599,7 @@ static HRESULT exec_fontsize(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *i
 
         get_font_size(doc, val);
         V_VT(out) = VT_I4;
-        V_I4(out) = strtolW(val, NULL, 10);
+        V_I4(out) = wcstol(val, NULL, 10);
     }
 
     if(in) {
@@ -806,23 +806,23 @@ static HRESULT exec_composesettings(HTMLDocumentNode *doc, DWORD cmdexecopt, VAR
     ptr = V_BSTR(in);
     if(*ptr == '1')
         exec_bold(doc, cmdexecopt, NULL, NULL);
-    ptr = strchrW(ptr, ',');
+    ptr = wcschr(ptr, ',');
     if(!ptr)
         return S_OK;
 
     if(*++ptr == '1')
         exec_italic(doc, cmdexecopt, NULL, NULL);
-    ptr = strchrW(ptr, ',');
+    ptr = wcschr(ptr, ',');
     if(!ptr)
         return S_OK;
 
     if(*++ptr == '1')
         exec_underline(doc, cmdexecopt, NULL, NULL);
-    ptr = strchrW(ptr, ',');
+    ptr = wcschr(ptr, ',');
     if(!ptr)
         return S_OK;
 
-    if(isdigitW(*++ptr)) {
+    if(iswdigit(*++ptr)) {
         VARIANT v;
 
         V_VT(&v) = VT_I4;
@@ -830,19 +830,19 @@ static HRESULT exec_composesettings(HTMLDocumentNode *doc, DWORD cmdexecopt, VAR
 
         exec_fontsize(doc, cmdexecopt, &v, NULL);
     }
-    ptr = strchrW(ptr, ',');
+    ptr = wcschr(ptr, ',');
     if(!ptr)
         return S_OK;
 
     if(*++ptr != ',')
         FIXME("set font color\n");
-    ptr = strchrW(ptr, ',');
+    ptr = wcschr(ptr, ',');
     if(!ptr)
         return S_OK;
 
     if(*++ptr != ',')
         FIXME("set background color\n");
-    ptr = strchrW(ptr, ',');
+    ptr = wcschr(ptr, ',');
     if(!ptr)
         return S_OK;
 
@@ -1028,27 +1028,27 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
                     type = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
                     SendMessageW((HWND)lparam, CB_GETLBTEXT, item, (LPARAM)type);
 
-                    if (!strcmpW(type, wszOther))
+                    if (!wcscmp(type, wszOther))
                         *type = '\0';
 
                     /* get current URL */
                     len = GetWindowTextLengthW(hwndURL);
-                    url = HeapAlloc(GetProcessHeap(), 0, (len + strlenW(type) + 3) * sizeof(WCHAR));
+                    url = HeapAlloc(GetProcessHeap(), 0, (len + lstrlenW(type) + 3) * sizeof(WCHAR));
                     GetWindowTextW(hwndURL, url, len + 1);
 
                     /* strip off old protocol */
-                    p = strchrW(url, ':');
+                    p = wcschr(url, ':');
                     if (p && p[1] == '/' && p[2] == '/')
                         p += 3;
                     if (!p) p = url;
-                    memmove(url + (*type != '\0' ? strlenW(type) + 2 : 0), p, (len + 1 - (p - url)) * sizeof(WCHAR));
+                    memmove(url + (*type != '\0' ? lstrlenW(type) + 2 : 0), p, (len + 1 - (p - url)) * sizeof(WCHAR));
 
                     /* add new protocol */
                     if (*type != '\0')
                     {
-                        memcpy(url, type, (strlenW(type) + 1) * sizeof(WCHAR));
-                        if (strcmpW(type, wszMailto) && strcmpW(type, wszNews))
-                            memcpy(url + strlenW(type), wszSlashSlash, sizeof(wszSlashSlash));
+                        memcpy(url, type, (lstrlenW(type) + 1) * sizeof(WCHAR));
+                        if (wcscmp(type, wszMailto) && wcscmp(type, wszNews))
+                            memcpy(url + lstrlenW(type), wszSlashSlash, sizeof(wszSlashSlash));
                     }
 
                     SetWindowTextW(hwndURL, url);

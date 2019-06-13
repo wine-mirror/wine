@@ -468,7 +468,7 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
 
         nsAString_GetData(&method_str, &method);
         TRACE("method is %s\n", debugstr_w(method));
-        is_post_submit = !strcmpiW(method, postW);
+        is_post_submit = !wcsicmp(method, postW);
     }
     nsAString_Finish(&method_str);
 
@@ -693,7 +693,7 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
     if('0' <= *name && *name <= '9') {
         WCHAR *end_ptr;
 
-        i = strtoulW(name, &end_ptr, 10);
+        i = wcstoul(name, &end_ptr, 10);
         if(!*end_ptr && i < len) {
             *pid = MSHTML_DISPID_CUSTOM_MIN + i;
             return S_OK;
@@ -730,7 +730,7 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
             break;
         }
         nsAString_GetData(&nsstr, &str);
-        if(!strcmpiW(str, name)) {
+        if(!wcsicmp(str, name)) {
             nsIDOMElement_Release(elem);
             /* FIXME: using index for dispid */
             *pid = MSHTML_DISPID_CUSTOM_MIN + i;
@@ -742,7 +742,7 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         nsres = get_elem_attr_value(elem, nameW, &name_str, &str);
         nsIDOMElement_Release(elem);
         if(NS_SUCCEEDED(nsres)) {
-            if(!strcmpiW(str, name)) {
+            if(!wcsicmp(str, name)) {
                 nsAString_Finish(&name_str);
                 /* FIXME: using index for dispid */
                 *pid = MSHTML_DISPID_CUSTOM_MIN + i;

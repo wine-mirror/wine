@@ -1021,9 +1021,9 @@ static HRESULT nsstr_to_truncated_bstr(const nsAString *nsstr, BSTR *ret_ptr)
 
     nsAString_GetData(nsstr, &str);
 
-    for(ptr = str; isdigitW(*ptr); ptr++);
+    for(ptr = str; iswdigit(*ptr); ptr++);
     if(*ptr == '.') {
-        for(end = ptr++; isdigitW(*ptr); ptr++);
+        for(end = ptr++; iswdigit(*ptr); ptr++);
         if(*ptr)
             end = NULL;
     }
@@ -1178,7 +1178,7 @@ static HRESULT WINAPI HTMLTable_put_cellSpacing(IHTMLTable *iface, VARIANT v)
         break;
     case VT_I4: {
         static const WCHAR formatW[] = {'%','d',0};
-        sprintfW(buf, formatW, V_I4(&v));
+        swprintf(buf, ARRAY_SIZE(buf), formatW, V_I4(&v));
         nsAString_InitDepend(&nsstr, buf);
         break;
     }

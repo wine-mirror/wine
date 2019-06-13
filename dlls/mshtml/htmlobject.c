@@ -268,7 +268,7 @@ static HRESULT WINAPI HTMLObjectElement_put_width(IHTMLObjectElement *iface, VAR
     switch(V_VT(&v)) {
     case VT_I4: {
         static const WCHAR formatW[] = {'%','d',0};
-        sprintfW(buf, formatW, V_I4(&v));
+        swprintf(buf, ARRAY_SIZE(buf), formatW, V_I4(&v));
         break;
     }
     default:
@@ -327,7 +327,7 @@ static HRESULT WINAPI HTMLObjectElement_put_height(IHTMLObjectElement *iface, VA
     switch(V_VT(&v)) {
     case VT_I4: {
         static const WCHAR formatW[] = {'%','d',0};
-        sprintfW(buf, formatW, V_I4(&v));
+        swprintf(buf, ARRAY_SIZE(buf), formatW, V_I4(&v));
         break;
     }
     default:

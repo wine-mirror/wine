@@ -95,7 +95,7 @@ static int comp_value(const WCHAR *ptr, int dpc)
     while(dpc--) {
         if(!*ptr)
             ret *= 16;
-        else if(isdigitW(ch = *ptr++))
+        else if(iswdigit(ch = *ptr++))
             ret = ret*16 + (ch-'0');
         else if('a' <= ch && ch <= 'f')
             ret = ret*16 + (ch-'a') + 10;
@@ -113,7 +113,7 @@ static int loose_hex_to_rgb(const WCHAR *hex)
 {
     int len, dpc;
 
-    len = strlenW(hex);
+    len = lstrlenW(hex);
     if(*hex == '#') {
         hex++;
         len--;
@@ -141,7 +141,7 @@ HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
 
     if(*color != '#') {
         for(i=0; i < ARRAY_SIZE(keyword_table); i++) {
-            if(!strcmpiW(color, keyword_table[i].keyword))
+            if(!wcsicmp(color, keyword_table[i].keyword))
                 rgb = keyword_table[i].rgb;
         }
     }
@@ -152,7 +152,7 @@ HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
     if(!*ret)
         return E_OUTOFMEMORY;
 
-    sprintfW(*ret, formatW, rgb>>16, (rgb>>8)&0xff, rgb&0xff);
+    swprintf(*ret, 8, formatW, rgb>>16, (rgb>>8)&0xff, rgb&0xff);
 
     TRACE("%s -> %s\n", debugstr_w(color), debugstr_w(*ret));
     return S_OK;
@@ -196,7 +196,7 @@ static HRESULT return_nscolor(nsresult nsres, nsAString *nsstr, VARIANT *p)
 
     if(*color == '#') {
         V_VT(p) = VT_I4;
-        V_I4(p) = strtolW(color+1, NULL, 16);
+        V_I4(p) = wcstol(color+1, NULL, 16);
     }else {
         V_VT(p) = VT_BSTR;
         V_BSTR(p) = SysAllocString(color);
@@ -621,11 +621,11 @@ static HRESULT WINAPI HTMLBodyElement_put_scroll(IHTMLBodyElement *iface, BSTR v
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     /* Emulate with CSS visibility attribute */
-    if(!strcmpW(v, yesW)) {
+    if(!wcscmp(v, yesW)) {
         val = scrollW;
-    }else if(!strcmpW(v, autoW)) {
+    }else if(!wcscmp(v, autoW)) {
         val = visibleW;
-    }else if(!strcmpW(v, noW)) {
+    }else if(!wcscmp(v, noW)) {
         val = hiddenW;
     }else {
         WARN("Invalid argument %s\n", debugstr_w(v));
@@ -652,11 +652,11 @@ static HRESULT WINAPI HTMLBodyElement_get_scroll(IHTMLBodyElement *iface, BSTR *
     if(!overflow || !*overflow) {
         *p = NULL;
         hres = S_OK;
-    }else if(!strcmpW(overflow, visibleW) || !strcmpW(overflow, autoW)) {
+    }else if(!wcscmp(overflow, visibleW) || !wcscmp(overflow, autoW)) {
         ret = autoW;
-    }else if(!strcmpW(overflow, scrollW)) {
+    }else if(!wcscmp(overflow, scrollW)) {
         ret = yesW;
-    }else if(!strcmpW(overflow, hiddenW)) {
+    }else if(!wcscmp(overflow, hiddenW)) {
         ret = noW;
     }else {
         TRACE("Defaulting %s to NULL\n", debugstr_w(overflow));

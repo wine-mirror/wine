@@ -454,7 +454,7 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
             break;
         }
 
-        if(id && !strcmpiW(id, name))
+        if(id && !wcsicmp(id, name))
             window = window_iter;
 
         SysFreeString(id);
@@ -991,7 +991,7 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
         return E_UNEXPECTED;
 
     if(name && *name == '_') {
-        if(!strcmpW(name, _selfW)) {
+        if(!wcscmp(name, _selfW)) {
             if((features && *features) || replace)
                 FIXME("Unsupported arguments for _self target\n");
 
@@ -3117,7 +3117,7 @@ HRESULT search_window_props(HTMLInnerWindow *This, BSTR bstrName, DWORD grfdex, 
 
     for(i=0; i < This->global_prop_cnt; i++) {
         /* FIXME: case sensitivity */
-        if(!strcmpW(This->global_props[i].name, bstrName)) {
+        if(!wcscmp(This->global_props[i].name, bstrName)) {
             *pid = MSHTML_DISPID_CUSTOM_MIN+i;
             return S_OK;
         }
