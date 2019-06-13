@@ -38,8 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 typedef struct {
     BaseFilter filter;
     BaseInputPin sink;
-    BaseOutputPin capture;
-    BaseOutputPin *preview;
+    BaseOutputPin capture, preview;
 } SmartTeeFilter;
 
 static inline SmartTeeFilter *impl_from_BaseFilter(BaseFilter *filter)
@@ -127,7 +126,7 @@ static IPin *smart_tee_get_pin(BaseFilter *iface, unsigned int index)
     else if (index == 1)
         return &filter->capture.pin.IPin_iface;
     else if (index == 2)
-        return &filter->preview->pin.IPin_iface;
+        return &filter->preview.pin.IPin_iface;
     return NULL;
 }
 
@@ -137,8 +136,7 @@ static void smart_tee_destroy(BaseFilter *iface)
 
     strmbase_sink_cleanup(&filter->sink);
     strmbase_source_cleanup(&filter->capture);
-    if (filter->preview)
-        BaseOutputPinImpl_Release(&filter->preview->pin.IPin_iface);
+    strmbase_source_cleanup(&filter->preview);
     strmbase_filter_cleanup(&filter->filter);
     CoTaskMemFree(filter);
 }
@@ -316,14 +314,14 @@ static HRESULT WINAPI SmartTeeFilterInput_Receive(BaseInputPin *base, IMediaSamp
         IMediaSample_Release(captureSample);
 
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->preview->pin.pConnectedTo)
-        hrPreview = copy_sample(inputSample, This->preview->pAllocator, &previewSample);
+    if (This->preview.pin.pConnectedTo)
+        hrPreview = copy_sample(inputSample, This->preview.pAllocator, &previewSample);
     LeaveCriticalSection(&This->filter.csFilter);
     /* No timestamps on preview stream: */
     if (SUCCEEDED(hrPreview))
         hrPreview = IMediaSample_SetTime(previewSample, NULL, NULL);
     if (SUCCEEDED(hrPreview))
-        hrPreview = BaseOutputPinImpl_Deliver(This->preview, previewSample);
+        hrPreview = BaseOutputPinImpl_Deliver(&This->preview, previewSample);
     if (previewSample)
         IMediaSample_Release(previewSample);
 
@@ -531,22 +529,20 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void**)&This->sink.pAllocator);
     if (FAILED(hr))
-        goto end;
+    {
+        *phr = hr;
+        strmbase_filter_cleanup(&This->filter);
+        return NULL;
+    }
 
     capturePinInfo.pFilter = &This->filter.IBaseFilter_iface;
     strmbase_source_init(&This->capture, &SmartTeeFilterCaptureVtbl, &capturePinInfo,
             &SmartTeeFilterCaptureFuncs, &This->filter.csFilter);
 
     previewPinInfo.pFilter = &This->filter.IBaseFilter_iface;
-    hr = BaseOutputPin_Construct(&SmartTeeFilterPreviewVtbl, sizeof(BaseOutputPin), &previewPinInfo,
-            &SmartTeeFilterPreviewFuncs, &This->filter.csFilter, (IPin**)&This->preview);
+    strmbase_source_init(&This->preview, &SmartTeeFilterPreviewVtbl, &previewPinInfo,
+            &SmartTeeFilterPreviewFuncs, &This->filter.csFilter);
 
-end:
-    *phr = hr;
-    if (SUCCEEDED(hr)) {
-        return &This->filter.IUnknown_inner;
-    } else {
-        strmbase_filter_cleanup(&This->filter);
-        return NULL;
-    }
+    *phr = S_OK;
+    return &This->filter.IUnknown_inner;
 }
