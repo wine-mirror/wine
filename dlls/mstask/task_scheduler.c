@@ -423,7 +423,7 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_Delete(ITaskScheduler *iface, LPCWST
 
     TRACE("%p, %s\n", iface, debugstr_w(name));
 
-    if (strchrW(name, '.')) return E_INVALIDARG;
+    if (wcschr(name, '.')) return E_INVALIDARG;
 
     GetWindowsDirectoryW(task_name, MAX_PATH);
     lstrcatW(task_name, tasksW);
@@ -467,7 +467,7 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_AddWorkItem(ITaskScheduler *iface, L
 
     TRACE("%p, %s, %p\n", iface, debugstr_w(name), item);
 
-    if (strchrW(name, '.')) return E_INVALIDARG;
+    if (wcschr(name, '.')) return E_INVALIDARG;
 
     GetWindowsDirectoryW(task_name, MAX_PATH);
     lstrcatW(task_name, tasksW);

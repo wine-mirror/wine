@@ -1813,10 +1813,10 @@ static HRESULT WINAPI MSTASK_IPersistFile_GetCurFile(IPersistFile *iface, LPOLES
 
     TRACE("(%p, %p)\n", iface, file_name);
 
-    *file_name = CoTaskMemAlloc((strlenW(This->task_name) + 1) * sizeof(WCHAR));
+    *file_name = CoTaskMemAlloc((lstrlenW(This->task_name) + 1) * sizeof(WCHAR));
     if (!*file_name) return E_OUTOFMEMORY;
 
-    strcpyW(*file_name, This->task_name);
+    lstrcpyW(*file_name, This->task_name);
     return S_OK;
 }
 
@@ -1893,7 +1893,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
 
     TRACE("(%s, %p)\n", debugstr_w(name), task);
 
-    if (strchrW(name, '.')) return E_INVALIDARG;
+    if (wcschr(name, '.')) return E_INVALIDARG;
 
     GetWindowsDirectoryW(task_name, MAX_PATH);
     lstrcatW(task_name, tasksW);
