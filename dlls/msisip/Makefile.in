@@ -1,5 +1,7 @@
 MODULE    = msisip.dll
 IMPORTS   = crypt32 ole32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c
