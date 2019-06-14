@@ -89,6 +89,8 @@ LPVOID WINAPI CreateFiberEx( SIZE_T stack_commit, SIZE_T stack_reserve, DWORD fl
                              LPFIBER_START_ROUTINE start, LPVOID param )
 {
     struct fiber_data *fiber;
+    INITIAL_TEB stack;
+    NTSTATUS status;
 
     if (!(fiber = HeapAlloc( GetProcessHeap(), 0, sizeof(*fiber) )))
     {
@@ -96,15 +98,15 @@ LPVOID WINAPI CreateFiberEx( SIZE_T stack_commit, SIZE_T stack_reserve, DWORD fl
         return NULL;
     }
 
-    /* FIXME: should use the thread stack allocation routines here */
-    if (!stack_reserve) stack_reserve = 1024*1024;
-    if(!(fiber->stack_allocation = VirtualAlloc( 0, stack_reserve, MEM_COMMIT, PAGE_READWRITE )))
+    if ((status = RtlCreateUserStack( stack_commit, stack_reserve, 0, 1, 1, &stack )))
     {
-        HeapFree( GetProcessHeap(), 0, fiber );
+        SetLastError( RtlNtStatusToDosError(status) );
         return NULL;
     }
-    fiber->stack_base  = (char *)fiber->stack_allocation + stack_reserve;
-    fiber->stack_limit = fiber->stack_allocation;
+
+    fiber->stack_allocation = stack.DeallocationStack;
+    fiber->stack_base = stack.StackBase;
+    fiber->stack_limit = stack.StackLimit;
     fiber->param       = param;
     fiber->except      = (void *)-1;
     fiber->start       = start;
@@ -127,7 +129,7 @@ void WINAPI DeleteFiber( LPVOID fiber_ptr )
         HeapFree( GetProcessHeap(), 0, fiber );
         ExitThread(1);
     }
-    VirtualFree( fiber->stack_allocation, 0, MEM_RELEASE );
+    RtlFreeUserStack( fiber->stack_allocation );
     HeapFree( GetProcessHeap(), 0, fiber->fls_slots );
     HeapFree( GetProcessHeap(), 0, fiber );
 }
