@@ -72,7 +72,7 @@ static ULONG WINAPI IDirectMusic8Impl_Release(LPDIRECTMUSIC8 iface)
     TRACE("(%p)->(): new ref = %u\n", This, ref);
 
     if (!ref) {
-        IReferenceClock_Release(&This->master_clock->IReferenceClock_iface);
+        IReferenceClock_Release(This->master_clock);
         if (This->dsound)
             IDirectSound_Release(This->dsound);
         HeapFree(GetProcessHeap(), 0, This->system_ports);
@@ -246,9 +246,9 @@ static HRESULT WINAPI IDirectMusic8Impl_GetMasterClock(LPDIRECTMUSIC8 iface, LPG
     TRACE("(%p)->(%p, %p)\n", This, guid_clock, reference_clock);
 
     if (guid_clock)
-        *guid_clock = This->master_clock->pClockInfo.guidClock;
+        *guid_clock = GUID_NULL;
     if (reference_clock) {
-        *reference_clock = &This->master_clock->IReferenceClock_iface;
+        *reference_clock = This->master_clock;
         IReferenceClock_AddRef(*reference_clock);
     }
 

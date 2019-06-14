@@ -111,7 +111,7 @@ struct IDirectMusic8Impl {
     IDirectMusic8 IDirectMusic8_iface;
     LONG ref;
     IDirectSound *dsound;
-    IReferenceClockImpl *master_clock;
+    IReferenceClock *master_clock;
     IDirectMusicPort **ports;
     int num_ports;
     port_info *system_ports;
