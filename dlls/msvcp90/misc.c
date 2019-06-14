@@ -1893,7 +1893,7 @@ typedef struct compact_block
 /* Return the integer base-2 logarithm of (x|1). Result is 0 for x == 0. */
 static inline unsigned int log2i(unsigned int x)
 {
-#ifdef HAVE___BUILTIN_CLZ
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
     return __builtin_clz(x|1) ^ 0x1f;
 #else
     static const unsigned int l[] =
