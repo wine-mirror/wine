@@ -415,6 +415,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     SIZE_T extra_stack = PTHREAD_STACK_MIN;
     data_size_t len = 0;
     struct object_attributes *objattr = NULL;
+    INITIAL_TEB stack;
 
     if (process != NtCurrentProcess())
     {
@@ -506,8 +507,12 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     info->entry_point = start;
     info->entry_arg   = param;
 
-    if ((status = virtual_alloc_thread_stack( teb, stack_reserve, stack_commit, &extra_stack )))
+    if ((status = virtual_alloc_thread_stack( &stack, stack_reserve, stack_commit, &extra_stack )))
         goto error;
+
+    teb->Tib.StackBase = stack.StackBase;
+    teb->Tib.StackLimit = stack.StackLimit;
+    teb->DeallocationStack = stack.DeallocationStack;
 
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd  = request_pipe[1];

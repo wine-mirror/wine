@@ -3787,6 +3787,7 @@ void __wine_process_init(void)
     ANSI_STRING func_name;
     UNICODE_STRING nt_name;
     void * (CDECL *init_func)(void);
+    INITIAL_TEB stack;
 
     thread_init();
 
@@ -3838,11 +3839,15 @@ void __wine_process_init(void)
     RemoveEntryList( &wm->ldr.InMemoryOrderModuleList );
     InsertHeadList( &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
 
-    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, NULL )) != STATUS_SUCCESS)
+    if ((status = virtual_alloc_thread_stack( &stack, 0, 0, NULL )) != STATUS_SUCCESS)
     {
         ERR( "Main exe initialization for %s failed, status %x\n",
              debugstr_w(wm->ldr.FullDllName.Buffer), status );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
+    NtCurrentTeb()->Tib.StackBase = stack.StackBase;
+    NtCurrentTeb()->Tib.StackLimit = stack.StackLimit;
+    NtCurrentTeb()->DeallocationStack = stack.DeallocationStack;
+
     server_init_process_done();
 }

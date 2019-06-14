@@ -1927,7 +1927,7 @@ NTSTATUS virtual_create_builtin_view( void *module )
 /***********************************************************************
  *           virtual_alloc_thread_stack
  */
-NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size )
+NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size )
 {
     struct file_view *view;
     NTSTATUS status;
@@ -1981,9 +1981,11 @@ NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commi
     }
 
     /* note: limit is lower than base since the stack grows down */
-    teb->DeallocationStack = view->base;
-    teb->Tib.StackBase     = (char *)view->base + view->size;
-    teb->Tib.StackLimit    = (char *)view->base + 2 * page_size;
+    stack->OldStackBase = 0;
+    stack->OldStackLimit = 0;
+    stack->DeallocationStack = view->base;
+    stack->StackBase = (char *)view->base + view->size;
+    stack->StackLimit = (char *)view->base + 2 * page_size;
 done:
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
@@ -2004,6 +2006,42 @@ void virtual_clear_thread_stack( void *stack_end )
     if (force_exec_prot) mprotect( stack, size, PROT_READ | PROT_WRITE | PROT_EXEC );
 }
 
+/**********************************************************************
+ *           RtlCreateUserStack (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCreateUserStack( SIZE_T commit, SIZE_T reserve, ULONG zero_bits,
+                                    SIZE_T commit_align, SIZE_T reserve_align, INITIAL_TEB *stack )
+{
+    TRACE("commit %#lx, reserve %#lx, zero_bits %u, commit_align %#lx, reserve_align %#lx, stack %p\n",
+            commit, reserve, zero_bits, commit_align, reserve_align, stack);
+
+    if (!commit_align || !reserve_align)
+        return STATUS_INVALID_PARAMETER;
+
+    if (!commit || !reserve)
+    {
+        IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+        if (!reserve) reserve = nt->OptionalHeader.SizeOfStackReserve;
+        if (!commit) commit = nt->OptionalHeader.SizeOfStackCommit;
+    }
+
+    reserve = (reserve + reserve_align - 1) & ~(reserve_align - 1);
+    commit = (commit + commit_align - 1) & ~(commit_align - 1);
+
+    return virtual_alloc_thread_stack( stack, reserve, commit, NULL );
+}
+
+/**********************************************************************
+ *           RtlFreeUserStack (NTDLL.@)
+ */
+void WINAPI RtlFreeUserStack( void *stack )
+{
+    SIZE_T size = 0;
+
+    TRACE("stack %p\n", stack);
+
+    NtFreeVirtualMemory( NtCurrentProcess(), &stack, &size, MEM_RELEASE );
+}
 
 /***********************************************************************
  *           virtual_handle_fault

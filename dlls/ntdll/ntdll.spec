@@ -526,6 +526,7 @@
 @ stdcall RtlCreateUnicodeStringFromAsciiz(ptr str)
 @ stdcall RtlCreateUserProcess(ptr long ptr ptr ptr long long long long ptr)
 @ stub RtlCreateUserSecurityObject
+@ stdcall RtlCreateUserStack(long long long long long ptr)
 @ stdcall RtlCreateUserThread(long ptr long ptr long long ptr ptr ptr ptr)
 @ stub RtlCustomCPToUnicodeN
 @ stub RtlCutoverTimeToSystemTime
@@ -644,7 +645,7 @@
 @ stdcall RtlFreeSid (ptr)
 @ stdcall RtlFreeThreadActivationContextStack()
 @ stdcall RtlFreeUnicodeString(ptr)
-@ stub RtlFreeUserThreadStack
+@ stdcall RtlFreeUserStack(ptr)
 @ stdcall RtlGUIDFromString(ptr ptr)
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr)
