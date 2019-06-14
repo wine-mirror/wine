@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winuser.h"
 #include "winreg.h"
 #include "cfgmgr32.h"
@@ -30,7 +31,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
@@ -71,9 +71,9 @@ static BOOL hardware_id_matches(const WCHAR *id, const WCHAR *device_ids)
 {
     while (*device_ids)
     {
-        if (!strcmpW(id, device_ids))
+        if (!wcscmp(id, device_ids))
             return TRUE;
-        device_ids += strlenW(device_ids) + 1;
+        device_ids += lstrlenW(device_ids) + 1;
     }
     return FALSE;
 }
@@ -128,7 +128,7 @@ BOOL WINAPI UpdateDriverForPlugAndPlayDevicesW(HWND parent, const WCHAR *hardwar
         if (!SetupDiGetDeviceInstallParamsW(set, &device, &params))
             continue;
 
-        strcpyW(params.DriverPath, inf_path);
+        lstrcpyW(params.DriverPath, inf_path);
         params.Flags |= DI_ENUMSINGLEINF;
         if (!SetupDiSetDeviceInstallParamsW(set, &device, &params))
             continue;
