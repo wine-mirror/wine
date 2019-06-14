@@ -523,7 +523,7 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
     nsAString_Finish(&tag_str);
     elem_vector_normalize(&buf);
 
-    TRACE("fount %d tags\n", buf.len);
+    TRACE("found %d tags\n", buf.len);
 
     *pdisp = (IDispatch*)HTMLElementCollection_Create(buf.buf, buf.len,
                                                       dispex_compat_mode(&This->dispex));
