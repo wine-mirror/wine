@@ -3681,7 +3681,7 @@ msgstr "Caractere inválido"
 
 #: jscript.rc:43
 msgid "Unterminated string constant"
-msgstr "String constante não terminada"
+msgstr "Cadeia constante não terminada"
 
 #: jscript.rc:44
 msgid "'return' statement outside of function"
@@ -6916,7 +6916,7 @@ msgstr "Dados inválidos.\n"
 
 #: mferror.mc:186
 msgid "Realtime support is not available.\n"
-msgstr "Suporte Realtime não disponível.\n"
+msgstr "Suporte em tempo real não disponível.\n"
 
 #: mferror.mc:193
 msgid "Unsupported rate.\n"
@@ -6928,7 +6928,7 @@ msgstr "Tipo não suportado.\n"
 
 #: mferror.mc:207
 msgid "Reversing is not supported.\n"
-msgstr "Revesão não suportado.\n"
+msgstr "Reversão não suportado.\n"
 
 #: mferror.mc:214
 msgid "Unsupported rate transition.\n"
@@ -6952,11 +6952,11 @@ msgstr "Relógio não disponível.\n"
 
 #: mferror.mc:263
 msgid "Multiple subscribers are not supported.\n"
-msgstr "Múltiplos assisentes não suportados.\n"
+msgstr "Múltiplos assistentes não suportados.\n"
 
 #: mferror.mc:270
 msgid "The timer was orphaned.\n"
-msgstr "O timer está orfão.\n"
+msgstr "O timer está órfão.\n"
 
 #: mferror.mc:277
 msgid "State transition is pending.\n"
@@ -7020,7 +7020,7 @@ msgstr "Vetor de Propriedade não permitido.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr "Propriedade do vetor ncessária.\n"
+msgstr "Propriedade do vetor necessária.\n"
 
 #: mferror.mc:389
 msgid "Operation was cancelled.\n"
@@ -7028,7 +7028,7 @@ msgstr "Operação cancelada.\n"
 
 #: mferror.mc:396
 msgid "Bytestream is not seekable.\n"
-msgstr "Bytestream não é pesquisavel.\n"
+msgstr "Bytestream não é pesquisável.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
@@ -7331,7 +7331,7 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
+"Instalador do Windows %s\n"
 "\n"
 "Modo de usar:\n"
 "msiexec comando {parâmetro requisitado} [parâmetro opcional]\n"
@@ -9526,19 +9526,19 @@ msgstr "Horário de verão da Europa Central"
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
-msgstr "Hora padrão do Iran"
+msgstr "Hora padrão do Irã"
 
 #: tzres.rc:119
 msgid "Iran Daylight Time"
-msgstr "Horário de verão do Iran"
+msgstr "Horário de verão do Irã"
 
 #: tzres.rc:150
 msgid "Namibia Standard Time"
-msgstr "Hora padrão da Nanibia"
+msgstr "Hora padrão da Namíbia"
 
 #: tzres.rc:151
 msgid "Namibia Daylight Time"
-msgstr "Horário de verão da Nanibia"
+msgstr "Horário de verão da Namíbia"
 
 #: tzres.rc:200
 msgid "Tonga Standard Time"
@@ -9630,11 +9630,11 @@ msgstr "Horário de verão de Samoa"
 
 #: tzres.rc:124
 msgid "Kaliningrad Standard Time"
-msgstr "Hora padrão de kalingrado"
+msgstr "Hora padrão de Kaliningrado"
 
 #: tzres.rc:125
 msgid "Kaliningrad Daylight Time"
-msgstr "Horário de verão de Kalingrado"
+msgstr "Horário de verão de Kaliningrado"
 
 #: tzres.rc:166
 msgid "Pacific Standard Time (Mexico)"
@@ -9654,11 +9654,11 @@ msgstr "Horário de verão do Oriente Médio"
 
 #: tzres.rc:198
 msgid "Tokyo Standard Time"
-msgstr "Hora padrão de Tokyo"
+msgstr "Hora padrão de Tóquio"
 
 #: tzres.rc:199
 msgid "Tokyo Daylight Time"
-msgstr "Horário de verão Tokyo"
+msgstr "Horário de verão Tóquio"
 
 #: tzres.rc:130
 msgid "Line Islands Standard Time"
@@ -9674,7 +9674,7 @@ msgstr "Hora padrão da Jordânia"
 
 #: tzres.rc:123
 msgid "Jordan Daylight Time"
-msgstr "Horário de verão da Jordania"
+msgstr "Horário de verão da Jordânia"
 
 #: tzres.rc:78
 msgid "Central Standard Time"
@@ -9778,11 +9778,11 @@ msgstr "Horário de verão Oeste da Europa"
 
 #: tzres.rc:138
 msgid "Montevideo Standard Time"
-msgstr "Hora padrão de Montevidéo"
+msgstr "Hora padrão de Montevidéu"
 
 #: tzres.rc:139
 msgid "Montevideo Daylight Time"
-msgstr "Horário de verão de Montevidéo"
+msgstr "Horário de verão de Montevidéu"
 
 #: tzres.rc:168
 msgid "Pakistan Standard Time"
@@ -9794,11 +9794,11 @@ msgstr "Horário de verão do Paquistão"
 
 #: tzres.rc:62
 msgid "Caucasus Standard Time"
-msgstr "Hora padrão do Caucaso"
+msgstr "Hora padrão do Cáucaso"
 
 #: tzres.rc:63
 msgid "Caucasus Daylight Time"
-msgstr "Horário de verão do Caucaso"
+msgstr "Horário de verão do Cáucaso"
 
 #: tzres.rc:46
 msgid "AUS Eastern Standard Time"
@@ -9894,7 +9894,7 @@ msgstr "Hora padrão da Austrália"
 
 #: tzres.rc:65
 msgid "Cen. Australia Daylight Time"
-msgstr "Horário de verão da Australia Central"
+msgstr "Horário de verão da Austrália Central"
 
 #: tzres.rc:190
 msgid "Sri Lanka Standard Time"
@@ -9902,7 +9902,7 @@ msgstr "Hora padrão do Sri Lanka"
 
 #: tzres.rc:191
 msgid "Sri Lanka Daylight Time"
-msgstr "Horário de verão do Sri lanka"
+msgstr "Horário de verão do Sri Lanka"
 
 #: tzres.rc:30
 msgid "Afghanistan Standard Time"
@@ -9914,15 +9914,15 @@ msgstr "Horário de verão do Afeganistão"
 
 #: tzres.rc:226
 msgid "Yakutsk Standard Time"
-msgstr "Hora padrão de Yakutsk"
+msgstr "Hora padrão de Iacutusque"
 
 #: tzres.rc:227
 msgid "Yakutsk Daylight Time"
-msgstr "Horário de verão de Yakutsk"
+msgstr "Horário de verão de Iacutusque"
 
 #: tzres.rc:176
 msgid "SA Eastern Standard Time"
-msgstr "Hora padrão do Leste da SA"
+msgstr "Hora padrão do Leste da América do Sul"
 
 #: tzres.rc:177
 msgid "SA Eastern Daylight Time"
@@ -9938,15 +9938,15 @@ msgstr "Horário de verão Árabe"
 
 #: tzres.rc:36
 msgid "Arabian Standard Time"
-msgstr "Hora padrão da Arábia Saudia"
+msgstr "Hora padrão da Arábia Saudita"
 
 #: tzres.rc:37
 msgid "Arabian Daylight Time"
-msgstr "Horário de verão da Arábia"
+msgstr "Horário de verão da Arábia Saudita"
 
 #: tzres.rc:174
 msgid "Russian Standard Time"
-msgstr "Hora padrão da Russia"
+msgstr "Hora padrão da Rússia"
 
 #: tzres.rc:175
 msgid "Russian Daylight Time"
@@ -9962,11 +9962,11 @@ msgstr "Horário de verão da România"
 
 #: tzres.rc:98
 msgid "Ekaterinburg Standard Time"
-msgstr "Hora padrão de Ekaterinbugo"
+msgstr "Hora padrão de Ecaterimburgo"
 
 #: tzres.rc:99
 msgid "Ekaterinburg Daylight Time"
-msgstr "Horário de verão de Ekaterinburgo"
+msgstr "Horário de verão de Ecaterimburgo"
 
 #: tzres.rc:192
 msgid "Syria Standard Time"
@@ -10018,7 +10018,7 @@ msgstr "Horário de verão de Bangladesh"
 
 #: tzres.rc:178
 msgid "SA Pacific Standard Time"
-msgstr "Hora padrão do Pacífico da SA"
+msgstr "Hora padrão do Pacífico da América do Sul"
 
 #: tzres.rc:179
 msgid "SA Pacific Daylight Time"
@@ -10038,7 +10038,7 @@ msgstr "Hora padrão do Alasca"
 
 #: tzres.rc:33
 msgid "Alaskan Daylight Time"
-msgstr "Horário de verão do Alaska"
+msgstr "Horário de verão do Alasca"
 
 #: tzres.rc:170
 msgid "Paraguay Standard Time"
@@ -10082,7 +10082,7 @@ msgstr "Horário de verão da Venezuela"
 
 #: tzres.rc:114
 msgid "Hawaiian Standard Time"
-msgstr "Hora padrão do Avai"
+msgstr "Hora padrão do Avaí"
 
 #: tzres.rc:115
 msgid "Hawaiian Daylight Time"
@@ -10114,7 +10114,7 @@ msgstr "Horário de verão Brasil Central"
 
 #: tzres.rc:56
 msgid "Belarus Standard Time"
-msgstr "Hora padrão de Belárus"
+msgstr "Hora padrão de Belarus"
 
 #: tzres.rc:57
 msgid "Belarus Daylight Time"
@@ -10122,7 +10122,7 @@ msgstr "Horário de verão de Belarus"
 
 #: tzres.rc:180
 msgid "SA Western Standard Time"
-msgstr "Hora padrão do Oeste da SA"
+msgstr "Hora padrão do Oeste da América do Sul"
 
 #: tzres.rc:181
 msgid "SA Western Daylight Time"
@@ -10130,11 +10130,11 @@ msgstr "Horário de verão do Oeste da América do Sul"
 
 #: tzres.rc:108
 msgid "Greenland Standard Time"
-msgstr "Hora padrão da Groelândia"
+msgstr "Hora padrão da Groenlândia"
 
 #: tzres.rc:109
 msgid "Greenland Daylight Time"
-msgstr "Horário de verão da Groelândia"
+msgstr "Horário de verão da Groenlândia"
 
 #: tzres.rc:92
 msgid "Easter Island Standard Time"
@@ -10178,11 +10178,11 @@ msgstr "Horário de verão de Singapura"
 
 #: tzres.rc:126
 msgid "Korea Standard Time"
-msgstr "Hora padrão da Koreia"
+msgstr "Hora padrão da Coréia"
 
 #: tzres.rc:127
 msgid "Korea Daylight Time"
-msgstr "Horário de verão da Koreia"
+msgstr "Horário de verão da Coréia"
 
 #: tzres.rc:86
 msgid "E. Africa Standard Time"
@@ -10202,7 +10202,7 @@ msgstr "Horário de verão FLE"
 
 #: tzres.rc:90
 msgid "E. South America Standard Time"
-msgstr "Hora padrão de Brasilia"
+msgstr "Hora padrão de Brasília"
 
 #: tzres.rc:91
 msgid "E. South America Daylight Time"
@@ -10464,7 +10464,7 @@ msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
-"A operação foi cancelada, normalmente isto ocorre porque o handle onde a "
+"A operação foi cancelada, normalmente isto ocorre porque o canal onde a "
 "requisição foi feita foi fechado antes da operação ser concluída.\n"
 
 #: winineterror.mc:61
@@ -13928,7 +13928,7 @@ msgstr ""
 "Exemplos de uso:\n"
 "  regedit \"importar.reg\"\n"
 "  regedit /E \"exportar.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Caminho\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
@@ -14136,7 +14136,7 @@ msgstr "Tem certeza que deseja excluir o valor do registro selecionado?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
-msgstr "Busca completa. A seqüência '%1' não foi encontrada."
+msgstr "Busca completa. A sequência '%1' não foi encontrada."
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -17045,6 +17045,8 @@ msgstr ""
 "[/A]  Copiar apenas arquivos com atributo de arquivo.\n"
 "[/M]  Copiar apenas arquivos com atributo de arquivo, removendo\n"
 "\to atributo de arquivo.\n"
+"[/K]  Copia os atributos do arquivo; sem isto, os attributos nao são "
+"preservados.\n"
 "[/D | /D:m-d-y] Copiar novos arquivos ou os alterados após a data "
 "fornecida.\n"
 "\t\tSe nenhuma data for fornecida, apenas copiar se o destino\n"
