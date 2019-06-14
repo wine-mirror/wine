@@ -26,6 +26,10 @@
 #include "winternl.h"
 #include "wine/test.h"
 
+static unsigned int page_size;
+
+static NTSTATUS (WINAPI *pRtlCreateUserStack)(SIZE_T, SIZE_T, ULONG, SIZE_T, SIZE_T, INITIAL_TEB *);
+static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 static void test_AllocateVirtualMemory(void)
@@ -167,16 +171,85 @@ static void test_AllocateVirtualMemory(void)
     ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed\n");
 }
 
+static void test_RtlCreateUserStack(void)
+{
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+    SIZE_T default_commit = nt->OptionalHeader.SizeOfStackCommit;
+    SIZE_T default_reserve = nt->OptionalHeader.SizeOfStackReserve;
+    INITIAL_TEB stack = {0};
+    unsigned int i;
+    NTSTATUS ret;
+
+    struct
+    {
+        SIZE_T commit, reserve, commit_align, reserve_align, expect_commit, expect_reserve;
+    }
+    tests[] =
+    {
+        {       0,        0,      1,        1, default_commit, default_reserve},
+        {  0x2000,        0,      1,        1,         0x2000, default_reserve},
+        {  0x4000,        0,      1,        1,         0x4000, default_reserve},
+        {       0, 0x200000,      1,        1, default_commit, 0x200000},
+        {  0x4000, 0x200000,      1,        1,         0x4000, 0x200000},
+        {0x100000, 0x100000,      1,        1,       0x100000, 0x100000},
+        { 0x20000,  0x20000,      1,        1,        0x20000, 0x100000},
+
+        {       0, 0x110000,      1,        1, default_commit, 0x110000},
+        {       0, 0x110000,      1,  0x40000, default_commit, 0x140000},
+        {       0, 0x140000,      1,  0x40000, default_commit, 0x140000},
+        { 0x11000, 0x140000,      1,  0x40000,        0x11000, 0x140000},
+        { 0x11000, 0x140000, 0x4000,  0x40000,        0x14000, 0x140000},
+        {       0,        0, 0x4000, 0x400000,
+                (default_commit + 0x3fff) & ~0x3fff,
+                (default_reserve + 0x3fffff) & ~0x3fffff},
+    };
+
+    if (!pRtlCreateUserStack)
+    {
+        win_skip("RtlCreateUserStack() is missing\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        memset(&stack, 0xcc, sizeof(stack));
+        ret = pRtlCreateUserStack(tests[i].commit, tests[i].reserve, 0,
+                tests[i].commit_align, tests[i].reserve_align, &stack);
+        ok(!ret, "%u: got status %#x\n", i, ret);
+        ok(!stack.OldStackBase, "%u: got OldStackBase %p\n", i, stack.OldStackBase);
+        ok(!stack.OldStackLimit, "%u: got OldStackLimit %p\n", i, stack.OldStackLimit);
+        ok(!((ULONG_PTR)stack.DeallocationStack & (page_size - 1)),
+                "%u: got unaligned memory %p\n", i, stack.DeallocationStack);
+        ok((ULONG_PTR)stack.StackBase - (ULONG_PTR)stack.DeallocationStack == tests[i].expect_reserve,
+                "%u: got reserve %#lx\n", i, (ULONG_PTR)stack.StackBase - (ULONG_PTR)stack.DeallocationStack);
+        todo_wine ok((ULONG_PTR)stack.StackBase - (ULONG_PTR)stack.StackLimit == tests[i].expect_commit,
+                "%u: got commit %#lx\n", i, (ULONG_PTR)stack.StackBase - (ULONG_PTR)stack.StackLimit);
+        pRtlFreeUserStack(stack.DeallocationStack);
+    }
+
+    ret = pRtlCreateUserStack(0x11000, 0x110000, 0, 1, 0, &stack);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+
+    ret = pRtlCreateUserStack(0x11000, 0x110000, 0, 0, 1, &stack);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+}
+
 START_TEST(virtual)
 {
     SYSTEM_BASIC_INFORMATION sbi;
-    HMODULE hkernel32;
+    HMODULE mod;
 
-    hkernel32 = GetModuleHandleA("kernel32.dll");
-    pIsWow64Process = (void *)GetProcAddress(hkernel32, "IsWow64Process");
+    mod = GetModuleHandleA("kernel32.dll");
+    pIsWow64Process = (void *)GetProcAddress(mod, "IsWow64Process");
+
+    mod = GetModuleHandleA("ntdll.dll");
+    pRtlCreateUserStack = (void *)GetProcAddress(mod, "RtlCreateUserStack");
+    pRtlFreeUserStack = (void *)GetProcAddress(mod, "RtlFreeUserStack");
 
     NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
     trace("system page size %#x\n", sbi.PageSize);
+    page_size = sbi.PageSize;
 
     test_AllocateVirtualMemory();
+    test_RtlCreateUserStack();
 }
