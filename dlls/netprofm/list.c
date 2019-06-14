@@ -21,7 +21,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include "config.h"
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"

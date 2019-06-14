@@ -1,6 +1,8 @@
 MODULE    = netprofm.dll
 IMPORTS   = iphlpapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	list.c \
 	main.c
