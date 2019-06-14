@@ -801,26 +801,26 @@ static void test_master_clock(void)
     hr = IReferenceClock_GetTime(clock, &time1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     time2 = counter.QuadPart * 10000000.0 / freq.QuadPart;
-    todo_wine ok(abs(time1 - time2) < 20 * 10000, "Expected about %s, got %s.\n",
+    ok(abs(time1 - time2) < 20 * 10000, "Expected about %s, got %s.\n",
             wine_dbgstr_longlong(time2), wine_dbgstr_longlong(time1));
 
     hr = IReferenceClock_GetTime(clock, &time2);
-    todo_wine ok(hr == (time2 == time1 ? S_FALSE : S_OK), "Got hr %#x.\n", hr);
+    ok(hr == (time2 == time1 ? S_FALSE : S_OK), "Got hr %#x.\n", hr);
 
     Sleep(100);
     hr = IReferenceClock_GetTime(clock, &time2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time2 - time1 > 80 * 10000, "Expected about %s, but got %s.\n",
+    ok(time2 - time1 > 80 * 10000, "Expected about %s, but got %s.\n",
             wine_dbgstr_longlong(time1 + 100 * 10000), wine_dbgstr_longlong(time2));
 
     hr = IReferenceClock_AdviseTime(clock, 0, 0, NULL, &cookie);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IReferenceClock_AdvisePeriodic(clock, 0, 0, NULL, &cookie);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IReferenceClock_Unadvise(clock, 0);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     IReferenceClock_Release(clock);
 
