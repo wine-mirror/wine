@@ -115,6 +115,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 /* just in case... */
 #undef VFAT_IOCTL_READDIR_BOTH
+#undef EXT2_IOC_GETFLAGS
+#undef EXT4_CASEFOLD_FL
 
 #ifdef linux
 
@@ -129,6 +131,12 @@ typedef struct
 
 /* Define the VFAT ioctl to get both short and long file names */
 #define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, KERNEL_DIRENT [2] )
+
+/* Define the ext2 ioctl for handling extra attributes */
+#define EXT2_IOC_GETFLAGS _IOR('f', 1, long)
+
+/* Case-insensitivity attribute */
+#define EXT4_CASEFOLD_FL 0x40000000
 
 #ifndef O_DIRECTORY
 # define O_DIRECTORY 0200000 /* must be directory */
@@ -1113,7 +1121,7 @@ static int get_dir_case_sensitivity_attr( const char *dir )
  *           get_dir_case_sensitivity_stat
  *
  * Checks if the volume containing the specified directory is case
- * sensitive or not. Uses statfs(2) or statvfs(2).
+ * sensitive or not. Uses (f)statfs(2), statvfs(2), fstatat(2), or ioctl(2).
  */
 static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
 {
@@ -1165,32 +1173,27 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
     return FALSE;
 
 #elif defined(__linux__)
+    BOOLEAN sens = TRUE;
     struct statfs stfs;
     struct stat st;
-    char *cifile;
+    int fd, flags;
 
-    /* Only assume CIOPFS is case insensitive. */
-    if (statfs( dir, &stfs ) == -1) return FALSE;
-    if (stfs.f_type != 0x65735546 /* FUSE_SUPER_MAGIC */)
+    if ((fd = open( dir, O_RDONLY | O_NONBLOCK | O_LARGEFILE )) == -1)
         return TRUE;
-    /* Normally, we'd have to parse the mtab to find out exactly what
-     * kind of FUSE FS this is. But, someone on wine-devel suggested
-     * a shortcut. We'll stat a special file in the directory. If it's
-     * there, we'll assume it's a CIOPFS, else not.
-     * This will break if somebody puts a file named ".ciopfs" in a non-
-     * CIOPFS directory.
-     */
-    cifile = RtlAllocateHeap( GetProcessHeap(), 0, strlen( dir )+sizeof("/.ciopfs") );
-    if (!cifile) return TRUE;
-    strcpy( cifile, dir );
-    strcat( cifile, "/.ciopfs" );
-    if (stat( cifile, &st ) == 0)
+
+    if (ioctl( fd, EXT2_IOC_GETFLAGS, &flags ) != -1 && (flags & EXT4_CASEFOLD_FL))
     {
-        RtlFreeHeap( GetProcessHeap(), 0, cifile );
-        return FALSE;
+        sens = FALSE;
     }
-    RtlFreeHeap( GetProcessHeap(), 0, cifile );
-    return TRUE;
+    else if (fstatfs( fd, &stfs ) == 0 &&                          /* CIOPFS is case insensitive.  Instead of */
+             stfs.f_type == 0x65735546 /* FUSE_SUPER_MAGIC */ &&   /* parsing mtab to discover if the FUSE FS */
+             fstatat( fd, ".ciopfs", &st, AT_NO_AUTOMOUNT ) == 0)  /* is CIOPFS, look for .ciopfs in the dir. */
+    {
+        sens = FALSE;
+    }
+
+    close( fd );
+    return sens;
 #else
     return TRUE;
 #endif
@@ -1201,7 +1204,7 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
  *           get_dir_case_sensitivity
  *
  * Checks if the volume containing the specified directory is case
- * sensitive or not. Uses statfs(2) or statvfs(2).
+ * sensitive or not. Uses multiple methods, depending on platform.
  */
 static BOOLEAN get_dir_case_sensitivity( const char *dir )
 {
