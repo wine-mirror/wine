@@ -34,6 +34,7 @@
 #define COBJMACROS
 #include <d3d9.h>
 #include "wine/test.h"
+#include "wine/heap.h"
 
 struct vec2
 {
@@ -25562,6 +25563,233 @@ static void test_sysmem_draw(void)
     DestroyWindow(window);
 }
 
+static void test_nrm_instruction(void)
+{
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    IDirect3DVertexShader9 *vertex_shader;
+    IDirect3DPixelShader9 *pixel_shader;
+    IDirect3DDevice9 *device;
+    unsigned int body_size;
+    IDirect3D9 *d3d;
+    D3DCOLOR colour;
+    unsigned int i;
+    DWORD *ps_code;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
+        {0,  0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        {0, 20, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
+        D3DDECL_END()
+    };
+    static const struct
+    {
+        struct vec3 position;
+        struct vec2 t0;
+        struct vec4 t1;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.3f, 0.5f}},
+        {{ 1.0f, -1.0f, 0.1f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.3f, 0.5f}},
+        {{-1.0f,  1.0f, 0.1f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.3f, 0.5f}},
+        {{ 1.0f,  1.0f, 0.1f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.3f, 0.5f}},
+    };
+
+    static const DWORD vs_code[] =
+    {
+        0xfffe0300,                                     /* vs_3_0                 */
+        0x0200001f, 0x80000000, 0x900f0000,             /* dcl_position v0        */
+        0x0200001f, 0x80000005, 0x900f0001,             /* dcl_texcoord0 v1       */
+        0x0200001f, 0x80010005, 0x900f0002,             /* dcl_texcoord1 v2       */
+        0x0200001f, 0x80000000, 0xe00f0000,             /* dcl_position o0        */
+        0x0200001f, 0x80000005, 0xe00f0001,             /* dcl_texcoord0 o1       */
+        0x0200001f, 0x80010005, 0xe00f0002,             /* dcl_texcoord1 o2       */
+        0x0200001f, 0x80020005, 0xe00f0003,             /* dcl_texcoord2 o3       */
+        0x02000001, 0xe00f0000, 0x90e40000,             /* mov o0, v0             */
+        0x02000001, 0xe00f0001, 0x90e40001,             /* mov o1, v1             */
+        0x02000001, 0xe00f0002, 0x90e40002,             /* mov o2, v2             */
+        0x02000024, 0x800f0000, 0x90e40002,             /* nrm r0, v2             */
+        0x02000001, 0xe00f0003, 0x80e40000,             /* mov o3, r0             */
+        0x0000ffff,
+    };
+    static const DWORD ps_header[] =
+    {
+        0xffff0300,                                     /* ps_3_0                 */
+    };
+    static const DWORD ps_footer[] =
+    {
+        0x02000001, 0x800f0800, 0x80e40000,             /* mov oC0, r0            */
+        0x0000ffff,                                     /* end                    */
+    };
+    static const DWORD nrm_t0[] =
+    {
+        0x0200001f, 0x80000005, 0x90070001,             /* dcl_texcoord0 v0.xyz   */
+        0x02000024, 0x800f0000, 0x90e40001,             /* nrm r0, v0             */
+    };
+    static const DWORD nrm_xyz_t0[] =
+    {
+        0x0200001f, 0x80000005, 0x90070000,             /* dcl_texcoord0 v0.xyz   */
+        0x02000001, 0x800f0000, 0xa0e40000,             /* mov r0, c0             */
+        0x02000024, 0x80070000, 0x90e40000,             /* nrm r0.xyz, v0         */
+        0x02000001, 0x80040000, 0x80ff0000,             /* mov r0.z, r0.w         */
+    };
+    static const DWORD nrm_t1[] =
+    {
+        0x0200001f, 0x80010005, 0x900f0000,             /* dcl_texcoord1 v0.xyzw  */
+        0x02000024, 0x800f0000, 0x90e40000,             /* nrm r0, v0             */
+    };
+    static const DWORD nrm_vs_t1[] =
+    {
+        0x0200001f, 0x80020005, 0x900f0000,             /* dcl_texcoord2 v0.xyzw  */
+        0x02000001, 0x800f0000, 0x90e40000,             /* mov r0, v0             */
+    };
+    static const DWORD nrm_t1_xyz[] =
+    {
+        0x0200001f, 0x80010005, 0x900f0000,             /* dcl_texcoord1 v0.xyzw  */
+        0x02000001, 0x800f0000, 0xa0e40000,             /* mov r0, c0             */
+        0x02000024, 0x80070000, 0x90e40000,             /* nrm r0.xyz, t1         */
+        0x02000001, 0x80040000, 0x80ff0000,             /* mov r0.z, r0.w         */
+    };
+    static const DWORD nrm_t1_xy[] =
+    {
+        0x0200001f, 0x80010005, 0x900f0000,             /* dcl_texcoord1 v0.xyzw  */
+        0x02000001, 0x800f0000, 0xa0e40000,             /* mov r0, c0             */
+        0x02000024, 0x800f0000, 0x90540000,             /* nrm r0, v0.xy          */
+    };
+    static const DWORD nrm_xyz_t1_yw[] =
+    {
+        0x0200001f, 0x80010005, 0x900f0000,             /* dcl_texcoord1 v0.xyzw  */
+        0x02000001, 0x800f0000, 0xa0e40000,             /* mov r0, c0             */
+        0x02000024, 0x80070000, 0x90fd0000,             /* nrm r0.xyz, v0.yw      */
+    };
+    static const DWORD nrm_t1_dcl_xy[] =
+    {
+        0x0200001f, 0x80010005, 0x90030000,             /* dcl_texcoord1 v0.xy    */
+        0x02000001, 0x800f0000, 0xa0e40000,             /* mov r0, c0             */
+        0x02000024, 0x800f0000, 0x90540000,             /* nrm r0, v0             */
+    };
+    static const DWORD nrm_c0[] =
+    {
+        0x02000024, 0x800f0000, 0xa0e40000,             /* nrm r0, c0             */
+        0x02000001, 0x80040000, 0x80ff0000,             /* mov r0.z, r0.w         */
+    };
+    static const DWORD nrm_c0_swizzle[] =
+    {
+        0x02000024, 0x800f0000, 0xa0390000,             /* nrm r0, c0.yzwx        */
+    };
+
+    static const struct
+    {
+        const char *name;
+        const DWORD *ops;
+        DWORD body_size;
+        struct vec4 c0;
+        D3DCOLOR expected_colour;
+    }
+    tests[] =
+    {
+        {"nrm_t0", nrm_t0, ARRAY_SIZE(nrm_t0), {0.0f}, 0x00b4b400},
+        {"nrm_xyz_t0", nrm_xyz_t0, ARRAY_SIZE(nrm_xyz_t0), {0.1f, 0.1f, 0.1f, 0.1f}, 0x00b4b419},
+        {"nrm_t1", nrm_t1, ARRAY_SIZE(nrm_t1), {0.0f}, 0x0000f449},
+        {"nrm_vs_t1", nrm_vs_t1, ARRAY_SIZE(nrm_vs_t1), {0.0f}, 0x0000f449},
+        {"nrm_t1_xyz", nrm_t1_xyz, ARRAY_SIZE(nrm_t1_xyz), {0.1f, 0.1f, 0.1f, 0.1f}, 0x0000f419},
+        {"nrm_t1_xy", nrm_t1_xy, ARRAY_SIZE(nrm_t1_xy), {0.1f, 0.1f, 0.1f, 0.1f}, 0x0000b4b4},
+        {"nrm_xyz_t1_yw", nrm_xyz_t1_yw, ARRAY_SIZE(nrm_xyz_t1_yw), {0.1f, 0.1f, 0.1f, 0.1f}, 0x00d06868},
+        {"nrm_t1_dcl_xy", nrm_t1_dcl_xy, ARRAY_SIZE(nrm_t1_dcl_xy), {0.1f, 0.1f, 0.1f, 0.1f}, 0x0000b4b4},
+        {"nrm_vec4(0.0, 0.0, 0.0, 0.0)", nrm_c0, ARRAY_SIZE(nrm_c0), {0.0f, 0.0f, 0.0f, 0.0f}, 0x00000000},
+        {"nrm_vec4(2.0, 0.0, 0.0, 0.5)", nrm_c0, ARRAY_SIZE(nrm_c0), {2.0f, 0.0f, 0.0f, 0.5f}, 0x00ff0040},
+        {"nrm_vec4(1.0)", nrm_c0, ARRAY_SIZE(nrm_c0), {1.0f, 1.0f, 1.0f, 1.0f}, 0x00939393},
+        {"nrm_c0_swizzle", nrm_c0_swizzle, ARRAY_SIZE(nrm_c0_swizzle), {1.0f, 1.0f, 0.0f, 2.0f}, 0x007200e4},
+    };
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(3, 0) || caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        skip("No shader model 3 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    body_size = 0;
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+        body_size = max(body_size, tests[i].body_size);
+
+    ps_code = heap_alloc(sizeof(ps_header) + body_size * sizeof(*ps_code) + sizeof(ps_footer));
+    memcpy(ps_code, ps_header, sizeof(ps_header));
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_code, &vertex_shader);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, vertex_shader);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        memcpy(ps_code + ARRAY_SIZE(ps_header), tests[i].ops, sizeof(*ps_code) * tests[i].body_size);
+        memcpy(ps_code + ARRAY_SIZE(ps_header) + tests[i].body_size, ps_footer, sizeof(ps_footer));
+
+        hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &pixel_shader);
+        ok(hr == D3D_OK, "Got unexpected hr %#x, test %s.\n", hr, tests[i].name);
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80808080, 0.0f, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShader(device, pixel_shader);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 0, &tests[i].c0.x, 1);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].expected_colour, 1),
+                "test %s, expected 0x%08x, got 0x%08x.\n",
+                tests[i].name, tests[i].expected_colour, colour);
+
+        IDirect3DPixelShader9_Release(pixel_shader);
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    heap_free(ps_code);
+    IDirect3DVertexShader9_Release(vertex_shader);
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -25703,4 +25931,5 @@ START_TEST(visual)
     test_map_synchronisation();
     test_color_vertex();
     test_sysmem_draw();
+    test_nrm_instruction();
 }
