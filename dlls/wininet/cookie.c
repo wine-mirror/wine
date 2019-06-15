@@ -733,7 +733,7 @@ BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 
     TRACE("(%s, %s, %p, %p, %x, %p)\n", debugstr_w(lpszUrl),debugstr_w(lpszCookieName), lpCookieData, lpdwSize, flags, reserved);
 
-    if (flags)
+    if (flags & ~INTERNET_COOKIE_HTTPONLY)
         FIXME("flags 0x%08x not supported\n", flags);
 
     if (!lpszUrl)
