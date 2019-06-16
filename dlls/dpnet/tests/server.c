@@ -326,8 +326,6 @@ HRESULT set_firewall( enum firewall_op op )
         hr = INetFwAuthorizedApplications_Add( apps, app );
     else if (op == APP_REMOVE)
         hr = INetFwAuthorizedApplications_Remove( apps, image );
-    else
-        hr = E_INVALIDARG;
 
 done:
     if (app) INetFwAuthorizedApplication_Release( app );
